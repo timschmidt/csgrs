@@ -13474,139 +13474,30 @@ fn clip_corresponding_parameter_overlap(
     second_carrier: &RegionCarrier,
     policy: &CurveContext,
 ) -> ExactCurveResult<Option<(CurveRegionParameterRange2, CurveRegionParameterRange2)>> {
-    let first_overlap = CurveRegionParameterRange2::from_bezier_range(first_range.clone());
-    let second_overlap = CurveRegionParameterRange2::from_bezier_range(second_range.clone());
-    let (first_overlap_start, first_overlap_end) = ascending_range(&first_overlap, policy)?;
-    let first_start = extreme_region_parameter(
-        [&first_carrier.start, first_overlap_start],
-        Ordering::Less,
-        first_carrier.family,
-        policy,
-    )?;
-    let first_end = extreme_region_parameter(
-        [&first_carrier.end, first_overlap_end],
-        Ordering::Greater,
-        first_carrier.family,
-        policy,
-    )?;
-    match decided_parameter_cmp(&first_start, &first_end, policy)? {
-        Ordering::Less => {}
-        Ordering::Equal | Ordering::Greater => return Ok(None),
-    }
-    let mapped_start = mapped_overlap_parameter(
-        correspondence,
-        true,
-        &first_start,
+    let first_fragment = CurveRegionParameterRange2::new_validated(
+        first_carrier.start.clone(),
+        first_carrier.end.clone(),
+    );
+    let second_fragment = CurveRegionParameterRange2::new_validated(
+        second_carrier.start.clone(),
+        second_carrier.end.clone(),
+    );
+    match correspondence.clipped_curve_region_ranges(
         first_range,
         second_range,
-        first_carrier.family,
+        &first_fragment,
+        &second_fragment,
         policy,
-    )?;
-    let mapped_end = mapped_overlap_parameter(
-        correspondence,
-        true,
-        &first_end,
-        first_range,
-        second_range,
-        first_carrier.family,
-        policy,
-    )?;
-    let mapped_order = decided_parameter_cmp(&mapped_start, &mapped_end, policy)?;
-    let (mapped_low, mapped_high) = match mapped_order {
-        Ordering::Less => (&mapped_start, &mapped_end),
-        Ordering::Greater => (&mapped_end, &mapped_start),
-        Ordering::Equal => return Ok(None),
-    };
-    let (second_overlap_start, second_overlap_end) = ascending_range(&second_overlap, policy)?;
-    let second_low = extreme_region_parameter(
-        [&second_carrier.start, mapped_low, second_overlap_start],
-        Ordering::Less,
-        second_carrier.family,
-        policy,
-    )?;
-    let second_high = extreme_region_parameter(
-        [&second_carrier.end, mapped_high, second_overlap_end],
-        Ordering::Greater,
-        second_carrier.family,
-        policy,
-    )?;
-    match decided_parameter_cmp(&second_low, &second_high, policy)? {
-        Ordering::Less => {}
-        Ordering::Equal | Ordering::Greater => return Ok(None),
-    }
-    let (second_start, second_end) = if mapped_order == Ordering::Less {
-        (second_low, second_high)
-    } else {
-        (second_high, second_low)
-    };
-    let lift = |second: &CurveRegionParameter2,
-                mapped: &CurveRegionParameter2,
-                original: &CurveRegionParameter2| {
-        if decided_parameter_cmp(second, mapped, policy)? == Ordering::Equal {
-            Ok(original.clone())
-        } else {
-            mapped_overlap_parameter(
-                correspondence,
-                false,
-                second,
-                first_range,
-                second_range,
-                second_carrier.family,
-                policy,
-            )
-        }
-    };
-    let first_start = lift(&second_start, &mapped_start, &first_start)?;
-    let first_end = lift(&second_end, &mapped_end, &first_end)?;
-    match decided_parameter_cmp(&first_start, &first_end, policy)? {
-        Ordering::Less => {}
-        Ordering::Equal | Ordering::Greater => return Ok(None),
-    }
-    Ok(Some((
-        CurveRegionParameterRange2::new_validated(first_start, first_end),
-        CurveRegionParameterRange2::new_validated(second_start, second_end),
-    )))
-}
-
-fn mapped_overlap_parameter(
-    correspondence: &RationalBezierOverlapParameterCorrespondence2,
-    first_to_second: bool,
-    parameter: &CurveRegionParameter2,
-    first_range: &BezierParameterRange2,
-    second_range: &BezierParameterRange2,
-    family: CurveFamily2,
-    policy: &CurveContext,
-) -> ExactCurveResult<CurveRegionParameter2> {
-    let mapped = if first_to_second {
-        correspondence.map_first_to_second_region_parameter(
-            parameter,
-            first_range,
-            second_range,
-            policy,
-        )
-    } else {
-        correspondence.map_second_to_first_region_parameter(
-            parameter,
-            first_range,
-            second_range,
-            policy,
-        )
-    };
-    match mapped {
-        Ok(Classification::Decided(Some(parameter))) => Ok(parameter),
-        Ok(Classification::Decided(None)) => Err(ExactCurveError::blocked(
-            CurveOperation2::Boolean,
-            family,
-            UncertaintyReason::Predicate,
-        )),
+    ) {
+        Ok(Classification::Decided(ranges)) => Ok(ranges),
         Ok(Classification::Uncertain(reason)) => Err(ExactCurveError::blocked(
             CurveOperation2::Boolean,
-            family,
+            first_carrier.family,
             reason,
         )),
         Err(cause) => Err(ExactCurveError::invalid(
             CurveOperation2::Boolean,
-            family,
+            first_carrier.family,
             cause,
         )),
     }

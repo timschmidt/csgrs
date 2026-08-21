@@ -5778,139 +5778,45 @@ fn retained_fillet_corresponding_overlap_is_positive(
     first_curve: &RationalBezier2,
     second_curve: &RationalBezier2,
     overlap: &crate::RationalBezierIntersectionOverlap2,
-    first_fragment: &BezierParameterRange2,
-    second_fragment: &BezierParameterRange2,
+    first_fragment: &crate::CurveRegionParameterRange2,
+    second_fragment: &crate::CurveRegionParameterRange2,
     family: CurveFamily2,
     policy: &CurveContext,
 ) -> ExactCurveResult<bool> {
-    let ascending = |range: &BezierParameterRange2| {
-        Ok(
-            match retained_fillet_bezier_parameter_order(
-                range.start(),
-                range.end(),
-                family,
-                policy,
-            )? {
-                std::cmp::Ordering::Less => (range.start().clone(), range.end().clone()),
-                std::cmp::Ordering::Greater => (range.end().clone(), range.start().clone()),
-                std::cmp::Ordering::Equal => {
-                    return Err(ExactCurveError::invalid(
-                        CurveOperation2::Fillet,
-                        family,
-                        CurveError::DegenerateOverlapRange,
-                    ));
-                }
-            },
-        )
-    };
-    let maximum = |parameters: [&BezierParameter2; 3]| {
-        let mut selected = parameters[0];
-        for parameter in &parameters[1..] {
-            if retained_fillet_bezier_parameter_order(selected, parameter, family, policy)?.is_lt()
-            {
-                selected = parameter;
-            }
-        }
-        Ok(selected.clone())
-    };
-    let minimum = |parameters: [&BezierParameter2; 3]| {
-        let mut selected = parameters[0];
-        for parameter in &parameters[1..] {
-            if retained_fillet_bezier_parameter_order(selected, parameter, family, policy)?.is_gt()
-            {
-                selected = parameter;
-            }
-        }
-        Ok(selected.clone())
-    };
-
-    let (first_overlap_start, first_overlap_end) = ascending(overlap.first_range())?;
-    let (first_fragment_start, first_fragment_end) = ascending(first_fragment)?;
-    let first_start = if retained_fillet_bezier_parameter_order(
-        &first_overlap_start,
-        &first_fragment_start,
-        family,
-        policy,
-    )?
-    .is_lt()
-    {
-        first_fragment_start.clone()
-    } else {
-        first_overlap_start.clone()
-    };
-    let first_end = if retained_fillet_bezier_parameter_order(
-        &first_overlap_end,
-        &first_fragment_end,
-        family,
-        policy,
-    )?
-    .is_gt()
-    {
-        first_fragment_end.clone()
-    } else {
-        first_overlap_end.clone()
-    };
-    if !retained_fillet_bezier_parameter_order(&first_start, &first_end, family, policy)?.is_lt() {
-        return Ok(false);
-    }
-
     let correspondence = RationalBezierOverlapParameterCorrespondence2::for_overlap(
         first_curve,
         second_curve,
         overlap,
         policy,
     );
-    let map = |parameter| match correspondence
-        .map_first_to_second(
-            parameter,
+    match correspondence
+        .clipped_curve_region_ranges(
             overlap.first_range(),
             overlap.second_range(),
+            first_fragment,
+            second_fragment,
             policy,
         )
         .map_err(|cause| ExactCurveError::invalid(CurveOperation2::Fillet, family, cause))?
     {
-        Classification::Decided(Some(parameter)) => Ok(parameter),
-        Classification::Decided(None) => Err(ExactCurveError::invalid(
-            CurveOperation2::Fillet,
-            family,
-            CurveError::Topology(
-                "a certified fillet overlap omitted its parameter correspondence".into(),
-            ),
-        )),
+        Classification::Decided(ranges) => Ok(ranges.is_some()),
         Classification::Uncertain(reason) => Err(ExactCurveError::blocked(
             CurveOperation2::Fillet,
             family,
             reason,
         )),
-    };
-    let mapped_first = map(&first_start)?;
-    let mapped_second = map(&first_end)?;
-    let (mapped_low, mapped_high) = match retained_fillet_bezier_parameter_order(
-        &mapped_first,
-        &mapped_second,
-        family,
-        policy,
-    )? {
-        std::cmp::Ordering::Less => (&mapped_first, &mapped_second),
-        std::cmp::Ordering::Greater => (&mapped_second, &mapped_first),
-        std::cmp::Ordering::Equal => return Ok(false),
-    };
-    let (second_overlap_start, second_overlap_end) = ascending(overlap.second_range())?;
-    let (second_fragment_start, second_fragment_end) = ascending(second_fragment)?;
-    let second_start = maximum([mapped_low, &second_overlap_start, &second_fragment_start])?;
-    let second_end = minimum([mapped_high, &second_overlap_end, &second_fragment_end])?;
-    Ok(retained_fillet_bezier_parameter_order(&second_start, &second_end, family, policy)?.is_lt())
+    }
 }
 
 fn retained_fillet_parameter_component_overlap_is_positive(
     overlap: &crate::bezier_offset::BezierParameterComponentOverlap2,
-    first_fragment: &BezierParameterRange2,
-    second_fragment: &BezierParameterRange2,
+    first_fragment: &crate::CurveRegionParameterRange2,
+    second_fragment: &crate::CurveRegionParameterRange2,
     family: CurveFamily2,
     policy: &CurveContext,
 ) -> ExactCurveResult<bool> {
     match overlap
-        .clipped_ranges(first_fragment, second_fragment, policy)
+        .clipped_curve_region_ranges(first_fragment, second_fragment, policy)
         .map_err(|cause| ExactCurveError::invalid(CurveOperation2::Fillet, family, cause))?
     {
         Classification::Decided(ranges) => Ok(ranges.is_some()),
@@ -6676,22 +6582,51 @@ fn fillet_offset_centers(
                 ));
             }
             centers.coincident |= positive_dimensional_incident_seam;
-            let previous_range = previous_source.parameter_range();
-            let next_range = next_source.parameter_range();
-            if (!intersections.overlaps().is_empty()
-                || !intersections.component_overlaps().is_empty()
-                || !intersections.parameter_components().is_empty())
-                && (previous_range.is_none() || next_range.is_none())
-            {
-                return Err(ExactCurveError::blocked(
-                    CurveOperation2::Fillet,
-                    previous_family,
-                    crate::UncertaintyReason::Unsupported,
-                ));
-            }
+            let previous_curve_range = previous_source.curve_parameter_range();
+            let next_curve_range = next_source.curve_parameter_range();
+            let has_selected_range = previous_source.parameter_range().is_none()
+                || next_source.parameter_range().is_none();
             if !intersections.overlaps().is_empty() {
                 let mut rational_sources = None;
                 for overlap in intersections.overlaps() {
+                    let mut correspondence_error = None;
+                    if has_selected_range {
+                        let corresponding = (|| {
+                            if rational_sources.is_none() {
+                                rational_sources = Some((
+                                    bezier_parallel_rational_source(
+                                        previous,
+                                        CurveOperation2::Fillet,
+                                        previous_family,
+                                    )?,
+                                    bezier_parallel_rational_source(
+                                        next,
+                                        CurveOperation2::Fillet,
+                                        next_family,
+                                    )?,
+                                ));
+                            }
+                            let (previous_curve, next_curve) = rational_sources
+                                .as_ref()
+                                .expect("fillet rational sources were initialized");
+                            retained_fillet_corresponding_overlap_is_positive(
+                                previous_curve,
+                                next_curve,
+                                overlap,
+                                &previous_curve_range,
+                                &next_curve_range,
+                                previous_family,
+                                policy,
+                            )
+                        })();
+                        match corresponding {
+                            Ok(positive) => {
+                                centers.coincident |= positive;
+                                continue;
+                            }
+                            Err(error) => correspondence_error = Some(error),
+                        }
+                    }
                     let mut has_component = false;
                     let mut positive = false;
                     for component in intersections
@@ -6702,12 +6637,8 @@ fn fillet_offset_centers(
                         has_component = true;
                         if retained_fillet_parameter_component_overlap_is_positive(
                             component,
-                            previous_range
-                                .as_ref()
-                                .expect("positive-dimensional ranges were validated"),
-                            next_range
-                                .as_ref()
-                                .expect("positive-dimensional ranges were validated"),
+                            &previous_curve_range,
+                            &next_curve_range,
                             previous_family,
                             policy,
                         )? {
@@ -6716,6 +6647,9 @@ fn fillet_offset_centers(
                         }
                     }
                     if !has_component {
+                        if let Some(error) = correspondence_error {
+                            return Err(error);
+                        }
                         if rational_sources.is_none() {
                             rational_sources = Some((
                                 bezier_parallel_rational_source(
@@ -6737,12 +6671,8 @@ fn fillet_offset_centers(
                             previous_curve,
                             next_curve,
                             overlap,
-                            previous_range
-                                .as_ref()
-                                .expect("positive-dimensional ranges were validated"),
-                            next_range
-                                .as_ref()
-                                .expect("positive-dimensional ranges were validated"),
+                            &previous_curve_range,
+                            &next_curve_range,
                             previous_family,
                             policy,
                         )?;
@@ -12630,6 +12560,83 @@ mod tests {
                 retained.promoted_bezier_parameter(&policy).unwrap(),
                 Classification::Uncertain(_)
             ));
+        }
+    }
+
+    #[test]
+    fn selected_parallel_fillet_clips_a_positive_dimensional_center_component_locally() {
+        let line = |height: i8| {
+            QuadraticBezier2::from_line_segment(
+                LineSeg2::try_new(
+                    Point2::new(Real::zero(), Real::from(height)),
+                    Point2::new(Real::one(), Real::from(height)),
+                )
+                .unwrap(),
+            )
+        };
+        let half = (Real::one() / Real::from(2_i8)).unwrap();
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let selected = crate::bezier_offset::degree_nine_selected_fiber_parameter_for_test(
+                half.clone(),
+                32_768,
+                &policy,
+            );
+            assert!(matches!(
+                selected.promoted_bezier_parameter(&policy).unwrap(),
+                Classification::Uncertain(_)
+            ));
+            let range = crate::CurveRegionParameterRange2::new_validated(
+                CurveRegionParameter2::from_bezier(BezierParameter2::Exact(Real::zero())),
+                CurveRegionParameter2::from_selected_fiber(selected.clone()),
+            );
+            let source_fragment = |height: i8| {
+                let source = line(height).parallel_left(Real::zero()).unwrap();
+                let end = RationalBezierIntersectionPointEvidence2::AnalyticParallel(
+                    crate::BezierAnalyticParallelPoint2::new_selected_fiber(
+                        source.clone(),
+                        selected.clone(),
+                        &policy,
+                    ),
+                );
+                (
+                    crate::bezier_split::BezierSelectedFiberFragment2::new(
+                        crate::bezier_split::BezierSelectedFiberSource2::AnalyticParallel(
+                            source.clone(),
+                        ),
+                        range.clone(),
+                        RationalBezierIntersectionPointEvidence2::Exact(Point2::new(
+                            Real::zero(),
+                            Real::from(height),
+                        )),
+                        end,
+                    ),
+                    source,
+                )
+            };
+            let (first_source, first_parallel) = source_fragment(0);
+            let (second_source, second_parallel) = source_fragment(2);
+            let first_support = first_parallel.with_distance(Real::one());
+            let second_support = second_parallel.with_distance(Real::from(-1_i8));
+            let previous = FilletOffsetCarrier2::Parallel {
+                source: FilletParallelSource2::Selected(&first_source),
+                support: first_support,
+            };
+            let next = FilletOffsetCarrier2::Parallel {
+                source: FilletParallelSource2::Selected(&second_source),
+                support: second_support,
+            };
+
+            let centers = fillet_offset_centers(
+                &previous,
+                &next,
+                CurveCornerMode2::TrimOnly,
+                CurveFamily2::QuadraticBezier,
+                CurveFamily2::QuadraticBezier,
+                &policy,
+            )
+            .expect("a selected positive-dimensional center component must clip locally");
+            assert!(centers.coincident);
+            assert!(centers.iter().next().is_none());
         }
     }
 

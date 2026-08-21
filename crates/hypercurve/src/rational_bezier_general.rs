@@ -40,9 +40,9 @@ use crate::{
     BezierParameterPolynomial, BezierParameterRange2, BezierParameterRayDirection2,
     BezierSplitMaterialization2, BezierSubcurve2, CircleCircleRelation, Classification,
     CurveContext, CurveDerivative2, CurveError, CurveFamily2, CurveOperation2,
-    CurveRegionParameter2, CurveResult, ExactCurveError, ExactCurveResult, LineSeg2, LineSide,
-    ParamRange, Point2, RationalBezierAlgebraicPointImage2, RationalBezierAlgebraicTangentImage2,
-    RationalQuadraticBezier2, UncertaintyReason,
+    CurveRegionParameter2, CurveRegionParameterRange2, CurveResult, ExactCurveError,
+    ExactCurveResult, LineSeg2, LineSide, ParamRange, Point2, RationalBezierAlgebraicPointImage2,
+    RationalBezierAlgebraicTangentImage2, RationalQuadraticBezier2, UncertaintyReason,
 };
 use crate::{BezierAlgebraicParameter2, BezierParameterInterval};
 
@@ -838,6 +838,46 @@ impl RationalBezierOverlapParameterCorrespondence2 {
         policy: &CurveContext,
     ) -> CurveResult<Classification<Option<CurveRegionParameter2>>> {
         self.map_region_parameter(parameter, first_range, second_range, false, policy)
+    }
+
+    /// Clips one certified shared-image correspondence to two retained local
+    /// parameter ranges without globalizing selected-fiber boundaries.
+    pub(crate) fn clipped_curve_region_ranges(
+        &self,
+        first_overlap: &BezierParameterRange2,
+        second_overlap: &BezierParameterRange2,
+        first_fragment: &CurveRegionParameterRange2,
+        second_fragment: &CurveRegionParameterRange2,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<Option<(CurveRegionParameterRange2, CurveRegionParameterRange2)>>>
+    {
+        let first_overlap_region =
+            CurveRegionParameterRange2::from_bezier_range(first_overlap.clone());
+        let second_overlap_region =
+            CurveRegionParameterRange2::from_bezier_range(second_overlap.clone());
+        crate::bezier_split::clip_corresponding_curve_region_parameter_ranges(
+            &first_overlap_region,
+            &second_overlap_region,
+            first_fragment,
+            second_fragment,
+            policy,
+            |parameter| {
+                self.map_first_to_second_region_parameter(
+                    parameter,
+                    first_overlap,
+                    second_overlap,
+                    policy,
+                )
+            },
+            |parameter| {
+                self.map_second_to_first_region_parameter(
+                    parameter,
+                    first_overlap,
+                    second_overlap,
+                    policy,
+                )
+            },
+        )
     }
 
     fn map_region_parameter(

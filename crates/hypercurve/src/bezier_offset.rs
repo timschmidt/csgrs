@@ -81763,113 +81763,17 @@ impl BezierParameterComponentOverlap2 {
             CurveRegionParameterRange2::from_bezier_range(self.overlap.first_range().clone());
         let second_overlap =
             CurveRegionParameterRange2::from_bezier_range(self.overlap.second_range().clone());
-        let [first_start, first_end] = match intersect_curve_region_parameter_ranges(
+        crate::bezier_split::clip_corresponding_curve_region_parameter_ranges(
             &first_overlap,
-            first_fragment,
-            policy,
-        )? {
-            Classification::Decided(Some(bounds)) => bounds,
-            Classification::Decided(None) => return Ok(Classification::Decided(None)),
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
-        let mapped_start =
-            match self.map_curve_parameter(CurveResultantParameter::First, &first_start, policy)? {
-                Classification::Decided(Some(parameter)) => parameter,
-                Classification::Decided(None) => return Ok(Classification::Decided(None)),
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            };
-        let mapped_end =
-            match self.map_curve_parameter(CurveResultantParameter::First, &first_end, policy)? {
-                Classification::Decided(Some(parameter)) => parameter,
-                Classification::Decided(None) => return Ok(Classification::Decided(None)),
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            };
-        let mapped_order = match mapped_start.cmp_by_refinement(&mapped_end, policy)? {
-            Classification::Decided(std::cmp::Ordering::Equal) => {
-                return Ok(Classification::Decided(None));
-            }
-            Classification::Decided(order) => order,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
-        let mapped_range =
-            CurveRegionParameterRange2::new_validated(mapped_start.clone(), mapped_end.clone());
-        let [second_low, second_high] = match intersect_curve_region_parameter_ranges(
-            &mapped_range,
             &second_overlap,
-            policy,
-        )? {
-            Classification::Decided(Some(bounds)) => bounds,
-            Classification::Decided(None) => return Ok(Classification::Decided(None)),
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
-        let second_candidate = CurveRegionParameterRange2::new_validated(second_low, second_high);
-        let [second_low, second_high] = match intersect_curve_region_parameter_ranges(
-            &second_candidate,
+            first_fragment,
             second_fragment,
             policy,
-        )? {
-            Classification::Decided(Some(bounds)) => bounds,
-            Classification::Decided(None) => return Ok(Classification::Decided(None)),
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
-        let (second_start, second_end) = if mapped_order == std::cmp::Ordering::Less {
-            (second_low, second_high)
-        } else {
-            (second_high, second_low)
-        };
-        let lift = |second: &CurveRegionParameter2,
-                    mapped: &CurveRegionParameter2,
-                    original: &CurveRegionParameter2|
-         -> CurveResult<Classification<Option<CurveRegionParameter2>>> {
-            Ok(match second.cmp_by_refinement(mapped, policy)? {
-                Classification::Decided(std::cmp::Ordering::Equal) => {
-                    Classification::Decided(Some(original.clone()))
-                }
-                Classification::Decided(_) => {
-                    self.map_curve_parameter(CurveResultantParameter::Second, second, policy)?
-                }
-                Classification::Uncertain(reason) => Classification::Uncertain(reason),
-            })
-        };
-        let clipped_first_start = match lift(&second_start, &mapped_start, &first_start)? {
-            Classification::Decided(Some(parameter)) => parameter,
-            Classification::Decided(None) => return Ok(Classification::Decided(None)),
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
-        let clipped_first_end = match lift(&second_end, &mapped_end, &first_end)? {
-            Classification::Decided(Some(parameter)) => parameter,
-            Classification::Decided(None) => return Ok(Classification::Decided(None)),
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
-        match clipped_first_start.cmp_by_refinement(&clipped_first_end, policy)? {
-            Classification::Decided(std::cmp::Ordering::Less) => {}
-            Classification::Decided(std::cmp::Ordering::Equal | std::cmp::Ordering::Greater) => {
-                return Ok(Classification::Decided(None));
-            }
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        }
-        Ok(Classification::Decided(Some((
-            CurveRegionParameterRange2::new_validated(clipped_first_start, clipped_first_end),
-            CurveRegionParameterRange2::new_validated(second_start, second_end),
-        ))))
+            |parameter| self.map_curve_parameter(CurveResultantParameter::First, parameter, policy),
+            |parameter| {
+                self.map_curve_parameter(CurveResultantParameter::Second, parameter, policy)
+            },
+        )
     }
 
     pub(crate) fn clipped_ranges(
@@ -81933,61 +81837,6 @@ pub(crate) fn nonlinear_parameter_component_overlap_for_test(
         panic!("the nonlinear component omitted its exact support evidence");
     };
     overlap.clone()
-}
-
-fn intersect_curve_region_parameter_ranges(
-    first: &CurveRegionParameterRange2,
-    second: &CurveRegionParameterRange2,
-    policy: &CurveContext,
-) -> CurveResult<Classification<Option<[CurveRegionParameter2; 2]>>> {
-    let ascending = |range: &CurveRegionParameterRange2| {
-        Ok(
-            match range.start().cmp_by_refinement(range.end(), policy)? {
-                Classification::Decided(std::cmp::Ordering::Less) => {
-                    Classification::Decided([range.start().clone(), range.end().clone()])
-                }
-                Classification::Decided(std::cmp::Ordering::Greater) => {
-                    Classification::Decided([range.end().clone(), range.start().clone()])
-                }
-                Classification::Decided(std::cmp::Ordering::Equal) => {
-                    return Err(CurveError::DegenerateOverlapRange);
-                }
-                Classification::Uncertain(reason) => Classification::Uncertain(reason),
-            },
-        )
-    };
-    let [first_low, first_high] = match ascending(first)? {
-        Classification::Decided(bounds) => bounds,
-        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-    };
-    let [second_low, second_high] = match ascending(second)? {
-        Classification::Decided(bounds) => bounds,
-        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-    };
-    // Prefer the second operand on equal bounds. Component clipping passes
-    // the retained carrier fragment second, preserving its compact local
-    // parameter instead of replacing it with an equal projected scalar.
-    let low = match first_low.cmp_by_refinement(&second_low, policy)? {
-        Classification::Decided(std::cmp::Ordering::Less | std::cmp::Ordering::Equal) => second_low,
-        Classification::Decided(std::cmp::Ordering::Greater) => first_low,
-        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-    };
-    let high = match first_high.cmp_by_refinement(&second_high, policy)? {
-        Classification::Decided(std::cmp::Ordering::Greater | std::cmp::Ordering::Equal) => {
-            second_high
-        }
-        Classification::Decided(std::cmp::Ordering::Less) => first_high,
-        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-    };
-    Ok(match low.cmp_by_refinement(&high, policy)? {
-        Classification::Decided(std::cmp::Ordering::Less) => {
-            Classification::Decided(Some([low, high]))
-        }
-        Classification::Decided(std::cmp::Ordering::Equal | std::cmp::Ordering::Greater) => {
-            Classification::Decided(None)
-        }
-        Classification::Uncertain(reason) => Classification::Uncertain(reason),
-    })
 }
 
 fn intersect_bezier_parameter_ranges(

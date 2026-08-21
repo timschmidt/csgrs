@@ -454,6 +454,170 @@ impl CurveRegionParameterRange2 {
     }
 }
 
+/// Clips one exact parameter correspondence to two retained carrier ranges.
+///
+/// The supplied maps own only the mathematical parameter relation. Range
+/// intersection, orientation, inverse clipping, and preservation of unchanged
+/// selected-fiber boundaries live here so Boolean and corner editing cannot
+/// disagree about the same retained overlap.
+pub(crate) fn clip_corresponding_curve_region_parameter_ranges(
+    first_overlap: &CurveRegionParameterRange2,
+    second_overlap: &CurveRegionParameterRange2,
+    first_fragment: &CurveRegionParameterRange2,
+    second_fragment: &CurveRegionParameterRange2,
+    policy: &CurveContext,
+    mut map_first_to_second: impl FnMut(
+        &CurveRegionParameter2,
+    )
+        -> CurveResult<Classification<Option<CurveRegionParameter2>>>,
+    mut map_second_to_first: impl FnMut(
+        &CurveRegionParameter2,
+    )
+        -> CurveResult<Classification<Option<CurveRegionParameter2>>>,
+) -> CurveResult<Classification<Option<(CurveRegionParameterRange2, CurveRegionParameterRange2)>>> {
+    let [first_start, first_end] =
+        match intersect_curve_region_parameter_ranges(first_fragment, first_overlap, policy)? {
+            Classification::Decided(Some(bounds)) => bounds,
+            Classification::Decided(None) => return Ok(Classification::Decided(None)),
+            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+        };
+    let mapped_start = match map_first_to_second(&first_start)? {
+        Classification::Decided(Some(parameter)) => parameter,
+        Classification::Decided(None) => {
+            return Err(CurveError::Topology(
+                "a certified overlap omitted its forward parameter correspondence".into(),
+            ));
+        }
+        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+    };
+    let mapped_end = match map_first_to_second(&first_end)? {
+        Classification::Decided(Some(parameter)) => parameter,
+        Classification::Decided(None) => {
+            return Err(CurveError::Topology(
+                "a certified overlap omitted its forward parameter correspondence".into(),
+            ));
+        }
+        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+    };
+    let mapped_order = match mapped_start.cmp_by_refinement(&mapped_end, policy)? {
+        Classification::Decided(Ordering::Equal) => return Ok(Classification::Decided(None)),
+        Classification::Decided(order) => order,
+        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+    };
+    let mapped_range =
+        CurveRegionParameterRange2::new_validated(mapped_start.clone(), mapped_end.clone());
+    let [second_low, second_high] =
+        match intersect_curve_region_parameter_ranges(&mapped_range, second_overlap, policy)? {
+            Classification::Decided(Some(bounds)) => bounds,
+            Classification::Decided(None) => return Ok(Classification::Decided(None)),
+            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+        };
+    let second_candidate = CurveRegionParameterRange2::new_validated(second_low, second_high);
+    let [second_low, second_high] = match intersect_curve_region_parameter_ranges(
+        second_fragment,
+        &second_candidate,
+        policy,
+    )? {
+        Classification::Decided(Some(bounds)) => bounds,
+        Classification::Decided(None) => return Ok(Classification::Decided(None)),
+        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+    };
+    let (second_start, second_end) = if mapped_order == Ordering::Less {
+        (second_low, second_high)
+    } else {
+        (second_high, second_low)
+    };
+    let mut lift = |second: &CurveRegionParameter2,
+                    mapped: &CurveRegionParameter2,
+                    original: &CurveRegionParameter2|
+     -> CurveResult<Classification<Option<CurveRegionParameter2>>> {
+        Ok(match second.cmp_by_refinement(mapped, policy)? {
+            Classification::Decided(Ordering::Equal) => {
+                Classification::Decided(Some(original.clone()))
+            }
+            Classification::Decided(_) => map_second_to_first(second)?,
+            Classification::Uncertain(reason) => Classification::Uncertain(reason),
+        })
+    };
+    let first_start = match lift(&second_start, &mapped_start, &first_start)? {
+        Classification::Decided(Some(parameter)) => parameter,
+        Classification::Decided(None) => {
+            return Err(CurveError::Topology(
+                "a certified overlap omitted its inverse parameter correspondence".into(),
+            ));
+        }
+        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+    };
+    let first_end = match lift(&second_end, &mapped_end, &first_end)? {
+        Classification::Decided(Some(parameter)) => parameter,
+        Classification::Decided(None) => {
+            return Err(CurveError::Topology(
+                "a certified overlap omitted its inverse parameter correspondence".into(),
+            ));
+        }
+        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+    };
+    match first_start.cmp_by_refinement(&first_end, policy)? {
+        Classification::Decided(Ordering::Less) => {}
+        Classification::Decided(Ordering::Equal | Ordering::Greater) => {
+            return Ok(Classification::Decided(None));
+        }
+        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+    }
+    Ok(Classification::Decided(Some((
+        CurveRegionParameterRange2::new_validated(first_start, first_end),
+        CurveRegionParameterRange2::new_validated(second_start, second_end),
+    ))))
+}
+
+fn intersect_curve_region_parameter_ranges(
+    first: &CurveRegionParameterRange2,
+    second: &CurveRegionParameterRange2,
+    policy: &CurveContext,
+) -> CurveResult<Classification<Option<[CurveRegionParameter2; 2]>>> {
+    let ascending = |range: &CurveRegionParameterRange2| {
+        Ok(
+            match range.start().cmp_by_refinement(range.end(), policy)? {
+                Classification::Decided(Ordering::Less) => {
+                    Classification::Decided([range.start().clone(), range.end().clone()])
+                }
+                Classification::Decided(Ordering::Greater) => {
+                    Classification::Decided([range.end().clone(), range.start().clone()])
+                }
+                Classification::Decided(Ordering::Equal) => {
+                    return Err(CurveError::DegenerateOverlapRange);
+                }
+                Classification::Uncertain(reason) => Classification::Uncertain(reason),
+            },
+        )
+    };
+    let [first_low, first_high] = match ascending(first)? {
+        Classification::Decided(bounds) => bounds,
+        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+    };
+    let [second_low, second_high] = match ascending(second)? {
+        Classification::Decided(bounds) => bounds,
+        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+    };
+    let low = match first_low.cmp_by_refinement(&second_low, policy)? {
+        Classification::Decided(Ordering::Less) => second_low,
+        Classification::Decided(Ordering::Equal | Ordering::Greater) => first_low,
+        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+    };
+    let high = match first_high.cmp_by_refinement(&second_high, policy)? {
+        Classification::Decided(Ordering::Greater) => second_high,
+        Classification::Decided(Ordering::Equal | Ordering::Less) => first_high,
+        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+    };
+    Ok(match low.cmp_by_refinement(&high, policy)? {
+        Classification::Decided(Ordering::Less) => Classification::Decided(Some([low, high])),
+        Classification::Decided(Ordering::Equal | Ordering::Greater) => {
+            Classification::Decided(None)
+        }
+        Classification::Uncertain(reason) => Classification::Uncertain(reason),
+    })
+}
+
 /// A native Bezier subcurve produced by exact split materialization.
 #[allow(clippy::large_enum_variant)]
 #[derive(Clone, Debug, PartialEq)]
