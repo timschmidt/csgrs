@@ -57,7 +57,8 @@ use crate::{
 };
 use hyperreal::{Rational as HyperRational, RealSign, ZeroKnowledge as ZeroStatus};
 use hypersolve::{
-    AlgebraicFiberDiagonalDeflationStatus, AlgebraicFiberProjectionStatus,
+    AlgebraicFiberDiagonalDeflationStatus, AlgebraicFiberPolynomialImageProjectionConfig,
+    AlgebraicFiberPolynomialImageProjectionStatus, AlgebraicFiberProjectionStatus,
     AlgebraicFiberRationalReductionStatus, AlgebraicFiberRootCountStatus,
     AlgebraicFiberRootIsolationConfig, AlgebraicFiberRootIsolationStatus, PredicateCertainty,
     count_bivariate_common_fiber_roots_at_algebraic_parameter,
@@ -65,7 +66,7 @@ use hypersolve::{
     count_bivariate_fiber_roots_at_algebraic_parameter_closed,
     count_bivariate_fiber_roots_at_algebraic_parameter_intervals,
     deflate_bivariate_fiber_diagonal_root_at_algebraic_parameter,
-    isolate_bivariate_fiber_roots_at_algebraic_parameter,
+    isolate_bivariate_fiber_roots_at_algebraic_parameter, project_algebraic_fiber_polynomial_image,
     project_bivariate_fiber_at_algebraic_parameter_with_max_degree,
     reduce_bivariate_rational_function_at_algebraic_parameter,
 };
@@ -3360,6 +3361,59 @@ impl BezierAlgebraicSelectedFiberParameter2 {
         )
     }
 
+    /// Projects one final polynomial image of the selected scalar without
+    /// first constructing the degree-multiplied global scalar itself.
+    ///
+    /// `relation(u, z) = 0` may contain a squared radical branch; the caller
+    /// must isolate `z` from bounds that retain the authored branch. This
+    /// method supplies only exact construction evidence and deliberately
+    /// treats every bounded or approximate outcome as a declined fast path.
+    fn represented_polynomial_image_eliminant(
+        &self,
+        relation: &BivariatePolynomial,
+        policy: &CurveContext,
+    ) -> CurveResult<Option<(Vec<Real>, AlgebraicRootRepresentation)>> {
+        self.validate_policy(policy)?;
+        let retained_root = policy.strict_predicate_pass(|| {
+            parameter_representation(&self.data.authority.data.retained_parameter, policy)
+        });
+        let report = policy.strict_predicate_pass(|| {
+            project_algebraic_fiber_polynomial_image(
+                &self.data.authority.data.incidence,
+                CurveResultantParameter::First,
+                relation,
+                CurveResultantParameter::Second,
+                &retained_root,
+                AlgebraicFiberPolynomialImageProjectionConfig {
+                    max_fiber_degree: MAX_SELECTED_FIBER_POLYNOMIAL_IMAGE_FIBER_DEGREE,
+                    max_retained_degree: MAX_SELECTED_FIBER_POLYNOMIAL_IMAGE_RETAINED_DEGREE,
+                    max_image_degree_bound: MAX_SELECTED_FIBER_POLYNOMIAL_IMAGE_DEGREE,
+                },
+                policy.predicate_policy(),
+            )
+        });
+        if report.certainty == PredicateCertainty::Approximate {
+            return Ok(None);
+        }
+        match report.status {
+            AlgebraicFiberPolynomialImageProjectionStatus::Constructed
+                if report.coefficients.len() > 1 =>
+            {
+                Ok(Some((report.coefficients, retained_root)))
+            }
+            AlgebraicFiberPolynomialImageProjectionStatus::InvalidEvidence => {
+                Err(CurveError::InvalidBezierAlgebraicParameter)
+            }
+            AlgebraicFiberPolynomialImageProjectionStatus::Constructed
+            | AlgebraicFiberPolynomialImageProjectionStatus::IdenticallyZeroFiber
+            | AlgebraicFiberPolynomialImageProjectionStatus::ConstantNonzeroFiber
+            | AlgebraicFiberPolynomialImageProjectionStatus::IdenticallyZeroImageRelation
+            | AlgebraicFiberPolynomialImageProjectionStatus::UnsupportedCoefficient
+            | AlgebraicFiberPolynomialImageProjectionStatus::DegreeLimitExceeded
+            | AlgebraicFiberPolynomialImageProjectionStatus::Undecided => Ok(None),
+        }
+    }
+
     /// Promotes this compact local scalar only when an exact construction
     /// requires an ordinary Bezier parameter.
     ///
@@ -4885,6 +4939,86 @@ fn represented_coordinate_interval(lower: &Real, upper: &Real) -> Option<Isolate
             exact_root: None,
             distinct_root_count: 1,
         }),
+    }
+}
+
+fn represented_univariate_coordinate(
+    coefficients: &[Real],
+    lower: &Real,
+    upper: &Real,
+    provenance: &AlgebraicRootRepresentation,
+) -> Classification<AlgebraicRootRepresentation> {
+    if coefficients.len() <= 1 {
+        return Classification::Uncertain(UncertaintyReason::Unsupported);
+    }
+    let Some(interval) = represented_coordinate_interval(lower, upper) else {
+        return Classification::Uncertain(UncertaintyReason::Predicate);
+    };
+    let coefficients = if let Some(root) = interval.exact_root.as_ref() {
+        if real_sign(
+            &polynomial_evaluate(coefficients, root),
+            &CurveContext::STRICT,
+        ) != Some(RealSign::Zero)
+        {
+            return Classification::Uncertain(UncertaintyReason::Predicate);
+        }
+        vec![-root.clone(), Real::one()]
+    } else {
+        // The exact retained-fiber construction and conservative point box
+        // prove that at least one authored coordinate root lies here. A
+        // strictly signed derivative enclosure proves that the global image
+        // eliminant has at most one root here, completing the singleton proof
+        // without a degree-sized Sturm chain. Multiple-root images decline
+        // this path and retain the complete global construction fallback.
+        let derivative = polynomial_derivative(coefficients);
+        let parameter_interval = BezierAlgebraicChordRealInterval2 {
+            lower: interval.lower.clone(),
+            upper: interval.upper.clone(),
+        };
+        let Some(derivative_bounds) = BezierAlgebraicChordRealInterval2::evaluate_power_basis(
+            &derivative,
+            &parameter_interval,
+            &CurveContext::STRICT,
+        ) else {
+            return Classification::Uncertain(UncertaintyReason::Predicate);
+        };
+        let derivative_nonzero = compare_reals(
+            &derivative_bounds.lower,
+            &Real::zero(),
+            &CurveContext::STRICT,
+        ) == Some(std::cmp::Ordering::Greater)
+            || compare_reals(
+                &derivative_bounds.upper,
+                &Real::zero(),
+                &CurveContext::STRICT,
+            ) == Some(std::cmp::Ordering::Less);
+        if !derivative_nonzero {
+            return Classification::Uncertain(UncertaintyReason::Predicate);
+        }
+        coefficients.to_vec()
+    };
+    let kind = if interval.exact_root.is_some() {
+        AlgebraicRootKind::ExactRationalWitness
+    } else {
+        AlgebraicRootKind::IsolatingInterval
+    };
+    let mut representation = AlgebraicRootRepresentation {
+        constraint_index: provenance.constraint_index,
+        symbol: provenance.symbol,
+        interval_index: provenance.interval_index,
+        polynomial_coefficients: coefficients,
+        interval,
+        kind,
+        validation: provenance.validation.clone(),
+    };
+    representation.validation = validate_algebraic_root_representation(
+        &representation,
+        hypersolve::PredicatePolicy::STRICT,
+    );
+    if representation.is_valid() {
+        Classification::Decided(representation)
+    } else {
+        Classification::Uncertain(UncertaintyReason::Unsupported)
     }
 }
 
@@ -61370,44 +61504,128 @@ impl BezierAnalyticParallelPoint2 {
                         &polynomial_multiply(frame_tangent_x, frame_tangent_x),
                         &polynomial_multiply(frame_tangent_y, frame_tangent_y),
                     );
-                    let speed = policy
-                        .strict_predicate_pass(|| polynomial_square_root(&speed_squared, policy))?;
-                    if let Classification::Decided(Some(speed)) = speed {
-                        let speed_predicate = bivariate_outer_product(&[Real::one()], &speed);
-                        let speed = match policy.strict_predicate_pass(|| {
-                            parameter.predicate_sign(&speed_predicate, policy)
-                        })? {
-                            Classification::Decided(RealSign::Positive) => Some(speed),
-                            Classification::Decided(RealSign::Negative) => {
-                                Some(polynomial_scale(&speed, &Real::from(-1_i8)))
+                    let speed_positive = match policy.strict_predicate_pass(|| {
+                        parameter.predicate_sign(
+                            &bivariate_outer_product(&[Real::one()], &speed_squared),
+                            policy,
+                        )
+                    })? {
+                        Classification::Decided(RealSign::Positive) => true,
+                        Classification::Decided(RealSign::Zero) => {
+                            return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
+                        }
+                        Classification::Decided(RealSign::Negative) => {
+                            return Err(CurveError::Topology(
+                                "analytic point frame had negative squared speed".into(),
+                            ));
+                        }
+                        Classification::Uncertain(_) => false,
+                    };
+                    if speed_positive {
+                        let frame_x = polynomial_subtract(
+                            &polynomial_scale(frame_tangent_x, &self.data.tangent_distance),
+                            &polynomial_scale(frame_tangent_y, self.data.parallel.distance()),
+                        );
+                        let frame_y = polynomial_add(
+                            &polynomial_scale(frame_tangent_x, self.data.parallel.distance()),
+                            &polynomial_scale(frame_tangent_y, &self.data.tangent_distance),
+                        );
+                        let speed = policy.strict_predicate_pass(|| {
+                            polynomial_square_root(&speed_squared, policy)
+                        })?;
+                        if let Classification::Decided(Some(speed)) = speed {
+                            let speed_predicate = bivariate_outer_product(&[Real::one()], &speed);
+                            let speed = match policy.strict_predicate_pass(|| {
+                                parameter.predicate_sign(&speed_predicate, policy)
+                            })? {
+                                Classification::Decided(RealSign::Positive) => Some(speed),
+                                Classification::Decided(RealSign::Negative) => {
+                                    Some(polynomial_scale(&speed, &Real::from(-1_i8)))
+                                }
+                                Classification::Decided(RealSign::Zero) => {
+                                    return Ok(Classification::Uncertain(
+                                        UncertaintyReason::Boundary,
+                                    ));
+                                }
+                                Classification::Uncertain(_) => None,
+                            };
+                            if let Some(speed) = speed {
+                                let denominator = polynomial_multiply(weight, &speed);
+                                let numerator_x = polynomial_add(
+                                    &polynomial_multiply(&translated_x, &speed),
+                                    &polynomial_multiply(weight, &frame_x),
+                                );
+                                let numerator_y = polynomial_add(
+                                    &polynomial_multiply(&translated_y, &speed),
+                                    &polynomial_multiply(weight, &frame_y),
+                                );
+                                if let Some(coordinates) =
+                                    represented_pair(&numerator_x, &numerator_y, &denominator)?
+                                {
+                                    return Ok(Classification::Decided(coordinates));
+                                }
                             }
-                            Classification::Decided(RealSign::Zero) => {
-                                return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
-                            }
-                            Classification::Uncertain(_) => None,
-                        };
-                        if let Some(speed) = speed {
-                            let frame_x = polynomial_subtract(
-                                &polynomial_scale(frame_tangent_x, &self.data.tangent_distance),
-                                &polynomial_scale(frame_tangent_y, self.data.parallel.distance()),
-                            );
-                            let frame_y = polynomial_add(
-                                &polynomial_scale(frame_tangent_x, self.data.parallel.distance()),
-                                &polynomial_scale(frame_tangent_y, &self.data.tangent_distance),
-                            );
-                            let denominator = polynomial_multiply(weight, &speed);
-                            let numerator_x = polynomial_add(
-                                &polynomial_multiply(&translated_x, &speed),
-                                &polynomial_multiply(weight, &frame_x),
-                            );
-                            let numerator_y = polynomial_add(
-                                &polynomial_multiply(&translated_y, &speed),
-                                &polynomial_multiply(weight, &frame_y),
-                            );
-                            if let Some(coordinates) =
-                                represented_pair(&numerator_x, &numerator_y, &denominator)?
-                            {
-                                return Ok(Classification::Decided(coordinates));
+                        }
+
+                        let x_relation = polynomial_unit_frame_coordinate_relation(
+                            &translated_x,
+                            weight,
+                            &frame_x,
+                            &speed_squared,
+                        );
+                        let y_relation = polynomial_unit_frame_coordinate_relation(
+                            &translated_y,
+                            weight,
+                            &frame_y,
+                            &speed_squared,
+                        );
+                        if let Some((x_coefficients, provenance)) =
+                            parameter.represented_polynomial_image_eliminant(&x_relation, policy)?
+                            && let Some((y_coefficients, _)) = parameter
+                                .represented_polynomial_image_eliminant(&y_relation, policy)?
+                        {
+                            let mut represented_x = None;
+                            let mut represented_y = None;
+                            for refinement_steps in [8, 16, 32, 64, 128, 256, 512] {
+                                let Classification::Decided(bounds) =
+                                    policy.strict_predicate_pass(|| {
+                                        self.conservative_bounds_refined(refinement_steps, policy)
+                                    })
+                                else {
+                                    continue;
+                                };
+                                if represented_x.is_none()
+                                    && let Classification::Decided(value) =
+                                        represented_univariate_coordinate(
+                                            &x_coefficients,
+                                            bounds.min().x(),
+                                            bounds.max().x(),
+                                            &provenance,
+                                        )
+                                {
+                                    represented_x = Some(value);
+                                }
+                                if represented_y.is_none()
+                                    && let Classification::Decided(value) =
+                                        represented_univariate_coordinate(
+                                            &y_coefficients,
+                                            bounds.min().y(),
+                                            bounds.max().y(),
+                                            &provenance,
+                                        )
+                                {
+                                    represented_y = Some(value);
+                                }
+                                if represented_x.is_some() && represented_y.is_some() {
+                                    return Ok(Classification::Decided([
+                                        represented_x
+                                            .take()
+                                            .expect("a represented x coordinate was retained"),
+                                        represented_y
+                                            .take()
+                                            .expect("a represented y coordinate was retained"),
+                                    ]));
+                                }
                             }
                         }
                     }
@@ -81281,6 +81499,47 @@ fn polynomial_power(coefficients: &[Real], exponent: usize) -> Vec<Real> {
     result
 }
 
+/// Builds the squared image equation for
+/// `z = translated/weight + frame/sqrt(speed_squared)`.
+///
+/// The positive radical sheet is deliberately not encoded by squaring; the
+/// caller selects it later with exact convergent bounds from the retained
+/// analytic point.
+fn polynomial_unit_frame_coordinate_relation(
+    translated: &[Real],
+    weight: &[Real],
+    frame: &[Real],
+    speed_squared: &[Real],
+) -> BivariatePolynomial {
+    let weight_squared = polynomial_multiply(weight, weight);
+    let constant = polynomial_subtract(
+        &polynomial_multiply(&polynomial_multiply(translated, translated), speed_squared),
+        &polynomial_multiply(&weight_squared, &polynomial_multiply(frame, frame)),
+    );
+    let linear = polynomial_scale(
+        &polynomial_multiply(&polynomial_multiply(weight, translated), speed_squared),
+        &Real::from(-2_i8),
+    );
+    let quadratic = polynomial_multiply(&weight_squared, speed_squared);
+    let coefficients = [constant, linear, quadratic];
+    let source_count = coefficients.iter().map(Vec::len).max().unwrap_or(1);
+    BivariatePolynomial::new(
+        (0..source_count)
+            .map(|source_power| {
+                coefficients
+                    .iter()
+                    .map(|coefficient| {
+                        coefficient
+                            .get(source_power)
+                            .cloned()
+                            .unwrap_or_else(Real::zero)
+                    })
+                    .collect()
+            })
+            .collect(),
+    )
+}
+
 fn polynomial_square_root(
     coefficients: &[Real],
     policy: &CurveContext,
@@ -81365,6 +81624,9 @@ const MAX_PARALLEL_INTERSECTION_RESULTANT_DEGREE: usize = 128;
 const MAX_FIXED_DISTANCE_RESULTANT_DEGREE: usize = 256;
 const MAX_SELECTED_FIBER_QUOTIENT_DEGREE: usize = 8;
 const MAX_FIXED_DISTANCE_QUOTIENT_DEGREE: usize = 10;
+const MAX_SELECTED_FIBER_POLYNOMIAL_IMAGE_FIBER_DEGREE: usize = 16;
+const MAX_SELECTED_FIBER_POLYNOMIAL_IMAGE_RETAINED_DEGREE: usize = 9;
+const MAX_SELECTED_FIBER_POLYNOMIAL_IMAGE_DEGREE: usize = 32;
 const MAX_DIRECT_SELECTED_NORM_ISOLATION_DEGREE: usize = 64;
 const MAX_DIRECT_SELECTED_PAIR_NORM_ISOLATION_DEGREE: usize = 16;
 const PARALLEL_INTERSECTION_RESULTANT_PRECISION: i32 = -128;
@@ -110772,6 +111034,72 @@ mod conversion_tests {
                     Some(std::cmp::Ordering::Equal)
                 );
             }
+        }
+    }
+
+    #[test]
+    fn correlated_degree_fifteen_nonsquare_speed_points_project_final_images() {
+        let half = (Real::one() / Real::from(2_i8)).unwrap();
+        let control_points = (0_i64..=15)
+            .map(|index| {
+                let x = (Real::from(index) / Real::from(15_i8)).unwrap();
+                let y = (Real::from(index * (index - 1)) / Real::from(15_i64 * 14_i64)).unwrap();
+                Point2::new(x, y)
+            })
+            .collect::<Vec<_>>();
+        let source = RationalBezier2::try_new(control_points, vec![Real::one(); 16]).unwrap();
+
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let parameter =
+                degree_nine_selected_fiber_parameter_for_test(half.clone(), 32_768, &policy);
+            assert!(matches!(
+                parameter.promoted_bezier_parameter(&policy).unwrap(),
+                Classification::Uncertain(_)
+            ));
+            let point = BezierAnalyticParallelPoint2::new_with_tangent_distance_parameter(
+                source.clone().parallel_left(Real::one()).unwrap(),
+                BezierAnalyticParallelPointParameter2::SelectedFiber(parameter),
+                (Real::one() / Real::from(3_i8)).unwrap(),
+                &policy,
+            );
+            let outcome = crate::policy::resolve_certified_operation(&policy, |attempt| {
+                point.represented_coordinates(attempt)
+            })
+            .unwrap();
+            assert_eq!(outcome.certainty, crate::CurveCertainty::Certified);
+            let Classification::Decided([x, y]) = outcome.value else {
+                panic!("the correlated nonsquare-speed image must materialize exactly");
+            };
+            assert!(x.is_valid());
+            assert!(y.is_valid());
+            assert!(x.polynomial_coefficients.len() - 1 <= 270);
+            assert!(y.polynomial_coefficients.len() - 1 <= 270);
+            assert_eq!(
+                compare_reals(&y.interval.lower, &Real::zero(), &CurveContext::STRICT),
+                Some(std::cmp::Ordering::Greater),
+                "the exact bounds must select the positive-speed sheet: {y:?}"
+            );
+
+            let Classification::Decided(bounds) = point.conservative_bounds_refined(64, &policy)
+            else {
+                panic!("the retained point bounds must converge");
+            };
+            assert_ne!(
+                compare_reals(&x.interval.upper, bounds.min().x(), &CurveContext::STRICT,),
+                Some(std::cmp::Ordering::Less)
+            );
+            assert_ne!(
+                compare_reals(&x.interval.lower, bounds.max().x(), &CurveContext::STRICT,),
+                Some(std::cmp::Ordering::Greater)
+            );
+            assert_ne!(
+                compare_reals(&y.interval.upper, bounds.min().y(), &CurveContext::STRICT,),
+                Some(std::cmp::Ordering::Less)
+            );
+            assert_ne!(
+                compare_reals(&y.interval.lower, bounds.max().y(), &CurveContext::STRICT,),
+                Some(std::cmp::Ordering::Greater)
+            );
         }
     }
 
