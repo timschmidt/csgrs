@@ -1412,15 +1412,7 @@ impl BezierAlgebraicCuspSemicircleMappedOverlap2 {
                 return retain_direct_overlap_parameter(parameter, &self.other_range, policy);
             }
 
-            let source = if let Some(source) = data.coincident_tangent_source() {
-                Some((
-                    source.parameter().clone(),
-                    source.tangent_power_basis()?,
-                    source.policy(),
-                ))
-            } else {
-                data.coincident_similarity_tangent_source(policy)?
-            };
+            let source = data.coincident_tangent_power_source(policy)?;
             if let Some((source_parameter, source_tangent, source_policy)) = source {
                 if !policy.accepts_retained_policy(source_policy) {
                     return Err(CurveError::Topology(
@@ -8866,24 +8858,30 @@ impl BezierAlgebraicCuspSemicircleMappedParameterData2 {
         }
     }
 
-    /// Recovers a regular tangent source through an exact similarity wrapper.
+    /// Recovers a regular tangent source through exact local transports.
     ///
-    /// A similarity leaves the source parameter unchanged and maps its tangent
-    /// by the linear part of the transform.  Coincident-circle and concentric
-    /// transports may move the point radially before that similarity, but
-    /// their tangent lines remain parallel.  The mapped-overlap inverse needs
-    /// only that tangent line; its retained regular cell rejects the antipode
-    /// and proves the unique target parameter exactly.
-    fn coincident_similarity_tangent_source(
+    /// Similarities use their linear part. Chamfer cuts use the same retained
+    /// center-relative rotation that constructs their point. Coincident and
+    /// concentric transports can change radius, but their tangent lines remain
+    /// parallel. The mapped-overlap inverse needs only that line; its regular
+    /// cell rejects the antipode and proves the unique target parameter.
+    fn coincident_tangent_power_source(
         &self,
         policy: &CurveContext,
     ) -> CurveResult<Option<(BezierParameter2, [Vec<Real>; 2], CurveContext)>> {
+        if let Some(source) = self.coincident_tangent_source() {
+            return Ok(Some((
+                source.parameter().clone(),
+                source.tangent_power_basis()?,
+                source.policy(),
+            )));
+        }
         match self {
             Self::PairOverlapMap { source, .. } => {
                 let BezierAlgebraicCuspSemicircleParameter2::Mapped(source) = source else {
                     return Ok(None);
                 };
-                source.coincident_similarity_tangent_source(policy)
+                source.coincident_tangent_power_source(policy)
             }
             Self::SimilarityTransport {
                 source,
@@ -8909,16 +8907,9 @@ impl BezierAlgebraicCuspSemicircleMappedParameterData2 {
                 let BezierAlgebraicCuspSemicircleParameter2::Mapped(source) = source else {
                     return Ok(None);
                 };
-                let source = if let Some(source) = source.coincident_tangent_source() {
-                    Some((
-                        source.parameter().clone(),
-                        source.tangent_power_basis()?,
-                        source.policy(),
-                    ))
-                } else {
-                    source.coincident_similarity_tangent_source(policy)?
-                };
-                let Some((parameter, tangent, source_policy)) = source else {
+                let Some((parameter, tangent, source_policy)) =
+                    source.coincident_tangent_power_source(policy)?
+                else {
                     return Ok(None);
                 };
                 if !policy.accepts_retained_policy(source_policy) {
@@ -8939,6 +8930,65 @@ impl BezierAlgebraicCuspSemicircleMappedParameterData2 {
                 ];
                 Ok(Some((parameter, transformed, *transport_policy)))
             }
+            Self::Chamfer {
+                source,
+                point,
+                policy: transport_policy,
+                ..
+            } => {
+                if !policy.accepts_retained_policy(*transport_policy) {
+                    return Err(CurveError::Topology(
+                        "mapped chamfer tangent used a different predicate policy".into(),
+                    ));
+                }
+                let BezierAlgebraicCuspSemicircleParameter2::Mapped(source) = source else {
+                    return Ok(None);
+                };
+                let Some((parameter, tangent, source_policy)) =
+                    source.coincident_tangent_power_source(policy)?
+                else {
+                    return Ok(None);
+                };
+                if !policy.accepts_retained_policy(source_policy) {
+                    return Err(CurveError::Topology(
+                        "mapped chamfer tangent source used a different predicate policy".into(),
+                    ));
+                }
+                let RationalBezierIntersectionPointEvidence2::AlgebraicCuspChordDerived(point) =
+                    point
+                else {
+                    return Err(CurveError::Topology(
+                        "mapped chamfer tangent lost its exact rotation provenance".into(),
+                    ));
+                };
+                let BezierAlgebraicCuspDerivedPointSource2::Mapped {
+                    parameter: point_source,
+                    ..
+                } = &point.data.source
+                else {
+                    return Err(CurveError::Topology(
+                        "mapped chamfer rotation lost its source parameter".into(),
+                    ));
+                };
+                if !Arc::ptr_eq(point_source, source) {
+                    return Err(CurveError::Topology(
+                        "mapped chamfer rotation changed its source parameter".into(),
+                    ));
+                }
+                let radial = &point.data.radial_scale;
+                let perpendicular = &point.data.perpendicular_scale;
+                let transformed = [
+                    polynomial_subtract(
+                        &polynomial_scale(&tangent[0], radial),
+                        &polynomial_scale(&tangent[1], perpendicular),
+                    ),
+                    polynomial_add(
+                        &polynomial_scale(&tangent[0], perpendicular),
+                        &polynomial_scale(&tangent[1], radial),
+                    ),
+                ];
+                Ok(Some((parameter, transformed, *transport_policy)))
+            }
             Self::Rational { .. }
             | Self::SelectedFiberRational { .. }
             | Self::SelectedFiberParallel { .. }
@@ -8950,8 +9000,7 @@ impl BezierAlgebraicCuspSemicircleMappedParameterData2 {
             | Self::SelectedChordParallelNormalContact { .. }
             | Self::Pair { .. }
             | Self::Chord { .. }
-            | Self::PairOverlap { .. }
-            | Self::Chamfer { .. } => Ok(None),
+            | Self::PairOverlap { .. } => Ok(None),
         }
     }
 
@@ -92022,6 +92071,41 @@ mod conversion_tests {
         parameter.clone()
     }
 
+    fn general_analytic_circle_overlap(
+        policy: &CurveContext,
+    ) -> (
+        BezierAlgebraicCuspSemicircle2,
+        BezierParallel2,
+        BezierAlgebraicCuspSemicircleMappedOverlap2,
+    ) {
+        let semicircle = synthetic_reducible_cusp_semicircle((3, 4), ((2, 3), (4, 5)), policy);
+        let source = RationalBezier2::from(
+            RationalQuadraticBezier2::try_new(
+                Point2::new(Real::from(2_i8), Real::zero()),
+                Point2::new(Real::from(2_i8), Real::from(2_i8)),
+                Point2::new(Real::zero(), Real::from(2_i8)),
+                Real::one(),
+                Real::one(),
+                Real::from(2_i8),
+            )
+            .unwrap(),
+        );
+        let parallel = source.parallel_left(Real::one()).unwrap();
+        assert!(parallel.data.certified_ph_offset.set(None).is_ok());
+        let Classification::Decided(BezierAlgebraicCuspSemicircleParallelIntersections2::Overlaps(
+            overlaps,
+        )) = semicircle
+            .parallel_intersections(&parallel, policy)
+            .unwrap()
+        else {
+            panic!("the analytic quarter must overlap the selected circle");
+        };
+        let [overlap] = overlaps.as_slice() else {
+            panic!("the analytic quarter must retain one overlap cell");
+        };
+        (semicircle, parallel, overlap.clone())
+    }
+
     fn incident_domain(
         parallel: &BezierParallel2,
         anchor: Real,
@@ -98726,31 +98810,7 @@ mod conversion_tests {
     #[test]
     fn similarity_transported_mapped_cusp_cut_inverts_on_analytic_overlap() {
         for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
-            let semicircle = synthetic_reducible_cusp_semicircle((3, 4), ((2, 3), (4, 5)), &policy);
-            let source = RationalBezier2::from(
-                RationalQuadraticBezier2::try_new(
-                    Point2::new(Real::from(2_i8), Real::zero()),
-                    Point2::new(Real::from(2_i8), Real::from(2_i8)),
-                    Point2::new(Real::zero(), Real::from(2_i8)),
-                    Real::one(),
-                    Real::one(),
-                    Real::from(2_i8),
-                )
-                .unwrap(),
-            );
-            let parallel = source.parallel_left(Real::one()).unwrap();
-            assert!(parallel.data.certified_ph_offset.set(None).is_ok());
-            let Classification::Decided(
-                BezierAlgebraicCuspSemicircleParallelIntersections2::Overlaps(overlaps),
-            ) = semicircle
-                .parallel_intersections(&parallel, &policy)
-                .unwrap()
-            else {
-                panic!("the analytic quarter must overlap the selected circle");
-            };
-            let [overlap] = overlaps.as_slice() else {
-                panic!("the analytic quarter must retain one overlap cell");
-            };
+            let (semicircle, parallel, overlap) = general_analytic_circle_overlap(&policy);
             let analytic_cut = algebraic_parameter(vec![
                 (Real::from(-1_i8) / Real::from(2_i8)).unwrap(),
                 Real::zero(),
@@ -98827,6 +98887,118 @@ mod conversion_tests {
                     Classification::Decided(true),
                 );
             }
+        }
+    }
+
+    #[test]
+    fn chamfer_transported_mapped_cusp_cut_inverts_on_analytic_overlap() {
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let (semicircle, parallel, overlap) = general_analytic_circle_overlap(&policy);
+            let analytic_cut = algebraic_parameter(vec![
+                (Real::from(-1_i8) / Real::from(2_i8)).unwrap(),
+                Real::zero(),
+                Real::one(),
+            ]);
+            let Classification::Decided(cusp_cut) = overlap
+                .cusp_parameter_for_other(&analytic_cut, &policy)
+                .unwrap()
+            else {
+                panic!("the analytic cut must retain its compact cusp parameter");
+            };
+            let Classification::Decided(fragment) =
+                BezierAlgebraicCuspSemicircleFragment2::try_new(
+                    semicircle,
+                    BezierAlgebraicCuspSemicircleParameter2::Exact(Real::zero()),
+                    cusp_cut,
+                    false,
+                    &policy,
+                )
+                .unwrap()
+            else {
+                panic!("the mapped cut must bound a retained circle fragment");
+            };
+            let assert_inverts =
+                |overlap: &BezierAlgebraicCuspSemicircleMappedOverlap2,
+                 chamfer_cut: &BezierAlgebraicCuspSemicircleParameter2| {
+                    assert!(matches!(
+                        chamfer_cut,
+                        BezierAlgebraicCuspSemicircleParameter2::Mapped(data)
+                            if matches!(
+                                data.as_ref(),
+                                BezierAlgebraicCuspSemicircleMappedParameterData2::Chamfer { .. }
+                            )
+                    ));
+                    let Classification::Decided(mapped_cut) = overlap
+                        .other_parameter_for_cusp(chamfer_cut, &policy)
+                        .unwrap()
+                    else {
+                        panic!("the chamfer-transported cusp cut must invert on its overlap");
+                    };
+                    let Classification::Decided(round_trip) = overlap
+                        .cusp_parameter_for_other(&mapped_cut, &policy)
+                        .unwrap()
+                    else {
+                        panic!("the mapped analytic cut must return to the selected circle");
+                    };
+                    for numerator in 0_i8..=8_i8 {
+                        let represented =
+                            (Real::from(numerator) / Real::from(8_i8)).expect("eight is nonzero");
+                        assert_eq!(
+                            round_trip.order_to_real(&represented, &policy).unwrap(),
+                            chamfer_cut.order_to_real(&represented, &policy).unwrap(),
+                        );
+                    }
+                };
+            let setback = (Real::one() / Real::from(4_i8)).unwrap();
+            let Classification::Decided(Some((chamfer_cut, _, complementary))) = fragment
+                .endpoint_chord_setback_cut(false, &setback, false, &policy)
+                .unwrap()
+            else {
+                panic!("the inward chord setback must retain a circle cut");
+            };
+            assert!(!complementary);
+            assert_inverts(&overlap, &chamfer_cut);
+
+            let setback = (Real::from(7_i8) / Real::from(4_i8)).unwrap();
+            let Classification::Decided(Some((chamfer_cut, _, complementary))) = fragment
+                .endpoint_chord_setback_cut(false, &setback, true, &policy)
+                .unwrap()
+            else {
+                panic!("the outward chord setback must retain a circle cut");
+            };
+            assert!(complementary);
+            let half_turn = Similarity2::try_from_real_affine(
+                Real::from(-1_i8),
+                Real::zero(),
+                Real::zero(),
+                Real::from(-1_i8),
+                Real::zero(),
+                Real::zero(),
+            )
+            .unwrap();
+            let target_parallel = parallel.transform_similarity(&half_turn).unwrap();
+            let target_semicircle = fragment.semicircle().complementary_half();
+            let Classification::Decided(
+                BezierAlgebraicCuspSemicircleParallelIntersections2::Overlaps(overlaps),
+            ) = target_semicircle
+                .parallel_intersections(&target_parallel, &policy)
+                .unwrap()
+            else {
+                panic!("the complementary analytic quarter must retain its overlap");
+            };
+            let [overlap] = overlaps.as_slice() else {
+                panic!("the complementary analytic quarter must retain one overlap cell");
+            };
+            assert_inverts(overlap, &chamfer_cut);
+
+            let Classification::Decided(Some((diameter_cut, _, complementary))) = fragment
+                .endpoint_chord_setback_cut(false, &Real::from(2_i8), true, &policy)
+                .unwrap()
+            else {
+                panic!("the diameter setback must retain its exact antipode");
+            };
+            assert!(complementary);
+            assert_inverts(overlap, &diameter_cut);
         }
     }
 
