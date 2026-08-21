@@ -66224,8 +66224,9 @@ impl BezierAlgebraicCuspSemicircleFragment2 {
         // circle and chord certify their unique tangent endpoint, a
         // concentric target circle has the same tangent line.  Consume that
         // exact topology before attempting a selected-field zero predicate.
-        if source.certified_adjacent_chord_is_endpoint_only(chord, start_endpoint, policy)?
-            == Classification::Decided(true)
+        if policy.strict_predicate_pass(|| {
+            source.certified_adjacent_chord_is_endpoint_only(chord, start_endpoint, policy)
+        })? == Classification::Decided(true)
         {
             #[cfg(feature = "dispatch-trace")]
             hyperreal::dispatch_trace::record(
