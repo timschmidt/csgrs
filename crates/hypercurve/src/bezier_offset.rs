@@ -1417,8 +1417,25 @@ impl BezierAlgebraicCuspSemicircleMappedOverlap2 {
                     Classification::Decided(RealSign::Zero) => {}
                     Classification::Decided(RealSign::Negative | RealSign::Positive) => {
                         let candidates = if let Some(source) = data.ordinary_point_source(policy)? {
-                            source
-                                .point_parameter_candidates_on_target(&self.parameter_map, policy)?
+                            let tangent_candidates =
+                                if let Some(point) = source.algebraic_point_image(policy)? {
+                                    data.one_field_circle_tangent_parameter_candidates_on_target(
+                                        &point,
+                                        &self.parameter_map,
+                                        policy,
+                                    )?
+                                } else {
+                                    Classification::Decided(None)
+                                };
+                            match tangent_candidates {
+                                decided @ Classification::Decided(Some(_)) => decided,
+                                Classification::Decided(None) | Classification::Uncertain(_) => {
+                                    source.point_parameter_candidates_on_target(
+                                        &self.parameter_map,
+                                        policy,
+                                    )?
+                                }
+                            }
                         } else {
                             data.retained_point_parameter_candidates_on_target(
                                 &self.parameter_map,
@@ -7673,6 +7690,51 @@ impl BezierAlgebraicCuspSemicircleMappedPointSource2 {
         })
     }
 
+    /// Publishes the selected source point in one ordinary algebraic field
+    /// when the owned carrier has an exact rational image. This is a cold
+    /// carrier-switch bridge; it never approximates an analytic parallel.
+    fn algebraic_point_image(
+        &self,
+        policy: &CurveContext,
+    ) -> CurveResult<Option<RationalBezierAlgebraicPointImage2>> {
+        let source_policy = match self {
+            Self::Rational { policy, .. } | Self::Parallel { policy, .. } => *policy,
+        };
+        if !policy.accepts_retained_policy(source_policy) {
+            return Err(CurveError::Topology(
+                "mapped point carrier crossed predicate policies".into(),
+            ));
+        }
+        let (curve, parameter) = match self {
+            Self::Rational {
+                curve, parameter, ..
+            } => (Some(curve.clone()), parameter),
+            Self::Parallel {
+                parallel,
+                parameter,
+                ..
+            } => {
+                let curve = match policy
+                    .strict_predicate_pass(|| parallel.exact_rational_parallel_component(policy))?
+                {
+                    Classification::Decided(curve) => curve,
+                    Classification::Uncertain(_) => None,
+                };
+                (curve, parameter)
+            }
+        };
+        let (Some(curve), BezierParameter2::Algebraic(parameter)) = (curve, parameter) else {
+            return Ok(None);
+        };
+        Ok(Some(
+            RationalBezierAlgebraicPointImage2::from_parametric_source(
+                curve,
+                parameter.clone(),
+                policy,
+            ),
+        ))
+    }
+
     fn point_parameter_candidates_on_target(
         &self,
         target: &BezierAlgebraicCuspSemicircleMappedOverlapMap2,
@@ -9633,33 +9695,15 @@ impl BezierAlgebraicCuspSemicircleMappedParameterData2 {
         target: &BezierAlgebraicCuspSemicircleMappedOverlapMap2,
         policy: &CurveContext,
     ) -> CurveResult<Classification<Option<Vec<BezierParameter2>>>> {
-        match self.retained_one_field_circle_tangent_source(policy)? {
-            Classification::Decided(Some((parameter, tangent))) => {
-                let target_tangent = match target {
-                    BezierAlgebraicCuspSemicircleMappedOverlapMap2::Rational(target) => {
-                        rational_parametric_tangent_numerator(
-                            target.data.curve.homogeneous_power_basis()?,
-                        )
-                    }
-                    BezierAlgebraicCuspSemicircleMappedOverlapMap2::Parallel(target) => {
-                        let differential = target.data.parallel.differential()?;
-                        [
-                            differential.tangent_x.clone(),
-                            differential.tangent_y.clone(),
-                        ]
-                    }
-                };
-                return Ok(mapped_circle_tangent_parameter_candidates(
-                    &parameter,
-                    &tangent,
-                    &target_tangent,
-                    policy,
-                )?
-                .map(Some));
-            }
-            Classification::Decided(None) => {}
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
+        if let Some(point) = self.retained_one_field_point_image(policy)? {
+            match self
+                .one_field_circle_tangent_parameter_candidates_on_target(&point, target, policy)?
+            {
+                decided @ Classification::Decided(Some(_)) => return Ok(decided),
+                Classification::Decided(None) => {}
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
             }
         }
         match target {
@@ -9785,17 +9829,49 @@ impl BezierAlgebraicCuspSemicircleMappedParameterData2 {
         })
     }
 
+    fn one_field_circle_tangent_parameter_candidates_on_target(
+        &self,
+        point: &RationalBezierAlgebraicPointImage2,
+        target: &BezierAlgebraicCuspSemicircleMappedOverlapMap2,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<Option<Vec<BezierParameter2>>>> {
+        let (parameter, tangent) = match self.one_field_circle_tangent_source(point, policy)? {
+            Classification::Decided(Some(source)) => source,
+            Classification::Decided(None) => return Ok(Classification::Decided(None)),
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        let target_tangent = match target {
+            BezierAlgebraicCuspSemicircleMappedOverlapMap2::Rational(target) => {
+                rational_parametric_tangent_numerator(target.data.curve.homogeneous_power_basis()?)
+            }
+            BezierAlgebraicCuspSemicircleMappedOverlapMap2::Parallel(target) => {
+                let differential = target.data.parallel.differential()?;
+                [
+                    differential.tangent_x.clone(),
+                    differential.tangent_y.clone(),
+                ]
+            }
+        };
+        Ok(mapped_circle_tangent_parameter_candidates(
+            &parameter,
+            &tangent,
+            &target_tangent,
+            policy,
+        )?
+        .map(Some))
+    }
+
     /// Recovers the supporting-circle tangent at a point whose coordinates
     /// and exact center already inhabit one selected algebraic field. A circle
     /// overlap needs only this line: the antipodal solution lies outside an
     /// interior half-circle overlap range.
-    fn retained_one_field_circle_tangent_source(
+    fn one_field_circle_tangent_source(
         &self,
+        point: &RationalBezierAlgebraicPointImage2,
         policy: &CurveContext,
     ) -> CurveResult<Classification<Option<(BezierParameter2, [Vec<Real>; 2])>>> {
-        let Some(point) = self.retained_one_field_point_image(policy)? else {
-            return Ok(Classification::Decided(None));
-        };
         let parameter = match algebraic_chord_image_parameter(&point, policy)? {
             Classification::Decided(parameter) => BezierParameter2::Algebraic(parameter),
             Classification::Uncertain(reason) => {
@@ -9809,11 +9885,7 @@ impl BezierAlgebraicCuspSemicircleMappedParameterData2 {
                     return Ok(Classification::Uncertain(reason));
                 }
             };
-        let Some(center) = self
-            .semicircle_carrier()
-            .center_point_image(policy)?
-            .exact_rational_point(&CurveContext::STRICT)
-        else {
+        let Some(center) = self.semicircle_carrier().exact_rational_center(policy)? else {
             return Ok(Classification::Decided(None));
         };
         let radial_x = polynomial_subtract(&x, &polynomial_scale(&denominator, center.x()));
@@ -100955,7 +101027,7 @@ mod conversion_tests {
         .unwrap();
 
         for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
-            let (semicircle, _, selected_overlap) =
+            let (semicircle, selected_curve, selected_overlap) =
                 selected_fiber_rational_quarter_overlap(&policy);
             let Classification::Decided((
                 BezierAlgebraicCuspSemicircleRationalIntersections2::SelectedFiberContacts(
@@ -100999,7 +101071,7 @@ mod conversion_tests {
 
             let Classification::Decided(fragment) =
                 BezierAlgebraicCuspSemicircleFragment2::try_new(
-                    semicircle,
+                    semicircle.clone(),
                     BezierAlgebraicCuspSemicircleParameter2::Exact(Real::zero()),
                     cusp_cut,
                     false,
@@ -101016,31 +101088,58 @@ mod conversion_tests {
             else {
                 panic!("the selected transverse endpoint must retain its inward chamfer cut");
             };
-            let chamfer_target = match selected_overlap
-                .other_parameter_for_cusp(&chamfer_cut, &policy)
-                .unwrap()
-            {
-                Classification::Decided(chamfer_target) => chamfer_target,
-                Classification::Uncertain(reason) => panic!(
-                    "the selected transverse chamfer must invert into its overlap: {reason:?}"
+            let Classification::Decided(
+                BezierAlgebraicCuspSemicircleRationalIntersections2::SelectedFiberOverlaps(
+                    reversed_overlaps,
                 ),
-            };
-            let Classification::Decided(chamfer_round_trip) = selected_overlap
-                .cusp_parameter_for_other(&chamfer_target, &policy)
+            ) = semicircle
+                .rational_intersections(&selected_curve.reversed(), &policy)
                 .unwrap()
             else {
-                panic!("the selected chamfer target must map back to the circle cut");
+                panic!("the reversed selected quarter must retain its circle overlap");
             };
-            for numerator in 0_i8..=8_i8 {
-                let represented =
-                    (Real::from(numerator) / Real::from(8_i8)).expect("eight is nonzero");
-                assert_eq!(
-                    chamfer_round_trip
-                        .order_to_real(&represented, &policy)
-                        .unwrap(),
-                    chamfer_cut.order_to_real(&represented, &policy).unwrap(),
-                );
+            let [reversed_overlap] = reversed_overlaps.as_slice() else {
+                panic!("the reversed selected quarter must retain one overlap");
+            };
+            for overlap in [&selected_overlap, reversed_overlap] {
+                let chamfer_target = match overlap
+                    .other_parameter_for_cusp(&chamfer_cut, &policy)
+                    .unwrap()
+                {
+                    Classification::Decided(chamfer_target) => chamfer_target,
+                    Classification::Uncertain(reason) => panic!(
+                        "the selected transverse chamfer must invert into its overlap: {reason:?}"
+                    ),
+                };
+                let Classification::Decided(chamfer_round_trip) = overlap
+                    .cusp_parameter_for_other(&chamfer_target, &policy)
+                    .unwrap()
+                else {
+                    panic!("the selected chamfer target must map back to the circle cut");
+                };
+                for numerator in 0_i8..=8_i8 {
+                    let represented =
+                        (Real::from(numerator) / Real::from(8_i8)).expect("eight is nonzero");
+                    assert_eq!(
+                        chamfer_round_trip
+                            .order_to_real(&represented, &policy)
+                            .unwrap(),
+                        chamfer_cut.order_to_real(&represented, &policy).unwrap(),
+                    );
+                }
             }
+            let Classification::Decided(chamfer_fragment) =
+                BezierAlgebraicCuspSemicircleFragment2::try_new(
+                    semicircle,
+                    BezierAlgebraicCuspSemicircleParameter2::Exact(Real::zero()),
+                    chamfer_cut,
+                    false,
+                    &policy,
+                )
+                .unwrap()
+            else {
+                panic!("the selected chamfer cut must bound a circle fragment");
+            };
             let to_origin = Similarity2::try_from_real_affine(
                 Real::zero(),
                 Real::one(),
@@ -101051,31 +101150,34 @@ mod conversion_tests {
             )
             .unwrap();
             let transformed = fragment.transform_similarity(&to_origin).unwrap();
+            let transformed_chamfer = chamfer_fragment.transform_similarity(&to_origin).unwrap();
             let (_, _, analytic_overlap) = general_analytic_circle_overlap(&policy);
-            let Classification::Decided(analytic_target) = analytic_overlap
-                .other_parameter_for_cusp(transformed.end_parameter(), &policy)
-                .unwrap()
-            else {
-                panic!("the transformed selected cut must invert on the analytic overlap");
-            };
-            let Classification::Decided(analytic_round_trip) = analytic_overlap
-                .cusp_parameter_for_other(&analytic_target, &policy)
-                .unwrap()
-            else {
-                panic!("the analytic target must map back to the transformed circle cut");
-            };
-            for numerator in 0_i8..=8_i8 {
-                let represented =
-                    (Real::from(numerator) / Real::from(8_i8)).expect("eight is nonzero");
-                assert_eq!(
-                    analytic_round_trip
-                        .order_to_real(&represented, &policy)
-                        .unwrap(),
-                    transformed
-                        .end_parameter()
-                        .order_to_real(&represented, &policy)
-                        .unwrap(),
-                );
+            for transformed in [&transformed, &transformed_chamfer] {
+                let Classification::Decided(analytic_target) = analytic_overlap
+                    .other_parameter_for_cusp(transformed.end_parameter(), &policy)
+                    .unwrap()
+                else {
+                    panic!("the transformed selected cut must invert on the analytic overlap");
+                };
+                let Classification::Decided(analytic_round_trip) = analytic_overlap
+                    .cusp_parameter_for_other(&analytic_target, &policy)
+                    .unwrap()
+                else {
+                    panic!("the analytic target must map back to the transformed circle cut");
+                };
+                for numerator in 0_i8..=8_i8 {
+                    let represented =
+                        (Real::from(numerator) / Real::from(8_i8)).expect("eight is nonzero");
+                    assert_eq!(
+                        analytic_round_trip
+                            .order_to_real(&represented, &policy)
+                            .unwrap(),
+                        transformed
+                            .end_parameter()
+                            .order_to_real(&represented, &policy)
+                            .unwrap(),
+                    );
+                }
             }
         }
     }
