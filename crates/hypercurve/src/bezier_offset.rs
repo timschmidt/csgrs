@@ -1412,12 +1412,13 @@ impl BezierAlgebraicCuspSemicircleMappedOverlap2 {
                 return retain_direct_overlap_parameter(parameter, &self.other_range, policy);
             }
 
-            if let Some(source) = data.coincident_tangent_source()
-                && let Some(tangent_cross) = data.ordinary_carrier_tangent_cross_sign(policy)?
-            {
+            if let Some(tangent_cross) = data.ordinary_carrier_tangent_cross_sign(policy)? {
                 match tangent_cross {
                     Classification::Decided(RealSign::Zero) => {}
                     Classification::Decided(RealSign::Negative | RealSign::Positive) => {
+                        let Some(source) = data.ordinary_point_source(policy)? else {
+                            return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+                        };
                         let candidates = match source
                             .point_parameter_candidates_on_target(&self.parameter_map, policy)?
                         {
@@ -7561,6 +7562,106 @@ enum BezierAlgebraicCuspSemicircleMappedTangentSource2<'a> {
     },
 }
 
+enum BezierAlgebraicCuspSemicircleMappedPointSource2 {
+    Rational {
+        curve: RationalBezier2,
+        parameter: BezierParameter2,
+        policy: CurveContext,
+    },
+    Parallel {
+        parallel: BezierParallel2,
+        parameter: BezierParameter2,
+        policy: CurveContext,
+    },
+}
+
+impl BezierAlgebraicCuspSemicircleMappedPointSource2 {
+    fn from_borrowed(source: BezierAlgebraicCuspSemicircleMappedTangentSource2<'_>) -> Self {
+        match source {
+            BezierAlgebraicCuspSemicircleMappedTangentSource2::Rational {
+                curve,
+                parameter,
+                policy,
+            } => Self::Rational {
+                curve: curve.clone(),
+                parameter: parameter.clone(),
+                policy,
+            },
+            BezierAlgebraicCuspSemicircleMappedTangentSource2::Parallel {
+                parallel,
+                parameter,
+                policy,
+            } => Self::Parallel {
+                parallel: parallel.clone(),
+                parameter: parameter.clone(),
+                policy,
+            },
+        }
+    }
+
+    fn as_borrowed(&self) -> BezierAlgebraicCuspSemicircleMappedTangentSource2<'_> {
+        match self {
+            Self::Rational {
+                curve,
+                parameter,
+                policy,
+            } => BezierAlgebraicCuspSemicircleMappedTangentSource2::Rational {
+                curve,
+                parameter,
+                policy: *policy,
+            },
+            Self::Parallel {
+                parallel,
+                parameter,
+                policy,
+            } => BezierAlgebraicCuspSemicircleMappedTangentSource2::Parallel {
+                parallel,
+                parameter,
+                policy: *policy,
+            },
+        }
+    }
+
+    fn transform_similarity(self, transform: &Similarity2) -> CurveResult<Self> {
+        Ok(match self {
+            Self::Rational {
+                curve,
+                parameter,
+                policy,
+            } => Self::Rational {
+                curve: RationalBezier2::try_new(
+                    curve
+                        .control_points()
+                        .iter()
+                        .map(|point| transform.transform_point(point))
+                        .collect(),
+                    curve.weights().to_vec(),
+                )?,
+                parameter,
+                policy,
+            },
+            Self::Parallel {
+                parallel,
+                parameter,
+                policy,
+            } => Self::Parallel {
+                parallel: parallel.transform_similarity(transform)?,
+                parameter,
+                policy,
+            },
+        })
+    }
+
+    fn point_parameter_candidates_on_target(
+        &self,
+        target: &BezierAlgebraicCuspSemicircleMappedOverlapMap2,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<Option<Vec<BezierParameter2>>>> {
+        self.as_borrowed()
+            .point_parameter_candidates_on_target(target, policy)
+    }
+}
+
 impl BezierAlgebraicCuspSemicircleMappedTangentSource2<'_> {
     fn policy(&self) -> CurveContext {
         match self {
@@ -9098,6 +9199,84 @@ impl BezierAlgebraicCuspSemicircleMappedParameterData2 {
             | Self::Chord { .. }
             | Self::SimilarityTransport { .. }
             | Self::Chamfer { .. } => None,
+        }
+    }
+
+    /// Recovers an owned ordinary carrier for exact point correspondence.
+    /// Similarity transport transforms the carrier itself while preserving
+    /// its parameter; point-specific chamfer rotation has no global carrier
+    /// image and deliberately declines this path.
+    fn ordinary_point_source(
+        &self,
+        policy: &CurveContext,
+    ) -> CurveResult<Option<BezierAlgebraicCuspSemicircleMappedPointSource2>> {
+        match self {
+            Self::Rational { map, .. } => {
+                if !policy.accepts_retained_policy(map.data.policy) {
+                    return Err(CurveError::Topology(
+                        "mapped rational point source used a different predicate policy".into(),
+                    ));
+                }
+                Ok(self
+                    .coincident_tangent_source()
+                    .map(BezierAlgebraicCuspSemicircleMappedPointSource2::from_borrowed))
+            }
+            Self::Parallel { map, .. } => {
+                if !policy.accepts_retained_policy(map.data.policy) {
+                    return Err(CurveError::Topology(
+                        "mapped analytic point source used a different predicate policy".into(),
+                    ));
+                }
+                Ok(self
+                    .coincident_tangent_source()
+                    .map(BezierAlgebraicCuspSemicircleMappedPointSource2::from_borrowed))
+            }
+            Self::PairOverlapMap { source, .. } => {
+                let BezierAlgebraicCuspSemicircleParameter2::Mapped(source) = source else {
+                    return Ok(None);
+                };
+                source.ordinary_point_source(policy)
+            }
+            Self::SimilarityTransport {
+                source,
+                point,
+                policy: transport_policy,
+                ..
+            } => {
+                if !policy.accepts_retained_policy(*transport_policy) {
+                    return Err(CurveError::Topology(
+                        "mapped point similarity used a different predicate policy".into(),
+                    ));
+                }
+                let RationalBezierIntersectionPointEvidence2::Similarity(point) = point else {
+                    return Err(CurveError::Topology(
+                        "mapped point similarity lost its exact transform provenance".into(),
+                    ));
+                };
+                if !policy.accepts_retained_policy(point.data.policy) {
+                    return Err(CurveError::Topology(
+                        "mapped point similarity evidence used a different predicate policy".into(),
+                    ));
+                }
+                let BezierAlgebraicCuspSemicircleParameter2::Mapped(source) = source else {
+                    return Ok(None);
+                };
+                let Some(source) = source.ordinary_point_source(policy)? else {
+                    return Ok(None);
+                };
+                Ok(Some(source.transform_similarity(&point.data.transform)?))
+            }
+            Self::SelectedFiberRational { .. }
+            | Self::SelectedFiberParallel { .. }
+            | Self::SelectedParallelContact { .. }
+            | Self::SelectedCircularTangentContact { .. }
+            | Self::SelectedPairContact { .. }
+            | Self::SelectedChordNormalContact { .. }
+            | Self::SelectedChordParallelNormalContact { .. }
+            | Self::Pair { .. }
+            | Self::Chord { .. }
+            | Self::PairOverlap { .. }
+            | Self::Chamfer { .. } => Ok(None),
         }
     }
 
@@ -99822,6 +100001,104 @@ mod conversion_tests {
                         );
                     }
                 }
+            }
+        }
+    }
+
+    #[test]
+    fn similarity_transported_transverse_mapped_cut_inverts_by_point() {
+        let half = (Real::one() / Real::from(2_i8)).unwrap();
+        let cutter = RationalBezier2::try_new(
+            vec![
+                Point2::new(Real::zero(), half.clone()),
+                Point2::new(Real::one(), half),
+            ],
+            vec![Real::one(), Real::one()],
+        )
+        .unwrap();
+
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let (semicircle, parallel, overlap) = general_analytic_circle_overlap(&policy);
+            let Classification::Decided((
+                BezierAlgebraicCuspSemicircleRationalIntersections2::Contacts(contacts),
+                Some(map),
+            )) = semicircle
+                .rational_intersections_with_parameter_map(&cutter, &policy)
+                .unwrap()
+            else {
+                panic!("the transverse cutter must retain its circle contact map");
+            };
+            let [contact] = contacts.as_slice() else {
+                panic!("the finite cutter must meet the selected quarter once");
+            };
+            assert_ne!(contact.tangent_cross_sign, RealSign::Zero);
+            assert!(matches!(
+                contact.other_parameter,
+                BezierParameter2::Algebraic(_)
+            ));
+            let cusp_cut = map.contact_parameter(contact);
+            let Classification::Decided(expected) = overlap
+                .other_parameter_for_cusp(&cusp_cut, &policy)
+                .unwrap()
+            else {
+                panic!("the base transverse cut must invert by point incidence");
+            };
+            let Classification::Decided(fragment) =
+                BezierAlgebraicCuspSemicircleFragment2::try_new(
+                    semicircle,
+                    BezierAlgebraicCuspSemicircleParameter2::Exact(Real::zero()),
+                    cusp_cut,
+                    false,
+                    &policy,
+                )
+                .unwrap()
+            else {
+                panic!("the transverse cut must bound a retained circle fragment");
+            };
+            for transform in [
+                Similarity2::try_from_real_affine(
+                    Real::zero(),
+                    Real::from(-2_i8),
+                    Real::from(2_i8),
+                    Real::zero(),
+                    Real::from(5_i8),
+                    Real::from(-7_i8),
+                )
+                .unwrap(),
+                Similarity2::try_from_real_affine(
+                    Real::from(-2_i8),
+                    Real::zero(),
+                    Real::zero(),
+                    Real::from(2_i8),
+                    Real::from(5_i8),
+                    Real::from(-7_i8),
+                )
+                .unwrap(),
+            ] {
+                let transformed_fragment = fragment.transform_similarity(&transform).unwrap();
+                let transformed_parallel = parallel.transform_similarity(&transform).unwrap();
+                let Classification::Decided(
+                    BezierAlgebraicCuspSemicircleParallelIntersections2::Overlaps(overlaps),
+                ) = transformed_fragment
+                    .semicircle()
+                    .parallel_intersections(&transformed_parallel, &policy)
+                    .unwrap()
+                else {
+                    panic!("the transformed analytic quarter must retain its overlap");
+                };
+                let [overlap] = overlaps.as_slice() else {
+                    panic!("the transformed analytic quarter must retain one overlap");
+                };
+                let Classification::Decided(actual) = overlap
+                    .other_parameter_for_cusp(transformed_fragment.end_parameter(), &policy)
+                    .unwrap()
+                else {
+                    panic!("the transformed transverse cut must invert by point incidence");
+                };
+                assert_eq!(
+                    actual.same_value(&expected, &policy).unwrap(),
+                    Classification::Decided(true),
+                );
             }
         }
     }
