@@ -159,17 +159,11 @@ impl Contour2 {
             Classification::Decided(offsets) => offsets,
             Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
         };
-        let joined = match joined_offset_segments(
-            self.segments(),
-            &offsets,
-            true,
-            Some(style),
-            &distance,
-            policy,
-        )? {
-            Classification::Decided(joined) => joined,
-            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-        };
+        let joined =
+            match joined_offset_segments(self.segments(), &offsets, style, &distance, policy)? {
+                Classification::Decided(joined) => joined,
+                Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+            };
         Ok(checked_joined_contour(joined, self.fill_rule())
             .map(|offset| offset.retain_left_offset_from(self, distance, policy)))
     }
@@ -199,21 +193,15 @@ impl Contour2 {
                 return Ok(Classification::Uncertain(reason));
             }
         };
-        classified_offset_joins(
-            self.segments(),
-            &offsets,
-            true,
-            Some(style),
-            &distance,
-            policy,
+        classified_offset_joins(self.segments(), &offsets, style, &distance, policy).map(
+            |classification| {
+                classification.map(|joins| {
+                    joins
+                        .iter()
+                        .all(|join| matches!(join, OffsetJoin::Connected | OffsetJoin::Miter(_)))
+                })
+            },
         )
-        .map(|classification| {
-            classification.map(|joins| {
-                joins
-                    .iter()
-                    .all(|join| matches!(join, OffsetJoin::Connected | OffsetJoin::Miter(_)))
-            })
-        })
     }
 }
 
@@ -292,8 +280,7 @@ enum OffsetJoin {
 fn joined_offset_segments(
     source: &[Segment2],
     offsets: &[Segment2],
-    closed: bool,
-    corner_style: Option<&OffsetCornerStyle2>,
+    corner_style: &OffsetCornerStyle2,
     distance: &Real,
     policy: &CurveContext,
 ) -> CurveResult<Classification<Vec<Segment2>>> {
@@ -306,15 +293,14 @@ fn joined_offset_segments(
         ));
     }
 
-    let joins =
-        match classified_offset_joins(source, offsets, closed, corner_style, distance, policy)? {
-            Classification::Decided(joins) => joins,
-            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-        };
+    let joins = match classified_offset_joins(source, offsets, corner_style, distance, policy)? {
+        Classification::Decided(joins) => joins,
+        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+    };
 
     let mut joined = Vec::with_capacity(offsets.len() + joins.len());
     for index in 0..offsets.len() {
-        let start_override = start_miter_for_segment(index, offsets.len(), closed, &joins);
+        let start_override = start_miter_for_segment(index, offsets.len(), &joins);
         let end_override = end_miter_for_segment(index, &joins);
         let adjusted = match adjust_offset_segment(
             &offsets[index],
@@ -356,18 +342,12 @@ fn joined_offset_segments(
 fn classified_offset_joins(
     source: &[Segment2],
     offsets: &[Segment2],
-    closed: bool,
-    corner_style: Option<&OffsetCornerStyle2>,
+    corner_style: &OffsetCornerStyle2,
     distance: &Real,
     policy: &CurveContext,
 ) -> CurveResult<Classification<Vec<OffsetJoin>>> {
-    let join_count = if closed {
-        offsets.len()
-    } else {
-        offsets.len().saturating_sub(1)
-    };
-    let mut joins = Vec::with_capacity(join_count);
-    for index in 0..join_count {
+    let mut joins = Vec::with_capacity(offsets.len());
+    for index in 0..offsets.len() {
         let next_index = (index + 1) % offsets.len();
         match classify_offset_join(
             &source[index],
@@ -390,7 +370,7 @@ fn classify_offset_join(
     source_next: &Segment2,
     offset_previous: &Segment2,
     offset_next: &Segment2,
-    corner_style: Option<&OffsetCornerStyle2>,
+    corner_style: &OffsetCornerStyle2,
     distance: &Real,
     policy: &CurveContext,
 ) -> CurveResult<Classification<OffsetJoin>> {
@@ -403,15 +383,6 @@ fn classify_offset_join(
         None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
     }
 
-    let Some(style) = corner_style else {
-        return classify_legacy_offset_join(
-            source_previous,
-            source_next,
-            offset_previous,
-            offset_next,
-            policy,
-        );
-    };
     let inward = match offset_corner_is_inward(source_previous, source_next, distance, policy)? {
         Classification::Decided(inward) => inward,
         Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
@@ -431,11 +402,8 @@ fn classify_offset_join(
         };
     }
 
-    match style {
-        OffsetCornerStyle2::Round => Ok(Classification::Decided(round_join(
-            source_previous,
-            source_next,
-        ))),
+    match corner_style {
+        OffsetCornerStyle2::Round => Ok(Classification::Decided(round_join(source_previous))),
         OffsetCornerStyle2::Bevel => Ok(Classification::Decided(OffsetJoin::Bevel)),
         OffsetCornerStyle2::Miter { limit } => match (offset_previous, offset_next) {
             (Segment2::Line(previous), Segment2::Line(next)) => {
@@ -465,33 +433,6 @@ fn classify_offset_join(
             }
             _ => Ok(Classification::Uncertain(UncertaintyReason::Unsupported)),
         },
-    }
-}
-
-fn classify_legacy_offset_join(
-    source_previous: &Segment2,
-    source_next: &Segment2,
-    offset_previous: &Segment2,
-    offset_next: &Segment2,
-    policy: &CurveContext,
-) -> CurveResult<Classification<OffsetJoin>> {
-    match (offset_previous, offset_next) {
-        (Segment2::Line(previous), Segment2::Line(next)) => {
-            match line_support_intersection(previous, next, policy)? {
-                Classification::Decided(Some(point)) => {
-                    Ok(Classification::Decided(OffsetJoin::Miter(point)))
-                }
-                Classification::Decided(None) => Ok(Classification::Decided(round_join(
-                    source_previous,
-                    source_next,
-                ))),
-                Classification::Uncertain(reason) => Ok(Classification::Uncertain(reason)),
-            }
-        }
-        _ => Ok(Classification::Decided(round_join(
-            source_previous,
-            source_next,
-        ))),
     }
 }
 
@@ -547,8 +488,7 @@ fn miter_within_limit(
     }
 }
 
-fn round_join(previous: &Segment2, next: &Segment2) -> OffsetJoin {
-    let _ = next;
+fn round_join(previous: &Segment2) -> OffsetJoin {
     OffsetJoin::Round {
         center: previous.end().clone(),
     }
@@ -578,12 +518,8 @@ pub(crate) fn line_support_intersection(
 fn start_miter_for_segment(
     index: usize,
     segment_count: usize,
-    closed: bool,
     joins: &[OffsetJoin],
 ) -> Option<Point2> {
-    if !closed && index == 0 {
-        return None;
-    }
     let join_index = if index == 0 {
         segment_count - 1
     } else {
