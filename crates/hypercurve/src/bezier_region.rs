@@ -914,7 +914,7 @@ impl BezierBoundaryLoop2 {
     pub fn new(fragments: Vec<BezierSubcurve2>, policy: &CurveContext) -> CurveResult<Self> {
         let fragments = fragments
             .into_iter()
-            .map(|curve| canonicalize_rational_circle_subcurve(curve, policy))
+            .map(|curve| canonicalize_exact_rational_subcurve(curve, policy))
             .collect::<Vec<_>>();
         validate_native_boundary_loop(&fragments, policy)?;
         Ok(Self { fragments })
@@ -1154,23 +1154,47 @@ impl BezierSubcurve2 {
     }
 }
 
-fn canonicalize_rational_circle_subcurve(
+fn canonicalize_exact_rational_subcurve(
     curve: BezierSubcurve2,
     policy: &CurveContext,
 ) -> BezierSubcurve2 {
-    // Canonicalization may only consume a STRICT proof. APPROXIMATE_512 is a
+    // Canonicalization may consume only a STRICT proof. APPROXIMATE_512 is a
     // terminal predicate policy and must never become reusable construction
-    // provenance.
+    // provenance. Exact inverse elevation preserves the authored local
+    // parameter and lineage while preventing structural degree from inflating
+    // every downstream resultant.
     let strict = policy.strict_counterpart();
+    let (curve, structurally_reduced) = match curve {
+        BezierSubcurve2::Rational(source) => {
+            match source.retained_minimal_degree_representative(&strict) {
+                Ok(Classification::Decided(Some(reduced))) => {
+                    (BezierSubcurve2::Rational(reduced), true)
+                }
+                Ok(Classification::Decided(None) | Classification::Uncertain(_)) | Err(_) => {
+                    (BezierSubcurve2::Rational(source), false)
+                }
+            }
+        }
+        curve => (curve, false),
+    };
     match curve.canonical_rational_circle_quadratic(&strict) {
         Ok(Classification::Decided(Some(quadratic))) => {
-            BezierSubcurve2::RationalQuadratic(quadratic)
+            return BezierSubcurve2::RationalQuadratic(quadratic);
         }
-        Ok(Classification::Decided(None) | Classification::Uncertain(_)) | Err(_) => curve,
+        Ok(Classification::Decided(None) | Classification::Uncertain(_)) | Err(_) => {}
     }
+    if structurally_reduced
+        && let BezierSubcurve2::Rational(source) = &curve
+        && source.degree() == 2
+        && let Ok(Classification::Decided(Some(quadratic))) =
+            source.retained_quadratic_representative(&strict)
+    {
+        return BezierSubcurve2::RationalQuadratic(quadratic);
+    }
+    curve
 }
 
-fn canonicalize_retained_circle_fragment(
+fn canonicalize_retained_rational_fragment(
     fragment: BezierSplitFragment2,
     policy: &CurveContext,
 ) -> BezierSplitFragment2 {
@@ -1180,7 +1204,7 @@ fn canonicalize_retained_circle_fragment(
     BezierSplitFragment2::Materialized {
         start,
         end,
-        curve: canonicalize_rational_circle_subcurve(curve, policy),
+        curve: canonicalize_exact_rational_subcurve(curve, policy),
     }
 }
 
@@ -1189,7 +1213,7 @@ impl CurveRegionBoundaryLoop2 {
     pub fn new(fragments: Vec<BezierSplitFragment2>, policy: &CurveContext) -> CurveResult<Self> {
         let fragments = fragments
             .into_iter()
-            .map(|fragment| canonicalize_retained_circle_fragment(fragment, policy))
+            .map(|fragment| canonicalize_retained_rational_fragment(fragment, policy))
             .collect::<Vec<_>>();
         validate_retained_boundary_loop(&fragments, policy)?;
         Ok(Self {
@@ -1206,7 +1230,7 @@ impl CurveRegionBoundaryLoop2 {
     ) -> CurveResult<Self> {
         let fragments = fragments
             .into_iter()
-            .map(|fragment| canonicalize_retained_circle_fragment(fragment, policy))
+            .map(|fragment| canonicalize_retained_rational_fragment(fragment, policy))
             .collect::<Vec<_>>();
         validate_retained_boundary_loop(&fragments, policy)?;
         if fragments.len() != arrangement_sources.len() {
@@ -3424,19 +3448,13 @@ fn canonicalize_retained_corner_materialization(
     else {
         return fragment;
     };
-    match curve.retained_quadratic_representative(&CurveContext::STRICT) {
-        Ok(Classification::Decided(Some(curve))) => BezierSplitFragment2::Materialized {
-            start,
-            end,
-            curve: BezierSubcurve2::RationalQuadratic(curve),
-        },
-        Ok(Classification::Decided(None) | Classification::Uncertain(_)) | Err(_) => {
-            BezierSplitFragment2::Materialized {
-                start,
-                end,
-                curve: BezierSubcurve2::Rational(curve),
-            }
-        }
+    BezierSplitFragment2::Materialized {
+        start,
+        end,
+        curve: canonicalize_exact_rational_subcurve(
+            BezierSubcurve2::Rational(curve),
+            &CurveContext::STRICT,
+        ),
     }
 }
 

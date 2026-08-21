@@ -4636,6 +4636,50 @@ fn non_ph_bezier_pair_fillet_retains_general_selected_circle() {
 }
 
 #[test]
+fn exact_high_degree_elevations_reenter_the_quadratic_corner_kernel() {
+    let elevated = |curve: QuadraticBezier2| {
+        RationalBezier2::try_new(
+            curve.control_points().into_iter().cloned().collect(),
+            vec![Real::one(); 3],
+        )
+        .unwrap()
+        .elevated_to_degree(12)
+        .unwrap()
+    };
+    let path = CurvePath2::try_new(vec![
+        Curve2::from(elevated(QuadraticBezier2::new(p(-2, 2), p(-1, 0), p(0, 0)))),
+        Curve2::from(elevated(QuadraticBezier2::new(p(0, 0), p(0, 1), p(2, 2)))),
+        Curve2::from(LineSeg2::try_new(p(2, 2), p(-2, 2)).unwrap()),
+    ])
+    .unwrap();
+
+    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+        let region = CurveRegion2::try_from_boundary_paths(std::slice::from_ref(&path), &policy)
+            .unwrap()
+            .into_value();
+        assert_eq!(
+            region.boundary_loops()[0]
+                .fragments()
+                .iter()
+                .filter(|fragment| matches!(
+                    fragment,
+                    BezierSplitFragment2::Materialized {
+                        curve: BezierSubcurve2::RationalQuadratic(_),
+                        ..
+                    }
+                ))
+                .count(),
+            2,
+        );
+        let filleted = region
+            .fillet_loop_vertex_by_radius(0, 1, q(1, 4), CurveCornerMode2::TrimOnly, &policy)
+            .expect("a structural elevation must reuse the quadratic fillet kernel");
+        assert_eq!(filleted.certainty, CurveCertainty::Certified);
+        assert!(filleted.value.candidate_count() > 0);
+    }
+}
+
+#[test]
 fn non_ph_bezier_pair_projective_fillet_retains_algebraic_extensions() {
     let end = Point2::new(-q(14, 65), q(196, 325));
     let path = CurvePath2::try_new(vec![

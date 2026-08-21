@@ -4068,21 +4068,12 @@ impl RationalBezier2 {
         {
             return Ok(None);
         }
-        let frame = match exact_linear_homogeneous_reduction(self.homogeneous_controls(), policy) {
-            Classification::Decided(Some(frame)) => frame,
+        let reduced = match self.retained_minimal_degree_representative(policy)? {
+            Classification::Decided(Some(reduced)) if reduced.degree() == 1 => reduced,
             Classification::Decided(None) | Classification::Uncertain(_) => return Ok(None),
+            Classification::Decided(Some(_)) => return Ok(None),
         };
-        let mut controls = Vec::with_capacity(2);
-        let mut weights = Vec::with_capacity(2);
-        for point in frame {
-            let projected = match project_homogeneous(&point, policy) {
-                Classification::Decided(projected) => projected,
-                Classification::Uncertain(_) => return Ok(None),
-            };
-            controls.push(projected);
-            weights.push(point.weight);
-        }
-        Ok(Self::try_new(controls, weights).ok())
+        Ok(Some(reduced))
     }
 
     fn exact_line_image_intersection_contacts(
@@ -6542,6 +6533,48 @@ impl RationalBezier2 {
                 .cloned(),
             self.data.lineage.root.circular_conic.get().cloned(),
         );
+        Ok(Classification::Decided(Some(representative)))
+    }
+
+    /// Returns the lowest exact homogeneous degree reachable by inverse
+    /// Bernstein elevation, when this carrier is structurally elevated.
+    ///
+    /// The local parameter and root-lineage map are unchanged.  This is a
+    /// construction canonicalization and therefore internally uses the STRICT
+    /// counterpart; an approximate terminal may not authorize reusable
+    /// lower-degree provenance.
+    pub(crate) fn retained_minimal_degree_representative(
+        &self,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<Option<Self>>> {
+        let strict = policy.strict_counterpart();
+        let reduced = match exact_homogeneous_minimal_degree_reduction(
+            self.homogeneous_controls(),
+            &strict,
+        ) {
+            Classification::Decided(Some(reduced)) => reduced,
+            Classification::Decided(None) => return Ok(Classification::Decided(None)),
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        let mut control_points = Vec::with_capacity(reduced.len());
+        let mut weights = Vec::with_capacity(reduced.len());
+        for point in reduced {
+            match project_homogeneous(&point, &strict) {
+                Classification::Decided(control) => control_points.push(control),
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            }
+            weights.push(point.weight);
+        }
+        let representative = Self::try_new_with_lineage_and_exact_line_image(
+            control_points,
+            weights,
+            self.data.lineage.clone(),
+            self.data.exact_line_image.clone(),
+        )?;
         Ok(Classification::Decided(Some(representative)))
     }
 
@@ -9432,22 +9465,6 @@ fn exact_quadratic_homogeneous_reduction(
     Classification::Decided(Some(frame))
 }
 
-fn exact_linear_homogeneous_reduction(
-    source: &[HomogeneousPoint2],
-    policy: &CurveContext,
-) -> Classification<Option<[HomogeneousPoint2; 2]>> {
-    let reduced = match exact_homogeneous_degree_reduction(source, 2, policy) {
-        Classification::Decided(Some(reduced)) => reduced,
-        Classification::Decided(None) => return Classification::Decided(None),
-        Classification::Uncertain(reason) => return Classification::Uncertain(reason),
-    };
-    let Ok(frame) = <Vec<HomogeneousPoint2> as TryInto<[HomogeneousPoint2; 2]>>::try_into(reduced)
-    else {
-        return Classification::Decided(None);
-    };
-    Classification::Decided(Some(frame))
-}
-
 fn exact_homogeneous_degree_reduction(
     source: &[HomogeneousPoint2],
     target_control_count: usize,
@@ -9458,67 +9475,97 @@ fn exact_homogeneous_degree_reduction(
     }
     let mut current = source.to_vec();
     while current.len() > target_control_count {
-        let degree = current.len() - 1;
-        let Ok(degree_u64) = u64::try_from(degree) else {
-            return Classification::Uncertain(UncertaintyReason::Unsupported);
+        current = match exact_homogeneous_degree_reduction_once(&current, policy) {
+            Classification::Decided(Some(reduced)) => reduced,
+            Classification::Decided(None) => return Classification::Decided(None),
+            Classification::Uncertain(reason) => return Classification::Uncertain(reason),
         };
-        let degree_real = Real::from(degree_u64);
-        let mut reduced = Vec::with_capacity(degree);
-        reduced.push(current[0].clone());
-        for index in 1..degree {
-            let Ok(index_u64) = u64::try_from(index) else {
-                return Classification::Uncertain(UncertaintyReason::Unsupported);
-            };
-            let Ok(remaining_u64) = u64::try_from(degree - index) else {
-                return Classification::Uncertain(UncertaintyReason::Unsupported);
-            };
-            let index_real = Real::from(index_u64);
-            let remaining = Real::from(remaining_u64);
-            let previous = &reduced[index - 1];
-            let candidate = HomogeneousPoint2 {
-                x: match (&degree_real * &current[index].x - &index_real * &previous.x) / &remaining
-                {
-                    Ok(value) => value,
-                    Err(_) => {
-                        return Classification::Uncertain(UncertaintyReason::Unsupported);
-                    }
-                },
-                y: match (&degree_real * &current[index].y - &index_real * &previous.y) / &remaining
-                {
-                    Ok(value) => value,
-                    Err(_) => {
-                        return Classification::Uncertain(UncertaintyReason::Unsupported);
-                    }
-                },
-                weight: match (&degree_real * &current[index].weight
-                    - &index_real * &previous.weight)
-                    / &remaining
-                {
-                    Ok(value) => value,
-                    Err(_) => {
-                        return Classification::Uncertain(UncertaintyReason::Unsupported);
-                    }
-                },
-            };
-            reduced.push(candidate);
-        }
-        let expected_end = reduced
-            .last()
-            .expect("positive-degree inverse elevation has an endpoint");
-        for residual in [
-            &expected_end.x - &current[degree].x,
-            &expected_end.y - &current[degree].y,
-            &expected_end.weight - &current[degree].weight,
-        ] {
-            match is_zero(&residual, policy) {
-                Some(true) => {}
-                Some(false) => return Classification::Decided(None),
-                None => return Classification::Uncertain(UncertaintyReason::RealSign),
-            }
-        }
-        current = reduced;
     }
     Classification::Decided(Some(current))
+}
+
+fn exact_homogeneous_minimal_degree_reduction(
+    source: &[HomogeneousPoint2],
+    policy: &CurveContext,
+) -> Classification<Option<Vec<HomogeneousPoint2>>> {
+    let mut current = source.to_vec();
+    let mut reduced_any = false;
+    while current.len() > 2 {
+        match exact_homogeneous_degree_reduction_once(&current, policy) {
+            Classification::Decided(Some(reduced)) => {
+                current = reduced;
+                reduced_any = true;
+            }
+            Classification::Decided(None) => break,
+            // Every prior inverse step is already an exact identity.  Keep
+            // that smaller representative even if minimality of the next
+            // step cannot be proved.
+            Classification::Uncertain(_) if reduced_any => break,
+            Classification::Uncertain(reason) => {
+                return Classification::Uncertain(reason);
+            }
+        }
+    }
+    Classification::Decided(reduced_any.then_some(current))
+}
+
+fn exact_homogeneous_degree_reduction_once(
+    current: &[HomogeneousPoint2],
+    policy: &CurveContext,
+) -> Classification<Option<Vec<HomogeneousPoint2>>> {
+    if current.len() <= 2 {
+        return Classification::Decided(None);
+    }
+    let degree = current.len() - 1;
+    let Ok(degree_u64) = u64::try_from(degree) else {
+        return Classification::Uncertain(UncertaintyReason::Unsupported);
+    };
+    let degree_real = Real::from(degree_u64);
+    let mut reduced = Vec::with_capacity(degree);
+    reduced.push(current[0].clone());
+    for index in 1..degree {
+        let Ok(index_u64) = u64::try_from(index) else {
+            return Classification::Uncertain(UncertaintyReason::Unsupported);
+        };
+        let Ok(remaining_u64) = u64::try_from(degree - index) else {
+            return Classification::Uncertain(UncertaintyReason::Unsupported);
+        };
+        let index_real = Real::from(index_u64);
+        let remaining = Real::from(remaining_u64);
+        let previous = &reduced[index - 1];
+        let candidate = HomogeneousPoint2 {
+            x: match (&degree_real * &current[index].x - &index_real * &previous.x) / &remaining {
+                Ok(value) => value,
+                Err(_) => return Classification::Uncertain(UncertaintyReason::Unsupported),
+            },
+            y: match (&degree_real * &current[index].y - &index_real * &previous.y) / &remaining {
+                Ok(value) => value,
+                Err(_) => return Classification::Uncertain(UncertaintyReason::Unsupported),
+            },
+            weight: match (&degree_real * &current[index].weight - &index_real * &previous.weight)
+                / &remaining
+            {
+                Ok(value) => value,
+                Err(_) => return Classification::Uncertain(UncertaintyReason::Unsupported),
+            },
+        };
+        reduced.push(candidate);
+    }
+    let expected_end = reduced
+        .last()
+        .expect("positive-degree inverse elevation has an endpoint");
+    for residual in [
+        &expected_end.x - &current[degree].x,
+        &expected_end.y - &current[degree].y,
+        &expected_end.weight - &current[degree].weight,
+    ] {
+        match is_zero(&residual, policy) {
+            Some(true) => {}
+            Some(false) => return Classification::Decided(None),
+            None => return Classification::Uncertain(UncertaintyReason::RealSign),
+        }
+    }
+    Classification::Decided(Some(reduced))
 }
 
 impl HomogeneousPoint2 {
@@ -10184,6 +10231,54 @@ mod tests {
                 .is_none(),
             "nonrational Real carriers retain the certified general path"
         );
+    }
+
+    #[test]
+    fn exact_high_degree_rational_elevation_recovers_its_minimal_parameter_frame() {
+        let source = RationalBezier2::try_new(
+            vec![
+                Point2::from_values(-2, 1),
+                Point2::from_values(-1, -3),
+                Point2::from_values(2, 4),
+                Point2::from_values(5, -1),
+            ],
+            vec![
+                Real::one(),
+                Real::from(2_i8),
+                Real::from(3_i8),
+                Real::from(5_i8),
+            ],
+        )
+        .unwrap();
+        let elevated = source.elevated_to_degree(12).unwrap();
+        let authored = RationalBezier2::try_new(
+            elevated.control_points().to_vec(),
+            elevated.weights().to_vec(),
+        )
+        .unwrap();
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let Classification::Decided(Some(reduced)) = authored
+                .retained_minimal_degree_representative(&policy)
+                .unwrap()
+            else {
+                panic!("the exact rational elevation must reduce under {policy:?}");
+            };
+            assert_eq!(reduced.degree(), 3);
+            assert_eq!(reduced.control_points(), source.control_points());
+            assert_eq!(reduced.weights(), source.weights());
+            for parameter in [
+                Real::zero(),
+                (Real::one() / Real::from(3_i8)).unwrap(),
+                Real::one(),
+            ] {
+                assert_eq!(
+                    reduced.point_at(&parameter, &CurveContext::STRICT).unwrap(),
+                    authored
+                        .point_at(&parameter, &CurveContext::STRICT)
+                        .unwrap(),
+                );
+            }
+        }
     }
 
     #[test]
