@@ -18,7 +18,7 @@ use hyperreal::{CertifiedRealSign, Real, RealSign, ZeroKnowledge};
 
 use crate::resultant::quotient_ring_fiber_resultant_polynomial;
 use crate::resultant::{UnivariateResultantError, resultant_univariate_polynomials};
-use crate::root_isolation::polynomial_div_rem;
+use crate::root_isolation::polynomial_remainder_modulo_certified_divisor;
 
 /// Dense ascending-power polynomial tensor with row-major coefficients.
 ///
@@ -368,7 +368,7 @@ impl DenseTensorPolynomial {
                         .unwrap_or_else(Real::zero),
                 );
             }
-            let (_, remainder) = polynomial_div_rem(fiber, modulus, policy)?;
+            let remainder = polynomial_remainder_modulo_certified_divisor(fiber, modulus, policy)?;
             for (power, coefficient) in remainder.into_iter().enumerate() {
                 if power >= target_axis_dimension {
                     return None;

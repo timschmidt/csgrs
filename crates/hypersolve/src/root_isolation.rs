@@ -2114,6 +2114,45 @@ pub(crate) fn polynomial_div_rem(
     Some((trim_polynomial(quotient, policy)?, remainder))
 }
 
+/// Reduces one dense polynomial modulo a divisor whose leading degree is
+/// certified once, without classifying intermediate dividend coefficients.
+///
+/// Quotient-ring tensor reduction does not need a trimmed quotient or
+/// remainder: every power at or above the divisor degree is eliminated by an
+/// exact field operation and the dense caller retains the fixed remainder
+/// shape. Avoiding repeated zero tests is essential when coefficients are
+/// correlated `Real` expressions whose cancellation follows from the very
+/// divisor relation being applied.
+pub(crate) fn polynomial_remainder_modulo_certified_divisor(
+    dividend: Vec<Real>,
+    divisor: &[Real],
+    policy: PredicatePolicy,
+) -> Option<Vec<Real>> {
+    let divisor = trim_polynomial(divisor.to_vec(), policy)?;
+    if divisor.len() <= 1 || is_zero_polynomial(&divisor, policy)? {
+        return None;
+    }
+    let divisor_degree = divisor.len() - 1;
+    let divisor_leading_inverse = reciprocal_real(divisor.last()?, policy).ok()?.value()?;
+    let mut remainder = dividend;
+    if remainder.len() <= divisor_degree {
+        return Some(remainder);
+    }
+    for power in (divisor_degree..remainder.len()).rev() {
+        if remainder[power].definitely_zero() {
+            continue;
+        }
+        let scale = &remainder[power] * &divisor_leading_inverse;
+        let target_start = power - divisor_degree;
+        for (index, divisor_coefficient) in divisor.iter().take(divisor_degree).enumerate() {
+            let target = target_start + index;
+            remainder[target] = remainder[target].clone() - &scale * divisor_coefficient;
+        }
+    }
+    remainder.truncate(divisor_degree);
+    Some(remainder)
+}
+
 fn root_refinement_report(
     status: IsolatedRootRefinementStatus,
     original_interval: IsolatedRootInterval,
@@ -2476,6 +2515,31 @@ mod tests {
 
     fn real(value: i64) -> Real {
         Real::from(value)
+    }
+
+    #[test]
+    fn fixed_degree_remainder_does_not_predicate_on_correlated_coefficients() {
+        let sqrt_two = real(2).sqrt().expect("positive square root");
+        let sqrt_three = real(3).sqrt().expect("positive square root");
+        let sum = &sqrt_two + &sqrt_three;
+        let correlated_zero =
+            &sum * &sum - (real(5) + real(2) * real(6).sqrt().expect("positive square root"));
+        assert!(!correlated_zero.definitely_zero());
+
+        let modulus = [real(-2), Real::zero(), Real::one()];
+        let dividend = vec![Real::zero(), Real::zero(), correlated_zero, Real::one()];
+        assert!(
+            polynomial_div_rem(dividend.clone(), &modulus, PredicatePolicy::STRICT).is_none(),
+            "generic division should expose the correlated leading cancellation"
+        );
+        let remainder = polynomial_remainder_modulo_certified_divisor(
+            dividend,
+            &modulus,
+            PredicatePolicy::STRICT,
+        )
+        .expect("fixed-degree quotient reduction is purely algebraic");
+        assert_eq!(remainder.len(), 2);
+        assert_eq!(remainder[1], real(2));
     }
 
     #[test]
