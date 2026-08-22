@@ -7324,33 +7324,62 @@ impl<'a> CurveRegionBooleanContext<'a> {
         }
         let mut face_windings = vec![None; edge_count.saturating_mul(2)];
 
-        // An exact local line-side classification seeds the same connected
-        // face equations without recursively intersecting a synthetic
-        // exterior ray against the complete boundary. Keep that global probe
-        // only for arrangements that have no rank-zero local seed at all.
-        let has_exact_local_seed =
+        // Exact affine fragments are the cheapest authoritative local face
+        // seeds. Evaluate them first and propagate their winding equations.
+        // Skip the global exterior ray only when those exact seeds already
+        // cover every edge; otherwise the historical probe remains the
+        // complete fallback rather than merely the no-line fallback.
+        for (carrier_index, splits) in topology.split_fragments.iter().enumerate() {
+            for (split_index, split) in splits.iter().enumerate() {
+                if actions[carrier_index][split_index].is_some()
+                    || edge_overlapped[carrier_index][split_index]
+                    || !match &split.fragment {
+                        BezierSplitFragment2::AlgebraicChord(chord) => chord.exact_line().is_some(),
+                        BezierSplitFragment2::Materialized { .. } => {
+                            split_fragment_is_affine_line(&split.fragment)
+                        }
+                        BezierSplitFragment2::AlgebraicEndpointImages { .. }
+                        | BezierSplitFragment2::AnalyticParallel(_)
+                        | BezierSplitFragment2::AlgebraicCuspSemicircle(_)
+                        | BezierSplitFragment2::SelectedFiber(_) => false,
+                    }
+                {
+                    continue;
+                }
+                match self.regularized_fragment_geometric_decision(carrier_index, &split.fragment) {
+                    Ok(decision) => {
+                        actions[carrier_index][split_index] = Some(decision.action);
+                        let [left, right] = decision.side_windings;
+                        let roots = face_roots[carrier_index][split_index];
+                        propagate_regularized_face_windings(
+                            &mut face_windings,
+                            &face_adjacency,
+                            &winding_jumps,
+                            [(roots[0], left), (roots[1], right)],
+                        )
+                        .map_err(|cause| self.invalid(carrier_index, cause))?;
+                    }
+                    Err(error @ ExactCurveError::Blocked(_)) => {
+                        blockers[carrier_index][split_index] = Some(error);
+                    }
+                    Err(error @ ExactCurveError::Invalid { .. }) => return Err(error),
+                }
+            }
+        }
+        let exact_local_seeds_cover_arrangement =
             topology
                 .split_fragments
                 .iter()
                 .enumerate()
-                .any(|(carrier_index, splits)| {
-                    splits.iter().enumerate().any(|(split_index, split)| {
-                        !edge_overlapped[carrier_index][split_index]
-                            && match &split.fragment {
-                                BezierSplitFragment2::AlgebraicChord(chord) => {
-                                    chord.exact_line().is_some()
-                                }
-                                BezierSplitFragment2::Materialized { .. } => {
-                                    split_fragment_is_affine_line(&split.fragment)
-                                }
-                                BezierSplitFragment2::AlgebraicEndpointImages { .. }
-                                | BezierSplitFragment2::AnalyticParallel(_)
-                                | BezierSplitFragment2::AlgebraicCuspSemicircle(_)
-                                | BezierSplitFragment2::SelectedFiber(_) => false,
-                            }
+                .all(|(carrier_index, splits)| {
+                    splits.iter().enumerate().all(|(split_index, _)| {
+                        actions[carrier_index][split_index].is_some() || {
+                            let [left, right] = face_roots[carrier_index][split_index];
+                            face_windings[left].is_some() && face_windings[right].is_some()
+                        }
                     })
                 });
-        if !has_exact_local_seed {
+        if !exact_local_seeds_cover_arrangement {
             let mut retained_bounds = Vec::with_capacity(self.data.carriers.len());
             for carrier in &self.data.carriers {
                 let cached = carrier
