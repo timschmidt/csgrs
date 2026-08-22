@@ -373,12 +373,13 @@ pub fn represent_algebraic_tensor_image(
     } else {
         None
     };
-    // Tensor elimination often leaves extraneous conjugate factors even when
-    // the selected image is a small rational CAD coordinate. A floating-point
-    // enclosure is used only to propose bounded-denominator candidates; exact
-    // polynomial evaluation and exact interval containment are the authority.
-    let exact_rational_root = exact_linear_root
-        .or_else(|| exact_cardinal_root_in_interval(&polynomial_coefficients, image_interval));
+    // A nonlinear eliminant can retain exact cardinal roots from conjugate
+    // source tuples that are not the authored tuple. Interval containment and
+    // exact polynomial incidence alone therefore do not identify the image;
+    // the general isolation path below must first prove that the supplied
+    // image enclosure contains exactly one distinct eliminant root. A linear
+    // eliminant is the sole safe shortcut because it has one global root.
+    let exact_rational_root = exact_linear_root;
     let interval = if let Some(root) = &exact_rational_root {
         IsolatedRootInterval {
             lower: root.clone(),
@@ -460,6 +461,7 @@ pub fn represent_algebraic_tensor_image(
 
 /// Recovers a selected cardinal image without using approximation as proof,
 /// leaving every other algebraic image on the unchanged exact isolator path.
+#[cfg(test)]
 fn exact_cardinal_root_in_interval(
     polynomial_coefficients: &[Real],
     interval: &IsolatedRootInterval,
@@ -864,6 +866,74 @@ mod tests {
             vec![real(-9), Real::one()]
         );
         assert_eq!(representation.interval.exact_root, Some(real(9)));
+    }
+
+    #[test]
+    fn tensor_image_does_not_select_an_extraneous_cardinal_conjugate_image() {
+        let coefficients = [23775_i64, 141480, -110296, -47200, -10000]
+            .map(real)
+            .to_vec();
+        let source = |interval_index, lower: Real, upper: Real| AlgebraicRootRepresentation {
+            constraint_index: 17,
+            symbol: SymbolId(23),
+            interval_index,
+            polynomial_coefficients: coefficients.clone(),
+            interval: IsolatedRootInterval {
+                lower,
+                upper,
+                exact_root: None,
+                distinct_root_count: 1,
+            },
+            kind: AlgebraicRootKind::IsolatingInterval,
+            validation: AlgebraicRootValidationReport {
+                status: AlgebraicRootValidationStatus::Valid,
+                message: None,
+            },
+        };
+        let first = source(
+            0,
+            (real(-5) / real(16)).unwrap(),
+            (real(25) / real(32)).unwrap(),
+        );
+        let second = source(
+            1,
+            (real(25) / real(32)).unwrap(),
+            (real(15) / real(8)).unwrap(),
+        );
+        let first_axis =
+            DenseTensorPolynomial::from_axis_polynomial(3, 0, &[Real::zero(), Real::one()])
+                .unwrap();
+        let second_axis =
+            DenseTensorPolynomial::from_axis_polynomial(3, 1, &[Real::zero(), Real::one()])
+                .unwrap();
+        let output =
+            DenseTensorPolynomial::from_axis_polynomial(3, 2, &[Real::zero(), Real::one()])
+                .unwrap();
+        let difference = first_axis.subtract(&second_axis).unwrap();
+        let relation = output
+            .subtract(&difference.multiply(&difference).unwrap())
+            .unwrap();
+
+        let report = represent_algebraic_tensor_image(
+            &relation,
+            &[first, second],
+            &IsolatedRootInterval {
+                lower: Real::zero(),
+                upper: real(10),
+                exact_root: None,
+                distinct_root_count: 1,
+            },
+        );
+        assert_eq!(report.status, AlgebraicTensorImageStatus::Transformed);
+        assert_eq!(
+            represented_root_sign(
+                &report
+                    .representation
+                    .expect("the authored nonzero image must be represented"),
+                PredicatePolicy::STRICT,
+            ),
+            Some(std::cmp::Ordering::Greater)
+        );
     }
 
     #[test]
