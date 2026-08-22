@@ -118195,9 +118195,21 @@ mod conversion_tests {
                 vec![CurveBoundaryInteriorSide2::Left],
             )
             .unwrap();
-            for style in [
-                crate::OffsetCornerStyle2::Round,
-                crate::OffsetCornerStyle2::Bevel,
+            for (style, expected_fragment_count, expected_chord_count) in [
+                (crate::OffsetCornerStyle2::Round, 4, 1),
+                (crate::OffsetCornerStyle2::Bevel, 4, 3),
+                (
+                    crate::OffsetCornerStyle2::Miter { limit: Real::one() },
+                    4,
+                    3,
+                ),
+                (
+                    crate::OffsetCornerStyle2::Miter {
+                        limit: Real::from(8_i8),
+                    },
+                    6,
+                    5,
+                ),
             ] {
                 let round = matches!(style, crate::OffsetCornerStyle2::Round);
                 #[cfg(feature = "dispatch-trace")]
@@ -118224,7 +118236,7 @@ mod conversion_tests {
                 let [boundary] = offset.value.boundary_loops() else {
                     panic!("the recursive cap offset must retain one material boundary");
                 };
-                assert_eq!(boundary.fragments().len(), 4);
+                assert_eq!(boundary.fragments().len(), expected_fragment_count);
                 assert_eq!(
                     boundary
                         .fragments()
@@ -118235,6 +118247,17 @@ mod conversion_tests {
                         ))
                         .count(),
                     if round { 3 } else { 1 },
+                );
+                assert_eq!(
+                    boundary
+                        .fragments()
+                        .iter()
+                        .filter(|fragment| matches!(
+                            fragment,
+                            BezierSplitFragment2::AlgebraicChord(_)
+                        ))
+                        .count(),
+                    expected_chord_count,
                 );
                 #[cfg(feature = "dispatch-trace")]
                 assert_eq!(
@@ -118263,6 +118286,25 @@ mod conversion_tests {
                     ),
                     if round { 2 } else { 0 },
                 );
+                #[cfg(feature = "dispatch-trace")]
+                if matches!(style, crate::OffsetCornerStyle2::Miter { .. }) {
+                    assert_eq!(
+                        trace.path_count(
+                            "hypercurve",
+                            "curve-region-exact-offset-miter",
+                            "retained-support",
+                        ),
+                        2,
+                    );
+                    assert_eq!(
+                        trace.path_count(
+                            "hypercurve",
+                            "curve-region-exact-offset-miter",
+                            "represented-vector-fallback",
+                        ),
+                        0,
+                    );
+                }
             }
         }
     }
