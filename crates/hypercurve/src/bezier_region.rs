@@ -4986,90 +4986,18 @@ fn exact_offset_span_from_algebraic_chord(
     distance: &Real,
     policy: &CurveContext,
 ) -> CurveResult<Classification<ExactOffsetSpan2>> {
-    // Axis translation is only a specialization.  Reuse it when the chord
-    // already carries a STRICT construction certificate; do not run an
-    // equality predicate merely to decide whether the complete normalized
-    // chord carrier is allowed.  Besides avoiding an unrelated selected-field
-    // ordering blocker, this prevents APPROXIMATE_512 from becoming persistent
-    // axis-alignment evidence.
-    let direction = chord.certified_axis_direction();
-    if let Some(direction) = direction {
-        #[cfg(feature = "dispatch-trace")]
-        hyperreal::dispatch_trace::record(
-            "hypercurve",
-            "curve-region-exact-offset-span",
-            "axis-algebraic-chord",
-        );
-        let (offset_x, offset_y) = direction.signed_left_offset(distance);
-        let offset_start = match crate::BezierAlgebraicChord2::translated_endpoint(
-            chord.start(),
-            &offset_x,
-            &offset_y,
-            policy,
-        )? {
-            Classification::Decided(point) => point,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
-        let offset_end = match crate::BezierAlgebraicChord2::translated_endpoint(
-            chord.end(),
-            &offset_x,
-            &offset_y,
-            policy,
-        )? {
-            Classification::Decided(point) => point,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
-        let offset_chord = crate::BezierAlgebraicChord2::from_certified_axis_aligned_endpoints(
-            offset_start.clone(),
-            offset_end.clone(),
-            direction,
-            policy,
-        );
-        return Ok(Classification::Decided(ExactOffsetSpan2 {
-            fragments: vec![retained_chord_fragment(offset_chord)],
-            source_end: chord.end().clone(),
-            offset_start,
-            offset_end,
-            start_tangent: Some(ExactOffsetTangent2::AlgebraicChord(chord.clone())),
-            end_tangent: Some(ExactOffsetTangent2::AlgebraicChord(chord.clone())),
-        }));
-    }
-
-    if chord.certified_unit_tangent().is_none() {
-        #[cfg(feature = "dispatch-trace")]
-        hyperreal::dispatch_trace::record(
-            "hypercurve",
-            "curve-region-exact-offset-span",
-            "retained-oblique-algebraic-chord",
-        );
-        let offset_chord = chord.parallel_left_retained(distance.clone(), policy)?;
-        let offset_start = offset_chord.start().clone();
-        let offset_end = offset_chord.end().clone();
-        return Ok(Classification::Decided(ExactOffsetSpan2 {
-            fragments: vec![retained_chord_fragment(offset_chord)],
-            source_end: chord.end().clone(),
-            offset_start,
-            offset_end,
-            start_tangent: Some(ExactOffsetTangent2::AlgebraicChord(chord.clone())),
-            end_tangent: Some(ExactOffsetTangent2::AlgebraicChord(chord.clone())),
-        }));
-    }
+    // Keep every exact line offset in the shared procedural normal carrier.
+    // The source chord retains cardinal and oblique tangent certificates, so
+    // flattening either case into independently translated endpoint
+    // polynomials only loses common normal-displacement authority and costs
+    // more memory.
     #[cfg(feature = "dispatch-trace")]
     hyperreal::dispatch_trace::record(
         "hypercurve",
         "curve-region-exact-offset-span",
-        "certified-oblique-algebraic-chord",
+        "retained-oblique-algebraic-chord",
     );
-    let offset_chord = match chord.parallel_left_with_certified_unit_tangent(distance, policy)? {
-        Classification::Decided(chord) => chord,
-        Classification::Uncertain(reason) => {
-            return Ok(Classification::Uncertain(reason));
-        }
-    };
+    let offset_chord = chord.parallel_left_retained(distance.clone(), policy)?;
     let offset_start = offset_chord.start().clone();
     let offset_end = offset_chord.end().clone();
     Ok(Classification::Decided(ExactOffsetSpan2 {
@@ -13720,9 +13648,9 @@ impl CurveRegion2 {
                             .map_err(|cause| {
                                 curve_region_edit_error(CurveOperation2::Fillet, cause)
                             })?;
-                        let same_point = contact
-                            .point
-                            .same_point(&chord_cut.point, &policy.strict_counterpart());
+                        let same_point = policy.strict_predicate_pass(|| {
+                            contact.point.same_point(&chord_cut.point, policy)
+                        });
                         match (parameter_order, same_point) {
                             (
                                 Classification::Decided(std::cmp::Ordering::Equal),

@@ -310,7 +310,67 @@ struct CarrierOverlap {
     second_carrier_index: usize,
     first_range: CurveRegionParameterRange2,
     second_range: CurveRegionParameterRange2,
+    first_endpoint_vertices: [usize; 2],
+    second_endpoint_vertices: [usize; 2],
     orientation: RationalBezierOverlapOrientation2,
+}
+
+impl CarrierOverlap {
+    fn endpoint_vertices(&self, carrier_index: usize) -> Option<[usize; 2]> {
+        if carrier_index == self.first_carrier_index {
+            Some(self.first_endpoint_vertices)
+        } else if carrier_index == self.second_carrier_index {
+            Some(self.second_endpoint_vertices)
+        } else {
+            None
+        }
+    }
+
+    fn replace_topology_vertex(&mut self, from: usize, to: usize) {
+        for vertex in self
+            .first_endpoint_vertices
+            .iter_mut()
+            .chain(&mut self.second_endpoint_vertices)
+        {
+            if *vertex == from {
+                *vertex = to;
+            }
+        }
+    }
+}
+
+/// Returns the contiguous split-edge interval bounded by the exact overlap
+/// endpoint vertices. A repeated vertex at more than one carrier boundary is
+/// ambiguous (for example at a pinched self-contact), so callers retain their
+/// scalar range fallback for that uncommon case.
+fn carrier_overlap_split_interval(
+    overlap: &CarrierOverlap,
+    carrier_index: usize,
+    splits: &[SplitCarrierFragment],
+) -> Option<std::ops::Range<usize>> {
+    let [first_vertex, second_vertex] = overlap.endpoint_vertices(carrier_index)?;
+    let boundary_position = |vertex| {
+        let mut position = None;
+        for (split_index, split) in splits.iter().enumerate() {
+            for (candidate, candidate_position) in [
+                (split.start_topology_vertex, split_index),
+                (split.end_topology_vertex, split_index + 1),
+            ] {
+                if candidate != Some(vertex) {
+                    continue;
+                }
+                match position {
+                    Some(existing) if existing != candidate_position => return None,
+                    Some(_) => {}
+                    None => position = Some(candidate_position),
+                }
+            }
+        }
+        position
+    };
+    let first = boundary_position(first_vertex)?;
+    let second = boundary_position(second_vertex)?;
+    (first != second).then(|| first.min(second)..first.max(second))
 }
 
 #[derive(Debug)]
@@ -3910,6 +3970,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
                             pair.first_carrier_index,
                         )
                     };
+                    let mut certified_chord_endpoint_incidence = None;
                     if let Some((first_at_start, second_at_start)) =
                         self.authored_carrier_shared_endpoints(pair)
                     {
@@ -3927,32 +3988,27 @@ impl<'a> CurveRegionBooleanContext<'a> {
                             );
                             return Ok(RegionPairResult::empty());
                         }
-                        let certificate = cusp
-                            .certified_adjacent_chord_is_endpoint_only(
+                        if cusp
+                            .authored_adjacent_chord_is_structurally_endpoint_only(
                                 chord,
                                 cusp_at_start,
                                 &self.data.policy,
                             )
-                            .map_err(|cause| self.invalid(chord_index, cause))?;
-                        match certificate {
-                            Classification::Decided(true) => {
-                                #[cfg(feature = "dispatch-trace")]
-                                hyperreal::dispatch_trace::record(
-                                    "hypercurve",
-                                    "algebraic-circle-chord-pair",
-                                    "adjacent-endpoint-only",
-                                );
-                                return Ok(RegionPairResult::empty());
-                            }
-                            Classification::Decided(false) => {}
-                            Classification::Uncertain(reason) => {
-                                return Ok(RegionPairResult {
-                                    contacts: Vec::new(),
-                                    overlaps: Vec::new(),
-                                    blockers: vec![RegionPairBlocker::Uncertain(reason)],
-                                });
-                            }
+                            .map_err(|cause| self.invalid(chord_index, cause))?
+                        {
+                            #[cfg(feature = "dispatch-trace")]
+                            hyperreal::dispatch_trace::record(
+                                "hypercurve",
+                                "algebraic-circle-chord-pair",
+                                "authored-adjacent-endpoint-only",
+                            );
+                            return Ok(RegionPairResult::empty());
                         }
+                        certified_chord_endpoint_incidence = Some(if *cusp_is_first {
+                            second_at_start
+                        } else {
+                            first_at_start
+                        });
                     }
                     // Refined bounds are only a rejection accelerator. Keep
                     // their proof budget small and fall through to the exact
@@ -3986,121 +4042,19 @@ impl<'a> CurveRegionBooleanContext<'a> {
                             return Ok(RegionPairResult::empty());
                         }
                     }
-                    // A disk is convex, so a chord whose endpoints are both
-                    // strictly inside the supporting disk cannot meet its
-                    // boundary. Run this exact but potentially expensive
-                    // certificate only after the cheap broad-phase rejects.
-                    let mut endpoint_incidence = [None, None];
-                    for (index, endpoint) in [chord.start(), chord.end()].into_iter().enumerate() {
-                        match cusp
+                    let intersections = match certified_chord_endpoint_incidence {
+                        Some(chord_at_start) => cusp
                             .semicircle()
-                            .strict_point_incidence_sign(endpoint, &self.data.policy)
-                            .map_err(|cause| self.invalid(chord_index, cause))?
-                        {
-                            Classification::Decided(sign) => endpoint_incidence[index] = Some(sign),
-                            Classification::Uncertain(_) => {}
-                        }
-                    }
-                    if endpoint_incidence == [Some(RealSign::Negative), Some(RealSign::Negative)] {
-                        #[cfg(feature = "dispatch-trace")]
-                        hyperreal::dispatch_trace::record(
-                            "hypercurve",
-                            "algebraic-circle-chord-pair",
-                            "chord-strictly-inside-disk",
-                        );
-                        return Ok(RegionPairResult::empty());
-                    }
-                    // Boolean band application can place a circle endpoint
-                    // and its tangent chord in different operands, so authored
-                    // adjacency is no longer available as the shared-point
-                    // certificate.  Re-establish that endpoint identity from
-                    // the retained evidence and publish the tangent contact:
-                    // unlike an authored join it must enter the arrangement.
-                    for chord_at_start in [true, false] {
-                        let chord_point = if chord_at_start {
-                            chord.start()
-                        } else {
-                            chord.end()
-                        };
-                        for cusp_at_start in [true, false] {
-                            let circle_point = match cusp
-                                .endpoint_point_evidence(cusp_at_start, &self.data.policy)
-                                .map_err(|cause| self.invalid(cusp_index, cause))?
-                            {
-                                Classification::Decided(Some(point)) => point,
-                                Classification::Decided(None) | Classification::Uncertain(_) => {
-                                    continue;
-                                }
-                            };
-                            if &circle_point != chord_point
-                                && circle_point.same_point(chord_point, &self.data.policy)
-                                    != Classification::Decided(true)
-                            {
-                                continue;
-                            }
-                            if cusp
-                                .certified_adjacent_chord_is_endpoint_only(
-                                    chord,
-                                    cusp_at_start,
-                                    &self.data.policy,
-                                )
-                                .map_err(|cause| self.invalid(chord_index, cause))?
-                                != Classification::Decided(true)
-                            {
-                                continue;
-                            }
-                            #[cfg(feature = "dispatch-trace")]
-                            hyperreal::dispatch_trace::record(
-                                "hypercurve",
-                                "algebraic-circle-chord-pair",
-                                "retained-shared-endpoint-tangent",
-                            );
-                            let contact = crate::bezier_offset::BezierAlgebraicCuspSemicircleRetainedChordContact2 {
-                                cusp_parameter: cusp.endpoint_parameter(cusp_at_start).clone(),
-                                chord_parameter: if chord_at_start {
-                                    chord.start_parameter()
-                                } else {
-                                    chord.end_parameter()
-                                },
-                                point: circle_point,
-                                tangent_cross_sign: RealSign::Zero,
-                            };
-                            return self.retained_cusp_chord_pair_result(
-                                cusp,
+                            .chord_intersections_with_certified_endpoint_incidence(
                                 chord,
-                                chord_index,
-                                *cusp_is_first,
-                                vec![contact],
-                            );
-                        }
-                    }
-                    let support_endpoint = match endpoint_incidence {
-                        [Some(RealSign::Zero), Some(RealSign::Negative)] => Some(chord.start()),
-                        [Some(RealSign::Negative), Some(RealSign::Zero)] => Some(chord.end()),
-                        _ => None,
-                    };
-                    if let Some(
-                        RationalBezierIntersectionPointEvidence2::AlgebraicCuspChordDerived(point),
-                    ) = support_endpoint
-                        && point
-                            .excluded_by_complementary_pair_semicircle(
-                                cusp.semicircle(),
+                                chord_at_start,
                                 &self.data.policy,
-                            )
-                            .map_err(|cause| self.invalid(chord_index, cause))?
-                    {
-                        #[cfg(feature = "dispatch-trace")]
-                        hyperreal::dispatch_trace::record(
-                            "hypercurve",
-                            "algebraic-circle-chord-pair",
-                            "complementary-pair-endpoint-excluded",
-                        );
-                        return Ok(RegionPairResult::empty());
+                            ),
+                        None => cusp
+                            .semicircle()
+                            .chord_intersections(chord, &self.data.policy),
                     }
-                    let intersections = cusp
-                        .semicircle()
-                        .chord_intersections(chord, &self.data.policy)
-                        .map_err(|cause| self.invalid(chord_index, cause))?;
+                    .map_err(|cause| self.invalid(chord_index, cause))?;
                     let intersections = match intersections {
                         Classification::Decided(intersections) => intersections,
                         Classification::Uncertain(reason) => {
@@ -4138,11 +4092,27 @@ impl<'a> CurveRegionBooleanContext<'a> {
                         }
                     };
                     let BezierAlgebraicCuspSemicircleRetainedChordIntersections2::Contacts(
-                        contacts,
+                        mut contacts,
                     ) = intersections
                     else {
                         return Ok(RegionPairResult::empty());
                     };
+                    if let Some(chord_at_start) = certified_chord_endpoint_incidence {
+                        // Boundary-loop seeding already owns this exact
+                        // adjacent vertex. The circle/chord solve was still
+                        // required because a line through one circle point can
+                        // have a second finite contact; discard only the
+                        // structurally identified endpoint and retain every
+                        // other root.
+                        contacts.retain(|contact| {
+                            !contact
+                                .chord_parameter
+                                .is_endpoint_of(chord, chord_at_start)
+                        });
+                        if contacts.is_empty() {
+                            return Ok(RegionPairResult::empty());
+                        }
+                    }
                     self.retained_cusp_chord_pair_result(
                         cusp,
                         chord,
@@ -4356,31 +4326,6 @@ impl<'a> CurveRegionBooleanContext<'a> {
                                 "exact-line-one-sided",
                             );
                             return Ok(RegionPairResult::empty());
-                        }
-                        for (support, candidate) in [(chord, other_chord), (other_chord, chord)] {
-                            let sides = [candidate.start(), candidate.end()].map(|endpoint| {
-                                self.data.policy.strict_predicate_pass(|| {
-                                    support.certified_tangent_side(endpoint, &self.data.policy)
-                                })
-                            });
-                            if matches!(
-                                sides,
-                                [
-                                    Classification::Decided(crate::classify::LineSide::Left),
-                                    Classification::Decided(crate::classify::LineSide::Left)
-                                ] | [
-                                    Classification::Decided(crate::classify::LineSide::Right),
-                                    Classification::Decided(crate::classify::LineSide::Right)
-                                ]
-                            ) {
-                                #[cfg(feature = "dispatch-trace")]
-                                hyperreal::dispatch_trace::record(
-                                    "hypercurve",
-                                    "algebraic-chord-pair",
-                                    "certified-tangent-one-sided",
-                                );
-                                return Ok(RegionPairResult::empty());
-                            }
                         }
                         let intersections = match chord
                             .chord_intersections(other_chord, &self.data.policy)
@@ -5688,7 +5633,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
         contact_vertex_counts.resize(next_topology_vertex, 0);
         transition_candidates.resize(next_topology_vertex, None);
         reclassification_vertices.resize(next_topology_vertex, false);
-        let mut overlaps = Vec::new();
+        let mut overlaps = Vec::<CarrierOverlap>::new();
         for pair in &self.data.pairs {
             let result = self.pair_result(pair)?;
             if let Some(blocker) = result.blockers.first() {
@@ -5925,6 +5870,9 @@ impl<'a> CurveRegionBooleanContext<'a> {
                         previous_vertex,
                         topology_vertex,
                     );
+                    for overlap in &mut overlaps {
+                        overlap.replace_topology_vertex(previous_vertex, topology_vertex);
+                    }
                     contact_vertex_counts[topology_vertex] +=
                         contact_vertex_counts[previous_vertex];
                     contact_vertex_counts[previous_vertex] = 0;
@@ -6029,6 +5977,8 @@ impl<'a> CurveRegionBooleanContext<'a> {
                 let mut first_parameters = [first_range.start().clone(), first_range.end().clone()];
                 let mut second_parameters =
                     [second_range.start().clone(), second_range.end().clone()];
+                let mut first_endpoint_vertices = [usize::MAX; 2];
+                let mut second_endpoint_vertices = [usize::MAX; 2];
                 let first_direction = decided_parameter_cmp(
                     &first_parameters[0],
                     &first_parameters[1],
@@ -6078,6 +6028,10 @@ impl<'a> CurveRegionBooleanContext<'a> {
                             previous_vertex,
                             topology_vertex,
                         );
+                        for retained_overlap in &mut overlaps {
+                            retained_overlap
+                                .replace_topology_vertex(previous_vertex, topology_vertex);
+                        }
                         contact_vertex_counts[topology_vertex] +=
                             contact_vertex_counts[previous_vertex];
                         contact_vertex_counts[previous_vertex] = 0;
@@ -6094,6 +6048,8 @@ impl<'a> CurveRegionBooleanContext<'a> {
                     }
                     transition_candidates[topology_vertex] = None;
                     reclassification_vertices[topology_vertex] = true;
+                    first_endpoint_vertices[index] = topology_vertex;
+                    second_endpoint_vertices[second_index] = topology_vertex;
                     first_parameters[index] = push_canonical_carrier_event(
                         &mut events[pair.first_carrier_index],
                         first_parameters[index].clone(),
@@ -6152,6 +6108,8 @@ impl<'a> CurveRegionBooleanContext<'a> {
                     second_carrier_index: pair.second_carrier_index,
                     first_range,
                     second_range,
+                    first_endpoint_vertices,
+                    second_endpoint_vertices,
                     orientation: overlap.orientation,
                 });
             }
@@ -6707,7 +6665,6 @@ impl<'a> CurveRegionBooleanContext<'a> {
                 }
             }
         }
-
         let authored_successor = |incoming: (usize, usize), outgoing: (usize, usize)| {
             let (incoming_carrier, incoming_split) = incoming;
             let (outgoing_carrier, outgoing_split) = outgoing;
@@ -7079,28 +7036,45 @@ impl<'a> CurveRegionBooleanContext<'a> {
             .iter()
             .map(|splits| vec![false; splits.len()])
             .collect::<Vec<_>>();
+        let mut edge_owns_overlap = topology
+            .split_fragments
+            .iter()
+            .map(|splits| vec![true; splits.len()])
+            .collect::<Vec<_>>();
         for (carrier_index, splits) in topology.split_fragments.iter().enumerate() {
             for (split_index, split) in splits.iter().enumerate() {
                 let range = split.fragment.curve_region_parameter_range();
                 for overlap in &topology.overlaps {
-                    let own_range = if overlap.first_carrier_index == carrier_index {
-                        Some(&overlap.first_range)
-                    } else if overlap.second_carrier_index == carrier_index {
-                        Some(&overlap.second_range)
-                    } else {
-                        None
+                    let (own_range, other_carrier_index) =
+                        if overlap.first_carrier_index == carrier_index {
+                            (Some(&overlap.first_range), overlap.second_carrier_index)
+                        } else if overlap.second_carrier_index == carrier_index {
+                            (Some(&overlap.second_range), overlap.first_carrier_index)
+                        } else {
+                            (None, usize::MAX)
+                        };
+                    let Some(own_range) = own_range else {
+                        continue;
                     };
-                    if let Some(own_range) = own_range
-                        && range_contains_fragment(
-                            own_range,
-                            range.start(),
-                            range.end(),
-                            &self.data.policy,
-                        )?
-                    {
+                    let contains =
+                        match carrier_overlap_split_interval(overlap, carrier_index, splits) {
+                            Some(interval) => interval.contains(&split_index),
+                            None => range_contains_fragment(
+                                own_range,
+                                range.start(),
+                                range.end(),
+                                &self.data.policy,
+                            )?,
+                        };
+                    if contains {
                         edge_overlapped[carrier_index][split_index] = true;
-                        break;
+                        if other_carrier_index < carrier_index {
+                            edge_owns_overlap[carrier_index][split_index] = false;
+                        }
                     }
+                }
+                if !edge_owns_overlap[carrier_index][split_index] {
+                    actions[carrier_index][split_index] = Some(RegionFragmentAction::Discard);
                 }
             }
         }
@@ -7115,12 +7089,20 @@ impl<'a> CurveRegionBooleanContext<'a> {
                     topology.split_fragments[carrier_index].iter().enumerate()
                 {
                     let range = split.fragment.curve_region_parameter_range();
-                    if range_contains_fragment(
-                        overlap_range,
-                        range.start(),
-                        range.end(),
-                        &self.data.policy,
-                    )? {
+                    let contains = match carrier_overlap_split_interval(
+                        overlap,
+                        carrier_index,
+                        &topology.split_fragments[carrier_index],
+                    ) {
+                        Some(interval) => interval.contains(&split_index),
+                        None => range_contains_fragment(
+                            overlap_range,
+                            range.start(),
+                            range.end(),
+                            &self.data.policy,
+                        )?,
+                    };
+                    if contains {
                         edges.push(edge_index(carrier_index, split_index));
                     }
                 }
@@ -7205,24 +7187,6 @@ impl<'a> CurveRegionBooleanContext<'a> {
                 let edge = edge_index(carrier_index, split_index);
                 roots[0] = face_union.find(left_face(edge));
                 roots[1] = face_union.find(right_face(edge));
-            }
-        }
-
-        let mut edge_owns_overlap = topology
-            .split_fragments
-            .iter()
-            .map(|splits| vec![true; splits.len()])
-            .collect::<Vec<_>>();
-        for (carrier_index, splits) in topology.split_fragments.iter().enumerate() {
-            for (split_index, split) in splits.iter().enumerate() {
-                if edge_overlapped[carrier_index][split_index] {
-                    edge_owns_overlap[carrier_index][split_index] = self
-                        .regularized_fragment_owns_overlap(
-                            carrier_index,
-                            &split.fragment,
-                            &topology.overlaps,
-                        )?;
-                }
             }
         }
 
@@ -7360,7 +7324,33 @@ impl<'a> CurveRegionBooleanContext<'a> {
         }
         let mut face_windings = vec![None; edge_count.saturating_mul(2)];
 
-        {
+        // An exact local line-side classification seeds the same connected
+        // face equations without recursively intersecting a synthetic
+        // exterior ray against the complete boundary. Keep that global probe
+        // only for arrangements that have no rank-zero local seed at all.
+        let has_exact_local_seed =
+            topology
+                .split_fragments
+                .iter()
+                .enumerate()
+                .any(|(carrier_index, splits)| {
+                    splits.iter().enumerate().any(|(split_index, split)| {
+                        !edge_overlapped[carrier_index][split_index]
+                            && match &split.fragment {
+                                BezierSplitFragment2::AlgebraicChord(chord) => {
+                                    chord.exact_line().is_some()
+                                }
+                                BezierSplitFragment2::Materialized { .. } => {
+                                    split_fragment_is_affine_line(&split.fragment)
+                                }
+                                BezierSplitFragment2::AlgebraicEndpointImages { .. }
+                                | BezierSplitFragment2::AnalyticParallel(_)
+                                | BezierSplitFragment2::AlgebraicCuspSemicircle(_)
+                                | BezierSplitFragment2::SelectedFiber(_) => false,
+                            }
+                    })
+                });
+        if !has_exact_local_seed {
             let mut retained_bounds = Vec::with_capacity(self.data.carriers.len());
             for carrier in &self.data.carriers {
                 let cached = carrier
@@ -7854,11 +7844,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
                 continue;
             }
             let split = &topology.split_fragments[carrier_index][split_index];
-            match self.regularized_fragment_decision(
-                carrier_index,
-                &split.fragment,
-                &topology.overlaps,
-            ) {
+            match self.regularized_fragment_geometric_decision(carrier_index, &split.fragment) {
                 Ok(decision) => {
                     actions[carrier_index][split_index] = Some(decision.action);
                     let [left, right] = decision.side_windings;
@@ -7971,21 +7957,6 @@ impl<'a> CurveRegionBooleanContext<'a> {
             }
         }
         Some(*filled_side_is_left)
-    }
-
-    fn regularized_fragment_decision(
-        &self,
-        carrier_index: usize,
-        fragment: &BezierSplitFragment2,
-        overlaps: &[CarrierOverlap],
-    ) -> ExactCurveResult<RegularizedFragmentDecision> {
-        let owns_overlap =
-            self.regularized_fragment_owns_overlap(carrier_index, fragment, overlaps)?;
-        let mut decision = self.regularized_fragment_geometric_decision(carrier_index, fragment)?;
-        if !owns_overlap {
-            decision.action = RegionFragmentAction::Discard;
-        }
-        Ok(decision)
     }
 
     fn regularized_fragment_geometric_decision(
@@ -8819,31 +8790,6 @@ impl<'a> CurveRegionBooleanContext<'a> {
             }
         }
         Err(self.blocked(carrier_index, last_reason))
-    }
-
-    fn regularized_fragment_owns_overlap(
-        &self,
-        carrier_index: usize,
-        fragment: &BezierSplitFragment2,
-        overlaps: &[CarrierOverlap],
-    ) -> ExactCurveResult<bool> {
-        let fragment_range = fragment.curve_region_parameter_range();
-        let (start, end) = (fragment_range.start(), fragment_range.end());
-        for overlap in overlaps {
-            let (own_range, other_carrier_index) = if overlap.first_carrier_index == carrier_index {
-                (&overlap.first_range, overlap.second_carrier_index)
-            } else if overlap.second_carrier_index == carrier_index {
-                (&overlap.second_range, overlap.first_carrier_index)
-            } else {
-                continue;
-            };
-            if other_carrier_index < carrier_index
-                && range_contains_fragment(own_range, start, end, &self.data.policy)?
-            {
-                return Ok(false);
-            }
-        }
-        Ok(true)
     }
 
     fn fragment_side_classification(
@@ -10838,6 +10784,11 @@ fn split_carrier_with_refinement(
     max_refinement_steps: usize,
     policy: &CurveContext,
 ) -> Result<Vec<SplitCarrierFragment>, CurveError> {
+    // Specialized event splitters receive only authored endpoints, contacts
+    // admitted by `parameter_in_carrier`, and clipped overlap endpoints.
+    // Their sorted event windows are therefore already within the finite
+    // carrier. Only generic whole-curve materialization needs a second range
+    // clip below.
     if carrier.selected_fiber_endpoint_points.is_some()
         || events
             .iter()
@@ -10852,7 +10803,7 @@ fn split_carrier_with_refinement(
         return split_algebraic_chord_carrier(carrier, chord, events, policy);
     }
     if let RegionCarrierGeometry::AlgebraicCuspSemicircle(fragment) = &carrier.geometry {
-        return split_algebraic_cusp_carrier(carrier, fragment, events, policy);
+        return split_algebraic_cusp_carrier(carrier, fragment, events, contact_points, policy);
     }
     let parameters = events
         .iter()
@@ -11044,10 +10995,6 @@ fn split_selected_fiber_carrier(
                 )));
             }
         }
-        if !parameter_range_inside_carrier(&pair[0].parameter, &pair[1].parameter, carrier, policy)?
-        {
-            continue;
-        }
         let start_point =
             selected_fiber_event_point(&pair[0], carrier, &source, contact_points, policy)?;
         let end_point =
@@ -11155,10 +11102,6 @@ fn split_algebraic_chord_carrier(
                 )));
             }
         }
-        if !parameter_range_inside_carrier(&pair[0].parameter, &pair[1].parameter, carrier, policy)?
-        {
-            continue;
-        }
         let Some(start) = pair[0].parameter.as_algebraic_chord() else {
             return Err(CurveError::Topology(
                 "non-chord cut reached an algebraic chord carrier".into(),
@@ -11194,30 +11137,78 @@ fn split_algebraic_cusp_carrier(
     carrier: &RegionCarrier,
     fragment: &crate::BezierAlgebraicCuspSemicircleFragment2,
     events: &[CarrierEvent],
+    contact_points: &[ContactVertex],
     policy: &CurveContext,
 ) -> Result<Vec<SplitCarrierFragment>, CurveError> {
-    let mut boundaries = events.to_vec();
-    for index in 1..boundaries.len() {
-        let mut cursor = index;
-        while cursor > 0 {
-            let order = match boundaries[cursor]
-                .parameter
-                .cmp_by_refinement(&boundaries[cursor - 1].parameter, policy)?
-            {
-                Classification::Decided(order) => order,
-                Classification::Uncertain(reason) => {
-                    return Err(CurveError::Topology(format!(
-                        "algebraic cusp split ordering remained uncertain: {reason:?}"
-                    )));
-                }
-            };
-            if order != Ordering::Less {
-                break;
-            }
-            boundaries.swap(cursor, cursor - 1);
-            cursor -= 1;
-        }
+    let endpoint_indices = || {
+        let start = events
+            .iter()
+            .position(|event| event.parameter == carrier.start)?;
+        let end = events
+            .iter()
+            .position(|event| event.parameter == carrier.end)?;
+        (start != end).then_some([start, end])
+    };
+    if events.len() == 2
+        && let Some([start, end]) = endpoint_indices()
+    {
+        let [start_topology_vertex, end_topology_vertex] = if carrier.reversed {
+            [events[end].topology_vertex, events[start].topology_vertex]
+        } else {
+            [events[start].topology_vertex, events[end].topology_vertex]
+        };
+        return Ok(vec![SplitCarrierFragment {
+            fragment: BezierSplitFragment2::AlgebraicCuspSemicircle(fragment.clone()),
+            start_topology_vertex,
+            end_topology_vertex,
+        }]);
     }
+
+    let boundaries = if events.len() == 3
+        && let Some([start, end]) = endpoint_indices()
+        && let Some(interior) = (0..events.len()).find(|index| *index != start && *index != end)
+        && let Some(vertex) = events[interior].topology_vertex
+        && let Some(point) = contact_points
+            .iter()
+            .filter(|contact| contact.topology_vertex == vertex)
+            .find_map(|contact| contact.point.as_ref())
+        && fragment.certified_incident_point_evidence_is_strict_interior(point, policy)?
+            == Classification::Decided(true)
+    {
+        // The pair kernel has already certified the only nonendpoint event
+        // as strict interior. Its finite-domain order is therefore exactly
+        // start, cut, end; rebuilding two independent angular comparisons
+        // would discard that stronger incidence certificate.
+        vec![
+            events[start].clone(),
+            events[interior].clone(),
+            events[end].clone(),
+        ]
+    } else {
+        let mut boundaries = events.to_vec();
+        for index in 1..boundaries.len() {
+            let mut cursor = index;
+            while cursor > 0 {
+                let order = match boundaries[cursor]
+                    .parameter
+                    .cmp_by_refinement(&boundaries[cursor - 1].parameter, policy)?
+                {
+                    Classification::Decided(order) => order,
+                    Classification::Uncertain(reason) => {
+                        return Err(CurveError::Topology(format!(
+                            "algebraic cusp split ordering remained uncertain: {reason:?}"
+                        )));
+                    }
+                };
+                if order != Ordering::Less {
+                    break;
+                }
+                boundaries.swap(cursor, cursor - 1);
+                cursor -= 1;
+            }
+        }
+        boundaries
+    };
 
     let mut output = Vec::with_capacity(boundaries.len().saturating_sub(1));
     for pair in boundaries.windows(2) {
@@ -11238,10 +11229,6 @@ fn split_algebraic_cusp_carrier(
                 )));
             }
         }
-        if !parameter_range_inside_carrier(&pair[0].parameter, &pair[1].parameter, carrier, policy)?
-        {
-            continue;
-        }
         let Some(start) = pair[0].parameter.as_algebraic_cusp() else {
             return Err(CurveError::Topology(
                 "Bezier cut reached an algebraic cusp carrier".into(),
@@ -11252,20 +11239,13 @@ fn split_algebraic_cusp_carrier(
                 "Bezier cut reached an algebraic cusp carrier".into(),
             ));
         };
-        let retained = match crate::BezierAlgebraicCuspSemicircleFragment2::try_new(
+        let retained = crate::BezierAlgebraicCuspSemicircleFragment2::from_certified_range(
             fragment.semicircle().clone(),
             start.clone(),
             end.clone(),
             false,
             policy,
-        )? {
-            Classification::Decided(fragment) => fragment,
-            Classification::Uncertain(reason) => {
-                return Err(CurveError::Topology(format!(
-                    "algebraic cusp split construction remained uncertain: {reason:?}"
-                )));
-            }
-        }
+        )
         .inherit_certified_tangent_endpoints(fragment);
         output.push(SplitCarrierFragment {
             fragment: BezierSplitFragment2::AlgebraicCuspSemicircle(retained),
@@ -11356,10 +11336,6 @@ fn split_analytic_carrier(
                     "analytic parallel split interval remained uncertain: {reason:?}"
                 )));
             }
-        }
-        if !parameter_range_inside_carrier(&pair[0].parameter, &pair[1].parameter, carrier, policy)?
-        {
-            continue;
         }
         output.push(SplitCarrierFragment {
             fragment: BezierSplitFragment2::AnalyticParallel(
@@ -13235,11 +13211,12 @@ fn parameter_in_carrier(
             use crate::bezier_offset::BezierAlgebraicCuspSemicircleIncidentLocation2::{
                 End, Exterior, Interior, Start,
             };
-            match fragment
+            let location = fragment
                 .certified_incident_point_evidence_location(parameter, &point, policy)
                 .map_err(|cause| {
                     ExactCurveError::invalid(CurveOperation2::Boolean, carrier.family, cause)
-                })? {
+                })?;
+            match location {
                 Classification::Decided(Start | Interior | End) => return Ok(true),
                 Classification::Decided(Exterior) => return Ok(false),
                 Classification::Uncertain(_) => {}
