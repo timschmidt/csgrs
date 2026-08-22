@@ -2722,7 +2722,12 @@ impl<'a> CurveRegionBooleanContext<'a> {
                             &self.data.policy,
                         ),
                     );
-                    chord.strict_oriented_side_by_fast_refinement(&point, &self.data.policy)
+                    let certified = chord.certified_tangent_side(&point, &self.data.policy);
+                    if matches!(certified, Classification::Decided(_)) {
+                        Ok(certified)
+                    } else {
+                        chord.strict_oriented_side_by_fast_refinement(&point, &self.data.policy)
+                    }
                 };
                 let sides = [endpoint_side(start), endpoint_side(end)];
                 let sides = match sides {
@@ -5925,10 +5930,12 @@ impl<'a> CurveRegionBooleanContext<'a> {
                         second_carrier: pair.second_carrier_index,
                         interior_on_both_carriers: parameter_strictly_inside_carrier(
                             first_parameter,
+                            contact.point(),
                             &self.data.carriers[pair.first_carrier_index],
                             &self.data.policy,
                         ) && parameter_strictly_inside_carrier(
                             second_parameter,
+                            contact.point(),
                             &self.data.carriers[pair.second_carrier_index],
                             &self.data.policy,
                         ),
@@ -8440,16 +8447,19 @@ impl<'a> CurveRegionBooleanContext<'a> {
                         break;
                     }
                 };
+                let bounds = bounds.certified_rational_outer_envelope().unwrap_or(bounds);
                 accumulated = Some(match accumulated {
                     None => bounds,
-                    Some(ref accumulated) => match accumulated.union(&bounds, &self.data.policy) {
-                        Classification::Decided(bounds) => bounds,
-                        Classification::Uncertain(reason) => {
-                            last_reason = reason;
-                            complete = false;
-                            break;
+                    Some(ref accumulated) => {
+                        match accumulated.union(&bounds, &CurveContext::STRICT) {
+                            Classification::Decided(bounds) => bounds,
+                            Classification::Uncertain(reason) => {
+                                last_reason = reason;
+                                complete = false;
+                                break;
+                            }
                         }
-                    },
+                    }
                 });
             }
             if complete {
@@ -9765,16 +9775,19 @@ impl<'a> CurveRegionBooleanContext<'a> {
                         break;
                     }
                 };
+                let bounds = bounds.certified_rational_outer_envelope().unwrap_or(bounds);
                 accumulated = Some(match accumulated {
                     None => bounds,
-                    Some(ref accumulated) => match accumulated.union(&bounds, &self.data.policy) {
-                        Classification::Decided(bounds) => bounds,
-                        Classification::Uncertain(reason) => {
-                            last_reason = reason;
-                            complete = false;
-                            break;
+                    Some(ref accumulated) => {
+                        match accumulated.union(&bounds, &CurveContext::STRICT) {
+                            Classification::Decided(bounds) => bounds,
+                            Classification::Uncertain(reason) => {
+                                last_reason = reason;
+                                complete = false;
+                                break;
+                            }
                         }
-                    },
+                    }
                 });
             }
             if complete {
@@ -13257,9 +13270,27 @@ fn parameter_in_carrier(
 
 fn parameter_strictly_inside_carrier(
     parameter: &CurveRegionParameter2,
+    point: Option<&RationalBezierIntersectionPointEvidence2>,
     carrier: &RegionCarrier,
     policy: &CurveContext,
 ) -> bool {
+    if let (
+        Some(parameter),
+        Some(point),
+        RegionCarrierGeometry::AlgebraicCuspSemicircle(fragment),
+    ) = (parameter.as_algebraic_cusp(), point, &carrier.geometry)
+    {
+        if let Ok(Some(Classification::Decided(interior))) =
+            fragment.translated_pair_parameter_is_strict_interior(parameter, policy)
+        {
+            return interior;
+        }
+        if let Ok(Classification::Decided(interior)) =
+            fragment.certified_incident_point_evidence_is_strict_interior(point, policy)
+        {
+            return interior;
+        }
+    }
     matches!(
         (
             decided_parameter_cmp(parameter, &carrier.start, policy),

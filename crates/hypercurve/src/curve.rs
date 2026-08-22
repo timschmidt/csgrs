@@ -7725,7 +7725,7 @@ fn fillet_offset_centers(
                 .map_err(|cause| {
                     ExactCurveError::invalid(CurveOperation2::Fillet, line_family, cause)
                 })?;
-            let finite_source_domain = line_source.native_line().is_some()
+            let represented_line_names_finite_domain = line_source.native_line().is_some()
                 || algebraic_chord_domain_matches_line_witness(
                     &retained_support,
                     line_support,
@@ -7737,15 +7737,28 @@ fn fillet_offset_centers(
             // ancestry. The former selects the compact selected-fiber line
             // kernel; the latter is the exact tangent relation needed when a
             // recursively selected terminal circle is reconstructed.
-            let support_chord = retained_support
-                .chord_between_certified_ordered_support_points(
-                    RationalBezierIntersectionPointEvidence2::Exact(line_support.start().clone()),
-                    RationalBezierIntersectionPointEvidence2::Exact(line_support.end().clone()),
-                    policy,
-                )
-                .map_err(|cause| {
-                    ExactCurveError::invalid(CurveOperation2::Fillet, line_family, cause)
-                })?;
+            let (support_chord, finite_source_domain) = if mode == CurveCornerMode2::TrimOnly
+                && !represented_line_names_finite_domain
+            {
+                // A canonical represented line names only the infinite
+                // support of this algebraic chord. For TrimOnly, intersect
+                // the translated authored chord itself so the common kernel
+                // owns and retains both exact finite-boundary inequalities.
+                (retained_support.clone(), true)
+            } else {
+                let support = retained_support
+                    .chord_between_certified_ordered_support_points(
+                        RationalBezierIntersectionPointEvidence2::Exact(
+                            line_support.start().clone(),
+                        ),
+                        RationalBezierIntersectionPointEvidence2::Exact(line_support.end().clone()),
+                        policy,
+                    )
+                    .map_err(|cause| {
+                        ExactCurveError::invalid(CurveOperation2::Fillet, line_family, cause)
+                    })?;
+                (support, represented_line_names_finite_domain)
+            };
             let promoted = FilletOffsetCarrier2::AlgebraicChord {
                 source: &source_chord,
                 support: support_chord,
@@ -9604,17 +9617,23 @@ fn fillet_cut_from_center(
             signed_distance,
             ..
         } => {
-            let point = source
-                .normal_displaced_point_evidence(center.clone(), -signed_distance.clone(), policy)
-                .map_err(|cause| {
-                    ExactCurveError::invalid(CurveOperation2::Fillet, family, cause)
-                })?;
-            algebraic_chord_corner_cut_from_support_point(
+            #[cfg(feature = "dispatch-trace")]
+            hyperreal::dispatch_trace::record(
+                "hypercurve",
+                "curve-region-fillet-algebraic-chord-cut",
+                match retained_parameter {
+                    Some(parameter) if parameter.is_algebraic_chord() => "algebraic-chord",
+                    Some(_) => "other",
+                    None => "missing",
+                },
+            );
+            algebraic_chord_fillet_cut_from_center(
                 source,
-                point,
+                center,
+                retained_parameter,
+                signed_distance,
                 previous,
                 mode,
-                CurveOperation2::Fillet,
                 family,
                 policy,
             )
@@ -9658,6 +9677,17 @@ fn fillet_cut_from_center(
                 }
             } else if strict_support_interior == Classification::Decided(true) {
                 CornerPlacement2::Trim
+            } else if strict_support_interior == Classification::Decided(false)
+                && mode != CurveCornerMode2::TrimOrExtend
+            {
+                // `support` is the concentric offset image of `source` over
+                // the identical angular range. The center constructor has
+                // already certified circle incidence, so a decided failure
+                // of strict support-fragment interior proves that this
+                // candidate is either an endpoint or exterior on the source
+                // as well. TrimOnly rejects both; comparing independently
+                // represented angular parameters cannot add information.
+                return Ok(None);
             } else {
                 use crate::bezier_offset::BezierAlgebraicCuspSemicircleIncidentLocation2::{
                     End, Exterior, Interior, Start,
@@ -9931,6 +9961,9 @@ fn algebraic_chord_parallel_parameter_placement(
                 ),
             )
         })?;
+    if parameter.has_certified_strict_interior_location() {
+        return Ok(Some(CornerPlacement2::Trim));
+    }
     let compare = |boundary| {
         parameter
             .cmp_by_refinement(boundary, policy)

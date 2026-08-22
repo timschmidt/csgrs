@@ -382,6 +382,29 @@ impl Aabb2 {
         }
     }
 
+    /// Returns an exact-rational outer envelope without ordering either stored
+    /// endpoint against an unrelated algebraic value.
+    ///
+    /// Every coordinate interval is a certified enclosure supplied by
+    /// `hyperreal`; choosing the lower enclosure for `min` and the upper
+    /// enclosure for `max` can only widen this box.  This is therefore safe in
+    /// STRICT as well as APPROXIMATE_512 and does not consume an approximate
+    /// equality decision.  The modest fixed precision keeps broad-phase boxes
+    /// useful without importing large dyadic denominators into later exact
+    /// predicates.
+    pub(crate) fn certified_rational_outer_envelope(&self) -> Option<Self> {
+        const PRECISION: i32 = -32;
+
+        let [min_x, _] = self.min_x().certified_dyadic_interval(PRECISION)?;
+        let [min_y, _] = self.min_y().certified_dyadic_interval(PRECISION)?;
+        let [_, max_x] = self.max_x().certified_dyadic_interval(PRECISION)?;
+        let [_, max_y] = self.max_y().certified_dyadic_interval(PRECISION)?;
+        Some(Self::new_unchecked(
+            Point2::new(Real::new(min_x), Real::new(min_y)),
+            Point2::new(Real::new(max_x), Real::new(max_y)),
+        ))
+    }
+
     /// Classifies whether this closed box contains `point`.
     pub fn contains_point(&self, point: &Point2, policy: &CurveContext) -> Classification<bool> {
         if !policy.is_edge_preview() {

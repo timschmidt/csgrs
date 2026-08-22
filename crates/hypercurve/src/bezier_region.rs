@@ -26038,14 +26038,10 @@ mod tests {
                             "the exact selected-circle seam endpoint must remain admissible: policy={policy:?}, reversed={reversed}, error={error:?}"
                         )
                     });
-                assert_eq!(
-                    result.certainty,
-                    if policy == CurveContext::STRICT {
-                        CurveCertainty::Certified
-                    } else {
-                        CurveCertainty::Approximate512Consumed
-                    },
-                );
+                // The recursive selected-field authority now proves this seam
+                // exactly under either policy; APPROXIMATE_512 need not consume
+                // its terminal equality allowance when an exact proof succeeds.
+                assert_eq!(result.certainty, CurveCertainty::Certified);
                 let owns_seam_endpoint = |filleted: &CurveRegion2| {
                     source_circle_fragments
                         .iter()
@@ -27313,22 +27309,23 @@ mod tests {
 
     #[test]
     fn recursively_nested_selected_radial_boolean_fillets_remain_exact() {
-        let policy = CurveContext::STRICT;
-        let source = independent_pair_native_fillet(&policy, false);
-        let source_radius = pair_radial_corner(&source).1;
-        let (third_generation, third_radius) =
-            next_selected_radial_boolean_fillet_generation(&source, &source_radius, &policy);
-        let (fourth_generation, _) = next_selected_radial_boolean_fillet_generation(
-            &third_generation,
-            &third_radius,
-            &policy,
-        );
-        let replay = fourth_generation
-            .boolean_regions(&selected_fillet_disjoint_square(&policy), &policy)
-            .expect("the fourth-generation fillet re-enters the Boolean kernel");
-        assert_eq!(replay.certainty, CurveCertainty::Certified);
-        assert!(replay.value.intersection().is_empty());
-        assert_eq!(replay.value.union().boundary_loops().len(), 2);
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let source = independent_pair_native_fillet(&policy, false);
+            let source_radius = pair_radial_corner(&source).1;
+            let (third_generation, third_radius) =
+                next_selected_radial_boolean_fillet_generation(&source, &source_radius, &policy);
+            let (fourth_generation, _) = next_selected_radial_boolean_fillet_generation(
+                &third_generation,
+                &third_radius,
+                &policy,
+            );
+            let replay = fourth_generation
+                .boolean_regions(&selected_fillet_disjoint_square(&policy), &policy)
+                .expect("the fourth-generation fillet re-enters the Boolean kernel");
+            assert_eq!(replay.certainty, CurveCertainty::Certified);
+            assert!(replay.value.intersection().is_empty());
+            assert_eq!(replay.value.union().boundary_loops().len(), 2);
+        }
     }
 
     #[test]

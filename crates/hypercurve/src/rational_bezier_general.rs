@@ -328,6 +328,26 @@ impl RationalBezierIntersectionPointEvidence2 {
         if self.shares_storage(other) {
             return Classification::Decided(true);
         }
+        let recursive_composite = |point: &Self| {
+            matches!(
+                point,
+                Self::AlgebraicChordPair(_)
+                    | Self::AlgebraicCuspChord(_)
+                    | Self::AlgebraicCuspChordDerived(_)
+                    | Self::AlgebraicChordParallel(_)
+                    | Self::Similarity(_)
+            )
+        };
+        if (recursive_composite(self) || recursive_composite(other))
+            && !matches!(self, Self::AnalyticParallel(_))
+            && !matches!(other, Self::AnalyticParallel(_))
+            && let Ok(Classification::Decided(Some(equal))) =
+                crate::bezier_offset::recursive_projective_point_evidence_equality(
+                    self, other, policy,
+                )
+        {
+            return Classification::Decided(equal);
+        }
         match (self, other) {
             (Self::Exact(first), Self::Exact(second)) => {
                 match is_zero(&first.distance_squared(second), policy) {
