@@ -7484,6 +7484,34 @@ fn append_exact_round_join(
         );
     }
 
+    if matches!(
+        sweep_kind,
+        crate::arc_bezier::ArcSweepKind::Minor | crate::arc_bezier::ArcSweepKind::Semicircle
+    ) && let (Some(previous_tangent), Some(next_tangent)) =
+        (previous.end_tangent.as_ref(), next.start_tangent.as_ref())
+    {
+        if let ExactOffsetTangent2::SelectedCircularEndpoint {
+            fragment, at_start, ..
+        } = previous_tangent
+            && let ExactOffsetTangent2::AlgebraicChord(chord) = next_tangent
+        {
+            return append_selected_circle_chord_round_join(
+                fragments, previous, next, distance, clockwise, sweep_kind, chord, fragment,
+                *at_start, false, policy,
+            );
+        }
+        if let ExactOffsetTangent2::AlgebraicChord(chord) = previous_tangent
+            && let ExactOffsetTangent2::SelectedCircularEndpoint {
+                fragment, at_start, ..
+            } = next_tangent
+        {
+            return append_selected_circle_chord_round_join(
+                fragments, previous, next, distance, clockwise, sweep_kind, chord, fragment,
+                *at_start, true, policy,
+            );
+        }
+    }
+
     if sweep_kind == crate::arc_bezier::ArcSweepKind::Minor {
         if let (
             Some(ExactOffsetTangent2::Vector(anchor_tangent)),
@@ -7690,6 +7718,120 @@ fn append_exact_round_join(
         }
     }
     Ok(Classification::Uncertain(UncertaintyReason::Unsupported))
+}
+
+#[allow(clippy::too_many_arguments)]
+fn append_selected_circle_chord_round_join(
+    fragments: &mut Vec<BezierSplitFragment2>,
+    previous: &ExactOffsetSpan2,
+    next: &ExactOffsetSpan2,
+    distance: &Real,
+    clockwise: bool,
+    sweep_kind: crate::arc_bezier::ArcSweepKind,
+    chord: &crate::BezierAlgebraicChord2,
+    selected_circle: &crate::BezierAlgebraicCuspSemicircleFragment2,
+    selected_at_start: bool,
+    anchor_is_previous: bool,
+    policy: &CurveContext,
+) -> CurveResult<Classification<()>> {
+    // Use the algebraic chord as the local unit frame. Its offset endpoint is
+    // parameter zero on the join circle; reversing the selected half when the
+    // chord follows the circular span restores the requested boundary order.
+    // The other authored endpoint is then selected by the same authoritative
+    // selected-circle/chord kernel used everywhere else.
+    let (other_point, fillet_clockwise, reversed) = if anchor_is_previous {
+        (&next.offset_start, clockwise, false)
+    } else {
+        (&previous.offset_end, !clockwise, true)
+    };
+    let center = if anchor_is_previous {
+        chord.end().clone()
+    } else {
+        chord.start().clone()
+    };
+    let fillet = match crate::bezier_offset::BezierAlgebraicCuspSemicircle2::from_retained_center_and_chord_normal(
+        center,
+        chord.clone(),
+        distance.clone(),
+        fillet_clockwise,
+        policy,
+    )? {
+        Classification::Decided(Some(fillet)) => fillet,
+        Classification::Decided(None) => return Ok(Classification::Decided(())),
+        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+    };
+    let end_parameter = match sweep_kind {
+        crate::arc_bezier::ArcSweepKind::Semicircle => {
+            crate::bezier_offset::BezierAlgebraicCuspSemicircleParameter2::Exact(Real::one())
+        }
+        crate::arc_bezier::ArcSweepKind::Minor => {
+            let tangent = match selected_circle.endpoint_tangent_chord(selected_at_start, policy)? {
+                Classification::Decided(Some(tangent)) => tangent,
+                Classification::Decided(None) => {
+                    return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+                }
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            };
+            match fillet.certified_authored_chord_pair_normal_contact_parameter(
+                chord,
+                tangent,
+                other_point.clone(),
+                distance.clone(),
+                policy,
+            )? {
+                Classification::Decided(parameter) => parameter,
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            }
+        }
+        crate::arc_bezier::ArcSweepKind::Major | crate::arc_bezier::ArcSweepKind::FullCircle => {
+            unreachable!("an exact offset round join admits at most one semicircle")
+        }
+    };
+    let fragment = match crate::BezierAlgebraicCuspSemicircleFragment2::try_new(
+        fillet,
+        crate::bezier_offset::BezierAlgebraicCuspSemicircleParameter2::Exact(Real::zero()),
+        end_parameter,
+        reversed,
+        policy,
+    )? {
+        Classification::Decided(fragment) => fragment,
+        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+    };
+    for (at_start, expected) in [(true, &previous.offset_end), (false, &next.offset_start)] {
+        if at_start == anchor_is_previous {
+            // Parameter zero was constructed from this exact chord endpoint
+            // and its signed left-normal offset. That shared carrier is the
+            // incidence certificate; comparing its independently wrapped
+            // center point would only rebuild the same selected fields.
+            continue;
+        }
+        match fragment.certify_and_cache_authored_endpoint(at_start, expected, policy)? {
+            Classification::Decided(true) => {}
+            Classification::Decided(false) => {
+                return Err(CurveError::Topology(
+                    "a retained selected-circle/chord round join missed its certified endpoint"
+                        .into(),
+                ));
+            }
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        }
+    }
+    #[cfg(feature = "dispatch-trace")]
+    hyperreal::dispatch_trace::record(
+        "hypercurve",
+        "curve-region-exact-offset-join",
+        "selected-circle-chord-round",
+    );
+    fragments.push(BezierSplitFragment2::AlgebraicCuspSemicircle(
+        fragment.with_certified_tangent_endpoints(),
+    ));
+    Ok(Classification::Decided(()))
 }
 
 #[allow(clippy::too_many_arguments)]

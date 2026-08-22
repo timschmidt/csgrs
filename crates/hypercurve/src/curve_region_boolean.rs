@@ -4982,11 +4982,43 @@ impl<'a> CurveRegionBooleanContext<'a> {
             RegionCarrierPairContext::CuspPair => {
                 let first_cusp = first.geometry.algebraic_cusp();
                 let second_cusp = second.geometry.algebraic_cusp();
+                if let Some((first_at_start, second_at_start)) =
+                    self.authored_carrier_shared_endpoints(pair)
+                    && (first_cusp.certified_tangent_endpoint(first_at_start)
+                        || second_cusp.certified_tangent_endpoint(second_at_start))
+                {
+                    // The round/fillet constructor certifies tangency to its
+                    // authored boundary neighbor before the carriers become
+                    // independent arrangement entries. Loop seeding already
+                    // owns their shared vertex, so there is no extra contact
+                    // event to reconstruct.
+                    #[cfg(feature = "dispatch-trace")]
+                    hyperreal::dispatch_trace::record(
+                        "hypercurve",
+                        "curve-region-cusp-pair",
+                        "adjacent-certified-tangent",
+                    );
+                    return Ok(RegionPairResult::empty());
+                }
                 if let Classification::Decided(Some((first_parameter, second_parameter))) =
                     first_cusp
                         .unique_shared_tangent_endpoint_contact(second_cusp, &self.data.policy)
                         .map_err(|cause| self.invalid(pair.first_carrier_index, cause))?
                 {
+                    if self.authored_carriers_are_adjacent(pair) {
+                        // Loop seeding already owns this exact vertex on both
+                        // carrier domains. An authored tangent switch neither
+                        // splits either injective carrier nor adds a second
+                        // topology event, so replaying its mapped parameter
+                        // range would duplicate the retained adjacency proof.
+                        #[cfg(feature = "dispatch-trace")]
+                        hyperreal::dispatch_trace::record(
+                            "hypercurve",
+                            "curve-region-cusp-pair",
+                            "adjacent-retained-endpoint-tangency",
+                        );
+                        return Ok(RegionPairResult::empty());
+                    }
                     #[cfg(feature = "dispatch-trace")]
                     hyperreal::dispatch_trace::record(
                         "hypercurve",

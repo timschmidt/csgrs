@@ -14301,6 +14301,50 @@ impl BezierAlgebraicCuspSemicircle2 {
         contact_radial_distance: Real,
         policy: &CurveContext,
     ) -> CurveResult<Classification<BezierAlgebraicCuspSemicircleParameter2>> {
+        self.selected_chord_pair_normal_contact_parameter(
+            anchor,
+            chord,
+            point,
+            contact_radial_distance,
+            false,
+            policy,
+        )
+    }
+
+    /// Retains a contact whose exact normal displacement is owned by the
+    /// offset construction itself. The caller supplies a unit tangent chord
+    /// at the authored source vertex and the corresponding signed offset
+    /// point, so replaying independent coordinate equality would duplicate
+    /// that construction proof. Angular placement still uses the same exact
+    /// chord-pair predicate as every other chord-normal contact.
+    pub(crate) fn certified_authored_chord_pair_normal_contact_parameter(
+        &self,
+        anchor: &BezierAlgebraicChord2,
+        chord: BezierAlgebraicChord2,
+        point: RationalBezierIntersectionPointEvidence2,
+        contact_radial_distance: Real,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<BezierAlgebraicCuspSemicircleParameter2>> {
+        self.selected_chord_pair_normal_contact_parameter(
+            anchor,
+            chord,
+            point,
+            contact_radial_distance,
+            true,
+            policy,
+        )
+    }
+
+    #[allow(clippy::too_many_arguments)]
+    fn selected_chord_pair_normal_contact_parameter(
+        &self,
+        anchor: &BezierAlgebraicChord2,
+        chord: BezierAlgebraicChord2,
+        point: RationalBezierIntersectionPointEvidence2,
+        contact_radial_distance: Real,
+        incidence_certified: bool,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<BezierAlgebraicCuspSemicircleParameter2>> {
         anchor.validate_policy(policy)?;
         chord.validate_policy(policy)?;
         let Some(frame) = self.data.frame.chord_normal() else {
@@ -14316,15 +14360,19 @@ impl BezierAlgebraicCuspSemicircle2 {
                 "a selected chord-normal pair contact did not share its anchor frame".into(),
             ));
         }
-        let contact_radial_distance = match chord.certified_normal_displacement_distance(
-            &frame.center,
-            &point,
-            &contact_radial_distance,
-            policy,
-        )? {
-            Classification::Decided(distance) => distance,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
+        let contact_radial_distance = if incidence_certified {
+            contact_radial_distance
+        } else {
+            match chord.certified_normal_displacement_distance(
+                &frame.center,
+                &point,
+                &contact_radial_distance,
+                policy,
+            )? {
+                Classification::Decided(distance) => distance,
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
             }
         };
         let radius_residual = self.radial_distance() * self.radial_distance()
@@ -68393,6 +68441,51 @@ impl BezierAlgebraicCuspSemicircleFragment2 {
                     );
                 }
             };
+        // A chord authored from both endpoints of this selected semicircle is
+        // a certified secant. Its endpoint tangent-cross sign depends only on
+        // traversal orientation and chord direction; neither recursive center
+        // nor endpoint coordinate field participates in that predicate.
+        if let Classification::Decided(Some(chord_reversed)) =
+            source.authored_endpoint_chord_orientation(chord, policy)?
+        {
+            // `chord_reversed` is relative to fragment traversal. Reversing a
+            // fragment reverses both that secant and its tangent, so their
+            // cross sign is already the carrier sign below; only the target
+            // fragment's retained orientation factor remains to transport.
+            let mut source_cross = if source.data.semicircle.is_clockwise() {
+                RealSign::Negative
+            } else {
+                RealSign::Positive
+            };
+            if !start_endpoint {
+                source_cross = product_sign(source_cross, RealSign::Negative);
+            }
+            if chord_reversed {
+                source_cross = product_sign(source_cross, RealSign::Negative);
+            }
+            #[cfg(feature = "dispatch-trace")]
+            hyperreal::dispatch_trace::record(
+                "hypercurve",
+                "selected-circle-chord-tangent",
+                "authored-two-endpoint-secant",
+            );
+            return Ok(Classification::Decided(product_sign(
+                source_cross,
+                target_factor,
+            )));
+        }
+        let source_factor =
+            match source.tangent_orientation_factor_from(&source.data.semicircle, policy)? {
+                Classification::Decided(Some(factor)) => factor,
+                Classification::Decided(None) | Classification::Uncertain(_) => {
+                    return self.endpoint_tangent_cross_algebraic_chord(
+                        start_endpoint,
+                        chord,
+                        permit_terminal_approximation,
+                        policy,
+                    );
+                }
+            };
         // The offset kernel invokes this predicate only for neighboring
         // source fragments.  Their authored adjacency is stronger than two
         // independently reconstructed direction fields: once the source
@@ -68411,18 +68504,6 @@ impl BezierAlgebraicCuspSemicircleFragment2 {
             );
             return Ok(Classification::Decided(RealSign::Zero));
         }
-        let source_factor =
-            match source.tangent_orientation_factor_from(&source.data.semicircle, policy)? {
-                Classification::Decided(Some(factor)) => factor,
-                Classification::Decided(None) | Classification::Uncertain(_) => {
-                    return self.endpoint_tangent_cross_algebraic_chord(
-                        start_endpoint,
-                        chord,
-                        permit_terminal_approximation,
-                        policy,
-                    );
-                }
-            };
         match source.endpoint_tangent_cross_algebraic_chord(
             start_endpoint,
             chord,
@@ -69717,6 +69798,46 @@ impl BezierAlgebraicCuspSemicircleFragment2 {
         } else {
             &self.data.end
         }
+    }
+
+    /// Recognizes a chord authored from this fragment's two traversal
+    /// endpoints. `Some(false)` follows the fragment and `Some(true)` opposes
+    /// it. The result is pure retained incidence; no coordinate field is
+    /// flattened and no approximate equality becomes construction evidence.
+    pub(crate) fn authored_endpoint_chord_orientation(
+        &self,
+        chord: &BezierAlgebraicChord2,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<Option<bool>>> {
+        self.validate_policy(policy)?;
+        chord.validate_policy(policy)?;
+        let start = match self.endpoint_point_evidence(true, policy)? {
+            Classification::Decided(Some(point)) => point,
+            Classification::Decided(None) => return Ok(Classification::Decided(None)),
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        let end = match self.endpoint_point_evidence(false, policy)? {
+            Classification::Decided(Some(point)) => point,
+            Classification::Decided(None) => return Ok(Classification::Decided(None)),
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        let same = |first: &RationalBezierIntersectionPointEvidence2,
+                    second: &RationalBezierIntersectionPointEvidence2| {
+            first.shares_storage(second) || first == second
+        };
+        Ok(Classification::Decided(
+            if same(chord.start(), &start) && same(chord.end(), &end) {
+                Some(false)
+            } else if same(chord.start(), &end) && same(chord.end(), &start) {
+                Some(true)
+            } else {
+                None
+            },
+        ))
     }
 
     /// Returns whether the traversal begins at an inline represented
@@ -111247,6 +111368,115 @@ mod conversion_tests {
                 &(Real::from(3_i8) / Real::from(2_i8)).unwrap(),
             ));
             assert!(encloses(&translated.unit_radial[0], &half));
+        }
+    }
+
+    #[test]
+    fn recursively_pair_radial_cap_offsets_exactly() {
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let arc = BezierAlgebraicCuspSemicircleFragment2::full(
+                recursively_pair_radial_half(&policy),
+                &policy,
+            );
+            let Classification::Decided(Some(start)) =
+                arc.endpoint_point_evidence(true, &policy).unwrap()
+            else {
+                panic!("the recursive cap start must retain exact point evidence");
+            };
+            let Classification::Decided(Some(end)) =
+                arc.endpoint_point_evidence(false, &policy).unwrap()
+            else {
+                panic!("the recursive cap end must retain exact point evidence");
+            };
+            let Classification::Decided(chord) =
+                BezierAlgebraicChord2::try_new(end, start, &policy).unwrap()
+            else {
+                panic!("the recursive cap diameter must retain an exact chord");
+            };
+            let boundary = CurveRegionBoundaryLoop2::new(
+                vec![
+                    BezierSplitFragment2::AlgebraicCuspSemicircle(arc),
+                    BezierSplitFragment2::AlgebraicChord(chord),
+                ],
+                &policy,
+            )
+            .expect("the recursive selected-circle cap must close exactly");
+            let cap = CurveRegion2::try_new_with_loop_topology(
+                vec![boundary],
+                vec![CurveRegionLoopRole::Material],
+                vec![FillRule::NonZero],
+                vec![CurveBoundaryInteriorSide2::Left],
+            )
+            .unwrap();
+            for style in [
+                crate::OffsetCornerStyle2::Round,
+                crate::OffsetCornerStyle2::Bevel,
+            ] {
+                let round = matches!(style, crate::OffsetCornerStyle2::Round);
+                #[cfg(feature = "dispatch-trace")]
+                hyperreal::dispatch_trace::reset();
+                let offset_work =
+                    || cap.offset((Real::one() / Real::from(8_i8)).unwrap(), &style, &policy);
+                #[cfg(feature = "dispatch-trace")]
+                let offset = hyperreal::dispatch_trace::with_recording(offset_work);
+                #[cfg(not(feature = "dispatch-trace"))]
+                let offset = offset_work();
+                #[cfg(feature = "dispatch-trace")]
+                let trace = hyperreal::dispatch_trace::take_trace();
+                let offset = offset.unwrap_or_else(|error| {
+                    #[cfg(feature = "dispatch-trace")]
+                    panic!(
+                        "the recursive selected-circle cap must offset exactly with {style:?}: {error:?}; {trace:?}"
+                    );
+                    #[cfg(not(feature = "dispatch-trace"))]
+                    panic!(
+                        "the recursive selected-circle cap must offset exactly with {style:?}: {error:?}"
+                    );
+                });
+                assert_eq!(offset.certainty, crate::CurveCertainty::Certified);
+                let [boundary] = offset.value.boundary_loops() else {
+                    panic!("the recursive cap offset must retain one material boundary");
+                };
+                assert_eq!(boundary.fragments().len(), 4);
+                assert_eq!(
+                    boundary
+                        .fragments()
+                        .iter()
+                        .filter(|fragment| matches!(
+                            fragment,
+                            BezierSplitFragment2::AlgebraicCuspSemicircle(_)
+                        ))
+                        .count(),
+                    if round { 3 } else { 1 },
+                );
+                #[cfg(feature = "dispatch-trace")]
+                assert_eq!(
+                    trace.path_count(
+                        "hypercurve",
+                        "selected-circle-chord-tangent",
+                        "authored-two-endpoint-secant",
+                    ),
+                    if round { 4 } else { 2 },
+                );
+                #[cfg(feature = "dispatch-trace")]
+                assert_eq!(
+                    trace.path_count(
+                        "hypercurve",
+                        "curve-region-exact-offset-join",
+                        "selected-circle-chord-round",
+                    ),
+                    if round { 2 } else { 0 },
+                );
+                #[cfg(feature = "dispatch-trace")]
+                assert_eq!(
+                    trace.path_count(
+                        "hypercurve",
+                        "curve-region-cusp-pair",
+                        "adjacent-certified-tangent",
+                    ),
+                    if round { 2 } else { 0 },
+                );
+            }
         }
     }
 
