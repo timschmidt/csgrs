@@ -19,7 +19,8 @@ use crate::algebraic::{
     validate_algebraic_root_representation,
 };
 use crate::root_isolation::{
-    IsolatedRootInterval, IsolatedRootRefinementStatus, RootIsolationConfig,
+    IsolatedRootInterval, IsolatedRootRefinementStatus, RootIsolationConfig, polynomial_div_rem,
+    polynomial_has_no_distinct_root_in_closed_interval,
     refine_isolated_univariate_polynomial_interval, square_free_part,
 };
 use crate::tensor_resultant::{
@@ -374,12 +375,36 @@ pub fn represent_algebraic_tensor_image(
         None
     };
     // A nonlinear eliminant can retain exact cardinal roots from conjugate
-    // source tuples that are not the authored tuple. Interval containment and
-    // exact polynomial incidence alone therefore do not identify the image;
-    // the general isolation path below must first prove that the supplied
-    // image enclosure contains exactly one distinct eliminant root. A linear
-    // eliminant is the sole safe shortcut because it has one global root.
-    let exact_rational_root = exact_linear_root;
+    // source tuples that are not the authored tuple. Factor the proposed root
+    // and certify that its cofactor has no root in the supplied interval;
+    // only then is the cardinal candidate the unique possible authored image.
+    // Narrow cardinal intervals usually finish in one Horner enclosure, while
+    // the exact Sturm fallback rejects intervals containing a foreign root.
+    let exact_cardinal_root =
+        exact_cardinal_root_in_interval(&polynomial_coefficients, image_interval).and_then(
+            |root| {
+                let factor = vec![-root.clone(), Real::one()];
+                let (quotient, remainder) = polynomial_div_rem(
+                    polynomial_coefficients.clone(),
+                    &factor,
+                    PredicatePolicy::STRICT,
+                )?;
+                let remainder_is_zero = remainder.iter().all(|coefficient| {
+                    coefficient
+                        .exact_rational_ref()
+                        .is_some_and(|coefficient| coefficient.is_zero())
+                });
+                (remainder_is_zero
+                    && polynomial_has_no_distinct_root_in_closed_interval(
+                        &quotient,
+                        &image_interval.lower,
+                        &image_interval.upper,
+                        PredicatePolicy::STRICT,
+                    ) == Some(true))
+                .then_some(root)
+            },
+        );
+    let exact_rational_root = exact_linear_root.or(exact_cardinal_root);
     let interval = if let Some(root) = &exact_rational_root {
         IsolatedRootInterval {
             lower: root.clone(),
@@ -461,7 +486,6 @@ pub fn represent_algebraic_tensor_image(
 
 /// Recovers a selected cardinal image without using approximation as proof,
 /// leaving every other algebraic image on the unchanged exact isolator path.
-#[cfg(test)]
 fn exact_cardinal_root_in_interval(
     polynomial_coefficients: &[Real],
     interval: &IsolatedRootInterval,
@@ -866,6 +890,38 @@ mod tests {
             vec![real(-9), Real::one()]
         );
         assert_eq!(representation.interval.exact_root, Some(real(9)));
+    }
+
+    #[test]
+    fn tensor_image_materializes_a_unique_cardinal_factor_of_a_nonlinear_eliminant() {
+        let source = square_root(2);
+        let source_axis =
+            DenseTensorPolynomial::from_axis_polynomial(2, 0, &[Real::zero(), Real::one()])
+                .unwrap();
+        let output =
+            DenseTensorPolynomial::from_axis_polynomial(2, 1, &[Real::zero(), Real::one()])
+                .unwrap();
+        let relation = output
+            .multiply(&output.subtract(&source_axis).unwrap())
+            .unwrap();
+        let quarter = (Real::one() / real(4)).unwrap();
+        let report = represent_algebraic_tensor_image(
+            &relation,
+            &[source],
+            &IsolatedRootInterval {
+                lower: -quarter.clone(),
+                upper: quarter,
+                exact_root: None,
+                distinct_root_count: 1,
+            },
+        );
+        assert_eq!(report.status, AlgebraicTensorImageStatus::Transformed);
+        let representation = report.representation.unwrap();
+        assert_eq!(
+            representation.polynomial_coefficients,
+            vec![Real::zero(), Real::one()]
+        );
+        assert_eq!(representation.interval.exact_root, Some(Real::zero()));
     }
 
     #[test]

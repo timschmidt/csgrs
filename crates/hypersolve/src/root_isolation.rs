@@ -1866,6 +1866,62 @@ pub fn polynomial_has_one_distinct_root_in_open_interval(
     Some(variations == 1)
 }
 
+/// Proves that a closed exact-rational interval contains no distinct root.
+///
+/// A Horner interval exclusion handles the common narrow-interval case in
+/// linear work. Endpoint replay and a square-free Sturm count remain the
+/// complete exact fallback; an undecided coefficient predicate returns
+/// `None` rather than treating absence of evidence as an empty interval.
+pub(crate) fn polynomial_has_no_distinct_root_in_closed_interval(
+    polynomial: &[Real],
+    lower: &Real,
+    upper: &Real,
+    policy: PredicatePolicy,
+) -> Option<bool> {
+    match compare_reals(lower, upper, policy).value()? {
+        Ordering::Greater => return None,
+        Ordering::Equal => {
+            return Some(
+                compare_reals(
+                    &evaluate_polynomial(polynomial, lower),
+                    &Real::zero(),
+                    policy,
+                )
+                .value()?
+                    != Ordering::Equal,
+            );
+        }
+        Ordering::Less => {}
+    }
+    let lower_sign = compare_reals(
+        &evaluate_polynomial(polynomial, lower),
+        &Real::zero(),
+        policy,
+    )
+    .value()?;
+    let upper_sign = compare_reals(
+        &evaluate_polynomial(polynomial, upper),
+        &Real::zero(),
+        policy,
+    )
+    .value()?;
+    if lower_sign == Ordering::Equal || upper_sign == Ordering::Equal {
+        return Some(false);
+    }
+    if let Some((range_lower, range_upper)) =
+        polynomial_interval_enclosure(polynomial, lower, upper, policy)
+    {
+        let range_lower_sign = compare_reals(&range_lower, &Real::zero(), policy).value()?;
+        let range_upper_sign = compare_reals(&range_upper, &Real::zero(), policy).value()?;
+        if range_lower_sign == Ordering::Greater || range_upper_sign == Ordering::Less {
+            return Some(true);
+        }
+    }
+    let square_free = square_free_part(polynomial.to_vec(), policy)?;
+    let sturm = sturm_sequence(&square_free, policy)?;
+    Some(sturm_count(&sturm, lower, upper, policy)? == 0)
+}
+
 fn polynomial_interval_enclosure(
     polynomial: &[Real],
     lower: &Real,
