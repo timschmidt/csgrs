@@ -27622,6 +27622,63 @@ mod tests {
                 "the recursive offset must replay retained pair provenance before chord refinement: {trace:?}",
             );
 
+            #[cfg(feature = "dispatch-trace")]
+            hyperreal::dispatch_trace::reset();
+            let adjacency_work = || {
+                let mut adjacent_cusp_pairs = 0_usize;
+                let mut retained_tangent_pairs = 0_usize;
+                for boundary in &offset_loops {
+                    let fragments = boundary.fragments();
+                    for index in 0..fragments.len() {
+                        let next = (index + 1) % fragments.len();
+                        let (
+                            BezierSplitFragment2::AlgebraicCuspSemicircle(first),
+                            BezierSplitFragment2::AlgebraicCuspSemicircle(second),
+                        ) = (&fragments[index], &fragments[next])
+                        else {
+                            continue;
+                        };
+                        adjacent_cusp_pairs += 1;
+                        if matches!(
+                            first
+                                .unique_shared_tangent_endpoint_contact(second, &policy)
+                                .expect("adjacent recursive endpoint tangency remains valid"),
+                            Classification::Decided(Some(_)),
+                        ) {
+                            retained_tangent_pairs += 1;
+                            continue;
+                        }
+                        let pair = first
+                            .semicircle()
+                            .pair_intersections(second.semicircle(), &policy)
+                            .expect("adjacent recursive offset circles remain valid");
+                        assert!(
+                            matches!(pair, Classification::Decided(_)),
+                            "policy {policy:?}, boundary pair {index}->{next}: {pair:?}",
+                        );
+                    }
+                }
+                (adjacent_cusp_pairs, retained_tangent_pairs)
+            };
+            #[cfg(feature = "dispatch-trace")]
+            let (adjacent_cusp_pairs, retained_tangent_pairs) =
+                hyperreal::dispatch_trace::with_recording(adjacency_work);
+            #[cfg(not(feature = "dispatch-trace"))]
+            let (adjacent_cusp_pairs, retained_tangent_pairs) = adjacency_work();
+            assert!(adjacent_cusp_pairs > 0);
+            assert!(retained_tangent_pairs > 0);
+            #[cfg(feature = "dispatch-trace")]
+            let adjacent_pair_trace = hyperreal::dispatch_trace::take_trace();
+            #[cfg(feature = "dispatch-trace")]
+            assert!(
+                adjacent_pair_trace.path_count(
+                    "hypercurve",
+                    "algebraic-circle-pair-kernel",
+                    "retained-pair-endpoint-tangent",
+                ) > 0,
+                "the fourth-generation offset must replay its retained adjacent circle tangency: {adjacent_pair_trace:?}",
+            );
+
             let (loop_index, corner) =
                 selected_radial_linear_corner(&fourth_generation, &fourth_radius);
             let setback = (fourth_radius / Real::from(10_i8)).unwrap();
