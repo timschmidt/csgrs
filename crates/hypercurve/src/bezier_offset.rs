@@ -13682,6 +13682,16 @@ impl BezierAlgebraicCuspSemicircle2 {
         }
     }
 
+    /// Recognizes the same retained complete circle without comparing center
+    /// coordinates or materializing either selected field. Opposite signed
+    /// radii merely exchange the two diameter endpoints, while traversal and
+    /// half-chart orientation do not change the supporting circle.
+    fn shares_structural_supporting_circle(&self, other: &Self) -> bool {
+        self.data.frame == other.data.frame
+            && (self.data.radial_distance == other.data.radial_distance
+                || self.data.radial_distance == -other.data.radial_distance.clone())
+    }
+
     /// Returns whether traversal follows the clockwise half circle.
     pub(crate) fn is_clockwise(&self) -> bool {
         self.data.clockwise
@@ -15145,6 +15155,13 @@ impl BezierAlgebraicCuspSemicircle2 {
         point: &RationalBezierIntersectionPointEvidence2,
         policy: &CurveContext,
     ) -> CurveResult<Classification<RealSign>> {
+        if let RationalBezierIntersectionPointEvidence2::AlgebraicCuspChord(point) = point {
+            let (map, _) = point.map_contact();
+            map.validate_policy(policy)?;
+            if self.shares_structural_supporting_circle(&map.data.semicircle) {
+                return Ok(Classification::Decided(RealSign::Zero));
+            }
+        }
         if let RationalBezierIntersectionPointEvidence2::AlgebraicCuspChordDerived(point) = point {
             match point.concentric_circle_incidence_sign(self, policy)? {
                 Classification::Decided(Some(sign)) => {
@@ -106550,8 +106567,20 @@ mod conversion_tests {
                 );
                 assert!(matches!(
                     contact.point,
-                    RationalBezierIntersectionPointEvidence2::Algebraic(_)
+                    RationalBezierIntersectionPointEvidence2::AlgebraicCuspChord(_)
                 ));
+                assert_eq!(
+                    carrier
+                        .contains_point_evidence(&contact.point, &policy)
+                        .unwrap(),
+                    Classification::Decided(true),
+                );
+                assert_eq!(
+                    BezierAlgebraicCuspSemicircleFragment2::full(semicircle.clone(), &policy,)
+                        .contains_point_evidence(&contact.point, &policy)
+                        .unwrap(),
+                    Classification::Decided(true),
+                );
             }
         }
     }
@@ -106695,26 +106724,31 @@ mod conversion_tests {
                     Classification::Decided(_)
                 ));
                 for (scale, translation_x, translation_y, expected) in [
-                    (Real::one(), Real::zero(), Real::zero(), RealSign::Zero),
-                    (Real::zero(), Real::zero(), Real::zero(), RealSign::Negative),
+                    (
+                        Real::one(),
+                        Real::zero(),
+                        Real::zero(),
+                        Some(RealSign::Zero),
+                    ),
+                    (
+                        Real::zero(),
+                        Real::zero(),
+                        Real::zero(),
+                        Some(RealSign::Negative),
+                    ),
                     (
                         Real::from(2_i8),
                         Real::zero(),
                         Real::zero(),
-                        RealSign::Positive,
+                        Some(RealSign::Positive),
                     ),
                     (
                         Real::from(-1_i8),
                         Real::zero(),
                         Real::zero(),
-                        RealSign::Zero,
+                        Some(RealSign::Zero),
                     ),
-                    (
-                        Real::one(),
-                        Real::from(10_i8),
-                        Real::from(-7_i8),
-                        RealSign::Positive,
-                    ),
+                    (Real::one(), Real::from(10_i8), Real::from(-7_i8), None),
                 ] {
                     let derived = point
                         .radial_scaled(scale)
@@ -106723,8 +106757,21 @@ mod conversion_tests {
                         derived
                             .concentric_circle_incidence_sign(&semicircle, &policy)
                             .unwrap(),
-                        Classification::Decided(Some(expected)),
+                        Classification::Decided(expected),
                     );
+                    if expected.is_none() {
+                        assert_eq!(
+                            semicircle
+                                .retained_point_incidence_sign(
+                                    &RationalBezierIntersectionPointEvidence2::AlgebraicCuspChordDerived(
+                                        derived,
+                                    ),
+                                    &policy,
+                                )
+                                .unwrap(),
+                            Classification::Decided(RealSign::Positive),
+                        );
+                    }
                 }
             }
 
@@ -107996,10 +108043,11 @@ mod conversion_tests {
                 assert_eq!(
                     mapped_cap_trace.path_count(
                         "hypercurve",
-                        "algebraic-circle-chord-pair",
-                        "adjacent-endpoint-only",
+                        "selected-circle-chord-tangent",
+                        "authored-two-endpoint-secant",
                     ),
                     2,
+                    "the selected-circle cap must certify both authored circle/chord joins structurally: {mapped_cap_trace:?}",
                 );
             }
             let independent_semicircle = synthetic_independent_unit_cusp_semicircle(&policy);
@@ -108777,18 +108825,20 @@ mod conversion_tests {
                 assert_eq!(
                     parallel_mapped_cap_trace.path_count(
                         "hypercurve",
-                        "algebraic-circle-chord-pair",
-                        "adjacent-endpoint-only",
+                        "selected-circle-chord-tangent",
+                        "authored-two-endpoint-secant",
                     ),
                     2,
+                    "the analytic-carrier cap must certify both authored circle/chord joins structurally: {parallel_mapped_cap_trace:?}",
                 );
                 assert_eq!(
                     parallel_mapped_cap_trace.path_count(
                         "hypercurve",
-                        "algebraic-circle-chord-pair",
-                        "chord-strictly-inside-disk",
+                        "algebraic-chord-pair",
+                        "refined-carrier-bounds-disjoint",
                     ),
                     1,
+                    "the analytic-carrier cap must reject its disjoint retained chord exactly: {parallel_mapped_cap_trace:?}",
                 );
             }
 
