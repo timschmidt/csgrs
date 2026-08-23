@@ -75559,6 +75559,43 @@ impl BezierAlgebraicCuspSemicircleFragment2 {
             }
             None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
         }
+        let certified_strict_interior = if !outward
+            && clip_inward_to_fragment
+            && real_sign(setback, policy) == Some(RealSign::Positive)
+        {
+            let corner = self.endpoint_point_evidence(start_endpoint, policy)?;
+            let opposite = self.endpoint_point_evidence(!start_endpoint, policy)?;
+            match (corner, opposite) {
+                (
+                    Classification::Decided(Some(corner)),
+                    Classification::Decided(Some(opposite)),
+                ) => {
+                    match algebraic_point_distance_squared_at_most(
+                        &corner,
+                        &opposite,
+                        &(setback * setback),
+                        policy,
+                    ) {
+                        Classification::Decided(false) => {
+                            #[cfg(feature = "dispatch-trace")]
+                            hyperreal::dispatch_trace::record(
+                                "hypercurve",
+                                "selected-circle-chamfer-trim-domain",
+                                "endpoint-chord-distance",
+                            );
+                            true
+                        }
+                        Classification::Decided(true) => {
+                            return Ok(Classification::Decided(None));
+                        }
+                        Classification::Uncertain(_) => false,
+                    }
+                }
+                _ => false,
+            }
+        } else {
+            false
+        };
         let half_angle_magnitude = (setback / remaining.sqrt()?)?;
         let source_start = start_endpoint != self.data.reversed;
         let interior_half_angle = if source_start {
@@ -75572,13 +75609,28 @@ impl BezierAlgebraicCuspSemicircleFragment2 {
             interior_half_angle
         };
         let source = self.endpoint_parameter(start_endpoint);
-        let complementary =
+        let complementary = if !outward && clip_inward_to_fragment {
+            // An admissible inward cut is strictly inside this finite
+            // fragment, whose whole parameter range belongs to the current
+            // half-circle chart. Let the retained parameter-order predicate
+            // accept or reject that candidate directly; reconstructing its
+            // chart from three independent affine signs can lose the shared
+            // nested chamfer provenance before that stronger evidence runs.
+            #[cfg(feature = "dispatch-trace")]
+            hyperreal::dispatch_trace::record(
+                "hypercurve",
+                "selected-circle-chamfer-chart",
+                "inward-fragment",
+            );
+            false
+        } else {
             match cusp_chamfer_parameter_uses_complement(source, &physical_half_angle, policy)? {
                 Classification::Decided(complementary) => complementary,
                 Classification::Uncertain(reason) => {
                     return Ok(Classification::Uncertain(reason));
                 }
-            };
+            }
+        };
         let candidate = match self.endpoint_chord_setback_parameter(
             start_endpoint,
             Some(&physical_half_angle),
@@ -75593,6 +75645,9 @@ impl BezierAlgebraicCuspSemicircleFragment2 {
                 return Ok(Classification::Uncertain(reason));
             }
         };
+        if certified_strict_interior {
+            return Ok(Classification::Decided(Some(candidate)));
+        }
         if outward || !clip_inward_to_fragment {
             return Ok(Classification::Decided(Some(candidate)));
         }

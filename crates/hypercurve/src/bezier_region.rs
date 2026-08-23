@@ -9056,6 +9056,70 @@ fn exact_selected_circle_pair_tangent_cross_and_dot_by_chords(
     }
 }
 
+/// Signs two retained circular traversal tangents from their current endpoint
+/// witnesses when no shared source-frame specialization applies.
+///
+/// Offset construction can give the same circular carrier either an ordinary
+/// endpoint tangent or a chord-contact tangent. Replay shared pair provenance
+/// first; unrelated representations still publish exact unit-step tangent
+/// chords for the general predicate.
+fn exact_current_selected_circle_pair_tangent_cross_and_dot(
+    first: &crate::BezierAlgebraicCuspSemicircleFragment2,
+    first_start: bool,
+    second: &crate::BezierAlgebraicCuspSemicircleFragment2,
+    second_start: bool,
+    policy: &CurveContext,
+) -> Classification<(RealSign, Option<RealSign>)> {
+    match first.endpoint_pair_tangent_cross_and_dot(first_start, second, second_start, policy) {
+        Ok(Classification::Decided(Some(relation))) => {
+            #[cfg(feature = "dispatch-trace")]
+            hyperreal::dispatch_trace::record(
+                "hypercurve",
+                "curve-region-exact-offset-selected-circle-pair-tangent",
+                "retained-pair",
+            );
+            return Classification::Decided(relation);
+        }
+        Ok(Classification::Decided(None)) => {}
+        Ok(Classification::Uncertain(reason)) => return Classification::Uncertain(reason),
+        Err(_) => return Classification::Uncertain(UncertaintyReason::Unsupported),
+    }
+    match exact_selected_circle_pair_tangent_cross_and_dot_by_chords(
+        first,
+        first_start,
+        second,
+        second_start,
+        policy,
+    ) {
+        Classification::Decided(Some(relation)) => Classification::Decided(relation),
+        Classification::Decided(None) => Classification::Uncertain(UncertaintyReason::Unsupported),
+        Classification::Uncertain(reason) => Classification::Uncertain(reason),
+    }
+}
+
+fn exact_offset_tangent_relation_is_opposite(
+    relation: Classification<(RealSign, Option<RealSign>)>,
+) -> Classification<bool> {
+    match relation {
+        Classification::Decided((RealSign::Negative | RealSign::Positive, _)) => {
+            Classification::Decided(false)
+        }
+        Classification::Decided((RealSign::Zero, Some(RealSign::Negative))) => {
+            Classification::Decided(true)
+        }
+        Classification::Decided((RealSign::Zero, Some(RealSign::Positive))) => {
+            Classification::Decided(false)
+        }
+        Classification::Decided((RealSign::Zero, Some(RealSign::Zero))) => {
+            Classification::Uncertain(UncertaintyReason::Boundary)
+        }
+        Classification::Decided((RealSign::Zero, None)) => {
+            Classification::Uncertain(UncertaintyReason::Unsupported)
+        }
+        Classification::Uncertain(reason) => Classification::Uncertain(reason),
+    }
+}
+
 fn exact_offset_tangent_cross_sign(
     first: &ExactOffsetTangent2,
     second: &ExactOffsetTangent2,
@@ -9514,6 +9578,45 @@ fn exact_offset_tangent_cross_sign(
             .map(|(cross, _)| cross)
         }
         (
+            ExactOffsetTangent2::SelectedCircularEndpoint {
+                fragment: first,
+                at_start: first_start,
+                ..
+            },
+            ExactOffsetTangent2::ChordContact {
+                fragment: second,
+                at_start: second_start,
+                ..
+            },
+        )
+        | (
+            ExactOffsetTangent2::ChordContact {
+                fragment: first,
+                at_start: first_start,
+                ..
+            },
+            ExactOffsetTangent2::SelectedCircularEndpoint {
+                fragment: second,
+                at_start: second_start,
+                ..
+            },
+        ) => {
+            #[cfg(feature = "dispatch-trace")]
+            hyperreal::dispatch_trace::record(
+                "hypercurve",
+                "curve-region-exact-offset-tangent-cross",
+                "selected-circle-chord-contact",
+            );
+            exact_current_selected_circle_pair_tangent_cross_and_dot(
+                first,
+                *first_start,
+                second,
+                *second_start,
+                policy,
+            )
+            .map(|(cross, _)| cross)
+        }
+        (
             ExactOffsetTangent2::ChordContact {
                 chord: first,
                 circle_cross_chord: RealSign::Zero,
@@ -9525,18 +9628,42 @@ fn exact_offset_tangent_cross_sign(
                 ..
             },
         ) => exact_algebraic_chord_parallel_factor(first, second, policy).map(|_| RealSign::Zero),
-        (ExactOffsetTangent2::ChordContact { .. }, ExactOffsetTangent2::ChordContact { .. }) => {
-            Classification::Uncertain(UncertaintyReason::Unsupported)
+        (
+            ExactOffsetTangent2::ChordContact {
+                fragment: first,
+                at_start: first_start,
+                ..
+            },
+            ExactOffsetTangent2::ChordContact {
+                fragment: second,
+                at_start: second_start,
+                ..
+            },
+        ) => {
+            #[cfg(feature = "dispatch-trace")]
+            hyperreal::dispatch_trace::record(
+                "hypercurve",
+                "curve-region-exact-offset-tangent-cross",
+                "chord-contact-pair",
+            );
+            exact_current_selected_circle_pair_tangent_cross_and_dot(
+                first,
+                *first_start,
+                second,
+                *second_start,
+                policy,
+            )
+            .map(|(cross, _)| cross)
         }
         (ExactOffsetTangent2::ChordContact { .. }, ExactOffsetTangent2::CircularPoint { .. })
         | (ExactOffsetTangent2::CircularPoint { .. }, ExactOffsetTangent2::ChordContact { .. })
         | (ExactOffsetTangent2::CircularPoint { .. }, ExactOffsetTangent2::CircularPoint { .. })
         | (
             ExactOffsetTangent2::SelectedCircularEndpoint { .. },
-            ExactOffsetTangent2::CircularPoint { .. } | ExactOffsetTangent2::ChordContact { .. },
+            ExactOffsetTangent2::CircularPoint { .. },
         )
         | (
-            ExactOffsetTangent2::CircularPoint { .. } | ExactOffsetTangent2::ChordContact { .. },
+            ExactOffsetTangent2::CircularPoint { .. },
             ExactOffsetTangent2::SelectedCircularEndpoint { .. },
         )
         | (ExactOffsetTangent2::RetainedParallel { .. }, _)
@@ -9698,27 +9825,49 @@ fn exact_offset_tangents_are_opposite(
                 fragment: second_fragment,
                 at_start: second_start,
             },
-        ) => match exact_selected_circle_pair_tangent_cross_and_dot(
-            first_source,
-            first_fragment,
-            *first_start,
-            second_source,
-            second_fragment,
-            *second_start,
-            policy,
-        ) {
-            Classification::Decided((_, Some(RealSign::Negative))) => Classification::Decided(true),
-            Classification::Decided((_, Some(RealSign::Positive))) => {
-                Classification::Decided(false)
-            }
-            Classification::Decided((_, Some(RealSign::Zero))) => {
-                Classification::Uncertain(UncertaintyReason::Boundary)
-            }
-            Classification::Decided((_, None)) => {
-                Classification::Uncertain(UncertaintyReason::Unsupported)
-            }
-            Classification::Uncertain(reason) => Classification::Uncertain(reason),
-        },
+        ) => exact_offset_tangent_relation_is_opposite(
+            exact_selected_circle_pair_tangent_cross_and_dot(
+                first_source,
+                first_fragment,
+                *first_start,
+                second_source,
+                second_fragment,
+                *second_start,
+                policy,
+            ),
+        ),
+        (
+            ExactOffsetTangent2::SelectedCircularEndpoint {
+                fragment: first,
+                at_start: first_start,
+                ..
+            },
+            ExactOffsetTangent2::ChordContact {
+                fragment: second,
+                at_start: second_start,
+                ..
+            },
+        )
+        | (
+            ExactOffsetTangent2::ChordContact {
+                fragment: first,
+                at_start: first_start,
+                ..
+            },
+            ExactOffsetTangent2::SelectedCircularEndpoint {
+                fragment: second,
+                at_start: second_start,
+                ..
+            },
+        ) => exact_offset_tangent_relation_is_opposite(
+            exact_current_selected_circle_pair_tangent_cross_and_dot(
+                first,
+                *first_start,
+                second,
+                *second_start,
+                policy,
+            ),
+        ),
         (
             ExactOffsetTangent2::SelectedCircularEndpoint {
                 source_fragment,
@@ -9746,29 +9895,19 @@ fn exact_offset_tangents_are_opposite(
                 fragment,
                 at_start,
             },
-        ) => match exact_selected_circle_retained_parallel_tangent_cross_and_dot(
-            source_fragment,
-            fragment,
-            *at_start,
-            parallel,
-            source_parallel,
-            parameter,
-            selected_source_parameter.as_ref(),
-            *source_direction,
-            policy,
-        ) {
-            Classification::Decided((_, Some(RealSign::Negative))) => Classification::Decided(true),
-            Classification::Decided((_, Some(RealSign::Positive))) => {
-                Classification::Decided(false)
-            }
-            Classification::Decided((_, Some(RealSign::Zero))) => {
-                Classification::Uncertain(UncertaintyReason::Boundary)
-            }
-            Classification::Decided((_, None)) => {
-                Classification::Uncertain(UncertaintyReason::Unsupported)
-            }
-            Classification::Uncertain(reason) => Classification::Uncertain(reason),
-        },
+        ) => exact_offset_tangent_relation_is_opposite(
+            exact_selected_circle_retained_parallel_tangent_cross_and_dot(
+                source_fragment,
+                fragment,
+                *at_start,
+                parallel,
+                source_parallel,
+                parameter,
+                selected_source_parameter.as_ref(),
+                *source_direction,
+                policy,
+            ),
+        ),
         (
             ExactOffsetTangent2::SelectedCircularEndpoint {
                 fragment, at_start, ..
@@ -9900,17 +10039,32 @@ fn exact_offset_tangents_are_opposite(
             }
             Classification::Uncertain(reason) => Classification::Uncertain(reason),
         },
+        (
+            ExactOffsetTangent2::ChordContact {
+                fragment: first,
+                at_start: first_start,
+                ..
+            },
+            ExactOffsetTangent2::ChordContact {
+                fragment: second,
+                at_start: second_start,
+                ..
+            },
+        ) => exact_offset_tangent_relation_is_opposite(
+            exact_current_selected_circle_pair_tangent_cross_and_dot(
+                first,
+                *first_start,
+                second,
+                *second_start,
+                policy,
+            ),
+        ),
         (ExactOffsetTangent2::CircularPoint { .. }, _)
         | (_, ExactOffsetTangent2::CircularPoint { .. }) => {
             Classification::Uncertain(UncertaintyReason::Unsupported)
         }
-        (ExactOffsetTangent2::SelectedCircularEndpoint { .. }, _)
-        | (_, ExactOffsetTangent2::SelectedCircularEndpoint { .. }) => {
-            Classification::Uncertain(UncertaintyReason::Unsupported)
-        }
         (ExactOffsetTangent2::ChordContact { .. }, ExactOffsetTangent2::Vector(_))
         | (ExactOffsetTangent2::Vector(_), ExactOffsetTangent2::ChordContact { .. })
-        | (ExactOffsetTangent2::ChordContact { .. }, ExactOffsetTangent2::ChordContact { .. })
         | (ExactOffsetTangent2::ChordContact { .. }, ExactOffsetTangent2::AlgebraicChord(_))
         | (ExactOffsetTangent2::AlgebraicChord(_), ExactOffsetTangent2::ChordContact { .. })
         | (ExactOffsetTangent2::RetainedParallel { .. }, _)
@@ -27308,13 +27462,13 @@ mod tests {
     }
 
     #[test]
-    fn recursively_nested_selected_radial_boolean_fillets_remain_exact() {
+    fn recursively_nested_selected_radial_operations_remain_exact() {
         for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
             let source = independent_pair_native_fillet(&policy, false);
             let source_radius = pair_radial_corner(&source).1;
             let (third_generation, third_radius) =
                 next_selected_radial_boolean_fillet_generation(&source, &source_radius, &policy);
-            let (fourth_generation, _) = next_selected_radial_boolean_fillet_generation(
+            let (fourth_generation, fourth_radius) = next_selected_radial_boolean_fillet_generation(
                 &third_generation,
                 &third_radius,
                 &policy,
@@ -27325,6 +27479,197 @@ mod tests {
             assert_eq!(replay.certainty, CurveCertainty::Certified);
             assert!(replay.value.intersection().is_empty());
             assert_eq!(replay.value.union().boundary_loops().len(), 2);
+
+            let offset_distance = (fourth_radius.clone() / Real::from(20_i8)).unwrap();
+            let filled_sides = match fourth_generation
+                .filled_side_is_left_raw(&policy)
+                .expect("the fourth-generation filled sides remain exact")
+            {
+                Classification::Decided(sides) => sides,
+                Classification::Uncertain(reason) => {
+                    panic!("the fourth-generation filled sides must decide: {reason:?}")
+                }
+            };
+            #[cfg(feature = "dispatch-trace")]
+            hyperreal::dispatch_trace::reset();
+            let assembly_work = || {
+                let mut offset_loops = Vec::with_capacity(fourth_generation.boundary_loops().len());
+                let mut mixed_tangent_joins = 0;
+                for (loop_index, boundary) in fourth_generation.boundary_loops().iter().enumerate()
+                {
+                    let signed_left_distance = if filled_sides[loop_index] {
+                        -offset_distance.clone()
+                    } else {
+                        offset_distance.clone()
+                    };
+                    let spans = match exact_offset_span_runs_from_boundary_loop(
+                        boundary,
+                        &signed_left_distance,
+                        &policy,
+                    )
+                    .expect("the fourth-generation offset spans remain valid")
+                    {
+                        Classification::Decided(spans) => {
+                            spans.into_iter().map(|(span, _)| span).collect::<Vec<_>>()
+                        }
+                        Classification::Uncertain(reason) => panic!(
+                            "the fourth-generation offset spans must decide: loop={loop_index}, reason={reason:?}"
+                        ),
+                    };
+                    let mut fragments = Vec::new();
+                    for span_index in 0..spans.len() {
+                        fragments.extend(spans[span_index].fragments.iter().cloned());
+                        let next_index = (span_index + 1) % spans.len();
+                        if let Some((first, second)) = spans[span_index]
+                            .end_tangent
+                            .as_ref()
+                            .zip(spans[next_index].start_tangent.as_ref())
+                            && matches!(
+                                (first, second),
+                                (
+                                    ExactOffsetTangent2::SelectedCircularEndpoint { .. },
+                                    ExactOffsetTangent2::ChordContact { .. }
+                                ) | (
+                                    ExactOffsetTangent2::ChordContact { .. },
+                                    ExactOffsetTangent2::SelectedCircularEndpoint { .. }
+                                )
+                            )
+                        {
+                            mixed_tangent_joins += 1;
+                            let Classification::Decided(forward) =
+                                exact_offset_tangent_cross_sign(first, second, &policy)
+                            else {
+                                panic!(
+                                    "the mixed circular tangent cross must decide: loop={loop_index}, span={span_index}"
+                                );
+                            };
+                            let Classification::Decided(reverse) =
+                                exact_offset_tangent_cross_sign(second, first, &policy)
+                            else {
+                                panic!(
+                                    "the reversed mixed circular tangent cross must decide: loop={loop_index}, span={span_index}"
+                                );
+                            };
+                            assert_eq!(reverse, exact_sign_reverse(forward));
+                            if forward == RealSign::Zero {
+                                let opposite =
+                                    exact_offset_tangents_are_opposite(first, second, &policy);
+                                assert!(matches!(opposite, Classification::Decided(_)));
+                                assert_eq!(
+                                    opposite,
+                                    exact_offset_tangents_are_opposite(second, first, &policy),
+                                );
+                            }
+                        }
+                        match append_exact_offset_join(
+                            &mut fragments,
+                            &spans[span_index],
+                            &spans[next_index],
+                            &signed_left_distance,
+                            &OffsetCornerStyle2::Bevel,
+                            &policy,
+                        )
+                        .expect("the fourth-generation offset join remains valid")
+                        {
+                            Classification::Decided(()) => {}
+                            Classification::Uncertain(reason) => panic!(
+                                "the fourth-generation offset join must decide: loop={loop_index}, span={span_index}, reason={reason:?}"
+                            ),
+                        }
+                    }
+                    offset_loops.push(
+                        CurveRegionBoundaryLoop2::try_new_from_certified_connected_chain(
+                            fragments, None, &policy,
+                        )
+                        .expect("the fourth-generation offset chain closes exactly"),
+                    );
+                }
+                (offset_loops, mixed_tangent_joins)
+            };
+            #[cfg(feature = "dispatch-trace")]
+            let (offset_loops, mixed_tangent_joins) =
+                hyperreal::dispatch_trace::with_recording(assembly_work);
+            #[cfg(not(feature = "dispatch-trace"))]
+            let (offset_loops, mixed_tangent_joins) = assembly_work();
+            #[cfg(feature = "dispatch-trace")]
+            let trace = hyperreal::dispatch_trace::take_trace();
+            assert_eq!(offset_loops.len(), fourth_generation.boundary_loops().len());
+            assert!(mixed_tangent_joins > 0);
+            #[cfg(feature = "dispatch-trace")]
+            assert!(
+                trace.path_count(
+                    "hypercurve",
+                    "curve-region-exact-offset-tangent-cross",
+                    "selected-circle-chord-contact",
+                ) > 0,
+                "the recursive offset must use its retained circular tangent chords: {trace:?}",
+            );
+            #[cfg(feature = "dispatch-trace")]
+            assert!(
+                trace.path_count(
+                    "hypercurve",
+                    "curve-region-exact-offset-selected-circle-pair-tangent",
+                    "retained-pair",
+                ) > 0,
+                "the recursive offset must replay retained pair provenance before chord refinement: {trace:?}",
+            );
+
+            let (loop_index, corner) =
+                selected_radial_linear_corner(&fourth_generation, &fourth_radius);
+            let setback = (fourth_radius / Real::from(10_i8)).unwrap();
+            assert_eq!(real_sign(&setback, &policy), Some(RealSign::Positive));
+            #[cfg(feature = "dispatch-trace")]
+            hyperreal::dispatch_trace::reset();
+            let chamfer_work = || {
+                fourth_generation.chamfer_loop_vertex_by_setbacks(
+                    loop_index,
+                    corner,
+                    setback.clone(),
+                    setback.clone(),
+                    CurveCornerMode2::TrimOnly,
+                    &policy,
+                )
+            };
+            #[cfg(feature = "dispatch-trace")]
+            let chamfer = hyperreal::dispatch_trace::with_recording(chamfer_work);
+            #[cfg(not(feature = "dispatch-trace"))]
+            let chamfer = chamfer_work();
+            #[cfg(feature = "dispatch-trace")]
+            let chamfer_trace = hyperreal::dispatch_trace::take_trace();
+            let chamfer = chamfer.unwrap_or_else(|error| {
+                #[cfg(feature = "dispatch-trace")]
+                panic!(
+                    "the fourth-generation retained corner chamfers exactly: {error:?}; {chamfer_trace:?}"
+                );
+                #[cfg(not(feature = "dispatch-trace"))]
+                panic!("the fourth-generation retained corner chamfers exactly: {error:?}");
+            });
+            #[cfg(feature = "dispatch-trace")]
+            assert!(
+                chamfer_trace.path_count(
+                    "hypercurve",
+                    "selected-circle-chamfer-chart",
+                    "inward-fragment",
+                ) > 0,
+                "the recursive chamfer must retain its current semicircle chart: {chamfer_trace:?}",
+            );
+            #[cfg(feature = "dispatch-trace")]
+            assert!(
+                chamfer_trace.path_count(
+                    "hypercurve",
+                    "selected-circle-chamfer-trim-domain",
+                    "endpoint-chord-distance",
+                ) > 0,
+                "the recursive chamfer must certify its trim domain by endpoint chord distance: {chamfer_trace:?}",
+            );
+            assert_eq!(chamfer.certainty, CurveCertainty::Certified);
+            for_each_corner_region(&chamfer.value, |chamfered| {
+                let replay = chamfered
+                    .boolean_regions(&selected_fillet_disjoint_square(&policy), &policy)
+                    .expect("the fourth-generation chamfer re-enters the Boolean kernel");
+                assert_eq!(replay.certainty, CurveCertainty::Certified);
+                assert!(replay.value.intersection().is_empty());
+            });
         }
     }
 
