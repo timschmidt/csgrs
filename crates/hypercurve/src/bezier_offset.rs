@@ -583,15 +583,19 @@ type BezierAlgebraicCuspSemicircleParameterCacheEntry2 = (
 #[derive(Clone, Debug)]
 enum BezierAlgebraicCuspSemicircleParameterCacheEvidence2 {
     RepresentedRational(Option<Real>),
-    ParameterBracket {
-        location: BezierAlgebraicCuspSemicircleContactLocation2,
-        refinement_steps: usize,
-        bracket: BezierAlgebraicCuspSemicircleParameterBracket2,
-    },
+    /// Box the uncommon refinement state so it does not enlarge every entry.
+    ParameterBracket(Box<BezierAlgebraicCuspSemicircleCachedParameterBracket2>),
     /// Fast replay of a just-certified cross-map inverse. Weak ownership
     /// prevents equivalent parameter maps from retaining each other; expiry
     /// falls back to the overlap's exact correlated incidence.
     RetainedCusp(Weak<BezierAlgebraicCuspSemicircleMappedParameterData2>),
+}
+
+#[derive(Clone, Debug)]
+struct BezierAlgebraicCuspSemicircleCachedParameterBracket2 {
+    location: BezierAlgebraicCuspSemicircleContactLocation2,
+    refinement_steps: usize,
+    bracket: BezierAlgebraicCuspSemicircleParameterBracket2,
 }
 
 #[derive(Debug, Default)]
@@ -35073,12 +35077,10 @@ impl BezierAlgebraicCuspSemicircleParameterCache2 {
             .expect("cusp parameter cache mutex poisoned")
             .iter()
             .find_map(|(cached, evidence)| match evidence {
-                BezierAlgebraicCuspSemicircleParameterCacheEvidence2::ParameterBracket {
-                    location: cached_location,
-                    refinement_steps,
-                    bracket,
-                } if cached == parameter && *cached_location == location => {
-                    Some((*refinement_steps, bracket.clone()))
+                BezierAlgebraicCuspSemicircleParameterCacheEvidence2::ParameterBracket(
+                    evidence,
+                ) if cached == parameter && evidence.location == location => {
+                    Some((evidence.refinement_steps, evidence.bracket.clone()))
                 }
                 _ => None,
             })
@@ -35099,25 +35101,28 @@ impl BezierAlgebraicCuspSemicircleParameterCache2 {
             cached == &parameter
                 && matches!(
                     evidence,
-                    BezierAlgebraicCuspSemicircleParameterCacheEvidence2::ParameterBracket {
-                        location: cached_location,
-                        ..
-                    } if *cached_location == location
+                    BezierAlgebraicCuspSemicircleParameterCacheEvidence2::ParameterBracket(
+                        evidence
+                    ) if evidence.location == location
                 )
         }) {
-            *evidence = BezierAlgebraicCuspSemicircleParameterCacheEvidence2::ParameterBracket {
-                location,
-                refinement_steps,
-                bracket,
-            };
-        } else {
-            cache.push((
-                parameter,
-                BezierAlgebraicCuspSemicircleParameterCacheEvidence2::ParameterBracket {
+            *evidence = BezierAlgebraicCuspSemicircleParameterCacheEvidence2::ParameterBracket(
+                Box::new(BezierAlgebraicCuspSemicircleCachedParameterBracket2 {
                     location,
                     refinement_steps,
                     bracket,
-                },
+                }),
+            );
+        } else {
+            cache.push((
+                parameter,
+                BezierAlgebraicCuspSemicircleParameterCacheEvidence2::ParameterBracket(Box::new(
+                    BezierAlgebraicCuspSemicircleCachedParameterBracket2 {
+                        location,
+                        refinement_steps,
+                        bracket,
+                    },
+                )),
             ));
         }
     }
