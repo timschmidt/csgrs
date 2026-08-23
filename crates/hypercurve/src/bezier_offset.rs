@@ -59976,19 +59976,20 @@ impl BezierAlgebraicChord2 {
                 }
                 None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
             };
-            let axis_direction = match self.axis_direction(policy)? {
-                Classification::Decided(Some(direction)) => direction,
-                Classification::Decided(None) => {
-                    return self.forward_ray_winding_delta_general(
-                        origin,
-                        direction_x,
-                        direction_y,
-                        policy,
-                    );
-                }
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
+            // Axis winding is only a shortcut. Asking a general composite
+            // chord to rediscover a zero tangent coordinate can be harder
+            // than the complete support predicate (and, for selected endpoint
+            // fields, may construct a full tensor resultant merely to prove
+            // that this shortcut does not apply). Enter it only from a
+            // retained construction certificate; all other chords use the
+            // authoritative general winding path below.
+            let Some(axis_direction) = self.certified_axis_direction() else {
+                return self.forward_ray_winding_delta_general(
+                    origin,
+                    direction_x,
+                    direction_y,
+                    policy,
+                );
             };
             let coordinate_order =
                 |point, axis, value| Self::point_axis_order_to_real(point, axis, value, policy);
@@ -78347,7 +78348,11 @@ impl BezierAlgebraicCuspSemicircleFragment2 {
         )
     }
 
-    fn selected_procedural_forward_ray_winding_delta(
+    /// Classifies one ray directly from retained circle, endpoint, and center
+    /// predicates. This representation-independent path is authoritative for
+    /// recursive frames and a compact fast path for rational frames; the
+    /// latter retain their complete circle/rational intersection fallback.
+    fn retained_forward_ray_winding_delta(
         &self,
         origin: &Point2,
         direction_x: &Real,
@@ -78580,15 +78585,31 @@ impl BezierAlgebraicCuspSemicircleFragment2 {
         policy: &CurveContext,
     ) -> CurveResult<Classification<i32>> {
         self.validate_policy(policy)?;
-        if self.data.semicircle.data.frame.rational().is_none() {
-            return self.selected_procedural_forward_ray_winding_delta(
-                origin,
-                direction_x,
-                direction_y,
-                skipped_origin,
-                policy,
+        let retained = self.retained_forward_ray_winding_delta(
+            origin,
+            direction_x,
+            direction_y,
+            skipped_origin,
+            policy,
+        )?;
+        if let decided @ Classification::Decided(_) = retained {
+            #[cfg(feature = "dispatch-trace")]
+            hyperreal::dispatch_trace::record(
+                "hypercurve",
+                "algebraic-circle-ray-winding",
+                "retained-point-predicates",
             );
+            return Ok(decided);
         }
+        if self.data.semicircle.data.frame.rational().is_none() {
+            return Ok(retained);
+        }
+        #[cfg(feature = "dispatch-trace")]
+        hyperreal::dispatch_trace::record(
+            "hypercurve",
+            "algebraic-circle-ray-winding",
+            "rational-intersection-fallback",
+        );
         let (_, intersections, parameter_map) = match self
             .data
             .semicircle
