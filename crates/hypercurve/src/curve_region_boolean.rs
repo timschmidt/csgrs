@@ -296,6 +296,13 @@ struct CarrierEvent {
     topology_vertex: Option<usize>,
 }
 
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+enum CarrierParameterLocation {
+    Outside,
+    Endpoint,
+    Interior,
+}
+
 #[derive(Clone, Debug)]
 struct ContactVertex {
     point: Option<RationalBezierIntersectionPointEvidence2>,
@@ -4160,6 +4167,9 @@ impl<'a> CurveRegionBooleanContext<'a> {
                         if self.authored_carriers_are_adjacent(pair) {
                             for (support, candidate) in [(chord, other_chord), (other_chord, chord)]
                             {
+                                if support.certified_unit_tangent().is_none() {
+                                    continue;
+                                }
                                 for endpoint in [candidate.start(), candidate.end()] {
                                     if matches!(
                                         support
@@ -4213,17 +4223,8 @@ impl<'a> CurveRegionBooleanContext<'a> {
                             for (axis_chord, candidate) in
                                 [(chord, other_chord), (other_chord, chord)]
                             {
-                                let direction = match self
-                                    .data
-                                    .policy
-                                    .strict_predicate_pass(|| {
-                                        axis_chord.axis_direction(&self.data.policy)
-                                    })
-                                    .map_err(|cause| self.invalid(chord_index, cause))?
-                                {
-                                    Classification::Decided(Some(direction)) => direction,
-                                    Classification::Decided(None)
-                                    | Classification::Uncertain(_) => continue,
+                                let Some(direction) = axis_chord.certified_axis_direction() else {
+                                    continue;
                                 };
                                 let constant_axis = match direction.axis() {
                                     Axis2::X => Axis2::Y,
@@ -4264,41 +4265,6 @@ impl<'a> CurveRegionBooleanContext<'a> {
                                     return Ok(RegionPairResult::empty());
                                 }
                             }
-                        }
-                        if self.authored_carriers_are_adjacent(pair)
-                            && let (
-                                Classification::Decided(Some(first_direction)),
-                                Classification::Decided(Some(second_direction)),
-                            ) = (
-                                self.data
-                                    .policy
-                                    .strict_predicate_pass(|| {
-                                        chord.axis_direction(&self.data.policy)
-                                    })
-                                    .map_err(|cause| self.invalid(chord_index, cause))?,
-                                self.data
-                                    .policy
-                                    .strict_predicate_pass(|| {
-                                        other_chord.axis_direction(&self.data.policy)
-                                    })
-                                    .map_err(|cause| self.invalid(other_index, cause))?,
-                            )
-                            && first_direction.axis() != second_direction.axis()
-                        {
-                            // Two nonparallel line supports have one contact.
-                            // Authored adjacency already owns their common
-                            // endpoint, so no pair predicate or point carrier
-                            // is needed. This is especially important after an
-                            // offset transports a correlated chord-pair point:
-                            // normalizing that endpoint would discard the two
-                            // support certificate that proves the same fact.
-                            #[cfg(feature = "dispatch-trace")]
-                            hyperreal::dispatch_trace::record(
-                                "hypercurve",
-                                "algebraic-chord-pair",
-                                "adjacent-perpendicular-complete",
-                            );
-                            return Ok(RegionPairResult::empty());
                         }
                         let strictly_one_sided = if let Some(line) = other_chord.exact_line() {
                             self.data
@@ -5710,15 +5676,19 @@ impl<'a> CurveRegionBooleanContext<'a> {
             for contact in &result.contacts {
                 let first_parameter = contact.first_parameter();
                 let second_parameter = contact.second_parameter();
-                if !parameter_in_carrier(
+                let first_location = parameter_location_in_carrier(
                     first_parameter,
                     &self.data.carriers[pair.first_carrier_index],
                     &self.data.policy,
-                )? || !parameter_in_carrier(
+                )?;
+                let second_location = parameter_location_in_carrier(
                     second_parameter,
                     &self.data.carriers[pair.second_carrier_index],
                     &self.data.policy,
-                )? {
+                )?;
+                if first_location == CarrierParameterLocation::Outside
+                    || second_location == CarrierParameterLocation::Outside
+                {
                     continue;
                 }
                 let first_existing = existing_event_vertex_if_decided(
@@ -5928,17 +5898,9 @@ impl<'a> CurveRegionBooleanContext<'a> {
                     Some(TransitionContactCandidate {
                         first_carrier: pair.first_carrier_index,
                         second_carrier: pair.second_carrier_index,
-                        interior_on_both_carriers: parameter_strictly_inside_carrier(
-                            first_parameter,
-                            contact.point(),
-                            &self.data.carriers[pair.first_carrier_index],
-                            &self.data.policy,
-                        ) && parameter_strictly_inside_carrier(
-                            second_parameter,
-                            contact.point(),
-                            &self.data.carriers[pair.second_carrier_index],
-                            &self.data.policy,
-                        ),
+                        interior_on_both_carriers: first_location
+                            == CarrierParameterLocation::Interior
+                            && second_location == CarrierParameterLocation::Interior,
                         certified_transverse: contact.is_certified_transverse(),
                         cross_is_positive: contact.tangent_cross_is_positive(),
                         tangent_dot_is_positive: match contact.tangent_dot_sign {
@@ -13224,6 +13186,18 @@ fn parameter_in_carrier(
     carrier: &RegionCarrier,
     policy: &CurveContext,
 ) -> ExactCurveResult<bool> {
+    Ok(parameter_location_in_carrier(parameter, carrier, policy)?
+        != CarrierParameterLocation::Outside)
+}
+
+fn parameter_location_in_carrier(
+    parameter: &CurveRegionParameter2,
+    carrier: &RegionCarrier,
+    policy: &CurveContext,
+) -> ExactCurveResult<CarrierParameterLocation> {
+    if parameter == &carrier.start || parameter == &carrier.end {
+        return Ok(CarrierParameterLocation::Endpoint);
+    }
     if let (Some(parameter), RegionCarrierGeometry::AlgebraicCuspSemicircle(fragment)) =
         (parameter.as_algebraic_cusp(), &carrier.geometry)
         && let Some(Classification::Decided(true)) = fragment
@@ -13232,7 +13206,7 @@ fn parameter_in_carrier(
                 ExactCurveError::invalid(CurveOperation2::Boolean, carrier.family, cause)
             })?
     {
-        return Ok(true);
+        return Ok(CarrierParameterLocation::Interior);
     }
     // Two independently selected fields need not admit a useful scalar
     // parameter comparison even when the pair kernel already certified their
@@ -13259,64 +13233,45 @@ fn parameter_in_carrier(
                     ExactCurveError::invalid(CurveOperation2::Boolean, carrier.family, cause)
                 })?;
             match location {
-                Classification::Decided(Start | Interior | End) => return Ok(true),
-                Classification::Decided(Exterior) => return Ok(false),
+                Classification::Decided(Start | End) => {
+                    return Ok(CarrierParameterLocation::Endpoint);
+                }
+                Classification::Decided(Interior) => {
+                    return Ok(CarrierParameterLocation::Interior);
+                }
+                Classification::Decided(Exterior) => {
+                    return Ok(CarrierParameterLocation::Outside);
+                }
                 Classification::Uncertain(_) => {}
             }
         }
+        use crate::bezier_offset::BezierAlgebraicCuspSemicircleIncidentLocation2::{
+            End, Exterior, Interior, Start,
+        };
+        return match fragment
+            .parameter_location_by_order(parameter, policy)
+            .map_err(|cause| {
+                ExactCurveError::invalid(CurveOperation2::Boolean, carrier.family, cause)
+            })? {
+            Classification::Decided(Start | End) => Ok(CarrierParameterLocation::Endpoint),
+            Classification::Decided(Interior) => Ok(CarrierParameterLocation::Interior),
+            Classification::Decided(Exterior) => Ok(CarrierParameterLocation::Outside),
+            Classification::Uncertain(reason) => Err(ExactCurveError::blocked(
+                CurveOperation2::Boolean,
+                carrier.family,
+                reason,
+            )),
+        };
     }
-    parameter_between(parameter, &carrier.start, &carrier.end, policy)
-}
-
-fn parameter_strictly_inside_carrier(
-    parameter: &CurveRegionParameter2,
-    point: Option<&RationalBezierIntersectionPointEvidence2>,
-    carrier: &RegionCarrier,
-    policy: &CurveContext,
-) -> bool {
-    if let (
-        Some(parameter),
-        Some(point),
-        RegionCarrierGeometry::AlgebraicCuspSemicircle(fragment),
-    ) = (parameter.as_algebraic_cusp(), point, &carrier.geometry)
-    {
-        if let Ok(Some(Classification::Decided(interior))) =
-            fragment.translated_pair_parameter_is_strict_interior(parameter, policy)
-        {
-            return interior;
-        }
-        if let Ok(Classification::Decided(interior)) =
-            fragment.certified_incident_point_evidence_is_strict_interior(point, policy)
-        {
-            return interior;
-        }
-    }
-    matches!(
-        (
-            decided_parameter_cmp(parameter, &carrier.start, policy),
-            decided_parameter_cmp(parameter, &carrier.end, policy),
-        ),
-        (Ok(Ordering::Greater), Ok(Ordering::Less))
-    )
-}
-
-fn parameter_between(
-    parameter: &CurveRegionParameter2,
-    start: &CurveRegionParameter2,
-    end: &CurveRegionParameter2,
-    policy: &CurveContext,
-) -> ExactCurveResult<bool> {
-    // A retained endpoint already carries the carrier's exact local
-    // authority.  Accept that identity directly: deciding whether the same
-    // endpoint lies on the correct side of the opposite, independently
-    // selected endpoint is unnecessary and may require a primitive element
-    // that the compact cusp representation deliberately avoids.
-    if parameter == start || parameter == end {
-        return Ok(true);
-    }
-    let lower = decided_parameter_cmp(parameter, start, policy)?;
-    let upper = decided_parameter_cmp(parameter, end, policy)?;
-    Ok(!lower.is_lt() && !upper.is_gt())
+    let lower = decided_parameter_cmp(parameter, &carrier.start, policy)?;
+    let upper = decided_parameter_cmp(parameter, &carrier.end, policy)?;
+    Ok(if lower.is_lt() || upper.is_gt() {
+        CarrierParameterLocation::Outside
+    } else if lower == Ordering::Equal || upper == Ordering::Equal {
+        CarrierParameterLocation::Endpoint
+    } else {
+        CarrierParameterLocation::Interior
+    })
 }
 
 fn parameter_range_inside_carrier(

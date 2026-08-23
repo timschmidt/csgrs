@@ -47277,6 +47277,9 @@ impl BezierAlgebraicCuspSemicircleParameter2 {
                     | BezierAlgebraicCuspSemicircleMappedParameterData2::SelectedChordParallelNormalContact {
                         ..
                     }
+            ) | (
+                BezierAlgebraicCuspSemicircleMappedParameterData2::Chord { .. },
+                BezierAlgebraicCuspSemicircleMappedParameterData2::Chord { .. }
             )
         ) {
             return Ok(None);
@@ -47299,110 +47302,7 @@ impl BezierAlgebraicCuspSemicircleParameter2 {
                 return Ok(Some(Classification::Uncertain(reason)));
             }
         };
-        let first = match recursive_projective_point_source(&first, policy)? {
-            Classification::Decided(Some(point)) => point,
-            Classification::Decided(None) => return Ok(None),
-            Classification::Uncertain(reason) => {
-                return Ok(Some(Classification::Uncertain(reason)));
-            }
-        };
-        let second = match recursive_projective_point_source(&second, policy)? {
-            Classification::Decided(Some(point)) => point,
-            Classification::Decided(None) => return Ok(None),
-            Classification::Uncertain(reason) => {
-                return Ok(Some(Classification::Uncertain(reason)));
-            }
-        };
-        let authority = match semicircle.recursive_selected_pair_frame_authority(policy)? {
-            Classification::Decided(Some(authority)) => authority,
-            Classification::Decided(None) => {
-                match semicircle.recursive_selected_radial_frame_authority(policy)? {
-                    Classification::Decided(Some(authority)) => authority,
-                    Classification::Decided(None) => return Ok(None),
-                    Classification::Uncertain(reason) => {
-                        return Ok(Some(Classification::Uncertain(reason)));
-                    }
-                }
-            }
-            Classification::Uncertain(reason) => {
-                return Ok(Some(Classification::Uncertain(reason)));
-            }
-        };
-        let (authority, first) = match embed_recursive_projective_point_source(authority, first)? {
-            Classification::Decided(Some(embedded)) => embedded,
-            Classification::Decided(None) => return Ok(None),
-            Classification::Uncertain(reason) => {
-                return Ok(Some(Classification::Uncertain(reason)));
-            }
-        };
-        let (authority, second) = match embed_recursive_projective_point_source(authority, second)?
-        {
-            Classification::Decided(Some(embedded)) => embedded,
-            Classification::Decided(None) => return Ok(None),
-            Classification::Uncertain(reason) => {
-                return Ok(Some(Classification::Uncertain(reason)));
-            }
-        };
-        let Some(first) = first.lifted_to(&authority.field) else {
-            return Ok(Some(Classification::Uncertain(
-                UncertaintyReason::Unsupported,
-            )));
-        };
-        let Some((first_x, first_y, _)) = first.difference_numerators(&authority.center) else {
-            return Ok(Some(Classification::Uncertain(
-                UncertaintyReason::Unsupported,
-            )));
-        };
-        let Some((second_x, second_y, _)) = second.difference_numerators(&authority.center) else {
-            return Ok(Some(Classification::Uncertain(
-                UncertaintyReason::Unsupported,
-            )));
-        };
-        let Some(cross) = first_x.multiply(&second_y).and_then(|value| {
-            first_y
-                .multiply(&second_x)
-                .and_then(|other| value.subtract(&other))
-        }) else {
-            return Ok(Some(Classification::Uncertain(
-                UncertaintyReason::Unsupported,
-            )));
-        };
-        let cross = match cross.sign(policy)? {
-            Classification::Decided(sign) => sign,
-            Classification::Uncertain(reason) => {
-                return Ok(Some(Classification::Uncertain(reason)));
-            }
-        };
-        if cross == RealSign::Zero {
-            let Some(dot) = first_x.multiply(&second_x).and_then(|value| {
-                first_y
-                    .multiply(&second_y)
-                    .and_then(|other| value.add(&other))
-            }) else {
-                return Ok(Some(Classification::Uncertain(
-                    UncertaintyReason::Unsupported,
-                )));
-            };
-            return Ok(Some(match dot.sign(policy)? {
-                Classification::Decided(RealSign::Positive) => {
-                    Classification::Decided(std::cmp::Ordering::Equal)
-                }
-                Classification::Decided(RealSign::Negative | RealSign::Zero) => {
-                    Classification::Uncertain(UncertaintyReason::Boundary)
-                }
-                Classification::Uncertain(reason) => Classification::Uncertain(reason),
-            }));
-        }
-        let follows_traversal = if semicircle.is_clockwise() {
-            cross == RealSign::Negative
-        } else {
-            cross == RealSign::Positive
-        };
-        Ok(Some(Classification::Decided(if follows_traversal {
-            std::cmp::Ordering::Less
-        } else {
-            std::cmp::Ordering::Greater
-        })))
+        recursive_projective_incident_point_order(&first, &second, semicircle, false, policy)
     }
 
     pub(crate) fn cmp_by_refinement(
@@ -57886,11 +57786,14 @@ impl BezierAlgebraicChord2 {
         if self.shares_retained_support(other) {
             return Ok(Classification::Decided(true));
         }
-        if let (
-            Classification::Decided(Some(first_direction)),
-            Classification::Decided(Some(second_direction)),
-        ) = (self.axis_direction(policy)?, other.axis_direction(policy)?)
-            && first_direction.axis() == second_direction.axis()
+        // Axis collinearity is only a compact precheck. A nonstructural axis
+        // proof may require projecting both composite endpoint fields; the
+        // complete chord-pair side kernel already decides the same support
+        // relation without that optional Cartesian materialization.
+        if let (Some(first_direction), Some(second_direction)) = (
+            self.certified_axis_direction(),
+            other.certified_axis_direction(),
+        ) && first_direction.axis() == second_direction.axis()
         {
             let constant_axis = match first_direction.axis() {
                 Axis2::X => Axis2::Y,
@@ -69487,9 +69390,11 @@ impl BezierAlgebraicChordSupportPredicate2 {
         {
             return Ok(Classification::Decided(crate::classify::LineSide::On));
         }
-        let certified_tangent_side = support_chord.certified_tangent_side(point, policy);
-        if let side @ Classification::Decided(_) = certified_tangent_side {
-            return Ok(side);
+        if support_chord.certified_unit_tangent().is_some() {
+            let certified_tangent_side = support_chord.certified_tangent_side(point, policy);
+            if let side @ Classification::Decided(_) = certified_tangent_side {
+                return Ok(side);
+            }
         }
         let retained_side = match point {
             RationalBezierIntersectionPointEvidence2::AlgebraicChordPair(point) => {
@@ -73515,6 +73420,152 @@ impl BezierAlgebraicChordPairPoint2 {
             Ok(Classification::Uncertain(UncertaintyReason::Ordering))
         }
     }
+}
+
+/// Orders two caller-certified incident points in one selected semicircle's
+/// retained recursive frame. The oriented cross product of their radial
+/// vectors is monotone on the closed half-circle chart. If the caller also
+/// certifies that the points differ, an exact nonnegative radial dot rules
+/// out the remaining antipodal zero-cross case and makes nonzero-cross sign
+/// refinement complete.
+fn recursive_projective_incident_point_order(
+    first: &RationalBezierIntersectionPointEvidence2,
+    second: &RationalBezierIntersectionPointEvidence2,
+    semicircle: &BezierAlgebraicCuspSemicircle2,
+    certified_distinct: bool,
+    policy: &CurveContext,
+) -> CurveResult<Option<Classification<std::cmp::Ordering>>> {
+    let first = match recursive_projective_point_source(first, policy)? {
+        Classification::Decided(Some(point)) => point,
+        Classification::Decided(None) => return Ok(None),
+        Classification::Uncertain(reason) => {
+            return Ok(Some(Classification::Uncertain(reason)));
+        }
+    };
+    let second = match recursive_projective_point_source(second, policy)? {
+        Classification::Decided(Some(point)) => point,
+        Classification::Decided(None) => return Ok(None),
+        Classification::Uncertain(reason) => {
+            return Ok(Some(Classification::Uncertain(reason)));
+        }
+    };
+    let authority = match semicircle.recursive_selected_pair_frame_authority(policy)? {
+        Classification::Decided(Some(authority)) => authority,
+        Classification::Decided(None) => {
+            match semicircle.recursive_selected_radial_frame_authority(policy)? {
+                Classification::Decided(Some(authority)) => authority,
+                Classification::Decided(None) => return Ok(None),
+                Classification::Uncertain(reason) => {
+                    return Ok(Some(Classification::Uncertain(reason)));
+                }
+            }
+        }
+        Classification::Uncertain(reason) => {
+            return Ok(Some(Classification::Uncertain(reason)));
+        }
+    };
+    let (authority, first) = match embed_recursive_projective_point_source(authority, first)? {
+        Classification::Decided(Some(embedded)) => embedded,
+        Classification::Decided(None) => return Ok(None),
+        Classification::Uncertain(reason) => {
+            return Ok(Some(Classification::Uncertain(reason)));
+        }
+    };
+    let (authority, second) = match embed_recursive_projective_point_source(authority, second)? {
+        Classification::Decided(Some(embedded)) => embedded,
+        Classification::Decided(None) => return Ok(None),
+        Classification::Uncertain(reason) => {
+            return Ok(Some(Classification::Uncertain(reason)));
+        }
+    };
+    let Some(first) = first.lifted_to(&authority.field) else {
+        return Ok(Some(Classification::Uncertain(
+            UncertaintyReason::Unsupported,
+        )));
+    };
+    let Some((first_x, first_y, _)) = first.difference_numerators(&authority.center) else {
+        return Ok(Some(Classification::Uncertain(
+            UncertaintyReason::Unsupported,
+        )));
+    };
+    let Some((second_x, second_y, _)) = second.difference_numerators(&authority.center) else {
+        return Ok(Some(Classification::Uncertain(
+            UncertaintyReason::Unsupported,
+        )));
+    };
+    let Some(cross) = first_x.multiply(&second_y).and_then(|value| {
+        first_y
+            .multiply(&second_x)
+            .and_then(|other| value.subtract(&other))
+    }) else {
+        return Ok(Some(Classification::Uncertain(
+            UncertaintyReason::Unsupported,
+        )));
+    };
+    let radial_dot = || {
+        first_x.multiply(&second_x).and_then(|value| {
+            first_y
+                .multiply(&second_y)
+                .and_then(|other| value.add(&other))
+        })
+    };
+    let cross = match cross.sign(policy)? {
+        Classification::Decided(sign) => sign,
+        Classification::Uncertain(reason) if certified_distinct => {
+            let Some(dot) = radial_dot() else {
+                return Ok(Some(Classification::Uncertain(
+                    UncertaintyReason::Unsupported,
+                )));
+            };
+            // This sign participates in an exact nonzero certificate rather
+            // than the final equality predicate. In APPROXIMATE_512, a
+            // terminal approximate zero must therefore not be promoted into
+            // construction evidence.
+            match dot.sign(&policy.strict_counterpart())? {
+                Classification::Decided(RealSign::Positive | RealSign::Zero) => {
+                    match cross.sign_with_nonzero_certificate()? {
+                        Classification::Decided(sign) => sign,
+                        Classification::Uncertain(reason) => {
+                            return Ok(Some(Classification::Uncertain(reason)));
+                        }
+                    }
+                }
+                Classification::Decided(RealSign::Negative) | Classification::Uncertain(_) => {
+                    return Ok(Some(Classification::Uncertain(reason)));
+                }
+            }
+        }
+        Classification::Uncertain(reason) => {
+            return Ok(Some(Classification::Uncertain(reason)));
+        }
+    };
+    if cross == RealSign::Zero {
+        let Some(dot) = radial_dot() else {
+            return Ok(Some(Classification::Uncertain(
+                UncertaintyReason::Unsupported,
+            )));
+        };
+        let order = match dot.sign(policy)? {
+            Classification::Decided(RealSign::Positive) => {
+                Classification::Decided(std::cmp::Ordering::Equal)
+            }
+            Classification::Decided(RealSign::Negative | RealSign::Zero) => {
+                Classification::Uncertain(UncertaintyReason::Boundary)
+            }
+            Classification::Uncertain(reason) => Classification::Uncertain(reason),
+        };
+        return Ok(Some(order));
+    }
+    let follows_traversal = if semicircle.is_clockwise() {
+        cross == RealSign::Negative
+    } else {
+        cross == RealSign::Positive
+    };
+    Ok(Some(Classification::Decided(if follows_traversal {
+        std::cmp::Ordering::Less
+    } else {
+        std::cmp::Ordering::Greater
+    })))
 }
 
 /// Signs an oriented area directly in the least shared recursive quadratic
@@ -78004,10 +78055,11 @@ impl BezierAlgebraicCuspSemicircleFragment2 {
     }
 
     /// Locates a point whose incidence on this supporting circle is already
-    /// certified. The endpoint chord decides interior versus endpoint without
-    /// comparing independently reconstructed angular values. At an endpoint,
-    /// one decided inequality against the opposite endpoint is enough to
-    /// identify the equal endpoint exactly.
+    /// certified. Retained scalar order is tried first, followed by angular
+    /// order in the circle's compact recursive frame. The endpoint chord is
+    /// the complete representation-independent fallback. At an endpoint, one
+    /// decided inequality against the opposite endpoint is enough to identify
+    /// the equal endpoint exactly.
     pub(crate) fn certified_incident_point_evidence_location(
         &self,
         parameter: &BezierAlgebraicCuspSemicircleParameter2,
@@ -78026,6 +78078,51 @@ impl BezierAlgebraicCuspSemicircleFragment2 {
             if point.shares_storage(&endpoint) {
                 return Ok(Classification::Decided(location));
             }
+        }
+        let point_order = |source_start: bool,
+                           scalar_order: Classification<std::cmp::Ordering>|
+         -> CurveResult<Classification<std::cmp::Ordering>> {
+            if matches!(scalar_order, Classification::Decided(_)) {
+                return Ok(scalar_order);
+            }
+            let endpoint = match self.endpoint_point_evidence(
+                if source_start {
+                    !self.data.reversed
+                } else {
+                    self.data.reversed
+                },
+                policy,
+            )? {
+                Classification::Decided(Some(endpoint)) => endpoint,
+                Classification::Decided(None) | Classification::Uncertain(_) => {
+                    return Ok(scalar_order);
+                }
+            };
+            let certified_distinct = matches!(
+                point,
+                RationalBezierIntersectionPointEvidence2::AlgebraicCuspChord(contact)
+                    if contact.contact_support_separates_point(&endpoint, policy)?
+                        == Classification::Decided(true)
+            );
+            Ok(
+                match recursive_projective_incident_point_order(
+                    point,
+                    &endpoint,
+                    &self.data.semicircle,
+                    certified_distinct,
+                    policy,
+                )? {
+                    Some(order) => order,
+                    None => scalar_order,
+                },
+            )
+        };
+        let start = point_order(true, parameter.cmp_by_refinement(&self.data.start, policy)?)?;
+        let end = point_order(false, parameter.cmp_by_refinement(&self.data.end, policy)?)?;
+        if let (Classification::Decided(start), Classification::Decided(end)) = (start, end) {
+            return Ok(Classification::Decided(
+                self.incident_location_from_orders(start, end),
+            ));
         }
         let side = match policy.strict_predicate_pass(|| self.endpoint_chord_side(point, policy))? {
             Classification::Decided(side) => side,
@@ -78074,13 +78171,37 @@ impl BezierAlgebraicCuspSemicircleFragment2 {
         }
     }
 
-    pub(crate) fn contains_parameter(
+    fn incident_location_from_orders(
+        &self,
+        start: std::cmp::Ordering,
+        end: std::cmp::Ordering,
+    ) -> BezierAlgebraicCuspSemicircleIncidentLocation2 {
+        use BezierAlgebraicCuspSemicircleIncidentLocation2::{End, Exterior, Interior, Start};
+        match (start, end) {
+            (std::cmp::Ordering::Equal, _) => {
+                if self.data.reversed {
+                    End
+                } else {
+                    Start
+                }
+            }
+            (_, std::cmp::Ordering::Equal) => {
+                if self.data.reversed {
+                    Start
+                } else {
+                    End
+                }
+            }
+            (std::cmp::Ordering::Greater, std::cmp::Ordering::Less) => Interior,
+            _ => Exterior,
+        }
+    }
+
+    pub(crate) fn parameter_location_by_order(
         &self,
         parameter: &BezierAlgebraicCuspSemicircleParameter2,
-        include_start: bool,
-        include_end: bool,
         policy: &CurveContext,
-    ) -> CurveResult<Classification<bool>> {
+    ) -> CurveResult<Classification<BezierAlgebraicCuspSemicircleIncidentLocation2>> {
         self.validate_policy(policy)?;
         let start = match parameter.cmp_by_refinement(&self.data.start, policy)? {
             Classification::Decided(order) => order,
@@ -78094,11 +78215,38 @@ impl BezierAlgebraicCuspSemicircleFragment2 {
                 return Ok(Classification::Uncertain(reason));
             }
         };
-        let after_start = matches!(start, std::cmp::Ordering::Greater)
-            || include_start && start == std::cmp::Ordering::Equal;
-        let before_end = matches!(end, std::cmp::Ordering::Less)
-            || include_end && end == std::cmp::Ordering::Equal;
-        Ok(Classification::Decided(after_start && before_end))
+        Ok(Classification::Decided(
+            self.incident_location_from_orders(start, end),
+        ))
+    }
+
+    pub(crate) fn contains_parameter(
+        &self,
+        parameter: &BezierAlgebraicCuspSemicircleParameter2,
+        include_start: bool,
+        include_end: bool,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<bool>> {
+        Ok(self
+            .parameter_location_by_order(parameter, policy)?
+            .map(|location| match location {
+                BezierAlgebraicCuspSemicircleIncidentLocation2::Start => {
+                    if self.data.reversed {
+                        include_end
+                    } else {
+                        include_start
+                    }
+                }
+                BezierAlgebraicCuspSemicircleIncidentLocation2::Interior => true,
+                BezierAlgebraicCuspSemicircleIncidentLocation2::End => {
+                    if self.data.reversed {
+                        include_start
+                    } else {
+                        include_end
+                    }
+                }
+                BezierAlgebraicCuspSemicircleIncidentLocation2::Exterior => false,
+            }))
     }
 
     /// Uses translated pair radials to classify a strict trim-domain contact
@@ -103858,9 +104006,10 @@ mod conversion_tests {
             );
 
             // Re-prove one diagonal concurrency with geometrically coincident,
-            // independently selected supports. Axis-aligned lines collapse
-            // structurally; these oblique supports deliberately require the
-            // terminal policy after exact interval refinement is exhausted.
+            // independently selected supports. Each retained point is exactly
+            // incident on the same two nonparallel support lines, so support
+            // uniqueness now proves equality without a Cartesian compositum or
+            // terminal approximate equality.
             let diagonal = RationalBezier2::try_new(
                 vec![Point2::from_values(0, 0), Point2::from_values(1, 1)],
                 vec![Real::one(); 2],
@@ -103910,22 +104059,8 @@ mod conversion_tests {
             let equality = crate::policy::resolve_certified_value(&policy, |attempt| {
                 primary_point.same_point(&alternate_point, attempt)
             });
-            if policy == CurveContext::STRICT {
-                assert!(
-                    matches!(
-                        equality.value,
-                        Classification::Uncertain(UncertaintyReason::Predicate)
-                    ),
-                    "strict independently supported concurrency: {equality:?}"
-                );
-                assert_eq!(equality.certainty, crate::CurveCertainty::Certified);
-            } else {
-                assert_eq!(equality.value, Classification::Decided(true));
-                assert_eq!(
-                    equality.certainty,
-                    crate::CurveCertainty::Approximate512Consumed
-                );
-            }
+            assert_eq!(equality.value, Classification::Decided(true));
+            assert_eq!(equality.certainty, crate::CurveCertainty::Certified);
 
             let Classification::Decided(disjoint) = BezierAlgebraicChord2::try_new(
                 RationalBezierIntersectionPointEvidence2::Exact(Point2::from_values(0, 0)),
@@ -115673,6 +115808,81 @@ mod conversion_tests {
                 radial_distance,
                 clockwise,
             }),
+        }
+    }
+
+    #[test]
+    fn selected_circle_parameter_location_preserves_ascending_range_inclusions_when_reversed() {
+        use BezierAlgebraicCuspSemicircleIncidentLocation2::{End, Interior, Start};
+
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let quarter = (Real::one() / Real::from(4_i8)).unwrap();
+            let half = (Real::one() / Real::from(2_i8)).unwrap();
+            let three_quarters = (Real::from(3_i8) / Real::from(4_i8)).unwrap();
+            let circle = synthetic_independent_unit_cusp_semicircle(&policy);
+            let parameter =
+                |value: &Real| BezierAlgebraicCuspSemicircleParameter2::Exact(value.clone());
+
+            for reversed in [false, true] {
+                let Classification::Decided(fragment) =
+                    BezierAlgebraicCuspSemicircleFragment2::try_new(
+                        circle.clone(),
+                        parameter(&quarter),
+                        parameter(&three_quarters),
+                        reversed,
+                        &policy,
+                    )
+                    .unwrap()
+                else {
+                    panic!("the exact selected-circle subrange must decide");
+                };
+
+                assert_eq!(
+                    fragment
+                        .parameter_location_by_order(&parameter(&quarter), &policy)
+                        .unwrap(),
+                    Classification::Decided(if reversed { End } else { Start }),
+                );
+                assert_eq!(
+                    fragment
+                        .parameter_location_by_order(&parameter(&half), &policy)
+                        .unwrap(),
+                    Classification::Decided(Interior),
+                );
+                assert_eq!(
+                    fragment
+                        .parameter_location_by_order(&parameter(&three_quarters), &policy)
+                        .unwrap(),
+                    Classification::Decided(if reversed { Start } else { End }),
+                );
+
+                // Inclusion flags continue to name the ascending stored
+                // range, independent of traversal direction.
+                assert_eq!(
+                    fragment
+                        .contains_parameter(&parameter(&quarter), true, false, &policy)
+                        .unwrap(),
+                    Classification::Decided(true),
+                );
+                assert_eq!(
+                    fragment
+                        .contains_parameter(&parameter(&quarter), false, true, &policy)
+                        .unwrap(),
+                    Classification::Decided(false),
+                );
+                assert_eq!(
+                    fragment
+                        .contains_parameter(&parameter(&three_quarters), false, true, &policy)
+                        .unwrap(),
+                    Classification::Decided(true),
+                );
+                assert_eq!(
+                    fragment
+                        .contains_parameter(&parameter(&three_quarters), true, false, &policy)
+                        .unwrap(),
+                    Classification::Decided(false),
+                );
+            }
         }
     }
 
