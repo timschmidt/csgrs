@@ -27738,6 +27738,83 @@ mod tests {
         }
     }
 
+    #[test]
+    fn fourth_selected_radial_approximate_nonadjacent_circle_pairs_decide() {
+        let policy = CurveContext::APPROXIMATE_512;
+        let (fourth_generation, fourth_radius) =
+            fourth_selected_radial_boolean_fillet_generation(&policy);
+        let distance = (fourth_radius / Real::from(20_i8)).unwrap();
+        let (offset_loops, _) =
+            exact_raw_bevel_offset_loops(&fourth_generation, &distance, &policy);
+        let mut circles = Vec::new();
+        for (loop_index, boundary) in offset_loops.iter().enumerate() {
+            for (fragment_index, fragment) in boundary.fragments().iter().enumerate() {
+                if let BezierSplitFragment2::AlgebraicCuspSemicircle(circle) = fragment {
+                    circles.push((
+                        loop_index,
+                        fragment_index,
+                        boundary.fragments().len(),
+                        circle,
+                    ));
+                }
+            }
+        }
+        let mut nonadjacent_pairs = 0_usize;
+        for first_index in 0..circles.len() {
+            for second_index in (first_index + 1)..circles.len() {
+                let (first_loop, first_fragment, first_count, first) = circles[first_index];
+                let (second_loop, second_fragment, second_count, second) = circles[second_index];
+                let adjacent = first_loop == second_loop
+                    && first_count == second_count
+                    && ((first_fragment + 1) % first_count == second_fragment
+                        || (second_fragment + 1) % second_count == first_fragment);
+                if adjacent {
+                    continue;
+                }
+                nonadjacent_pairs += 1;
+                if matches!(
+                    first
+                        .unique_shared_tangent_endpoint_contact(second, &policy)
+                        .expect("a retained nonadjacent tangent remains valid"),
+                    Classification::Decided(Some(_)),
+                ) {
+                    continue;
+                }
+                #[cfg(feature = "dispatch-trace")]
+                hyperreal::dispatch_trace::reset();
+                let pair_work = || {
+                    first
+                        .semicircle()
+                        .pair_intersections(second.semicircle(), &policy)
+                        .expect("a nonadjacent recursive circle pair remains valid")
+                };
+                #[cfg(feature = "dispatch-trace")]
+                let result = hyperreal::dispatch_trace::with_recording(pair_work);
+                #[cfg(not(feature = "dispatch-trace"))]
+                let result = pair_work();
+                #[cfg(feature = "dispatch-trace")]
+                let pair_trace = hyperreal::dispatch_trace::take_trace()
+                    .dispatch
+                    .into_iter()
+                    .filter(|entry| entry.layer == "hypercurve")
+                    .collect::<Vec<_>>();
+                #[cfg(not(feature = "dispatch-trace"))]
+                let pair_trace: Vec<()> = Vec::new();
+                assert!(
+                    matches!(result, Classification::Decided(_)),
+                    "nonadjacent recursive circle pair ({first_loop},{first_fragment})/({second_loop},{second_fragment}) must decide: {result:?}; frames selected=({}, {}), chord=({}, {}), parallel=({}, {}); trace={pair_trace:?}",
+                    first.semicircle().uses_selected_radial_frame(),
+                    second.semicircle().uses_selected_radial_frame(),
+                    first.semicircle().uses_selected_chord_normal_frame(),
+                    second.semicircle().uses_selected_chord_normal_frame(),
+                    first.semicircle().uses_selected_parallel_normal_frame(),
+                    second.semicircle().uses_selected_parallel_normal_frame(),
+                );
+            }
+        }
+        assert!(nonadjacent_pairs > 0);
+    }
+
     fn assert_fourth_selected_radial_public_offset_regularizes(policy: CurveContext) {
         let (fourth_generation, fourth_radius) =
             fourth_selected_radial_boolean_fillet_generation(&policy);
@@ -27754,9 +27831,16 @@ mod tests {
         let trace = hyperreal::dispatch_trace::take_trace();
         let offset = offset.unwrap_or_else(|error| {
             #[cfg(feature = "dispatch-trace")]
-            panic!(
-                "the fourth-generation public offset must regularize exactly: {error:?}; {trace:?}"
-            );
+            {
+                let hypercurve_trace = trace
+                    .dispatch
+                    .iter()
+                    .filter(|entry| entry.layer == "hypercurve")
+                    .collect::<Vec<_>>();
+                panic!(
+                    "the fourth-generation public offset must regularize exactly: {error:?}; hypercurve trace: {hypercurve_trace:?}"
+                );
+            }
             #[cfg(not(feature = "dispatch-trace"))]
             panic!("the fourth-generation public offset must regularize exactly: {error:?}");
         });
