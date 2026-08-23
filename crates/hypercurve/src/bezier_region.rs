@@ -27461,18 +27461,127 @@ mod tests {
         (candidate, radius)
     }
 
+    fn fourth_selected_radial_boolean_fillet_generation(
+        policy: &CurveContext,
+    ) -> (CurveRegion2, Real) {
+        let source = independent_pair_native_fillet(policy, false);
+        let source_radius = pair_radial_corner(&source).1;
+        let (third_generation, third_radius) =
+            next_selected_radial_boolean_fillet_generation(&source, &source_radius, policy);
+        next_selected_radial_boolean_fillet_generation(&third_generation, &third_radius, policy)
+    }
+
+    fn exact_raw_bevel_offset_loops(
+        source: &CurveRegion2,
+        distance: &Real,
+        policy: &CurveContext,
+    ) -> (Vec<CurveRegionBoundaryLoop2>, usize) {
+        let filled_sides = match source
+            .filled_side_is_left_raw(policy)
+            .expect("the recursive filled sides remain exact")
+        {
+            Classification::Decided(sides) => sides,
+            Classification::Uncertain(reason) => {
+                panic!("the recursive filled sides must decide: {reason:?}")
+            }
+        };
+        let mut offset_loops = Vec::with_capacity(source.boundary_loops().len());
+        let mut mixed_tangent_joins = 0;
+        for (loop_index, boundary) in source.boundary_loops().iter().enumerate() {
+            let signed_left_distance = if filled_sides[loop_index] {
+                -distance.clone()
+            } else {
+                distance.clone()
+            };
+            let spans = match exact_offset_span_runs_from_boundary_loop(
+                boundary,
+                &signed_left_distance,
+                policy,
+            )
+            .expect("the recursive offset spans remain valid")
+            {
+                Classification::Decided(spans) => {
+                    spans.into_iter().map(|(span, _)| span).collect::<Vec<_>>()
+                }
+                Classification::Uncertain(reason) => panic!(
+                    "the recursive offset spans must decide: loop={loop_index}, reason={reason:?}"
+                ),
+            };
+            let mut fragments = Vec::new();
+            for span_index in 0..spans.len() {
+                fragments.extend(spans[span_index].fragments.iter().cloned());
+                let next_index = (span_index + 1) % spans.len();
+                if let Some((first, second)) = spans[span_index]
+                    .end_tangent
+                    .as_ref()
+                    .zip(spans[next_index].start_tangent.as_ref())
+                    && matches!(
+                        (first, second),
+                        (
+                            ExactOffsetTangent2::SelectedCircularEndpoint { .. },
+                            ExactOffsetTangent2::ChordContact { .. }
+                        ) | (
+                            ExactOffsetTangent2::ChordContact { .. },
+                            ExactOffsetTangent2::SelectedCircularEndpoint { .. }
+                        )
+                    )
+                {
+                    mixed_tangent_joins += 1;
+                    let Classification::Decided(forward) =
+                        exact_offset_tangent_cross_sign(first, second, policy)
+                    else {
+                        panic!(
+                            "the mixed circular tangent cross must decide: loop={loop_index}, span={span_index}"
+                        );
+                    };
+                    let Classification::Decided(reverse) =
+                        exact_offset_tangent_cross_sign(second, first, policy)
+                    else {
+                        panic!(
+                            "the reversed mixed circular tangent cross must decide: loop={loop_index}, span={span_index}"
+                        );
+                    };
+                    assert_eq!(reverse, exact_sign_reverse(forward));
+                    if forward == RealSign::Zero {
+                        let opposite = exact_offset_tangents_are_opposite(first, second, policy);
+                        assert!(matches!(opposite, Classification::Decided(_)));
+                        assert_eq!(
+                            opposite,
+                            exact_offset_tangents_are_opposite(second, first, policy),
+                        );
+                    }
+                }
+                match append_exact_offset_join(
+                    &mut fragments,
+                    &spans[span_index],
+                    &spans[next_index],
+                    &signed_left_distance,
+                    &OffsetCornerStyle2::Bevel,
+                    policy,
+                )
+                .expect("the recursive offset join remains valid")
+                {
+                    Classification::Decided(()) => {}
+                    Classification::Uncertain(reason) => panic!(
+                        "the recursive offset join must decide: loop={loop_index}, span={span_index}, reason={reason:?}"
+                    ),
+                }
+            }
+            offset_loops.push(
+                CurveRegionBoundaryLoop2::try_new_from_certified_connected_chain(
+                    fragments, None, policy,
+                )
+                .expect("the recursive offset chain closes exactly"),
+            );
+        }
+        (offset_loops, mixed_tangent_joins)
+    }
+
     #[test]
     fn recursively_nested_selected_radial_operations_remain_exact() {
         for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
-            let source = independent_pair_native_fillet(&policy, false);
-            let source_radius = pair_radial_corner(&source).1;
-            let (third_generation, third_radius) =
-                next_selected_radial_boolean_fillet_generation(&source, &source_radius, &policy);
-            let (fourth_generation, fourth_radius) = next_selected_radial_boolean_fillet_generation(
-                &third_generation,
-                &third_radius,
-                &policy,
-            );
+            let (fourth_generation, fourth_radius) =
+                fourth_selected_radial_boolean_fillet_generation(&policy);
             let replay = fourth_generation
                 .boolean_regions(&selected_fillet_disjoint_square(&policy), &policy)
                 .expect("the fourth-generation fillet re-enters the Boolean kernel");
@@ -27481,111 +27590,10 @@ mod tests {
             assert_eq!(replay.value.union().boundary_loops().len(), 2);
 
             let offset_distance = (fourth_radius.clone() / Real::from(20_i8)).unwrap();
-            let filled_sides = match fourth_generation
-                .filled_side_is_left_raw(&policy)
-                .expect("the fourth-generation filled sides remain exact")
-            {
-                Classification::Decided(sides) => sides,
-                Classification::Uncertain(reason) => {
-                    panic!("the fourth-generation filled sides must decide: {reason:?}")
-                }
-            };
             #[cfg(feature = "dispatch-trace")]
             hyperreal::dispatch_trace::reset();
-            let assembly_work = || {
-                let mut offset_loops = Vec::with_capacity(fourth_generation.boundary_loops().len());
-                let mut mixed_tangent_joins = 0;
-                for (loop_index, boundary) in fourth_generation.boundary_loops().iter().enumerate()
-                {
-                    let signed_left_distance = if filled_sides[loop_index] {
-                        -offset_distance.clone()
-                    } else {
-                        offset_distance.clone()
-                    };
-                    let spans = match exact_offset_span_runs_from_boundary_loop(
-                        boundary,
-                        &signed_left_distance,
-                        &policy,
-                    )
-                    .expect("the fourth-generation offset spans remain valid")
-                    {
-                        Classification::Decided(spans) => {
-                            spans.into_iter().map(|(span, _)| span).collect::<Vec<_>>()
-                        }
-                        Classification::Uncertain(reason) => panic!(
-                            "the fourth-generation offset spans must decide: loop={loop_index}, reason={reason:?}"
-                        ),
-                    };
-                    let mut fragments = Vec::new();
-                    for span_index in 0..spans.len() {
-                        fragments.extend(spans[span_index].fragments.iter().cloned());
-                        let next_index = (span_index + 1) % spans.len();
-                        if let Some((first, second)) = spans[span_index]
-                            .end_tangent
-                            .as_ref()
-                            .zip(spans[next_index].start_tangent.as_ref())
-                            && matches!(
-                                (first, second),
-                                (
-                                    ExactOffsetTangent2::SelectedCircularEndpoint { .. },
-                                    ExactOffsetTangent2::ChordContact { .. }
-                                ) | (
-                                    ExactOffsetTangent2::ChordContact { .. },
-                                    ExactOffsetTangent2::SelectedCircularEndpoint { .. }
-                                )
-                            )
-                        {
-                            mixed_tangent_joins += 1;
-                            let Classification::Decided(forward) =
-                                exact_offset_tangent_cross_sign(first, second, &policy)
-                            else {
-                                panic!(
-                                    "the mixed circular tangent cross must decide: loop={loop_index}, span={span_index}"
-                                );
-                            };
-                            let Classification::Decided(reverse) =
-                                exact_offset_tangent_cross_sign(second, first, &policy)
-                            else {
-                                panic!(
-                                    "the reversed mixed circular tangent cross must decide: loop={loop_index}, span={span_index}"
-                                );
-                            };
-                            assert_eq!(reverse, exact_sign_reverse(forward));
-                            if forward == RealSign::Zero {
-                                let opposite =
-                                    exact_offset_tangents_are_opposite(first, second, &policy);
-                                assert!(matches!(opposite, Classification::Decided(_)));
-                                assert_eq!(
-                                    opposite,
-                                    exact_offset_tangents_are_opposite(second, first, &policy),
-                                );
-                            }
-                        }
-                        match append_exact_offset_join(
-                            &mut fragments,
-                            &spans[span_index],
-                            &spans[next_index],
-                            &signed_left_distance,
-                            &OffsetCornerStyle2::Bevel,
-                            &policy,
-                        )
-                        .expect("the fourth-generation offset join remains valid")
-                        {
-                            Classification::Decided(()) => {}
-                            Classification::Uncertain(reason) => panic!(
-                                "the fourth-generation offset join must decide: loop={loop_index}, span={span_index}, reason={reason:?}"
-                            ),
-                        }
-                    }
-                    offset_loops.push(
-                        CurveRegionBoundaryLoop2::try_new_from_certified_connected_chain(
-                            fragments, None, &policy,
-                        )
-                        .expect("the fourth-generation offset chain closes exactly"),
-                    );
-                }
-                (offset_loops, mixed_tangent_joins)
-            };
+            let assembly_work =
+                || exact_raw_bevel_offset_loops(&fourth_generation, &offset_distance, &policy);
             #[cfg(feature = "dispatch-trace")]
             let (offset_loops, mixed_tangent_joins) =
                 hyperreal::dispatch_trace::with_recording(assembly_work);
@@ -27671,6 +27679,44 @@ mod tests {
                 assert!(replay.value.intersection().is_empty());
             });
         }
+    }
+
+    fn assert_fourth_selected_radial_public_offset_regularizes(policy: CurveContext) {
+        let (fourth_generation, fourth_radius) =
+            fourth_selected_radial_boolean_fillet_generation(&policy);
+        let distance = (fourth_radius / Real::from(20_i8)).unwrap();
+        #[cfg(feature = "dispatch-trace")]
+        hyperreal::dispatch_trace::reset();
+        let offset_work =
+            || fourth_generation.offset(distance, &OffsetCornerStyle2::Bevel, &policy);
+        #[cfg(feature = "dispatch-trace")]
+        let offset = hyperreal::dispatch_trace::with_recording(offset_work);
+        #[cfg(not(feature = "dispatch-trace"))]
+        let offset = offset_work();
+        #[cfg(feature = "dispatch-trace")]
+        let trace = hyperreal::dispatch_trace::take_trace();
+        let offset = offset.unwrap_or_else(|error| {
+            #[cfg(feature = "dispatch-trace")]
+            panic!(
+                "the fourth-generation public offset must regularize exactly: {error:?}; {trace:?}"
+            );
+            #[cfg(not(feature = "dispatch-trace"))]
+            panic!("the fourth-generation public offset must regularize exactly: {error:?}");
+        });
+        assert_eq!(offset.certainty, CurveCertainty::Certified);
+        assert!(!offset.value.is_empty());
+    }
+
+    #[test]
+    #[ignore = "multi-minute exact unary-arrangement performance sentinel"]
+    fn recursively_nested_selected_radial_public_offset_regularizes_strict() {
+        assert_fourth_selected_radial_public_offset_regularizes(CurveContext::STRICT);
+    }
+
+    #[test]
+    #[ignore = "multi-minute exact unary-arrangement performance sentinel"]
+    fn recursively_nested_selected_radial_public_offset_regularizes_approximate_512() {
+        assert_fourth_selected_radial_public_offset_regularizes(CurveContext::APPROXIMATE_512);
     }
 
     #[test]
