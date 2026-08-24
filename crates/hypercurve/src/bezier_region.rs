@@ -27542,6 +27542,22 @@ mod tests {
             #[cfg(not(feature = "dispatch-trace"))]
             panic!("the Boolean-fragmented pair-native boundary must offset: {error:?}");
         });
+        #[cfg(feature = "dispatch-trace")]
+        if !reversed {
+            assert!(
+                trace.path_count("hypercurve", "regularization-successor", "face-sector",) > 0,
+                "the endpoint crossing must reuse the regularization face-sector topology: {trace:?}",
+            );
+            assert_eq!(
+                trace.path_count(
+                    "hypercurve",
+                    "retained-endpoint-scope",
+                    "tangent-order-rebuild",
+                ),
+                0,
+                "topology-only algebraic chords must not require coordinate tangent reconstruction: {trace:?}",
+            );
+        }
         assert_eq!(offset.certainty, CurveCertainty::Certified);
         assert!(!offset.value.is_empty());
     }

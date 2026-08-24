@@ -473,6 +473,17 @@ struct RegularizedFragmentDecision {
     side_windings: [Vec<i32>; 2],
 }
 
+const NO_REGULARIZED_EDGE: usize = usize::MAX;
+const AMBIGUOUS_REGULARIZED_EDGE: usize = usize::MAX - 1;
+
+#[derive(Debug)]
+struct RegularizedFragmentSelection {
+    actions: Vec<Vec<RegionFragmentAction>>,
+    /// Unique retained successors proved by the same local face-sector links
+    /// that decided the actions, indexed by the flattened source edge.
+    successor_edge_ids: Vec<usize>,
+}
+
 impl RegularizedFragmentDecision {
     fn from_classified_sides(
         left: (Vec<i32>, RegionPointLocation),
@@ -525,6 +536,22 @@ impl RegularizedFaceUnion {
             (second, first)
         };
         self.parent[child] = root;
+    }
+}
+
+/// Unites an exact local face sector and retains that direct (non-transitive)
+/// adjacency for boundary traversal. Global face-component identity is not
+/// sufficient at a crossing because one connected face can occupy multiple
+/// local sectors around the same vertex.
+fn unite_regularized_vertex_sectors(
+    face_union: &mut RegularizedFaceUnion,
+    vertex_sector_links: &mut Vec<(usize, usize, usize)>,
+    vertex: usize,
+    pairs: &[(usize, usize)],
+) {
+    for &(first, second) in pairs {
+        face_union.unite(first, second);
+        vertex_sector_links.push((vertex, first, second));
     }
 }
 
@@ -6635,12 +6662,16 @@ impl<'a> CurveRegionBooleanContext<'a> {
     fn build_regularized_region(&self) -> ExactCurveResult<CurveRegion2> {
         let topology = self.build_split_topology()?;
         let simple_loop_filled_side = self.certified_simple_single_loop_filled_side(&topology);
-        let fragment_actions =
+        let fragment_selection =
             self.regularized_fragment_actions(&topology, simple_loop_filled_side)?;
         let mut arrangement_fragments = Vec::new();
         let mut arrangement_directions = Vec::new();
+        let mut arrangement_source_edge_ids = Vec::new();
+        let mut source_edge_index = 0_usize;
         for (carrier_index, splits) in topology.split_fragments.iter().enumerate() {
             for (split_fragment_index, split) in splits.iter().enumerate() {
+                let current_source_edge = source_edge_index;
+                source_edge_index += 1;
                 let source_range = split.fragment.curve_region_parameter_range();
                 let (source_start, source_end) = (source_range.start(), source_range.end());
                 let source_start_branch = self.transition_contact_branch(
@@ -6655,7 +6686,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
                     split.end_topology_vertex,
                     source_end,
                 )?;
-                let action = fragment_actions[carrier_index][split_fragment_index];
+                let action = fragment_selection.actions[carrier_index][split_fragment_index];
                 if action == RegionFragmentAction::Discard {
                     continue;
                 }
@@ -6690,6 +6721,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
                         RegionFragmentAction::Discard => unreachable!(),
                     },
                 });
+                arrangement_source_edge_ids.push(current_source_edge);
                 arrangement_fragments.push(
                     BezierArrangementFragment2::new(carrier_index, split_fragment_index, fragment)
                         .with_topology_vertices(start_topology_vertex, end_topology_vertex),
@@ -6703,9 +6735,27 @@ impl<'a> CurveRegionBooleanContext<'a> {
             .iter()
             .all(|fragment| split_fragment_is_affine_line(fragment.fragment()));
         let graph = BezierArrangementGraph2::from_certified_fragments(arrangement_fragments);
+        let mut arrangement_index_by_source_edge =
+            vec![NO_REGULARIZED_EDGE; fragment_selection.successor_edge_ids.len()];
+        for (arrangement_index, source_edge) in
+            arrangement_source_edge_ids.iter().copied().enumerate()
+        {
+            arrangement_index_by_source_edge[source_edge] = arrangement_index;
+        }
+        let face_sector_successors = arrangement_source_edge_ids
+            .iter()
+            .map(|source_edge| {
+                let successor = fragment_selection.successor_edge_ids[*source_edge];
+                arrangement_index_by_source_edge
+                    .get(successor)
+                    .copied()
+                    .filter(|successor| *successor != NO_REGULARIZED_EDGE)
+            })
+            .collect::<Vec<_>>();
         let certified_successors = certified_regularization_successors(
             &graph,
             &arrangement_directions,
+            &face_sector_successors,
             &topology,
             &self.data.carriers,
         );
@@ -6756,18 +6806,23 @@ impl<'a> CurveRegionBooleanContext<'a> {
         &self,
         topology: &CurveRegionSplitTopology,
         simple_loop_filled_side: Option<bool>,
-    ) -> ExactCurveResult<Vec<Vec<RegionFragmentAction>>> {
+    ) -> ExactCurveResult<RegularizedFragmentSelection> {
         if let Some(filled_side_is_left) = simple_loop_filled_side {
             let action = if filled_side_is_left {
                 RegionFragmentAction::Keep
             } else {
                 RegionFragmentAction::KeepReversed
             };
-            return Ok(topology
+            let actions = topology
                 .split_fragments
                 .iter()
                 .map(|splits| vec![action; splits.len()])
-                .collect());
+                .collect::<Vec<_>>();
+            let successor_edge_ids = topology.split_fragments.iter().map(Vec::len).sum::<usize>();
+            return Ok(RegularizedFragmentSelection {
+                actions,
+                successor_edge_ids: vec![NO_REGULARIZED_EDGE; successor_edge_ids],
+            });
         }
 
         let mut actions = topology
@@ -6842,6 +6897,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
         let left_face = |edge: usize| edge.saturating_mul(2);
         let right_face = |edge: usize| edge.saturating_mul(2).saturating_add(1);
         let mut face_union = RegularizedFaceUnion::new(edge_count.saturating_mul(2));
+        let mut vertex_sector_links = Vec::new();
 
         // An authored continuation with no transverse event preserves both
         // local face sectors exactly.
@@ -7055,9 +7111,12 @@ impl<'a> CurveRegionBooleanContext<'a> {
                             (right_face(second_out), right_face(first_in)),
                         ]
                     };
-                    for (first_sector, second_sector) in sector_pairs {
-                        face_union.unite(first_sector, second_sector);
-                    }
+                    unite_regularized_vertex_sectors(
+                        &mut face_union,
+                        &mut vertex_sector_links,
+                        vertex,
+                        &sector_pairs,
+                    );
                     continue;
                 }
                 if overlap_orientation_between_edges(first_in, second_out)? == Some(true) {
@@ -7074,22 +7133,35 @@ impl<'a> CurveRegionBooleanContext<'a> {
                             (left_face(second_in), left_face(first_out)),
                         ]
                     };
-                    for (first_sector, second_sector) in sector_pairs {
-                        face_union.unite(first_sector, second_sector);
-                    }
+                    unite_regularized_vertex_sectors(
+                        &mut face_union,
+                        &mut vertex_sector_links,
+                        vertex,
+                        &sector_pairs,
+                    );
                     continue;
                 }
-                if cross_is_positive {
-                    face_union.unite(left_face(first_out), right_face(second_out));
-                    face_union.unite(right_face(first_out), right_face(second_in));
-                    face_union.unite(left_face(first_in), left_face(second_out));
-                    face_union.unite(right_face(first_in), left_face(second_in));
+                let sector_pairs = if cross_is_positive {
+                    [
+                        (left_face(first_out), right_face(second_out)),
+                        (right_face(first_out), right_face(second_in)),
+                        (left_face(first_in), left_face(second_out)),
+                        (right_face(first_in), left_face(second_in)),
+                    ]
                 } else {
-                    face_union.unite(left_face(first_out), left_face(second_in));
-                    face_union.unite(right_face(first_out), left_face(second_out));
-                    face_union.unite(left_face(first_in), right_face(second_in));
-                    face_union.unite(right_face(first_in), right_face(second_out));
-                }
+                    [
+                        (left_face(first_out), left_face(second_in)),
+                        (right_face(first_out), left_face(second_out)),
+                        (left_face(first_in), right_face(second_in)),
+                        (right_face(first_in), right_face(second_out)),
+                    ]
+                };
+                unite_regularized_vertex_sectors(
+                    &mut face_union,
+                    &mut vertex_sector_links,
+                    vertex,
+                    &sector_pairs,
+                );
                 continue;
             }
             let (Some(mut same_direction), Some(mut side)) = (
@@ -7133,9 +7205,12 @@ impl<'a> CurveRegionBooleanContext<'a> {
                 ],
                 (_, LineSide::On) => continue,
             };
-            for (first_sector, second_sector) in sector_pairs {
-                face_union.unite(first_sector, second_sector);
-            }
+            unite_regularized_vertex_sectors(
+                &mut face_union,
+                &mut vertex_sector_links,
+                vertex,
+                &sector_pairs,
+            );
         }
 
         let mut face_roots = topology
@@ -8047,7 +8122,69 @@ impl<'a> CurveRegionBooleanContext<'a> {
             }
             decided.push(carrier_decided);
         }
-        Ok(decided)
+        let mut successor_edge_ids = vec![NO_REGULARIZED_EDGE; edge_count];
+        let oriented_sector_edge = |vertex: usize, sector: usize| {
+            let edge = sector / 2;
+            let &(carrier_index, split_index) = edge_sources.get(edge)?;
+            let action = decided[carrier_index][split_index];
+            let filled_sector = match action {
+                RegionFragmentAction::Keep => left_face(edge),
+                RegionFragmentAction::KeepReversed => right_face(edge),
+                RegionFragmentAction::Discard => return None,
+            };
+            if sector != filled_sector {
+                return None;
+            }
+            let split = &topology.split_fragments[carrier_index][split_index];
+            let (start, end) = match action {
+                RegionFragmentAction::Keep => {
+                    (split.start_topology_vertex, split.end_topology_vertex)
+                }
+                RegionFragmentAction::KeepReversed => {
+                    (split.end_topology_vertex, split.start_topology_vertex)
+                }
+                RegionFragmentAction::Discard => unreachable!(),
+            };
+            if start == Some(vertex) {
+                Some((edge, true))
+            } else if end == Some(vertex) {
+                Some((edge, false))
+            } else {
+                None
+            }
+        };
+        for &(vertex, first_sector, second_sector) in &vertex_sector_links {
+            let (Some(first), Some(second)) = (
+                oriented_sector_edge(vertex, first_sector),
+                oriented_sector_edge(vertex, second_sector),
+            ) else {
+                continue;
+            };
+            let (incoming, outgoing) = match (first, second) {
+                ((incoming, false), (outgoing, true)) | ((outgoing, true), (incoming, false)) => {
+                    (incoming, outgoing)
+                }
+                ((_, true), (_, true)) | ((_, false), (_, false)) => continue,
+            };
+            match successor_edge_ids[incoming] {
+                NO_REGULARIZED_EDGE => {
+                    successor_edge_ids[incoming] = outgoing;
+                    #[cfg(feature = "dispatch-trace")]
+                    hyperreal::dispatch_trace::record(
+                        "hypercurve",
+                        "regularization-successor",
+                        "face-sector",
+                    );
+                }
+                AMBIGUOUS_REGULARIZED_EDGE => {}
+                existing if existing == outgoing => {}
+                _ => successor_edge_ids[incoming] = AMBIGUOUS_REGULARIZED_EDGE,
+            }
+        }
+        Ok(RegularizedFragmentSelection {
+            actions: decided,
+            successor_edge_ids,
+        })
     }
 
     fn certified_simple_single_loop_filled_side(
@@ -12075,17 +12212,27 @@ fn authored_split_source_is_successor(
 fn certified_regularization_successors(
     graph: &BezierArrangementGraph2,
     directions: &[BooleanArrangementFragmentDirection],
+    face_sector_successors: &[Option<usize>],
     topology: &CurveRegionSplitTopology,
     carriers: &[RegionCarrier],
 ) -> Vec<Option<usize>> {
     let starts_by_vertex = arrangement_starts_by_vertex(graph, None);
-    let mut successors = certified_transverse_successors(
+    let transverse_successors = certified_transverse_successors(
         graph,
         directions,
         &topology.transverse_contacts,
         &starts_by_vertex,
         |contact, _| contact.cross_is_positive,
     );
+    let mut successors = (0..graph.len())
+        .map(|index| {
+            face_sector_successors
+                .get(index)
+                .copied()
+                .flatten()
+                .or_else(|| transverse_successors.get(index).copied().flatten())
+        })
+        .collect::<Vec<_>>();
     certify_nontransverse_regularization_authored_continuity(
         &mut successors,
         graph,

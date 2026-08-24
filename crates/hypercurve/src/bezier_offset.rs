@@ -104474,7 +104474,15 @@ mod conversion_tests {
             };
             assert!(offset.has_retained_parallel_support());
             assert!(offset.exact_line().is_none());
-            assert!(offset.strict_provenance_support_line(&policy).is_none());
+            let support = offset
+                .strict_provenance_support_line(&policy)
+                .expect("the retained transforms preserve the exact physical support");
+            assert_eq!(support.start().y(), &Real::zero());
+            assert_eq!(support.end().y(), &Real::zero());
+            assert_eq!(
+                real_sign(&(support.end().x() - support.start().x()), &policy),
+                Some(RealSign::Positive),
+            );
 
             let crossing = line(
                 Point2::new(&translation_x + &two_thirds, Real::from(-1_i8)),
