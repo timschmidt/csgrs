@@ -10297,12 +10297,14 @@ impl CurveRegion2 {
         policy: &CurveContext,
     ) -> ExactCurveResult<CurveOutcome<Classification<Self>>> {
         resolve_certified_operation(policy, |attempt| {
-            let roles = match Self::native_boundary_contour_roles_raw(&contours, attempt)? {
-                Classification::Decided(roles) => roles,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            };
+            let nesting =
+                match Self::native_boundary_contour_nesting_evidence_raw(&contours, attempt)? {
+                    Classification::Decided(nesting) => nesting,
+                    Classification::Uncertain(reason) => {
+                        return Ok(Classification::Uncertain(reason));
+                    }
+                };
+            let roles = nesting.roles;
             let mut material = Vec::new();
             let mut holes = Vec::new();
             for (contour, role) in contours.into_iter().zip(roles) {
@@ -10316,18 +10318,19 @@ impl CurveRegion2 {
         })
     }
 
-    /// Assigns native contour roles through the all-family curved-loop
-    /// nesting authority.
+    /// Produces authoritative all-family nesting evidence for native contours.
     ///
-    /// This is the only role classifier used by native boundary construction
-    /// and unordered native arrangement. Native segments are promoted to
-    /// exact Bezier/conic carriers, distinct loop pairs are validated through
-    /// the general curve-pair kernel, and containment then uses the same
-    /// boundary classifier as every other `CurveRegion2` carrier.
-    pub(crate) fn native_boundary_contour_roles_raw(
+    /// This is the only role classifier used by native boundary construction,
+    /// unordered native arrangement, and retained exact line images. Native
+    /// segments are promoted to exact Bezier/conic carriers, distinct loop
+    /// pairs are validated through the general curve-pair kernel, and
+    /// containment then uses the same boundary classifier as every other
+    /// `CurveRegion2` carrier. Returning full evidence lets every caller reuse
+    /// the certified depths without maintaining another contour-nesting path.
+    pub(crate) fn native_boundary_contour_nesting_evidence_raw(
         contours: &[Contour2],
         policy: &CurveContext,
-    ) -> ExactCurveResult<Classification<Vec<CurveRegionLoopRole>>> {
+    ) -> ExactCurveResult<Classification<CurveRegionNestingRoleEvidence2>> {
         let paths = contours
             .iter()
             .map(curve_path_from_native_contour)
@@ -10336,7 +10339,6 @@ impl CurveRegion2 {
         region
             .curved_nesting_role_evidence_raw(policy)
             .map_err(curve_region_promotion_error)
-            .map(|classification| classification.map(|evidence| evidence.roles().to_vec()))
     }
 
     /// Borrowed counterpart to [`Self::try_from_native_boundary_contours`].
@@ -11123,10 +11125,12 @@ impl CurveRegion2 {
     /// that is exactly a degree elevation of its endpoint line segment, or an
     /// algebraic endpoint-image carrier whose contributed endpoints are exact
     /// rational point witnesses. The method lowers those loops to native line
-    /// contours and assigns even-odd nesting roles with exact point-in-contour
-    /// decisions.  It rejects conics, nonlinear Bezier arcs, algebraic
-    /// endpoint-image carriers without exact rational endpoints, unresolved
-    /// fragments, boundary-touching loops, and uncertain predicate signs.
+    /// contours, validates every potentially intersecting pair through the
+    /// all-family curve kernel, and assigns even-odd nesting roles with the
+    /// authoritative curved-loop containment classifier. It rejects conics,
+    /// nonlinear Bezier arcs, algebraic endpoint-image carriers without exact
+    /// rational endpoints, unresolved fragments, boundary-touching loops, and
+    /// uncertain predicate signs.
     pub fn line_image_role_evidence(
         &self,
         policy: &CurveContext,
@@ -11151,13 +11155,24 @@ impl CurveRegion2 {
             contours.push(line_loop.contour);
         }
 
-        let roles = match retained_line_loop_roles(&contours, policy)? {
-            Classification::Decided(roles) => roles,
-            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+        let nesting = match Self::native_boundary_contour_nesting_evidence_raw(&contours, policy) {
+            Ok(Classification::Decided(evidence)) => evidence,
+            Ok(Classification::Uncertain(reason)) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+            Err(ExactCurveError::Invalid { cause, .. }) => return Err(cause),
+            Err(ExactCurveError::Blocked(blocker)) => {
+                return Ok(Classification::Uncertain(blocker.reason()));
+            }
         };
+        let CurveRegionNestingRoleEvidence2 {
+            roles,
+            nesting_depths,
+            ..
+        } = nesting;
         let evidence = CurveRegionLineRoleEvidence2::new(
-            roles.roles,
-            roles.nesting_depths,
+            roles,
+            nesting_depths,
             materialized_fragment_count,
             algebraic_fragment_count,
             contours,
@@ -11412,6 +11427,15 @@ impl CurveRegion2 {
         if self.data.boundary_loops.len() == 1 {
             return Ok(Classification::Decided(vec![CurveRegionLoopRole::Material]));
         }
+        // The authoritative face walk has already certified that every output
+        // chain is a noncrossing filled-left boundary. Replaying all-family
+        // pair intersections here is both redundant and weaker: compact
+        // procedural conics can retain the face certificate even when a fresh
+        // standalone path-construction predicate is not representable. Use the
+        // certificate-aware retained classifier directly.
+        if self.data.certified_regularized_filled_left_topology {
+            return self.regularized_retained_loop_roles_raw(policy);
+        }
         match self.curved_nesting_role_evidence_raw(policy)? {
             Classification::Decided(evidence) => {
                 return Ok(Classification::Decided(evidence.roles().to_vec()));
@@ -11427,11 +11451,6 @@ impl CurveRegion2 {
         match self.line_image_role_evidence_raw(policy)? {
             Classification::Decided(evidence) => {
                 Ok(Classification::Decided(evidence.roles().to_vec()))
-            }
-            Classification::Uncertain(UncertaintyReason::Unsupported)
-                if self.data.certified_regularized_filled_left_topology =>
-            {
-                self.regularized_retained_loop_roles_raw(policy)
             }
             Classification::Uncertain(reason) => Ok(Classification::Uncertain(reason)),
         }
@@ -18189,50 +18208,6 @@ fn exact_rational_point_from_image(
             point.exact_rational_point(policy)
         }
     }
-}
-
-struct RetainedLoopRoleDecision {
-    roles: Vec<CurveRegionLoopRole>,
-    nesting_depths: Vec<usize>,
-}
-
-fn retained_line_loop_roles(
-    contours: &[Contour2],
-    policy: &CurveContext,
-) -> CurveResult<Classification<RetainedLoopRoleDecision>> {
-    let mut roles = Vec::with_capacity(contours.len());
-    let mut nesting_depths = Vec::with_capacity(contours.len());
-    for (candidate_index, candidate) in contours.iter().enumerate() {
-        let sample = candidate
-            .segments()
-            .first()
-            .ok_or(crate::CurveError::EmptyCurveString)?
-            .start();
-        let mut depth = 0_usize;
-        for (container_index, container) in contours.iter().enumerate() {
-            if candidate_index == container_index {
-                continue;
-            }
-            match container.classify_point(sample, policy) {
-                Classification::Decided(ContourPointLocation::Inside) => depth += 1,
-                Classification::Decided(ContourPointLocation::Outside) => {}
-                Classification::Decided(ContourPointLocation::Boundary) => {
-                    return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
-                }
-                Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-            }
-        }
-        nesting_depths.push(depth);
-        roles.push(if depth.is_multiple_of(2) {
-            CurveRegionLoopRole::Material
-        } else {
-            CurveRegionLoopRole::Hole
-        });
-    }
-    Ok(Classification::Decided(RetainedLoopRoleDecision {
-        roles,
-        nesting_depths,
-    }))
 }
 
 fn retained_loop_to_native(

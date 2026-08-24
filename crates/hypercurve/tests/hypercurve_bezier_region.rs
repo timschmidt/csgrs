@@ -568,6 +568,22 @@ fn retained_line_image_role_evidence_assigns_nested_material_and_hole() {
 }
 
 #[test]
+fn retained_line_image_role_evidence_rejects_crossing_loops_under_both_policies() {
+    let first = retained_line_loop(&[p(0, 0), p(4, 0), p(4, 4), p(0, 4)]);
+    let second = retained_line_loop(&[p(2, -1), p(6, -1), p(6, 3), p(2, 3)]);
+    let retained = retained_region(vec![first, second]);
+
+    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+        let evidence = retained.line_image_role_evidence(&policy).unwrap();
+        assert_eq!(evidence.certainty, CurveCertainty::Certified);
+        assert_eq!(
+            evidence.into_value(),
+            Classification::Uncertain(UncertaintyReason::Boundary),
+        );
+    }
+}
+
+#[test]
 fn retained_role_evidence_constructors_reject_mismatched_evidence() {
     let roles = vec![CurveRegionLoopRole::Material];
 

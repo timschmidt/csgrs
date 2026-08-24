@@ -171,8 +171,10 @@ fn finish_nested_contours(
     contours: Vec<Contour2>,
     policy: &CurveContext,
 ) -> CurveResult<RegionLineSegmentRegionBuildResult2> {
-    let roles = match crate::CurveRegion2::native_boundary_contour_roles_raw(&contours, policy) {
-        Ok(Classification::Decided(roles)) => roles,
+    let nesting = match crate::CurveRegion2::native_boundary_contour_nesting_evidence_raw(
+        &contours, policy,
+    ) {
+        Ok(Classification::Decided(nesting)) => nesting,
         Ok(Classification::Uncertain(reason)) => {
             return Ok(RegionLineSegmentRegionBuildResult2 {
                 region: None,
@@ -196,7 +198,7 @@ fn finish_nested_contours(
             });
         }
     };
-    let region = assign_boundary_contour_roles(contours, &roles);
+    let region = assign_boundary_contour_roles(contours, nesting.roles());
     let output_ring_count = Some(region.material_contours().len() + region.hole_contours().len());
     let output_boundary_segment_count = Some(
         region
