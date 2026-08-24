@@ -13192,8 +13192,10 @@ impl BezierAlgebraicCuspSemicircle2 {
     /// normal supplies the parameter-zero radial direction; the signed radius
     /// therefore places both diameter endpoints without adjoining the source
     /// speed square root to the selected parameter field.  The construction
-    /// policy is retained because an APPROXIMATE_512 root selection must never
-    /// be replayed later as STRICT evidence.
+    /// policy actually consumed by construction is retained. An exact build
+    /// requested through APPROXIMATE_512 therefore remains STRICT-replayable,
+    /// while a consumed approximate terminal decision can never be replayed
+    /// later as STRICT evidence.
     pub(crate) fn from_selected_parallel_normal(
         center_support: BezierParallel2,
         center_parameter: BezierParameter2,
@@ -60988,8 +60990,9 @@ impl BezierAlgebraicChord2 {
     /// The anchor publishes only its normal support scalar. Source-free towers
     /// collapse directly into canonical `Real` arithmetic; other towers form
     /// one selected algebraic source. The ordinary fiber kernel then isolates
-    /// target parameters and replays the authored positive source-speed root,
-    /// so conjugate or opposite-normal candidates cannot enter topology.
+    /// target parameters, replays the authored positive source-speed root, and
+    /// clips finite contacts through the chord's retained monotone parameter.
+    /// Conjugate or opposite-normal candidates cannot enter topology.
     fn recursive_tangent_parallel_intersections_with_frame(
         &self,
         parallel: &BezierParallel2,
@@ -60998,14 +61001,6 @@ impl BezierAlgebraicChord2 {
         clip_to_finite_chord: bool,
         policy: &CurveContext,
     ) -> CurveResult<Classification<BezierAlgebraicChordParallelIntersections2>> {
-        // This compact carrier owns the complete affine support, but it does
-        // not retain both finite endpoint coordinates in the selected source
-        // field. Finite clipping belongs to the represented endpoint kernel;
-        // attempting it here reconstructs the analytic contact as a second
-        // Cartesian tensor and duplicates that authoritative finite engine.
-        if clip_to_finite_chord {
-            return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
-        }
         let Some((direction_x, direction_y)) = self.certified_unit_tangent() else {
             return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
         };
@@ -61207,8 +61202,17 @@ impl BezierAlgebraicChord2 {
                     BezierAnalyticParallelPoint2::new(parallel.clone(), candidate.clone(), policy)
                 },
             );
-            let chord_parameter =
-                self.parameter_at_certified_support_point(point.clone(), policy)?;
+            let chord_parameter = if clip_to_finite_chord {
+                match self.parameter_at_certified_point(point.clone(), policy)? {
+                    Classification::Decided(Some(parameter)) => parameter,
+                    Classification::Decided(None) => continue,
+                    Classification::Uncertain(reason) => {
+                        return Ok(Classification::Uncertain(reason));
+                    }
+                }
+            } else {
+                self.parameter_at_certified_support_point(point.clone(), policy)?
+            };
             let source_cross = match signed_coefficients_at_parameter(
                 tangent_cross.clone(),
                 &candidate,
@@ -126007,7 +126011,7 @@ mod conversion_tests {
     }
 
     #[test]
-    fn selected_parallel_normal_circle_rejects_cross_policy_replay() {
+    fn selected_parallel_normal_circle_retains_strict_replay_after_exact_approximate_request() {
         let source = QuadraticBezier2::new(
             Point2::from_values(0, 0),
             Point2::from_values(1, 0),
@@ -126027,9 +126031,18 @@ mod conversion_tests {
         else {
             panic!("the approximate-policy selected frame must construct");
         };
+        assert_eq!(
+            circle
+                .data
+                .frame
+                .parallel_normal()
+                .expect("the selected circle retains its parallel-normal frame")
+                .policy,
+            CurveContext::STRICT,
+        );
         assert!(matches!(
             circle.point_evidence_at(&half, &CurveContext::STRICT),
-            Err(CurveError::Topology(_)),
+            Ok(Classification::Decided(_)),
         ));
     }
 
@@ -128166,15 +128179,62 @@ mod conversion_tests {
                 vec![CurveBoundaryInteriorSide2::Left],
             )
             .unwrap();
-            let transverse_offset = transverse_region.offset(
-                (Real::one() / Real::from(10_i8)).unwrap(),
-                &OffsetCornerStyle2::Round,
-                &policy,
-            );
+            #[cfg(feature = "dispatch-trace")]
+            hyperreal::dispatch_trace::reset();
+            let transverse_offset_work = || {
+                transverse_region.offset(
+                    (Real::one() / Real::from(10_i8)).unwrap(),
+                    &OffsetCornerStyle2::Round,
+                    &policy,
+                )
+            };
+            #[cfg(feature = "dispatch-trace")]
+            let transverse_offset =
+                hyperreal::dispatch_trace::with_recording(transverse_offset_work);
+            #[cfg(not(feature = "dispatch-trace"))]
+            let transverse_offset = transverse_offset_work();
+            #[cfg(feature = "dispatch-trace")]
+            let transverse_offset_trace = hyperreal::dispatch_trace::take_trace();
+            #[cfg(feature = "dispatch-trace")]
+            let transverse_offset_trace_entries = transverse_offset_trace
+                .dispatch
+                .iter()
+                .filter(|entry| entry.layer == "hypercurve")
+                .collect::<Vec<_>>();
             assert!(
                 transverse_offset.is_ok(),
-                "a transverse selected-fiber carrier switch must offset: policy={policy:?}, result={transverse_offset:?}"
+                "a transverse selected-fiber carrier switch must offset: policy={policy:?}, result={transverse_offset:?}{}",
+                {
+                    #[cfg(feature = "dispatch-trace")]
+                    {
+                        format!(", trace={transverse_offset_trace_entries:?}")
+                    }
+                    #[cfg(not(feature = "dispatch-trace"))]
+                    {
+                        String::new()
+                    }
+                }
             );
+            #[cfg(feature = "dispatch-trace")]
+            {
+                assert!(
+                    transverse_offset_trace.path_count(
+                        "hypercurve",
+                        "algebraic-chord-pair",
+                        "recursive-tangent-parallel",
+                    ) > 0,
+                    "finite retained-chord clipping must use the recursive tangent/parallel authority",
+                );
+                assert_eq!(
+                    transverse_offset_trace.path_count(
+                        "hypercurve",
+                        "algebraic-chord-pair",
+                        "represented-endpoint-parallel",
+                    ),
+                    0,
+                    "finite retained-chord clipping must not expand into the global represented endpoint resultant",
+                );
+            }
             let setback = (Real::one() / Real::from(100_i8)).unwrap();
             let fillet = transverse_region
                 .fillet_loop_vertex_by_radius(
