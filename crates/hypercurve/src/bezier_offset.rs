@@ -3537,7 +3537,7 @@ impl BezierAlgebraicSelectedFiberAuthority2 {
             data: Arc::new(BezierAlgebraicSelectedFiberAuthorityData2 {
                 incidence,
                 retained_parameter,
-                policy: *policy,
+                policy: policy.retained_object_policy(),
             }),
         }
     }
@@ -4277,6 +4277,17 @@ impl BezierAlgebraicSelectedFiberParameter2 {
         value: &Real,
         policy: &CurveContext,
     ) -> CurveResult<Classification<std::cmp::Ordering>> {
+        self.validate_policy(policy)?;
+        let strict = CurveContext::STRICT;
+        if compare_reals(&self.data.root.upper, value, &strict) == Some(std::cmp::Ordering::Less) {
+            return Ok(Classification::Decided(std::cmp::Ordering::Less));
+        }
+        if compare_reals(value, &self.data.root.lower, &strict) == Some(std::cmp::Ordering::Less) {
+            return Ok(Classification::Decided(std::cmp::Ordering::Greater));
+        }
+        if self.data.root.exact_root.as_ref() == Some(value) {
+            return Ok(Classification::Decided(std::cmp::Ordering::Equal));
+        }
         let predicate = bivariate_outer_product(&[Real::one()], &[(-value.clone()), Real::one()]);
         Ok(self
             .predicate_sign(&predicate, policy)?
@@ -13211,7 +13222,7 @@ impl BezierAlgebraicCuspSemicircle2 {
                         center_support,
                         center_parameter,
                         tangent_authority: None,
-                        policy: *policy,
+                        policy: policy.retained_object_policy(),
                     },
                 )),
                 radial_distance,
@@ -13306,7 +13317,7 @@ impl BezierAlgebraicCuspSemicircle2 {
                     BezierSelectedChordNormalFrameData2 {
                         anchor,
                         center,
-                        policy: *policy,
+                        policy: policy.retained_object_policy(),
                     },
                 )),
                 radial_distance,
@@ -13357,7 +13368,7 @@ impl BezierAlgebraicCuspSemicircle2 {
                     BezierSelectedRadialFrameData2 {
                         center_parameter,
                         normal_denominator,
-                        policy: *policy,
+                        policy: policy.retained_object_policy(),
                     },
                 )),
                 radial_distance,
@@ -45663,6 +45674,221 @@ impl BezierAlgebraicCuspSemicirclePairOverlap2 {
 }
 
 impl BezierAlgebraicCuspSemicircleParameter2 {
+    /// Maps this selected contact radially onto one certified quadratic conic
+    /// and returns the conic's exact local projective parameter.
+    ///
+    /// A quadratic conic's three homogeneous controls form a projective
+    /// frame. Dotting the retained point with their opposite cross products
+    /// yields coordinates proportional to `(1-t)^2`, `2t(1-t)`, and `t^2`;
+    /// either adjacent pair therefore recovers `t` by one linear-fractional
+    /// expression. Evaluating those linear forms in the contact's existing
+    /// recursive quadratic tower preserves the already-selected line/circle
+    /// root and avoids a second tangent intersection or global Cartesian
+    /// primitive element.
+    pub(crate) fn concentric_quadratic_conic_parameter(
+        &self,
+        source: &BezierAlgebraicCuspSemicircle2,
+        radial_scale: &Real,
+        target: &RationalBezier2,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<Option<CurveRegionParameter2>>> {
+        self.validate_policy(policy)?;
+        if target.degree() != 2 {
+            return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+        }
+        let target_circle = match source.scaled_radial_distance(radial_scale, policy)? {
+            Classification::Decided(Some(circle)) => circle,
+            Classification::Decided(None) => {
+                return Err(CurveError::Topology(
+                    "a nonzero concentric conic transport collapsed its circle".into(),
+                ));
+            }
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        let point = match self.concentric_offset_point_evidence(source, &target_circle, policy)? {
+            Classification::Decided(Some(point)) => point,
+            Classification::Decided(None) => {
+                return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+            }
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        let point = match recursive_projective_evidence_points(&[&point], policy)? {
+            Classification::Decided(Some(mut points)) => points
+                .pop()
+                .expect("one conic inverse request retains one projective point"),
+            Classification::Decided(None) => {
+                return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+            }
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        let point = match positive_recursive_projective_point(point)? {
+            Classification::Decided(point) => point,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+
+        let controls: [[Real; 3]; 3] = target
+            .control_points()
+            .iter()
+            .zip(target.weights())
+            .map(|(control, weight)| [control.x() * weight, control.y() * weight, weight.clone()])
+            .collect::<Vec<_>>()
+            .try_into()
+            .expect("a quadratic conic has three homogeneous controls");
+        let cross = |first: &[Real; 3], second: &[Real; 3]| {
+            [
+                &first[1] * &second[2] - &first[2] * &second[1],
+                &first[2] * &second[0] - &first[0] * &second[2],
+                &first[0] * &second[1] - &first[1] * &second[0],
+            ]
+        };
+        let dual = [
+            cross(&controls[1], &controls[2]),
+            cross(&controls[2], &controls[0]),
+            cross(&controls[0], &controls[1]),
+        ];
+        let coordinate = |linear: &[Real; 3]| {
+            point
+                .x
+                .scale(&linear[0])?
+                .add(&point.y.scale(&linear[1])?)?
+                .add(&point.denominator.scale(&linear[2])?)
+        };
+        let (Some(first), Some(middle), Some(last)) = (
+            coordinate(&dual[0]),
+            coordinate(&dual[1]),
+            coordinate(&dual[2]),
+        ) else {
+            return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+        };
+        let two = Real::from(2_i8);
+        let first_denominator = first
+            .scale(&two)
+            .and_then(|value| value.add(&middle))
+            .ok_or_else(|| {
+                CurveError::Topology(
+                    "a retained conic inverse exceeded its coefficient-field budget".into(),
+                )
+            })?;
+        let strict = policy.strict_counterpart();
+        let (numerator, denominator) = match first_denominator.sign(&strict)? {
+            Classification::Decided(RealSign::Positive) => (middle, first_denominator),
+            Classification::Decided(RealSign::Negative) => (
+                middle.scale(&Real::from(-1_i8)).ok_or_else(|| {
+                    CurveError::Topology(
+                        "a retained conic inverse exceeded its coefficient-field budget".into(),
+                    )
+                })?,
+                first_denominator.scale(&Real::from(-1_i8)).ok_or_else(|| {
+                    CurveError::Topology(
+                        "a retained conic inverse exceeded its coefficient-field budget".into(),
+                    )
+                })?,
+            ),
+            Classification::Decided(RealSign::Zero) => {
+                let numerator = last.scale(&two).ok_or_else(|| {
+                    CurveError::Topology(
+                        "a retained conic inverse exceeded its coefficient-field budget".into(),
+                    )
+                })?;
+                let denominator = middle.add(&numerator).ok_or_else(|| {
+                    CurveError::Topology(
+                        "a retained conic inverse exceeded its coefficient-field budget".into(),
+                    )
+                })?;
+                match denominator.sign(&strict)? {
+                    Classification::Decided(RealSign::Positive) => (numerator, denominator),
+                    Classification::Decided(RealSign::Negative) => (
+                        numerator.scale(&Real::from(-1_i8)).ok_or_else(|| {
+                            CurveError::Topology(
+                                "a retained conic inverse exceeded its coefficient-field budget"
+                                    .into(),
+                            )
+                        })?,
+                        denominator.scale(&Real::from(-1_i8)).ok_or_else(|| {
+                            CurveError::Topology(
+                                "a retained conic inverse exceeded its coefficient-field budget"
+                                    .into(),
+                            )
+                        })?,
+                    ),
+                    Classification::Decided(RealSign::Zero) => {
+                        return Ok(Classification::Decided(None));
+                    }
+                    Classification::Uncertain(reason) => {
+                        return Ok(Classification::Uncertain(reason));
+                    }
+                }
+            }
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        let parameter = BezierRecursiveQuadraticProjectiveScalar2 {
+            numerator,
+            denominator,
+        };
+        let zero_order = match parameter.order_to_real(&Real::zero(), &strict)? {
+            Classification::Decided(order) => order,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        let one_order = match parameter.order_to_real(&Real::one(), &strict)? {
+            Classification::Decided(order) => order,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        if zero_order == std::cmp::Ordering::Less || one_order == std::cmp::Ordering::Greater {
+            return Ok(Classification::Decided(None));
+        }
+        if zero_order == std::cmp::Ordering::Equal {
+            return Ok(Classification::Decided(Some(
+                CurveRegionParameter2::from_bezier(BezierParameter2::Exact(Real::zero())),
+            )));
+        }
+        if one_order == std::cmp::Ordering::Equal {
+            return Ok(Classification::Decided(Some(
+                CurveRegionParameter2::from_bezier(BezierParameter2::Exact(Real::one())),
+            )));
+        }
+        if let Some(exact) = parameter.exact_real_value() {
+            return Ok(Classification::Decided(Some(
+                CurveRegionParameter2::from_bezier(BezierParameter2::Exact(exact)),
+            )));
+        }
+        match parameter.selected_fiber_value(policy)? {
+            Classification::Decided(Some(parameter)) => {
+                return Ok(Classification::Decided(Some(
+                    CurveRegionParameter2::from_selected_fiber(parameter),
+                )));
+            }
+            Classification::Decided(None) => {}
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        }
+        let represented = match parameter.represented_value(&strict)? {
+            Classification::Decided(represented) => represented,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        BezierParameter2::from_algebraic_root_representation(&represented, &strict).map(
+            |parameter| {
+                parameter.map(|parameter| Some(CurveRegionParameter2::from_bezier(parameter)))
+            },
+        )
+    }
+
     /// Replays the exact tangent relation retained by a rational-contact
     /// parameter. This is the compact authority used when a later fillet
     /// needs the dot predicate only for a parallel-tangent center.
@@ -50093,6 +50319,122 @@ impl BezierRecursiveQuadraticProjectiveScalar2 {
             }
         }
         Ok(Classification::Uncertain(UncertaintyReason::Predicate))
+    }
+
+    /// Retains this scalar as one root over its single selected base field.
+    ///
+    /// Recursive quadratic generators are normed only down to the selected
+    /// base parameter. The scalar's certified interval then selects the one
+    /// authored fiber root. This is the compact counterpart of
+    /// `represented_value`: it avoids eliminating the base root into a global
+    /// polynomial merely to pass the same parameter to another local curve
+    /// predicate.
+    fn selected_fiber_value(
+        &self,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<Option<BezierAlgebraicSelectedFiberParameter2>>> {
+        if !self.numerator.field().same_field(&self.denominator.field()) {
+            return Ok(Classification::Decided(None));
+        }
+        let Some((base, relation)) = recursive_quadratic_polynomial_projection(vec![
+            self.numerator.clone(),
+            self.denominator.scale(&Real::from(-1_i8)).ok_or_else(|| {
+                CurveError::Topology(
+                    "a recursive scalar fiber exceeded its coefficient-field budget".into(),
+                )
+            })?,
+        ]) else {
+            return Ok(Classification::Decided(None));
+        };
+        if base.sources.len() != 1 || relation.dimensions().len() != 2 {
+            return Ok(Classification::Decided(None));
+        }
+        let strict = policy.strict_counterpart();
+        let retained_parameter =
+            match BezierParameter2::from_algebraic_root_representation_unbounded(
+                &base.sources[0],
+                &strict,
+            )? {
+                Classification::Decided(BezierParameter2::Algebraic(parameter)) => parameter,
+                Classification::Decided(BezierParameter2::Exact(_)) => {
+                    return Ok(Classification::Decided(None));
+                }
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            };
+        let second_count = relation.dimensions()[1];
+        let incidence = BivariatePolynomial::new(
+            relation
+                .coefficients()
+                .chunks(second_count)
+                .map(<[Real]>::to_vec)
+                .collect(),
+        );
+        let authority = BezierAlgebraicSelectedFiberAuthority2::new(
+            incidence.clone(),
+            retained_parameter,
+            policy,
+        );
+        for refinement_steps in [4_usize, 8, 16, 32, 64, 128, 256, 512] {
+            let (Some(numerator), Some(denominator)) = (
+                self.numerator.interval(refinement_steps),
+                self.denominator.interval(refinement_steps),
+            ) else {
+                continue;
+            };
+            let Some(interval) = numerator.divide(&denominator, &strict) else {
+                continue;
+            };
+            if compare_reals(&interval.lower, &Real::zero(), &strict)
+                != Some(std::cmp::Ordering::Greater)
+                || compare_reals(&interval.upper, &Real::one(), &strict)
+                    != Some(std::cmp::Ordering::Less)
+            {
+                continue;
+            }
+            let report = isolate_bivariate_fiber_roots_at_algebraic_parameter(
+                &incidence,
+                CurveResultantParameter::First,
+                &base.sources[0],
+                &interval.lower,
+                &interval.upper,
+                AlgebraicFiberRootIsolationConfig {
+                    max_subdivision_depth: 512,
+                    refinement_steps: 8,
+                },
+                hypersolve::PredicatePolicy::STRICT,
+            );
+            match report.status {
+                AlgebraicFiberRootIsolationStatus::Isolated if report.intervals.len() == 1 => {
+                    // The report certifies that this exact recursive enclosure
+                    // contains one fiber root. Keep the original enclosure:
+                    // unlike a generic isolator seed, it also preserves the
+                    // selected radical sheet and its already-proved strict
+                    // unit-domain separation.
+                    let root = IsolatedRootInterval {
+                        lower: interval.lower,
+                        upper: interval.upper,
+                        exact_root: None,
+                        distinct_root_count: 1,
+                    };
+                    return Ok(Classification::Decided(Some(authority.parameter(root))));
+                }
+                AlgebraicFiberRootIsolationStatus::Isolated
+                | AlgebraicFiberRootIsolationStatus::NoRoots
+                | AlgebraicFiberRootIsolationStatus::DepthLimit
+                | AlgebraicFiberRootIsolationStatus::Undecided => {}
+                AlgebraicFiberRootIsolationStatus::IdenticallyZeroFiber
+                | AlgebraicFiberRootIsolationStatus::UnsupportedCoefficient => {
+                    return Ok(Classification::Decided(None));
+                }
+                AlgebraicFiberRootIsolationStatus::InvalidEvidence
+                | AlgebraicFiberRootIsolationStatus::InvalidInterval => {
+                    return Err(CurveError::InvalidBezierAlgebraicParameter);
+                }
+            }
+        }
+        Ok(Classification::Decided(None))
     }
 
     fn order_to_real(
@@ -61329,45 +61671,6 @@ impl BezierAlgebraicChord2 {
             &system,
             SelectedThirdAxisDomain2::UnitInterval,
             true,
-            policy,
-        )
-    }
-
-    /// Replays the finite analytic span against this chord's complete affine
-    /// support. This is the exact building block for a bounded conic chart in
-    /// `TrimOrExtend`: conic extension is enumerated as adjacent pole-free
-    /// charts while the straight carrier remains unbounded.
-    pub(crate) fn parallel_support_intersections(
-        &self,
-        parallel: &BezierParallel2,
-        policy: &CurveContext,
-    ) -> CurveResult<Classification<BezierAlgebraicChordParallelIntersections2>> {
-        self.validate_policy(policy)?;
-        let system = match self.independent_parallel_incidence_system(parallel, policy)? {
-            Classification::Decided(system) => system,
-            Classification::Uncertain(UncertaintyReason::Unsupported) => {
-                match self.recursive_tangent_parallel_intersections_with_frame(
-                    parallel, None, None, false, policy,
-                )? {
-                    decided @ Classification::Decided(_) => return Ok(decided),
-                    Classification::Uncertain(UncertaintyReason::Unsupported) => {}
-                    Classification::Uncertain(reason) => {
-                        return Ok(Classification::Uncertain(reason));
-                    }
-                }
-                return self.represented_endpoint_parallel_intersections_with_frame(
-                    parallel, None, None, false, policy,
-                );
-            }
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
-        self.parallel_intersections_in_domain(
-            parallel,
-            &system,
-            SelectedThirdAxisDomain2::UnitInterval,
-            false,
             policy,
         )
     }
