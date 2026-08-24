@@ -31494,33 +31494,39 @@ mod tests {
 
     #[test]
     fn regularized_composite_chord_roles_preserve_nested_islands_and_profiles() {
-        let policy = CurveContext::STRICT;
-        let base = independent_oblique_chord_pair_corner_region(&policy, false);
-        let center_x = ((&q(1, 2).sqrt().unwrap() + Real::one()) / Real::from(3_i8)).unwrap();
-        let center_y = (&q(1, 3).sqrt().unwrap() + q(1, 5).sqrt().unwrap()) / Real::from(3_i8);
-        let center_y = center_y.unwrap();
-        let nested_loop = |scale: i32| {
-            let scale = Real::from(scale);
-            let transformed = base
-                .transform_affine(
-                    &scale,
-                    &Real::zero(),
-                    &Real::zero(),
-                    &scale,
-                    &-(&scale * &center_x),
-                    &-(&scale * &center_y),
-                    &policy,
-                )
-                .expect("a homothetic retained chord loop must transform exactly");
-            assert_eq!(transformed.certainty, CurveCertainty::Certified);
-            let [boundary] = transformed
-                .value
-                .into_boundary_loops()
-                .try_into()
-                .expect("the transformed triangle retains one loop");
-            let sample = retained_loop_sample_point_evidence(&boundary, &policy)
-                .expect("the transformed loop has exact sample evidence");
-            assert!(matches!(
+        for (policy, reversed) in [
+            (CurveContext::STRICT, false),
+            (CurveContext::STRICT, true),
+            (CurveContext::APPROXIMATE_512, false),
+            (CurveContext::APPROXIMATE_512, true),
+        ] {
+            let base = independent_oblique_chord_pair_corner_region(&policy, reversed);
+            let center_x = ((&q(1, 2).sqrt().unwrap() + Real::one()) / Real::from(3_i8)).unwrap();
+            let center_y = (&q(1, 3).sqrt().unwrap() + q(1, 5).sqrt().unwrap()) / Real::from(3_i8);
+            let center_y = center_y.unwrap();
+            let nested_loop =
+                |scale: i32| {
+                    let scale = Real::from(scale);
+                    let transformed = base
+                        .transform_affine(
+                            &scale,
+                            &Real::zero(),
+                            &Real::zero(),
+                            &scale,
+                            &-(&scale * &center_x),
+                            &-(&scale * &center_y),
+                            &policy,
+                        )
+                        .expect("a homothetic retained chord loop must transform exactly");
+                    assert_eq!(transformed.certainty, CurveCertainty::Certified);
+                    let [boundary] = transformed
+                        .value
+                        .into_boundary_loops()
+                        .try_into()
+                        .expect("the transformed triangle retains one loop");
+                    let sample = retained_loop_sample_point_evidence(&boundary, &policy)
+                        .expect("the transformed loop has exact sample evidence");
+                    assert!(matches!(
                 sample,
                 Classification::Decided(
                     RationalBezierIntersectionPointEvidence2::AlgebraicChordPair(_)
@@ -31531,35 +31537,68 @@ mod tests {
                         | RationalBezierIntersectionPointEvidence2::Similarity(_)
                 )
             ));
-            boundary
-        };
-        let region = CurveRegion2::new(vec![nested_loop(3), nested_loop(2), nested_loop(1)])
-            .expect("homothetic triangles are valid retained loops");
-        let expected = vec![
-            CurveRegionLoopRole::Material,
-            CurveRegionLoopRole::Hole,
-            CurveRegionLoopRole::Material,
-        ];
-        assert_eq!(
-            region.regularized_retained_loop_roles_raw(&policy),
-            Ok(Classification::Decided(expected.clone()))
-        );
+                    boundary
+                };
+            let region = CurveRegion2::new(vec![nested_loop(3), nested_loop(2), nested_loop(1)])
+                .expect("homothetic triangles are valid retained loops");
+            let expected = vec![
+                CurveRegionLoopRole::Material,
+                CurveRegionLoopRole::Hole,
+                CurveRegionLoopRole::Material,
+            ];
+            #[cfg(feature = "dispatch-trace")]
+            hyperreal::dispatch_trace::reset();
+            let regularize = || region.regularized_region(&policy);
+            #[cfg(feature = "dispatch-trace")]
+            let regularized = hyperreal::dispatch_trace::with_recording(regularize);
+            #[cfg(not(feature = "dispatch-trace"))]
+            let regularized = regularize();
+            #[cfg(feature = "dispatch-trace")]
+            let trace = hyperreal::dispatch_trace::take_trace();
+            let regularized = regularized
+                .expect("nested composite chord loops must regularize without materialization");
+            assert_eq!(regularized.certainty, CurveCertainty::Certified);
+            #[cfg(feature = "dispatch-trace")]
+            assert!(
+                trace.path_count(
+                    "hypercurve",
+                    "curve-region-regularization-chord-side",
+                    "retained-endpoint-winding-probe",
+                ) > 0,
+                "composite chord regularization must retain the endpoint winding theorem: {trace:?}",
+            );
+            assert_eq!(regularized.value.boundary_loops().len(), 3);
+            assert!(regularized.value.boundary_loops().iter().all(|boundary| {
+                boundary
+                    .fragments()
+                    .iter()
+                    .all(|fragment| matches!(fragment, BezierSplitFragment2::AlgebraicChord(_)))
+            }));
+            assert_eq!(
+                regularized.value.loop_roles_raw(&policy),
+                Ok(Classification::Decided(expected.clone()))
+            );
+            assert_eq!(
+                region.regularized_retained_loop_roles_raw(&policy),
+                Ok(Classification::Decided(expected.clone()))
+            );
 
-        let profiled = region
-            .with_certified_loop_roles(expected)
-            .expect("the exact nesting roles match the retained loops");
-        let profiles = profiled
-            .boundary_profiles(&policy)
-            .expect("composite point evidence must assign hole ownership");
-        assert_eq!(profiles.certainty, CurveCertainty::Certified);
-        let Classification::Decided(profiles) = profiles.value else {
-            panic!("composite hole ownership must be decided");
-        };
-        assert_eq!(profiles.len(), 2);
-        assert_eq!(profiles[0].material_loop_index(), 0);
-        assert_eq!(profiles[0].hole_loop_indices(), &[1]);
-        assert_eq!(profiles[1].material_loop_index(), 2);
-        assert!(profiles[1].hole_loop_indices().is_empty());
+            let profiled = region
+                .with_certified_loop_roles(expected)
+                .expect("the exact nesting roles match the retained loops");
+            let profiles = profiled
+                .boundary_profiles(&policy)
+                .expect("composite point evidence must assign hole ownership");
+            assert_eq!(profiles.certainty, CurveCertainty::Certified);
+            let Classification::Decided(profiles) = profiles.value else {
+                panic!("composite hole ownership must be decided");
+            };
+            assert_eq!(profiles.len(), 2);
+            assert_eq!(profiles[0].material_loop_index(), 0);
+            assert_eq!(profiles[0].hole_loop_indices(), &[1]);
+            assert_eq!(profiles[1].material_loop_index(), 2);
+            assert!(profiles[1].hole_loop_indices().is_empty());
+        }
     }
 
     #[test]

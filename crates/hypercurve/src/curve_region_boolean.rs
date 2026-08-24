@@ -645,6 +645,66 @@ fn propagate_regularized_face_windings(
     Ok(())
 }
 
+fn retained_probe_outer_bounds(
+    carriers: &[RegionCarrier],
+    policy: &CurveContext,
+) -> Classification<Aabb2> {
+    let mut last_reason = UncertaintyReason::Unsupported;
+    for refinement_steps in [0, 2, 4, 8, 16, 32, 64, 128, 256, 512] {
+        let mut accumulated = None::<Aabb2>;
+        let mut complete = true;
+        for carrier in carriers {
+            let bounds = match carrier
+                .geometry
+                .certified_outer_bounds_refined(refinement_steps, policy)
+            {
+                Classification::Decided(bounds) => bounds,
+                Classification::Uncertain(reason) => {
+                    last_reason = reason;
+                    complete = false;
+                    break;
+                }
+            };
+            let bounds = bounds.certified_rational_outer_envelope().unwrap_or(bounds);
+            accumulated = Some(match accumulated {
+                None => bounds,
+                Some(ref accumulated) => match accumulated.union(&bounds, &CurveContext::STRICT) {
+                    Classification::Decided(bounds) => bounds,
+                    Classification::Uncertain(reason) => {
+                        last_reason = reason;
+                        complete = false;
+                        break;
+                    }
+                },
+            });
+        }
+        if complete {
+            return accumulated.map_or(
+                Classification::Uncertain(UncertaintyReason::Unsupported),
+                Classification::Decided,
+            );
+        }
+    }
+    Classification::Uncertain(last_reason)
+}
+
+fn retained_probe_exterior_candidate(bounds: &Aabb2, index: usize) -> Option<crate::Point2> {
+    let one = Real::one();
+    Some(match index {
+        0 => crate::Point2::new(bounds.min().x() - &one, bounds.min().y() - &one),
+        1 => crate::Point2::new(bounds.max().x() + &one, bounds.min().y() - &one),
+        2 => crate::Point2::new(bounds.max().x() + &one, bounds.max().y() + &one),
+        3 => crate::Point2::new(bounds.min().x() - &one, bounds.max().y() + &one),
+        index => {
+            let offset = u64::try_from(index.checked_sub(2)?).ok()?;
+            crate::Point2::new(
+                bounds.min().x() - &one,
+                bounds.min().y() - Real::from(offset),
+            )
+        }
+    })
+}
+
 impl CurveRegionCarrierRef2 {
     /// Returns the flattened carrier index in the retained pair.
     pub const fn carrier_index(&self) -> usize {
@@ -1468,9 +1528,18 @@ impl<'a> CurveRegionBooleanContext<'a> {
         &self,
         probe: crate::BezierAlgebraicChord2,
     ) -> ExactCurveResult<CurveRegionIntersectionResult2> {
+        self.intersect_algebraic_probe_carriers(probe, self.data.first, &self.data.carriers)
+    }
+
+    fn intersect_algebraic_probe_carriers(
+        &self,
+        probe: crate::BezierAlgebraicChord2,
+        boundary_region: &CurveRegion2,
+        boundary_carriers: &[RegionCarrier],
+    ) -> ExactCurveResult<CurveRegionIntersectionResult2> {
         let start = probe.start_parameter();
         let end = probe.end_parameter();
-        let mut carriers = Vec::with_capacity(self.data.carriers.len().saturating_add(1));
+        let mut carriers = Vec::with_capacity(boundary_carriers.len().saturating_add(1));
         carriers.push(RegionCarrier {
             operand: CurveRegionBooleanOperand2::First,
             loop_index: 0,
@@ -1485,7 +1554,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
             image_is_injective: OnceLock::new(),
             bounds: OnceLock::new(),
         });
-        carriers.extend(self.data.carriers.iter().cloned().map(|mut carrier| {
+        carriers.extend(boundary_carriers.iter().cloned().map(|mut carrier| {
             carrier.operand = CurveRegionBooleanOperand2::Second;
             carrier
         }));
@@ -1499,7 +1568,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
                 | RegionCarrierGeometry::AlgebraicCuspSemicircle(_) => None,
             })
             .collect::<Vec<_>>();
-        let mut pairs = Vec::with_capacity(self.data.carriers.len());
+        let mut pairs = Vec::with_capacity(boundary_carriers.len());
         let mut intersection_cache = CurveIntersectionBatchCache::default();
         for second_carrier_index in 1..carriers.len() {
             if let Some(pair) = build_candidate_carrier_pair(
@@ -1515,12 +1584,12 @@ impl<'a> CurveRegionBooleanContext<'a> {
         }
         CurveRegionBooleanContext {
             data: CurveRegionBooleanContextData {
-                first: self.data.first,
-                second: self.data.first,
+                first: boundary_region,
+                second: boundary_region,
                 policy: self.data.policy,
                 carriers,
                 first_carrier_count: 1,
-                authored_carrier_pair_count: self.data.carriers.len(),
+                authored_carrier_pair_count: boundary_carriers.len(),
                 pairs,
                 bezier_self_intersections: Vec::new(),
                 parallel_self_intersections: Vec::new(),
@@ -8981,9 +9050,14 @@ impl<'a> CurveRegionBooleanContext<'a> {
                 left, right,
             ));
         }
-        let RationalBezierIntersectionPointEvidence2::Algebraic(representative) = representative
-        else {
-            return Err(self.blocked(carrier_index, UncertaintyReason::Unsupported));
+        let representative = match representative {
+            RationalBezierIntersectionPointEvidence2::Algebraic(representative) => representative,
+            representative => {
+                return self.regularized_retained_chord_fragment_decision_by_probe(
+                    carrier_index,
+                    representative,
+                );
+            }
         };
         let [tangent_x, tangent_y] = chord
             .tangent_coordinate_signs(&self.data.policy)
@@ -9005,6 +9079,363 @@ impl<'a> CurveRegionBooleanContext<'a> {
         Ok(RegularizedFragmentDecision::from_classified_sides(
             left, right,
         ))
+    }
+
+    /// Seeds both local faces of a retained chord whose representative lives
+    /// in more than one selected field.
+    ///
+    /// A certified exterior rational point has zero winding in every source
+    /// loop. Complete carrier-pair replay orders the crossings of the retained
+    /// probe ending at the chord representative. The transverse endpoint
+    /// contact identifies which source face precedes the endpoint; crossing
+    /// the oriented source chord changes only its loop winding by one. No
+    /// Cartesian coordinate or finite side displacement is manufactured.
+    #[cold]
+    fn regularized_retained_chord_fragment_decision_by_probe(
+        &self,
+        carrier_index: usize,
+        representative: RationalBezierIntersectionPointEvidence2,
+    ) -> ExactCurveResult<RegularizedFragmentDecision> {
+        let outer_bounds = match retained_probe_outer_bounds(&self.data.carriers, &self.data.policy)
+        {
+            Classification::Decided(bounds) => bounds,
+            Classification::Uncertain(reason) => {
+                return Err(self.blocked(carrier_index, reason));
+            }
+        };
+        let loop_count = self.data.first.boundary_loops().len();
+        let source_loop_index = self.data.carriers[carrier_index].loop_index;
+        if source_loop_index >= loop_count {
+            return Err(self.invalid(
+                carrier_index,
+                CurveError::Topology(
+                    "a retained chord regularization probe references a missing source loop".into(),
+                ),
+            ));
+        }
+        let candidate_count = self.data.carriers.len().saturating_mul(2).saturating_add(5);
+        let mut last_reason = UncertaintyReason::Unsupported;
+        let authored_successor = |first_index: usize, second_index: usize| {
+            let first = &self.data.carriers[first_index];
+            let second = &self.data.carriers[second_index];
+            if first.loop_index != second.loop_index {
+                return false;
+            }
+            let fragment_count = self.data.first.boundary_loops()[first.loop_index].len();
+            first.fragment_index.checked_add(1) == Some(second.fragment_index)
+                || second.fragment_index == 0
+                    && first.fragment_index.checked_add(1) == Some(fragment_count)
+        };
+
+        'candidate: for candidate_index in 0..candidate_count {
+            let Some(outside) = retained_probe_exterior_candidate(&outer_bounds, candidate_index)
+            else {
+                continue;
+            };
+            let probe = match crate::BezierAlgebraicChord2::try_new(
+                RationalBezierIntersectionPointEvidence2::Exact(outside),
+                representative.clone(),
+                &self.data.policy,
+            )
+            .map_err(|cause| self.invalid(carrier_index, cause))?
+            {
+                Classification::Decided(probe) => probe,
+                Classification::Uncertain(reason) => {
+                    last_reason = reason;
+                    continue;
+                }
+            };
+            let probe_end = CurveRegionParameter2::from_algebraic_chord(probe.end_parameter());
+            let evidence = match self.intersect_algebraic_probe_boundary(probe) {
+                Ok(evidence) => evidence,
+                Err(ExactCurveError::Blocked(blocker)) => {
+                    last_reason = blocker.reason();
+                    continue;
+                }
+                Err(error @ ExactCurveError::Invalid { .. }) => return Err(error),
+            };
+            if !evidence.overlaps().is_empty() {
+                last_reason = UncertaintyReason::Boundary;
+                continue;
+            }
+            if let Some(blocker) = evidence.blockers().first() {
+                last_reason = blocker
+                    .uncertainty_reason()
+                    .unwrap_or(UncertaintyReason::Unsupported);
+                continue;
+            }
+
+            for contact in evidence.contacts() {
+                match contact
+                    .first_parameter()
+                    .cmp_by_refinement(&probe_end, &self.data.policy)
+                    .map_err(|cause| self.invalid(carrier_index, cause))?
+                {
+                    Classification::Decided(Ordering::Less | Ordering::Equal) => {}
+                    Classification::Decided(Ordering::Greater) => {
+                        return Err(self.invalid(
+                            carrier_index,
+                            CurveError::Topology(
+                                "a retained boundary-side probe kept a contact past its endpoint"
+                                    .into(),
+                            ),
+                        ));
+                    }
+                    Classification::Uncertain(reason) => {
+                        last_reason = reason;
+                        continue 'candidate;
+                    }
+                }
+            }
+
+            let mut crossings =
+                Vec::<(&CurveRegionParameter2, &CurveRegionParameter2, usize, bool)>::with_capacity(
+                    evidence.contacts().len(),
+                );
+            for contact in evidence
+                .contacts()
+                .iter()
+                .filter(|contact| contact.is_certified_transverse())
+            {
+                let Some(mut cross_is_positive) = contact.evidence.tangent_cross_is_positive()
+                else {
+                    last_reason = UncertaintyReason::Predicate;
+                    continue 'candidate;
+                };
+                let Some(boundary_index) = contact.second().carrier_index().checked_sub(1) else {
+                    return Err(self.invalid(
+                        carrier_index,
+                        CurveError::Topology(
+                            "a retained boundary-side contact resolved to its probe carrier".into(),
+                        ),
+                    ));
+                };
+                let Some(boundary) = self.data.carriers.get(boundary_index) else {
+                    return Err(self.invalid(
+                        carrier_index,
+                        CurveError::Topology(
+                            "a retained boundary-side contact lost its boundary carrier".into(),
+                        ),
+                    ));
+                };
+                cross_is_positive ^= boundary.reversed;
+                crossings.push((
+                    contact.first_parameter(),
+                    contact.second_parameter(),
+                    boundary_index,
+                    cross_is_positive,
+                ));
+            }
+            for index in 1..crossings.len() {
+                let mut cursor = index;
+                while cursor > 0 {
+                    match crossings[cursor]
+                        .0
+                        .cmp_by_refinement(crossings[cursor - 1].0, &self.data.policy)
+                        .map_err(|cause| self.invalid(carrier_index, cause))?
+                    {
+                        Classification::Decided(Ordering::Less) => {
+                            crossings.swap(cursor, cursor - 1);
+                            cursor -= 1;
+                        }
+                        Classification::Decided(Ordering::Equal | Ordering::Greater) => break,
+                        Classification::Uncertain(reason) => {
+                            last_reason = reason;
+                            continue 'candidate;
+                        }
+                    }
+                }
+            }
+
+            let mut windings = vec![0_i32; loop_count];
+            let mut group_start = 0_usize;
+            while group_start < crossings.len() {
+                let mut group_end = group_start + 1;
+                while group_end < crossings.len() {
+                    match crossings[group_end]
+                        .0
+                        .cmp_by_refinement(crossings[group_start].0, &self.data.policy)
+                        .map_err(|cause| self.invalid(carrier_index, cause))?
+                    {
+                        Classification::Decided(Ordering::Equal) => group_end += 1,
+                        Classification::Decided(Ordering::Greater) => break,
+                        Classification::Decided(Ordering::Less) => {
+                            return Err(self.invalid(
+                                carrier_index,
+                                CurveError::Topology(
+                                    "retained boundary-side probe crossings lost exact order"
+                                        .into(),
+                                ),
+                            ));
+                        }
+                        Classification::Uncertain(reason) => {
+                            last_reason = reason;
+                            continue 'candidate;
+                        }
+                    }
+                }
+                let group = &crossings[group_start..group_end];
+                match group[0]
+                    .0
+                    .cmp_by_refinement(&probe_end, &self.data.policy)
+                    .map_err(|cause| self.invalid(carrier_index, cause))?
+                {
+                    Classification::Decided(Ordering::Equal) => {
+                        let mut source_cross = None;
+                        for &(_, _, boundary_index, cross_is_positive) in group {
+                            if boundary_index != carrier_index || source_cross.is_some() {
+                                last_reason = UncertaintyReason::Boundary;
+                                continue 'candidate;
+                            }
+                            source_cross = Some(cross_is_positive);
+                        }
+                        let Some(source_cross_is_positive) = source_cross else {
+                            last_reason = UncertaintyReason::Predicate;
+                            continue 'candidate;
+                        };
+                        let mut opposite = windings.clone();
+                        opposite[source_loop_index] = opposite[source_loop_index]
+                            .checked_add(if source_cross_is_positive { -1 } else { 1 })
+                            .ok_or_else(|| {
+                                self.invalid(
+                                    carrier_index,
+                                    CurveError::Topology(
+                                        "retained boundary-side winding overflowed i32".into(),
+                                    ),
+                                )
+                            })?;
+                        let (left_windings, right_windings) = if source_cross_is_positive {
+                            (windings, opposite)
+                        } else {
+                            (opposite, windings)
+                        };
+                        let left = self
+                            .data
+                            .first
+                            .region_location_from_loop_windings(&left_windings)
+                            .map_err(|cause| self.invalid(carrier_index, cause))?;
+                        let right = self
+                            .data
+                            .first
+                            .region_location_from_loop_windings(&right_windings)
+                            .map_err(|cause| self.invalid(carrier_index, cause))?;
+                        #[cfg(feature = "dispatch-trace")]
+                        hyperreal::dispatch_trace::record(
+                            "hypercurve",
+                            "curve-region-regularization-chord-side",
+                            "retained-endpoint-winding-probe",
+                        );
+                        return Ok(RegularizedFragmentDecision::from_classified_sides(
+                            (left_windings, left),
+                            (right_windings, right),
+                        ));
+                    }
+                    Classification::Decided(Ordering::Less) => {}
+                    Classification::Decided(Ordering::Greater) => {
+                        return Err(self.invalid(
+                            carrier_index,
+                            CurveError::Topology(
+                                "retained boundary-side crossing followed its probe endpoint"
+                                    .into(),
+                            ),
+                        ));
+                    }
+                    Classification::Uncertain(reason) => {
+                        last_reason = reason;
+                        continue 'candidate;
+                    }
+                }
+
+                let mut endpoint_roles = Vec::with_capacity(group.len());
+                for &(_, parameter, boundary_index, _) in group {
+                    let boundary = &self.data.carriers[boundary_index];
+                    let (start, end) = if boundary.reversed {
+                        (&boundary.end, &boundary.start)
+                    } else {
+                        (&boundary.start, &boundary.end)
+                    };
+                    let endpoint_role = |endpoint| {
+                        parameter
+                            .same_value(endpoint, &self.data.policy)
+                            .map_err(|cause| self.invalid(carrier_index, cause))
+                    };
+                    let at_start = match endpoint_role(start)? {
+                        Classification::Decided(at_start) => at_start,
+                        Classification::Uncertain(reason) => {
+                            last_reason = reason;
+                            continue 'candidate;
+                        }
+                    };
+                    let at_end = match endpoint_role(end)? {
+                        Classification::Decided(at_end) => at_end,
+                        Classification::Uncertain(reason) => {
+                            last_reason = reason;
+                            continue 'candidate;
+                        }
+                    };
+                    endpoint_roles.push([at_start, at_end]);
+                }
+                let mut consumed = vec![false; group.len()];
+                for index in 0..group.len() {
+                    if consumed[index] {
+                        continue;
+                    }
+                    let (_, _, boundary_index, cross_is_positive) = group[index];
+                    let mut partner = None;
+                    for candidate in index + 1..group.len() {
+                        if consumed[candidate] {
+                            continue;
+                        }
+                        let candidate_index = group[candidate].2;
+                        let adjacent = authored_successor(boundary_index, candidate_index)
+                            && endpoint_roles[index][1]
+                            && endpoint_roles[candidate][0]
+                            || authored_successor(candidate_index, boundary_index)
+                                && endpoint_roles[candidate][1]
+                                && endpoint_roles[index][0];
+                        if !adjacent {
+                            continue;
+                        }
+                        if partner.replace(candidate).is_some() {
+                            last_reason = UncertaintyReason::Boundary;
+                            continue 'candidate;
+                        }
+                    }
+                    consumed[index] = true;
+                    let delta = if let Some(partner) = partner {
+                        consumed[partner] = true;
+                        if cross_is_positive == group[partner].3 {
+                            if cross_is_positive { -1 } else { 1 }
+                        } else {
+                            0
+                        }
+                    } else if cross_is_positive {
+                        -1
+                    } else {
+                        1
+                    };
+                    let loop_index = self.data.carriers[boundary_index].loop_index;
+                    let Some(winding) = windings.get_mut(loop_index) else {
+                        return Err(self.invalid(
+                            carrier_index,
+                            CurveError::Topology(
+                                "a retained boundary-side contact references a missing loop".into(),
+                            ),
+                        ));
+                    };
+                    *winding = winding.checked_add(delta).ok_or_else(|| {
+                        self.invalid(
+                            carrier_index,
+                            CurveError::Topology(
+                                "retained boundary-side winding overflowed i32".into(),
+                            ),
+                        )
+                    })?;
+                }
+                group_start = group_end;
+            }
+        }
+        Err(self.blocked(carrier_index, last_reason))
     }
 
     fn algebraic_fragment_side_classification(
@@ -10059,63 +10490,19 @@ impl<'a> CurveRegionBooleanContext<'a> {
         }
 
         let mut last_reason = UncertaintyReason::Unsupported;
-        let mut outer_bounds = None;
-        for refinement_steps in [0, 2, 4, 8, 16, 32, 64, 128, 256, 512] {
-            let mut accumulated = None::<Aabb2>;
-            let mut complete = true;
-            for carrier in &boundary_carriers {
-                let bounds = match carrier
-                    .geometry
-                    .certified_outer_bounds_refined(refinement_steps, &self.data.policy)
-                {
-                    Classification::Decided(bounds) => bounds,
-                    Classification::Uncertain(reason) => {
-                        last_reason = reason;
-                        complete = false;
-                        break;
-                    }
-                };
-                let bounds = bounds.certified_rational_outer_envelope().unwrap_or(bounds);
-                accumulated = Some(match accumulated {
-                    None => bounds,
-                    Some(ref accumulated) => {
-                        match accumulated.union(&bounds, &CurveContext::STRICT) {
-                            Classification::Decided(bounds) => bounds,
-                            Classification::Uncertain(reason) => {
-                                last_reason = reason;
-                                complete = false;
-                                break;
-                            }
-                        }
-                    }
-                });
+        let outer_bounds = match retained_probe_outer_bounds(&boundary_carriers, &self.data.policy)
+        {
+            Classification::Decided(bounds) => bounds,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
             }
-            if complete {
-                outer_bounds = accumulated;
-                break;
-            }
-        }
-        let Some(outer_bounds) = outer_bounds else {
-            return Ok(Classification::Uncertain(last_reason));
         };
-
-        let one = Real::one();
-        let outside_corners = [
-            crate::Point2::new(outer_bounds.min().x() - &one, outer_bounds.min().y() - &one),
-            crate::Point2::new(outer_bounds.max().x() + &one, outer_bounds.min().y() - &one),
-            crate::Point2::new(outer_bounds.max().x() + &one, outer_bounds.max().y() + &one),
-            crate::Point2::new(outer_bounds.min().x() - &one, outer_bounds.max().y() + &one),
-        ];
         let fallback_count = boundary_carriers.len().saturating_mul(2).saturating_add(1);
-        let exterior_line_candidates = (0..fallback_count).filter_map(|index| {
-            let offset = u64::try_from(index).ok()?.checked_add(2)?;
-            Some(crate::Point2::new(
-                outer_bounds.min().x() - &one,
-                outer_bounds.min().y() - Real::from(offset),
-            ))
-        });
-
-        for outside in outside_corners.into_iter().chain(exterior_line_candidates) {
+        for candidate_index in 0..fallback_count.saturating_add(4) {
+            let Some(outside) = retained_probe_exterior_candidate(&outer_bounds, candidate_index)
+            else {
+                continue;
+            };
             let probe = match crate::BezierAlgebraicChord2::try_new(
                 RationalBezierIntersectionPointEvidence2::Exact(outside),
                 point.clone(),
@@ -10130,79 +10517,11 @@ impl<'a> CurveRegionBooleanContext<'a> {
                 }
             };
             let probe_end = CurveRegionParameter2::from_algebraic_chord(probe.end_parameter());
-            let probe_start = probe.start_parameter();
-            let probe_end_parameter = probe.end_parameter();
-
-            let mut carriers = Vec::with_capacity(boundary_carriers.len().saturating_add(1));
-            carriers.push(RegionCarrier {
-                operand: CurveRegionBooleanOperand2::First,
-                loop_index: 0,
-                fragment_index: 0,
-                family: CurveFamily2::Line,
-                geometry: RegionCarrierGeometry::AlgebraicChord(probe),
-                start: CurveRegionParameter2::from_algebraic_chord(probe_start),
-                end: CurveRegionParameter2::from_algebraic_chord(probe_end_parameter),
-                reversed: false,
-                filled_side_is_left: false,
-                selected_fiber_endpoint_points: None,
-                image_is_injective: OnceLock::new(),
-                bounds: OnceLock::new(),
-            });
-            carriers.extend(boundary_carriers.iter().cloned().map(|mut carrier| {
-                carrier.operand = CurveRegionBooleanOperand2::Second;
-                carrier
-            }));
-
-            let curves = carriers
-                .iter()
-                .map(|carrier| match &carrier.geometry {
-                    RegionCarrierGeometry::Bezier(curve) => Some(Curve2::from(curve.clone())),
-                    RegionCarrierGeometry::AnalyticParallel(_)
-                    | RegionCarrierGeometry::AlgebraicChord(_)
-                    | RegionCarrierGeometry::AlgebraicCuspSemicircle(_) => None,
-                })
-                .collect::<Vec<_>>();
-            let mut pairs = Vec::with_capacity(boundary_carriers.len());
-            let mut intersection_cache = CurveIntersectionBatchCache::default();
-            let mut pair_build_blocked = false;
-            for second_carrier_index in 1..carriers.len() {
-                match build_candidate_carrier_pair(
-                    &carriers,
-                    &curves,
-                    0,
-                    second_carrier_index,
-                    &self.data.policy,
-                    &mut intersection_cache,
-                ) {
-                    Ok(Some(pair)) => pairs.push(pair),
-                    Ok(None) => {}
-                    Err(ExactCurveError::Blocked(blocker)) => {
-                        last_reason = blocker.reason();
-                        pair_build_blocked = true;
-                        break;
-                    }
-                    Err(error @ ExactCurveError::Invalid { .. }) => return Err(error),
-                }
-            }
-            if pair_build_blocked {
-                continue;
-            }
-
-            let context = CurveRegionBooleanContext {
-                data: CurveRegionBooleanContextData {
-                    first: boundary_region,
-                    second: boundary_region,
-                    policy: self.data.policy,
-                    carriers,
-                    first_carrier_count: 1,
-                    authored_carrier_pair_count: boundary_carriers.len(),
-                    pairs,
-                    bezier_self_intersections: Vec::new(),
-                    parallel_self_intersections: Vec::new(),
-                    strict_line_image_only: OnceLock::new(),
-                },
-            };
-            let evidence = match context.build_intersection_evidence() {
+            let evidence = match self.intersect_algebraic_probe_carriers(
+                probe,
+                boundary_region,
+                &boundary_carriers,
+            ) {
                 Ok(evidence) => evidence,
                 Err(ExactCurveError::Blocked(blocker)) => {
                     last_reason = blocker.reason();
@@ -10280,8 +10599,16 @@ impl<'a> CurveRegionBooleanContext<'a> {
                     ambiguous = true;
                     break;
                 };
-                let Some(boundary) = context.data.carriers.get(contact.second().carrier_index())
-                else {
+                let Some(boundary_index) = contact.second().carrier_index().checked_sub(1) else {
+                    return Err(self.invalid(
+                        owner_carrier_index,
+                        CurveError::Topology(
+                            "an exterior classification contact resolved to its probe carrier"
+                                .into(),
+                        ),
+                    ));
+                };
+                let Some(boundary) = boundary_carriers.get(boundary_index) else {
                     return Err(self.invalid(
                         owner_carrier_index,
                         CurveError::Topology(
