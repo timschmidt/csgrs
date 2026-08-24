@@ -50712,11 +50712,65 @@ impl BezierRecursiveQuadraticProjectivePoint2 {
             Axis2::X => (&self.x, &other.x),
             Axis2::Y => (&self.y, &other.y),
         };
-        let Some(numerator) = first.multiply(&other.denominator).and_then(|first| {
-            second
-                .multiply(&self.denominator)
-                .and_then(|second| first.subtract(&second))
-        }) else {
+        // Most topology-event comparisons are strict and well separated.
+        // Prove those from certified projective intervals before expanding a
+        // deep recursive quadratic cross-product merely to recover its sign.
+        // Equality and overlapping enclosures retain the complete exact path
+        // below.
+        for refinement_steps in [0, 2, 4, 8, 16, 32, 64] {
+            let coordinate_interval =
+                |numerator: &BezierRecursiveQuadraticValue2,
+                 denominator: &BezierRecursiveQuadraticValue2| {
+                    numerator.interval(refinement_steps)?.divide(
+                        &denominator.interval(refinement_steps)?,
+                        &CurveContext::STRICT,
+                    )
+                };
+            let (Some(first), Some(second)) = (
+                coordinate_interval(first, &self.denominator),
+                coordinate_interval(second, &other.denominator),
+            ) else {
+                continue;
+            };
+            if compare_reals(&first.upper, &second.lower, &CurveContext::STRICT)
+                == Some(std::cmp::Ordering::Less)
+            {
+                #[cfg(feature = "dispatch-trace")]
+                hyperreal::dispatch_trace::record(
+                    "hypercurve",
+                    "recursive-projective-axis-order",
+                    "interval-separated",
+                );
+                return Ok(Classification::Decided(std::cmp::Ordering::Less));
+            }
+            if compare_reals(&second.upper, &first.lower, &CurveContext::STRICT)
+                == Some(std::cmp::Ordering::Less)
+            {
+                #[cfg(feature = "dispatch-trace")]
+                hyperreal::dispatch_trace::record(
+                    "hypercurve",
+                    "recursive-projective-axis-order",
+                    "interval-separated",
+                );
+                return Ok(Classification::Decided(std::cmp::Ordering::Greater));
+            }
+        }
+        let numerator = if Arc::ptr_eq(&self.denominator.data, &other.denominator.data) {
+            #[cfg(feature = "dispatch-trace")]
+            hyperreal::dispatch_trace::record(
+                "hypercurve",
+                "recursive-projective-axis-order",
+                "shared-denominator",
+            );
+            first.subtract(second)
+        } else {
+            first.multiply(&other.denominator).and_then(|first| {
+                second
+                    .multiply(&self.denominator)
+                    .and_then(|second| first.subtract(&second))
+            })
+        };
+        let Some(numerator) = numerator else {
             return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
         };
         Ok(numerator.sign(policy)?.map(|sign| match sign {
@@ -58195,11 +58249,17 @@ impl BezierAlgebraicChord2 {
             || first == second
             || (first.start() == second.end() && first.end() == second.start())
             || matches!(
-                (first.start(), second.start()),
+                (first.start(), first.end(), second.start(), second.end()),
                 (
-                    RationalBezierIntersectionPointEvidence2::AlgebraicChordParallel(first),
-                    RationalBezierIntersectionPointEvidence2::AlgebraicChordParallel(second),
-                ) if first.shares_normal_offset_carrier(second)
+                    RationalBezierIntersectionPointEvidence2::AlgebraicChordParallel(first_start),
+                    RationalBezierIntersectionPointEvidence2::AlgebraicChordParallel(first_end),
+                    RationalBezierIntersectionPointEvidence2::AlgebraicChordParallel(second_start),
+                    RationalBezierIntersectionPointEvidence2::AlgebraicChordParallel(second_end),
+                ) if first_start.at_end != first_end.at_end
+                    && second_start.at_end != second_end.at_end
+                    && first_start.shares_normal_offset_carrier(first_end)
+                    && first_start.shares_normal_offset_carrier(second_start)
+                    && first_start.shares_normal_offset_carrier(second_end)
             )
     }
 
@@ -62631,7 +62691,29 @@ impl BezierAlgebraicChord2 {
         if perpendicular_axis_directions.is_none() {
             let collinearity = self.support_collinearity(other, policy)?;
             if collinearity == Classification::Decided(true) {
-                return self.collinear_chord_intersections(other, policy);
+                let tangent_cross =
+                    policy.strict_predicate_pass(|| self.tangent_cross_sign(other, policy))?;
+                if tangent_cross == Classification::Decided(RealSign::Zero) {
+                    return self.collinear_chord_intersections(other, policy);
+                }
+                #[cfg(feature = "dispatch-trace")]
+                {
+                    let first = self.retained_support();
+                    let second = other.retained_support();
+                    hyperreal::dispatch_trace::record(
+                        "hypercurve",
+                        "algebraic-chord-support-identity-conflict",
+                        if Arc::ptr_eq(&first.data, &second.data) {
+                            "shared-allocation"
+                        } else if first == second {
+                            "equal-endpoints"
+                        } else if first.start() == second.end() && first.end() == second.start() {
+                            "reversed-endpoints"
+                        } else {
+                            "normal-offset-carrier"
+                        },
+                    );
+                }
             }
         }
 
@@ -62675,7 +62757,7 @@ impl BezierAlgebraicChord2 {
         } else {
             None
         };
-        let (first_sides, second_sides, perpendicular_axis_certificate) =
+        let (mut first_sides, mut second_sides, mut perpendicular_axis_certificate) =
             if let Some((first_sides, second_sides)) = perpendicular_axis_sides {
                 #[cfg(feature = "dispatch-trace")]
                 hyperreal::dispatch_trace::record(
@@ -62710,7 +62792,7 @@ impl BezierAlgebraicChord2 {
                         "algebraic-chord-pair-side-kernel",
                         "batched-refined-endpoints",
                     );
-                    let result = self.pair_sides_by_refinement(other, policy)?;
+                    let result = self.pair_sides_by_refinement(other, true, policy)?;
                     match result {
                         Classification::Decided(sides) => sides,
                         Classification::Uncertain(reason) => {
@@ -62742,13 +62824,40 @@ impl BezierAlgebraicChord2 {
                 };
                 (first_sides, second_sides, false)
             };
-        if second_sides == [crate::classify::LineSide::On; 2] {
-            if first_sides != [crate::classify::LineSide::On; 2] {
-                return Ok(Classification::Uncertain(UncertaintyReason::Predicate));
+        let all_on = [crate::classify::LineSide::On; 2];
+        if first_sides == all_on || second_sides == all_on {
+            let both_on = first_sides == all_on && second_sides == all_on;
+            let tangent_cross =
+                policy.strict_predicate_pass(|| self.tangent_cross_sign(other, policy))?;
+            if both_on && tangent_cross == Classification::Decided(RealSign::Zero) {
+                return self.collinear_chord_intersections(other, policy);
             }
-            return self.collinear_chord_intersections(other, policy);
+
+            // Retained intersection-point provenance is an exact incidence
+            // fast path, but it can name an ancestral support that no longer
+            // matches a rebuilt finite chord.  A nonzero tangent cross (or an
+            // asymmetric all-on result) contradicts the inferred line
+            // identity.  Recompute all four sides from endpoint geometry,
+            // retaining only direct endpoint equality, before deciding
+            // the finite pair.
+            let (repaired_first, repaired_second) =
+                match self.pair_sides_by_refinement(other, false, policy)? {
+                    Classification::Decided(sides) => sides,
+                    Classification::Uncertain(reason) => {
+                        return Ok(Classification::Uncertain(reason));
+                    }
+                };
+            first_sides = repaired_first;
+            second_sides = repaired_second;
+            perpendicular_axis_certificate = false;
+            #[cfg(feature = "dispatch-trace")]
+            hyperreal::dispatch_trace::record(
+                "hypercurve",
+                "algebraic-chord-pair-side-kernel",
+                "geometric-refinement-after-incidence-conflict",
+            );
         }
-        if first_sides == [crate::classify::LineSide::On; 2] {
+        if first_sides == all_on || second_sides == all_on {
             return Ok(Classification::Uncertain(UncertaintyReason::Predicate));
         }
         let misses_support = |sides: [crate::classify::LineSide; 2]| {
@@ -63019,15 +63128,39 @@ impl BezierAlgebraicChord2 {
         } else {
             (first_end, first_start)
         };
-        let second_order = match coordinate_order(other.start(), other.end())? {
-            Classification::Decided(std::cmp::Ordering::Less) => std::cmp::Ordering::Less,
-            Classification::Decided(std::cmp::Ordering::Greater) => std::cmp::Ordering::Greater,
-            Classification::Decided(std::cmp::Ordering::Equal) => {
+        // Collinearity already proves that the two nondegenerate traversal
+        // tangents are parallel.  Their exact dot sign therefore determines
+        // the second chord's coordinate orientation without re-adjoining both
+        // endpoints to this chord's retained support field.  In particular,
+        // exact parallel-offset bands commonly retain the same represented
+        // unit-tangent authority even when a cross-field endpoint comparison
+        // cannot prove equality under STRICT.
+        let tangent_dot_sign =
+            policy.strict_predicate_pass(|| self.tangent_dot_sign(other, policy))?;
+        let second_increases = match tangent_dot_sign {
+            Classification::Decided(RealSign::Positive) => {
+                self.data.parameter_axis.coordinate_increases
+            }
+            Classification::Decided(RealSign::Negative) => {
+                !self.data.parameter_axis.coordinate_increases
+            }
+            Classification::Decided(RealSign::Zero) => {
                 return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
             }
             Classification::Uncertain(reason) => {
                 return Ok(Classification::Uncertain(reason));
             }
+        };
+        #[cfg(feature = "dispatch-trace")]
+        hyperreal::dispatch_trace::record(
+            "hypercurve",
+            "algebraic-chord-collinear-range",
+            "exact-tangent-orientation",
+        );
+        let second_order = if second_increases {
+            std::cmp::Ordering::Less
+        } else {
+            std::cmp::Ordering::Greater
         };
         let second_start = Boundary {
             point: other.start().clone(),
@@ -63076,30 +63209,62 @@ impl BezierAlgebraicChord2 {
                 BezierAlgebraicChordPairIntersections2::Contacts(Vec::new()),
             ));
         }
+        if overlap_order == std::cmp::Ordering::Equal {
+            // The maximum lower boundary and minimum upper boundary are the
+            // same point.  Together they already own an endpoint parameter
+            // on each chord; merging those authorities avoids replaying the
+            // cross-field point through either finite-range predicate.
+            let contact = merged(low, high);
+            let first_parameter = if let Some(parameter) = contact.first_parameter {
+                parameter
+            } else {
+                match self.parameter_at_certified_point(contact.point.clone(), policy)? {
+                    Classification::Decided(Some(parameter)) => parameter,
+                    Classification::Decided(None) => {
+                        return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
+                    }
+                    Classification::Uncertain(reason) => {
+                        return Ok(Classification::Uncertain(reason));
+                    }
+                }
+            };
+            let second_parameter = if let Some(parameter) = contact.second_parameter {
+                parameter
+            } else {
+                match other.parameter_at_certified_point(contact.point.clone(), policy)? {
+                    Classification::Decided(Some(parameter)) => parameter,
+                    Classification::Decided(None) => {
+                        return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
+                    }
+                    Classification::Uncertain(reason) => {
+                        return Ok(Classification::Uncertain(reason));
+                    }
+                }
+            };
+            return Ok(Classification::Decided(
+                BezierAlgebraicChordPairIntersections2::Contacts(vec![
+                    BezierAlgebraicChordPairContact2 {
+                        first_parameter,
+                        second_parameter,
+                        point: contact.point,
+                        tangent_cross_sign: RealSign::Zero,
+                    },
+                ]),
+            ));
+        }
         for boundary in [&mut low, &mut high] {
             if boundary.first_parameter.is_none() {
+                // A strict, nonempty overlap places a boundary borrowed from
+                // the second chord strictly inside the first interval: equal
+                // endpoints were merged above and disjoint intervals already
+                // returned.  The interval proof is the finite-range
+                // certificate; do not repeat it in another algebraic field.
                 boundary.first_parameter =
-                    match self.parameter_at_certified_point(boundary.point.clone(), policy)? {
-                        Classification::Decided(Some(parameter)) => Some(parameter),
-                        Classification::Decided(None) => {
-                            return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
-                        }
-                        Classification::Uncertain(reason) => {
-                            return Ok(Classification::Uncertain(reason));
-                        }
-                    };
+                    Some(self.parameter_at_certified_interior_point(boundary.point.clone()));
             }
             if boundary.second_parameter.is_none() {
                 boundary.second_parameter =
-                    match other.parameter_at_certified_point(boundary.point.clone(), policy)? {
-                        Classification::Decided(Some(parameter)) => Some(parameter),
-                        Classification::Decided(None) => {
-                            return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
-                        }
-                        Classification::Uncertain(reason) => {
-                            return Ok(Classification::Uncertain(reason));
-                        }
-                    };
+                    Some(other.parameter_at_certified_interior_point(boundary.point.clone()));
             }
         }
         let first_low = low
@@ -63114,18 +63279,6 @@ impl BezierAlgebraicChord2 {
         let second_high = high
             .second_parameter
             .expect("the second high boundary was mapped");
-        if overlap_order == std::cmp::Ordering::Equal {
-            return Ok(Classification::Decided(
-                BezierAlgebraicChordPairIntersections2::Contacts(vec![
-                    BezierAlgebraicChordPairContact2 {
-                        first_parameter: first_low,
-                        second_parameter: second_low,
-                        point: low.point,
-                        tangent_cross_sign: RealSign::Zero,
-                    },
-                ]),
-            ));
-        }
         let same_direction = self.data.parameter_axis.coordinate_increases
             == (second_order == std::cmp::Ordering::Less);
         Ok(Classification::Decided(
@@ -69560,6 +69713,7 @@ impl BezierAlgebraicChord2 {
     fn pair_sides_by_refinement(
         &self,
         other: &Self,
+        retain_structural_incidence: bool,
         policy: &CurveContext,
     ) -> CurveResult<
         Classification<(
@@ -69593,20 +69747,22 @@ impl BezierAlgebraicChord2 {
         // kernel instead of asking interval boxes to rediscover an exact
         // zero. The remaining endpoint sides then decide whether the unique
         // support intersection lies inside both finite chords.
-        for (index, point) in first_points.iter().enumerate() {
-            if let RationalBezierIntersectionPointEvidence2::AlgebraicChordPair(point) = point
-                && (other.shares_retained_support(&point.data.first)
-                    || other.shares_retained_support(&point.data.second))
-            {
-                first_sides[index] = Some(crate::classify::LineSide::On);
+        if retain_structural_incidence {
+            for (index, point) in first_points.iter().enumerate() {
+                if let RationalBezierIntersectionPointEvidence2::AlgebraicChordPair(point) = point
+                    && (other.shares_retained_support(&point.data.first)
+                        || other.shares_retained_support(&point.data.second))
+                {
+                    first_sides[index] = Some(crate::classify::LineSide::On);
+                }
             }
-        }
-        for (index, point) in second_points.iter().enumerate() {
-            if let RationalBezierIntersectionPointEvidence2::AlgebraicChordPair(point) = point
-                && (self.shares_retained_support(&point.data.first)
-                    || self.shares_retained_support(&point.data.second))
-            {
-                second_sides[index] = Some(crate::classify::LineSide::On);
+            for (index, point) in second_points.iter().enumerate() {
+                if let RationalBezierIntersectionPointEvidence2::AlgebraicChordPair(point) = point
+                    && (self.shares_retained_support(&point.data.first)
+                        || self.shares_retained_support(&point.data.second))
+                {
+                    second_sides[index] = Some(crate::classify::LineSide::On);
+                }
             }
         }
 
@@ -104956,6 +105112,38 @@ mod conversion_tests {
                     RationalBezierIntersectionPointEvidence2::AlgebraicChordParallel(_),
                 )
             ));
+
+            // Sharing one procedural normal-offset endpoint does not make
+            // two rebuilt chords collinear.  Miter and chamfer topology
+            // routinely creates exactly this fan: the ancestral endpoint
+            // remains common while each opposite endpoint belongs to a
+            // different retained carrier.
+            let divergent = |end: &RationalBezierIntersectionPointEvidence2| {
+                let Classification::Decided(chord) = BezierAlgebraicChord2::try_new(
+                    horizontal.start().clone(),
+                    end.clone(),
+                    &policy,
+                )
+                .unwrap() else {
+                    panic!("a divergent retained-offset chord must construct exactly");
+                };
+                chord
+            };
+            let downward = divergent(vertical.start());
+            let upward = divergent(vertical.end());
+            assert!(!downward.shares_retained_support(&upward));
+            let fan_result = downward.chord_intersections(&upward, &policy).unwrap();
+            let Classification::Decided(BezierAlgebraicChordPairIntersections2::Contacts(
+                fan_contacts,
+            )) = fan_result
+            else {
+                panic!("a divergent retained-offset fan must complete: {fan_result:?}");
+            };
+            let [fan_contact] = fan_contacts.as_slice() else {
+                panic!("expected one shared-endpoint fan contact: {fan_contacts:?}");
+            };
+            assert_ne!(fan_contact.tangent_cross_sign(), RealSign::Zero);
+
             for (first, second, expected_cross) in [
                 (&horizontal, &vertical, RealSign::Positive),
                 (&vertical, &horizontal, RealSign::Negative),

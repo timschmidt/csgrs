@@ -5435,7 +5435,74 @@ fn nonconvex_algebraic_chord_expansion_is_exact_and_local_collapse_is_explicit()
             Classification::Decided(RegionPointLocation::Outside)
         );
 
-        let contracted = source.offset(-q(1, 20), &miter, &policy).unwrap();
+        #[cfg(feature = "dispatch-trace")]
+        hyperreal::dispatch_trace::reset();
+        let contract_work = || source.offset(-q(1, 20), &miter, &policy);
+        #[cfg(feature = "dispatch-trace")]
+        let contracted = hyperreal::dispatch_trace::with_recording(contract_work);
+        #[cfg(not(feature = "dispatch-trace"))]
+        let contracted = contract_work();
+        #[cfg(feature = "dispatch-trace")]
+        let contract_trace = hyperreal::dispatch_trace::take_trace();
+        #[cfg(feature = "dispatch-trace")]
+        let contract_kernel_trace = contract_trace
+            .dispatch
+            .iter()
+            .filter(|entry| entry.layer == "hypercurve")
+            .collect::<Vec<_>>();
+        let contracted = contracted.unwrap_or_else(|error| {
+            #[cfg(feature = "dispatch-trace")]
+            panic!(
+                "nonconvex algebraic-chord contraction failed under {policy:?}: {error:?}; trace: {contract_kernel_trace:?}"
+            );
+            #[cfg(not(feature = "dispatch-trace"))]
+            panic!("nonconvex algebraic-chord contraction failed under {policy:?}: {error:?}");
+        });
+        #[cfg(feature = "dispatch-trace")]
+        {
+            assert!(
+                contract_trace.path_count(
+                    "hypercurve",
+                    "algebraic-chord-collinear-range",
+                    "exact-tangent-orientation",
+                ) > 0,
+                "a collinear retained-chord overlap must orient its exact tangent field: {contract_kernel_trace:?}",
+            );
+            assert!(
+                contract_trace.path_count(
+                    "hypercurve",
+                    "algebraic-chord-pair",
+                    "chord-overlap-complete",
+                ) > 0,
+                "the nonconvex contraction must complete its retained-chord overlap: {contract_kernel_trace:?}",
+            );
+            assert!(
+                contract_trace.path_count(
+                    "hypercurve",
+                    "recursive-projective-axis-order",
+                    "interval-separated",
+                ) > 0,
+                "strictly separated recursive projective coordinates must avoid exact cross-product expansion: {contract_kernel_trace:?}",
+            );
+            assert_eq!(
+                contract_trace.path_count(
+                    "hypercurve",
+                    "algebraic-chord-support-identity-conflict",
+                    "normal-offset-carrier",
+                ),
+                0,
+                "divergent rebuilt chords must not inherit an ancestral normal-offset support identity: {contract_kernel_trace:?}",
+            );
+            assert_eq!(
+                contract_trace.path_count(
+                    "hypercurve",
+                    "algebraic-chord-pair-side-kernel",
+                    "geometric-refinement-after-incidence-conflict",
+                ),
+                0,
+                "the corrected retained-support identity must make geometric conflict repair unnecessary: {contract_kernel_trace:?}",
+            );
+        }
         assert_eq!(contracted.certainty, CurveCertainty::Certified);
         assert_eq!(
             certified(
