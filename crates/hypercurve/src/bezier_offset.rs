@@ -45889,34 +45889,13 @@ impl BezierAlgebraicCuspSemicircleParameter2 {
         )
     }
 
-    /// Replays the exact tangent relation retained by a rational-contact
-    /// parameter. This is the compact authority used when a later fillet
-    /// needs the dot predicate only for a parallel-tangent center.
-    pub(crate) fn rational_contact_tangent_cross_dot_linear_combination_sign(
-        &self,
-        cross_scale: &Real,
-        dot_scale: &Real,
-        policy: &CurveContext,
-    ) -> CurveResult<Classification<RealSign>> {
-        self.validate_policy(policy)?;
+    /// Returns the selected-circle carrier retained by a mapped parameter.
+    /// Exact endpoint parameters intentionally have no implicit carrier.
+    pub(crate) fn mapped_semicircle_carrier(&self) -> Option<&BezierAlgebraicCuspSemicircle2> {
         let Self::Mapped(data) = self else {
-            return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+            return None;
         };
-        match data.as_ref() {
-            BezierAlgebraicCuspSemicircleMappedParameterData2::Rational { map, contact } => map
-                .tangent_cross_dot_linear_combination_sign(contact, cross_scale, dot_scale, policy),
-            BezierAlgebraicCuspSemicircleMappedParameterData2::SelectedFiberRational {
-                map,
-                other_parameter,
-                ..
-            } => map.tangent_cross_dot_linear_combination_sign(
-                other_parameter,
-                cross_scale,
-                dot_scale,
-                policy,
-            ),
-            _ => Ok(Classification::Uncertain(UncertaintyReason::Unsupported)),
-        }
+        Some(data.semicircle_carrier())
     }
 
     pub(crate) fn retains_pair_contact(&self) -> bool {

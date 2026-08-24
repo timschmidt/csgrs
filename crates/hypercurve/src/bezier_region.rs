@@ -14711,7 +14711,10 @@ impl CurveRegion2 {
                     return Ok(result.fillet_fragments);
                 }
             }
-            if let (
+            if !matches!(
+                &frame.radial_frame,
+                RetainedFilletRadialFrame2::SelectedConcentric { .. }
+            ) && let (
                 Some((source_parallel, source_parameter, source_direction)),
                 BezierSplitFragment2::AlgebraicCuspSemicircle(companion),
                 Some(companion_parameter),
