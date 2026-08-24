@@ -10660,6 +10660,29 @@ impl CurveRegion2 {
         Ok(self)
     }
 
+    /// Publishes all-material roles when conservative loop boxes prove that
+    /// no retained boundary can nest another one.
+    ///
+    /// This is an exact topology certificate, not a sampled classification:
+    /// nested closed loops necessarily have overlapping outer boxes. It is
+    /// especially useful immediately after a filled-left face walk splits a
+    /// self-contacting procedural loop into disjoint material components.
+    pub(crate) fn with_pairwise_disjoint_material_loop_roles(
+        mut self,
+        policy: &CurveContext,
+    ) -> Self {
+        if self.data.certified_loop_roles.is_none()
+            && self.data.boundary_loops.len() > 1
+            && retained_loops_have_pairwise_disjoint_bounds(&self.data.boundary_loops, policy)
+                == Classification::Decided(true)
+        {
+            let role_count = self.data.boundary_loops.len();
+            self.data_mut_for_construction().certified_loop_roles =
+                Some(shared_all_material_curve_region_loop_roles(role_count));
+        }
+        self
+    }
+
     pub fn filled_side_is_left(
         &self,
         policy: &CurveContext,
@@ -11122,10 +11145,11 @@ impl CurveRegion2 {
 
     /// Returns one exact material/hole role per retained loop.
     ///
-    /// Native curves enter the all-family nesting classifier directly. Exact
-    /// retained line images first lower to native line contours and then enter
-    /// that same authority. Any other unsupported carrier remains explicit
-    /// uncertainty; authored orientation never overrides a topology blocker.
+    /// Native curves and exact retained line images keep their direct nesting
+    /// fast paths. Already-regularized higher carriers retain their point
+    /// evidence and enter the Boolean carrier-pair probe. Any genuinely
+    /// unsupported carrier remains explicit uncertainty; authored orientation
+    /// never overrides a topology blocker.
     pub fn loop_roles(
         &self,
         policy: &CurveContext,
@@ -11142,6 +11166,14 @@ impl CurveRegion2 {
         }
         if self.data.boundary_loops.len() == 1 {
             return Ok(Classification::Decided(vec![CurveRegionLoopRole::Material]));
+        }
+        if retained_loops_have_pairwise_disjoint_bounds(&self.data.boundary_loops, policy)
+            == Classification::Decided(true)
+        {
+            return Ok(Classification::Decided(vec![
+                CurveRegionLoopRole::Material;
+                self.data.boundary_loops.len()
+            ]));
         }
         // The authoritative face walk has already certified that every output
         // chain is a noncrossing filled-left boundary. Replaying all-family
@@ -11171,10 +11203,11 @@ impl CurveRegion2 {
     ///
     /// The retained regularization certificate guarantees that distinct
     /// output chains are noncrossing simple boundaries with fill on their
-    /// left. A represented interior point of one retained fragment is
+    /// left. Exact interior point evidence from one retained fragment is
     /// therefore inside exactly the loops that contain that complete
-    /// boundary. Nesting parity assigns material and hole roles without
-    /// requiring a Green integral for procedural analytic parallels.
+    /// boundary. Multi-field evidence stays retained and enters the Boolean
+    /// carrier-pair probe. Nesting parity assigns material and hole roles
+    /// without requiring a Green integral for procedural analytic parallels.
     pub(crate) fn regularized_retained_loop_roles_raw(
         &self,
         policy: &CurveContext,
@@ -11190,7 +11223,7 @@ impl CurveRegion2 {
         let mut samples = Vec::with_capacity(self.data.boundary_loops.len());
         let mut bounds = Vec::with_capacity(self.data.boundary_loops.len());
         for boundary_loop in &self.data.boundary_loops {
-            match retained_loop_sample_point(boundary_loop, policy)? {
+            match retained_loop_sample_point_evidence(boundary_loop, policy)? {
                 Classification::Decided(point) => samples.push(point),
                 Classification::Uncertain(reason) => {
                     return Ok(Classification::Uncertain(reason));
@@ -11205,26 +11238,23 @@ impl CurveRegion2 {
         let mut roles = Vec::with_capacity(self.data.boundary_loops.len());
         for (candidate_index, sample) in samples.iter().enumerate() {
             let mut depth = 0_usize;
-            for (container_index, (boundary_loop, evaluators)) in self
-                .data
-                .boundary_loops
-                .iter()
-                .zip(evaluators.iter())
-                .enumerate()
-            {
+            for (container_index, evaluators) in evaluators.iter().enumerate() {
                 if candidate_index == container_index {
                     continue;
                 }
-                if bounds[container_index].as_ref().is_some_and(|bounds| {
-                    matches!(
-                        bounds.contains_point(sample, policy),
-                        Classification::Decided(false)
-                    )
+                if sample.as_exact().is_some_and(|point| {
+                    bounds[container_index].as_ref().is_some_and(|bounds| {
+                        matches!(
+                            bounds.contains_point(point, policy),
+                            Classification::Decided(false)
+                        )
+                    })
                 }) {
                     continue;
                 }
-                match classify_point_against_retained_loop(
-                    boundary_loop,
+                match classify_point_evidence_against_retained_loop(
+                    self,
+                    container_index,
                     evaluators,
                     sample,
                     policy,
@@ -11286,10 +11316,9 @@ impl CurveRegion2 {
 
     /// Groups retained material loops with their exact owned hole loops.
     ///
-    /// Roles come from [`Self::loop_roles`]. Each hole contributes a retained
-    /// exact endpoint witness which is classified against material carriers;
-    /// sampled coordinates and winding are not used. An algebraic endpoint
-    /// without a represented point remains explicit uncertainty.
+    /// Roles come from [`Self::loop_roles`]. Each hole contributes exact
+    /// retained representative evidence which is classified against material
+    /// carriers without materializing multi-field coordinates.
     pub fn boundary_profiles(
         &self,
         policy: &CurveContext,
@@ -11334,80 +11363,61 @@ impl CurveRegion2 {
         }
 
         let evaluators = self.retained_rational_evaluators()?;
-        let native_loops = self.native_boundary_loops();
-        let native_bounds = self.native_boundary_bounds(policy);
         for (hole_index, role) in roles.iter().enumerate() {
             if *role != CurveRegionLoopRole::Hole {
                 continue;
             }
-            let point =
-                match retained_loop_sample_point(&self.data.boundary_loops[hole_index], policy)? {
-                    Classification::Decided(point) => point,
-                    Classification::Uncertain(reason) => {
-                        return Ok(Classification::Uncertain(reason));
-                    }
-                };
+            let point = match retained_loop_sample_point_evidence(
+                &self.data.boundary_loops[hole_index],
+                policy,
+            )? {
+                Classification::Decided(point) => point,
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            };
 
             let mut owner: Option<usize> = None;
             for (profile_index, profile) in profiles.iter().enumerate() {
                 let material_index = profile.material_loop_index;
-                if native_bounds.is_some_and(|bounds| {
-                    matches!(
-                        bounds[material_index].contains_point(&point, policy),
-                        Classification::Decided(false)
-                    )
-                }) {
-                    continue;
-                }
-                let containment = if let Some(native_loops) = native_loops {
-                    classify_point_against_native_loop_after_bounds(
-                        &native_loops[material_index],
-                        &point,
-                        policy,
-                    )?
-                } else {
-                    classify_point_against_retained_loop(
-                        profile.material,
-                        &evaluators[material_index],
-                        &point,
-                        policy,
-                    )?
-                };
+                let containment = classify_point_evidence_against_retained_loop(
+                    self,
+                    material_index,
+                    &evaluators[material_index],
+                    &point,
+                    policy,
+                )?;
                 match containment {
                     Classification::Decided(
                         ContourPointLocation::Inside | ContourPointLocation::Boundary,
                     ) => match owner {
                         None => owner = Some(profile_index),
                         Some(owner_index) => {
-                            let candidate_point =
-                                match retained_loop_sample_point(profile.material, policy)? {
-                                    Classification::Decided(point) => point,
-                                    Classification::Uncertain(reason) => {
-                                        return Ok(Classification::Uncertain(reason));
-                                    }
-                                };
+                            let candidate_point = match retained_loop_sample_point_evidence(
+                                profile.material,
+                                policy,
+                            )? {
+                                Classification::Decided(point) => point,
+                                Classification::Uncertain(reason) => {
+                                    return Ok(Classification::Uncertain(reason));
+                                }
+                            };
                             let current_owner = &profiles[owner_index];
                             let current_material_index = current_owner.material_loop_index;
-                            let candidate_inside_owner = if let Some(native_loops) = native_loops {
-                                classify_point_against_native_loop_after_bounds(
-                                    &native_loops[current_material_index],
-                                    &candidate_point,
-                                    policy,
-                                )?
-                            } else {
-                                classify_point_against_retained_loop(
-                                    current_owner.material,
+                            let candidate_inside_owner =
+                                classify_point_evidence_against_retained_loop(
+                                    self,
+                                    current_material_index,
                                     &evaluators[current_material_index],
                                     &candidate_point,
                                     policy,
-                                )?
-                            };
+                                )?;
                             match candidate_inside_owner {
                                 Classification::Decided(
                                     ContourPointLocation::Inside | ContourPointLocation::Boundary,
                                 ) => owner = Some(profile_index),
                                 Classification::Decided(ContourPointLocation::Outside) => {
-                                    let owner_point = match retained_loop_sample_point(
+                                    let owner_point = match retained_loop_sample_point_evidence(
                                         current_owner.material,
                                         policy,
                                     )? {
@@ -11417,20 +11427,13 @@ impl CurveRegion2 {
                                         }
                                     };
                                     let owner_inside_candidate =
-                                        if let Some(native_loops) = native_loops {
-                                            classify_point_against_native_loop_after_bounds(
-                                                &native_loops[material_index],
-                                                &owner_point,
-                                                policy,
-                                            )?
-                                        } else {
-                                            classify_point_against_retained_loop(
-                                                profile.material,
-                                                &evaluators[material_index],
-                                                &owner_point,
-                                                policy,
-                                            )?
-                                        };
+                                        classify_point_evidence_against_retained_loop(
+                                            self,
+                                            material_index,
+                                            &evaluators[material_index],
+                                            &owner_point,
+                                            policy,
+                                        )?;
                                     match owner_inside_candidate {
                                         Classification::Decided(
                                             ContourPointLocation::Inside
@@ -16215,10 +16218,11 @@ impl CurveRegion2 {
                         self.data.certified_loop_fill_rules.as_deref(),
                     );
                 }
-                Classification::Uncertain(UncertaintyReason::Unsupported) => {}
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
+                // Native lowering is only a specialization. Any undecided
+                // construction predicate, not just an unsupported carrier,
+                // must fall through to the authoritative retained winding
+                // kernel below.
+                Classification::Uncertain(_) => {}
             }
         }
         let Some(native_loops) = self.native_boundary_loops() else {
@@ -17894,10 +17898,10 @@ fn native_loop_sample_point(
     subcurve_point_at(fragment, half, policy)
 }
 
-fn retained_loop_sample_point(
+fn retained_loop_sample_point_evidence(
     boundary_loop: &CurveRegionBoundaryLoop2,
     policy: &CurveContext,
-) -> CurveResult<Classification<Point2>> {
+) -> CurveResult<Classification<RationalBezierIntersectionPointEvidence2>> {
     if boundary_loop.fragments().is_empty() {
         return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
     }
@@ -17907,6 +17911,7 @@ fn retained_loop_sample_point(
         let candidate = match fragment {
             BezierSplitFragment2::Materialized { curve, .. } => {
                 subcurve_point_at(curve, half.clone(), policy)
+                    .map(RationalBezierIntersectionPointEvidence2::Exact)
             }
             BezierSplitFragment2::AlgebraicEndpointImages {
                 start,
@@ -17916,42 +17921,21 @@ fn retained_loop_sample_point(
             } => match start.strict_rational_between(end, policy)? {
                 Classification::Decided(parameter) => {
                     subcurve_point_at(source_curve, parameter, policy)
+                        .map(RationalBezierIntersectionPointEvidence2::Exact)
                 }
                 Classification::Uncertain(reason) => Classification::Uncertain(reason),
             },
-            BezierSplitFragment2::AnalyticParallel(fragment) => {
-                fragment.representative_point(policy)?
-            }
-            BezierSplitFragment2::SelectedFiber(fragment) => {
-                fragment.representative_point(policy)?
-            }
-            BezierSplitFragment2::AlgebraicChord(chord) => {
-                match chord.representative_point(policy)? {
-                    Classification::Decided(RationalBezierIntersectionPointEvidence2::Exact(
-                        point,
-                    )) => Classification::Decided(point),
-                    Classification::Decided(
-                        RationalBezierIntersectionPointEvidence2::Algebraic(point),
-                    ) => point.exact_rational_point(policy).map_or(
-                        Classification::Uncertain(UncertaintyReason::Unsupported),
-                        Classification::Decided,
-                    ),
-                    Classification::Decided(
-                        RationalBezierIntersectionPointEvidence2::AlgebraicChordPair(_)
-                        | RationalBezierIntersectionPointEvidence2::AlgebraicCuspChord(_)
-                        | RationalBezierIntersectionPointEvidence2::AlgebraicCuspChordDerived(_)
-                        | RationalBezierIntersectionPointEvidence2::AlgebraicChordParallel(_)
-                        | RationalBezierIntersectionPointEvidence2::AnalyticParallel(_)
-                        | RationalBezierIntersectionPointEvidence2::Similarity(_),
-                    ) => Classification::Uncertain(UncertaintyReason::Unsupported),
-                    Classification::Uncertain(reason) => Classification::Uncertain(reason),
-                }
-            }
+            BezierSplitFragment2::AnalyticParallel(fragment) => fragment
+                .representative_point(policy)?
+                .map(RationalBezierIntersectionPointEvidence2::Exact),
+            BezierSplitFragment2::SelectedFiber(fragment) => fragment
+                .representative_point(policy)?
+                .map(RationalBezierIntersectionPointEvidence2::Exact),
+            BezierSplitFragment2::AlgebraicChord(chord) => chord.representative_point(policy)?,
             BezierSplitFragment2::AlgebraicCuspSemicircle(fragment) => {
                 match fragment.representative_point()? {
-                    Classification::Decided(point) => point.exact_rational_point(policy).map_or(
-                        Classification::Uncertain(UncertaintyReason::Unsupported),
-                        Classification::Decided,
+                    Classification::Decided(point) => Classification::Decided(
+                        RationalBezierIntersectionPointEvidence2::Algebraic(point),
                     ),
                     Classification::Uncertain(reason) => Classification::Uncertain(reason),
                 }
@@ -17963,6 +17947,61 @@ fn retained_loop_sample_point(
         }
     }
     Ok(Classification::Uncertain(last_reason))
+}
+
+fn classify_point_evidence_against_retained_loop(
+    region: &CurveRegion2,
+    loop_index: usize,
+    evaluators: &[Option<RationalBezier2>],
+    point: &RationalBezierIntersectionPointEvidence2,
+    policy: &CurveContext,
+) -> CurveResult<Classification<ContourPointLocation>> {
+    let boundary_loop = region.data.boundary_loops.get(loop_index).ok_or_else(|| {
+        CurveError::Topology("retained loop classification index is out of bounds".into())
+    })?;
+    let direct = match point {
+        RationalBezierIntersectionPointEvidence2::Exact(point) => Some(
+            classify_point_against_retained_loop(boundary_loop, evaluators, point, policy)?,
+        ),
+        RationalBezierIntersectionPointEvidence2::Algebraic(point) => {
+            Some(match point.predicate_evaluator(policy)? {
+                Classification::Decided(predicate) => {
+                    if let Classification::Decided(bounds) =
+                        retained_loop_query_bounds(boundary_loop, policy)
+                        && algebraic_point_is_decided_outside_bounds(&predicate, &bounds, policy)?
+                    {
+                        Classification::Decided(ContourPointLocation::Outside)
+                    } else {
+                        classify_algebraic_point_against_retained_loop(
+                            boundary_loop,
+                            &predicate,
+                            FillRule::EvenOdd,
+                            true,
+                            policy,
+                        )?
+                    }
+                }
+                Classification::Uncertain(reason) => Classification::Uncertain(reason),
+            })
+        }
+        RationalBezierIntersectionPointEvidence2::AlgebraicChordPair(_)
+        | RationalBezierIntersectionPointEvidence2::AlgebraicCuspChord(_)
+        | RationalBezierIntersectionPointEvidence2::AlgebraicCuspChordDerived(_)
+        | RationalBezierIntersectionPointEvidence2::AlgebraicChordParallel(_)
+        | RationalBezierIntersectionPointEvidence2::AnalyticParallel(_)
+        | RationalBezierIntersectionPointEvidence2::Similarity(_) => None,
+    };
+    match direct {
+        Some(decided @ Classification::Decided(_)) => Ok(decided),
+        Some(Classification::Uncertain(_)) | None => {
+            crate::curve_region_boolean::classify_retained_point_evidence_against_loop_by_probe(
+                region,
+                loop_index,
+                point.clone(),
+                policy,
+            )
+        }
+    }
 }
 
 fn subcurve_control_hull_contains_point(
@@ -20373,6 +20412,58 @@ fn retained_loop_query_bounds(
         };
     }
     Classification::Decided(bounds)
+}
+
+fn retained_loops_have_pairwise_disjoint_bounds(
+    boundary_loops: &[CurveRegionBoundaryLoop2],
+    policy: &CurveContext,
+) -> Classification<bool> {
+    let mut bounds = Vec::<Aabb2>::with_capacity(boundary_loops.len());
+    for boundary_loop in boundary_loops {
+        let current = match retained_loop_query_bounds(boundary_loop, policy) {
+            Classification::Decided(bounds) => bounds,
+            Classification::Uncertain(reason) => {
+                #[cfg(feature = "dispatch-trace")]
+                hyperreal::dispatch_trace::record(
+                    "hypercurve",
+                    "curve-region-disjoint-loop-roles-blocker",
+                    "loop-bounds",
+                );
+                return Classification::Uncertain(reason);
+            }
+        };
+        for previous in &bounds {
+            match previous.overlaps(&current, policy) {
+                Classification::Decided(false) => {}
+                Classification::Decided(true) => {
+                    #[cfg(feature = "dispatch-trace")]
+                    hyperreal::dispatch_trace::record(
+                        "hypercurve",
+                        "curve-region-disjoint-loop-roles-blocker",
+                        "overlapping-bounds",
+                    );
+                    return Classification::Decided(false);
+                }
+                Classification::Uncertain(reason) => {
+                    #[cfg(feature = "dispatch-trace")]
+                    hyperreal::dispatch_trace::record(
+                        "hypercurve",
+                        "curve-region-disjoint-loop-roles-blocker",
+                        "bounds-overlap",
+                    );
+                    return Classification::Uncertain(reason);
+                }
+            }
+        }
+        bounds.push(current);
+    }
+    #[cfg(feature = "dispatch-trace")]
+    hyperreal::dispatch_trace::record(
+        "hypercurve",
+        "curve-region-disjoint-loop-roles",
+        "pairwise-disjoint",
+    );
+    Classification::Decided(true)
 }
 
 pub(crate) fn retained_fragment_query_bounds(
@@ -31383,6 +31474,76 @@ mod tests {
                 CurveRegionLoopRole::Material,
             ]))
         );
+    }
+
+    #[test]
+    fn regularized_composite_chord_roles_preserve_nested_islands_and_profiles() {
+        let policy = CurveContext::STRICT;
+        let base = independent_oblique_chord_pair_corner_region(&policy, false);
+        let center_x = ((&q(1, 2).sqrt().unwrap() + Real::one()) / Real::from(3_i8)).unwrap();
+        let center_y = (&q(1, 3).sqrt().unwrap() + q(1, 5).sqrt().unwrap()) / Real::from(3_i8);
+        let center_y = center_y.unwrap();
+        let nested_loop = |scale: i32| {
+            let scale = Real::from(scale);
+            let transformed = base
+                .transform_affine(
+                    &scale,
+                    &Real::zero(),
+                    &Real::zero(),
+                    &scale,
+                    &-(&scale * &center_x),
+                    &-(&scale * &center_y),
+                    &policy,
+                )
+                .expect("a homothetic retained chord loop must transform exactly");
+            assert_eq!(transformed.certainty, CurveCertainty::Certified);
+            let [boundary] = transformed
+                .value
+                .into_boundary_loops()
+                .try_into()
+                .expect("the transformed triangle retains one loop");
+            let sample = retained_loop_sample_point_evidence(&boundary, &policy)
+                .expect("the transformed loop has exact sample evidence");
+            assert!(matches!(
+                sample,
+                Classification::Decided(
+                    RationalBezierIntersectionPointEvidence2::AlgebraicChordPair(_)
+                        | RationalBezierIntersectionPointEvidence2::AlgebraicCuspChord(_)
+                        | RationalBezierIntersectionPointEvidence2::AlgebraicCuspChordDerived(_)
+                        | RationalBezierIntersectionPointEvidence2::AlgebraicChordParallel(_)
+                        | RationalBezierIntersectionPointEvidence2::AnalyticParallel(_)
+                        | RationalBezierIntersectionPointEvidence2::Similarity(_)
+                )
+            ));
+            boundary
+        };
+        let region = CurveRegion2::new(vec![nested_loop(3), nested_loop(2), nested_loop(1)])
+            .expect("homothetic triangles are valid retained loops");
+        let expected = vec![
+            CurveRegionLoopRole::Material,
+            CurveRegionLoopRole::Hole,
+            CurveRegionLoopRole::Material,
+        ];
+        assert_eq!(
+            region.regularized_retained_loop_roles_raw(&policy),
+            Ok(Classification::Decided(expected.clone()))
+        );
+
+        let profiled = region
+            .with_certified_loop_roles(expected)
+            .expect("the exact nesting roles match the retained loops");
+        let profiles = profiled
+            .boundary_profiles(&policy)
+            .expect("composite point evidence must assign hole ownership");
+        assert_eq!(profiles.certainty, CurveCertainty::Certified);
+        let Classification::Decided(profiles) = profiles.value else {
+            panic!("composite hole ownership must be decided");
+        };
+        assert_eq!(profiles.len(), 2);
+        assert_eq!(profiles[0].material_loop_index(), 0);
+        assert_eq!(profiles[0].hole_loop_indices(), &[1]);
+        assert_eq!(profiles[1].material_loop_index(), 2);
+        assert!(profiles[1].hole_loop_indices().is_empty());
     }
 
     #[test]

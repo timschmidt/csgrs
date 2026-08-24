@@ -60387,6 +60387,7 @@ impl BezierAlgebraicChord2 {
                     | RationalBezierIntersectionPointEvidence2::AlgebraicCuspChordDerived(_)
                     | RationalBezierIntersectionPointEvidence2::AlgebraicChordParallel(_)
                     | RationalBezierIntersectionPointEvidence2::AnalyticParallel(_)
+                    | RationalBezierIntersectionPointEvidence2::Similarity(_)
             )
         })
     }
@@ -60748,6 +60749,12 @@ impl BezierAlgebraicChord2 {
         policy: &CurveContext,
     ) -> CurveResult<Classification<i32>> {
         if self.has_composite_endpoint() {
+            #[cfg(feature = "dispatch-trace")]
+            hyperreal::dispatch_trace::record(
+                "hypercurve",
+                "algebraic-chord-ray-winding",
+                "composite-endpoint",
+            );
             let side_x = -direction_y.clone();
             let side_y = direction_x.clone();
             let start_side = match algebraic_chord_point_linear_order_to_exact(
@@ -68545,12 +68552,12 @@ pub(crate) fn algebraic_chord_point_linear_order_to_exact(
             .map(std::cmp::Ordering::reverse)),
         };
     }
-    let coefficient_x = BezierAlgebraicChordRealInterval2::from_values(
+    let coefficient_x_interval = BezierAlgebraicChordRealInterval2::from_values(
         [coefficient_x.clone()],
         &CurveContext::STRICT,
     )
     .expect("one exact coefficient defines an interval");
-    let coefficient_y = BezierAlgebraicChordRealInterval2::from_values(
+    let coefficient_y_interval = BezierAlgebraicChordRealInterval2::from_values(
         [coefficient_y.clone()],
         &CurveContext::STRICT,
     )
@@ -68561,45 +68568,82 @@ pub(crate) fn algebraic_chord_point_linear_order_to_exact(
     let origin_y =
         BezierAlgebraicChordRealInterval2::from_values([origin.y().clone()], &CurveContext::STRICT)
             .expect("one exact coordinate defines an interval");
-    let mut terminal_refined = false;
-    for refinement_steps in [0, 2, 4, 8, 16, 32, 64, 128, 256, 512] {
+    let interval_order = |refinement_steps| {
         let Classification::Decided(bounds) =
             algebraic_chord_endpoint_bounds_refined(point, refinement_steps, policy)
         else {
-            continue;
+            return None;
         };
-        terminal_refined |= refinement_steps == 512;
         let delta_x =
             BezierAlgebraicChordRealInterval2::from_axis(&bounds, Axis2::X).subtract(&origin_x);
         let delta_y =
             BezierAlgebraicChordRealInterval2::from_axis(&bounds, Axis2::Y).subtract(&origin_y);
         let Some(value) = delta_x
-            .multiply(&coefficient_x, &CurveContext::STRICT)
+            .multiply(&coefficient_x_interval, &CurveContext::STRICT)
             .and_then(|x| {
                 delta_y
-                    .multiply(&coefficient_y, &CurveContext::STRICT)
+                    .multiply(&coefficient_y_interval, &CurveContext::STRICT)
                     .map(|y| x.add(&y))
             })
         else {
-            continue;
+            return Some(None);
         };
         let zero = Real::zero();
         if compare_reals(&value.lower, &zero, &CurveContext::STRICT)
             == Some(std::cmp::Ordering::Greater)
         {
-            return Ok(Classification::Decided(std::cmp::Ordering::Greater));
+            return Some(Some(std::cmp::Ordering::Greater));
         }
         if compare_reals(&value.upper, &zero, &CurveContext::STRICT)
             == Some(std::cmp::Ordering::Less)
         {
-            return Ok(Classification::Decided(std::cmp::Ordering::Less));
+            return Some(Some(std::cmp::Ordering::Less));
         }
         if compare_reals(&value.lower, &zero, &CurveContext::STRICT)
             == Some(std::cmp::Ordering::Equal)
             && compare_reals(&value.upper, &zero, &CurveContext::STRICT)
                 == Some(std::cmp::Ordering::Equal)
         {
-            return Ok(Classification::Decided(std::cmp::Ordering::Equal));
+            return Some(Some(std::cmp::Ordering::Equal));
+        }
+        Some(None)
+    };
+    for refinement_steps in [0, 2, 4, 8, 16] {
+        if let Some(Some(order)) = interval_order(refinement_steps) {
+            return Ok(Classification::Decided(order));
+        }
+    }
+    // Independently refined Cartesian boxes cannot prove a correlated
+    // oblique projection is exactly zero. Compare the retained final
+    // algebraic image before applying the policy terminal; this is the same
+    // exact cold authority used by point equality and axis ordering.
+    if let Classification::Decided([x, y]) =
+        policy.strict_predicate_pass(|| represented_point_evidence_coordinates(point, policy))?
+    {
+        let offset = -(coefficient_x * origin.x() + coefficient_y * origin.y());
+        if let Classification::Decided(projection) =
+            represented_affine_coordinate(&[(&x, coefficient_x), (&y, coefficient_y)], &offset)
+            && let Some(sign) = represented_strict_sign(&projection)
+        {
+            #[cfg(feature = "dispatch-trace")]
+            hyperreal::dispatch_trace::record(
+                "hypercurve",
+                "algebraic-chord-point-linear-order",
+                "represented-cold-fallback",
+            );
+            return Ok(Classification::Decided(match sign {
+                RealSign::Negative => std::cmp::Ordering::Less,
+                RealSign::Zero => std::cmp::Ordering::Equal,
+                RealSign::Positive => std::cmp::Ordering::Greater,
+            }));
+        }
+    }
+    let mut terminal_refined = false;
+    for refinement_steps in [32, 64, 128, 256, 512] {
+        match interval_order(refinement_steps) {
+            Some(Some(order)) => return Ok(Classification::Decided(order)),
+            Some(None) => terminal_refined |= refinement_steps == 512,
+            None => {}
         }
     }
     if terminal_refined && policy.permits_approximate_512() {
@@ -104046,6 +104090,55 @@ mod conversion_tests {
                     )
                     .unwrap(),
                 Classification::Decided(-1)
+            );
+        }
+    }
+
+    #[test]
+    fn correlated_algebraic_point_oblique_projection_is_exact() {
+        let half = (Real::one() / Real::from(2_i8)).unwrap();
+        let BezierParameter2::Algebraic(parameter) =
+            algebraic_parameter(vec![-half, Real::zero(), Real::one()])
+        else {
+            unreachable!("sqrt(1/2) must remain algebraic");
+        };
+        let diagonal = RationalBezier2::try_from_subcurve(&BezierSubcurve2::Quadratic(
+            QuadraticBezier2::from_line_segment(
+                LineSeg2::try_new(Point2::from_values(0, 0), Point2::from_values(1, 1)).unwrap(),
+            ),
+        ))
+        .unwrap();
+
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let point = RationalBezierIntersectionPointEvidence2::Algebraic(
+                diagonal
+                    .point_at_algebraic_parameter(&parameter, &policy)
+                    .unwrap(),
+            );
+            #[cfg(feature = "dispatch-trace")]
+            hyperreal::dispatch_trace::reset();
+            let compare = || {
+                algebraic_chord_point_linear_order_to_exact(
+                    &point,
+                    &Point2::from_values(0, 0),
+                    &Real::one(),
+                    &-Real::one(),
+                    &policy,
+                )
+                .unwrap()
+            };
+            #[cfg(feature = "dispatch-trace")]
+            let order = hyperreal::dispatch_trace::with_recording(compare);
+            #[cfg(not(feature = "dispatch-trace"))]
+            let order = compare();
+            assert_eq!(order, Classification::Decided(std::cmp::Ordering::Equal));
+            #[cfg(feature = "dispatch-trace")]
+            assert!(
+                hyperreal::dispatch_trace::take_trace().path_count(
+                    "hypercurve",
+                    "algebraic-chord-point-linear-order",
+                    "represented-cold-fallback",
+                ) > 0
             );
         }
     }

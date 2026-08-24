@@ -5649,6 +5649,157 @@ fn algebraic_chord_erosion_splits_a_collapsed_neck_exactly() {
 }
 
 #[test]
+fn algebraic_chord_non_miter_erosions_split_a_collapsed_neck_exactly() {
+    for (policy, fill_rule, reverse) in [
+        (CurveContext::STRICT, FillRule::NonZero, false),
+        (CurveContext::STRICT, FillRule::EvenOdd, true),
+        (CurveContext::APPROXIMATE_512, FillRule::NonZero, false),
+        (CurveContext::APPROXIMATE_512, FillRule::EvenOdd, true),
+    ] {
+        let source = axis_aligned_algebraic_dumbbell_region(&policy, fill_rule, reverse);
+        for radius in [Real::one(), q(11, 10)] {
+            for corner_style in [
+                OffsetCornerStyle2::Bevel,
+                OffsetCornerStyle2::Round,
+                OffsetCornerStyle2::Miter { limit: Real::one() },
+            ] {
+                let split = source
+                    .offset(-radius.clone(), &corner_style, &policy)
+                    .unwrap_or_else(|error| {
+                        panic!(
+                            "algebraic {corner_style:?} erosion at radius {radius:?} must regularize through a collapsed neck under {policy:?}: {error:?}"
+                        )
+                    });
+                assert_eq!(split.certainty, CurveCertainty::Certified);
+                assert_eq!(split.value.boundary_loops().len(), 2);
+                assert_eq!(
+                    certified(split.value.loop_roles(&policy).unwrap()),
+                    Classification::Decided(vec![
+                        CurveRegionLoopRole::Material,
+                        CurveRegionLoopRole::Material,
+                    ])
+                );
+                for (point, expected) in [
+                    (p(2, 2), RegionPointLocation::Inside),
+                    (p(10, 2), RegionPointLocation::Inside),
+                    (p(6, 2), RegionPointLocation::Outside),
+                ] {
+                    assert_eq!(
+                        certified(split.value.classify_point(&point, &policy).unwrap()),
+                        Classification::Decided(expected)
+                    );
+                }
+            }
+        }
+    }
+}
+
+#[test]
+fn rotated_algebraic_chord_erosion_splits_a_collapsed_neck_exactly() {
+    let cosine = q(3, 5);
+    let sine = q(4, 5);
+    let translation_x = Real::from(20);
+    let translation_y = Real::from(5);
+    let transform_point = |point: Point2| {
+        Point2::new(
+            &cosine * point.x() - &sine * point.y() + &translation_x,
+            &sine * point.x() + &cosine * point.y() + &translation_y,
+        )
+    };
+    let miter = OffsetCornerStyle2::Miter {
+        limit: Real::from(2),
+    };
+    for (policy, fill_rule, reverse) in [
+        (CurveContext::STRICT, FillRule::NonZero, false),
+        (CurveContext::STRICT, FillRule::EvenOdd, true),
+        (CurveContext::APPROXIMATE_512, FillRule::NonZero, false),
+        (CurveContext::APPROXIMATE_512, FillRule::EvenOdd, true),
+    ] {
+        let source = axis_aligned_algebraic_dumbbell_region(&policy, fill_rule, reverse);
+        let rotated = source
+            .transform_affine(
+                &cosine,
+                &-sine.clone(),
+                &sine,
+                &cosine,
+                &translation_x,
+                &translation_y,
+                &policy,
+            )
+            .expect("a rational unit rotation must preserve exact retained chords");
+        assert_eq!(rotated.certainty, CurveCertainty::Certified);
+        let split = rotated
+            .value
+            .offset(-q(11, 10), &miter, &policy)
+            .unwrap_or_else(|error| {
+                panic!(
+                    "a rotated algebraic erosion must regularize through a collapsed neck under {policy:?}: {error:?}"
+                )
+            });
+        assert_eq!(split.certainty, CurveCertainty::Certified);
+        assert_eq!(split.value.boundary_loops().len(), 2);
+        #[cfg(feature = "dispatch-trace")]
+        hyperreal::dispatch_trace::reset();
+        let classify_roles = || split.value.loop_roles(&policy).unwrap();
+        #[cfg(feature = "dispatch-trace")]
+        let roles_outcome = hyperreal::dispatch_trace::with_recording(classify_roles);
+        #[cfg(not(feature = "dispatch-trace"))]
+        let roles_outcome = classify_roles();
+        let roles_certainty = roles_outcome.certainty;
+        let actual_roles = roles_outcome.value;
+        let expected_roles = Classification::Decided(vec![
+            CurveRegionLoopRole::Material,
+            CurveRegionLoopRole::Material,
+        ]);
+        #[cfg(feature = "dispatch-trace")]
+        if roles_certainty != CurveCertainty::Certified || actual_roles != expected_roles {
+            let trace = hyperreal::dispatch_trace::take_trace();
+            let curve_paths = trace
+                .dispatch
+                .iter()
+                .filter(|entry| entry.layer == "hypercurve")
+                .collect::<Vec<_>>();
+            panic!(
+                "rotated loop roles failed under {policy:?}, fill={fill_rule:?}, reverse={reverse}: certainty={roles_certainty:?}, actual={actual_roles:?}, expected={expected_roles:?}, curve_paths={curve_paths:#?}"
+            );
+        }
+        assert_eq!(roles_certainty, CurveCertainty::Certified);
+        assert_eq!(actual_roles, expected_roles);
+        for (point, expected) in [
+            (transform_point(p(2, 2)), RegionPointLocation::Inside),
+            (transform_point(p(10, 2)), RegionPointLocation::Inside),
+            (transform_point(p(6, 2)), RegionPointLocation::Outside),
+        ] {
+            #[cfg(feature = "dispatch-trace")]
+            hyperreal::dispatch_trace::reset();
+            let classify = || split.value.classify_point(&point, &policy).unwrap();
+            #[cfg(feature = "dispatch-trace")]
+            let point_outcome = hyperreal::dispatch_trace::with_recording(classify);
+            #[cfg(not(feature = "dispatch-trace"))]
+            let point_outcome = classify();
+            let point_certainty = point_outcome.certainty;
+            let actual = point_outcome.value;
+            #[cfg(feature = "dispatch-trace")]
+            if point_certainty != CurveCertainty::Certified
+                || actual != Classification::Decided(expected)
+            {
+                let trace = hyperreal::dispatch_trace::take_trace();
+                let curve_paths = trace
+                    .dispatch
+                    .iter()
+                    .filter(|entry| entry.layer == "hypercurve")
+                    .collect::<Vec<_>>();
+                panic!(
+                    "rotated point classification failed under {policy:?} for {point:?}: certainty={point_certainty:?}, actual={actual:?}, expected={expected:?}, curve_paths={curve_paths:#?}"
+                );
+            }
+            assert_eq!(point_certainty, CurveCertainty::Certified);
+            assert_eq!(actual, Classification::Decided(expected));
+        }
+    }
+}
+
+#[test]
 fn unified_region_bounds_cover_native_and_higher_order_carriers_exactly() {
     let policy = CurveContext::STRICT;
     let native =

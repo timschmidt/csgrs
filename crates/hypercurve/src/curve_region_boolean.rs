@@ -33,8 +33,8 @@ use crate::{
     BezierEndpoint, BezierEndpointTangentImage2, BezierLineContactRelation,
     BezierLineCrossingDirection, BezierLineImageFitRelation, BezierParallel2,
     BezierParallelPairIntersectionSet2, BezierParameter2, BezierParameterRange2,
-    BezierSplitFragment2, BezierSubcurve2, BooleanOp, Classification, Curve2, CurveContext,
-    CurveDerivative2, CurveError, CurveFamily2, CurveIntersectionContact2,
+    BezierSplitFragment2, BezierSubcurve2, BooleanOp, Classification, ContourPointLocation, Curve2,
+    CurveContext, CurveDerivative2, CurveError, CurveFamily2, CurveIntersectionContact2,
     CurveIntersectionOverlap2, CurveIntersectionPairBlocker2, CurveOperation2, CurveOutcome,
     CurveRegion2, CurveRegionLoopRole, CurveRegionParameter2, CurveRegionParameterRange2,
     CurveResult, ExactCurveError, ExactCurveResult, FillRule, LineSeg2, LineSide, QuadraticBezier2,
@@ -132,6 +132,12 @@ struct CurveRegionBooleanContextData<'a> {
     bezier_self_intersections: Vec<BezierSelfIntersectionCache>,
     parallel_self_intersections: Vec<ParallelSelfIntersectionCache>,
     strict_line_image_only: OnceLock<bool>,
+}
+
+#[derive(Clone, Copy)]
+enum RetainedPointProbeClassification {
+    FilledRegion,
+    LoopParity,
 }
 
 #[derive(Debug)]
@@ -1103,7 +1109,94 @@ impl CurveRegion2 {
     }
 }
 
+/// Classifies retained multi-field point evidence against one certified simple
+/// loop without materializing its coordinates.
+///
+/// The Boolean carrier-pair authority intersects an exterior probe with only
+/// the selected loop. Crossing parity is independent of authored orientation
+/// and therefore supplies the geometric nesting predicate needed to assign
+/// material, hole, and nested-island roles.
+pub(crate) fn classify_retained_point_evidence_against_loop_by_probe(
+    region: &CurveRegion2,
+    loop_index: usize,
+    point: RationalBezierIntersectionPointEvidence2,
+    policy: &CurveContext,
+) -> CurveResult<Classification<ContourPointLocation>> {
+    let context = match CurveRegionBooleanContext::try_new_retained_loop(region, loop_index, policy)
+    {
+        Ok(context) => context,
+        Err(ExactCurveError::Blocked(blocker)) => {
+            return Ok(Classification::Uncertain(blocker.reason()));
+        }
+        Err(ExactCurveError::Invalid { cause, .. }) => return Err(cause),
+    };
+    let classification = match context.classify_retained_point_off_boundary_by_probe(
+        0,
+        point,
+        CurveRegionBooleanOperand2::First,
+        RetainedPointProbeClassification::LoopParity,
+    ) {
+        Ok(classification) => classification,
+        Err(ExactCurveError::Blocked(blocker)) => {
+            return Ok(Classification::Uncertain(blocker.reason()));
+        }
+        Err(ExactCurveError::Invalid { cause, .. }) => return Err(cause),
+    };
+    Ok(classification.map(|location| match location {
+        RegionPointLocation::Outside => ContourPointLocation::Outside,
+        RegionPointLocation::Boundary => ContourPointLocation::Boundary,
+        RegionPointLocation::Inside => ContourPointLocation::Inside,
+    }))
+}
+
 impl<'a> CurveRegionBooleanContext<'a> {
+    fn try_new_retained_loop(
+        region: &'a CurveRegion2,
+        loop_index: usize,
+        policy: &CurveContext,
+    ) -> ExactCurveResult<Self> {
+        let Some(boundary_loop) = region.boundary_loops().get(loop_index) else {
+            return Err(ExactCurveError::invalid(
+                CurveOperation2::Classification,
+                CurveFamily2::Line,
+                CurveError::Topology("retained loop classification index is out of bounds".into()),
+            ));
+        };
+        if boundary_loop.is_empty() {
+            return Err(ExactCurveError::invalid(
+                CurveOperation2::Classification,
+                CurveFamily2::Line,
+                CurveError::Topology("retained loop classification requires a boundary".into()),
+            ));
+        }
+        let mut carriers = Vec::with_capacity(boundary_loop.len());
+        for (fragment_index, fragment) in boundary_loop.fragments().iter().enumerate() {
+            carriers.push(build_region_carrier(
+                fragment,
+                CurveRegionBooleanOperand2::First,
+                loop_index,
+                fragment_index,
+                false,
+                policy,
+            )?);
+        }
+        let carrier_count = carriers.len();
+        Ok(Self {
+            data: CurveRegionBooleanContextData {
+                first: region,
+                second: region,
+                policy: *policy,
+                carriers,
+                first_carrier_count: carrier_count,
+                authored_carrier_pair_count: 0,
+                pairs: Vec::new(),
+                bezier_self_intersections: Vec::new(),
+                parallel_self_intersections: Vec::new(),
+                strict_line_image_only: OnceLock::new(),
+            },
+        })
+    }
+
     fn try_new(
         first: &'a CurveRegion2,
         second: &'a CurveRegion2,
@@ -6630,6 +6723,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
             }
             .with_certified_regularized_filled_left_topology()
             .map_err(|cause| self.invalid(0, cause))?;
+        region = region.with_pairwise_disjoint_material_loop_roles(&self.data.policy);
         if affine_line_output || self.strict_line_image_only() {
             return self.compact_line_image_result_or_retain(region);
         }
@@ -9112,6 +9206,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
         region = region
             .with_certified_regularized_filled_left_topology()
             .map_err(|cause| self.invalid(0, cause))?;
+        region = region.with_pairwise_disjoint_material_loop_roles(&self.data.policy);
         region = self.coalesce_certified_boolean_line_runs(region)?;
         if affine_line_output || self.strict_line_image_only() {
             self.compact_line_image_result_or_retain(region)
@@ -9755,6 +9850,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
                     owner_carrier_index,
                     point,
                     boundary_operand,
+                    RetainedPointProbeClassification::FilledRegion,
                 ),
         }
     }
@@ -9766,13 +9862,49 @@ impl<'a> CurveRegionBooleanContext<'a> {
     /// by one retained algebraic chord. Complete pair replay against the
     /// selected operand then identifies the last transverse boundary crossing.
     /// The boundary's certified filled side determines which face contains the
-    /// target. Four exterior corners avoid making a vertex or overlap on one
-    /// particular probe direction a terminal ambiguity.
+    /// target. Four exterior corners are the fast candidates. If all are
+    /// degenerate, `2n+1` distinct points on one certified exterior line
+    /// exclude every direction through the `n` loop vertices and every
+    /// direction that can overlap one of the `n` retained line images.
     fn classify_retained_point_off_boundary_by_probe(
         &self,
         owner_carrier_index: usize,
         point: RationalBezierIntersectionPointEvidence2,
         boundary_operand: CurveRegionBooleanOperand2,
+        classification_kind: RetainedPointProbeClassification,
+    ) -> ExactCurveResult<Classification<RegionPointLocation>> {
+        // A terminal equality on one unlucky probe direction must not preempt
+        // another direction that has a strict separation proof. Exhaust the
+        // complete finite probe set with terminals suppressed, then replay it
+        // under APPROXIMATE_512 only when every strict direction is blocked.
+        if self.data.policy.permits_approximate_512() {
+            match self.data.policy.strict_predicate_pass(|| {
+                self.classify_retained_point_off_boundary_by_probe_once(
+                    owner_carrier_index,
+                    point.clone(),
+                    boundary_operand,
+                    classification_kind,
+                )
+            }) {
+                Ok(decided @ Classification::Decided(_)) => return Ok(decided),
+                Ok(Classification::Uncertain(_)) | Err(ExactCurveError::Blocked(_)) => {}
+                Err(error @ ExactCurveError::Invalid { .. }) => return Err(error),
+            }
+        }
+        self.classify_retained_point_off_boundary_by_probe_once(
+            owner_carrier_index,
+            point,
+            boundary_operand,
+            classification_kind,
+        )
+    }
+
+    fn classify_retained_point_off_boundary_by_probe_once(
+        &self,
+        owner_carrier_index: usize,
+        point: RationalBezierIntersectionPointEvidence2,
+        boundary_operand: CurveRegionBooleanOperand2,
+        classification_kind: RetainedPointProbeClassification,
     ) -> ExactCurveResult<Classification<RegionPointLocation>> {
         let boundary_region = match boundary_operand {
             CurveRegionBooleanOperand2::First => self.data.first,
@@ -9831,14 +9963,22 @@ impl<'a> CurveRegionBooleanContext<'a> {
         };
 
         let one = Real::one();
-        let outside_points = [
+        let outside_corners = [
             crate::Point2::new(outer_bounds.min().x() - &one, outer_bounds.min().y() - &one),
             crate::Point2::new(outer_bounds.max().x() + &one, outer_bounds.min().y() - &one),
             crate::Point2::new(outer_bounds.max().x() + &one, outer_bounds.max().y() + &one),
             crate::Point2::new(outer_bounds.min().x() - &one, outer_bounds.max().y() + &one),
         ];
+        let fallback_count = boundary_carriers.len().saturating_mul(2).saturating_add(1);
+        let exterior_line_candidates = (0..fallback_count).filter_map(|index| {
+            let offset = u64::try_from(index).ok()?.checked_add(2)?;
+            Some(crate::Point2::new(
+                outer_bounds.min().x() - &one,
+                outer_bounds.min().y() - Real::from(offset),
+            ))
+        });
 
-        for outside in outside_points {
+        for outside in outside_corners.into_iter().chain(exterior_line_candidates) {
             let probe = match crate::BezierAlgebraicChord2::try_new(
                 RationalBezierIntersectionPointEvidence2::Exact(outside),
                 point.clone(),
@@ -9988,7 +10128,9 @@ impl<'a> CurveRegionBooleanContext<'a> {
                 continue;
             }
 
-            let mut last_contact = None::<(&CurveRegionParameter2, RegionPointLocation)>;
+            let mut crossings = Vec::<(&CurveRegionParameter2, bool, bool)>::with_capacity(
+                evidence.contacts().len(),
+            );
             let mut ambiguous = false;
             for contact in evidence
                 .contacts()
@@ -10011,59 +10153,165 @@ impl<'a> CurveRegionBooleanContext<'a> {
                     ));
                 };
                 cross_is_positive ^= boundary.reversed;
-                let target_is_left_of_boundary = !cross_is_positive;
-                let location = if target_is_left_of_boundary == boundary.filled_side_is_left {
-                    RegionPointLocation::Inside
-                } else {
-                    RegionPointLocation::Outside
-                };
-
-                let replace = match last_contact {
-                    None => true,
-                    Some((parameter, previous_location)) => match contact
-                        .first_parameter()
-                        .cmp_by_refinement(parameter, &self.data.policy)
-                        .map_err(|cause| self.invalid(owner_carrier_index, cause))?
-                    {
-                        Classification::Decided(Ordering::Greater) => true,
-                        Classification::Decided(Ordering::Less) => false,
-                        Classification::Decided(Ordering::Equal)
-                            if previous_location == location =>
-                        {
-                            false
-                        }
-                        Classification::Decided(Ordering::Equal) => {
-                            last_reason = UncertaintyReason::Boundary;
-                            ambiguous = true;
-                            break;
-                        }
-                        Classification::Uncertain(reason) => {
-                            last_reason = reason;
-                            ambiguous = true;
-                            break;
-                        }
-                    },
-                };
-                if replace {
-                    last_contact = Some((contact.first_parameter(), location));
-                }
+                crossings.push((
+                    contact.first_parameter(),
+                    cross_is_positive,
+                    boundary.filled_side_is_left,
+                ));
             }
             if ambiguous {
                 continue;
             }
-            #[cfg(feature = "dispatch-trace")]
-            hyperreal::dispatch_trace::record(
-                "hypercurve",
-                "retained-point-probe",
-                match last_contact {
-                    Some((_, RegionPointLocation::Inside)) => "inside",
-                    Some((_, RegionPointLocation::Outside)) | None => "outside",
-                    Some((_, RegionPointLocation::Boundary)) => unreachable!(),
-                },
-            );
-            return Ok(Classification::Decided(
-                last_contact.map_or(RegionPointLocation::Outside, |(_, location)| location),
-            ));
+            match classification_kind {
+                RetainedPointProbeClassification::FilledRegion => {
+                    let mut last_contact = None::<(&CurveRegionParameter2, RegionPointLocation)>;
+                    for (parameter, cross_is_positive, filled_side_is_left) in crossings {
+                        let target_is_left_of_boundary = !cross_is_positive;
+                        let location = if target_is_left_of_boundary == filled_side_is_left {
+                            RegionPointLocation::Inside
+                        } else {
+                            RegionPointLocation::Outside
+                        };
+                        let replace = match last_contact {
+                            None => true,
+                            Some((previous_parameter, previous_location)) => match parameter
+                                .cmp_by_refinement(previous_parameter, &self.data.policy)
+                                .map_err(|cause| self.invalid(owner_carrier_index, cause))?
+                            {
+                                Classification::Decided(Ordering::Greater) => true,
+                                Classification::Decided(Ordering::Less) => false,
+                                Classification::Decided(Ordering::Equal)
+                                    if previous_location == location =>
+                                {
+                                    false
+                                }
+                                Classification::Decided(Ordering::Equal) => {
+                                    last_reason = UncertaintyReason::Boundary;
+                                    ambiguous = true;
+                                    break;
+                                }
+                                Classification::Uncertain(reason) => {
+                                    last_reason = reason;
+                                    ambiguous = true;
+                                    break;
+                                }
+                            },
+                        };
+                        if replace {
+                            last_contact = Some((parameter, location));
+                        }
+                    }
+                    if ambiguous {
+                        continue;
+                    }
+                    #[cfg(feature = "dispatch-trace")]
+                    hyperreal::dispatch_trace::record(
+                        "hypercurve",
+                        "retained-point-probe",
+                        match last_contact {
+                            Some((_, RegionPointLocation::Inside)) => "inside",
+                            Some((_, RegionPointLocation::Outside)) | None => "outside",
+                            Some((_, RegionPointLocation::Boundary)) => unreachable!(),
+                        },
+                    );
+                    return Ok(Classification::Decided(
+                        last_contact.map_or(RegionPointLocation::Outside, |(_, location)| location),
+                    ));
+                }
+                RetainedPointProbeClassification::LoopParity => {
+                    for index in 1..crossings.len() {
+                        let mut cursor = index;
+                        while cursor > 0 {
+                            match crossings[cursor]
+                                .0
+                                .cmp_by_refinement(crossings[cursor - 1].0, &self.data.policy)
+                                .map_err(|cause| self.invalid(owner_carrier_index, cause))?
+                            {
+                                Classification::Decided(Ordering::Less) => {
+                                    crossings.swap(cursor, cursor - 1);
+                                    cursor -= 1;
+                                }
+                                Classification::Decided(Ordering::Equal | Ordering::Greater) => {
+                                    break;
+                                }
+                                Classification::Uncertain(reason) => {
+                                    last_reason = reason;
+                                    ambiguous = true;
+                                    break;
+                                }
+                            }
+                        }
+                        if ambiguous {
+                            break;
+                        }
+                    }
+                    if ambiguous {
+                        continue;
+                    }
+
+                    let mut inside = false;
+                    let mut group_start = 0_usize;
+                    while group_start < crossings.len() {
+                        let mut group_end = group_start + 1;
+                        while group_end < crossings.len() {
+                            match crossings[group_end]
+                                .0
+                                .cmp_by_refinement(crossings[group_start].0, &self.data.policy)
+                                .map_err(|cause| self.invalid(owner_carrier_index, cause))?
+                            {
+                                Classification::Decided(Ordering::Equal) => group_end += 1,
+                                Classification::Decided(Ordering::Greater) => break,
+                                Classification::Decided(Ordering::Less) => {
+                                    return Err(self.invalid(
+                                        owner_carrier_index,
+                                        CurveError::Topology(
+                                            "retained loop probe crossings lost exact order".into(),
+                                        ),
+                                    ));
+                                }
+                                Classification::Uncertain(reason) => {
+                                    last_reason = reason;
+                                    ambiguous = true;
+                                    break;
+                                }
+                            }
+                        }
+                        if ambiguous {
+                            break;
+                        }
+                        let group = &crossings[group_start..group_end];
+                        if group.len() > 2 {
+                            last_reason = UncertaintyReason::Boundary;
+                            ambiguous = true;
+                            break;
+                        }
+                        let has_positive = group.iter().any(|(_, positive, _)| *positive);
+                        let has_negative = group.iter().any(|(_, positive, _)| !*positive);
+                        // A single transverse image, or the same oriented
+                        // tangent on both sides of a split vertex, crosses the
+                        // loop once. Opposite vertex tangents are a touch and
+                        // leave parity unchanged.
+                        if !(has_positive && has_negative) {
+                            inside = !inside;
+                        }
+                        group_start = group_end;
+                    }
+                    if ambiguous {
+                        continue;
+                    }
+                    #[cfg(feature = "dispatch-trace")]
+                    hyperreal::dispatch_trace::record(
+                        "hypercurve",
+                        "retained-loop-parity-probe",
+                        if inside { "inside" } else { "outside" },
+                    );
+                    return Ok(Classification::Decided(if inside {
+                        RegionPointLocation::Inside
+                    } else {
+                        RegionPointLocation::Outside
+                    }));
+                }
+            }
         }
 
         Ok(Classification::Uncertain(last_reason))
