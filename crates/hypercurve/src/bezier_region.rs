@@ -30656,7 +30656,17 @@ mod tests {
                     } else {
                         chord
                     };
-                    let contacts = match circle.chord_intersections(&carrier, &policy).unwrap() {
+                    #[cfg(feature = "dispatch-trace")]
+                    hyperreal::dispatch_trace::reset();
+                    let intersection_work = || circle.chord_intersections(&carrier, &policy);
+                    #[cfg(feature = "dispatch-trace")]
+                    let intersections =
+                        hyperreal::dispatch_trace::with_recording(intersection_work);
+                    #[cfg(not(feature = "dispatch-trace"))]
+                    let intersections = intersection_work();
+                    #[cfg(feature = "dispatch-trace")]
+                    let trace = hyperreal::dispatch_trace::take_trace();
+                    let contacts = match intersections.unwrap() {
                         Classification::Decided(
                             crate::bezier_offset::BezierAlgebraicCuspSemicircleRetainedChordIntersections2::Contacts(
                                 contacts,
@@ -30669,6 +30679,26 @@ mod tests {
                             "the chord-normal circle must meet its algebraic chord: {result:?}"
                         ),
                     };
+                    #[cfg(feature = "dispatch-trace")]
+                    {
+                        assert!(
+                            trace.path_count(
+                                "hypercurve",
+                                "algebraic-circle-chord-kernel",
+                                "chord-normal-recursive-quadratic",
+                            ) > 0,
+                            "the algebraic line must remain quadratic over the retained chord-normal field: {trace:?}",
+                        );
+                        assert_eq!(
+                            trace.path_count(
+                                "hypercurve",
+                                "algebraic-circle-chord-kernel",
+                                "recursive-projective-retained-chord",
+                            ),
+                            0,
+                            "the chord-normal authority must precede the generic recursive bridge: {trace:?}",
+                        );
+                    }
                     crossings += 1;
                     assert!(!contacts.is_empty());
                     for contact in contacts {

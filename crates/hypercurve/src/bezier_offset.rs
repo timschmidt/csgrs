@@ -23998,7 +23998,7 @@ impl BezierAlgebraicCuspSemicircle2 {
         };
         match self.recursive_quadratic_chord_intersections_from_dense_system(
             chord,
-            recursive_system,
+            &recursive_system,
             clip_to_finite_chord,
             certified_endpoint_incidence,
             policy,
@@ -26679,8 +26679,32 @@ impl BezierAlgebraicCuspSemicircle2 {
         chord: &BezierAlgebraicChord2,
         system: BezierChordNormalDenseIntersectionSystem2,
         clip_to_finite_chord: bool,
+        certified_endpoint_incidence: Option<BezierCertifiedFiniteChordEndpointIncidence2>,
         policy: &CurveContext,
     ) -> CurveResult<Classification<BezierAlgebraicCuspSemicircleChordIntersections2>> {
+        // The authored target is an affine line, so its circle incidence is
+        // quadratic in the final parameter even when the coefficient field
+        // contains many independent selected roots.  Preserve that quadratic
+        // over the retained field before constructing the global norm used by
+        // the general dense fallback.
+        match self.recursive_quadratic_chord_intersections_from_dense_system(
+            chord,
+            &system,
+            clip_to_finite_chord,
+            certified_endpoint_incidence,
+            policy,
+        )? {
+            Classification::Decided(Some(intersections)) => {
+                #[cfg(feature = "dispatch-trace")]
+                hyperreal::dispatch_trace::record(
+                    "hypercurve",
+                    "algebraic-circle-chord-kernel",
+                    "chord-normal-recursive-quadratic",
+                );
+                return Ok(Classification::Decided(intersections));
+            }
+            Classification::Decided(None) | Classification::Uncertain(_) => {}
+        }
         let domain = if clip_to_finite_chord {
             SelectedThirdAxisDomain2::UnitInterval
         } else {
@@ -26719,7 +26743,7 @@ impl BezierAlgebraicCuspSemicircle2 {
     fn recursive_quadratic_chord_intersections_from_dense_system(
         &self,
         chord: &BezierAlgebraicChord2,
-        system: BezierChordNormalDenseIntersectionSystem2,
+        system: &BezierChordNormalDenseIntersectionSystem2,
         clip_to_finite_chord: bool,
         certified_endpoint_incidence: Option<BezierCertifiedFiniteChordEndpointIncidence2>,
         policy: &CurveContext,
@@ -26760,14 +26784,14 @@ impl BezierAlgebraicCuspSemicircle2 {
         };
         let strict_sign =
             |value: &BezierRecursiveQuadraticValue2| value.sign(&CurveContext::STRICT);
-        if dense_expression_last_axis_degree(&incidence) != Some(2) {
+        if dense_expression_last_axis_degree(incidence) != Some(2) {
             return Ok(Classification::Decided(None));
         }
         let Some((mut c, mut b, mut a)) = (|| {
             Some((
-                recursive_quadratic_base_expression_coefficient(&incidence, 0, base)?,
-                recursive_quadratic_base_expression_coefficient(&incidence, 1, base)?,
-                recursive_quadratic_base_expression_coefficient(&incidence, 2, base)?,
+                recursive_quadratic_base_expression_coefficient(incidence, 0, base)?,
+                recursive_quadratic_base_expression_coefficient(incidence, 1, base)?,
+                recursive_quadratic_base_expression_coefficient(incidence, 2, base)?,
             ))
         })() else {
             return Ok(Classification::Decided(None));
@@ -27125,10 +27149,10 @@ impl BezierAlgebraicCuspSemicircle2 {
         else {
             return Ok(Classification::Decided(None));
         };
-        let Some(tangent_degree) = maximum_degree(&[&tangent_cross, &angular_tangent]) else {
+        let Some(tangent_degree) = maximum_degree(&[tangent_cross, angular_tangent]) else {
             return Ok(Classification::Decided(None));
         };
-        let Some(selected_degree) = dense_expression_last_axis_degree(&selected_half_plane) else {
+        let Some(selected_degree) = dense_expression_last_axis_degree(selected_half_plane) else {
             return Ok(Classification::Decided(None));
         };
         let turn_sign = if self.is_clockwise() {
@@ -27196,7 +27220,7 @@ impl BezierAlgebraicCuspSemicircle2 {
             }
             let Some((selected_half_plane, diameter, radius_squared_denominator)) = (|| {
                 Some((
-                    evaluate(&selected_half_plane, selected_degree)?,
+                    evaluate(selected_half_plane, selected_degree)?,
                     evaluate(&map.diameter, angular_degree)?,
                     evaluate(&map.radius_squared_denominator, angular_degree)?,
                 ))
@@ -27232,8 +27256,8 @@ impl BezierAlgebraicCuspSemicircle2 {
             };
             let Some((tangent_cross, angular_tangent)) = (|| {
                 Some((
-                    evaluate(&tangent_cross, tangent_degree)?,
-                    evaluate(&angular_tangent, tangent_degree)?,
+                    evaluate(tangent_cross, tangent_degree)?,
+                    evaluate(angular_tangent, tangent_degree)?,
                 ))
             })() else {
                 return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
@@ -28164,6 +28188,38 @@ impl BezierAlgebraicCuspSemicircle2 {
             }
         }
 
+        // A chord-normal circle already owns a rank-independent projective
+        // system for arbitrary retained chord endpoints.  Consult that
+        // authored authority before the generic recursive projective bridge:
+        // importing the circle and both chord endpoints into one recursive
+        // tower merely expands the same line/circle quadratic through every
+        // independent endpoint field.
+        if self.uses_selected_chord_normal_frame() {
+            match self.chord_normal_projective_chord_system(chord, policy)? {
+                Classification::Decided(Some(system)) => {
+                    #[cfg(feature = "dispatch-trace")]
+                    hyperreal::dispatch_trace::record(
+                        "hypercurve",
+                        "algebraic-circle-chord-kernel",
+                        "chord-normal-projective",
+                    );
+                    match self.chord_normal_projective_chord_intersections(
+                        chord,
+                        system,
+                        clip_to_finite_chord,
+                        certified_endpoint_incidence,
+                        policy,
+                    )? {
+                        Classification::Decided(intersections) => {
+                            return self.retain_chord_intersections(chord, intersections, policy);
+                        }
+                        Classification::Uncertain(_) => {}
+                    }
+                }
+                Classification::Decided(None) | Classification::Uncertain(_) => {}
+            }
+        }
+
         match self.recursive_projective_retained_chord_intersections(
             chord,
             clip_to_finite_chord,
@@ -28298,36 +28354,6 @@ impl BezierAlgebraicCuspSemicircle2 {
                 return self.retain_chord_intersections(chord, intersections, policy);
             }
             Classification::Decided(None) | Classification::Uncertain(_) => {}
-        }
-        // Preserve the compact authored support fields whenever the
-        // chord-normal projective system can represent them. If a third
-        // independent anchor makes that system decline, an exact or certified
-        // target line continues into the shared represented rational-curve
-        // kernel below; only a genuinely algebraic support needs the general
-        // represented chord fallback.
-        if self.uses_selected_chord_normal_frame() {
-            match self.chord_normal_projective_chord_system(chord, policy)? {
-                Classification::Decided(Some(system)) => {
-                    #[cfg(feature = "dispatch-trace")]
-                    hyperreal::dispatch_trace::record(
-                        "hypercurve",
-                        "algebraic-circle-chord-kernel",
-                        "chord-normal-projective",
-                    );
-                    match self.chord_normal_projective_chord_intersections(
-                        chord,
-                        system,
-                        clip_to_finite_chord,
-                        policy,
-                    )? {
-                        Classification::Decided(intersections) => {
-                            return self.retain_chord_intersections(chord, intersections, policy);
-                        }
-                        Classification::Uncertain(_) => {}
-                    }
-                }
-                Classification::Decided(None) | Classification::Uncertain(_) => {}
-            }
         }
         if self.uses_selected_chord_normal_frame()
             && exact_line.is_none()
@@ -117912,7 +117938,16 @@ mod conversion_tests {
             } else {
                 target
             };
-            let result = circle.chord_intersections(&target, &policy).unwrap();
+            #[cfg(feature = "dispatch-trace")]
+            hyperreal::dispatch_trace::reset();
+            let intersection_work = || circle.chord_intersections(&target, &policy);
+            #[cfg(feature = "dispatch-trace")]
+            let result = hyperreal::dispatch_trace::with_recording(intersection_work);
+            #[cfg(not(feature = "dispatch-trace"))]
+            let result = intersection_work();
+            #[cfg(feature = "dispatch-trace")]
+            let trace = hyperreal::dispatch_trace::take_trace();
+            let result = result.unwrap();
             let Classification::Decided(
                 BezierAlgebraicCuspSemicircleRetainedChordIntersections2::Contacts(contacts),
             ) = result
@@ -117949,8 +117984,17 @@ mod conversion_tests {
             };
             assert!(matches!(
                 &map.data.system,
-                BezierAlgebraicCuspSemicircleChordParameterMapSystem2::ChordNormalProjective(_)
+                BezierAlgebraicCuspSemicircleChordParameterMapSystem2::RecursiveQuadraticLine(_)
             ));
+            #[cfg(feature = "dispatch-trace")]
+            assert!(
+                trace.path_count(
+                    "hypercurve",
+                    "algebraic-circle-chord-kernel",
+                    "chord-normal-recursive-quadratic",
+                ) > 0,
+                "the exact tangency must retain the affine quadratic instead of its global norm: {trace:?}",
+            );
             assert_eq!(
                 map.retained_tangent_cross_dot_linear_combination_sign(
                     retained_contact,
