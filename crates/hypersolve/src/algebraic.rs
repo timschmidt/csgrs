@@ -1533,23 +1533,6 @@ pub fn transform_algebraic_root_affine(
             Some("affine algebraic-root construction requires nonzero scale".to_owned()),
         );
     }
-    if root.polynomial_coefficients.len() <= 1
-        || root
-            .polynomial_coefficients
-            .iter()
-            .any(|coefficient| coefficient.exact_rational_ref().is_none())
-    {
-        return algebraic_affine_transform_report(
-            AlgebraicRootAffineTransformStatus::InvalidEvidence,
-            scale,
-            offset,
-            None,
-            Some(
-                "affine algebraic-root construction requires exact-rational polynomial evidence"
-                    .to_owned(),
-            ),
-        );
-    }
     let Some(polynomial_coefficients) =
         affine_transformed_polynomial(&root.polynomial_coefficients, &scale, &offset, policy)
     else {
@@ -3897,6 +3880,54 @@ mod tests {
             zero_scale.status,
             AlgebraicRootAffineTransformStatus::ZeroScale
         );
+    }
+
+    #[test]
+    fn algebraic_root_affine_transform_preserves_exact_real_coefficients() {
+        let sqrt_two = real(2).sqrt().expect("positive exact square root");
+        let source = AlgebraicRootRepresentation {
+            constraint_index: 0,
+            symbol: SymbolId(0),
+            interval_index: 0,
+            polynomial_coefficients: vec![-sqrt_two.clone(), Real::one()],
+            interval: IsolatedRootInterval {
+                lower: real(1),
+                upper: real(2),
+                exact_root: None,
+                distinct_root_count: 1,
+            },
+            kind: AlgebraicRootKind::IsolatingInterval,
+            validation: AlgebraicRootValidationReport::valid(),
+        };
+        assert!(source.is_valid());
+        assert!(
+            source.polynomial_coefficients[0]
+                .exact_rational_ref()
+                .is_none()
+        );
+
+        let transformed =
+            transform_algebraic_root_affine(&source, real(2), real(3), PredicatePolicy::STRICT);
+        assert_eq!(
+            transformed.status,
+            AlgebraicRootAffineTransformStatus::Transformed
+        );
+        let transformed = transformed
+            .representation
+            .expect("the exact affine image must retain root evidence");
+        assert_eq!(
+            compare_reals(
+                &transformed.polynomial_coefficients[0],
+                &(-real(3) - real(2) * sqrt_two),
+                PredicatePolicy::STRICT,
+            )
+            .value(),
+            Some(Ordering::Equal)
+        );
+        assert_eq!(transformed.polynomial_coefficients[1], Real::one());
+        assert_eq!(transformed.interval.lower, real(5));
+        assert_eq!(transformed.interval.upper, real(7));
+        assert!(transformed.is_valid());
     }
 
     proptest! {
