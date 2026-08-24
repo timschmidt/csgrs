@@ -14625,10 +14625,25 @@ mod certified_successor_tests {
             };
             assert!(contact.is_certified_transverse());
             assert_eq!(contact.tangent_cross_sign, Some(RealSign::Negative));
+            let point = contact
+                .point()
+                .expect("the exact oblique contact must retain point evidence");
             assert!(matches!(
-                contact.point(),
-                Some(RationalBezierIntersectionPointEvidence2::Algebraic(_))
+                point,
+                RationalBezierIntersectionPointEvidence2::AlgebraicCuspChord(_)
             ));
+            assert_eq!(
+                chord.contains_point_evidence(point, &policy).unwrap(),
+                Classification::Decided(true),
+            );
+            assert_eq!(
+                context.data.carriers[0]
+                    .geometry
+                    .algebraic_cusp()
+                    .contains_point_evidence(point, &policy)
+                    .unwrap(),
+                Classification::Decided(true),
+            );
             let chord_parameter = contact
                 .second_parameter()
                 .as_algebraic_chord()

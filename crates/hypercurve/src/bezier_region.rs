@@ -30571,15 +30571,29 @@ mod tests {
                             Classification::Decided(std::cmp::Ordering::Less)
                         );
                         let RationalBezierIntersectionPointEvidence2::AlgebraicCuspChord(point) =
-                            contact.point
+                            &contact.point
                         else {
-                            panic!("the contact must retain its projective chord map")
+                            panic!("the contact must retain its correlated chord map")
                         };
-                        assert!(point.uses_chord_normal_projective_map());
                         assert!(matches!(
                             point.conservative_bounds_refined(16, &policy),
                             Classification::Decided(_)
                         ));
+                        assert_eq!(
+                            carrier
+                                .contains_point_evidence(&contact.point, &policy)
+                                .unwrap(),
+                            Classification::Decided(true),
+                        );
+                        assert_eq!(
+                            crate::bezier_offset::BezierAlgebraicCuspSemicircleFragment2::full(
+                                circle.clone(),
+                                &policy,
+                            )
+                            .contains_point_evidence(&contact.point, &policy)
+                            .unwrap(),
+                            Classification::Decided(true),
+                        );
                     }
                 }
             });

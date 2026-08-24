@@ -42063,14 +42063,6 @@ impl BezierAlgebraicCuspChordPoint2 {
             .and_then(|_| contact.selected_fiber_parameter.clone())
     }
 
-    #[cfg(test)]
-    pub(crate) fn uses_chord_normal_projective_map(&self) -> bool {
-        self.map_contact()
-            .0
-            .chord_normal_projective_system()
-            .is_some()
-    }
-
     fn translated(
         &self,
         translation_x: &Real,
@@ -69408,12 +69400,6 @@ impl BezierAlgebraicChordSupportPredicate2 {
         {
             return Ok(Classification::Decided(crate::classify::LineSide::On));
         }
-        if support_chord.certified_unit_tangent().is_some() {
-            let certified_tangent_side = support_chord.certified_tangent_side(point, policy);
-            if let side @ Classification::Decided(_) = certified_tangent_side {
-                return Ok(side);
-            }
-        }
         let retained_side = match point {
             RationalBezierIntersectionPointEvidence2::AlgebraicChordPair(point) => {
                 Some(point.oriented_side_to_chord(support_chord, policy))
@@ -69430,13 +69416,27 @@ impl BezierAlgebraicChordSupportPredicate2 {
             | RationalBezierIntersectionPointEvidence2::AnalyticParallel(_)
             | RationalBezierIntersectionPointEvidence2::Similarity(_) => None,
         };
-        if let Some(side) = retained_side {
+        let retained_side_was_uncertain = if let Some(side) = retained_side {
             match side? {
                 decided @ Classification::Decided(_) => return Ok(decided),
-                Classification::Uncertain(_) => {
-                    return support_chord.oriented_side_by_refinement(point, policy);
-                }
+                Classification::Uncertain(_) => true,
             }
+        } else {
+            false
+        };
+        // Structural retained-point incidence is both exact and normally
+        // constant-time. Consume it before rebuilding the same point through
+        // a represented unit-tangent predicate; selected circle/chord
+        // contacts otherwise expand their compact local field merely to
+        // rediscover the support that authored them.
+        if support_chord.certified_unit_tangent().is_some() {
+            let certified_tangent_side = support_chord.certified_tangent_side(point, policy);
+            if let side @ Classification::Decided(_) = certified_tangent_side {
+                return Ok(side);
+            }
+        }
+        if retained_side_was_uncertain {
+            return support_chord.oriented_side_by_refinement(point, policy);
         }
         let reverse = |side| match side {
             crate::classify::LineSide::Left => crate::classify::LineSide::Right,
@@ -78035,6 +78035,22 @@ impl BezierAlgebraicCuspSemicircleFragment2 {
         point: &RationalBezierIntersectionPointEvidence2,
         policy: &CurveContext,
     ) -> CurveResult<Classification<bool>> {
+        // A chord contact authored by this exact selected semicircle already
+        // retains its circle parameter and incidence proof in one shared map.
+        // Classify that parameter against this finite range directly instead
+        // of rebuilding the same point's recursive endpoint-chord side.
+        if let RationalBezierIntersectionPointEvidence2::AlgebraicCuspChord(point) = point {
+            let (map, _) = point.map_contact();
+            map.validate_policy(policy)?;
+            if self.data.semicircle == map.data.semicircle {
+                return self.contains_parameter(
+                    &BezierAlgebraicCuspSemicircleParameter2::Mapped(point.data.clone()),
+                    true,
+                    true,
+                    policy,
+                );
+            }
+        }
         Ok(self.incident_point_chord_side(point, policy)?.map(|side| {
             let Some(side) = side else {
                 return false;
@@ -112241,29 +112257,23 @@ mod conversion_tests {
                             ),
                             2,
                         );
-                        assert_eq!(
-                            trace.path_count(
-                                "hypercurve",
-                                "algebraic-circle-chord-pair",
-                                "adjacent-endpoint-only",
-                            ),
-                            4,
+                        let general_circle_chord = trace.path_count(
+                            "hypercurve",
+                            "algebraic-circle-chord-kernel",
+                            "general-algebraic-oblique",
                         );
-                        assert_eq!(
-                            trace.path_count(
-                                "hypercurve",
-                                "algebraic-circle-chord-pair",
-                                "complementary-pair-endpoint-excluded",
-                            ),
-                            4,
+                        assert!(
+                            general_circle_chord > 0,
+                            "the pair-mapped lens must re-enter the general circle/chord authority: {trace:?}",
                         );
                         assert_eq!(
                             trace.path_count(
                                 "hypercurve",
                                 "algebraic-circle-chord-kernel",
-                                "axis-correlated-fast-path",
+                                "represented-oblique-complete",
                             ),
-                            0,
+                            general_circle_chord,
+                            "every general pair-derived contact must reach exact represented completion: {trace:?}",
                         );
                     }
                     Ok(())
@@ -112596,9 +112606,10 @@ mod conversion_tests {
                             trace.path_count(
                                 "hypercurve",
                                 "curve-region-exact-offset-span",
-                                "axis-algebraic-chord",
+                                "retained-oblique-algebraic-chord",
                             ),
                             1,
+                            "the nested mapped cap must retain its chord offset span: {trace:?}",
                         );
                         assert_eq!(
                             trace.path_count(
