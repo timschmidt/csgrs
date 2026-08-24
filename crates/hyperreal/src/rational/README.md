@@ -27,7 +27,8 @@ and shared safely by every clone and thread.
 - `arithmetic.rs`: representation, constructors, arithmetic, reduction,
   structural predicates, exact product sums, and tests.
 - `convert.rs`: primitive integer and floating-point conversions.
-- `parse.rs`: exact text parsing for integers, decimals, and fractions.
+- `parse.rs`: exact text parsing for integers, decimals, scientific notation,
+  and fractions.
 
 ## API expectations
 
@@ -36,8 +37,11 @@ and shared safely by every clone and thread.
 - finite `f32`/`f64` imports decode the IEEE-754 value exactly, including values
   like `0.3` that are not decimal `3/10`.
 - `NaN` and infinities are rejected.
-- text decimals and fractions parse as exact rationals; scientific notation is
-  not the exact text format.
+- text decimals, scientific notation, and fractions parse as exact rationals
+  without an intermediate floating-point conversion.
+- exponent-only storage amplification is bounded; an oversized nonzero
+  scientific value returns `Problem::Exhausted` before allocating its expanded
+  numerator or denominator.
 - `-0.0` imports as canonical rational zero, so IEEE signed zero is not
   preserved.
 

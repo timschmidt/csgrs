@@ -72,8 +72,14 @@ fn supported_numeric_text_forms_parse_losslessly() {
         ("98760/123450", q(4, 5)),
         ("0.0", Rational::zero()),
         ("0.125", q(1, 8)),
+        (".5", q(1, 2)),
+        ("5.", Rational::from(5_i32)),
         ("-7.875", q(-63, 8)),
         ("123456.000001", q(123456000001, 1_000_000)),
+        ("1e3", Rational::from(1_000_i32)),
+        ("2.5E-3", q(1, 400)),
+        ("-7.78437e-005", q(-778_437, 10_000_000_000)),
+        ("+3.125e+2", q(625, 2)),
     ];
 
     for (text, expected) in cases {
@@ -88,7 +94,7 @@ fn supported_numeric_text_forms_parse_losslessly() {
 
 #[test]
 fn unsupported_numeric_text_forms_fail_instead_of_rounding() {
-    for text in ["", "1e3", "NaN", "inf", "1 1/2"] {
+    for text in ["", "NaN", "inf", "1 1/2", "1e", "1e1e2"] {
         let parsed: Result<Real, _> = text.parse();
         assert!(
             parsed.is_err(),
@@ -185,6 +191,35 @@ proptest! {
         prop_assert_eq!(real.exact_rational(), Some(rational));
         prop_assert_eq!(Real::from_json(&real.to_json()).unwrap(), real.clone());
         prop_assert_eq!(Real::from_bytes(&real.to_bytes()).unwrap(), real.clone());
+    }
+
+    #[test]
+    fn generated_scientific_text_matches_exact_decimal_scaling(
+        whole in -1_000_000_i64..=1_000_000,
+        fractional in 0_u32..1_000_000,
+        exponent in -18_i32..=18,
+        uppercase in any::<bool>(),
+        explicit_plus in any::<bool>(),
+    ) {
+        let mantissa_text = format!("{whole}.{fractional:06}");
+        let exponent_marker = if uppercase { 'E' } else { 'e' };
+        let exponent_text = if explicit_plus && exponent >= 0 {
+            format!("+{exponent}")
+        } else {
+            exponent.to_string()
+        };
+        let text = format!("{mantissa_text}{exponent_marker}{exponent_text}");
+        let mantissa = mantissa_text.parse::<Rational>().unwrap();
+        let scale = Rational::new(10).powi(exponent.into()).unwrap();
+        let expected = mantissa * scale;
+        let rational: Rational = text.parse().unwrap();
+        let real: Real = text.parse().unwrap();
+
+        prop_assert_eq!(rational.clone(), expected);
+        prop_assert_eq!(real.clone(), rational.clone());
+        prop_assert_eq!(real.exact_rational(), Some(rational));
+        prop_assert_eq!(Real::from_json(&real.to_json()).unwrap(), real.clone());
+        prop_assert_eq!(Real::from_bytes(&real.to_bytes()).unwrap(), real);
     }
 
     #[test]

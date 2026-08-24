@@ -76,12 +76,29 @@ impl std::str::FromStr for Real {
     type Err = Problem;
 
     fn from_str(s: &str) -> Result<Self, Problem> {
-        let rational: Rational = s.parse()?;
-        Ok(Self {
-            rational,
-            class: One,
-            computable: None,
-            primitive_approx_cache: AtomicPrimitiveApproxCache::new(PrimitiveApproxCache::Empty),
-        })
+        match s.parse::<Rational>() {
+            Ok(rational) => Ok(Self {
+                rational,
+                class: One,
+                computable: None,
+                primitive_approx_cache: AtomicPrimitiveApproxCache::new(
+                    PrimitiveApproxCache::Empty,
+                ),
+            }),
+            Err(Problem::Exhausted) if s.contains(['e', 'E']) => {
+                // Rational parsing deliberately bounds exponent-only storage
+                // amplification. Real can retain the same exact mathematical
+                // value as a lazy integer power without materializing that
+                // numerator or denominator.
+                let (significand, exponent) =
+                    s.split_once(['e', 'E']).ok_or(Problem::BadDecimal)?;
+                let significand = significand.parse::<Rational>()?;
+                let exponent = exponent.parse::<BigInt>().map_err(|_| Problem::BadDecimal)?;
+                let scale = Self::from(10_u8).powi(exponent)?;
+                crate::trace_dispatch!("real", "parse", "lazy-scientific-scale");
+                Ok(Self::new(significand) * scale)
+            }
+            Err(problem) => Err(problem),
+        }
     }
 }

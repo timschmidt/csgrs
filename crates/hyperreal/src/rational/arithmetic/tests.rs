@@ -2270,6 +2270,9 @@ mod tests {
         let b: Rational = "2.5".parse().unwrap();
         let answer = a * b;
         assert_eq!(answer, Rational::one());
+        assert_eq!(".5".parse::<Rational>().unwrap(), Rational::fraction(1, 2).unwrap());
+        assert_eq!("5.".parse::<Rational>().unwrap(), Rational::new(5));
+        assert_eq!("+0.25".parse::<Rational>().unwrap(), Rational::fraction(1, 4).unwrap());
 
         let word_limit = u128::MAX.to_string();
         assert_eq!(word_limit.parse::<Rational>().unwrap().to_string(), word_limit);
@@ -2285,6 +2288,74 @@ mod tests {
                 .to_string(),
             "18446744073709551616 1/2"
         );
+    }
+
+    #[test]
+    fn scientific_notation_parses_as_an_exact_rational() {
+        let cases = [
+            ("1e3", "1000"),
+            ("1E+3", "1000"),
+            ("2.5E3", "2500"),
+            ("-7.78437e-005", "-0.0000778437"),
+            ("1200e-2", "12"),
+            (".5e1", "5"),
+            ("5.e-1", "0.5"),
+            ("+3.125e+2", "312.5"),
+            (
+                "340282366920938463463374607431768211456e-38",
+                "3.40282366920938463463374607431768211456",
+            ),
+            (
+                "340282366920938463463374607431768211455e-1",
+                "34028236692093846346337460743176821145.5",
+            ),
+            (
+                "340282366920938463463374607431768211457e-3",
+                "340282366920938463463374607431768211.457",
+            ),
+            (
+                "340282366920938463463374607431768211456e2",
+                "34028236692093846346337460743176821145600",
+            ),
+        ];
+
+        for (scientific, decimal) in cases {
+            assert_eq!(
+                scientific.parse::<Rational>().unwrap(),
+                decimal.parse::<Rational>().unwrap(),
+                "{scientific}"
+            );
+        }
+    }
+
+    #[test]
+    fn scientific_notation_validates_grammar_and_bounds_expansion() {
+        for malformed in [
+            "e1", ".e1", "1e", "1e+", "1e-", "1e1e2", "1.2.3e4", "1/2e3",
+            "1e999999999999999999999999x",
+        ] {
+            assert_eq!(
+                malformed.parse::<Rational>(),
+                Err(Problem::BadDecimal),
+                "{malformed}"
+            );
+        }
+
+        assert_eq!("1e2000000".parse::<Rational>(), Err(Problem::Exhausted));
+        assert_eq!("1e-2000000".parse::<Rational>(), Err(Problem::Exhausted));
+        assert_eq!(
+            "1e999999999999999999999999".parse::<Rational>(),
+            Err(Problem::Exhausted)
+        );
+
+        // The exponent is syntactically checked, but zero never allocates an
+        // exponent-sized numerator or denominator.
+        assert_eq!(
+            "0e999999999999999999999999".parse::<Rational>(),
+            Ok(Rational::zero())
+        );
+        let wide_zero = format!("{}e{}", "0".repeat(10_000), "9".repeat(100));
+        assert_eq!(wide_zero.parse::<Rational>(), Ok(Rational::zero()));
     }
 
     #[test]

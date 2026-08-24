@@ -4,5 +4,6 @@
 //! planned split layout.
 //! Rational parsing implementations live in [`super::arithmetic`].
 //!
-//! Parsing stays close to the representation constructors so decimal and
-//! fractional input can reuse canonicalization and small-constant fast paths.
+//! Parsing stays close to the representation constructors so decimal,
+//! scientific, and fractional input can reuse canonicalization and
+//! small-constant fast paths.

@@ -786,6 +786,18 @@ const SCALAR_MICRO_GROUPS: &[BenchGroupDoc] = &[
                 description: "Parses a short exact decimal through the checked word-sized path.",
             },
             BenchDoc {
+                name: "radix_parse_short_scientific",
+                description: "Parses a representative file-I/O scientific literal through the checked word-sized path.",
+            },
+            BenchDoc {
+                name: "radix_parse_wide_scientific",
+                description: "Parses a 5,120-digit significand with a negative decimal exponent exactly.",
+            },
+            BenchDoc {
+                name: "radix_parse_wide_scientific_expanded",
+                description: "Parses the same exact wide value after expanding its decimal point as a baseline.",
+            },
+            BenchDoc {
                 name: "radix_parse_large_integer",
                 description: "Parses a large below-threshold decimal fixture through chunked multiply-add conversion.",
             },
@@ -2310,6 +2322,14 @@ fn bench_rational_algorithm_dispatch_speed(c: &mut Criterion) {
     let large_radix = backend_limb_rational(32, 17);
     let large_radix_decimal = large_radix.to_string();
     let short_radix_decimal = "-12345.678901";
+    let short_radix_scientific = "-7.78437e-005";
+    let wide_scientific_digits = "1234567890".repeat(512);
+    let wide_radix_scientific = format!("{wide_scientific_digits}e-4096");
+    let wide_radix_scientific_expanded = format!(
+        "{}.{}",
+        &wide_scientific_digits[..1024],
+        &wide_scientific_digits[1024..]
+    );
     let divide_conquer_decimal_10240 = "1234567890".repeat(1024);
     let divide_conquer_decimal_20480 = "1234567890".repeat(2048);
     let decimal_fraction = Rational::fraction(1, 7).unwrap();
@@ -2321,6 +2341,33 @@ fn bench_rational_algorithm_dispatch_speed(c: &mut Criterion) {
     });
     group.bench_function("radix_parse_short_decimal", |b| {
         b.iter(|| black_box(black_box(short_radix_decimal).parse::<Rational>().unwrap()))
+    });
+    group.bench_function("radix_parse_short_scientific", |b| {
+        b.iter(|| {
+            black_box(
+                black_box(short_radix_scientific)
+                    .parse::<Rational>()
+                    .unwrap(),
+            )
+        })
+    });
+    group.bench_function("radix_parse_wide_scientific", |b| {
+        b.iter(|| {
+            black_box(
+                black_box(&wide_radix_scientific)
+                    .parse::<Rational>()
+                    .unwrap(),
+            )
+        })
+    });
+    group.bench_function("radix_parse_wide_scientific_expanded", |b| {
+        b.iter(|| {
+            black_box(
+                black_box(&wide_radix_scientific_expanded)
+                    .parse::<Rational>()
+                    .unwrap(),
+            )
+        })
     });
     group.bench_function("radix_parse_large_integer", |b| {
         b.iter(|| black_box(black_box(&large_radix_decimal).parse::<Rational>().unwrap()))

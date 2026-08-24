@@ -244,10 +244,12 @@ signals.
 
 ## Guarantees and boundaries
 
-- Integer, fraction, decimal-text, and finite-float imports preserve their
-  exact represented value.
+- Integer, fraction, decimal/scientific-text, and finite-float imports preserve
+  their exact represented value.
 - `NaN` and infinities are rejected. IEEE negative zero imports as exact zero.
-- Scientific notation is not an exact text format in the current parser.
+- Scientific notation is parsed directly rather than through floating point.
+  `Rational` returns `Problem::Exhausted` before a short exponent-only input can
+  force excessive eager storage; `Real` retains such extreme powers lazily.
 - `Real::to_f32_lossy` and `to_f64_lossy` return `None` when no finite
   approximation can be produced.
 - Structural equality is not algebraic equality. Use exact extraction or a

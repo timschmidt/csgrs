@@ -44,3 +44,9 @@ name = "structural_representations"
 path = "fuzz_targets/structural_representations.rs"
 test = false
 doc = false
+
+[[bin]]
+name = "string_parsing"
+path = "fuzz_targets/string_parsing.rs"
+test = false
+doc = false

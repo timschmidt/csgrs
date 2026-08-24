@@ -402,12 +402,15 @@ Cold backend algorithm families and retained rational fact dispatch selected fro
 | `rational_algorithm_dispatch_speed/perfect_power_unfactored_reject` | not run | not run | Rejects mismatched seventh- and fifth-power rational components beyond the trial table. |
 | `rational_algorithm_dispatch_speed/radix_format_small_integer` | not run | not run | Formats a 16-limb integer using repeated single-limb radix division. |
 | `rational_algorithm_dispatch_speed/radix_format_large_integer` | not run | not run | Formats a 32-limb integer using divide-and-conquer radix conversion. |
-| `rational_algorithm_dispatch_speed/radix_parse_short_decimal` | not run | not run | Parses a short exact decimal through the checked word-sized path. |
-| `rational_algorithm_dispatch_speed/radix_parse_large_integer` | not run | not run | Parses a large below-threshold decimal fixture through chunked multiply-add conversion. |
-| `rational_algorithm_dispatch_speed/radix_parse_divide_conquer_10240_digits` | not run | not run | Parses 10,240 digits through the divide-and-conquer product tree. |
-| `rational_algorithm_dispatch_speed/radix_parse_backend_chunked_10240_digits` | not run | not run | Parses the same 10,240 digits with the backend chunked multiply-add baseline. |
-| `rational_algorithm_dispatch_speed/radix_parse_divide_conquer_20480_digits` | not run | not run | Parses 20,480 digits through the divide-and-conquer product tree. |
-| `rational_algorithm_dispatch_speed/radix_parse_backend_chunked_20480_digits` | not run | not run | Parses the same 20,480 digits with the backend chunked multiply-add baseline. |
+| `rational_algorithm_dispatch_speed/radix_parse_short_decimal` | 91.00 ns | 90.71 ns - 91.31 ns | Parses a short exact decimal through the checked word-sized path. |
+| `rational_algorithm_dispatch_speed/radix_parse_short_scientific` | 75.16 ns | 74.64 ns - 75.80 ns | Parses a representative file-I/O scientific literal through the checked word-sized path. |
+| `rational_algorithm_dispatch_speed/radix_parse_wide_scientific` | 42.509 us | 42.356 us - 42.676 us | Parses a 5,120-digit significand with a negative decimal exponent exactly. |
+| `rational_algorithm_dispatch_speed/radix_parse_wide_scientific_expanded` | 39.326 us | 39.180 us - 39.521 us | Parses the same exact wide value after expanding its decimal point as a baseline. |
+| `rational_algorithm_dispatch_speed/radix_parse_large_integer` | 1.859 us | 1.851 us - 1.868 us | Parses a large below-threshold decimal fixture through chunked multiply-add conversion. |
+| `rational_algorithm_dispatch_speed/radix_parse_divide_conquer_10240_digits` | 106.618 us | 106.377 us - 106.883 us | Parses 10,240 digits through the divide-and-conquer product tree. |
+| `rational_algorithm_dispatch_speed/radix_parse_backend_chunked_10240_digits` | 103.057 us | 102.660 us - 103.555 us | Parses the same 10,240 digits with the backend chunked multiply-add baseline. |
+| `rational_algorithm_dispatch_speed/radix_parse_divide_conquer_20480_digits` | 301.227 us | 299.847 us - 302.753 us | Parses 20,480 digits through the divide-and-conquer product tree. |
+| `rational_algorithm_dispatch_speed/radix_parse_backend_chunked_20480_digits` | 379.236 us | 377.065 us - 381.661 us | Parses the same 20,480 digits with the backend chunked multiply-add baseline. |
 | `rational_algorithm_dispatch_speed/radix_format_fraction_decimal` | not run | not run | Formats a rational decimal through exact repeated digit division. |
 
 ### `borrowed_op_overhead`

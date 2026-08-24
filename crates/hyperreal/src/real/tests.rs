@@ -279,6 +279,31 @@ mod tests {
     }
 
     #[test]
+    fn parse_scientific_notation_exactly() {
+        let input: Real = "-7.78437e-005".parse().unwrap();
+        let answer: Real = "-0.0000778437".parse().unwrap();
+        assert_eq!(input, answer);
+        assert_eq!(
+            input.exact_rational(),
+            Some("-778437/10000000000".parse().unwrap())
+        );
+    }
+
+    #[test]
+    fn parse_extreme_scientific_notation_as_a_lazy_exact_real() {
+        assert_eq!("1e2000000".parse::<Rational>(), Err(Problem::Exhausted));
+
+        let input = "1e2000000".parse::<Real>().unwrap();
+        assert_eq!(input.exact_rational(), None);
+        assert_eq!(input.structural_facts().sign, Some(RealSign::Positive));
+
+        let extreme_exponent = format!("1e{}", "9".repeat(400));
+        assert!(extreme_exponent.parse::<Real>().is_ok());
+        let extreme_negative_exponent = format!("1e-{}", "9".repeat(400));
+        assert!(extreme_negative_exponent.parse::<Real>().is_ok());
+    }
+
+    #[test]
     fn root_divide() {
         let twenty: Real = 20.into();
         let five: Real = 5.into();

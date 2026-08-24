@@ -1407,9 +1407,11 @@ impl Simple {
 
     // Consume a literal, for now presumably a single number consisting of:
     // a possible leading minus symbol, then
-    // digits, the decimal point or a slash and optionally commas, underscores etc. which are ignored
+    // digits, the decimal point, a slash, or a scientific exponent and
+    // optionally commas, underscores etc. which are ignored
     fn consume_literal(c: &mut Peekable<Chars>) -> Result<Operand, Problem> {
         let mut num = String::new();
+        let mut seen_exponent = false;
 
         if let Some('-') = c.peek() {
             num.push('-');
@@ -1418,6 +1420,16 @@ impl Simple {
         while let Some(item) = c.peek() {
             match item {
                 '0'..='9' | '.' | '/' => num.push(*item),
+                'e' | 'E' if !seen_exponent => {
+                    seen_exponent = true;
+                    num.push(*item);
+                    c.next();
+                    if let Some(sign @ ('-' | '+')) = c.peek() {
+                        num.push(*sign);
+                        c.next();
+                    }
+                    continue;
+                }
                 '_' | ',' | '\'' => { /* ignore */ }
                 _ => break,
             }
@@ -1584,6 +1596,15 @@ mod tests {
         let result = xpr.evaluate(&empty).unwrap();
         let ans = format!("{result}");
         assert_eq!(ans, "2");
+    }
+
+    #[test]
+    fn scientific_literals_delegate_to_exact_rational_parsing() {
+        let empty = HashMap::new();
+        let xpr: Simple = "(+ 1e3 2.5E-1 -7.5e+0)".parse().unwrap();
+        let result = xpr.evaluate(&empty).unwrap();
+        assert_eq!(result, "992.75".parse::<Real>().unwrap());
+        assert_eq!(result.exact_rational(), Some("3971/4".parse().unwrap()));
     }
 
     #[test]
