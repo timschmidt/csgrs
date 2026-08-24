@@ -439,14 +439,7 @@ fn intersect_contours_with_unreserved_exact_dyadic_line_aabbs(
     b_boxes: &crate::contour::ExactDyadicLineAabbs,
     policy: &CurveContext,
 ) -> CurveResult<ContourIntersectionSet> {
-    if matches!(
-        a.retained_offset_relation(b, policy),
-        Some(
-            crate::contour::RetainedContourOffsetRelation2::FirstContainsSecond
-                | crate::contour::RetainedContourOffsetRelation2::SecondContainsFirst
-        )
-    ) || a_boxes.contour.is_disjoint(b_boxes.contour)
-    {
+    if a_boxes.contour.is_disjoint(b_boxes.contour) {
         return Ok(ContourIntersectionSet::default());
     }
     debug_assert_eq!(a_boxes.segments.len(), a.len());
@@ -494,14 +487,7 @@ fn intersect_contours_with_retained_line_candidates(
     b_boxes: &crate::contour::ExactDyadicLineAabbs,
     policy: &CurveContext,
 ) -> CurveResult<ContourIntersectionSet> {
-    if matches!(
-        a.retained_offset_relation(b, policy),
-        Some(
-            crate::contour::RetainedContourOffsetRelation2::FirstContainsSecond
-                | crate::contour::RetainedContourOffsetRelation2::SecondContainsFirst
-        )
-    ) || a_boxes.contour.is_disjoint(b_boxes.contour)
-    {
+    if a_boxes.contour.is_disjoint(b_boxes.contour) {
         return Ok(ContourIntersectionSet::default());
     }
     debug_assert_eq!(a_boxes.segments.len(), a.len());
@@ -638,16 +624,6 @@ pub(crate) fn intersect_contours_with_cached_aabbs(
     b_x_index: Option<&SegmentAabbXIndex>,
     policy: &CurveContext,
 ) -> CurveResult<ContourIntersectionSet> {
-    if matches!(
-        a.retained_offset_relation(b, policy),
-        Some(
-            crate::contour::RetainedContourOffsetRelation2::FirstContainsSecond
-                | crate::contour::RetainedContourOffsetRelation2::SecondContainsFirst
-        )
-    ) {
-        return Ok(ContourIntersectionSet::default());
-    }
-
     if let (Some(a_box), Some(b_box)) = (a_box, b_box)
         && aabbs_decided_disjoint(a_box, b_box, policy)
     {

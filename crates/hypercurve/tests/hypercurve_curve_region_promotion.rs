@@ -864,11 +864,7 @@ fn unified_region_offset_corner_styles_have_exact_area_and_miter_fallback() {
         .unwrap()
         .into_value();
 
-    let round_native = decided(round.native_contours_fast_path(&policy).unwrap());
-    let round_area = round_native.material_contours()[0]
-        .signed_area()
-        .unwrap()
-        .unwrap();
+    let round_area = decided(round.filled_area(&policy).unwrap()).unwrap();
     assert_eq!(
         round_area
             .certified_eq_until(&(Real::from(32) + Real::pi()), -512)
@@ -6721,7 +6717,7 @@ fn native_contour_constructors_and_signed_depth_need_no_region_wrapper() {
     );
 }
 #[test]
-fn authored_line_arc_paths_retain_the_native_offset_engine() {
+fn authored_line_arc_paths_use_the_unified_offset_engine() {
     let policy = CurveContext::STRICT;
     let region = CurveRegion2::try_from_boundary_paths_with_loop_semantics(
         &[full_circle_path(5)],

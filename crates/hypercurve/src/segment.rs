@@ -140,26 +140,6 @@ impl LineSeg2 {
             .map_or(&self.start, |support| &support.start)
     }
 
-    pub(crate) fn fragment_between(&self, start: Point2, end: Point2) -> CurveResult<Self> {
-        if start == end {
-            return Err(CurveError::ZeroLengthLine);
-        }
-        let endpoints_decided_distinct = match start.distance_squared(&end).zero_status() {
-            ZeroStatus::Zero => return Err(CurveError::ZeroLengthLine),
-            ZeroStatus::NonZero => true,
-            ZeroStatus::Unknown => false,
-        };
-        Ok(Self {
-            start,
-            end,
-            endpoints_decided_distinct,
-            support: line_support_cell(Some(self.fragment_support())),
-            has_retained_support: true,
-            support_direction_reversed: self.support_direction_reversed,
-            offset_provenance: self.offset_provenance.clone(),
-        })
-    }
-
     pub(crate) fn fragment_between_after_distinct_endpoints(
         &self,
         start: Point2,

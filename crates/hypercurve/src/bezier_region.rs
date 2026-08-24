@@ -4125,18 +4125,6 @@ fn canonicalize_retained_extension_on_finite_envelope(
     Ok(())
 }
 
-fn push_native_offset_component(
-    role: CurveRegionLoopRole,
-    component: CurveRegion2,
-    material_components: &mut Vec<CurveRegion2>,
-    void_components: &mut Vec<CurveRegion2>,
-) {
-    match role {
-        CurveRegionLoopRole::Material => material_components.push(component),
-        CurveRegionLoopRole::Hole => void_components.push(component),
-    }
-}
-
 fn curve_region_from_native_material_contour(
     contour: Contour2,
     policy: &CurveContext,
@@ -4157,49 +4145,6 @@ fn regularize_native_contour_with_curve_region(
         None,
     )?;
     raw.regularized_region_raw(policy)
-}
-
-fn regularize_native_offset_regions(
-    mut material_components: Vec<CurveRegion2>,
-    void_components: Vec<CurveRegion2>,
-    policy: &CurveContext,
-) -> ExactCurveResult<CurveRegion2> {
-    if material_components.len() == 1 && void_components.is_empty() {
-        return Ok(material_components
-            .pop()
-            .expect("single offset component inventory"));
-    }
-    let mut material = CurveRegion2::empty();
-    for component in material_components {
-        material = material
-            .boolean_region_raw(&component, BooleanOp::Union, policy)
-            .map_err(|error| error.with_operation(CurveOperation2::Offset))?;
-    }
-
-    if material.is_empty() || void_components.is_empty() {
-        return Ok(material);
-    }
-
-    let mut voids = CurveRegion2::empty();
-    for component in void_components {
-        voids = voids
-            .boolean_region_raw(&component, BooleanOp::Union, policy)
-            .map_err(|error| error.with_operation(CurveOperation2::Offset))?;
-    }
-    material
-        .boolean_region_raw(&voids, BooleanOp::Difference, policy)
-        .map_err(|error| error.with_operation(CurveOperation2::Offset))
-}
-
-fn native_region_role_contour(
-    region: &LineArcRegion2,
-    role: CurveRegionLoopRole,
-    ordinal: usize,
-) -> Option<&Contour2> {
-    match role {
-        CurveRegionLoopRole::Material => region.material_contours().get(ordinal),
-        CurveRegionLoopRole::Hole => region.hole_contours().get(ordinal),
-    }
 }
 
 struct ExactOffsetSpan2 {
@@ -7989,8 +7934,18 @@ fn append_exact_miter_join(
     limit: Option<&Real>,
     policy: &CurveContext,
 ) -> CurveResult<Classification<()>> {
-    if let Some(result) =
-        append_retained_support_miter_join(fragments, previous, next, distance, limit, policy)
+    let represented_vector_frame = matches!(
+        (&previous.end_tangent, &next.start_tangent),
+        (
+            Some(ExactOffsetTangent2::Vector(_)),
+            Some(ExactOffsetTangent2::Vector(_))
+        )
+    ) && previous.offset_end.as_exact().is_some()
+        && next.offset_start.as_exact().is_some()
+        && previous.source_end.as_exact().is_some();
+    if !represented_vector_frame
+        && let Some(result) =
+            append_retained_support_miter_join(fragments, previous, next, distance, limit, policy)
     {
         #[cfg(feature = "dispatch-trace")]
         hyperreal::dispatch_trace::record(
@@ -15686,17 +15641,16 @@ impl CurveRegion2 {
     /// move into their voids. Independently offset material components and
     /// voids are unioned, then the unified void set is subtracted, so overlaps
     /// created by expansion are returned as regularized boundary topology.
-    /// Native line/arc contours retain their specialized wavefront path.
-    /// Materialized polynomial and rational spans lower to exact analytic
+    /// Native line/arc, materialized polynomial, and rational spans lower to exact analytic
     /// parallels, split at every certified offset cusp, and retain exact PH
     /// materializations where available. Round joins are exact circular conics;
     /// bevel and bounded-miter joins are exact lines. Every general result then
     /// passes through the same authoritative exact arrangement that removes
     /// self-walk branches and composes material and hole loops. Certified convex
-    /// all-line contractions and orthogonal non-convex collapses retain their
-    /// faster exact native paths. Unsupported retained source fragments and the
-    /// remaining non-orthogonal post-collapse wavefront cases return explicit
-    /// uncertainty rather than sampled geometry.
+    /// all-line contractions, non-convex collapses, and higher carriers use the
+    /// same boundary-walk/band construction and authoritative arrangement.
+    /// Unsupported retained source fragments return explicit uncertainty rather
+    /// than sampled geometry.
     pub fn offset(
         &self,
         distance: Real,
@@ -15730,182 +15684,6 @@ impl CurveRegion2 {
             }
         }
         self.offset_exact_general_raw(distance, corner_style, policy)
-    }
-
-    fn try_offset_native_topology_fast_path(
-        &self,
-        distance: Real,
-        corner_style: &OffsetCornerStyle2,
-        policy: &CurveContext,
-    ) -> ExactCurveResult<Classification<Self>> {
-        if is_zero(&distance, policy) == Some(true) {
-            return Ok(Classification::Decided(self.clone()));
-        }
-        let distance_positive = match real_sign(&distance, policy) {
-            Some(RealSign::Positive) => true,
-            Some(RealSign::Negative) => false,
-            Some(RealSign::Zero) => return Ok(Classification::Decided(self.clone())),
-            None => {
-                return Ok(Classification::Uncertain(UncertaintyReason::RealSign));
-            }
-        };
-        let region = match self
-            .native_line_arc_region(policy)
-            .map_err(|cause| curve_region_edit_error(CurveOperation2::Offset, cause))?
-        {
-            Classification::Decided(region) => region,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
-        let roles = match self
-            .loop_roles_raw(policy)
-            .map_err(|cause| curve_region_edit_error(CurveOperation2::Offset, cause))?
-        {
-            Classification::Decided(roles) => roles,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
-        let filled_sides = match self
-            .filled_side_is_left_raw(policy)
-            .map_err(|cause| curve_region_edit_error(CurveOperation2::Offset, cause))?
-        {
-            Classification::Decided(sides) => sides,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
-        if roles.len() != self.data.boundary_loops.len()
-            || filled_sides.len() != self.data.boundary_loops.len()
-        {
-            return Err(curve_region_edit_error(
-                CurveOperation2::Offset,
-                CurveError::Topology(
-                    "curve-region offset semantics are inconsistent with boundary loops".into(),
-                ),
-            ));
-        }
-
-        let mut material_components = Vec::new();
-        let mut void_components = Vec::new();
-        for (loop_index, (role, filled_side_is_left)) in
-            roles.iter().zip(filled_sides.iter()).enumerate()
-        {
-            let ordinal = roles[..loop_index]
-                .iter()
-                .filter(|candidate| *candidate == role)
-                .count();
-            let contour = native_region_role_contour(region, *role, ordinal)
-                .expect("validated native region role inventory")
-                .clone();
-            let signed_left_distance = if *filled_side_is_left {
-                Real::zero() - &distance
-            } else {
-                distance.clone()
-            };
-            let component_expands = (*role == CurveRegionLoopRole::Material) == distance_positive;
-            let all_line_source = contour
-                .segments()
-                .iter()
-                .all(|segment| matches!(segment, Segment2::Line(_)));
-            if !component_expands && !all_line_source {
-                return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
-            }
-            if !component_expands && all_line_source {
-                let use_line_wavefront = match contour
-                    .offset_left_uses_line_wavefront_joins(
-                        signed_left_distance.clone(),
-                        corner_style,
-                        policy,
-                    )
-                    .map_err(|cause| curve_region_edit_error(CurveOperation2::Offset, cause))?
-                {
-                    Classification::Decided(use_line_wavefront) => use_line_wavefront,
-                    Classification::Uncertain(reason) => {
-                        return Ok(Classification::Uncertain(reason));
-                    }
-                };
-                if !use_line_wavefront {
-                    // Round, bevel, and limited-miter fallback joins have a
-                    // different exact boundary from a line wavefront. Rejoin
-                    // the authoritative retained-carrier arrangement instead
-                    // of asking this native miter specialization to classify
-                    // their later self contacts.
-                    return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
-                }
-                match contour
-                    .offset_left_line_wavefront_contours(signed_left_distance.clone(), policy)
-                    .map_err(|cause| curve_region_edit_error(CurveOperation2::Offset, cause))?
-                {
-                    Classification::Decided(contours) => {
-                        push_native_offset_component(
-                            *role,
-                            CurveRegion2::try_from_native_contours_raw(
-                                contours,
-                                Vec::new(),
-                                policy,
-                            )?,
-                            &mut material_components,
-                            &mut void_components,
-                        );
-                        continue;
-                    }
-                    Classification::Uncertain(UncertaintyReason::Unsupported) => {}
-                    Classification::Uncertain(reason) => {
-                        return Ok(Classification::Uncertain(reason));
-                    }
-                }
-            }
-            let raw_offset = match contour
-                .offset_left_with_corner_style(signed_left_distance.clone(), corner_style, policy)
-                .map_err(|cause| curve_region_edit_error(CurveOperation2::Offset, cause))?
-            {
-                Classification::Decided(offset) => offset,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            };
-            let self_contacts = raw_offset
-                .has_self_contacts(policy)
-                .map_err(|cause| curve_region_edit_error(CurveOperation2::Offset, cause))?;
-            if !component_expands
-                && all_line_source
-                && !raw_offset.has_retained_regular_offset_branch()
-            {
-                // A straight-skeleton blocker may rejoin the raw construction
-                // only while every emitted edge still follows its authored
-                // support. Exhausted provenance cannot certify a contracting
-                // polygonal component.
-                return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
-            }
-            let component = match self_contacts {
-                Classification::Decided(false) => {
-                    curve_region_from_native_material_contour(raw_offset, policy)?
-                }
-                Classification::Decided(true) if component_expands => {
-                    regularize_native_contour_with_curve_region(&raw_offset, policy)?
-                }
-                Classification::Decided(true) => {
-                    // If exact wavefront construction itself was blocked, raw
-                    // contracting self-intersections cannot be regularized by
-                    // winding alone without risking inverted collapse loops.
-                    return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
-                }
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            };
-            push_native_offset_component(
-                *role,
-                component,
-                &mut material_components,
-                &mut void_components,
-            );
-        }
-        let edited =
-            regularize_native_offset_regions(material_components, void_components, policy)?;
-        Ok(Classification::Decided(edited))
     }
 
     fn offset_exact_boundary_walk_raw(
@@ -16098,21 +15876,6 @@ impl CurveRegion2 {
     ) -> ExactCurveResult<Classification<Self>> {
         if is_zero(&distance, policy) == Some(true) {
             return Ok(Classification::Decided(self.clone()));
-        }
-        // Native line/arc contraction topology is a private specialization of
-        // this authority.  It may decide exact wavefront collapse and neck
-        // splitting early, but every component is composed through
-        // `CurveRegion2::boolean_region_raw`; an inapplicable specialization
-        // rejoins the general retained-carrier construction below.
-        match self.try_offset_native_topology_fast_path(distance.clone(), corner_style, policy) {
-            Ok(decided @ Classification::Decided(_)) => return Ok(decided),
-            Ok(Classification::Uncertain(UncertaintyReason::Unsupported)) => {}
-            Err(ExactCurveError::Blocked(blocker))
-                if blocker.reason() == UncertaintyReason::Unsupported => {}
-            Ok(Classification::Uncertain(reason)) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-            Err(error) => return Err(error),
         }
         let distance_positive = match real_sign(&distance, policy) {
             Some(RealSign::Positive) => true,

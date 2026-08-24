@@ -2,10 +2,10 @@
 
 use std::{cmp::Ordering, sync::Arc, sync::OnceLock};
 
-use hyperreal::{Real, RealSign, ZeroKnowledge as ZeroStatus};
+use hyperreal::{Real, ZeroKnowledge as ZeroStatus};
 
 use crate::bbox::{Aabb2, aabb_decided_misses_point, decided_contour_aabb, decided_segment_aabb};
-use crate::classify::{classify_oriented_line, compare_reals, is_zero, real_sign};
+use crate::classify::{classify_oriented_line, compare_reals, is_zero};
 use crate::curve_string::merge_adjacent_line_segments;
 use crate::{
     BulgeVertex2, Classification, CurveContext, CurveError, CurveResult, CurveString2, LineSeg2,
@@ -37,7 +37,6 @@ pub enum ContourPointLocation {
 pub struct Contour2 {
     curve: CurveString2,
     fill_rule: FillRule,
-    offset_provenance: Option<Arc<ContourOffsetProvenance2>>,
     signed_area_cache: Arc<OnceLock<CurveResult<Option<Real>>>>,
     signed_x_first_moment_cache: Arc<OnceLock<CurveResult<Option<Real>>>>,
     exact_dyadic_line_aabbs_cache: Arc<OnceLock<Option<Arc<ExactDyadicLineAabbs>>>>,
@@ -118,27 +117,6 @@ impl ExactDyadicLineAabbs {
     }
 }
 
-#[derive(Debug, PartialEq)]
-struct ContourOffsetSource2 {
-    curve: CurveString2,
-    fill_rule: FillRule,
-    orientation: RealSign,
-}
-
-#[derive(Debug, PartialEq)]
-struct ContourOffsetProvenance2 {
-    source: Arc<ContourOffsetSource2>,
-    left_distance: Real,
-}
-
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub(crate) enum RetainedContourOffsetRelation2 {
-    FirstContainsSecond,
-    SecondContainsFirst,
-    Coincident,
-    Uncertain,
-}
-
 impl PartialEq for Contour2 {
     fn eq(&self, other: &Self) -> bool {
         self.curve == other.curve && self.fill_rule == other.fill_rule
@@ -161,7 +139,6 @@ impl Contour2 {
         Ok(Self {
             curve,
             fill_rule,
-            offset_provenance: None,
             signed_area_cache: Arc::new(OnceLock::new()),
             signed_x_first_moment_cache: Arc::new(OnceLock::new()),
             exact_dyadic_line_aabbs_cache: Arc::new(OnceLock::new()),
@@ -173,7 +150,6 @@ impl Contour2 {
         Self {
             curve,
             fill_rule,
-            offset_provenance: None,
             signed_area_cache: Arc::new(OnceLock::new()),
             signed_x_first_moment_cache: Arc::new(OnceLock::new()),
             exact_dyadic_line_aabbs_cache: Arc::new(OnceLock::new()),
@@ -185,100 +161,6 @@ impl Contour2 {
         fill_rule: FillRule,
     ) -> Self {
         Self::new_unchecked(CurveString2::new_unchecked(segments), fill_rule)
-    }
-
-    pub(crate) fn retain_left_offset_from(
-        mut self,
-        source: &Self,
-        distance: Real,
-        policy: &CurveContext,
-    ) -> Self {
-        // A simple raw offset can re-expand after a collapse while remaining
-        // self-contact free. Retain nesting only on the regular branch where
-        // every output line still follows its corresponding source line.
-        if self.segments().len() != source.segments().len()
-            || !self
-                .segments()
-                .iter()
-                .zip(source.segments())
-                .all(|(offset, source)| match (offset, source) {
-                    (Segment2::Line(offset), Segment2::Line(source)) => {
-                        let (offset_x, offset_y) = offset.delta();
-                        let (source_x, source_y) = source.delta();
-                        let direction_dot = (&offset_x * &source_x) + (&offset_y * &source_y);
-                        real_sign(&direction_dot, policy) == Some(RealSign::Positive)
-                    }
-                    _ => false,
-                })
-        {
-            return self;
-        }
-
-        let provenance = match source.offset_provenance.as_ref() {
-            None => {
-                let Some(orientation) = source
-                    .signed_area()
-                    .ok()
-                    .flatten()
-                    .and_then(|area| real_sign(&area, policy))
-                else {
-                    return self;
-                };
-                ContourOffsetProvenance2 {
-                    source: Arc::new(ContourOffsetSource2 {
-                        curve: source.curve.clone(),
-                        fill_rule: source.fill_rule,
-                        orientation,
-                    }),
-                    left_distance: distance,
-                }
-            }
-            Some(provenance) => ContourOffsetProvenance2 {
-                source: provenance.source.clone(),
-                left_distance: &provenance.left_distance + &distance,
-            },
-        };
-        self.offset_provenance = Some(Arc::new(provenance));
-        self
-    }
-
-    pub(crate) fn retained_offset_relation(
-        &self,
-        other: &Self,
-        policy: &CurveContext,
-    ) -> Option<RetainedContourOffsetRelation2> {
-        let (Some(first), Some(second)) = (
-            self.offset_provenance.as_ref(),
-            other.offset_provenance.as_ref(),
-        ) else {
-            return None;
-        };
-        if first.source != second.source {
-            return None;
-        }
-
-        Some(
-            match compare_reals(&first.left_distance, &second.left_distance, policy) {
-                Some(Ordering::Equal) => RetainedContourOffsetRelation2::Coincident,
-                Some(ordering) => match (first.source.orientation, ordering) {
-                    (RealSign::Positive, Ordering::Less)
-                    | (RealSign::Negative, Ordering::Greater) => {
-                        RetainedContourOffsetRelation2::FirstContainsSecond
-                    }
-                    (RealSign::Positive, Ordering::Greater)
-                    | (RealSign::Negative, Ordering::Less) => {
-                        RetainedContourOffsetRelation2::SecondContainsFirst
-                    }
-                    (RealSign::Zero, _) => RetainedContourOffsetRelation2::Uncertain,
-                    (_, Ordering::Equal) => RetainedContourOffsetRelation2::Coincident,
-                },
-                None => RetainedContourOffsetRelation2::Uncertain,
-            },
-        )
-    }
-
-    pub(crate) fn has_retained_regular_offset_branch(&self) -> bool {
-        self.offset_provenance.is_some()
     }
 
     /// Constructs a closed contour from exact bulge vertices.
@@ -1546,6 +1428,11 @@ mod tests {
 
     #[test]
     fn exact_dyadic_line_bounds_use_compact_lossless_coordinates() {
+        assert_eq!(
+            size_of::<Contour2>(),
+            size_of::<CurveString2>() + 4 * size_of::<usize>(),
+            "a contour owns one fill-rule word and three clone-shared caches",
+        );
         let contour = Contour2::from_bulge_vertices(&[
             BulgeVertex2::new(point(-2, 0), Real::zero()),
             BulgeVertex2::new(point(3, 0), Real::zero()),
