@@ -9,7 +9,7 @@ use hypercurve::{
     CurveCornerNoSolution2, CurveCornerSolutions2, CurveError, CurveFamily2, CurveOutcome,
     CurvePath2, CurveRegion2, CurveRegionLoopRole, ExactCurveError, FillRule,
     FiniteProjectionOptions, LineSeg2, OffsetCornerStyle2, Point2, QuadraticBezier2,
-    RationalBezier2, Real, RegionPointLocation, Segment2, Similarity2,
+    RationalBezier2, Real, RegionPointLocation, Segment2, Similarity2, UncertaintyReason,
 };
 use hyperreal::SymbolicDependencyMask;
 
@@ -6352,6 +6352,23 @@ fn authoritative_curve_region_arrangement_regularizes_nonlinear_winding() {
             Some(q(32, 3))
         );
         assert!(regularize(FillRule::EvenOdd).is_empty());
+    }
+}
+
+#[test]
+fn all_family_nesting_rejects_crossing_loops_before_role_assignment() {
+    let curved = rational_cap_path();
+    let cutter = path_from_contour(&square(-1, 2, 1, 5));
+    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+        let raw = CurveRegion2::try_from_boundary_paths(&[curved.clone(), cutter.clone()], &policy)
+            .unwrap()
+            .into_value();
+        assert_eq!(
+            raw.curved_nesting_role_evidence(&policy)
+                .unwrap()
+                .into_value(),
+            Classification::Uncertain(UncertaintyReason::Boundary),
+        );
     }
 }
 

@@ -1,23 +1,20 @@
 //! Contour nesting and material/hole role assignment.
 //!
-//! This module turns already-closed native boundary contours into private
-//! material/hole bins. It assumes intersections and overlaps have already been
-//! resolved by earlier topology stages.
-use std::{cmp::Ordering, sync::OnceLock};
+//! This module assembles unordered native segments into closed contours. Final
+//! material/hole roles are delegated to [`crate::CurveRegion2`]'s all-family
+//! curve-pair validation and curved-loop nesting authority.
+use std::cmp::Ordering;
 
 use hyperreal::Real;
 
-use crate::bbox::{
-    Aabb2, aabb_decided_misses_point, aabbs_decided_disjoint, decided_contour_aabb,
-    decided_segment_aabb,
-};
+use crate::bbox::{Aabb2, aabbs_decided_disjoint};
 use crate::bezier_region::CurveRegionArrangementStage2;
 use crate::classify::compare_reals;
 use crate::region::LineArcRegion2;
 use crate::{
-    ArcArcIntersection, CircularArc2, Classification, Contour2, ContourPointLocation, CurveContext,
-    CurveError, CurveResult, FillRule, LineArcIntersection, LineArcOrder, LineLineIntersection,
-    LineSeg2, Point2, RetainedTopologyStatus, Segment2, SegmentIntersection, SegmentKindCounts,
+    ArcArcIntersection, CircularArc2, Classification, Contour2, CurveContext, CurveError,
+    CurveResult, FillRule, LineArcIntersection, LineArcOrder, LineLineIntersection, LineSeg2,
+    Point2, RetainedTopologyStatus, Segment2, SegmentIntersection, SegmentKindCounts,
     UncertaintyReason,
 };
 
@@ -52,17 +49,6 @@ struct RegionLineSegmentRegionBuildEvidence2 {
 struct RegionLineSegmentRegionBuildResult2 {
     region: Option<LineArcRegion2>,
     evidence: RegionLineSegmentRegionBuildEvidence2,
-}
-
-#[derive(Clone, Debug, PartialEq)]
-struct BoundaryContourNestingDepths {
-    depths: Vec<usize>,
-}
-
-#[derive(Clone, Debug, PartialEq)]
-enum BoundaryContourNestingOutcome {
-    Decided(BoundaryContourNestingDepths),
-    Blocked(UncertaintyReason),
 }
 
 fn evaluate_unordered_line_segments_region_result(
@@ -185,38 +171,51 @@ fn finish_nested_contours(
     contours: Vec<Contour2>,
     policy: &CurveContext,
 ) -> CurveResult<RegionLineSegmentRegionBuildResult2> {
-    let (region, status, blocker) = match LineArcRegion2::from_boundary_contours(contours, policy)?
-    {
-        Classification::Decided(region) => {
-            (Some(region), RetainedTopologyStatus::NativeExact, None)
+    let roles = match crate::CurveRegion2::native_boundary_contour_roles_raw(&contours, policy) {
+        Ok(Classification::Decided(roles)) => roles,
+        Ok(Classification::Uncertain(reason)) => {
+            return Ok(RegionLineSegmentRegionBuildResult2 {
+                region: None,
+                evidence: blocked_line_segment_region_evidence(
+                    CurveRegionArrangementStage2::RegionRoleAssignment,
+                    retained_status_for_boundary_contour_blocker(reason),
+                    reason,
+                ),
+            });
         }
-        Classification::Uncertain(reason) => (
-            None,
-            retained_status_for_boundary_contour_blocker(reason),
-            Some(reason),
-        ),
+        Err(crate::ExactCurveError::Invalid { cause, .. }) => return Err(cause),
+        Err(crate::ExactCurveError::Blocked(blocker)) => {
+            let reason = blocker.reason();
+            return Ok(RegionLineSegmentRegionBuildResult2 {
+                region: None,
+                evidence: blocked_line_segment_region_evidence(
+                    CurveRegionArrangementStage2::RegionRoleAssignment,
+                    retained_status_for_boundary_contour_blocker(reason),
+                    reason,
+                ),
+            });
+        }
     };
-    let output_ring_count = region
-        .as_ref()
-        .map(|region| region.material_contours().len() + region.hole_contours().len());
-    let output_boundary_segment_count = region.as_ref().map(|region| {
+    let region = assign_boundary_contour_roles(contours, &roles);
+    let output_ring_count = Some(region.material_contours().len() + region.hole_contours().len());
+    let output_boundary_segment_count = Some(
         region
             .material_contours()
             .iter()
             .chain(region.hole_contours())
             .map(|contour| contour.segments().len())
-            .sum()
-    });
-    let output_boundary_segment_kind_counts = region.as_ref().map(region_segment_kind_counts);
+            .sum(),
+    );
+    let output_boundary_segment_kind_counts = Some(region_segment_kind_counts(&region));
     Ok(RegionLineSegmentRegionBuildResult2 {
-        region,
+        region: Some(region),
         evidence: RegionLineSegmentRegionBuildEvidence2 {
             stage: CurveRegionArrangementStage2::RegionRoleAssignment,
             output_ring_count,
             output_boundary_segment_count,
             output_boundary_segment_kind_counts,
-            status,
-            blocker,
+            status: RetainedTopologyStatus::NativeExact,
+            blocker: None,
         },
     })
 }
@@ -283,38 +282,18 @@ impl LineArcRegion2 {
             source_segments.len(),
         ))
     }
-
-    /// Builds a region by nesting closed boundary contours and retaining role evidence.
-    ///
-    /// This is the evidence-bearing counterpart to
-    /// Contours at even containment depth
-    /// become material and odd-depth contours become holes. If intersections,
-    /// touches, or undecided containment predicates prevent role assignment, no
-    /// region is materialized and the evidence carries the blocker.
-    pub(crate) fn from_boundary_contours(
-        contours: Vec<Contour2>,
-        policy: &CurveContext,
-    ) -> CurveResult<Classification<Self>> {
-        Ok(match contour_nesting_depths(&contours, policy)? {
-            BoundaryContourNestingOutcome::Decided(nesting) => {
-                Classification::Decided(assign_boundary_contour_roles(contours, &nesting))
-            }
-            BoundaryContourNestingOutcome::Blocked(reason) => Classification::Uncertain(reason),
-        })
-    }
 }
 
 fn assign_boundary_contour_roles(
     contours: Vec<Contour2>,
-    nesting: &BoundaryContourNestingDepths,
+    roles: &[crate::CurveRegionLoopRole],
 ) -> LineArcRegion2 {
     let mut material_contours = Vec::new();
     let mut hole_contours = Vec::new();
-    for (contour, depth) in contours.into_iter().zip(&nesting.depths) {
-        if depth % 2 == 0 {
-            material_contours.push(contour);
-        } else {
-            hole_contours.push(contour);
+    for (contour, role) in contours.into_iter().zip(roles) {
+        match role {
+            crate::CurveRegionLoopRole::Material => material_contours.push(contour),
+            crate::CurveRegionLoopRole::Hole => hole_contours.push(contour),
         }
     }
     LineArcRegion2::new(material_contours, hole_contours)
@@ -1154,391 +1133,5 @@ fn retained_status_for_boundary_contour_blocker(
             RetainedTopologyStatus::Unsupported
         }
         _ => RetainedTopologyStatus::Unresolved,
-    }
-}
-
-fn contour_aabb_overlap_neighbors(
-    contour_boxes: &[Option<Aabb2>],
-    policy: &CurveContext,
-) -> Option<Vec<Vec<usize>>> {
-    const MIN_RETAINED_NEIGHBOR_COUNT: usize = 4_096;
-    const RETAINED_NEIGHBORS_PER_CONTOUR: usize = 32;
-
-    let retained_neighbor_limit = contour_boxes
-        .len()
-        .saturating_mul(RETAINED_NEIGHBORS_PER_CONTOUR)
-        .max(MIN_RETAINED_NEIGHBOR_COUNT);
-    let mut ordered = contour_boxes
-        .iter()
-        .enumerate()
-        .filter_map(|(index, bbox)| bbox.as_ref().map(|bbox| (index, bbox)))
-        .collect::<Vec<_>>();
-    let mut ordering_failed = false;
-    ordered.sort_by(|(_, left), (_, right)| {
-        compare_reals(left.min().x(), right.min().x(), policy).unwrap_or_else(|| {
-            ordering_failed = true;
-            Ordering::Equal
-        })
-    });
-    if ordering_failed {
-        return None;
-    }
-
-    let mut neighbors = (0..contour_boxes.len())
-        .map(|_| Vec::new())
-        .collect::<Vec<_>>();
-    let mut retained_neighbor_count = 0_usize;
-    let mut active = Vec::<(usize, &Aabb2)>::new();
-    for (current_index, current_box) in ordered {
-        active.retain(|(_, active_box)| {
-            compare_reals(active_box.max().x(), current_box.min().x(), policy)
-                != Some(Ordering::Less)
-        });
-        for &(active_index, active_box) in &active {
-            if aabbs_decided_disjoint(active_box, current_box, policy) {
-                continue;
-            }
-            retained_neighbor_count += 1;
-            if retained_neighbor_count > retained_neighbor_limit {
-                return None;
-            }
-            neighbors[active_index].push(current_index);
-            neighbors[current_index].push(active_index);
-        }
-        active.push((current_index, current_box));
-    }
-
-    for undecided_index in contour_boxes
-        .iter()
-        .enumerate()
-        .filter_map(|(index, bbox)| bbox.is_none().then_some(index))
-    {
-        for other_index in 0..contour_boxes.len() {
-            if undecided_index == other_index
-                || contour_boxes[other_index].is_none() && other_index < undecided_index
-            {
-                continue;
-            }
-            retained_neighbor_count += 1;
-            if retained_neighbor_count > retained_neighbor_limit {
-                return None;
-            }
-            neighbors[undecided_index].push(other_index);
-            neighbors[other_index].push(undecided_index);
-        }
-    }
-
-    for contour_neighbors in &mut neighbors {
-        contour_neighbors.sort_unstable();
-    }
-    Some(neighbors)
-}
-
-fn aabb_may_contain(outer: &Aabb2, inner: &Aabb2, policy: &CurveContext) -> bool {
-    let mut predicates = [
-        (
-            outer
-                .min_x()
-                .to_f64_lossy()
-                .zip(inner.min_x().to_f64_lossy())
-                .map_or(f64::NEG_INFINITY, |(outer, inner)| outer - inner),
-            outer.min_x(),
-            inner.min_x(),
-            Ordering::Greater,
-        ),
-        (
-            outer
-                .min_y()
-                .to_f64_lossy()
-                .zip(inner.min_y().to_f64_lossy())
-                .map_or(f64::NEG_INFINITY, |(outer, inner)| outer - inner),
-            outer.min_y(),
-            inner.min_y(),
-            Ordering::Greater,
-        ),
-        (
-            inner
-                .max_x()
-                .to_f64_lossy()
-                .zip(outer.max_x().to_f64_lossy())
-                .map_or(f64::NEG_INFINITY, |(inner, outer)| inner - outer),
-            outer.max_x(),
-            inner.max_x(),
-            Ordering::Less,
-        ),
-        (
-            inner
-                .max_y()
-                .to_f64_lossy()
-                .zip(outer.max_y().to_f64_lossy())
-                .map_or(f64::NEG_INFINITY, |(inner, outer)| inner - outer),
-            outer.max_y(),
-            inner.max_y(),
-            Ordering::Less,
-        ),
-    ];
-    predicates.sort_by(|left, right| right.0.total_cmp(&left.0));
-    predicates
-        .into_iter()
-        .all(|(_, outer, inner, violation)| compare_reals(outer, inner, policy) != Some(violation))
-}
-
-fn contour_nesting_depths(
-    contours: &[Contour2],
-    policy: &CurveContext,
-) -> CurveResult<BoundaryContourNestingOutcome> {
-    // Region construction compares every contour pair, then classifies a
-    // boundary sample against every other contour. Retain the broad-phase
-    // certificates across both passes instead of rebuilding them for every
-    // pair and point query. Segment boxes stay lazy because disjoint contour
-    // boxes settle the common case without them.
-    let contour_boxes = contours
-        .iter()
-        .map(|contour| decided_contour_aabb(contour, policy))
-        .collect::<Vec<_>>();
-    let segment_boxes = (0..contours.len())
-        .map(|_| OnceLock::<Vec<Option<Aabb2>>>::new())
-        .collect::<Vec<_>>();
-    let prepared_contours = (0..contours.len())
-        .map(|_| OnceLock::<crate::prepared::ContourQuery2<'_>>::new())
-        .collect::<Vec<_>>();
-    let aabb_overlap_neighbors = contour_aabb_overlap_neighbors(&contour_boxes, policy);
-
-    for (left_index, left) in contours.iter().enumerate() {
-        let mut neighbor_position = aabb_overlap_neighbors.as_ref().map_or(0, |neighbors| {
-            neighbors[left_index].partition_point(|&index| index <= left_index)
-        });
-        for (right_offset, right) in contours[left_index + 1..].iter().enumerate() {
-            let right_index = left_index + 1 + right_offset;
-            if let Some(neighbors) = &aabb_overlap_neighbors {
-                if neighbors[left_index].get(neighbor_position).copied() != Some(right_index) {
-                    continue;
-                }
-                neighbor_position += 1;
-            }
-            if let (Some(left_box), Some(right_box)) = (
-                contour_boxes[left_index].as_ref(),
-                contour_boxes[right_index].as_ref(),
-            ) && aabbs_decided_disjoint(left_box, right_box, policy)
-            {
-                continue;
-            }
-            let intersections = if let (Some(left_boxes), Some(right_boxes)) = (
-                left.exact_dyadic_line_aabbs(policy),
-                right.exact_dyadic_line_aabbs(policy),
-            ) {
-                crate::events::intersect_contours_with_exact_dyadic_line_aabbs(
-                    left,
-                    right,
-                    &left_boxes,
-                    &right_boxes,
-                    policy,
-                )?
-            } else {
-                let left_segment_boxes = segment_boxes[left_index].get_or_init(|| {
-                    left.segments()
-                        .iter()
-                        .map(|segment| decided_segment_aabb(segment, policy))
-                        .collect()
-                });
-                let right_segment_boxes = segment_boxes[right_index].get_or_init(|| {
-                    right
-                        .segments()
-                        .iter()
-                        .map(|segment| decided_segment_aabb(segment, policy))
-                        .collect()
-                });
-                crate::events::intersect_contours_with_cached_aabbs(
-                    left,
-                    right,
-                    contour_boxes[left_index].as_ref(),
-                    contour_boxes[right_index].as_ref(),
-                    left_segment_boxes,
-                    right_segment_boxes,
-                    None,
-                    policy,
-                )?
-            };
-            if let Some(reason) = contour_intersection_blocker(&intersections) {
-                return Ok(BoundaryContourNestingOutcome::Blocked(reason));
-            }
-        }
-    }
-
-    let mut depths = Vec::with_capacity(contours.len());
-
-    for (candidate_index, candidate) in contours.iter().enumerate() {
-        // A point on the candidate boundary is sufficient for nesting against
-        // every *other* non-touching contour. This reduces role assignment to
-        // repeated point-in-polygon classification. If that sample lies on
-        // another contour boundary, return uncertainty instead of inventing a
-        // role.
-        let first_sample = candidate
-            .segments()
-            .first()
-            .ok_or(CurveError::EmptyCurveString)?
-            .start()
-            .clone();
-        let fractions = [
-            (Real::one() / Real::from(2_i8))?,
-            (Real::one() / Real::from(3_i8))?,
-            (Real::from(2_i8) / Real::from(3_i8))?,
-        ];
-        // The exact validation pass above, or the trusted Boolean assembly
-        // supplying this internal path, proves that every point on this
-        // candidate boundary is off every other contour boundary. Its first
-        // endpoint is therefore a sufficient nesting sample. Retain interior
-        // samples as exact fallbacks for an undecided containment predicate,
-        // but do not eagerly interpolate them when that endpoint decides.
-        let fallback_samples = candidate.segments().iter().flat_map(|segment| {
-            fractions
-                .iter()
-                .map(move |fraction| segment.point_at(fraction, policy))
-        });
-        let samples =
-            std::iter::once(Ok(Classification::Decided(first_sample))).chain(fallback_samples);
-
-        let mut last_blocker = None;
-        let mut decided_entry = None;
-        'sample: for sample in samples {
-            let Classification::Decided(sample) = sample? else {
-                continue;
-            };
-            let mut depth = 0_usize;
-            let mut neighbor_position = 0;
-            for (container_index, container) in contours.iter().enumerate() {
-                if candidate_index == container_index {
-                    continue;
-                }
-
-                if let Some(neighbors) = &aabb_overlap_neighbors {
-                    if neighbors[candidate_index].get(neighbor_position).copied()
-                        != Some(container_index)
-                    {
-                        continue;
-                    }
-                    neighbor_position += 1;
-                }
-                if let (Some(container_box), Some(candidate_box)) = (
-                    contour_boxes[container_index].as_ref(),
-                    contour_boxes[candidate_index].as_ref(),
-                ) && !aabb_may_contain(container_box, candidate_box, policy)
-                {
-                    continue;
-                }
-                if contour_boxes[container_index]
-                    .as_ref()
-                    .is_some_and(|bbox| aabb_decided_misses_point(bbox, &sample, policy))
-                {
-                    continue;
-                }
-                let prepared = prepared_contours[container_index].get_or_init(|| {
-                    crate::prepared::ContourQuery2::from_contour(container, policy)
-                });
-                match prepared.classify_point_assuming_off_boundary(&sample, policy) {
-                    Classification::Decided(ContourPointLocation::Inside) => {
-                        depth += 1;
-                    }
-                    Classification::Decided(ContourPointLocation::Outside) => {}
-                    Classification::Decided(ContourPointLocation::Boundary) => {
-                        return Ok(BoundaryContourNestingOutcome::Blocked(
-                            crate::UncertaintyReason::Boundary,
-                        ));
-                    }
-                    Classification::Uncertain(reason) => {
-                        last_blocker = Some(reason);
-                        continue 'sample;
-                    }
-                }
-            }
-            decided_entry = Some(depth);
-            break;
-        }
-
-        let Some(depth) = decided_entry else {
-            return Ok(BoundaryContourNestingOutcome::Blocked(
-                last_blocker.unwrap_or(crate::UncertaintyReason::Unsupported),
-            ));
-        };
-        depths.push(depth);
-    }
-
-    Ok(BoundaryContourNestingOutcome::Decided(
-        BoundaryContourNestingDepths { depths },
-    ))
-}
-
-fn contour_intersection_blocker(
-    intersections: &crate::ContourIntersectionSet,
-) -> Option<UncertaintyReason> {
-    let mut uncertainty = None;
-    for event in intersections.events() {
-        match event {
-            crate::ContourIntersection::Point(_) | crate::ContourIntersection::Overlap(_) => {
-                return Some(UncertaintyReason::Boundary);
-            }
-            crate::ContourIntersection::Uncertain(event) => {
-                uncertainty.get_or_insert(event.reason);
-            }
-        }
-    }
-    uncertainty
-}
-
-#[cfg(test)]
-mod tests {
-    use super::contour_intersection_blocker;
-    use crate::{
-        ContourIntersection, ContourIntersectionSet, ContourPointIntersection,
-        ContourUncertainIntersection, IntersectionKind, Point2, SegmentKind, UncertaintyReason,
-    };
-    use hyperreal::Real;
-
-    #[test]
-    fn contour_nesting_preserves_uncertain_intersection_reason() {
-        let intersections = ContourIntersectionSet::new(vec![ContourIntersection::Uncertain(
-            ContourUncertainIntersection {
-                a_segment_index: 2,
-                b_segment_index: 4,
-                a_segment_kind: SegmentKind::Arc,
-                b_segment_kind: SegmentKind::Line,
-                reason: UncertaintyReason::RealSign,
-            },
-        )])
-        .unwrap();
-
-        assert_eq!(
-            contour_intersection_blocker(&intersections),
-            Some(UncertaintyReason::RealSign)
-        );
-    }
-
-    #[test]
-    fn contour_nesting_prefers_decided_contact_over_uncertainty() {
-        let intersections = ContourIntersectionSet::new(vec![
-            ContourIntersection::Uncertain(ContourUncertainIntersection {
-                a_segment_index: 0,
-                b_segment_index: 0,
-                a_segment_kind: SegmentKind::Line,
-                b_segment_kind: SegmentKind::Line,
-                reason: UncertaintyReason::Ordering,
-            }),
-            ContourIntersection::Point(ContourPointIntersection {
-                a_segment_index: 1,
-                b_segment_index: 1,
-                a_segment_kind: SegmentKind::Line,
-                b_segment_kind: SegmentKind::Line,
-                point: Point2::new(Real::zero(), Real::zero()),
-                a_param: Real::zero(),
-                b_param: Real::zero(),
-                kind: IntersectionKind::Endpoint,
-            }),
-        ])
-        .unwrap();
-
-        assert_eq!(
-            contour_intersection_blocker(&intersections),
-            Some(UncertaintyReason::Boundary)
-        );
     }
 }

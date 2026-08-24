@@ -10296,18 +10296,47 @@ impl CurveRegion2 {
         contours: Vec<Contour2>,
         policy: &CurveContext,
     ) -> ExactCurveResult<CurveOutcome<Classification<Self>>> {
-        resolve_certified_operation(
-            policy,
-            |attempt| match LineArcRegion2::from_boundary_contours(contours, attempt)
-                .map_err(curve_region_promotion_error)?
-            {
-                Classification::Decided(region) => {
-                    Self::try_from_line_arc_region_raw(&region, attempt)
-                        .map(Classification::Decided)
+        resolve_certified_operation(policy, |attempt| {
+            let roles = match Self::native_boundary_contour_roles_raw(&contours, attempt)? {
+                Classification::Decided(roles) => roles,
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
                 }
-                Classification::Uncertain(reason) => Ok(Classification::Uncertain(reason)),
-            },
-        )
+            };
+            let mut material = Vec::new();
+            let mut holes = Vec::new();
+            for (contour, role) in contours.into_iter().zip(roles) {
+                match role {
+                    CurveRegionLoopRole::Material => material.push(contour),
+                    CurveRegionLoopRole::Hole => holes.push(contour),
+                }
+            }
+            Self::try_from_native_contours_raw(material, holes, attempt)
+                .map(Classification::Decided)
+        })
+    }
+
+    /// Assigns native contour roles through the all-family curved-loop
+    /// nesting authority.
+    ///
+    /// This is the only role classifier used by native boundary construction
+    /// and unordered native arrangement. Native segments are promoted to
+    /// exact Bezier/conic carriers, distinct loop pairs are validated through
+    /// the general curve-pair kernel, and containment then uses the same
+    /// boundary classifier as every other `CurveRegion2` carrier.
+    pub(crate) fn native_boundary_contour_roles_raw(
+        contours: &[Contour2],
+        policy: &CurveContext,
+    ) -> ExactCurveResult<Classification<Vec<CurveRegionLoopRole>>> {
+        let paths = contours
+            .iter()
+            .map(curve_path_from_native_contour)
+            .collect::<ExactCurveResult<Vec<_>>>()?;
+        let region = Self::try_from_boundary_paths_raw(&paths, policy)?;
+        region
+            .curved_nesting_role_evidence_raw(policy)
+            .map_err(curve_region_promotion_error)
+            .map(|classification| classification.map(|evidence| evidence.roles().to_vec()))
     }
 
     /// Borrowed counterpart to [`Self::try_from_native_boundary_contours`].
@@ -11194,8 +11223,10 @@ impl CurveRegion2 {
     /// Assigns material/hole roles by exact curved-loop nesting.
     ///
     /// Each retained loop must be fully native and have a nonzero implemented
-    /// signed area. The area is used only to reject degenerate/unsupported
-    /// loops; role parity comes from exact containment depth. This makes
+    /// signed area. Potentially overlapping loop pairs first pass through the
+    /// all-family exact path-intersection kernel; any contact or overlap blocks
+    /// nesting. The area is used only to reject degenerate/unsupported loops;
+    /// role parity comes from exact containment depth. This makes
     /// same-orientation nested nonlinear loops classify as material/hole by
     /// topology instead of by their authored orientation.
     pub fn curved_nesting_role_evidence(
@@ -11215,6 +11246,74 @@ impl CurveRegion2 {
             return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
         };
         let native_bounds = self.native_boundary_bounds(policy);
+        let mut native_paths = vec![None; native_loops.len()];
+
+        // Role assignment is valid only for disjoint or strictly nested
+        // loops. Validate every potentially overlapping pair through the same
+        // all-family curve interaction kernel used by path and region
+        // topology. A decided contact or overlap dominates an incomplete
+        // predicate because either already proves that nesting is not valid.
+        for first_index in 0..native_loops.len() {
+            for second_index in first_index + 1..native_loops.len() {
+                if native_bounds.is_some_and(|bounds| {
+                    matches!(
+                        bounds[first_index].overlaps(&bounds[second_index], policy),
+                        Classification::Decided(false)
+                    )
+                }) {
+                    continue;
+                }
+                for index in [first_index, second_index] {
+                    if native_paths[index].is_some() {
+                        continue;
+                    }
+                    let curves = native_loops[index]
+                        .fragments()
+                        .iter()
+                        .cloned()
+                        .map(Curve2::from)
+                        .collect();
+                    match CurvePath2::try_new_raw(curves, policy) {
+                        Ok(path) => native_paths[index] = Some(path),
+                        Err(ExactCurveError::Invalid { cause, .. }) => return Err(cause),
+                        Err(ExactCurveError::Blocked(blocker)) => {
+                            return Ok(Classification::Uncertain(blocker.reason()));
+                        }
+                    }
+                }
+                let intersections = match native_paths[first_index]
+                    .as_ref()
+                    .expect("an overlapping first loop has one exact path")
+                    .intersect_path_raw(
+                        native_paths[second_index]
+                            .as_ref()
+                            .expect("an overlapping second loop has one exact path"),
+                        policy,
+                    ) {
+                    Ok(intersections) => intersections,
+                    Err(ExactCurveError::Invalid { cause, .. }) => return Err(cause),
+                    Err(ExactCurveError::Blocked(blocker)) => {
+                        return Ok(Classification::Uncertain(blocker.reason()));
+                    }
+                };
+                if !intersections.contacts().is_empty() || !intersections.overlaps().is_empty() {
+                    return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
+                }
+                if let Some(blocker) = intersections.blockers().first() {
+                    let reason = match blocker.blocker().kind() {
+                        CurveIntersectionPairBlockerKind2::Uncertain(reason) => *reason,
+                        CurveIntersectionPairBlockerKind2::IncompleteReplay { .. } => {
+                            UncertaintyReason::Predicate
+                        }
+                        CurveIntersectionPairBlockerKind2::SharedComponent => {
+                            UncertaintyReason::Boundary
+                        }
+                    };
+                    return Ok(Classification::Uncertain(reason));
+                }
+            }
+        }
+
         let mut sample_points = Vec::with_capacity(self.data.boundary_loops.len());
         let mut signed_areas = Vec::with_capacity(self.data.boundary_loops.len());
         for native_loop in native_loops {

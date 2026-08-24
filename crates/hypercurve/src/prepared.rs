@@ -404,36 +404,6 @@ impl<'a> ContourQuery2<'a> {
             ContourPointLocation::Outside
         })
     }
-
-    // Callers of this internal path must already have certified that the
-    // sample cannot lie on the contour. It deliberately skips the boundary
-    // scan while retaining the same exact winding and fill-rule decision.
-    pub(crate) fn classify_point_assuming_off_boundary(
-        &self,
-        point: &Point2,
-        policy: &CurveContext,
-    ) -> Classification<ContourPointLocation> {
-        if self
-            .contour_box
-            .as_ref()
-            .is_some_and(|bbox| aabb_decided_misses_point(bbox, point, policy))
-        {
-            return Classification::Decided(ContourPointLocation::Outside);
-        }
-        let winding = match prepared_contour_winding_number_unchecked(self, point, policy) {
-            Classification::Decided(winding) => winding,
-            Classification::Uncertain(reason) => return Classification::Uncertain(reason),
-        };
-        let inside = match self.contour.fill_rule() {
-            FillRule::NonZero => winding != 0,
-            FillRule::EvenOdd => winding.rem_euclid(2) != 0,
-        };
-        Classification::Decided(if inside {
-            ContourPointLocation::Inside
-        } else {
-            ContourPointLocation::Outside
-        })
-    }
 }
 
 /// A borrowed region view with cached contour and region bounding boxes.
