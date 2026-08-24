@@ -58902,6 +58902,7 @@ impl BezierAlgebraicChord2 {
             BezierAlgebraicChordRealInterval2::from_values([tangent_y], &CurveContext::STRICT)
                 .expect("one exact tangent coordinate defines an interval");
         let zero = Real::zero();
+        let mut terminal_refined = false;
         for refinement_steps in [0, 2, 4, 8, 16, 32, 64, 128, 256, 512] {
             let (Classification::Decided(origin), Classification::Decided(point)) = (
                 algebraic_chord_endpoint_bounds_refined(self.start(), refinement_steps, policy),
@@ -58909,6 +58910,7 @@ impl BezierAlgebraicChord2 {
             ) else {
                 continue;
             };
+            terminal_refined |= refinement_steps == 512;
             let delta_x = BezierAlgebraicChordRealInterval2::from_axis(&point, Axis2::X).subtract(
                 &BezierAlgebraicChordRealInterval2::from_axis(&origin, Axis2::X),
             );
@@ -58935,6 +58937,35 @@ impl BezierAlgebraicChord2 {
             {
                 return Classification::Decided(crate::classify::LineSide::Right);
             }
+        }
+        // Equality is deliberately a cold path: interval refinement proves
+        // every nonzero oriented area first. A separately retained endpoint
+        // can nevertheless be the same exact point as this support endpoint
+        // without sharing its allocation (notably where an offset circle
+        // collapses). Replay that point certificate before reporting an
+        // ordering blocker. APPROXIMATE_512 remains confined to its terminal
+        // equality evaluation through `same_point`.
+        if [self.start(), self.end()].into_iter().any(|endpoint| {
+            endpoint.same_point(point, policy) == Classification::Decided(true)
+                || point.same_point(endpoint, policy) == Classification::Decided(true)
+        }) {
+            #[cfg(feature = "dispatch-trace")]
+            hyperreal::dispatch_trace::record(
+                "hypercurve",
+                "algebraic-chord-side-kernel",
+                "retained-endpoint-incidence",
+            );
+            return Classification::Decided(crate::classify::LineSide::On);
+        }
+        if terminal_refined && policy.permits_approximate_512() {
+            policy.observe_approximate_512();
+            #[cfg(feature = "dispatch-trace")]
+            hyperreal::dispatch_trace::record(
+                "hypercurve",
+                "algebraic-chord-side-kernel",
+                "approximate-512-terminal",
+            );
+            return Classification::Decided(crate::classify::LineSide::On);
         }
         Classification::Uncertain(UncertaintyReason::Ordering)
     }

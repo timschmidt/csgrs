@@ -2220,9 +2220,34 @@ fn selected_algebraic_round_joins_reenter_exact_region_offsets() {
             Classification::Decided(RegionPointLocation::Boundary),
         );
 
-        let contracted = rounded
-            .offset(-q(1, 20), &OffsetCornerStyle2::Round, &policy)
-            .expect("a retained selected circle must contract before its radius collapses");
+        #[cfg(feature = "dispatch-trace")]
+        hyperreal::dispatch_trace::reset();
+        let contract = || rounded.offset(-q(1, 20), &OffsetCornerStyle2::Round, &policy);
+        #[cfg(feature = "dispatch-trace")]
+        let contracted = hyperreal::dispatch_trace::with_recording(contract);
+        #[cfg(not(feature = "dispatch-trace"))]
+        let contracted = contract();
+        #[cfg(feature = "dispatch-trace")]
+        let contract_trace = hyperreal::dispatch_trace::take_trace();
+        let contracted = contracted.unwrap_or_else(|error| {
+            #[cfg(feature = "dispatch-trace")]
+            panic!(
+                "a retained selected circle must contract before its radius collapses under {policy:?}: {error:?}; {contract_trace:?}"
+            );
+            #[cfg(not(feature = "dispatch-trace"))]
+            panic!(
+                "a retained selected circle must contract before its radius collapses under {policy:?}: {error:?}"
+            );
+        });
+        #[cfg(feature = "dispatch-trace")]
+        assert!(
+            contract_trace.path_count(
+                "hypercurve",
+                "algebraic-circle-chord-pair",
+                "retained-nonadjacent-endpoint-tangent",
+            ) > 0,
+            "the contraction must retain its cross-component endpoint tangent: {contract_trace:?}",
+        );
         assert_eq!(contracted.certainty, CurveCertainty::Certified);
         assert_eq!(
             certified(
@@ -2234,10 +2259,53 @@ fn selected_algebraic_round_joins_reenter_exact_region_offsets() {
             Classification::Decided(RegionPointLocation::Boundary),
         );
 
-        let collapsed_round = rounded
-            .offset(-q(1, 10), &OffsetCornerStyle2::Round, &policy)
-            .expect("an exact selected-circle radius collapse must remove only the arc")
+        #[cfg(feature = "dispatch-trace")]
+        hyperreal::dispatch_trace::reset();
+        let collapse = || rounded.offset(-q(1, 10), &OffsetCornerStyle2::Round, &policy);
+        #[cfg(feature = "dispatch-trace")]
+        let collapsed_round = hyperreal::dispatch_trace::with_recording(collapse);
+        #[cfg(not(feature = "dispatch-trace"))]
+        let collapsed_round = collapse();
+        #[cfg(feature = "dispatch-trace")]
+        let collapse_trace = hyperreal::dispatch_trace::take_trace();
+        #[cfg(feature = "dispatch-trace")]
+        let collapse_kernel_trace = collapse_trace
+            .dispatch
+            .iter()
+            .filter(|entry| entry.layer == "hypercurve")
+            .collect::<Vec<_>>();
+        let collapsed_round = collapsed_round
+            .unwrap_or_else(|error| {
+                #[cfg(feature = "dispatch-trace")]
+                panic!(
+                    "an exact selected-circle radius collapse must remove only the arc under {policy:?}: {error:?}; {collapse_kernel_trace:?}"
+                );
+                #[cfg(not(feature = "dispatch-trace"))]
+                panic!(
+                    "an exact selected-circle radius collapse must remove only the arc under {policy:?}: {error:?}"
+                );
+            })
             .into_value();
+        #[cfg(feature = "dispatch-trace")]
+        {
+            assert!(
+                collapse_trace.path_count(
+                    "hypercurve",
+                    "algebraic-chord-side-kernel",
+                    "retained-endpoint-incidence",
+                ) > 0,
+                "the collapsed circle must replay its independently retained chord endpoint: {collapse_kernel_trace:?}",
+            );
+            assert_eq!(
+                collapse_trace.path_count(
+                    "hypercurve",
+                    "algebraic-chord-side-kernel",
+                    "approximate-512-terminal",
+                ) > 0,
+                policy == CurveContext::APPROXIMATE_512,
+                "only APPROXIMATE_512 may terminate an unresolved chord-side equality: {collapse_kernel_trace:?}",
+            );
+        }
         assert!(
             collapsed_round.boundary_loops()[0]
                 .fragments()

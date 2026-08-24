@@ -8,7 +8,8 @@ use crate::bezier_moment::RationalQuadraticAreaIntegralCache;
 use crate::bezier_offset::{
     BezierAlgebraicChordAxisDirection2, BezierAlgebraicChordPairIntersections2,
     BezierAlgebraicChordParallelIntersections2, BezierAlgebraicChordRationalIntersections2,
-    BezierAlgebraicChordRationalOverlap2, BezierAlgebraicCuspSemicircleRetainedChordIntersections2,
+    BezierAlgebraicChordRationalOverlap2, BezierAlgebraicCuspSemicircleRetainedChordContact2,
+    BezierAlgebraicCuspSemicircleRetainedChordIntersections2,
     BezierAlgebraicCuspSemicircleSelectedFiberContact2,
     BezierAlgebraicCuspSemicircleSelectedFiberRationalOverlap2,
 };
@@ -3596,6 +3597,55 @@ impl<'a> CurveRegionBooleanContext<'a> {
         })
     }
 
+    /// Replays a certified tangent support when a circle and chord from
+    /// different arrangement components retain the same endpoint. Unlike an
+    /// authored adjacent vertex, this contact remains part of the arrangement
+    /// evidence; only the general circle/line solve is bypassed.
+    fn certified_cusp_chord_endpoint_contact(
+        &self,
+        cusp: &crate::BezierAlgebraicCuspSemicircleFragment2,
+        chord: &crate::BezierAlgebraicChord2,
+    ) -> CurveResult<Classification<Option<BezierAlgebraicCuspSemicircleRetainedChordContact2>>>
+    {
+        for cusp_at_start in [true, false] {
+            let point = match cusp.endpoint_point_evidence(cusp_at_start, &self.data.policy)? {
+                Classification::Decided(Some(point)) => point,
+                Classification::Decided(None) | Classification::Uncertain(_) => continue,
+            };
+            for (chord_at_start, endpoint) in [(true, chord.start()), (false, chord.end())] {
+                if !point.shares_storage(endpoint)
+                    && point.same_point(endpoint, &self.data.policy)
+                        != Classification::Decided(true)
+                    && endpoint.same_point(&point, &self.data.policy)
+                        != Classification::Decided(true)
+                {
+                    continue;
+                }
+                if cusp.certified_adjacent_chord_is_endpoint_only(
+                    chord,
+                    cusp_at_start,
+                    &self.data.policy,
+                )? != Classification::Decided(true)
+                {
+                    continue;
+                }
+                return Ok(Classification::Decided(Some(
+                    BezierAlgebraicCuspSemicircleRetainedChordContact2 {
+                        cusp_parameter: cusp.endpoint_parameter(cusp_at_start).clone(),
+                        chord_parameter: if chord_at_start {
+                            chord.start_parameter()
+                        } else {
+                            chord.end_parameter()
+                        },
+                        point,
+                        tangent_cross_sign: RealSign::Zero,
+                    },
+                )));
+            }
+        }
+        Ok(Classification::Decided(None))
+    }
+
     fn pair_result(&self, pair: &RegionCarrierPair) -> ExactCurveResult<RegionPairResult> {
         let first = &self.data.carriers[pair.first_carrier_index];
         let second = &self.data.carriers[pair.second_carrier_index];
@@ -4021,6 +4071,25 @@ impl<'a> CurveRegionBooleanContext<'a> {
                         } else {
                             first_at_start
                         });
+                    }
+                    if certified_chord_endpoint_incidence.is_none()
+                        && let Classification::Decided(Some(contact)) = self
+                            .certified_cusp_chord_endpoint_contact(cusp, chord)
+                            .map_err(|cause| self.invalid(chord_index, cause))?
+                    {
+                        #[cfg(feature = "dispatch-trace")]
+                        hyperreal::dispatch_trace::record(
+                            "hypercurve",
+                            "algebraic-circle-chord-pair",
+                            "retained-nonadjacent-endpoint-tangent",
+                        );
+                        return self.retained_cusp_chord_pair_result(
+                            cusp,
+                            chord,
+                            chord_index,
+                            *cusp_is_first,
+                            vec![contact],
+                        );
                     }
                     // Refined bounds are only a rejection accelerator. Keep
                     // their proof budget small and fall through to the exact
