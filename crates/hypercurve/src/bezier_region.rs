@@ -7495,22 +7495,42 @@ fn append_selected_chord_pair_round_join(
             .certified_axis_direction()
             .map(BezierAlgebraicChordAxisDirection2::unit_tangent)
     });
-    let selected = if let Some((tangent_x, tangent_y)) = represented_unit_tangent.as_ref() {
-        crate::bezier_offset::BezierAlgebraicCuspSemicircle2::from_retained_center_and_certified_unit_normal(
-            &previous.source_end,
-            (-tangent_y.clone(), tangent_x.clone()),
-            distance.clone(),
-            clockwise,
-            policy,
-        )?
-    } else {
+    let chord_frame = || {
         crate::bezier_offset::BezierAlgebraicCuspSemicircle2::from_retained_center_and_chord_normal(
             previous.source_end.clone(),
             anchor.clone(),
             distance.clone(),
             clockwise,
             policy,
-        )?
+        )
+    };
+    let (selected, represented_frame) = if let Some((tangent_x, tangent_y)) =
+        represented_unit_tangent.as_ref()
+    {
+        let represented = crate::bezier_offset::BezierAlgebraicCuspSemicircle2::from_retained_center_and_certified_unit_normal(
+            &previous.source_end,
+            (-tangent_y.clone(), tangent_x.clone()),
+            distance.clone(),
+            clockwise,
+            policy,
+        )?;
+        match represented {
+            Classification::Uncertain(UncertaintyReason::Unsupported) => {
+                // A represented circle frame owns one algebraic center field.
+                // Exact and other retained centers instead share the anchor's
+                // general chord-normal frame without projecting coordinates.
+                #[cfg(feature = "dispatch-trace")]
+                hyperreal::dispatch_trace::record(
+                    "hypercurve",
+                    "curve-region-exact-offset-join",
+                    "selected-chord-pair-round-chord-frame-fallback",
+                );
+                (chord_frame()?, false)
+            }
+            represented => (represented, true),
+        }
+    } else {
+        (chord_frame()?, false)
     };
     let semicircle = match selected {
         Classification::Decided(Some(semicircle)) => semicircle,
@@ -7519,8 +7539,8 @@ fn append_selected_chord_pair_round_join(
     };
     let end = match sweep_kind {
         crate::arc_bezier::ArcSweepKind::Minor => {
-            let selected = match represented_unit_tangent {
-                Some(anchor_tangent) => semicircle
+            let selected = match (represented_frame, represented_unit_tangent) {
+                (true, Some(anchor_tangent)) => semicircle
                     .certified_selected_chord_normal_contact_parameter(
                         anchor_tangent,
                         chord.clone(),
@@ -7528,13 +7548,14 @@ fn append_selected_chord_pair_round_join(
                         distance.clone(),
                         policy,
                     )?,
-                None => semicircle.certified_selected_chord_pair_normal_contact_parameter(
+                (false, _) => semicircle.certified_selected_chord_pair_normal_contact_parameter(
                     anchor,
                     chord.clone(),
                     next.offset_start.clone(),
                     distance.clone(),
                     policy,
                 )?,
+                (true, None) => unreachable!("a represented frame has a represented tangent"),
             };
             match selected {
                 Classification::Decided(parameter) => parameter,

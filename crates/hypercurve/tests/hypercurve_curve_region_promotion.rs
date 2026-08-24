@@ -5222,10 +5222,38 @@ fn algebraic_chords_survive_nonsingular_exact_affine_transforms() {
                 Classification::Decided(expected),
             );
         }
-        let rounded = transformed
-            .value
-            .offset(distance.clone(), &OffsetCornerStyle2::Round, &policy)
-            .expect("the transformed cardinal proof must remain usable by exact offsets");
+        #[cfg(feature = "dispatch-trace")]
+        hyperreal::dispatch_trace::reset();
+        let offset = || {
+            transformed
+                .value
+                .offset(distance.clone(), &OffsetCornerStyle2::Round, &policy)
+        };
+        #[cfg(feature = "dispatch-trace")]
+        let rounded = hyperreal::dispatch_trace::with_recording(offset);
+        #[cfg(not(feature = "dispatch-trace"))]
+        let rounded = offset();
+        #[cfg(feature = "dispatch-trace")]
+        let trace = hyperreal::dispatch_trace::take_trace();
+        let rounded = rounded.unwrap_or_else(|error| {
+            #[cfg(feature = "dispatch-trace")]
+            panic!(
+                "the transformed cardinal proof must remain usable by exact offsets under {policy:?}: {error:?}; {trace:?}"
+            );
+            #[cfg(not(feature = "dispatch-trace"))]
+            panic!(
+                "the transformed cardinal proof must remain usable by exact offsets under {policy:?}: {error:?}"
+            );
+        });
+        #[cfg(feature = "dispatch-trace")]
+        assert!(
+            trace.path_count(
+                "hypercurve",
+                "curve-region-exact-offset-join",
+                "selected-chord-pair-round-chord-frame-fallback",
+            ) > 0,
+            "the exact-center chord join must exercise its retained chord-frame fallback: {trace:?}",
+        );
         assert_eq!(rounded.certainty, CurveCertainty::Certified);
         assert_eq!(
             certified(
