@@ -6369,6 +6369,12 @@ fn all_family_nesting_rejects_crossing_loops_before_role_assignment() {
                 .into_value(),
             Classification::Uncertain(UncertaintyReason::Boundary),
         );
+        let roles = raw.loop_roles(&policy).unwrap();
+        assert_eq!(roles.certainty, CurveCertainty::Certified);
+        assert_eq!(
+            roles.into_value(),
+            Classification::Uncertain(UncertaintyReason::Boundary),
+        );
     }
 }
 

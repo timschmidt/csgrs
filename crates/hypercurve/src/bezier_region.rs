@@ -572,54 +572,10 @@ impl<'a> CurveRegionProfile2<'a> {
     }
 }
 
-/// Exact role assignment for retained line-image Bezier boundary loops.
-///
-/// This evidence is intentionally narrower than arbitrary retained Bezier role
-/// assignment.  It accepts materialized Bezier/conic fragments only through a
-/// certified exact line-image fit, accepts algebraic endpoint-image fragments
-/// only when they provide exact endpoint witnesses, lowers those loops to
-/// native [`Contour2`] line loops, and then runs exact nesting.  This follows
-/// the exact-geometric-computation boundary: unsupported curve families
-/// remain explicit evidence gaps rather than being sampled into polygon
-/// surrogates.  The source counters retain whether role assignment consumed
-/// native fit certificates or algebraic endpoint evidence.  The containment
-/// step uses boundary-first point-in-contour classification as surveyed by
-/// boundary-first winding classification.
-#[derive(Clone, Debug, PartialEq)]
-pub struct CurveRegionLineRoleEvidence2 {
-    roles: Vec<CurveRegionLoopRole>,
-    nesting_depths: Vec<usize>,
-    materialized_fragment_count: usize,
-    algebraic_fragment_count: usize,
-    contours: Vec<Contour2>,
-    loop_arrangement_sources: Option<Vec<Option<Vec<CurveRegionFragmentSource2>>>>,
-}
-
-/// Exact orientation-derived role assignment for native retained Bezier loops.
-///
-/// This evidence is broader than [`CurveRegionLineRoleEvidence2`]: it
-/// accepts native polynomial Bezier and rational quadratic conic loops whenever
-/// their exact Green-integral signed area is implemented and nonzero.  It is
-/// intentionally narrower than full curved-loop nesting: it assigns roles from
-/// the authored loop orientation only, returns the signed areas as evidence,
-/// and rejects algebraic, unresolved, zero-area, or unsupported-area loops.
-/// That keeps the construction/decision boundary explicit in the exactness model's sense; see
-/// exact-computation discipline.  The signed-area evidence comes from Green's theorem
-/// and Bernstein/rational Bezier identities as described by the Bernstein and de Casteljau curve model.
-#[derive(Clone, Debug, PartialEq)]
-pub struct CurveRegionSignedAreaRoleEvidence2 {
-    roles: Vec<CurveRegionLoopRole>,
-    signed_areas: Vec<Real>,
-    loop_fragment_counts: Option<Vec<usize>>,
-    loop_arrangement_sources: Option<Vec<Option<Vec<CurveRegionFragmentSource2>>>>,
-}
-
 /// Exact nesting-derived role assignment for native retained curved loops.
 ///
-/// Unlike [`CurveRegionLineRoleEvidence2`], this evidence does not lower
-/// nonlinear loops to line contours. Unlike
-/// [`CurveRegionSignedAreaRoleEvidence2`], it does not trust authored
-/// orientation to distinguish material from holes. It chooses an exact
+/// This evidence never trusts authored orientation to distinguish material
+/// from holes. It chooses an exact
 /// representative point on each candidate loop and classifies it against every
 /// other native Bezier/conic loop by counting certified ray crossings. Boundary
 /// hits, tangent-only ray contacts, algebraic carriers, unresolved line-contact
@@ -635,190 +591,6 @@ pub struct CurveRegionNestingRoleEvidence2 {
     sample_points: Vec<Point2>,
     loop_fragment_counts: Option<Vec<usize>>,
     loop_arrangement_sources: Option<Vec<Option<Vec<CurveRegionFragmentSource2>>>>,
-}
-
-impl CurveRegionLineRoleEvidence2 {
-    /// Constructs a retained line-image role evidence.
-    pub fn new(
-        roles: Vec<CurveRegionLoopRole>,
-        nesting_depths: Vec<usize>,
-        materialized_fragment_count: usize,
-        algebraic_fragment_count: usize,
-        contours: Vec<Contour2>,
-    ) -> CurveResult<Self> {
-        validate_evidence_length(roles.len(), "nesting depth", nesting_depths.len())?;
-        validate_evidence_length(roles.len(), "line contour", contours.len())?;
-        validate_nesting_depth_roles(&roles, &nesting_depths)?;
-        validate_line_role_evidence_fragment_counts(
-            materialized_fragment_count,
-            algebraic_fragment_count,
-            &contours,
-        )?;
-        Ok(Self {
-            roles,
-            nesting_depths,
-            materialized_fragment_count,
-            algebraic_fragment_count,
-            contours,
-            loop_arrangement_sources: None,
-        })
-    }
-
-    /// Attaches one optional arrangement source trail per retained loop.
-    pub fn with_loop_arrangement_sources(
-        mut self,
-        loop_arrangement_sources: Vec<Option<Vec<CurveRegionFragmentSource2>>>,
-    ) -> CurveResult<Self> {
-        validate_loop_arrangement_sources(self.roles.len(), &loop_arrangement_sources)?;
-        validate_line_loop_arrangement_source_counts(&self.contours, &loop_arrangement_sources)?;
-        self.loop_arrangement_sources = Some(loop_arrangement_sources);
-        Ok(self)
-    }
-
-    /// Returns one assigned role per retained boundary loop.
-    pub fn roles(&self) -> &[CurveRegionLoopRole] {
-        &self.roles
-    }
-
-    /// Returns the certified count of containing loops for each retained loop.
-    pub fn nesting_depths(&self) -> &[usize] {
-        &self.nesting_depths
-    }
-
-    /// Returns how many materialized fragments contributed certified line-image fits.
-    pub const fn materialized_fragment_count(&self) -> usize {
-        self.materialized_fragment_count
-    }
-
-    /// Returns how many algebraic endpoint-image fragments contributed exact endpoints.
-    pub const fn algebraic_fragment_count(&self) -> usize {
-        self.algebraic_fragment_count
-    }
-
-    /// Returns true when algebraic endpoint evidence contributed to the line contours.
-    pub const fn has_algebraic_fragments(&self) -> bool {
-        self.algebraic_fragment_count > 0
-    }
-
-    /// Returns exact native line contours used for role assignment.
-    pub fn contours(&self) -> &[Contour2] {
-        &self.contours
-    }
-
-    /// Returns per-loop arrangement/source provenance when the evidence has it.
-    pub fn loop_arrangement_sources(&self) -> Option<&[Option<Vec<CurveRegionFragmentSource2>>]> {
-        self.loop_arrangement_sources.as_deref()
-    }
-
-    /// Returns loop indices assigned as material.
-    pub fn material_loop_indices(&self) -> Vec<usize> {
-        self.roles
-            .iter()
-            .enumerate()
-            .filter_map(|(index, role)| (*role == CurveRegionLoopRole::Material).then_some(index))
-            .collect()
-    }
-
-    /// Returns loop indices assigned as holes.
-    pub fn hole_loop_indices(&self) -> Vec<usize> {
-        self.roles
-            .iter()
-            .enumerate()
-            .filter_map(|(index, role)| (*role == CurveRegionLoopRole::Hole).then_some(index))
-            .collect()
-    }
-
-    /// Builds the unified owned region represented by this exact role evidence.
-    pub fn try_to_curve_region(
-        &self,
-        policy: &CurveContext,
-    ) -> ExactCurveResult<CurveOutcome<CurveRegion2>> {
-        let mut material = Vec::new();
-        let mut holes = Vec::new();
-        for (contour, role) in self
-            .contours
-            .iter()
-            .cloned()
-            .zip(self.roles.iter().copied())
-        {
-            match role {
-                CurveRegionLoopRole::Material => material.push(contour),
-                CurveRegionLoopRole::Hole => holes.push(contour),
-            }
-        }
-        CurveRegion2::try_from_native_contours(material, holes, policy)
-    }
-}
-
-impl CurveRegionSignedAreaRoleEvidence2 {
-    /// Constructs a retained signed-area role evidence.
-    pub fn new(
-        roles: Vec<CurveRegionLoopRole>,
-        signed_areas: Vec<Real>,
-        policy: &CurveContext,
-    ) -> CurveResult<Self> {
-        validate_evidence_length(roles.len(), "signed area", signed_areas.len())?;
-        validate_signed_area_roles(&roles, &signed_areas, policy)?;
-        Ok(Self {
-            roles,
-            signed_areas,
-            loop_fragment_counts: None,
-            loop_arrangement_sources: None,
-        })
-    }
-
-    fn with_loop_fragment_counts(mut self, loop_fragment_counts: Vec<usize>) -> CurveResult<Self> {
-        validate_loop_fragment_counts(self.roles.len(), &loop_fragment_counts)?;
-        self.loop_fragment_counts = Some(loop_fragment_counts);
-        Ok(self)
-    }
-
-    /// Attaches one optional arrangement source trail per retained loop.
-    pub fn with_loop_arrangement_sources(
-        mut self,
-        loop_arrangement_sources: Vec<Option<Vec<CurveRegionFragmentSource2>>>,
-    ) -> CurveResult<Self> {
-        validate_loop_arrangement_sources(self.roles.len(), &loop_arrangement_sources)?;
-        validate_counted_loop_arrangement_source_counts(
-            self.loop_fragment_counts.as_deref(),
-            &loop_arrangement_sources,
-        )?;
-        self.loop_arrangement_sources = Some(loop_arrangement_sources);
-        Ok(self)
-    }
-
-    /// Returns one assigned role per retained boundary loop.
-    pub fn roles(&self) -> &[CurveRegionLoopRole] {
-        &self.roles
-    }
-
-    /// Returns exact signed areas used as orientation evidence.
-    pub fn signed_areas(&self) -> &[Real] {
-        &self.signed_areas
-    }
-
-    /// Returns per-loop arrangement/source provenance when the evidence has it.
-    pub fn loop_arrangement_sources(&self) -> Option<&[Option<Vec<CurveRegionFragmentSource2>>]> {
-        self.loop_arrangement_sources.as_deref()
-    }
-
-    /// Returns loop indices assigned as material.
-    pub fn material_loop_indices(&self) -> Vec<usize> {
-        self.roles
-            .iter()
-            .enumerate()
-            .filter_map(|(index, role)| (*role == CurveRegionLoopRole::Material).then_some(index))
-            .collect()
-    }
-
-    /// Returns loop indices assigned as holes.
-    pub fn hole_loop_indices(&self) -> Vec<usize> {
-        self.roles
-            .iter()
-            .enumerate()
-            .filter_map(|(index, role)| (*role == CurveRegionLoopRole::Hole).then_some(index))
-            .collect()
-    }
 }
 
 impl CurveRegionNestingRoleEvidence2 {
@@ -1361,7 +1133,8 @@ impl CurveRegionBoundaryLoop2 {
         })
     }
 
-    /// Returns exact signed area only for fully native loops with implemented integrals.
+    /// Returns exact signed area for implemented native integrals and certified
+    /// exact line-image fragments.
     pub fn signed_area(
         &self,
         policy: &CurveContext,
@@ -1390,28 +1163,26 @@ impl CurveRegionBoundaryLoop2 {
 
         let mut total = Real::zero();
         for fragment in &self.fragments {
-            if let BezierSplitFragment2::AlgebraicChord(chord) = fragment {
-                let Some(line) = chord.exact_line() else {
-                    return Ok(Classification::Decided(None));
-                };
-                total = &total
-                    + &crate::contour::line_signed_area_contribution(line.start(), line.end())?;
+            if let BezierSplitFragment2::Materialized { curve, .. } = fragment {
+                match curve.signed_area_contribution_with_cache(policy, rational_quadratic_cache)? {
+                    Classification::Decided(Some(contribution)) => {
+                        total = &total + &contribution;
+                    }
+                    Classification::Decided(None) => {
+                        return Ok(Classification::Decided(None));
+                    }
+                    Classification::Uncertain(reason) => {
+                        return Ok(Classification::Uncertain(reason));
+                    }
+                }
                 continue;
             }
-            let BezierSplitFragment2::Materialized { curve, .. } = fragment else {
-                return Ok(Classification::Decided(None));
+            let line = match retained_line_fragment_segment(fragment, policy)? {
+                Classification::Decided(line) => line,
+                Classification::Uncertain(_) => return Ok(Classification::Decided(None)),
             };
-            match curve.signed_area_contribution_with_cache(policy, rational_quadratic_cache)? {
-                Classification::Decided(Some(contribution)) => {
-                    total = &total + &contribution;
-                }
-                Classification::Decided(None) => {
-                    return Ok(Classification::Decided(None));
-                }
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            };
+            total =
+                &total + &crate::contour::line_signed_area_contribution(line.start(), line.end())?;
         }
         Ok(Classification::Decided(Some(total)))
     }
@@ -10950,16 +10721,16 @@ impl CurveRegion2 {
             Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
         }
 
-        match self.line_image_role_evidence_raw(policy)? {
-            Classification::Decided(evidence) => {
-                let mut areas = Vec::with_capacity(evidence.contours().len());
-                for contour in evidence.contours() {
+        match self.line_image_roles_and_contours_raw(policy)? {
+            Classification::Decided((roles, contours)) => {
+                let mut areas = Vec::with_capacity(contours.len());
+                for contour in &contours {
                     let Some(area) = contour.signed_area()? else {
                         return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
                     };
                     areas.push(area);
                 }
-                filled_sides_from_roles_and_areas(evidence.roles(), &areas, policy)
+                filled_sides_from_roles_and_areas(&roles, &areas, policy)
                     .map(|sides| Classification::Decided(Arc::from(sides)))
             }
             Classification::Uncertain(reason) => Ok(Classification::Uncertain(reason)),
@@ -11119,7 +10890,8 @@ impl CurveRegion2 {
         })
     }
 
-    /// Assigns material/hole roles for retained loops that are exact line images.
+    /// Lowers retained exact line images and assigns roles through the
+    /// authoritative all-family nesting kernel.
     ///
     /// Every retained fragment must either be a materialized polynomial Bezier
     /// that is exactly a degree elevation of its endpoint line segment, or an
@@ -11131,28 +10903,17 @@ impl CurveRegion2 {
     /// nonlinear Bezier arcs, algebraic endpoint-image carriers without exact
     /// rational endpoints, unresolved fragments, boundary-touching loops, and
     /// uncertain predicate signs.
-    pub fn line_image_role_evidence(
+    fn line_image_roles_and_contours_raw(
         &self,
         policy: &CurveContext,
-    ) -> CurveResult<CurveOutcome<Classification<CurveRegionLineRoleEvidence2>>> {
-        resolve_certified_operation(policy, |attempt| self.line_image_role_evidence_raw(attempt))
-    }
-
-    pub(crate) fn line_image_role_evidence_raw(
-        &self,
-        policy: &CurveContext,
-    ) -> CurveResult<Classification<CurveRegionLineRoleEvidence2>> {
+    ) -> CurveResult<Classification<(Vec<CurveRegionLoopRole>, Vec<Contour2>)>> {
         let mut contours = Vec::with_capacity(self.data.boundary_loops.len());
-        let mut materialized_fragment_count = 0_usize;
-        let mut algebraic_fragment_count = 0_usize;
         for boundary_loop in &self.data.boundary_loops {
-            let line_loop = match retained_line_loop_to_contour(boundary_loop, policy)? {
-                Classification::Decided(line_loop) => line_loop,
+            let contour = match retained_line_loop_to_contour(boundary_loop, policy)? {
+                Classification::Decided(contour) => contour,
                 Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
             };
-            materialized_fragment_count += line_loop.materialized_fragment_count;
-            algebraic_fragment_count += line_loop.algebraic_fragment_count;
-            contours.push(line_loop.contour);
+            contours.push(contour);
         }
 
         let nesting = match Self::native_boundary_contour_nesting_evidence_raw(&contours, policy) {
@@ -11165,74 +10926,7 @@ impl CurveRegion2 {
                 return Ok(Classification::Uncertain(blocker.reason()));
             }
         };
-        let CurveRegionNestingRoleEvidence2 {
-            roles,
-            nesting_depths,
-            ..
-        } = nesting;
-        let evidence = CurveRegionLineRoleEvidence2::new(
-            roles,
-            nesting_depths,
-            materialized_fragment_count,
-            algebraic_fragment_count,
-            contours,
-        )?
-        .with_loop_arrangement_sources(retained_loop_arrangement_sources(
-            &self.data.boundary_loops,
-        ))?;
-        Ok(Classification::Decided(evidence))
-    }
-
-    /// Assigns material/hole roles from exact native loop signed-area orientation.
-    ///
-    /// A negative signed area is treated as a material loop and a positive
-    /// signed area as a hole loop, matching the unified region boundary
-    /// convention used by [`CurveRegion2::signed_area`].  This method is a
-    /// evidence-bearing orientation adapter: it does not infer nesting and it
-    /// does not sample nonlinear loops.  Use [`Self::line_image_role_evidence`]
-    /// when exact line-image nesting is required.
-    pub fn signed_area_role_evidence(
-        &self,
-        policy: &CurveContext,
-    ) -> CurveResult<CurveOutcome<Classification<CurveRegionSignedAreaRoleEvidence2>>> {
-        resolve_certified_operation(policy, |attempt| {
-            self.signed_area_role_evidence_raw(attempt)
-        })
-    }
-
-    pub(crate) fn signed_area_role_evidence_raw(
-        &self,
-        policy: &CurveContext,
-    ) -> CurveResult<Classification<CurveRegionSignedAreaRoleEvidence2>> {
-        let mut roles = Vec::with_capacity(self.data.boundary_loops.len());
-        let mut signed_areas = Vec::with_capacity(self.data.boundary_loops.len());
-        for boundary_loop in &self.data.boundary_loops {
-            let area = match boundary_loop.signed_area_raw(policy)? {
-                Classification::Decided(Some(area)) => area,
-                Classification::Decided(None) => {
-                    return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
-                }
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            };
-            let role = match real_sign(&area, policy) {
-                Some(RealSign::Negative) => CurveRegionLoopRole::Material,
-                Some(RealSign::Positive) => CurveRegionLoopRole::Hole,
-                Some(RealSign::Zero) => {
-                    return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
-                }
-                None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
-            };
-            roles.push(role);
-            signed_areas.push(area);
-        }
-        let evidence = CurveRegionSignedAreaRoleEvidence2::new(roles, signed_areas, policy)?
-            .with_loop_fragment_counts(retained_loop_fragment_counts(&self.data.boundary_loops))?
-            .with_loop_arrangement_sources(retained_loop_arrangement_sources(
-                &self.data.boundary_loops,
-            ))?;
-        Ok(Classification::Decided(evidence))
+        Ok(Classification::Decided((nesting.roles, contours)))
     }
 
     /// Assigns material/hole roles by exact curved-loop nesting.
@@ -11407,9 +11101,10 @@ impl CurveRegion2 {
 
     /// Returns one exact material/hole role per retained loop.
     ///
-    /// The strongest curved nesting classifier is preferred. Exact signed-area
-    /// orientation and line-image nesting are retained fallbacks for carrier
-    /// subsets that do not support the full curved evidence.
+    /// Native curves enter the all-family nesting classifier directly. Exact
+    /// retained line images first lower to native line contours and then enter
+    /// that same authority. Any other unsupported carrier remains explicit
+    /// uncertainty; authored orientation never overrides a topology blocker.
     pub fn loop_roles(
         &self,
         policy: &CurveContext,
@@ -11440,18 +11135,13 @@ impl CurveRegion2 {
             Classification::Decided(evidence) => {
                 return Ok(Classification::Decided(evidence.roles().to_vec()));
             }
-            Classification::Uncertain(_) => {}
-        }
-        match self.signed_area_role_evidence_raw(policy)? {
-            Classification::Decided(evidence) => {
-                return Ok(Classification::Decided(evidence.roles().to_vec()));
+            Classification::Uncertain(UncertaintyReason::Unsupported) => {}
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
             }
-            Classification::Uncertain(_) => {}
         }
-        match self.line_image_role_evidence_raw(policy)? {
-            Classification::Decided(evidence) => {
-                Ok(Classification::Decided(evidence.roles().to_vec()))
-            }
+        match self.line_image_roles_and_contours_raw(policy)? {
+            Classification::Decided((roles, _)) => Ok(Classification::Decided(roles)),
             Classification::Uncertain(reason) => Ok(Classification::Uncertain(reason)),
         }
     }
@@ -11787,9 +11477,9 @@ impl CurveRegion2 {
                         Classification::Uncertain(reason) => Ok(Classification::Uncertain(reason)),
                     }
                 } else {
-                    match self.line_image_role_evidence_raw(attempt)? {
-                        Classification::Decided(evidence) => {
-                            let region = self.region_from_line_role_evidence(&evidence)?;
+                    match self.line_image_roles_and_contours_raw(attempt)? {
+                        Classification::Decided((roles, contours)) => {
+                            let region = self.region_from_line_contours(&contours, &roles)?;
                             Ok(Classification::Decided(Some(region)))
                         }
                         Classification::Uncertain(UncertaintyReason::Unsupported) => {
@@ -16213,18 +15903,6 @@ impl CurveRegion2 {
             .map_err(|error| error.with_operation(CurveOperation2::Offset))
     }
 
-    fn region_from_line_role_evidence(
-        &self,
-        evidence: &CurveRegionLineRoleEvidence2,
-    ) -> CurveResult<LineArcRegion2> {
-        let roles = self
-            .data
-            .certified_loop_roles
-            .as_deref()
-            .unwrap_or_else(|| evidence.roles());
-        self.region_from_line_contours(evidence.contours(), roles)
-    }
-
     fn certified_line_image_region(
         &self,
         policy: &CurveContext,
@@ -16235,7 +15913,7 @@ impl CurveRegion2 {
         let mut contours = Vec::with_capacity(self.data.boundary_loops.len());
         for boundary_loop in &self.data.boundary_loops {
             match retained_line_loop_to_contour(boundary_loop, policy)? {
-                Classification::Decided(line_loop) => contours.push(line_loop.contour),
+                Classification::Decided(contour) => contours.push(contour),
                 Classification::Uncertain(reason) => {
                     return Ok(Classification::Uncertain(reason));
                 }
@@ -17278,13 +16956,12 @@ fn represented_boundary_loop_is_simple(
                 }
                 curves.push(Curve2::from(curve.clone()));
             }
-            BezierSplitFragment2::AlgebraicChord(chord) => {
-                let Some(line) = chord.exact_line() else {
+            _ => match retained_line_fragment_segment(fragment, policy)? {
+                Classification::Decided(line) => curves.push(Curve2::from(line)),
+                Classification::Uncertain(_) => {
                     return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
-                };
-                curves.push(Curve2::from(line));
-            }
-            _ => return Ok(Classification::Uncertain(UncertaintyReason::Unsupported)),
+                }
+            },
         }
     }
     let path = match CurvePath2::try_new_raw(curves, policy) {
@@ -17652,12 +17329,6 @@ fn affine_region_point(
     )
 }
 
-struct RetainedLineLoopContour {
-    contour: Contour2,
-    materialized_fragment_count: usize,
-    algebraic_fragment_count: usize,
-}
-
 fn retained_loop_arrangement_sources(
     boundary_loops: &[CurveRegionBoundaryLoop2],
 ) -> Vec<Option<Vec<CurveRegionFragmentSource2>>> {
@@ -17821,32 +17492,6 @@ fn validate_nesting_depth_roles(
     Ok(())
 }
 
-fn validate_signed_area_roles(
-    roles: &[CurveRegionLoopRole],
-    signed_areas: &[Real],
-    policy: &CurveContext,
-) -> CurveResult<()> {
-    for (role, signed_area) in roles.iter().zip(signed_areas) {
-        let expected = match real_sign(signed_area, policy) {
-            Some(RealSign::Negative) => CurveRegionLoopRole::Material,
-            Some(RealSign::Positive) => CurveRegionLoopRole::Hole,
-            Some(RealSign::Zero) | None => {
-                return Err(CurveError::Topology(
-                    "retained signed-area role evidence must carry certified nonzero area evidence"
-                        .into(),
-                ));
-            }
-        };
-        if *role != expected {
-            return Err(CurveError::Topology(
-                "retained signed-area role evidence role does not match signed-area evidence"
-                    .into(),
-            ));
-        }
-    }
-    Ok(())
-}
-
 fn validate_nonzero_signed_area_evidence(
     signed_areas: &[Real],
     policy: &CurveContext,
@@ -17865,59 +17510,11 @@ fn validate_nonzero_signed_area_evidence(
     Ok(())
 }
 
-fn validate_line_role_evidence_fragment_counts(
-    materialized_fragment_count: usize,
-    algebraic_fragment_count: usize,
-    contours: &[Contour2],
-) -> CurveResult<()> {
-    let source_fragment_count = materialized_fragment_count
-        .checked_add(algebraic_fragment_count)
-        .ok_or_else(|| {
-            CurveError::Topology(
-                "retained line role evidence source fragment count overflowed".into(),
-            )
-        })?;
-    let contour_fragment_count = contours
-        .iter()
-        .try_fold(0_usize, |count, contour| count.checked_add(contour.len()))
-        .ok_or_else(|| {
-            CurveError::Topology(
-                "retained line role evidence contour fragment count overflowed".into(),
-            )
-        })?;
-    if source_fragment_count != contour_fragment_count {
-        return Err(CurveError::Topology(
-            "retained line role evidence source fragment count does not match line contour evidence"
-                .into(),
-        ));
-    }
-    Ok(())
-}
-
-fn validate_line_loop_arrangement_source_counts(
-    contours: &[Contour2],
-    loop_arrangement_sources: &[Option<Vec<CurveRegionFragmentSource2>>],
-) -> CurveResult<()> {
-    for (contour, sources) in contours.iter().zip(loop_arrangement_sources) {
-        if let Some(sources) = sources
-            && sources.len() != contour.len()
-        {
-            return Err(CurveError::Topology(
-                "retained line role evidence loop source count does not match contour fragment count"
-                    .into(),
-            ));
-        }
-    }
-    Ok(())
-}
-
 fn retained_line_loop_to_contour(
     boundary_loop: &CurveRegionBoundaryLoop2,
     policy: &CurveContext,
-) -> CurveResult<Classification<RetainedLineLoopContour>> {
+) -> CurveResult<Classification<Contour2>> {
     let mut segments = Vec::with_capacity(boundary_loop.fragments().len());
-    let mut materialized_fragment_count = 0_usize;
-    let mut algebraic_fragment_count = 0_usize;
     let mut blocker = None;
     for fragment in boundary_loop.fragments() {
         let endpoints = match retained_line_fragment_endpoints(fragment, policy)? {
@@ -17930,34 +17527,13 @@ fn retained_line_loop_to_contour(
                 continue;
             }
         };
-        match endpoints.source {
-            RetainedLineFragmentSource::MaterializedFit => materialized_fragment_count += 1,
-            RetainedLineFragmentSource::AlgebraicEndpoints => algebraic_fragment_count += 1,
-        }
-        let (start, end) = endpoints.points;
+        let (start, end) = endpoints;
         segments.push(Segment2::Line(LineSeg2::try_new(start, end)?));
     }
     if let Some(reason) = blocker {
         return Ok(Classification::Uncertain(reason));
     }
-    Contour2::try_new(segments).map(|contour| {
-        Classification::Decided(RetainedLineLoopContour {
-            contour,
-            materialized_fragment_count,
-            algebraic_fragment_count,
-        })
-    })
-}
-
-struct RetainedLineFragmentEndpoints {
-    points: (Point2, Point2),
-    source: RetainedLineFragmentSource,
-}
-
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
-enum RetainedLineFragmentSource {
-    MaterializedFit,
-    AlgebraicEndpoints,
+    Contour2::try_new(segments).map(Classification::Decided)
 }
 
 /// Returns exact line-segment endpoints for a retained line-image fragment.
@@ -17975,7 +17551,7 @@ enum RetainedLineFragmentSource {
 fn retained_line_fragment_endpoints(
     fragment: &BezierSplitFragment2,
     policy: &CurveContext,
-) -> CurveResult<Classification<RetainedLineFragmentEndpoints>> {
+) -> CurveResult<Classification<(Point2, Point2)>> {
     match fragment {
         BezierSplitFragment2::Materialized { curve, .. } => {
             let fit = match subcurve_fit_exact_line_image(curve, policy)? {
@@ -17987,10 +17563,10 @@ fn retained_line_fragment_endpoints(
                     return Ok(Classification::Uncertain(reason));
                 }
             };
-            Ok(Classification::Decided(RetainedLineFragmentEndpoints {
-                points: (fit.line().start().clone(), fit.line().end().clone()),
-                source: RetainedLineFragmentSource::MaterializedFit,
-            }))
+            Ok(Classification::Decided((
+                fit.line().start().clone(),
+                fit.line().end().clone(),
+            )))
         }
         BezierSplitFragment2::AlgebraicEndpointImages {
             reversed,
@@ -18032,10 +17608,7 @@ fn retained_line_fragment_endpoints(
             } else {
                 (start, end)
             };
-            Ok(Classification::Decided(RetainedLineFragmentEndpoints {
-                points,
-                source: RetainedLineFragmentSource::AlgebraicEndpoints,
-            }))
+            Ok(Classification::Decided(points))
         }
         BezierSplitFragment2::AnalyticParallel(fragment) => {
             let relation = match fragment.parallel().source() {
@@ -18073,13 +17646,10 @@ fn retained_line_fragment_endpoints(
                     return Ok(Classification::Uncertain(reason));
                 }
             };
-            Ok(Classification::Decided(RetainedLineFragmentEndpoints {
-                points: if fragment.is_reversed() {
-                    (end, start)
-                } else {
-                    (start, end)
-                },
-                source: RetainedLineFragmentSource::AlgebraicEndpoints,
+            Ok(Classification::Decided(if fragment.is_reversed() {
+                (end, start)
+            } else {
+                (start, end)
             }))
         }
         BezierSplitFragment2::AlgebraicChord(chord) => {
@@ -18127,10 +17697,10 @@ fn retained_line_fragment_endpoints(
                 };
                 LineSeg2::try_new(start, end)?
             };
-            Ok(Classification::Decided(RetainedLineFragmentEndpoints {
-                points: (line.start().clone(), line.end().clone()),
-                source: RetainedLineFragmentSource::AlgebraicEndpoints,
-            }))
+            Ok(Classification::Decided((
+                line.start().clone(),
+                line.end().clone(),
+            )))
         }
         BezierSplitFragment2::AlgebraicCuspSemicircle(_) => {
             Ok(Classification::Uncertain(UncertaintyReason::Unsupported))
@@ -18146,7 +17716,7 @@ pub(crate) fn retained_line_fragment_segment(
     policy: &CurveContext,
 ) -> CurveResult<Classification<LineSeg2>> {
     let endpoints = match retained_line_fragment_endpoints(fragment, policy)? {
-        Classification::Decided(endpoints) => endpoints.points,
+        Classification::Decided(endpoints) => endpoints,
         Classification::Uncertain(reason) => {
             return Ok(Classification::Uncertain(reason));
         }

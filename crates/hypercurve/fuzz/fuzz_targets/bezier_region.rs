@@ -149,8 +149,7 @@ fuzz_target!(|data: &[u8]| {
             .into_value()
             .map(|region| {
                 let _ = region.signed_area(&policy);
-                let _ = region.line_image_role_evidence(&policy);
-                let _ = region.signed_area_role_evidence(&policy);
+                let _ = region.loop_roles(&policy);
                 let _ = region.curved_nesting_role_evidence(&policy);
                 let _ = BezierRetainedEndpointEnvelope2::from_region(&region, &policy);
                 let _ = BezierRetainedCurveEnvelope2::from_region(&region, &policy);
@@ -167,8 +166,7 @@ fuzz_target!(|data: &[u8]| {
             .into_value()
             .map(|region| {
                 let _ = region.signed_area(&policy);
-                let _ = region.line_image_role_evidence(&policy);
-                let _ = region.signed_area_role_evidence(&policy);
+                let _ = region.loop_roles(&policy);
                 let _ = region.curved_nesting_role_evidence(&policy);
                 let _ = BezierRetainedEndpointEnvelope2::from_region(&region, &policy);
                 let _ = BezierRetainedCurveEnvelope2::from_region(&region, &policy);
@@ -181,8 +179,7 @@ fuzz_target!(|data: &[u8]| {
                 .into_value()
                 .map(|region| {
                     let _ = region.signed_area(&policy);
-                    let _ = region.line_image_role_evidence(&policy);
-                    let _ = region.signed_area_role_evidence(&policy);
+                    let _ = region.loop_roles(&policy);
                     let _ = region.curved_nesting_role_evidence(&policy);
                     let _ = BezierRetainedEndpointEnvelope2::from_region(&region, &policy);
                     let _ = BezierRetainedCurveEnvelope2::from_region(&region, &policy);
@@ -240,7 +237,7 @@ fuzz_target!(|data: &[u8]| {
             CurveRegionBoundaryLoop2::new(inner, &policy),
         ) {
             if let Ok(region) = CurveRegion2::new(vec![outer, inner]) {
-                let _ = region.line_image_role_evidence(&policy);
+                let _ = region.loop_roles(&policy);
             }
         }
     }

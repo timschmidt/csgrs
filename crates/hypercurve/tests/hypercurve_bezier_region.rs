@@ -5,10 +5,9 @@ use hypercurve::{
     BezierRetainedEndpointEnvelope2, BezierRetainedEnvelopeSourceKind,
     BezierRetainedOverlapEvidence2, BezierSplitFragment2, BezierSubcurve2, Classification,
     CurveCertainty, CurveContext, CurveError, CurveOutcome, CurveRegion2, CurveRegionBoundaryLoop2,
-    CurveRegionFragmentSource2, CurveRegionLineRoleEvidence2, CurveRegionLoopRole,
-    CurveRegionNestingRoleEvidence2, CurveRegionSignedAreaRoleEvidence2, Point2, QuadraticBezier2,
-    RationalBezier2, RationalBezierIntersectionPointEvidence2, RationalQuadraticBezier2, Real,
-    RegionPointLocation, UncertaintyReason,
+    CurveRegionFragmentSource2, CurveRegionLoopRole, CurveRegionNestingRoleEvidence2, Point2,
+    QuadraticBezier2, RationalBezier2, RationalBezierIntersectionPointEvidence2,
+    RationalQuadraticBezier2, Real, RegionPointLocation, UncertaintyReason,
 };
 use proptest::prelude::*;
 
@@ -423,21 +422,12 @@ fn resolved_linear_overlap_traversal_materializes_unified_region() {
     let retained_sources = retained.boundary_loops()[0]
         .arrangement_sources()
         .expect("linear-overlap retained loop keeps graph sources");
-    let role_evidence = decided(retained.line_image_role_evidence(&policy()).unwrap());
+    let role_evidence = decided(retained.curved_nesting_role_evidence(&policy()).unwrap());
     let evidence_sources = role_evidence
         .loop_arrangement_sources()
-        .expect("line role evidence keeps loop sources");
+        .expect("authoritative nesting evidence keeps loop sources");
     assert_eq!(evidence_sources.len(), 1);
     assert_eq!(evidence_sources[0].as_deref(), Some(retained_sources));
-    let signed_evidence = decided(retained.signed_area_role_evidence(&policy()).unwrap());
-    let signed_evidence_sources = signed_evidence
-        .loop_arrangement_sources()
-        .expect("signed-area role evidence keeps counted loop sources");
-    assert_eq!(signed_evidence_sources.len(), 1);
-    assert_eq!(
-        signed_evidence_sources[0].as_deref(),
-        Some(retained_sources)
-    );
 }
 
 #[test]
@@ -531,60 +521,60 @@ fn reversed_internal_overlap_traversal_materializes_union_boundary() {
 }
 
 #[test]
-fn retained_line_image_role_evidence_assigns_nested_material_and_hole() {
+fn retained_exact_line_images_assign_nested_material_and_hole() {
     let outer = retained_line_loop(&[p(0, 0), p(6, 0), p(6, 6), p(0, 6)]);
     let same_orientation_inner = retained_line_loop(&[p(2, 2), p(4, 2), p(4, 4), p(2, 4)]);
     let retained = retained_region(vec![outer, same_orientation_inner]);
     assert!(retained.boundary_loops()[0].arrangement_sources().is_none());
 
-    let evidence = decided(retained.line_image_role_evidence(&policy()).unwrap());
-    let evidence_sources = evidence
-        .loop_arrangement_sources()
-        .expect("evidence records absence of graph provenance per loop");
-    assert_eq!(evidence_sources.len(), 2);
-    assert!(evidence_sources[0].is_none());
-    assert!(evidence_sources[1].is_none());
-
+    let roles = decided(retained.loop_roles(&policy()).unwrap());
     assert_eq!(
-        evidence.roles(),
-        &[CurveRegionLoopRole::Material, CurveRegionLoopRole::Hole]
+        roles,
+        vec![CurveRegionLoopRole::Material, CurveRegionLoopRole::Hole]
     );
-    assert_eq!(evidence.nesting_depths(), &[0, 1]);
-    assert_eq!(evidence.materialized_fragment_count(), 8);
-    assert_eq!(evidence.algebraic_fragment_count(), 0);
-    assert!(!evidence.has_algebraic_fragments());
-    assert_eq!(evidence.material_loop_indices(), vec![0]);
-    assert_eq!(evidence.hole_loop_indices(), vec![1]);
     assert_eq!(
-        evidence
-            .try_to_curve_region(&policy())
-            .unwrap()
-            .into_value()
-            .filled_area(&policy())
-            .unwrap()
-            .into_value(),
+        retained.filled_area(&policy()).unwrap().into_value(),
         Classification::Decided(Some(r(32)))
     );
 }
 
 #[test]
-fn retained_line_image_role_evidence_rejects_crossing_loops_under_both_policies() {
-    let first = retained_line_loop(&[p(0, 0), p(4, 0), p(4, 4), p(0, 4)]);
-    let second = retained_line_loop(&[p(2, -1), p(6, -1), p(6, 3), p(2, 3)]);
+fn retained_algebraic_line_images_reject_crossing_loops_under_both_policies() {
+    let exact_loop = |points: &[(Point2, Point2)]| {
+        retained_loop(
+            points
+                .iter()
+                .cloned()
+                .map(|(start, end)| retained_algebraic_endpoint_line_fragment(start, end))
+                .collect(),
+        )
+    };
+    let first = exact_loop(&[
+        (p(0, 0), p(4, 0)),
+        (p(4, 0), p(4, 4)),
+        (p(4, 4), p(0, 4)),
+        (p(0, 4), p(0, 0)),
+    ]);
+    let second = exact_loop(&[
+        (p(2, -1), p(6, -1)),
+        (p(6, -1), p(6, 3)),
+        (p(6, 3), p(2, 3)),
+        (p(2, 3), p(2, -1)),
+    ]);
     let retained = retained_region(vec![first, second]);
 
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
-        let evidence = retained.line_image_role_evidence(&policy).unwrap();
-        assert_eq!(evidence.certainty, CurveCertainty::Certified);
+        let roles = retained.loop_roles(&policy).unwrap();
+        assert_eq!(roles.certainty, CurveCertainty::Certified);
         assert_eq!(
-            evidence.into_value(),
+            roles.into_value(),
             Classification::Uncertain(UncertaintyReason::Boundary),
         );
     }
 }
 
 #[test]
-fn retained_role_evidence_constructors_reject_mismatched_evidence() {
+fn retained_nesting_evidence_constructor_rejects_mismatched_evidence() {
     let roles = vec![CurveRegionLoopRole::Material];
 
     assert_topology_error(CurveRegionBoundaryLoop2::try_new_with_arrangement_sources(
@@ -592,135 +582,6 @@ fn retained_role_evidence_constructors_reject_mismatched_evidence() {
         Vec::new(),
         &policy(),
     ));
-    assert_topology_error(CurveRegionLineRoleEvidence2::new(
-        roles.clone(),
-        Vec::new(),
-        0,
-        0,
-        Vec::new(),
-    ));
-    assert_topology_error(CurveRegionLineRoleEvidence2::new(
-        Vec::new(),
-        Vec::new(),
-        0,
-        0,
-        Vec::new(),
-    ));
-    let retained = retained_region(vec![retained_line_loop(&[
-        p(0, 0),
-        p(4, 0),
-        p(4, 4),
-        p(0, 4),
-    ])]);
-    let evidence = decided(retained.line_image_role_evidence(&policy()).unwrap());
-    assert_topology_error(CurveRegionLineRoleEvidence2::new(
-        vec![CurveRegionLoopRole::Hole],
-        vec![0],
-        evidence.materialized_fragment_count(),
-        evidence.algebraic_fragment_count(),
-        evidence.contours().to_vec(),
-    ));
-    assert_topology_error(CurveRegionLineRoleEvidence2::new(
-        evidence.roles().to_vec(),
-        evidence.nesting_depths().to_vec(),
-        0,
-        0,
-        evidence.contours().to_vec(),
-    ));
-    assert_topology_error(CurveRegionLineRoleEvidence2::new(
-        evidence.roles().to_vec(),
-        evidence.nesting_depths().to_vec(),
-        usize::MAX,
-        1,
-        evidence.contours().to_vec(),
-    ));
-    assert_topology_error(
-        CurveRegionLineRoleEvidence2::new(
-            evidence.roles().to_vec(),
-            evidence.nesting_depths().to_vec(),
-            evidence.materialized_fragment_count(),
-            evidence.algebraic_fragment_count(),
-            evidence.contours().to_vec(),
-        )
-        .unwrap()
-        .with_loop_arrangement_sources(vec![Some(vec![CurveRegionFragmentSource2::new(0, 0, 0)])]),
-    );
-    let two_loop_retained = retained_region(vec![
-        retained_line_loop(&[p(0, 0), p(6, 0), p(6, 6), p(0, 6)]),
-        retained_line_loop(&[p(2, 2), p(4, 2), p(4, 4), p(2, 4)]),
-    ]);
-    let two_loop_evidence = decided(
-        two_loop_retained
-            .line_image_role_evidence(&policy())
-            .unwrap(),
-    );
-    assert_topology_error(
-        CurveRegionLineRoleEvidence2::new(
-            two_loop_evidence.roles().to_vec(),
-            two_loop_evidence.nesting_depths().to_vec(),
-            two_loop_evidence.materialized_fragment_count(),
-            two_loop_evidence.algebraic_fragment_count(),
-            two_loop_evidence.contours().to_vec(),
-        )
-        .unwrap()
-        .with_loop_arrangement_sources(vec![
-            Some(vec![
-                CurveRegionFragmentSource2::new(0, 0, 0),
-                CurveRegionFragmentSource2::new(1, 0, 1),
-                CurveRegionFragmentSource2::new(2, 0, 2),
-                CurveRegionFragmentSource2::new(3, 0, 3),
-            ]),
-            Some(vec![
-                CurveRegionFragmentSource2::new(0, 1, 0),
-                CurveRegionFragmentSource2::new(4, 1, 1),
-                CurveRegionFragmentSource2::new(5, 1, 2),
-                CurveRegionFragmentSource2::new(6, 1, 3),
-            ]),
-        ]),
-    );
-    assert_topology_error(CurveRegionSignedAreaRoleEvidence2::new(
-        roles.clone(),
-        Vec::new(),
-        &policy(),
-    ));
-    assert_topology_error(CurveRegionSignedAreaRoleEvidence2::new(
-        Vec::new(),
-        Vec::new(),
-        &policy(),
-    ));
-    assert_topology_error(CurveRegionSignedAreaRoleEvidence2::new(
-        vec![CurveRegionLoopRole::Material],
-        vec![r(1)],
-        &policy(),
-    ));
-    assert_topology_error(CurveRegionSignedAreaRoleEvidence2::new(
-        vec![CurveRegionLoopRole::Hole],
-        vec![r(-1)],
-        &policy(),
-    ));
-    assert_topology_error(CurveRegionSignedAreaRoleEvidence2::new(
-        vec![CurveRegionLoopRole::Material],
-        vec![r(0)],
-        &policy(),
-    ));
-    assert_topology_error(
-        CurveRegionSignedAreaRoleEvidence2::new(
-            vec![CurveRegionLoopRole::Material],
-            vec![r(-1)],
-            &policy(),
-        )
-        .unwrap()
-        .with_loop_arrangement_sources(vec![Some(Vec::new())]),
-    );
-    assert_topology_error(
-        CurveRegionSignedAreaRoleEvidence2::new(
-            vec![CurveRegionLoopRole::Material],
-            vec![r(-1)],
-            &policy(),
-        )
-        .unwrap()
-        .with_loop_arrangement_sources(vec![Some(vec![CurveRegionFragmentSource2::new(0, 0, 0)])]),
-    );
     assert_topology_error(CurveRegionNestingRoleEvidence2::new(
         roles.clone(),
         vec![0],
@@ -933,7 +794,7 @@ fn retained_region_constructor_rejects_duplicate_boundary_loops() {
 }
 
 #[test]
-fn retained_line_image_role_evidence_accepts_exact_algebraic_endpoint_carriers() {
+fn retained_exact_algebraic_endpoint_line_images_assign_roles() {
     let outer = retained_loop(vec![
         retained_algebraic_endpoint_line_fragment(p(0, 0), p(6, 0)),
         retained_algebraic_endpoint_line_fragment(p(6, 0), p(6, 6)),
@@ -947,72 +808,56 @@ fn retained_line_image_role_evidence_accepts_exact_algebraic_endpoint_carriers()
         retained_algebraic_endpoint_line_fragment(p(2, 4), p(2, 2)),
     ]);
     let retained = retained_region(vec![outer, same_orientation_inner]);
-
-    let evidence = decided(retained.line_image_role_evidence(&policy()).unwrap());
-
-    assert_eq!(
-        evidence.roles(),
-        &[CurveRegionLoopRole::Material, CurveRegionLoopRole::Hole]
-    );
-    assert_eq!(evidence.nesting_depths(), &[0, 1]);
-    assert_eq!(evidence.materialized_fragment_count(), 0);
-    assert_eq!(evidence.algebraic_fragment_count(), 8);
-    assert!(evidence.has_algebraic_fragments());
-    assert_eq!(evidence.material_loop_indices(), vec![0]);
-    assert_eq!(evidence.hole_loop_indices(), vec![1]);
-    assert_eq!(
-        evidence
-            .try_to_curve_region(&policy())
-            .unwrap()
-            .into_value()
-            .filled_area(&policy())
-            .unwrap()
-            .into_value(),
-        Classification::Decided(Some(r(32)))
-    );
-    assert_eq!(
-        retained
-            .signed_area_role_evidence(&policy())
-            .unwrap()
-            .into_value(),
-        Classification::Uncertain(UncertaintyReason::Unsupported)
-    );
     let clone = retained.clone();
-    assert_eq!(
-        retained
-            .classify_point(&p(1, 1), &policy())
-            .unwrap()
-            .into_value(),
-        Classification::Decided(RegionPointLocation::Inside)
-    );
-    assert_eq!(
-        retained
-            .classify_point(&p(3, 3), &policy())
-            .unwrap()
-            .into_value(),
-        Classification::Decided(RegionPointLocation::Outside)
-    );
-    assert_eq!(
-        retained
-            .classify_point(&p(2, 3), &policy())
-            .unwrap()
-            .into_value(),
-        Classification::Decided(RegionPointLocation::Boundary)
-    );
-    assert_eq!(
-        retained
-            .classify_point(&p(7, 3), &policy())
-            .unwrap()
-            .into_value(),
-        Classification::Decided(RegionPointLocation::Outside)
-    );
-    assert_eq!(
-        clone
-            .classify_point(&p(3, 3), &policy())
-            .unwrap()
-            .into_value(),
-        Classification::Decided(RegionPointLocation::Outside)
-    );
+    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+        let roles = decided(retained.loop_roles(&policy).unwrap());
+        assert_eq!(
+            roles,
+            vec![CurveRegionLoopRole::Material, CurveRegionLoopRole::Hole]
+        );
+        let native = decided(retained.native_contours_fast_path(&policy).unwrap());
+        assert_eq!(native.material_contours().len(), 1);
+        assert_eq!(native.hole_contours().len(), 1);
+        assert_eq!(
+            retained.filled_area(&policy).unwrap().into_value(),
+            Classification::Decided(Some(r(32)))
+        );
+        assert_eq!(
+            retained
+                .classify_point(&p(1, 1), &policy)
+                .unwrap()
+                .into_value(),
+            Classification::Decided(RegionPointLocation::Inside)
+        );
+        assert_eq!(
+            retained
+                .classify_point(&p(3, 3), &policy)
+                .unwrap()
+                .into_value(),
+            Classification::Decided(RegionPointLocation::Outside)
+        );
+        assert_eq!(
+            retained
+                .classify_point(&p(2, 3), &policy)
+                .unwrap()
+                .into_value(),
+            Classification::Decided(RegionPointLocation::Boundary)
+        );
+        assert_eq!(
+            retained
+                .classify_point(&p(7, 3), &policy)
+                .unwrap()
+                .into_value(),
+            Classification::Decided(RegionPointLocation::Outside)
+        );
+        assert_eq!(
+            clone
+                .classify_point(&p(3, 3), &policy)
+                .unwrap()
+                .into_value(),
+            Classification::Decided(RegionPointLocation::Outside)
+        );
+    }
 }
 
 #[test]
@@ -1082,7 +927,7 @@ fn retained_nonlinear_algebraic_carriers_classify_without_materialization() {
 }
 
 #[test]
-fn retained_line_image_role_evidence_accepts_certified_nonlinear_line_image_loop() {
+fn retained_certified_nonlinear_line_image_uses_authoritative_roles() {
     let nonlinear_edge = BezierSplitFragment2::Materialized {
         start: exact(r(0)),
         end: exact(r(1)),
@@ -1123,21 +968,15 @@ fn retained_line_image_role_evidence_accepts_certified_nonlinear_line_image_loop
         },
     ])]);
 
-    let evidence = decided(retained.line_image_role_evidence(&policy()).unwrap());
-
-    assert_eq!(evidence.roles(), &[CurveRegionLoopRole::Material]);
-    assert_eq!(evidence.nesting_depths(), &[0]);
-    assert_eq!(evidence.materialized_fragment_count(), 4);
-    assert_eq!(evidence.algebraic_fragment_count(), 0);
-    assert!(!evidence.has_algebraic_fragments());
     assert_eq!(
-        evidence
-            .try_to_curve_region(&policy())
-            .unwrap()
-            .into_value()
-            .filled_area(&policy())
-            .unwrap()
-            .into_value(),
+        decided(retained.loop_roles(&policy()).unwrap()),
+        vec![CurveRegionLoopRole::Material]
+    );
+    let native = decided(retained.native_contours_fast_path(&policy()).unwrap());
+    assert_eq!(native.material_contours().len(), 1);
+    assert!(native.hole_contours().is_empty());
+    assert_eq!(
+        retained.filled_area(&policy()).unwrap().into_value(),
         Classification::Decided(Some(r(16)))
     );
 }
@@ -1207,47 +1046,10 @@ fn retained_quadratic_lens_loop(
 }
 
 #[test]
-fn retained_signed_area_role_evidence_accepts_nonlinear_bezier_loops() {
-    let material = retained_quadratic_lens_loop(0, 8, 4, true);
-    let hole = retained_quadratic_lens_loop(2, 6, 1, false);
-    let retained = retained_region(vec![material, hole]);
-
-    let evidence = decided(retained.signed_area_role_evidence(&policy()).unwrap());
-    let evidence_sources = evidence
-        .loop_arrangement_sources()
-        .expect("signed-area evidence records absence of graph provenance per loop");
-    assert_eq!(evidence_sources.len(), 2);
-    assert!(evidence_sources[0].is_none());
-    assert!(evidence_sources[1].is_none());
-
-    assert_eq!(
-        evidence.roles(),
-        &[CurveRegionLoopRole::Material, CurveRegionLoopRole::Hole]
-    );
-    assert_eq!(evidence.material_loop_indices(), vec![0]);
-    assert_eq!(evidence.hole_loop_indices(), vec![1]);
-    assert_eq!(evidence.signed_areas()[0], q(-64, 3));
-    assert_eq!(evidence.signed_areas()[1], q(8, 3));
-    assert_eq!(
-        retained
-            .line_image_role_evidence(&policy())
-            .unwrap()
-            .into_value(),
-        Classification::Uncertain(UncertaintyReason::Unsupported)
-    );
-}
-
-#[test]
 fn retained_curved_nesting_role_evidence_assigns_same_orientation_nonlinear_hole() {
     let material = retained_quadratic_lens_loop(0, 8, 4, true);
     let same_orientation_inner = retained_quadratic_lens_loop(2, 6, 1, true);
     let retained = retained_region(vec![material, same_orientation_inner]);
-
-    let signed_area = decided(retained.signed_area_role_evidence(&policy()).unwrap());
-    assert_eq!(
-        signed_area.roles(),
-        &[CurveRegionLoopRole::Material, CurveRegionLoopRole::Material]
-    );
 
     let nesting = decided(retained.curved_nesting_role_evidence(&policy()).unwrap());
     let nesting_sources = nesting
@@ -1266,55 +1068,6 @@ fn retained_curved_nesting_role_evidence_assigns_same_orientation_nonlinear_hole
     assert_eq!(nesting.material_loop_indices(), vec![0]);
     assert_eq!(nesting.hole_loop_indices(), vec![1]);
     assert_eq!(nesting.sample_points().len(), 2);
-    assert_eq!(
-        retained
-            .line_image_role_evidence(&policy())
-            .unwrap()
-            .into_value(),
-        Classification::Uncertain(UncertaintyReason::Unsupported)
-    );
-}
-
-#[test]
-fn retained_signed_area_role_evidence_rejects_zero_area_materialized_and_chord_loops() {
-    let zero = retained_region(vec![retained_loop(vec![
-        BezierSplitFragment2::Materialized {
-            start: exact(r(0)),
-            end: exact(r(1)),
-            curve: hypercurve::BezierSubcurve2::Quadratic(QuadraticBezier2::new(
-                p(0, 0),
-                p(1, 0),
-                p(2, 0),
-            )),
-        },
-        BezierSplitFragment2::Materialized {
-            start: exact(r(0)),
-            end: exact(r(1)),
-            curve: hypercurve::BezierSubcurve2::Quadratic(QuadraticBezier2::new(
-                p(2, 0),
-                p(1, 0),
-                p(0, 0),
-            )),
-        },
-    ])]);
-    assert_eq!(
-        zero.signed_area_role_evidence(&policy())
-            .unwrap()
-            .into_value(),
-        Classification::Uncertain(UncertaintyReason::Boundary)
-    );
-
-    let algebraic = retained_region(vec![retained_loop(vec![
-        retained_algebraic_line_fragment(p(0, 0), p(1, 0)),
-        retained_algebraic_line_fragment(p(1, 0), p(0, 0)),
-    ])]);
-    assert_eq!(
-        algebraic
-            .signed_area_role_evidence(&policy())
-            .unwrap()
-            .into_value(),
-        Classification::Uncertain(UncertaintyReason::Boundary)
-    );
 }
 
 #[test]
