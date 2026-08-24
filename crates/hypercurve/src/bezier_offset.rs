@@ -60613,6 +60613,14 @@ impl BezierAlgebraicChord2 {
         clip_to_finite_chord: bool,
         policy: &CurveContext,
     ) -> CurveResult<Classification<BezierAlgebraicChordParallelIntersections2>> {
+        // This compact carrier owns the complete affine support, but it does
+        // not retain both finite endpoint coordinates in the selected source
+        // field. Finite clipping belongs to the represented endpoint kernel;
+        // attempting it here reconstructs the analytic contact as a second
+        // Cartesian tensor and duplicates that authoritative finite engine.
+        if clip_to_finite_chord {
+            return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+        }
         let Some((direction_x, direction_y)) = self.certified_unit_tangent() else {
             return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
         };
@@ -60814,45 +60822,8 @@ impl BezierAlgebraicChord2 {
                     BezierAnalyticParallelPoint2::new(parallel.clone(), candidate.clone(), policy)
                 },
             );
-            let chord_parameter = if clip_to_finite_chord {
-                let finite = policy.strict_predicate_pass(|| {
-                    self.parameter_at_certified_point(point.clone(), policy)
-                })?;
-                match finite {
-                    Classification::Decided(Some(parameter)) => parameter,
-                    Classification::Decided(None) => continue,
-                    Classification::Uncertain(reason) => {
-                        let mut endpoint = None;
-                        let mut endpoint_reason = reason;
-                        for (at_end, authored) in [(false, self.start()), (true, self.end())] {
-                            match authored.same_point(&point, policy) {
-                                Classification::Decided(true) if endpoint.is_none() => {
-                                    endpoint = Some(if at_end {
-                                        self.end_parameter()
-                                    } else {
-                                        self.start_parameter()
-                                    });
-                                }
-                                Classification::Decided(true) => {
-                                    return Ok(Classification::Uncertain(
-                                        UncertaintyReason::Boundary,
-                                    ));
-                                }
-                                Classification::Decided(false) => {}
-                                Classification::Uncertain(next_reason) => {
-                                    endpoint_reason = next_reason;
-                                }
-                            }
-                        }
-                        let Some(parameter) = endpoint else {
-                            return Ok(Classification::Uncertain(endpoint_reason));
-                        };
-                        parameter
-                    }
-                }
-            } else {
-                self.parameter_at_certified_support_point(point.clone(), policy)?
-            };
+            let chord_parameter =
+                self.parameter_at_certified_support_point(point.clone(), policy)?;
             let source_cross = match signed_coefficients_at_parameter(
                 tangent_cross.clone(),
                 &candidate,
@@ -60973,49 +60944,81 @@ impl BezierAlgebraicChord2 {
         };
         let unit = [Real::one()];
         let weight = source.weight.unwrap_or(&unit);
-        let Some((source_incidence, normal_incidence, speed_squared, tangent_cross, tangent_dot)) =
-            (|| {
-                let reduce =
-                    |polynomial| dense_reduce_selected_root_relations(polynomial, &sources);
-                let source_x = axis(source.x_numerator)?;
-                let source_y = axis(source.y_numerator)?;
-                let weight = axis(weight)?;
-                let tangent_x = axis(tangent_x_coefficients)?;
-                let tangent_y = axis(tangent_y_coefficients)?;
-                let direction_x = reduce(end_x.subtract(&start_x)?)?;
-                let direction_y = reduce(end_y.subtract(&start_y)?)?;
-                let delta_x = reduce(source_x.subtract(&reduce(start_x.multiply(&weight)?)?)?)?;
-                let delta_y = reduce(source_y.subtract(&reduce(start_y.multiply(&weight)?)?)?)?;
-                let source_incidence = reduce(
-                    direction_x
-                        .multiply(&delta_y)?
-                        .subtract(&direction_y.multiply(&delta_x)?)?,
-                )?;
-                let tangent_dot = reduce(
-                    direction_x
-                        .multiply(&tangent_x)?
-                        .add(&direction_y.multiply(&tangent_y)?)?,
-                )?;
-                let normal_incidence =
-                    reduce(tangent_dot.multiply(&weight)?.scale(parallel.distance())?)?;
-                let speed_squared = reduce(
-                    tangent_x
-                        .multiply(&tangent_x)?
-                        .add(&tangent_y.multiply(&tangent_y)?)?,
-                )?;
-                let tangent_cross = reduce(
-                    direction_x
-                        .multiply(&tangent_y)?
-                        .subtract(&direction_y.multiply(&tangent_x)?)?,
-                )?;
-                Some((
-                    source_incidence,
-                    normal_incidence,
-                    speed_squared,
-                    tangent_cross,
-                    tangent_dot,
-                ))
-            })()
+        let Some((
+            source_incidence,
+            normal_incidence,
+            speed_squared,
+            tangent_cross,
+            tangent_dot,
+            coordinate_weight,
+            coordinate_differences,
+        )) = (|| {
+            let reduce = |polynomial| dense_reduce_selected_root_relations(polynomial, &sources);
+            let source_x = axis(source.x_numerator)?;
+            let source_y = axis(source.y_numerator)?;
+            let weight = axis(weight)?;
+            let tangent_x = axis(tangent_x_coefficients)?;
+            let tangent_y = axis(tangent_y_coefficients)?;
+            let direction_x = reduce(end_x.subtract(&start_x)?)?;
+            let direction_y = reduce(end_y.subtract(&start_y)?)?;
+            let delta_x = reduce(source_x.subtract(&reduce(start_x.multiply(&weight)?)?)?)?;
+            let delta_y = reduce(source_y.subtract(&reduce(start_y.multiply(&weight)?)?)?)?;
+            let source_incidence = reduce(
+                direction_x
+                    .multiply(&delta_y)?
+                    .subtract(&direction_y.multiply(&delta_x)?)?,
+            )?;
+            let tangent_dot = reduce(
+                direction_x
+                    .multiply(&tangent_x)?
+                    .add(&direction_y.multiply(&tangent_y)?)?,
+            )?;
+            let normal_incidence =
+                reduce(tangent_dot.multiply(&weight)?.scale(parallel.distance())?)?;
+            let speed_squared = reduce(
+                tangent_x
+                    .multiply(&tangent_x)?
+                    .add(&tangent_y.multiply(&tangent_y)?)?,
+            )?;
+            let tangent_cross = reduce(
+                direction_x
+                    .multiply(&tangent_y)?
+                    .subtract(&direction_y.multiply(&tangent_x)?)?,
+            )?;
+            let (coordinate_source, coordinate_frame, coordinate_start, coordinate_end) =
+                match self.data.parameter_axis.axis {
+                    Axis2::X => (
+                        &source_x,
+                        tangent_y.scale(&(-parallel.distance().clone()))?,
+                        &start_x,
+                        &end_x,
+                    ),
+                    Axis2::Y => (
+                        &source_y,
+                        tangent_x.scale(parallel.distance())?,
+                        &start_y,
+                        &end_y,
+                    ),
+                };
+            let coordinate_rational = reduce(coordinate_frame.multiply(&weight)?)?;
+            let coordinate_radical = |endpoint: &DenseTensorPolynomial| {
+                reduce(coordinate_source.subtract(&reduce(endpoint.multiply(&weight)?)?)?)
+            };
+            let start_difference = coordinate_radical(coordinate_start)?;
+            let end_difference = coordinate_radical(coordinate_end)?;
+            Some((
+                source_incidence,
+                normal_incidence,
+                speed_squared,
+                tangent_cross,
+                tangent_dot,
+                weight,
+                [
+                    (coordinate_rational.clone(), start_difference),
+                    (coordinate_rational, end_difference),
+                ],
+            ))
+        })()
         else {
             return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
         };
@@ -61083,40 +61086,53 @@ impl BezierAlgebraicChord2 {
                 },
             );
             let chord_parameter = if clip_to_finite_chord {
-                let finite_parameter = policy.strict_predicate_pass(|| {
-                    self.parameter_at_certified_point(point.clone(), policy)
-                })?;
-                match finite_parameter {
-                    Classification::Decided(Some(parameter)) => parameter,
-                    Classification::Decided(None) => continue,
-                    Classification::Uncertain(reason) => {
-                        let mut endpoint = None;
-                        let mut endpoint_reason = reason;
-                        for (at_end, authored) in [(false, self.start()), (true, self.end())] {
-                            match authored.same_point(&point, policy) {
-                                Classification::Decided(true) if endpoint.is_none() => {
-                                    endpoint = Some(if at_end {
-                                        self.end_parameter()
-                                    } else {
-                                        self.start_parameter()
-                                    });
-                                }
-                                Classification::Decided(true) => {
-                                    return Ok(Classification::Uncertain(
-                                        UncertaintyReason::Boundary,
-                                    ));
-                                }
-                                Classification::Decided(false) => {}
-                                Classification::Uncertain(next_reason) => {
-                                    endpoint_reason = next_reason;
-                                }
-                            }
-                        }
-                        let Some(parameter) = endpoint else {
-                            return Ok(Classification::Uncertain(endpoint_reason));
-                        };
-                        parameter
+                let weight_sign = match policy.strict_predicate_pass(|| {
+                    dense_polynomial_tuple_sign(&coordinate_weight, &selected, policy)
+                })? {
+                    Classification::Decided(sign @ (RealSign::Positive | RealSign::Negative)) => {
+                        sign
                     }
+                    Classification::Decided(RealSign::Zero) => {
+                        return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
+                    }
+                    Classification::Uncertain(reason) => {
+                        return Ok(Classification::Uncertain(reason));
+                    }
+                };
+                let mut coordinate_signs = [RealSign::Zero; 2];
+                for (sign, (rational, radical)) in coordinate_signs
+                    .iter_mut()
+                    .zip(coordinate_differences.iter())
+                {
+                    *sign = match policy.strict_predicate_pass(|| {
+                        dense_positive_square_root_sum_sign(
+                            rational,
+                            radical,
+                            &speed_squared,
+                            &selected,
+                            policy,
+                        )
+                    })? {
+                        Classification::Decided(sign) => product_sign(sign, weight_sign),
+                        Classification::Uncertain(reason) => {
+                            return Ok(Classification::Uncertain(reason));
+                        }
+                    };
+                }
+                if !self.data.parameter_axis.coordinate_increases {
+                    coordinate_signs =
+                        coordinate_signs.map(|sign| product_sign(sign, RealSign::Negative));
+                }
+                match coordinate_signs {
+                    [RealSign::Zero, RealSign::Zero] => {
+                        return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
+                    }
+                    [RealSign::Zero, _] => self.start_parameter(),
+                    [_, RealSign::Zero] => self.end_parameter(),
+                    [RealSign::Positive, RealSign::Negative] => {
+                        self.parameter_at_certified_interior_point(point.clone())
+                    }
+                    [RealSign::Negative, _] | [_, RealSign::Positive] => continue,
                 }
             } else {
                 self.parameter_at_certified_support_point(point.clone(), policy)?
@@ -61496,40 +61512,32 @@ impl BezierAlgebraicChord2 {
                 },
             );
             let chord_parameter = if clip_to_finite_chord {
+                if independent_parameter_map.is_none() {
+                    independent_parameter_map = Some(
+                        match self.independent_parallel_parameter_map(parallel, system, policy)? {
+                            Classification::Decided(map) => map,
+                            Classification::Uncertain(reason) => {
+                                return Ok(Classification::Uncertain(reason));
+                            }
+                        },
+                    );
+                }
                 let finite_parameter = policy.strict_predicate_pass(|| {
-                    self.parameter_at_certified_point(point.clone(), policy)
+                    self.parameter_at_independent_parallel_incidence_candidate(
+                        point.clone(),
+                        independent_parameter_map
+                            .as_ref()
+                            .expect("the independent parallel parameter map was initialized"),
+                        system,
+                        &candidate,
+                        policy,
+                    )
                 })?;
                 match finite_parameter {
                     Classification::Decided(Some(parameter)) => parameter,
                     Classification::Decided(None) => continue,
-                    Classification::Uncertain(_) => {
-                        if independent_parameter_map.is_none() {
-                            independent_parameter_map = Some(
-                                match self
-                                    .independent_parallel_parameter_map(parallel, system, policy)?
-                                {
-                                    Classification::Decided(map) => map,
-                                    Classification::Uncertain(reason) => {
-                                        return Ok(Classification::Uncertain(reason));
-                                    }
-                                },
-                            );
-                        }
-                        match self.parameter_at_independent_parallel_incidence_candidate(
-                            point.clone(),
-                            independent_parameter_map
-                                .as_ref()
-                                .expect("the independent parallel parameter map was initialized"),
-                            system,
-                            &candidate,
-                            policy,
-                        )? {
-                            Classification::Decided(Some(parameter)) => parameter,
-                            Classification::Decided(None) => continue,
-                            Classification::Uncertain(reason) => {
-                                return Ok(Classification::Uncertain(reason));
-                            }
-                        }
+                    Classification::Uncertain(reason) => {
+                        return Ok(Classification::Uncertain(reason));
                     }
                 }
             } else {
