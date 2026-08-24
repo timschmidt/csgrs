@@ -2644,11 +2644,41 @@ fn translated_algebraic_round_regions_boolean_through_cusp_chord_contacts() {
             .transform_similarity(&translation, &policy)
             .expect("translated selected round region must remain exact")
             .into_value();
-        let evidence = first
-            .intersect_region(&second, &policy)
+        #[cfg(feature = "dispatch-trace")]
+        hyperreal::dispatch_trace::reset();
+        let intersection_work = || first.intersect_region(&second, &policy);
+        #[cfg(feature = "dispatch-trace")]
+        let evidence = hyperreal::dispatch_trace::with_recording(intersection_work);
+        #[cfg(not(feature = "dispatch-trace"))]
+        let evidence = intersection_work();
+        #[cfg(feature = "dispatch-trace")]
+        let trace = hyperreal::dispatch_trace::take_trace();
+        #[cfg(feature = "dispatch-trace")]
+        let kernel_trace = trace
+            .dispatch
+            .iter()
+            .filter(|entry| entry.layer == "hypercurve")
+            .collect::<Vec<_>>();
+        let evidence = evidence
             .expect("translated round boundaries must intersect exactly")
             .into_value();
+        #[cfg(feature = "dispatch-trace")]
+        assert!(
+            evidence.is_complete(),
+            "translated round intersection blockers under {policy:?}: {:?}; trace: {kernel_trace:?}",
+            evidence.blockers(),
+        );
+        #[cfg(not(feature = "dispatch-trace"))]
         assert!(evidence.is_complete(), "{evidence:?}");
+        #[cfg(feature = "dispatch-trace")]
+        assert!(
+            trace.path_count(
+                "hypercurve",
+                "represented-circle-pair-translation",
+                "retained-similarity-point",
+            ) > 0,
+            "translated chord-normal circles must cancel their shared retained center before materialization: {trace:?}",
+        );
         assert!(!evidence.contacts().is_empty(), "{evidence:?}");
         assert!(
             evidence.contacts().iter().any(|contact| matches!(
@@ -2733,10 +2763,25 @@ fn rotated_algebraic_round_regions_boolean_through_oblique_three_field_contacts(
         let evidence = hyperreal::dispatch_trace::with_recording(intersection_work);
         #[cfg(not(feature = "dispatch-trace"))]
         let evidence = intersection_work();
+        #[cfg(feature = "dispatch-trace")]
+        let trace = hyperreal::dispatch_trace::take_trace();
+        #[cfg(feature = "dispatch-trace")]
+        let kernel_trace = trace
+            .dispatch
+            .iter()
+            .filter(|entry| entry.layer == "hypercurve")
+            .collect::<Vec<_>>();
         let evidence = evidence
             .expect("rotated round boundaries must intersect through the exact oblique kernel");
         assert_eq!(evidence.certainty, CurveCertainty::Certified);
         let evidence = evidence.into_value();
+        #[cfg(feature = "dispatch-trace")]
+        assert!(
+            evidence.is_complete(),
+            "rotated round intersection blockers under {policy:?}: {:?}; trace: {kernel_trace:?}",
+            evidence.blockers(),
+        );
+        #[cfg(not(feature = "dispatch-trace"))]
         assert!(evidence.is_complete(), "{evidence:?}");
         assert!(
             evidence.contacts().iter().any(|contact| {
@@ -2751,12 +2796,36 @@ fn rotated_algebraic_round_regions_boolean_through_oblique_three_field_contacts(
         );
         #[cfg(feature = "dispatch-trace")]
         {
-            let trace = hyperreal::dispatch_trace::take_trace();
+            assert!(
+                trace.path_count(
+                    "hypercurve",
+                    "represented-circle-pair-translation",
+                    "retained-similarity-point",
+                ) > 0,
+                "rotated chord-normal circles must retain their structural translation authority: {trace:?}",
+            );
+            assert!(
+                trace.path_count(
+                    "hypercurve",
+                    "algebraic-chord-side-kernel",
+                    "certified-tangent-represented-cold-fallback",
+                ) > 0,
+                "oblique offset chords must replay unresolved sides in one exact represented authority: {trace:?}",
+            );
+            assert_eq!(
+                trace.path_count(
+                    "hypercurve",
+                    "algebraic-chord-side-kernel",
+                    "approximate-512-terminal",
+                ),
+                0,
+                "the represented oblique side replay must decide exactly before any policy terminal",
+            );
             assert!(
                 trace.path_count(
                     "hypercurve",
                     "algebraic-circle-chord-kernel",
-                    "exact-support-replay",
+                    "recursive-projective-retained-chord",
                 ) > 0,
                 "the public rotated-region path must replay its certified oblique support exactly: {trace:?}",
             );
@@ -2793,7 +2862,7 @@ fn rotated_algebraic_round_regions_boolean_through_oblique_three_field_contacts(
                 trace.path_count(
                     "hypercurve",
                     "curve-region-exact-offset-span",
-                    "certified-oblique-algebraic-chord",
+                    "retained-oblique-algebraic-chord",
                 ) > 0,
                 "the reoffset must retain its oblique chord fast path: {trace:?}",
             );
@@ -2865,7 +2934,7 @@ fn cusp_chord_boolean_boundary_reoffsets_with_exact_bevels() {
                 trace.path_count(
                     "hypercurve",
                     "curve-region-exact-offset-span",
-                    "axis-algebraic-chord",
+                    "retained-oblique-algebraic-chord",
                 ) > 0,
                 "the cusp/chord re-offset must retain its exact chord spans: {trace:?}",
             );

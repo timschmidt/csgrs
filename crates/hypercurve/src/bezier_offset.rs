@@ -29031,11 +29031,104 @@ impl BezierAlgebraicCuspSemicircle2 {
         ))
     }
 
+    fn optional_similarity_components(similarity: Option<&Similarity2>) -> [Real; 6] {
+        match similarity {
+            Some(similarity) => {
+                let (a, b, d, e, x, y) = similarity.affine_components();
+                [
+                    a.clone(),
+                    b.clone(),
+                    d.clone(),
+                    e.clone(),
+                    x.clone(),
+                    y.clone(),
+                ]
+            }
+            None => [
+                Real::one(),
+                Real::zero(),
+                Real::zero(),
+                Real::one(),
+                Real::zero(),
+                Real::zero(),
+            ],
+        }
+    }
+
+    fn retained_similarity_source<'a>(
+        mut point: &'a RationalBezierIntersectionPointEvidence2,
+        policy: &CurveContext,
+    ) -> CurveResult<(
+        &'a RationalBezierIntersectionPointEvidence2,
+        Option<Similarity2>,
+    )> {
+        let mut transform: Option<Similarity2> = None;
+        while let RationalBezierIntersectionPointEvidence2::Similarity(similarity) = point {
+            if !policy.accepts_retained_policy(similarity.data.policy) {
+                return Err(CurveError::Topology(
+                    "a structural circle translation crossed predicate policies".into(),
+                ));
+            }
+            transform = Some(match transform {
+                Some(outer) => similarity.data.transform.then(&outer),
+                None => similarity.data.transform.clone(),
+            });
+            point = &similarity.data.source;
+        }
+        Ok((point, transform))
+    }
+
+    /// Recovers a rational translation from two exact similarity views of one
+    /// retained point. Equal linear parts cancel the selected source
+    /// coordinates, so no algebraic-root affine relation has to rediscover
+    /// construction provenance after materialization.
+    fn retained_point_structural_translation(
+        first: &RationalBezierIntersectionPointEvidence2,
+        second: &RationalBezierIntersectionPointEvidence2,
+        policy: &CurveContext,
+    ) -> CurveResult<Option<[Real; 2]>> {
+        let (first_source, first_transform) = Self::retained_similarity_source(first, policy)?;
+        let (second_source, second_transform) = Self::retained_similarity_source(second, policy)?;
+        if !first_source.shares_storage(second_source) && first_source != second_source {
+            return Ok(None);
+        }
+        let first = Self::optional_similarity_components(first_transform.as_ref());
+        let second = Self::optional_similarity_components(second_transform.as_ref());
+        if (0..4).any(|index| {
+            compare_reals(&first[index], &second[index], &CurveContext::STRICT)
+                != Some(std::cmp::Ordering::Equal)
+        }) {
+            return Ok(None);
+        }
+        let translation = [&second[4] - &first[4], &second[5] - &first[5]];
+        if translation
+            .iter()
+            .any(|coordinate| coordinate.exact_rational_ref().is_none())
+        {
+            return Ok(None);
+        }
+        Ok(Some(translation))
+    }
+
     fn represented_structural_translation(
         &self,
         other: &Self,
         policy: &CurveContext,
     ) -> CurveResult<Option<[Real; 2]>> {
+        if let (Some(first), Some(second)) = (
+            self.data.frame.chord_normal(),
+            other.data.frame.chord_normal(),
+        ) && let Some(translation) =
+            Self::retained_point_structural_translation(&first.center, &second.center, policy)?
+        {
+            #[cfg(feature = "dispatch-trace")]
+            hyperreal::dispatch_trace::record(
+                "hypercurve",
+                "represented-circle-pair-translation",
+                "retained-similarity-point",
+            );
+            return Ok(Some(translation));
+        }
         if !self.uses_selected_radial_frame() || !other.uses_selected_radial_frame() {
             return Ok(None);
         }
@@ -29053,31 +29146,8 @@ impl BezierAlgebraicCuspSemicircle2 {
         {
             return Ok(None);
         }
-        let components = |similarity: Option<&Similarity2>| -> [Real; 6] {
-            match similarity {
-                Some(similarity) => {
-                    let (a, b, d, e, x, y) = similarity.affine_components();
-                    [
-                        a.clone(),
-                        b.clone(),
-                        d.clone(),
-                        e.clone(),
-                        x.clone(),
-                        y.clone(),
-                    ]
-                }
-                None => [
-                    Real::one(),
-                    Real::zero(),
-                    Real::zero(),
-                    Real::one(),
-                    Real::zero(),
-                    Real::zero(),
-                ],
-            }
-        };
-        let first = components(first.similarity.as_ref());
-        let second = components(second.similarity.as_ref());
+        let first = Self::optional_similarity_components(first.similarity.as_ref());
+        let second = Self::optional_similarity_components(second.similarity.as_ref());
         if (0..4).any(|index| {
             compare_reals(&first[index], &second[index], &CurveContext::STRICT)
                 != Some(std::cmp::Ordering::Equal)
@@ -29161,31 +29231,8 @@ impl BezierAlgebraicCuspSemicircle2 {
             }
         }
 
-        let components = |similarity: Option<&Similarity2>| -> [Real; 6] {
-            match similarity {
-                Some(similarity) => {
-                    let (a, b, d, e, x, y) = similarity.affine_components();
-                    [
-                        a.clone(),
-                        b.clone(),
-                        d.clone(),
-                        e.clone(),
-                        x.clone(),
-                        y.clone(),
-                    ]
-                }
-                None => [
-                    Real::one(),
-                    Real::zero(),
-                    Real::zero(),
-                    Real::one(),
-                    Real::zero(),
-                    Real::zero(),
-                ],
-            }
-        };
-        let first_transform = components(first.similarity.as_ref());
-        let second_transform = components(second.similarity.as_ref());
+        let first_transform = Self::optional_similarity_components(first.similarity.as_ref());
+        let second_transform = Self::optional_similarity_components(second.similarity.as_ref());
         Ok(Some(BezierRepresentedCommonSourceCenter2 {
             sources: first_center.to_vec(),
             transforms: [first_transform, second_transform],
@@ -30110,7 +30157,7 @@ impl BezierAlgebraicCuspSemicircle2 {
         else {
             return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
         };
-        let q_value = match represented_dense_value(&q, &sources) {
+        let q_value = match represented_dense_value_refined(&q, &sources) {
             Classification::Decided(value) => value,
             Classification::Uncertain(reason) => {
                 return Ok(Classification::Uncertain(reason));
@@ -30138,7 +30185,7 @@ impl BezierAlgebraicCuspSemicircle2 {
                 return Ok(Classification::Uncertain(UncertaintyReason::Predicate));
             }
         }
-        let discriminant_value = match represented_dense_value(&discriminant, &sources) {
+        let discriminant_value = match represented_dense_value_refined(&discriminant, &sources) {
             Classification::Decided(value) => value,
             Classification::Uncertain(reason) => {
                 return Ok(Classification::Uncertain(reason));
@@ -30157,7 +30204,7 @@ impl BezierAlgebraicCuspSemicircle2 {
                 return Ok(Classification::Uncertain(UncertaintyReason::Predicate));
             }
         };
-        let radial_dot_value = match represented_dense_value(&radial_dot, &sources) {
+        let radial_dot_value = match represented_dense_value_refined(&radial_dot, &sources) {
             Classification::Decided(value) => value,
             Classification::Uncertain(reason) => {
                 return Ok(Classification::Uncertain(reason));
@@ -58937,6 +58984,17 @@ impl BezierAlgebraicChord2 {
             {
                 return Classification::Decided(crate::classify::LineSide::Right);
             }
+        }
+        if let Ok(Classification::Decided(side)) =
+            policy.strict_predicate_pass(|| self.represented_oriented_side(point, policy))
+        {
+            #[cfg(feature = "dispatch-trace")]
+            hyperreal::dispatch_trace::record(
+                "hypercurve",
+                "algebraic-chord-side-kernel",
+                "certified-tangent-represented-cold-fallback",
+            );
+            return Classification::Decided(side);
         }
         // Equality is deliberately a cold path: interval refinement proves
         // every nonzero oriented area first. A separately retained endpoint
