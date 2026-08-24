@@ -57600,6 +57600,44 @@ impl BezierAlgebraicChord2 {
         })
     }
 
+    /// Rebinds this chord to endpoint witnesses that the caller has proved
+    /// denote the same two points in traversal order.
+    ///
+    /// Exact carrier switches routinely replace an algebraic point witness by
+    /// an equivalent witness in a smaller local field. The chord direction,
+    /// axis monotonicity, and endpoint inequality are unchanged, so replaying
+    /// those predicates after the switch would only rebuild a larger
+    /// compositum. Boundary reconstruction owns the equivalence proof.
+    pub(crate) fn with_certified_equivalent_endpoints(
+        &self,
+        start: RationalBezierIntersectionPointEvidence2,
+        end: RationalBezierIntersectionPointEvidence2,
+        policy: &CurveContext,
+    ) -> CurveResult<Self> {
+        self.validate_policy(policy)?;
+        let (start, end) = if self.data.reversed {
+            (end, start)
+        } else {
+            (start, end)
+        };
+        Ok(Self {
+            data: Arc::new(BezierAlgebraicChordData2 {
+                start,
+                end,
+                parameter_axis: self.data.parameter_axis,
+                certified_axis_aligned: self.data.certified_axis_aligned,
+                certified_unit_tangent: self.data.certified_unit_tangent.clone(),
+                certified_circle_transverse_endpoints: self
+                    .data
+                    .certified_circle_transverse_endpoints,
+                parallel_tangent_contacts: self.data.parallel_tangent_contacts.clone(),
+                source: self.data.source.clone(),
+                reversed: self.data.reversed,
+                policy: policy.retained_object_policy(),
+            }),
+        })
+    }
+
     /// Coalesces two already-certified forward-collinear chord fragments.
     ///
     /// The caller owns the zero-cross and positive-dot proofs. Reusing the
@@ -65160,6 +65198,14 @@ pub(crate) fn algebraic_chord_point_coordinate_order(
         return Ok(Classification::Decided(std::cmp::Ordering::Equal));
     }
     if let (
+        RationalBezierIntersectionPointEvidence2::AnalyticParallel(first),
+        RationalBezierIntersectionPointEvidence2::AnalyticParallel(second),
+    ) = (first, second)
+        && let Some(order) = first.same_zero_distance_source_axis_order(second, axis, policy)?
+    {
+        return Ok(order);
+    }
+    if let (
         RationalBezierIntersectionPointEvidence2::AlgebraicCuspChordDerived(derived),
         RationalBezierIntersectionPointEvidence2::AlgebraicChordParallel(parallel),
     ) = (first, second)
@@ -71051,6 +71097,122 @@ impl BezierAnalyticParallelPoint2 {
 
     pub(crate) fn shares_storage(&self, other: &Self) -> bool {
         Arc::ptr_eq(&self.data, &other.data)
+    }
+
+    /// Compares coordinates of two points on one zero-distance source while
+    /// preserving the selected fiber that relates their parameters.
+    ///
+    /// Finite-envelope corner reconstruction can retain one boundary as an
+    /// ordinary algebraic parameter `alpha` and the other as a selected root
+    /// `u` over that same `alpha`. Expanding either point into independent
+    /// Cartesian roots discards exactly that correlation. The homogeneous
+    /// difference
+    ///
+    /// `N(u) * W(alpha) - N(alpha) * W(u)`
+    ///
+    /// instead lives directly in the existing `(alpha, u)` field. Both its
+    /// sign and the denominator sign are construction predicates, so they are
+    /// always evaluated by a STRICT pass even when the retained carrier uses
+    /// APPROXIMATE_512 terminal equality policy.
+    fn same_zero_distance_source_axis_order(
+        &self,
+        other: &Self,
+        axis: Axis2,
+        policy: &CurveContext,
+    ) -> CurveResult<Option<Classification<std::cmp::Ordering>>> {
+        if !policy.accepts_retained_policy(self.data.policy)
+            || !policy.accepts_retained_policy(other.data.policy)
+        {
+            return Err(CurveError::Topology(
+                "analytic source points crossed predicate policies".into(),
+            ));
+        }
+        if self.data.parallel != other.data.parallel
+            || self.data.parallel.distance().zero_status() != ZeroStatus::Zero
+            || self.data.tangent_distance.zero_status() != ZeroStatus::Zero
+            || other.data.tangent_distance.zero_status() != ZeroStatus::Zero
+            || self.data.translation_x != other.data.translation_x
+            || self.data.translation_y != other.data.translation_y
+        {
+            return Ok(None);
+        }
+        let (selected, ordinary, reverse) = match (&self.data.parameter, &other.data.parameter) {
+            (
+                BezierAnalyticParallelPointParameter2::SelectedFiber(selected),
+                BezierAnalyticParallelPointParameter2::Bezier(BezierParameter2::Algebraic(
+                    ordinary,
+                )),
+            ) => (selected, ordinary, false),
+            (
+                BezierAnalyticParallelPointParameter2::Bezier(BezierParameter2::Algebraic(
+                    ordinary,
+                )),
+                BezierAnalyticParallelPointParameter2::SelectedFiber(selected),
+            ) => (selected, ordinary, true),
+            _ => return Ok(None),
+        };
+        if ordinary != &selected.data.authority.data.retained_parameter {
+            return Ok(None);
+        }
+
+        let source = self.data.parallel.source_power_basis()?;
+        let unit_weight = [Real::one()];
+        let weight = source.weight.unwrap_or(&unit_weight);
+        let coordinate = match axis {
+            Axis2::X => source.x_numerator,
+            Axis2::Y => source.y_numerator,
+        };
+        let numerator = bivariate_subtract(
+            &bivariate_outer_product(weight, coordinate),
+            &bivariate_outer_product(coordinate, weight),
+        );
+        let denominator = bivariate_outer_product(weight, weight);
+        let (numerator_sign, denominator_sign) = policy.strict_predicate_pass(|| {
+            Ok::<_, CurveError>((
+                selected.predicate_sign(&numerator, policy)?,
+                selected.predicate_sign(&denominator, policy)?,
+            ))
+        })?;
+        let order = match (numerator_sign, denominator_sign) {
+            (
+                Classification::Decided(numerator),
+                Classification::Decided(denominator @ (RealSign::Positive | RealSign::Negative)),
+            ) => {
+                let sign = if denominator == RealSign::Positive {
+                    numerator
+                } else {
+                    match numerator {
+                        RealSign::Negative => RealSign::Positive,
+                        RealSign::Zero => RealSign::Zero,
+                        RealSign::Positive => RealSign::Negative,
+                    }
+                };
+                Classification::Decided(match sign {
+                    RealSign::Negative => std::cmp::Ordering::Less,
+                    RealSign::Zero => std::cmp::Ordering::Equal,
+                    RealSign::Positive => std::cmp::Ordering::Greater,
+                })
+            }
+            (_, Classification::Decided(RealSign::Zero)) => {
+                Classification::Uncertain(UncertaintyReason::Boundary)
+            }
+            (Classification::Uncertain(reason), _) | (_, Classification::Uncertain(reason)) => {
+                Classification::Uncertain(reason)
+            }
+        };
+        #[cfg(feature = "dispatch-trace")]
+        if matches!(order, Classification::Decided(_)) {
+            hyperreal::dispatch_trace::record(
+                "hypercurve",
+                "algebraic-chord-point-axis-order",
+                "same-zero-distance-selected-source",
+            );
+        }
+        Ok(Some(if reverse {
+            order.map(std::cmp::Ordering::reverse)
+        } else {
+            order
+        }))
     }
 
     /// Re-enters the ordinary point authority when this retained analytic
@@ -102200,6 +102362,77 @@ mod conversion_tests {
         CurveBoundaryInteriorSide2, CurveCertainty, CurveCornerMode2, CurveCornerSolutions2,
         CurveRegion2, CurveRegionBoundaryLoop2, CurveRegionLoopRole, FillRule, OffsetCornerStyle2,
     };
+
+    #[test]
+    fn selected_zero_distance_source_axis_order_stays_in_its_correlated_field() {
+        let source = QuadraticBezier2::from_line_segment(
+            LineSeg2::try_new(Point2::from_values(0, 0), Point2::from_values(1, 0)).unwrap(),
+        );
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let selected = degree_nine_selected_fiber_parameter_for_test(
+                (Real::one() / Real::from(2_i8)).unwrap(),
+                1,
+                &policy,
+            );
+            let ordinary = BezierParameter2::Algebraic(
+                selected.data.authority.data.retained_parameter.clone(),
+            );
+            let parallel = BezierParallel2::from_source(
+                BezierParallelSource2::Quadratic(source.clone()),
+                Real::zero(),
+            );
+            let selected_point = RationalBezierIntersectionPointEvidence2::AnalyticParallel(
+                BezierAnalyticParallelPoint2::new_selected_fiber(
+                    parallel.clone(),
+                    selected,
+                    &policy,
+                ),
+            );
+            let ordinary_point = RationalBezierIntersectionPointEvidence2::AnalyticParallel(
+                BezierAnalyticParallelPoint2::new(parallel, ordinary, &policy),
+            );
+
+            #[cfg(feature = "dispatch-trace")]
+            hyperreal::dispatch_trace::reset();
+            let compare_x = || {
+                algebraic_chord_point_coordinate_order(
+                    &selected_point,
+                    &ordinary_point,
+                    Axis2::X,
+                    &policy,
+                )
+            };
+            #[cfg(feature = "dispatch-trace")]
+            let x_order = hyperreal::dispatch_trace::with_recording(compare_x);
+            #[cfg(not(feature = "dispatch-trace"))]
+            let x_order = compare_x();
+            #[cfg(feature = "dispatch-trace")]
+            let trace = hyperreal::dispatch_trace::take_trace();
+            assert_eq!(
+                x_order.unwrap(),
+                Classification::Decided(std::cmp::Ordering::Greater),
+            );
+            assert_eq!(
+                algebraic_chord_point_coordinate_order(
+                    &selected_point,
+                    &ordinary_point,
+                    Axis2::Y,
+                    &policy,
+                )
+                .unwrap(),
+                Classification::Decided(std::cmp::Ordering::Equal),
+            );
+            #[cfg(feature = "dispatch-trace")]
+            assert!(
+                trace.path_count(
+                    "hypercurve",
+                    "algebraic-chord-point-axis-order",
+                    "same-zero-distance-selected-source",
+                ) > 0,
+                "the selected/ordinary comparison must retain its correlated field: {trace:?}",
+            );
+        }
+    }
 
     #[test]
     fn quadratic_affine_root_signs_cover_exact_branch_configurations() {

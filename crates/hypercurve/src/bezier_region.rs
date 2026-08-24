@@ -11959,6 +11959,30 @@ impl CurveRegion2 {
             {
                 return Ok(None);
             }
+            // The corner solver has already certified these two point
+            // witnesses distinct. Capture the chord's exact monotone axis
+            // before extension canonicalization reparameterizes either point
+            // onto a finite local envelope. The carrier switch preserves the
+            // points but can otherwise turn a cheap one-field direction proof
+            // into an unnecessary Cartesian compositum.
+            let chord_authority =
+                if previous_cut.point.as_exact().is_some() && next_cut.point.as_exact().is_some() {
+                    None
+                } else {
+                    match policy
+                        .strict_predicate_pass(|| {
+                            crate::BezierAlgebraicChord2::try_new_from_certified_distinct_endpoints(
+                                previous_cut.point.clone(),
+                                next_cut.point.clone(),
+                                policy,
+                            )
+                        })
+                        .map_err(|cause| curve_region_edit_error(CurveOperation2::Chamfer, cause))?
+                    {
+                        Classification::Decided(chord) => Some(chord),
+                        Classification::Uncertain(_) => None,
+                    }
+                };
             // A recognized rational circle is one geometric carrier regardless
             // of how its authored chart was weighted or elevated. Rebuild both
             // trims and extensions from that carrier so every retained piece
@@ -12048,6 +12072,7 @@ impl CurveRegion2 {
                 next_cut_index,
                 previous_cut,
                 next_cut,
+                chord_authority,
                 previous_replacement,
                 next_replacement,
                 policy,
@@ -12064,12 +12089,47 @@ impl CurveRegion2 {
         next_index: usize,
         previous_cut: CornerTrimCut2,
         next_cut: CornerTrimCut2,
+        chord_authority: Option<crate::BezierAlgebraicChord2>,
         previous_replacement: Option<Vec<BezierSplitFragment2>>,
         next_replacement: Option<Vec<BezierSplitFragment2>>,
         policy: &CurveContext,
     ) -> ExactCurveResult<Self> {
+        // A finite selected envelope retains both its extended cut and the
+        // authored corner in one parameter field. When the opposite setback
+        // is zero, use that correlated corner witness for the chamfer chord.
+        // The boundary adjacency and envelope construction already prove it
+        // is the same corner; mixing in the old carrier's endpoint would throw
+        // away this proof and force an unrelated Cartesian compositum.
+        let mut previous_chord_point = previous_cut.point.clone();
+        let mut next_chord_point = next_cut.point.clone();
+        if previous_cut.placement == CornerPlacement2::Corner
+            && next_cut.placement == CornerPlacement2::Extension
+            && let Some(CornerReplacement2::SelectedFiber { fragment, .. }) =
+                next_cut.replacement.as_ref()
+        {
+            previous_chord_point = fragment.end_point().clone();
+            #[cfg(feature = "dispatch-trace")]
+            hyperreal::dispatch_trace::record(
+                "hypercurve",
+                "curve-region-retained-chamfer",
+                "selected-envelope-corner-witness",
+            );
+        }
+        if next_cut.placement == CornerPlacement2::Corner
+            && previous_cut.placement == CornerPlacement2::Extension
+            && let Some(CornerReplacement2::SelectedFiber { fragment, .. }) =
+                previous_cut.replacement.as_ref()
+        {
+            next_chord_point = fragment.start_point().clone();
+            #[cfg(feature = "dispatch-trace")]
+            hyperreal::dispatch_trace::record(
+                "hypercurve",
+                "curve-region-retained-chamfer",
+                "selected-envelope-corner-witness",
+            );
+        }
         let chord = if let (Some(previous_point), Some(next_point)) =
-            (previous_cut.point.as_exact(), next_cut.point.as_exact())
+            (previous_chord_point.as_exact(), next_chord_point.as_exact())
         {
             BezierSplitFragment2::Materialized {
                 start: BezierParameter2::Exact(Real::zero()),
@@ -12080,10 +12140,26 @@ impl CurveRegion2 {
                     )?,
                 )),
             }
+        } else if let Some(authority) = chord_authority {
+            #[cfg(feature = "dispatch-trace")]
+            hyperreal::dispatch_trace::record(
+                "hypercurve",
+                "curve-region-retained-chamfer",
+                "precanonical-chord-authority",
+            );
+            BezierSplitFragment2::AlgebraicChord(
+                authority
+                    .with_certified_equivalent_endpoints(
+                        previous_chord_point,
+                        next_chord_point,
+                        policy,
+                    )
+                    .map_err(|cause| curve_region_edit_error(CurveOperation2::Chamfer, cause))?,
+            )
         } else {
             match crate::BezierAlgebraicChord2::try_new(
-                previous_cut.point.clone(),
-                next_cut.point.clone(),
+                previous_chord_point,
+                next_chord_point,
                 policy,
             )
             .map_err(|cause| curve_region_edit_error(CurveOperation2::Chamfer, cause))?
@@ -23594,8 +23670,10 @@ mod tests {
                     )
                     .unwrap()
                     .into_value();
-                let extended = region
-                    .chamfer_loop_vertex_by_setbacks(
+                #[cfg(feature = "dispatch-trace")]
+                hyperreal::dispatch_trace::reset();
+                let extended_work = || {
+                    region.chamfer_loop_vertex_by_setbacks(
                         0,
                         0,
                         setback.clone(),
@@ -23603,9 +23681,25 @@ mod tests {
                         CurveCornerMode2::TrimOrExtend,
                         &policy,
                     )
-                    .unwrap();
+                };
+                #[cfg(feature = "dispatch-trace")]
+                let extended = hyperreal::dispatch_trace::with_recording(extended_work);
+                #[cfg(not(feature = "dispatch-trace"))]
+                let extended = extended_work();
+                #[cfg(feature = "dispatch-trace")]
+                let trace = hyperreal::dispatch_trace::take_trace();
+                let extended = extended.unwrap();
                 assert_eq!(extended.certainty, CurveCertainty::Certified);
                 assert!(extended.value.candidate_count() > trimmed.candidate_count());
+                #[cfg(feature = "dispatch-trace")]
+                assert!(
+                    trace.path_count(
+                        "hypercurve",
+                        "curve-region-retained-chamfer",
+                        "precanonical-chord-authority",
+                    ) > 0,
+                    "the finite envelope must retain the pre-canonical chord certificate: {trace:?}",
+                );
             }
         }
     }
@@ -29221,8 +29315,10 @@ mod tests {
                     )
                     .expect("the finite nonlinear endpoint search must decide")
                     .into_value();
-                let extended = region
-                    .chamfer_loop_vertex_by_setbacks(
+                #[cfg(feature = "dispatch-trace")]
+                hyperreal::dispatch_trace::reset();
+                let extended_work = || {
+                    region.chamfer_loop_vertex_by_setbacks(
                         0,
                         corner,
                         previous_setback,
@@ -29230,6 +29326,14 @@ mod tests {
                         CurveCornerMode2::TrimOrExtend,
                         &policy,
                     )
+                };
+                #[cfg(feature = "dispatch-trace")]
+                let extended = hyperreal::dispatch_trace::with_recording(extended_work);
+                #[cfg(not(feature = "dispatch-trace"))]
+                let extended = extended_work();
+                #[cfg(feature = "dispatch-trace")]
+                let trace = hyperreal::dispatch_trace::take_trace();
+                let extended = extended
                     .unwrap_or_else(|error| {
                         panic!(
                             "the nonlinear algebraic endpoint ray must extend: policy={policy:?}, reversed={reversed}, error={error:?}"
@@ -29237,6 +29341,15 @@ mod tests {
                     });
                 assert_eq!(extended.certainty, CurveCertainty::Certified);
                 assert!(extended.value.candidate_count() > trim.candidate_count());
+                #[cfg(feature = "dispatch-trace")]
+                assert!(
+                    trace.path_count(
+                        "hypercurve",
+                        "curve-region-retained-chamfer",
+                        "selected-envelope-corner-witness",
+                    ) > 0,
+                    "the selected envelope chamfer must retain its correlated source field: {trace:?}",
+                );
                 for_each_corner_region(&extended.value, |edited| {
                     assert!(
                         edited.boundary_loops()[0]
@@ -29247,6 +29360,7 @@ mod tests {
                                     fragment,
                                     BezierSplitFragment2::AlgebraicEndpointImages { .. }
                                         | BezierSplitFragment2::AnalyticParallel(_)
+                                        | BezierSplitFragment2::SelectedFiber(_)
                                 )
                             })
                     );
