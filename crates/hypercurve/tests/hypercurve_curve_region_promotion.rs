@@ -5565,7 +5565,59 @@ fn algebraic_chord_erosion_splits_a_collapsed_neck_exactly() {
     ] {
         let source = axis_aligned_algebraic_dumbbell_region(&policy, fill_rule, reverse);
         for radius in [Real::one(), q(11, 10)] {
-            let split = source.offset(-radius, &miter, &policy).unwrap();
+            #[cfg(feature = "dispatch-trace")]
+            hyperreal::dispatch_trace::reset();
+            let offset_work = || source.offset(-radius, &miter, &policy);
+            #[cfg(feature = "dispatch-trace")]
+            let split = hyperreal::dispatch_trace::with_recording(offset_work);
+            #[cfg(not(feature = "dispatch-trace"))]
+            let split = offset_work();
+            #[cfg(feature = "dispatch-trace")]
+            let trace = hyperreal::dispatch_trace::take_trace();
+            let split = split.unwrap_or_else(|error| {
+                #[cfg(feature = "dispatch-trace")]
+                panic!("collapsed-neck offset failed: {error:?}; trace: {trace:?}");
+                #[cfg(not(feature = "dispatch-trace"))]
+                panic!("collapsed-neck offset failed: {error:?}");
+            });
+            #[cfg(feature = "dispatch-trace")]
+            {
+                assert!(
+                    trace.path_count(
+                        "hypercurve",
+                        "recursive-projective-point",
+                        "cardinal-displacement-canonicalized",
+                    ) > 0,
+                    "cardinal procedural points must shed their artificial unit radical: {trace:?}",
+                );
+                assert!(
+                    trace.path_count(
+                        "hypercurve",
+                        "algebraic-chord-pair-side-kernel",
+                        "cardinal-coordinate-terminal",
+                    ) > 0,
+                    "cardinal supports must use their scalar coordinate authority: {trace:?}",
+                );
+                for path in [
+                    "all-on-after-geometric-check",
+                    "inconsistent-side-orientation",
+                ] {
+                    assert_eq!(
+                        trace.path_count("hypercurve", "algebraic-chord-pair-blocker", path),
+                        0,
+                        "collapsed-neck regularization must not leave a chord-pair blocker: {trace:?}",
+                    );
+                }
+                assert_eq!(
+                    trace.path_count(
+                        "hypercurve",
+                        "curve-region-exact-offset-blocker",
+                        "band-union",
+                    ),
+                    0,
+                    "collapsed-neck band union must remain complete: {trace:?}",
+                );
+            }
             assert_eq!(split.certainty, CurveCertainty::Certified);
             assert_eq!(split.value.boundary_loops().len(), 2);
             assert_eq!(
