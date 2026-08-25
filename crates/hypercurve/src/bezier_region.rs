@@ -1324,9 +1324,9 @@ fn validate_retained_source_endpoint_image(
                     "retained algebraic endpoint image parameter does not match boundary".into(),
                 ));
             }
-            if !image.is_transformed() && !image.is_lazy_first_order() {
+            if !image.is_exact() && !image.is_lazy_first_order() {
                 return Err(CurveError::Topology(
-                    "retained algebraic endpoint image must be transformed or retain replayable first-order source evidence".into(),
+                    "retained algebraic endpoint image must retain exact or replayable first-order source evidence".into(),
                 ));
             }
             let expected = crate::BezierAlgebraicEndpointImage2::from_source_curve(

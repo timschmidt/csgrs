@@ -39,9 +39,13 @@ impl BezierEndpointPointImage2 {
         }
     }
 
-    /// Returns true when both coordinates were constructed as exact images.
-    pub fn is_transformed(&self) -> bool {
-        matches!(self.status(), BezierAlgebraicImageStatus::Transformed)
+    /// Returns true when both coordinates retain exact replayable evidence.
+    pub fn is_exact(&self) -> bool {
+        matches!(
+            self.status(),
+            BezierAlgebraicImageStatus::Transformed
+                | BezierAlgebraicImageStatus::RetainedRationalExpression
+        )
     }
 }
 
@@ -64,9 +68,13 @@ impl BezierEndpointTangentImage2 {
         }
     }
 
-    /// Returns true when both tangent coordinates were constructed exactly.
-    pub fn is_transformed(&self) -> bool {
-        matches!(self.status(), BezierAlgebraicImageStatus::Transformed)
+    /// Returns true when both tangent coordinates retain exact replayable evidence.
+    pub fn is_exact(&self) -> bool {
+        matches!(
+            self.status(),
+            BezierAlgebraicImageStatus::Transformed
+                | BezierAlgebraicImageStatus::RetainedRationalExpression
+        )
     }
 }
 
@@ -355,12 +363,10 @@ impl BezierAlgebraicEndpointImage2 {
         }
     }
 
-    /// Returns true when both point and tangent images were constructed.
-    pub fn is_transformed(&self) -> bool {
-        self.try_point().is_ok_and(|point| point.is_transformed())
-            && self
-                .try_tangent()
-                .is_ok_and(|tangent| tangent.is_transformed())
+    /// Returns true when both point and tangent retain exact replayable evidence.
+    pub fn is_exact(&self) -> bool {
+        self.try_point().is_ok_and(|point| point.is_exact())
+            && self.try_tangent().is_ok_and(|tangent| tangent.is_exact())
     }
 
     pub(crate) fn matches_required_source_evidence(&self, expected: &Self) -> bool {
@@ -382,8 +388,8 @@ impl BezierAlgebraicEndpointImage2 {
         )
     }
 
-    pub(crate) fn is_transformed_or_lazy_first_order(&self) -> bool {
-        self.is_lazy_first_order() || self.is_transformed()
+    pub(crate) fn is_exact_or_lazy_first_order(&self) -> bool {
+        self.is_lazy_first_order() || self.is_exact()
     }
 
     pub(crate) fn try_point(&self) -> CurveResult<&BezierEndpointPointImage2> {

@@ -1808,9 +1808,9 @@ fn validate_algebraic_endpoint_image_boundary(
                     "algebraic {name} Bezier split endpoint image parameter does not match boundary"
                 )));
             }
-            if !image.is_transformed() {
+            if !image.is_exact() {
                 return Err(CurveError::Topology(format!(
-                    "algebraic {name} Bezier split endpoint image must be exact transformed evidence"
+                    "algebraic {name} Bezier split endpoint image must retain exact evidence"
                 )));
             }
             let expected =
@@ -2257,10 +2257,10 @@ where
                 let end_image = image_pair[1].clone();
                 if start_image
                     .as_ref()
-                    .is_none_or(BezierAlgebraicEndpointImage2::is_transformed_or_lazy_first_order)
-                    && end_image.as_ref().is_none_or(
-                        BezierAlgebraicEndpointImage2::is_transformed_or_lazy_first_order,
-                    )
+                    .is_none_or(BezierAlgebraicEndpointImage2::is_exact_or_lazy_first_order)
+                    && end_image
+                        .as_ref()
+                        .is_none_or(BezierAlgebraicEndpointImage2::is_exact_or_lazy_first_order)
                 {
                     fragments.push(BezierSplitFragment2::AlgebraicEndpointImages {
                         reversed: false,

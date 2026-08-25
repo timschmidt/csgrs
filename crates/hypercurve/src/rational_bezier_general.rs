@@ -8644,21 +8644,8 @@ pub(crate) fn exact_contact_point_evidence(
                     Some(RationalBezierIntersectionPointEvidence2::Algebraic(image))
                 }
                 crate::BezierAlgebraicImageStatus::XImageFailed
-                | crate::BezierAlgebraicImageStatus::YImageFailed => {
-                    Some(RationalBezierIntersectionPointEvidence2::Algebraic(
-                        // The coordinate-image package is deliberately bounded.
-                        // Preserve the exact curve/selected-parameter expression
-                        // when one coordinate resultant exceeds that budget;
-                        // consumers resolve or refine it only when a predicate
-                        // actually needs Cartesian coordinates.
-                        RationalBezierAlgebraicPointImage2::from_parametric_source(
-                            curve.clone(),
-                            parameter.clone(),
-                            policy,
-                        ),
-                    ))
-                }
-                crate::BezierAlgebraicImageStatus::InvalidParameterEvidence => None,
+                | crate::BezierAlgebraicImageStatus::YImageFailed
+                | crate::BezierAlgebraicImageStatus::InvalidParameterEvidence => None,
             })
         }
     }
@@ -10159,7 +10146,7 @@ mod tests {
     }
 
     #[test]
-    fn exact_contact_evidence_retains_a_bounded_high_degree_image_failure() {
+    fn exact_contact_evidence_reuses_a_retained_high_degree_image() {
         let policy = CurveContext::STRICT;
         let mut coefficients = vec![Real::zero(); 42];
         coefficients[0] = (Real::from(-1_i8) / Real::from(2_i8)).unwrap();
@@ -10188,14 +10175,14 @@ mod tests {
             vec![Real::one(), Real::from(2_i8), Real::from(3_i8)],
         )
         .unwrap();
-        let bounded = curve
+        let retained_image = curve
             .point_at_algebraic_parameter(&parameter, &policy)
             .unwrap();
-        assert!(matches!(
-            bounded.status(),
-            crate::BezierAlgebraicImageStatus::XImageFailed
-                | crate::BezierAlgebraicImageStatus::YImageFailed
-        ));
+        assert_eq!(
+            retained_image.status(),
+            crate::BezierAlgebraicImageStatus::RetainedRationalExpression
+        );
+        assert_eq!(retained_image.retained_parameter(), Some(&parameter));
 
         let evidence = exact_contact_point_evidence(
             &curve,
@@ -10212,6 +10199,7 @@ mod tests {
             crate::BezierAlgebraicImageStatus::RetainedRationalExpression
         );
         assert_eq!(retained.retained_parameter(), Some(&parameter));
+        assert_eq!(retained, retained_image);
     }
 
     #[test]

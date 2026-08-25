@@ -629,9 +629,17 @@ fn pi_weight_conic_replays_degree_elevated_horizontal_contact() {
         .intersection_contacts(&cubic_line, &policy)
         .expect("pi-weight conic contact should remain exact");
 
+    let RationalBezierIntersectionContacts2::Contacts(contacts) = &contacts else {
+        panic!("pi-weight conic contact did not retain its isolated evidence");
+    };
+    assert_eq!(contacts.len(), 1);
+    let RationalBezierIntersectionPointEvidence2::Algebraic(point) = contacts[0].point() else {
+        panic!("pi-weight conic contact did not retain its exact selected-root expression");
+    };
     assert!(matches!(
-        contacts,
-        RationalBezierIntersectionContacts2::Contacts(ref contacts) if contacts.len() == 1
+        point.status(),
+        BezierAlgebraicImageStatus::Transformed
+            | BezierAlgebraicImageStatus::RetainedRationalExpression
     ));
 
     let reversed = cubic_line
@@ -654,6 +662,36 @@ fn pi_weight_conic_replays_degree_elevated_horizontal_contact() {
         .intersection_topology(&cubic_line, &policy)
         .expect("pi-weight conic topology should remain exact");
     assert_eq!(topology.contacts().len(), 1);
+    assert_eq!(topology.arrangement_graph().unwrap().fragments().len(), 4);
+
+    let approximate = conic
+        .intersection_topology(&cubic_line, &CurveContext::APPROXIMATE_512)
+        .expect("approximate policy must retain the same exact pi-weight topology");
+    assert_eq!(approximate.contacts().len(), 1);
+    assert_eq!(
+        approximate.arrangement_graph().unwrap().fragments().len(),
+        4
+    );
+    assert_eq!(
+        approximate.contacts()[0]
+            .first_parameter()
+            .cmp_by_refinement(
+                topology.contacts()[0].first_parameter(),
+                &CurveContext::APPROXIMATE_512,
+            )
+            .unwrap(),
+        Classification::Decided(std::cmp::Ordering::Equal)
+    );
+    assert_eq!(
+        approximate.contacts()[0]
+            .second_parameter()
+            .cmp_by_refinement(
+                topology.contacts()[0].second_parameter(),
+                &CurveContext::APPROXIMATE_512,
+            )
+            .unwrap(),
+        Classification::Decided(std::cmp::Ordering::Equal)
+    );
 }
 
 #[test]
@@ -922,8 +960,8 @@ fn rational_resultant_retains_algebraic_parameter_projections() {
             start_image,
             end_image,
             ..
-        } if start_image.as_ref().is_none_or(|image| image.is_transformed())
-            && end_image.as_ref().is_none_or(|image| image.is_transformed())
+        } if start_image.as_ref().is_none_or(|image| image.is_exact())
+            && end_image.as_ref().is_none_or(|image| image.is_exact())
     )));
     for image in split
         .fragments()

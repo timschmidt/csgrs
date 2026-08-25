@@ -118,7 +118,7 @@ fn assert_polynomial_endpoint_image(image: &Option<BezierAlgebraicEndpointImage2
     let image = image
         .as_ref()
         .expect("algebraic boundary should retain an endpoint image");
-    assert!(image.is_transformed());
+    assert!(image.is_exact());
     match image.point() {
         BezierEndpointPointImage2::Polynomial(point) => {
             assert_eq!(point.status(), BezierAlgebraicImageStatus::Transformed);
@@ -145,7 +145,7 @@ fn assert_rational_endpoint_image(image: &Option<BezierAlgebraicEndpointImage2>)
     let image = image
         .as_ref()
         .expect("algebraic boundary should retain a rational endpoint image");
-    assert!(image.is_transformed());
+    assert!(image.is_exact());
     match image.point() {
         BezierEndpointPointImage2::Rational(point) => {
             assert_eq!(point.status(), BezierAlgebraicImageStatus::Transformed);

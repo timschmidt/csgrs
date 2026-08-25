@@ -620,9 +620,9 @@ fn validate_arrangement_algebraic_endpoint_image(
                     "algebraic {name} Bezier arrangement endpoint image parameter does not match boundary"
                 )));
             }
-            if !image.is_transformed() {
+            if !image.is_exact() {
                 return Err(CurveError::Topology(format!(
-                    "algebraic {name} Bezier arrangement endpoint image must be exact transformed evidence"
+                    "algebraic {name} Bezier arrangement endpoint image must retain exact evidence"
                 )));
             }
             if let Some(source_curve) = source_curve {

@@ -92,14 +92,14 @@ fuzz_target!(|data: &[u8]| {
                         assert!(
                             start_image
                                 .as_ref()
-                                .is_some_and(|image| image.is_transformed())
+                                .is_some_and(|image| image.is_exact())
                         );
                     }
                     if !end.is_exact() {
                         assert!(
                             end_image
                                 .as_ref()
-                                .is_some_and(|image| image.is_transformed())
+                                .is_some_and(|image| image.is_exact())
                         );
                     }
                 }
