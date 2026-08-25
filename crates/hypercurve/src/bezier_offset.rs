@@ -83008,7 +83008,8 @@ fn algebraic_selected_parameters_from_norm(
     norm: BezierParameterPolynomial,
     policy: &CurveContext,
 ) -> CurveResult<Classification<ResultantParameterProjection>> {
-    for refinement_steps in [8, 16, 32, 64, 128] {
+    let mut refinement_steps = 8_usize;
+    loop {
         let report = isolate_bivariate_fiber_roots_at_algebraic_parameter_complete(
             incidence,
             CurveResultantParameter::First,
@@ -83089,19 +83090,38 @@ fn algebraic_selected_parameters_from_norm(
                 }
                 None => None,
             };
+            let parameter_interval = match BezierParameterInterval::try_new(
+                interval.lower,
+                interval.upper,
+                &CurveContext::STRICT,
+            )? {
+                Classification::Decided(interval) => interval,
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            };
             if singleton != Some(true) {
-                retry = true;
-                break;
-            }
-            let interval =
-                match BezierParameterInterval::try_new(interval.lower, interval.upper, policy)? {
-                    Classification::Decided(interval) => interval,
+                match norm.root_count_in_interval(&parameter_interval, policy)? {
+                    Classification::Decided(0) => {
+                        return Err(CurveError::Topology(
+                            "a selected fiber root was absent from its quotient norm".into(),
+                        ));
+                    }
+                    Classification::Decided(1) => {}
+                    Classification::Decided(_) => {
+                        retry = true;
+                        break;
+                    }
                     Classification::Uncertain(reason) => {
                         return Ok(Classification::Uncertain(reason));
                     }
-                };
+                }
+            }
             parameters.push(BezierParameter2::Algebraic(
-                BezierAlgebraicParameter2::from_certified_singleton(norm.clone(), interval),
+                BezierAlgebraicParameter2::from_certified_singleton(
+                    norm.clone(),
+                    parameter_interval,
+                ),
             ));
         }
         if !retry {
@@ -83115,8 +83135,18 @@ fn algebraic_selected_parameters_from_norm(
                 ResultantParameterProjection::SelectedParameters(parameters),
             ));
         }
+        #[cfg(feature = "dispatch-trace")]
+        if refinement_steps >= 128 {
+            hyperreal::dispatch_trace::record(
+                "hypercurve",
+                "selected-fiber-norm-isolation",
+                "unbounded-cold-continuation",
+            );
+        }
+        refinement_steps = refinement_steps.checked_mul(2).ok_or_else(|| {
+            CurveError::Topology("selected-fiber norm refinement depth overflow".into())
+        })?;
     }
-    Ok(Classification::Uncertain(UncertaintyReason::Predicate))
 }
 
 /// Projects a polynomial already reduced in one retained selected-root field,
@@ -130067,6 +130097,93 @@ mod conversion_tests {
                     "unbounded-cold-continuation",
                 ) >= 1,
                 "the bounded isolator must continue exact subdivision: {trace:?}",
+            );
+        }
+    }
+
+    #[test]
+    fn selected_fiber_norm_isolation_refines_past_the_old_limit() {
+        let half = (Real::one() / Real::from(2_i8)).unwrap();
+        let alpha = half.clone().sqrt().unwrap();
+        let BezierParameter2::Algebraic(retained) =
+            algebraic_parameter(vec![-half, Real::zero(), Real::one()])
+        else {
+            panic!("the irrational retained root must remain algebraic");
+        };
+        let incidence = BivariatePolynomial::new(vec![
+            vec![Real::zero(), Real::one()],
+            vec![Real::from(-1_i8)],
+        ]);
+        let retained_root = parameter_representation(&retained, &CurveContext::STRICT);
+        let seed = isolate_bivariate_fiber_roots_at_algebraic_parameter_complete(
+            &incidence,
+            CurveResultantParameter::First,
+            &retained_root,
+            &Real::zero(),
+            &Real::one(),
+            AlgebraicFiberRootIsolationConfig {
+                max_subdivision_depth: 256,
+                refinement_steps: 128,
+            },
+            hypersolve::PredicatePolicy::STRICT,
+        );
+        let [seed] = seed.intervals.as_slice() else {
+            panic!("the selected identity fiber must have one seed root");
+        };
+        let second_root = ((&alpha + &seed.upper) / Real::from(2_i8)).unwrap();
+        let Classification::Decided(norm) = BezierParameterPolynomial::try_new_power_basis(
+            vec![&alpha * &second_root, -(&alpha + &second_root), Real::one()],
+            &CurveContext::STRICT,
+        )
+        .unwrap() else {
+            panic!("the two-root quotient norm must construct exactly");
+        };
+
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            #[cfg(feature = "dispatch-trace")]
+            hyperreal::dispatch_trace::reset();
+            let work = || {
+                crate::policy::resolve_certified_value(&policy, |attempt| {
+                    let projection = algebraic_selected_parameters_from_norm(
+                        &incidence,
+                        &parameter_representation(&retained, attempt),
+                        norm.clone(),
+                        attempt,
+                    )
+                    .unwrap();
+                    let Classification::Decided(ResultantParameterProjection::SelectedParameters(
+                        parameters,
+                    )) = projection
+                    else {
+                        return Classification::Uncertain(UncertaintyReason::Predicate);
+                    };
+                    let [candidate] = parameters.as_slice() else {
+                        return Classification::Uncertain(UncertaintyReason::Boundary);
+                    };
+                    candidate
+                        .cmp_by_refinement(&BezierParameter2::Algebraic(retained.clone()), attempt)
+                        .unwrap()
+                })
+            };
+            #[cfg(feature = "dispatch-trace")]
+            let outcome = hyperreal::dispatch_trace::with_recording(work);
+            #[cfg(not(feature = "dispatch-trace"))]
+            let outcome = work();
+            #[cfg(feature = "dispatch-trace")]
+            let trace = hyperreal::dispatch_trace::take_trace();
+            assert_eq!(
+                outcome.value,
+                Classification::Decided(std::cmp::Ordering::Equal)
+            );
+            assert_eq!(outcome.certainty, crate::CurveCertainty::Certified);
+            #[cfg(feature = "dispatch-trace")]
+            assert!(
+                trace.path_count(
+                    "hypercurve",
+                    "selected-fiber-norm-isolation",
+                    "unbounded-cold-continuation",
+                ) >= 1,
+                "the selected norm must refine beyond 128 steps: {trace:?}",
             );
         }
     }
