@@ -55012,6 +55012,59 @@ fn selected_trivariate_third_axis_parameters(
     domain: SelectedThirdAxisDomain2<'_>,
     policy: &CurveContext,
 ) -> CurveResult<Classification<BezierAlgebraicFiberProjection2>> {
+    selected_trivariate_third_axis_parameters_with_resultant_limit(
+        polynomial,
+        first_parameter,
+        second_parameter,
+        domain,
+        MAX_PARALLEL_INTERSECTION_RESULTANT_DEGREE,
+        policy,
+    )
+}
+
+fn selected_trivariate_third_axis_parameters_with_resultant_limit(
+    polynomial: &TrivariatePolynomial2,
+    first_parameter: &BezierParameter2,
+    second_parameter: &BezierParameter2,
+    domain: SelectedThirdAxisDomain2<'_>,
+    max_resultant_degree: usize,
+    policy: &CurveContext,
+) -> CurveResult<Classification<BezierAlgebraicFiberProjection2>> {
+    let bounded = selected_trivariate_third_axis_parameters_bounded(
+        polynomial,
+        first_parameter,
+        second_parameter,
+        domain,
+        max_resultant_degree,
+        policy,
+    )?;
+    if !matches!(
+        bounded,
+        Classification::Uncertain(UncertaintyReason::Unsupported)
+    ) {
+        return Ok(bounded);
+    }
+    #[cfg(feature = "dispatch-trace")]
+    hyperreal::dispatch_trace::record(
+        "hypercurve",
+        "selected-trivariate-projection",
+        "rank-independent-tensor-fallback",
+    );
+    let Some(polynomial) = polynomial.to_dense_polynomial() else {
+        return Ok(bounded);
+    };
+    let sources = selected_parameter_representations([first_parameter, second_parameter]);
+    selected_dense_last_axis_parameters(&polynomial, &sources, domain, policy)
+}
+
+fn selected_trivariate_third_axis_parameters_bounded(
+    polynomial: &TrivariatePolynomial2,
+    first_parameter: &BezierParameter2,
+    second_parameter: &BezierParameter2,
+    domain: SelectedThirdAxisDomain2<'_>,
+    max_resultant_degree: usize,
+    policy: &CurveContext,
+) -> CurveResult<Classification<BezierAlgebraicFiberProjection2>> {
     let defining = |parameter: &BezierParameter2| match parameter {
         BezierParameter2::Exact(parameter) => vec![-parameter.clone(), Real::one()],
         BezierParameter2::Algebraic(parameter) => parameter.polynomial().coefficients().to_vec(),
@@ -55042,7 +55095,7 @@ fn selected_trivariate_third_axis_parameters(
     let first_axis_is_independent = polynomial.dimensions().0 == 1;
     let config = CurveIntersectionResultantConfig {
         min_precision: hypersolve::PredicatePolicy::MAX_REFINEMENT_PRECISION,
-        max_resultant_degree: MAX_PARALLEL_INTERSECTION_RESULTANT_DEGREE,
+        max_resultant_degree,
     };
     // Quotient reduction commonly leaves the first selected axis linear.  Its
     // constrained resultant has a direct homogeneous evaluation
@@ -127485,6 +127538,87 @@ mod conversion_tests {
             });
             assert_eq!(outcome.value, Classification::Decided(RealSign::Zero));
             assert_eq!(outcome.certainty, crate::CurveCertainty::Certified);
+        }
+    }
+
+    #[test]
+    fn selected_trivariate_projection_cold_continuation_removes_degree_cap() {
+        let half = (Real::one() / Real::from(2_i8)).unwrap();
+        let first = algebraic_parameter(vec![-half, Real::zero(), Real::zero(), Real::one()]);
+        let second = BezierParameter2::Exact(Real::zero());
+        // t - x^2 = 0 at x^3 = 1/2. Eliminating x has target degree three,
+        // so a deliberately smaller hot schedule must decline while the
+        // rank-independent tensor continuation retains t = x^2 exactly.
+        let polynomial = TrivariatePolynomial2::from_coefficients(vec![
+            vec![vec![Real::zero(), Real::one()]],
+            vec![vec![Real::zero()]],
+            vec![vec![-Real::one()]],
+        ])
+        .unwrap();
+        assert!(matches!(
+            selected_trivariate_third_axis_parameters_bounded(
+                &polynomial,
+                &first,
+                &second,
+                SelectedThirdAxisDomain2::UnitInterval,
+                2,
+                &CurveContext::STRICT,
+            )
+            .unwrap(),
+            Classification::Uncertain(UncertaintyReason::Unsupported)
+        ));
+
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            #[cfg(feature = "dispatch-trace")]
+            hyperreal::dispatch_trace::reset();
+            let work = || {
+                crate::policy::resolve_certified_value(&policy, |attempt| {
+                    selected_trivariate_third_axis_parameters_with_resultant_limit(
+                        &polynomial,
+                        &first,
+                        &second,
+                        SelectedThirdAxisDomain2::UnitInterval,
+                        2,
+                        attempt,
+                    )
+                    .unwrap()
+                })
+            };
+            #[cfg(feature = "dispatch-trace")]
+            let outcome = hyperreal::dispatch_trace::with_recording(work);
+            #[cfg(not(feature = "dispatch-trace"))]
+            let outcome = work();
+            #[cfg(feature = "dispatch-trace")]
+            let trace = hyperreal::dispatch_trace::take_trace();
+            let Classification::Decided(BezierAlgebraicFiberProjection2::Parameters(parameters)) =
+                outcome.value
+            else {
+                panic!("the uncapped tensor continuation must publish its exact candidate")
+            };
+            let [parameter] = parameters.as_slice() else {
+                panic!("the positive cubic source must have one squared image")
+            };
+            assert!(
+                projected_selected_trivariate_candidate_has_box_root(
+                    &polynomial,
+                    &first,
+                    &second,
+                    parameter,
+                    512,
+                )
+                .unwrap(),
+                "the exact projection root must belong to the authored cubic sheet",
+            );
+            assert_eq!(outcome.certainty, crate::CurveCertainty::Certified);
+            #[cfg(feature = "dispatch-trace")]
+            assert!(
+                trace.path_count(
+                    "hypercurve",
+                    "selected-trivariate-projection",
+                    "rank-independent-tensor-fallback",
+                ) > 0,
+                "the bounded decline must enter the shared dense authority: {trace:?}",
+            );
         }
     }
 
