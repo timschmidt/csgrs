@@ -82,11 +82,11 @@ use hypersolve::{
     transform_algebraic_root_mobius, validate_algebraic_root_representation,
 };
 use hypersolve::{
-    BivariatePolynomial, BivariatePolynomialAxisFactorStatus, BivariatePolynomialComponentStatus,
-    CurveIntersectionParameterLiftMap, CurveIntersectionParameterLiftReport,
-    CurveIntersectionParameterLiftStatus, CurveIntersectionResultantConfig,
-    CurveIntersectionResultantStatus, CurveResultantParameter, RationalParametricCurve2,
-    RootIsolationConfig, divide_bivariate_polynomial_exact,
+    BivariatePolynomial, BivariatePolynomialAxisFactorStatus, BivariatePolynomialComponentReport,
+    BivariatePolynomialComponentStatus, CurveIntersectionParameterLiftMap,
+    CurveIntersectionParameterLiftReport, CurveIntersectionParameterLiftStatus,
+    CurveIntersectionResultantConfig, CurveIntersectionResultantStatus, CurveResultantParameter,
+    RationalParametricCurve2, RootIsolationConfig, divide_bivariate_polynomial_exact,
     extract_bivariate_polynomial_system_axis_factors,
     linear_parameter_lifts_bivariate_polynomial_system,
     parameter_component_bivariate_polynomial_system,
@@ -56936,7 +56936,7 @@ fn bivariate_remove_common_factors(
             CurveResultantParameter::First,
             CurveResultantParameter::Second,
         ] {
-            let report = parameter_component_bivariate_polynomial_system(
+            let report = parameter_component_bivariate_polynomial_system_complete(
                 &equations[0],
                 &equations[1],
                 retained,
@@ -97098,6 +97098,43 @@ fn parameter_component_system(
     )
 }
 
+/// Keeps the configured component extractor as the hot schedule without
+/// allowing its degree budget to discard an exact positive-dimensional path.
+#[inline]
+fn parameter_component_bivariate_polynomial_system_complete(
+    first_equation: &BivariatePolynomial,
+    second_equation: &BivariatePolynomial,
+    retained_parameter: CurveResultantParameter,
+    config: CurveIntersectionResultantConfig,
+) -> BivariatePolynomialComponentReport {
+    let report = parameter_component_bivariate_polynomial_system(
+        first_equation,
+        second_equation,
+        retained_parameter,
+        config,
+    );
+    if report.status != BivariatePolynomialComponentStatus::DegreeBoundExceeded
+        || config.max_resultant_degree == usize::MAX
+    {
+        return report;
+    }
+    #[cfg(feature = "dispatch-trace")]
+    hyperreal::dispatch_trace::record(
+        "hypercurve",
+        "bivariate-component",
+        "unbounded-cold-continuation",
+    );
+    parameter_component_bivariate_polynomial_system(
+        first_equation,
+        second_equation,
+        retained_parameter,
+        CurveIntersectionResultantConfig {
+            max_resultant_degree: usize::MAX,
+            ..config
+        },
+    )
+}
+
 fn parameter_component_system_with_selector(
     equations: &[BivariatePolynomial; 2],
     selector: &ParameterComponentSelector2<'_>,
@@ -97117,7 +97154,7 @@ fn parameter_component_system_with_selector(
             CurveResultantParameter::Second,
             CurveResultantParameter::First,
         ] {
-            let report = parameter_component_bivariate_polynomial_system(
+            let report = parameter_component_bivariate_polynomial_system_complete(
                 &residual_equations[0],
                 &residual_equations[1],
                 retained_parameter,
@@ -97374,7 +97411,7 @@ fn split_parameter_component_at_selector_boundary(
             return Some([boundary.clone(), quotient]);
         }
         for parameter in [retained_parameter, alternate_parameter] {
-            let report = parameter_component_bivariate_polynomial_system(
+            let report = parameter_component_bivariate_polynomial_system_complete(
                 component, boundary, parameter, config,
             );
             if !matches!(
@@ -97550,7 +97587,7 @@ fn remove_implicit_parameter_component_zero_branch_factors(
         let degree = bivariate_storage_bidegree_sum(&reduced);
         let mut next = None;
         for parameter in [retained_parameter, alternate_parameter] {
-            let report = parameter_component_bivariate_polynomial_system(
+            let report = parameter_component_bivariate_polynomial_system_complete(
                 &reduced, branch, parameter, config,
             );
             if !matches!(
@@ -97598,7 +97635,7 @@ fn reduce_implicit_parameter_component_multiplicity(
     let mut reduced = component.clone();
     loop {
         let derivative = bivariate_parameter_derivative(&reduced, differentiated_parameter);
-        let report = parameter_component_bivariate_polynomial_system(
+        let report = parameter_component_bivariate_polynomial_system_complete(
             &reduced,
             &derivative,
             retained_parameter,
@@ -100803,7 +100840,7 @@ fn parallel_source_parameter_components_from_equations(
             CurveResultantParameter::First,
             CurveResultantParameter::Second,
         ] {
-            let report = parameter_component_bivariate_polynomial_system(
+            let report = parameter_component_bivariate_polynomial_system_complete(
                 &residual[0],
                 &residual[1],
                 retained_parameter,
@@ -101050,7 +101087,7 @@ fn extract_bivariate_system_components(
             CurveResultantParameter::First,
             CurveResultantParameter::Second,
         ] {
-            let report = parameter_component_bivariate_polynomial_system(
+            let report = parameter_component_bivariate_polynomial_system_complete(
                 &residual_equations[0],
                 &residual_equations[1],
                 retained_parameter,
@@ -134695,6 +134732,110 @@ mod conversion_tests {
             );
             assert!(overlap.includes_start());
             assert!(!overlap.includes_end());
+        }
+    }
+
+    #[test]
+    fn bounded_component_extraction_rejoins_the_uncapped_authority() {
+        let t = BivariatePolynomial::new(vec![vec![Real::zero()], vec![Real::one()]]);
+        let u = BivariatePolynomial::new(vec![vec![Real::zero(), Real::one()]]);
+        let component = bivariate_subtract(&u, &t);
+        let quadratic = bivariate_add(&bivariate_multiply(&t, &t), &bivariate_multiply(&u, &u));
+        let first_residual = bivariate_add(
+            &quadratic,
+            &BivariatePolynomial::new(vec![vec![Real::one()]]),
+        );
+        let second_residual = bivariate_add(
+            &quadratic,
+            &BivariatePolynomial::new(vec![vec![Real::from(2_i8)]]),
+        );
+        let equations = [
+            bivariate_multiply(&component, &first_residual),
+            bivariate_multiply(&component, &second_residual),
+        ];
+        let bounded = CurveIntersectionResultantConfig {
+            min_precision: PARALLEL_INTERSECTION_RESULTANT_PRECISION,
+            max_resultant_degree: 2,
+        };
+        assert_eq!(
+            parameter_component_bivariate_polynomial_system(
+                &equations[0],
+                &equations[1],
+                CurveResultantParameter::First,
+                bounded,
+            )
+            .status,
+            BivariatePolynomialComponentStatus::DegreeBoundExceeded,
+        );
+
+        let complete = parameter_component_bivariate_polynomial_system_complete(
+            &equations[0],
+            &equations[1],
+            CurveResultantParameter::First,
+            bounded,
+        );
+        assert_eq!(
+            complete.status,
+            BivariatePolynomialComponentStatus::Rational
+        );
+        let support = rational_parameter_component_support(
+            CurveResultantParameter::First,
+            &complete.numerator_coefficients,
+            &complete.denominator_coefficients,
+        )
+        .expect("the exact identity component must have a rational support");
+        assert!(
+            equations
+                .iter()
+                .all(|equation| divide_bivariate_polynomial_exact(equation, &support).is_some())
+        );
+
+        let positive_branch = BivariatePolynomial::new(vec![vec![Real::one()]]);
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            #[cfg(feature = "dispatch-trace")]
+            hyperreal::dispatch_trace::reset();
+            let work = || {
+                crate::policy::resolve_certified_value(&policy, |attempt| {
+                    parameter_component_system(&equations, &positive_branch, attempt, bounded)
+                        .unwrap()
+                })
+            };
+            #[cfg(feature = "dispatch-trace")]
+            let outcome = hyperreal::dispatch_trace::with_recording(work);
+            #[cfg(not(feature = "dispatch-trace"))]
+            let outcome = work();
+            #[cfg(feature = "dispatch-trace")]
+            let trace = hyperreal::dispatch_trace::take_trace();
+            let Classification::Decided(Some(system)) = outcome.value else {
+                panic!("the bounded schedule did not transport the complete component");
+            };
+            assert_eq!(outcome.certainty, crate::CurveCertainty::Certified);
+            let [overlap] = system.overlaps.as_ref() else {
+                panic!("the identity component must produce one complete overlap");
+            };
+            assert_eq!(
+                overlap.first_range().exact_endpoints(),
+                Some((&Real::zero(), &Real::one()))
+            );
+            assert_eq!(
+                overlap.second_range().exact_endpoints(),
+                Some((&Real::zero(), &Real::one()))
+            );
+            assert_eq!(
+                overlap.orientation(),
+                RationalBezierOverlapOrientation2::Same
+            );
+            assert!(system.selected_pairs().is_empty());
+            assert!(system.excluded_pairs().is_empty());
+            #[cfg(feature = "dispatch-trace")]
+            assert!(
+                trace.path_count(
+                    "hypercurve",
+                    "bivariate-component",
+                    "unbounded-cold-continuation",
+                ) >= 1,
+                "the bounded component schedule must enter its exact continuation: {trace:?}",
+            );
         }
     }
 
