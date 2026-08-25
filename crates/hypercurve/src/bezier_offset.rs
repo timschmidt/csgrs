@@ -6102,6 +6102,69 @@ fn represented_tensor_coordinate(
     }
 }
 
+/// Refines selected source isolators until one exact tensor-image root is
+/// separated. A repeated source/image state proves that further subdivision
+/// cannot add evidence and remains an explicit predicate blocker; otherwise
+/// no resource-shaped refinement ceiling changes the mathematical result.
+fn represented_tensor_coordinate_refined(
+    relation: &DenseTensorPolynomial,
+    sources: &[AlgebraicRootRepresentation],
+    _hot_refinement_limit: usize,
+    _trace_operation: &'static str,
+    mut image_interval: impl FnMut(
+        &[AlgebraicRootRepresentation],
+        usize,
+    ) -> Option<BezierAlgebraicChordRealInterval2>,
+) -> Classification<AlgebraicRootRepresentation> {
+    let mut refinement_steps = 0_usize;
+    let mut previous = None;
+    loop {
+        let refined_sources = sources
+            .iter()
+            .map(|source| refined_represented_root(source, refinement_steps))
+            .collect::<Vec<_>>();
+        if let Some(interval) = image_interval(&refined_sources, refinement_steps) {
+            let unchanged = previous
+                .as_ref()
+                .is_some_and(|(old_sources, old_interval)| {
+                    old_sources == &refined_sources && old_interval == &interval
+                });
+            match represented_tensor_coordinate(
+                relation,
+                &refined_sources,
+                &interval.lower,
+                &interval.upper,
+            ) {
+                decided @ Classification::Decided(_) => return decided,
+                Classification::Uncertain(UncertaintyReason::Unsupported) => {
+                    return Classification::Uncertain(UncertaintyReason::Unsupported);
+                }
+                Classification::Uncertain(_) if unchanged => {
+                    return Classification::Uncertain(UncertaintyReason::Predicate);
+                }
+                Classification::Uncertain(_) => {}
+            }
+            previous = Some((refined_sources, interval));
+        }
+        let Some(next_steps) = (if refinement_steps == 0 {
+            Some(4)
+        } else {
+            refinement_steps.checked_mul(2)
+        }) else {
+            return Classification::Uncertain(UncertaintyReason::Predicate);
+        };
+        #[cfg(feature = "dispatch-trace")]
+        if refinement_steps <= _hot_refinement_limit && next_steps > _hot_refinement_limit {
+            hyperreal::dispatch_trace::record(
+                "hypercurve",
+                _trace_operation,
+                "unbounded-cold-continuation",
+            );
+        }
+        refinement_steps = next_steps;
+    }
+}
+
 /// Constructs one exact affine image of already selected algebraic numbers.
 /// Rational witnesses and certified affine-related sources collapse before
 /// elimination. Any remaining selected roots retain their exact isolators as
@@ -6208,46 +6271,32 @@ fn represented_affine_coordinate(
         sources.push((*source).clone());
         scales.push((*scale).clone());
     }
-    for refinement_steps in [0, 4, 8, 16, 32, 64, 128, 256] {
-        let refined_sources = sources
-            .iter()
-            .map(|source| refined_represented_root(source, refinement_steps))
-            .collect::<Vec<_>>();
-        let mut interval = BezierAlgebraicChordRealInterval2 {
-            lower: affine_offset.clone(),
-            upper: affine_offset.clone(),
-        };
-        let mut bounded = true;
-        for (source, scale) in refined_sources.iter().zip(&scales) {
-            let source_interval = BezierAlgebraicChordRealInterval2 {
-                lower: source.interval.lower.clone(),
-                upper: source.interval.upper.clone(),
+    represented_tensor_coordinate_refined(
+        &relation,
+        &sources,
+        256,
+        "represented-affine-image-separation",
+        |refined_sources, _| {
+            let mut interval = BezierAlgebraicChordRealInterval2 {
+                lower: affine_offset.clone(),
+                upper: affine_offset.clone(),
             };
-            let scale_interval = BezierAlgebraicChordRealInterval2 {
-                lower: scale.clone(),
-                upper: scale.clone(),
-            };
-            let Some(term_interval) =
-                source_interval.multiply(&scale_interval, &CurveContext::STRICT)
-            else {
-                bounded = false;
-                break;
-            };
-            interval = interval.add(&term_interval);
-        }
-        if !bounded {
-            continue;
-        }
-        if let Classification::Decided(value) = represented_tensor_coordinate(
-            &relation,
-            &refined_sources,
-            &interval.lower,
-            &interval.upper,
-        ) {
-            return Classification::Decided(value);
-        }
-    }
-    Classification::Uncertain(UncertaintyReason::Predicate)
+            for (source, scale) in refined_sources.iter().zip(&scales) {
+                let source_interval = BezierAlgebraicChordRealInterval2 {
+                    lower: source.interval.lower.clone(),
+                    upper: source.interval.upper.clone(),
+                };
+                let scale_interval = BezierAlgebraicChordRealInterval2 {
+                    lower: scale.clone(),
+                    upper: scale.clone(),
+                };
+                let term_interval =
+                    source_interval.multiply(&scale_interval, &CurveContext::STRICT)?;
+                interval = interval.add(&term_interval);
+            }
+            Some(interval)
+        },
+    )
 }
 
 fn represented_similarity_point(
@@ -6463,23 +6512,40 @@ fn represented_dense_value_refined(
     polynomial: &DenseTensorPolynomial,
     sources: &[AlgebraicRootRepresentation],
 ) -> Classification<AlgebraicRootRepresentation> {
-    let mut reason = UncertaintyReason::Predicate;
-    for refinement_steps in [0, 4, 8, 16, 32, 64, 128, 256] {
-        let refined = sources
-            .iter()
-            .map(|source| refined_represented_root(source, refinement_steps))
-            .collect::<Vec<_>>();
-        let coefficient_bits = refinement_steps.max(64).min(i32::MAX as usize) as i32;
-        match represented_dense_value_with_coefficient_precision(
-            polynomial,
-            &refined,
-            -coefficient_bits,
-        ) {
-            Classification::Decided(value) => return Classification::Decided(value),
-            Classification::Uncertain(next_reason) => reason = next_reason,
-        }
+    let dimensions = polynomial.dimensions();
+    if dimensions.len() != sources.len() + 1 || dimensions.last() != Some(&1) {
+        return Classification::Uncertain(UncertaintyReason::Unsupported);
     }
-    Classification::Uncertain(reason)
+    if sources.is_empty() {
+        return Classification::Decided(exact_real_algebraic_representation(
+            &polynomial.coefficients()[0],
+        ));
+    }
+    let output_axis = dimensions.len() - 1;
+    let Some(output) = DenseTensorPolynomial::from_axis_polynomial(
+        dimensions.len(),
+        output_axis,
+        &[Real::zero(), Real::one()],
+    ) else {
+        return Classification::Uncertain(UncertaintyReason::Unsupported);
+    };
+    let Some(relation) = output.subtract(polynomial) else {
+        return Classification::Uncertain(UncertaintyReason::Unsupported);
+    };
+    represented_tensor_coordinate_refined(
+        &relation,
+        sources,
+        256,
+        "represented-dense-image-separation",
+        |refined, refinement_steps| {
+            let coefficient_bits = refinement_steps.max(64).min(i32::MAX as usize) as i32;
+            dense_tensor_interval_with_coefficient_precision(
+                polynomial,
+                refined,
+                Some(-coefficient_bits),
+            )
+        },
+    )
 }
 
 /// Eliminates every already-selected source axis and retains the exact
@@ -72262,7 +72328,7 @@ impl BezierAlgebraicChordSupportPredicate2 {
     }
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 struct BezierAlgebraicChordRealInterval2 {
     lower: Real,
     upper: Real,
@@ -130184,6 +130250,121 @@ mod conversion_tests {
                     "unbounded-cold-continuation",
                 ) >= 1,
                 "the selected norm must refine beyond 128 steps: {trace:?}",
+            );
+        }
+    }
+
+    #[test]
+    fn represented_scalar_images_refine_past_the_old_limit() {
+        let constant = DenseTensorPolynomial::from_axis_polynomial(1, 0, &[Real::pi()]).unwrap();
+        let Classification::Decided(constant) = represented_dense_value_refined(&constant, &[])
+        else {
+            panic!("a source-free exact Real scalar must not enter root separation");
+        };
+        assert_eq!(constant.exact_rational_witness(), Some(&Real::pi()));
+
+        let half = (Real::one() / Real::from(2_i8)).unwrap();
+        let epsilon = Real::new(
+            hyperreal::Rational::from_bigint_fraction(
+                num::BigInt::from(1_u8),
+                num::BigUint::from(1_u8) << 384,
+            )
+            .unwrap(),
+        );
+        let BezierParameter2::Algebraic(first_parameter) =
+            algebraic_parameter(vec![-half.clone(), Real::zero(), Real::one()])
+        else {
+            panic!("the first positive square root must remain algebraic");
+        };
+        let BezierParameter2::Algebraic(second_parameter) =
+            algebraic_parameter(vec![-(&half + &epsilon), Real::zero(), Real::one()])
+        else {
+            panic!("the second positive square root must remain algebraic");
+        };
+        let first = parameter_representation(&first_parameter, &CurveContext::STRICT);
+        let second = parameter_representation(&second_parameter, &CurveContext::STRICT);
+        assert!(
+            algebraic_root_affine_relation(&first, &second, hypersolve::PredicatePolicy::STRICT,)
+                .is_none()
+        );
+
+        let first_axis =
+            DenseTensorPolynomial::from_axis_polynomial(3, 0, &[Real::zero(), Real::one()])
+                .unwrap();
+        let second_axis =
+            DenseTensorPolynomial::from_axis_polynomial(3, 1, &[Real::zero(), Real::one()])
+                .unwrap();
+        let difference = first_axis.subtract(&second_axis).unwrap();
+        let bounded_sources = [
+            refined_represented_root(&first, 256),
+            refined_represented_root(&second, 256),
+        ];
+        assert!(matches!(
+            represented_dense_value_with_coefficient_precision(&difference, &bounded_sources, -256,),
+            Classification::Uncertain(_)
+        ));
+
+        #[cfg(feature = "dispatch-trace")]
+        hyperreal::dispatch_trace::reset();
+        let work = || {
+            (
+                represented_dense_value_refined(&difference, &[first.clone(), second.clone()]),
+                represented_affine_coordinate(
+                    &[(&first, &Real::one()), (&second, &Real::from(-1_i8))],
+                    &Real::zero(),
+                ),
+            )
+        };
+        #[cfg(feature = "dispatch-trace")]
+        let (dense, affine) = hyperreal::dispatch_trace::with_recording(work);
+        #[cfg(not(feature = "dispatch-trace"))]
+        let (dense, affine) = work();
+        #[cfg(feature = "dispatch-trace")]
+        let trace = hyperreal::dispatch_trace::take_trace();
+        let (Classification::Decided(dense), Classification::Decided(affine)) = (dense, affine)
+        else {
+            panic!("both represented scalar authorities must separate the selected image");
+        };
+        let comparison = compare_algebraic_root_representations_with_refinement(
+            &dense,
+            &affine,
+            AlgebraicRootRefinementComparisonConfig {
+                policy: hypersolve::PredicatePolicy::STRICT,
+                ..AlgebraicRootRefinementComparisonConfig::default()
+            },
+        );
+        assert_eq!(
+            comparison.comparison.ordering,
+            Some(std::cmp::Ordering::Equal)
+        );
+        assert_eq!(
+            compare_reals(&dense.interval.upper, &Real::zero(), &CurveContext::STRICT),
+            Some(std::cmp::Ordering::Less),
+        );
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let outcome = crate::policy::resolve_certified_value(&policy, |attempt| {
+                represented_policy_sign(&dense, attempt)
+            });
+            assert_eq!(outcome.value, Classification::Decided(RealSign::Negative));
+            assert_eq!(outcome.certainty, crate::CurveCertainty::Certified);
+        }
+        #[cfg(feature = "dispatch-trace")]
+        {
+            assert!(
+                trace.path_count(
+                    "hypercurve",
+                    "represented-dense-image-separation",
+                    "unbounded-cold-continuation",
+                ) >= 1,
+                "the dense image must refine beyond 256 steps: {trace:?}",
+            );
+            assert!(
+                trace.path_count(
+                    "hypercurve",
+                    "represented-affine-image-separation",
+                    "unbounded-cold-continuation",
+                ) >= 1,
+                "the affine image must refine beyond 256 steps: {trace:?}",
             );
         }
     }
