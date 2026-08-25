@@ -55818,6 +55818,24 @@ fn projected_selected_trivariate_candidate_has_subresultant_root(
     third_parameter: &BezierParameter2,
     policy: &CurveContext,
 ) -> CurveResult<Classification<bool>> {
+    projected_selected_trivariate_candidate_has_subresultant_root_with_resultant_limit(
+        projected_incidence,
+        first_parameter,
+        second_parameter,
+        third_parameter,
+        MAX_PARALLEL_INTERSECTION_RESULTANT_DEGREE,
+        policy,
+    )
+}
+
+fn projected_selected_trivariate_candidate_has_subresultant_root_with_resultant_limit(
+    projected_incidence: &TrivariatePolynomial2,
+    first_parameter: &BezierParameter2,
+    second_parameter: &BezierParameter2,
+    third_parameter: &BezierParameter2,
+    max_resultant_degree: usize,
+    policy: &CurveContext,
+) -> CurveResult<Classification<bool>> {
     let strict = policy.strict_counterpart();
     let pair_incidence = independent_parameter_pair_incidence(second_parameter);
     let pair_sign = |polynomial: &BivariatePolynomial| {
@@ -55863,18 +55881,35 @@ fn projected_selected_trivariate_candidate_has_subresultant_root(
             return Ok(Classification::Uncertain(reason));
         }
     };
-    let config = CurveIntersectionResultantConfig {
+    let mut config = CurveIntersectionResultantConfig {
         min_precision: hypersolve::PredicatePolicy::MAX_REFINEMENT_PRECISION,
-        max_resultant_degree: MAX_PARALLEL_INTERSECTION_RESULTANT_DEGREE,
+        max_resultant_degree,
     };
     let solver_polynomial =
         SolverTrivariatePolynomial::new(projected_incidence.coefficients.clone());
-    let resultant = resultant_trivariate_polynomial_univariate_constraint(
+    let mut resultant = resultant_trivariate_polynomial_univariate_constraint(
         &solver_polynomial,
         &constraint,
         TrivariatePolynomialAxis::Third,
         config,
     );
+    if resultant.status == TrivariateConstraintResultantStatus::DegreeBoundExceeded
+        && config.max_resultant_degree != usize::MAX
+    {
+        #[cfg(feature = "dispatch-trace")]
+        hyperreal::dispatch_trace::record(
+            "hypercurve",
+            "selected-pair-constrained-elimination",
+            "unbounded-cold-continuation",
+        );
+        config.max_resultant_degree = usize::MAX;
+        resultant = resultant_trivariate_polynomial_univariate_constraint(
+            &solver_polynomial,
+            &constraint,
+            TrivariatePolynomialAxis::Third,
+            config,
+        );
+    }
     let resultant = match resultant.status {
         TrivariateConstraintResultantStatus::Constructed => resultant
             .resultant
@@ -55905,13 +55940,31 @@ fn projected_selected_trivariate_candidate_has_subresultant_root(
         .saturating_sub(1)
         .min(constraint.len().saturating_sub(1));
     for order in 1..=maximum_order {
-        let report = subresultant_trivariate_polynomial_univariate_constraint(
+        let mut report = subresultant_trivariate_polynomial_univariate_constraint(
             &solver_polynomial,
             &constraint,
             TrivariatePolynomialAxis::Third,
             order,
             config,
         );
+        if report.status == TrivariateConstraintSubresultantStatus::DegreeBoundExceeded
+            && config.max_resultant_degree != usize::MAX
+        {
+            #[cfg(feature = "dispatch-trace")]
+            hyperreal::dispatch_trace::record(
+                "hypercurve",
+                "selected-pair-constrained-elimination",
+                "unbounded-cold-continuation",
+            );
+            config.max_resultant_degree = usize::MAX;
+            report = subresultant_trivariate_polynomial_univariate_constraint(
+                &solver_polynomial,
+                &constraint,
+                TrivariatePolynomialAxis::Third,
+                order,
+                config,
+            );
+        }
         match report.status {
             TrivariateConstraintSubresultantStatus::Constructed => {}
             TrivariateConstraintSubresultantStatus::UndecidedCoefficient => {
@@ -123286,12 +123339,37 @@ mod conversion_tests {
             Real::one(),
         ]);
         for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
-            assert_eq!(
-                projected_selected_trivariate_candidate_has_subresultant_root(
-                    &projected, &alpha, &beta, &alpha, &policy,
-                )
-                .unwrap(),
-                Classification::Decided(true),
+            #[cfg(feature = "dispatch-trace")]
+            hyperreal::dispatch_trace::reset();
+            let work = || {
+                crate::policy::resolve_certified_value(&policy, |attempt| {
+                    projected_selected_trivariate_candidate_has_subresultant_root_with_resultant_limit(
+                        &projected,
+                        &alpha,
+                        &beta,
+                        &alpha,
+                        0,
+                        attempt,
+                    )
+                    .unwrap()
+                })
+            };
+            #[cfg(feature = "dispatch-trace")]
+            let outcome = hyperreal::dispatch_trace::with_recording(work);
+            #[cfg(not(feature = "dispatch-trace"))]
+            let outcome = work();
+            #[cfg(feature = "dispatch-trace")]
+            let trace = hyperreal::dispatch_trace::take_trace();
+            assert_eq!(outcome.value, Classification::Decided(true));
+            assert_eq!(outcome.certainty, crate::CurveCertainty::Certified);
+            #[cfg(feature = "dispatch-trace")]
+            assert!(
+                trace.path_count(
+                    "hypercurve",
+                    "selected-pair-constrained-elimination",
+                    "unbounded-cold-continuation",
+                ) >= 1,
+                "the bounded selected-pair eliminator must continue exactly: {trace:?}",
             );
             assert_eq!(
                 projected_selected_trivariate_candidate_has_subresultant_root(
