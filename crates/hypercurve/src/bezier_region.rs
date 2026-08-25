@@ -26773,13 +26773,14 @@ mod tests {
         analytic_bottom: bool,
         policy: &CurveContext,
     ) -> CurveRegion2 {
-        selected_radial_crossing_cutter(filleted, None, analytic_bottom, policy)
+        selected_radial_crossing_cutter(filleted, None, analytic_bottom, false, policy)
     }
 
     fn selected_radial_crossing_cutter(
         filleted: &CurveRegion2,
         selected_radius: Option<&Real>,
         analytic_bottom: bool,
+        curved_crossing: bool,
         policy: &CurveContext,
     ) -> CurveRegion2 {
         let pair_fragment = filleted.boundary_loops()[0]
@@ -26942,9 +26943,24 @@ mod tests {
                 Point2::new(left, top),
             ]
         };
-        let crossing_source = QuadraticBezier2::from_line_segment(
-            LineSeg2::try_new(vertices[0].clone(), vertices[1].clone()).unwrap(),
-        );
+        let crossing_source = if curved_crossing {
+            let half = q(1, 2);
+            let bend = (pair_circle.radial_distance().abs() / Real::from(1000_i16)).unwrap();
+            let midpoint = Point2::new(
+                (vertices[0].x() + vertices[1].x()) * &half,
+                (vertices[0].y() + vertices[1].y()) * half,
+            );
+            let control = if crossing_axis.0 {
+                midpoint.translated(bend, Real::zero())
+            } else {
+                midpoint.translated(Real::zero(), bend)
+            };
+            QuadraticBezier2::new(vertices[0].clone(), control, vertices[1].clone())
+        } else {
+            QuadraticBezier2::from_line_segment(
+                LineSeg2::try_new(vertices[0].clone(), vertices[1].clone()).unwrap(),
+            )
+        };
         let crossing = if analytic_bottom {
             let Classification::Decided(crossing) = crate::BezierParallelFragment2::try_new(
                 crossing_source.parallel_left(Real::zero()).unwrap(),
@@ -27018,7 +27034,8 @@ mod tests {
         source_radius: &Real,
         policy: &CurveContext,
     ) -> (CurveRegion2, Real) {
-        let cutter = selected_radial_crossing_cutter(source, Some(source_radius), false, policy);
+        let cutter =
+            selected_radial_crossing_cutter(source, Some(source_radius), false, false, policy);
         #[cfg(feature = "dispatch-trace")]
         hyperreal::dispatch_trace::reset();
         let boolean_work = || source.boolean_regions(&cutter, policy);
@@ -27352,6 +27369,56 @@ mod tests {
                 assert_eq!(replay.certainty, CurveCertainty::Certified);
                 assert!(replay.value.intersection().is_empty());
             });
+        }
+    }
+
+    #[test]
+    fn recursive_selected_radial_crosses_a_nonlinear_quadratic() {
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let (fourth_generation, fourth_radius) =
+                fourth_selected_radial_boolean_fillet_generation(&policy);
+            let cutter = selected_radial_crossing_cutter(
+                &fourth_generation,
+                Some(&fourth_radius),
+                false,
+                true,
+                &policy,
+            );
+            #[cfg(feature = "dispatch-trace")]
+            hyperreal::dispatch_trace::reset();
+            let intersection_work = || fourth_generation.intersect_region(&cutter, &policy);
+            #[cfg(feature = "dispatch-trace")]
+            let intersections = hyperreal::dispatch_trace::with_recording(intersection_work);
+            #[cfg(not(feature = "dispatch-trace"))]
+            let intersections = intersection_work();
+            #[cfg(feature = "dispatch-trace")]
+            let trace = hyperreal::dispatch_trace::take_trace();
+            let intersections = intersections.unwrap_or_else(|error| {
+                #[cfg(feature = "dispatch-trace")]
+                panic!(
+                    "the recursive selected-radial/nonlinear crossing must decide: policy={policy:?}, error={error:?}, trace={trace:?}"
+                );
+                #[cfg(not(feature = "dispatch-trace"))]
+                panic!(
+                    "the recursive selected-radial/nonlinear crossing must decide: policy={policy:?}, error={error:?}"
+                );
+            });
+            assert!(
+                intersections.value.is_complete(),
+                "the recursive nonlinear crossing must retain complete intersection evidence: policy={policy:?}, blockers={:?}",
+                intersections.value.blockers(),
+            );
+            assert!(!intersections.value.contacts().is_empty());
+            let booleans = fourth_generation
+                .boolean_regions(&cutter, &policy)
+                .unwrap_or_else(|error| {
+                    panic!(
+                        "the recursive selected-radial/nonlinear crossing must publish Boolean topology: policy={policy:?}, error={error:?}"
+                    )
+                });
+            assert_eq!(booleans.certainty, CurveCertainty::Certified);
+            assert!(!booleans.value.intersection().is_empty());
+            assert!(!booleans.value.difference().is_empty());
         }
     }
 
