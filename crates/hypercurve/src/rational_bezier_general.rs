@@ -1396,6 +1396,68 @@ const RATIONAL_INTERSECTION_RESULTANT_PRECISION: i32 = -128;
 const MAX_QUOTIENT_RING_RATIONAL_IMAGE_DEGREE: usize = 12;
 const MAX_RETAINED_EVALUATION_POWER_DEGREE: usize = 256;
 
+/// Keeps a bounded resultant as the hot schedule while removing its degree
+/// limit as a mathematical boundary. The continuation changes only resource
+/// scheduling: coefficient certification and every later candidate replay
+/// retain their requested exact predicate policy.
+#[inline]
+fn continue_resultant_after_degree_bound(
+    report: CurveIntersectionResultantReport,
+    config: CurveIntersectionResultantConfig,
+    continuation: impl FnOnce(CurveIntersectionResultantConfig) -> CurveIntersectionResultantReport,
+) -> CurveIntersectionResultantReport {
+    if report.status != CurveIntersectionResultantStatus::DegreeBoundExceeded
+        || config.max_resultant_degree == usize::MAX
+    {
+        return report;
+    }
+    #[cfg(feature = "dispatch-trace")]
+    hyperreal::dispatch_trace::record(
+        "hypercurve",
+        "bivariate-resultant",
+        "unbounded-cold-continuation",
+    );
+    continuation(CurveIntersectionResultantConfig {
+        max_resultant_degree: usize::MAX,
+        ..config
+    })
+}
+
+pub(crate) fn resultant_bivariate_polynomial_system_complete(
+    first_equation: &BivariatePolynomial,
+    second_equation: &BivariatePolynomial,
+    retained_parameter: CurveResultantParameter,
+    config: CurveIntersectionResultantConfig,
+) -> CurveIntersectionResultantReport {
+    let report = resultant_bivariate_polynomial_system(
+        first_equation,
+        second_equation,
+        retained_parameter,
+        config,
+    );
+    continue_resultant_after_degree_bound(report, config, |config| {
+        resultant_bivariate_polynomial_system(
+            first_equation,
+            second_equation,
+            retained_parameter,
+            config,
+        )
+    })
+}
+
+fn resultant_rational_parametric_curve_intersection_complete(
+    first: &RationalParametricCurve2,
+    second: &RationalParametricCurve2,
+    retained_parameter: CurveResultantParameter,
+    config: CurveIntersectionResultantConfig,
+) -> CurveIntersectionResultantReport {
+    let report =
+        resultant_rational_parametric_curve_intersection(first, second, retained_parameter, config);
+    continue_resultant_after_degree_bound(report, config, |config| {
+        resultant_rational_parametric_curve_intersection(first, second, retained_parameter, config)
+    })
+}
+
 fn rational_self_intersection_residual_system(
     basis: &RationalParametricCurve2,
 ) -> Option<[BivariatePolynomial; 2]> {
@@ -1496,7 +1558,7 @@ fn project_retained_lineage_residual_system(
 ) -> CurveResult<Classification<RationalBezierIntersectionCandidates2>> {
     let project = |parameter| {
         resultant_parameter_projection(
-            resultant_bivariate_polynomial_system(
+            resultant_bivariate_polynomial_system_complete(
                 &equations[0],
                 &equations[1],
                 parameter,
@@ -1540,7 +1602,7 @@ fn project_symmetric_self_intersection_system(
     equations: &[BivariatePolynomial; 2],
     policy: &CurveContext,
 ) -> CurveResult<Classification<RationalBezierIntersectionCandidates2>> {
-    let report = resultant_bivariate_polynomial_system(
+    let report = resultant_bivariate_polynomial_system_complete(
         &equations[0],
         &equations[1],
         CurveResultantParameter::First,
@@ -1583,7 +1645,7 @@ fn project_symmetric_self_intersection_system_with_incident_rays(
 ) -> CurveResult<Classification<RationalBezierIntersectionCandidates2>> {
     let project = |parameter, anchor, direction, barrier| {
         resultant_parameter_projection_with_incident_ray(
-            resultant_bivariate_polynomial_system(
+            resultant_bivariate_polynomial_system_complete(
                 &equations[0],
                 &equations[1],
                 parameter,
@@ -4682,13 +4744,13 @@ impl RationalBezier2 {
             min_precision: RATIONAL_INTERSECTION_RESULTANT_PRECISION,
             max_resultant_degree: MAX_RATIONAL_INTERSECTION_RESULTANT_DEGREE,
         };
-        let first = resultant_rational_parametric_curve_intersection(
+        let first = resultant_rational_parametric_curve_intersection_complete(
             self.homogeneous_power_basis()?,
             other.homogeneous_power_basis()?,
             CurveResultantParameter::First,
             config,
         );
-        let second = resultant_rational_parametric_curve_intersection(
+        let second = resultant_rational_parametric_curve_intersection_complete(
             self.homogeneous_power_basis()?,
             other.homogeneous_power_basis()?,
             CurveResultantParameter::Second,
@@ -9783,6 +9845,130 @@ mod tests {
 
     fn exact_f64(value: f64) -> Real {
         Real::try_from(value).expect("finite binary rational")
+    }
+
+    #[test]
+    fn bounded_curve_resultants_rejoin_the_uncapped_authority() {
+        let half = (Real::one() / Real::from(2_i8)).unwrap();
+        let first_equation = BivariatePolynomial::new(vec![
+            vec![Real::zero(), Real::one()],
+            vec![Real::zero()],
+            vec![Real::zero()],
+            vec![Real::from(-1_i8)],
+        ]);
+        let second_equation = BivariatePolynomial::new(vec![vec![-half.clone(), Real::one()]]);
+        let bounded = CurveIntersectionResultantConfig {
+            min_precision: RATIONAL_INTERSECTION_RESULTANT_PRECISION,
+            max_resultant_degree: 2,
+        };
+        assert_eq!(
+            resultant_bivariate_polynomial_system(
+                &first_equation,
+                &second_equation,
+                CurveResultantParameter::First,
+                bounded,
+            )
+            .status,
+            CurveIntersectionResultantStatus::DegreeBoundExceeded,
+        );
+
+        let third = (Real::one() / Real::from(3_i8)).unwrap();
+        let two_thirds = (Real::from(2_i8) / Real::from(3_i8)).unwrap();
+        let cubic = RationalBezier2::try_new(
+            vec![
+                Point2::from_values(0, 0),
+                Point2::new(third, Real::zero()),
+                Point2::new(two_thirds, Real::zero()),
+                Point2::from_values(1, 1),
+            ],
+            vec![Real::one(); 4],
+        )
+        .unwrap();
+        let line = RationalBezier2::try_new(
+            vec![
+                Point2::new(Real::zero(), half.clone()),
+                Point2::new(Real::one(), half.clone()),
+            ],
+            vec![Real::one(); 2],
+        )
+        .unwrap();
+        assert_eq!(
+            resultant_rational_parametric_curve_intersection(
+                cubic.homogeneous_power_basis().unwrap(),
+                line.homogeneous_power_basis().unwrap(),
+                CurveResultantParameter::First,
+                bounded,
+            )
+            .status,
+            CurveIntersectionResultantStatus::DegreeBoundExceeded,
+        );
+
+        let defining = vec![-half, Real::zero(), Real::zero(), Real::one()];
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            #[cfg(feature = "dispatch-trace")]
+            hyperreal::dispatch_trace::reset();
+            let work = || {
+                crate::policy::resolve_certified_value(&policy, |attempt| {
+                    let polynomial = resultant_bivariate_polynomial_system_complete(
+                        &first_equation,
+                        &second_equation,
+                        CurveResultantParameter::First,
+                        bounded,
+                    );
+                    let rational = resultant_rational_parametric_curve_intersection_complete(
+                        cubic.homogeneous_power_basis().unwrap(),
+                        line.homogeneous_power_basis().unwrap(),
+                        CurveResultantParameter::First,
+                        bounded,
+                    );
+                    let projections = [polynomial, rational]
+                        .map(|report| resultant_parameter_projection(report, attempt).unwrap());
+                    let mut parameters = Vec::with_capacity(2);
+                    for projection in projections {
+                        let Classification::Decided(ResultantParameterProjection::Parameters(
+                            projected,
+                        )) = projection
+                        else {
+                            return Classification::Uncertain(UncertaintyReason::Predicate);
+                        };
+                        let [parameter] = projected.as_slice() else {
+                            return Classification::Uncertain(UncertaintyReason::Boundary);
+                        };
+                        if crate::bezier_parameter::signed_coefficients_at_parameter(
+                            defining.clone(),
+                            parameter,
+                            attempt,
+                        )
+                        .unwrap()
+                            != Classification::Decided(RealSign::Zero)
+                        {
+                            return Classification::Uncertain(UncertaintyReason::Predicate);
+                        }
+                        parameters.push(parameter.clone());
+                    }
+                    Classification::Decided(parameters)
+                })
+            };
+            #[cfg(feature = "dispatch-trace")]
+            let outcome = hyperreal::dispatch_trace::with_recording(work);
+            #[cfg(not(feature = "dispatch-trace"))]
+            let outcome = work();
+            #[cfg(feature = "dispatch-trace")]
+            let trace = hyperreal::dispatch_trace::take_trace();
+            assert!(
+                matches!(outcome.value, Classification::Decided(parameters) if parameters.len() == 2)
+            );
+            assert_eq!(outcome.certainty, crate::CurveCertainty::Certified);
+            #[cfg(feature = "dispatch-trace")]
+            assert!(
+                trace.path_count(
+                    "hypercurve",
+                    "bivariate-resultant",
+                    "unbounded-cold-continuation",
+                ) >= 2,
+                "both bounded projection forms must rejoin the same exact continuation: {trace:?}",
+            );
+        }
     }
 
     #[test]

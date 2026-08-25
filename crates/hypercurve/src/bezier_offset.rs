@@ -38,7 +38,8 @@ use crate::bezier_parameter::{
 use crate::classify::{classify_oriented_line, compare_reals, in_closed_unit_interval, real_sign};
 use crate::rational_bezier_general::{
     RationalBezierOverlapParameterCorrespondence2, RationalParameterImageMap2,
-    ResultantParameterProjection, exact_contact_point_evidence, resultant_parameter_projection,
+    ResultantParameterProjection, exact_contact_point_evidence,
+    resultant_bivariate_polynomial_system_complete, resultant_parameter_projection,
     resultant_parameter_projection_with_incident_ray,
 };
 use crate::{
@@ -5309,7 +5310,7 @@ fn represented_biaffine_ratio(
             .map(|coefficient| vec![coefficient])
             .collect(),
     );
-    let report = resultant_bivariate_polynomial_system(
+    let report = resultant_bivariate_polynomial_system_complete(
         &eliminated_x,
         &y_constraint,
         CurveResultantParameter::Second,
@@ -95665,7 +95666,7 @@ fn project_parallel_intersection_system(
         min_precision: PARALLEL_INTERSECTION_RESULTANT_PRECISION,
         max_resultant_degree: MAX_PARALLEL_INTERSECTION_RESULTANT_DEGREE,
     };
-    let parallel_report = resultant_bivariate_polynomial_system(
+    let parallel_report = resultant_bivariate_polynomial_system_complete(
         first_equation,
         second_equation,
         CurveResultantParameter::First,
@@ -95680,7 +95681,7 @@ fn project_parallel_intersection_system(
             BezierParallelIntersectionCandidates2::DegenerateResultant,
         ));
     }
-    let other_report = resultant_bivariate_polynomial_system(
+    let other_report = resultant_bivariate_polynomial_system_complete(
         first_equation,
         second_equation,
         CurveResultantParameter::Second,
@@ -95726,7 +95727,7 @@ fn project_parallel_intersection_equations_with_incident_rays(
         min_precision: PARALLEL_INTERSECTION_RESULTANT_PRECISION,
         max_resultant_degree: MAX_PARALLEL_INTERSECTION_RESULTANT_DEGREE,
     };
-    let first_report = resultant_bivariate_polynomial_system(
+    let first_report = resultant_bivariate_polynomial_system_complete(
         first_equation,
         second_equation,
         CurveResultantParameter::First,
@@ -95749,7 +95750,7 @@ fn project_parallel_intersection_equations_with_incident_rays(
             BezierParallelIntersectionCandidates2::DegenerateResultant,
         ));
     }
-    let second_report = resultant_bivariate_polynomial_system(
+    let second_report = resultant_bivariate_polynomial_system_complete(
         first_equation,
         second_equation,
         CurveResultantParameter::Second,
