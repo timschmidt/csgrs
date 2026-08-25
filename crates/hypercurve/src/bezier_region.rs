@@ -27062,6 +27062,44 @@ mod tests {
         .expect("the selected-radial disk has authored topology")
     }
 
+    fn selected_radial_cap(
+        semicircle: crate::bezier_offset::BezierAlgebraicCuspSemicircle2,
+        policy: &CurveContext,
+    ) -> CurveRegion2 {
+        assert!(semicircle.uses_selected_radial_frame());
+        let arc = crate::BezierAlgebraicCuspSemicircleFragment2::full(semicircle, policy);
+        let Classification::Decided(Some(start)) =
+            arc.endpoint_point_evidence(true, policy).unwrap()
+        else {
+            panic!("the selected-radial cap start must retain exact point evidence");
+        };
+        let Classification::Decided(Some(end)) =
+            arc.endpoint_point_evidence(false, policy).unwrap()
+        else {
+            panic!("the selected-radial cap end must retain exact point evidence");
+        };
+        let Classification::Decided(chord) =
+            crate::bezier_offset::BezierAlgebraicChord2::try_new(end, start, policy).unwrap()
+        else {
+            panic!("the selected-radial cap diameter must retain an exact chord");
+        };
+        let boundary = CurveRegionBoundaryLoop2::new(
+            vec![
+                BezierSplitFragment2::AlgebraicCuspSemicircle(arc),
+                BezierSplitFragment2::AlgebraicChord(chord),
+            ],
+            policy,
+        )
+        .expect("the selected-radial cap closes exactly");
+        CurveRegion2::try_new_with_loop_topology(
+            vec![boundary],
+            vec![CurveRegionLoopRole::Material],
+            vec![FillRule::NonZero],
+            vec![CurveBoundaryInteriorSide2::Left],
+        )
+        .expect("the selected-radial cap has authored topology")
+    }
+
     fn recursive_selected_radial_nonlinear_cutter(policy: &CurveContext) -> CurveRegion2 {
         let start = Point2::from_values(-1, -1);
         let end = Point2::from_values(2, -1);
@@ -27536,6 +27574,69 @@ mod tests {
                 .unwrap_or_else(|error| {
                     panic!(
                         "the recursive selected-radial/nonlinear crossing must publish Boolean topology: policy={policy:?}, error={error:?}"
+                    )
+                });
+            assert_eq!(booleans.certainty, CurveCertainty::Certified);
+            assert!(!booleans.value.intersection().is_empty());
+            assert!(!booleans.value.difference().is_empty());
+        }
+    }
+
+    #[test]
+    fn recursive_selected_radial_cap_crosses_a_nonlinear_quadratic() {
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let recursive = crate::bezier_offset::recursively_line_contact_radial_half(&policy);
+            let recursive_cap = selected_radial_cap(recursive, &policy);
+            let cutter = recursive_selected_radial_nonlinear_cutter(&policy);
+            #[cfg(feature = "dispatch-trace")]
+            hyperreal::dispatch_trace::reset();
+            let intersection_work = || recursive_cap.intersect_region(&cutter, &policy);
+            #[cfg(feature = "dispatch-trace")]
+            let intersections = hyperreal::dispatch_trace::with_recording(intersection_work);
+            #[cfg(not(feature = "dispatch-trace"))]
+            let intersections = intersection_work();
+            #[cfg(feature = "dispatch-trace")]
+            let trace = hyperreal::dispatch_trace::take_trace();
+            let intersections = intersections.unwrap_or_else(|error| {
+                #[cfg(feature = "dispatch-trace")]
+                panic!(
+                    "the recursive selected-radial cap/nonlinear crossing must decide: policy={policy:?}, error={error:?}, trace={trace:?}"
+                );
+                #[cfg(not(feature = "dispatch-trace"))]
+                panic!(
+                    "the recursive selected-radial cap/nonlinear crossing must decide: policy={policy:?}, error={error:?}"
+                );
+            });
+            #[cfg(feature = "dispatch-trace")]
+            assert!(
+                trace.path_count(
+                    "hypercurve",
+                    "algebraic-chord-rational-kernel",
+                    "recursive-projective",
+                ) > 0,
+                "the recursive cap diameter must use the shared projective rational kernel: {trace:?}",
+            );
+            #[cfg(feature = "dispatch-trace")]
+            assert_eq!(
+                trace.path_count(
+                    "hypercurve",
+                    "algebraic-chord-rational-kernel",
+                    "represented-zero-parallel-fallback",
+                ),
+                0,
+                "the recursive cap diameter must not enter the represented fallback: {trace:?}",
+            );
+            assert!(
+                intersections.value.is_complete(),
+                "the recursive cap crossing must retain complete intersection evidence: policy={policy:?}, blockers={:?}",
+                intersections.value.blockers(),
+            );
+            assert!(!intersections.value.contacts().is_empty());
+            let booleans = recursive_cap
+                .boolean_regions(&cutter, &policy)
+                .unwrap_or_else(|error| {
+                    panic!(
+                        "the recursive selected-radial cap/nonlinear crossing must publish Boolean topology: policy={policy:?}, error={error:?}"
                     )
                 });
             assert_eq!(booleans.certainty, CurveCertainty::Certified);
