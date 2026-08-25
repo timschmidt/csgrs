@@ -103275,6 +103275,43 @@ pub(crate) struct BivariateParameterPairReplayCache {
     parameter_lifts: [Option<CurveIntersectionParameterLiftReport>; 2],
 }
 
+/// Keeps bounded cofactor interpolation on the hot path while ensuring that
+/// its degree budget cannot discard an otherwise exact parameter pairing.
+#[inline]
+fn linear_parameter_lifts_bivariate_polynomial_system_complete(
+    first_equation: &BivariatePolynomial,
+    second_equation: &BivariatePolynomial,
+    retained_parameter: CurveResultantParameter,
+    config: CurveIntersectionResultantConfig,
+) -> CurveIntersectionParameterLiftReport {
+    let report = linear_parameter_lifts_bivariate_polynomial_system(
+        first_equation,
+        second_equation,
+        retained_parameter,
+        config,
+    );
+    if report.status != CurveIntersectionParameterLiftStatus::DegreeBoundExceeded
+        || config.max_resultant_degree == usize::MAX
+    {
+        return report;
+    }
+    #[cfg(feature = "dispatch-trace")]
+    hyperreal::dispatch_trace::record(
+        "hypercurve",
+        "bivariate-parameter-lift",
+        "unbounded-cold-continuation",
+    );
+    linear_parameter_lifts_bivariate_polynomial_system(
+        first_equation,
+        second_equation,
+        retained_parameter,
+        CurveIntersectionResultantConfig {
+            max_resultant_degree: usize::MAX,
+            ..config
+        },
+    )
+}
+
 fn replay_bivariate_parameter_pair(
     first: &BivariatePolynomial,
     second: &BivariatePolynomial,
@@ -103328,7 +103365,7 @@ fn replay_bivariate_parameter_pair(
     }
 
     let first_lifts = parameter_lifts[0].get_or_insert_with(|| {
-        linear_parameter_lifts_bivariate_polynomial_system(
+        linear_parameter_lifts_bivariate_polynomial_system_complete(
             first,
             second,
             CurveResultantParameter::First,
@@ -103346,7 +103383,7 @@ fn replay_bivariate_parameter_pair(
     }
 
     let second_lifts = parameter_lifts[1].get_or_insert_with(|| {
-        linear_parameter_lifts_bivariate_polynomial_system(
+        linear_parameter_lifts_bivariate_polynomial_system_complete(
             first,
             second,
             CurveResultantParameter::Second,
@@ -137466,6 +137503,82 @@ mod conversion_tests {
             assert_eq!(
                 rootless_axis_primitive_system(&nonrational_rootful, &policy).unwrap(),
                 None
+            );
+        }
+    }
+
+    #[test]
+    fn bounded_parameter_lifts_rejoin_the_uncapped_authority() {
+        // The common solution is `t^3 = 1/2`, `u = 1/2`. The cubic retained
+        // dependence exceeds the artificial hot budget while the authored
+        // nullity-one fiber still has an exact constant lift.
+        let half = (Real::one() / Real::from(2_i8)).unwrap();
+        let first = BivariatePolynomial::new(vec![
+            vec![Real::zero(), Real::one()],
+            vec![],
+            vec![],
+            vec![Real::from(-1_i8)],
+        ]);
+        let second = BivariatePolynomial::new(vec![vec![-half.clone(), Real::one()]]);
+        let retained = algebraic_parameter(vec![
+            Real::from(-1_i8),
+            Real::zero(),
+            Real::zero(),
+            Real::from(2_i8),
+        ]);
+        let lifted = BezierParameter2::Exact(half);
+        let bounded = CurveIntersectionResultantConfig {
+            min_precision: PARALLEL_INTERSECTION_RESULTANT_PRECISION,
+            max_resultant_degree: 2,
+        };
+        assert_eq!(
+            linear_parameter_lifts_bivariate_polynomial_system(
+                &first,
+                &second,
+                CurveResultantParameter::First,
+                bounded,
+            )
+            .status,
+            CurveIntersectionParameterLiftStatus::DegreeBoundExceeded,
+        );
+
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            #[cfg(feature = "dispatch-trace")]
+            hyperreal::dispatch_trace::reset();
+            let work = || {
+                crate::policy::resolve_certified_value(&policy, |attempt| {
+                    let report = linear_parameter_lifts_bivariate_polynomial_system_complete(
+                        &first,
+                        &second,
+                        CurveResultantParameter::First,
+                        bounded,
+                    );
+                    parameter_pair_matches_linear_lift(&report, &retained, &lifted, attempt)
+                        .unwrap()
+                })
+            };
+            #[cfg(feature = "dispatch-trace")]
+            let outcome = hyperreal::dispatch_trace::with_recording(work);
+            #[cfg(not(feature = "dispatch-trace"))]
+            let outcome = work();
+            #[cfg(feature = "dispatch-trace")]
+            let trace = hyperreal::dispatch_trace::take_trace();
+            assert!(matches!(
+                outcome.value,
+                Classification::Decided(BivariateParameterPairReplay::LinearLift(
+                    CurveResultantParameter::First,
+                    _
+                ))
+            ));
+            assert_eq!(outcome.certainty, crate::CurveCertainty::Certified);
+            #[cfg(feature = "dispatch-trace")]
+            assert!(
+                trace.path_count(
+                    "hypercurve",
+                    "bivariate-parameter-lift",
+                    "unbounded-cold-continuation",
+                ) >= 1,
+                "the bounded lift schedule must enter its exact continuation: {trace:?}",
             );
         }
     }
