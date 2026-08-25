@@ -25442,14 +25442,24 @@ mod tests {
                 vec![CurveBoundaryInteriorSide2::Left],
             )
             .unwrap();
-            let result = region
-                .fillet_loop_vertex_by_radius(
+            #[cfg(feature = "dispatch-trace")]
+            hyperreal::dispatch_trace::reset();
+            let fillet_work = || {
+                region.fillet_loop_vertex_by_radius(
                     0,
                     1,
                     half.clone(),
                     CurveCornerMode2::TrimOnly,
                     &policy,
                 )
+            };
+            #[cfg(feature = "dispatch-trace")]
+            let result = hyperreal::dispatch_trace::with_recording(fillet_work);
+            #[cfg(not(feature = "dispatch-trace"))]
+            let result = fillet_work();
+            #[cfg(feature = "dispatch-trace")]
+            let trace = hyperreal::dispatch_trace::take_trace();
+            let result = result
                 .unwrap_or_else(|error| {
                     panic!(
                         "the selected-fiber circle/line contact must fillet: policy={policy:?}, error={error:?}"
@@ -25463,6 +25473,26 @@ mod tests {
                     .iter()
                     .any(|fragment| matches!(fragment, BezierSplitFragment2::SelectedFiber(_)));
             });
+            #[cfg(feature = "dispatch-trace")]
+            {
+                assert!(
+                    trace.path_count(
+                        "hypercurve",
+                        "algebraic-circle-chord-kernel",
+                        "selected-fiber-line",
+                    ) > 0,
+                    "an authored exact line must keep the compact selected-fiber kernel: {trace:?}",
+                );
+                assert_eq!(
+                    trace.path_count(
+                        "hypercurve",
+                        "algebraic-circle-chord-kernel",
+                        "recursive-projective-retained-chord",
+                    ),
+                    0,
+                    "the general recursive bridge must not preempt selected-fiber line provenance: {trace:?}",
+                );
+            }
             assert!(
                 retained_selected_cut,
                 "the exact rational line cut must remain in its selected contact fiber"

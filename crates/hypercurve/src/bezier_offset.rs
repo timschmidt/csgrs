@@ -28942,6 +28942,12 @@ impl BezierAlgebraicCuspSemicircle2 {
             && exact_line.is_some()
             && (!self.uses_selected_radial_frame()
                 || self.has_recursive_selected_radial_line_parent());
+        let prefer_selected_fiber_exact_line = prefer_authored_exact_line
+            && self.uses_selected_parallel_normal_frame()
+            && matches!(
+                self.selected_frame_parameter(),
+                Some(BezierParameter2::Algebraic(_))
+            );
         if !prefer_authored_exact_line && !Arc::ptr_eq(&retained_support.data, &chord.data) {
             match self.chord_intersections_in_domain(retained_support, false, policy)? {
                 Classification::Decided(intersections) => {
@@ -29049,21 +29055,23 @@ impl BezierAlgebraicCuspSemicircle2 {
             }
         }
 
-        match self.recursive_projective_retained_chord_intersections(
-            chord,
-            clip_to_finite_chord,
-            policy,
-        )? {
-            Classification::Decided(Some(intersections)) => {
-                #[cfg(feature = "dispatch-trace")]
-                hyperreal::dispatch_trace::record(
-                    "hypercurve",
-                    "algebraic-circle-chord-kernel",
-                    "recursive-projective-retained-chord",
-                );
-                return self.retain_chord_intersections(chord, intersections, policy);
+        if !prefer_selected_fiber_exact_line {
+            match self.recursive_projective_retained_chord_intersections(
+                chord,
+                clip_to_finite_chord,
+                policy,
+            )? {
+                Classification::Decided(Some(intersections)) => {
+                    #[cfg(feature = "dispatch-trace")]
+                    hyperreal::dispatch_trace::record(
+                        "hypercurve",
+                        "algebraic-circle-chord-kernel",
+                        "recursive-projective-retained-chord",
+                    );
+                    return self.retain_chord_intersections(chord, intersections, policy);
+                }
+                Classification::Decided(None) | Classification::Uncertain(_) => {}
             }
-            Classification::Decided(None) | Classification::Uncertain(_) => {}
         }
 
         let line_parameter_is_chord_parameter = exact_line.is_some();
