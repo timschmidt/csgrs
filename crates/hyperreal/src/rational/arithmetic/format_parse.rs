@@ -169,9 +169,7 @@ impl Rational {
         significand: &str,
         exponent: &str,
     ) -> Result<Self, Problem> {
-        let (whole, fraction) = significand
-            .split_once('.')
-            .map_or((significand, ""), |parts| parts);
+        let (whole, fraction) = significand.split_once('.').unwrap_or((significand, ""));
         let source_digits = whole
             .len()
             .checked_add(fraction.len())
