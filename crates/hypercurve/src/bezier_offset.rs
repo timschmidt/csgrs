@@ -20168,12 +20168,8 @@ impl BezierAlgebraicCuspSemicircle2 {
             ));
         }
         if self.uses_selected_radial_frame() {
-            if let Classification::Decided(intersections) = self
-                .recursive_selected_radial_parallel_intersections(other, range, incident, policy)?
-            {
-                return Ok(Classification::Decided(intersections));
-            }
-            return self.represented_parallel_intersections(other, range, incident, policy);
+            return self
+                .recursive_selected_radial_parallel_intersections(other, range, incident, policy);
         }
 
         let system = match self.parallel_system(other, policy)? {
@@ -21195,26 +21191,29 @@ impl BezierAlgebraicCuspSemicircle2 {
         policy: &CurveContext,
     ) -> CurveResult<Classification<BezierAlgebraicCuspSemicircleParallelParameterMap2>> {
         if self.uses_selected_radial_frame() {
-            let recursive = self.recursive_selected_radial_parallel_system(other, policy)?;
-            if let Classification::Decided(system) = recursive {
-                return Ok(Classification::Decided(
-                    BezierAlgebraicCuspSemicircleParallelParameterMap2 {
-                        data: Arc::new(BezierAlgebraicCuspSemicircleParallelParameterMapData2 {
-                            semicircle: self.clone(),
-                            parallel: other.clone(),
-                            system:
-                                BezierAlgebraicCuspSemicircleParallelParameterMapSystem2::RecursiveSelectedRadial {
-                                    system,
-                                },
-                            policy: policy.retained_object_policy(),
-                            parameter_cache:
-                                BezierAlgebraicCuspSemicircleParameterCache2::default(),
-                        }),
-                    },
-                ));
-            }
+            let system = match self.recursive_selected_radial_parallel_system(other, policy)? {
+                Classification::Decided(system) => system,
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            };
+            return Ok(Classification::Decided(
+                BezierAlgebraicCuspSemicircleParallelParameterMap2 {
+                    data: Arc::new(BezierAlgebraicCuspSemicircleParallelParameterMapData2 {
+                        semicircle: self.clone(),
+                        parallel: other.clone(),
+                        system:
+                            BezierAlgebraicCuspSemicircleParallelParameterMapSystem2::RecursiveSelectedRadial {
+                                system,
+                            },
+                        policy: policy.retained_object_policy(),
+                        parameter_cache:
+                            BezierAlgebraicCuspSemicircleParameterCache2::default(),
+                    }),
+                },
+            ));
         }
-        if self.uses_selected_chord_normal_frame() || self.uses_selected_radial_frame() {
+        if self.uses_selected_chord_normal_frame() {
             let system = match self.represented_parallel_system(other, policy)? {
                 Classification::Decided(system) => system,
                 Classification::Uncertain(reason) => {
@@ -44433,6 +44432,64 @@ impl BezierAlgebraicCuspChordDerivedPoint2 {
                 policy,
             );
         }
+        let synthesized_point = match &self.data.source {
+            BezierAlgebraicCuspDerivedPointSource2::Mapped {
+                parameter,
+                point: None,
+            } => match parameter.as_ref() {
+                BezierAlgebraicCuspSemicircleMappedParameterData2::SelectedFiberParallel {
+                    map,
+                    other_parameter,
+                    ..
+                } => Some(RationalBezierIntersectionPointEvidence2::AnalyticParallel(
+                    BezierAnalyticParallelPoint2::new_selected_fiber(
+                        map.data.parallel.clone(),
+                        other_parameter.clone(),
+                        policy,
+                    ),
+                )),
+                BezierAlgebraicCuspSemicircleMappedParameterData2::SelectedFiberRational {
+                    map,
+                    other_parameter,
+                    ..
+                } => {
+                    let parameter = match policy.strict_predicate_pass(|| {
+                        other_parameter.promoted_bezier_parameter_complete(policy)
+                    })? {
+                        Classification::Decided(parameter) => parameter,
+                        Classification::Uncertain(reason) => {
+                            return Ok(Classification::Uncertain(reason));
+                        }
+                    };
+                    Some(match parameter {
+                        BezierParameter2::Exact(parameter) => {
+                            match policy.strict_predicate_pass(|| {
+                                map.data.curve.point_at_classified(&parameter, policy)
+                            }) {
+                                Classification::Decided(point) => {
+                                    RationalBezierIntersectionPointEvidence2::Exact(point)
+                                }
+                                Classification::Uncertain(reason) => {
+                                    return Ok(Classification::Uncertain(reason));
+                                }
+                            }
+                        }
+                        BezierParameter2::Algebraic(parameter) => {
+                            RationalBezierIntersectionPointEvidence2::Algebraic(
+                                RationalBezierAlgebraicPointImage2::from_parametric_source(
+                                    map.data.curve.clone(),
+                                    parameter,
+                                    policy,
+                                ),
+                            )
+                        }
+                    })
+                }
+                _ => None,
+            },
+            BezierAlgebraicCuspDerivedPointSource2::Mapped { point: Some(_), .. }
+            | BezierAlgebraicCuspDerivedPointSource2::Chord(_) => None,
+        };
         let explicit_point = match &self.data.source {
             BezierAlgebraicCuspDerivedPointSource2::Mapped {
                 point: Some(point), ..
@@ -44440,7 +44497,9 @@ impl BezierAlgebraicCuspChordDerivedPoint2 {
             BezierAlgebraicCuspDerivedPointSource2::Mapped {
                 parameter,
                 point: None,
-            } => parameter.retained_point_evidence(),
+            } => parameter
+                .retained_point_evidence()
+                .or(synthesized_point.as_ref()),
             BezierAlgebraicCuspDerivedPointSource2::Chord(_) => None,
         };
         if let Some(source) = explicit_point
@@ -53110,7 +53169,14 @@ fn recursive_projective_point_source(
             };
             Some(source)
         }
-        RationalBezierIntersectionPointEvidence2::AnalyticParallel(_) => None,
+        RationalBezierIntersectionPointEvidence2::AnalyticParallel(point) => {
+            return Ok(match point.recursive_projective_point(policy)? {
+                Classification::Decided(point) => Classification::Decided(
+                    point.map(BezierRecursiveProjectivePointSource2::Recursive),
+                ),
+                Classification::Uncertain(reason) => Classification::Uncertain(reason),
+            });
+        }
     };
     Ok(Classification::Decided(source))
 }
@@ -73708,6 +73774,161 @@ impl BezierAnalyticParallelPoint2 {
         }
         let differential = self.data.parallel.differential()?;
         Ok((&differential.tangent_x, &differential.tangent_y))
+    }
+
+    /// Imports this retained analytic point into one recursive projective
+    /// field without materializing its Cartesian coordinates independently.
+    ///
+    /// A selected-fiber parameter is promoted only at this cold carrier
+    /// boundary, and its already-isolated root chooses the global parameter
+    /// under a strict predicate pass. The source point and its positive speed
+    /// square root then remain correlated in one dense base axis. Therefore
+    /// APPROXIMATE_512 may still terminate later equality predicates, but can
+    /// never select the construction field or radical sheet.
+    fn recursive_projective_point(
+        &self,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<Option<BezierRecursiveQuadraticProjectivePoint2>>> {
+        if !policy.accepts_retained_policy(self.data.policy) {
+            return Err(CurveError::Topology(
+                "an analytic-parallel point entered a recursive field under a different policy"
+                    .into(),
+            ));
+        }
+        let parameter = match &self.data.parameter {
+            BezierAnalyticParallelPointParameter2::Bezier(parameter) => parameter.clone(),
+            BezierAnalyticParallelPointParameter2::SelectedFiber(parameter) => {
+                match policy.strict_predicate_pass(|| {
+                    parameter.promoted_bezier_parameter_complete(policy)
+                })? {
+                    Classification::Decided(parameter) => parameter,
+                    Classification::Uncertain(reason) => {
+                        return Ok(Classification::Uncertain(reason));
+                    }
+                }
+            }
+        };
+        let source = self.data.parallel.source_power_basis()?;
+        let unit_weight = [Real::one()];
+        let weight = source.weight.unwrap_or(&unit_weight);
+        let translated_x = polynomial_add(
+            source.x_numerator,
+            &polynomial_scale(weight, &self.data.translation_x),
+        );
+        let translated_y = polynomial_add(
+            source.y_numerator,
+            &polynomial_scale(weight, &self.data.translation_y),
+        );
+        let parameter_source = bezier_parameter_root_representation(&parameter);
+        let tensor =
+            |coefficients: &[Real]| DenseTensorPolynomial::from_axis_polynomial(1, 0, coefficients);
+        let Some(one) = tensor(std::slice::from_ref(&Real::one())) else {
+            return Ok(Classification::Decided(None));
+        };
+        let zero_frame = self.data.parallel.distance().zero_status() == ZeroStatus::Zero
+            && self.data.tangent_distance.zero_status() == ZeroStatus::Zero;
+        let point = if zero_frame {
+            let Some(field) =
+                BezierRecursiveQuadraticField2::base(vec![parameter_source], one.clone(), one)
+            else {
+                return Ok(Classification::Decided(None));
+            };
+            let BezierRecursiveQuadraticField2::Base(base) = &field else {
+                unreachable!("an analytic point recursive field begins at its dense base")
+            };
+            let value = |coefficients: &[Real]| {
+                recursive_quadratic_rational_value(base, tensor(coefficients)?)
+            };
+            let Some(point) = (|| {
+                Some(BezierRecursiveQuadraticProjectivePoint2 {
+                    x: value(&translated_x)?,
+                    y: value(&translated_y)?,
+                    denominator: value(weight)?,
+                })
+            })() else {
+                return Ok(Classification::Decided(None));
+            };
+            point
+        } else {
+            let (frame_tangent_x, frame_tangent_y) = self.frame_tangent_power_basis()?;
+            let speed_squared = polynomial_add(
+                &polynomial_multiply(frame_tangent_x, frame_tangent_x),
+                &polynomial_multiply(frame_tangent_y, frame_tangent_y),
+            );
+            match policy.strict_predicate_pass(|| {
+                signed_coefficients_at_parameter(speed_squared.clone(), &parameter, policy)
+            })? {
+                Classification::Decided(RealSign::Positive) => {}
+                Classification::Decided(RealSign::Zero) => {
+                    return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
+                }
+                Classification::Decided(RealSign::Negative) => {
+                    return Err(CurveError::Topology(
+                        "an analytic point frame retained negative squared speed".into(),
+                    ));
+                }
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            }
+            let Some(speed_squared) = tensor(&speed_squared) else {
+                return Ok(Classification::Decided(None));
+            };
+            let Some(field) =
+                BezierRecursiveQuadraticField2::base(vec![parameter_source], speed_squared, one)
+            else {
+                return Ok(Classification::Decided(None));
+            };
+            let BezierRecursiveQuadraticField2::Base(base) = &field else {
+                unreachable!("an analytic point recursive field begins at its dense base")
+            };
+            let expression = |rational: &[Real], first: &[Real]| {
+                let zero = DenseTensorPolynomial::zero(vec![1])?;
+                BezierRecursiveQuadraticValue2::from_base(
+                    base.clone(),
+                    BezierDenseTwoSquareRootExpression2 {
+                        rational: tensor(rational)?,
+                        first: tensor(first)?,
+                        second: zero.clone(),
+                        product: zero,
+                    },
+                )
+            };
+            let frame_x = polynomial_subtract(
+                &polynomial_scale(frame_tangent_x, &self.data.tangent_distance),
+                &polynomial_scale(frame_tangent_y, self.data.parallel.distance()),
+            );
+            let frame_y = polynomial_add(
+                &polynomial_scale(frame_tangent_x, self.data.parallel.distance()),
+                &polynomial_scale(frame_tangent_y, &self.data.tangent_distance),
+            );
+            let weighted_frame_x = polynomial_multiply(weight, &frame_x);
+            let weighted_frame_y = polynomial_multiply(weight, &frame_y);
+            let zero = [Real::zero()];
+            let Some(point) = (|| {
+                Some(BezierRecursiveQuadraticProjectivePoint2 {
+                    x: expression(&weighted_frame_x, &translated_x)?,
+                    y: expression(&weighted_frame_y, &translated_y)?,
+                    denominator: expression(&zero, weight)?,
+                })
+            })() else {
+                return Ok(Classification::Decided(None));
+            };
+            point
+        };
+        let point = match positive_recursive_projective_point(point)? {
+            Classification::Decided(point) => point,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        #[cfg(feature = "dispatch-trace")]
+        hyperreal::dispatch_trace::record(
+            "hypercurve",
+            "recursive-projective-point",
+            "analytic-parallel",
+        );
+        Ok(Classification::Decided(Some(point)))
     }
 
     pub(crate) fn shares_storage(&self, other: &Self) -> bool {
@@ -123533,9 +123754,9 @@ mod conversion_tests {
                 parallel.exact_rational_parallel_component(&policy).unwrap(),
                 Classification::Decided(None),
             ));
-            for (line_contact, recursive) in [
-                (false, recursively_pair_radial_rational_center_half(&policy)),
-                (true, recursively_line_contact_radial_half(&policy)),
+            for recursive in [
+                recursively_pair_radial_rational_center_half(&policy),
+                recursively_line_contact_radial_half(&policy),
             ] {
                 assert!(matches!(
                     recursive
@@ -123543,16 +123764,6 @@ mod conversion_tests {
                         .unwrap(),
                     Classification::Decided(_),
                 ));
-                assert_eq!(
-                    matches!(
-                        recursive
-                            .represented_parallel_system(&parallel, &policy)
-                            .unwrap(),
-                        Classification::Decided(_),
-                    ),
-                    !line_contact,
-                    "only the deeper recursive center must exceed the legacy represented frame",
-                );
 
                 #[cfg(feature = "dispatch-trace")]
                 hyperreal::dispatch_trace::reset();
@@ -123581,6 +123792,15 @@ mod conversion_tests {
                         "recursive-quadratic",
                     ),
                     1,
+                );
+                #[cfg(feature = "dispatch-trace")]
+                assert_eq!(
+                    trace.path_count(
+                        "hypercurve",
+                        "represented-circle-parallel-system",
+                        "constructed",
+                    ),
+                    0,
                 );
                 assert!(!contacts.is_empty());
                 let map = recursive
@@ -131032,6 +131252,25 @@ mod conversion_tests {
                     .represented_value()
                     .is_none()
             );
+            let Classification::Decided(Some(recursive_child)) =
+                BezierAlgebraicCuspSemicircle2::from_selected_circle_radial(
+                    &exact_center_circle,
+                    reparameterized_contact_evidence.cusp_parameter(),
+                    exact_center_circle.radial_distance().clone(),
+                    (Real::one() / Real::from(10_i8)).unwrap(),
+                    false,
+                    &policy,
+                )
+                .unwrap()
+            else {
+                panic!("an analytic selected-fiber contact must author a recursive circle");
+            };
+            assert!(matches!(
+                recursive_child
+                    .recursive_selected_radial_any_frame_authority(&policy)
+                    .unwrap(),
+                Classification::Decided(Some(_)),
+            ));
             let Classification::Decided(circle_fragment) =
                 BezierAlgebraicCuspSemicircleFragment2::try_new(
                     exact_center_circle.clone(),
