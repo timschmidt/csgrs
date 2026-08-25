@@ -61,7 +61,8 @@ use hypersolve::{
     AlgebraicFiberDiagonalDeflationStatus, AlgebraicFiberPolynomialImageProjectionConfig,
     AlgebraicFiberPolynomialImageProjectionStatus, AlgebraicFiberProjectionStatus,
     AlgebraicFiberRationalReductionStatus, AlgebraicFiberRootCountStatus,
-    AlgebraicFiberRootIsolationConfig, AlgebraicFiberRootIsolationStatus, PredicateCertainty,
+    AlgebraicFiberRootIsolationConfig, AlgebraicFiberRootIsolationReport,
+    AlgebraicFiberRootIsolationStatus, PredicateCertainty,
     count_bivariate_common_fiber_roots_at_algebraic_parameter,
     count_bivariate_fiber_roots_at_algebraic_parameter,
     count_bivariate_fiber_roots_at_algebraic_parameter_closed,
@@ -18809,7 +18810,7 @@ impl BezierAlgebraicCuspSemicircle2 {
                 }
             } else {
                 let refined_center = center.refined_isolating_interval(64, &CurveContext::STRICT);
-                let report = isolate_bivariate_fiber_roots_at_algebraic_parameter(
+                let report = isolate_bivariate_fiber_roots_at_algebraic_parameter_complete(
                     &incidence,
                     CurveResultantParameter::First,
                     &match refined_center {
@@ -27400,7 +27401,7 @@ impl BezierAlgebraicCuspSemicircle2 {
                 unreachable!("the local selected-fiber line has an algebraic center")
             };
             let retained_root = parameter_representation(&refined_center_parameter, policy);
-            let report = isolate_bivariate_fiber_roots_at_algebraic_parameter(
+            let report = isolate_bivariate_fiber_roots_at_algebraic_parameter_complete(
                 &incidence,
                 CurveResultantParameter::First,
                 &retained_root,
@@ -33022,7 +33023,7 @@ impl BezierAlgebraicCuspSemicircle2 {
         let BezierParameter2::Algebraic(refined_center) = refined_center else {
             unreachable!("a selected-fiber rational map has an algebraic center")
         };
-        let report = isolate_bivariate_fiber_roots_at_algebraic_parameter(
+        let report = isolate_bivariate_fiber_roots_at_algebraic_parameter_complete(
             &candidate_incidence,
             CurveResultantParameter::First,
             &parameter_representation(&refined_center, policy),
@@ -33229,7 +33230,7 @@ impl BezierAlgebraicCuspSemicircle2 {
         let BezierParameter2::Algebraic(refined_center) = refined_center else {
             unreachable!("a selected rational-circle component has an algebraic center")
         };
-        let report = isolate_bivariate_fiber_roots_at_algebraic_parameter(
+        let report = isolate_bivariate_fiber_roots_at_algebraic_parameter_complete(
             &boundary_incidence,
             CurveResultantParameter::First,
             &parameter_representation(&refined_center, policy),
@@ -37734,7 +37735,7 @@ impl BezierAlgebraicCuspSemicircleSelectedFiberRationalOverlap2 {
         let BezierParameter2::Algebraic(refined_center) = refined_center else {
             unreachable!("a selected overlap inverse has an algebraic center")
         };
-        let report = isolate_bivariate_fiber_roots_at_algebraic_parameter(
+        let report = isolate_bivariate_fiber_roots_at_algebraic_parameter_complete(
             &incidence,
             CurveResultantParameter::First,
             &parameter_representation(&refined_center, policy),
@@ -82420,6 +82421,52 @@ fn algebraic_selected_fiber_parameters_with_incident_ray_and_limits(
     ))
 }
 
+/// Preserves a bounded selected-fiber isolator as the hot schedule without
+/// treating dyadic root separation depth as a mathematical boundary.
+#[inline]
+fn isolate_bivariate_fiber_roots_at_algebraic_parameter_complete(
+    polynomial: &BivariatePolynomial,
+    retained_parameter: CurveResultantParameter,
+    retained_root: &AlgebraicRootRepresentation,
+    fiber_lower: &Real,
+    fiber_upper: &Real,
+    config: AlgebraicFiberRootIsolationConfig,
+    predicate_policy: hypersolve::PredicatePolicy,
+) -> AlgebraicFiberRootIsolationReport {
+    let report = isolate_bivariate_fiber_roots_at_algebraic_parameter(
+        polynomial,
+        retained_parameter,
+        retained_root,
+        fiber_lower,
+        fiber_upper,
+        config,
+        predicate_policy,
+    );
+    if report.status != AlgebraicFiberRootIsolationStatus::DepthLimit
+        || config.max_subdivision_depth == usize::MAX
+    {
+        return report;
+    }
+    #[cfg(feature = "dispatch-trace")]
+    hyperreal::dispatch_trace::record(
+        "hypercurve",
+        "selected-fiber-root-isolation",
+        "unbounded-cold-continuation",
+    );
+    isolate_bivariate_fiber_roots_at_algebraic_parameter(
+        polynomial,
+        retained_parameter,
+        retained_root,
+        fiber_lower,
+        fiber_upper,
+        AlgebraicFiberRootIsolationConfig {
+            max_subdivision_depth: usize::MAX,
+            ..config
+        },
+        predicate_policy,
+    )
+}
+
 /// Isolates one selected bivariate fiber between represented affine bounds.
 ///
 /// The retained first-axis parameter stays in its local algebraic field and
@@ -82440,7 +82487,7 @@ fn selected_fiber_parameters_in_interval(
         BezierParameter2::Algebraic(parameter) => parameter_representation(&parameter, policy),
         BezierParameter2::Exact(parameter) => exact_real_algebraic_representation(&parameter),
     };
-    let report = isolate_bivariate_fiber_roots_at_algebraic_parameter(
+    let report = isolate_bivariate_fiber_roots_at_algebraic_parameter_complete(
         incidence,
         CurveResultantParameter::First,
         &retained_root,
@@ -82572,7 +82619,7 @@ fn selected_fiber_parameters_on_incident_ray(
         BezierParameter2::Algebraic(parameter) => parameter_representation(&parameter, policy),
         BezierParameter2::Exact(parameter) => exact_real_algebraic_representation(&parameter),
     };
-    let report = isolate_bivariate_fiber_roots_at_algebraic_parameter(
+    let report = isolate_bivariate_fiber_roots_at_algebraic_parameter_complete(
         &compact_incidence,
         CurveResultantParameter::First,
         &retained_root,
@@ -82962,7 +83009,7 @@ fn algebraic_selected_parameters_from_norm(
     policy: &CurveContext,
 ) -> CurveResult<Classification<ResultantParameterProjection>> {
     for refinement_steps in [8, 16, 32, 64, 128] {
-        let report = isolate_bivariate_fiber_roots_at_algebraic_parameter(
+        let report = isolate_bivariate_fiber_roots_at_algebraic_parameter_complete(
             incidence,
             CurveResultantParameter::First,
             retained_root,
@@ -83451,7 +83498,7 @@ fn algebraic_selected_fiber_root_interval_refined(
         }));
     };
     let retained = parameter_representation(&retained_parameter, policy);
-    let report = isolate_bivariate_fiber_roots_at_algebraic_parameter(
+    let report = isolate_bivariate_fiber_roots_at_algebraic_parameter_complete(
         incidence,
         CurveResultantParameter::First,
         &retained,
@@ -129928,6 +129975,99 @@ mod conversion_tests {
                     "the bounded general resultant must continue exactly: {trace:?}",
                 );
             }
+        }
+    }
+
+    #[test]
+    fn selected_fiber_root_isolation_rejoins_uncapped_depth() {
+        let half = (Real::one() / Real::from(2_i8)).unwrap();
+        let BezierParameter2::Algebraic(retained) =
+            algebraic_parameter(vec![-half, Real::zero(), Real::one()])
+        else {
+            panic!("the irrational retained root must remain algebraic");
+        };
+        let incidence = BivariatePolynomial::new(vec![
+            vec![Real::zero(), Real::one()],
+            vec![Real::from(-1_i8)],
+        ]);
+        let retained_root = parameter_representation(&retained, &CurveContext::STRICT);
+        let bounded = AlgebraicFiberRootIsolationConfig {
+            max_subdivision_depth: 0,
+            refinement_steps: 8,
+        };
+        assert_eq!(
+            isolate_bivariate_fiber_roots_at_algebraic_parameter(
+                &incidence,
+                CurveResultantParameter::First,
+                &retained_root,
+                &Real::zero(),
+                &Real::one(),
+                bounded,
+                hypersolve::PredicatePolicy::STRICT,
+            )
+            .status,
+            AlgebraicFiberRootIsolationStatus::DepthLimit,
+        );
+
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            #[cfg(feature = "dispatch-trace")]
+            hyperreal::dispatch_trace::reset();
+            let work = || {
+                crate::policy::resolve_certified_value(&policy, |attempt| {
+                    let report = isolate_bivariate_fiber_roots_at_algebraic_parameter_complete(
+                        &incidence,
+                        CurveResultantParameter::First,
+                        &retained_root,
+                        &Real::zero(),
+                        &Real::one(),
+                        bounded,
+                        attempt.predicate_policy(),
+                    );
+                    if report.status != AlgebraicFiberRootIsolationStatus::Isolated
+                        || report.intervals.len() != 1
+                    {
+                        return Classification::Uncertain(UncertaintyReason::Predicate);
+                    }
+                    let candidate = BezierAlgebraicSelectedFiberAuthority2::new(
+                        incidence.clone(),
+                        retained.clone(),
+                        attempt,
+                    )
+                    .parameter(
+                        report
+                            .intervals
+                            .into_iter()
+                            .next()
+                            .expect("one isolated selected root"),
+                    );
+                    candidate
+                        .cmp_bezier_parameter(
+                            &BezierParameter2::Algebraic(retained.clone()),
+                            attempt,
+                        )
+                        .unwrap()
+                })
+            };
+            #[cfg(feature = "dispatch-trace")]
+            let outcome = hyperreal::dispatch_trace::with_recording(work);
+            #[cfg(not(feature = "dispatch-trace"))]
+            let outcome = work();
+            #[cfg(feature = "dispatch-trace")]
+            let trace = hyperreal::dispatch_trace::take_trace();
+            assert_eq!(
+                outcome.value,
+                Classification::Decided(std::cmp::Ordering::Equal)
+            );
+            assert_eq!(outcome.certainty, crate::CurveCertainty::Certified);
+            #[cfg(feature = "dispatch-trace")]
+            assert!(
+                trace.path_count(
+                    "hypercurve",
+                    "selected-fiber-root-isolation",
+                    "unbounded-cold-continuation",
+                ) >= 1,
+                "the bounded isolator must continue exact subdivision: {trace:?}",
+            );
         }
     }
 
