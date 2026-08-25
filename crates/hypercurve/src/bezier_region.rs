@@ -29469,6 +29469,214 @@ mod tests {
     }
 
     #[test]
+    fn independent_field_chord_publishes_nonzero_parallel_line_overlap() {
+        let tenth = (Real::one() / Real::from(10_i8)).unwrap();
+        let high = (Real::from(2_i8) / Real::from(3_i8)).unwrap();
+        let low = (Real::from(3_i8) / Real::from(5_i8)).unwrap();
+        let independent_parallel = QuadraticBezier2::from_line_segment(
+            LineSeg2::try_new(
+                Point2::new(
+                    -tenth.clone(),
+                    (Real::one() / Real::from(2_i8)).unwrap().sqrt().unwrap(),
+                ),
+                Point2::new(
+                    -tenth.clone(),
+                    (Real::one() / Real::from(3_i8)).unwrap().sqrt().unwrap(),
+                ),
+            )
+            .unwrap(),
+        )
+        .parallel_left(tenth.clone())
+        .unwrap();
+        let parallel = QuadraticBezier2::from_line_segment(
+            LineSeg2::try_new(
+                Point2::new(-tenth.clone(), high.clone()),
+                Point2::new(-tenth.clone(), low.clone()),
+            )
+            .unwrap(),
+        )
+        .parallel_left(tenth.clone())
+        .unwrap();
+        let Classification::Decided(parallel_start) = parallel
+            .point_at(&Real::zero(), &CurveContext::STRICT)
+            .unwrap()
+        else {
+            panic!("the retained source line must have an exact parallel start");
+        };
+        let Classification::Decided(parallel_end) = parallel
+            .point_at(&Real::one(), &CurveContext::STRICT)
+            .unwrap()
+        else {
+            panic!("the retained source line must have an exact parallel end");
+        };
+        let outer_start = Point2::new(tenth.clone(), high);
+        let outer_end = Point2::new(tenth.clone(), low);
+        let line = |start, end| BezierSplitFragment2::Materialized {
+            start: BezierParameter2::Exact(Real::zero()),
+            end: BezierParameter2::Exact(Real::one()),
+            curve: BezierSubcurve2::Quadratic(QuadraticBezier2::from_line_segment(
+                LineSeg2::try_new(start, end).unwrap(),
+            )),
+        };
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            assert!(matches!(
+                independent_parallel
+                    .exact_rational_parallel_component(&policy)
+                    .unwrap(),
+                Classification::Decided(Some(_))
+            ));
+            let Classification::Decided(analysis) =
+                independent_parallel.singularity_analysis(&policy).unwrap()
+            else {
+                panic!("retained line provenance must certify constant nonzero speed");
+            };
+            assert!(analysis.source_singularities().is_empty());
+            assert!(analysis.parallel_cusps().is_empty());
+            let y_source = BezierSubcurve2::Quadratic(QuadraticBezier2::from_line_segment(
+                LineSeg2::try_new(p(0, 0), p(0, 1)).unwrap(),
+            ));
+            let y_rational = RationalBezier2::try_from_subcurve(&y_source).unwrap();
+            let lower_parameter = positive_inverse_sqrt_parameter(3, &policy);
+            let upper_parameter = positive_inverse_sqrt_parameter(2, &policy);
+            let algebraic_point = |parameter: &BezierParameter2| {
+                crate::rational_bezier_general::exact_contact_point_evidence(
+                    &y_rational,
+                    parameter,
+                    &policy,
+                )
+                .unwrap()
+                .expect("the independent y-axis root retains point evidence")
+            };
+            let vertices = [
+                algebraic_point(&lower_parameter),
+                RationalBezierIntersectionPointEvidence2::Exact(p(1, 0)),
+                RationalBezierIntersectionPointEvidence2::Exact(p(1, 1)),
+                algebraic_point(&upper_parameter),
+            ];
+            let region_fragments = (0..vertices.len())
+                .map(|index| {
+                    let next = (index + 1) % vertices.len();
+                    let Classification::Decided(chord) = crate::BezierAlgebraicChord2::try_new(
+                        vertices[index].clone(),
+                        vertices[next].clone(),
+                        &policy,
+                    )
+                    .unwrap() else {
+                        panic!("the independent-field polygon chord must construct");
+                    };
+                    BezierSplitFragment2::AlgebraicChord(chord)
+                })
+                .collect::<Vec<_>>();
+            assert!(matches!(
+                parallel
+                    .exact_rational_parallel_component(&CurveContext::STRICT)
+                    .unwrap(),
+                Classification::Decided(Some(_))
+            ));
+            let Classification::Decided(parallel_fragment) =
+                crate::BezierParallelFragment2::try_new(
+                    parallel.clone(),
+                    BezierParameterRange2::from_exact(Real::zero(), Real::one()),
+                    &policy,
+                )
+                .unwrap()
+            else {
+                panic!("the exact PH parallel span must remain regular");
+            };
+            let cutter = CurveRegion2::try_new_with_loop_topology(
+                vec![
+                    CurveRegionBoundaryLoop2::new(
+                        vec![
+                            BezierSplitFragment2::AnalyticParallel(parallel_fragment),
+                            line(parallel_end.clone(), outer_end.clone()),
+                            line(outer_end.clone(), outer_start.clone()),
+                            line(outer_start.clone(), parallel_start.clone()),
+                        ],
+                        &policy,
+                    )
+                    .expect("the exact parallel strip closes"),
+                ],
+                vec![CurveRegionLoopRole::Material],
+                vec![FillRule::NonZero],
+                vec![CurveBoundaryInteriorSide2::Left],
+            )
+            .expect("the exact parallel strip has authored topology");
+            for reversed in [false, true] {
+                let (fragments, interior_side) = if reversed {
+                    (
+                        region_fragments
+                            .clone()
+                            .into_iter()
+                            .rev()
+                            .map(|fragment| fragment.reversed().unwrap())
+                            .collect(),
+                        CurveBoundaryInteriorSide2::Right,
+                    )
+                } else {
+                    (region_fragments.clone(), CurveBoundaryInteriorSide2::Left)
+                };
+                let region = CurveRegion2::try_new_with_loop_topology(
+                    vec![CurveRegionBoundaryLoop2::new(fragments, &policy).unwrap()],
+                    vec![CurveRegionLoopRole::Material],
+                    vec![FillRule::NonZero],
+                    vec![interior_side],
+                )
+                .unwrap();
+                #[cfg(feature = "dispatch-trace")]
+                hyperreal::dispatch_trace::reset();
+                let work = || region.intersect_region(&cutter, &policy);
+                #[cfg(feature = "dispatch-trace")]
+                let evidence = hyperreal::dispatch_trace::with_recording(work);
+                #[cfg(not(feature = "dispatch-trace"))]
+                let evidence = work();
+                #[cfg(feature = "dispatch-trace")]
+                let trace = hyperreal::dispatch_trace::take_trace();
+                #[cfg(feature = "dispatch-trace")]
+                let evidence = evidence.unwrap_or_else(|error| {
+                    panic!("the coincident chord/parallel relation is exact: {error:?}; {trace:?}")
+                });
+                #[cfg(not(feature = "dispatch-trace"))]
+                let evidence = evidence.expect("the coincident chord/parallel relation is exact");
+                #[cfg(feature = "dispatch-trace")]
+                assert!(
+                    evidence.value.is_complete(),
+                    "{:?}; {trace:?}",
+                    evidence.value.blockers()
+                );
+                #[cfg(not(feature = "dispatch-trace"))]
+                assert!(
+                    evidence.value.is_complete(),
+                    "{:?}",
+                    evidence.value.blockers()
+                );
+                assert!(!evidence.value.overlaps().is_empty());
+                #[cfg(feature = "dispatch-trace")]
+                assert!(
+                    trace.path_count(
+                        "hypercurve",
+                        "algebraic-chord-pair",
+                        "analytic-parallel-strict-rational-component",
+                    ) > 0,
+                    "the exact analytic component must reuse rational overlap authority: {trace:?}",
+                );
+                #[cfg(feature = "dispatch-trace")]
+                assert!(
+                    trace.path_count(
+                        "hypercurve",
+                        "algebraic-chord-pair",
+                        "collinear-overlap-complete",
+                    ) > 0,
+                    "the positive-dimensional support must be certified before overlap mapping: {trace:?}",
+                );
+                let booleans = region
+                    .boolean_regions(&cutter, &policy)
+                    .expect("the shared chord/parallel boundary must regularize");
+                assert_eq!(booleans.certainty, CurveCertainty::Certified);
+            }
+        }
+    }
+
+    #[test]
     fn independent_field_chord_crosses_a_genuine_analytic_parallel_boolean() {
         for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
             for reversed in [false, true] {

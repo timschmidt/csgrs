@@ -93307,6 +93307,15 @@ impl BezierParallel2 {
             return Ok(differential);
         }
         let (tangent_x, tangent_y) = match self.source() {
+            BezierParallelSource2::Quadratic(source)
+                if source.retained_exact_line_image().is_some() =>
+            {
+                let (dx, dy) = source
+                    .retained_exact_line_image()
+                    .expect("the retained line was matched")
+                    .delta();
+                (vec![dx], vec![dy])
+            }
             BezierParallelSource2::Quadratic(_) | BezierParallelSource2::Cubic(_) => {
                 let (source_x, source_y) = self.polynomial_power_basis()?;
                 (
@@ -93818,6 +93827,37 @@ impl BezierParallel2 {
         &self,
         policy: &CurveContext,
     ) -> CurveResult<Classification<Option<CertifiedPythagoreanHodographOffset2>>> {
+        // A retained quadratic line is an affine degree elevation by
+        // construction.  Reuse that certificate before rebuilding the zero
+        // quadratic coefficient from independently embedded endpoint fields:
+        // the latter equality can be harder to prove than the authored line
+        // fact even though its hodograph is constant.
+        if let BezierParallelSource2::Quadratic(source) = self.source()
+            && let Some(line) = source.retained_exact_line_image()
+        {
+            let offset_line = line.offset_left(self.distance().clone())?;
+            let translation = offset_line.start().delta_from(line.start());
+            let curve = RationalBezier2::try_new_with_exact_line_image(
+                source
+                    .control_points()
+                    .into_iter()
+                    .map(|point| point.translated(translation.0.clone(), translation.1.clone()))
+                    .collect(),
+                vec![Real::one(); 3],
+                offset_line,
+            )?;
+            let (dx, dy) = line.delta();
+            let speed = (&dx * &dx + &dy * &dy).sqrt()?;
+            return Ok(Classification::Decided(Some(
+                CertifiedPythagoreanHodographOffset2 {
+                    curve,
+                    speed_polynomial: vec![speed],
+                    source_degree: 2,
+                    rational_degree: 2,
+                    distance: self.distance().clone(),
+                },
+            )));
+        }
         let rational_source = self.rational_source();
         let rational_power_basis = match rational_source {
             Some(source) => Some(source.homogeneous_power_basis()?),
