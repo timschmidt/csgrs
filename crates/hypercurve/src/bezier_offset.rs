@@ -6559,11 +6559,10 @@ fn represented_dense_value_refined(
     )
 }
 
-fn represented_dense_nonzero(
-    polynomial: &DenseTensorPolynomial,
-    sources: &[AlgebraicRootRepresentation],
+fn represented_value_nonzero(
+    value: Classification<AlgebraicRootRepresentation>,
 ) -> Classification<()> {
-    let value = match represented_dense_value_refined(polynomial, sources) {
+    let value = match value {
         Classification::Decided(value) => value,
         Classification::Uncertain(reason) => return Classification::Uncertain(reason),
     };
@@ -6576,6 +6575,13 @@ fn represented_dense_nonzero(
         }
         Classification::Uncertain(reason) => Classification::Uncertain(reason),
     }
+}
+
+fn represented_dense_nonzero(
+    polynomial: &DenseTensorPolynomial,
+    sources: &[AlgebraicRootRepresentation],
+) -> Classification<()> {
+    represented_value_nonzero(represented_dense_value_refined(polynomial, sources))
 }
 
 /// Eliminates every already-selected source axis and retains the exact
@@ -7206,6 +7212,72 @@ fn represented_affine_tensor_basis(
     Some((sources, polynomials))
 }
 
+fn represented_tensor_nested_interval(
+    retained: &DenseTensorPolynomial,
+    candidate: &DenseTensorPolynomial,
+    sources: &[AlgebraicRootRepresentation],
+    signed_radical: &AlgebraicRootRepresentation,
+) -> Option<BezierAlgebraicChordRealInterval2> {
+    let retained = dense_tensor_interval(retained, sources)?;
+    let candidate = dense_tensor_interval(candidate, sources)?;
+    let radical = BezierAlgebraicChordRealInterval2 {
+        lower: signed_radical.interval.lower.clone(),
+        upper: signed_radical.interval.upper.clone(),
+    };
+    Some(retained.add(&candidate.multiply(&radical, &CurveContext::STRICT)?))
+}
+
+#[allow(clippy::too_many_arguments)]
+fn represented_tensor_nested_value_refined(
+    retained: &DenseTensorPolynomial,
+    candidate: &DenseTensorPolynomial,
+    discriminant: &DenseTensorPolynomial,
+    sources: &[AlgebraicRootRepresentation],
+    signed_radical: &AlgebraicRootRepresentation,
+    initial_refinement_steps: usize,
+    hot_refinement_limit: usize,
+    trace_operation: &'static str,
+) -> Classification<AlgebraicRootRepresentation> {
+    if candidate
+        .coefficients()
+        .iter()
+        .all(|coefficient| coefficient.zero_status() == ZeroStatus::Zero)
+    {
+        return represented_dense_value_refined(retained, sources);
+    }
+    let rank = sources.len() + 1;
+    let Some(output) = DenseTensorPolynomial::from_axis_polynomial(
+        rank,
+        sources.len(),
+        &[Real::zero(), Real::one()],
+    ) else {
+        return Classification::Uncertain(UncertaintyReason::Unsupported);
+    };
+    let Some(relation) = output.subtract(retained).and_then(|residual| {
+        residual
+            .multiply(&residual)?
+            .subtract(&candidate.multiply(candidate)?.multiply(discriminant)?)
+    }) else {
+        return Classification::Uncertain(UncertaintyReason::Unsupported);
+    };
+    represented_tensor_coordinate_refined(
+        &relation,
+        sources,
+        initial_refinement_steps,
+        hot_refinement_limit,
+        trace_operation,
+        |refined_sources, refinement_steps| {
+            let refined_radical = refined_represented_root(signed_radical, refinement_steps);
+            represented_tensor_nested_interval(
+                retained,
+                candidate,
+                refined_sources,
+                &refined_radical,
+            )
+        },
+    )
+}
+
 /// Materializes `(A + branch*B*sqrt(S)) / (C + branch*D*sqrt(S))`
 /// from one retained tensor authority. The supplied signed radical interval
 /// selects the authored square-root sheet; the exact squared relation remains
@@ -7233,6 +7305,36 @@ fn represented_tensor_nested_ratio(
     }) {
         return Classification::Uncertain(UncertaintyReason::Unsupported);
     }
+    // With no retained tensor axes this is exactly an ordinary Mobius image
+    // of the already represented signed radical. Reuse the complete quotient
+    // authority instead of maintaining a second transform loop.
+    if sources.is_empty() {
+        let (Some(numerator), Some(denominator)) = (
+            DenseTensorPolynomial::from_axis_polynomial(
+                2,
+                0,
+                &[
+                    numerator_retained.coefficients()[0].clone(),
+                    numerator_candidate.coefficients()[0].clone(),
+                ],
+            ),
+            DenseTensorPolynomial::from_axis_polynomial(
+                2,
+                0,
+                &[
+                    denominator_retained.coefficients()[0].clone(),
+                    denominator_candidate.coefficients()[0].clone(),
+                ],
+            ),
+        ) else {
+            return Classification::Uncertain(UncertaintyReason::Unsupported);
+        };
+        return represented_tensor_ratio(
+            &numerator,
+            &denominator,
+            std::slice::from_ref(signed_radical),
+        );
+    }
     let Some(output) = DenseTensorPolynomial::from_axis_polynomial(
         rank,
         sources.len(),
@@ -7259,70 +7361,25 @@ fn represented_tensor_nested_ratio(
             .map(|source| refined_represented_root(source, refinement_steps))
             .collect::<Vec<_>>();
         let refined_radical = refined_represented_root(signed_radical, refinement_steps);
-        let radical = BezierAlgebraicChordRealInterval2 {
-            lower: refined_radical.interval.lower.clone(),
-            upper: refined_radical.interval.upper.clone(),
-        };
-        let nested_interval = |retained: &DenseTensorPolynomial,
-                               candidate: &DenseTensorPolynomial| {
-            let retained = dense_tensor_interval(retained, &refined_sources)?;
-            let candidate = dense_tensor_interval(candidate, &refined_sources)?;
-            Some(retained.add(&candidate.multiply(&radical, &CurveContext::STRICT)?))
-        };
         let (Some(numerator), Some(denominator)) = (
-            nested_interval(numerator_retained, numerator_candidate),
-            nested_interval(denominator_retained, denominator_candidate),
+            represented_tensor_nested_interval(
+                numerator_retained,
+                numerator_candidate,
+                &refined_sources,
+                &refined_radical,
+            ),
+            represented_tensor_nested_interval(
+                denominator_retained,
+                denominator_candidate,
+                &refined_sources,
+                &refined_radical,
+            ),
         ) else {
             continue;
         };
         let Some(interval) = numerator.divide(&denominator, &CurveContext::STRICT) else {
             continue;
         };
-        if sources.is_empty() && interval.lower != interval.upper {
-            let report = transform_algebraic_root_mobius(
-                &refined_radical,
-                numerator_candidate.coefficients()[0].clone(),
-                numerator_retained.coefficients()[0].clone(),
-                denominator_candidate.coefficients()[0].clone(),
-                denominator_retained.coefficients()[0].clone(),
-                hypersolve::PredicatePolicy::STRICT,
-            );
-            match report.status {
-                AlgebraicRootMobiusTransformStatus::Transformed => {
-                    return Classification::Decided(
-                        report
-                            .representation
-                            .expect("a transformed nested quotient retains its representation"),
-                    );
-                }
-                AlgebraicRootMobiusTransformStatus::NonInvertible => {
-                    let (numerator, denominator) = if denominator_candidate.coefficients()[0]
-                        .zero_status()
-                        != ZeroStatus::Zero
-                    {
-                        (
-                            &numerator_candidate.coefficients()[0],
-                            &denominator_candidate.coefficients()[0],
-                        )
-                    } else {
-                        (
-                            &numerator_retained.coefficients()[0],
-                            &denominator_retained.coefficients()[0],
-                        )
-                    };
-                    let Ok(value) = numerator / denominator else {
-                        return Classification::Uncertain(UncertaintyReason::Predicate);
-                    };
-                    return Classification::Decided(exact_real_algebraic_representation(&value));
-                }
-                AlgebraicRootMobiusTransformStatus::DenominatorMayVanish
-                | AlgebraicRootMobiusTransformStatus::Undecided => {}
-                AlgebraicRootMobiusTransformStatus::InvalidEvidence
-                | AlgebraicRootMobiusTransformStatus::InvalidTransformedEvidence => {
-                    return Classification::Uncertain(UncertaintyReason::Unsupported);
-                }
-            }
-        }
         match represented_tensor_coordinate(
             &relation,
             &refined_sources,
@@ -7336,7 +7393,43 @@ fn represented_tensor_nested_ratio(
             Classification::Uncertain(_) => {}
         }
     }
-    Classification::Uncertain(UncertaintyReason::Predicate)
+    if let Classification::Uncertain(reason) =
+        represented_value_nonzero(represented_tensor_nested_value_refined(
+            denominator_retained,
+            denominator_candidate,
+            discriminant,
+            sources,
+            signed_radical,
+            128,
+            64,
+            "represented-nested-denominator-separation",
+        ))
+    {
+        return Classification::Uncertain(reason);
+    }
+    represented_tensor_coordinate_refined(
+        &relation,
+        sources,
+        128,
+        64,
+        "represented-nested-ratio-image-separation",
+        |refined_sources, refinement_steps| {
+            let refined_radical = refined_represented_root(signed_radical, refinement_steps);
+            let numerator = represented_tensor_nested_interval(
+                numerator_retained,
+                numerator_candidate,
+                refined_sources,
+                &refined_radical,
+            )?;
+            let denominator = represented_tensor_nested_interval(
+                denominator_retained,
+                denominator_candidate,
+                refined_sources,
+                &refined_radical,
+            )?;
+            numerator.divide(&denominator, &CurveContext::STRICT)
+        },
+    )
 }
 
 /// Materializes one exact quotient of two retained tensor values.
@@ -130307,7 +130400,7 @@ mod conversion_tests {
     }
 
     #[test]
-    fn represented_scalar_images_and_ratios_refine_past_the_old_limit() {
+    fn represented_scalar_images_and_quotients_refine_past_the_old_limit() {
         let constant = DenseTensorPolynomial::from_axis_polynomial(1, 0, &[Real::pi()]).unwrap();
         let Classification::Decided(constant) = represented_dense_value_refined(&constant, &[])
         else {
@@ -130316,13 +130409,16 @@ mod conversion_tests {
         assert_eq!(constant.exact_rational_witness(), Some(&Real::pi()));
 
         let half = (Real::one() / Real::from(2_i8)).unwrap();
-        let epsilon = Real::new(
-            hyperreal::Rational::from_bigint_fraction(
-                num::BigInt::from(1_u8),
-                num::BigUint::from(1_u8) << 384,
+        let dyadic = |bits| {
+            Real::new(
+                hyperreal::Rational::from_bigint_fraction(
+                    num::BigInt::from(1_u8),
+                    num::BigUint::from(1_u8) << bits,
+                )
+                .unwrap(),
             )
-            .unwrap(),
-        );
+        };
+        let epsilon = dyadic(384);
         let BezierParameter2::Algebraic(first_parameter) =
             algebraic_parameter(vec![-half.clone(), Real::zero(), Real::one()])
         else {
@@ -130375,6 +130471,79 @@ mod conversion_tests {
                 .unwrap();
         let difference = first_axis.subtract(&second_axis).unwrap();
         let one = DenseTensorPolynomial::from_axis_polynomial(3, 0, &[Real::one()]).unwrap();
+        let zero = DenseTensorPolynomial::from_axis_polynomial(3, 0, &[Real::zero()]).unwrap();
+        let discriminant =
+            DenseTensorPolynomial::from_axis_polynomial(3, 0, &[Real::from(2_i8)]).unwrap();
+        let radical = square_root_algebraic_root_representation(
+            &exact_real_algebraic_representation(&Real::from(2_i8)),
+            1,
+        );
+        let AlgebraicRootSquareRootStatus::Transformed = radical.status else {
+            panic!("the positive square root of two must be represented exactly");
+        };
+        let signed_radical = radical
+            .representation
+            .expect("the transformed positive radical retains its representation");
+        let nested_candidate =
+            DenseTensorPolynomial::from_axis_polynomial(3, 0, &[dyadic(400)]).unwrap();
+        let nested_bounded_sources = [
+            refined_represented_root(&first, 64),
+            refined_represented_root(&second, 64),
+        ];
+        let nested_bounded_radical = refined_represented_root(&signed_radical, 64);
+        let nested_bounded_numerator =
+            dense_tensor_interval(&one, &nested_bounded_sources).unwrap();
+        let nested_bounded_denominator = represented_tensor_nested_interval(
+            &difference,
+            &nested_candidate,
+            &nested_bounded_sources,
+            &nested_bounded_radical,
+        )
+        .unwrap();
+        assert!(
+            nested_bounded_numerator
+                .divide(&nested_bounded_denominator, &CurveContext::STRICT)
+                .is_none(),
+            "the correlated radical denominator must straddle zero at the old nested ceiling",
+        );
+        let nested_zero_retained = first_axis.scale(&Real::from(-1_i8)).unwrap();
+        let nested_zero_candidate =
+            DenseTensorPolynomial::from_axis_polynomial(3, 0, std::slice::from_ref(&half)).unwrap();
+        assert_eq!(
+            represented_tensor_nested_ratio(
+                &one,
+                &zero,
+                &nested_zero_retained,
+                &nested_zero_candidate,
+                &discriminant,
+                &[first.clone(), second.clone()],
+                &signed_radical,
+            ),
+            Classification::Uncertain(UncertaintyReason::Boundary),
+            "the exact correlation -sqrt(1/2)+sqrt(2)/2 must remain undefined",
+        );
+
+        let source_free_zero =
+            DenseTensorPolynomial::from_axis_polynomial(1, 0, &[Real::zero()]).unwrap();
+        let source_free_one =
+            DenseTensorPolynomial::from_axis_polynomial(1, 0, &[Real::one()]).unwrap();
+        let source_free_discriminant =
+            DenseTensorPolynomial::from_axis_polynomial(1, 0, &[Real::from(2_i8)]).unwrap();
+        let Classification::Decided(source_free_nested) = represented_tensor_nested_ratio(
+            &source_free_zero,
+            &source_free_one,
+            &source_free_one,
+            &source_free_zero,
+            &source_free_discriminant,
+            &[],
+            &signed_radical,
+        ) else {
+            panic!("a source-free nested quotient must reuse the ordinary quotient kernel");
+        };
+        assert!(represented_roots_strictly_equal(
+            &source_free_nested,
+            &signed_radical,
+        ));
         let ratio_bounded_sources = [
             refined_represented_root(&first, 128),
             refined_represented_root(&second, 128),
@@ -130407,23 +130576,34 @@ mod conversion_tests {
                     &Real::zero(),
                 ),
                 represented_tensor_ratio(&one, &difference, &[first.clone(), second.clone()]),
+                represented_tensor_nested_ratio(
+                    &one,
+                    &zero,
+                    &difference,
+                    &nested_candidate,
+                    &discriminant,
+                    &[first.clone(), second.clone()],
+                    &signed_radical,
+                ),
             )
         };
         #[cfg(feature = "dispatch-trace")]
-        let (dense, affine, ratio) = hyperreal::dispatch_trace::with_recording(work);
+        let (dense, affine, ratio, nested_ratio) = hyperreal::dispatch_trace::with_recording(work);
         #[cfg(not(feature = "dispatch-trace"))]
-        let (dense, affine, ratio) = work();
+        let (dense, affine, ratio, nested_ratio) = work();
         #[cfg(feature = "dispatch-trace")]
         let trace = hyperreal::dispatch_trace::take_trace();
         let (
             Classification::Decided(dense),
             Classification::Decided(affine),
             Classification::Decided(ratio),
-        ) = (dense, affine, ratio)
+            Classification::Decided(nested_ratio),
+        ) = (dense, affine, ratio, nested_ratio)
         else {
             panic!("every represented scalar authority must separate its selected image");
         };
         assert!(ratio.is_valid());
+        assert!(nested_ratio.is_valid());
         let comparison = compare_algebraic_root_representations_with_refinement(
             &dense,
             &affine,
@@ -130441,7 +130621,7 @@ mod conversion_tests {
             Some(std::cmp::Ordering::Less),
         );
         for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
-            for represented in [&dense, &ratio] {
+            for represented in [&dense, &ratio, &nested_ratio] {
                 let outcome = crate::policy::resolve_certified_value(&policy, |attempt| {
                     represented_policy_sign(represented, attempt)
                 });
@@ -130474,6 +130654,22 @@ mod conversion_tests {
                     "unbounded-cold-continuation",
                 ) >= 1,
                 "the quotient image must refine beyond 128 steps: {trace:?}",
+            );
+            assert!(
+                trace.path_count(
+                    "hypercurve",
+                    "represented-nested-denominator-separation",
+                    "unbounded-cold-continuation",
+                ) >= 1,
+                "the correlated denominator must refine beyond 64 steps: {trace:?}",
+            );
+            assert!(
+                trace.path_count(
+                    "hypercurve",
+                    "represented-nested-ratio-image-separation",
+                    "unbounded-cold-continuation",
+                ) >= 1,
+                "the correlated quotient must refine beyond 64 steps: {trace:?}",
             );
         }
     }
