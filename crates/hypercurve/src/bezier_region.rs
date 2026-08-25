@@ -27002,7 +27002,11 @@ mod tests {
             };
             BezierSplitFragment2::AnalyticParallel(crossing)
         } else {
-            line(vertices[0].clone(), vertices[1].clone())
+            BezierSplitFragment2::Materialized {
+                start: BezierParameter2::Exact(Real::zero()),
+                end: BezierParameter2::Exact(Real::one()),
+                curve: BezierSubcurve2::Quadratic(crossing_source),
+            }
         };
         CurveRegion2::try_new_with_loop_topology(
             vec![
@@ -27022,6 +27026,79 @@ mod tests {
             vec![CurveBoundaryInteriorSide2::Left],
         )
         .expect("the crossing cutter has authored topology")
+    }
+
+    fn selected_radial_disk(
+        semicircle: crate::bezier_offset::BezierAlgebraicCuspSemicircle2,
+        policy: &CurveContext,
+    ) -> CurveRegion2 {
+        assert!(semicircle.uses_selected_radial_frame());
+        let interior_side = if semicircle.is_clockwise() {
+            CurveBoundaryInteriorSide2::Right
+        } else {
+            CurveBoundaryInteriorSide2::Left
+        };
+        let boundary = CurveRegionBoundaryLoop2::new(
+            vec![
+                BezierSplitFragment2::AlgebraicCuspSemicircle(
+                    crate::BezierAlgebraicCuspSemicircleFragment2::full(semicircle.clone(), policy),
+                ),
+                BezierSplitFragment2::AlgebraicCuspSemicircle(
+                    crate::BezierAlgebraicCuspSemicircleFragment2::full(
+                        semicircle.complementary_half(),
+                        policy,
+                    ),
+                ),
+            ],
+            policy,
+        )
+        .expect("the selected-radial disk closes exactly");
+        CurveRegion2::try_new_with_loop_topology(
+            vec![boundary],
+            vec![CurveRegionLoopRole::Material],
+            vec![FillRule::NonZero],
+            vec![interior_side],
+        )
+        .expect("the selected-radial disk has authored topology")
+    }
+
+    fn recursive_selected_radial_nonlinear_cutter(policy: &CurveContext) -> CurveRegion2 {
+        let start = Point2::from_values(-1, -1);
+        let end = Point2::from_values(2, -1);
+        let bottom_right = Point2::from_values(2, -2);
+        let bottom_left = Point2::from_values(-1, -2);
+        let fragment = |curve| BezierSplitFragment2::Materialized {
+            start: BezierParameter2::Exact(Real::zero()),
+            end: BezierParameter2::Exact(Real::one()),
+            curve: BezierSubcurve2::Quadratic(curve),
+        };
+        let line = |start, end| {
+            fragment(QuadraticBezier2::from_line_segment(
+                LineSeg2::try_new(start, end).unwrap(),
+            ))
+        };
+        let crossing = fragment(QuadraticBezier2::new(
+            start.clone(),
+            Point2::new(q(1, 2), -q(9, 10)),
+            end.clone(),
+        ));
+        let boundary = CurveRegionBoundaryLoop2::new(
+            vec![
+                crossing,
+                line(end, bottom_right.clone()),
+                line(bottom_right, bottom_left.clone()),
+                line(bottom_left, start),
+            ],
+            policy,
+        )
+        .expect("the rational nonlinear cutter closes exactly");
+        CurveRegion2::try_new_with_loop_topology(
+            vec![boundary],
+            vec![CurveRegionLoopRole::Material],
+            vec![FillRule::NonZero],
+            vec![CurveBoundaryInteriorSide2::Right],
+        )
+        .expect("the rational nonlinear cutter has authored topology")
     }
 
     fn selected_radial_linear_corner(
@@ -27405,18 +27482,14 @@ mod tests {
     #[test]
     fn recursive_selected_radial_crosses_a_nonlinear_quadratic() {
         for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
-            let (fourth_generation, fourth_radius) =
-                fourth_selected_radial_boolean_fillet_generation(&policy);
-            let cutter = selected_radial_crossing_cutter(
-                &fourth_generation,
-                Some(&fourth_radius),
-                false,
-                true,
-                &policy,
-            );
+            let recursive = crate::bezier_offset::recursively_line_contact_radial_half(&policy);
+            let recursive_radius = recursive.radial_distance().abs();
+            let recursive_disk = selected_radial_disk(recursive, &policy);
+            assert_eq!(recursive_radius, q(1, 4));
+            let cutter = recursive_selected_radial_nonlinear_cutter(&policy);
             #[cfg(feature = "dispatch-trace")]
             hyperreal::dispatch_trace::reset();
-            let intersection_work = || fourth_generation.intersect_region(&cutter, &policy);
+            let intersection_work = || recursive_disk.intersect_region(&cutter, &policy);
             #[cfg(feature = "dispatch-trace")]
             let intersections = hyperreal::dispatch_trace::with_recording(intersection_work);
             #[cfg(not(feature = "dispatch-trace"))]
@@ -27433,13 +27506,32 @@ mod tests {
                     "the recursive selected-radial/nonlinear crossing must decide: policy={policy:?}, error={error:?}"
                 );
             });
+            #[cfg(feature = "dispatch-trace")]
+            assert!(
+                trace.path_count(
+                    "hypercurve",
+                    "algebraic-circle-rational-kernel",
+                    "recursive-quadratic",
+                ) > 0,
+                "the deep selected-radial crossing must stay in the recursive projective rational kernel: {trace:?}",
+            );
+            #[cfg(feature = "dispatch-trace")]
+            assert_eq!(
+                trace.path_count(
+                    "hypercurve",
+                    "algebraic-circle-rational-kernel",
+                    "represented",
+                ),
+                0,
+                "the deep selected-radial crossing must not materialize a represented Cartesian frame: {trace:?}",
+            );
             assert!(
                 intersections.value.is_complete(),
                 "the recursive nonlinear crossing must retain complete intersection evidence: policy={policy:?}, blockers={:?}",
                 intersections.value.blockers(),
             );
             assert!(!intersections.value.contacts().is_empty());
-            let booleans = fourth_generation
+            let booleans = recursive_disk
                 .boolean_regions(&cutter, &policy)
                 .unwrap_or_else(|error| {
                     panic!(

@@ -626,6 +626,13 @@ enum BezierAlgebraicCuspSemicircleRationalParameterMapSystem2 {
         tangent_cross: BezierAlgebraicCuspTrivariateSquareRootExpression2,
         angular_tangent: BezierAlgebraicCuspTrivariateSquareRootExpression2,
     },
+    /// Arbitrary-depth selected-radial circle whose rational target parameter
+    /// is embedded into the existing recursive quadratic tower. Rational
+    /// incidence uses unit procedural speed, so singular target parameters
+    /// remain valid contacts rather than becoming spurious speed roots.
+    RecursiveSelectedRadial {
+        system: Arc<BezierRecursiveSelectedRadialParallelSystem2>,
+    },
     /// Direct homogeneous chord-pair center with two retained positive speed
     /// radicals. Its rank-independent tensor is the sole angular authority;
     /// immutable coefficients are allocation-shared by contacts.
@@ -1733,6 +1740,135 @@ fn rational_overlap_parameter_for_exact_cusp(
     policy: &CurveContext,
 ) -> CurveResult<Classification<BezierParameter2>> {
     let data = &map.data;
+    if let BezierAlgebraicCuspSemicircleRationalParameterMapSystem2::Represented { frame } =
+        &data.system
+    {
+        match in_closed_unit_interval(parameter, &policy.strict_counterpart()) {
+            Some(true) => {}
+            Some(false) => return Err(CurveError::InvalidBezierParameter),
+            None => return Ok(Classification::Uncertain(UncertaintyReason::Ordering)),
+        }
+        let [Some(center_x), Some(center_y), Some(unit_x), Some(unit_y)] = [
+            frame.center[0].exact_rational_witness(),
+            frame.center[1].exact_rational_witness(),
+            frame.unit_radial[0].exact_rational_witness(),
+            frame.unit_radial[1].exact_rational_witness(),
+        ] else {
+            return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+        };
+        let one_minus = Real::one() - parameter;
+        let denominator = &one_minus * &one_minus + parameter * parameter;
+        match real_sign(&denominator, &CurveContext::STRICT) {
+            Some(RealSign::Positive) => {}
+            Some(RealSign::Zero | RealSign::Negative) => {
+                return Err(CurveError::Topology(
+                    "represented semicircle inverse-map denominator was not positive".into(),
+                ));
+            }
+            None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
+        }
+        let radial = Real::one() - Real::from(2_i8) * parameter;
+        let tangent = data.semicircle.turn_sign() * Real::from(2_i8) * parameter * &one_minus;
+        let radius_scale = (&frame.signed_radius / &denominator)?;
+        let point = Point2::new(
+            center_x + &radius_scale * (&radial * unit_x - &tangent * unit_y),
+            center_y + &radius_scale * (&radial * unit_y + &tangent * unit_x),
+        );
+        let candidates = match policy
+            .strict_predicate_pass(|| data.curve.retained_circle_point_parameters(&point, policy))?
+        {
+            Classification::Decided(candidates) => candidates,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        let retained =
+            retain_unique_overlap_parameter(candidates, range, map_reversed, true, policy, |_| {
+                Ok(Classification::Decided(RealSign::Zero))
+            })?;
+        if let Classification::Decided(candidate) = &retained {
+            let map_parameter = if map_reversed {
+                candidate.unit_complement()
+            } else {
+                candidate.clone()
+            };
+            map.data
+                .parameter_cache
+                .retain_represented_rational_value(map_parameter, Some(parameter.clone()));
+        }
+        return Ok(retained);
+    }
+    if let BezierAlgebraicCuspSemicircleRationalParameterMapSystem2::RecursiveSelectedRadial {
+        system,
+    } = &data.system
+    {
+        if !system.unit_target_speed {
+            return Err(CurveError::Topology(
+                "a recursive rational inverse map retained analytic target speed".into(),
+            ));
+        }
+        let one_minus = Real::one() - parameter;
+        let denominator = &one_minus * &one_minus + parameter * parameter;
+        match real_sign(&denominator, policy) {
+            Some(RealSign::Positive) => {}
+            Some(RealSign::Zero | RealSign::Negative) => {
+                return Err(CurveError::Topology(
+                    "semicircle inverse-map denominator was not positive".into(),
+                ));
+            }
+            None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
+        }
+        let radial_coefficient = Real::one() - Real::from(2_i8) * parameter;
+        let Some(projection) =
+            system.diameter_parameter_projection(&denominator, &radial_coefficient)
+        else {
+            return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+        };
+        let candidates = match system.expression_parameters(
+            &projection,
+            SelectedThirdAxisDomain2::UnitInterval,
+            policy,
+        )? {
+            Classification::Decided(BezierAlgebraicFiberProjection2::Parameters(candidates)) => {
+                candidates
+            }
+            Classification::Decided(
+                BezierAlgebraicFiberProjection2::IdenticallyZero
+                | BezierAlgebraicFiberProjection2::Degenerate,
+            ) => return Ok(Classification::Uncertain(UncertaintyReason::Unsupported)),
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        let retained = retain_unique_overlap_parameter(
+            candidates,
+            range,
+            map_reversed,
+            true,
+            policy,
+            |candidate| {
+                policy.strict_predicate_pass(|| {
+                    system.diameter_parameter_sign(
+                        candidate,
+                        &denominator,
+                        &radial_coefficient,
+                        policy,
+                    )
+                })
+            },
+        )?;
+        if let Classification::Decided(candidate) = &retained {
+            let map_parameter = if map_reversed {
+                candidate.unit_complement()
+            } else {
+                candidate.clone()
+            };
+            map.data
+                .parameter_cache
+                .retain_represented_rational_value(map_parameter, Some(parameter.clone()));
+        }
+        return Ok(retained);
+    }
     if let BezierAlgebraicCuspSemicircleRationalParameterMapSystem2::SelectedRadial {
         pair_map,
         branch,
@@ -5371,7 +5507,11 @@ struct BezierRecursiveSelectedRadialParallelSystem2 {
     field: BezierRecursiveQuadraticField2,
     base: Arc<BezierRecursiveQuadraticBaseFieldData2>,
     direct_pair_fast_path: Option<Arc<BezierDirectPairRadialParallelFastPath2>>,
-    projection: DenseTensorPolynomial,
+    /// Rational-curve incidence is the zero-distance specialization with an
+    /// exact unit procedural speed. It neither adjoins nor divides by the
+    /// target derivative norm, preserving singular rational contacts.
+    unit_target_speed: bool,
+    projection: Option<DenseTensorPolynomial>,
     circle: BezierRecursiveQuadraticParallelExpression2,
     selected_half_plane: BezierRecursiveQuadraticParallelExpression2,
     diameter: BezierRecursiveQuadraticParallelExpression2,
@@ -14778,6 +14918,32 @@ impl BezierAlgebraicCuspSemicircle2 {
                 }
             };
         }
+        if let Some(frame) = self.data.frame.selected_radial() {
+            if !policy.accepts_retained_policy(frame.policy) {
+                return Err(CurveError::Topology(
+                    "a selected radial center crossed predicate policies".into(),
+                ));
+            }
+            if let BezierAlgebraicCuspSemicircleMappedParameterData2::Pair {
+                map,
+                contact,
+                first,
+            } = frame.center_parameter.as_ref()
+                && let Classification::Decided([x, y]) = map
+                    .represented_selected_radial_derived_point(
+                        contact,
+                        *first,
+                        &Real::one(),
+                        &Real::zero(),
+                        &Real::zero(),
+                        &Real::zero(),
+                        policy,
+                    )?
+                && let (Some(x), Some(y)) = (x.exact_rational_witness(), y.exact_rational_witness())
+            {
+                return Ok(Some(Point2::new(x.clone(), y.clone())));
+            }
+        }
         Ok(match self.center_point_evidence(policy)? {
             Classification::Decided(RationalBezierIntersectionPointEvidence2::Exact(center)) => {
                 Some(center)
@@ -15648,6 +15814,85 @@ impl BezierAlgebraicCuspSemicircle2 {
             }
         }
         Ok(uncertainty.map_or(Classification::Decided(true), Classification::Uncertain))
+    }
+
+    /// Certifies retained circular-conic metadata against an arbitrary-depth
+    /// selected-radial frame without materializing Cartesian coordinates.
+    /// This is a structural fast path only: a non-match or an unproved
+    /// equality rejoins the complete recursive incidence projection.
+    fn recursive_selected_radial_has_same_supporting_circle(
+        &self,
+        center: &Point2,
+        radius_squared: &Real,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<bool>> {
+        if let Some(retained_center) = self.exact_rational_center(policy)? {
+            for (actual, expected) in [
+                (retained_center.x(), center.x()),
+                (retained_center.y(), center.y()),
+            ] {
+                match compare_reals(actual, expected, &CurveContext::STRICT) {
+                    Some(std::cmp::Ordering::Equal) => {}
+                    Some(std::cmp::Ordering::Less | std::cmp::Ordering::Greater) => {
+                        return Ok(Classification::Decided(false));
+                    }
+                    None => {
+                        return Ok(Classification::Uncertain(UncertaintyReason::RealSign));
+                    }
+                }
+            }
+        } else {
+            let frame = match self.recursive_selected_radial_any_frame_authority(policy)? {
+                Classification::Decided(Some(frame)) => frame,
+                Classification::Decided(None) => {
+                    return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+                }
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            };
+            for (coordinate, expected) in
+                [(&frame.center.x, center.x()), (&frame.center.y, center.y())]
+            {
+                let difference = coordinate
+                    .subtract(&frame.center.denominator.scale(expected).ok_or_else(|| {
+                        CurveError::Topology(
+                            "a recursive supporting-circle center exceeded its field budget".into(),
+                        )
+                    })?)
+                    .ok_or_else(|| {
+                        CurveError::Topology(
+                            "a recursive supporting-circle center crossed retained fields".into(),
+                        )
+                    })?;
+                if difference.is_structurally_zero() {
+                    continue;
+                }
+                match policy.strict_predicate_pass(|| difference.sign(policy))? {
+                    Classification::Decided(RealSign::Zero) => {}
+                    Classification::Decided(RealSign::Positive | RealSign::Negative) => {
+                        return Ok(Classification::Decided(false));
+                    }
+                    Classification::Uncertain(reason) => {
+                        return Ok(Classification::Uncertain(reason));
+                    }
+                }
+            }
+        }
+        let retained_radius_squared = self.radial_distance() * self.radial_distance();
+        Ok(
+            match compare_reals(
+                &retained_radius_squared,
+                radius_squared,
+                &CurveContext::STRICT,
+            ) {
+                Some(std::cmp::Ordering::Equal) => Classification::Decided(true),
+                Some(std::cmp::Ordering::Less | std::cmp::Ordering::Greater) => {
+                    Classification::Decided(false)
+                }
+                None => Classification::Uncertain(UncertaintyReason::RealSign),
+            },
+        )
     }
 
     /// Proves that this supporting circle cannot meet one retained exact
@@ -16775,81 +17020,6 @@ impl BezierAlgebraicCuspSemicircle2 {
         ))
     }
 
-    /// Proves that a rational target misses the complete supporting circle of
-    /// a recursively authored selected-radial arc.
-    ///
-    /// A rationally mapped center `C(u)` and exact radius define circle
-    /// incidence without the parent circle's angular frame.  Projecting that
-    /// two-parameter equation first avoids materializing the independent
-    /// parent-center field when there are no supporting-circle contacts.  Any
-    /// surviving candidate deliberately falls through to the complete frame
-    /// kernel, which still owns selected-half and tangent classification.
-    fn recursive_selected_radial_rational_support_is_disjoint(
-        &self,
-        other: &RationalBezier2,
-        policy: &CurveContext,
-    ) -> CurveResult<Option<Classification<bool>>> {
-        let Some(frame) = self.data.frame.selected_radial() else {
-            return Ok(None);
-        };
-        if !policy.accepts_retained_policy(frame.policy) {
-            return Err(CurveError::Topology(
-                "a recursive selected-radial support crossed predicate policies".into(),
-            ));
-        }
-        let BezierAlgebraicCuspSemicircleMappedParameterData2::Rational { map, contact } =
-            frame.center_parameter.as_ref()
-        else {
-            return Ok(None);
-        };
-        if !policy.accepts_retained_policy(map.data.policy)
-            || map.data.semicircle != *frame.center_parameter.semicircle_carrier()
-        {
-            return Err(CurveError::Topology(
-                "a recursive rational center lost its authored support".into(),
-            ));
-        }
-        let center = map.data.curve.homogeneous_power_basis()?;
-        let target = other.homogeneous_power_basis()?;
-        let delta_x = bivariate_subtract(
-            &bivariate_outer_product(&center.weight, &target.x_numerator),
-            &bivariate_outer_product(&center.x_numerator, &target.weight),
-        );
-        let delta_y = bivariate_subtract(
-            &bivariate_outer_product(&center.weight, &target.y_numerator),
-            &bivariate_outer_product(&center.y_numerator, &target.weight),
-        );
-        let denominator = bivariate_outer_product(&center.weight, &target.weight);
-        let radius_squared = self.radial_distance() * self.radial_distance();
-        let incidence = bivariate_subtract(
-            &bivariate_add(
-                &bivariate_multiply(&delta_x, &delta_x),
-                &bivariate_multiply(&delta_y, &delta_y),
-            ),
-            &bivariate_scale(
-                bivariate_multiply(&denominator, &denominator),
-                &radius_squared,
-            ),
-        );
-        let projection = selected_parameter_fiber_parameters(
-            &incidence,
-            &contact.other_parameter,
-            MAX_PARALLEL_INTERSECTION_RESULTANT_DEGREE,
-            MAX_SELECTED_FIBER_QUOTIENT_DEGREE,
-            policy,
-        )?;
-        Ok(Some(match projection {
-            Classification::Decided(BezierAlgebraicFiberProjection2::Parameters(parameters)) => {
-                Classification::Decided(parameters.is_empty())
-            }
-            Classification::Decided(
-                BezierAlgebraicFiberProjection2::IdenticallyZero
-                | BezierAlgebraicFiberProjection2::Degenerate,
-            ) => Classification::Decided(false),
-            Classification::Uncertain(reason) => Classification::Uncertain(reason),
-        }))
-    }
-
     fn represented_circle_frame(
         &self,
         policy: &CurveContext,
@@ -16965,6 +17135,42 @@ impl BezierAlgebraicCuspSemicircle2 {
                 signed_radius: self.radial_distance().clone(),
             },
         ))
+    }
+
+    /// Collapses a recursively retained frame only when both its center and
+    /// parameter-zero unit radial have exact rational witnesses.  A
+    /// coincident rational carrier can then partition its sole parameter axis
+    /// without projecting constant recursive-field coefficients.  The
+    /// general recursive tower remains authoritative when either coordinate
+    /// is genuinely algebraic.
+    fn exact_rational_component_frame(
+        &self,
+        policy: &CurveContext,
+    ) -> CurveResult<Option<BezierRepresentedSelectedRadialCircleFrame2>> {
+        let Some(center) = self.exact_rational_center(policy)? else {
+            return Ok(None);
+        };
+        let frame = match self.represented_circle_frame(policy)? {
+            Classification::Decided(frame) => frame,
+            Classification::Uncertain(_) => return Ok(None),
+        };
+        let [Some(unit_x), Some(unit_y)] = [
+            frame.unit_radial[0].exact_rational_witness(),
+            frame.unit_radial[1].exact_rational_witness(),
+        ] else {
+            return Ok(None);
+        };
+        Ok(Some(BezierRepresentedSelectedRadialCircleFrame2 {
+            center: [
+                exact_real_algebraic_representation(center.x()),
+                exact_real_algebraic_representation(center.y()),
+            ],
+            unit_radial: [
+                exact_real_algebraic_representation(unit_x),
+                exact_real_algebraic_representation(unit_y),
+            ],
+            signed_radius: frame.signed_radius,
+        }))
     }
 
     /// Builds the exact three-root equations for a pair-radial circle against
@@ -33531,6 +33737,314 @@ impl BezierAlgebraicCuspSemicircle2 {
         )
     }
 
+    /// Publishes a rational carrier whose complete image lies on an
+    /// arbitrary-depth selected-radial supporting circle. The target
+    /// parameter is the only projected axis; every candidate is replayed in
+    /// the authored recursive quadratic tower before it becomes a component
+    /// boundary.
+    fn recursive_selected_radial_replay_rational_circle_component(
+        &self,
+        other: &RationalBezier2,
+        system: Arc<BezierRecursiveSelectedRadialParallelSystem2>,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<BezierAlgebraicCuspSemicircleRationalIntersections2>> {
+        if !system.unit_target_speed {
+            return Err(CurveError::Topology(
+                "a recursive rational-circle component retained analytic target speed".into(),
+            ));
+        }
+        if let Some(frame) = self.exact_rational_component_frame(policy)? {
+            #[cfg(feature = "dispatch-trace")]
+            {
+                hyperreal::dispatch_trace::record(
+                    "hypercurve",
+                    "algebraic-circle-rational-kernel",
+                    "recursive-quadratic-component",
+                );
+                hyperreal::dispatch_trace::record(
+                    "hypercurve",
+                    "algebraic-circle-rational-kernel",
+                    "recursive-rational-frame-component",
+                );
+            }
+            return self.replay_rational_circle_component_with_exact_frame(
+                other,
+                &frame,
+                BezierAlgebraicCuspSemicircleRationalParameterMapSystem2::Represented {
+                    frame: frame.clone(),
+                },
+                policy,
+            );
+        }
+        let selected_roots = match system.retained_expression_parameters(
+            &system.selected_half_plane,
+            SelectedThirdAxisDomain2::UnitInterval,
+            policy,
+        )? {
+            Classification::Decided(BezierAlgebraicFiberProjection2::Parameters(roots)) => roots,
+            Classification::Decided(
+                BezierAlgebraicFiberProjection2::IdenticallyZero
+                | BezierAlgebraicFiberProjection2::Degenerate,
+            ) => {
+                return Ok(Classification::Decided(
+                    BezierAlgebraicCuspSemicircleRationalIntersections2::DegenerateProjection,
+                ));
+            }
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        let angular_roots = match system.retained_expression_parameters(
+            &system.tangent_dot_source,
+            SelectedThirdAxisDomain2::UnitInterval,
+            policy,
+        )? {
+            Classification::Decided(BezierAlgebraicFiberProjection2::Parameters(roots)) => roots,
+            Classification::Decided(
+                BezierAlgebraicFiberProjection2::IdenticallyZero
+                | BezierAlgebraicFiberProjection2::Degenerate,
+            ) => {
+                return Ok(Classification::Decided(
+                    BezierAlgebraicCuspSemicircleRationalIntersections2::DegenerateProjection,
+                ));
+            }
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        let mut boundaries = Vec::with_capacity(selected_roots.len() + angular_roots.len() + 2);
+        boundaries.push(BezierAlgebraicCuspSemicircleRationalComponentBoundary2 {
+            parameter: BezierParameter2::Exact(Real::zero()),
+            correlation: BezierAlgebraicCuspSemicircleRationalCorrelation2::Independent,
+            selected_relation: false,
+        });
+        boundaries.extend(selected_roots.into_iter().map(|parameter| {
+            BezierAlgebraicCuspSemicircleRationalComponentBoundary2 {
+                parameter,
+                correlation: BezierAlgebraicCuspSemicircleRationalCorrelation2::Map,
+                selected_relation: true,
+            }
+        }));
+        boundaries.extend(angular_roots.into_iter().map(|parameter| {
+            BezierAlgebraicCuspSemicircleRationalComponentBoundary2 {
+                parameter,
+                correlation: BezierAlgebraicCuspSemicircleRationalCorrelation2::Map,
+                selected_relation: false,
+            }
+        }));
+        boundaries.push(BezierAlgebraicCuspSemicircleRationalComponentBoundary2 {
+            parameter: BezierParameter2::Exact(Real::one()),
+            correlation: BezierAlgebraicCuspSemicircleRationalCorrelation2::Independent,
+            selected_relation: false,
+        });
+        let parameter_map = BezierAlgebraicCuspSemicircleRationalParameterMap2 {
+            data: Arc::new(BezierAlgebraicCuspSemicircleRationalParameterMapData2 {
+                semicircle: self.clone(),
+                curve: other.clone(),
+                system:
+                    BezierAlgebraicCuspSemicircleRationalParameterMapSystem2::RecursiveSelectedRadial {
+                        system: Arc::clone(&system),
+                    },
+                policy: policy.retained_object_policy(),
+                parameter_cache: BezierAlgebraicCuspSemicircleParameterCache2::default(),
+            }),
+        };
+        #[cfg(feature = "dispatch-trace")]
+        hyperreal::dispatch_trace::record(
+            "hypercurve",
+            "algebraic-circle-rational-kernel",
+            "recursive-quadratic-component",
+        );
+        self.publish_partitioned_rational_circle_component(
+            other,
+            parameter_map,
+            boundaries,
+            policy,
+            |boundary| {
+                if boundary.selected_relation {
+                    Ok(Classification::Decided(RealSign::Zero))
+                } else {
+                    system.expression_sign_at_parameter(
+                        &system.selected_half_plane,
+                        &boundary.parameter,
+                        policy,
+                    )
+                }
+            },
+            |boundary| {
+                system.expression_sign_at_parameter(&system.diameter, &boundary.parameter, policy)
+            },
+            |parameter| {
+                system.expression_sign_at_parameter(&system.tangent_dot_source, parameter, policy)
+            },
+        )
+    }
+
+    fn recursive_selected_radial_rational_intersections_internal(
+        &self,
+        other: &RationalBezier2,
+        retain_parameter_map: bool,
+        system: Arc<BezierRecursiveSelectedRadialParallelSystem2>,
+        policy: &CurveContext,
+    ) -> CurveResult<
+        Classification<(
+            BezierAlgebraicCuspSemicircleRationalIntersections2,
+            Option<BezierAlgebraicCuspSemicircleRationalParameterMap2>,
+        )>,
+    > {
+        if !system.unit_target_speed {
+            return Err(CurveError::Topology(
+                "a recursive circle/rational intersection retained analytic target speed".into(),
+            ));
+        }
+        let projection = system.projection.as_ref().ok_or_else(|| {
+            CurveError::Topology(
+                "a finite recursive circle/rational solve lost its incidence projection".into(),
+            )
+        })?;
+        let candidates = match system.expression_parameters(
+            projection,
+            SelectedThirdAxisDomain2::UnitInterval,
+            policy,
+        )? {
+            Classification::Decided(BezierAlgebraicFiberProjection2::Parameters(candidates)) => {
+                candidates
+            }
+            Classification::Decided(BezierAlgebraicFiberProjection2::IdenticallyZero) => {
+                let sample = BezierParameter2::Exact((Real::one() / Real::from(2_i8))?);
+                match policy.strict_predicate_pass(|| {
+                    system.expression_sign_at_parameter(&system.circle, &sample, policy)
+                })? {
+                    Classification::Decided(RealSign::Zero) => {
+                        return Ok(self
+                            .recursive_selected_radial_replay_rational_circle_component(
+                                other, system, policy,
+                            )?
+                            .map(|intersections| (intersections, None)));
+                    }
+                    Classification::Decided(RealSign::Positive | RealSign::Negative) => {
+                        return Ok(Classification::Decided((
+                            BezierAlgebraicCuspSemicircleRationalIntersections2::DegenerateProjection,
+                            None,
+                        )));
+                    }
+                    Classification::Uncertain(reason) => {
+                        return Ok(Classification::Uncertain(reason));
+                    }
+                }
+            }
+            Classification::Decided(BezierAlgebraicFiberProjection2::Degenerate) => {
+                return Ok(Classification::Decided((
+                    BezierAlgebraicCuspSemicircleRationalIntersections2::DegenerateProjection,
+                    None,
+                )));
+            }
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        let mut contacts = Vec::with_capacity(candidates.len());
+        for candidate in candidates {
+            let transverse = system.expression_transverse_root(&system.circle, &candidate);
+            if transverse == Some(false) {
+                continue;
+            }
+            let evaluation = match system.candidate_evaluation(&candidate, policy)? {
+                Classification::Decided(Some(evaluation)) => evaluation,
+                Classification::Decided(None) => continue,
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            };
+            if transverse != Some(true) {
+                match policy.strict_predicate_pass(|| {
+                    system.expression_sign_with_evaluation(&system.circle, &evaluation, policy)
+                })? {
+                    Classification::Decided(RealSign::Zero) => {}
+                    Classification::Decided(RealSign::Positive | RealSign::Negative) => continue,
+                    Classification::Uncertain(reason) => {
+                        return Ok(Classification::Uncertain(reason));
+                    }
+                }
+            }
+            let location = match policy.strict_predicate_pass(|| {
+                system.contact_location_with_evaluation(&evaluation, policy)
+            })? {
+                Classification::Decided(Some(location)) => location,
+                Classification::Decided(None) => continue,
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            };
+            let tangent_cross_sign = match system.polynomial_sign_with_evaluation(
+                &system.tangent_cross_source,
+                &evaluation,
+                policy,
+            )? {
+                Classification::Decided(sign) => sign,
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            };
+            let tangent_dot_sign = if other.degree() == 1 {
+                match policy.strict_predicate_pass(|| {
+                    system.expression_sign_with_evaluation(
+                        &system.tangent_dot_source,
+                        &evaluation,
+                        policy,
+                    )
+                })? {
+                    Classification::Decided(sign) => Some(sign),
+                    Classification::Uncertain(_) => None,
+                }
+            } else {
+                None
+            };
+            let point = match rational_point_evidence_at_parameter(other, &candidate, policy)? {
+                Classification::Decided(point) => point,
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            };
+            contacts.push(BezierAlgebraicCuspSemicircleRationalContact2 {
+                other_parameter: candidate,
+                point,
+                tangent_cross_sign,
+                tangent_dot_sign,
+                location,
+            });
+        }
+        let parameter_map = if retain_parameter_map
+            && contacts.iter().any(|contact| {
+                contact.location == BezierAlgebraicCuspSemicircleContactLocation2::Interior
+            }) {
+            Some(BezierAlgebraicCuspSemicircleRationalParameterMap2 {
+                data: Arc::new(BezierAlgebraicCuspSemicircleRationalParameterMapData2 {
+                    semicircle: self.clone(),
+                    curve: other.clone(),
+                    system:
+                        BezierAlgebraicCuspSemicircleRationalParameterMapSystem2::RecursiveSelectedRadial {
+                            system,
+                        },
+                    policy: policy.retained_object_policy(),
+                    parameter_cache: BezierAlgebraicCuspSemicircleParameterCache2::default(),
+                }),
+            })
+        } else {
+            None
+        };
+        #[cfg(feature = "dispatch-trace")]
+        hyperreal::dispatch_trace::record(
+            "hypercurve",
+            "algebraic-circle-rational-kernel",
+            "recursive-quadratic",
+        );
+        Ok(Classification::Decided((
+            BezierAlgebraicCuspSemicircleRationalIntersections2::Contacts(contacts),
+            parameter_map,
+        )))
+    }
+
     fn selected_parallel_normal_rational_intersections_internal(
         &self,
         other: &RationalBezier2,
@@ -34284,13 +34798,17 @@ impl BezierAlgebraicCuspSemicircle2 {
     fn represented_rational_system(
         &self,
         other: &RationalBezier2,
+        retained_frame: Option<BezierRepresentedSelectedRadialCircleFrame2>,
         policy: &CurveContext,
     ) -> CurveResult<Classification<BezierRepresentedCircleRationalSystem2>> {
-        let frame = match self.represented_circle_frame(policy)? {
-            Classification::Decided(frame) => frame,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
+        let frame = match retained_frame {
+            Some(frame) => frame,
+            None => match self.represented_circle_frame(policy)? {
+                Classification::Decided(frame) => frame,
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            },
         };
         let Some((sources, center)) = represented_affine_tensor_basis(&frame.center) else {
             return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
@@ -34477,6 +34995,40 @@ impl BezierAlgebraicCuspSemicircle2 {
         other: &BezierParallel2,
         policy: &CurveContext,
     ) -> CurveResult<Classification<Arc<BezierRecursiveSelectedRadialParallelSystem2>>> {
+        self.recursive_selected_radial_target_system(other, false, true, policy)
+    }
+
+    fn recursive_selected_radial_rational_system(
+        &self,
+        other: &RationalBezier2,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<Arc<BezierRecursiveSelectedRadialParallelSystem2>>> {
+        let target = BezierParallel2::from_source(
+            BezierParallelSource2::Rational(other.clone()),
+            Real::zero(),
+        );
+        self.recursive_selected_radial_target_system(&target, true, true, policy)
+    }
+
+    fn recursive_selected_radial_rational_component_system(
+        &self,
+        other: &RationalBezier2,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<Arc<BezierRecursiveSelectedRadialParallelSystem2>>> {
+        let target = BezierParallel2::from_source(
+            BezierParallelSource2::Rational(other.clone()),
+            Real::zero(),
+        );
+        self.recursive_selected_radial_target_system(&target, true, false, policy)
+    }
+
+    fn recursive_selected_radial_target_system(
+        &self,
+        other: &BezierParallel2,
+        unit_target_speed: bool,
+        project_incidence: bool,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<Arc<BezierRecursiveSelectedRadialParallelSystem2>>> {
         let frame = match self.recursive_selected_radial_any_frame_authority(policy)? {
             Classification::Decided(Some(frame)) => frame,
             Classification::Decided(None) => {
@@ -34493,9 +35045,11 @@ impl BezierAlgebraicCuspSemicircle2 {
         {
             return Ok(Classification::Uncertain(reason));
         }
-        if let Classification::Uncertain(reason) = policy.strict_predicate_pass(|| {
-            BezierParallel2::certify_regular_differential(differential, policy)
-        })? {
+        if !unit_target_speed
+            && let Classification::Uncertain(reason) = policy.strict_predicate_pass(|| {
+                BezierParallel2::certify_regular_differential(differential, policy)
+            })?
+        {
             return Ok(Classification::Uncertain(reason));
         }
         let unit_weight = [Real::one()];
@@ -34554,9 +35108,12 @@ impl BezierAlgebraicCuspSemicircle2 {
             //   sqrt(S) (|R|^2 + W^2 D^2(d^2-r^2))
             //     + 2 W D R.N = 0.
             //
-            // Squaring this one procedural target-speed root enumerates
-            // candidates. The recursive center roots remain coefficient-field
-            // values and are normed only by the shared projection primitive.
+            // Analytic parallels square this one procedural target-speed root
+            // to enumerate candidates. A rational target is the exact
+            // zero-distance specialization with procedural speed fixed to
+            // one, so its unsquared circle polynomial is projected directly;
+            // derivative zeros then remain geometric candidates only when
+            // they actually satisfy the circle equation.
             let radial_x = subtract(
                 &scale_value(&x, &frame.center.denominator)?,
                 &scale_value(&weight, &frame.center.x)?,
@@ -34584,12 +35141,21 @@ impl BezierAlgebraicCuspSemicircle2 {
                 &multiply(&weight_denominator, &radial_dot_normal)?,
                 &Real::from(2_i8),
             )?;
-            let projected_coefficients = subtract(
-                &multiply(&circle_rational, &circle_rational)?,
-                &multiply(&multiply(&circle_radical, &circle_radical)?, &speed_squared)?,
-            )?;
-            let (base, projection) =
-                recursive_quadratic_polynomial_projection(projected_coefficients)?;
+            let (base, projection) = if project_incidence {
+                let projected_coefficients = if unit_target_speed {
+                    add(&circle_rational, &circle_radical)?
+                } else {
+                    subtract(
+                        &multiply(&circle_rational, &circle_rational)?,
+                        &multiply(&multiply(&circle_radical, &circle_radical)?, &speed_squared)?,
+                    )?
+                };
+                let (base, projection) =
+                    recursive_quadratic_polynomial_projection(projected_coefficients)?;
+                (base, Some(projection))
+            } else {
+                (field.base_and_extension_path().0, None)
+            };
 
             let (anchor_x, anchor_y, anchor_denominator) =
                 frame.center.difference_numerators(&frame.support_center)?;
@@ -34677,23 +35243,31 @@ impl BezierAlgebraicCuspSemicircle2 {
                 radius_squared_denominator,
                 tangent_cross_source,
                 tangent_dot_source,
-                speed_squared,
+                if unit_target_speed {
+                    real(&[Real::one()])?
+                } else {
+                    speed_squared
+                },
                 weight,
             ))
         })()
         else {
             return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
         };
-        let direct_pair_fast_path =
+        let direct_pair_fast_path = if unit_target_speed {
+            None
+        } else {
             match self.direct_pair_radial_parallel_fast_path(other, policy)? {
                 Classification::Decided(fast_path) => Some(fast_path),
                 Classification::Uncertain(_) => None,
-            };
+            }
+        };
         Ok(Classification::Decided(Arc::new(
             BezierRecursiveSelectedRadialParallelSystem2 {
                 field,
                 base,
                 direct_pair_fast_path,
+                unit_target_speed,
                 projection,
                 circle,
                 selected_half_plane,
@@ -35136,10 +35710,11 @@ impl BezierAlgebraicCuspSemicircle2 {
         )))
     }
 
-    fn represented_replay_rational_circle_component(
+    fn replay_rational_circle_component_with_exact_frame(
         &self,
         other: &RationalBezier2,
         frame: &BezierRepresentedSelectedRadialCircleFrame2,
+        parameter_system: BezierAlgebraicCuspSemicircleRationalParameterMapSystem2,
         policy: &CurveContext,
     ) -> CurveResult<Classification<BezierAlgebraicCuspSemicircleRationalIntersections2>> {
         let system = match self.represented_rational_component_system(other, frame, policy)? {
@@ -35219,19 +35794,25 @@ impl BezierAlgebraicCuspSemicircle2 {
             data: Arc::new(BezierAlgebraicCuspSemicircleRationalParameterMapData2 {
                 semicircle: self.clone(),
                 curve: other.clone(),
-                system: BezierAlgebraicCuspSemicircleRationalParameterMapSystem2::Represented {
-                    frame: frame.clone(),
-                },
+                system: parameter_system,
                 policy: policy.retained_object_policy(),
                 parameter_cache: BezierAlgebraicCuspSemicircleParameterCache2::default(),
             }),
         };
         #[cfg(feature = "dispatch-trace")]
-        hyperreal::dispatch_trace::record(
-            "hypercurve",
-            "algebraic-circle-rational-kernel",
-            "represented-circle-component",
-        );
+        {
+            let path = match &parameter_map.data.system {
+                BezierAlgebraicCuspSemicircleRationalParameterMapSystem2::RecursiveSelectedRadial {
+                    ..
+                } => "recursive-rational-frame-component",
+                _ => "represented-circle-component",
+            };
+            hyperreal::dispatch_trace::record(
+                "hypercurve",
+                "algebraic-circle-rational-kernel",
+                path,
+            );
+        }
         self.publish_partitioned_rational_circle_component(
             other,
             parameter_map,
@@ -35253,6 +35834,8 @@ impl BezierAlgebraicCuspSemicircle2 {
         &self,
         other: &RationalBezier2,
         retain_parameter_map: bool,
+        retained_frame: Option<BezierRepresentedSelectedRadialCircleFrame2>,
+        _dispatch_path: &'static str,
         policy: &CurveContext,
     ) -> CurveResult<
         Classification<(
@@ -35260,7 +35843,13 @@ impl BezierAlgebraicCuspSemicircle2 {
             Option<BezierAlgebraicCuspSemicircleRationalParameterMap2>,
         )>,
     > {
-        let system = match self.represented_rational_system(other, policy)? {
+        #[cfg(feature = "dispatch-trace")]
+        hyperreal::dispatch_trace::record(
+            "hypercurve",
+            "algebraic-circle-rational-kernel",
+            _dispatch_path,
+        );
+        let system = match self.represented_rational_system(other, retained_frame, policy)? {
             Classification::Decided(system) => system,
             Classification::Uncertain(reason) => {
                 return Ok(Classification::Uncertain(reason));
@@ -35277,7 +35866,14 @@ impl BezierAlgebraicCuspSemicircle2 {
             }
             Classification::Decided(BezierAlgebraicFiberProjection2::IdenticallyZero) => {
                 return Ok(self
-                    .represented_replay_rational_circle_component(other, &system.frame, policy)?
+                    .replay_rational_circle_component_with_exact_frame(
+                        other,
+                        &system.frame,
+                        BezierAlgebraicCuspSemicircleRationalParameterMapSystem2::Represented {
+                            frame: system.frame.clone(),
+                        },
+                        policy,
+                    )?
                     .map(|intersections| (intersections, None)));
             }
             Classification::Decided(BezierAlgebraicFiberProjection2::Degenerate) => {
@@ -35405,6 +36001,8 @@ impl BezierAlgebraicCuspSemicircle2 {
             return self.represented_rational_intersections_internal(
                 other,
                 retain_parameter_map,
+                None,
+                "represented",
                 policy,
             );
         }
@@ -35412,20 +36010,57 @@ impl BezierAlgebraicCuspSemicircle2 {
             let system = match self.selected_radial_rational_system(other, policy)? {
                 Classification::Decided(system) => system,
                 Classification::Uncertain(UncertaintyReason::Unsupported) => {
-                    if matches!(
-                        self.recursive_selected_radial_rational_support_is_disjoint(other, policy)?,
-                        Some(Classification::Decided(true))
-                    ) {
-                        return Ok(Classification::Decided((
-                            BezierAlgebraicCuspSemicircleRationalIntersections2::Contacts(
-                                Vec::new(),
-                            ),
-                            None,
-                        )));
+                    if let Some(circle) = other.retained_circular_conic()
+                        && self.recursive_selected_radial_has_same_supporting_circle(
+                            &circle.center,
+                            &circle.radius_squared,
+                            policy,
+                        )? == Classification::Decided(true)
+                    {
+                        let component = match self
+                            .recursive_selected_radial_rational_component_system(other, policy)?
+                        {
+                            Classification::Decided(system) => system,
+                            Classification::Uncertain(reason) => {
+                                return Ok(Classification::Uncertain(reason));
+                            }
+                        };
+                        #[cfg(feature = "dispatch-trace")]
+                        hyperreal::dispatch_trace::record(
+                            "hypercurve",
+                            "algebraic-circle-rational-kernel",
+                            "recursive-structural-circle",
+                        );
+                        return Ok(self
+                            .recursive_selected_radial_replay_rational_circle_component(
+                                other, component, policy,
+                            )?
+                            .map(|intersections| (intersections, None)));
                     }
-                    return self.represented_rational_intersections_internal(
+                    let recursive = match self
+                        .recursive_selected_radial_rational_system(other, policy)?
+                    {
+                        Classification::Decided(system) => system,
+                        Classification::Uncertain(UncertaintyReason::Unsupported) => {
+                            if let Some(frame) = self.exact_rational_component_frame(policy)? {
+                                return self.represented_rational_intersections_internal(
+                                    other,
+                                    retain_parameter_map,
+                                    Some(frame),
+                                    "exact-rational-frame",
+                                    policy,
+                                );
+                            }
+                            return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+                        }
+                        Classification::Uncertain(reason) => {
+                            return Ok(Classification::Uncertain(reason));
+                        }
+                    };
+                    return self.recursive_selected_radial_rational_intersections_internal(
                         other,
                         retain_parameter_map,
+                        recursive,
                         policy,
                     );
                 }
@@ -35667,6 +36302,12 @@ impl BezierAlgebraicCuspSemicircle2 {
             } else {
                 None
             };
+            #[cfg(feature = "dispatch-trace")]
+            hyperreal::dispatch_trace::record(
+                "hypercurve",
+                "algebraic-circle-rational-kernel",
+                "direct-pair-radial",
+            );
             return Ok(Classification::Decided((
                 BezierAlgebraicCuspSemicircleRationalIntersections2::Contacts(contacts),
                 parameter_map,
@@ -37966,6 +38607,17 @@ impl BezierAlgebraicCuspSemicircleRationalParameterMap2 {
         {
             return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
         }
+        if let BezierAlgebraicCuspSemicircleRationalParameterMapSystem2::RecursiveSelectedRadial {
+            system,
+        } = &self.data.system
+        {
+            return system.tangent_cross_dot_source_sign(
+                &contact.other_parameter,
+                cross_scale,
+                dot_scale,
+                policy,
+            );
+        }
         let BezierAlgebraicCuspSemicircleRationalParameterMapSystem2::SelectedRadial {
             pair_map,
             branch,
@@ -38054,6 +38706,26 @@ impl BezierAlgebraicCuspSemicircleRationalParameterMap2 {
             | (
                 BezierAlgebraicCuspSemicircleRationalParameterMapSystem2::SelectedRadial { .. },
                 BezierAlgebraicCuspSemicircleRationalParameterMapSystem2::OneField { .. },
+            ) => false,
+            (
+                BezierAlgebraicCuspSemicircleRationalParameterMapSystem2::RecursiveSelectedRadial {
+                    system: first,
+                },
+                BezierAlgebraicCuspSemicircleRationalParameterMapSystem2::RecursiveSelectedRadial {
+                    system: second,
+                },
+            ) => self.data.curve == other.data.curve && Arc::ptr_eq(first, second),
+            (
+                BezierAlgebraicCuspSemicircleRationalParameterMapSystem2::RecursiveSelectedRadial {
+                    ..
+                },
+                _,
+            )
+            | (
+                _,
+                BezierAlgebraicCuspSemicircleRationalParameterMapSystem2::RecursiveSelectedRadial {
+                    ..
+                },
             ) => false,
             (
                 BezierAlgebraicCuspSemicircleRationalParameterMapSystem2::Represented {
@@ -38277,6 +38949,14 @@ impl BezierAlgebraicCuspSemicircleRationalParameterMap2 {
                     policy,
                 )?
             }
+            BezierAlgebraicCuspSemicircleRationalParameterMapSystem2::RecursiveSelectedRadial {
+                system,
+            } => system.diameter_parameter_sign(
+                &contact.other_parameter,
+                &denominator,
+                &radial_coefficient,
+                policy,
+            )?,
             BezierAlgebraicCuspSemicircleRationalParameterMapSystem2::ChordNormalProjective {
                 system,
             } => system.diameter_parameter_sign(
@@ -52591,6 +53271,53 @@ impl BezierRecursiveSelectedRadialParallelSystem2 {
             .then_some(projection)
     }
 
+    fn expression_projection(
+        &self,
+        expression: &BezierRecursiveQuadraticParallelExpression2,
+    ) -> Option<DenseTensorPolynomial> {
+        let coefficients = if self.unit_target_speed {
+            recursive_quadratic_polynomial_combine(
+                &expression.rational,
+                &expression.radical,
+                false,
+            )?
+        } else {
+            let rational_squared = recursive_quadratic_polynomial_multiply(
+                &expression.rational,
+                &expression.rational,
+            )?;
+            let radical_squared =
+                recursive_quadratic_polynomial_multiply(&expression.radical, &expression.radical)?;
+            let radical_speed =
+                recursive_quadratic_polynomial_multiply(&radical_squared, &self.speed_squared)?;
+            recursive_quadratic_polynomial_combine(&rational_squared, &radical_speed, true)?
+        };
+        self.projected_polynomial(&coefficients)
+    }
+
+    fn diameter_parameter_projection(
+        &self,
+        denominator: &Real,
+        radial_coefficient: &Real,
+    ) -> Option<DenseTensorPolynomial> {
+        let combine = |diameter: &[BezierRecursiveQuadraticValue2],
+                       radius: &[BezierRecursiveQuadraticValue2]| {
+            let diameter = recursive_quadratic_polynomial_scale_real(diameter, denominator)?;
+            let radius = recursive_quadratic_polynomial_scale_real(radius, radial_coefficient)?;
+            recursive_quadratic_polynomial_combine(&diameter, &radius, true)
+        };
+        self.expression_projection(&BezierRecursiveQuadraticParallelExpression2 {
+            rational: combine(
+                &self.diameter.rational,
+                &self.radius_squared_denominator.rational,
+            )?,
+            radical: combine(
+                &self.diameter.radical,
+                &self.radius_squared_denominator.radical,
+            )?,
+        })
+    }
+
     fn target_embedding(
         &self,
         target_parameter: &BezierParameter2,
@@ -52677,14 +53404,20 @@ impl BezierRecursiveSelectedRadialParallelSystem2 {
             source_steps,
             coefficient_precision,
         )?;
-        let speed = self
-            .polynomial_interval(
+        let speed = if self.unit_target_speed {
+            BezierAlgebraicChordRealInterval2 {
+                lower: Real::one(),
+                upper: Real::one(),
+            }
+        } else {
+            self.polynomial_interval(
                 &self.speed_squared,
                 target,
                 source_steps,
                 coefficient_precision,
             )?
-            .nonnegative_square_root(&CurveContext::STRICT)?;
+            .nonnegative_square_root(&CurveContext::STRICT)?
+        };
         Some(rational.add(&radical.multiply(&speed, &CurveContext::STRICT)?))
     }
 
@@ -52765,6 +53498,21 @@ impl BezierRecursiveSelectedRadialParallelSystem2 {
                 return Ok(Classification::Uncertain(reason));
             }
         }
+        if self.unit_target_speed {
+            let speed_field = embedding.field.clone();
+            let speed = speed_field.constant(Real::one()).ok_or_else(|| {
+                CurveError::Topology(
+                    "a recursive circle/rational target lost its exact unit speed".into(),
+                )
+            })?;
+            return Ok(Classification::Decided(Some(
+                BezierRecursiveSelectedRadialParallelEvaluation2 {
+                    embedding,
+                    speed_field,
+                    speed,
+                },
+            )));
+        }
         let speed_squared = embedding
             .polynomial_value(&self.speed_squared)
             .ok_or_else(|| {
@@ -52830,6 +53578,24 @@ impl BezierRecursiveSelectedRadialParallelSystem2 {
         value.sign(policy)
     }
 
+    fn expression_sign_at_parameter(
+        &self,
+        expression: &BezierRecursiveQuadraticParallelExpression2,
+        target_parameter: &BezierParameter2,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<RealSign>> {
+        let evaluation = match self.candidate_evaluation(target_parameter, policy)? {
+            Classification::Decided(Some(evaluation)) => evaluation,
+            Classification::Decided(None) => {
+                return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
+            }
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        self.expression_sign_with_evaluation(expression, &evaluation, policy)
+    }
+
     fn polynomial_sign_with_evaluation(
         &self,
         polynomial: &[BezierRecursiveQuadraticValue2],
@@ -52855,6 +53621,43 @@ impl BezierRecursiveSelectedRadialParallelSystem2 {
         })
     }
 
+    fn retained_expression_parameters(
+        &self,
+        expression: &BezierRecursiveQuadraticParallelExpression2,
+        domain: SelectedThirdAxisDomain2<'_>,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<BezierAlgebraicFiberProjection2>> {
+        let Some(projection) = self.expression_projection(expression) else {
+            return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+        };
+        let candidates = match self.expression_parameters(&projection, domain, policy)? {
+            Classification::Decided(BezierAlgebraicFiberProjection2::Parameters(candidates)) => {
+                candidates
+            }
+            Classification::Decided(projection) => {
+                return Ok(Classification::Decided(projection));
+            }
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        let mut retained = Vec::with_capacity(candidates.len());
+        for candidate in candidates {
+            match policy.strict_predicate_pass(|| {
+                self.expression_sign_at_parameter(expression, &candidate, policy)
+            })? {
+                Classification::Decided(RealSign::Zero) => retained.push(candidate),
+                Classification::Decided(RealSign::Positive | RealSign::Negative) => {}
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            }
+        }
+        Ok(Classification::Decided(
+            BezierAlgebraicFiberProjection2::Parameters(retained),
+        ))
+    }
+
     fn parameters_with_incident_domain(
         &self,
         polynomial: &DenseTensorPolynomial,
@@ -52876,7 +53679,10 @@ impl BezierRecursiveSelectedRadialParallelSystem2 {
         if let Some(fast_path) = self.direct_pair_fast_path.as_ref() {
             return fast_path.parameters_with_incident_domain(range, incident, policy);
         }
-        self.parameters_with_incident_domain(&self.projection, range, incident, policy)
+        let Some(projection) = self.projection.as_ref() else {
+            return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+        };
+        self.parameters_with_incident_domain(projection, range, incident, policy)
     }
 
     fn contact_location_with_evaluation(
@@ -105218,8 +106024,12 @@ fn parameter_matches_any(
 }
 
 #[cfg(test)]
+pub(crate) use conversion_tests::recursively_line_contact_radial_half;
+
+#[cfg(test)]
 mod conversion_tests {
     use super::*;
+    use crate::rational_bezier::RationalQuadraticCircle2;
     use crate::{
         BezierParallelFragment2, BezierSplitFragment2, BezierSubcurve2, CircularArc2,
         CurveBoundaryInteriorSide2, CurveCertainty, CurveCornerMode2, CurveCornerSolutions2,
@@ -123281,10 +124091,21 @@ mod conversion_tests {
         recursive
     }
 
+    #[test]
+    fn recursively_pair_radial_center_retains_exact_rational_witness() {
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let recursive = recursively_pair_radial_rational_center_half(&policy);
+            assert_eq!(
+                recursive.exact_rational_center(&policy).unwrap(),
+                Some(Point2::from_values(0, -1)),
+            );
+        }
+    }
+
     /// Authors one further selected-radial generation at an exact line
     /// contact. Its center is retained by the recursive quadratic line map
     /// rather than by standalone Cartesian algebraic coordinates.
-    fn recursively_line_contact_radial_half(
+    pub(crate) fn recursively_line_contact_radial_half(
         policy: &CurveContext,
     ) -> BezierAlgebraicCuspSemicircle2 {
         let support = recursively_pair_radial_half(policy);
@@ -123741,6 +124562,366 @@ mod conversion_tests {
                     );
                 }
             }
+        }
+    }
+
+    #[test]
+    fn recursively_pair_radial_circle_intersects_a_rational_quadratic_without_representation() {
+        let half = (Real::one() / Real::from(2_i8)).unwrap();
+        let nine_tenths = (Real::from(9_i8) / Real::from(10_i8)).unwrap();
+        let source = QuadraticBezier2::new(
+            Point2::from_values(-1, -1),
+            Point2::new(half, -nine_tenths),
+            Point2::from_values(2, -1),
+        );
+        let target = RationalBezier2::try_from_subcurve(&BezierSubcurve2::Quadratic(source))
+            .expect("the polynomial quadratic has an exact rational carrier");
+
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            for recursive in [
+                recursively_pair_radial_rational_center_half(&policy),
+                recursively_line_contact_radial_half(&policy),
+            ] {
+                #[cfg(feature = "dispatch-trace")]
+                hyperreal::dispatch_trace::reset();
+                let intersection_work =
+                    || recursive.rational_intersections_with_parameter_map(&target, &policy);
+                #[cfg(feature = "dispatch-trace")]
+                let intersections = hyperreal::dispatch_trace::with_recording(intersection_work);
+                #[cfg(not(feature = "dispatch-trace"))]
+                let intersections = intersection_work();
+                #[cfg(feature = "dispatch-trace")]
+                let trace = hyperreal::dispatch_trace::take_trace();
+                let Classification::Decided((
+                    BezierAlgebraicCuspSemicircleRationalIntersections2::Contacts(contacts),
+                    parameter_map,
+                )) = intersections.unwrap_or_else(|error| {
+                    #[cfg(feature = "dispatch-trace")]
+                    panic!(
+                        "the recursive selected-radial/rational kernel must decide: policy={policy:?}, error={error:?}, trace={trace:?}"
+                    );
+                    #[cfg(not(feature = "dispatch-trace"))]
+                    panic!(
+                        "the recursive selected-radial/rational kernel must decide: policy={policy:?}, error={error:?}"
+                    );
+                })
+                else {
+                    panic!(
+                        "the recursive selected-radial/rational crossing must publish finite contacts: policy={policy:?}"
+                    );
+                };
+                assert!(!contacts.is_empty());
+                #[cfg(feature = "dispatch-trace")]
+                assert_eq!(
+                    trace.path_count(
+                        "hypercurve",
+                        "algebraic-circle-rational-kernel",
+                        "recursive-quadratic",
+                    ),
+                    1,
+                );
+                #[cfg(feature = "dispatch-trace")]
+                assert_eq!(
+                    trace.path_count(
+                        "hypercurve",
+                        "algebraic-circle-rational-kernel",
+                        "represented",
+                    ),
+                    0,
+                );
+                let map = parameter_map
+                    .expect("the recursive rational crossing retains an interior parameter map");
+                assert!(matches!(
+                    map.data.system,
+                    BezierAlgebraicCuspSemicircleRationalParameterMapSystem2::RecursiveSelectedRadial {
+                        ..
+                    }
+                ));
+                for contact in &contacts {
+                    assert!(matches!(
+                        map.contact_parameter_bracket(contact, 8).unwrap(),
+                        Classification::Decided(_),
+                    ));
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn recursively_pair_radial_rational_circle_component_maps_both_directions_exactly() {
+        let half = (Real::one() / Real::from(2_i8)).unwrap();
+        let three_halves = (Real::from(3_i8) / Real::from(2_i8)).unwrap();
+        let circular_conic = Arc::new(RationalQuadraticCircle2 {
+            center: Point2::new(Real::zero(), Real::from(-1_i8)),
+            radius_squared: &half * &half,
+            tangent_contacts: None,
+        });
+        let implicit_conic = Arc::new([
+            Real::one(),
+            Real::zero(),
+            Real::one(),
+            Real::zero(),
+            Real::from(2_i8),
+            (Real::from(3_i8) / Real::from(4_i8)).unwrap(),
+        ]);
+        let quarters = [
+            (
+                Point2::new(Real::zero(), -half.clone()),
+                Point2::new(half.clone(), -half.clone()),
+                Point2::new(half.clone(), Real::from(-1_i8)),
+            ),
+            (
+                Point2::new(half.clone(), Real::from(-1_i8)),
+                Point2::new(half.clone(), -three_halves.clone()),
+                Point2::new(Real::zero(), -three_halves.clone()),
+            ),
+            (
+                Point2::new(Real::zero(), -three_halves.clone()),
+                Point2::new(-half.clone(), -three_halves.clone()),
+                Point2::new(-half.clone(), Real::from(-1_i8)),
+            ),
+            (
+                Point2::new(-half.clone(), Real::from(-1_i8)),
+                Point2::new(-half.clone(), -half.clone()),
+                Point2::new(Real::zero(), -half.clone()),
+            ),
+        ]
+        .map(|(start, control, end)| {
+            RationalBezier2::from(
+                rational_unit_circle_quarter(start, control, end, 1)
+                    .with_retained_conic_provenance(
+                        Some(Arc::clone(&implicit_conic)),
+                        Some(Arc::clone(&circular_conic)),
+                    ),
+            )
+        });
+
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let recursive = recursively_pair_radial_rational_center_half(&policy);
+            let mut overlaps = Vec::new();
+            for (quarter_index, quarter) in quarters.iter().enumerate() {
+                #[cfg(feature = "dispatch-trace")]
+                hyperreal::dispatch_trace::reset();
+                let intersection_work = || {
+                    if quarter_index == 0 {
+                        let result = recursive
+                            .rational_intersections_with_parameter_map(quarter, &policy)
+                            .unwrap();
+                        let Classification::Decided((intersections, None)) = result else {
+                            panic!(
+                                "a certified recursive rational quarter must decide: policy={policy:?}, result={result:?}"
+                            );
+                        };
+                        intersections
+                    } else {
+                        let system = match recursive
+                            .recursive_selected_radial_rational_component_system(quarter, &policy)
+                            .unwrap()
+                        {
+                            Classification::Decided(system) => system,
+                            Classification::Uncertain(reason) => {
+                                panic!("a certified component system must construct: {reason:?}")
+                            }
+                        };
+                        match recursive
+                            .recursive_selected_radial_replay_rational_circle_component(
+                                quarter, system, &policy,
+                            )
+                            .unwrap()
+                        {
+                            Classification::Decided(intersections) => intersections,
+                            Classification::Uncertain(reason) => {
+                                panic!("a certified component must publish: {reason:?}")
+                            }
+                        }
+                    }
+                };
+                #[cfg(feature = "dispatch-trace")]
+                let intersections = hyperreal::dispatch_trace::with_recording(intersection_work);
+                #[cfg(not(feature = "dispatch-trace"))]
+                let intersections = intersection_work();
+                #[cfg(feature = "dispatch-trace")]
+                let trace = hyperreal::dispatch_trace::take_trace();
+                #[cfg(feature = "dispatch-trace")]
+                if quarter_index == 0 {
+                    assert_eq!(
+                        trace.path_count(
+                            "hypercurve",
+                            "algebraic-circle-rational-kernel",
+                            "recursive-structural-circle",
+                        ),
+                        1,
+                    );
+                }
+                #[cfg(feature = "dispatch-trace")]
+                assert_eq!(
+                    trace.path_count(
+                        "hypercurve",
+                        "algebraic-circle-rational-kernel",
+                        "recursive-quadratic-component",
+                    ),
+                    1,
+                );
+                #[cfg(feature = "dispatch-trace")]
+                assert_eq!(
+                    trace.path_count(
+                        "hypercurve",
+                        "algebraic-circle-rational-kernel",
+                        "represented",
+                    ),
+                    0,
+                );
+                match intersections {
+                    BezierAlgebraicCuspSemicircleRationalIntersections2::Overlaps(found) => {
+                        overlaps.extend(found)
+                    }
+                    BezierAlgebraicCuspSemicircleRationalIntersections2::Contacts(_) => {}
+                    other => {
+                        panic!("the coincident recursive quarter was not partitioned: {other:?}")
+                    }
+                }
+            }
+            assert!(!overlaps.is_empty());
+            for overlap in &overlaps {
+                let midpoint = match overlap
+                    .other_range()
+                    .start()
+                    .strict_rational_between_ordered(overlap.other_range().end(), &policy)
+                    .unwrap()
+                {
+                    Classification::Decided(midpoint) => BezierParameter2::Exact(midpoint),
+                    Classification::Uncertain(reason) => {
+                        panic!("a component cell midpoint must decide: {reason:?}")
+                    }
+                };
+                let Classification::Decided(cusp) = overlap
+                    .cusp_parameter_for_other(&midpoint, &policy)
+                    .unwrap()
+                else {
+                    panic!("a recursive component midpoint must map to the circle");
+                };
+                let Classification::Decided(replayed) =
+                    overlap.other_parameter_for_cusp(&cusp, &policy).unwrap()
+                else {
+                    panic!("a recursive mapped midpoint must invert exactly");
+                };
+                assert_eq!(
+                    replayed.same_value(&midpoint, &policy).unwrap(),
+                    Classification::Decided(true)
+                );
+            }
+
+            let exact_cusp = BezierAlgebraicCuspSemicircleParameter2::Exact(
+                (Real::one() / Real::from(3_i8)).unwrap(),
+            );
+            let containing = overlaps.iter().find(|overlap| {
+                matches!(
+                    exact_cusp
+                        .cmp_by_refinement(&overlap.cusp_start_parameter(), &policy)
+                        .unwrap(),
+                    Classification::Decided(std::cmp::Ordering::Greater)
+                ) && matches!(
+                    exact_cusp
+                        .cmp_by_refinement(&overlap.cusp_end_parameter(), &policy)
+                        .unwrap(),
+                    Classification::Decided(std::cmp::Ordering::Less)
+                )
+            });
+            let containing = containing.expect("one component cell contains circle parameter 1/3");
+            let Classification::Decided(other_parameter) = containing
+                .other_parameter_for_cusp(&exact_cusp, &policy)
+                .unwrap()
+            else {
+                panic!("an exact circle cut must invert through the recursive rational map");
+            };
+            let Classification::Decided(replayed_cusp) = containing
+                .cusp_parameter_for_other(&other_parameter, &policy)
+                .unwrap()
+            else {
+                panic!("the inverse rational parameter must map back to the exact circle cut");
+            };
+            assert_eq!(
+                replayed_cusp
+                    .cmp_by_refinement(&exact_cusp, &policy)
+                    .unwrap(),
+                Classification::Decided(std::cmp::Ordering::Equal),
+            );
+        }
+    }
+
+    #[test]
+    fn recursive_selected_radial_rational_kernel_retains_singular_circle_contacts() {
+        let half = (Real::one() / Real::from(2_i8)).unwrap();
+        let singular_parameter = BezierParameter2::Exact(half);
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let recursive = recursively_pair_radial_rational_center_half(&policy);
+            let mut retained_singular_contact = false;
+            for scale in [Real::one(), Real::from(-1_i8)] {
+                // x(t)=scale*(12t^3-18t^2+9t-1) is monotone with a
+                // stationary point at t=1/2 and x=scale/2. Both possible
+                // selected halves are covered by reflecting the target.
+                let cubic = CubicBezier2::new(
+                    Point2::new(-scale.clone(), Real::from(-1_i8)),
+                    Point2::new(Real::from(2_i8) * &scale, Real::from(-1_i8)),
+                    Point2::new(-scale.clone(), Real::from(-1_i8)),
+                    Point2::new(Real::from(2_i8) * &scale, Real::from(-1_i8)),
+                );
+                let target = RationalBezier2::try_from_subcurve(&BezierSubcurve2::Cubic(cubic))
+                    .expect("the singular polynomial cubic has a rational carrier");
+                #[cfg(feature = "dispatch-trace")]
+                hyperreal::dispatch_trace::reset();
+                let intersection_work = || recursive.rational_intersections(&target, &policy);
+                #[cfg(feature = "dispatch-trace")]
+                let intersections = hyperreal::dispatch_trace::with_recording(intersection_work);
+                #[cfg(not(feature = "dispatch-trace"))]
+                let intersections = intersection_work();
+                #[cfg(feature = "dispatch-trace")]
+                let trace = hyperreal::dispatch_trace::take_trace();
+                let result = intersections.unwrap();
+                let Classification::Decided(
+                    BezierAlgebraicCuspSemicircleRationalIntersections2::Contacts(contacts),
+                ) = result
+                else {
+                    #[cfg(feature = "dispatch-trace")]
+                    panic!(
+                        "the singular recursive rational target must publish contacts: policy={policy:?}, scale={scale:?}, result={result:?}, trace={trace:?}"
+                    );
+                    #[cfg(not(feature = "dispatch-trace"))]
+                    panic!(
+                        "the singular recursive rational target must publish contacts: policy={policy:?}, scale={scale:?}, result={result:?}"
+                    );
+                };
+                #[cfg(feature = "dispatch-trace")]
+                assert_eq!(
+                    trace.path_count(
+                        "hypercurve",
+                        "algebraic-circle-rational-kernel",
+                        "exact-rational-frame",
+                    ),
+                    1,
+                );
+                #[cfg(feature = "dispatch-trace")]
+                assert_eq!(
+                    trace.path_count(
+                        "hypercurve",
+                        "algebraic-circle-rational-kernel",
+                        "represented",
+                    ),
+                    0,
+                );
+                retained_singular_contact |= contacts.iter().any(|contact| {
+                    contact.tangent_cross_sign == RealSign::Zero
+                        && contact
+                            .other_parameter
+                            .same_value(&singular_parameter, &policy)
+                            .unwrap()
+                            == Classification::Decided(true)
+                });
+            }
+            assert!(
+                retained_singular_contact,
+                "a zero target derivative must not erase its incident circle point: policy={policy:?}",
+            );
         }
     }
 
