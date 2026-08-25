@@ -424,40 +424,66 @@ impl Computable {
                 None,
             ))
         } else {
-            match &self.internal.approximation {
-            Approximation::Add(left, right) => left
-                .pi_laurent_polynomial_with_memo(budget - 1, memo)?
-                .add(right.pi_laurent_polynomial_with_memo(budget - 1, memo)?),
-            Approximation::Multiply(left, right) => left
-                .pi_laurent_polynomial_with_memo(budget - 1, memo)?
-                .multiply(right.pi_laurent_polynomial_with_memo(budget - 1, memo)?),
-            Approximation::Negate(child) => Some(
-                child
+            let expanded = (|| match &self.internal.approximation {
+                Approximation::Add(left, right) => left
                     .pi_laurent_polynomial_with_memo(budget - 1, memo)?
-                    .scaled(Rational::new(-1)),
-            ),
-            Approximation::Offset(child, shift) => Some(
-                child
+                    .add(right.pi_laurent_polynomial_with_memo(budget - 1, memo)?),
+                Approximation::Multiply(left, right) => left
                     .pi_laurent_polynomial_with_memo(budget - 1, memo)?
-                    .scaled(Self::power_of_two_rational(*shift)),
-            ),
-            Approximation::Inverse(child) => child
-                .pi_laurent_polynomial_with_memo(budget - 1, memo)?
-                .inverse_monomial(),
-            Approximation::Square(child) => {
-                let child = child.pi_laurent_polynomial_with_memo(budget - 1, memo)?;
-                child.clone().multiply(child)
-            }
-            Approximation::Sqrt(child) => {
-                let radicand = child.exact_rational()?;
+                    .multiply(right.pi_laurent_polynomial_with_memo(budget - 1, memo)?),
+                Approximation::Negate(child) => Some(
+                    child
+                        .pi_laurent_polynomial_with_memo(budget - 1, memo)?
+                        .scaled(Rational::new(-1)),
+                ),
+                Approximation::Offset(child, shift) => Some(
+                    child
+                        .pi_laurent_polynomial_with_memo(budget - 1, memo)?
+                        .scaled(Self::power_of_two_rational(*shift)),
+                ),
+                Approximation::Inverse(child) => child
+                    .pi_laurent_polynomial_with_memo(budget - 1, memo)?
+                    .inverse_monomial(),
+                Approximation::Square(child) => {
+                    let child = child.pi_laurent_polynomial_with_memo(budget - 1, memo)?;
+                    child.clone().multiply(child)
+                }
+                Approximation::Sqrt(child) => {
+                    let radicand = child.exact_rational()?;
+                    Some(PiQuadraticLaurentPolynomial::monomial(
+                        0,
+                        QuadraticCoefficient::radical(Rational::one()),
+                        Some(radicand),
+                    ))
+                }
+                Approximation::LinearCombination3(combination) => {
+                    let mut sum = PiQuadraticLaurentPolynomial::monomial(
+                        0,
+                        QuadraticCoefficient::rational(Rational::zero()),
+                        None,
+                    );
+                    for (coefficient, value) in combination
+                        .coefficients
+                        .iter()
+                        .zip(combination.values.iter())
+                    {
+                        sum = sum.add(
+                            coefficient
+                                .pi_laurent_polynomial_with_memo(budget - 1, memo)?
+                                .scaled(value.clone()),
+                        )?;
+                    }
+                    Some(sum)
+                }
+                _ => None,
+            })();
+            expanded.or_else(|| {
                 Some(PiQuadraticLaurentPolynomial::monomial(
                     0,
-                    QuadraticCoefficient::radical(Rational::one()),
-                    Some(radicand),
+                    QuadraticCoefficient::atom(self.clone()),
+                    None,
                 ))
-            }
-            _ => None,
-            }
+            })
         };
         if shared {
             memo.get_or_insert_with(|| Vec::with_capacity(8))

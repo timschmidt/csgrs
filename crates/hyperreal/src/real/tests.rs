@@ -4424,6 +4424,19 @@ mod tests {
     }
 
     #[test]
+    fn exact_normal_form_cancels_shared_opaque_affine_atoms() {
+        let atom = (Real::from(2_i32).sqrt().unwrap() + Real::one()).sin();
+        let x = &atom - Real::one();
+        let y = &atom + Real::from(2_i32);
+        let determinant = Real::diff_of_products(&Real::one(), &y, &Real::one(), &x);
+
+        assert_eq!(
+            determinant.exact_rational_normal_form(),
+            Some(Rational::new(3)),
+        );
+    }
+
+    #[test]
     fn dot_products_handle_mixed_symbolic_structural_terms() {
         let left = [
             Real::one(),
