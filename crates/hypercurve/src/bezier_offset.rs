@@ -4987,12 +4987,51 @@ impl BezierRepresentedCircleRationalComponentSystem2 {
         polynomial: &DenseTensorPolynomial,
         policy: &CurveContext,
     ) -> CurveResult<Classification<BezierAlgebraicFiberProjection2>> {
-        selected_dense_last_axis_parameters(
+        let projection = match selected_dense_last_axis_parameters(
             polynomial,
             &self.sources,
             SelectedThirdAxisDomain2::UnitInterval,
             policy,
-        )
+        )? {
+            Classification::Decided(projection) => projection,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        let BezierAlgebraicFiberProjection2::Parameters(candidates) = projection else {
+            return Ok(Classification::Decided(projection));
+        };
+
+        // Dense elimination projects every algebraic conjugate of the frame
+        // sources. Only candidates that replay to zero on the authored tuple
+        // are component boundaries; admitting the other conjugate roots
+        // would subdivide a regular overlap into fictitious monotone cells.
+        let mut retained = Vec::with_capacity(candidates.len());
+        for candidate in candidates {
+            match projected_selected_dense_candidate_box_incidence(
+                polynomial,
+                &self.sources,
+                &candidate,
+                64,
+            ) {
+                Some(true) => {
+                    retained.push(candidate);
+                    continue;
+                }
+                Some(false) => continue,
+                None => {}
+            }
+            match self.sign(polynomial, &candidate, policy)? {
+                Classification::Decided(RealSign::Zero) => retained.push(candidate),
+                Classification::Decided(RealSign::Positive | RealSign::Negative) => {}
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            }
+        }
+        Ok(Classification::Decided(
+            BezierAlgebraicFiberProjection2::Parameters(retained),
+        ))
     }
 
     fn sign(
@@ -6292,6 +6331,171 @@ fn selected_dense_last_axis_projection(
         return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
     }
     Ok(Classification::Decided(projection))
+}
+
+fn dense_specialize_last_axis(
+    polynomial: &DenseTensorPolynomial,
+    parameter: &Real,
+) -> Option<DenseTensorPolynomial> {
+    let target_count = *polynomial.dimensions().last()?;
+    let mut dimensions = polynomial.dimensions().to_vec();
+    *dimensions.last_mut()? = 1;
+    let fiber_count = polynomial.coefficients().len().checked_div(target_count)?;
+    let mut coefficients = Vec::new();
+    coefficients.try_reserve_exact(fiber_count).ok()?;
+    for fiber in polynomial.coefficients().chunks_exact(target_count) {
+        coefficients.push(fiber.iter().rev().fold(Real::zero(), |value, coefficient| {
+            value * parameter + coefficient
+        }));
+    }
+    DenseTensorPolynomial::try_new(dimensions, coefficients)
+}
+
+fn dense_last_axis_derivative(polynomial: &DenseTensorPolynomial) -> Option<DenseTensorPolynomial> {
+    let target_count = *polynomial.dimensions().last()?;
+    let derivative_count = target_count.saturating_sub(1).max(1);
+    let mut dimensions = polynomial.dimensions().to_vec();
+    *dimensions.last_mut()? = derivative_count;
+    let fiber_count = polynomial.coefficients().len().checked_div(target_count)?;
+    let coefficient_count = fiber_count.checked_mul(derivative_count)?;
+    let mut coefficients = Vec::new();
+    coefficients.try_reserve_exact(coefficient_count).ok()?;
+    for fiber in polynomial.coefficients().chunks_exact(target_count) {
+        if target_count == 1 {
+            coefficients.push(Real::zero());
+            continue;
+        }
+        for (power, coefficient) in fiber.iter().enumerate().skip(1) {
+            coefficients.push(coefficient * Real::from(u64::try_from(power).ok()?));
+        }
+    }
+    DenseTensorPolynomial::try_new(dimensions, coefficients)
+}
+
+/// Certifies that one projected last-axis candidate belongs to the selected
+/// represented source tuple rather than to conjugates introduced by
+/// sequential resultants.
+///
+/// The source defining polynomials occupy their own coordinate axes. On a
+/// refined product isolator they already have opposite signs on their two
+/// corresponding faces. If the authored tensor also has uniform opposite
+/// signs on the candidate's two parameter faces, Poincare--Miranda proves a
+/// common zero in that box. Every box isolates exactly one root on each axis,
+/// so that zero is necessarily the authored tuple. Uniform equal face signs
+/// together with a strictly signed parameter derivative prove that the
+/// conjugate candidate has no authored zero. Multiple/even roots simply
+/// decline both certificates and retain the complete exact sign fallback.
+fn projected_selected_dense_candidate_box_incidence(
+    polynomial: &DenseTensorPolynomial,
+    sources: &[AlgebraicRootRepresentation],
+    candidate: &BezierParameter2,
+    maximum_steps: usize,
+) -> Option<bool> {
+    if polynomial.dimensions().len() != sources.len() + 1 {
+        return None;
+    }
+    let BezierParameter2::Algebraic(candidate) = candidate else {
+        return None;
+    };
+    let derivative = dense_last_axis_derivative(polynomial)?;
+    let candidate = parameter_representation(candidate, &CurveContext::STRICT);
+    let square_free_defining = |root: &AlgebraicRootRepresentation| {
+        hypersolve::square_free_part(
+            root.polynomial_coefficients.clone(),
+            hypersolve::PredicatePolicy::STRICT,
+        )
+        .unwrap_or_else(|| root.polynomial_coefficients.clone())
+    };
+    let source_defining = sources.iter().map(square_free_defining).collect::<Vec<_>>();
+    let defining_face_signs = |root: &AlgebraicRootRepresentation, coefficients: &[Real]| {
+        if root.interval.lower == root.interval.upper {
+            return None;
+        }
+        let lower = real_sign(
+            &polynomial_evaluate(coefficients, &root.interval.lower),
+            &CurveContext::STRICT,
+        )?;
+        let upper = real_sign(
+            &polynomial_evaluate(coefficients, &root.interval.upper),
+            &CurveContext::STRICT,
+        )?;
+        matches!(
+            (lower, upper),
+            (RealSign::Negative, RealSign::Positive) | (RealSign::Positive, RealSign::Negative)
+        )
+        .then_some((lower, upper))
+    };
+
+    let mut previous = None;
+    for target_steps in [0_usize, 2, 4, 8, 16, 32, 64, 128, 256, 512] {
+        if target_steps > maximum_steps {
+            break;
+        }
+        let source_steps = target_steps.saturating_add(64);
+        let refined_sources = sources
+            .iter()
+            .map(|source| refined_represented_root(source, source_steps))
+            .collect::<Vec<_>>();
+        let refined_candidate = refined_represented_root(&candidate, target_steps);
+        if previous
+            .as_ref()
+            .is_some_and(|(old_sources, old_candidate)| {
+                old_sources == &refined_sources && old_candidate == &refined_candidate
+            })
+        {
+            break;
+        }
+        previous = Some((refined_sources.clone(), refined_candidate.clone()));
+        let source_defining_ok = !refined_sources
+            .iter()
+            .zip(&source_defining)
+            .any(|(source, defining)| defining_face_signs(source, defining).is_none());
+        let (Some(lower), Some(upper)) = (
+            dense_specialize_last_axis(polynomial, &refined_candidate.interval.lower),
+            dense_specialize_last_axis(polynomial, &refined_candidate.interval.upper),
+        ) else {
+            return None;
+        };
+        let coefficient_bits = source_steps.max(64).min(i32::MAX as usize) as i32;
+        let face_sign = |face: &DenseTensorPolynomial| {
+            dense_tensor_interval_with_coefficient_precision(
+                face,
+                &refined_sources,
+                Some(-coefficient_bits),
+            )
+            .as_ref()
+            .and_then(dense_strict_interval_sign)
+        };
+        let face_signs = (face_sign(&lower), face_sign(&upper));
+        if matches!(
+            face_signs,
+            (Some(RealSign::Negative), Some(RealSign::Positive))
+                | (Some(RealSign::Positive), Some(RealSign::Negative))
+        ) && source_defining_ok
+        {
+            return Some(true);
+        }
+        if matches!(
+            face_signs,
+            (Some(RealSign::Negative), Some(RealSign::Negative))
+                | (Some(RealSign::Positive), Some(RealSign::Positive))
+        ) {
+            let mut selected = refined_sources.clone();
+            selected.push(refined_candidate);
+            if dense_polynomial_value_interval_with_coefficient_precision(
+                &derivative,
+                &selected,
+                -coefficient_bits,
+            )
+            .as_ref()
+            .and_then(dense_strict_interval_sign)
+            .is_some_and(|sign| sign != RealSign::Zero)
+            {
+                return Some(false);
+            }
+        }
+    }
+    None
 }
 
 /// Eliminates every already-selected source axis and isolates all candidates
@@ -34404,7 +34608,9 @@ impl BezierAlgebraicCuspSemicircle2 {
             if let Some(selected_roots) = &system.quadratic_selected_parameters {
                 (selected_roots.clone(), Vec::new())
             } else {
-                let selected_roots = match system.parameters(&system.selected_half_plane, policy)? {
+                let selected_roots = match policy.strict_predicate_pass(|| {
+                    system.parameters(&system.selected_half_plane, policy)
+                })? {
                     Classification::Decided(BezierAlgebraicFiberProjection2::Parameters(roots)) => {
                         roots
                     }
@@ -34420,7 +34626,9 @@ impl BezierAlgebraicCuspSemicircle2 {
                         return Ok(Classification::Uncertain(reason));
                     }
                 };
-                let angular_roots = match system.parameters(&system.angular_tangent, policy)? {
+                let angular_roots = match policy
+                    .strict_predicate_pass(|| system.parameters(&system.angular_tangent, policy))?
+                {
                     Classification::Decided(BezierAlgebraicFiberProjection2::Parameters(roots)) => {
                         roots
                     }
@@ -119053,6 +119261,39 @@ mod conversion_tests {
         .unwrap()
     }
 
+    fn rational_bezier_cap_region(arc: RationalBezier2, policy: &CurveContext) -> CurveRegion2 {
+        let closing = QuadraticBezier2::from_line_segment(
+            LineSeg2::try_new(arc.end().clone(), arc.start().clone()).unwrap(),
+        );
+        let boundary = CurveRegionBoundaryLoop2::new(
+            vec![
+                BezierSplitFragment2::Materialized {
+                    start: BezierParameter2::Exact(Real::zero()),
+                    end: BezierParameter2::Exact(Real::one()),
+                    curve: BezierSubcurve2::Rational(arc),
+                },
+                BezierSplitFragment2::Materialized {
+                    start: BezierParameter2::Exact(Real::zero()),
+                    end: BezierParameter2::Exact(Real::one()),
+                    curve: BezierSubcurve2::Quadratic(closing),
+                },
+            ],
+            policy,
+        )
+        .unwrap();
+        CurveRegion2::try_new_with_loop_topology(
+            vec![boundary],
+            vec![CurveRegionLoopRole::Material],
+            vec![FillRule::NonZero],
+            // The folded prefix travels counterclockwise from the unit-circle
+            // top toward its left side, so the bounded circular cap is on the
+            // traversal's left. (The quadratic fixtures above travel
+            // clockwise and intentionally use `Right`.)
+            vec![CurveBoundaryInteriorSide2::Left],
+        )
+        .unwrap()
+    }
+
     fn rational_unit_circle_quarter(
         start: Point2,
         control: Point2,
@@ -119194,6 +119435,124 @@ mod conversion_tests {
                         );
                     }
                 }
+            }
+        }
+    }
+
+    #[test]
+    fn rank_independent_chord_normal_circle_partitions_folded_rational_overlap() {
+        let eleven = Real::from(11_i8);
+        // Compose the unit-circle quarter from (0,1) to (-1,0) with
+        // v=4u(1-u). The resulting genuine rational quartic reaches the
+        // quarter endpoint at u=1/2 and then retraces it, so component replay
+        // must partition both selected-diameter crossings and the interior
+        // angular reversal without reducing the carrier to a conic.
+        let folded_quarter = RationalBezier2::try_new(
+            vec![
+                Point2::from_values(0, 1),
+                Point2::from_values(-2, 1),
+                Point2::new(
+                    (Real::from(-8_i8) / &eleven).unwrap(),
+                    (Real::from(-5_i8) / &eleven).unwrap(),
+                ),
+                Point2::from_values(-2, 1),
+                Point2::from_values(0, 1),
+            ],
+            vec![
+                Real::one(),
+                Real::one(),
+                (&eleven / Real::from(3_i8)).unwrap(),
+                Real::one(),
+                Real::one(),
+            ],
+        )
+        .unwrap();
+
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            assert!(matches!(
+                folded_quarter
+                    .retained_quadratic_representative(&policy)
+                    .unwrap(),
+                Classification::Decided(None)
+            ));
+            let circle = dense_chord_normal_independent_circle(
+                &policy,
+                "independent chord-normal folded overlap anchor",
+            );
+            #[cfg(feature = "dispatch-trace")]
+            hyperreal::dispatch_trace::reset();
+            let work =
+                || circle.rational_intersections_with_parameter_map(&folded_quarter, &policy);
+            #[cfg(feature = "dispatch-trace")]
+            let result = hyperreal::dispatch_trace::with_recording(work);
+            #[cfg(not(feature = "dispatch-trace"))]
+            let result = work();
+            #[cfg(feature = "dispatch-trace")]
+            let trace = hyperreal::dispatch_trace::take_trace();
+            let Classification::Decided((
+                BezierAlgebraicCuspSemicircleRationalIntersections2::Overlaps(overlaps),
+                None,
+            )) = result.unwrap()
+            else {
+                panic!("the represented folded quarter must publish its overlap cells");
+            };
+            assert_eq!(overlaps.len(), 2);
+            assert_ne!(overlaps[0].orientation(), overlaps[1].orientation());
+            assert_eq!(
+                overlaps[0].other_range().start(),
+                &BezierParameter2::Exact(Real::zero()),
+            );
+            assert_eq!(
+                overlaps[1].other_range().end(),
+                &BezierParameter2::Exact(Real::one()),
+            );
+            assert!(matches!(
+                overlaps[0].other_range().end(),
+                BezierParameter2::Algebraic(_)
+            ));
+            assert!(matches!(
+                overlaps[1].other_range().start(),
+                BezierParameter2::Algebraic(_)
+            ));
+            #[cfg(feature = "dispatch-trace")]
+            assert!(
+                trace.path_count(
+                    "hypercurve",
+                    "algebraic-circle-rational-kernel",
+                    "represented-circle-component",
+                ) > 0,
+                "the folded overlap must use represented component replay: {trace:?}",
+            );
+
+            let quarter = (Real::one() / Real::from(4_i8)).unwrap();
+            let Classification::Decided(partial_arc) = folded_quarter
+                .subcurve_between_exact(&Real::zero(), &quarter, &policy)
+                .unwrap()
+            else {
+                panic!("the regular folded-quarter prefix must materialize exactly");
+            };
+            assert!(matches!(
+                partial_arc
+                    .retained_quadratic_representative(&policy)
+                    .unwrap(),
+                Classification::Decided(None)
+            ));
+            let circle_region = dense_chord_normal_full_circle_region(circle, &policy);
+            let cap_region = rational_bezier_cap_region(partial_arc, &policy);
+            for circle_is_first in [true, false] {
+                let (first, second) = if circle_is_first {
+                    (&circle_region, &cap_region)
+                } else {
+                    (&cap_region, &circle_region)
+                };
+                let result = first
+                    .boolean_regions(second, &policy)
+                    .expect("the general represented overlap must complete all Booleans")
+                    .into_value();
+                assert!(!result.union().is_empty());
+                assert!(!result.intersection().is_empty());
+                assert_eq!(result.difference().is_empty(), !circle_is_first);
+                assert!(!result.xor().is_empty());
             }
         }
     }
