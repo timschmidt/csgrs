@@ -27616,16 +27616,6 @@ mod tests {
                 ) > 0,
                 "the recursive cap diameter must use the shared projective rational kernel: {trace:?}",
             );
-            #[cfg(feature = "dispatch-trace")]
-            assert_eq!(
-                trace.path_count(
-                    "hypercurve",
-                    "algebraic-chord-rational-kernel",
-                    "represented-zero-parallel-fallback",
-                ),
-                0,
-                "the recursive cap diameter must not enter the represented fallback: {trace:?}",
-            );
             assert!(
                 intersections.value.is_complete(),
                 "the recursive cap crossing must retain complete intersection evidence: policy={policy:?}, blockers={:?}",

@@ -11313,7 +11313,18 @@ impl BezierAlgebraicCuspSemicircleMappedParameterData2 {
                 point,
             ))));
         }
-        let center = match self.semicircle_carrier().center_point_evidence(policy)? {
+        // A coincident-circle transport preserves its source circle's center.
+        // Reuse that exact authored center when the retained point descends
+        // from a chord contact, so the probe and the contact remain in one
+        // recursive frame instead of reconstructing an equivalent center in
+        // the destination overlap carrier.
+        let center_carrier = match &point {
+            RationalBezierIntersectionPointEvidence2::AlgebraicCuspChord(point) => {
+                &point.map_contact().0.data.semicircle
+            }
+            _ => self.semicircle_carrier(),
+        };
+        let center = match center_carrier.center_point_evidence(policy)? {
             Classification::Decided(center) => center,
             Classification::Uncertain(reason) => {
                 return Ok(Classification::Uncertain(reason));
@@ -22491,7 +22502,7 @@ impl BezierAlgebraicCuspSemicircle2 {
         }
         Ok(Classification::Decided(Some(
             BezierRecursiveSelectedRadialFrame2 {
-                field,
+                field: field.clone(),
                 center: BezierRecursiveQuadraticProjectivePoint2 {
                     x: center_x,
                     y: center_y,
@@ -41341,6 +41352,67 @@ impl BezierAlgebraicCuspSemicircleChordParameterMap2 {
         normalize_recursive_contact_frame(frame).map(|frame| frame.map(Some))
     }
 
+    /// Imports the historical represented oblique contact as one selected
+    /// recursive projective frame. Coordinate roots remain separate dense
+    /// axes, but every candidate is evaluated at their authored isolated
+    /// tuple; no primitive element or rounded Cartesian point is constructed.
+    fn represented_oblique_recursive_contact_frame(
+        &self,
+        contact: &BezierAlgebraicCuspSemicircleChordContact2,
+    ) -> CurveResult<Classification<Option<BezierRecursiveQuadraticChordContactFrame2>>> {
+        let Some(system) = self.represented_oblique_system() else {
+            return Ok(Classification::Decided(None));
+        };
+        let contact = self.represented_oblique_contact(contact)?;
+        let mut sources = Vec::with_capacity(4);
+        for source in system.center.iter().chain(&contact.point) {
+            if !sources.contains(source) {
+                sources.push(source.clone());
+            }
+        }
+        let Some(one) = DenseTensorPolynomial::try_new(vec![1; sources.len()], vec![Real::one()])
+        else {
+            return Ok(Classification::Decided(None));
+        };
+        let Some(field) = BezierRecursiveQuadraticField2::base(sources.clone(), one.clone(), one)
+        else {
+            return Ok(Classification::Decided(None));
+        };
+        let BezierRecursiveQuadraticField2::Base(base) = &field else {
+            unreachable!("a represented contact import begins at its dense base")
+        };
+        let coordinate = |source: &AlgebraicRootRepresentation| {
+            let axis = sources.iter().position(|candidate| candidate == source)?;
+            recursive_quadratic_rational_value(
+                base,
+                DenseTensorPolynomial::from_axis_polynomial(
+                    sources.len(),
+                    axis,
+                    &[Real::zero(), Real::one()],
+                )?,
+            )
+        };
+        let Some(frame) = (|| {
+            let denominator = field.constant(Real::one())?;
+            Some(BezierRecursiveQuadraticChordContactFrame2 {
+                field: field.clone(),
+                point: BezierRecursiveQuadraticProjectivePoint2 {
+                    x: coordinate(&contact.point[0])?,
+                    y: coordinate(&contact.point[1])?,
+                    denominator: denominator.clone(),
+                },
+                center: BezierRecursiveQuadraticProjectivePoint2 {
+                    x: coordinate(&system.center[0])?,
+                    y: coordinate(&system.center[1])?,
+                    denominator,
+                },
+            })
+        })() else {
+            return Ok(Classification::Decided(None));
+        };
+        normalize_recursive_contact_frame(frame).map(|frame| frame.map(Some))
+    }
+
     /// Single exact bridge from every compact contact map that naturally
     /// lives in a quadratic tower. Callers consume one point/center frame and
     /// no longer need to know which historical solver authored it.
@@ -41369,6 +41441,9 @@ impl BezierAlgebraicCuspSemicircleChordParameterMap2 {
         }
         if self.chord_normal_projective_system().is_some() {
             return self.chord_normal_recursive_contact_frame(contact);
+        }
+        if self.represented_oblique_system().is_some() {
+            return self.represented_oblique_recursive_contact_frame(contact);
         }
         if self.retained_offset_system().is_some() {
             return self.retained_offset_recursive_contact_frame(contact);
@@ -54108,6 +54183,18 @@ impl BezierRecursiveSelectedRadialFrame2 {
     }
 }
 
+fn recursive_projective_algebraic_point_source(
+    point: &RationalBezierAlgebraicPointImage2,
+) -> Option<BezierRecursiveQuadraticProjectivePoint2> {
+    let sources = vec![point.parameter().clone()];
+    let one = DenseTensorPolynomial::try_new(vec![1], vec![Real::one()])?;
+    let field = BezierRecursiveQuadraticField2::base(sources, one.clone(), one)?;
+    recursive_projective_point_source_in_field(
+        &field,
+        &BezierRecursiveProjectivePointSource2::Algebraic(point.clone()),
+    )
+}
+
 fn recursive_projective_point_source(
     point: &RationalBezierIntersectionPointEvidence2,
     policy: &CurveContext,
@@ -54177,10 +54264,19 @@ fn recursive_projective_point_source(
                         point.data.transform.transform_point(&source),
                     )
                 }
-                BezierRecursiveProjectivePointSource2::Algebraic(_) => {
-                    return Ok(Classification::Decided(None));
-                }
-                BezierRecursiveProjectivePointSource2::Recursive(source) => {
+                source @ (BezierRecursiveProjectivePointSource2::Algebraic(_)
+                | BezierRecursiveProjectivePointSource2::Recursive(_)) => {
+                    let source = match source {
+                        BezierRecursiveProjectivePointSource2::Algebraic(source) => {
+                            let Some(source) = recursive_projective_algebraic_point_source(&source)
+                            else {
+                                return Ok(Classification::Decided(None));
+                            };
+                            source
+                        }
+                        BezierRecursiveProjectivePointSource2::Recursive(source) => source,
+                        BezierRecursiveProjectivePointSource2::Exact(_) => unreachable!(),
+                    };
                     let (m00, m01, m10, m11, tx, ty) = point.data.transform.affine_components();
                     let Some(source) = source.transformed_affine(m00, m01, m10, m11, tx, ty) else {
                         return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
@@ -54221,16 +54317,7 @@ fn embed_recursive_projective_point_source(
             return Ok(Classification::Decided(None));
         }
         BezierRecursiveProjectivePointSource2::Algebraic(algebraic) => {
-            let sources = vec![algebraic.parameter().clone()];
-            let Some(one) = DenseTensorPolynomial::try_new(vec![1], vec![Real::one()]) else {
-                return Ok(Classification::Decided(None));
-            };
-            let Some(field) = BezierRecursiveQuadraticField2::base(sources, one.clone(), one)
-            else {
-                return Ok(Classification::Decided(None));
-            };
-            let source = BezierRecursiveProjectivePointSource2::Algebraic(algebraic);
-            let Some(point) = recursive_projective_point_source_in_field(&field, &source) else {
+            let Some(point) = recursive_projective_algebraic_point_source(&algebraic) else {
                 return Ok(Classification::Decided(None));
             };
             point
@@ -54365,10 +54452,19 @@ fn recursive_projective_evidence_points(
             represented.push(point);
             continue;
         }
-        let BezierRecursiveProjectivePointSource2::Recursive(source_point) = source else {
-            return Ok(Classification::Decided(None));
+        let source_point = match source {
+            BezierRecursiveProjectivePointSource2::Algebraic(point) => {
+                let Some(point) = recursive_projective_algebraic_point_source(point) else {
+                    return Ok(Classification::Decided(None));
+                };
+                point
+            }
+            BezierRecursiveProjectivePointSource2::Recursive(point) => point.clone(),
+            BezierRecursiveProjectivePointSource2::Exact(_) => {
+                unreachable!("exact points embed in every recursive field")
+            }
         };
-        let mut point = source_point.clone();
+        let mut point = source_point;
         let (active_base, _) = field.base_and_extension_path();
         let (point_base, _) = point.denominator.field().base_and_extension_path();
         if !Arc::ptr_eq(&active_base, &point_base)
@@ -65172,149 +65268,6 @@ impl BezierAlgebraicChord2 {
         ))
     }
 
-    fn has_retained_parallel_support(&self) -> bool {
-        let support = self.retained_support();
-        matches!(
-            (support.start(), support.end()),
-            (
-                RationalBezierIntersectionPointEvidence2::AlgebraicChordParallel(start),
-                RationalBezierIntersectionPointEvidence2::AlgebraicChordParallel(end),
-            ) if start.shares_carrier(end)
-                && start.at_end != end.at_end
-                && start.data.direction == BezierAlgebraicChordUnitDisplacement2::LeftNormal
-        )
-    }
-
-    /// Reuses the represented-endpoint analytic solver for a rational target
-    /// at zero normal distance. The zero-distance specialization cancels the
-    /// target-speed radical before projection, so stationary rational
-    /// parameters cannot become artificial contacts.
-    fn represented_rational_intersections_via_zero_parallel(
-        &self,
-        source: &RationalBezier2,
-        excluded_source_parameter: Option<&BezierParameter2>,
-        policy: &CurveContext,
-    ) -> CurveResult<Classification<BezierAlgebraicChordRationalIntersections2>> {
-        let parallel = source.parallel_left(Real::zero())?;
-        let intersections = match self.parallel_intersections(&parallel, policy)? {
-            Classification::Decided(intersections) => intersections,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
-        let contacts = match intersections {
-            BezierAlgebraicChordParallelIntersections2::Contacts(contacts) => contacts,
-            BezierAlgebraicChordParallelIntersections2::DegenerateProjection => {
-                return self.retained_parallel_rational_degenerate_intersections(
-                    source,
-                    &parallel,
-                    excluded_source_parameter,
-                    policy,
-                );
-            }
-        };
-        let mut retained = Vec::with_capacity(contacts.len());
-        for contact in contacts {
-            if let Some(excluded) = excluded_source_parameter {
-                match contact
-                    .parallel_parameter
-                    .cmp_by_refinement(excluded, policy)?
-                {
-                    Classification::Decided(std::cmp::Ordering::Equal) => continue,
-                    Classification::Decided(_) => {}
-                    Classification::Uncertain(reason) => {
-                        return Ok(Classification::Uncertain(reason));
-                    }
-                }
-            }
-            retained.push(BezierAlgebraicChordRationalContact2 {
-                chord_parameter: contact.chord_parameter,
-                other_parameter: contact.parallel_parameter,
-                point: contact.point,
-                tangent_cross_sign: contact.tangent_cross_sign,
-            });
-        }
-        Ok(Classification::Decided(
-            BezierAlgebraicChordRationalIntersections2::Contacts(retained),
-        ))
-    }
-
-    /// Distinguishes a physical coincident line from the opposite normal sheet
-    /// introduced by squaring the retained chord displacement. Projection
-    /// identity is necessary but not sufficient: exact unsquared replay at one
-    /// finite source endpoint selects the connected rational image's authored
-    /// sheet before overlap ranges are published.
-    fn retained_parallel_rational_degenerate_intersections(
-        &self,
-        source: &RationalBezier2,
-        parallel: &BezierParallel2,
-        excluded_source_parameter: Option<&BezierParameter2>,
-        policy: &CurveContext,
-    ) -> CurveResult<Classification<BezierAlgebraicChordRationalIntersections2>> {
-        let system = match self.independent_parallel_incidence_system(parallel, policy)? {
-            Classification::Decided(system) => system,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
-        let BezierAlgebraicChordIndependentParallelEquation2::RetainedOffsetRational {
-            incidence,
-            chord_speed_squared,
-        } = &system.equation
-        else {
-            return Ok(Classification::Decided(
-                BezierAlgebraicChordRationalIntersections2::DegenerateProjection,
-            ));
-        };
-        let Some(projection) = incidence.projection(chord_speed_squared) else {
-            return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
-        };
-        let projection = trivariate_reduce_parameter_pair_relations(
-            &projection,
-            &system.first_parameter,
-            &system.second_parameter,
-        )
-        .unwrap_or(projection);
-        match selected_trivariate_third_axis_is_identically_zero(
-            &projection,
-            &system.first_parameter,
-            &system.second_parameter,
-            policy,
-        )? {
-            Classification::Decided(true) => {}
-            Classification::Decided(false) => {
-                return Ok(Classification::Decided(
-                    BezierAlgebraicChordRationalIntersections2::DegenerateProjection,
-                ));
-            }
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        }
-        let source_start = BezierParameter2::Exact(Real::zero());
-        match algebraic_cusp_projected_trivariate_square_root_sum_sign(
-            incidence,
-            chord_speed_squared,
-            &projection,
-            &system.first_parameter,
-            &system.second_parameter,
-            &source_start,
-            1,
-            true,
-            policy,
-        )? {
-            Classification::Decided(RealSign::Zero) => {
-                self.collinear_rational_intersections(source, excluded_source_parameter, policy)
-            }
-            Classification::Decided(RealSign::Positive | RealSign::Negative) => {
-                Ok(Classification::Decided(
-                    BezierAlgebraicChordRationalIntersections2::Contacts(Vec::new()),
-                ))
-            }
-            Classification::Uncertain(reason) => Ok(Classification::Uncertain(reason)),
-        }
-    }
-
     /// Replays every finite contact between this retained chord and an
     /// arbitrary rational Bezier without adjoining its finite-boundary fields.
     ///
@@ -65412,22 +65365,93 @@ impl BezierAlgebraicChord2 {
         )))
     }
 
+    /// Reuses the selected circle/chord map's own recursive frame when this
+    /// support was authored directly between that circle's center and the
+    /// retained contact.  The structural center match is only a sufficient
+    /// provenance certificate: unrelated but geometrically equal points fall
+    /// through to the complete projective importer below.
+    fn recursive_cusp_contact_frame_endpoints(
+        &self,
+        policy: &CurveContext,
+    ) -> CurveResult<Option<[BezierRecursiveQuadraticProjectivePoint2; 2]>> {
+        for (contact_endpoint, center_endpoint, contact_at_start) in [
+            (self.start(), self.end(), true),
+            (self.end(), self.start(), false),
+        ] {
+            let RationalBezierIntersectionPointEvidence2::AlgebraicCuspChord(point) =
+                contact_endpoint
+            else {
+                continue;
+            };
+            let (map, contact) = point.map_contact();
+            let center = match map.data.semicircle.center_point_evidence(policy)? {
+                Classification::Decided(center) => center,
+                Classification::Uncertain(_) => continue,
+            };
+            let same_center = if center_endpoint == &center {
+                true
+            } else if let (
+                RationalBezierIntersectionPointEvidence2::Algebraic(first),
+                RationalBezierIntersectionPointEvidence2::Algebraic(second),
+            ) = (center_endpoint, &center)
+            {
+                match policy
+                    .strict_predicate_pass(|| first.same_retained_rational_point(second, policy))?
+                {
+                    Some(Classification::Decided(equal)) => equal,
+                    Some(Classification::Uncertain(_)) | None => matches!(
+                        policy
+                            .strict_predicate_pass(|| center_endpoint.same_point(&center, policy)),
+                        Classification::Decided(true)
+                    ),
+                }
+            } else {
+                false
+            };
+            if !same_center {
+                continue;
+            }
+            let frame = match map.recursive_contact_frame(contact, policy)? {
+                Classification::Decided(Some(frame)) => frame,
+                Classification::Decided(None) | Classification::Uncertain(_) => continue,
+            };
+            #[cfg(feature = "dispatch-trace")]
+            hyperreal::dispatch_trace::record(
+                "hypercurve",
+                "recursive-projective-chord-endpoints",
+                "cusp-contact-center-frame",
+            );
+            return Ok(Some(if contact_at_start {
+                [frame.point, frame.center]
+            } else {
+                [frame.center, frame.point]
+            }));
+        }
+        Ok(None)
+    }
+
     fn recursive_projective_rational_system(
         &self,
         source: &RationalBezier2,
         policy: &CurveContext,
     ) -> CurveResult<Classification<Option<BezierRecursiveProjectiveChordRationalSystem2>>> {
-        let evidence = [self.start(), self.end()];
-        let points = match recursive_projective_evidence_points(&evidence, policy)? {
-            Classification::Decided(Some(points)) => points,
-            Classification::Decided(None) => return Ok(Classification::Decided(None)),
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
+        let [start, end] = if let Some(points) =
+            self.recursive_cusp_contact_frame_endpoints(policy)?
+        {
+            points
+        } else {
+            let evidence = [self.start(), self.end()];
+            let points = match recursive_projective_evidence_points(&evidence, policy)? {
+                Classification::Decided(Some(points)) => points,
+                Classification::Decided(None) => return Ok(Classification::Decided(None)),
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            };
+            points
+                .try_into()
+                .expect("a recursive chord support retains two authored endpoints")
         };
-        let [start, end]: [BezierRecursiveQuadraticProjectivePoint2; 2] = points
-            .try_into()
-            .expect("a recursive chord support retains two authored endpoints");
         let start = match positive_recursive_projective_point(start)? {
             Classification::Decided(point) => point,
             Classification::Uncertain(reason) => {
@@ -65777,41 +65801,39 @@ impl BezierAlgebraicChord2 {
                 BezierAlgebraicChordRationalIntersections2::Contacts(contacts),
             ));
         }
-        if self.has_retained_parallel_support() {
-            return self.represented_rational_intersections_via_zero_parallel(
-                source,
-                excluded_source_parameter,
-                policy,
-            );
+        let mut recursive_degenerate = false;
+        let mut recursive_uncertainty = None;
+        match self.recursive_projective_rational_intersections(
+            source,
+            excluded_source_parameter,
+            policy,
+        )? {
+            Classification::Decided(Some(
+                BezierAlgebraicChordRationalIntersections2::DegenerateProjection,
+            )) => recursive_degenerate = true,
+            Classification::Decided(Some(intersections)) => {
+                return Ok(Classification::Decided(intersections));
+            }
+            Classification::Decided(None) => {}
+            Classification::Uncertain(reason) => recursive_uncertainty = Some(reason),
         }
+        #[cfg(feature = "dispatch-trace")]
+        hyperreal::dispatch_trace::record(
+            "hypercurve",
+            "algebraic-chord-rational-kernel",
+            "independent-resultant-fallback",
+        );
         let system = match self.independent_incidence_system(source, policy)? {
             Classification::Decided(system) => system,
             Classification::Uncertain(UncertaintyReason::Unsupported) => {
-                match self.recursive_projective_rational_intersections(
-                    source,
-                    excluded_source_parameter,
-                    policy,
-                )? {
-                    Classification::Decided(Some(intersections)) => {
-                        return Ok(Classification::Decided(intersections));
-                    }
-                    Classification::Decided(None)
-                    | Classification::Uncertain(UncertaintyReason::Unsupported) => {}
-                    Classification::Uncertain(reason) => {
-                        return Ok(Classification::Uncertain(reason));
-                    }
+                if recursive_degenerate {
+                    return Ok(Classification::Decided(
+                        BezierAlgebraicChordRationalIntersections2::DegenerateProjection,
+                    ));
                 }
-                #[cfg(feature = "dispatch-trace")]
-                hyperreal::dispatch_trace::record(
-                    "hypercurve",
-                    "algebraic-chord-rational-kernel",
-                    "represented-zero-parallel-fallback",
-                );
-                return self.represented_rational_intersections_via_zero_parallel(
-                    source,
-                    excluded_source_parameter,
-                    policy,
-                );
+                return Ok(Classification::Uncertain(
+                    recursive_uncertainty.unwrap_or(UncertaintyReason::Unsupported),
+                ));
             }
             Classification::Uncertain(reason) => {
                 return Ok(Classification::Uncertain(reason));
@@ -108035,7 +108057,6 @@ mod conversion_tests {
             else {
                 panic!("the retained offset translation must complete");
             };
-            assert!(offset.has_retained_parallel_support());
             assert!(offset.exact_line().is_none());
             let support = offset
                 .strict_provenance_support_line(&policy)
@@ -117139,13 +117160,38 @@ mod conversion_tests {
                     let [rational_overlap] = rational_overlaps.as_slice() else {
                         panic!("the nested target must retain one rational overlap cell");
                     };
-                    let nested_target = rational_overlap
-                        .other_parameter_for_cusp(&right_target_parameter, &policy)?;
+                    #[cfg(feature = "dispatch-trace")]
+                    hyperreal::dispatch_trace::reset();
+                    let nested_target_work = || {
+                        rational_overlap
+                            .other_parameter_for_cusp(&right_target_parameter, &policy)
+                    };
+                    #[cfg(feature = "dispatch-trace")]
+                    let nested_target =
+                        hyperreal::dispatch_trace::with_recording(nested_target_work)?;
+                    #[cfg(not(feature = "dispatch-trace"))]
+                    let nested_target = nested_target_work()?;
+                    #[cfg(feature = "dispatch-trace")]
+                    let nested_target_trace = hyperreal::dispatch_trace::take_trace();
                     let Classification::Decided(nested_target) = nested_target else {
+                        #[cfg(feature = "dispatch-trace")]
+                        panic!(
+                            "the nested chord-mapped cut must invert on the rational overlap: {nested_target:?}, trace={nested_target_trace:?}"
+                        );
+                        #[cfg(not(feature = "dispatch-trace"))]
                         panic!(
                             "the nested chord-mapped cut must invert on the rational overlap: {nested_target:?}"
                         );
                     };
+                    #[cfg(feature = "dispatch-trace")]
+                    assert_eq!(
+                        nested_target_trace.path_count(
+                            "hypercurve",
+                            "recursive-projective-chord-endpoints",
+                            "cusp-contact-center-frame",
+                        ),
+                        1,
+                    );
                     let expected_target = algebraic_parameter(vec![
                         Real::one(),
                         Real::from(-3_i8),
@@ -121958,6 +122004,132 @@ mod conversion_tests {
         }
     }
 
+    #[test]
+    fn oblique_retained_offset_chord_uses_recursive_rational_kernel() {
+        let quarter = (Real::one() / Real::from(4_i8)).unwrap();
+        let tenth = (Real::one() / Real::from(10_i8)).unwrap();
+        let target = RationalBezier2::try_new(
+            vec![
+                Point2::new(quarter.clone(), Real::from(-1_i8)),
+                Point2::new(quarter, Real::one()),
+            ],
+            vec![Real::one(); 2],
+        )
+        .unwrap();
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let chord = dense_chord_normal_chord(
+                2,
+                vec![Real::zero(), Real::one()],
+                vec![Real::zero()],
+                3,
+                vec![Real::zero()],
+                vec![Real::zero(), Real::one()],
+                &policy,
+                "oblique retained-offset rational support",
+            );
+            let offset = chord
+                .parallel_left_retained(tenth.clone(), &policy)
+                .unwrap();
+            assert!(offset.exact_line().is_none());
+            assert!(offset.strict_provenance_support_line(&policy).is_none());
+
+            #[cfg(feature = "dispatch-trace")]
+            hyperreal::dispatch_trace::reset();
+            let work = || offset.rational_intersections(&target, None, &policy);
+            #[cfg(feature = "dispatch-trace")]
+            let result = hyperreal::dispatch_trace::with_recording(work);
+            #[cfg(not(feature = "dispatch-trace"))]
+            let result = work();
+            #[cfg(feature = "dispatch-trace")]
+            let trace = hyperreal::dispatch_trace::take_trace();
+            let Classification::Decided(BezierAlgebraicChordRationalIntersections2::Contacts(
+                contacts,
+            )) = result.unwrap()
+            else {
+                panic!("the oblique retained-offset/rational crossing must decide");
+            };
+            let [contact] = contacts.as_slice() else {
+                panic!("the oblique retained-offset crossing must be unique: {contacts:?}");
+            };
+            assert_ne!(contact.tangent_cross_sign, RealSign::Zero);
+            #[cfg(feature = "dispatch-trace")]
+            assert_eq!(
+                trace.path_count(
+                    "hypercurve",
+                    "algebraic-chord-rational-kernel",
+                    "recursive-projective",
+                ),
+                1,
+                "the retained-offset chord must stay in the authoritative recursive kernel: {trace:?}",
+            );
+        }
+    }
+
+    #[test]
+    fn recursive_projective_kernel_imports_similarity_of_algebraic_endpoints() {
+        let transform = Similarity2::try_from_real_affine(
+            Real::one(),
+            Real::from(-1_i8),
+            Real::one(),
+            Real::one(),
+            Real::from(2_i8),
+            Real::from(-3_i8),
+        )
+        .unwrap();
+        let quarter = (Real::one() / Real::from(4_i8)).unwrap();
+        let target = QuadraticBezier2::from_line_segment(
+            LineSeg2::try_new(
+                Point2::new(quarter.clone(), Real::from(-1_i8)),
+                Point2::new(quarter, Real::one()),
+            )
+            .unwrap(),
+        );
+        let target = QuadraticBezier2::new(
+            transform.transform_point(target.start()),
+            transform.transform_point(target.control()),
+            transform.transform_point(target.end()),
+        );
+        let target = RationalBezier2::try_from_subcurve(&BezierSubcurve2::Quadratic(target))
+            .expect("the similarity image has an exact rational carrier");
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let source = dense_chord_normal_chord(
+                2,
+                vec![Real::zero(), Real::one()],
+                vec![Real::zero()],
+                3,
+                vec![Real::zero()],
+                vec![Real::zero(), Real::one()],
+                &policy,
+                "similarity-authored algebraic chord",
+            );
+            let transformed =
+                |point: &RationalBezierIntersectionPointEvidence2| {
+                    RationalBezierIntersectionPointEvidence2::Similarity(
+                        BezierSimilarityPoint2::new(point.clone(), transform.clone(), &policy),
+                    )
+                };
+            let Classification::Decided(chord) = BezierAlgebraicChord2::try_new(
+                transformed(source.start()),
+                transformed(source.end()),
+                &policy,
+            )
+            .unwrap() else {
+                panic!("the similarity-authored algebraic chord must construct");
+            };
+            let result = chord
+                .recursive_projective_rational_intersections(&target, None, &policy)
+                .unwrap();
+            let Classification::Decided(Some(
+                BezierAlgebraicChordRationalIntersections2::Contacts(contacts),
+            )) = result
+            else {
+                panic!("the similarity-authored algebraic chord crossing must decide: {result:?}");
+            };
+            assert_eq!(contacts.len(), 1);
+            assert_ne!(contacts[0].tangent_cross_sign, RealSign::Zero);
+        }
+    }
+
     fn dense_chord_normal_unit_semicircle_with_anchor(
         policy: &CurveContext,
         anchor: Option<BezierAlgebraicChord2>,
@@ -125404,15 +125576,6 @@ mod conversion_tests {
                     "recursive-projective",
                 ),
                 1,
-            );
-            #[cfg(feature = "dispatch-trace")]
-            assert_eq!(
-                trace.path_count(
-                    "hypercurve",
-                    "algebraic-chord-rational-kernel",
-                    "represented-zero-parallel-fallback",
-                ),
-                0,
             );
         }
     }
