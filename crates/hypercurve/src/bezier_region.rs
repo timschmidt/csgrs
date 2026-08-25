@@ -25755,6 +25755,7 @@ mod tests {
                                     .expect("the smooth-run chamfer remains classifiable")
                                     .into_value(),
                                 Classification::Decided(RegionPointLocation::Inside),
+                                "policy={policy:?}, independently_reframed={independently_reframed}, reversed={reversed}, mode={mode:?}",
                             );
                         });
                     }
@@ -27351,6 +27352,174 @@ mod tests {
                 assert_eq!(replay.certainty, CurveCertainty::Certified);
                 assert!(replay.value.intersection().is_empty());
             });
+        }
+    }
+
+    #[test]
+    fn recursive_selected_radial_projective_chamfer_reenters_corner_kernel() {
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let source = independent_pair_native_fillet(&policy, false);
+            let source_radius = pair_radial_corner(&source).1;
+            let (third_generation, third_radius) =
+                next_selected_radial_boolean_fillet_generation(&source, &source_radius, &policy);
+            let (loop_index, corner) =
+                selected_radial_linear_corner(&third_generation, &third_radius);
+            let edit_radius = (third_radius / Real::from(10_i8)).unwrap();
+
+            let trim_chamfer = third_generation
+                .chamfer_loop_vertex_by_setbacks(
+                    loop_index,
+                    corner,
+                    edit_radius.clone(),
+                    edit_radius.clone(),
+                    CurveCornerMode2::TrimOnly,
+                    &policy,
+                )
+                .expect("the recursive selected-radial/line trim chamfer remains exact");
+            let extended_chamfer = third_generation
+                .chamfer_loop_vertex_by_setbacks(
+                    loop_index,
+                    corner,
+                    edit_radius.clone(),
+                    edit_radius.clone(),
+                    CurveCornerMode2::TrimOrExtend,
+                    &policy,
+                )
+                .unwrap_or_else(|error| {
+                    panic!(
+                        "the recursive selected-radial/line chamfer must extend exactly: policy={policy:?}, error={error:?}"
+                    )
+                });
+            assert_eq!(trim_chamfer.certainty, CurveCertainty::Certified);
+            assert_eq!(extended_chamfer.certainty, CurveCertainty::Certified);
+            assert!(
+                extended_chamfer.value.candidate_count() > trim_chamfer.value.candidate_count(),
+                "the incident carrier rays must contribute an exterior chamfer: trim={}, extended={}",
+                trim_chamfer.value.candidate_count(),
+                extended_chamfer.value.candidate_count(),
+            );
+
+            let candidates = match extended_chamfer.value {
+                CurveCornerSolutions2::Unique(candidate) => vec![candidate],
+                CurveCornerSolutions2::Multiple(candidates) => candidates,
+                CurveCornerSolutions2::NoSolution(reason) => {
+                    panic!("the projective chamfer must have a solution: {reason:?}")
+                }
+            };
+            let chamfer_parameter =
+                |parameter: &crate::bezier_offset::BezierAlgebraicCuspSemicircleParameter2| {
+                    matches!(
+                        parameter,
+                        crate::bezier_offset::BezierAlgebraicCuspSemicircleParameter2::Mapped(data)
+                            if matches!(
+                                data.as_ref(),
+                                crate::bezier_offset::BezierAlgebraicCuspSemicircleMappedParameterData2::Chamfer { .. }
+                            )
+                    )
+                };
+            let mut reentered = false;
+            for candidate in candidates {
+                let nested_corner = candidate.boundary_loops().iter().enumerate().find_map(
+                    |(loop_index, boundary)| {
+                        let fragments = boundary.fragments();
+                        (0..fragments.len()).find_map(|corner| {
+                            let previous =
+                                &fragments[(corner + fragments.len() - 1) % fragments.len()];
+                            let next = &fragments[corner];
+                            let mapped_circle = match previous {
+                                BezierSplitFragment2::AlgebraicCuspSemicircle(fragment) => {
+                                    chamfer_parameter(fragment.endpoint_parameter(false))
+                                }
+                                _ => false,
+                            } || match next {
+                                BezierSplitFragment2::AlgebraicCuspSemicircle(fragment) => {
+                                    chamfer_parameter(fragment.endpoint_parameter(true))
+                                }
+                                _ => false,
+                            };
+                            mapped_circle.then_some((loop_index, corner))
+                        })
+                    },
+                );
+                let Some((nested_loop, nested_corner)) = nested_corner else {
+                    continue;
+                };
+                let nested_setback = (&edit_radius / Real::from(4_i8)).unwrap();
+                #[cfg(feature = "dispatch-trace")]
+                hyperreal::dispatch_trace::reset();
+                let nested_chamfer_work = || {
+                    candidate.chamfer_loop_vertex_by_setbacks(
+                        nested_loop,
+                        nested_corner,
+                        nested_setback.clone(),
+                        nested_setback,
+                        CurveCornerMode2::TrimOnly,
+                        &policy,
+                    )
+                };
+                #[cfg(feature = "dispatch-trace")]
+                let nested = hyperreal::dispatch_trace::with_recording(nested_chamfer_work);
+                #[cfg(not(feature = "dispatch-trace"))]
+                let nested = nested_chamfer_work();
+                #[cfg(feature = "dispatch-trace")]
+                let nested_chamfer_trace = hyperreal::dispatch_trace::take_trace();
+                let nested = nested.unwrap_or_else(|error| {
+                    panic!(
+                        "the recursively mapped projective chamfer endpoint must re-enter the corner kernel: policy={policy:?}, error={error:?}"
+                    )
+                });
+                assert_eq!(nested.certainty, CurveCertainty::Certified);
+                assert!(nested.value.candidate_count() > 0);
+                #[cfg(feature = "dispatch-trace")]
+                assert!(
+                    nested_chamfer_trace.path_count(
+                        "hypercurve",
+                        "recursive-projective-axis-order",
+                        "interval-separated",
+                    ) > 0,
+                    "the nested chamfer must order its transported endpoint in the retained projective chart: {nested_chamfer_trace:?}",
+                );
+                let nested_fillet_radius = (&edit_radius / Real::from(16_i8)).unwrap();
+                #[cfg(feature = "dispatch-trace")]
+                hyperreal::dispatch_trace::reset();
+                let nested_fillet_work = || {
+                    candidate.fillet_loop_vertex_by_radius(
+                        nested_loop,
+                        nested_corner,
+                        nested_fillet_radius,
+                        CurveCornerMode2::TrimOnly,
+                        &policy,
+                    )
+                };
+                #[cfg(feature = "dispatch-trace")]
+                let nested_fillet = hyperreal::dispatch_trace::with_recording(nested_fillet_work);
+                #[cfg(not(feature = "dispatch-trace"))]
+                let nested_fillet = nested_fillet_work();
+                #[cfg(feature = "dispatch-trace")]
+                let nested_fillet_trace = hyperreal::dispatch_trace::take_trace();
+                let nested_fillet = nested_fillet.unwrap_or_else(|error| {
+                    panic!(
+                        "the recursively mapped projective chamfer endpoint must fillet exactly: policy={policy:?}, error={error:?}"
+                    )
+                });
+                assert_eq!(nested_fillet.certainty, CurveCertainty::Certified);
+                assert!(nested_fillet.value.candidate_count() > 0);
+                #[cfg(feature = "dispatch-trace")]
+                assert!(
+                    nested_fillet_trace.path_count(
+                        "hypercurve",
+                        "algebraic-circle-chord-tangent-dot",
+                        "retained-contact-map",
+                    ) > 0,
+                    "the nested fillet must replay the retained circle/chord tangent dot: {nested_fillet_trace:?}",
+                );
+                reentered = true;
+                break;
+            }
+            assert!(
+                reentered,
+                "one exterior recursive chamfer must retain its mapped circle endpoint"
+            );
         }
     }
 

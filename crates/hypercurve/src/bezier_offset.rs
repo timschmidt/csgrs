@@ -5505,6 +5505,11 @@ enum BezierRecursiveProjectivePointSource2 {
 #[derive(Debug)]
 struct BezierRecursiveQuadraticLineContactSystem2 {
     branch: i8,
+    /// Circle-tangent/chord-tangent dot sign reduced before adjoining this
+    /// contact discriminant. Both branches receive the same parent-field
+    /// certificate; storing its byte beside `branch` consumes existing
+    /// alignment padding instead of enlarging the owning map allocation.
+    tangent_dot_sign: Option<RealSign>,
     point: BezierRecursiveQuadraticProjectivePoint2,
     /// Dot of the authored parameter-zero radial with this contact radial,
     /// multiplied by the same strictly positive projective scale as
@@ -5521,6 +5526,9 @@ struct BezierRecursiveQuadraticLineContactSystem2 {
 /// flattened to a degree-multiplied univariate resultant.
 #[derive(Debug)]
 struct BezierRecursiveQuadraticLineParameterMapSystem2 {
+    /// Every constructor normalizes this point and `center` to strictly
+    /// positive projective denominators before publishing the map. Contact
+    /// replay may therefore lift either value without re-signing it.
     center: BezierRecursiveQuadraticProjectivePoint2,
     contacts: Vec<BezierRecursiveQuadraticLineContactSystem2>,
 }
@@ -6104,8 +6112,7 @@ fn dense_tensor_interval_with_coefficient_precision(
             exponents[axis] = remaining % dimensions[axis];
             remaining /= dimensions[axis];
         }
-        let mut term = if coefficient.immediate_sign().is_some() || coefficient_precision.is_none()
-        {
+        let mut term = if coefficient_precision.is_none() {
             BezierAlgebraicChordRealInterval2 {
                 lower: coefficient.clone(),
                 upper: coefficient.clone(),
@@ -8185,6 +8192,49 @@ pub(crate) struct BezierAlgebraicCuspSemicircleRetainedChordContact2 {
     pub(crate) chord_parameter: BezierAlgebraicChordParameter2,
     pub(crate) point: RationalBezierIntersectionPointEvidence2,
     pub(crate) tangent_cross_sign: RealSign,
+}
+
+impl BezierAlgebraicCuspSemicircleRetainedChordContact2 {
+    /// Replays the tangent dot retained by the contact's authoritative
+    /// circle/chord map before reconstructing either carrier support.
+    /// Re-clipped descendant chords transport only the exact tangent
+    /// orientation; contacts without mapped chord evidence retain the
+    /// complete center-side fallback.
+    pub(crate) fn tangent_dot_sign(
+        &self,
+        semicircle: &BezierAlgebraicCuspSemicircle2,
+        chord: &BezierAlgebraicChord2,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<RealSign>> {
+        if let BezierAlgebraicCuspSemicircleParameter2::Mapped(data) = &self.cusp_parameter
+            && let BezierAlgebraicCuspSemicircleMappedParameterData2::Chord { map, contact } =
+                data.as_ref()
+            && map.data.semicircle == *semicircle
+            && let Some(reversed) = map.data.chord.shared_tangent_orientation(chord)
+        {
+            let sign = map.retained_tangent_cross_dot_linear_combination_sign(
+                contact,
+                &Real::zero(),
+                &Real::one(),
+            )?;
+            #[cfg(feature = "dispatch-trace")]
+            if matches!(sign, Classification::Decided(_)) {
+                hyperreal::dispatch_trace::record(
+                    "hypercurve",
+                    "algebraic-circle-chord-tangent-dot",
+                    "retained-contact-map",
+                );
+            }
+            return Ok(sign.map(|sign| {
+                if reversed {
+                    product_sign(sign, RealSign::Negative)
+                } else {
+                    sign
+                }
+            }));
+        }
+        semicircle.chord_tangent_dot_sign(chord, policy)
+    }
 }
 
 #[derive(Clone, Debug)]
@@ -22186,7 +22236,15 @@ impl BezierAlgebraicCuspSemicircle2 {
             unsupported!("anchor-difference");
         };
         let (delta_x, delta_y) = line.delta();
-        let Some((a, b, c, discriminant, line_start_radial_x, line_start_radial_y)) = (|| {
+        let Some((
+            a,
+            b,
+            c,
+            discriminant,
+            line_start_radial_x,
+            line_start_radial_y,
+            line_center_cross,
+        )) = (|| {
             let start_x = parent_field.constant(line.start().x().clone())?;
             let start_y = parent_field.constant(line.start().y().clone())?;
             let vx = center.denominator.multiply(&start_x)?.subtract(&center.x)?;
@@ -22217,8 +22275,9 @@ impl BezierAlgebraicCuspSemicircle2 {
             let discriminant = denominator_squared
                 .multiply(&radial_term.subtract(&cross.square()?)?)?
                 .scale(&Real::from(4_i8))?;
-            Some((a, b, c, discriminant, vx, vy))
-        })() else {
+            Some((a, b, c, discriminant, vx, vy, cross))
+        })()
+        else {
             unsupported!("quadratic-coefficients");
         };
         match a.sign(&CurveContext::STRICT)? {
@@ -22306,6 +22365,9 @@ impl BezierAlgebraicCuspSemicircle2 {
         } else {
             RealSign::Positive
         };
+        let tangent_dot_sign = line_center_cross
+            .bounded_interval_sign()
+            .map(|sign| product_sign(sign, turn_sign));
         let selected_root_signs = if let Some((constant, slope)) = selected_linear.as_ref() {
             recursive_quadratic_affine_predicate_root_signs(
                 &a,
@@ -22497,6 +22559,7 @@ impl BezierAlgebraicCuspSemicircle2 {
             let branch = quadratic_branch;
             retained_contacts.push(BezierRecursiveQuadraticLineContactSystem2 {
                 branch,
+                tangent_dot_sign,
                 point,
                 diameter,
                 radius_squared_denominator,
@@ -22740,6 +22803,7 @@ impl BezierAlgebraicCuspSemicircle2 {
             b,
             c,
             discriminant,
+            line_center_cross,
         )) = (|| {
             let line_denominator = start.denominator.multiply(&end.denominator)?;
             let line_start_x = start.x.multiply(&end.denominator)?;
@@ -22803,6 +22867,7 @@ impl BezierAlgebraicCuspSemicircle2 {
                 b,
                 c,
                 discriminant,
+                cross,
             ))
         })()
         else {
@@ -22898,6 +22963,9 @@ impl BezierAlgebraicCuspSemicircle2 {
         } else {
             RealSign::Positive
         };
+        let tangent_dot_sign = line_center_cross
+            .bounded_interval_sign()
+            .map(|sign| product_sign(sign, turn_sign));
         let selected_root_signs = if let Some((constant, slope)) = selected_linear.as_ref() {
             recursive_quadratic_affine_predicate_root_signs(
                 &a,
@@ -23080,6 +23148,7 @@ impl BezierAlgebraicCuspSemicircle2 {
             let branch = quadratic_branch;
             retained_contacts.push(BezierRecursiveQuadraticLineContactSystem2 {
                 branch,
+                tangent_dot_sign,
                 point,
                 diameter,
                 radius_squared_denominator,
@@ -27803,6 +27872,7 @@ impl BezierAlgebraicCuspSemicircle2 {
             };
             retained_contacts.push(BezierRecursiveQuadraticLineContactSystem2 {
                 branch,
+                tangent_dot_sign: None,
                 point,
                 diameter,
                 radius_squared_denominator,
@@ -40114,12 +40184,13 @@ impl BezierAlgebraicCuspSemicircleChordParameterMap2 {
             let Some(center) = system.center.lifted_to(&field) else {
                 return Ok(Classification::Decided(None));
             };
-            return normalize_recursive_contact_frame(BezierRecursiveQuadraticChordContactFrame2 {
-                field,
-                point: retained.point.clone(),
-                center,
-            })
-            .map(|frame| frame.map(Some));
+            return Ok(Classification::Decided(Some(
+                BezierRecursiveQuadraticChordContactFrame2 {
+                    field,
+                    point: retained.point.clone(),
+                    center,
+                },
+            )));
         }
         if self.selected_radial_system().is_some() {
             return self.selected_radial_recursive_contact_frame(contact, policy);
@@ -40495,6 +40566,16 @@ impl BezierAlgebraicCuspSemicircleChordParameterMap2 {
             return self.selected_fiber_line_radical_sign(contact, &expression);
         }
         if let Some(system) = self.recursive_quadratic_line_system() {
+            let retained = system.contact(contact.branch)?;
+            if cross_scale.zero_status() == ZeroStatus::Zero
+                && let Some(tangent_dot_sign) = retained.tangent_dot_sign
+                && let Some(scale_sign) = real_sign(dot_scale, &self.data.policy)
+            {
+                return Ok(Classification::Decided(product_sign(
+                    tangent_dot_sign,
+                    scale_sign,
+                )));
+            }
             let turn = Real::from(if self.data.semicircle.is_clockwise() {
                 -1_i8
             } else {
@@ -48338,7 +48419,28 @@ impl BezierAlgebraicCuspSemicircleParameter2 {
                 return Ok(Some(Classification::Uncertain(reason)));
             }
         };
-        recursive_projective_incident_point_order(&first, &second, semicircle, false, policy)
+        recursive_projective_incident_point_order(
+            &first,
+            &second,
+            semicircle,
+            || {
+                Ok(match (&first, &second) {
+                    (
+                        RationalBezierIntersectionPointEvidence2::AlgebraicCuspChord(contact),
+                        point,
+                    )
+                    | (
+                        point,
+                        RationalBezierIntersectionPointEvidence2::AlgebraicCuspChord(contact),
+                    ) => {
+                        contact.contact_support_separates_point(point, policy)?
+                            == Classification::Decided(true)
+                    }
+                    _ => false,
+                })
+            },
+            policy,
+        )
     }
 
     pub(crate) fn cmp_by_refinement(
@@ -50934,6 +51036,20 @@ impl BezierRecursiveQuadraticValue2 {
         self.interval_with_coefficient_precision(refinement_steps, None)
     }
 
+    /// Returns only a strict interval-separated sign. This never forms an
+    /// exact norm and is therefore suitable for optional construction-time
+    /// certificates whose complete predicate remains available later.
+    fn bounded_interval_sign(&self) -> Option<RealSign> {
+        [0_usize, 2, 4, 8, 16, 32, 64]
+            .into_iter()
+            .find_map(|refinement_steps| {
+                let coefficient_bits = refinement_steps.max(64).min(i32::MAX as usize) as i32;
+                self.interval_with_coefficient_precision(refinement_steps, Some(-coefficient_bits))
+                    .as_ref()
+                    .and_then(dense_strict_interval_sign)
+            })
+    }
+
     /// Signs a value after an independent exact certificate has ruled out
     /// equality. Interval refinement is then complete: it may continue past
     /// the approximate policy terminal because no equality decision is being
@@ -50964,14 +51080,8 @@ impl BezierRecursiveQuadraticValue2 {
         // few source-root refinements. Consume that locality before forming a
         // recursive norm; the latter is reserved for genuine or near
         // equality, where interval separation cannot be authoritative.
-        for refinement_steps in [0_usize, 2, 4, 8, 16, 32, 64] {
-            if let Some(sign) = self
-                .interval(refinement_steps)
-                .as_ref()
-                .and_then(dense_strict_interval_sign)
-            {
-                return Ok(Classification::Decided(sign));
-            }
+        if let Some(sign) = self.bounded_interval_sign() {
+            return Ok(Classification::Decided(sign));
         }
         match self.data.as_ref() {
             BezierRecursiveQuadraticValueData2::Base { field, expression } => {
@@ -75158,7 +75268,7 @@ fn recursive_projective_incident_point_order(
     first: &RationalBezierIntersectionPointEvidence2,
     second: &RationalBezierIntersectionPointEvidence2,
     semicircle: &BezierAlgebraicCuspSemicircle2,
-    certified_distinct: bool,
+    certify_distinct: impl FnOnce() -> CurveResult<bool>,
     policy: &CurveContext,
 ) -> CurveResult<Option<Classification<std::cmp::Ordering>>> {
     let first = match recursive_projective_point_source(first, policy)? {
@@ -75235,34 +75345,54 @@ fn recursive_projective_incident_point_order(
                 .and_then(|other| value.add(&other))
         })
     };
-    let cross = match cross.sign(policy)? {
-        Classification::Decided(sign) => sign,
-        Classification::Uncertain(reason) if certified_distinct => {
-            let Some(dot) = radial_dot() else {
-                return Ok(Some(Classification::Uncertain(
-                    UncertaintyReason::Unsupported,
-                )));
-            };
-            // This sign participates in an exact nonzero certificate rather
-            // than the final equality predicate. In APPROXIMATE_512, a
-            // terminal approximate zero must therefore not be promoted into
-            // construction evidence.
-            match dot.sign(&policy.strict_counterpart())? {
-                Classification::Decided(RealSign::Positive | RealSign::Zero) => {
-                    match cross.sign_with_nonzero_certificate()? {
-                        Classification::Decided(sign) => sign,
-                        Classification::Uncertain(reason) => {
-                            return Ok(Some(Classification::Uncertain(reason)));
-                        }
-                    }
+    let cross = if let Some(sign) = cross.bounded_interval_sign() {
+        #[cfg(feature = "dispatch-trace")]
+        hyperreal::dispatch_trace::record(
+            "hypercurve",
+            "algebraic-circle-incident-point-order",
+            "recursive-projective-interval-separated",
+        );
+        sign
+    } else if certify_distinct()? {
+        let Some(dot) = radial_dot() else {
+            return Ok(Some(Classification::Uncertain(
+                UncertaintyReason::Unsupported,
+            )));
+        };
+        // This sign participates in an exact nonzero certificate rather
+        // than the final equality predicate. In APPROXIMATE_512, a
+        // terminal approximate zero must therefore not be promoted into
+        // construction evidence.
+        if matches!(
+            dot.bounded_interval_sign(),
+            Some(RealSign::Positive | RealSign::Zero)
+        ) {
+            #[cfg(feature = "dispatch-trace")]
+            hyperreal::dispatch_trace::record(
+                "hypercurve",
+                "algebraic-circle-incident-point-order",
+                "recursive-projective-nonzero-certificate",
+            );
+            match cross.sign_with_nonzero_certificate()? {
+                Classification::Decided(sign) => sign,
+                Classification::Uncertain(reason) => {
+                    return Ok(Some(Classification::Uncertain(reason)));
                 }
-                Classification::Decided(RealSign::Negative) | Classification::Uncertain(_) => {
+            }
+        } else {
+            match cross.sign(policy)? {
+                Classification::Decided(sign) => sign,
+                Classification::Uncertain(reason) => {
                     return Ok(Some(Classification::Uncertain(reason)));
                 }
             }
         }
-        Classification::Uncertain(reason) => {
-            return Ok(Some(Classification::Uncertain(reason)));
+    } else {
+        match cross.sign(policy)? {
+            Classification::Decided(sign) => sign,
+            Classification::Uncertain(reason) => {
+                return Ok(Some(Classification::Uncertain(reason)));
+            }
         }
     };
     if cross == RealSign::Zero {
@@ -79798,10 +79928,12 @@ impl BezierAlgebraicCuspSemicircleFragment2 {
 
     /// Locates a point whose incidence on this supporting circle is already
     /// certified. Retained scalar order is tried first, followed by angular
-    /// order in the circle's compact recursive frame. The endpoint chord is
-    /// the complete representation-independent fallback. At an endpoint, one
-    /// decided inequality against the opposite endpoint is enough to identify
-    /// the equal endpoint exactly.
+    /// order in the circle's compact recursive frame. The angular predicate
+    /// is only a fallback because it is monotone on the selected half, not on
+    /// an incident extension point on the complementary half. The endpoint
+    /// chord is the complete representation-independent fallback. At an
+    /// endpoint, one decided inequality against the opposite endpoint is
+    /// enough to identify the equal endpoint exactly.
     pub(crate) fn certified_incident_point_evidence_location(
         &self,
         parameter: &BezierAlgebraicCuspSemicircleParameter2,
@@ -79840,24 +79972,21 @@ impl BezierAlgebraicCuspSemicircleFragment2 {
                     return Ok(scalar_order);
                 }
             };
-            let certified_distinct = matches!(
+            let projective = recursive_projective_incident_point_order(
                 point,
-                RationalBezierIntersectionPointEvidence2::AlgebraicCuspChord(contact)
-                    if contact.contact_support_separates_point(&endpoint, policy)?
-                        == Classification::Decided(true)
-            );
-            Ok(
-                match recursive_projective_incident_point_order(
-                    point,
-                    &endpoint,
-                    &self.data.semicircle,
-                    certified_distinct,
-                    policy,
-                )? {
-                    Some(order) => order,
-                    None => scalar_order,
+                &endpoint,
+                &self.data.semicircle,
+                || {
+                    Ok(matches!(
+                        point,
+                        RationalBezierIntersectionPointEvidence2::AlgebraicCuspChord(contact)
+                            if contact.contact_support_separates_point(&endpoint, policy)?
+                                == Classification::Decided(true)
+                    ))
                 },
-            )
+                policy,
+            )?;
+            Ok(projective.unwrap_or(scalar_order))
         };
         let start = point_order(true, parameter.cmp_by_refinement(&self.data.start, policy)?)?;
         let end = point_order(false, parameter.cmp_by_refinement(&self.data.end, policy)?)?;
@@ -103900,6 +104029,32 @@ mod conversion_tests {
         CurveBoundaryInteriorSide2, CurveCertainty, CurveCornerMode2, CurveCornerSolutions2,
         CurveRegion2, CurveRegionBoundaryLoop2, CurveRegionLoopRole, FillRule, OffsetCornerStyle2,
     };
+
+    #[test]
+    fn coefficient_precision_uses_certified_dyadic_bounds_for_signed_surds() {
+        let coefficient = Real::from(2_i8).sqrt().unwrap();
+        assert_eq!(coefficient.immediate_sign(), Some(RealSign::Positive));
+        assert!(coefficient.exact_rational_normal_form().is_none());
+        let polynomial =
+            DenseTensorPolynomial::try_new(vec![1], vec![coefficient.clone()]).unwrap();
+        let interval =
+            dense_tensor_interval_with_coefficient_precision(&polynomial, &[], Some(-64)).unwrap();
+
+        assert!(interval.lower.exact_rational_normal_form().is_some());
+        assert!(interval.upper.exact_rational_normal_form().is_some());
+        assert_ne!(
+            compare_reals(&interval.lower, &coefficient, &CurveContext::STRICT),
+            Some(std::cmp::Ordering::Greater),
+        );
+        assert_ne!(
+            compare_reals(&interval.upper, &coefficient, &CurveContext::STRICT),
+            Some(std::cmp::Ordering::Less),
+        );
+        assert_eq!(
+            dense_strict_interval_sign(&interval),
+            Some(RealSign::Positive)
+        );
+    }
 
     #[test]
     fn selected_zero_distance_source_axis_order_stays_in_its_correlated_field() {

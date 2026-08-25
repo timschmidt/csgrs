@@ -8634,25 +8634,24 @@ fn fillet_offset_centers(
                 cusp_family,
                 policy,
             )?;
-            let mut tangent_dot = match cusp_support
-                .semicircle()
-                .chord_tangent_dot_sign(chord_support, policy)
-                .map_err(|cause| {
-                    ExactCurveError::invalid(CurveOperation2::Fillet, chord_family, cause)
-                })? {
-                Classification::Decided(sign) => sign,
-                Classification::Uncertain(reason) => {
-                    return Err(ExactCurveError::blocked(
-                        CurveOperation2::Fillet,
-                        chord_family,
-                        reason,
-                    ));
-                }
-            };
-            if cusp_support_reverses_source {
-                tangent_dot = reverse_fillet_sign(tangent_dot);
-            }
             for (contact, complementary) in contacts {
+                let mut tangent_dot = match contact
+                    .tangent_dot_sign(cusp_support.semicircle(), chord_support, policy)
+                    .map_err(|cause| {
+                        ExactCurveError::invalid(CurveOperation2::Fillet, chord_family, cause)
+                    })? {
+                    Classification::Decided(sign) => sign,
+                    Classification::Uncertain(reason) => {
+                        return Err(ExactCurveError::blocked(
+                            CurveOperation2::Fillet,
+                            chord_family,
+                            reason,
+                        ));
+                    }
+                };
+                if cusp_support_reverses_source {
+                    tangent_dot = reverse_fillet_sign(tangent_dot);
+                }
                 let tangent_cross = if cusp_support_reverses_source {
                     reverse_fillet_sign(contact.tangent_cross_sign)
                 } else {
@@ -9904,11 +9903,29 @@ fn fillet_cut_from_center(
                     })?;
                 match translated_pair_interior {
                     Some(Classification::Decided(interior)) => Classification::Decided(interior),
-                    Some(Classification::Uncertain(_)) | None => support
-                        .certified_incident_point_evidence_is_strict_interior(center, policy)
-                        .map_err(|cause| {
-                            ExactCurveError::invalid(CurveOperation2::Fillet, family, cause)
-                        })?,
+                    Some(Classification::Uncertain(_)) | None => {
+                        use crate::bezier_offset::BezierAlgebraicCuspSemicircleIncidentLocation2::Interior;
+                        match policy
+                            .strict_predicate_pass(|| {
+                                support.certified_incident_point_evidence_location(
+                                    &parameter, center, policy,
+                                )
+                            })
+                            .map_err(|cause| {
+                                ExactCurveError::invalid(CurveOperation2::Fillet, family, cause)
+                            })? {
+                            Classification::Decided(location) => {
+                                Classification::Decided(location == Interior)
+                            }
+                            Classification::Uncertain(_) => support
+                                .certified_incident_point_evidence_is_strict_interior(
+                                    center, policy,
+                                )
+                                .map_err(|cause| {
+                                    ExactCurveError::invalid(CurveOperation2::Fillet, family, cause)
+                                })?,
+                        }
+                    }
                 }
             };
             let placement = if complementary {
