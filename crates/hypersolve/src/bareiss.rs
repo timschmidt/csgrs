@@ -1565,8 +1565,10 @@ mod tests {
 
     #[test]
     fn bareiss_solve_obeys_terminal_residual_policy() {
-        let matrix = [vec![real(1), real(1)], vec![real(0), real(1)]];
-        let rhs = [Real::pi() + Real::e(), Real::pi()];
+        let e = Real::e();
+        let pi = Real::pi();
+        let matrix = [vec![e.clone(), pi.clone()], vec![pi, e]];
+        let rhs = [real(1), real(2)];
         assert_eq!(
             solve_dense_linear_system_bareiss(&matrix, &rhs, -128, PredicatePolicy::STRICT,)
                 .unwrap_err(),

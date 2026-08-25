@@ -497,48 +497,21 @@ pub fn resultant_tensor_polynomial_univariate_constraint(
             );
         }
     };
-    let degrees = match certified_tensor_degrees(polynomial, min_precision) {
-        Ok(Some(degrees)) => degrees,
-        Ok(None) => {
-            let retained_rank = polynomial.dimensions.len() - 1;
-            let dimensions = vec![1; retained_rank];
-            let zero = DenseTensorPolynomial::try_new(dimensions, vec![Real::zero()])
-                .expect("a scalar zero tensor has a valid shape");
-            return report(
-                TensorConstraintResultantStatus::Constructed,
-                vec![0; retained_rank],
-                Some(zero),
-                None,
-                None,
-            );
-        }
-        Err(()) => {
-            return report(
-                TensorConstraintResultantStatus::UndecidedCoefficient,
-                Vec::new(),
-                None,
-                None,
-                Some("tensor polynomial degree was not certified exactly".to_owned()),
-            );
-        }
-    };
     let constraint_degree = constraint.len() - 1;
     let retained_axes = (0..polynomial.dimensions.len())
         .filter(|axis| *axis != eliminated_axis)
         .collect::<Vec<_>>();
 
-    // A tensor linear in the eliminated variable has a closed-form norm for
-    // a quadratic source constraint.  For
+    // A tensor nominally linear in the eliminated variable has a closed-form
+    // norm for a quadratic source constraint. For
     //
     //     g(x) = c0 + c1*x + c2*x^2,   f(x) = A + B*x,
     //
-    // `Res(g,f) = c2*A^2 - c1*A*B + c0*B^2`.  Constructing those retained-
-    // axis tensor products directly avoids evaluating and interpolating a
-    // multidimensional integer grid.  This case is especially common after
-    // quotient-ring reduction of represented geometry: selected quadratic
-    // source fields remain linear in the incidence tensor even when several
-    // other fields and a high-degree output axis are present.
-    if degrees[eliminated_axis] == 1 && constraint_degree == 2 {
+    // `Res(g,f) = c2*A^2 - c1*A*B + c0*B^2`. The identity also holds when
+    // `B` is exactly zero, so requiring a sign decision for every trailing
+    // coefficient before selecting this path would create a predicate hole
+    // precisely at quotient-ring degree drops.
+    if polynomial.dimensions[eliminated_axis] <= 2 && constraint_degree == 2 {
         let Some(a) = tensor_axis_coefficient(polynomial, eliminated_axis, 0) else {
             return report(
                 TensorConstraintResultantStatus::DimensionOverflow,
@@ -548,17 +521,33 @@ pub fn resultant_tensor_polynomial_univariate_constraint(
                 Some("linear tensor-resultant constant fiber exceeded its shape budget".to_owned()),
             );
         };
-        let Some(b) = tensor_axis_coefficient(polynomial, eliminated_axis, 1) else {
-            return report(
-                TensorConstraintResultantStatus::DimensionOverflow,
-                Vec::new(),
-                None,
-                None,
-                Some(
-                    "linear tensor-resultant coefficient fiber exceeded its shape budget"
-                        .to_owned(),
-                ),
-            );
+        let b = if polynomial.dimensions[eliminated_axis] == 2 {
+            let Some(b) = tensor_axis_coefficient(polynomial, eliminated_axis, 1) else {
+                return report(
+                    TensorConstraintResultantStatus::DimensionOverflow,
+                    Vec::new(),
+                    None,
+                    None,
+                    Some(
+                        "linear tensor-resultant coefficient fiber exceeded its shape budget"
+                            .to_owned(),
+                    ),
+                );
+            };
+            b
+        } else {
+            let Some(zero) = a.scale(&Real::zero()) else {
+                return report(
+                    TensorConstraintResultantStatus::DimensionOverflow,
+                    Vec::new(),
+                    None,
+                    None,
+                    Some(
+                        "constant tensor-resultant zero fiber exceeded its shape budget".to_owned(),
+                    ),
+                );
+            };
+            zero
         };
         let Some(resultant) = a
             .multiply(&a)
@@ -584,13 +573,15 @@ pub fn resultant_tensor_polynomial_univariate_constraint(
         };
         let degree_bounds = retained_axes
             .iter()
-            .map(|axis| degrees[*axis].saturating_mul(2))
+            .map(|axis| {
+                polynomial.dimensions[*axis]
+                    .saturating_sub(1)
+                    .saturating_mul(2)
+            })
             .collect::<Vec<_>>();
         // Convolution already has exactly the conservative resultant shape.
-        // Do not certify and trim every retained coefficient here: callers
-        // immediately reduce still-selected axes in their quotient rings,
-        // and forcing zero decisions on the unreduced arithmetic DAG can cost
-        // more than the elimination itself.
+        // Callers may immediately reduce still-selected axes in their
+        // quotient rings, so forcing zero decisions here adds no authority.
         return report(
             TensorConstraintResultantStatus::Constructed,
             degree_bounds,
@@ -599,7 +590,31 @@ pub fn resultant_tensor_polynomial_univariate_constraint(
             None,
         );
     }
-
+    let degrees = match certified_tensor_degrees(polynomial, min_precision) {
+        Ok(Some(degrees)) => degrees,
+        Ok(None) => {
+            let retained_rank = polynomial.dimensions.len() - 1;
+            let dimensions = vec![1; retained_rank];
+            let zero = DenseTensorPolynomial::try_new(dimensions, vec![Real::zero()])
+                .expect("a scalar zero tensor has a valid shape");
+            return report(
+                TensorConstraintResultantStatus::Constructed,
+                vec![0; retained_rank],
+                Some(zero),
+                None,
+                None,
+            );
+        }
+        Err(()) => {
+            return report(
+                TensorConstraintResultantStatus::UndecidedCoefficient,
+                Vec::new(),
+                None,
+                None,
+                Some("tensor polynomial degree was not certified exactly".to_owned()),
+            );
+        }
+    };
     // When only one retained axis remains, construct its exact quotient-ring
     // norm directly. This avoids reconstructing a high-degree univariate
     // resultant from an exact integer sample grid and keeps every coefficient
@@ -1146,6 +1161,77 @@ mod tests {
         assert_eq!(
             report.resultant.unwrap().coefficients(),
             &[real(1), real(0), real(0), real(0), real(1)]
+        );
+    }
+
+    #[test]
+    fn nominal_linear_quadratic_norm_does_not_require_leading_sign() {
+        let [_lower, upper] = Real::pi()
+            .certified_dyadic_interval(-256)
+            .expect("pi exposes certified dyadic intervals");
+        let delayed_positive = Real::from(upper) - Real::pi();
+        assert!(matches!(
+            delayed_positive.certified_sign_until(-128),
+            CertifiedRealSign::Unknown { .. }
+        ));
+        // P(x,t)=1+t+b*x over x²-2. The exact norm
+        // (1+t)²-2b² is valid without deciding whether the nominal linear
+        // coefficient b vanishes.
+        let polynomial = DenseTensorPolynomial::try_new(
+            vec![2, 2],
+            vec![
+                Real::one(),
+                Real::one(),
+                delayed_positive.clone(),
+                Real::zero(),
+            ],
+        )
+        .unwrap();
+        let report = resultant_tensor_polynomial_univariate_constraint(
+            &polynomial,
+            &[real(-2), Real::zero(), Real::one()],
+            0,
+            -128,
+        );
+        assert_eq!(report.status, TensorConstraintResultantStatus::Constructed);
+        let result = report.resultant.unwrap();
+        assert_eq!(result.dimensions(), &[3]);
+        let expected = [
+            Real::one() - real(2) * &delayed_positive * delayed_positive,
+            real(2),
+            Real::one(),
+        ];
+        assert!(
+            result
+                .coefficients()
+                .iter()
+                .zip(expected)
+                .all(|(actual, expected)| {
+                    matches!(
+                        (actual - expected).certified_sign_until(-512),
+                        CertifiedRealSign::Known {
+                            sign: RealSign::Zero,
+                            ..
+                        }
+                    )
+                })
+        );
+    }
+
+    #[test]
+    fn constant_quadratic_norm_uses_the_same_nominal_fast_path() {
+        let polynomial =
+            DenseTensorPolynomial::try_new(vec![1, 2], vec![real(1), real(1)]).unwrap();
+        let report = resultant_tensor_polynomial_univariate_constraint(
+            &polynomial,
+            &[real(-2), Real::zero(), Real::one()],
+            0,
+            PredicatePolicy::MAX_REFINEMENT_PRECISION,
+        );
+        assert_eq!(report.status, TensorConstraintResultantStatus::Constructed);
+        assert_eq!(
+            report.resultant.unwrap().coefficients(),
+            &[real(1), real(2), real(1)]
         );
     }
 

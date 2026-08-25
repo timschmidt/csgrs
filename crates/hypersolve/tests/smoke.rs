@@ -10897,11 +10897,14 @@ fn negative_residual_ball_certifies_inequality_satisfaction() {
 
 #[test]
 fn residual_ball_certification_preserves_approximate_policy_certainty() {
-    let undecidable = (Real::pi() + Real::e()) - (Real::e() + Real::pi());
+    let angle = Real::one();
+    let sine = angle.clone().sin();
+    let cosine = angle.cos();
+    let undecidable = &sine * &sine + &cosine * &cosine - Real::one();
     let mut problem = Problem::default();
     problem.add_variable("x", real(0));
     problem.add_constraint(Constraint::equality(
-        "commuted symbolic zero",
+        "transcendental Pythagorean zero",
         Expr::real(undecidable),
     ));
 

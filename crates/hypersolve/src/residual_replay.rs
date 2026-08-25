@@ -575,9 +575,15 @@ mod tests {
 
     #[test]
     fn dense_replay_obeys_terminal_equality_policy_and_retains_certainty() {
-        let matrix = [vec![real(1), real(1)]];
-        let rhs = [Real::pi() + Real::e()];
-        let candidate = [Real::e(), Real::pi()];
+        let e = Real::e();
+        let pi = Real::pi();
+        let determinant = &e * &e - &pi * &pi;
+        let matrix = [vec![e.clone(), pi.clone()], vec![pi.clone(), e.clone()]];
+        let rhs = [real(1), real(2)];
+        let candidate = [
+            ((e.clone() - real(2) * &pi) / determinant.clone()).unwrap(),
+            ((real(2) * &e - pi) / determinant).unwrap(),
+        ];
 
         assert_eq!(
             replay_dense_linear_residuals(
