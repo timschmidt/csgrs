@@ -914,10 +914,10 @@ struct BezierAlgebraicCuspSemicircleParallelParameterMapData2 {
 
 /// Exact parameter-order authority behind a common analytic-parallel contact.
 /// Ordinary one-field circles retain the compact bivariate path. Selected
-/// Direct pair-radial circles retain their correlated two-root field and one
-/// procedural target-speed radical. More deeply recursive chord/radial circles
-/// retain their shared quadratic tower and add only the exact target root plus
-/// its procedural positive speed radical during predicate replay.
+/// radial circles retain their shared quadratic tower and add only the exact
+/// target root plus its procedural positive speed radical during predicate
+/// replay. Rank-independent represented frames remain the chord-normal
+/// authority.
 #[derive(Debug)]
 enum BezierAlgebraicCuspSemicircleParallelParameterMapSystem2 {
     OneField {
@@ -929,9 +929,6 @@ enum BezierAlgebraicCuspSemicircleParallelParameterMapSystem2 {
         diameter: BezierAlgebraicCuspTwoTermExpression2,
         radius_squared_denominator: BivariatePolynomial,
         speed_squared: BivariatePolynomial,
-    },
-    SelectedRadial {
-        system: Arc<BezierSelectedRadialCircleParallelSystem2>,
     },
     RecursiveSelectedRadial {
         system: Arc<BezierRecursiveSelectedRadialParallelSystem2>,
@@ -4923,14 +4920,12 @@ struct BezierSelectedRadialCircleRationalSystem2 {
     angular_tangent: BezierAlgebraicCuspTrivariateSquareRootExpression2,
 }
 
-/// Compact exact incidence of a direct pair-radial circle with one analytic
-/// parallel. The two selected pair roots remain the first axes; the target
-/// parameter is the third. `pair_discriminant` selects the authored circle
-/// center sheet and `candidate_speed_squared` contributes only its positive
-/// square root, so the four correlated circle-frame coordinates are never
-/// promoted to independent algebraic tensor axes.
+/// Minimal-degree direct pair-radial backend for the authoritative recursive
+/// circle/analytic-parallel kernel. It enumerates and replays the common
+/// two-root case without independently materializing frame coordinates; the
+/// owning recursive system handles components and every higher carrier.
 #[derive(Debug)]
-struct BezierSelectedRadialCircleParallelSystem2 {
+struct BezierDirectPairRadialParallelFastPath2 {
     pair_map: BezierAlgebraicCuspSemicirclePairParameterMap2,
     branch: i8,
     pair_discriminant: TrivariatePolynomial2,
@@ -5375,6 +5370,7 @@ struct BezierRecursiveQuadraticParallelExpression2 {
 struct BezierRecursiveSelectedRadialParallelSystem2 {
     field: BezierRecursiveQuadraticField2,
     base: Arc<BezierRecursiveQuadraticBaseFieldData2>,
+    direct_pair_fast_path: Option<Arc<BezierDirectPairRadialParallelFastPath2>>,
     projection: DenseTensorPolynomial,
     circle: BezierRecursiveQuadraticParallelExpression2,
     selected_half_plane: BezierRecursiveQuadraticParallelExpression2,
@@ -17223,7 +17219,7 @@ impl BezierAlgebraicCuspSemicircle2 {
         ))
     }
 
-    /// Builds the compact three-axis system for a direct pair-radial circle
+    /// Builds the minimal-degree three-axis backend for a direct pair-radial circle
     /// against one analytic parallel. The target point is
     ///
     /// `Q = (X/W,Y/W) + d*J(H)/sqrt(S)`.
@@ -17237,11 +17233,11 @@ impl BezierAlgebraicCuspSemicircle2 {
     /// Both vector terms remain affine in the authored pair radical `k`.
     /// Thus every predicate fits the shared two-square-root expression and
     /// avoids independently eliminating center and radial coordinates.
-    fn selected_radial_parallel_system(
+    fn direct_pair_radial_parallel_fast_path(
         &self,
         other: &BezierParallel2,
         policy: &CurveContext,
-    ) -> CurveResult<Classification<Arc<BezierSelectedRadialCircleParallelSystem2>>> {
+    ) -> CurveResult<Classification<Arc<BezierDirectPairRadialParallelFastPath2>>> {
         let frame = match self.selected_radial_frame_system(policy)? {
             Classification::Decided(frame) => frame,
             Classification::Uncertain(reason) => {
@@ -17460,7 +17456,7 @@ impl BezierAlgebraicCuspSemicircle2 {
             );
             let incidence_projection =
                 reduce(incidence_candidate_norm.projection(&pair_discriminant)?);
-            Some(Arc::new(BezierSelectedRadialCircleParallelSystem2 {
+            Some(Arc::new(BezierDirectPairRadialParallelFastPath2 {
                 pair_map,
                 branch,
                 pair_discriminant,
@@ -19052,90 +19048,6 @@ impl BezierAlgebraicCuspSemicircle2 {
         )))
     }
 
-    fn selected_radial_parallel_intersections(
-        &self,
-        other: &BezierParallel2,
-        range: Option<&BezierParameterRange2>,
-        incident: Option<&BezierParallelIncidentDomain2>,
-        policy: &CurveContext,
-    ) -> CurveResult<Classification<BezierAlgebraicCuspSemicircleParallelIntersections2>> {
-        let system = match self.selected_radial_parallel_system(other, policy)? {
-            Classification::Decided(system) => system,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
-        let candidates = match system.parameters_with_incident_domain(range, incident, policy)? {
-            Classification::Decided(BezierAlgebraicFiberProjection2::Parameters(parameters)) => {
-                parameters
-            }
-            // Coincident components and other identically-zero projections
-            // remain the cold represented authority. Returning Unsupported
-            // here preserves that complete path without duplicating its
-            // component partitioning in this transverse fast kernel.
-            Classification::Decided(
-                BezierAlgebraicFiberProjection2::IdenticallyZero
-                | BezierAlgebraicFiberProjection2::Degenerate,
-            ) => {
-                return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
-            }
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
-        let mut contacts = Vec::with_capacity(candidates.len());
-        for candidate in candidates {
-            match system.target_is_regular(&candidate, policy)? {
-                Classification::Decided(true) => {}
-                Classification::Decided(false) => continue,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            }
-            let location = match system.contact_location(&candidate, policy)? {
-                Classification::Decided(Some(location)) => location,
-                Classification::Decided(None) => continue,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            };
-            let source_cross = match system.pair_expression_sign(
-                &system.tangent_cross_source,
-                &candidate,
-                policy,
-            )? {
-                Classification::Decided(sign) => sign,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            };
-            let tangent_cross_sign = if source_cross == RealSign::Zero {
-                Some(RealSign::Zero)
-            } else {
-                other.apply_parallel_derivative_scale_to_tangent_sign(
-                    Classification::Decided(source_cross),
-                    &candidate,
-                    policy,
-                )?
-            };
-            contacts.push(BezierAlgebraicCuspSemicircleParallelContact2 {
-                parallel_parameter: candidate,
-                tangent_cross_sign,
-                location,
-                correlated: true,
-            });
-        }
-        #[cfg(feature = "dispatch-trace")]
-        hyperreal::dispatch_trace::record(
-            "hypercurve",
-            "algebraic-circle-parallel-kernel",
-            "selected-radial-two-radical",
-        );
-        Ok(Classification::Decided(
-            BezierAlgebraicCuspSemicircleParallelIntersections2::Contacts(contacts),
-        ))
-    }
-
     fn recursive_selected_radial_parallel_intersections(
         &self,
         other: &BezierParallel2,
@@ -19149,14 +19061,11 @@ impl BezierAlgebraicCuspSemicircle2 {
                 return Ok(Classification::Uncertain(reason));
             }
         };
-        let (candidates, transverse_projection) = match system.parameters_with_incident_domain(
-            &system.projection,
-            range,
-            incident,
-            policy,
-        )? {
+        let (candidates, transverse_projection, direct_pair_candidates) = match system
+            .incidence_parameters_with_incident_domain(range, incident, policy)?
+        {
             Classification::Decided(BezierAlgebraicFiberProjection2::Parameters(parameters)) => {
-                (parameters, true)
+                (parameters, true, system.direct_pair_fast_path.is_some())
             }
             Classification::Decided(BezierAlgebraicFiberProjection2::IdenticallyZero) => {
                 let full_range;
@@ -19241,7 +19150,7 @@ impl BezierAlgebraicCuspSemicircle2 {
                 )? {
                     Classification::Decided(BezierAlgebraicFiberProjection2::Parameters(
                         parameters,
-                    )) => (parameters, false),
+                    )) => (parameters, false, false),
                     Classification::Decided(BezierAlgebraicFiberProjection2::IdenticallyZero) => {
                         let Some(rational_projection) =
                             system.projected_polynomial(&system.circle.rational)
@@ -19256,7 +19165,7 @@ impl BezierAlgebraicCuspSemicircle2 {
                         )? {
                             Classification::Decided(
                                 BezierAlgebraicFiberProjection2::Parameters(parameters),
-                            ) => (parameters, false),
+                            ) => (parameters, false, false),
                             Classification::Decided(
                                 BezierAlgebraicFiberProjection2::IdenticallyZero
                                 | BezierAlgebraicFiberProjection2::Degenerate,
@@ -19291,6 +19200,52 @@ impl BezierAlgebraicCuspSemicircle2 {
         };
         let mut contacts = Vec::with_capacity(candidates.len());
         for candidate in candidates {
+            if direct_pair_candidates {
+                let fast = system
+                    .direct_pair_fast_path
+                    .as_ref()
+                    .expect("direct pair candidates retain their fast backend");
+                match fast.target_is_regular(&candidate, policy)? {
+                    Classification::Decided(true) => {}
+                    Classification::Decided(false) => continue,
+                    Classification::Uncertain(reason) => {
+                        return Ok(Classification::Uncertain(reason));
+                    }
+                }
+                let location = match fast.contact_location(&candidate, policy)? {
+                    Classification::Decided(Some(location)) => location,
+                    Classification::Decided(None) => continue,
+                    Classification::Uncertain(reason) => {
+                        return Ok(Classification::Uncertain(reason));
+                    }
+                };
+                let source_cross = match fast.pair_expression_sign(
+                    &fast.tangent_cross_source,
+                    &candidate,
+                    policy,
+                )? {
+                    Classification::Decided(sign) => sign,
+                    Classification::Uncertain(reason) => {
+                        return Ok(Classification::Uncertain(reason));
+                    }
+                };
+                let tangent_cross_sign = if source_cross == RealSign::Zero {
+                    Some(RealSign::Zero)
+                } else {
+                    other.apply_parallel_derivative_scale_to_tangent_sign(
+                        Classification::Decided(source_cross),
+                        &candidate,
+                        policy,
+                    )?
+                };
+                contacts.push(BezierAlgebraicCuspSemicircleParallelContact2 {
+                    parallel_parameter: candidate,
+                    tangent_cross_sign,
+                    location,
+                    correlated: true,
+                });
+                continue;
+            }
             let transverse = transverse_projection
                 .then(|| system.expression_transverse_root(&system.circle, &candidate))
                 .flatten();
@@ -20213,11 +20168,6 @@ impl BezierAlgebraicCuspSemicircle2 {
             ));
         }
         if self.uses_selected_radial_frame() {
-            if let Classification::Decided(intersections) =
-                self.selected_radial_parallel_intersections(other, range, incident, policy)?
-            {
-                return Ok(Classification::Decided(intersections));
-            }
             if let Classification::Decided(intersections) = self
                 .recursive_selected_radial_parallel_intersections(other, range, incident, policy)?
             {
@@ -21245,24 +21195,6 @@ impl BezierAlgebraicCuspSemicircle2 {
         policy: &CurveContext,
     ) -> CurveResult<Classification<BezierAlgebraicCuspSemicircleParallelParameterMap2>> {
         if self.uses_selected_radial_frame() {
-            let compact = self.selected_radial_parallel_system(other, policy)?;
-            if let Classification::Decided(system) = compact {
-                return Ok(Classification::Decided(
-                    BezierAlgebraicCuspSemicircleParallelParameterMap2 {
-                        data: Arc::new(BezierAlgebraicCuspSemicircleParallelParameterMapData2 {
-                            semicircle: self.clone(),
-                            parallel: other.clone(),
-                            system:
-                                BezierAlgebraicCuspSemicircleParallelParameterMapSystem2::SelectedRadial {
-                                    system,
-                                },
-                            policy: policy.retained_object_policy(),
-                            parameter_cache:
-                                BezierAlgebraicCuspSemicircleParameterCache2::default(),
-                        }),
-                    },
-                ));
-            }
             let recursive = self.recursive_selected_radial_parallel_system(other, policy)?;
             if let Classification::Decided(system) = recursive {
                 return Ok(Classification::Decided(
@@ -34745,10 +34677,16 @@ impl BezierAlgebraicCuspSemicircle2 {
         else {
             return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
         };
+        let direct_pair_fast_path =
+            match self.direct_pair_radial_parallel_fast_path(other, policy)? {
+                Classification::Decided(fast_path) => Some(fast_path),
+                Classification::Uncertain(_) => None,
+            };
         Ok(Classification::Decided(Arc::new(
             BezierRecursiveSelectedRadialParallelSystem2 {
                 field,
                 base,
+                direct_pair_fast_path,
                 projection,
                 circle,
                 selected_half_plane,
@@ -38451,14 +38389,6 @@ impl BezierAlgebraicCuspSemicircleParallelParameterMap2 {
             ));
         }
         match &self.data.system {
-            BezierAlgebraicCuspSemicircleParallelParameterMapSystem2::SelectedRadial { system } => {
-                system.tangent_cross_dot_source_sign(
-                    &contact.parallel_parameter,
-                    cross_scale,
-                    dot_scale,
-                    policy,
-                )
-            }
             BezierAlgebraicCuspSemicircleParallelParameterMapSystem2::Represented { system } => {
                 system.tangent_cross_dot_source_sign(
                     &contact.parallel_parameter,
@@ -38508,18 +38438,6 @@ impl BezierAlgebraicCuspSemicircleParallelParameterMap2 {
                     && first_diameter == second_diameter
                     && first_radius == second_radius
                     && first_speed == second_speed
-            }
-            (
-                BezierAlgebraicCuspSemicircleParallelParameterMapSystem2::SelectedRadial {
-                    system: first,
-                },
-                BezierAlgebraicCuspSemicircleParallelParameterMapSystem2::SelectedRadial {
-                    system: second,
-                },
-            ) => {
-                Arc::ptr_eq(first, second)
-                    || (self.data.semicircle == other.data.semicircle
-                        && self.data.parallel == other.data.parallel)
             }
             (
                 BezierAlgebraicCuspSemicircleParallelParameterMapSystem2::RecursiveSelectedRadial {
@@ -38648,14 +38566,6 @@ impl BezierAlgebraicCuspSemicircleParallelParameterMap2 {
                 }
             }
             BezierAlgebraicCuspSemicircleParallelParameterMapSystem2::Represented { system } => {
-                system.diameter_parameter_sign(
-                    &contact.parallel_parameter,
-                    &denominator,
-                    &radial_coefficient,
-                    policy,
-                )?
-            }
-            BezierAlgebraicCuspSemicircleParallelParameterMapSystem2::SelectedRadial { system } => {
                 system.diameter_parameter_sign(
                     &contact.parallel_parameter,
                     &denominator,
@@ -52890,6 +52800,18 @@ impl BezierRecursiveSelectedRadialParallelSystem2 {
         })
     }
 
+    fn incidence_parameters_with_incident_domain(
+        &self,
+        range: Option<&BezierParameterRange2>,
+        incident: Option<&BezierParallelIncidentDomain2>,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<BezierAlgebraicFiberProjection2>> {
+        if let Some(fast_path) = self.direct_pair_fast_path.as_ref() {
+            return fast_path.parameters_with_incident_domain(range, incident, policy);
+        }
+        self.parameters_with_incident_domain(&self.projection, range, incident, policy)
+    }
+
     fn contact_location_with_evaluation(
         &self,
         evaluation: &BezierRecursiveSelectedRadialParallelEvaluation2,
@@ -52936,6 +52858,28 @@ impl BezierRecursiveSelectedRadialParallelSystem2 {
         dot_scale: &Real,
         policy: &CurveContext,
     ) -> CurveResult<Classification<RealSign>> {
+        if let Some(fast_path) = self.direct_pair_fast_path.as_ref()
+            && let Classification::Decided(sign) = fast_path.tangent_cross_dot_source_sign(
+                target_parameter,
+                cross_scale,
+                dot_scale,
+                policy,
+            )?
+        {
+            #[cfg(feature = "dispatch-trace")]
+            hyperreal::dispatch_trace::record(
+                "hypercurve",
+                "recursive-circle-parallel-map-predicate",
+                "direct-pair-tangent",
+            );
+            return Ok(Classification::Decided(sign));
+        }
+        #[cfg(feature = "dispatch-trace")]
+        hyperreal::dispatch_trace::record(
+            "hypercurve",
+            "recursive-circle-parallel-map-predicate",
+            "recursive-tangent",
+        );
         let evaluation = match self.candidate_evaluation(target_parameter, policy)? {
             Classification::Decided(Some(evaluation)) => evaluation,
             Classification::Decided(None) => {
@@ -52978,6 +52922,28 @@ impl BezierRecursiveSelectedRadialParallelSystem2 {
         radial_coefficient: &Real,
         policy: &CurveContext,
     ) -> CurveResult<Classification<RealSign>> {
+        if let Some(fast_path) = self.direct_pair_fast_path.as_ref()
+            && let Classification::Decided(sign) = fast_path.diameter_parameter_sign(
+                target_parameter,
+                denominator,
+                radial_coefficient,
+                policy,
+            )?
+        {
+            #[cfg(feature = "dispatch-trace")]
+            hyperreal::dispatch_trace::record(
+                "hypercurve",
+                "recursive-circle-parallel-map-predicate",
+                "direct-pair-diameter",
+            );
+            return Ok(Classification::Decided(sign));
+        }
+        #[cfg(feature = "dispatch-trace")]
+        hyperreal::dispatch_trace::record(
+            "hypercurve",
+            "recursive-circle-parallel-map-predicate",
+            "recursive-diameter",
+        );
         let evaluation = match self.candidate_evaluation(target_parameter, policy)? {
             Classification::Decided(Some(evaluation)) => evaluation,
             Classification::Decided(None) => {
@@ -58289,7 +58255,7 @@ fn parallel_parameters_with_incident_domain(
     ))
 }
 
-impl BezierSelectedRadialCircleParallelSystem2 {
+impl BezierDirectPairRadialParallelFastPath2 {
     fn compact_source_parameters(&self) -> Option<[BezierParameter2; 2]> {
         self.pair_map.compact_source_parameters()
     }
@@ -110299,6 +110265,16 @@ mod conversion_tests {
             let parallel = non_ph_parallel_touching_upper_unit_circle(true)
                 .transform_similarity(&quarter_turn)
                 .unwrap();
+            let Classification::Decided(system) = semicircle
+                .recursive_selected_radial_parallel_system(&parallel, &policy)
+                .unwrap()
+            else {
+                panic!("the direct pair frame must enter the recursive authority");
+            };
+            assert!(
+                system.direct_pair_fast_path.is_some(),
+                "the recursive authority must retain its direct-pair fast backend"
+            );
             let Classification::Decided(
                 BezierAlgebraicCuspSemicircleParallelIntersections2::Contacts(contacts),
             ) = semicircle
