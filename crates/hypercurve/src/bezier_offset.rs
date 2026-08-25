@@ -82268,28 +82268,83 @@ fn algebraic_selected_fiber_parameters_with_incident_ray(
     barrier: Option<&BezierParameter2>,
     policy: &CurveContext,
 ) -> CurveResult<Classification<BezierAlgebraicFiberProjection2>> {
+    algebraic_selected_fiber_parameters_with_incident_ray_and_limits(
+        incidence,
+        cusp,
+        finite_range,
+        anchor,
+        direction,
+        barrier,
+        MAX_PARALLEL_INTERSECTION_RESULTANT_DEGREE,
+        MAX_SELECTED_FIBER_QUOTIENT_DEGREE,
+        policy,
+    )
+}
+
+fn algebraic_selected_fiber_parameters_with_incident_ray_and_limits(
+    incidence: &BivariatePolynomial,
+    cusp: &BezierAlgebraicParameter2,
+    finite_range: &BezierParameterRange2,
+    anchor: &Real,
+    direction: BezierParameterRayDirection2,
+    barrier: Option<&BezierParameter2>,
+    max_resultant_degree: usize,
+    max_quotient_degree: usize,
+    policy: &CurveContext,
+) -> CurveResult<Classification<BezierAlgebraicFiberProjection2>> {
     let cusp_root = parameter_representation(cusp, policy);
     let report = project_bivariate_fiber_at_algebraic_parameter_with_max_degree(
         incidence,
         CurveResultantParameter::First,
         &cusp_root,
-        MAX_SELECTED_FIBER_QUOTIENT_DEGREE,
+        max_quotient_degree,
         policy.predicate_policy(),
     );
-    match report.status {
-        AlgebraicFiberProjectionStatus::Constructed => {}
+    let coefficients = match report.status {
+        AlgebraicFiberProjectionStatus::Constructed => report.coefficients,
         AlgebraicFiberProjectionStatus::InvalidEvidence => {
             return Err(CurveError::InvalidBezierAlgebraicParameter);
         }
-        AlgebraicFiberProjectionStatus::UnsupportedCoefficient => {
-            return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+        AlgebraicFiberProjectionStatus::UnsupportedCoefficient
+        | AlgebraicFiberProjectionStatus::Undecided => {
+            #[cfg(feature = "dispatch-trace")]
+            hyperreal::dispatch_trace::record(
+                "hypercurve",
+                "algebraic-selected-incident-fiber-projection",
+                "general-resultant-fallback",
+            );
+            let defining = BivariatePolynomial::new(
+                cusp.polynomial()
+                    .coefficients()
+                    .iter()
+                    .map(|coefficient| vec![coefficient.clone()])
+                    .collect(),
+            );
+            let report = resultant_bivariate_polynomial_system_complete(
+                &defining,
+                incidence,
+                CurveResultantParameter::Second,
+                CurveIntersectionResultantConfig {
+                    min_precision: PARALLEL_INTERSECTION_RESULTANT_PRECISION,
+                    max_resultant_degree,
+                },
+            );
+            match report.status {
+                CurveIntersectionResultantStatus::Constructed => report.resultant_coefficients,
+                CurveIntersectionResultantStatus::UndecidedCoefficient => {
+                    return Ok(Classification::Uncertain(UncertaintyReason::Predicate));
+                }
+                CurveIntersectionResultantStatus::EmptyCoordinatePolynomial
+                | CurveIntersectionResultantStatus::DegreeBoundExceeded
+                | CurveIntersectionResultantStatus::ResultantError
+                | CurveIntersectionResultantStatus::InterpolationDivisionFailed
+                | CurveIntersectionResultantStatus::InvalidHomogeneousWeight => {
+                    return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+                }
+            }
         }
-        AlgebraicFiberProjectionStatus::Undecided => {
-            return Ok(Classification::Uncertain(UncertaintyReason::Predicate));
-        }
-    }
-    if report
-        .coefficients
+    };
+    if coefficients
         .iter()
         .all(|coefficient| real_sign(coefficient, policy) == Some(RealSign::Zero))
     {
@@ -82297,18 +82352,15 @@ fn algebraic_selected_fiber_parameters_with_incident_ray(
             BezierAlgebraicFiberProjection2::IdenticallyZero,
         ));
     }
-    if report
-        .coefficients
+    if coefficients
         .iter()
         .all(|coefficient| real_sign(coefficient, policy).is_none())
     {
         return Ok(Classification::Uncertain(UncertaintyReason::RealSign));
     }
-    let coefficients = hypersolve::square_free_part(
-        report.coefficients.clone(),
-        hypersolve::PredicatePolicy::STRICT,
-    )
-    .unwrap_or(report.coefficients);
+    let coefficients =
+        hypersolve::square_free_part(coefficients.clone(), hypersolve::PredicatePolicy::STRICT)
+            .unwrap_or(coefficients);
     let polynomial = match BezierParameterPolynomial::try_new_power_basis(coefficients, policy)? {
         Classification::Decided(polynomial) => polynomial,
         Classification::Uncertain(reason) => {
@@ -129796,6 +129848,84 @@ mod conversion_tests {
                         .cmp_by_refinement(&BezierParameter2::Exact(expected), &policy)
                         .unwrap(),
                     Classification::Decided(std::cmp::Ordering::Equal),
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn incident_selected_fiber_projection_rejoins_the_complete_resultant() {
+        let half = (Real::one() / Real::from(2_i8)).unwrap();
+        let BezierParameter2::Algebraic(retained) =
+            algebraic_parameter(vec![-half, Real::zero(), Real::one()])
+        else {
+            panic!("the irrational retained root must remain algebraic");
+        };
+        let incidence = BivariatePolynomial::new(vec![
+            vec![Real::zero(), Real::one()],
+            vec![Real::from(-1_i8)],
+        ]);
+        let range = BezierParameterRange2::new_validated(
+            BezierParameter2::Exact(Real::zero()),
+            BezierParameter2::Exact(Real::one()),
+        );
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            #[cfg(feature = "dispatch-trace")]
+            hyperreal::dispatch_trace::reset();
+            let work = || {
+                crate::policy::resolve_certified_value(&policy, |attempt| {
+                    algebraic_selected_fiber_parameters_with_incident_ray_and_limits(
+                        &incidence,
+                        &retained,
+                        &range,
+                        &Real::one(),
+                        BezierParameterRayDirection2::Increasing,
+                        None,
+                        0,
+                        0,
+                        attempt,
+                    )
+                    .unwrap()
+                })
+            };
+            #[cfg(feature = "dispatch-trace")]
+            let outcome = hyperreal::dispatch_trace::with_recording(work);
+            #[cfg(not(feature = "dispatch-trace"))]
+            let outcome = work();
+            #[cfg(feature = "dispatch-trace")]
+            let trace = hyperreal::dispatch_trace::take_trace();
+            let Classification::Decided(BezierAlgebraicFiberProjection2::Parameters(candidates)) =
+                outcome.value
+            else {
+                panic!("the complete incident projection must publish its finite root");
+            };
+            let [candidate] = candidates.as_slice() else {
+                panic!("the selected identity fiber must retain exactly one root");
+            };
+            assert_eq!(
+                candidate
+                    .cmp_by_refinement(&BezierParameter2::Algebraic(retained.clone()), &policy)
+                    .unwrap(),
+                Classification::Decided(std::cmp::Ordering::Equal),
+            );
+            assert_eq!(outcome.certainty, crate::CurveCertainty::Certified);
+            #[cfg(feature = "dispatch-trace")]
+            {
+                assert!(
+                    trace.path_count(
+                        "hypercurve",
+                        "algebraic-selected-incident-fiber-projection",
+                        "general-resultant-fallback",
+                    ) >= 1,
+                    "the bounded quotient must rejoin the general authority: {trace:?}",
+                );
+                assert!(
+                    trace.path_count(
+                        "hypercurve",
+                        "bivariate-resultant",
+                        "unbounded-cold-continuation",
+                    ) >= 1,
+                    "the bounded general resultant must continue exactly: {trace:?}",
                 );
             }
         }
