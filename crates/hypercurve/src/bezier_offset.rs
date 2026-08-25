@@ -6109,6 +6109,7 @@ fn represented_tensor_coordinate(
 fn represented_tensor_coordinate_refined(
     relation: &DenseTensorPolynomial,
     sources: &[AlgebraicRootRepresentation],
+    initial_refinement_steps: usize,
     _hot_refinement_limit: usize,
     _trace_operation: &'static str,
     mut image_interval: impl FnMut(
@@ -6116,8 +6117,16 @@ fn represented_tensor_coordinate_refined(
         usize,
     ) -> Option<BezierAlgebraicChordRealInterval2>,
 ) -> Classification<AlgebraicRootRepresentation> {
-    let mut refinement_steps = 0_usize;
+    let mut refinement_steps = initial_refinement_steps;
     let mut previous = None;
+    #[cfg(feature = "dispatch-trace")]
+    if initial_refinement_steps > _hot_refinement_limit {
+        hyperreal::dispatch_trace::record(
+            "hypercurve",
+            _trace_operation,
+            "unbounded-cold-continuation",
+        );
+    }
     loop {
         let refined_sources = sources
             .iter()
@@ -6274,6 +6283,7 @@ fn represented_affine_coordinate(
     represented_tensor_coordinate_refined(
         &relation,
         &sources,
+        0,
         256,
         "represented-affine-image-separation",
         |refined_sources, _| {
@@ -6535,6 +6545,7 @@ fn represented_dense_value_refined(
     represented_tensor_coordinate_refined(
         &relation,
         sources,
+        0,
         256,
         "represented-dense-image-separation",
         |refined, refinement_steps| {
@@ -6546,6 +6557,25 @@ fn represented_dense_value_refined(
             )
         },
     )
+}
+
+fn represented_dense_nonzero(
+    polynomial: &DenseTensorPolynomial,
+    sources: &[AlgebraicRootRepresentation],
+) -> Classification<()> {
+    let value = match represented_dense_value_refined(polynomial, sources) {
+        Classification::Decided(value) => value,
+        Classification::Uncertain(reason) => return Classification::Uncertain(reason),
+    };
+    match represented_policy_sign(&value, &CurveContext::STRICT) {
+        Classification::Decided(RealSign::Positive | RealSign::Negative) => {
+            Classification::Decided(())
+        }
+        Classification::Decided(RealSign::Zero) => {
+            Classification::Uncertain(UncertaintyReason::Boundary)
+        }
+        Classification::Uncertain(reason) => Classification::Uncertain(reason),
+    }
 }
 
 /// Eliminates every already-selected source axis and retains the exact
@@ -7347,6 +7377,14 @@ fn represented_tensor_ratio(
             divide_univariate_polynomial_exact(denominator.coefficients(), &common),
         )
     {
+        if common.len() > 1 {
+            let Some(common) = DenseTensorPolynomial::from_axis_polynomial(2, 0, &common) else {
+                return Classification::Uncertain(UncertaintyReason::Unsupported);
+            };
+            if let Classification::Uncertain(reason) = represented_dense_nonzero(&common, sources) {
+                return Classification::Uncertain(reason);
+            }
+        }
         if numerator.len() == 1
             && denominator.len() == 1
             && let Ok(value) = &numerator[0] / &denominator[0]
@@ -7406,7 +7444,21 @@ fn represented_tensor_ratio(
             Classification::Uncertain(_) => {}
         }
     }
-    Classification::Uncertain(UncertaintyReason::Predicate)
+    if let Classification::Uncertain(reason) = represented_dense_nonzero(denominator, sources) {
+        return Classification::Uncertain(reason);
+    }
+    represented_tensor_coordinate_refined(
+        &relation,
+        sources,
+        256,
+        128,
+        "represented-ratio-image-separation",
+        |refined_sources, _| {
+            let numerator = dense_tensor_interval(numerator, refined_sources)?;
+            let denominator = dense_tensor_interval(denominator, refined_sources)?;
+            numerator.divide(&denominator, &CurveContext::STRICT)
+        },
+    )
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -130255,7 +130307,7 @@ mod conversion_tests {
     }
 
     #[test]
-    fn represented_scalar_images_refine_past_the_old_limit() {
+    fn represented_scalar_images_and_ratios_refine_past_the_old_limit() {
         let constant = DenseTensorPolynomial::from_axis_polynomial(1, 0, &[Real::pi()]).unwrap();
         let Classification::Decided(constant) = represented_dense_value_refined(&constant, &[])
         else {
@@ -130288,6 +130340,33 @@ mod conversion_tests {
                 .is_none()
         );
 
+        let selected_axis =
+            DenseTensorPolynomial::from_axis_polynomial(2, 0, &[Real::zero(), Real::one()])
+                .unwrap();
+        let nonzero_common =
+            DenseTensorPolynomial::from_axis_polynomial(2, 0, &[Real::one(), Real::one()]).unwrap();
+        let cancellable_numerator = selected_axis.multiply(&nonzero_common).unwrap();
+        let Classification::Decided(canceled) = represented_tensor_ratio(
+            &cancellable_numerator,
+            &nonzero_common,
+            std::slice::from_ref(&first),
+        ) else {
+            panic!("a nonvanishing exact common factor must remain cancellable");
+        };
+        assert!(represented_roots_strictly_equal(&canceled, &first));
+        let selected_minimal =
+            DenseTensorPolynomial::from_axis_polynomial(2, 0, &first.polynomial_coefficients)
+                .unwrap();
+        assert_eq!(
+            represented_tensor_ratio(
+                &selected_minimal,
+                &selected_minimal,
+                std::slice::from_ref(&first),
+            ),
+            Classification::Uncertain(UncertaintyReason::Boundary),
+            "cancellation must not turn an authored algebraic 0/0 into one",
+        );
+
         let first_axis =
             DenseTensorPolynomial::from_axis_polynomial(3, 0, &[Real::zero(), Real::one()])
                 .unwrap();
@@ -130295,6 +130374,20 @@ mod conversion_tests {
             DenseTensorPolynomial::from_axis_polynomial(3, 1, &[Real::zero(), Real::one()])
                 .unwrap();
         let difference = first_axis.subtract(&second_axis).unwrap();
+        let one = DenseTensorPolynomial::from_axis_polynomial(3, 0, &[Real::one()]).unwrap();
+        let ratio_bounded_sources = [
+            refined_represented_root(&first, 128),
+            refined_represented_root(&second, 128),
+        ];
+        let ratio_bounded_numerator = dense_tensor_interval(&one, &ratio_bounded_sources).unwrap();
+        let ratio_bounded_denominator =
+            dense_tensor_interval(&difference, &ratio_bounded_sources).unwrap();
+        assert!(
+            ratio_bounded_numerator
+                .divide(&ratio_bounded_denominator, &CurveContext::STRICT)
+                .is_none(),
+            "the exact nonzero denominator must still straddle zero at the old quotient ceiling",
+        );
         let bounded_sources = [
             refined_represented_root(&first, 256),
             refined_represented_root(&second, 256),
@@ -130313,18 +130406,24 @@ mod conversion_tests {
                     &[(&first, &Real::one()), (&second, &Real::from(-1_i8))],
                     &Real::zero(),
                 ),
+                represented_tensor_ratio(&one, &difference, &[first.clone(), second.clone()]),
             )
         };
         #[cfg(feature = "dispatch-trace")]
-        let (dense, affine) = hyperreal::dispatch_trace::with_recording(work);
+        let (dense, affine, ratio) = hyperreal::dispatch_trace::with_recording(work);
         #[cfg(not(feature = "dispatch-trace"))]
-        let (dense, affine) = work();
+        let (dense, affine, ratio) = work();
         #[cfg(feature = "dispatch-trace")]
         let trace = hyperreal::dispatch_trace::take_trace();
-        let (Classification::Decided(dense), Classification::Decided(affine)) = (dense, affine)
+        let (
+            Classification::Decided(dense),
+            Classification::Decided(affine),
+            Classification::Decided(ratio),
+        ) = (dense, affine, ratio)
         else {
-            panic!("both represented scalar authorities must separate the selected image");
+            panic!("every represented scalar authority must separate its selected image");
         };
+        assert!(ratio.is_valid());
         let comparison = compare_algebraic_root_representations_with_refinement(
             &dense,
             &affine,
@@ -130342,11 +130441,13 @@ mod conversion_tests {
             Some(std::cmp::Ordering::Less),
         );
         for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
-            let outcome = crate::policy::resolve_certified_value(&policy, |attempt| {
-                represented_policy_sign(&dense, attempt)
-            });
-            assert_eq!(outcome.value, Classification::Decided(RealSign::Negative));
-            assert_eq!(outcome.certainty, crate::CurveCertainty::Certified);
+            for represented in [&dense, &ratio] {
+                let outcome = crate::policy::resolve_certified_value(&policy, |attempt| {
+                    represented_policy_sign(represented, attempt)
+                });
+                assert_eq!(outcome.value, Classification::Decided(RealSign::Negative));
+                assert_eq!(outcome.certainty, crate::CurveCertainty::Certified);
+            }
         }
         #[cfg(feature = "dispatch-trace")]
         {
@@ -130365,6 +130466,14 @@ mod conversion_tests {
                     "unbounded-cold-continuation",
                 ) >= 1,
                 "the affine image must refine beyond 256 steps: {trace:?}",
+            );
+            assert!(
+                trace.path_count(
+                    "hypercurve",
+                    "represented-ratio-image-separation",
+                    "unbounded-cold-continuation",
+                ) >= 1,
+                "the quotient image must refine beyond 128 steps: {trace:?}",
             );
         }
     }
