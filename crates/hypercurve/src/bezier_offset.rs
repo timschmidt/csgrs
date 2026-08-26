@@ -41546,6 +41546,61 @@ impl BezierAlgebraicCuspSemicircleChordParameterMap2 {
         normalize_recursive_contact_frame(frame).map(|frame| frame.map(Some))
     }
 
+    /// Imports a line contact retained in `Q(alpha, u)` through the ordinary
+    /// parameter boundary required by the current recursive-field base.
+    ///
+    /// The local selected-fiber scalar remains authoritative until this cold
+    /// carrier switch. Its complete global projection is selected under a
+    /// STRICT pass, after which the exact affine line point enters the common
+    /// recursive projective importer. APPROXIMATE_512 can therefore terminate
+    /// later point predicates, but cannot choose `u` or construct coordinates.
+    fn selected_fiber_line_recursive_contact_point(
+        &self,
+        contact: &BezierAlgebraicCuspSemicircleChordContact2,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<Option<BezierRecursiveQuadraticProjectivePoint2>>> {
+        let Some(system) = self.selected_fiber_line_system() else {
+            return Ok(Classification::Decided(None));
+        };
+        self.validate_policy(policy)?;
+        let parameter = match policy.strict_predicate_pass(|| {
+            self.selected_fiber_line_parameter(contact)?
+                .promoted_bezier_parameter_complete(policy)
+        })? {
+            Classification::Decided(parameter) => parameter,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        let line = RationalBezier2::try_new(
+            vec![system.line.start().clone(), system.line.end().clone()],
+            vec![Real::one(), Real::one()],
+        )?;
+        let evidence = match rational_point_evidence_at_parameter(&line, &parameter, policy)? {
+            Classification::Decided(evidence) => evidence,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        let points = match recursive_projective_evidence_points(&[&evidence], policy)? {
+            Classification::Decided(Some(points)) => points,
+            Classification::Decided(None) => return Ok(Classification::Decided(None)),
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        let [point]: [BezierRecursiveQuadraticProjectivePoint2; 1] = points
+            .try_into()
+            .expect("a selected-fiber line contact retains one projective point");
+        #[cfg(feature = "dispatch-trace")]
+        hyperreal::dispatch_trace::record(
+            "hypercurve",
+            "recursive-projective-point",
+            "selected-fiber-line-promoted",
+        );
+        Ok(Classification::Decided(Some(point)))
+    }
+
     /// Imports the historical represented oblique contact as one selected
     /// recursive projective frame. Coordinate roots remain separate dense
     /// axes, but every candidate is evaluated at their authored isolated
@@ -44397,6 +44452,9 @@ impl BezierAlgebraicCuspChordPoint2 {
         policy: &CurveContext,
     ) -> CurveResult<Classification<Option<BezierRecursiveQuadraticProjectivePoint2>>> {
         let (map, contact) = self.map_contact();
+        if map.selected_fiber_line_system().is_some() {
+            return map.selected_fiber_line_recursive_contact_point(contact, policy);
+        }
         Ok(map
             .recursive_contact_frame(contact, policy)?
             .map(|frame| frame.map(|frame| frame.point)))
@@ -55515,6 +55573,27 @@ fn recursive_projective_point_rational_axis_parameters(
     axis: Axis2,
     policy: &CurveContext,
 ) -> CurveResult<Classification<Option<Vec<CurveRegionParameter2>>>> {
+    if let RationalBezierIntersectionPointEvidence2::AnalyticParallel(point) = point
+        && let Some(parameters) =
+            point.zero_distance_rational_source_parameters_for_axis(source, axis, policy)?
+    {
+        #[cfg(feature = "dispatch-trace")]
+        if matches!(&parameters, Classification::Decided(_)) {
+            hyperreal::dispatch_trace::record(
+                "hypercurve",
+                "algebraic-chord-collinear-endpoint",
+                "zero-distance-rational-source",
+            );
+        }
+        return Ok(parameters.map(|parameters| {
+            Some(
+                parameters
+                    .into_iter()
+                    .map(CurveRegionParameter2::from_bezier)
+                    .collect(),
+            )
+        }));
+    }
     let points = match recursive_projective_evidence_points(&[point], policy)? {
         Classification::Decided(Some(points)) => points,
         Classification::Decided(None) => return Ok(Classification::Decided(None)),
@@ -68247,20 +68326,6 @@ impl BezierAlgebraicChord2 {
                     return Ok(Classification::Uncertain(reason));
                 }
             }
-        }
-        if let RationalBezierIntersectionPointEvidence2::AnalyticParallel(point) = point
-            && let Some(parameters) = point.zero_distance_rational_source_parameters_for_axis(
-                source,
-                self.data.parameter_axis.axis,
-                policy,
-            )?
-        {
-            return Ok(parameters.map(|parameters| {
-                parameters
-                    .into_iter()
-                    .map(CurveRegionParameter2::from_bezier)
-                    .collect()
-            }));
         }
         if let RationalBezierIntersectionPointEvidence2::AlgebraicCuspChord(point) = point
             && point
@@ -132980,6 +133045,141 @@ mod conversion_tests {
                     .unwrap(),
                 Classification::Decided(Some(RealSign::Positive | RealSign::Negative)),
             ));
+        }
+    }
+
+    #[test]
+    fn selected_fiber_line_endpoint_enters_recursive_collinear_solver() {
+        let half = (Real::one() / Real::from(2_i8)).unwrap();
+        let support = QuadraticBezier2::from_line_segment(
+            LineSeg2::try_new(Point2::from_values(0, 0), Point2::from_values(2, 0)).unwrap(),
+        )
+        .parallel_left(Real::zero())
+        .unwrap();
+        let line = LineSeg2::try_new(
+            Point2::new(Real::from(-2_i8), half.clone()),
+            Point2::new(Real::from(4_i8), half.clone()),
+        )
+        .unwrap();
+        let source = RationalBezier2::try_new(
+            vec![line.start().clone(), line.end().clone()],
+            vec![Real::one(), Real::one()],
+        )
+        .unwrap();
+
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let Classification::Decided(polynomial) =
+                BezierParameterPolynomial::try_new_power_basis(
+                    vec![-half.clone(), Real::zero(), Real::one()],
+                    &policy,
+                )
+                .unwrap()
+            else {
+                panic!("the selected center polynomial must construct");
+            };
+            let Classification::Decided(interval) =
+                BezierParameterInterval::try_new(half.clone(), Real::one(), &policy).unwrap()
+            else {
+                panic!("the selected center interval must construct");
+            };
+            let Classification::Decided(center_parameter) =
+                BezierAlgebraicParameter2::try_isolate(polynomial, interval, &policy).unwrap()
+            else {
+                panic!("the selected center must isolate");
+            };
+            let Classification::Decided(Some(circle)) =
+                BezierAlgebraicCuspSemicircle2::from_selected_parallel_normal(
+                    support.clone(),
+                    BezierParameter2::Algebraic(center_parameter),
+                    Real::one(),
+                    false,
+                    &policy,
+                )
+                .unwrap()
+            else {
+                panic!("the selected circle must construct");
+            };
+            let Classification::Decided(chord) = BezierAlgebraicChord2::try_new(
+                RationalBezierIntersectionPointEvidence2::Exact(line.start().clone()),
+                RationalBezierIntersectionPointEvidence2::Exact(line.end().clone()),
+                &policy,
+            )
+            .unwrap() else {
+                panic!("the exact cutter chord must construct");
+            };
+            let Classification::Decided(intersections) = circle
+                .selected_parallel_normal_line_intersections(&chord, &line, true, &policy)
+                .unwrap()
+            else {
+                panic!("the selected-fiber circle/line incidence must decide");
+            };
+            let Classification::Decided(
+                BezierAlgebraicCuspSemicircleRetainedChordIntersections2::Contacts(contacts),
+            ) = circle
+                .retain_selected_fiber_line_intersections(
+                    &chord,
+                    intersections,
+                    true,
+                    true,
+                    &policy,
+                )
+                .unwrap()
+            else {
+                panic!("the selected-fiber line contacts must retain");
+            };
+            let contact = contacts
+                .iter()
+                .find(|contact| {
+                    matches!(
+                        &contact.point,
+                        RationalBezierIntersectionPointEvidence2::AlgebraicCuspChord(point)
+                            if point.map_contact().0.selected_fiber_line_system().is_some()
+                    )
+                })
+                .expect("the line contact must retain its selected-fiber map");
+
+            #[cfg(feature = "dispatch-trace")]
+            hyperreal::dispatch_trace::reset();
+            let work = || {
+                chord.collinear_source_parameters_at_chord_endpoint(
+                    &source,
+                    &contact.point,
+                    &policy,
+                )
+            };
+            #[cfg(feature = "dispatch-trace")]
+            let parameters = hyperreal::dispatch_trace::with_recording(work);
+            #[cfg(not(feature = "dispatch-trace"))]
+            let parameters = work();
+            #[cfg(feature = "dispatch-trace")]
+            let trace = hyperreal::dispatch_trace::take_trace();
+            let Classification::Decided(parameters) = parameters.unwrap() else {
+                panic!("the selected-fiber endpoint must invert recursively");
+            };
+            let [parameter] = parameters.as_slice() else {
+                panic!("the monotone line must retain one source parameter");
+            };
+            let parameter = parameter
+                .as_recursive_projective()
+                .expect("the source cut must retain its recursive scalar");
+            assert_eq!(
+                parameter.order_to_real(&Real::zero(), &policy).unwrap(),
+                Classification::Decided(std::cmp::Ordering::Greater),
+            );
+            assert_eq!(
+                parameter.order_to_real(&Real::one(), &policy).unwrap(),
+                Classification::Decided(std::cmp::Ordering::Less),
+            );
+            #[cfg(feature = "dispatch-trace")]
+            assert_eq!(
+                trace.path_count(
+                    "hypercurve",
+                    "recursive-projective-point",
+                    "selected-fiber-line-promoted",
+                ),
+                1,
+                "the selected-fiber line adapter must enter the common point importer: {trace:?}",
+            );
         }
     }
 
