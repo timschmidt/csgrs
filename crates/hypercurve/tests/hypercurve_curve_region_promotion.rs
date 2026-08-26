@@ -399,6 +399,92 @@ fn axis_aligned_algebraic_rectangle(policy: &CurveContext) -> CurveRegion2 {
     .unwrap()
 }
 
+fn shifted_algebraic_rectangle_boundary(
+    min_x: i64,
+    min_y: i64,
+    max_x: i64,
+    max_y: i64,
+    reverse: bool,
+    parameter: &BezierAlgebraicParameter2,
+    policy: &CurveContext,
+) -> CurveRegionBoundaryLoop2 {
+    let point = |x: i64, y: i64| {
+        RationalBezierIntersectionPointEvidence2::Algebraic(
+            RationalBezier2::try_new(vec![p(x, y), p(x + 1, y)], vec![Real::one(); 2])
+                .unwrap()
+                .point_at_algebraic_parameter(parameter, policy)
+                .unwrap(),
+        )
+    };
+    let points = [
+        point(min_x, min_y),
+        point(max_x, min_y),
+        point(max_x, max_y),
+        point(min_x, max_y),
+    ];
+    let fragments = (0..points.len())
+        .map(|index| {
+            BezierSplitFragment2::AlgebraicChord(decided(
+                BezierAlgebraicChord2::try_new(
+                    points[index].clone(),
+                    points[(index + 1) % points.len()].clone(),
+                    policy,
+                )
+                .unwrap(),
+            ))
+        })
+        .collect::<Vec<_>>();
+    let fragments = if reverse {
+        fragments
+            .into_iter()
+            .rev()
+            .map(|fragment| fragment.reversed().unwrap())
+            .collect()
+    } else {
+        fragments
+    };
+    CurveRegionBoundaryLoop2::new(fragments, policy).unwrap()
+}
+
+fn algebraic_material_hole_rectangle(
+    policy: &CurveContext,
+    fill_rule: FillRule,
+    reverse: bool,
+) -> CurveRegion2 {
+    let polynomial = decided(
+        BezierParameterPolynomial::try_new_power_basis(
+            vec![-q(1, 2), Real::zero(), Real::one()],
+            policy,
+        )
+        .unwrap(),
+    );
+    let interval =
+        decided(BezierParameterInterval::try_new(Real::zero(), Real::one(), policy).unwrap());
+    let parameter =
+        decided(BezierAlgebraicParameter2::try_isolate(polynomial, interval, policy).unwrap());
+    let boundaries = vec![
+        shifted_algebraic_rectangle_boundary(0, 0, 12, 4, reverse, &parameter, policy),
+        shifted_algebraic_rectangle_boundary(5, 1, 7, 3, reverse, &parameter, policy),
+    ];
+    CurveRegion2::try_new_with_loop_topology(
+        boundaries,
+        vec![CurveRegionLoopRole::Material, CurveRegionLoopRole::Hole],
+        vec![fill_rule; 2],
+        if reverse {
+            vec![
+                CurveBoundaryInteriorSide2::Right,
+                CurveBoundaryInteriorSide2::Left,
+            ]
+        } else {
+            vec![
+                CurveBoundaryInteriorSide2::Left,
+                CurveBoundaryInteriorSide2::Right,
+            ]
+        },
+    )
+    .unwrap()
+}
+
 #[test]
 fn correlated_chord_pair_endpoints_survive_transform_and_offset() {
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
@@ -5960,6 +6046,101 @@ fn algebraic_chord_expansion_merges_coupled_material_loops_exactly() {
                 Classification::Decided(expected)
             );
         }
+    }
+}
+
+#[test]
+fn algebraic_chord_material_hole_contact_and_hole_collapse_are_exact() {
+    let miter = OffsetCornerStyle2::Miter {
+        limit: Real::from(2),
+    };
+    for (policy, fill_rule, reverse) in [
+        (CurveContext::STRICT, FillRule::NonZero, false),
+        (CurveContext::STRICT, FillRule::EvenOdd, true),
+        (CurveContext::APPROXIMATE_512, FillRule::NonZero, false),
+        (CurveContext::APPROXIMATE_512, FillRule::EvenOdd, true),
+    ] {
+        let source = algebraic_material_hole_rectangle(&policy, fill_rule, reverse);
+        assert_eq!(
+            certified(source.classify_point(&p(2, 2), &policy).unwrap()),
+            Classification::Decided(RegionPointLocation::Inside),
+        );
+        assert_eq!(
+            certified(source.classify_point(&p(7, 2), &policy).unwrap()),
+            Classification::Decided(RegionPointLocation::Outside),
+        );
+
+        let contacted = source
+            .offset(-q(1, 2), &miter, &policy)
+            .unwrap_or_else(|error| {
+                panic!(
+                    "retained material/hole bands must regularize at coincident contact under {policy:?}, fill={fill_rule:?}, reverse={reverse}: {error:?}"
+                )
+            });
+        assert_eq!(contacted.certainty, CurveCertainty::Certified);
+        assert_eq!(contacted.value.boundary_loops().len(), 2);
+        assert_eq!(
+            certified(contacted.value.loop_roles(&policy).unwrap()),
+            Classification::Decided(vec![
+                CurveRegionLoopRole::Material,
+                CurveRegionLoopRole::Material,
+            ]),
+        );
+        assert!(
+            contacted
+                .value
+                .boundary_loops()
+                .iter()
+                .flat_map(|boundary| boundary.fragments())
+                .all(|fragment| matches!(fragment, BezierSplitFragment2::AlgebraicChord(_)))
+        );
+        for (point, expected) in [
+            (p(2, 2), RegionPointLocation::Inside),
+            (p(7, 2), RegionPointLocation::Outside),
+            (p(10, 2), RegionPointLocation::Inside),
+            (
+                Point2::new(Real::from(2), q(1, 2)),
+                RegionPointLocation::Boundary,
+            ),
+            (
+                Point2::new(Real::from(10), q(1, 2)),
+                RegionPointLocation::Boundary,
+            ),
+        ] {
+            assert_eq!(
+                certified(contacted.value.classify_point(&point, &policy).unwrap()),
+                Classification::Decided(expected),
+            );
+        }
+
+        let hole_collapsed = source
+            .offset(Real::one(), &miter, &policy)
+            .unwrap_or_else(|error| {
+                panic!(
+                    "the retained hole must collapse exactly under {policy:?}, fill={fill_rule:?}, reverse={reverse}: {error:?}"
+                )
+            });
+        assert_eq!(hole_collapsed.certainty, CurveCertainty::Certified);
+        assert_eq!(hole_collapsed.value.boundary_loops().len(), 1);
+        assert_eq!(
+            certified(hole_collapsed.value.loop_roles(&policy).unwrap()),
+            Classification::Decided(vec![CurveRegionLoopRole::Material]),
+        );
+        assert!(
+            hole_collapsed.value.boundary_loops()[0]
+                .fragments()
+                .iter()
+                .all(|fragment| matches!(fragment, BezierSplitFragment2::AlgebraicChord(_)))
+        );
+        assert_eq!(
+            certified(
+                hole_collapsed
+                    .value
+                    .classify_point(&p(7, 2), &policy)
+                    .unwrap(),
+            ),
+            Classification::Decided(RegionPointLocation::Inside),
+        );
     }
 }
 
