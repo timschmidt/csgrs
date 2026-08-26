@@ -3074,7 +3074,8 @@ impl<'a> CurveRegionBooleanContext<'a> {
                     contacts,
                 )) => Some(contacts),
                 Classification::Decided(
-                    BezierAlgebraicChordParallelIntersections2::DegenerateProjection,
+                    BezierAlgebraicChordParallelIntersections2::CoincidentSupportComponent
+                    | BezierAlgebraicChordParallelIntersections2::DegenerateProjection,
                 ) if chord.exact_line().is_none() => {
                     return Ok(blocker(UncertaintyReason::Boundary));
                 }
@@ -3082,7 +3083,8 @@ impl<'a> CurveRegionBooleanContext<'a> {
                     return Ok(blocker(reason));
                 }
                 Classification::Decided(
-                    BezierAlgebraicChordParallelIntersections2::DegenerateProjection,
+                    BezierAlgebraicChordParallelIntersections2::CoincidentSupportComponent
+                    | BezierAlgebraicChordParallelIntersections2::DegenerateProjection,
                 )
                 | Classification::Uncertain(_) => None,
             };

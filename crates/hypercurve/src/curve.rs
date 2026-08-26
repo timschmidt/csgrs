@@ -9068,7 +9068,8 @@ fn fillet_offset_centers(
                     ),
                 ) => contacts,
                 Classification::Decided(
-                    crate::bezier_offset::BezierAlgebraicChordParallelIntersections2::DegenerateProjection,
+                    crate::bezier_offset::BezierAlgebraicChordParallelIntersections2::CoincidentSupportComponent
+                    | crate::bezier_offset::BezierAlgebraicChordParallelIntersections2::DegenerateProjection,
                 ) => {
                     return Err(ExactCurveError::blocked(
                         CurveOperation2::Fillet,

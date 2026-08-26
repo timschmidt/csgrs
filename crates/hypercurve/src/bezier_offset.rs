@@ -6953,47 +6953,17 @@ fn selected_dense_last_axis_parameters(
     };
     match structural_zero {
         Classification::Decided(true) => {
-            let target_count = *polynomial
-                .dimensions()
-                .last()
-                .expect("a selected dense projection has a target axis");
-            for target_power in 0..target_count {
-                let mut dimensions = polynomial.dimensions().to_vec();
-                *dimensions
-                    .last_mut()
-                    .expect("a selected dense coefficient has a target axis") = 1;
-                let fiber_count = polynomial.coefficients().len() / target_count;
-                let mut coefficient = Vec::with_capacity(fiber_count);
-                for fiber in 0..fiber_count {
-                    coefficient.push(
-                        polynomial.coefficients()[fiber * target_count + target_power].clone(),
-                    );
-                }
-                let Some(coefficient) = DenseTensorPolynomial::try_new(dimensions, coefficient)
-                else {
-                    return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
-                };
-                let value = match represented_dense_value_refined(&coefficient, sources) {
-                    Classification::Decided(value) => value,
-                    Classification::Uncertain(reason) => {
-                        return Ok(Classification::Uncertain(reason));
+            return Ok(
+                match selected_dense_last_axis_active_degree(polynomial, sources, policy)? {
+                    Classification::Decided(None) => {
+                        Classification::Decided(BezierAlgebraicFiberProjection2::IdenticallyZero)
                     }
-                };
-                match represented_policy_sign(&value, policy) {
-                    Classification::Decided(RealSign::Zero) => {}
-                    Classification::Decided(RealSign::Positive | RealSign::Negative) => {
-                        return Ok(Classification::Decided(
-                            BezierAlgebraicFiberProjection2::Degenerate,
-                        ));
+                    Classification::Decided(Some(_)) => {
+                        Classification::Decided(BezierAlgebraicFiberProjection2::Degenerate)
                     }
-                    Classification::Uncertain(reason) => {
-                        return Ok(Classification::Uncertain(reason));
-                    }
-                }
-            }
-            return Ok(Classification::Decided(
-                BezierAlgebraicFiberProjection2::IdenticallyZero,
-            ));
+                    Classification::Uncertain(reason) => Classification::Uncertain(reason),
+                },
+            );
         }
         Classification::Decided(false) => {}
         Classification::Uncertain(reason) => {
@@ -7019,6 +6989,49 @@ fn selected_dense_last_axis_parameters(
         domain.isolate(&polynomial, policy)?
     };
     Ok(isolated.map(BezierAlgebraicFiberProjection2::Parameters))
+}
+
+/// Returns the exact degree of a dense target polynomial after fixing every
+/// selected source root. `None` means the complete selected fiber is zero.
+///
+/// Sequential resultants can vanish because a different conjugate source
+/// tuple owns a target-wide component. This local coefficient replay does not
+/// isolate positive-degree roots, but it can prove the important constant
+/// nonzero case immediately and without admitting a conjugate component.
+fn selected_dense_last_axis_active_degree(
+    polynomial: &DenseTensorPolynomial,
+    sources: &[AlgebraicRootRepresentation],
+    policy: &CurveContext,
+) -> CurveResult<Classification<Option<usize>>> {
+    if polynomial.dimensions().len() != sources.len() + 1 {
+        return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+    }
+    let target_count = *polynomial
+        .dimensions()
+        .last()
+        .expect("a selected dense polynomial has a target axis");
+    let strict = policy.strict_counterpart();
+    for target_power in (0..target_count).rev() {
+        let Some(coefficient) = dense_last_axis_coefficient(polynomial, target_power) else {
+            return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+        };
+        let value = match represented_dense_value_refined(&coefficient, sources) {
+            Classification::Decided(value) => value,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        match represented_policy_sign(&value, &strict) {
+            Classification::Decided(RealSign::Zero) => {}
+            Classification::Decided(RealSign::Positive | RealSign::Negative) => {
+                return Ok(Classification::Decided(Some(target_power)));
+            }
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        }
+    }
+    Ok(Classification::Decided(None))
 }
 
 /// Uses a binary64 solve only to locate the at-most-two roots of one selected
@@ -11331,7 +11344,8 @@ impl BezierAlgebraicCuspSemicircleMappedParameterData2 {
                         BezierAlgebraicChordParallelIntersections2::Contacts(contacts),
                     ) => contacts,
                     Classification::Decided(
-                        BezierAlgebraicChordParallelIntersections2::DegenerateProjection,
+                        BezierAlgebraicChordParallelIntersections2::CoincidentSupportComponent
+                        | BezierAlgebraicChordParallelIntersections2::DegenerateProjection,
                     ) => {
                         return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
                     }
@@ -12492,6 +12506,9 @@ pub(crate) struct BezierAlgebraicChordParallelContact2 {
 #[derive(Clone, Debug)]
 pub(crate) enum BezierAlgebraicChordParallelIntersections2 {
     Contacts(Vec<BezierAlgebraicChordParallelContact2>),
+    /// The analytic carrier follows the chord's complete supporting line on
+    /// the selected regular parameter cell. No isolated corner center exists.
+    CoincidentSupportComponent,
     DegenerateProjection,
 }
 
@@ -19497,37 +19514,7 @@ impl BezierAlgebraicCuspSemicircle2 {
                 (parameters, true, system.direct_pair_fast_path.is_some())
             }
             Classification::Decided(BezierAlgebraicFiberProjection2::IdenticallyZero) => {
-                let full_range;
-                let sample = if let Some(incident) = incident {
-                    let anchor = BezierParameter2::Exact(incident.anchor.clone());
-                    match (incident.direction, incident.barrier.as_ref()) {
-                        (BezierParameterRayDirection2::Increasing, Some(barrier)) => {
-                            anchor.strict_rational_between_ordered(barrier, policy)?
-                        }
-                        (BezierParameterRayDirection2::Decreasing, Some(barrier)) => {
-                            barrier.strict_rational_between_ordered(&anchor, policy)?
-                        }
-                        (BezierParameterRayDirection2::Increasing, None) => {
-                            Classification::Decided(&incident.anchor + Real::one())
-                        }
-                        (BezierParameterRayDirection2::Decreasing, None) => {
-                            Classification::Decided(&incident.anchor - Real::one())
-                        }
-                    }
-                } else {
-                    let sample_range = if let Some(range) = range {
-                        range
-                    } else {
-                        full_range = BezierParameterRange2::new_validated(
-                            BezierParameter2::Exact(Real::zero()),
-                            BezierParameter2::Exact(Real::one()),
-                        );
-                        &full_range
-                    };
-                    sample_range
-                        .start()
-                        .strict_rational_between_ordered(sample_range.end(), policy)?
-                };
+                let sample = strict_rational_sample_for_parallel_domain(range, incident, policy)?;
                 let sample = match sample {
                     Classification::Decided(sample) => BezierParameter2::Exact(sample),
                     Classification::Uncertain(reason) => {
@@ -19802,37 +19789,7 @@ impl BezierAlgebraicCuspSemicircle2 {
                     "represented-circle-parallel-projection",
                     "identically-zero",
                 );
-                let full_range;
-                let sample = if let Some(incident) = incident {
-                    let anchor = BezierParameter2::Exact(incident.anchor.clone());
-                    match (incident.direction, incident.barrier.as_ref()) {
-                        (BezierParameterRayDirection2::Increasing, Some(barrier)) => {
-                            anchor.strict_rational_between_ordered(barrier, policy)?
-                        }
-                        (BezierParameterRayDirection2::Decreasing, Some(barrier)) => {
-                            barrier.strict_rational_between_ordered(&anchor, policy)?
-                        }
-                        (BezierParameterRayDirection2::Increasing, None) => {
-                            Classification::Decided(&incident.anchor + Real::one())
-                        }
-                        (BezierParameterRayDirection2::Decreasing, None) => {
-                            Classification::Decided(&incident.anchor - Real::one())
-                        }
-                    }
-                } else {
-                    let sample_range = if let Some(range) = range {
-                        range
-                    } else {
-                        full_range = BezierParameterRange2::new_validated(
-                            BezierParameter2::Exact(Real::zero()),
-                            BezierParameter2::Exact(Real::one()),
-                        );
-                        &full_range
-                    };
-                    sample_range
-                        .start()
-                        .strict_rational_between_ordered(sample_range.end(), policy)?
-                };
+                let sample = strict_rational_sample_for_parallel_domain(range, incident, policy)?;
                 let sample = match sample {
                     Classification::Decided(sample) => BezierParameter2::Exact(sample),
                     Classification::Uncertain(reason) => {
@@ -20842,21 +20799,8 @@ impl BezierAlgebraicCuspSemicircle2 {
                     // sheet only common zeros of the two radical terms are
                     // geometric contacts; isolate all such finite and
                     // incident roots through the same quotient authority.
-                    let anchor = BezierParameter2::Exact(incident.anchor.clone());
-                    let sample = match (incident.direction, incident.barrier.as_ref()) {
-                        (BezierParameterRayDirection2::Increasing, Some(barrier)) => {
-                            anchor.strict_rational_between_ordered(barrier, policy)?
-                        }
-                        (BezierParameterRayDirection2::Decreasing, Some(barrier)) => {
-                            barrier.strict_rational_between_ordered(&anchor, policy)?
-                        }
-                        (BezierParameterRayDirection2::Increasing, None) => {
-                            Classification::Decided(&incident.anchor + Real::one())
-                        }
-                        (BezierParameterRayDirection2::Decreasing, None) => {
-                            Classification::Decided(&incident.anchor - Real::one())
-                        }
-                    };
+                    let sample =
+                        strict_rational_sample_for_parallel_domain(range, Some(incident), policy)?;
                     let sample = match sample {
                         Classification::Decided(sample) => BezierParameter2::Exact(sample),
                         Classification::Uncertain(reason) => {
@@ -54459,19 +54403,57 @@ fn recursive_quadratic_parallel_candidate_evaluation(
 }
 
 impl BezierRecursiveProjectiveChordParallelSystem2 {
+    fn projected_polynomial(
+        &self,
+        coefficients: &[BezierRecursiveQuadraticValue2],
+    ) -> Option<DenseTensorPolynomial> {
+        let (base, projection) = recursive_quadratic_polynomial_projection(coefficients.to_vec())?;
+        recursive_quadratic_bases_equivalent(&base, &self.base).then_some(projection)
+    }
+
+    fn projected_parameters(
+        &self,
+        projection: &DenseTensorPolynomial,
+        domain: SelectedThirdAxisDomain2<'_>,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<BezierAlgebraicFiberProjection2>> {
+        let projected = policy.strict_predicate_pass(|| {
+            selected_dense_last_axis_parameters(projection, &self.base.sources, domain, policy)
+        })?;
+        let Classification::Decided(BezierAlgebraicFiberProjection2::Degenerate) = projected else {
+            return Ok(projected);
+        };
+        Ok(
+            match selected_dense_last_axis_active_degree(projection, &self.base.sources, policy)? {
+                // A different conjugate source tuple can make the global
+                // resultant target-wide even though the authored selected
+                // tuple is a nonzero constant. That tuple has no roots.
+                Classification::Decided(Some(0)) => {
+                    #[cfg(feature = "dispatch-trace")]
+                    hyperreal::dispatch_trace::record(
+                        "hypercurve",
+                        "recursive-chord-parallel-degenerate",
+                        "constant-nonzero-selected-conjugate",
+                    );
+                    Classification::Decided(BezierAlgebraicFiberProjection2::Parameters(Vec::new()))
+                }
+                Classification::Decided(None) => {
+                    Classification::Decided(BezierAlgebraicFiberProjection2::IdenticallyZero)
+                }
+                Classification::Decided(Some(_)) => {
+                    Classification::Decided(BezierAlgebraicFiberProjection2::Degenerate)
+                }
+                Classification::Uncertain(reason) => Classification::Uncertain(reason),
+            },
+        )
+    }
+
     fn parameters(
         &self,
         domain: SelectedThirdAxisDomain2<'_>,
         policy: &CurveContext,
     ) -> CurveResult<Classification<BezierAlgebraicFiberProjection2>> {
-        policy.strict_predicate_pass(|| {
-            selected_dense_last_axis_parameters(
-                &self.projection,
-                &self.base.sources,
-                domain,
-                policy,
-            )
-        })
+        self.projected_parameters(&self.projection, domain, policy)
     }
 
     fn candidate_evaluation(
@@ -56263,6 +56245,35 @@ enum SelectedThirdAxisDomain2<'a> {
 }
 
 impl SelectedThirdAxisDomain2<'_> {
+    fn strict_rational_sample(self, policy: &CurveContext) -> CurveResult<Classification<Real>> {
+        let strict = policy.strict_counterpart();
+        match self {
+            Self::UnitInterval => Ok(Classification::Decided((Real::one() / Real::from(2_i8))?)),
+            Self::AffineLine => Ok(Classification::Decided(Real::zero())),
+            Self::IncidentRay {
+                anchor,
+                direction,
+                barrier,
+            } => {
+                let anchor_parameter = BezierParameter2::Exact(anchor.clone());
+                match (direction, barrier) {
+                    (BezierParameterRayDirection2::Increasing, Some(barrier)) => {
+                        anchor_parameter.strict_rational_between_ordered(barrier, &strict)
+                    }
+                    (BezierParameterRayDirection2::Decreasing, Some(barrier)) => {
+                        barrier.strict_rational_between_ordered(&anchor_parameter, &strict)
+                    }
+                    (BezierParameterRayDirection2::Increasing, None) => {
+                        Ok(Classification::Decided(anchor + Real::one()))
+                    }
+                    (BezierParameterRayDirection2::Decreasing, None) => {
+                        Ok(Classification::Decided(anchor - Real::one()))
+                    }
+                }
+            }
+        }
+    }
+
     fn isolate(
         self,
         polynomial: &BezierParameterPolynomial,
@@ -56320,6 +56331,25 @@ impl SelectedThirdAxisDomain2<'_> {
                 retain_parameters_before_incident_barrier(parameters, barrier, direction, policy)
             }
         }
+    }
+}
+
+fn strict_rational_sample_for_parallel_domain(
+    range: Option<&BezierParameterRange2>,
+    incident: Option<&BezierParallelIncidentDomain2>,
+    policy: &CurveContext,
+) -> CurveResult<Classification<Real>> {
+    if let Some(incident) = incident {
+        return (SelectedThirdAxisDomain2::IncidentRay {
+            anchor: incident.anchor(),
+            direction: incident.direction(),
+            barrier: incident.barrier(),
+        })
+        .strict_rational_sample(policy);
+    }
+    match range {
+        Some(range) => range.strict_rational_interior(&policy.strict_counterpart()),
+        None => SelectedThirdAxisDomain2::UnitInterval.strict_rational_sample(policy),
     }
 }
 
@@ -66020,17 +66050,104 @@ impl BezierAlgebraicChord2 {
         frame_tangent: Option<&Arc<BezierAnalyticParallelTangentField2>>,
         derivative_scale_sign: Option<RealSign>,
         domain: SelectedThirdAxisDomain2<'_>,
+        component_sample: Option<&Real>,
         clip_to_finite_chord: bool,
         policy: &CurveContext,
     ) -> CurveResult<Classification<BezierAlgebraicChordParallelIntersections2>> {
-        let candidates = match system.parameters(domain, policy)? {
+        let (candidates, original_projection_is_discrete) = match system
+            .parameters(domain, policy)?
+        {
             Classification::Decided(BezierAlgebraicFiberProjection2::Parameters(candidates)) => {
-                candidates
+                (candidates, true)
             }
-            Classification::Decided(
-                BezierAlgebraicFiberProjection2::IdenticallyZero
-                | BezierAlgebraicFiberProjection2::Degenerate,
-            ) => {
+            Classification::Decided(BezierAlgebraicFiberProjection2::IdenticallyZero) => {
+                let sample = match component_sample.cloned().map(Classification::Decided) {
+                    Some(sample) => sample,
+                    None => domain.strict_rational_sample(policy)?,
+                };
+                let sample = match sample {
+                    Classification::Decided(sample) => BezierParameter2::Exact(sample),
+                    Classification::Uncertain(reason) => {
+                        return Ok(Classification::Uncertain(reason));
+                    }
+                };
+                let evaluation = match system.candidate_evaluation(&sample, policy)? {
+                    Classification::Decided(Some(evaluation)) => evaluation,
+                    Classification::Decided(None) => {
+                        return Ok(Classification::Decided(
+                            BezierAlgebraicChordParallelIntersections2::DegenerateProjection,
+                        ));
+                    }
+                    Classification::Uncertain(reason) => {
+                        return Ok(Classification::Uncertain(reason));
+                    }
+                };
+                match policy.strict_predicate_pass(|| {
+                    system.expression_replay_sign(&system.incidence, &evaluation, policy)
+                })? {
+                    Classification::Decided(RealSign::Zero) => {
+                        #[cfg(feature = "dispatch-trace")]
+                        hyperreal::dispatch_trace::record(
+                            "hypercurve",
+                            "recursive-chord-parallel-degenerate",
+                            "coincident-support",
+                        );
+                        return Ok(Classification::Decided(
+                            BezierAlgebraicChordParallelIntersections2::CoincidentSupportComponent,
+                        ));
+                    }
+                    Classification::Decided(RealSign::Negative | RealSign::Positive) => {
+                        #[cfg(feature = "dispatch-trace")]
+                        hyperreal::dispatch_trace::record(
+                            "hypercurve",
+                            "recursive-chord-parallel-degenerate",
+                            "opposite-speed-sheet",
+                        );
+                    }
+                    Classification::Uncertain(reason) => {
+                        return Ok(Classification::Uncertain(reason));
+                    }
+                }
+
+                // A target-wide squared norm can belong wholly to the
+                // opposite positive-speed sheet. Authored-sheet contacts are
+                // then exactly the common zeros of the two unsquared terms.
+                // Enumerate either nonzero term and replay the complete
+                // expression below; no parallel-specific component solver is
+                // introduced.
+                let mut residual = None;
+                for coefficients in [&system.incidence.radical, &system.incidence.rational] {
+                    let Some(projection) = system.projected_polynomial(coefficients) else {
+                        return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+                    };
+                    match system.projected_parameters(&projection, domain, policy)? {
+                        Classification::Decided(BezierAlgebraicFiberProjection2::Parameters(
+                            candidates,
+                        )) => {
+                            residual = Some(candidates);
+                            break;
+                        }
+                        Classification::Decided(
+                            BezierAlgebraicFiberProjection2::IdenticallyZero,
+                        ) => {}
+                        Classification::Decided(BezierAlgebraicFiberProjection2::Degenerate) => {
+                            return Ok(Classification::Decided(
+                                BezierAlgebraicChordParallelIntersections2::DegenerateProjection,
+                            ));
+                        }
+                        Classification::Uncertain(reason) => {
+                            return Ok(Classification::Uncertain(reason));
+                        }
+                    }
+                }
+                let Some(candidates) = residual else {
+                    return Ok(Classification::Decided(
+                        BezierAlgebraicChordParallelIntersections2::DegenerateProjection,
+                    ));
+                };
+                (candidates, false)
+            }
+            Classification::Decided(BezierAlgebraicFiberProjection2::Degenerate) => {
                 return Ok(Classification::Decided(
                     BezierAlgebraicChordParallelIntersections2::DegenerateProjection,
                 ));
@@ -66041,13 +66158,17 @@ impl BezierAlgebraicChord2 {
         };
         let mut contacts = Vec::with_capacity(candidates.len());
         for candidate in candidates {
-            let projected_incidence = projected_selected_dense_candidate_box_incidence(
-                &system.projection,
-                &system.base.sources,
-                &candidate,
-                64,
-                64,
-            );
+            let projected_incidence = original_projection_is_discrete
+                .then(|| {
+                    projected_selected_dense_candidate_box_incidence(
+                        &system.projection,
+                        &system.base.sources,
+                        &candidate,
+                        64,
+                        64,
+                    )
+                })
+                .flatten();
             let projected_certificate = match projected_incidence {
                 Some(BezierDenseCandidateBoxIncidence2::Root(certificate)) => Some(certificate),
                 Some(BezierDenseCandidateBoxIncidence2::Disjoint(_)) => continue,
@@ -66192,6 +66313,7 @@ impl BezierAlgebraicChord2 {
         frame_tangent: Option<Arc<BezierAnalyticParallelTangentField2>>,
         derivative_scale_sign: Option<RealSign>,
         domain: SelectedThirdAxisDomain2<'_>,
+        component_sample: Option<&Real>,
         clip_to_finite_chord: bool,
         policy: &CurveContext,
     ) -> CurveResult<Classification<Option<BezierAlgebraicChordParallelIntersections2>>> {
@@ -66213,6 +66335,7 @@ impl BezierAlgebraicChord2 {
                 frame_tangent.as_ref(),
                 derivative_scale_sign,
                 domain,
+                component_sample,
                 clip_to_finite_chord,
                 policy,
             )?
@@ -66240,6 +66363,7 @@ impl BezierAlgebraicChord2 {
                 None,
                 None,
                 SelectedThirdAxisDomain2::UnitInterval,
+                None,
                 true,
                 policy,
             )? {
@@ -66284,12 +66408,19 @@ impl BezierAlgebraicChord2 {
                     return Ok(Classification::Uncertain(reason));
                 }
             };
+        let component_sample = match range.strict_rational_interior(&policy.strict_counterpart())? {
+            Classification::Decided(sample) => sample,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
         Ok(
             match self.recursive_projective_parallel_intersections_with_frame(
                 parallel,
                 Some(frame),
                 Some(derivative_scale_sign),
                 SelectedThirdAxisDomain2::UnitInterval,
+                Some(&component_sample),
                 true,
                 policy,
             )? {
@@ -66335,6 +66466,7 @@ impl BezierAlgebraicChord2 {
             None,
             None,
             SelectedThirdAxisDomain2::UnitInterval,
+            None,
             false,
             policy,
         )? {
@@ -66353,6 +66485,7 @@ impl BezierAlgebraicChord2 {
                 direction: incident.direction(),
                 barrier: incident.barrier(),
             },
+            None,
             false,
             policy,
         )? {
@@ -66368,6 +66501,10 @@ impl BezierAlgebraicChord2 {
             ) => {
                 finite.extend(exterior);
                 BezierAlgebraicChordParallelIntersections2::Contacts(finite)
+            }
+            (BezierAlgebraicChordParallelIntersections2::CoincidentSupportComponent, _)
+            | (_, BezierAlgebraicChordParallelIntersections2::CoincidentSupportComponent) => {
+                BezierAlgebraicChordParallelIntersections2::CoincidentSupportComponent
             }
             _ => BezierAlgebraicChordParallelIntersections2::DegenerateProjection,
         }))
@@ -77045,6 +77182,7 @@ impl BezierAlgebraicChordPairPoint2 {
                 None,
                 None,
                 SelectedThirdAxisDomain2::UnitInterval,
+                None,
                 false,
                 policy,
             )? {
@@ -130516,6 +130654,7 @@ mod conversion_tests {
                         None,
                         None,
                         SelectedThirdAxisDomain2::UnitInterval,
+                        None,
                         true,
                         &policy,
                     )
@@ -130548,6 +130687,118 @@ mod conversion_tests {
                     "the general recursive chord/parallel kernel must own replay: {trace:?}",
                 );
             }
+        }
+    }
+
+    #[test]
+    fn recursive_projective_chord_rejects_constant_conjugate_norm_component() {
+        // The two endpoint parameters are the distinct roots of
+        // 8t^2-8t+1. Treating their fields independently admits conjugate
+        // tuples on which the diagonal chord collapses to a point, so a
+        // sequential global resultant is identically zero. On the authored
+        // lower/upper tuple the chord is nondegenerate and the selected norm
+        // is a nonzero constant: the parallel line y=x+1 has no contact.
+        let parallel = QuadraticBezier2::from_line_segment(
+            LineSeg2::try_new(Point2::from_values(0, 1), Point2::from_values(1, 2)).unwrap(),
+        )
+        .parallel_left(Real::zero())
+        .unwrap();
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let parameters =
+                algebraic_parameters(vec![Real::one(), Real::from(-8_i8), Real::from(8_i8)]);
+            let [start, end] = parameters.as_slice() else {
+                panic!("the diagonal endpoints must have two selected roots");
+            };
+            let diagonal = RationalBezier2::try_new(
+                vec![Point2::from_values(0, 0), Point2::from_values(1, 1)],
+                vec![Real::one(), Real::one()],
+            )
+            .unwrap();
+            let endpoint = |parameter: &BezierParameter2| {
+                exact_contact_point_evidence(&diagonal, parameter, &policy)
+                    .unwrap()
+                    .expect("the diagonal selected point must retain exact evidence")
+            };
+            let chord =
+                match BezierAlgebraicChord2::try_new(endpoint(start), endpoint(end), &policy)
+                    .unwrap()
+                {
+                    Classification::Decided(chord) => chord,
+                    Classification::Uncertain(reason) => {
+                        panic!("the independent diagonal chord must construct: {reason:?}")
+                    }
+                };
+            for chord in [chord.clone(), chord.reversed()] {
+                assert!(matches!(
+                    chord.parallel_intersections(&parallel, &policy).unwrap(),
+                    Classification::Decided(
+                        BezierAlgebraicChordParallelIntersections2::Contacts(ref contacts)
+                    ) if contacts.is_empty()
+                ));
+            }
+        }
+    }
+
+    #[test]
+    fn recursive_projective_chord_replays_identically_zero_norm_sheet() {
+        let horizontal = |height: i8, policy: &CurveContext| match BezierAlgebraicChord2::try_new(
+            RationalBezierIntersectionPointEvidence2::Exact(Point2::new(
+                Real::from(-2_i8),
+                Real::from(height),
+            )),
+            RationalBezierIntersectionPointEvidence2::Exact(Point2::new(
+                Real::from(2_i8),
+                Real::from(height),
+            )),
+            policy,
+        )
+        .unwrap()
+        {
+            Classification::Decided(chord) => chord,
+            Classification::Uncertain(reason) => {
+                panic!("the exact horizontal chord must construct: {reason:?}")
+            }
+        };
+        let parallel = QuadraticBezier2::from_line_segment(
+            LineSeg2::try_new(Point2::from_values(-1, 0), Point2::from_values(1, 0)).unwrap(),
+        )
+        .parallel_left(Real::one())
+        .unwrap();
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            // Squaring cannot distinguish y=1 from y=-1. Exact authored-sheet
+            // replay rejects the opposite normal without manufacturing roots.
+            assert!(matches!(
+                horizontal(-1, &policy)
+                    .parallel_intersections(&parallel, &policy)
+                    .unwrap(),
+                Classification::Decided(
+                    BezierAlgebraicChordParallelIntersections2::Contacts(ref contacts)
+                ) if contacts.is_empty()
+            ));
+
+            let coincident = horizontal(1, &policy);
+            assert!(matches!(
+                coincident
+                    .parallel_intersections(&parallel, &policy)
+                    .unwrap(),
+                Classification::Decided(
+                    BezierAlgebraicChordParallelIntersections2::CoincidentSupportComponent
+                )
+            ));
+            let incident = incident_domain(
+                &parallel,
+                Real::one(),
+                BezierParameterRayDirection2::Increasing,
+                &policy,
+            );
+            assert!(matches!(
+                coincident
+                    .parallel_intersections_with_incident_ray(&parallel, &incident, &policy)
+                    .unwrap(),
+                Classification::Decided(
+                    BezierAlgebraicChordParallelIntersections2::CoincidentSupportComponent
+                )
+            ));
         }
     }
 
