@@ -3947,6 +3947,14 @@ impl BezierAlgebraicSelectedFiberParameter2 {
         if report.certainty == PredicateCertainty::Approximate {
             return Ok(None);
         }
+        if let Some(factor) = &report.identically_zero_fiber_factor {
+            match self.predicate_sign(factor, &policy.strict_counterpart())? {
+                Classification::Decided(RealSign::Positive | RealSign::Negative) => {}
+                Classification::Decided(RealSign::Zero) | Classification::Uncertain(_) => {
+                    return Ok(None);
+                }
+            }
+        }
         match report.status {
             AlgebraicFiberPolynomialImageProjectionStatus::Constructed
                 if report.coefficients.len() > 1 =>
@@ -3977,7 +3985,15 @@ impl BezierAlgebraicSelectedFiberParameter2 {
         &self,
         relation: &BivariatePolynomial,
         policy: &CurveContext,
-    ) -> CurveResult<Classification<Option<(BivariatePolynomial, Option<Vec<Real>>)>>> {
+    ) -> CurveResult<
+        Classification<
+            Option<(
+                BivariatePolynomial,
+                Option<Vec<Real>>,
+                Option<BivariatePolynomial>,
+            )>,
+        >,
+    > {
         self.validate_policy(policy)?;
         let retained_root = policy.strict_predicate_pass(|| {
             parameter_representation(&self.data.authority.data.retained_parameter, policy)
@@ -4066,11 +4082,9 @@ impl BezierAlgebraicSelectedFiberParameter2 {
                 // take the ordinary local-isolation path instead of trying to
                 // construct a root polynomial from that constant.
                 let schedule = (report.coefficients.len() > 1).then_some(report.coefficients);
-                Ok(Classification::Decided(
-                    report
-                        .retained_relation
-                        .map(|relation| (relation, schedule)),
-                ))
+                Ok(Classification::Decided(report.retained_relation.map(
+                    |relation| (relation, schedule, report.identically_zero_fiber_factor),
+                )))
             }
             AlgebraicFiberPolynomialImageProjectionStatus::InvalidEvidence => {
                 Err(CurveError::InvalidBezierAlgebraicParameter)
@@ -4087,7 +4101,13 @@ impl BezierAlgebraicSelectedFiberParameter2 {
             AlgebraicFiberPolynomialImageProjectionStatus::Undecided => {
                 Ok(report.retained_relation.map_or(
                     Classification::Uncertain(UncertaintyReason::Predicate),
-                    |relation| Classification::Decided(Some((relation, None))),
+                    |relation| {
+                        Classification::Decided(Some((
+                            relation,
+                            None,
+                            report.identically_zero_fiber_factor,
+                        )))
+                    },
                 ))
             }
         }
@@ -91493,12 +91513,27 @@ impl BezierParallel2 {
                 };
                 (system.incidence.clone(), Some(system))
             };
-        let (selected_incidence, global_schedule) =
+        let (selected_incidence, global_schedule, identically_zero_source_factor) =
             match center.retained_polynomial_image_relation(&projected_incidence, policy)? {
                 Classification::Decided(Some(incidence)) => incidence,
                 Classification::Decided(None) => return complete_promoted_fallback(),
                 Classification::Uncertain(_) => return complete_promoted_fallback(),
             };
+        if let Some(factor) = identically_zero_source_factor {
+            match center.predicate_sign(&factor, policy)? {
+                Classification::Decided(RealSign::Positive | RealSign::Negative) => {
+                    #[cfg(feature = "dispatch-trace")]
+                    hyperreal::dispatch_trace::record(
+                        "hypercurve",
+                        "selected-fiber-fixed-distance",
+                        "saturated-foreign-zero-image-component",
+                    );
+                }
+                Classification::Decided(RealSign::Zero) | Classification::Uncertain(_) => {
+                    return complete_promoted_fallback();
+                }
+            }
+        }
         #[cfg(feature = "dispatch-trace")]
         hyperreal::dispatch_trace::record(
             "hypercurve",
@@ -138379,6 +138414,59 @@ mod conversion_tests {
             assert_eq!(
                 linear.predicate_sign(&linear_incidence, &policy).unwrap(),
                 Classification::Decided(RealSign::Zero),
+            );
+        }
+    }
+
+    #[test]
+    fn selected_polynomial_image_saturates_a_foreign_repeated_source_component() {
+        let half = (Real::one() / Real::from(2_i8)).unwrap();
+        let image = BivariatePolynomial::new(vec![
+            vec![Real::zero(), Real::one()],
+            vec![Real::from(-1_i8), Real::one()],
+            vec![Real::from(-1_i8)],
+        ]);
+        let expected_factor =
+            BivariatePolynomial::new(vec![vec![Real::one(), Real::from(2_i8), Real::one()]]);
+        let expected_relation = BivariatePolynomial::new(vec![
+            vec![-half.clone(), Real::one()],
+            vec![Real::from(-1_i8), Real::one()],
+        ]);
+
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let BezierParameter2::Algebraic(alpha) =
+                algebraic_parameter(vec![-half.clone(), Real::zero(), Real::one()])
+            else {
+                unreachable!()
+            };
+            // F=(u-alpha)(u+1)^2 selects u=alpha. The image
+            // G=(u+1)(z-u) is identically zero on the foreign repeated
+            // u=-1 component, but its selected residual image is z=alpha.
+            let center = BezierAlgebraicSelectedFiberAuthority2::new(
+                BivariatePolynomial::new(vec![
+                    vec![Real::zero(), Real::one(), Real::from(2_i8), Real::one()],
+                    vec![Real::from(-1_i8), Real::from(-2_i8), Real::from(-1_i8)],
+                ]),
+                alpha.clone(),
+                &policy,
+            )
+            .parameter(IsolatedRootInterval {
+                lower: alpha.interval().start().clone(),
+                upper: alpha.interval().end().clone(),
+                exact_root: None,
+                distinct_root_count: 1,
+            });
+            let Classification::Decided(Some((relation, _, Some(factor)))) = center
+                .retained_polynomial_image_relation(&image, &policy)
+                .unwrap()
+            else {
+                panic!("the saturated selected image must remain locally constructible")
+            };
+            assert_eq!(factor, expected_factor);
+            assert_eq!(relation, expected_relation);
+            assert_eq!(
+                center.predicate_sign(&factor, &policy).unwrap(),
+                Classification::Decided(RealSign::Positive),
             );
         }
     }
