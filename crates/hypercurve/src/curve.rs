@@ -4999,11 +4999,11 @@ impl FilletOffsetCarrier2<'_, '_> {
                     anchor_evidence
                         .as_ref()
                         .and_then(|evidence| evidence.center_parallel.as_ref()),
-                    anchor_parameter.and_then(CurveRegionParameter2::as_selected_fiber),
+                    anchor_parameter.filter(|parameter| parameter.is_retained_scalar()),
                 ) {
-                    let anchor = match crate::BezierAlgebraicChord2::from_certified_selected_parallel_unit_tangent(
+                    let anchor = match crate::BezierAlgebraicChord2::from_certified_retained_parallel_unit_tangent(
                         center_frame.support.clone(),
-                        center_parameter.clone(),
+                        center_parameter,
                         policy,
                     )
                     .map_err(|cause| {
@@ -5167,11 +5167,11 @@ impl FilletOffsetCarrier2<'_, '_> {
                         policy: *policy,
                     }
                 } else if let Some(center_parameter) =
-                    anchor_parameter.and_then(CurveRegionParameter2::as_selected_fiber)
+                    anchor_parameter.filter(|parameter| parameter.is_retained_scalar())
                 {
-                    let anchor = match crate::BezierAlgebraicChord2::from_certified_selected_parallel_unit_tangent(
+                    let anchor = match crate::BezierAlgebraicChord2::from_certified_retained_parallel_unit_tangent(
                         support.clone(),
-                        center_parameter.clone(),
+                        center_parameter,
                         policy,
                     )
                     .map_err(|cause| {

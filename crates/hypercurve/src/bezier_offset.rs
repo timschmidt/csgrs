@@ -63232,28 +63232,45 @@ impl BezierAlgebraicChord2 {
         Self::try_new_with_endpoint_equality(start, end, equality, true, policy)
     }
 
-    /// Retains the positive source unit tangent at one selected analytic
-    /// parameter as an exact chord without projecting that parameter into its
+    /// Retains the positive source unit tangent at one compact analytic
+    /// parameter as an exact chord without projecting that parameter into a
     /// degree-multiplied global polynomial.
     ///
     /// The two endpoints differ by exactly one unit tangent.  Signing the
-    /// homogeneous tangent components in the selected fiber is therefore a
-    /// complete noncoincidence and monotone-axis certificate.  Those signs
-    /// are construction evidence and are always proved in a STRICT predicate
-    /// pass, even when the surrounding object retains APPROXIMATE_512 replay
-    /// authority.
-    pub(crate) fn from_certified_selected_parallel_unit_tangent(
+    /// homogeneous tangent components in the retained scalar's own field is
+    /// therefore a complete noncoincidence and monotone-axis certificate.
+    /// Those signs are construction evidence and are always proved in a
+    /// STRICT predicate pass, even when the surrounding object retains
+    /// APPROXIMATE_512 replay authority.
+    pub(crate) fn from_certified_retained_parallel_unit_tangent(
         parallel: BezierParallel2,
-        parameter: BezierAlgebraicSelectedFiberParameter2,
+        parameter: &CurveRegionParameter2,
         policy: &CurveContext,
     ) -> CurveResult<Classification<Self>> {
-        parameter.validate_policy(policy)?;
+        let parameter = if let Some(parameter) = parameter.as_selected_fiber() {
+            parameter.validate_policy(policy)?;
+            BezierAnalyticParallelPointParameter2::SelectedFiber(parameter.clone())
+        } else if let Some(parameter) = parameter.as_recursive_projective() {
+            parameter.validate_policy(policy)?;
+            BezierAnalyticParallelPointParameter2::RecursiveProjective(parameter.clone())
+        } else {
+            return Err(CurveError::Topology(
+                "a retained analytic tangent lost its compact parameter".into(),
+            ));
+        };
         let differential = parallel.differential()?;
-        let component_sign = |coefficients: &[Real]| {
-            parameter.predicate_sign(
-                &bivariate_outer_product(&[Real::one()], coefficients),
-                policy,
-            )
+        let component_sign = |coefficients: &[Real]| match &parameter {
+            BezierAnalyticParallelPointParameter2::SelectedFiber(parameter) => parameter
+                .predicate_sign(
+                    &bivariate_outer_product(&[Real::one()], coefficients),
+                    policy,
+                ),
+            BezierAnalyticParallelPointParameter2::RecursiveProjective(parameter) => {
+                parameter.polynomial_sign(coefficients, policy)
+            }
+            BezierAnalyticParallelPointParameter2::Bezier(_) => {
+                unreachable!("the retained tangent constructor rejects ordinary parameters")
+            }
         };
         let (x_sign, y_sign) = policy.strict_predicate_pass(|| {
             Ok::<_, CurveError>((
@@ -63278,7 +63295,7 @@ impl BezierAlgebraicChord2 {
             ),
             (Classification::Decided(RealSign::Zero), Classification::Decided(RealSign::Zero)) => {
                 return Err(CurveError::Topology(
-                    "a selected analytic tangent frame was singular".into(),
+                    "a retained analytic tangent frame was singular".into(),
                 ));
             }
             (Classification::Uncertain(reason), _) | (_, Classification::Uncertain(reason)) => {
@@ -63286,16 +63303,17 @@ impl BezierAlgebraicChord2 {
             }
         };
         let start = RationalBezierIntersectionPointEvidence2::AnalyticParallel(
-            BezierAnalyticParallelPoint2::new_selected_fiber(
+            BezierAnalyticParallelPoint2::new_with_tangent_distance_parameter(
                 parallel.clone(),
                 parameter.clone(),
+                Real::zero(),
                 policy,
             ),
         );
         let end = RationalBezierIntersectionPointEvidence2::AnalyticParallel(
             BezierAnalyticParallelPoint2::new_with_tangent_distance_parameter(
                 parallel,
-                BezierAnalyticParallelPointParameter2::SelectedFiber(parameter),
+                parameter,
                 Real::one(),
                 policy,
             ),
@@ -81224,40 +81242,10 @@ impl BezierAlgebraicCuspSemicircleFragment2 {
                     return Ok(Classification::Uncertain(reason));
                 }
             }
-        } else if let Some(parameter) = parameter.as_selected_fiber() {
-            match BezierAlgebraicChord2::from_certified_selected_parallel_unit_tangent(
-                parallel.clone(),
-                parameter.clone(),
-                policy,
-            )? {
-                Classification::Decided(chord) => chord,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            }
         } else if parameter.is_retained_scalar() {
-            let parameter = match policy
-                .strict_predicate_pass(|| parameter.promoted_bezier_parameter_complete(policy))?
-            {
-                Classification::Decided(parameter) => parameter,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            };
-            let anchor_point = RationalBezierIntersectionPointEvidence2::AnalyticParallel(
-                BezierAnalyticParallelPoint2::new(parallel.clone(), parameter.clone(), policy),
-            );
-            let anchor_support = RationalBezierIntersectionPointEvidence2::AnalyticParallel(
-                BezierAnalyticParallelPoint2::new_with_tangent_distance(
-                    parallel.clone(),
-                    parameter,
-                    Real::one(),
-                    policy,
-                ),
-            );
-            match BezierAlgebraicChord2::try_new_from_certified_distinct_endpoints(
-                anchor_point,
-                anchor_support,
+            match BezierAlgebraicChord2::from_certified_retained_parallel_unit_tangent(
+                parallel.clone(),
+                parameter,
                 policy,
             )? {
                 Classification::Decided(chord) => chord,
@@ -138685,6 +138673,26 @@ mod conversion_tests {
                 Classification::Decided(RealSign::Negative),
             );
             let endpoint = CurveRegionParameter2::from_recursive_projective(parameter.clone());
+            let Classification::Decided(anchor_tangent) =
+                BezierAlgebraicChord2::from_certified_retained_parallel_unit_tangent(
+                    incident_parallel.clone(),
+                    &endpoint,
+                    &policy,
+                )
+                .unwrap()
+            else {
+                panic!("the recursive analytic tangent must construct locally");
+            };
+            for point in [&anchor_tangent.data.start, &anchor_tangent.data.end] {
+                let RationalBezierIntersectionPointEvidence2::AnalyticParallel(point) = point
+                else {
+                    panic!("the retained analytic tangent must preserve its point carrier");
+                };
+                assert!(matches!(
+                    &point.data.parameter,
+                    BezierAnalyticParallelPointParameter2::RecursiveProjective(_)
+                ));
+            }
             let Classification::Decided(incident) = incident_parallel
                 .incident_domain_from_retained_parameter(
                     &endpoint,
