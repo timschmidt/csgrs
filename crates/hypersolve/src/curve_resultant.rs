@@ -139,7 +139,8 @@ pub enum TrivariateConstraintResultantStatus {
     UndecidedCoefficient,
     /// The constraint was constant after certified trimming.
     InvalidConstraint,
-    /// At least one retained-axis degree exceeded the configured budget.
+    /// At least one retained-axis degree exceeded the configured or
+    /// addressable budget.
     DegreeBoundExceeded,
     /// A sampled univariate resultant failed.
     ResultantError,
@@ -177,7 +178,8 @@ pub enum TrivariateConstraintSubresultantStatus {
     InvalidConstraint,
     /// The requested order was zero or exceeded the smaller input degree.
     InvalidOrder,
-    /// At least one retained-axis degree exceeded the configured budget.
+    /// At least one retained-axis degree exceeded the configured or
+    /// addressable budget.
     DegreeBoundExceeded,
     /// A sampled exact subresultant determinant failed.
     DeterminantError,
@@ -200,6 +202,52 @@ pub struct TrivariateConstraintSubresultantReport {
     /// Remaining tensor axes, in ascending original-axis order.
     pub retained_axes: [TrivariatePolynomialAxis; 2],
     /// Requested subresultant order.
+    pub order: usize,
+    /// Conservative coefficient degree bound on each retained axis.
+    pub degree_bounds: [usize; 2],
+    /// Coefficients in ascending eliminated-axis power order.
+    pub coefficients: Vec<BivariatePolynomial>,
+    /// Sampled determinant error, when construction stopped there.
+    pub determinant_error: Option<BareissError>,
+}
+
+/// Final status for one exact subresultant of two trivariate polynomials.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub enum TrivariatePolynomialSystemSubresultantStatus {
+    /// Every retained-axis coefficient of the requested subresultant was
+    /// reconstructed exactly.
+    Constructed,
+    /// At least one polynomial was identically zero.
+    EmptyPolynomial,
+    /// A coefficient needed for exact degree certification remained undecided.
+    UndecidedCoefficient,
+    /// The requested order exceeded the smaller eliminated-axis degree.
+    InvalidOrder,
+    /// At least one retained-axis degree exceeded the configured or
+    /// addressable budget.
+    DegreeBoundExceeded,
+    /// A sampled Sylvester or subresultant determinant failed.
+    DeterminantError,
+    /// Exact tensor-grid interpolation failed.
+    InterpolationDivisionFailed,
+}
+
+/// Exact subresultant of two trivariate polynomials on one eliminated axis.
+///
+/// Order zero is their resultant. For positive order,
+/// `coefficients[k]` multiplies eliminated-axis power `k`. Scanning orders
+/// upward and signing the coefficient polynomials at a selected retained pair
+/// recovers the first nonzero fiber GCD without constructing a primitive
+/// element for that pair.
+#[derive(Clone, Debug, PartialEq)]
+pub struct TrivariatePolynomialSystemSubresultantReport {
+    /// Final construction status.
+    pub status: TrivariatePolynomialSystemSubresultantStatus,
+    /// Tensor axis on which the input polynomials were compared.
+    pub eliminated_axis: TrivariatePolynomialAxis,
+    /// Remaining tensor axes, in ascending original-axis order.
+    pub retained_axes: [TrivariatePolynomialAxis; 2],
+    /// Requested subresultant order; zero denotes the resultant.
     pub order: usize,
     /// Conservative coefficient degree bound on each retained axis.
     pub degree_bounds: [usize; 2],
@@ -840,13 +888,29 @@ pub fn subresultant_trivariate_polynomial_univariate_constraint(
             None,
         );
     }
+    let Some(first_sample_count) = degree_bounds[0].checked_add(1) else {
+        return report(
+            TrivariateConstraintSubresultantStatus::DegreeBoundExceeded,
+            degree_bounds,
+            Vec::new(),
+            None,
+        );
+    };
+    let Some(second_sample_count) = degree_bounds[1].checked_add(1) else {
+        return report(
+            TrivariateConstraintSubresultantStatus::DegreeBoundExceeded,
+            degree_bounds,
+            Vec::new(),
+            None,
+        );
+    };
 
     let mut samples = (0..=order)
-        .map(|_| vec![vec![Real::zero(); degree_bounds[1] + 1]; degree_bounds[0] + 1])
+        .map(|_| vec![vec![Real::zero(); second_sample_count]; first_sample_count])
         .collect::<Vec<_>>();
-    for first_sample in 0..=degree_bounds[0] {
+    for first_sample in 0..first_sample_count {
         let first_value = Real::from(first_sample as u64);
-        for second_sample in 0..=degree_bounds[1] {
+        for second_sample in 0..second_sample_count {
             let second_value = Real::from(second_sample as u64);
             let mut fiber = evaluate_trivariate_at_retained_parameters(
                 polynomial,
@@ -887,6 +951,234 @@ pub fn subresultant_trivariate_polynomial_univariate_constraint(
     };
     report(
         TrivariateConstraintSubresultantStatus::Constructed,
+        degree_bounds,
+        coefficients,
+        None,
+    )
+}
+
+/// Reconstructs one exact subresultant of two trivariate polynomials.
+///
+/// Both operands keep their two retained axes symbolic while the requested
+/// eliminated-axis subresultant is sampled on an exact integer tensor grid.
+/// Nominal eliminated-axis degrees are preserved at every sample, so a
+/// leading coefficient which vanishes only at one grid point does not change
+/// the represented Sylvester minor. Order zero returns the resultant as one
+/// constant coefficient polynomial.
+pub fn subresultant_trivariate_polynomial_system(
+    first: &TrivariatePolynomial,
+    second: &TrivariatePolynomial,
+    eliminated_axis: TrivariatePolynomialAxis,
+    order: usize,
+    config: CurveIntersectionResultantConfig,
+) -> TrivariatePolynomialSystemSubresultantReport {
+    let retained_axis_indices = match eliminated_axis {
+        TrivariatePolynomialAxis::First => [1, 2],
+        TrivariatePolynomialAxis::Second => [0, 2],
+        TrivariatePolynomialAxis::Third => [0, 1],
+    };
+    let retained_axes = retained_axis_indices.map(trivariate_axis_from_index);
+    let report = |status, degree_bounds, coefficients, determinant_error| {
+        TrivariatePolynomialSystemSubresultantReport {
+            status,
+            eliminated_axis,
+            retained_axes,
+            order,
+            degree_bounds,
+            coefficients,
+            determinant_error,
+        }
+    };
+    if trivariate_polynomial_is_empty(first) || trivariate_polynomial_is_empty(second) {
+        return report(
+            TrivariatePolynomialSystemSubresultantStatus::EmptyPolynomial,
+            [0, 0],
+            Vec::new(),
+            None,
+        );
+    }
+    let first_degrees = match certified_trivariate_degree(first, config.min_precision) {
+        Ok(Some(degrees)) => degrees,
+        Ok(None) => {
+            return report(
+                TrivariatePolynomialSystemSubresultantStatus::EmptyPolynomial,
+                [0, 0],
+                Vec::new(),
+                None,
+            );
+        }
+        Err(()) => {
+            return report(
+                TrivariatePolynomialSystemSubresultantStatus::UndecidedCoefficient,
+                [0, 0],
+                Vec::new(),
+                None,
+            );
+        }
+    };
+    let second_degrees = match certified_trivariate_degree(second, config.min_precision) {
+        Ok(Some(degrees)) => degrees,
+        Ok(None) => {
+            return report(
+                TrivariatePolynomialSystemSubresultantStatus::EmptyPolynomial,
+                [0, 0],
+                Vec::new(),
+                None,
+            );
+        }
+        Err(()) => {
+            return report(
+                TrivariatePolynomialSystemSubresultantStatus::UndecidedCoefficient,
+                [0, 0],
+                Vec::new(),
+                None,
+            );
+        }
+    };
+
+    let eliminated_index = eliminated_axis.index();
+    let first_degree = first_degrees[eliminated_index];
+    let second_degree = second_degrees[eliminated_index];
+    let terminal_order = first_degree.min(second_degree);
+    if order > terminal_order {
+        return report(
+            TrivariatePolynomialSystemSubresultantStatus::InvalidOrder,
+            [0, 0],
+            Vec::new(),
+            None,
+        );
+    }
+
+    // At terminal order the smaller input is the subresultant. If both
+    // degrees are equal, either input is valid once every lower order has
+    // vanished in the selected retained fiber; use the second consistently.
+    if order > 0 && order == terminal_order {
+        let (polynomial, degrees) = if first_degree < second_degree {
+            (first, first_degrees)
+        } else {
+            (second, second_degrees)
+        };
+        let coefficients = (0..=terminal_order)
+            .map(|power| trivariate_axis_coefficient_bivariate(polynomial, eliminated_axis, power))
+            .collect();
+        return report(
+            TrivariatePolynomialSystemSubresultantStatus::Constructed,
+            retained_axis_indices.map(|axis| degrees[axis]),
+            coefficients,
+            None,
+        );
+    }
+
+    let first_row_count = second_degree - order;
+    let second_row_count = first_degree - order;
+    let degree_bounds = retained_axis_indices.map(|axis| {
+        first_row_count
+            .saturating_mul(first_degrees[axis])
+            .saturating_add(second_row_count.saturating_mul(second_degrees[axis]))
+    });
+    if degree_bounds
+        .into_iter()
+        .any(|degree| degree > config.max_resultant_degree)
+    {
+        return report(
+            TrivariatePolynomialSystemSubresultantStatus::DegreeBoundExceeded,
+            degree_bounds,
+            Vec::new(),
+            None,
+        );
+    }
+    let Some(first_sample_count) = degree_bounds[0].checked_add(1) else {
+        return report(
+            TrivariatePolynomialSystemSubresultantStatus::DegreeBoundExceeded,
+            degree_bounds,
+            Vec::new(),
+            None,
+        );
+    };
+    let Some(second_sample_count) = degree_bounds[1].checked_add(1) else {
+        return report(
+            TrivariatePolynomialSystemSubresultantStatus::DegreeBoundExceeded,
+            degree_bounds,
+            Vec::new(),
+            None,
+        );
+    };
+
+    let mut samples = (0..=order)
+        .map(|_| vec![vec![Real::zero(); second_sample_count]; first_sample_count])
+        .collect::<Vec<_>>();
+    for first_sample in 0..first_sample_count {
+        let first_value = Real::from(first_sample as u64);
+        for second_sample in 0..second_sample_count {
+            let second_value = Real::from(second_sample as u64);
+            let mut first_fiber = evaluate_trivariate_at_retained_parameters(
+                first,
+                eliminated_axis,
+                &first_value,
+                &second_value,
+            );
+            let mut second_fiber = evaluate_trivariate_at_retained_parameters(
+                second,
+                eliminated_axis,
+                &first_value,
+                &second_value,
+            );
+            first_fiber.resize(first_degree + 1, Real::zero());
+            first_fiber.truncate(first_degree + 1);
+            second_fiber.resize(second_degree + 1, Real::zero());
+            second_fiber.truncate(second_degree + 1);
+            let coefficients = if order == 0 {
+                match determinant_bareiss(
+                    &sylvester_matrix(&first_fiber, &second_fiber),
+                    config.min_precision,
+                ) {
+                    Ok(result) => vec![result.determinant],
+                    Err(error) => {
+                        return report(
+                            TrivariatePolynomialSystemSubresultantStatus::DeterminantError,
+                            degree_bounds,
+                            Vec::new(),
+                            Some(error),
+                        );
+                    }
+                }
+            } else {
+                match subresultant_coefficients(
+                    &first_fiber,
+                    &second_fiber,
+                    order,
+                    config.min_precision,
+                ) {
+                    Ok(coefficients) => coefficients,
+                    Err(error) => {
+                        return report(
+                            TrivariatePolynomialSystemSubresultantStatus::DeterminantError,
+                            degree_bounds,
+                            Vec::new(),
+                            Some(error),
+                        );
+                    }
+                }
+            };
+            for (coefficient_samples, coefficient) in samples.iter_mut().zip(coefficients) {
+                coefficient_samples[first_sample][second_sample] = coefficient;
+            }
+        }
+    }
+    let Some(coefficients) = samples
+        .iter()
+        .map(|samples| interpolate_rectangular_tensor_grid(samples, config.min_precision))
+        .collect::<Option<Vec<_>>>()
+    else {
+        return report(
+            TrivariatePolynomialSystemSubresultantStatus::InterpolationDivisionFailed,
+            degree_bounds,
+            Vec::new(),
+            None,
+        );
+    };
+    report(
+        TrivariatePolynomialSystemSubresultantStatus::Constructed,
         degree_bounds,
         coefficients,
         None,
@@ -5883,6 +6175,227 @@ mod tests {
                 .map(|coefficient| BivariatePolynomial::new(vec![vec![coefficient]]))
                 .collect::<Vec<_>>()
         );
+    }
+
+    #[test]
+    fn trivariate_system_subresultant_recovers_tangent_selected_pair_gcd() {
+        // H(a,u,v)=v^2-a and G(a,u,v)=(v-u)^2. Their resultant in v is
+        // (u^2-a)^2, but at a=u=1 the first positive subresultant recovers
+        // the simple common factor v-1 despite G's even contact.
+        let image = TrivariatePolynomial::new(vec![
+            vec![vec![real(0), real(0), real(1)]],
+            vec![vec![real(-1)]],
+        ]);
+        let incidence = TrivariatePolynomial::new(vec![vec![
+            vec![real(0), real(0), real(1)],
+            vec![real(0), real(-2)],
+            vec![real(1)],
+        ]]);
+        let config = CurveIntersectionResultantConfig::default();
+        let evaluate_at_one = |coefficient: &BivariatePolynomial| {
+            let fiber = evaluate_bivariate_at_retained_parameter(
+                coefficient,
+                &real(1),
+                CurveResultantParameter::First,
+            );
+            eval_univariate(&fiber, &real(1))
+        };
+
+        let resultant = subresultant_trivariate_polynomial_system(
+            &image,
+            &incidence,
+            TrivariatePolynomialAxis::Third,
+            0,
+            config,
+        );
+        assert_eq!(
+            resultant.status,
+            TrivariatePolynomialSystemSubresultantStatus::Constructed
+        );
+        assert_eq!(resultant.degree_bounds, [2, 4]);
+        assert_eq!(resultant.coefficients.len(), 1);
+        assert_eq!(evaluate_at_one(&resultant.coefficients[0]), Real::zero());
+
+        let gcd = subresultant_trivariate_polynomial_system(
+            &image,
+            &incidence,
+            TrivariatePolynomialAxis::Third,
+            1,
+            config,
+        );
+        assert_eq!(
+            gcd.status,
+            TrivariatePolynomialSystemSubresultantStatus::Constructed
+        );
+        assert_eq!(gcd.degree_bounds, [1, 2]);
+        assert_eq!(gcd.coefficients.len(), 2);
+        let constant = evaluate_at_one(&gcd.coefficients[0]);
+        let linear = evaluate_at_one(&gcd.coefficients[1]);
+        assert_ne!(linear, Real::zero());
+        assert_eq!(constant + linear, Real::zero());
+    }
+
+    #[test]
+    fn trivariate_system_resultant_preserves_nominal_degree_at_grid_drop() {
+        // F(a,u,v)=1+a*v drops from degree one to zero at the first sampling
+        // plane a=0. G(a,u,v)=v-u remains linear, and the nominal Sylvester
+        // determinant must still reconstruct 1+a*u up to a global sign.
+        let first =
+            TrivariatePolynomial::new(vec![vec![vec![real(1)]], vec![vec![real(0), real(1)]]]);
+        let second = TrivariatePolynomial::new(vec![vec![vec![real(0), real(1)], vec![real(-1)]]]);
+        let report = subresultant_trivariate_polynomial_system(
+            &first,
+            &second,
+            TrivariatePolynomialAxis::Third,
+            0,
+            CurveIntersectionResultantConfig::default(),
+        );
+
+        assert_eq!(
+            report.status,
+            TrivariatePolynomialSystemSubresultantStatus::Constructed
+        );
+        assert_eq!(report.degree_bounds, [1, 1]);
+        let [resultant] = report.coefficients.as_slice() else {
+            panic!("an order-zero subresultant must have one coefficient")
+        };
+        let expected =
+            BivariatePolynomial::new(vec![vec![real(1), real(0)], vec![real(0), real(1)]]);
+        let scale = resultant.coefficients[0][0].clone();
+        assert_ne!(scale, Real::zero());
+        for first_power in 0..2 {
+            for second_power in 0..2 {
+                let actual = resultant
+                    .coefficients
+                    .get(first_power)
+                    .and_then(|row| row.get(second_power))
+                    .cloned()
+                    .unwrap_or_else(Real::zero);
+                assert_eq!(
+                    actual,
+                    &scale * &expected.coefficients[first_power][second_power]
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn trivariate_system_resultant_handles_constant_eliminated_operand() {
+        // F(a,u,v)=1+a is constant in v while G(a,u,v)=v-u is linear.
+        // Their v-resultant is the retained coefficient 1+a.
+        let first = TrivariatePolynomial::new(vec![vec![vec![real(1)]], vec![vec![real(1)]]]);
+        let second = TrivariatePolynomial::new(vec![vec![vec![real(0), real(1)], vec![real(-1)]]]);
+        let report = subresultant_trivariate_polynomial_system(
+            &first,
+            &second,
+            TrivariatePolynomialAxis::Third,
+            0,
+            CurveIntersectionResultantConfig::default(),
+        );
+
+        assert_eq!(
+            report.status,
+            TrivariatePolynomialSystemSubresultantStatus::Constructed
+        );
+        assert_eq!(report.degree_bounds, [1, 0]);
+        assert_eq!(
+            report.coefficients,
+            vec![BivariatePolynomial::new(vec![vec![real(1)], vec![real(1)]])]
+        );
+    }
+
+    #[test]
+    fn trivariate_system_resultant_ignores_trailing_zero_storage() {
+        // F(v)=1+v is deliberately stored with a zero v^2 coefficient. Its
+        // certified degree, rather than ragged tensor capacity, must define
+        // the Sylvester matrix against G(u,v)=v-u.
+        let first = TrivariatePolynomial::new(vec![vec![vec![real(1), real(1), real(0)]]]);
+        let second = TrivariatePolynomial::new(vec![vec![vec![real(0), real(1)], vec![real(-1)]]]);
+        let report = subresultant_trivariate_polynomial_system(
+            &first,
+            &second,
+            TrivariatePolynomialAxis::Third,
+            0,
+            CurveIntersectionResultantConfig::default(),
+        );
+
+        assert_eq!(
+            report.status,
+            TrivariatePolynomialSystemSubresultantStatus::Constructed
+        );
+        let [resultant] = report.coefficients.as_slice() else {
+            panic!("an order-zero subresultant must have one coefficient")
+        };
+        let fiber = evaluate_bivariate_at_retained_parameter(
+            resultant,
+            &real(0),
+            CurveResultantParameter::First,
+        );
+        let at_zero = eval_univariate(&fiber, &real(0));
+        let at_one = eval_univariate(&fiber, &real(1));
+        assert_ne!(at_zero, Real::zero());
+        assert_eq!(at_one, &real(2) * at_zero);
+    }
+
+    #[test]
+    fn trivariate_system_resultant_eliminates_every_tensor_axis() {
+        let axes = [
+            TrivariatePolynomialAxis::First,
+            TrivariatePolynomialAxis::Second,
+            TrivariatePolynomialAxis::Third,
+        ];
+        for eliminated_axis in axes {
+            let eliminated = eliminated_axis.index();
+            let retained = match eliminated_axis {
+                TrivariatePolynomialAxis::First => [1, 2],
+                TrivariatePolynomialAxis::Second => [0, 2],
+                TrivariatePolynomialAxis::Third => [0, 1],
+            };
+            let mut first = vec![vec![vec![Real::zero(); 2]; 2]; 2];
+            let mut second = first.clone();
+            let mut exponents = [0; 3];
+            exponents[eliminated] = 1;
+            first[exponents[0]][exponents[1]][exponents[2]] = Real::one();
+            second[exponents[0]][exponents[1]][exponents[2]] = Real::one();
+            exponents = [0; 3];
+            exponents[retained[0]] = 1;
+            first[exponents[0]][exponents[1]][exponents[2]] = real(-1);
+            exponents = [0; 3];
+            exponents[retained[1]] = 1;
+            second[exponents[0]][exponents[1]][exponents[2]] = real(-1);
+
+            let report = subresultant_trivariate_polynomial_system(
+                &TrivariatePolynomial::new(first),
+                &TrivariatePolynomial::new(second),
+                eliminated_axis,
+                0,
+                CurveIntersectionResultantConfig::default(),
+            );
+            assert_eq!(
+                report.status,
+                TrivariatePolynomialSystemSubresultantStatus::Constructed
+            );
+            assert_eq!(
+                report.retained_axes,
+                retained.map(trivariate_axis_from_index)
+            );
+            let [resultant] = report.coefficients.as_slice() else {
+                panic!("an order-zero subresultant must have one coefficient")
+            };
+            let evaluate = |first: i64, second: i64| {
+                let fiber = evaluate_bivariate_at_retained_parameter(
+                    resultant,
+                    &real(first),
+                    CurveResultantParameter::First,
+                );
+                eval_univariate(&fiber, &real(second))
+            };
+            let forward = evaluate(2, 3);
+            let reverse = evaluate(3, 2);
+            assert_ne!(forward, Real::zero());
+            assert_eq!(&forward + &reverse, Real::zero());
+            assert_eq!(evaluate(2, 2), Real::zero());
+        }
     }
 
     #[test]

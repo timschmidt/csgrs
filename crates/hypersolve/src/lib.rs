@@ -183,6 +183,7 @@ pub use curve_resultant::{
     QuadrivariatePolynomial, TrivariateConstraintResultantReport,
     TrivariateConstraintResultantStatus, TrivariateConstraintSubresultantReport,
     TrivariateConstraintSubresultantStatus, TrivariatePolynomial, TrivariatePolynomialAxis,
+    TrivariatePolynomialSystemSubresultantReport, TrivariatePolynomialSystemSubresultantStatus,
     divide_bivariate_polynomial_exact, divide_univariate_polynomial_exact,
     extract_bivariate_polynomial_system_axis_factors,
     greatest_common_divisor_univariate_polynomials_exact,
@@ -193,6 +194,7 @@ pub use curve_resultant::{
     resultant_rational_parametric_curve_intersection,
     resultant_trivariate_polynomial_univariate_constraint,
     subresultant_quadrivariate_polynomial_fourth_axis_constraint,
+    subresultant_trivariate_polynomial_system,
     subresultant_trivariate_polynomial_univariate_constraint,
 };
 pub use curve_substitution::{
