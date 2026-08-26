@@ -10380,6 +10380,89 @@ impl BezierAlgebraicCuspSemicircleMappedParameterData2 {
         }
     }
 
+    /// Publishes point evidence for every mapped parameter that already owns
+    /// a compact point carrier. Selected-fiber contacts, including their
+    /// coincident-overlap transports, use the same one-word derived-point
+    /// representation exposed by their public contact handle; no ordinary
+    /// parameter or Cartesian coordinate is constructed.
+    fn retained_or_selected_point_evidence(
+        self: &Arc<Self>,
+    ) -> Option<RationalBezierIntersectionPointEvidence2> {
+        if let Some(point) = self.retained_point_evidence() {
+            return Some(point.clone());
+        }
+        match self.as_ref() {
+            Self::SelectedFiberRational { .. } | Self::SelectedFiberParallel { .. } => Some(
+                RationalBezierIntersectionPointEvidence2::AlgebraicCuspChordDerived(
+                    BezierAlgebraicCuspChordDerivedPoint2::from_mapped_source(
+                        self.clone(),
+                        None,
+                        Real::one(),
+                    ),
+                ),
+            ),
+            Self::PairOverlapMap { source, .. } => {
+                let BezierAlgebraicCuspSemicircleParameter2::Mapped(source) = source else {
+                    return None;
+                };
+                source.retained_or_selected_point_evidence()
+            }
+            _ => None,
+        }
+    }
+
+    /// Views a selected-fiber source point through the shared analytic-point
+    /// carrier, following point-preserving coincident-overlap transports. A
+    /// rational source is its exact zero-distance parallel. This is reserved
+    /// for consumers that genuinely need a standalone recursive or
+    /// represented Cartesian field; topology keeps the compact derived point
+    /// above instead.
+    fn selected_fiber_analytic_point(
+        &self,
+        policy: &CurveContext,
+    ) -> CurveResult<Option<BezierAnalyticParallelPoint2>> {
+        Ok(match self {
+            Self::SelectedFiberRational {
+                map,
+                other_parameter,
+                ..
+            } => {
+                map.validate_policy(policy)?;
+                Some(BezierAnalyticParallelPoint2::new_selected_fiber(
+                    map.data.curve.parallel_left(Real::zero())?,
+                    other_parameter.clone(),
+                    policy,
+                ))
+            }
+            Self::SelectedFiberParallel {
+                map,
+                other_parameter,
+                ..
+            } => {
+                map.validate_policy(policy)?;
+                Some(BezierAnalyticParallelPoint2::new_selected_fiber(
+                    map.data.parallel.clone(),
+                    other_parameter.clone(),
+                    policy,
+                ))
+            }
+            Self::PairOverlapMap {
+                overlap, source, ..
+            } => {
+                if !policy.accepts_retained_policy(overlap.data.policy) {
+                    return Err(CurveError::Topology(
+                        "mapped overlap point used a different predicate policy".into(),
+                    ));
+                }
+                let BezierAlgebraicCuspSemicircleParameter2::Mapped(source) = source else {
+                    return Ok(None);
+                };
+                return source.selected_fiber_analytic_point(policy);
+            }
+            _ => None,
+        })
+    }
+
     fn selected_parallel_contact_order_to_real(
         &self,
         represented: &Real,
@@ -11560,6 +11643,47 @@ impl BezierAlgebraicCuspSemicircleMappedParameterData2 {
         Ok(point.map(|point| point.map(|point| transform.transform_point(&point))))
     }
 
+    /// Materializes a selected-fiber parameter only for an ordinary-carrier
+    /// point or tangent algorithm. The complete compact point kernel remains
+    /// available when this cold exact bridge cannot construct its global
+    /// scalar, so representation is an optimization rather than an admission
+    /// requirement. Root selection always runs under STRICT.
+    fn selected_fiber_ordinary_parameter(
+        &self,
+        policy: &CurveContext,
+    ) -> CurveResult<Option<BezierParameter2>> {
+        let other_parameter = match self {
+            Self::SelectedFiberRational {
+                map,
+                other_parameter,
+                ..
+            } => {
+                map.validate_policy(policy)?;
+                other_parameter
+            }
+            Self::SelectedFiberParallel {
+                map,
+                other_parameter,
+                ..
+            } => {
+                map.validate_policy(policy)?;
+                other_parameter
+            }
+            _ => return Ok(None),
+        };
+        if let Some(parameter) = other_parameter.represented_value() {
+            return Ok(Some(BezierParameter2::Exact(parameter.clone())));
+        }
+        Ok(
+            match policy.strict_predicate_pass(|| {
+                other_parameter.promoted_bezier_parameter_complete(policy)
+            })? {
+                Classification::Decided(parameter) => Some(parameter),
+                Classification::Uncertain(_) => None,
+            },
+        )
+    }
+
     /// Recovers an owned ordinary carrier for exact point correspondence.
     /// Similarity transport transforms the carrier itself while preserving
     /// its parameter. A chamfer rotation does the same when its selected
@@ -11590,21 +11714,9 @@ impl BezierAlgebraicCuspSemicircleMappedParameterData2 {
                     .coincident_tangent_source()
                     .map(BezierAlgebraicCuspSemicircleMappedPointSource2::from_borrowed))
             }
-            Self::SelectedFiberRational {
-                map,
-                other_parameter,
-                ..
-            } => {
-                map.validate_policy(policy)?;
-                let parameter = if let Some(parameter) = other_parameter.represented_value() {
-                    BezierParameter2::Exact(parameter.clone())
-                } else {
-                    match policy.strict_predicate_pass(|| {
-                        other_parameter.promoted_bezier_parameter_complete(policy)
-                    })? {
-                        Classification::Decided(parameter) => parameter,
-                        Classification::Uncertain(_) => return Ok(None),
-                    }
+            Self::SelectedFiberRational { map, .. } => {
+                let Some(parameter) = self.selected_fiber_ordinary_parameter(policy)? else {
+                    return Ok(None);
                 };
                 Ok(Some(
                     BezierAlgebraicCuspSemicircleMappedPointSource2::Rational {
@@ -11614,21 +11726,9 @@ impl BezierAlgebraicCuspSemicircleMappedParameterData2 {
                     },
                 ))
             }
-            Self::SelectedFiberParallel {
-                map,
-                other_parameter,
-                ..
-            } => {
-                map.validate_policy(policy)?;
-                let parameter = if let Some(parameter) = other_parameter.represented_value() {
-                    BezierParameter2::Exact(parameter.clone())
-                } else {
-                    match policy.strict_predicate_pass(|| {
-                        other_parameter.promoted_bezier_parameter_complete(policy)
-                    })? {
-                        Classification::Decided(parameter) => parameter,
-                        Classification::Uncertain(_) => return Ok(None),
-                    }
+            Self::SelectedFiberParallel { map, .. } => {
+                let Some(parameter) = self.selected_fiber_ordinary_parameter(policy)? else {
+                    return Ok(None);
                 };
                 Ok(Some(
                     BezierAlgebraicCuspSemicircleMappedPointSource2::Parallel {
@@ -11991,7 +12091,7 @@ impl BezierAlgebraicCuspSemicircleMappedParameterData2 {
             )>,
         >,
     > {
-        let point = if let Some(point) = self.retained_point_evidence().cloned() {
+        let point = if let Some(point) = self.retained_or_selected_point_evidence() {
             point
         } else if let Some(data) = self.coincident_chord_parameter() {
             RationalBezierIntersectionPointEvidence2::AlgebraicCuspChord(
@@ -12173,53 +12273,22 @@ impl BezierAlgebraicCuspSemicircleMappedParameterData2 {
         }
         match self {
             Self::SelectedFiberRational {
-                map,
-                other_parameter,
-                tangent_cross_sign,
-                ..
-            } => {
-                map.validate_policy(policy)?;
-                if *tangent_cross_sign != RealSign::Zero {
-                    return Ok(None);
-                }
-                let parameter = match policy.strict_predicate_pass(|| {
-                    other_parameter.promoted_bezier_parameter_complete(policy)
-                })? {
-                    Classification::Decided(parameter) => parameter,
-                    Classification::Uncertain(_) => return Ok(None),
-                };
-                Ok(Some((
-                    parameter,
-                    rational_parametric_tangent_numerator(
-                        map.data.curve.homogeneous_power_basis()?,
-                    ),
-                    map.data.policy,
-                )))
+                tangent_cross_sign, ..
             }
-            Self::SelectedFiberParallel {
-                map,
-                other_parameter,
-                tangent_cross_sign,
-                ..
+            | Self::SelectedFiberParallel {
+                tangent_cross_sign, ..
             } => {
-                map.validate_policy(policy)?;
                 if *tangent_cross_sign != RealSign::Zero {
                     return Ok(None);
                 }
-                let parameter = match policy.strict_predicate_pass(|| {
-                    other_parameter.promoted_bezier_parameter_complete(policy)
-                })? {
-                    Classification::Decided(parameter) => parameter,
-                    Classification::Uncertain(_) => return Ok(None),
+                let Some(source) = self.ordinary_point_source(policy)? else {
+                    return Ok(None);
                 };
-                let differential = map.data.parallel.differential()?;
+                let source = source.as_borrowed();
                 Ok(Some((
-                    parameter,
-                    [
-                        differential.tangent_x.clone(),
-                        differential.tangent_y.clone(),
-                    ],
-                    map.data.policy,
+                    source.parameter().clone(),
+                    source.tangent_power_basis()?,
+                    source.policy(),
                 )))
             }
             Self::PairOverlapMap { source, .. } => {
@@ -37948,13 +38017,9 @@ impl BezierAlgebraicCuspSemicircleSelectedFiberContact2 {
     }
 
     pub(crate) fn point_evidence(&self) -> RationalBezierIntersectionPointEvidence2 {
-        RationalBezierIntersectionPointEvidence2::AlgebraicCuspChordDerived(
-            BezierAlgebraicCuspChordDerivedPoint2::from_mapped_source(
-                Arc::clone(&self.data),
-                None,
-                Real::one(),
-            ),
-        )
+        self.data
+            .retained_or_selected_point_evidence()
+            .expect("a selected-fiber contact owns compact point evidence")
     }
 
     #[cfg(test)]
@@ -45923,57 +45988,9 @@ impl BezierAlgebraicCuspChordDerivedPoint2 {
             BezierAlgebraicCuspDerivedPointSource2::Mapped {
                 parameter,
                 point: None,
-            } => match parameter.as_ref() {
-                BezierAlgebraicCuspSemicircleMappedParameterData2::SelectedFiberParallel {
-                    map,
-                    other_parameter,
-                    ..
-                } => Some(RationalBezierIntersectionPointEvidence2::AnalyticParallel(
-                    BezierAnalyticParallelPoint2::new_selected_fiber(
-                        map.data.parallel.clone(),
-                        other_parameter.clone(),
-                        policy,
-                    ),
-                )),
-                BezierAlgebraicCuspSemicircleMappedParameterData2::SelectedFiberRational {
-                    map,
-                    other_parameter,
-                    ..
-                } => {
-                    let parameter = match policy.strict_predicate_pass(|| {
-                        other_parameter.promoted_bezier_parameter_complete(policy)
-                    })? {
-                        Classification::Decided(parameter) => parameter,
-                        Classification::Uncertain(reason) => {
-                            return Ok(Classification::Uncertain(reason));
-                        }
-                    };
-                    Some(match parameter {
-                        BezierParameter2::Exact(parameter) => {
-                            match policy.strict_predicate_pass(|| {
-                                map.data.curve.point_at_classified(&parameter, policy)
-                            }) {
-                                Classification::Decided(point) => {
-                                    RationalBezierIntersectionPointEvidence2::Exact(point)
-                                }
-                                Classification::Uncertain(reason) => {
-                                    return Ok(Classification::Uncertain(reason));
-                                }
-                            }
-                        }
-                        BezierParameter2::Algebraic(parameter) => {
-                            RationalBezierIntersectionPointEvidence2::Algebraic(
-                                RationalBezierAlgebraicPointImage2::from_parametric_source(
-                                    map.data.curve.clone(),
-                                    parameter,
-                                    policy,
-                                ),
-                            )
-                        }
-                    })
-                }
-                _ => None,
-            },
+            } => parameter
+                .selected_fiber_analytic_point(policy)?
+                .map(RationalBezierIntersectionPointEvidence2::AnalyticParallel),
             BezierAlgebraicCuspDerivedPointSource2::Mapped { point: Some(_), .. }
             | BezierAlgebraicCuspDerivedPointSource2::Chord(_) => None,
         };
@@ -46370,10 +46387,14 @@ impl BezierAlgebraicCuspChordDerivedPoint2 {
                 parameter,
                 point: None,
             } => {
-                let Some(source) = parameter.ordinary_point_source(policy)? else {
-                    return Ok(Classification::Decided(None));
-                };
-                source.represented_coordinates(policy)?
+                if let Some(source) = parameter.selected_fiber_analytic_point(policy)? {
+                    source.represented_coordinates(policy)?
+                } else {
+                    let Some(source) = parameter.ordinary_point_source(policy)? else {
+                        return Ok(Classification::Decided(None));
+                    };
+                    source.represented_coordinates(policy)?
+                }
             }
             BezierAlgebraicCuspDerivedPointSource2::Chord(_) => {
                 return Ok(Classification::Decided(None));
@@ -119791,6 +119812,32 @@ mod conversion_tests {
                 panic!("the finite cutter must meet the selected quarter once");
             };
             assert_ne!(contact.tangent_cross_sign(), RealSign::Zero);
+            let point = contact.point_evidence();
+            let RationalBezierIntersectionPointEvidence2::AlgebraicCuspChordDerived(derived) =
+                &point
+            else {
+                panic!("the selected contact must publish a compact derived point");
+            };
+            assert!(matches!(
+                &derived.data.source,
+                BezierAlgebraicCuspDerivedPointSource2::Mapped {
+                    parameter,
+                    point: None,
+                } if Arc::ptr_eq(parameter, &contact.data)
+            ));
+            let Classification::Decided(Some((probe, retained_point))) =
+                contact.data.retained_point_probe_chord(&policy).unwrap()
+            else {
+                panic!("the selected contact must publish an exact retained probe chord");
+            };
+            assert_eq!(retained_point, point);
+            assert!(matches!(
+                (probe.start(), probe.end()),
+                (
+                    RationalBezierIntersectionPointEvidence2::AlgebraicCuspChordDerived(_),
+                    RationalBezierIntersectionPointEvidence2::AlgebraicCuspChordDerived(_),
+                )
+            ));
             let cusp_cut = contact.cusp_parameter();
 
             let Classification::Decided(selected_target) = selected_overlap
