@@ -5802,6 +5802,69 @@ fn rotated_algebraic_chord_erosion_splits_a_collapsed_neck_exactly() {
 }
 
 #[test]
+fn sheared_algebraic_chord_erosion_splits_a_collapsed_neck_exactly() {
+    let transform_point =
+        |point: Point2| Point2::new(Real::from(2) * point.x() + point.y(), point.y().clone());
+    let miter = OffsetCornerStyle2::Miter {
+        limit: Real::from(4),
+    };
+    for (policy, fill_rule, reverse) in [
+        (CurveContext::STRICT, FillRule::NonZero, false),
+        (CurveContext::STRICT, FillRule::EvenOdd, true),
+        (CurveContext::APPROXIMATE_512, FillRule::NonZero, false),
+        (CurveContext::APPROXIMATE_512, FillRule::EvenOdd, true),
+    ] {
+        let source = axis_aligned_algebraic_dumbbell_region(&policy, fill_rule, reverse);
+        let sheared = source
+            .transform_affine(
+                &Real::from(2),
+                &Real::one(),
+                &Real::zero(),
+                &Real::one(),
+                &Real::zero(),
+                &Real::zero(),
+                &policy,
+            )
+            .expect("an exact nonsimilarity shear must preserve retained chords");
+        assert_eq!(sheared.certainty, CurveCertainty::Certified);
+        assert!(
+            sheared.value.boundary_loops()[0]
+                .fragments()
+                .iter()
+                .all(|fragment| matches!(fragment, BezierSplitFragment2::AlgebraicChord(_)))
+        );
+
+        let split = sheared
+            .value
+            .offset(-q(11, 10), &miter, &policy)
+            .unwrap_or_else(|error| {
+                panic!(
+                    "a sheared algebraic erosion must regularize through a collapsed neck under {policy:?}, fill={fill_rule:?}, reverse={reverse}: {error:?}"
+                )
+            });
+        assert_eq!(split.certainty, CurveCertainty::Certified);
+        assert_eq!(split.value.boundary_loops().len(), 2);
+        assert_eq!(
+            certified(split.value.loop_roles(&policy).unwrap()),
+            Classification::Decided(vec![
+                CurveRegionLoopRole::Material,
+                CurveRegionLoopRole::Material,
+            ])
+        );
+        for (point, expected) in [
+            (transform_point(p(2, 2)), RegionPointLocation::Inside),
+            (transform_point(p(10, 2)), RegionPointLocation::Inside),
+            (transform_point(p(6, 2)), RegionPointLocation::Outside),
+        ] {
+            assert_eq!(
+                certified(split.value.classify_point(&point, &policy).unwrap()),
+                Classification::Decided(expected)
+            );
+        }
+    }
+}
+
+#[test]
 fn unified_region_bounds_cover_native_and_higher_order_carriers_exactly() {
     let policy = CurveContext::STRICT;
     let native =
