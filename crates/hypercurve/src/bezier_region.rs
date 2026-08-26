@@ -21832,6 +21832,149 @@ mod tests {
     }
 
     #[test]
+    fn nonlinear_selected_corner_chamfers_through_retained_fixed_distance_image() {
+        let half = q(1, 2);
+        let start = Real::zero();
+        let setback = q(1, 10);
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let center =
+                crate::bezier_offset::high_degree_quadratic_selected_fiber_parameter_for_test(
+                    half.clone(),
+                    &policy,
+                );
+            assert!(matches!(
+                center.promoted_bezier_parameter(&policy).unwrap(),
+                Classification::Uncertain(_)
+            ));
+            let parallel =
+                QuadraticBezier2::new(p(0, 0), Point2::new(Real::zero(), half.clone()), p(2, 1))
+                    .parallel_left(Real::zero())
+                    .unwrap();
+            let start_point = RationalBezierIntersectionPointEvidence2::Exact(p(0, 0));
+            let end_point = RationalBezierIntersectionPointEvidence2::AnalyticParallel(
+                crate::BezierAnalyticParallelPoint2::new_selected_fiber(
+                    parallel.clone(),
+                    center.clone(),
+                    &policy,
+                ),
+            );
+            let selected = BezierSplitFragment2::SelectedFiber(
+                crate::bezier_split::BezierSelectedFiberFragment2::new(
+                    BezierSelectedFiberSource2::AnalyticParallel(parallel),
+                    CurveRegionParameterRange2::new_validated(
+                        CurveRegionParameter2::from_bezier(BezierParameter2::Exact(start.clone())),
+                        CurveRegionParameter2::from_selected_fiber(center.clone()),
+                    ),
+                    start_point.clone(),
+                    end_point.clone(),
+                ),
+            );
+            let apex = match crate::BezierAlgebraicChord2::translated_endpoint(
+                &end_point,
+                &Real::zero(),
+                &Real::from(5_i8),
+                &policy,
+            )
+            .unwrap()
+            {
+                Classification::Decided(point) => point,
+                Classification::Uncertain(reason) => {
+                    panic!("the nonlinear selected apex must translate: {reason:?}")
+                }
+            };
+            let vertical = BezierSplitFragment2::AlgebraicChord(
+                crate::BezierAlgebraicChord2::from_certified_axis_aligned_endpoints(
+                    end_point,
+                    apex.clone(),
+                    crate::bezier_offset::BezierAlgebraicChordAxisDirection2::PositiveY,
+                    &policy,
+                ),
+            );
+            let closing =
+                match crate::BezierAlgebraicChord2::try_new(apex, start_point, &policy).unwrap() {
+                    Classification::Decided(chord) => BezierSplitFragment2::AlgebraicChord(chord),
+                    Classification::Uncertain(reason) => {
+                        panic!("the nonlinear selected closing chord must construct: {reason:?}")
+                    }
+                };
+            let boundary =
+                CurveRegionBoundaryLoop2::new(vec![selected, vertical, closing], &policy)
+                    .expect("the nonlinear selected triangle must close");
+            let region = CurveRegion2::try_new_with_loop_topology(
+                vec![boundary],
+                vec![CurveRegionLoopRole::Material],
+                vec![FillRule::NonZero],
+                vec![CurveBoundaryInteriorSide2::Left],
+            )
+            .unwrap();
+            #[cfg(feature = "dispatch-trace")]
+            hyperreal::dispatch_trace::reset();
+            let work = || {
+                region.chamfer_loop_vertex_by_setbacks(
+                    0,
+                    1,
+                    setback.clone(),
+                    setback.clone(),
+                    CurveCornerMode2::TrimOnly,
+                    &policy,
+                )
+            };
+            #[cfg(feature = "dispatch-trace")]
+            let chamfers = hyperreal::dispatch_trace::with_recording(work);
+            #[cfg(not(feature = "dispatch-trace"))]
+            let chamfers = work();
+            #[cfg(feature = "dispatch-trace")]
+            let trace = hyperreal::dispatch_trace::take_trace();
+            let chamfers = chamfers.unwrap_or_else(|error| {
+                panic!(
+                    "the nonlinear selected endpoint must chamfer in its retained fiber: policy={policy:?}, error={error:?}"
+                )
+            });
+            assert_eq!(chamfers.certainty, CurveCertainty::Certified);
+            assert!(chamfers.value.candidate_count() > 0);
+            let mut retained_local_cut = false;
+            for_each_corner_region(&chamfers.value, |edited| {
+                retained_local_cut |= edited.boundary_loops()[0]
+                    .fragments()
+                    .iter()
+                    .filter_map(|fragment| match fragment {
+                        BezierSplitFragment2::SelectedFiber(fragment) => Some(fragment.range()),
+                        _ => None,
+                    })
+                    .flat_map(|range| [range.start(), range.end()])
+                    .filter_map(CurveRegionParameter2::as_selected_fiber)
+                    .any(|parameter| {
+                        parameter.order_to_real(&Real::zero(), &policy).unwrap()
+                            == Classification::Decided(std::cmp::Ordering::Greater)
+                            && parameter.cmp_by_refinement(&center, &policy).unwrap()
+                                == Classification::Decided(std::cmp::Ordering::Less)
+                    });
+            });
+            assert!(retained_local_cut);
+            #[cfg(feature = "dispatch-trace")]
+            {
+                assert!(
+                    trace.path_count(
+                        "hypercurve",
+                        "selected-fiber-fixed-distance",
+                        "retained-local-image",
+                    ) > 0,
+                    "the nonlinear chamfer must enter the retained image kernel: {trace:?}",
+                );
+                assert_eq!(
+                    trace.path_count(
+                        "hypercurve",
+                        "selected-fiber-fixed-distance",
+                        "global-center-degenerate-fallback",
+                    ),
+                    0,
+                    "the supported nonlinear center must not promote globally: {trace:?}",
+                );
+            }
+        }
+    }
+
+    #[test]
     fn one_fragment_selected_native_extensions_keep_the_local_fiber() {
         let half = (Real::one() / Real::from(2_i8)).unwrap();
         let third = (Real::one() / Real::from(3_i8)).unwrap();

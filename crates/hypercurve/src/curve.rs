@@ -10518,23 +10518,6 @@ fn curve_region_corner_parameter_placement(
     Ok(None)
 }
 
-fn promoted_curve_region_bezier_parameter(
-    parameter: &CurveRegionParameter2,
-    operation: CurveOperation2,
-    family: CurveFamily2,
-    policy: &CurveContext,
-) -> ExactCurveResult<BezierParameter2> {
-    match policy
-        .strict_predicate_pass(|| parameter.promoted_bezier_parameter_complete(policy))
-        .map_err(|cause| ExactCurveError::invalid(operation, family, cause))?
-    {
-        Classification::Decided(parameter) => Ok(parameter),
-        Classification::Uncertain(reason) => {
-            Err(ExactCurveError::blocked(operation, family, reason))
-        }
-    }
-}
-
 fn decided_parallel_point(
     parallel: &BezierParallel2,
     parameter: &Real,
@@ -11116,26 +11099,15 @@ fn selected_fiber_chamfer_cuts(
         ordinary_parameters(center_parameter)?
     } else if let Some(center_parameter) = corner_parameter.as_selected_fiber() {
         match parallel
-            .affine_fixed_distance_parameters_from_selected_parameter(
+            .fixed_distance_incidence_from_selected_parameter(
                 center_parameter,
                 setback,
+                (mode == CurveCornerMode2::TrimOrExtend).then_some(direction),
                 policy,
             )
             .map_err(|cause| ExactCurveError::invalid(operation, family, cause))?
         {
-            Classification::Decided(Some(parameters)) => parameters
-                .into_iter()
-                .map(crate::bezier_offset::BezierParallelFixedDistanceParameter2::SelectedFiber)
-                .collect(),
-            Classification::Decided(None) => {
-                let promoted = promoted_curve_region_bezier_parameter(
-                    corner_parameter,
-                    operation,
-                    family,
-                    policy,
-                )?;
-                ordinary_parameters(&promoted)?
-            }
+            Classification::Decided(parameters) => parameters,
             Classification::Uncertain(reason) => {
                 return Err(ExactCurveError::blocked(operation, family, reason));
             }
