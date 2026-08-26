@@ -78,7 +78,8 @@ use hypersolve::{
     AlgebraicRootRepresentation, AlgebraicRootSquareRootStatus, AlgebraicTensorImageStatus,
     DenseTensorPolynomial, IsolatedRootInterval, algebraic_root_affine_relation,
     compare_algebraic_root_representations_with_refinement, divide_univariate_polynomial_exact,
-    greatest_common_divisor_univariate_polynomials_exact, represent_algebraic_tensor_image,
+    greatest_common_divisor_univariate_polynomials_exact,
+    project_selected_tensor_fiber_via_tagged_norm, represent_algebraic_tensor_image,
     square_root_algebraic_root_representation, transform_algebraic_root_affine,
     transform_algebraic_root_mobius, validate_algebraic_root_representation,
 };
@@ -6926,7 +6927,7 @@ fn selected_dense_last_axis_parameters(
             return Ok(Classification::Uncertain(reason));
         }
     };
-    let coefficients = projection
+    let mut coefficients = projection
         .coefficients()
         .iter()
         .cloned()
@@ -6953,17 +6954,53 @@ fn selected_dense_last_axis_parameters(
     };
     match structural_zero {
         Classification::Decided(true) => {
-            return Ok(
-                match selected_dense_last_axis_active_degree(polynomial, sources, policy)? {
-                    Classification::Decided(None) => {
-                        Classification::Decided(BezierAlgebraicFiberProjection2::IdenticallyZero)
+            match selected_dense_last_axis_active_degree(polynomial, sources, policy)? {
+                Classification::Decided(None) => {
+                    return Ok(Classification::Decided(
+                        BezierAlgebraicFiberProjection2::IdenticallyZero,
+                    ));
+                }
+                Classification::Decided(Some(0)) => {
+                    return Ok(Classification::Decided(
+                        BezierAlgebraicFiberProjection2::Parameters(Vec::new()),
+                    ));
+                }
+                Classification::Decided(Some(_)) => {
+                    // A foreign conjugate tuple owns a target-wide component,
+                    // but the authored selected tuple has a finite nonzero
+                    // fiber. Tagging every source tuple turns those complete
+                    // components into retained-axis content; Hypersolve
+                    // saturates that content exactly before projecting the
+                    // target. This is the single rank-independent completion
+                    // path for every dense selected system.
+                    let tagged = policy.strict_predicate_pass(|| {
+                        project_selected_tensor_fiber_via_tagged_norm(polynomial, sources)
+                    });
+                    match tagged.status {
+                        AlgebraicFiberProjectionStatus::Constructed => {
+                            coefficients = tagged.coefficients;
+                            #[cfg(feature = "dispatch-trace")]
+                            hyperreal::dispatch_trace::record(
+                                "hypercurve",
+                                "selected-dense-degenerate",
+                                "tagged-norm-selected-fiber",
+                            );
+                        }
+                        AlgebraicFiberProjectionStatus::InvalidEvidence => {
+                            return Err(CurveError::InvalidBezierAlgebraicParameter);
+                        }
+                        AlgebraicFiberProjectionStatus::UnsupportedCoefficient
+                        | AlgebraicFiberProjectionStatus::Undecided => {
+                            return Ok(Classification::Uncertain(
+                                UncertaintyReason::Unsupported,
+                            ));
+                        }
                     }
-                    Classification::Decided(Some(_)) => {
-                        Classification::Decided(BezierAlgebraicFiberProjection2::Degenerate)
-                    }
-                    Classification::Uncertain(reason) => Classification::Uncertain(reason),
-                },
-            );
+                }
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            }
         }
         Classification::Decided(false) => {}
         Classification::Uncertain(reason) => {
@@ -54417,123 +54454,9 @@ impl BezierRecursiveProjectiveChordParallelSystem2 {
         domain: SelectedThirdAxisDomain2<'_>,
         policy: &CurveContext,
     ) -> CurveResult<Classification<BezierAlgebraicFiberProjection2>> {
-        let projected = policy.strict_predicate_pass(|| {
+        policy.strict_predicate_pass(|| {
             selected_dense_last_axis_parameters(projection, &self.base.sources, domain, policy)
-        })?;
-        let Classification::Decided(BezierAlgebraicFiberProjection2::Degenerate) = projected else {
-            return Ok(projected);
-        };
-        Ok(
-            match selected_dense_last_axis_active_degree(projection, &self.base.sources, policy)? {
-                // A different conjugate source tuple can make the global
-                // resultant target-wide even though the authored selected
-                // tuple is a nonzero constant. That tuple has no roots.
-                Classification::Decided(Some(0)) => {
-                    #[cfg(feature = "dispatch-trace")]
-                    hyperreal::dispatch_trace::record(
-                        "hypercurve",
-                        "recursive-chord-parallel-degenerate",
-                        "constant-nonzero-selected-conjugate",
-                    );
-                    Classification::Decided(BezierAlgebraicFiberProjection2::Parameters(Vec::new()))
-                }
-                Classification::Decided(None) => {
-                    Classification::Decided(BezierAlgebraicFiberProjection2::IdenticallyZero)
-                }
-                Classification::Decided(Some(degree @ (1 | 2))) => {
-                    self.selected_low_degree_parameters(projection, degree, domain, policy)?
-                }
-                Classification::Decided(Some(_)) => {
-                    Classification::Decided(BezierAlgebraicFiberProjection2::Degenerate)
-                }
-                Classification::Uncertain(reason) => Classification::Uncertain(reason),
-            },
-        )
-    }
-
-    /// Solves one linear or quadratic target polynomial directly in the
-    /// authored selected tuple. This is the local-field continuation used
-    /// when a foreign conjugate component makes the global tensor norm zero.
-    /// The compact recursive roots are projected to ordinary parameters only
-    /// after their exact branch and finite domain have been certified.
-    fn selected_low_degree_parameters(
-        &self,
-        projection: &DenseTensorPolynomial,
-        degree: usize,
-        domain: SelectedThirdAxisDomain2<'_>,
-        policy: &CurveContext,
-    ) -> CurveResult<Classification<BezierAlgebraicFiberProjection2>> {
-        let strict = policy.strict_counterpart();
-        let field = BezierRecursiveQuadraticField2::Base(self.base.clone());
-        let mut coefficients = Vec::with_capacity(degree + 1);
-        for power in 0..=degree {
-            let Some(coefficient) =
-                dense_last_axis_coefficient(projection, power).and_then(|coefficient| {
-                    coefficient.remove_certified_independent_axis(
-                        self.base.sources.len(),
-                        hypersolve::PredicatePolicy::MAX_REFINEMENT_PRECISION,
-                    )
-                })
-            else {
-                return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
-            };
-            let Some(coefficient) = recursive_quadratic_rational_value(&self.base, coefficient)
-            else {
-                return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
-            };
-            coefficients.push(coefficient);
-        }
-
-        let Some(scalars) =
-            recursive_quadratic_polynomial_projective_roots(&field, &coefficients, &strict)?
-        else {
-            return Ok(Classification::Uncertain(UncertaintyReason::Predicate));
-        };
-
-        let mut retained = Vec::with_capacity(scalars.len());
-        for scalar in scalars {
-            let parameter = match BezierRecursiveProjectiveParameter2::new(scalar, &strict)? {
-                Classification::Decided(parameter) => parameter,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            };
-            match domain.retains_recursive_projective_parameter(&parameter, &strict)? {
-                Classification::Decided(true) => retained.push(parameter),
-                Classification::Decided(false) => {}
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            }
-        }
-        if matches!(
-            domain,
-            SelectedThirdAxisDomain2::IncidentRay {
-                direction: BezierParameterRayDirection2::Decreasing,
-                ..
-            }
-        ) {
-            retained.reverse();
-        }
-        let mut parameters = Vec::with_capacity(retained.len());
-        for parameter in retained {
-            let parameter = match parameter.promoted_bezier_parameter_complete(&strict)? {
-                Classification::Decided(parameter) => parameter,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            };
-            parameters.push(parameter);
-        }
-        #[cfg(feature = "dispatch-trace")]
-        hyperreal::dispatch_trace::record(
-            "hypercurve",
-            "recursive-chord-parallel-degenerate",
-            "selected-low-degree-fiber",
-        );
-        Ok(Classification::Decided(
-            BezierAlgebraicFiberProjection2::Parameters(parameters),
-        ))
+        })
     }
 
     fn parameters(
@@ -56405,68 +56328,6 @@ impl SelectedThirdAxisDomain2<'_> {
         }
     }
 
-    fn retains_recursive_projective_parameter(
-        self,
-        parameter: &BezierRecursiveProjectiveParameter2,
-        policy: &CurveContext,
-    ) -> CurveResult<Classification<bool>> {
-        let decided = |ordering| match ordering {
-            Classification::Decided(ordering) => Ok(ordering),
-            Classification::Uncertain(reason) => Err(reason),
-        };
-        let keep = match self {
-            Self::UnitInterval => {
-                let lower = match decided(parameter.order_to_real(&Real::zero(), policy)?) {
-                    Ok(ordering) => ordering,
-                    Err(reason) => return Ok(Classification::Uncertain(reason)),
-                };
-                let upper = match decided(parameter.order_to_real(&Real::one(), policy)?) {
-                    Ok(ordering) => ordering,
-                    Err(reason) => return Ok(Classification::Uncertain(reason)),
-                };
-                lower != std::cmp::Ordering::Less && upper != std::cmp::Ordering::Greater
-            }
-            Self::AffineLine => true,
-            Self::IncidentRay {
-                anchor,
-                direction,
-                barrier,
-            } => {
-                let anchor_order = match decided(parameter.order_to_real(anchor, policy)?) {
-                    Ok(ordering) => ordering,
-                    Err(reason) => return Ok(Classification::Uncertain(reason)),
-                };
-                let after_anchor = match direction {
-                    BezierParameterRayDirection2::Increasing => {
-                        anchor_order == std::cmp::Ordering::Greater
-                    }
-                    BezierParameterRayDirection2::Decreasing => {
-                        anchor_order == std::cmp::Ordering::Less
-                    }
-                };
-                if !after_anchor {
-                    false
-                } else if let Some(barrier) = barrier {
-                    let barrier_order =
-                        match decided(parameter.cmp_bezier_parameter(barrier, policy)?) {
-                            Ok(ordering) => ordering,
-                            Err(reason) => return Ok(Classification::Uncertain(reason)),
-                        };
-                    match direction {
-                        BezierParameterRayDirection2::Increasing => {
-                            barrier_order == std::cmp::Ordering::Less
-                        }
-                        BezierParameterRayDirection2::Decreasing => {
-                            barrier_order == std::cmp::Ordering::Greater
-                        }
-                    }
-                } else {
-                    true
-                }
-            }
-        };
-        Ok(Classification::Decided(keep))
-    }
 }
 
 fn strict_rational_sample_for_parallel_domain(
@@ -130957,11 +130818,11 @@ mod conversion_tests {
                     assert_eq!(
                         trace.path_count(
                             "hypercurve",
-                            "recursive-chord-parallel-degenerate",
-                            "selected-low-degree-fiber",
+                            "selected-dense-degenerate",
+                            "tagged-norm-selected-fiber",
                         ),
                         1,
-                        "the authored local quadratic must own projection: {trace:?}",
+                        "the saturated selected fiber must own projection: {trace:?}",
                     );
                 }
 
@@ -131020,6 +130881,98 @@ mod conversion_tests {
                     ));
                 }
             }
+        }
+    }
+
+    #[test]
+    fn selected_dense_kernel_projects_cubic_past_foreign_wide_components() {
+        // For the two selected roots a<b of 8x^2-8x+1, the authored tuple
+        // owns (a-b)(8t^3-1). Foreign tuples with x=y make every ordinary
+        // sequential resultant coefficient zero. The shared tagged-norm
+        // saturation must nevertheless recover the selected cubic root 1/2.
+        let parameters =
+            algebraic_parameters(vec![Real::one(), Real::from(-8_i8), Real::from(8_i8)]);
+        let [first, second] = parameters.as_slice() else {
+            panic!("the source polynomial must own two selected roots");
+        };
+        let sources = [
+            bezier_parameter_root_representation(first),
+            bezier_parameter_root_representation(second),
+        ];
+        let difference = DenseTensorPolynomial::from_axis_polynomial(
+            3,
+            0,
+            &[Real::zero(), Real::one()],
+        )
+        .unwrap()
+        .subtract(
+            &DenseTensorPolynomial::from_axis_polynomial(
+                3,
+                1,
+                &[Real::zero(), Real::one()],
+            )
+            .unwrap(),
+        )
+        .unwrap();
+        let cubic = DenseTensorPolynomial::from_axis_polynomial(
+            3,
+            2,
+            &[
+                Real::from(-1_i8),
+                Real::zero(),
+                Real::zero(),
+                Real::from(8_i8),
+            ],
+        )
+        .unwrap();
+        let relation = difference.multiply(&cubic).unwrap();
+        let Classification::Decided(global) =
+            selected_dense_last_axis_projection(&relation, &sources).unwrap()
+        else {
+            panic!("the foreign-component global projection must complete");
+        };
+        assert!(global.coefficients().iter().all(|coefficient| {
+            coefficient
+                .exact_rational_ref()
+                .is_some_and(|coefficient| coefficient.is_zero())
+        }));
+
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            #[cfg(feature = "dispatch-trace")]
+            hyperreal::dispatch_trace::reset();
+            let work = || {
+                selected_dense_last_axis_parameters(
+                    &relation,
+                    &sources,
+                    SelectedThirdAxisDomain2::UnitInterval,
+                    &policy,
+                )
+            };
+            #[cfg(feature = "dispatch-trace")]
+            let result = hyperreal::dispatch_trace::with_recording(work).unwrap();
+            #[cfg(not(feature = "dispatch-trace"))]
+            let result = work().unwrap();
+            let Classification::Decided(BezierAlgebraicFiberProjection2::Parameters(roots)) =
+                result
+            else {
+                panic!("the selected cubic fiber must project: {result:?}");
+            };
+            let [root] = roots.as_slice() else {
+                panic!("the selected cubic must own one unit root: {roots:?}");
+            };
+            assert_eq!(
+                root.as_exact(),
+                Some(&(Real::one() / Real::from(2_i8)).unwrap())
+            );
+            #[cfg(feature = "dispatch-trace")]
+            assert_eq!(
+                hyperreal::dispatch_trace::take_trace().path_count(
+                    "hypercurve",
+                    "selected-dense-degenerate",
+                    "tagged-norm-selected-fiber",
+                ),
+                1,
+            );
         }
     }
 
