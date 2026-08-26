@@ -131488,7 +131488,7 @@ mod conversion_tests {
                     .parallel_intersections_on_regular_range(&parallel, &range, &policy)
                     .unwrap(),
                 Classification::Decided(
-                    BezierAlgebraicChordParallelIntersections2::DegenerateProjection
+                    BezierAlgebraicChordParallelIntersections2::CoincidentSupportComponent
                 ),
             ));
             let component = match parallel
