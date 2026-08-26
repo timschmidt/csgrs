@@ -41683,42 +41683,45 @@ impl BezierAlgebraicCuspSemicircleChordParameterMap2 {
         policy: &CurveContext,
     ) -> CurveResult<Classification<Option<BezierRecursiveQuadraticChordContactFrame2>>> {
         self.validate_policy(policy)?;
-        if self.selected_fiber_line_system().is_some() {
-            return self.selected_fiber_line_recursive_contact_frame(contact, policy);
+        match &self.data.system {
+            BezierAlgebraicCuspSemicircleChordParameterMapSystem2::SelectedFiberLine(_) => {
+                self.selected_fiber_line_recursive_contact_frame(contact, policy)
+            }
+            BezierAlgebraicCuspSemicircleChordParameterMapSystem2::RecursiveQuadraticLine(
+                system,
+            ) => {
+                let retained = system.contact(contact.branch)?;
+                let field = retained.point.denominator.field();
+                let Some(center) = system.center.lifted_to(&field) else {
+                    return Ok(Classification::Decided(None));
+                };
+                Ok(Classification::Decided(Some(
+                    BezierRecursiveQuadraticChordContactFrame2 {
+                        field,
+                        point: retained.point.clone(),
+                        center,
+                    },
+                )))
+            }
+            BezierAlgebraicCuspSemicircleChordParameterMapSystem2::SelectedRadial(_) => {
+                self.selected_radial_recursive_contact_frame(contact, policy)
+            }
+            BezierAlgebraicCuspSemicircleChordParameterMapSystem2::ChordNormalProjective(_) => {
+                self.chord_normal_recursive_contact_frame(contact)
+            }
+            BezierAlgebraicCuspSemicircleChordParameterMapSystem2::RepresentedOblique(_) => {
+                self.represented_oblique_recursive_contact_frame(contact)
+            }
+            BezierAlgebraicCuspSemicircleChordParameterMapSystem2::RetainedOffset(_) => {
+                self.retained_offset_recursive_contact_frame(contact)
+            }
+            BezierAlgebraicCuspSemicircleChordParameterMapSystem2::Oblique(_) => {
+                self.oblique_recursive_contact_frame(contact)
+            }
+            BezierAlgebraicCuspSemicircleChordParameterMapSystem2::Axis(_) => {
+                self.axis_recursive_contact_frame(contact)
+            }
         }
-        if let Some(system) = self.recursive_quadratic_line_system() {
-            let retained = system.contact(contact.branch)?;
-            let field = retained.point.denominator.field();
-            let Some(center) = system.center.lifted_to(&field) else {
-                return Ok(Classification::Decided(None));
-            };
-            return Ok(Classification::Decided(Some(
-                BezierRecursiveQuadraticChordContactFrame2 {
-                    field,
-                    point: retained.point.clone(),
-                    center,
-                },
-            )));
-        }
-        if self.selected_radial_system().is_some() {
-            return self.selected_radial_recursive_contact_frame(contact, policy);
-        }
-        if self.chord_normal_projective_system().is_some() {
-            return self.chord_normal_recursive_contact_frame(contact);
-        }
-        if self.represented_oblique_system().is_some() {
-            return self.represented_oblique_recursive_contact_frame(contact);
-        }
-        if self.retained_offset_system().is_some() {
-            return self.retained_offset_recursive_contact_frame(contact);
-        }
-        if self.oblique_system().is_some() {
-            return self.oblique_recursive_contact_frame(contact);
-        }
-        if self.axis_system().is_some() {
-            return self.axis_recursive_contact_frame(contact);
-        }
-        Ok(Classification::Decided(None))
     }
 
     fn chord_normal_projective_system(
