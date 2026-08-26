@@ -41554,11 +41554,11 @@ impl BezierAlgebraicCuspSemicircleChordParameterMap2 {
     /// STRICT pass, after which the exact affine line point enters the common
     /// recursive projective importer. APPROXIMATE_512 can therefore terminate
     /// later point predicates, but cannot choose `u` or construct coordinates.
-    fn selected_fiber_line_recursive_contact_point(
+    fn selected_fiber_line_recursive_contact_frame(
         &self,
         contact: &BezierAlgebraicCuspSemicircleChordContact2,
         policy: &CurveContext,
-    ) -> CurveResult<Classification<Option<BezierRecursiveQuadraticProjectivePoint2>>> {
+    ) -> CurveResult<Classification<Option<BezierRecursiveQuadraticChordContactFrame2>>> {
         let Some(system) = self.selected_fiber_line_system() else {
             return Ok(Classification::Decided(None));
         };
@@ -41582,23 +41582,35 @@ impl BezierAlgebraicCuspSemicircleChordParameterMap2 {
                 return Ok(Classification::Uncertain(reason));
             }
         };
-        let points = match recursive_projective_evidence_points(&[&evidence], policy)? {
+        let center = match self.data.semicircle.center_point_evidence(policy)? {
+            Classification::Decided(center) => center,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        let points = match recursive_projective_evidence_points(&[&evidence, &center], policy)? {
             Classification::Decided(Some(points)) => points,
             Classification::Decided(None) => return Ok(Classification::Decided(None)),
             Classification::Uncertain(reason) => {
                 return Ok(Classification::Uncertain(reason));
             }
         };
-        let [point]: [BezierRecursiveQuadraticProjectivePoint2; 1] = points
+        let [point, center]: [BezierRecursiveQuadraticProjectivePoint2; 2] = points
             .try_into()
-            .expect("a selected-fiber line contact retains one projective point");
+            .expect("a selected-fiber line contact retains its point and center");
+        let field = point.denominator.field();
         #[cfg(feature = "dispatch-trace")]
         hyperreal::dispatch_trace::record(
             "hypercurve",
             "recursive-projective-point",
             "selected-fiber-line-promoted",
         );
-        Ok(Classification::Decided(Some(point)))
+        normalize_recursive_contact_frame(BezierRecursiveQuadraticChordContactFrame2 {
+            field,
+            point,
+            center,
+        })
+        .map(|frame| frame.map(Some))
     }
 
     /// Imports the historical represented oblique contact as one selected
@@ -41671,6 +41683,9 @@ impl BezierAlgebraicCuspSemicircleChordParameterMap2 {
         policy: &CurveContext,
     ) -> CurveResult<Classification<Option<BezierRecursiveQuadraticChordContactFrame2>>> {
         self.validate_policy(policy)?;
+        if self.selected_fiber_line_system().is_some() {
+            return self.selected_fiber_line_recursive_contact_frame(contact, policy);
+        }
         if let Some(system) = self.recursive_quadratic_line_system() {
             let retained = system.contact(contact.branch)?;
             let field = retained.point.denominator.field();
@@ -44452,9 +44467,6 @@ impl BezierAlgebraicCuspChordPoint2 {
         policy: &CurveContext,
     ) -> CurveResult<Classification<Option<BezierRecursiveQuadraticProjectivePoint2>>> {
         let (map, contact) = self.map_contact();
-        if map.selected_fiber_line_system().is_some() {
-            return map.selected_fiber_line_recursive_contact_point(contact, policy);
-        }
         Ok(map
             .recursive_contact_frame(contact, policy)?
             .map(|frame| frame.map(|frame| frame.point)))
@@ -132878,7 +132890,7 @@ mod conversion_tests {
     }
 
     #[test]
-    fn selected_fiber_line_endpoint_enters_recursive_collinear_solver() {
+    fn selected_fiber_line_derived_endpoint_enters_recursive_collinear_solver() {
         let half = (Real::one() / Real::from(2_i8)).unwrap();
         let support = QuadraticBezier2::from_line_segment(
             LineSeg2::try_new(Point2::from_values(0, 0), Point2::from_values(2, 0)).unwrap(),
@@ -132891,7 +132903,10 @@ mod conversion_tests {
         )
         .unwrap();
         let source = RationalBezier2::try_new(
-            vec![line.start().clone(), line.end().clone()],
+            vec![
+                line.start().translated(Real::zero(), Real::one()),
+                line.end().translated(Real::zero(), Real::one()),
+            ],
             vec![Real::one(), Real::one()],
         )
         .unwrap();
@@ -132966,16 +132981,19 @@ mod conversion_tests {
                     )
                 })
                 .expect("the line contact must retain its selected-fiber map");
+            let RationalBezierIntersectionPointEvidence2::AlgebraicCuspChord(point) =
+                &contact.point
+            else {
+                unreachable!("the selected-fiber contact was matched above")
+            };
+            let point = RationalBezierIntersectionPointEvidence2::AlgebraicCuspChordDerived(
+                point.translated(&Real::zero(), &Real::one()),
+            );
 
             #[cfg(feature = "dispatch-trace")]
             hyperreal::dispatch_trace::reset();
-            let work = || {
-                chord.collinear_source_parameters_at_chord_endpoint(
-                    &source,
-                    &contact.point,
-                    &policy,
-                )
-            };
+            let work =
+                || chord.collinear_source_parameters_at_chord_endpoint(&source, &point, &policy);
             #[cfg(feature = "dispatch-trace")]
             let parameters = hyperreal::dispatch_trace::with_recording(work);
             #[cfg(not(feature = "dispatch-trace"))]
