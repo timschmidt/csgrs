@@ -19775,6 +19775,30 @@ fn classify_point_with_retained_ray_skipping_origin(
                     }
                     result
                 }
+                None if skipped_origin.is_some() => {
+                    match chord.forward_ray_winding_delta_skipping_incident_origin(
+                        point,
+                        direction_x,
+                        direction_y,
+                        policy,
+                    )? {
+                        Classification::Decided(Some(delta)) => {
+                            if skipped_origin
+                                .is_some_and(|origin| origin.fragment_index == Some(fragment_index))
+                            {
+                                source_origin_contact_was_skipped = true;
+                            }
+                            Classification::Decided(delta)
+                        }
+                        Classification::Decided(None) => chord.forward_ray_winding_delta(
+                            point,
+                            direction_x,
+                            direction_y,
+                            policy,
+                        )?,
+                        Classification::Uncertain(reason) => Classification::Uncertain(reason),
+                    }
+                }
                 None => chord.forward_ray_winding_delta(point, direction_x, direction_y, policy)?,
             };
             match result {

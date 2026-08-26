@@ -2111,9 +2111,9 @@ fn axis_aligned_algebraic_chords_reenter_exact_region_offsets() {
                 trace.path_count(
                     "hypercurve",
                     "algebraic-chord-pair",
-                    "adjacent-circular-endpoint-only",
+                    "refined-carrier-bounds-disjoint",
                 ),
-                4
+                2
             );
             assert_eq!(
                 trace.path_count("hypercurve", "algebraic-chord-pair", "general-rational",),
@@ -2122,21 +2122,23 @@ fn axis_aligned_algebraic_chords_reenter_exact_region_offsets() {
             assert_eq!(
                 trace.path_count(
                     "hypercurve",
-                    "algebraic-circle-rational-pair",
-                    "bounds-disjoint",
+                    "algebraic-circle-chord-pair",
+                    "adjacent-authored-tangent",
                 ),
-                2
+                8
             );
-            for path in [
-                "nonadjacent-line",
-                "nonadjacent-circle",
-                "nonadjacent-general",
-            ] {
-                assert_eq!(
-                    trace.path_count("hypercurve", "algebraic-circle-rational-pair", path),
-                    0
-                );
-            }
+            assert_eq!(
+                trace.path_count(
+                    "hypercurve",
+                    "algebraic-circle-chord-pair",
+                    "refined-bounds-disjoint",
+                ),
+                4
+            );
+            assert_eq!(
+                trace.operation_count("hypercurve", "algebraic-circle-rational-pair"),
+                0
+            );
         }
         assert_eq!(rounded.certainty, CurveCertainty::Certified);
         assert_eq!(rounded.value.boundary_loops().len(), 1);
@@ -5858,6 +5860,103 @@ fn sheared_algebraic_chord_erosion_splits_a_collapsed_neck_exactly() {
         ] {
             assert_eq!(
                 certified(split.value.classify_point(&point, &policy).unwrap()),
+                Classification::Decided(expected)
+            );
+        }
+    }
+}
+
+#[test]
+fn algebraic_chord_expansion_merges_coupled_material_loops_exactly() {
+    let miter = OffsetCornerStyle2::Miter {
+        limit: Real::from(2),
+    };
+    for (policy, fill_rule, reverse) in [
+        (CurveContext::STRICT, FillRule::NonZero, false),
+        (CurveContext::STRICT, FillRule::EvenOdd, true),
+        (CurveContext::APPROXIMATE_512, FillRule::NonZero, false),
+        (CurveContext::APPROXIMATE_512, FillRule::EvenOdd, true),
+    ] {
+        let first = axis_aligned_algebraic_rectangle(&policy);
+        let second = first
+            .transform_affine(
+                &Real::one(),
+                &Real::zero(),
+                &Real::zero(),
+                &Real::one(),
+                &Real::from(2),
+                &Real::zero(),
+                &policy,
+            )
+            .expect("the second retained material loop must translate exactly")
+            .into_value();
+        let mut boundaries = first
+            .into_boundary_loops()
+            .into_iter()
+            .chain(second.into_boundary_loops())
+            .collect::<Vec<_>>();
+        if reverse {
+            boundaries = boundaries
+                .into_iter()
+                .map(|boundary| {
+                    CurveRegionBoundaryLoop2::new(
+                        boundary
+                            .into_fragments()
+                            .into_iter()
+                            .rev()
+                            .map(|fragment| fragment.reversed().unwrap())
+                            .collect(),
+                        &policy,
+                    )
+                    .unwrap()
+                })
+                .collect();
+        }
+        let source = CurveRegion2::try_new_with_loop_topology(
+            boundaries,
+            vec![CurveRegionLoopRole::Material; 2],
+            vec![fill_rule; 2],
+            vec![
+                if reverse {
+                    CurveBoundaryInteriorSide2::Right
+                } else {
+                    CurveBoundaryInteriorSide2::Left
+                };
+                2
+            ],
+        )
+        .unwrap();
+
+        let merged = source
+            .offset(Real::one(), &miter, &policy)
+            .unwrap_or_else(|error| {
+                panic!(
+                    "coupled retained material loops must merge under {policy:?}, fill={fill_rule:?}, reverse={reverse}: {error:?}"
+                )
+            });
+        assert_eq!(merged.certainty, CurveCertainty::Certified);
+        assert_eq!(merged.value.boundary_loops().len(), 1);
+        assert_eq!(
+            certified(merged.value.loop_roles(&policy).unwrap()),
+            Classification::Decided(vec![CurveRegionLoopRole::Material])
+        );
+        assert!(
+            merged.value.boundary_loops()[0]
+                .fragments()
+                .iter()
+                .all(|fragment| matches!(fragment, BezierSplitFragment2::AlgebraicChord(_)))
+        );
+        for (point, expected) in [
+            (Point2::new(q(1, 4), q(1, 2)), RegionPointLocation::Inside),
+            (Point2::new(q(3, 2), q(1, 2)), RegionPointLocation::Inside),
+            (Point2::new(q(9, 4), q(1, 2)), RegionPointLocation::Inside),
+            (
+                Point2::new(Real::from(-2), q(1, 2)),
+                RegionPointLocation::Outside,
+            ),
+        ] {
+            assert_eq!(
+                certified(merged.value.classify_point(&point, &policy).unwrap()),
                 Classification::Decided(expected)
             );
         }

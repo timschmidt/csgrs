@@ -65425,6 +65425,41 @@ impl BezierAlgebraicChord2 {
         Ok(Classification::Decided(0))
     }
 
+    /// Omits this chord when an exact boundary-side ray starts in its interior.
+    ///
+    /// A side query is the winding of the open forward ray immediately after
+    /// its origin. Every transverse boundary image through that origin must
+    /// therefore be omitted, including coincident images from other loops. A
+    /// straight chord has no residual contact after its certified origin; a
+    /// parallel ray remains a nongeneric boundary direction.
+    pub(crate) fn forward_ray_winding_delta_skipping_incident_origin(
+        &self,
+        origin: &Point2,
+        direction_x: &Real,
+        direction_y: &Real,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<Option<i32>>> {
+        self.validate_policy(policy)?;
+        match self.contains_point(origin, policy)? {
+            Classification::Decided(true) => {}
+            Classification::Decided(false) => {
+                return Ok(Classification::Decided(None));
+            }
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        }
+        match self.tangent_cross_vector_sign(&(direction_x.clone(), direction_y.clone()), policy)? {
+            Classification::Decided(RealSign::Positive | RealSign::Negative) => {
+                Ok(Classification::Decided(Some(0)))
+            }
+            Classification::Decided(RealSign::Zero) => {
+                Ok(Classification::Uncertain(UncertaintyReason::Boundary))
+            }
+            Classification::Uncertain(reason) => Ok(Classification::Uncertain(reason)),
+        }
+    }
+
     fn forward_ray_winding_delta_general(
         &self,
         origin: &Point2,
@@ -72870,9 +72905,10 @@ impl BezierAlgebraicChord2 {
     fn shared_tangent_orientation(&self, other: &Self) -> Option<bool> {
         let (first, first_reversed) = self.tangent_authority();
         let (second, second_reversed) = other.tangent_authority();
-        first
-            .shares_retained_support(second)
-            .then_some(first_reversed ^ second_reversed)
+        let support_reversed = first
+            .retained_support_orientation_to(second)
+            .or_else(|| first.shares_retained_support(second).then_some(false))?;
+        Some(first_reversed ^ support_reversed ^ second_reversed)
     }
 
     fn tangent_relation_sign_by_refinement(
@@ -108361,9 +108397,14 @@ mod conversion_tests {
             let first = chord(Point2::from_values(0, 0), Point2::from_values(3, 4));
             let forward = chord(Point2::from_values(10, 0), Point2::from_values(13, 4));
             let reverse = chord(Point2::from_values(13, 4), Point2::from_values(10, 0));
+            let reconstructed_reverse = chord(Point2::from_values(3, 4), Point2::from_values(0, 0));
 
             assert!(first.shared_tangent_orientation(&forward).is_none());
             assert!(first.shared_tangent_orientation(&reverse).is_none());
+            assert_eq!(
+                first.shared_tangent_orientation(&reconstructed_reverse),
+                Some(true)
+            );
             assert_eq!(
                 first.tangent_cross_sign(&forward, &policy).unwrap(),
                 Classification::Decided(RealSign::Zero),
@@ -108380,6 +108421,23 @@ mod conversion_tests {
                 first.tangent_dot_sign(&reverse, &policy).unwrap(),
                 Classification::Decided(RealSign::Negative),
             );
+            assert_eq!(
+                first
+                    .tangent_dot_sign(&reconstructed_reverse, &policy)
+                    .unwrap(),
+                Classification::Decided(RealSign::Negative),
+            );
+            let reconstructed_overlap = first
+                .chord_intersections(&reconstructed_reverse, &policy)
+                .unwrap();
+            assert!(matches!(
+                reconstructed_overlap,
+                Classification::Decided(BezierAlgebraicChordPairIntersections2::Overlaps(
+                    ref overlaps
+                )) if overlaps.len() == 1
+                    && overlaps[0].orientation()
+                        == RationalBezierOverlapOrientation2::Reversed
+            ));
         }
     }
 
