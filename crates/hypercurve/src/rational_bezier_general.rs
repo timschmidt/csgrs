@@ -918,9 +918,9 @@ impl RationalBezierOverlapParameterCorrespondence2 {
             }?;
             return Ok(mapped.map(|parameter| parameter.map(CurveRegionParameter2::from_bezier)));
         }
-        let Some(parameter) = parameter.as_selected_fiber() else {
+        if !parameter.is_retained_scalar() {
             return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
-        };
+        }
         let (source_range, target_range) = if first_to_second {
             (first_range, second_range)
         } else {
@@ -930,7 +930,10 @@ impl RationalBezierOverlapParameterCorrespondence2 {
             (source_range.start(), target_range.start()),
             (source_range.end(), target_range.end()),
         ] {
-            match parameter.cmp_bezier_parameter(source_endpoint, policy)? {
+            match parameter.cmp_by_refinement(
+                &CurveRegionParameter2::from_bezier(source_endpoint.clone()),
+                policy,
+            )? {
                 Classification::Decided(Ordering::Equal) => {
                     return Ok(Classification::Decided(Some(
                         CurveRegionParameter2::from_bezier(target_endpoint.clone()),
@@ -945,7 +948,11 @@ impl RationalBezierOverlapParameterCorrespondence2 {
 
         let mapped = match self {
             Self::Identity => Classification::Decided(parameter.clone()),
-            Self::UnitComplement => Classification::Decided(parameter.unit_complement()),
+            Self::UnitComplement => Classification::Decided(
+                parameter
+                    .unit_complement()
+                    .expect("a retained scalar has a unit-complement chart"),
+            ),
             Self::EndpointProjective {
                 second_to_first_scale,
                 reversed,
@@ -1016,27 +1023,32 @@ impl RationalBezierOverlapParameterCorrespondence2 {
                 return Ok(Classification::Uncertain(reason));
             }
         };
-        let lower = match mapped.order_to_real(&Real::zero(), policy)? {
+        let lower = match mapped.cmp_by_refinement(
+            &CurveRegionParameter2::from_bezier(BezierParameter2::Exact(Real::zero())),
+            policy,
+        )? {
             Classification::Decided(order) => order,
             Classification::Uncertain(reason) => {
                 return Ok(Classification::Uncertain(reason));
             }
         };
-        let upper = match mapped.order_to_real(&Real::one(), policy)? {
+        let upper = match mapped.cmp_by_refinement(
+            &CurveRegionParameter2::from_bezier(BezierParameter2::Exact(Real::one())),
+            policy,
+        )? {
             Classification::Decided(order) => order,
             Classification::Uncertain(reason) => {
                 return Ok(Classification::Uncertain(reason));
             }
         };
         Ok(Classification::Decided(
-            (!lower.is_lt() && !upper.is_gt())
-                .then(|| CurveRegionParameter2::from_selected_fiber(mapped)),
+            (!lower.is_lt() && !upper.is_gt()).then_some(mapped),
         ))
     }
 
     fn map_promoted_region_parameter(
         &self,
-        parameter: &crate::bezier_offset::BezierAlgebraicSelectedFiberParameter2,
+        parameter: &CurveRegionParameter2,
         first_range: &BezierParameterRange2,
         second_range: &BezierParameterRange2,
         first_to_second: bool,

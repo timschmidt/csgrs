@@ -896,6 +896,18 @@ fn finite_region_parameter_projection(
             },
         );
     }
+    if let Some(parameter) = parameter.as_recursive_projective() {
+        return match parameter.finite_projection_interval(refinement_steps, policy)? {
+            Classification::Decided((lower, value, upper)) => Ok(FiniteParameterProjection2 {
+                lower,
+                value,
+                upper,
+            }),
+            Classification::Uncertain(reason) => Err(CurveError::Topology(format!(
+                "finite projection could not refine a recursive projective parameter: {reason:?}"
+            ))),
+        };
+    }
     let selected = parameter.as_selected_fiber().ok_or_else(|| {
         CurveError::Topology(
             "finite projection encountered a non-source selected parameter domain".into(),

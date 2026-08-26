@@ -2855,8 +2855,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
                     CurveRegionParameter2::from_algebraic_chord(chord_start.clone()),
                     CurveRegionParameter2::from_algebraic_chord(chord_end.clone()),
                 );
-                let source_range =
-                    CurveRegionParameterRange2::from_bezier_range(overlap.source_range().clone());
+                let source_range = overlap.source_range().clone();
                 let orientation = overlap.orientation();
                 let (first_range, second_range) = if chord_is_first {
                     (chord_range, source_range)
@@ -11577,7 +11576,7 @@ fn split_carrier_with_refinement(
     if carrier.selected_fiber_endpoint_points.is_some()
         || events
             .iter()
-            .any(|event| event.parameter.is_selected_fiber())
+            .any(|event| event.parameter.is_retained_scalar())
     {
         return split_selected_fiber_carrier(carrier, events, contact_points, policy);
     }
@@ -11685,12 +11684,23 @@ fn selected_fiber_event_point(
     {
         return Ok(point);
     }
-    let parameter = event.parameter.as_bezier_parameter().ok_or_else(|| {
-        CurveError::Topology("a selected-fiber boundary lost its exact point evidence".into())
-    })?;
+    let parameter = if let Some(parameter) = event.parameter.as_bezier_parameter() {
+        parameter.clone()
+    } else {
+        match policy
+            .strict_predicate_pass(|| event.parameter.promoted_bezier_parameter_complete(policy))?
+        {
+            Classification::Decided(parameter) => parameter,
+            Classification::Uncertain(reason) => {
+                return Err(CurveError::Topology(format!(
+                    "a retained-scalar boundary lost its exact point evidence: {reason:?}"
+                )));
+            }
+        }
+    };
     match source {
         BezierSelectedFiberSource2::Rational(curve) => {
-            exact_contact_point_evidence(curve, parameter, policy)?.ok_or_else(|| {
+            exact_contact_point_evidence(curve, &parameter, policy)?.ok_or_else(|| {
                 CurveError::Topology(
                     "a selected-fiber rational boundary could not retain its exact point".into(),
                 )
@@ -11708,11 +11718,7 @@ fn selected_fiber_event_point(
                 };
             }
             Ok(RationalBezierIntersectionPointEvidence2::AnalyticParallel(
-                crate::BezierAnalyticParallelPoint2::new(
-                    parallel.clone(),
-                    parameter.clone(),
-                    policy,
-                ),
+                crate::BezierAnalyticParallelPoint2::new(parallel.clone(), parameter, policy),
             ))
         }
     }

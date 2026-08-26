@@ -22,9 +22,11 @@ use std::cmp::Ordering;
 
 use crate::Aabb2;
 use crate::RationalBezierIntersectionPointEvidence2;
-use crate::bezier_offset::BezierAlgebraicSelectedFiberParameter2;
 use crate::bezier_offset::{
     BezierAlgebraicChordParameter2, BezierAlgebraicCuspSemicircleParameter2,
+};
+use crate::bezier_offset::{
+    BezierAlgebraicSelectedFiberParameter2, BezierRecursiveProjectiveParameter2,
 };
 use crate::classify::{compare_reals, in_closed_unit_interval, is_zero};
 use crate::{
@@ -50,6 +52,7 @@ pub struct CurveRegionParameter2 {
 enum CurveRegionParameterData2 {
     Bezier(BezierParameter2),
     SelectedFiber(BezierAlgebraicSelectedFiberParameter2),
+    RecursiveProjective(BezierRecursiveProjectiveParameter2),
     AlgebraicChord(BezierAlgebraicChordParameter2),
     AlgebraicCusp(BezierAlgebraicCuspSemicircleParameter2),
     /// Parameter on the other oriented half of the same supporting circle.
@@ -80,6 +83,10 @@ impl PartialEq for CurveRegionParameter2 {
             (
                 CurveRegionParameterData2::SelectedFiber(first),
                 CurveRegionParameterData2::SelectedFiber(second),
+            ) => first == second,
+            (
+                CurveRegionParameterData2::RecursiveProjective(first),
+                CurveRegionParameterData2::RecursiveProjective(second),
             ) => first == second,
             _ => false,
         }
@@ -113,6 +120,14 @@ impl CurveRegionParameter2 {
         }
     }
 
+    pub(crate) fn from_recursive_projective(
+        parameter: BezierRecursiveProjectiveParameter2,
+    ) -> Self {
+        Self {
+            data: CurveRegionParameterData2::RecursiveProjective(parameter),
+        }
+    }
+
     pub(crate) fn from_algebraic_chord(parameter: BezierAlgebraicChordParameter2) -> Self {
         Self {
             data: CurveRegionParameterData2::AlgebraicChord(parameter),
@@ -124,7 +139,8 @@ impl CurveRegionParameter2 {
     pub const fn as_bezier_parameter(&self) -> Option<&BezierParameter2> {
         match &self.data {
             CurveRegionParameterData2::Bezier(parameter) => Some(parameter),
-            CurveRegionParameterData2::SelectedFiber(_) => None,
+            CurveRegionParameterData2::SelectedFiber(_)
+            | CurveRegionParameterData2::RecursiveProjective(_) => None,
             CurveRegionParameterData2::AlgebraicChord(_)
             | CurveRegionParameterData2::AlgebraicCusp(_)
             | CurveRegionParameterData2::AlgebraicCuspComplement(_) => None,
@@ -135,7 +151,8 @@ impl CurveRegionParameter2 {
     pub const fn as_exact(&self) -> Option<&Real> {
         match &self.data {
             CurveRegionParameterData2::Bezier(parameter) => parameter.as_exact(),
-            CurveRegionParameterData2::SelectedFiber(_) => None,
+            CurveRegionParameterData2::SelectedFiber(_)
+            | CurveRegionParameterData2::RecursiveProjective(_) => None,
             CurveRegionParameterData2::AlgebraicChord(_) => None,
             CurveRegionParameterData2::AlgebraicCusp(
                 BezierAlgebraicCuspSemicircleParameter2::Exact(parameter),
@@ -175,8 +192,13 @@ impl CurveRegionParameter2 {
         matches!(self.data, CurveRegionParameterData2::AlgebraicChord(_))
     }
 
-    pub(crate) const fn is_selected_fiber(&self) -> bool {
-        matches!(self.data, CurveRegionParameterData2::SelectedFiber(_))
+    /// Returns true for either compact retained scalar authority.
+    pub(crate) const fn is_retained_scalar(&self) -> bool {
+        matches!(
+            self.data,
+            CurveRegionParameterData2::SelectedFiber(_)
+                | CurveRegionParameterData2::RecursiveProjective(_)
+        )
     }
 
     pub(crate) const fn as_selected_fiber(
@@ -184,6 +206,15 @@ impl CurveRegionParameter2 {
     ) -> Option<&BezierAlgebraicSelectedFiberParameter2> {
         match &self.data {
             CurveRegionParameterData2::SelectedFiber(parameter) => Some(parameter),
+            _ => None,
+        }
+    }
+
+    pub(crate) const fn as_recursive_projective(
+        &self,
+    ) -> Option<&BezierRecursiveProjectiveParameter2> {
+        match &self.data {
+            CurveRegionParameterData2::RecursiveProjective(parameter) => Some(parameter),
             _ => None,
         }
     }
@@ -201,7 +232,8 @@ impl CurveRegionParameter2 {
             CurveRegionParameterData2::Bezier(_) | CurveRegionParameterData2::AlgebraicChord(_) => {
                 None
             }
-            CurveRegionParameterData2::SelectedFiber(_) => None,
+            CurveRegionParameterData2::SelectedFiber(_)
+            | CurveRegionParameterData2::RecursiveProjective(_) => None,
         }
     }
 
@@ -211,7 +243,8 @@ impl CurveRegionParameter2 {
             CurveRegionParameterData2::Bezier(_)
             | CurveRegionParameterData2::AlgebraicCusp(_)
             | CurveRegionParameterData2::AlgebraicCuspComplement(_) => None,
-            CurveRegionParameterData2::SelectedFiber(_) => None,
+            CurveRegionParameterData2::SelectedFiber(_)
+            | CurveRegionParameterData2::RecursiveProjective(_) => None,
         }
     }
 
@@ -242,6 +275,10 @@ impl CurveRegionParameter2 {
                 CurveRegionParameterData2::SelectedFiber(second),
             ) => first.cmp_by_refinement(second, policy),
             (
+                CurveRegionParameterData2::RecursiveProjective(first),
+                CurveRegionParameterData2::RecursiveProjective(second),
+            ) => first.cmp_by_refinement(second, policy),
+            (
                 CurveRegionParameterData2::SelectedFiber(first),
                 CurveRegionParameterData2::Bezier(second),
             ) => first.cmp_bezier_parameter(second, policy),
@@ -251,6 +288,52 @@ impl CurveRegionParameter2 {
             ) => Ok(second
                 .cmp_bezier_parameter(first, policy)?
                 .map(Ordering::reverse)),
+            (
+                CurveRegionParameterData2::RecursiveProjective(first),
+                CurveRegionParameterData2::Bezier(second),
+            ) => first.cmp_bezier_parameter(second, policy),
+            (
+                CurveRegionParameterData2::Bezier(first),
+                CurveRegionParameterData2::RecursiveProjective(second),
+            ) => Ok(second
+                .cmp_bezier_parameter(first, policy)?
+                .map(Ordering::reverse)),
+            (
+                CurveRegionParameterData2::SelectedFiber(first),
+                CurveRegionParameterData2::RecursiveProjective(second),
+            ) => {
+                let first = policy
+                    .strict_predicate_pass(|| first.promoted_bezier_parameter_complete(policy))?;
+                let second = policy
+                    .strict_predicate_pass(|| second.promoted_bezier_parameter_complete(policy))?;
+                match (first, second) {
+                    (Classification::Decided(first), Classification::Decided(second)) => {
+                        policy.strict_predicate_pass(|| first.cmp_by_refinement(&second, policy))
+                    }
+                    (Classification::Uncertain(reason), _)
+                    | (_, Classification::Uncertain(reason)) => {
+                        Ok(Classification::Uncertain(reason))
+                    }
+                }
+            }
+            (
+                CurveRegionParameterData2::RecursiveProjective(first),
+                CurveRegionParameterData2::SelectedFiber(second),
+            ) => {
+                let first = policy
+                    .strict_predicate_pass(|| first.promoted_bezier_parameter_complete(policy))?;
+                let second = policy
+                    .strict_predicate_pass(|| second.promoted_bezier_parameter_complete(policy))?;
+                match (first, second) {
+                    (Classification::Decided(first), Classification::Decided(second)) => {
+                        policy.strict_predicate_pass(|| first.cmp_by_refinement(&second, policy))
+                    }
+                    (Classification::Uncertain(reason), _)
+                    | (_, Classification::Uncertain(reason)) => {
+                        Ok(Classification::Uncertain(reason))
+                    }
+                }
+            }
             _ => Err(CurveError::Topology(
                 "cannot compare parameters from distinct carrier domains".into(),
             )),
@@ -275,6 +358,9 @@ impl CurveRegionParameter2 {
             CurveRegionParameterData2::SelectedFiber(parameter) => {
                 Some(Self::from_selected_fiber(parameter.unit_complement()))
             }
+            CurveRegionParameterData2::RecursiveProjective(parameter) => {
+                Some(Self::from_recursive_projective(parameter.unit_complement()))
+            }
             CurveRegionParameterData2::AlgebraicChord(_)
             | CurveRegionParameterData2::AlgebraicCusp(_)
             | CurveRegionParameterData2::AlgebraicCuspComplement(_) => None,
@@ -293,6 +379,9 @@ impl CurveRegionParameter2 {
                 Some((parameter.interval().start(), parameter.interval().end()))
             }
             CurveRegionParameterData2::SelectedFiber(parameter) => {
+                Some(parameter.isolating_bounds())
+            }
+            CurveRegionParameterData2::RecursiveProjective(parameter) => {
                 Some(parameter.isolating_bounds())
             }
             CurveRegionParameterData2::AlgebraicChord(_)
@@ -318,6 +407,9 @@ impl CurveRegionParameter2 {
             CurveRegionParameterData2::SelectedFiber(parameter) => Ok(parameter
                 .refined(refinement_steps, policy)?
                 .map(Self::from_selected_fiber)),
+            CurveRegionParameterData2::RecursiveProjective(parameter) => Ok(parameter
+                .refined(refinement_steps, policy)?
+                .map(Self::from_recursive_projective)),
             CurveRegionParameterData2::AlgebraicChord(_)
             | CurveRegionParameterData2::AlgebraicCusp(_)
             | CurveRegionParameterData2::AlgebraicCuspComplement(_) => {
@@ -341,6 +433,59 @@ impl CurveRegionParameter2 {
             CurveRegionParameterData2::SelectedFiber(parameter) => Ok(parameter
                 .affine_image_unbounded(scale, offset, policy)?
                 .map(Self::from_selected_fiber)),
+            CurveRegionParameterData2::RecursiveProjective(parameter) => Ok(parameter
+                .affine_image_unbounded(scale, offset, policy)?
+                .map(Self::from_recursive_projective)),
+            CurveRegionParameterData2::AlgebraicChord(_)
+            | CurveRegionParameterData2::AlgebraicCusp(_)
+            | CurveRegionParameterData2::AlgebraicCuspComplement(_) => {
+                Ok(Classification::Uncertain(UncertaintyReason::Unsupported))
+            }
+        }
+    }
+
+    /// Applies one finite projective chart while preserving a retained local
+    /// scalar authority. Ordinary Bezier parameters are mapped by their
+    /// correspondence before reaching this method.
+    pub(crate) fn projective_image_unbounded(
+        &self,
+        numerator: &[Real; 2],
+        denominator: &[Real; 2],
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<Self>> {
+        match &self.data {
+            CurveRegionParameterData2::SelectedFiber(parameter) => Ok(parameter
+                .projective_image_unbounded(numerator, denominator, policy)?
+                .map(Self::from_selected_fiber)),
+            CurveRegionParameterData2::RecursiveProjective(parameter) => Ok(parameter
+                .projective_image_unbounded(numerator, denominator, policy)?
+                .map(Self::from_recursive_projective)),
+            CurveRegionParameterData2::Bezier(_)
+            | CurveRegionParameterData2::AlgebraicChord(_)
+            | CurveRegionParameterData2::AlgebraicCusp(_)
+            | CurveRegionParameterData2::AlgebraicCuspComplement(_) => {
+                Ok(Classification::Uncertain(UncertaintyReason::Unsupported))
+            }
+        }
+    }
+
+    /// Promotes a retained finite scalar only for a consumer that requires an
+    /// ordinary Bezier parameter. Local comparison, clipping, and affine or
+    /// projective correspondence keep their compact authority.
+    pub(crate) fn promoted_bezier_parameter_complete(
+        &self,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<BezierParameter2>> {
+        match &self.data {
+            CurveRegionParameterData2::Bezier(parameter) => {
+                Ok(Classification::Decided(parameter.clone()))
+            }
+            CurveRegionParameterData2::SelectedFiber(parameter) => {
+                parameter.promoted_bezier_parameter_complete(policy)
+            }
+            CurveRegionParameterData2::RecursiveProjective(parameter) => {
+                parameter.promoted_bezier_parameter_complete(policy)
+            }
             CurveRegionParameterData2::AlgebraicChord(_)
             | CurveRegionParameterData2::AlgebraicCusp(_)
             | CurveRegionParameterData2::AlgebraicCuspComplement(_) => {
@@ -372,12 +517,24 @@ impl CurveRegionParameter2 {
                 CurveRegionParameterData2::SelectedFiber(second),
             ) => first.strict_rational_between_ordered(second, policy),
             (
+                CurveRegionParameterData2::RecursiveProjective(first),
+                CurveRegionParameterData2::RecursiveProjective(second),
+            ) => first.strict_rational_between_ordered(second, policy),
+            (
                 CurveRegionParameterData2::SelectedFiber(first),
                 CurveRegionParameterData2::Bezier(second),
             ) => first.strict_rational_between_bezier_ordered(second, true, policy),
             (
                 CurveRegionParameterData2::Bezier(first),
                 CurveRegionParameterData2::SelectedFiber(second),
+            ) => second.strict_rational_between_bezier_ordered(first, false, policy),
+            (
+                CurveRegionParameterData2::RecursiveProjective(first),
+                CurveRegionParameterData2::Bezier(second),
+            ) => first.strict_rational_between_bezier_ordered(second, true, policy),
+            (
+                CurveRegionParameterData2::Bezier(first),
+                CurveRegionParameterData2::RecursiveProjective(second),
             ) => second.strict_rational_between_bezier_ordered(first, false, policy),
             (CurveRegionParameterData2::AlgebraicChord(_), _)
             | (_, CurveRegionParameterData2::AlgebraicChord(_)) => Err(CurveError::Topology(
@@ -404,8 +561,10 @@ impl CurveRegionParameter2 {
                 "cannot separate parameters from distinct carrier domains".into(),
             )),
             (CurveRegionParameterData2::SelectedFiber(_), _)
-            | (_, CurveRegionParameterData2::SelectedFiber(_)) => Err(CurveError::Topology(
-                "selected-fiber separation requires a shared local authority".into(),
+            | (_, CurveRegionParameterData2::SelectedFiber(_))
+            | (CurveRegionParameterData2::RecursiveProjective(_), _)
+            | (_, CurveRegionParameterData2::RecursiveProjective(_)) => Err(CurveError::Topology(
+                "retained-scalar separation requires a shared local authority".into(),
             )),
         }
     }
@@ -675,7 +834,7 @@ fn intersect_curve_region_parameter_ranges(
     let low = match first_low.cmp_by_refinement(&second_low, policy)? {
         Classification::Decided(Ordering::Less) => second_low,
         Classification::Decided(Ordering::Equal) => {
-            if !first_low.is_selected_fiber() && second_low.is_selected_fiber() {
+            if !first_low.is_retained_scalar() && second_low.is_retained_scalar() {
                 second_low
             } else {
                 first_low
@@ -687,7 +846,7 @@ fn intersect_curve_region_parameter_ranges(
     let high = match first_high.cmp_by_refinement(&second_high, policy)? {
         Classification::Decided(Ordering::Greater) => second_high,
         Classification::Decided(Ordering::Equal) => {
-            if !first_high.is_selected_fiber() && second_high.is_selected_fiber() {
+            if !first_high.is_retained_scalar() && second_high.is_retained_scalar() {
                 second_high
             } else {
                 first_high
