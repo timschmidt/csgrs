@@ -12966,7 +12966,6 @@ fn cloned_once_lock<T: Clone>(source: &OnceLock<T>) -> OnceLock<T> {
 /// predicate, so no path constructs a primitive element.
 #[derive(Debug)]
 pub(crate) struct BezierAlgebraicCuspSemicircleAlgebraicRay2 {
-    frame: BezierParallelAlgebraicCuspFrame2,
     start: RationalBezierAlgebraicPointImage2,
     end: RationalBezierAlgebraicPointImage2,
     center: RationalBezierAlgebraicPointImage2,
@@ -62176,11 +62175,6 @@ fn algebraic_point_circle_residual_sign(
 }
 
 impl BezierAlgebraicCuspSemicircleAlgebraicRay2 {
-    pub(crate) fn has_same_structural_support(&self, other: &Self) -> bool {
-        Arc::ptr_eq(&self.frame.data, &other.frame.data)
-            && self.radius_squared == other.radius_squared
-    }
-
     pub(crate) fn endpoint_side_signs(
         &self,
         point: &RationalBezierAlgebraicPointPredicate2<'_>,
@@ -62249,6 +62243,57 @@ impl BezierAlgebraicCuspSemicircleAlgebraicRay2 {
                 }
             }),
         )
+    }
+
+    /// Omits this finite arc's transverse contact at an algebraic side-ray
+    /// origin while preserving any second forward circle contact.
+    pub(crate) fn forward_ray_winding_delta_skipping_incident_origin(
+        &self,
+        point: &RationalBezierAlgebraicPointPredicate2<'_>,
+        direction_x: &Real,
+        direction_y: &Real,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<Option<i32>>> {
+        match self.contains_point(point, policy)? {
+            Classification::Decided(true) => {}
+            Classification::Decided(false) => return Ok(Classification::Decided(None)),
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        }
+        let center = match self.center.predicate_evaluator(policy)? {
+            Classification::Decided(center) => center,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        let radial_sign = match signed_algebraic_point_linear_difference(
+            point,
+            &center,
+            direction_x,
+            direction_y,
+            policy,
+        )? {
+            Classification::Decided(sign @ (RealSign::Positive | RealSign::Negative)) => sign,
+            Classification::Decided(RealSign::Zero) => {
+                return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
+            }
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        // The ordinary minor-arc predicate evaluates a point on the circle
+        // from its outside limit.  An inward ray therefore includes the
+        // origin crossing; an outward ray does not.  Remove exactly that
+        // signed crossing while retaining a second forward contact when it
+        // lies on this same finite semicircle.
+        let skipped_origin_delta = if radial_sign == RealSign::Negative {
+            if self.clockwise { 1 } else { -1 }
+        } else {
+            0
+        };
+        self.forward_ray_winding_delta(point, direction_x, direction_y, true, policy)
+            .map(|delta| delta.map(|delta| Some(delta - skipped_origin_delta)))
     }
 
     pub(crate) fn forward_ray_winding_delta(
@@ -72030,6 +72075,32 @@ impl BezierParallelAlgebraicRay2 {
         }
     }
 
+    /// Omits every transverse contact at an algebraic boundary-side ray
+    /// origin while retaining all other contacts on this finite parallel.
+    pub(crate) fn forward_ray_winding_delta_skipping_incident_origin(
+        &self,
+        point: &RationalBezierAlgebraicPointPredicate2<'_>,
+        direction_x: &Real,
+        direction_y: &Real,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<Option<i32>>> {
+        match self.contains_point(point, policy)? {
+            Classification::Decided(true) => {}
+            Classification::Decided(false) => return Ok(Classification::Decided(None)),
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        }
+        self.forward_ray_winding_delta_with_origin_mode(
+            point,
+            direction_x,
+            direction_y,
+            true,
+            policy,
+        )
+        .map(|delta| delta.map(Some))
+    }
+
     fn neighbor_sample(
         &self,
         parameters: &[BezierParameter2],
@@ -72099,6 +72170,23 @@ impl BezierParallelAlgebraicRay2 {
         direction_y: &Real,
         policy: &CurveContext,
     ) -> CurveResult<Classification<i32>> {
+        self.forward_ray_winding_delta_with_origin_mode(
+            point,
+            direction_x,
+            direction_y,
+            false,
+            policy,
+        )
+    }
+
+    fn forward_ray_winding_delta_with_origin_mode(
+        &self,
+        point: &RationalBezierAlgebraicPointPredicate2<'_>,
+        direction_x: &Real,
+        direction_y: &Real,
+        skip_incident_origin: bool,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<i32>> {
         let side_x = -direction_y.clone();
         let side_y = direction_x.clone();
         let side = self.system(point, &side_x, &side_y)?;
@@ -72136,16 +72224,20 @@ impl BezierParallelAlgebraicRay2 {
             if start_order.is_eq() || end_order.is_eq() {
                 return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
             }
-            match self.expression_sign_at_candidate(&side, &ahead, point, parameter, policy)? {
-                Classification::Decided(RealSign::Positive) => {}
-                Classification::Decided(RealSign::Negative) => continue,
-                Classification::Decided(RealSign::Zero) => {
-                    return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
-                }
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            }
+            let at_origin =
+                match self.expression_sign_at_candidate(&side, &ahead, point, parameter, policy)? {
+                    Classification::Decided(RealSign::Positive) => false,
+                    Classification::Decided(RealSign::Negative) => continue,
+                    Classification::Decided(RealSign::Zero) => {
+                        if !skip_incident_origin {
+                            return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
+                        }
+                        true
+                    }
+                    Classification::Uncertain(reason) => {
+                        return Ok(Classification::Uncertain(reason));
+                    }
+                };
             let before = match self.neighbor_sample(&parameters, index, false, policy)? {
                 Classification::Decided(sample) => {
                     match self.exact_sample_sign(point, &sample, &side_x, &side_y, policy)? {
@@ -72181,6 +72273,12 @@ impl BezierParallelAlgebraicRay2 {
                     return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
                 }
             };
+            if at_origin {
+                if delta == 0 {
+                    return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
+                }
+                continue;
+            }
             winding = winding
                 .checked_add(if self.reversed { -delta } else { delta })
                 .ok_or_else(|| {
@@ -81671,7 +81769,7 @@ impl BezierAlgebraicCuspSemicircleFragment2 {
         policy: &CurveContext,
     ) -> CurveResult<Classification<BezierAlgebraicCuspSemicircleAlgebraicRay2>> {
         self.validate_policy(policy)?;
-        let Some(rational_frame) = self.data.semicircle.data.frame.rational() else {
+        let Some(_) = self.data.semicircle.data.frame.rational() else {
             return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
         };
         let mut start = match self
@@ -81733,7 +81831,6 @@ impl BezierAlgebraicCuspSemicircleFragment2 {
         };
         Ok(Classification::Decided(
             BezierAlgebraicCuspSemicircleAlgebraicRay2 {
-                frame: rational_frame.clone(),
                 start,
                 end,
                 center: self.data.semicircle.center_point_image(policy)?,
@@ -83362,6 +83459,7 @@ impl BezierAlgebraicCuspSemicircleFragment2 {
             direction_x,
             direction_y,
             None,
+            false,
             policy,
         )
     }
@@ -83382,8 +83480,36 @@ impl BezierAlgebraicCuspSemicircleFragment2 {
             direction_x,
             direction_y,
             Some((parameter, crossing_direction)),
+            true,
             policy,
         )
+    }
+
+    /// Omits this finite arc's transverse contact at a represented side-ray
+    /// origin while preserving any second forward circle contact.
+    pub(crate) fn forward_ray_winding_delta_skipping_incident_origin(
+        &self,
+        origin: &Point2,
+        direction_x: &Real,
+        direction_y: &Real,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<Option<i32>>> {
+        match self.contains_point(origin, policy)? {
+            Classification::Decided(true) => {}
+            Classification::Decided(false) => return Ok(Classification::Decided(None)),
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        }
+        self.forward_ray_winding_delta_with_origin_contact(
+            origin,
+            direction_x,
+            direction_y,
+            None,
+            true,
+            policy,
+        )
+        .map(|delta| delta.map(Some))
     }
 
     /// Classifies one ray directly from retained circle, endpoint, and center
@@ -83399,6 +83525,7 @@ impl BezierAlgebraicCuspSemicircleFragment2 {
             &BezierAlgebraicCuspSemicircleParameter2,
             BezierLineCrossingDirection,
         )>,
+        skip_incident_origin: bool,
         policy: &CurveContext,
     ) -> CurveResult<Classification<i32>> {
         let direction_squared = direction_x * direction_x + direction_y * direction_y;
@@ -83464,21 +83591,24 @@ impl BezierAlgebraicCuspSemicircleFragment2 {
             } else {
                 line_side != crate::classify::LineSide::Left
             };
+        let mut skipped_origin_delta = 0_i32;
         if point_on_fragment {
-            let Some((source_parameter, crossing_direction)) = skipped_origin else {
+            if !skip_incident_origin {
                 return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
-            };
-            match self.contains_parameter(source_parameter, true, true, policy)? {
-                Classification::Decided(true) => {}
-                Classification::Decided(false) => {
-                    return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
-                }
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
             }
-            let source_point =
-                match source_parameter.coincident_point_evidence(&self.data.semicircle, policy)? {
+            if let Some((source_parameter, _)) = skipped_origin {
+                match self.contains_parameter(source_parameter, true, true, policy)? {
+                    Classification::Decided(true) => {}
+                    Classification::Decided(false) => {
+                        return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
+                    }
+                    Classification::Uncertain(reason) => {
+                        return Ok(Classification::Uncertain(reason));
+                    }
+                }
+                let source_point = match source_parameter
+                    .coincident_point_evidence(&self.data.semicircle, policy)?
+                {
                     Classification::Decided(Some(point)) => point,
                     Classification::Decided(None) => {
                         return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
@@ -83487,18 +83617,19 @@ impl BezierAlgebraicCuspSemicircleFragment2 {
                         return Ok(Classification::Uncertain(reason));
                     }
                 };
-            match source_point.same_point(
-                &RationalBezierIntersectionPointEvidence2::Exact(origin.clone()),
-                policy,
-            ) {
-                Classification::Decided(true) => {}
-                Classification::Decided(false) => {
-                    return Err(CurveError::Topology(
-                        "selected-circle origin crossing referenced a different point".into(),
-                    ));
-                }
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
+                match source_point.same_point(
+                    &RationalBezierIntersectionPointEvidence2::Exact(origin.clone()),
+                    policy,
+                ) {
+                    Classification::Decided(true) => {}
+                    Classification::Decided(false) => {
+                        return Err(CurveError::Topology(
+                            "selected-circle origin crossing referenced a different point".into(),
+                        ));
+                    }
+                    Classification::Uncertain(reason) => {
+                        return Ok(Classification::Uncertain(reason));
+                    }
                 }
             }
             let radial_order = match algebraic_chord_points_linear_order(
@@ -83532,12 +83663,25 @@ impl BezierAlgebraicCuspSemicircleFragment2 {
                     return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
                 }
             };
-            if certified_direction != crossing_direction {
+            if let Some((_, crossing_direction)) = skipped_origin
+                && certified_direction != crossing_direction
+            {
                 return Err(CurveError::Topology(
                     "selected-circle origin crossing disagreed with its boundary tangent".into(),
                 ));
             }
-        } else if skipped_origin.is_some() {
+            // The minor-arc predicate below uses the circle's outside-side
+            // limit at a boundary query. It consequently counts an inward
+            // origin crossing, but already excludes an outward one. Remove
+            // only the former so a second forward contact on this same
+            // finite arc remains in the winding sum.
+            if radial_order == std::cmp::Ordering::Less {
+                skipped_origin_delta = match certified_direction {
+                    BezierLineCrossingDirection::NegativeToPositive => 1,
+                    BezierLineCrossingDirection::PositiveToNegative => -1,
+                };
+            }
+        } else if skip_incident_origin {
             return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
         }
 
@@ -83578,7 +83722,7 @@ impl BezierAlgebraicCuspSemicircleFragment2 {
         );
         let (lower, upper, delta) = match decision {
             crate::contour::MinorArcWindingDecision::Delta(delta) => {
-                return Ok(Classification::Decided(delta));
+                return Ok(Classification::Decided(delta - skipped_origin_delta));
             }
             crate::contour::MinorArcWindingDecision::PointBetweenStartAndEnd(delta) => {
                 (&start, &end, delta)
@@ -83594,7 +83738,7 @@ impl BezierAlgebraicCuspSemicircleFragment2 {
             }
         };
         if lower_x != std::cmp::Ordering::Less {
-            return Ok(Classification::Decided(0));
+            return Ok(Classification::Decided(-skipped_origin_delta));
         }
         let upper_x = match order(upper, &exact_origin, direction_x, direction_y)? {
             Classification::Decided(order) => order,
@@ -83604,9 +83748,9 @@ impl BezierAlgebraicCuspSemicircleFragment2 {
         };
         Ok(Classification::Decided(
             if upper_x == std::cmp::Ordering::Greater {
-                delta
+                delta - skipped_origin_delta
             } else {
-                0
+                -skipped_origin_delta
             },
         ))
     }
@@ -83620,6 +83764,7 @@ impl BezierAlgebraicCuspSemicircleFragment2 {
             &BezierAlgebraicCuspSemicircleParameter2,
             BezierLineCrossingDirection,
         )>,
+        skip_incident_origin: bool,
         policy: &CurveContext,
     ) -> CurveResult<Classification<i32>> {
         self.validate_policy(policy)?;
@@ -83628,6 +83773,7 @@ impl BezierAlgebraicCuspSemicircleFragment2 {
             direction_x,
             direction_y,
             skipped_origin,
+            skip_incident_origin,
             policy,
         )?;
         if let decided @ Classification::Decided(_) = retained {
@@ -83699,19 +83845,22 @@ impl BezierAlgebraicCuspSemicircleFragment2 {
             if at_origin {
                 match self.contains_parameter(&parameter, true, true, policy)? {
                     Classification::Decided(true) => {
-                        let Some((source_parameter, crossing_direction)) = skipped_origin else {
+                        if !skip_incident_origin || origin_was_skipped {
                             return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
-                        };
-                        let is_source = match parameter
-                            .cmp_by_refinement(source_parameter, policy)?
-                        {
-                            Classification::Decided(order) => order == std::cmp::Ordering::Equal,
-                            Classification::Uncertain(reason) => {
-                                return Ok(Classification::Uncertain(reason));
+                        }
+                        if let Some((source_parameter, _)) = skipped_origin {
+                            let is_source =
+                                match parameter.cmp_by_refinement(source_parameter, policy)? {
+                                    Classification::Decided(order) => {
+                                        order == std::cmp::Ordering::Equal
+                                    }
+                                    Classification::Uncertain(reason) => {
+                                        return Ok(Classification::Uncertain(reason));
+                                    }
+                                };
+                            if !is_source {
+                                return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
                             }
-                        };
-                        if !is_source || origin_was_skipped {
-                            return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
                         }
                         let traversal_cross_sign = if self.data.reversed {
                             match contact.tangent_cross_sign {
@@ -83729,7 +83878,9 @@ impl BezierAlgebraicCuspSemicircleFragment2 {
                                 return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
                             }
                         };
-                        if certified_direction != crossing_direction {
+                        if let Some((_, crossing_direction)) = skipped_origin
+                            && certified_direction != crossing_direction
+                        {
                             return Err(CurveError::Topology(
                                 "algebraic cusp origin crossing disagreed with its boundary tangent"
                                     .into(),
@@ -83762,7 +83913,7 @@ impl BezierAlgebraicCuspSemicircleFragment2 {
             };
             winding += if self.data.reversed { -delta } else { delta };
         }
-        if skipped_origin.is_some() && !origin_was_skipped {
+        if skip_incident_origin && !origin_was_skipped {
             return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
         }
         Ok(Classification::Decided(winding))

@@ -18428,10 +18428,12 @@ fn algebraic_ray_retained_fragments_winding(
     skip_incident_origin_contacts: bool,
     policy: &CurveContext,
 ) -> CurveResult<Classification<i32>> {
-    let skipped_support = if let Some(fragment_index) = skipped_fragment {
+    if let Some(fragment_index) = skipped_fragment {
         match fragments.get(fragment_index) {
-            Some(AlgebraicRayRetainedFragment2::AlgebraicCusp(fragment)) => Some(fragment),
-            Some(AlgebraicRayRetainedFragment2::AlgebraicChord(_)) => None,
+            Some(
+                AlgebraicRayRetainedFragment2::AlgebraicCusp(_)
+                | AlgebraicRayRetainedFragment2::AlgebraicChord(_),
+            ) => {}
             Some(
                 AlgebraicRayRetainedFragment2::Rational(_)
                 | AlgebraicRayRetainedFragment2::AnalyticParallel(_),
@@ -18446,31 +18448,61 @@ fn algebraic_ray_retained_fragments_winding(
                 ));
             }
         }
-    } else {
-        None
-    };
+    }
     let mut winding = 0_i32;
-    for (fragment_index, fragment) in fragments.iter().enumerate() {
-        // The side-ray origin lies strictly inside its source cusp subarc.
-        // A line through a circle point has only that point and its antipode;
-        // the antipode is outside the same open semicircle. Omitting this one
-        // certified source fragment therefore removes exactly the origin
-        // contact and no forward crossing.
-        if skipped_fragment == Some(fragment_index) {
-            continue;
-        }
+    for fragment in fragments {
         let delta = match fragment {
             AlgebraicRayRetainedFragment2::Rational(fragment) => {
-                algebraic_point_rational_curve_ray_winding(
-                    fragment,
-                    point,
-                    direction_x,
-                    direction_y,
-                    policy,
-                )?
+                if skip_incident_origin_contacts {
+                    match algebraic_point_rational_curve_ray_winding_skipping_incident_origin(
+                        fragment,
+                        point,
+                        direction_x,
+                        direction_y,
+                        policy,
+                    )? {
+                        Classification::Decided(Some(delta)) => Classification::Decided(delta),
+                        Classification::Decided(None) => {
+                            algebraic_point_rational_curve_ray_winding(
+                                fragment,
+                                point,
+                                direction_x,
+                                direction_y,
+                                policy,
+                            )?
+                        }
+                        Classification::Uncertain(reason) => Classification::Uncertain(reason),
+                    }
+                } else {
+                    algebraic_point_rational_curve_ray_winding(
+                        fragment,
+                        point,
+                        direction_x,
+                        direction_y,
+                        policy,
+                    )?
+                }
             }
             AlgebraicRayRetainedFragment2::AnalyticParallel(fragment) => {
-                fragment.forward_ray_winding_delta(point, direction_x, direction_y, policy)?
+                if skip_incident_origin_contacts {
+                    match fragment.forward_ray_winding_delta_skipping_incident_origin(
+                        point,
+                        direction_x,
+                        direction_y,
+                        policy,
+                    )? {
+                        Classification::Decided(Some(delta)) => Classification::Decided(delta),
+                        Classification::Decided(None) => fragment.forward_ray_winding_delta(
+                            point,
+                            direction_x,
+                            direction_y,
+                            policy,
+                        )?,
+                        Classification::Uncertain(reason) => Classification::Uncertain(reason),
+                    }
+                } else {
+                    fragment.forward_ray_winding_delta(point, direction_x, direction_y, policy)?
+                }
             }
             AlgebraicRayRetainedFragment2::AlgebraicChord(fragment) => {
                 if skip_incident_origin_contacts {
@@ -18500,15 +18532,32 @@ fn algebraic_ray_retained_fragments_winding(
                 }
             }
             AlgebraicRayRetainedFragment2::AlgebraicCusp(fragment) => {
-                let point_on_supporting_circle = skipped_support
-                    .is_some_and(|source| fragment.has_same_structural_support(source));
-                fragment.forward_ray_winding_delta(
-                    point,
-                    direction_x,
-                    direction_y,
-                    point_on_supporting_circle,
-                    policy,
-                )?
+                if skip_incident_origin_contacts {
+                    match fragment.forward_ray_winding_delta_skipping_incident_origin(
+                        point,
+                        direction_x,
+                        direction_y,
+                        policy,
+                    )? {
+                        Classification::Decided(Some(delta)) => Classification::Decided(delta),
+                        Classification::Decided(None) => fragment.forward_ray_winding_delta(
+                            point,
+                            direction_x,
+                            direction_y,
+                            false,
+                            policy,
+                        )?,
+                        Classification::Uncertain(reason) => Classification::Uncertain(reason),
+                    }
+                } else {
+                    fragment.forward_ray_winding_delta(
+                        point,
+                        direction_x,
+                        direction_y,
+                        false,
+                        policy,
+                    )?
+                }
             }
         };
         let delta = match delta {
@@ -18917,6 +18966,7 @@ fn algebraic_point_rational_curve_ray_winding(
             point,
             direction_x,
             direction_y,
+            false,
             policy,
         );
     }
@@ -19076,11 +19126,56 @@ fn algebraic_point_rational_curve_ray_winding(
     }))
 }
 
+fn algebraic_point_rational_curve_ray_winding_skipping_incident_origin(
+    fragment: &AlgebraicRayRationalFragment2,
+    point: &RationalBezierAlgebraicPointPredicate2<'_>,
+    direction_x: &Real,
+    direction_y: &Real,
+    policy: &CurveContext,
+) -> CurveResult<Classification<Option<i32>>> {
+    match algebraic_point_on_rational_fragment(fragment, point, policy)? {
+        Classification::Decided(true) => {}
+        Classification::Decided(false) => return Ok(Classification::Decided(None)),
+        Classification::Uncertain(reason) => {
+            return Ok(Classification::Uncertain(reason));
+        }
+    }
+    if fragment.retained_range.is_some() {
+        return algebraic_point_retained_rational_curve_ray_winding(
+            fragment,
+            point,
+            direction_x,
+            direction_y,
+            true,
+            policy,
+        )
+        .map(|delta| delta.map(Some));
+    }
+    let retained = AlgebraicRayRationalFragment2 {
+        curve: fragment.curve.clone(),
+        retained_range: Some(CurveRegionParameterRange2::from_bezier_range(
+            BezierParameterRange2::from_exact(Real::zero(), Real::one()),
+        )),
+        reversed: fragment.reversed,
+        endpoints: fragment.endpoints.clone(),
+    };
+    algebraic_point_retained_rational_curve_ray_winding(
+        &retained,
+        point,
+        direction_x,
+        direction_y,
+        true,
+        policy,
+    )
+    .map(|delta| delta.map(Some))
+}
+
 fn algebraic_point_retained_rational_curve_ray_winding(
     fragment: &AlgebraicRayRationalFragment2,
     point: &RationalBezierAlgebraicPointPredicate2<'_>,
     direction_x: &Real,
     direction_y: &Real,
+    skip_incident_origin: bool,
     policy: &CurveContext,
 ) -> CurveResult<Classification<i32>> {
     let range = fragment
@@ -19159,13 +19254,16 @@ fn algebraic_point_retained_rational_curve_ray_winding(
                 return Ok(Classification::Uncertain(reason));
             }
         };
-        match ahead_sign {
+        let at_origin = match ahead_sign {
             RealSign::Negative => continue,
             RealSign::Zero => {
-                return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
+                if !skip_incident_origin {
+                    return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
+                }
+                true
             }
-            RealSign::Positive => {}
-        }
+            RealSign::Positive => false,
+        };
 
         let mut derivative = incidence.clone();
         let mut derivative_order = 0_usize;
@@ -19200,6 +19298,12 @@ fn algebraic_point_retained_rational_curve_ray_winding(
                 return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
             }
         };
+        if at_origin {
+            if delta == 0 {
+                return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
+            }
+            continue;
+        }
         winding = winding.checked_add(delta).ok_or_else(|| {
             CurveError::Topology("algebraic ray winding exceeds the curve counter".into())
         })?;
@@ -19866,6 +19970,29 @@ fn classify_point_with_retained_ray_skipping_origin(
                     }
                     result
                 }
+                None if skipped_origin.is_some() => match fragment
+                    .forward_ray_winding_delta_skipping_incident_origin(
+                        point,
+                        direction_x,
+                        direction_y,
+                        policy,
+                    )? {
+                    Classification::Decided(Some(delta)) => {
+                        if skipped_origin
+                            .is_some_and(|origin| origin.fragment_index == Some(fragment_index))
+                        {
+                            source_origin_contact_was_skipped = true;
+                        }
+                        Classification::Decided(delta)
+                    }
+                    Classification::Decided(None) => fragment.forward_ray_winding_delta(
+                        point,
+                        direction_x,
+                        direction_y,
+                        policy,
+                    )?,
+                    Classification::Uncertain(reason) => Classification::Uncertain(reason),
+                },
                 None => {
                     fragment.forward_ray_winding_delta(point, direction_x, direction_y, policy)?
                 }
@@ -29109,6 +29236,412 @@ mod tests {
                 )
                 .unwrap(),
                 Classification::Decided(0),
+            );
+        }
+    }
+
+    #[test]
+    fn algebraic_side_ray_skips_retained_rational_contacts_across_loops() {
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let alpha = sqrt_half_algebraic_parameter(&policy);
+            let BezierParameter2::Algebraic(alpha_root) = &alpha else {
+                panic!("sqrt(1/2) must remain algebraic");
+            };
+            let line =
+                RationalBezier2::try_new(vec![p(0, 0), p(1, 0)], vec![Real::one(), Real::one()])
+                    .unwrap();
+            let query_image = line
+                .point_at_algebraic_parameter(alpha_root, &policy)
+                .unwrap();
+            let Classification::Decided(query) = query_image.predicate_evaluator(&policy).unwrap()
+            else {
+                panic!("the algebraic side-ray origin predicate must construct");
+            };
+            let fragment = AlgebraicRayRationalFragment2 {
+                endpoints: [
+                    RationalBezierIntersectionPointEvidence2::Exact(line.start().clone()),
+                    RationalBezierIntersectionPointEvidence2::Exact(line.end().clone()),
+                ],
+                curve: line,
+                retained_range: Some(CurveRegionParameterRange2::from_bezier_range(
+                    BezierParameterRange2::from_exact(Real::zero(), Real::one()),
+                )),
+                reversed: false,
+            };
+            assert_eq!(
+                algebraic_point_on_rational_fragment(&fragment, &query, &policy).unwrap(),
+                Classification::Decided(true),
+            );
+            assert_eq!(
+                algebraic_point_rational_curve_ray_winding(
+                    &fragment,
+                    &query,
+                    &Real::zero(),
+                    &Real::one(),
+                    &policy,
+                )
+                .unwrap(),
+                Classification::Uncertain(UncertaintyReason::Boundary),
+            );
+            assert_eq!(
+                algebraic_point_rational_curve_ray_winding_skipping_incident_origin(
+                    &fragment,
+                    &query,
+                    &Real::zero(),
+                    &Real::one(),
+                    &policy,
+                )
+                .unwrap(),
+                Classification::Decided(Some(0)),
+            );
+        }
+    }
+
+    #[test]
+    fn algebraic_side_ray_skips_genuine_parallel_contacts_across_loops() {
+        let half = (Real::one() / Real::from(2_i8)).unwrap();
+        let source =
+            QuadraticBezier2::new(p(0, 0), Point2::new(half.clone(), Real::zero()), p(1, 1));
+        let distance = Real::from(3_i8).sqrt().unwrap();
+        let parallel = source.parallel_left(distance).unwrap();
+        let query_curve = RationalBezier2::try_new(
+            vec![p(0, 1), Point2::new(-half, Real::one()), p(-1, 2)],
+            vec![Real::one(); 3],
+        )
+        .unwrap();
+
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            assert_eq!(
+                parallel.exact_rational_parallel_component(&policy).unwrap(),
+                Classification::Decided(None),
+            );
+            let alpha = sqrt_half_algebraic_parameter(&policy);
+            let BezierParameter2::Algebraic(alpha_root) = &alpha else {
+                panic!("sqrt(1/2) must remain algebraic");
+            };
+            let query_image = query_curve
+                .point_at_algebraic_parameter(alpha_root, &policy)
+                .unwrap();
+            let Classification::Decided(query) = query_image.predicate_evaluator(&policy).unwrap()
+            else {
+                panic!("the genuine-parallel side-ray predicate must construct");
+            };
+            let endpoint = |parameter: Real| {
+                let Classification::Decided(point) =
+                    parallel.point_at(&parameter, &policy).unwrap()
+                else {
+                    panic!("the genuine parallel endpoint must evaluate");
+                };
+                RationalBezierIntersectionPointEvidence2::Exact(point)
+            };
+            let Classification::Decided(evaluator) =
+                crate::bezier_offset::BezierParallelAlgebraicRay2::try_new(
+                    parallel.clone(),
+                    CurveRegionParameterRange2::from_bezier_range(
+                        BezierParameterRange2::from_exact(Real::zero(), Real::one()),
+                    ),
+                    false,
+                    [endpoint(Real::zero()), endpoint(Real::one())],
+                    &policy,
+                )
+                .unwrap()
+            else {
+                panic!("the genuine-parallel algebraic ray must construct");
+            };
+            assert_eq!(
+                evaluator.contains_point(&query, &policy).unwrap(),
+                Classification::Decided(true),
+            );
+            assert_eq!(
+                evaluator
+                    .forward_ray_winding_delta(&query, &Real::zero(), &Real::one(), &policy)
+                    .unwrap(),
+                Classification::Uncertain(UncertaintyReason::Boundary),
+            );
+            assert_eq!(
+                evaluator
+                    .forward_ray_winding_delta_skipping_incident_origin(
+                        &query,
+                        &Real::zero(),
+                        &Real::one(),
+                        &policy,
+                    )
+                    .unwrap(),
+                Classification::Decided(Some(0)),
+            );
+            assert_eq!(
+                evaluator
+                    .forward_ray_winding_delta_skipping_incident_origin(
+                        &query,
+                        &Real::zero(),
+                        &Real::from(-1_i8),
+                        &policy,
+                    )
+                    .unwrap(),
+                Classification::Decided(Some(-1)),
+            );
+            assert_eq!(
+                algebraic_ray_retained_fragments_winding(
+                    &[AlgebraicRayRetainedFragment2::AnalyticParallel(evaluator)],
+                    &query,
+                    &Real::zero(),
+                    &Real::from(-1_i8),
+                    None,
+                    true,
+                    &policy,
+                )
+                .unwrap(),
+                Classification::Decided(-1),
+            );
+        }
+    }
+
+    #[test]
+    fn boundary_side_rays_skip_retained_cusp_contacts_across_loops() {
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let (_, represented_center) = selected_circle_fixture_center(&policy);
+            let Classification::Decided(Some(represented_support)) =
+                crate::bezier_offset::BezierAlgebraicCuspSemicircle2::from_retained_axis_aligned_center(
+                    &represented_center,
+                    (1, 0),
+                    Real::one(),
+                    true,
+                    &policy,
+                )
+                .unwrap()
+            else {
+                panic!("the represented selected semicircle must construct");
+            };
+            let represented = crate::BezierAlgebraicCuspSemicircleFragment2::full(
+                represented_support.clone(),
+                &policy,
+            );
+            let query = Point2::new((Real::one() / Real::from(2_i8)).unwrap(), Real::from(-1_i8));
+            assert_eq!(
+                represented.contains_point(&query, &policy).unwrap(),
+                Classification::Decided(true),
+            );
+            assert_eq!(
+                represented
+                    .forward_ray_winding_delta(&query, &Real::zero(), &Real::one(), &policy,)
+                    .unwrap(),
+                Classification::Uncertain(UncertaintyReason::Boundary),
+            );
+            assert_eq!(
+                represented
+                    .forward_ray_winding_delta_skipping_incident_origin(
+                        &query,
+                        &Real::zero(),
+                        &Real::one(),
+                        &policy,
+                    )
+                    .unwrap(),
+                Classification::Decided(Some(0)),
+            );
+            assert_eq!(
+                represented
+                    .forward_ray_winding_delta_skipping_incident_origin(
+                        &query,
+                        &Real::from(2_i8),
+                        &Real::one(),
+                        &policy,
+                    )
+                    .unwrap(),
+                Classification::Decided(Some(-1)),
+            );
+            assert_eq!(
+                represented
+                    .forward_ray_winding_delta_skipping_incident_origin(
+                        &query,
+                        &Real::zero(),
+                        &Real::from(-1_i8),
+                        &policy,
+                    )
+                    .unwrap(),
+                Classification::Decided(Some(0)),
+            );
+            let represented_complement = crate::BezierAlgebraicCuspSemicircleFragment2::full(
+                represented_support.complementary_half(),
+                &policy,
+            );
+            assert_eq!(
+                represented_complement
+                    .contains_point(&query, &policy)
+                    .unwrap(),
+                Classification::Decided(false),
+            );
+            assert_eq!(
+                represented_complement
+                    .forward_ray_winding_delta_skipping_incident_origin(
+                        &query,
+                        &Real::zero(),
+                        &Real::one(),
+                        &policy,
+                    )
+                    .unwrap(),
+                Classification::Decided(None),
+            );
+            let boundary = CurveRegionBoundaryLoop2::new(
+                vec![
+                    BezierSplitFragment2::AlgebraicCuspSemicircle(represented),
+                    BezierSplitFragment2::AlgebraicCuspSemicircle(represented_complement),
+                ],
+                &policy,
+            )
+            .unwrap();
+            let ray = BezierRay2 {
+                line: LineSeg2::try_new(
+                    query.clone(),
+                    Point2::new(query.x().clone(), Real::zero()),
+                )
+                .unwrap(),
+                direction_x: Real::zero(),
+                direction_y: Real::one(),
+            };
+            assert_eq!(
+                classify_point_with_retained_ray_skipping_origin(
+                    &boundary,
+                    &query,
+                    &ray,
+                    Some(RetainedRayOriginContact {
+                        fragment_index: None,
+                        parameter: None,
+                        crossing_direction: BezierLineCrossingDirection::PositiveToNegative,
+                        tangent_contacts: None,
+                    }),
+                    &policy,
+                )
+                .unwrap(),
+                Classification::Decided(RetainedRayWinding::Winding(-1)),
+            );
+            let source_parameter = CurveRegionParameter2::from_algebraic_cusp(
+                crate::bezier_offset::BezierAlgebraicCuspSemicircleParameter2::Exact(
+                    (Real::one() / Real::from(2_i8)).unwrap(),
+                ),
+            );
+            let oblique_ray = BezierRay2 {
+                line: LineSeg2::try_new(
+                    query.clone(),
+                    Point2::new(query.x() + Real::from(2_i8), Real::zero()),
+                )
+                .unwrap(),
+                direction_x: Real::from(2_i8),
+                direction_y: Real::one(),
+            };
+            assert_eq!(
+                classify_point_with_retained_ray_skipping_origin(
+                    &boundary,
+                    &query,
+                    &oblique_ray,
+                    Some(RetainedRayOriginContact {
+                        fragment_index: Some(0),
+                        parameter: Some(&source_parameter),
+                        crossing_direction: BezierLineCrossingDirection::NegativeToPositive,
+                        tangent_contacts: None,
+                    }),
+                    &policy,
+                )
+                .unwrap(),
+                Classification::Decided(RetainedRayWinding::Winding(-1)),
+            );
+
+            let alpha = sqrt_half_algebraic_parameter(&policy);
+            let BezierParameter2::Algebraic(alpha_root) = &alpha else {
+                panic!("sqrt(1/2) must remain algebraic");
+            };
+            let image = |height: i8| {
+                RationalBezier2::try_new(
+                    vec![p(0, i32::from(height)), p(1, i32::from(height))],
+                    vec![Real::one(), Real::one()],
+                )
+                .unwrap()
+                .point_at_algebraic_parameter(alpha_root, &policy)
+                .unwrap()
+            };
+            let center = RationalBezierIntersectionPointEvidence2::Algebraic(image(0));
+            let query_image = image(-1);
+            let Classification::Decided(query) = query_image.predicate_evaluator(&policy).unwrap()
+            else {
+                panic!("the algebraic cusp query predicate must construct");
+            };
+            let Classification::Decided(Some(support)) =
+                crate::bezier_offset::BezierAlgebraicCuspSemicircle2::from_retained_axis_aligned_center(
+                    &center,
+                    (1, 0),
+                    Real::one(),
+                    true,
+                    &policy,
+                )
+                .unwrap()
+            else {
+                panic!("the algebraic selected semicircle must construct");
+            };
+            let fragment = crate::BezierAlgebraicCuspSemicircleFragment2::full(support, &policy);
+            let Classification::Decided(evaluator) =
+                fragment.algebraic_ray_evaluator(&policy).unwrap()
+            else {
+                panic!("the algebraic selected semicircle ray must construct");
+            };
+            assert_eq!(
+                evaluator.contains_point(&query, &policy).unwrap(),
+                Classification::Decided(true),
+            );
+            assert_eq!(
+                evaluator
+                    .forward_ray_winding_delta_skipping_incident_origin(
+                        &query,
+                        &Real::zero(),
+                        &Real::one(),
+                        &policy,
+                    )
+                    .unwrap(),
+                Classification::Decided(Some(0)),
+            );
+            assert_eq!(
+                evaluator
+                    .forward_ray_winding_delta_skipping_incident_origin(
+                        &query,
+                        &Real::from(2_i8),
+                        &Real::one(),
+                        &policy,
+                    )
+                    .unwrap(),
+                Classification::Decided(Some(-1)),
+            );
+            assert_eq!(
+                evaluator
+                    .forward_ray_winding_delta_skipping_incident_origin(
+                        &query,
+                        &Real::zero(),
+                        &Real::from(-1_i8),
+                        &policy,
+                    )
+                    .unwrap(),
+                Classification::Decided(Some(0)),
+            );
+            assert_eq!(
+                evaluator
+                    .forward_ray_winding_delta_skipping_incident_origin(
+                        &query,
+                        &Real::one(),
+                        &Real::zero(),
+                        &policy,
+                    )
+                    .unwrap(),
+                Classification::Uncertain(UncertaintyReason::Boundary),
+            );
+            assert_eq!(
+                algebraic_ray_retained_fragments_winding(
+                    &[AlgebraicRayRetainedFragment2::AlgebraicCusp(evaluator)],
+                    &query,
+                    &Real::from(2_i8),
+                    &Real::one(),
+                    Some(0),
+                    true,
+                    &policy,
+                )
+                .unwrap(),
+                Classification::Decided(-1),
             );
         }
     }
