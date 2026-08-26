@@ -3071,6 +3071,27 @@ impl BezierParameterRange2 {
         Self::new_validated(BezierParameter2::Exact(start), BezierParameter2::Exact(end))
     }
 
+    /// Constructs one represented parameter strictly inside this oriented range.
+    ///
+    /// The retained endpoints follow curve traversal and may therefore be
+    /// descending. The underlying separation routine expects ascending
+    /// arguments, so select that order exactly without changing the range.
+    pub(crate) fn strict_rational_interior(
+        &self,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<Real>> {
+        match self.start.cmp_by_refinement(&self.end, policy)? {
+            Classification::Decided(Ordering::Less) => self
+                .start
+                .strict_rational_between_ordered(&self.end, policy),
+            Classification::Decided(Ordering::Greater) => self
+                .end
+                .strict_rational_between_ordered(&self.start, policy),
+            Classification::Decided(Ordering::Equal) => Err(CurveError::InvalidBezierRange),
+            Classification::Uncertain(reason) => Ok(Classification::Uncertain(reason)),
+        }
+    }
+
     /// Returns the oriented start boundary.
     pub const fn start(&self) -> &BezierParameter2 {
         &self.start

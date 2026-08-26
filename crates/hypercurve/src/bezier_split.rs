@@ -582,6 +582,23 @@ impl CurveRegionParameterRange2 {
         Self { start, end }
     }
 
+    /// Constructs one represented scalar strictly inside this oriented range.
+    pub(crate) fn strict_rational_interior(
+        &self,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<Real>> {
+        match self.start.cmp_by_refinement(&self.end, policy)? {
+            Classification::Decided(Ordering::Less) => self
+                .start
+                .strict_rational_between_ordered(&self.end, policy),
+            Classification::Decided(Ordering::Greater) => self
+                .end
+                .strict_rational_between_ordered(&self.start, policy),
+            Classification::Decided(Ordering::Equal) => Err(CurveError::InvalidBezierRange),
+            Classification::Uncertain(reason) => Ok(Classification::Uncertain(reason)),
+        }
+    }
+
     /// Returns the oriented range start.
     pub const fn start(&self) -> &CurveRegionParameter2 {
         &self.start

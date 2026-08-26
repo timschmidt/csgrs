@@ -17172,7 +17172,7 @@ mod certified_successor_tests {
                     trace.path_count(
                         "hypercurve",
                         "analytic-parallel-rational-component",
-                        "regularized-constant-tangent",
+                        "regularized-pythagorean-hodograph",
                     ) > 0,
                     "the selected branch must materialize structurally: {trace:?}",
                 );
@@ -17185,6 +17185,116 @@ mod certified_successor_tests {
                     "the rational overlap authority must publish the component: {trace:?}",
                 );
             }
+
+            let test_regularized_ph = || {
+                // P'(t)=(2t-1)(1-t^2,2t) has no global polynomial speed
+                // sheet, while its primitive quotient is the nonconstant PH
+                // field (1-t^2,2t). The selected right side must enter the same
+                // rational pair publisher and retain its authored parameter.
+                let regularized_ph_source = RationalBezier2::try_new(
+                    vec![
+                        Point2::from_values(0, 0),
+                        Point2::new(-(Real::one() / Real::from(4_i8)).unwrap(), Real::zero()),
+                        Point2::new(
+                            -(Real::one() / Real::from(3_i8)).unwrap(),
+                            -(Real::one() / Real::from(6_i8)).unwrap(),
+                        ),
+                        Point2::new(
+                            -(Real::one() / Real::from(6_i8)).unwrap(),
+                            -(Real::one() / Real::from(6_i8)).unwrap(),
+                        ),
+                        Point2::new(
+                            -(Real::one() / Real::from(6_i8)).unwrap(),
+                            (Real::one() / Real::from(3_i8)).unwrap(),
+                        ),
+                    ],
+                    vec![Real::one(); 5],
+                )
+                .expect("valid regularized PH source");
+                let regularized_ph = regularized_ph_source
+                    .parallel_left(Real::one())
+                    .expect("valid regularized PH parallel");
+                assert!(matches!(
+                    regularized_ph
+                        .exact_rational_parallel_component(&CurveContext::STRICT)
+                        .unwrap(),
+                    Classification::Decided(None),
+                ));
+                let three_quarters =
+                    (Real::from(3_i8) / Real::from(4_i8)).expect("nonzero denominator");
+                let contact_point =
+                    match regularized_ph.point_at(&three_quarters, &CurveContext::STRICT) {
+                        Ok(Classification::Decided(point)) => point,
+                        result => panic!("the PH contact point must evaluate exactly: {result:?}"),
+                    };
+                let ph_chord = decided(
+                    crate::BezierAlgebraicChord2::try_new(
+                        RationalBezierIntersectionPointEvidence2::Exact(Point2::new(
+                            contact_point.x() - Real::one(),
+                            contact_point.y().clone(),
+                        )),
+                        RationalBezierIntersectionPointEvidence2::Exact(Point2::new(
+                            contact_point.x() + Real::one(),
+                            contact_point.y().clone(),
+                        )),
+                        &CurveContext::STRICT,
+                    )
+                    .expect("valid regularized PH crossing chord"),
+                );
+                #[cfg(feature = "dispatch-trace")]
+                hyperreal::dispatch_trace::reset();
+                let work = || {
+                    evaluate(
+                        ph_chord,
+                        regularized_ph,
+                        BezierParameterRange2::from_exact(
+                            (Real::one() / Real::from(2_i8)).expect("nonzero denominator"),
+                            Real::one(),
+                        ),
+                    )
+                };
+                #[cfg(feature = "dispatch-trace")]
+                let (ph_result, ph_evidence) = hyperreal::dispatch_trace::with_recording(work);
+                #[cfg(not(feature = "dispatch-trace"))]
+                let (ph_result, ph_evidence) = work();
+                #[cfg(feature = "dispatch-trace")]
+                let ph_trace = hyperreal::dispatch_trace::take_trace();
+                assert!(ph_result.blockers.is_empty(), "{ph_result:?}");
+                assert!(ph_result.overlaps.is_empty(), "{ph_result:?}");
+                assert!(!ph_result.contacts.is_empty(), "{ph_result:?}");
+                assert!(ph_evidence.is_complete(), "{ph_evidence:?}");
+                assert!(ph_evidence.contacts().iter().any(|contact| {
+                    contact
+                        .second_parameter()
+                        .as_bezier_parameter()
+                        .is_some_and(|parameter| {
+                            matches!(
+                                parameter.same_value(
+                                    &BezierParameter2::Exact(three_quarters.clone()),
+                                    &policy,
+                                ),
+                                Ok(Classification::Decided(true))
+                            )
+                        })
+                }));
+                #[cfg(feature = "dispatch-trace")]
+                for (operation, path) in [
+                    (
+                        "analytic-parallel-rational-component",
+                        "regularized-pythagorean-hodograph",
+                    ),
+                    ("algebraic-chord-pair", "general-rational"),
+                    (
+                        "algebraic-chord-pair",
+                        "analytic-parallel-strict-rational-component",
+                    ),
+                ] {
+                    assert!(
+                        ph_trace.path_count("hypercurve", operation, path) > 0,
+                        "the nonconstant PH branch must traverse {operation}/{path}: {ph_trace:?}",
+                    );
+                }
+            };
 
             // A Real coefficient can have unresolved zero status while the
             // authored hodograph still has exact rank one.  Keep the shared
@@ -17398,6 +17508,7 @@ mod certified_successor_tests {
                     "the algebraic range must traverse {operation}/{path}: {algebraic_trace:?}",
                 );
             }
+            test_regularized_ph();
         }
     }
 

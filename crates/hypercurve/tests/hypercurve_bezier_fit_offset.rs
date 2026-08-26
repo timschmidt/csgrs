@@ -539,7 +539,7 @@ fn cubic_pythagorean_hodograph_parallel_materializes_exact_rational_bezier() {
 }
 
 #[test]
-fn approximate_ph_materialization_never_populates_the_certified_cache() {
+fn approximate_ph_materialization_never_selects_a_structural_component() {
     let undecidable_zero = (Real::pi() + Real::e()) - (Real::e() + Real::pi());
     let source =
         QuadraticBezier2::new(p(0, 0), Point2::new(Real::one(), undecidable_zero), p(2, 0));
@@ -551,7 +551,7 @@ fn approximate_ph_materialization_never_populates_the_certified_cache() {
     ));
     assert!(matches!(
         parallel.exact_pythagorean_hodograph_offset(&CurveContext::APPROXIMATE_512),
-        Ok(Classification::Decided(Some(_)))
+        Ok(Classification::Uncertain(_))
     ));
     assert!(matches!(
         parallel.exact_pythagorean_hodograph_offset(&CurveContext::STRICT),

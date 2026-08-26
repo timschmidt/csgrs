@@ -88417,10 +88417,7 @@ impl BezierParallel2 {
         range: &BezierParameterRange2,
         policy: &CurveContext,
     ) -> CurveResult<Classification<RealSign>> {
-        let parameter = match range
-            .start()
-            .strict_rational_between_ordered(range.end(), policy)?
-        {
+        let parameter = match range.strict_rational_interior(policy)? {
             Classification::Decided(parameter) => parameter,
             Classification::Uncertain(reason) => {
                 return Ok(Classification::Uncertain(reason));
@@ -88468,10 +88465,7 @@ impl BezierParallel2 {
         policy: &CurveContext,
     ) -> CurveResult<Classification<Option<Arc<BezierAnalyticParallelTangentField2>>>> {
         let strict = policy.strict_counterpart();
-        let interior = match range
-            .start()
-            .strict_rational_between_ordered(range.end(), &strict)?
-        {
+        let interior = match range.strict_rational_interior(&strict)? {
             Classification::Decided(parameter) => parameter,
             Classification::Uncertain(reason) => {
                 return Ok(Classification::Uncertain(reason));
@@ -88769,10 +88763,7 @@ impl BezierParallel2 {
         policy: &CurveContext,
     ) -> CurveResult<Classification<RationalBezierIntersectionPointEvidence2>> {
         let strict = policy.strict_counterpart();
-        let interior = match range
-            .start()
-            .strict_rational_between_ordered(range.end(), &strict)?
-        {
+        let interior = match range.strict_rational_interior(&strict)? {
             Classification::Decided(interior) => interior,
             Classification::Uncertain(reason) => {
                 return Ok(Classification::Uncertain(reason));
@@ -88842,10 +88833,7 @@ impl BezierParallel2 {
         policy: &CurveContext,
     ) -> CurveResult<Classification<(RealSign, RealSign)>> {
         let strict = policy.strict_counterpart();
-        let interior = match range
-            .start()
-            .strict_rational_between_ordered(range.end(), &strict)?
-        {
+        let interior = match range.strict_rational_interior(&strict)? {
             Classification::Decided(interior) => interior,
             Classification::Uncertain(reason) => {
                 return Ok(Classification::Uncertain(reason));
@@ -91999,10 +91987,7 @@ impl BezierParallel2 {
         policy: &CurveContext,
     ) -> CurveResult<Classification<BezierLineContactRelation>> {
         let strict = policy.strict_counterpart();
-        let interior = match range
-            .start()
-            .strict_rational_between_ordered(range.end(), &strict)?
-        {
+        let interior = match range.strict_rational_interior(&strict)? {
             Classification::Decided(interior) => interior,
             Classification::Uncertain(reason) => {
                 return Ok(Classification::Uncertain(reason));
@@ -92304,10 +92289,7 @@ impl BezierParallel2 {
         policy: &CurveContext,
     ) -> CurveResult<Classification<std::cmp::Ordering>> {
         let strict = policy.strict_counterpart();
-        let interior = match range
-            .start()
-            .strict_rational_between_ordered(range.end(), &strict)?
-        {
+        let interior = match range.strict_rational_interior(&strict)? {
             Classification::Decided(interior) => interior,
             Classification::Uncertain(reason) => {
                 return Ok(Classification::Uncertain(reason));
@@ -95240,14 +95222,12 @@ impl BezierParallel2 {
 
     /// Materializes the exact parallel image selected by one regular source range.
     ///
-    /// A globally retracing line has no single polynomial speed sheet: the
-    /// authored unit normal reverses across its stationary parameter. Exact
-    /// hodograph-GCD cancellation nevertheless leaves a constant oriented
-    /// tangent on each regular side. Translating the original rational source
-    /// by that constant unit normal preserves its parameter exactly and lets
-    /// the ordinary rational component authority publish overlaps and residual
-    /// contacts. Nonconstant quotient fields retain the general analytic
-    /// kernel; no fitted or approximately selected component is constructed.
+    /// A globally singular PH source has no single polynomial speed sheet: its
+    /// authored unit normal can reverse across a stationary parameter. Exact
+    /// hodograph-GCD cancellation nevertheless leaves one primitive oriented
+    /// tangent field on each regular side. When that quotient field is itself
+    /// Pythagorean, the ordinary rational component authority can publish the
+    /// selected branch without fitting or approximately selecting a curve.
     pub(crate) fn exact_rational_parallel_component_on_regular_range(
         &self,
         range: &BezierParameterRange2,
@@ -95269,10 +95249,7 @@ impl BezierParallel2 {
             Classification::Uncertain(reason) => Classification::Uncertain(reason),
             Classification::Decided(Some(_)) => unreachable!("the exact component returned"),
         };
-        let interior = match range
-            .start()
-            .strict_rational_between_ordered(range.end(), &strict)?
-        {
+        let interior = match range.strict_rational_interior(&strict)? {
             Classification::Decided(interior) => interior,
             Classification::Uncertain(reason) => {
                 return Ok(Classification::Uncertain(reason));
@@ -95288,52 +95265,37 @@ impl BezierParallel2 {
             };
         let tangent_x = polynomial_trim_structural_zeros(frame.x.clone());
         let tangent_y = polynomial_trim_structural_zeros(frame.y.clone());
-        let ([tangent_x], [tangent_y]) = (tangent_x.as_slice(), tangent_y.as_slice()) else {
-            return Ok(global);
-        };
-        let speed_squared = tangent_x * tangent_x + tangent_y * tangent_y;
-        match real_sign(&speed_squared, &strict) {
-            Some(RealSign::Positive) => {}
-            Some(RealSign::Zero) => {
-                return Err(CurveError::Topology(
-                    "a regularized constant tangent field was zero".into(),
-                ));
-            }
-            Some(RealSign::Negative) => {
-                return Err(CurveError::Topology(
-                    "a regularized tangent squared norm was negative".into(),
-                ));
-            }
-            None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
-        }
-        let speed = speed_squared.sqrt()?;
-        let translation_x = ((-self.distance() * tangent_y) / &speed)?;
-        let translation_y = ((self.distance() * tangent_x) / speed)?;
-        let source = self.source().to_rational_bezier()?;
-        let curve = RationalBezier2::try_new(
-            source
-                .control_points()
-                .iter()
-                .map(|point| point.translated(translation_x.clone(), translation_y.clone()))
-                .collect(),
-            source.weights().to_vec(),
-        )?;
-        #[cfg(feature = "dispatch-trace")]
-        hyperreal::dispatch_trace::record(
-            "hypercurve",
-            "analytic-parallel-rational-component",
-            "regularized-constant-tangent",
-        );
-        let anchor = match curve.point_at_classified(&interior, &strict) {
-            Classification::Decided(anchor) => anchor,
+        let offset = match self.compute_pythagorean_hodograph_offset_from_tangent_field(
+            &tangent_x, &tangent_y, &interior, false, &strict,
+        )? {
+            Classification::Decided(Some(offset)) => offset,
+            Classification::Decided(None) => return Ok(global),
             Classification::Uncertain(reason) => {
                 return Ok(Classification::Uncertain(reason));
             }
         };
-        let support_line = Some(LineSeg2::try_new(
-            anchor.clone(),
-            anchor.translated((*tangent_x).clone(), (*tangent_y).clone()),
-        )?);
+        let curve = offset.curve;
+        #[cfg(feature = "dispatch-trace")]
+        hyperreal::dispatch_trace::record(
+            "hypercurve",
+            "analytic-parallel-rational-component",
+            "regularized-pythagorean-hodograph",
+        );
+        let support_line = match (tangent_x.as_slice(), tangent_y.as_slice()) {
+            ([tangent_x], [tangent_y]) => {
+                let anchor = match curve.point_at_classified(&interior, &strict) {
+                    Classification::Decided(anchor) => anchor,
+                    Classification::Uncertain(reason) => {
+                        return Ok(Classification::Uncertain(reason));
+                    }
+                };
+                Some(LineSeg2::try_new(
+                    anchor.clone(),
+                    anchor.translated(tangent_x.clone(), tangent_y.clone()),
+                )?)
+            }
+            _ => None,
+        };
         Ok(Classification::Decided(Some(
             BezierParallelRationalComponent2 {
                 curve,
@@ -95988,19 +95950,10 @@ impl BezierParallel2 {
         if let Some(cached) = self.data.certified_ph_offset.get() {
             return Ok(Classification::Decided(cached.as_deref().cloned()));
         }
-        if policy.permits_approximate_512() {
-            match self.compute_pythagorean_hodograph_offset(&CurveContext::STRICT)? {
-                Classification::Decided(offset) => {
-                    return Ok(Classification::Decided(
-                        self.retain_certified_ph_offset(offset),
-                    ));
-                }
-                Classification::Uncertain(_) => {
-                    return self.compute_pythagorean_hodograph_offset(policy);
-                }
-            }
-        }
-        match self.compute_pythagorean_hodograph_offset(policy)? {
+        // Curve construction is structural. APPROXIMATE_512 may terminate an
+        // equality predicate, but it must never select a speed sheet or mint a
+        // rational component. Reuse only the caller's STRICT counterpart here.
+        match self.compute_pythagorean_hodograph_offset(&policy.strict_counterpart())? {
             Classification::Decided(offset) => Ok(Classification::Decided(
                 self.retain_certified_ph_offset(offset),
             )),
@@ -96057,6 +96010,84 @@ impl BezierParallel2 {
                 },
             )));
         }
+        let differential = self.differential()?;
+        self.compute_pythagorean_hodograph_offset_from_tangent_field(
+            &differential.tangent_x,
+            &differential.tangent_y,
+            &Real::zero(),
+            true,
+            policy,
+        )
+    }
+
+    /// Materializes one exact rational parallel from an oriented PH tangent
+    /// field. The field can be either the source's complete homogeneous
+    /// hodograph or the primitive GCD quotient selected on one regular range.
+    /// `orientation_parameter` selects the positive polynomial speed sheet;
+    /// callers prove that the field orientation agrees with the source before
+    /// entering this constructor.
+    #[cold]
+    fn compute_pythagorean_hodograph_offset_from_tangent_field(
+        &self,
+        tangent_x: &[Real],
+        tangent_y: &[Real],
+        orientation_parameter: &Real,
+        allow_circular_specialization: bool,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<Option<CertifiedPythagoreanHodographOffset2>>> {
+        // Preserve a constant tangent field as a direct affine translation.
+        // The general homogeneous formula is algebraically equivalent, but it
+        // introduces canceling speed radicals into every control coordinate.
+        // Keeping the source coefficients intact is both smaller and essential
+        // when an opaque authored coefficient proves line rank by correlation.
+        if let ([tangent_x], [tangent_y]) = (tangent_x, tangent_y) {
+            let speed_squared = tangent_x * tangent_x + tangent_y * tangent_y;
+            match real_sign(&speed_squared, policy) {
+                Some(RealSign::Positive) => {}
+                Some(RealSign::Zero) => {
+                    return Err(CurveError::Topology(
+                        "a regularized constant tangent field was zero".into(),
+                    ));
+                }
+                Some(RealSign::Negative) => {
+                    return Err(CurveError::Topology(
+                        "a regularized tangent squared norm was negative".into(),
+                    ));
+                }
+                None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
+            }
+            let speed = speed_squared.sqrt()?;
+            let translation_x = ((-self.distance() * tangent_y) / &speed)?;
+            let translation_y = ((self.distance() * tangent_x) / &speed)?;
+            let source = self.source().to_rational_bezier()?;
+            let controls = source
+                .control_points()
+                .iter()
+                .map(|point| point.translated(translation_x.clone(), translation_y.clone()))
+                .collect();
+            let curve = if let Some(line) = source.retained_exact_line_image() {
+                RationalBezier2::try_new_with_exact_line_image(
+                    controls,
+                    source.weights().to_vec(),
+                    LineSeg2::try_new(
+                        line.start()
+                            .translated(translation_x.clone(), translation_y.clone()),
+                        line.end().translated(translation_x, translation_y),
+                    )?,
+                )?
+            } else {
+                RationalBezier2::try_new(controls, source.weights().to_vec())?
+            };
+            return Ok(Classification::Decided(Some(
+                CertifiedPythagoreanHodographOffset2 {
+                    rational_degree: curve.degree(),
+                    curve,
+                    speed_polynomial: vec![speed],
+                    source_degree: self.source_degree(),
+                    distance: self.distance().clone(),
+                },
+            )));
+        }
         let rational_source = self.rational_source();
         let rational_power_basis = match rational_source {
             Some(source) => Some(source.homogeneous_power_basis()?),
@@ -96072,7 +96103,6 @@ impl BezierParallel2 {
             (None, Some((source_x, source_y))) => (source_x, source_y),
             _ => unreachable!("parallel source has exactly one power basis"),
         };
-        let differential = self.differential()?;
         let weight = if let Some(source) = rational_power_basis {
             let weight = polynomial_trim_structural_zeros(source.weight.clone());
             let weight_polynomial = match polynomial_from_coefficients(weight.clone(), policy)? {
@@ -96094,16 +96124,16 @@ impl BezierParallel2 {
             None
         };
         let speed_squared = polynomial_add(
-            &polynomial_multiply(&differential.tangent_x, &differential.tangent_x),
-            &polynomial_multiply(&differential.tangent_y, &differential.tangent_y),
+            &polynomial_multiply(tangent_x, tangent_x),
+            &polynomial_multiply(tangent_y, tangent_y),
         );
         let mut speed = match polynomial_square_root(&speed_squared, policy)? {
             Classification::Decided(Some(speed)) => speed,
             Classification::Decided(None) => return Ok(Classification::Decided(None)),
             Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
         };
-        let speed_at_start = polynomial_evaluate(&speed, &Real::zero());
-        match real_sign(&speed_at_start, policy) {
+        let speed_at_orientation = polynomial_evaluate(&speed, orientation_parameter);
+        match real_sign(&speed_at_orientation, policy) {
             Some(RealSign::Positive) => {}
             Some(RealSign::Negative) => {
                 speed = polynomial_scale(&speed, &Real::from(-1_i8));
@@ -96124,11 +96154,15 @@ impl BezierParallel2 {
             return Ok(Classification::Decided(None));
         }
 
-        let circular_component = match self.exact_circular_parallel_component(policy)? {
-            Classification::Decided(component) => component,
-            // Circle recognition is a specialization. The already-certified
-            // PH speed below remains the complete construction authority.
-            Classification::Uncertain(_) => None,
+        let circular_component = if allow_circular_specialization {
+            match self.exact_circular_parallel_component(policy)? {
+                Classification::Decided(component) => component,
+                // Circle recognition is a specialization. The already-certified
+                // PH speed below remains the complete construction authority.
+                Classification::Uncertain(_) => None,
+            }
+        } else {
+            None
         };
         if let Some(curve) = circular_component {
             let source_degree = self.source_degree();
@@ -96146,14 +96180,14 @@ impl BezierParallel2 {
         let (normal_x_term, normal_y_term, mut denominator) = if let Some(weight) = &weight {
             let weighted_distance = polynomial_scale(weight, self.distance());
             (
-                polynomial_multiply(&weighted_distance, &differential.tangent_y),
-                polynomial_multiply(&weighted_distance, &differential.tangent_x),
+                polynomial_multiply(&weighted_distance, tangent_y),
+                polynomial_multiply(&weighted_distance, tangent_x),
                 polynomial_multiply(weight, &speed),
             )
         } else {
             (
-                polynomial_scale(&differential.tangent_y, self.distance()),
-                polynomial_scale(&differential.tangent_x, self.distance()),
+                polynomial_scale(tangent_y, self.distance()),
+                polynomial_scale(tangent_x, self.distance()),
                 speed.clone(),
             )
         };
@@ -130518,6 +130552,140 @@ mod conversion_tests {
     }
 
     #[test]
+    fn regularized_nonconstant_ph_quotient_materializes_exact_component() {
+        // P'(t)=(2t-1)(1-t^2,2t). The source is stationary at t=1/2,
+        // so sqrt(P' dot P') has no global polynomial sheet. Cancelling the
+        // common factor leaves the nonconstant PH field (1-t^2,2t), whose
+        // speed is 1+t^2. Each regular side must therefore materialize one
+        // exact, oppositely oriented rational parallel branch.
+        let source_x = vec![
+            Real::zero(),
+            Real::from(-1_i8),
+            Real::one(),
+            (Real::one() / Real::from(3_i8)).unwrap(),
+            -(Real::one() / Real::from(2_i8)).unwrap(),
+        ];
+        let source_y = vec![
+            Real::zero(),
+            Real::zero(),
+            Real::from(-1_i8),
+            (Real::from(4_i8) / Real::from(3_i8)).unwrap(),
+            Real::zero(),
+        ];
+        let x_controls = power_to_bernstein_coefficients(&source_x, 4).unwrap();
+        let y_controls = power_to_bernstein_coefficients(&source_y, 4).unwrap();
+        let source = RationalBezier2::try_new(
+            x_controls
+                .into_iter()
+                .zip(y_controls)
+                .map(|(x, y)| Point2::new(x, y))
+                .collect(),
+            vec![Real::one(); 5],
+        )
+        .unwrap();
+        let parallel = source.parallel_left(Real::one()).unwrap();
+        assert!(matches!(
+            parallel
+                .exact_rational_parallel_component(&CurveContext::STRICT)
+                .unwrap(),
+            Classification::Decided(None),
+        ));
+
+        let half = (Real::one() / Real::from(2_i8)).unwrap();
+        let quarter = (Real::one() / Real::from(4_i8)).unwrap();
+        let three_quarters = (Real::from(3_i8) / Real::from(4_i8)).unwrap();
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let materialize = |range: BezierParameterRange2| {
+                #[cfg(feature = "dispatch-trace")]
+                hyperreal::dispatch_trace::reset();
+                let work =
+                    || parallel.exact_rational_parallel_component_on_regular_range(&range, &policy);
+                #[cfg(feature = "dispatch-trace")]
+                let component = hyperreal::dispatch_trace::with_recording(work).unwrap();
+                #[cfg(not(feature = "dispatch-trace"))]
+                let component = work().unwrap();
+                #[cfg(feature = "dispatch-trace")]
+                let trace = hyperreal::dispatch_trace::take_trace();
+                let Classification::Decided(Some(component)) = component else {
+                    panic!("the nonconstant regular PH branch must materialize: {component:?}")
+                };
+                #[cfg(feature = "dispatch-trace")]
+                {
+                    assert_eq!(
+                        trace.path_count(
+                            "hypercurve",
+                            "analytic-parallel-rational-component",
+                            "regularized-pythagorean-hodograph",
+                        ),
+                        1,
+                        "the regularized PH quotient must own construction: {trace:?}",
+                    );
+                }
+                assert!(component.support_line().is_none());
+                assert_eq!(component.curve().degree(), 6);
+                component
+            };
+            let left = materialize(BezierParameterRange2::from_exact(
+                Real::zero(),
+                half.clone(),
+            ));
+            let right = materialize(BezierParameterRange2::from_exact(half.clone(), Real::one()));
+            let right_reversed = materialize(
+                BezierParameterRange2::from_exact(half.clone(), Real::one()).reversed(),
+            );
+
+            let analytic_point = |parameter: &Real| match parallel.point_at(parameter, &policy) {
+                Ok(Classification::Decided(point)) => point,
+                result => panic!("the regular PH point must evaluate exactly: {result:?}"),
+            };
+            let rational_point = |component: &BezierParallelRationalComponent2,
+                                  parameter: &Real| {
+                match component.curve().point_at_classified(parameter, &policy) {
+                    Classification::Decided(point) => point,
+                    result => panic!("the rational PH point must evaluate exactly: {result:?}"),
+                }
+            };
+            let left_analytic = analytic_point(&quarter);
+            let right_analytic = analytic_point(&three_quarters);
+            let left_exact = rational_point(&left, &quarter);
+            let right_exact = rational_point(&right, &three_quarters);
+            let right_reversed_exact = rational_point(&right_reversed, &three_quarters);
+            assert_eq!(
+                real_sign(&left_exact.distance_squared(&left_analytic), &policy),
+                Some(RealSign::Zero),
+            );
+            assert_eq!(
+                real_sign(&right_exact.distance_squared(&right_analytic), &policy),
+                Some(RealSign::Zero),
+            );
+            assert_eq!(
+                real_sign(
+                    &right_reversed_exact.distance_squared(&right_analytic),
+                    &policy,
+                ),
+                Some(RealSign::Zero),
+            );
+
+            // Each rational expression extends globally, but the opposite
+            // side carries the other authored normal sheet. The retained
+            // regular range, rather than that extension, owns topology.
+            let wrong_left_sheet = rational_point(&right, &quarter);
+            let wrong_right_sheet = rational_point(&left, &three_quarters);
+            assert_eq!(
+                real_sign(&wrong_left_sheet.distance_squared(&left_analytic), &policy,),
+                Some(RealSign::Positive),
+            );
+            assert_eq!(
+                real_sign(
+                    &wrong_right_sheet.distance_squared(&right_analytic),
+                    &policy,
+                ),
+                Some(RealSign::Positive),
+            );
+        }
+    }
+
+    #[test]
     fn regularized_retracing_line_chord_publishes_exact_component() {
         let source = QuadraticBezier2::new(
             Point2::from_values(-1, 1),
@@ -130583,10 +130751,10 @@ mod conversion_tests {
                 trace.path_count(
                     "hypercurve",
                     "analytic-parallel-rational-component",
-                    "regularized-constant-tangent",
+                    "regularized-pythagorean-hodograph",
                 ),
                 1,
-                "the regularized constant frame must own construction: {trace:?}",
+                "the regularized PH frame must own construction: {trace:?}",
             );
             let overlaps = match chord
                 .rational_intersections(component.curve(), None, &policy)
