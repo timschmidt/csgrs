@@ -167,6 +167,22 @@ impl DenseTensorPolynomial {
         Some(result)
     }
 
+    /// Inserts one independent degree-zero axis at `axis`.
+    ///
+    /// A dimension-one axis does not change row-major coefficient order, so
+    /// this is an allocation-only shape lift. It is useful when an exact
+    /// elimination construction needs to add a retained tag or image
+    /// variable without rebuilding the authored polynomial coefficient by
+    /// coefficient.
+    pub fn insert_independent_axis(&self, axis: usize) -> Option<Self> {
+        if axis > self.dimensions.len() {
+            return None;
+        }
+        let mut dimensions = self.dimensions.clone();
+        dimensions.insert(axis, 1);
+        Self::try_new(dimensions, self.coefficients.clone())
+    }
+
     /// Substitutes one tensor variable for another equal selected variable.
     ///
     /// Powers on `removed_axis` are added to powers on `retained_axis`, then

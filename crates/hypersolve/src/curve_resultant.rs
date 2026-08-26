@@ -3355,6 +3355,22 @@ fn primitive_common_fiber_component(
     (!exact_bivariate_is_zero(&component)).then_some(component)
 }
 
+/// Removes the greatest univariate content on the retained axis exactly.
+///
+/// The returned bivariate polynomial has the same non-identically-zero
+/// selected fibers as `polynomial`, while retained-axis factors that make a
+/// complete lifted fiber vanish are saturated away. All coefficient GCDs and
+/// divisions are replayed with exact [`Real`] arithmetic under `STRICT`.
+pub fn primitive_bivariate_fiber_component_exact(
+    polynomial: &BivariatePolynomial,
+    retained_parameter: CurveResultantParameter,
+) -> Option<BivariatePolynomial> {
+    primitive_common_fiber_component(
+        bivariate_fiber_coefficient_polynomials(polynomial, retained_parameter),
+        retained_parameter,
+    )
+}
+
 /// Returns the monic exact GCD of two univariate polynomials.
 ///
 /// Coefficients are in ascending power order. The Euclidean/subresultant

@@ -18,6 +18,13 @@ use crate::algebraic::{
     AlgebraicRootValidationReport, AlgebraicRootValidationStatus, algebraic_root_affine_relation,
     validate_algebraic_root_representation,
 };
+use crate::algebraic_fiber::{
+    AlgebraicFiberProjectionReport, AlgebraicFiberProjectionStatus,
+    project_bivariate_fiber_at_algebraic_parameter_with_max_degree,
+};
+use crate::curve_resultant::{
+    BivariatePolynomial, CurveResultantParameter, primitive_bivariate_fiber_component_exact,
+};
 use crate::root_isolation::{
     IsolatedRootInterval, IsolatedRootRefinementStatus, RootIsolationConfig, polynomial_div_rem,
     polynomial_has_no_distinct_root_in_closed_interval,
@@ -64,6 +71,172 @@ pub struct AlgebraicTensorImageReport {
     pub representation: Option<AlgebraicRootRepresentation>,
     /// Compact diagnostic reason.
     pub message: Option<String>,
+}
+
+/// Projects the final axis of one selected algebraic tensor after saturating
+/// target-wide conjugate components.
+///
+/// Ordinary sequential norms can be identically zero when *any* foreign
+/// source tuple makes `relation` vanish for every target value, even though
+/// the authored selected tuple owns a nonzero polynomial. This construction
+/// adds a retained tag `z` and eliminates the sum of squares
+///
+/// `relation(source, target)^2 + (z - source[0])^2`.
+///
+/// Every target-wide source component then contributes only retained-axis
+/// content. Exact polynomial GCD and division remove that content before the
+/// remaining bivariate relation is projected through the first selected root.
+/// The resulting univariate polynomial is an enumerator: it can contain
+/// foreign or complex-source candidates, and callers must replay every root
+/// against the complete selected tuple. Construction and saturation are
+/// always `STRICT`; no approximate predicate selects a factor or root.
+///
+/// The caller must first prove that the authored selected fiber is not
+/// identically zero. A zero selected fiber is a component, not a finite root
+/// set, and therefore has no univariate projection.
+pub fn project_selected_tensor_fiber_via_tagged_norm(
+    relation: &DenseTensorPolynomial,
+    source_roots: &[AlgebraicRootRepresentation],
+) -> AlgebraicFiberProjectionReport {
+    let projection_report = |status| AlgebraicFiberProjectionReport {
+        status,
+        coefficients: Vec::new(),
+    };
+    if source_roots.is_empty() || relation.dimensions().len() != source_roots.len() + 1 {
+        return projection_report(AlgebraicFiberProjectionStatus::InvalidEvidence);
+    }
+    if source_roots.iter().any(|source| {
+        !source.is_valid()
+            || validate_algebraic_root_representation(source, PredicatePolicy::STRICT).status
+                != AlgebraicRootValidationStatus::Valid
+    }) {
+        return projection_report(AlgebraicFiberProjectionStatus::InvalidEvidence);
+    }
+    let Some(constraints) = source_roots
+        .iter()
+        .map(|source| {
+            square_free_part(
+                source.polynomial_coefficients.clone(),
+                PredicatePolicy::STRICT,
+            )
+            .map(canonicalize_proven_rational_coefficients)
+        })
+        .collect::<Option<Vec<_>>>()
+    else {
+        return projection_report(AlgebraicFiberProjectionStatus::UnsupportedCoefficient);
+    };
+
+    let source_count = source_roots.len();
+    let rank = source_count + 2;
+    let Some(lifted_relation) = relation.insert_independent_axis(source_count) else {
+        return projection_report(AlgebraicFiberProjectionStatus::Undecided);
+    };
+    let Some(tag) = DenseTensorPolynomial::from_axis_polynomial(
+        rank,
+        source_count,
+        &[Real::zero(), Real::one()],
+    ) else {
+        return projection_report(AlgebraicFiberProjectionStatus::Undecided);
+    };
+    let Some(tagged_source) =
+        DenseTensorPolynomial::from_axis_polynomial(rank, 0, &[Real::zero(), Real::one()])
+    else {
+        return projection_report(AlgebraicFiberProjectionStatus::Undecided);
+    };
+    let Some(tag_difference) = tag.subtract(&tagged_source) else {
+        return projection_report(AlgebraicFiberProjectionStatus::Undecided);
+    };
+    let Some(mut tagged_relation) = lifted_relation
+        .multiply(&lifted_relation)
+        .and_then(|square| {
+            tag_difference
+                .multiply(&tag_difference)
+                .and_then(|tag_square| square.add(&tag_square))
+        })
+    else {
+        return projection_report(AlgebraicFiberProjectionStatus::Undecided);
+    };
+
+    for (axis, constraint) in constraints.iter().enumerate() {
+        let Some(reduced) =
+            tagged_relation.reduce_axis_modulo(axis, constraint, PredicatePolicy::STRICT)
+        else {
+            return projection_report(AlgebraicFiberProjectionStatus::UnsupportedCoefficient);
+        };
+        tagged_relation = reduced;
+    }
+    tagged_relation = canonicalize_proven_rational_tensor(tagged_relation);
+
+    for (source_index, constraint) in constraints.iter().enumerate() {
+        tagged_relation = if let Some(independent) = tagged_relation
+            .remove_certified_independent_axis(0, PredicatePolicy::MAX_REFINEMENT_PRECISION)
+        {
+            independent
+        } else {
+            let elimination = resultant_tensor_polynomial_univariate_constraint(
+                &tagged_relation,
+                constraint,
+                0,
+                PredicatePolicy::MAX_REFINEMENT_PRECISION,
+            );
+            if elimination.status != TensorConstraintResultantStatus::Constructed {
+                return projection_report(AlgebraicFiberProjectionStatus::Undecided);
+            }
+            elimination
+                .resultant
+                .expect("a constructed tagged tensor resultant retains its polynomial")
+        };
+        tagged_relation = canonicalize_proven_rational_tensor(tagged_relation);
+        for (axis, remaining_constraint) in constraints.iter().skip(source_index + 1).enumerate() {
+            let Some(reduced) = tagged_relation.reduce_axis_modulo(
+                axis,
+                remaining_constraint,
+                PredicatePolicy::STRICT,
+            ) else {
+                return projection_report(AlgebraicFiberProjectionStatus::UnsupportedCoefficient);
+            };
+            tagged_relation = reduced;
+        }
+        tagged_relation = canonicalize_proven_rational_tensor(tagged_relation);
+    }
+
+    let [tag_count, target_count] = tagged_relation.dimensions() else {
+        return projection_report(AlgebraicFiberProjectionStatus::Undecided);
+    };
+    let coefficients = (0..*tag_count)
+        .map(|tag_power| {
+            (0..*target_count)
+                .map(|target_power| {
+                    tagged_relation
+                        .coefficient(&[tag_power, target_power])
+                        .cloned()
+                        .unwrap_or_else(Real::zero)
+                })
+                .collect::<Vec<_>>()
+        })
+        .collect::<Vec<_>>();
+    let Some(primitive) = primitive_bivariate_fiber_component_exact(
+        &BivariatePolynomial::new(coefficients),
+        CurveResultantParameter::First,
+    ) else {
+        return projection_report(AlgebraicFiberProjectionStatus::Undecided);
+    };
+    let max_source_degree = source_roots[0]
+        .polynomial_coefficients
+        .len()
+        .saturating_sub(1);
+    let mut projection = project_bivariate_fiber_at_algebraic_parameter_with_max_degree(
+        &primitive,
+        CurveResultantParameter::First,
+        &source_roots[0],
+        max_source_degree,
+        PredicatePolicy::STRICT,
+    );
+    if projection.status == AlgebraicFiberProjectionStatus::Constructed {
+        projection.coefficients =
+            canonicalize_proven_rational_coefficients(projection.coefficients);
+    }
+    projection
 }
 
 /// Reduces a selected root to a rational or quadratic `x^2-q` factor when a
@@ -752,6 +925,64 @@ mod tests {
         exponent[count] = 1;
         coefficients[flat_index(&dimensions, &exponent)] = Real::one();
         DenseTensorPolynomial::try_new(dimensions, coefficients).unwrap()
+    }
+
+    fn opposite_conjugate_cubic_fiber_relation() -> DenseTensorPolynomial {
+        // (x - y) * (8 t^3 - 1). The selected tuple
+        // (sqrt(2), -sqrt(2)) owns one cubic fiber, while the two foreign
+        // tuples x=y make the ordinary sequential norm identically zero.
+        let dimensions = vec![2, 2, 4];
+        let mut coefficients = vec![Real::zero(); dimensions.iter().product()];
+        for (exponents, coefficient) in [
+            ([1, 0, 0], real(-1)),
+            ([1, 0, 3], real(8)),
+            ([0, 1, 0], Real::one()),
+            ([0, 1, 3], real(-8)),
+        ] {
+            coefficients[flat_index(&dimensions, &exponents)] = coefficient;
+        }
+        DenseTensorPolynomial::try_new(dimensions, coefficients).unwrap()
+    }
+
+    #[test]
+    fn tagged_norm_projects_nonzero_selected_fiber_past_foreign_wide_components() {
+        let positive = square_root(2);
+        let mut negative = positive.clone();
+        negative.constraint_index = 3;
+        negative.symbol = SymbolId(3);
+        negative.interval = IsolatedRootInterval {
+            lower: real(-2),
+            upper: real(-1),
+            exact_root: None,
+            distinct_root_count: 1,
+        };
+        negative.validation =
+            validate_algebraic_root_representation(&negative, PredicatePolicy::STRICT);
+        assert!(negative.is_valid());
+
+        let relation = opposite_conjugate_cubic_fiber_relation();
+        let report =
+            project_selected_tensor_fiber_via_tagged_norm(&relation, &[positive, negative]);
+        assert_eq!(report.status, AlgebraicFiberProjectionStatus::Constructed);
+        assert!(report.coefficients.len() > 1);
+        assert!(report.coefficients.iter().any(|coefficient| {
+            coefficient
+                .exact_rational_ref()
+                .is_none_or(|coefficient| !coefficient.is_zero())
+        }));
+        let half = (Real::one() / real(2)).unwrap();
+        let value = report
+            .coefficients
+            .iter()
+            .rev()
+            .fold(Real::zero(), |value, coefficient| {
+                value * &half + coefficient
+            });
+        assert!(
+            value
+                .exact_rational_ref()
+                .is_some_and(|value| value.is_zero())
+        );
     }
 
     #[test]

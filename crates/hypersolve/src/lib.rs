@@ -137,7 +137,8 @@ pub use algebraic_sqrt::{
 };
 pub use algebraic_tensor_image::{
     AlgebraicTensorImageReport, AlgebraicTensorImageStatus,
-    compact_algebraic_root_low_degree_witness, represent_algebraic_tensor_image,
+    compact_algebraic_root_low_degree_witness, project_selected_tensor_fiber_via_tagged_norm,
+    represent_algebraic_tensor_image,
 };
 pub use alpha::{
     UnivariateQuadraticAlphaReport, UnivariateQuadraticAlphaRow, UnivariateQuadraticAlphaStatus,
@@ -185,8 +186,8 @@ pub use curve_resultant::{
     extract_bivariate_polynomial_system_axis_factors,
     greatest_common_divisor_univariate_polynomials_exact,
     linear_parameter_lifts_bivariate_polynomial_system,
-    parameter_component_bivariate_polynomial_system, resultant_bivariate_polynomial_system,
-    resultant_parametric_curve_intersection,
+    parameter_component_bivariate_polynomial_system, primitive_bivariate_fiber_component_exact,
+    resultant_bivariate_polynomial_system, resultant_parametric_curve_intersection,
     resultant_quadrivariate_polynomial_fourth_axis_constraint,
     resultant_rational_parametric_curve_intersection,
     resultant_trivariate_polynomial_univariate_constraint,
