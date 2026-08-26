@@ -54440,12 +54440,100 @@ impl BezierRecursiveProjectiveChordParallelSystem2 {
                 Classification::Decided(None) => {
                     Classification::Decided(BezierAlgebraicFiberProjection2::IdenticallyZero)
                 }
+                Classification::Decided(Some(degree @ (1 | 2))) => {
+                    self.selected_low_degree_parameters(projection, degree, domain, policy)?
+                }
                 Classification::Decided(Some(_)) => {
                     Classification::Decided(BezierAlgebraicFiberProjection2::Degenerate)
                 }
                 Classification::Uncertain(reason) => Classification::Uncertain(reason),
             },
         )
+    }
+
+    /// Solves one linear or quadratic target polynomial directly in the
+    /// authored selected tuple. This is the local-field continuation used
+    /// when a foreign conjugate component makes the global tensor norm zero.
+    /// The compact recursive roots are projected to ordinary parameters only
+    /// after their exact branch and finite domain have been certified.
+    fn selected_low_degree_parameters(
+        &self,
+        projection: &DenseTensorPolynomial,
+        degree: usize,
+        domain: SelectedThirdAxisDomain2<'_>,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<BezierAlgebraicFiberProjection2>> {
+        let strict = policy.strict_counterpart();
+        let field = BezierRecursiveQuadraticField2::Base(self.base.clone());
+        let mut coefficients = Vec::with_capacity(degree + 1);
+        for power in 0..=degree {
+            let Some(coefficient) =
+                dense_last_axis_coefficient(projection, power).and_then(|coefficient| {
+                    coefficient.remove_certified_independent_axis(
+                        self.base.sources.len(),
+                        hypersolve::PredicatePolicy::MAX_REFINEMENT_PRECISION,
+                    )
+                })
+            else {
+                return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+            };
+            let Some(coefficient) = recursive_quadratic_rational_value(&self.base, coefficient)
+            else {
+                return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+            };
+            coefficients.push(coefficient);
+        }
+
+        let Some(scalars) =
+            recursive_quadratic_polynomial_projective_roots(&field, &coefficients, &strict)?
+        else {
+            return Ok(Classification::Uncertain(UncertaintyReason::Predicate));
+        };
+
+        let mut retained = Vec::with_capacity(scalars.len());
+        for scalar in scalars {
+            let parameter = match BezierRecursiveProjectiveParameter2::new(scalar, &strict)? {
+                Classification::Decided(parameter) => parameter,
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            };
+            match domain.retains_recursive_projective_parameter(&parameter, &strict)? {
+                Classification::Decided(true) => retained.push(parameter),
+                Classification::Decided(false) => {}
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            }
+        }
+        if matches!(
+            domain,
+            SelectedThirdAxisDomain2::IncidentRay {
+                direction: BezierParameterRayDirection2::Decreasing,
+                ..
+            }
+        ) {
+            retained.reverse();
+        }
+        let mut parameters = Vec::with_capacity(retained.len());
+        for parameter in retained {
+            let parameter = match parameter.promoted_bezier_parameter_complete(&strict)? {
+                Classification::Decided(parameter) => parameter,
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            };
+            parameters.push(parameter);
+        }
+        #[cfg(feature = "dispatch-trace")]
+        hyperreal::dispatch_trace::record(
+            "hypercurve",
+            "recursive-chord-parallel-degenerate",
+            "selected-low-degree-fiber",
+        );
+        Ok(Classification::Decided(
+            BezierAlgebraicFiberProjection2::Parameters(parameters),
+        ))
     }
 
     fn parameters(
@@ -55499,6 +55587,149 @@ fn recursive_projective_polynomial_value(
     Some(value)
 }
 
+/// Solves one linear or quadratic polynomial directly in its retained
+/// recursive coefficient field. `None` declines the fast path when the active
+/// degree or a required STRICT sign cannot be certified; callers may then use
+/// their complete projection authority. Every returned denominator is
+/// strictly positive and the roots are ordered by their authored real value.
+fn recursive_quadratic_polynomial_projective_roots(
+    field: &BezierRecursiveQuadraticField2,
+    coefficients: &[BezierRecursiveQuadraticValue2],
+    policy: &CurveContext,
+) -> CurveResult<Option<Vec<BezierRecursiveQuadraticProjectiveScalar2>>> {
+    let strict = policy.strict_counterpart();
+    match coefficients {
+        [constant, linear] => {
+            let (numerator, denominator) = match linear.sign(&strict)? {
+                Classification::Decided(RealSign::Positive) => {
+                    (constant.scale(&Real::from(-1_i8)), Some(linear.clone()))
+                }
+                Classification::Decided(RealSign::Negative) => {
+                    (Some(constant.clone()), linear.scale(&Real::from(-1_i8)))
+                }
+                Classification::Decided(RealSign::Zero) | Classification::Uncertain(_) => {
+                    return Ok(None);
+                }
+            };
+            let (Some(numerator), Some(denominator)) = (numerator, denominator) else {
+                return Ok(None);
+            };
+            Ok(Some(vec![BezierRecursiveQuadraticProjectiveScalar2 {
+                numerator,
+                denominator,
+            }]))
+        }
+        [constant, linear, quadratic] => {
+            let quadratic_sign = match quadratic.sign(&strict)? {
+                Classification::Decided(sign @ (RealSign::Positive | RealSign::Negative)) => sign,
+                Classification::Decided(RealSign::Zero) | Classification::Uncertain(_) => {
+                    return Ok(None);
+                }
+            };
+            let discriminant = linear
+                .square()
+                .and_then(|linear_squared| {
+                    quadratic
+                        .multiply(constant)
+                        .and_then(|product| product.scale(&Real::from(4_i8)))
+                        .and_then(|product| linear_squared.subtract(&product))
+                })
+                .ok_or_else(|| {
+                    CurveError::Topology(
+                        "a recursive quadratic discriminant exceeded its field budget".into(),
+                    )
+                })?;
+            let discriminant_sign = match discriminant.sign(&strict)? {
+                Classification::Decided(sign) => sign,
+                Classification::Uncertain(_) => return Ok(None),
+            };
+            if discriminant_sign == RealSign::Negative {
+                return Ok(Some(Vec::new()));
+            }
+            let root_field = if discriminant_sign == RealSign::Positive {
+                field.extension(discriminant)
+            } else {
+                Some(field.clone())
+            }
+            .ok_or_else(|| {
+                CurveError::Topology("a recursive quadratic root could not extend its field".into())
+            })?;
+            let lifted_linear = root_field.lift(linear).ok_or_else(|| {
+                CurveError::Topology("a recursive linear term crossed fields".into())
+            })?;
+            let lifted_quadratic = root_field.lift(quadratic).ok_or_else(|| {
+                CurveError::Topology("a recursive quadratic term crossed fields".into())
+            })?;
+            let denominator_negative = quadratic_sign == RealSign::Negative;
+            let mut denominator = lifted_quadratic.scale(&Real::from(2_i8)).ok_or_else(|| {
+                CurveError::Topology(
+                    "a recursive quadratic denominator exceeded its field budget".into(),
+                )
+            })?;
+            if denominator_negative {
+                denominator = denominator.scale(&Real::from(-1_i8)).ok_or_else(|| {
+                    CurveError::Topology(
+                        "a recursive quadratic denominator exceeded its field budget".into(),
+                    )
+                })?;
+            }
+            let radical = if discriminant_sign == RealSign::Positive {
+                root_field.element(
+                    field.constant(Real::zero()).ok_or_else(|| {
+                        CurveError::Topology("a recursive root field lost its zero".into())
+                    })?,
+                    field.constant(Real::one()).ok_or_else(|| {
+                        CurveError::Topology("a recursive root field lost its unit".into())
+                    })?,
+                )
+            } else {
+                root_field.constant(Real::zero())
+            }
+            .ok_or_else(|| {
+                CurveError::Topology(
+                    "a recursive quadratic field lost its discriminant root".into(),
+                )
+            })?;
+            let branches: &[i8] = if discriminant_sign == RealSign::Zero {
+                &[0]
+            } else {
+                &[-1, 1]
+            };
+            let mut roots = Vec::with_capacity(branches.len());
+            for branch in branches {
+                let mut numerator = lifted_linear
+                    .scale(&Real::from(-1_i8))
+                    .and_then(|value| {
+                        radical
+                            .scale(&Real::from(*branch))
+                            .and_then(|root| value.add(&root))
+                    })
+                    .ok_or_else(|| {
+                        CurveError::Topology(
+                            "a recursive quadratic numerator exceeded its field budget".into(),
+                        )
+                    })?;
+                if denominator_negative {
+                    numerator = numerator.scale(&Real::from(-1_i8)).ok_or_else(|| {
+                        CurveError::Topology(
+                            "a recursive quadratic numerator exceeded its field budget".into(),
+                        )
+                    })?;
+                }
+                roots.push(BezierRecursiveQuadraticProjectiveScalar2 {
+                    numerator,
+                    denominator: denominator.clone(),
+                });
+            }
+            if roots.len() == 2 && denominator_negative {
+                roots.swap(0, 1);
+            }
+            Ok(Some(roots))
+        }
+        _ => Ok(None),
+    }
+}
+
 fn certified_recursive_projective_source_parameter(
     scalar: BezierRecursiveQuadraticProjectiveScalar2,
     equation: &[BezierRecursiveQuadraticValue2],
@@ -55641,196 +55872,37 @@ fn recursive_projective_point_rational_axis_parameters(
     {
         weight.pop();
     }
-    if equation.len() <= 2 && weight.len() <= 2 {
-        match equation.as_slice() {
-            [] => return Ok(Classification::Uncertain(UncertaintyReason::Boundary)),
-            [constant] => {
-                return match policy.strict_predicate_pass(|| constant.sign(policy))? {
-                    Classification::Decided(RealSign::Positive | RealSign::Negative) => {
-                        Ok(Classification::Decided(Some(Vec::new())))
-                    }
-                    Classification::Decided(RealSign::Zero) => {
-                        Ok(Classification::Uncertain(UncertaintyReason::Boundary))
-                    }
-                    Classification::Uncertain(reason) => Ok(Classification::Uncertain(reason)),
-                };
-            }
-            [constant, linear] => {
-                let (numerator, denominator) =
-                    match policy.strict_predicate_pass(|| linear.sign(policy))? {
-                        Classification::Decided(RealSign::Positive) => {
-                            (constant.scale(&Real::from(-1_i8)), Some(linear.clone()))
-                        }
-                        Classification::Decided(RealSign::Negative) => {
-                            (Some(constant.clone()), linear.scale(&Real::from(-1_i8)))
-                        }
-                        Classification::Decided(RealSign::Zero) => (None, None),
-                        Classification::Uncertain(_) => (None, None),
-                    };
-                if let (Some(numerator), Some(denominator)) = (numerator, denominator) {
-                    let scalar = BezierRecursiveQuadraticProjectiveScalar2 {
-                        numerator,
-                        denominator,
-                    };
-                    match certified_recursive_projective_source_parameter(
-                        scalar, &equation, &weight, policy,
-                    )? {
-                        Classification::Decided(Some(parameter)) => {
-                            return Ok(Classification::Decided(Some(vec![parameter])));
-                        }
-                        Classification::Decided(None) => {
-                            return Ok(Classification::Decided(Some(Vec::new())));
-                        }
-                        Classification::Uncertain(reason) => {
-                            return Ok(Classification::Uncertain(reason));
-                        }
-                    }
+    match equation.as_slice() {
+        [] => return Ok(Classification::Uncertain(UncertaintyReason::Boundary)),
+        [constant] => {
+            return match policy.strict_predicate_pass(|| constant.sign(policy))? {
+                Classification::Decided(RealSign::Positive | RealSign::Negative) => {
+                    Ok(Classification::Decided(Some(Vec::new())))
                 }
-            }
-            _ => unreachable!("a linear coordinate equation has at most two coefficients"),
+                Classification::Decided(RealSign::Zero) => {
+                    Ok(Classification::Uncertain(UncertaintyReason::Boundary))
+                }
+                Classification::Uncertain(reason) => Ok(Classification::Uncertain(reason)),
+            };
         }
+        _ => {}
     }
-    if let [constant, linear, quadratic] = equation.as_slice()
-        && weight.len() <= 3
+    if let Some(scalars) =
+        recursive_quadratic_polynomial_projective_roots(&field, &equation, policy)?
     {
-        let quadratic_sign = policy.strict_predicate_pass(|| quadratic.sign(policy))?;
-        if let Classification::Decided(RealSign::Positive | RealSign::Negative) = quadratic_sign {
-            let discriminant = linear
-                .square()
-                .and_then(|linear_squared| {
-                    quadratic
-                        .multiply(constant)
-                        .and_then(|product| product.scale(&Real::from(4_i8)))
-                        .and_then(|product| linear_squared.subtract(&product))
-                })
-                .ok_or_else(|| {
-                    CurveError::Topology(
-                        "a retained coordinate discriminant exceeded its field budget".into(),
-                    )
-                })?;
-            let discriminant_sign = policy.strict_predicate_pass(|| discriminant.sign(policy))?;
-            match discriminant_sign {
-                Classification::Decided(RealSign::Negative) => {
-                    return Ok(Classification::Decided(Some(Vec::new())));
+        let mut retained = Vec::with_capacity(scalars.len());
+        for scalar in scalars {
+            match certified_recursive_projective_source_parameter(
+                scalar, &equation, &weight, policy,
+            )? {
+                Classification::Decided(Some(parameter)) => retained.push(parameter),
+                Classification::Decided(None) => {}
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
                 }
-                Classification::Decided(RealSign::Zero | RealSign::Positive) => {
-                    let target_field =
-                        if discriminant_sign == Classification::Decided(RealSign::Positive) {
-                            field.extension(discriminant.clone())
-                        } else {
-                            Some(field.clone())
-                        }
-                        .ok_or_else(|| {
-                            CurveError::Topology(
-                                "a retained coordinate root could not extend its field".into(),
-                            )
-                        })?;
-                    let lifted_linear = target_field.lift(linear).ok_or_else(|| {
-                        CurveError::Topology(
-                            "a retained coordinate linear term crossed fields".into(),
-                        )
-                    })?;
-                    let lifted_quadratic = target_field.lift(quadratic).ok_or_else(|| {
-                        CurveError::Topology(
-                            "a retained coordinate quadratic term crossed fields".into(),
-                        )
-                    })?;
-                    let mut denominator =
-                        lifted_quadratic.scale(&Real::from(2_i8)).ok_or_else(|| {
-                            CurveError::Topology(
-                                "a retained coordinate denominator exceeded its field budget"
-                                    .into(),
-                            )
-                        })?;
-                    let denominator_negative =
-                        matches!(quadratic_sign, Classification::Decided(RealSign::Negative));
-                    if denominator_negative {
-                        denominator = denominator.scale(&Real::from(-1_i8)).ok_or_else(|| {
-                            CurveError::Topology(
-                                "a retained coordinate denominator exceeded its field budget"
-                                    .into(),
-                            )
-                        })?;
-                    }
-                    let radical =
-                        if discriminant_sign == Classification::Decided(RealSign::Positive) {
-                            target_field.element(
-                                field.constant(Real::zero()).ok_or_else(|| {
-                                    CurveError::Topology(
-                                        "a retained coordinate field lost its zero".into(),
-                                    )
-                                })?,
-                                field.constant(Real::one()).ok_or_else(|| {
-                                    CurveError::Topology(
-                                        "a retained coordinate field lost its unit".into(),
-                                    )
-                                })?,
-                            )
-                        } else {
-                            target_field.constant(Real::zero())
-                        }
-                        .ok_or_else(|| {
-                            CurveError::Topology(
-                                "a retained coordinate field lost its discriminant root".into(),
-                            )
-                        })?;
-                    let branches: &[i8] =
-                        if discriminant_sign == Classification::Decided(RealSign::Zero) {
-                            &[0]
-                        } else {
-                            &[-1, 1]
-                        };
-                    let mut retained = Vec::with_capacity(branches.len());
-                    for branch in branches {
-                        let mut numerator = lifted_linear
-                            .scale(&Real::from(-1_i8))
-                            .and_then(|value| {
-                                radical
-                                    .scale(&Real::from(*branch))
-                                    .and_then(|root| value.add(&root))
-                            })
-                            .ok_or_else(|| {
-                                CurveError::Topology(
-                                    "a retained coordinate numerator exceeded its field budget"
-                                        .into(),
-                                )
-                            })?;
-                        if denominator_negative {
-                            numerator = numerator.scale(&Real::from(-1_i8)).ok_or_else(|| {
-                                CurveError::Topology(
-                                    "a retained coordinate numerator exceeded its field budget"
-                                        .into(),
-                                )
-                            })?;
-                        }
-                        match certified_recursive_projective_source_parameter(
-                            BezierRecursiveQuadraticProjectiveScalar2 {
-                                numerator,
-                                denominator: denominator.clone(),
-                            },
-                            &equation,
-                            &weight,
-                            policy,
-                        )? {
-                            Classification::Decided(Some(parameter)) => retained.push(parameter),
-                            Classification::Decided(None) => {}
-                            Classification::Uncertain(reason) => {
-                                return Ok(Classification::Uncertain(reason));
-                            }
-                        }
-                    }
-                    // The two authored roots are ordered by the signed
-                    // denominator: `-sqrt(D)` comes first for `a > 0` and
-                    // second for `a < 0`. Positive `D` proves they are
-                    // distinct, so no global algebraic comparison is needed.
-                    if retained.len() == 2 && denominator_negative {
-                        retained.swap(0, 1);
-                    }
-                    return Ok(Classification::Decided(Some(retained)));
-                }
-                Classification::Uncertain(_) => {}
             }
         }
+        return Ok(Classification::Decided(Some(retained)));
     }
     let Some((base, projection)) = recursive_quadratic_polynomial_projection(equation.clone())
     else {
@@ -56331,6 +56403,69 @@ impl SelectedThirdAxisDomain2<'_> {
                 retain_parameters_before_incident_barrier(parameters, barrier, direction, policy)
             }
         }
+    }
+
+    fn retains_recursive_projective_parameter(
+        self,
+        parameter: &BezierRecursiveProjectiveParameter2,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<bool>> {
+        let decided = |ordering| match ordering {
+            Classification::Decided(ordering) => Ok(ordering),
+            Classification::Uncertain(reason) => Err(reason),
+        };
+        let keep = match self {
+            Self::UnitInterval => {
+                let lower = match decided(parameter.order_to_real(&Real::zero(), policy)?) {
+                    Ok(ordering) => ordering,
+                    Err(reason) => return Ok(Classification::Uncertain(reason)),
+                };
+                let upper = match decided(parameter.order_to_real(&Real::one(), policy)?) {
+                    Ok(ordering) => ordering,
+                    Err(reason) => return Ok(Classification::Uncertain(reason)),
+                };
+                lower != std::cmp::Ordering::Less && upper != std::cmp::Ordering::Greater
+            }
+            Self::AffineLine => true,
+            Self::IncidentRay {
+                anchor,
+                direction,
+                barrier,
+            } => {
+                let anchor_order = match decided(parameter.order_to_real(anchor, policy)?) {
+                    Ok(ordering) => ordering,
+                    Err(reason) => return Ok(Classification::Uncertain(reason)),
+                };
+                let after_anchor = match direction {
+                    BezierParameterRayDirection2::Increasing => {
+                        anchor_order == std::cmp::Ordering::Greater
+                    }
+                    BezierParameterRayDirection2::Decreasing => {
+                        anchor_order == std::cmp::Ordering::Less
+                    }
+                };
+                if !after_anchor {
+                    false
+                } else if let Some(barrier) = barrier {
+                    let barrier_order =
+                        match decided(parameter.cmp_bezier_parameter(barrier, policy)?) {
+                            Ok(ordering) => ordering,
+                            Err(reason) => return Ok(Classification::Uncertain(reason)),
+                        };
+                    match direction {
+                        BezierParameterRayDirection2::Increasing => {
+                            barrier_order == std::cmp::Ordering::Less
+                        }
+                        BezierParameterRayDirection2::Decreasing => {
+                            barrier_order == std::cmp::Ordering::Greater
+                        }
+                    }
+                } else {
+                    true
+                }
+            }
+        };
+        Ok(Classification::Decided(keep))
     }
 }
 
@@ -130735,6 +130870,155 @@ mod conversion_tests {
                         BezierAlgebraicChordParallelIntersections2::Contacts(ref contacts)
                     ) if contacts.is_empty()
                 ));
+            }
+        }
+    }
+
+    #[test]
+    fn recursive_projective_chord_retains_positive_degree_selected_conjugate_fiber() {
+        // The independent endpoint fields admit foreign conjugate tuples on
+        // which this diagonal chord collapses, making the global squared-norm
+        // projection target-wide. On the authored lower/upper tuple the local
+        // fiber is quadratic. Zero displacement has the repeated root t=1/2;
+        // nonzero displacement has two norm roots and exact authored-sheet
+        // replay retains only the positive-normal contact.
+        let horizontal_parallel = |height: Real, distance: Real| {
+            QuadraticBezier2::from_line_segment(
+                LineSeg2::try_new(
+                    Point2::new(Real::zero(), height.clone()),
+                    Point2::new(Real::one(), height),
+                )
+                .unwrap(),
+            )
+            .parallel_left(distance)
+            .unwrap()
+        };
+        let half = (Real::one() / Real::from(2_i8)).unwrap();
+        let quarter = (Real::one() / Real::from(4_i8)).unwrap();
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let parameters =
+                algebraic_parameters(vec![Real::one(), Real::from(-8_i8), Real::from(8_i8)]);
+            let [start, end] = parameters.as_slice() else {
+                panic!("the diagonal endpoints must have two selected roots");
+            };
+            let diagonal = RationalBezier2::try_new(
+                vec![Point2::from_values(0, 0), Point2::from_values(1, 1)],
+                vec![Real::one(), Real::one()],
+            )
+            .unwrap();
+            let endpoint = |parameter: &BezierParameter2| {
+                exact_contact_point_evidence(&diagonal, parameter, &policy)
+                    .unwrap()
+                    .expect("the diagonal selected point must retain exact evidence")
+            };
+            let chord =
+                match BezierAlgebraicChord2::try_new(endpoint(start), endpoint(end), &policy)
+                    .unwrap()
+                {
+                    Classification::Decided(chord) => chord,
+                    Classification::Uncertain(reason) => {
+                        panic!("the independent diagonal chord must construct: {reason:?}")
+                    }
+                };
+            for chord in [chord.clone(), chord.reversed()] {
+                for (parallel, expected) in [
+                    (
+                        horizontal_parallel(half.clone(), Real::zero()),
+                        half.clone(),
+                    ),
+                    (
+                        horizontal_parallel(half.clone(), quarter.clone()),
+                        (Real::from(3_i8) / Real::from(4_i8)).unwrap(),
+                    ),
+                ] {
+                    #[cfg(feature = "dispatch-trace")]
+                    hyperreal::dispatch_trace::reset();
+                    let work = || chord.parallel_intersections(&parallel, &policy);
+                    #[cfg(feature = "dispatch-trace")]
+                    let result = hyperreal::dispatch_trace::with_recording(work).unwrap();
+                    #[cfg(not(feature = "dispatch-trace"))]
+                    let result = work().unwrap();
+                    #[cfg(feature = "dispatch-trace")]
+                    let trace = hyperreal::dispatch_trace::take_trace();
+                    let Classification::Decided(
+                        BezierAlgebraicChordParallelIntersections2::Contacts(contacts),
+                    ) = result
+                    else {
+                        panic!("the selected quadratic fiber must publish contacts: {result:?}")
+                    };
+                    let [contact] = contacts.as_slice() else {
+                        panic!("the selected quadratic fiber must retain one contact: {contacts:?}")
+                    };
+                    assert_eq!(
+                        contact.parallel_parameter,
+                        BezierParameter2::Exact(expected),
+                    );
+                    #[cfg(feature = "dispatch-trace")]
+                    assert_eq!(
+                        trace.path_count(
+                            "hypercurve",
+                            "recursive-chord-parallel-degenerate",
+                            "selected-low-degree-fiber",
+                        ),
+                        1,
+                        "the authored local quadratic must own projection: {trace:?}",
+                    );
+                }
+
+                // The same selected local authority owns both open incident
+                // charts. Their anchors and any regularity barrier remain
+                // excluded exactly; no compact-chart approximation becomes a
+                // constructed source parameter.
+                for (parallel, anchor, direction, expected) in [
+                    (
+                        horizontal_parallel(
+                            (Real::from(3_i8) / Real::from(2_i8)).unwrap(),
+                            Real::zero(),
+                        ),
+                        Real::one(),
+                        BezierParameterRayDirection2::Increasing,
+                        (Real::from(3_i8) / Real::from(2_i8)).unwrap(),
+                    ),
+                    (
+                        horizontal_parallel(
+                            (Real::from(-1_i8) / Real::from(2_i8)).unwrap(),
+                            Real::zero(),
+                        ),
+                        Real::zero(),
+                        BezierParameterRayDirection2::Decreasing,
+                        (Real::from(-1_i8) / Real::from(2_i8)).unwrap(),
+                    ),
+                ] {
+                    let incident = incident_domain(&parallel, anchor, direction, &policy);
+                    let result = chord
+                        .parallel_intersections_with_incident_ray(&parallel, &incident, &policy)
+                        .unwrap();
+                    let Classification::Decided(
+                        BezierAlgebraicChordParallelIntersections2::Contacts(contacts),
+                    ) = result
+                    else {
+                        panic!("the incident selected quadratic must publish contacts: {result:?}")
+                    };
+                    assert!(matches!(
+                        contacts.as_slice(),
+                        [contact]
+                            if contact.parallel_parameter
+                                == BezierParameter2::Exact(expected.clone())
+                    ));
+
+                    let mut clipped = incident;
+                    clipped.barrier = Some(BezierParameter2::Exact(expected));
+                    assert!(matches!(
+                        chord
+                            .parallel_intersections_with_incident_ray(
+                                &parallel, &clipped, &policy,
+                            )
+                            .unwrap(),
+                        Classification::Decided(
+                            BezierAlgebraicChordParallelIntersections2::Contacts(ref contacts)
+                        ) if contacts.is_empty()
+                    ));
+                }
             }
         }
     }

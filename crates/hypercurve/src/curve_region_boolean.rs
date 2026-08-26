@@ -17072,6 +17072,90 @@ mod certified_successor_tests {
                     && contact.certified_transverse
             }));
 
+            // Two independently selected roots define this diagonal chord.
+            // A foreign conjugate tuple collapses the chord and zeros the
+            // global norm, while the authored tuple has the exact local root
+            // t=1/2. The CurveRegion pair must consume the same retained
+            // chord/parallel kernel result without a second Boolean fallback.
+            let selected_parameter = |lower: Real, upper: Real| {
+                let polynomial = decided(
+                    crate::BezierParameterPolynomial::try_new_power_basis(
+                        vec![Real::one(), Real::from(-8_i8), Real::from(8_i8)],
+                        &policy,
+                    )
+                    .expect("valid independent endpoint polynomial"),
+                );
+                let interval = decided(
+                    crate::BezierParameterInterval::try_new(lower, upper, &policy)
+                        .expect("valid independent endpoint interval"),
+                );
+                BezierParameter2::Algebraic(decided(
+                    BezierAlgebraicParameter2::try_isolate(polynomial, interval, &policy)
+                        .expect("isolated independent endpoint"),
+                ))
+            };
+            let diagonal = RationalBezier2::try_new(
+                vec![Point2::from_values(0, 0), Point2::from_values(1, 1)],
+                vec![Real::one(), Real::one()],
+            )
+            .expect("valid diagonal parameter source");
+            let selected_point = |parameter: &BezierParameter2| {
+                crate::rational_bezier_general::exact_contact_point_evidence(
+                    &diagonal, parameter, &policy,
+                )
+                .expect("exact independent endpoint")
+                .expect("retained independent endpoint evidence")
+            };
+            let selected_start = selected_parameter(
+                (Real::one() / Real::from(8_i8)).expect("nonzero denominator"),
+                (Real::one() / Real::from(4_i8)).expect("nonzero denominator"),
+            );
+            let selected_end = selected_parameter(
+                (Real::from(3_i8) / Real::from(4_i8)).expect("nonzero denominator"),
+                (Real::from(7_i8) / Real::from(8_i8)).expect("nonzero denominator"),
+            );
+            let selected_chord = decided(
+                crate::BezierAlgebraicChord2::try_new(
+                    selected_point(&selected_start),
+                    selected_point(&selected_end),
+                    &policy,
+                )
+                .expect("valid independent diagonal chord"),
+            );
+            let selected_parallel = BezierParallel2::from_source(
+                crate::BezierParallelSource2::Quadratic(QuadraticBezier2::from_line_segment(
+                    LineSeg2::try_new(
+                        Point2::new(
+                            Real::zero(),
+                            (Real::one() / Real::from(2_i8)).expect("nonzero denominator"),
+                        ),
+                        Point2::new(
+                            Real::one(),
+                            (Real::one() / Real::from(2_i8)).expect("nonzero denominator"),
+                        ),
+                    )
+                    .expect("valid horizontal target"),
+                )),
+                Real::zero(),
+            );
+            let (selected_contact, selected_evidence) = evaluate(
+                selected_chord,
+                selected_parallel,
+                BezierParameterRange2::from_exact(Real::zero(), Real::one()),
+            );
+            assert!(selected_contact.blockers.is_empty(), "{selected_contact:?}");
+            assert!(selected_contact.overlaps.is_empty(), "{selected_contact:?}");
+            let [selected_contact] = selected_contact.contacts.as_slice() else {
+                panic!("expected one selected-fiber contact: {selected_contact:?}");
+            };
+            assert_eq!(
+                selected_contact.second_parameter.as_bezier_parameter(),
+                Some(&BezierParameter2::Exact(
+                    (Real::one() / Real::from(2_i8)).expect("nonzero denominator"),
+                )),
+            );
+            assert!(selected_evidence.is_complete(), "{selected_evidence:?}");
+
             let overlap_chord = decided(
                 crate::BezierAlgebraicChord2::try_new(
                     RationalBezierIntersectionPointEvidence2::Exact(Point2::from_values(-1, 0)),
