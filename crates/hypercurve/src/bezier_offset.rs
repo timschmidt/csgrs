@@ -3656,6 +3656,20 @@ pub(crate) struct BezierAlgebraicSelectedFiberParameter2 {
     data: Arc<BezierAlgebraicSelectedFiberParameterData2>,
 }
 
+/// Exact local image of one selected-fiber scalar.
+///
+/// `relation` is the residual image after source components on which the
+/// authored image equation vanishes identically have been saturated. The
+/// removed factor remains explicit so the selected source root, rather than
+/// an unrelated conjugate, decides whether the image is positive-dimensional.
+#[derive(Debug)]
+struct BezierSelectedPolynomialImage2 {
+    relation: Option<BivariatePolynomial>,
+    global_schedule: Option<Vec<Real>>,
+    identically_zero_source_factor: Option<BivariatePolynomial>,
+    identically_zero_image_relation: bool,
+}
+
 #[derive(Debug, PartialEq)]
 struct BezierAlgebraicSelectedFiberParameterData2 {
     authority: BezierAlgebraicSelectedFiberAuthority2,
@@ -3985,15 +3999,7 @@ impl BezierAlgebraicSelectedFiberParameter2 {
         &self,
         relation: &BivariatePolynomial,
         policy: &CurveContext,
-    ) -> CurveResult<
-        Classification<
-            Option<(
-                BivariatePolynomial,
-                Option<Vec<Real>>,
-                Option<BivariatePolynomial>,
-            )>,
-        >,
-    > {
+    ) -> CurveResult<Classification<Option<BezierSelectedPolynomialImage2>>> {
         self.validate_policy(policy)?;
         let retained_root = policy.strict_predicate_pass(|| {
             parameter_representation(&self.data.authority.data.retained_parameter, policy)
@@ -4082,16 +4088,28 @@ impl BezierAlgebraicSelectedFiberParameter2 {
                 // take the ordinary local-isolation path instead of trying to
                 // construct a root polynomial from that constant.
                 let schedule = (report.coefficients.len() > 1).then_some(report.coefficients);
-                Ok(Classification::Decided(report.retained_relation.map(
-                    |relation| (relation, schedule, report.identically_zero_fiber_factor),
+                Ok(Classification::Decided(Some(
+                    BezierSelectedPolynomialImage2 {
+                        relation: report.retained_relation,
+                        global_schedule: schedule,
+                        identically_zero_source_factor: report.identically_zero_fiber_factor,
+                        identically_zero_image_relation: false,
+                    },
                 )))
             }
             AlgebraicFiberPolynomialImageProjectionStatus::InvalidEvidence => {
                 Err(CurveError::InvalidBezierAlgebraicParameter)
             }
+            AlgebraicFiberPolynomialImageProjectionStatus::IdenticallyZeroImageRelation => Ok(
+                Classification::Decided(Some(BezierSelectedPolynomialImage2 {
+                    relation: None,
+                    global_schedule: None,
+                    identically_zero_source_factor: report.identically_zero_fiber_factor,
+                    identically_zero_image_relation: true,
+                })),
+            ),
             AlgebraicFiberPolynomialImageProjectionStatus::IdenticallyZeroFiber
-            | AlgebraicFiberPolynomialImageProjectionStatus::ConstantNonzeroFiber
-            | AlgebraicFiberPolynomialImageProjectionStatus::IdenticallyZeroImageRelation => {
+            | AlgebraicFiberPolynomialImageProjectionStatus::ConstantNonzeroFiber => {
                 Ok(Classification::Decided(None))
             }
             AlgebraicFiberPolynomialImageProjectionStatus::UnsupportedCoefficient
@@ -4099,14 +4117,15 @@ impl BezierAlgebraicSelectedFiberParameter2 {
                 Ok(Classification::Uncertain(UncertaintyReason::Unsupported))
             }
             AlgebraicFiberPolynomialImageProjectionStatus::Undecided => {
-                Ok(report.retained_relation.map_or(
-                    Classification::Uncertain(UncertaintyReason::Predicate),
+                Ok(report.retained_relation.map_or_else(
+                    || Classification::Uncertain(UncertaintyReason::Predicate),
                     |relation| {
-                        Classification::Decided(Some((
-                            relation,
-                            None,
-                            report.identically_zero_fiber_factor,
-                        )))
+                        Classification::Decided(Some(BezierSelectedPolynomialImage2 {
+                            relation: Some(relation),
+                            global_schedule: None,
+                            identically_zero_source_factor: report.identically_zero_fiber_factor,
+                            identically_zero_image_relation: false,
+                        }))
                     },
                 ))
             }
@@ -19486,6 +19505,12 @@ impl BezierAlgebraicCuspSemicircle2 {
                 Classification::Decided(
                     BezierSelectedParallelNormalPositiveProjection2::Candidates(candidates),
                 ) => candidates,
+                Classification::Decided(
+                    BezierSelectedParallelNormalPositiveProjection2::AuthoredPolynomialCandidates {
+                        parameters,
+                        ..
+                    },
+                ) => parameters,
                 Classification::Decided(
                     BezierSelectedParallelNormalPositiveProjection2::CoincidentCircleComponent,
                 ) => {
@@ -84760,6 +84785,77 @@ fn algebraic_selected_square_root_polynomial_is_identically_zero(
     Ok(Classification::Decided(true))
 }
 
+/// Selected-fiber counterpart of
+/// [`algebraic_selected_square_root_polynomial_is_identically_zero`].
+///
+/// The authored expression has center parameter `u` on its first axis and
+/// candidate parameter `v` on its second. Each `v` coefficient is lifted into
+/// the compact `F(alpha,u)=0` authority and signed there, so neither `u` nor
+/// its positive speed root is globally materialized.
+fn selected_fiber_square_root_polynomial_is_identically_zero(
+    expression: &BezierAlgebraicCuspTwoTermExpression2,
+    radicand: &BivariatePolynomial,
+    center: &BezierAlgebraicSelectedFiberParameter2,
+    policy: &CurveContext,
+) -> CurveResult<Classification<bool>> {
+    let speed = bivariate_specialize_second(radicand, &Real::zero());
+    if *radicand != bivariate_outer_product(&speed, &[Real::one()]) {
+        return Err(CurveError::Topology(
+            "a selected-fiber center speed unexpectedly depended on the target parameter".into(),
+        ));
+    }
+    let speed = bivariate_outer_product(&[Real::one()], &speed);
+    match center.predicate_sign(&speed, policy)? {
+        Classification::Decided(RealSign::Positive) => {}
+        Classification::Decided(RealSign::Zero) => {
+            return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
+        }
+        Classification::Decided(RealSign::Negative) => {
+            return Err(CurveError::Topology(
+                "a selected-fiber center squared speed was negative".into(),
+            ));
+        }
+        Classification::Uncertain(reason) => {
+            return Ok(Classification::Uncertain(reason));
+        }
+    }
+    let coefficient_count = expression
+        .rational
+        .coefficients
+        .iter()
+        .chain(&expression.radical.coefficients)
+        .map(Vec::len)
+        .max()
+        .unwrap_or(0);
+    for power in 0..coefficient_count {
+        let coefficient = BezierAlgebraicCuspTwoTermExpression2 {
+            rational: bivariate_outer_product(
+                &[Real::one()],
+                &bivariate_second_parameter_coefficient(&expression.rational, power),
+            ),
+            radical: bivariate_outer_product(
+                &[Real::one()],
+                &bivariate_second_parameter_coefficient(&expression.radical, power),
+            ),
+        };
+        match center.square_root_sum_sign(&coefficient, &speed, policy)? {
+            Classification::Decided(RealSign::Zero) => {}
+            Classification::Decided(RealSign::Positive | RealSign::Negative) => {
+                return Ok(Classification::Decided(false));
+            }
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        }
+    }
+    Ok(Classification::Decided(true))
+}
+
+enum SelectedParallelEquationProjection2 {
+    Candidates(Vec<BezierAlgebraicSelectedFiberParameter2>),
+    IdenticallyZero,
+}
+
 #[allow(clippy::too_many_arguments)]
 fn selected_parallel_normal_positive_dimensional_projection(
     circle: &BezierParallelTwoNormalExpression2,
@@ -84771,11 +84867,6 @@ fn selected_parallel_normal_positive_dimensional_projection(
     incident: Option<&BezierParallelIncidentDomain2>,
     policy: &CurveContext,
 ) -> CurveResult<Classification<BezierSelectedParallelNormalPositiveProjection2>> {
-    enum SelectedEquationProjection2 {
-        Candidates(Vec<BezierAlgebraicSelectedFiberParameter2>),
-        IdenticallyZero,
-    }
-
     let full_range = BezierParameterRange2::new_validated(
         BezierParameter2::Exact(Real::zero()),
         BezierParameter2::Exact(Real::one()),
@@ -84783,7 +84874,7 @@ fn selected_parallel_normal_positive_dimensional_projection(
     let finite_range = range.unwrap_or(&full_range);
     let strict = policy.strict_counterpart();
     let project = |equation: &BivariatePolynomial|
-     -> CurveResult<Classification<SelectedEquationProjection2>> {
+     -> CurveResult<Classification<SelectedParallelEquationProjection2>> {
         let mut parameters = match selected_fiber_parameters_in_bezier_range(
             equation,
             center_parameter,
@@ -84793,7 +84884,7 @@ fn selected_parallel_normal_positive_dimensional_projection(
             Classification::Decided(Some(parameters)) => parameters,
             Classification::Decided(None) => {
                 return Ok(Classification::Decided(
-                    SelectedEquationProjection2::IdenticallyZero,
+                    SelectedParallelEquationProjection2::IdenticallyZero,
                 ));
             }
             Classification::Uncertain(reason) => {
@@ -84812,7 +84903,7 @@ fn selected_parallel_normal_positive_dimensional_projection(
                 Classification::Decided(Some(mut exterior)) => parameters.append(&mut exterior),
                 Classification::Decided(None) => {
                     return Ok(Classification::Decided(
-                        SelectedEquationProjection2::IdenticallyZero,
+                        SelectedParallelEquationProjection2::IdenticallyZero,
                     ));
                 }
                 Classification::Uncertain(reason) => {
@@ -84821,14 +84912,50 @@ fn selected_parallel_normal_positive_dimensional_projection(
             }
         }
         Ok(Classification::Decided(
-            SelectedEquationProjection2::Candidates(parameters),
+            SelectedParallelEquationProjection2::Candidates(parameters),
         ))
     };
-    let finish_projection = |projection: SelectedEquationProjection2| match projection {
-        SelectedEquationProjection2::Candidates(parameters) => Some(
+    let selected_expression_is_zero = |expression: &BezierAlgebraicCuspTwoTermExpression2| {
+        algebraic_selected_square_root_polynomial_is_identically_zero(
+            expression,
+            center_speed_squared,
+            center_parameter,
+            policy,
+        )
+    };
+    parallel_normal_positive_dimensional_projection(
+        circle,
+        squared_branch,
+        center_speed_squared,
+        candidate_speed_squared,
+        finite_range,
+        &project,
+        &selected_expression_is_zero,
+        policy,
+    )
+}
+
+#[allow(clippy::too_many_arguments)]
+fn parallel_normal_positive_dimensional_projection(
+    circle: &BezierParallelTwoNormalExpression2,
+    squared_branch: &BezierAlgebraicCuspTwoTermExpression2,
+    center_speed_squared: &BivariatePolynomial,
+    candidate_speed_squared: &BivariatePolynomial,
+    finite_range: &BezierParameterRange2,
+    project: &impl Fn(
+        &BivariatePolynomial,
+    ) -> CurveResult<Classification<SelectedParallelEquationProjection2>>,
+    selected_expression_is_zero: &impl Fn(
+        &BezierAlgebraicCuspTwoTermExpression2,
+    ) -> CurveResult<Classification<bool>>,
+    policy: &CurveContext,
+) -> CurveResult<Classification<BezierSelectedParallelNormalPositiveProjection2>> {
+    let strict = policy.strict_counterpart();
+    let finish_projection = |projection: SelectedParallelEquationProjection2| match projection {
+        SelectedParallelEquationProjection2::Candidates(parameters) => Some(
             BezierSelectedParallelNormalPositiveProjection2::Candidates(parameters),
         ),
-        SelectedEquationProjection2::IdenticallyZero => None,
+        SelectedParallelEquationProjection2::IdenticallyZero => None,
     };
     let project_nonzero_branch =
         |first: &BivariatePolynomial,
@@ -84842,12 +84969,12 @@ fn selected_parallel_normal_positive_dimensional_projection(
                     }
                 };
                 match projection {
-                    SelectedEquationProjection2::Candidates(parameters) => {
+                    SelectedParallelEquationProjection2::Candidates(parameters) => {
                         return Ok(Classification::Decided(
                             BezierSelectedParallelNormalPositiveProjection2::Candidates(parameters),
                         ));
                     }
-                    SelectedEquationProjection2::IdenticallyZero => {}
+                    SelectedParallelEquationProjection2::IdenticallyZero => {}
                 }
             }
             Ok(Classification::Decided(
@@ -84911,12 +85038,7 @@ fn selected_parallel_normal_positive_dimensional_projection(
                     &bivariate_multiply(&circle.product, &speed),
                 ),
             };
-            match algebraic_selected_square_root_polynomial_is_identically_zero(
-                &collapsed,
-                center_speed_squared,
-                center_parameter,
-                policy,
-            )? {
+            match selected_expression_is_zero(&collapsed)? {
                 Classification::Decided(true) => {
                     return Ok(Classification::Decided(
                         BezierSelectedParallelNormalPositiveProjection2::CoincidentCircleComponent,
@@ -84949,18 +85071,12 @@ fn selected_parallel_normal_positive_dimensional_projection(
             project_nonzero_branch(&collapsed.rational, &collapsed.radical)
         }
         Classification::Decided(None) => {
-            let selected_norm_is_zero =
-                match algebraic_selected_square_root_polynomial_is_identically_zero(
-                    squared_branch,
-                    center_speed_squared,
-                    center_parameter,
-                    policy,
-                )? {
-                    Classification::Decided(is_zero) => is_zero,
-                    Classification::Uncertain(reason) => {
-                        return Ok(Classification::Uncertain(reason));
-                    }
-                };
+            let selected_norm_is_zero = match selected_expression_is_zero(squared_branch)? {
+                Classification::Decided(is_zero) => is_zero,
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            };
             if !selected_norm_is_zero {
                 // The final norm vanished because the opposite center-speed
                 // conjugate owns the component. On the selected sheet roots
@@ -84982,30 +85098,18 @@ fn selected_parallel_normal_positive_dimensional_projection(
                 rational: circle.candidate.clone(),
                 radical: circle.product.clone(),
             };
-            let center_term_is_zero =
-                match algebraic_selected_square_root_polynomial_is_identically_zero(
-                    &center_term,
-                    center_speed_squared,
-                    center_parameter,
-                    policy,
-                )? {
-                    Classification::Decided(is_zero) => is_zero,
-                    Classification::Uncertain(reason) => {
-                        return Ok(Classification::Uncertain(reason));
-                    }
-                };
-            let target_term_is_zero =
-                match algebraic_selected_square_root_polynomial_is_identically_zero(
-                    &target_term,
-                    center_speed_squared,
-                    center_parameter,
-                    policy,
-                )? {
-                    Classification::Decided(is_zero) => is_zero,
-                    Classification::Uncertain(reason) => {
-                        return Ok(Classification::Uncertain(reason));
-                    }
-                };
+            let center_term_is_zero = match selected_expression_is_zero(&center_term)? {
+                Classification::Decided(is_zero) => is_zero,
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            };
+            let target_term_is_zero = match selected_expression_is_zero(&target_term)? {
+                Classification::Decided(is_zero) => is_zero,
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            };
             if center_term_is_zero && target_term_is_zero {
                 return Ok(Classification::Decided(
                     BezierSelectedParallelNormalPositiveProjection2::CoincidentCircleComponent,
@@ -86849,6 +86953,82 @@ fn algebraic_selected_fiber_pair_square_root_sum_sign(
     })
 }
 
+fn collapse_two_normal_polynomial_speeds(
+    expression: &BezierParallelTwoNormalExpression2,
+    source_speed: &[Real],
+    image_speed: &[Real],
+) -> BivariatePolynomial {
+    let source_speed = bivariate_outer_product(source_speed, &[Real::one()]);
+    let image_speed = bivariate_outer_product(&[Real::one()], image_speed);
+    let speed_product = bivariate_multiply(&source_speed, &image_speed);
+    bivariate_add(
+        &bivariate_add(
+            &bivariate_multiply(&expression.product, &speed_product),
+            &bivariate_multiply(&expression.center, &source_speed),
+        ),
+        &bivariate_add(
+            &bivariate_multiply(&expression.candidate, &image_speed),
+            &expression.rational,
+        ),
+    )
+}
+
+fn selected_fiber_positive_polynomial_speed(
+    parameter: &BezierAlgebraicSelectedFiberParameter2,
+    speed_squared: &[Real],
+    policy: &CurveContext,
+) -> CurveResult<Classification<Option<Vec<Real>>>> {
+    let mut speed = match polynomial_square_root(speed_squared, policy)? {
+        Classification::Decided(Some(speed)) => speed,
+        Classification::Decided(None) => return Ok(Classification::Decided(None)),
+        Classification::Uncertain(reason) => {
+            return Ok(Classification::Uncertain(reason));
+        }
+    };
+    let predicate = bivariate_outer_product(&[Real::one()], &speed);
+    match parameter.predicate_sign(&predicate, policy)? {
+        Classification::Decided(RealSign::Positive) => {}
+        Classification::Decided(RealSign::Negative) => {
+            speed = polynomial_scale(&speed, &Real::from(-1_i8));
+        }
+        Classification::Decided(RealSign::Zero) => {
+            return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
+        }
+        Classification::Uncertain(reason) => {
+            return Ok(Classification::Uncertain(reason));
+        }
+    }
+    Ok(Classification::Decided(Some(speed)))
+}
+
+fn unit_interval_positive_polynomial_speed(
+    speed_squared: &[Real],
+    policy: &CurveContext,
+) -> CurveResult<Classification<Option<Vec<Real>>>> {
+    let mut speed = match polynomial_square_root(speed_squared, policy)? {
+        Classification::Decided(Some(speed)) => speed,
+        Classification::Decided(None) => return Ok(Classification::Decided(None)),
+        Classification::Uncertain(reason) => {
+            return Ok(Classification::Uncertain(reason));
+        }
+    };
+    let half = (Real::one() / Real::from(2_i8))?;
+    match real_sign(
+        &polynomial_evaluate(&speed, &half),
+        &policy.strict_counterpart(),
+    ) {
+        Some(RealSign::Positive) => {}
+        Some(RealSign::Negative) => {
+            speed = polynomial_scale(&speed, &Real::from(-1_i8));
+        }
+        Some(RealSign::Zero) => {
+            return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
+        }
+        None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
+    }
+    Ok(Classification::Decided(Some(speed)))
+}
+
 fn algebraic_selected_fiber_pair_two_normal_sum_sign(
     source: &BezierAlgebraicSelectedFiberParameter2,
     image: &BezierAlgebraicSelectedFiberParameter2,
@@ -86858,6 +87038,28 @@ fn algebraic_selected_fiber_pair_two_normal_sum_sign(
     projected_root_certified: bool,
     policy: &CurveContext,
 ) -> CurveResult<Classification<RealSign>> {
+    let source_speed = bivariate_specialize_second(source_speed_squared, &Real::zero());
+    let image_speed = bivariate_specialize_first(image_speed_squared, &Real::zero());
+    if *source_speed_squared == bivariate_outer_product(&source_speed, &[Real::one()])
+        && *image_speed_squared == bivariate_outer_product(&[Real::one()], &image_speed)
+        && let (
+            Classification::Decided(Some(source_speed)),
+            Classification::Decided(Some(image_speed)),
+        ) = (
+            selected_fiber_positive_polynomial_speed(source, &source_speed, policy)?,
+            selected_fiber_positive_polynomial_speed(image, &image_speed, policy)?,
+        )
+    {
+        #[cfg(feature = "dispatch-trace")]
+        hyperreal::dispatch_trace::record(
+            "hypercurve",
+            "selected-fiber-two-normal-sign",
+            "polynomial-speed-collapse",
+        );
+        let collapsed =
+            collapse_two_normal_polynomial_speeds(expression, &source_speed, &image_speed);
+        return algebraic_selected_fiber_pair_predicate_sign(source, image, &collapsed, policy);
+    }
     let square_root_sign = |expression: &BezierAlgebraicCuspTwoTermExpression2,
                             projected_magnitude_zero| {
         algebraic_selected_fiber_pair_square_root_sum_sign(
@@ -91418,128 +91620,20 @@ impl BezierParallel2 {
         )
     }
 
-    /// Solves fixed-distance cuts from one compact selected-fiber center.
+    /// Isolates one retained `H(alpha,v)=0` image on the finite source chart
+    /// and, when requested, its complete regular incident cell.
     ///
-    /// Affine charts translate the local root directly. General charts retain
-    /// the projected cut equation as `H(alpha, v)=0`, so every cut shares the
-    /// center's already-selected base root and no global center scalar is
-    /// constructed. The twice-squared two-normal equation is enumeration only;
-    /// every candidate is correlated with the authored center and replayed on
-    /// the unsquared radical sheet before admission.
-    pub(crate) fn fixed_distance_incidence_from_selected_parameter(
+    /// `None` means the selected relation is identically zero on at least one
+    /// requested cell. Keeping that outcome distinct lets the caller descend
+    /// to an unsquared lower equation instead of promoting the selected center.
+    fn selected_fiber_image_parameters(
         &self,
         center: &BezierAlgebraicSelectedFiberParameter2,
-        setback: &Real,
+        incidence: &BivariatePolynomial,
+        global_schedule: Option<Vec<Real>>,
         direction: Option<BezierParameterRayDirection2>,
         policy: &CurveContext,
-    ) -> CurveResult<Classification<Vec<BezierParallelFixedDistanceParameter2>>> {
-        center.validate_policy(policy)?;
-        match self.affine_fixed_distance_parameter_delta(setback, policy)? {
-            Classification::Decided(Some(delta)) => {
-                return Ok(Classification::Decided(vec![
-                    BezierParallelFixedDistanceParameter2::SelectedFiber(
-                        center.translated(&(-delta.clone())),
-                    ),
-                    BezierParallelFixedDistanceParameter2::SelectedFiber(center.translated(&delta)),
-                ]));
-            }
-            Classification::Decided(None) => {}
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        }
-
-        let radius_squared = setback * setback;
-        let complete_promoted_fallback = || {
-            #[cfg(feature = "dispatch-trace")]
-            hyperreal::dispatch_trace::record(
-                "hypercurve",
-                "selected-fiber-fixed-distance",
-                "global-center-degenerate-fallback",
-            );
-            let center = match center.promoted_bezier_parameter_complete(policy)? {
-                Classification::Decided(center) => center,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            };
-            let unit_range = BezierParameterRange2::new_validated(
-                BezierParameter2::Exact(Real::zero()),
-                BezierParameter2::Exact(Real::one()),
-            );
-            if let Some(direction) = direction {
-                self.fixed_distance_incidence_from_parameter_with_incident_ray(
-                    &center,
-                    &radius_squared,
-                    &unit_range,
-                    direction,
-                    policy,
-                )
-            } else {
-                self.fixed_distance_incidence_from_parameter(
-                    &center,
-                    &radius_squared,
-                    &unit_range,
-                    policy,
-                )
-            }
-        };
-
-        let (projected_incidence, radical_system) =
-            if real_sign(self.distance(), &CurveContext::STRICT) == Some(RealSign::Zero) {
-                let incidence = match parallel_source_fixed_distance_incidence(
-                    self,
-                    &radius_squared,
-                    policy,
-                )? {
-                    Classification::Decided(incidence) => incidence,
-                    Classification::Uncertain(reason) => {
-                        return Ok(Classification::Uncertain(reason));
-                    }
-                };
-                (incidence, None)
-            } else {
-                let system = match parallel_fixed_distance_system(
-                    self,
-                    self,
-                    &radius_squared,
-                    None,
-                    policy,
-                )? {
-                    Classification::Decided(system) => system,
-                    Classification::Uncertain(reason) => {
-                        return Ok(Classification::Uncertain(reason));
-                    }
-                };
-                (system.incidence.clone(), Some(system))
-            };
-        let (selected_incidence, global_schedule, identically_zero_source_factor) =
-            match center.retained_polynomial_image_relation(&projected_incidence, policy)? {
-                Classification::Decided(Some(incidence)) => incidence,
-                Classification::Decided(None) => return complete_promoted_fallback(),
-                Classification::Uncertain(_) => return complete_promoted_fallback(),
-            };
-        if let Some(factor) = identically_zero_source_factor {
-            match center.predicate_sign(&factor, policy)? {
-                Classification::Decided(RealSign::Positive | RealSign::Negative) => {
-                    #[cfg(feature = "dispatch-trace")]
-                    hyperreal::dispatch_trace::record(
-                        "hypercurve",
-                        "selected-fiber-fixed-distance",
-                        "saturated-foreign-zero-image-component",
-                    );
-                }
-                Classification::Decided(RealSign::Zero) | Classification::Uncertain(_) => {
-                    return complete_promoted_fallback();
-                }
-            }
-        }
-        #[cfg(feature = "dispatch-trace")]
-        hyperreal::dispatch_trace::record(
-            "hypercurve",
-            "selected-fiber-fixed-distance",
-            "retained-local-image",
-        );
+    ) -> CurveResult<Classification<Option<Vec<BezierAlgebraicSelectedFiberParameter2>>>> {
         let retained = &center.data.authority.data.retained_parameter;
         let mut candidates = if let Some(coefficients) = global_schedule {
             let strict = policy.strict_counterpart();
@@ -91569,7 +91663,7 @@ impl BezierParallel2 {
                 }
             };
             let exact_authority = BezierAlgebraicSelectedFiberAuthority2::new(
-                selected_incidence.clone(),
+                incidence.clone(),
                 retained.clone(),
                 policy,
             );
@@ -91579,7 +91673,7 @@ impl BezierParallel2 {
                 match candidate {
                     BezierParameter2::Exact(candidate) => {
                         match signed_coefficients_at_parameter(
-                            bivariate_specialize_second(&selected_incidence, &candidate),
+                            bivariate_specialize_second(incidence, &candidate),
                             &retained_parameter,
                             &strict,
                         )? {
@@ -91599,7 +91693,7 @@ impl BezierParallel2 {
                     }
                     BezierParameter2::Algebraic(candidate) => {
                         match selected_fiber_parameters_in_interval(
-                            &selected_incidence,
+                            incidence,
                             retained,
                             candidate.interval().start(),
                             candidate.interval().end(),
@@ -91607,7 +91701,7 @@ impl BezierParallel2 {
                         )? {
                             Classification::Decided(Some(mut local)) => selected.append(&mut local),
                             Classification::Decided(None) => {
-                                return complete_promoted_fallback();
+                                return Ok(Classification::Decided(None));
                             }
                             Classification::Uncertain(reason) => {
                                 return Ok(Classification::Uncertain(reason));
@@ -91619,14 +91713,16 @@ impl BezierParallel2 {
             selected
         } else {
             match selected_fiber_parameters_in_interval(
-                &selected_incidence,
+                incidence,
                 retained,
                 &Real::zero(),
                 &Real::one(),
                 policy,
             )? {
                 Classification::Decided(Some(candidates)) => candidates,
-                Classification::Decided(None) => return complete_promoted_fallback(),
+                Classification::Decided(None) => {
+                    return Ok(Classification::Decided(None));
+                }
                 Classification::Uncertain(reason) => {
                     return Ok(Classification::Uncertain(reason));
                 }
@@ -91643,14 +91739,16 @@ impl BezierParallel2 {
                 };
             if let Some(bridge) = incident.bridge() {
                 let adjacent = match selected_fiber_parameters_in_interval(
-                    &selected_incidence,
+                    incidence,
                     retained,
                     bridge.start(),
                     bridge.end(),
                     policy,
                 )? {
                     Classification::Decided(Some(parameters)) => parameters,
-                    Classification::Decided(None) => return complete_promoted_fallback(),
+                    Classification::Decided(None) => {
+                        return Ok(Classification::Decided(None));
+                    }
                     Classification::Uncertain(reason) => {
                         return Ok(Classification::Uncertain(reason));
                     }
@@ -91681,7 +91779,7 @@ impl BezierParallel2 {
                 candidates.extend(retained_adjacent);
             }
             let exterior = match selected_fiber_parameters_on_incident_ray(
-                &selected_incidence,
+                incidence,
                 retained,
                 incident.anchor(),
                 incident.direction(),
@@ -91689,31 +91787,396 @@ impl BezierParallel2 {
                 policy,
             )? {
                 Classification::Decided(Some(parameters)) => parameters,
-                Classification::Decided(None) => return complete_promoted_fallback(),
+                Classification::Decided(None) => {
+                    return Ok(Classification::Decided(None));
+                }
                 Classification::Uncertain(reason) => {
                     return Ok(Classification::Uncertain(reason));
                 }
             };
             candidates.extend(exterior);
         }
+        Ok(Classification::Decided(Some(candidates)))
+    }
 
-        let mut retained_candidates = Vec::with_capacity(candidates.len());
-        for candidate in candidates {
-            let projected_root = match algebraic_selected_fiber_pair_projected_root(
+    /// Projects one lower fixed-distance equation through the compact center
+    /// authority. A selected zero-image source factor is reported as an
+    /// identically-zero equation; a foreign factor is saturated and ignored.
+    fn selected_fiber_fixed_distance_equation_projection(
+        &self,
+        center: &BezierAlgebraicSelectedFiberParameter2,
+        equation: &BivariatePolynomial,
+        direction: Option<BezierParameterRayDirection2>,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<SelectedParallelEquationProjection2>> {
+        let image = match center.retained_polynomial_image_relation(equation, policy)? {
+            Classification::Decided(Some(image)) => image,
+            Classification::Decided(None) => {
+                return Ok(Classification::Uncertain(UncertaintyReason::Predicate));
+            }
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        let had_zero_source_factor = image.identically_zero_source_factor.is_some();
+        if let Some(factor) = image.identically_zero_source_factor {
+            match center.predicate_sign(&factor, policy)? {
+                Classification::Decided(RealSign::Zero) => {
+                    return Ok(Classification::Decided(
+                        SelectedParallelEquationProjection2::IdenticallyZero,
+                    ));
+                }
+                Classification::Decided(RealSign::Positive | RealSign::Negative) => {}
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            }
+        }
+        if image.identically_zero_image_relation {
+            return if had_zero_source_factor {
+                Ok(Classification::Uncertain(UncertaintyReason::Predicate))
+            } else {
+                Ok(Classification::Decided(
+                    SelectedParallelEquationProjection2::IdenticallyZero,
+                ))
+            };
+        }
+        let Some(incidence) = image.relation else {
+            return Ok(Classification::Uncertain(UncertaintyReason::Predicate));
+        };
+        Ok(
+            match self.selected_fiber_image_parameters(
                 center,
-                &candidate,
-                &projected_incidence,
+                &incidence,
+                image.global_schedule,
+                direction,
                 policy,
             )? {
-                Classification::Decided(projected_root) => projected_root,
+                Classification::Decided(Some(parameters)) => Classification::Decided(
+                    SelectedParallelEquationProjection2::Candidates(parameters),
+                ),
+                Classification::Decided(None) => {
+                    Classification::Decided(SelectedParallelEquationProjection2::IdenticallyZero)
+                }
+                Classification::Uncertain(reason) => Classification::Uncertain(reason),
+            },
+        )
+    }
+
+    fn selected_fiber_parallel_normal_positive_dimensional_projection(
+        &self,
+        center: &BezierAlgebraicSelectedFiberParameter2,
+        system: &BezierParallelFixedDistanceSystem2,
+        direction: Option<BezierParameterRayDirection2>,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<BezierSelectedParallelNormalPositiveProjection2>> {
+        let finite_range = BezierParameterRange2::new_validated(
+            BezierParameter2::Exact(Real::zero()),
+            BezierParameter2::Exact(Real::one()),
+        );
+        let center_speed_squared =
+            bivariate_specialize_second(&system.center_speed_squared, &Real::zero());
+        let candidate_speed_squared =
+            bivariate_specialize_first(&system.candidate_speed_squared, &Real::zero());
+        if system.center_speed_squared
+            == bivariate_outer_product(&center_speed_squared, &[Real::one()])
+            && system.candidate_speed_squared
+                == bivariate_outer_product(&[Real::one()], &candidate_speed_squared)
+            && let (
+                Classification::Decided(Some(center_speed)),
+                Classification::Decided(Some(candidate_speed)),
+            ) = (
+                selected_fiber_positive_polynomial_speed(center, &center_speed_squared, policy)?,
+                unit_interval_positive_polynomial_speed(&candidate_speed_squared, policy)?,
+            )
+        {
+            let incidence = collapse_two_normal_polynomial_speeds(
+                &system.circle,
+                &center_speed,
+                &candidate_speed,
+            );
+            match self.selected_fiber_fixed_distance_equation_projection(
+                center, &incidence, direction, policy,
+            )? {
+                Classification::Decided(SelectedParallelEquationProjection2::Candidates(
+                    parameters,
+                )) => {
+                    return Ok(Classification::Decided(
+                        BezierSelectedParallelNormalPositiveProjection2::AuthoredPolynomialCandidates {
+                            parameters,
+                            incidence,
+                        },
+                    ));
+                }
+                Classification::Decided(SelectedParallelEquationProjection2::IdenticallyZero) => {
+                    return Ok(Classification::Decided(
+                        BezierSelectedParallelNormalPositiveProjection2::CoincidentCircleComponent,
+                    ));
+                }
+                Classification::Uncertain(_) => {}
+            }
+        }
+        let project = |equation: &BivariatePolynomial| {
+            self.selected_fiber_fixed_distance_equation_projection(
+                center, equation, direction, policy,
+            )
+        };
+        let selected_expression_is_zero = |expression: &BezierAlgebraicCuspTwoTermExpression2| {
+            selected_fiber_square_root_polynomial_is_identically_zero(
+                expression,
+                &system.center_speed_squared,
+                center,
+                policy,
+            )
+        };
+        parallel_normal_positive_dimensional_projection(
+            &system.circle,
+            &system.squared_branch,
+            &system.center_speed_squared,
+            &system.candidate_speed_squared,
+            &finite_range,
+            &project,
+            &selected_expression_is_zero,
+            policy,
+        )
+    }
+
+    /// Solves fixed-distance cuts from one compact selected-fiber center.
+    ///
+    /// Affine charts translate the local root directly. General charts retain
+    /// the projected cut equation as `H(alpha, v)=0`, so every cut shares the
+    /// center's already-selected base root and no global center scalar is
+    /// constructed. A twice-squared two-normal equation is enumeration only:
+    /// its candidates are correlated with the authored center and replayed on
+    /// the unsquared radical sheet. When both positive speeds are polynomial,
+    /// the authored equation is projected directly instead.
+    pub(crate) fn fixed_distance_incidence_from_selected_parameter(
+        &self,
+        center: &BezierAlgebraicSelectedFiberParameter2,
+        setback: &Real,
+        direction: Option<BezierParameterRayDirection2>,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<Vec<BezierParallelFixedDistanceParameter2>>> {
+        center.validate_policy(policy)?;
+        match self.affine_fixed_distance_parameter_delta(setback, policy)? {
+            Classification::Decided(Some(delta)) => {
+                return Ok(Classification::Decided(vec![
+                    BezierParallelFixedDistanceParameter2::SelectedFiber(
+                        center.translated(&(-delta.clone())),
+                    ),
+                    BezierParallelFixedDistanceParameter2::SelectedFiber(center.translated(&delta)),
+                ]));
+            }
+            Classification::Decided(None) => {}
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        }
+
+        let radius_squared = setback * setback;
+        let (projected_incidence, radical_system) =
+            if real_sign(self.distance(), &CurveContext::STRICT) == Some(RealSign::Zero) {
+                let incidence = match parallel_source_fixed_distance_incidence(
+                    self,
+                    &radius_squared,
+                    policy,
+                )? {
+                    Classification::Decided(incidence) => incidence,
+                    Classification::Uncertain(reason) => {
+                        return Ok(Classification::Uncertain(reason));
+                    }
+                };
+                (incidence, None)
+            } else {
+                let system = match parallel_fixed_distance_system(
+                    self,
+                    self,
+                    &radius_squared,
+                    None,
+                    policy,
+                )? {
+                    Classification::Decided(system) => system,
+                    Classification::Uncertain(reason) => {
+                        return Ok(Classification::Uncertain(reason));
+                    }
+                };
+                (system.incidence.clone(), Some(system))
+            };
+        let selected_image =
+            match center.retained_polynomial_image_relation(&projected_incidence, policy)? {
+                Classification::Decided(Some(image)) => image,
+                Classification::Decided(None) => {
+                    return Ok(Classification::Uncertain(UncertaintyReason::Predicate));
+                }
                 Classification::Uncertain(reason) => {
                     return Ok(Classification::Uncertain(reason));
                 }
             };
-            if !projected_root {
-                continue;
+        let had_zero_source_factor = selected_image.identically_zero_source_factor.is_some();
+        let mut positive_dimensional =
+            selected_image.identically_zero_image_relation && !had_zero_source_factor;
+        if let Some(factor) = selected_image.identically_zero_source_factor {
+            match center.predicate_sign(&factor, policy)? {
+                Classification::Decided(RealSign::Positive | RealSign::Negative) => {
+                    #[cfg(feature = "dispatch-trace")]
+                    hyperreal::dispatch_trace::record(
+                        "hypercurve",
+                        "selected-fiber-fixed-distance",
+                        "saturated-foreign-zero-image-component",
+                    );
+                }
+                Classification::Decided(RealSign::Zero) => {
+                    positive_dimensional = true;
+                }
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
             }
-            if let Some(system) = &radical_system {
+        }
+        if selected_image.identically_zero_image_relation && !positive_dimensional {
+            return Ok(Classification::Uncertain(UncertaintyReason::Predicate));
+        }
+        let mut candidates = None;
+        if !positive_dimensional {
+            let Some(selected_incidence) = selected_image.relation else {
+                return Ok(Classification::Uncertain(UncertaintyReason::Predicate));
+            };
+            match self.selected_fiber_image_parameters(
+                center,
+                &selected_incidence,
+                selected_image.global_schedule,
+                direction,
+                policy,
+            )? {
+                Classification::Decided(Some(parameters)) => {
+                    candidates = Some(parameters);
+                    #[cfg(feature = "dispatch-trace")]
+                    hyperreal::dispatch_trace::record(
+                        "hypercurve",
+                        "selected-fiber-fixed-distance",
+                        "retained-local-image",
+                    );
+                }
+                Classification::Decided(None) => {
+                    positive_dimensional = true;
+                }
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            }
+        }
+        let projected_root_required = !positive_dimensional;
+        let mut authored_positive_incidence = None;
+        let candidates = if let Some(candidates) = candidates {
+            candidates
+        } else if let Some(system) = &radical_system {
+            match self.selected_fiber_parallel_normal_positive_dimensional_projection(
+                center, system, direction, policy,
+            )? {
+                Classification::Decided(
+                    BezierSelectedParallelNormalPositiveProjection2::Candidates(parameters),
+                ) => {
+                    #[cfg(feature = "dispatch-trace")]
+                    hyperreal::dispatch_trace::record(
+                        "hypercurve",
+                        "selected-fiber-fixed-distance",
+                        "retained-positive-dimensional-lower-equation",
+                    );
+                    parameters
+                }
+                Classification::Decided(
+                    BezierSelectedParallelNormalPositiveProjection2::AuthoredPolynomialCandidates {
+                        parameters,
+                        incidence,
+                    },
+                ) => {
+                    #[cfg(feature = "dispatch-trace")]
+                    hyperreal::dispatch_trace::record(
+                        "hypercurve",
+                        "selected-fiber-fixed-distance",
+                        "retained-positive-polynomial-speed-equation",
+                    );
+                    authored_positive_incidence = Some(incidence);
+                    parameters
+                }
+                Classification::Decided(
+                    BezierSelectedParallelNormalPositiveProjection2::CoincidentCircleComponent,
+                ) => {
+                    #[cfg(feature = "dispatch-trace")]
+                    hyperreal::dispatch_trace::record(
+                        "hypercurve",
+                        "selected-fiber-fixed-distance",
+                        "coincident-fixed-distance-component",
+                    );
+                    return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
+                }
+                Classification::Decided(
+                    BezierSelectedParallelNormalPositiveProjection2::Degenerate,
+                ) => {
+                    return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
+                }
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            }
+        } else {
+            // The unsquared source-circle equation itself vanishes for every
+            // candidate parameter on this component. The fixed-distance cut
+            // is a continuum rather than a finite chamfer solution set.
+            return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
+        };
+
+        let authored_source_is_unique = center
+            .data
+            .authority
+            .data
+            .incidence
+            .coefficients
+            .iter()
+            .map(Vec::len)
+            .max()
+            .unwrap_or_default()
+            <= 2;
+        let mut retained_candidates = Vec::with_capacity(candidates.len());
+        for candidate in candidates {
+            if projected_root_required {
+                let projected_root = match algebraic_selected_fiber_pair_projected_root(
+                    center,
+                    &candidate,
+                    &projected_incidence,
+                    policy,
+                )? {
+                    Classification::Decided(projected_root) => projected_root,
+                    Classification::Uncertain(reason) => {
+                        return Ok(Classification::Uncertain(reason));
+                    }
+                };
+                if !projected_root {
+                    continue;
+                }
+            }
+            if !authored_source_is_unique && let Some(incidence) = &authored_positive_incidence {
+                let authored_root = match algebraic_selected_fiber_pair_projected_root(
+                    center, &candidate, incidence, policy,
+                )? {
+                    Classification::Decided(root) => root,
+                    Classification::Uncertain(reason) => {
+                        return Ok(Classification::Uncertain(reason));
+                    }
+                };
+                if !authored_root {
+                    continue;
+                }
+            }
+            if authored_positive_incidence.is_none()
+                && let Some(system) = &radical_system
+            {
+                #[cfg(feature = "dispatch-trace")]
+                hyperreal::dispatch_trace::record(
+                    "hypercurve",
+                    "selected-fiber-fixed-distance",
+                    "unsquared-two-normal-replay",
+                );
                 match algebraic_selected_fiber_pair_two_normal_sum_sign(
                     center,
                     &candidate,
@@ -91726,6 +92189,12 @@ impl BezierParallel2 {
                     Classification::Decided(RealSign::Zero) => {}
                     Classification::Decided(RealSign::Positive | RealSign::Negative) => continue,
                     Classification::Uncertain(reason) => {
+                        #[cfg(feature = "dispatch-trace")]
+                        hyperreal::dispatch_trace::record(
+                            "hypercurve",
+                            "selected-fiber-fixed-distance",
+                            "unsquared-two-normal-replay-undecided",
+                        );
                         return Ok(Classification::Uncertain(reason));
                     }
                 }
@@ -105185,6 +105654,14 @@ struct BezierSelectedParallelNormalCircleParallelSystem2 {
 
 enum BezierSelectedParallelNormalPositiveProjection2 {
     Candidates(Vec<BezierAlgebraicSelectedFiberParameter2>),
+    /// Candidates projected directly from the authored equation after both
+    /// positive speed radicals collapsed polynomially. Pair replay of this
+    /// incidence certifies the unsquared sheet without reconstructing either
+    /// speed root globally.
+    AuthoredPolynomialCandidates {
+        parameters: Vec<BezierAlgebraicSelectedFiberParameter2>,
+        incidence: BivariatePolynomial,
+    },
     CoincidentCircleComponent,
     Degenerate,
 }
@@ -138456,12 +138933,18 @@ mod conversion_tests {
                 exact_root: None,
                 distinct_root_count: 1,
             });
-            let Classification::Decided(Some((relation, _, Some(factor)))) = center
+            let Classification::Decided(Some(image)) = center
                 .retained_polynomial_image_relation(&image, &policy)
                 .unwrap()
             else {
                 panic!("the saturated selected image must remain locally constructible")
             };
+            let factor = image
+                .identically_zero_source_factor
+                .expect("the saturated source factor must be retained");
+            let relation = image
+                .relation
+                .expect("the selected residual image must be retained");
             assert_eq!(factor, expected_factor);
             assert_eq!(relation, expected_relation);
             assert_eq!(
@@ -138624,6 +139107,65 @@ mod conversion_tests {
                     Classification::Decided(std::cmp::Ordering::Equal),
                 );
             }
+        }
+    }
+
+    #[test]
+    fn selected_fiber_positive_dimensional_projection_reports_authored_continuum() {
+        let half = (Real::one() / Real::from(2_i8)).unwrap();
+        let zero = BivariatePolynomial::new(vec![vec![Real::zero()]]);
+        let one = BivariatePolynomial::new(vec![vec![Real::one()]]);
+        let target = QuadraticBezier2::from_line_segment(
+            LineSeg2::try_new(Point2::from_values(0, 0), Point2::from_values(1, 0)).unwrap(),
+        )
+        .parallel_left(Real::zero())
+        .unwrap();
+        let system = BezierParallelFixedDistanceSystem2 {
+            incidence: zero.clone(),
+            center_speed_squared: one.clone(),
+            candidate_speed_squared: one.clone(),
+            squared_branch: BezierAlgebraicCuspTwoTermExpression2 {
+                rational: zero.clone(),
+                radical: zero.clone(),
+            },
+            circle: BezierParallelTwoNormalExpression2 {
+                product: zero.clone(),
+                center: zero.clone(),
+                candidate: zero.clone(),
+                rational: zero,
+            },
+        };
+
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let BezierParameter2::Algebraic(alpha) =
+                algebraic_parameter(vec![-half.clone(), Real::zero(), Real::one()])
+            else {
+                unreachable!()
+            };
+            let center = BezierAlgebraicSelectedFiberAuthority2::new(
+                BivariatePolynomial::new(vec![
+                    vec![Real::zero(), Real::one()],
+                    vec![Real::from(-1_i8)],
+                ]),
+                alpha.clone(),
+                &policy,
+            )
+            .parameter(IsolatedRootInterval {
+                lower: alpha.interval().start().clone(),
+                upper: alpha.interval().end().clone(),
+                exact_root: None,
+                distinct_root_count: 1,
+            });
+            assert!(matches!(
+                target
+                    .selected_fiber_parallel_normal_positive_dimensional_projection(
+                        &center, &system, None, &policy,
+                    )
+                    .unwrap(),
+                Classification::Decided(
+                    BezierSelectedParallelNormalPositiveProjection2::CoincidentCircleComponent
+                ),
+            ));
         }
     }
 
@@ -138921,6 +139463,107 @@ mod conversion_tests {
                 candidate.order_to_real(&Real::zero(), &policy).unwrap()
                     == Classification::Decided(std::cmp::Ordering::Equal)
             }));
+        }
+    }
+
+    #[test]
+    fn selected_fiber_fixed_distance_descends_from_conjugate_circle_component() {
+        // This rational quadratic traverses 270 degrees of the unit circle
+        // counterclockwise. Its negative middle weight keeps the denominator
+        // positive while placing the selected 45-degree point and its
+        // radius-two, chord-two mate on one finite chart.
+        let source = RationalBezier2::from(
+            RationalQuadraticBezier2::try_new(
+                Point2::from_values(1, 0),
+                Point2::from_values(1, -1),
+                Point2::from_values(0, -1),
+                Real::one(),
+                Real::from(-1_i8),
+                Real::from(2_i8),
+            )
+            .unwrap(),
+        );
+        // A right unit parallel of the CCW unit circle has radius two. The
+        // opposite center-speed sheet collapses at the origin, so its radius-
+        // two circle contains the complete target component and makes the
+        // twice-squared projection identically zero. The authored sheet has
+        // exactly the authored 60-degree angular cut.
+        let parallel = source.parallel_left(Real::from(-1_i8)).unwrap();
+
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let parameters =
+                algebraic_parameters(vec![Real::one(), Real::from(-6_i8), Real::from(7_i8)]);
+            let [BezierParameter2::Algebraic(alpha), _] = parameters.as_slice() else {
+                panic!("the two selected chart parameters must remain algebraic")
+            };
+            let expected_parameters = algebraic_parameters(vec![
+                Real::from(-1_i8),
+                Real::zero(),
+                Real::from(22_i8),
+                Real::from(-48_i8),
+                Real::from(23_i8),
+            ]);
+            let expected = expected_parameters
+                .first()
+                .expect("the 105-degree chart parameter must be in the unit interval");
+            let center = BezierAlgebraicSelectedFiberAuthority2::new(
+                BivariatePolynomial::new(vec![
+                    vec![Real::zero(), Real::one()],
+                    vec![Real::from(-1_i8)],
+                ]),
+                alpha.clone(),
+                &policy,
+            )
+            .parameter(IsolatedRootInterval {
+                lower: alpha.interval().start().clone(),
+                upper: alpha.interval().end().clone(),
+                exact_root: None,
+                distinct_root_count: 1,
+            });
+            #[cfg(feature = "dispatch-trace")]
+            hyperreal::dispatch_trace::reset();
+            #[cfg(feature = "dispatch-trace")]
+            let outcome = hyperreal::dispatch_trace::with_recording(|| {
+                parallel.fixed_distance_incidence_from_selected_parameter(
+                    &center,
+                    &Real::from(2_i8),
+                    None,
+                    &policy,
+                )
+            })
+            .unwrap();
+            #[cfg(not(feature = "dispatch-trace"))]
+            let outcome = parallel
+                .fixed_distance_incidence_from_selected_parameter(
+                    &center,
+                    &Real::from(2_i8),
+                    None,
+                    &policy,
+                )
+                .unwrap();
+            #[cfg(feature = "dispatch-trace")]
+            let trace = hyperreal::dispatch_trace::take_trace();
+            let Classification::Decided(candidates) = outcome else {
+                panic!("the selected conjugate circle component must descend exactly: {outcome:?}")
+            };
+            let [BezierParallelFixedDistanceParameter2::SelectedFiber(candidate)] =
+                candidates.as_slice()
+            else {
+                panic!("the authored circle sheet must retain its one 60-degree cut")
+            };
+            assert_eq!(
+                candidate.cmp_bezier_parameter(expected, &policy).unwrap(),
+                Classification::Decided(std::cmp::Ordering::Equal),
+            );
+            #[cfg(feature = "dispatch-trace")]
+            assert_eq!(
+                trace.path_count(
+                    "hypercurve",
+                    "selected-fiber-fixed-distance",
+                    "retained-positive-polynomial-speed-equation",
+                ),
+                1,
+            );
         }
     }
 
