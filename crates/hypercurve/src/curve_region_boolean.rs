@@ -11,7 +11,7 @@ use crate::bezier_offset::{
     BezierAlgebraicChordRationalOverlap2, BezierAlgebraicCuspSemicircleRetainedChordContact2,
     BezierAlgebraicCuspSemicircleRetainedChordIntersections2,
     BezierAlgebraicCuspSemicircleSelectedFiberContact2,
-    BezierAlgebraicCuspSemicircleSelectedFiberRationalOverlap2,
+    BezierAlgebraicCuspSemicircleSelectedFiberRationalOverlap2, BezierParallelRationalComponent2,
 };
 use crate::bezier_offset::{
     BezierAlgebraicCuspSemicircleContactLocation2, BezierAlgebraicCuspSemicircleMappedOverlap2,
@@ -2723,8 +2723,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
         chord: &crate::BezierAlgebraicChord2,
         chord_index: usize,
         rational: &RationalBezier2,
-        support_line: Option<&LineSeg2>,
-        certified_regular_range: Option<&BezierParameterRange2>,
+        regular_component: Option<&BezierParallelRationalComponent2>,
         shared_source_parameter: Option<&BezierParameter2>,
     ) -> ExactCurveResult<Option<RegionPairResult>> {
         let other_index = if chord_index == pair.first_carrier_index {
@@ -2747,7 +2746,9 @@ impl<'a> CurveRegionBooleanContext<'a> {
                 .rational_intersections(rational, shared_source_parameter, &self.data.policy)
                 .map_err(|cause| self.invalid(other_index, cause))
         };
-        let collinear_support = if let Some(line) = support_line {
+        let collinear_support = if let Some(line) =
+            regular_component.and_then(BezierParallelRationalComponent2::support_line)
+        {
             matches!(
                 chord
                     .has_non_collinear_support_with_exact_line(line, &self.data.policy)
@@ -2764,11 +2765,10 @@ impl<'a> CurveRegionBooleanContext<'a> {
                 "algebraic-chord-pair",
                 "certified-rational-support-collinear",
             );
-            let ranged = if let Some(range) = certified_regular_range {
+            let ranged = if let Some(component) = regular_component {
                 chord
-                    .collinear_rational_intersections_on_regular_range(
-                        rational,
-                        range,
+                    .collinear_rational_intersections_on_regular_component(
+                        component,
                         shared_source_parameter,
                         &self.data.policy,
                     )
@@ -3029,8 +3029,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
                 chord,
                 chord_index,
                 rational.curve(),
-                rational.support_line(),
-                Some(rational.regular_range()),
+                Some(&rational),
                 shared_source_parameter,
             )?
         {
@@ -4882,7 +4881,6 @@ impl<'a> CurveRegionBooleanContext<'a> {
                             chord,
                             chord_index,
                             &rational,
-                            None,
                             None,
                             shared_source_parameter,
                         )? {
@@ -17224,6 +17222,12 @@ mod certified_successor_tests {
                 .expect("exact opaque source point")
                 .x()
                 .clone();
+            let two_thirds = (Real::from(2_i8) / Real::from(3_i8)).expect("nonzero denominator");
+            let wide_start_q = opaque_source
+                .point_at(&two_thirds, &CurveContext::STRICT)
+                .expect("exact wide opaque source point")
+                .x()
+                .clone();
             let end_q = opaque_source.end().x().clone();
             let normal_parameter = sqrt_half_parameter(&policy);
             let normal_representation =
@@ -17243,10 +17247,18 @@ mod certified_successor_tests {
             let opaque_chord = decided(
                 crate::BezierAlgebraicChord2::try_new(
                     endpoint(start_q, "opaque Boolean chord start"),
-                    endpoint(end_q, "opaque Boolean chord end"),
+                    endpoint(end_q.clone(), "opaque Boolean chord end"),
                     &policy,
                 )
                 .expect("valid opaque algebraic chord"),
+            );
+            let algebraic_range_chord = decided(
+                crate::BezierAlgebraicChord2::try_new(
+                    endpoint(wide_start_q, "algebraic-range Boolean chord start"),
+                    endpoint(end_q, "algebraic-range Boolean chord end"),
+                    &policy,
+                )
+                .expect("valid algebraic-range chord"),
             );
             assert!(opaque_chord.exact_line().is_none());
             assert!(
@@ -17261,8 +17273,8 @@ mod certified_successor_tests {
             hyperreal::dispatch_trace::reset();
             let work = || {
                 evaluate(
-                    opaque_chord,
-                    opaque_parallel,
+                    opaque_chord.clone(),
+                    opaque_parallel.clone(),
                     BezierParameterRange2::from_exact(
                         (Real::one() / Real::from(2_i8)).expect("nonzero denominator"),
                         Real::one(),
@@ -17300,7 +17312,7 @@ mod certified_successor_tests {
                     ),
                     (
                         "algebraic-chord-collinear-range",
-                        "certified-injective-subcurve",
+                        "certified-regular-line-range",
                     ),
                     (
                         "algebraic-chord-collinear-endpoint",
@@ -17317,6 +17329,74 @@ mod certified_successor_tests {
                         "the opaque Boolean must traverse {operation}/{path}: {opaque_trace:?}",
                     );
                 }
+            }
+
+            #[cfg(feature = "dispatch-trace")]
+            hyperreal::dispatch_trace::reset();
+            let algebraic_range_start = BezierParameter2::Algebraic(normal_parameter.clone());
+            let work = || {
+                evaluate(
+                    algebraic_range_chord,
+                    opaque_parallel,
+                    BezierParameterRange2::new_validated(
+                        algebraic_range_start.clone(),
+                        BezierParameter2::Exact(Real::one()),
+                    ),
+                )
+            };
+            #[cfg(feature = "dispatch-trace")]
+            let (algebraic_component, algebraic_evidence) =
+                hyperreal::dispatch_trace::with_recording(work);
+            #[cfg(not(feature = "dispatch-trace"))]
+            let (algebraic_component, algebraic_evidence) = work();
+            #[cfg(feature = "dispatch-trace")]
+            let algebraic_trace = hyperreal::dispatch_trace::take_trace();
+            assert!(
+                algebraic_component.blockers.is_empty(),
+                "{algebraic_component:?}",
+            );
+            assert!(
+                algebraic_component.contacts.is_empty(),
+                "{algebraic_component:?}",
+            );
+            assert_eq!(
+                algebraic_component.overlaps.len(),
+                1,
+                "{algebraic_component:?}",
+            );
+            assert!(algebraic_evidence.is_complete(), "{algebraic_evidence:?}",);
+            let [algebraic_overlap] = algebraic_evidence.overlaps() else {
+                panic!(
+                    "the algebraic regular branch must publish one overlap: {algebraic_evidence:?}"
+                );
+            };
+            assert_eq!(
+                algebraic_overlap.orientation(),
+                RationalBezierOverlapOrientation2::Same,
+            );
+            assert_eq!(
+                algebraic_overlap
+                    .second_range()
+                    .start()
+                    .as_bezier_parameter(),
+                Some(&algebraic_range_start),
+            );
+            #[cfg(feature = "dispatch-trace")]
+            for (operation, path) in [
+                (
+                    "algebraic-chord-collinear-range",
+                    "certified-regular-line-range",
+                ),
+                (
+                    "algebraic-chord-pair",
+                    "certified-rational-support-collinear",
+                ),
+                ("algebraic-chord-pair", "collinear-overlap-complete"),
+            ] {
+                assert!(
+                    algebraic_trace.path_count("hypercurve", operation, path) > 0,
+                    "the algebraic range must traverse {operation}/{path}: {algebraic_trace:?}",
+                );
             }
         }
     }
