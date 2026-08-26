@@ -1601,10 +1601,23 @@ impl BezierAlgebraicCuspSemicircleMappedOverlap2 {
                                             )?,
                                     }
                                 } else {
-                                    data.retained_point_parameter_candidates_on_target(
+                                    match data.retained_point_parameter_candidates_on_target(
                                         &self.parameter_map,
                                         policy,
-                                    )?
+                                    )? {
+                                        Classification::Decided(Some(candidates)) => {
+                                            promote_curve_region_parameter_candidates_complete(
+                                                candidates, policy,
+                                            )?
+                                            .map(Some)
+                                        }
+                                        Classification::Decided(None) => {
+                                            Classification::Decided(None)
+                                        }
+                                        Classification::Uncertain(reason) => {
+                                            Classification::Uncertain(reason)
+                                        }
+                                    }
                                 }
                             }
                         };
@@ -1682,6 +1695,14 @@ impl BezierAlgebraicCuspSemicircleMappedOverlap2 {
 
             match data.retained_point_parameter_candidates_on_target(&self.parameter_map, policy)? {
                 Classification::Decided(Some(candidates)) => {
+                    let candidates = match promote_curve_region_parameter_candidates_complete(
+                        candidates, policy,
+                    )? {
+                        Classification::Decided(candidates) => candidates,
+                        Classification::Uncertain(reason) => {
+                            return Ok(Classification::Uncertain(reason));
+                        }
+                    };
                     let retained = retain_unique_overlap_parameter(
                         candidates,
                         &self.other_range,
@@ -3114,6 +3135,33 @@ where
             "cusp cut had no parameter on its published mapped overlap".into(),
         )),
     }
+}
+
+fn promote_curve_region_parameter_candidates_complete(
+    candidates: Vec<CurveRegionParameter2>,
+    policy: &CurveContext,
+) -> CurveResult<Classification<Vec<BezierParameter2>>> {
+    let mut promoted = Vec::with_capacity(candidates.len());
+    for candidate in candidates {
+        match policy
+            .strict_predicate_pass(|| candidate.promoted_bezier_parameter_complete(policy))?
+        {
+            Classification::Decided(candidate) => promoted.push(candidate),
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        }
+    }
+    Ok(Classification::Decided(promoted))
+}
+
+fn curve_region_parameters_from_bezier(
+    parameters: Vec<BezierParameter2>,
+) -> Vec<CurveRegionParameter2> {
+    parameters
+        .into_iter()
+        .map(CurveRegionParameter2::from_bezier)
+        .collect()
 }
 
 fn retain_direct_overlap_parameter(
@@ -11581,12 +11629,16 @@ impl BezierAlgebraicCuspSemicircleMappedParameterData2 {
         self: &Arc<Self>,
         target: &BezierAlgebraicCuspSemicircleMappedOverlapMap2,
         policy: &CurveContext,
-    ) -> CurveResult<Classification<Option<Vec<BezierParameter2>>>> {
+    ) -> CurveResult<Classification<Option<Vec<CurveRegionParameter2>>>> {
         if let Some(point) = self.retained_one_field_point_image(policy)? {
             match self
                 .one_field_circle_tangent_parameter_candidates_on_target(&point, target, policy)?
             {
-                decided @ Classification::Decided(Some(_)) => return Ok(decided),
+                Classification::Decided(Some(parameters)) => {
+                    return Ok(Classification::Decided(Some(
+                        curve_region_parameters_from_bezier(parameters),
+                    )));
+                }
                 Classification::Decided(None) => {}
                 Classification::Uncertain(reason) => {
                     return Ok(Classification::Uncertain(reason));
@@ -11603,7 +11655,7 @@ impl BezierAlgebraicCuspSemicircleMappedParameterData2 {
                         &target.data.parallel,
                         policy,
                     )?
-                    .map(Some));
+                    .map(|parameters| Some(curve_region_parameters_from_bezier(parameters))));
                 }
                 if let Classification::Decided(Some(curve)) = target
                     .data
@@ -11651,7 +11703,9 @@ impl BezierAlgebraicCuspSemicircleMappedParameterData2 {
                 for contact in contacts {
                     match point.same_point(contact.point(), policy) {
                         Classification::Decided(true) => {
-                            candidates.push(contact.parallel_parameter().clone());
+                            candidates.push(CurveRegionParameter2::from_bezier(
+                                contact.parallel_parameter().clone(),
+                            ));
                         }
                         Classification::Decided(false) => {}
                         Classification::Uncertain(reason) => {
@@ -11668,12 +11722,12 @@ impl BezierAlgebraicCuspSemicircleMappedParameterData2 {
         self: &Arc<Self>,
         target: &RationalBezier2,
         policy: &CurveContext,
-    ) -> CurveResult<Classification<Option<Vec<BezierParameter2>>>> {
+    ) -> CurveResult<Classification<Option<Vec<CurveRegionParameter2>>>> {
         if let Some(point) = self.retained_one_field_point_image(policy)? {
             return Ok(one_field_point_parameter_candidates_on_rational_target(
                 &point, target, policy,
             )?
-            .map(Some));
+            .map(|parameters| Some(curve_region_parameters_from_bezier(parameters))));
         }
         let (chord, point) = match self.retained_point_probe_chord(policy)? {
             Classification::Decided(Some(probe)) => probe,
@@ -12755,7 +12809,9 @@ enum BezierAlgebraicChordParameterStorage2 {
 #[derive(Clone, Debug)]
 pub(crate) struct BezierAlgebraicChordRationalContact2 {
     chord_parameter: BezierAlgebraicChordParameter2,
-    other_parameter: BezierParameter2,
+    /// Exact source parameter, including local selected-fiber and recursive
+    /// carriers that must not be materialized merely to publish the contact.
+    other_parameter: CurveRegionParameter2,
     point: RationalBezierIntersectionPointEvidence2,
     tangent_cross_sign: RealSign,
 }
@@ -38049,7 +38105,7 @@ impl BezierAlgebraicCuspSemicircleSelectedFiberRationalOverlap2 {
 
     fn retain_unique_other_parameter(
         &self,
-        candidates: Vec<BezierParameter2>,
+        candidates: Vec<CurveRegionParameter2>,
         policy: &CurveContext,
     ) -> CurveResult<Classification<BezierAlgebraicSelectedFiberParameter2>> {
         let retained_parameter = self
@@ -38061,11 +38117,25 @@ impl BezierAlgebraicCuspSemicircleSelectedFiberRationalOverlap2 {
             .clone();
         let mut retained = None;
         for candidate in candidates {
-            let candidate = BezierAlgebraicSelectedFiberAuthority2::from_bezier_parameter(
-                retained_parameter.clone(),
-                candidate,
-                policy,
-            );
+            let candidate = if let Some(candidate) = candidate.as_selected_fiber()
+                && candidate.data.authority.data.retained_parameter == retained_parameter
+            {
+                candidate.clone()
+            } else {
+                let candidate = match policy.strict_predicate_pass(|| {
+                    candidate.promoted_bezier_parameter_complete(policy)
+                })? {
+                    Classification::Decided(candidate) => candidate,
+                    Classification::Uncertain(reason) => {
+                        return Ok(Classification::Uncertain(reason));
+                    }
+                };
+                BezierAlgebraicSelectedFiberAuthority2::from_bezier_parameter(
+                    retained_parameter.clone(),
+                    candidate,
+                    policy,
+                )
+            };
             match self.contains_other_parameter(&candidate, policy)? {
                 Classification::Decided(true) => {}
                 Classification::Decided(false) => continue,
@@ -38136,7 +38206,9 @@ impl BezierAlgebraicCuspSemicircleSelectedFiberRationalOverlap2 {
                             .data
                             .curve
                             .retained_circle_point_parameters(&point, policy)?
-                            .map(Some),
+                            .map(|parameters| {
+                                Some(curve_region_parameters_from_bezier(parameters))
+                            }),
                         Classification::Decided(None) => Classification::Decided(None),
                         Classification::Uncertain(reason) => Classification::Uncertain(reason),
                     };
@@ -38144,10 +38216,14 @@ impl BezierAlgebraicCuspSemicircleSelectedFiberRationalOverlap2 {
                         decided @ Classification::Decided(Some(_)) => decided,
                         Classification::Decided(None) | Classification::Uncertain(_) => {
                             if let Some(source) = data.ordinary_point_source(policy)? {
-                                source.point_parameter_candidates_on_rational_target(
-                                    &self.map.data.curve,
-                                    policy,
-                                )?
+                                source
+                                    .point_parameter_candidates_on_rational_target(
+                                        &self.map.data.curve,
+                                        policy,
+                                    )?
+                                    .map(|parameters| {
+                                        parameters.map(curve_region_parameters_from_bezier)
+                                    })
                             } else {
                                 data.retained_point_parameter_candidates_on_rational_target(
                                     &self.map.data.curve,
@@ -38195,7 +38271,10 @@ impl BezierAlgebraicCuspSemicircleSelectedFiberRationalOverlap2 {
                     return Ok(Classification::Uncertain(reason));
                 }
             };
-            return self.retain_unique_other_parameter(candidates, policy);
+            return self.retain_unique_other_parameter(
+                curve_region_parameters_from_bezier(candidates),
+                policy,
+            );
         }
         if let BezierAlgebraicCuspSemicircleParameter2::Mapped(data) = parameter {
             match data.retained_point_parameter_candidates_on_rational_target(
@@ -66366,7 +66445,7 @@ impl BezierAlgebraicChord2 {
             };
             contacts.push(BezierAlgebraicChordRationalContact2 {
                 chord_parameter,
-                other_parameter: candidate,
+                other_parameter: CurveRegionParameter2::from_bezier(candidate),
                 point,
                 tangent_cross_sign,
             });
@@ -67263,7 +67342,7 @@ impl BezierAlgebraicChord2 {
                 }
                 contacts.push(BezierAlgebraicChordRationalContact2 {
                     chord_parameter: chord_parameter.clone(),
-                    other_parameter: source_parameter,
+                    other_parameter: CurveRegionParameter2::from_bezier(source_parameter),
                     point: point.clone(),
                     tangent_cross_sign,
                 });
@@ -67702,7 +67781,7 @@ impl BezierAlgebraicChord2 {
             };
             contacts.push(BezierAlgebraicChordRationalContact2 {
                 chord_parameter,
-                other_parameter: candidate,
+                other_parameter: CurveRegionParameter2::from_bezier(candidate),
                 point: point_evidence,
                 tangent_cross_sign,
             });
@@ -67803,7 +67882,7 @@ impl BezierAlgebraicChord2 {
                 };
                 contacts.push(BezierAlgebraicChordRationalContact2 {
                     chord_parameter,
-                    other_parameter: source_parameter,
+                    other_parameter: CurveRegionParameter2::from_bezier(source_parameter),
                     point,
                     tangent_cross_sign,
                 });
@@ -68697,21 +68776,11 @@ impl BezierAlgebraicChord2 {
                         }
                     }
                 }
-                let other_parameter = match policy.strict_predicate_pass(|| {
-                    lower
-                        .source_parameter
-                        .promoted_bezier_parameter_complete(policy)
-                })? {
-                    Classification::Decided(parameter) => parameter,
-                    Classification::Uncertain(reason) => {
-                        return Ok(Classification::Uncertain(reason));
-                    }
-                };
                 Ok(Classification::Decided(
                     BezierAlgebraicChordRationalIntersections2::Contacts(vec![
                         BezierAlgebraicChordRationalContact2 {
                             chord_parameter: lower.chord_parameter,
-                            other_parameter,
+                            other_parameter: lower.source_parameter,
                             point: lower.point,
                             tangent_cross_sign: RealSign::Zero,
                         },
@@ -69063,16 +69132,7 @@ impl BezierAlgebraicChord2 {
                 };
             contacts.push(BezierAlgebraicChordRationalContact2 {
                 chord_parameter: boundary.chord_parameter,
-                other_parameter: match policy.strict_predicate_pass(|| {
-                    boundary
-                        .source_parameter
-                        .promoted_bezier_parameter_complete(policy)
-                })? {
-                    Classification::Decided(parameter) => parameter,
-                    Classification::Uncertain(reason) => {
-                        return Ok(Classification::Uncertain(reason));
-                    }
-                },
+                other_parameter: boundary.source_parameter,
                 point: boundary.point,
                 tangent_cross_sign: RealSign::Zero,
             });
@@ -69111,7 +69171,7 @@ impl BezierAlgebraicChord2 {
             BezierAlgebraicChordRationalIntersections2::Contacts(vec![
                 BezierAlgebraicChordRationalContact2 {
                     chord_parameter,
-                    other_parameter: source_parameter,
+                    other_parameter: CurveRegionParameter2::from_bezier(source_parameter),
                     point,
                     tangent_cross_sign: RealSign::Zero,
                 },
@@ -69999,7 +70059,7 @@ impl BezierAlgebraicChordRationalContact2 {
         &self.chord_parameter
     }
 
-    pub(crate) fn other_parameter(&self) -> &BezierParameter2 {
+    pub(crate) fn other_parameter(&self) -> &CurveRegionParameter2 {
         &self.other_parameter
     }
 
@@ -111032,6 +111092,10 @@ mod conversion_tests {
         CurveRegion2, CurveRegionBoundaryLoop2, CurveRegionLoopRole, FillRule, OffsetCornerStyle2,
     };
 
+    fn region_parameter(parameter: BezierParameter2) -> CurveRegionParameter2 {
+        CurveRegionParameter2::from_bezier(parameter)
+    }
+
     #[test]
     fn coefficient_precision_uses_certified_dyadic_bounds_for_signed_surds() {
         let coefficient = Real::from(2_i8).sqrt().unwrap();
@@ -111299,10 +111363,7 @@ mod conversion_tests {
                     .unwrap(),
                 Classification::Decided(std::cmp::Ordering::Equal),
             );
-            assert!(matches!(
-                contact.other_parameter(),
-                BezierParameter2::Exact(parameter) if parameter == &Real::one()
-            ));
+            assert_eq!(contact.other_parameter().as_exact(), Some(&Real::one()));
             assert!(matches!(
                 contact.point(),
                 RationalBezierIntersectionPointEvidence2::Exact(point)
@@ -112202,7 +112263,10 @@ mod conversion_tests {
             assert_eq!(
                 contact
                     .other_parameter()
-                    .cmp_by_refinement(&BezierParameter2::Exact(half.clone()), &policy)
+                    .cmp_by_refinement(
+                        &region_parameter(BezierParameter2::Exact(half.clone())),
+                        &policy,
+                    )
                     .unwrap(),
                 Classification::Decided(std::cmp::Ordering::Equal)
             );
@@ -112261,7 +112325,10 @@ mod conversion_tests {
             assert_eq!(
                 tangent_contact
                     .other_parameter()
-                    .cmp_by_refinement(&BezierParameter2::Exact(half.clone()), &policy)
+                    .cmp_by_refinement(
+                        &region_parameter(BezierParameter2::Exact(half.clone())),
+                        &policy,
+                    )
                     .unwrap(),
                 Classification::Decided(std::cmp::Ordering::Equal)
             );
@@ -112406,7 +112473,10 @@ mod conversion_tests {
             assert_eq!(
                 touch
                     .other_parameter()
-                    .cmp_by_refinement(&BezierParameter2::Exact(Real::one()), &policy)
+                    .cmp_by_refinement(
+                        &region_parameter(BezierParameter2::Exact(Real::one())),
+                        &policy,
+                    )
                     .unwrap(),
                 Classification::Decided(std::cmp::Ordering::Equal)
             );
@@ -112535,7 +112605,10 @@ mod conversion_tests {
                 assert_eq!(
                     contact
                         .other_parameter()
-                        .cmp_by_refinement(&BezierParameter2::Exact(half.clone()), &policy)
+                        .cmp_by_refinement(
+                            &region_parameter(BezierParameter2::Exact(half.clone())),
+                            &policy,
+                        )
                         .unwrap(),
                     Classification::Decided(std::cmp::Ordering::Equal),
                 );
@@ -112680,7 +112753,7 @@ mod conversion_tests {
                 algebraic_contact
                     .other_parameter()
                     .cmp_by_refinement(
-                        &BezierParameter2::Algebraic(end_parameter.clone()),
+                        &region_parameter(BezierParameter2::Algebraic(end_parameter.clone())),
                         &policy,
                     )
                     .unwrap(),
@@ -112925,7 +112998,10 @@ mod conversion_tests {
                         matches!(
                             contact
                                 .other_parameter()
-                                .cmp_by_refinement(&BezierParameter2::Exact(half.clone()), &policy,)
+                                .cmp_by_refinement(
+                                    &region_parameter(BezierParameter2::Exact(half.clone())),
+                                    &policy,
+                                )
                                 .unwrap(),
                             Classification::Decided(std::cmp::Ordering::Less)
                         )
@@ -112940,7 +113016,10 @@ mod conversion_tests {
                         matches!(
                             contact
                                 .other_parameter()
-                                .cmp_by_refinement(&BezierParameter2::Exact(half.clone()), &policy,)
+                                .cmp_by_refinement(
+                                    &region_parameter(BezierParameter2::Exact(half.clone())),
+                                    &policy,
+                                )
                                 .unwrap(),
                             Classification::Decided(std::cmp::Ordering::Greater)
                         )
@@ -112957,7 +113036,11 @@ mod conversion_tests {
                     Classification::Decided(std::cmp::Ordering::Equal)
                 );
             }
-            let excluded = contacts[0].other_parameter().clone();
+            let excluded = contacts[0]
+                .other_parameter()
+                .as_bezier_parameter()
+                .expect("the ordinary retraced source retains an ordinary parameter")
+                .clone();
             let excluded_result = chord
                 .rational_intersections(&retraced, Some(&excluded), &policy)
                 .unwrap();
@@ -112973,7 +113056,7 @@ mod conversion_tests {
             assert!(matches!(
                 retained
                     .other_parameter()
-                    .cmp_by_refinement(&excluded, &policy)
+                    .cmp_by_refinement(&region_parameter(excluded), &policy)
                     .unwrap(),
                 Classification::Decided(std::cmp::Ordering::Less | std::cmp::Ordering::Greater)
             ));
@@ -113710,7 +113793,10 @@ mod conversion_tests {
             assert_eq!(
                 contact
                     .other_parameter()
-                    .cmp_by_refinement(&BezierParameter2::Exact(half.clone()), &policy)
+                    .cmp_by_refinement(
+                        &region_parameter(BezierParameter2::Exact(half.clone())),
+                        &policy,
+                    )
                     .unwrap(),
                 Classification::Decided(std::cmp::Ordering::Equal)
             );
@@ -113762,7 +113848,10 @@ mod conversion_tests {
             assert_eq!(
                 contact
                     .other_parameter()
-                    .cmp_by_refinement(&BezierParameter2::Exact(fraction(1, 4)), &policy,)
+                    .cmp_by_refinement(
+                        &region_parameter(BezierParameter2::Exact(fraction(1, 4))),
+                        &policy,
+                    )
                     .unwrap(),
                 Classification::Decided(std::cmp::Ordering::Equal)
             );
@@ -113868,8 +113957,8 @@ mod conversion_tests {
                 panic!("expected one third-field contact, got {contacts:?}");
             };
             assert!(matches!(
-                contact.other_parameter(),
-                BezierParameter2::Algebraic(_)
+                contact.other_parameter().as_bezier_parameter(),
+                Some(BezierParameter2::Algebraic(_))
             ));
             assert_ne!(contact.tangent_cross_sign(), RealSign::Zero);
             assert!(matches!(
@@ -115191,9 +115280,9 @@ mod conversion_tests {
                     contact
                         .other_parameter()
                         .cmp_by_refinement(
-                            &BezierParameter2::Exact(
+                            &region_parameter(BezierParameter2::Exact(
                                 (Real::from(2_i8) / Real::from(3_i8)).unwrap(),
-                            ),
+                            )),
                             &policy,
                         )
                         .unwrap(),
@@ -115471,7 +115560,10 @@ mod conversion_tests {
                 assert_eq!(
                     contact
                         .other_parameter()
-                        .cmp_by_refinement(&BezierParameter2::Exact(Real::one()), &policy)
+                        .cmp_by_refinement(
+                            &region_parameter(BezierParameter2::Exact(Real::one())),
+                            &policy,
+                        )
                         .unwrap(),
                     Classification::Decided(std::cmp::Ordering::Equal),
                 );
@@ -130192,7 +130284,10 @@ mod conversion_tests {
                     assert_eq!(
                         contact
                             .other_parameter
-                            .same_value(&BezierParameter2::Exact(expected_parameter), &policy)
+                            .same_value(
+                                &region_parameter(BezierParameter2::Exact(expected_parameter)),
+                                &policy,
+                            )
                             .unwrap(),
                         Classification::Decided(true),
                     );
@@ -130280,7 +130375,9 @@ mod conversion_tests {
                 contact
                     .other_parameter
                     .same_value(
-                        &BezierParameter2::Exact((Real::one() / Real::from(2_i8)).unwrap(),),
+                        &region_parameter(BezierParameter2::Exact(
+                            (Real::one() / Real::from(2_i8)).unwrap(),
+                        )),
                         &policy,
                     )
                     .unwrap(),

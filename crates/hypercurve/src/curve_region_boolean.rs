@@ -2872,8 +2872,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
                 };
                 let chord_parameter =
                     CurveRegionParameter2::from_algebraic_chord(contact.chord_parameter().clone());
-                let other_parameter =
-                    CurveRegionParameter2::from_bezier(contact.other_parameter().clone());
+                let other_parameter = contact.other_parameter().clone();
                 let (first_parameter, second_parameter) = if chord_is_first {
                     (chord_parameter, other_parameter)
                 } else {
