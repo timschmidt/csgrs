@@ -1591,7 +1591,7 @@ impl BezierAlgebraicCuspSemicircleMappedOverlap2 {
                         let candidates = match direct_candidates {
                             decided @ Classification::Decided(Some(_)) => decided,
                             Classification::Decided(None) | Classification::Uncertain(_) => {
-                                if let Some(source) = data.ordinary_point_source(policy)? {
+                                if let Some(source) = data.mapped_point_source(policy)? {
                                     let tangent_candidates = if let Some(point) =
                                         source.algebraic_point_image(policy)?
                                     {
@@ -9461,17 +9461,71 @@ enum BezierAlgebraicCuspSemicircleMappedTangentSource2<'a> {
     },
 }
 
+enum BezierAlgebraicCuspSemicircleMappedPointParameter2 {
+    Ordinary(BezierParameter2),
+    Selected(BezierAlgebraicSelectedFiberParameter2),
+}
+
 enum BezierAlgebraicCuspSemicircleMappedPointSource2 {
     Rational {
         curve: RationalBezier2,
-        parameter: BezierParameter2,
+        parameter: BezierAlgebraicCuspSemicircleMappedPointParameter2,
         policy: CurveContext,
     },
     Parallel {
         parallel: BezierParallel2,
-        parameter: BezierParameter2,
+        parameter: BezierAlgebraicCuspSemicircleMappedPointParameter2,
         policy: CurveContext,
     },
+}
+
+#[derive(Clone, Copy)]
+enum BezierAlgebraicCuspSemicircleMappedPointParameterRef2<'a> {
+    Ordinary(&'a BezierParameter2),
+    Selected(&'a BezierAlgebraicSelectedFiberParameter2),
+}
+
+impl BezierAlgebraicCuspSemicircleMappedPointParameter2 {
+    fn as_ref(&self) -> BezierAlgebraicCuspSemicircleMappedPointParameterRef2<'_> {
+        match self {
+            Self::Ordinary(parameter) => {
+                BezierAlgebraicCuspSemicircleMappedPointParameterRef2::Ordinary(parameter)
+            }
+            Self::Selected(parameter) => {
+                BezierAlgebraicCuspSemicircleMappedPointParameterRef2::Selected(parameter)
+            }
+        }
+    }
+}
+
+impl BezierAlgebraicCuspSemicircleMappedPointParameterRef2<'_> {
+    fn matching_target_parameters<'a>(
+        self,
+        pairs: impl IntoIterator<Item = (&'a BezierParameter2, &'a BezierParameter2)>,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<Vec<BezierParameter2>>> {
+        let mut retained = Vec::new();
+        for (candidate_source, candidate_target) in pairs {
+            let same = match self {
+                Self::Ordinary(source) => candidate_source.same_value(source, policy)?,
+                Self::Selected(source) => {
+                    selected_fiber_root_matches_certified_incidence_candidate(
+                        source,
+                        candidate_source,
+                        policy,
+                    )?
+                }
+            };
+            match same {
+                Classification::Decided(true) => retained.push(candidate_target.clone()),
+                Classification::Decided(false) => {}
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            }
+        }
+        Ok(Classification::Decided(retained))
+    }
 }
 
 impl BezierAlgebraicCuspSemicircleMappedPointSource2 {
@@ -9483,7 +9537,9 @@ impl BezierAlgebraicCuspSemicircleMappedPointSource2 {
                 policy,
             } => Self::Rational {
                 curve: curve.clone(),
-                parameter: parameter.clone(),
+                parameter: BezierAlgebraicCuspSemicircleMappedPointParameter2::Ordinary(
+                    parameter.clone(),
+                ),
                 policy,
             },
             BezierAlgebraicCuspSemicircleMappedTangentSource2::Parallel {
@@ -9492,17 +9548,27 @@ impl BezierAlgebraicCuspSemicircleMappedPointSource2 {
                 policy,
             } => Self::Parallel {
                 parallel: parallel.clone(),
-                parameter: parameter.clone(),
+                parameter: BezierAlgebraicCuspSemicircleMappedPointParameter2::Ordinary(
+                    parameter.clone(),
+                ),
                 policy,
             },
         }
     }
 
-    fn as_borrowed(&self) -> BezierAlgebraicCuspSemicircleMappedTangentSource2<'_> {
+    fn policy(&self) -> CurveContext {
         match self {
+            Self::Rational { policy, .. } | Self::Parallel { policy, .. } => *policy,
+        }
+    }
+
+    fn as_ordinary_borrowed(
+        &self,
+    ) -> Option<BezierAlgebraicCuspSemicircleMappedTangentSource2<'_>> {
+        Some(match self {
             Self::Rational {
                 curve,
-                parameter,
+                parameter: BezierAlgebraicCuspSemicircleMappedPointParameter2::Ordinary(parameter),
                 policy,
             } => BezierAlgebraicCuspSemicircleMappedTangentSource2::Rational {
                 curve,
@@ -9511,14 +9577,24 @@ impl BezierAlgebraicCuspSemicircleMappedPointSource2 {
             },
             Self::Parallel {
                 parallel,
-                parameter,
+                parameter: BezierAlgebraicCuspSemicircleMappedPointParameter2::Ordinary(parameter),
                 policy,
             } => BezierAlgebraicCuspSemicircleMappedTangentSource2::Parallel {
                 parallel,
                 parameter,
                 policy: *policy,
             },
-        }
+            Self::Rational {
+                parameter: BezierAlgebraicCuspSemicircleMappedPointParameter2::Selected(_),
+                ..
+            }
+            | Self::Parallel {
+                parameter: BezierAlgebraicCuspSemicircleMappedPointParameter2::Selected(_),
+                ..
+            } => {
+                return None;
+            }
+        })
     }
 
     fn transform_similarity(self, transform: &Similarity2) -> CurveResult<Self> {
@@ -9558,16 +9634,31 @@ impl BezierAlgebraicCuspSemicircleMappedPointSource2 {
         &self,
         policy: &CurveContext,
     ) -> CurveResult<Option<RationalBezierAlgebraicPointImage2>> {
-        let source_policy = match self {
-            Self::Rational { policy, .. } | Self::Parallel { policy, .. } => *policy,
-        };
+        let source_policy = self.policy();
         if !policy.accepts_retained_policy(source_policy) {
             return Err(CurveError::Topology(
                 "mapped point carrier crossed predicate policies".into(),
             ));
         }
         let parameter = match self {
-            Self::Rational { parameter, .. } | Self::Parallel { parameter, .. } => parameter,
+            Self::Rational {
+                parameter: BezierAlgebraicCuspSemicircleMappedPointParameter2::Ordinary(parameter),
+                ..
+            }
+            | Self::Parallel {
+                parameter: BezierAlgebraicCuspSemicircleMappedPointParameter2::Ordinary(parameter),
+                ..
+            } => parameter,
+            Self::Rational {
+                parameter: BezierAlgebraicCuspSemicircleMappedPointParameter2::Selected(_),
+                ..
+            }
+            | Self::Parallel {
+                parameter: BezierAlgebraicCuspSemicircleMappedPointParameter2::Selected(_),
+                ..
+            } => {
+                return Ok(None);
+            }
         };
         let BezierParameter2::Algebraic(parameter) = parameter else {
             return Ok(None);
@@ -9594,28 +9685,36 @@ impl BezierAlgebraicCuspSemicircleMappedPointSource2 {
     }
 
     fn exact_point(&self, policy: &CurveContext) -> CurveResult<Classification<Option<Point2>>> {
-        let (parameter, source_policy) = match self {
-            Self::Rational {
-                parameter, policy, ..
-            }
-            | Self::Parallel {
-                parameter, policy, ..
-            } => (parameter, *policy),
-        };
+        let source_policy = self.policy();
         if !policy.accepts_retained_policy(source_policy) {
             return Err(CurveError::Topology(
                 "mapped point carrier crossed predicate policies".into(),
             ));
         }
-        let parameter = match parameter {
-            BezierParameter2::Exact(parameter) => parameter.clone(),
-            BezierParameter2::Algebraic(parameter) => {
-                match policy
-                    .strict_predicate_pass(|| parameter.represented_rational_root(policy))?
-                {
-                    Classification::Decided(Some(parameter)) => parameter,
-                    Classification::Decided(None) | Classification::Uncertain(_) => {
-                        return Ok(Classification::Decided(None));
+        let parameter = match self {
+            Self::Rational { parameter, .. } | Self::Parallel { parameter, .. } => {
+                match parameter {
+                    BezierAlgebraicCuspSemicircleMappedPointParameter2::Ordinary(parameter) => {
+                        match parameter {
+                            BezierParameter2::Exact(parameter) => parameter.clone(),
+                            BezierParameter2::Algebraic(parameter) => {
+                                match policy.strict_predicate_pass(|| {
+                                    parameter.represented_rational_root(policy)
+                                })? {
+                                    Classification::Decided(Some(parameter)) => parameter,
+                                    Classification::Decided(None)
+                                    | Classification::Uncertain(_) => {
+                                        return Ok(Classification::Decided(None));
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    BezierAlgebraicCuspSemicircleMappedPointParameter2::Selected(parameter) => {
+                        let Some(parameter) = parameter.represented_value() else {
+                            return Ok(Classification::Decided(None));
+                        };
+                        parameter.clone()
                     }
                 }
             }
@@ -9636,9 +9735,7 @@ impl BezierAlgebraicCuspSemicircleMappedPointSource2 {
         &self,
         policy: &CurveContext,
     ) -> CurveResult<Classification<[AlgebraicRootRepresentation; 2]>> {
-        let source_policy = match self {
-            Self::Rational { policy, .. } | Self::Parallel { policy, .. } => *policy,
-        };
+        let source_policy = self.policy();
         if !policy.accepts_retained_policy(source_policy) {
             return Err(CurveError::Topology(
                 "mapped point carrier crossed predicate policies".into(),
@@ -9648,93 +9745,62 @@ impl BezierAlgebraicCuspSemicircleMappedPointSource2 {
             Self::Rational {
                 curve, parameter, ..
             } => match parameter {
-                BezierParameter2::Exact(parameter) => {
-                    Ok(curve.point_at_classified(parameter, policy).map(|point| {
-                        [
-                            exact_real_algebraic_representation(point.x()),
-                            exact_real_algebraic_representation(point.y()),
-                        ]
-                    }))
+                BezierAlgebraicCuspSemicircleMappedPointParameter2::Ordinary(parameter) => {
+                    match parameter {
+                        BezierParameter2::Exact(parameter) => {
+                            Ok(curve.point_at_classified(parameter, policy).map(|point| {
+                                [
+                                    exact_real_algebraic_representation(point.x()),
+                                    exact_real_algebraic_representation(point.y()),
+                                ]
+                            }))
+                        }
+                        BezierParameter2::Algebraic(parameter) => {
+                            Ok(RationalBezierAlgebraicPointImage2::from_parametric_source(
+                                curve.clone(),
+                                parameter.clone(),
+                                policy,
+                            )
+                            .represented_coordinates(policy)
+                            .map(Classification::Decided)
+                            .unwrap_or(Classification::Uncertain(UncertaintyReason::Unsupported)))
+                        }
+                    }
                 }
-                BezierParameter2::Algebraic(parameter) => {
-                    Ok(RationalBezierAlgebraicPointImage2::from_parametric_source(
-                        curve.clone(),
+                BezierAlgebraicCuspSemicircleMappedPointParameter2::Selected(parameter) => {
+                    BezierAnalyticParallelPoint2::new_selected_fiber(
+                        curve.parallel_left(Real::zero())?,
                         parameter.clone(),
-                        policy,
+                        &source_policy,
                     )
                     .represented_coordinates(policy)
-                    .map(Classification::Decided)
-                    .unwrap_or(Classification::Uncertain(UncertaintyReason::Unsupported)))
                 }
             },
             Self::Parallel {
                 parallel,
                 parameter,
                 ..
-            } => BezierAnalyticParallelPoint2::new(
-                parallel.clone(),
-                parameter.clone(),
-                &source_policy,
-            )
-            .represented_coordinates(policy),
+            } => match parameter {
+                BezierAlgebraicCuspSemicircleMappedPointParameter2::Ordinary(parameter) => {
+                    BezierAnalyticParallelPoint2::new(
+                        parallel.clone(),
+                        parameter.clone(),
+                        &source_policy,
+                    )
+                    .represented_coordinates(policy)
+                }
+                BezierAlgebraicCuspSemicircleMappedPointParameter2::Selected(parameter) => {
+                    BezierAnalyticParallelPoint2::new_selected_fiber(
+                        parallel.clone(),
+                        parameter.clone(),
+                        &source_policy,
+                    )
+                    .represented_coordinates(policy)
+                }
+            },
         }
     }
 
-    fn point_parameter_candidates_on_target(
-        &self,
-        target: &BezierAlgebraicCuspSemicircleMappedOverlapMap2,
-        policy: &CurveContext,
-    ) -> CurveResult<Classification<Option<Vec<BezierParameter2>>>> {
-        self.as_borrowed()
-            .point_parameter_candidates_on_target(target, policy)
-    }
-
-    fn point_parameter_candidates_on_rational_target(
-        &self,
-        target: &RationalBezier2,
-        policy: &CurveContext,
-    ) -> CurveResult<Classification<Option<Vec<BezierParameter2>>>> {
-        self.as_borrowed()
-            .point_parameter_candidates_on_rational_target(target, policy)
-    }
-}
-
-impl BezierAlgebraicCuspSemicircleMappedTangentSource2<'_> {
-    fn policy(&self) -> CurveContext {
-        match self {
-            Self::Rational { policy, .. } | Self::Parallel { policy, .. } => *policy,
-        }
-    }
-
-    fn parameter(&self) -> &BezierParameter2 {
-        match self {
-            Self::Rational { parameter, .. } | Self::Parallel { parameter, .. } => parameter,
-        }
-    }
-
-    fn tangent_power_basis(&self) -> CurveResult<[Vec<Real>; 2]> {
-        match self {
-            Self::Rational { curve, .. } => Ok(rational_parametric_tangent_numerator(
-                curve.homogeneous_power_basis()?,
-            )),
-            Self::Parallel { parallel, .. } => {
-                let differential = parallel.differential()?;
-                Ok([
-                    differential.tangent_x.clone(),
-                    differential.tangent_y.clone(),
-                ])
-            }
-        }
-    }
-
-    /// Recovers the target-carrier parameters at the exact source point.
-    ///
-    /// This is the complete fallback for a cut authored by a transverse
-    /// ordinary carrier. Tangent-line correspondence is invalid there: the
-    /// source tangent does not name the circle point. Replaying the existing
-    /// carrier-pair intersection authority preserves the original parameter
-    /// correlation and returns only contacts whose source coordinate is the
-    /// retained cut parameter.
     fn point_parameter_candidates_on_target(
         &self,
         target: &BezierAlgebraicCuspSemicircleMappedOverlapMap2,
@@ -9745,6 +9811,19 @@ impl BezierAlgebraicCuspSemicircleMappedTangentSource2<'_> {
                 self.point_parameter_candidates_on_rational_target(&target.data.curve, policy)
             }
             BezierAlgebraicCuspSemicircleMappedOverlapMap2::Parallel(target) => {
+                if let Classification::Decided(Some(curve)) = target
+                    .data
+                    .parallel
+                    .exact_circular_parallel_component(&policy.strict_counterpart())?
+                {
+                    #[cfg(feature = "dispatch-trace")]
+                    hyperreal::dispatch_trace::record(
+                        "hypercurve",
+                        "mapped-circle-point-inverse",
+                        "exact-analytic-circle-component",
+                    );
+                    return self.point_parameter_candidates_on_rational_target(&curve, policy);
+                }
                 self.point_parameter_candidates_on_parallel_target(&target.data.parallel, policy)
             }
         }
@@ -9755,18 +9834,36 @@ impl BezierAlgebraicCuspSemicircleMappedTangentSource2<'_> {
         target: &RationalBezier2,
         policy: &CurveContext,
     ) -> CurveResult<Classification<Option<Vec<BezierParameter2>>>> {
+        let source_policy = self.policy();
+        if !policy.accepts_retained_policy(source_policy) {
+            return Err(CurveError::Topology(
+                "mapped point carrier crossed predicate policies".into(),
+            ));
+        }
+
         match self {
             Self::Rational {
                 curve, parameter, ..
             } => {
+                let parameter = parameter.as_ref();
+                #[cfg(feature = "dispatch-trace")]
+                if matches!(
+                    parameter,
+                    BezierAlgebraicCuspSemicircleMappedPointParameterRef2::Selected(_)
+                ) {
+                    hyperreal::dispatch_trace::record(
+                        "hypercurve",
+                        "mapped-circle-point-inverse",
+                        "selected-rational-carrier-intersection",
+                    );
+                }
                 let intersections = match curve.intersection_contacts_classified(target, policy)? {
                     Classification::Decided(intersections) => intersections,
                     Classification::Uncertain(reason) => {
                         return Ok(Classification::Uncertain(reason));
                     }
                 };
-                let candidates = match matching_target_parameters(
-                    parameter,
+                let candidates = match parameter.matching_target_parameters(
                     intersections
                         .isolated_contacts()
                         .iter()
@@ -9775,9 +9872,12 @@ impl BezierAlgebraicCuspSemicircleMappedTangentSource2<'_> {
                 )? {
                     Classification::Decided(candidates) => candidates,
                     Classification::Uncertain(reason) => {
-                        if let BezierParameter2::Algebraic(parameter) = parameter {
+                        if let BezierAlgebraicCuspSemicircleMappedPointParameterRef2::Ordinary(
+                            BezierParameter2::Algebraic(parameter),
+                        ) = parameter
+                        {
                             let point = RationalBezierAlgebraicPointImage2::from_parametric_source(
-                                (*curve).clone(),
+                                curve.clone(),
                                 parameter.clone(),
                                 policy,
                             );
@@ -9812,14 +9912,25 @@ impl BezierAlgebraicCuspSemicircleMappedTangentSource2<'_> {
                 parameter,
                 ..
             } => {
+                let parameter = parameter.as_ref();
+                #[cfg(feature = "dispatch-trace")]
+                if matches!(
+                    parameter,
+                    BezierAlgebraicCuspSemicircleMappedPointParameterRef2::Selected(_)
+                ) {
+                    hyperreal::dispatch_trace::record(
+                        "hypercurve",
+                        "mapped-circle-point-inverse",
+                        "selected-parallel-carrier-intersection",
+                    );
+                }
                 let intersections = match parallel.intersections(target, policy)? {
                     Classification::Decided(intersections) => intersections,
                     Classification::Uncertain(reason) => {
                         return Ok(Classification::Uncertain(reason));
                     }
                 };
-                let candidates = match matching_target_parameters(
-                    parameter,
+                let candidates = match parameter.matching_target_parameters(
                     intersections
                         .contacts()
                         .iter()
@@ -9845,48 +9956,78 @@ impl BezierAlgebraicCuspSemicircleMappedTangentSource2<'_> {
         target: &BezierParallel2,
         policy: &CurveContext,
     ) -> CurveResult<Classification<Option<Vec<BezierParameter2>>>> {
+        let source_policy = self.policy();
+        if !policy.accepts_retained_policy(source_policy) {
+            return Err(CurveError::Topology(
+                "mapped point carrier crossed predicate policies".into(),
+            ));
+        }
+
         match self {
             Self::Rational {
                 curve, parameter, ..
             } => {
+                let parameter = parameter.as_ref();
+                #[cfg(feature = "dispatch-trace")]
+                if matches!(
+                    parameter,
+                    BezierAlgebraicCuspSemicircleMappedPointParameterRef2::Selected(_)
+                ) {
+                    hyperreal::dispatch_trace::record(
+                        "hypercurve",
+                        "mapped-circle-point-inverse",
+                        "selected-rational-carrier-intersection",
+                    );
+                }
                 let intersections = match target.intersections(curve, policy)? {
                     Classification::Decided(intersections) => intersections,
                     Classification::Uncertain(reason) => {
                         return Ok(Classification::Uncertain(reason));
                     }
                 };
-                let candidates = match matching_target_parameters(
-                    parameter,
+                let candidates = parameter.matching_target_parameters(
                     intersections
                         .contacts()
                         .iter()
                         .map(|contact| (contact.other_parameter(), contact.parallel_parameter())),
                     policy,
-                )? {
-                    Classification::Decided(candidates) => candidates,
-                    Classification::Uncertain(reason) => {
-                        return Ok(Classification::Uncertain(reason));
+                )?;
+                Ok(match candidates {
+                    Classification::Decided(candidates)
+                        if !candidates.is_empty() || intersections.is_complete() =>
+                    {
+                        Classification::Decided(Some(candidates))
                     }
-                };
-                if !candidates.is_empty() || intersections.is_complete() {
-                    Ok(Classification::Decided(Some(candidates)))
-                } else {
-                    Ok(Classification::Uncertain(UncertaintyReason::Unsupported))
-                }
+                    Classification::Decided(_) => {
+                        Classification::Uncertain(UncertaintyReason::Unsupported)
+                    }
+                    Classification::Uncertain(reason) => Classification::Uncertain(reason),
+                })
             }
             Self::Parallel {
                 parallel,
                 parameter,
                 ..
             } => {
+                let parameter = parameter.as_ref();
+                #[cfg(feature = "dispatch-trace")]
+                if matches!(
+                    parameter,
+                    BezierAlgebraicCuspSemicircleMappedPointParameterRef2::Selected(_)
+                ) {
+                    hyperreal::dispatch_trace::record(
+                        "hypercurve",
+                        "mapped-circle-point-inverse",
+                        "selected-parallel-carrier-intersection",
+                    );
+                }
                 let intersections = match parallel.parallel_intersections(target, policy)? {
                     Classification::Decided(intersections) => intersections,
                     Classification::Uncertain(reason) => {
                         return Ok(Classification::Uncertain(reason));
                     }
                 };
-                let candidates = match matching_target_parameters(
-                    parameter,
+                let candidates = match parameter.matching_target_parameters(
                     intersections
                         .contacts()
                         .iter()
@@ -9906,24 +10047,160 @@ impl BezierAlgebraicCuspSemicircleMappedTangentSource2<'_> {
             }
         }
     }
+
+    /// Materializes a selected scalar only for the legacy tangent-line
+    /// parameter solver. Point correspondence keeps the selected parameter
+    /// above and replays the complete carrier-pair intersection authority.
+    fn ordinary_tangent_power_source(
+        &self,
+        policy: &CurveContext,
+    ) -> CurveResult<Option<(BezierParameter2, [Vec<Real>; 2], CurveContext)>> {
+        if let Some(source) = self.as_ordinary_borrowed() {
+            return Ok(Some((
+                source.parameter().clone(),
+                source.tangent_power_basis()?,
+                source.policy(),
+            )));
+        }
+        let (parameter, tangent, source_policy) = match self {
+            Self::Rational {
+                curve,
+                parameter: BezierAlgebraicCuspSemicircleMappedPointParameter2::Selected(parameter),
+                policy: source_policy,
+            } => (
+                parameter,
+                rational_parametric_tangent_numerator(curve.homogeneous_power_basis()?),
+                *source_policy,
+            ),
+            Self::Parallel {
+                parallel,
+                parameter: BezierAlgebraicCuspSemicircleMappedPointParameter2::Selected(parameter),
+                policy: source_policy,
+            } => {
+                let differential = parallel.differential()?;
+                (
+                    parameter,
+                    [
+                        differential.tangent_x.clone(),
+                        differential.tangent_y.clone(),
+                    ],
+                    *source_policy,
+                )
+            }
+            Self::Rational {
+                parameter: BezierAlgebraicCuspSemicircleMappedPointParameter2::Ordinary(_),
+                ..
+            }
+            | Self::Parallel {
+                parameter: BezierAlgebraicCuspSemicircleMappedPointParameter2::Ordinary(_),
+                ..
+            } => {
+                unreachable!("ordinary point sources return through their borrowed view")
+            }
+        };
+        if !policy.accepts_retained_policy(source_policy) {
+            return Err(CurveError::Topology(
+                "selected mapped tangent crossed predicate policies".into(),
+            ));
+        }
+        let parameter = if let Some(parameter) = parameter.represented_value() {
+            BezierParameter2::Exact(parameter.clone())
+        } else {
+            #[cfg(feature = "dispatch-trace")]
+            hyperreal::dispatch_trace::record(
+                "hypercurve",
+                "mapped-circle-point-inverse",
+                "ordinary-tangent-promotion",
+            );
+            match policy
+                .strict_predicate_pass(|| parameter.promoted_bezier_parameter_complete(policy))?
+            {
+                Classification::Decided(parameter) => parameter,
+                Classification::Uncertain(_) => return Ok(None),
+            }
+        };
+        Ok(Some((parameter, tangent, source_policy)))
+    }
 }
 
-fn matching_target_parameters<'a>(
-    source: &BezierParameter2,
-    pairs: impl IntoIterator<Item = (&'a BezierParameter2, &'a BezierParameter2)>,
-    policy: &CurveContext,
-) -> CurveResult<Classification<Vec<BezierParameter2>>> {
-    let mut retained = Vec::new();
-    for (candidate_source, candidate_target) in pairs {
-        match candidate_source.same_value(source, policy)? {
-            Classification::Decided(true) => retained.push(candidate_target.clone()),
-            Classification::Decided(false) => {}
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
+impl BezierAlgebraicCuspSemicircleMappedTangentSource2<'_> {
+    fn policy(&self) -> CurveContext {
+        match self {
+            Self::Rational { policy, .. } | Self::Parallel { policy, .. } => *policy,
+        }
+    }
+
+    fn parameter(&self) -> &BezierParameter2 {
+        match self {
+            Self::Rational { parameter, .. } | Self::Parallel { parameter, .. } => parameter,
+        }
+    }
+
+    fn tangent_power_basis(&self) -> CurveResult<[Vec<Real>; 2]> {
+        match self {
+            Self::Rational { curve, .. } => Ok(rational_parametric_tangent_numerator(
+                curve.homogeneous_power_basis()?,
+            )),
+            Self::Parallel { parallel, .. } => {
+                let differential = parallel.differential()?;
+                Ok([
+                    differential.tangent_x.clone(),
+                    differential.tangent_y.clone(),
+                ])
             }
         }
     }
-    Ok(Classification::Decided(retained))
+}
+
+/// Matches a carrier-intersection parameter already certified to be a root
+/// of the selected source's circle incidence.
+///
+/// The target passed to the mapped-point inversion kernel is an overlap
+/// carrier of the same supporting circle. Similarity transports and chamfer
+/// rotations preserve that circle, so every carrier-pair contact supplies a
+/// source parameter satisfying the original selected incidence. The selected
+/// fiber isolator contains exactly one such root; interval containment is
+/// therefore a complete identity certificate and avoids re-signing
+/// `u-candidate` in the local field.
+fn selected_fiber_root_matches_certified_incidence_candidate(
+    selected: &BezierAlgebraicSelectedFiberParameter2,
+    candidate: &BezierParameter2,
+    policy: &CurveContext,
+) -> CurveResult<Classification<bool>> {
+    selected.validate_policy(policy)?;
+    let strict = &CurveContext::STRICT;
+    let mut candidate = candidate.clone();
+    let mut refinement_steps = 1_usize;
+    loop {
+        let (candidate_lower, candidate_upper) = parameter_bounds(&candidate);
+        if compare_reals(candidate_upper, &selected.data.root.lower, strict)
+            == Some(std::cmp::Ordering::Less)
+            || compare_reals(&selected.data.root.upper, candidate_lower, strict)
+                == Some(std::cmp::Ordering::Less)
+        {
+            return Ok(Classification::Decided(false));
+        }
+        let lower_inside = compare_reals(candidate_lower, &selected.data.root.lower, strict)
+            != Some(std::cmp::Ordering::Less);
+        let upper_inside = compare_reals(&selected.data.root.upper, candidate_upper, strict)
+            != Some(std::cmp::Ordering::Less);
+        if lower_inside && upper_inside {
+            return Ok(Classification::Decided(true));
+        }
+        let refined = candidate
+            .clone()
+            .refined_isolating_interval(refinement_steps, &policy.strict_counterpart());
+        if refined == candidate {
+            return Ok(Classification::Uncertain(UncertaintyReason::Ordering));
+        }
+        candidate = refined;
+        refinement_steps = refinement_steps
+            .checked_mul(2)
+            .and_then(|steps| steps.checked_add(1))
+            .ok_or_else(|| {
+                CurveError::Topology("certified selected-fiber contact refinement overflow".into())
+            })?;
+    }
 }
 
 /// Encloses one exact analytic-parallel point without adjoining its normalized
@@ -11624,16 +11901,24 @@ impl BezierAlgebraicCuspSemicircleMappedParameterData2 {
         let BezierAlgebraicCuspSemicircleParameter2::Mapped(source) = source else {
             return Ok(Classification::Decided(None));
         };
-        let Some(source) = source.ordinary_point_source(policy)? else {
+        let Some(source) = source.mapped_point_source(policy)? else {
             return Ok(Classification::Decided(None));
         };
-        if !matches!(
-            &source,
+        let represented_parallel = match &source {
             BezierAlgebraicCuspSemicircleMappedPointSource2::Parallel {
-                parameter: BezierParameter2::Exact(_),
+                parameter:
+                    BezierAlgebraicCuspSemicircleMappedPointParameter2::Ordinary(
+                        BezierParameter2::Exact(_),
+                    ),
                 ..
-            }
-        ) {
+            } => true,
+            BezierAlgebraicCuspSemicircleMappedPointSource2::Parallel {
+                parameter: BezierAlgebraicCuspSemicircleMappedPointParameter2::Selected(parameter),
+                ..
+            } => parameter.represented_value().is_some(),
+            _ => false,
+        };
+        if !represented_parallel {
             return Ok(Classification::Decided(None));
         }
         let point = source.exact_point(policy)?;
@@ -11643,53 +11928,11 @@ impl BezierAlgebraicCuspSemicircleMappedParameterData2 {
         Ok(point.map(|point| point.map(|point| transform.transform_point(&point))))
     }
 
-    /// Materializes a selected-fiber parameter only for an ordinary-carrier
-    /// point or tangent algorithm. The complete compact point kernel remains
-    /// available when this cold exact bridge cannot construct its global
-    /// scalar, so representation is an optimization rather than an admission
-    /// requirement. Root selection always runs under STRICT.
-    fn selected_fiber_ordinary_parameter(
-        &self,
-        policy: &CurveContext,
-    ) -> CurveResult<Option<BezierParameter2>> {
-        let other_parameter = match self {
-            Self::SelectedFiberRational {
-                map,
-                other_parameter,
-                ..
-            } => {
-                map.validate_policy(policy)?;
-                other_parameter
-            }
-            Self::SelectedFiberParallel {
-                map,
-                other_parameter,
-                ..
-            } => {
-                map.validate_policy(policy)?;
-                other_parameter
-            }
-            _ => return Ok(None),
-        };
-        if let Some(parameter) = other_parameter.represented_value() {
-            return Ok(Some(BezierParameter2::Exact(parameter.clone())));
-        }
-        Ok(
-            match policy.strict_predicate_pass(|| {
-                other_parameter.promoted_bezier_parameter_complete(policy)
-            })? {
-                Classification::Decided(parameter) => Some(parameter),
-                Classification::Uncertain(_) => None,
-            },
-        )
-    }
-
-    /// Recovers an owned ordinary carrier for exact point correspondence.
-    /// Similarity transport transforms the carrier itself while preserving
-    /// its parameter. A chamfer rotation does the same when its selected
-    /// circle center is exactly represented; nonrepresented centers remain
-    /// on the procedural retained-point path.
-    fn ordinary_point_source(
+    /// Recovers an owned carrier and its exact parameter for point
+    /// correspondence. Selected parameters remain in their local fiber;
+    /// similarity and represented-center chamfer transports transform only
+    /// the carrier, so the parameter identity remains unchanged.
+    fn mapped_point_source(
         &self,
         policy: &CurveContext,
     ) -> CurveResult<Option<BezierAlgebraicCuspSemicircleMappedPointSource2>> {
@@ -11714,26 +11957,34 @@ impl BezierAlgebraicCuspSemicircleMappedParameterData2 {
                     .coincident_tangent_source()
                     .map(BezierAlgebraicCuspSemicircleMappedPointSource2::from_borrowed))
             }
-            Self::SelectedFiberRational { map, .. } => {
-                let Some(parameter) = self.selected_fiber_ordinary_parameter(policy)? else {
-                    return Ok(None);
-                };
+            Self::SelectedFiberRational {
+                map,
+                other_parameter,
+                ..
+            } => {
+                map.validate_policy(policy)?;
                 Ok(Some(
                     BezierAlgebraicCuspSemicircleMappedPointSource2::Rational {
                         curve: map.data.curve.clone(),
-                        parameter,
+                        parameter: BezierAlgebraicCuspSemicircleMappedPointParameter2::Selected(
+                            other_parameter.clone(),
+                        ),
                         policy: map.data.policy,
                     },
                 ))
             }
-            Self::SelectedFiberParallel { map, .. } => {
-                let Some(parameter) = self.selected_fiber_ordinary_parameter(policy)? else {
-                    return Ok(None);
-                };
+            Self::SelectedFiberParallel {
+                map,
+                other_parameter,
+                ..
+            } => {
+                map.validate_policy(policy)?;
                 Ok(Some(
                     BezierAlgebraicCuspSemicircleMappedPointSource2::Parallel {
                         parallel: map.data.parallel.clone(),
-                        parameter,
+                        parameter: BezierAlgebraicCuspSemicircleMappedPointParameter2::Selected(
+                            other_parameter.clone(),
+                        ),
                         policy: map.data.policy,
                     },
                 ))
@@ -11742,7 +11993,7 @@ impl BezierAlgebraicCuspSemicircleMappedParameterData2 {
                 let BezierAlgebraicCuspSemicircleParameter2::Mapped(source) = source else {
                     return Ok(None);
                 };
-                source.ordinary_point_source(policy)
+                source.mapped_point_source(policy)
             }
             Self::SimilarityTransport {
                 source,
@@ -11768,7 +12019,7 @@ impl BezierAlgebraicCuspSemicircleMappedParameterData2 {
                 let BezierAlgebraicCuspSemicircleParameter2::Mapped(source) = source else {
                     return Ok(None);
                 };
-                let Some(source) = source.ordinary_point_source(policy)? else {
+                let Some(source) = source.mapped_point_source(policy)? else {
                     return Ok(None);
                 };
                 Ok(Some(source.transform_similarity(&point.data.transform)?))
@@ -11780,7 +12031,7 @@ impl BezierAlgebraicCuspSemicircleMappedParameterData2 {
                 let Some((source, transform)) = self.chamfer_rotation_source(policy)? else {
                     return Ok(None);
                 };
-                let Some(source) = source.ordinary_point_source(policy)? else {
+                let Some(source) = source.mapped_point_source(policy)? else {
                     return Ok(None);
                 };
                 Ok(Some(source.transform_similarity(&transform)?))
@@ -12281,15 +12532,10 @@ impl BezierAlgebraicCuspSemicircleMappedParameterData2 {
                 if *tangent_cross_sign != RealSign::Zero {
                     return Ok(None);
                 }
-                let Some(source) = self.ordinary_point_source(policy)? else {
+                let Some(source) = self.mapped_point_source(policy)? else {
                     return Ok(None);
                 };
-                let source = source.as_borrowed();
-                Ok(Some((
-                    source.parameter().clone(),
-                    source.tangent_power_basis()?,
-                    source.policy(),
-                )))
+                source.ordinary_tangent_power_source(policy)
             }
             Self::PairOverlapMap { source, .. } => {
                 let BezierAlgebraicCuspSemicircleParameter2::Mapped(source) = source else {
@@ -38262,12 +38508,16 @@ impl BezierAlgebraicCuspSemicircleSelectedFiberRationalOverlap2 {
             {
                 candidate.clone()
             } else {
-                let candidate = match policy.strict_predicate_pass(|| {
-                    candidate.promoted_bezier_parameter_complete(policy)
-                })? {
-                    Classification::Decided(candidate) => candidate,
-                    Classification::Uncertain(reason) => {
-                        return Ok(Classification::Uncertain(reason));
+                let candidate = if let Some(candidate) = candidate.as_bezier_parameter() {
+                    candidate.clone()
+                } else {
+                    match policy.strict_predicate_pass(|| {
+                        candidate.promoted_bezier_parameter_complete(policy)
+                    })? {
+                        Classification::Decided(candidate) => candidate,
+                        Classification::Uncertain(reason) => {
+                            return Ok(Classification::Uncertain(reason));
+                        }
                     }
                 };
                 BezierAlgebraicSelectedFiberAuthority2::from_bezier_parameter(
@@ -38355,7 +38605,7 @@ impl BezierAlgebraicCuspSemicircleSelectedFiberRationalOverlap2 {
                     let candidates = match direct_candidates {
                         decided @ Classification::Decided(Some(_)) => decided,
                         Classification::Decided(None) | Classification::Uncertain(_) => {
-                            if let Some(source) = data.ordinary_point_source(policy)? {
+                            if let Some(source) = data.mapped_point_source(policy)? {
                                 source
                                     .point_parameter_candidates_on_rational_target(
                                         &self.map.data.curve,
@@ -46390,7 +46640,7 @@ impl BezierAlgebraicCuspChordDerivedPoint2 {
                 if let Some(source) = parameter.selected_fiber_analytic_point(policy)? {
                     source.represented_coordinates(policy)?
                 } else {
-                    let Some(source) = parameter.ordinary_point_source(policy)? else {
+                    let Some(source) = parameter.mapped_point_source(policy)? else {
                         return Ok(Classification::Decided(None));
                     };
                     source.represented_coordinates(policy)?
@@ -119840,12 +120090,38 @@ mod conversion_tests {
             ));
             let cusp_cut = contact.cusp_parameter();
 
-            let Classification::Decided(selected_target) = selected_overlap
-                .other_parameter_for_cusp(&cusp_cut, &policy)
-                .unwrap()
-            else {
+            #[cfg(feature = "dispatch-trace")]
+            hyperreal::dispatch_trace::reset();
+            let invert = || selected_overlap.other_parameter_for_cusp(&cusp_cut, &policy);
+            #[cfg(feature = "dispatch-trace")]
+            let selected_target = hyperreal::dispatch_trace::with_recording(invert);
+            #[cfg(not(feature = "dispatch-trace"))]
+            let selected_target = invert();
+            #[cfg(feature = "dispatch-trace")]
+            let trace = hyperreal::dispatch_trace::take_trace();
+            let Classification::Decided(selected_target) = selected_target.unwrap() else {
                 panic!("the transverse selected cut must invert into its circle overlap");
             };
+            #[cfg(feature = "dispatch-trace")]
+            {
+                assert!(
+                    trace.path_count(
+                        "hypercurve",
+                        "mapped-circle-point-inverse",
+                        "selected-rational-carrier-intersection",
+                    ) >= 1,
+                    "selected point inversion must retain the local fiber: {trace:?}",
+                );
+                assert_eq!(
+                    trace.path_count(
+                        "hypercurve",
+                        "mapped-circle-point-inverse",
+                        "ordinary-tangent-promotion",
+                    ),
+                    0,
+                    "a transverse point inversion must not promote its selected scalar: {trace:?}",
+                );
+            }
             let Classification::Decided(selected_round_trip) = selected_overlap
                 .cusp_parameter_for_other(&selected_target, &policy)
                 .unwrap()
