@@ -1,3 +1,5 @@
+mod support;
+
 use hypercurve::{CurveContext, NurbsCurve2, Point2, RationalBezier2, Real};
 use proptest::prelude::*;
 
@@ -14,7 +16,7 @@ fn p(x: i32, y: i32) -> Point2 {
 }
 
 #[test]
-fn symbolic_interpolation_solve_and_replay_obey_terminal_policy() {
+fn symbolic_interpolation_solve_and_replay_are_strictly_affine_exact() {
     let pi = Real::pi();
     let e = Real::e();
     let points = vec![
@@ -24,54 +26,40 @@ fn symbolic_interpolation_solve_and_replay_obey_terminal_policy() {
     ];
     let parameters = vec![r(0), q(1, 2), r(1)];
 
-    assert!(matches!(
-        NurbsCurve2::interpolate_global(
-            2,
-            points.clone(),
-            parameters.clone(),
-            &CurveContext::STRICT,
-        ),
-        Err(hypercurve::ExactCurveError::Blocked(blocker))
-            if blocker.operation() == hypercurve::CurveOperation2::Interpolation
-                && blocker.reason() == hypercurve::UncertaintyReason::Predicate
-    ));
-
-    let approximate = NurbsCurve2::interpolate_global(
-        2,
-        points.clone(),
-        parameters.clone(),
-        &CurveContext::APPROXIMATE_512,
-    )
-    .expect("the terminal policy must close symbolic solve and authored-point replay");
-    assert_eq!(
-        approximate.certainty,
-        hypercurve::CurveCertainty::Approximate512Consumed
-    );
-    for (parameter, expected) in parameters.iter().zip(points) {
-        let actual = approximate
-            .value
-            .point_at(parameter, &CurveContext::APPROXIMATE_512)
-            .unwrap()
-            .into_value();
-        for (actual, expected) in [(actual.x(), expected.x()), (actual.y(), expected.y())] {
-            assert!(matches!(
-                hyperlimit::compare_reals(
-                    actual,
-                    expected,
-                    hyperlimit::PredicatePolicy::APPROXIMATE_512,
-                ),
-                hyperlimit::PredicateOutcome::Decided {
-                    value: std::cmp::Ordering::Equal,
-                    ..
-                }
-            ));
+    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+        let interpolated =
+            NurbsCurve2::interpolate_global(2, points.clone(), parameters.clone(), &policy)
+                .expect("the symbolic affine solve and authored-point replay must stay exact");
+        assert_eq!(
+            interpolated.certainty,
+            hypercurve::CurveCertainty::Certified
+        );
+        for (parameter, expected) in parameters.iter().zip(&points) {
+            let actual = interpolated
+                .value
+                .point_at(parameter, &CurveContext::STRICT)
+                .unwrap()
+                .into_value();
+            for (actual, expected) in [(actual.x(), expected.x()), (actual.y(), expected.y())] {
+                assert!(matches!(
+                    hyperlimit::compare_reals(
+                        actual,
+                        expected,
+                        hyperlimit::PredicatePolicy::STRICT,
+                    ),
+                    hyperlimit::PredicateOutcome::Decided {
+                        value: std::cmp::Ordering::Equal,
+                        ..
+                    }
+                ));
+            }
         }
     }
 }
 
 #[test]
 fn explicit_interpolation_obeys_terminal_policy_and_retains_symbolic_domain() {
-    let undecidable_zero = (Real::pi() + Real::e()) - (Real::e() + Real::pi());
+    let undecidable_zero = support::terminally_unresolved_zero();
     let symbolic_end = r(1) + undecidable_zero;
     let points = vec![p(0, 0), p(2, 0)];
     let parameters = vec![r(0), r(1)];

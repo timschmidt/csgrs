@@ -21187,6 +21187,12 @@ mod tests {
         (Real::from(numerator) / Real::from(denominator)).unwrap()
     }
 
+    fn terminally_unresolved_zero() -> Real {
+        let sine = Real::e().sin();
+        let cosine = Real::e().cos();
+        &sine * &sine + &cosine * &cosine - Real::one()
+    }
+
     #[test]
     fn even_multiplicity_stationary_source_coalesces_one_offset_span() {
         // With s=2u-1, P(u)=(s^3,s^4) has P'(u)=s^2(6,8s).
@@ -32343,8 +32349,8 @@ mod tests {
 
     #[test]
     fn boundary_path_construction_obeys_selected_terminal_policy() {
-        let start = Point2::new(Real::pi() + Real::e(), Real::zero());
-        let end = Point2::new(Real::e() + Real::pi(), Real::zero());
+        let start = Point2::new(Real::e().sin(), Real::zero());
+        let end = Point2::new(Real::e().sin() + terminally_unresolved_zero(), Real::zero());
         let path = CurvePath2::try_new(vec![Curve2::from(QuadraticBezier2::new(
             start,
             p(0, 1),
@@ -32396,7 +32402,7 @@ mod tests {
 
     #[test]
     fn rational_line_measurements_obey_policy_and_isolate_cached_certainty() {
-        let undecidable_zero = (Real::pi() + Real::e()) - (Real::e() + Real::pi());
+        let undecidable_zero = terminally_unresolved_zero();
         let line_y = || Real::one() + &undecidable_zero;
         let rational = RationalBezier2::try_new(
             vec![
@@ -32502,7 +32508,7 @@ mod tests {
 
     #[test]
     fn curve_region_mutations_report_selected_terminal_policy() {
-        let undecidable_zero = (Real::pi() + Real::e()) - (Real::e() + Real::pi());
+        let undecidable_zero = terminally_unresolved_zero();
         let region = single_quadratic_loop_region(false);
 
         let scale = Real::one() + &undecidable_zero;

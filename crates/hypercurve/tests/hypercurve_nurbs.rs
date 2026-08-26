@@ -1,3 +1,5 @@
+mod support;
+
 use hypercurve::Similarity2;
 use hypercurve::{
     BezierSubcurve2, Curve2, CurveContext, CurveError, CurveFamily2, CurveOperation2,
@@ -30,7 +32,7 @@ fn quadratic_nurbs() -> NurbsCurve2 {
 
 fn terminal_nurbs() -> (NurbsCurve2, Real) {
     let half = q(1, 2);
-    let symbolic_half = &half + ((Real::pi() + Real::e()) - (Real::e() + Real::pi()));
+    let symbolic_half = &half + support::terminally_unresolved_zero();
     let curve = NurbsCurve2::try_new(
         2,
         vec![p(0, 0), p(1, 2), p(2, 0), p(3, -2), p(4, 0)],
@@ -54,7 +56,7 @@ fn terminal_nurbs() -> (NurbsCurve2, Real) {
 
 #[test]
 fn nurbs_construction_obeys_terminal_policy_without_replacing_knots() {
-    let undecidable_zero = (Real::pi() + Real::e()) - (Real::e() + Real::pi());
+    let undecidable_zero = support::terminally_unresolved_zero();
     let symbolic_end = r(1) + undecidable_zero.clone();
     let controls = vec![p(0, 0), p(2, 0)];
     let weights = vec![Real::one(), Real::one()];
@@ -243,7 +245,7 @@ fn nurbs_construction_obeys_terminal_policy_without_replacing_knots() {
 #[test]
 fn nurbs_subdivision_reconstruction_obeys_terminal_policy() {
     let curve = quadratic_nurbs();
-    let undecidable_zero = (Real::pi() + Real::e()) - (Real::e() + Real::pi());
+    let undecidable_zero = support::terminally_unresolved_zero();
     let parameter = r(1) + undecidable_zero;
 
     let strict = curve
@@ -1717,7 +1719,7 @@ fn periodic_nurbs_wrapping_obeys_terminal_policy() {
     )
     .unwrap()
     .into_value();
-    let undecidable_zero = (Real::pi() + Real::e()) - (Real::e() + Real::pi());
+    let undecidable_zero = support::terminally_unresolved_zero();
     let wrapped_seam = r(4) + undecidable_zero;
 
     assert!(matches!(

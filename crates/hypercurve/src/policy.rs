@@ -874,7 +874,9 @@ mod tests {
     #[test]
     fn approximate_operation_runs_once_and_records_only_a_consumed_terminal() {
         let calls = Cell::new(0_u8);
-        let undecidable_zero = (Real::pi() + Real::e()) - (Real::e() + Real::pi());
+        let sine = Real::e().sin();
+        let cosine = Real::e().cos();
+        let undecidable_zero = &sine * &sine + &cosine * &cosine - Real::one();
         let outcome = resolve_certified_operation(&CurveContext::APPROXIMATE_512, |operation| {
             calls.set(calls.get() + 1);
             assert_eq!(

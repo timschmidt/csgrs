@@ -1,3 +1,5 @@
+mod support;
+
 use hypercurve::{
     BooleanOp, BulgeVertex2, Classification, Contour2, Curve2, CurveCertainty, CurveContext,
     CurvePath2, CurveRegion2, LineSeg2, Point2, Real, RegionPointLocation, Segment2,
@@ -835,7 +837,7 @@ fn mixed_line_circular_conic_degeneracy_matrix_matches_native_results() {
 
 #[test]
 fn mixed_line_circular_conic_batch_obeys_the_approximate_512_terminal() {
-    let undecidable_zero = (Real::pi() + Real::e()) - (Real::e() + Real::pi());
+    let undecidable_zero = support::terminally_unresolved_zero();
     let disk = circle_with_policy(undecidable_zero, &CurveContext::APPROXIMATE_512);
     let right_half = square(0, -3, 3, 3);
 
@@ -878,8 +880,9 @@ fn mixed_line_circular_conic_batch_obeys_the_approximate_512_terminal() {
 
 #[test]
 fn circular_conic_batch_obeys_the_approximate_512_terminal() {
-    let first = circle_with_policy(Real::pi() + Real::e(), &CurveContext::APPROXIMATE_512);
-    let second = circle_with_policy(Real::e() + Real::pi(), &CurveContext::APPROXIMATE_512);
+    let (first_center, second_center) = support::terminally_equal_pair(Real::pi() + Real::e());
+    let first = circle_with_policy(first_center.clone(), &CurveContext::APPROXIMATE_512);
+    let second = circle_with_policy(second_center, &CurveContext::APPROXIMATE_512);
 
     assert!(matches!(
         first.boolean_regions(&second, &CurveContext::STRICT),
@@ -893,15 +896,16 @@ fn circular_conic_batch_obeys_the_approximate_512_terminal() {
     assert!(batch.value.xor().is_empty());
     assert_location(
         batch.value.union(),
-        Point2::new(Real::pi() + Real::e(), Real::zero()),
+        Point2::new(first_center, Real::zero()),
         RegionPointLocation::Inside,
     );
 }
 
 #[test]
 fn approximate_policy_reports_a_consumed_terminal_instead_of_relabeling_it_exact() {
-    let first = symbolic_rectangle(Real::pi() + Real::e());
-    let second = symbolic_rectangle(Real::e() + Real::pi());
+    let (first_x, second_x) = support::terminally_equal_pair(Real::pi() + Real::e());
+    let first = symbolic_rectangle(first_x);
+    let second = symbolic_rectangle(second_x);
 
     assert!(matches!(
         first.boolean_region(&second, BooleanOp::Union, &CurveContext::STRICT),
@@ -934,8 +938,9 @@ fn approximate_policy_reports_a_consumed_terminal_instead_of_relabeling_it_exact
 
 #[test]
 fn curve_path_construction_obeys_the_approximate_512_terminal() {
-    let first_end = Point2::new(Real::pi() + Real::e(), Real::zero());
-    let second_start = Point2::new(Real::e() + Real::pi(), Real::zero());
+    let (first_end_x, second_start_x) = support::terminally_equal_pair(Real::pi() + Real::e());
+    let first_end = Point2::new(first_end_x, Real::zero());
+    let second_start = Point2::new(second_start_x, Real::zero());
     let curves = vec![
         Curve2::from(LineSeg2::try_new(point(0, 0), first_end).unwrap()),
         Curve2::from(LineSeg2::try_new(second_start, point(0, 1)).unwrap()),
@@ -953,8 +958,9 @@ fn curve_path_construction_obeys_the_approximate_512_terminal() {
 
 #[test]
 fn general_curve_batch_obeys_the_approximate_512_terminal() {
-    let first = symbolic_quadratic_cap(-(Real::pi() + Real::e()), &CurveContext::APPROXIMATE_512);
-    let second = symbolic_quadratic_cap(-(Real::e() + Real::pi()), &CurveContext::APPROXIMATE_512);
+    let (first_height, second_height) = support::terminally_equal_pair(Real::pi() + Real::e());
+    let first = symbolic_quadratic_cap(-first_height, &CurveContext::APPROXIMATE_512);
+    let second = symbolic_quadratic_cap(-second_height, &CurveContext::APPROXIMATE_512);
 
     assert!(matches!(
         first.boolean_regions(&second, &CurveContext::STRICT),
@@ -988,7 +994,7 @@ fn general_curve_batch_obeys_the_approximate_512_terminal() {
 #[test]
 fn line_general_batch_obeys_the_approximate_512_terminal() {
     let first = square(0, 0, 4, 4);
-    let symbolic_zero = (Real::pi() + Real::e()) - (Real::e() + Real::pi());
+    let symbolic_zero = support::terminally_unresolved_zero();
     let second = symbolic_general_line_region(symbolic_zero, &CurveContext::APPROXIMATE_512);
 
     assert!(matches!(
@@ -1015,8 +1021,7 @@ fn line_general_batch_obeys_the_approximate_512_terminal() {
 
 #[test]
 fn conic_general_batch_obeys_the_approximate_512_terminal() {
-    let first_center = Real::pi() + Real::e();
-    let second_center = Real::e() + Real::pi();
+    let (first_center, second_center) = support::terminally_equal_pair(Real::pi() + Real::e());
     let first = circle_with_policy(first_center.clone(), &CurveContext::APPROXIMATE_512);
     let second = symbolic_elevated_circle(second_center, &CurveContext::APPROXIMATE_512);
 
@@ -1044,11 +1049,9 @@ fn conic_general_batch_obeys_the_approximate_512_terminal() {
 
 #[test]
 fn point_query_reports_when_approximate_policy_decides_a_symbolic_boundary() {
-    let region = symbolic_rectangle(Real::pi() + Real::e());
-    let point = Point2::new(
-        Real::e() + Real::pi(),
-        (Real::one() / Real::from(2_u8)).unwrap(),
-    );
+    let (boundary_x, query_x) = support::terminally_equal_pair(Real::pi() + Real::e());
+    let region = symbolic_rectangle(boundary_x);
+    let point = Point2::new(query_x, (Real::one() / Real::from(2_u8)).unwrap());
 
     let strict = region
         .classify_point(&point, &CurveContext::STRICT)
@@ -1072,7 +1075,7 @@ fn point_query_reports_when_approximate_policy_decides_a_symbolic_boundary() {
 #[test]
 fn approximate_offset_reports_a_consumed_terminal_for_symbolic_zero_distance() {
     let source = square(0, 0, 4, 4);
-    let distance = (Real::pi() + Real::e()) - (Real::e() + Real::pi());
+    let distance = support::terminally_unresolved_zero();
 
     assert!(matches!(
         source.offset(distance.clone(), &sharp_offset(), &CurveContext::STRICT),

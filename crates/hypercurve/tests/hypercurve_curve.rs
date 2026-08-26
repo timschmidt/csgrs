@@ -1,3 +1,5 @@
+mod support;
+
 use hypercurve::{
     BezierSplitFragment2, BezierSubcurve2, CircularArc2, Classification, CubicBezier2, Curve2,
     CurveContext, CurveCornerMode2, CurveCornerNoSolution2, CurveCornerSolutions2, CurveError,
@@ -212,8 +214,9 @@ fn top_level_curve_region_classifies_points_and_shares_results() {
 
 #[test]
 fn curve_path_boundary_and_classification_report_terminal_closure() {
-    let start = Point2::new(Real::pi() + Real::e(), Real::zero());
-    let end = Point2::new(Real::e() + Real::pi(), Real::zero());
+    let (start_x, end_x) = support::terminally_equal_pair(Real::pi() + Real::e());
+    let start = Point2::new(start_x, Real::zero());
+    let end = Point2::new(end_x, Real::zero());
     let origin = p(0, 0);
     let upper = p(0, 2);
     let path = CurvePath2::try_new(vec![
@@ -1541,7 +1544,7 @@ fn retained_circular_corner_recognition_uses_the_shared_approximate_terminal() {
         .into_value()
         .spans()[0]
         .curve();
-    let undecidable_zero = (Real::pi() + Real::e()) - (Real::e() + Real::pi());
+    let undecidable_zero = support::terminally_unresolved_zero();
     let control = Point2::new(
         conic.control().x() + undecidable_zero,
         conic.control().y().clone(),
@@ -1662,7 +1665,7 @@ fn exact_native_arc_fillet_uses_only_the_shared_approximate_terminal() {
         Curve2::from(CircularArc2::try_from_center(p(0, 0), p(1, 1), p(1, 0), true).unwrap()),
     ])
     .unwrap();
-    let undecidable_zero = (Real::pi() + Real::e()) - (Real::e() + Real::pi());
+    let undecidable_zero = support::terminally_unresolved_zero();
     let radius = Real::one() + undecidable_zero;
     assert!(matches!(
         path.fillet_vertex_by_radius(
@@ -3102,7 +3105,7 @@ fn represented_bezier_chamfer_retains_more_than_two_exact_cuts() {
 
 #[test]
 fn represented_bezier_corner_incidence_uses_the_shared_approximate_terminal() {
-    let undecidable_zero = (Real::pi() + Real::e()) - (Real::e() + Real::pi());
+    let undecidable_zero = support::terminally_unresolved_zero();
     let path = CurvePath2::try_new(vec![
         Curve2::from(LineSeg2::try_new(p(-4, 0), p(0, 0)).unwrap()),
         Curve2::from(QuadraticBezier2::new(
@@ -3141,7 +3144,7 @@ fn represented_bezier_corner_incidence_uses_the_shared_approximate_terminal() {
 
 #[test]
 fn spline_corner_incidence_uses_the_shared_approximate_terminal() {
-    let undecidable_zero = (Real::pi() + Real::e()) - (Real::e() + Real::pi());
+    let undecidable_zero = support::terminally_unresolved_zero();
     for family in [CurveFamily2::PolynomialBSpline, CurveFamily2::Nurbs] {
         let controls = vec![
             p(0, 0),
@@ -3200,7 +3203,7 @@ fn spline_corner_incidence_uses_the_shared_approximate_terminal() {
 #[test]
 fn automatic_corner_solver_obeys_strict_and_approximate_512_once() {
     let path = right_angle_line_path(4);
-    let undecidable_zero = (Real::pi() + Real::e()) - (Real::e() + Real::pi());
+    let undecidable_zero = support::terminally_unresolved_zero();
     assert!(matches!(
         path.fillet_vertex_by_radius(
             1,
@@ -3229,7 +3232,7 @@ fn automatic_corner_solver_obeys_strict_and_approximate_512_once() {
         CurveCornerSolutions2::NoSolution(CurveCornerNoSolution2::ZeroDesignValue)
     );
 
-    let undecidable_parallel = (Real::pi() + Real::e()) - (Real::e() + Real::pi());
+    let undecidable_parallel = support::terminally_unresolved_zero();
     let near_tangent = CurvePath2::try_new(vec![
         Curve2::from(LineSeg2::try_new(p(-1, 0), p(0, 0)).unwrap()),
         Curve2::from(

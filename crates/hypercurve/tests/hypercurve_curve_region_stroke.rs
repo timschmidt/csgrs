@@ -1,3 +1,5 @@
+mod support;
+
 use hypercurve::{
     BezierSplitFragment2, BooleanOp, CircularArc2, Classification, CubicBezier2, Curve2,
     CurveCertainty, CurveContext, CurveError, CurvePath2, CurveRegion2, ExactCurveError, LineSeg2,
@@ -201,7 +203,7 @@ fn path_stroke_requires_a_policy_positive_half_width() {
         }
     }
 
-    let undecidable_zero = (Real::pi() + Real::e()) - (Real::e() + Real::pi());
+    let undecidable_zero = support::terminally_unresolved_zero();
     assert!(matches!(
         CurveRegion2::stroke_path(
             &path,
@@ -682,8 +684,7 @@ fn rational_nurbs_path_stroke_retains_exact_parallels_under_both_policies() {
 
 #[test]
 fn path_stroke_obeys_the_approximate_512_connectivity_terminal() {
-    let left_form = Real::pi() + Real::e();
-    let right_form = Real::e() + Real::pi();
+    let (left_form, right_form) = support::terminally_equal_pair(Real::pi() + Real::e());
     let curves = vec![
         Curve2::from(LineSeg2::try_new(p(0, 0), Point2::new(left_form, Real::zero())).unwrap()),
         Curve2::from(
@@ -728,8 +729,7 @@ fn path_stroke_obeys_the_approximate_512_connectivity_terminal() {
 
 #[test]
 fn path_stroke_obeys_the_approximate_512_closure_terminal() {
-    let left_form = Real::pi() + Real::e();
-    let right_form = Real::e() + Real::pi();
+    let (left_form, right_form) = support::terminally_equal_pair(Real::pi() + Real::e());
     let path = CurvePath2::try_new(vec![
         Curve2::from(
             LineSeg2::try_new(

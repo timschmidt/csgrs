@@ -1,3 +1,5 @@
+mod support;
+
 use hypercurve::{
     BezierAreaMomentPrefixSums2, BezierAreaPrefixSums2, BezierLineImageFitRelation,
     BezierParallelApproximationCurve2, BezierParallelIncidence2,
@@ -540,7 +542,7 @@ fn cubic_pythagorean_hodograph_parallel_materializes_exact_rational_bezier() {
 
 #[test]
 fn approximate_ph_materialization_never_selects_a_structural_component() {
-    let undecidable_zero = (Real::pi() + Real::e()) - (Real::e() + Real::pi());
+    let undecidable_zero = support::terminally_unresolved_zero();
     let source =
         QuadraticBezier2::new(p(0, 0), Point2::new(Real::one(), undecidable_zero), p(2, 0));
     let parallel = source.parallel_left(Real::one()).unwrap();
@@ -1028,7 +1030,7 @@ fn exact_parallel_point_incidence_rejects_the_opposite_normal_branch() {
 
 #[test]
 fn parallel_point_incidence_uses_approximate_512_only_as_a_terminal_decision() {
-    let undecidable_zero = (Real::pi() + Real::e()) - (Real::e() + Real::pi());
+    let undecidable_zero = support::terminally_unresolved_zero();
     let source = QuadraticBezier2::new(p(0, 0), p(1, 0), p(2, 0));
     let parallel = source.parallel_left(undecidable_zero).unwrap();
 
@@ -1271,7 +1273,7 @@ fn zero_distance_supporting_line_incidence_keeps_stationary_source_contact() {
 
 #[test]
 fn supporting_line_incidence_uses_approximate_512_only_as_a_terminal_decision() {
-    let undecidable_zero = (Real::pi() + Real::e()) - (Real::e() + Real::pi());
+    let undecidable_zero = support::terminally_unresolved_zero();
     let parallel = QuadraticBezier2::new(p(0, 0), p(1, 0), p(2, 0))
         .parallel_left(undecidable_zero)
         .unwrap();
@@ -1913,7 +1915,7 @@ fn parallel_rational_axis_saturation_retains_in_domain_projective_base_points() 
 
 #[test]
 fn parallel_rational_candidates_use_approximate_512_only_as_a_terminal_decision() {
-    let undecidable_zero = (Real::pi() + Real::e()) - (Real::e() + Real::pi());
+    let undecidable_zero = support::terminally_unresolved_zero();
     let parallel = QuadraticBezier2::new(p(0, 0), p(1, 0), p(2, 0))
         .parallel_left(undecidable_zero)
         .unwrap();
@@ -2931,7 +2933,7 @@ fn independently_constructed_ph_parallel_reuses_rational_overlap_authority() {
 
 #[test]
 fn parallel_rational_contacts_inherit_the_approximate_512_terminal() {
-    let undecidable_zero = (Real::pi() + Real::e()) - (Real::e() + Real::pi());
+    let undecidable_zero = support::terminally_unresolved_zero();
     let parallel = QuadraticBezier2::new(p(0, 0), p(1, 0), p(2, 0))
         .parallel_left(undecidable_zero)
         .unwrap();

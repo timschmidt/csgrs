@@ -1,3 +1,5 @@
+mod support;
+
 use hypercurve::{
     BezierAlgebraicChord2, BezierAlgebraicParameter2, BezierParameterInterval,
     BezierParameterPolynomial, CurveBoundaryInteriorSide2, CurveRegionBoundaryLoop2,
@@ -1900,7 +1902,7 @@ fn unified_region_corner_solver_obeys_terminal_policy_once() {
     )
     .unwrap()
     .into_value();
-    let undecidable_zero = (Real::pi() + Real::e()) - (Real::e() + Real::pi());
+    let undecidable_zero = support::terminally_unresolved_zero();
     assert!(matches!(
         source.fillet_loop_vertex_by_radius(
             0,
@@ -1955,7 +1957,7 @@ fn unified_region_offset_corner_options_obey_the_terminal_policy() {
         ));
     }
 
-    let undecidable_zero = (Real::pi() + Real::e()) - (Real::e() + Real::pi());
+    let undecidable_zero = support::terminally_unresolved_zero();
     let style = OffsetCornerStyle2::Miter {
         limit: undecidable_zero,
     };
@@ -7290,8 +7292,9 @@ fn unified_region_chamfer_and_fillet_edit_higher_order_loops() {
 
 #[test]
 fn materialized_boundary_paths_obey_terminal_policy_once() {
-    let start = Point2::new(Real::pi() + Real::e(), Real::zero());
-    let end = Point2::new(Real::e() + Real::pi(), Real::zero());
+    let (start_x, end_x) = support::terminally_equal_pair(Real::pi() + Real::e());
+    let start = Point2::new(start_x, Real::zero());
+    let end = Point2::new(end_x, Real::zero());
     let path = CurvePath2::try_new(vec![Curve2::from(QuadraticBezier2::new(
         start,
         p(0, 1),

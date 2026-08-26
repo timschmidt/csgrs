@@ -1,3 +1,5 @@
+mod support;
+
 use hypercurve::{
     BezierSubcurve2, CurveContext, CurveError, CurveFamily2, CurveOperation2, ExactCurveError,
     Point2, PolynomialSplineCurve2, Real, SplinePeriodicity2,
@@ -29,7 +31,7 @@ fn two_span_cubic() -> PolynomialSplineCurve2 {
 
 fn terminal_polynomial_spline() -> (PolynomialSplineCurve2, Real) {
     let half = q(1, 2);
-    let symbolic_half = &half + ((Real::pi() + Real::e()) - (Real::e() + Real::pi()));
+    let symbolic_half = &half + support::terminally_unresolved_zero();
     let curve = PolynomialSplineCurve2::try_new(
         2,
         vec![p(0, 0), p(1, 2), p(2, 0), p(3, -2), p(4, 0)],
@@ -52,7 +54,7 @@ fn terminal_polynomial_spline() -> (PolynomialSplineCurve2, Real) {
 
 #[test]
 fn polynomial_spline_construction_obeys_terminal_policy_without_replacing_knots() {
-    let undecidable_zero = (Real::pi() + Real::e()) - (Real::e() + Real::pi());
+    let undecidable_zero = support::terminally_unresolved_zero();
     let symbolic_end = r(1) + undecidable_zero.clone();
     let controls = vec![p(0, 0), p(2, 0)];
     let knots = vec![r(0), r(0), symbolic_end.clone(), r(1)];
@@ -178,7 +180,7 @@ fn polynomial_spline_construction_obeys_terminal_policy_without_replacing_knots(
 #[test]
 fn polynomial_subdivision_reconstruction_obeys_terminal_policy() {
     let curve = two_span_cubic();
-    let undecidable_zero = (Real::pi() + Real::e()) - (Real::e() + Real::pi());
+    let undecidable_zero = support::terminally_unresolved_zero();
     let parameter = r(1) + undecidable_zero;
 
     assert!(matches!(
@@ -772,7 +774,7 @@ fn periodic_polynomial_wrapping_obeys_terminal_policy() {
     )
     .unwrap()
     .into_value();
-    let undecidable_zero = (Real::pi() + Real::e()) - (Real::e() + Real::pi());
+    let undecidable_zero = support::terminally_unresolved_zero();
     let wrapped_seam = r(4) + undecidable_zero;
 
     assert!(matches!(

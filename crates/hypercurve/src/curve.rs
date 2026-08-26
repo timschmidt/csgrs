@@ -13595,8 +13595,11 @@ mod tests {
 
     #[test]
     fn boundary_cache_revalidates_approximate_internal_path_joins() {
-        let left_x = Real::pi() + Real::e();
-        let right_x = Real::e() + Real::pi();
+        let sine = Real::e().sin();
+        let cosine = Real::e().cos();
+        let unresolved_zero = &sine * &sine + &cosine * &cosine - Real::one();
+        let left_x = Real::from(4_i8);
+        let right_x = left_x.clone() + unresolved_zero;
         let lower_left = Point2::new(Real::zero(), Real::zero());
         let upper_left = Point2::new(Real::zero(), Real::from(2_i8));
         let lower_right_left_form = Point2::new(left_x, Real::zero());

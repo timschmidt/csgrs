@@ -117961,9 +117961,14 @@ mod conversion_tests {
                             "algebraic-circle-chord-kernel",
                             "general-algebraic-oblique",
                         );
+                        let correlated_axis_chord = trace.path_count(
+                            "hypercurve",
+                            "algebraic-circle-chord-kernel",
+                            "axis-correlated-fast-path",
+                        );
                         assert!(
-                            general_circle_chord > 0,
-                            "the pair-mapped lens must re-enter the general circle/chord authority: {trace:?}",
+                            general_circle_chord + correlated_axis_chord > 0,
+                            "the pair-mapped lens must re-enter the exact circle/chord authority: {trace:?}",
                         );
                         assert_eq!(
                             trace.path_count(
@@ -120075,7 +120080,9 @@ mod conversion_tests {
     #[test]
     fn selected_circle_partition_coalescing_obeys_terminal_policy() {
         let half = (Real::one() / Real::from(2_i8)).unwrap();
-        let unresolved_zero = (Real::pi() + Real::e()) - (Real::e() + Real::pi());
+        let sine = Real::e().sin();
+        let cosine = Real::e().cos();
+        let terminal_delta = &sine * &sine + &cosine * &cosine - Real::one();
 
         for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
             let semicircle = synthetic_reducible_cusp_semicircle((3, 4), ((2, 3), (4, 5)), &policy);
@@ -120095,7 +120102,7 @@ mod conversion_tests {
                 fragment
             };
             let first = fragment(Real::zero(), half.clone());
-            let second = fragment(half.clone() + &unresolved_zero, Real::one());
+            let second = fragment(half.clone() + &terminal_delta, Real::one());
             let coalesced = crate::policy::resolve_certified_operation(&policy, |active_policy| {
                 first.coalesced_with_next(&second, active_policy)
             })

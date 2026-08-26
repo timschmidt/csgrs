@@ -577,8 +577,11 @@ fn strict_and_approximate_512_share_the_unified_policy_terminal() {
 
 #[test]
 fn unordered_native_arrangement_obeys_the_approximate_512_terminal() {
-    let first_sum = Real::pi() + Real::e();
-    let second_sum = Real::e() + Real::pi();
+    let sine = Real::e().sin();
+    let cosine = Real::e().cos();
+    let unresolved_zero = &sine * &sine + &cosine * &cosine - Real::one();
+    let first_sum = sine;
+    let second_sum = first_sum.clone() + unresolved_zero;
     let lines = vec![
         crate::LineSeg2::try_new(
             crate::Point2::new(Real::zero(), Real::zero()),

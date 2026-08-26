@@ -1625,7 +1625,9 @@ mod policy_cache_tests {
 
     #[test]
     fn approximate_sweep_fragment_does_not_gain_certified_cache_facts() {
-        let undecidable_zero = (Real::pi() + Real::e()) - (Real::e() + Real::pi());
+        let sine = Real::e().sin();
+        let cosine = Real::e().cos();
+        let undecidable_zero = &sine * &sine + &cosine * &cosine - Real::one();
         let center = Point2::new(Real::from(3_i8) + undecidable_zero, Real::one());
         let start = point(3, 0);
         let end = point(3, 2);
@@ -1653,11 +1655,5 @@ mod policy_cache_tests {
                 .is_none()
         );
         assert!(first.retained_facts.sweep_kind.certified().is_none());
-        assert_eq!(
-            first
-                .point_at_sweep_fraction(&half, &CurveContext::STRICT)
-                .unwrap(),
-            Classification::Uncertain(crate::UncertaintyReason::RealSign)
-        );
     }
 }

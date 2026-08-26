@@ -1,3 +1,5 @@
+mod support;
+
 use hypercurve::{
     BezierSubcurve2, CircularArc2, Classification, Curve2, CurveContext, CurveGeometry2,
     CurvePath2, LineSeg2, Point2, Real, UncertaintyReason,
@@ -401,7 +403,7 @@ fn top_level_arc_reuses_promotion_and_builds_mixed_boundary() {
 
 #[test]
 fn public_arc_native_topology_obeys_terminal_policy_once() {
-    let undecidable_zero = (Real::pi() + Real::e()) - (Real::e() + Real::pi());
+    let undecidable_zero = support::terminally_unresolved_zero();
     let center = Point2::new(Real::from(3) + &undecidable_zero, Real::one());
     let arc = CircularArc2::try_from_center(p(3, 0), p(3, 2), center, false).unwrap();
 

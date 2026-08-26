@@ -1,3 +1,5 @@
+mod support;
+
 use hypercurve::{
     BezierParameter2, BezierSplitFragment2, CurveCertainty, CurveFamily2, CurveOperation2,
     ExactCurveError, QuadraticBezier2, RationalQuadraticBezier2, RegionPointLocation,
@@ -492,8 +494,9 @@ fn promoted_region_boolean_consumes_irrational_polynomial_graph_overlap() {
 
 #[test]
 fn region_boolean_reports_terminal_use_after_explicit_path_promotion() {
-    let first = symbolic_rectangle_path(Real::pi() + Real::e());
-    let second = symbolic_rectangle_path(Real::e() + Real::pi());
+    let (first_x, second_x) = support::terminally_equal_pair(Real::pi() + Real::e());
+    let first = symbolic_rectangle_path(first_x);
+    let second = symbolic_rectangle_path(second_x);
     let approximate = CurveContext::APPROXIMATE_512;
 
     let strict_first = path_region(
@@ -614,7 +617,7 @@ fn top_level_arc_dispatch_filters_circle_witnesses_and_retains_exact_parameters(
 
 #[test]
 fn curve_and_path_intersections_report_terminal_use_without_upgrading_arc_caches() {
-    let undecidable_zero = (Real::pi() + Real::e()) - (Real::e() + Real::pi());
+    let undecidable_zero = support::terminally_unresolved_zero();
     let arc = Curve2::from(
         CircularArc2::try_from_center(
             p(3, 0),

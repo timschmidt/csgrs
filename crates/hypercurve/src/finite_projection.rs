@@ -1643,6 +1643,15 @@ mod tests {
         Point2::new(Real::from(x), Real::from(y))
     }
 
+    fn terminally_equal_x_pair() -> (Real, Real) {
+        let start = Real::e().sin();
+        let sine = Real::e().sin();
+        let cosine = Real::e().cos();
+        let unresolved_zero = &sine * &sine + &cosine * &cosine - Real::one();
+        let end = start.clone() + unresolved_zero;
+        (start, end)
+    }
+
     fn cubic_cap() -> CurvePath2 {
         CurvePath2::try_new(vec![
             Curve2::from(LineSeg2::try_new(point(0, 0), point(4, 0)).unwrap()),
@@ -1679,8 +1688,9 @@ mod tests {
 
     #[test]
     fn path_projection_obeys_terminal_policy_and_reports_consumption() {
-        let start = Point2::new(Real::pi() + Real::e(), Real::zero());
-        let end = Point2::new(Real::e() + Real::pi(), Real::zero());
+        let (start_x, end_x) = terminally_equal_x_pair();
+        let start = Point2::new(start_x, Real::zero());
+        let end = Point2::new(end_x, Real::zero());
         let path = CurvePath2::try_new(vec![Curve2::from(QuadraticBezier2::new(
             start,
             point(0, 1),
@@ -1706,8 +1716,9 @@ mod tests {
 
     #[test]
     fn region_curve_path_projection_rechecks_symbolic_materialized_joins() {
-        let start = Point2::new(Real::pi() + Real::e(), Real::zero());
-        let end = Point2::new(Real::e() + Real::pi(), Real::zero());
+        let (start_x, end_x) = terminally_equal_x_pair();
+        let start = Point2::new(start_x, Real::zero());
+        let end = Point2::new(end_x, Real::zero());
         let path = CurvePath2::try_new(vec![Curve2::from(QuadraticBezier2::new(
             start,
             point(0, 1),

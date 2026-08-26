@@ -1,3 +1,5 @@
+mod support;
+
 use hypercurve::{
     Aabb2, BezierBoundaryLoop2, BezierSubcurve2, Classification, CurveContext, CurveError,
     CurveRegion2, Point2, PolynomialBSplineCurve2, QuadraticBezier2, RationalBSplineCurve2,
@@ -980,7 +982,7 @@ fn retained_rational_span_topology_evidence_reject_forged_native_evidence() {
 
 #[test]
 fn retained_bspline_evidence_constructors_obey_terminal_policy() {
-    let undecidable_zero = (Real::pi() + Real::e()) - (Real::e() + Real::pi());
+    let undecidable_zero = support::terminally_unresolved_zero();
     let ambiguous_bounds =
         Aabb2::new_unchecked(Point2::new(undecidable_zero, r(0)), Point2::new(r(0), r(0)));
     let strict_fact = RetainedBSplineSpanFacts2::new(
@@ -1010,7 +1012,7 @@ fn retained_bspline_evidence_constructors_obey_terminal_policy() {
     .unwrap();
     assert!(matches!(approximate_fact, Classification::Decided(_)));
 
-    let symbolic_join = r(1) + ((Real::pi() + Real::e()) - (Real::e() + Real::pi()));
+    let symbolic_join = r(1) + support::terminally_unresolved_zero();
     let first_fact = decided(
         RetainedBSplineSpanFacts2::new(
             0,
