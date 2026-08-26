@@ -172,6 +172,15 @@ pub struct AlgebraicFiberPolynomialImageProjectionReport {
     pub status: AlgebraicFiberPolynomialImageProjectionStatus,
     /// Global image eliminant in ascending powers of the image variable.
     pub coefficients: Vec<Real>,
+    /// Exact image relation retained over the selected base parameter.
+    ///
+    /// `retained_relation.coefficients[first_power][second_power]` names the
+    /// retained base parameter and image parameter respectively. This
+    /// relation is the primitive local norm before the final norm through the
+    /// retained parameter's defining polynomial. It can therefore be
+    /// available even when construction of the larger global eliminant is
+    /// declined.
+    pub retained_relation: Option<BivariatePolynomial>,
     /// Degree of the specialized source fiber used by the local norm.
     pub fiber_degree: usize,
     /// Conservative image degree before exact trimming and square-free replay.
@@ -1468,10 +1477,62 @@ pub fn project_algebraic_fiber_polynomial_image(
     config: AlgebraicFiberPolynomialImageProjectionConfig,
     policy: PredicatePolicy,
 ) -> AlgebraicFiberPolynomialImageProjectionReport {
+    project_algebraic_fiber_polynomial_image_internal(
+        fiber_equation,
+        retained_parameter,
+        image_relation,
+        image_parameter,
+        retained_root,
+        config,
+        policy,
+        true,
+    )
+}
+
+/// Retains the exact polynomial image relation over the selected base root.
+///
+/// This stops after the first norm in `Q(alpha)[u] / (fiber_equation)` and
+/// avoids constructing the degree-multiplied global image polynomial.  A
+/// caller can isolate the image directly as another fiber over `alpha`, then
+/// replay the authored relation to reject roots contributed by other local
+/// fiber conjugates.
+pub fn project_algebraic_fiber_polynomial_image_relation(
+    fiber_equation: &BivariatePolynomial,
+    retained_parameter: CurveResultantParameter,
+    image_relation: &BivariatePolynomial,
+    image_parameter: CurveResultantParameter,
+    retained_root: &AlgebraicRootRepresentation,
+    config: AlgebraicFiberPolynomialImageProjectionConfig,
+    policy: PredicatePolicy,
+) -> AlgebraicFiberPolynomialImageProjectionReport {
+    project_algebraic_fiber_polynomial_image_internal(
+        fiber_equation,
+        retained_parameter,
+        image_relation,
+        image_parameter,
+        retained_root,
+        config,
+        policy,
+        false,
+    )
+}
+
+#[allow(clippy::too_many_arguments)]
+fn project_algebraic_fiber_polynomial_image_internal(
+    fiber_equation: &BivariatePolynomial,
+    retained_parameter: CurveResultantParameter,
+    image_relation: &BivariatePolynomial,
+    image_parameter: CurveResultantParameter,
+    retained_root: &AlgebraicRootRepresentation,
+    config: AlgebraicFiberPolynomialImageProjectionConfig,
+    policy: PredicatePolicy,
+    construct_global_image: bool,
+) -> AlgebraicFiberPolynomialImageProjectionReport {
     let report = |status, coefficients, fiber_degree, image_degree_bound, certainty| {
         AlgebraicFiberPolynomialImageProjectionReport {
             status,
             coefficients,
+            retained_relation: None,
             fiber_degree,
             image_degree_bound,
             certainty,
@@ -1644,43 +1705,87 @@ pub fn project_algebraic_fiber_polynomial_image(
             );
         }
     };
+    if !construct_global_image {
+        return AlgebraicFiberPolynomialImageProjectionReport {
+            status: AlgebraicFiberPolynomialImageProjectionStatus::Constructed,
+            coefficients: Vec::new(),
+            retained_relation: Some(local_image_retained_relation(primitive_image)),
+            fiber_degree,
+            image_degree_bound,
+            certainty: field.certainty,
+        };
+    }
     if primitive_image
         .iter()
         .all(|coefficient| coefficient.len() <= 1)
     {
-        return report(
-            AlgebraicFiberPolynomialImageProjectionStatus::Constructed,
-            normalize_projective_image_polynomial(
-                primitive_image
-                    .into_iter()
-                    .map(|coefficient| coefficient.into_iter().next().unwrap_or_else(Real::zero))
-                    .collect(),
-            ),
+        let coefficients = normalize_projective_image_polynomial(
+            primitive_image
+                .iter()
+                .map(|coefficient| coefficient.first().cloned().unwrap_or_else(Real::zero))
+                .collect(),
+        );
+        return AlgebraicFiberPolynomialImageProjectionReport {
+            status: AlgebraicFiberPolynomialImageProjectionStatus::Constructed,
+            coefficients,
+            retained_relation: Some(local_image_retained_relation(primitive_image)),
             fiber_degree,
             image_degree_bound,
-            field.certainty,
-        );
+            certainty: field.certainty,
+        };
     }
-    match quotient_ring_fiber_resultant_polynomial(
+    let coefficients = quotient_ring_fiber_resultant_polynomial(
         &field.modulus,
         &primitive_image,
         config.max_retained_degree,
-    ) {
-        Some(coefficients) => report(
-            AlgebraicFiberPolynomialImageProjectionStatus::Constructed,
-            normalize_projective_image_polynomial(coefficients),
+    );
+    let retained_relation = local_image_retained_relation(primitive_image);
+    match coefficients {
+        Some(coefficients) => AlgebraicFiberPolynomialImageProjectionReport {
+            status: AlgebraicFiberPolynomialImageProjectionStatus::Constructed,
+            coefficients: normalize_projective_image_polynomial(coefficients),
+            retained_relation: Some(retained_relation),
             fiber_degree,
             image_degree_bound,
-            field.certainty,
-        ),
-        None => report(
-            AlgebraicFiberPolynomialImageProjectionStatus::Undecided,
-            Vec::new(),
+            certainty: field.certainty,
+        },
+        None => AlgebraicFiberPolynomialImageProjectionReport {
+            status: AlgebraicFiberPolynomialImageProjectionStatus::Undecided,
+            coefficients: Vec::new(),
+            retained_relation: Some(retained_relation),
             fiber_degree,
             image_degree_bound,
-            field.certainty,
-        ),
+            certainty: field.certainty,
+        },
     }
+}
+
+fn local_image_retained_relation(image: Vec<Vec<Real>>) -> BivariatePolynomial {
+    let retained_count = image.iter().map(Vec::len).max().unwrap_or(1);
+    let mut coefficients = vec![vec![Real::zero(); image.len()]; retained_count];
+    for (image_power, coefficient) in image.into_iter().enumerate() {
+        for (retained_power, value) in coefficient.into_iter().enumerate() {
+            coefficients[retained_power][image_power] = value;
+        }
+    }
+    for row in &mut coefficients {
+        while row.len() > 1
+            && row
+                .last()
+                .is_some_and(|value| value.zero_status() == ZeroKnowledge::Zero)
+        {
+            row.pop();
+        }
+    }
+    while coefficients.len() > 1
+        && coefficients.last().is_some_and(|row| {
+            row.iter()
+                .all(|value| value.zero_status() == ZeroKnowledge::Zero)
+        })
+    {
+        coefficients.pop();
+    }
+    BivariatePolynomial::new(coefficients)
 }
 
 fn normalize_projective_image_polynomial(mut coefficients: Vec<Real>) -> Vec<Real> {
@@ -2117,6 +2222,7 @@ fn algebraic_fiber_polynomial_image_error_report(
     AlgebraicFiberPolynomialImageProjectionReport {
         status,
         coefficients: Vec::new(),
+        retained_relation: None,
         fiber_degree,
         image_degree_bound,
         certainty,
@@ -3740,6 +3846,17 @@ mod tests {
             Real::zero(),
             Real::one(),
         ];
+        // Local primitive normalization is projective; alpha^2 reduces to 2
+        // in the retained field before this relation is exported.
+        let expected_retained = BivariatePolynomial::new(vec![vec![
+            Real::one(),
+            Real::zero(),
+            real(-1),
+            Real::zero(),
+            Real::one(),
+            Real::zero(),
+            rational(-1, 3),
+        ]]);
 
         for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
             let alpha = represented_root(
@@ -3768,7 +3885,29 @@ mod tests {
             assert_eq!(report.fiber_degree, 3);
             assert_eq!(report.image_degree_bound, 6);
             assert_eq!(report.coefficients, expected);
+            assert_eq!(report.retained_relation, Some(expected_retained.clone()));
             assert_eq!(report.certainty, Certainty::Exact);
+
+            let retained = project_algebraic_fiber_polynomial_image_relation(
+                &fiber,
+                CurveResultantParameter::First,
+                &image,
+                CurveResultantParameter::Second,
+                &alpha,
+                AlgebraicFiberPolynomialImageProjectionConfig {
+                    max_fiber_degree: 3,
+                    max_retained_degree: 2,
+                    max_image_degree_bound: 6,
+                },
+                policy,
+            );
+            assert_eq!(
+                retained.status,
+                AlgebraicFiberPolynomialImageProjectionStatus::Constructed
+            );
+            assert!(retained.coefficients.is_empty());
+            assert_eq!(retained.retained_relation, Some(expected_retained.clone()));
+            assert_eq!(retained.certainty, Certainty::Exact);
 
             let bounded = project_algebraic_fiber_polynomial_image(
                 &fiber,
@@ -3788,6 +3927,44 @@ mod tests {
                 AlgebraicFiberPolynomialImageProjectionStatus::DegreeLimitExceeded
             );
             assert_eq!(bounded.image_degree_bound, 6);
+        }
+    }
+
+    #[test]
+    fn polynomial_fiber_image_retains_base_parameter_axis() {
+        // u=alpha and z=u must remain z-alpha over the selected base instead
+        // of being flattened immediately to the global z^2-2 eliminant.
+        let fiber = BivariatePolynomial::new(vec![vec![Real::zero(), Real::one()], vec![real(-1)]]);
+        let image = BivariatePolynomial::new(vec![vec![Real::zero(), Real::one()], vec![real(-1)]]);
+        let expected =
+            BivariatePolynomial::new(vec![vec![Real::zero(), Real::one()], vec![real(-1)]]);
+        for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
+            let alpha = represented_root(
+                vec![real(-2), Real::zero(), Real::one()],
+                Real::one(),
+                real(2),
+                policy,
+            );
+            let report = project_algebraic_fiber_polynomial_image_relation(
+                &fiber,
+                CurveResultantParameter::First,
+                &image,
+                CurveResultantParameter::Second,
+                &alpha,
+                AlgebraicFiberPolynomialImageProjectionConfig {
+                    max_fiber_degree: 1,
+                    max_retained_degree: 2,
+                    max_image_degree_bound: 1,
+                },
+                policy,
+            );
+            assert_eq!(
+                report.status,
+                AlgebraicFiberPolynomialImageProjectionStatus::Constructed
+            );
+            assert_eq!(report.retained_relation, Some(expected.clone()));
+            assert!(report.coefficients.is_empty());
+            assert_eq!(report.certainty, Certainty::Exact);
         }
     }
 
