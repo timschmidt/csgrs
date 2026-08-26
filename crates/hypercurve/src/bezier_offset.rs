@@ -68327,57 +68327,6 @@ impl BezierAlgebraicChord2 {
                 }
             }
         }
-        if let RationalBezierIntersectionPointEvidence2::AlgebraicCuspChord(point) = point
-            && point
-                .map_contact()
-                .0
-                .data
-                .chord
-                .shares_retained_support(self)
-        {
-            let (map, contact) = point.map_contact();
-            map.validate_policy(policy)?;
-            if let Some(direction) = map.axis_direction() {
-                let contacts = match map.data.semicircle.rational_intersections(source, policy)? {
-                    Classification::Decided(
-                        BezierAlgebraicCuspSemicircleRationalIntersections2::Contacts(contacts),
-                    ) => contacts,
-                    Classification::Decided(
-                        BezierAlgebraicCuspSemicircleRationalIntersections2::Overlaps(_)
-                        | BezierAlgebraicCuspSemicircleRationalIntersections2::SelectedFiberContacts(
-                            _,
-                        )
-                        | BezierAlgebraicCuspSemicircleRationalIntersections2::SelectedFiberOverlaps(
-                            _,
-                        )
-                        | BezierAlgebraicCuspSemicircleRationalIntersections2::DegenerateProjection,
-                    ) => {
-                        return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
-                    }
-                    Classification::Uncertain(reason) => {
-                        return Ok(Classification::Uncertain(reason));
-                    }
-                };
-                let mut parameters = Vec::new();
-                for candidate in contacts {
-                    match map.data.semicircle.axis_chord_contact_minus_point_sign(
-                        &candidate.point,
-                        direction,
-                        contact.branch,
-                        policy,
-                    )? {
-                        Classification::Decided(RealSign::Zero) => parameters.push(
-                            CurveRegionParameter2::from_bezier(candidate.other_parameter),
-                        ),
-                        Classification::Decided(RealSign::Positive | RealSign::Negative) => {}
-                        Classification::Uncertain(reason) => {
-                            return Ok(Classification::Uncertain(reason));
-                        }
-                    }
-                }
-                return Ok(Classification::Decided(parameters));
-            }
-        }
         let represented_point = match point {
             RationalBezierIntersectionPointEvidence2::Exact(point) => Some(point.clone()),
             RationalBezierIntersectionPointEvidence2::Algebraic(point) => {
