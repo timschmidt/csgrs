@@ -68248,10 +68248,6 @@ impl BezierAlgebraicChord2 {
                 }
             }
         }
-        if let RationalBezierIntersectionPointEvidence2::AlgebraicChordParallel(point) = point {
-            return self
-                .retained_parallel_collinear_source_parameters_at_endpoint(source, point, policy);
-        }
         if let RationalBezierIntersectionPointEvidence2::AnalyticParallel(point) = point
             && let Some(parameters) = point.zero_distance_rational_source_parameters_for_axis(
                 source,
@@ -68401,51 +68397,6 @@ impl BezierAlgebraicChord2 {
                     .map(CurveRegionParameter2::from_bezier)
                     .collect()
             }))
-    }
-
-    /// Maps one procedural retained-offset endpoint back to every parameter on
-    /// a coincident rational line image. Collinearity makes the chord's
-    /// certified monotone coordinate sufficient, so the shared recursive
-    /// projective point importer isolates that one exact coordinate equation.
-    fn retained_parallel_collinear_source_parameters_at_endpoint(
-        &self,
-        source: &RationalBezier2,
-        point: &BezierAlgebraicChordParallelPoint2,
-        policy: &CurveContext,
-    ) -> CurveResult<Classification<Vec<CurveRegionParameter2>>> {
-        let support = self.retained_support();
-        let retained_endpoint = match (support.start(), support.end()) {
-            (RationalBezierIntersectionPointEvidence2::AlgebraicChordParallel(start), _)
-                if start.shares_storage(point) =>
-            {
-                true
-            }
-            (_, RationalBezierIntersectionPointEvidence2::AlgebraicChordParallel(end))
-                if end.shares_storage(point) =>
-            {
-                true
-            }
-            _ => false,
-        };
-        if !retained_endpoint {
-            return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
-        }
-        let evidence =
-            RationalBezierIntersectionPointEvidence2::AlgebraicChordParallel(point.clone());
-        Ok(
-            match recursive_projective_point_rational_axis_parameters(
-                &evidence,
-                source,
-                self.data.parameter_axis.axis,
-                policy,
-            )? {
-                Classification::Decided(Some(parameters)) => Classification::Decided(parameters),
-                Classification::Decided(None) => {
-                    Classification::Uncertain(UncertaintyReason::Unsupported)
-                }
-                Classification::Uncertain(reason) => Classification::Uncertain(reason),
-            },
-        )
     }
 
     fn collinear_source_parameters_at_chord_endpoint_image(
