@@ -56357,64 +56357,178 @@ fn recursive_quadratic_polynomial_projective_roots(
     }
 }
 
-fn certified_recursive_projective_source_parameter(
-    scalar: BezierRecursiveQuadraticProjectiveScalar2,
-    equation: &[BezierRecursiveQuadraticValue2],
-    weight: &[BezierRecursiveQuadraticValue2],
+fn recursive_projective_polynomial_value_at_parameter(
+    field: &BezierRecursiveQuadraticField2,
+    coefficients: &[BezierRecursiveQuadraticValue2],
+    parameter: &CurveRegionParameter2,
+) -> Option<BezierRecursiveQuadraticValue2> {
+    if let Some(parameter) = parameter.as_recursive_projective() {
+        return recursive_projective_polynomial_value(coefficients, &parameter.data.scalar);
+    }
+    let parameter = parameter.as_bezier_parameter()?;
+    let base = field.base_and_extension_path().0;
+    recursive_quadratic_target_embedding(field, &base, parameter)?.polynomial_value(coefficients)
+}
+
+/// Isolates every unit-domain root of one polynomial over a retained
+/// recursive quadratic field. Linear and quadratic roots remain projective
+/// values in that same tower. Higher degrees use the shared dense projection
+/// only as an enumerator and replay every candidate on the authored recursive
+/// sheet before publishing it.
+fn recursive_projective_polynomial_unit_parameters(
+    field: &BezierRecursiveQuadraticField2,
+    mut coefficients: Vec<BezierRecursiveQuadraticValue2>,
     policy: &CurveContext,
-) -> CurveResult<Classification<Option<CurveRegionParameter2>>> {
-    let parameter = match BezierRecursiveProjectiveParameter2::new(scalar, policy)? {
-        Classification::Decided(parameter) => parameter,
-        Classification::Uncertain(reason) => {
-            return Ok(Classification::Uncertain(reason));
+) -> CurveResult<Classification<Vec<CurveRegionParameter2>>> {
+    policy.strict_predicate_pass(|| {
+        while coefficients
+            .last()
+            .is_some_and(BezierRecursiveQuadraticValue2::is_structurally_zero)
+        {
+            coefficients.pop();
         }
-    };
-    let zero_order =
-        policy.strict_predicate_pass(|| parameter.order_to_real(&Real::zero(), policy))?;
-    let one_order =
-        policy.strict_predicate_pass(|| parameter.order_to_real(&Real::one(), policy))?;
-    match (zero_order, one_order) {
-        (
-            Classification::Decided(std::cmp::Ordering::Equal | std::cmp::Ordering::Greater),
-            Classification::Decided(std::cmp::Ordering::Equal | std::cmp::Ordering::Less),
-        ) => {}
-        (Classification::Decided(_), Classification::Decided(_)) => {
-            return Ok(Classification::Decided(None));
+        let Some(first) = coefficients.first() else {
+            return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
+        };
+        if !field.same_field(&first.field())
+            || coefficients
+                .iter()
+                .any(|coefficient| !field.same_field(&coefficient.field()))
+        {
+            return Err(CurveError::Topology(
+                "a recursive polynomial crossed retained coefficient fields".into(),
+            ));
         }
-        (Classification::Uncertain(reason), _) | (_, Classification::Uncertain(reason)) => {
-            return Ok(Classification::Uncertain(reason));
+        if coefficients.len() == 1 {
+            return Ok(match first.sign(policy)? {
+                Classification::Decided(RealSign::Positive | RealSign::Negative) => {
+                    Classification::Decided(Vec::new())
+                }
+                Classification::Decided(RealSign::Zero) => {
+                    Classification::Uncertain(UncertaintyReason::Boundary)
+                }
+                Classification::Uncertain(reason) => Classification::Uncertain(reason),
+            });
         }
-    }
-    let equation_value = recursive_projective_polynomial_value(equation, &parameter.data.scalar)
-        .ok_or_else(|| {
-            CurveError::Topology(
-                "a retained coordinate root exceeded its recursive field budget".into(),
+
+        if let Some(scalars) =
+            recursive_quadratic_polynomial_projective_roots(field, &coefficients, policy)?
+        {
+            let mut retained = Vec::with_capacity(scalars.len());
+            for scalar in scalars {
+                let parameter = match BezierRecursiveProjectiveParameter2::new(scalar, policy)? {
+                    Classification::Decided(parameter) => parameter,
+                    Classification::Uncertain(reason) => {
+                        return Ok(Classification::Uncertain(reason));
+                    }
+                };
+                let lower = parameter.order_to_real(&Real::zero(), policy)?;
+                let upper = parameter.order_to_real(&Real::one(), policy)?;
+                match (lower, upper) {
+                    (
+                        Classification::Decided(
+                            std::cmp::Ordering::Equal | std::cmp::Ordering::Greater,
+                        ),
+                        Classification::Decided(
+                            std::cmp::Ordering::Equal | std::cmp::Ordering::Less,
+                        ),
+                    ) => {}
+                    (Classification::Decided(_), Classification::Decided(_)) => continue,
+                    (Classification::Uncertain(reason), _)
+                    | (_, Classification::Uncertain(reason)) => {
+                        return Ok(Classification::Uncertain(reason));
+                    }
+                }
+                let value =
+                    recursive_projective_polynomial_value(&coefficients, &parameter.data.scalar)
+                        .ok_or_else(|| {
+                            CurveError::Topology(
+                                "a retained polynomial root exceeded its recursive field budget"
+                                    .into(),
+                            )
+                        })?;
+                match value.sign(policy)? {
+                    Classification::Decided(RealSign::Zero) => {}
+                    Classification::Decided(RealSign::Positive | RealSign::Negative) => {
+                        return Err(CurveError::Topology(
+                            "a direct recursive polynomial root failed authored replay".into(),
+                        ));
+                    }
+                    Classification::Uncertain(reason) => {
+                        return Ok(Classification::Uncertain(reason));
+                    }
+                }
+                retained.push(parameter.data.scalar.exact_real_value().map_or_else(
+                    || CurveRegionParameter2::from_recursive_projective(parameter),
+                    |value| CurveRegionParameter2::from_bezier(BezierParameter2::Exact(value)),
+                ));
+            }
+            #[cfg(feature = "dispatch-trace")]
+            hyperreal::dispatch_trace::record(
+                "hypercurve",
+                "recursive-polynomial-unit-roots",
+                "direct-projective",
+            );
+            return Ok(Classification::Decided(retained));
+        }
+
+        let Some((base, projection)) =
+            recursive_quadratic_polynomial_projection(coefficients.clone())
+        else {
+            return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+        };
+        if !recursive_quadratic_bases_equivalent(&base, &field.base_and_extension_path().0) {
+            return Err(CurveError::Topology(
+                "a recursive polynomial projection changed its retained base".into(),
+            ));
+        }
+        let candidates = match selected_dense_last_axis_parameters(
+            &projection,
+            &base.sources,
+            SelectedThirdAxisDomain2::UnitInterval,
+            policy,
+        )? {
+            Classification::Decided(BezierAlgebraicFiberProjection2::Parameters(candidates)) => {
+                candidates
+            }
+            Classification::Decided(
+                BezierAlgebraicFiberProjection2::IdenticallyZero
+                | BezierAlgebraicFiberProjection2::Degenerate,
+            ) => return Ok(Classification::Uncertain(UncertaintyReason::Boundary)),
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        let mut retained = Vec::with_capacity(candidates.len());
+        for candidate in candidates {
+            let candidate = CurveRegionParameter2::from_bezier(candidate);
+            let value = recursive_projective_polynomial_value_at_parameter(
+                field,
+                &coefficients,
+                &candidate,
             )
-        })?;
-    match policy.strict_predicate_pass(|| equation_value.sign(policy))? {
-        Classification::Decided(RealSign::Zero) => {}
-        Classification::Decided(RealSign::Positive | RealSign::Negative) => {
-            return Ok(Classification::Uncertain(UncertaintyReason::Predicate));
+            .ok_or_else(|| {
+                CurveError::Topology(
+                    "a projected recursive polynomial root exceeded its retained field budget"
+                        .into(),
+                )
+            })?;
+            match value.sign(policy)? {
+                Classification::Decided(RealSign::Zero) => retained.push(candidate),
+                Classification::Decided(RealSign::Positive | RealSign::Negative) => {}
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            }
         }
-        Classification::Uncertain(reason) => {
-            return Ok(Classification::Uncertain(reason));
-        }
-    }
-    let weight_value = recursive_projective_polynomial_value(weight, &parameter.data.scalar)
-        .ok_or_else(|| {
-            CurveError::Topology("a retained source weight exceeded its field budget".into())
-        })?;
-    match policy.strict_predicate_pass(|| weight_value.sign(policy))? {
-        Classification::Decided(RealSign::Positive | RealSign::Negative) => {
-            Ok(Classification::Decided(Some(
-                CurveRegionParameter2::from_recursive_projective(parameter),
-            )))
-        }
-        Classification::Decided(RealSign::Zero) => {
-            Ok(Classification::Uncertain(UncertaintyReason::Boundary))
-        }
-        Classification::Uncertain(reason) => Ok(Classification::Uncertain(reason)),
-    }
+        #[cfg(feature = "dispatch-trace")]
+        hyperreal::dispatch_trace::record(
+            "hypercurve",
+            "recursive-polynomial-unit-roots",
+            "projected-replay",
+        );
+        Ok(Classification::Decided(retained))
+    })
 }
 
 /// Isolates every rational-curve parameter whose chosen coordinate equals one
@@ -56499,87 +56613,26 @@ fn recursive_projective_point_rational_axis_parameters(
     {
         weight.pop();
     }
-    match equation.as_slice() {
-        [] => return Ok(Classification::Uncertain(UncertaintyReason::Boundary)),
-        [constant] => {
-            return match policy.strict_predicate_pass(|| constant.sign(policy))? {
-                Classification::Decided(RealSign::Positive | RealSign::Negative) => {
-                    Ok(Classification::Decided(Some(Vec::new())))
-                }
-                Classification::Decided(RealSign::Zero) => {
-                    Ok(Classification::Uncertain(UncertaintyReason::Boundary))
-                }
-                Classification::Uncertain(reason) => Ok(Classification::Uncertain(reason)),
-            };
-        }
-        _ => {}
-    }
-    if let Some(scalars) =
-        recursive_quadratic_polynomial_projective_roots(&field, &equation, policy)?
-    {
-        let mut retained = Vec::with_capacity(scalars.len());
-        for scalar in scalars {
-            match certified_recursive_projective_source_parameter(
-                scalar, &equation, &weight, policy,
-            )? {
-                Classification::Decided(Some(parameter)) => retained.push(parameter),
-                Classification::Decided(None) => {}
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            }
-        }
-        return Ok(Classification::Decided(Some(retained)));
-    }
-    let Some((base, projection)) = recursive_quadratic_polynomial_projection(equation.clone())
-    else {
-        return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
-    };
-    let candidates = match policy.strict_predicate_pass(|| {
-        selected_dense_last_axis_parameters(
-            &projection,
-            &base.sources,
-            SelectedThirdAxisDomain2::UnitInterval,
-            policy,
-        )
-    })? {
-        Classification::Decided(BezierAlgebraicFiberProjection2::Parameters(candidates)) => {
-            candidates
-        }
-        Classification::Decided(
-            BezierAlgebraicFiberProjection2::IdenticallyZero
-            | BezierAlgebraicFiberProjection2::Degenerate,
-        ) => return Ok(Classification::Uncertain(UncertaintyReason::Boundary)),
-        Classification::Uncertain(reason) => {
-            return Ok(Classification::Uncertain(reason));
-        }
-    };
-    let mut retained = Vec::with_capacity(candidates.len());
-    for candidate in candidates {
-        let Some(embedding) = recursive_quadratic_target_embedding(&field, &base, &candidate)
-        else {
-            return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
-        };
-        let equation = embedding.polynomial_value(&equation).ok_or_else(|| {
-            CurveError::Topology(
-                "a recursive endpoint/source equation exceeded its retained field budget".into(),
-            )
-        })?;
-        match policy.strict_predicate_pass(|| equation.sign(policy))? {
-            Classification::Decided(RealSign::Zero) => {}
-            Classification::Decided(RealSign::Positive | RealSign::Negative) => continue,
+    let candidates =
+        match recursive_projective_polynomial_unit_parameters(&field, equation, policy)? {
+            Classification::Decided(candidates) => candidates,
             Classification::Uncertain(reason) => {
                 return Ok(Classification::Uncertain(reason));
             }
-        }
-        let weight = embedding.polynomial_value(&weight).ok_or_else(|| {
-            CurveError::Topology(
-                "a recursive endpoint/source weight exceeded its retained field budget".into(),
-            )
-        })?;
+        };
+    let mut retained = Vec::with_capacity(candidates.len());
+    for candidate in candidates {
+        let weight =
+            recursive_projective_polynomial_value_at_parameter(&field, &weight, &candidate)
+                .ok_or_else(|| {
+                    CurveError::Topology(
+                        "a recursive endpoint/source weight exceeded its retained field budget"
+                            .into(),
+                    )
+                })?;
         match policy.strict_predicate_pass(|| weight.sign(policy))? {
             Classification::Decided(RealSign::Positive | RealSign::Negative) => {
-                retained.push(CurveRegionParameter2::from_bezier(candidate))
+                retained.push(candidate)
             }
             Classification::Decided(RealSign::Zero) => {
                 return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
@@ -101776,42 +101829,10 @@ impl BezierParameterComponentOverlap2 {
             return policy.strict_predicate_pass(|| {
                 self.map_selected_fiber_parameter(retained_parameter, parameter, policy)
             });
-        } else if parameter.as_recursive_projective().is_some() {
-            let (retained_range, lifted_range) = match retained_parameter {
-                CurveResultantParameter::First => {
-                    (self.overlap.first_range(), self.overlap.second_range())
-                }
-                CurveResultantParameter::Second => {
-                    (self.overlap.second_range(), self.overlap.first_range())
-                }
-            };
-            for (retained_endpoint, lifted_endpoint) in [
-                (retained_range.start(), lifted_range.start()),
-                (retained_range.end(), lifted_range.end()),
-            ] {
-                match parameter.cmp_by_refinement(
-                    &CurveRegionParameter2::from_bezier(retained_endpoint.clone()),
-                    policy,
-                )? {
-                    Classification::Decided(std::cmp::Ordering::Equal) => {
-                        return Ok(Classification::Decided(Some(
-                            CurveRegionParameter2::from_bezier(lifted_endpoint.clone()),
-                        )));
-                    }
-                    Classification::Decided(_) => {}
-                    Classification::Uncertain(reason) => {
-                        return Ok(Classification::Uncertain(reason));
-                    }
-                }
-            }
-            match policy
-                .strict_predicate_pass(|| parameter.promoted_bezier_parameter_complete(policy))?
-            {
-                Classification::Decided(parameter) => parameter,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            }
+        } else if let Some(parameter) = parameter.as_recursive_projective() {
+            return policy.strict_predicate_pass(|| {
+                self.map_recursive_projective_parameter(retained_parameter, parameter, policy)
+            });
         } else {
             return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
         };
@@ -101976,6 +101997,105 @@ impl BezierParameterComponentOverlap2 {
                 |value| CurveRegionParameter2::from_bezier(BezierParameter2::Exact(value.clone())),
             ),
         )))
+    }
+
+    /// Maps one recursively retained scalar through the authored component
+    /// without first constructing its global univariate image. The component
+    /// is specialized directly in the recursive coefficient tower; its
+    /// linear/quadratic image stays there, while higher degree uses the shared
+    /// dense projection only for candidate enumeration and exact sheet replay.
+    fn map_recursive_projective_parameter(
+        &self,
+        retained_parameter: CurveResultantParameter,
+        parameter: &BezierRecursiveProjectiveParameter2,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<Option<CurveRegionParameter2>>> {
+        parameter.validate_policy(policy)?;
+        let (retained_range, lifted_range) = match retained_parameter {
+            CurveResultantParameter::First => {
+                (self.overlap.first_range(), self.overlap.second_range())
+            }
+            CurveResultantParameter::Second => {
+                (self.overlap.second_range(), self.overlap.first_range())
+            }
+        };
+        for (retained_endpoint, lifted_endpoint) in [
+            (retained_range.start(), lifted_range.start()),
+            (retained_range.end(), lifted_range.end()),
+        ] {
+            match parameter.cmp_bezier_parameter(retained_endpoint, policy)? {
+                Classification::Decided(std::cmp::Ordering::Equal) => {
+                    return Ok(Classification::Decided(Some(
+                        CurveRegionParameter2::from_bezier(lifted_endpoint.clone()),
+                    )));
+                }
+                Classification::Decided(_) => {}
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            }
+        }
+        match curve_region_parameter_is_in_bezier_range(
+            &CurveRegionParameter2::from_recursive_projective(parameter.clone()),
+            retained_range,
+            false,
+            policy,
+        )? {
+            Classification::Decided(true) => {}
+            Classification::Decided(false) => return Ok(Classification::Decided(None)),
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        }
+
+        let swapped_support;
+        let support = match retained_parameter {
+            CurveResultantParameter::First => self.support.as_ref(),
+            CurveResultantParameter::Second => {
+                swapped_support = bivariate_swap_parameters(&self.support);
+                &swapped_support
+            }
+        };
+        let Some(equation) = recursive_projective_bivariate_first_parameter_polynomial(
+            support,
+            parameter,
+            bivariate_first_active_degree(support),
+        ) else {
+            return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+        };
+        let candidates = match recursive_projective_polynomial_unit_parameters(
+            &parameter.data.scalar.numerator.field(),
+            equation,
+            policy,
+        )? {
+            Classification::Decided(candidates) => candidates,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        let rank = match self.resolved_fiber_root_rank(retained_parameter, policy)? {
+            Classification::Decided(rank) => rank,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        let Some(mapped) = candidates.into_iter().nth(rank) else {
+            return Ok(Classification::Decided(None));
+        };
+        match curve_region_parameter_is_in_bezier_range(&mapped, lifted_range, true, policy)? {
+            Classification::Decided(true) => {}
+            Classification::Decided(false) => return Ok(Classification::Decided(None)),
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        }
+        #[cfg(feature = "dispatch-trace")]
+        hyperreal::dispatch_trace::record(
+            "hypercurve",
+            "parameter-component-map",
+            "recursive-projective-local-image",
+        );
+        Ok(Classification::Decided(Some(mapped)))
     }
 
     fn resolved_fiber_root_rank(
@@ -143500,6 +143620,211 @@ mod conversion_tests {
                 .expect("the reverse nonrepresented image must remain in the selected fiber");
             assert_eq!(
                 round_trip.cmp_by_refinement(&source, &policy).unwrap(),
+                Classification::Decided(std::cmp::Ordering::Equal),
+            );
+        }
+    }
+
+    #[test]
+    fn nonlinear_parameter_component_maps_recursive_projective_scalars_locally() {
+        let fraction = |numerator: i8, denominator: i8| {
+            (Real::from(numerator) / Real::from(denominator)).unwrap()
+        };
+        let half = fraction(1, 2);
+        let eighth = fraction(1, 8);
+        let source_parameter = algebraic_parameter(vec![-half.clone(), Real::zero(), Real::one()]);
+        let source_representation = bezier_parameter_root_representation(&source_parameter);
+        let one = DenseTensorPolynomial::from_axis_polynomial(1, 0, &[Real::one()])
+            .expect("the recursive component base must retain its unit");
+        let coordinate =
+            DenseTensorPolynomial::from_axis_polynomial(1, 0, &[Real::zero(), Real::one()])
+                .expect("the recursive component base must retain its coordinate");
+        let parameter = |value: Real| BezierParameter2::Exact(value);
+        let witness = BezierParallelIntersectionParameterPair2 {
+            parallel_parameter: parameter(Real::zero()),
+            other_parameter: parameter(Real::zero()),
+        };
+        let affine = BezierParameterComponentOverlap2 {
+            overlap: RationalBezierIntersectionOverlap2::from_certified_parameters(
+                parameter(Real::zero()),
+                parameter(Real::one()),
+                parameter(Real::zero()),
+                parameter(half.clone()),
+                RationalBezierOverlapOrientation2::Same,
+                [true, true],
+            ),
+            // 2v-u=0 maps alpha to alpha/2 without leaving its recursive
+            // coefficient tower.
+            support: Arc::new(BivariatePolynomial::new(vec![
+                vec![Real::zero(), Real::from(2_i8)],
+                vec![Real::from(-1_i8)],
+            ])),
+            fiber_root_ranks: [0, 0],
+            witness: witness.clone(),
+        };
+        let cubic = BezierParameterComponentOverlap2 {
+            overlap: RationalBezierIntersectionOverlap2::from_certified_parameters(
+                parameter(Real::zero()),
+                parameter(Real::one()),
+                parameter(Real::zero()),
+                parameter(Real::one()),
+                RationalBezierOverlapOrientation2::Same,
+                [true, true],
+            ),
+            // v-u^3=0 forces the reverse map through the complete projected
+            // enumerator while authored-sheet replay selects u=alpha from
+            // v=alpha/2=alpha^3.
+            support: Arc::new(BivariatePolynomial::new(vec![
+                vec![Real::zero(), Real::one()],
+                vec![Real::zero()],
+                vec![Real::zero()],
+                vec![Real::from(-1_i8)],
+            ])),
+            fiber_root_ranks: [0, 0],
+            witness: witness.clone(),
+        };
+        let upper_quadratic_branch = BezierParameterComponentOverlap2 {
+            overlap: RationalBezierIntersectionOverlap2::from_certified_parameters(
+                parameter(half.clone()),
+                parameter(Real::one()),
+                parameter(half.clone()),
+                parameter(Real::one()),
+                RationalBezierOverlapOrientation2::Same,
+                [true, true],
+            ),
+            // (v-u)(v-(1-u))=0 has two ordered unit roots. The authored
+            // upper branch is rank one in both directions on [1/2,1].
+            support: Arc::new(BivariatePolynomial::new(vec![
+                vec![Real::zero(), Real::from(-1_i8), Real::one()],
+                vec![Real::one()],
+                vec![Real::from(-1_i8)],
+            ])),
+            fiber_root_ranks: [1, 1],
+            witness: witness.clone(),
+        };
+        let degree_drop = BezierParameterComponentOverlap2 {
+            overlap: RationalBezierIntersectionOverlap2::from_certified_parameters(
+                parameter(Real::zero()),
+                parameter(Real::one()),
+                parameter(Real::zero()),
+                parameter(Real::one()),
+                RationalBezierOverlapOrientation2::Same,
+                [true, true],
+            ),
+            // v-u+(u^2-1/2)v^3=0 specializes to v=u at the selected
+            // alpha^2=1/2 source. The global cubic leading coefficient drops
+            // only on the authored retained tuple.
+            support: Arc::new(BivariatePolynomial::new(vec![
+                vec![Real::zero(), Real::one(), Real::zero(), -half.clone()],
+                vec![Real::from(-1_i8)],
+                vec![Real::zero(), Real::zero(), Real::zero(), Real::one()],
+            ])),
+            fiber_root_ranks: [0, 0],
+            witness,
+        };
+
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let field = BezierRecursiveQuadraticField2::base(
+                vec![source_representation.clone()],
+                one.clone(),
+                one.clone(),
+            )
+            .expect("the recursive component field must construct");
+            let BezierRecursiveQuadraticField2::Base(base) = &field else {
+                unreachable!("the recursive component field begins at its base")
+            };
+            let scalar = BezierRecursiveQuadraticProjectiveScalar2 {
+                numerator: recursive_quadratic_rational_value(base, coordinate.clone())
+                    .expect("the selected source coordinate must embed"),
+                denominator: field
+                    .constant(Real::one())
+                    .expect("the selected source coordinate must retain its denominator"),
+            };
+            let Classification::Decided(source) =
+                BezierRecursiveProjectiveParameter2::new(scalar, &policy).unwrap()
+            else {
+                panic!("the recursive component source must construct");
+            };
+            let source = CurveRegionParameter2::from_recursive_projective(source);
+
+            let direct = crate::policy::resolve_certified_operation(&policy, |attempt| {
+                affine.map_curve_parameter(CurveResultantParameter::First, &source, attempt)
+            })
+            .unwrap();
+            assert_eq!(direct.certainty, CurveCertainty::Certified);
+            let Classification::Decided(Some(direct)) = direct.value else {
+                panic!("the affine recursive component image must decide");
+            };
+            let direct_parameter = direct
+                .as_recursive_projective()
+                .expect("a nonrepresented affine image must remain recursive");
+            assert_eq!(direct_parameter.data.policy, CurveContext::STRICT);
+            assert_eq!(
+                direct_parameter
+                    .polynomial_sign(&[-eighth.clone(), Real::zero(), Real::one()], &policy)
+                    .unwrap(),
+                Classification::Decided(RealSign::Zero),
+            );
+
+            let ranked = crate::policy::resolve_certified_operation(&policy, |attempt| {
+                upper_quadratic_branch.map_curve_parameter(
+                    CurveResultantParameter::First,
+                    &source,
+                    attempt,
+                )
+            })
+            .unwrap();
+            assert_eq!(ranked.certainty, CurveCertainty::Certified);
+            let Classification::Decided(Some(ranked)) = ranked.value else {
+                panic!("the rank-one recursive component image must decide");
+            };
+            let ranked = ranked
+                .as_recursive_projective()
+                .expect("a quadratic recursive image must remain in its extended tower");
+            assert_eq!(
+                ranked.order_to_real(&half, &policy).unwrap(),
+                Classification::Decided(std::cmp::Ordering::Greater),
+            );
+            assert_eq!(
+                ranked
+                    .polynomial_sign(&[-half.clone(), Real::zero(), Real::one()], &policy)
+                    .unwrap(),
+                Classification::Decided(RealSign::Zero),
+            );
+
+            let dropped = crate::policy::resolve_certified_operation(&policy, |attempt| {
+                degree_drop.map_curve_parameter(CurveResultantParameter::First, &source, attempt)
+            })
+            .unwrap();
+            assert_eq!(dropped.certainty, CurveCertainty::Certified);
+            let Classification::Decided(Some(dropped)) = dropped.value else {
+                panic!("the recursive component degree drop must decide");
+            };
+            let dropped = dropped
+                .as_recursive_projective()
+                .expect("an exact selected degree drop must stay in the recursive tower");
+            assert_eq!(
+                dropped
+                    .polynomial_sign(&[-half.clone(), Real::zero(), Real::one()], &policy)
+                    .unwrap(),
+                Classification::Decided(RealSign::Zero),
+            );
+
+            let projected = crate::policy::resolve_certified_operation(&policy, |attempt| {
+                cubic.map_curve_parameter(CurveResultantParameter::Second, &direct, attempt)
+            })
+            .unwrap();
+            assert_eq!(projected.certainty, CurveCertainty::Certified);
+            let Classification::Decided(Some(projected)) = projected.value else {
+                panic!("the cubic recursive component image must decide");
+            };
+            let projected = projected
+                .as_bezier_parameter()
+                .expect("a higher-degree recursive image uses the complete projected carrier");
+            assert_eq!(
+                projected
+                    .cmp_by_refinement(&source_parameter, &policy)
+                    .unwrap(),
                 Classification::Decided(std::cmp::Ordering::Equal),
             );
         }
