@@ -100,7 +100,9 @@ use hypersolve::{
 use hypersolve::{
     TrivariateConstraintResultantStatus, TrivariateConstraintSubresultantStatus,
     TrivariatePolynomial as SolverTrivariatePolynomial, TrivariatePolynomialAxis,
+    TrivariatePolynomialSystemSubresultantStatus,
     resultant_trivariate_polynomial_univariate_constraint,
+    subresultant_trivariate_polynomial_system,
     subresultant_trivariate_polynomial_univariate_constraint,
 };
 
@@ -58842,6 +58844,38 @@ fn bivariate_remove_common_factors(
 
 #[cold]
 #[inline(never)]
+fn trivariate_from_bivariate_axes(
+    polynomial: &BivariatePolynomial,
+    axes: [usize; 2],
+) -> Option<TrivariatePolynomial2> {
+    if axes[0] >= 3 || axes[1] >= 3 || axes[0] == axes[1] {
+        return None;
+    }
+    let first_count = polynomial.coefficients.len().max(1);
+    let second_count = polynomial
+        .coefficients
+        .iter()
+        .map(Vec::len)
+        .max()
+        .unwrap_or(1)
+        .max(1);
+    let mut dimensions = [1; 3];
+    dimensions[axes[0]] = first_count;
+    dimensions[axes[1]] = second_count;
+    let mut coefficients = try_zero_trivariate_coefficients(dimensions)?;
+    for (first, row) in polynomial.coefficients.iter().enumerate() {
+        for (second, value) in row.iter().enumerate() {
+            let mut exponents = [0; 3];
+            exponents[axes[0]] = first;
+            exponents[axes[1]] = second;
+            coefficients[exponents[0]][exponents[1]][exponents[2]] = value.clone();
+        }
+    }
+    TrivariatePolynomial2::from_coefficients(coefficients)
+}
+
+#[cold]
+#[inline(never)]
 fn trivariate_from_axis_bivariate_coefficients(
     coefficients: &[BivariatePolynomial],
     axis: usize,
@@ -60134,10 +60168,24 @@ fn trivariate_restrict_to_parameter_box(
     let (second_start, second_end) = parameter_bounds(second);
     let (third_start, third_end) = parameter_bounds(third);
 
+    trivariate_restrict_to_box_bounds(
+        polynomial,
+        [
+            (first_start, first_end),
+            (second_start, second_end),
+            (third_start, third_end),
+        ],
+    )
+}
+
+fn trivariate_restrict_to_box_bounds(
+    polynomial: &TrivariatePolynomial2,
+    bounds: [(&Real, &Real); 3],
+) -> TrivariatePolynomial2 {
     let mut restricted = polynomial.coefficients.clone();
     for rows in &mut restricted {
         for row in rows {
-            *row = polynomial_restrict_to_interval(row, third_start, third_end);
+            *row = polynomial_restrict_to_interval(row, bounds[2].0, bounds[2].1);
         }
     }
     for rows in &mut restricted {
@@ -60146,8 +60194,8 @@ fn trivariate_restrict_to_parameter_box(
             let coefficients = rows.iter().map(|row| row[c].clone()).collect::<Vec<_>>();
             for (row, coefficient) in rows.iter_mut().zip(polynomial_restrict_to_interval(
                 &coefficients,
-                second_start,
-                second_end,
+                bounds[1].0,
+                bounds[1].1,
             )) {
                 row[c] = coefficient;
             }
@@ -60162,8 +60210,8 @@ fn trivariate_restrict_to_parameter_box(
                 .collect::<Vec<_>>();
             for (rows, coefficient) in restricted.iter_mut().zip(polynomial_restrict_to_interval(
                 &coefficients,
-                first_start,
-                first_end,
+                bounds[0].0,
+                bounds[0].1,
             )) {
                 rows[b][c] = coefficient;
             }
@@ -86774,14 +86822,478 @@ fn algebraic_selected_fiber_pair_predicate_sign(
     }
 }
 
+/// Rebinds an equation known to vanish at a selected fiber root.
+///
+/// Differentiation can introduce foreign critical roots inside the original
+/// isolator even though that interval contains only one root of the old
+/// equation. Narrow the trusted old singleton until the new equation also has
+/// exactly one root there before publishing a new authority. All isolation is
+/// STRICT because the result becomes construction evidence.
+fn selected_fiber_rebind_incidence(
+    parameter: &BezierAlgebraicSelectedFiberParameter2,
+    incidence: BivariatePolynomial,
+    strict: &CurveContext,
+) -> CurveResult<Classification<BezierAlgebraicSelectedFiberParameter2>> {
+    let retained = &parameter.data.authority.data.retained_parameter;
+    if parameter.data.root.exact_root.is_some() {
+        return Ok(Classification::Decided(
+            BezierAlgebraicSelectedFiberAuthority2::new(incidence, retained.clone(), strict)
+                .parameter(parameter.data.root.clone()),
+        ));
+    }
+    for steps in [0_usize, 2, 4, 8, 16, 32, 64, 128, 256, 512] {
+        let trusted = match parameter.refined(steps, strict)? {
+            Classification::Decided(parameter) => parameter,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        if trusted.data.root.exact_root.is_some() {
+            return Ok(Classification::Decided(
+                BezierAlgebraicSelectedFiberAuthority2::new(incidence, retained.clone(), strict)
+                    .parameter(trusted.data.root.clone()),
+            ));
+        }
+        let retained_refined = BezierParameter2::Algebraic(retained.clone())
+            .refined_isolating_interval(steps.max(64), strict);
+        let retained_root = match retained_refined {
+            BezierParameter2::Algebraic(parameter) => parameter_representation(&parameter, strict),
+            BezierParameter2::Exact(parameter) => exact_real_algebraic_representation(&parameter),
+        };
+        let report = isolate_bivariate_fiber_roots_at_algebraic_parameter_complete(
+            &incidence,
+            CurveResultantParameter::First,
+            &retained_root,
+            &trusted.data.root.lower,
+            &trusted.data.root.upper,
+            AlgebraicFiberRootIsolationConfig {
+                max_subdivision_depth: 512,
+                refinement_steps: 8,
+            },
+            hypersolve::PredicatePolicy::STRICT,
+        );
+        match report.status {
+            AlgebraicFiberRootIsolationStatus::Isolated if report.intervals.len() == 1 => {
+                return Ok(Classification::Decided(
+                    BezierAlgebraicSelectedFiberAuthority2::new(
+                        incidence,
+                        retained.clone(),
+                        strict,
+                    )
+                    .parameter(
+                        report
+                            .intervals
+                            .into_iter()
+                            .next()
+                            .expect("a singleton deflated fiber has one isolator"),
+                    ),
+                ));
+            }
+            AlgebraicFiberRootIsolationStatus::Isolated => {}
+            AlgebraicFiberRootIsolationStatus::NoRoots
+            | AlgebraicFiberRootIsolationStatus::IdenticallyZeroFiber => {
+                return Err(CurveError::Topology(
+                    "a certified fiber root disappeared during local multiplicity deflation".into(),
+                ));
+            }
+            AlgebraicFiberRootIsolationStatus::InvalidEvidence
+            | AlgebraicFiberRootIsolationStatus::InvalidInterval => {
+                return Err(CurveError::InvalidBezierAlgebraicParameter);
+            }
+            AlgebraicFiberRootIsolationStatus::UnsupportedCoefficient => {
+                return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+            }
+            AlgebraicFiberRootIsolationStatus::DepthLimit
+            | AlgebraicFiberRootIsolationStatus::Undecided => {
+                return Ok(Classification::Uncertain(UncertaintyReason::Predicate));
+            }
+        }
+    }
+    Ok(Classification::Uncertain(UncertaintyReason::Predicate))
+}
+
+/// Returns a local authority in which the retained fiber root is simple.
+///
+/// Repeated differentiation is local multiplicity deflation: the last
+/// equation whose derivative is nonzero at the selected root still vanishes
+/// there and crosses its isolator. Every identity test and authority rebind is
+/// STRICT because this equation becomes construction evidence for a later
+/// product-box proof.
+fn selected_fiber_simple_parameter(
+    parameter: &BezierAlgebraicSelectedFiberParameter2,
+    policy: &CurveContext,
+) -> CurveResult<Classification<BezierAlgebraicSelectedFiberParameter2>> {
+    let strict = policy.strict_counterpart();
+    let mut incidence = parameter.data.authority.data.incidence.clone();
+    // Norm projections commonly duplicate every factor. Peeling an exact
+    // bivariate square preserves the complete root set and avoids asking the
+    // local Sturm engine to rediscover that structural multiplicity.
+    while let Some(square_root) = bivariate_exact_square_root(&incidence) {
+        let old_count = incidence
+            .coefficients
+            .iter()
+            .map(Vec::len)
+            .max()
+            .unwrap_or_default();
+        let new_count = square_root
+            .coefficients
+            .iter()
+            .map(Vec::len)
+            .max()
+            .unwrap_or_default();
+        if new_count >= old_count {
+            break;
+        }
+        incidence = square_root;
+    }
+    let mut parameter = BezierAlgebraicSelectedFiberAuthority2::new(
+        incidence,
+        parameter.data.authority.data.retained_parameter.clone(),
+        &strict,
+    )
+    .parameter(parameter.data.root.clone());
+    loop {
+        let derivative = bivariate_parameter_derivative(
+            &parameter.data.authority.data.incidence,
+            CurveResultantParameter::Second,
+        );
+        if matches!(bivariate_exact_nonzero_metadata(&derivative), Some(None)) {
+            return Err(CurveError::InvalidBezierAlgebraicParameter);
+        }
+        match parameter.predicate_sign(&derivative, &strict)? {
+            Classification::Decided(RealSign::Positive | RealSign::Negative) => {
+                return Ok(Classification::Decided(parameter));
+            }
+            Classification::Decided(RealSign::Zero) => {
+                parameter = match selected_fiber_rebind_incidence(&parameter, derivative, &strict)?
+                {
+                    Classification::Decided(parameter) => parameter,
+                    Classification::Uncertain(reason) => {
+                        return Ok(Classification::Uncertain(reason));
+                    }
+                };
+            }
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        }
+    }
+}
+
+/// Certifies one root of a trivariate equation in the selected
+/// `(alpha,u,v)` product isolator.
+///
+/// The caller supplies locally simple source and image authorities; the base
+/// is reduced here as the remaining simple constraint. Strict opposite signs
+/// on all three coordinate-face pairs then give a Poincare--Miranda existence
+/// proof. A strict Bernstein sign on the complete box instead proves the
+/// selected tuple is not a root.
+fn algebraic_selected_fiber_pair_trivariate_root(
+    source: &BezierAlgebraicSelectedFiberParameter2,
+    image: &BezierAlgebraicSelectedFiberParameter2,
+    incidence: &TrivariatePolynomial2,
+    policy: &CurveContext,
+) -> CurveResult<Classification<bool>> {
+    let strict = policy.strict_counterpart();
+    let retained = &source.data.authority.data.retained_parameter;
+    let base = match selected_parameter_simple_constraint(
+        &BezierParameter2::Algebraic(retained.clone()),
+        &strict,
+    )? {
+        Classification::Decided(base) => base,
+        Classification::Uncertain(reason) => {
+            return Ok(Classification::Uncertain(reason));
+        }
+    };
+    let source_incidence = source.data.authority.data.incidence.clone();
+    let mut previous = None;
+    for steps in [0_usize, 2, 4, 8, 16, 32, 64, 128, 256, 512] {
+        let source_steps = steps.saturating_add(64);
+        let alpha = BezierParameter2::Algebraic(retained.clone())
+            .refined_isolating_interval(source_steps, &strict);
+        let BezierParameter2::Algebraic(alpha) = alpha else {
+            return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+        };
+        let source = match source.refined(source_steps, &strict)? {
+            Classification::Decided(source) => source,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        let image = match image.refined(steps, &strict)? {
+            Classification::Decided(image) => image,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        if previous
+            .as_ref()
+            .is_some_and(|(old_alpha, old_source, old_image)| {
+                old_alpha == &alpha && old_source == &source && old_image == &image
+            })
+        {
+            break;
+        }
+        previous = Some((alpha.clone(), source.clone(), image.clone()));
+
+        let defining_lower = polynomial_evaluate(&base, alpha.interval().start());
+        let defining_upper = polynomial_evaluate(&base, alpha.interval().end());
+        if !strict_signs_are_opposite(
+            real_sign(&defining_lower, &strict),
+            real_sign(&defining_upper, &strict),
+        ) {
+            continue;
+        }
+        let restricted_source = bivariate_restrict_to_box_bounds(
+            &source_incidence,
+            alpha.interval().start(),
+            alpha.interval().end(),
+            &source.root().lower,
+            &source.root().upper,
+            &strict,
+        );
+        let source_lower = univariate_unit_interval_strict_bernstein_sign(
+            &bivariate_specialize_second(&restricted_source, &Real::zero()),
+            &strict,
+        )?;
+        let source_upper = univariate_unit_interval_strict_bernstein_sign(
+            &bivariate_specialize_second(&restricted_source, &Real::one()),
+            &strict,
+        )?;
+        if !strict_signs_are_opposite(source_lower, source_upper) {
+            continue;
+        }
+
+        let restricted = trivariate_restrict_to_box_bounds(
+            incidence,
+            [
+                (alpha.interval().start(), alpha.interval().end()),
+                (&source.root().lower, &source.root().upper),
+                (&image.root().lower, &image.root().upper),
+            ],
+        );
+        if trivariate_unit_cube_strict_bernstein_sign(restricted.clone(), &strict)?.is_some() {
+            return Ok(Classification::Decided(false));
+        }
+        let Some((coefficients, [0, 1])) = trivariate_axis_bivariate_coefficients(&restricted, 2)
+        else {
+            continue;
+        };
+        let Some(lower) = coefficients.first() else {
+            continue;
+        };
+        let upper = coefficients
+            .iter()
+            .skip(1)
+            .fold(lower.clone(), |sum, coefficient| {
+                bivariate_add(&sum, coefficient)
+            });
+        let lower = bivariate_unit_square_strict_bernstein_sign(lower, &strict)?;
+        let upper = bivariate_unit_square_strict_bernstein_sign(&upper, &strict)?;
+        if strict_signs_are_opposite(lower, upper) {
+            return Ok(Classification::Decided(true));
+        }
+    }
+    Ok(Classification::Uncertain(UncertaintyReason::Predicate))
+}
+
+/// Correlates a projected image root without promoting either selected fiber.
+///
+/// The image constraint is locally deflated to a simple root. Exact
+/// trivariate subresultants of that constraint and the authored incidence then
+/// recover their first nonzero GCD over the selected `(alpha,u)` field. Since
+/// that GCD divides the simple image constraint, the product-box proof above
+/// decides both tangent membership and separation.
+fn algebraic_selected_fiber_pair_projected_root_via_subresultants(
+    source: &BezierAlgebraicSelectedFiberParameter2,
+    image: &BezierAlgebraicSelectedFiberParameter2,
+    projected_incidence: &BivariatePolynomial,
+    policy: &CurveContext,
+) -> CurveResult<Classification<bool>> {
+    let strict = policy.strict_counterpart();
+    let source = match selected_fiber_simple_parameter(source, &strict)? {
+        Classification::Decided(parameter) => parameter,
+        Classification::Uncertain(reason) => {
+            return Ok(Classification::Uncertain(reason));
+        }
+    };
+    let image = match selected_fiber_simple_parameter(image, &strict)? {
+        Classification::Decided(parameter) => parameter,
+        Classification::Uncertain(reason) => {
+            return Ok(Classification::Uncertain(reason));
+        }
+    };
+    let image_incidence = image.data.authority.data.incidence.clone();
+    let Some(mut image_incidence) = trivariate_from_bivariate_axes(&image_incidence, [0, 2]) else {
+        return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+    };
+    let Some(mut projected_incidence) = trivariate_from_bivariate_axes(projected_incidence, [1, 2])
+    else {
+        return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+    };
+    let specialize_degree = |polynomial: &TrivariatePolynomial2|
+     -> CurveResult<Classification<Option<TrivariatePolynomial2>>> {
+        let Some((mut coefficients, [0, 1])) =
+            trivariate_axis_bivariate_coefficients(polynomial, 2)
+        else {
+            return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+        };
+        while coefficients.len() > 1 {
+            match source.predicate_sign(
+                coefficients
+                    .last()
+                    .expect("a nonempty coefficient list has a last value"),
+                &strict,
+            )? {
+                Classification::Decided(RealSign::Zero) => {
+                    coefficients.pop();
+                }
+                Classification::Decided(RealSign::Positive | RealSign::Negative) => break,
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            }
+        }
+        match source.predicate_sign(
+            coefficients
+                .first()
+                .expect("a retained coefficient list is nonempty"),
+            &strict,
+        )? {
+            Classification::Decided(RealSign::Zero) if coefficients.len() == 1 => {
+                Ok(Classification::Decided(None))
+            }
+            Classification::Decided(_) => Ok(Classification::Decided(
+                trivariate_from_axis_bivariate_coefficients(&coefficients, 2, [0, 1]),
+            )),
+            Classification::Uncertain(reason) => Ok(Classification::Uncertain(reason)),
+        }
+    };
+    image_incidence = match specialize_degree(&image_incidence)? {
+        Classification::Decided(Some(incidence)) => incidence,
+        Classification::Decided(None) => {
+            return Err(CurveError::InvalidBezierAlgebraicParameter);
+        }
+        Classification::Uncertain(reason) => {
+            return Ok(Classification::Uncertain(reason));
+        }
+    };
+    projected_incidence = match specialize_degree(&projected_incidence)? {
+        Classification::Decided(Some(incidence)) => incidence,
+        Classification::Decided(None) => return Ok(Classification::Decided(true)),
+        Classification::Uncertain(reason) => {
+            return Ok(Classification::Uncertain(reason));
+        }
+    };
+
+    let first_degree = image_incidence.dimensions().2.saturating_sub(1);
+    let second_degree = projected_incidence.dimensions().2.saturating_sub(1);
+    let maximum_order = first_degree.min(second_degree);
+    if maximum_order == 0 {
+        // The simple selected-image equation is nonconstant. A specialized
+        // constant authored equation was already certified nonzero above, so
+        // it cannot vanish at the selected pair.
+        return Ok(Classification::Decided(false));
+    }
+    let solver_image = SolverTrivariatePolynomial::new(image_incidence.coefficients.clone());
+    let solver_projected =
+        SolverTrivariatePolynomial::new(projected_incidence.coefficients.clone());
+    let mut config = CurveIntersectionResultantConfig {
+        min_precision: hypersolve::PredicatePolicy::MAX_REFINEMENT_PRECISION,
+        max_resultant_degree: MAX_PARALLEL_INTERSECTION_RESULTANT_DEGREE,
+    };
+    for order in 0..=maximum_order {
+        let mut report = subresultant_trivariate_polynomial_system(
+            &solver_image,
+            &solver_projected,
+            TrivariatePolynomialAxis::Third,
+            order,
+            config,
+        );
+        if report.status == TrivariatePolynomialSystemSubresultantStatus::DegreeBoundExceeded
+            && config.max_resultant_degree != usize::MAX
+        {
+            #[cfg(feature = "dispatch-trace")]
+            hyperreal::dispatch_trace::record(
+                "hypercurve",
+                "selected-fiber-pair-correlation",
+                "unbounded-cold-continuation",
+            );
+            config.max_resultant_degree = usize::MAX;
+            report = subresultant_trivariate_polynomial_system(
+                &solver_image,
+                &solver_projected,
+                TrivariatePolynomialAxis::Third,
+                order,
+                config,
+            );
+        }
+        match report.status {
+            TrivariatePolynomialSystemSubresultantStatus::Constructed => {}
+            TrivariatePolynomialSystemSubresultantStatus::UndecidedCoefficient => {
+                return Ok(Classification::Uncertain(UncertaintyReason::Predicate));
+            }
+            TrivariatePolynomialSystemSubresultantStatus::EmptyPolynomial
+            | TrivariatePolynomialSystemSubresultantStatus::InvalidOrder
+            | TrivariatePolynomialSystemSubresultantStatus::DegreeBoundExceeded
+            | TrivariatePolynomialSystemSubresultantStatus::DeterminantError
+            | TrivariatePolynomialSystemSubresultantStatus::InterpolationDivisionFailed => {
+                return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+            }
+        }
+        let mut any_nonzero = false;
+        let mut uncertainty = None;
+        for coefficient in &report.coefficients {
+            match source.predicate_sign(coefficient, &strict)? {
+                Classification::Decided(RealSign::Zero) => {}
+                Classification::Decided(RealSign::Positive | RealSign::Negative) => {
+                    any_nonzero = true;
+                    break;
+                }
+                Classification::Uncertain(reason) => uncertainty = Some(reason),
+            }
+        }
+        if order == 0 {
+            if any_nonzero {
+                return Ok(Classification::Decided(false));
+            }
+            if let Some(reason) = uncertainty {
+                return Ok(Classification::Uncertain(reason));
+            }
+            continue;
+        }
+        if !any_nonzero {
+            if let Some(reason) = uncertainty {
+                return Ok(Classification::Uncertain(reason));
+            }
+            continue;
+        }
+        let Some(gcd) =
+            trivariate_from_axis_bivariate_coefficients(&report.coefficients, 2, [0, 1])
+        else {
+            return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+        };
+        #[cfg(feature = "dispatch-trace")]
+        hyperreal::dispatch_trace::record(
+            "hypercurve",
+            "selected-fiber-pair-correlation",
+            "local-subresultant-gcd",
+        );
+        return algebraic_selected_fiber_pair_trivariate_root(&source, &image, &gcd, &strict);
+    }
+    Err(CurveError::Topology(
+        "a selected-fiber subresultant sequence lost its nonzero terminal polynomial".into(),
+    ))
+}
+
 /// Correlates one projected image root with the particular selected source
 /// fiber root that authored it.
 ///
 /// The square system `P(alpha)=0`, `F(alpha,u)=0`, `G(u,v)=0` receives a
 /// division-free Poincare--Miranda certificate whenever the contact is
 /// transverse.  Since `v` is already a singleton root of the exact local norm
-/// of `G`, any `G` root in its box is that selected image.  Multiple roots use
-/// the complete predicate fallback above.
+/// of `G`, any `G` root in its box is that selected image. Multiple roots use
+/// a local trivariate subresultant GCD before the complete predicate fallback.
 fn algebraic_selected_fiber_pair_projected_root(
     source: &BezierAlgebraicSelectedFiberParameter2,
     image: &BezierAlgebraicSelectedFiberParameter2,
@@ -86811,22 +87323,33 @@ fn algebraic_selected_fiber_pair_projected_root(
     }
 
     let strict = &CurveContext::STRICT;
-    let retained = &source.data.authority.data.retained_parameter;
+    let retained = source.data.authority.data.retained_parameter.clone();
+    let box_source = match selected_fiber_simple_parameter(source, strict)? {
+        Classification::Decided(parameter) => Some(parameter),
+        Classification::Uncertain(_) => None,
+    };
+    let box_image = match selected_fiber_simple_parameter(image, strict)? {
+        Classification::Decided(parameter) => Some(parameter),
+        Classification::Uncertain(_) => None,
+    };
     let mut previous = None;
     for steps in [0_usize, 2, 4, 8, 16, 32, 64, 128, 256, 512] {
+        let (Some(box_source), Some(box_image)) = (&box_source, &box_image) else {
+            break;
+        };
         let source_steps = steps.saturating_add(64);
         let alpha = BezierParameter2::Algebraic(retained.clone())
             .refined_isolating_interval(source_steps, strict);
         let BezierParameter2::Algebraic(alpha) = alpha else {
             break;
         };
-        let source = match source.refined(source_steps, strict)? {
+        let source = match box_source.refined(source_steps, strict)? {
             Classification::Decided(source) => source,
             Classification::Uncertain(reason) => {
                 return Ok(Classification::Uncertain(reason));
             }
         };
-        let image = match image.refined(steps, strict)? {
+        let image = match box_image.refined(steps, strict)? {
             Classification::Decided(image) => image,
             Classification::Uncertain(reason) => {
                 return Ok(Classification::Uncertain(reason));
@@ -86896,6 +87419,16 @@ fn algebraic_selected_fiber_pair_projected_root(
         if strict_signs_are_opposite(image_lower, image_upper) {
             return Ok(Classification::Decided(true));
         }
+    }
+    if let decided @ Classification::Decided(_) =
+        algebraic_selected_fiber_pair_projected_root_via_subresultants(
+            source,
+            image,
+            projected_incidence,
+            policy,
+        )?
+    {
+        return Ok(decided);
     }
     Ok(
         algebraic_selected_fiber_pair_predicate_sign(source, image, projected_incidence, policy)?
@@ -139415,6 +139948,229 @@ mod conversion_tests {
                 BezierParallelFixedDistanceParameter2::SelectedFiber(_)
             )));
         }
+    }
+
+    #[test]
+    fn selected_fiber_pair_tangent_correlation_stays_in_degree_130_local_field() {
+        let half = (Real::one() / Real::from(2_i8)).unwrap();
+        // The retained base has degree 65 and each selected fiber is
+        // quadratic, so either ordinary scalar projection has degree 130.
+        // The authored equation (v-u)^2 has an even contact and defeats the
+        // sign-changing product-box fast path; the local subresultant must
+        // recover its simple factor v-u without constructing either scalar.
+        let tangent = BivariatePolynomial::new(vec![
+            vec![Real::zero(), Real::zero(), Real::one()],
+            vec![Real::zero(), Real::from(-2_i8)],
+            vec![Real::one()],
+        ]);
+
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let source =
+                high_degree_quadratic_selected_fiber_parameter_for_test(half.clone(), &policy);
+            let image = BezierAlgebraicSelectedFiberAuthority2::new(
+                BivariatePolynomial::new(vec![
+                    vec![Real::zero(), Real::zero(), Real::from(8_i8)],
+                    vec![Real::from(-2_i8)],
+                ]),
+                source.data.authority.data.retained_parameter.clone(),
+                &policy,
+            )
+            .parameter(source.root().clone());
+
+            #[cfg(feature = "dispatch-trace")]
+            hyperreal::dispatch_trace::reset();
+            #[cfg(feature = "dispatch-trace")]
+            let outcome = hyperreal::dispatch_trace::with_recording(|| {
+                algebraic_selected_fiber_pair_projected_root(&source, &image, &tangent, &policy)
+            })
+            .unwrap();
+            #[cfg(not(feature = "dispatch-trace"))]
+            let outcome =
+                algebraic_selected_fiber_pair_projected_root(&source, &image, &tangent, &policy)
+                    .unwrap();
+            #[cfg(feature = "dispatch-trace")]
+            let trace = hyperreal::dispatch_trace::take_trace();
+
+            assert_eq!(outcome, Classification::Decided(true));
+            #[cfg(feature = "dispatch-trace")]
+            assert_eq!(
+                trace.path_count(
+                    "hypercurve",
+                    "selected-fiber-pair-correlation",
+                    "local-subresultant-gcd",
+                ),
+                1,
+            );
+        }
+    }
+
+    #[test]
+    fn selected_fiber_pair_subresultant_rejects_foreign_image_conjugate() {
+        let half = (Real::one() / Real::from(2_i8)).unwrap();
+        let tangent = BivariatePolynomial::new(vec![
+            vec![Real::zero(), Real::zero(), Real::one()],
+            vec![Real::zero(), Real::from(-2_i8)],
+            vec![Real::one()],
+        ]);
+
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let BezierParameter2::Algebraic(alpha) =
+                algebraic_parameter(vec![-half.clone(), Real::zero(), Real::one()])
+            else {
+                unreachable!()
+            };
+            let incidence = BivariatePolynomial::new(vec![
+                vec![Real::zero(), Real::zero(), Real::from(4_i8)],
+                vec![Real::from(-1_i8)],
+            ]);
+            let authority = BezierAlgebraicSelectedFiberAuthority2::new(incidence, alpha, &policy);
+            let source = authority.parameter(IsolatedRootInterval {
+                lower: Real::zero(),
+                upper: Real::one(),
+                exact_root: None,
+                distinct_root_count: 1,
+            });
+            let image = authority.parameter(IsolatedRootInterval {
+                lower: Real::from(-1_i8),
+                upper: Real::zero(),
+                exact_root: None,
+                distinct_root_count: 1,
+            });
+
+            // The authored equation shares the positive conjugate of the
+            // image polynomial, but not the selected negative image root.
+            // The recovered local GCD must therefore be rejected by the
+            // selected image isolator rather than accepted by resultant zero.
+            assert_eq!(
+                algebraic_selected_fiber_pair_projected_root_via_subresultants(
+                    &source, &image, &tangent, &policy,
+                )
+                .unwrap(),
+                Classification::Decided(false),
+            );
+            assert_eq!(
+                algebraic_selected_fiber_pair_projected_root_via_subresultants(
+                    &source,
+                    &image,
+                    &BivariatePolynomial::new(vec![vec![Real::one()]]),
+                    &policy,
+                )
+                .unwrap(),
+                Classification::Decided(false),
+            );
+        }
+    }
+
+    #[test]
+    fn selected_fiber_pair_correlation_deflates_repeated_fibers() {
+        let half = (Real::one() / Real::from(2_i8)).unwrap();
+        let tangent = BivariatePolynomial::new(vec![
+            vec![Real::zero(), Real::zero(), Real::one()],
+            vec![Real::zero(), Real::from(-2_i8)],
+            vec![Real::one()],
+        ]);
+
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let BezierParameter2::Algebraic(alpha) =
+                algebraic_parameter(vec![-half.clone(), Real::zero(), Real::one()])
+            else {
+                unreachable!()
+            };
+            let root = IsolatedRootInterval {
+                lower: Real::zero(),
+                upper: half.clone(),
+                exact_root: None,
+                distinct_root_count: 1,
+            };
+            // F=(4u^2-alpha)^2 and H=(8v^2-2alpha)^2 encode the same
+            // selected value with different repeated relations.
+            let source = BezierAlgebraicSelectedFiberAuthority2::new(
+                BivariatePolynomial::new(vec![
+                    vec![
+                        Real::zero(),
+                        Real::zero(),
+                        Real::zero(),
+                        Real::zero(),
+                        Real::from(16_i8),
+                    ],
+                    vec![Real::zero(), Real::zero(), Real::from(-8_i8)],
+                    vec![Real::one()],
+                ]),
+                alpha.clone(),
+                &policy,
+            )
+            .parameter(root.clone());
+            let image = BezierAlgebraicSelectedFiberAuthority2::new(
+                BivariatePolynomial::new(vec![
+                    vec![
+                        Real::zero(),
+                        Real::zero(),
+                        Real::zero(),
+                        Real::zero(),
+                        Real::from(64_i8),
+                    ],
+                    vec![Real::zero(), Real::zero(), Real::from(-32_i8)],
+                    vec![Real::from(4_i8)],
+                ]),
+                alpha,
+                &policy,
+            )
+            .parameter(root);
+
+            assert_eq!(
+                algebraic_selected_fiber_pair_projected_root(&source, &image, &tangent, &policy,)
+                    .unwrap(),
+                Classification::Decided(true),
+            );
+        }
+    }
+
+    #[test]
+    fn selected_fiber_deflation_excludes_foreign_critical_roots() {
+        let half = (Real::one() / Real::from(2_i8)).unwrap();
+        let BezierParameter2::Algebraic(alpha) =
+            algebraic_parameter(vec![-half, Real::zero(), Real::one()])
+        else {
+            unreachable!()
+        };
+        // F(u)=u^2(3u^2-8u+6) has only the repeated real root u=0, but
+        // F'(u)=12u(u-1)^2 introduces the foreign double critical root u=1.
+        // The broad valid F isolator therefore is not a valid F' isolator.
+        let incidence = BivariatePolynomial::new(vec![vec![
+            Real::zero(),
+            Real::zero(),
+            Real::from(6_i8),
+            Real::from(-8_i8),
+            Real::from(3_i8),
+        ]]);
+        let parameter =
+            BezierAlgebraicSelectedFiberAuthority2::new(incidence, alpha, &CurveContext::STRICT)
+                .parameter(IsolatedRootInterval {
+                    lower: Real::from(-1_i8),
+                    upper: Real::from(2_i8),
+                    exact_root: None,
+                    distinct_root_count: 1,
+                });
+
+        let Classification::Decided(simple) =
+            selected_fiber_simple_parameter(&parameter, &CurveContext::STRICT).unwrap()
+        else {
+            panic!("the selected repeated root must deflate exactly")
+        };
+        let derivative = bivariate_parameter_derivative(
+            &simple.data.authority.data.incidence,
+            CurveResultantParameter::Second,
+        );
+        assert_eq!(
+            simple
+                .predicate_sign(&derivative, &CurveContext::STRICT)
+                .unwrap(),
+            Classification::Decided(RealSign::Positive),
+        );
+        assert!(matches!(
+            simple.refined(8, &CurveContext::STRICT).unwrap(),
+            Classification::Decided(_)
+        ));
     }
 
     #[test]
