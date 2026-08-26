@@ -181,6 +181,14 @@ pub struct AlgebraicFiberPolynomialImageProjectionReport {
     /// available even when construction of the larger global eliminant is
     /// declined.
     pub retained_relation: Option<BivariatePolynomial>,
+    /// Source-fiber factor on which the complete image relation vanishes.
+    ///
+    /// The factor uses the same retained/fiber axis order as
+    /// `fiber_equation`. It is removed before the residual image norm is
+    /// constructed. A caller must test whether its specifically selected
+    /// source root belongs to this factor before using the residual image;
+    /// membership denotes a genuinely positive-dimensional image equation.
+    pub identically_zero_fiber_factor: Option<BivariatePolynomial>,
     /// Degree of the specialized source fiber used by the local norm.
     pub fiber_degree: usize,
     /// Conservative image degree before exact trimming and square-free replay.
@@ -1533,6 +1541,7 @@ fn project_algebraic_fiber_polynomial_image_internal(
             status,
             coefficients,
             retained_relation: None,
+            identically_zero_fiber_factor: None,
             fiber_degree,
             image_degree_bound,
             certainty,
@@ -1659,57 +1668,93 @@ fn project_algebraic_fiber_polynomial_image_internal(
             );
         }
     };
-    let matrix = match local_polynomial_quotient_multiplication_matrix(
-        &fiber,
-        &image_coefficients,
-        &mut field,
-    ) {
-        Ok(matrix) => matrix,
-        Err(error) => {
-            return algebraic_fiber_polynomial_image_error_report(
-                error,
-                fiber_degree,
-                image_degree_bound,
-                field.certainty,
-            );
-        }
-    };
-    let local_image = match local_polynomial_matrix_determinant(&matrix, fiber_degree, &mut field) {
-        Ok(image) => image,
-        Err(error) => {
-            return algebraic_fiber_polynomial_image_error_report(
-                error,
-                fiber_degree,
-                image_degree_bound,
-                field.certainty,
-            );
-        }
-    };
-    let primitive_image = match primitive_local_image_coefficients(local_image, &mut field) {
-        Ok(Some(image)) => image,
-        Ok(None) => {
-            return report(
-                AlgebraicFiberPolynomialImageProjectionStatus::IdenticallyZeroImageRelation,
-                Vec::new(),
-                fiber_degree,
-                image_degree_bound,
-                field.certainty,
-            );
-        }
-        Err(error) => {
-            return algebraic_fiber_polynomial_image_error_report(
-                error,
-                fiber_degree,
-                image_degree_bound,
-                field.certainty,
-            );
-        }
-    };
+    let mut norm_fiber = fiber;
+    let mut identically_zero_fiber_factor = None;
+    let primitive_image =
+        match primitive_local_polynomial_image_norm(&norm_fiber, &image_coefficients, &mut field) {
+            Ok(Some(image)) => image,
+            Ok(None) => {
+                let saturated = match saturate_identically_zero_image_fiber_factor(
+                    &norm_fiber,
+                    &image_coefficients,
+                    retained_parameter,
+                    &mut field,
+                ) {
+                    Ok(saturated) => saturated,
+                    Err(error) => {
+                        return algebraic_fiber_polynomial_image_error_report(
+                            error,
+                            fiber_degree,
+                            image_degree_bound,
+                            field.certainty,
+                        );
+                    }
+                };
+                let Some((residual_fiber, factor)) = saturated else {
+                    return report(
+                        AlgebraicFiberPolynomialImageProjectionStatus::Undecided,
+                        Vec::new(),
+                        fiber_degree,
+                        image_degree_bound,
+                        field.certainty,
+                    );
+                };
+                identically_zero_fiber_factor = Some(factor);
+                norm_fiber = residual_fiber;
+                if norm_fiber.len() == 1 {
+                    return AlgebraicFiberPolynomialImageProjectionReport {
+                    status:
+                        AlgebraicFiberPolynomialImageProjectionStatus::IdenticallyZeroImageRelation,
+                    coefficients: Vec::new(),
+                    retained_relation: None,
+                    identically_zero_fiber_factor,
+                    fiber_degree,
+                    image_degree_bound,
+                    certainty: field.certainty,
+                };
+                }
+                match primitive_local_polynomial_image_norm(
+                    &norm_fiber,
+                    &image_coefficients,
+                    &mut field,
+                ) {
+                    Ok(Some(image)) => image,
+                    Ok(None) => {
+                        return AlgebraicFiberPolynomialImageProjectionReport {
+                            status: AlgebraicFiberPolynomialImageProjectionStatus::Undecided,
+                            coefficients: Vec::new(),
+                            retained_relation: None,
+                            identically_zero_fiber_factor,
+                            fiber_degree,
+                            image_degree_bound,
+                            certainty: field.certainty,
+                        };
+                    }
+                    Err(error) => {
+                        return algebraic_fiber_polynomial_image_error_report(
+                            error,
+                            fiber_degree,
+                            image_degree_bound,
+                            field.certainty,
+                        );
+                    }
+                }
+            }
+            Err(error) => {
+                return algebraic_fiber_polynomial_image_error_report(
+                    error,
+                    fiber_degree,
+                    image_degree_bound,
+                    field.certainty,
+                );
+            }
+        };
     if !construct_global_image {
         return AlgebraicFiberPolynomialImageProjectionReport {
             status: AlgebraicFiberPolynomialImageProjectionStatus::Constructed,
             coefficients: Vec::new(),
             retained_relation: Some(local_image_retained_relation(primitive_image)),
+            identically_zero_fiber_factor,
             fiber_degree,
             image_degree_bound,
             certainty: field.certainty,
@@ -1729,6 +1774,7 @@ fn project_algebraic_fiber_polynomial_image_internal(
             status: AlgebraicFiberPolynomialImageProjectionStatus::Constructed,
             coefficients,
             retained_relation: Some(local_image_retained_relation(primitive_image)),
+            identically_zero_fiber_factor,
             fiber_degree,
             image_degree_bound,
             certainty: field.certainty,
@@ -1745,6 +1791,7 @@ fn project_algebraic_fiber_polynomial_image_internal(
             status: AlgebraicFiberPolynomialImageProjectionStatus::Constructed,
             coefficients: normalize_projective_image_polynomial(coefficients),
             retained_relation: Some(retained_relation),
+            identically_zero_fiber_factor,
             fiber_degree,
             image_degree_bound,
             certainty: field.certainty,
@@ -1753,11 +1800,89 @@ fn project_algebraic_fiber_polynomial_image_internal(
             status: AlgebraicFiberPolynomialImageProjectionStatus::Undecided,
             coefficients: Vec::new(),
             retained_relation: Some(retained_relation),
+            identically_zero_fiber_factor,
             fiber_degree,
             image_degree_bound,
             certainty: field.certainty,
         },
     }
+}
+
+fn primitive_local_polynomial_image_norm(
+    fiber: &[LocalFieldElement],
+    image_coefficients: &[LocalImagePolynomial],
+    field: &mut LocalAlgebraicField,
+) -> Result<Option<Vec<Vec<Real>>>, LocalFieldError> {
+    let fiber_degree = fiber
+        .len()
+        .checked_sub(1)
+        .ok_or(LocalFieldError::Undecided)?;
+    let matrix = local_polynomial_quotient_multiplication_matrix(fiber, image_coefficients, field)?;
+    let local_image = local_polynomial_matrix_determinant(&matrix, fiber_degree, field)?;
+    primitive_local_image_coefficients(local_image, field)
+}
+
+/// Removes source roots on which every image-parameter coefficient vanishes.
+///
+/// A polynomial `F(u)` independent of `z` divides `G(u,z)` over the selected
+/// local field exactly when it divides every coefficient of `G` in `z`. Such
+/// a factor makes the raw resultant identically zero but contributes no
+/// isolated image roots. The returned factor remains explicit so the caller
+/// can distinguish an unrelated conjugate component from its selected source
+/// root lying on a genuinely positive-dimensional image.
+fn saturate_identically_zero_image_fiber_factor(
+    fiber: &[LocalFieldElement],
+    image_coefficients: &[LocalImagePolynomial],
+    retained_parameter: CurveResultantParameter,
+    field: &mut LocalAlgebraicField,
+) -> Result<Option<(Vec<LocalFieldElement>, BivariatePolynomial)>, LocalFieldError> {
+    let image_coefficient_count = image_coefficients.iter().map(Vec::len).max().unwrap_or(1);
+    let mut coefficients = Vec::with_capacity(image_coefficient_count);
+    for image_power in 0..image_coefficient_count {
+        let mut coefficient = image_coefficients
+            .iter()
+            .map(|source_coefficient| {
+                source_coefficient
+                    .get(image_power)
+                    .cloned()
+                    .unwrap_or_else(LocalFieldElement::zero)
+            })
+            .collect::<Vec<_>>();
+        trim_local_polynomial(&mut coefficient, field)?;
+        if !local_polynomial_is_zero(&coefficient, field)? {
+            coefficients.push(coefficient);
+        }
+    }
+    let mut residual = fiber.to_vec();
+    loop {
+        let mut common_factor = residual.clone();
+        for coefficient in &coefficients {
+            common_factor = local_polynomial_greatest_common_divisor(
+                common_factor,
+                coefficient.clone(),
+                field,
+            )?;
+            if common_factor.len() == 1 {
+                break;
+            }
+        }
+        if common_factor.len() == 1 {
+            break;
+        }
+        residual = local_polynomial_divide_exact(residual, &common_factor, field)?;
+        if residual.len() == 1 {
+            break;
+        }
+    }
+    if residual.len() == fiber.len() {
+        return Ok(None);
+    }
+    let factor = local_polynomial_divide_exact(fiber.to_vec(), &residual, field)?;
+    let residual = local_polynomial_clear_denominators(residual, field)?;
+    let factor = local_polynomial_clear_denominators(factor, field)?;
+    let factor =
+        local_fiber_to_bivariate(&factor, retained_parameter).ok_or(LocalFieldError::Undecided)?;
+    Ok(Some((residual, factor)))
 }
 
 fn local_image_retained_relation(image: Vec<Vec<Real>>) -> BivariatePolynomial {
@@ -2223,6 +2348,7 @@ fn algebraic_fiber_polynomial_image_error_report(
         status,
         coefficients: Vec::new(),
         retained_relation: None,
+        identically_zero_fiber_factor: None,
         fiber_degree,
         image_degree_bound,
         certainty,
@@ -2829,6 +2955,111 @@ fn derivative_local_polynomial(
         derivative.push(LocalFieldElement::zero());
     }
     Ok(derivative)
+}
+
+fn local_polynomial_greatest_common_divisor(
+    mut first: Vec<LocalFieldElement>,
+    mut second: Vec<LocalFieldElement>,
+    field: &mut LocalAlgebraicField,
+) -> Result<Vec<LocalFieldElement>, LocalFieldError> {
+    trim_local_polynomial(&mut first, field)?;
+    trim_local_polynomial(&mut second, field)?;
+    if local_polynomial_is_zero(&first, field)? {
+        return Ok(second);
+    }
+    if local_polynomial_is_zero(&second, field)? {
+        return Ok(first);
+    }
+    if first.len() < second.len() {
+        std::mem::swap(&mut first, &mut second);
+    }
+    while !local_polynomial_is_zero(&second, field)? {
+        let remainder = local_polynomial_remainder(first, &second, field)?;
+        first = second;
+        second = remainder;
+    }
+    Ok(first)
+}
+
+fn local_polynomial_divide_exact(
+    mut dividend: Vec<LocalFieldElement>,
+    divisor: &[LocalFieldElement],
+    field: &mut LocalAlgebraicField,
+) -> Result<Vec<LocalFieldElement>, LocalFieldError> {
+    trim_local_polynomial(&mut dividend, field)?;
+    if divisor.is_empty() || (divisor.len() == 1 && divisor[0].is_zero(field)?) {
+        return Err(LocalFieldError::DivisionByZero);
+    }
+    if dividend.len() < divisor.len() {
+        return Err(LocalFieldError::Undecided);
+    }
+    let divisor_degree = divisor.len() - 1;
+    let mut quotient = vec![LocalFieldElement::zero(); dividend.len() - divisor_degree];
+    while dividend.len() >= divisor.len() && !(dividend.len() == 1 && dividend[0].is_zero(field)?) {
+        let degree_delta = dividend.len() - divisor.len();
+        let scale = dividend.last().ok_or(LocalFieldError::Undecided)?.divide(
+            divisor.last().ok_or(LocalFieldError::DivisionByZero)?,
+            field,
+        )?;
+        quotient[degree_delta] = scale.clone();
+        for (power, divisor_coefficient) in divisor.iter().enumerate().take(divisor_degree) {
+            let product = scale.multiply(divisor_coefficient, field)?;
+            dividend[degree_delta + power] =
+                dividend[degree_delta + power].subtract(&product, field)?;
+        }
+        dividend[degree_delta + divisor_degree] = LocalFieldElement::zero();
+        trim_local_polynomial(&mut dividend, field)?;
+    }
+    if !local_polynomial_is_zero(&dividend, field)? {
+        return Err(LocalFieldError::Undecided);
+    }
+    trim_local_polynomial(&mut quotient, field)?;
+    Ok(quotient)
+}
+
+/// Multiplies one local polynomial by the product of all coefficient
+/// denominators, preserving its roots while exporting denominator-free
+/// bivariate evidence.
+fn local_polynomial_clear_denominators(
+    mut polynomial: Vec<LocalFieldElement>,
+    field: &mut LocalAlgebraicField,
+) -> Result<Vec<LocalFieldElement>, LocalFieldError> {
+    trim_local_polynomial(&mut polynomial, field)?;
+    if polynomial
+        .iter()
+        .all(|coefficient| coefficient.denominator.is_none())
+    {
+        return Ok(polynomial);
+    }
+    let denominators = polynomial
+        .iter()
+        .map(|coefficient| {
+            coefficient
+                .denominator
+                .clone()
+                .unwrap_or_else(|| vec![Real::one()])
+        })
+        .collect::<Vec<_>>();
+    let mut prefixes = Vec::with_capacity(denominators.len() + 1);
+    prefixes.push(vec![Real::one()]);
+    for denominator in &denominators {
+        let prefix = field.multiply_polynomials(
+            prefixes.last().ok_or(LocalFieldError::Undecided)?,
+            denominator,
+        )?;
+        prefixes.push(prefix);
+    }
+    let mut suffix = vec![Real::one()];
+    for index in (0..polynomial.len()).rev() {
+        let scale = field.multiply_polynomials(&prefixes[index], &suffix)?;
+        polynomial[index] = LocalFieldElement {
+            numerator: field.multiply_polynomials(&polynomial[index].numerator, &scale)?,
+            denominator: None,
+        };
+        suffix = field.multiply_polynomials(&denominators[index], &suffix)?;
+    }
+    trim_local_polynomial(&mut polynomial, field)?;
+    Ok(polynomial)
 }
 
 fn local_polynomial_remainder(
@@ -3965,6 +4196,87 @@ mod tests {
             assert_eq!(report.retained_relation, Some(expected.clone()));
             assert!(report.coefficients.is_empty());
             assert_eq!(report.certainty, Certainty::Exact);
+        }
+    }
+
+    #[test]
+    fn polynomial_fiber_image_saturates_an_identically_zero_source_conjugate() {
+        // F=(u-alpha)(u-1)^2. The image G=(u-1)(z-u) vanishes for every z on
+        // the unrelated repeated u=1 source component, so the raw resultant
+        // is zero. Saturation must remove the whole primary component, retain
+        // it explicitly, and project the residual selected image instead of
+        // discarding every z root.
+        let fiber = BivariatePolynomial::new(vec![
+            vec![Real::zero(), Real::one(), real(-2), Real::one()],
+            vec![real(-1), real(2), real(-1)],
+        ]);
+        let image = BivariatePolynomial::new(vec![
+            vec![Real::zero(), real(-1)],
+            vec![Real::one(), Real::one()],
+            vec![real(-1)],
+        ]);
+        let expected_factor =
+            BivariatePolynomial::new(vec![vec![Real::one(), real(-2), Real::one()]]);
+        let expected_retained = BivariatePolynomial::new(vec![
+            vec![real(-2), real(-1)],
+            vec![Real::one(), Real::one()],
+        ]);
+        for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
+            let alpha = represented_root(
+                vec![real(-2), Real::zero(), Real::one()],
+                Real::one(),
+                real(2),
+                policy,
+            );
+            let config = AlgebraicFiberPolynomialImageProjectionConfig {
+                max_fiber_degree: 3,
+                max_retained_degree: 2,
+                max_image_degree_bound: 3,
+            };
+            let retained = project_algebraic_fiber_polynomial_image_relation(
+                &fiber,
+                CurveResultantParameter::First,
+                &image,
+                CurveResultantParameter::Second,
+                &alpha,
+                config,
+                policy,
+            );
+            assert_eq!(
+                retained.status,
+                AlgebraicFiberPolynomialImageProjectionStatus::Constructed
+            );
+            assert_eq!(
+                retained.identically_zero_fiber_factor,
+                Some(expected_factor.clone())
+            );
+            assert_eq!(retained.retained_relation, Some(expected_retained.clone()));
+            assert!(retained.coefficients.is_empty());
+            assert_eq!(retained.certainty, Certainty::Exact);
+
+            let global = project_algebraic_fiber_polynomial_image(
+                &fiber,
+                CurveResultantParameter::First,
+                &image,
+                CurveResultantParameter::Second,
+                &alpha,
+                config,
+                policy,
+            );
+            assert_eq!(
+                global.status,
+                AlgebraicFiberPolynomialImageProjectionStatus::Constructed
+            );
+            assert_eq!(
+                global.identically_zero_fiber_factor,
+                Some(expected_factor.clone())
+            );
+            assert_eq!(global.retained_relation, Some(expected_retained.clone()));
+            assert_eq!(
+                global.coefficients,
+                vec![real(-2), Real::zero(), Real::one()]
+            );
+            assert_eq!(global.certainty, Certainty::Exact);
         }
     }
 
