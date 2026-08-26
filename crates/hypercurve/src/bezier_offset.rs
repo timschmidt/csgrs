@@ -12375,6 +12375,7 @@ struct BezierAnalyticParallelTangentField2 {
 enum BezierAnalyticParallelPointParameter2 {
     Bezier(BezierParameter2),
     SelectedFiber(BezierAlgebraicSelectedFiberParameter2),
+    RecursiveProjective(BezierRecursiveProjectiveParameter2),
 }
 
 #[derive(Debug)]
@@ -53082,6 +53083,37 @@ impl BezierRecursiveProjectiveParameter2 {
         (&self.data.lower, &self.data.upper)
     }
 
+    /// Evaluates `d^degree * polynomial(n / d)` in this scalar's retained
+    /// recursive field. Callers may choose a degree above the polynomial's
+    /// active degree to align several rational expressions to one homogeneous
+    /// scale without constructing a global scalar image.
+    fn homogeneous_polynomial_value(
+        &self,
+        coefficients: &[Real],
+        degree: usize,
+    ) -> Option<BezierRecursiveQuadraticValue2> {
+        if coefficients
+            .iter()
+            .skip(degree.saturating_add(1))
+            .any(|coefficient| coefficient.zero_status() != ZeroStatus::Zero)
+        {
+            return None;
+        }
+        let field = self.data.scalar.numerator.field();
+        let mut value =
+            field.constant(coefficients.get(degree).cloned().unwrap_or_else(Real::zero))?;
+        let mut denominator_power = field.constant(Real::one())?;
+        for index in (0..degree).rev() {
+            denominator_power = denominator_power.multiply(&self.data.scalar.denominator)?;
+            let coefficient =
+                field.constant(coefficients.get(index).cloned().unwrap_or_else(Real::zero))?;
+            value = value
+                .multiply(&self.data.scalar.numerator)?
+                .add(&coefficient.multiply(&denominator_power)?)?;
+        }
+        Some(value)
+    }
+
     /// Signs one power-basis polynomial directly at this retained projective
     /// scalar.  If `t = n / d` with the stored `d > 0`, the homogeneous Horner
     /// replay below signs `d^degree * polynomial(t)` in the existing recursive
@@ -53098,34 +53130,9 @@ impl BezierRecursiveProjectiveParameter2 {
         else {
             return Ok(Classification::Decided(RealSign::Zero));
         };
-        let field = self.data.scalar.numerator.field();
-        let Some(mut value) = field.constant(coefficients[degree].clone()) else {
+        let Some(value) = self.homogeneous_polynomial_value(coefficients, degree) else {
             return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
         };
-        let mut denominator_power = self.data.scalar.denominator.clone();
-        for (index, coefficient) in coefficients[..degree].iter().rev().enumerate() {
-            let Some(constant) = field.constant(coefficient.clone()) else {
-                return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
-            };
-            let Some(next) = value
-                .multiply(&self.data.scalar.numerator)
-                .and_then(|value| {
-                    constant
-                        .multiply(&denominator_power)
-                        .and_then(|constant| value.add(&constant))
-                })
-            else {
-                return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
-            };
-            value = next;
-            if index + 1 != degree {
-                if let Some(next) = denominator_power.multiply(&self.data.scalar.denominator) {
-                    denominator_power = next;
-                } else {
-                    return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
-                }
-            }
-        }
         value.sign(policy)
     }
 
@@ -53529,6 +53536,34 @@ impl BezierRecursiveProjectiveParameter2 {
 }
 
 impl BezierRecursiveQuadraticProjectivePoint2 {
+    /// Publishes standalone exact coordinate roots only for consumers that
+    /// cannot operate on this correlated projective point directly.
+    fn represented_coordinates(
+        &self,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<[AlgebraicRootRepresentation; 2]>> {
+        let coordinate = |numerator: &BezierRecursiveQuadraticValue2| {
+            BezierRecursiveQuadraticProjectiveScalar2 {
+                numerator: numerator.clone(),
+                denominator: self.denominator.clone(),
+            }
+            .represented_value(policy)
+        };
+        let x = match coordinate(&self.x)? {
+            Classification::Decided(x) => x,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        let y = match coordinate(&self.y)? {
+            Classification::Decided(y) => y,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        Ok(Classification::Decided([x, y]))
+    }
+
     fn embedded_to_equivalent_field(&self, field: &BezierRecursiveQuadraticField2) -> Option<Self> {
         let source_field = self.denominator.field();
         let (target_base, embeddings) =
@@ -75729,6 +75764,19 @@ impl BezierAnalyticParallelPoint2 {
         )
     }
 
+    pub(crate) fn new_recursive_projective(
+        parallel: BezierParallel2,
+        parameter: BezierRecursiveProjectiveParameter2,
+        policy: &CurveContext,
+    ) -> Self {
+        Self::new_with_tangent_distance_parameter(
+            parallel,
+            BezierAnalyticParallelPointParameter2::RecursiveProjective(parameter),
+            Real::zero(),
+            policy,
+        )
+    }
+
     /// Maps a zero-distance rational-source point onto one coordinate of a
     /// collinear rational target without first resolving its point image.
     /// Constant source coordinates therefore remain O(target degree), even
@@ -75872,6 +75920,160 @@ impl BezierAnalyticParallelPoint2 {
         Ok((&differential.tangent_x, &differential.tangent_y))
     }
 
+    /// Evaluates this point directly in an endpoint's existing recursive
+    /// projective field. Source coordinates share one homogeneous degree; the
+    /// tangent frame shares another. Adjoining the strictly positive source
+    /// speed therefore preserves every scale factor and the authored radical
+    /// sheet without first projecting the endpoint onto a global polynomial.
+    fn recursive_projective_point_from_recursive_parameter(
+        &self,
+        parameter: &BezierRecursiveProjectiveParameter2,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<Option<BezierRecursiveQuadraticProjectivePoint2>>> {
+        parameter.validate_policy(policy)?;
+        let source = self.data.parallel.source_power_basis()?;
+        let unit_weight = [Real::one()];
+        let weight = source.weight.unwrap_or(&unit_weight);
+        let translated_x = polynomial_add(
+            source.x_numerator,
+            &polynomial_scale(weight, &self.data.translation_x),
+        );
+        let translated_y = polynomial_add(
+            source.y_numerator,
+            &polynomial_scale(weight, &self.data.translation_y),
+        );
+        let source_degree = [translated_x.len(), translated_y.len(), weight.len()]
+            .into_iter()
+            .max()
+            .unwrap_or(1)
+            .saturating_sub(1);
+        let Some(translated_x) =
+            parameter.homogeneous_polynomial_value(&translated_x, source_degree)
+        else {
+            return Ok(Classification::Decided(None));
+        };
+        let Some(translated_y) =
+            parameter.homogeneous_polynomial_value(&translated_y, source_degree)
+        else {
+            return Ok(Classification::Decided(None));
+        };
+        let Some(weight_value) = parameter.homogeneous_polynomial_value(weight, source_degree)
+        else {
+            return Ok(Classification::Decided(None));
+        };
+        let zero_frame = self.data.parallel.distance().zero_status() == ZeroStatus::Zero
+            && self.data.tangent_distance.zero_status() == ZeroStatus::Zero;
+        let point = if zero_frame {
+            BezierRecursiveQuadraticProjectivePoint2 {
+                x: translated_x,
+                y: translated_y,
+                denominator: weight_value,
+            }
+        } else {
+            let (tangent_x, tangent_y) = self.frame_tangent_power_basis()?;
+            let tangent_degree = tangent_x.len().max(tangent_y.len()).saturating_sub(1);
+            let Some(speed_degree) = tangent_degree.checked_mul(2) else {
+                return Ok(Classification::Decided(None));
+            };
+            let Some(frame_degree) = source_degree.checked_add(tangent_degree) else {
+                return Ok(Classification::Decided(None));
+            };
+            let frame_x = polynomial_subtract(
+                &polynomial_scale(tangent_x, &self.data.tangent_distance),
+                &polynomial_scale(tangent_y, self.data.parallel.distance()),
+            );
+            let frame_y = polynomial_add(
+                &polynomial_scale(tangent_x, self.data.parallel.distance()),
+                &polynomial_scale(tangent_y, &self.data.tangent_distance),
+            );
+            let speed_squared = polynomial_add(
+                &polynomial_multiply(tangent_x, tangent_x),
+                &polynomial_multiply(tangent_y, tangent_y),
+            );
+            let Some(speed_squared) =
+                parameter.homogeneous_polynomial_value(&speed_squared, speed_degree)
+            else {
+                return Ok(Classification::Decided(None));
+            };
+            let Some(frame_x) = parameter
+                .homogeneous_polynomial_value(&polynomial_multiply(weight, &frame_x), frame_degree)
+            else {
+                return Ok(Classification::Decided(None));
+            };
+            let Some(frame_y) = parameter
+                .homogeneous_polynomial_value(&polynomial_multiply(weight, &frame_y), frame_degree)
+            else {
+                return Ok(Classification::Decided(None));
+            };
+            match policy.strict_predicate_pass(|| speed_squared.sign(policy))? {
+                Classification::Decided(RealSign::Positive) => {}
+                Classification::Decided(RealSign::Zero) => {
+                    return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
+                }
+                Classification::Decided(RealSign::Negative) => {
+                    return Err(CurveError::Topology(
+                        "an analytic point frame retained negative squared speed".into(),
+                    ));
+                }
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            }
+            let field = speed_squared.field();
+            let Some(extension) = field.extension(speed_squared) else {
+                return Ok(Classification::Decided(None));
+            };
+            let Some(speed) = extension.element(
+                field.constant(Real::zero()).ok_or_else(|| {
+                    CurveError::Topology("a recursive analytic point lost its zero".into())
+                })?,
+                field.constant(Real::one()).ok_or_else(|| {
+                    CurveError::Topology("a recursive analytic point lost its unit".into())
+                })?,
+            ) else {
+                return Ok(Classification::Decided(None));
+            };
+            let Some(translated_x) = extension.lift(&translated_x) else {
+                return Ok(Classification::Decided(None));
+            };
+            let Some(translated_y) = extension.lift(&translated_y) else {
+                return Ok(Classification::Decided(None));
+            };
+            let Some(weight_value) = extension.lift(&weight_value) else {
+                return Ok(Classification::Decided(None));
+            };
+            let Some(frame_x) = extension.lift(&frame_x) else {
+                return Ok(Classification::Decided(None));
+            };
+            let Some(frame_y) = extension.lift(&frame_y) else {
+                return Ok(Classification::Decided(None));
+            };
+            let Some(point) = (|| {
+                Some(BezierRecursiveQuadraticProjectivePoint2 {
+                    x: translated_x.multiply(&speed)?.add(&frame_x)?,
+                    y: translated_y.multiply(&speed)?.add(&frame_y)?,
+                    denominator: weight_value.multiply(&speed)?,
+                })
+            })() else {
+                return Ok(Classification::Decided(None));
+            };
+            point
+        };
+        let point = match positive_recursive_projective_point(point)? {
+            Classification::Decided(point) => point,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        #[cfg(feature = "dispatch-trace")]
+        hyperreal::dispatch_trace::record(
+            "hypercurve",
+            "recursive-projective-point",
+            "analytic-parallel-retained-parameter",
+        );
+        Ok(Classification::Decided(Some(point)))
+    }
+
     /// Imports this retained analytic point into one recursive projective
     /// field without materializing its Cartesian coordinates independently.
     ///
@@ -75902,6 +76104,9 @@ impl BezierAnalyticParallelPoint2 {
                         return Ok(Classification::Uncertain(reason));
                     }
                 }
+            }
+            BezierAnalyticParallelPointParameter2::RecursiveProjective(parameter) => {
+                return self.recursive_projective_point_from_recursive_parameter(parameter, policy);
             }
         };
         let source = self.data.parallel.source_power_basis()?;
@@ -76218,6 +76423,18 @@ impl BezierAnalyticParallelPoint2 {
                     .into(),
             ));
         }
+        if matches!(
+            &self.data.parameter,
+            BezierAnalyticParallelPointParameter2::RecursiveProjective(_)
+        ) {
+            return match self.recursive_projective_point(policy)? {
+                Classification::Decided(Some(point)) => point.represented_coordinates(policy),
+                Classification::Decided(None) => {
+                    Ok(Classification::Uncertain(UncertaintyReason::Unsupported))
+                }
+                Classification::Uncertain(reason) => Ok(Classification::Uncertain(reason)),
+            };
+        }
         let source = self.data.parallel.source_power_basis()?;
         let unit = [Real::one()];
         let weight = source.weight.unwrap_or(&unit);
@@ -76438,6 +76655,9 @@ impl BezierAnalyticParallelPoint2 {
                         return Ok(Classification::Uncertain(reason));
                     }
                 }
+            }
+            BezierAnalyticParallelPointParameter2::RecursiveProjective(_) => {
+                unreachable!("recursive analytic points retain their projective field")
             }
         };
         let parameter = bezier_parameter_root_representation(&parameter);
@@ -76723,6 +76943,32 @@ impl BezierAnalyticParallelPoint2 {
                     &self.data.translation_y,
                 )
             }
+            BezierAnalyticParallelPointParameter2::RecursiveProjective(parameter) => {
+                let parameter = match parameter.refined(refinement_steps, policy) {
+                    Ok(Classification::Decided(parameter)) => parameter,
+                    Ok(Classification::Uncertain(reason)) => {
+                        return Classification::Uncertain(reason);
+                    }
+                    Err(_) => {
+                        return Classification::Uncertain(UncertaintyReason::Unsupported);
+                    }
+                };
+                let (lower, upper) = parameter.isolating_bounds();
+                analytic_parallel_point_bounds_over_interval_with_tangent(
+                    &self.data.parallel,
+                    &BezierAlgebraicChordRealInterval2 {
+                        lower: lower.clone(),
+                        upper: upper.clone(),
+                    },
+                    self.data
+                        .frame_tangent
+                        .as_ref()
+                        .map(|tangent| (&tangent.x[..], &tangent.y[..])),
+                    &self.data.tangent_distance,
+                    &self.data.translation_x,
+                    &self.data.translation_y,
+                )
+            }
         }
     }
 
@@ -76806,6 +77052,9 @@ impl BezierAnalyticParallelPoint2 {
                     &bivariate_outer_product(&[Real::one()], &polynomial),
                     policy,
                 ),
+            BezierAnalyticParallelPointParameter2::RecursiveProjective(parameter) => {
+                parameter.polynomial_sign(&polynomial, policy)
+            }
         };
         let speed_sign = match sign(speed_squared.clone())? {
             Classification::Decided(sign) => sign,
@@ -76867,6 +77116,25 @@ impl BezierAnalyticParallelPoint2 {
             && self.shares_carrier(other)
         {
             return Classification::Decided(true);
+        }
+        let retains_recursive_parameter = matches!(
+            &self.data.parameter,
+            BezierAnalyticParallelPointParameter2::RecursiveProjective(_)
+        ) || matches!(
+            other,
+            RationalBezierIntersectionPointEvidence2::AnalyticParallel(other)
+                if matches!(
+                    &other.data.parameter,
+                    BezierAnalyticParallelPointParameter2::RecursiveProjective(_)
+                )
+        );
+        if retains_recursive_parameter {
+            let retained = RationalBezierIntersectionPointEvidence2::AnalyticParallel(self.clone());
+            if let Ok(Classification::Decided(Some(equal))) =
+                recursive_projective_point_evidence_equality(&retained, other, policy)
+            {
+                return Classification::Decided(equal);
+            }
         }
         retained_point_evidence_equality_by_refinement(
             &RationalBezierIntersectionPointEvidence2::AnalyticParallel(self.clone()),
@@ -135041,6 +135309,53 @@ mod conversion_tests {
                     )
                     .unwrap(),
                 Classification::Decided(true),
+            );
+            // Point reconstruction must keep this same recursive scalar in
+            // place.  Compare the zero- and unit-left-parallel points inside
+            // the resulting tower: their exact squared separation is one.
+            let source_point = BezierAnalyticParallelPoint2::new_recursive_projective(
+                incident_parallel.clone(),
+                parameter.clone(),
+                &policy,
+            );
+            let offset_point = BezierAnalyticParallelPoint2::new_recursive_projective(
+                incident_parallel.with_distance(Real::one()),
+                parameter.clone(),
+                &policy,
+            );
+            assert!(matches!(
+                &offset_point.data.parameter,
+                BezierAnalyticParallelPointParameter2::RecursiveProjective(_)
+            ));
+            let Classification::Decided(Some(source_point)) =
+                source_point.recursive_projective_point(&policy).unwrap()
+            else {
+                panic!("the recursive source point must remain in its retained field");
+            };
+            let Classification::Decided(Some(offset_point)) =
+                offset_point.recursive_projective_point(&policy).unwrap()
+            else {
+                panic!("the recursive parallel point must adjoin its exact source speed");
+            };
+            let field = offset_point.denominator.field();
+            let source_point = source_point
+                .lifted_to(&field)
+                .expect("the source point field must be ancestral to its parallel point");
+            let (delta_x, delta_y, denominator) = offset_point
+                .difference_numerators(&source_point)
+                .expect("the retained parallel points must share one field");
+            let distance_residual = delta_x
+                .square()
+                .and_then(|x| delta_y.square().and_then(|y| x.add(&y)))
+                .and_then(|distance| {
+                    denominator
+                        .square()
+                        .and_then(|unit| distance.subtract(&unit))
+                })
+                .expect("the unit-distance replay must fit its retained field");
+            assert_eq!(
+                distance_residual.sign(&policy).unwrap(),
+                Classification::Decided(RealSign::Zero),
             );
             #[cfg(feature = "dispatch-trace")]
             assert_eq!(

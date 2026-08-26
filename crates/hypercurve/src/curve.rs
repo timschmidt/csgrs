@@ -10627,19 +10627,25 @@ fn curve_region_parallel_point_evidence(
             ),
         ));
     }
-    if !parameter.is_retained_scalar() {
-        return Err(ExactCurveError::blocked(
-            operation,
-            family,
-            crate::UncertaintyReason::Unsupported,
+    if let Some(parameter) = parameter.as_recursive_projective() {
+        let parallel = if source_point {
+            parallel.with_distance(Real::zero())
+        } else {
+            parallel.clone()
+        };
+        return Ok(RationalBezierIntersectionPointEvidence2::AnalyticParallel(
+            crate::BezierAnalyticParallelPoint2::new_recursive_projective(
+                parallel,
+                parameter.clone(),
+                policy,
+            ),
         ));
     }
-    let parameter = promoted_curve_region_bezier_parameter(parameter, operation, family, policy)?;
-    if source_point {
-        bezier_parallel_source_point_evidence(parallel, &parameter, operation, family, policy)
-    } else {
-        analytic_parallel_point_evidence(parallel, &parameter, operation, family, policy)
-    }
+    Err(ExactCurveError::blocked(
+        operation,
+        family,
+        crate::UncertaintyReason::Unsupported,
+    ))
 }
 
 fn bezier_parallel_rational_source(
