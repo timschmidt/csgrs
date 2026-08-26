@@ -11077,16 +11077,16 @@ fn selected_fiber_chamfer_cuts(
         });
     }
     let parallel = fragment.parallel_carrier();
+    let direction = if previous != fragment.is_reversed() {
+        crate::BezierParameterRayDirection2::Increasing
+    } else {
+        crate::BezierParameterRayDirection2::Decreasing
+    };
     let ordinary_parameters = |center_parameter: &BezierParameter2| {
         let unit_range = BezierParameterRange2::new_validated(
             BezierParameter2::Exact(Real::zero()),
             BezierParameter2::Exact(Real::one()),
         );
-        let direction = if previous != fragment.is_reversed() {
-            crate::BezierParameterRayDirection2::Increasing
-        } else {
-            crate::BezierParameterRayDirection2::Decreasing
-        };
         let radius_squared = setback * setback;
         let parameters = (if mode == CurveCornerMode2::TrimOrExtend {
             parallel.fixed_distance_incidence_from_parameter_with_incident_ray(
@@ -11140,10 +11140,21 @@ fn selected_fiber_chamfer_cuts(
                 return Err(ExactCurveError::blocked(operation, family, reason));
             }
         }
-    } else if corner_parameter.is_retained_scalar() {
-        let promoted =
-            promoted_curve_region_bezier_parameter(corner_parameter, operation, family, policy)?;
-        ordinary_parameters(&promoted)?
+    } else if corner_parameter.as_recursive_projective().is_some() {
+        match parallel
+            .fixed_distance_incidence_from_recursive_parameter(
+                corner_parameter,
+                setback,
+                (mode == CurveCornerMode2::TrimOrExtend).then_some(direction),
+                policy,
+            )
+            .map_err(|cause| ExactCurveError::invalid(operation, family, cause))?
+        {
+            Classification::Decided(parameters) => parameters,
+            Classification::Uncertain(reason) => {
+                return Err(ExactCurveError::blocked(operation, family, reason));
+            }
+        }
     } else {
         return Err(ExactCurveError::blocked(
             operation,
@@ -11171,6 +11182,21 @@ fn selected_fiber_chamfer_cuts(
                     ),
                 );
                 (CurveRegionParameter2::from_selected_fiber(parameter), point)
+            }
+            crate::bezier_offset::BezierParallelFixedDistanceParameter2::RecursiveProjective(
+                parameter,
+            ) => {
+                let point = RationalBezierIntersectionPointEvidence2::AnalyticParallel(
+                    crate::BezierAnalyticParallelPoint2::new_recursive_projective(
+                        parallel.clone(),
+                        parameter.clone(),
+                        policy,
+                    ),
+                );
+                (
+                    CurveRegionParameter2::from_recursive_projective(parameter),
+                    point,
+                )
             }
         };
         let Some(placement) = selected_fiber_corner_parameter_placement(
@@ -11308,6 +11334,32 @@ fn analytic_parallel_chamfer_cuts(
                     point,
                     placement,
                 )
+            }
+            crate::bezier_offset::BezierParallelFixedDistanceParameter2::RecursiveProjective(
+                parameter,
+            ) => {
+                let curve_parameter =
+                    CurveRegionParameter2::from_recursive_projective(parameter.clone());
+                let Some(placement) = retained_parallel_corner_parameter_placement(
+                    &curve_parameter,
+                    fragment,
+                    previous,
+                    mode,
+                    operation,
+                    family,
+                    policy,
+                )?
+                else {
+                    continue;
+                };
+                let point = RationalBezierIntersectionPointEvidence2::AnalyticParallel(
+                    crate::BezierAnalyticParallelPoint2::new_recursive_projective(
+                        fragment.parallel().clone(),
+                        parameter,
+                        policy,
+                    ),
+                );
+                (curve_parameter, point, placement)
             }
         };
         cuts.push(CornerCut2 {
