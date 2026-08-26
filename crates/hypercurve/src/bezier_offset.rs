@@ -65062,6 +65062,25 @@ impl BezierAlgebraicChord2 {
         ))
     }
 
+    /// Omits this chord when an algebraic boundary-side ray starts on its
+    /// finite image.
+    pub(crate) fn algebraic_forward_ray_winding_delta_skipping_incident_origin(
+        &self,
+        origin: &RationalBezierAlgebraicPointPredicate2<'_>,
+        direction_x: &Real,
+        direction_y: &Real,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<Option<i32>>> {
+        self.validate_policy(policy)?;
+        let incidence = self.contains_algebraic_point(origin, policy)?;
+        self.forward_ray_winding_delta_skipping_incident_origin_from_incidence(
+            incidence,
+            direction_x,
+            direction_y,
+            policy,
+        )
+    }
+
     fn has_composite_endpoint(&self) -> bool {
         [self.start(), self.end()].into_iter().any(|point| {
             matches!(
@@ -65425,7 +65444,8 @@ impl BezierAlgebraicChord2 {
         Ok(Classification::Decided(0))
     }
 
-    /// Omits this chord when an exact boundary-side ray starts in its interior.
+    /// Omits this chord when a represented boundary-side ray starts on its
+    /// finite image.
     ///
     /// A side query is the winding of the open forward ray immediately after
     /// its origin. Every transverse boundary image through that origin must
@@ -65440,7 +65460,23 @@ impl BezierAlgebraicChord2 {
         policy: &CurveContext,
     ) -> CurveResult<Classification<Option<i32>>> {
         self.validate_policy(policy)?;
-        match self.contains_point(origin, policy)? {
+        let incidence = self.contains_point(origin, policy)?;
+        self.forward_ray_winding_delta_skipping_incident_origin_from_incidence(
+            incidence,
+            direction_x,
+            direction_y,
+            policy,
+        )
+    }
+
+    fn forward_ray_winding_delta_skipping_incident_origin_from_incidence(
+        &self,
+        incidence: Classification<bool>,
+        direction_x: &Real,
+        direction_y: &Real,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<Option<i32>>> {
+        match incidence {
             Classification::Decided(true) => {}
             Classification::Decided(false) => {
                 return Ok(Classification::Decided(None));

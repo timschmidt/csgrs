@@ -16486,6 +16486,7 @@ impl CurveRegion2 {
                 &direction_x,
                 &direction_y,
                 (loop_index == source_loop_index).then_some(source_fragment_index),
+                true,
                 policy,
             )? {
                 Classification::Decided(winding) => winding,
@@ -18289,6 +18290,7 @@ fn classify_algebraic_point_against_retained_loop_with_cusps(
             &direction_x,
             &direction_y,
             None,
+            false,
             policy,
         )? {
             Classification::Decided(winding) => winding,
@@ -18423,6 +18425,7 @@ fn algebraic_ray_retained_fragments_winding(
     direction_x: &Real,
     direction_y: &Real,
     skipped_fragment: Option<usize>,
+    skip_incident_origin_contacts: bool,
     policy: &CurveContext,
 ) -> CurveResult<Classification<i32>> {
     let skipped_support = if let Some(fragment_index) = skipped_fragment {
@@ -18469,8 +18472,33 @@ fn algebraic_ray_retained_fragments_winding(
             AlgebraicRayRetainedFragment2::AnalyticParallel(fragment) => {
                 fragment.forward_ray_winding_delta(point, direction_x, direction_y, policy)?
             }
-            AlgebraicRayRetainedFragment2::AlgebraicChord(fragment) => fragment
-                .algebraic_forward_ray_winding_delta(point, direction_x, direction_y, policy)?,
+            AlgebraicRayRetainedFragment2::AlgebraicChord(fragment) => {
+                if skip_incident_origin_contacts {
+                    match fragment.algebraic_forward_ray_winding_delta_skipping_incident_origin(
+                        point,
+                        direction_x,
+                        direction_y,
+                        policy,
+                    )? {
+                        Classification::Decided(Some(delta)) => Classification::Decided(delta),
+                        Classification::Decided(None) => fragment
+                            .algebraic_forward_ray_winding_delta(
+                                point,
+                                direction_x,
+                                direction_y,
+                                policy,
+                            )?,
+                        Classification::Uncertain(reason) => Classification::Uncertain(reason),
+                    }
+                } else {
+                    fragment.algebraic_forward_ray_winding_delta(
+                        point,
+                        direction_x,
+                        direction_y,
+                        policy,
+                    )?
+                }
+            }
             AlgebraicRayRetainedFragment2::AlgebraicCusp(fragment) => {
                 let point_on_supporting_circle = skipped_support
                     .is_some_and(|source| fragment.has_same_structural_support(source));
@@ -28979,6 +29007,7 @@ mod tests {
                     &Real::one(),
                     &Real::zero(),
                     None,
+                    false,
                     &policy,
                 )
                 .unwrap(),
@@ -28994,6 +29023,92 @@ mod tests {
                 )
                 .unwrap(),
                 Classification::Decided(ContourPointLocation::Outside),
+            );
+        }
+    }
+
+    #[test]
+    fn algebraic_side_ray_skips_coincident_chords_across_loops() {
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let alpha = sqrt_half_algebraic_parameter(&policy);
+            let BezierParameter2::Algebraic(alpha_root) = &alpha else {
+                panic!("sqrt(1/2) must remain algebraic");
+            };
+            let quarter = q(1, 4);
+            let image = |start_x: Real, end_x: Real| {
+                RationalBezier2::try_new(
+                    vec![
+                        Point2::new(start_x, Real::zero()),
+                        Point2::new(end_x, Real::zero()),
+                    ],
+                    vec![Real::one(); 2],
+                )
+                .expect("the affine algebraic point carrier is finite")
+                .point_at_algebraic_parameter(alpha_root, &policy)
+                .expect("the affine algebraic point image is exact")
+            };
+            let start = RationalBezierIntersectionPointEvidence2::Algebraic(image(
+                -quarter.clone(),
+                Real::from(3_i8) * &quarter,
+            ));
+            let query_image = image(Real::zero(), Real::one());
+            let end = RationalBezierIntersectionPointEvidence2::Algebraic(image(
+                quarter.clone(),
+                Real::from(5_i8) * &quarter,
+            ));
+            let Classification::Decided(query) = query_image.predicate_evaluator(&policy).unwrap()
+            else {
+                panic!("the algebraic side-ray origin predicate must construct");
+            };
+            let Classification::Decided(chord) =
+                crate::BezierAlgebraicChord2::try_new(start, end, &policy).unwrap()
+            else {
+                panic!("the straddling algebraic chord must construct");
+            };
+            assert_eq!(
+                chord.contains_algebraic_point(&query, &policy).unwrap(),
+                Classification::Decided(true),
+            );
+            let fragments = vec![
+                AlgebraicRayRetainedFragment2::AlgebraicChord(chord.clone()),
+                AlgebraicRayRetainedFragment2::AlgebraicChord(chord),
+            ];
+            assert_eq!(
+                algebraic_ray_retained_fragments_admit_direction(
+                    &fragments,
+                    &query,
+                    &-Real::one(),
+                    &Real::zero(),
+                    &policy,
+                )
+                .unwrap(),
+                Classification::Decided(true),
+            );
+            assert_eq!(
+                algebraic_ray_retained_fragments_winding(
+                    &fragments,
+                    &query,
+                    &Real::zero(),
+                    &Real::one(),
+                    Some(0),
+                    false,
+                    &policy,
+                )
+                .unwrap(),
+                Classification::Uncertain(UncertaintyReason::Boundary),
+            );
+            assert_eq!(
+                algebraic_ray_retained_fragments_winding(
+                    &fragments,
+                    &query,
+                    &Real::zero(),
+                    &Real::one(),
+                    Some(0),
+                    true,
+                    &policy,
+                )
+                .unwrap(),
+                Classification::Decided(0),
             );
         }
     }
