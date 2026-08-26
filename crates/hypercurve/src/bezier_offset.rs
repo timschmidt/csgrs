@@ -66754,6 +66754,21 @@ impl BezierAlgebraicChord2 {
                 return Ok(Classification::Uncertain(reason));
             }
         };
+        if matches!(
+            system
+                .polynomial_is_identically_zero(&system.incidence, &policy.strict_counterpart(),)?,
+            Classification::Decided(true),
+        ) {
+            #[cfg(feature = "dispatch-trace")]
+            hyperreal::dispatch_trace::record(
+                "hypercurve",
+                "algebraic-chord-rational-kernel",
+                "collinear-before-projection",
+            );
+            return Ok(self
+                .collinear_rational_intersections(source, excluded_source_parameter, policy)?
+                .map(Some));
+        }
         let candidates = match system.parameters(policy)? {
             Classification::Decided(BezierAlgebraicFiberProjection2::Parameters(candidates)) => {
                 candidates
@@ -67677,7 +67692,7 @@ impl BezierAlgebraicChord2 {
         ))
     }
 
-    fn collinear_rational_intersections(
+    pub(crate) fn collinear_rational_intersections(
         &self,
         source: &RationalBezier2,
         excluded_source_parameter: Option<&BezierParameter2>,
@@ -67697,9 +67712,10 @@ impl BezierAlgebraicChord2 {
             }
         }
         if !source.has_certified_injective_axis_on(axis, policy) {
-            return self.collinear_noninjective_rational_intersections(
+            return self.collinear_partitioned_rational_intersections(
                 source,
                 excluded_source_parameter,
+                None,
                 policy,
             );
         }
@@ -67938,28 +67954,110 @@ impl BezierAlgebraicChord2 {
         }
     }
 
-    fn collinear_noninjective_rational_intersections(
+    /// Clips a certified line-valued rational image on one exact regular
+    /// parameter range through the common collinear partition engine.
+    ///
+    /// The exact subcurve must independently certify the chord's chosen axis
+    /// as injective.  Its range endpoints then form the complete stationary
+    /// partition, so opaque global leading coefficients never need to be
+    /// normalized merely to rediscover a regular local branch.
+    pub(crate) fn collinear_rational_intersections_on_regular_range(
         &self,
         source: &RationalBezier2,
+        range: &BezierParameterRange2,
         excluded_source_parameter: Option<&BezierParameter2>,
         policy: &CurveContext,
     ) -> CurveResult<Classification<BezierAlgebraicChordRationalIntersections2>> {
+        self.validate_policy(policy)?;
+        let strict = policy.strict_counterpart();
+        match source.common_weight_sign(&strict) {
+            Classification::Decided(RealSign::Positive | RealSign::Negative) => {}
+            Classification::Decided(RealSign::Zero) => {
+                return Ok(Classification::Decided(
+                    BezierAlgebraicChordRationalIntersections2::DegenerateProjection,
+                ));
+            }
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        }
+        let (BezierParameter2::Exact(first), BezierParameter2::Exact(second)) =
+            (range.start(), range.end())
+        else {
+            return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+        };
+        let bounds = match compare_reals(first, second, &strict) {
+            Some(std::cmp::Ordering::Less) => [first.clone(), second.clone()],
+            Some(std::cmp::Ordering::Greater) => [second.clone(), first.clone()],
+            Some(std::cmp::Ordering::Equal) => {
+                return Ok(Classification::Decided(
+                    BezierAlgebraicChordRationalIntersections2::DegenerateProjection,
+                ));
+            }
+            None => return Ok(Classification::Uncertain(UncertaintyReason::Ordering)),
+        };
+        let local = match source.subcurve_between_exact(&bounds[0], &bounds[1], &strict)? {
+            Classification::Decided(local) => local,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        if !local.has_certified_injective_axis_on(self.data.parameter_axis.axis, &strict) {
+            return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+        }
+        #[cfg(feature = "dispatch-trace")]
+        hyperreal::dispatch_trace::record(
+            "hypercurve",
+            "algebraic-chord-collinear-range",
+            "certified-injective-subcurve",
+        );
+        self.collinear_partitioned_rational_intersections(
+            source,
+            excluded_source_parameter,
+            Some(bounds),
+            policy,
+        )
+    }
+
+    fn collinear_partitioned_rational_intersections(
+        &self,
+        source: &RationalBezier2,
+        excluded_source_parameter: Option<&BezierParameter2>,
+        certified_monotone_bounds: Option<[Real; 2]>,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<BezierAlgebraicChordRationalIntersections2>> {
+        let parameter_bounds = certified_monotone_bounds
+            .clone()
+            .unwrap_or_else(|| [Real::zero(), Real::one()]);
         let mut boundaries = vec![
             BezierAlgebraicChordRationalPartitionBoundary2 {
                 source_parameter: CurveRegionParameter2::from_bezier(BezierParameter2::Exact(
-                    Real::zero(),
+                    parameter_bounds[0].clone(),
                 )),
                 chord_endpoint_at_end: None,
             },
             BezierAlgebraicChordRationalPartitionBoundary2 {
                 source_parameter: CurveRegionParameter2::from_bezier(BezierParameter2::Exact(
-                    Real::one(),
+                    parameter_bounds[1].clone(),
                 )),
                 chord_endpoint_at_end: None,
             },
         ];
         for (at_end, point) in [(false, self.start()), (true, self.end())] {
-            match self.collinear_source_parameters_at_chord_endpoint(source, point, policy)? {
+            let parameters = if let Some(bounds) = certified_monotone_bounds.as_ref() {
+                match self.collinear_monotone_source_parameter_at_chord_endpoint(
+                    source, point, bounds, policy,
+                )? {
+                    Classification::Decided(Some(parameter)) => {
+                        Classification::Decided(vec![parameter])
+                    }
+                    Classification::Decided(None) => Classification::Decided(Vec::new()),
+                    Classification::Uncertain(reason) => Classification::Uncertain(reason),
+                }
+            } else {
+                self.collinear_source_parameters_at_chord_endpoint(source, point, policy)?
+            };
+            match parameters {
                 Classification::Decided(parameters) => {
                     boundaries.extend(parameters.into_iter().map(|source_parameter| {
                         BezierAlgebraicChordRationalPartitionBoundary2 {
@@ -67974,40 +68072,43 @@ impl BezierAlgebraicChord2 {
             }
         }
 
-        let source_power = source.homogeneous_power_basis()?;
-        let [derivative_x, derivative_y] = rational_parametric_tangent_numerator(source_power);
-        let derivative = match self.data.parameter_axis.axis {
-            Axis2::X => derivative_x,
-            Axis2::Y => derivative_y,
-        };
-        match polynomial_coefficients_are_identically_zero(&derivative, policy) {
-            Classification::Decided(true) => {
-                return Ok(Classification::Decided(
-                    BezierAlgebraicChordRationalIntersections2::DegenerateProjection,
-                ));
+        if certified_monotone_bounds.is_none() {
+            let source_power = source.homogeneous_power_basis()?;
+            let [derivative_x, derivative_y] = rational_parametric_tangent_numerator(source_power);
+            let derivative = match self.data.parameter_axis.axis {
+                Axis2::X => derivative_x,
+                Axis2::Y => derivative_y,
+            };
+            match polynomial_coefficients_are_identically_zero(&derivative, policy) {
+                Classification::Decided(true) => {
+                    return Ok(Classification::Decided(
+                        BezierAlgebraicChordRationalIntersections2::DegenerateProjection,
+                    ));
+                }
+                Classification::Decided(false) => {}
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
             }
-            Classification::Decided(false) => {}
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        }
-        let derivative = match BezierParameterPolynomial::try_new_power_basis(derivative, policy)? {
-            Classification::Decided(polynomial) => polynomial,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
-        match derivative.isolate_unit_interval_roots(policy)? {
-            Classification::Decided(parameters) => {
-                boundaries.extend(parameters.into_iter().map(|source_parameter| {
-                    BezierAlgebraicChordRationalPartitionBoundary2 {
-                        source_parameter: CurveRegionParameter2::from_bezier(source_parameter),
-                        chord_endpoint_at_end: None,
+            let derivative =
+                match BezierParameterPolynomial::try_new_power_basis(derivative, policy)? {
+                    Classification::Decided(polynomial) => polynomial,
+                    Classification::Uncertain(reason) => {
+                        return Ok(Classification::Uncertain(reason));
                     }
-                }))
-            }
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
+                };
+            match derivative.isolate_unit_interval_roots(policy)? {
+                Classification::Decided(parameters) => {
+                    boundaries.extend(parameters.into_iter().map(|source_parameter| {
+                        BezierAlgebraicChordRationalPartitionBoundary2 {
+                            source_parameter: CurveRegionParameter2::from_bezier(source_parameter),
+                            chord_endpoint_at_end: None,
+                        }
+                    }))
+                }
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
             }
         }
         let boundaries = match sort_and_dedup_collinear_partition_boundaries(boundaries, policy)? {
@@ -68311,6 +68412,176 @@ impl BezierAlgebraicChord2 {
                 point,
             },
         ))
+    }
+
+    /// Inverts one chord endpoint on an exact source range whose chosen axis
+    /// is already certified injective.
+    ///
+    /// Strict point/axis comparisons either recover an exact dyadic cut or
+    /// retain the unique local root in its authored selected field.  The
+    /// injectivity certificate proves the root count, so construction never
+    /// depends on a possibly vanishing global leading coefficient.
+    fn collinear_monotone_source_parameter_at_chord_endpoint(
+        &self,
+        source: &RationalBezier2,
+        point: &RationalBezierIntersectionPointEvidence2,
+        bounds: &[Real; 2],
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<Option<CurveRegionParameter2>>> {
+        let strict = policy.strict_counterpart();
+        let axis = self.data.parameter_axis.axis;
+        let point_at = |parameter: &Real| match source.point_at_classified(parameter, &strict) {
+            Classification::Decided(point) => {
+                Classification::Decided(RationalBezierIntersectionPointEvidence2::Exact(point))
+            }
+            Classification::Uncertain(reason) => Classification::Uncertain(reason),
+        };
+        let lower_point = match point_at(&bounds[0]) {
+            Classification::Decided(point) => point,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        let upper_point = match point_at(&bounds[1]) {
+            Classification::Decided(point) => point,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        let source_order = match algebraic_chord_point_coordinate_order(
+            &lower_point,
+            &upper_point,
+            axis,
+            &strict,
+        )? {
+            Classification::Decided(
+                order @ (std::cmp::Ordering::Less | std::cmp::Ordering::Greater),
+            ) => order,
+            Classification::Decided(std::cmp::Ordering::Equal) => {
+                return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
+            }
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        let lower_order =
+            match algebraic_chord_point_coordinate_order(point, &lower_point, axis, &strict)? {
+                Classification::Decided(order) => order,
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            };
+        if lower_order == std::cmp::Ordering::Equal {
+            return Ok(Classification::Decided(Some(
+                CurveRegionParameter2::from_bezier(BezierParameter2::Exact(bounds[0].clone())),
+            )));
+        }
+        let upper_order =
+            match algebraic_chord_point_coordinate_order(point, &upper_point, axis, &strict)? {
+                Classification::Decided(order) => order,
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            };
+        if upper_order == std::cmp::Ordering::Equal {
+            return Ok(Classification::Decided(Some(
+                CurveRegionParameter2::from_bezier(BezierParameter2::Exact(bounds[1].clone())),
+            )));
+        }
+        let target_is_inside = match source_order {
+            std::cmp::Ordering::Less => {
+                lower_order == std::cmp::Ordering::Greater
+                    && upper_order == std::cmp::Ordering::Less
+            }
+            std::cmp::Ordering::Greater => {
+                lower_order == std::cmp::Ordering::Less
+                    && upper_order == std::cmp::Ordering::Greater
+            }
+            std::cmp::Ordering::Equal => unreachable!("the source axis is injective"),
+        };
+        if !target_is_inside {
+            return Ok(Classification::Decided(None));
+        }
+
+        let mut lower = bounds[0].clone();
+        let mut upper = bounds[1].clone();
+        for _ in 0..16 {
+            let midpoint = Real::average_pair(&lower, &upper);
+            let midpoint_point = match point_at(&midpoint) {
+                Classification::Decided(point) => point,
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            };
+            let order = match algebraic_chord_point_coordinate_order(
+                point,
+                &midpoint_point,
+                axis,
+                &strict,
+            )? {
+                Classification::Decided(order) => order,
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            };
+            if order == std::cmp::Ordering::Equal {
+                #[cfg(feature = "dispatch-trace")]
+                hyperreal::dispatch_trace::record(
+                    "hypercurve",
+                    "algebraic-chord-collinear-endpoint",
+                    "exact-monotone-inverse",
+                );
+                return Ok(Classification::Decided(Some(
+                    CurveRegionParameter2::from_bezier(BezierParameter2::Exact(midpoint)),
+                )));
+            }
+            let root_is_after_midpoint = match source_order {
+                std::cmp::Ordering::Less => order == std::cmp::Ordering::Greater,
+                std::cmp::Ordering::Greater => order == std::cmp::Ordering::Less,
+                std::cmp::Ordering::Equal => unreachable!("the source axis is injective"),
+            };
+            if root_is_after_midpoint {
+                lower = midpoint;
+            } else {
+                upper = midpoint;
+            }
+        }
+
+        let RationalBezierIntersectionPointEvidence2::Algebraic(point) = point else {
+            return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+        };
+        let (Some(parameter), Some((point_x, point_y, point_weight))) = (
+            point.retained_parameter(),
+            point.retained_coordinate_polynomials(),
+        ) else {
+            return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+        };
+        let source_power = source.homogeneous_power_basis()?;
+        let (point_axis, source_axis) = match axis {
+            Axis2::X => (point_x, &source_power.x_numerator),
+            Axis2::Y => (point_y, &source_power.y_numerator),
+        };
+        let incidence = bivariate_subtract(
+            &bivariate_outer_product(point_weight, source_axis),
+            &bivariate_outer_product(point_axis, &source_power.weight),
+        );
+        let selected =
+            BezierAlgebraicSelectedFiberAuthority2::new(incidence, parameter.clone(), &strict)
+                .parameter(IsolatedRootInterval {
+                    lower,
+                    upper,
+                    exact_root: None,
+                    distinct_root_count: 1,
+                });
+        #[cfg(feature = "dispatch-trace")]
+        hyperreal::dispatch_trace::record(
+            "hypercurve",
+            "algebraic-chord-collinear-endpoint",
+            "retained-monotone-inverse",
+        );
+        Ok(Classification::Decided(Some(
+            CurveRegionParameter2::from_selected_fiber(selected),
+        )))
     }
 
     fn collinear_source_parameters_at_chord_endpoint(
@@ -71885,6 +72156,32 @@ pub(crate) fn algebraic_chord_point_linear_order_to_exact(
     for refinement_steps in [0, 2, 4, 8, 16] {
         if let Some(Some(order)) = interval_order(refinement_steps) {
             return Ok(Classification::Decided(order));
+        }
+    }
+    // Preserve authored correlation before splitting a singly selected
+    // rational point into independent Cartesian algebraic images.  An
+    // oblique projection can cancel shared coordinate terms coefficientwise
+    // even when each coordinate contains opaque Real coefficients that the
+    // represented-root package cannot normalize independently.
+    if let RationalBezierIntersectionPointEvidence2::Algebraic(point) = point {
+        let value = coefficient_x * origin.x() + coefficient_y * origin.y();
+        let order = policy.strict_predicate_pass(|| -> CurveResult<_> {
+            let predicate = match point.predicate_evaluator(policy)? {
+                Classification::Decided(predicate) => predicate,
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            };
+            predicate.linear_order_to_real(coefficient_x, coefficient_y, &value, policy)
+        })?;
+        if order.is_decided() {
+            #[cfg(feature = "dispatch-trace")]
+            hyperreal::dispatch_trace::record(
+                "hypercurve",
+                "algebraic-chord-point-linear-order",
+                "retained-field-projection",
+            );
+            return Ok(order);
         }
     }
     // Independently refined Cartesian boxes cannot prove a correlated
@@ -87518,6 +87815,32 @@ pub struct CertifiedPythagoreanHodographOffset2 {
     distance: Real,
 }
 
+/// Exact rational image selected by one regular analytic-parallel range.
+///
+/// `support_line` is only an infinite-support certificate for a line-valued
+/// branch. The rational curve retains its original global parameterization
+/// and may retrace or extend beyond that finite witness segment.
+#[derive(Debug)]
+pub(crate) struct BezierParallelRationalComponent2 {
+    curve: RationalBezier2,
+    support_line: Option<LineSeg2>,
+    regular_range: BezierParameterRange2,
+}
+
+impl BezierParallelRationalComponent2 {
+    pub(crate) const fn curve(&self) -> &RationalBezier2 {
+        &self.curve
+    }
+
+    pub(crate) const fn support_line(&self) -> Option<&LineSeg2> {
+        self.support_line.as_ref()
+    }
+
+    pub(crate) const fn regular_range(&self) -> &BezierParameterRange2 {
+        &self.regular_range
+    }
+}
+
 /// Blend2D quadratic parallel candidate with an exact radial-excursion bound.
 ///
 /// `radial_error_bound` bounds the excess of `|candidate(t)-source(t)|` over
@@ -88143,7 +88466,19 @@ impl BezierParallel2 {
             &differential.tangent_x,
             &differential.tangent_y,
         ) else {
-            return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+            return Ok(
+                match self.source_constant_tangent_field_at_interior(
+                    differential,
+                    interior,
+                    policy,
+                )? {
+                    Classification::Decided(Some(field)) => Classification::Decided(Some(field)),
+                    Classification::Decided(None) => {
+                        Classification::Uncertain(UncertaintyReason::Unsupported)
+                    }
+                    Classification::Uncertain(reason) => Classification::Uncertain(reason),
+                },
+            );
         };
         if common_factor.len() <= 1 {
             return Ok(Classification::Decided(None));
@@ -88175,6 +88510,77 @@ impl BezierParallel2 {
             BezierAnalyticParallelTangentField2 {
                 x: tangent_x,
                 y: tangent_y,
+            },
+        ))))
+    }
+
+    /// Recovers a constant oriented tangent when monic hodograph GCD
+    /// normalization alone is unsupported.
+    ///
+    /// A coefficient may have unresolved zero status even though the two
+    /// tangent polynomials have exact rank one. One nonzero interior tangent
+    /// supplies a scale-free direction; every polynomial coefficient must
+    /// then replay with zero cross product under STRICT. This certifies a line
+    /// image without assuming that the unresolved coefficient is nonzero and
+    /// without using approximate construction evidence.
+    fn source_constant_tangent_field_at_interior(
+        &self,
+        differential: &BezierParallelDifferential2,
+        interior: &Real,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<Option<Arc<BezierAnalyticParallelTangentField2>>>> {
+        let strict = policy.strict_counterpart();
+        let tangent_x = polynomial_evaluate(&differential.tangent_x, interior);
+        let tangent_y = polynomial_evaluate(&differential.tangent_y, interior);
+        let tangent_x_sign = real_sign(&tangent_x, &strict);
+        let tangent_y_sign = real_sign(&tangent_y, &strict);
+        let (direction_x, direction_y) = match (tangent_x_sign, tangent_y_sign) {
+            (Some(sign @ (RealSign::Positive | RealSign::Negative)), _) => {
+                let orientation = if sign == RealSign::Positive {
+                    Real::one()
+                } else {
+                    Real::from(-1_i8)
+                };
+                let ratio = (tangent_y / &tangent_x)?;
+                (orientation.clone(), orientation * ratio)
+            }
+            (_, Some(sign @ (RealSign::Positive | RealSign::Negative))) => {
+                let orientation = if sign == RealSign::Positive {
+                    Real::one()
+                } else {
+                    Real::from(-1_i8)
+                };
+                let ratio = (tangent_x / &tangent_y)?;
+                (orientation.clone() * ratio, orientation)
+            }
+            (Some(RealSign::Zero), Some(RealSign::Zero)) => {
+                return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
+            }
+            _ => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
+        };
+        let cross = polynomial_subtract(
+            &polynomial_scale(&differential.tangent_x, &direction_y),
+            &polynomial_scale(&differential.tangent_y, &direction_x),
+        );
+        for coefficient in cross {
+            match real_sign(&coefficient, &strict) {
+                Some(RealSign::Zero) => {}
+                Some(RealSign::Positive | RealSign::Negative) => {
+                    return Ok(Classification::Decided(None));
+                }
+                None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
+            }
+        }
+        #[cfg(feature = "dispatch-trace")]
+        hyperreal::dispatch_trace::record(
+            "hypercurve",
+            "analytic-parallel-regularized-tangent",
+            "constant-direction-rank",
+        );
+        Ok(Classification::Decided(Some(Arc::new(
+            BezierAnalyticParallelTangentField2 {
+                x: vec![direction_x],
+                y: vec![direction_y],
             },
         ))))
     }
@@ -94822,12 +95228,23 @@ impl BezierParallel2 {
         &self,
         range: &BezierParameterRange2,
         policy: &CurveContext,
-    ) -> CurveResult<Classification<Option<RationalBezier2>>> {
+    ) -> CurveResult<Classification<Option<BezierParallelRationalComponent2>>> {
         let strict = policy.strict_counterpart();
         let global = self.exact_rational_parallel_component(&strict)?;
         if let Classification::Decided(Some(curve)) = &global {
-            return Ok(Classification::Decided(Some(curve.clone())));
+            return Ok(Classification::Decided(Some(
+                BezierParallelRationalComponent2 {
+                    curve: curve.clone(),
+                    support_line: None,
+                    regular_range: range.clone(),
+                },
+            )));
         }
+        let global = match global {
+            Classification::Decided(None) => Classification::Decided(None),
+            Classification::Uncertain(reason) => Classification::Uncertain(reason),
+            Classification::Decided(Some(_)) => unreachable!("the exact component returned"),
+        };
         let frame = match self.source_oriented_regularized_tangent_field(range, &strict)? {
             Classification::Decided(Some(frame)) => frame,
             Classification::Decided(None) => return Ok(global),
@@ -94873,7 +95290,29 @@ impl BezierParallel2 {
             "analytic-parallel-rational-component",
             "regularized-constant-tangent",
         );
-        Ok(Classification::Decided(Some(curve)))
+        let support_line = [range.end(), range.start()]
+            .into_iter()
+            .find_map(|parameter| {
+                let BezierParameter2::Exact(parameter) = parameter else {
+                    return None;
+                };
+                let Classification::Decided(anchor) = curve.point_at_classified(parameter, &strict)
+                else {
+                    return None;
+                };
+                LineSeg2::try_new(
+                    anchor.clone(),
+                    anchor.translated((*tangent_x).clone(), (*tangent_y).clone()),
+                )
+                .ok()
+            });
+        Ok(Classification::Decided(Some(
+            BezierParallelRationalComponent2 {
+                curve,
+                support_line,
+                regular_range: range.clone(),
+            },
+        )))
     }
 
     fn certified_transverse_contact_sign(
@@ -130122,7 +130561,7 @@ mod conversion_tests {
                 "the regularized constant frame must own construction: {trace:?}",
             );
             let overlaps = match chord
-                .rational_intersections(&component, None, &policy)
+                .rational_intersections(component.curve(), None, &policy)
                 .unwrap()
             {
                 Classification::Decided(BezierAlgebraicChordRationalIntersections2::Overlaps(
@@ -130144,6 +130583,197 @@ mod conversion_tests {
             assert_eq!(
                 overlaps[1].orientation(),
                 RationalBezierOverlapOrientation2::Same,
+            );
+        }
+    }
+
+    #[test]
+    fn opaque_retracing_line_uses_constant_direction_rank_component() {
+        let epsilon = Real::new(
+            hyperreal::Rational::from_bigint_fraction(
+                num::BigInt::from(1_u8),
+                num::BigUint::from(1_u8) << 600,
+            )
+            .unwrap(),
+        );
+        let opaque = epsilon.cos() - Real::one();
+        assert_eq!(opaque.zero_status(), ZeroStatus::Unknown);
+        let third = (Real::one() / Real::from(3_i8)).unwrap();
+        let quarter = (Real::one() / Real::from(4_i8)).unwrap();
+        let shoulder = -((&opaque + Real::one()) * quarter);
+        let source = RationalBezier2::try_new(
+            vec![
+                Point2::from_values(0, 0),
+                Point2::new(shoulder.clone(), shoulder.clone()),
+                Point2::new(-third.clone(), -third),
+                Point2::new(shoulder.clone(), shoulder),
+                Point2::from_values(0, 0),
+            ],
+            vec![Real::one(); 5],
+        )
+        .unwrap();
+        let parallel = source.parallel_left(Real::one()).unwrap();
+        let differential = parallel.differential().unwrap();
+        assert_eq!(differential.tangent_x, differential.tangent_y);
+        assert!(
+            greatest_common_divisor_univariate_polynomials_exact(
+                &differential.tangent_x,
+                &differential.tangent_y,
+            )
+            .is_none(),
+            "the unresolved leading coefficient must make monic GCD normalization unsupported",
+        );
+        let half = (Real::one() / Real::from(2_i8)).unwrap();
+        let two_thirds = (Real::from(2_i8) / Real::from(3_i8)).unwrap();
+        let start_q = source
+            .point_at(&two_thirds, &CurveContext::STRICT)
+            .unwrap()
+            .x()
+            .clone();
+        let end_q = source.end().x().clone();
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let range = BezierParameterRange2::from_exact(half.clone(), Real::one());
+            #[cfg(feature = "dispatch-trace")]
+            hyperreal::dispatch_trace::reset();
+            let work = || parallel.source_oriented_regularized_tangent_field(&range, &policy);
+            #[cfg(feature = "dispatch-trace")]
+            let frame = hyperreal::dispatch_trace::with_recording(work).unwrap();
+            #[cfg(not(feature = "dispatch-trace"))]
+            let frame = work().unwrap();
+            #[cfg(feature = "dispatch-trace")]
+            let trace = hyperreal::dispatch_trace::take_trace();
+            let Classification::Decided(Some(frame)) = frame else {
+                panic!("the rank-one tangent must regularize: {frame:?}")
+            };
+            assert_eq!(frame.x, vec![Real::one()]);
+            assert_eq!(frame.y, vec![Real::one()]);
+            #[cfg(feature = "dispatch-trace")]
+            assert_eq!(
+                trace.path_count(
+                    "hypercurve",
+                    "analytic-parallel-regularized-tangent",
+                    "constant-direction-rank",
+                ),
+                1,
+                "the GCD-independent certificate must own the frame: {trace:?}",
+            );
+
+            let BezierParameter2::Algebraic(normal_parameter) = algebraic_parameter(vec![
+                -(Real::one() / Real::from(2_i8)).unwrap(),
+                Real::zero(),
+                Real::one(),
+            ]) else {
+                panic!("the unit normal must remain algebraic")
+            };
+            let normal_representation = parameter_representation(&normal_parameter, &policy);
+            let endpoint = |q: Real, label| {
+                RationalBezierIntersectionPointEvidence2::Algebraic(
+                    RationalBezierAlgebraicPointImage2::from_retained_expression(
+                        normal_parameter.clone(),
+                        normal_representation.clone(),
+                        vec![q.clone(), Real::from(-1_i8)],
+                        vec![q, Real::one()],
+                        vec![Real::one()],
+                        label,
+                    ),
+                )
+            };
+            let chord = match BezierAlgebraicChord2::try_new(
+                endpoint(start_q.clone(), "opaque retracing-line first endpoint"),
+                endpoint(end_q.clone(), "opaque retracing-line second endpoint"),
+                &policy,
+            )
+            .unwrap()
+            {
+                Classification::Decided(chord) => chord,
+                Classification::Uncertain(reason) => {
+                    panic!("the independent selected chord must construct: {reason:?}")
+                }
+            };
+            assert!(chord.exact_line().is_none());
+            assert!(chord.strict_provenance_support_line(&policy).is_none());
+            assert!(matches!(
+                chord
+                    .parallel_intersections_on_regular_range(&parallel, &range, &policy)
+                    .unwrap(),
+                Classification::Decided(
+                    BezierAlgebraicChordParallelIntersections2::DegenerateProjection
+                ),
+            ));
+            let component = match parallel
+                .exact_rational_parallel_component_on_regular_range(&range, &policy)
+                .unwrap()
+            {
+                Classification::Decided(Some(component)) => component,
+                result => panic!("the strict rank-one branch must materialize: {result:?}"),
+            };
+            #[cfg(feature = "dispatch-trace")]
+            hyperreal::dispatch_trace::reset();
+            let support_line = component
+                .support_line()
+                .expect("the exact regular range must publish a support witness");
+            assert_eq!(
+                chord
+                    .has_non_collinear_support_with_exact_line(support_line, &policy)
+                    .unwrap(),
+                Classification::Decided(false),
+            );
+            let work = || {
+                chord.collinear_rational_intersections_on_regular_range(
+                    component.curve(),
+                    component.regular_range(),
+                    None,
+                    &policy,
+                )
+            };
+            #[cfg(feature = "dispatch-trace")]
+            let overlap_result = hyperreal::dispatch_trace::with_recording(work).unwrap();
+            #[cfg(not(feature = "dispatch-trace"))]
+            let overlap_result = work().unwrap();
+            #[cfg(feature = "dispatch-trace")]
+            let overlap_trace = hyperreal::dispatch_trace::take_trace();
+            #[cfg(feature = "dispatch-trace")]
+            {
+                assert_eq!(
+                    overlap_trace.path_count(
+                        "hypercurve",
+                        "algebraic-chord-collinear-range",
+                        "certified-injective-subcurve",
+                    ),
+                    1,
+                    "the exact regular range must own partitioning: {overlap_trace:?}",
+                );
+                assert_eq!(
+                    overlap_trace.path_count(
+                        "hypercurve",
+                        "algebraic-chord-collinear-endpoint",
+                        "retained-monotone-inverse",
+                    ),
+                    1,
+                    "the authored correlated endpoint must invert exactly: {overlap_trace:?}",
+                );
+            }
+            let overlaps = match overlap_result {
+                Classification::Decided(BezierAlgebraicChordRationalIntersections2::Overlaps(
+                    overlaps,
+                )) => overlaps,
+                Classification::Decided(
+                    BezierAlgebraicChordRationalIntersections2::ContactsAndOverlaps {
+                        overlaps,
+                        ..
+                    },
+                ) => overlaps,
+                result => panic!("the opaque line branch must publish overlaps: {result:?}"),
+            };
+            assert!(!overlaps.is_empty());
+            assert!(overlaps.iter().any(|overlap| {
+                overlap.orientation() == RationalBezierOverlapOrientation2::Same
+            }));
+            assert!(
+                overlaps
+                    .iter()
+                    .any(|overlap| overlap.source_range().start().is_retained_scalar()),
+                "the non-dyadic monotone inverse must remain compact: {overlaps:?}",
             );
         }
     }

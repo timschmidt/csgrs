@@ -2723,6 +2723,8 @@ impl<'a> CurveRegionBooleanContext<'a> {
         chord: &crate::BezierAlgebraicChord2,
         chord_index: usize,
         rational: &RationalBezier2,
+        support_line: Option<&LineSeg2>,
+        certified_regular_range: Option<&BezierParameterRange2>,
         shared_source_parameter: Option<&BezierParameter2>,
     ) -> ExactCurveResult<Option<RegionPairResult>> {
         let other_index = if chord_index == pair.first_carrier_index {
@@ -2745,7 +2747,46 @@ impl<'a> CurveRegionBooleanContext<'a> {
                 .rational_intersections(rational, shared_source_parameter, &self.data.policy)
                 .map_err(|cause| self.invalid(other_index, cause))
         };
-        let intersections = if let Some(source_parameter) = source_parameter {
+        let collinear_support = if let Some(line) = support_line {
+            matches!(
+                chord
+                    .has_non_collinear_support_with_exact_line(line, &self.data.policy)
+                    .map_err(|cause| self.invalid(other_index, cause))?,
+                Classification::Decided(false),
+            )
+        } else {
+            false
+        };
+        let intersections = if collinear_support {
+            #[cfg(feature = "dispatch-trace")]
+            hyperreal::dispatch_trace::record(
+                "hypercurve",
+                "algebraic-chord-pair",
+                "certified-rational-support-collinear",
+            );
+            let ranged = if let Some(range) = certified_regular_range {
+                chord
+                    .collinear_rational_intersections_on_regular_range(
+                        rational,
+                        range,
+                        shared_source_parameter,
+                        &self.data.policy,
+                    )
+                    .map_err(|cause| self.invalid(other_index, cause))?
+            } else {
+                Classification::Uncertain(UncertaintyReason::Unsupported)
+            };
+            match ranged {
+                Classification::Uncertain(UncertaintyReason::Unsupported) => chord
+                    .collinear_rational_intersections(
+                        rational,
+                        shared_source_parameter,
+                        &self.data.policy,
+                    )
+                    .map_err(|cause| self.invalid(other_index, cause))?,
+                ranged => ranged,
+            }
+        } else if let Some(source_parameter) = source_parameter {
             match chord
                 .source_related_intersections(rational, source_parameter, &self.data.policy)
                 .map_err(|cause| self.invalid(other_index, cause))?
@@ -2987,7 +3028,9 @@ impl<'a> CurveRegionBooleanContext<'a> {
                 pair,
                 chord,
                 chord_index,
-                &rational,
+                rational.curve(),
+                rational.support_line(),
+                Some(rational.regular_range()),
                 shared_source_parameter,
             )?
         {
@@ -4839,6 +4882,8 @@ impl<'a> CurveRegionBooleanContext<'a> {
                             chord,
                             chord_index,
                             &rational,
+                            None,
+                            None,
                             shared_source_parameter,
                         )? {
                             return Ok(result);
@@ -17114,7 +17159,7 @@ mod certified_successor_tests {
             #[cfg(feature = "dispatch-trace")]
             let trace = hyperreal::dispatch_trace::take_trace();
             assert!(component.blockers.is_empty(), "{component:?}");
-            assert_eq!(component.overlaps.len(), 2, "{component:?}");
+            assert_eq!(component.overlaps.len(), 1, "{component:?}");
             assert!(evidence.is_complete(), "{evidence:?}");
             let [selected_overlap] = evidence.overlaps() else {
                 panic!("only the selected regular branch may survive: {evidence:?}");
@@ -17141,6 +17186,137 @@ mod certified_successor_tests {
                     ) > 0,
                     "the rational overlap authority must publish the component: {trace:?}",
                 );
+            }
+
+            // A Real coefficient can have unresolved zero status while the
+            // authored hodograph still has exact rank one.  Keep the shared
+            // coordinate expression intact through line incidence, restrict
+            // the materialized rational image to its certified regular
+            // branch, and recover its overlap without assigning a global
+            // polynomial degree.
+            let epsilon = Real::new(
+                hyperreal::Rational::from_bigint_fraction(
+                    BigInt::from(1_u8),
+                    BigUint::from(1_u8) << 600,
+                )
+                .expect("valid dyadic epsilon"),
+            );
+            let opaque = epsilon.cos() - Real::one();
+            assert_eq!(opaque.zero_status(), hyperreal::ZeroKnowledge::Unknown);
+            let third = (Real::one() / Real::from(3_i8)).expect("nonzero denominator");
+            let quarter = (Real::one() / Real::from(4_i8)).expect("nonzero denominator");
+            let shoulder = -((&opaque + Real::one()) * quarter);
+            let opaque_source = RationalBezier2::try_new(
+                vec![
+                    Point2::from_values(0, 0),
+                    Point2::new(shoulder.clone(), shoulder.clone()),
+                    Point2::new(-third.clone(), -third),
+                    Point2::new(shoulder.clone(), shoulder),
+                    Point2::from_values(0, 0),
+                ],
+                vec![Real::one(); 5],
+            )
+            .expect("valid opaque retracing source");
+            let three_quarters =
+                (Real::from(3_i8) / Real::from(4_i8)).expect("nonzero denominator");
+            let start_q = opaque_source
+                .point_at(&three_quarters, &CurveContext::STRICT)
+                .expect("exact opaque source point")
+                .x()
+                .clone();
+            let end_q = opaque_source.end().x().clone();
+            let normal_parameter = sqrt_half_parameter(&policy);
+            let normal_representation =
+                crate::bezier_algebraic_image::parameter_representation(&normal_parameter, &policy);
+            let endpoint = |q: Real, label| {
+                RationalBezierIntersectionPointEvidence2::Algebraic(
+                    RationalBezierAlgebraicPointImage2::from_retained_expression(
+                        normal_parameter.clone(),
+                        normal_representation.clone(),
+                        vec![q.clone(), Real::from(-1_i8)],
+                        vec![q, Real::one()],
+                        vec![Real::one()],
+                        label,
+                    ),
+                )
+            };
+            let opaque_chord = decided(
+                crate::BezierAlgebraicChord2::try_new(
+                    endpoint(start_q, "opaque Boolean chord start"),
+                    endpoint(end_q, "opaque Boolean chord end"),
+                    &policy,
+                )
+                .expect("valid opaque algebraic chord"),
+            );
+            assert!(opaque_chord.exact_line().is_none());
+            assert!(
+                opaque_chord
+                    .strict_provenance_support_line(&policy)
+                    .is_none()
+            );
+            let opaque_parallel = opaque_source
+                .parallel_left(Real::one())
+                .expect("valid opaque analytic parallel");
+            #[cfg(feature = "dispatch-trace")]
+            hyperreal::dispatch_trace::reset();
+            let work = || {
+                evaluate(
+                    opaque_chord,
+                    opaque_parallel,
+                    BezierParameterRange2::from_exact(
+                        (Real::one() / Real::from(2_i8)).expect("nonzero denominator"),
+                        Real::one(),
+                    ),
+                )
+            };
+            #[cfg(feature = "dispatch-trace")]
+            let (opaque_component, opaque_evidence) =
+                hyperreal::dispatch_trace::with_recording(work);
+            #[cfg(not(feature = "dispatch-trace"))]
+            let (opaque_component, opaque_evidence) = work();
+            #[cfg(feature = "dispatch-trace")]
+            let opaque_trace = hyperreal::dispatch_trace::take_trace();
+            assert!(opaque_component.blockers.is_empty(), "{opaque_component:?}");
+            assert!(opaque_component.contacts.is_empty(), "{opaque_component:?}");
+            assert_eq!(opaque_component.overlaps.len(), 1, "{opaque_component:?}");
+            assert!(opaque_evidence.is_complete(), "{opaque_evidence:?}");
+            let [opaque_overlap] = opaque_evidence.overlaps() else {
+                panic!("the selected opaque branch must publish one overlap: {opaque_evidence:?}");
+            };
+            assert_eq!(
+                opaque_overlap.orientation(),
+                RationalBezierOverlapOrientation2::Same,
+            );
+            #[cfg(feature = "dispatch-trace")]
+            {
+                for (operation, path) in [
+                    (
+                        "analytic-parallel-regularized-tangent",
+                        "constant-direction-rank",
+                    ),
+                    (
+                        "algebraic-chord-point-linear-order",
+                        "retained-field-projection",
+                    ),
+                    (
+                        "algebraic-chord-collinear-range",
+                        "certified-injective-subcurve",
+                    ),
+                    (
+                        "algebraic-chord-collinear-endpoint",
+                        "exact-monotone-inverse",
+                    ),
+                    (
+                        "algebraic-chord-pair",
+                        "certified-rational-support-collinear",
+                    ),
+                    ("algebraic-chord-pair", "collinear-overlap-complete"),
+                ] {
+                    assert!(
+                        opaque_trace.path_count("hypercurve", operation, path) > 0,
+                        "the opaque Boolean must traverse {operation}/{path}: {opaque_trace:?}",
+                    );
+                }
             }
         }
     }
