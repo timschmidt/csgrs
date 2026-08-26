@@ -86558,7 +86558,8 @@ fn algebraic_selected_fiber_root_interval_refined(
 ///
 /// Strict Bernstein boxes decide every separated nonzero value. Exact
 /// common-fiber counting decides zero without a primitive element. Only the
-/// final 512-step equality query may consume APPROXIMATE_512.
+/// final 512-step equality query may consume APPROXIMATE_512; STRICT continues
+/// exact isolation without treating that schedule as a mathematical bound.
 fn algebraic_selected_fiber_root_predicate_sign(
     incidence: &BivariatePolynomial,
     predicate: &BivariatePolynomial,
@@ -86610,7 +86611,17 @@ fn algebraic_selected_fiber_root_predicate_sign(
     };
     let retained_root = parameter_representation(refined_retained, policy);
     let mut latest = root.clone();
-    for refinement_steps in [0, 2, 4, 8, 16, 32, 64, 128, 256, 512] {
+    let mut refinement_steps = 0_usize;
+    let next_refinement_steps = |steps: usize| {
+        if steps == 0 {
+            Ok(2)
+        } else {
+            steps.checked_mul(2).ok_or_else(|| {
+                CurveError::Topology("selected-fiber predicate refinement overflow".into())
+            })
+        }
+    };
+    loop {
         if refinement_steps != 0 {
             latest = match algebraic_selected_fiber_root_interval_refined(
                 incidence,
@@ -86653,6 +86664,7 @@ fn algebraic_selected_fiber_root_predicate_sign(
         }
 
         if refinement_steps < 32 {
+            refinement_steps = next_refinement_steps(refinement_steps)?;
             continue;
         }
         let predicate_policy = if refinement_steps == 512 && policy.permits_approximate_512() {
@@ -86669,6 +86681,9 @@ fn algebraic_selected_fiber_root_predicate_sign(
             &latest.upper,
             predicate_policy,
         );
+        let exact_nonzero = zero_report.certainty == PredicateCertainty::Exact
+            && zero_report.status == AlgebraicFiberRootCountStatus::Counted
+            && zero_report.distinct_root_count == Some(0);
         if zero_report.certainty == PredicateCertainty::Approximate {
             policy.observe_approximate_512();
         }
@@ -86693,21 +86708,46 @@ fn algebraic_selected_fiber_root_predicate_sign(
                 return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
             }
             AlgebraicFiberRootCountStatus::Undecided => {
-                if refinement_steps == 512 {
+                if refinement_steps == 512 && policy.permits_approximate_512() {
                     return Ok(Classification::Uncertain(UncertaintyReason::Predicate));
                 }
             }
         }
+        if refinement_steps == 512 && policy.permits_approximate_512() && !exact_nonzero {
+            return Ok(Classification::Uncertain(UncertaintyReason::Predicate));
+        }
+        #[cfg(feature = "dispatch-trace")]
+        if refinement_steps == 512 {
+            hyperreal::dispatch_trace::record(
+                "hypercurve",
+                "selected-fiber-predicate-sign",
+                "unbounded-cold-continuation",
+            );
+        }
+        refinement_steps = next_refinement_steps(refinement_steps)?;
     }
-    Ok(Classification::Uncertain(UncertaintyReason::Predicate))
+}
+
+fn validate_selected_fiber_pair_base(
+    first: &BezierAlgebraicSelectedFiberParameter2,
+    second: &BezierAlgebraicSelectedFiberParameter2,
+) -> CurveResult<()> {
+    if first.data.authority.data.retained_parameter == second.data.authority.data.retained_parameter
+    {
+        Ok(())
+    } else {
+        Err(CurveError::Topology(
+            "a selected-fiber pair lost its shared retained base".into(),
+        ))
+    }
 }
 
 /// Signs `predicate(u, v)` for two roots retained over the same selected
 /// algebraic base parameter.
 ///
-/// Separated values use only the two compact fiber boxes.  Exact zero falls
-/// back to complete global scalar projection only at this cold predicate
-/// boundary; that projection never selects persistent construction evidence.
+/// Separated values use only the two compact fiber boxes. Exact zero is
+/// decided by a local subresultant GCD over the selected `(alpha,u)` field;
+/// neither selected scalar is promoted to a degree-multiplied global norm.
 fn algebraic_selected_fiber_pair_predicate_sign(
     first: &BezierAlgebraicSelectedFiberParameter2,
     second: &BezierAlgebraicSelectedFiberParameter2,
@@ -86716,6 +86756,14 @@ fn algebraic_selected_fiber_pair_predicate_sign(
 ) -> CurveResult<Classification<RealSign>> {
     first.validate_policy(policy)?;
     second.validate_policy(policy)?;
+    if policy.permits_approximate_512() {
+        match policy.strict_predicate_pass(|| {
+            algebraic_selected_fiber_pair_predicate_sign(first, second, predicate, policy)
+        })? {
+            decided @ Classification::Decided(_) => return Ok(decided),
+            Classification::Uncertain(_) => {}
+        }
+    }
     if matches!(bivariate_exact_nonzero_metadata(predicate), Some(None)) {
         return Ok(Classification::Decided(RealSign::Zero));
     }
@@ -86757,68 +86805,69 @@ fn algebraic_selected_fiber_pair_predicate_sign(
         }
         (None, None) => {}
     }
+    validate_selected_fiber_pair_base(first, second)?;
 
-    let strict = &CurveContext::STRICT;
+    let strict = policy;
     let mut previous = None;
-    for steps in [0_usize, 2, 4, 8, 16, 32, 64, 128, 256, 512] {
-        let first = match first.refined(steps.saturating_add(64), strict)? {
+    let mut certified_nonzero = false;
+    let mut steps = 0_usize;
+    loop {
+        let refined_first = match first.refined(steps.saturating_add(64), strict)? {
             Classification::Decided(first) => first,
             Classification::Uncertain(reason) => {
                 return Ok(Classification::Uncertain(reason));
             }
         };
-        let second = match second.refined(steps, strict)? {
+        let refined_second = match second.refined(steps, strict)? {
             Classification::Decided(second) => second,
             Classification::Uncertain(reason) => {
                 return Ok(Classification::Uncertain(reason));
             }
         };
-        if previous
-            .as_ref()
-            .is_some_and(|(old_first, old_second)| old_first == &first && old_second == &second)
-        {
-            break;
-        }
-        previous = Some((first.clone(), second.clone()));
+        let stalled = previous.as_ref().is_some_and(|(old_first, old_second)| {
+            old_first == &refined_first && old_second == &refined_second
+        });
+        previous = Some((refined_first.clone(), refined_second.clone()));
         let restricted = bivariate_restrict_to_box_bounds(
             predicate,
-            &first.root().lower,
-            &first.root().upper,
-            &second.root().lower,
-            &second.root().upper,
+            &refined_first.root().lower,
+            &refined_first.root().upper,
+            &refined_second.root().lower,
+            &refined_second.root().upper,
             strict,
         );
         if let Some(sign) = bivariate_unit_square_strict_bernstein_sign(&restricted, strict)? {
             return Ok(Classification::Decided(sign));
         }
-    }
-
-    // Construction remains strictly local above.  Only an equality predicate
-    // that no finite product box can separate reaches this exact global-root
-    // fallback, and APPROXIMATE_512 may affect only its terminal sign query.
-    let (first, second) = policy.strict_predicate_pass(|| -> CurveResult<_> {
-        Ok((
-            first.promoted_bezier_parameter_complete(policy)?,
-            second.promoted_bezier_parameter_complete(policy)?,
-        ))
-    })?;
-    let first = match first {
-        Classification::Decided(first) => first,
-        Classification::Uncertain(reason) => {
-            return Ok(Classification::Uncertain(reason));
+        // A stalled or terminal product box needs one local equality decision.
+        // Once the exact resultant proves nonzero, refinement continues past
+        // 512 until the sign separates; 512 is not a STRICT distance bound.
+        if !certified_nonzero && (stalled || steps == 512) {
+            match algebraic_selected_fiber_pair_projected_root_via_subresultants(
+                first, second, predicate, policy,
+            )? {
+                Classification::Decided(true) => {
+                    return Ok(Classification::Decided(RealSign::Zero));
+                }
+                Classification::Decided(false) => certified_nonzero = true,
+                Classification::Uncertain(UncertaintyReason::Predicate)
+                    if policy.permits_approximate_512() =>
+                {
+                    policy.observe_approximate_512();
+                    return Ok(Classification::Decided(RealSign::Zero));
+                }
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            }
         }
-    };
-    let second = match second {
-        Classification::Decided(second) => second,
-        Classification::Uncertain(reason) => {
-            return Ok(Classification::Uncertain(reason));
-        }
-    };
-    match signed_bivariate_at_parameter_pair(predicate, &first, &second, policy)? {
-        decided @ Classification::Decided(_) => Ok(decided),
-        Classification::Uncertain(_) => algebraic_selected_correlated_predicate_sign(
-            predicate, predicate, &first, &second, policy,
-        ),
+        steps = if steps == 0 {
+            2
+        } else {
+            steps.checked_mul(2).ok_or_else(|| {
+                CurveError::Topology("selected-fiber pair sign refinement overflow".into())
+            })?
+        };
     }
 }
 
@@ -86994,8 +87043,9 @@ fn algebraic_selected_fiber_pair_trivariate_root(
     incidence: &TrivariatePolynomial2,
     policy: &CurveContext,
 ) -> CurveResult<Classification<bool>> {
-    let strict = policy.strict_counterpart();
+    let strict = *policy;
     let retained = &source.data.authority.data.retained_parameter;
+    validate_selected_fiber_pair_base(source, image)?;
     let base = match selected_parameter_simple_constraint(
         &BezierParameter2::Algebraic(retained.clone()),
         &strict,
@@ -87007,10 +87057,26 @@ fn algebraic_selected_fiber_pair_trivariate_root(
     };
     let source_incidence = source.data.authority.data.incidence.clone();
     let mut previous = None;
-    for steps in [0_usize, 2, 4, 8, 16, 32, 64, 128, 256, 512] {
-        let source_steps = steps.saturating_add(64);
+    let mut steps = 0_usize;
+    let next_steps = |steps: usize| {
+        if steps == 0 {
+            Ok(2)
+        } else {
+            steps.checked_mul(2).ok_or_else(|| {
+                CurveError::Topology("selected-fiber root correlation overflow".into())
+            })
+        }
+    };
+    loop {
+        // After the co-refined hot attempt, grow a triangular enclosure: the
+        // base box becomes narrower than the source box, which becomes
+        // narrower than the image box. Equal base/source refinements can make
+        // an exact relation such as `u-alpha` touch zero at box corners
+        // forever. Growing both gaps handles arbitrarily steep branches.
+        let source_steps = steps.saturating_mul(2).saturating_add(64);
+        let alpha_steps = source_steps.saturating_add(steps);
         let alpha = BezierParameter2::Algebraic(retained.clone())
-            .refined_isolating_interval(source_steps, &strict);
+            .refined_isolating_interval(alpha_steps, &strict);
         let BezierParameter2::Algebraic(alpha) = alpha else {
             return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
         };
@@ -87032,7 +87098,7 @@ fn algebraic_selected_fiber_pair_trivariate_root(
                 old_alpha == &alpha && old_source == &source && old_image == &image
             })
         {
-            break;
+            return Ok(Classification::Uncertain(UncertaintyReason::Predicate));
         }
         previous = Some((alpha.clone(), source.clone(), image.clone()));
 
@@ -87042,6 +87108,7 @@ fn algebraic_selected_fiber_pair_trivariate_root(
             real_sign(&defining_lower, &strict),
             real_sign(&defining_upper, &strict),
         ) {
+            steps = next_steps(steps)?;
             continue;
         }
         let restricted_source = bivariate_restrict_to_box_bounds(
@@ -87061,6 +87128,7 @@ fn algebraic_selected_fiber_pair_trivariate_root(
             &strict,
         )?;
         if !strict_signs_are_opposite(source_lower, source_upper) {
+            steps = next_steps(steps)?;
             continue;
         }
 
@@ -87077,9 +87145,11 @@ fn algebraic_selected_fiber_pair_trivariate_root(
         }
         let Some((coefficients, [0, 1])) = trivariate_axis_bivariate_coefficients(&restricted, 2)
         else {
+            steps = next_steps(steps)?;
             continue;
         };
         let Some(lower) = coefficients.first() else {
+            steps = next_steps(steps)?;
             continue;
         };
         let upper = coefficients
@@ -87093,8 +87163,8 @@ fn algebraic_selected_fiber_pair_trivariate_root(
         if strict_signs_are_opposite(lower, upper) {
             return Ok(Classification::Decided(true));
         }
+        steps = next_steps(steps)?;
     }
-    Ok(Classification::Uncertain(UncertaintyReason::Predicate))
 }
 
 /// Correlates a projected image root without promoting either selected fiber.
@@ -87110,7 +87180,24 @@ fn algebraic_selected_fiber_pair_projected_root_via_subresultants(
     projected_incidence: &BivariatePolynomial,
     policy: &CurveContext,
 ) -> CurveResult<Classification<bool>> {
-    let strict = policy.strict_counterpart();
+    policy.strict_predicate_pass(|| {
+        algebraic_selected_fiber_pair_projected_root_via_subresultants_strict(
+            source,
+            image,
+            projected_incidence,
+            policy,
+        )
+    })
+}
+
+fn algebraic_selected_fiber_pair_projected_root_via_subresultants_strict(
+    source: &BezierAlgebraicSelectedFiberParameter2,
+    image: &BezierAlgebraicSelectedFiberParameter2,
+    projected_incidence: &BivariatePolynomial,
+    policy: &CurveContext,
+) -> CurveResult<Classification<bool>> {
+    let strict = *policy;
+    validate_selected_fiber_pair_base(source, image)?;
     let source = match selected_fiber_simple_parameter(source, &strict)? {
         Classification::Decided(parameter) => parameter,
         Classification::Uncertain(reason) => {
@@ -87302,15 +87389,13 @@ fn algebraic_selected_fiber_pair_projected_root(
 ) -> CurveResult<Classification<bool>> {
     source.validate_policy(policy)?;
     image.validate_policy(policy)?;
-    if source.data.authority.data.retained_parameter != image.data.authority.data.retained_parameter
-    {
-        return Ok(algebraic_selected_fiber_pair_predicate_sign(
-            source,
-            image,
-            projected_incidence,
-            policy,
-        )?
-        .map(|sign| sign == RealSign::Zero));
+    if policy.permits_approximate_512() {
+        match policy.strict_predicate_pass(|| {
+            algebraic_selected_fiber_pair_projected_root(source, image, projected_incidence, policy)
+        })? {
+            decided @ Classification::Decided(_) => return Ok(decided),
+            Classification::Uncertain(_) => {}
+        }
     }
     if source.represented_value().is_some() || image.represented_value().is_some() {
         return Ok(algebraic_selected_fiber_pair_predicate_sign(
@@ -87321,119 +87406,129 @@ fn algebraic_selected_fiber_pair_projected_root(
         )?
         .map(|sign| sign == RealSign::Zero));
     }
+    validate_selected_fiber_pair_base(source, image)?;
 
-    let strict = &CurveContext::STRICT;
-    let retained = source.data.authority.data.retained_parameter.clone();
-    let box_source = match selected_fiber_simple_parameter(source, strict)? {
-        Classification::Decided(parameter) => Some(parameter),
-        Classification::Uncertain(_) => None,
-    };
-    let box_image = match selected_fiber_simple_parameter(image, strict)? {
-        Classification::Decided(parameter) => Some(parameter),
-        Classification::Uncertain(_) => None,
-    };
-    let mut previous = None;
-    for steps in [0_usize, 2, 4, 8, 16, 32, 64, 128, 256, 512] {
-        let (Some(box_source), Some(box_image)) = (&box_source, &box_image) else {
-            break;
+    if !policy.permits_approximate_512() {
+        let strict = policy;
+        let retained = source.data.authority.data.retained_parameter.clone();
+        let box_source = match selected_fiber_simple_parameter(source, strict)? {
+            Classification::Decided(parameter) => Some(parameter),
+            Classification::Uncertain(_) => None,
         };
-        let source_steps = steps.saturating_add(64);
-        let alpha = BezierParameter2::Algebraic(retained.clone())
-            .refined_isolating_interval(source_steps, strict);
-        let BezierParameter2::Algebraic(alpha) = alpha else {
-            break;
+        let box_image = match selected_fiber_simple_parameter(image, strict)? {
+            Classification::Decided(parameter) => Some(parameter),
+            Classification::Uncertain(_) => None,
         };
-        let source = match box_source.refined(source_steps, strict)? {
-            Classification::Decided(source) => source,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
+        let mut previous = None;
+        // This is only the transverse hot path. Tangencies and severely
+        // conditioned boxes continue through the exact local subresultant
+        // authority below, so do not spend the terminal predicate schedule
+        // trying to turn an even contact into an opposite-face certificate.
+        for steps in [0_usize, 2, 4, 8, 16, 32] {
+            let (Some(box_source), Some(box_image)) = (&box_source, &box_image) else {
+                break;
+            };
+            let source_steps = steps.saturating_mul(2).saturating_add(64);
+            let alpha_steps = source_steps.saturating_add(steps);
+            let alpha = BezierParameter2::Algebraic(retained.clone())
+                .refined_isolating_interval(alpha_steps, strict);
+            let BezierParameter2::Algebraic(alpha) = alpha else {
+                break;
+            };
+            let source = match box_source.refined(source_steps, strict)? {
+                Classification::Decided(source) => source,
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            };
+            let image = match box_image.refined(steps, strict)? {
+                Classification::Decided(image) => image,
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            };
+            if previous
+                .as_ref()
+                .is_some_and(|(old_alpha, old_source, old_image)| {
+                    old_alpha == &alpha && old_source == &source && old_image == &image
+                })
+            {
+                break;
             }
-        };
-        let image = match box_image.refined(steps, strict)? {
-            Classification::Decided(image) => image,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
+            previous = Some((alpha.clone(), source.clone(), image.clone()));
+
+            let restricted_incidence = bivariate_restrict_to_box_bounds(
+                projected_incidence,
+                &source.root().lower,
+                &source.root().upper,
+                &image.root().lower,
+                &image.root().upper,
+                strict,
+            );
+            if bivariate_unit_square_strict_bernstein_sign(&restricted_incidence, strict)?.is_some()
+            {
+                return Ok(Classification::Decided(false));
             }
-        };
-        if previous
-            .as_ref()
-            .is_some_and(|(old_alpha, old_source, old_image)| {
-                old_alpha == &alpha && old_source == &source && old_image == &image
-            })
+
+            let defining_lower =
+                polynomial_evaluate(alpha.polynomial().coefficients(), alpha.interval().start());
+            let defining_upper =
+                polynomial_evaluate(alpha.polynomial().coefficients(), alpha.interval().end());
+            if !strict_signs_are_opposite(
+                real_sign(&defining_lower, strict),
+                real_sign(&defining_upper, strict),
+            ) {
+                continue;
+            }
+
+            let source_incidence = bivariate_restrict_to_box_bounds(
+                &source.data.authority.data.incidence,
+                alpha.interval().start(),
+                alpha.interval().end(),
+                &source.root().lower,
+                &source.root().upper,
+                strict,
+            );
+            let source_lower = univariate_unit_interval_strict_bernstein_sign(
+                &bivariate_specialize_second(&source_incidence, &Real::zero()),
+                strict,
+            )?;
+            let source_upper = univariate_unit_interval_strict_bernstein_sign(
+                &bivariate_specialize_second(&source_incidence, &Real::one()),
+                strict,
+            )?;
+            if !strict_signs_are_opposite(source_lower, source_upper) {
+                continue;
+            }
+
+            let image_lower = univariate_unit_interval_strict_bernstein_sign(
+                &bivariate_specialize_second(&restricted_incidence, &Real::zero()),
+                strict,
+            )?;
+            let image_upper = univariate_unit_interval_strict_bernstein_sign(
+                &bivariate_specialize_second(&restricted_incidence, &Real::one()),
+                strict,
+            )?;
+            if strict_signs_are_opposite(image_lower, image_upper) {
+                return Ok(Classification::Decided(true));
+            }
+        }
+    }
+    match algebraic_selected_fiber_pair_projected_root_via_subresultants(
+        source,
+        image,
+        projected_incidence,
+        policy,
+    )? {
+        decided @ Classification::Decided(_) => Ok(decided),
+        Classification::Uncertain(UncertaintyReason::Predicate)
+            if policy.permits_approximate_512() =>
         {
-            break;
+            policy.observe_approximate_512();
+            Ok(Classification::Decided(true))
         }
-        previous = Some((alpha.clone(), source.clone(), image.clone()));
-
-        let restricted_incidence = bivariate_restrict_to_box_bounds(
-            projected_incidence,
-            &source.root().lower,
-            &source.root().upper,
-            &image.root().lower,
-            &image.root().upper,
-            strict,
-        );
-        if bivariate_unit_square_strict_bernstein_sign(&restricted_incidence, strict)?.is_some() {
-            return Ok(Classification::Decided(false));
-        }
-
-        let defining_lower =
-            polynomial_evaluate(alpha.polynomial().coefficients(), alpha.interval().start());
-        let defining_upper =
-            polynomial_evaluate(alpha.polynomial().coefficients(), alpha.interval().end());
-        if !strict_signs_are_opposite(
-            real_sign(&defining_lower, strict),
-            real_sign(&defining_upper, strict),
-        ) {
-            continue;
-        }
-
-        let source_incidence = bivariate_restrict_to_box_bounds(
-            &source.data.authority.data.incidence,
-            alpha.interval().start(),
-            alpha.interval().end(),
-            &source.root().lower,
-            &source.root().upper,
-            strict,
-        );
-        let source_lower = univariate_unit_interval_strict_bernstein_sign(
-            &bivariate_specialize_second(&source_incidence, &Real::zero()),
-            strict,
-        )?;
-        let source_upper = univariate_unit_interval_strict_bernstein_sign(
-            &bivariate_specialize_second(&source_incidence, &Real::one()),
-            strict,
-        )?;
-        if !strict_signs_are_opposite(source_lower, source_upper) {
-            continue;
-        }
-
-        let image_lower = univariate_unit_interval_strict_bernstein_sign(
-            &bivariate_specialize_second(&restricted_incidence, &Real::zero()),
-            strict,
-        )?;
-        let image_upper = univariate_unit_interval_strict_bernstein_sign(
-            &bivariate_specialize_second(&restricted_incidence, &Real::one()),
-            strict,
-        )?;
-        if strict_signs_are_opposite(image_lower, image_upper) {
-            return Ok(Classification::Decided(true));
-        }
+        Classification::Uncertain(reason) => Ok(Classification::Uncertain(reason)),
     }
-    if let decided @ Classification::Decided(_) =
-        algebraic_selected_fiber_pair_projected_root_via_subresultants(
-            source,
-            image,
-            projected_incidence,
-            policy,
-        )?
-    {
-        return Ok(decided);
-    }
-    Ok(
-        algebraic_selected_fiber_pair_predicate_sign(source, image, projected_incidence, policy)?
-            .map(|sign| sign == RealSign::Zero),
-    )
 }
 
 fn algebraic_selected_fiber_pair_square_root_sum_sign(
@@ -136352,6 +136447,71 @@ mod conversion_tests {
     }
 
     #[test]
+    fn selected_fiber_predicate_sign_refines_past_the_policy_terminal_under_strict() {
+        let half = (Real::one() / Real::from(2_i8)).unwrap();
+        let epsilon = Real::new(
+            hyperreal::Rational::from_bigint_fraction(
+                num::BigInt::from(1_u8),
+                num::BigUint::from(1_u8) << 600,
+            )
+            .unwrap(),
+        );
+        let BezierParameter2::Algebraic(retained) =
+            algebraic_parameter(vec![-half, Real::zero(), Real::one()])
+        else {
+            panic!("the irrational retained root must remain algebraic");
+        };
+        let incidence = BivariatePolynomial::new(vec![
+            vec![Real::zero(), Real::one()],
+            vec![Real::from(-1_i8)],
+        ]);
+        let selected = BezierAlgebraicSelectedFiberAuthority2::new(
+            incidence,
+            retained.clone(),
+            &CurveContext::STRICT,
+        )
+        .parameter(IsolatedRootInterval {
+            lower: retained.interval().start().clone(),
+            upper: retained.interval().end().clone(),
+            exact_root: None,
+            distinct_root_count: 1,
+        });
+        // At the selected root u=alpha this is the positive value 2^-600.
+        // A product box cannot expose that sign on the 512-step schedule, but
+        // exact common-root counting proves it is nonzero and STRICT must
+        // continue until the sign separates.
+        let predicate =
+            BivariatePolynomial::new(vec![vec![epsilon, Real::one()], vec![Real::from(-1_i8)]]);
+
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            #[cfg(feature = "dispatch-trace")]
+            hyperreal::dispatch_trace::reset();
+            let work = || {
+                crate::policy::resolve_certified_value(&policy, |attempt| {
+                    selected.predicate_sign(&predicate, attempt).unwrap()
+                })
+            };
+            #[cfg(feature = "dispatch-trace")]
+            let outcome = hyperreal::dispatch_trace::with_recording(work);
+            #[cfg(not(feature = "dispatch-trace"))]
+            let outcome = work();
+            #[cfg(feature = "dispatch-trace")]
+            let trace = hyperreal::dispatch_trace::take_trace();
+            assert_eq!(outcome.value, Classification::Decided(RealSign::Positive));
+            assert_eq!(outcome.certainty, crate::CurveCertainty::Certified);
+            #[cfg(feature = "dispatch-trace")]
+            assert!(
+                trace.path_count(
+                    "hypercurve",
+                    "selected-fiber-predicate-sign",
+                    "unbounded-cold-continuation",
+                ) >= 1,
+                "STRICT must refine this certified nonzero value beyond 512 steps: {trace:?}",
+            );
+        }
+    }
+
+    #[test]
     fn selected_fiber_norm_isolation_refines_past_the_old_limit() {
         let half = (Real::one() / Real::from(2_i8)).unwrap();
         let alpha = half.clone().sqrt().unwrap();
@@ -139891,16 +140051,16 @@ mod conversion_tests {
             else {
                 panic!("the negative selected root must retain its local authority")
             };
-            let Classification::Decided(candidates) = parallel
+            let outcome = parallel
                 .fixed_distance_incidence_from_selected_parameter(
                     &center,
                     &setback,
                     Some(BezierParameterRayDirection2::Decreasing),
                     &policy,
                 )
-                .unwrap()
-            else {
-                panic!("the selected nonlinear fixed-distance fiber must decide")
+                .unwrap();
+            let Classification::Decided(candidates) = outcome else {
+                panic!("the selected nonlinear fixed-distance fiber must decide: {outcome:?}")
             };
             assert!(candidates.iter().all(|candidate| matches!(
                 candidate,
@@ -139992,6 +140152,11 @@ mod conversion_tests {
             let trace = hyperreal::dispatch_trace::take_trace();
 
             assert_eq!(outcome, Classification::Decided(true));
+            assert_eq!(
+                algebraic_selected_fiber_pair_predicate_sign(&source, &image, &tangent, &policy,)
+                    .unwrap(),
+                Classification::Decided(RealSign::Zero),
+            );
             #[cfg(feature = "dispatch-trace")]
             assert_eq!(
                 trace.path_count(
