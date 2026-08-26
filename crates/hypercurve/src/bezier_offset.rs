@@ -595,7 +595,13 @@ enum BezierAlgebraicCuspSemicircleParameterCacheEvidence2 {
     /// Fast replay of a just-certified cross-map inverse. Weak ownership
     /// prevents equivalent parameter maps from retaining each other; expiry
     /// falls back to the overlap's exact correlated incidence.
-    RetainedCusp(Weak<BezierAlgebraicCuspSemicircleMappedParameterData2>),
+    RetainedCusp {
+        /// `None` reuses the ordinary key stored by the cache entry. Higher
+        /// carriers are boxed only on this uncommon inverse-replay path so
+        /// they do not enlarge every cache entry.
+        retained_parameter: Option<Box<CurveRegionParameter2>>,
+        cusp: Weak<BezierAlgebraicCuspSemicircleMappedParameterData2>,
+    },
 }
 
 #[derive(Clone, Debug)]
@@ -1076,13 +1082,19 @@ impl BezierAlgebraicCuspSemicircleMappedOverlap2 {
         else {
             return Ok(Classification::Decided(None));
         };
-        let cusp_at_other_start = match self.cusp_parameter_for_other(&other_start, policy)? {
+        let cusp_at_other_start = match self.cusp_parameter_for_other(
+            &CurveRegionParameter2::from_bezier(other_start.clone()),
+            policy,
+        )? {
             Classification::Decided(parameter) => parameter,
             Classification::Uncertain(reason) => {
                 return Ok(Classification::Uncertain(reason));
             }
         };
-        let cusp_at_other_end = match self.cusp_parameter_for_other(&other_end, policy)? {
+        let cusp_at_other_end = match self.cusp_parameter_for_other(
+            &CurveRegionParameter2::from_bezier(other_end.clone()),
+            policy,
+        )? {
             Classification::Decided(parameter) => parameter,
             Classification::Uncertain(reason) => {
                 return Ok(Classification::Uncertain(reason));
@@ -1122,13 +1134,8 @@ impl BezierAlgebraicCuspSemicircleMappedOverlap2 {
             let Some(parameter) = parameter.as_algebraic_cusp() else {
                 return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
             };
-            return Ok(self
-                .other_parameter_for_cusp(parameter, policy)?
-                .map(|parameter| Some(CurveRegionParameter2::from_bezier(parameter))));
+            return Ok(self.other_parameter_for_cusp(parameter, policy)?.map(Some));
         }
-        let Some(parameter) = parameter.as_bezier_parameter() else {
-            return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
-        };
         Ok(self
             .cusp_parameter_for_other(parameter, policy)?
             .map(|parameter| Some(CurveRegionParameter2::from_algebraic_cusp(parameter))))
@@ -1184,14 +1191,14 @@ impl BezierAlgebraicCuspSemicircleMappedOverlap2 {
         }
     }
 
-    fn other_parameter_at_cusp_endpoint(&self, cusp_start: bool) -> BezierParameter2 {
+    fn other_parameter_at_cusp_endpoint(&self, cusp_start: bool) -> CurveRegionParameter2 {
         let other_start =
             cusp_start == (self.orientation == RationalBezierOverlapOrientation2::Same);
-        if other_start {
+        CurveRegionParameter2::from_bezier(if other_start {
             self.other_range.start().clone()
         } else {
             self.other_range.end().clone()
-        }
+        })
     }
 
     fn map_policy(&self) -> CurveContext {
@@ -1203,7 +1210,7 @@ impl BezierAlgebraicCuspSemicircleMappedOverlap2 {
 
     fn retain_inverse_authority(
         &self,
-        retained: &Classification<BezierParameter2>,
+        retained: &Classification<CurveRegionParameter2>,
         source: &BezierAlgebraicCuspSemicircleParameter2,
     ) {
         let Classification::Decided(target_parameter) = retained else {
@@ -1224,7 +1231,7 @@ impl BezierAlgebraicCuspSemicircleMappedOverlap2 {
     /// cusp-circle parameter without constructing another selected-root field.
     pub(crate) fn cusp_parameter_for_other(
         &self,
-        parameter: &BezierParameter2,
+        parameter: &CurveRegionParameter2,
         policy: &CurveContext,
     ) -> CurveResult<Classification<BezierAlgebraicCuspSemicircleParameter2>> {
         if !policy.accepts_retained_policy(self.map_policy()) {
@@ -1236,7 +1243,10 @@ impl BezierAlgebraicCuspSemicircleMappedOverlap2 {
             (self.other_range.start(), true),
             (self.other_range.end(), false),
         ] {
-            match parameter.same_value(endpoint, policy)? {
+            match parameter.same_value(
+                &CurveRegionParameter2::from_bezier(endpoint.clone()),
+                policy,
+            )? {
                 Classification::Decided(true) => {
                     return Ok(Classification::Decided(
                         self.cusp_parameter_at_other_endpoint(other_start),
@@ -1263,6 +1273,18 @@ impl BezierAlgebraicCuspSemicircleMappedOverlap2 {
             Some(None) => true,
             None => false,
         };
+        let parameter = if let Some(parameter) = parameter.as_bezier_parameter() {
+            parameter.clone()
+        } else {
+            match policy
+                .strict_predicate_pass(|| parameter.promoted_bezier_parameter_complete(policy))?
+            {
+                Classification::Decided(parameter) => parameter,
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            }
+        };
         let rational_correlation = if correlated {
             BezierAlgebraicCuspSemicircleRationalCorrelation2::Map
         } else {
@@ -1271,7 +1293,7 @@ impl BezierAlgebraicCuspSemicircleMappedOverlap2 {
         let map_parameter = if self.map_reversed {
             parameter.unit_complement()
         } else {
-            parameter.clone()
+            parameter
         };
         let parameter = match &self.parameter_map {
             BezierAlgebraicCuspSemicircleMappedOverlapMap2::Rational(map) => {
@@ -1305,7 +1327,7 @@ impl BezierAlgebraicCuspSemicircleMappedOverlap2 {
         &self,
         parameter: &BezierAlgebraicCuspSemicircleParameter2,
         policy: &CurveContext,
-    ) -> CurveResult<Classification<BezierParameter2>> {
+    ) -> CurveResult<Classification<CurveRegionParameter2>> {
         parameter.validate_policy(policy)?;
         if !policy.accepts_retained_policy(self.map_policy()) {
             return Err(CurveError::Topology(
@@ -1346,11 +1368,13 @@ impl BezierAlgebraicCuspSemicircleMappedOverlap2 {
             if let Some((parameter, orientation)) = same_map_parameter {
                 let reverse = self.map_reversed
                     != (orientation == RationalBezierOverlapOrientation2::Reversed);
-                return Ok(Classification::Decided(if reverse {
-                    parameter.unit_complement()
-                } else {
-                    parameter
-                }));
+                return Ok(Classification::Decided(CurveRegionParameter2::from_bezier(
+                    if reverse {
+                        parameter.unit_complement()
+                    } else {
+                        parameter
+                    },
+                )));
             }
 
             if let BezierAlgebraicCuspSemicircleMappedOverlapMap2::Rational(target) =
@@ -1408,7 +1432,7 @@ impl BezierAlgebraicCuspSemicircleMappedOverlap2 {
                     }
                 };
                 return retain_unique_overlap_parameter(
-                    candidates,
+                    curve_region_parameters_from_bezier(candidates),
                     &self.other_range,
                     self.map_reversed,
                     true,
@@ -1438,7 +1462,7 @@ impl BezierAlgebraicCuspSemicircleMappedOverlap2 {
                     }
                 };
                 return retain_unique_overlap_parameter(
-                    candidates,
+                    curve_region_parameters_from_bezier(candidates),
                     &self.other_range,
                     self.map_reversed,
                     true,
@@ -1553,7 +1577,7 @@ impl BezierAlgebraicCuspSemicircleMappedOverlap2 {
                 match tangent_cross {
                     Classification::Decided(RealSign::Zero) => {}
                     Classification::Decided(RealSign::Negative | RealSign::Positive) => {
-                        let direct_candidates = match data.chamfer_exact_point(policy)? {
+                        let direct_candidates = (match data.chamfer_exact_point(policy)? {
                             Classification::Decided(Some(point)) => data
                                 .exact_point_circle_tangent_parameter_candidates_on_target(
                                     &point,
@@ -1562,7 +1586,8 @@ impl BezierAlgebraicCuspSemicircleMappedOverlap2 {
                                 )?,
                             Classification::Decided(None) => Classification::Decided(None),
                             Classification::Uncertain(reason) => Classification::Uncertain(reason),
-                        };
+                        })
+                        .map(|parameters| parameters.map(curve_region_parameters_from_bezier));
                         let candidates = match direct_candidates {
                             decided @ Classification::Decided(Some(_)) => decided,
                             Classification::Decided(None) | Classification::Uncertain(_) => {
@@ -1591,7 +1616,7 @@ impl BezierAlgebraicCuspSemicircleMappedOverlap2 {
                                             }
                                         }
                                     };
-                                    match tangent_candidates {
+                                    (match tangent_candidates {
                                         decided @ Classification::Decided(Some(_)) => decided,
                                         Classification::Decided(None)
                                         | Classification::Uncertain(_) => source
@@ -1599,25 +1624,15 @@ impl BezierAlgebraicCuspSemicircleMappedOverlap2 {
                                                 &self.parameter_map,
                                                 policy,
                                             )?,
-                                    }
+                                    })
+                                    .map(|parameters| {
+                                        parameters.map(curve_region_parameters_from_bezier)
+                                    })
                                 } else {
-                                    match data.retained_point_parameter_candidates_on_target(
+                                    data.retained_point_parameter_candidates_on_target(
                                         &self.parameter_map,
                                         policy,
-                                    )? {
-                                        Classification::Decided(Some(candidates)) => {
-                                            promote_curve_region_parameter_candidates_complete(
-                                                candidates, policy,
-                                            )?
-                                            .map(Some)
-                                        }
-                                        Classification::Decided(None) => {
-                                            Classification::Decided(None)
-                                        }
-                                        Classification::Uncertain(reason) => {
-                                            Classification::Uncertain(reason)
-                                        }
-                                    }
+                                    )?
                                 }
                             }
                         };
@@ -1682,7 +1697,7 @@ impl BezierAlgebraicCuspSemicircleMappedOverlap2 {
                     }
                 };
                 let retained = retain_unique_overlap_parameter(
-                    candidates,
+                    curve_region_parameters_from_bezier(candidates),
                     &self.other_range,
                     self.map_reversed,
                     false,
@@ -1695,14 +1710,6 @@ impl BezierAlgebraicCuspSemicircleMappedOverlap2 {
 
             match data.retained_point_parameter_candidates_on_target(&self.parameter_map, policy)? {
                 Classification::Decided(Some(candidates)) => {
-                    let candidates = match promote_curve_region_parameter_candidates_complete(
-                        candidates, policy,
-                    )? {
-                        Classification::Decided(candidates) => candidates,
-                        Classification::Uncertain(reason) => {
-                            return Ok(Classification::Uncertain(reason));
-                        }
-                    };
                     let retained = retain_unique_overlap_parameter(
                         candidates,
                         &self.other_range,
@@ -1766,7 +1773,7 @@ fn rational_overlap_parameter_for_exact_cusp(
     range: &BezierParameterRange2,
     map_reversed: bool,
     policy: &CurveContext,
-) -> CurveResult<Classification<BezierParameter2>> {
+) -> CurveResult<Classification<CurveRegionParameter2>> {
     let data = &map.data;
     if let BezierAlgebraicCuspSemicircleRationalParameterMapSystem2::Represented { frame } =
         &data.system
@@ -1810,11 +1817,17 @@ fn rational_overlap_parameter_for_exact_cusp(
                 return Ok(Classification::Uncertain(reason));
             }
         };
-        let retained =
-            retain_unique_overlap_parameter(candidates, range, map_reversed, true, policy, |_| {
-                Ok(Classification::Decided(RealSign::Zero))
-            })?;
-        if let Classification::Decided(candidate) = &retained {
+        let retained = retain_unique_overlap_parameter(
+            curve_region_parameters_from_bezier(candidates),
+            range,
+            map_reversed,
+            true,
+            policy,
+            |_| Ok(Classification::Decided(RealSign::Zero)),
+        )?;
+        if let Classification::Decided(candidate) = &retained
+            && let Some(candidate) = candidate.as_bezier_parameter()
+        {
             let map_parameter = if map_reversed {
                 candidate.unit_complement()
             } else {
@@ -1869,12 +1882,17 @@ fn rational_overlap_parameter_for_exact_cusp(
             }
         };
         let retained = retain_unique_overlap_parameter(
-            candidates,
+            curve_region_parameters_from_bezier(candidates),
             range,
             map_reversed,
             true,
             policy,
             |candidate| {
+                let candidate = candidate.as_bezier_parameter().ok_or_else(|| {
+                    CurveError::Topology(
+                        "a recursive rational inverse produced a non-Bezier candidate".into(),
+                    )
+                })?;
                 policy.strict_predicate_pass(|| {
                     system.diameter_parameter_sign(
                         candidate,
@@ -1885,7 +1903,9 @@ fn rational_overlap_parameter_for_exact_cusp(
                 })
             },
         )?;
-        if let Classification::Decided(candidate) = &retained {
+        if let Classification::Decided(candidate) = &retained
+            && let Some(candidate) = candidate.as_bezier_parameter()
+        {
             let map_parameter = if map_reversed {
                 candidate.unit_complement()
             } else {
@@ -1955,11 +1975,17 @@ fn rational_overlap_parameter_for_exact_cusp(
                 return Ok(Classification::Uncertain(reason));
             }
         };
-        let retained =
-            retain_unique_overlap_parameter(candidates, range, map_reversed, true, policy, |_| {
-                Ok(Classification::Decided(RealSign::Zero))
-            })?;
-        if let Classification::Decided(candidate) = &retained {
+        let retained = retain_unique_overlap_parameter(
+            curve_region_parameters_from_bezier(candidates),
+            range,
+            map_reversed,
+            true,
+            policy,
+            |_| Ok(Classification::Decided(RealSign::Zero)),
+        )?;
+        if let Classification::Decided(candidate) = &retained
+            && let Some(candidate) = candidate.as_bezier_parameter()
+        {
             let map_parameter = if map_reversed {
                 candidate.unit_complement()
             } else {
@@ -2035,11 +2061,17 @@ fn rational_overlap_parameter_for_exact_cusp(
                 return Ok(Classification::Uncertain(reason));
             }
         };
-    let retained =
-        retain_unique_overlap_parameter(candidates, range, map_reversed, true, policy, |_| {
-            Ok(Classification::Decided(RealSign::Zero))
-        })?;
-    if let Classification::Decided(candidate) = &retained {
+    let retained = retain_unique_overlap_parameter(
+        curve_region_parameters_from_bezier(candidates),
+        range,
+        map_reversed,
+        true,
+        policy,
+        |_| Ok(Classification::Decided(RealSign::Zero)),
+    )?;
+    if let Classification::Decided(candidate) = &retained
+        && let Some(candidate) = candidate.as_bezier_parameter()
+    {
         let map_parameter = if map_reversed {
             candidate.unit_complement()
         } else {
@@ -2058,7 +2090,7 @@ fn parallel_overlap_parameter_for_exact_cusp(
     range: &BezierParameterRange2,
     map_reversed: bool,
     policy: &CurveContext,
-) -> CurveResult<Classification<BezierParameter2>> {
+) -> CurveResult<Classification<CurveRegionParameter2>> {
     let map = &map.data;
     let Some((cusp_parameter, _, diameter, radius_squared_denominator, speed_squared)) =
         map.one_field_system()
@@ -2137,12 +2169,15 @@ fn parallel_overlap_parameter_for_exact_cusp(
         }
     };
     retain_unique_overlap_parameter(
-        candidates,
+        curve_region_parameters_from_bezier(candidates),
         range,
         map_reversed,
         true,
         policy,
         |map_parameter| {
+            let map_parameter = map_parameter.as_bezier_parameter().ok_or_else(|| {
+                CurveError::Topology("a parallel inverse produced a non-Bezier candidate".into())
+            })?;
             algebraic_cusp_correlated_radical_sum_sign(
                 &incidence,
                 &predicate,
@@ -3090,15 +3125,15 @@ fn bivariate_tensor_product(first: &[Real], second: &[Real]) -> BivariatePolynom
 }
 
 fn retain_unique_overlap_parameter<F>(
-    candidates: Vec<BezierParameter2>,
+    candidates: Vec<CurveRegionParameter2>,
     range: &BezierParameterRange2,
     map_reversed: bool,
     include_boundaries: bool,
     policy: &CurveContext,
     mut predicate_sign: F,
-) -> CurveResult<Classification<BezierParameter2>>
+) -> CurveResult<Classification<CurveRegionParameter2>>
 where
-    F: FnMut(&BezierParameter2) -> CurveResult<Classification<RealSign>>,
+    F: FnMut(&CurveRegionParameter2) -> CurveResult<Classification<RealSign>>,
 {
     let mut retained = None;
     for map_parameter in candidates {
@@ -3112,17 +3147,25 @@ where
             continue;
         }
         let candidate = if map_reversed {
-            map_parameter.unit_complement()
+            map_parameter.unit_complement().ok_or_else(|| {
+                CurveError::Topology(
+                    "a mapped overlap candidate had no scalar unit-complement".into(),
+                )
+            })?
         } else {
             map_parameter
         };
-        let in_range =
-            match overlap_parameter_is_in_range(&candidate, range, include_boundaries, policy)? {
-                Classification::Decided(in_range) => in_range,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            };
+        let in_range = match curve_region_parameter_is_in_bezier_range(
+            &candidate,
+            range,
+            include_boundaries,
+            policy,
+        )? {
+            Classification::Decided(in_range) => in_range,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
         if in_range && retained.replace(candidate).is_some() {
             return Err(CurveError::Topology(
                 "one cusp cut mapped to multiple parameters in one regular overlap cell".into(),
@@ -3135,24 +3178,6 @@ where
             "cusp cut had no parameter on its published mapped overlap".into(),
         )),
     }
-}
-
-fn promote_curve_region_parameter_candidates_complete(
-    candidates: Vec<CurveRegionParameter2>,
-    policy: &CurveContext,
-) -> CurveResult<Classification<Vec<BezierParameter2>>> {
-    let mut promoted = Vec::with_capacity(candidates.len());
-    for candidate in candidates {
-        match policy
-            .strict_predicate_pass(|| candidate.promoted_bezier_parameter_complete(policy))?
-        {
-            Classification::Decided(candidate) => promoted.push(candidate),
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        }
-    }
-    Ok(Classification::Decided(promoted))
 }
 
 fn curve_region_parameters_from_bezier(
@@ -3168,9 +3193,11 @@ fn retain_direct_overlap_parameter(
     parameter: BezierParameter2,
     range: &BezierParameterRange2,
     policy: &CurveContext,
-) -> CurveResult<Classification<BezierParameter2>> {
+) -> CurveResult<Classification<CurveRegionParameter2>> {
     match overlap_parameter_is_in_range(&parameter, range, true, policy)? {
-        Classification::Decided(true) => Ok(Classification::Decided(parameter)),
+        Classification::Decided(true) => Ok(Classification::Decided(
+            CurveRegionParameter2::from_bezier(parameter),
+        )),
         Classification::Decided(false) => Err(CurveError::Topology(
             "cusp cut had no parameter on its published mapped overlap".into(),
         )),
@@ -3248,6 +3275,54 @@ fn selected_fiber_parameter_is_in_bezier_range(
     }))
 }
 
+fn curve_region_parameter_is_in_bezier_range(
+    parameter: &CurveRegionParameter2,
+    range: &BezierParameterRange2,
+    include_boundaries: bool,
+    policy: &CurveContext,
+) -> CurveResult<Classification<bool>> {
+    if let Some(parameter) = parameter.as_bezier_parameter() {
+        return overlap_parameter_is_in_range(parameter, range, include_boundaries, policy);
+    }
+    if let Some(parameter) = parameter.as_selected_fiber() {
+        return selected_fiber_parameter_is_in_bezier_range(
+            parameter,
+            range,
+            include_boundaries,
+            policy,
+        );
+    }
+    let start_parameter = CurveRegionParameter2::from_bezier(range.start().clone());
+    let end_parameter = CurveRegionParameter2::from_bezier(range.end().clone());
+    let orientation = match start_parameter.cmp_by_refinement(&end_parameter, policy)? {
+        Classification::Decided(std::cmp::Ordering::Less) => std::cmp::Ordering::Less,
+        Classification::Decided(std::cmp::Ordering::Greater) => std::cmp::Ordering::Greater,
+        Classification::Decided(std::cmp::Ordering::Equal) => {
+            return Err(CurveError::DegenerateOverlapRange);
+        }
+        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+    };
+    let start = match parameter.cmp_by_refinement(&start_parameter, policy)? {
+        Classification::Decided(order) => order,
+        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+    };
+    let end = match parameter.cmp_by_refinement(&end_parameter, policy)? {
+        Classification::Decided(order) => order,
+        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+    };
+    Ok(Classification::Decided(match orientation {
+        std::cmp::Ordering::Less => {
+            (start.is_gt() || (include_boundaries && start.is_eq()))
+                && (end.is_lt() || (include_boundaries && end.is_eq()))
+        }
+        std::cmp::Ordering::Greater => {
+            (start.is_lt() || (include_boundaries && start.is_eq()))
+                && (end.is_gt() || (include_boundaries && end.is_eq()))
+        }
+        std::cmp::Ordering::Equal => unreachable!("the overlap range is positive-length"),
+    }))
+}
+
 fn bezier_parameter_is_in_curve_region_range(
     parameter: &BezierParameter2,
     range: &CurveRegionParameterRange2,
@@ -3273,9 +3348,9 @@ fn mapped_overlap_parameters_for_exact_cusp(
     overlaps: Vec<BezierAlgebraicCuspSemicircleMappedOverlap2>,
     parameter: &Real,
     policy: &CurveContext,
-) -> CurveResult<Classification<Vec<BezierParameter2>>> {
+) -> CurveResult<Classification<Vec<CurveRegionParameter2>>> {
     let parameter = BezierAlgebraicCuspSemicircleParameter2::Exact(parameter.clone());
-    let mut candidates: Vec<BezierParameter2> = Vec::new();
+    let mut candidates: Vec<CurveRegionParameter2> = Vec::new();
     for overlap in overlaps {
         let after_start = match parameter.cmp_by_refinement(&overlap.cusp_start, policy)? {
             Classification::Decided(std::cmp::Ordering::Less) => false,
@@ -3327,7 +3402,7 @@ fn rational_parameters_for_cusp_endpoint(
     parameter: &Real,
     target: &RationalBezier2,
     policy: &CurveContext,
-) -> CurveResult<Classification<Vec<BezierParameter2>>> {
+) -> CurveResult<Classification<Vec<CurveRegionParameter2>>> {
     match source.rational_intersections(target, policy)? {
         Classification::Decided(BezierAlgebraicCuspSemicircleRationalIntersections2::Overlaps(
             overlaps,
@@ -3357,7 +3432,7 @@ fn parallel_parameters_for_cusp_endpoint(
     parameter: &Real,
     target: &BezierParallel2,
     policy: &CurveContext,
-) -> CurveResult<Classification<Vec<BezierParameter2>>> {
+) -> CurveResult<Classification<Vec<CurveRegionParameter2>>> {
     match source.parallel_intersections(target, policy)? {
         Classification::Decided(BezierAlgebraicCuspSemicircleParallelIntersections2::Overlaps(
             overlaps,
@@ -38992,7 +39067,7 @@ impl BezierAlgebraicCuspSemicircleParameterCache2 {
 
     fn retained_cusp_parameter(
         &self,
-        parameter: &BezierParameter2,
+        parameter: &CurveRegionParameter2,
         policy: &CurveContext,
     ) -> Option<Option<BezierAlgebraicCuspSemicircleParameter2>> {
         let cusp = self
@@ -39001,8 +39076,13 @@ impl BezierAlgebraicCuspSemicircleParameterCache2 {
             .expect("cusp parameter cache mutex poisoned")
             .iter()
             .find_map(|(cached, evidence)| match evidence {
-                BezierAlgebraicCuspSemicircleParameterCacheEvidence2::RetainedCusp(cusp)
-                    if cached == parameter =>
+                BezierAlgebraicCuspSemicircleParameterCacheEvidence2::RetainedCusp {
+                    retained_parameter,
+                    cusp,
+                } if retained_parameter.as_deref().map_or_else(
+                    || parameter.as_bezier_parameter() == Some(cached),
+                    |retained| retained == parameter,
+                ) =>
                 {
                     Some(cusp.clone())
                 }
@@ -39016,18 +39096,54 @@ impl BezierAlgebraicCuspSemicircleParameterCache2 {
 
     fn retain_cusp_parameter(
         &self,
-        parameter: BezierParameter2,
+        parameter: CurveRegionParameter2,
         cusp: &BezierAlgebraicCuspSemicircleParameter2,
     ) {
         let BezierAlgebraicCuspSemicircleParameter2::Mapped(cusp) = cusp else {
             return;
         };
-        self.retain_evidence(
-            parameter,
-            BezierAlgebraicCuspSemicircleParameterCacheEvidence2::RetainedCusp(Arc::downgrade(
-                cusp,
-            )),
-        );
+        let mut cache = self
+            .entries
+            .lock()
+            .expect("cusp parameter cache mutex poisoned");
+        if let Some((_, retained)) = cache.iter_mut().find(|(cached, evidence)| {
+            let BezierAlgebraicCuspSemicircleParameterCacheEvidence2::RetainedCusp {
+                retained_parameter,
+                ..
+            } = evidence
+            else {
+                return false;
+            };
+            retained_parameter.as_deref().map_or_else(
+                || parameter.as_bezier_parameter() == Some(cached),
+                |retained| retained == &parameter,
+            )
+        }) {
+            *retained = BezierAlgebraicCuspSemicircleParameterCacheEvidence2::RetainedCusp {
+                retained_parameter: parameter
+                    .as_bezier_parameter()
+                    .is_none()
+                    .then(|| Box::new(parameter)),
+                cusp: Arc::downgrade(cusp),
+            };
+        } else {
+            let (ordinary_key, retained_parameter) =
+                if let Some(parameter) = parameter.as_bezier_parameter() {
+                    (parameter.clone(), None)
+                } else {
+                    (
+                        BezierParameter2::Exact(Real::zero()),
+                        Some(Box::new(parameter)),
+                    )
+                };
+            cache.push((
+                ordinary_key,
+                BezierAlgebraicCuspSemicircleParameterCacheEvidence2::RetainedCusp {
+                    retained_parameter,
+                    cusp: Arc::downgrade(cusp),
+                },
+            ));
+        }
     }
 }
 
@@ -81652,7 +81768,10 @@ impl BezierAlgebraicCuspSemicircleFragment2 {
                                 return Ok(Classification::Uncertain(reason));
                             }
                         };
-                    match candidate.same_value(parameter, policy)? {
+                    match candidate.same_value(
+                        &CurveRegionParameter2::from_bezier(parameter.clone()),
+                        policy,
+                    )? {
                         Classification::Decided(true) => {
                             retain_orientation(overlap.orientation())?;
                         }
@@ -111634,6 +111753,83 @@ mod conversion_tests {
         (semicircle, parallel, overlap.clone())
     }
 
+    #[test]
+    fn mapped_overlap_retains_distinct_selected_inverse_keys_and_rebuilds_expired_values() {
+        let BezierParameter2::Algebraic(retained_parameter) = algebraic_parameter(vec![
+            (Real::from(-1_i8) / Real::from(2_i8)).unwrap(),
+            Real::zero(),
+            Real::one(),
+        ]) else {
+            panic!("the selected base parameter must be algebraic");
+        };
+        let values = [
+            (Real::one() / Real::from(3_i8)).unwrap(),
+            (Real::from(2_i8) / Real::from(3_i8)).unwrap(),
+        ];
+
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let (_, _, overlap) = general_analytic_circle_overlap(&policy);
+            let selected = values.clone().map(|value| {
+                CurveRegionParameter2::from_selected_fiber(exact_selected_fiber_parameter_for_test(
+                    retained_parameter.clone(),
+                    value,
+                    &policy,
+                ))
+            });
+
+            {
+                let source = values.clone().map(|value| {
+                    let Classification::Decided(parameter) = overlap
+                        .cusp_parameter_for_other(
+                            &region_parameter(BezierParameter2::Exact(value)),
+                            &policy,
+                        )
+                        .unwrap()
+                    else {
+                        panic!("an interior analytic cut must remain mapped");
+                    };
+                    parameter
+                });
+                for (target, source) in selected.iter().zip(&source) {
+                    overlap
+                        .retain_inverse_authority(&Classification::Decided(target.clone()), source);
+                }
+                for (target, source) in selected.iter().zip(&source) {
+                    let Classification::Decided(replayed) =
+                        overlap.cusp_parameter_for_other(target, &policy).unwrap()
+                    else {
+                        panic!("a retained selected-fiber inverse must replay");
+                    };
+                    assert!(replayed.shares_exact_evidence(source));
+                }
+            }
+
+            for (target, value) in selected.iter().zip(&values) {
+                let rebuilt = crate::policy::resolve_certified_operation(&policy, |attempt| {
+                    overlap.cusp_parameter_for_other(target, attempt)
+                })
+                .unwrap();
+                assert_eq!(rebuilt.certainty, CurveCertainty::Certified);
+                let Classification::Decided(rebuilt) = rebuilt.value else {
+                    panic!("an expired selected-fiber inverse must rebuild exactly");
+                };
+                let Classification::Decided(expected) = overlap
+                    .cusp_parameter_for_other(
+                        &region_parameter(BezierParameter2::Exact(value.clone())),
+                        &policy,
+                    )
+                    .unwrap()
+                else {
+                    panic!("the corresponding ordinary cut must remain mapped");
+                };
+                assert_eq!(
+                    rebuilt.represented_rational_value(&policy).unwrap(),
+                    expected.represented_rational_value(&policy).unwrap(),
+                );
+            }
+        }
+    }
+
     fn selected_fiber_rational_quarter_overlap(
         policy: &CurveContext,
     ) -> (
@@ -116875,14 +117071,21 @@ mod conversion_tests {
             };
             assert_eq!(
                 reversed_cut
-                    .same_value(&forward_cut.unit_complement(), &policy)
+                    .same_value(
+                        &forward_cut
+                            .unit_complement()
+                            .expect("an overlap target is a scalar parameter"),
+                        &policy,
+                    )
                     .unwrap(),
                 Classification::Decided(true),
             );
             assert_eq!(
                 forward_cut
                     .same_value(
-                        &BezierParameter2::Exact((Real::one() / Real::from(3_i8)).unwrap(),),
+                        &region_parameter(BezierParameter2::Exact(
+                            (Real::one() / Real::from(3_i8)).unwrap(),
+                        )),
                         &policy,
                     )
                     .unwrap(),
@@ -116900,7 +117103,7 @@ mod conversion_tests {
             );
             let authored_parallel_cut = BezierParameter2::Exact(quarter.clone());
             let Classification::Decided(mapped_cusp_cut) = overlap
-                .cusp_parameter_for_other(&authored_parallel_cut, &policy)
+                .cusp_parameter_for_other(&region_parameter(authored_parallel_cut.clone()), &policy)
                 .unwrap()
             else {
                 panic!("an authored analytic cut must retain a compact cusp parameter");
@@ -116913,7 +117116,7 @@ mod conversion_tests {
             };
             assert_eq!(
                 mapped_parallel_round_trip
-                    .same_value(&authored_parallel_cut, &policy)
+                    .same_value(&region_parameter(authored_parallel_cut), &policy)
                     .unwrap(),
                 Classification::Decided(true),
             );
@@ -117019,7 +117222,7 @@ mod conversion_tests {
             let expected_rational_cut =
                 BezierParameter2::Exact((Real::one() / Real::from(3_i8)).unwrap());
             let Classification::Decided(cross_field_cusp_cut) = rational_source_overlap
-                .cusp_parameter_for_other(&expected_rational_cut, &policy)
+                .cusp_parameter_for_other(&region_parameter(expected_rational_cut.clone()), &policy)
                 .unwrap()
             else {
                 panic!("the rational carrier must author one compact interior cusp cut");
@@ -117066,7 +117269,7 @@ mod conversion_tests {
             };
             assert_eq!(
                 cross_field_rational_cut
-                    .same_value(&expected_rational_cut, &policy)
+                    .same_value(&region_parameter(expected_rational_cut), &policy)
                     .unwrap(),
                 Classification::Decided(true),
             );
@@ -117076,7 +117279,7 @@ mod conversion_tests {
                 Real::one(),
             ]);
             let Classification::Decided(algebraic_rational_cusp_cut) = rational_source_overlap
-                .cusp_parameter_for_other(&algebraic_native_cut, &policy)
+                .cusp_parameter_for_other(&region_parameter(algebraic_native_cut.clone()), &policy)
                 .unwrap()
             else {
                 panic!("an algebraic rational-carrier cut must stay mapped");
@@ -117167,7 +117370,7 @@ mod conversion_tests {
                 panic!("the reflected rational quarter must retain one selected cell");
             };
             let Classification::Decided(reflected_cusp_cut) = reflected_rational_overlap
-                .cusp_parameter_for_other(&algebraic_native_cut, &policy)
+                .cusp_parameter_for_other(&region_parameter(algebraic_native_cut.clone()), &policy)
                 .unwrap()
             else {
                 panic!("the reflected nonrational cut must stay mapped");
@@ -117310,7 +117513,7 @@ mod conversion_tests {
             };
             assert_eq!(
                 independent_field_rational_cut
-                    .same_value(&algebraic_native_cut, &policy)
+                    .same_value(&region_parameter(algebraic_native_cut.clone()), &policy)
                     .unwrap(),
                 Classification::Decided(true),
             );
@@ -117352,7 +117555,7 @@ mod conversion_tests {
             };
             assert_eq!(
                 rebuilt_algebraic_rational_cut
-                    .same_value(&algebraic_native_cut, &policy)
+                    .same_value(&region_parameter(algebraic_native_cut.clone()), &policy)
                     .unwrap(),
                 Classification::Decided(true),
             );
@@ -117364,7 +117567,7 @@ mod conversion_tests {
             };
             assert_eq!(
                 algebraic_rational_to_parallel_cut
-                    .same_value(&algebraic_native_cut, &policy)
+                    .same_value(&region_parameter(algebraic_native_cut.clone()), &policy)
                     .unwrap(),
                 Classification::Decided(true),
             );
@@ -117376,7 +117579,10 @@ mod conversion_tests {
             };
             assert_eq!(
                 algebraic_rational_to_reversed_cut
-                    .same_value(&algebraic_native_cut.unit_complement(), &policy)
+                    .same_value(
+                        &region_parameter(algebraic_native_cut.unit_complement()),
+                        &policy
+                    )
                     .unwrap(),
                 Classification::Decided(true),
             );
@@ -117423,7 +117629,7 @@ mod conversion_tests {
             };
             assert_eq!(
                 projective_algebraic_rational_cut
-                    .same_value(&projective_expected, &policy)
+                    .same_value(&region_parameter(projective_expected.clone()), &policy)
                     .unwrap(),
                 Classification::Decided(true),
             );
@@ -117453,7 +117659,10 @@ mod conversion_tests {
             };
             assert_eq!(
                 reversed_projective_algebraic_rational_cut
-                    .same_value(&projective_expected.unit_complement(), &policy)
+                    .same_value(
+                        &region_parameter(projective_expected.unit_complement()),
+                        &policy
+                    )
                     .unwrap(),
                 Classification::Decided(true),
             );
@@ -117521,7 +117730,7 @@ mod conversion_tests {
             };
             assert_eq!(
                 nonlinear_algebraic_rational_cut
-                    .same_value(&nonlinear_expected, &policy)
+                    .same_value(&region_parameter(nonlinear_expected.clone()), &policy)
                     .unwrap(),
                 Classification::Decided(true),
             );
@@ -117546,7 +117755,7 @@ mod conversion_tests {
             };
             assert_eq!(
                 independent_nonlinear_cut
-                    .same_value(&nonlinear_expected, &policy)
+                    .same_value(&region_parameter(nonlinear_expected.clone()), &policy)
                     .unwrap(),
                 Classification::Decided(true),
             );
@@ -117564,7 +117773,7 @@ mod conversion_tests {
             };
             assert_eq!(
                 nonlinear_round_trip
-                    .same_value(&algebraic_native_cut, &policy)
+                    .same_value(&region_parameter(algebraic_native_cut.clone()), &policy)
                     .unwrap(),
                 Classification::Decided(true),
             );
@@ -117594,7 +117803,10 @@ mod conversion_tests {
             };
             assert_eq!(
                 reversed_nonlinear_algebraic_rational_cut
-                    .same_value(&nonlinear_expected.unit_complement(), &policy)
+                    .same_value(
+                        &region_parameter(nonlinear_expected.unit_complement()),
+                        &policy
+                    )
                     .unwrap(),
                 Classification::Decided(true),
             );
@@ -117633,7 +117845,7 @@ mod conversion_tests {
             };
             assert_eq!(
                 pair_nonlinear_cut
-                    .same_value(&nonlinear_expected, &policy)
+                    .same_value(&region_parameter(nonlinear_expected.clone()), &policy)
                     .unwrap(),
                 Classification::Decided(true),
             );
@@ -117661,7 +117873,10 @@ mod conversion_tests {
             };
             assert_eq!(
                 reversed_algebraic_rational_cut
-                    .same_value(&algebraic_native_cut.unit_complement(), &policy)
+                    .same_value(
+                        &region_parameter(algebraic_native_cut.unit_complement()),
+                        &policy
+                    )
                     .unwrap(),
                 Classification::Decided(true),
             );
@@ -117871,7 +118086,7 @@ mod conversion_tests {
             )
             .unwrap();
             let Classification::Decided(algebraic_parallel_cusp_cut) = overlap
-                .cusp_parameter_for_other(&algebraic_native_cut, &policy)
+                .cusp_parameter_for_other(&region_parameter(algebraic_native_cut.clone()), &policy)
                 .unwrap()
             else {
                 panic!("an algebraic analytic-carrier cut must stay mapped");
@@ -117920,7 +118135,7 @@ mod conversion_tests {
             };
             assert_eq!(
                 rebuilt_algebraic_parallel_cut
-                    .same_value(&algebraic_native_cut, &policy)
+                    .same_value(&region_parameter(algebraic_native_cut.clone()), &policy)
                     .unwrap(),
                 Classification::Decided(true),
             );
@@ -117932,7 +118147,10 @@ mod conversion_tests {
             };
             assert_eq!(
                 reversed_algebraic_parallel_cut
-                    .same_value(&algebraic_native_cut.unit_complement(), &policy)
+                    .same_value(
+                        &region_parameter(algebraic_native_cut.unit_complement()),
+                        &policy
+                    )
                     .unwrap(),
                 Classification::Decided(true),
             );
@@ -117945,7 +118163,7 @@ mod conversion_tests {
             };
             assert_eq!(
                 algebraic_parallel_to_rational_cut
-                    .same_value(&algebraic_native_cut, &policy)
+                    .same_value(&region_parameter(algebraic_native_cut.clone()), &policy)
                     .unwrap(),
                 Classification::Decided(true),
             );
@@ -118410,7 +118628,10 @@ mod conversion_tests {
             };
             assert_eq!(
                 nonlinear_analytic_cut
-                    .same_value(&nonlinear_analytic_expected, &policy)
+                    .same_value(
+                        &region_parameter(nonlinear_analytic_expected.clone()),
+                        &policy
+                    )
                     .unwrap(),
                 Classification::Decided(true),
             );
@@ -118423,7 +118644,10 @@ mod conversion_tests {
             };
             assert_eq!(
                 rational_to_nonlinear_analytic_cut
-                    .same_value(&nonlinear_analytic_expected, &policy)
+                    .same_value(
+                        &region_parameter(nonlinear_analytic_expected.clone()),
+                        &policy
+                    )
                     .unwrap(),
                 Classification::Decided(true),
             );
@@ -118436,7 +118660,7 @@ mod conversion_tests {
             };
             assert_eq!(
                 analytic_to_nonlinear_rational_cut
-                    .same_value(&nonlinear_expected, &policy)
+                    .same_value(&region_parameter(nonlinear_expected.clone()), &policy)
                     .unwrap(),
                 Classification::Decided(true),
             );
@@ -118474,7 +118698,10 @@ mod conversion_tests {
             };
             assert_eq!(
                 reversed_nonlinear_analytic_cut
-                    .same_value(&nonlinear_analytic_expected.unit_complement(), &policy)
+                    .same_value(
+                        &region_parameter(nonlinear_analytic_expected.unit_complement()),
+                        &policy
+                    )
                     .unwrap(),
                 Classification::Decided(true),
             );
@@ -118491,8 +118718,6 @@ mod conversion_tests {
                 cross_field_parallel_overlap
                     .second_range()
                     .end()
-                    .as_bezier_parameter()
-                    .expect("the cross-field analytic cut must regain its native parameter")
                     .same_value(&forward_cut, &policy)
                     .unwrap(),
                 Classification::Decided(true),
@@ -118561,8 +118786,6 @@ mod conversion_tests {
                 clipped_overlap
                     .second_range()
                     .end()
-                    .as_bezier_parameter()
-                    .expect("the second clipped range must retain the analytic domain")
                     .same_value(&forward_cut, &policy)
                     .unwrap(),
                 Classification::Decided(true),
@@ -118642,8 +118865,6 @@ mod conversion_tests {
                 reversed_clipped_overlap
                     .second_range()
                     .start()
-                    .as_bezier_parameter()
-                    .expect("the reversed overlap must retain analytic parameters")
                     .same_value(&reversed_cut, &policy)
                     .unwrap(),
                 Classification::Decided(true),
@@ -118670,8 +118891,6 @@ mod conversion_tests {
                 cross_field_reversed_overlap
                     .second_range()
                     .start()
-                    .as_bezier_parameter()
-                    .expect("the reversed cross-field cut must regain its native parameter")
                     .same_value(&reversed_cut, &policy)
                     .unwrap(),
                 Classification::Decided(true),
@@ -118700,7 +118919,7 @@ mod conversion_tests {
                 Real::one(),
             ]);
             let Classification::Decided(cusp_cut) = overlap
-                .cusp_parameter_for_other(&analytic_cut, &policy)
+                .cusp_parameter_for_other(&region_parameter(analytic_cut.clone()), &policy)
                 .unwrap()
             else {
                 panic!("the analytic cut must retain its compact cusp parameter");
@@ -118766,7 +118985,9 @@ mod conversion_tests {
                     panic!("the similarity-transported cusp cut must invert on its overlap");
                 };
                 assert_eq!(
-                    mapped_cut.same_value(&analytic_cut, &policy).unwrap(),
+                    mapped_cut
+                        .same_value(&region_parameter(analytic_cut.clone()), &policy)
+                        .unwrap(),
                     Classification::Decided(true),
                 );
             }
@@ -118783,7 +119004,7 @@ mod conversion_tests {
                 Real::one(),
             ]);
             let Classification::Decided(cusp_cut) = overlap
-                .cusp_parameter_for_other(&analytic_cut, &policy)
+                .cusp_parameter_for_other(&region_parameter(analytic_cut.clone()), &policy)
                 .unwrap()
             else {
                 panic!("the analytic cut must retain its compact cusp parameter");
@@ -119002,7 +119223,7 @@ mod conversion_tests {
                 Real::one(),
             ]);
             let Classification::Decided(source_cut) = source_overlap
-                .cusp_parameter_for_other(&analytic_cut, &policy)
+                .cusp_parameter_for_other(&region_parameter(analytic_cut.clone()), &policy)
                 .unwrap()
             else {
                 panic!("the analytic cut must retain its compact cusp parameter");
@@ -119092,7 +119313,7 @@ mod conversion_tests {
                 Real::one(),
             ]);
             let Classification::Decided(analytic_cusp_cut) = analytic_overlap
-                .cusp_parameter_for_other(&analytic_cut, &policy)
+                .cusp_parameter_for_other(&region_parameter(analytic_cut.clone()), &policy)
                 .unwrap()
             else {
                 panic!("the analytic cut must retain its compact cusp parameter");
@@ -119215,7 +119436,9 @@ mod conversion_tests {
                     panic!("the selected-fiber cut must invert on the analytic overlap");
                 };
                 assert_eq!(
-                    round_trip.same_value(&expected, &policy).unwrap(),
+                    round_trip
+                        .same_value(&region_parameter(expected), &policy)
+                        .unwrap(),
                     Classification::Decided(true),
                 );
             }
@@ -119848,7 +120071,7 @@ mod conversion_tests {
                 BezierAlgebraicCuspSemicircleMappedOverlapMap2::Rational(_)
             ));
             let Classification::Decided(cusp_cut) = overlap
-                .cusp_parameter_for_other(&algebraic_target, &policy)
+                .cusp_parameter_for_other(&region_parameter(algebraic_target.clone()), &policy)
                 .unwrap()
             else {
                 panic!("the nonrepresented analytic cut must map onto the selected circle");
@@ -119864,7 +120087,9 @@ mod conversion_tests {
                 panic!("the nonrepresented selected-circle cut must invert analytically");
             };
             assert_eq!(
-                round_trip.same_value(&algebraic_target, &policy).unwrap(),
+                round_trip
+                    .same_value(&region_parameter(algebraic_target.clone()), &policy)
+                    .unwrap(),
                 Classification::Decided(true),
             );
 
@@ -119911,7 +120136,10 @@ mod conversion_tests {
             };
             assert_eq!(
                 reversed_cut
-                    .same_value(&algebraic_target.unit_complement(), &policy)
+                    .same_value(
+                        &region_parameter(algebraic_target.unit_complement()),
+                        &policy,
+                    )
                     .unwrap(),
                 Classification::Decided(true),
             );
@@ -120241,7 +120469,7 @@ mod conversion_tests {
             };
 
             let Classification::Decided(cusp_cut) = overlap
-                .cusp_parameter_for_other(&algebraic_target, &policy)
+                .cusp_parameter_for_other(&region_parameter(algebraic_target.clone()), &policy)
                 .unwrap()
             else {
                 panic!("the algebraic conic cut must remain mapped");
@@ -120629,7 +120857,10 @@ mod conversion_tests {
                             panic!("the analytic quarter must retain one selected overlap");
                         };
                         let Classification::Decided(cut) = overlap
-                            .cusp_parameter_for_other(native_cut, &policy)
+                            .cusp_parameter_for_other(
+                                &region_parameter(native_cut.clone()),
+                                &policy,
+                            )
                             .unwrap()
                         else {
                             panic!("the nonrational analytic cut must remain mapped");
@@ -120969,7 +121200,10 @@ mod conversion_tests {
             };
             assert_eq!(
                 mapped_pair_contact
-                    .same_value(&rational_contact.other_parameter, &policy)
+                    .same_value(
+                        &region_parameter(rational_contact.other_parameter.clone()),
+                        &policy,
+                    )
                     .unwrap(),
                 Classification::Decided(true),
             );
@@ -121032,7 +121266,10 @@ mod conversion_tests {
             };
             assert_eq!(
                 mapped_analytic_pair_contact
-                    .same_value(&analytic_contact.parallel_parameter, &policy)
+                    .same_value(
+                        &region_parameter(analytic_contact.parallel_parameter.clone()),
+                        &policy,
+                    )
                     .unwrap(),
                 Classification::Decided(true),
             );
@@ -121071,7 +121308,10 @@ mod conversion_tests {
             };
             assert_eq!(
                 reversed_analytic_pair_contact
-                    .same_value(&reversed_analytic_expected, &policy)
+                    .same_value(
+                        &region_parameter(reversed_analytic_expected.clone()),
+                        &policy,
+                    )
                     .unwrap(),
                 Classification::Decided(true),
             );
@@ -121108,7 +121348,7 @@ mod conversion_tests {
             };
             assert_eq!(
                 reversed_pair_contact
-                    .same_value(&reversed_expected, &policy)
+                    .same_value(&region_parameter(reversed_expected.clone()), &policy)
                     .unwrap(),
                 Classification::Decided(true),
             );
@@ -121167,7 +121407,10 @@ mod conversion_tests {
             };
             assert_eq!(
                 mapped_second_pair_contact
-                    .same_value(&second_rational_contact.other_parameter, &policy)
+                    .same_value(
+                        &region_parameter(second_rational_contact.other_parameter.clone()),
+                        &policy,
+                    )
                     .unwrap(),
                 Classification::Decided(true),
             );
@@ -121225,7 +121468,10 @@ mod conversion_tests {
             };
             assert_eq!(
                 mapped_wrapped_pair_contact
-                    .same_value(&rational_contact.other_parameter, &policy)
+                    .same_value(
+                        &region_parameter(rational_contact.other_parameter.clone()),
+                        &policy,
+                    )
                     .unwrap(),
                 Classification::Decided(true),
             );
@@ -121709,7 +121955,8 @@ mod conversion_tests {
                         Real::one(),
                     ]);
                     assert_eq!(
-                        nested_target.same_value(&expected_target, &policy)?,
+                        nested_target
+                            .same_value(&region_parameter(expected_target.clone()), &policy)?,
                         Classification::Decided(true),
                     );
                     let (_, _, analytic_overlap) = general_analytic_circle_overlap(&policy);
@@ -121732,7 +121979,8 @@ mod conversion_tests {
                         );
                     };
                     assert_eq!(
-                        analytic_target.same_value(&expected_target, &policy)?,
+                        analytic_target
+                            .same_value(&region_parameter(expected_target.clone()), &policy)?,
                         Classification::Decided(true),
                     );
                     #[cfg(feature = "dispatch-trace")]
@@ -122809,7 +123057,7 @@ mod conversion_tests {
             };
             assert_eq!(
                 mapped_pair_endpoint
-                    .same_value(&expected_wide_parameter, &policy)
+                    .same_value(&region_parameter(expected_wide_parameter.clone()), &policy,)
                     .unwrap(),
                 Classification::Decided(true),
             );
@@ -122918,7 +123166,7 @@ mod conversion_tests {
             };
             assert_eq!(
                 mapped_wrapped_endpoint
-                    .same_value(&expected_wide_parameter, &policy)
+                    .same_value(&region_parameter(expected_wide_parameter.clone()), &policy,)
                     .unwrap(),
                 Classification::Decided(true),
             );
@@ -122978,7 +123226,7 @@ mod conversion_tests {
             };
             assert_eq!(
                 mapped_analytic_pair_endpoint
-                    .same_value(&expected_wide_parameter, &policy)
+                    .same_value(&region_parameter(expected_wide_parameter.clone()), &policy,)
                     .unwrap(),
                 Classification::Decided(true),
             );
@@ -123945,7 +124193,7 @@ mod conversion_tests {
                 panic!("the benchmark rational carrier must retain one selected cell");
             };
             let Classification::Decided(cut) = overlap
-                .cusp_parameter_for_other(&algebraic_cut, &policy)
+                .cusp_parameter_for_other(&region_parameter(algebraic_cut.clone()), &policy)
                 .unwrap()
             else {
                 panic!("the benchmark rational cut must remain mapped");
@@ -124021,7 +124269,7 @@ mod conversion_tests {
             panic!("the benchmark analytic carrier must retain one selected cell");
         };
         let Classification::Decided(parallel_start) = parallel_overlap
-            .cusp_parameter_for_other(&algebraic_cut, &policy)
+            .cusp_parameter_for_other(&region_parameter(algebraic_cut.clone()), &policy)
             .unwrap()
         else {
             panic!("the benchmark analytic cut must remain mapped");
@@ -124093,7 +124341,7 @@ mod conversion_tests {
             panic!("the reflected analytic carrier must retain one selected cell");
         };
         let Classification::Decided(two_parallel_end) = left_overlap
-            .cusp_parameter_for_other(&algebraic_cut.unit_complement(), &policy)
+            .cusp_parameter_for_other(&region_parameter(algebraic_cut.unit_complement()), &policy)
             .unwrap()
         else {
             panic!("the reflected analytic cut must remain mapped");
@@ -125929,7 +126177,10 @@ mod conversion_tests {
                     panic!("the rational-carrier cut must remain algebraic");
                 };
                 let Classification::Decided(cut) = overlap
-                    .cusp_parameter_for_other(&BezierParameter2::Algebraic(source.clone()), &policy)
+                    .cusp_parameter_for_other(
+                        &region_parameter(BezierParameter2::Algebraic(source.clone())),
+                        &policy,
+                    )
                     .unwrap()
                 else {
                     panic!("the algebraic rational-carrier cut must map to the cusp");
@@ -130567,7 +130818,7 @@ mod conversion_tests {
                     }
                 };
                 let Classification::Decided(cusp) = overlap
-                    .cusp_parameter_for_other(&midpoint, &policy)
+                    .cusp_parameter_for_other(&region_parameter(midpoint.clone()), &policy)
                     .unwrap()
                 else {
                     panic!("a recursive component midpoint must map to the circle");
@@ -130578,7 +130829,9 @@ mod conversion_tests {
                     panic!("a recursive mapped midpoint must invert exactly");
                 };
                 assert_eq!(
-                    replayed.same_value(&midpoint, &policy).unwrap(),
+                    replayed
+                        .same_value(&region_parameter(midpoint.clone()), &policy)
+                        .unwrap(),
                     Classification::Decided(true)
                 );
             }
@@ -133927,7 +134180,10 @@ mod conversion_tests {
             };
             assert_eq!(
                 rational_cut
-                    .same_value(&BezierParameter2::Exact(one_third.clone()), &policy)
+                    .same_value(
+                        &region_parameter(BezierParameter2::Exact(one_third.clone())),
+                        &policy,
+                    )
                     .unwrap(),
                 Classification::Decided(true),
             );
@@ -133966,7 +134222,10 @@ mod conversion_tests {
             };
             assert_eq!(
                 reversed_cut
-                    .same_value(&BezierParameter2::Exact(Real::one() - &one_third), &policy,)
+                    .same_value(
+                        &region_parameter(BezierParameter2::Exact(Real::one() - &one_third)),
+                        &policy,
+                    )
                     .unwrap(),
                 Classification::Decided(true),
             );
