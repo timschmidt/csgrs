@@ -53082,6 +53082,53 @@ impl BezierRecursiveProjectiveParameter2 {
         (&self.data.lower, &self.data.upper)
     }
 
+    /// Signs one power-basis polynomial directly at this retained projective
+    /// scalar.  If `t = n / d` with the stored `d > 0`, the homogeneous Horner
+    /// replay below signs `d^degree * polynomial(t)` in the existing recursive
+    /// quadratic field.  No global scalar image or resultant is constructed.
+    fn polynomial_sign(
+        &self,
+        coefficients: &[Real],
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<RealSign>> {
+        self.validate_policy(policy)?;
+        let Some(degree) = coefficients
+            .iter()
+            .rposition(|coefficient| coefficient.zero_status() != ZeroStatus::Zero)
+        else {
+            return Ok(Classification::Decided(RealSign::Zero));
+        };
+        let field = self.data.scalar.numerator.field();
+        let Some(mut value) = field.constant(coefficients[degree].clone()) else {
+            return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+        };
+        let mut denominator_power = self.data.scalar.denominator.clone();
+        for (index, coefficient) in coefficients[..degree].iter().rev().enumerate() {
+            let Some(constant) = field.constant(coefficient.clone()) else {
+                return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+            };
+            let Some(next) = value
+                .multiply(&self.data.scalar.numerator)
+                .and_then(|value| {
+                    constant
+                        .multiply(&denominator_power)
+                        .and_then(|constant| value.add(&constant))
+                })
+            else {
+                return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+            };
+            value = next;
+            if index + 1 != degree {
+                if let Some(next) = denominator_power.multiply(&self.data.scalar.denominator) {
+                    denominator_power = next;
+                } else {
+                    return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+                }
+            }
+        }
+        value.sign(policy)
+    }
+
     pub(crate) fn refined(
         &self,
         refinement_steps: usize,
@@ -90105,36 +90152,46 @@ impl BezierParallel2 {
         }))
     }
 
-    /// Builds the same regular incident ray from a compact selected-fiber
-    /// endpoint without constructing its degree-multiplied global norm.
+    /// Builds the same regular incident ray from a compact retained endpoint
+    /// without constructing its degree-multiplied global norm.
     ///
     /// The selected isolator is refined under STRICT until its complete
     /// rational box has one nonzero source-weight sign and positive tangent
     /// speed. The outward box boundary is then a certified represented ray
     /// anchor; the root-to-anchor bridge stays regular by the same interval
     /// proof. No approximate value selects the chart.
-    pub(crate) fn incident_domain_from_selected_parameter(
+    pub(crate) fn incident_domain_from_retained_parameter(
         &self,
-        endpoint: &BezierAlgebraicSelectedFiberParameter2,
+        endpoint: &CurveRegionParameter2,
         direction: BezierParameterRayDirection2,
         policy: &CurveContext,
     ) -> CurveResult<Classification<BezierParallelIncidentDomain2>> {
-        endpoint.validate_policy(policy)?;
+        if !endpoint.is_retained_scalar() {
+            return Err(CurveError::Topology(
+                "a retained parallel incident domain requires a retained scalar endpoint".into(),
+            ));
+        }
         let source = self.source_power_basis()?;
         let differential = self.differential()?;
         let weight = source
             .weight
             .map_or_else(|| vec![Real::one()], ToOwned::to_owned);
         let speed_squared = parallel_speed_squared_polynomial(differential);
-        let selected_sign = |coefficients: &[Real]| {
+        let retained_sign = |coefficients: &[Real]| {
             policy.strict_predicate_pass(|| {
-                endpoint.predicate_sign(
-                    &bivariate_outer_product(&[Real::one()], coefficients),
-                    policy,
-                )
+                if let Some(endpoint) = endpoint.as_selected_fiber() {
+                    endpoint.predicate_sign(
+                        &bivariate_outer_product(&[Real::one()], coefficients),
+                        policy,
+                    )
+                } else if let Some(endpoint) = endpoint.as_recursive_projective() {
+                    endpoint.polynomial_sign(coefficients, policy)
+                } else {
+                    unreachable!("a retained scalar has one compact parameter authority")
+                }
             })
         };
-        match selected_sign(&weight)? {
+        match retained_sign(&weight)? {
             Classification::Decided(RealSign::Positive | RealSign::Negative) => {}
             Classification::Decided(RealSign::Zero) => {
                 return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
@@ -90143,7 +90200,7 @@ impl BezierParallel2 {
                 return Ok(Classification::Uncertain(reason));
             }
         }
-        match selected_sign(&speed_squared)? {
+        match retained_sign(&speed_squared)? {
             Classification::Decided(RealSign::Positive) => {}
             Classification::Decided(RealSign::Zero) => {
                 return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
@@ -90188,7 +90245,7 @@ impl BezierParallel2 {
                 },
             )
         };
-        let mut selected_bridge = None;
+        let mut retained_bridge = None;
         for (steps, precision) in [
             (0, -32),
             (2, -64),
@@ -90201,12 +90258,15 @@ impl BezierParallel2 {
             (256, -768),
             (512, -1024),
         ] {
-            let refined = match policy.strict_predicate_pass(|| endpoint.refined(steps, policy))? {
+            let refined = match policy
+                .strict_predicate_pass(|| endpoint.refined_for_finite_envelope(steps, policy))?
+            {
                 Classification::Decided(refined) => refined,
                 Classification::Uncertain(_) => continue,
             };
-            let lower = &refined.root().lower;
-            let upper = &refined.root().upper;
+            let Some((lower, upper)) = refined.finite_envelope_bounds() else {
+                return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+            };
             if strict_interval_sign(&weight, lower, upper, precision)?.is_none()
                 || strict_interval_sign(&speed_squared, lower, upper, precision)?
                     != Some(RealSign::Positive)
@@ -90225,10 +90285,10 @@ impl BezierParallel2 {
                 BezierParameterRayDirection2::Decreasing => lower.clone(),
                 BezierParameterRayDirection2::Increasing => upper.clone(),
             };
-            selected_bridge = Some((anchor, interval));
+            retained_bridge = Some((anchor, interval));
             break;
         }
-        let Some((anchor, bridge)) = selected_bridge else {
+        let Some((anchor, bridge)) = retained_bridge else {
             return Ok(Classification::Uncertain(UncertaintyReason::Predicate));
         };
         let barrier = match self.incident_ray_regular_barrier(&anchor, direction, policy)? {
@@ -90238,7 +90298,7 @@ impl BezierParallel2 {
             }
         };
         Ok(Classification::Decided(BezierParallelIncidentDomain2 {
-            endpoint: CurveRegionParameter2::from_selected_fiber(endpoint.clone()),
+            endpoint: endpoint.clone(),
             bridge: Some(bridge),
             anchor,
             direction,
@@ -134927,6 +134987,60 @@ mod conversion_tests {
             assert_eq!(
                 parameter.order_to_real(&Real::one(), &policy).unwrap(),
                 Classification::Decided(std::cmp::Ordering::Less),
+            );
+            // Reuse the recursive scalar directly as an incident endpoint on
+            // an unrelated nonlinear analytic carrier.  Its source speed is
+            // `4 + 4t^2`, so this exercises homogeneous polynomial replay in
+            // the retained field rather than a constant-line shortcut or a
+            // global scalar projection.
+            let incident_parallel = QuadraticBezier2::new(
+                Point2::from_values(0, 0),
+                Point2::from_values(1, 0),
+                Point2::from_values(2, 1),
+            )
+            .parallel_left(Real::zero())
+            .unwrap();
+            assert_eq!(
+                parameter
+                    .polynomial_sign(&[Real::from(4_i8), Real::zero(), Real::from(4_i8)], &policy,)
+                    .unwrap(),
+                Classification::Decided(RealSign::Positive),
+            );
+            assert_eq!(
+                parameter
+                    .polynomial_sign(&[Real::zero(), Real::one(), -Real::one()], &policy)
+                    .unwrap(),
+                Classification::Decided(RealSign::Positive),
+            );
+            assert_eq!(
+                parameter
+                    .polynomial_sign(&[-Real::one(), Real::one()], &policy)
+                    .unwrap(),
+                Classification::Decided(RealSign::Negative),
+            );
+            let endpoint = CurveRegionParameter2::from_recursive_projective(parameter.clone());
+            let Classification::Decided(incident) = incident_parallel
+                .incident_domain_from_retained_parameter(
+                    &endpoint,
+                    BezierParameterRayDirection2::Increasing,
+                    &policy,
+                )
+                .unwrap()
+            else {
+                panic!("the recursive endpoint must retain its local incident ray");
+            };
+            assert!(incident.endpoint().as_recursive_projective().is_some());
+            assert!(incident.barrier().is_none());
+            assert_eq!(
+                incident
+                    .contains_extension_curve_parameter(
+                        &CurveRegionParameter2::from_bezier(BezierParameter2::Exact(Real::from(
+                            2_i8
+                        ),)),
+                        &policy,
+                    )
+                    .unwrap(),
+                Classification::Decided(true),
             );
             #[cfg(feature = "dispatch-trace")]
             assert_eq!(

@@ -4340,16 +4340,8 @@ impl FilletParallelSource2<'_> {
                 };
                 if let Some(endpoint) = endpoint.as_bezier_parameter() {
                     support.incident_domain_from_parameter(endpoint, direction, policy)
-                } else if let Some(endpoint) = endpoint.as_selected_fiber() {
-                    support.incident_domain_from_selected_parameter(endpoint, direction, policy)
                 } else if endpoint.is_retained_scalar() {
-                    let endpoint = promoted_curve_region_bezier_parameter(
-                        endpoint,
-                        CurveOperation2::Fillet,
-                        family,
-                        policy,
-                    )?;
-                    support.incident_domain_from_parameter(&endpoint, direction, policy)
+                    support.incident_domain_from_retained_parameter(endpoint, direction, policy)
                 } else {
                     return Err(ExactCurveError::blocked(
                         CurveOperation2::Fillet,
