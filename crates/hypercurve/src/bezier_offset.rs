@@ -3165,6 +3165,41 @@ pub(crate) fn overlap_parameter_is_in_range(
     }))
 }
 
+fn selected_fiber_parameter_is_in_bezier_range(
+    parameter: &BezierAlgebraicSelectedFiberParameter2,
+    range: &BezierParameterRange2,
+    include_boundaries: bool,
+    policy: &CurveContext,
+) -> CurveResult<Classification<bool>> {
+    let orientation = match range.start().cmp_by_refinement(range.end(), policy)? {
+        Classification::Decided(std::cmp::Ordering::Less) => std::cmp::Ordering::Less,
+        Classification::Decided(std::cmp::Ordering::Greater) => std::cmp::Ordering::Greater,
+        Classification::Decided(std::cmp::Ordering::Equal) => {
+            return Err(CurveError::DegenerateOverlapRange);
+        }
+        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+    };
+    let start = match parameter.cmp_bezier_parameter(range.start(), policy)? {
+        Classification::Decided(order) => order,
+        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+    };
+    let end = match parameter.cmp_bezier_parameter(range.end(), policy)? {
+        Classification::Decided(order) => order,
+        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+    };
+    Ok(Classification::Decided(match orientation {
+        std::cmp::Ordering::Less => {
+            (start.is_gt() || (include_boundaries && start.is_eq()))
+                && (end.is_lt() || (include_boundaries && end.is_eq()))
+        }
+        std::cmp::Ordering::Greater => {
+            (start.is_lt() || (include_boundaries && start.is_eq()))
+                && (end.is_gt() || (include_boundaries && end.is_eq()))
+        }
+        std::cmp::Ordering::Equal => unreachable!("the overlap range is positive-length"),
+    }))
+}
+
 fn bezier_parameter_is_in_curve_region_range(
     parameter: &BezierParameter2,
     range: &CurveRegionParameterRange2,
@@ -101558,7 +101593,11 @@ impl BezierParameterComponentOverlap2 {
     ) -> CurveResult<Classification<Option<CurveRegionParameter2>>> {
         let parameter = if let Some(parameter) = parameter.as_bezier_parameter() {
             parameter.clone()
-        } else if parameter.is_retained_scalar() {
+        } else if let Some(parameter) = parameter.as_selected_fiber() {
+            return policy.strict_predicate_pass(|| {
+                self.map_selected_fiber_parameter(retained_parameter, parameter, policy)
+            });
+        } else if parameter.as_recursive_projective().is_some() {
             let (retained_range, lifted_range) = match retained_parameter {
                 CurveResultantParameter::First => {
                     (self.overlap.first_range(), self.overlap.second_range())
@@ -101600,6 +101639,164 @@ impl BezierParameterComponentOverlap2 {
         Ok(self
             .map_parameter(retained_parameter, &parameter, policy)?
             .map(|parameter| parameter.map(CurveRegionParameter2::from_bezier)))
+    }
+
+    /// Maps one compact selected-fiber scalar through this exact component.
+    ///
+    /// If the retained coordinate is selected by `F(alpha, u) = 0`, the
+    /// component support `S(u, v) = 0` is projected only as far as a local
+    /// image relation `H(alpha, v) = 0`.  Every isolated image root is replayed
+    /// against `S` at the authored `(u, v)` tuple before the component's
+    /// certified fiber rank selects the branch.  This method is entered under
+    /// [`CurveContext::strict_predicate_pass`], because both isolation and
+    /// rank selection become construction evidence.
+    fn map_selected_fiber_parameter(
+        &self,
+        retained_parameter: CurveResultantParameter,
+        parameter: &BezierAlgebraicSelectedFiberParameter2,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<Option<CurveRegionParameter2>>> {
+        parameter.validate_policy(policy)?;
+        let (retained_range, lifted_range) = match retained_parameter {
+            CurveResultantParameter::First => {
+                (self.overlap.first_range(), self.overlap.second_range())
+            }
+            CurveResultantParameter::Second => {
+                (self.overlap.second_range(), self.overlap.first_range())
+            }
+        };
+        for (retained_endpoint, lifted_endpoint) in [
+            (retained_range.start(), lifted_range.start()),
+            (retained_range.end(), lifted_range.end()),
+        ] {
+            match parameter.cmp_bezier_parameter(retained_endpoint, policy)? {
+                Classification::Decided(std::cmp::Ordering::Equal) => {
+                    return Ok(Classification::Decided(Some(
+                        CurveRegionParameter2::from_bezier(lifted_endpoint.clone()),
+                    )));
+                }
+                Classification::Decided(_) => {}
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            }
+        }
+        match selected_fiber_parameter_is_in_bezier_range(parameter, retained_range, false, policy)?
+        {
+            Classification::Decided(true) => {}
+            Classification::Decided(false) => return Ok(Classification::Decided(None)),
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        }
+
+        let swapped_support;
+        let support = match retained_parameter {
+            CurveResultantParameter::First => self.support.as_ref(),
+            CurveResultantParameter::Second => {
+                swapped_support = bivariate_swap_parameters(&self.support);
+                &swapped_support
+            }
+        };
+        let image = match parameter.retained_polynomial_image_relation(support, policy)? {
+            Classification::Decided(Some(image)) => image,
+            Classification::Decided(None) => {
+                return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
+            }
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        if let Some(factor) = image.identically_zero_source_factor {
+            match parameter.predicate_sign(&factor, policy)? {
+                Classification::Decided(RealSign::Positive | RealSign::Negative) => {}
+                Classification::Decided(RealSign::Zero) => {
+                    return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
+                }
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            }
+        }
+        if image.identically_zero_image_relation {
+            return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
+        }
+        let Some(image_incidence) = image.relation else {
+            return Ok(Classification::Uncertain(UncertaintyReason::Predicate));
+        };
+        let candidates = match selected_fiber_parameters_in_interval(
+            &image_incidence,
+            &parameter.data.authority.data.retained_parameter,
+            &Real::zero(),
+            &Real::one(),
+            policy,
+        )? {
+            Classification::Decided(Some(candidates)) => candidates,
+            Classification::Decided(None) => {
+                return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
+            }
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        let mut support_roots = Vec::with_capacity(candidates.len());
+        for candidate in candidates {
+            match algebraic_selected_fiber_pair_predicate_sign(
+                parameter, &candidate, support, policy,
+            )? {
+                Classification::Decided(RealSign::Zero) => support_roots.push(candidate),
+                Classification::Decided(RealSign::Negative | RealSign::Positive) => {}
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            }
+        }
+        for pair in support_roots.windows(2) {
+            match pair[0].cmp_by_refinement(&pair[1], policy)? {
+                Classification::Decided(std::cmp::Ordering::Less) => {}
+                Classification::Decided(std::cmp::Ordering::Equal) => {
+                    return Err(CurveError::Topology(
+                        "a selected component image isolated one root twice".into(),
+                    ));
+                }
+                Classification::Decided(std::cmp::Ordering::Greater) => {
+                    return Err(CurveError::Topology(
+                        "selected component image roots were not ordered".into(),
+                    ));
+                }
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            }
+        }
+        let rank = match self.resolved_fiber_root_rank(retained_parameter, policy)? {
+            Classification::Decided(rank) => rank,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        let Some(mapped) = support_roots.into_iter().nth(rank) else {
+            return Ok(Classification::Decided(None));
+        };
+        match selected_fiber_parameter_is_in_bezier_range(&mapped, lifted_range, true, policy)? {
+            Classification::Decided(true) => {}
+            Classification::Decided(false) => return Ok(Classification::Decided(None)),
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        }
+        #[cfg(feature = "dispatch-trace")]
+        hyperreal::dispatch_trace::record(
+            "hypercurve",
+            "parameter-component-map",
+            "selected-fiber-local-image",
+        );
+        Ok(Classification::Decided(Some(
+            mapped.represented_value().map_or_else(
+                || CurveRegionParameter2::from_selected_fiber(mapped.clone()),
+                |value| CurveRegionParameter2::from_bezier(BezierParameter2::Exact(value.clone())),
+            ),
+        )))
     }
 
     fn resolved_fiber_root_rank(
@@ -142886,6 +143083,69 @@ mod conversion_tests {
                     Classification::Decided(std::cmp::Ordering::Equal),
                 );
             }
+        }
+    }
+
+    #[test]
+    fn nonlinear_parameter_component_maps_a_degree_135_selected_scalar_locally() {
+        let half = (Real::one() / Real::from(2_i8)).unwrap();
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            // alpha^9 = 1/2 and u^15 = alpha make the ordinary projection of
+            // u degree 135.  The component v=u^2 must keep both scalars over
+            // the selected alpha root instead of constructing that norm.
+            let source = degree_nine_selected_fiber_parameter_for_test(half.clone(), 1, &policy);
+            let overlap = nonlinear_parameter_component_overlap_for_test(&policy);
+            let mapped = match overlap
+                .map_curve_parameter(
+                    CurveResultantParameter::First,
+                    &CurveRegionParameter2::from_selected_fiber(source.clone()),
+                    &policy,
+                )
+                .unwrap()
+            {
+                Classification::Decided(Some(parameter)) => parameter,
+                outcome => panic!("the selected nonlinear component map failed: {outcome:?}"),
+            };
+            let mapped = mapped
+                .as_selected_fiber()
+                .expect("a nonrepresented component image must remain in the selected fiber");
+            assert_eq!(
+                mapped.data.authority.data.retained_parameter,
+                source.data.authority.data.retained_parameter,
+            );
+            assert_eq!(
+                mapped.data.authority.data.policy,
+                CurveContext::STRICT,
+                "component construction must not consume APPROXIMATE_512",
+            );
+            assert_eq!(
+                algebraic_selected_fiber_pair_predicate_sign(
+                    &source,
+                    mapped,
+                    &overlap.support,
+                    &policy,
+                )
+                .unwrap(),
+                Classification::Decided(RealSign::Zero),
+            );
+            let round_trip = match overlap
+                .map_curve_parameter(
+                    CurveResultantParameter::Second,
+                    &CurveRegionParameter2::from_selected_fiber(mapped.clone()),
+                    &policy,
+                )
+                .unwrap()
+            {
+                Classification::Decided(Some(parameter)) => parameter,
+                outcome => panic!("the reverse selected component map failed: {outcome:?}"),
+            };
+            let round_trip = round_trip
+                .as_selected_fiber()
+                .expect("the reverse nonrepresented image must remain in the selected fiber");
+            assert_eq!(
+                round_trip.cmp_by_refinement(&source, &policy).unwrap(),
+                Classification::Decided(std::cmp::Ordering::Equal),
+            );
         }
     }
 
