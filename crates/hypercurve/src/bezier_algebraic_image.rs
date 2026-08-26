@@ -25,7 +25,8 @@ use hypersolve::{
 };
 use hypersolve::{
     AlgebraicRootRationalImageStatus, transform_algebraic_root_polynomial_image,
-    transform_algebraic_root_rational_images, validate_algebraic_root_representation,
+    transform_algebraic_root_rational_image, transform_algebraic_root_rational_images,
+    validate_algebraic_root_representation,
 };
 
 use crate::bezier_parameter::strict_coefficients_sign_on_parameter_interval;
@@ -689,6 +690,88 @@ impl RationalBezierAlgebraicPointImage2 {
             y.numerator_coefficients(),
             x.denominator_coefficients(),
         ))
+    }
+
+    /// Materializes one exact linear projection while the Cartesian
+    /// coordinates still share their selected parameter field.
+    ///
+    /// Combining `aX + bY` coefficientwise before rational-image elimination
+    /// preserves cancellations that independent x/y root representations and
+    /// interval boxes necessarily forget. Construction is always STRICT;
+    /// callers remain responsible for applying any approximate equality
+    /// terminal only while comparing the resulting exact representations.
+    pub(crate) fn strict_linear_projection_representation(
+        &self,
+        coefficient_x: &Real,
+        coefficient_y: &Real,
+    ) -> Option<AlgebraicRootRepresentation> {
+        let Classification::Decided(predicate) =
+            self.predicate_evaluator(&CurveContext::STRICT).ok()?
+        else {
+            return None;
+        };
+        let x_numerator = predicate.x_numerator;
+        let y_numerator = predicate.y_numerator;
+        let denominator = predicate.denominator;
+        let coefficient_count = x_numerator.len().max(y_numerator.len());
+        let zero = Real::zero();
+        let mut numerator = Vec::with_capacity(coefficient_count.max(1));
+        for index in 0..coefficient_count {
+            let x = x_numerator.get(index).unwrap_or(&zero);
+            let y = y_numerator.get(index).unwrap_or(&zero);
+            numerator.push(Real::dot2_refs([coefficient_x, coefficient_y], [x, y]));
+        }
+        if numerator.is_empty() {
+            numerator.push(Real::zero());
+        }
+        while numerator.len() > 1
+            && real_sign(
+                numerator.last().expect("a nonempty projection numerator"),
+                &CurveContext::STRICT,
+            ) == Some(RealSign::Zero)
+        {
+            numerator.pop();
+        }
+
+        // An opaque exact `Real` constant is not a rational-coefficient
+        // algebraic number, but it is already the canonical scalar carrier.
+        // Detect a projectively constant rational map before asking the
+        // algebraic-image package to eliminate a parameter that has vanished.
+        if let Some(pivot) = denominator.iter().position(|coefficient| {
+            matches!(
+                real_sign(coefficient, &CurveContext::STRICT),
+                Some(RealSign::Negative | RealSign::Positive)
+            )
+        }) {
+            let numerator_pivot = numerator.get(pivot).unwrap_or(&zero);
+            let denominator_pivot = &denominator[pivot];
+            let proportional = (0..numerator.len().max(denominator.len())).all(|index| {
+                let numerator = numerator.get(index).unwrap_or(&zero);
+                let denominator = denominator.get(index).unwrap_or(&zero);
+                real_sign(
+                    &Real::diff_of_products(
+                        numerator,
+                        denominator_pivot,
+                        numerator_pivot,
+                        denominator,
+                    ),
+                    &CurveContext::STRICT,
+                ) == Some(RealSign::Zero)
+            });
+            if proportional {
+                let value = (numerator_pivot / denominator_pivot).ok()?;
+                return Some(exact_real_algebraic_representation(&value));
+            }
+        }
+        let evidence = transform_algebraic_root_rational_image(
+            predicate.root,
+            &numerator,
+            denominator,
+            hypersolve::PredicatePolicy::STRICT,
+        );
+        (evidence.status == AlgebraicRootRationalImageStatus::Transformed)
+            .then_some(evidence.representation)
+            .flatten()
     }
 
     /// Returns an exact affine-line equation retained by this rational point

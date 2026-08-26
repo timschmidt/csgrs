@@ -18,7 +18,8 @@ use std::borrow::Cow;
 use std::sync::{Arc, Mutex, OnceLock, Weak};
 
 use crate::bezier_algebraic_image::{
-    RationalBezierAlgebraicPointPredicate2, exact_real_algebraic_representation,
+    RationalBezierAlgebraicPointPredicate2, compare_algebraic_representations_with_policy,
+    exact_real_algebraic_representation,
 };
 use crate::bezier_algebraic_image::{
     certified_parameter_representation, parameter_representation,
@@ -6991,9 +6992,7 @@ fn selected_dense_last_axis_parameters(
                         }
                         AlgebraicFiberProjectionStatus::UnsupportedCoefficient
                         | AlgebraicFiberProjectionStatus::Undecided => {
-                            return Ok(Classification::Uncertain(
-                                UncertaintyReason::Unsupported,
-                            ));
+                            return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
                         }
                     }
                 }
@@ -56327,7 +56326,6 @@ impl SelectedThirdAxisDomain2<'_> {
             }
         }
     }
-
 }
 
 fn strict_rational_sample_for_parallel_domain(
@@ -72411,25 +72409,23 @@ pub(crate) fn algebraic_chord_points_linear_order(
     if first.same_point(second, policy) == Classification::Decided(true) {
         return Ok(Classification::Decided(std::cmp::Ordering::Equal));
     }
-    let coefficient_x = BezierAlgebraicChordRealInterval2::from_values(
+    let coefficient_x_interval = BezierAlgebraicChordRealInterval2::from_values(
         [coefficient_x.clone()],
         &CurveContext::STRICT,
     )
     .expect("one exact coefficient defines an interval");
-    let coefficient_y = BezierAlgebraicChordRealInterval2::from_values(
+    let coefficient_y_interval = BezierAlgebraicChordRealInterval2::from_values(
         [coefficient_y.clone()],
         &CurveContext::STRICT,
     )
     .expect("one exact coefficient defines an interval");
-    let mut terminal_refined = false;
-    for refinement_steps in [0, 2, 4, 8, 16, 32, 64, 128, 256, 512] {
+    let interval_order = |refinement_steps| {
         let (Classification::Decided(first), Classification::Decided(second)) = (
             algebraic_chord_endpoint_bounds_refined(first, refinement_steps, policy),
             algebraic_chord_endpoint_bounds_refined(second, refinement_steps, policy),
         ) else {
-            continue;
+            return None;
         };
-        terminal_refined |= refinement_steps == 512;
         let delta_x = BezierAlgebraicChordRealInterval2::from_axis(&first, Axis2::X).subtract(
             &BezierAlgebraicChordRealInterval2::from_axis(&second, Axis2::X),
         );
@@ -72437,33 +72433,78 @@ pub(crate) fn algebraic_chord_points_linear_order(
             &BezierAlgebraicChordRealInterval2::from_axis(&second, Axis2::Y),
         );
         let Some(value) = delta_x
-            .multiply(&coefficient_x, &CurveContext::STRICT)
+            .multiply(&coefficient_x_interval, &CurveContext::STRICT)
             .and_then(|x| {
                 delta_y
-                    .multiply(&coefficient_y, &CurveContext::STRICT)
+                    .multiply(&coefficient_y_interval, &CurveContext::STRICT)
                     .map(|y| x.add(&y))
             })
         else {
-            continue;
+            return Some(None);
         };
         let zero = Real::zero();
         if compare_reals(&value.lower, &zero, &CurveContext::STRICT)
             == Some(std::cmp::Ordering::Greater)
         {
-            return Ok(Classification::Decided(std::cmp::Ordering::Greater));
+            return Some(Some(std::cmp::Ordering::Greater));
         }
         if compare_reals(&value.upper, &zero, &CurveContext::STRICT)
             == Some(std::cmp::Ordering::Less)
         {
-            return Ok(Classification::Decided(std::cmp::Ordering::Less));
+            return Some(Some(std::cmp::Ordering::Less));
         }
         if compare_reals(&value.lower, &zero, &CurveContext::STRICT)
             == Some(std::cmp::Ordering::Equal)
             && compare_reals(&value.upper, &zero, &CurveContext::STRICT)
                 == Some(std::cmp::Ordering::Equal)
         {
-            return Ok(Classification::Decided(std::cmp::Ordering::Equal));
+            return Some(Some(std::cmp::Ordering::Equal));
         }
+        Some(None)
+    };
+    for refinement_steps in [0, 2, 4, 8, 16] {
+        if let Some(Some(order)) = interval_order(refinement_steps) {
+            return Ok(Classification::Decided(order));
+        }
+    }
+
+    // Preserve each endpoint's one-field coordinate correlation before
+    // comparing independent selected fields. This handles exact oblique
+    // equality without constructing a four-variable Cartesian tensor image.
+    let retained_projections = match (first, second) {
+        (
+            RationalBezierIntersectionPointEvidence2::Algebraic(first),
+            RationalBezierIntersectionPointEvidence2::Algebraic(second),
+        ) => first
+            .strict_linear_projection_representation(coefficient_x, coefficient_y)
+            .zip(second.strict_linear_projection_representation(coefficient_x, coefficient_y)),
+        _ => None,
+    };
+    if let Some((first, second)) = retained_projections.as_ref()
+        && let Some(order) =
+            compare_algebraic_representations_with_policy(first, second, &CurveContext::STRICT)
+    {
+        #[cfg(feature = "dispatch-trace")]
+        hyperreal::dispatch_trace::record(
+            "hypercurve",
+            "algebraic-chord-points-linear-order",
+            "retained-field-projections",
+        );
+        return Ok(Classification::Decided(order));
+    }
+
+    let mut terminal_refined = false;
+    for refinement_steps in [32, 64, 128, 256, 512] {
+        match interval_order(refinement_steps) {
+            Some(Some(order)) => return Ok(Classification::Decided(order)),
+            Some(None) => terminal_refined |= refinement_steps == 512,
+            None => {}
+        }
+    }
+    if let Some((first, second)) = retained_projections.as_ref()
+        && let Some(order) = compare_algebraic_representations_with_policy(first, second, policy)
+    {
+        return Ok(Classification::Decided(order));
     }
     if terminal_refined && policy.permits_approximate_512() {
         policy.observe_approximate_512();
@@ -108588,13 +108629,82 @@ mod conversion_tests {
             let order = compare();
             assert_eq!(order, Classification::Decided(std::cmp::Ordering::Equal));
             #[cfg(feature = "dispatch-trace")]
-            assert!(
-                hyperreal::dispatch_trace::take_trace().path_count(
-                    "hypercurve",
-                    "algebraic-chord-point-linear-order",
-                    "represented-cold-fallback",
-                ) > 0
+            {
+                let trace = hyperreal::dispatch_trace::take_trace();
+                assert!(
+                    trace.path_count(
+                        "hypercurve",
+                        "algebraic-chord-point-linear-order",
+                        "retained-field-projection",
+                    ) + trace.path_count(
+                        "hypercurve",
+                        "algebraic-chord-point-linear-order",
+                        "represented-cold-fallback",
+                    ) > 0,
+                    "the oblique equality must preserve one-field coordinate correlation: {trace:?}",
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn independent_algebraic_point_oblique_projections_compare_exactly() {
+        let epsilon = Real::new(
+            hyperreal::Rational::from_bigint_fraction(
+                num::BigInt::from(1_u8),
+                num::BigUint::from(1_u8) << 600,
+            )
+            .unwrap(),
+        );
+        let opaque = epsilon.cos() - Real::one();
+        assert_eq!(opaque.zero_status(), ZeroStatus::Unknown);
+        let half = (Real::one() / Real::from(2_i8)).unwrap();
+        let third = (Real::one() / Real::from(3_i8)).unwrap();
+        let BezierParameter2::Algebraic(first_parameter) =
+            algebraic_parameter(vec![-half, Real::zero(), Real::one()])
+        else {
+            unreachable!("sqrt(1/2) must remain algebraic");
+        };
+        let BezierParameter2::Algebraic(second_parameter) =
+            algebraic_parameter(vec![-third, Real::zero(), Real::one()])
+        else {
+            unreachable!("sqrt(1/3) must remain algebraic");
+        };
+        let diagonal = RationalBezier2::try_new(
+            vec![
+                Point2::new(opaque.clone(), Real::zero()),
+                Point2::new(&opaque + Real::one(), Real::one()),
+            ],
+            vec![Real::one(), Real::one()],
+        )
+        .unwrap();
+
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let first = RationalBezierIntersectionPointEvidence2::Algebraic(
+                diagonal
+                    .point_at_algebraic_parameter(&first_parameter, &policy)
+                    .unwrap(),
             );
+            let second = RationalBezierIntersectionPointEvidence2::Algebraic(
+                diagonal
+                    .point_at_algebraic_parameter(&second_parameter, &policy)
+                    .unwrap(),
+            );
+            let outcome = crate::policy::resolve_certified_operation(&policy, |attempt| {
+                algebraic_chord_points_linear_order(
+                    &first,
+                    &second,
+                    &Real::one(),
+                    &-Real::one(),
+                    attempt,
+                )
+            })
+            .unwrap();
+            assert_eq!(
+                outcome.value,
+                Classification::Decided(std::cmp::Ordering::Equal),
+            );
+            assert_eq!(outcome.certainty, crate::CurveCertainty::Certified);
         }
     }
 
@@ -130899,21 +131009,18 @@ mod conversion_tests {
             bezier_parameter_root_representation(first),
             bezier_parameter_root_representation(second),
         ];
-        let difference = DenseTensorPolynomial::from_axis_polynomial(
-            3,
-            0,
-            &[Real::zero(), Real::one()],
-        )
-        .unwrap()
-        .subtract(
-            &DenseTensorPolynomial::from_axis_polynomial(
-                3,
-                1,
-                &[Real::zero(), Real::one()],
-            )
-            .unwrap(),
-        )
-        .unwrap();
+        let difference =
+            DenseTensorPolynomial::from_axis_polynomial(3, 0, &[Real::zero(), Real::one()])
+                .unwrap()
+                .subtract(
+                    &DenseTensorPolynomial::from_axis_polynomial(
+                        3,
+                        1,
+                        &[Real::zero(), Real::one()],
+                    )
+                    .unwrap(),
+                )
+                .unwrap();
         let cubic = DenseTensorPolynomial::from_axis_polynomial(
             3,
             2,
