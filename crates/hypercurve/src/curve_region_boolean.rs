@@ -2886,13 +2886,19 @@ impl<'a> CurveRegionBooleanContext<'a> {
         parallel_index: usize,
     ) -> ExactCurveResult<RegionPairResult> {
         let parallel_carrier = &self.data.carriers[parallel_index];
-        if let (Some(start), Some(end)) = (
+        let regular_range = match (
             parallel_carrier.start.as_bezier_parameter(),
             parallel_carrier.end.as_bezier_parameter(),
         ) {
-            let range = BezierParameterRange2::new_validated(start.clone(), end.clone());
+            (Some(start), Some(end)) => Some(BezierParameterRange2::new_validated(
+                start.clone(),
+                end.clone(),
+            )),
+            _ => None,
+        };
+        if let Some(range) = regular_range.as_ref() {
             let monotonic = chord
-                .parallel_tangent_cross_sign_on_range(parallel, &range, &self.data.policy)
+                .parallel_tangent_cross_sign_on_range(parallel, range, &self.data.policy)
                 .map_err(|cause| self.invalid(parallel_index, cause))?;
             if matches!(
                 monotonic,
@@ -2925,7 +2931,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
                         chord.strict_oriented_side_by_fast_refinement(&point, &self.data.policy)
                     }
                 };
-                let sides = [endpoint_side(start), endpoint_side(end)];
+                let sides = [endpoint_side(range.start()), endpoint_side(range.end())];
                 let sides = match sides {
                     [Ok(first), Ok(second)] => [first, second],
                     [Err(cause), _] | [_, Err(cause)] => {
@@ -2953,19 +2959,36 @@ impl<'a> CurveRegionBooleanContext<'a> {
             }
         }
         // Carrier representation is structural. Probe it under STRICT so
-        // APPROXIMATE_512 remains terminal evidence rather than dispatch.
-        if !self.authored_carriers_are_adjacent(pair)
-            && parallel_carrier.start.as_bezier_parameter().is_some()
-            && parallel_carrier.end.as_bezier_parameter().is_some()
+        // APPROXIMATE_512 remains terminal evidence rather than dispatch. A
+        // source-stationary line can have a different exact rational component
+        // on each regular side; that branch component preserves the authored
+        // analytic parameter and therefore enters the same rational overlap
+        // authority as an ordinary PH carrier.
+        if let Some(range) = regular_range.as_ref()
             && let Classification::Decided(Some(rational)) = parallel
-                .exact_rational_parallel_component(&CurveContext::STRICT)
+                .exact_rational_parallel_component_on_regular_range(range, &CurveContext::STRICT)
                 .map_err(|cause| self.invalid(parallel_index, cause))?
+            && let shared_source_parameter = self.authored_carrier_shared_endpoints(pair).and_then(
+                |(first_at_start, second_at_start)| {
+                    let parallel_at_start = if parallel_index == pair.first_carrier_index {
+                        first_at_start
+                    } else {
+                        second_at_start
+                    };
+                    if parallel_at_start {
+                        carrier_traversal_start(parallel_carrier)
+                    } else {
+                        carrier_traversal_end(parallel_carrier)
+                    }
+                    .as_bezier_parameter()
+                },
+            )
             && let Some(result) = self.algebraic_chord_rational_pair_result(
                 pair,
                 chord,
                 chord_index,
                 &rational,
-                None,
+                shared_source_parameter,
             )?
         {
             #[cfg(feature = "dispatch-trace")]
@@ -16909,7 +16932,9 @@ mod certified_successor_tests {
         for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
             let empty_first = CurveRegion2::empty();
             let empty_second = CurveRegion2::empty();
-            let evaluate = |chord: crate::BezierAlgebraicChord2, parallel: BezierParallel2| {
+            let evaluate = |chord: crate::BezierAlgebraicChord2,
+                            parallel: BezierParallel2,
+                            range: BezierParameterRange2| {
                 let chord_geometry = RegionCarrierGeometry::AlgebraicChord(chord.clone());
                 let parallel_geometry = RegionCarrierGeometry::AnalyticParallel(parallel);
                 let context = CurveRegionBooleanContext {
@@ -16942,12 +16967,8 @@ mod certified_successor_tests {
                                 fragment_index: 0,
                                 family: parallel_geometry.family(),
                                 geometry: parallel_geometry,
-                                start: CurveRegionParameter2::from_bezier(BezierParameter2::Exact(
-                                    Real::zero(),
-                                )),
-                                end: CurveRegionParameter2::from_bezier(BezierParameter2::Exact(
-                                    Real::one(),
-                                )),
+                                start: CurveRegionParameter2::from_bezier(range.start().clone()),
+                                end: CurveRegionParameter2::from_bezier(range.end().clone()),
                                 reversed: false,
                                 filled_side_is_left: true,
                                 selected_fiber_endpoint_points: None,
@@ -16967,9 +16988,13 @@ mod certified_successor_tests {
                         strict_line_image_only: OnceLock::new(),
                     },
                 };
-                context
+                let result = context
                     .pair_result(&context.data.pairs[0])
-                    .expect("the chord/analytic-parallel relation must complete")
+                    .expect("the chord/analytic-parallel relation must complete");
+                let evidence = context
+                    .build_intersection_evidence()
+                    .expect("the chord/analytic-parallel evidence must complete");
+                (result, evidence)
             };
 
             let crossing_chord = decided(
@@ -16988,7 +17013,11 @@ mod certified_successor_tests {
                 )),
                 Real::zero(),
             );
-            let crossings = evaluate(crossing_chord, parabola);
+            let (crossings, _) = evaluate(
+                crossing_chord,
+                parabola,
+                BezierParameterRange2::from_exact(Real::zero(), Real::one()),
+            );
             assert!(crossings.blockers.is_empty(), "{crossings:?}");
             assert!(crossings.overlaps.is_empty(), "{crossings:?}");
             assert_eq!(crossings.contacts.len(), 2, "{crossings:?}");
@@ -17013,7 +17042,11 @@ mod certified_successor_tests {
                 )),
                 Real::zero(),
             );
-            let overlap = evaluate(overlap_chord, line_parallel);
+            let (overlap, _) = evaluate(
+                overlap_chord,
+                line_parallel,
+                BezierParameterRange2::from_exact(Real::zero(), Real::one()),
+            );
             assert!(overlap.blockers.is_empty(), "{overlap:?}");
             assert!(overlap.contacts.is_empty(), "{overlap:?}");
             let [overlap] = overlap.overlaps.as_slice() else {
@@ -17022,6 +17055,93 @@ mod certified_successor_tests {
             assert_eq!(overlap.orientation, RationalBezierOverlapOrientation2::Same);
             assert!(overlap.first_range.start().is_algebraic_chord());
             assert!(overlap.second_range.start().as_bezier_parameter().is_some());
+
+            // P(t)=(2t-1)^2(-1,1) reverses at t=1/2. Its signed left
+            // parallel has opposite line images on the two regular sides, so
+            // no global PH component exists. The second branch nevertheless
+            // coincides with this independently selected algebraic chord.
+            let selected = BezierParameter2::Algebraic(sqrt_half_parameter(&policy));
+            let selected_point = |start: Point2, end: Point2| {
+                let source =
+                    RationalBezier2::try_new(vec![start, end], vec![Real::one(), Real::one()])
+                        .expect("valid selected line source");
+                exact_contact_point_evidence(&source, &selected, &policy)
+                    .expect("exact selected line point")
+                    .expect("selected line point evidence")
+            };
+            let retracing_chord = decided(
+                crate::BezierAlgebraicChord2::try_new(
+                    selected_point(Point2::from_values(0, 0), Point2::from_values(-1, -1)),
+                    selected_point(Point2::from_values(-1, 1), Point2::from_values(-2, 0)),
+                    &policy,
+                )
+                .expect("valid independent retracing-line chord"),
+            );
+            assert!(retracing_chord.exact_line().is_none());
+            assert!(
+                retracing_chord
+                    .strict_provenance_support_line(&policy)
+                    .is_none()
+            );
+            let retracing_parallel = BezierParallel2::from_source(
+                crate::BezierParallelSource2::Quadratic(QuadraticBezier2::new(
+                    Point2::from_values(-1, 1),
+                    Point2::from_values(1, -1),
+                    Point2::from_values(-1, 1),
+                )),
+                Real::one(),
+            );
+            assert!(matches!(
+                retracing_parallel
+                    .exact_rational_parallel_component(&CurveContext::STRICT)
+                    .unwrap(),
+                Classification::Decided(None),
+            ));
+            let half = (Real::one() / Real::from(2_i8)).expect("nonzero denominator");
+            #[cfg(feature = "dispatch-trace")]
+            hyperreal::dispatch_trace::reset();
+            let work = || {
+                evaluate(
+                    retracing_chord,
+                    retracing_parallel,
+                    BezierParameterRange2::from_exact(half, Real::one()),
+                )
+            };
+            #[cfg(feature = "dispatch-trace")]
+            let (component, evidence) = hyperreal::dispatch_trace::with_recording(work);
+            #[cfg(not(feature = "dispatch-trace"))]
+            let (component, evidence) = work();
+            #[cfg(feature = "dispatch-trace")]
+            let trace = hyperreal::dispatch_trace::take_trace();
+            assert!(component.blockers.is_empty(), "{component:?}");
+            assert_eq!(component.overlaps.len(), 2, "{component:?}");
+            assert!(evidence.is_complete(), "{evidence:?}");
+            let [selected_overlap] = evidence.overlaps() else {
+                panic!("only the selected regular branch may survive: {evidence:?}");
+            };
+            assert_eq!(
+                selected_overlap.orientation(),
+                RationalBezierOverlapOrientation2::Same,
+            );
+            #[cfg(feature = "dispatch-trace")]
+            {
+                assert!(
+                    trace.path_count(
+                        "hypercurve",
+                        "analytic-parallel-rational-component",
+                        "regularized-constant-tangent",
+                    ) > 0,
+                    "the selected branch must materialize structurally: {trace:?}",
+                );
+                assert!(
+                    trace.path_count(
+                        "hypercurve",
+                        "algebraic-chord-pair",
+                        "collinear-overlap-complete",
+                    ) > 0,
+                    "the rational overlap authority must publish the component: {trace:?}",
+                );
+            }
         }
     }
 

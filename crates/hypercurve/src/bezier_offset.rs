@@ -94808,6 +94808,74 @@ impl BezierParallel2 {
         }
     }
 
+    /// Materializes the exact parallel image selected by one regular source range.
+    ///
+    /// A globally retracing line has no single polynomial speed sheet: the
+    /// authored unit normal reverses across its stationary parameter. Exact
+    /// hodograph-GCD cancellation nevertheless leaves a constant oriented
+    /// tangent on each regular side. Translating the original rational source
+    /// by that constant unit normal preserves its parameter exactly and lets
+    /// the ordinary rational component authority publish overlaps and residual
+    /// contacts. Nonconstant quotient fields retain the general analytic
+    /// kernel; no fitted or approximately selected component is constructed.
+    pub(crate) fn exact_rational_parallel_component_on_regular_range(
+        &self,
+        range: &BezierParameterRange2,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<Option<RationalBezier2>>> {
+        let strict = policy.strict_counterpart();
+        let global = self.exact_rational_parallel_component(&strict)?;
+        if let Classification::Decided(Some(curve)) = &global {
+            return Ok(Classification::Decided(Some(curve.clone())));
+        }
+        let frame = match self.source_oriented_regularized_tangent_field(range, &strict)? {
+            Classification::Decided(Some(frame)) => frame,
+            Classification::Decided(None) => return Ok(global),
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        let tangent_x = polynomial_trim_structural_zeros(frame.x.clone());
+        let tangent_y = polynomial_trim_structural_zeros(frame.y.clone());
+        let ([tangent_x], [tangent_y]) = (tangent_x.as_slice(), tangent_y.as_slice()) else {
+            return Ok(global);
+        };
+        let speed_squared = tangent_x * tangent_x + tangent_y * tangent_y;
+        match real_sign(&speed_squared, &strict) {
+            Some(RealSign::Positive) => {}
+            Some(RealSign::Zero) => {
+                return Err(CurveError::Topology(
+                    "a regularized constant tangent field was zero".into(),
+                ));
+            }
+            Some(RealSign::Negative) => {
+                return Err(CurveError::Topology(
+                    "a regularized tangent squared norm was negative".into(),
+                ));
+            }
+            None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
+        }
+        let speed = speed_squared.sqrt()?;
+        let translation_x = ((-self.distance() * tangent_y) / &speed)?;
+        let translation_y = ((self.distance() * tangent_x) / speed)?;
+        let source = self.source().to_rational_bezier()?;
+        let curve = RationalBezier2::try_new(
+            source
+                .control_points()
+                .iter()
+                .map(|point| point.translated(translation_x.clone(), translation_y.clone()))
+                .collect(),
+            source.weights().to_vec(),
+        )?;
+        #[cfg(feature = "dispatch-trace")]
+        hyperreal::dispatch_trace::record(
+            "hypercurve",
+            "analytic-parallel-rational-component",
+            "regularized-constant-tangent",
+        );
+        Ok(Classification::Decided(Some(curve)))
+    }
+
     fn certified_transverse_contact_sign(
         &self,
         other: &RationalBezier2,
@@ -129979,6 +130047,104 @@ mod conversion_tests {
                     "the general recursive chord/parallel kernel must own replay: {trace:?}",
                 );
             }
+        }
+    }
+
+    #[test]
+    fn regularized_retracing_line_chord_publishes_exact_component() {
+        let source = QuadraticBezier2::new(
+            Point2::from_values(-1, 1),
+            Point2::from_values(1, -1),
+            Point2::from_values(-1, 1),
+        );
+        let parallel = source.parallel_left(Real::one()).unwrap();
+        let half = (Real::one() / Real::from(2_i8)).unwrap();
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let start = dense_chord_normal_point(
+                2,
+                vec![Real::zero(), Real::from(-1_i8)],
+                vec![Real::zero(), Real::from(-1_i8)],
+                &policy,
+                "regularized retracing-line first endpoint",
+            );
+            let end = dense_chord_normal_point(
+                2,
+                vec![Real::from(-1_i8), Real::from(-1_i8)],
+                vec![Real::one(), Real::from(-1_i8)],
+                &policy,
+                "regularized retracing-line second endpoint",
+            );
+            let chord = match BezierAlgebraicChord2::try_new(start, end, &policy).unwrap() {
+                Classification::Decided(chord) => chord,
+                Classification::Uncertain(reason) => {
+                    panic!("the independent horizontal chord must construct: {reason:?}")
+                }
+            };
+            assert!(chord.exact_line().is_none());
+            assert!(chord.strict_provenance_support_line(&policy).is_none());
+            let range = BezierParameterRange2::new_validated(
+                BezierParameter2::Exact(half.clone()),
+                BezierParameter2::Exact(Real::one()),
+            );
+            let frame = parallel
+                .source_oriented_regularized_tangent_field(&range, &policy)
+                .unwrap();
+            assert!(
+                matches!(frame, Classification::Decided(Some(_))),
+                "the retracing line must publish its regularized frame: {frame:?}",
+            );
+            let endpoints = chord.recursive_projective_endpoints(&policy).unwrap();
+            assert!(
+                matches!(endpoints, Classification::Decided(Some(_))),
+                "the retracing-line chord must publish recursive endpoints: {endpoints:?}",
+            );
+            #[cfg(feature = "dispatch-trace")]
+            hyperreal::dispatch_trace::reset();
+            let work =
+                || parallel.exact_rational_parallel_component_on_regular_range(&range, &policy);
+            #[cfg(feature = "dispatch-trace")]
+            let result = hyperreal::dispatch_trace::with_recording(work).unwrap();
+            #[cfg(not(feature = "dispatch-trace"))]
+            let result = work().unwrap();
+            #[cfg(feature = "dispatch-trace")]
+            let trace = hyperreal::dispatch_trace::take_trace();
+            let Classification::Decided(Some(component)) = result else {
+                panic!("the selected regular line branch must materialize exactly: {result:?}")
+            };
+            #[cfg(feature = "dispatch-trace")]
+            assert_eq!(
+                trace.path_count(
+                    "hypercurve",
+                    "analytic-parallel-rational-component",
+                    "regularized-constant-tangent",
+                ),
+                1,
+                "the regularized constant frame must own construction: {trace:?}",
+            );
+            let overlaps = match chord
+                .rational_intersections(&component, None, &policy)
+                .unwrap()
+            {
+                Classification::Decided(BezierAlgebraicChordRationalIntersections2::Overlaps(
+                    overlaps,
+                )) => overlaps,
+                Classification::Decided(
+                    BezierAlgebraicChordRationalIntersections2::ContactsAndOverlaps {
+                        overlaps,
+                        ..
+                    },
+                ) => overlaps,
+                result => panic!("the selected line component must publish overlaps: {result:?}"),
+            };
+            assert_eq!(overlaps.len(), 2);
+            assert_eq!(
+                overlaps[0].orientation(),
+                RationalBezierOverlapOrientation2::Reversed,
+            );
+            assert_eq!(
+                overlaps[1].orientation(),
+                RationalBezierOverlapOrientation2::Same,
+            );
         }
     }
 
