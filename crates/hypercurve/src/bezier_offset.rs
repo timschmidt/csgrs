@@ -9612,6 +9612,19 @@ impl BezierAlgebraicCuspSemicircleMappedPointParameterRef2<'_> {
         }
     }
 
+    fn matches_certified_incidence_candidate(
+        self,
+        candidate: &BezierParameter2,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<bool>> {
+        match self {
+            Self::Ordinary(source) => candidate.same_value(source, policy),
+            Self::Selected(source) => {
+                selected_fiber_root_matches_certified_incidence_candidate(source, candidate, policy)
+            }
+        }
+    }
+
     fn matching_target_parameters<'a>(
         self,
         pairs: impl IntoIterator<Item = (&'a BezierParameter2, &'a BezierParameter2)>,
@@ -9619,16 +9632,7 @@ impl BezierAlgebraicCuspSemicircleMappedPointParameterRef2<'_> {
     ) -> CurveResult<Classification<Vec<CurveRegionParameter2>>> {
         let mut retained = Vec::new();
         for (candidate_source, candidate_target) in pairs {
-            let same = match self {
-                Self::Ordinary(source) => candidate_source.same_value(source, policy)?,
-                Self::Selected(source) => {
-                    selected_fiber_root_matches_certified_incidence_candidate(
-                        source,
-                        candidate_source,
-                        policy,
-                    )?
-                }
-            };
+            let same = self.matches_certified_incidence_candidate(candidate_source, policy)?;
             match same {
                 Classification::Decided(true) => {
                     retained.push(CurveRegionParameter2::from_bezier(candidate_target.clone()))
@@ -9971,66 +9975,29 @@ impl BezierAlgebraicCuspSemicircleMappedPointSource2 {
                         return Ok(Classification::Uncertain(reason));
                     }
                 };
-                let mut overlap_decided = false;
-                if let Some(overlap) = intersections.overlap() {
-                    let correspondence = policy.strict_predicate_pass(|| {
-                        RationalBezierOverlapParameterCorrespondence2::for_overlap(
-                            curve, target, overlap, policy,
-                        )
-                    });
-                    let requires_ordinary_fallback = matches!(
-                        (&correspondence, parameter),
-                        (
-                            RationalBezierOverlapParameterCorrespondence2::General { .. },
-                            BezierAlgebraicCuspSemicircleMappedPointParameterRef2::Selected(_),
-                        )
-                    );
-                    if !requires_ordinary_fallback {
-                        let source = parameter.to_curve_region_parameter();
-                        match policy.strict_predicate_pass(|| {
-                            curve_region_parameter_is_in_bezier_range(
-                                &source,
-                                overlap.first_range(),
-                                true,
-                                policy,
-                            )
-                        })? {
-                            Classification::Decided(true) => {
-                                match policy.strict_predicate_pass(|| {
-                                    correspondence.map_first_to_second_region_parameter(
-                                        &source,
-                                        overlap.first_range(),
-                                        overlap.second_range(),
-                                        policy,
-                                    )
-                                })? {
-                                    Classification::Decided(Some(candidate)) => {
-                                        candidates.push(candidate);
-                                        overlap_decided = true;
-                                    }
-                                    Classification::Decided(None) => overlap_decided = true,
-                                    Classification::Uncertain(reason) => {
-                                        return Ok(Classification::Uncertain(reason));
-                                    }
-                                }
-                            }
-                            Classification::Decided(false) => overlap_decided = true,
-                            Classification::Uncertain(reason) => {
-                                return Ok(Classification::Uncertain(reason));
-                            }
-                        }
-                        #[cfg(feature = "dispatch-trace")]
-                        if overlap_decided {
-                            hyperreal::dispatch_trace::record(
-                                "hypercurve",
-                                "mapped-circle-point-inverse",
-                                "rational-overlap-parameter-map",
-                            );
-                        }
+                let has_overlap = intersections.overlap().is_some();
+                let overlap_decided = match mapped_point_parameters_through_rational_overlaps(
+                    intersections.overlap().map_or(&[], std::slice::from_ref),
+                    curve,
+                    target,
+                    CurveResultantParameter::First,
+                    parameter,
+                    policy,
+                )? {
+                    Classification::Decided(Some(mut mapped)) => {
+                        candidates.append(&mut mapped);
+                        true
                     }
+                    Classification::Decided(None) => false,
+                    Classification::Uncertain(reason) => {
+                        return Ok(Classification::Uncertain(reason));
+                    }
+                };
+                if has_overlap && !overlap_decided {
+                    return Ok(Classification::Decided(None));
                 }
                 if !candidates.is_empty() {
-                    return Ok(Classification::Decided(Some(candidates)));
+                    return decided_mapped_point_parameters(candidates, policy);
                 }
                 if overlap_decided {
                     return Ok(Classification::Decided(Some(Vec::new())));
@@ -10073,7 +10040,7 @@ impl BezierAlgebraicCuspSemicircleMappedPointSource2 {
                         return Ok(Classification::Uncertain(reason));
                     }
                 };
-                let mut candidates = match parameter.matching_target_parameters(
+                let candidates = match parameter.matching_target_parameters(
                     intersections
                         .contacts()
                         .iter()
@@ -10085,32 +10052,25 @@ impl BezierAlgebraicCuspSemicircleMappedPointSource2 {
                         return Ok(Classification::Uncertain(reason));
                     }
                 };
-                let component_decided = match mapped_point_parameters_through_component_overlaps(
+                let source_curve = if intersections.overlaps().is_empty() {
+                    None
+                } else {
+                    exact_rational_parallel_point_carrier(parallel, policy)?
+                };
+                finish_mapped_point_parameter_candidates(
+                    candidates,
                     intersections.component_overlaps(),
+                    MappedPointParameterComponentsRef2::ParallelRational {
+                        components: intersections.parameter_components(),
+                        source_parameter: CurveResultantParameter::First,
+                    },
+                    intersections.overlaps(),
+                    source_curve.as_ref().map(|source| (source, target)),
                     CurveResultantParameter::First,
                     parameter,
+                    intersections.is_complete(),
                     policy,
-                )? {
-                    Classification::Decided(Some(mut mapped)) => {
-                        candidates.append(&mut mapped);
-                        true
-                    }
-                    Classification::Decided(None) => false,
-                    Classification::Uncertain(reason) => {
-                        return Ok(Classification::Uncertain(reason));
-                    }
-                };
-                if !intersections.overlaps().is_empty()
-                    || !intersections.parameter_components().is_empty()
-                {
-                    Ok(Classification::Decided(None))
-                } else if !candidates.is_empty() || component_decided {
-                    Ok(Classification::Decided(Some(candidates)))
-                } else if intersections.is_complete() {
-                    Ok(Classification::Decided(Some(Vec::new())))
-                } else {
-                    Ok(Classification::Uncertain(UncertaintyReason::Unsupported))
-                }
+                )
             }
         }
     }
@@ -10149,7 +10109,7 @@ impl BezierAlgebraicCuspSemicircleMappedPointSource2 {
                         return Ok(Classification::Uncertain(reason));
                     }
                 };
-                let mut candidates = match parameter.matching_target_parameters(
+                let candidates = match parameter.matching_target_parameters(
                     intersections
                         .contacts()
                         .iter()
@@ -10161,32 +10121,25 @@ impl BezierAlgebraicCuspSemicircleMappedPointSource2 {
                         return Ok(Classification::Uncertain(reason));
                     }
                 };
-                let component_decided = match mapped_point_parameters_through_component_overlaps(
+                let target_curve = if intersections.overlaps().is_empty() {
+                    None
+                } else {
+                    exact_rational_parallel_point_carrier(target, policy)?
+                };
+                finish_mapped_point_parameter_candidates(
+                    candidates,
                     intersections.component_overlaps(),
+                    MappedPointParameterComponentsRef2::ParallelRational {
+                        components: intersections.parameter_components(),
+                        source_parameter: CurveResultantParameter::Second,
+                    },
+                    intersections.overlaps(),
+                    target_curve.as_ref().map(|target| (curve, target)),
                     CurveResultantParameter::Second,
                     parameter,
+                    intersections.is_complete(),
                     policy,
-                )? {
-                    Classification::Decided(Some(mut mapped)) => {
-                        candidates.append(&mut mapped);
-                        true
-                    }
-                    Classification::Decided(None) => false,
-                    Classification::Uncertain(reason) => {
-                        return Ok(Classification::Uncertain(reason));
-                    }
-                };
-                if !intersections.overlaps().is_empty()
-                    || !intersections.parameter_components().is_empty()
-                {
-                    Ok(Classification::Decided(None))
-                } else if !candidates.is_empty() || component_decided {
-                    Ok(Classification::Decided(Some(candidates)))
-                } else if intersections.is_complete() {
-                    Ok(Classification::Decided(Some(Vec::new())))
-                } else {
-                    Ok(Classification::Uncertain(UncertaintyReason::Unsupported))
-                }
+                )
             }
             Self::Parallel {
                 parallel,
@@ -10211,7 +10164,7 @@ impl BezierAlgebraicCuspSemicircleMappedPointSource2 {
                         return Ok(Classification::Uncertain(reason));
                     }
                 };
-                let mut candidates = match parameter.matching_target_parameters(
+                let candidates = match parameter.matching_target_parameters(
                     intersections
                         .contacts()
                         .iter()
@@ -10223,32 +10176,34 @@ impl BezierAlgebraicCuspSemicircleMappedPointSource2 {
                         return Ok(Classification::Uncertain(reason));
                     }
                 };
-                let component_decided = match mapped_point_parameters_through_component_overlaps(
+                let overlap_curves = if intersections.overlaps().is_empty() {
+                    None
+                } else {
+                    let first = exact_rational_parallel_point_carrier(parallel, policy)?;
+                    let second = exact_rational_parallel_point_carrier(target, policy)?;
+                    Some(match (first, second) {
+                        (Some(first), Some(second)) => (first, second),
+                        _ => (
+                            parallel.source().to_rational_bezier()?,
+                            target.source().to_rational_bezier()?,
+                        ),
+                    })
+                };
+                finish_mapped_point_parameter_candidates(
+                    candidates,
                     intersections.component_overlaps(),
+                    MappedPointParameterComponentsRef2::ParallelPair(
+                        intersections.parameter_components(),
+                    ),
+                    intersections.overlaps(),
+                    overlap_curves
+                        .as_ref()
+                        .map(|(source, target)| (source, target)),
                     CurveResultantParameter::First,
                     parameter,
+                    intersections.is_complete(),
                     policy,
-                )? {
-                    Classification::Decided(Some(mut mapped)) => {
-                        candidates.append(&mut mapped);
-                        true
-                    }
-                    Classification::Decided(None) => false,
-                    Classification::Uncertain(reason) => {
-                        return Ok(Classification::Uncertain(reason));
-                    }
-                };
-                if !intersections.overlaps().is_empty()
-                    || !intersections.parameter_components().is_empty()
-                {
-                    Ok(Classification::Decided(None))
-                } else if !candidates.is_empty() || component_decided {
-                    Ok(Classification::Decided(Some(candidates)))
-                } else if intersections.is_complete() {
-                    Ok(Classification::Decided(Some(Vec::new())))
-                } else {
-                    Ok(Classification::Uncertain(UncertaintyReason::Unsupported))
-                }
+                )
             }
         }
     }
@@ -10299,6 +10254,37 @@ impl BezierAlgebraicCuspSemicircleMappedPointSource2 {
         }
         Ok(Some((parameter, tangent, source_policy)))
     }
+}
+
+/// Collapses duplicate parameter evidence before it becomes a topology event.
+/// Distinct intersection authorities may certify the same image through an
+/// isolated contact, a structural overlap, and an extracted component. Only a
+/// strict exact equality may remove one candidate; an undecided comparison
+/// conservatively retains both.
+fn decided_mapped_point_parameters(
+    mut parameters: Vec<CurveRegionParameter2>,
+    policy: &CurveContext,
+) -> CurveResult<Classification<Option<Vec<CurveRegionParameter2>>>> {
+    let mut candidate = 1_usize;
+    while candidate < parameters.len() {
+        let duplicate = policy.strict_predicate_pass(|| -> CurveResult<bool> {
+            for retained in &parameters[..candidate] {
+                if matches!(
+                    retained.same_value(&parameters[candidate], policy)?,
+                    Classification::Decided(true)
+                ) {
+                    return Ok(true);
+                }
+            }
+            Ok(false)
+        })?;
+        if duplicate {
+            parameters.remove(candidate);
+        } else {
+            candidate += 1;
+        }
+    }
+    Ok(Classification::Decided(Some(parameters)))
 }
 
 impl BezierAlgebraicCuspSemicircleMappedTangentSource2<'_> {
@@ -10381,6 +10367,152 @@ fn selected_fiber_root_matches_certified_incidence_candidate(
     }
 }
 
+#[derive(Clone, Copy)]
+enum MappedPointParameterComponentsRef2<'a> {
+    ParallelRational {
+        components: &'a [BezierParallelIntersectionParameterComponent2],
+        source_parameter: CurveResultantParameter,
+    },
+    ParallelPair(&'a [BezierParallelPairIntersectionParameterComponent2]),
+}
+
+impl MappedPointParameterComponentsRef2<'_> {
+    fn is_empty(self) -> bool {
+        match self {
+            Self::ParallelRational { components, .. } => components.is_empty(),
+            Self::ParallelPair(components) => components.is_empty(),
+        }
+    }
+
+    fn mapped_parameters(
+        self,
+        parameter: BezierAlgebraicCuspSemicircleMappedPointParameterRef2<'_>,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<Option<Vec<CurveRegionParameter2>>>> {
+        match self {
+            Self::ParallelRational {
+                components,
+                source_parameter: CurveResultantParameter::First,
+            } => mapped_point_parameters_through_parameter_components(
+                components
+                    .iter()
+                    .map(|component| (component.parallel_parameter(), component.other_parameter())),
+                parameter,
+                policy,
+            ),
+            Self::ParallelRational {
+                components,
+                source_parameter: CurveResultantParameter::Second,
+            } => mapped_point_parameters_through_parameter_components(
+                components
+                    .iter()
+                    .map(|component| (component.other_parameter(), component.parallel_parameter())),
+                parameter,
+                policy,
+            ),
+            Self::ParallelPair(components) => mapped_point_parameters_through_parameter_components(
+                components
+                    .iter()
+                    .map(|component| (component.first_parameter(), component.second_parameter())),
+                parameter,
+                policy,
+            ),
+        }
+    }
+}
+
+fn append_mapped_point_parameters(
+    candidates: &mut Vec<CurveRegionParameter2>,
+    mapped: Classification<Option<Vec<CurveRegionParameter2>>>,
+) -> Classification<bool> {
+    match mapped {
+        Classification::Decided(Some(mut mapped)) => {
+            candidates.append(&mut mapped);
+            Classification::Decided(true)
+        }
+        Classification::Decided(None) => Classification::Decided(false),
+        Classification::Uncertain(reason) => Classification::Uncertain(reason),
+    }
+}
+
+fn finish_mapped_point_parameter_candidates(
+    mut candidates: Vec<CurveRegionParameter2>,
+    component_overlaps: &[BezierParameterComponentOverlap2],
+    parameter_components: MappedPointParameterComponentsRef2<'_>,
+    overlaps: &[RationalBezierIntersectionOverlap2],
+    overlap_curves: Option<(&RationalBezier2, &RationalBezier2)>,
+    source_parameter: CurveResultantParameter,
+    parameter: BezierAlgebraicCuspSemicircleMappedPointParameterRef2<'_>,
+    complete: bool,
+    policy: &CurveContext,
+) -> CurveResult<Classification<Option<Vec<CurveRegionParameter2>>>> {
+    let component_overlap_decided = match append_mapped_point_parameters(
+        &mut candidates,
+        mapped_point_parameters_through_component_overlaps(
+            component_overlaps,
+            source_parameter,
+            parameter,
+            policy,
+        )?,
+    ) {
+        Classification::Decided(decided) => decided,
+        Classification::Uncertain(reason) => {
+            return Ok(Classification::Uncertain(reason));
+        }
+    };
+    let has_parameter_components = !parameter_components.is_empty();
+    let parameter_component_decided = match append_mapped_point_parameters(
+        &mut candidates,
+        parameter_components.mapped_parameters(parameter, policy)?,
+    ) {
+        Classification::Decided(decided) => decided,
+        Classification::Uncertain(reason) => {
+            return Ok(Classification::Uncertain(reason));
+        }
+    };
+    if has_parameter_components && !parameter_component_decided {
+        return Ok(Classification::Decided(None));
+    }
+    let has_overlap = !overlaps.is_empty();
+    let overlap_decided = if has_overlap {
+        let Some((source_curve, target_curve)) = overlap_curves else {
+            return Ok(Classification::Decided(None));
+        };
+        match append_mapped_point_parameters(
+            &mut candidates,
+            mapped_point_parameters_through_rational_overlaps(
+                overlaps,
+                source_curve,
+                target_curve,
+                source_parameter,
+                parameter,
+                policy,
+            )?,
+        ) {
+            Classification::Decided(decided) => decided,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        }
+    } else {
+        false
+    };
+    if has_overlap && !overlap_decided {
+        return Ok(Classification::Decided(None));
+    }
+    if !candidates.is_empty()
+        || component_overlap_decided
+        || parameter_component_decided
+        || overlap_decided
+    {
+        decided_mapped_point_parameters(candidates, policy)
+    } else if complete {
+        Ok(Classification::Decided(Some(Vec::new())))
+    } else {
+        Ok(Classification::Uncertain(UncertaintyReason::Unsupported))
+    }
+}
+
 fn mapped_point_parameters_through_component_overlaps(
     overlaps: &[BezierParameterComponentOverlap2],
     retained_parameter: CurveResultantParameter,
@@ -10410,6 +10542,155 @@ fn mapped_point_parameters_through_component_overlaps(
         "parameter-component-map",
     );
     Ok(Classification::Decided(Some(mapped)))
+}
+
+fn mapped_point_parameters_through_parameter_components<'a>(
+    components: impl IntoIterator<Item = (Option<&'a BezierParameter2>, Option<&'a BezierParameter2>)>,
+    parameter: BezierAlgebraicCuspSemicircleMappedPointParameterRef2<'_>,
+    policy: &CurveContext,
+) -> CurveResult<Classification<Option<Vec<CurveRegionParameter2>>>> {
+    policy.strict_predicate_pass(|| {
+        let mut saw_component = false;
+        let mut mapped = Vec::new();
+        for (source, target) in components {
+            saw_component = true;
+            match (source, target) {
+                (None, Some(target)) => {
+                    mapped.push(CurveRegionParameter2::from_bezier(target.clone()));
+                }
+                (Some(source), Some(target)) => {
+                    match parameter.matches_certified_incidence_candidate(source, policy)? {
+                        Classification::Decided(true) => {
+                            mapped.push(CurveRegionParameter2::from_bezier(target.clone()));
+                        }
+                        Classification::Decided(false) => {}
+                        Classification::Uncertain(reason) => {
+                            return Ok(Classification::Uncertain(reason));
+                        }
+                    }
+                }
+                (Some(source), None) => {
+                    match parameter.matches_certified_incidence_candidate(source, policy)? {
+                        Classification::Decided(true) => {
+                            return Ok(Classification::Decided(None));
+                        }
+                        Classification::Decided(false) => {}
+                        Classification::Uncertain(reason) => {
+                            return Ok(Classification::Uncertain(reason));
+                        }
+                    }
+                }
+                (None, None) => return Ok(Classification::Decided(None)),
+            }
+        }
+        if !saw_component {
+            return Ok(Classification::Decided(None));
+        }
+        #[cfg(feature = "dispatch-trace")]
+        hyperreal::dispatch_trace::record(
+            "hypercurve",
+            "mapped-circle-point-inverse",
+            "point-parameter-component",
+        );
+        Ok(Classification::Decided(Some(mapped)))
+    })
+}
+
+fn mapped_point_parameters_through_rational_overlaps(
+    overlaps: &[RationalBezierIntersectionOverlap2],
+    source_curve: &RationalBezier2,
+    target_curve: &RationalBezier2,
+    source_parameter: CurveResultantParameter,
+    parameter: BezierAlgebraicCuspSemicircleMappedPointParameterRef2<'_>,
+    policy: &CurveContext,
+) -> CurveResult<Classification<Option<Vec<CurveRegionParameter2>>>> {
+    if overlaps.is_empty() {
+        return Ok(Classification::Decided(None));
+    }
+    let source = parameter.to_curve_region_parameter();
+    let mut mapped = Vec::with_capacity(overlaps.len());
+    for authored_overlap in overlaps {
+        let swapped;
+        let overlap = match source_parameter {
+            CurveResultantParameter::First => authored_overlap,
+            CurveResultantParameter::Second => {
+                swapped = swapped_parallel_overlap(authored_overlap);
+                &swapped
+            }
+        };
+        let correspondence = policy.strict_predicate_pass(|| {
+            RationalBezierOverlapParameterCorrespondence2::for_overlap(
+                source_curve,
+                target_curve,
+                overlap,
+                policy,
+            )
+        });
+        if matches!(
+            (&correspondence, parameter),
+            (
+                RationalBezierOverlapParameterCorrespondence2::General { .. },
+                BezierAlgebraicCuspSemicircleMappedPointParameterRef2::Selected(_),
+            )
+        ) {
+            return Ok(Classification::Decided(None));
+        }
+        match policy.strict_predicate_pass(|| {
+            curve_region_parameter_is_in_bezier_range(&source, overlap.first_range(), true, policy)
+        })? {
+            Classification::Decided(true) => {}
+            Classification::Decided(false) => continue,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        }
+        match policy.strict_predicate_pass(|| {
+            correspondence.map_first_to_second_region_parameter(
+                &source,
+                overlap.first_range(),
+                overlap.second_range(),
+                policy,
+            )
+        })? {
+            Classification::Decided(Some(parameter)) => mapped.push(parameter),
+            Classification::Decided(None) => {
+                return Err(CurveError::Topology(
+                    "a certified overlap omitted its retained point correspondence".into(),
+                ));
+            }
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        }
+    }
+    #[cfg(feature = "dispatch-trace")]
+    hyperreal::dispatch_trace::record(
+        "hypercurve",
+        "mapped-circle-point-inverse",
+        "rational-overlap-parameter-map",
+    );
+    Ok(Classification::Decided(Some(mapped)))
+}
+
+/// Returns an exact rational carrier with the analytic parallel's authored
+/// parameter when one is available. Circular recognition precedes the general
+/// PH test because it is both cheaper and covers non-PH rational conics.
+/// Failure to materialize is not a geometric uncertainty: callers retain the
+/// analytic carrier and continue through its authoritative local relation.
+fn exact_rational_parallel_point_carrier(
+    parallel: &BezierParallel2,
+    policy: &CurveContext,
+) -> CurveResult<Option<RationalBezier2>> {
+    let strict = policy.strict_counterpart();
+    if let Classification::Decided(Some(curve)) =
+        parallel.exact_circular_parallel_component(&strict)?
+    {
+        return Ok(Some(curve));
+    }
+    Ok(match parallel.exact_rational_parallel_component(&strict)? {
+        Classification::Decided(curve) => curve,
+        Classification::Uncertain(_) => None,
+    })
 }
 
 /// Encloses one exact analytic-parallel point without adjoining its normalized
@@ -120075,6 +120356,182 @@ mod conversion_tests {
                     Classification::Decided(true),
                 );
             }
+        }
+    }
+
+    #[test]
+    fn mapped_point_inversion_maps_every_structural_overlap_carrier_directly() {
+        let one_third = (Real::one() / Real::from(3_i8)).unwrap();
+        let two_thirds = Real::one() - &one_third;
+
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let (_, parallel, _) = general_analytic_circle_overlap(&policy);
+            let carrier = exact_rational_parallel_point_carrier(&parallel, &policy)
+                .unwrap()
+                .expect("the analytic circle parallel has an exact rational point carrier");
+            let reversed_carrier = carrier.reversed();
+            let reversed_parallel = parallel.reversed();
+            let Classification::Decided(parallel_rational_evidence) =
+                parallel.intersections(&reversed_carrier, &policy).unwrap()
+            else {
+                panic!("the analytic/rational overlap evidence must complete");
+            };
+            assert!(!parallel_rational_evidence.overlaps().is_empty());
+            let Classification::Decided(parallel_pair_evidence) = parallel
+                .parallel_intersections(&reversed_parallel, &policy)
+                .unwrap()
+            else {
+                panic!("the analytic/analytic overlap evidence must complete");
+            };
+            assert!(!parallel_pair_evidence.overlaps().is_empty());
+            let source_parameter = BezierAlgebraicCuspSemicircleMappedPointParameter2::Ordinary(
+                BezierParameter2::Exact(one_third.clone()),
+            );
+            let expected = region_parameter(BezierParameter2::Exact(two_thirds.clone()));
+            let assert_mapped = |result: CurveResult<
+                Classification<Option<Vec<CurveRegionParameter2>>>,
+            >| {
+                let Classification::Decided(Some(parameters)) = result.unwrap() else {
+                    panic!("the structural overlap must map without tangent fallback");
+                };
+                let [parameter] = parameters.as_slice() else {
+                    panic!("the injective structural overlap must have one image: {parameters:?}");
+                };
+                assert_eq!(
+                    parameter.same_value(&expected, &policy).unwrap(),
+                    Classification::Decided(true),
+                );
+            };
+
+            assert_mapped(
+                BezierAlgebraicCuspSemicircleMappedPointSource2::Parallel {
+                    parallel: parallel.clone(),
+                    parameter: source_parameter.clone(),
+                    policy,
+                }
+                .point_parameter_candidates_on_rational_target(&reversed_carrier, &policy),
+            );
+            assert_mapped(
+                BezierAlgebraicCuspSemicircleMappedPointSource2::Rational {
+                    curve: reversed_carrier,
+                    parameter: source_parameter.clone(),
+                    policy,
+                }
+                .point_parameter_candidates_on_parallel_target(&parallel, &policy),
+            );
+            assert_mapped(
+                BezierAlgebraicCuspSemicircleMappedPointSource2::Parallel {
+                    parallel,
+                    parameter: source_parameter,
+                    policy,
+                }
+                .point_parameter_candidates_on_parallel_target(&reversed_parallel, &policy),
+            );
+        }
+    }
+
+    #[test]
+    fn mapped_point_inversion_maps_zero_image_parameter_components_directly() {
+        let point = Point2::from_values(0, 0);
+        let constant_source = QuadraticBezier2::new(point.clone(), point.clone(), point.clone());
+        let line_source = QuadraticBezier2::from_line_segment(
+            LineSeg2::try_new(Point2::from_values(-1, 0), Point2::from_values(1, 0)).unwrap(),
+        );
+        let constant_parallel = BezierParallel2::from_source(
+            BezierParallelSource2::Quadratic(constant_source),
+            Real::zero(),
+        );
+        let line_parallel = BezierParallel2::from_source(
+            BezierParallelSource2::Quadratic(line_source),
+            Real::zero(),
+        );
+        let constant_rational =
+            RationalBezier2::try_new(vec![point.clone(), point], vec![Real::one(), Real::one()])
+                .unwrap();
+        let line_rational = RationalBezier2::try_new(
+            vec![Point2::from_values(-1, 0), Point2::from_values(1, 0)],
+            vec![Real::one(), Real::one()],
+        )
+        .unwrap();
+        let one_third = (Real::one() / Real::from(3_i8)).unwrap();
+        let half = (Real::one() / Real::from(2_i8)).unwrap();
+
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let Classification::Decided(parallel_rational_evidence) = constant_parallel
+                .intersections(&line_rational, &policy)
+                .unwrap()
+            else {
+                panic!("the constant analytic carrier evidence must complete");
+            };
+            assert!(!parallel_rational_evidence.parameter_components().is_empty());
+            let Classification::Decided(rational_parallel_evidence) = line_parallel
+                .intersections(&constant_rational, &policy)
+                .unwrap()
+            else {
+                panic!("the constant rational carrier evidence must complete");
+            };
+            assert!(!rational_parallel_evidence.parameter_components().is_empty());
+            let Classification::Decided(parallel_pair_evidence) = constant_parallel
+                .parallel_intersections(&line_parallel, &policy)
+                .unwrap()
+            else {
+                panic!("the constant analytic pair evidence must complete");
+            };
+            assert!(!parallel_pair_evidence.parameter_components().is_empty());
+            let source_parameter = BezierAlgebraicCuspSemicircleMappedPointParameter2::Ordinary(
+                BezierParameter2::Exact(one_third.clone()),
+            );
+            let expected = region_parameter(BezierParameter2::Exact(half.clone()));
+            let assert_mapped = |result: CurveResult<
+                Classification<Option<Vec<CurveRegionParameter2>>>,
+            >| {
+                let Classification::Decided(Some(parameters)) = result.unwrap() else {
+                    panic!("the point-image component must map directly");
+                };
+                let [parameter] = parameters.as_slice() else {
+                    panic!("the point-image component must have one fixed image: {parameters:?}");
+                };
+                assert_eq!(
+                    parameter.same_value(&expected, &policy).unwrap(),
+                    Classification::Decided(true),
+                );
+            };
+
+            assert_mapped(
+                BezierAlgebraicCuspSemicircleMappedPointSource2::Parallel {
+                    parallel: constant_parallel.clone(),
+                    parameter: source_parameter.clone(),
+                    policy,
+                }
+                .point_parameter_candidates_on_rational_target(&line_rational, &policy),
+            );
+            assert_mapped(
+                BezierAlgebraicCuspSemicircleMappedPointSource2::Rational {
+                    curve: constant_rational.clone(),
+                    parameter: source_parameter.clone(),
+                    policy,
+                }
+                .point_parameter_candidates_on_parallel_target(&line_parallel, &policy),
+            );
+            assert_mapped(
+                BezierAlgebraicCuspSemicircleMappedPointSource2::Parallel {
+                    parallel: constant_parallel.clone(),
+                    parameter: source_parameter.clone(),
+                    policy,
+                }
+                .point_parameter_candidates_on_parallel_target(&line_parallel, &policy),
+            );
+
+            let ambiguous = BezierAlgebraicCuspSemicircleMappedPointSource2::Parallel {
+                parallel: line_parallel.clone(),
+                parameter: BezierAlgebraicCuspSemicircleMappedPointParameter2::Ordinary(
+                    BezierParameter2::Exact(half.clone()),
+                ),
+                policy,
+            }
+            .point_parameter_candidates_on_rational_target(&constant_rational, &policy)
+            .unwrap();
+            assert_eq!(ambiguous, Classification::Decided(None));
         }
     }
 
