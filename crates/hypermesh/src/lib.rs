@@ -46,6 +46,7 @@ pub mod output;
 mod point_interner;
 pub mod polygon;
 mod predicate;
+pub mod surface_nets;
 pub mod winding;
 
 pub use boolean::boolean;
@@ -76,6 +77,7 @@ pub use output::{
     boolean_mesh_closure_evidence, boolean_mesh_is_closed,
 };
 pub use polygon::{ApproxBounds, ConvexPolygon, convex_quad, convex_triangle};
+pub use surface_nets::{SurfaceNetsError, SurfaceNetsGrid, SurfaceNetsOutput, surface_nets};
 pub use winding::{
     BooleanExpression, BooleanOp, BooleanProgram, WindingNumberTransitionVector,
     WindingNumberVector, WindingPair, classify_polygon_output, propagate_wnv,
