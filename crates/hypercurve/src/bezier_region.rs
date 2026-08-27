@@ -7057,10 +7057,35 @@ fn append_exact_round_join(
     {
         return result;
     }
+    // Procedural chord-offset endpoints deliberately retain their source
+    // ancestry. At cardinal vertices they can nevertheless reduce exactly to
+    // ordinary points. Canonicalize that proved case before constructing a
+    // selected circle, so rational round joins use the native conic authority
+    // and only genuinely selected centers retain the algebraic-circle engine.
+    let strict_exact_point =
+        |point: &RationalBezierIntersectionPointEvidence2| -> CurveResult<Option<Point2>> {
+            Ok(match point {
+                RationalBezierIntersectionPointEvidence2::Exact(point) => Some(point.clone()),
+                RationalBezierIntersectionPointEvidence2::Algebraic(point) => {
+                    point.exact_rational_point(&CurveContext::STRICT)
+                }
+                RationalBezierIntersectionPointEvidence2::AlgebraicChordParallel(point) => {
+                    point.strict_cardinal_exact_point(policy)?
+                }
+                RationalBezierIntersectionPointEvidence2::AlgebraicChordPair(_)
+                | RationalBezierIntersectionPointEvidence2::AlgebraicCuspChord(_)
+                | RationalBezierIntersectionPointEvidence2::AlgebraicCuspChordDerived(_)
+                | RationalBezierIntersectionPointEvidence2::AnalyticParallel(_)
+                | RationalBezierIntersectionPointEvidence2::Similarity(_) => None,
+            })
+        };
+    let previous_offset_end = strict_exact_point(&previous.offset_end)?;
+    let next_offset_start = strict_exact_point(&next.offset_start)?;
+    let center = strict_exact_point(&previous.source_end)?;
     if let (Some(previous_offset_end), Some(next_offset_start), Some(center)) = (
-        previous.offset_end.as_exact(),
-        next.offset_start.as_exact(),
-        previous.source_end.as_exact(),
+        previous_offset_end.as_ref(),
+        next_offset_start.as_ref(),
+        center.as_ref(),
     ) {
         let radius_squared = distance * distance;
         let arc = CircularArc2::new_with_certified_radius_and_sweep(

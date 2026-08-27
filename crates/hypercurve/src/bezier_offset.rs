@@ -76544,6 +76544,32 @@ impl BezierAlgebraicChordParallelPoint2 {
         )
     }
 
+    /// Returns the represented point when this procedural displacement is
+    /// cardinal and both translated source coordinates reduce exactly to the
+    /// canonical scalar. The cardinal direction and coordinate reduction are
+    /// proved under STRICT; an approximate terminal can never canonicalize a
+    /// stored construction.
+    pub(crate) fn strict_cardinal_exact_point(
+        &self,
+        policy: &CurveContext,
+    ) -> CurveResult<Option<Point2>> {
+        let Some(point) = self.strict_cardinal_point_evidence(policy)? else {
+            return Ok(None);
+        };
+        Ok(match point {
+            RationalBezierIntersectionPointEvidence2::Exact(point) => Some(point),
+            RationalBezierIntersectionPointEvidence2::Algebraic(point) => {
+                point.exact_rational_point(&CurveContext::STRICT)
+            }
+            RationalBezierIntersectionPointEvidence2::AlgebraicChordPair(_)
+            | RationalBezierIntersectionPointEvidence2::AlgebraicCuspChord(_)
+            | RationalBezierIntersectionPointEvidence2::AlgebraicCuspChordDerived(_)
+            | RationalBezierIntersectionPointEvidence2::AlgebraicChordParallel(_)
+            | RationalBezierIntersectionPointEvidence2::AnalyticParallel(_)
+            | RationalBezierIntersectionPointEvidence2::Similarity(_) => None,
+        })
+    }
+
     fn strict_preserved_axis_source<'a>(
         &'a self,
         axis: Axis2,
