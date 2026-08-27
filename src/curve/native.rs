@@ -2755,9 +2755,12 @@ pub fn translated_solid(mesh: &TriangleMesh, x: Real, y: Real, z: Real) -> Trian
 #[cfg(test)]
 mod tests {
     use super::*;
-    use hypercurve::{
-        BezierParameter2, BezierSplitFragment2, BezierSubcurve2, CurveRegionBoundaryLoop2,
-    };
+
+    fn terminally_unresolved_zero() -> Real {
+        let sine = Real::e().sin();
+        let cosine = Real::e().cos();
+        &sine * &sine + &cosine * &cosine - Real::one()
+    }
 
     fn signed_volume(mesh: &TriangleMesh) -> f64 {
         mesh.triangles
@@ -2788,46 +2791,25 @@ mod tests {
     }
 
     #[test]
-    fn finite_profiles_consume_selected_projection_outcome_once() {
-        let point = |x, y| Point2::new(Real::from(x), Real::from(y));
-        let fragment = |start, control, end| BezierSplitFragment2::Materialized {
-            start: BezierParameter2::Exact(Real::zero()),
-            end: BezierParameter2::Exact(Real::one()),
-            curve: BezierSubcurve2::Quadratic(QuadraticBezier2::new(start, control, end)),
-        };
-        let symbolic_zero = (Real::pi() + Real::e()) - (Real::e() + Real::pi());
-        let rational = RationalBezier2::try_new(
-            vec![
-                point(1, 1),
-                Point2::new(Real::from(2), Real::one() + &symbolic_zero),
-                Point2::new(Real::from(3), Real::one() + &symbolic_zero),
-                Point2::new(Real::from(4), Real::one() + &symbolic_zero),
-                point(5, 1),
-            ],
-            vec![
-                Real::one(),
-                Real::from(2),
-                Real::from(3),
-                Real::from(5),
-                Real::from(10),
-            ],
-        )
+    fn finite_profiles_reuse_retained_loop_topology_without_reconsumption() {
+        let start_x = Real::e().sin();
+        let terminal_start_x = start_x.clone() + terminally_unresolved_zero();
+        let p0 = Point2::new(start_x.clone(), Real::zero());
+        let p1 = Point2::new(start_x.clone() + Real::one(), Real::zero());
+        let p2 = Point2::new(start_x.clone() + Real::one(), Real::one());
+        let p3 = Point2::new(start_x, Real::one());
+        let terminal_p0 = Point2::new(terminal_start_x, Real::zero());
+        let path = CurvePath2::try_new(vec![
+            Curve2::from(LineSeg2::try_new(p0, p1.clone()).unwrap()),
+            Curve2::from(LineSeg2::try_new(p1, p2.clone()).unwrap()),
+            Curve2::from(LineSeg2::try_new(p2, p3.clone()).unwrap()),
+            Curve2::from(LineSeg2::try_new(p3, terminal_p0).unwrap()),
+        ])
         .unwrap();
-        let boundary = CurveRegionBoundaryLoop2::new(
-            vec![
-                BezierSplitFragment2::Materialized {
-                    start: BezierParameter2::Exact(Real::zero()),
-                    end: BezierParameter2::Exact(Real::one()),
-                    curve: BezierSubcurve2::Rational(rational),
-                },
-                fragment(point(5, 1), point(5, 2), point(5, 3)),
-                fragment(point(5, 3), point(3, 3), point(1, 3)),
-                fragment(point(1, 3), point(1, 2), point(1, 1)),
-            ],
-            &CurveContext::STRICT,
-        )
-        .unwrap();
-        let region = CurveRegion2::new(vec![boundary]).unwrap();
+        let region =
+            CurveRegion2::try_from_boundary_paths(&[path], &CurveContext::APPROXIMATE_512)
+                .unwrap()
+                .into_value();
 
         let strict = try_finite_profiles(&region, &GeometryContext::STRICT).unwrap();
         assert_eq!(strict.certainty, crate::GeometryCertainty::Certified);
@@ -2835,10 +2817,7 @@ mod tests {
 
         let permissive =
             try_finite_profiles(&region, &GeometryContext::APPROXIMATE_512).unwrap();
-        assert_eq!(
-            permissive.certainty,
-            crate::GeometryCertainty::Approximate512Consumed
-        );
+        assert_eq!(permissive.certainty, crate::GeometryCertainty::Certified);
         assert_eq!(permissive.value.len(), 1);
     }
 
@@ -2979,7 +2958,7 @@ mod tests {
     #[test]
     fn approximate_sweep_reports_consumed_terminal_point_equality() {
         let square = square(Real::from(2_u8));
-        let symbolic_zero = (Real::pi() + Real::e()) - (Real::e() + Real::pi());
+        let symbolic_zero = terminally_unresolved_zero();
         let path = [
             Point3::origin(),
             Point3::new(symbolic_zero, Real::zero(), Real::zero()),
