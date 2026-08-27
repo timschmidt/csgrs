@@ -152,6 +152,13 @@ struct PiQuadraticLaurentPolynomial {
     terms: Vec<(i16, QuadraticCoefficient)>,
 }
 
+// This normal form is a bounded recognition fast path, not an exactness
+// authority. A depth limit alone still permits exponential traversal of a
+// wide, mostly unshared arithmetic DAG before the query returns `None`.
+// Bound aggregate node visits as well; callers retain their ordinary exact
+// representation when this recognition budget is exhausted.
+const MAX_PI_LAURENT_NORMAL_FORM_NODES: usize = 512;
+
 impl PiQuadraticLaurentPolynomial {
     const MAX_TERMS: usize = 8;
 
@@ -357,28 +364,29 @@ impl Computable {
         budget: usize,
     ) -> Option<PiQuadraticLaurentPolynomial> {
         let mut memo = None;
-        self.pi_laurent_polynomial_with_memo(budget, &mut memo)
+        let mut remaining_work = MAX_PI_LAURENT_NORMAL_FORM_NODES;
+        self.pi_laurent_polynomial_with_memo(budget, &mut remaining_work, &mut memo)
     }
 
     fn pi_laurent_polynomial_with_memo(
         &self,
         budget: usize,
-        memo: &mut Option<Vec<(usize, usize, Option<PiQuadraticLaurentPolynomial>)>>,
+        remaining_work: &mut usize,
+        memo: &mut Option<Vec<(usize, Option<PiQuadraticLaurentPolynomial>)>>,
     ) -> Option<PiQuadraticLaurentPolynomial> {
         let key = Arc::as_ptr(&self.internal) as usize;
         let shared = Arc::strong_count(&self.internal) > 1;
         if shared
-            && let Some((_, _, value)) = memo.as_ref().and_then(|memo| {
-                memo.iter().find(|(candidate, candidate_budget, _)| {
-                    *candidate == key && *candidate_budget == budget
-                })
-            })
+            && let Some((_, value)) = memo
+                .as_ref()
+                .and_then(|memo| memo.iter().find(|(candidate, _)| *candidate == key))
         {
             return value.clone();
         }
-        if budget == 0 {
+        if budget == 0 || *remaining_work == 0 {
             return None;
         }
+        *remaining_work -= 1;
         let result = if let Some(rational) = self.exact_rational() {
             Some(PiQuadraticLaurentPolynomial::monomial(
                 0,
@@ -426,26 +434,38 @@ impl Computable {
         } else {
             let expanded = (|| match &self.internal.approximation {
                 Approximation::Add(left, right) => left
-                    .pi_laurent_polynomial_with_memo(budget - 1, memo)?
-                    .add(right.pi_laurent_polynomial_with_memo(budget - 1, memo)?),
+                    .pi_laurent_polynomial_with_memo(budget - 1, remaining_work, memo)?
+                    .add(right.pi_laurent_polynomial_with_memo(
+                        budget - 1,
+                        remaining_work,
+                        memo,
+                    )?),
                 Approximation::Multiply(left, right) => left
-                    .pi_laurent_polynomial_with_memo(budget - 1, memo)?
-                    .multiply(right.pi_laurent_polynomial_with_memo(budget - 1, memo)?),
+                    .pi_laurent_polynomial_with_memo(budget - 1, remaining_work, memo)?
+                    .multiply(right.pi_laurent_polynomial_with_memo(
+                        budget - 1,
+                        remaining_work,
+                        memo,
+                    )?),
                 Approximation::Negate(child) => Some(
                     child
-                        .pi_laurent_polynomial_with_memo(budget - 1, memo)?
+                        .pi_laurent_polynomial_with_memo(budget - 1, remaining_work, memo)?
                         .scaled(Rational::new(-1)),
                 ),
                 Approximation::Offset(child, shift) => Some(
                     child
-                        .pi_laurent_polynomial_with_memo(budget - 1, memo)?
+                        .pi_laurent_polynomial_with_memo(budget - 1, remaining_work, memo)?
                         .scaled(Self::power_of_two_rational(*shift)),
                 ),
                 Approximation::Inverse(child) => child
-                    .pi_laurent_polynomial_with_memo(budget - 1, memo)?
+                    .pi_laurent_polynomial_with_memo(budget - 1, remaining_work, memo)?
                     .inverse_monomial(),
                 Approximation::Square(child) => {
-                    let child = child.pi_laurent_polynomial_with_memo(budget - 1, memo)?;
+                    let child = child.pi_laurent_polynomial_with_memo(
+                        budget - 1,
+                        remaining_work,
+                        memo,
+                    )?;
                     child.clone().multiply(child)
                 }
                 Approximation::Sqrt(child) => {
@@ -469,7 +489,11 @@ impl Computable {
                     {
                         sum = sum.add(
                             coefficient
-                                .pi_laurent_polynomial_with_memo(budget - 1, memo)?
+                                .pi_laurent_polynomial_with_memo(
+                                    budget - 1,
+                                    remaining_work,
+                                    memo,
+                                )?
                                 .scaled(value.clone()),
                         )?;
                     }
@@ -487,7 +511,7 @@ impl Computable {
         };
         if shared {
             memo.get_or_insert_with(|| Vec::with_capacity(8))
-                .push((key, budget, result.clone()));
+                .push((key, result.clone()));
         }
         result
     }

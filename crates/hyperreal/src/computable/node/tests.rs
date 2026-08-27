@@ -1506,6 +1506,22 @@ mod tests {
     }
 
     #[test]
+    fn structural_bound_walk_reuses_shared_dag_subtrees() {
+        // `exp(pi) - 100` has no cheap structural bound. Repeatedly sharing it
+        // under addition makes the logical expression tree exponential while
+        // the immutable DAG remains tiny. The nonrecursive bound walk must
+        // cache each completed node so the second edge reuses the first proof.
+        let mut value = Computable::pi()
+            .exp()
+            .add(Computable::integer(BigInt::from(-100)));
+        for _ in 0..128 {
+            value = value.clone().add(value);
+        }
+
+        assert_eq!(value.cheap_bound(), BoundInfo::Unknown);
+    }
+
+    #[test]
     fn huge_trig_arguments_reduce_correctly() {
         let huge_multiple = BigInt::from(1_u8) << 200;
         let offset = Computable::rational(Rational::fraction(7, 5).unwrap());
@@ -2097,6 +2113,33 @@ fn inverse_atan_linear_sign_includes_the_argument_sign() {
                 .bounded_laurent_rational(),
             Some(Rational::zero())
         );
+    }
+
+    #[test]
+    fn pi_laurent_normal_form_declines_wide_opaque_expression_dags() {
+        let denominator = Rational::new(4_099);
+        let mut layer = (2..1_026)
+            .map(|numerator| {
+                Computable::rational(
+                    Rational::new(numerator) / denominator.clone(),
+                )
+                .atan()
+            })
+            .collect::<Vec<_>>();
+        while layer.len() > 1 {
+            let mut next = Vec::with_capacity(layer.len().div_ceil(2));
+            let mut values = layer.into_iter();
+            while let Some(left) = values.next() {
+                next.push(match values.next() {
+                    Some(right) => left.add(right),
+                    None => left,
+                });
+            }
+            layer = next;
+        }
+        let expression = layer.pop().expect("the balanced expression is nonempty");
+
+        assert!(expression.bounded_laurent_rational().is_none());
     }
 
     #[test]

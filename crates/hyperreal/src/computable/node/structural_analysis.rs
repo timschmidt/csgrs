@@ -474,16 +474,19 @@ impl Computable {
 
         enum Frame<'a> {
             Eval(&'a Computable),
-            FinishNegate,
-            FinishOffset(i32),
-            FinishInverse,
-            FinishSquare,
-            FinishSqrt,
-            FinishAdd,
-            FinishMultiply,
+            FinishNegate(&'a Computable),
+            FinishOffset(&'a Computable, i32),
+            FinishInverse(&'a Computable),
+            FinishSquare(&'a Computable),
+            FinishSqrt(&'a Computable),
+            FinishAdd(&'a Computable),
+            FinishMultiply(&'a Computable),
         }
 
         fn direct_bound(node: &Computable) -> Option<BoundInfo> {
+            if let Some(bound) = node.cached_bound() {
+                return Some(bound);
+            }
             match &node.internal.approximation {
                 Approximation::One => Some(BoundInfo::with_sign(Sign::Plus, Some(0))),
                 Approximation::Int(n) => Some(if n.sign() == Sign::NoSign {
@@ -542,73 +545,88 @@ impl Computable {
             match frame {
                 Frame::Eval(node) => {
                     if let Some(bound) = direct_bound(node) {
+                        node.store_bound(&bound);
                         values.push(bound);
                         continue;
                     }
 
                     match &node.internal.approximation {
                         Approximation::Negate(child) => {
-                            frames.push(Frame::FinishNegate);
+                            frames.push(Frame::FinishNegate(node));
                             frames.push(Frame::Eval(child));
                         }
                         Approximation::Offset(child, n) => {
-                            frames.push(Frame::FinishOffset(*n));
+                            frames.push(Frame::FinishOffset(node, *n));
                             frames.push(Frame::Eval(child));
                         }
                         Approximation::Inverse(child) => {
-                            frames.push(Frame::FinishInverse);
+                            frames.push(Frame::FinishInverse(node));
                             frames.push(Frame::Eval(child));
                         }
                         Approximation::Square(child) => {
-                            frames.push(Frame::FinishSquare);
+                            frames.push(Frame::FinishSquare(node));
                             frames.push(Frame::Eval(child));
                         }
                         Approximation::Sqrt(child) => {
-                            frames.push(Frame::FinishSqrt);
+                            frames.push(Frame::FinishSqrt(node));
                             frames.push(Frame::Eval(child));
                         }
                         Approximation::Add(left, right) => {
-                            frames.push(Frame::FinishAdd);
+                            frames.push(Frame::FinishAdd(node));
                             frames.push(Frame::Eval(right));
                             frames.push(Frame::Eval(left));
                         }
                         Approximation::Multiply(left, right) => {
-                            frames.push(Frame::FinishMultiply);
+                            frames.push(Frame::FinishMultiply(node));
                             frames.push(Frame::Eval(right));
                             frames.push(Frame::Eval(left));
                         }
                         _ => unreachable!("direct_bound should handle non-structural nodes"),
                     }
                 }
-                Frame::FinishNegate => {
+                Frame::FinishNegate(node) => {
                     let value = values.pop().expect("negate bound should exist");
-                    values.push(value.negate());
+                    let result = value.negate();
+                    node.store_bound(&result);
+                    values.push(result);
                 }
-                Frame::FinishOffset(offset) => {
+                Frame::FinishOffset(node, offset) => {
                     let value = values.pop().expect("offset bound should exist");
-                    values.push(value.map_msd(|msd| msd + offset));
+                    let result = value.map_msd(|msd| msd + offset);
+                    node.store_bound(&result);
+                    values.push(result);
                 }
-                Frame::FinishInverse => {
+                Frame::FinishInverse(node) => {
                     let value = values.pop().expect("inverse bound should exist");
-                    values.push(value.inverse());
+                    let result = value.inverse();
+                    node.store_bound(&result);
+                    values.push(result);
                 }
-                Frame::FinishSquare => {
+                Frame::FinishSquare(node) => {
                     let value = values.pop().expect("square bound should exist");
-                    values.push(value.square());
+                    let result = value.square();
+                    node.store_bound(&result);
+                    values.push(result);
                 }
-                Frame::FinishSqrt => {
+                Frame::FinishSqrt(node) => {
                     let value = values.pop().expect("sqrt bound should exist");
-                    values.push(value.sqrt());
+                    let result = value.sqrt();
+                    node.store_bound(&result);
+                    values.push(result);
                 }
-                Frame::FinishAdd => {
+                Frame::FinishAdd(node) => {
                     let right = values.pop().expect("add rhs bound should exist");
                     let left = values.pop().expect("add lhs bound should exist");
-                    values.push(left.add(right));
+                    let result = left.add(right);
+                    node.store_bound(&result);
+                    values.push(result);
                 }
-                Frame::FinishMultiply => {
+                Frame::FinishMultiply(node) => {
                     let right = values.pop().expect("multiply rhs bound should exist");
                     let left = values.pop().expect("multiply lhs bound should exist");
-                    values.push(left.multiply(right));
+                    let result = left.multiply(right);
+                    node.store_bound(&result);
+                    values.push(result);
                 }
             }
         }
