@@ -24,7 +24,7 @@ runs:
         checkout_repo hypercurve https://github.com/timschmidt/hypercurve.git f5f9f5dbbaa4cd652fd8d9ba0a1e51e28dfd7231
         checkout_repo hyperlattice https://github.com/timschmidt/hyperlattice.git ac2aaebeaf676f837b28ed103a4391f473bd7786
         checkout_repo hyperlimit https://github.com/timschmidt/hyperlimit.git c508d739a5745591857c55b90b81ea5d8729b4a8
-        checkout_repo hypermesh https://github.com/timschmidt/hypermesh.git 0bcaeb2d673c0f928c2ccec2af2dbd6f6652e040
+        checkout_repo hypermesh https://github.com/timschmidt/hypermesh.git cf95b9706b270ac5291783e2c3920a0af6e840b9
         checkout_repo hyperphysics https://github.com/timschmidt/hyperphysics.git 86f84d0e470fe68bdec66459595a63cb1d8c8d7f
         checkout_repo hyperreal https://github.com/timschmidt/hyperreal.git 75913818780c02164063c3fca00a4b0ff9de3d68
         checkout_repo hypersdf https://github.com/timschmidt/hypersdf.git ecb9811f99fdca083faae8e97624679c8ce1970c
