@@ -4295,7 +4295,9 @@ impl<'a> CurveRegionBooleanContext<'a> {
                         } else {
                             second_at_start
                         };
-                        if cusp.certified_tangent_endpoint(cusp_at_start) {
+                        if cusp.certified_tangent_endpoint(cusp_at_start)
+                            && !cusp.selected_chord_normal_contact_endpoint(cusp_at_start)
+                        {
                             #[cfg(feature = "dispatch-trace")]
                             hyperreal::dispatch_trace::record(
                                 "hypercurve",
@@ -4304,14 +4306,24 @@ impl<'a> CurveRegionBooleanContext<'a> {
                             );
                             return Ok(RegionPairResult::empty());
                         }
-                        if cusp
-                            .authored_adjacent_chord_is_structurally_endpoint_only(
-                                chord,
-                                cusp_at_start,
-                                &self.data.policy,
-                            )
-                            .map_err(|cause| self.invalid(chord_index, cause))?
-                        {
+                        let endpoint_only =
+                            if cusp.selected_chord_normal_contact_endpoint(cusp_at_start) {
+                                cusp.certified_adjacent_chord_is_endpoint_only(
+                                    chord,
+                                    cusp_at_start,
+                                    &self.data.policy,
+                                )
+                                .map_err(|cause| self.invalid(chord_index, cause))?
+                                    == Classification::Decided(true)
+                            } else {
+                                cusp.authored_adjacent_chord_is_structurally_endpoint_only(
+                                    chord,
+                                    cusp_at_start,
+                                    &self.data.policy,
+                                )
+                                .map_err(|cause| self.invalid(chord_index, cause))?
+                            };
+                        if endpoint_only {
                             #[cfg(feature = "dispatch-trace")]
                             hyperreal::dispatch_trace::record(
                                 "hypercurve",

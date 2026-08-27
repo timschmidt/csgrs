@@ -2503,7 +2503,7 @@ fn selected_algebraic_round_join_retains_a_general_minor_cut() {
                     "curve-region-exact-offset-tangent",
                     "selected-chord-normal-contact",
                 ) >= 2,
-                "both orientations of the general chord-normal round join must use one authority"
+                "both orientations of the general chord-normal round join must use one authority: {trace:?}"
             );
             assert!(
                 trace.path_count(
@@ -2511,7 +2511,7 @@ fn selected_algebraic_round_join_retains_a_general_minor_cut() {
                     "algebraic-circle-chord-kernel",
                     "selected-chord-normal-tangent",
                 ) > 0,
-                "regularization must reuse the authored tangent-line certificate"
+                "regularization must reuse the authored tangent-line certificate: {trace:?}"
             );
         }
         assert_eq!(rounded.certainty, CurveCertainty::Certified);

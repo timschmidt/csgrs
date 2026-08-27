@@ -7456,11 +7456,14 @@ fn append_selected_circle_chord_round_join(
                     return Ok(Classification::Uncertain(reason));
                 }
             };
-            match fillet.certified_authored_chord_pair_normal_contact_parameter(
-                chord,
+            match fillet.certified_chord_normal_contact_parameter(
+                crate::bezier_offset::BezierSelectedChordNormalAnchor2::RetainedChord(
+                    chord.clone(),
+                ),
                 tangent,
                 other_point.clone(),
                 distance.clone(),
+                true,
                 policy,
             )? {
                 Classification::Decided(parameter) => parameter,
@@ -7579,18 +7582,24 @@ fn append_selected_chord_pair_round_join(
         crate::arc_bezier::ArcSweepKind::Minor => {
             let selected = match (represented_frame, represented_unit_tangent) {
                 (true, Some(anchor_tangent)) => semicircle
-                    .certified_selected_chord_normal_contact_parameter(
-                        anchor_tangent,
+                    .certified_chord_normal_contact_parameter(
+                        crate::bezier_offset::BezierSelectedChordNormalAnchor2::Represented(
+                            anchor_tangent,
+                        ),
                         chord.clone(),
                         next.offset_start.clone(),
                         distance.clone(),
+                        false,
                         policy,
                     )?,
-                (false, _) => semicircle.certified_selected_chord_pair_normal_contact_parameter(
-                    anchor,
+                (false, _) => semicircle.certified_chord_normal_contact_parameter(
+                    crate::bezier_offset::BezierSelectedChordNormalAnchor2::RetainedChord(
+                        anchor.clone(),
+                    ),
                     chord.clone(),
                     next.offset_start.clone(),
                     distance.clone(),
+                    false,
                     policy,
                 )?,
                 (true, None) => unreachable!("a represented frame has a represented tangent"),
@@ -7683,17 +7692,12 @@ fn append_selected_chord_normal_round_join(
         Classification::Decided(None) => return Ok(Classification::Decided(())),
         Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
     };
-    #[cfg(feature = "dispatch-trace")]
-    hyperreal::dispatch_trace::record(
-        "hypercurve",
-        "curve-region-exact-offset-tangent",
-        "selected-chord-normal-contact",
-    );
-    let end = match semicircle.certified_selected_chord_normal_contact_parameter(
-        anchor_tangent.clone(),
+    let end = match semicircle.certified_chord_normal_contact_parameter(
+        crate::bezier_offset::BezierSelectedChordNormalAnchor2::Represented(anchor_tangent.clone()),
         chord.clone(),
         RationalBezierIntersectionPointEvidence2::AlgebraicChordParallel(point.clone()),
         distance.clone(),
+        false,
         policy,
     )? {
         Classification::Decided(parameter) => parameter,
@@ -13614,20 +13618,26 @@ impl CurveRegion2 {
             let parameter = match &frame.radial_frame {
                 RetainedFilletRadialFrame2::RepresentedUnitNormal(unit_normal) => {
                     let anchor_tangent = (unit_normal.1.clone(), -unit_normal.0.clone());
-                    terminal_circle.certified_selected_chord_normal_contact_parameter(
-                        anchor_tangent,
+                    terminal_circle.certified_chord_normal_contact_parameter(
+                        crate::bezier_offset::BezierSelectedChordNormalAnchor2::Represented(
+                            anchor_tangent,
+                        ),
                         chord.clone(),
                         chord_cut.point.clone(),
                         frame.radial_distance.clone(),
+                        false,
                         policy,
                     )
                 }
                 RetainedFilletRadialFrame2::ChordNormal { anchor, .. } => terminal_circle
-                    .certified_selected_chord_pair_normal_contact_parameter(
-                        anchor,
+                    .certified_chord_normal_contact_parameter(
+                        crate::bezier_offset::BezierSelectedChordNormalAnchor2::RetainedChord(
+                            anchor.clone(),
+                        ),
                         chord.clone(),
                         chord_cut.point.clone(),
                         frame.radial_distance.clone(),
+                        false,
                         policy,
                     ),
                 RetainedFilletRadialFrame2::ParallelNormal { .. } => {
