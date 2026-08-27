@@ -8,11 +8,13 @@ use crate::context::GeometryDecisions;
 use crate::errors::{CurveBooleanError, ValidationError};
 use crate::solid;
 use crate::{GeometryContext, GeometryOutcome};
+#[cfg(feature = "offset")]
+use hypercurve::OffsetCornerStyle2;
 use hypercurve::{
     BooleanOp, Classification, Contour2, CubicBezier2, Curve2, CurveContext, CurveOutcome,
     CurvePath2, CurveRegion2, CurveString2, ExactCurveResult, FinitePolyline2,
-    FiniteProjectionOptions, FiniteRegionProfile2, LineSeg2, OffsetCornerStyle2, Point2,
-    PolynomialSplineCurve2, QuadraticBezier2, RationalBezier2, RegionPointLocation,
+    FiniteProjectionOptions, FiniteRegionProfile2, LineSeg2, Point2, PolynomialSplineCurve2,
+    QuadraticBezier2, RationalBezier2, RegionPointLocation,
 };
 use hyperlattice::{Aabb, Matrix4, Point3, Real, Vector3};
 use hypermesh::TriangleMesh;

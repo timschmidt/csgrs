@@ -1242,7 +1242,11 @@ pub fn metaballs_with_diagnostics(
     )
 }
 
-/// Samples an exact scalar field into reusable native triangle geometry.
+/// Samples an exact scalar field with native-real Surface Nets.
+///
+/// Coordinates remain [`Real`] throughout construction. The regular sample
+/// grid still defines proposal topology; this is not a continuous-field
+/// topology certificate.
 #[cfg(feature = "sdf")]
 pub fn sdf(
     field: impl Fn(&Point3) -> Real,
@@ -1266,7 +1270,11 @@ pub fn sdf_with_diagnostics(
     crate::implicit::sdf::sdf_with_diagnostics(field, resolution, min, max, iso_value)
 }
 
-/// Samples a Hypersdf expression into reusable native triangle geometry.
+/// Samples a Hypersdf expression with native-real Surface Nets.
+///
+/// Coordinates remain [`Real`] throughout construction. The regular sample
+/// grid still defines proposal topology; this is not a continuous-field
+/// topology certificate.
 #[cfg(feature = "sdf")]
 pub fn sdf_expr(
     expression: hypersdf::SdfExpr,
