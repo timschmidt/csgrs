@@ -1,5 +1,9 @@
-use csgrs::solid;
+use csgrs::solid::{self, SolidExt};
 use hyperlattice::{Point3, Real};
+use hyperlimit::{Point3 as HPoint3, PredicatePolicy};
+use hypermesh::{MeshCertainty, MeshContext};
+use hyperreal::Rational;
+use hypersdf::SdfExpr;
 use std::collections::HashMap;
 
 fn r(value: f64) -> Real {
@@ -8,6 +12,31 @@ fn r(value: f64) -> Real {
 
 fn p3(x: f64, y: f64, z: f64) -> Point3 {
     Point3::new(r(x), r(y), r(z))
+}
+
+fn q(numerator: i64, denominator: u64) -> Real {
+    Real::from(Rational::fraction(numerator, denominator).expect("exact test rational"))
+}
+
+fn hp3(x: f64, y: f64, z: f64) -> HPoint3 {
+    HPoint3::new(r(x), r(y), r(z))
+}
+
+fn tiny_exact_real() -> Real {
+    let denominator = format!("1{}", "0".repeat(400));
+    Real::from(
+        format!("1/{denominator}")
+            .parse::<Rational>()
+            .expect("exact test rational"),
+    )
+}
+
+fn huge_exact_real() -> Real {
+    Real::from(
+        format!("1{}", "0".repeat(400))
+            .parse::<Rational>()
+            .expect("exact test integer"),
+    )
 }
 
 fn edge_defects(mesh: &hypermesh::TriangleMesh) -> (usize, usize, Vec<(usize, usize)>) {
@@ -101,7 +130,7 @@ fn signed_volume(mesh: &hypermesh::TriangleMesh) -> f64 {
 }
 
 #[test]
-fn sdf_boundary_converts_only_at_sampling_boundary() {
+fn sdf_native_real_surface_nets_produces_closed_mesh() {
     let mesh = solid::sdf(
         |p| p.to_vector().norm() - r(0.6),
         (8, 8, 8),
@@ -112,6 +141,150 @@ fn sdf_boundary_converts_only_at_sampling_boundary() {
 
     assert!(!mesh.triangles.is_empty());
     assert!(mesh.is_closed_manifold());
+}
+
+#[test]
+fn sdf_expr_preserves_exact_signs_below_float_range() {
+    let tiny = tiny_exact_real();
+    let closure_scale = tiny.clone();
+    let expected_max = tiny.clone();
+    let surface_x = q(1, 3);
+    let iso = surface_x.clone() * tiny.clone();
+    let closure_mesh = solid::sdf(
+        move |point| &point.x * &closure_scale,
+        (9, 9, 9),
+        p3(-1.0, -1.0, -1.0),
+        p3(1.0, 1.0, 1.0),
+        iso.clone(),
+    );
+    let (expression_mesh, diagnostics) = solid::sdf_expr_with_diagnostics(
+        SdfExpr::x().mul_expr(SdfExpr::constant(tiny)),
+        (9, 9, 9),
+        p3(-1.0, -1.0, -1.0),
+        p3(1.0, 1.0, 1.0),
+        iso,
+    );
+
+    assert!(!closure_mesh.triangles.is_empty());
+    assert_eq!(expression_mesh, closure_mesh);
+    assert!(
+        expression_mesh
+            .positions
+            .iter()
+            .all(|position| position.x == surface_x)
+    );
+    assert_eq!(diagnostics.negative_sample_count, 6 * 9 * 9);
+    assert_eq!(diagnostics.zero_sample_count, 0);
+    assert_eq!(diagnostics.positive_sample_count, 3 * 9 * 9);
+    assert_eq!(diagnostics.non_finite_sample_count, 0);
+    assert_eq!(diagnostics.min_finite_value, Some(-expected_max.clone()));
+    assert_eq!(diagnostics.max_finite_value, Some(expected_max));
+
+    let preview = diagnostics
+        .hypersdf_preview
+        .as_ref()
+        .expect("retained expression preview diagnostics");
+    assert!(preview.is_self_consistent());
+    assert_eq!(preview.grid_samples.samples.negative_count, 6 * 9 * 9);
+    assert_eq!(preview.grid_samples.samples.zero_count, 0);
+    assert_eq!(preview.grid_samples.samples.positive_count, 3 * 9 * 9);
+    assert_eq!(preview.vertex_count, diagnostics.surface_nets_vertex_count);
+    assert_eq!(preview.triangle_count, diagnostics.emitted_triangle_count);
+}
+
+#[test]
+fn sdf_native_real_surface_nets_handles_values_above_float_range() {
+    let scale = huge_exact_real();
+    let surface_x = q(1, 3);
+    let closure_surface_x = surface_x.clone();
+    let mesh = solid::sdf(
+        move |point| (&point.x - &closure_surface_x) * &scale,
+        (3, 3, 3),
+        p3(0.0, 0.0, 0.0),
+        p3(1.0, 1.0, 1.0),
+        Real::zero(),
+    );
+
+    assert_eq!(mesh.positions.len(), 4);
+    assert_eq!(mesh.triangles.len(), 2);
+    assert!(mesh.positions.iter().all(|position| position.x == surface_x));
+}
+
+#[test]
+fn native_real_sdf_mesh_is_hypermesh_boolean_ready() {
+    let radius_squared = q(2, 5);
+    let mesh = solid::sdf(
+        move |point| {
+            point.x.clone() * point.x.clone()
+                + point.y.clone() * point.y.clone()
+                + point.z.clone() * point.z.clone()
+                - radius_squared.clone()
+        },
+        (9, 9, 9),
+        p3(-1.0, -1.0, -1.0),
+        p3(1.0, 1.0, 1.0),
+        Real::zero(),
+    );
+
+    assert!(!mesh.triangles.is_empty());
+    assert!(mesh.is_closed_manifold());
+    assert!(signed_volume(&mesh) > 0.0);
+    let validation =
+        hypermesh::polygon_soup(&MeshContext::new(PredicatePolicy::STRICT), &[mesh.as_ref()])
+            .expect("native-real Surface Nets output should be valid Hypermesh input");
+    assert_eq!(validation.certainty, MeshCertainty::Certified);
+
+    let enclosing = solid::cube(r(2.0)).translated(r(-1.0), r(-1.0), r(-1.0));
+    let intersection = mesh
+        .try_intersection(&enclosing)
+        .expect("native-real SDF mesh should be accepted by Hypermesh Boolean operations");
+    assert!(!intersection.triangles.is_empty());
+    assert!(intersection.is_closed_manifold());
+    assert!(signed_volume(&intersection) > 0.0);
+}
+
+#[test]
+fn sdf_expr_preview_tracks_nonzero_iso_surface() {
+    let expression = SdfExpr::sphere(hp3(0.0, 0.0, 0.0), r(1.0));
+    let direct_mesh = solid::sdf_expr(
+        expression.clone(),
+        (17, 17, 17),
+        p3(-2.0, -2.0, -2.0),
+        p3(2.0, 2.0, 2.0),
+        r(1.0),
+    );
+    let (diagnostic_mesh, diagnostics) = solid::sdf_expr_with_diagnostics(
+        expression,
+        (17, 17, 17),
+        p3(-2.0, -2.0, -2.0),
+        p3(2.0, 2.0, 2.0),
+        r(1.0),
+    );
+
+    assert_eq!(diagnostic_mesh, direct_mesh);
+    assert!(!diagnostic_mesh.triangles.is_empty());
+    assert!(diagnostic_mesh.is_closed_manifold());
+    assert!(signed_volume(&diagnostic_mesh) > 0.0);
+
+    let preview = diagnostics
+        .hypersdf_preview
+        .as_ref()
+        .expect("retained expression preview diagnostics");
+    assert!(preview.is_self_consistent());
+    assert_eq!(preview.vertex_count, diagnostics.surface_nets_vertex_count);
+    assert_eq!(preview.triangle_count, diagnostics.emitted_triangle_count);
+    assert_eq!(
+        preview.grid_samples.samples.negative_count,
+        diagnostics.negative_sample_count
+    );
+    assert_eq!(
+        preview.grid_samples.samples.zero_count,
+        diagnostics.zero_sample_count
+    );
+    assert_eq!(
+        preview.grid_samples.samples.positive_count,
+        diagnostics.positive_sample_count
+    );
 }
 
 #[test]

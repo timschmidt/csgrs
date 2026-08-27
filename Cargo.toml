@@ -56,7 +56,7 @@ harness = false
 name = "kernel_comparison"
 path = "benchmarks/rust/kernel_comparison.rs"
 harness = false
-required-features = ["attributed"]
+required-features = ["attributed", "obj-io", "stl-io"]
 
 [[bench]]
 name = "feature_pipeline"
@@ -74,6 +74,7 @@ required-features = ["curve"]
 name = "competitive"
 path = "benchmarks/rust/competitive.rs"
 harness = false
+required-features = ["obj-io"]
 
 [[bench]]
 name = "solidean_comparison"
@@ -232,10 +233,7 @@ image-io = [
 metaballs = [
   "fast-surface-nets",
 ]
-sdf = [
-  "fast-surface-nets",
-  "hypersdf",
-]
+sdf = ["hypersdf"]
 # Native Hypercurve offset and regularized-buffer operations.
 offset = ["curve"]
 bevymesh = [
@@ -269,7 +267,79 @@ required-features = [
 ]
 
 [[example]]
+name = "basic"
+required-features = ["curve", "stl-io"]
+
+[[example]]
+name = "basic2d_shapes_and_offsetting"
+required-features = ["curve", "stl-io"]
+
+[[example]]
+name = "basic_shapes"
+required-features = ["stl-io"]
+
+[[example]]
+name = "boolean_operations"
+required-features = ["stl-io"]
+
+[[example]]
+name = "convex_hull"
+required-features = ["stl-io"]
+
+[[example]]
+name = "extrude"
+required-features = ["curve", "stl-io"]
+
+[[example]]
+name = "minkowski_sum"
+required-features = ["stl-io"]
+
+[[example]]
+name = "transformations"
+required-features = ["stl-io"]
+
+[[example]]
 name = "scalar_adapter"
+
+[[test]]
+name = "adversarial"
+path = "tests/adversarial.rs"
+required-features = ["curve"]
+
+[[test]]
+name = "adversarial_deep"
+path = "tests/adversarial_deep.rs"
+required-features = ["curve"]
+
+[[test]]
+name = "adversarial_extrusions"
+path = "tests/adversarial_extrusions.rs"
+required-features = ["curve"]
+
+[[test]]
+name = "adversarial_stress"
+path = "tests/adversarial_stress.rs"
+required-features = ["curve"]
+
+[[test]]
+name = "competitive"
+path = "tests/competitive.rs"
+required-features = ["obj-io"]
+
+[[test]]
+name = "generated_benchmark_corpus"
+path = "tests/generated_benchmark_corpus.rs"
+required-features = ["obj-io"]
+
+[[test]]
+name = "metaballs_diagnostics"
+path = "tests/metaballs_diagnostics.rs"
+required-features = ["metaballs"]
+
+[[test]]
+name = "sdf_tpms_diagnostics"
+path = "tests/sdf_tpms_diagnostics.rs"
+required-features = ["sdf"]
 
 [dev-dependencies]
 boolmesh = "=0.1.9"

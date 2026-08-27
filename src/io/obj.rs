@@ -1,8 +1,6 @@
 //! Wavefront OBJ import and export for native Hypermesh triangles.
 
-use super::{
-    IoError, finite_f64, parse_real_decimal, single_line_metadata, triangulate_planar_face,
-};
+use super::{IoError, finite_f64, single_line_metadata, triangulate_planar_face};
 use hyperlattice::{Point3, Real};
 use hypermesh::{Triangle, TriangleMesh};
 #[cfg(feature = "attributed")]
@@ -14,7 +12,7 @@ fn malformed(line: usize, message: impl std::fmt::Display) -> IoError {
 }
 
 fn parse_real(text: &str, line: usize) -> Result<Real, IoError> {
-    parse_real_decimal(text).map_err(|error| malformed(line, error))
+    text.parse().map_err(|error| malformed(line, error))
 }
 
 fn parse_index(text: &str, position_count: usize, line: usize) -> Result<usize, IoError> {
