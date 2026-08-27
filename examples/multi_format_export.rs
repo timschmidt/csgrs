@@ -130,6 +130,9 @@ fn export_to_obj(
     name: &str,
     description: &str,
 ) -> Result<(), Box<dyn std::error::Error>> {
+    #[cfg(not(any(feature = "obj-io", feature = "ply-io", feature = "amf-io")))]
+    let _ = (csg, name);
+
     // Export OBJ format
     #[cfg(feature = "obj-io")]
     {

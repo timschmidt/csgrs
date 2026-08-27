@@ -574,8 +574,7 @@ fn exact_region_vertices(region: &CurveRegion2) -> Vec<Point2> {
             | BezierSplitFragment2::AlgebraicChord(_)
             | BezierSplitFragment2::AlgebraicCuspSemicircle(_)
             | BezierSplitFragment2::SelectedFiber(_)
-            | BezierSplitFragment2::AlgebraicEndpointImages { .. }
-            | BezierSplitFragment2::Unresolved { .. } => None,
+            | BezierSplitFragment2::AlgebraicEndpointImages { .. } => None,
         })
         .collect()
 }
