@@ -3792,22 +3792,28 @@ fn canonicalize_retained_extension_on_finite_envelope(
                 _ => unreachable!("the replacement point evaluator matches its carrier"),
             })
         };
+        let retained_parameter_parallel = || match (&replacement, replacement_rational.as_ref()) {
+            (RetainedCornerEnvelope2::AnalyticParallel(parallel), None) => parallel.clone(),
+            (RetainedCornerEnvelope2::Curve(_), Some(rational)) => BezierParallel2::from_source(
+                BezierParallelSource2::Rational(rational.clone()),
+                Real::zero(),
+            ),
+            _ => unreachable!("the replacement point evaluator matches its carrier"),
+        };
         cut.point = if let Some(parameter) = mapped.as_bezier_parameter() {
             point_at_bezier_parameter(parameter)?
         } else if let Some(parameter) = mapped.as_selected_fiber() {
-            let parallel = match (&replacement, replacement_rational.as_ref()) {
-                (RetainedCornerEnvelope2::AnalyticParallel(parallel), None) => parallel.clone(),
-                (RetainedCornerEnvelope2::Curve(_), Some(rational)) => {
-                    BezierParallel2::from_source(
-                        BezierParallelSource2::Rational(rational.clone()),
-                        Real::zero(),
-                    )
-                }
-                _ => unreachable!("the replacement point evaluator matches its carrier"),
-            };
             RationalBezierIntersectionPointEvidence2::AnalyticParallel(
                 crate::BezierAnalyticParallelPoint2::new_selected_fiber(
-                    parallel,
+                    retained_parameter_parallel(),
+                    parameter.clone(),
+                    policy,
+                ),
+            )
+        } else if let Some(parameter) = mapped.as_recursive_projective() {
+            RationalBezierIntersectionPointEvidence2::AnalyticParallel(
+                crate::BezierAnalyticParallelPoint2::new_recursive_projective(
+                    retained_parameter_parallel(),
                     parameter.clone(),
                     policy,
                 ),
@@ -25660,7 +25666,7 @@ mod tests {
     }
 
     #[test]
-    fn selected_parallel_normal_circle_and_line_fillet_retains_contact_fiber() {
+    fn selected_parallel_normal_circle_and_line_fillet_retains_recursive_contact() {
         let half = (Real::one() / Real::from(2_i8)).unwrap();
         let three_halves = (Real::from(3_i8) / Real::from(2_i8)).unwrap();
         let upper = Point2::new(Real::zero(), half.clone());
@@ -25797,26 +25803,34 @@ mod tests {
             let result = result
                 .unwrap_or_else(|error| {
                     panic!(
-                        "the selected-fiber circle/line contact must fillet: policy={policy:?}, error={error:?}"
+                        "the selected-center circle/line contact must fillet: policy={policy:?}, error={error:?}"
                     )
                 });
             assert_eq!(result.certainty, CurveCertainty::Certified);
-            let mut retained_selected_cut = false;
+            let mut retained_recursive_cut = false;
             for_each_corner_region(&result.value, |filleted| {
-                retained_selected_cut |= filleted.boundary_loops()[0]
-                    .fragments()
-                    .iter()
-                    .any(|fragment| matches!(fragment, BezierSplitFragment2::SelectedFiber(_)));
+                retained_recursive_cut |=
+                    filleted.boundary_loops()[0]
+                        .fragments()
+                        .iter()
+                        .any(|fragment| {
+                            let BezierSplitFragment2::SelectedFiber(fragment) = fragment else {
+                                return false;
+                            };
+                            fragment.range().start().as_recursive_projective().is_some()
+                                || fragment.range().end().as_recursive_projective().is_some()
+                        });
             });
+            assert!(retained_recursive_cut);
             #[cfg(feature = "dispatch-trace")]
             {
                 assert!(
                     trace.path_count(
                         "hypercurve",
                         "algebraic-circle-chord-kernel",
-                        "selected-fiber-line",
+                        "selected-parallel-normal-recursive-line",
                     ) > 0,
-                    "an authored exact line must keep the compact selected-fiber kernel: {trace:?}",
+                    "an authored exact line must keep the compact recursive quadratic kernel: {trace:?}",
                 );
                 assert_eq!(
                     trace.path_count(
@@ -25825,13 +25839,9 @@ mod tests {
                         "recursive-projective-retained-chord",
                     ),
                     0,
-                    "the general recursive bridge must not preempt selected-fiber line provenance: {trace:?}",
+                    "the general recursive bridge must not preempt the direct selected-center line solve: {trace:?}",
                 );
             }
-            assert!(
-                retained_selected_cut,
-                "the exact rational line cut must remain in its selected contact fiber"
-            );
         }
     }
 

@@ -7969,7 +7969,7 @@ fn fillet_offset_centers(
                 )
             }?;
             // Retain the promoted contact parameter needed by the original
-            // carrier. Native lines reuse the compact selected-fiber scalar;
+            // carrier. Native lines reuse the recursive quadratic scalar;
             // algebraic chords retain contact provenance while their final
             // cut is classified on the authored source domain.
             for center in promoted_centers.iter_mut() {
@@ -7978,14 +7978,14 @@ fn fillet_offset_centers(
                 } else {
                     center.next_parameter.as_ref()
                 };
-                let selected_line_parameter = line_parameter
+                let recursive_line_parameter = line_parameter
                     .and_then(CurveRegionParameter2::as_algebraic_chord)
                     .and_then(|parameter| parameter.point().as_algebraic_cusp_chord())
-                    .and_then(|point| point.selected_fiber_line_parameter())
-                    .map(CurveRegionParameter2::from_selected_fiber);
+                    .and_then(|point| point.recursive_quadratic_line_parameter())
+                    .map(CurveRegionParameter2::from_recursive_projective);
                 let retained_line_parameter = finite_source_domain
                     .then(|| {
-                        selected_line_parameter.or_else(|| {
+                        recursive_line_parameter.or_else(|| {
                             line_source
                                 .algebraic_chord()
                                 .and_then(|_| line_parameter.cloned())
