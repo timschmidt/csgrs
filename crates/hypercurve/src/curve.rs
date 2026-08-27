@@ -6021,6 +6021,9 @@ fn selected_fiber_parallel_derivative_scale_sign(
     family: CurveFamily2,
     policy: &CurveContext,
 ) -> ExactCurveResult<RealSign> {
+    if parallel.has_exact_affine_line_parameterization() {
+        return Ok(RealSign::Positive);
+    }
     let parameter = match source
         .range()
         .start()
@@ -6126,6 +6129,103 @@ fn retained_selected_fillet_overlap_is_positive(
         overlap.has_positive_curve_region_overlap(&cusp_range, &incident_range, policy),
         cusp_family,
     )
+}
+
+#[allow(clippy::too_many_arguments)]
+fn retain_cusp_parallel_fillet_contact(
+    centers: &mut FilletCenters2,
+    cusp_source: &crate::BezierAlgebraicCuspSemicircleFragment2,
+    parallel_source: FilletParallelSource2<'_>,
+    analytic_support: &BezierParallel2,
+    cusp_parameter: crate::bezier_offset::BezierAlgebraicCuspSemicircleParameter2,
+    analytic_parameter: CurveRegionParameter2,
+    point: RationalBezierIntersectionPointEvidence2,
+    location: crate::bezier_offset::BezierAlgebraicCuspSemicircleContactLocation2,
+    mut cross: RealSign,
+    mut dot: RealSign,
+    complementary: bool,
+    cusp_support_reverses_source: bool,
+    analytic_support_reverses_source: bool,
+    cusp_is_previous: bool,
+    mode: CurveCornerMode2,
+    incident_domain: Option<&crate::bezier_offset::BezierParallelIncidentDomain2>,
+    cusp_family: CurveFamily2,
+    analytic_family: CurveFamily2,
+    policy: &CurveContext,
+) -> ExactCurveResult<()> {
+    if complementary
+        && location != crate::bezier_offset::BezierAlgebraicCuspSemicircleContactLocation2::Interior
+    {
+        return Ok(());
+    }
+    if mode != CurveCornerMode2::TrimOrExtend {
+        match cusp_source
+            .contains_parameter(&cusp_parameter, false, false, policy)
+            .map_err(|cause| {
+                ExactCurveError::invalid(CurveOperation2::Fillet, cusp_family, cause)
+            })? {
+            Classification::Decided(true) => {}
+            Classification::Decided(false) => return Ok(()),
+            Classification::Uncertain(reason) => {
+                return Err(ExactCurveError::blocked(
+                    CurveOperation2::Fillet,
+                    cusp_family,
+                    reason,
+                ));
+            }
+        }
+    }
+    if !parallel_source.parameter_is_admissible(
+        &analytic_parameter,
+        !cusp_is_previous,
+        mode,
+        incident_domain,
+        analytic_family,
+        policy,
+    )? {
+        return Ok(());
+    }
+    if cusp_support_reverses_source {
+        cross = reverse_fillet_sign(cross);
+        dot = reverse_fillet_sign(dot);
+    }
+    if analytic_support_reverses_source {
+        cross = reverse_fillet_sign(cross);
+        dot = reverse_fillet_sign(dot);
+    }
+    let cusp_parameter = if complementary {
+        CurveRegionParameter2::from_algebraic_cusp_complement(cusp_parameter)
+    } else {
+        CurveRegionParameter2::from_algebraic_cusp(cusp_parameter)
+    };
+    let (previous_parameter, next_parameter) = if cusp_is_previous {
+        (Some(cusp_parameter), Some(analytic_parameter.clone()))
+    } else {
+        (Some(analytic_parameter.clone()), Some(cusp_parameter))
+    };
+    centers.push(FilletCenterWitness2 {
+        point,
+        previous_parameter,
+        next_parameter,
+        // The retained frame is the analytic carrier, so store analytic x
+        // cusp rather than the direct kernel's cusp x analytic relation.
+        retained_anchor_evidence: Some(RetainedFilletAnchorEvidence2 {
+            cross: Some(reverse_fillet_sign(cross)),
+            dot: Some(dot),
+            center_parallel: Some(RetainedFilletCenterParallel2 {
+                support: analytic_support.clone(),
+                parameter: Some(analytic_parameter),
+            }),
+            source_direction: Some(if analytic_support_reverses_source {
+                RealSign::Negative
+            } else {
+                RealSign::Positive
+            }),
+            canonical_anchor_curve: None,
+            deferred_arc_contact: None,
+        }),
+    });
+    Ok(())
 }
 
 fn fillet_offset_centers(
@@ -7044,36 +7144,7 @@ fn fillet_offset_centers(
                 match intersections {
                     crate::bezier_offset::BezierAlgebraicCuspSemicircleParallelIntersections2::SelectedFiberContacts(contacts) => {
                         for contact in contacts {
-                            if complementary
-                                && contact.location()
-                                    != crate::bezier_offset::BezierAlgebraicCuspSemicircleContactLocation2::Interior
-                            {
-                                continue;
-                            }
-                            let cusp_parameter = contact.cusp_parameter();
-                            if mode != CurveCornerMode2::TrimOrExtend {
-                                match cusp_source
-                                    .contains_parameter(&cusp_parameter, false, false, policy)
-                                    .map_err(|cause| {
-                                        ExactCurveError::invalid(
-                                            CurveOperation2::Fillet,
-                                            cusp_family,
-                                            cause,
-                                        )
-                                    })? {
-                                    Classification::Decided(true) => {}
-                                    Classification::Decided(false) => continue,
-                                    Classification::Uncertain(reason) => {
-                                        return Err(ExactCurveError::blocked(
-                                            CurveOperation2::Fillet,
-                                            cusp_family,
-                                            reason,
-                                        ));
-                                    }
-                                }
-                            }
-                            let mut cross = contact.tangent_cross_sign();
-                            let mut dot = match contact
+                            let dot = match contact
                                 .tangent_dot_sign(policy)
                                 .map_err(|cause| {
                                     ExactCurveError::invalid(
@@ -7091,66 +7162,54 @@ fn fillet_offset_centers(
                                     ));
                                 }
                             };
-                            if cusp_support_reverses_source {
-                                cross = reverse_fillet_sign(cross);
-                                dot = reverse_fillet_sign(dot);
-                            }
-                            if analytic_support_reverses_source {
-                                cross = reverse_fillet_sign(cross);
-                                dot = reverse_fillet_sign(dot);
-                            }
-                            let analytic_parameter = CurveRegionParameter2::from_selected_fiber(
-                                contact.other_parameter().clone(),
-                            );
-                            if !parallel_source.parameter_is_admissible(
-                                &analytic_parameter,
-                                !cusp_is_previous,
+                            retain_cusp_parallel_fillet_contact(
+                                &mut centers,
+                                cusp_source,
+                                *parallel_source,
+                                analytic_support,
+                                contact.cusp_parameter(),
+                                CurveRegionParameter2::from_selected_fiber(
+                                    contact.other_parameter().clone(),
+                                ),
+                                contact.point_evidence(),
+                                contact.location(),
+                                contact.tangent_cross_sign(),
+                                dot,
+                                complementary,
+                                cusp_support_reverses_source,
+                                analytic_support_reverses_source,
+                                cusp_is_previous,
                                 mode,
                                 incident_domain.as_ref(),
+                                cusp_family,
                                 analytic_family,
                                 policy,
-                            )? {
-                                continue;
-                            }
-                            let cusp_parameter = if complementary {
-                                CurveRegionParameter2::from_algebraic_cusp_complement(
-                                    cusp_parameter,
-                                )
-                            } else {
-                                CurveRegionParameter2::from_algebraic_cusp(cusp_parameter)
-                            };
-                            let (previous_parameter, next_parameter) = if cusp_is_previous {
-                                (Some(cusp_parameter), Some(analytic_parameter.clone()))
-                            } else {
-                                (Some(analytic_parameter.clone()), Some(cusp_parameter))
-                            };
-                            centers.push(FilletCenterWitness2 {
-                                point: contact.point_evidence(),
-                                previous_parameter,
-                                next_parameter,
-                                // The retained frame is the analytic carrier,
-                                // so store analytic x cusp rather than the
-                                // direct kernel's cusp x analytic relation.
-                                retained_anchor_evidence: Some(
-                                    RetainedFilletAnchorEvidence2 {
-                                        cross: Some(reverse_fillet_sign(cross)),
-                                        dot: Some(dot),
-                                        center_parallel: Some(RetainedFilletCenterParallel2 {
-                                            support: analytic_support.clone(),
-                                            parameter: Some(analytic_parameter),
-                                        }),
-                                        source_direction: Some(
-                                            if analytic_support_reverses_source {
-                                                RealSign::Negative
-                                            } else {
-                                                RealSign::Positive
-                                            },
-                                        ),
-                                        canonical_anchor_curve: None,
-                                        deferred_arc_contact: None,
-                                    },
-                                ),
-                            });
+                            )?;
+                        }
+                    }
+                    crate::bezier_offset::BezierAlgebraicCuspSemicircleParallelIntersections2::RetainedContacts(contacts) => {
+                        for contact in contacts {
+                            retain_cusp_parallel_fillet_contact(
+                                &mut centers,
+                                cusp_source,
+                                *parallel_source,
+                                analytic_support,
+                                contact.cusp_parameter(),
+                                contact.other_parameter().clone(),
+                                contact.point_evidence(),
+                                contact.location(),
+                                contact.tangent_cross_sign(),
+                                contact.tangent_dot_sign(),
+                                complementary,
+                                cusp_support_reverses_source,
+                                analytic_support_reverses_source,
+                                cusp_is_previous,
+                                mode,
+                                incident_domain.as_ref(),
+                                cusp_family,
+                                analytic_family,
+                                policy,
+                            )?;
                         }
                     }
                     crate::bezier_offset::BezierAlgebraicCuspSemicircleParallelIntersections2::SelectedFiberOverlaps(overlaps) => {

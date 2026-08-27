@@ -13556,6 +13556,7 @@ impl CurveRegion2 {
         fillet_clockwise: bool,
         anchor_cut: &mut CornerTrimCut2,
         chord_cut: &mut CornerTrimCut2,
+        candidate_valid: &mut bool,
         policy: &CurveContext,
     ) -> ExactCurveResult<Vec<BezierSplitFragment2>> {
         #[cfg(feature = "dispatch-trace")]
@@ -13603,6 +13604,7 @@ impl CurveRegion2 {
                         false,
                         policy,
                     )
+                    .map(|classification| classification.map(Some))
                 }
                 RetainedFilletRadialFrame2::ChordNormal { anchor, .. } => terminal_circle
                     .certified_chord_normal_contact_parameter(
@@ -13614,7 +13616,8 @@ impl CurveRegion2 {
                         frame.radial_distance.clone(),
                         false,
                         policy,
-                    ),
+                    )
+                    .map(|classification| classification.map(Some)),
                 RetainedFilletRadialFrame2::ParallelNormal { .. } => {
                     #[cfg(feature = "dispatch-trace")]
                     hyperreal::dispatch_trace::record(
@@ -13629,6 +13632,7 @@ impl CurveRegion2 {
                         tangent_cross,
                         policy,
                     )
+                    .map(|classification| classification.map(Some))
                 }
                 RetainedFilletRadialFrame2::SelectedConcentric { .. } => terminal_circle
                     .certified_selected_chord_retained_contact_parameter(
@@ -13722,7 +13726,7 @@ impl CurveRegion2 {
                         }
                     }
                     Ok(match selected {
-                        Some(parameter) => Classification::Decided(parameter),
+                        Some(parameter) => Classification::Decided(Some(parameter)),
                         None => {
                             return Err(curve_region_edit_error(
                                 CurveOperation2::Fillet,
@@ -13737,7 +13741,11 @@ impl CurveRegion2 {
             }
             .map_err(|cause| curve_region_edit_error(CurveOperation2::Fillet, cause))?;
             match parameter {
-                Classification::Decided(parameter) => parameter,
+                Classification::Decided(Some(parameter)) => parameter,
+                Classification::Decided(None) => {
+                    *candidate_valid = false;
+                    return Ok(Vec::new());
+                }
                 Classification::Uncertain(reason) => {
                     #[cfg(feature = "dispatch-trace")]
                     hyperreal::dispatch_trace::record(
@@ -14642,6 +14650,7 @@ impl CurveRegion2 {
                     fillet_clockwise,
                     anchor_cut,
                     other_cut,
+                    candidate_valid,
                     policy,
                 );
             }
@@ -14658,6 +14667,7 @@ impl CurveRegion2 {
                     fillet_clockwise,
                     anchor_cut,
                     other_cut,
+                    candidate_valid,
                     policy,
                 );
             }
@@ -14686,6 +14696,7 @@ impl CurveRegion2 {
                     fillet_clockwise,
                     anchor_cut,
                     other_cut,
+                    candidate_valid,
                     policy,
                 );
             }
@@ -28622,6 +28633,11 @@ mod tests {
                         };
                         let analytic = |fragment: &BezierSplitFragment2| {
                             matches!(fragment, BezierSplitFragment2::AnalyticParallel(_))
+                                || matches!(
+                                    fragment,
+                                    BezierSplitFragment2::SelectedFiber(fragment)
+                                        if fragment.analytic_parallel().is_some()
+                                )
                         };
                         if analytic(previous) {
                             pair_radius(next)
