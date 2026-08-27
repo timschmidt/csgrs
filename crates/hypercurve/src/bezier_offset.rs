@@ -17061,72 +17061,76 @@ impl BezierAlgebraicCuspSemicircle2 {
                 "a retained chord contact crossed selected-radial policies".into(),
             ));
         }
-        let (anchor_tangent, anchor_clockwise, construction_radial_distance) =
-            match frame.center_parameter.as_ref() {
-                BezierAlgebraicCuspSemicircleMappedParameterData2::Chord { map, contact } => {
-                    map.validate_policy(policy)?;
-                    if map
-                        .data
-                        .chord
-                        .retained_normal_offset_tangent_reversal_to(&chord)
-                        .is_none()
-                    {
-                        return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
-                    }
-                    if map.retained_offset_system().is_none()
-                        && map.represented_oblique_system().is_none()
-                        && map.axis_system().is_none()
-                        && map.recursive_quadratic_line_system().is_none()
-                        && !map.has_chord_normal_projective_system()
-                    {
-                        return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
-                    }
-                    (
-                        BezierSelectedChordNormalAnchor2::RetainedCircleChord {
-                            map: map.clone(),
-                            contact: contact.clone(),
-                        },
-                        map.data.semicircle.is_clockwise(),
-                        map.data
-                            .chord
-                            .retained_normal_offset_distance_to(&chord)
-                            .map(|distance| -distance),
-                    )
-                }
-                BezierAlgebraicCuspSemicircleMappedParameterData2::Rational { map, contact } => {
-                    if !policy.accepts_retained_policy(map.data.policy) {
-                        return Err(CurveError::Topology(
-                            "a retained rational chord contact crossed predicate policies".into(),
-                        ));
-                    }
-                    let BezierAlgebraicCuspSemicircleRationalCorrelation2::MapWithChordTangent {
-                        chord: mapped_chord,
-                        ..
-                    } = &contact.correlation
-                    else {
-                        return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
-                    };
-                    if mapped_chord
-                        .retained_normal_offset_tangent_reversal_to(&chord)
-                        .is_none()
-                    {
-                        return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
-                    }
-                    (
-                        BezierSelectedChordNormalAnchor2::RetainedCircleRationalChord {
-                            map: map.clone(),
-                            contact: contact.clone(),
-                        },
-                        map.data.semicircle.is_clockwise(),
-                        mapped_chord
-                            .retained_normal_offset_distance_to(&chord)
-                            .map(|distance| -distance),
-                    )
-                }
-                _ => {
+        let (
+            anchor_tangent,
+            anchor_clockwise,
+            construction_radial_distance,
+            target_tangent_reversed,
+        ) = match frame.center_parameter.as_ref() {
+            BezierAlgebraicCuspSemicircleMappedParameterData2::Chord { map, contact } => {
+                map.validate_policy(policy)?;
+                let Some(target_tangent_reversed) = map
+                    .data
+                    .chord
+                    .retained_normal_offset_tangent_reversal_to(&chord)
+                else {
+                    return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+                };
+                if map.retained_offset_system().is_none()
+                    && map.represented_oblique_system().is_none()
+                    && map.axis_system().is_none()
+                    && map.recursive_quadratic_line_system().is_none()
+                    && !map.has_chord_normal_projective_system()
+                {
                     return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
                 }
-            };
+                (
+                    BezierSelectedChordNormalAnchor2::RetainedCircleChord {
+                        map: map.clone(),
+                        contact: contact.clone(),
+                    },
+                    map.data.semicircle.is_clockwise(),
+                    map.data
+                        .chord
+                        .retained_normal_offset_distance_to(&chord)
+                        .map(|distance| -distance),
+                    target_tangent_reversed,
+                )
+            }
+            BezierAlgebraicCuspSemicircleMappedParameterData2::Rational { map, contact } => {
+                if !policy.accepts_retained_policy(map.data.policy) {
+                    return Err(CurveError::Topology(
+                        "a retained rational chord contact crossed predicate policies".into(),
+                    ));
+                }
+                let BezierAlgebraicCuspSemicircleRationalCorrelation2::MapWithChordTangent {
+                    chord: mapped_chord,
+                    ..
+                } = &contact.correlation
+                else {
+                    return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+                };
+                let Some(target_tangent_reversed) =
+                    mapped_chord.retained_normal_offset_tangent_reversal_to(&chord)
+                else {
+                    return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+                };
+                (
+                    BezierSelectedChordNormalAnchor2::RetainedCircleRationalChord {
+                        map: map.clone(),
+                        contact: contact.clone(),
+                    },
+                    map.data.semicircle.is_clockwise(),
+                    mapped_chord
+                        .retained_normal_offset_distance_to(&chord)
+                        .map(|distance| -distance),
+                    target_tangent_reversed,
+                )
+            }
+            _ => {
+                return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+            }
+        };
         let contact_radial_distance = if let Some(distance) = construction_radial_distance {
             // The circle/chord center lies on a procedural normal offset of
             // this source chord, and the fillet cut preserves the contact's
@@ -17192,7 +17196,7 @@ impl BezierAlgebraicCuspSemicircle2 {
             }
             None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
         };
-        let parameter = BezierAlgebraicCuspSemicircleParameter2::Mapped(Arc::new(
+        let mut parameter =
             BezierAlgebraicCuspSemicircleMappedParameterData2::SelectedChordNormalContact {
                 semicircle: self.clone(),
                 anchor_tangent,
@@ -17200,24 +17204,50 @@ impl BezierAlgebraicCuspSemicircle2 {
                 radial_product_sign,
                 point,
                 policy: *policy,
-            },
-        ));
-        for (boundary, expected) in [
-            (Real::zero(), std::cmp::Ordering::Greater),
-            (Real::one(), std::cmp::Ordering::Less),
-        ] {
-            let boundary_order = parameter.order_to_real(&boundary, policy)?;
-            match boundary_order {
-                Classification::Decided(order) if order == expected => {}
-                Classification::Decided(_) => {
-                    return Ok(Classification::Decided(None));
-                }
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
+            };
+        let is_interior = |parameter: &BezierAlgebraicCuspSemicircleMappedParameterData2|
+         -> CurveResult<Classification<bool>> {
+            for (boundary, expected) in [
+                (Real::zero(), std::cmp::Ordering::Greater),
+                (Real::one(), std::cmp::Ordering::Less),
+            ] {
+                match parameter.selected_chord_normal_contact_order_to_real(&boundary)? {
+                    Classification::Decided(order) if order == expected => {}
+                    Classification::Decided(_) => {
+                        return Ok(Classification::Decided(false));
+                    }
+                    Classification::Uncertain(reason) => {
+                        return Ok(Classification::Uncertain(reason));
+                    }
                 }
             }
+            Ok(Classification::Decided(true))
+        };
+        let mut interior = is_interior(&parameter)?;
+        if matches!(interior, Classification::Decided(false)) && target_tangent_reversed {
+            // A reversed target tangent reverses both its signed normal
+            // distance and its normal basis. Their product therefore leaves
+            // two equivalent ancestry descriptions of the contact radial.
+            // Exactly one antipodal sign can lie strictly inside this selected
+            // semicircle; use the retained angular predicate to choose that
+            // chart without deriving a special case from the source kind.
+            let BezierAlgebraicCuspSemicircleMappedParameterData2::SelectedChordNormalContact {
+                radial_product_sign,
+                ..
+            } = &mut parameter
+            else {
+                unreachable!("the retained chord parameter was just constructed")
+            };
+            *radial_product_sign = product_sign(*radial_product_sign, RealSign::Negative);
+            interior = is_interior(&parameter)?;
         }
-        Ok(Classification::Decided(Some(parameter)))
+        match interior {
+            Classification::Decided(true) => Ok(Classification::Decided(Some(
+                BezierAlgebraicCuspSemicircleParameter2::Mapped(Arc::new(parameter)),
+            ))),
+            Classification::Decided(false) => Ok(Classification::Decided(None)),
+            Classification::Uncertain(reason) => Ok(Classification::Uncertain(reason)),
+        }
     }
 
     pub(crate) fn start_point_image(

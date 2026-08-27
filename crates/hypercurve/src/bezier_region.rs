@@ -26368,6 +26368,7 @@ mod tests {
                         ))
                         .count(),
                     3,
+                    "policy={policy:?}, reversed={reversed}",
                 );
                 assert_eq!(
                     filleted
@@ -31833,7 +31834,11 @@ mod tests {
                                 )
                             });
                         assert_eq!(outcome.certainty, CurveCertainty::Certified);
-                        assert!(outcome.value.candidate_count() > 0);
+                        assert!(
+                            outcome.value.candidate_count() > 0,
+                            "policy={policy:?}, reversed={reversed}, radius={radius:?}, mode={mode:?}, outcome={:?}",
+                            outcome.value,
+                        );
                         if mode == CurveCornerMode2::TrimOnly {
                             trim_count = Some(outcome.value.candidate_count());
                         } else {
@@ -32030,7 +32035,11 @@ mod tests {
                                 )
                             });
                         assert_eq!(outcome.certainty, CurveCertainty::Certified);
-                        assert!(outcome.value.candidate_count() > 0);
+                        assert!(
+                            outcome.value.candidate_count() > 0,
+                            "policy={policy:?}, reversed={reversed}, elevated={elevated}, mode={mode:?}, outcome={:?}",
+                            outcome.value,
+                        );
                     }
                 }
             }
