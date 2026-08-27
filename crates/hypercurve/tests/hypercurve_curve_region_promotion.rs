@@ -2205,13 +2205,24 @@ fn axis_aligned_algebraic_chords_reenter_exact_region_offsets() {
                 trace.path_count("hypercurve", "algebraic-chord-pair", "general-rational",),
                 0
             );
+            let direct_authored_tangent = trace.path_count(
+                "hypercurve",
+                "algebraic-circle-chord-pair",
+                "adjacent-authored-tangent",
+            );
+            let selected_chord_normal_tangent = trace.path_count(
+                "hypercurve",
+                "algebraic-circle-chord-pair",
+                "authored-adjacent-endpoint-only",
+            );
             assert_eq!(
-                trace.path_count(
-                    "hypercurve",
-                    "algebraic-circle-chord-pair",
-                    "adjacent-authored-tangent",
-                ),
-                8
+                direct_authored_tangent + selected_chord_normal_tangent,
+                8,
+                "every adjacent round/chord tangent must remain structurally certified: {trace:?}",
+            );
+            assert!(
+                selected_chord_normal_tangent > 0,
+                "selected chord-normal adjacency must enter the shared circle/chord authority: {trace:?}",
             );
             assert_eq!(
                 trace.path_count(
@@ -3082,9 +3093,18 @@ fn one_chord_orders_contacts_from_two_selected_round_corners() {
             .expect("the cutter offset must retain certified axis chords")
             .into_value();
 
-        let evidence = rounded
-            .intersect_region(&cutter, &policy)
-            .expect("both selected round corners must meet one chord exactly");
+        #[cfg(feature = "dispatch-trace")]
+        hyperreal::dispatch_trace::reset();
+        let intersect = || rounded.intersect_region(&cutter, &policy);
+        #[cfg(feature = "dispatch-trace")]
+        let evidence = hyperreal::dispatch_trace::with_recording(intersect);
+        #[cfg(not(feature = "dispatch-trace"))]
+        let evidence = intersect();
+        #[cfg(feature = "dispatch-trace")]
+        let contact_trace = hyperreal::dispatch_trace::take_trace();
+        #[cfg(not(feature = "dispatch-trace"))]
+        let contact_trace = ();
+        let evidence = evidence.expect("both selected round corners must meet one chord exactly");
         assert_eq!(evidence.certainty, CurveCertainty::Certified);
         let evidence = evidence.into_value();
         let blockers = evidence
@@ -3111,7 +3131,16 @@ fn one_chord_orders_contacts_from_two_selected_round_corners() {
                 )
             })
             .count();
-        assert_eq!(correlated_contacts, 2);
+        #[cfg(feature = "dispatch-trace")]
+        assert!(
+            contact_trace.path_count(
+                "hypercurve",
+                "algebraic-circle-chord-kernel",
+                "exact-chord-normal-frame-line",
+            ) > 0,
+            "rationalizable chord-normal contacts must use the exact scalar line/circle primitive: {contact_trace:?}",
+        );
+        assert_eq!(correlated_contacts, 2, "{contact_trace:?}");
 
         let batch = rounded
             .boolean_regions(&cutter, &policy)
@@ -5776,7 +5805,8 @@ fn algebraic_chord_non_miter_erosions_split_a_collapsed_neck_exactly() {
                 ] {
                     assert_eq!(
                         certified(split.value.classify_point(&point, &policy).unwrap()),
-                        Classification::Decided(expected)
+                        Classification::Decided(expected),
+                        "{policy:?} {fill_rule:?} reverse={reverse} radius={radius:?} {corner_style:?} at {point:?}",
                     );
                 }
             }

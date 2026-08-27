@@ -30144,6 +30144,11 @@ impl BezierAlgebraicCuspSemicircle2 {
         // descendant still replays procedural ancestry, which can carry the
         // stronger support relation needed by its original construction.
         let exact_line = chord.exact_line();
+        let line_parameter_is_chord_parameter = exact_line.is_some();
+        let certified_support_line = exact_line
+            .is_none()
+            .then(|| chord.strict_provenance_support_line(policy))
+            .flatten();
         let retained_support = chord.retained_support();
         let retained_offset_support = matches!(
             (retained_support.start(), retained_support.end()),
@@ -30183,6 +30188,52 @@ impl BezierAlgebraicCuspSemicircle2 {
                 }
                 Classification::Uncertain(_) => {}
             }
+        }
+
+        // A chord-normal carrier can still be an ordinary represented circle:
+        // an exact center plus a represented anchor tangent makes its entire
+        // radial frame canonical. Keep the procedural carrier (and therefore
+        // its authored endpoint ancestry), but intersect an exact line through
+        // the compact Real line/circle primitive. Interior contacts then
+        // publish Exact point evidence rather than a needless selected-field
+        // correlation.
+        if let (Some(frame), Some(line), Some(center)) = (
+            self.data.frame.chord_normal(),
+            exact_line.as_ref().or(certified_support_line.as_ref()),
+            self.exact_rational_center(policy)?,
+        ) && let Some((tangent_x, tangent_y)) =
+            frame.anchor.certified_unit_tangent().or_else(|| {
+                frame
+                    .anchor
+                    .certified_axis_direction()
+                    .map(BezierAlgebraicChordAxisDirection2::unit_tangent)
+            })
+        {
+            #[cfg(feature = "dispatch-trace")]
+            hyperreal::dispatch_trace::record(
+                "hypercurve",
+                "algebraic-circle-chord-kernel",
+                "exact-chord-normal-frame-line",
+            );
+            let radial = (
+                -tangent_y * self.radial_distance(),
+                tangent_x * self.radial_distance(),
+            );
+            let retained_line = (!line_parameter_is_chord_parameter)
+                .then(|| chord.retained_support().exact_line())
+                .flatten();
+            let retained_orientation_reversed =
+                retained_line.is_some() && chord.retained_support_orientation_is_reversed();
+            return self.exact_frame_line_intersections(
+                chord,
+                retained_line.as_ref().unwrap_or(line),
+                line_parameter_is_chord_parameter,
+                clip_to_finite_chord,
+                retained_orientation_reversed,
+                center,
+                radial,
+                policy,
+            );
         }
 
         // A selected-radial circle owns the complete circle/chord relation in
@@ -30290,11 +30341,6 @@ impl BezierAlgebraicCuspSemicircle2 {
             }
         }
 
-        let line_parameter_is_chord_parameter = exact_line.is_some();
-        let certified_support_line = exact_line
-            .is_none()
-            .then(|| chord.strict_provenance_support_line(policy))
-            .flatten();
         if (self.data.frame.rational().is_some() || self.uses_selected_chord_normal_frame())
             && exact_line.is_none()
             && let Some(line) = certified_support_line.as_ref()
@@ -76443,32 +76489,6 @@ impl BezierAlgebraicChordParallelPoint2 {
                 Classification::Uncertain(_) => None,
             },
         )
-    }
-
-    /// Returns the represented point when this procedural displacement is
-    /// cardinal and both translated source coordinates reduce exactly to the
-    /// canonical scalar. The cardinal direction and coordinate reduction are
-    /// proved under STRICT; an approximate terminal can never canonicalize a
-    /// stored construction.
-    pub(crate) fn strict_cardinal_exact_point(
-        &self,
-        policy: &CurveContext,
-    ) -> CurveResult<Option<Point2>> {
-        let Some(point) = self.strict_cardinal_point_evidence(policy)? else {
-            return Ok(None);
-        };
-        Ok(match point {
-            RationalBezierIntersectionPointEvidence2::Exact(point) => Some(point),
-            RationalBezierIntersectionPointEvidence2::Algebraic(point) => {
-                point.exact_rational_point(&CurveContext::STRICT)
-            }
-            RationalBezierIntersectionPointEvidence2::AlgebraicChordPair(_)
-            | RationalBezierIntersectionPointEvidence2::AlgebraicCuspChord(_)
-            | RationalBezierIntersectionPointEvidence2::AlgebraicCuspChordDerived(_)
-            | RationalBezierIntersectionPointEvidence2::AlgebraicChordParallel(_)
-            | RationalBezierIntersectionPointEvidence2::AnalyticParallel(_)
-            | RationalBezierIntersectionPointEvidence2::Similarity(_) => None,
-        })
     }
 
     fn strict_preserved_axis_source<'a>(
