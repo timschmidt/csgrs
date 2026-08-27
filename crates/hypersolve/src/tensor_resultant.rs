@@ -14,7 +14,7 @@
 //! reservations turn unrepresentable host sizes into explicit statuses;
 //! coefficients are never sampled through primitive floating point.
 
-use hyperreal::{CertifiedRealSign, Real, RealSign, ZeroKnowledge};
+use hyperreal::{CertifiedRealSign, Real, RealSign};
 
 use crate::resultant::quotient_ring_fiber_resultant_polynomial;
 use crate::resultant::{UnivariateResultantError, resultant_univariate_polynomials};
@@ -127,13 +127,23 @@ impl DenseTensorPolynomial {
             .map(|(left, right)| left.checked_add(*right)?.checked_sub(1))
             .collect::<Option<Vec<_>>>()?;
         let mut result = Self::zero(dimensions.clone())?;
+        // Zero pruning is only a storage fast path. Asking `zero_status()` on
+        // an opaque coefficient can recursively refine a large exact-real DAG
+        // before a convolution that remains correct when the term is simply
+        // retained. Skip only represented rational zero; every unknown exact
+        // coefficient participates in the ordinary exact product.
+        let is_stored_zero = |coefficient: &Real| {
+            coefficient
+                .exact_rational_ref()
+                .is_some_and(|value| value.is_zero())
+        };
         for (left_index, left) in self.coefficients.iter().enumerate() {
-            if left.zero_status() == ZeroKnowledge::Zero {
+            if is_stored_zero(left) {
                 continue;
             }
             let left_exponents = exponents(&self.dimensions, left_index);
             for (right_index, right) in other.coefficients.iter().enumerate() {
-                if right.zero_status() == ZeroKnowledge::Zero {
+                if is_stored_zero(right) {
                     continue;
                 }
                 let right_exponents = exponents(&other.dimensions, right_index);
@@ -1096,6 +1106,33 @@ mod tests {
         exponent[output_axis] = 1;
         coefficients[flat_index(&dimensions, &exponent)] = Real::one();
         DenseTensorPolynomial::try_new(std::mem::take(&mut dimensions), coefficients).unwrap()
+    }
+
+    #[cfg(feature = "dispatch-trace")]
+    #[test]
+    fn dense_tensor_multiplication_does_not_refine_opaque_coefficients_for_zero_pruning() {
+        let [_lower, upper] = Real::pi()
+            .certified_dyadic_interval(-256)
+            .expect("pi exposes a certified dyadic interval");
+        let delayed_positive = Real::from(upper) - Real::pi();
+        let left = DenseTensorPolynomial::try_new(vec![1], vec![delayed_positive.clone()])
+            .expect("one opaque coefficient forms a tensor");
+        let right = DenseTensorPolynomial::try_new(vec![1], vec![Real::one()])
+            .expect("one exact coefficient forms a tensor");
+
+        hyperreal::dispatch_trace::reset();
+        let product = hyperreal::dispatch_trace::with_recording(|| {
+            left.multiply(&right)
+                .expect("opaque coefficients remain valid convolution terms")
+        });
+        let trace = hyperreal::dispatch_trace::take_trace();
+
+        assert_eq!(product.coefficients(), &[delayed_positive]);
+        assert_eq!(
+            trace.operation_count("real", "zero_status"),
+            0,
+            "zero pruning must not launch an exact predicate on an opaque coefficient",
+        );
     }
 
     #[test]
