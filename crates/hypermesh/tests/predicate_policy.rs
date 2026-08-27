@@ -11,7 +11,12 @@ const STRICT: MeshContext = MeshContext::new(PredicatePolicy::STRICT);
 const APPROXIMATE: MeshContext = MeshContext::new(PredicatePolicy::APPROXIMATE_512);
 
 fn terminal_equality() -> (Real, Real) {
-    (Real::pi() + Real::e(), Real::e() + Real::pi())
+    let left = Real::e().sin();
+    let sine = Real::e().sin();
+    let cosine = Real::e().cos();
+    let unresolved_zero = &sine * &sine + &cosine * &cosine - Real::one();
+    let right = left.clone() + unresolved_zero;
+    (left, right)
 }
 
 #[test]

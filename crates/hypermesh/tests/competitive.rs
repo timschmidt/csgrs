@@ -646,27 +646,16 @@ fn deep_symbolic_translation_obeys_policy_at_every_depth() {
                 nodes: &ALL_BOOLEAN_NODES,
                 roots: &ALL_BOOLEAN_ROOTS,
             },
+        )
+        .unwrap_or_else(|error| panic!("{} STRICT: {error}", case.name));
+        assert_eq!(strict.certainty, hypermesh::MeshCertainty::Certified);
+        assert_translated_batch_equivalent(
+            &strict_context,
+            &strict.value,
+            &offsets,
+            &reference,
+            case.name,
         );
-        if depth == 1 {
-            let strict = strict.unwrap_or_else(|error| panic!("{} STRICT: {error}", case.name));
-            assert_eq!(strict.certainty, hypermesh::MeshCertainty::Certified);
-            assert_translated_batch_equivalent(
-                &strict_context,
-                &strict.value,
-                &offsets,
-                &reference,
-                case.name,
-            );
-        } else {
-            assert!(
-                matches!(
-                    strict,
-                    Err(hypermesh::HypermeshError::PredicateUndecided { .. })
-                ),
-                "{} STRICT must preserve an unresolved exact predicate",
-                case.name
-            );
-        }
 
         let context = MeshContext::new(PredicatePolicy::APPROXIMATE_512);
         let input = polygon_soup(&context, &[case.left.as_ref(), case.right.as_ref()])
@@ -681,14 +670,7 @@ fn deep_symbolic_translation_obeys_policy_at_every_depth() {
             },
         )
         .unwrap_or_else(|error| panic!("{} APPROXIMATE_512: {error}", case.name));
-        assert_eq!(
-            outcome.certainty,
-            if depth == 1 {
-                hypermesh::MeshCertainty::Certified
-            } else {
-                hypermesh::MeshCertainty::Approximate512Consumed
-            }
-        );
+        assert_eq!(outcome.certainty, hypermesh::MeshCertainty::Certified);
         assert_translated_batch_equivalent(
             &context,
             &outcome.value,
