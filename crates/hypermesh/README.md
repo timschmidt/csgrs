@@ -160,6 +160,19 @@ Balanced nonmanifold PWN output is accepted and reported by its topology.
 Primitive-float GPU buffers are explicit presentation boundaries. Do not feed
 their approximated coordinates back into topology decisions.
 
+## Native-real Surface Nets
+
+`surface_nets` constructs a regular-grid Surface Nets proposal directly from
+`Real` scalar samples. Sign classification, edge interpolation, cell centroids,
+quad diagonal selection, and triangle-degeneracy checks remain in the exact
+geometry boundary, and the result is returned as a `TriangleMesh`.
+
+This removes primitive-float coordinate quantization but does not certify that
+the finite sample grid captures the topology of an underlying continuous
+field. `MeshOutcome::certainty` describes the predicates consumed while
+constructing the sampled proposal only. Callers needing a solid must also keep
+the level set away from the grid boundary and validate closed PWN intake.
+
 ## Features
 
 | Feature | Default | Effect |
