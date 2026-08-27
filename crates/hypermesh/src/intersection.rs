@@ -3520,6 +3520,12 @@ mod tests {
         }
     }
 
+    fn terminally_unresolved_zero() -> Real {
+        let sine = Real::e().sin();
+        let cosine = Real::e().cos();
+        &sine * &sine + &cosine * &cosine - Real::one()
+    }
+
     fn deferred_segment_span<'point>(
         minimum: DeferredIntersectionPoint<'point>,
         maximum: DeferredIntersectionPoint<'point>,
@@ -3717,8 +3723,8 @@ mod tests {
 
     #[test]
     fn symbolic_support_parallelism_obeys_terminal_policy() {
-        let left_value = Real::pi() + Real::e();
-        let right_value = Real::e() + Real::pi();
+        let left_value = Real::one();
+        let right_value = Real::one() + terminally_unresolved_zero();
         let left = Plane::from_coefficients(Real::zero(), left_value, right_value, Real::zero());
         let right = Plane::from_coefficients(Real::zero(), Real::one(), Real::one(), Real::zero());
 
@@ -4012,8 +4018,12 @@ mod tests {
         for (left_ratio, right_ratio) in
             [(false, false), (false, true), (true, false), (true, true)]
         {
-            let left = Point3::new(Real::pi() + Real::e(), Real::zero(), Real::zero());
-            let right = Point3::new(Real::e() + Real::pi(), Real::zero(), Real::zero());
+            let left = Point3::new(Real::one(), Real::zero(), Real::zero());
+            let right = Point3::new(
+                Real::one() + terminally_unresolved_zero(),
+                Real::zero(),
+                Real::zero(),
+            );
             let strict_context = MeshContext::new(hyperlimit::PredicatePolicy::STRICT);
             let strict = DecisionContext::new(&strict_context);
             assert!(matches!(
@@ -4551,8 +4561,8 @@ mod tests {
 
     #[test]
     fn retained_shared_vertex_schedule_obeys_terminal_policy() {
-        let first = Real::pi() + Real::e();
-        let equivalent = Real::e() + Real::pi();
+        let first = Real::one();
+        let equivalent = Real::one() + terminally_unresolved_zero();
         let origin = Point3::origin();
         let mut host = crate::test_support::approximate_convex_triangle(
             &origin,

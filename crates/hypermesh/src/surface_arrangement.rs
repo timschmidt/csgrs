@@ -4493,6 +4493,12 @@ mod tests {
         Point3::new(Real::from(x), Real::from(y), Real::from(z))
     }
 
+    fn terminally_unresolved_zero() -> Real {
+        let sine = Real::e().sin();
+        let cosine = Real::e().cos();
+        &sine * &sine + &cosine * &cosine - Real::one()
+    }
+
     fn triangle(
         points: [Point3; 3],
         mesh: usize,
@@ -5237,13 +5243,15 @@ mod tests {
 
     #[test]
     fn output_certification_obeys_the_strict_and_approximate_512_terminal_policy() {
-        let left = Real::pi() + Real::e();
-        let right = Real::e() + Real::pi();
         let surface = SurfaceCorefinement {
             points: vec![
                 Point3::new(Real::zero(), Real::zero(), Real::zero()),
                 Point3::new(Real::one(), Real::one(), Real::zero()),
-                Point3::new(left, right, Real::zero()),
+                Point3::new(
+                    Real::from(2),
+                    Real::from(2) + terminally_unresolved_zero(),
+                    Real::zero(),
+                ),
             ],
             face_offsets: Vec::new().into_boxed_slice(),
             triangles: Vec::new(),
@@ -6613,9 +6621,9 @@ mod tests {
     fn point_aliasing_obeys_strict_and_approximate_512_terminal_policy() {
         let left = p(0, 0, 0);
         let mut symbolic_left = left.clone();
-        symbolic_left.x = Real::pi() + Real::e();
+        symbolic_left.x = Real::one();
         let mut symbolic_right = left;
-        symbolic_right.x = Real::e() + Real::pi();
+        symbolic_right.x = Real::one() + terminally_unresolved_zero();
         let first_identity =
             ArrangementPointIdentity::Construction(ConstructionVertexIdentity::Source {
                 mesh: 0,
@@ -6656,7 +6664,7 @@ mod tests {
 
     #[test]
     fn radial_equality_obeys_strict_and_approximate_512_terminal_policy() {
-        let symbolic_zero = (Real::pi() + Real::e()) - (Real::e() + Real::pi());
+        let symbolic_zero = terminally_unresolved_zero();
         let points = [
             p(0, 0, 0),
             p(1, 0, 0),

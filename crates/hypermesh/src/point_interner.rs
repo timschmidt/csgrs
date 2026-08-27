@@ -677,7 +677,9 @@ mod tests {
     }
 
     fn terminal_zero() -> Real {
-        (Real::pi() + Real::e()) - (Real::e() + Real::pi())
+        let sine = Real::e().sin();
+        let cosine = Real::e().cos();
+        &sine * &sine + &cosine * &cosine - Real::one()
     }
 
     fn interner_from_unique(points: &[Point3]) -> PointInterner<()> {
