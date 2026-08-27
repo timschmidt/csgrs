@@ -64708,6 +64708,28 @@ impl BezierAlgebraicChord2 {
                 return Classification::Decided(crate::classify::LineSide::Right);
             }
         }
+        // Equality is deliberately a cold path: interval refinement proves
+        // every nonzero oriented area first. A separately retained endpoint
+        // can nevertheless be the same exact point as this support endpoint
+        // without sharing its allocation (notably where an offset circle
+        // collapses). Replay that compact point certificate under STRICT
+        // before adjoining all three point fields in the general represented
+        // oriented-area authority.
+        let retained_endpoint_incidence = || {
+            [self.start(), self.end()].into_iter().any(|endpoint| {
+                endpoint.same_point(point, policy) == Classification::Decided(true)
+                    || point.same_point(endpoint, policy) == Classification::Decided(true)
+            })
+        };
+        if policy.strict_predicate_pass(retained_endpoint_incidence) {
+            #[cfg(feature = "dispatch-trace")]
+            hyperreal::dispatch_trace::record(
+                "hypercurve",
+                "algebraic-chord-side-kernel",
+                "retained-endpoint-incidence",
+            );
+            return Classification::Decided(crate::classify::LineSide::On);
+        }
         if let Ok(Classification::Decided(side)) =
             policy.strict_predicate_pass(|| self.represented_oriented_side(point, policy))
         {
@@ -64719,17 +64741,11 @@ impl BezierAlgebraicChord2 {
             );
             return Classification::Decided(side);
         }
-        // Equality is deliberately a cold path: interval refinement proves
-        // every nonzero oriented area first. A separately retained endpoint
-        // can nevertheless be the same exact point as this support endpoint
-        // without sharing its allocation (notably where an offset circle
-        // collapses). Replay that point certificate before reporting an
-        // ordering blocker. APPROXIMATE_512 remains confined to its terminal
-        // equality evaluation through `same_point`.
-        if [self.start(), self.end()].into_iter().any(|endpoint| {
-            endpoint.same_point(point, policy) == Classification::Decided(true)
-                || point.same_point(endpoint, policy) == Classification::Decided(true)
-        }) {
+        // A retained endpoint whose exact equality remains unresolved may use
+        // the selected policy only here, after both exact authorities. Its
+        // `same_point` implementation consumes APPROXIMATE_512 solely at a
+        // terminal 512-bit equality evaluation.
+        if policy.permits_approximate_512() && retained_endpoint_incidence() {
             #[cfg(feature = "dispatch-trace")]
             hyperreal::dispatch_trace::record(
                 "hypercurve",

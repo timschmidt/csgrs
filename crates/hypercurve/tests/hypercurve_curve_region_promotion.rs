@@ -2375,8 +2375,7 @@ fn selected_algebraic_round_joins_reenter_exact_region_offsets() {
             .iter()
             .filter(|entry| entry.layer == "hypercurve")
             .collect::<Vec<_>>();
-        let collapsed_round = collapsed_round
-            .unwrap_or_else(|error| {
+        let collapsed_round = collapsed_round.unwrap_or_else(|error| {
                 #[cfg(feature = "dispatch-trace")]
                 panic!(
                     "an exact selected-circle radius collapse must remove only the arc under {policy:?}: {error:?}; {collapse_kernel_trace:?}"
@@ -2385,8 +2384,13 @@ fn selected_algebraic_round_joins_reenter_exact_region_offsets() {
                 panic!(
                     "an exact selected-circle radius collapse must remove only the arc under {policy:?}: {error:?}"
                 );
-            })
-            .into_value();
+            });
+        assert_eq!(
+            collapsed_round.certainty,
+            CurveCertainty::Certified,
+            "retained endpoint incidence must decide the collapse without a policy terminal",
+        );
+        let collapsed_round = collapsed_round.into_value();
         #[cfg(feature = "dispatch-trace")]
         {
             assert!(
@@ -2402,9 +2406,9 @@ fn selected_algebraic_round_joins_reenter_exact_region_offsets() {
                     "hypercurve",
                     "algebraic-chord-side-kernel",
                     "approximate-512-terminal",
-                ) > 0,
-                policy == CurveContext::APPROXIMATE_512,
-                "only APPROXIMATE_512 may terminate an unresolved chord-side equality: {collapse_kernel_trace:?}",
+                ),
+                0,
+                "the retained endpoint proof must precede every policy terminal: {collapse_kernel_trace:?}",
             );
         }
         assert!(
