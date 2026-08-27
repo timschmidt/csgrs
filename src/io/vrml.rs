@@ -5,7 +5,7 @@
 //! attributes are intentionally ignored. Unsupported geometry fails explicitly
 //! instead of producing an incomplete mesh.
 
-use crate::io::{IoError, parse_real_decimal as parse_real, triangulate_planar_face};
+use crate::io::{IoError, triangulate_planar_face};
 use hashbrown::HashMap;
 use hyperlattice::{Matrix4, Point3, Real, Vector3};
 use hypermesh::{Triangle, TriangleMesh};
@@ -502,7 +502,7 @@ impl Parser {
 
     fn real(&mut self) -> Result<Real, IoError> {
         let text = self.word("number")?;
-        parse_real(&text)
+        text.parse()
             .map_err(|error| malformed(format!("invalid number {text:?}: {error}")))
     }
 
