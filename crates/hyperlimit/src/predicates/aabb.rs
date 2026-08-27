@@ -1019,6 +1019,12 @@ mod tests {
 
     const APPROX: PredicatePolicy = PredicatePolicy::APPROXIMATE_512;
 
+    fn terminally_unresolved_zero() -> Real {
+        let sine = Real::e().sin();
+        let cosine = Real::e().cos();
+        &sine * &sine + &cosine * &cosine - Real::one()
+    }
+
     fn p2(x: i32, y: i32) -> Point2 {
         Point2::new(hyperreal::Real::from(x), hyperreal::Real::from(y))
     }
@@ -1189,7 +1195,7 @@ mod tests {
             ));
         }
 
-        let terminal_zero = (Real::pi() + Real::e()) - (Real::e() + Real::pi());
+        let terminal_zero = terminally_unresolved_zero();
         let symbolic_max = Point3::new(terminal_zero, Real::one(), Real::one());
         let touching_min = p3(0, 0, 0);
         let touching_max = p3(2, 2, 2);

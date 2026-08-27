@@ -475,6 +475,12 @@ mod tests {
         hyperreal::Real::from(value)
     }
 
+    fn terminally_unresolved_zero() -> Real {
+        let sine = Real::e().sin();
+        let cosine = Real::e().cos();
+        &sine * &sine + &cosine * &cosine - Real::one()
+    }
+
     #[test]
     fn paired_signs_batch_exact_rationals_and_preserve_unknowns() {
         assert_eq!(
@@ -482,7 +488,7 @@ mod tests {
             Some((Sign::Negative, Sign::Zero))
         );
 
-        let undecidable = (Real::pi() + Real::e()) - (Real::e() + Real::pi());
+        let undecidable = terminally_unresolved_zero();
         assert!(matches!(
             classify_real_sign_pair_with_policy(&real(1), &undecidable, PredicatePolicy::STRICT),
             PredicateOutcome::Unknown { .. }
@@ -657,7 +663,7 @@ mod tests {
             Err(Problem::DivideByZero)
         );
 
-        let undecidable = (Real::pi() + Real::e()) - (Real::e() + Real::pi());
+        let undecidable = terminally_unresolved_zero();
         assert!(matches!(
             reciprocal_real_with_policy(&undecidable, PredicatePolicy::STRICT),
             Ok(PredicateOutcome::Unknown { .. })

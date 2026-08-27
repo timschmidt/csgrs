@@ -9,7 +9,9 @@ fn point(x: i64, y: i64, z: Real) -> Point3 {
 }
 
 fn terminal_zero() -> Real {
-    (Real::pi() + Real::e()) - (Real::e() + Real::pi())
+    let sine = Real::e().sin();
+    let cosine = Real::e().cos();
+    &sine * &sine + &cosine * &cosine - Real::one()
 }
 
 #[test]

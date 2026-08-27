@@ -792,6 +792,12 @@ mod tests {
 
     const APPROX: PredicatePolicy = PredicatePolicy::APPROXIMATE_512;
 
+    fn terminally_unresolved_zero() -> Real {
+        let sine = Real::e().sin();
+        let cosine = Real::e().cos();
+        &sine * &sine + &cosine * &cosine - Real::one()
+    }
+
     fn p3(x: i64, y: i64, z: i64) -> Point3 {
         Point3::new(Real::from(x), Real::from(y), Real::from(z))
     }
@@ -839,11 +845,10 @@ mod tests {
 
     #[test]
     fn triangle3_degeneracy_preserves_terminal_approximation_evidence() {
-        let left = Real::pi() + Real::e();
-        let right = Real::e() + Real::pi();
+        let terminal_zero = terminally_unresolved_zero();
         let a = p3(0, 0, 0);
         let b = p3(1, 1, 0);
-        let c = Point3::new(left, right, Real::zero());
+        let c = Point3::new(Real::from(2), Real::from(2) + terminal_zero, Real::zero());
 
         assert!(matches!(
             crate::classify_triangle3_degeneracy(&a, &b, &c, PredicatePolicy::STRICT),

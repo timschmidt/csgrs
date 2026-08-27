@@ -336,6 +336,12 @@ mod tests {
     use super::*;
     use hyperreal::Rational;
 
+    fn terminally_unresolved_zero() -> Real {
+        let sine = Real::e().sin();
+        let cosine = Real::e().cos();
+        &sine * &sine + &cosine * &cosine - Real::one()
+    }
+
     #[test]
     fn signed_term_filter_decides_same_sign_terms_without_magnitude() {
         let large = Real::from(10);
@@ -383,10 +389,9 @@ mod tests {
 
     #[test]
     fn terminal_approximation_is_policy_controlled_and_reports_its_certainty() {
-        // The two expression trees are mathematically equal but intentionally
-        // arranged differently, so bounded sign certification cannot prove
-        // the zero identity from structural facts alone.
-        let value = (Real::pi() + Real::e()) - (Real::e() + Real::pi());
+        // This exact identity deliberately remains outside bounded structural
+        // normalization so only the terminal policy may consume it.
+        let value = terminally_unresolved_zero();
 
         assert!(matches!(
             resolve_real_sign_direct(

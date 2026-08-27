@@ -214,6 +214,12 @@ mod tests {
 
     const APPROX: PredicatePolicy = PredicatePolicy::APPROXIMATE_512;
 
+    fn terminally_unresolved_zero() -> Real {
+        let sine = Real::e().sin();
+        let cosine = Real::e().cos();
+        &sine * &sine + &cosine * &cosine - Real::one()
+    }
+
     #[test]
     fn certified_interval_sign_decides_strict_and_zero_enclosures() {
         assert_eq!(
@@ -280,7 +286,7 @@ mod tests {
 
     #[test]
     fn interval_and_ball_filters_preserve_terminal_approximation_certainty() {
-        let undecidable = (Real::pi() + Real::e()) - (Real::e() + Real::pi());
+        let undecidable = terminally_unresolved_zero();
 
         assert_eq!(
             certified_interval_sign_with_policy(
