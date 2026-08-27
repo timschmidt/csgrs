@@ -11,6 +11,12 @@ fn r(value: i32) -> Real {
     Real::from(value)
 }
 
+fn terminally_unresolved_zero() -> Real {
+    let sine = Real::e().sin();
+    let cosine = Real::e().cos();
+    &sine * &sine + &cosine * &cosine - Real::one()
+}
+
 fn standard_box_triangles() -> Vec<Triangle> {
     vec![
         Triangle::new(4, 5, 6),
@@ -433,8 +439,8 @@ fn public_boolean_reports_every_program_and_input_rejection() {
 
 #[test]
 fn boolean_terminal_equality_obeys_strict_and_approximate_512() {
-    let left_boundary = Real::pi() + Real::e();
-    let right_boundary = Real::e() + Real::pi();
+    let left_boundary = Real::e().sin();
+    let right_boundary = left_boundary.clone() + terminally_unresolved_zero();
     let left = exact_box(
         [&left_boundary - &Real::one(), Real::zero(), Real::zero()],
         [left_boundary, Real::one(), Real::one()],
