@@ -303,6 +303,48 @@ pub fn compact_algebraic_root_low_degree_witness(
     None
 }
 
+/// Materializes a selected rational or pure-quadratic root as a canonical
+/// [`Real`] only after exact factor replay and STRICT interval selection.
+///
+/// This is the scalar counterpart of
+/// [`compact_algebraic_root_low_degree_witness`]. It lets geometry kernels
+/// reuse a root already present in their canonical `Real` coefficient field
+/// without retaining a redundant algebraic axis. Approximation proposes only
+/// the small factor inside the compaction routine; exact polynomial division,
+/// root validation, and interval membership remain authoritative.
+pub fn compact_algebraic_root_real_witness(root: &AlgebraicRootRepresentation) -> Option<Real> {
+    let compact = compact_algebraic_root_low_degree_witness(root)?;
+    if let Some(exact) = compact.interval.exact_root.as_ref() {
+        return Some(exact.clone());
+    }
+    let [constant, linear, quadratic] = compact.polynomial_coefficients.as_slice() else {
+        return None;
+    };
+    if linear
+        .exact_rational_ref()
+        .is_none_or(|coefficient| !coefficient.is_zero())
+        || quadratic != &Real::one()
+    {
+        return None;
+    }
+    let positive = (-constant.clone()).sqrt().ok()?;
+    let inside = |candidate: &Real| {
+        matches!(
+            compare_reals(&compact.interval.lower, candidate, PredicatePolicy::STRICT).value(),
+            Some(std::cmp::Ordering::Less | std::cmp::Ordering::Equal)
+        ) && matches!(
+            compare_reals(candidate, &compact.interval.upper, PredicatePolicy::STRICT).value(),
+            Some(std::cmp::Ordering::Less | std::cmp::Ordering::Equal)
+        )
+    };
+    let negative = -positive.clone();
+    match (inside(&negative), inside(&positive)) {
+        (true, false) => Some(negative),
+        (false, true) => Some(positive),
+        (false, false) | (true, true) => None,
+    }
+}
+
 fn exact_polynomial_divides(polynomial: &[Real], factor: &[Real]) -> bool {
     if polynomial.len() < factor.len() || factor.last() != Some(&Real::one()) {
         return false;
@@ -905,6 +947,10 @@ mod tests {
         assert_eq!(
             compact.polynomial_coefficients,
             vec![-three_quarters, Real::zero(), Real::one()]
+        );
+        assert_eq!(
+            compact_algebraic_root_real_witness(&root),
+            Some(-((real(3) / real(4)).unwrap().sqrt().unwrap()))
         );
 
         let mut nonfactor = root;
