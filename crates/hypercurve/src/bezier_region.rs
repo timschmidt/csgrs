@@ -12684,9 +12684,7 @@ impl CurveRegion2 {
                                 .contact_parameter(&contact),
                         };
                         retain_contact(
-                            CurveRegionParameter2::from_bezier(
-                                contact.other_parameter.clone(),
-                            ),
+                            contact.other_parameter.clone(),
                             contact.location,
                             contact.tangent_cross_sign,
                             contact.point,
@@ -27078,6 +27076,11 @@ mod tests {
                     );
                     for (source, transported) in contacts.iter().zip(&transformed_contacts) {
                         assert_eq!(source.location, transported.location);
+                        assert!(
+                            source.other_parameter.as_bezier_parameter().is_none()
+                                && transported.other_parameter.as_bezier_parameter().is_none(),
+                            "the line contacts must retain the compact recursive scalar instead of promoting a global root"
+                        );
                         assert_eq!(
                             source
                                 .other_parameter
@@ -28123,8 +28126,13 @@ mod tests {
                         "hypercurve",
                         "recursive-projective-axis-order",
                         "interval-separated",
-                    ) > 0,
-                    "the nested chamfer must order its transported endpoint in the retained projective chart: {nested_chamfer_trace:?}",
+                    ) > 0
+                        || nested_chamfer_trace.path_count(
+                            "hypercurve",
+                            "algebraic-chord-point-axis-order",
+                            "recursive-composite-interval-separated",
+                        ) > 0,
+                    "the nested chamfer must order its transported endpoint in a retained recursive chart: {nested_chamfer_trace:?}",
                 );
                 let nested_fillet_radius = (&edit_radius / Real::from(16_i8)).unwrap();
                 #[cfg(feature = "dispatch-trace")]
@@ -28159,6 +28167,15 @@ mod tests {
                         "retained-contact-map",
                     ) > 0,
                     "the nested fillet must replay the retained circle/chord tangent dot: {nested_fillet_trace:?}",
+                );
+                #[cfg(feature = "dispatch-trace")]
+                assert!(
+                    nested_fillet_trace.path_count(
+                        "hypercurve",
+                        "recursive-projective-parameter",
+                        "certified-unit-bounds",
+                    ) > 0,
+                    "the finite recursive contact must reuse its constructed unit bounds: {nested_fillet_trace:?}",
                 );
                 reentered = true;
                 break;

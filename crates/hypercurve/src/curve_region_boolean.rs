@@ -3900,11 +3900,11 @@ impl<'a> CurveRegionBooleanContext<'a> {
                     let (first_parameter, second_parameter) = if cusp_is_first {
                         (
                             CurveRegionParameter2::from_algebraic_cusp(cusp_parameter),
-                            CurveRegionParameter2::from_bezier(contact.other_parameter),
+                            contact.other_parameter,
                         )
                     } else {
                         (
-                            CurveRegionParameter2::from_bezier(contact.other_parameter),
+                            contact.other_parameter,
                             CurveRegionParameter2::from_algebraic_cusp(cusp_parameter),
                         )
                     };

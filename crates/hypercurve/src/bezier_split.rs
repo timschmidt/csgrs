@@ -33,8 +33,8 @@ use crate::{
     Axis2, BezierAlgebraicChord2, BezierAlgebraicCuspSemicircleFragment2,
     BezierAlgebraicEndpointImage2, BezierAlgebraicParameter2, BezierEndpoint, BezierParallel2,
     BezierParameter2, BezierParameterRange2, Classification, CubicBezier2, CurveContext,
-    CurveError, CurveResult, Point2, QuadraticBezier2, RationalBezier2, RationalQuadraticBezier2,
-    UncertaintyReason,
+    CurveError, CurveResult, LineSeg2, Point2, QuadraticBezier2, RationalBezier2,
+    RationalQuadraticBezier2, Similarity2, UncertaintyReason,
 };
 
 /// Exact local parameter on any retained [`CurveRegion2`](crate::CurveRegion2) carrier.
@@ -125,6 +125,21 @@ impl CurveRegionParameter2 {
     ) -> Self {
         Self {
             data: CurveRegionParameterData2::RecursiveProjective(parameter),
+        }
+    }
+
+    pub(crate) fn transported_recursive_line_identity(
+        self,
+        line: LineSeg2,
+        transform: &Similarity2,
+    ) -> Self {
+        match self.data {
+            CurveRegionParameterData2::RecursiveProjective(parameter) => Self {
+                data: CurveRegionParameterData2::RecursiveProjective(
+                    parameter.transported_line_identity(line, transform),
+                ),
+            },
+            data => Self { data },
         }
     }
 
