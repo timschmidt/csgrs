@@ -5421,8 +5421,22 @@ fn exact_support_cutter_reenters_correlated_chord_collinearly() {
         assert_eq!(touch_cut.certainty, CurveCertainty::Certified);
         let touch_region = touch_cut.into_value().difference().clone();
         assert!(!touch_region.is_empty());
-        let touch_evidence = first
-            .intersect_region(&touch_region, &policy)
+        #[cfg(feature = "dispatch-trace")]
+        hyperreal::dispatch_trace::reset();
+        let touch_intersection = || first.intersect_region(&touch_region, &policy);
+        #[cfg(feature = "dispatch-trace")]
+        let touch_evidence = hyperreal::dispatch_trace::with_recording(touch_intersection);
+        #[cfg(not(feature = "dispatch-trace"))]
+        let touch_evidence = touch_intersection();
+        #[cfg(feature = "dispatch-trace")]
+        let touch_trace = hyperreal::dispatch_trace::take_trace();
+        #[cfg(feature = "dispatch-trace")]
+        let touch_kernel_trace = touch_trace
+            .dispatch
+            .iter()
+            .filter(|entry| entry.layer == "hypercurve")
+            .collect::<Vec<_>>();
+        let touch_evidence = touch_evidence
             .expect("the retained selected-circle/chord endpoint must support a point touch");
         let touch_certainty = CurveCertainty::Certified;
         assert_eq!(touch_evidence.certainty, touch_certainty);
@@ -5442,6 +5456,21 @@ fn exact_support_cutter_reenters_correlated_chord_collinearly() {
                 )
             })
             .collect::<Vec<_>>();
+        #[cfg(feature = "dispatch-trace")]
+        assert!(
+            touch_evidence.value.is_complete(),
+            "{touch_blockers:?}; {touch_kernel_trace:?}",
+        );
+        #[cfg(feature = "dispatch-trace")]
+        assert!(
+            touch_trace.path_count(
+                "hypercurve",
+                "algebraic-chord-finite-parameter",
+                "strict-retained-endpoint",
+            ) > 0,
+            "support-level contacts must reclip through retained endpoint identity: {touch_kernel_trace:?}",
+        );
+        #[cfg(not(feature = "dispatch-trace"))]
         assert!(touch_evidence.value.is_complete(), "{touch_blockers:?}");
         assert!(!touch_evidence.value.contacts().is_empty());
         assert!(touch_evidence.value.overlaps().is_empty());

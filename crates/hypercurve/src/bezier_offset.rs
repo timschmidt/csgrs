@@ -64170,13 +64170,39 @@ impl BezierAlgebraicChord2 {
         let parameter = self.parameter_on_retained_support(point.clone());
         let start = self.start_parameter();
         let end = self.end_parameter();
-        let lower = match parameter.cmp_by_refinement(&start, policy)? {
-            Classification::Decided(order) => order,
-            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+        // A support solve can rebuild a Boolean-split endpoint in a different
+        // correlated field. If monotone coordinate order cannot rediscover
+        // that equality, replay point identity under STRICT and retain the
+        // descendant's existing endpoint parameter.
+        let retained_endpoint_parameter = || {
+            let at_end = policy.strict_predicate_pass(|| {
+                [(false, self.start()), (true, self.end())]
+                    .into_iter()
+                    .find_map(|(at_end, endpoint)| {
+                        (point.same_point(endpoint, policy) == Classification::Decided(true)
+                            || endpoint.same_point(&point, policy) == Classification::Decided(true))
+                        .then_some(at_end)
+                    })
+            })?;
+            #[cfg(feature = "dispatch-trace")]
+            hyperreal::dispatch_trace::record(
+                "hypercurve",
+                "algebraic-chord-finite-parameter",
+                "strict-retained-endpoint",
+            );
+            Some(if at_end { end.clone() } else { start.clone() })
         };
-        let upper = match parameter.cmp_by_refinement(&end, policy)? {
-            Classification::Decided(order) => order,
-            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+        let (lower, upper) = match (
+            parameter.cmp_by_refinement(&start, policy)?,
+            parameter.cmp_by_refinement(&end, policy)?,
+        ) {
+            (Classification::Decided(lower), Classification::Decided(upper)) => (lower, upper),
+            (Classification::Uncertain(reason), _) | (_, Classification::Uncertain(reason)) => {
+                if let Some(parameter) = retained_endpoint_parameter() {
+                    return Ok(Classification::Decided(Some(parameter)));
+                }
+                return Ok(Classification::Uncertain(reason));
+            }
         };
         Ok(Classification::Decided(match (lower, upper) {
             (std::cmp::Ordering::Equal, _) => Some(start),
