@@ -754,7 +754,7 @@ impl Simple {
                 }
                 let mut left = Vec::with_capacity(self.operands.len() / 2);
                 let mut right = Vec::with_capacity(self.operands.len() / 2);
-                for pair in self.operands.chunks_exact(2) {
+                for pair in self.operands.as_chunks::<2>().0 {
                     left.push(pair[0].value(names)?);
                     right.push(pair[1].value(names)?);
                 }
