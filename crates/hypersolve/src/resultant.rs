@@ -1359,7 +1359,9 @@ mod tests {
                 .map(|value| BigInt::from(i64::from(value)))
                 .collect::<Vec<_>>();
             let matrix = entries
-                .chunks_exact(4)
+                .as_chunks::<4>()
+                .0
+                .iter()
                 .map(|row| {
                     row.iter()
                         .copied()
