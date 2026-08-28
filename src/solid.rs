@@ -1051,7 +1051,7 @@ pub fn polyhedron(
         let indices = hypertri::earcut(&crate::TRIANGULATION_CONTEXT, &projected, &[])
             .map_err(|error| ValidationError::Geometry(error.to_string()))?
             .into_value();
-        triangles.extend(indices.chunks_exact(3).map(|triangle| {
+        triangles.extend(indices.as_chunks::<3>().0.iter().map(|triangle| {
             Triangle::new(face[triangle[0]], face[triangle[1]], face[triangle[2]])
         }));
     }
@@ -2086,7 +2086,9 @@ pub fn loft(sections: &[Vec<Point3>]) -> Result<TriangleMesh, ValidationError> {
             .map_err(|error| ValidationError::Geometry(error.to_string()))?
             .into_value();
         Ok(flat
-            .chunks_exact(3)
+            .as_chunks::<3>()
+            .0
+            .iter()
             .map(|triangle| [triangle[0], triangle[1], triangle[2]])
             .collect())
     };

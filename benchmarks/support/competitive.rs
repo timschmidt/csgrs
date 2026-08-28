@@ -467,7 +467,9 @@ fn raw_from_manifold(manifold: &ManifoldRs) -> RawMesh {
             .collect(),
         triangles: mesh
             .tri_verts
-            .chunks_exact(3)
+            .as_chunks::<3>()
+            .0
+            .iter()
             .map(|row| [row[0] as usize, row[1] as usize, row[2] as usize])
             .collect(),
     }

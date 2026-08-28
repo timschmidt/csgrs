@@ -261,7 +261,9 @@ pub(crate) fn triangulate_planar_face(
         .map(|outcome| {
             let indices = outcome.into_value();
             indices
-                .chunks_exact(3)
+                .as_chunks::<3>()
+                .0
+                .iter()
                 .map(|row| {
                     let [a, mut b, mut c] = [face[row[0]], face[row[1]], face[row[2]]];
                     if reverse_output {

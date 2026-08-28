@@ -360,7 +360,7 @@ pub fn metaballs_with_diagnostics(
         return (TriangleMesh::new(Vec::new(), Vec::new()), diagnostics);
     }
 
-    for tri in sn_buffer.indices.chunks_exact(3) {
+    for tri in sn_buffer.indices.as_chunks::<3>().0 {
         let i0 = tri[0] as usize;
         let i1 = tri[1] as usize;
         let i2 = tri[2] as usize;

@@ -59,7 +59,7 @@ pub fn to_ply(mesh: &TriangleMesh, comment: &str) -> Result<String, IoError> {
             finite_f64(&normal[2], "PLY", "normal z")?,
         ));
     }
-    for face in buffers.indices.chunks_exact(3) {
+    for face in buffers.indices.as_chunks::<3>().0 {
         output.push_str(&format!("3 {} {} {}\n", face[0], face[1], face[2]));
     }
     PLY_CACHE.with_borrow_mut(|entries| {
