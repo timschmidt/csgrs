@@ -960,7 +960,7 @@ mod tests {
         for (triangle, rendered) in output
             .triangles
             .iter()
-            .zip(faces.vertices().chunks_exact(3))
+            .zip(faces.vertices().as_chunks::<3>().0)
         {
             assert!(
                 rendered

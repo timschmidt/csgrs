@@ -1039,7 +1039,9 @@ fn raw_from_manifold(manifold: &ManifoldRs) -> RawMesh {
             .collect(),
         triangles: mesh
             .tri_verts
-            .chunks_exact(3)
+            .as_chunks::<3>()
+            .0
+            .iter()
             .map(|triangle| {
                 [
                     triangle[0] as usize,
@@ -1082,7 +1084,7 @@ pub fn box_mesh(min: [f64; 3], max: [f64; 3]) -> RawMesh {
 
 fn box_mesh_with_alternate_diagonals(min: [f64; 3], max: [f64; 3]) -> RawMesh {
     let mut mesh = box_mesh(min, max);
-    for pair in mesh.triangles.chunks_exact_mut(2) {
+    for pair in mesh.triangles.as_chunks_mut::<2>().0 {
         let [a, b, c] = pair[0];
         let [same_a, same_c, d] = pair[1];
         assert_eq!([same_a, same_c], [a, c]);

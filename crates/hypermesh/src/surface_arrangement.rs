@@ -898,12 +898,18 @@ fn geometric_facet_side_cells(
         .map_err(|_| HypermeshError::CapacityOverflow {
             operation: "surface geometric facet sheet sides",
         })?;
-    scratch.extend(sheet_side_cells.chunks_exact(2).flat_map(|cells| {
-        [
-            u64::from(cells[FRONT]) << 1,
-            (u64::from(cells[BACK]) << 1) | 1,
-        ]
-    }));
+    scratch.extend(
+        sheet_side_cells
+            .as_chunks::<2>()
+            .0
+            .iter()
+            .flat_map(|cells| {
+                [
+                    u64::from(cells[FRONT]) << 1,
+                    (u64::from(cells[BACK]) << 1) | 1,
+                ]
+            }),
+    );
     scratch.sort_unstable();
     let mut outer = [None; 2];
     let mut start = 0;
