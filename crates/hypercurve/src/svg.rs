@@ -852,7 +852,9 @@ fn points(value: &str) -> SvgResult<Vec<Point2>> {
         ));
     }
     numbers
-        .chunks_exact(2)
+        .as_chunks::<2>()
+        .0
+        .iter()
         .map(|pair| {
             Ok(Point2::new(
                 real(pair[0], "point x")?,

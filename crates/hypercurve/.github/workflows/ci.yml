@@ -84,7 +84,10 @@ jobs:
 
       - name: Run complete test suite
         working-directory: hypercurve
-        run: cargo test --locked --all-features --no-fail-fast
+        # Exact algebraic tests can each retain large certified elimination
+        # structures. Keep the complete suite optimized and bound concurrent
+        # test processes so hosted runners do not exhaust memory.
+        run: cargo test --release --locked --all-features --no-fail-fast -- --test-threads=2
 
       - name: Test WASM demo crate
         working-directory: hypercurve/examples/hypercurve_ui

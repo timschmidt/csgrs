@@ -89,7 +89,9 @@ fn triangles_from_indices(
         ));
     }
     indices
-        .chunks_exact(3)
+        .as_chunks::<3>()
+        .0
+        .iter()
         .map(|triangle| {
             Ok([
                 *vertices.get(triangle[0]).ok_or_else(|| {

@@ -202,7 +202,9 @@ proptest! {
         coordinates in prop::collection::vec(-8_i32..=8, 8)
     ) {
         let controls = coordinates
-            .chunks_exact(2)
+            .as_chunks::<2>()
+            .0
+            .iter()
             .map(|coordinate| p(coordinate[0], coordinate[1]))
             .collect::<Vec<_>>();
         let source_curve = RationalBezier2::try_new(controls.clone(), vec![r(1); 4]).unwrap();

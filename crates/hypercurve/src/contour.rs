@@ -773,11 +773,11 @@ fn compute_contour_signed_area(segments: &[Segment2]) -> CurveResult<Option<Real
             .all(|coordinate| coordinate.exact_rational_ref().is_some())
         }) {
             let mut doubled_area = Real::zero();
-            let mut chunks = segments.chunks_exact(8);
-            for chunk in &mut chunks {
+            let (chunks, remainder) = segments.as_chunks::<8>();
+            for chunk in chunks {
                 doubled_area += exact_eight_line_doubled_signed_area(chunk);
             }
-            for segment in chunks.remainder() {
+            for segment in remainder {
                 let Segment2::Line(line) = segment else {
                     unreachable!("all-line contour was checked before exact accumulation")
                 };

@@ -177,11 +177,11 @@ fn decode_glyph(
     historical_id: Option<u32>,
     encoded: &str,
 ) -> Result<Glyph, HersheyError> {
-    let pairs = encoded.as_bytes().chunks_exact(2);
-    if !pairs.remainder().is_empty() {
+    let (pairs, remainder) = encoded.as_bytes().as_chunks::<2>();
+    if !remainder.is_empty() {
         return Err(HersheyError::InvalidGlyph(index));
     }
-    let mut pairs = pairs;
+    let mut pairs = pairs.iter();
     let bearings = pairs.next().ok_or(HersheyError::InvalidGlyph(index))?;
     let left_bearing = coordinate(bearings[0]);
     let right_bearing = coordinate(bearings[1]);
