@@ -130071,81 +130071,138 @@ mod conversion_tests {
         }
     }
 
-    #[test]
-    fn rank_independent_chord_normal_circle_overlap_completes_public_booleans() {
-        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
-            let circle = dense_chord_normal_independent_circle(
-                &policy,
-                "independent chord-normal public overlap anchor",
-            );
-            let circle_region = dense_chord_normal_full_circle_region(circle, &policy);
-
-            let quarters = [
-                (
-                    rational_unit_circle_quarter(
-                        Point2::from_values(0, 1),
-                        Point2::from_values(1, 1),
-                        Point2::from_values(1, 0),
-                        1,
-                    ),
-                    1_usize,
+    fn assert_rank_independent_chord_normal_circle_overlap_completes_public_booleans(
+        policy: CurveContext,
+        quarter_index: usize,
+        cusp_is_first: bool,
+    ) {
+        let circle = dense_chord_normal_independent_circle(
+            &policy,
+            "independent chord-normal public overlap anchor",
+        );
+        let circle_region = dense_chord_normal_full_circle_region(circle, &policy);
+        let (quarter, expected_overlap_count) = match quarter_index {
+            0 => (
+                rational_unit_circle_quarter(
+                    Point2::from_values(0, 1),
+                    Point2::from_values(1, 1),
+                    Point2::from_values(1, 0),
+                    1,
                 ),
-                (
-                    rational_unit_circle_quarter(
-                        Point2::from_values(-1, 0),
-                        Point2::from_values(-1, 1),
-                        Point2::from_values(0, 1),
-                        1,
-                    ),
-                    2_usize,
+                1_usize,
+            ),
+            1 => (
+                rational_unit_circle_quarter(
+                    Point2::from_values(-1, 0),
+                    Point2::from_values(-1, 1),
+                    Point2::from_values(0, 1),
+                    1,
                 ),
-            ];
-            for (quarter, expected_overlap_count) in quarters {
-                let quarter_region = rational_quadratic_cap_region(quarter, &policy);
-                for cusp_is_first in [true, false] {
-                    let (first, second) = if cusp_is_first {
-                        (&circle_region, &quarter_region)
-                    } else {
-                        (&quarter_region, &circle_region)
-                    };
-                    #[cfg(feature = "dispatch-trace")]
-                    hyperreal::dispatch_trace::reset();
-                    let intersection_work = || first.intersect_region(second, &policy);
-                    #[cfg(feature = "dispatch-trace")]
-                    let evidence = hyperreal::dispatch_trace::with_recording(intersection_work);
-                    #[cfg(not(feature = "dispatch-trace"))]
-                    let evidence = intersection_work();
-                    #[cfg(feature = "dispatch-trace")]
-                    let trace = hyperreal::dispatch_trace::take_trace();
-                    let evidence = evidence
-                        .expect("the represented rational-circle overlap must intersect publicly")
-                        .into_value();
-                    assert!(evidence.blockers().is_empty());
-                    assert_eq!(evidence.overlaps().len(), expected_overlap_count);
-                    #[cfg(feature = "dispatch-trace")]
-                    assert!(
-                        trace.path_count(
-                            "hypercurve",
-                            "algebraic-circle-rational-kernel",
-                            "represented-circle-component",
-                        ) > 0,
-                        "public topology must use the represented component authority: {trace:?}",
-                    );
+                2_usize,
+            ),
+            _ => unreachable!("the certification matrix has exactly two quarter carriers"),
+        };
+        let quarter_region = rational_quadratic_cap_region(quarter, &policy);
+        let (first, second) = if cusp_is_first {
+            (&circle_region, &quarter_region)
+        } else {
+            (&quarter_region, &circle_region)
+        };
+        #[cfg(feature = "dispatch-trace")]
+        hyperreal::dispatch_trace::reset();
+        let intersection_work = || first.intersect_region(second, &policy);
+        #[cfg(feature = "dispatch-trace")]
+        let evidence = hyperreal::dispatch_trace::with_recording(intersection_work);
+        #[cfg(not(feature = "dispatch-trace"))]
+        let evidence = intersection_work();
+        #[cfg(feature = "dispatch-trace")]
+        let trace = hyperreal::dispatch_trace::take_trace();
+        let evidence = evidence
+            .expect("the represented rational-circle overlap must intersect publicly")
+            .into_value();
+        assert!(evidence.blockers().is_empty());
+        assert_eq!(evidence.overlaps().len(), expected_overlap_count);
+        #[cfg(feature = "dispatch-trace")]
+        assert!(
+            trace.path_count(
+                "hypercurve",
+                "algebraic-circle-rational-kernel",
+                "represented-circle-component",
+            ) > 0,
+            "public topology must use the represented component authority: {trace:?}",
+        );
 
-                    let result = first
-                        .boolean_regions(second, &policy)
-                        .expect(
-                            "the represented rational-circle overlap must complete all Booleans",
-                        )
-                        .into_value();
-                    assert!(!result.union().is_empty());
-                    assert!(!result.intersection().is_empty());
-                    assert_eq!(result.difference().is_empty(), !cusp_is_first);
-                    assert!(!result.xor().is_empty());
-                }
-            }
-        }
+        let result = first
+            .boolean_regions(second, &policy)
+            .expect("the represented rational-circle overlap must complete all Booleans")
+            .into_value();
+        assert!(!result.union().is_empty());
+        assert!(!result.intersection().is_empty());
+        assert_eq!(result.difference().is_empty(), !cusp_is_first);
+        assert!(!result.xor().is_empty());
     }
+
+    macro_rules! rank_independent_public_boolean_case {
+        ($name:ident, $policy:expr, $quarter:expr, $cusp_is_first:expr) => {
+            #[test]
+            fn $name() {
+                assert_rank_independent_chord_normal_circle_overlap_completes_public_booleans(
+                    $policy,
+                    $quarter,
+                    $cusp_is_first,
+                );
+            }
+        };
+    }
+
+    rank_independent_public_boolean_case!(
+        rank_independent_public_booleans_strict_first_quarter_cusp_first,
+        CurveContext::STRICT,
+        0,
+        true
+    );
+    rank_independent_public_boolean_case!(
+        rank_independent_public_booleans_strict_first_quarter_cusp_second,
+        CurveContext::STRICT,
+        0,
+        false
+    );
+    rank_independent_public_boolean_case!(
+        rank_independent_public_booleans_strict_second_quarter_cusp_first,
+        CurveContext::STRICT,
+        1,
+        true
+    );
+    rank_independent_public_boolean_case!(
+        rank_independent_public_booleans_strict_second_quarter_cusp_second,
+        CurveContext::STRICT,
+        1,
+        false
+    );
+    rank_independent_public_boolean_case!(
+        rank_independent_public_booleans_approximate_first_quarter_cusp_first,
+        CurveContext::APPROXIMATE_512,
+        0,
+        true
+    );
+    rank_independent_public_boolean_case!(
+        rank_independent_public_booleans_approximate_first_quarter_cusp_second,
+        CurveContext::APPROXIMATE_512,
+        0,
+        false
+    );
+    rank_independent_public_boolean_case!(
+        rank_independent_public_booleans_approximate_second_quarter_cusp_first,
+        CurveContext::APPROXIMATE_512,
+        1,
+        true
+    );
+    rank_independent_public_boolean_case!(
+        rank_independent_public_booleans_approximate_second_quarter_cusp_second,
+        CurveContext::APPROXIMATE_512,
+        1,
+        false
+    );
 
     #[test]
     fn analytic_parallel_classifies_correlated_chord_pair_points() {
@@ -133055,8 +133112,9 @@ mod conversion_tests {
         }
     }
 
-    #[test]
-    fn recursive_selected_radial_diameter_chord_intersects_a_rational_quadratic() {
+    fn assert_recursive_selected_radial_diameter_chord_intersects_a_rational_quadratic(
+        policy: CurveContext,
+    ) {
         let half = (Real::one() / Real::from(2_i8)).unwrap();
         let nine_tenths = (Real::from(9_i8) / Real::from(10_i8)).unwrap();
         let source = QuadraticBezier2::new(
@@ -133066,59 +133124,69 @@ mod conversion_tests {
         );
         let target = RationalBezier2::try_from_subcurve(&BezierSubcurve2::Quadratic(source))
             .expect("the polynomial quadratic has an exact rational carrier");
-
-        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
-            let recursive = recursively_line_contact_radial_half(&policy);
-            let Classification::Decided(start) = recursive.start_point_evidence(&policy).unwrap()
-            else {
-                panic!("the recursive diameter start must remain exact");
-            };
-            let Classification::Decided(end) = recursive.end_point_evidence(&policy).unwrap()
-            else {
-                panic!("the recursive diameter end must remain exact");
-            };
-            let Classification::Decided(chord) =
-                BezierAlgebraicChord2::try_new(end, start, &policy).unwrap()
-            else {
-                panic!("the recursive diameter chord must construct");
-            };
+        let recursive = recursively_line_contact_radial_half(&policy);
+        let Classification::Decided(start) = recursive.start_point_evidence(&policy).unwrap()
+        else {
+            panic!("the recursive diameter start must remain exact");
+        };
+        let Classification::Decided(end) = recursive.end_point_evidence(&policy).unwrap() else {
+            panic!("the recursive diameter end must remain exact");
+        };
+        let Classification::Decided(chord) =
+            BezierAlgebraicChord2::try_new(end, start, &policy).unwrap()
+        else {
+            panic!("the recursive diameter chord must construct");
+        };
+        #[cfg(feature = "dispatch-trace")]
+        hyperreal::dispatch_trace::reset();
+        let intersection_work = || chord.rational_intersections(&target, None, &policy);
+        #[cfg(feature = "dispatch-trace")]
+        let intersections = hyperreal::dispatch_trace::with_recording(intersection_work);
+        #[cfg(not(feature = "dispatch-trace"))]
+        let intersections = intersection_work();
+        #[cfg(feature = "dispatch-trace")]
+        let trace = hyperreal::dispatch_trace::take_trace();
+        let Classification::Decided(BezierAlgebraicChordRationalIntersections2::Contacts(
+            contacts,
+        )) = intersections.unwrap_or_else(|error| {
             #[cfg(feature = "dispatch-trace")]
-            hyperreal::dispatch_trace::reset();
-            let intersection_work = || chord.rational_intersections(&target, None, &policy);
-            #[cfg(feature = "dispatch-trace")]
-            let intersections = hyperreal::dispatch_trace::with_recording(intersection_work);
-            #[cfg(not(feature = "dispatch-trace"))]
-            let intersections = intersection_work();
-            #[cfg(feature = "dispatch-trace")]
-            let trace = hyperreal::dispatch_trace::take_trace();
-            let Classification::Decided(BezierAlgebraicChordRationalIntersections2::Contacts(
-                contacts,
-            )) = intersections.unwrap_or_else(|error| {
-                #[cfg(feature = "dispatch-trace")]
-                panic!(
-                    "the recursive diameter/rational kernel must decide: policy={policy:?}, error={error:?}, trace={trace:?}"
-                );
-                #[cfg(not(feature = "dispatch-trace"))]
-                panic!(
-                    "the recursive diameter/rational kernel must decide: policy={policy:?}, error={error:?}"
-                );
-            })
-            else {
-                panic!(
-                    "the recursive diameter/rational crossing must publish finite contacts: policy={policy:?}"
-                );
-            };
-            assert!(!contacts.is_empty());
-            #[cfg(feature = "dispatch-trace")]
-            assert_eq!(
-                trace.path_count(
-                    "hypercurve",
-                    "algebraic-chord-rational-kernel",
-                    "recursive-projective",
-                ),
-                1,
+            panic!(
+                "the recursive diameter/rational kernel must decide: policy={policy:?}, error={error:?}, trace={trace:?}"
             );
-        }
+            #[cfg(not(feature = "dispatch-trace"))]
+            panic!(
+                "the recursive diameter/rational kernel must decide: policy={policy:?}, error={error:?}"
+            );
+        })
+        else {
+            panic!(
+                "the recursive diameter/rational crossing must publish finite contacts: policy={policy:?}"
+            );
+        };
+        assert!(!contacts.is_empty());
+        #[cfg(feature = "dispatch-trace")]
+        assert_eq!(
+            trace.path_count(
+                "hypercurve",
+                "algebraic-chord-rational-kernel",
+                "recursive-projective",
+            ),
+            1,
+        );
+    }
+
+    #[test]
+    fn recursive_selected_radial_diameter_chord_intersects_a_rational_quadratic_strict() {
+        assert_recursive_selected_radial_diameter_chord_intersects_a_rational_quadratic(
+            CurveContext::STRICT,
+        );
+    }
+
+    #[test]
+    fn recursive_selected_radial_diameter_chord_intersects_a_rational_quadratic_approximate() {
+        assert_recursive_selected_radial_diameter_chord_intersects_a_rational_quadratic(
+            CurveContext::APPROXIMATE_512,
+        );
     }
 
     #[test]

@@ -86,8 +86,9 @@ jobs:
         working-directory: hypercurve
         # Exact algebraic tests can each retain large certified elimination
         # structures. Keep the complete suite optimized and bound concurrent
-        # test processes so hosted runners do not exhaust memory.
-        run: cargo test --release --locked --all-features --no-fail-fast -- --test-threads=2
+        # test workers below the public runner's four-CPU ceiling so exact
+        # cases can overlap without exhausting memory.
+        run: cargo test --release --locked --all-features --no-fail-fast -- --test-threads=3
 
       - name: Test WASM demo crate
         working-directory: hypercurve/examples/hypercurve_ui
