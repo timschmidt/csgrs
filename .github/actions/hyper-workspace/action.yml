@@ -29,4 +29,4 @@ runs:
         checkout_repo hyperreal https://github.com/timschmidt/hyperreal.git 8d25d62c508471a4b783f03173342c1595e5f3c6
         checkout_repo hypersdf https://github.com/timschmidt/hypersdf.git ecb9811f99fdca083faae8e97624679c8ce1970c
         checkout_repo hypersolve https://github.com/timschmidt/hypersolve.git d2f5907c5420d57854fce82773eaf2f80c682b1a
-        checkout_repo hypertri https://github.com/timschmidt/hypertriangulate.git 2f9b27222e2108ceffe7e2a9cf669c3c3e63a5e0
+        checkout_repo hypertri https://github.com/timschmidt/hypertriangulate.git 79dc4a4661960c7ebb90cdb84991385fb5d06874
