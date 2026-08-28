@@ -55,7 +55,9 @@ fn indexed_geometry(mesh: &TriangleMesh) -> Result<IndexedTriangleMesh3D, IoErro
         .collect::<Vec<_>>();
     let faces = buffers
         .indices
-        .chunks_exact(3)
+        .as_chunks::<3>()
+        .0
+        .iter()
         .map(|row| {
             [
                 (row[0] as usize, row[0] as usize),
@@ -276,8 +278,8 @@ fn import_gltf_node(
                     limit: "u32 implicit vertex index",
                 });
             }
-            let chunks = indices.chunks_exact(3);
-            if !chunks.remainder().is_empty() {
+            let (chunks, remainder) = indices.as_chunks::<3>();
+            if !remainder.is_empty() {
                 return Err(IoError::MalformedInput(format!(
                     "mesh {} primitive {} triangle index count is not divisible by three",
                     mesh.index(),

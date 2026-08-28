@@ -401,7 +401,9 @@ impl Parser {
                     }
                     points = Some(
                         coordinates
-                            .chunks_exact(3)
+                            .as_chunks::<3>()
+                            .0
+                            .iter()
                             .map(|point| {
                                 Point3::new(
                                     point[0].clone(),

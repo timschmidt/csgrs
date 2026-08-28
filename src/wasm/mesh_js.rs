@@ -47,7 +47,9 @@ impl MeshJs {
             ));
         }
         let positions = positions
-            .chunks_exact(3)
+            .as_chunks::<3>()
+            .0
+            .iter()
             .map(|row| {
                 Some(Point3::new(
                     real_from_js(row[0])?,
@@ -58,7 +60,9 @@ impl MeshJs {
             .collect::<Option<Vec<_>>>()
             .ok_or_else(|| JsValue::from_str("positions must be finite"))?;
         let triangles = indices
-            .chunks_exact(3)
+            .as_chunks::<3>()
+            .0
+            .iter()
             .map(|row| {
                 let [a, b, c] = [
                     usize::try_from(row[0]).ok()?,
@@ -121,7 +125,7 @@ impl MeshJs {
                 counts[index] += 1;
             }
         }
-        for (normal, count) in normals.chunks_exact_mut(3).zip(counts) {
+        for (normal, count) in normals.as_chunks_mut::<3>().0.iter_mut().zip(counts) {
             if count != 0 {
                 let length =
                     (normal[0] * normal[0] + normal[1] * normal[1] + normal[2] * normal[2])
