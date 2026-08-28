@@ -3876,6 +3876,10 @@ struct BezierRecursiveCirclePairContactData2 {
     angular: [BezierRecursiveCirclePairAngularData2; 2],
     tangent_cross: BezierRecursiveQuadraticValue2,
     tangent_dot: BezierRecursiveQuadraticValue2,
+    /// Independent sign certificate for the zero-discriminant branch.  Its
+    /// tangent cross is identically zero, while the two nonzero radial line
+    /// factors and positive center-distance square decide the dot sign.
+    tangent_dot_sign: Option<RealSign>,
 }
 
 #[derive(Debug)]
@@ -3887,7 +3891,6 @@ struct BezierRecursiveCirclePairAngularData2 {
 struct BezierRecursiveCirclePairContactSide2 {
     location: BezierAlgebraicCuspSemicircleContactLocation2,
     angular: BezierRecursiveCirclePairAngularData2,
-    radial: [BezierRecursiveQuadraticValue2; 2],
 }
 
 #[derive(Clone, Debug)]
@@ -33964,7 +33967,6 @@ impl BezierAlgebraicCuspSemicircle2 {
                     diameter,
                     radius_squared_denominator,
                 },
-                radial: [radial_x.clone(), radial_y.clone()],
             },
         )))
     }
@@ -34381,6 +34383,43 @@ impl BezierAlgebraicCuspSemicircle2 {
                 product_sign(branch_sign, turn_sign)
             }
         };
+        let turn_product_sign = if self.is_clockwise() == other.is_clockwise() {
+            RealSign::Positive
+        } else {
+            RealSign::Negative
+        };
+        let Some(second_line) = q
+            .scale(&Real::from(2_i8))
+            .and_then(|twice_q| line.subtract(&twice_q))
+        else {
+            return Ok(None);
+        };
+        let tangent_dot_sign = if discriminant_sign == RealSign::Zero {
+            let line_sign = match line.sign(&CurveContext::STRICT)? {
+                Classification::Decided(sign @ (RealSign::Negative | RealSign::Positive)) => sign,
+                Classification::Decided(RealSign::Zero) => {
+                    return Err(CurveError::Topology(
+                        "a tangent circle pair retained a zero first radial line factor".into(),
+                    ));
+                }
+                Classification::Uncertain(_) => return Ok(None),
+            };
+            let second_line_sign = match second_line.sign(&CurveContext::STRICT)? {
+                Classification::Decided(sign @ (RealSign::Negative | RealSign::Positive)) => sign,
+                Classification::Decided(RealSign::Zero) => {
+                    return Err(CurveError::Topology(
+                        "a tangent circle pair retained a zero second radial line factor".into(),
+                    ));
+                }
+                Classification::Uncertain(_) => return Ok(None),
+            };
+            Some(product_sign(
+                product_sign(line_sign, second_line_sign),
+                turn_product_sign,
+            ))
+        } else {
+            None
+        };
         let mut contacts = Vec::with_capacity(branches.len());
         let mut retained_contacts = Vec::with_capacity(branches.len());
         for &branch in branches {
@@ -34475,17 +34514,30 @@ impl BezierAlgebraicCuspSemicircle2 {
                 Classification::Uncertain(_) => return Ok(None),
             };
             let Some((tangent_cross, tangent_dot)) = (|| {
+                // With `D=C2-C1`, `q=D·D`, `a=line`, `b=line-2q`, and
+                // `s=branch*sqrt(discriminant)`, the two radial numerators
+                // above are `aD+sJ(D)` and `bD+sJ(D)`.  Keep their cross and
+                // dot in that factored frame:
+                //
+                //   cross = 2 s q²
+                //   dot   = q (a b + s²)
+                //
+                // Expanding the Cartesian components first asks a deep
+                // recursive coefficient tower to rediscover both exact
+                // cancellations.  In particular, a tangent (`s=0`) could be
+                // simplified to a false zero dot even though both radii are
+                // certified nonzero.
                 let tangent_cross = if branch == 0 {
                     field.constant(Real::zero())?
                 } else {
-                    first.radial[0]
-                        .multiply(&second.radial[1])?
-                        .subtract(&first.radial[1].multiply(&second.radial[0])?)?
-                        .scale(&turn_product)?
+                    signed_root
+                        .multiply(&q.square()?)?
+                        .scale(&(Real::from(2_i8) * &turn_product))?
                 };
-                let tangent_dot = first.radial[0]
-                    .multiply(&second.radial[0])?
-                    .add(&first.radial[1].multiply(&second.radial[1])?)?
+                let tangent_dot = line
+                    .multiply(&second_line)?
+                    .add(&signed_root.square()?)?
+                    .multiply(&q)?
                     .scale(&turn_product)?;
                 Some((tangent_cross, tangent_dot))
             })() else {
@@ -34508,6 +34560,7 @@ impl BezierAlgebraicCuspSemicircle2 {
                 angular: [first.angular, second.angular],
                 tangent_cross,
                 tangent_dot,
+                tangent_dot_sign,
             });
         }
         if contacts.is_empty() {
@@ -42056,6 +42109,15 @@ impl BezierAlgebraicCuspSemicirclePairParameterMap2 {
             ));
         }
         if let Some(data) = self.recursive_contact_data(contact) {
+            if let Some(tangent_dot_sign) = data.tangent_dot_sign {
+                let Some(dot_scale_sign) = real_sign(dot_scale, policy) else {
+                    return Ok(Classification::Uncertain(UncertaintyReason::RealSign));
+                };
+                return Ok(Classification::Decided(product_sign(
+                    tangent_dot_sign,
+                    dot_scale_sign,
+                )));
+            }
             let expression = data
                 .tangent_cross
                 .scale(cross_scale)
