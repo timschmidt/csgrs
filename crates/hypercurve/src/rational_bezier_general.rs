@@ -2753,7 +2753,10 @@ impl RationalBezier2 {
         {
             return Classification::Decided(BezierLineContactRelation::OnSupportingLine);
         }
-        if let Some(circle) = retained_regular_circle {
+        'retained_circle: {
+            let Some(circle) = retained_regular_circle else {
+                break 'retained_circle;
+            };
             let (line_dx, line_dy) = line.delta();
             let (from_center_x, from_center_y) = line.start().delta_from(&circle.center);
             let quadratic = Real::dot2_refs([&line_dx, &line_dy], [&line_dx, &line_dy]);
@@ -2806,9 +2809,7 @@ impl RationalBezier2 {
                 let parameters = match quadratic_conic_point_parameters(&point, self, policy) {
                     Classification::Decided(Some(parameters)) => parameters,
                     Classification::Decided(None) => continue,
-                    Classification::Uncertain(reason) => {
-                        return Classification::Uncertain(reason);
-                    }
+                    Classification::Uncertain(_) => break 'retained_circle,
                 };
                 for parameter in parameters {
                     let crossing_direction = if kind == BezierLineContactKind::Crossing {
@@ -2818,7 +2819,7 @@ impl RationalBezier2 {
                         let Classification::Decided(derivative) =
                             self.derivative_at_classified(exact, policy)
                         else {
-                            return Classification::Uncertain(UncertaintyReason::RealSign);
+                            break 'retained_circle;
                         };
                         let signed_derivative = Real::signed_product_sum(
                             [true, false],
@@ -2832,7 +2833,7 @@ impl RationalBezier2 {
                                 Some(BezierLineCrossingDirection::PositiveToNegative)
                             }
                             Some(RealSign::Zero) | None => {
-                                return Classification::Uncertain(UncertaintyReason::RealSign);
+                                break 'retained_circle;
                             }
                         }
                     } else {
@@ -2859,9 +2860,7 @@ impl RationalBezier2 {
                 {
                     Ok(Classification::Decided(Ordering::Greater)) => contacts.swap(0, 1),
                     Ok(Classification::Decided(_)) => {}
-                    Ok(Classification::Uncertain(reason)) => {
-                        return Classification::Uncertain(reason);
-                    }
+                    Ok(Classification::Uncertain(_)) => break 'retained_circle,
                     Err(_) => return Classification::Uncertain(UncertaintyReason::Ordering),
                 }
             }
@@ -11577,6 +11576,43 @@ mod tests {
             contacts[0].crossing_direction(),
             Some(BezierLineCrossingDirection::PositiveToNegative)
         );
+    }
+
+    #[test]
+    fn retained_circle_line_contacts_fall_back_at_an_omitted_chart_point() {
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let arc = crate::CircularArc2::try_from_center(
+                Point2::from_values(2, 0),
+                Point2::from_values(0, 2),
+                Point2::from_values(0, 0),
+                false,
+            )
+            .unwrap();
+            let Classification::Decided(decomposition) = arc
+                .rational_bezier_decomposition_with_policy(&policy)
+                .unwrap()
+            else {
+                panic!("an exact quarter circle must decompose");
+            };
+            let [span] = decomposition.spans() else {
+                panic!("an exact quarter circle must have one rational span");
+            };
+            let curve = RationalBezier2::from(span.curve().clone());
+            let line =
+                LineSeg2::try_new(Point2::from_values(-2, -2), Point2::from_values(2, 2)).unwrap();
+
+            let relation = curve.relation_to_line_with_contacts(&line, &policy);
+            let Classification::Decided(BezierLineContactRelation::Contacts { contacts }) =
+                relation
+            else {
+                panic!("the finite diagonal contact must be decided after chart fallback");
+            };
+            assert_eq!(
+                contacts.len(),
+                1,
+                "the circle point omitted by the chart must not become a finite contact",
+            );
+        }
     }
 
     #[test]

@@ -6,3 +6,5 @@
 # everyone who runs the test benefits from these saved cases.
 cc 831ed4a8bd3eaf8f7d9d1c968ec4990c06a31170c08bba75e72ac676037e23af # shrinks to kind = 1, width = 60, height = 12, offset = 1, teeth = 2
 cc e6cd9a310878f2a37fb9ec25567a662349a31f34aafe21f8db11fd23de855f7f # shrinks to kind = 3, width = 32, height = 50, offset = 14, teeth = 2, distance = 2
+cc 0e3a15c4cff33e58d26834e41438fd55eb0563e0d0e04f8bdcf9b9a61ce98059 # shrinks to kind = 2, width = 70, height = 12, offset = 1, teeth = 4, distance = 1
+cc 11f3b682463d692a59612bc6f2d1c0d6b8ff44174e5e0877befef3e396322fc3 # shrinks to kind = 2, width = 40, height = 12, offset = 1, teeth = 3

@@ -69427,7 +69427,7 @@ impl BezierAlgebraicChord2 {
         };
         // A provenance line may be only a short directed witness for the
         // infinite support.  Classify that support first and let the retained
-        // arc and this finite chord perform the two authoritative domain
+        // parameterization and this finite chord perform the two authoritative domain
         // filters; `intersect_arc` would incorrectly clip to the witness.
         let hits = match line.supporting_line_circle_relation(&arc, policy)? {
             LineCircleRelation::Disjoint => Vec::new(),
@@ -69444,23 +69444,30 @@ impl BezierAlgebraicChord2 {
         let (chord_dx, chord_dy) = line.delta();
         let mut contacts = Vec::with_capacity(hits.len());
         for hit in hits {
-            match arc.contains_sweep_point(&hit, policy) {
-                Classification::Decided(true) => {}
-                Classification::Decided(false) => continue,
-                Classification::Uncertain(reason) => {
-                    return Ok(Some(Classification::Uncertain(reason)));
+            // The inverse retained-circle parameter map is itself the exact
+            // finite-span admission certificate.  Reclassifying the same hit
+            // through reconstructed Cartesian sweep sides can needlessly
+            // exhaust the predicate budget for algebraic line/circle roots.
+            let source_parameters = match policy
+                .strict_predicate_pass(|| source.retained_circle_point_parameters(&hit, policy))?
+            {
+                Classification::Decided(parameters) => parameters,
+                Classification::Uncertain(_) => {
+                    // The retained-circle inverse is an accelerator.  A hit
+                    // at the quadratic chart's omitted projective point can
+                    // make that inverse undecidable even though the ordinary
+                    // Bernstein line-contact kernel can certify the complete
+                    // finite parameter set.
+                    return Ok(None);
                 }
+            };
+            if source_parameters.is_empty() {
+                continue;
             }
             let point = RationalBezierIntersectionPointEvidence2::Exact(hit.clone());
             let chord_parameter = match self.parameter_at_certified_point(point.clone(), policy)? {
                 Classification::Decided(Some(parameter)) => parameter,
                 Classification::Decided(None) => continue,
-                Classification::Uncertain(reason) => {
-                    return Ok(Some(Classification::Uncertain(reason)));
-                }
-            };
-            let source_parameters = match source.retained_circle_point_parameters(&hit, policy)? {
-                Classification::Decided(parameters) => parameters,
                 Classification::Uncertain(reason) => {
                     return Ok(Some(Classification::Uncertain(reason)));
                 }

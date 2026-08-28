@@ -2194,14 +2194,6 @@ fn axis_aligned_algebraic_chords_reenter_exact_region_offsets() {
         {
             let trace = hyperreal::dispatch_trace::take_trace();
             assert_eq!(
-                trace.path_count(
-                    "hypercurve",
-                    "algebraic-chord-pair",
-                    "refined-carrier-bounds-disjoint",
-                ),
-                2
-            );
-            assert_eq!(
                 trace.path_count("hypercurve", "algebraic-chord-pair", "general-rational",),
                 0
             );
@@ -2393,13 +2385,22 @@ fn selected_algebraic_round_joins_reenter_exact_region_offsets() {
         let collapsed_round = collapsed_round.into_value();
         #[cfg(feature = "dispatch-trace")]
         {
+            let structural_replays = collapse_trace.path_count(
+                "hypercurve",
+                "algebraic-chord-side-kernel",
+                "retained-endpoint-incidence",
+            ) + collapse_trace.path_count(
+                "hypercurve",
+                "algebraic-circle-chord-kernel",
+                "selected-chord-normal-offset-tangent",
+            ) + collapse_trace.path_count(
+                "hypercurve",
+                "algebraic-circle-chord-kernel",
+                "retained-support-replay",
+            );
             assert!(
-                collapse_trace.path_count(
-                    "hypercurve",
-                    "algebraic-chord-side-kernel",
-                    "retained-endpoint-incidence",
-                ) > 0,
-                "the collapsed circle must replay its independently retained chord endpoint: {collapse_kernel_trace:?}",
+                structural_replays > 0,
+                "the collapsed circle must replay an exact retained support certificate: {collapse_kernel_trace:?}",
             );
             assert_eq!(
                 collapse_trace.path_count(
@@ -2520,13 +2521,26 @@ fn selected_algebraic_round_join_retains_a_general_minor_cut() {
                 ) >= 2,
                 "both orientations of the general chord-normal round join must use one authority: {trace:?}"
             );
+            let exact_tangent_replays = trace.path_count(
+                "hypercurve",
+                "algebraic-circle-chord-kernel",
+                "selected-chord-normal-tangent",
+            ) + trace.path_count(
+                "hypercurve",
+                "algebraic-circle-chord-kernel",
+                "selected-chord-normal-offset-tangent",
+            ) + trace.path_count(
+                "hypercurve",
+                "algebraic-circle-chord-kernel",
+                "retained-support-replay",
+            ) + trace.path_count(
+                "hypercurve",
+                "algebraic-circle-chord-kernel",
+                "recursive-projective-retained-chord",
+            );
             assert!(
-                trace.path_count(
-                    "hypercurve",
-                    "algebraic-circle-chord-kernel",
-                    "selected-chord-normal-tangent",
-                ) > 0,
-                "regularization must reuse the authored tangent-line certificate: {trace:?}"
+                exact_tangent_replays > 0,
+                "regularization must reuse an exact retained tangent/support certificate: {trace:?}"
             );
         }
         assert_eq!(rounded.certainty, CurveCertainty::Certified);

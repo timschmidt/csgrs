@@ -401,7 +401,41 @@ pub(crate) fn rational_bezier_circular_arc(
             Some(RealSign::Positive) => false,
             Some(RealSign::Negative) => true,
             Some(RealSign::Zero) => return Ok(Classification::Decided(None)),
-            None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
+            None => {
+                // Exact round joins retain the adjacent directed line and
+                // contact point.  That endpoint tangent is an authoritative
+                // traversal certificate even when expanding the selected
+                // control point into a radial cross product exceeds the
+                // predicate budget.
+                let retained_cross = circle.tangent_contacts.as_deref().and_then(|contacts| {
+                    contacts.iter().find_map(|contact| {
+                        let crate::rational_bezier::RationalQuadraticCircleTangentContact2::Line {
+                            line,
+                            point,
+                        } = contact
+                        else {
+                            return None;
+                        };
+                        // The retained line is directed with the authored
+                        // boundary traversal.  Radial cross tangent therefore
+                        // fixes the circle orientation at any certified
+                        // contact, including contacts outside this particular
+                        // decomposed span.
+                        let (radial_x, radial_y) = point.delta_from(&circle.center);
+                        let (tangent_x, tangent_y) = line.delta();
+                        crate::classify::real_sign(
+                            &(&radial_x * tangent_y - &radial_y * tangent_x),
+                            policy,
+                        )
+                    })
+                });
+                match retained_cross {
+                    Some(RealSign::Positive) => false,
+                    Some(RealSign::Negative) => true,
+                    Some(RealSign::Zero) => return Ok(Classification::Decided(None)),
+                    None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
+                }
+            }
         };
         return Ok(Classification::Decided(Some(
             CircularArc2::new_with_certified_radius(

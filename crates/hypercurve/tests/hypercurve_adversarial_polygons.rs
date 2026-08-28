@@ -329,6 +329,12 @@ fn reconstructed_slender_concavity_offsets_through_authoritative_region() {
 }
 
 #[test]
+fn reconstructed_collapsed_comb_offsets_through_authoritative_region() {
+    let case = polygon_case(2, 40, 12, 1, 4);
+    exercise_reconstruction(&case.source_points);
+}
+
+#[test]
 fn polygon_with_hole_cut_through_slender_concavity_stays_structurally_valid() {
     let case = polygon_case(1, 64, 40, 31, 3);
     let region = curve_region(vec![case.material.clone()], case.holes.clone());
