@@ -302,16 +302,23 @@ impl BezierLineContact {
         policy: &CurveContext,
     ) -> CurveResult<Self> {
         match parameter.known_interval(policy) {
-            Ok(Classification::Decided(_)) => Ok(Self {
-                parameter,
-                kind,
-                crossing_direction: None,
-                tangent_side: None,
-                supporting_line_parameter: None,
-            }),
-            Ok(Classification::Uncertain(_)) | Err(_) => Err(CurveError::Topology(
-                "Bezier line contact parameter must have a certified unit interval".into(),
-            )),
+            Ok(Classification::Decided(interval))
+                if in_closed_unit_interval(interval.start(), policy) == Some(true)
+                    && in_closed_unit_interval(interval.end(), policy) == Some(true) =>
+            {
+                Ok(Self {
+                    parameter,
+                    kind,
+                    crossing_direction: None,
+                    tangent_side: None,
+                    supporting_line_parameter: None,
+                })
+            }
+            Ok(Classification::Decided(_) | Classification::Uncertain(_)) | Err(_) => {
+                Err(CurveError::Topology(
+                    "Bezier line contact parameter must have a certified unit interval".into(),
+                ))
+            }
         }
     }
 

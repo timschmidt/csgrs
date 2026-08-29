@@ -69517,9 +69517,18 @@ impl BezierAlgebraicChord2 {
                 Classification::Uncertain(_) => {
                     // The retained-circle inverse is an accelerator.  A hit
                     // at the quadratic chart's omitted projective point can
-                    // make that inverse undecidable even though the ordinary
-                    // Bernstein line-contact kernel can certify the complete
-                    // finite parameter set.
+                    // make that inverse undecidable.  The retained arc sweep
+                    // can still reject that exact circle point before the
+                    // ordinary Bernstein line-contact fallback is needed.
+                    if arc.contains_sweep_point(&hit, policy) == Classification::Decided(false) {
+                        #[cfg(feature = "dispatch-trace")]
+                        hyperreal::dispatch_trace::record(
+                            "hypercurve",
+                            "algebraic-chord-retained-circle",
+                            "omitted-projective-point-outside-sweep",
+                        );
+                        continue;
+                    }
                     return Ok(None);
                 }
             };

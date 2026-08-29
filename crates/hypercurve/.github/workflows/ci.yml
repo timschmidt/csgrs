@@ -87,8 +87,8 @@ jobs:
         # Exact algebraic tests can each retain large certified elimination
         # structures. Explicitly ignored manual certification stress cases
         # remain available by name; keep the push suite optimized and bound
-        # concurrent test workers below the public runner's four-CPU ceiling.
-        run: cargo test --release --locked --all-features --no-fail-fast -- --test-threads=3
+        # concurrent retained elimination fields to two worker threads.
+        run: cargo test --release --locked --all-features --no-fail-fast -- --test-threads=2
 
       - name: Test WASM demo crate
         working-directory: hypercurve/examples/hypercurve_ui
