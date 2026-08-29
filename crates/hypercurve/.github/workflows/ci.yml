@@ -85,7 +85,7 @@ jobs:
       - name: Run bounded test suite
         working-directory: hypercurve
         # Exact algebraic tests can each retain large certified elimination
-        # structures. Explicitly ignored manual certification stress matrices
+        # structures. Explicitly ignored manual certification stress cases
         # remain available by name; keep the push suite optimized and bound
         # concurrent test workers below the public runner's four-CPU ceiling.
         run: cargo test --release --locked --all-features --no-fail-fast -- --test-threads=3

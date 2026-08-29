@@ -307,12 +307,15 @@ The quick start is compiled as `examples/basic.rs` and checked byte-for-byte
 against this README. The test suite also covers adversarial exact predicates,
 mixed-family region Booleans, regression corpora, and finite adapters.
 
-The exhaustive rank-independent public-Boolean matrix is retained as a manual
-stress test because an individual case can exceed a GitHub-hosted job's
-six-hour deadline. Run it on a suitably provisioned workstation with:
+The exhaustive rank-independent public-Boolean matrix and three recursive
+radial/projective cases are retained as manual stress tests because an
+individual case can consume a GitHub-hosted job's six-hour budget. Run them on
+a suitably provisioned workstation with:
 
 ```sh
 cargo test --release --locked --all-features rank_independent_public_booleans_ -- --ignored --test-threads=1
+cargo test --release --locked --all-features recursive_selected_radial_diameter_chord_intersects_a_rational_quadratic_ -- --ignored --test-threads=1
+cargo test --release --locked --all-features recursive_selected_radial_rational_kernel_retains_singular_circle_contacts -- --ignored --test-threads=1
 ```
 
 Detailed benchmark definitions and interpretation live in
