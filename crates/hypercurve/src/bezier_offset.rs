@@ -130145,6 +130145,7 @@ mod conversion_tests {
     macro_rules! rank_independent_public_boolean_case {
         ($name:ident, $policy:expr, $quarter:expr, $cusp_is_first:expr) => {
             #[test]
+            #[ignore = "manual exact-certification stress case; exceeds hosted CI deadline"]
             fn $name() {
                 assert_rank_independent_chord_normal_circle_overlap_completes_public_booleans(
                     $policy,

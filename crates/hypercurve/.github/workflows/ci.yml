@@ -82,12 +82,12 @@ jobs:
         working-directory: hypercurve
         run: cargo clippy --locked --all-targets --all-features -- -D warnings
 
-      - name: Run complete test suite
+      - name: Run bounded test suite
         working-directory: hypercurve
         # Exact algebraic tests can each retain large certified elimination
-        # structures. Keep the complete suite optimized and bound concurrent
-        # test workers below the public runner's four-CPU ceiling so exact
-        # cases can overlap without exhausting memory.
+        # structures. Explicitly ignored manual certification stress matrices
+        # remain available by name; keep the push suite optimized and bound
+        # concurrent test workers below the public runner's four-CPU ceiling.
         run: cargo test --release --locked --all-features --no-fail-fast -- --test-threads=3
 
       - name: Test WASM demo crate

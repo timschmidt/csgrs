@@ -307,6 +307,14 @@ The quick start is compiled as `examples/basic.rs` and checked byte-for-byte
 against this README. The test suite also covers adversarial exact predicates,
 mixed-family region Booleans, regression corpora, and finite adapters.
 
+The exhaustive rank-independent public-Boolean matrix is retained as a manual
+stress test because an individual case can exceed a GitHub-hosted job's
+six-hour deadline. Run it on a suitably provisioned workstation with:
+
+```sh
+cargo test --release --locked --all-features rank_independent_public_booleans_ -- --ignored --test-threads=1
+```
+
 Detailed benchmark definitions and interpretation live in
 [PERFORMANCE.md](PERFORMANCE.md) and
 [COMPARATIVE_BENCHMARKS.md](COMPARATIVE_BENCHMARKS.md). Fuzz target ownership
