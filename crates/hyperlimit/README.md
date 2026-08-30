@@ -260,7 +260,7 @@ binary64 comparison crates return determinant values or signs.
 
 Coverage is measured on two axes. LLVM reports executable source coverage;
 `tests/real_representations.rs` independently enforces scalar representation
-coverage across all eight public Hyperreal structural kinds, all twenty
+coverage across all eight public Hyperreal structural kinds, all twenty-two
 optimized class certificates, every rational storage class and primitive range
 status, primitive-float imports, every optional primitive-cache feature
 combination, cache and abort state, JSON/CBOR forms, and unresolved opaque

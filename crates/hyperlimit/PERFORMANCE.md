@@ -23,10 +23,10 @@ and writes the raw annotated HTML report.
 Source-line coverage is paired with an explicit `Real` representation matrix;
 running a common arithmetic line with one convenient rational is not treated
 as representation coverage. `tests/real_representations.rs` constructs every
-public `StructuralKind` and all twenty optimized Hyperreal class certificates:
+public `StructuralKind` and all twenty-two optimized Hyperreal class certificates:
 `One`, `Pi`, `PiPow`, `PiInv`, `PiExp`, `PiInvExp`, `PiSqrt`, `ConstProduct`,
 `ConstOffset`, `ConstProductSqrt`, `Sqrt`, `Exp`, `Ln`, `LnAffine`, `LnProduct`,
-`Log10`, `Log2`, `SinPi`, `TanPi`, and `Irrational`. Each is translated through
+`Log10`, `Log2`, `Pow10`, `Pow2`, `SinPi`, `TanPi`, and `Irrational`. Each is translated through
 scalar ordering/sign, 2D orientation, segment and triangle containment, 3D
 orientation, and plane incidence under strict and approximation-capable
 policies. The matrix separately covers zero/word/multi-limb/very-large rational
@@ -56,7 +56,7 @@ claim that every possible expression tree can be enumerated.
 
 | Layer | Owns | Performance boundary |
 | --- | --- | --- |
-| Hyperreal | Exact `Rational` storage, the scaled 20-class `Real` certificate, lazy `Computable` graphs, scalar facts, refinement, and approximation caches. | Simplifies and certifies scalar structure before allocating or refining a generic graph. |
+| Hyperreal | Exact `Rational` storage, the scaled 22-class `Real` certificate, lazy `Computable` graphs, scalar facts, refinement, and approximation caches. | Simplifies and certifies scalar structure before allocating or refining a generic graph. |
 | Hyperlattice | Fixed-size point/vector/matrix/projective carriers, shared-scale views, sparse support, zero masks, determinant schedules, and exact reducers. | Reuses object-level algebra and facts; it constructs expressions but does not classify geometry. |
 | Hyperlimit | Policy-aware predicate cascades, typed classifications, bounded escalation, exact predicate constructions, retained evidence, reports, replay, and validation. | Consumes scalar/carrier facts and returns `Unknown` rather than inventing an epsilon or primitive-float topology decision. |
 | Hypercurve/Hypertri/Hypermesh and higher crates | Curves, triangulations, mesh topology, Boolean structure, and application policy. | Consume Hyperlimit outcomes; they do not redefine scalar or predicate semantics. |
@@ -124,7 +124,7 @@ bytes as passive payload. They vary rational offsets, scale, step, shear,
 structural `Real` representation, and strict versus approximate policy while
 checking scalar/batch/Rayon agreement, sign reversal, translation and incidence
 laws, retained report validation/replay, and ordering consistency. The
-representation target constructs all twenty optimized certificates on every
+representation target constructs all twenty-two optimized certificates on every
 execution, rotates their pairings from fuzz input, and grows variable-depth
 opaque computable DAGs. Both targets compile independently and completed
 sanitizer-backed smoke campaigns without a crash. The representation carrier

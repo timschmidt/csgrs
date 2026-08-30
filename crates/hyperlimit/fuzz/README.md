@@ -4,7 +4,7 @@
 and Rayon-batch agreement, retained evidence/report replay, and metamorphic
 laws over generated exact rationals.
 `hyperreal_representations` constructs all eight public Hyperreal structural
-kinds and all twenty optimized scalar certificates (`One` through
+kinds and all twenty-two optimized scalar certificates (`One` through
 `Irrational`). Every execution crosses each certificate through orientation,
 sidedness, sign, scalar/batch/Rayon parity, and ordering; a fuzzed rotation
 eventually pairs every representation with every other representation without
