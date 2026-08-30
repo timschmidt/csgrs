@@ -899,7 +899,7 @@ impl Real {
                 Irrational => "scaled-computable",
                 Pi | PiPow(_) | PiInv | PiExp(_) | PiInvExp(_) | PiSqrt(_) | ConstProduct(_)
                 | ConstOffset(_) | ConstProductSqrt(_) | Sqrt(_) | Exp(_) | Ln(_) | LnAffine(_)
-                | LnProduct(_) | Log10(_) | Log2(_) | SinPi(_) | TanPi(_) =>
+                | LnProduct(_) | Log10(_) | Log2(_) | Pow10(_) | Pow2(_) | SinPi(_) | TanPi(_) =>
                     "symbolic-nonzero-scale",
             }
         );
@@ -909,7 +909,7 @@ impl Real {
             One => Some(real_sign_from_num(rational_sign)),
             Pi | PiPow(_) | PiInv | PiExp(_) | PiInvExp(_) | PiSqrt(_) | ConstProduct(_)
             | ConstOffset(_) | ConstProductSqrt(_) | Sqrt(_) | Exp(_) | Ln(_) | LnAffine(_)
-            | LnProduct(_) | Log10(_) | Log2(_) | SinPi(_) | TanPi(_) => {
+            | LnProduct(_) | Log10(_) | Log2(_) | Pow10(_) | Pow2(_) | SinPi(_) | TanPi(_) => {
                 // Exact symbolic classes are positive by construction, so the
                 // outer rational scale alone determines sign. Additive classes
                 // such as ConstOffset/LnAffine are admitted only when this

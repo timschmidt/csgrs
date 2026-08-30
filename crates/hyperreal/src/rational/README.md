@@ -60,6 +60,10 @@ the needed facts:
 - exact dot products and signed product sums build shared denominators and
   reduce once at the end; dyadic dots first align checked `u128` products and
   fall through to `BigUint` unchanged on overflow
+- owned and borrowed iterator products skip multiplicative identities and use
+  bounded balanced chunks plus a logarithmic partial-product tree, avoiding the
+  rapidly growing intermediates of a long left fold without retaining every
+  streamed factor
 - fused exact-dyadic line intersections reduce their two ordering parameters
   eagerly but retain the two point coordinates as exact internal quotients;
   output assembly can compare and clone those coordinates without paying two
@@ -105,6 +109,8 @@ matrix/vector kernels, where repeated rational reduction can dominate runtime.
 - shared-denominator dot products and signed product sums accumulate related
   terms before the final reduction; word-sized dyadic accumulators avoid one
   arbitrary-precision allocation per dense vector lane
+- iterator products consume the complete input even after observing zero;
+  empty, all-one, and single-factor inputs avoid allocating a product buffer
 - scale-invariant polynomial kernels can clear denominators and integer content
   directly into mutable `BigInt` coefficients with `primitive_bigint_ratio`,
   avoiding an intermediate vector of `Rational` wrappers

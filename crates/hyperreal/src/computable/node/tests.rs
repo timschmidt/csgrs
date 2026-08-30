@@ -1567,6 +1567,35 @@ mod tests {
     }
 
     #[test]
+    fn many_digits_exact_integer_trig_uses_one_high_precision_pi_pass() {
+        // Many Digits C08: the exact argument has 120,605 bits. Besides being
+        // a useful quadrant oracle, this crosses the cache-aware reduction
+        // threshold so the quotient estimate warms pi deeply enough for the
+        // final residual instead of immediately recomputing pi.
+        let argument = BigInt::from(6_u8).pow(6_u32.pow(6));
+        let direct = Computable::integer(argument);
+
+        assert_approx(
+            direct.clone().sin(),
+            -128,
+            "324613637756746780497943680818791265673",
+            8,
+        );
+        assert_approx(
+            direct.clone().cos(),
+            -128,
+            "-102068973834597634010659370575740411979",
+            8,
+        );
+        assert_approx(
+            direct.tan(),
+            -128,
+            "-1082212280978570270357125515810836172498",
+            16,
+        );
+    }
+
+    #[test]
     fn tan_small_and_medium_arguments() {
         let one_fifth = Computable::rational(Rational::fraction(1, 5).unwrap());
         assert_approx(one_fifth.tan(), -32, "870632973", 2);
@@ -1830,6 +1859,32 @@ mod tests {
             assert!(Computable::internal_structural_eq(&reduced, &tiny));
             assert_eq!(reduced.exact_sign(), Some(Sign::Plus));
         }
+    }
+
+    #[test]
+    fn add_cancels_a_commuted_exact_pair_without_general_reordering() {
+        let root_two = Computable::sqrt_rational(Rational::new(2));
+        let root_three = Computable::sqrt_rational(Rational::new(3));
+        let forward = root_two.clone().add(root_three.clone());
+        let reverse = root_three.clone().add(root_two.clone());
+
+        for zero in [
+            forward.clone().add(reverse.clone().negate()),
+            reverse.negate().add(forward),
+        ] {
+            assert_eq!(zero.exact_rational(), Some(Rational::zero()));
+            assert_eq!(zero.exact_sign(), Some(Sign::NoSign));
+        }
+
+        let nonzero = root_two
+            .clone()
+            .add(Computable::one())
+            .add(
+                Computable::one()
+                    .add(root_two.multiply_rational(Rational::new(2)))
+                    .negate(),
+            );
+        assert_eq!(nonzero.exact_sign(), Some(Sign::Minus));
     }
 
     #[test]

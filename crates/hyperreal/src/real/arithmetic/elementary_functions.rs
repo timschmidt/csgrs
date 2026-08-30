@@ -225,14 +225,57 @@ impl Real {
             _ => (),
         }
         if matches!(&self.class, Irrational)
-            && let Some((rational, radical_scale, None)) = self
+            && let Some((rational, radical_scale, radicand)) = self
                 .computable
                 .as_ref()
                 .and_then(Computable::exact_quadratic_surd_parts)
-            && radical_scale.sign() == Sign::NoSign
         {
-            crate::trace_dispatch!("real", "sqrt", "computable-rational-promotion");
-            return Self::new(&self.rational * &rational).sqrt();
+            let rational = &self.rational * &rational;
+            let radical_scale = &self.rational * &radical_scale;
+            if radical_scale.sign() == Sign::NoSign {
+                crate::trace_dispatch!("real", "sqrt", "computable-rational-promotion");
+                return Self::new(rational).sqrt();
+            }
+
+            // If z = a + b*sqrt(d) has a nonnegative square conjugate norm,
+            // recover its principal square root exactly:
+            //
+            // sqrt(z) = sqrt((a+s)/2) + sign(b)*sqrt((a-s)/2),
+            // where s^2 = a^2 - b^2*d. Requiring both half-squares to be
+            // nonnegative makes this a proof-only fold rather than a heuristic
+            // algebraic rewrite.
+            if let Some(radicand) = radicand
+                && radicand.sign() == Sign::Plus
+            {
+                let norm = &rational * &rational
+                    - &radical_scale * &radical_scale * radicand;
+                if norm.sign() != Sign::Minus && norm.extract_square_will_succeed() {
+                    let norm_root = if norm.sign() == Sign::NoSign {
+                        Some(Rational::zero())
+                    } else {
+                        let (root, rest) = norm.extract_square_reduced();
+                        rest.is_one().then_some(root)
+                    };
+                    if let Some(norm_root) = norm_root {
+                        let high = (&rational + &norm_root) * rationals::HALF.clone();
+                        let low = (rational - norm_root) * rationals::HALF.clone();
+                        if high.sign() != Sign::Minus && low.sign() != Sign::Minus {
+                            let high_root = Self::new(high).sqrt()?;
+                            let low_root = Self::new(low).sqrt()?;
+                            crate::trace_dispatch!(
+                                "real",
+                                "sqrt",
+                                "quadratic-surd-perfect-square"
+                            );
+                            return Ok(if radical_scale.sign() == Sign::Minus {
+                                high_root - low_root
+                            } else {
+                                high_root + low_root
+                            });
+                        }
+                    }
+                }
+            }
         }
         crate::trace_dispatch!("real", "sqrt", "generic-computable");
         Ok(self.make_computable(Computable::sqrt))
@@ -339,6 +382,56 @@ impl Real {
         Ok(self.make_computable(Computable::exp))
     }
 
+    /// Raise two to this Real exponent.
+    ///
+    /// Exact rational exponents remain algebraic, and retained [`Real::log2`]
+    /// certificates cancel without entering the approximation graph.
+    pub fn exp2(self) -> Result<Real, Problem> {
+        if matches!(self.class, One)
+            && !self.rational.is_integer()
+            && self.rational.denominator() != unsigned::TWO.deref()
+        {
+            let exponent = self.rational;
+            let computable = Class::rational_base_power_computable(&rationals::TWO, &exponent);
+            crate::trace_dispatch!("real", "exp2", "rational-power-certificate");
+            return Ok(Self {
+                rational: Rational::one(),
+                class: Pow2(exponent),
+                computable: Some(computable),
+                primitive_approx_cache: AtomicPrimitiveApproxCache::new(
+                    PrimitiveApproxCache::Empty,
+                ),
+            });
+        }
+        crate::trace_dispatch!("real", "exp2", "base-two-pow");
+        Self::from(2_i32).pow(self)
+    }
+
+    /// Raise ten to this Real exponent.
+    ///
+    /// Exact rational exponents remain algebraic, and retained [`Real::log10`]
+    /// certificates cancel without entering the approximation graph.
+    pub fn exp10(self) -> Result<Real, Problem> {
+        if matches!(self.class, One)
+            && !self.rational.is_integer()
+            && self.rational.denominator() != unsigned::TWO.deref()
+        {
+            let exponent = self.rational;
+            let computable = Class::rational_base_power_computable(&rationals::TEN, &exponent);
+            crate::trace_dispatch!("real", "exp10", "rational-power-certificate");
+            return Ok(Self {
+                rational: Rational::one(),
+                class: Pow10(exponent),
+                computable: Some(computable),
+                primitive_approx_cache: AtomicPrimitiveApproxCache::new(
+                    PrimitiveApproxCache::Empty,
+                ),
+            });
+        }
+        crate::trace_dispatch!("real", "exp10", "base-ten-pow");
+        Self::from(10_i32).pow(self)
+    }
+
     /// The base 10 logarithm of this Real or Problem::NotANumber if this Real is negative.
     pub fn log10(self) -> Result<Real, Problem> {
         if self.operation_sign()? != Sign::Plus {
@@ -349,6 +442,19 @@ impl Real {
             // Scalar construction benches hit exact rationals here heavily.
             // Avoid building ln(x) and then simplifying ln(x)/ln(10).
             return Self::log10_rational(self.rational);
+        }
+        if self.rational.is_one()
+            && let Pow10(exponent) = &self.class
+        {
+            crate::trace_dispatch!("real", "log10", "rational-power-inverse");
+            return Ok(Self::new(exponent.clone()));
+        }
+        if let Sqrt(radicand) = &self.class
+            && radicand == rationals::TEN.deref()
+            && let Some(scale_log) = Self::rational_integer_log(&self.rational, 10)
+        {
+            crate::trace_dispatch!("real", "log10", "half-integer-power-inverse");
+            return Ok(Self::new(scale_log + rationals::HALF.clone()));
         }
         // Use the cached ln(10) symbolic constant. Division recognizes ln/ln10
         // and can return a lightweight Log10 class for exact log inputs.
@@ -405,6 +511,19 @@ impl Real {
         }
         if let One = &self.class {
             return Self::log2_rational(self.rational);
+        }
+        if self.rational.is_one()
+            && let Pow2(exponent) = &self.class
+        {
+            crate::trace_dispatch!("real", "log2", "rational-power-inverse");
+            return Ok(Self::new(exponent.clone()));
+        }
+        if let Sqrt(radicand) = &self.class
+            && radicand == rationals::TWO.deref()
+            && let Some(scale_log) = Self::rational_integer_log(&self.rational, 2)
+        {
+            crate::trace_dispatch!("real", "log2", "half-integer-power-inverse");
+            return Ok(Self::new(scale_log + rationals::HALF.clone()));
         }
         crate::trace_dispatch!("real", "log2", "ln-div-cached-ln2");
         self.ln()? / constants::scaled_ln(2, 1).unwrap()
@@ -514,6 +633,20 @@ impl Real {
             result
         } else {
             None
+        }
+    }
+
+    fn rational_integer_log(r: &Rational, base: u32) -> Option<Rational> {
+        match r.cmp_one_structural() {
+            std::cmp::Ordering::Less => {
+                let inverse = r.clone().inverse().ok()?;
+                Some(-Self::rational_integer_log(&inverse, base)?)
+            }
+            std::cmp::Ordering::Equal => Some(Rational::zero()),
+            std::cmp::Ordering::Greater => {
+                let exponent = Self::integer_log(r.integer_magnitude()?, base)?;
+                Some(Rational::from_bigint(BigInt::from(exponent)))
+            }
         }
     }
 
@@ -3737,7 +3870,25 @@ impl Real {
                 return Ok(left * exponent.exp()?);
             }
         }
-        /* could handle self == 10 =>  10 ^ log10(exponent) specially */
+        if self.class == One {
+            match (&self.rational, &exponent.class) {
+                (base, Log2(argument)) if base == rationals::TWO.deref() => {
+                    // 2^(q log2(r)) = r^q. Preserve exact rational/algebraic
+                    // structure instead of constructing exp(ln(2) * q log2(r)).
+                    crate::trace_dispatch!("real", "pow", "base-two-log2-collapse");
+                    return Self::new(argument.clone())
+                        .pow_rational(exponent.rational.clone());
+                }
+                (base, Log10(argument)) if base == rationals::TEN.deref() => {
+                    // 10^(q log10(r)) = r^q, with the same exact-domain
+                    // guarantees carried by the retained Log10 certificate.
+                    crate::trace_dispatch!("real", "pow", "base-ten-log10-collapse");
+                    return Self::new(argument.clone())
+                        .pow_rational(exponent.rational.clone());
+                }
+                _ => {}
+            }
+        }
         if exponent.class == One {
             let r = exponent.rational;
             if r.is_integer() {

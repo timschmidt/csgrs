@@ -473,6 +473,54 @@ impl MulAssign<f64> for Real {
     }
 }
 
+fn real_product<I, T>(mut iter: I) -> Real
+where
+    I: Iterator<Item = T>,
+    T: AsRef<Real>,
+{
+    let mut first_symbolic = None;
+    let exact_prefix: Rational = iter
+        .by_ref()
+        .map_while(|factor| {
+            let factor = factor.as_ref();
+            if factor.class == One {
+                Some(factor.rational.clone())
+            } else {
+                first_symbolic = Some(factor.clone());
+                None
+            }
+        })
+        .product();
+
+    let Some(first_symbolic) = first_symbolic else {
+        crate::trace_dispatch!("real", "product", "exact-rational-balanced");
+        return Real::new(exact_prefix);
+    };
+
+    crate::trace_dispatch!("real", "product", "mixed-left-fold");
+    let mut product = if exact_prefix.is_one() {
+        first_symbolic
+    } else {
+        Real::new(exact_prefix) * first_symbolic
+    };
+    for factor in iter {
+        product *= factor.as_ref();
+    }
+    product
+}
+
+impl std::iter::Product for Real {
+    fn product<I: Iterator<Item = Self>>(iter: I) -> Self {
+        real_product(iter)
+    }
+}
+
+impl<'a> std::iter::Product<&'a Real> for Real {
+    fn product<I: Iterator<Item = &'a Real>>(iter: I) -> Self {
+        real_product(iter)
+    }
+}
+
 impl<T: AsRef<Real>> Div<T> for &Real {
     type Output = Result<Real, Problem>;
 

@@ -1784,6 +1784,63 @@ mod tests {
     }
 
     #[test]
+    fn iterator_products_balance_exact_factors_and_preserve_semantics() {
+        let empty: Vec<Rational> = Vec::new();
+        assert_eq!(empty.clone().into_iter().product::<Rational>(), Rational::one());
+        assert_eq!(empty.iter().product::<Rational>(), Rational::one());
+
+        for count in [1_usize, 2, 3, 8, 31, 128, 257, 511, 512, 513, 777] {
+            let factors: Vec<Rational> = (0..count)
+                .map(|index| {
+                    let magnitude = i64::try_from(index % 29 + 1).unwrap();
+                    let numerator = if index % 3 == 0 {
+                        -magnitude
+                    } else {
+                        magnitude
+                    };
+                    Rational::fraction(numerator, u64::try_from(index % 17 + 1).unwrap()).unwrap()
+                })
+                .collect();
+            let expected = factors
+                .iter()
+                .fold(Rational::one(), |product, factor| &product * factor);
+            assert_eq!(
+                factors.clone().into_iter().product::<Rational>(),
+                expected,
+                "owned product with {count} factors"
+            );
+            assert_eq!(
+                factors.iter().product::<Rational>(),
+                expected,
+                "borrowed product with {count} factors"
+            );
+        }
+
+        let wallis: Vec<Rational> = (1_i64..=256)
+            .map(|index| {
+                let square4 = 4 * index * index;
+                Rational::fraction(square4, u64::try_from(square4 - 1).unwrap()).unwrap()
+            })
+            .collect();
+        let sequential = wallis
+            .iter()
+            .fold(Rational::one(), |product, factor| &product * factor);
+        assert_eq!(wallis.iter().product::<Rational>(), sequential);
+
+        let visits = std::cell::Cell::new(0);
+        let with_zero = (0_i64..5).map(|index| {
+            visits.set(visits.get() + 1);
+            if index == 1 {
+                Rational::zero()
+            } else {
+                Rational::new(index + 2)
+            }
+        });
+        assert_eq!(with_zero.product::<Rational>(), Rational::zero());
+        assert_eq!(visits.get(), 5, "product must consume the whole iterator");
+    }
+
+    #[test]
     fn word_multiplication_cross_cancellation_stays_reduced() {
         let dyadic = Rational::try_from(0.123_456_789_f64).unwrap();
         let scaled = &dyadic * Rational::new(10);

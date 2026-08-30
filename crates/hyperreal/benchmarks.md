@@ -120,8 +120,8 @@ Low-level approximation kernels and deep expression-tree stress cases.
 | `computable_transcendentals/cos_f64_cold_p96` | not run | not run | Approximates cos of the exact binary64-derived dyadic for 1.23456789. |
 | `computable_transcendentals/sin_1e6_cold_p96` | not run | not run | Approximates sin(1000000). |
 | `computable_transcendentals/cos_1e6_cold_p96` | not run | not run | Approximates cos(1000000). |
-| `computable_transcendentals/sin_1e30_cold_p96` | not run | not run | Approximates sin(10^30). |
-| `computable_transcendentals/cos_1e30_cold_p96` | not run | not run | Approximates cos(10^30). |
+| `computable_transcendentals/sin_1e30_cold_p96` | 2.109 us | 2.092 us - 2.129 us | Approximates sin(10^30). |
+| `computable_transcendentals/cos_1e30_cold_p96` | 2.274 us | 2.260 us - 2.288 us | Approximates cos(10^30). |
 | `computable_transcendentals/cos_cached_p96` | not run | not run | Repeats a cached cos(7/5) approximation. |
 | `computable_transcendentals/tan_cold_p96` | not run | not run | Approximates tan(7/5). |
 | `computable_transcendentals/tan_cached_p96` | not run | not run | Repeats a cached tan(7/5) approximation. |
@@ -578,6 +578,17 @@ Integer exponentiation for `Rational`.
 | `rational_powi/exact_17` | not run | not run | Raises a rational value to the 17th power. |
 | `rational_powi/oversized_20000_exhausted` | not run | not run | Rejects eager materialization before an oversized rational power allocates its result. |
 
+### `iterator_products`
+
+Sequential and balanced exact products over a 1,000-factor Wallis corpus.
+
+| Benchmark output | Mean | 95% CI | What it measures |
+| --- | ---: | ---: | --- |
+| `iterator_products/rational_wallis_sequential_1000` | 56.668 ms | 56.417 ms - 56.937 ms | Multiplies borrowed rational factors with a conventional left fold. |
+| `iterator_products/rational_wallis_owned_1000` | 1.667 ms | 1.659 ms - 1.674 ms | Consumes rational factors through the balanced `Product` implementation. |
+| `iterator_products/rational_wallis_borrowed_1000` | 1.654 ms | 1.643 ms - 1.666 ms | Clones borrowed rational factors into the balanced `Product` implementation. |
+| `iterator_products/real_wallis_owned_1000` | 1.686 ms | 1.676 ms - 1.696 ms | Consumes exact rational-backed `Real` factors through their balanced `Product` implementation. |
+
 ### `real_exact_trig`
 
 Exact and symbolic trig construction for known pi multiples.
@@ -697,14 +708,18 @@ Exact logarithm construction and simplification for rational inputs.
 
 ### `real_exact_exp_log10`
 
-Exact inverse relationships among exp, ln, and log10.
+Exact inverse relationships among exp, ln, log2, and log10.
 
 | Benchmark output | Mean | 95% CI | What it measures |
 | --- | ---: | ---: | --- |
-| `real_exact_exp_log10/exp_ln_1000` | not run | not run | Simplifies exp(ln(1000)) back to 1000. |
-| `real_exact_exp_log10/exp_ln_1_8` | not run | not run | Simplifies exp(ln(1/8)) back to 1/8. |
-| `real_exact_exp_log10/log10_1000` | not run | not run | Recognizes log10(1000) as 3. |
-| `real_exact_exp_log10/log10_1_1000` | not run | not run | Recognizes log10(1/1000) as -3. |
+| `real_exact_exp_log10/exp_ln_1000` | 67.38 ns | 66.99 ns - 67.82 ns | Simplifies exp(ln(1000)) back to 1000. |
+| `real_exact_exp_log10/exp_ln_1_8` | 85.50 ns | 83.18 ns - 88.93 ns | Simplifies exp(ln(1/8)) back to 1/8. |
+| `real_exact_exp_log10/log10_1000` | 42.09 ns | 41.81 ns - 42.39 ns | Recognizes log10(1000) as 3. |
+| `real_exact_exp_log10/log10_1_1000` | 73.82 ns | 73.49 ns - 74.18 ns | Recognizes log10(1/1000) as -3. |
+| `real_exact_exp_log10/pow2_log2_3` | 100.69 ns | 99.52 ns - 101.91 ns | Builds 2 raised to the retained log2(3) certificate. |
+| `real_exact_exp_log10/pow10_log10_2` | 101.69 ns | 100.05 ns - 103.53 ns | Builds 10 raised to the retained log10(2) certificate. |
+| `real_exact_exp_log10/log2_exp2_1_7` | 92.44 ns | 89.77 ns - 95.27 ns | Recovers 1/7 from the exact algebraic value 2^(1/7). |
+| `real_exact_exp_log10/log10_exp10_6411_4096` | 112.69 ns | 105.87 ns - 119.78 ns | Recovers Kahan's 6411/4096 exponent from its exact base-ten power. |
 
 ### `real_stable_scalar_substrate`
 
@@ -723,6 +738,8 @@ Stable scalar constructors that preserve small residuals, dominance, roots, rati
 | `real_stable_scalar_substrate/logit_near_one` | not run | not run | Builds logit close to the upper probability boundary. |
 | `real_stable_scalar_substrate/sqrt1pm1_tiny` | not run | not run | Builds sqrt(1 + tiny) - 1 through the stable helper. |
 | `real_stable_scalar_substrate/sqrt1m1_tiny` | not run | not run | Builds sqrt(1 - tiny) - 1 through the stable helper. |
+| `real_stable_scalar_substrate/sqrt_quadratic_surd_perfect_norm` | 1.183 us | 1.168 us - 1.201 us | Recovers the exact principal root of 3 + 2*sqrt(2) from its square conjugate norm. |
+| `real_stable_scalar_substrate/certified_compare_nested_radical_identity` | 226.20 ns | 224.22 ns - 228.38 ns | Certifies sqrt(x)+sqrt(y) against the equivalent nested radical after exact construction. |
 | `real_stable_scalar_substrate/cbrt_negative_perfect` | not run | not run | Collapses a negative perfect cube. |
 | `real_stable_scalar_substrate/root_n_perfect_fourth` | not run | not run | Collapses an exact fourth root. |
 | `real_stable_scalar_substrate/pow_rational_negative_odd_denominator` | not run | not run | Routes a negative rational base through odd-root symmetry. |
@@ -975,7 +992,7 @@ Owned versus borrowed arithmetic for symbolic irrational `Real` values.
 | Benchmark output | Mean | 95% CI | What it measures |
 | --- | ---: | ---: | --- |
 | `real_irrational_ops/add_owned` | not run | not run | Adds cloned owned operands. |
-| `real_irrational_ops/add_refs` | not run | not run | Adds borrowed operands without cloning both inputs. |
+| `real_irrational_ops/add_refs` | 62.54 ns | 62.07 ns - 63.09 ns | Adds borrowed operands without cloning both inputs. |
 | `real_irrational_ops/sub_owned` | not run | not run | Subtracts cloned owned operands. |
 | `real_irrational_ops/sub_refs` | not run | not run | Subtracts borrowed operands. |
 | `real_irrational_ops/mul_owned` | not run | not run | Multiplies cloned owned operands. |

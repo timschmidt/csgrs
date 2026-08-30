@@ -121,6 +121,20 @@ fn optimized_certificate_representatives() -> Vec<RepresentationCase> {
             value: Real::from(3).log2().expect("positive logarithm input"),
         },
         RepresentationCase {
+            certificate: "Pow10",
+            public_kind: StructuralKind::ExpLike,
+            value: fraction(1, 7)
+                .exp10()
+                .expect("finite rational base-ten power"),
+        },
+        RepresentationCase {
+            certificate: "Pow2",
+            public_kind: StructuralKind::ExpLike,
+            value: fraction(1, 7)
+                .exp2()
+                .expect("finite rational base-two power"),
+        },
+        RepresentationCase {
             certificate: "SinPi",
             public_kind: StructuralKind::TrigExact,
             value: fraction(1, 5).sin_pi(),
@@ -201,7 +215,7 @@ fn assert_same_value(left: &Real, right: &Real, context: &str) {
 #[test]
 fn every_public_kind_and_private_optimized_certificate_crosses_scalar_dispatch() {
     let cases = optimized_certificate_representatives();
-    assert_eq!(cases.len(), 20, "update the optimized certificate matrix");
+    assert_eq!(cases.len(), 22, "update the optimized certificate matrix");
 
     let mut observed_kinds = [false; 8];
     for case in &cases {

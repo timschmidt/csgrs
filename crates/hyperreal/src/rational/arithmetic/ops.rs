@@ -1410,6 +1410,142 @@ impl<T: AsRef<Rational>> MulAssign<T> for Rational {
     }
 }
 
+const BALANCED_PRODUCT_CHUNK: usize = 512;
+
+#[inline]
+fn balanced_product_pair(left: &Rational, right: &Rational, traced: &mut bool) -> Rational {
+    if !*traced {
+        crate::trace_dispatch!("rational", "product", "balanced-pairwise");
+        *traced = true;
+    }
+    left * right
+}
+
+fn reduce_rational_product_chunk(
+    factors: &mut Vec<Rational>,
+    traced: &mut bool,
+) -> Option<Rational> {
+    while factors.len() > 1 {
+        let length = factors.len();
+        let mut read = 0;
+        let mut write = 0;
+        while read + 1 < length {
+            let product = balanced_product_pair(&factors[read], &factors[read + 1], traced);
+            factors[write] = product;
+            read += 2;
+            write += 1;
+        }
+        if read < length {
+            if read != write {
+                factors.swap(read, write);
+            }
+            write += 1;
+        }
+        factors.truncate(write);
+    }
+    factors.pop()
+}
+
+fn push_rational_product_partial(
+    partials: &mut Vec<Option<Rational>>,
+    mut product: Rational,
+    traced: &mut bool,
+) {
+    let mut level = 0;
+    loop {
+        if level == partials.len() {
+            partials.push(Some(product));
+            return;
+        }
+        if let Some(left) = partials[level].take() {
+            product = balanced_product_pair(&left, &product, traced);
+            level += 1;
+        } else {
+            partials[level] = Some(product);
+            return;
+        }
+    }
+}
+
+fn balanced_rational_product<I>(iter: I) -> Rational
+where
+    I: Iterator<Item = Rational>,
+{
+    let initial_chunk_capacity = iter.size_hint().0.min(BALANCED_PRODUCT_CHUNK);
+    let mut chunk = Vec::new();
+    let mut pending_factor = None;
+    // Slot n holds either no value or a product of 2^n full chunks. Chunking
+    // keeps the hot inner tree contiguous while retaining only O(log n)
+    // partial products and at most 512 original factors.
+    let mut partials: Vec<Option<Rational>> = Vec::new();
+    let mut has_zero = false;
+    let mut traced = false;
+
+    for factor in iter {
+        if has_zero {
+            continue;
+        }
+        if factor.is_zero() {
+            pending_factor = None;
+            chunk.clear();
+            partials.clear();
+            has_zero = true;
+            continue;
+        }
+        if factor.is_one() {
+            continue;
+        }
+        if chunk.capacity() == 0 {
+            let Some(first) = pending_factor.take() else {
+                pending_factor = Some(factor);
+                continue;
+            };
+            chunk = Vec::with_capacity(initial_chunk_capacity.max(2));
+            chunk.push(first);
+        }
+        chunk.push(factor);
+        if chunk.len() == BALANCED_PRODUCT_CHUNK {
+            let product = reduce_rational_product_chunk(&mut chunk, &mut traced)
+                .expect("a full product chunk is nonempty");
+            push_rational_product_partial(&mut partials, product, &mut traced);
+        }
+    }
+
+    if has_zero {
+        return Rational::zero();
+    }
+    if let Some(factor) = pending_factor {
+        return factor;
+    }
+
+    if let Some(product) = reduce_rational_product_chunk(&mut chunk, &mut traced) {
+        push_rational_product_partial(&mut partials, product, &mut traced);
+    }
+
+    // Low-to-high merging combines the short trailing blocks before the
+    // largest leading block, avoiding a final long chain for non-powers of 2.
+    let mut result = None;
+    for leading in partials.into_iter().flatten() {
+        result = Some(match result {
+            Some(trailing) => balanced_product_pair(&trailing, &leading, &mut traced),
+            None => leading,
+        });
+    }
+    result.unwrap_or_else(Rational::one)
+}
+
+impl std::iter::Product for Rational {
+    fn product<I: Iterator<Item = Self>>(iter: I) -> Self {
+        balanced_rational_product(iter)
+    }
+}
+
+impl<'a> std::iter::Product<&'a Rational> for Rational {
+    fn product<I: Iterator<Item = &'a Rational>>(iter: I) -> Self {
+        balanced_rational_product(iter.cloned())
+    }
+}
+
 impl<T: AsRef<Rational>> Div<T> for &Rational {
     type Output = Rational;
 

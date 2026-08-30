@@ -430,6 +430,58 @@ The regenerated trace reduces `computable/exp_large_rational` from 29 events to
 5, records `bounded-integer-e-power`, and removes the old `ln2-range-reduction`
 and its rational add, multiply, comparison, and word-result traffic.
 
+### Exact base-two and base-ten logarithm cancellation
+
+`Real::exp2` and `Real::exp10` now expose the existing exact power machinery
+with bases two and ten. More importantly, `Real::pow` recognizes the matching
+retained logarithm certificates before constructing a generic
+`exp(ln(base) * exponent)` graph. For a positive rational `r` and exact
+rational scale `q`, it applies the exact identities
+`2^(q log2(r)) = r^q` and `10^(q log10(r)) = r^q`. Integer results stay
+rational, fractional powers stay algebraic, and nonmatching or opaque
+exponents retain the former arbitrary-exponent path.
+
+Matched Criterion runs of the complete `real_exact_exp_log10` group measured:
+
+| Exact construction | Before | Retained | Change |
+| --- | ---: | ---: | ---: |
+| `2^log2(3)` | 9.260--9.409 us | 101.1--102.6 ns | about 98.9% faster |
+| `10^log10(2)` | 6.414--6.525 us | 99.18--100.68 ns | about 98.5% faster |
+
+The old results were generic irrational graphs; the retained results are the
+exact rationals three and two, respectively, so the timing win accompanies a
+strict exactness improvement. Small exhaustive tests cover 576 positive
+rational round trips, signed rational certificate scales, integer and
+algebraic exponents, Simple-expression parsing, and a 1,040-case binary64
+cross-reference grid. The public API benchmark also compares generic
+`exp2(3/4)` and `exp10(3/4)` construction against 128-bit MPFR; those rows are
+semantic boundary measurements because Hyper retains an exact algebraic value
+while MPFR computes a fixed-precision approximation.
+
+The reverse direction now retains a compact exact certificate for rational
+base-two and base-ten powers that are not already rationals or quadratic
+surds. Thus `log2(exp2(q))` and `log10(exp10(q))` return the exact rational
+`q`; half-integer powers keep their more useful `Sqrt` representation and use
+a separate exact inverse rule. The two certificates each carry one `Rational`,
+so the guarded `Class` and `Real` layout limits remain 16 and 48 bytes.
+
+This also removes the former generic `pow` construction for those rational
+exponents. Matched Criterion runs measured:
+
+| Exact operation | Before | Retained | Change |
+| --- | ---: | ---: | ---: |
+| `exp2(3/4)` | about 5.36 us | 172.87--175.46 ns | about 96.8% faster |
+| `exp10(3/4)` | 5.277--5.365 us | 167.69--171.58 ns | about 96.8% faster |
+| `log2(exp2(1/7))` | 419.00--430.95 ns | 82.99--84.79 ns | about 80.0% faster |
+| `log10(exp10(6411/4096))` | 752.16--761.45 ns | 87.98--89.12 ns | about 88.2% faster |
+
+The retained results are structural exact rationals, whereas bounded equality
+of the former logarithm graphs remained unknown even after 2,048 bits of
+refinement. Tests cover 2,080 signed rational inverse round trips, the
+`6411/4096` hard exponent, clone reconstruction, base mismatch, exhaustive
+private-class JSON/CBOR round trips, layout guards, and the existing numerical
+cross-reference grid.
+
 ## Computable Path
 
 Current timing anchors:
@@ -541,10 +593,10 @@ benchmark, and correctness test supported it.
 | Reference | Transferable mechanism | Result in hyperreal |
 | --- | --- | --- |
 | Bareiss (1968) | Exact division and fraction-free elimination keep intermediate coefficients integral. | Already reflected in delayed rational reduction and product-sum aggregation.  General elimination is outside this scalar crate. |
-| Boehm et al. (1986) | Precision-driven functional exact reals, cached best approximations, variable-precision Newton steps, and balanced expression trees. | The representation, approximation cache, and Newton kernels already follow the paper.  Balanced arbitrary-length sums were measured and rejected; details below. |
+| Boehm et al. (1986) | Precision-driven functional exact reals, cached best approximations, variable-precision Newton steps, and balanced expression trees. | The representation, approximation cache, and Newton kernels already follow the paper. Balanced arbitrary-length symbolic sums were measured and rejected, while balanced exact iterator products were later measured and retained; details below. |
 | Boehm (2020) | Separate terminating approximate comparison from potentially divergent exact comparison; preserve symbolic facts and cached recursive approximations. | Existing structural facts, bounded refinement, exact float import, explicit lossy export, and cached `Computable` graphs cover the applicable API.  A fixed rational-size cap would change exact-rational extraction semantics and was not adopted. |
 | Brent (1976) | Variable-precision Newton iteration and high-precision AGM/Landen elementary functions. | Newton reciprocal and square root are already variable precision.  AGM was not introduced because the paper itself notes that conventional kernels win at modest precision, which is the measured regime here. |
-| Brent--Zimmermann (2010) | Staged argument reduction, `ln1p` symmetry, binary splitting, and asymptotically fast pi/functions. | Existing trig reduction, the `x/(2+x)` logarithm transform, Newton kernels, and binary-split exponential cover the useful mechanisms.  AGM or Chudnovsky pi is reserved for evidence of an extreme-precision bottleneck. |
+| Brent--Zimmermann (2010) | Staged argument reduction, `ln1p` symmetry, binary splitting, and asymptotically fast pi/functions. | Existing trig reduction, the `x/(2+x)` logarithm transform, Newton kernels, and binary-split exponential cover the useful mechanisms. Binary-split Chudnovsky pi was subsequently retained after an exact 120,605-bit argument exposed the high-precision bottleneck; details below. |
 | Johansson (2015) | Table-based argument reduction plus rectangular splitting shortens medium-precision elementary-function series while retaining rigorous error bounds. | Retained a minimal exact-rational `atan(2/3)` table point assembled from the existing pi and `atan(1/5)` caches.  The representative interval sweep improved by 24% at 32 bits, 30% at 96 bits, and 41% at 256 bits; a larger table and rectangular splitting remain unjustified at the current operand sizes. |
 | Middeke--Jeffrey--Koutschan (2021) | Predict systematic common row/column factors in fraction-free matrix decompositions. | No LU/QR decomposition exists here on which to attach the three-entry factor predictor.  Rational aggregation already shares denominators and strips dyadic/common factors. |
 | Odrzywolek (2026) | Lower elementary expressions to the binary `exp(x)-ln(y)` operator. | Rejected for this runtime: lowering expands the graph and imports complex principal-branch and infinity semantics absent from this real-only API. |
@@ -584,6 +636,51 @@ construction-plus-`to_f64_lossy` from 32.74 us to 118.87 us.  Vec allocation,
 extra cloning, and loss of the cheap left-fold shape outweighed the shallower
 tree.  The implementation was removed; the two `real_sum_refs_64_symbolic`
 benchmark rows remain as regression guards.
+
+### Retained experiment: balanced exact iterator products
+
+The exactCore Core2 `sumProd` corpus contrasts a left-associated Wallis product
+with an aggregate product. Its harness has no numerical oracle and its signed
+`4*i*i` term overflows above 23,170, including the default 100,000-term run, but
+the expression-shape question transfers cleanly when the factors are constructed
+as exact `Rational` values.
+
+`Rational` and exact rational-backed `Real` now implement owned and borrowed
+`Iterator::product`. Exact factors are reduced in balanced 512-factor chunks;
+chunk products enter a binary-carry tree, so a streaming caller retains at most
+one chunk plus logarithmically many partial products. Empty and all-one inputs
+return one, a single owned factor is returned directly, zero still consumes the
+complete iterator, and mixed symbolic `Real` factors retain their established
+left-fold order after the balanced exact prefix.
+
+The permanent Criterion group constructs fresh factors outside every timed
+sample so bounded operand-product caches cannot turn later samples into cache
+hits. On the 1,000-factor Wallis corpus, isolated 100-sample runs measured:
+
+| Operation | Mean | 95% interval | Versus rational left fold |
+| --- | ---: | ---: | ---: |
+| borrowed rational left fold | 56.668 ms | 56.417-56.937 ms | baseline |
+| owned `Rational::product` | 1.667 ms | 1.659-1.674 ms | 97.1% faster / 34.0x |
+| borrowed `Rational::product` | 1.654 ms | 1.643-1.666 ms | 97.1% faster / 34.3x |
+| owned exact `Real::product` | 1.686 ms | 1.676-1.696 ms | 97.0% faster / 33.6x |
+
+A counting-allocator probe also compared the retained 512-factor hybrid with a
+full in-place balanced tree. At 1,000 factors, peak live growth fell from
+176,168 to 90,280 bytes while staying within about 2.2% of the full-tree
+Criterion mean. At 10,000 factors it fell from 1,760,168 to 103,320 bytes
+(94.1%); requested allocation
+volume was 257.73 MB, versus 123.40 GB for the sequential product. The measured
+10,000-factor end-to-end run was 57.78 ms versus 14.99 s for the left fold, and
+both produced exactly equal 39,991/39,990-bit numerator/denominator results.
+Regression tests cover owned and borrowed identities, signs, zero with complete
+iterator consumption, odd trees, the 511/512/513 chunk boundaries, a 777-factor
+tail, exact Wallis equality, and mixed symbolic order.
+
+A matched minimal release probe switched only between the balanced `Product`
+call and the former left fold. The retained path added 12,544 file bytes and
+10,524 text bytes, with 104 additional data bytes and 2,424 fewer BSS bytes
+(`size` total +8,204 bytes). This is a bounded code-size cost for the public API,
+34x measured speedup, and allocation-volume reduction; no scalar layout changed.
 
 ### Retained experiment: exact square-factor screens
 
@@ -645,6 +742,53 @@ four individual cases also beat Numerica, including the imported tiny dyadic
 Regression tests prove exact factor equality, stable retained identities,
 cycle-free destruction, and coexistence with both unary and both linear pairs;
 dispatch tracing records `reuse-observed` followed by `retained-reduction`.
+
+### Retained experiment: perfect-norm quadratic-surd square roots
+
+The exactCore `progs/compare` corpus compares
+`sqrt(x) + sqrt(y)` with `sqrt(x + y + 2*sqrt(x*y))`. Before this transfer,
+Hyperreal's bounded quadratic-surd parser could certify the inner radicand but
+the outer square root became opaque; three integer/rational probes returned
+`Unknown` at -2,048 bits after 118-145 us.
+
+For a recognized positive value `z = a + b*sqrt(d)`, the retained `Real::sqrt`
+path now computes the conjugate norm `n = a^2 - b^2*d`. It rewrites only when
+`n = s^2` is an exact nonnegative rational square and both `(a+s)/2` and
+`(a-s)/2` are nonnegative:
+
+```text
+sqrt(z) = sqrt((a+s)/2) + sign(b)*sqrt((a-s)/2)
+```
+
+The existing 256-node surd-parser budget and rational square-extraction size
+gate bound the proof attempt. Negative, nonsquare, oversized, or malformed
+norms retain the generic computable square root. Addition also recognizes the
+strictly local cancellation `(u + v) - (v + u)` so independently ordered root
+terms can certify zero without globally sorting or flattening addition trees.
+
+The permanent Criterion rows measure 1.183 us (1.168-1.201 us) to construct the
+exact root of `3 + 2*sqrt(2)` and 226.20 ns (224.22-228.38 ns) to certify the
+historical nested identity after construction. In a matched 5,000-case release
+loop, construction rose from about 21.0 ms to 32.5 ms because the result now
+carries the recovered exact terms; the subsequent bounded comparison fell from
+586.3 ms to 3.32 ms (about 177x), while decided equalities rose from 0/5,000 to
+5,000/5,000. Nonfoldable negative- and nonsquare-norm construction added about
+0.26 us and 0.47 us respectively in the same source A/B. The existing
+`real_irrational_ops/add_refs` sentinel remained in the overlapping 63-64 ns
+range after the local commuted-pair check.
+
+A counting allocator over 1,000 complete build-and-compare cases measured
+86,027 allocations, no reallocations, 4.39 MB requested, and 3,872 peak live
+bytes, versus 1,779,009 allocations, 228,000 reallocations, 143.64 MB, and
+9,448 peak bytes before the fold. Thus allocation calls fall 95.2%, requested
+bytes 96.9%, and peak live memory 59.0%. A matched release executable grew
+10,480 file bytes and 8,860 text bytes, added 296 data bytes, and removed 936
+BSS bytes (`size` total +8,220); no scalar layout changed.
+
+Regression coverage includes positive and negative radical coefficients,
+scaled forms, foldable and nonfoldable norms, both commuted cancellation
+orientations, 128 deterministic rational sum/difference pairs, the exactCore
+integer and fraction examples, and a separate 2,000-pair release stress sweep.
 
 ### Retained experiment: exact dyadic/general product cancellation
 
@@ -1927,15 +2071,95 @@ in-circle and from 77.820 to 76.003 ns for in-sphere. Full evidence derivation
 measured 1.716 us versus the 1.736 us baseline for in-circle and 3.433 us
 versus 3.399 us for in-sphere; Criterion reported no regression.
 
+### High-precision pi and exact-rational range reduction
+
+The audited Many Digits C08 workload, `sin(6^(6^6))`, supplies an exact
+120,605-bit integer argument and therefore needs roughly 120,700 bits of pi to
+produce 100 decimal output digits. The historical Core2 program exhausted
+memory, and its recorded Maple value is incorrect. Independent correctly
+rounded MPFR and Hyperreal agree that the value starts
+`0.95395374345732063524921114340552534258`.
+
+Two independent costs were visible in the original Hyperreal path. The
+deferred exact-rational reducer first computed pi just deeply enough to choose
+the half-pi quotient, then immediately recomputed it at the finer precision
+needed by the residual. Exact inputs of at least 4,096 bits now include the
+requested residual precision in the quotient estimate, so the shared pi cache
+serves both stages. Smaller inputs retain the narrower estimate: the existing
+`sin(10^30)` sentinel remains at 2.081-2.107 us.
+
+The remaining high-precision Machin series dominated the workload. Pi requests
+with any fractional bit now use a binary-split Chudnovsky series with 64
+fixed-point guard bits. The initial 4,096-bit gate was deliberately
+conservative; a later audit of exactCore's binary-split Machin implementation
+triggered a fresh-process sweep and found Chudnovsky already faster at one bit,
+so only coarse nonfractional or unsupported requests retain the Machin
+fallback. Consecutive absolute terms are bounded by a ratio below `2^-43`, two
+additional terms cover the alternating tail, and the guarded integer square
+root and final division are rounded once to the public approximation scale.
+Abort checks occur throughout the balanced recursion and aborted results are
+never published.
+
+Fresh-process release timings show that there is no profitable negative-
+precision Machin band:
+
+| requested pi bits | Machin | binary-split Chudnovsky | reduction |
+| ---: | ---: | ---: | ---: |
+| 1 | 30.64 us | 22.17 us | 27.6% |
+| 128 | 38.50 us | 24.91 us | 35.3% |
+| 256 | 57.27 us | 26.84 us | 53.1% |
+| 512 | 74.78 us | 32.47 us | 56.6% |
+| 1,024 | 91.31 us | 44.46 us | 51.3% |
+| 2,048 | 205.47 us | 72.55 us | 64.7% |
+| 4,095 | 589.38 us | 141.09 us | 76.1% |
+| 4,096 | 629.5 us | 142.3 us | 77.4% |
+| 8,192 | 2.084 ms | 401.5 us | 80.7% |
+| 16,384 | 6.936 ms | 1.280 ms | 81.5% |
+| 65,536 | 93.185 ms | 15.947 ms | 82.9% |
+| 120,700 | 316.110 ms | 48.136 ms | 84.8% |
+
+For the end-to-end C08 approximation at 440 fractional bits, the original
+matched probe took 643.026 ms. Reusing one sufficiently fine pi pass first
+reduced that to 321.862-323.547 ms. With the retained high-precision kernel,
+five fresh-process runs measured 53.601-58.327 ms (55.671 ms median), a 91.34%
+reduction or 11.55x speedup. An immediate repeated `approx(-440)` is a
+210-240 ns cache hit. The 100-decimal result and 128-bit sine, cosine, and
+tangent integers match independent MPFR oracles.
+
+Heaptrack at 120,700 pi bits reports 167,121 allocation calls and 67,178
+temporaries for Machin versus 51,973 and 10,806 for Chudnovsky, reductions of
+68.9% and 83.9%. Balanced splitting raises peak heap from 180.82 KiB to
+400.20 KiB; uninstrumented peak RSS rose from 3.19 to 3.52 MiB. The complete
+C08 probe remained at about 3.68 MiB RSS.
+
+A cold counting-allocator probe confirms the same trade at ordinary
+precisions. At 128 bits, Chudnovsky uses 94 allocations plus 10 reallocations
+and 3,200 allocated bytes, versus Machin's 224 allocations and 6,096 bytes;
+peak live memory falls from 1,072 to 480 bytes. At 1,024 bits, total allocation
+operations fall from 1,459 to 416 and bytes from 70,256 to 17,680, with
+essentially unchanged peak live memory. At 4,095 bits, operations fall from
+5,711 to 1,501 and bytes from 715,456 to 80,720; balanced splitting raises peak
+live memory from 4,544 to 7,448 bytes.
+
+The code-size cost is bounded and measured. A minimal release probe gained
+9,344 bytes of text and 12,288 bytes of total loadable size; its file grew
+10,040 bytes. The default release rlib grew 9,832 bytes (0.142%). No public or
+private scalar layout changed. MPFR cross-checks cover 4,096, 4,097, 16,384,
+65,536, and 120,700 bits, plus 27 boundary precisions from 1 through 4,095,
+alongside the exact C08 quadrant regression and an abort-path test. Lowering
+the already-compiled kernel's gate is code-size neutral: the matched release
+probe changed by -48 file bytes, -12 text bytes, and +4 total loadable
+bytes.
+
 ### Architecture and measurement triggers
 
 - Shewchuk expansion stages become applicable only if predicate traces in `hyperlimit` or
   `hypermesh` prove that near-degenerate floating inputs frequently reach the
   arbitrary-precision fallback.  The paper reports nontrivial ordinary-input
   overhead, so a scalar-only microbenchmark is insufficient justification.
-- Chudnovsky/binary-split pi or AGM elementary functions become applicable only if an
-  extreme-precision benchmark shows the current Machin/Taylor kernels dominate
-  end-to-end work.  The current measured workload is below that crossover.
+- Further pi-kernel or AGM changes must beat the retained all-fractional-
+  precision Chudnovsky path and the C08 end-to-end result; Machin remains only
+  a coarse/unsupported fallback.
 - Fraction-free LU/QR common-factor prediction belongs in the crate that
   owns a general matrix decomposition, not in the exact scalar substrate.
 - Additional arctangent table points or rectangular splitting require a measured

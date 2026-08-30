@@ -63,6 +63,8 @@ impl fmt::Display for Real {
                 }
                 Log10(n) => write!(f, " x log10({})", n),
                 Log2(n) => write!(f, " x log2({})", n),
+                Pow10(n) => write!(f, " x 10**({})", n),
+                Pow2(n) => write!(f, " x 2**({})", n),
                 Sqrt(n) => write!(f, " √({})", n),
                 SinPi(n) => write!(f, " x sin({} x Pi)", n),
                 TanPi(n) => write!(f, " x tan({} x Pi)", n),

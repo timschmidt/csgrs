@@ -562,6 +562,8 @@ impl Real {
                 Class::PiInv => Some(scale / std::f64::consts::PI),
                 Class::PiPow(power) => Some(scale * std::f64::consts::PI.powi(i32::from(*power))),
                 Class::Exp(exp) => exp.to_f64_lossy().map(|exp| scale * exp.exp()),
+                Class::Pow10(exp) => exp.to_f64_lossy().map(|exp| scale * 10_f64.powf(exp)),
+                Class::Pow2(exp) => exp.to_f64_lossy().map(|exp| scale * 2_f64.powf(exp)),
                 Class::PiExp(exp) => exp
                     .to_f64_lossy()
                     .map(|exp| scale * std::f64::consts::PI * exp.exp()),

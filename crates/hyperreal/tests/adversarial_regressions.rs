@@ -113,3 +113,32 @@ fn compare_and_equality_do_not_conflate_nearby_cancellation_values() {
     assert_ne!(pi_error.to_f64_lossy(), Some(0.0));
     assert_ne!(sqrt_error.to_f64_lossy(), Some(0.0));
 }
+
+#[test]
+fn rump_polynomial_retains_exact_large_integer_cancellation() {
+    let a = r(77_617, 1);
+    let b = r(33_096, 1);
+    let aa = &a * &a;
+    let bb = &b * &b;
+
+    let integer_part = Real::from(21) * &bb - Real::from(2) * &aa + Real::from(55) * (&bb * &bb)
+        - Real::from(10) * (&aa * &bb);
+    assert_eq!(integer_part, Real::from(-2));
+
+    let quotient = (&a / &(Real::from(2) * &b)).unwrap();
+    let value = integer_part + quotient;
+    assert_eq!(value, r(-54_767, 66_192));
+    assert!(value.exact_rational().is_some());
+}
+
+#[test]
+fn scheinerman_radical_sums_receive_the_correct_certified_order() {
+    let root = |value| Real::from(value).sqrt().expect("positive integer radicand");
+    let left = root(75_025) + root(121_393) + root(196_418) + root(317_811);
+    let right = root(514_229) + root(832_040);
+
+    assert_eq!(
+        (left - right).certified_sign_until(-32).sign(),
+        Some(RealSign::Positive)
+    );
+}

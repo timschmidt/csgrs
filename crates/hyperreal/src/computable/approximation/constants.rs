@@ -1,4 +1,82 @@
+// Fresh-process timing favors Chudnovsky at every fractional precision tested,
+// including p = -1. Machin remains the coarse/unsupported fallback.
+const CHUDNOVSKY_PI_THRESHOLD: Precision = -1;
+const CHUDNOVSKY_C3_OVER_24: u64 = 10_939_058_860_032_000;
+const CHUDNOVSKY_GUARD_BITS: u64 = 64;
+
+fn chudnovsky_binary_split(
+    signal: &Option<Signal>,
+    a: u32,
+    b: u32,
+) -> Option<(BigInt, BigInt, BigInt)> {
+    if should_stop(signal) {
+        return None;
+    }
+    if b - a == 1 {
+        if a == 0 {
+            return Some((
+                BigInt::one(),
+                BigInt::one(),
+                BigInt::from(13_591_409_u32),
+            ));
+        }
+
+        let k = u64::from(a);
+        let p = BigInt::from(6 * k - 5)
+            * BigInt::from(2 * k - 1)
+            * BigInt::from(6 * k - 1);
+        let q = BigInt::from(k).pow(3) * BigInt::from(CHUDNOVSKY_C3_OVER_24);
+        let mut t = &p * BigInt::from(13_591_409_u64 + 545_140_134_u64 * k);
+        if a & 1 == 1 {
+            t = -t;
+        }
+        return Some((p, q, t));
+    }
+
+    let mid = a + (b - a) / 2;
+    let (left_p, left_q, left_t) = chudnovsky_binary_split(signal, a, mid)?;
+    let (right_p, right_q, right_t) = chudnovsky_binary_split(signal, mid, b)?;
+    let t = left_t * &right_q + &left_p * right_t;
+    Some((left_p * right_p, left_q * right_q, t))
+}
+
+fn pi_chudnovsky(signal: &Option<Signal>, p: Precision) -> Option<BigInt> {
+    let target_bits = u64::try_from(p.checked_neg()?).ok()?;
+    let work_bits = target_bits.checked_add(CHUDNOVSKY_GUARD_BITS)?;
+
+    // Consecutive absolute Chudnovsky terms have ratio below 2^-43. For k >= 1,
+    // bounding the six numerator factors by 6(k+1), the three (3k+j) factors
+    // below by 3k, and the linear-factor ratio by 2 proves the bound; the k=0
+    // ratio is smaller by direct integer comparison. The alternating tail is
+    // therefore below the first omitted term. Two extra terms put it well
+    // beneath one work-scale ulp; 64 guard bits also dominate fixed-point sqrt
+    // and final-division rounding before one final scale rounding.
+    let terms = u32::try_from(work_bits.div_ceil(43).checked_add(2)?).ok()?;
+    let (_, q, t) = chudnovsky_binary_split(signal, 0, terms)?;
+    if should_stop(signal) {
+        return None;
+    }
+
+    let sqrt_shift = usize::try_from(work_bits.checked_mul(2)?).ok()?;
+    let sqrt_10005 = (BigUint::from(10_005_u32) << sqrt_shift).sqrt();
+    let q = q.to_biguint()?;
+    let denominator = t.to_biguint()?;
+    let numerator = q * BigUint::from(426_880_u32) * sqrt_10005;
+    let work_scaled = (numerator + (&denominator >> 1_usize)) / denominator;
+    let guard = Precision::try_from(CHUDNOVSKY_GUARD_BITS).ok()?;
+    Some(scale(BigInt::from(work_scaled), -guard))
+}
+
 fn pi(signal: &Option<Signal>, p: Precision) -> BigInt {
+    if p <= CHUDNOVSKY_PI_THRESHOLD {
+        if let Some(result) = pi_chudnovsky(signal, p) {
+            return result;
+        }
+        if should_stop(signal) {
+            return BigInt::zero();
+        }
+    }
+
     // Machin formula: pi = 4 * (4 atan(1/5) - atan(1/239)).
     // It converges much faster than a generic trig/log identity and is stable
     // enough to serve as the shared pi cache source. This is the same

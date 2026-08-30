@@ -687,6 +687,8 @@ fn bench_real_elementary_api(c: &mut Criterion) {
         |x| x.root(5),
     );
     unary_result!("exp", 0.75, exp, exp);
+    unary_result!("exp2", 0.75, exp2, exp2);
+    unary_result!("exp10", 0.75, exp10, exp10);
     unary_result!("ln", 1.75, ln, ln);
     unary_result!("log2", 17.0, log2, log2);
     unary_result!("log10", 17.0, log10, log10);

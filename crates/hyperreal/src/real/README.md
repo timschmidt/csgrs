@@ -76,6 +76,10 @@ shape unless benchmarks show no cost.
 - `sqrt1pm1`, `sqrt1m1`, and `hypot_minus` preserve common square-root
   cancellation patterns used by offsets, normalized vectors, and curvature
   calculations.
+- `sqrt` recognizes a bounded exact quadratic surd `a + b*sqrt(d)` and recovers
+  its principal root when `a^2 - b^2*d` is a nonnegative rational square. This
+  certifies nested-radical sum and difference identities without a root-bound
+  refinement pass.
 - `mul_add`, `sum_products`, and `diff_of_products` expose common product-sum
   forms directly, reusing exact-rational product reducers and omitting
   known-zero product lanes.

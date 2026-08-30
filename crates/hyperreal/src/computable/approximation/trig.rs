@@ -91,7 +91,11 @@ fn cos_rational(signal: &Option<Signal>, r: &Rational, p: Precision) -> BigInt {
     scale(current_sum, calc_precision - p)
 }
 
-fn large_rational_half_pi_multiple(signal: &Option<Signal>, r: &Rational) -> BigInt {
+fn large_rational_half_pi_multiple(
+    signal: &Option<Signal>,
+    r: &Rational,
+    p: Precision,
+) -> BigInt {
     // Deferred large-rational trig needs the same nearest-half-pi quotient as
     // Computable::sin/cos, but rebuilding a Ratio node just to call the generic
     // reducer was the remaining hot path in exact 1e6/1e30 benchmarks. This is
@@ -101,7 +105,24 @@ fn large_rational_half_pi_multiple(signal: &Option<Signal>, r: &Rational) -> Big
         return multiple;
     }
 
-    let mut multiple = Computable::half_pi_multiple_exact_rational(r)
+    // The residual below will need pi at roughly `msd(r) - p` bits. Request
+    // that precision while estimating the quotient so the shared pi cache can
+    // serve the correction and final residual instead of running the
+    // high-precision pi kernel twice. The 16 extra bits retain the original
+    // nearest-integer guard for coarse requests.
+    // Below a few thousand argument bits, the second pi pass is cheap and the
+    // smaller quotient operands win in the warm 1e6/1e30 scalar benchmarks.
+    // Reserve the cache-aware wider estimate for inputs where recomputing pi
+    // dominates (the Many Digits case is 120,605 bits).
+    let quotient_guard_bits = if r.msd_exact().is_some_and(|msd| msd >= 4_096) {
+        p.saturating_neg().saturating_add(16)
+    } else {
+        16
+    };
+    let mut multiple = Computable::half_pi_multiple_exact_rational_with_guard(
+        r,
+        quotient_guard_bits,
+    )
         .unwrap_or_else(|| Computable::rational(r.clone()).half_pi_multiple());
     let rough_appr = large_rational_half_pi_residual(signal, r, &multiple, -1);
 
@@ -535,7 +556,7 @@ fn cos_large_rational(signal: &Option<Signal>, r: &Rational, p: Precision) -> Bi
     // Construction-included benches pay heavily for eager half-pi reduction on
     // large exact rationals. Use the direct residual kernels here so the public
     // constructor can stay lazy without recursing back through Computable::cos.
-    let multiple = large_rational_half_pi_multiple(signal, r);
+    let multiple = large_rational_half_pi_multiple(signal, r, p);
     match large_rational_quadrant(&multiple).to_u8() {
         Some(0) => cos_large_rational_residual(signal, r, &multiple, p),
         Some(1) => -sin_large_rational_residual(signal, r, &multiple, p),
@@ -690,7 +711,7 @@ fn sin_large_rational(signal: &Option<Signal>, r: &Rational, p: Precision) -> Bi
     // Same lazy public-construction policy as cosine. The direct residual
     // arithmetic avoids allocating the generic reduced expression tree while
     // preserving the standard quadrant identities.
-    let multiple = large_rational_half_pi_multiple(signal, r);
+    let multiple = large_rational_half_pi_multiple(signal, r, p);
     match large_rational_quadrant(&multiple).to_u8() {
         Some(0) => sin_large_rational_residual(signal, r, &multiple, p),
         Some(1) => cos_large_rational_residual(signal, r, &multiple, p),
@@ -857,7 +878,7 @@ fn tan_large_rational(signal: &Option<Signal>, r: &Rational, p: Precision) -> Bi
         return Zero::zero();
     }
 
-    let multiple = large_rational_half_pi_multiple(signal, r);
+    let multiple = large_rational_half_pi_multiple(signal, r, p);
     if let Some(reduced) = tan_large_rational_quarter_pi(signal, r, &multiple, p) {
         return reduced;
     }

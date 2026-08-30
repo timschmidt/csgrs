@@ -1541,17 +1541,36 @@ impl Computable {
     /// Add some other number to this number.
     #[allow(clippy::should_implement_trait)]
     pub fn add(self, other: Computable) -> Computable {
-        if let Approximation::Negate(cancelled) = &other.internal.approximation
-            && Self::internal_structural_eq(&self, cancelled)
-        {
-            crate::trace_dispatch!("computable", "add", "direct-cancellation");
-            return Self::zero();
+        fn commuted_add_pair_eq(left: &Computable, right: &Computable) -> bool {
+            matches!(
+                (&left.internal.approximation, &right.internal.approximation),
+                (
+                    Approximation::Add(left_first, left_second),
+                    Approximation::Add(right_first, right_second),
+                ) if Computable::internal_structural_eq(left_first, right_second)
+                    && Computable::internal_structural_eq(left_second, right_first)
+            )
         }
-        if let Approximation::Negate(cancelled) = &self.internal.approximation
-            && Self::internal_structural_eq(cancelled, &other)
-        {
-            crate::trace_dispatch!("computable", "add", "direct-cancellation");
-            return Self::zero();
+
+        if let Approximation::Negate(cancelled) = &other.internal.approximation {
+            if Self::internal_structural_eq(&self, cancelled) {
+                crate::trace_dispatch!("computable", "add", "direct-cancellation");
+                return Self::zero();
+            }
+            if commuted_add_pair_eq(&self, cancelled) {
+                crate::trace_dispatch!("computable", "add", "commuted-pair-cancellation");
+                return Self::zero();
+            }
+        }
+        if let Approximation::Negate(cancelled) = &self.internal.approximation {
+            if Self::internal_structural_eq(cancelled, &other) {
+                crate::trace_dispatch!("computable", "add", "direct-cancellation");
+                return Self::zero();
+            }
+            if commuted_add_pair_eq(cancelled, &other) {
+                crate::trace_dispatch!("computable", "add", "commuted-pair-cancellation");
+                return Self::zero();
+            }
         }
         if let Some(rational) = self.collapsed_inverse_trig_linear_sum(&other) {
             crate::trace_dispatch!("computable", "add", "inverse-trig-linear-collapse");

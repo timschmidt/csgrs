@@ -236,6 +236,13 @@ impl Computable {
     }
 
     pub(super) fn half_pi_multiple_exact_rational(rational: &Rational) -> Option<BigInt> {
+        Self::half_pi_multiple_exact_rational_with_guard(rational, 16)
+    }
+
+    pub(super) fn half_pi_multiple_exact_rational_with_guard(
+        rational: &Rational,
+        quotient_guard_bits: Precision,
+    ) -> Option<BigInt> {
         // Large exact rationals are the hot scalar sin/cos construction path.
         // Estimate round(2*x/pi) with one cached pi approximation and integer
         // arithmetic, then let half_pi_multiple's residual correction validate
@@ -246,7 +253,9 @@ impl Computable {
             return None;
         }
 
-        let precision_bits = msd.checked_add(16)?.max(16);
+        let precision_bits = msd
+            .checked_add(quotient_guard_bits.max(16))?
+            .max(16);
         let shift = usize::try_from(precision_bits).ok()?;
         let pi_scaled = Self::pi().approx(-precision_bits).to_biguint()?;
         let numerator = rational.numerator() << (shift + 1);

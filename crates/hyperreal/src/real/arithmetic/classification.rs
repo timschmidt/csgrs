@@ -76,6 +76,8 @@ pub(crate) enum Class {
     LnProduct(Box<LnProductClass>), // Product of two logarithms, ordered by base
     Log10(Rational),                // Rational > 1 and never a multiple of ten
     Log2(Rational),                 // Rational > 1 and never a power of two
+    Pow10(Rational), // Exactly 10**Rational for a noninteger exponent not represented as a sqrt
+    Pow2(Rational),  // Exactly 2**Rational for a noninteger exponent not represented as a sqrt
     SinPi(Rational),                // 0 < Rational < 1/2 also never 1/6 or 1/4 or 1/3
     TanPi(Rational),                // 0 < Rational < 1/2 also never 1/6 or 1/4 or 1/3
     Irrational,
@@ -227,6 +229,8 @@ impl PartialEq for Class {
             }
             (Log10(r), Log10(s)) => r == s,
             (Log2(r), Log2(s)) => r == s,
+            (Pow10(r), Pow10(s)) => r == s,
+            (Pow2(r), Pow2(s)) => r == s,
             (SinPi(r), SinPi(s)) => r == s,
             (TanPi(r), TanPi(s)) => r == s,
             (_, _) => false,
@@ -536,6 +540,12 @@ impl Class {
         Computable::rational(base.clone()).ln()
     }
 
+    fn rational_base_power_computable(base: &Rational, exponent: &Rational) -> Computable {
+        Self::ln_computable(base)
+            .multiply(Computable::rational(exponent.clone()))
+            .exp()
+    }
+
     fn make_ln_affine(offset: Rational, base: Rational) -> Option<(Class, Computable)> {
         // Like `ConstOffset`, this additive form is only admitted when the
         // inner value is structurally positive. That keeps sign and zero queries
@@ -628,6 +638,8 @@ impl Class {
             Log2(base) => {
                 Self::ln_computable(base).multiply(Self::ln_computable(&rationals::TWO).inverse())
             }
+            Pow10(exponent) => Self::rational_base_power_computable(&rationals::TEN, exponent),
+            Pow2(exponent) => Self::rational_base_power_computable(&rationals::TWO, exponent),
             SinPi(rational) => {
                 let argument =
                     Computable::multiply(Computable::pi(), Computable::rational(rational.clone()));

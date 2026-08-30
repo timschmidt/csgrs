@@ -103,6 +103,28 @@ const LIBRARY_PERF_GROUPS: &[BenchGroupDoc] = &[
         ],
     },
     BenchGroupDoc {
+        name: "iterator_products",
+        description: "Sequential and balanced exact products over a 1,000-factor Wallis corpus.",
+        benches: &[
+            BenchDoc {
+                name: "rational_wallis_sequential_1000",
+                description: "Multiplies borrowed rational factors with a conventional left fold.",
+            },
+            BenchDoc {
+                name: "rational_wallis_owned_1000",
+                description: "Consumes rational factors through the balanced `Product` implementation.",
+            },
+            BenchDoc {
+                name: "rational_wallis_borrowed_1000",
+                description: "Clones borrowed rational factors into the balanced `Product` implementation.",
+            },
+            BenchDoc {
+                name: "real_wallis_owned_1000",
+                description: "Consumes exact rational-backed `Real` factors through their balanced `Product` implementation.",
+            },
+        ],
+    },
+    BenchGroupDoc {
         name: "real_exact_trig",
         description: "Exact and symbolic trig construction for known pi multiples.",
         benches: &[
@@ -396,7 +418,7 @@ const LIBRARY_PERF_GROUPS: &[BenchGroupDoc] = &[
     },
     BenchGroupDoc {
         name: "real_exact_exp_log10",
-        description: "Exact inverse relationships among exp, ln, and log10.",
+        description: "Exact inverse relationships among exp, ln, log2, and log10.",
         benches: &[
             BenchDoc {
                 name: "exp_ln_1000",
@@ -413,6 +435,22 @@ const LIBRARY_PERF_GROUPS: &[BenchGroupDoc] = &[
             BenchDoc {
                 name: "log10_1_1000",
                 description: "Recognizes log10(1/1000) as -3.",
+            },
+            BenchDoc {
+                name: "pow2_log2_3",
+                description: "Builds 2 raised to the retained log2(3) certificate.",
+            },
+            BenchDoc {
+                name: "pow10_log10_2",
+                description: "Builds 10 raised to the retained log10(2) certificate.",
+            },
+            BenchDoc {
+                name: "log2_exp2_1_7",
+                description: "Recovers 1/7 from the exact algebraic value 2^(1/7).",
+            },
+            BenchDoc {
+                name: "log10_exp10_6411_4096",
+                description: "Recovers Kahan's 6411/4096 exponent from its exact base-ten power.",
             },
         ],
     },
@@ -463,6 +501,14 @@ const LIBRARY_PERF_GROUPS: &[BenchGroupDoc] = &[
             BenchDoc {
                 name: "sqrt1m1_tiny",
                 description: "Builds sqrt(1 - tiny) - 1 through the stable helper.",
+            },
+            BenchDoc {
+                name: "sqrt_quadratic_surd_perfect_norm",
+                description: "Recovers the exact principal root of 3 + 2*sqrt(2) from its square conjugate norm.",
+            },
+            BenchDoc {
+                name: "certified_compare_nested_radical_identity",
+                description: "Certifies sqrt(x)+sqrt(y) against the equivalent nested radical after exact construction.",
             },
             BenchDoc {
                 name: "cbrt_negative_perfect",
@@ -762,6 +808,15 @@ fn real(n: i64, d: u64) -> Real {
     Real::new(rational(n, d))
 }
 
+fn wallis_rationals(count: i64) -> Vec<Rational> {
+    (1..=count)
+        .map(|index| {
+            let square4 = 4 * index * index;
+            rational(square4, u64::try_from(square4 - 1).unwrap())
+        })
+        .collect()
+}
+
 fn bench_real_format(c: &mut Criterion) {
     bench_docs::write_benchmark_docs(
         "library_perf",
@@ -907,6 +962,52 @@ fn bench_rational_powi(c: &mut Criterion) {
             || value.clone(),
             |value| black_box(value.powi(large_exp.clone()).unwrap_err()),
             BatchSize::SmallInput,
+        )
+    });
+
+    group.finish();
+}
+
+fn bench_iterator_products(c: &mut Criterion) {
+    let mut group = c.benchmark_group("iterator_products");
+
+    group.bench_function("rational_wallis_sequential_1000", |b| {
+        b.iter_batched(
+            || wallis_rationals(1_000),
+            |factors| {
+                black_box(
+                    factors
+                        .iter()
+                        .fold(Rational::one(), |product, factor| &product * factor),
+                )
+            },
+            BatchSize::LargeInput,
+        )
+    });
+    group.bench_function("rational_wallis_owned_1000", |b| {
+        b.iter_batched(
+            || wallis_rationals(1_000),
+            |factors| black_box(factors.into_iter().product::<Rational>()),
+            BatchSize::LargeInput,
+        )
+    });
+    group.bench_function("rational_wallis_borrowed_1000", |b| {
+        b.iter_batched(
+            || wallis_rationals(1_000),
+            |factors| black_box(factors.iter().product::<Rational>()),
+            BatchSize::LargeInput,
+        )
+    });
+    group.bench_function("real_wallis_owned_1000", |b| {
+        b.iter_batched(
+            || {
+                wallis_rationals(1_000)
+                    .into_iter()
+                    .map(Real::new)
+                    .collect::<Vec<_>>()
+            },
+            |factors| black_box(factors.into_iter().product::<Real>()),
+            BatchSize::LargeInput,
         )
     });
 
@@ -1355,6 +1456,12 @@ fn bench_real_exact_exp_log10(c: &mut Criterion) {
     let exp_ln_eighth = Real::new(Rational::fraction(1, 8).unwrap()).ln().unwrap();
     let log10_1000 = Real::new(Rational::new(1000));
     let log10_milli = Real::new(Rational::fraction(1, 1000).unwrap());
+    let log2_three = Real::from(3_i32).log2().unwrap();
+    let log10_two = Real::from(2_i32).log10().unwrap();
+    let exp2_one_seventh = Real::new(Rational::fraction(1, 7).unwrap()).exp2().unwrap();
+    let exp10_kahan = Real::new(Rational::fraction(6411, 4096).unwrap())
+        .exp10()
+        .unwrap();
 
     group.bench_function("exp_ln_1000", |b| {
         b.iter_batched(
@@ -1384,6 +1491,34 @@ fn bench_real_exact_exp_log10(c: &mut Criterion) {
             BatchSize::SmallInput,
         )
     });
+    group.bench_function("pow2_log2_3", |b| {
+        b.iter_batched(
+            || log2_three.clone(),
+            |exponent| black_box(Real::from(2_i32).pow(exponent).unwrap()),
+            BatchSize::SmallInput,
+        )
+    });
+    group.bench_function("pow10_log10_2", |b| {
+        b.iter_batched(
+            || log10_two.clone(),
+            |exponent| black_box(Real::from(10_i32).pow(exponent).unwrap()),
+            BatchSize::SmallInput,
+        )
+    });
+    group.bench_function("log2_exp2_1_7", |b| {
+        b.iter_batched(
+            || exp2_one_seventh.clone(),
+            |value| black_box(value.log2().unwrap()),
+            BatchSize::SmallInput,
+        )
+    });
+    group.bench_function("log10_exp10_6411_4096", |b| {
+        b.iter_batched(
+            || exp10_kahan.clone(),
+            |value| black_box(value.log10().unwrap()),
+            BatchSize::SmallInput,
+        )
+    });
 
     group.finish();
 }
@@ -1401,6 +1536,16 @@ fn bench_real_stable_scalar_substrate(c: &mut Criterion) {
     let rational_floor = real(7, 3);
     let rational_rem = real(-17, 5);
     let modulus = Real::from(3_i32);
+    let root_two = Real::from(2_i32).sqrt().unwrap();
+    let perfect_norm_surd = Real::from(3_i32) + Real::from(2_i32) * root_two;
+    let compare_x = real(3, 5);
+    let compare_y = real(7, 11);
+    let compare_expanded = compare_x.clone().sqrt().unwrap() + compare_y.clone().sqrt().unwrap();
+    let compare_nested = (compare_x.clone()
+        + compare_y.clone()
+        + Real::from(2_i32) * (compare_x * compare_y).sqrt().unwrap())
+    .sqrt()
+    .unwrap();
 
     group.bench_function("ln_1p_tiny", |b| {
         b.iter_batched(
@@ -1476,6 +1621,26 @@ fn bench_real_stable_scalar_substrate(c: &mut Criterion) {
         b.iter_batched(
             || tiny.clone(),
             |value| black_box(value.sqrt1m1().unwrap()),
+            BatchSize::SmallInput,
+        )
+    });
+    group.bench_function("sqrt_quadratic_surd_perfect_norm", |b| {
+        b.iter_batched(
+            || perfect_norm_surd.clone(),
+            |value| black_box(value.sqrt().unwrap()),
+            BatchSize::SmallInput,
+        )
+    });
+    group.bench_function("certified_compare_nested_radical_identity", |b| {
+        b.iter_batched(
+            || (compare_expanded.clone(), compare_nested.clone()),
+            |(expanded, nested)| {
+                black_box(
+                    expanded
+                        .certified_eq_until(&nested, Real::PARTIAL_CMP_MIN_PRECISION)
+                        .as_bool(),
+                )
+            },
             BatchSize::SmallInput,
         )
     });
@@ -2028,6 +2193,7 @@ criterion_group!(
     bench_simple,
     bench_real_powi,
     bench_rational_powi,
+    bench_iterator_products,
     bench_real_exact_trig,
     bench_real_general_trig,
     bench_real_exact_inverse_trig,

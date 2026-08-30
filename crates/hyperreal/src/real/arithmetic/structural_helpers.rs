@@ -234,7 +234,7 @@ fn structural_kind_for_class(class: &Class) -> StructuralKind {
     match class {
         One => StructuralKind::ExactRational,
         Pi | PiPow(_) | PiInv => StructuralKind::PiLike,
-        Exp(_) | PiExp(_) | PiInvExp(_) => StructuralKind::ExpLike,
+        Exp(_) | PiExp(_) | PiInvExp(_) | Pow10(_) | Pow2(_) => StructuralKind::ExpLike,
         Sqrt(_) | PiSqrt(_) => StructuralKind::SqrtLike,
         Ln(_) | LnAffine(_) | LnProduct(_) | Log10(_) | Log2(_) => StructuralKind::LogLike,
         SinPi(_) | TanPi(_) => StructuralKind::TrigExact,
@@ -248,7 +248,9 @@ fn symbolic_degree_for_class(class: &Class) -> ExpressionDegree {
         Irrational => ExpressionDegree::Unknown,
         One | Pi | PiPow(_) | PiInv | PiExp(_) | PiInvExp(_) | PiSqrt(_) | ConstProduct(_)
         | ConstOffset(_) | ConstProductSqrt(_) | Sqrt(_) | Exp(_) | Ln(_) | LnAffine(_)
-        | LnProduct(_) | Log10(_) | Log2(_) | SinPi(_) | TanPi(_) => ExpressionDegree::Constant,
+        | LnProduct(_) | Log10(_) | Log2(_) | Pow10(_) | Pow2(_) | SinPi(_) | TanPi(_) => {
+            ExpressionDegree::Constant
+        }
     }
 }
 
@@ -265,6 +267,9 @@ fn symbolic_dependencies_for_class(class: &Class) -> SymbolicDependencyMask {
             .union(SymbolicDependencyMask::SQRT),
         Sqrt(_) => SymbolicDependencyMask::SQRT,
         Ln(_) | LnAffine(_) | LnProduct(_) | Log10(_) | Log2(_) => SymbolicDependencyMask::LOG,
+        Pow10(_) | Pow2(_) => {
+            SymbolicDependencyMask::EXP.union(SymbolicDependencyMask::LOG)
+        }
         SinPi(_) | TanPi(_) => SymbolicDependencyMask::TRIG.union(SymbolicDependencyMask::PI),
         Irrational => SymbolicDependencyMask::OPAQUE,
     }

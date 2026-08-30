@@ -61,6 +61,8 @@ enum Operator {
     Cbrt,
     RootN,
     Exp,
+    Exp2,
+    Exp10,
     Log10,
     Log2,
     Ln,
@@ -501,6 +503,18 @@ impl Simple {
                 let operand = self.operands.first().unwrap();
                 let value = operand.value(names)?.exp()?;
                 Ok(value)
+            }
+            Exp2 => {
+                if self.operands.len() != 1 {
+                    return Err(Problem::ParseError);
+                }
+                self.operands.first().unwrap().value(names)?.exp2()
+            }
+            Exp10 => {
+                if self.operands.len() != 1 {
+                    return Err(Problem::ParseError);
+                }
+                self.operands.first().unwrap().value(names)?.exp10()
             }
             Log10 => {
                 if self.operands.len() != 1 {
@@ -1219,6 +1233,8 @@ impl Simple {
             "ln_1p" | "log1p" => Ok(Ln1p),
             "ln_1m" | "log1m" => Ok(Ln1m),
             "exp" => Ok(Exp),
+            "exp2" => Ok(Exp2),
+            "exp10" => Ok(Exp10),
             "expm1" => Ok(Expm1),
             "softplus" => Ok(Softplus),
             "logaddexp" => Ok(Logaddexp),
@@ -1491,6 +1507,8 @@ mod tests {
             "(log10 5)",
             "(log2 5)",
             "(exp 5)",
+            "(exp2 5)",
+            "(exp10 5)",
             "(expm1 5)",
             "(softplus 5)",
             "(logaddexp 5 6)",
@@ -1702,6 +1720,22 @@ mod tests {
         let result = xpr.evaluate(&empty).unwrap();
         assert!(result.is_integer());
         assert_eq!(format!("{result}"), "10");
+    }
+
+    #[test]
+    fn exp2_and_exp10_parse_and_preserve_exact_results() {
+        let empty = HashMap::new();
+
+        let exp2: Simple = "(exp2 (log2 3))".parse().unwrap();
+        assert_eq!(exp2.evaluate(&empty).unwrap(), Real::from(3_i32));
+
+        let exp10: Simple = "(exp10 (log10 2))".parse().unwrap();
+        assert_eq!(exp10.evaluate(&empty).unwrap(), Real::from(2_i32));
+
+        for case in ["(exp2 )", "(exp10 1 2)"] {
+            let expression: Simple = case.parse().unwrap();
+            assert_eq!(expression.evaluate(&empty), Err(Problem::ParseError));
+        }
     }
 
     #[test]

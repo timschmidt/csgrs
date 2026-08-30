@@ -80,6 +80,8 @@ Approximation kernels should:
 
 - constructors should fold identities, exact endpoints, inverse pairs, and
   known-zero branches before adding graph nodes
+- addition cancels a directly negated expression and the bounded two-term form
+  `(a + b) - (b + a)` without globally sorting or flattening addition trees
 - transcendental kernels should reduce arguments and use prescaled forms before
   entering long series
 - cancellation-sensitive paths should prefer stable transforms over subtracting

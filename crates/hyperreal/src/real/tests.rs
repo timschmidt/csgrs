@@ -493,6 +493,96 @@ mod tests {
     }
 
     #[test]
+    fn sqrt_recovers_quadratic_surds_with_perfect_square_norms() {
+        let root_two = Real::from(2_i32).sqrt().unwrap();
+        for (input, expected) in [
+            (
+                Real::from(3_i32) + Real::from(2_i32) * &root_two,
+                root_two.clone() + Real::one(),
+            ),
+            (
+                Real::from(3_i32) - Real::from(2_i32) * &root_two,
+                root_two.clone() - Real::one(),
+            ),
+            (
+                Real::from(17_i32) + Real::from(12_i32) * &root_two,
+                Real::from(3_i32) + Real::from(2_i32) * &root_two,
+            ),
+            (
+                Real::from(12_i32) + Real::from(8_i32) * &root_two,
+                Real::from(2_i32) * &root_two + Real::from(2_i32),
+            ),
+        ] {
+            let root = input.clone().sqrt().unwrap();
+            assert_eq!(
+                root.certified_eq_until(&expected, -256).as_bool(),
+                Some(true)
+            );
+            assert_eq!(
+                (&root * &root).certified_eq_until(&input, -256).as_bool(),
+                Some(true)
+            );
+        }
+
+        for input in [Real::one() + &root_two, Real::from(5_i32) + &root_two] {
+            let root = input.clone().sqrt().unwrap();
+            assert_eq!(
+                root.detailed_facts().symbolic.kind,
+                StructuralKind::ComputableOpaque
+            );
+        }
+    }
+
+    #[test]
+    fn sqrt_sum_and_difference_identity_is_certified_for_rational_pairs() {
+        let mut state = 0x9e37_79b9_7f4a_7c15_u64;
+        for case in 0..128 {
+            state = state
+                .wrapping_mul(6_364_136_223_846_793_005)
+                .wrapping_add(1_442_695_040_888_963_407);
+            let x = Rational::fraction(
+                (state % 1_000_003 + 1) as i64,
+                state.rotate_left(17) % 10_007 + 1,
+            )
+            .unwrap();
+            state = state
+                .wrapping_mul(6_364_136_223_846_793_005)
+                .wrapping_add(1_442_695_040_888_963_407);
+            let y = Rational::fraction(
+                (state % 1_000_033 + 1) as i64,
+                state.rotate_left(29) % 10_009 + 1,
+            )
+            .unwrap();
+
+            let x_real = Real::new(x.clone());
+            let y_real = Real::new(y.clone());
+            let x_root = x_real.clone().sqrt().unwrap();
+            let y_root = y_real.clone().sqrt().unwrap();
+            let cross = Real::from(2_i32) * (x_real.clone() * y_real.clone()).sqrt().unwrap();
+            let plus = (x_real.clone() + y_real.clone() + &cross).sqrt().unwrap();
+            assert_eq!(
+                (x_root.clone() + y_root.clone())
+                    .certified_eq_until(&plus, -2_048)
+                    .as_bool(),
+                Some(true),
+                "plus case {case}: x={x:?}, y={y:?}"
+            );
+
+            let minus = (x_real + y_real - cross).sqrt().unwrap();
+            let expected_minus = if x >= y {
+                x_root - y_root
+            } else {
+                y_root - x_root
+            };
+            assert_eq!(
+                expected_minus.certified_eq_until(&minus, -2_048).as_bool(),
+                Some(true),
+                "minus case {case}: x={x:?}, y={y:?}"
+            );
+        }
+    }
+
+    #[test]
     fn square_sqrt() {
         let two: Real = 2.into();
         let three: Real = 3.into();
@@ -922,6 +1012,24 @@ mod tests {
         assert!(log_facts.dependencies.contains(SymbolicDependencyMask::LOG));
         assert!(log_facts.has_log_factor);
 
+        let rational_power_facts = Real::new(Rational::fraction(1, 7).unwrap())
+            .exp2()
+            .unwrap()
+            .detailed_facts()
+            .symbolic;
+        assert_eq!(rational_power_facts.kind, StructuralKind::ExpLike);
+        assert_eq!(rational_power_facts.degree, ExpressionDegree::Constant);
+        assert!(
+            rational_power_facts
+                .dependencies
+                .contains(SymbolicDependencyMask::EXP)
+        );
+        assert!(
+            rational_power_facts
+                .dependencies
+                .contains(SymbolicDependencyMask::LOG)
+        );
+
         let trig_facts = pi_fraction(1, 5).sin().detailed_facts().symbolic;
         assert_eq!(trig_facts.degree, ExpressionDegree::Constant);
         assert!(
@@ -1066,6 +1174,53 @@ mod tests {
         assert_eq!(
             pi_e_sqrt_two.clone().inverse().unwrap() * &pi_e_sqrt_two,
             Real::new(Rational::one())
+        );
+    }
+
+    #[test]
+    fn iterator_products_balance_exact_prefixes_and_preserve_mixed_order() {
+        let empty: Vec<Real> = Vec::new();
+        assert_eq!(empty.clone().into_iter().product::<Real>(), Real::one());
+        assert_eq!(empty.iter().product::<Real>(), Real::one());
+
+        let wallis_rationals: Vec<Rational> = (1_i64..=513)
+            .map(|index| {
+                let square4 = 4 * index * index;
+                Rational::fraction(square4, u64::try_from(square4 - 1).unwrap()).unwrap()
+            })
+            .collect();
+        let expected_rational = wallis_rationals
+            .iter()
+            .fold(Rational::one(), |product, factor| &product * factor);
+        let exact_factors: Vec<Real> = wallis_rationals.into_iter().map(Real::new).collect();
+        assert_eq!(
+            exact_factors.clone().into_iter().product::<Real>(),
+            Real::new(expected_rational.clone())
+        );
+        assert_eq!(
+            exact_factors.iter().product::<Real>(),
+            Real::new(expected_rational)
+        );
+
+        let mixed = [
+            Real::from(2_i32),
+            Real::from(3_i32),
+            Real::from(5_i32),
+            Real::pi(),
+            Real::e(),
+            Real::from(7_i32),
+        ];
+        let sequential = mixed
+            .iter()
+            .fold(Real::one(), |product, factor| &product * factor);
+        assert_eq!(mixed.clone().into_iter().product::<Real>(), sequential);
+        assert_eq!(mixed.iter().product::<Real>(), sequential);
+
+        assert_eq!(
+            [Real::from(2_i32), Real::zero(), Real::pi(), Real::e()]
+                .into_iter()
+                .product::<Real>(),
+            Real::zero()
         );
     }
 
@@ -1614,6 +1769,112 @@ mod tests {
             let answer = n.log10().unwrap();
             assert_eq!(answer, Rational::new(log));
         }
+    }
+
+    #[test]
+    fn base_two_and_ten_exponentials_preserve_exact_rational_powers() {
+        assert_eq!(Real::from(10_i32).exp2().unwrap(), Real::from(1024_i32));
+        assert_eq!(Real::from(3_i32).exp10().unwrap(), Real::from(1000_i32));
+        assert_eq!(
+            Real::from(-3_i32).exp2().unwrap(),
+            Real::new(Rational::fraction(1, 8).unwrap())
+        );
+
+        let half = Real::new(Rational::fraction(1, 2).unwrap());
+        assert_eq!(
+            half.clone().exp2().unwrap(),
+            Real::from(2_i32).sqrt().unwrap()
+        );
+        assert_eq!(half.exp10().unwrap(), Real::from(10_i32).sqrt().unwrap());
+    }
+
+    #[test]
+    fn base_two_and_ten_logarithm_round_trips_are_exact() {
+        for denominator in 1_u64..=12 {
+            for numerator in 1_i64..=24 {
+                let real = Real::new(Rational::fraction(numerator, denominator).unwrap());
+                assert_eq!(real.clone().log2().unwrap().exp2().unwrap(), real);
+                assert_eq!(real.clone().log10().unwrap().exp10().unwrap(), real);
+            }
+        }
+    }
+
+    #[test]
+    fn rational_base_power_logarithm_round_trips_are_exact() {
+        for denominator in 1_u64..=16 {
+            for numerator in -32_i64..=32 {
+                let exponent = Rational::fraction(numerator, denominator).unwrap();
+                let expected = Real::new(exponent);
+                assert_eq!(expected.clone().exp2().unwrap().log2().unwrap(), expected);
+                assert_eq!(expected.clone().exp10().unwrap().log10().unwrap(), expected);
+            }
+        }
+
+        // LOG10HAF's hard exponent is deliberately outside the small grid.
+        for exponent in [
+            Rational::fraction(-6411, 4096).unwrap(),
+            Rational::fraction(6411, 4096).unwrap(),
+        ] {
+            let expected = Real::new(exponent);
+            let power_two = expected.clone().exp2().unwrap();
+            let power_ten = expected.clone().exp10().unwrap();
+
+            // Exercise both clone reconstruction from the compact certificate
+            // and the original retained computable payload.
+            assert_eq!(power_two.clone().log2().unwrap(), expected);
+            assert_eq!(power_ten.clone().log10().unwrap(), expected);
+            assert_eq!(power_two.log2().unwrap(), expected);
+            assert_eq!(power_ten.log10().unwrap(), expected);
+        }
+
+        let one_seventh = Real::new(Rational::fraction(1, 7).unwrap());
+        let power = one_seventh.clone().exp10().unwrap();
+        assert_ne!(power.log2().unwrap(), one_seventh);
+    }
+
+    #[test]
+    fn generic_power_uses_exact_retained_base_logarithm_certificates() {
+        let log2_three = Real::from(3_i32).log2().unwrap();
+        assert_eq!(
+            Real::from(2_i32).pow(log2_three).unwrap(),
+            Real::from(3_i32)
+        );
+
+        let log10_two = Real::from(2_i32).log10().unwrap();
+        assert_eq!(
+            Real::from(10_i32).pow(log10_two).unwrap(),
+            Real::from(2_i32)
+        );
+
+        let scaled_log2_nine =
+            Real::new(Rational::fraction(1, 2).unwrap()) * Real::from(9_i32).log2().unwrap();
+        assert_eq!(scaled_log2_nine.exp2().unwrap(), Real::from(3_i32));
+
+        for scale in [
+            Rational::fraction(-3, 2).unwrap(),
+            Rational::fraction(-1, 3).unwrap(),
+            Rational::fraction(2, 3).unwrap(),
+            Rational::fraction(5, 2).unwrap(),
+        ] {
+            let log2_five = Real::new(scale.clone()) * Real::from(5_i32).log2().unwrap();
+            let expected = Real::from(5_i32).pow_rational(scale.clone()).unwrap();
+            assert_eq!(log2_five.exp2().unwrap(), expected);
+
+            let log10_three = Real::new(scale.clone()) * Real::from(3_i32).log10().unwrap();
+            let expected = Real::from(3_i32).pow_rational(scale).unwrap();
+            assert_eq!(log10_three.exp10().unwrap(), expected);
+        }
+    }
+
+    #[test]
+    fn base_two_and_ten_exponentials_match_binary64_for_irrational_exponents() {
+        let exponent = Real::from(2_i32).sqrt().unwrap();
+        assert_close(
+            exponent.clone().exp2().unwrap(),
+            2_f64.powf(2_f64.sqrt()),
+            1e-12,
+        );
+        assert_close(exponent.exp10().unwrap(), 10_f64.powf(2_f64.sqrt()), 1e-12);
     }
 
     #[test]

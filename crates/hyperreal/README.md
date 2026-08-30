@@ -117,6 +117,7 @@ the test suite, and compared byte-for-byte with this README block.
 | Inspect a value | `numerator`, `denominator`, `sign`, `is_zero`, `is_one`, `is_integer`, `is_dyadic`, `same_denominator` |
 | Integer/fraction parts | `trunc`, `fract`, `to_big_integer` |
 | Powers and roots | `powi`, `extract_square_reduced`, `perfect_nth_root`, `is_perfect_power` |
+| Iterator products | owned or borrowed `Iterator::product::<Rational>()` |
 
 `Rational` implements the usual owned and borrowed arithmetic operators.
 Finite float import decodes the exact IEEE-754 value; it does not reinterpret
@@ -128,13 +129,20 @@ the input as a decimal measurement.
 | --- | --- |
 | Constants | `Real::zero`, `one`, `integer`, `pi`, `tau`, `e` |
 | Lift an exact value | `Real::new`, integer and finite-float `From`/`TryFrom` implementations |
-| Aggregate | `sum_owned`, `sum_refs`, `mean`, `sample_stddev`, `min`, `max` |
+| Aggregate | owned or borrowed `Iterator::product::<Real>()`, `sum_owned`, `sum_refs`, `mean`, `sample_stddev`, `min`, `max` |
 | Common transforms | `abs`, `inverse`, `inverse_ref`, `to_radians`, `to_degrees` |
 | Certified integer operations | `floor_certified`, `ceil_certified`, `round_certified`, `trunc_certified`, `fract_certified`, `rem_euclid_certified` |
 
 `Real` implements arithmetic operators while retaining recognized exact,
 symbolic, and computable forms. `PartialEq` is structural and is deliberately
 not a complete proof of mathematical equality.
+
+Square roots of recognized quadratic surds also stay exact when the conjugate
+norm is a nonnegative rational square. For example,
+`sqrt(x + y + 2*sqrt(x*y))` reduces to a sum of rational square roots for
+positive rational `x` and `y`; `certified_eq_until` can then prove equality
+with `sqrt(x) + sqrt(y)` even when structural `PartialEq` sees the two terms in
+opposite orders.
 
 ### Elementary and stable functions
 
@@ -143,7 +151,7 @@ All entries below are methods on `Real`:
 | Family | Methods |
 | --- | --- |
 | Roots and powers | `sqrt`, `cbrt`, `root_n`, `powi_i64`, `powi`, `pow_rational`, `pow` |
-| Exponential and logarithmic | `exp`, `expm1`, `ln`, `ln_1p`/`log1p`, `ln_1m`/`log1m`, `log2`, `log10` |
+| Exponential and logarithmic | `exp`, `exp2`, `exp10`, `expm1`, `ln`, `ln_1p`/`log1p`, `ln_1m`/`log1m`, `log2`, `log10` |
 | Stable probability transforms | `softplus`, `sigmoid`, `logit`, `logaddexp`, `logsubexp` |
 | Trigonometric | `sin`, `cos`, `tan`, `sin_pi`, `cos_pi`, `tan_pi`, `sinc`, `sinc_pi`, `cosc` |
 | Inverse trigonometric | `asin`, `acos`, `atan`, `atan2` |
