@@ -365,7 +365,7 @@ impl Point2 {
                 && known_nonzero_mask.count_ones() == 1
                 && unknown_zero_mask == 0
             {
-                single_bit_index(known_nonzero_mask)
+                Some(single_bit_index(known_nonzero_mask))
             } else {
                 None
             },
@@ -512,7 +512,7 @@ impl Point3 {
                 && known_nonzero_mask.count_ones() == 1
                 && unknown_zero_mask == 0
             {
-                single_bit_index(known_nonzero_mask)
+                Some(single_bit_index(known_nonzero_mask))
             } else {
                 None
             },
@@ -730,12 +730,9 @@ fn coordinate_symbolic_dependency_mask<const N: usize>(
 }
 
 #[inline]
-fn single_bit_index(mask: u128) -> Option<usize> {
-    if mask.count_ones() == 1 {
-        Some(mask.trailing_zeros() as usize)
-    } else {
-        None
-    }
+fn single_bit_index(mask: u128) -> usize {
+    debug_assert_eq!(mask.count_ones(), 1);
+    mask.trailing_zeros() as usize
 }
 
 #[cfg(test)]

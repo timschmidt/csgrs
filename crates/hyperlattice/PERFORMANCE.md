@@ -768,6 +768,39 @@ single-run workloads for the public algebra2, point, projective, and AABB famili
 Each row fails if it records only its benchmark marker, preventing a syntactically
 present workload from being mistaken for executed lattice/dependency work.
 
+## Representation, coverage, and allocation gates
+
+`tests/real_representations.rs` is the finite representation oracle at the
+Hyperlattice boundary. It constructs all 22 current optimized Hyperreal
+certificate classes, checks their serialized private tags when `serde` is
+enabled, covers all 8 public `StructuralKind` variants, sends every class
+through every lattice carrier family, and exercises all 484 ordered class
+pairs. The explicit count and serialized tag checks intentionally fail when
+Hyperreal adds or renames a finite certificate until Hyperlattice adds a
+corresponding recipe.
+
+`scripts/representation_coverage.sh` repeats that oracle with neither optional
+crate feature, with each primitive approximation cache independently, and with
+all Hyperlattice features plus both dependency caches. The
+`hyperreal_representations` fuzz target uses the same finite corpus on every
+execution. Input bytes select rotating pairings, scalar perturbations, powers,
+and bounded variable-depth opaque DAGs, so finite discriminant coverage does
+not depend on corpus discovery.
+
+The Criterion `real_representations` group provides one composite
+vector/determinant/complex workload per certificate. It is a representation
+cost sweep, complementary to the existing competitive `mathbench` groups that
+compare Hyperlattice with Numerica 128, GMP/MPFR 128 through Rug, and Symbolica.
+`examples/allocation_profile.rs` measures complex multiplication, vector
+dot/cross, Matrix3 determinant, and Matrix4 point transform separately for all
+22 classes. Its counting epoch starts after fixture construction and warm-up;
+the end-live delta intentionally makes lazy cache retention visible.
+
+`scripts/coverage.sh` uses Rust's LLVM coverage tools directly. It merges
+no-feature, all-feature, integration-test, example, and benchmark-fixture
+profiles, suppresses generated benchmark-document writes, and emits both an
+annotated source report and HTML under `target/coverage`.
+
 ## Reproduction and validation
 
 ```sh
@@ -777,8 +810,14 @@ cargo bench --bench regression_sentinels -- 'sentinel/matrix4/determinant_fracti
 cargo bench --bench regression_sentinels -- 'sentinel/matrix4/exact_facts'
 cargo bench --bench regression_sentinels -- 'sentinel/vector/shared_scale_owned_common_denominator'
 cargo bench --bench mathbench -- scalar_large_integer_exp
+cargo bench --bench mathbench -- real_representations
 cargo bench --bench mathbench --features hyperreal-dispatch-trace -- --write-dispatch-trace-md
 cargo bench --bench api_dispatch_trace --features hyperreal-dispatch-trace
+scripts/representation_coverage.sh
+scripts/allocation_profile.sh
+scripts/coverage.sh
+cargo check --manifest-path fuzz/Cargo.toml --bins
+cargo +nightly fuzz run hyperreal_representations --fuzz-dir fuzz -- -max_total_time=30
 cargo fmt --all -- --check
 cargo test --locked
 cargo check --benches --locked

@@ -264,6 +264,10 @@ mod enabled {
     }
 
     pub fn write_report() {
+        if std::env::var_os("HYPERLATTICE_SKIP_BENCHMARK_REPORTS").is_some() {
+            return;
+        }
+
         let rows = rows().lock().expect("dispatch trace rows lock poisoned");
         let matrix_rows = matrix_profile_rows()
             .lock()

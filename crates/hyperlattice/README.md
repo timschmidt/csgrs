@@ -223,6 +223,44 @@ Hyperlattice has no default features.
 - Hyperlattice constructs expressions and carriers. Hyperlimit owns predicate
   escalation and classifications; geometry crates own curves and topology.
 
+## Validation and performance tooling
+
+The deterministic representation suite constructs all 22 optimized finite
+`Real` certificate classes, verifies all 8 public structural kinds, crosses all
+ordered class pairs, and runs every class through scalar, complex, vector,
+point, matrix, and projective carriers. It is repeated under Hyperreal's four
+primitive-cache layouts with:
+
+```sh
+scripts/representation_coverage.sh
+```
+
+The matching fuzz target retains that complete finite corpus on every
+execution, rotates cross-representation pairs from input bytes, and grows
+additional bounded opaque expression DAGs:
+
+```sh
+cargo check --manifest-path fuzz/Cargo.toml --bins
+cargo +nightly fuzz run hyperreal_representations --fuzz-dir fuzz -- -max_total_time=30
+```
+
+`scripts/coverage.sh` builds isolated no-feature and all-feature coverage,
+executes benchmark fixtures without rewriting checked-in reports, and writes
+an annotated text report plus HTML under `target/coverage`. The allocation
+profile reports calls, bytes, reallocations, and peak live memory for four
+carrier workloads across every certificate:
+
+```sh
+scripts/coverage.sh
+scripts/allocation_profile.sh
+```
+
+The Criterion `real_representations` group measures the same 22-class carrier
+sweep. The broader `mathbench` compares equivalent scalar, complex, vector,
+and matrix workloads against Numerica 128, GMP/MPFR 128 through Rug, and
+Symbolica; methodology and retained results live in
+[`PERFORMANCE.md`](PERFORMANCE.md).
+
 ## Ecosystem and further documentation
 
 - [Hyperreal](https://github.com/timschmidt/hyperreal) supplies exact-aware

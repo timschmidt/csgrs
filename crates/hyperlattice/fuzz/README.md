@@ -1,9 +1,12 @@
 # Hyperlattice fuzz targets
 
 This unpublished `cargo-fuzz` package exercises Hyperlattice scalar, complex,
-vector, and matrix operations with bounded generated values. It also crosses
-all public Hyperreal structural representations through lattice construction
-and algebra.
+vector, point, projective, and matrix operations with bounded generated values.
+The `hyperreal_representations` target constructs all 22 finite optimized
+Hyperreal certificate classes on every execution, asserts coverage of all 8
+public structural kinds, and grows additional input-directed opaque expression
+DAGs. A rotating stride exposes every ordered cross-representation pairing to
+the fuzzer without making each execution quadratic.
 
 ## Run
 

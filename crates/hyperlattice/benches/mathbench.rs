@@ -13,6 +13,7 @@ include!("mathbench/complex_ops.rs");
 include!("mathbench/vector_ops.rs");
 include!("mathbench/matrix_ops.rs");
 include!("mathbench/borrowed_ops.rs");
+include!("mathbench/representation_ops.rs");
 include!("mathbench/dispatch_trace.rs");
 include!("mathbench/report.rs");
 
@@ -93,6 +94,7 @@ fn main() {
     bench_matrix_operations(&mut criterion);
     bench_targeted_matrix_forms(&mut criterion);
     bench_borrowed_operations(&mut criterion);
+    bench_real_representations(&mut criterion);
     if trace_only {
         write_dispatch_trace_report();
     } else {

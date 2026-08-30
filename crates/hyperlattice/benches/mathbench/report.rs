@@ -1005,7 +1005,8 @@ fn render_benchmarks_md(estimates: &BTreeMap<String, f64>) -> String {
 }
 
 fn update_benchmarks_doc() {
-    if std::env::var_os("REALISTIC_BLAS_SKIP_BENCHMARK_DOC_UPDATE").is_some()
+    if std::env::var_os("HYPERLATTICE_SKIP_BENCHMARK_REPORTS").is_some()
+        || std::env::var_os("REALISTIC_BLAS_SKIP_BENCHMARK_DOC_UPDATE").is_some()
         || std::env::args().any(|arg| arg == "--test" || arg == "--list" || arg == "--help")
     {
         return;

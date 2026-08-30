@@ -69,3 +69,8 @@ jobs:
       - name: Run Clippy
         run: cargo clippy --all-targets ${CARGO_ARGS} -- -D warnings
         working-directory: hyperlattice
+
+      - name: Check fuzz targets
+        if: matrix.backend.name == 'default'
+        run: cargo check --manifest-path fuzz/Cargo.toml --bins
+        working-directory: hyperlattice

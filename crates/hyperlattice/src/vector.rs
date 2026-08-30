@@ -539,12 +539,9 @@ fn vector_one_mask<const N: usize>(components: [&Real; N]) -> u128 {
 }
 
 #[inline]
-fn single_bit_index(mask: u128) -> Option<usize> {
-    if mask.count_ones() == 1 {
-        Some(mask.trailing_zeros() as usize)
-    } else {
-        None
-    }
+fn single_bit_index(mask: u128) -> usize {
+    debug_assert_eq!(mask.count_ones(), 1);
+    mask.trailing_zeros() as usize
 }
 
 #[inline]
@@ -1296,22 +1293,16 @@ macro_rules! impl_vector {
                 crate::trace_dispatch!("hyperlattice_vector", "method", "div-scalar-checked");
                 require_known_nonzero(&rhs)?;
                 let inv_rhs = rhs.inverse()?;
-                if true && $n == 3 {
+                if $n == 3 {
                     // Keep this vec3 path aligned with normalize: for three
                     // lanes, borrowed multiply can be cheaper than
                     // forcing the shared-scale helper used by matrices.
                     Ok(Self(self.0.map(|value| &value * &inv_rhs)))
-                } else if true {
+                } else {
                     // Vec4 still benchmarks faster through the cached scalar
                     // multiply path because it amortizes the shared scale over
                     // one extra lane.
                     Ok(Self(self.0.map(|value| value.mul_cached(&inv_rhs))))
-                } else {
-                    let mut values = self.0;
-                    for value in &mut values {
-                        *value = value.clone().mul_cached(&inv_rhs);
-                    }
-                    Ok(Self(values))
                 }
             }
 
@@ -1329,16 +1320,10 @@ macro_rules! impl_vector {
                 let rhs = with_abort(rhs, signal);
                 require_known_nonzero(&rhs)?;
                 let inv_rhs = rhs.inverse()?;
-                if true && $n == 3 {
+                if $n == 3 {
                     Ok(Self(self.0.map(|value| &value * &inv_rhs)))
-                } else if true {
-                    Ok(Self(self.0.map(|value| value.mul_cached(&inv_rhs))))
                 } else {
-                    let mut values = self.0;
-                    for value in &mut values {
-                        *value = value.clone().mul_cached(&inv_rhs);
-                    }
-                    Ok(Self(values))
+                    Ok(Self(self.0.map(|value| value.mul_cached(&inv_rhs))))
                 }
             }
         }
@@ -1423,15 +1408,7 @@ macro_rules! impl_vector {
             fn add(self, rhs: Real) -> Self::Output {
                 crate::trace_dispatch!("hyperlattice_vector", "op", "add-scalar-owned");
                 let rhs = &rhs;
-                if true {
-                    Self(self.0.map(|value| value.add_cached(rhs)))
-                } else {
-                    let mut values = self.0;
-                    for value in &mut values {
-                        *value = value.clone().add_cached(rhs);
-                    }
-                    Self(values)
-                }
+                Self(self.0.map(|value| value.add_cached(rhs)))
             }
         }
 
@@ -1494,15 +1471,7 @@ macro_rules! impl_vector {
                 crate::trace_dispatch!("hyperlattice_vector", "op", "sub-scalar-owned");
                 let rhs = -rhs;
                 let rhs = &rhs;
-                if true {
-                    Self(self.0.map(|value| value.add_cached(rhs)))
-                } else {
-                    let mut values = self.0;
-                    for value in &mut values {
-                        *value = value.clone().add_cached(rhs);
-                    }
-                    Self(values)
-                }
+                Self(self.0.map(|value| value.add_cached(rhs)))
             }
         }
 
@@ -1571,6 +1540,7 @@ macro_rules! impl_vector {
             }
         }
 
+        #[allow(clippy::suspicious_arithmetic_impl)]
         impl Div<&Real> for $name {
             type Output = BlasResult<Self>;
 
@@ -1578,16 +1548,10 @@ macro_rules! impl_vector {
                 crate::trace_dispatch!("hyperlattice_vector", "op", "div-scalar-ref");
                 reject_definite_zero(rhs)?;
                 let inv_rhs = rhs.inverse_ref()?;
-                if true && $n == 3 {
+                if $n == 3 {
                     Ok(Self(self.0.map(|value| &value * &inv_rhs)))
-                } else if true {
-                    Ok(Self(self.0.map(|value| value.mul_cached(&inv_rhs))))
                 } else {
-                    let mut values = self.0;
-                    for value in &mut values {
-                        *value = value.clone().mul_cached(&inv_rhs);
-                    }
-                    Ok(Self(values))
+                    Ok(Self(self.0.map(|value| value.mul_cached(&inv_rhs))))
                 }
             }
         }
@@ -1814,7 +1778,7 @@ impl Vector3 {
                 && known_nonzero_mask.count_ones() == 1
                 && unknown_zero_mask == 0
             {
-                single_bit_index(known_nonzero_mask)
+                Some(single_bit_index(known_nonzero_mask))
             } else {
                 None
             },
@@ -2056,7 +2020,7 @@ impl Vector4 {
                 && known_nonzero_mask.count_ones() == 1
                 && unknown_zero_mask == 0
             {
-                single_bit_index(known_nonzero_mask)
+                Some(single_bit_index(known_nonzero_mask))
             } else {
                 None
             },
