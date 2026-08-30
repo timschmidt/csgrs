@@ -7,7 +7,7 @@
 
 use crate::error::{Error, Result};
 #[cfg(any(feature = "earcut", all(feature = "cdt", feature = "runtime-select")))]
-use crate::kernel::ExactKernel;
+use crate::predicate_evaluator::PredicateEvaluator;
 use crate::types::ExactPoint;
 
 /// A borrowed ring over a flat polygon vertex buffer.
@@ -112,7 +112,7 @@ pub fn rings_from_hole_indices(
 /// Build a ring index list, dropping a duplicated closing point when present.
 #[cfg(any(feature = "earcut", all(feature = "cdt", feature = "runtime-select")))]
 pub(crate) fn open_ring_indices(
-    kernel: &ExactKernel,
+    evaluator: &PredicateEvaluator,
     vertices: &[ExactPoint],
     range: RingRange,
 ) -> Result<Vec<usize>> {
@@ -121,9 +121,41 @@ pub(crate) fn open_ring_indices(
     }
 
     let mut end = range.end;
-    if crate::predicates::points_equal(kernel, &vertices[range.start], &vertices[range.end - 1])? {
+    if crate::predicates::points_equal(evaluator, &vertices[range.start], &vertices[range.end - 1])?
+    {
         end -= 1;
     }
 
     Ok((range.start..end).collect())
+}
+
+#[cfg(all(
+    test,
+    any(feature = "earcut", all(feature = "cdt", feature = "runtime-select"))
+))]
+mod tests {
+    use super::*;
+    use crate::context::TriangulationContext;
+    use crate::types::Real;
+
+    #[test]
+    fn open_ring_handles_short_and_explicitly_closed_ranges() {
+        let context = TriangulationContext::new(hyperlimit::PredicatePolicy::STRICT);
+        let evaluator = PredicateEvaluator::new(&context);
+        let points = vec![
+            ExactPoint::new(Real::from(0), Real::from(0)),
+            ExactPoint::new(Real::from(2), Real::from(0)),
+            ExactPoint::new(Real::from(0), Real::from(2)),
+            ExactPoint::new(Real::from(0), Real::from(0)),
+        ];
+
+        assert_eq!(
+            open_ring_indices(&evaluator, &points, RingRange { start: 1, end: 2 }).unwrap(),
+            vec![1]
+        );
+        assert_eq!(
+            open_ring_indices(&evaluator, &points, RingRange { start: 0, end: 4 }).unwrap(),
+            vec![0, 1, 2]
+        );
+    }
 }

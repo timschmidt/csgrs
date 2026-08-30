@@ -8,7 +8,12 @@ const STRICT: TriangulationContext = TriangulationContext::new(PredicatePolicy::
 const APPROX: TriangulationContext = TriangulationContext::new(PredicatePolicy::APPROXIMATE_512);
 
 fn terminal_equality() -> (Real, Real) {
-    (Real::pi() + Real::e(), Real::e() + Real::pi())
+    let sine = Real::e().sin();
+    let cosine = Real::e().cos();
+    (
+        &sine * &sine + &cosine * &cosine + Real::from(2),
+        Real::from(3),
+    )
 }
 
 #[cfg(feature = "earcut")]

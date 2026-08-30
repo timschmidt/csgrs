@@ -9,7 +9,7 @@
 use std::cmp::Ordering;
 
 use crate::error::Result;
-use crate::kernel::ExactKernel;
+use crate::predicate_evaluator::PredicateEvaluator;
 use crate::predicates;
 #[cfg(feature = "earcut")]
 use crate::types::ExactPoint;
@@ -54,7 +54,7 @@ impl ConstraintPolygon {
 /// order. This is the same containment model used by the other polygon
 /// algorithms in this crate.
 pub(crate) fn polygon_from_closed_constraints(
-    kernel: &ExactKernel,
+    evaluator: &PredicateEvaluator,
     points: &[Point2],
     constraints: &[Constraint],
 ) -> Result<Option<ConstraintPolygon>> {
@@ -63,7 +63,7 @@ pub(crate) fn polygon_from_closed_constraints(
         return Ok(None);
     };
 
-    order_polygon_rings(kernel, points, rings)
+    order_polygon_rings(evaluator, points, rings)
 }
 
 fn extract_closed_rings(point_count: usize, constraints: &[Constraint]) -> Option<Vec<Vec<usize>>> {
@@ -133,7 +133,7 @@ fn extract_closed_rings(point_count: usize, constraints: &[Constraint]) -> Optio
 }
 
 fn order_polygon_rings(
-    kernel: &ExactKernel,
+    evaluator: &PredicateEvaluator,
     points: &[Point2],
     rings: Vec<Vec<usize>>,
 ) -> Result<Option<ConstraintPolygon>> {
@@ -141,7 +141,7 @@ fn order_polygon_rings(
         return Ok(Some(ConstraintPolygon { rings }));
     }
 
-    let Some(exterior_index) = exterior_ring_index(kernel, points, &rings)? else {
+    let Some(exterior_index) = exterior_ring_index(evaluator, points, &rings)? else {
         return Ok(None);
     };
 
@@ -153,10 +153,10 @@ fn order_polygon_rings(
         if ring_index == exterior_index {
             continue;
         }
-        if ring_is_inside_any_other_hole(kernel, points, &rings, exterior_index, ring_index)? {
+        if ring_is_inside_any_other_hole(evaluator, points, &rings, exterior_index, ring_index)? {
             return Ok(None);
         }
-        insert_hole_sorted(kernel, points, &mut holes, ring.clone())?;
+        insert_hole_sorted(evaluator, points, &mut holes, ring.clone())?;
     }
     ordered.extend(holes);
 
@@ -164,14 +164,14 @@ fn order_polygon_rings(
 }
 
 fn insert_hole_sorted(
-    kernel: &ExactKernel,
+    evaluator: &PredicateEvaluator,
     points: &[Point2],
     holes: &mut Vec<Vec<usize>>,
     hole: Vec<usize>,
 ) -> Result<()> {
     let mut insert_at = holes.len();
     for (candidate_at, candidate) in holes.iter().enumerate() {
-        if compare_ring_representatives(kernel, points, &hole, candidate)? == Ordering::Less {
+        if compare_ring_representatives(evaluator, points, &hole, candidate)? == Ordering::Less {
             insert_at = candidate_at;
             break;
         }
@@ -181,7 +181,7 @@ fn insert_hole_sorted(
 }
 
 fn exterior_ring_index(
-    kernel: &ExactKernel,
+    evaluator: &PredicateEvaluator,
     points: &[Point2],
     rings: &[Vec<usize>],
 ) -> Result<Option<usize>> {
@@ -195,7 +195,7 @@ fn exterior_ring_index(
                 if !contains_all {
                     return Ok(false);
                 }
-                predicates::point_in_ring_even_odd(kernel, points, ring, &points[other[0]])
+                predicates::point_in_ring_even_odd(evaluator, points, ring, &points[other[0]])
             })?;
 
         if contains_all_other_rings {
@@ -210,7 +210,7 @@ fn exterior_ring_index(
 }
 
 fn ring_is_inside_any_other_hole(
-    kernel: &ExactKernel,
+    evaluator: &PredicateEvaluator,
     points: &[Point2],
     rings: &[Vec<usize>],
     exterior_index: usize,
@@ -220,8 +220,12 @@ fn ring_is_inside_any_other_hole(
         if other_index == exterior_index || other_index == ring_index {
             continue;
         }
-        if predicates::point_in_ring_even_odd(kernel, points, other, &points[rings[ring_index][0]])?
-        {
+        if predicates::point_in_ring_even_odd(
+            evaluator,
+            points,
+            other,
+            &points[rings[ring_index][0]],
+        )? {
             return Ok(true);
         }
     }
@@ -230,20 +234,24 @@ fn ring_is_inside_any_other_hole(
 }
 
 fn compare_ring_representatives(
-    kernel: &ExactKernel,
+    evaluator: &PredicateEvaluator,
     points: &[Point2],
     left: &[usize],
     right: &[usize],
 ) -> Result<Ordering> {
-    let left_rep = leftmost_position(kernel, points, left)?;
-    let right_rep = leftmost_position(kernel, points, right)?;
-    compare_points(kernel, points, left[left_rep], right[right_rep])
+    let left_rep = leftmost_position(evaluator, points, left)?;
+    let right_rep = leftmost_position(evaluator, points, right)?;
+    compare_points(evaluator, points, left[left_rep], right[right_rep])
 }
 
-fn leftmost_position(kernel: &ExactKernel, points: &[Point2], ring: &[usize]) -> Result<usize> {
+fn leftmost_position(
+    evaluator: &PredicateEvaluator,
+    points: &[Point2],
+    ring: &[usize],
+) -> Result<usize> {
     let mut best = 0;
     for position in 1..ring.len() {
-        if compare_points(kernel, points, ring[position], ring[best])? == Ordering::Less {
+        if compare_points(evaluator, points, ring[position], ring[best])? == Ordering::Less {
             best = position;
         }
     }
@@ -251,7 +259,7 @@ fn leftmost_position(kernel: &ExactKernel, points: &[Point2], ring: &[usize]) ->
 }
 
 fn compare_points(
-    kernel: &ExactKernel,
+    evaluator: &PredicateEvaluator,
     points: &[Point2],
     left: usize,
     right: usize,
@@ -259,8 +267,177 @@ fn compare_points(
     // Ring ordering is not CDT topology; it is a reusable exact point-order
     // predicate. Keep it in hyperlimit so hypertri only chooses how ordered
     // rings are consumed.
-    kernel.decide(
-        hyperlimit::compare_point2_lexicographic(&points[left], &points[right], kernel.policy()),
+    evaluator.decide(
+        hyperlimit::compare_point2_lexicographic(&points[left], &points[right], evaluator.policy()),
         "compare_point2_lexicographic",
     )
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::context::TriangulationContext;
+    use crate::types::Real;
+
+    const STRICT: TriangulationContext =
+        TriangulationContext::new(hyperlimit::PredicatePolicy::STRICT);
+
+    fn evaluator() -> PredicateEvaluator {
+        PredicateEvaluator::new(&STRICT)
+    }
+
+    fn point(x: i64, y: i64) -> Point2 {
+        Point2::new(Real::from(x), Real::from(y))
+    }
+
+    fn cycle(indices: &[usize]) -> Vec<Constraint> {
+        (0..indices.len())
+            .map(|index| Constraint::new(indices[index], indices[(index + 1) % indices.len()]))
+            .collect()
+    }
+
+    #[test]
+    fn closed_ring_extraction_rejects_noncycles_and_keeps_all_cycles() {
+        assert_eq!(extract_closed_rings(0, &[]), None);
+        assert_eq!(extract_closed_rings(2, &[Constraint::new(0, 1)]), None);
+        assert_eq!(extract_closed_rings(3, &[Constraint::new(0, 1)]), None);
+        assert_eq!(extract_closed_rings(3, &[Constraint::new(0, 0)]), None);
+        assert_eq!(
+            extract_closed_rings(3, &[Constraint::new(0, 1), Constraint::new(0, 1)]),
+            None
+        );
+
+        let mut constraints = cycle(&[0, 1, 2]);
+        constraints.extend(cycle(&[3, 4, 5, 6]));
+        let rings = extract_closed_rings(7, &constraints).unwrap();
+        assert_eq!(rings.len(), 2);
+        assert_eq!(rings[0], vec![0, 1, 2]);
+        assert_eq!(rings[1], vec![3, 4, 5, 6]);
+    }
+
+    #[test]
+    fn ring_ordering_finds_exterior_and_sorts_holes_lexicographically() {
+        let points = vec![
+            point(0, 0),
+            point(12, 0),
+            point(12, 12),
+            point(0, 12),
+            point(8, 4),
+            point(10, 4),
+            point(10, 6),
+            point(8, 6),
+            point(4, 6),
+            point(2, 6),
+            point(2, 4),
+            point(4, 4),
+        ];
+        // Put the exterior last and rotate both holes so representative search
+        // and insertion-before-an-existing-hole are exercised.
+        let rings = vec![vec![4, 5, 6, 7], vec![8, 9, 10, 11], vec![0, 1, 2, 3]];
+        let polygon = order_polygon_rings(&evaluator(), &points, rings)
+            .unwrap()
+            .unwrap();
+
+        assert_eq!(polygon.rings[0], vec![0, 1, 2, 3]);
+        assert_eq!(polygon.rings[1], vec![8, 9, 10, 11]);
+        assert_eq!(polygon.rings[2], vec![4, 5, 6, 7]);
+
+        #[cfg(feature = "earcut")]
+        {
+            let (flat, hole_indices, source_indices) = polygon.to_flat_polygon(&points);
+            assert_eq!(flat.len(), 12);
+            assert_eq!(hole_indices, vec![4, 8]);
+            assert_eq!(source_indices, vec![0, 1, 2, 3, 8, 9, 10, 11, 4, 5, 6, 7]);
+        }
+    }
+
+    #[test]
+    fn private_hole_helpers_cover_prepend_and_nested_detection() {
+        let points = vec![
+            point(0, 0),
+            point(12, 0),
+            point(12, 12),
+            point(0, 12),
+            point(6, 6),
+            point(8, 4),
+            point(10, 4),
+            point(10, 8),
+            point(8, 8),
+            point(9, 5),
+        ];
+        let mut holes = vec![vec![5, 6, 7, 8]];
+        insert_hole_sorted(&evaluator(), &points, &mut holes, vec![4]).unwrap();
+        assert_eq!(holes, vec![vec![4], vec![5, 6, 7, 8]]);
+
+        let rings = vec![vec![0, 1, 2, 3], vec![5, 6, 7, 8], vec![9]];
+        assert!(ring_is_inside_any_other_hole(&evaluator(), &points, &rings, 0, 2).unwrap());
+    }
+
+    #[test]
+    fn ring_ordering_rejects_disjoint_nested_and_ambiguous_exteriors() {
+        let disjoint = vec![
+            point(0, 0),
+            point(2, 0),
+            point(0, 2),
+            point(5, 0),
+            point(7, 0),
+            point(5, 2),
+        ];
+        assert_eq!(
+            order_polygon_rings(&evaluator(), &disjoint, vec![vec![0, 1, 2], vec![3, 4, 5]])
+                .unwrap(),
+            None
+        );
+
+        let nested = vec![
+            point(0, 0),
+            point(10, 0),
+            point(10, 10),
+            point(0, 10),
+            point(2, 2),
+            point(8, 2),
+            point(8, 8),
+            point(2, 8),
+            point(3, 3),
+            point(4, 3),
+            point(4, 4),
+            point(3, 4),
+        ];
+        assert_eq!(
+            order_polygon_rings(
+                &evaluator(),
+                &nested,
+                vec![vec![0, 1, 2, 3], vec![4, 5, 6, 7], vec![8, 9, 10, 11]],
+            )
+            .unwrap(),
+            None
+        );
+
+        let duplicate = vec![
+            point(0, 0),
+            point(4, 0),
+            point(0, 4),
+            point(0, 0),
+            point(4, 0),
+            point(0, 4),
+        ];
+        assert_eq!(
+            exterior_ring_index(&evaluator(), &duplicate, &[vec![0, 1, 2], vec![3, 4, 5]]).unwrap(),
+            None
+        );
+    }
+
+    #[test]
+    fn public_recognizer_distinguishes_cycle_graphs_from_general_pslgs() {
+        let points = vec![point(0, 0), point(4, 0), point(0, 4), point(2, 2)];
+        let polygon =
+            polygon_from_closed_constraints(&evaluator(), &points, &cycle(&[0, 1, 2])).unwrap();
+        assert!(polygon.is_some());
+
+        let open = [Constraint::new(0, 1), Constraint::new(1, 2)];
+        assert_eq!(
+            polygon_from_closed_constraints(&evaluator(), &points, &open).unwrap(),
+            None
+        );
+    }
 }

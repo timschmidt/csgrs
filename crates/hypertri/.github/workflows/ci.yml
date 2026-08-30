@@ -126,6 +126,14 @@ jobs:
         working-directory: hypertri
         run: cargo test --all-features
 
+      - name: Test every Real representation and cache layout
+        working-directory: hypertri
+        run: scripts/representation_coverage.sh
+
+      - name: Compile sanitizer fuzz targets
+        working-directory: hypertri
+        run: cargo check --manifest-path fuzz/Cargo.toml --bins
+
       - name: Build docs with all features
         working-directory: hypertri
         run: cargo doc --no-deps --all-features
@@ -133,3 +141,49 @@ jobs:
       - name: Check UI feature selection
         working-directory: hypertri
         run: cargo check --manifest-path examples/hypertri_ui/Cargo.toml
+
+  coverage:
+    name: Production line coverage
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout hypertri
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          path: hypertri
+          persist-credentials: false
+
+      - name: Checkout hyperreal sibling
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          repository: ${{ github.repository_owner }}/hyperreal
+          path: hyperreal
+          persist-credentials: false
+
+      - name: Checkout hyperlattice sibling
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          repository: ${{ github.repository_owner }}/hyperlattice
+          path: hyperlattice
+          persist-credentials: false
+
+      - name: Checkout hyperlimit sibling
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          repository: ${{ github.repository_owner }}/hyperlimit
+          path: hyperlimit
+          persist-credentials: false
+
+      - name: Install Rust with coverage tools
+        run: |
+          rustup toolchain install stable --profile minimal --component llvm-tools-preview
+          rustup default stable
+
+      - name: Cache Cargo
+        uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2
+        with:
+          workspaces: hypertri
+
+      - name: Enforce production coverage threshold
+        working-directory: hypertri
+        run: scripts/coverage.sh

@@ -10,6 +10,69 @@ The explicit-policy runtime, native/WASM size, and call-graph baseline is
 recorded separately in
 [`benchmarks/baselines/policy-context-2026-07-30.md`](benchmarks/baselines/policy-context-2026-07-30.md).
 
+## Exhaustive representation and competitor baseline
+
+The August 30, 2026 verification extension inventories all 22 optimized finite
+Hyperreal certificate classes and all eight public structural kinds. The
+integration matrix exercises every ordered class pair and every class across
+earcut, ordinary and spatial Delaunay, crossing and convex-hull CDT,
+topology-only CDT, D-dimensional Delaunay, and runtime selection. The same
+matrix passes with no approximation cache, each cache independently, and both
+`cached-f32-approx` and `cached-f64-approx` together. Variable-depth opaque
+expression DAGs extend the same corpus under ASan fuzzing.
+
+Direct LLVM instrumentation across minimal, executor-free runtime,
+single-algorithm runtime, complete, example, and benchmark configurations
+reports 6,270 of 6,599 production executable lines (95.01%), 96.15% of all
+instrumented lines, and 100% of functions. `scripts/coverage.sh` enforces the
+95% production threshold.
+
+### Competitive runtime baseline
+
+Criterion results below are local estimates from `rustc 1.97.0` on an x86-64
+Ryzen 7 5800X3D. Hypertri's rows provide exact topology over `Real`; `earcutr`
+and Delaunator are ordinary finite-`f64` speed references and do not provide
+equivalent general exact-real semantics. Pre-lifted rows exclude boundary
+conversion, while `hypertri_f64_boundary` includes exact lifting.
+
+| workload | Hypertri exact pre-lifted | Hypertri alternate/boundary | float reference |
+| --- | ---: | ---: | ---: |
+| 32-vertex polygon | 22.96 µs | 32.27 µs (`f64`) | 1.524 µs (`earcutr`) |
+| 128-vertex polygon | 101.03 µs | 131.58 µs (`f64`) | 6.020 µs (`earcutr`) |
+| 64-point Delaunay | 212.76 µs | 158.01 µs (spatial), 193.26 µs (`f64`) | 6.841 µs (Delaunator) |
+| 400-point Delaunay | 3.520 ms | 3.358 ms (spatial), 3.568 ms (`f64`) | 52.74 µs (Delaunator) |
+
+The 64-point ordinary Delaunay row had a wide 180.86–244.34 µs confidence
+interval; the spatial row was stable at 156.72–159.05 µs. These measurements
+are a transparent cost boundary, not a claim that unlike numeric contracts
+should have equal throughput.
+
+### Representation-shaped runtime and memory
+
+`benches/representations.rs` measures one composite invocation of all five
+topology families for each finite certificate. Criterion central estimates
+ranged from 29.05 µs for the exact-rational `One` class to 5.63 ms for
+`TanPi`; the slowest classes identify symbolic reduction work for investigation
+without weakening predicate policy.
+
+`examples/allocation_profile.rs` warms fixtures before measurement and records
+allocations, allocated bytes, reallocations, peak live bytes, and end-of-epoch
+live deltas for 22 classes by five operations. In an eight-iteration run,
+crossing CDT ranged from 12,349 bytes/op for `One` to 1,537,097 bytes/op for
+`TanPi`; the largest per-row counting-allocator peak was 43,152 bytes. An
+independent one-pass Valgrind Massif profile peaked at 169,744 total heap bytes.
+Memcheck observed 1,315,139 allocations and reported zero definitely,
+indirectly, or possibly lost bytes and zero memory errors; the 90,728 bytes
+still reachable at process exit are shared Hyperreal caches/constants.
+
+Reproduce these profiles with:
+
+```text
+cargo bench --bench competitive --features all-algorithms,f64-interop
+cargo bench --bench representations --features all-algorithms,runtime-select
+scripts/allocation_profile.sh
+```
+
 ## Retained changes
 
 ### Immediate runtime triangulation reports

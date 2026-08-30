@@ -188,7 +188,7 @@ return `Error`; finite values are exact-lifted before any topology branch.
 
 ### Predicate ownership
 
-Hypertri's predicate adapters and operation-local kernel are private so every
+Hypertri's predicate adapters and operation-local evaluator are private so every
 topology path uses the selected policy and contributes to one aggregate
 certainty result. Applications call a triangulator; Hyperlimit remains the
 public predicate layer.
@@ -236,6 +236,41 @@ cargo run --example nd --features nd
 The browser demonstration is deployed at
 <https://timschmidt.github.io/hypertri/> and its source lives in
 [`examples/hypertri_ui`](examples/hypertri_ui).
+
+## Verification and profiling
+
+The representation gate inventories all 22 optimized finite `Real`
+certificate classes, confirms all eight public structural kinds, exercises
+every ordered 22-by-22 translation pair, and runs every class through the
+earcut, Delaunay, spatial Delaunay, CDT, topology-only CDT, D-dimensional, and
+runtime-selection surfaces. It repeats that suite under both Hyperreal cache
+layouts and their combination:
+
+```sh
+scripts/representation_coverage.sh
+```
+
+Production executable-line coverage is measured across the minimal build,
+both single-algorithm runtime builds, all features, examples, and benchmark
+fixtures. The script rejects coverage below 95% and writes annotated text and
+HTML reports under `target/coverage`:
+
+```sh
+scripts/coverage.sh
+```
+
+The fuzz corpus covers the same finite classes plus variable-depth opaque
+expression DAGs. Allocation profiling excludes fixture construction and
+first-use cache materialization, then reports allocations, bytes, and peak live
+bytes for five topology operations per certificate class:
+
+```sh
+cargo check --manifest-path fuzz/Cargo.toml --bins
+cargo +nightly fuzz run hyperreal_representations --fuzz-dir fuzz
+scripts/allocation_profile.sh
+cargo bench --bench representations --features all-algorithms,runtime-select
+cargo bench --bench competitive --features all-algorithms,f64-interop
+```
 
 ## Further documentation
 
@@ -310,7 +345,10 @@ Before submitting a change, run:
 
 ```sh
 cargo fmt --all -- --check
-cargo test --all-features
-cargo clippy --all-targets --all-features -- -D warnings
-RUSTDOCFLAGS="-D warnings" cargo doc --no-deps --all-features
+cargo test --all-targets --all-features --locked
+scripts/representation_coverage.sh
+scripts/coverage.sh
+cargo check --manifest-path fuzz/Cargo.toml --bins --locked
+cargo clippy --all-targets --all-features --locked -- -D warnings
+RUSTDOCFLAGS="-D warnings" cargo doc --no-deps --all-features --locked
 ```

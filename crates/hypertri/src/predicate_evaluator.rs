@@ -1,4 +1,4 @@
-//! Numeric kernels used by triangulation algorithms.
+//! Operation-local predicate evaluation used by triangulation algorithms.
 //!
 //! All irreversible topology decisions in exact code should pass through this
 //! layer. Cheap structural facts and filters are used only when they certify a
@@ -12,22 +12,22 @@ use crate::types::{Point2, Real, Sign, TriangleLocation};
 #[cfg(any(feature = "earcut", feature = "cdt", feature = "nd"))]
 use hyperlimit::{Certainty, PredicateOutcome, PredicatePolicy};
 use std::cell::Cell;
-#[cfg(any(feature = "earcut", feature = "cdt"))]
+#[cfg(feature = "cdt")]
 use std::cmp::Ordering;
 
-/// Operation-local exact kernel backed by [`hyperreal::Real`].
+/// Operation-local predicate evaluator backed by [`hyperreal::Real`].
 ///
-/// A fresh kernel is created for every public operation. Its interior cell
+/// A fresh evaluator is created for every public operation. Its interior cell
 /// aggregates whether any Hyperlimit decision consumed APPROXIMATE_512 without
 /// making the caller's immutable [`TriangulationContext`] stateful.
 #[derive(Debug)]
-pub(crate) struct ExactKernel {
+pub(crate) struct PredicateEvaluator {
     #[cfg(any(feature = "earcut", feature = "cdt", feature = "nd"))]
     policy: PredicatePolicy,
     certainty: Cell<TriangulationCertainty>,
 }
 
-impl ExactKernel {
+impl PredicateEvaluator {
     pub(crate) fn new(context: &TriangulationContext) -> Self {
         #[cfg(not(any(feature = "earcut", feature = "cdt", feature = "nd")))]
         let _ = context;
@@ -77,7 +77,7 @@ impl ExactKernel {
         left + right
     }
 
-    #[cfg(any(feature = "earcut", feature = "cdt"))]
+    #[cfg(feature = "cdt")]
     pub(crate) fn sub(left: &Real, right: &Real) -> Real {
         left - right
     }
@@ -103,7 +103,7 @@ impl ExactKernel {
         ))
     }
 
-    #[cfg(any(feature = "earcut", feature = "cdt"))]
+    #[cfg(feature = "cdt")]
     pub(crate) fn cmp(&self, left: &Real, right: &Real) -> Result<Ordering> {
         self.decide(
             hyperlimit::compare_reals(left, right, self.policy),
@@ -146,7 +146,7 @@ impl ExactKernel {
     }
 
     /// Classify a point after the ordered triangle orientation has already
-    /// been decided by this operation's exact kernel.
+    /// been decided by this operation's predicate evaluator.
     ///
     /// Incremental triangulation retains positive winding for every active
     /// triangle, and cavity ear selection decides the same turn immediately
@@ -168,7 +168,7 @@ impl ExactKernel {
 
 #[cfg(any(feature = "earcut", feature = "cdt"))]
 fn classify_point_triangle_with_orientation(
-    kernel: &ExactKernel,
+    evaluator: &PredicateEvaluator,
     a: &Point2,
     b: &Point2,
     c: &Point2,
@@ -179,9 +179,9 @@ fn classify_point_triangle_with_orientation(
         return Ok(TriangleLocation::Degenerate);
     }
 
-    let ab = kernel.orient2(a, b, point)?;
-    let bc = kernel.orient2(b, c, point)?;
-    let ca = kernel.orient2(c, a, point)?;
+    let ab = evaluator.orient2(a, b, point)?;
+    let bc = evaluator.orient2(b, c, point)?;
+    let ca = evaluator.orient2(c, a, point)?;
     let signs = [ab, bc, ca];
 
     if signs.contains(&orientation.reversed()) {
@@ -210,8 +210,8 @@ mod tests {
     const APPROX: TriangulationContext =
         TriangulationContext::new(PredicatePolicy::APPROXIMATE_512);
 
-    fn kernel() -> ExactKernel {
-        ExactKernel::new(&APPROX)
+    fn evaluator() -> PredicateEvaluator {
+        PredicateEvaluator::new(&APPROX)
     }
 
     fn p(x: i64, y: i64) -> Point2 {
@@ -219,32 +219,42 @@ mod tests {
     }
 
     #[test]
-    fn exact_kernel_routes_orientation_through_predicate_layer() {
-        let kernel = kernel();
+    fn predicate_evaluator_routes_orientation_through_predicate_layer() {
+        let evaluator = evaluator();
         assert_eq!(
-            kernel.orient2(&p(0, 0), &p(2, 0), &p(1, 1)).unwrap(),
+            evaluator.orient2(&p(0, 0), &p(2, 0), &p(1, 1)).unwrap(),
             Sign::Positive
         );
         assert_eq!(
-            kernel.orient2(&p(0, 0), &p(1, 1), &p(2, 2)).unwrap(),
+            evaluator.orient2(&p(0, 0), &p(1, 1), &p(2, 2)).unwrap(),
             Sign::Zero
         );
     }
 
-    #[cfg(feature = "dispatch-trace")]
     #[test]
-    fn exact_kernel_compares_rationals_without_materializing_a_difference() {
+    fn predicate_evaluator_maps_real_division_failure() {
+        assert_eq!(
+            PredicateEvaluator::div(&Real::one(), &Real::zero()),
+            Err(Error::InvalidInput {
+                reason: "Real division failed"
+            })
+        );
+    }
+
+    #[cfg(all(feature = "dispatch-trace", feature = "cdt"))]
+    #[test]
+    fn predicate_evaluator_compares_rationals_without_materializing_a_difference() {
         let context = TriangulationContext::new(PredicatePolicy::STRICT);
-        let kernel = ExactKernel::new(&context);
+        let evaluator = PredicateEvaluator::new(&context);
         let left = Real::from(hyperreal::Rational::fraction(7, 13).unwrap());
         let right = Real::from(hyperreal::Rational::fraction(8, 13).unwrap());
 
         hyperreal::dispatch_trace::reset();
-        let ordering = hyperreal::dispatch_trace::with_recording(|| kernel.cmp(&left, &right));
+        let ordering = hyperreal::dispatch_trace::with_recording(|| evaluator.cmp(&left, &right));
 
         assert_eq!(ordering, Ok(Ordering::Less));
         assert_eq!(
-            kernel.finish(()).certainty,
+            evaluator.finish(()).certainty,
             TriangulationCertainty::Certified
         );
         let trace = hyperreal::dispatch_trace::take_trace();
@@ -258,27 +268,32 @@ mod tests {
 
     #[cfg(feature = "cdt")]
     #[test]
-    fn exact_kernel_routes_incircle_through_predicate_layer() {
-        let kernel = kernel();
+    fn predicate_evaluator_routes_incircle_through_predicate_layer() {
+        let evaluator = evaluator();
         let a = p(0, 0);
         let b = p(2, 0);
         let c = p(0, 2);
         assert_eq!(
-            kernel.incircle2(&a, &b, &c, &p(1, 1)).unwrap(),
+            evaluator.incircle2(&a, &b, &c, &p(1, 1)).unwrap(),
             Sign::Positive
         );
-        assert_eq!(kernel.incircle2(&a, &b, &c, &p(2, 2)).unwrap(), Sign::Zero);
         assert_eq!(
-            kernel.incircle2(&a, &b, &c, &p(3, 3)).unwrap(),
+            evaluator.incircle2(&a, &b, &c, &p(2, 2)).unwrap(),
+            Sign::Zero
+        );
+        assert_eq!(
+            evaluator.incircle2(&a, &b, &c, &p(3, 3)).unwrap(),
             Sign::Negative
         );
     }
 
     #[cfg(feature = "earcut")]
     #[test]
-    fn exact_kernel_uses_central_terminal_equality_policy() {
-        let left = &Real::pi() + &Real::e();
-        let right = &Real::e() + &Real::pi();
+    fn predicate_evaluator_uses_central_terminal_equality_policy() {
+        let sine = Real::e().sin();
+        let cosine = Real::e().cos();
+        let left = &sine * &sine + &cosine * &cosine + Real::from(2);
+        let right = Real::from(3);
         assert_ne!(
             left, right,
             "the fixture must use distinct Real representations"
@@ -286,13 +301,13 @@ mod tests {
 
         let left_point = Point2::new(left, Real::zero());
         let right_point = Point2::new(right, Real::zero());
-        let kernel = kernel();
+        let evaluator = evaluator();
         assert_eq!(
-            crate::predicates::points_equal(&kernel, &left_point, &right_point),
+            crate::predicates::points_equal(&evaluator, &left_point, &right_point),
             Ok(true)
         );
         assert_eq!(
-            kernel.finish(()).certainty,
+            evaluator.finish(()).certainty,
             TriangulationCertainty::Approximate512Consumed
         );
         assert!(matches!(
@@ -304,15 +319,15 @@ mod tests {
         ));
 
         let strict_context = TriangulationContext::new(PredicatePolicy::STRICT);
-        let strict_kernel = ExactKernel::new(&strict_context);
+        let strict_evaluator = PredicateEvaluator::new(&strict_context);
         assert!(matches!(
-            strict_kernel.cmp(&left_point.x, &right_point.x),
+            crate::predicates::points_equal(&strict_evaluator, &left_point, &right_point),
             Err(Error::PredicateUndecided {
-                predicate: "exact Real ordering"
+                predicate: "point2_equal"
             })
         ));
         assert_eq!(
-            strict_kernel.finish(()).certainty,
+            strict_evaluator.finish(()).certainty,
             TriangulationCertainty::Certified
         );
     }
@@ -328,7 +343,7 @@ mod tests {
         let representation_distinct_query = Point2::new(right, Real::zero());
         assert_ne!(representation_distinct_query, a);
         assert_eq!(
-            kernel()
+            evaluator()
                 .classify_point_triangle(&a, &b, &c, &representation_distinct_query,)
                 .unwrap(),
             TriangleLocation::OnVertex
@@ -351,13 +366,13 @@ mod tests {
             {
                 let [a, b, c] = indices.map(|index| &triangle[index]);
                 for (query, expected) in &queries {
-                    let immediate = ExactKernel::new(&context);
+                    let immediate = PredicateEvaluator::new(&context);
                     assert_eq!(
                         immediate.classify_point_triangle(a, b, c, query),
                         Ok(*expected)
                     );
 
-                    let retained = ExactKernel::new(&context);
+                    let retained = PredicateEvaluator::new(&context);
                     assert_eq!(
                         retained.classify_point_triangle_with_orientation(
                             a,
@@ -375,7 +390,7 @@ mod tests {
                 }
             }
 
-            let degenerate = ExactKernel::new(&context);
+            let degenerate = PredicateEvaluator::new(&context);
             assert_eq!(
                 degenerate.classify_point_triangle_with_orientation(
                     &triangle[0],
@@ -397,14 +412,14 @@ mod tests {
 
         hyperreal::dispatch_trace::reset();
         let immediate = hyperreal::dispatch_trace::with_recording(|| {
-            ExactKernel::new(&context).classify_point_triangle(&a, &b, &c, &query)
+            PredicateEvaluator::new(&context).classify_point_triangle(&a, &b, &c, &query)
         });
         assert_eq!(immediate, Ok(TriangleLocation::Inside));
         let immediate_trace = hyperreal::dispatch_trace::take_trace();
 
         hyperreal::dispatch_trace::reset();
         let retained = hyperreal::dispatch_trace::with_recording(|| {
-            ExactKernel::new(&context).classify_point_triangle_with_orientation(
+            PredicateEvaluator::new(&context).classify_point_triangle_with_orientation(
                 &a,
                 &b,
                 &c,

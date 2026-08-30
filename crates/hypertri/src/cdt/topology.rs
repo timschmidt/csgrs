@@ -6,7 +6,7 @@ use super::{
 };
 use crate::cdt_insert::TriangleTopology;
 use crate::error::{Error, Result};
-use crate::kernel::ExactKernel;
+use crate::predicate_evaluator::PredicateEvaluator;
 use crate::predicates;
 use crate::types::{Point2, Sign, Triangle, TriangleLocation};
 
@@ -25,13 +25,13 @@ impl PointTriangulation {
 }
 
 pub(super) fn triangulate_point_set(
-    kernel: &ExactKernel,
+    evaluator: &PredicateEvaluator,
     points: &[Point2],
 ) -> Result<PointTriangulation> {
     match points.len() {
         0..=2 => return Ok(PointTriangulation::without_topology(Vec::new())),
         3 => {
-            return triangle_if_not_degenerate(kernel, points, [0, 1, 2])?
+            return triangle_if_not_degenerate(evaluator, points, [0, 1, 2])?
                 .map(|triangle| vec![triangle])
                 .map(PointTriangulation::without_topology)
                 .ok_or(Error::InvalidInput {
@@ -41,12 +41,12 @@ pub(super) fn triangulate_point_set(
         _ => {}
     }
 
-    if let Some(triangles) = triangulate_from_enclosing_prefix_triangle(kernel, points)? {
+    if let Some(triangles) = triangulate_from_enclosing_prefix_triangle(evaluator, points)? {
         return Ok(triangles);
     }
 
-    let order = lexicographic_point_order(kernel, points)?;
-    let mut hull = convex_hull_from_order(kernel, points, &order)?;
+    let order = lexicographic_point_order(evaluator, points)?;
+    let mut hull = convex_hull_from_order(evaluator, points, &order)?;
     if hull.len() < 3 {
         return Err(Error::InvalidInput {
             reason: "point set is collinear",
@@ -56,7 +56,7 @@ pub(super) fn triangulate_point_set(
     let mut triangles = Vec::with_capacity(points.len().saturating_mul(2));
     for index in 1..hull.len() - 1 {
         triangles.push(make_oriented(
-            kernel,
+            evaluator,
             points,
             [hull[0], hull[index], hull[index + 1]],
         )?);
@@ -66,11 +66,11 @@ pub(super) fn triangulate_point_set(
     let mut topology = None;
     for point in 0..points.len() {
         if hull.binary_search(&point).is_err() {
-            insert_point(kernel, points, &mut triangles, point, &mut topology)?;
+            insert_point(evaluator, points, &mut triangles, point, &mut topology)?;
         }
     }
 
-    if !crate::cdt_validate::triangulates_convex_hull(kernel, points, &triangles)? {
+    if !crate::cdt_validate::triangulates_convex_hull(evaluator, points, &triangles)? {
         return Err(Error::InvalidInput {
             reason: "topological point insertion did not cover the convex hull",
         });
@@ -88,13 +88,13 @@ pub(super) fn triangulate_point_set(
 /// proof or any negative side simply declines to the complete hull discovery
 /// above without changing the operation's aggregate certainty.
 fn triangulate_from_enclosing_prefix_triangle(
-    kernel: &ExactKernel,
+    evaluator: &PredicateEvaluator,
     points: &[Point2],
 ) -> Result<Option<PointTriangulation>> {
     let proof_context =
         crate::context::TriangulationContext::new(hyperlimit::PredicatePolicy::STRICT);
-    let proof_kernel = ExactKernel::new(&proof_context);
-    let (seed, first_edge) = match prove_enclosing_prefix_triangle(&proof_kernel, points) {
+    let proof_evaluator = PredicateEvaluator::new(&proof_context);
+    let (seed, first_edge) = match prove_enclosing_prefix_triangle(&proof_evaluator, points) {
         Ok(Some(proof)) => proof,
         Ok(None) | Err(Error::PredicateUndecided { .. }) => return Ok(None),
         Err(error) => return Err(error),
@@ -115,7 +115,7 @@ fn triangulate_from_enclosing_prefix_triangle(
     }
     let mut topology = None;
     for point in 4..points.len() {
-        insert_point(kernel, points, &mut triangles, point, &mut topology)?;
+        insert_point(evaluator, points, &mut triangles, point, &mut topology)?;
     }
     Ok(Some(PointTriangulation {
         triangles,
@@ -124,10 +124,10 @@ fn triangulate_from_enclosing_prefix_triangle(
 }
 
 fn prove_enclosing_prefix_triangle(
-    kernel: &ExactKernel,
+    evaluator: &PredicateEvaluator,
     points: &[Point2],
 ) -> Result<Option<(Triangle, Option<[usize; 3]>)>> {
-    let Some(seed) = triangle_if_not_degenerate(kernel, points, [0, 1, 2])? else {
+    let Some(seed) = triangle_if_not_degenerate(evaluator, points, [0, 1, 2])? else {
         return Ok(None);
     };
     let mut first_edge = None;
@@ -138,7 +138,7 @@ fn prove_enclosing_prefix_triangle(
             [seed[1], seed[2], seed[0]],
             [seed[2], seed[0], seed[1]],
         ] {
-            match predicates::orient2(kernel, &points[from], &points[to], point)? {
+            match predicates::orient2(evaluator, &points[from], &points[to], point)? {
                 Sign::Negative => return Ok(None),
                 Sign::Zero if on_edge.is_some() => return Ok(None),
                 Sign::Zero => on_edge = Some((from, to, opposite)),
@@ -155,7 +155,10 @@ fn prove_enclosing_prefix_triangle(
     Ok(Some((seed, first_edge)))
 }
 
-fn lexicographic_point_order(kernel: &ExactKernel, points: &[Point2]) -> Result<Vec<usize>> {
+fn lexicographic_point_order(
+    evaluator: &PredicateEvaluator,
+    points: &[Point2],
+) -> Result<Vec<usize>> {
     let mut order = (0..points.len()).collect::<Vec<_>>();
     let mut merged = order.clone();
     let mut width = 1_usize;
@@ -168,7 +171,7 @@ fn lexicographic_point_order(kernel: &ExactKernel, points: &[Point2]) -> Result<
             for output in &mut merged[start..end] {
                 let take_left = right == end
                     || (left < middle
-                        && spatial_point_cmp(kernel, points, order[left], order[right], false)?
+                        && spatial_point_cmp(evaluator, points, order[left], order[right], false)?
                             != std::cmp::Ordering::Greater);
                 if take_left {
                     *output = order[left];
@@ -187,12 +190,12 @@ fn lexicographic_point_order(kernel: &ExactKernel, points: &[Point2]) -> Result<
 }
 
 fn convex_hull_from_order(
-    kernel: &ExactKernel,
+    evaluator: &PredicateEvaluator,
     points: &[Point2],
     order: &[usize],
 ) -> Result<Vec<usize>> {
     fn append(
-        kernel: &ExactKernel,
+        evaluator: &PredicateEvaluator,
         points: &[Point2],
         half: &mut Vec<usize>,
         point: usize,
@@ -200,7 +203,7 @@ fn convex_hull_from_order(
         while half.len() >= 2 {
             let end = half.len();
             if predicates::orient2(
-                kernel,
+                evaluator,
                 &points[half[end - 2]],
                 &points[half[end - 1]],
                 &points[point],
@@ -216,11 +219,11 @@ fn convex_hull_from_order(
 
     let mut lower = Vec::with_capacity(order.len());
     for &point in order {
-        append(kernel, points, &mut lower, point)?;
+        append(evaluator, points, &mut lower, point)?;
     }
     let mut upper = Vec::with_capacity(order.len());
     for &point in order.iter().rev() {
-        append(kernel, points, &mut upper, point)?;
+        append(evaluator, points, &mut upper, point)?;
     }
     lower.pop();
     upper.pop();
@@ -231,7 +234,7 @@ fn convex_hull_from_order(
 /// Insert one indexed point while retaining exact triangle topology once the
 /// located schedule has paid to construct it.
 pub(crate) fn insert_point(
-    kernel: &ExactKernel,
+    evaluator: &PredicateEvaluator,
     points: &[Point2],
     triangles: &mut Vec<Triangle>,
     point: usize,
@@ -253,14 +256,14 @@ pub(crate) fn insert_point(
                 reason: "located point insertion did not construct adjacency",
             })?;
         if let Some(triangle) = locate_triangle(
-            kernel,
+            evaluator,
             points,
             triangles,
             retained,
             point,
             triangles.len().saturating_sub(1),
         )? {
-            let location = kernel.classify_point_triangle_with_orientation(
+            let location = evaluator.classify_point_triangle_with_orientation(
                 &points[triangles[triangle][0]],
                 &points[triangles[triangle][1]],
                 &points[triangles[triangle][2]],
@@ -274,7 +277,7 @@ pub(crate) fn insert_point(
     }
     if located.is_none() {
         for (triangle_index, triangle) in triangles.iter().copied().enumerate() {
-            let location = kernel.classify_point_triangle_with_orientation(
+            let location = evaluator.classify_point_triangle_with_orientation(
                 &points[triangle[0]],
                 &points[triangle[1]],
                 &points[triangle[2]],
@@ -300,9 +303,9 @@ pub(crate) fn insert_point(
         TriangleLocation::Inside => {
             let [a, b, c] = triangles[triangle_index];
             let replacement = [
-                make_oriented(kernel, points, [a, b, point])?,
-                make_oriented(kernel, points, [b, c, point])?,
-                make_oriented(kernel, points, [c, a, point])?,
+                make_oriented(evaluator, points, [a, b, point])?,
+                make_oriented(evaluator, points, [b, c, point])?,
+                make_oriented(evaluator, points, [c, a, point])?,
             ];
             if let Some(topology) = topology {
                 topology.replace_point_region(triangles, &[triangle_index], &replacement, None)?;
@@ -312,9 +315,14 @@ pub(crate) fn insert_point(
             }
             Ok(())
         }
-        TriangleLocation::OnEdge => {
-            split_edge(kernel, points, triangles, triangle_index, point, topology)
-        }
+        TriangleLocation::OnEdge => split_edge(
+            evaluator,
+            points,
+            triangles,
+            triangle_index,
+            point,
+            topology,
+        ),
         TriangleLocation::OnVertex => Err(Error::InvalidInput {
             reason: "unique point coincides with a triangulation vertex",
         }),
@@ -328,7 +336,7 @@ pub(crate) fn insert_point(
 }
 
 fn split_edge(
-    kernel: &ExactKernel,
+    evaluator: &PredicateEvaluator,
     points: &[Point2],
     triangles: &mut Vec<Triangle>,
     triangle_index: usize,
@@ -343,7 +351,7 @@ fn split_edge(
         (triangle[2], triangle[0]),
     ] {
         if predicates::point_on_segment(
-            kernel,
+            evaluator,
             &points[candidate.0],
             &points[candidate.1],
             &points[point],
@@ -396,8 +404,8 @@ fn split_edge(
             .ok_or(Error::InvalidInput {
                 reason: "triangulation edge has no opposite vertex",
             })?;
-        first[position] = make_oriented(kernel, points, [edge.0, point, opposite])?;
-        second[position] = make_oriented(kernel, points, [point, edge.1, opposite])?;
+        first[position] = make_oriented(evaluator, points, [edge.0, point, opposite])?;
+        second[position] = make_oriented(evaluator, points, [point, edge.1, opposite])?;
     }
 
     if let Some(retained) = topology {
@@ -430,7 +438,7 @@ mod tests {
     }
 
     fn insert_with_retained_adjacency(
-        kernel: &ExactKernel,
+        evaluator: &PredicateEvaluator,
         points: &[Point2],
         mut triangles: Vec<Triangle>,
         point: usize,
@@ -438,7 +446,7 @@ mod tests {
         let mut topology = Some(Box::new(
             TriangleTopology::new(&triangles, points.len()).unwrap(),
         ));
-        insert_point(kernel, points, &mut triangles, point, &mut topology).unwrap();
+        insert_point(evaluator, points, &mut triangles, point, &mut topology).unwrap();
         assert_eq!(
             topology
                 .expect("retained topology remains initialized")
@@ -455,21 +463,21 @@ mod tests {
             hyperlimit::PredicatePolicy::APPROXIMATE_512,
         ] {
             let context = TriangulationContext::new(policy);
-            let kernel = ExactKernel::new(&context);
+            let evaluator = PredicateEvaluator::new(&context);
 
             let interior = [p(0, 0), p(8, 0), p(0, 8), p(1, 1)];
             let interior_triangles =
-                insert_with_retained_adjacency(&kernel, &interior, vec![[0, 1, 2]], 3);
+                insert_with_retained_adjacency(&evaluator, &interior, vec![[0, 1, 2]], 3);
             assert_eq!(interior_triangles.len(), 3);
 
             let boundary = [p(0, 0), p(8, 0), p(0, 8), p(4, 0)];
             let boundary_triangles =
-                insert_with_retained_adjacency(&kernel, &boundary, vec![[0, 1, 2]], 3);
+                insert_with_retained_adjacency(&evaluator, &boundary, vec![[0, 1, 2]], 3);
             assert_eq!(boundary_triangles.len(), 2);
 
             let shared_edge = [p(0, 0), p(8, 0), p(8, 8), p(0, 8), p(4, 4)];
             let shared_triangles = insert_with_retained_adjacency(
-                &kernel,
+                &evaluator,
                 &shared_edge,
                 vec![[0, 1, 2], [0, 2, 3]],
                 4,
@@ -477,14 +485,14 @@ mod tests {
             assert_eq!(shared_triangles.len(), 4);
             assert!(
                 crate::cdt_validate::triangulates_convex_hull(
-                    &kernel,
+                    &evaluator,
                     &shared_edge,
                     &shared_triangles,
                 )
                 .unwrap()
             );
             assert_eq!(
-                kernel.finish(()).certainty,
+                evaluator.finish(()).certainty,
                 crate::TriangulationCertainty::Certified,
             );
         }
@@ -524,8 +532,8 @@ mod tests {
             hyperlimit::PredicatePolicy::APPROXIMATE_512,
         ] {
             let context = TriangulationContext::new(policy);
-            let kernel = ExactKernel::new(&context);
-            let triangulation = triangulate_point_set(&kernel, &points).unwrap();
+            let evaluator = PredicateEvaluator::new(&context);
+            let triangulation = triangulate_point_set(&evaluator, &points).unwrap();
             let topology = triangulation
                 .topology
                 .expect("the nontrivial point set retains its checked topology");
@@ -536,14 +544,14 @@ mod tests {
             );
             assert!(
                 crate::cdt_validate::triangulates_convex_hull(
-                    &kernel,
+                    &evaluator,
                     &points,
                     &triangulation.triangles,
                 )
                 .unwrap(),
             );
             assert_eq!(
-                kernel.finish(()).certainty,
+                evaluator.finish(()).certainty,
                 crate::TriangulationCertainty::Certified,
             );
         }
@@ -560,21 +568,21 @@ mod tests {
                 hyperlimit::PredicatePolicy::APPROXIMATE_512,
             ] {
                 let context = TriangulationContext::new(policy);
-                let kernel = ExactKernel::new(&context);
-                let triangulation = triangulate_from_enclosing_prefix_triangle(&kernel, &points)
+                let evaluator = PredicateEvaluator::new(&context);
+                let triangulation = triangulate_from_enclosing_prefix_triangle(&evaluator, &points)
                     .unwrap()
                     .expect("the prefix triangle exactly encloses every other point");
 
                 assert!(
                     crate::cdt_validate::triangulates_convex_hull(
-                        &kernel,
+                        &evaluator,
                         &points,
                         &triangulation.triangles,
                     )
                     .unwrap()
                 );
                 assert_eq!(
-                    kernel.finish(()).certainty,
+                    evaluator.finish(()).certainty,
                     crate::TriangulationCertainty::Certified
                 );
             }
@@ -585,16 +593,16 @@ mod tests {
     fn nonenclosing_prefix_declines_to_general_hull_discovery() {
         let points = [p(0, 0), p(1, 0), p(0, 1), p(2, 2)];
         let context = TriangulationContext::new(hyperlimit::PredicatePolicy::STRICT);
-        let kernel = ExactKernel::new(&context);
+        let evaluator = PredicateEvaluator::new(&context);
 
         assert_eq!(
-            triangulate_from_enclosing_prefix_triangle(&kernel, &points)
+            triangulate_from_enclosing_prefix_triangle(&evaluator, &points)
                 .unwrap()
                 .map(|triangulation| triangulation.triangles),
             None,
         );
         assert_eq!(
-            triangulate_point_set(&kernel, &points)
+            triangulate_point_set(&evaluator, &points)
                 .unwrap()
                 .triangles
                 .len(),
@@ -606,16 +614,16 @@ mod tests {
     fn degenerate_prefix_declines_to_general_hull_discovery() {
         let points = [p(0, 0), p(1, 0), p(2, 0), p(0, 1)];
         let context = TriangulationContext::new(hyperlimit::PredicatePolicy::STRICT);
-        let kernel = ExactKernel::new(&context);
+        let evaluator = PredicateEvaluator::new(&context);
 
         assert_eq!(
-            triangulate_from_enclosing_prefix_triangle(&kernel, &points)
+            triangulate_from_enclosing_prefix_triangle(&evaluator, &points)
                 .unwrap()
                 .map(|triangulation| triangulation.triangles),
             None,
         );
         assert_eq!(
-            triangulate_point_set(&kernel, &points)
+            triangulate_point_set(&evaluator, &points)
                 .unwrap()
                 .triangles
                 .len(),

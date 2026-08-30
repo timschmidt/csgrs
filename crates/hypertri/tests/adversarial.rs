@@ -12,12 +12,160 @@ fn p(x: i32, y: i32) -> ExactPoint {
     Point2::new(Real::from(x), Real::from(y))
 }
 
+#[test]
+#[cfg(feature = "cdt")]
+fn exactcore_cocircular_rings_produce_complete_valid_delaunay_topology() {
+    let rings: &[&[(i32, i32)]] = &[
+        &[
+            (5, 0),
+            (4, 3),
+            (3, 4),
+            (0, 5),
+            (-3, 4),
+            (-4, 3),
+            (-5, 0),
+            (-4, -3),
+            (-3, -4),
+            (0, -5),
+            (3, -4),
+            (4, -3),
+        ],
+        &[
+            (65, 0),
+            (60, 25),
+            (52, 39),
+            (39, 52),
+            (25, 60),
+            (0, 65),
+            (-25, 60),
+            (-39, 52),
+            (-52, 39),
+            (-60, 25),
+            (-65, 0),
+            (-60, -25),
+            (-52, -39),
+            (-39, -52),
+            (-25, -60),
+            (0, -65),
+            (25, -60),
+            (39, -52),
+            (52, -39),
+            (60, -25),
+        ],
+    ];
+
+    for ring in rings {
+        let points = ring.iter().map(|&(x, y)| p(x, y)).collect::<Vec<_>>();
+        assert_complete_valid_delaunay(&points, points.len() - 2);
+    }
+}
+
 #[cfg(any(feature = "earcut", feature = "cdt"))]
 fn q(xn: i64, xd: u64, yn: i64, yd: u64) -> ExactPoint {
     Point2::new(
         Real::from(Rational::fraction(xn, xd).unwrap()),
         Real::from(Rational::fraction(yn, yd).unwrap()),
     )
+}
+
+#[cfg(feature = "cdt")]
+fn assert_complete_valid_delaunay(points: &[ExactPoint], expected_triangles: usize) {
+    for context in [TriangulationContext::new(PredicatePolicy::STRICT), APPROX] {
+        for outcome in [
+            hypertri::cdt::delaunay(&context, points).unwrap(),
+            hypertri::cdt::delaunay_spatial(&context, points).unwrap(),
+        ] {
+            let triangulation = outcome.value;
+            assert_eq!(triangulation.triangles().len(), expected_triangles);
+            assert!((0..points.len()).all(|index| {
+                triangulation
+                    .triangles()
+                    .iter()
+                    .any(|triangle| triangle.contains(&index))
+            }));
+            triangulation.validate(&context).unwrap();
+        }
+    }
+}
+
+#[test]
+#[cfg(feature = "cdt")]
+fn exactcore_pythagorean_circle_prefix_produces_complete_valid_delaunay_topology() {
+    let mut numerator_x = 3_i64;
+    let mut numerator_y = 4_i64;
+    let mut denominator = 5_i64;
+    let mut points = Vec::with_capacity(24);
+    let mut last_triple = (0_i64, 0_i64, 1_i64);
+
+    for _ in 0..24 {
+        assert_eq!(
+            i128::from(numerator_x).pow(2) + i128::from(numerator_y).pow(2),
+            i128::from(denominator).pow(2),
+        );
+        points.push(q(
+            numerator_x,
+            denominator as u64,
+            numerator_y,
+            denominator as u64,
+        ));
+        last_triple = (numerator_x, numerator_y, denominator);
+        (numerator_x, numerator_y, denominator) = (
+            3 * numerator_x - 4 * numerator_y,
+            4 * numerator_x + 3 * numerator_y,
+            5 * denominator,
+        );
+    }
+
+    assert_eq!(
+        last_triple,
+        (
+            -57_540_563_024_581_727,
+            -15_549_832_333_971_936,
+            59_604_644_775_390_625,
+        ),
+    );
+    assert_complete_valid_delaunay(&points, points.len() - 2);
+}
+
+#[test]
+#[cfg(feature = "cdt")]
+fn exactcore_three_by_three_lattices_produce_complete_valid_delaunay_topology() {
+    let decimal_lattice = [1_i64, 5, 9]
+        .into_iter()
+        .flat_map(|x| [1_i64, 5, 9].into_iter().map(move |y| q(x, 10, y, 10)))
+        .collect::<Vec<_>>();
+    let large_lattice = [100_000, 500_000, 900_000]
+        .into_iter()
+        .flat_map(|x| {
+            [100_000, 500_000, 900_000]
+                .into_iter()
+                .map(move |y| p(x, y))
+        })
+        .collect::<Vec<_>>();
+
+    // Eight boundary sites (including the four collinear edge midpoints) and
+    // one interior site give 2n - 2 - h = 8 triangular faces.
+    for points in [&decimal_lattice, &large_lattice] {
+        assert_complete_valid_delaunay(points, 8);
+    }
+}
+
+#[test]
+#[cfg(feature = "cdt")]
+fn exactcore_sub_ulp_decimal_quadrilateral_retains_all_sites() {
+    const DENOMINATOR: u64 = 10_000_000_000_000_000;
+    let points = vec![
+        q(0, 1, 0, 1),
+        q(1, 1, 1, 1),
+        q(1, 1, 10_000_000_000_000_001, DENOMINATOR),
+        q(2, 1, 20_000_000_000_000_001, DENOMINATOR),
+    ];
+
+    // The archived decimal separation is below one binary64 ulp at this
+    // magnitude, but its two opposite exact orientations are +/- 10^-16.
+    assert_eq!("1.0000000000000001".parse::<f64>().unwrap(), 1.0);
+    assert_eq!("2.0000000000000001".parse::<f64>().unwrap(), 2.0);
+    assert_complete_valid_delaunay(&points, 2);
 }
 
 #[cfg(feature = "nd")]
@@ -95,6 +243,35 @@ fn exact_nd_delaunay_stars_3d_simplex_around_rational_interior_point() {
             .all(|cell| cell.indices().contains(&4))
     );
     complex.validate(&APPROX).unwrap();
+}
+
+#[test]
+#[cfg(feature = "nd")]
+fn exactcore_face_interior_site_subdivides_boundary_tetrahedron() {
+    // exactCore's `chull/inputs/degen`: the last point is strictly inside the
+    // face x + y + z = 11, so it must remain in the boundary subdivision.
+    let points = vec![
+        point_d(&[r(0), r(0), r(0)]),
+        point_d(&[r(0), r(0), r(11)]),
+        point_d(&[r(0), r(11), r(0)]),
+        point_d(&[r(11), r(0), r(0)]),
+        point_d(&[r(1), r(3), r(7)]),
+    ];
+    let expected = vec![vec![0, 1, 2, 4], vec![0, 1, 3, 4], vec![0, 2, 3, 4]];
+
+    for context in [TriangulationContext::new(PredicatePolicy::STRICT), APPROX] {
+        let complex = hypertri::nd::delaunay_complex(&context, &points)
+            .unwrap()
+            .value;
+        let cells = complex
+            .cells()
+            .iter()
+            .map(|cell| cell.indices().to_vec())
+            .collect::<Vec<_>>();
+
+        assert_eq!(cells, expected);
+        complex.validate(&context).unwrap();
+    }
 }
 
 #[test]

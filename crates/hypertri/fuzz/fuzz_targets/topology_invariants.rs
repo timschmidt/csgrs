@@ -14,8 +14,7 @@ use hypertri::{
 };
 use libfuzzer_sys::fuzz_target;
 
-const APPROX: TriangulationContext =
-    TriangulationContext::new(PredicatePolicy::APPROXIMATE_512);
+const APPROX: TriangulationContext = TriangulationContext::new(PredicatePolicy::APPROXIMATE_512);
 
 #[derive(Clone, Copy, Debug, Arbitrary)]
 struct RawInput {
@@ -77,9 +76,7 @@ fn exercise_crossing_constraint_cdt(input: RawInput) {
     ];
     let constraints = [Constraint::new(0, 1), Constraint::new(2, 3)];
 
-    let Ok(outcome) =
-        hypertri::cdt::constrained_delaunay(&APPROX, &points, &constraints)
-    else {
+    let Ok(outcome) = hypertri::cdt::constrained_delaunay(&APPROX, &points, &constraints) else {
         return;
     };
     let triangulation = outcome.value;
@@ -124,9 +121,7 @@ fn exercise_separated_cycle_cdt(input: RawInput) {
         Constraint::new(7, 4),
     ];
 
-    let Ok(outcome) =
-        hypertri::cdt::constrained_delaunay(&APPROX, &points, &constraints)
-    else {
+    let Ok(outcome) = hypertri::cdt::constrained_delaunay(&APPROX, &points, &constraints) else {
         return;
     };
     let triangulation = outcome.value;
@@ -141,18 +136,16 @@ fn exercise_separated_cycle_cdt(input: RawInput) {
             triangulation
                 .triangles()
                 .iter()
-                .any(|triangle| triangle.contains(&constraint.from) && triangle.contains(&constraint.to)),
+                .any(|triangle| triangle.contains(&constraint.from)
+                    && triangle.contains(&constraint.to)),
             "every generated protected edge must appear in CDT triangles"
         );
     }
 
-    let topology = hypertri::cdt::constrained_triangulation_convex_hull(
-        &APPROX,
-        &points,
-        &constraints,
-    )
-    .expect("generated separated cycles must have exact constrained topology")
-    .value;
+    let topology =
+        hypertri::cdt::constrained_triangulation_convex_hull(&APPROX, &points, &constraints)
+            .expect("generated separated cycles must have exact constrained topology")
+            .value;
     for constraint in constraints {
         assert!(
             topology
@@ -193,7 +186,11 @@ fn exercise_exact_nd_complex(input: RawInput) {
         .expect("exact ND Delaunay complex must validate");
     for cell in complex.cells() {
         assert_eq!(cell.indices().len(), complex.dimension() + 1);
-        assert!(cell.indices().iter().all(|&index| index < complex.points().len()));
+        assert!(
+            cell.indices()
+                .iter()
+                .all(|&index| index < complex.points().len())
+        );
     }
 }
 

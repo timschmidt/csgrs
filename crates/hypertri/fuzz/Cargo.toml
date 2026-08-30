@@ -12,7 +12,7 @@ cargo-fuzz = true
 
 [dependencies]
 arbitrary = { version = "1", features = ["derive"] }
-hypertri = { version = "0.4.1", path = "..", features = ["earcut", "cdt", "nd"] }
+hypertri = { version = "0.4.1", path = "..", features = ["earcut", "cdt", "nd", "runtime-select"] }
 hyperreal = { version = "0.13.1", path = "../../hyperreal" }
 libfuzzer-sys = "0.4"
 

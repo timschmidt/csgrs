@@ -115,7 +115,7 @@
 
 use crate::context::{TriangulationContext, TriangulationOutcome};
 use crate::error::{Error, Result};
-use crate::kernel::ExactKernel;
+use crate::predicate_evaluator::PredicateEvaluator;
 use crate::types::{Real, Sign};
 use std::collections::BTreeMap;
 
@@ -978,14 +978,14 @@ impl TriangulationDataStructureD {
         &self,
         context: &TriangulationContext,
     ) -> TriangulationOutcome<TdsGeometricValidationReportD> {
-        let kernel = ExactKernel::new(context);
-        let report = self.validate_geometric_report_inner(&kernel);
-        kernel.finish(report)
+        let evaluator = PredicateEvaluator::new(context);
+        let report = self.validate_geometric_report_inner(&evaluator);
+        evaluator.finish(report)
     }
 
     fn validate_geometric_report_inner(
         &self,
-        kernel: &ExactKernel,
+        evaluator: &PredicateEvaluator,
     ) -> TdsGeometricValidationReportD {
         let mut report = TdsGeometricValidationReportD::new();
         let combinatorial = self.validate_combinatorial_report();
@@ -1025,8 +1025,8 @@ impl TriangulationDataStructureD {
                 })
                 .collect::<Vec<_>>();
             let orientation = nd_sign(
-                kernel,
-                hyperlimit::orient_d(&simplex, kernel.policy()),
+                evaluator,
+                hyperlimit::orient_d(&simplex, evaluator.policy()),
                 "D-dimensional orientation",
             );
             let orientation = match orientation {
@@ -1057,8 +1057,8 @@ impl TriangulationDataStructureD {
                     continue;
                 }
                 let sphere = nd_sign(
-                    kernel,
-                    hyperlimit::insphere_d(&simplex, point.coordinates(), kernel.policy()),
+                    evaluator,
+                    hyperlimit::insphere_d(&simplex, point.coordinates(), evaluator.policy()),
                     "D-dimensional in-sphere",
                 );
                 let sphere = match sphere {
@@ -1090,8 +1090,8 @@ impl TriangulationDataStructureD {
         &self,
         context: &TriangulationContext,
     ) -> Result<TriangulationOutcome<()>> {
-        let kernel = ExactKernel::new(context);
-        let report = self.validate_geometric_report_inner(&kernel);
+        let evaluator = PredicateEvaluator::new(context);
+        let report = self.validate_geometric_report_inner(&evaluator);
         if let Some(violation) = report.violations().first() {
             if let Some(predicate) = violation.undecided_predicate() {
                 return Err(Error::PredicateUndecided {
@@ -1102,7 +1102,7 @@ impl TriangulationDataStructureD {
                 reason: tds_validation_reason(violation.reason()),
             });
         }
-        Ok(kernel.finish(()))
+        Ok(evaluator.finish(()))
     }
 
     /// Validates arity, handles, distinctness, finite/infinite status, and
@@ -1561,22 +1561,22 @@ impl DelaunayComplex {
     /// coverage proof. Combinatorial, manifold, and geometric validation remain
     /// distinct so each report states exactly which invariants it certifies.
     pub fn validate(&self, context: &TriangulationContext) -> Result<TriangulationOutcome<()>> {
-        let kernel = ExactKernel::new(context);
-        self.validate_inner(&kernel)?;
-        Ok(kernel.finish(()))
+        let evaluator = PredicateEvaluator::new(context);
+        self.validate_inner(&evaluator)?;
+        Ok(evaluator.finish(()))
     }
 
-    fn validate_inner(&self, kernel: &ExactKernel) -> Result<()> {
-        validate_points(kernel, &self.points, self.dimension)?;
+    fn validate_inner(&self, evaluator: &PredicateEvaluator) -> Result<()> {
+        validate_points(evaluator, &self.points, self.dimension)?;
         for cell in &self.cells {
             validate_simplex_shape(cell, self.points.len(), self.dimension)?;
-            let orientation = simplex_orientation(kernel, &self.points, cell.indices())?;
+            let orientation = simplex_orientation(evaluator, &self.points, cell.indices())?;
             if orientation == Sign::Zero {
                 return Err(Error::InvalidInput {
                     reason: "D-dimensional simplex is affinely dependent",
                 });
             }
-            validate_empty_sphere(kernel, &self.points, cell.indices(), orientation)?;
+            validate_empty_sphere(evaluator, &self.points, cell.indices(), orientation)?;
         }
         Ok(())
     }
@@ -1591,14 +1591,14 @@ impl DelaunayComplex {
         context: &TriangulationContext,
         point: PointD,
     ) -> Result<TriangulationOutcome<DelaunayInsertionReportD>> {
-        let kernel = ExactKernel::new(context);
-        let report = self.insert_point_oracle_inner(&kernel, point)?;
-        Ok(kernel.finish(report))
+        let evaluator = PredicateEvaluator::new(context);
+        let report = self.insert_point_oracle_inner(&evaluator, point)?;
+        Ok(evaluator.finish(report))
     }
 
     fn insert_point_oracle_inner(
         &self,
-        kernel: &ExactKernel,
+        evaluator: &PredicateEvaluator,
         point: PointD,
     ) -> Result<DelaunayInsertionReportD> {
         if point.dimension() != self.dimension {
@@ -1607,20 +1607,20 @@ impl DelaunayComplex {
             });
         }
         for existing in &self.points {
-            if point_d_equal(kernel, existing, &point)? {
+            if point_d_equal(evaluator, existing, &point)? {
                 return Err(Error::InvalidInput {
                     reason: "duplicate D-dimensional points are not supported",
                 });
             }
         }
-        self.validate_inner(kernel)?;
+        self.validate_inner(evaluator)?;
 
         let inserted_vertex = self.points.len();
-        let conflict_cells = self.conflict_cells_for_point(kernel, &point)?;
+        let conflict_cells = self.conflict_cells_for_point(evaluator, &point)?;
         let boundary_facets = conflict_boundary_facets(&conflict_cells);
         let mut points = self.points.clone();
         points.push(point);
-        let result = delaunay_complex_inner(kernel, &points)?;
+        let result = delaunay_complex_inner(evaluator, &points)?;
         Ok(DelaunayInsertionReportD {
             inserted_vertex,
             old_cell_count: self.cells.len(),
@@ -1643,9 +1643,9 @@ impl DelaunayComplex {
         context: &TriangulationContext,
         flip: &BistellarFlipD,
     ) -> TriangulationOutcome<BistellarFlipReportD> {
-        let kernel = ExactKernel::new(context);
+        let evaluator = PredicateEvaluator::new(context);
         let report = self
-            .validate_bistellar_flip_inner(&kernel, flip)
+            .validate_bistellar_flip_inner(&evaluator, flip)
             .unwrap_or_else(|error| {
                 let predicate_undecided = match &error {
                     Error::PredicateUndecided { predicate } => Some((*predicate).to_owned()),
@@ -1664,7 +1664,7 @@ impl DelaunayComplex {
                     predicate_undecided,
                 }
             });
-        kernel.finish(report)
+        evaluator.finish(report)
     }
 
     /// Applies a validated flip functionally and returns the rewritten complex.
@@ -1679,17 +1679,17 @@ impl DelaunayComplex {
         context: &TriangulationContext,
         flip: &BistellarFlipD,
     ) -> Result<TriangulationOutcome<BistellarFlipApplyReportD>> {
-        let kernel = ExactKernel::new(context);
-        let report = self.flip_oracle_inner(&kernel, flip)?;
-        Ok(kernel.finish(report))
+        let evaluator = PredicateEvaluator::new(context);
+        let report = self.flip_oracle_inner(&evaluator, flip)?;
+        Ok(evaluator.finish(report))
     }
 
     fn flip_oracle_inner(
         &self,
-        kernel: &ExactKernel,
+        evaluator: &PredicateEvaluator,
         flip: &BistellarFlipD,
     ) -> Result<BistellarFlipApplyReportD> {
-        let validation = self.validate_bistellar_flip_inner(kernel, flip)?;
+        let validation = self.validate_bistellar_flip_inner(evaluator, flip)?;
         if validation.blocks_delaunay() {
             return Err(Error::InvalidInput {
                 reason: "D-dimensional flip is blocked by exact Delaunay legality",
@@ -1710,13 +1710,13 @@ impl DelaunayComplex {
         cells.extend(validation.inserted_cells().iter().cloned());
         canonicalize_simplex_list(&mut cells);
         let result = DelaunayComplex::from_parts(self.dimension, self.points.clone(), cells);
-        result.validate_inner(kernel)?;
+        result.validate_inner(evaluator)?;
         Ok(BistellarFlipApplyReportD { validation, result })
     }
 
     fn validate_bistellar_flip_inner(
         &self,
-        kernel: &ExactKernel,
+        evaluator: &PredicateEvaluator,
         flip: &BistellarFlipD,
     ) -> Result<BistellarFlipReportD> {
         if self.points.is_empty() || self.dimension == 0 {
@@ -1779,13 +1779,13 @@ impl DelaunayComplex {
 
         let mut blocks_delaunay = false;
         for cell in &inserted_cells {
-            let orientation = simplex_orientation(kernel, &self.points, cell.indices())?;
+            let orientation = simplex_orientation(evaluator, &self.points, cell.indices())?;
             if orientation == Sign::Zero {
                 return Err(Error::InvalidInput {
                     reason: "D-dimensional flip inserted cell is affinely dependent",
                 });
             }
-            if !simplex_has_empty_sphere(kernel, &self.points, cell.indices(), orientation)? {
+            if !simplex_has_empty_sphere(evaluator, &self.points, cell.indices(), orientation)? {
                 blocks_delaunay = true;
             }
         }
@@ -1803,13 +1803,13 @@ impl DelaunayComplex {
 
     fn conflict_cells_for_point(
         &self,
-        kernel: &ExactKernel,
+        evaluator: &PredicateEvaluator,
         point: &PointD,
     ) -> Result<Vec<Simplex>> {
         let mut conflicts = Vec::new();
         for cell in &self.cells {
-            let orientation = simplex_orientation(kernel, &self.points, cell.indices())?;
-            let sphere = insphere_sign_for_query(kernel, &self.points, cell.indices(), point)?;
+            let orientation = simplex_orientation(evaluator, &self.points, cell.indices())?;
+            let sphere = insphere_sign_for_query(evaluator, &self.points, cell.indices(), point)?;
             if sphere == insphere_inside_sign(self.dimension, orientation) {
                 conflicts.push(cell.clone());
             }
@@ -1841,14 +1841,17 @@ pub fn delaunay_complex(
     context: &TriangulationContext,
     points: &[PointD],
 ) -> Result<TriangulationOutcome<DelaunayComplex>> {
-    let kernel = ExactKernel::new(context);
-    let complex = delaunay_complex_inner(&kernel, points)?;
-    Ok(kernel.finish(complex))
+    let evaluator = PredicateEvaluator::new(context);
+    let complex = delaunay_complex_inner(&evaluator, points)?;
+    Ok(evaluator.finish(complex))
 }
 
-fn delaunay_complex_inner(kernel: &ExactKernel, points: &[PointD]) -> Result<DelaunayComplex> {
+fn delaunay_complex_inner(
+    evaluator: &PredicateEvaluator,
+    points: &[PointD],
+) -> Result<DelaunayComplex> {
     let dimension = infer_dimension(points)?;
-    validate_points(kernel, points, dimension)?;
+    validate_points(evaluator, points, dimension)?;
 
     if points.len() < dimension + 1 {
         return Ok(DelaunayComplex::from_parts(
@@ -1860,11 +1863,11 @@ fn delaunay_complex_inner(kernel: &ExactKernel, points: &[PointD]) -> Result<Del
 
     let mut cells = Vec::new();
     for indices in combinations(points.len(), dimension + 1) {
-        let orientation = simplex_orientation(kernel, points, &indices)?;
+        let orientation = simplex_orientation(evaluator, points, &indices)?;
         if orientation == Sign::Zero {
             continue;
         }
-        if simplex_has_empty_sphere(kernel, points, &indices, orientation)? {
+        if simplex_has_empty_sphere(evaluator, points, &indices, orientation)? {
             cells.push(Simplex::new(indices));
         }
     }
@@ -1895,7 +1898,11 @@ fn infer_dimension(points: &[PointD]) -> Result<usize> {
     Ok(first.dimension())
 }
 
-fn validate_points(kernel: &ExactKernel, points: &[PointD], dimension: usize) -> Result<()> {
+fn validate_points(
+    evaluator: &PredicateEvaluator,
+    points: &[PointD],
+    dimension: usize,
+) -> Result<()> {
     if dimension == 0 {
         return Err(Error::InvalidInput {
             reason: "D-dimensional points must have at least one coordinate",
@@ -1910,7 +1917,7 @@ fn validate_points(kernel: &ExactKernel, points: &[PointD], dimension: usize) ->
     }
     for first in 0..points.len() {
         for second in first + 1..points.len() {
-            if point_d_equal(kernel, &points[first], &points[second])? {
+            if point_d_equal(evaluator, &points[first], &points[second])? {
                 return Err(Error::InvalidInput {
                     reason: "duplicate D-dimensional points are not supported",
                 });
@@ -1921,7 +1928,7 @@ fn validate_points(kernel: &ExactKernel, points: &[PointD], dimension: usize) ->
 }
 
 #[inline]
-fn point_d_equal(kernel: &ExactKernel, left: &PointD, right: &PointD) -> Result<bool> {
+fn point_d_equal(evaluator: &PredicateEvaluator, left: &PointD, right: &PointD) -> Result<bool> {
     if left.dimension() != right.dimension() {
         return Ok(false);
     }
@@ -1936,8 +1943,8 @@ fn point_d_equal(kernel: &ExactKernel, left: &PointD, right: &PointD) -> Result<
         if left == right {
             continue;
         }
-        if kernel.decide(
-            hyperlimit::compare_reals(left, right, kernel.policy()),
+        if evaluator.decide(
+            hyperlimit::compare_reals(left, right, evaluator.policy()),
             "D-dimensional point equality",
         )? != std::cmp::Ordering::Equal
         {
@@ -1970,12 +1977,12 @@ fn validate_simplex_shape(simplex: &Simplex, point_count: usize, dimension: usiz
 }
 
 fn validate_empty_sphere(
-    kernel: &ExactKernel,
+    evaluator: &PredicateEvaluator,
     points: &[PointD],
     simplex: &[usize],
     orientation: Sign,
 ) -> Result<()> {
-    if !simplex_has_empty_sphere(kernel, points, simplex, orientation)? {
+    if !simplex_has_empty_sphere(evaluator, points, simplex, orientation)? {
         return Err(Error::InvalidInput {
             reason: "D-dimensional simplex violates empty-sphere legality",
         });
@@ -1984,7 +1991,7 @@ fn validate_empty_sphere(
 }
 
 fn simplex_has_empty_sphere(
-    kernel: &ExactKernel,
+    evaluator: &PredicateEvaluator,
     points: &[PointD],
     simplex: &[usize],
     orientation: Sign,
@@ -1993,7 +2000,7 @@ fn simplex_has_empty_sphere(
         if simplex.contains(&point_index) {
             continue;
         }
-        let sphere = insphere_sign(kernel, points, simplex, point_index)?;
+        let sphere = insphere_sign(evaluator, points, simplex, point_index)?;
         if sphere == insphere_inside_sign(points[point_index].dimension(), orientation) {
             return Ok(false);
         }
@@ -2014,29 +2021,33 @@ fn insphere_inside_sign(dimension: usize, orientation: Sign) -> Sign {
     }
 }
 
-fn simplex_orientation(kernel: &ExactKernel, points: &[PointD], simplex: &[usize]) -> Result<Sign> {
+fn simplex_orientation(
+    evaluator: &PredicateEvaluator,
+    points: &[PointD],
+    simplex: &[usize],
+) -> Result<Sign> {
     let coordinates = simplex
         .iter()
         .map(|&index| points[index].coordinates.clone())
         .collect::<Vec<_>>();
     nd_sign(
-        kernel,
-        hyperlimit::orient_d(&coordinates, kernel.policy()),
+        evaluator,
+        hyperlimit::orient_d(&coordinates, evaluator.policy()),
         "D-dimensional orientation",
     )
 }
 
 fn insphere_sign(
-    kernel: &ExactKernel,
+    evaluator: &PredicateEvaluator,
     points: &[PointD],
     simplex: &[usize],
     point_index: usize,
 ) -> Result<Sign> {
-    insphere_sign_for_query(kernel, points, simplex, &points[point_index])
+    insphere_sign_for_query(evaluator, points, simplex, &points[point_index])
 }
 
 fn insphere_sign_for_query(
-    kernel: &ExactKernel,
+    evaluator: &PredicateEvaluator,
     points: &[PointD],
     simplex: &[usize],
     query: &PointD,
@@ -2046,8 +2057,8 @@ fn insphere_sign_for_query(
         .map(|&index| points[index].coordinates.clone())
         .collect::<Vec<_>>();
     nd_sign(
-        kernel,
-        hyperlimit::insphere_d(&coordinates, query.coordinates(), kernel.policy()),
+        evaluator,
+        hyperlimit::insphere_d(&coordinates, query.coordinates(), evaluator.policy()),
         "D-dimensional in-sphere",
     )
 }
@@ -2104,11 +2115,11 @@ fn canonicalize_simplex_list(cells: &mut Vec<Simplex>) {
 }
 
 fn nd_sign(
-    kernel: &ExactKernel,
+    evaluator: &PredicateEvaluator,
     outcome: hyperlimit::PredicateOutcome<hyperlimit::Sign>,
     predicate: &'static str,
 ) -> Result<Sign> {
-    kernel
+    evaluator
         .decide(outcome, predicate)
         .map(map_hyperlimit_nd_sign)
 }
@@ -2324,5 +2335,420 @@ mod tests {
                 reason: "D-dimensional points must share one ambient dimension"
             }
         );
+    }
+
+    #[test]
+    fn malformed_tds_snapshots_report_every_structural_contract() {
+        let metadata_invalid = TriangulationDataStructureD {
+            dimension: 0,
+            vertices: vec![
+                VertexD {
+                    point: None,
+                    infinite: false,
+                },
+                VertexD {
+                    point: Some(p(&[0])),
+                    infinite: true,
+                },
+                VertexD::infinite(),
+            ],
+            cells: Vec::new(),
+        };
+        let metadata = metadata_invalid.validate_combinatorial_report();
+        let reasons = metadata
+            .violations()
+            .iter()
+            .map(TdsCombinatorialViolationD::reason)
+            .collect::<Vec<_>>();
+        assert!(reasons.contains(&"D-dimensional TDS dimension must be positive"));
+        assert!(reasons.contains(&"TDS has more than one infinite vertex"));
+        assert!(reasons.contains(&"TDS vertex infinite status and point payload disagree"));
+        assert!(reasons.contains(&"TDS vertex dimension does not match ambient dimension"));
+        assert!(
+            !metadata_invalid
+                .validate_manifold_report(TdsBoundaryPolicyD::AllowBoundary)
+                .is_valid()
+        );
+        assert!(
+            !metadata_invalid
+                .validate_geometric_report(&APPROX)
+                .value
+                .is_valid()
+        );
+        assert!(metadata_invalid.validate_combinatorial().is_err());
+
+        let vertices = vec![
+            VertexD::finite(p(&[0, 0])),
+            VertexD::finite(p(&[2, 0])),
+            VertexD::finite(p(&[0, 2])),
+        ];
+        let cells = vec![
+            Cell::new(vec![VertexHandle::new(0), VertexHandle::new(1)], vec![None]),
+            Cell::new(
+                vec![
+                    VertexHandle::new(0),
+                    VertexHandle::new(1),
+                    VertexHandle::new(9),
+                ],
+                vec![None, None, None],
+            ),
+            Cell::new(
+                vec![
+                    VertexHandle::new(0),
+                    VertexHandle::new(1),
+                    VertexHandle::new(1),
+                ],
+                vec![None, None, None],
+            ),
+            Cell::with_infinite_status(
+                vec![
+                    VertexHandle::new(0),
+                    VertexHandle::new(1),
+                    VertexHandle::new(2),
+                ],
+                vec![None, None, None],
+                true,
+            ),
+            Cell::new(
+                vec![
+                    VertexHandle::new(0),
+                    VertexHandle::new(1),
+                    VertexHandle::new(2),
+                ],
+                vec![Some(CellHandle::new(99)), None, None],
+            ),
+        ];
+        let shape_invalid = TriangulationDataStructureD {
+            dimension: 2,
+            vertices,
+            cells,
+        };
+        let shape = shape_invalid.validate_combinatorial_report();
+        let reasons = shape
+            .violations()
+            .iter()
+            .map(TdsCombinatorialViolationD::reason)
+            .collect::<Vec<_>>();
+        for reason in [
+            "TDS cell has wrong arity",
+            "TDS cell has wrong neighbor arity",
+            "TDS cell vertex handle out of bounds",
+            "TDS cell repeats a vertex handle",
+            "TDS cell finite/infinite status does not match vertices",
+            "TDS neighbor handle out of bounds",
+        ] {
+            assert!(reasons.contains(&reason), "missing {reason}");
+        }
+    }
+
+    #[test]
+    fn reciprocal_neighbor_validation_distinguishes_all_malformed_links() {
+        let vertices = (0..6)
+            .map(|index| VertexD::finite(p(&[index, index % 2])))
+            .collect::<Vec<_>>();
+        let isolated = Cell::new(
+            vec![
+                VertexHandle::new(0),
+                VertexHandle::new(1),
+                VertexHandle::new(2),
+            ],
+            vec![None, None, None],
+        );
+        let disjoint = Cell::new(
+            vec![
+                VertexHandle::new(3),
+                VertexHandle::new(4),
+                VertexHandle::new(5),
+            ],
+            vec![None, None, None],
+        );
+        let shared_but_not_reciprocal = Cell::new(
+            vec![
+                VertexHandle::new(1),
+                VertexHandle::new(2),
+                VertexHandle::new(3),
+            ],
+            vec![None, None, None],
+        );
+
+        let missing_source = TriangulationDataStructureD {
+            dimension: 2,
+            vertices: vertices.clone(),
+            cells: vec![isolated.clone()],
+        };
+        assert_eq!(
+            validate_reciprocal_neighbor(
+                &missing_source,
+                CellHandle::new(9),
+                0,
+                CellHandle::new(0),
+            ),
+            Err(Error::InvalidInput {
+                reason: "TDS reciprocal check references missing cell"
+            })
+        );
+        assert!(
+            validate_reciprocal_neighbor(
+                &missing_source,
+                CellHandle::new(0),
+                0,
+                CellHandle::new(9),
+            )
+            .is_err()
+        );
+
+        let no_shared_facet = TriangulationDataStructureD {
+            dimension: 2,
+            vertices: vertices.clone(),
+            cells: vec![isolated.clone(), disjoint],
+        };
+        assert!(
+            validate_reciprocal_neighbor(
+                &no_shared_facet,
+                CellHandle::new(0),
+                0,
+                CellHandle::new(1),
+            )
+            .is_err()
+        );
+
+        let one_way = TriangulationDataStructureD {
+            dimension: 2,
+            vertices,
+            cells: vec![isolated, shared_but_not_reciprocal],
+        };
+        assert!(
+            validate_reciprocal_neighbor(&one_way, CellHandle::new(0), 0, CellHandle::new(1),)
+                .is_err()
+        );
+    }
+
+    #[test]
+    fn manifold_reports_infinite_same_orientation_and_overfull_facets() {
+        let vertices = vec![
+            VertexD::finite(p(&[0, 0])),
+            VertexD::finite(p(&[2, 0])),
+            VertexD::finite(p(&[0, 2])),
+            VertexD::finite(p(&[1, 2])),
+            VertexD::finite(p(&[2, 2])),
+        ];
+        let triangle = |third| {
+            Cell::new(
+                vec![
+                    VertexHandle::new(0),
+                    VertexHandle::new(1),
+                    VertexHandle::new(third),
+                ],
+                vec![None, None, None],
+            )
+        };
+
+        let same_orientation = TriangulationDataStructureD {
+            dimension: 2,
+            vertices: vertices.clone(),
+            cells: vec![triangle(2), triangle(3)],
+        };
+        assert!(
+            same_orientation
+                .validate_manifold_report(TdsBoundaryPolicyD::AllowBoundary)
+                .violations()
+                .iter()
+                .any(|violation| violation.reason()
+                    == "adjacent cells have the same induced facet orientation")
+        );
+
+        let overfull = TriangulationDataStructureD {
+            dimension: 2,
+            vertices,
+            cells: vec![triangle(2), triangle(3), triangle(4)],
+        };
+        assert!(
+            overfull
+                .validate_manifold_report(TdsBoundaryPolicyD::AllowBoundary)
+                .violations()
+                .iter()
+                .any(|violation| violation.reason() == "finite facet has degree greater than two")
+        );
+
+        let infinite = TriangulationDataStructureD {
+            dimension: 2,
+            vertices: vec![
+                VertexD::finite(p(&[0, 0])),
+                VertexD::finite(p(&[1, 0])),
+                VertexD::infinite(),
+            ],
+            cells: vec![Cell::with_infinite_status(
+                vec![
+                    VertexHandle::new(0),
+                    VertexHandle::new(1),
+                    VertexHandle::new(2),
+                ],
+                vec![None, None, None],
+                true,
+            )],
+        };
+        let report = infinite.validate_manifold_report(TdsBoundaryPolicyD::AllowBoundary);
+        assert_eq!(report.finite_facet_count(), 1);
+        let geometric = infinite.validate_geometric_report(&APPROX).value;
+        assert!(geometric.is_valid());
+        assert_eq!(geometric.finite_cell_count(), 0);
+
+        let key = FacetKey::new(vec![VertexHandle::new(0), VertexHandle::new(1)]);
+        assert!(infinite.adjacent_facets_have_opposite_orientation(&key, &[]));
+        assert!(
+            infinite.adjacent_facets_have_opposite_orientation(&key, &[(CellHandle::new(0), 2)])
+        );
+    }
+
+    #[test]
+    fn geometric_reports_cover_negative_degenerate_cospherical_and_inside_cells() {
+        let negative = TriangulationDataStructureD {
+            dimension: 2,
+            vertices: vec![
+                VertexD::finite(p(&[0, 0])),
+                VertexD::finite(p(&[0, 2])),
+                VertexD::finite(p(&[2, 0])),
+            ],
+            cells: vec![Cell::new(
+                vec![
+                    VertexHandle::new(0),
+                    VertexHandle::new(1),
+                    VertexHandle::new(2),
+                ],
+                vec![None, None, None],
+            )],
+        };
+        assert_eq!(
+            negative
+                .validate_geometric_report(&APPROX)
+                .value
+                .negative_orientation_count(),
+            1
+        );
+
+        let degenerate = TriangulationDataStructureD {
+            dimension: 2,
+            vertices: vec![
+                VertexD::finite(p(&[0, 0])),
+                VertexD::finite(p(&[1, 0])),
+                VertexD::finite(p(&[2, 0])),
+            ],
+            cells: negative.cells.clone(),
+        };
+        assert!(degenerate.validate_geometric(&APPROX).is_err());
+
+        let queried = TriangulationDataStructureD {
+            dimension: 2,
+            vertices: vec![
+                VertexD::finite(p(&[0, 0])),
+                VertexD::finite(p(&[2, 0])),
+                VertexD::finite(p(&[0, 2])),
+                VertexD::finite(p(&[2, 2])),
+                VertexD::finite(p(&[1, 1])),
+            ],
+            cells: vec![Cell::new(
+                vec![
+                    VertexHandle::new(0),
+                    VertexHandle::new(1),
+                    VertexHandle::new(2),
+                ],
+                vec![None, None, None],
+            )],
+        };
+        let report = queried.validate_geometric_report(&APPROX).value;
+        assert_eq!(report.cospherical_boundary_count(), 1);
+        assert!(report.violations().iter().any(|violation| {
+            violation.reason() == "D-dimensional simplex violates empty-sphere legality"
+        }));
+    }
+
+    #[test]
+    fn strict_geometric_report_retains_undecided_predicate_identity() {
+        let sine = Real::e().sin();
+        let cosine = Real::e().cos();
+        let opaque_zero = &sine * &sine + &cosine * &cosine - Real::one();
+        let tds = TriangulationDataStructureD {
+            dimension: 2,
+            vertices: vec![
+                VertexD::finite(p(&[0, 0])),
+                VertexD::finite(p(&[1, 0])),
+                VertexD::finite(PointD::new(vec![Real::zero(), opaque_zero])),
+            ],
+            cells: vec![Cell::new(
+                vec![
+                    VertexHandle::new(0),
+                    VertexHandle::new(1),
+                    VertexHandle::new(2),
+                ],
+                vec![None, None, None],
+            )],
+        };
+        let strict = TriangulationContext::new(hyperlimit::PredicatePolicy::STRICT);
+        let report = tds.validate_geometric_report(&strict).value;
+        assert_eq!(report.violations().len(), 1);
+        assert_eq!(
+            report.violations()[0].undecided_predicate(),
+            Some("D-dimensional orientation")
+        );
+        assert!(matches!(
+            tds.validate_geometric(&strict),
+            Err(Error::PredicateUndecided { .. })
+        ));
+    }
+
+    #[test]
+    fn flip_validation_rejects_affinely_dependent_inserted_side() {
+        let complex = DelaunayComplex::from_parts(
+            2,
+            vec![p(&[0, 0]), p(&[1, 0]), p(&[2, 0]), p(&[0, 1])],
+            vec![Simplex::new(vec![1, 2, 3]), Simplex::new(vec![0, 1, 3])],
+        );
+        let report = complex
+            .validate_bistellar_flip(&APPROX, &BistellarFlipD::new(vec![0, 1, 2, 3], vec![0, 2]))
+            .value;
+        assert_eq!(
+            report.reason(),
+            Some("D-dimensional flip inserted cell is affinely dependent")
+        );
+    }
+
+    #[test]
+    fn private_validation_utilities_cover_dimension_and_reason_boundaries() {
+        let evaluator = PredicateEvaluator::new(&APPROX);
+        assert!(validate_points(&evaluator, &[PointD::new(Vec::new())], 0).is_err());
+        assert!(!point_d_equal(&evaluator, &p(&[0]), &p(&[0, 0])).unwrap());
+
+        assert_eq!(
+            error_reason(Error::NoEarFound),
+            "no valid polygon ear could be found"
+        );
+        assert_eq!(
+            error_reason(Error::UnsupportedFeature { feature: "probe" }),
+            "probe"
+        );
+        assert_eq!(
+            error_reason(Error::PredicateUndecided { predicate: "probe" }),
+            "probe"
+        );
+
+        for reason in [
+            "D-dimensional TDS dimension must be positive",
+            "TDS vertex infinite status and point payload disagree",
+            "TDS vertex dimension does not match ambient dimension",
+            "TDS cell finite/infinite status does not match vertices",
+            "TDS reciprocal check references missing cell",
+            "TDS neighbor does not share the referenced facet",
+            "TDS combinatorial validation must pass before manifold validation",
+            "adjacent cells have the same induced facet orientation",
+            "finite facet has degree greater than two",
+            "TDS combinatorial validation must pass before geometric validation",
+            "D-dimensional simplex is affinely dependent",
+            "D-dimensional simplex violates empty-sphere legality",
+            "D-dimensional orientation",
+            "D-dimensional in-sphere",
+        ] {
+            assert_eq!(tds_validation_reason(reason), reason);
+        }
+        assert_eq!(tds_validation_reason("unknown"), "TDS validation failed");
     }
 }

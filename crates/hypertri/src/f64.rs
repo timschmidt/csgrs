@@ -141,4 +141,14 @@ mod tests {
             }
         );
     }
+
+    #[test]
+    fn direct_scalar_lift_maps_nonfinite_conversion_errors() {
+        assert_eq!(
+            lift_real(f64::NAN).unwrap_err(),
+            Error::InvalidInput {
+                reason: "f64 coordinates must be finite"
+            }
+        );
+    }
 }

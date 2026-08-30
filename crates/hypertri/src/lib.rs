@@ -21,16 +21,16 @@ mod earcut;
 pub mod error;
 #[cfg(feature = "f64-interop")]
 pub mod f64;
+#[cfg(feature = "nd")]
+pub mod nd;
+pub mod polygon;
 #[cfg(any(
     feature = "earcut",
     feature = "cdt",
     feature = "nd",
     feature = "runtime-select"
 ))]
-mod kernel;
-#[cfg(feature = "nd")]
-pub mod nd;
-pub mod polygon;
+mod predicate_evaluator;
 #[cfg(any(feature = "earcut", feature = "cdt"))]
 mod predicates;
 #[cfg(feature = "runtime-select")]

@@ -7,26 +7,26 @@
 //! the same empty-circle predicate used by Delaunay insertion.
 
 use crate::error::{Error, Result};
-use crate::kernel::ExactKernel;
+use crate::predicate_evaluator::PredicateEvaluator;
 use crate::predicates;
 use crate::types::Sign;
 use crate::types::{Constraint, ExactPoint, Triangle};
 
 /// Validate unconstrained exact Delaunay topology and local edge legality.
 pub(crate) fn validate_delaunay(
-    kernel: &ExactKernel,
+    evaluator: &PredicateEvaluator,
     points: &[ExactPoint],
     triangles: &[Triangle],
 ) -> Result<()> {
-    let _ = validate_triangles(kernel, points, triangles)?;
+    let _ = validate_triangles(evaluator, points, triangles)?;
     let edge_uses = sorted_edge_uses(triangles);
     validate_edge_adjacency(&edge_uses)?;
-    if !triangulates_convex_hull_with_edge_uses(kernel, points, triangles, &edge_uses)? {
+    if !triangulates_convex_hull_with_edge_uses(evaluator, points, triangles, &edge_uses)? {
         return Err(Error::InvalidInput {
             reason: "triangulation does not cover the convex hull",
         });
     }
-    validate_local_delaunay(kernel, points, &edge_uses, &[])
+    validate_local_delaunay(evaluator, points, &edge_uses, &[])
 }
 
 /// Return whether `triangles` form one complete triangulation of the convex
@@ -36,22 +36,22 @@ pub(crate) fn validate_delaunay(
 /// cannot see: missing wedges appear as a concave boundary even though every
 /// retained interior edge is locally legal.
 pub(crate) fn triangulates_convex_hull(
-    kernel: &ExactKernel,
+    evaluator: &PredicateEvaluator,
     points: &[ExactPoint],
     triangles: &[Triangle],
 ) -> Result<bool> {
     let edge_uses = sorted_edge_uses(triangles);
-    triangulates_convex_hull_with_edge_uses(kernel, points, triangles, &edge_uses)
+    triangulates_convex_hull_with_edge_uses(evaluator, points, triangles, &edge_uses)
 }
 
 fn triangulates_convex_hull_with_edge_uses(
-    kernel: &ExactKernel,
+    evaluator: &PredicateEvaluator,
     points: &[ExactPoint],
     triangles: &[Triangle],
     edge_uses: &[EdgeUse],
 ) -> Result<bool> {
     if triangles.is_empty() {
-        return points_are_collinear(kernel, points);
+        return points_are_collinear(evaluator, points);
     }
 
     let mut used = vec![false; points.len()];
@@ -137,7 +137,7 @@ fn triangulates_convex_hull_with_edge_uses(
     let mut turn = None;
     for index in 0..cycle.len() {
         let sign = predicates::orient2(
-            kernel,
+            evaluator,
             &points[cycle[(index + cycle.len() - 1) % cycle.len()]],
             &points[cycle[index]],
             &points[cycle[(index + 1) % cycle.len()]],
@@ -153,13 +153,13 @@ fn triangulates_convex_hull_with_edge_uses(
     Ok(turn.is_some())
 }
 
-fn points_are_collinear(kernel: &ExactKernel, points: &[ExactPoint]) -> Result<bool> {
+fn points_are_collinear(evaluator: &PredicateEvaluator, points: &[ExactPoint]) -> Result<bool> {
     let Some(first) = points.first() else {
         return Ok(true);
     };
     let mut second = None;
     for candidate in &points[1..] {
-        if !predicates::points_equal(kernel, first, candidate)? {
+        if !predicates::points_equal(evaluator, first, candidate)? {
             second = Some(candidate);
             break;
         }
@@ -168,7 +168,7 @@ fn points_are_collinear(kernel: &ExactKernel, points: &[ExactPoint]) -> Result<b
         return Ok(true);
     };
     for point in points {
-        if predicates::orient2(kernel, first, second, point)? != Sign::Zero {
+        if predicates::orient2(evaluator, first, second, point)? != Sign::Zero {
             return Ok(false);
         }
     }
@@ -193,22 +193,22 @@ fn union(parents: &mut [usize], first: usize, second: usize) {
 
 /// Validate exact constrained triangulation topology without Delaunay legality.
 pub(crate) fn validate_constrained_topology(
-    kernel: &ExactKernel,
+    evaluator: &PredicateEvaluator,
     points: &[ExactPoint],
     constraints: &[Constraint],
     triangles: &[Triangle],
 ) -> Result<()> {
-    validated_constrained_edge_uses(kernel, points, constraints, triangles).map(drop)
+    validated_constrained_edge_uses(evaluator, points, constraints, triangles).map(drop)
 }
 
 fn validated_constrained_edge_uses(
-    kernel: &ExactKernel,
+    evaluator: &PredicateEvaluator,
     points: &[ExactPoint],
     constraints: &[Constraint],
     triangles: &[Triangle],
 ) -> Result<(Vec<EdgeUse>, Option<Sign>)> {
     validate_constraints(points.len(), constraints)?;
-    let winding = validate_triangles(kernel, points, triangles)?;
+    let winding = validate_triangles(evaluator, points, triangles)?;
     let edge_uses = sorted_edge_uses(triangles);
     validate_edge_adjacency(&edge_uses)?;
     for &constraint in constraints {
@@ -224,28 +224,30 @@ fn validated_constrained_edge_uses(
 /// Validate constrained topology and local Delaunay legality of unprotected
 /// interior edges.
 pub(crate) fn validate_constrained_delaunay(
-    kernel: &ExactKernel,
+    evaluator: &PredicateEvaluator,
     points: &[ExactPoint],
     constraints: &[Constraint],
     triangles: &[Triangle],
 ) -> Result<()> {
-    let (edge_uses, _) = validated_constrained_edge_uses(kernel, points, constraints, triangles)?;
+    let (edge_uses, _) =
+        validated_constrained_edge_uses(evaluator, points, constraints, triangles)?;
     let constrained_edges = sorted_constraint_edges(constraints);
-    validate_local_delaunay(kernel, points, &edge_uses, &constrained_edges)
+    validate_local_delaunay(evaluator, points, &edge_uses, &constrained_edges)
 }
 
 /// Validate a constrained Delaunay triangulation whose domain is the complete
 /// convex hull, rather than a boundary-preserving polygon subset.
 pub(crate) fn validate_constrained_convex_hull_delaunay(
-    kernel: &ExactKernel,
+    evaluator: &PredicateEvaluator,
     points: &[ExactPoint],
     constraints: &[Constraint],
     triangles: &[Triangle],
 ) -> Result<()> {
-    let (edge_uses, _) = validated_constrained_edge_uses(kernel, points, constraints, triangles)?;
+    let (edge_uses, _) =
+        validated_constrained_edge_uses(evaluator, points, constraints, triangles)?;
     let constrained_edges = sorted_constraint_edges(constraints);
-    validate_local_delaunay(kernel, points, &edge_uses, &constrained_edges)?;
-    if !triangulates_convex_hull_with_edge_uses(kernel, points, triangles, &edge_uses)? {
+    validate_local_delaunay(evaluator, points, &edge_uses, &constrained_edges)?;
+    if !triangulates_convex_hull_with_edge_uses(evaluator, points, triangles, &edge_uses)? {
         return Err(Error::InvalidInput {
             reason: "constrained triangulation does not cover the convex hull",
         });
@@ -257,19 +259,19 @@ pub(crate) fn validate_constrained_convex_hull_delaunay(
 /// convex hull without imposing Delaunay legality on unprotected interior
 /// edges.
 pub(crate) fn validate_constrained_convex_hull_topology(
-    kernel: &ExactKernel,
+    evaluator: &PredicateEvaluator,
     points: &[ExactPoint],
     constraints: &[Constraint],
     triangles: &[Triangle],
 ) -> Result<()> {
     let (edge_uses, winding) =
-        validated_constrained_edge_uses(kernel, points, constraints, triangles)?;
+        validated_constrained_edge_uses(evaluator, points, constraints, triangles)?;
     if winding == Some(Sign::Negative) {
         return Err(Error::InvalidInput {
             reason: "triangle winding is not positive",
         });
     }
-    if !triangulates_convex_hull_with_edge_uses(kernel, points, triangles, &edge_uses)? {
+    if !triangulates_convex_hull_with_edge_uses(evaluator, points, triangles, &edge_uses)? {
         return Err(Error::InvalidInput {
             reason: "constrained triangulation does not cover the convex hull",
         });
@@ -305,7 +307,7 @@ fn validate_constraints(point_count: usize, constraints: &[Constraint]) -> Resul
 }
 
 fn validate_triangles(
-    kernel: &ExactKernel,
+    evaluator: &PredicateEvaluator,
     points: &[ExactPoint],
     triangles: &[Triangle],
 ) -> Result<Option<Sign>> {
@@ -323,7 +325,7 @@ fn validate_triangles(
             });
         }
         let sign = predicates::orient2(
-            kernel,
+            evaluator,
             &points[triangle[0]],
             &points[triangle[1]],
             &points[triangle[2]],
@@ -369,7 +371,7 @@ fn validate_edge_adjacency(edge_uses: &[EdgeUse]) -> Result<()> {
 }
 
 fn validate_local_delaunay(
-    kernel: &ExactKernel,
+    evaluator: &PredicateEvaluator,
     points: &[ExactPoint],
     edge_uses: &[EdgeUse],
     constrained_edges: &[EdgeKey],
@@ -392,13 +394,13 @@ fn validate_local_delaunay(
 
         let first = edge_uses[start].opposite;
         let second = edge_uses[start + 1].opposite;
-        if !opposite_sides_of_edge(kernel, points, edge, first, second)? {
+        if !opposite_sides_of_edge(evaluator, points, edge, first, second)? {
             return Err(Error::InvalidInput {
                 reason: "adjacent triangles are not on opposite sides of edge",
             });
         }
 
-        if edge_is_illegal(kernel, points, edge, first, second)? {
+        if edge_is_illegal(evaluator, points, edge, first, second)? {
             return Err(Error::InvalidInput {
                 reason: "unconstrained interior edge violates Delaunay legality",
             });
@@ -409,14 +411,14 @@ fn validate_local_delaunay(
 }
 
 fn edge_is_illegal(
-    kernel: &ExactKernel,
+    evaluator: &PredicateEvaluator,
     points: &[ExactPoint],
     edge: EdgeKey,
     first_opposite: usize,
     second_opposite: usize,
 ) -> Result<bool> {
     let orientation = predicates::orient2(
-        kernel,
+        evaluator,
         &points[edge.from],
         &points[edge.to],
         &points[first_opposite],
@@ -425,7 +427,7 @@ fn edge_is_illegal(
         return Ok(false);
     }
 
-    let sign = kernel.incircle2(
+    let sign = evaluator.incircle2(
         &points[edge.from],
         &points[edge.to],
         &points[first_opposite],
@@ -438,16 +440,20 @@ fn edge_is_illegal(
 }
 
 fn opposite_sides_of_edge(
-    kernel: &ExactKernel,
+    evaluator: &PredicateEvaluator,
     points: &[ExactPoint],
     edge: EdgeKey,
     first: usize,
     second: usize,
 ) -> Result<bool> {
-    let first_side =
-        predicates::orient2(kernel, &points[edge.from], &points[edge.to], &points[first])?;
+    let first_side = predicates::orient2(
+        evaluator,
+        &points[edge.from],
+        &points[edge.to],
+        &points[first],
+    )?;
     let second_side = predicates::orient2(
-        kernel,
+        evaluator,
         &points[edge.from],
         &points[edge.to],
         &points[second],
@@ -537,10 +543,18 @@ mod tests {
     use crate::TriangulationContext;
     use hyperreal::Real;
 
+    fn p(x: i64, y: i64) -> ExactPoint {
+        ExactPoint::new(Real::from(x), Real::from(y))
+    }
+
+    fn evaluator(context: &TriangulationContext) -> PredicateEvaluator {
+        PredicateEvaluator::new(context)
+    }
+
     #[test]
     fn convex_hull_topology_contract_rejects_consistent_negative_winding() {
         let context = TriangulationContext::new(hyperlimit::PredicatePolicy::STRICT);
-        let kernel = ExactKernel::new(&context);
+        let evaluator = PredicateEvaluator::new(&context);
         let points = [
             ExactPoint::new(Real::from(0), Real::from(0)),
             ExactPoint::new(Real::from(1), Real::from(0)),
@@ -549,7 +563,7 @@ mod tests {
         ];
 
         let error = validate_constrained_convex_hull_topology(
-            &kernel,
+            &evaluator,
             &points,
             &[],
             &[[0, 2, 1], [0, 3, 2]],
@@ -562,5 +576,100 @@ mod tests {
                 reason: "triangle winding is not positive"
             }
         );
+    }
+
+    #[test]
+    fn convex_hull_certificate_rejects_missing_invalid_disconnected_and_nonmanifold_meshes() {
+        let context = TriangulationContext::new(hyperlimit::PredicatePolicy::STRICT);
+        let evaluator = evaluator(&context);
+        assert!(triangulates_convex_hull(&evaluator, &[], &[]).unwrap());
+        assert!(points_are_collinear(&evaluator, &[p(0, 0), p(0, 0)]).unwrap());
+        assert!(points_are_collinear(&evaluator, &[p(0, 0), p(1, 0), p(2, 0)]).unwrap());
+        assert!(!points_are_collinear(&evaluator, &[p(0, 0), p(1, 0), p(0, 1)]).unwrap());
+
+        let triangle_points = [p(0, 0), p(2, 0), p(0, 2)];
+        assert!(!triangulates_convex_hull(&evaluator, &triangle_points, &[[0, 1, 9]]).unwrap());
+
+        let unused = [p(0, 0), p(2, 0), p(0, 2), p(1, 1)];
+        assert!(!triangulates_convex_hull(&evaluator, &unused, &[[0, 1, 2]]).unwrap());
+
+        let nonmanifold = [p(0, 0), p(2, 0), p(0, 2), p(1, -1), p(1, 3)];
+        assert!(!triangulates_convex_hull(
+            &evaluator,
+            &nonmanifold,
+            &[[0, 1, 2], [1, 0, 3], [0, 1, 4]],
+        )
+        .unwrap());
+
+        let disconnected = [p(0, 0), p(1, 0), p(0, 1), p(4, 0), p(5, 0), p(4, 1)];
+        assert!(
+            !triangulates_convex_hull(&evaluator, &disconnected, &[[0, 1, 2], [3, 4, 5]],).unwrap()
+        );
+    }
+
+    #[test]
+    fn constrained_convex_hull_validators_reject_incomplete_coverage() {
+        let context = TriangulationContext::new(hyperlimit::PredicatePolicy::STRICT);
+        let evaluator = evaluator(&context);
+        let points = [p(0, 0), p(4, 0), p(0, 4), p(3, 3)];
+        let triangles = [[0, 1, 2]];
+
+        assert_eq!(
+            validate_constrained_convex_hull_delaunay(&evaluator, &points, &[], &triangles),
+            Err(Error::InvalidInput {
+                reason: "constrained triangulation does not cover the convex hull"
+            })
+        );
+        assert_eq!(
+            validate_constrained_convex_hull_topology(&evaluator, &points, &[], &triangles),
+            Err(Error::InvalidInput {
+                reason: "constrained triangulation does not cover the convex hull"
+            })
+        );
+    }
+
+    #[test]
+    fn local_delaunay_helpers_cover_same_side_collinear_and_strictly_opposite_cases() {
+        let context = TriangulationContext::new(hyperlimit::PredicatePolicy::STRICT);
+        let evaluator = evaluator(&context);
+        let points = [p(0, 0), p(4, 0), p(1, 1), p(3, 1), p(2, -1)];
+        let edge = EdgeKey::new(0, 1);
+        let same_side = [
+            EdgeUse {
+                edge,
+                triangle: 0,
+                opposite: 2,
+            },
+            EdgeUse {
+                edge,
+                triangle: 1,
+                opposite: 3,
+            },
+        ];
+        assert_eq!(
+            validate_local_delaunay(&evaluator, &points, &same_side, &[]),
+            Err(Error::InvalidInput {
+                reason: "adjacent triangles are not on opposite sides of edge"
+            })
+        );
+
+        assert!(!edge_is_illegal(&evaluator, &points, edge, 1, 2).unwrap());
+        assert!(!opposite_sides_of_edge(&evaluator, &points, edge, 2, 3).unwrap());
+        assert!(opposite_sides_of_edge(&evaluator, &points, edge, 2, 4).unwrap());
+        assert!(signs_strictly_differ(Sign::Negative, Sign::Positive));
+        assert!(!signs_strictly_differ(Sign::Zero, Sign::Positive));
+    }
+
+    #[test]
+    fn strict_triangle_validation_propagates_an_undecided_orientation() {
+        let sine = Real::e().sin();
+        let cosine = Real::e().cos();
+        let opaque_zero = &sine * &sine + &cosine * &cosine - Real::one();
+        let points = [p(0, 0), p(1, 0), ExactPoint::new(Real::zero(), opaque_zero)];
+        let context = TriangulationContext::new(hyperlimit::PredicatePolicy::STRICT);
+        assert!(matches!(
+            validate_triangles(&evaluator(&context), &points, &[[0, 1, 2]]),
+            Err(Error::PredicateUndecided { .. })
+        ));
     }
 }

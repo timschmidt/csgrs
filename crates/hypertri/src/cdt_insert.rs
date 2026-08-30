@@ -7,11 +7,11 @@
 //! subsegment by flipping crossed unconstrained edges or retriangulating its
 //! exact cavity, then re-legalizes only unconstrained edges. Correctness
 //! reduces to complete convex-hull coverage and local Delaunay checks on
-//! unprotected edges; exact predicate ownership stays in the kernel/predicate
+//! unprotected edges; exact predicate ownership stays in the evaluator/predicate
 //! layer.
 
 use crate::error::{Error, Result};
-use crate::kernel::ExactKernel;
+use crate::predicate_evaluator::PredicateEvaluator;
 use crate::predicates;
 use crate::types::Sign;
 use crate::types::{Constraint, Point2, Triangle};
@@ -40,7 +40,7 @@ struct RecoveredConstraints {
 /// legality for unconstrained interior edges where exact predicates can decide
 /// the required flips.
 pub(crate) fn insert_constraints(
-    kernel: &ExactKernel,
+    evaluator: &PredicateEvaluator,
     points: &[Point2],
     triangles: Vec<Triangle>,
     constraints: &[Constraint],
@@ -49,8 +49,14 @@ pub(crate) fn insert_constraints(
         mut triangles,
         constrained_edges,
         topology,
-    } = recover_constraints(kernel, points, triangles, constraints, None)?;
-    legalize_unconstrained_edges(kernel, points, &mut triangles, &constrained_edges, topology)?;
+    } = recover_constraints(evaluator, points, triangles, constraints, None)?;
+    legalize_unconstrained_edges(
+        evaluator,
+        points,
+        &mut triangles,
+        &constrained_edges,
+        topology,
+    )?;
     Ok(triangles)
 }
 
@@ -61,7 +67,7 @@ pub(crate) fn insert_constraints(
 /// exact crossing, flip, and cavity predicates recover every protected edge;
 /// only the final empty-circle legalization sweep is omitted.
 pub(crate) fn insert_constraints_topology(
-    kernel: &ExactKernel,
+    evaluator: &PredicateEvaluator,
     points: &[Point2],
     triangles: Vec<Triangle>,
     constraints: &[Constraint],
@@ -72,18 +78,24 @@ pub(crate) fn insert_constraints_topology(
         constrained_edges,
         topology,
     } = recover_constraints(
-        kernel,
+        evaluator,
         points,
         triangles,
         constraints,
         initial_topology.map(|topology| *topology),
     )?;
-    canonicalize_unconstrained_edges(kernel, points, &mut triangles, &constrained_edges, topology)?;
+    canonicalize_unconstrained_edges(
+        evaluator,
+        points,
+        &mut triangles,
+        &constrained_edges,
+        topology,
+    )?;
     Ok(triangles)
 }
 
 fn recover_constraints(
-    kernel: &ExactKernel,
+    evaluator: &PredicateEvaluator,
     points: &[Point2],
     mut triangles: Vec<Triangle>,
     constraints: &[Constraint],
@@ -115,7 +127,7 @@ fn recover_constraints(
         };
         recover_constraint(
             ConstraintRecovery {
-                kernel,
+                evaluator,
                 points,
                 triangles: &mut triangles,
                 topology,
@@ -146,7 +158,7 @@ fn recover_constraints(
 /// into subsegments. Constraint recovery then operates only on a valid planar
 /// straight-line graph.
 pub(crate) fn planarize_constraints(
-    kernel: &ExactKernel,
+    evaluator: &PredicateEvaluator,
     points: &[Point2],
     constraints: &[Constraint],
 ) -> Result<PlanarConstraints> {
@@ -170,7 +182,7 @@ pub(crate) fn planarize_constraints(
             }
 
             if predicates::segment_intersection(
-                kernel,
+                evaluator,
                 &planar_points[a.from],
                 &planar_points[a.to],
                 &planar_points[b.from],
@@ -179,7 +191,7 @@ pub(crate) fn planarize_constraints(
             .is_proper_crossing()
             {
                 let point = segment_intersection_point(&planar_points, a, b)?;
-                push_unique_point(kernel, &mut planar_points, point)?;
+                push_unique_point(evaluator, &mut planar_points, point)?;
             }
         }
     }
@@ -199,7 +211,7 @@ pub(crate) fn planarize_constraints(
                 continue;
             }
             if predicates::point_on_segment(
-                kernel,
+                evaluator,
                 &planar_points[constraint.from],
                 &planar_points[constraint.to],
                 &planar_points[point_index],
@@ -208,7 +220,7 @@ pub(crate) fn planarize_constraints(
             }
         }
 
-        sort_indices_on_segment(kernel, &planar_points, constraint, &mut on_segment)?;
+        sort_indices_on_segment(evaluator, &planar_points, constraint, &mut on_segment)?;
         for pair in on_segment.windows(2) {
             push_unique_constraint(&mut split, Constraint::new(pair[0], pair[1]));
         }
@@ -239,12 +251,12 @@ fn segment_intersection_point(
 }
 
 fn push_unique_point(
-    kernel: &ExactKernel,
+    evaluator: &PredicateEvaluator,
     points: &mut Vec<Point2>,
     point: Point2,
 ) -> Result<usize> {
     for (index, candidate) in points.iter().enumerate() {
-        if predicates::points_equal(kernel, candidate, &point)? {
+        if predicates::points_equal(evaluator, candidate, &point)? {
             return Ok(index);
         }
     }
@@ -262,13 +274,13 @@ fn constraints_share_endpoint(first: Constraint, second: Constraint) -> bool {
 }
 
 fn sort_indices_on_segment(
-    kernel: &ExactKernel,
+    evaluator: &PredicateEvaluator,
     points: &[Point2],
     constraint: &Constraint,
     indices: &mut [usize],
 ) -> Result<()> {
     let use_x = compare_segment_axis_reals(
-        kernel,
+        evaluator,
         &points[constraint.from].x,
         &points[constraint.to].x,
         "compare_constraint_endpoint_x",
@@ -277,8 +289,13 @@ fn sort_indices_on_segment(
     for index in 1..indices.len() {
         let mut cursor = index;
         while cursor > 0
-            && compare_segment_indices(kernel, points, indices[cursor], indices[cursor - 1], use_x)?
-                == Ordering::Less
+            && compare_segment_indices(
+                evaluator,
+                points,
+                indices[cursor],
+                indices[cursor - 1],
+                use_x,
+            )? == Ordering::Less
         {
             indices.swap(cursor, cursor - 1);
             cursor -= 1;
@@ -289,7 +306,7 @@ fn sort_indices_on_segment(
 }
 
 fn compare_segment_indices(
-    kernel: &ExactKernel,
+    evaluator: &PredicateEvaluator,
     points: &[Point2],
     left: usize,
     right: usize,
@@ -297,14 +314,14 @@ fn compare_segment_indices(
 ) -> Result<Ordering> {
     if use_x {
         compare_segment_axis_reals(
-            kernel,
+            evaluator,
             &points[left].x,
             &points[right].x,
             "compare_segment_x",
         )
     } else {
         compare_segment_axis_reals(
-            kernel,
+            evaluator,
             &points[left].y,
             &points[right].y,
             "compare_segment_y",
@@ -313,7 +330,7 @@ fn compare_segment_indices(
 }
 
 fn compare_segment_axis_reals(
-    kernel: &ExactKernel,
+    evaluator: &PredicateEvaluator,
     left: &crate::types::Real,
     right: &crate::types::Real,
     predicate: &'static str,
@@ -321,8 +338,8 @@ fn compare_segment_axis_reals(
     // Points have already been certified to lie on this segment. The remaining
     // subsegment split order is therefore a scalar exact-ordering predicate,
     // which belongs in hyperlimit rather than CDT topology.
-    kernel.decide(
-        hyperlimit::compare_reals(left, right, kernel.policy()),
+    evaluator.decide(
+        hyperlimit::compare_reals(left, right, evaluator.policy()),
         predicate,
     )
 }
@@ -352,7 +369,7 @@ struct ConstraintCrossing {
 }
 
 struct ConstraintRecovery<'a> {
-    kernel: &'a ExactKernel,
+    evaluator: &'a PredicateEvaluator,
     points: &'a [Point2],
     triangles: &'a mut Vec<Triangle>,
     topology: &'a mut TriangleTopology,
@@ -366,7 +383,7 @@ struct ConstraintRecovery<'a> {
 
 fn recover_constraint(recovery: ConstraintRecovery<'_>, constraint: Constraint) -> Result<()> {
     let location = locate_constraint_from_endpoint(
-        recovery.kernel,
+        recovery.evaluator,
         recovery.points,
         recovery.triangles,
         recovery.topology,
@@ -388,7 +405,7 @@ fn recover_constraint(recovery: ConstraintRecovery<'_>, constraint: Constraint) 
 }
 
 fn locate_constraint_from_endpoint(
-    kernel: &ExactKernel,
+    evaluator: &PredicateEvaluator,
     points: &[Point2],
     triangles: &[Triangle],
     topology: &TriangleTopology,
@@ -427,8 +444,13 @@ fn locate_constraint_from_endpoint(
                 }
                 continue;
             }
-            let Some(edge_sides) =
-                edge_proper_crossing_sides(kernel, points, edge, constraint, approximate_points)?
+            let Some(edge_sides) = edge_proper_crossing_sides(
+                evaluator,
+                points,
+                edge,
+                constraint,
+                approximate_points,
+            )?
             else {
                 continue;
             };
@@ -461,7 +483,7 @@ fn recover_constraint_cavity(
     first: ConstraintCrossing,
 ) -> Result<()> {
     let ConstraintRecovery {
-        kernel,
+        evaluator,
         points,
         triangles,
         topology,
@@ -521,8 +543,13 @@ fn recover_constraint_cavity(
             if edge == incoming {
                 continue;
             }
-            let Some(edge_sides) =
-                edge_proper_crossing_sides(kernel, points, edge, constraint, approximate_points)?
+            let Some(edge_sides) = edge_proper_crossing_sides(
+                evaluator,
+                points,
+                edge,
+                constraint,
+                approximate_points,
+            )?
             else {
                 continue;
             };
@@ -599,7 +626,7 @@ fn recover_constraint_cavity(
         // Reuse it instead of repeating the same four side orientations.
         if replacement == EdgeKey::new(constraint.from, constraint.to) {
             return replace_adjacent_edge_in_topology(
-                kernel,
+                evaluator,
                 points,
                 triangles,
                 topology,
@@ -621,7 +648,7 @@ fn recover_constraint_cavity(
     let cavity_indices = incident_triangles;
     let target = EdgeKey::new(constraint.from, constraint.to);
     let mut replacement = match triangulate_cavity_region(
-        kernel,
+        evaluator,
         points,
         triangles,
         cavity_indices.as_slice(),
@@ -666,7 +693,7 @@ fn recover_constraint_cavity(
         prune_absorbed_chain_detours(left_chain, constrained_edges, &boundary_edges);
         prune_absorbed_chain_detours(right_chain, constrained_edges, &boundary_edges);
         replacement = Some(triangulate_cavity_region(
-            kernel,
+            evaluator,
             points,
             triangles,
             cavity_indices.as_slice(),
@@ -696,7 +723,7 @@ fn mark_cavity_triangles(cavity: &mut [bool], adjacent: [AdjacentTriangle; 2]) {
 }
 
 fn triangulate_cavity_region(
-    kernel: &ExactKernel,
+    evaluator: &PredicateEvaluator,
     points: &[Point2],
     triangles: &[Triangle],
     cavity_indices: &[usize],
@@ -720,7 +747,7 @@ fn triangulate_cavity_region(
     for (side, winding) in sides.into_iter().zip([Sign::Negative, Sign::Positive]) {
         if side.len() >= 3 {
             replacement.extend(triangulate_cavity_side(
-                kernel,
+                evaluator,
                 points,
                 side.to_vec(),
                 winding,
@@ -736,7 +763,7 @@ fn triangulate_cavity_region(
             continue;
         }
         crate::cdt::insert_topology_point(
-            kernel,
+            evaluator,
             points,
             &mut replacement,
             vertex,
@@ -857,7 +884,7 @@ fn close_constraint_cavity_holes(
 }
 
 fn triangulate_cavity_side(
-    kernel: &ExactKernel,
+    evaluator: &PredicateEvaluator,
     points: &[Point2],
     mut ring: Vec<usize>,
     winding: Sign,
@@ -873,8 +900,12 @@ fn triangulate_cavity_side(
             let previous = ring[position - 1];
             let current = ring[position];
             let next = ring[position + 1];
-            if predicates::orient2(kernel, &points[previous], &points[current], &points[next])?
-                == Sign::Zero
+            if predicates::orient2(
+                evaluator,
+                &points[previous],
+                &points[current],
+                &points[next],
+            )? == Sign::Zero
             {
                 collinear = Some(position);
                 break;
@@ -896,8 +927,12 @@ fn triangulate_cavity_side(
             let previous = ring[(position + ring.len() - 1) % ring.len()];
             let current = ring[position];
             let next = ring[(position + 1) % ring.len()];
-            let turn =
-                predicates::orient2(kernel, &points[previous], &points[current], &points[next])?;
+            let turn = predicates::orient2(
+                evaluator,
+                &points[previous],
+                &points[current],
+                &points[next],
+            )?;
             if turn == Sign::Zero {
                 continue;
             }
@@ -910,7 +945,7 @@ fn triangulate_cavity_side(
                     continue;
                 }
                 if predicates::point_in_or_on_triangle_with_orientation(
-                    kernel,
+                    evaluator,
                     &points[previous],
                     &points[current],
                     &points[next],
@@ -933,13 +968,17 @@ fn triangulate_cavity_side(
         ring.remove(position);
     }
     if ring.len() == 3 {
-        triangles.push(make_oriented(kernel, points, [ring[0], ring[1], ring[2]])?);
+        triangles.push(make_oriented(
+            evaluator,
+            points,
+            [ring[0], ring[1], ring[2]],
+        )?);
     }
     Ok(triangles)
 }
 
 fn edge_proper_crossing_sides(
-    kernel: &ExactKernel,
+    evaluator: &PredicateEvaluator,
     points: &[Point2],
     edge: EdgeKey,
     constraint: Constraint,
@@ -959,13 +998,13 @@ fn edge_proper_crossing_sides(
     }
     let edge_sides = [
         predicates::orient2(
-            kernel,
+            evaluator,
             &points[constraint.from],
             &points[constraint.to],
             &points[edge.from],
         )?,
         predicates::orient2(
-            kernel,
+            evaluator,
             &points[constraint.from],
             &points[constraint.to],
             &points[edge.to],
@@ -976,13 +1015,13 @@ fn edge_proper_crossing_sides(
     }
     let constraint_sides = [
         predicates::orient2(
-            kernel,
+            evaluator,
             &points[edge.from],
             &points[edge.to],
             &points[constraint.from],
         )?,
         predicates::orient2(
-            kernel,
+            evaluator,
             &points[edge.from],
             &points[edge.to],
             &points[constraint.to],
@@ -992,7 +1031,7 @@ fn edge_proper_crossing_sides(
 }
 
 fn legalize_unconstrained_edges(
-    kernel: &ExactKernel,
+    evaluator: &PredicateEvaluator,
     points: &[Point2],
     triangles: &mut Vec<Triangle>,
     constrained_edges: &[EdgeKey],
@@ -1000,7 +1039,7 @@ fn legalize_unconstrained_edges(
 ) -> Result<()> {
     match topology {
         Some(topology) => restore_unconstrained_edges(
-            kernel,
+            evaluator,
             points,
             triangles,
             constrained_edges,
@@ -1008,7 +1047,7 @@ fn legalize_unconstrained_edges(
             EdgeSchedule::Delaunay,
         ),
         None => restore_unconstrained_edges_by_scan(
-            kernel,
+            evaluator,
             points,
             triangles,
             constrained_edges,
@@ -1027,7 +1066,7 @@ fn legalize_unconstrained_edges(
 /// stabilizes common equivalent-cell cases that constraint recovery can reach
 /// through different initial diagonals.
 fn canonicalize_unconstrained_edges(
-    kernel: &ExactKernel,
+    evaluator: &PredicateEvaluator,
     points: &[Point2],
     triangles: &mut Vec<Triangle>,
     constrained_edges: &[EdgeKey],
@@ -1035,7 +1074,7 @@ fn canonicalize_unconstrained_edges(
 ) -> Result<()> {
     match topology {
         Some(topology) => restore_unconstrained_edges(
-            kernel,
+            evaluator,
             points,
             triangles,
             constrained_edges,
@@ -1043,7 +1082,7 @@ fn canonicalize_unconstrained_edges(
             EdgeSchedule::Lexicographic,
         ),
         None => restore_unconstrained_edges_by_scan(
-            kernel,
+            evaluator,
             points,
             triangles,
             constrained_edges,
@@ -1059,7 +1098,7 @@ enum EdgeSchedule {
 }
 
 fn restore_unconstrained_edges(
-    kernel: &ExactKernel,
+    evaluator: &PredicateEvaluator,
     points: &[Point2],
     triangles: &mut Vec<Triangle>,
     constrained_edges: &[EdgeKey],
@@ -1094,11 +1133,11 @@ fn restore_unconstrained_edges(
         let [first, second] = adjacent;
         let should_flip = match schedule {
             EdgeSchedule::Delaunay => {
-                edge_is_illegal(kernel, points, edge, first.opposite, second.opposite)?
+                edge_is_illegal(evaluator, points, edge, first.opposite, second.opposite)?
             }
             EdgeSchedule::Lexicographic => {
                 EdgeKey::new(first.opposite, second.opposite) < edge
-                    && edge_is_flippable(kernel, points, edge, first.opposite, second.opposite)?
+                    && edge_is_flippable(evaluator, points, edge, first.opposite, second.opposite)?
             }
         };
         if !should_flip {
@@ -1106,7 +1145,7 @@ fn restore_unconstrained_edges(
         }
         let changed = [first.triangle, second.triangle];
         replace_adjacent_edge_in_topology(
-            kernel,
+            evaluator,
             points,
             triangles,
             &mut topology,
@@ -1127,7 +1166,7 @@ fn restore_unconstrained_edges(
 }
 
 fn restore_unconstrained_edges_by_scan(
-    kernel: &ExactKernel,
+    evaluator: &PredicateEvaluator,
     points: &[Point2],
     triangles: &mut [Triangle],
     constrained_edges: &[EdgeKey],
@@ -1147,11 +1186,17 @@ fn restore_unconstrained_edges_by_scan(
             let [first, second] = adjacent;
             let should_flip = match schedule {
                 EdgeSchedule::Delaunay => {
-                    edge_is_illegal(kernel, points, edge, first.opposite, second.opposite)?
+                    edge_is_illegal(evaluator, points, edge, first.opposite, second.opposite)?
                 }
                 EdgeSchedule::Lexicographic => {
                     EdgeKey::new(first.opposite, second.opposite) < edge
-                        && edge_is_flippable(kernel, points, edge, first.opposite, second.opposite)?
+                        && edge_is_flippable(
+                            evaluator,
+                            points,
+                            edge,
+                            first.opposite,
+                            second.opposite,
+                        )?
                 }
             };
             if should_flip {
@@ -1162,7 +1207,7 @@ fn restore_unconstrained_edges_by_scan(
         let Some((edge, adjacent)) = replacement else {
             return Ok(());
         };
-        let replacement = adjacent_edge_replacement(kernel, points, edge, adjacent)?;
+        let replacement = adjacent_edge_replacement(evaluator, points, edge, adjacent)?;
         for (owner, triangle) in adjacent.into_iter().zip(replacement) {
             triangles[owner.triangle] = triangle;
         }
@@ -1185,18 +1230,18 @@ fn enqueue_triangle_edges(
 }
 
 fn edge_is_illegal(
-    kernel: &ExactKernel,
+    evaluator: &PredicateEvaluator,
     points: &[Point2],
     edge: EdgeKey,
     first_opposite: usize,
     second_opposite: usize,
 ) -> Result<bool> {
-    if !edge_is_flippable(kernel, points, edge, first_opposite, second_opposite)? {
+    if !edge_is_flippable(evaluator, points, edge, first_opposite, second_opposite)? {
         return Ok(false);
     }
 
     let orientation = predicates::orient2(
-        kernel,
+        evaluator,
         &points[edge.from],
         &points[edge.to],
         &points[first_opposite],
@@ -1205,7 +1250,7 @@ fn edge_is_illegal(
         return Ok(false);
     }
 
-    let incircle = kernel.incircle2(
+    let incircle = evaluator.incircle2(
         &points[edge.from],
         &points[edge.to],
         &points[first_opposite],
@@ -1223,7 +1268,7 @@ fn edge_is_illegal(
 /// Keeping the proof beside the selected edge avoids rediscovering topology or
 /// repeating the four exact side predicates immediately before the write.
 fn replace_adjacent_edge_in_topology(
-    kernel: &ExactKernel,
+    evaluator: &PredicateEvaluator,
     points: &[Point2],
     triangles: &mut Vec<Triangle>,
     topology: &mut TriangleTopology,
@@ -1231,26 +1276,34 @@ fn replace_adjacent_edge_in_topology(
     mut adjacent: [AdjacentTriangle; 2],
 ) -> Result<()> {
     adjacent.sort_unstable_by_key(|owner| owner.triangle);
-    let replacement = adjacent_edge_replacement(kernel, points, edge, adjacent)?;
+    let replacement = adjacent_edge_replacement(evaluator, points, edge, adjacent)?;
     let indices = [adjacent[0].triangle, adjacent[1].triangle];
     topology.replace_region(triangles, &indices, &replacement, None)
 }
 
 fn adjacent_edge_replacement(
-    kernel: &ExactKernel,
+    evaluator: &PredicateEvaluator,
     points: &[Point2],
     edge: EdgeKey,
     adjacent: [AdjacentTriangle; 2],
 ) -> Result<[Triangle; 2]> {
     let [first, second] = adjacent;
     Ok([
-        make_oriented(kernel, points, [first.opposite, second.opposite, edge.from])?,
-        make_oriented(kernel, points, [second.opposite, first.opposite, edge.to])?,
+        make_oriented(
+            evaluator,
+            points,
+            [first.opposite, second.opposite, edge.from],
+        )?,
+        make_oriented(
+            evaluator,
+            points,
+            [second.opposite, first.opposite, edge.to],
+        )?,
     ])
 }
 
 fn edge_is_flippable(
-    kernel: &ExactKernel,
+    evaluator: &PredicateEvaluator,
     points: &[Point2],
     edge: EdgeKey,
     first_opposite: usize,
@@ -1264,25 +1317,25 @@ fn edge_is_flippable(
     }
 
     let first_side = predicates::orient2(
-        kernel,
+        evaluator,
         &points[edge.from],
         &points[edge.to],
         &points[first_opposite],
     )?;
     let second_side = predicates::orient2(
-        kernel,
+        evaluator,
         &points[edge.from],
         &points[edge.to],
         &points[second_opposite],
     )?;
     let opposite_edge_side = predicates::orient2(
-        kernel,
+        evaluator,
         &points[first_opposite],
         &points[second_opposite],
         &points[edge.from],
     )?;
     let opposite_other_side = predicates::orient2(
-        kernel,
+        evaluator,
         &points[first_opposite],
         &points[second_opposite],
         &points[edge.to],
@@ -1804,9 +1857,13 @@ fn adjacent_triangles(
     Ok([adjacent(owners[0])?, adjacent(owners[1])?])
 }
 
-fn make_oriented(kernel: &ExactKernel, points: &[Point2], triangle: Triangle) -> Result<Triangle> {
+fn make_oriented(
+    evaluator: &PredicateEvaluator,
+    points: &[Point2],
+    triangle: Triangle,
+) -> Result<Triangle> {
     let sign = predicates::orient2(
-        kernel,
+        evaluator,
         &points[triangle[0]],
         &points[triangle[1]],
         &points[triangle[2]],
@@ -1955,12 +2012,12 @@ mod tests {
         let mut triangles = vec![[0, 1, 2], [0, 2, 3]];
         let mut topology = TriangleTopology::new(&triangles, points.len()).unwrap();
         let context = TriangulationContext::new(hyperlimit::PredicatePolicy::STRICT);
-        let kernel = ExactKernel::new(&context);
+        let evaluator = PredicateEvaluator::new(&context);
         let edge = EdgeKey::new(0, 2);
         let adjacent = adjacent_triangles(&triangles, edge, [0, 1]).unwrap();
 
         replace_adjacent_edge_in_topology(
-            &kernel,
+            &evaluator,
             &points,
             &mut triangles,
             &mut topology,
@@ -2002,6 +2059,206 @@ mod tests {
     }
 
     #[test]
+    fn retained_topology_rejects_malformed_local_replacements_before_mutation() {
+        fn replacement_error(
+            original: &[Triangle],
+            point_count: usize,
+            indices: &[usize],
+            replacement: &[Triangle],
+            split: Option<(EdgeKey, usize)>,
+        ) -> Error {
+            let mut triangles = original.to_vec();
+            let mut topology = TriangleTopology::new(&triangles, point_count).unwrap();
+            let error = topology
+                .replace_region(&mut triangles, indices, replacement, split)
+                .unwrap_err();
+            assert_eq!(triangles, original);
+            error
+        }
+
+        let one = [[0, 1, 2]];
+        assert_eq!(
+            replacement_error(&one, 5, &[], &[[0, 1, 2]], None),
+            Error::InvalidInput {
+                reason: "topology replacement has mismatched triangle slots"
+            }
+        );
+        assert_eq!(
+            replacement_error(&one, 5, &[0], &[], None),
+            Error::InvalidInput {
+                reason: "topology replacement has mismatched triangle slots"
+            }
+        );
+        assert_eq!(
+            replacement_error(&one, 5, &[0, 0], &[[0, 1, 2], [0, 1, 2]], None),
+            Error::InvalidInput {
+                reason: "topology replacement triangle slots are not unique and sorted"
+            }
+        );
+        assert_eq!(
+            replacement_error(&one, 5, &[1], &[[0, 1, 2]], None),
+            Error::InvalidInput {
+                reason: "topology replacement references an absent triangle"
+            }
+        );
+        assert_eq!(
+            replacement_error(&one, 5, &[0], &[[0, 0, 2]], None),
+            Error::InvalidInput {
+                reason: "topology replacement contains an invalid triangle"
+            }
+        );
+        assert_eq!(
+            replacement_error(&one, 3, &[0], &[[0, 1, 3]], None),
+            Error::InvalidInput {
+                reason: "topology replacement contains an invalid triangle"
+            }
+        );
+        assert_eq!(
+            replacement_error(&one, 5, &[0], &[[0, 1, 2]], Some((EdgeKey::new(0, 1), 0)),),
+            Error::InvalidInput {
+                reason: "topology replacement does not split an edge interior"
+            }
+        );
+        assert_eq!(
+            replacement_error(&one, 5, &[0], &[[0, 1, 2]], Some((EdgeKey::new(3, 4), 2)),),
+            Error::InvalidInput {
+                reason: "split edge has invalid topology incidence"
+            }
+        );
+
+        let mut triangles = one.to_vec();
+        let mut topology = TriangleTopology::new(&triangles, 6).unwrap();
+        assert_eq!(
+            topology.replace_point_region(&mut triangles, &[0, 1, 2], &[[0, 1, 2]], None,),
+            Err(Error::InvalidInput {
+                reason: "point insertion exceeds its local topology bound"
+            })
+        );
+        assert_eq!(
+            topology.replace_point_region(
+                &mut triangles,
+                &[0],
+                &[[0, 1, 2], [0, 2, 3], [0, 3, 4], [0, 4, 5], [0, 5, 1],],
+                None,
+            ),
+            Err(Error::InvalidInput {
+                reason: "point insertion exceeds its local topology bound"
+            })
+        );
+    }
+
+    #[test]
+    fn retained_topology_detects_corrupted_split_and_boundary_adjacency() {
+        let mesh = [[0, 1, 2], [0, 2, 3]];
+        let split = EdgeKey::new(0, 2);
+
+        let mut triangles = mesh.to_vec();
+        let mut topology = TriangleTopology::new(&triangles, 5).unwrap();
+        assert_eq!(
+            topology.replace_region(
+                &mut triangles,
+                &[0],
+                &[[0, 1, 4], [1, 2, 4], [2, 0, 4]],
+                Some((split, 4)),
+            ),
+            Err(Error::InvalidInput {
+                reason: "split edge omitted an adjacent triangle"
+            })
+        );
+
+        let mut triangles = mesh.to_vec();
+        let mut topology = TriangleTopology::new(&triangles, 5).unwrap();
+        topology.neighbors.fill([None; 3]);
+        assert_eq!(
+            topology.replace_region(
+                &mut triangles,
+                &[0, 1],
+                &[[0, 1, 4], [1, 2, 4], [2, 3, 4], [3, 0, 4]],
+                Some((split, 4)),
+            ),
+            Err(Error::InvalidInput {
+                reason: "interior split edge remained on the topology boundary"
+            })
+        );
+
+        let duplicate_mesh = [[0, 1, 2], [0, 1, 2]];
+        let mut triangles = duplicate_mesh.to_vec();
+        let mut topology = TriangleTopology::new(&triangles, 3).unwrap();
+        topology.neighbors.fill([None; 3]);
+        assert_eq!(
+            topology.replace_region(&mut triangles, &[0, 1], &[[0, 1, 2], [0, 1, 2]], None,),
+            Err(Error::InvalidInput {
+                reason: "topology replacement boundary contains a duplicate edge"
+            })
+        );
+
+        for bad_backlink in [None, Some(1)] {
+            let mut triangles = mesh.to_vec();
+            let mut topology = TriangleTopology::new(&triangles, 4).unwrap();
+            let outside_slot = triangle_edge_slot(mesh[1], split).unwrap();
+            topology.neighbors[1][outside_slot] = bad_backlink;
+            assert_eq!(
+                topology.replace_region(&mut triangles, &[0], &[mesh[0]], None),
+                Err(Error::InvalidInput {
+                    reason: "triangle adjacency is not reciprocal"
+                })
+            );
+        }
+    }
+
+    #[test]
+    fn retained_topology_rejects_nonmanifold_replacement_and_bad_lookup_slots() {
+        let mut triangles = vec![[0, 1, 2]];
+        let mut topology = TriangleTopology::new(&triangles, 5).unwrap();
+        assert_eq!(
+            topology.replace_region(
+                &mut triangles,
+                &[0],
+                &[[0, 1, 2], [0, 1, 3], [0, 1, 4]],
+                None,
+            ),
+            Err(Error::InvalidInput {
+                reason: "topology replacement contains a non-manifold edge"
+            })
+        );
+
+        assert_eq!(
+            replacement_local_index(&[1], 3, 1, 0),
+            Err(Error::InvalidInput {
+                reason: "topology replacement edge has no triangle slot"
+            })
+        );
+        assert_eq!(
+            replacement_local_index(&[0], 1, 1, 2),
+            Err(Error::InvalidInput {
+                reason: "topology replacement edge has no appended slot"
+            })
+        );
+
+        let topology = TriangleTopology::new(&[[0, 1, 2]], 3).unwrap();
+        assert!(
+            topology
+                .neighbor_across(&[[0, 1, 2]], 9, EdgeKey::new(0, 1))
+                .is_err()
+        );
+        assert!(
+            topology
+                .neighbor_across(&[[0, 1, 2]], 0, EdgeKey::new(0, 9))
+                .is_err()
+        );
+
+        assert!(TriangleTopology::new(&[[0, 0, 1]], 2).is_err());
+        assert!(TriangleTopology::new(&[[0, 1, 3]], 3).is_err());
+        assert!(adjacent_triangles(&[[0, 1, 0]], EdgeKey::new(0, 1), [0, 0]).is_err());
+        assert_eq!(
+            oriented_triangle(Sign::Zero, [0, 1, 2]),
+            Err(Error::InvalidInput {
+                reason: "degenerate triangle"
+            })
+        );
+    }
+
+    #[test]
     fn steiner_point_deduplication_uses_numeric_equality() {
         let left = Real::pi() + Real::e();
         let right = Real::e() + Real::pi();
@@ -2009,9 +2266,9 @@ mod tests {
 
         let mut points = vec![Point2::new(left, Real::zero())];
         let context = TriangulationContext::new(hyperlimit::PredicatePolicy::APPROXIMATE_512);
-        let kernel = ExactKernel::new(&context);
+        let evaluator = PredicateEvaluator::new(&context);
         assert_eq!(
-            push_unique_point(&kernel, &mut points, Point2::new(right, Real::zero())),
+            push_unique_point(&evaluator, &mut points, Point2::new(right, Real::zero())),
             Ok(0)
         );
         assert_eq!(points.len(), 1);
@@ -2029,7 +2286,7 @@ mod tests {
             hyperlimit::PredicatePolicy::APPROXIMATE_512,
         ] {
             let context = TriangulationContext::new(policy);
-            let kernel = ExactKernel::new(&context);
+            let evaluator = PredicateEvaluator::new(&context);
             let mut triangles = original.clone();
             let mut topology = TriangleTopology::new(&triangles, points.len()).unwrap();
             let mut cavity = Vec::new();
@@ -2039,7 +2296,7 @@ mod tests {
 
             recover_constraint(
                 ConstraintRecovery {
-                    kernel: &kernel,
+                    evaluator: &evaluator,
                     points: &points,
                     triangles: &mut triangles,
                     topology: &mut topology,
@@ -2061,14 +2318,14 @@ mod tests {
             ));
             assert!(triangles.iter().any(|triangle| triangle.contains(&2)));
             crate::cdt_validate::validate_constrained_topology(
-                &kernel,
+                &evaluator,
                 &points,
                 &[constraint],
                 &triangles,
             )
             .unwrap();
             assert_eq!(
-                kernel.finish(()).certainty,
+                evaluator.finish(()).certainty,
                 crate::TriangulationCertainty::Certified
             );
         }
@@ -2100,9 +2357,9 @@ mod tests {
             hyperlimit::PredicatePolicy::APPROXIMATE_512,
         ] {
             let context = TriangulationContext::new(policy);
-            let kernel = ExactKernel::new(&context);
+            let evaluator = PredicateEvaluator::new(&context);
             let mut triangles = triangulate_cavity_side(
-                &kernel,
+                &evaluator,
                 &points,
                 (0..points.len()).collect(),
                 Sign::Negative,
@@ -2111,7 +2368,7 @@ mod tests {
             for vertex in 0..points.len() {
                 if !triangles.iter().any(|triangle| triangle.contains(&vertex)) {
                     crate::cdt::insert_topology_point(
-                        &kernel,
+                        &evaluator,
                         &points,
                         &mut triangles,
                         vertex,
@@ -2131,7 +2388,7 @@ mod tests {
                     .all(|vertex| triangles.iter().any(|triangle| triangle.contains(&vertex)))
             );
             assert_eq!(
-                kernel.finish(()).certainty,
+                evaluator.finish(()).certainty,
                 crate::TriangulationCertainty::Certified
             );
         }
@@ -2184,7 +2441,7 @@ mod tests {
             hyperlimit::PredicatePolicy::APPROXIMATE_512,
         ] {
             let context = TriangulationContext::new(policy);
-            let kernel = ExactKernel::new(&context);
+            let evaluator = PredicateEvaluator::new(&context);
             let mut triangles = original.clone();
             let mut topology = TriangleTopology::new(&triangles, points.len()).unwrap();
             let mut cavity = Vec::new();
@@ -2194,7 +2451,7 @@ mod tests {
 
             recover_constraint(
                 ConstraintRecovery {
-                    kernel: &kernel,
+                    evaluator: &evaluator,
                     points: &points,
                     triangles: &mut triangles,
                     topology: &mut topology,
@@ -2217,14 +2474,14 @@ mod tests {
             ));
             TriangleTopology::new(&triangles, points.len()).unwrap();
             crate::cdt_validate::validate_constrained_topology(
-                &kernel,
+                &evaluator,
                 &points,
                 &[protected, target],
                 &triangles,
             )
             .unwrap();
             assert_eq!(
-                kernel.finish(()).certainty,
+                evaluator.finish(()).certainty,
                 crate::TriangulationCertainty::Certified
             );
         }
@@ -2271,7 +2528,7 @@ mod tests {
             hyperlimit::PredicatePolicy::APPROXIMATE_512,
         ] {
             let context = TriangulationContext::new(policy);
-            let kernel = ExactKernel::new(&context);
+            let evaluator = PredicateEvaluator::new(&context);
             let mut triangles = original.clone();
             let mut topology = TriangleTopology::new(&triangles, points.len()).unwrap();
             let mut cavity = Vec::new();
@@ -2281,7 +2538,7 @@ mod tests {
 
             recover_constraint(
                 ConstraintRecovery {
-                    kernel: &kernel,
+                    evaluator: &evaluator,
                     points: &points,
                     triangles: &mut triangles,
                     topology: &mut topology,
@@ -2303,14 +2560,14 @@ mod tests {
             ));
             TriangleTopology::new(&triangles, points.len()).unwrap();
             crate::cdt_validate::validate_constrained_topology(
-                &kernel,
+                &evaluator,
                 &points,
                 &[target],
                 &triangles,
             )
             .unwrap();
             assert_eq!(
-                kernel.finish(()).certainty,
+                evaluator.finish(()).certainty,
                 crate::TriangulationCertainty::Certified
             );
         }
@@ -2327,12 +2584,12 @@ mod tests {
             hyperlimit::PredicatePolicy::APPROXIMATE_512,
         ] {
             let context = TriangulationContext::new(policy);
-            let kernel = ExactKernel::new(&context);
+            let evaluator = PredicateEvaluator::new(&context);
             let orient = |triangles: &[[usize; 3]]| {
                 triangles
                     .iter()
                     .copied()
-                    .map(|triangle| make_oriented(&kernel, &points, triangle))
+                    .map(|triangle| make_oriented(&evaluator, &points, triangle))
                     .collect::<Result<Vec<_>>>()
             };
             let mut first = orient(&first).unwrap();
@@ -2342,10 +2599,10 @@ mod tests {
             let first_topology = TriangleTopology::new(&first, points.len()).unwrap();
             let second_topology = TriangleTopology::new(&second, points.len()).unwrap();
 
-            canonicalize_unconstrained_edges(&kernel, &points, &mut first, &[], None).unwrap();
-            canonicalize_unconstrained_edges(&kernel, &points, &mut second, &[], None).unwrap();
+            canonicalize_unconstrained_edges(&evaluator, &points, &mut first, &[], None).unwrap();
+            canonicalize_unconstrained_edges(&evaluator, &points, &mut second, &[], None).unwrap();
             canonicalize_unconstrained_edges(
-                &kernel,
+                &evaluator,
                 &points,
                 &mut retained_first,
                 &[],
@@ -2353,7 +2610,7 @@ mod tests {
             )
             .unwrap();
             canonicalize_unconstrained_edges(
-                &kernel,
+                &evaluator,
                 &points,
                 &mut retained_second,
                 &[],
