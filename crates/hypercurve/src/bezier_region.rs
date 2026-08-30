@@ -3915,11 +3915,26 @@ fn canonicalize_retained_extension_on_finite_envelope(
     Ok(())
 }
 
-fn curve_region_from_native_material_contour(
+fn curve_region_boundary_loop_from_native_material_contour(
     contour: Contour2,
     policy: &CurveContext,
-) -> ExactCurveResult<CurveRegion2> {
-    CurveRegion2::try_from_native_contours_raw(vec![contour], Vec::new(), policy)
+) -> ExactCurveResult<CurveRegionBoundaryLoop2> {
+    let mut boundaries =
+        CurveRegion2::try_from_native_contours_raw(vec![contour], Vec::new(), policy)?
+            .into_boundary_loops();
+    if boundaries.len() != 1 {
+        return Err(curve_region_edit_error(
+            CurveOperation2::Offset,
+            CurveError::Topology("a native offset cap did not produce one boundary loop".into()),
+        ));
+    }
+    // Promotion-local arrangement indices start at zero for every cap. They
+    // are not source-curve identities and cannot be combined across caps;
+    // the unified band arrangement publishes its own global provenance.
+    Ok(boundaries
+        .pop()
+        .expect("the native offset cap has exactly one boundary loop")
+        .without_arrangement_sources())
 }
 
 fn regularize_native_contour_with_curve_region(
@@ -6846,30 +6861,38 @@ fn exact_offset_corner_band(
     .map(|loop_| loop_.map(|loop_| Some((loop_, filled_side_is_left))))
 }
 
-fn regularized_exact_offset_band_region(
-    boundary_loop: CurveRegionBoundaryLoop2,
-    filled_side_is_left: bool,
+fn regularized_exact_offset_band_arrangement(
+    boundary_loops: Vec<CurveRegionBoundaryLoop2>,
+    filled_sides_are_left: Vec<bool>,
     policy: &CurveContext,
 ) -> ExactCurveResult<CurveRegion2> {
-    let mut band = CurveRegion2::new(vec![boundary_loop])
+    if boundary_loops.is_empty() || boundary_loops.len() != filled_sides_are_left.len() {
+        return Err(curve_region_edit_error(
+            CurveOperation2::Offset,
+            CurveError::Topology("exact offset produced inconsistent boundary bands".into()),
+        ));
+    }
+    let band_count = boundary_loops.len();
+    let mut band = CurveRegion2::new(boundary_loops)
         .map_err(|cause| curve_region_edit_error(CurveOperation2::Offset, cause))?;
     {
         let data = band.data_mut_for_construction();
-        data.certified_loop_roles = Some(shared_all_material_curve_region_loop_roles(1));
-        data.certified_loop_fill_rules = Some(Arc::from(vec![FillRule::NonZero]));
+        data.certified_loop_roles = Some(shared_all_material_curve_region_loop_roles(band_count));
+        data.certified_loop_fill_rules = Some(Arc::from(vec![FillRule::NonZero; band_count]));
+        data.signed_loop_composition = true;
     }
     band = band
-        .with_certified_filled_side_is_left(vec![filled_side_is_left])
+        .with_certified_filled_side_is_left(filled_sides_are_left)
         .map_err(|cause| curve_region_edit_error(CurveOperation2::Offset, cause))?;
     band.regularized_region_raw(policy)
         .map_err(|error| error.with_operation(CurveOperation2::Offset))
 }
 
-fn exact_round_path_cap_region(
+fn exact_round_path_cap_band(
     center: &Point2,
     distance: &Real,
     policy: &CurveContext,
-) -> ExactCurveResult<CurveRegion2> {
+) -> ExactCurveResult<CurveRegionBoundaryLoop2> {
     let positive = center.translated(distance.clone(), Real::zero());
     let negative = center.translated(-distance.clone(), Real::zero());
     let first =
@@ -6882,7 +6905,7 @@ fn exact_round_path_cap_region(
         FillRule::NonZero,
     )
     .map_err(|cause| curve_region_edit_error(CurveOperation2::Offset, cause))?;
-    curve_region_from_native_material_contour(contour, policy)
+    curve_region_boundary_loop_from_native_material_contour(contour, policy)
         .map_err(|error| error.with_operation(CurveOperation2::Offset))
 }
 
@@ -6957,11 +6980,11 @@ fn exact_path_endpoint_unit_tangent(
     Ok(Classification::Uncertain(UncertaintyReason::Boundary))
 }
 
-fn exact_line_stroke_band_region(
+fn exact_line_stroke_band(
     line: LineSeg2,
     distance: &Real,
     policy: &CurveContext,
-) -> ExactCurveResult<Classification<CurveRegion2>> {
+) -> ExactCurveResult<Classification<CurveRegionBoundaryLoop2>> {
     let source = BezierSubcurve2::Quadratic(QuadraticBezier2::from_line_segment(line));
     let left = match exact_offset_spans_from_materialized_curve(&source, distance, policy)
         .map_err(|cause| curve_region_edit_error(CurveOperation2::Offset, cause))?
@@ -7004,26 +7027,7 @@ fn exact_line_stroke_band_region(
             return Ok(Classification::Uncertain(reason));
         }
     };
-    regularized_exact_offset_band_region(boundary, true, policy).map(Classification::Decided)
-}
-
-fn union_exact_offset_regions(
-    regions: Vec<CurveRegion2>,
-    policy: &CurveContext,
-) -> ExactCurveResult<CurveRegion2> {
-    let mut regions = regions.into_iter().filter(|region| !region.is_empty());
-    let Some(mut union) = regions.next() else {
-        return Err(curve_region_edit_error(
-            CurveOperation2::Offset,
-            CurveError::Topology("exact path stroke produced no two-dimensional region".into()),
-        ));
-    };
-    for region in regions {
-        union = union
-            .boolean_region_raw(&region, BooleanOp::Union, policy)
-            .map_err(|error| error.with_operation(CurveOperation2::Offset))?;
-    }
-    Ok(union)
+    Ok(Classification::Decided(boundary))
 }
 
 fn exact_offset_parallel_endpoint(
@@ -15617,10 +15621,10 @@ impl CurveRegion2 {
     /// `half_width` must be strictly positive. Each promoted source span is
     /// bounded by its two exact analytic parallels, every authored corner uses
     /// `corner_style`, and open endpoints use `cap_style`. The resulting span,
-    /// corner, and cap regions are composed by the same regularized Boolean
-    /// authority as region offsetting, so self-crossing paths and overlapping
-    /// stroke bands do not escape as raw linework. Closed paths receive their
-    /// cyclic corner and ignore endpoint caps.
+    /// corner, and cap loops enter the same single signed arrangement as region
+    /// offset bands, so self-crossing paths and overlapping stroke bands do not
+    /// escape as raw linework or create sequential intermediate regions. Closed
+    /// paths receive their cyclic corner and ignore endpoint caps.
     ///
     /// General polynomial, rational, B-spline, and NURBS paths retain analytic
     /// parallel carriers rather than being chordized. `STRICT` accepts only
@@ -15753,12 +15757,12 @@ impl CurveRegion2 {
         } else {
             left_spans.len().saturating_sub(1)
         };
-        let mut components = Vec::with_capacity(
-            left_spans
-                .len()
-                .saturating_add(join_count.saturating_mul(2))
-                .saturating_add(if closed { 0 } else { 2 }),
-        );
+        let band_capacity = left_spans
+            .len()
+            .saturating_add(join_count.saturating_mul(2))
+            .saturating_add(if closed { 0 } else { 2 });
+        let mut band_loops = Vec::with_capacity(band_capacity);
+        let mut band_filled_sides = Vec::with_capacity(band_capacity);
         for (right, left) in right_spans.iter().zip(&left_spans) {
             let boundary = match exact_offset_span_band_loop(right, left, policy)
                 .map_err(|cause| curve_region_edit_error(CurveOperation2::Offset, cause))?
@@ -15768,9 +15772,8 @@ impl CurveRegion2 {
                     return Ok(Classification::Uncertain(reason));
                 }
             };
-            components.push(regularized_exact_offset_band_region(
-                boundary, true, policy,
-            )?);
+            band_loops.push(boundary);
+            band_filled_sides.push(true);
         }
 
         for index in 0..join_count {
@@ -15811,11 +15814,8 @@ impl CurveRegion2 {
                     }
                 };
                 if let Some((boundary, filled_side_is_left)) = corner {
-                    components.push(regularized_exact_offset_band_region(
-                        boundary,
-                        filled_side_is_left,
-                        policy,
-                    )?);
+                    band_loops.push(boundary);
+                    band_filled_sides.push(filled_side_is_left);
                 }
             }
         }
@@ -15824,16 +15824,10 @@ impl CurveRegion2 {
             match cap_style {
                 OffsetCap::Butt => {}
                 OffsetCap::Round => {
-                    components.push(exact_round_path_cap_region(
-                        path.start(),
-                        &half_width,
-                        policy,
-                    )?);
-                    components.push(exact_round_path_cap_region(
-                        path.end(),
-                        &half_width,
-                        policy,
-                    )?);
+                    for center in [path.start(), path.end()] {
+                        band_loops.push(exact_round_path_cap_band(center, &half_width, policy)?);
+                        band_filled_sides.push(true);
+                    }
                 }
                 OffsetCap::Square => {
                     let start_tangent = match exact_path_endpoint_unit_tangent(path, true, policy)?
@@ -15863,8 +15857,11 @@ impl CurveRegion2 {
                     )
                     .map_err(|cause| curve_region_edit_error(CurveOperation2::Offset, cause))?;
                     for extension in [start_extension, end_extension] {
-                        match exact_line_stroke_band_region(extension, &half_width, policy)? {
-                            Classification::Decided(region) => components.push(region),
+                        match exact_line_stroke_band(extension, &half_width, policy)? {
+                            Classification::Decided(boundary) => {
+                                band_loops.push(boundary);
+                                band_filled_sides.push(true);
+                            }
                             Classification::Uncertain(reason) => {
                                 return Ok(Classification::Uncertain(reason));
                             }
@@ -15874,7 +15871,11 @@ impl CurveRegion2 {
             }
         }
 
-        let region = union_exact_offset_regions(components, policy)?;
+        // Span, join, and cap loops are all positive stroke material. One
+        // signed arrangement computes their exact union and self-contact
+        // regularization without growing a chain of intermediate regions.
+        let region =
+            regularized_exact_offset_band_arrangement(band_loops, band_filled_sides, policy)?;
         Ok(Classification::Decided(region))
     }
 
@@ -16291,27 +16292,8 @@ impl CurveRegion2 {
                 CurveError::Topology("exact offset produced no boundary bands".into()),
             ));
         }
-        // Every span and corner band is a positive material component. Their
-        // set union is therefore exactly the positive signed depth of one
-        // multi-loop arrangement, including overlaps and self-intersections.
-        // Regularize that arrangement once instead of repeatedly invoking the
-        // binary kernel on growing intermediate regions.
-        let band_count = band_loops.len();
-        let mut raw_bands = Self::new(band_loops)
-            .map_err(|cause| curve_region_edit_error(CurveOperation2::Offset, cause))?;
-        {
-            let data = raw_bands.data_mut_for_construction();
-            data.certified_loop_roles =
-                Some(shared_all_material_curve_region_loop_roles(band_count));
-            data.certified_loop_fill_rules = Some(Arc::from(vec![FillRule::NonZero; band_count]));
-            data.signed_loop_composition = true;
-        }
-        raw_bands = raw_bands
-            .with_certified_filled_side_is_left(band_filled_sides)
-            .map_err(|cause| curve_region_edit_error(CurveOperation2::Offset, cause))?;
-        let bands = raw_bands
-            .regularized_region_raw(policy)
-            .map_err(|error| error.with_operation(CurveOperation2::Offset))?;
+        let bands =
+            regularized_exact_offset_band_arrangement(band_loops, band_filled_sides, policy)?;
         let regularized = self.boolean_region_raw(
             &bands,
             if distance_positive {
