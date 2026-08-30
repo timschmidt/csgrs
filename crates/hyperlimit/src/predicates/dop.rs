@@ -1118,19 +1118,7 @@ impl SupportDop3 {
                         relation: value,
                     });
                     match value {
-                        SupportDopRelation::Separated => {
-                            return PredicateOutcome::decided(
-                                SupportDopAabb3Report {
-                                    relation: value,
-                                    slab_count: self.slabs.len(),
-                                    terminal_slab: Some(slab_index),
-                                    slab_reports,
-                                },
-                                certainty,
-                                stage,
-                            );
-                        }
-                        SupportDopRelation::Degenerate => {
+                        SupportDopRelation::Separated | SupportDopRelation::Degenerate => {
                             return PredicateOutcome::decided(
                                 SupportDopAabb3Report {
                                     relation: value,
@@ -1805,5 +1793,420 @@ fn stage_rank(stage: Escalation) -> u8 {
         Escalation::Exact => 2,
         Escalation::Refined => 3,
         Escalation::Undecided => 4,
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    const APPROX: PredicatePolicy = PredicatePolicy::APPROXIMATE_512;
+
+    fn p3(x: i32, y: i32, z: i32) -> Point3 {
+        Point3::new(x.into(), y.into(), z.into())
+    }
+
+    fn terminal_zero() -> Real {
+        let sine = Real::e().sin();
+        let cosine = Real::e().cos();
+        &sine * &sine + &cosine * &cosine - Real::one()
+    }
+
+    fn x_slab(min: Real, max: Real) -> SupportSlab3 {
+        SupportSlab3::new(p3(1, 0, 0), min, max)
+    }
+
+    #[test]
+    fn projection_and_overlap_helpers_cover_every_location_and_unknown_boundary() {
+        for (value, expected) in [
+            (-1, ProjectionIntervalLocation::Below),
+            (0, ProjectionIntervalLocation::OnMin),
+            (1, ProjectionIntervalLocation::Inside),
+            (2, ProjectionIntervalLocation::OnMax),
+            (3, ProjectionIntervalLocation::Above),
+        ] {
+            assert_eq!(
+                classify_projection_interval(
+                    &Real::from(value),
+                    &Real::from(0),
+                    &Real::from(2),
+                    APPROX,
+                )
+                .value(),
+                Some(expected)
+            );
+        }
+        assert!(matches!(
+            classify_projection_interval(
+                &terminal_zero(),
+                &Real::from(0),
+                &Real::from(2),
+                PredicatePolicy::STRICT,
+            ),
+            PredicateOutcome::Unknown { .. }
+        ));
+        assert!(matches!(
+            classify_projection_interval(
+                &(&Real::from(2) + &terminal_zero()),
+                &Real::from(0),
+                &Real::from(2),
+                PredicatePolicy::STRICT,
+            ),
+            PredicateOutcome::Unknown { .. }
+        ));
+
+        assert_eq!(
+            classify_interval_overlap(
+                &Real::from(-3),
+                &Real::from(-1),
+                &Real::from(0),
+                &Real::from(2),
+                APPROX,
+            )
+            .value(),
+            Some(SupportDopRelation::Separated)
+        );
+        assert_eq!(
+            classify_interval_overlap(
+                &Real::from(3),
+                &Real::from(4),
+                &Real::from(0),
+                &Real::from(2),
+                APPROX,
+            )
+            .value(),
+            Some(SupportDopRelation::Separated)
+        );
+        assert!(matches!(
+            classify_interval_overlap(
+                &Real::from(-1),
+                &terminal_zero(),
+                &Real::from(0),
+                &Real::from(2),
+                PredicatePolicy::STRICT,
+            ),
+            PredicateOutcome::Unknown { .. }
+        ));
+        assert!(matches!(
+            classify_interval_overlap(
+                &(&Real::from(2) + &terminal_zero()),
+                &Real::from(3),
+                &Real::from(0),
+                &Real::from(2),
+                PredicatePolicy::STRICT,
+            ),
+            PredicateOutcome::Unknown { .. }
+        ));
+    }
+
+    #[test]
+    fn strict_support_dop_classifiers_propagate_slab_and_projection_uncertainty() {
+        let uncertain_bounds = SupportDop3::from_slabs(vec![x_slab(terminal_zero(), 0.into())]);
+        assert!(matches!(
+            uncertain_bounds.classify_point(&p3(0, 0, 0), PredicatePolicy::STRICT),
+            PredicateOutcome::Unknown { .. }
+        ));
+        assert!(matches!(
+            uncertain_bounds.classify_aabb3_report(
+                &p3(0, 0, 0),
+                &p3(1, 1, 1),
+                PredicatePolicy::STRICT,
+            ),
+            PredicateOutcome::Unknown { .. }
+        ));
+        assert!(matches!(
+            uncertain_bounds.classify_aabb3(&p3(0, 0, 0), &p3(1, 1, 1), PredicatePolicy::STRICT,),
+            PredicateOutcome::Unknown { .. }
+        ));
+        let plane = Plane3::new(p3(1, 0, 0), 0.into());
+        assert!(matches!(
+            uncertain_bounds.classify_plane3_report(&plane, PredicatePolicy::STRICT),
+            PredicateOutcome::Unknown { .. }
+        ));
+        assert!(matches!(
+            uncertain_bounds.classify_plane3(&plane, PredicatePolicy::STRICT),
+            PredicateOutcome::Unknown { .. }
+        ));
+
+        let dop = SupportDop3::from_slabs(vec![x_slab(0.into(), 2.into())]);
+        assert!(matches!(
+            dop.classify_point(
+                &Point3::new(terminal_zero(), 0.into(), 0.into()),
+                PredicatePolicy::STRICT,
+            ),
+            PredicateOutcome::Unknown { .. }
+        ));
+        assert!(matches!(
+            dop.classify_point(
+                &Point3::new(&Real::from(2) + &terminal_zero(), 0.into(), 0.into()),
+                PredicatePolicy::STRICT,
+            ),
+            PredicateOutcome::Unknown { .. }
+        ));
+
+        assert!(matches!(
+            dop.classify_aabb3_report(
+                &Point3::new(terminal_zero(), 0.into(), 0.into()),
+                &p3(0, 1, 1),
+                PredicatePolicy::STRICT,
+            ),
+            PredicateOutcome::Unknown { .. }
+        ));
+        let opaque_zero = terminal_zero();
+        assert!(matches!(
+            dop.classify_aabb3_report(
+                &Point3::new(&opaque_zero - &Real::from(1), 0.into(), 0.into()),
+                &Point3::new(opaque_zero, 1.into(), 1.into()),
+                PredicatePolicy::STRICT,
+            ),
+            PredicateOutcome::Unknown { .. }
+        ));
+
+        assert!(matches!(
+            SupportDop3::from_points(
+                &[p3(1, 0, 0)],
+                &[
+                    p3(0, 0, 0),
+                    Point3::new(terminal_zero(), 0.into(), 0.into()),
+                ],
+                PredicatePolicy::STRICT,
+            ),
+            PredicateOutcome::Unknown { .. }
+        ));
+    }
+
+    #[test]
+    fn plane_report_propagates_carrier_and_each_query_side_uncertainty() {
+        let uncertain_axis = SupportDop3::from_slabs(vec![SupportSlab3::new(
+            Point3::new(1.into(), terminal_zero(), 0.into()),
+            1.into(),
+            2.into(),
+        )]);
+        assert!(matches!(
+            uncertain_axis.classify_plane3_report(
+                &Plane3::new(p3(1, 0, 0), 0.into()),
+                PredicatePolicy::STRICT,
+            ),
+            PredicateOutcome::Unknown { .. }
+        ));
+
+        let exact_slab = SupportDop3::from_slabs(vec![x_slab(0.into(), 2.into())]);
+        let uncertain_normal = || Point3::new(0.into(), terminal_zero(), 0.into());
+        assert!(matches!(
+            exact_slab.classify_plane3_report(
+                &Plane3::new(uncertain_normal(), 1.into()),
+                PredicatePolicy::STRICT,
+            ),
+            PredicateOutcome::Unknown { .. }
+        ));
+        assert!(matches!(
+            exact_slab.classify_plane3_report(
+                &Plane3::new(uncertain_normal(), (-1).into()),
+                PredicatePolicy::STRICT,
+            ),
+            PredicateOutcome::Unknown { .. }
+        ));
+    }
+
+    #[test]
+    fn slab_building_distinguishes_unknown_minimum_and_later_unknown_maximum() {
+        assert!(matches!(
+            build_slab(
+                &p3(1, 0, 0),
+                &[
+                    p3(0, 0, 0),
+                    Point3::new(terminal_zero(), 0.into(), 0.into())
+                ],
+                PredicatePolicy::STRICT,
+            ),
+            PredicateOutcome::Unknown { .. }
+        ));
+        assert!(matches!(
+            build_slab(
+                &p3(1, 0, 0),
+                &[
+                    p3(0, 0, 0),
+                    p3(1, 0, 0),
+                    Point3::new(&Real::from(1) + &terminal_zero(), 0.into(), 0.into()),
+                ],
+                PredicatePolicy::STRICT,
+            ),
+            PredicateOutcome::Unknown { .. }
+        ));
+
+        let projected = project_aabb3_on_axis(&p3(-1, 0, 0), &p3(0, 0, 0), &p3(2, 1, 1), APPROX)
+            .value()
+            .expect("integer AABB projection should decide");
+        assert_eq!(projected, (Real::from(-2), Real::from(0)));
+        assert!(matches!(
+            project_aabb3_on_axis(
+                &p3(1, 0, 0),
+                &Point3::new(terminal_zero(), 0.into(), 0.into()),
+                &p3(0, 1, 1),
+                PredicatePolicy::STRICT,
+            ),
+            PredicateOutcome::Unknown { .. }
+        ));
+    }
+
+    #[test]
+    fn aabb_report_validation_rejects_unknown_intervals_and_wrong_terminals() {
+        let slab = x_slab(0.into(), 0.into());
+        let report = SupportDopAabb3Report {
+            relation: SupportDopRelation::ConservativeOverlap,
+            slab_count: 1,
+            terminal_slab: None,
+            slab_reports: vec![SupportDopAabb3SlabReport {
+                slab_index: 0,
+                slab: slab.clone(),
+                query_min: Some(0.into()),
+                query_max: Some(terminal_zero()),
+                relation: SupportDopRelation::ConservativeOverlap,
+            }],
+        };
+        assert_eq!(
+            report.validate(PredicatePolicy::STRICT),
+            Err(SupportDopAabb3ValidationError::QueryIntervalInvalid)
+        );
+
+        let report = SupportDopAabb3Report {
+            relation: SupportDopRelation::ConservativeOverlap,
+            slab_count: 1,
+            terminal_slab: None,
+            slab_reports: vec![SupportDopAabb3SlabReport {
+                slab_index: 0,
+                slab: slab.clone(),
+                query_min: Some(terminal_zero()),
+                query_max: Some(2.into()),
+                relation: SupportDopRelation::ConservativeOverlap,
+            }],
+        };
+        assert_eq!(
+            report.validate(PredicatePolicy::STRICT),
+            Err(SupportDopAabb3ValidationError::SlabRelationMismatch)
+        );
+
+        let report = SupportDopAabb3Report {
+            relation: SupportDopRelation::Separated,
+            slab_count: 1,
+            terminal_slab: None,
+            slab_reports: vec![SupportDopAabb3SlabReport {
+                slab_index: 0,
+                slab,
+                query_min: Some(1.into()),
+                query_max: Some(2.into()),
+                relation: SupportDopRelation::Separated,
+            }],
+        };
+        assert_eq!(
+            report.validate(APPROX),
+            Err(SupportDopAabb3ValidationError::TerminalSlabMismatch)
+        );
+    }
+
+    #[test]
+    fn witnessed_slab_validation_preserves_unknown_and_inverted_bounds() {
+        let points = [p3(0, 0, 0), p3(1, 0, 0)];
+        let axis = SupportDopAxis3::new([1, 0, 0]);
+        let inverted = WitnessedSupportSlab3 {
+            axis,
+            min: support_witness(1, &points[1], 1.into()),
+            max: support_witness(0, &points[0], 0.into()),
+        };
+        assert_eq!(
+            validate_witnessed_slab(&inverted, &points, APPROX),
+            Err(SupportDopValidationError::WitnessNotMinimal)
+        );
+
+        let uncertain_point = Point3::new(terminal_zero(), 0.into(), 0.into());
+        let uncertain_points = [uncertain_point.clone(), p3(0, 0, 0)];
+        let uncertain = WitnessedSupportSlab3 {
+            axis,
+            min: support_witness(0, &uncertain_point, terminal_zero()),
+            max: support_witness(1, &uncertain_points[1], 0.into()),
+        };
+        assert_eq!(
+            validate_witnessed_slab(&uncertain, &uncertain_points, PredicatePolicy::STRICT),
+            Err(SupportDopValidationError::UnknownSlabOrder)
+        );
+
+        let opaque_point = Point3::new(terminal_zero(), 0.into(), 0.into());
+        let points = [p3(0, 0, 0), p3(1, 0, 0), opaque_point];
+        let uncertain_min_order = WitnessedSupportSlab3 {
+            axis,
+            min: support_witness(0, &points[0], 0.into()),
+            max: support_witness(1, &points[1], 1.into()),
+        };
+        assert_eq!(
+            validate_witnessed_slab(&uncertain_min_order, &points, PredicatePolicy::STRICT),
+            Err(SupportDopValidationError::UnknownSlabOrder)
+        );
+
+        let opaque_point = Point3::new(terminal_zero(), 0.into(), 0.into());
+        let points = [p3(-1, 0, 0), p3(0, 0, 0), opaque_point];
+        let uncertain_max_order = WitnessedSupportSlab3 {
+            axis,
+            min: support_witness(0, &points[0], (-1).into()),
+            max: support_witness(1, &points[1], 0.into()),
+        };
+        assert_eq!(
+            validate_witnessed_slab(&uncertain_max_order, &points, PredicatePolicy::STRICT),
+            Err(SupportDopValidationError::UnknownSlabOrder)
+        );
+    }
+
+    #[test]
+    fn support_dop_helpers_cover_unknowns_side_relations_and_trace_ranks() {
+        let slab = x_slab(terminal_zero(), 0.into());
+        assert!(matches!(
+            validate_slab_bounds(&slab, PredicatePolicy::STRICT),
+            PredicateOutcome::Unknown { .. }
+        ));
+        assert_eq!(
+            decided_bool(PredicateOutcome::unknown(
+                crate::RefinementNeed::RealRefinement,
+                Escalation::Undecided,
+            )),
+            None
+        );
+        assert!(matches!(
+            support_dop_slab_halfspaces(&[slab], PredicatePolicy::STRICT),
+            PredicateOutcome::Unknown { .. }
+        ));
+
+        assert_eq!(
+            support_dop_plane_relation_from_side_feasibility(true, true),
+            SupportDopPlaneRelation::Intersecting
+        );
+        assert_eq!(
+            support_dop_plane_relation_from_side_feasibility(true, false),
+            SupportDopPlaneRelation::Below
+        );
+        assert_eq!(
+            support_dop_plane_relation_from_side_feasibility(false, true),
+            SupportDopPlaneRelation::Above
+        );
+        assert_eq!(
+            support_dop_plane_relation_from_side_feasibility(false, false),
+            SupportDopPlaneRelation::Degenerate
+        );
+
+        assert_eq!(
+            max_certainty(Certainty::Exact, Certainty::Filtered),
+            Certainty::Filtered
+        );
+        assert_eq!(
+            max_certainty(Certainty::Filtered, Certainty::Approximate),
+            Certainty::Approximate
+        );
+        assert_eq!(
+            max_stage(Escalation::Filter, Escalation::Exact),
+            Escalation::Exact
+        );
+        assert_eq!(stage_rank(Escalation::Structural), 0);
+        assert_eq!(stage_rank(Escalation::Filter), 1);
+        assert_eq!(stage_rank(Escalation::Exact), 2);
+        assert_eq!(stage_rank(Escalation::Refined), 3);
+        assert_eq!(stage_rank(Escalation::Undecided), 4);
     }
 }

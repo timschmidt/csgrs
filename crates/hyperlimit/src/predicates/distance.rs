@@ -1270,6 +1270,24 @@ mod tests {
         Point3::new(r(x.0, x.1), r(y.0, y.1), r(z.0, z.1))
     }
 
+    fn terminal_zero() -> Real {
+        let sine = Real::e().sin();
+        let cosine = Real::e().cos();
+        &sine * &sine + &cosine * &cosine - Real::one()
+    }
+
+    fn shifted2(x: i32, y: i32) -> Point2 {
+        Point2::new(Real::pi() + Real::from(x), Real::e() + Real::from(y))
+    }
+
+    fn shifted3(x: i32, y: i32, z: i32) -> Point3 {
+        Point3::new(
+            Real::pi() + Real::from(x),
+            Real::e() + Real::from(y),
+            Real::pi() + Real::from(z),
+        )
+    }
+
     #[test]
     fn exact_rational_distance_kernels_preserve_tangent_boundaries() {
         let zero2 = rp2((0, 1), (0, 1));
@@ -1663,5 +1681,775 @@ mod tests {
             .value(),
             Some(AabbSphereIntersection::Overlapping)
         );
+    }
+
+    #[test]
+    fn symbolic_translations_exercise_generic_distance_cascades() {
+        let anchor2 = shifted2(0, 0);
+        assert_eq!(
+            crate::compare_point2_distance_squared(
+                &anchor2,
+                &shifted2(1, 0),
+                &shifted2(2, 0),
+                APPROX,
+            )
+            .value(),
+            Some(Ordering::Less)
+        );
+
+        let anchor3 = shifted3(0, 0, 0);
+        assert_eq!(
+            crate::compare_point3_distance_squared(
+                &anchor3,
+                &shifted3(1, 2, 2),
+                &shifted3(2, 4, 4),
+                APPROX,
+            )
+            .value(),
+            Some(Ordering::Less)
+        );
+
+        for (height, expected) in [
+            (0, CircleLineRelation::Secant),
+            (5, CircleLineRelation::Tangent),
+            (6, CircleLineRelation::Disjoint),
+        ] {
+            assert_eq!(
+                crate::classify_circle_line2(
+                    &anchor2,
+                    &Real::from(25),
+                    &shifted2(-10, height),
+                    &shifted2(10, height),
+                    APPROX,
+                )
+                .value(),
+                Some(expected)
+            );
+        }
+
+        for (a, b, expected) in [
+            ((0, 0), (0, 0), CircleSegmentRelation::ContainedInside),
+            ((5, 0), (5, 0), CircleSegmentRelation::Tangent),
+            ((6, 0), (6, 0), CircleSegmentRelation::Disjoint),
+            ((-5, 0), (5, 0), CircleSegmentRelation::Secant),
+            ((5, 0), (0, 0), CircleSegmentRelation::Tangent),
+            ((5, 0), (10, 0), CircleSegmentRelation::Secant),
+            ((0, 0), (10, 0), CircleSegmentRelation::Secant),
+            ((-2, 0), (2, 0), CircleSegmentRelation::ContainedInside),
+            ((-10, 5), (10, 5), CircleSegmentRelation::Tangent),
+            ((6, 0), (10, 0), CircleSegmentRelation::Disjoint),
+        ] {
+            assert_eq!(
+                crate::classify_circle_segment2(
+                    &anchor2,
+                    &Real::from(25),
+                    &shifted2(a.0, a.1),
+                    &shifted2(b.0, b.1),
+                    APPROX,
+                )
+                .value(),
+                Some(expected),
+                "segment case {a:?}..{b:?}"
+            );
+        }
+
+        let line_a = shifted3(0, 0, 0);
+        let line_b = shifted3(10, 0, 0);
+        assert_eq!(
+            crate::compare_point_line3_distance_squared(
+                &shifted3(5, 3, 4),
+                &line_a,
+                &line_b,
+                &Real::from(25),
+                APPROX,
+            )
+            .value(),
+            Some(Ordering::Equal)
+        );
+        for (point, threshold, expected) in [
+            (shifted3(-1, 0, 0), 0, Ordering::Greater),
+            (shifted3(5, 3, 4), 25, Ordering::Equal),
+            (shifted3(13, 4, 0), 25, Ordering::Equal),
+        ] {
+            assert_eq!(
+                crate::compare_point_segment3_distance_squared(
+                    &point,
+                    &line_a,
+                    &line_b,
+                    &Real::from(threshold),
+                    APPROX,
+                )
+                .value(),
+                Some(expected)
+            );
+        }
+
+        let plane = crate::plane::Plane3::new(p3(0, 0, 2), Real::from(-2) * Real::pi());
+        assert_eq!(
+            crate::compare_point_plane_distance_squared(
+                &shifted3(0, 0, 2),
+                &plane,
+                &Real::from(4),
+                APPROX,
+            )
+            .value(),
+            Some(Ordering::Equal)
+        );
+
+        assert_eq!(
+            crate::classify_point_sphere3(&anchor3, &Real::from(25), &shifted3(3, 4, 0), APPROX,)
+                .value(),
+            Some(SpherePointLocation::On)
+        );
+        assert_eq!(
+            crate::classify_sphere3_intersection(
+                &anchor3,
+                &Real::from(2),
+                &shifted3(3, 4, 0),
+                &Real::from(3),
+                APPROX,
+            )
+            .value(),
+            Some(SphereIntersection::Touching)
+        );
+
+        assert_eq!(
+            crate::classify_aabb3_sphere_intersection(
+                &shifted3(2, 2, 2),
+                &shifted3(0, 0, 0),
+                &shifted3(-1, -2, -2),
+                &Real::from(9),
+                APPROX,
+            )
+            .value(),
+            Some(AabbSphereIntersection::Touching)
+        );
+    }
+
+    #[test]
+    fn non_dyadic_rational_distance_kernels_cover_every_relation() {
+        let center = rp2((0, 1), (0, 1));
+        let radius_squared = r(1, 9);
+        for (height, expected) in [
+            ((0, 1), CircleLineRelation::Secant),
+            ((1, 3), CircleLineRelation::Tangent),
+            ((2, 3), CircleLineRelation::Disjoint),
+        ] {
+            assert_eq!(
+                crate::classify_circle_line2(
+                    &center,
+                    &radius_squared,
+                    &rp2((-1, 1), height),
+                    &rp2((1, 1), height),
+                    APPROX,
+                )
+                .value(),
+                Some(expected)
+            );
+        }
+        assert_eq!(
+            crate::classify_circle_line2(&center, &radius_squared, &center, &center, APPROX,)
+                .value(),
+            Some(CircleLineRelation::DegenerateLine)
+        );
+
+        for (a, b, expected) in [
+            (
+                rp2((0, 1), (0, 1)),
+                rp2((0, 1), (0, 1)),
+                CircleSegmentRelation::ContainedInside,
+            ),
+            (
+                rp2((1, 3), (0, 1)),
+                rp2((1, 3), (0, 1)),
+                CircleSegmentRelation::Tangent,
+            ),
+            (
+                rp2((1, 1), (0, 1)),
+                rp2((1, 1), (0, 1)),
+                CircleSegmentRelation::Disjoint,
+            ),
+            (
+                rp2((-1, 1), (0, 1)),
+                rp2((1, 1), (0, 1)),
+                CircleSegmentRelation::Secant,
+            ),
+            (
+                rp2((-1, 6), (0, 1)),
+                rp2((1, 6), (0, 1)),
+                CircleSegmentRelation::ContainedInside,
+            ),
+            (
+                rp2((1, 1), (0, 1)),
+                rp2((2, 1), (0, 1)),
+                CircleSegmentRelation::Disjoint,
+            ),
+        ] {
+            assert_eq!(
+                crate::classify_circle_segment2(&center, &radius_squared, &a, &b, APPROX).value(),
+                Some(expected)
+            );
+        }
+
+        let line_a = rp3((-1, 1), (0, 1), (0, 1));
+        let line_b = rp3((1, 1), (0, 1), (0, 1));
+        let plane = crate::plane::Plane3::new(p3(0, 1, 0), Real::from(0));
+        for (height, expected) in [
+            ((0, 1), Ordering::Less),
+            ((1, 3), Ordering::Equal),
+            ((1, 1), Ordering::Greater),
+        ] {
+            let point = rp3((0, 1), height, (0, 1));
+            assert_eq!(
+                crate::compare_point_line3_distance_squared(
+                    &point,
+                    &line_a,
+                    &line_b,
+                    &radius_squared,
+                    APPROX,
+                )
+                .value(),
+                Some(expected)
+            );
+            assert_eq!(
+                crate::compare_point_segment3_distance_squared(
+                    &point,
+                    &line_a,
+                    &line_b,
+                    &radius_squared,
+                    APPROX,
+                )
+                .value(),
+                Some(expected)
+            );
+            assert_eq!(
+                crate::compare_point_plane_distance_squared(
+                    &point,
+                    &plane,
+                    &radius_squared,
+                    APPROX,
+                )
+                .value(),
+                Some(expected)
+            );
+        }
+    }
+
+    #[test]
+    fn exact_rational_threshold_helpers_cover_two_and_three_dimensions() {
+        let origin2 = rp2((0, 1), (0, 1));
+        let origin3 = rp3((0, 1), (0, 1), (0, 1));
+        let threshold = r(1, 9);
+
+        for (point2, point3, expected) in [
+            (
+                rp2((0, 1), (0, 1)),
+                rp3((0, 1), (0, 1), (0, 1)),
+                Ordering::Less,
+            ),
+            (
+                rp2((1, 3), (0, 1)),
+                rp3((1, 3), (0, 1), (0, 1)),
+                Ordering::Equal,
+            ),
+            (
+                rp2((1, 1), (0, 1)),
+                rp3((1, 1), (0, 1), (0, 1)),
+                Ordering::Greater,
+            ),
+        ] {
+            assert_eq!(
+                exact_rational_point2_distance_threshold_ordering(&point2, &origin2, &threshold,)
+                    .and_then(PredicateOutcome::value),
+                Some(expected)
+            );
+            assert_eq!(
+                exact_rational_point3_distance_threshold_ordering(&point3, &origin3, &threshold,)
+                    .and_then(PredicateOutcome::value),
+                Some(expected)
+            );
+            assert_eq!(
+                exact_rational_point3_distance_threshold(&point3, &origin3, &threshold),
+                Some(expected)
+            );
+        }
+
+        assert_eq!(
+            exact_rational_point2_distance_threshold_ordering(
+                &Point2::new(Real::pi(), Real::zero()),
+                &origin2,
+                &threshold,
+            ),
+            None
+        );
+        assert_eq!(
+            exact_rational_point3_distance_threshold_ordering(
+                &Point3::new(Real::pi(), Real::zero(), Real::zero()),
+                &origin3,
+                &threshold,
+            ),
+            None
+        );
+    }
+
+    #[test]
+    fn strict_distance_predicates_preserve_unresolved_input() {
+        let zero = terminal_zero();
+        let uncertain2 = Point2::new(zero.clone(), Real::from(0));
+        let uncertain3 = Point3::new(zero.clone(), Real::from(0), Real::from(0));
+
+        assert!(matches!(
+            crate::classify_circle_line2(
+                &p2(0, 0),
+                &Real::from(1),
+                &p2(0, 0),
+                &uncertain2,
+                PredicatePolicy::STRICT,
+            ),
+            PredicateOutcome::Unknown { .. }
+        ));
+        assert!(matches!(
+            crate::classify_circle_segment2(
+                &p2(0, 0),
+                &Real::from(1),
+                &p2(0, 0),
+                &uncertain2,
+                PredicatePolicy::STRICT,
+            ),
+            PredicateOutcome::Unknown { .. }
+        ));
+        assert!(matches!(
+            crate::compare_point_segment3_distance_squared(
+                &p3(0, 0, 0),
+                &p3(0, 0, 0),
+                &uncertain3,
+                &Real::from(1),
+                PredicatePolicy::STRICT,
+            ),
+            PredicateOutcome::Unknown { .. }
+        ));
+        assert!(matches!(
+            crate::classify_point_sphere3(
+                &p3(0, 0, 0),
+                &zero,
+                &p3(0, 0, 0),
+                PredicatePolicy::STRICT,
+            ),
+            PredicateOutcome::Unknown { .. }
+        ));
+        assert!(matches!(
+            crate::classify_sphere3_intersection(
+                &p3(0, 0, 0),
+                &zero,
+                &p3(1, 0, 0),
+                &Real::from(1),
+                PredicatePolicy::STRICT,
+            ),
+            PredicateOutcome::Unknown { .. }
+        ));
+        assert!(matches!(
+            crate::classify_sphere3_intersection(
+                &p3(0, 0, 0),
+                &Real::from(1),
+                &p3(1, 0, 0),
+                &Real::from(-1),
+                APPROX,
+            ),
+            PredicateOutcome::Unknown { .. }
+        ));
+        assert!(matches!(
+            crate::classify_aabb3_sphere_intersection(
+                &p3(0, 0, 0),
+                &uncertain3,
+                &p3(0, 0, 0),
+                &Real::from(1),
+                PredicatePolicy::STRICT,
+            ),
+            PredicateOutcome::Unknown { .. }
+        ));
+    }
+
+    #[test]
+    fn strict_distance_subpredicates_propagate_each_unresolved_comparison() {
+        let unresolved = terminal_zero();
+        let unresolved_line_end = Point2::new(unresolved.clone(), Real::from(0));
+        assert!(matches!(
+            classify_circle_line2_with_policy(
+                &p2(0, 0),
+                &Real::from(1),
+                &p2(0, 0),
+                &unresolved_line_end,
+                PredicatePolicy::STRICT,
+            ),
+            PredicateOutcome::Unknown { .. }
+        ));
+        assert!(matches!(
+            classify_circle_line2_with_policy(
+                &Point2::new(Real::from(0), unresolved.clone()),
+                &Real::from(0),
+                &p2(0, 0),
+                &p2(1, 0),
+                PredicatePolicy::STRICT,
+            ),
+            PredicateOutcome::Unknown { .. }
+        ));
+
+        assert!(matches!(
+            classify_circle_segment2_with_policy(
+                &p2(0, 0),
+                &unresolved,
+                &p2(0, 0),
+                &p2(0, 0),
+                PredicatePolicy::STRICT,
+            ),
+            PredicateOutcome::Unknown { .. }
+        ));
+        assert!(matches!(
+            classify_circle_segment2_with_policy(
+                &Point2::new(Real::from(0), unresolved.clone()),
+                &Real::from(0),
+                &p2(-2, 0),
+                &p2(2, 0),
+                PredicatePolicy::STRICT,
+            ),
+            PredicateOutcome::Unknown { .. }
+        ));
+
+        let unresolved_line_end3 = Point3::new(unresolved.clone(), 0.into(), 0.into());
+        assert!(matches!(
+            compare_point_line3_distance_squared_with_policy(
+                &p3(0, 1, 0),
+                &p3(0, 0, 0),
+                &unresolved_line_end3,
+                &Real::from(1),
+                PredicatePolicy::STRICT,
+            ),
+            PredicateOutcome::Unknown { .. }
+        ));
+        assert!(matches!(
+            compare_point_segment3_distance_squared_with_policy(
+                &Point3::new(unresolved.clone(), 1.into(), 0.into()),
+                &p3(0, 0, 0),
+                &p3(1, 0, 0),
+                &Real::from(1),
+                PredicatePolicy::STRICT,
+            ),
+            PredicateOutcome::Unknown { .. }
+        ));
+        assert!(matches!(
+            compare_point_segment3_distance_squared_with_policy(
+                &Point3::new(&Real::from(1) + &unresolved, 1.into(), 0.into()),
+                &p3(0, 0, 0),
+                &p3(1, 0, 0),
+                &Real::from(1),
+                PredicatePolicy::STRICT,
+            ),
+            PredicateOutcome::Unknown { .. }
+        ));
+
+        let uncertain_plane = crate::plane::Plane3::new(
+            Point3::new(unresolved.clone(), 0.into(), 0.into()),
+            0.into(),
+        );
+        assert!(matches!(
+            compare_point_plane_distance_squared_with_policy(
+                &p3(0, 0, 0),
+                &uncertain_plane,
+                &Real::from(0),
+                PredicatePolicy::STRICT,
+            ),
+            PredicateOutcome::Unknown { .. }
+        ));
+        assert!(matches!(
+            classify_sphere3_intersection_with_policy(
+                &p3(0, 0, 0),
+                &Real::from(0),
+                &Point3::new(unresolved.clone(), 0.into(), 0.into()),
+                &Real::from(0),
+                PredicatePolicy::STRICT,
+            ),
+            PredicateOutcome::Unknown { .. }
+        ));
+        assert!(matches!(
+            classify_aabb3_sphere_intersection_with_policy(
+                &p3(0, 0, 0),
+                &p3(1, 1, 1),
+                &p3(0, 0, 0),
+                &unresolved,
+                PredicatePolicy::STRICT,
+            ),
+            PredicateOutcome::Unknown { .. }
+        ));
+    }
+
+    #[test]
+    fn interval_distance_helper_propagates_lower_and_upper_order_uncertainty() {
+        assert!(matches!(
+            outside_interval_delta(
+                &terminal_zero(),
+                &Real::from(0),
+                &Real::from(1),
+                PredicatePolicy::STRICT,
+            ),
+            Err(PredicateOutcome::Unknown { .. })
+        ));
+        assert!(matches!(
+            outside_interval_delta(
+                &(&Real::from(1) + &terminal_zero()),
+                &Real::from(0),
+                &Real::from(1),
+                PredicatePolicy::STRICT,
+            ),
+            Err(PredicateOutcome::Unknown { .. })
+        ));
+
+        assert!(matches!(
+            compare_point_segment2_distance_squared_with_policy(
+                &p2(1, 1),
+                &p2(0, 0),
+                &p2(0, 0),
+                &Real::from(1),
+                APPROX,
+            ),
+            PredicateOutcome::Decided { .. }
+        ));
+        assert!(matches!(
+            compare_point_segment2_distance_squared_with_policy(
+                &Point2::new(terminal_zero(), Real::from(1)),
+                &p2(0, 0),
+                &p2(1, 0),
+                &Real::from(1),
+                PredicatePolicy::STRICT,
+            ),
+            PredicateOutcome::Unknown { .. }
+        ));
+        assert!(matches!(
+            compare_point_segment2_distance_squared_with_policy(
+                &Point2::new(&Real::from(1) + &terminal_zero(), Real::from(1)),
+                &p2(0, 0),
+                &p2(1, 0),
+                &Real::from(1),
+                PredicatePolicy::STRICT,
+            ),
+            PredicateOutcome::Unknown { .. }
+        ));
+        assert_eq!(
+            compare_point_segment2_distance_squared_with_policy(
+                &p2(2, 0),
+                &p2(0, 0),
+                &p2(1, 0),
+                &Real::from(1),
+                APPROX,
+            )
+            .value(),
+            Some(Ordering::Equal)
+        );
+    }
+
+    #[test]
+    fn exact_circle_segment_kernel_covers_endpoint_and_interval_partitions() {
+        let center = p2(0, 0);
+        let radius = Real::from(1);
+        let relation = |a: Point2, b: Point2| {
+            exact_rational_circle_segment2(&center, &radius, &a, &b)
+                .and_then(PredicateOutcome::value)
+                .expect("rational circle/segment query should decide")
+        };
+
+        assert_eq!(relation(p2(-1, 0), p2(1, 0)), CircleSegmentRelation::Secant);
+        assert_eq!(relation(p2(1, 0), p2(0, 0)), CircleSegmentRelation::Tangent);
+        assert_eq!(relation(p2(1, 0), p2(2, 0)), CircleSegmentRelation::Secant);
+        assert_eq!(relation(p2(0, 0), p2(1, 0)), CircleSegmentRelation::Tangent);
+        assert_eq!(relation(p2(0, 0), p2(2, 0)), CircleSegmentRelation::Secant);
+        assert_eq!(
+            relation(p2(2, 1), p2(3, 1)),
+            CircleSegmentRelation::Disjoint
+        );
+        assert_eq!(
+            relation(p2(-3, 1), p2(-2, 1)),
+            CircleSegmentRelation::Disjoint
+        );
+    }
+
+    #[test]
+    fn exact_distance_helpers_cover_nonrational_and_degenerate_endpoint_fallbacks() {
+        let symbolic2 = Point2::new(Real::pi(), Real::from(0));
+        assert!(
+            exact_rational_point_line3_distance_ordering(
+                &Point3::new(Real::pi(), 0.into(), 0.into()),
+                &p3(0, 0, 0),
+                &p3(1, 0, 0),
+                &Real::from(0),
+            )
+            .is_none()
+        );
+        assert!(
+            exact_rational_point_segment3_distance_ordering(
+                &Point3::new(Real::pi(), 0.into(), 0.into()),
+                &p3(0, 0, 0),
+                &p3(1, 0, 0),
+                &Real::from(0),
+            )
+            .is_none()
+        );
+        assert!(
+            exact_rational_point_plane_distance_ordering(
+                &Point3::new(Real::pi(), 0.into(), 0.into()),
+                &crate::plane::Plane3::new(p3(1, 0, 0), 0.into()),
+                &Real::from(0),
+            )
+            .is_none()
+        );
+        assert!(symbolic2.x.exact_rational_ref().is_none());
+
+        for expected in [Ordering::Less, Ordering::Equal, Ordering::Greater] {
+            let threshold = match expected {
+                Ordering::Less => Real::from(2),
+                Ordering::Equal => Real::from(1),
+                Ordering::Greater => Real::from(0),
+            };
+            assert_eq!(
+                exact_rational_point_line3_distance_ordering(
+                    &p3(1, 0, 0),
+                    &p3(0, 0, 0),
+                    &p3(0, 0, 0),
+                    &threshold,
+                )
+                .and_then(PredicateOutcome::value),
+                Some(expected)
+            );
+            assert_eq!(
+                exact_rational_point_segment3_distance_ordering(
+                    &p3(1, 0, 0),
+                    &p3(0, 0, 0),
+                    &p3(0, 0, 0),
+                    &threshold,
+                )
+                .and_then(PredicateOutcome::value),
+                Some(expected)
+            );
+        }
+
+        assert_eq!(
+            exact_rational_point_segment3_distance_ordering(
+                &p3(-1, 0, 0),
+                &p3(0, 0, 0),
+                &p3(2, 0, 0),
+                &Real::from(1),
+            )
+            .and_then(PredicateOutcome::value),
+            Some(Ordering::Equal)
+        );
+        assert_eq!(
+            exact_rational_point_segment3_distance_ordering(
+                &p3(3, 0, 0),
+                &p3(0, 0, 0),
+                &p3(2, 0, 0),
+                &Real::from(1),
+            )
+            .and_then(PredicateOutcome::value),
+            Some(Ordering::Equal)
+        );
+        assert_eq!(
+            exact_rational_point_plane_distance_ordering(
+                &p3(0, 0, 0),
+                &crate::plane::Plane3::new(p3(0, 0, 0), Real::from(1)),
+                &Real::from(1),
+            )
+            .and_then(PredicateOutcome::value),
+            Some(Ordering::Equal)
+        );
+    }
+
+    #[test]
+    fn distance_trace_ranking_covers_all_certainties_and_stages() {
+        assert_eq!(
+            max_distance_certainty(Certainty::Exact, Certainty::Filtered),
+            Certainty::Filtered
+        );
+        assert_eq!(
+            max_distance_certainty(Certainty::Filtered, Certainty::Approximate),
+            Certainty::Approximate
+        );
+        assert_eq!(
+            max_distance_stage(Escalation::Filter, Escalation::Exact),
+            Escalation::Exact
+        );
+        assert_eq!(distance_stage_rank(Escalation::Structural), 0);
+        assert_eq!(distance_stage_rank(Escalation::Filter), 1);
+        assert_eq!(distance_stage_rank(Escalation::Exact), 2);
+        assert_eq!(distance_stage_rank(Escalation::Refined), 3);
+        assert_eq!(distance_stage_rank(Escalation::Undecided), 4);
+    }
+
+    #[test]
+    fn generic_distance_threshold_and_late_unknown_paths_are_covered() {
+        let third = r(1, 3);
+        assert_eq!(
+            compare_point2_distance_squared_to_threshold_with_policy(
+                &p2(0, 0),
+                &p2(0, 0),
+                &third,
+                PredicatePolicy::STRICT,
+            )
+            .value(),
+            Some(Ordering::Less)
+        );
+        assert_eq!(
+            compare_point3_distance_squared_to_threshold_with_policy(
+                &p3(0, 0, 0),
+                &p3(0, 0, 0),
+                &third,
+                PredicatePolicy::STRICT,
+            )
+            .value(),
+            Some(Ordering::Less)
+        );
+
+        // Put the boundary endpoint second so the generic endpoint partition
+        // exercises both halves of its symmetric selection.
+        assert_eq!(
+            classify_circle_segment2_with_policy(
+                &p2(0, 0),
+                &Real::from(1),
+                &p2(0, 0),
+                &p2(1, 0),
+                PredicatePolicy::STRICT,
+            )
+            .value(),
+            Some(CircleSegmentRelation::Tangent)
+        );
+
+        let unresolved = terminal_zero();
+        assert!(matches!(
+            classify_circle_segment2_with_policy(
+                &Point2::new(unresolved.clone(), Real::zero()),
+                &Real::zero(),
+                &p2(0, 0),
+                &p2(1, 0),
+                PredicatePolicy::STRICT,
+            ),
+            PredicateOutcome::Unknown { .. }
+        ));
+        assert!(matches!(
+            classify_circle_segment2_with_policy(
+                &p2(0, 0),
+                &Real::zero(),
+                &p2(1, 0),
+                &Point2::new(unresolved.clone(), Real::zero()),
+                PredicatePolicy::STRICT,
+            ),
+            PredicateOutcome::Unknown { .. }
+        ));
+        assert!(matches!(
+            compare_point_segment2_distance_squared_with_policy(
+                &p2(0, 1),
+                &p2(0, 0),
+                &Point2::new(unresolved, Real::zero()),
+                &Real::one(),
+                PredicatePolicy::STRICT,
+            ),
+            PredicateOutcome::Unknown { .. }
+        ));
     }
 }

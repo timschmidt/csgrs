@@ -572,6 +572,12 @@ mod tests {
         Point2::new(hyperreal::Real::from(x), hyperreal::Real::from(y))
     }
 
+    fn terminal_zero() -> hyperreal::Real {
+        let sine = hyperreal::Real::e().sin();
+        let cosine = hyperreal::Real::e().cos();
+        &sine * &sine + &cosine * &cosine - hyperreal::Real::one()
+    }
+
     #[test]
     fn point_displacement_facts_track_duplicate_and_axis_cases() {
         let origin = p2(0, 0);
@@ -591,6 +597,14 @@ mod tests {
         let horizontal_facts = point2_displacement_facts(&origin, &horizontal);
         assert_eq!(horizontal_facts.known_axis, Some(CoordinateAxis2::X));
         assert_eq!(horizontal_facts.known_zero_mask(), CoordinateAxis2::Y.bit());
+        assert_eq!(
+            horizontal_facts.component_zero(CoordinateAxis2::X),
+            ZeroKnowledge::NonZero
+        );
+        assert_eq!(
+            horizontal_facts.component_zero(CoordinateAxis2::Y),
+            ZeroKnowledge::Zero
+        );
         assert!(horizontal_facts.is_one_hot());
         assert!(horizontal_facts.has_sparse_support());
 
@@ -638,6 +652,7 @@ mod tests {
         assert!(!point_facts.has_unknown_extent_zero());
         assert!(!point_facts.known_segment());
         assert!(point_facts.has_sparse_extent_support());
+        assert_eq!(point_facts.known_positive_area(), Some(false));
 
         let segment_facts = aabb2_facts(&origin, &horizontal);
         assert!(!segment_facts.known_point());
@@ -645,6 +660,7 @@ mod tests {
         assert_eq!(segment_facts.known_axis_segment(), Some(CoordinateAxis2::X));
         assert!(segment_facts.known_segment());
         assert!(segment_facts.has_sparse_extent_support());
+        assert_eq!(segment_facts.known_positive_area(), Some(false));
 
         let area_facts = aabb2_facts(&origin, &area);
         assert_eq!(area_facts.known_zero_area(), Some(false));
@@ -662,6 +678,7 @@ mod tests {
 
         let collinear = triangle2_facts(&origin, &x_axis, &farther_x_axis);
         assert_eq!(collinear.known_degenerate(), Some(true));
+        assert_eq!(collinear.known_non_degenerate(), Some(false));
         assert_eq!(
             collinear.determinant_known_zero_mask(),
             0b11,
@@ -683,5 +700,60 @@ mod tests {
         assert_eq!(perpendicular.determinant_known_zero_count(), 1);
         assert_eq!(perpendicular.determinant_known_nonzero_count(), 1);
         assert_eq!(perpendicular.determinant_unknown_zero_count(), 0);
+        assert_eq!(
+            perpendicular.determinant_term_zero(0),
+            ZeroKnowledge::NonZero
+        );
+        assert_eq!(perpendicular.determinant_term_zero(1), ZeroKnowledge::Zero);
+        assert_eq!(
+            perpendicular.edge(TriangleEdge2::Bc).known_degenerate(),
+            Some(false)
+        );
+        assert_eq!(
+            perpendicular.edge(TriangleEdge2::Ca).known_axis(),
+            Some(CoordinateAxis2::Y)
+        );
+    }
+
+    #[test]
+    fn structural_facts_keep_unknown_zero_status_conservative() {
+        let origin = p2(0, 0);
+        let unknown = terminal_zero();
+        let uncertain = Point2::new(unknown.clone(), unknown.clone());
+        let displacement = point2_displacement_facts(&origin, &uncertain);
+
+        assert_eq!(displacement.known_zero_mask(), 0);
+        assert_eq!(displacement.known_nonzero_mask(), 0);
+        assert_eq!(
+            displacement.unknown_zero_mask(),
+            CoordinateAxis2::X.bit() | CoordinateAxis2::Y.bit()
+        );
+        assert_eq!(displacement.known_zero_count(), 0);
+        assert_eq!(displacement.known_nonzero_count(), 0);
+        assert_eq!(displacement.unknown_zero_count(), 2);
+        assert!(displacement.has_unknown_zero());
+        assert!(!displacement.has_sparse_support());
+
+        let segment = Segment2Facts::from_displacement(displacement);
+        assert_eq!(segment.known_degenerate(), None);
+        assert_eq!(segment.known_axis_aligned(), None);
+        assert!(segment.has_unknown_zero());
+
+        let box_facts = Aabb2Facts::from_extent(displacement);
+        assert!(!box_facts.known_point());
+        assert_eq!(box_facts.known_zero_area(), None);
+        assert_eq!(box_facts.known_positive_area(), None);
+        assert!(box_facts.has_unknown_extent_zero());
+        assert!(!box_facts.known_segment());
+
+        let b = Point2::new(hyperreal::Real::from(1), unknown.clone());
+        let c = Point2::new(unknown, hyperreal::Real::from(1));
+        let triangle = triangle2_facts(&origin, &b, &c);
+        assert_eq!(triangle.known_degenerate(), None);
+        assert_eq!(triangle.known_non_degenerate(), None);
+        assert_eq!(triangle.determinant_known_nonzero_mask(), 0b01);
+        assert_eq!(triangle.determinant_unknown_zero_mask(), 0b10);
+        assert_eq!(triangle.determinant_unknown_zero_count(), 1);
+        assert!(triangle.has_unknown_determinant_zero());
     }
 }

@@ -512,10 +512,11 @@ fn classify_point_ring_even_odd_report_refs(
             continue;
         }
 
-        let upward = match compare_greater(&b.y, &a.y, policy, &mut trace) {
-            Ok(value) => value,
-            Err(unknown) => return unknown.into_outcome(),
-        };
+        // A certified y-straddle already proves the endpoint order: if only b
+        // is above the query then b > a, and if only a is above then b < a.
+        // Re-comparing b.y with a.y duplicated an exact predicate and exposed
+        // a logically unreachable uncertainty branch.
+        let upward = b_above;
 
         let crosses_right = matches!(
             (upward, orientation),
@@ -778,6 +779,12 @@ mod tests {
         )
     }
 
+    fn terminal_zero() -> Real {
+        let sine = Real::e().sin();
+        let cosine = Real::e().cos();
+        &sine * &sine + &cosine * &cosine - Real::one()
+    }
+
     #[test]
     fn ring_area_sign_classifies_winding_and_degenerate_rings() {
         let ccw = [p2(0, 0), p2(4, 0), p2(4, 3), p2(0, 3)];
@@ -984,5 +991,247 @@ mod tests {
             Some(RingConvexity::LocallyConvex)
         );
         assert!(crate::indexed_ring2_facts(&points, &[1, 99], APPROX).is_none());
+
+        assert_eq!(
+            ring_convexity_with_policy(&points[1..], APPROX),
+            RingConvexity::LocallyConvex
+        );
+        assert_eq!(
+            point_in_indexed_ring_even_odd_with_policy(
+                &points,
+                &ring,
+                &p2(2, 2),
+                PredicatePolicy::STRICT,
+            )
+            .value(),
+            Some(true)
+        );
+    }
+
+    #[test]
+    fn strict_even_odd_classifier_propagates_unresolved_comparisons() {
+        let ring = [p2(0, 0), p2(4, 0), p2(4, 4), p2(0, 4)];
+        let point = Point2::new(Real::from(2), terminal_zero());
+        assert!(matches!(
+            classify_point_ring_even_odd_report_with_policy(&ring, &point, PredicatePolicy::STRICT,),
+            PredicateOutcome::Unknown { .. }
+        ));
+
+        assert!(matches!(
+            classify_point_ring_even_odd_with_policy(&ring, &point, PredicatePolicy::STRICT),
+            PredicateOutcome::Unknown { .. }
+        ));
+        assert!(matches!(
+            classify_point_indexed_ring_even_odd_with_policy(
+                &ring,
+                &[0, 1, 2, 3],
+                &point,
+                PredicatePolicy::STRICT,
+            ),
+            PredicateOutcome::Unknown { .. }
+        ));
+        assert!(matches!(
+            point_in_ring_even_odd_with_policy(&ring, &point, PredicatePolicy::STRICT),
+            PredicateOutcome::Unknown { .. }
+        ));
+        assert!(matches!(
+            point_in_indexed_ring_even_odd_with_policy(
+                &ring,
+                &[0, 1, 2, 3],
+                &point,
+                PredicatePolicy::STRICT,
+            ),
+            PredicateOutcome::Unknown { .. }
+        ));
+    }
+
+    #[test]
+    fn ring_facts_cover_empty_indexed_diagonal_and_unknown_edges() {
+        let empty = ring2_facts_with_policy(&[], APPROX);
+        assert_eq!(empty.vertex_count, 0);
+        assert_eq!(empty.known_degenerate_edges, 0);
+
+        let diagonal = [p2(0, 0), p2(1, 1), p2(2, 3)];
+        let facts = indexed_ring2_facts_with_policy(&diagonal, &[0, 1, 2], APPROX)
+            .expect("valid indices should retain ring facts");
+        assert_eq!(facts.vertex_count, 3);
+        assert_eq!(facts.known_axis_aligned_edges, 0);
+        assert_eq!(facts.unknown_edge_zero_status, 0);
+
+        let unresolved = [
+            p2(0, 0),
+            Point2::new(terminal_zero(), Real::from(1)),
+            p2(2, 2),
+        ];
+        let facts = ring2_facts_with_policy(&unresolved, PredicatePolicy::STRICT);
+        assert!(facts.unknown_edge_zero_status > 0);
+
+        assert!(indexed_ring2_facts_with_policy(&diagonal, &[0, 9], APPROX).is_none());
+        assert!(matches!(
+            indexed_ring_area_sign_with_policy(&diagonal, &[0, 9], APPROX),
+            PredicateOutcome::Unknown {
+                needed: RefinementNeed::Unsupported,
+                stage: Escalation::Undecided,
+            }
+        ));
+    }
+
+    #[test]
+    fn degenerate_ring_reports_are_exact_and_replayable() {
+        for ring in [&[][..], &[p2(0, 0)][..], &[p2(0, 0), p2(1, 0)][..]] {
+            let report = classify_point_ring_even_odd_report_with_policy(
+                ring,
+                &p2(0, 0),
+                PredicatePolicy::STRICT,
+            )
+            .value()
+            .expect("rings with fewer than three points have an exact outside result");
+            assert_eq!(report.location, RingPointLocation::Outside);
+            assert_eq!(report.edge_count, ring.len());
+            assert_eq!(report.validate(), Ok(()));
+            assert_eq!(
+                report.validate_against_sources(ring, &p2(0, 0), PredicatePolicy::STRICT),
+                Ok(())
+            );
+        }
+    }
+
+    #[test]
+    fn ring_report_validation_rejects_a_different_boundary_index() {
+        let ring = [p2(0, 0), p2(4, 0), p2(4, 4), p2(0, 4)];
+        let point = p2(4, 2);
+        let mut report = classify_point_ring_even_odd_report_with_policy(&ring, &point, APPROX)
+            .value()
+            .expect("boundary classification should decide");
+        report.boundary_edge = Some(0);
+        assert_eq!(
+            report.validate(),
+            Err(RingEvenOddValidationError::BoundaryMismatch)
+        );
+    }
+
+    #[test]
+    fn ring_convexity_covers_turn_classes_and_unresolved_turns() {
+        assert_eq!(
+            ring_convexity_with_policy(&[p2(0, 0), p2(1, 0)], APPROX),
+            RingConvexity::Degenerate
+        );
+        assert_eq!(
+            ring_convexity_with_policy(&[p2(0, 0), p2(0, 2), p2(2, 2), p2(2, 0)], APPROX),
+            RingConvexity::LocallyConvex
+        );
+        assert_eq!(
+            ring_convexity_with_policy(&[p2(0, 0), p2(1, 1), p2(2, 2)], APPROX),
+            RingConvexity::Degenerate
+        );
+        assert_eq!(
+            ring_convexity_with_policy(&[p2(0, 0), p2(2, 0), p2(1, 1), p2(2, 2), p2(0, 2)], APPROX,),
+            RingConvexity::MixedTurns
+        );
+
+        let unresolved = [
+            p2(0, 0),
+            p2(1, 0),
+            Point2::new(Real::from(2), terminal_zero()),
+        ];
+        assert_eq!(
+            ring_convexity_with_policy(&unresolved, PredicatePolicy::STRICT),
+            RingConvexity::Unknown
+        );
+    }
+
+    #[test]
+    fn decision_trace_retains_the_least_certain_and_latest_stage() {
+        let mut trace = DecisionTrace::default();
+        assert!(matches!(
+            decided(
+                PredicateOutcome::decided(7, Certainty::Filtered, Escalation::Filter,),
+                &mut trace,
+            ),
+            Ok(7)
+        ));
+        assert_eq!(trace.certainty, Certainty::Filtered);
+        assert_eq!(trace.stage, Escalation::Filter);
+
+        assert!(matches!(
+            decided(
+                PredicateOutcome::decided(9, Certainty::Approximate, Escalation::Refined,),
+                &mut trace,
+            ),
+            Ok(9)
+        ));
+        assert_eq!(trace.certainty, Certainty::Approximate);
+        assert_eq!(trace.stage, Escalation::Refined);
+        assert_eq!(certainty_rank(Certainty::Exact), 0);
+        assert_eq!(certainty_rank(Certainty::Filtered), 1);
+        assert_eq!(certainty_rank(Certainty::Approximate), 2);
+        assert_eq!(stage_rank(Escalation::Structural), 0);
+        assert_eq!(stage_rank(Escalation::Filter), 1);
+        assert_eq!(stage_rank(Escalation::Exact), 2);
+        assert_eq!(stage_rank(Escalation::Refined), 3);
+        assert_eq!(stage_rank(Escalation::Undecided), 4);
+
+        let unknown = decided::<()>(
+            PredicateOutcome::unknown(RefinementNeed::RealRefinement, Escalation::Undecided),
+            &mut trace,
+        )
+        .expect_err("unknown decisions must propagate");
+        assert!(matches!(
+            unknown.into_outcome::<()>(),
+            PredicateOutcome::Unknown {
+                needed: RefinementNeed::RealRefinement,
+                stage: Escalation::Undecided,
+            }
+        ));
+    }
+
+    #[test]
+    fn ring_report_rejects_multiple_boundaries_and_propagates_late_unknowns() {
+        let ring = [p2(0, 0), p2(4, 0), p2(4, 4), p2(0, 4)];
+        let boundary = classify_point_ring_even_odd_report_with_policy(&ring, &p2(4, 2), APPROX)
+            .value()
+            .expect("boundary report");
+        let boundary_edge = boundary
+            .edges
+            .last()
+            .expect("boundary edge is retained")
+            .clone();
+        let forged = RingEvenOddReport {
+            location: RingPointLocation::Boundary,
+            edge_count: 4,
+            crossing_count: 0,
+            boundary_edge: Some(boundary_edge.edge_index),
+            edges: vec![boundary_edge.clone(), boundary_edge],
+        };
+        assert_eq!(
+            forged.validate(),
+            Err(RingEvenOddValidationError::BoundaryMismatch)
+        );
+
+        let unresolved = terminal_zero();
+        assert!(matches!(
+            classify_point_ring_even_odd_report_with_policy(
+                &[p2(0, 0), p2(1, 0), p2(0, 1)],
+                &Point2::new(unresolved.clone(), Real::zero()),
+                PredicatePolicy::STRICT,
+            ),
+            PredicateOutcome::Unknown { .. }
+        ));
+        assert!(matches!(
+            classify_point_ring_even_odd_report_with_policy(
+                &[p2(0, 0), p2(0, 1), p2(-1, 1)],
+                &Point2::new(Real::one(), unresolved.clone()),
+                PredicatePolicy::STRICT,
+            ),
+            PredicateOutcome::Unknown { .. }
+        ));
+        assert!(matches!(
+            classify_point_ring_even_odd_report_with_policy(
+                &[p2(0, -1), p2(0, 0), p2(-1, 0)],
+                &Point2::new(Real::one(), unresolved),
+                PredicatePolicy::STRICT,
+            ),
+            PredicateOutcome::Unknown { .. }
+        ));
     }
 }

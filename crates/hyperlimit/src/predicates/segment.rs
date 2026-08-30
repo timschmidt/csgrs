@@ -558,20 +558,16 @@ fn classify_segment_intersection_impl(
     // This is the standard four-orientation segment classifier. Every
     // orientation and interval comparison routes through exact
     // hyperreal-backed determinant signs.
-    let o1 = match decided(orient2d_with_policy(a, b, c, policy), &mut trace) {
-        Ok(sign) => sign,
-        Err(unknown) => return unknown.into_outcome(),
-    };
-    let o2 = match decided(orient2d_with_policy(a, b, d, policy), &mut trace) {
-        Ok(sign) => sign,
-        Err(unknown) => return unknown.into_outcome(),
-    };
-    let o3 = match decided(orient2d_with_policy(c, d, a, policy), &mut trace) {
-        Ok(sign) => sign,
-        Err(unknown) => return unknown.into_outcome(),
-    };
-    let o4 = match decided(orient2d_with_policy(c, d, b, policy), &mut trace) {
-        Ok(sign) => sign,
+    let orientations: Result<[Sign; 4], UnknownDecision> = (|| {
+        Ok([
+            decided(orient2d_with_policy(a, b, c, policy), &mut trace)?,
+            decided(orient2d_with_policy(a, b, d, policy), &mut trace)?,
+            decided(orient2d_with_policy(c, d, a, policy), &mut trace)?,
+            decided(orient2d_with_policy(c, d, b, policy), &mut trace)?,
+        ])
+    })();
+    let [o1, o2, o3, o4] = match orientations {
+        Ok(signs) => signs,
         Err(unknown) => return unknown.into_outcome(),
     };
 
@@ -590,31 +586,40 @@ fn classify_segment_intersection_impl(
         );
     }
 
-    for (segment_start, segment_end, point, sign) in
-        [(a, b, c, o1), (a, b, d, o2), (c, d, a, o3), (c, d, b, o4)]
-    {
-        if sign == Sign::Zero {
-            match classify_collinear_point_segment(
-                segment_start,
-                segment_end,
-                point,
-                policy,
-                &mut trace,
-            ) {
-                Ok(location) if location.is_on_segment() => {
-                    return PredicateOutcome::decided(
-                        SegmentIntersection::EndpointTouch,
-                        trace.certainty,
-                        trace.stage,
-                    );
-                }
-                Ok(_) => {}
-                Err(unknown) => return unknown.into_outcome(),
+    let endpoint_touch = [(a, b, c, o1), (a, b, d, o2), (c, d, a, o3), (c, d, b, o4)]
+        .into_iter()
+        .try_fold(false, |touch, (segment_start, segment_end, point, sign)| {
+            if touch || sign != Sign::Zero {
+                Ok(touch)
+            } else {
+                classify_collinear_point_segment(
+                    segment_start,
+                    segment_end,
+                    point,
+                    policy,
+                    &mut trace,
+                )
+                .map(PointSegmentLocation::is_on_segment)
             }
-        }
-    }
+        });
+    finish_planar_endpoint_touch(endpoint_touch, trace)
+}
 
-    PredicateOutcome::decided(SegmentIntersection::Disjoint, trace.certainty, trace.stage)
+fn finish_planar_endpoint_touch(
+    endpoint_touch: Result<bool, UnknownDecision>,
+    trace: DecisionTrace,
+) -> PredicateOutcome<SegmentIntersection> {
+    match endpoint_touch {
+        Ok(true) => PredicateOutcome::decided(
+            SegmentIntersection::EndpointTouch,
+            trace.certainty,
+            trace.stage,
+        ),
+        Ok(false) => {
+            PredicateOutcome::decided(SegmentIntersection::Disjoint, trace.certainty, trace.stage)
+        }
+        Err(unknown) => unknown.into_outcome(),
+    }
 }
 
 fn classify_known_degenerate_segment_intersection(
@@ -921,11 +926,11 @@ fn nonzero_axis(signs: [Sign; 3]) -> Option<usize> {
 }
 
 fn coordinate(vector: &Vector3Real, axis: usize) -> &Real {
+    debug_assert!(axis < 3, "3D vector axis is in 0..3");
     match axis {
         0 => &vector.x,
         1 => &vector.y,
-        2 => &vector.z,
-        _ => unreachable!("3D vector axis is in 0..3"),
+        _ => &vector.z,
     }
 }
 
@@ -1172,6 +1177,22 @@ mod tests {
         Point3::new(real(x), real(y), real(z))
     }
 
+    fn terminal_zero() -> Real {
+        let sine = Real::e().sin();
+        let cosine = Real::e().cos();
+        &sine * &sine + &cosine * &cosine - Real::one()
+    }
+
+    fn decided_parameter(
+        outcome: Result<Parameter01, UnknownDecision>,
+        message: &str,
+    ) -> Parameter01 {
+        match outcome {
+            Ok(value) => value,
+            Err(_) => panic!("{message}"),
+        }
+    }
+
     #[test]
     fn point_segment_classifier_distinguishes_endpoint_inside_and_outside() {
         let a = p2(0, 0);
@@ -1277,6 +1298,15 @@ mod tests {
             crate::point_on_segment3(&a, &b, &p3(2, 2, 2), APPROX).value(),
             Some(true)
         );
+
+        assert_eq!(
+            crate::classify_point_segment3(&a, &a, &a, APPROX).value(),
+            Some(PointSegmentLocation::OnEndpoint)
+        );
+        assert_eq!(
+            crate::classify_point_segment3(&a, &a, &p3(1, 0, 0), APPROX).value(),
+            Some(PointSegmentLocation::CollinearOutside)
+        );
     }
 
     #[test]
@@ -1342,6 +1372,37 @@ mod tests {
         assert_eq!(
             crate::construct_line_intersection_point(&p2(0, 0), &p2(1, 0), &p2(2, -1), &p2(2, 1)),
             Some(p2(2, 0))
+        );
+    }
+
+    #[test]
+    fn line_intersection_point_uses_wide_dyadic_carrier() {
+        let word = hyperreal::Rational::new(i64::MAX);
+        let extent = &word * &word;
+        let extent_minus_one = &extent - &hyperreal::Rational::new(1);
+        let extent_real = Real::from(extent.clone());
+        let extent_minus_one_real = Real::from(extent_minus_one.clone());
+        let zero = Real::zero();
+        let first_start = Point2::new(zero.clone(), zero.clone());
+        let first_end = Point2::new(extent_real.clone(), extent_minus_one_real.clone());
+        let second_start = Point2::new(zero.clone(), extent_minus_one_real.clone());
+        let second_end = Point2::new(extent_real.clone(), zero);
+
+        assert!(
+            Real::exact_rational_line_intersection2_point_known_dyadic(
+                [&first_start.x, &first_start.y],
+                [&first_end.x, &first_end.y],
+                [&second_start.x, &second_start.y],
+                [&second_end.x, &second_end.y],
+            )
+            .is_none()
+        );
+        assert_eq!(
+            construct_line_intersection_point(&first_start, &first_end, &second_start, &second_end,),
+            Some(Point2::new(
+                (&extent_real / &Real::from(2)).unwrap(),
+                (&extent_minus_one_real / &Real::from(2)).unwrap(),
+            ))
         );
     }
 
@@ -1598,6 +1659,45 @@ mod tests {
             .value(),
             Some(Segment3Intersection::CoplanarDisjoint)
         );
+
+        let point = p3(2, 2, 2);
+        assert_eq!(
+            crate::classify_segment3_intersection(&point, &point, &point, &point, APPROX).value(),
+            Some(Segment3Intersection::Identical)
+        );
+        assert_eq!(
+            crate::classify_segment3_intersection(
+                &point,
+                &point,
+                &p3(9, 9, 9),
+                &p3(9, 9, 9),
+                APPROX,
+            )
+            .value(),
+            Some(Segment3Intersection::CoplanarDisjoint)
+        );
+        assert_eq!(
+            crate::classify_segment3_intersection(
+                &point,
+                &point,
+                &p3(0, 0, 0),
+                &p3(4, 4, 4),
+                APPROX,
+            )
+            .value(),
+            Some(Segment3Intersection::EndpointTouch)
+        );
+        assert_eq!(
+            crate::classify_segment3_intersection(
+                &p3(0, 0, 0),
+                &p3(4, 4, 4),
+                &point,
+                &point,
+                APPROX,
+            )
+            .value(),
+            Some(Segment3Intersection::EndpointTouch)
+        );
     }
 
     #[test]
@@ -1611,5 +1711,513 @@ mod tests {
             crate::classify_segment3_intersection(&a, &b, &c, &d, APPROX).value(),
             Some(Segment3Intersection::Proper)
         );
+    }
+
+    #[test]
+    fn strict_point_segment_apis_propagate_each_unresolved_decision_class() {
+        let origin2 = p2(0, 0);
+        let x2 = p2(4, 0);
+        let unresolved_x2 = Point2::new(terminal_zero(), real(0));
+        let unresolved_y2 = Point2::new(real(2), terminal_zero());
+
+        assert!(matches!(
+            classify_point_segment_with_policy(
+                &origin2,
+                &unresolved_x2,
+                &origin2,
+                PredicatePolicy::STRICT,
+            ),
+            PredicateOutcome::Unknown { .. }
+        ));
+        assert!(matches!(
+            classify_point_segment_with_policy(
+                &origin2,
+                &x2,
+                &unresolved_y2,
+                PredicatePolicy::STRICT,
+            ),
+            PredicateOutcome::Unknown { .. }
+        ));
+        assert!(matches!(
+            classify_collinear_point_segment_with_policy(
+                &origin2,
+                &x2,
+                &unresolved_x2,
+                PredicatePolicy::STRICT,
+            ),
+            PredicateOutcome::Unknown { .. }
+        ));
+        assert!(matches!(
+            point_on_segment_with_policy(&origin2, &x2, &unresolved_y2, PredicatePolicy::STRICT,),
+            PredicateOutcome::Unknown { .. }
+        ));
+
+        let orientation = crate::line2_orientation(&origin2, &x2);
+        let query = crate::line2_orientation_query(&unresolved_y2);
+        assert!(matches!(
+            point_on_segment_with_orientation_and_policy(
+                &origin2,
+                &x2,
+                &unresolved_y2,
+                &orientation,
+                PredicatePolicy::STRICT,
+            ),
+            PredicateOutcome::Unknown { .. }
+        ));
+        assert!(matches!(
+            point_on_segment_with_orientation_and_query_and_policy(
+                &origin2,
+                &x2,
+                &unresolved_y2,
+                &orientation,
+                &query,
+                PredicatePolicy::STRICT,
+            ),
+            PredicateOutcome::Unknown { .. }
+        ));
+
+        let degenerate_facts = crate::geometry::segment2_facts(&origin2, &origin2);
+        assert!(matches!(
+            classify_point_segment_with_policy_and_facts(
+                &origin2,
+                &origin2,
+                &unresolved_x2,
+                degenerate_facts,
+                PredicatePolicy::STRICT,
+            ),
+            PredicateOutcome::Unknown { .. }
+        ));
+        assert!(matches!(
+            point_on_segment_with_policy_and_facts(
+                &origin2,
+                &origin2,
+                &unresolved_x2,
+                degenerate_facts,
+                PredicatePolicy::STRICT,
+            ),
+            PredicateOutcome::Unknown { .. }
+        ));
+
+        let origin3 = p3(0, 0, 0);
+        let x3 = p3(4, 0, 0);
+        let unresolved_x3 = Point3::new(terminal_zero(), real(0), real(0));
+        let unresolved_y3 = Point3::new(real(2), terminal_zero(), real(0));
+        assert!(matches!(
+            classify_point_segment3_with_policy(
+                &origin3,
+                &unresolved_x3,
+                &origin3,
+                PredicatePolicy::STRICT,
+            ),
+            PredicateOutcome::Unknown { .. }
+        ));
+        assert!(matches!(
+            classify_point_segment3_with_policy(
+                &origin3,
+                &origin3,
+                &unresolved_x3,
+                PredicatePolicy::STRICT,
+            ),
+            PredicateOutcome::Unknown { .. }
+        ));
+        assert!(matches!(
+            classify_point_segment3_with_policy(
+                &origin3,
+                &x3,
+                &unresolved_y3,
+                PredicatePolicy::STRICT,
+            ),
+            PredicateOutcome::Unknown { .. }
+        ));
+        assert!(matches!(
+            classify_point_segment3_with_policy(
+                &origin3,
+                &x3,
+                &unresolved_x3,
+                PredicatePolicy::STRICT,
+            ),
+            PredicateOutcome::Unknown { .. }
+        ));
+        assert!(matches!(
+            point_on_segment3_with_policy(&origin3, &x3, &unresolved_y3, PredicatePolicy::STRICT,),
+            PredicateOutcome::Unknown { .. }
+        ));
+    }
+
+    #[test]
+    fn strict_segment_intersection_propagates_unresolved_geometry() {
+        let origin = p3(0, 0, 0);
+
+        assert!(matches!(
+            classify_segment3_intersection_with_policy(
+                &origin,
+                &Point3::new(terminal_zero(), real(0), real(0)),
+                &p3(0, 1, 0),
+                &p3(0, 2, 0),
+                PredicatePolicy::STRICT,
+            ),
+            PredicateOutcome::Unknown { .. }
+        ));
+
+        let unresolved_point = Point3::new(terminal_zero(), real(0), real(0));
+        assert!(matches!(
+            classify_segment3_intersection_with_policy(
+                &origin,
+                &origin,
+                &unresolved_point,
+                &unresolved_point,
+                PredicatePolicy::STRICT,
+            ),
+            PredicateOutcome::Unknown { .. }
+        ));
+
+        let cross_unknown = Point3::new(real(0), terminal_zero(), real(1));
+        assert!(matches!(
+            classify_segment3_intersection_with_policy(
+                &origin,
+                &p3(1, 0, 0),
+                &origin,
+                &cross_unknown,
+                PredicatePolicy::STRICT,
+            ),
+            PredicateOutcome::Unknown { .. }
+        ));
+
+        let shifted_start = Point3::new(real(0), terminal_zero(), real(0));
+        let shifted_end = Point3::new(real(1), terminal_zero(), real(0));
+        assert!(matches!(
+            classify_segment3_intersection_with_policy(
+                &origin,
+                &p3(1, 0, 0),
+                &shifted_start,
+                &shifted_end,
+                PredicatePolicy::STRICT,
+            ),
+            PredicateOutcome::Unknown { .. }
+        ));
+
+        let elevated_start = Point3::new(real(0), real(0), terminal_zero());
+        let elevated_end = Point3::new(real(0), real(1), terminal_zero());
+        assert!(matches!(
+            classify_segment3_intersection_with_policy(
+                &origin,
+                &p3(1, 0, 0),
+                &elevated_start,
+                &elevated_end,
+                PredicatePolicy::STRICT,
+            ),
+            PredicateOutcome::Unknown { .. }
+        ));
+
+        assert_eq!(
+            classify_segment3_intersection_with_policy(
+                &origin,
+                &p3(1, 0, 0),
+                &p3(2, -1, 0),
+                &p3(2, 1, 0),
+                APPROX,
+            )
+            .value(),
+            Some(Segment3Intersection::CoplanarDisjoint)
+        );
+        assert_eq!(
+            classify_segment_intersection_with_policy(
+                &p2(0, 0),
+                &p2(1, 0),
+                &p2(2, -1),
+                &p2(2, 1),
+                APPROX,
+            )
+            .value(),
+            Some(SegmentIntersection::Disjoint)
+        );
+    }
+
+    #[test]
+    fn strict_planar_segment_intersection_propagates_collinear_and_fact_uncertainty() {
+        let unresolved = Point2::new(terminal_zero(), real(0));
+        assert!(matches!(
+            classify_segment_intersection_with_policy(
+                &p2(0, 0),
+                &p2(4, 0),
+                &unresolved,
+                &p2(6, 0),
+                PredicatePolicy::STRICT,
+            ),
+            PredicateOutcome::Unknown { .. }
+        ));
+
+        let origin = p2(0, 0);
+        let unresolved_point = Point2::new(terminal_zero(), real(0));
+        let origin_facts = crate::geometry::segment2_facts(&origin, &origin);
+        let unresolved_facts =
+            crate::geometry::segment2_facts(&unresolved_point, &unresolved_point);
+        assert!(matches!(
+            classify_segment_intersection_with_policy_and_facts(
+                &origin,
+                &origin,
+                &unresolved_point,
+                &unresolved_point,
+                origin_facts,
+                unresolved_facts,
+                PredicatePolicy::STRICT,
+            ),
+            PredicateOutcome::Unknown { .. }
+        ));
+
+        assert!(matches!(
+            point_segment_intersection_from_classifier(PredicateOutcome::unknown(
+                RefinementNeed::RealRefinement,
+                Escalation::Undecided,
+            )),
+            PredicateOutcome::Unknown { .. }
+        ));
+        assert!(matches!(
+            point_segment3_intersection_from_classifier(PredicateOutcome::unknown(
+                RefinementNeed::RealRefinement,
+                Escalation::Undecided,
+            )),
+            PredicateOutcome::Unknown { .. }
+        ));
+
+        assert_eq!(
+            point_segment_intersection_from_classifier(PredicateOutcome::decided(
+                PointSegmentLocation::CollinearOutside,
+                Certainty::Exact,
+                Escalation::Exact,
+            ))
+            .value(),
+            Some(SegmentIntersection::Disjoint)
+        );
+        assert_eq!(
+            point_segment3_intersection_from_classifier(PredicateOutcome::decided(
+                PointSegmentLocation::CollinearOutside,
+                Certainty::Exact,
+                Escalation::Exact,
+            ))
+            .value(),
+            Some(Segment3Intersection::CoplanarDisjoint)
+        );
+
+        let trace = DecisionTrace::default();
+        assert_eq!(
+            finish_planar_endpoint_touch(Ok(true), trace).value(),
+            Some(SegmentIntersection::EndpointTouch)
+        );
+        assert_eq!(
+            finish_planar_endpoint_touch(Ok(false), trace).value(),
+            Some(SegmentIntersection::Disjoint)
+        );
+        assert!(matches!(
+            finish_planar_endpoint_touch(
+                Err(UnknownDecision {
+                    needed: RefinementNeed::RealRefinement,
+                    stage: Escalation::Undecided,
+                }),
+                trace,
+            ),
+            PredicateOutcome::Unknown { .. }
+        ));
+    }
+
+    #[test]
+    fn strict_segment_classifiers_propagate_each_late_uncertainty_stage() {
+        let unresolved_d = Point2::new(terminal_zero(), real(1));
+        assert!(matches!(
+            classify_segment_intersection_with_policy(
+                &p2(0, 0),
+                &p2(4, 0),
+                &p2(0, 1),
+                &unresolved_d,
+                PredicatePolicy::STRICT,
+            ),
+            PredicateOutcome::Unknown { .. }
+        ));
+
+        let normal_unknown_end = Point3::new(real(0), real(1), &Real::from(1) + &terminal_zero());
+        assert!(matches!(
+            classify_segment3_intersection_with_policy(
+                &p3(0, 0, 0),
+                &p3(4, 0, 0),
+                &p3(0, 0, 1),
+                &normal_unknown_end,
+                PredicatePolicy::STRICT,
+            ),
+            PredicateOutcome::Unknown { .. }
+        ));
+
+        assert!(matches!(
+            classify_segment3_intersection_with_policy(
+                &p3(0, 0, 0),
+                &p3(4, 0, 0),
+                &Point3::new(terminal_zero(), 0.into(), 0.into()),
+                &p3(6, 0, 0),
+                PredicatePolicy::STRICT,
+            ),
+            PredicateOutcome::Unknown { .. }
+        ));
+
+        let t_unknown = terminal_zero();
+        assert!(matches!(
+            classify_segment3_intersection_with_policy(
+                &p3(0, 0, 0),
+                &p3(4, 0, 0),
+                &Point3::new(t_unknown.clone(), (-1).into(), 0.into()),
+                &Point3::new(t_unknown, 1.into(), 0.into()),
+                PredicatePolicy::STRICT,
+            ),
+            PredicateOutcome::Unknown { .. }
+        ));
+        let u_unknown = terminal_zero();
+        assert!(matches!(
+            classify_segment3_intersection_with_policy(
+                &p3(0, 0, 0),
+                &p3(4, 0, 0),
+                &Point3::new(2.into(), u_unknown, 0.into()),
+                &p3(2, 1, 0),
+                PredicatePolicy::STRICT,
+            ),
+            PredicateOutcome::Unknown { .. }
+        ));
+    }
+
+    #[test]
+    fn collinear_overlap_collection_covers_each_endpoint_order() {
+        let mut trace = DecisionTrace::default();
+        assert_eq!(
+            classify_collinear_segments(
+                &p2(0, 0),
+                &p2(4, 0),
+                &p2(-1, 0),
+                &p2(2, 0),
+                APPROX,
+                &mut trace,
+            )
+            .ok(),
+            Some(SegmentIntersection::CollinearOverlap)
+        );
+
+        let mut trace = DecisionTrace::default();
+        assert_eq!(
+            classify_collinear_segments3(
+                &p3(0, 0, 0),
+                &p3(4, 0, 0),
+                &p3(-1, 0, 0),
+                &p3(2, 0, 0),
+                APPROX,
+                &mut trace,
+            )
+            .ok(),
+            Some(Segment3Intersection::CollinearOverlap)
+        );
+
+        let mut trace = DecisionTrace::default();
+        assert_eq!(
+            classify_collinear_segments3(
+                &p3(0, 0, 0),
+                &p3(4, 0, 0),
+                &p3(4, 0, 0),
+                &p3(6, 0, 0),
+                APPROX,
+                &mut trace,
+            )
+            .ok(),
+            Some(Segment3Intersection::EndpointTouch)
+        );
+    }
+
+    #[test]
+    fn line_constructor_and_parameter_helpers_cover_general_real_and_bounds() {
+        let pi = Real::pi();
+        let intersection = construct_line_intersection_point(
+            &Point2::new(pi.clone(), real(0)),
+            &Point2::new(pi.clone(), real(2)),
+            &Point2::new(real(0), real(1)),
+            &Point2::new(&pi * &Real::from(2), real(1)),
+        )
+        .expect("nonparallel symbolic supporting lines intersect");
+        assert_eq!(intersection, Point2::new(pi, real(1)));
+
+        let mut trace = DecisionTrace::default();
+        let below = decided_parameter(
+            classify_parameter_01(&real(-1), &real(2), APPROX, &mut trace),
+            "rational parameter should decide",
+        );
+        assert!(!below.on_segment);
+        let above = decided_parameter(
+            classify_parameter_01(&real(3), &real(2), APPROX, &mut trace),
+            "rational parameter should decide",
+        );
+        assert!(!above.on_segment);
+        let reversed = decided_parameter(
+            classify_parameter_01(&real(-1), &real(-2), APPROX, &mut trace),
+            "negative denominator should be normalized",
+        );
+        assert!(reversed.on_segment);
+        assert!(!reversed.on_boundary);
+        let boundary = decided_parameter(
+            classify_parameter_01(&real(0), &real(2), APPROX, &mut trace),
+            "zero parameter should decide",
+        );
+        assert!(boundary.on_segment);
+        assert!(boundary.on_boundary);
+
+        let vector = Vector3Real {
+            x: real(1),
+            y: real(2),
+            z: real(3),
+        };
+        assert_eq!(coordinate(&vector, 0), &real(1));
+        assert_eq!(coordinate(&vector, 1), &real(2));
+        assert_eq!(coordinate(&vector, 2), &real(3));
+    }
+
+    #[test]
+    fn segment_decision_helpers_cover_uniqueness_signs_and_trace_ranks() {
+        let a = p2(0, 0);
+        let b = p2(1, 0);
+        let mut points = Vec::new();
+        let mut trace = DecisionTrace::default();
+        assert!(push_unique_point(&mut points, &a, APPROX, &mut trace).is_ok());
+        assert!(push_unique_point(&mut points, &a, APPROX, &mut trace).is_ok());
+        assert_eq!(points.len(), 1);
+
+        let a3 = p3(0, 0, 0);
+        let mut points3 = Vec::new();
+        assert!(push_unique_point3(&mut points3, &a3, APPROX, &mut trace).is_ok());
+        assert!(push_unique_point3(&mut points3, &a3, APPROX, &mut trace).is_ok());
+        assert_eq!(points3.len(), 1);
+
+        assert!(opposite_strict(Sign::Positive, Sign::Negative));
+        assert!(opposite_strict(Sign::Negative, Sign::Positive));
+        assert!(!opposite_strict(Sign::Zero, Sign::Positive));
+        assert_eq!(
+            max_certainty(Certainty::Exact, Certainty::Filtered),
+            Certainty::Filtered
+        );
+        assert_eq!(certainty_rank(Certainty::Exact), 0);
+        assert_eq!(certainty_rank(Certainty::Filtered), 1);
+        assert_eq!(certainty_rank(Certainty::Approximate), 2);
+        assert_eq!(
+            max_stage(Escalation::Filter, Escalation::Exact),
+            Escalation::Exact
+        );
+        assert_eq!(stage_rank(Escalation::Structural), 0);
+        assert_eq!(stage_rank(Escalation::Filter), 1);
+        assert_eq!(stage_rank(Escalation::Exact), 2);
+        assert_eq!(stage_rank(Escalation::Refined), 3);
+        assert_eq!(stage_rank(Escalation::Undecided), 4);
+
+        let unknown = decided::<Sign>(
+            PredicateOutcome::unknown(RefinementNeed::RealRefinement, Escalation::Undecided),
+            &mut trace,
+        )
+        .expect_err("unknown predicate outcomes must propagate");
+        assert!(matches!(
+            unknown.into_outcome::<()>(),
+            PredicateOutcome::Unknown { .. }
+        ));
+
+        assert_eq!(b, p2(1, 0));
     }
 }

@@ -2300,6 +2300,182 @@ mod tests {
         }
     }
 
+    #[test]
+    fn generic_real_lifted_determinants_match_exact_rational_kernels() {
+        let a = rp2(0, 0);
+        let b = rp2(2, 0);
+        let c = rp2(0, 2);
+        for query in [rp2(1, 1), rp2(2, 2), rp2(3, 3)] {
+            assert_eq!(
+                incircle2d_real_expr(&a, &b, &c, &query, PredicatePolicy::STRICT).value(),
+                incircle2d_with_policy(&a, &b, &c, &query, PredicatePolicy::STRICT).value()
+            );
+        }
+
+        let p = rp3(0, 0, 0);
+        let q = rp3(1, 0, 0);
+        let r = rp3(0, 1, 0);
+        let s = rp3(0, 0, 1);
+        for query in [
+            Point3::new(
+                Real::from(Rational::fraction(1, 4).unwrap()),
+                Real::from(Rational::fraction(1, 4).unwrap()),
+                Real::from(Rational::fraction(1, 4).unwrap()),
+            ),
+            rp3(0, 0, 0),
+            rp3(2, 2, 2),
+        ] {
+            assert_eq!(
+                insphere3d_real_expr(&p, &q, &r, &s, &query, PredicatePolicy::STRICT).value(),
+                insphere3d_with_policy(&p, &q, &r, &s, &query, PredicatePolicy::STRICT).value()
+            );
+        }
+
+        assert_eq!(
+            orient2d_real_expr(&a, &b, &c, PredicatePolicy::STRICT).value(),
+            orient2d_with_policy(&a, &b, &c, PredicatePolicy::STRICT).value()
+        );
+    }
+
+    #[test]
+    fn retained_query_and_polynomial_fallbacks_match_scalar_predicates() {
+        let from = rp2(0, 0);
+        let to = rp2(2, 0);
+        let point = rp2(1, 1);
+        let orientation = line2_orientation(&from, &to);
+        let query = line2_orientation_query(&point);
+        assert_eq!(
+            classify_point_line_with_orientation_and_query_and_policy(
+                &from,
+                &to,
+                &point,
+                &orientation,
+                &query,
+                PredicatePolicy::STRICT,
+            ),
+            classify_point_line_with_policy(&from, &to, &point, PredicatePolicy::STRICT)
+        );
+
+        let symbolic_point = Point2::new(Real::pi(), Real::from(1));
+        assert_eq!(
+            crate::classify_point_line_with_orientation(
+                &from,
+                &to,
+                &symbolic_point,
+                &orientation,
+                APPROX,
+            ),
+            classify_point_line_with_policy(&from, &to, &symbolic_point, APPROX)
+        );
+
+        let a = rp2(1, 0);
+        let b = rp2(0, 1);
+        let c = rp2(-1, 0);
+        let symbolic_query = Point2::new(Real::pi(), Real::from(0));
+        let mut circle = incircle2_evidence(&a, &b, &c);
+        circle.filter = None;
+        circle.rational_filter = None;
+        assert_eq!(
+            incircle2d_with_evidence_and_policy(&a, &b, &c, &symbolic_query, &circle, APPROX,)
+                .value(),
+            incircle2d_with_policy(&a, &b, &c, &symbolic_query, APPROX).value()
+        );
+
+        let p = rp3(0, 0, 0);
+        let q = rp3(1, 0, 0);
+        let r = rp3(0, 1, 0);
+        let s = rp3(0, 0, 1);
+        let symbolic_query = Point3::new(Real::pi(), Real::from(0), Real::from(0));
+        let mut sphere = insphere3_evidence(&p, &q, &r, &s);
+        sphere.filter = None;
+        assert_eq!(
+            insphere3d_with_evidence_and_policy(&p, &q, &r, &s, &symbolic_query, &sphere, APPROX,)
+                .value(),
+            insphere3d_with_policy(&p, &q, &r, &s, &symbolic_query, APPROX).value()
+        );
+
+        let circle_facts = circle.coefficient_facts();
+        assert_eq!(
+            circle_facts.coefficient_zero_count()
+                + circle_facts.coefficient_nonzero_count()
+                + circle_facts.coefficient_unknown_zero_count(),
+            4
+        );
+        assert!(circle_facts.has_shared_denominator_schedule());
+        assert_eq!(
+            circle_facts.has_sparse_coefficient_support(),
+            circle_facts.coefficient_zero_count() > 0
+        );
+
+        let sphere_facts = sphere.coefficient_facts();
+        assert_eq!(
+            sphere_facts.coefficient_zero_count()
+                + sphere_facts.coefficient_nonzero_count()
+                + sphere_facts.coefficient_unknown_zero_count(),
+            5
+        );
+        assert!(sphere_facts.has_shared_denominator_schedule());
+        assert_eq!(
+            sphere_facts.has_sparse_coefficient_support(),
+            sphere_facts.coefficient_zero_count() > 0
+        );
+    }
+
+    #[test]
+    fn retained_exact_callbacks_cover_filter_decline_boundaries() {
+        let from = rp2(0, 0);
+        let to = rp2(2, 0);
+        let boundary = rp2(1, 0);
+        let mut orientation = line2_orientation(&from, &to);
+        orientation.filter = None;
+        orientation.exact_word_filter = None;
+        assert_eq!(
+            orient2d_with_retained_evidence(
+                &from,
+                &to,
+                &boundary,
+                &orientation,
+                None,
+                PredicatePolicy::STRICT,
+            ),
+            PredicateOutcome::decided(Sign::Zero, Certainty::Exact, Escalation::Exact)
+        );
+
+        let a = rp2(1, 0);
+        let b = rp2(0, 1);
+        let c = rp2(-1, 0);
+        let mut circle = incircle2_evidence(&a, &b, &c);
+        circle.filter = None;
+        circle.rational_filter = None;
+        circle.x_coeff = Real::pi();
+        assert_eq!(
+            incircle2d_with_evidence_and_policy(&a, &b, &c, &a, &circle, PredicatePolicy::STRICT,),
+            PredicateOutcome::decided(Sign::Zero, Certainty::Exact, Escalation::Exact)
+        );
+
+        let p = rp3(0, 0, 0);
+        let q = rp3(1, 0, 0);
+        let r = rp3(0, 1, 0);
+        let s = rp3(0, 0, 1);
+        let mut sphere = insphere3_evidence(&p, &q, &r, &s);
+        sphere.filter = None;
+        sphere.x_coeff = Real::pi();
+        assert_eq!(
+            insphere3d_with_evidence_and_policy(
+                &p,
+                &q,
+                &r,
+                &s,
+                &p,
+                &sphere,
+                PredicatePolicy::STRICT,
+            ),
+            PredicateOutcome::decided(Sign::Zero, Certainty::Exact, Escalation::Exact)
+        );
+
+        assert_eq!(sign_from_ordering(Ordering::Greater), Sign::Positive);
+    }
+
     proptest! {
         #![proptest_config(ProptestConfig::with_cases(256))]
 

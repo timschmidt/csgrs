@@ -10,9 +10,7 @@
 
 use crate::classify::{SegmentIntersection, TriangleLocation};
 use crate::geometry::{Point2, Point3};
-use crate::predicate::{
-    Certainty, Escalation, PredicateOutcome, PredicatePolicy, RefinementNeed, Sign,
-};
+use crate::predicate::{Certainty, Escalation, PredicateOutcome, PredicatePolicy, Sign};
 use crate::predicates::orient::orient2d_with_policy;
 use crate::predicates::ring::ring_area_sign_with_policy;
 use crate::predicates::segment::classify_segment_intersection_with_policy;
@@ -196,57 +194,53 @@ pub fn classify_triangle3_degeneracy_with_policy(
     let mut zero_stage = Escalation::Exact;
     let mut unknown = None;
 
-    for (index, (a, b, c)) in projections.iter().copied().enumerate() {
+    for (a, b, c) in projections.iter().copied() {
         if let Some(sign) = super::orient::orient2d_certified_real_filter(a, b, c) {
-            if sign != Sign::Zero {
-                return PredicateOutcome::decided(
-                    TriangleDegeneracy::NonDegenerate,
-                    Certainty::Exact,
-                    Escalation::Exact,
-                );
-            }
-            signs[index] = Some(Sign::Zero);
+            debug_assert_ne!(
+                sign,
+                Sign::Zero,
+                "the floating filter declines exact boundaries"
+            );
+            return PredicateOutcome::decided(
+                TriangleDegeneracy::NonDegenerate,
+                Certainty::Exact,
+                Escalation::Exact,
+            );
         }
     }
     for (index, (a, b, c)) in projections.iter().copied().enumerate() {
         if signs[index].is_none()
             && let Some(sign) = super::orient::orient2d_exact_word_filter(a, b, c)
+            && let Some(value) = record_exact_projection_sign(sign, &mut signs[index])
         {
-            if sign != Sign::Zero {
-                return PredicateOutcome::decided(
-                    TriangleDegeneracy::NonDegenerate,
-                    Certainty::Exact,
-                    Escalation::Exact,
-                );
-            }
-            signs[index] = Some(Sign::Zero);
+            return PredicateOutcome::decided(value, Certainty::Exact, Escalation::Exact);
         }
     }
     for (index, (a, b, c)) in projections.iter().copied().enumerate() {
         if signs[index].is_none()
             && let Some(sign) = super::orient::orient2d_certified_rational_filter(a, b, c)
         {
-            if sign != Sign::Zero {
-                return PredicateOutcome::decided(
-                    TriangleDegeneracy::NonDegenerate,
-                    Certainty::Exact,
-                    Escalation::Exact,
-                );
-            }
-            signs[index] = Some(Sign::Zero);
+            debug_assert_ne!(
+                sign,
+                Sign::Zero,
+                "the certified rational filter declines exact boundaries"
+            );
+            return PredicateOutcome::decided(
+                TriangleDegeneracy::NonDegenerate,
+                Certainty::Exact,
+                Escalation::Exact,
+            );
         }
     }
     for (index, (a, b, c)) in projections.iter().copied().enumerate() {
         if signs[index].is_none()
             && let Some(sign) = super::exact::orient2d_coordinates(a, b, c)
         {
-            if sign != Sign::Zero {
-                return PredicateOutcome::decided(
-                    TriangleDegeneracy::NonDegenerate,
-                    Certainty::Exact,
-                    Escalation::Exact,
-                );
-            }
+            debug_assert_eq!(
+                sign,
+                Sign::Zero,
+                "a nonzero exact rational projection is certified by the preceding filter"
+            );
             signs[index] = Some(Sign::Zero);
         }
     }
@@ -283,10 +277,20 @@ pub fn classify_triangle3_degeneracy_with_policy(
 
     if signs.into_iter().all(|sign| sign == Some(Sign::Zero)) {
         PredicateOutcome::decided(TriangleDegeneracy::Degenerate, zero_certainty, zero_stage)
-    } else if let Some((needed, stage)) = unknown {
-        PredicateOutcome::unknown(needed, stage)
     } else {
-        PredicateOutcome::unknown(RefinementNeed::Unsupported, Escalation::Undecided)
+        let (needed, stage) = unknown.expect(
+            "every projection without a decided zero or nonzero sign records its uncertainty",
+        );
+        PredicateOutcome::unknown(needed, stage)
+    }
+}
+
+fn record_exact_projection_sign(sign: Sign, slot: &mut Option<Sign>) -> Option<TriangleDegeneracy> {
+    if sign == Sign::Zero {
+        *slot = Some(Sign::Zero);
+        None
+    } else {
+        Some(TriangleDegeneracy::NonDegenerate)
     }
 }
 
@@ -385,11 +389,29 @@ pub fn classify_coplanar_triangle_points_with_policy(
     }
 
     let right_vertices_in_left = classify_vertices_in_triangle(&left2, &right2, policy);
-    if right_vertices_in_left.iter().any(Option::is_none) {
-        return unknown_with_projection(projection, edge_intersections);
-    }
     let left_vertices_in_right = classify_vertices_in_triangle(&right2, &left2, policy);
-    if left_vertices_in_right.iter().any(Option::is_none) {
+
+    finish_coplanar_triangle_classification(
+        projection,
+        edge_intersections,
+        right_vertices_in_left,
+        left_vertices_in_right,
+        saw_touch,
+        saw_overlap,
+    )
+}
+
+fn finish_coplanar_triangle_classification(
+    projection: CoplanarProjection,
+    edge_intersections: Vec<SegmentIntersection>,
+    right_vertices_in_left: [Option<TriangleLocation>; 3],
+    left_vertices_in_right: [Option<TriangleLocation>; 3],
+    mut saw_touch: bool,
+    mut saw_overlap: bool,
+) -> CoplanarTriangleClassification {
+    if right_vertices_in_left.iter().any(Option::is_none)
+        || left_vertices_in_right.iter().any(Option::is_none)
+    {
         return unknown_with_projection(projection, edge_intersections);
     }
 
@@ -844,6 +866,70 @@ mod tests {
     }
 
     #[test]
+    fn triangle3_degeneracy_covers_exact_boundary_and_projection_bookkeeping() {
+        let word = Rational::new(i64::MAX);
+        let square = &word * &word;
+        let wide = &square * &Rational::new(8);
+        let two_wide = &wide * &Rational::new(2);
+        let four_wide = &wide * &Rational::new(4);
+        let zero = Real::zero();
+        let a = Point3::new(zero.clone(), zero.clone(), zero.clone());
+        let b = Point3::new(
+            Real::from(wide.clone()),
+            Real::from(two_wide.clone()),
+            zero.clone(),
+        );
+        let c = Point3::new(Real::from(two_wide), Real::from(four_wide), zero);
+
+        assert_eq!(
+            classify_triangle3_degeneracy_with_policy(&a, &b, &c, PredicatePolicy::STRICT).value(),
+            Some(TriangleDegeneracy::Degenerate)
+        );
+
+        let mut slot = None;
+        assert_eq!(record_exact_projection_sign(Sign::Zero, &mut slot), None);
+        assert_eq!(slot, Some(Sign::Zero));
+        assert_eq!(
+            record_exact_projection_sign(Sign::Positive, &mut slot),
+            Some(TriangleDegeneracy::NonDegenerate)
+        );
+    }
+
+    #[test]
+    fn coplanar_completion_preserves_unknown_vertex_classifications_and_all_stage_ranks() {
+        let outside = Some(TriangleLocation::Outside);
+        let unknown_right = finish_coplanar_triangle_classification(
+            CoplanarProjection::Xy,
+            Vec::new(),
+            [None, outside, outside],
+            [outside; 3],
+            false,
+            false,
+        );
+        assert_eq!(unknown_right.relation, CoplanarTriangleRelation::Unknown);
+
+        let unknown_left = finish_coplanar_triangle_classification(
+            CoplanarProjection::Xy,
+            Vec::new(),
+            [outside; 3],
+            [outside, None, outside],
+            false,
+            false,
+        );
+        assert_eq!(unknown_left.relation, CoplanarTriangleRelation::Unknown);
+
+        assert_eq!(escalation_rank(Escalation::Structural), 0);
+        assert_eq!(escalation_rank(Escalation::Filter), 1);
+        assert_eq!(escalation_rank(Escalation::Exact), 2);
+        assert_eq!(escalation_rank(Escalation::Refined), 3);
+        assert_eq!(escalation_rank(Escalation::Undecided), 4);
+        assert_eq!(
+            weaker_certainty(Certainty::Exact, Certainty::Filtered),
+            Certainty::Filtered
+        );
+    }
+
+    #[test]
     fn triangle3_degeneracy_preserves_terminal_approximation_evidence() {
         let terminal_zero = terminally_unresolved_zero();
         let a = p3(0, 0, 0);
@@ -910,6 +996,10 @@ mod tests {
         overlapping
             .validate_against_sources(&overlapping_points, [0, 1, 2], [3, 4, 5], APPROX)
             .unwrap();
+        assert_eq!(
+            disjoint.validate_against_sources(&overlapping_points, [0, 1, 2], [3, 4, 5], APPROX,),
+            Err(CoplanarTriangleValidationError::SourceReplayMismatch)
+        );
     }
 
     #[test]
@@ -939,5 +1029,251 @@ mod tests {
             APPROX,
         );
         assert_eq!(crossing, Some(half));
+    }
+
+    #[test]
+    fn projection_helpers_cover_all_coordinate_planes_and_degenerate_cases() {
+        let xy = [p3(0, 0, 0), p3(1, 0, 0), p3(0, 1, 0)];
+        let xz = [p3(0, 0, 0), p3(1, 0, 0), p3(0, 0, 1)];
+        let yz = [p3(0, 0, 0), p3(0, 1, 0), p3(0, 0, 1)];
+        let line = [p3(0, 0, 0), p3(1, 1, 1), p3(2, 2, 2)];
+
+        assert_eq!(
+            choose_coplanar_projection_with_policy([&xy[0], &xy[1], &xy[2]], APPROX),
+            Some(CoplanarProjection::Xy)
+        );
+        assert_eq!(
+            choose_coplanar_projection_with_policy([&xz[0], &xz[1], &xz[2]], APPROX),
+            Some(CoplanarProjection::Xz)
+        );
+        assert_eq!(
+            choose_coplanar_projection_with_policy([&yz[0], &yz[1], &yz[2]], APPROX),
+            Some(CoplanarProjection::Yz)
+        );
+        assert_eq!(
+            choose_coplanar_projection_with_policy([&line[0], &line[1], &line[2]], APPROX),
+            None
+        );
+
+        let point = p3(2, 3, 5);
+        assert_eq!(
+            project_point3(&point, CoplanarProjection::Xy),
+            Point2::new(Real::from(2), Real::from(3))
+        );
+        assert_eq!(
+            project_point3(&point, CoplanarProjection::Xz),
+            Point2::new(Real::from(2), Real::from(5))
+        );
+        assert_eq!(
+            project_point3(&point, CoplanarProjection::Yz),
+            Point2::new(Real::from(3), Real::from(5))
+        );
+        assert_eq!(
+            project_triangle3([&yz[0], &yz[1], &yz[2]], CoplanarProjection::Yz),
+            [
+                Point2::new(Real::from(0), Real::from(0)),
+                Point2::new(Real::from(1), Real::from(0)),
+                Point2::new(Real::from(0), Real::from(1)),
+            ]
+        );
+
+        let classification = classify_coplanar_triangle_points_with_policy(
+            [&line[0], &line[1], &line[2]],
+            [&xy[0], &xy[1], &xy[2]],
+            APPROX,
+        );
+        assert_eq!(classification.relation, CoplanarTriangleRelation::Unknown);
+        assert_eq!(classification.validate(), Ok(()));
+
+        let indexed = classify_coplanar_triangles_with_policy(&xy, [0, 1, 2], [0, 1, 3], APPROX);
+        assert_eq!(indexed.relation, CoplanarTriangleRelation::Unknown);
+        assert_eq!(indexed.validate(), Ok(()));
+    }
+
+    #[test]
+    fn projected_area_turn_and_parameter_helpers_cover_boundary_branches() {
+        let clockwise = [p3(0, 0, 0), p3(0, 3, 0), p3(4, 3, 0), p3(4, 0, 0)];
+        assert_eq!(
+            projected_polygon_area2_sign_with_policy(&clockwise, CoplanarProjection::Xy, APPROX,)
+                .value(),
+            Some(Sign::Negative)
+        );
+        assert_eq!(
+            projected_polygon_area2_value(&clockwise, CoplanarProjection::Xy),
+            Real::from(-24)
+        );
+        assert_eq!(
+            projected_polygon_area2_abs_value_with_policy(
+                &clockwise,
+                CoplanarProjection::Xy,
+                APPROX,
+            ),
+            Some(Real::from(24))
+        );
+        assert_eq!(
+            projected_polygon_area2_value(&[], CoplanarProjection::Xy),
+            Real::from(0)
+        );
+
+        let base = Point2::new(Real::from(1), Real::from(0));
+        let up = Point2::new(Real::from(0), Real::from(1));
+        let down = Point2::new(Real::from(0), Real::from(-1));
+        let northeast = Point2::new(Real::from(1), Real::from(1));
+        assert_eq!(
+            ccw_projected_turn_less_with_policy(&base, &up, &down, APPROX),
+            Some(true)
+        );
+        assert_eq!(
+            ccw_projected_turn_less_with_policy(&base, &down, &up, APPROX),
+            Some(false)
+        );
+        assert_eq!(
+            ccw_projected_turn_less_with_policy(&base, &northeast, &up, APPROX),
+            Some(true)
+        );
+        assert_eq!(
+            ccw_projected_turn_less_with_policy(&base, &up, &northeast, APPROX),
+            Some(false)
+        );
+        assert_eq!(
+            ccw_projected_turn_less_with_policy(&base, &up, &up, APPROX),
+            Some(false)
+        );
+        assert_eq!(
+            ccw_projected_turn_less_with_policy(
+                &base,
+                &Point2::new(Real::from(2), Real::from(0)),
+                &Point2::new(Real::from(-1), Real::from(0)),
+                APPROX,
+            ),
+            Some(true)
+        );
+
+        let start = p3(0, 0, 0);
+        let end = p3(0, 4, 0);
+        assert_eq!(
+            projected_segment_parameter3_with_policy(
+                &p3(0, 2, 0),
+                &start,
+                &end,
+                CoplanarProjection::Xy,
+                APPROX,
+            ),
+            Some((Real::from(1) / Real::from(2)).unwrap())
+        );
+        assert_eq!(
+            projected_segment_parameter3_with_policy(
+                &start,
+                &start,
+                &start,
+                CoplanarProjection::Xy,
+                APPROX,
+            ),
+            None
+        );
+        assert_eq!(
+            projected_line_parameter3_with_policy(
+                &p3(0, 0, 0),
+                &p3(4, 0, 0),
+                &p3(0, 1, 0),
+                &p3(4, 1, 0),
+                CoplanarProjection::Xy,
+                APPROX,
+            ),
+            None
+        );
+        assert_eq!(
+            intersect_segment_with_projected_line3_with_policy(
+                &p3(0, 0, 0),
+                &p3(4, 0, 0),
+                &p3(0, 1, 0),
+                &p3(4, 1, 0),
+                CoplanarProjection::Xy,
+                APPROX,
+            ),
+            None
+        );
+    }
+
+    #[test]
+    fn strict_coplanar_composition_keeps_unresolved_edge_evidence() {
+        let left = [p3(0, 0, 0), p3(4, 0, 0), p3(0, 4, 0)];
+        let right = [
+            Point3::new(Real::from(1), terminally_unresolved_zero(), Real::from(0)),
+            p3(5, 1, 0),
+            p3(1, 5, 0),
+        ];
+        let report = classify_coplanar_triangle_points_with_policy(
+            [&left[0], &left[1], &left[2]],
+            [&right[0], &right[1], &right[2]],
+            PredicatePolicy::STRICT,
+        );
+        assert_eq!(report.relation, CoplanarTriangleRelation::Unknown);
+        assert_eq!(report.projection, Some(CoplanarProjection::Xy));
+        assert_eq!(report.validate(), Ok(()));
+    }
+
+    #[test]
+    fn triangle3_degeneracy_exercises_each_exact_representation_stage() {
+        let third = Real::new(Rational::fraction(1, 3).unwrap());
+        let fifth = Real::new(Rational::fraction(1, 5).unwrap());
+        let word_a = Point3::new(Real::zero(), Real::zero(), Real::zero());
+        let word_b = Point3::new(third.clone(), Real::zero(), Real::zero());
+        let word_c = Point3::new(Real::zero(), fifth, Real::zero());
+        assert_eq!(
+            classify_triangle3_degeneracy_with_policy(
+                &word_a,
+                &word_b,
+                &word_c,
+                PredicatePolicy::STRICT,
+            )
+            .value(),
+            Some(TriangleDegeneracy::NonDegenerate)
+        );
+
+        let word_late_b = Point3::new(third.clone(), Real::zero(), third.clone());
+        let word_late_c = Point3::new(&third + &third, Real::zero(), Real::one());
+        assert_eq!(
+            classify_triangle3_degeneracy_with_policy(
+                &word_a,
+                &word_late_b,
+                &word_late_c,
+                PredicatePolicy::STRICT,
+            )
+            .value(),
+            Some(TriangleDegeneracy::NonDegenerate)
+        );
+
+        let limb = Rational::new(i64::MAX);
+        let limb = Real::from(&limb * &limb * Rational::new(8));
+        let wide_b = Point3::new(limb.clone(), Real::zero(), Real::zero());
+        let wide_c = Point3::new(Real::zero(), limb, Real::zero());
+        assert_eq!(
+            classify_triangle3_degeneracy_with_policy(
+                &word_a,
+                &wide_b,
+                &wide_c,
+                PredicatePolicy::STRICT,
+            )
+            .value(),
+            Some(TriangleDegeneracy::NonDegenerate)
+        );
+
+        let pi = Real::pi();
+        let symbolic_a = Point3::new(pi.clone(), Real::zero(), Real::zero());
+        let symbolic_b = Point3::new(&pi + Real::one(), Real::zero(), Real::zero());
+        let symbolic_c = Point3::new(pi, Real::one(), Real::zero());
+        assert!(matches!(
+            classify_triangle3_degeneracy_with_policy(
+                &symbolic_a,
+                &symbolic_b,
+                &symbolic_c,
+                PredicatePolicy::STRICT,
+            ),
+            PredicateOutcome::Decided {
+                value: TriangleDegeneracy::NonDegenerate,
+                ..
+            }
+        ));
     }
 }

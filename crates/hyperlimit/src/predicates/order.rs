@@ -126,13 +126,7 @@ pub fn compare_reals_with_policy(
             ordering,
             certificate,
         } => {
-            let stage = match certificate {
-                RealOrderingCertificate::StructuralEquality
-                | RealOrderingCertificate::StructuralFacts
-                | RealOrderingCertificate::DifferenceStructuralFacts => Escalation::Structural,
-                RealOrderingCertificate::ExactRationalComparison => Escalation::Exact,
-                RealOrderingCertificate::BoundedRefinement { .. } => Escalation::Refined,
-            };
+            let stage = ordering_certificate_stage(certificate);
             crate::trace_dispatch!("hyperlimit", "compare_reals", "certified-real-ordering");
             PredicateOutcome::decided(ordering, Certainty::Exact, stage)
         }
@@ -141,13 +135,29 @@ pub fn compare_reals_with_policy(
             crate::trace_dispatch!("hyperlimit", "compare_reals", "difference-sign-cascade");
             map_outcome(
                 classify_real_sign_with_policy(&difference, policy),
-                |sign| match sign {
-                    Sign::Negative => Ordering::Less,
-                    Sign::Zero => Ordering::Equal,
-                    Sign::Positive => Ordering::Greater,
-                },
+                ordering_from_sign,
             )
         }
+    }
+}
+
+#[inline(always)]
+fn ordering_certificate_stage(certificate: RealOrderingCertificate) -> Escalation {
+    match certificate {
+        RealOrderingCertificate::StructuralEquality
+        | RealOrderingCertificate::StructuralFacts
+        | RealOrderingCertificate::DifferenceStructuralFacts => Escalation::Structural,
+        RealOrderingCertificate::ExactRationalComparison => Escalation::Exact,
+        RealOrderingCertificate::BoundedRefinement { .. } => Escalation::Refined,
+    }
+}
+
+#[inline(always)]
+const fn ordering_from_sign(sign: Sign) -> Ordering {
+    match sign {
+        Sign::Negative => Ordering::Less,
+        Sign::Zero => Ordering::Equal,
+        Sign::Positive => Ordering::Greater,
     }
 }
 
@@ -493,6 +503,15 @@ mod tests {
             classify_real_sign_pair_with_policy(&real(1), &undecidable, PredicatePolicy::STRICT),
             PredicateOutcome::Unknown { .. }
         ));
+        assert!(matches!(
+            classify_real_sign_pair_with_policy(&undecidable, &real(1), PredicatePolicy::STRICT),
+            PredicateOutcome::Unknown { .. }
+        ));
+        assert_eq!(
+            classify_real_sign_pair_with_policy(&Real::pi(), &Real::e(), PredicatePolicy::STRICT)
+                .value(),
+            Some((Sign::Positive, Sign::Positive))
+        );
     }
 
     #[test]
@@ -595,6 +614,18 @@ mod tests {
             crate::point2_equal(&left, &different, APPROX).value(),
             Some(false)
         );
+        assert_eq!(
+            crate::point2_equal(&left, &Point2::new(real(2), real(4)), APPROX).value(),
+            Some(false)
+        );
+
+        let symbolic_left = Point2::new(real(1), Real::pi());
+        let symbolic_same = Point2::new(real(1), Real::pi());
+        assert_eq!(
+            point2_equal_with_policy(&symbolic_left, &symbolic_same, PredicatePolicy::STRICT)
+                .value(),
+            Some(true)
+        );
     }
 
     #[test]
@@ -633,7 +664,9 @@ mod tests {
         assert_eq!(crate::real_le(&low, &mid, APPROX).value(), Some(true));
         assert_eq!(crate::real_ge(&high, &mid, APPROX).value(), Some(true));
         assert_eq!(crate::real_min(&high, &low, APPROX).value(), Some(&low));
+        assert_eq!(crate::real_min(&low, &high, APPROX).value(), Some(&low));
         assert_eq!(crate::real_max(&high, &low, APPROX).value(), Some(&high));
+        assert_eq!(crate::real_max(&low, &high, APPROX).value(), Some(&high));
         assert_eq!(
             crate::real_clamp(mid.clone(), &low, &high, APPROX).value(),
             Some(mid)
@@ -645,6 +678,127 @@ mod tests {
         assert_eq!(
             crate::real_clamp(real(4), &low, &high, APPROX).value(),
             Some(high)
+        );
+
+        assert!(matches!(
+            real_clamp_with_policy(real(2), &real(3), &real(1), PredicatePolicy::STRICT),
+            PredicateOutcome::Unknown {
+                needed: RefinementNeed::Unsupported,
+                ..
+            }
+        ));
+
+        let unresolved = terminally_unresolved_zero();
+        assert!(matches!(
+            real_clamp_with_policy(real(1), &unresolved, &real(0), PredicatePolicy::STRICT,),
+            PredicateOutcome::Unknown { .. }
+        ));
+        assert!(matches!(
+            real_clamp_with_policy(real(0), &unresolved, &real(10), PredicatePolicy::STRICT,),
+            PredicateOutcome::Unknown { .. }
+        ));
+        assert!(matches!(
+            real_clamp_with_policy(
+                unresolved.clone(),
+                &real(0),
+                &real(10),
+                PredicatePolicy::STRICT,
+            ),
+            PredicateOutcome::Unknown { .. }
+        ));
+        assert!(matches!(
+            real_clamp_with_policy(unresolved, &real(-10), &real(0), PredicatePolicy::STRICT,),
+            PredicateOutcome::Unknown { .. }
+        ));
+    }
+
+    #[test]
+    fn lexicographic_unknowns_and_ranking_helpers_cover_all_stages() {
+        let unresolved = terminally_unresolved_zero();
+        let zero = Real::zero();
+
+        assert!(matches!(
+            compare_point2_lexicographic_with_policy(
+                &Point2::new(zero.clone(), unresolved.clone()),
+                &Point2::new(zero.clone(), zero.clone()),
+                PredicatePolicy::STRICT,
+            ),
+            PredicateOutcome::Unknown { .. }
+        ));
+        assert_eq!(
+            compare_point2_lexicographic_with_policy(
+                &Point2::new(real(-1), zero.clone()),
+                &Point2::new(real(1), zero.clone()),
+                PredicatePolicy::STRICT,
+            )
+            .value(),
+            Some(Ordering::Less)
+        );
+
+        assert_eq!(
+            compare_point3_lexicographic_with_policy(
+                &Point3::new(zero.clone(), real(-1), zero.clone()),
+                &Point3::new(zero.clone(), real(1), zero.clone()),
+                PredicatePolicy::STRICT,
+            )
+            .value(),
+            Some(Ordering::Less)
+        );
+        assert_eq!(
+            compare_point3_lexicographic_with_policy(
+                &Point3::new(real(-1), zero.clone(), zero.clone()),
+                &Point3::new(real(1), zero.clone(), zero.clone()),
+                PredicatePolicy::STRICT,
+            )
+            .value(),
+            Some(Ordering::Less)
+        );
+        assert!(matches!(
+            compare_point3_lexicographic_with_policy(
+                &Point3::new(zero.clone(), unresolved.clone(), zero.clone()),
+                &Point3::new(zero.clone(), zero.clone(), zero.clone()),
+                PredicatePolicy::STRICT,
+            ),
+            PredicateOutcome::Unknown { .. }
+        ));
+        assert!(matches!(
+            compare_point3_lexicographic_with_policy(
+                &Point3::new(zero.clone(), zero.clone(), unresolved),
+                &Point3::new(zero.clone(), zero.clone(), zero),
+                PredicatePolicy::STRICT,
+            ),
+            PredicateOutcome::Unknown { .. }
+        ));
+
+        assert_eq!(
+            ordering_certificate_stage(RealOrderingCertificate::ExactRationalComparison),
+            Escalation::Exact
+        );
+        assert_eq!(ordering_from_sign(Sign::Negative), Ordering::Less);
+        assert_eq!(ordering_from_sign(Sign::Zero), Ordering::Equal);
+        assert_eq!(ordering_from_sign(Sign::Positive), Ordering::Greater);
+        assert_eq!(exact_rational_sign(&Rational::new(-1)), Sign::Negative);
+        assert_eq!(exact_rational_sign(&Rational::zero()), Sign::Zero);
+        assert_eq!(exact_rational_sign(&Rational::new(1)), Sign::Positive);
+        assert_eq!(
+            max_certainty(Certainty::Exact, Certainty::Filtered),
+            Certainty::Filtered
+        );
+        assert_eq!(
+            max_certainty(Certainty::Exact, Certainty::Approximate),
+            Certainty::Approximate
+        );
+        assert_eq!(
+            max_stage(Escalation::Structural, Escalation::Filter),
+            Escalation::Filter
+        );
+        assert_eq!(
+            max_stage(Escalation::Exact, Escalation::Refined),
+            Escalation::Refined
+        );
+        assert_eq!(
+            max_stage(Escalation::Exact, Escalation::Undecided),
+            Escalation::Undecided
         );
     }
 

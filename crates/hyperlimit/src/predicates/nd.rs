@@ -258,9 +258,9 @@ fn determinant_subset_dp(matrix: &[Vec<Real>]) -> Real {
     sums[0] = Some(Real::one());
 
     for mask in 0..state_count - 1 {
-        let Some(partial) = sums[mask].take() else {
-            continue;
-        };
+        let partial = sums[mask]
+            .take()
+            .expect("every determinant subset state is reachable");
         let row = mask.count_ones() as usize;
         for (column, coefficient) in matrix[row].iter().enumerate() {
             let bit = 1_usize << column;
@@ -289,6 +289,9 @@ fn determinant_recursive(matrix: &[Vec<Real>]) -> Real {
         size => {
             let mut total = Real::zero();
             for column in 0..size {
+                if matrix[0][column].definitely_zero() {
+                    continue;
+                }
                 let minor = determinant_minor(matrix, 0, column);
                 let term = &matrix[0][column] * &determinant_recursive(&minor);
                 if column % 2 == 0 {
@@ -433,6 +436,63 @@ mod tests {
         assert_eq!(
             crate::orient_d(&points, APPROX).value(),
             Some(Sign::Positive)
+        );
+
+        let quarter = Real::from(Rational::fraction(1, 4).unwrap());
+        let rational_simplex = vec![
+            vec![Real::zero(), Real::zero()],
+            vec![Real::one(), Real::zero()],
+            vec![Real::zero(), Real::one()],
+        ];
+        let rational_query = vec![quarter.clone(), quarter.clone()];
+        let expected = crate::insphere_d(&rational_simplex, &rational_query, APPROX).value();
+
+        let translated_simplex = vec![
+            vec![Real::pi(), Real::zero()],
+            vec![Real::pi() + Real::one(), Real::zero()],
+            vec![Real::pi(), Real::one()],
+        ];
+        let translated_query = vec![Real::pi() + quarter.clone(), quarter];
+        assert_eq!(
+            insphere_d_exact_rational_sign(&translated_simplex, &translated_query, 2),
+            None
+        );
+        assert_eq!(
+            crate::insphere_d(&translated_simplex, &translated_query, APPROX).value(),
+            expected
+        );
+
+        assert_eq!(
+            insphere_d_exact_rational_sign(&translated_simplex, &rational_query, 2),
+            None
+        );
+    }
+
+    #[test]
+    fn invalid_and_unresolved_nd_inputs_remain_explicit() {
+        let invalid_simplex = vec![vec![Real::zero()], vec![Real::one()]];
+        assert_eq!(
+            insphere_d_with_policy(&invalid_simplex, &[], PredicatePolicy::STRICT),
+            PredicateOutcome::unknown(RefinementNeed::Unsupported, Escalation::Exact)
+        );
+
+        let terminal_zero = {
+            let sine = Real::e().sin();
+            let cosine = Real::e().cos();
+            &sine * &sine + &cosine * &cosine - Real::one()
+        };
+        let unresolved = vec![vec![Real::zero()], vec![terminal_zero]];
+        assert!(matches!(
+            affine_independent_d_with_policy(&unresolved, PredicatePolicy::STRICT),
+            PredicateOutcome::Unknown { .. }
+        ));
+
+        assert_eq!(exact_rational_determinant_sign(Vec::new()), Sign::Positive);
+
+        let sparse_large = vec![vec![Real::zero(); 17]; 17];
+        assert_eq!(
+            determinant(&sparse_large).exact_rational(),
+            Some(Rational::zero())
         );
     }
 

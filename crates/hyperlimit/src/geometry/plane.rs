@@ -1132,7 +1132,6 @@ fn sub(left: &Real, right: &Real) -> Real {
 #[cfg(test)]
 mod tests {
     use super::*;
-    #[cfg(feature = "dispatch-trace")]
     use hyperreal::Rational;
 
     const APPROX: PredicatePolicy = PredicatePolicy::APPROXIMATE_512;
@@ -1153,6 +1152,12 @@ mod tests {
 
     fn rational(numerator: i64, denominator: u64) -> Real {
         Real::new(Rational::fraction(numerator, denominator).expect("valid test rational"))
+    }
+
+    fn terminal_zero() -> Real {
+        let sine = Real::e().sin();
+        let cosine = Real::e().cos();
+        &sine * &sine + &cosine * &cosine - Real::one()
     }
 
     #[test]
@@ -1309,6 +1314,25 @@ mod tests {
         assert_eq!(
             report.validate_against_sources(&plane, &min, &max, APPROX,),
             Ok(())
+        );
+
+        let mut forged = report.clone();
+        forged.lower_value = forged.upper_value.clone() + Real::from(1);
+        assert_eq!(
+            forged.validate(APPROX),
+            Err(PlaneAabbReportValidationError::ExtremumOrderMismatch)
+        );
+
+        let mut forged = report.clone();
+        forged.lower_sign = Sign::Positive;
+        assert_eq!(
+            forged.validate(APPROX),
+            Err(PlaneAabbReportValidationError::ExtremumSignMismatch)
+        );
+
+        assert_eq!(
+            report.validate_against_sources(&plane, &min, &p3(3.0, 2.0, 2.0), APPROX),
+            Err(PlaneAabbReportValidationError::SourceReplayMismatch)
         );
     }
 
@@ -1469,11 +1493,31 @@ mod tests {
             p3(0.1, 0.2, 0.38 * 0.1 + 0.24 * 0.2),
         ] {
             assert_eq!(
+                classify_point_oriented_plane_exact_word(&point, &evidence, APPROX).value(),
+                crate::classify_point_oriented_plane(&a, &b, &c, &point, APPROX).value()
+            );
+            assert_eq!(
                 crate::classify_point_oriented_plane_with_evidence(&point, &evidence, APPROX)
                     .value(),
                 crate::classify_point_oriented_plane(&a, &b, &c, &point, APPROX).value()
             );
         }
+    }
+
+    #[test]
+    fn oriented_plane_exact_word_evidence_falls_back_for_symbolic_queries() {
+        let a = Point3::new(rational(1, 3), Real::from(0), Real::from(0));
+        let b = Point3::new(Real::from(0), rational(1, 5), Real::from(0));
+        let c = Point3::new(Real::from(0), Real::from(0), rational(1, 7));
+        let point = Point3::new(Real::pi(), Real::from(0), Real::from(0));
+        let evidence = oriented_plane3_evidence(&a, &b, &c);
+
+        assert!(evidence.filter.is_none());
+        assert!(evidence.exact_word_filter.is_some());
+        assert_eq!(
+            crate::classify_point_oriented_plane_with_evidence(&point, &evidence, APPROX),
+            crate::classify_point_oriented_plane(&a, &b, &c, &point, APPROX)
+        );
     }
 
     #[test]
@@ -1515,6 +1559,193 @@ mod tests {
         assert_eq!(
             evidence.facts().coefficient_symbolic_dependencies,
             facts.coefficient_symbolic_dependencies
+        );
+    }
+
+    #[test]
+    fn plane_unknown_paths_and_helper_rankings_are_explicit() {
+        let uncertain = terminal_zero();
+        let uncertain_plane = Plane3::new(
+            Point3::new(Real::zero(), Real::zero(), Real::one()),
+            uncertain.clone(),
+        );
+
+        assert!(matches!(
+            classify_plane_segment_with_policy(
+                &uncertain_plane,
+                &p3(0.0, 0.0, 0.0),
+                &p3(0.0, 0.0, 1.0),
+                PredicatePolicy::STRICT,
+            ),
+            PredicateOutcome::Unknown { .. }
+        ));
+        assert!(matches!(
+            classify_plane_segment_with_policy(
+                &uncertain_plane,
+                &p3(0.0, 0.0, -1.0),
+                &p3(0.0, 0.0, 0.0),
+                PredicatePolicy::STRICT,
+            ),
+            PredicateOutcome::Unknown { .. }
+        ));
+        assert!(matches!(
+            classify_plane_triangle_with_policy(
+                &uncertain_plane,
+                &p3(0.0, 0.0, -1.0),
+                &p3(1.0, 0.0, 0.0),
+                &p3(0.0, 1.0, 1.0),
+                PredicatePolicy::STRICT,
+            ),
+            PredicateOutcome::Unknown { .. }
+        ));
+
+        let uncertain_axis_plane = Plane3::new(
+            Point3::new(uncertain.clone(), Real::zero(), Real::zero()),
+            Real::zero(),
+        );
+        assert!(matches!(
+            classify_plane_aabb3_report_with_policy(
+                &uncertain_axis_plane,
+                &p3(0.0, 0.0, 0.0),
+                &p3(1.0, 1.0, 1.0),
+                PredicatePolicy::STRICT,
+            ),
+            PredicateOutcome::Unknown { .. }
+        ));
+        assert!(matches!(
+            classify_plane_aabb3_with_policy(
+                &uncertain_axis_plane,
+                &p3(0.0, 0.0, 0.0),
+                &p3(1.0, 1.0, 1.0),
+                PredicatePolicy::STRICT,
+            ),
+            PredicateOutcome::Unknown { .. }
+        ));
+        assert!(matches!(
+            classify_plane_aabb3_report_with_policy(
+                &uncertain_plane,
+                &p3(0.0, 0.0, 0.0),
+                &p3(0.0, 0.0, 0.0),
+                PredicatePolicy::STRICT,
+            ),
+            PredicateOutcome::Unknown { .. }
+        ));
+        assert!(matches!(
+            classify_plane_aabb3_report_with_policy(
+                &uncertain_plane,
+                &p3(0.0, 0.0, 0.0),
+                &p3(0.0, 0.0, 1.0),
+                PredicatePolicy::STRICT,
+            ),
+            PredicateOutcome::Unknown { .. }
+        ));
+
+        let facts = Plane3::new(
+            Point3::new(uncertain.clone(), Real::zero(), Real::one()),
+            Real::zero(),
+        )
+        .structural_facts();
+        assert_eq!(facts.coefficient_unknown_zero_mask, 0b0001);
+
+        assert_eq!(
+            max_certainty(Certainty::Filtered, Certainty::Exact),
+            Certainty::Filtered
+        );
+        assert_eq!(
+            max_certainty(Certainty::Exact, Certainty::Approximate),
+            Certainty::Approximate
+        );
+        assert_eq!(certainty_rank(Certainty::Exact), 0);
+        assert_eq!(certainty_rank(Certainty::Filtered), 1);
+        assert_eq!(certainty_rank(Certainty::Approximate), 2);
+        assert_eq!(
+            max_stage(Escalation::Exact, Escalation::Filter),
+            Escalation::Exact
+        );
+        assert_eq!(
+            max_stage(Escalation::Structural, Escalation::Refined),
+            Escalation::Refined
+        );
+        assert_eq!(stage_rank(Escalation::Structural), 0);
+        assert_eq!(stage_rank(Escalation::Filter), 1);
+        assert_eq!(stage_rank(Escalation::Exact), 2);
+        assert_eq!(stage_rank(Escalation::Refined), 3);
+        assert_eq!(stage_rank(Escalation::Undecided), 4);
+    }
+
+    #[test]
+    fn plane_evidence_and_report_replay_cover_fallback_and_mismatch_paths() {
+        let plane = Plane3::new(
+            Point3::new(Real::pi(), Real::e(), Real::from(2).sqrt().unwrap()),
+            Real::one().sin(),
+        );
+        let point = Point3::new(Real::from(1), Real::from(2), Real::from(3));
+        let evidence = plane3_evidence(&plane);
+        assert!(evidence.filter.is_none());
+        assert!(evidence.rational_filter.is_none());
+        assert_eq!(
+            classify_point_plane_with_evidence_and_policy(&point, &plane, &evidence, APPROX),
+            classify_point_plane_with_policy(&point, &plane, APPROX)
+        );
+
+        let a = Point3::new(rational(1, 3), Real::zero(), Real::zero());
+        let b = Point3::new(Real::zero(), rational(1, 5), Real::zero());
+        let c = Point3::new(Real::zero(), Real::zero(), rational(1, 7));
+        let exact_word = oriented_plane3_evidence(&a, &b, &c);
+        assert!(exact_word.filter.is_none());
+        assert!(exact_word.exact_word_filter.is_some());
+        let exact_query = p3(0.0, 0.0, 0.0);
+        assert!(matches!(
+            classify_point_oriented_plane_exact_word(&exact_query, &exact_word, APPROX),
+            PredicateOutcome::Decided {
+                stage: Escalation::Exact,
+                ..
+            }
+        ));
+
+        let face = [p3(0.0, 0.0, 0.0), p3(1.0, 0.0, 0.0), p3(0.0, 1.0, 0.0)];
+        let above = [p3(0.0, 0.0, 1.0), p3(1.0, 0.0, 1.0), p3(0.0, 1.0, 1.0)];
+        let below = [p3(0.0, 0.0, -1.0), p3(1.0, 0.0, -1.0), p3(0.0, 1.0, -1.0)];
+        let report = classify_triangle_against_oriented_plane_with_policy(
+            [&face[0], &face[1], &face[2]],
+            [&above[0], &above[1], &above[2]],
+            APPROX,
+        );
+        assert_eq!(
+            report.validate_against_triangles(
+                [&face[0], &face[1], &face[2]],
+                [&below[0], &below[1], &below[2]],
+                APPROX,
+            ),
+            Err(TrianglePlaneReportValidationError::SourceReplayMismatch)
+        );
+        let points = [
+            face[0].clone(),
+            face[1].clone(),
+            face[2].clone(),
+            below[0].clone(),
+            below[1].clone(),
+            below[2].clone(),
+        ];
+        assert_eq!(
+            report.validate_against_sources(&points, [0, 1, 2], [3, 4, 5], APPROX),
+            Err(TrianglePlaneReportValidationError::SourceReplayMismatch)
+        );
+
+        let base = classify_plane_aabb3_report_with_policy(
+            &Plane3::new(p3(0.0, 0.0, 1.0), Real::zero()),
+            &p3(0.0, 0.0, 0.0),
+            &p3(1.0, 1.0, 1.0),
+            APPROX,
+        )
+        .value()
+        .unwrap();
+        let mut unknown_order = base;
+        unknown_order.lower_value = terminal_zero();
+        unknown_order.upper_value = Real::zero();
+        assert_eq!(
+            unknown_order.validate(PredicatePolicy::STRICT),
+            Err(PlaneAabbReportValidationError::ExtremumOrderMismatch)
         );
     }
 

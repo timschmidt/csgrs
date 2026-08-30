@@ -615,4 +615,362 @@ mod tests {
             SegmentPlaneRelation::Coplanar
         );
     }
+
+    #[test]
+    fn explicit_plane_intersection_covers_every_decided_relation() {
+        let plane = Plane3::new(p3(0, 0, 1), Real::from(0));
+        let cases = [
+            (
+                p3(0, 0, -1),
+                p3(0, 0, 1),
+                SegmentPlaneRelation::ProperCrossing,
+                [Some(PlaneSide::Below), Some(PlaneSide::Above)],
+            ),
+            (
+                p3(0, 0, 0),
+                p3(0, 0, 1),
+                SegmentPlaneRelation::EndpointOnPlane,
+                [Some(PlaneSide::On), Some(PlaneSide::Above)],
+            ),
+            (
+                p3(0, 0, -1),
+                p3(0, 0, 0),
+                SegmentPlaneRelation::EndpointOnPlane,
+                [Some(PlaneSide::Below), Some(PlaneSide::On)],
+            ),
+            (
+                p3(0, 0, 0),
+                p3(1, 1, 0),
+                SegmentPlaneRelation::Coplanar,
+                [Some(PlaneSide::On), Some(PlaneSide::On)],
+            ),
+            (
+                p3(0, 0, 1),
+                p3(1, 1, 2),
+                SegmentPlaneRelation::Disjoint,
+                [Some(PlaneSide::Above), Some(PlaneSide::Above)],
+            ),
+            (
+                p3(0, 0, -1),
+                p3(1, 1, -2),
+                SegmentPlaneRelation::Disjoint,
+                [Some(PlaneSide::Below), Some(PlaneSide::Below)],
+            ),
+        ];
+
+        for (p0, p1, relation, sides) in cases {
+            let intersection = crate::intersect_segment_with_plane(&plane, &p0, &p1, APPROX);
+            assert_eq!(intersection.relation, relation);
+            assert_eq!(intersection.endpoint_sides, sides);
+            intersection.validate(APPROX).unwrap();
+        }
+    }
+
+    #[test]
+    fn retained_segment_plane_validation_rejects_every_inconsistent_field_family() {
+        let p0 = p3(0, 0, -1);
+        let p1 = p3(0, 0, 1);
+        let plane_a = p3(0, 0, 0);
+        let plane_b = p3(1, 0, 0);
+        let plane_c = p3(0, 1, 0);
+
+        let unknown = event(
+            SegmentPlaneRelation::Unknown,
+            [None, Some(PlaneSide::Above)],
+            SegmentPlaneEventConstruction::none(),
+        );
+        unknown.validate(APPROX).unwrap();
+
+        let mut forged = unknown.clone();
+        forged.endpoint_sides = [Some(PlaneSide::Below), Some(PlaneSide::Above)];
+        assert_eq!(
+            forged.validate(APPROX),
+            Err(SegmentPlaneValidationError::UnknownHasDecidedSides)
+        );
+
+        let mut forged = unknown.clone();
+        forged.point = Some(p0.clone());
+        assert_eq!(
+            forged.validate(APPROX),
+            Err(SegmentPlaneValidationError::UnexpectedConstruction)
+        );
+
+        let mut forged = unknown.clone();
+        forged.construction_failure = Some(SegmentPlaneConstructionFailure::ZeroDenominator);
+        assert_eq!(
+            forged.validate(APPROX),
+            Err(SegmentPlaneValidationError::UnexpectedConstructionFailureReason)
+        );
+
+        let disjoint = event(
+            SegmentPlaneRelation::Disjoint,
+            [Some(PlaneSide::Above), Some(PlaneSide::Above)],
+            SegmentPlaneEventConstruction::none(),
+        );
+        disjoint.validate(APPROX).unwrap();
+        let mut forged = disjoint;
+        forged.endpoint_sides[1] = Some(PlaneSide::Below);
+        assert_eq!(
+            forged.validate(APPROX),
+            Err(SegmentPlaneValidationError::DisjointSideFactsMismatch)
+        );
+
+        let coplanar = event(
+            SegmentPlaneRelation::Coplanar,
+            [Some(PlaneSide::On), Some(PlaneSide::On)],
+            SegmentPlaneEventConstruction::none(),
+        );
+        coplanar.validate(APPROX).unwrap();
+        let mut forged = coplanar;
+        forged.endpoint_sides[1] = Some(PlaneSide::Above);
+        assert_eq!(
+            forged.validate(APPROX),
+            Err(SegmentPlaneValidationError::CoplanarSideFactsMismatch)
+        );
+
+        let endpoint = event(
+            SegmentPlaneRelation::EndpointOnPlane,
+            [Some(PlaneSide::On), Some(PlaneSide::Above)],
+            SegmentPlaneEventConstruction::endpoint(0, p3(0, 0, 0), Real::from(0)),
+        );
+        endpoint.validate(APPROX).unwrap();
+
+        let mut forged = endpoint.clone();
+        forged.endpoint_on_plane = None;
+        assert_eq!(
+            forged.validate(APPROX),
+            Err(SegmentPlaneValidationError::InvalidEndpointIndex)
+        );
+        let mut forged = endpoint.clone();
+        forged.endpoint_on_plane = Some(2);
+        assert_eq!(
+            forged.validate(APPROX),
+            Err(SegmentPlaneValidationError::InvalidEndpointIndex)
+        );
+        let mut forged = endpoint.clone();
+        forged.point = None;
+        assert_eq!(
+            forged.validate(APPROX),
+            Err(SegmentPlaneValidationError::MissingEndpointConstruction)
+        );
+        let mut forged = endpoint.clone();
+        forged.parameter_ratio = Some(SegmentPlaneParameterRatio {
+            numerator: Real::from(0),
+            denominator: Real::from(1),
+        });
+        assert_eq!(
+            forged.validate(APPROX),
+            Err(SegmentPlaneValidationError::UnexpectedConstruction)
+        );
+        let mut forged = endpoint.clone();
+        forged.construction_failure = Some(SegmentPlaneConstructionFailure::ZeroDenominator);
+        assert_eq!(
+            forged.validate(APPROX),
+            Err(SegmentPlaneValidationError::UnexpectedConstructionFailureReason)
+        );
+        let mut forged = endpoint.clone();
+        forged.endpoint_sides = [Some(PlaneSide::Above), Some(PlaneSide::On)];
+        assert_eq!(
+            forged.validate(APPROX),
+            Err(SegmentPlaneValidationError::EndpointSideFactsMismatch)
+        );
+        let mut forged = endpoint;
+        forged.parameter = Some(Real::from(1));
+        assert_eq!(
+            forged.validate(APPROX),
+            Err(SegmentPlaneValidationError::MissingEndpointConstruction)
+        );
+
+        let crossing = crate::intersect_segment_with_oriented_plane(
+            &plane_a, &plane_b, &plane_c, &p0, &p1, APPROX,
+        );
+        crossing.validate(APPROX).unwrap();
+
+        let mut forged = crossing.clone();
+        forged.endpoint_sides = [Some(PlaneSide::Above), Some(PlaneSide::Above)];
+        assert_eq!(
+            forged.validate(APPROX),
+            Err(SegmentPlaneValidationError::ProperCrossingSideFactsMismatch)
+        );
+        let mut forged = crossing.clone();
+        forged.point = None;
+        assert_eq!(
+            forged.validate(APPROX),
+            Err(SegmentPlaneValidationError::MissingProperCrossingConstruction)
+        );
+        let mut forged = crossing.clone();
+        forged.construction_failure = Some(SegmentPlaneConstructionFailure::ZeroDenominator);
+        assert_eq!(
+            forged.validate(APPROX),
+            Err(SegmentPlaneValidationError::UnexpectedConstructionFailureReason)
+        );
+        let mut forged = crossing.clone();
+        forged.parameter = Some(Real::from(0));
+        assert_eq!(
+            forged.validate(APPROX),
+            Err(SegmentPlaneValidationError::ProperCrossingParameterOutOfRange)
+        );
+        let mut forged = crossing.clone();
+        forged.parameter = Some(Real::from(2));
+        assert_eq!(
+            forged.validate(APPROX),
+            Err(SegmentPlaneValidationError::ProperCrossingParameterOutOfRange)
+        );
+        let mut forged = crossing.clone();
+        forged.parameter_ratio = None;
+        assert_eq!(
+            forged.validate(APPROX),
+            Err(SegmentPlaneValidationError::MissingProperCrossingRatio)
+        );
+        let mut forged = crossing.clone();
+        forged.parameter_ratio.as_mut().unwrap().denominator = Real::from(0);
+        assert_eq!(
+            forged.validate(APPROX),
+            Err(SegmentPlaneValidationError::ProperCrossingRatioMismatch)
+        );
+        let root_two = Real::from(2).sqrt().unwrap();
+        let root_two_over_pi = (root_two.clone() / Real::pi()).unwrap();
+        let half = (Real::from(1) / Real::from(2)).unwrap();
+        let shared_offset = root_two.clone() * Real::from(3) + half;
+        let contact = (((root_two.clone() * Real::from(4) - shared_offset.clone()) * Real::pi())
+            * root_two_over_pi.clone()
+            / Real::from(4))
+        .unwrap();
+        let domain = (((root_two * Real::from(2) - shared_offset) * Real::pi()) * root_two_over_pi
+            / Real::from(4))
+        .unwrap()
+            + Real::from(1);
+        let exact_normal_form_positive = contact - domain + Real::from(2).powi_i64(-5000).unwrap();
+        assert!(matches!(
+            exact_normal_form_positive.certified_sign_until(-4096),
+            hyperreal::CertifiedRealSign::Unknown { .. }
+        ));
+        assert_eq!(
+            compare_reals_with_policy(
+                &exact_normal_form_positive,
+                &Real::from(0),
+                PredicatePolicy::STRICT,
+            )
+            .value(),
+            Some(core::cmp::Ordering::Greater)
+        );
+        let mut forged = crossing.clone();
+        forged.parameter_ratio.as_mut().unwrap().denominator = exact_normal_form_positive;
+        assert_eq!(
+            forged.validate(PredicatePolicy::STRICT),
+            Err(SegmentPlaneValidationError::ProperCrossingRatioMismatch)
+        );
+        let mut forged = crossing.clone();
+        forged.parameter_ratio.as_mut().unwrap().numerator = Real::from(3);
+        assert_eq!(
+            forged.validate(APPROX),
+            Err(SegmentPlaneValidationError::ProperCrossingRatioMismatch)
+        );
+
+        let mut forged = crossing;
+        forged.point = Some(p3(9, 9, 0));
+        forged.validate(APPROX).unwrap();
+        assert_eq!(
+            forged.validate_against_sources(&plane_a, &plane_b, &plane_c, &p0, &p1, APPROX,),
+            Err(SegmentPlaneValidationError::SourceReplayMismatch)
+        );
+    }
+
+    #[test]
+    fn construction_failure_records_are_validated_and_preserved() {
+        let p0 = p3(0, 0, -1);
+        let p1 = p3(0, 0, 1);
+        let unknown = intersect_segment_with_plane_values_with_policy(
+            &Real::from(-1),
+            &Real::from(1),
+            &p0,
+            &p1,
+            [None, Some(PlaneSide::Above)],
+            APPROX,
+        );
+        assert_eq!(unknown.relation, SegmentPlaneRelation::Unknown);
+        unknown.validate(APPROX).unwrap();
+
+        let failed = intersect_segment_with_plane_values_with_policy(
+            &Real::from(0),
+            &Real::from(0),
+            &p0,
+            &p1,
+            [Some(PlaneSide::Below), Some(PlaneSide::Above)],
+            PredicatePolicy::STRICT,
+        );
+        assert_eq!(failed.relation, SegmentPlaneRelation::ConstructionFailed);
+        assert_eq!(
+            failed.construction_failure,
+            Some(SegmentPlaneConstructionFailure::ZeroDenominator)
+        );
+        failed.validate(APPROX).unwrap();
+
+        let mut forged = failed.clone();
+        forged.endpoint_sides = [Some(PlaneSide::Above), Some(PlaneSide::Above)];
+        assert_eq!(
+            forged.validate(APPROX),
+            Err(SegmentPlaneValidationError::ConstructionFailedSideFactsMismatch)
+        );
+        let mut forged = failed.clone();
+        forged.construction_failure = None;
+        assert_eq!(
+            forged.validate(APPROX),
+            Err(SegmentPlaneValidationError::MissingConstructionFailureReason)
+        );
+        let mut forged = failed;
+        forged.point = Some(p3(0, 0, 0));
+        assert_eq!(
+            forged.validate(APPROX),
+            Err(SegmentPlaneValidationError::UnexpectedConstruction)
+        );
+
+        let tiny = "1e-2000".parse::<Real>().unwrap();
+        let left = (Real::pi() + tiny.clone() + tiny.clone()).exp().unwrap();
+        let right = (Real::pi() + tiny).exp().unwrap();
+        let opaque_positive = left - right;
+        assert_eq!(
+            opaque_positive.zero_status(),
+            hyperreal::ZeroKnowledge::Unknown
+        );
+        assert!(matches!(
+            opaque_positive.certified_sign_until(-4096),
+            hyperreal::CertifiedRealSign::Unknown { .. }
+        ));
+        let failed = intersect_segment_with_plane_values_with_policy(
+            &opaque_positive,
+            &Real::from(0),
+            &p0,
+            &p1,
+            [Some(PlaneSide::Below), Some(PlaneSide::Above)],
+            PredicatePolicy::STRICT,
+        );
+        assert_eq!(failed.relation, SegmentPlaneRelation::ConstructionFailed);
+        assert_eq!(
+            failed.construction_failure,
+            Some(SegmentPlaneConstructionFailure::ParameterDivisionFailed)
+        );
+    }
+
+    #[test]
+    fn segment_parameter_rejects_constant_axes_and_solves_nonconstant_axes() {
+        assert_eq!(
+            crate::segment_parameter_from_axis(
+                &Real::from(2),
+                &Real::from(1),
+                &Real::from(1),
+                APPROX,
+            ),
+            None
+        );
+        assert_eq!(
+            crate::segment_parameter_from_axis(
+                &Real::from(2),
+                &Real::from(1),
+                &Real::from(3),
+                APPROX,
+            ),
+            Some((Real::from(1) / &Real::from(2)).unwrap())
+        );
+    }
 }

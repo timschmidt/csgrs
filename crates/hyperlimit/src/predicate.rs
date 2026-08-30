@@ -384,9 +384,15 @@ mod tests {
     #[test]
     fn boolean_outcome_combinators_preserve_certainty_and_short_circuit_unknowns() {
         let exact_true = PredicateOutcome::decided(true, Certainty::Exact, Escalation::Structural);
+        let filtered_true =
+            PredicateOutcome::decided(true, Certainty::Filtered, Escalation::Filter);
         let approximate_true =
             PredicateOutcome::decided(true, Certainty::Approximate, Escalation::Refined);
         let exact_false = PredicateOutcome::decided(false, Certainty::Exact, Escalation::Exact);
+        let filtered_false =
+            PredicateOutcome::decided(false, Certainty::Filtered, Escalation::Filter);
+        let approximate_false =
+            PredicateOutcome::decided(false, Certainty::Approximate, Escalation::Refined);
         let unknown =
             PredicateOutcome::unknown(RefinementNeed::RealRefinement, Escalation::Undecided);
 
@@ -394,8 +400,42 @@ mod tests {
             exact_true.and(approximate_true),
             PredicateOutcome::decided(true, Certainty::Approximate, Escalation::Refined)
         );
+        assert_eq!(
+            exact_true.and(filtered_true),
+            PredicateOutcome::decided(true, Certainty::Filtered, Escalation::Filter)
+        );
+        assert_eq!(exact_false.and(unknown), exact_false);
         assert_eq!(unknown.and(exact_false), exact_false);
+        assert_eq!(unknown.and(exact_true), unknown);
         assert_eq!(unknown.or(exact_true), exact_true);
+        assert_eq!(exact_true.or(unknown), exact_true);
         assert_eq!(exact_false.or(unknown), unknown);
+        assert_eq!(unknown.or(exact_false), unknown);
+        assert_eq!(
+            exact_false.or(filtered_false),
+            PredicateOutcome::decided(false, Certainty::Filtered, Escalation::Exact)
+        );
+        assert_eq!(approximate_false.or(filtered_false), approximate_false);
+        assert_eq!(filtered_true.and(approximate_true), approximate_true);
+        assert_eq!(exact_true.and(exact_true), exact_true);
+        assert_eq!(
+            exact_true.and(PredicateOutcome::decided(
+                true,
+                Certainty::Exact,
+                Escalation::Undecided,
+            )),
+            PredicateOutcome::decided(true, Certainty::Exact, Escalation::Undecided)
+        );
+
+        assert!(PredicatePolicy::STRICT.accepts(Certainty::Exact));
+        assert!(PredicatePolicy::STRICT.accepts(Certainty::Filtered));
+        assert!(!PredicatePolicy::STRICT.accepts(Certainty::Approximate));
+        assert!(PredicatePolicy::APPROXIMATE_512.accepts(Certainty::Approximate));
+    }
+
+    #[test]
+    #[should_panic(expected = "internal error: entered unreachable code")]
+    fn invalid_private_policy_state_is_rejected() {
+        let _ = PredicatePolicy(2).final_approximation_precision();
     }
 }

@@ -1,5 +1,6 @@
 use hyperlimit::{
-    HalfspaceFeasibility, Plane3, Point3, PredicateOutcome, classify_halfspace_feasibility3,
+    HalfspaceFeasibility, HalfspaceFeasibilityReport, HalfspaceInfeasibilityCertificate, Plane3,
+    Point3, PredicateOutcome, classify_halfspace_feasibility3,
 };
 use hyperreal::{Rational, Real};
 
@@ -167,5 +168,131 @@ fn halfspace_feasibility_reports_four_plane_farkas_certificate() {
     assert_eq!(
         certificate.validate_against_planes(&planes, APPROX).value(),
         Some(true)
+    );
+}
+
+#[test]
+fn halfspace_report_constructors_and_shape_validation_are_total() {
+    let planes = [plane(1, 0, 0, 0)];
+    let feasible = HalfspaceFeasibilityReport::feasible(pi(0, 0, 0), [Some(0), None, None]);
+    assert!(feasible.is_feasible());
+    assert_eq!(
+        feasible.validate_against_planes(&planes, APPROX).value(),
+        Some(true)
+    );
+
+    let infeasible = HalfspaceFeasibilityReport::infeasible(None);
+    assert!(!infeasible.is_feasible());
+    assert_eq!(
+        infeasible.validate_against_planes(&planes, APPROX).value(),
+        Some(true)
+    );
+
+    let malformed_feasible = HalfspaceFeasibilityReport {
+        status: HalfspaceFeasibility::Feasible,
+        witness: None,
+        infeasibility_certificate: None,
+        active_planes: [None; 3],
+    };
+    assert_eq!(
+        malformed_feasible
+            .validate_against_planes(&planes, APPROX)
+            .value(),
+        Some(false)
+    );
+
+    let malformed_infeasible = HalfspaceFeasibilityReport {
+        status: HalfspaceFeasibility::Infeasible,
+        witness: Some(pi(0, 0, 0)),
+        infeasibility_certificate: None,
+        active_planes: [None; 3],
+    };
+    assert_eq!(
+        malformed_infeasible
+            .validate_against_planes(&planes, APPROX)
+            .value(),
+        Some(false)
+    );
+}
+
+#[test]
+fn farkas_certificate_replay_rejects_each_invalid_proof_component() {
+    let contradiction = [plane(0, 0, 0, 1)];
+    let valid = HalfspaceInfeasibilityCertificate {
+        active_planes: [Some(0), None, None, None],
+        multipliers: [r(1), r(0), r(0), r(0)],
+        offset_sum: r(1),
+    };
+    assert_eq!(
+        valid
+            .validate_against_planes(&contradiction, APPROX)
+            .value(),
+        Some(true)
+    );
+
+    let mut forged = valid.clone();
+    forged.multipliers[0] = r(-1);
+    assert_eq!(
+        forged
+            .validate_against_planes(&contradiction, APPROX)
+            .value(),
+        Some(false)
+    );
+
+    let mut forged = valid.clone();
+    forged.active_planes[0] = Some(1);
+    assert_eq!(
+        forged
+            .validate_against_planes(&contradiction, APPROX)
+            .value(),
+        Some(false)
+    );
+
+    let mut forged = valid.clone();
+    forged.active_planes[0] = None;
+    assert_eq!(
+        forged
+            .validate_against_planes(&contradiction, APPROX)
+            .value(),
+        Some(false)
+    );
+
+    let mut forged = valid.clone();
+    forged.multipliers = [r(0), r(0), r(0), r(0)];
+    forged.offset_sum = r(0);
+    assert_eq!(
+        forged
+            .validate_against_planes(&contradiction, APPROX)
+            .value(),
+        Some(false)
+    );
+
+    let mut forged = valid.clone();
+    forged.offset_sum = r(2);
+    assert_eq!(
+        forged
+            .validate_against_planes(&contradiction, APPROX)
+            .value(),
+        Some(false)
+    );
+
+    let nonzero_normal = [plane(1, 0, 0, 1)];
+    assert_eq!(
+        valid
+            .validate_against_planes(&nonzero_normal, APPROX)
+            .value(),
+        Some(false)
+    );
+
+    let nonpositive_offset = [plane(0, 0, 0, 0)];
+    let zero_offset = HalfspaceInfeasibilityCertificate {
+        offset_sum: r(0),
+        ..valid
+    };
+    assert_eq!(
+        zero_offset
+            .validate_against_planes(&nonpositive_offset, APPROX)
+            .value(),
+        Some(false)
     );
 }

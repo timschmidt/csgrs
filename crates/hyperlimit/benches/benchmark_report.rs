@@ -33,7 +33,7 @@ pub fn write_benchmarks_md() -> io::Result<ReportSummary> {
     if criterion_dir.exists() {
         collect_rows(&criterion_dir, &mut rows)?;
     }
-    rows.retain(row_is_current_real_benchmark);
+    rows.retain(row_is_reportable_benchmark);
     rows.sort_by(compare_rows);
 
     let path = root.join("benchmarks.md");
@@ -150,10 +150,17 @@ fn compare_rows(left: &Row, right: &Row) -> Ordering {
         .then_with(|| left.full_id.cmp(&right.full_id))
 }
 
-fn row_is_current_real_benchmark(row: &Row) -> bool {
+fn row_is_reportable_benchmark(row: &Row) -> bool {
     matches!(
         row.function_id.as_str(),
-        "hyperreal" | "hyperreal_evidence" | "hyperreal_oriented" | "robust"
+        "hyperreal"
+            | "hyperreal_evidence"
+            | "hyperreal_oriented"
+            | "robust"
+            | "geometry_predicates"
+            | "apfp"
+            | "sequential"
+            | "rayon"
     )
 }
 
@@ -167,15 +174,18 @@ fn render_markdown(rows: &[Row]) -> String {
     ));
     md.push_str("## Commands\n\n");
     md.push_str("Run the default benchmark suite and update this file:\n\n");
-    md.push_str("```sh\ncargo bench --bench predicates\n```\n\n");
+    md.push_str("```sh\ncargo bench --all-features --bench predicates\n```\n\n");
     md.push_str("Run dispatch tracing separately and update `dispatch_trace.md`:\n\n");
     md.push_str(
-        "```sh\ncargo bench --bench predicates --features dispatch-trace -- --write-dispatch-trace-md\n```\n\n",
+        "```sh\ncargo bench --all-features --bench predicates -- --write-dispatch-trace-md\n```\n\n",
     );
     md.push_str("Regenerate this file from existing Criterion output:\n\n");
     md.push_str("```sh\ncargo run --example write_benchmarks_md\n```\n\n");
     md.push_str(
         "Open Criterion's detailed HTML report at `target/criterion/report/index.html`.\n\n",
+    );
+    md.push_str(
+        "Core predicate rows process 512 prebuilt cases per iteration. Hyperlimit rows accept exact `Real` coordinates and return policy/provenance-bearing outcomes; `robust`, `geometry-predicates`, and `apfp` rows accept binary64 coordinates and return only a determinant sign. The timings therefore compare end-to-end predicate APIs on equivalent binary64 values, not identical output semantics. `apfp` currently supplies only the 2D rows. Parallel batch rows process 8,192 cases.\n\n",
     );
 
     md.push_str("## Latest Results\n\n");

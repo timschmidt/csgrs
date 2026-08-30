@@ -233,3 +233,55 @@ fn sign_from_ordering(ordering: Ordering) -> Sign {
         Ordering::Greater => Sign::Positive,
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn p2(x: i32, y: i32) -> Point2 {
+        Point2::new(Real::from(x), Real::from(y))
+    }
+
+    fn p3(x: i32, y: i32, z: i32) -> Point3 {
+        Point3::new(Real::from(x), Real::from(y), Real::from(z))
+    }
+
+    #[test]
+    fn exact_kernel_entry_points_cover_signs_and_decline_symbolic_inputs() {
+        assert_eq!(
+            orient2d(&p2(0, 0), &p2(1, 0), &p2(0, 1)),
+            Some(Sign::Positive)
+        );
+        assert_eq!(
+            orient2d(&p2(0, 0), &p2(0, 1), &p2(1, 0)),
+            Some(Sign::Negative)
+        );
+        assert_eq!(orient2d(&p2(0, 0), &p2(1, 1), &p2(2, 2)), Some(Sign::Zero));
+
+        assert_eq!(
+            orient3d(&p3(0, 0, 0), &p3(1, 0, 0), &p3(0, 1, 0), &p3(0, 0, 1)),
+            Some(Sign::Negative)
+        );
+        assert_eq!(
+            orient3d(&p3(0, 0, 0), &p3(1, 0, 0), &p3(0, 1, 0), &p3(1, 1, 0)),
+            Some(Sign::Zero)
+        );
+        assert_eq!(
+            incircle2d(&p2(0, 0), &p2(2, 0), &p2(0, 2), &p2(1, 1)),
+            Some(Sign::Positive)
+        );
+        assert_eq!(
+            insphere3d(
+                &p3(0, 0, 0),
+                &p3(1, 0, 0),
+                &p3(0, 1, 0),
+                &p3(0, 0, 1),
+                &p3(0, 0, 0),
+            ),
+            Some(Sign::Zero)
+        );
+
+        let symbolic = Point2::new(Real::pi(), Real::from(0));
+        assert_eq!(orient2d(&symbolic, &p2(1, 0), &p2(0, 1)), None);
+    }
+}

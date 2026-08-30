@@ -228,6 +228,7 @@ pub fn classify_circle_segment2_batch_with_policy(
 #[cfg(feature = "parallel")]
 mod parallel {
     use super::*;
+    use rayon::prelude::*;
 
     /// Evaluate a batch of 2D orientation predicates in parallel with an explicit policy.
     pub fn orient2d_batch_parallel_with_policy(
@@ -236,7 +237,7 @@ mod parallel {
     ) -> Vec<PredicateOutcome<Sign>> {
         crate::trace_dispatch!("hyperlimit", "batch", "orient2d-parallel");
         cases
-            .iter()
+            .par_iter()
             .map(|(a, b, c)| orient2d_with_policy(a, b, c, policy))
             .collect()
     }
@@ -248,7 +249,7 @@ mod parallel {
     ) -> Vec<PredicateOutcome<LineSide>> {
         crate::trace_dispatch!("hyperlimit", "batch", "classify-point-line-parallel");
         cases
-            .iter()
+            .par_iter()
             .map(|(from, to, point)| classify_point_line_with_policy(from, to, point, policy))
             .collect()
     }
@@ -260,7 +261,7 @@ mod parallel {
     ) -> Vec<PredicateOutcome<Sign>> {
         crate::trace_dispatch!("hyperlimit", "batch", "orient3d-parallel");
         cases
-            .iter()
+            .par_iter()
             .map(|(a, b, c, d)| orient3d_with_policy(a, b, c, d, policy))
             .collect()
     }
@@ -272,7 +273,7 @@ mod parallel {
     ) -> Vec<PredicateOutcome<PlaneSide>> {
         crate::trace_dispatch!("hyperlimit", "batch", "classify-point-plane-parallel");
         cases
-            .iter()
+            .par_iter()
             .map(|(point, plane)| classify_point_plane_with_policy(point, plane, policy))
             .collect()
     }
@@ -288,7 +289,7 @@ mod parallel {
             "classify-point-oriented-plane-parallel"
         );
         cases
-            .iter()
+            .par_iter()
             .map(|(a, b, c, point)| {
                 classify_point_oriented_plane_with_policy(a, b, c, point, policy)
             })
@@ -302,7 +303,7 @@ mod parallel {
     ) -> Vec<PredicateOutcome<Sign>> {
         crate::trace_dispatch!("hyperlimit", "batch", "incircle2d-parallel");
         cases
-            .iter()
+            .par_iter()
             .map(|(a, b, c, d)| incircle2d_with_policy(a, b, c, d, policy))
             .collect()
     }
@@ -314,7 +315,7 @@ mod parallel {
     ) -> Vec<PredicateOutcome<Sign>> {
         crate::trace_dispatch!("hyperlimit", "batch", "insphere3d-parallel");
         cases
-            .iter()
+            .par_iter()
             .map(|(a, b, c, d, e)| insphere3d_with_policy(a, b, c, d, e, policy))
             .collect()
     }
@@ -326,7 +327,7 @@ mod parallel {
     ) -> Vec<PredicateOutcome<Segment3Intersection>> {
         crate::trace_dispatch!("hyperlimit", "batch", "segment3-intersection-parallel");
         cases
-            .iter()
+            .par_iter()
             .map(|(a, b, c, d)| classify_segment3_intersection_with_policy(a, b, c, d, policy))
             .collect()
     }
@@ -342,7 +343,7 @@ mod parallel {
             "segment-triangle3-intersection-parallel"
         );
         cases
-            .iter()
+            .par_iter()
             .map(|(p, q, a, b, c)| {
                 classify_segment_triangle3_intersection_with_policy(p, q, a, b, c, policy)
             })
@@ -356,7 +357,7 @@ mod parallel {
     ) -> Vec<PredicateOutcome<RayTriangleIntersection>> {
         crate::trace_dispatch!("hyperlimit", "batch", "ray-triangle3-intersection-parallel");
         cases
-            .iter()
+            .par_iter()
             .map(|(origin, direction, a, b, c)| {
                 classify_ray_triangle3_intersection_with_policy(origin, direction, a, b, c, policy)
             })
@@ -370,7 +371,7 @@ mod parallel {
     ) -> Vec<PredicateOutcome<CircleLineRelation>> {
         crate::trace_dispatch!("hyperlimit", "batch", "circle-line2-parallel");
         cases
-            .iter()
+            .par_iter()
             .map(|(center, radius_squared, a, b)| {
                 classify_circle_line2_with_policy(center, radius_squared, a, b, policy)
             })
@@ -384,7 +385,7 @@ mod parallel {
     ) -> Vec<PredicateOutcome<CircleSegmentRelation>> {
         crate::trace_dispatch!("hyperlimit", "batch", "circle-segment2-parallel");
         cases
-            .iter()
+            .par_iter()
             .map(|(center, radius_squared, a, b)| {
                 classify_circle_segment2_with_policy(center, radius_squared, a, b, policy)
             })

@@ -139,10 +139,7 @@ fn certified_ball_sign_outcome_with_policy(
                 stage,
             ))
         }
-        Some(PredicateOutcome::Unknown { .. }) => {
-            unreachable!("certified interval filters return only decided outcomes")
-        }
-        None => {
+        Some(PredicateOutcome::Unknown { .. }) | None => {
             crate::trace_dispatch!("hyperlimit", "certified_ball_sign", "uncertain");
             BallFilterResult::Uncertain
         }
@@ -307,6 +304,23 @@ mod tests {
         assert_eq!(
             classify_ball_sign_with_policy(&undecidable, &Real::zero(), APPROX,),
             PredicateOutcome::decided(Sign::Zero, Certainty::Approximate, Escalation::Filter,)
+        );
+        assert_eq!(
+            classify_ball_sign_with_policy(&Real::zero(), &undecidable, PredicatePolicy::STRICT,),
+            PredicateOutcome::unknown(RefinementNeed::RealRefinement, Escalation::Filter)
+        );
+        assert_eq!(
+            classify_ball_sign_with_policy(&Real::zero(), &Real::from(-1), APPROX),
+            PredicateOutcome::unknown(RefinementNeed::Unsupported, Escalation::Filter)
+        );
+        assert_eq!(
+            certified_ball_sign_with_policy(&Real::zero(), &Real::from(-1), APPROX),
+            None
+        );
+
+        assert_eq!(
+            min_ordering(Ordering::Greater, Ordering::Less),
+            Ordering::Less
         );
     }
 }

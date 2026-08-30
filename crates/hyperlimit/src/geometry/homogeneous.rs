@@ -163,9 +163,37 @@ mod tests {
         assert_eq!(line.direction, p3(0, 0, 1));
         assert_eq!(line.moment, p3(2, -1, 0));
 
-        let point = line.intersect_plane(&z_eq_3);
+        let point = intersect_homogeneous_line_plane(&line, &z_eq_3);
         assert_eq!(point, intersect_three_planes(&x_eq_1, &y_eq_2, &z_eq_3));
         assert_eq!(point.to_affine_point().unwrap(), p3(1, 2, 3));
+    }
+
+    #[test]
+    fn symbolic_homogeneous_incidence_uses_the_generic_real_pipeline() {
+        let pi = Real::pi();
+        let point = HomogeneousPoint3::new(pi.clone(), r(0), r(0), r(1));
+        let x_eq_pi = Plane3::new(p3(1, 0, 0), -pi);
+        let x_eq_zero = plane(1, 0, 0, 0);
+
+        let incident = crate::classify_homogeneous_point_plane(&point, &x_eq_pi, APPROX);
+        assert_eq!(incident.value(), Some(true));
+        assert_eq!(
+            crate::classify_homogeneous_point_plane(&point, &x_eq_zero, APPROX).value(),
+            Some(false)
+        );
+
+        let rational_point = HomogeneousPoint3::new(r(1), r(0), r(0), r(1));
+        assert_eq!(
+            crate::classify_homogeneous_point_plane(&rational_point, &x_eq_pi, APPROX).value(),
+            Some(false)
+        );
+
+        let opaque = Real::from(1).erf() - "4/5".parse::<Real>().unwrap();
+        let opaque_point = HomogeneousPoint3::new(opaque, r(0), r(0), r(1));
+        assert_eq!(
+            crate::classify_homogeneous_point_plane(&opaque_point, &x_eq_zero, APPROX).value(),
+            Some(false)
+        );
     }
 
     #[test]

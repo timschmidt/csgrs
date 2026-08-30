@@ -137,7 +137,14 @@ fn exact_rational_normal_form_sign(value: &Real) -> Option<Sign> {
 }
 
 pub(crate) fn decide_real_sign(value: &Real, stage: Escalation) -> Option<PredicateOutcome<Sign>> {
-    match value.known_sign() {
+    decide_sign_knowledge(value.known_sign(), stage)
+}
+
+fn decide_sign_knowledge(
+    knowledge: SignKnowledge,
+    stage: Escalation,
+) -> Option<PredicateOutcome<Sign>> {
+    match knowledge {
         SignKnowledge::Known { sign, certainty } => {
             crate::trace_dispatch!("hyperlimit", "decide_real_sign", "known-sign");
             Some(PredicateOutcome::decided(sign, certainty, stage))
@@ -211,12 +218,8 @@ fn refine_real_sign(value: &Real) -> Option<PredicateOutcome<Sign>> {
                 Escalation::Refined,
             ))
         }
-        SignKnowledge::NonZero => {
-            crate::trace_dispatch!("hyperlimit", "refine_real_sign", "nonzero-no-sign");
-            None
-        }
-        SignKnowledge::Unknown => {
-            crate::trace_dispatch!("hyperlimit", "refine_real_sign", "unknown");
+        SignKnowledge::NonZero | SignKnowledge::Unknown => {
+            crate::trace_dispatch!("hyperlimit", "refine_real_sign", "unresolved");
             None
         }
     }
@@ -355,6 +358,37 @@ mod tests {
                 Escalation::Filter
             ))
         );
+
+        assert_eq!(
+            signed_term_filter(&[
+                (&large, Sign::Positive),
+                (&small, Sign::Positive),
+                (&large, Sign::Positive),
+                (&small, Sign::Positive),
+                (&large, Sign::Positive),
+            ]),
+            Some(PredicateOutcome::decided(
+                Sign::Positive,
+                Certainty::Filtered,
+                Escalation::Filter,
+            ))
+        );
+        assert_eq!(
+            signed_term_filter(&[(&large, Sign::Zero)]),
+            Some(PredicateOutcome::decided(
+                Sign::Zero,
+                Certainty::Filtered,
+                Escalation::Filter,
+            ))
+        );
+        assert_eq!(
+            signed_term_filter(&[(&Real::zero(), Sign::Positive)]),
+            Some(PredicateOutcome::decided(
+                Sign::Zero,
+                Certainty::Filtered,
+                Escalation::Filter,
+            ))
+        );
     }
 
     #[test]
@@ -385,6 +419,28 @@ mod tests {
             ),
             PredicateOutcome::decided(Sign::Positive, Certainty::Exact, Escalation::Exact)
         );
+
+        let filtered =
+            PredicateOutcome::decided(Sign::Negative, Certainty::Filtered, Escalation::Filter);
+        assert_eq!(
+            resolve_real_sign(
+                &value,
+                PredicatePolicy::STRICT,
+                || Some(filtered),
+                Option::<Sign>::default,
+                RefinementNeed::ExactArithmetic,
+            ),
+            filtered
+        );
+
+        assert_eq!(
+            decide_sign_knowledge(SignKnowledge::NonZero, Escalation::Structural),
+            None
+        );
+        assert_eq!(
+            decide_sign_knowledge(SignKnowledge::Unknown, Escalation::Structural),
+            None
+        );
     }
 
     #[test]
@@ -409,6 +465,31 @@ mod tests {
             ),
             PredicateOutcome::decided(Sign::Zero, Certainty::Approximate, Escalation::Refined,)
         );
+
+        assert_eq!(
+            approximate_real_sign(&Real::from(-1), PredicatePolicy::APPROXIMATE_512),
+            Some(PredicateOutcome::decided(
+                Sign::Negative,
+                Certainty::Approximate,
+                Escalation::Refined,
+            ))
+        );
+        assert_eq!(
+            approximate_real_sign(&Real::from(1), PredicatePolicy::APPROXIMATE_512),
+            Some(PredicateOutcome::decided(
+                Sign::Positive,
+                Certainty::Approximate,
+                Escalation::Refined,
+            ))
+        );
+
+        let mut calls = 0;
+        let unknown = resolve_composite_policy(PredicatePolicy::APPROXIMATE_512, |_| {
+            calls += 1;
+            PredicateOutcome::<Sign>::unknown(RefinementNeed::RealRefinement, Escalation::Undecided)
+        });
+        assert_eq!(calls, 2);
+        assert!(matches!(unknown, PredicateOutcome::Unknown { .. }));
     }
 
     #[test]
@@ -437,6 +518,11 @@ mod tests {
                 RefinementNeed::RealRefinement,
             ),
             PredicateOutcome::decided(Sign::Positive, Certainty::Exact, Escalation::Exact)
+        );
+
+        assert_eq!(
+            exact_rational_normal_form_sign(&Real::from(-1)),
+            Some(Sign::Negative)
         );
     }
 }

@@ -16,7 +16,9 @@ hyperlattice = { version = "0.6.1", path = "../hyperlattice" }
 rayon = { version = "1.10", optional = true }
 
 [dev-dependencies]
+apfp = "0.1.1"
 criterion = "0.5"
+geometry-predicates = "0.3.0"
 proptest = "1.7.0"
 robust = "1.2.0"
 serde_json = "1"

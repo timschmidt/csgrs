@@ -98,17 +98,46 @@ pub fn classify_closed_interval_intersection_with_policy(
     second_end: &Real,
     policy: PredicatePolicy,
 ) -> PredicateOutcome<ClosedIntervalIntersection> {
+    match classify_closed_interval_intersection_with_extent_policy(
+        first_start,
+        first_end,
+        second_start,
+        second_end,
+        policy,
+    ) {
+        PredicateOutcome::Decided {
+            value: (relation, _),
+            certainty,
+            stage,
+        } => PredicateOutcome::decided(relation, certainty, stage),
+        PredicateOutcome::Unknown { needed, stage } => PredicateOutcome::unknown(needed, stage),
+    }
+}
+
+/// Internal interval report that retains whether either input has zero extent.
+///
+/// AABB classifiers need this fact in addition to the overlap relation. Keeping
+/// it in the interval normalization pass avoids repeating the same endpoint
+/// comparisons after all four orders have already been certified.
+pub(crate) fn classify_closed_interval_intersection_with_extent_policy(
+    first_start: &Real,
+    first_end: &Real,
+    second_start: &Real,
+    second_end: &Real,
+    policy: PredicatePolicy,
+) -> PredicateOutcome<(ClosedIntervalIntersection, bool)> {
     let mut trace = DecisionTrace::default();
-    let (first_lower, first_upper) = match ordered_pair(first_start, first_end, policy, &mut trace)
-    {
-        Ok(pair) => pair,
-        Err(unknown) => return unknown.into_outcome(),
-    };
-    let (second_lower, second_upper) =
-        match ordered_pair(second_start, second_end, policy, &mut trace) {
+    let (first_lower, first_upper, first_zero_extent) =
+        match ordered_pair_with_zero_extent(first_start, first_end, policy, &mut trace) {
             Ok(pair) => pair,
             Err(unknown) => return unknown.into_outcome(),
         };
+    let (second_lower, second_upper, second_zero_extent) =
+        match ordered_pair_with_zero_extent(second_start, second_end, policy, &mut trace) {
+            Ok(pair) => pair,
+            Err(unknown) => return unknown.into_outcome(),
+        };
+    let zero_extent = first_zero_extent || second_zero_extent;
 
     match decided(
         compare_reals_with_policy(first_upper, second_lower, policy),
@@ -116,14 +145,14 @@ pub fn classify_closed_interval_intersection_with_policy(
     ) {
         Ok(Ordering::Less) => {
             return PredicateOutcome::decided(
-                ClosedIntervalIntersection::Disjoint,
+                (ClosedIntervalIntersection::Disjoint, zero_extent),
                 trace.certainty,
                 trace.stage,
             );
         }
         Ok(Ordering::Equal) => {
             return PredicateOutcome::decided(
-                ClosedIntervalIntersection::Touching,
+                (ClosedIntervalIntersection::Touching, zero_extent),
                 trace.certainty,
                 trace.stage,
             );
@@ -137,17 +166,17 @@ pub fn classify_closed_interval_intersection_with_policy(
         &mut trace,
     ) {
         Ok(Ordering::Less) => PredicateOutcome::decided(
-            ClosedIntervalIntersection::Disjoint,
+            (ClosedIntervalIntersection::Disjoint, zero_extent),
             trace.certainty,
             trace.stage,
         ),
         Ok(Ordering::Equal) => PredicateOutcome::decided(
-            ClosedIntervalIntersection::Touching,
+            (ClosedIntervalIntersection::Touching, zero_extent),
             trace.certainty,
             trace.stage,
         ),
         Ok(Ordering::Greater) => PredicateOutcome::decided(
-            ClosedIntervalIntersection::Overlapping,
+            (ClosedIntervalIntersection::Overlapping, zero_extent),
             trace.certainty,
             trace.stage,
         ),
@@ -186,10 +215,23 @@ fn ordered_pair<'a>(
     policy: PredicatePolicy,
     trace: &mut DecisionTrace,
 ) -> Result<(&'a Real, &'a Real), UnknownDecision> {
-    match decided(compare_reals_with_policy(first, second, policy), trace)? {
-        Ordering::Greater => Ok((second, first)),
-        Ordering::Less | Ordering::Equal => Ok((first, second)),
-    }
+    let (lower, upper, _) = ordered_pair_with_zero_extent(first, second, policy, trace)?;
+    Ok((lower, upper))
+}
+
+fn ordered_pair_with_zero_extent<'a>(
+    first: &'a Real,
+    second: &'a Real,
+    policy: PredicatePolicy,
+    trace: &mut DecisionTrace,
+) -> Result<(&'a Real, &'a Real, bool), UnknownDecision> {
+    Ok(
+        match decided(compare_reals_with_policy(first, second, policy), trace)? {
+            Ordering::Greater => (second, first, false),
+            Ordering::Less => (first, second, false),
+            Ordering::Equal => (first, second, true),
+        },
+    )
 }
 
 #[derive(Clone, Copy)]
@@ -281,6 +323,12 @@ mod tests {
         hyperreal::Real::from(value)
     }
 
+    fn terminally_unresolved_zero() -> Real {
+        let sine = Real::e().sin();
+        let cosine = Real::e().cos();
+        &sine * &sine + &cosine * &cosine - Real::one()
+    }
+
     #[test]
     fn real_interval_classifies_ordered_and_reversed_endpoints() {
         assert_eq!(
@@ -340,6 +388,208 @@ mod tests {
             crate::closed_intervals_intersect(&real(4), &real(2), &real(1), &real(2), APPROX)
                 .value(),
             Some(true)
+        );
+    }
+
+    #[test]
+    fn real_interval_covers_every_location_and_boolean_result() {
+        for (value, expected) in [
+            (-1, RealIntervalLocation::Below),
+            (0, RealIntervalLocation::AtLowerEndpoint),
+            (1, RealIntervalLocation::Interior),
+            (2, RealIntervalLocation::AtUpperEndpoint),
+            (3, RealIntervalLocation::Above),
+        ] {
+            assert_eq!(
+                classify_real_closed_interval_with_policy(
+                    &real(value),
+                    &real(0),
+                    &real(2),
+                    PredicatePolicy::STRICT,
+                )
+                .value(),
+                Some(expected),
+            );
+        }
+
+        assert_eq!(
+            real_in_closed_interval_with_policy(
+                &real(-1),
+                &real(0),
+                &real(2),
+                PredicatePolicy::STRICT,
+            )
+            .value(),
+            Some(false),
+        );
+    }
+
+    #[test]
+    fn interval_classifiers_preserve_unknowns_at_each_comparison_stage() {
+        fn is_unknown<T>(outcome: PredicateOutcome<T>) -> bool {
+            matches!(outcome, PredicateOutcome::Unknown { .. })
+        }
+
+        let unresolved = terminally_unresolved_zero();
+
+        // Endpoint normalization, lower comparison, and upper comparison.
+        assert!(is_unknown(classify_real_closed_interval_with_policy(
+            &real(0),
+            &unresolved,
+            &real(0),
+            PredicatePolicy::STRICT,
+        )));
+        assert!(is_unknown(classify_real_closed_interval_with_policy(
+            &unresolved,
+            &real(0),
+            &real(1),
+            PredicatePolicy::STRICT,
+        )));
+        assert!(is_unknown(classify_real_closed_interval_with_policy(
+            &unresolved,
+            &real(-1),
+            &real(0),
+            PredicatePolicy::STRICT,
+        )));
+        assert!(is_unknown(real_in_closed_interval_with_policy(
+            &unresolved,
+            &real(0),
+            &real(1),
+            PredicatePolicy::STRICT,
+        )));
+
+        // First normalization, second normalization, first separating
+        // comparison, and the reverse separating comparison.
+        assert!(is_unknown(
+            classify_closed_interval_intersection_with_policy(
+                &unresolved,
+                &real(0),
+                &real(1),
+                &real(2),
+                PredicatePolicy::STRICT,
+            )
+        ));
+        assert!(is_unknown(
+            classify_closed_interval_intersection_with_policy(
+                &real(1),
+                &real(2),
+                &unresolved,
+                &real(0),
+                PredicatePolicy::STRICT,
+            )
+        ));
+        assert!(is_unknown(
+            classify_closed_interval_intersection_with_policy(
+                &real(-1),
+                &unresolved,
+                &real(0),
+                &real(1),
+                PredicatePolicy::STRICT,
+            )
+        ));
+        assert!(is_unknown(
+            classify_closed_interval_intersection_with_policy(
+                &unresolved,
+                &real(2),
+                &real(-1),
+                &real(0),
+                PredicatePolicy::STRICT,
+            )
+        ));
+        assert!(is_unknown(closed_intervals_intersect_with_policy(
+            &real(-1),
+            &unresolved,
+            &real(0),
+            &real(1),
+            PredicatePolicy::STRICT,
+        )));
+    }
+
+    #[test]
+    fn reverse_interval_separation_and_contact_are_distinguished() {
+        assert_eq!(
+            classify_closed_interval_intersection_with_policy(
+                &real(2),
+                &real(3),
+                &real(0),
+                &real(1),
+                PredicatePolicy::STRICT,
+            )
+            .value(),
+            Some(ClosedIntervalIntersection::Disjoint),
+        );
+        assert_eq!(
+            classify_closed_interval_intersection_with_policy(
+                &real(1),
+                &real(3),
+                &real(0),
+                &real(1),
+                PredicatePolicy::STRICT,
+            )
+            .value(),
+            Some(ClosedIntervalIntersection::Touching),
+        );
+        assert_eq!(
+            closed_intervals_intersect_with_policy(
+                &real(3),
+                &real(2),
+                &real(1),
+                &real(0),
+                PredicatePolicy::STRICT,
+            )
+            .value(),
+            Some(false),
+        );
+    }
+
+    #[test]
+    fn decision_trace_rankings_are_total() {
+        let certainties = [
+            Certainty::Exact,
+            Certainty::Filtered,
+            Certainty::Approximate,
+        ];
+        for left in certainties {
+            for right in certainties {
+                assert_eq!(
+                    certainty_rank(max_certainty(left, right)),
+                    certainty_rank(left).max(certainty_rank(right)),
+                );
+            }
+        }
+
+        let stages = [
+            Escalation::Structural,
+            Escalation::Filter,
+            Escalation::Exact,
+            Escalation::Refined,
+            Escalation::Undecided,
+        ];
+        for left in stages {
+            for right in stages {
+                assert_eq!(
+                    stage_rank(max_stage(left, right)),
+                    stage_rank(left).max(stage_rank(right)),
+                );
+            }
+        }
+
+        let mut trace = DecisionTrace::default();
+        assert!(matches!(
+            decided(
+                PredicateOutcome::decided(7_u8, Certainty::Filtered, Escalation::Filter),
+                &mut trace,
+            ),
+            Ok(7)
+        ));
+        assert_eq!(trace.certainty, Certainty::Filtered);
+        assert_eq!(trace.stage, Escalation::Filter);
+        assert!(
+            decided::<u8>(
+                PredicateOutcome::unknown(RefinementNeed::RealRefinement, Escalation::Undecided),
+                &mut trace,
+            )
+            .is_err()
         );
     }
 }

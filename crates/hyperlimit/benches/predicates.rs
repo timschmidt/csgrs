@@ -96,11 +96,8 @@ fn bench_predicates(c: &mut Criterion) {
     bench_shared_scale_views(c);
     bench_transformed_predicates(c);
     bench_hypermesh_port_helpers(c);
-
-    // Parallel batch APIs require `Sync` real storage. `hyperreal::Real`
-    // currently keeps local refinement caches behind `RefCell`, so exact
-    // hyperreal benchmark rows stay sequential until the real layer exposes a
-    // thread-safe sharing mode.
+    #[cfg(feature = "parallel")]
+    bench_parallel_batches(c);
 }
 
 fn bench_point2_equality(c: &mut Criterion) {
@@ -565,6 +562,44 @@ fn bench_robust_predicates(c: &mut Criterion) {
                 });
             },
         );
+        orient2_group.bench_with_input(
+            BenchmarkId::new("geometry_predicates", workload.name()),
+            &cases,
+            |bench, cases| {
+                bench.iter(|| {
+                    let mut score = 0_i64;
+                    for &(a, b, c) in cases {
+                        score += determinant_score(geometry_predicates::orient2d(
+                            black_box(a),
+                            black_box(b),
+                            black_box(c),
+                        ));
+                    }
+                    black_box(score)
+                });
+            },
+        );
+        let apfp_cases: Vec<_> = cases
+            .iter()
+            .map(|&(a, b, c)| (apfp_coord2(a), apfp_coord2(b), apfp_coord2(c)))
+            .collect();
+        orient2_group.bench_with_input(
+            BenchmarkId::new("apfp", workload.name()),
+            &apfp_cases,
+            |bench, cases| {
+                bench.iter(|| {
+                    let mut score = 0_i64;
+                    for (a, b, c) in cases {
+                        score += apfp_orientation_score(apfp::geometry::f64::orient2d(
+                            black_box(a),
+                            black_box(b),
+                            black_box(c),
+                        ));
+                    }
+                    black_box(score)
+                });
+            },
+        );
     }
     orient2_group.finish();
 
@@ -583,6 +618,24 @@ fn bench_robust_predicates(c: &mut Criterion) {
                             black_box(coord3(b)),
                             black_box(coord3(c)),
                             black_box(coord3(d)),
+                        ));
+                    }
+                    black_box(score)
+                });
+            },
+        );
+        orient3_group.bench_with_input(
+            BenchmarkId::new("geometry_predicates", workload.name()),
+            &cases,
+            |bench, cases| {
+                bench.iter(|| {
+                    let mut score = 0_i64;
+                    for &(a, b, c, d) in cases {
+                        score += determinant_score(geometry_predicates::orient3d(
+                            black_box(a),
+                            black_box(b),
+                            black_box(c),
+                            black_box(d),
                         ));
                     }
                     black_box(score)
@@ -613,6 +666,53 @@ fn bench_robust_predicates(c: &mut Criterion) {
                 });
             },
         );
+        incircle_group.bench_with_input(
+            BenchmarkId::new("geometry_predicates", workload.name()),
+            &cases,
+            |bench, cases| {
+                bench.iter(|| {
+                    let mut score = 0_i64;
+                    for &(a, b, c, d) in cases {
+                        score += determinant_score(geometry_predicates::incircle(
+                            black_box(a),
+                            black_box(b),
+                            black_box(c),
+                            black_box(d),
+                        ));
+                    }
+                    black_box(score)
+                });
+            },
+        );
+        let apfp_cases: Vec<_> = cases
+            .iter()
+            .map(|&(a, b, c, d)| {
+                (
+                    apfp_coord2(a),
+                    apfp_coord2(b),
+                    apfp_coord2(c),
+                    apfp_coord2(d),
+                )
+            })
+            .collect();
+        incircle_group.bench_with_input(
+            BenchmarkId::new("apfp", workload.name()),
+            &apfp_cases,
+            |bench, cases| {
+                bench.iter(|| {
+                    let mut score = 0_i64;
+                    for (a, b, c, d) in cases {
+                        score += apfp_orientation_score(apfp::geometry::f64::incircle(
+                            black_box(a),
+                            black_box(b),
+                            black_box(c),
+                            black_box(d),
+                        ));
+                    }
+                    black_box(score)
+                });
+            },
+        );
     }
     incircle_group.finish();
 
@@ -632,6 +732,25 @@ fn bench_robust_predicates(c: &mut Criterion) {
                             black_box(coord3(c)),
                             black_box(coord3(d)),
                             black_box(coord3(e)),
+                        ));
+                    }
+                    black_box(score)
+                });
+            },
+        );
+        insphere_group.bench_with_input(
+            BenchmarkId::new("geometry_predicates", workload.name()),
+            &cases,
+            |bench, cases| {
+                bench.iter(|| {
+                    let mut score = 0_i64;
+                    for &(a, b, c, d, e) in cases {
+                        score += determinant_score(geometry_predicates::insphere(
+                            black_box(a),
+                            black_box(b),
+                            black_box(c),
+                            black_box(d),
+                            black_box(e),
                         ));
                     }
                     black_box(score)
@@ -1239,6 +1358,83 @@ fn bench_representation(c: &mut Criterion, label: &'static str, real: fn(f64) ->
     bench_oriented_plane(c, label, real);
     bench_incircle2d(c, label, real);
     bench_insphere3d(c, label, real);
+}
+
+#[cfg(feature = "parallel")]
+fn bench_parallel_batches(c: &mut Criterion) {
+    const PARALLEL_BATCH: usize = 8_192;
+
+    bench_batch_pair(
+        c,
+        "batch_parallel/orient2d/near_degenerate",
+        repeat_cases(
+            orient2d_cases(Workload::NearDegenerate, hyperreal_real),
+            PARALLEL_BATCH,
+        ),
+        |cases| hyperlimit::orient2_batch(cases, APPROX),
+        |cases| hyperlimit::orient2_batch_parallel(cases, APPROX),
+    );
+    bench_batch_pair(
+        c,
+        "batch_parallel/orient3d/near_degenerate",
+        repeat_cases(
+            orient3d_cases(Workload::NearDegenerate, hyperreal_real),
+            PARALLEL_BATCH,
+        ),
+        |cases| hyperlimit::orient3_batch(cases, APPROX),
+        |cases| hyperlimit::orient3_batch_parallel(cases, APPROX),
+    );
+    bench_batch_pair(
+        c,
+        "batch_parallel/incircle2d/near_degenerate",
+        repeat_cases(
+            incircle2d_cases(Workload::NearDegenerate, hyperreal_real),
+            PARALLEL_BATCH,
+        ),
+        |cases| hyperlimit::incircle2_batch(cases, APPROX),
+        |cases| hyperlimit::incircle2_batch_parallel(cases, APPROX),
+    );
+    bench_batch_pair(
+        c,
+        "batch_parallel/insphere3d/near_degenerate",
+        repeat_cases(
+            insphere3d_cases(Workload::NearDegenerate, hyperreal_real),
+            PARALLEL_BATCH,
+        ),
+        |cases| hyperlimit::insphere3_batch(cases, APPROX),
+        |cases| hyperlimit::insphere3_batch_parallel(cases, APPROX),
+    );
+}
+
+#[cfg(feature = "parallel")]
+fn bench_batch_pair<T, O>(
+    c: &mut Criterion,
+    name: &str,
+    cases: Vec<T>,
+    sequential: impl Fn(&[T]) -> Vec<O>,
+    parallel: impl Fn(&[T]) -> Vec<O>,
+) {
+    let mut group = c.benchmark_group(name);
+    group.sample_size(20);
+    group.throughput(criterion::Throughput::Elements(cases.len() as u64));
+    group.bench_function("sequential", |bench| {
+        bench.iter(|| black_box(sequential(black_box(&cases))))
+    });
+    group.bench_function("rayon", |bench| {
+        bench.iter(|| black_box(parallel(black_box(&cases))))
+    });
+    group.finish();
+}
+
+#[cfg(feature = "parallel")]
+fn repeat_cases<T: Clone>(base: Vec<T>, count: usize) -> Vec<T> {
+    assert!(!base.is_empty());
+    let mut repeated = Vec::with_capacity(count);
+    while repeated.len() < count {
+        let remaining = count - repeated.len();
+        repeated.extend(base.iter().take(remaining).cloned());
+    }
+    repeated
 }
 
 fn bench_exact_rational_kernels(c: &mut Criterion) {
@@ -3109,6 +3305,11 @@ fn coord2(point: [f64; 2]) -> Coord<f64> {
 }
 
 #[inline]
+fn apfp_coord2(point: [f64; 2]) -> apfp::geometry::f64::Coord {
+    apfp::geometry::f64::Coord::new(point[0], point[1])
+}
+
+#[inline]
 fn coord3(point: [f64; 3]) -> Coord3D<f64> {
     Coord3D {
         x: point[0],
@@ -3208,6 +3409,15 @@ fn determinant_score(determinant: f64) -> i64 {
         -1
     } else {
         0
+    }
+}
+
+#[inline]
+fn apfp_orientation_score(orientation: apfp::geometry::Orientation) -> i64 {
+    match orientation {
+        apfp::geometry::Orientation::Clockwise => -1,
+        apfp::geometry::Orientation::CoLinear => 0,
+        apfp::geometry::Orientation::CounterClockwise => 1,
     }
 }
 

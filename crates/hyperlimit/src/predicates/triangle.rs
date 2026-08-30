@@ -389,6 +389,16 @@ fn classify_segment_triangle3_intersection_report_impl(
     let plane_event =
         intersect_segment_with_plane_values_with_policy(&d0, &d1, p, q, sides, policy);
 
+    finish_segment_triangle3_report(plane_event, a, b, c, policy)
+}
+
+fn finish_segment_triangle3_report(
+    plane_event: SegmentPlaneIntersection,
+    a: &Point3,
+    b: &Point3,
+    c: &Point3,
+    policy: PredicatePolicy,
+) -> PredicateOutcome<SegmentTriangleIntersectionReport> {
     match plane_event.relation {
         SegmentPlaneRelation::Unknown => {
             PredicateOutcome::unknown(RefinementNeed::Unsupported, Escalation::Undecided)
@@ -397,10 +407,10 @@ fn classify_segment_triangle3_intersection_report_impl(
             PredicateOutcome::unknown(RefinementNeed::Unsupported, Escalation::Exact)
         }
         SegmentPlaneRelation::Disjoint | SegmentPlaneRelation::Coplanar => {
-            let relation = match plane_event.relation {
-                SegmentPlaneRelation::Disjoint => SegmentTriangleIntersection::Disjoint,
-                SegmentPlaneRelation::Coplanar => SegmentTriangleIntersection::Coplanar,
-                _ => unreachable!("matched above"),
+            let relation = if plane_event.relation == SegmentPlaneRelation::Disjoint {
+                SegmentTriangleIntersection::Disjoint
+            } else {
+                SegmentTriangleIntersection::Coplanar
             };
             PredicateOutcome::decided(
                 SegmentTriangleIntersectionReport {
@@ -413,9 +423,10 @@ fn classify_segment_triangle3_intersection_report_impl(
             )
         }
         SegmentPlaneRelation::EndpointOnPlane | SegmentPlaneRelation::ProperCrossing => {
-            let Some(point) = plane_event.point.as_ref() else {
-                return PredicateOutcome::unknown(RefinementNeed::Unsupported, Escalation::Exact);
-            };
+            let point = plane_event
+                .point
+                .as_ref()
+                .expect("a certified segment/plane intersection event retains its point");
             let location = match classify_point_triangle3_with_policy(a, b, c, point, policy) {
                 PredicateOutcome::Decided { value, .. } => value,
                 PredicateOutcome::Unknown { needed, stage } => {
@@ -684,10 +695,8 @@ fn classify_ray_triangle3_intersection_report_impl(
     }
 
     let numerator = neg_real(&origin_expression);
-    let parameter = match &numerator / &direction_expression {
-        Ok(parameter) => parameter,
-        Err(_) => return PredicateOutcome::unknown(RefinementNeed::Unsupported, Escalation::Exact),
-    };
+    let parameter = (&numerator / &direction_expression)
+        .expect("a certified nonzero ray/plane denominator is a valid divisor");
     let intersection = ray_point_at(origin, direction, &parameter);
     match classify_point_triangle3_with_policy(a, b, c, &intersection, policy) {
         PredicateOutcome::Decided { value, .. } => {
@@ -775,7 +784,7 @@ fn classify_point_triangle3_impl(
         &mut stage,
     ) {
         Ok(sign) => sign,
-        Err(unknown) => return unknown,
+        Err(unknown) => return unknown.into_outcome(),
     };
     if plane_sign != Sign::Zero {
         return PredicateOutcome::decided(Triangle3Location::OffPlane, certainty, stage);
@@ -786,7 +795,9 @@ fn classify_point_triangle3_impl(
     let edge_ca = edge_halfspace3_sign(normal, c, a, point, policy, &mut certainty, &mut stage);
     let edge_signs = match (edge_ab, edge_bc, edge_ca) {
         (Ok(ab), Ok(bc), Ok(ca)) => [ab, bc, ca],
-        (Err(unknown), _, _) | (_, Err(unknown), _) | (_, _, Err(unknown)) => return unknown,
+        (Err(unknown), _, _) | (_, Err(unknown), _) | (_, _, Err(unknown)) => {
+            return unknown.into_outcome();
+        }
     };
 
     if edge_signs.contains(&Sign::Negative) {
@@ -995,10 +1006,10 @@ fn classify_point_triangle_impl(
     let stage = combine_stages([triangle.stage, ab.stage, bc.stage, ca.stage]);
     let edge_signs = [ab.sign, bc.sign, ca.sign];
 
-    let opposite = match triangle.sign {
-        Sign::Positive => Sign::Negative,
-        Sign::Negative => Sign::Positive,
-        Sign::Zero => unreachable!("degenerate triangle returned early"),
+    let opposite = if triangle.sign == Sign::Positive {
+        Sign::Negative
+    } else {
+        Sign::Positive
     };
 
     if edge_signs.contains(&opposite) {
@@ -1406,12 +1417,7 @@ fn triangle3_normal_signs_outcome(
         &mut stage,
     ) {
         Ok(signs) => PredicateOutcome::decided(signs, certainty, stage),
-        Err(PredicateOutcome::Unknown { needed, stage }) => {
-            PredicateOutcome::unknown(needed, stage)
-        }
-        Err(PredicateOutcome::Decided { .. }) => {
-            unreachable!("real_signs3 only returns decided signs through Ok")
-        }
+        Err(unknown) => unknown.into_outcome(),
     }
 }
 
@@ -1423,7 +1429,7 @@ fn edge_halfspace3_sign(
     policy: PredicatePolicy,
     certainty: &mut Certainty,
     stage: &mut Escalation,
-) -> Result<Sign, PredicateOutcome<Triangle3Location>> {
+) -> Result<Sign, Triangle3Unknown> {
     let ex = sub_ref(&end.x, &start.x);
     let ey = sub_ref(&end.y, &start.y);
     let ez = sub_ref(&end.z, &start.z);
@@ -1453,7 +1459,7 @@ fn real_signs3(
     policy: PredicatePolicy,
     certainty: &mut Certainty,
     stage: &mut Escalation,
-) -> Result<[Sign; 3], PredicateOutcome<Triangle3Location>> {
+) -> Result<[Sign; 3], Triangle3Unknown> {
     Ok([
         triangle3_sign(
             resolve_real_sign_direct(values[0], policy, RefinementNeed::RealRefinement),
@@ -1477,7 +1483,7 @@ fn triangle3_sign(
     outcome: PredicateOutcome<Sign>,
     certainty: &mut Certainty,
     stage: &mut Escalation,
-) -> Result<Sign, PredicateOutcome<Triangle3Location>> {
+) -> Result<Sign, Triangle3Unknown> {
     match outcome {
         PredicateOutcome::Decided {
             value,
@@ -1488,9 +1494,7 @@ fn triangle3_sign(
             *stage = max_stage(*stage, value_stage);
             Ok(value)
         }
-        PredicateOutcome::Unknown { needed, stage } => {
-            Err(PredicateOutcome::unknown(needed, stage))
-        }
+        PredicateOutcome::Unknown { needed, stage } => Err(Triangle3Unknown { needed, stage }),
     }
 }
 
@@ -1520,6 +1524,18 @@ struct DecidedSign {
     sign: Sign,
     certainty: Certainty,
     stage: Escalation,
+}
+
+#[derive(Clone, Copy, Debug)]
+struct Triangle3Unknown {
+    needed: RefinementNeed,
+    stage: Escalation,
+}
+
+impl Triangle3Unknown {
+    fn into_outcome<T>(self) -> PredicateOutcome<T> {
+        PredicateOutcome::unknown(self.needed, self.stage)
+    }
 }
 
 fn combine_certainties(values: [Certainty; 4]) -> Certainty {
@@ -1588,6 +1604,12 @@ mod tests {
         Point3::new(real(x), real(y), real(z))
     }
 
+    fn terminal_zero() -> Real {
+        let sine = Real::e().sin();
+        let cosine = Real::e().cos();
+        &sine * &sine + &cosine * &cosine - Real::one()
+    }
+
     #[test]
     fn classifies_point_inside_triangle() {
         let a = p2(0.0, 0.0);
@@ -1597,6 +1619,10 @@ mod tests {
 
         assert_eq!(
             crate::classify_point_triangle(&a, &b, &c, &point, APPROX).value(),
+            Some(TriangleLocation::Inside)
+        );
+        assert_eq!(
+            crate::classify_point_triangle(&a, &c, &b, &point, APPROX).value(),
             Some(TriangleLocation::Inside)
         );
     }
@@ -1679,6 +1705,34 @@ mod tests {
                 &p3(0.25, 0.25, 0.0),
                 &orientation,
                 APPROX
+            )
+            .value(),
+            Some(Triangle3Location::Inside)
+        );
+    }
+
+    #[test]
+    fn strict_triangle3_classifier_recomputes_rejected_cached_certainty() {
+        let a = p3(0.0, 0.0, 0.0);
+        let b = p3(2.0, 0.0, 0.0);
+        let c = p3(0.0, 2.0, 0.0);
+        let point = p3(0.25, 0.25, 0.0);
+        let mut orientation = crate::triangle3_orientation(&a, &b, &c, APPROX);
+        let signs = orientation
+            .normal_signs()
+            .value()
+            .expect("exact triangle normal should decide");
+        orientation.normal_signs =
+            PredicateOutcome::decided(signs, Certainty::Approximate, Escalation::Refined);
+
+        assert_eq!(
+            crate::classify_point_triangle3_with_orientation(
+                &a,
+                &b,
+                &c,
+                &point,
+                &orientation,
+                PredicatePolicy::STRICT,
             )
             .value(),
             Some(Triangle3Location::Inside)
@@ -2129,5 +2183,730 @@ mod tests {
             .value(),
             Some(TriangleLocation::Outside)
         );
+    }
+
+    #[test]
+    fn retained_segment_triangle_report_rejects_relation_location_and_replay_corruption() {
+        let a = p3(0.0, 0.0, 0.0);
+        let b = p3(4.0, 0.0, 0.0);
+        let c = p3(0.0, 4.0, 0.0);
+        let p = p3(1.0, 1.0, -1.0);
+        let q = p3(1.0, 1.0, 1.0);
+        let crossing =
+            classify_segment_triangle3_intersection_report_with_policy(&p, &q, &a, &b, &c, APPROX)
+                .value()
+                .expect("rational crossing should decide");
+
+        let mut forged = crossing.clone();
+        forged.relation = SegmentTriangleIntersection::Disjoint;
+        assert_eq!(
+            forged.validate(APPROX),
+            Err(SegmentTriangleValidationError::RelationMismatch)
+        );
+        assert_eq!(
+            crossing.validate_against_sources(&p, &p3(1.0, 1.0, 2.0), &a, &b, &c, APPROX),
+            Err(SegmentTriangleValidationError::SourceReplayMismatch)
+        );
+
+        let disjoint = classify_segment_triangle3_intersection_report_with_policy(
+            &p3(0.0, 0.0, 2.0),
+            &p3(1.0, 0.0, 2.0),
+            &a,
+            &b,
+            &c,
+            APPROX,
+        )
+        .value()
+        .expect("same-side segment should decide");
+        let mut forged = disjoint;
+        forged.triangle_location = Some(Triangle3Location::Outside);
+        assert_eq!(
+            relation_from_segment_plane_event(&forged.plane_event, forged.triangle_location),
+            Err(SegmentTriangleValidationError::UnexpectedTriangleLocation)
+        );
+
+        let coplanar = classify_segment_triangle3_intersection_report_with_policy(
+            &p3(1.0, 1.0, 0.0),
+            &p3(2.0, 1.0, 0.0),
+            &a,
+            &b,
+            &c,
+            APPROX,
+        )
+        .value()
+        .expect("coplanar segment should decide");
+        assert_eq!(
+            relation_from_segment_plane_event(
+                &coplanar.plane_event,
+                Some(Triangle3Location::Inside),
+            ),
+            Err(SegmentTriangleValidationError::UnexpectedTriangleLocation)
+        );
+        assert_eq!(
+            relation_from_segment_plane_event(&crossing.plane_event, None),
+            Err(SegmentTriangleValidationError::MissingTriangleLocation)
+        );
+
+        let mut unsupported = crossing.plane_event.clone();
+        unsupported.relation = SegmentPlaneRelation::Unknown;
+        assert_eq!(
+            relation_from_segment_plane_event(&unsupported, None),
+            Err(SegmentTriangleValidationError::RelationMismatch)
+        );
+        unsupported.relation = SegmentPlaneRelation::ConstructionFailed;
+        assert_eq!(
+            relation_from_segment_plane_event(&unsupported, None),
+            Err(SegmentTriangleValidationError::RelationMismatch)
+        );
+
+        for relation in [
+            SegmentPlaneRelation::Unknown,
+            SegmentPlaneRelation::ConstructionFailed,
+        ] {
+            let mut event = crossing.plane_event.clone();
+            event.relation = relation;
+            assert!(matches!(
+                finish_segment_triangle3_report(event, &a, &b, &c, PredicatePolicy::STRICT),
+                PredicateOutcome::Unknown { .. }
+            ));
+        }
+
+        let terminal_point = Point3::new(terminal_zero(), Real::from(1), Real::from(0));
+        let mut terminal_event = crossing.plane_event.clone();
+        terminal_event.relation = SegmentPlaneRelation::EndpointOnPlane;
+        terminal_event.point = Some(terminal_point.clone());
+        assert!(matches!(
+            finish_segment_triangle3_report(terminal_event, &a, &b, &c, PredicatePolicy::STRICT,),
+            PredicateOutcome::Unknown { .. }
+        ));
+
+        let retained_plane = triangle_support_plane(&a, &b, &c);
+        assert!(matches!(
+            classify_segment_triangle3_intersection_from_sides(
+                &Point3::new(terminal_zero(), Real::from(1), Real::from(-1)),
+                &Point3::new(terminal_zero(), Real::from(1), Real::from(1)),
+                &a,
+                &b,
+                &c,
+                Sign::Negative,
+                Sign::Positive,
+                Some(&retained_plane),
+                PredicatePolicy::STRICT,
+                Certainty::Exact,
+                Escalation::Exact,
+            ),
+            PredicateOutcome::Unknown { .. }
+        ));
+    }
+
+    #[test]
+    fn retained_ray_report_rejects_every_shape_and_parameter_corruption() {
+        let a = p3(0.0, 0.0, 0.0);
+        let b = p3(4.0, 0.0, 0.0);
+        let c = p3(0.0, 4.0, 0.0);
+        let origin = p3(1.0, 1.0, -2.0);
+        let direction = p3(0.0, 0.0, 1.0);
+        let crossing = classify_ray_triangle3_intersection_report_with_policy(
+            &origin, &direction, &a, &b, &c, APPROX,
+        )
+        .value()
+        .expect("rational ray crossing should decide");
+
+        let mut forged = crossing.clone();
+        forged.parameter = None;
+        assert_eq!(
+            forged.validate(APPROX),
+            Err(RayTriangleValidationError::InvalidParameter)
+        );
+
+        let mut forged = crossing.clone();
+        forged.point = None;
+        assert_eq!(
+            forged.validate(APPROX),
+            Err(RayTriangleValidationError::UnexpectedCandidate)
+        );
+
+        let mut forged = crossing.clone();
+        forged.origin_side = Some(PlaneSide::On);
+        assert_eq!(
+            forged.validate(APPROX),
+            Err(RayTriangleValidationError::InvalidParameterRatio)
+        );
+
+        let mut forged = crossing.clone();
+        forged.point = None;
+        forged.parameter = None;
+        assert_eq!(
+            forged.validate(APPROX),
+            Err(RayTriangleValidationError::InvalidParameterRatio)
+        );
+
+        let mut forged = crossing.clone();
+        forged.relation = RayTriangleIntersection::BoundaryTouch;
+        assert_eq!(
+            forged.validate(APPROX),
+            Err(RayTriangleValidationError::RelationMismatch)
+        );
+        assert_eq!(
+            crossing.validate_against_sources(&p3(1.0, 1.0, -3.0), &direction, &a, &b, &c, APPROX,),
+            Err(RayTriangleValidationError::SourceReplayMismatch)
+        );
+
+        assert_eq!(
+            assert_ray_parameter_nonnegative(&Real::from(-1), APPROX),
+            Err(RayTriangleValidationError::InvalidParameter)
+        );
+        assert_eq!(
+            assert_ray_parameter_nonnegative(&terminal_zero(), PredicatePolicy::STRICT),
+            Err(RayTriangleValidationError::InvalidParameter)
+        );
+        assert_eq!(
+            validate_ray_parameter_ratio(
+                &RayTriangleParameterRatio {
+                    numerator: Real::from(1),
+                    denominator: Real::from(0),
+                },
+                &Real::from(1),
+                APPROX,
+            ),
+            Err(RayTriangleValidationError::InvalidParameterRatio)
+        );
+        assert_eq!(
+            validate_ray_parameter_ratio(
+                &RayTriangleParameterRatio {
+                    numerator: Real::from(2),
+                    denominator: Real::from(1),
+                },
+                &Real::from(1),
+                APPROX,
+            ),
+            Err(RayTriangleValidationError::InvalidParameterRatio)
+        );
+        assert_eq!(
+            validate_ray_parameter_ratio(
+                &RayTriangleParameterRatio {
+                    numerator: terminal_zero(),
+                    denominator: Real::from(1),
+                },
+                &Real::from(0),
+                PredicatePolicy::STRICT,
+            ),
+            Err(RayTriangleValidationError::InvalidParameterRatio)
+        );
+        assert_eq!(
+            validate_ray_origin_parameter(Some(PlaneSide::Above), &Real::from(0), APPROX),
+            Err(RayTriangleValidationError::InvalidParameter)
+        );
+        assert_eq!(
+            validate_ray_origin_parameter(Some(PlaneSide::On), &Real::from(1), APPROX),
+            Err(RayTriangleValidationError::InvalidParameter)
+        );
+        assert_eq!(
+            validate_ray_origin_parameter(
+                Some(PlaneSide::On),
+                &terminal_zero(),
+                PredicatePolicy::STRICT,
+            ),
+            Err(RayTriangleValidationError::InvalidParameter)
+        );
+    }
+
+    #[test]
+    fn relation_helpers_cover_all_segment_and_ray_location_collapses() {
+        for location in [
+            Triangle3Location::Inside,
+            Triangle3Location::OnEdge,
+            Triangle3Location::OnVertex,
+            Triangle3Location::Outside,
+            Triangle3Location::OffPlane,
+            Triangle3Location::Degenerate,
+        ] {
+            let crossing = relation_from_constructed_segment_triangle_point(
+                SegmentPlaneRelation::ProperCrossing,
+                location,
+            );
+            let endpoint = relation_from_constructed_segment_triangle_point(
+                SegmentPlaneRelation::EndpointOnPlane,
+                location,
+            );
+            let ray_origin = relation_from_ray_origin_triangle_point(location);
+            let ray_crossing = relation_from_constructed_ray_triangle_point(location);
+            assert!(matches!(
+                crossing,
+                SegmentTriangleIntersection::Proper
+                    | SegmentTriangleIntersection::BoundaryTouch
+                    | SegmentTriangleIntersection::Disjoint
+            ));
+            assert!(matches!(
+                endpoint,
+                SegmentTriangleIntersection::BoundaryTouch | SegmentTriangleIntersection::Disjoint
+            ));
+            assert!(matches!(
+                ray_origin,
+                RayTriangleIntersection::BoundaryTouch | RayTriangleIntersection::Disjoint
+            ));
+            assert!(matches!(
+                ray_crossing,
+                RayTriangleIntersection::Proper
+                    | RayTriangleIntersection::BoundaryTouch
+                    | RayTriangleIntersection::Disjoint
+            ));
+        }
+    }
+
+    #[test]
+    fn retained_report_fact_reduction_rejects_every_optional_field_shape() {
+        let candidate = p3(0.0, 0.0, 0.0);
+        let blank = RayTriangleIntersectionReport {
+            relation: RayTriangleIntersection::Coplanar,
+            origin_side: Some(PlaneSide::On),
+            direction_sign: Some(Sign::Zero),
+            parameter: None,
+            parameter_ratio: None,
+            point: None,
+            triangle_location: None,
+        };
+        assert_eq!(
+            relation_from_ray_report_facts(&blank),
+            Ok(RayTriangleIntersection::Coplanar)
+        );
+
+        let mut report = blank.clone();
+        report.point = Some(candidate.clone());
+        assert_eq!(
+            relation_from_ray_report_facts(&report),
+            Err(RayTriangleValidationError::UnexpectedCandidate)
+        );
+        let mut report = blank.clone();
+        report.triangle_location = Some(Triangle3Location::Inside);
+        assert_eq!(
+            relation_from_ray_report_facts(&report),
+            Err(RayTriangleValidationError::UnexpectedTriangleLocation)
+        );
+        let mut report = blank.clone();
+        report.origin_side = Some(PlaneSide::Above);
+        assert_eq!(
+            relation_from_ray_report_facts(&report),
+            Err(RayTriangleValidationError::RelationMismatch)
+        );
+
+        let crossing_ratio = RayTriangleParameterRatio {
+            numerator: Real::from(1),
+            denominator: Real::from(1),
+        };
+        let crossing = RayTriangleIntersectionReport {
+            relation: RayTriangleIntersection::Proper,
+            origin_side: Some(PlaneSide::Below),
+            direction_sign: Some(Sign::Positive),
+            parameter: Some(Real::from(1)),
+            parameter_ratio: Some(crossing_ratio.clone()),
+            point: Some(candidate.clone()),
+            triangle_location: Some(Triangle3Location::Inside),
+        };
+        assert_eq!(
+            relation_from_ray_report_facts(&crossing),
+            Ok(RayTriangleIntersection::Proper)
+        );
+        let mut report = crossing.clone();
+        report.point = None;
+        assert_eq!(
+            relation_from_ray_report_facts(&report),
+            Err(RayTriangleValidationError::MissingCandidate)
+        );
+        let mut report = crossing.clone();
+        report.triangle_location = None;
+        assert_eq!(
+            relation_from_ray_report_facts(&report),
+            Err(RayTriangleValidationError::MissingTriangleLocation)
+        );
+        let mut report = crossing.clone();
+        report.parameter_ratio = None;
+        assert_eq!(
+            relation_from_ray_report_facts(&report),
+            Ok(RayTriangleIntersection::BoundaryTouch)
+        );
+
+        let disjoint = RayTriangleIntersectionReport {
+            relation: RayTriangleIntersection::Disjoint,
+            origin_side: Some(PlaneSide::Above),
+            direction_sign: Some(Sign::Positive),
+            parameter: None,
+            parameter_ratio: None,
+            point: None,
+            triangle_location: None,
+        };
+        assert_eq!(
+            relation_from_ray_report_facts(&disjoint),
+            Ok(RayTriangleIntersection::Disjoint)
+        );
+        let mut report = disjoint.clone();
+        report.parameter = Some(Real::from(1));
+        assert_eq!(
+            relation_from_ray_report_facts(&report),
+            Err(RayTriangleValidationError::UnexpectedCandidate)
+        );
+        let mut report = disjoint.clone();
+        report.triangle_location = Some(Triangle3Location::Outside);
+        assert_eq!(
+            relation_from_ray_report_facts(&report),
+            Err(RayTriangleValidationError::UnexpectedTriangleLocation)
+        );
+        let mut report = disjoint.clone();
+        report.point = Some(candidate.clone());
+        assert_eq!(
+            relation_from_ray_report_facts(&report),
+            Err(RayTriangleValidationError::MissingCandidate)
+        );
+        let mut report = disjoint;
+        report.point = Some(candidate);
+        report.parameter = Some(Real::from(1));
+        assert_eq!(
+            relation_from_ray_report_facts(&report),
+            Err(RayTriangleValidationError::MissingTriangleLocation)
+        );
+        report.triangle_location = Some(Triangle3Location::Inside);
+        assert_eq!(
+            relation_from_ray_report_facts(&report),
+            Ok(RayTriangleIntersection::BoundaryTouch)
+        );
+
+        let disjoint_plane_event = SegmentPlaneIntersection {
+            relation: SegmentPlaneRelation::Disjoint,
+            point: None,
+            parameter: None,
+            parameter_ratio: None,
+            endpoint_on_plane: None,
+            endpoint_sides: [Some(PlaneSide::Above), Some(PlaneSide::Above)],
+            construction_failure: None,
+        };
+        assert_eq!(
+            relation_from_segment_plane_event(&disjoint_plane_event, None),
+            Ok(SegmentTriangleIntersection::Disjoint)
+        );
+    }
+
+    #[test]
+    fn strict_planar_triangle_classifier_propagates_triangle_and_each_edge_uncertainty() {
+        let a = p2(0.0, 0.0);
+        let b = p2(4.0, 0.0);
+        let c = p2(0.0, 4.0);
+        let unknown =
+            PredicateOutcome::unknown(RefinementNeed::RealRefinement, Escalation::Undecided);
+        assert!(matches!(
+            classify_point_triangle_with_orientation(
+                &a,
+                &b,
+                &c,
+                &p2(1.0, 1.0),
+                unknown,
+                PredicatePolicy::STRICT,
+            ),
+            PredicateOutcome::Unknown { .. }
+        ));
+
+        let unresolved_y = Point2::new(real(1.0), terminal_zero());
+        assert!(matches!(
+            classify_point_triangle_with_policy(&a, &b, &c, &unresolved_y, PredicatePolicy::STRICT),
+            PredicateOutcome::Unknown { .. }
+        ));
+        let unresolved_bc = Point2::new(terminal_zero(), real(4.0));
+        assert!(matches!(
+            classify_point_triangle_with_policy(
+                &a,
+                &b,
+                &c,
+                &unresolved_bc,
+                PredicatePolicy::STRICT,
+            ),
+            PredicateOutcome::Unknown { .. }
+        ));
+        let unresolved_ca = Point2::new(terminal_zero(), real(1.0));
+        assert!(matches!(
+            classify_point_triangle_with_policy(
+                &a,
+                &b,
+                &c,
+                &unresolved_ca,
+                PredicatePolicy::STRICT,
+            ),
+            PredicateOutcome::Unknown { .. }
+        ));
+
+        let uncertain_triangle = Point2::new(real(0.0), terminal_zero());
+        assert!(matches!(
+            classify_point_triangle_with_policy(
+                &a,
+                &b,
+                &uncertain_triangle,
+                &p2(1.0, 1.0),
+                PredicatePolicy::STRICT,
+            ),
+            PredicateOutcome::Unknown { .. }
+        ));
+
+        let facts = crate::geometry::triangle2_facts(&a, &b, &c);
+        assert_eq!(
+            classify_point_triangle_with_policy_and_facts(
+                &a,
+                &b,
+                &c,
+                &p2(1.0, 1.0),
+                facts,
+                APPROX,
+            )
+            .value(),
+            Some(TriangleLocation::Inside)
+        );
+    }
+
+    #[test]
+    fn strict_spatial_triangle_and_tetrahedron_classifiers_propagate_uncertainty() {
+        let a = p3(0.0, 0.0, 0.0);
+        let b = p3(1.0, 0.0, 0.0);
+        let c = p3(0.0, 1.0, 0.0);
+
+        let uncertain_normal = Point3::new(real(0.0), terminal_zero(), real(0.0));
+        assert!(matches!(
+            classify_point_triangle3_with_policy(
+                &a,
+                &b,
+                &uncertain_normal,
+                &a,
+                PredicatePolicy::STRICT,
+            ),
+            PredicateOutcome::Unknown { .. }
+        ));
+        let off_plane_unknown = Point3::new(real(0.25), real(0.25), terminal_zero());
+        assert!(matches!(
+            classify_point_triangle3_with_policy(
+                &a,
+                &b,
+                &c,
+                &off_plane_unknown,
+                PredicatePolicy::STRICT,
+            ),
+            PredicateOutcome::Unknown { .. }
+        ));
+        let edge_unknown = Point3::new(terminal_zero(), real(0.25), real(0.0));
+        assert!(matches!(
+            classify_point_triangle3_with_policy(
+                &a,
+                &b,
+                &c,
+                &edge_unknown,
+                PredicatePolicy::STRICT,
+            ),
+            PredicateOutcome::Unknown { .. }
+        ));
+
+        let d = p3(0.0, 0.0, 1.0);
+        let uncertain_d = Point3::new(real(0.0), real(0.0), terminal_zero());
+        assert!(matches!(
+            classify_point_tetrahedron_with_policy(
+                &a,
+                &b,
+                &c,
+                &uncertain_d,
+                &a,
+                PredicatePolicy::STRICT,
+            ),
+            PredicateOutcome::Unknown { .. }
+        ));
+
+        let queries = [
+            Point3::new(real(0.0), real(0.0), terminal_zero()),
+            Point3::new(real(0.0), terminal_zero(), real(0.0)),
+            Point3::new(terminal_zero(), real(0.0), real(0.0)),
+            Point3::new(&Real::from(1) + &terminal_zero(), real(0.0), real(0.0)),
+        ];
+        for query in &queries {
+            assert!(matches!(
+                classify_point_tetrahedron_with_policy(
+                    &a,
+                    &b,
+                    &c,
+                    &d,
+                    query,
+                    PredicatePolicy::STRICT,
+                ),
+                PredicateOutcome::Unknown { .. }
+            ));
+        }
+    }
+
+    #[test]
+    fn strict_segment_and_ray_triangle_apis_propagate_unresolved_constructions() {
+        let a = p3(0.0, 0.0, 0.0);
+        let b = p3(4.0, 0.0, 0.0);
+        let c = p3(0.0, 4.0, 0.0);
+        let unresolved = Point3::new(real(1.0), real(1.0), terminal_zero());
+
+        assert!(matches!(
+            classify_segment_triangle3_intersection_report_with_policy(
+                &unresolved,
+                &p3(1.0, 1.0, 1.0),
+                &a,
+                &b,
+                &c,
+                PredicatePolicy::STRICT,
+            ),
+            PredicateOutcome::Unknown { .. }
+        ));
+        assert!(matches!(
+            classify_segment_triangle3_intersection_with_policy(
+                &unresolved,
+                &p3(1.0, 1.0, 1.0),
+                &a,
+                &b,
+                &c,
+                PredicatePolicy::STRICT,
+            ),
+            PredicateOutcome::Unknown { .. }
+        ));
+        assert!(matches!(
+            classify_segment_triangle3_intersection_with_policy(
+                &p3(1.0, 1.0, 1.0),
+                &unresolved,
+                &a,
+                &b,
+                &c,
+                PredicatePolicy::STRICT,
+            ),
+            PredicateOutcome::Unknown { .. }
+        ));
+
+        let plane = triangle_support_plane(&a, &b, &c);
+        assert!(matches!(
+            classify_segment_triangle3_intersection_with_preclassified_sides(
+                [&p3(0.0, 0.0, 1.0), &p3(1.0, 0.0, 1.0)],
+                [&a, &b, &c],
+                [PlaneSide::Below, PlaneSide::Above],
+                &plane,
+                APPROX,
+            ),
+            PredicateOutcome::Unknown {
+                needed: RefinementNeed::Unsupported,
+                ..
+            }
+        ));
+
+        let unresolved_direction = Point3::new(real(0.0), real(0.0), terminal_zero());
+        assert!(matches!(
+            classify_ray_triangle3_intersection_report_with_policy(
+                &p3(1.0, 1.0, -1.0),
+                &unresolved_direction,
+                &a,
+                &b,
+                &c,
+                PredicatePolicy::STRICT,
+            ),
+            PredicateOutcome::Unknown { .. }
+        ));
+        assert!(matches!(
+            classify_ray_triangle3_intersection_with_policy(
+                &p3(1.0, 1.0, -1.0),
+                &unresolved_direction,
+                &a,
+                &b,
+                &c,
+                PredicatePolicy::STRICT,
+            ),
+            PredicateOutcome::Unknown { .. }
+        ));
+
+        let origin_unknown = Point3::new(terminal_zero(), real(1.0), real(0.0));
+        assert!(matches!(
+            classify_ray_triangle3_intersection_report_with_policy(
+                &origin_unknown,
+                &p3(0.0, 0.0, 1.0),
+                &a,
+                &b,
+                &c,
+                PredicatePolicy::STRICT,
+            ),
+            PredicateOutcome::Unknown { .. }
+        ));
+        let crossing_unknown = Point3::new(terminal_zero(), real(1.0), real(-1.0));
+        assert!(matches!(
+            classify_ray_triangle3_intersection_report_with_policy(
+                &crossing_unknown,
+                &p3(0.0, 0.0, 1.0),
+                &a,
+                &b,
+                &c,
+                PredicatePolicy::STRICT,
+            ),
+            PredicateOutcome::Unknown { .. }
+        ));
+
+        assert!(matches!(
+            segment_endpoint_triangle_relation(
+                &origin_unknown,
+                &a,
+                &b,
+                &c,
+                PredicatePolicy::STRICT,
+                Certainty::Exact,
+                Escalation::Exact,
+            ),
+            PredicateOutcome::Unknown { .. }
+        ));
+    }
+
+    #[test]
+    fn triangle_sign_and_trace_helpers_cover_unknown_positions_and_all_ranks() {
+        for values in [
+            [terminal_zero(), Real::from(0), Real::from(0)],
+            [Real::from(1), terminal_zero(), Real::from(0)],
+            [Real::from(1), Real::from(1), terminal_zero()],
+        ] {
+            let mut certainty = Certainty::Exact;
+            let mut stage = Escalation::Structural;
+            assert!(matches!(
+                real_signs3(
+                    [&values[0], &values[1], &values[2]],
+                    PredicatePolicy::STRICT,
+                    &mut certainty,
+                    &mut stage,
+                ),
+                Err(Triangle3Unknown { .. })
+            ));
+        }
+
+        let mut certainty = Certainty::Exact;
+        let mut stage = Escalation::Structural;
+        let unknown =
+            PredicateOutcome::unknown(RefinementNeed::RealRefinement, Escalation::Undecided);
+        assert!(matches!(
+            segment_triangle_sign(unknown, &mut certainty, &mut stage),
+            Err(PredicateOutcome::Unknown { .. })
+        ));
+        assert!(matches!(
+            triangle3_sign(unknown, &mut certainty, &mut stage),
+            Err(Triangle3Unknown { .. })
+        ));
+        assert!(matches!(
+            tetrahedron_sign(unknown, &mut certainty, &mut stage),
+            Err(PredicateOutcome::Unknown { .. })
+        ));
+
+        assert_eq!(combine_certainties([Certainty::Exact; 4]), Certainty::Exact);
+        assert_eq!(
+            max_certainty(Certainty::Exact, Certainty::Filtered),
+            Certainty::Filtered
+        );
+        assert_eq!(certainty_rank(Certainty::Exact), 0);
+        assert_eq!(certainty_rank(Certainty::Filtered), 1);
+        assert_eq!(certainty_rank(Certainty::Approximate), 2);
+        assert_eq!(combine_stages([Escalation::Exact; 4]), Escalation::Exact);
+        assert_eq!(
+            max_stage(Escalation::Filter, Escalation::Refined),
+            Escalation::Refined
+        );
+        assert_eq!(stage_rank(Escalation::Structural), 0);
+        assert_eq!(stage_rank(Escalation::Filter), 1);
+        assert_eq!(stage_rank(Escalation::Exact), 2);
+        assert_eq!(stage_rank(Escalation::Refined), 3);
+        assert_eq!(stage_rank(Escalation::Undecided), 4);
     }
 }

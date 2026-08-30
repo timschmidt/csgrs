@@ -188,6 +188,12 @@ mod tests {
         Point3::new(Real::from(x), Real::from(y), Real::from(z))
     }
 
+    fn terminal_zero() -> Real {
+        let sine = Real::e().sin();
+        let cosine = Real::e().cos();
+        &sine * &sine + &cosine * &cosine - Real::one()
+    }
+
     #[test]
     fn convex_polygon2_classifier_composes_edge_halfspaces() {
         let square = vec![p2(0, 0), p2(4, 0), p2(4, 4), p2(0, 4)];
@@ -204,6 +210,65 @@ mod tests {
             crate::classify_point_convex_polygon2(&square, &p2(5, 2), APPROX).value(),
             Some(ConvexPointLocation::Outside)
         );
+    }
+
+    #[test]
+    fn convex_polygon2_handles_degenerate_clockwise_and_undecided_inputs() {
+        assert_eq!(
+            crate::classify_point_convex_polygon2(&[], &p2(0, 0), APPROX).value(),
+            Some(ConvexPointLocation::Degenerate)
+        );
+        assert_eq!(
+            crate::classify_point_convex_polygon2(
+                &[p2(0, 0), p2(1, 1), p2(2, 2)],
+                &p2(1, 1),
+                APPROX,
+            )
+            .value(),
+            Some(ConvexPointLocation::Degenerate)
+        );
+
+        let clockwise = [p2(0, 0), p2(0, 4), p2(4, 4), p2(4, 0)];
+        assert_eq!(
+            crate::classify_point_convex_polygon2(&clockwise, &p2(2, 2), APPROX).value(),
+            Some(ConvexPointLocation::Inside)
+        );
+        assert_eq!(
+            crate::classify_point_convex_polygon2(&clockwise, &p2(0, 2), APPROX).value(),
+            Some(ConvexPointLocation::Boundary)
+        );
+
+        let unknown_area = [
+            p2(0, 0),
+            p2(1, 0),
+            Point2::new(Real::from(0), terminal_zero()),
+        ];
+        assert!(matches!(
+            crate::classify_point_convex_polygon2(
+                &unknown_area,
+                &p2(0, 0),
+                PredicatePolicy::STRICT,
+            ),
+            PredicateOutcome::Unknown { .. }
+        ));
+
+        let exact_square = [p2(0, 0), p2(4, 0), p2(4, 4), p2(0, 4)];
+        let uncertain_point = Point2::new(Real::from(2), terminal_zero());
+        assert!(matches!(
+            crate::classify_point_convex_polygon2(
+                &exact_square,
+                &uncertain_point,
+                PredicatePolicy::STRICT,
+            ),
+            PredicateOutcome::Unknown { .. }
+        ));
+        assert!(matches!(
+            crate::classify_point_convex_polygon2(&exact_square, &uncertain_point, APPROX),
+            PredicateOutcome::Decided {
+                certainty: Certainty::Approximate,
+                ..
+            }
+        ));
     }
 
     #[test]
@@ -228,6 +293,44 @@ mod tests {
         assert_eq!(
             crate::classify_point_convex_planes3(&planes, &p3(5, 2, 2), APPROX).value(),
             Some(ConvexPointLocation::Outside)
+        );
+    }
+
+    #[test]
+    fn convex_planes3_handles_empty_and_undecided_carriers() {
+        assert_eq!(
+            crate::classify_point_convex_planes3(&[], &p3(0, 0, 0), APPROX).value(),
+            Some(ConvexPointLocation::Degenerate)
+        );
+
+        let plane = Plane3::new(p3(0, 0, 0), terminal_zero());
+        assert!(matches!(
+            crate::classify_point_convex_planes3(
+                core::slice::from_ref(&plane),
+                &p3(0, 0, 0),
+                PredicatePolicy::STRICT,
+            ),
+            PredicateOutcome::Unknown { .. }
+        ));
+        assert!(matches!(
+            crate::classify_point_convex_planes3(&[plane], &p3(0, 0, 0), APPROX),
+            PredicateOutcome::Decided {
+                certainty: Certainty::Approximate,
+                ..
+            }
+        ));
+
+        assert_eq!(
+            max_certainty(Certainty::Exact, Certainty::Filtered),
+            Certainty::Filtered
+        );
+        assert_eq!(
+            max_stage(Escalation::Structural, Escalation::Filter),
+            Escalation::Filter
+        );
+        assert_eq!(
+            max_stage(Escalation::Exact, Escalation::Undecided),
+            Escalation::Undecided
         );
     }
 }

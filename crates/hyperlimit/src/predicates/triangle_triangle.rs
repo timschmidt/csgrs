@@ -96,6 +96,14 @@ impl TriangleTriangleClassification {
         }
 
         if let Some(coplanar) = &self.coplanar {
+            if !matches!(
+                self.relation,
+                TriangleTriangleIntersection::CoplanarDisjoint
+                    | TriangleTriangleIntersection::CoplanarTouching
+                    | TriangleTriangleIntersection::CoplanarOverlapping
+            ) {
+                return Err(TriangleTriangleValidationError::UnexpectedCoplanarClassification);
+            }
             let expected = relation_from_coplanar(coplanar.relation)
                 .ok_or(TriangleTriangleValidationError::CoplanarRelationMismatch)?;
             if self.relation == expected {
@@ -262,8 +270,6 @@ fn classify_triangle_triangle3_points_impl(
         });
     }
 
-    let mut left_edges_against_right = [None; 3];
-    let mut right_edges_against_left = [None; 3];
     let mut saw_boundary = false;
     let mut saw_crossing = false;
     crate::trace_dispatch!(
@@ -272,50 +278,21 @@ fn classify_triangle_triangle3_points_impl(
         "reuse-plane-sides-for-edges"
     );
 
-    for (slot, (edge, endpoint_sides)) in triangle_edges(left)
-        .into_iter()
-        .zip(triangle_edge_sides(left_against_right_sides))
-        .enumerate()
-    {
-        let relation =
-            match edge_against_triangle(edge, endpoint_sides, right, right_plane.plane(), policy) {
-                Ok(relation) => relation,
-                Err(unknown) => return unknown,
-            };
-        if let Err(unknown) = absorb_edge_relation(
-            relation,
-            edge,
-            right,
-            policy,
-            &mut saw_boundary,
-            &mut saw_crossing,
-        ) {
-            return unknown;
-        }
-        left_edges_against_right[slot] = Some(relation);
-    }
-    for (slot, (edge, endpoint_sides)) in triangle_edges(right)
-        .into_iter()
-        .zip(triangle_edge_sides(right_against_left_sides))
-        .enumerate()
-    {
-        let relation =
-            match edge_against_triangle(edge, endpoint_sides, left, left_plane.plane(), policy) {
-                Ok(relation) => relation,
-                Err(unknown) => return unknown,
-            };
-        if let Err(unknown) = absorb_edge_relation(
-            relation,
-            edge,
-            left,
-            policy,
-            &mut saw_boundary,
-            &mut saw_crossing,
-        ) {
-            return unknown;
-        }
-        right_edges_against_left[slot] = Some(relation);
-    }
+    let edge_reports = classify_triangle_pair_edges(
+        left,
+        right,
+        left_against_right_sides,
+        right_against_left_sides,
+        left_plane.plane(),
+        right_plane.plane(),
+        policy,
+        &mut saw_boundary,
+        &mut saw_crossing,
+    );
+    let (left_edges_against_right, right_edges_against_left) = match edge_reports {
+        Ok(reports) => reports,
+        Err(unknown) => return unknown,
+    };
 
     let relation = if saw_crossing {
         TriangleTriangleIntersection::NonCoplanarIntersection
@@ -335,6 +312,65 @@ fn classify_triangle_triangle3_points_impl(
         right_edges_against_left,
         coplanar: None,
     })
+}
+
+type TriangleEdgeReports = [Option<SegmentTriangleIntersection>; 3];
+type TrianglePairEdgeReports = (TriangleEdgeReports, TriangleEdgeReports);
+type TrianglePairUnknown = PredicateOutcome<TriangleTriangleClassification>;
+
+#[allow(clippy::too_many_arguments)]
+fn classify_triangle_pair_edges(
+    left: [&Point3; 3],
+    right: [&Point3; 3],
+    left_against_right_sides: [PlaneSide; 3],
+    right_against_left_sides: [PlaneSide; 3],
+    left_plane: &crate::geometry::Plane3,
+    right_plane: &crate::geometry::Plane3,
+    policy: PredicatePolicy,
+    saw_boundary: &mut bool,
+    saw_crossing: &mut bool,
+) -> Result<TrianglePairEdgeReports, TrianglePairUnknown> {
+    let mut reports = [[None; 3]; 2];
+    for (direction, direction_reports) in reports.iter_mut().enumerate() {
+        let (source, source_sides, target, target_plane) = if direction == 0 {
+            (left, left_against_right_sides, right, right_plane)
+        } else {
+            (right, right_against_left_sides, left, left_plane)
+        };
+        *direction_reports = classify_triangle_edges_against_triangle(
+            source,
+            source_sides,
+            target,
+            target_plane,
+            policy,
+            saw_boundary,
+            saw_crossing,
+        )?;
+    }
+    let [left_reports, right_reports] = reports;
+    Ok((left_reports, right_reports))
+}
+
+fn classify_triangle_edges_against_triangle(
+    source: [&Point3; 3],
+    source_sides: [PlaneSide; 3],
+    target: [&Point3; 3],
+    target_plane: &crate::geometry::Plane3,
+    policy: PredicatePolicy,
+    saw_boundary: &mut bool,
+    saw_crossing: &mut bool,
+) -> Result<TriangleEdgeReports, TrianglePairUnknown> {
+    let mut reports = [None; 3];
+    for (slot, (edge, endpoint_sides)) in triangle_edges(source)
+        .into_iter()
+        .zip(triangle_edge_sides(source_sides))
+        .enumerate()
+    {
+        let relation = edge_against_triangle(edge, endpoint_sides, target, target_plane, policy)?;
+        absorb_edge_relation(relation, edge, target, policy, saw_boundary, saw_crossing)?;
+        reports[slot] = Some(relation);
+    }
+    Ok(reports)
 }
 
 fn edge_against_triangle(
@@ -437,45 +473,43 @@ fn coplanar_segment_intersects_triangle(
     let triangle2 = project_triangle3(triangle, projection);
 
     for endpoint in &segment2 {
-        match classify_point_triangle_with_policy(
+        let value = outcome_value(classify_point_triangle_with_policy(
             &triangle2[0],
             &triangle2[1],
             &triangle2[2],
             endpoint,
             policy,
+        ))?;
+        if matches!(
+            value,
+            TriangleLocation::Inside | TriangleLocation::OnEdge | TriangleLocation::OnVertex
         ) {
-            PredicateOutcome::Decided { value, .. } => {
-                if matches!(
-                    value,
-                    TriangleLocation::Inside
-                        | TriangleLocation::OnEdge
-                        | TriangleLocation::OnVertex
-                ) {
-                    return Ok(true);
-                }
-            }
-            PredicateOutcome::Unknown { needed, stage } => {
-                return Err(PredicateOutcome::unknown(needed, stage));
-            }
+            return Ok(true);
         }
     }
 
     for edge in triangle_edges2(&triangle2) {
-        match classify_segment_intersection_with_policy(
+        let value = outcome_value(classify_segment_intersection_with_policy(
             &segment2[0],
             &segment2[1],
             edge[0],
             edge[1],
             policy,
-        ) {
-            PredicateOutcome::Decided { value, .. } if value.intersects() => return Ok(true),
-            PredicateOutcome::Decided { .. } => {}
-            PredicateOutcome::Unknown { needed, stage } => {
-                return Err(PredicateOutcome::unknown(needed, stage));
-            }
+        ))?;
+        if value.intersects() {
+            return Ok(true);
         }
     }
     Ok(false)
+}
+
+fn outcome_value<T, U>(outcome: PredicateOutcome<T>) -> Result<T, PredicateOutcome<U>> {
+    match outcome {
+        PredicateOutcome::Decided { value, .. } => Ok(value),
+        PredicateOutcome::Unknown { needed, stage } => {
+            Err(PredicateOutcome::unknown(needed, stage))
+        }
+    }
 }
 
 fn derive_non_coplanar_relation(
@@ -573,6 +607,12 @@ mod tests {
         Point3::new(Real::from(x), Real::from(y), Real::from(z))
     }
 
+    fn terminal_zero() -> Real {
+        let sine = Real::e().sin();
+        let cosine = Real::e().cos();
+        &sine * &sine + &cosine * &cosine - Real::one()
+    }
+
     fn classify(left: [&Point3; 3], right: [&Point3; 3]) -> TriangleTriangleClassification {
         classify_triangle_triangle3_points_with_policy(left, right, APPROX)
             .value()
@@ -634,6 +674,15 @@ mod tests {
         );
         assert!(report.coplanar.is_some());
         assert_eq!(report.validate(), Ok(()));
+
+        let projected = project_triangle3(
+            [&a[0], &a[1], &a[2]],
+            crate::predicates::coplanar::CoplanarProjection::Xy,
+        );
+        let edges = triangle_edges2(&projected);
+        assert_eq!(edges[0], [&projected[0], &projected[1]]);
+        assert_eq!(edges[1], [&projected[1], &projected[2]]);
+        assert_eq!(edges[2], [&projected[2], &projected[0]]);
     }
 
     #[test]
@@ -644,5 +693,442 @@ mod tests {
 
         assert_eq!(report.relation, TriangleTriangleIntersection::Degenerate);
         assert_eq!(report.validate(), Ok(()));
+    }
+
+    #[test]
+    fn triangle_triangle_covers_coplanar_disjoint_and_touching_relations() {
+        let a = [p3(0, 0, 0), p3(4, 0, 0), p3(0, 4, 0)];
+        let disjoint = [p3(10, 10, 0), p3(14, 10, 0), p3(10, 14, 0)];
+        let touching = [p3(4, 0, 0), p3(7, 0, 0), p3(4, 3, 0)];
+
+        let report = classify(
+            [&a[0], &a[1], &a[2]],
+            [&disjoint[0], &disjoint[1], &disjoint[2]],
+        );
+        assert_eq!(
+            report.relation,
+            TriangleTriangleIntersection::CoplanarDisjoint
+        );
+        assert_eq!(report.validate(), Ok(()));
+
+        let report = classify(
+            [&a[0], &a[1], &a[2]],
+            [&touching[0], &touching[1], &touching[2]],
+        );
+        assert_eq!(
+            report.relation,
+            TriangleTriangleIntersection::CoplanarTouching
+        );
+        assert_eq!(report.validate(), Ok(()));
+    }
+
+    #[test]
+    fn triangle_triangle_can_be_disjoint_without_plane_separation() {
+        let horizontal = [p3(-2, 0, 0), p3(2, 0, 0), p3(0, 4, 0)];
+        let vertical = [p3(0, 10, -2), p3(0, 10, 2), p3(0, 14, 0)];
+        let report = classify(
+            [&horizontal[0], &horizontal[1], &horizontal[2]],
+            [&vertical[0], &vertical[1], &vertical[2]],
+        );
+
+        assert_eq!(report.relation, TriangleTriangleIntersection::Disjoint);
+        assert_eq!(report.edge_report_count(), 6);
+        assert!(
+            !report
+                .right_against_left_plane
+                .is_some_and(separated_by_plane)
+        );
+        assert!(
+            !report
+                .left_against_right_plane
+                .is_some_and(separated_by_plane)
+        );
+        assert_eq!(report.validate(), Ok(()));
+    }
+
+    #[test]
+    fn coplanar_segment_helper_covers_endpoint_edge_and_disjoint_paths() {
+        let triangle = [p3(0, 0, 0), p3(4, 0, 0), p3(0, 4, 0)];
+        let inside = [p3(1, 1, 0), p3(6, 1, 0)];
+        let crossing = [p3(-1, 1, 0), p3(5, 1, 0)];
+        let outside = [p3(6, 6, 0), p3(8, 6, 0)];
+
+        assert!(matches!(
+            coplanar_segment_intersects_triangle(
+                [&inside[0], &inside[1]],
+                [&triangle[0], &triangle[1], &triangle[2]],
+                APPROX,
+            ),
+            Ok(true)
+        ));
+        assert!(matches!(
+            coplanar_segment_intersects_triangle(
+                [&crossing[0], &crossing[1]],
+                [&triangle[0], &triangle[1], &triangle[2]],
+                APPROX,
+            ),
+            Ok(true)
+        ));
+        assert!(matches!(
+            coplanar_segment_intersects_triangle(
+                [&outside[0], &outside[1]],
+                [&triangle[0], &triangle[1], &triangle[2]],
+                APPROX,
+            ),
+            Ok(false)
+        ));
+
+        let degenerate = [p3(0, 0, 0), p3(1, 1, 1), p3(2, 2, 2)];
+        assert!(matches!(
+            coplanar_segment_intersects_triangle(
+                [&inside[0], &inside[1]],
+                [&degenerate[0], &degenerate[1], &degenerate[2]],
+                APPROX,
+            ),
+            Err(PredicateOutcome::Unknown {
+                needed: RefinementNeed::Unsupported,
+                stage: Escalation::Undecided,
+            })
+        ));
+    }
+
+    #[test]
+    fn plane_triangle_helper_classifies_every_coarse_side_relation() {
+        let plane_points = [p3(0, 0, 0), p3(4, 0, 0), p3(0, 4, 0)];
+        let plane = oriented_plane3_evidence(&plane_points[0], &plane_points[1], &plane_points[2]);
+        let cases = [
+            (
+                [p3(0, 0, 2), p3(1, 0, 2), p3(0, 1, 2)],
+                PlaneTriangleRelation::Below,
+            ),
+            (
+                [p3(0, 0, -2), p3(1, 0, -2), p3(0, 1, -2)],
+                PlaneTriangleRelation::Above,
+            ),
+            (
+                [p3(0, 0, 0), p3(1, 0, 0), p3(0, 1, 0)],
+                PlaneTriangleRelation::Coplanar,
+            ),
+            (
+                [p3(0, 0, -1), p3(1, 0, 1), p3(0, 1, 0)],
+                PlaneTriangleRelation::Split,
+            ),
+            (
+                [p3(0, 0, 0), p3(1, 0, 1), p3(0, 1, 1)],
+                PlaneTriangleRelation::BoundaryTouch,
+            ),
+        ];
+
+        for (triangle, expected) in cases {
+            let outcome = classify_triangle_against_plane_evidence(
+                &plane,
+                [&triangle[0], &triangle[1], &triangle[2]],
+                APPROX,
+            );
+            assert!(matches!(outcome, Ok((relation, _)) if relation == expected));
+        }
+
+        let unresolved = [
+            Point3::new(Real::from(0), Real::from(0), terminal_zero()),
+            p3(1, 0, 1),
+            p3(0, 1, 1),
+        ];
+        assert!(matches!(
+            classify_triangle_against_plane_evidence(
+                &plane,
+                [&unresolved[0], &unresolved[1], &unresolved[2]],
+                PredicatePolicy::STRICT,
+            ),
+            Err(PredicateOutcome::Unknown { .. })
+        ));
+    }
+
+    #[test]
+    fn retained_relation_helpers_cover_all_collapsed_outcomes() {
+        assert_eq!(
+            relation_from_coplanar(CoplanarTriangleRelation::Disjoint),
+            Some(TriangleTriangleIntersection::CoplanarDisjoint)
+        );
+        assert_eq!(
+            relation_from_coplanar(CoplanarTriangleRelation::Touching),
+            Some(TriangleTriangleIntersection::CoplanarTouching)
+        );
+        assert_eq!(
+            relation_from_coplanar(CoplanarTriangleRelation::Overlapping),
+            Some(TriangleTriangleIntersection::CoplanarOverlapping)
+        );
+        assert_eq!(
+            relation_from_coplanar(CoplanarTriangleRelation::Unknown),
+            None
+        );
+
+        let none = [None; 3];
+        assert_eq!(
+            derive_non_coplanar_relation(Some(PlaneTriangleRelation::Above), None, none, none,),
+            TriangleTriangleIntersection::Disjoint
+        );
+        assert_eq!(
+            derive_non_coplanar_relation(
+                Some(PlaneTriangleRelation::Split),
+                Some(PlaneTriangleRelation::Split),
+                [Some(SegmentTriangleIntersection::BoundaryTouch), None, None],
+                none,
+            ),
+            TriangleTriangleIntersection::BoundaryTouch
+        );
+        assert_eq!(
+            derive_non_coplanar_relation(
+                None,
+                None,
+                [Some(SegmentTriangleIntersection::Proper), None, None],
+                [Some(SegmentTriangleIntersection::Coplanar), None, None],
+            ),
+            TriangleTriangleIntersection::NonCoplanarIntersection
+        );
+        assert_eq!(
+            derive_non_coplanar_relation(None, None, none, none),
+            TriangleTriangleIntersection::Disjoint
+        );
+    }
+
+    #[test]
+    fn retained_report_rejects_false_degeneracy_and_unknown_coplanar_relation() {
+        let a = [p3(0, 0, 0), p3(4, 0, 0), p3(0, 4, 0)];
+        let b = [p3(0, 0, 2), p3(4, 0, 2), p3(0, 4, 2)];
+        let mut report = classify([&a[0], &a[1], &a[2]], [&b[0], &b[1], &b[2]]);
+        report.relation = TriangleTriangleIntersection::Degenerate;
+        assert_eq!(
+            report.validate(),
+            Err(TriangleTriangleValidationError::DegeneracyMismatch)
+        );
+
+        let coplanar_b = [p3(1, 1, 0), p3(5, 1, 0), p3(1, 5, 0)];
+        let mut report = classify(
+            [&a[0], &a[1], &a[2]],
+            [&coplanar_b[0], &coplanar_b[1], &coplanar_b[2]],
+        );
+        report
+            .coplanar
+            .as_mut()
+            .expect("coplanar pair should retain its projected report")
+            .relation = CoplanarTriangleRelation::Unknown;
+        assert_eq!(
+            report.validate(),
+            Err(TriangleTriangleValidationError::CoplanarRelationMismatch)
+        );
+    }
+
+    #[test]
+    fn strict_composition_propagates_each_preconstruction_uncertainty_stage() {
+        let planar = [p3(0, 0, 0), p3(4, 0, 0), p3(0, 4, 0)];
+        let uncertain_triangle = [
+            p3(0, 0, 0),
+            p3(1, 0, 0),
+            Point3::new(Real::from(0), terminal_zero(), Real::from(0)),
+        ];
+        assert!(matches!(
+            classify_triangle_triangle3_points_impl(
+                [
+                    &uncertain_triangle[0],
+                    &uncertain_triangle[1],
+                    &uncertain_triangle[2]
+                ],
+                [&planar[0], &planar[1], &planar[2]],
+                PredicatePolicy::STRICT,
+            ),
+            PredicateOutcome::Unknown { .. }
+        ));
+        assert!(matches!(
+            classify_triangle_triangle3_points_impl(
+                [&planar[0], &planar[1], &planar[2]],
+                [
+                    &uncertain_triangle[0],
+                    &uncertain_triangle[1],
+                    &uncertain_triangle[2]
+                ],
+                PredicatePolicy::STRICT,
+            ),
+            PredicateOutcome::Unknown { .. }
+        ));
+
+        let translated_z = terminal_zero();
+        let parallel_unknown = [
+            Point3::new(Real::from(0), Real::from(0), translated_z.clone()),
+            Point3::new(Real::from(1), Real::from(0), translated_z.clone()),
+            Point3::new(Real::from(0), Real::from(1), translated_z),
+        ];
+        assert_eq!(
+            classify_triangle3_degeneracy_with_policy(
+                &parallel_unknown[0],
+                &parallel_unknown[1],
+                &parallel_unknown[2],
+                PredicatePolicy::STRICT,
+            )
+            .value(),
+            Some(TriangleDegeneracy::NonDegenerate)
+        );
+        assert!(matches!(
+            classify_triangle_triangle3_points_impl(
+                [&planar[0], &planar[1], &planar[2]],
+                [
+                    &parallel_unknown[0],
+                    &parallel_unknown[1],
+                    &parallel_unknown[2]
+                ],
+                PredicatePolicy::STRICT,
+            ),
+            PredicateOutcome::Unknown { .. }
+        ));
+
+        let translated_x = terminal_zero();
+        let vertical_unknown = [
+            Point3::new(translated_x.clone(), Real::from(0), Real::from(-1)),
+            Point3::new(translated_x.clone(), Real::from(1), Real::from(1)),
+            Point3::new(translated_x, Real::from(-1), Real::from(1)),
+        ];
+        assert_eq!(
+            classify_triangle3_degeneracy_with_policy(
+                &vertical_unknown[0],
+                &vertical_unknown[1],
+                &vertical_unknown[2],
+                PredicatePolicy::STRICT,
+            )
+            .value(),
+            Some(TriangleDegeneracy::NonDegenerate)
+        );
+        assert!(matches!(
+            classify_triangle_triangle3_points_impl(
+                [&planar[0], &planar[1], &planar[2]],
+                [
+                    &vertical_unknown[0],
+                    &vertical_unknown[1],
+                    &vertical_unknown[2]
+                ],
+                PredicatePolicy::STRICT,
+            ),
+            PredicateOutcome::Unknown { .. }
+        ));
+
+        let plane = oriented_plane3_evidence(&planar[0], &planar[1], &planar[2]);
+        assert!(matches!(
+            edge_against_triangle(
+                [&p3(0, 0, 1), &p3(1, 0, 1)],
+                [PlaneSide::Below, PlaneSide::Above],
+                [&planar[0], &planar[1], &planar[2]],
+                plane.plane(),
+                APPROX,
+            ),
+            Err(PredicateOutcome::Unknown { .. })
+        ));
+
+        let endpoint_unknown = Point3::new(Real::from(1), terminal_zero(), Real::from(0));
+        assert!(matches!(
+            coplanar_segment_intersects_triangle(
+                [&endpoint_unknown, &p3(6, 1, 0)],
+                [&planar[0], &planar[1], &planar[2]],
+                PredicatePolicy::STRICT,
+            ),
+            Err(PredicateOutcome::Unknown { .. })
+        ));
+
+        let edge_unknown = terminal_zero();
+        let outside_start = Point3::new(edge_unknown.clone(), Real::from(-1), Real::from(0));
+        let outside_end = Point3::new(
+            &edge_unknown + &Real::from(1),
+            Real::from(-1),
+            Real::from(0),
+        );
+        assert!(matches!(
+            coplanar_segment_intersects_triangle(
+                [&outside_start, &outside_end],
+                [&planar[0], &planar[1], &planar[2]],
+                PredicatePolicy::STRICT,
+            ),
+            Err(PredicateOutcome::Unknown { .. })
+        ));
+
+        let shared_shift = terminal_zero();
+        let coplanar_unknown = [
+            Point3::new(&Real::from(4) + &shared_shift, 0.into(), 0.into()),
+            Point3::new(&Real::from(5) + &shared_shift, 0.into(), 0.into()),
+            Point3::new(&Real::from(4) + &shared_shift, 1.into(), 0.into()),
+        ];
+        assert!(matches!(
+            classify_triangle_triangle3_points_impl(
+                [&planar[0], &planar[1], &planar[2]],
+                [
+                    &coplanar_unknown[0],
+                    &coplanar_unknown[1],
+                    &coplanar_unknown[2],
+                ],
+                PredicatePolicy::STRICT,
+            ),
+            PredicateOutcome::Unknown { .. }
+        ));
+
+        let vertex_shift = terminal_zero();
+        let tangent_start = Point3::new(
+            Real::from(-1),
+            &Real::from(1) + &vertex_shift,
+            Real::from(0),
+        );
+        let tangent_end = Point3::new(
+            &Real::from(1) + &vertex_shift,
+            Real::from(-1),
+            Real::from(0),
+        );
+        assert!(matches!(
+            coplanar_segment_intersects_triangle(
+                [&tangent_start, &tangent_end],
+                [&planar[0], &planar[1], &planar[2]],
+                PredicatePolicy::STRICT,
+            ),
+            Err(PredicateOutcome::Unknown { .. })
+        ));
+
+        let plane = oriented_plane3_evidence(&planar[0], &planar[1], &planar[2]);
+        let mut saw_boundary = false;
+        let mut saw_crossing = false;
+        assert!(matches!(
+            classify_triangle_edges_against_triangle(
+                [&endpoint_unknown, &p3(6, 1, 0), &p3(7, 1, 0)],
+                [PlaneSide::On; 3],
+                [&planar[0], &planar[1], &planar[2]],
+                plane.plane(),
+                PredicatePolicy::STRICT,
+                &mut saw_boundary,
+                &mut saw_crossing,
+            ),
+            Err(PredicateOutcome::Unknown { .. })
+        ));
+
+        let edge_shift = terminal_zero();
+        let vertical_edge_unknown = [
+            Point3::new(1.into(), edge_shift.clone(), (-1).into()),
+            Point3::new(1.into(), edge_shift.clone(), 1.into()),
+            Point3::new(1.into(), &Real::from(1) + &edge_shift, 0.into()),
+        ];
+        assert_eq!(
+            classify_triangle3_degeneracy_with_policy(
+                &vertical_edge_unknown[0],
+                &vertical_edge_unknown[1],
+                &vertical_edge_unknown[2],
+                PredicatePolicy::STRICT,
+            )
+            .value(),
+            Some(TriangleDegeneracy::NonDegenerate)
+        );
+        assert!(matches!(
+            classify_triangle_triangle3_points_impl(
+                [&planar[0], &planar[1], &planar[2]],
+                [
+                    &vertical_edge_unknown[0],
+                    &vertical_edge_unknown[1],
+                    &vertical_edge_unknown[2],
+                ],
+                PredicatePolicy::STRICT,
+            ),
+            PredicateOutcome::Unknown { .. }
+        ));
     }
 }

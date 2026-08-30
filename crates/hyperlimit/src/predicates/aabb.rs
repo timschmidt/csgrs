@@ -13,6 +13,7 @@ use crate::geometry::{Aabb2Facts, Point2, Point3};
 use crate::predicate::PredicatePolicy;
 use crate::predicate::{Certainty, Escalation, PredicateOutcome, RefinementNeed};
 use crate::predicates::interval::{
+    classify_closed_interval_intersection_with_extent_policy,
     classify_closed_interval_intersection_with_policy, classify_real_closed_interval_with_policy,
 };
 use crate::predicates::order::compare_reals_with_policy;
@@ -626,8 +627,8 @@ pub fn classify_aabb3_intersection_with_policy(
 
     let mut trace = DecisionTrace::default();
 
-    let x = match decided(
-        classify_closed_interval_intersection_with_policy(
+    let (x, x_zero_extent) = match decided(
+        classify_closed_interval_intersection_with_extent_policy(
             &first_min.x,
             &first_max.x,
             &second_min.x,
@@ -647,8 +648,8 @@ pub fn classify_aabb3_intersection_with_policy(
         );
     }
 
-    let y = match decided(
-        classify_closed_interval_intersection_with_policy(
+    let (y, y_zero_extent) = match decided(
+        classify_closed_interval_intersection_with_extent_policy(
             &first_min.y,
             &first_max.y,
             &second_min.y,
@@ -668,8 +669,8 @@ pub fn classify_aabb3_intersection_with_policy(
         );
     }
 
-    let z = match decided(
-        classify_closed_interval_intersection_with_policy(
+    let (z, z_zero_extent) = match decided(
+        classify_closed_interval_intersection_with_extent_policy(
             &first_min.z,
             &first_max.z,
             &second_min.z,
@@ -689,12 +690,7 @@ pub fn classify_aabb3_intersection_with_policy(
         );
     }
 
-    let zero_extent_input = match aabb3_has_zero_extent_axis(
-        first_min, first_max, second_min, second_max, policy, &mut trace,
-    ) {
-        Ok(value) => value,
-        Err(unknown) => return unknown.into_outcome(),
-    };
+    let zero_extent_input = x_zero_extent || y_zero_extent || z_zero_extent;
     let relation = if x == ClosedIntervalIntersection::Touching
         || y == ClosedIntervalIntersection::Touching
         || z == ClosedIntervalIntersection::Touching
@@ -888,33 +884,6 @@ fn exact_rational_coordinates3(coordinates: [&Real; 3]) -> Option<[&hyperreal::R
     Some([x, y, z])
 }
 
-fn aabb3_has_zero_extent_axis(
-    first_min: &Point3,
-    first_max: &Point3,
-    second_min: &Point3,
-    second_max: &Point3,
-    policy: PredicatePolicy,
-    trace: &mut DecisionTrace,
-) -> Result<bool, UnknownDecision> {
-    Ok(
-        interval_has_zero_extent(&first_min.x, &first_max.x, policy, trace)?
-            || interval_has_zero_extent(&first_min.y, &first_max.y, policy, trace)?
-            || interval_has_zero_extent(&first_min.z, &first_max.z, policy, trace)?
-            || interval_has_zero_extent(&second_min.x, &second_max.x, policy, trace)?
-            || interval_has_zero_extent(&second_min.y, &second_max.y, policy, trace)?
-            || interval_has_zero_extent(&second_min.z, &second_max.z, policy, trace)?,
-    )
-}
-
-fn interval_has_zero_extent(
-    first: &hyperreal::Real,
-    second: &hyperreal::Real,
-    policy: PredicatePolicy,
-    trace: &mut DecisionTrace,
-) -> Result<bool, UnknownDecision> {
-    Ok(decided(compare_reals_with_policy(first, second, policy), trace)? == Ordering::Equal)
-}
-
 fn min_max3<'a>(
     first: &'a hyperreal::Real,
     second: &'a hyperreal::Real,
@@ -1025,6 +994,10 @@ mod tests {
         &sine * &sine + &cosine * &cosine - Real::one()
     }
 
+    fn real(value: i32) -> Real {
+        Real::from(value)
+    }
+
     fn p2(x: i32, y: i32) -> Point2 {
         Point2::new(hyperreal::Real::from(x), hyperreal::Real::from(y))
     }
@@ -1035,6 +1008,18 @@ mod tests {
             hyperreal::Real::from(y),
             hyperreal::Real::from(z),
         )
+    }
+
+    fn symbolic(value: i32) -> Real {
+        Real::pi() + Real::from(value)
+    }
+
+    fn symbolic_p2(x: i32, y: i32) -> Point2 {
+        Point2::new(symbolic(x), symbolic(y))
+    }
+
+    fn symbolic_p3(x: i32, y: i32, z: i32) -> Point3 {
+        Point3::new(symbolic(x), symbolic(y), symbolic(z))
     }
 
     #[test]
@@ -1412,6 +1397,495 @@ mod tests {
         assert_eq!(
             crate::aabb3s_intersect(&min, &max, &other_min, &other_max, APPROX).value(),
             Some(true)
+        );
+    }
+
+    #[test]
+    fn symbolic_ordered_aabb2_predicates_exercise_the_real_fallback() {
+        fn coordinates(point: &Point2) -> [&Real; 2] {
+            [&point.x, &point.y]
+        }
+
+        let min = symbolic_p2(0, 0);
+        let max = symbolic_p2(4, 4);
+        for (point, expected) in [
+            (symbolic_p2(2, 2), true),
+            (symbolic_p2(-1, 2), false),
+            (symbolic_p2(5, 2), false),
+            (symbolic_p2(2, -1), false),
+            (symbolic_p2(2, 5), false),
+        ] {
+            assert_eq!(
+                crate::point_in_ordered_aabb2_coordinates(
+                    coordinates(&min),
+                    coordinates(&max),
+                    coordinates(&point),
+                    PredicatePolicy::STRICT,
+                )
+                .value(),
+                Some(expected)
+            );
+        }
+
+        for (other_min, other_max, expected) in [
+            (symbolic_p2(1, 1), symbolic_p2(3, 3), true),
+            (symbolic_p2(4, 1), symbolic_p2(6, 3), true),
+            (symbolic_p2(5, 1), symbolic_p2(6, 3), false),
+            (symbolic_p2(-2, 1), symbolic_p2(-1, 3), false),
+            (symbolic_p2(1, 5), symbolic_p2(3, 6), false),
+        ] {
+            assert_eq!(
+                crate::ordered_aabb2s_intersect_coordinates(
+                    coordinates(&min),
+                    coordinates(&max),
+                    coordinates(&other_min),
+                    coordinates(&other_max),
+                    PredicatePolicy::STRICT,
+                )
+                .value(),
+                Some(expected)
+            );
+        }
+    }
+
+    #[test]
+    fn symbolic_point_box_predicates_cover_every_axis_and_boundary_route() {
+        let min2 = symbolic_p2(0, 0);
+        let max2 = symbolic_p2(4, 4);
+        for (point, expected) in [
+            (symbolic_p2(2, 2), Aabb2PointLocation::Inside),
+            (symbolic_p2(0, 2), Aabb2PointLocation::Boundary),
+            (symbolic_p2(2, 0), Aabb2PointLocation::Boundary),
+            (symbolic_p2(-1, 2), Aabb2PointLocation::Outside),
+            (symbolic_p2(2, 5), Aabb2PointLocation::Outside),
+        ] {
+            assert_eq!(
+                crate::classify_point_aabb2(&min2, &max2, &point, PredicatePolicy::STRICT).value(),
+                Some(expected)
+            );
+        }
+
+        let min3 = symbolic_p3(0, 0, 0);
+        let max3 = symbolic_p3(4, 4, 4);
+        for (point, expected) in [
+            (symbolic_p3(2, 2, 2), Aabb3PointLocation::Inside),
+            (symbolic_p3(0, 2, 2), Aabb3PointLocation::Boundary),
+            (symbolic_p3(2, 0, 2), Aabb3PointLocation::Boundary),
+            (symbolic_p3(2, 2, 4), Aabb3PointLocation::Boundary),
+            (symbolic_p3(-1, 2, 2), Aabb3PointLocation::Outside),
+            (symbolic_p3(2, 5, 2), Aabb3PointLocation::Outside),
+            (symbolic_p3(2, 2, 5), Aabb3PointLocation::Outside),
+        ] {
+            assert_eq!(
+                crate::classify_point_aabb3(&min3, &max3, &point, PredicatePolicy::STRICT).value(),
+                Some(expected)
+            );
+        }
+        assert_eq!(
+            crate::point_in_aabb3(&min3, &max3, &symbolic_p3(2, 2, 2), PredicatePolicy::STRICT,)
+                .value(),
+            Some(true)
+        );
+    }
+
+    #[test]
+    fn symbolic_relative_interior_covers_zero_and_positive_extent_axes() {
+        let min = symbolic_p3(0, 0, 0);
+        let max = symbolic_p3(4, 0, 4);
+        for (point, expected) in [
+            (symbolic_p3(2, 0, 2), true),
+            (symbolic_p3(0, 0, 2), false),
+            (symbolic_p3(4, 0, 2), false),
+            (symbolic_p3(2, 1, 2), false),
+            (symbolic_p3(2, 0, 4), false),
+        ] {
+            assert_eq!(
+                crate::point_in_ordered_aabb3_relative_interior(
+                    &min,
+                    &max,
+                    &point,
+                    PredicatePolicy::STRICT,
+                )
+                .value(),
+                Some(expected)
+            );
+        }
+    }
+
+    #[test]
+    fn symbolic_aabb3_intersections_exercise_interval_and_extent_fallbacks() {
+        let first_min = symbolic_p3(0, 0, 0);
+        let first_max = symbolic_p3(4, 4, 4);
+        for (second_min, second_max, expected) in [
+            (
+                symbolic_p3(1, 1, 1),
+                symbolic_p3(3, 3, 3),
+                Aabb3Intersection::Overlapping,
+            ),
+            (
+                symbolic_p3(4, 1, 1),
+                symbolic_p3(6, 3, 3),
+                Aabb3Intersection::Touching,
+            ),
+            (
+                symbolic_p3(5, 1, 1),
+                symbolic_p3(6, 3, 3),
+                Aabb3Intersection::Disjoint,
+            ),
+            (
+                symbolic_p3(1, 5, 1),
+                symbolic_p3(3, 6, 3),
+                Aabb3Intersection::Disjoint,
+            ),
+            (
+                symbolic_p3(1, 1, 5),
+                symbolic_p3(3, 3, 6),
+                Aabb3Intersection::Disjoint,
+            ),
+            (
+                symbolic_p3(1, 2, 1),
+                symbolic_p3(3, 2, 3),
+                Aabb3Intersection::Touching,
+            ),
+        ] {
+            assert_eq!(
+                crate::classify_aabb3_intersection(
+                    &first_min,
+                    &first_max,
+                    &second_min,
+                    &second_max,
+                    PredicatePolicy::STRICT,
+                )
+                .value(),
+                Some(expected)
+            );
+        }
+
+        let outer_min = symbolic_p3(0, 0, 0);
+        let outer_max = symbolic_p3(6, 6, 6);
+        let inner_min = symbolic_p3(1, 1, 1);
+        let inner_max = symbolic_p3(5, 5, 5);
+        assert_eq!(
+            crate::ordered_aabb3_contains(
+                &outer_min,
+                &outer_max,
+                &inner_min,
+                &inner_max,
+                PredicatePolicy::STRICT,
+            )
+            .value(),
+            Some(true)
+        );
+        assert_eq!(
+            crate::ordered_aabb3_contains(
+                &inner_min,
+                &inner_max,
+                &outer_min,
+                &outer_max,
+                PredicatePolicy::STRICT,
+            )
+            .value(),
+            Some(false)
+        );
+    }
+
+    #[test]
+    fn aabb_wrappers_propagate_strict_unknowns_without_boolean_coercion() {
+        fn is_unknown<T>(outcome: PredicateOutcome<T>) -> bool {
+            matches!(outcome, PredicateOutcome::Unknown { .. })
+        }
+
+        let unresolved = terminally_unresolved_zero();
+        let min2 = p2(0, 0);
+        let max2 = p2(1, 1);
+        let unknown_x2 = Point2::new(unresolved.clone(), Real::from(0));
+        let unknown_y2 = Point2::new(Real::from(0), unresolved.clone());
+        assert!(is_unknown(crate::classify_point_aabb2(
+            &min2,
+            &max2,
+            &unknown_x2,
+            PredicatePolicy::STRICT,
+        )));
+        assert!(is_unknown(crate::classify_point_aabb2(
+            &min2,
+            &max2,
+            &unknown_y2,
+            PredicatePolicy::STRICT,
+        )));
+        assert!(is_unknown(crate::point_in_aabb2(
+            &min2,
+            &max2,
+            &unknown_x2,
+            PredicatePolicy::STRICT,
+        )));
+
+        let min3 = p3(0, 0, 0);
+        let max3 = p3(1, 1, 1);
+        for point in [
+            Point3::new(unresolved.clone(), Real::from(0), Real::from(0)),
+            Point3::new(Real::from(0), unresolved.clone(), Real::from(0)),
+            Point3::new(Real::from(0), Real::from(0), unresolved.clone()),
+        ] {
+            assert!(is_unknown(crate::classify_point_aabb3(
+                &min3,
+                &max3,
+                &point,
+                PredicatePolicy::STRICT,
+            )));
+        }
+        assert!(is_unknown(crate::point_in_aabb3(
+            &min3,
+            &max3,
+            &Point3::new(unresolved.clone(), Real::from(0), Real::from(0)),
+            PredicatePolicy::STRICT,
+        )));
+
+        let unknown_max3 = Point3::new(unresolved.clone(), Real::from(1), Real::from(1));
+        assert!(is_unknown(crate::point_in_ordered_aabb3_relative_interior(
+            &min3,
+            &unknown_max3,
+            &p3(0, 0, 0),
+            PredicatePolicy::STRICT,
+        )));
+        let zero_width = p3(0, 1, 1);
+        assert!(is_unknown(crate::point_in_ordered_aabb3_relative_interior(
+            &min3,
+            &zero_width,
+            &Point3::new(unresolved.clone(), Real::from(0), Real::from(0)),
+            PredicatePolicy::STRICT,
+        )));
+
+        let first_min2 = p2(-1, -1);
+        let first_max2 = Point2::new(unresolved.clone(), Real::from(1));
+        assert!(is_unknown(crate::classify_aabb2_intersection(
+            &first_min2,
+            &first_max2,
+            &min2,
+            &max2,
+            PredicatePolicy::STRICT,
+        )));
+        assert!(is_unknown(crate::aabb2s_intersect(
+            &first_min2,
+            &first_max2,
+            &min2,
+            &max2,
+            PredicatePolicy::STRICT,
+        )));
+
+        let first_min3 = p3(-1, -1, -1);
+        let first_max3 = Point3::new(unresolved, Real::from(1), Real::from(1));
+        assert!(is_unknown(crate::classify_aabb3_intersection(
+            &first_min3,
+            &first_max3,
+            &min3,
+            &max3,
+            PredicatePolicy::STRICT,
+        )));
+        assert!(is_unknown(crate::aabb3s_intersect(
+            &first_min3,
+            &first_max3,
+            &min3,
+            &max3,
+            PredicatePolicy::STRICT,
+        )));
+    }
+
+    #[test]
+    fn borrowed_and_triangle_aabb_predicates_preserve_each_strict_unknown() {
+        fn is_unknown<T>(outcome: PredicateOutcome<T>) -> bool {
+            matches!(outcome, PredicateOutcome::Unknown { .. })
+        }
+
+        let unresolved = terminally_unresolved_zero();
+        let minus_one = real(-1);
+        let zero = real(0);
+        let one = real(1);
+
+        assert!(is_unknown(point_in_ordered_aabb2_coordinates_with_policy(
+            [&zero, &zero],
+            [&one, &one],
+            [&unresolved, &zero],
+            PredicatePolicy::STRICT,
+        )));
+        assert!(is_unknown(point_in_ordered_aabb2_coordinates_with_policy(
+            [&minus_one, &zero],
+            [&zero, &one],
+            [&unresolved, &zero],
+            PredicatePolicy::STRICT,
+        )));
+        assert!(is_unknown(
+            ordered_aabb2s_intersect_coordinates_with_policy(
+                [&minus_one, &minus_one],
+                [&unresolved, &one],
+                [&zero, &zero],
+                [&one, &one],
+                PredicatePolicy::STRICT,
+            )
+        ));
+
+        let point = p2(0, 0);
+        assert!(is_unknown(point_in_triangle2_aabb_with_policy(
+            &Point2::new(unresolved.clone(), real(0)),
+            &p2(0, 1),
+            &p2(1, 2),
+            &point,
+            PredicatePolicy::STRICT,
+        )));
+        assert!(is_unknown(point_in_triangle2_aabb_with_policy(
+            &p2(0, 0),
+            &p2(1, 1),
+            &p2(2, 2),
+            &Point2::new(unresolved.clone(), real(0)),
+            PredicatePolicy::STRICT,
+        )));
+        assert!(is_unknown(point_in_triangle2_aabb_with_policy(
+            &Point2::new(real(0), unresolved.clone()),
+            &p2(1, 0),
+            &p2(2, 1),
+            &point,
+            PredicatePolicy::STRICT,
+        )));
+        assert!(is_unknown(point_in_triangle2_aabb_with_policy(
+            &p2(0, 0),
+            &p2(1, 1),
+            &p2(2, 2),
+            &Point2::new(real(0), unresolved),
+            PredicatePolicy::STRICT,
+        )));
+    }
+
+    #[test]
+    fn aabb_fallbacks_cover_late_axis_separation_and_unknowns() {
+        fn is_unknown<T>(outcome: PredicateOutcome<T>) -> bool {
+            matches!(outcome, PredicateOutcome::Unknown { .. })
+        }
+
+        let unresolved = terminally_unresolved_zero();
+
+        assert!(is_unknown(
+            point_in_ordered_aabb3_relative_interior_with_policy(
+                &p3(0, 0, 0),
+                &p3(1, 1, 1),
+                &Point3::new(unresolved.clone(), real(0), real(0)),
+                PredicatePolicy::STRICT,
+            )
+        ));
+        assert!(is_unknown(
+            point_in_ordered_aabb3_relative_interior_with_policy(
+                &p3(-1, 0, 0),
+                &p3(0, 1, 1),
+                &Point3::new(unresolved.clone(), real(0), real(0)),
+                PredicatePolicy::STRICT,
+            )
+        ));
+
+        assert_eq!(
+            classify_aabb2_intersection_with_policy(
+                &p2(0, 0),
+                &p2(2, 1),
+                &p2(1, 2),
+                &p2(3, 3),
+                PredicatePolicy::STRICT,
+            )
+            .value(),
+            Some(Aabb2Intersection::Disjoint),
+        );
+        assert!(is_unknown(classify_aabb2_intersection_with_policy(
+            &p2(-1, -1),
+            &Point2::new(real(1), unresolved.clone()),
+            &p2(0, 0),
+            &p2(2, 1),
+            PredicatePolicy::STRICT,
+        )));
+
+        // Reverse both boxes on one axis to exercise exact-rational endpoint
+        // normalization without changing the geometric intersection.
+        assert_eq!(
+            classify_aabb3_intersection_with_policy(
+                &p3(4, 0, 0),
+                &p3(0, 4, 4),
+                &p3(3, 1, 1),
+                &p3(1, 3, 3),
+                PredicatePolicy::STRICT,
+            )
+            .value(),
+            Some(Aabb3Intersection::Overlapping),
+        );
+
+        assert!(is_unknown(classify_aabb3_intersection_with_policy(
+            &p3(-1, -1, -1),
+            &Point3::new(real(1), unresolved.clone(), real(1)),
+            &p3(0, 0, 0),
+            &p3(2, 1, 2),
+            PredicatePolicy::STRICT,
+        )));
+        assert!(is_unknown(classify_aabb3_intersection_with_policy(
+            &p3(-1, -1, -1),
+            &Point3::new(real(1), real(1), unresolved.clone()),
+            &p3(0, 0, 0),
+            &p3(2, 2, 1),
+            PredicatePolicy::STRICT,
+        )));
+
+        assert!(is_unknown(
+            classify_closed_interval_intersection_with_extent_policy(
+                &unresolved,
+                &real(0),
+                &real(0),
+                &real(1),
+                PredicatePolicy::STRICT,
+            )
+        ));
+    }
+
+    #[test]
+    fn aabb_decision_trace_rankings_are_total() {
+        let certainties = [
+            Certainty::Exact,
+            Certainty::Filtered,
+            Certainty::Approximate,
+        ];
+        for left in certainties {
+            for right in certainties {
+                assert_eq!(
+                    certainty_rank(max_certainty(left, right)),
+                    certainty_rank(left).max(certainty_rank(right)),
+                );
+            }
+        }
+
+        let stages = [
+            Escalation::Structural,
+            Escalation::Filter,
+            Escalation::Exact,
+            Escalation::Refined,
+            Escalation::Undecided,
+        ];
+        for left in stages {
+            for right in stages {
+                assert_eq!(
+                    stage_rank(max_stage(left, right)),
+                    stage_rank(left).max(stage_rank(right)),
+                );
+            }
+        }
+
+        let mut trace = DecisionTrace::default();
+        assert!(matches!(
+            decided(
+                PredicateOutcome::decided(7_u8, Certainty::Filtered, Escalation::Filter),
+                &mut trace,
+            ),
+            Ok(7)
+        ));
+        assert_eq!(trace.certainty, Certainty::Filtered);
+        assert_eq!(trace.stage, Escalation::Filter);
+        assert!(
+            decided::<u8>(
+                PredicateOutcome::unknown(RefinementNeed::RealRefinement, Escalation::Undecided),
+                &mut trace,
+            )
+            .is_err()
         );
     }
 }

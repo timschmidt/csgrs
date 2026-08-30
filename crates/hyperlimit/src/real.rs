@@ -99,5 +99,20 @@ mod tests {
             Real::from(-3).known_sign(),
             SignKnowledge::exact(Sign::Negative)
         );
+
+        let without_sign = |zero| RealStructuralFacts {
+            sign: None,
+            zero,
+            exact_rational: false,
+            magnitude: None,
+        };
+        assert_eq!(
+            sign_knowledge_from_real_facts(without_sign(ZeroKnowledge::Zero)),
+            SignKnowledge::exact(Sign::Zero)
+        );
+        assert_eq!(
+            sign_knowledge_from_real_facts(without_sign(ZeroKnowledge::NonZero)),
+            SignKnowledge::NonZero
+        );
     }
 }

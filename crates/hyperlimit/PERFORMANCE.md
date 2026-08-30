@@ -4,6 +4,135 @@ This document records the reference-driven optimization audit for `hyperlimit`.
 Changes are retained only when the exact report contract remains intact and a
 focused Criterion comparison shows a meaningful improvement.
 
+## 2026-08-29 verification, parallelism, and comparison audit
+
+An exhaustive source audit expanded unit, integration, property, retained-
+report forgery, metamorphic, batch-parity, and boundary tests. A fresh
+LLVM source-coverage run over every feature-enabled unit and integration test
+now executes all 10,532 production physical lines in every source module
+(100.00%). LLVM's raw source view also includes trailing inline `#[cfg(test)]`
+modules because they share the production file paths; that view covers all
+1,216 functions, 17,853 of 17,926 lines (99.59%), and 27,798 of 28,356 regions
+(98.03%). Every one of its 73 missed lines is inside an inline test module, not
+production code. The pre-audit baseline covered 85.43% of source lines and
+91.40% of source functions. `scripts/coverage.sh` uses the toolchain-matched
+`llvm-tools-preview`, isolates its build/profile artifacts, excludes dependency
+and external-test paths, reports the raw and production-only views separately,
+and writes the raw annotated HTML report.
+
+Source-line coverage is paired with an explicit `Real` representation matrix;
+running a common arithmetic line with one convenient rational is not treated
+as representation coverage. `tests/real_representations.rs` constructs every
+public `StructuralKind` and all twenty optimized Hyperreal class certificates:
+`One`, `Pi`, `PiPow`, `PiInv`, `PiExp`, `PiInvExp`, `PiSqrt`, `ConstProduct`,
+`ConstOffset`, `ConstProductSqrt`, `Sqrt`, `Exp`, `Ln`, `LnAffine`, `LnProduct`,
+`Log10`, `Log2`, `SinPi`, `TanPi`, and `Irrational`. Each is translated through
+scalar ordering/sign, 2D orientation, segment and triangle containment, 3D
+orientation, and plane incidence under strict and approximation-capable
+policies. The matrix separately covers zero/word/multi-limb/very-large rational
+storage, dyadic/non-dyadic values, binary32/binary64/subnormal imports, positive
+and negative/fractional scales, cold and warmed `F32(Some/None)` and
+`F64(Some/None)` primitive caches, untriggered and triggered abort signals,
+JSON and CBOR round trips, and a terminally unresolved opaque identity. A Serde
+unknown-variant probe compares the matrix with Hyperreal's private class enum,
+so adding a certificate makes this suite fail until that representation gains a
+predicate case. `scripts/representation_coverage.sh` runs all four optional
+primitive-cache feature combinations and checks whether private F32 cache
+states are actually present or absent as configured.
+
+The finite matrix also exhausts all four `RationalStorageClass` variants, all
+five `PrimitiveFloatStatus` variants for both binary32 and binary64, all 57
+private `Computable::Approximation` node variants, and all 18 shared-constant
+payloads. Exhaustive Rust matches make additions to the public enums fail to
+compile; Serde unknown-variant probes do the same for Hyperreal's private class,
+node, and constant enums. Every computable node and constant representative is
+deserialized, evaluated at a fixed precision, round-tripped, embedded in an
+opaque `Real`, and crossed through exact predicate translations. Recursive
+computable graph topology remains mathematically unbounded, so variable-depth
+shared DAGs and metamorphic fuzzing cover composition without making the false
+claim that every possible expression tree can be enumerated.
+
+### Scalar and geometry ownership
+
+| Layer | Owns | Performance boundary |
+| --- | --- | --- |
+| Hyperreal | Exact `Rational` storage, the scaled 20-class `Real` certificate, lazy `Computable` graphs, scalar facts, refinement, and approximation caches. | Simplifies and certifies scalar structure before allocating or refining a generic graph. |
+| Hyperlattice | Fixed-size point/vector/matrix/projective carriers, shared-scale views, sparse support, zero masks, determinant schedules, and exact reducers. | Reuses object-level algebra and facts; it constructs expressions but does not classify geometry. |
+| Hyperlimit | Policy-aware predicate cascades, typed classifications, bounded escalation, exact predicate constructions, retained evidence, reports, replay, and validation. | Consumes scalar/carrier facts and returns `Unknown` rather than inventing an epsilon or primitive-float topology decision. |
+| Hypercurve/Hypertri/Hypermesh and higher crates | Curves, triangulations, mesh topology, Boolean structure, and application policy. | Consume Hyperlimit outcomes; they do not redefine scalar or predicate semantics. |
+
+This split is why representation coverage begins below Hyperlimit: a predicate
+must remain correct for every scalar/storage/graph state Hyperreal can carry and
+every retained carrier fact Hyperlattice can expose, while topology stays out
+of the predicate crate.
+
+The audit found that all twelve `_parallel` batch functions were feature-
+gated but still iterated sequentially. They now use Rayon's parallel iterator,
+and tests compare every sequential and parallel result. On a 16-thread Ryzen
+7 5800X3D, 8,192-case near-degenerate batches measured these speedups:
+
+| Predicate | Sequential | Rayon | Speedup |
+| --- | ---: | ---: | ---: |
+| `orient2d` | 368.01 us | 118.23 us | 3.11x |
+| `orient3d` | 658.70 us | 173.44 us | 3.80x |
+| `incircle2d` | 385.39 us | 135.66 us | 2.84x |
+| `insphere3d` | about 1.17 ms | 275.90 us | 4.24x |
+
+The same audit made a retained triangle/triangle validation error reachable:
+a non-coplanar relation that retained a coplanar report now returns
+`UnexpectedCoplanarClassification`, matching the public validation contract.
+
+### Competitive benchmark scope
+
+Criterion now runs the four core predicates against `robust` and
+`geometry-predicates`, with `apfp` covering its supported 2D predicates. Each
+row processes the same 512 prebuilt binary64 coordinate sets. These are API-
+level comparisons, not semantic-equivalence claims: Hyperlimit converts to
+exact `Real` coordinates and returns certainty/escalation metadata, and its
+evidence rows reuse retained polynomial data; competitors consume binary64
+coordinates and return only a determinant value or sign. Representative easy-
+case batch means were:
+
+| Predicate | Hyperlimit | Retained evidence | `robust` | `geometry-predicates` | `apfp` |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| `orient2d` | 13.25 us | - | 1.30 us | 1.23 us | 986.89 ns |
+| `orient3d` | 47.41 us | - | 8.40 us | 3.49 us | - |
+| `incircle2d` | 24.98 us | 18.06 us | 2.91 us | 2.92 us | 2.50 us |
+| `insphere3d` | 71.31 us | 41.97 us | 14.21 us | 10.99 us | - |
+
+The complete 40-row result set, including near-degenerate inputs and confidence
+intervals, is generated in [`benchmarks.md`](benchmarks.md).
+
+### Steady-state allocation profile
+
+`examples/allocation_profile.rs` installs a counting system allocator, builds
+and warms fixtures before measurement, and reports calls, bytes, reallocations,
+peak live bytes, and retained bytes. In a 256-iteration release run, exact-
+rational `orient2`, `orient3`, `incircle2`, `insphere3`, point/AABB, and three-
+plane intersection queries made zero steady-state allocations. The exact 3D
+segment classifier used 3 allocations/120 bytes, its segment/triangle report
+used 9/360 bytes, and a 512-case orientation batch used one 1,536-byte output
+allocation. The Rayon batch averaged 1.02 allocations and 1,559.8 bytes per
+call, including amortized worker-pool activity. A symbolic pi-offset `orient2`
+query used 27 allocations/1,392 bytes, exposing the intentional generic exact-
+expression cost rather than fixture allocation.
+
+### Fuzzing scope
+
+The two libFuzzer targets now consume typed inputs instead of treating fuzzer
+bytes as passive payload. They vary rational offsets, scale, step, shear,
+structural `Real` representation, and strict versus approximate policy while
+checking scalar/batch/Rayon agreement, sign reversal, translation and incidence
+laws, retained report validation/replay, and ordering consistency. The
+representation target constructs all twenty optimized certificates on every
+execution, rotates their pairings from fuzz input, and grows variable-depth
+opaque computable DAGs. Both targets compile independently and completed
+sanitizer-backed smoke campaigns without a crash. The representation carrier
+is deliberately eight bytes (its policy uses the high stride bit), matching
+the existing corpus rather than silently rejecting every saved seed: its final
+campaign executed 512 inputs and reached 7,024 coverage counters. The predicate
+campaign replayed 1,215 inputs and reached 8,297 counters.
+
 ## Immediate explicit-sphere API gate
 
 `PreparedExplicitSphere3` stored only borrowed center and squared-radius
@@ -166,8 +295,8 @@ The general, endpoint-normalizing 3D point and intersection classifiers use the
 same exact-rational stage before falling through to their prior interval
 cascade.
 
-The 40-sample general intersection row improved from 113.18 ns to 86.60 ns
-(23.56%), and point classification improved from 58.95 ns to 54.98 ns (6.48%).
+The general intersection row improved from 113.18 ns to a fresh 85.17 ns
+(24.75%), and point classification improved from 58.95 ns to 54.98 ns (6.48%).
 Full-axis ordered intersection, containment, and relative-interior decisions
 measured 24.50 ns, 24.12 ns, and 29.94 ns respectively.
 
@@ -481,10 +610,16 @@ paths.
 The retained implementation is checked with:
 
 ```sh
-cargo test --all-targets
+cargo test --all-targets --all-features
+cargo test --all-targets --no-default-features
 cargo clippy --all-targets --all-features -- -D warnings
-RUSTDOCFLAGS='-D warnings' cargo doc --no-deps
-cargo check --examples --benches
+RUSTDOCFLAGS='-D warnings' cargo doc --no-deps --all-features
+cargo check --examples --benches --all-features
+cargo check --manifest-path fuzz/Cargo.toml --bins
+cargo bench --all-features --bench predicates --no-run
+cargo run --release --all-features --example allocation_profile
+scripts/representation_coverage.sh
+scripts/coverage.sh
 cargo fmt --all -- --check
 git diff --check
 ```

@@ -235,4 +235,126 @@ fn parallel_batches_match_sequential_batches() {
         orient3_batch(&orient3_cases, APPROX),
         hyperlimit::orient3_batch_parallel(&orient3_cases, APPROX)
     );
+
+    let line_cases = vec![
+        (sp2(0, 0), sp2(4, 0), sp2(2, 1)),
+        (sp2(0, 0), sp2(4, 0), sp2(2, -1)),
+        (sp2(0, 0), sp2(4, 0), sp2(2, 0)),
+    ];
+    assert_eq!(
+        classify_point_line_batch(&line_cases, APPROX),
+        hyperlimit::classify_point_line_batch_parallel(&line_cases, APPROX)
+    );
+
+    let plane_cases = vec![
+        (sp3(0, 0, 3), Plane3::new(sp3(0, 0, 1), Real::from(-2_i128))),
+        (sp3(0, 0, 2), Plane3::new(sp3(0, 0, 1), Real::from(-2_i128))),
+        (sp3(0, 0, 1), Plane3::new(sp3(0, 0, 1), Real::from(-2_i128))),
+    ];
+    assert_eq!(
+        classify_point_plane_batch(&plane_cases, APPROX),
+        hyperlimit::classify_point_plane_batch_parallel(&plane_cases, APPROX)
+    );
+    assert_eq!(
+        classify_point_oriented_plane_batch(&orient3_cases, APPROX),
+        hyperlimit::classify_point_oriented_plane_batch_parallel(&orient3_cases, APPROX)
+    );
+
+    let incircle_cases = vec![
+        (sp2(1, 0), sp2(0, 1), sp2(-1, 0), sp2(0, 0)),
+        (sp2(1, 0), sp2(0, 1), sp2(-1, 0), sp2(0, -1)),
+    ];
+    assert_eq!(
+        incircle2_batch(&incircle_cases, APPROX),
+        hyperlimit::incircle2_batch_parallel(&incircle_cases, APPROX)
+    );
+
+    let insphere_cases = vec![
+        (
+            sp3(1, 0, 0),
+            sp3(-1, 0, 0),
+            sp3(0, 1, 0),
+            sp3(0, 0, 1),
+            sp3(0, 0, 0),
+        ),
+        (
+            sp3(1, 0, 0),
+            sp3(-1, 0, 0),
+            sp3(0, 1, 0),
+            sp3(0, 0, 1),
+            sp3(1, 0, 0),
+        ),
+    ];
+    assert_eq!(
+        insphere3_batch(&insphere_cases, APPROX),
+        hyperlimit::insphere3_batch_parallel(&insphere_cases, APPROX)
+    );
+
+    let segment3_cases = vec![
+        (sp3(0, 0, 0), sp3(4, 0, 0), sp3(2, -1, 0), sp3(2, 1, 0)),
+        (sp3(0, 0, 0), sp3(1, 0, 0), sp3(2, 0, 0), sp3(3, 0, 0)),
+    ];
+    assert_eq!(
+        classify_segment3_intersection_batch(&segment3_cases, APPROX),
+        hyperlimit::classify_segment3_intersection_batch_parallel(&segment3_cases, APPROX)
+    );
+
+    let triangle = (sp3(0, 0, 0), sp3(4, 0, 0), sp3(0, 4, 0));
+    let segment_triangle_cases = vec![
+        (
+            sp3(1, 1, -1),
+            sp3(1, 1, 1),
+            triangle.0.clone(),
+            triangle.1.clone(),
+            triangle.2.clone(),
+        ),
+        (
+            sp3(5, 5, -1),
+            sp3(5, 5, 1),
+            triangle.0.clone(),
+            triangle.1.clone(),
+            triangle.2.clone(),
+        ),
+    ];
+    assert_eq!(
+        classify_segment_triangle3_intersection_batch(&segment_triangle_cases, APPROX),
+        hyperlimit::classify_segment_triangle3_intersection_batch_parallel(
+            &segment_triangle_cases,
+            APPROX
+        )
+    );
+
+    let ray_triangle_cases = vec![
+        (
+            sp3(1, 1, -1),
+            sp3(0, 0, 1),
+            triangle.0.clone(),
+            triangle.1.clone(),
+            triangle.2.clone(),
+        ),
+        (
+            sp3(1, 1, -1),
+            sp3(0, 0, -1),
+            triangle.0,
+            triangle.1,
+            triangle.2,
+        ),
+    ];
+    assert_eq!(
+        classify_ray_triangle3_intersection_batch(&ray_triangle_cases, APPROX),
+        hyperlimit::classify_ray_triangle3_intersection_batch_parallel(&ray_triangle_cases, APPROX)
+    );
+
+    let circle_cases = vec![
+        (sp2(0, 0), Real::from(25_i128), sp2(-10, 5), sp2(10, 5)),
+        (sp2(0, 0), Real::from(25_i128), sp2(-10, 6), sp2(10, 6)),
+    ];
+    assert_eq!(
+        classify_circle_line2_batch(&circle_cases, APPROX),
+        hyperlimit::classify_circle_line2_batch_parallel(&circle_cases, APPROX)
+    );
+    assert_eq!(
+        classify_circle_segment2_batch(&circle_cases, APPROX),
+        hyperlimit::classify_circle_segment2_batch_parallel(&circle_cases, APPROX)
+    );
 }

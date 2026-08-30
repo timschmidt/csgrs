@@ -228,6 +228,50 @@ Associated `*Case` aliases document each batch tuple shape.
 | `dispatch-trace` | no | Enables lower-stack predicate/scalar dispatch instrumentation. |
 | `serde` | no | Serializes the shared exact `Point2` carrier. |
 
+## Validation and profiling
+
+The repository keeps correctness, coverage, fuzz, timing, and allocation
+checks independently reproducible:
+
+```sh
+cargo test --all-targets --all-features
+cargo test --all-targets --no-default-features
+cargo bench --all-features --bench predicates
+cargo run --release --all-features --example allocation_profile
+scripts/representation_coverage.sh
+
+rustup component add llvm-tools-preview
+scripts/coverage.sh                 # also requires jq
+
+cargo check --manifest-path fuzz/Cargo.toml --bins
+cargo +nightly fuzz run predicate_invariants --fuzz-dir fuzz -- -max_total_time=30
+cargo +nightly fuzz run hyperreal_representations --fuzz-dir fuzz -- -max_total_time=30
+```
+
+The coverage command instruments all feature-enabled unit and integration
+tests and reports only `src/`. It prints a raw LLVM view (which necessarily
+includes trailing inline `#[cfg(test)]` modules sharing those files) and a
+production-only physical-line view, then writes browsable raw annotations to
+`target/coverage/html/index.html`. The allocation example warms every query
+before counting so fixture construction is excluded. Competitive benchmark
+rows are intentionally labeled by representation: Hyperlimit accepts exact
+`Real` inputs and returns policy/provenance-bearing outcomes, whereas the
+binary64 comparison crates return determinant values or signs.
+
+Coverage is measured on two axes. LLVM reports executable source coverage;
+`tests/real_representations.rs` independently enforces scalar representation
+coverage across all eight public Hyperreal structural kinds, all twenty
+optimized class certificates, every rational storage class and primitive range
+status, primitive-float imports, every optional primitive-cache feature
+combination, cache and abort state, JSON/CBOR forms, and unresolved opaque
+policy behavior. Serde drift probes additionally enumerate all 57 private
+computable node tags and all 18 shared constants; every representative is
+evaluated, round-tripped, embedded in an opaque `Real`, and crossed through
+predicate families. A new finite representation cannot silently escape the
+matrix. Opaque computable expression topology is unbounded, so variable-depth
+shared graphs and metamorphic fuzzing cover composition rather than claiming a
+finite list of every possible tree.
+
 ## Guarantees and boundaries
 
 - A decided result comes from structural, filtered, exact, or bounded-refined

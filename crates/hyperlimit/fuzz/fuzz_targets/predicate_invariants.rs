@@ -16,22 +16,27 @@ use hyperlimit::{
     PredicatePolicy, SegmentPlaneRelation, Sign, SphereIntersection, SupportDop3,
     SupportDopPlaneRelation, SupportDopRelation, SupportSlab3, TriangleDegeneracy,
     certified_ball_sign, certified_interval_sign, classify_aabb3_sphere_intersection,
-    classify_circle_line2, classify_circle_line2_batch, classify_circle_segment2,
-    classify_circle_segment2_batch, classify_coplanar_triangles, classify_halfspace_feasibility3,
-    classify_homogeneous_point_plane, classify_plane_aabb3_report, classify_point_convex_planes3,
-    classify_point_convex_polygon2, classify_point_line, classify_point_line_batch,
-    classify_point_ring_even_odd, classify_point_ring_even_odd_report,
-    classify_ray_triangle3_intersection, classify_ray_triangle3_intersection_batch,
+    classify_circle_line2, classify_circle_line2_batch, classify_circle_line2_batch_parallel,
+    classify_circle_segment2, classify_circle_segment2_batch,
+    classify_circle_segment2_batch_parallel, classify_coplanar_triangles,
+    classify_halfspace_feasibility3, classify_homogeneous_point_plane, classify_plane_aabb3_report,
+    classify_point_convex_planes3, classify_point_convex_polygon2, classify_point_line,
+    classify_point_line_batch, classify_point_line_batch_parallel, classify_point_ring_even_odd,
+    classify_point_ring_even_odd_report, classify_ray_triangle3_intersection,
+    classify_ray_triangle3_intersection_batch, classify_ray_triangle3_intersection_batch_parallel,
     classify_ray_triangle3_intersection_report, classify_segment_triangle3_intersection,
-    classify_segment_triangle3_intersection_batch, classify_segment_triangle3_intersection_report,
-    classify_segment3_intersection, classify_segment3_intersection_batch,
+    classify_segment_triangle3_intersection_batch,
+    classify_segment_triangle3_intersection_batch_parallel,
+    classify_segment_triangle3_intersection_report, classify_segment3_intersection,
+    classify_segment3_intersection_batch, classify_segment3_intersection_batch_parallel,
     classify_sphere3_intersection, classify_triangle_triangle3, classify_triangle3_degeneracy,
     compare_point_line3_distance_squared, compare_point_plane_distance_squared,
     compare_point_segment3_distance_squared, incircle2 as incircle2d, incircle2_evidence,
     incircle2_with_evidence as incircle2d_with_evidence, insphere3 as insphere3d,
     insphere3_evidence, insphere3_with_evidence as insphere3d_with_evidence,
     intersect_segment_with_oriented_plane, intersect_three_planes, intersect_two_planes,
-    orient2 as orient2d, orient2_batch as orient2d_batch, projected_line_parameter3,
+    orient2 as orient2d, orient2_batch as orient2d_batch,
+    orient2_batch_parallel as orient2d_batch_parallel, projected_line_parameter3,
     projected_segment_parameter3,
 };
 use hyperreal::{Rational, Real};
@@ -126,6 +131,7 @@ fn predicate_invariants(input: Input) {
         (b.clone(), a.clone(), c.clone()),
     ];
     let batch = orient2d_batch(&batch_cases, APPROX);
+    assert_eq!(orient2d_batch_parallel(&batch_cases, APPROX), batch);
     assert_eq!(batch[0].value(), orient2d(&a, &b, &c, APPROX).value());
     assert_eq!(batch[1].value(), orient2d(&b, &a, &c, APPROX).value());
 
@@ -164,6 +170,10 @@ fn predicate_invariants(input: Input) {
         (a.clone(), b.clone(), d.clone()),
     ];
     let line_batch = classify_point_line_batch(&line_batch_cases, APPROX);
+    assert_eq!(
+        classify_point_line_batch_parallel(&line_batch_cases, APPROX),
+        line_batch
+    );
     assert_eq!(
         line_batch[0].value(),
         classify_point_line(&a, &b, &c, APPROX).value()
@@ -300,6 +310,11 @@ fn predicate_invariants(input: Input) {
         "3D segment batch relation must match scalar relation"
     );
     assert_eq!(
+        classify_segment3_intersection_batch_parallel(&segment_batch_cases, APPROX)[0].value(),
+        segment_relation,
+        "parallel 3D segment batch relation must match scalar relation"
+    );
+    assert_eq!(
         segment_relation,
         classify_segment3_intersection(&r, &s, &p, &q, APPROX).value(),
         "3D segment intersection classification must be symmetric under segment exchange"
@@ -360,6 +375,12 @@ fn predicate_invariants(input: Input) {
         segment_triangle,
         "segment/triangle batch relation must match scalar relation"
     );
+    assert_eq!(
+        classify_segment_triangle3_intersection_batch_parallel(&segment_triangle_batch, APPROX)[0]
+            .value(),
+        segment_triangle,
+        "parallel segment/triangle batch relation must match scalar relation"
+    );
     let ray_triangle_batch = [(
         p.clone(),
         ray_direction.clone(),
@@ -371,6 +392,11 @@ fn predicate_invariants(input: Input) {
         classify_ray_triangle3_intersection_batch(&ray_triangle_batch, APPROX)[0].value(),
         ray_triangle,
         "ray/triangle batch relation must match scalar relation"
+    );
+    assert_eq!(
+        classify_ray_triangle3_intersection_batch_parallel(&ray_triangle_batch, APPROX)[0].value(),
+        ray_triangle,
+        "parallel ray/triangle batch relation must match scalar relation"
     );
     if let Some(segment_relation) = segment_triangle {
         assert_eq!(
@@ -519,6 +545,11 @@ fn predicate_invariants(input: Input) {
         "circle/line batch relation must match scalar relation"
     );
     assert_eq!(
+        classify_circle_line2_batch_parallel(&circle_line_batch, APPROX)[0].value(),
+        classify_circle_line2(&a, &zero, &a, &unit_x_from_a, APPROX).value(),
+        "parallel circle/line batch relation must match scalar relation"
+    );
+    assert_eq!(
         classify_circle_segment2(&a, &zero, &a, &a, APPROX).value(),
         Some(hyperlimit::CircleSegmentRelation::Tangent),
         "zero-radius circle and degenerate segment at the center touch exactly once"
@@ -528,6 +559,11 @@ fn predicate_invariants(input: Input) {
         classify_circle_segment2_batch(&circle_segment_batch, APPROX)[0].value(),
         classify_circle_segment2(&a, &zero, &a, &a, APPROX).value(),
         "circle/segment batch relation must match scalar relation"
+    );
+    assert_eq!(
+        classify_circle_segment2_batch_parallel(&circle_segment_batch, APPROX)[0].value(),
+        classify_circle_segment2(&a, &zero, &a, &a, APPROX).value(),
+        "parallel circle/segment batch relation must match scalar relation"
     );
 
     let unit_square = vec![

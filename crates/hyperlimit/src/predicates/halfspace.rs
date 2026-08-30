@@ -270,7 +270,13 @@ fn classify_halfspace_feasibility3_impl(
         }
     }
 
-    let certificate = match find_farkas_certificate(planes, policy) {
+    infeasible_outcome_from_certificate_search(find_farkas_certificate(planes, policy))
+}
+
+fn infeasible_outcome_from_certificate_search(
+    search: CertificateSearch,
+) -> PredicateOutcome<HalfspaceFeasibilityReport> {
+    let certificate = match search {
         CertificateSearch::Found(certificate) => Some(*certificate),
         CertificateSearch::NotFound => None,
         CertificateSearch::Unknown { needed, stage } => {
@@ -682,10 +688,8 @@ fn closest_point_on_plane(plane: &Plane3, policy: PredicatePolicy) -> CandidateC
         }
     }
 
-    let scale = match div(&neg(&plane.offset), &norm2) {
-        Some(value) => value,
-        None => return CandidateConstruction::Skip,
-    };
+    let scale = div(&neg(&plane.offset), &norm2)
+        .expect("a norm with certified nonzero sign is a valid divisor");
     CandidateConstruction::Point(scale_point(&plane.normal, &scale))
 }
 
@@ -712,14 +716,10 @@ fn closest_point_on_plane_pair(
     let rhs_second = neg(&second.offset);
     let lambda_first_num = sub(&mul(&rhs_first, &c), &mul(&b, &rhs_second));
     let lambda_second_num = sub(&mul(&a, &rhs_second), &mul(&b, &rhs_first));
-    let lambda_first = match div(&lambda_first_num, &det) {
-        Some(value) => value,
-        None => return CandidateConstruction::Skip,
-    };
-    let lambda_second = match div(&lambda_second_num, &det) {
-        Some(value) => value,
-        None => return CandidateConstruction::Skip,
-    };
+    let lambda_first = div(&lambda_first_num, &det)
+        .expect("a Gram determinant with certified nonzero sign is a valid divisor");
+    let lambda_second = div(&lambda_second_num, &det)
+        .expect("a Gram determinant with certified nonzero sign is a valid divisor");
 
     CandidateConstruction::Point(add_points(
         &scale_point(&first.normal, &lambda_first),
@@ -852,5 +852,460 @@ fn stage_rank(stage: Escalation) -> u8 {
         Escalation::Exact => 2,
         Escalation::Refined => 3,
         Escalation::Undecided => 4,
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    const APPROX: PredicatePolicy = PredicatePolicy::APPROXIMATE_512;
+
+    fn point(x: Real, y: Real, z: Real) -> Point3 {
+        Point3::new(x, y, z)
+    }
+
+    fn p3(x: i32, y: i32, z: i32) -> Point3 {
+        point(x.into(), y.into(), z.into())
+    }
+
+    fn plane(nx: i32, ny: i32, nz: i32, offset: i32) -> Plane3 {
+        Plane3::new(p3(nx, ny, nz), offset.into())
+    }
+
+    fn terminal_zero() -> Real {
+        let sine = Real::e().sin();
+        let cosine = Real::e().cos();
+        &sine * &sine + &cosine * &cosine - Real::one()
+    }
+
+    #[test]
+    fn unresolved_farkas_certificate_components_propagate() {
+        let unresolved_multiplier = HalfspaceInfeasibilityCertificate {
+            active_planes: [None; 4],
+            multipliers: [terminal_zero(), 0.into(), 0.into(), 0.into()],
+            offset_sum: 0.into(),
+        };
+        assert!(matches!(
+            unresolved_multiplier.validate_against_planes(&[], PredicatePolicy::STRICT),
+            PredicateOutcome::Unknown { .. }
+        ));
+
+        let unresolved_normal = [Plane3::new(
+            point(terminal_zero(), 0.into(), 0.into()),
+            1.into(),
+        )];
+        let certificate = HalfspaceInfeasibilityCertificate {
+            active_planes: [Some(0), None, None, None],
+            multipliers: [1.into(), 0.into(), 0.into(), 0.into()],
+            offset_sum: 1.into(),
+        };
+        assert!(matches!(
+            certificate.validate_against_planes(&unresolved_normal, PredicatePolicy::STRICT),
+            PredicateOutcome::Unknown { .. }
+        ));
+
+        let unresolved_offset = [Plane3::new(p3(0, 0, 0), terminal_zero())];
+        let certificate = HalfspaceInfeasibilityCertificate {
+            offset_sum: terminal_zero(),
+            ..certificate
+        };
+        assert!(matches!(
+            certificate.validate_against_planes(&unresolved_offset, PredicatePolicy::STRICT),
+            PredicateOutcome::Unknown { .. }
+        ));
+    }
+
+    #[test]
+    fn multiplier_orientation_covers_both_rays_mixed_zero_and_unknown() {
+        assert!(matches!(
+            orient_nonnegative_multipliers([1.into(), 2.into(), 0.into(), 0.into()], APPROX),
+            MultiplierOrientation::Oriented(_)
+        ));
+        let negative =
+            orient_nonnegative_multipliers([(-1).into(), (-2).into(), 0.into(), 0.into()], APPROX);
+        assert!(matches!(
+            negative,
+            MultiplierOrientation::Oriented(values)
+                if values[0] == Real::from(1) && values[1] == Real::from(2)
+        ));
+        assert!(matches!(
+            orient_nonnegative_multipliers([1.into(), (-1).into(), 0.into(), 0.into()], APPROX,),
+            MultiplierOrientation::NotConePositive
+        ));
+        assert!(matches!(
+            orient_nonnegative_multipliers([0.into(), 0.into(), 0.into(), 0.into()], APPROX),
+            MultiplierOrientation::NotConePositive
+        ));
+        assert!(matches!(
+            orient_nonnegative_multipliers(
+                [terminal_zero(), 0.into(), 0.into(), 0.into()],
+                PredicatePolicy::STRICT,
+            ),
+            MultiplierOrientation::Unknown { .. }
+        ));
+    }
+
+    #[test]
+    fn active_set_candidate_construction_covers_point_skip_and_unknown() {
+        assert!(matches!(
+            closest_point_on_plane(&plane(0, 0, 0, 1), APPROX),
+            CandidateConstruction::Skip
+        ));
+        assert!(matches!(
+            closest_point_on_plane(&plane(1, 0, 0, -2), APPROX),
+            CandidateConstruction::Point(value) if value == p3(2, 0, 0)
+        ));
+        let unresolved_plane = Plane3::new(point(terminal_zero(), 0.into(), 0.into()), 1.into());
+        assert!(matches!(
+            closest_point_on_plane(&unresolved_plane, PredicatePolicy::STRICT),
+            CandidateConstruction::Unknown { .. }
+        ));
+        assert!(matches!(
+            classify_halfspace_feasibility3_impl(
+                core::slice::from_ref(&unresolved_plane),
+                PredicatePolicy::STRICT,
+            ),
+            PredicateOutcome::Unknown { .. }
+        ));
+
+        assert!(matches!(
+            closest_point_on_plane_pair(&plane(1, 0, 0, 0), &plane(2, 0, 0, 1), APPROX),
+            CandidateConstruction::Skip
+        ));
+        assert!(matches!(
+            closest_point_on_plane_pair(&plane(1, 0, 0, -2), &plane(0, 1, 0, -3), APPROX),
+            CandidateConstruction::Point(value) if value == p3(2, 3, 0)
+        ));
+        let almost_parallel = Plane3::new(point(1.into(), terminal_zero(), 0.into()), 0.into());
+        assert!(matches!(
+            closest_point_on_plane_pair(
+                &plane(1, 0, 0, 0),
+                &almost_parallel,
+                PredicatePolicy::STRICT,
+            ),
+            CandidateConstruction::Unknown { .. }
+        ));
+
+        let first = plane(1, 0, 0, 1);
+        let second = Plane3::new(point((-1).into(), terminal_zero(), 0.into()), 1.into());
+        assert!(matches!(
+            classify_halfspace_feasibility3_impl(&[first, second], PredicatePolicy::STRICT),
+            PredicateOutcome::Unknown { .. }
+        ));
+    }
+
+    #[test]
+    fn dependency_search_covers_pair_triple_and_four_plane_bases() {
+        assert!(matches!(
+            pair_dependency(&p3(1, 0, 0), &p3(-1, 0, 0), APPROX),
+            DependencySearch::Found(_)
+        ));
+        assert!(matches!(
+            pair_dependency(&p3(0, 0, 0), &p3(0, 0, 0), APPROX),
+            DependencySearch::NotFound
+        ));
+        assert!(matches!(
+            pair_dependency(
+                &point(terminal_zero(), 0.into(), 0.into()),
+                &p3(1, 0, 0),
+                PredicatePolicy::STRICT,
+            ),
+            DependencySearch::Unknown { .. }
+        ));
+        assert!(matches!(
+            pair_dependency(
+                &p3(1, 0, 0),
+                &point(terminal_zero(), 0.into(), 0.into()),
+                PredicatePolicy::STRICT,
+            ),
+            DependencySearch::Unknown { .. }
+        ));
+
+        assert!(matches!(
+            triple_dependency(&p3(1, 0, 0), &p3(0, 1, 0), &p3(-1, -1, 0), APPROX),
+            DependencySearch::Found(_)
+        ));
+        assert!(matches!(
+            triple_dependency(&p3(1, 0, 0), &p3(0, 1, 0), &p3(0, 0, 1), APPROX),
+            DependencySearch::NotFound
+        ));
+
+        let dependency =
+            four_plane_dependency(&p3(1, 0, 0), &p3(0, 1, 0), &p3(0, 0, 1), &p3(-1, -1, -1));
+        assert_eq!(
+            dependency,
+            [
+                Real::from(-1),
+                Real::from(-1),
+                Real::from(-1),
+                Real::from(-1),
+            ]
+        );
+
+        let pi_sine = Real::pi().sin();
+        let pi_cosine = Real::pi().cos();
+        let independent_terminal_zero = &pi_sine * &pi_sine + &pi_cosine * &pi_cosine - Real::one();
+        let symbolic_dependency = triple_dependency(
+            &point(terminal_zero(), 1.into(), 0.into()),
+            &p3(0, 0, 1),
+            &point(neg(&independent_terminal_zero), (-1).into(), (-1).into()),
+            PredicatePolicy::STRICT,
+        );
+        assert!(matches!(
+            symbolic_dependency,
+            DependencySearch::Unknown { .. }
+        ));
+
+        let unknown_multiplier = triple_dependency(
+            &p3(1, 0, 0),
+            &p3(0, 1, 0),
+            &point(0.into(), terminal_zero(), 1.into()),
+            PredicatePolicy::STRICT,
+        );
+        assert!(matches!(
+            unknown_multiplier,
+            DependencySearch::Unknown { .. }
+        ));
+    }
+
+    #[test]
+    fn farkas_search_exercises_every_active_set_and_uncertainty_exit() {
+        assert!(matches!(
+            find_farkas_certificate(
+                &[Plane3::new(p3(0, 0, 0), terminal_zero())],
+                PredicatePolicy::STRICT,
+            ),
+            CertificateSearch::Unknown { .. }
+        ));
+        assert!(matches!(
+            find_farkas_certificate(&[plane(0, 0, 0, -1)], PredicatePolicy::STRICT),
+            CertificateSearch::NotFound
+        ));
+
+        assert!(matches!(
+            find_farkas_certificate(
+                &[
+                    Plane3::new(p3(1, 0, 0), terminal_zero()),
+                    plane(-1, 0, 0, 0),
+                ],
+                PredicatePolicy::STRICT,
+            ),
+            CertificateSearch::Unknown { .. }
+        ));
+        assert!(matches!(
+            find_farkas_certificate(
+                &[
+                    Plane3::new(point(1.into(), terminal_zero(), 0.into()), 0.into()),
+                    plane(0, 1, 0, 0),
+                ],
+                PredicatePolicy::STRICT,
+            ),
+            CertificateSearch::Unknown { .. }
+        ));
+
+        let triple = [plane(1, 0, 0, 1), plane(0, 1, 0, 1), plane(-1, -1, 0, 1)];
+        assert!(matches!(
+            find_farkas_certificate(&triple, PredicatePolicy::STRICT),
+            CertificateSearch::Found(_)
+        ));
+        let triple_unknown = [
+            Plane3::new(p3(1, 0, 0), terminal_zero()),
+            plane(0, 1, 0, 0),
+            plane(-1, -1, 0, 0),
+        ];
+        assert!(matches!(
+            find_farkas_certificate(&triple_unknown, PredicatePolicy::STRICT),
+            CertificateSearch::Unknown { .. }
+        ));
+        let triple_not_found = [plane(1, 0, 0, -1), plane(0, 1, 0, -1), plane(-1, -1, 0, -1)];
+        assert!(matches!(
+            find_farkas_certificate(&triple_not_found, PredicatePolicy::STRICT),
+            CertificateSearch::NotFound
+        ));
+        let triple_dependency_unknown = [
+            Plane3::new(point(1.into(), 0.into(), terminal_zero()), 0.into()),
+            plane(1, 1, 0, 0),
+            plane(1, 2, 0, 0),
+        ];
+        assert!(matches!(
+            find_farkas_certificate(&triple_dependency_unknown, PredicatePolicy::STRICT),
+            CertificateSearch::Unknown { .. }
+        ));
+
+        let four = [
+            plane(1, 0, 0, 1),
+            plane(0, 1, 0, 1),
+            plane(0, 0, 1, 1),
+            plane(-1, -1, -1, 1),
+        ];
+        assert!(matches!(
+            find_farkas_certificate(&four, PredicatePolicy::STRICT),
+            CertificateSearch::Found(_)
+        ));
+        let four_unknown = [
+            Plane3::new(p3(1, 0, 0), terminal_zero()),
+            plane(0, 1, 0, 0),
+            plane(0, 0, 1, 0),
+            plane(-1, -1, -1, 0),
+        ];
+        assert!(matches!(
+            find_farkas_certificate(&four_unknown, PredicatePolicy::STRICT),
+            CertificateSearch::Unknown { .. }
+        ));
+        let four_not_found = [
+            plane(1, 0, 0, -1),
+            plane(0, 1, 0, -1),
+            plane(0, 0, 1, -1),
+            plane(-1, -1, -1, -1),
+        ];
+        assert!(matches!(
+            find_farkas_certificate(&four_not_found, PredicatePolicy::STRICT),
+            CertificateSearch::NotFound
+        ));
+
+        let found = find_farkas_certificate(&[plane(0, 0, 0, 1)], PredicatePolicy::STRICT);
+        assert_eq!(
+            infeasible_outcome_from_certificate_search(found)
+                .value()
+                .map(|report| report.status),
+            Some(HalfspaceFeasibility::Infeasible)
+        );
+        assert_eq!(
+            infeasible_outcome_from_certificate_search(CertificateSearch::NotFound)
+                .value()
+                .map(|report| report.status),
+            Some(HalfspaceFeasibility::Infeasible)
+        );
+        assert!(matches!(
+            infeasible_outcome_from_certificate_search(CertificateSearch::Unknown {
+                needed: RefinementNeed::RealRefinement,
+                stage: Escalation::Undecided,
+            }),
+            PredicateOutcome::Unknown { .. }
+        ));
+    }
+
+    #[test]
+    fn farkas_dependency_acceptance_checks_indices_normal_and_offset() {
+        let planes = [plane(0, 0, 0, 1)];
+        assert!(matches!(
+            accept_farkas_dependency(
+                &planes,
+                [Some(0), None, None, None],
+                [1.into(), 0.into(), 0.into(), 0.into()],
+                APPROX,
+            ),
+            CertificateSearch::Found(_)
+        ));
+        assert!(matches!(
+            accept_farkas_dependency(
+                &planes,
+                [Some(9), None, None, None],
+                [1.into(), 0.into(), 0.into(), 0.into()],
+                APPROX,
+            ),
+            CertificateSearch::NotFound
+        ));
+        assert!(matches!(
+            accept_farkas_dependency(
+                &[plane(1, 0, 0, 1)],
+                [Some(0), None, None, None],
+                [1.into(), 0.into(), 0.into(), 0.into()],
+                APPROX,
+            ),
+            CertificateSearch::NotFound
+        ));
+        assert!(matches!(
+            accept_farkas_dependency(
+                &planes,
+                [Some(0), None, None, None],
+                [terminal_zero(), 0.into(), 0.into(), 0.into()],
+                PredicatePolicy::STRICT,
+            ),
+            CertificateSearch::Unknown { .. }
+        ));
+
+        let unresolved_normal = [Plane3::new(
+            point(terminal_zero(), 0.into(), 0.into()),
+            1.into(),
+        )];
+        assert!(matches!(
+            accept_farkas_dependency(
+                &unresolved_normal,
+                [Some(0), None, None, None],
+                [1.into(), 0.into(), 0.into(), 0.into()],
+                PredicatePolicy::STRICT,
+            ),
+            CertificateSearch::Unknown { .. }
+        ));
+        let unresolved_offset = [Plane3::new(p3(0, 0, 0), terminal_zero())];
+        assert!(matches!(
+            accept_farkas_dependency(
+                &unresolved_offset,
+                [Some(0), None, None, None],
+                [1.into(), 0.into(), 0.into(), 0.into()],
+                PredicatePolicy::STRICT,
+            ),
+            CertificateSearch::Unknown { .. }
+        ));
+    }
+
+    #[test]
+    fn candidate_acceptance_zero_checks_and_trace_ranking_are_total() {
+        let unresolved = Plane3::new(p3(0, 0, 0), terminal_zero());
+        assert!(matches!(
+            point_satisfies_halfspaces(&p3(0, 0, 0), &[unresolved], PredicatePolicy::STRICT),
+            PredicateOutcome::Unknown { .. }
+        ));
+        assert!(matches!(
+            accept_candidate(
+                &p3(0, 0, 0),
+                [None; 3],
+                &[Plane3::new(p3(0, 0, 0), terminal_zero())],
+                PredicatePolicy::STRICT,
+            ),
+            Some(PredicateOutcome::Unknown { .. })
+        ));
+        assert!(matches!(
+            point_zero(
+                &point(terminal_zero(), 0.into(), 0.into()),
+                PredicatePolicy::STRICT,
+            ),
+            PredicateOutcome::Unknown { .. }
+        ));
+
+        assert!(matches!(
+            find_farkas_certificate(&[], APPROX),
+            CertificateSearch::NotFound
+        ));
+        assert!(matches!(
+            find_farkas_certificate(
+                &[Plane3::new(
+                    point(terminal_zero(), 0.into(), 0.into()),
+                    0.into(),
+                )],
+                PredicatePolicy::STRICT,
+            ),
+            CertificateSearch::Unknown { .. }
+        ));
+
+        assert_eq!(
+            max_certainty(Certainty::Exact, Certainty::Filtered),
+            Certainty::Filtered
+        );
+        assert_eq!(
+            max_certainty(Certainty::Filtered, Certainty::Approximate),
+            Certainty::Approximate
+        );
+        assert_eq!(stage_rank(Escalation::Structural), 0);
+        assert_eq!(stage_rank(Escalation::Filter), 1);
+        assert_eq!(stage_rank(Escalation::Exact), 2);
+        assert_eq!(stage_rank(Escalation::Refined), 3);
+        assert_eq!(stage_rank(Escalation::Undecided), 4);
+        assert_eq!(
+            max_stage(Escalation::Filter, Escalation::Exact),
+            Escalation::Exact
+        );
     }
 }
