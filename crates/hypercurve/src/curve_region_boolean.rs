@@ -2800,10 +2800,9 @@ impl<'a> CurveRegionBooleanContext<'a> {
                 "algebraic-chord-pair",
                 "general-rational",
             );
-            let result = chord
+            chord
                 .rational_intersections(rational, shared_source_parameter, &self.data.policy)
-                .map_err(|cause| self.invalid(other_index, cause));
-            result
+                .map_err(|cause| self.invalid(other_index, cause))
         };
         let collinear_support = if let Some(line) =
             regular_component.and_then(BezierParallelRationalComponent2::support_line)
@@ -6908,14 +6907,14 @@ impl<'a> CurveRegionBooleanContext<'a> {
             .iter()
             .enumerate()
             .map(|(carrier_index, carrier)| {
-                let result = split_carrier(
+                split_carrier(
                     carrier,
                     &events[carrier_index],
                     &contact_points,
                     &exact_contact_point_index_by_vertex,
                     &self.data.policy,
-                );
-                result.map_err(|cause| self.invalid(carrier_index, cause))
+                )
+                .map_err(|cause| self.invalid(carrier_index, cause))
             })
             .collect::<ExactCurveResult<Vec<_>>>()?;
         let transverse_vertices = certified_transverse_contact_vertices(
@@ -8984,6 +8983,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
             None
         };
         let mut source_endpoint_witness_attempted = false;
+        let mut boundary_probe_representative = None;
         for _ in 0..max_representatives {
             let (parameter, representative, derivative, derivative_follows_boundary) =
                 if let Some(curve) = local_circular_curve {
@@ -9115,6 +9115,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
                 tangent_x = -tangent_x;
                 tangent_y = -tangent_y;
             }
+            boundary_probe_representative = Some(representative.clone());
             let source_parameter = parameter.map(|parameter| {
                 CurveRegionParameter2::from_bezier(BezierParameter2::Exact(parameter))
             });
@@ -9151,6 +9152,14 @@ impl<'a> CurveRegionBooleanContext<'a> {
             return Ok(RegularizedFragmentDecision::from_classified_sides(
                 left, right,
             ));
+        }
+        if last_reason == UncertaintyReason::Boundary
+            && let Some(representative) = boundary_probe_representative
+        {
+            return self.regularized_fragment_decision_by_boundary_probe(
+                carrier_index,
+                RationalBezierIntersectionPointEvidence2::Exact(representative),
+            );
         }
         Err(self.blocked(carrier_index, last_reason))
     }
@@ -9554,49 +9563,70 @@ impl<'a> CurveRegionBooleanContext<'a> {
             }
         };
         if let RationalBezierIntersectionPointEvidence2::Exact(representative) = representative {
-            let (tangent_x, tangent_y) = chord
+            let tangent = chord
                 .exact_line()
                 .map(|line| line.delta())
-                .or_else(|| chord.certified_unit_tangent())
-                .ok_or_else(|| self.blocked(carrier_index, UncertaintyReason::Unsupported))?;
-            let parameter = match chord
-                .parameter_at_certified_point(
-                    RationalBezierIntersectionPointEvidence2::Exact(representative.clone()),
-                    &self.data.policy,
-                )
-                .map_err(|cause| self.invalid(carrier_index, cause))?
-            {
-                Classification::Decided(Some(parameter)) => {
-                    CurveRegionParameter2::from_algebraic_chord(parameter)
-                }
-                Classification::Decided(None) => {
-                    return Err(self.invalid(
-                        carrier_index,
-                        CurveError::Topology(
-                            "an exact chord rejected its exact representative".into(),
-                        ),
-                    ));
-                }
-                Classification::Uncertain(reason) => {
-                    return Err(self.blocked(carrier_index, reason));
-                }
+                .or_else(|| {
+                    chord
+                        .strict_provenance_support_line(&self.data.policy)
+                        .map(|line| line.delta())
+                })
+                .or_else(|| chord.certified_unit_tangent());
+            let Some((tangent_x, tangent_y)) = tangent else {
+                return self.regularized_fragment_decision_by_boundary_probe(
+                    carrier_index,
+                    RationalBezierIntersectionPointEvidence2::Exact(representative),
+                );
             };
-            let left = self.fragment_side_classification(
-                carrier_index,
-                &representative,
-                Some(&parameter),
-                &tangent_x,
-                &tangent_y,
-                true,
-            )?;
-            let right = self.fragment_side_classification(
-                carrier_index,
-                &representative,
-                Some(&parameter),
-                &tangent_x,
-                &tangent_y,
-                false,
-            )?;
+            let source_chord = match &self.data.carriers[carrier_index].geometry {
+                RegionCarrierGeometry::AlgebraicChord(source) => source,
+                RegionCarrierGeometry::Bezier(_)
+                | RegionCarrierGeometry::AnalyticParallel(_)
+                | RegionCarrierGeometry::AlgebraicCuspSemicircle(_) => chord,
+            };
+            // `chord` is an ordered nonempty split of `source_chord`, and its
+            // representative is strictly interior to that split.  This
+            // construction is a stronger finite-domain certificate than
+            // independently reordering the transformed endpoint fields.
+            let parameter = CurveRegionParameter2::from_algebraic_chord(
+                source_chord.parameter_at_certified_interior_point(
+                    RationalBezierIntersectionPointEvidence2::Exact(representative.clone()),
+                ),
+            );
+            let classify = |left| {
+                self.fragment_side_classification(
+                    carrier_index,
+                    &representative,
+                    Some(&parameter),
+                    &tangent_x,
+                    &tangent_y,
+                    left,
+                )
+            };
+            let left = match classify(true) {
+                Ok(classification) => classification,
+                Err(ExactCurveError::Blocked(blocker))
+                    if blocker.reason() == UncertaintyReason::Boundary =>
+                {
+                    return self.regularized_fragment_decision_by_boundary_probe(
+                        carrier_index,
+                        RationalBezierIntersectionPointEvidence2::Exact(representative),
+                    );
+                }
+                Err(error) => return Err(error),
+            };
+            let right = match classify(false) {
+                Ok(classification) => classification,
+                Err(ExactCurveError::Blocked(blocker))
+                    if blocker.reason() == UncertaintyReason::Boundary =>
+                {
+                    return self.regularized_fragment_decision_by_boundary_probe(
+                        carrier_index,
+                        RationalBezierIntersectionPointEvidence2::Exact(representative),
+                    );
+                }
+                Err(error) => return Err(error),
+            };
             return Ok(RegularizedFragmentDecision::from_classified_sides(
                 left, right,
             ));
@@ -9604,7 +9634,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
         let representative = match representative {
             RationalBezierIntersectionPointEvidence2::Algebraic(representative) => representative,
             representative => {
-                return self.regularized_retained_chord_fragment_decision_by_probe(
+                return self.regularized_fragment_decision_by_boundary_probe(
                     carrier_index,
                     representative,
                 );
@@ -9613,36 +9643,55 @@ impl<'a> CurveRegionBooleanContext<'a> {
         let [tangent_x, tangent_y] = chord
             .tangent_coordinate_signs(&self.data.policy)
             .map_err(|cause| self.invalid(carrier_index, cause))?;
-        let left = self.algebraic_fragment_side_classification(
-            carrier_index,
-            &representative,
-            tangent_x,
-            tangent_y,
-            true,
-        )?;
-        let right = self.algebraic_fragment_side_classification(
-            carrier_index,
-            &representative,
-            tangent_x,
-            tangent_y,
-            false,
-        )?;
+        let classify = |left| {
+            self.algebraic_fragment_side_classification(
+                carrier_index,
+                &representative,
+                tangent_x,
+                tangent_y,
+                left,
+            )
+        };
+        let left = match classify(true) {
+            Ok(classification) => classification,
+            Err(ExactCurveError::Blocked(blocker))
+                if blocker.reason() == UncertaintyReason::Boundary =>
+            {
+                return self.regularized_fragment_decision_by_boundary_probe(
+                    carrier_index,
+                    RationalBezierIntersectionPointEvidence2::Algebraic(representative),
+                );
+            }
+            Err(error) => return Err(error),
+        };
+        let right = match classify(false) {
+            Ok(classification) => classification,
+            Err(ExactCurveError::Blocked(blocker))
+                if blocker.reason() == UncertaintyReason::Boundary =>
+            {
+                return self.regularized_fragment_decision_by_boundary_probe(
+                    carrier_index,
+                    RationalBezierIntersectionPointEvidence2::Algebraic(representative),
+                );
+            }
+            Err(error) => return Err(error),
+        };
         Ok(RegularizedFragmentDecision::from_classified_sides(
             left, right,
         ))
     }
 
-    /// Seeds both local faces of a retained chord whose representative lives
-    /// in more than one selected field.
+    /// Seeds both local faces when a representative lies on a coincident
+    /// boundary stack or lives in more than one selected field.
     ///
     /// A certified exterior rational point has zero winding in every source
     /// loop. Complete carrier-pair replay orders the crossings of the retained
-    /// probe ending at the chord representative. The transverse endpoint
-    /// contact identifies which source face precedes the endpoint; crossing
-    /// the oriented source chord changes only its loop winding by one. No
-    /// Cartesian coordinate or finite side displacement is manufactured.
+    /// probe ending at the fragment representative. The transverse endpoint
+    /// contacts identify the incoming face, and their aggregate loop-winding
+    /// jump identifies the opposite face. No Cartesian coordinate or finite
+    /// side displacement is manufactured.
     #[cold]
-    fn regularized_retained_chord_fragment_decision_by_probe(
+    fn regularized_fragment_decision_by_boundary_probe(
         &self,
         carrier_index: usize,
         representative: RationalBezierIntersectionPointEvidence2,
@@ -9660,7 +9709,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
             return Err(self.invalid(
                 carrier_index,
                 CurveError::Topology(
-                    "a retained chord regularization probe references a missing source loop".into(),
+                    "a regularization boundary probe references a missing source loop".into(),
                 ),
             ));
         }
@@ -9826,62 +9875,12 @@ impl<'a> CurveRegionBooleanContext<'a> {
                     }
                 }
                 let group = &crossings[group_start..group_end];
-                match group[0]
+                let endpoint_order = match group[0]
                     .0
                     .cmp_by_refinement(&probe_end, &self.data.policy)
                     .map_err(|cause| self.invalid(carrier_index, cause))?
                 {
-                    Classification::Decided(Ordering::Equal) => {
-                        let mut source_cross = None;
-                        for &(_, _, boundary_index, cross_is_positive) in group {
-                            if boundary_index != carrier_index || source_cross.is_some() {
-                                last_reason = UncertaintyReason::Boundary;
-                                continue 'candidate;
-                            }
-                            source_cross = Some(cross_is_positive);
-                        }
-                        let Some(source_cross_is_positive) = source_cross else {
-                            last_reason = UncertaintyReason::Predicate;
-                            continue 'candidate;
-                        };
-                        let mut opposite = windings.clone();
-                        opposite[source_loop_index] = opposite[source_loop_index]
-                            .checked_add(if source_cross_is_positive { -1 } else { 1 })
-                            .ok_or_else(|| {
-                                self.invalid(
-                                    carrier_index,
-                                    CurveError::Topology(
-                                        "retained boundary-side winding overflowed i32".into(),
-                                    ),
-                                )
-                            })?;
-                        let (left_windings, right_windings) = if source_cross_is_positive {
-                            (windings, opposite)
-                        } else {
-                            (opposite, windings)
-                        };
-                        let left = self
-                            .data
-                            .first
-                            .region_location_from_loop_windings(&left_windings)
-                            .map_err(|cause| self.invalid(carrier_index, cause))?;
-                        let right = self
-                            .data
-                            .first
-                            .region_location_from_loop_windings(&right_windings)
-                            .map_err(|cause| self.invalid(carrier_index, cause))?;
-                        #[cfg(feature = "dispatch-trace")]
-                        hyperreal::dispatch_trace::record(
-                            "hypercurve",
-                            "curve-region-regularization-chord-side",
-                            "retained-endpoint-winding-probe",
-                        );
-                        return Ok(RegularizedFragmentDecision::from_classified_sides(
-                            (left_windings, left),
-                            (right_windings, right),
-                        ));
-                    }
-                    Classification::Decided(Ordering::Less) => {}
+                    Classification::Decided(order @ (Ordering::Equal | Ordering::Less)) => order,
                     Classification::Decided(Ordering::Greater) => {
                         return Err(self.invalid(
                             carrier_index,
@@ -9895,7 +9894,27 @@ impl<'a> CurveRegionBooleanContext<'a> {
                         last_reason = reason;
                         continue 'candidate;
                     }
-                }
+                };
+
+                let source_cross_is_positive = if endpoint_order == Ordering::Equal {
+                    let mut source_cross = None;
+                    for &(_, _, boundary_index, cross_is_positive) in group {
+                        if boundary_index != carrier_index {
+                            continue;
+                        }
+                        if source_cross.replace(cross_is_positive).is_some() {
+                            last_reason = UncertaintyReason::Boundary;
+                            continue 'candidate;
+                        }
+                    }
+                    let Some(source_cross) = source_cross else {
+                        last_reason = UncertaintyReason::Predicate;
+                        continue 'candidate;
+                    };
+                    Some(source_cross)
+                } else {
+                    None
+                };
 
                 let mut endpoint_roles = Vec::with_capacity(group.len());
                 for &(_, parameter, boundary_index, _) in group {
@@ -9926,6 +9945,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
                     };
                     endpoint_roles.push([at_start, at_end]);
                 }
+                let mut group_deltas = vec![0_i32; loop_count];
                 let mut consumed = vec![false; group.len()];
                 for index in 0..group.len() {
                     if consumed[index] {
@@ -9966,7 +9986,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
                         1
                     };
                     let loop_index = self.data.carriers[boundary_index].loop_index;
-                    let Some(winding) = windings.get_mut(loop_index) else {
+                    let Some(winding) = group_deltas.get_mut(loop_index) else {
                         return Err(self.invalid(
                             carrier_index,
                             CurveError::Topology(
@@ -9974,6 +9994,54 @@ impl<'a> CurveRegionBooleanContext<'a> {
                             ),
                         ));
                     };
+                    *winding = winding.checked_add(delta).ok_or_else(|| {
+                        self.invalid(
+                            carrier_index,
+                            CurveError::Topology(
+                                "retained boundary-side winding overflowed i32".into(),
+                            ),
+                        )
+                    })?;
+                }
+                if let Some(source_cross_is_positive) = source_cross_is_positive {
+                    let mut opposite = windings.clone();
+                    for (winding, delta) in opposite.iter_mut().zip(group_deltas) {
+                        *winding = winding.checked_add(delta).ok_or_else(|| {
+                            self.invalid(
+                                carrier_index,
+                                CurveError::Topology(
+                                    "retained boundary-side winding overflowed i32".into(),
+                                ),
+                            )
+                        })?;
+                    }
+                    let (left_windings, right_windings) = if source_cross_is_positive {
+                        (windings, opposite)
+                    } else {
+                        (opposite, windings)
+                    };
+                    let left = self
+                        .data
+                        .first
+                        .region_location_from_loop_windings(&left_windings)
+                        .map_err(|cause| self.invalid(carrier_index, cause))?;
+                    let right = self
+                        .data
+                        .first
+                        .region_location_from_loop_windings(&right_windings)
+                        .map_err(|cause| self.invalid(carrier_index, cause))?;
+                    #[cfg(feature = "dispatch-trace")]
+                    hyperreal::dispatch_trace::record(
+                        "hypercurve",
+                        "curve-region-regularization-chord-side",
+                        "retained-endpoint-winding-probe",
+                    );
+                    return Ok(RegularizedFragmentDecision::from_classified_sides(
+                        (left_windings, left),
+                        (right_windings, right),
+                    ));
+                }
+                for (winding, delta) in windings.iter_mut().zip(group_deltas) {
                     *winding = winding.checked_add(delta).ok_or_else(|| {
                         self.invalid(
                             carrier_index,
@@ -10054,8 +10122,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
                 continue;
             }
             let classification = self
-                .data
-                .first
+                .region_for_carrier(carrier_index)
                 .classify_algebraic_point_from_boundary_side_ray_with_windings(
                     representative,
                     Real::from(direction_x),
@@ -10083,6 +10150,27 @@ impl<'a> CurveRegionBooleanContext<'a> {
         tangent_x: &crate::Real,
         tangent_y: &crate::Real,
         left: bool,
+    ) -> ExactCurveResult<(Vec<i32>, RegionPointLocation)> {
+        self.fragment_side_classification_with_reference_tangent(
+            carrier_index,
+            representative,
+            source_parameter,
+            tangent_x,
+            tangent_y,
+            left,
+            true,
+        )
+    }
+
+    fn fragment_side_classification_with_reference_tangent(
+        &self,
+        carrier_index: usize,
+        representative: &crate::Point2,
+        source_parameter: Option<&CurveRegionParameter2>,
+        tangent_x: &crate::Real,
+        tangent_y: &crate::Real,
+        left: bool,
+        source_follows_reference_tangent: bool,
     ) -> ExactCurveResult<(Vec<i32>, RegionPointLocation)> {
         let carrier = &self.data.carriers[carrier_index];
         let normal_x = if left {
@@ -10134,14 +10222,13 @@ impl<'a> CurveRegionBooleanContext<'a> {
         let mut last_reason = UncertaintyReason::Boundary;
         for (direction_x, direction_y) in directions.into_iter().flatten() {
             match self
-                .data
-                .first
+                .region_for_carrier(carrier_index)
                 .classify_point_from_boundary_side_ray_with_windings(
                     representative,
                     direction_x,
                     direction_y,
                     true,
-                    if left {
+                    if left == source_follows_reference_tangent {
                         BezierLineCrossingDirection::PositiveToNegative
                     } else {
                         BezierLineCrossingDirection::NegativeToPositive
@@ -10160,6 +10247,13 @@ impl<'a> CurveRegionBooleanContext<'a> {
             }
         }
         Err(self.blocked(carrier_index, last_reason))
+    }
+
+    fn region_for_carrier(&self, carrier_index: usize) -> &CurveRegion2 {
+        match self.data.carriers[carrier_index].operand {
+            CurveRegionBooleanOperand2::First => self.data.first,
+            CurveRegionBooleanOperand2::Second => self.data.second,
+        }
     }
 
     fn build_xor_from_exact_set_identity(&self) -> ExactCurveResult<CurveRegion2> {
@@ -10320,7 +10414,9 @@ impl<'a> CurveRegionBooleanContext<'a> {
         let mut region =
             match CurveRegion2::from_certified_retained_arrangement_traversal(&graph, &traversal) {
                 Classification::Decided(region) => region,
-                Classification::Uncertain(reason) => return Err(self.blocked(0, reason)),
+                Classification::Uncertain(reason) => {
+                    return Err(self.blocked(0, reason));
+                }
             };
         region = region
             .with_certified_regularized_filled_left_topology()
@@ -11338,76 +11434,47 @@ impl<'a> CurveRegionBooleanContext<'a> {
         // point/region classifier below must get the decision.
         self.data.policy.strict_predicate_pass(|| {
             let carrier = &self.data.carriers[carrier_index];
-            let coarse_bounds_are_separated = || {
-                let Classification::Decided(carrier_bounds) = carrier
-                    .bounds
-                    .get_or_init(|| carrier.geometry.certified_outer_bounds(&self.data.policy))
-                else {
-                    return false;
-                };
-                let mut other_bounds = None::<Aabb2>;
-                for other in &self.data.carriers {
-                    if other.operand == carrier.operand {
-                        continue;
-                    }
-                    let Classification::Decided(bounds) = other
-                        .bounds
-                        .get_or_init(|| other.geometry.certified_outer_bounds(&self.data.policy))
+            [0, 2, 4, 8, 16, 32, 64, 128, 256, 512]
+                .into_iter()
+                .any(|refinement_steps| {
+                    let Classification::Decided(carrier_bounds) =
+                        carrier_optional_outer_bounds_refined(
+                            carrier,
+                            refinement_steps,
+                            &self.data.policy,
+                        )
                     else {
                         return false;
                     };
-                    other_bounds = Some(match other_bounds {
-                        None => bounds.clone(),
-                        Some(accumulated) => match accumulated.union(bounds, &self.data.policy) {
-                            Classification::Decided(bounds) => bounds,
-                            Classification::Uncertain(_) => return false,
-                        },
-                    });
-                }
-                other_bounds.is_none_or(|other_bounds| {
-                    carrier_bounds.overlaps(&other_bounds, &self.data.policy)
-                        == Classification::Decided(false)
-                })
-            };
-            coarse_bounds_are_separated()
-                || [0, 2, 4, 8, 16, 32, 64, 128, 256, 512]
-                    .into_iter()
-                    .any(|refinement_steps| {
-                        let Classification::Decided(carrier_bounds) = carrier
-                            .geometry
-                            .certified_outer_bounds_refined(refinement_steps, &self.data.policy)
-                        else {
+                    let mut other_bounds = None::<Aabb2>;
+                    for other in &self.data.carriers {
+                        if other.operand == carrier.operand {
+                            continue;
+                        }
+                        let Classification::Decided(bounds) = carrier_optional_outer_bounds_refined(
+                            other,
+                            refinement_steps,
+                            &self.data.policy,
+                        ) else {
                             return false;
                         };
-                        let mut other_bounds = None::<Aabb2>;
-                        for other in &self.data.carriers {
-                            if other.operand == carrier.operand {
-                                continue;
+                        other_bounds = Some(match other_bounds {
+                            None => bounds,
+                            Some(accumulated) => {
+                                let Classification::Decided(bounds) =
+                                    accumulated.union(&bounds, &self.data.policy)
+                                else {
+                                    return false;
+                                };
+                                bounds
                             }
-                            let other_result = other.geometry.certified_outer_bounds_refined(
-                                refinement_steps,
-                                &self.data.policy,
-                            );
-                            let Classification::Decided(bounds) = other_result else {
-                                return false;
-                            };
-                            other_bounds = Some(match other_bounds {
-                                None => bounds,
-                                Some(accumulated) => {
-                                    let Classification::Decided(bounds) =
-                                        accumulated.union(&bounds, &self.data.policy)
-                                    else {
-                                        return false;
-                                    };
-                                    bounds
-                                }
-                            });
-                        }
-                        other_bounds.is_none_or(|other_bounds| {
-                            carrier_bounds.overlaps(&other_bounds, &self.data.policy)
-                                == Classification::Decided(false)
-                        })
+                        });
+                    }
+                    other_bounds.is_none_or(|other_bounds| {
+                        carrier_bounds.overlaps(&other_bounds, &self.data.policy)
+                            == Classification::Decided(false)
                     })
+                })
         })
     }
 
@@ -11505,6 +11572,11 @@ impl<'a> CurveRegionBooleanContext<'a> {
         let second = &self.data.carriers[overlap.second_carrier_index];
         let same_source_direction = overlap.orientation == RationalBezierOverlapOrientation2::Same;
         let same_traversal = same_source_direction == (first.reversed == second.reversed);
+        if let Some(action) =
+            self.shared_algebraic_chord_action(overlap, fragment, same_traversal, operation)?
+        {
+            return Ok(action);
+        }
         let second_left_in_first_direction = if same_traversal {
             second.filled_side_is_left
         } else {
@@ -11513,6 +11585,181 @@ impl<'a> CurveRegionBooleanContext<'a> {
         let left = operation.apply(first.filled_side_is_left, second_left_in_first_direction);
         let right = operation.apply(!first.filled_side_is_left, !second_left_in_first_direction);
         Ok(action_from_result_sides(left, right))
+    }
+
+    /// Decides coincident retained chords from the actual global occupancy on
+    /// both sides of their shared image. Loop-local `filled_side_is_left`
+    /// remains valid for a simple regularized boundary, but it cannot decide
+    /// a span made internal by another loop of the same operand. The boundary
+    /// side-ray kernel skips each owning source fragment at the common point,
+    /// so no finite epsilon or inexact displacement is introduced.
+    fn shared_algebraic_chord_action(
+        &self,
+        overlap: &CarrierOverlap,
+        first_fragment: &BezierSplitFragment2,
+        same_traversal: bool,
+        operation: BooleanOp,
+    ) -> ExactCurveResult<Option<RegionFragmentAction>> {
+        let BezierSplitFragment2::AlgebraicChord(first_chord) = first_fragment else {
+            return Ok(None);
+        };
+        if !matches!(
+            self.data.carriers[overlap.second_carrier_index].geometry,
+            RegionCarrierGeometry::AlgebraicChord(_)
+        ) {
+            return Ok(None);
+        }
+        let representative = match first_chord
+            .representative_point(&self.data.policy)
+            .map_err(|cause| self.invalid(overlap.first_carrier_index, cause))?
+        {
+            Classification::Decided(representative) => representative,
+            Classification::Uncertain(first_reason) => {
+                let RegionCarrierGeometry::AlgebraicChord(second_chord) =
+                    &self.data.carriers[overlap.second_carrier_index].geometry
+                else {
+                    unreachable!("shared algebraic chord action validated its second carrier")
+                };
+                let (Some(second_start), Some(second_end)) = (
+                    overlap.second_range.start().as_algebraic_chord(),
+                    overlap.second_range.end().as_algebraic_chord(),
+                ) else {
+                    return Err(self.blocked(overlap.first_carrier_index, first_reason));
+                };
+                let second_fragment =
+                    crate::BezierAlgebraicChord2::from_certified_ordered_parameter_range(
+                        second_chord,
+                        second_start,
+                        second_end,
+                        &self.data.policy,
+                    )
+                    .map_err(|cause| self.invalid(overlap.second_carrier_index, cause))?;
+                match second_fragment
+                    .representative_point(&self.data.policy)
+                    .map_err(|cause| self.invalid(overlap.second_carrier_index, cause))?
+                {
+                    Classification::Decided(representative) => representative,
+                    Classification::Uncertain(reason) => {
+                        return Err(self.blocked(overlap.second_carrier_index, reason));
+                    }
+                }
+            }
+        };
+        let location_is_inside = |carrier_index: usize,
+                                  classification: (Vec<i32>, RegionPointLocation)|
+         -> ExactCurveResult<bool> {
+            match classification.1 {
+                RegionPointLocation::Inside => Ok(true),
+                RegionPointLocation::Outside => Ok(false),
+                RegionPointLocation::Boundary => {
+                    Err(self.blocked(carrier_index, UncertaintyReason::Boundary))
+                }
+            }
+        };
+        let certified_regularized_sides =
+            |carrier_index: usize, source_follows_reference_tangent: bool| {
+                let region = self.region_for_carrier(carrier_index);
+                if !region.has_certified_regularized_filled_left_topology() {
+                    return None;
+                }
+                let source_left_is_inside = self.data.carriers[carrier_index].filled_side_is_left;
+                let reference_left_is_inside = if source_follows_reference_tangent {
+                    source_left_is_inside
+                } else {
+                    !source_left_is_inside
+                };
+                Some([reference_left_is_inside, !reference_left_is_inside])
+            };
+        let (first_sides, second_sides) = match representative {
+            RationalBezierIntersectionPointEvidence2::Exact(point) => {
+                let (tangent_x, tangent_y) = first_chord
+                    .exact_line()
+                    .map(|line| line.delta())
+                    .or_else(|| {
+                        first_chord
+                            .strict_provenance_support_line(&self.data.policy)
+                            .map(|line| line.delta())
+                    })
+                    .or_else(|| first_chord.certified_unit_tangent())
+                    .ok_or_else(|| {
+                        self.blocked(overlap.first_carrier_index, UncertaintyReason::Unsupported)
+                    })?;
+                let classify = |carrier_index,
+                                source_follows_reference_tangent|
+                 -> ExactCurveResult<[bool; 2]> {
+                    if let Some(sides) =
+                        certified_regularized_sides(carrier_index, source_follows_reference_tangent)
+                    {
+                        return Ok(sides);
+                    }
+                    let classify_side = |left| {
+                        self.fragment_side_classification_with_reference_tangent(
+                            carrier_index,
+                            &point,
+                            None,
+                            &tangent_x,
+                            &tangent_y,
+                            left,
+                            source_follows_reference_tangent,
+                        )
+                        .and_then(|classification| {
+                            location_is_inside(carrier_index, classification)
+                        })
+                    };
+                    Ok([classify_side(true)?, classify_side(false)?])
+                };
+                (
+                    classify(overlap.first_carrier_index, true)?,
+                    classify(overlap.second_carrier_index, same_traversal)?,
+                )
+            }
+            RationalBezierIntersectionPointEvidence2::Algebraic(point) => {
+                let [tangent_x, tangent_y] = first_chord
+                    .tangent_coordinate_signs(&self.data.policy)
+                    .map_err(|cause| self.invalid(overlap.first_carrier_index, cause))?;
+                let classify = |carrier_index,
+                                source_follows_reference_tangent|
+                 -> ExactCurveResult<[bool; 2]> {
+                    if let Some(sides) =
+                        certified_regularized_sides(carrier_index, source_follows_reference_tangent)
+                    {
+                        return Ok(sides);
+                    }
+                    let classify_side = |left| {
+                        self.algebraic_fragment_side_classification(
+                            carrier_index,
+                            &point,
+                            tangent_x,
+                            tangent_y,
+                            left,
+                        )
+                        .and_then(|classification| {
+                            location_is_inside(carrier_index, classification)
+                        })
+                    };
+                    let source_sides = [classify_side(true)?, classify_side(false)?];
+                    Ok(if source_follows_reference_tangent {
+                        source_sides
+                    } else {
+                        [source_sides[1], source_sides[0]]
+                    })
+                };
+                (
+                    classify(overlap.first_carrier_index, true)?,
+                    classify(overlap.second_carrier_index, same_traversal)?,
+                )
+            }
+            RationalBezierIntersectionPointEvidence2::AlgebraicChordPair(_)
+            | RationalBezierIntersectionPointEvidence2::AlgebraicChordParallel(_)
+            | RationalBezierIntersectionPointEvidence2::AlgebraicCuspChord(_)
+            | RationalBezierIntersectionPointEvidence2::AlgebraicCuspChordDerived(_)
+            | RationalBezierIntersectionPointEvidence2::AnalyticParallel(_)
+            | RationalBezierIntersectionPointEvidence2::Similarity(_) => return Ok(None),
+        };
+        Ok(Some(action_from_result_sides(
+            operation.apply(first_sides[0], second_sides[0]),
+            operation.apply(first_sides[1], second_sides[1]),
+        )))
     }
 
     fn invalid(&self, carrier_index: usize, cause: CurveError) -> ExactCurveError {
@@ -11824,39 +12071,47 @@ fn carrier_bounds_decided_disjoint(
     second: &RegionCarrier,
     policy: &CurveContext,
 ) -> bool {
-    // A non-materialized algebraic chord deliberately retains endpoint
-    // evidence instead of expanding it into global coordinates. Constructing
-    // those coordinates merely for optional broad-phase pruning can dominate
-    // (or fail to terminate under STRICT) before the exact pair kernel uses
-    // the retained identities directly. Materialized line chords still have
-    // cheap boxes and retain the ordinary fast path.
-    if matches!(
-        &first.geometry,
-        RegionCarrierGeometry::AlgebraicChord(chord) if chord.exact_line().is_none()
-    ) || matches!(
-        &second.geometry,
-        RegionCarrierGeometry::AlgebraicChord(chord) if chord.exact_line().is_none()
-    ) {
-        return false;
-    }
     // Bounds are an optional rejection proof. They must never consume the
     // APPROXIMATE_512 terminal or weaken the certainty of an operation whose
     // authoritative carrier kernel can decide the pair exactly.
     policy.strict_predicate_pass(|| {
-        let first_bounds = first
-            .bounds
-            .get_or_init(|| first.geometry.certified_outer_bounds(policy));
-        let second_bounds = second
-            .bounds
-            .get_or_init(|| second.geometry.certified_outer_bounds(policy));
-        match (first_bounds, second_bounds) {
-            (Classification::Decided(first), Classification::Decided(second)) => matches!(
-                first.overlaps(second, policy),
-                Classification::Decided(false)
-            ),
-            (Classification::Decided(_) | Classification::Uncertain(_), _) => false,
+        for refinement_steps in [0, 2] {
+            let first_bounds =
+                carrier_optional_outer_bounds_refined(first, refinement_steps, policy);
+            let second_bounds =
+                carrier_optional_outer_bounds_refined(second, refinement_steps, policy);
+            if let (Classification::Decided(first), Classification::Decided(second)) =
+                (first_bounds, second_bounds)
+                && first.overlaps(&second, policy) == Classification::Decided(false)
+            {
+                return true;
+            }
         }
+        false
     })
+}
+
+/// Returns an optional rejection box without forcing a nonmaterialized chord
+/// to join its retained endpoint fields. Rational outer envelopes make boxes
+/// from independent fields directly comparable while remaining conservative.
+fn carrier_optional_outer_bounds_refined(
+    carrier: &RegionCarrier,
+    refinement_steps: usize,
+    policy: &CurveContext,
+) -> Classification<Aabb2> {
+    let bounds = match &carrier.geometry {
+        RegionCarrierGeometry::AlgebraicChord(chord) if chord.exact_line().is_none() => chord
+            .conservative_local_bounds_refined(refinement_steps, policy)
+            .unwrap_or(Classification::Uncertain(UncertaintyReason::Unsupported)),
+        _ if refinement_steps == 0 => carrier
+            .bounds
+            .get_or_init(|| carrier.geometry.certified_outer_bounds(policy))
+            .clone(),
+        _ => carrier
+            .geometry
+            .certified_outer_bounds_refined(refinement_steps, policy),
+    };
+    bounds.map(|bounds| bounds.certified_rational_outer_envelope().unwrap_or(bounds))
 }
 
 fn subcurve_certified_outer_bounds(
@@ -12379,10 +12634,12 @@ fn split_algebraic_chord_carrier(
     for index in 1..boundaries.len() {
         let mut cursor = index;
         while cursor > 0 {
-            let order = match boundaries[cursor]
-                .parameter
-                .cmp_by_refinement(&boundaries[cursor - 1].parameter, policy)?
-            {
+            let order = match algebraic_chord_carrier_parameter_cmp(
+                chord,
+                &boundaries[cursor].parameter,
+                &boundaries[cursor - 1].parameter,
+                policy,
+            )? {
                 Classification::Decided(order) => order,
                 Classification::Uncertain(reason) => {
                     return Err(CurveError::Topology(format!(
@@ -12400,10 +12657,12 @@ fn split_algebraic_chord_carrier(
 
     let mut output = Vec::with_capacity(boundaries.len().saturating_sub(1));
     for pair in boundaries.windows(2) {
-        match pair[0]
-            .parameter
-            .cmp_by_refinement(&pair[1].parameter, policy)?
-        {
+        match algebraic_chord_carrier_parameter_cmp(
+            chord,
+            &pair[0].parameter,
+            &pair[1].parameter,
+            policy,
+        )? {
             Classification::Decided(Ordering::Less) => {}
             Classification::Decided(Ordering::Equal) => continue,
             Classification::Decided(Ordering::Greater) => {
@@ -12427,8 +12686,9 @@ fn split_algebraic_chord_carrier(
                 "non-chord cut reached an algebraic chord carrier".into(),
             ));
         };
-        let retained =
-            crate::BezierAlgebraicChord2::from_ordered_parameter_range(chord, start, end, policy)?;
+        let retained = crate::BezierAlgebraicChord2::from_certified_ordered_parameter_range(
+            chord, start, end, policy,
+        )?;
         output.push(SplitCarrierFragment {
             fragment: BezierSplitFragment2::AlgebraicChord(retained),
             start_topology_vertex: pair[0].topology_vertex,
@@ -12446,6 +12706,121 @@ fn split_algebraic_chord_carrier(
         }
     }
     Ok(output)
+}
+
+/// Orders every split event in the finite carrier's one certified monotone
+/// coordinate. Contact kernels may construct equivalent parameters through
+/// different retained chord domains; comparing those domains pairwise is not
+/// a valid total order even when all represented points share this support.
+fn algebraic_chord_carrier_parameter_cmp(
+    chord: &crate::BezierAlgebraicChord2,
+    first: &CurveRegionParameter2,
+    second: &CurveRegionParameter2,
+    policy: &CurveContext,
+) -> CurveResult<Classification<Ordering>> {
+    let (Some(first), Some(second)) = (first.as_algebraic_chord(), second.as_algebraic_chord())
+    else {
+        return Err(CurveError::Topology(
+            "non-chord event reached an algebraic chord carrier".into(),
+        ));
+    };
+    if first == second {
+        return Ok(Classification::Decided(Ordering::Equal));
+    }
+    let (axis, increasing) = [Axis2::X, Axis2::Y]
+        .into_iter()
+        .find_map(|axis| match chord.certified_tangent_axis_sign(axis) {
+            Some(RealSign::Positive) => Some((axis, true)),
+            Some(RealSign::Negative) => Some((axis, false)),
+            Some(RealSign::Zero) | None => None,
+        })
+        .ok_or_else(|| {
+            CurveError::Topology("an algebraic chord lost its monotone parameter axis".into())
+        })?;
+    for refinement_steps in [0, 2, 4, 8, 16, 32, 64, 128, 256, 512] {
+        let first_bounds = crate::bezier_offset::algebraic_chord_endpoint_local_bounds_refined(
+            first.point(),
+            refinement_steps,
+            policy,
+        );
+        let second_bounds = crate::bezier_offset::algebraic_chord_endpoint_local_bounds_refined(
+            second.point(),
+            refinement_steps,
+            policy,
+        );
+        let (Classification::Decided(first_bounds), Classification::Decided(second_bounds)) =
+            (first_bounds, second_bounds)
+        else {
+            continue;
+        };
+        let (Some(first_bounds), Some(second_bounds)) = (
+            first_bounds.certified_rational_outer_envelope(),
+            second_bounds.certified_rational_outer_envelope(),
+        ) else {
+            continue;
+        };
+        let (first_lower, first_upper, second_lower, second_upper) = match axis {
+            Axis2::X => (
+                first_bounds.min().x(),
+                first_bounds.max().x(),
+                second_bounds.min().x(),
+                second_bounds.max().x(),
+            ),
+            Axis2::Y => (
+                first_bounds.min().y(),
+                first_bounds.max().y(),
+                second_bounds.min().y(),
+                second_bounds.max().y(),
+            ),
+        };
+        let coordinate_order = if compare_reals(first_upper, second_lower, &CurveContext::STRICT)
+            == Some(Ordering::Less)
+        {
+            Some(Ordering::Less)
+        } else if compare_reals(first_lower, second_upper, &CurveContext::STRICT)
+            == Some(Ordering::Greater)
+        {
+            Some(Ordering::Greater)
+        } else {
+            None
+        };
+        if let Some(order) = coordinate_order {
+            return Ok(Classification::Decided(if increasing {
+                order
+            } else {
+                order.reverse()
+            }));
+        }
+    }
+    if matches!(
+        (first.point(), second.point()),
+        (
+            RationalBezierIntersectionPointEvidence2::AlgebraicChordPair(_)
+                | RationalBezierIntersectionPointEvidence2::AlgebraicCuspChord(_),
+            _,
+        ) | (
+            _,
+            RationalBezierIntersectionPointEvidence2::AlgebraicChordPair(_)
+                | RationalBezierIntersectionPointEvidence2::AlgebraicCuspChord(_),
+        )
+    ) && let Classification::Decided(order) = first.cmp_by_refinement(second, policy)?
+    {
+        // Correlated chord-pair and selected-circle contacts retain support
+        // side/branch certificates that are stronger than reconstructing a
+        // common Cartesian projective coordinate.
+        return Ok(Classification::Decided(order));
+    }
+    let order = crate::BezierAlgebraicChord2::point_axis_order(
+        first.point(),
+        second.point(),
+        axis,
+        policy,
+    )?;
+    Ok(if increasing {
+        order
+    } else {
+        order.map(Ordering::reverse)
+    })
 }
 
 fn split_algebraic_cusp_carrier(

@@ -16285,38 +16285,33 @@ impl CurveRegion2 {
             }
         }
 
-        let mut band_regions = Vec::with_capacity(band_loops.len());
-        for (band_loop, filled_side_is_left) in band_loops.into_iter().zip(band_filled_sides) {
-            // A span parallel may reverse after a local radius collapse, so
-            // even an individually constructed band can self-intersect.  The
-            // binary Boolean kernel requires regularized operands; normalize
-            // every band through the same authoritative unary arrangement
-            // before composing the band union.
-            let band =
-                regularized_exact_offset_band_region(band_loop, filled_side_is_left, policy)?;
-            if !band.is_empty() {
-                band_regions.push(band);
-            }
-        }
-        let mut band_regions = band_regions.into_iter();
-        let Some(mut bands) = band_regions.next() else {
+        if band_loops.is_empty() {
             return Err(curve_region_edit_error(
                 CurveOperation2::Offset,
                 CurveError::Topology("exact offset produced no boundary bands".into()),
             ));
-        };
-        for band in band_regions {
-            let union = bands.boolean_region_raw(&band, BooleanOp::Union, policy);
-            #[cfg(feature = "dispatch-trace")]
-            if union.is_err() {
-                hyperreal::dispatch_trace::record(
-                    "hypercurve",
-                    "curve-region-exact-offset-blocker",
-                    "band-union",
-                );
-            }
-            bands = union.map_err(|error| error.with_operation(CurveOperation2::Offset))?;
         }
+        // Every span and corner band is a positive material component. Their
+        // set union is therefore exactly the positive signed depth of one
+        // multi-loop arrangement, including overlaps and self-intersections.
+        // Regularize that arrangement once instead of repeatedly invoking the
+        // binary kernel on growing intermediate regions.
+        let band_count = band_loops.len();
+        let mut raw_bands = Self::new(band_loops)
+            .map_err(|cause| curve_region_edit_error(CurveOperation2::Offset, cause))?;
+        {
+            let data = raw_bands.data_mut_for_construction();
+            data.certified_loop_roles =
+                Some(shared_all_material_curve_region_loop_roles(band_count));
+            data.certified_loop_fill_rules = Some(Arc::from(vec![FillRule::NonZero; band_count]));
+            data.signed_loop_composition = true;
+        }
+        raw_bands = raw_bands
+            .with_certified_filled_side_is_left(band_filled_sides)
+            .map_err(|cause| curve_region_edit_error(CurveOperation2::Offset, cause))?;
+        let bands = raw_bands
+            .regularized_region_raw(policy)
+            .map_err(|error| error.with_operation(CurveOperation2::Offset))?;
         let regularized = self.boolean_region_raw(
             &bands,
             if distance_positive {
@@ -20267,8 +20262,11 @@ fn classify_point_with_retained_ray_skipping_origin(
     let mut winding = 0_i32;
     let mut source_origin_contact_was_skipped = false;
     for (fragment_index, fragment) in boundary_loop.fragments().iter().enumerate() {
+        let is_source_fragment =
+            skipped_origin.is_some_and(|origin| origin.fragment_index == Some(fragment_index));
         if let Classification::Decided(bounds) = retained_fragment_query_bounds(fragment, policy)
             && !retained_bounds_may_intersect_forward_ray(&bounds, point, direction_x, direction_y)
+            && !is_source_fragment
         {
             continue;
         }
