@@ -1,7 +1,10 @@
 mod common;
 
 use common::{frac, r, unknown_zero};
-use hyperlattice::{Complex, Matrix3, Matrix4, Problem, Real, Vector3, Vector4, ZeroStatus};
+use hyperlattice::{
+    Complex, HomogeneousLine3, Matrix3, Matrix4, Point3, Problem, ProjectivePlane3, Real, Vector3,
+    Vector4, ZeroStatus,
+};
 
 #[test]
 fn complex_zero_and_unknown_norms_are_rejected_by_checked_division() {
@@ -105,4 +108,23 @@ fn normalization_checked_rejects_unknown_zero_norm_but_preserves_exact_unit_vect
 
     let exact = Vector3::new([frac(3, 5), frac(4, 5), r(0)]);
     assert_eq!(exact.normalize_checked().unwrap(), exact);
+}
+
+#[test]
+fn algebraic_line_plane_intersections_replay_exact_incidence() {
+    let sqrt_two = r(2).sqrt().unwrap();
+    let plane = ProjectivePlane3::new(Point3::new(sqrt_two, r(1), r(1)), r(-1));
+
+    for i in [1_i32, 2, 3, 5, 31, 32] {
+        for j in [1_i32, 2, 3, 5, 31, 32] {
+            let direction = Point3::new(r(i).sqrt().unwrap(), r(j) * r(j).sqrt().unwrap(), r(3));
+            let line = HomogeneousLine3::new(direction, Point3::new(r(0), r(0), r(0)));
+            let intersection = line.intersect_plane(&plane);
+
+            assert_eq!(
+                intersection.plane_expression(&plane).zero_status(),
+                ZeroStatus::Zero
+            );
+        }
+    }
 }
