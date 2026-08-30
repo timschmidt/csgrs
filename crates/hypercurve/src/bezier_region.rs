@@ -3993,6 +3993,100 @@ fn exact_offset_tangent_is_selected_circle(tangent: &ExactOffsetTangent2) -> boo
     )
 }
 
+/// Certifies one monotone bevel coordinate directly from incident tangent
+/// component signs. Unit normalization preserves each component sign; when
+/// the two signs differ, the corresponding normal-component difference has a
+/// strict sign independent of either speed magnitude.
+fn exact_offset_bevel_parameter_axis(
+    previous: &ExactOffsetTangent2,
+    next: &ExactOffsetTangent2,
+    turn_sign: RealSign,
+    distance_sign: RealSign,
+    policy: &CurveContext,
+) -> Option<(crate::Axis2, bool)> {
+    let (ExactOffsetTangent2::AlgebraicChord(previous), ExactOffsetTangent2::AlgebraicChord(next)) =
+        (previous, next)
+    else {
+        return None;
+    };
+    let component_difference = |first, second| match (first, second) {
+        (RealSign::Negative, RealSign::Zero | RealSign::Positive)
+        | (RealSign::Zero, RealSign::Positive) => Some(RealSign::Positive),
+        (RealSign::Positive, RealSign::Zero | RealSign::Negative)
+        | (RealSign::Zero, RealSign::Negative) => Some(RealSign::Negative),
+        _ => None,
+    };
+    let mut resolved_signs = [(None, None); 2];
+    for (axis_index, tangent_axis) in [crate::Axis2::X, crate::Axis2::Y].into_iter().enumerate() {
+        let (previous_certified, next_certified) = (
+            previous.certified_tangent_axis_sign(tangent_axis),
+            next.certified_tangent_axis_sign(tangent_axis),
+        );
+        let component_sign = |chord: &crate::BezierAlgebraicChord2, certified: Option<RealSign>| {
+            certified.or_else(|| match chord.tangent_axis_sign(tangent_axis, policy) {
+                Ok(Classification::Decided(sign)) => Some(sign),
+                Ok(Classification::Uncertain(_)) | Err(_) => None,
+            })
+        };
+        let (Some(previous_sign), Some(next_sign)) = (
+            component_sign(previous, previous_certified),
+            component_sign(next, next_certified),
+        ) else {
+            continue;
+        };
+        resolved_signs[axis_index] = (Some(previous_sign), Some(next_sign));
+        let difference = component_difference(previous_sign, next_sign);
+        let Some(difference) = difference else {
+            continue;
+        };
+        let (axis, normal_difference) = match tangent_axis {
+            // N_y = T_x / |T|.
+            crate::Axis2::X => (crate::Axis2::Y, difference),
+            // N_x = -T_y / |T|.
+            crate::Axis2::Y => (crate::Axis2::X, exact_sign_reverse(difference)),
+        };
+        let sign = exact_sign_product(distance_sign, normal_difference);
+        if sign == RealSign::Zero {
+            return None;
+        }
+        #[cfg(feature = "dispatch-trace")]
+        hyperreal::dispatch_trace::record(
+            "hypercurve",
+            "curve-region-exact-offset-bevel-axis",
+            "separated-tangent-components",
+        );
+        return Some((axis, sign == RealSign::Positive));
+    }
+    let [
+        (Some(previous_x), Some(next_x)),
+        (Some(previous_y), Some(next_y)),
+    ] = resolved_signs
+    else {
+        return None;
+    };
+    if previous_x == next_x
+        && previous_y == next_y
+        && previous_x != RealSign::Zero
+        && previous_y != RealSign::Zero
+        && turn_sign != RealSign::Zero
+    {
+        // Both unit tangents lie in one open quadrant. That quadrant is
+        // narrower than pi, so the cross sign fixes their angular order and
+        // component monotonicity without comparing either normalized
+        // magnitude: d(T_x)/d(theta)=-T_y.
+        let difference_x = exact_sign_product(turn_sign, exact_sign_reverse(previous_y));
+        let sign = exact_sign_product(distance_sign, difference_x);
+        #[cfg(feature = "dispatch-trace")]
+        hyperreal::dispatch_trace::record(
+            "hypercurve",
+            "curve-region-exact-offset-bevel-axis",
+            "same-quadrant-turn",
+        );
+        return Some((crate::Axis2::Y, sign == RealSign::Positive));
+    }
+    None
+}
+
 fn retained_chord_fragment(chord: crate::BezierAlgebraicChord2) -> BezierSplitFragment2 {
     BezierSplitFragment2::AlgebraicChord(chord)
 }
@@ -4002,11 +4096,15 @@ fn append_exact_algebraic_line_join(
     from: &crate::RationalBezierIntersectionPointEvidence2,
     to: &crate::RationalBezierIntersectionPointEvidence2,
     certified_direction: Option<BezierAlgebraicChordAxisDirection2>,
+    certified_parameter_axis: Option<(crate::Axis2, bool)>,
     certified_distinct: bool,
     certified_circle_transverse_endpoints: [bool; 2],
     policy: &CurveContext,
 ) -> CurveResult<Classification<()>> {
-    let endpoint_equality = if certified_direction.is_some() || certified_distinct {
+    let endpoint_equality = if certified_direction.is_some()
+        || certified_parameter_axis.is_some()
+        || certified_distinct
+    {
         Classification::Decided(false)
     } else {
         from.same_point(to, policy)
@@ -4027,30 +4125,35 @@ fn append_exact_algebraic_line_join(
                 )));
                 return Ok(Classification::Decided(()));
             }
-            let chord = match certified_direction {
-                Some(direction) => {
-                    crate::BezierAlgebraicChord2::from_certified_axis_aligned_endpoints(
+            let chord = if let Some(direction) = certified_direction {
+                crate::BezierAlgebraicChord2::from_certified_axis_aligned_endpoints(
+                    from.clone(),
+                    to.clone(),
+                    direction,
+                    policy,
+                )
+            } else if let Some((axis, coordinate_increases)) = certified_parameter_axis {
+                crate::BezierAlgebraicChord2::from_certified_monotone_axis_endpoints(
+                    from.clone(),
+                    to.clone(),
+                    axis,
+                    coordinate_increases,
+                    policy,
+                )
+            } else {
+                let chord = if certified_distinct {
+                    crate::BezierAlgebraicChord2::try_new_from_certified_distinct_endpoints(
                         from.clone(),
                         to.clone(),
-                        direction,
                         policy,
-                    )
-                }
-                None => {
-                    let chord = if certified_distinct {
-                        crate::BezierAlgebraicChord2::try_new_from_certified_distinct_endpoints(
-                            from.clone(),
-                            to.clone(),
-                            policy,
-                        )?
-                    } else {
-                        crate::BezierAlgebraicChord2::try_new(from.clone(), to.clone(), policy)?
-                    };
-                    match chord {
-                        Classification::Decided(chord) => chord,
-                        Classification::Uncertain(reason) => {
-                            return Ok(Classification::Uncertain(reason));
-                        }
+                    )?
+                } else {
+                    crate::BezierAlgebraicChord2::try_new(from.clone(), to.clone(), policy)?
+                };
+                match chord {
+                    Classification::Decided(chord) => chord,
+                    Classification::Uncertain(reason) => {
+                        return Ok(Classification::Uncertain(reason));
                     }
                 }
             };
@@ -5312,38 +5415,281 @@ fn exact_retained_parallel_fragment(
     ))
 }
 
-fn promoted_retained_parallel_parameter(
+fn exact_parallel_region_point_evidence(
+    parallel: &BezierParallel2,
     parameter: &CurveRegionParameter2,
     policy: &CurveContext,
-) -> CurveResult<Classification<BezierParameter2>> {
-    parameter.promoted_bezier_parameter_complete(policy)
-}
-
-fn promoted_retained_parallel_fragment(
-    fragment: RetainedParallelOffsetFragmentRef2<'_>,
-    parallel: BezierParallel2,
-    policy: &CurveContext,
-) -> CurveResult<Classification<crate::BezierParallelFragment2>> {
-    let range = fragment.range();
-    let start = match promoted_retained_parallel_parameter(range.start(), policy)? {
-        Classification::Decided(parameter) => parameter,
-        Classification::Uncertain(reason) => {
-            return Ok(Classification::Uncertain(reason));
-        }
-    };
-    let end = match promoted_retained_parallel_parameter(range.end(), policy)? {
-        Classification::Decided(parameter) => parameter,
-        Classification::Uncertain(reason) => {
-            return Ok(Classification::Uncertain(reason));
-        }
+) -> CurveResult<Classification<RationalBezierIntersectionPointEvidence2>> {
+    if let Some(parameter) = parameter.as_bezier_parameter() {
+        return exact_parallel_point_evidence(parallel, parameter, policy);
+    }
+    let Some(point) =
+        crate::BezierAnalyticParallelPoint2::new_with_region_parameter_and_tangent_distance(
+            parallel.clone(),
+            parameter,
+            Real::zero(),
+            policy,
+        )
+    else {
+        return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
     };
     Ok(Classification::Decided(
-        crate::BezierParallelFragment2::from_certified_range(
-            parallel,
-            BezierParameterRange2::new_validated(start, end),
-            fragment.is_reversed(),
-        ),
+        RationalBezierIntersectionPointEvidence2::AnalyticParallel(point),
     ))
+}
+
+fn exact_parallel_region_endpoint_tangent(
+    parallel: &BezierParallel2,
+    source_parallel: &BezierParallel2,
+    parameter: &CurveRegionParameter2,
+    scale: RealSign,
+    reversed: bool,
+    policy: &CurveContext,
+) -> CurveResult<Classification<ExactOffsetTangent2>> {
+    debug_assert_ne!(scale, RealSign::Zero);
+    let source_direction = if (scale == RealSign::Positive) != reversed {
+        RealSign::Positive
+    } else {
+        RealSign::Negative
+    };
+    if let Some(parameter) = parameter.as_bezier_parameter() {
+        return exact_parallel_endpoint_tangent(
+            parallel,
+            source_parallel,
+            parameter,
+            scale,
+            reversed,
+        );
+    }
+    Ok(
+        crate::BezierAlgebraicChord2::from_certified_retained_parallel_oriented_unit_tangent(
+            parallel.clone(),
+            parameter,
+            source_direction,
+            policy,
+        )?
+        .map(ExactOffsetTangent2::AlgebraicChord),
+    )
+}
+
+/// Offsets a selected-fiber fragment in its native retained parameter chart.
+/// The source/cusp analysis remains in the canonical Bezier chart, but every
+/// Boolean-authored boundary stays a `CurveRegionParameter2`; no global norm
+/// is constructed merely to form an offset range or endpoint tangent.
+fn exact_offset_span_from_selected_parallel_fragment(
+    fragment: &crate::bezier_split::BezierSelectedFiberFragment2,
+    distance: &Real,
+    policy: &CurveContext,
+) -> CurveResult<Classification<ExactOffsetSpan2>> {
+    let parallel = fragment.parallel_carrier();
+    let range = fragment.range();
+    let source_scale_result = retained_parallel_range_scale_sign(&parallel, range, policy);
+    let source_scale = match source_scale_result? {
+        Classification::Decided(sign @ (RealSign::Positive | RealSign::Negative)) => sign,
+        Classification::Decided(RealSign::Zero) => {
+            return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
+        }
+        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+    };
+    let traversal_agrees_with_source =
+        (source_scale == RealSign::Positive) != fragment.is_reversed();
+    let composed_distance = if traversal_agrees_with_source {
+        parallel.distance() + distance
+    } else {
+        parallel.distance() - distance
+    };
+    let composed = parallel.with_distance(composed_distance);
+    let composed_distance_sign = match real_sign(composed.distance(), policy) {
+        Some(sign) => sign,
+        None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
+    };
+
+    let mut boundaries = vec![range.start().clone()];
+    if composed_distance_sign != RealSign::Zero {
+        let analysis = match composed.singularity_analysis(policy)? {
+            Classification::Decided(analysis) => analysis,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        for singularity in analysis.source_singularities() {
+            let singularity = CurveRegionParameter2::from_bezier(singularity.clone());
+            let after_start = match singularity.cmp_by_refinement(range.start(), policy)? {
+                Classification::Decided(order) => !order.is_lt(),
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            };
+            let before_end = match singularity.cmp_by_refinement(range.end(), policy)? {
+                Classification::Decided(order) => !order.is_gt(),
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            };
+            if after_start && before_end {
+                return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+            }
+        }
+        for cusp in analysis.parallel_cusps() {
+            let cusp = CurveRegionParameter2::from_bezier(cusp.clone());
+            let after_start = match cusp.cmp_by_refinement(range.start(), policy)? {
+                Classification::Decided(order) => order.is_gt(),
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            };
+            let before_end = match cusp.cmp_by_refinement(range.end(), policy)? {
+                Classification::Decided(order) => order.is_lt(),
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            };
+            if after_start && before_end {
+                match cusp.cmp_by_refinement(
+                    boundaries
+                        .last()
+                        .expect("retained parallel boundaries begin at the range start"),
+                    policy,
+                )? {
+                    Classification::Decided(std::cmp::Ordering::Greater) => {
+                        boundaries.push(cusp);
+                    }
+                    Classification::Decided(std::cmp::Ordering::Equal) => {}
+                    Classification::Decided(std::cmp::Ordering::Less) => {
+                        return Err(CurveError::Topology(
+                            "retained parallel cusp parameters are not ordered".into(),
+                        ));
+                    }
+                    Classification::Uncertain(reason) => {
+                        return Ok(Classification::Uncertain(reason));
+                    }
+                }
+            }
+        }
+    }
+    boundaries.push(range.end().clone());
+    let ranges = boundaries
+        .windows(2)
+        .map(|pair| CurveRegionParameterRange2::new_validated(pair[0].clone(), pair[1].clone()))
+        .collect::<Vec<_>>();
+    let mut fragments = Vec::with_capacity(ranges.len());
+    for range in &ranges {
+        let start_point =
+            match exact_parallel_region_point_evidence(&composed, range.start(), policy)? {
+                Classification::Decided(point) => point,
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            };
+        let end_point = match exact_parallel_region_point_evidence(&composed, range.end(), policy)?
+        {
+            Classification::Decided(point) => point,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        let retained = crate::bezier_split::BezierSelectedFiberFragment2::new(
+            BezierSelectedFiberSource2::AnalyticParallel(composed.clone()),
+            range.clone(),
+            start_point,
+            end_point,
+        );
+        fragments.push(BezierSplitFragment2::SelectedFiber(
+            if fragment.is_reversed() {
+                retained.reversed()
+            } else {
+                retained
+            },
+        ));
+    }
+    if fragment.is_reversed() {
+        fragments.reverse();
+    }
+
+    let first_range = ranges
+        .first()
+        .expect("a retained parameter range produces one composed span");
+    let last_range = ranges
+        .last()
+        .expect("a retained parameter range produces one composed span");
+    let (start_parameter, end_parameter, start_range, end_range) = if fragment.is_reversed() {
+        (range.end(), range.start(), last_range, first_range)
+    } else {
+        (range.start(), range.end(), first_range, last_range)
+    };
+    let offset_start =
+        match exact_parallel_region_point_evidence(&composed, start_parameter, policy)? {
+            Classification::Decided(point) => point,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+    let offset_end = match exact_parallel_region_point_evidence(&composed, end_parameter, policy)? {
+        Classification::Decided(point) => point,
+        Classification::Uncertain(reason) => {
+            return Ok(Classification::Uncertain(reason));
+        }
+    };
+    let start_scale = match retained_parallel_range_scale_sign(&composed, start_range, policy)? {
+        Classification::Decided(sign @ (RealSign::Positive | RealSign::Negative)) => sign,
+        Classification::Decided(RealSign::Zero) => {
+            return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
+        }
+        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+    };
+    let end_scale = if ranges.len() == 1 {
+        start_scale
+    } else {
+        match retained_parallel_range_scale_sign(&composed, end_range, policy)? {
+            Classification::Decided(sign @ (RealSign::Positive | RealSign::Negative)) => sign,
+            Classification::Decided(RealSign::Zero) => {
+                return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
+            }
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        }
+    };
+    let start_tangent = match exact_parallel_region_endpoint_tangent(
+        &composed,
+        &parallel,
+        start_parameter,
+        start_scale,
+        fragment.is_reversed(),
+        policy,
+    )? {
+        Classification::Decided(tangent) => tangent,
+        Classification::Uncertain(reason) => {
+            return Ok(Classification::Uncertain(reason));
+        }
+    };
+    let end_tangent = match exact_parallel_region_endpoint_tangent(
+        &composed,
+        &parallel,
+        end_parameter,
+        end_scale,
+        fragment.is_reversed(),
+        policy,
+    )? {
+        Classification::Decided(tangent) => tangent,
+        Classification::Uncertain(reason) => {
+            return Ok(Classification::Uncertain(reason));
+        }
+    };
+    #[cfg(feature = "dispatch-trace")]
+    hyperreal::dispatch_trace::record(
+        "hypercurve",
+        "curve-region-exact-offset-span",
+        "retained-region-parameter",
+    );
+    Ok(Classification::Decided(ExactOffsetSpan2 {
+        fragments,
+        source_end: fragment.end_point().clone(),
+        offset_start,
+        offset_end,
+        start_tangent: Some(start_tangent),
+        end_tangent: Some(end_tangent),
+    }))
 }
 
 fn promoted_endpoint_image_corner_fragment(
@@ -5576,7 +5922,14 @@ fn retained_parallel_fragment_scale_sign(
     fragment: RetainedParallelOffsetFragmentRef2<'_>,
     policy: &CurveContext,
 ) -> CurveResult<Classification<RealSign>> {
-    let range = fragment.range();
+    retained_parallel_range_scale_sign(parallel, &fragment.range(), policy)
+}
+
+fn retained_parallel_range_scale_sign(
+    parallel: &BezierParallel2,
+    range: &CurveRegionParameterRange2,
+    policy: &CurveContext,
+) -> CurveResult<Classification<RealSign>> {
     let parameter = match range
         .start()
         .strict_rational_between_ordered(range.end(), policy)?
@@ -5594,47 +5947,14 @@ fn exact_offset_span_from_retained_parallel_fragment(
     distance: &Real,
     policy: &CurveContext,
 ) -> CurveResult<Classification<ExactOffsetSpan2>> {
-    let parallel = fragment.parallel();
-    let promoted = match promoted_retained_parallel_fragment(fragment, parallel, policy)? {
-        Classification::Decided(fragment) => fragment,
-        Classification::Uncertain(reason) => {
-            return Ok(Classification::Uncertain(reason));
+    match fragment {
+        RetainedParallelOffsetFragmentRef2::Analytic(fragment) => {
+            exact_offset_span_from_analytic_parallel(fragment, distance, policy)
         }
-    };
-    let mut span = match exact_offset_span_from_analytic_parallel(&promoted, distance, policy)? {
-        Classification::Decided(span) => span,
-        Classification::Uncertain(reason) => {
-            return Ok(Classification::Uncertain(reason));
+        RetainedParallelOffsetFragmentRef2::Selected(fragment) => {
+            exact_offset_span_from_selected_parallel_fragment(fragment, distance, policy)
         }
-    };
-    if let RetainedParallelOffsetFragmentRef2::Selected(fragment) = fragment {
-        let view = RetainedParallelOffsetFragmentRef2::Selected(fragment);
-        let start_parameter = retained_parallel_traversal_start(view)
-            .as_selected_fiber()
-            .cloned();
-        let end_parameter = retained_parallel_traversal_end(view)
-            .as_selected_fiber()
-            .cloned();
-        if let Some(ExactOffsetTangent2::RetainedParallel {
-            selected_source_parameter,
-            ..
-        }) = &mut span.start_tangent
-        {
-            *selected_source_parameter = start_parameter;
-        }
-        if let Some(ExactOffsetTangent2::RetainedParallel {
-            selected_source_parameter,
-            ..
-        }) = &mut span.end_tangent
-        {
-            *selected_source_parameter = end_parameter;
-        }
-        // Preserve the original correlated contact as the corner center. The
-        // promoted scalar is construction evidence for the offset carrier,
-        // not a replacement for shared Boolean point identity.
-        span.source_end = fragment.end_point().clone();
     }
-    Ok(Classification::Decided(span))
 }
 
 /// Coalesces one traversal-contiguous retained-parallel run whose only
@@ -6270,6 +6590,13 @@ fn append_exact_offset_join(
             &previous.offset_end,
             &next.offset_start,
             None,
+            exact_offset_bevel_parameter_axis(
+                previous_tangent,
+                next_tangent,
+                turn_sign,
+                distance_sign,
+                policy,
+            ),
             turn_sign != RealSign::Zero,
             // For a nonzero turn, the difference of the two unit normals
             // cannot be parallel to either endpoint tangent. Thus this bevel
@@ -6285,14 +6612,28 @@ fn append_exact_offset_join(
             },
             policy,
         ),
-        OffsetCornerStyle2::Miter { limit } if !inward => {
-            append_exact_miter_join(fragments, previous, next, distance, Some(limit), policy)
-        }
+        OffsetCornerStyle2::Miter { limit } if !inward => append_exact_miter_join(
+            fragments,
+            previous,
+            next,
+            distance,
+            Some(limit),
+            turn_sign,
+            distance_sign,
+            policy,
+        ),
         OffsetCornerStyle2::Round
         | OffsetCornerStyle2::Bevel
-        | OffsetCornerStyle2::Miter { .. } => {
-            append_exact_miter_join(fragments, previous, next, distance, None, policy)
-        }
+        | OffsetCornerStyle2::Miter { .. } => append_exact_miter_join(
+            fragments,
+            previous,
+            next,
+            distance,
+            None,
+            turn_sign,
+            distance_sign,
+            policy,
+        ),
     }
 }
 
@@ -6368,7 +6709,7 @@ fn exact_offset_band_connector(
     to: &RationalBezierIntersectionPointEvidence2,
     policy: &CurveContext,
 ) -> CurveResult<Classification<()>> {
-    append_exact_algebraic_line_join(fragments, from, to, None, true, [false; 2], policy)
+    append_exact_algebraic_line_join(fragments, from, to, None, None, true, [false; 2], policy)
 }
 
 fn exact_offset_span_band_loop(
@@ -7741,6 +8082,8 @@ fn append_exact_miter_join(
     next: &ExactOffsetSpan2,
     distance: &Real,
     limit: Option<&Real>,
+    turn_sign: RealSign,
+    distance_sign: RealSign,
     policy: &CurveContext,
 ) -> CurveResult<Classification<()>> {
     let represented_vector_frame = matches!(
@@ -7753,8 +8096,16 @@ fn append_exact_miter_join(
         && next.offset_start.as_exact().is_some()
         && previous.source_end.as_exact().is_some();
     if !represented_vector_frame
-        && let Some(result) =
-            append_retained_support_miter_join(fragments, previous, next, distance, limit, policy)
+        && let Some(result) = append_retained_support_miter_join(
+            fragments,
+            previous,
+            next,
+            distance,
+            limit,
+            turn_sign,
+            distance_sign,
+            policy,
+        )
     {
         #[cfg(feature = "dispatch-trace")]
         hyperreal::dispatch_trace::record(
@@ -8004,7 +8355,7 @@ fn exact_offset_span_retained_tangent_support(
     span: &ExactOffsetSpan2,
     at_start: bool,
     policy: &CurveContext,
-) -> Option<CurveResult<Classification<crate::BezierAlgebraicChord2>>> {
+) -> Option<CurveResult<Classification<(crate::BezierAlgebraicChord2, bool)>>> {
     let fragment = if at_start {
         span.fragments.first()
     } else {
@@ -8014,7 +8365,7 @@ fn exact_offset_span_retained_tangent_support(
         // The offset span itself is the authoritative finite subset of this
         // tangent support. Reuse it so a later miter intersection retains the
         // same support identity used by Boolean regularization.
-        return Some(Ok(Classification::Decided(chord.clone())));
+        return Some(Ok(Classification::Decided((chord.clone(), !at_start))));
     }
     // A carrier may collapse its finite offset image while still retaining an
     // authored endpoint tangent for the adjacent inner join.  The tangent is
@@ -8031,6 +8382,7 @@ fn exact_offset_span_retained_tangent_support(
         &span.offset_end
     };
     exact_offset_retained_tangent_support(tangent, endpoint, policy)
+        .map(|result| result.map(|classification| classification.map(|chord| (chord, false))))
 }
 
 fn append_retained_support_miter_join(
@@ -8039,6 +8391,8 @@ fn append_retained_support_miter_join(
     next: &ExactOffsetSpan2,
     distance: &Real,
     limit: Option<&Real>,
+    turn_sign: RealSign,
+    distance_sign: RealSign,
     policy: &CurveContext,
 ) -> Option<CurveResult<Classification<()>>> {
     let previous_support = exact_offset_span_retained_tangent_support(previous, false, policy)?;
@@ -8090,19 +8444,37 @@ fn append_retained_support_miter_join(
                 }
             },
         };
-        let support_intersection =
-            match previous_support.supporting_line_intersection(&next_support, policy) {
-                Ok(intersection) => intersection,
-                Err(error) => {
-                    #[cfg(feature = "dispatch-trace")]
-                    hyperreal::dispatch_trace::record(
-                        "hypercurve",
-                        "curve-region-exact-offset-miter-error",
-                        "support-intersection",
-                    );
-                    return Err(error);
-                }
-            };
+        let (previous_support, previous_anchor_at_end) = previous_support;
+        let (next_support, next_anchor_at_end) = next_support;
+        let displacement_sign = exact_sign_product(turn_sign, distance_sign);
+        let first_order = match displacement_sign {
+            RealSign::Positive => std::cmp::Ordering::Less,
+            RealSign::Negative => std::cmp::Ordering::Greater,
+            RealSign::Zero => {
+                return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
+            }
+        };
+        let second_order = first_order.reverse();
+        let support_intersection = match previous_support
+            .supporting_line_intersection_with_certified_anchor_orders(
+                &next_support,
+                previous_anchor_at_end,
+                first_order,
+                next_anchor_at_end,
+                second_order,
+                policy,
+            ) {
+            Ok(intersection) => intersection,
+            Err(error) => {
+                #[cfg(feature = "dispatch-trace")]
+                hyperreal::dispatch_trace::record(
+                    "hypercurve",
+                    "curve-region-exact-offset-miter-error",
+                    "support-intersection",
+                );
+                return Err(error);
+            }
+        };
         let miter = match support_intersection {
             Classification::Decided(Some(point)) => point,
             Classification::Decided(None) => {
@@ -8116,6 +8488,7 @@ fn append_retained_support_miter_join(
                     fragments,
                     &previous.offset_end,
                     &next.offset_start,
+                    None,
                     None,
                     true,
                     [false; 2],
@@ -8228,6 +8601,7 @@ fn append_retained_support_miter_join(
                         fragments,
                         &previous.offset_end,
                         &next.offset_start,
+                        None,
                         None,
                         true,
                         [
@@ -8967,6 +9341,12 @@ fn exact_offset_tangent_cross_sign(
                 "curve-region-exact-offset-tangent-cross",
                 "algebraic-chord-algebraic-chord",
             );
+            if let Some(sign) = first.tangent_cross_sign_with_shared_endpoint(second, policy) {
+                return match sign {
+                    Ok(sign) => sign,
+                    Err(_) => Classification::Uncertain(UncertaintyReason::Unsupported),
+                };
+            }
             match first.tangent_cross_sign(second, policy) {
                 Ok(sign) => sign,
                 Err(_) => Classification::Uncertain(UncertaintyReason::Unsupported),

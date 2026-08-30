@@ -1164,8 +1164,9 @@ impl CurveRegion2 {
         if self.has_certified_regularized_filled_left_topology() {
             return Ok(self.clone());
         }
-        CurveRegionBooleanContext::try_new_unary(self, policy)
-            .and_then(|context| context.build_regularized_region())
+        let context = CurveRegionBooleanContext::try_new_unary(self, policy)?;
+        context
+            .build_regularized_region()
             .map_err(|error| error.with_operation(CurveOperation2::Arrangement))
     }
 
@@ -2799,9 +2800,10 @@ impl<'a> CurveRegionBooleanContext<'a> {
                 "algebraic-chord-pair",
                 "general-rational",
             );
-            chord
+            let result = chord
                 .rational_intersections(rational, shared_source_parameter, &self.data.policy)
-                .map_err(|cause| self.invalid(other_index, cause))
+                .map_err(|cause| self.invalid(other_index, cause));
+            result
         };
         let collinear_support = if let Some(line) =
             regular_component.and_then(BezierParallelRationalComponent2::support_line)
@@ -3080,6 +3082,10 @@ impl<'a> CurveRegionBooleanContext<'a> {
         parallel_index: usize,
     ) -> ExactCurveResult<RegionPairResult> {
         let parallel_carrier = &self.data.carriers[parallel_index];
+        let retained_range = CurveRegionParameterRange2::new_validated(
+            parallel_carrier.start.clone(),
+            parallel_carrier.end.clone(),
+        );
         let regular_range = match (
             parallel_carrier.start.as_bezier_parameter(),
             parallel_carrier.end.as_bezier_parameter(),
@@ -3124,14 +3130,43 @@ impl<'a> CurveRegionBooleanContext<'a> {
                 blockers: Vec::new(),
             }
         };
-        if let Some(range) = regular_range.as_ref() {
+        let retained_monotone_contact_result =
+            |contact: crate::bezier_offset::BezierAlgebraicChordRetainedParallelContact2| {
+                let chord_is_first = chord_index == pair.first_carrier_index;
+                let tangent_cross_sign =
+                    orient_tangent_cross_sign(contact.tangent_cross_sign(), chord_is_first);
+                let chord_parameter =
+                    CurveRegionParameter2::from_algebraic_chord(contact.chord_parameter().clone());
+                let parallel_parameter = contact.parallel_parameter().clone();
+                let (first_parameter, second_parameter) = if chord_is_first {
+                    (chord_parameter, parallel_parameter)
+                } else {
+                    (parallel_parameter, chord_parameter)
+                };
+                RegionPairResult {
+                    contacts: vec![RegionPairContactEvidence::direct(
+                        first_parameter,
+                        second_parameter,
+                        Some(contact.point().clone()),
+                        true,
+                        Some(tangent_cross_sign),
+                    )],
+                    overlaps: Vec::new(),
+                    blockers: Vec::new(),
+                }
+            };
+        {
             let monotonic = chord
-                .parallel_tangent_cross_sign_on_range(parallel, range, &self.data.policy)
+                .parallel_tangent_cross_sign_on_region_range(
+                    parallel,
+                    &retained_range,
+                    &self.data.policy,
+                )
                 .map_err(|cause| self.invalid(parallel_index, cause))?;
-            if matches!(
-                monotonic,
-                Classification::Decided(RealSign::Positive | RealSign::Negative)
-            ) {
+            if let Classification::Decided(
+                monotonic_sign @ (RealSign::Positive | RealSign::Negative),
+            ) = monotonic
+            {
                 if self.authored_carriers_are_adjacent(pair) {
                     // The authored chain already owns one common endpoint. A
                     // strict support-incidence derivative over the complete
@@ -3144,23 +3179,37 @@ impl<'a> CurveRegionBooleanContext<'a> {
                     );
                     return Ok(RegionPairResult::empty());
                 }
-                let strict = self.data.policy.strict_counterpart();
-                let endpoint_side = |parameter: &BezierParameter2| {
-                    let point = RationalBezierIntersectionPointEvidence2::AnalyticParallel(
-                        crate::BezierAnalyticParallelPoint2::new(
-                            parallel.clone(),
-                            parameter.clone(),
-                            &strict,
-                        ),
-                    );
-                    let certified = chord.certified_tangent_side(&point, &strict);
-                    if matches!(certified, Classification::Decided(_)) {
-                        Ok(certified)
-                    } else {
-                        chord.strict_oriented_side_by_fast_refinement(&point, &strict)
-                    }
+                let endpoint_side = |parameter: &CurveRegionParameter2| {
+                    self.data.policy.strict_predicate_pass(|| {
+                        let point = match parallel.point_evidence_on_region_range(
+                            parameter,
+                            &retained_range,
+                            &self.data.policy,
+                        )? {
+                            Classification::Decided(point) => point,
+                            Classification::Uncertain(reason) => {
+                                return Ok(Classification::Uncertain(reason));
+                            }
+                        };
+                        let interval = chord.strict_oriented_side_by_interval_refinement(
+                            &point,
+                            &self.data.policy,
+                        )?;
+                        if matches!(interval, Classification::Decided(_)) {
+                            return Ok(interval);
+                        }
+                        let certified = chord.certified_tangent_side(&point, &self.data.policy);
+                        if matches!(certified, Classification::Decided(_)) {
+                            Ok(certified)
+                        } else {
+                            chord.strict_oriented_side_by_fast_refinement(&point, &self.data.policy)
+                        }
+                    })
                 };
-                let sides = [endpoint_side(range.start()), endpoint_side(range.end())];
+                let sides = [
+                    endpoint_side(retained_range.start()),
+                    endpoint_side(retained_range.end()),
+                ];
                 let sides = match sides {
                     [Ok(first), Ok(second)] => [first, second],
                     [Err(cause), _] | [_, Err(cause)] => {
@@ -3184,6 +3233,31 @@ impl<'a> CurveRegionBooleanContext<'a> {
                         "parallel-monotone-one-sided",
                     );
                     return Ok(RegionPairResult::empty());
+                }
+                if let [
+                    Classification::Decided(first @ (LineSide::Left | LineSide::Right)),
+                    Classification::Decided(second @ (LineSide::Left | LineSide::Right)),
+                ] = sides
+                    && first != second
+                {
+                    match chord
+                        .retained_monotone_parallel_contact_on_region_range(
+                            parallel,
+                            &retained_range,
+                            [first, second],
+                            monotonic_sign,
+                            &self.data.policy,
+                        )
+                        .map_err(|cause| self.invalid(parallel_index, cause))?
+                    {
+                        Classification::Decided(Some(contact)) => {
+                            return Ok(retained_monotone_contact_result(contact));
+                        }
+                        Classification::Decided(None) => {
+                            return Ok(RegionPairResult::empty());
+                        }
+                        Classification::Uncertain(_) => {}
+                    }
                 }
             }
         }
@@ -4239,23 +4313,25 @@ impl<'a> CurveRegionBooleanContext<'a> {
                 // need not itself own a selected endpoint, while its unsplit
                 // authored source still has the singular hodograph.
                 if parallel_carrier.selected_fiber_endpoint_points.is_none() {
-                    match self.parallel_arc_pair_result(parallel, curve, *parallel_is_first)? {
+                    let arc = self.parallel_arc_pair_result(parallel, curve, *parallel_is_first)?;
+                    match arc {
                         Classification::Decided(Some(result)) => return Ok(result),
                         Classification::Decided(None) | Classification::Uncertain(_) => {}
                     }
                 }
-                let regular_range = retained_range
-                    .as_ref()
-                    .cloned()
-                    .map(CurveRegionParameterRange2::from_bezier_range);
-                match self.parallel_line_pair_result(
+                let regular_range = CurveRegionParameterRange2::new_validated(
+                    parallel_carrier.start.clone(),
+                    parallel_carrier.end.clone(),
+                );
+                let line = self.parallel_line_pair_result(
                     pair,
                     parallel,
                     parallel_index,
                     curve,
                     *parallel_is_first,
-                    regular_range.as_ref(),
-                )? {
+                    Some(&regular_range),
+                )?;
+                match line {
                     Classification::Decided(Some(result)) => return Ok(result),
                     Classification::Decided(None) | Classification::Uncertain(_) => {}
                 }
@@ -5129,6 +5205,21 @@ impl<'a> CurveRegionBooleanContext<'a> {
                             )?
                         {
                             return Ok(result);
+                        }
+                        let one_sided = chord
+                            .rational_control_hull_is_strictly_one_sided(
+                                &rational,
+                                &self.data.policy,
+                            )
+                            .map_err(|cause| self.invalid(other_index, cause))?;
+                        if one_sided == Classification::Decided(true) {
+                            #[cfg(feature = "dispatch-trace")]
+                            hyperreal::dispatch_trace::record(
+                                "hypercurve",
+                                "algebraic-chord-pair",
+                                "rational-control-hull-one-sided",
+                            );
+                            return Ok(RegionPairResult::empty());
                         }
                         let shared_source_parameter =
                             if let Some(chord_precedes_other) = chord_precedes_other {
@@ -6121,12 +6212,20 @@ impl<'a> CurveRegionBooleanContext<'a> {
         // carrier's own Bezier parameter domain. Promote only the two
         // surviving boundaries after their correlated chord endpoints have
         // been recovered from the original retained identities.
-        let promote_source_boundary = |parameter: CurveRegionParameter2| match parameter
-            .promoted_bezier_parameter_complete(&self.data.policy.strict_counterpart())
-            .map_err(|cause| self.invalid(source_carrier_index, cause))?
-        {
-            Classification::Decided(parameter) => Ok(CurveRegionParameter2::from_bezier(parameter)),
-            Classification::Uncertain(reason) => Err(self.blocked(source_carrier_index, reason)),
+        let promote_source_boundary = |parameter: CurveRegionParameter2| {
+            self.data.policy.strict_predicate_pass(|| {
+                match parameter
+                    .promoted_bezier_parameter_complete(&self.data.policy)
+                    .map_err(|cause| self.invalid(source_carrier_index, cause))?
+                {
+                    Classification::Decided(parameter) => {
+                        Ok(CurveRegionParameter2::from_bezier(parameter))
+                    }
+                    Classification::Uncertain(reason) => {
+                        Err(self.blocked(source_carrier_index, reason))
+                    }
+                }
+            })
         };
         let source_low = promote_source_boundary(source_low)?;
         let source_high = promote_source_boundary(source_high)?;
@@ -6324,13 +6423,13 @@ impl<'a> CurveRegionBooleanContext<'a> {
                 {
                     continue;
                 }
-                let first_existing = existing_event_vertex_if_decided(
+                let first_existing = existing_contact_event_vertex_if_decided(
                     &events[pair.first_carrier_index],
                     first_parameter,
                     &self.data.policy,
                 )
                 .map_err(|cause| self.invalid(pair.first_carrier_index, cause))?;
-                let second_existing = existing_event_vertex_if_decided(
+                let second_existing = existing_contact_event_vertex_if_decided(
                     &events[pair.second_carrier_index],
                     second_parameter,
                     &self.data.policy,
@@ -6348,6 +6447,20 @@ impl<'a> CurveRegionBooleanContext<'a> {
                 for (existing_index, existing) in contact_points.iter().enumerate() {
                     if topology_vertex == Some(existing.topology_vertex) {
                         matching_contact_index.get_or_insert(existing_index);
+                        continue;
+                    }
+                    if let Some(current_vertex) = topology_vertex
+                        && contact_points.iter().any(|incidence| {
+                            incidence.topology_vertex == existing.topology_vertex
+                                && contact_decided_distinct_from_carrier_endpoint_vertex(
+                                    incidence,
+                                    current_vertex,
+                                    &events,
+                                    &self.data.carriers,
+                                    &self.data.policy,
+                                )
+                        })
+                    {
                         continue;
                     }
                     if contacts_decided_same_from_shared_parallel(
@@ -6509,11 +6622,38 @@ impl<'a> CurveRegionBooleanContext<'a> {
                 } else {
                     contact.point().cloned()
                 };
+                let mut retained_parameters = [first_parameter.clone(), second_parameter.clone()];
+                if let Some(existing_index) = matching_contact_index
+                    && let Some(representative) = contact_points[existing_index].point.clone()
+                {
+                    for (slot, (carrier_index, location)) in [
+                        (pair.first_carrier_index, first_location),
+                        (pair.second_carrier_index, second_location),
+                    ]
+                    .into_iter()
+                    .enumerate()
+                    {
+                        let RegionCarrierGeometry::AlgebraicChord(chord) =
+                            &self.data.carriers[carrier_index].geometry
+                        else {
+                            continue;
+                        };
+                        if location == CarrierParameterLocation::Interior
+                            && retained_parameters[slot].as_algebraic_chord().is_some_and(
+                                |parameter| parameter.is_certified_strict_interior_of(chord),
+                            )
+                        {
+                            retained_parameters[slot] = CurveRegionParameter2::from_algebraic_chord(
+                                chord.parameter_at_certified_interior_point(representative.clone()),
+                            );
+                        }
+                    }
+                }
                 contact_points.push(ContactVertex {
                     point,
                     topology_vertex,
                     carrier_indices: [pair.first_carrier_index, pair.second_carrier_index],
-                    parameters: [first_parameter.clone(), second_parameter.clone()],
+                    parameters: retained_parameters.clone(),
                 });
                 for &(existing_index, reason) in &uncertain_contact_matches {
                     deferred_contact_matches.push((existing_index, contact_index, reason));
@@ -6543,21 +6683,21 @@ impl<'a> CurveRegionBooleanContext<'a> {
                         },
                         second_side_of_first: contact.second_side_of_first,
                         self_parameters: (pair.first_carrier_index == pair.second_carrier_index)
-                            .then(|| [first_parameter.clone(), second_parameter.clone()]),
+                            .then(|| retained_parameters.clone()),
                     })
                 } else {
                     None
                 };
                 deferred_event_ordering |= push_contact_carrier_event(
                     &mut events[pair.first_carrier_index],
-                    first_parameter.clone(),
+                    retained_parameters[0].clone(),
                     Some(topology_vertex),
                     &self.data.carriers[pair.first_carrier_index],
                     &self.data.policy,
                 )?;
                 deferred_event_ordering |= push_contact_carrier_event(
                     &mut events[pair.second_carrier_index],
-                    second_parameter.clone(),
+                    retained_parameters[1].clone(),
                     Some(topology_vertex),
                     &self.data.carriers[pair.second_carrier_index],
                     &self.data.policy,
@@ -6648,7 +6788,12 @@ impl<'a> CurveRegionBooleanContext<'a> {
                         transition_candidates.resize(topology_vertex + 1, None);
                         reclassification_vertices.resize(topology_vertex + 1, false);
                     }
-                    transition_candidates[topology_vertex] = None;
+                    // An overlap endpoint may reuse the vertex of one
+                    // already-certified point contact. Keep that contact:
+                    // the face kernel has exact sector formulas for a branch
+                    // entering or leaving a coincident range. Only the
+                    // distinct-vertex merge above invalidates the unique
+                    // four-branch contact authority.
                     reclassification_vertices[topology_vertex] = true;
                     first_endpoint_vertices[index] = topology_vertex;
                     second_endpoint_vertices[second_index] = topology_vertex;
@@ -6731,17 +6876,16 @@ impl<'a> CurveRegionBooleanContext<'a> {
             }
         }
         for overlap in &overlaps {
-            for (carrier_index, range) in [
-                (overlap.first_carrier_index, &overlap.first_range),
-                (overlap.second_carrier_index, &overlap.second_range),
-            ] {
-                for parameter in [range.start(), range.end()] {
-                    if let Some(vertex) =
-                        existing_event_vertex(&events[carrier_index], parameter, &self.data.policy)?
-                        && transition_candidates.get(vertex).is_some()
-                    {
-                        reclassification_vertices[vertex] = true;
-                    }
+            // Clipping published these exact endpoint vertices when it
+            // inserted the overlap events. Reuse that topology authority
+            // instead of re-comparing independently retained parameters.
+            for vertex in overlap
+                .first_endpoint_vertices
+                .into_iter()
+                .chain(overlap.second_endpoint_vertices)
+            {
+                if transition_candidates.get(vertex).is_some() {
+                    reclassification_vertices[vertex] = true;
                 }
             }
         }
@@ -7974,6 +8118,32 @@ impl<'a> CurveRegionBooleanContext<'a> {
             }
         }
         let mut face_windings = vec![None; edge_count.saturating_mul(2)];
+        let action_from_face_windings = |carrier_index: usize,
+                                         split_index: usize,
+                                         face_windings: &[Option<Vec<i32>>]|
+         -> ExactCurveResult<Option<RegionFragmentAction>> {
+            let [left_face, right_face] = face_roots[carrier_index][split_index];
+            let (Some(left), Some(right)) = (
+                face_windings[left_face].as_ref(),
+                face_windings[right_face].as_ref(),
+            ) else {
+                return Ok(None);
+            };
+            let left = self
+                .data
+                .first
+                .region_location_from_loop_windings(left)
+                .map_err(|cause| self.invalid(carrier_index, cause))?;
+            let right = self
+                .data
+                .first
+                .region_location_from_loop_windings(right)
+                .map_err(|cause| self.invalid(carrier_index, cause))?;
+            Ok(Some(action_from_result_sides(
+                left == RegionPointLocation::Inside,
+                right == RegionPointLocation::Inside,
+            )))
+        };
 
         // Exact affine fragments are the cheapest authoritative local face
         // seeds. Evaluate them first and propagate their winding equations.
@@ -7997,7 +8167,21 @@ impl<'a> CurveRegionBooleanContext<'a> {
                 {
                     continue;
                 }
-                match self.regularized_fragment_geometric_decision(carrier_index, &split.fragment) {
+                if let Some(action) =
+                    action_from_face_windings(carrier_index, split_index, &face_windings)?
+                {
+                    actions[carrier_index][split_index] = Some(action);
+                    #[cfg(feature = "dispatch-trace")]
+                    hyperreal::dispatch_trace::record(
+                        "hypercurve",
+                        "regularization-fragment-action",
+                        "propagated-face-winding",
+                    );
+                    continue;
+                }
+                let decision =
+                    self.regularized_fragment_geometric_decision(carrier_index, &split.fragment);
+                match decision {
                     Ok(decision) => {
                         actions[carrier_index][split_index] = Some(decision.action);
                         let [left, right] = decision.side_windings;
@@ -8375,7 +8559,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
                                          face_windings: &[Option<Vec<i32>>]|
          -> ExactCurveResult<()> {
             for (derived_carrier_index, roots) in face_roots.iter().enumerate() {
-                for (derived_split_index, &[left_face, right_face]) in roots.iter().enumerate() {
+                for derived_split_index in 0..roots.len() {
                     let derived_edge = edge_index(derived_carrier_index, derived_split_index);
                     if edge_overlapped[derived_carrier_index][derived_split_index]
                         && (!edge_overlap_grouped[derived_edge]
@@ -8383,26 +8567,14 @@ impl<'a> CurveRegionBooleanContext<'a> {
                     {
                         continue;
                     }
-                    let (Some(left), Some(right)) = (
-                        face_windings[left_face].as_ref(),
-                        face_windings[right_face].as_ref(),
-                    ) else {
+                    let Some(derived) = action_from_face_windings(
+                        derived_carrier_index,
+                        derived_split_index,
+                        face_windings,
+                    )?
+                    else {
                         continue;
                     };
-                    let left = self
-                        .data
-                        .first
-                        .region_location_from_loop_windings(left)
-                        .map_err(|cause| self.invalid(derived_carrier_index, cause))?;
-                    let right = self
-                        .data
-                        .first
-                        .region_location_from_loop_windings(right)
-                        .map_err(|cause| self.invalid(derived_carrier_index, cause))?;
-                    let derived = action_from_result_sides(
-                        left == RegionPointLocation::Inside,
-                        right == RegionPointLocation::Inside,
-                    );
                     match actions[derived_carrier_index][derived_split_index] {
                         Some(existing) if existing != derived => {
                             return Err(self.invalid(
@@ -8490,6 +8662,8 @@ impl<'a> CurveRegionBooleanContext<'a> {
                 Ok(())
             };
 
+        propagate_authored_actions(&mut actions)?;
+
         let mut work = topology
             .split_fragments
             .iter()
@@ -8524,7 +8698,9 @@ impl<'a> CurveRegionBooleanContext<'a> {
                 continue;
             }
             let split = &topology.split_fragments[carrier_index][split_index];
-            match self.regularized_fragment_geometric_decision(carrier_index, &split.fragment) {
+            let decision =
+                self.regularized_fragment_geometric_decision(carrier_index, &split.fragment);
+            match decision {
                 Ok(decision) => {
                     actions[carrier_index][split_index] = Some(decision.action);
                     let [left, right] = decision.side_windings;
@@ -11411,7 +11587,13 @@ fn build_candidate_carrier_pair(
 ) -> ExactCurveResult<Option<RegionCarrierPair>> {
     let first_carrier = &carriers[first_carrier_index];
     let second_carrier = &carriers[second_carrier_index];
-    if carrier_bounds_decided_disjoint(first_carrier, second_carrier, policy) {
+    // Consecutive authored fragments share their loop vertex by construction.
+    // They therefore cannot be rejected by bounds, and asking an algebraic
+    // endpoint for a box here can be much more expensive than admitting the
+    // pair to the authoritative exact kernel.
+    if !authored_carriers_are_adjacent_in_set(carriers, first_carrier, second_carrier)
+        && carrier_bounds_decided_disjoint(first_carrier, second_carrier, policy)
+    {
         return Ok(None);
     }
     let context = match (&first_carrier.geometry, &second_carrier.geometry) {
@@ -11498,6 +11680,32 @@ fn build_candidate_carrier_pair(
         second_carrier_index,
         context,
     }))
+}
+
+fn authored_carriers_are_adjacent_in_set(
+    carriers: &[RegionCarrier],
+    first: &RegionCarrier,
+    second: &RegionCarrier,
+) -> bool {
+    if first.operand != second.operand || first.loop_index != second.loop_index {
+        return false;
+    }
+    if first.fragment_index.abs_diff(second.fragment_index) == 1 {
+        return true;
+    }
+    let last_fragment_index = carriers
+        .iter()
+        .filter(|carrier| {
+            carrier.operand == first.operand && carrier.loop_index == first.loop_index
+        })
+        .map(|carrier| carrier.fragment_index)
+        .max();
+    matches!(
+        last_fragment_index,
+        Some(last)
+            if (first.fragment_index == 0 && second.fragment_index == last)
+                || (second.fragment_index == 0 && first.fragment_index == last)
+    )
 }
 
 fn build_parallel_self_intersection_caches(
@@ -11616,6 +11824,21 @@ fn carrier_bounds_decided_disjoint(
     second: &RegionCarrier,
     policy: &CurveContext,
 ) -> bool {
+    // A non-materialized algebraic chord deliberately retains endpoint
+    // evidence instead of expanding it into global coordinates. Constructing
+    // those coordinates merely for optional broad-phase pruning can dominate
+    // (or fail to terminate under STRICT) before the exact pair kernel uses
+    // the retained identities directly. Materialized line chords still have
+    // cheap boxes and retain the ordinary fast path.
+    if matches!(
+        &first.geometry,
+        RegionCarrierGeometry::AlgebraicChord(chord) if chord.exact_line().is_none()
+    ) || matches!(
+        &second.geometry,
+        RegionCarrierGeometry::AlgebraicChord(chord) if chord.exact_line().is_none()
+    ) {
+        return false;
+    }
     // Bounds are an optional rejection proof. They must never consume the
     // APPROXIMATE_512 terminal or weaken the certainty of an operation whose
     // authoritative carrier kernel can decide the pair exactly.
@@ -13181,7 +13404,8 @@ fn certified_transverse_contact_vertices(
             ) else {
                 return candidate.certified_transverse;
             };
-            match algebraic_endpoint_tangent_cross_sign(first, second, policy) {
+            let cross = algebraic_endpoint_tangent_cross_sign(first, second, policy);
+            match cross {
                 Classification::Decided(RealSign::Positive) => {
                     candidate.cross_is_positive = Some(true);
                     true
@@ -13422,30 +13646,29 @@ fn push_carrier_event_internal(
     for (event_index, event) in events.iter_mut().enumerate() {
         let same_topology_vertex =
             topology_vertex.is_some() && event.topology_vertex == topology_vertex;
-        match parameter
-            .cmp_by_refinement(&event.parameter, policy)
-            .map_err(|cause| {
-                ExactCurveError::invalid(CurveOperation2::Boolean, carrier.family, cause)
-            })? {
+        // A single-valued injective carrier cannot assign two parameters to
+        // one exact topology vertex. Contact reconciliation has already
+        // proved the vertex identity geometrically, so it is both stronger
+        // and cheaper than rejoining two independently retained scalar
+        // fields merely to rediscover parameter equality.
+        if same_topology_vertex && carrier_has_certified_injective_image(carrier, policy) {
+            return Ok((deferred_ordering, event_index));
+        }
+        let comparison = if defer_unordered {
+            locally_decidable_contact_parameter_cmp(&parameter, &event.parameter, policy)
+        } else {
+            parameter.cmp_by_refinement(&event.parameter, policy)
+        };
+        match comparison.map_err(|cause| {
+            ExactCurveError::invalid(CurveOperation2::Boolean, carrier.family, cause)
+        })? {
             Classification::Decided(Ordering::Equal) => {
                 if event.topology_vertex.is_none() {
                     event.topology_vertex = topology_vertex;
                 }
                 return Ok((deferred_ordering, event_index));
             }
-            Classification::Decided(_)
-                if same_topology_vertex
-                    && carrier_has_certified_injective_image(carrier, policy) =>
-            {
-                return Ok((deferred_ordering, event_index));
-            }
             Classification::Decided(_) => {}
-            Classification::Uncertain(_)
-                if same_topology_vertex
-                    && carrier_has_certified_injective_image(carrier, policy) =>
-            {
-                return Ok((deferred_ordering, event_index));
-            }
             Classification::Uncertain(_) if defer_unordered => deferred_ordering = true,
             Classification::Uncertain(reason) => {
                 return Err(ExactCurveError::blocked(
@@ -13519,20 +13742,6 @@ fn carrier_traversal_end(carrier: &RegionCarrier) -> &CurveRegionParameter2 {
     }
 }
 
-fn existing_event_vertex(
-    events: &[CarrierEvent],
-    parameter: &CurveRegionParameter2,
-    policy: &CurveContext,
-) -> ExactCurveResult<Option<usize>> {
-    for event in events {
-        match decided_parameter_cmp(parameter, &event.parameter, policy)? {
-            Ordering::Equal => return Ok(event.topology_vertex),
-            Ordering::Less | Ordering::Greater => {}
-        }
-    }
-    Ok(None)
-}
-
 fn existing_event_vertex_if_decided(
     events: &[CarrierEvent],
     parameter: &CurveRegionParameter2,
@@ -13546,6 +13755,44 @@ fn existing_event_vertex_if_decided(
         }
     }
     Ok(None)
+}
+
+fn existing_contact_event_vertex_if_decided(
+    events: &[CarrierEvent],
+    parameter: &CurveRegionParameter2,
+    policy: &CurveContext,
+) -> CurveResult<Option<usize>> {
+    for event in events {
+        match locally_decidable_contact_parameter_cmp(parameter, &event.parameter, policy)? {
+            Classification::Decided(Ordering::Equal) => return Ok(event.topology_vertex),
+            Classification::Decided(Ordering::Less | Ordering::Greater)
+            | Classification::Uncertain(_) => {}
+        }
+    }
+    Ok(None)
+}
+
+fn locally_decidable_contact_parameter_cmp(
+    first: &CurveRegionParameter2,
+    second: &CurveRegionParameter2,
+    policy: &CurveContext,
+) -> CurveResult<Classification<Ordering>> {
+    if first == second {
+        return Ok(Classification::Decided(Ordering::Equal));
+    }
+    if let (Some(first), Some(second)) = (
+        first.as_recursive_projective(),
+        second.as_recursive_projective(),
+    ) {
+        return first.cmp_by_native_refinement(second, policy);
+    }
+    if first.is_retained_scalar() && second.is_retained_scalar() {
+        // Two independent retained authorities can require a joined recursive
+        // field even when this caller only seeks an optional shortcut.  Their
+        // exact Cartesian evidence is the authoritative contact identity.
+        return Ok(Classification::Uncertain(UncertaintyReason::Ordering));
+    }
+    first.cmp_by_refinement(second, policy)
 }
 
 fn carrier_has_certified_injective_image(carrier: &RegionCarrier, policy: &CurveContext) -> bool {
@@ -13633,6 +13880,112 @@ fn contacts_decided_distinct_from_carriers(
     carriers: &[RegionCarrier],
     policy: &CurveContext,
 ) -> ExactCurveResult<bool> {
+    for (existing_shared_slot, existing_shared_carrier) in
+        existing.carrier_indices.iter().copied().enumerate()
+    {
+        for (current_shared_slot, current_shared_carrier) in
+            carrier_indices.iter().copied().enumerate()
+        {
+            if existing_shared_carrier != current_shared_carrier {
+                continue;
+            }
+            let existing_chord_slot = 1 - existing_shared_slot;
+            let current_chord_slot = 1 - current_shared_slot;
+            let existing_chord_index = existing.carrier_indices[existing_chord_slot];
+            let current_chord_index = carrier_indices[current_chord_slot];
+            let (
+                RegionCarrierGeometry::AlgebraicChord(existing_chord),
+                RegionCarrierGeometry::AlgebraicChord(current_chord),
+            ) = (
+                &carriers[existing_chord_index].geometry,
+                &carriers[current_chord_index].geometry,
+            )
+            else {
+                continue;
+            };
+            let (Some(existing_parameter), Some(current_parameter)) = (
+                existing.parameters[existing_chord_slot].as_algebraic_chord(),
+                parameters[current_chord_slot].as_algebraic_chord(),
+            ) else {
+                continue;
+            };
+            if !existing_parameter.is_certified_strict_interior_of(existing_chord)
+                || !current_parameter.is_certified_strict_interior_of(current_chord)
+            {
+                continue;
+            }
+            let shared_endpoint = [existing_chord.start(), existing_chord.end()]
+                .into_iter()
+                .enumerate()
+                .find_map(|(existing_endpoint, first)| {
+                    [current_chord.start(), current_chord.end()]
+                        .into_iter()
+                        .enumerate()
+                        .find_map(|(current_endpoint, second)| {
+                            first
+                                .shares_storage(second)
+                                .then_some((existing_endpoint, current_endpoint))
+                        })
+                });
+            let Some((existing_endpoint, current_endpoint)) = shared_endpoint else {
+                continue;
+            };
+            let Some(cross) =
+                existing_chord.tangent_cross_sign_with_shared_endpoint(current_chord, policy)
+            else {
+                continue;
+            };
+            let cross = cross.map_err(|cause| {
+                ExactCurveError::invalid(
+                    CurveOperation2::Boolean,
+                    carriers[existing_chord_index].family,
+                    cause,
+                )
+            })?;
+            match cross {
+                Classification::Decided(RealSign::Positive | RealSign::Negative) => {
+                    #[cfg(feature = "dispatch-trace")]
+                    hyperreal::dispatch_trace::record(
+                        "hypercurve",
+                        "contact-point-distinctness",
+                        "shared-endpoint-chord-interiors",
+                    );
+                    return Ok(true);
+                }
+                Classification::Decided(RealSign::Zero) => {
+                    let dot = existing_chord
+                        .tangent_dot_sign(current_chord, policy)
+                        .map_err(|cause| {
+                            ExactCurveError::invalid(
+                                CurveOperation2::Boolean,
+                                carriers[existing_chord_index].family,
+                                cause,
+                            )
+                        })?;
+                    let Classification::Decided(mut away_dot) = dot else {
+                        continue;
+                    };
+                    if existing_endpoint != current_endpoint {
+                        away_dot = match away_dot {
+                            RealSign::Negative => RealSign::Positive,
+                            RealSign::Zero => RealSign::Zero,
+                            RealSign::Positive => RealSign::Negative,
+                        };
+                    }
+                    if away_dot == RealSign::Negative {
+                        #[cfg(feature = "dispatch-trace")]
+                        hyperreal::dispatch_trace::record(
+                            "hypercurve",
+                            "contact-point-distinctness",
+                            "opposite-shared-endpoint-chord-interiors",
+                        );
+                        return Ok(true);
+                    }
+                }
+                Classification::Uncertain(_) => {}
+            }
+        }
+    }
     for (existing_slot, existing_carrier) in existing.carrier_indices.iter().copied().enumerate() {
         for (current_slot, current_carrier) in carrier_indices.iter().copied().enumerate() {
             let (
@@ -13647,8 +14000,11 @@ fn contacts_decided_distinct_from_carriers(
             };
             if existing_parallel == current_parallel
                 && matches!(
-                    existing.parameters[existing_slot]
-                        .cmp_by_refinement(parameters[current_slot], policy)
+                    locally_decidable_contact_parameter_cmp(
+                        &existing.parameters[existing_slot],
+                        parameters[current_slot],
+                        policy,
+                    )
                         .map_err(|cause| ExactCurveError::invalid(
                             CurveOperation2::Boolean,
                             carriers[existing_carrier].family,
@@ -13693,8 +14049,11 @@ fn contacts_decided_distinct_from_carriers(
         for (current_slot, current_carrier) in carrier_indices.iter().copied().enumerate() {
             if existing_carrier == current_carrier
                 && matches!(
-                    existing.parameters[existing_slot]
-                        .cmp_by_refinement(parameters[current_slot], policy)
+                    locally_decidable_contact_parameter_cmp(
+                        &existing.parameters[existing_slot],
+                        parameters[current_slot],
+                        policy,
+                    )
                         .map_err(|cause| ExactCurveError::invalid(
                             CurveOperation2::Boolean,
                             carrier.family,
@@ -13708,6 +14067,43 @@ fn contacts_decided_distinct_from_carriers(
         }
     }
     Ok(false)
+}
+
+/// Proves that an existing contact vertex cannot equal an already-authored
+/// endpoint vertex of one of its incident carriers.
+///
+/// A contact record can omit other carrier incidences attached to the same
+/// topology vertex, so reconciliation applies this predicate across the
+/// complete vertex group. On an injective algebraic chord, a parameter
+/// certified in the strict finite interior is necessarily distinct from both
+/// authored endpoint parameters; no Cartesian point comparison is needed.
+fn contact_decided_distinct_from_carrier_endpoint_vertex(
+    existing: &ContactVertex,
+    current_vertex: usize,
+    events: &[Vec<CarrierEvent>],
+    carriers: &[RegionCarrier],
+    policy: &CurveContext,
+) -> bool {
+    existing
+        .carrier_indices
+        .iter()
+        .copied()
+        .enumerate()
+        .any(|(slot, carrier_index)| {
+            let carrier = &carriers[carrier_index];
+            let RegionCarrierGeometry::AlgebraicChord(chord) = &carrier.geometry else {
+                return false;
+            };
+            let Some(parameter) = existing.parameters[slot].as_algebraic_chord() else {
+                return false;
+            };
+            parameter.is_certified_strict_interior_of(chord)
+                && carrier_has_certified_injective_image(carrier, policy)
+                && events[carrier_index].iter().any(|event| {
+                    event.topology_vertex == Some(current_vertex)
+                        && (event.parameter == carrier.start || event.parameter == carrier.end)
+                })
+        })
 }
 
 fn contacts_decided_same_from_shared_parallel(
@@ -13729,15 +14125,74 @@ fn contacts_decided_same_from_shared_parallel(
             else {
                 continue;
             };
+            if existing_carrier == current_carrier {
+                let existing_chord_slot = 1 - existing_slot;
+                let current_chord_slot = 1 - current_slot;
+                let existing_chord_index = existing.carrier_indices[existing_chord_slot];
+                let current_chord_index = carrier_indices[current_chord_slot];
+                if let (
+                    RegionCarrierGeometry::AlgebraicChord(existing_chord),
+                    RegionCarrierGeometry::AlgebraicChord(current_chord),
+                    Some(existing_parallel_parameter),
+                    Some(current_parallel_parameter),
+                    Some(existing_chord_parameter),
+                    Some(current_chord_parameter),
+                ) = (
+                    &carriers[existing_chord_index].geometry,
+                    &carriers[current_chord_index].geometry,
+                    existing.parameters[existing_slot].as_recursive_projective(),
+                    parameters[current_slot].as_recursive_projective(),
+                    existing.parameters[existing_chord_slot].as_algebraic_chord(),
+                    parameters[current_chord_slot].as_algebraic_chord(),
+                ) && existing_parallel_parameter
+                    .certifies_monotone_chord_parallel_contact(existing_chord, existing_parallel)
+                    && current_parallel_parameter
+                        .certifies_monotone_chord_parallel_contact(current_chord, current_parallel)
+                    && existing_chord_parameter.is_certified_strict_interior_of(existing_chord)
+                    && current_chord_parameter.is_certified_strict_interior_of(current_chord)
+                    && [existing_chord.start(), existing_chord.end()]
+                        .into_iter()
+                        .any(|first| {
+                            [current_chord.start(), current_chord.end()]
+                                .into_iter()
+                                .any(|second| first.shares_storage(second))
+                        })
+                    && let Some(cross) = existing_chord
+                        .tangent_cross_sign_with_shared_endpoint(current_chord, policy)
+                {
+                    match cross.map_err(|cause| {
+                        ExactCurveError::invalid(
+                            CurveOperation2::Boolean,
+                            carriers[existing_chord_index].family,
+                            cause,
+                        )
+                    })? {
+                        Classification::Decided(RealSign::Zero) => {
+                            #[cfg(feature = "dispatch-trace")]
+                            hyperreal::dispatch_trace::record(
+                                "hypercurve",
+                                "contact-point-equality",
+                                "collinear-monotone-shared-carrier-root",
+                            );
+                            return Ok(true);
+                        }
+                        Classification::Decided(RealSign::Negative | RealSign::Positive)
+                        | Classification::Uncertain(_) => {}
+                    }
+                }
+            }
             if existing_parallel == current_parallel
                 && matches!(
-                    existing.parameters[existing_slot]
-                        .cmp_by_refinement(parameters[current_slot], policy)
-                        .map_err(|cause| ExactCurveError::invalid(
-                            CurveOperation2::Boolean,
-                            carriers[existing_carrier].family,
-                            cause,
-                        ))?,
+                    locally_decidable_contact_parameter_cmp(
+                        &existing.parameters[existing_slot],
+                        parameters[current_slot],
+                        policy,
+                    )
+                    .map_err(|cause| ExactCurveError::invalid(
+                        CurveOperation2::Boolean,
+                        carriers[existing_carrier].family,
+                        cause,
+                    ))?,
                     Classification::Decided(Ordering::Equal)
                 )
             {
@@ -14353,6 +14808,18 @@ fn parameter_location_in_carrier(
 ) -> ExactCurveResult<CarrierParameterLocation> {
     if parameter == &carrier.start || parameter == &carrier.end {
         return Ok(CarrierParameterLocation::Endpoint);
+    }
+    if let (Some(parameter), RegionCarrierGeometry::AlgebraicChord(chord)) =
+        (parameter.as_algebraic_chord(), &carrier.geometry)
+        && parameter.is_certified_strict_interior_of(chord)
+    {
+        #[cfg(feature = "dispatch-trace")]
+        hyperreal::dispatch_trace::record(
+            "hypercurve",
+            "curve-region-carrier-parameter-location",
+            "authored-strict-interior",
+        );
+        return Ok(CarrierParameterLocation::Interior);
     }
     if let (Some(parameter), RegionCarrierGeometry::AlgebraicCuspSemicircle(fragment)) =
         (parameter.as_algebraic_cusp(), &carrier.geometry)

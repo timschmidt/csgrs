@@ -26,7 +26,8 @@ use crate::bezier_offset::{
     BezierAlgebraicChordParameter2, BezierAlgebraicCuspSemicircleParameter2,
 };
 use crate::bezier_offset::{
-    BezierAlgebraicSelectedFiberParameter2, BezierRecursiveProjectiveParameter2,
+    BezierAlgebraicSelectedFiberParameter2, BezierRecursiveChordContactLocation2,
+    BezierRecursiveProjectiveParameter2,
 };
 use crate::classify::{compare_reals, in_closed_unit_interval, is_zero};
 use crate::{
@@ -139,6 +140,26 @@ impl CurveRegionParameter2 {
                     parameter.transported_line_identity(line, transform),
                 ),
             },
+            data => Self { data },
+        }
+    }
+
+    pub(crate) fn with_chord_rational_tangent_identity(
+        self,
+        chord: BezierAlgebraicChord2,
+        source: RationalBezier2,
+        tangent_cross_sign: RealSign,
+        chord_location: BezierRecursiveChordContactLocation2,
+    ) -> Self {
+        match self.data {
+            CurveRegionParameterData2::RecursiveProjective(parameter) => {
+                Self::from_recursive_projective(parameter.with_chord_rational_tangent_identity(
+                    chord,
+                    source,
+                    tangent_cross_sign,
+                    chord_location,
+                ))
+            }
             data => Self { data },
         }
     }
@@ -514,6 +535,27 @@ impl CurveRegionParameter2 {
         other: &Self,
         policy: &CurveContext,
     ) -> CurveResult<Classification<Real>> {
+        // Construction-owned finite isolators are already an exact separation
+        // certificate. Consume them before asking either retained authority to
+        // refine or project itself into a global Bezier polynomial: a Boolean
+        // boundary commonly pairs an authored endpoint with a local recursive
+        // contact, and the stored open gap is all an interior sample requires.
+        if let (Some((_, first_upper)), Some((second_lower, _))) = (
+            self.finite_envelope_bounds(),
+            other.finite_envelope_bounds(),
+        ) && compare_reals(first_upper, second_lower, &CurveContext::STRICT)
+            == Some(Ordering::Less)
+        {
+            #[cfg(feature = "dispatch-trace")]
+            hyperreal::dispatch_trace::record(
+                "hypercurve",
+                "curve-region-parameter-interior",
+                "stored-envelope-separated",
+            );
+            return Ok(Classification::Decided(
+                ((first_upper + second_lower) / Real::from(2_i8))?,
+            ));
+        }
         match (&self.data, &other.data) {
             (
                 CurveRegionParameterData2::Bezier(first),
