@@ -3,19 +3,31 @@
 #![no_main]
 
 use hyperreal::{
-    CertifiedRealEquality, CertifiedRealOrdering, CertifiedRealSign, Rational, Real, RealSign,
-    StructuralKind,
+    CertifiedRealEquality, CertifiedRealOrdering, CertifiedRealSign, Computable, Rational, Real,
+    RealSign, StructuralKind,
 };
 use libfuzzer_sys::fuzz_target;
 
-const EXPECTED_KINDS: [StructuralKind; 8] = [
+const EXPECTED_KINDS: [StructuralKind; 20] = [
     StructuralKind::ExactRational,
     StructuralKind::PiLike,
+    StructuralKind::PiLike,
+    StructuralKind::PiLike,
+    StructuralKind::ExpLike,
     StructuralKind::ExpLike,
     StructuralKind::SqrtLike,
+    StructuralKind::ProductConstant,
+    StructuralKind::ProductConstant,
+    StructuralKind::ProductConstant,
+    StructuralKind::SqrtLike,
+    StructuralKind::ExpLike,
+    StructuralKind::LogLike,
+    StructuralKind::LogLike,
+    StructuralKind::LogLike,
+    StructuralKind::LogLike,
     StructuralKind::LogLike,
     StructuralKind::TrigExact,
-    StructuralKind::ProductConstant,
+    StructuralKind::TrigExact,
     StructuralKind::ComputableOpaque,
 ];
 
@@ -48,24 +60,36 @@ fuzz_target!(|data: &[u8]| {
         let _ = value.clone().powi_i64(exponent);
     }
 
-    // Every representation is paired with every other representation. This
-    // catches asymmetric dispatch and ownership-specific arithmetic paths.
-    for left in &values {
-        for right in &values {
-            assert_bounded_equal(&(left + right), &(right + left));
-            assert_bounded_equal(&(left * right), &(right * left));
-            assert_bounded_equal(&(left - right), &-(right - left));
+    // Rotate all twenty left-hand certificates across a fuzzer-selected right
+    // stride. A campaign covers the full ordered 20x20 dispatch matrix without
+    // forcing every individual execution to perform 400 high-precision pairs.
+    let stride = usize::from(data.first().copied().unwrap_or(0)) % values.len();
+    for (index, left) in values.iter().enumerate() {
+        let right = &values[(index + stride) % values.len()];
+        assert_bounded_equal(&(left + right), &(right + left));
+        assert_bounded_equal(&(left * right), &(right * left));
+        assert_bounded_equal(&(left - right), &-(right - left));
 
-            let quotient = (left / right).expect("representatives are nonzero");
-            assert!(quotient.certified_dyadic_interval(-512).is_some());
+        let quotient = (left / right).expect("representatives are nonzero");
+        assert!(quotient.certified_dyadic_interval(-512).is_some());
 
-            assert!(matches!(
-                left.certified_eq_until(left, -512),
-                CertifiedRealEquality::Equal { .. }
-            ));
-            assert_certificates_match_bounded_evaluation(left, right);
-        }
+        assert!(matches!(
+            left.certified_eq_until(left, -512),
+            CertifiedRealEquality::Equal { .. }
+        ));
+        assert_certificates_match_bounded_evaluation(left, right);
     }
+
+    // Finite node tags are covered deterministically by the serde inventory
+    // test. This fuzzer covers the unbounded part of the representation space:
+    // variable-depth, shared expression-DAG topology.
+    let graph = variable_depth_graph(data);
+    let coarse = graph.approx(-32);
+    assert_eq!(graph.approx(-32), coarse);
+    let fine = graph.approx(-96);
+    assert_eq!(graph.approx(-96), fine);
+    let _ = graph.structural_facts();
+    let _ = graph.sign_until(-128);
 });
 
 fn assert_certificates_match_bounded_evaluation(left: &Real, right: &Real) {
@@ -121,17 +145,65 @@ fn assert_bounded_equal(left: &Real, right: &Real) {
 }
 
 fn representative_values() -> Vec<Real> {
-    let pi_squared = &Real::pi() * &Real::pi();
+    let pi = Real::pi();
+    let e = Real::e();
+    let pi_squared = &pi * &pi;
+    let sqrt_two = Real::from(2).sqrt().expect("positive radicand");
+    let ln_two = Real::from(2).ln().expect("positive logarithm input");
+    let ln_three = Real::from(3).ln().expect("positive logarithm input");
     vec![
         Real::new(Rational::fraction(3, 2).expect("nonzero denominator")),
-        Real::pi(),
-        Real::e(),
-        Real::new(Rational::new(2))
-            .sqrt()
-            .expect("positive rational"),
-        Real::new(Rational::new(3)).ln().expect("positive rational"),
+        pi.clone(),
+        pi_squared.clone(),
+        pi.clone().inverse().expect("pi is nonzero"),
+        &pi * &e,
+        (&e / &pi).expect("pi is nonzero"),
+        &pi * &sqrt_two,
+        &pi_squared * &e,
+        &pi - Real::from(3),
+        &(&pi_squared * &e) * &sqrt_two,
+        sqrt_two,
+        Real::from(2).exp().expect("finite exponential"),
+        ln_three.clone(),
+        (Real::from(2) * &e)
+            .ln()
+            .expect("positive logarithm input"),
+        &ln_two * &ln_three,
+        Real::from(2).log10().expect("positive logarithm input"),
+        Real::from(3).log2().expect("positive logarithm input"),
         Real::new(Rational::fraction(1, 5).expect("nonzero denominator")).sin_pi(),
-        pi_squared * Real::e(),
+        Real::new(Rational::fraction(1, 5).expect("nonzero denominator"))
+            .tan_pi()
+            .expect("one fifth of a turn is not a tangent pole"),
         Real::new(Rational::one()).sin(),
     ]
+}
+
+fn variable_depth_graph(data: &[u8]) -> Computable {
+    let numerator = i64::from(data.get(1).copied().unwrap_or(1) % 7) + 1;
+    let denominator = u64::from(data.get(2).copied().unwrap_or(2) % 7) + 1;
+    let mut value = Computable::rational(
+        Rational::fraction(numerator, denominator).expect("positive graph denominator"),
+    );
+
+    for (depth, byte) in data.iter().copied().take(32).enumerate() {
+        let small = Computable::rational(
+            Rational::fraction(i64::from(byte % 5) + 1, u64::from(byte % 7) + 2)
+                .expect("positive graph scale denominator"),
+        );
+        value = match (usize::from(byte) + depth) % 8 {
+            0 => value.add(small),
+            1 => value.multiply(small),
+            2 => value.negate(),
+            3 => value.sin().square(),
+            4 => value.sin(),
+            5 => value.cos(),
+            6 => value.atan(),
+            _ => {
+                let shared = value.clone();
+                value.add(shared)
+            }
+        };
+    }
+    value
 }

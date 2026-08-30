@@ -21,6 +21,8 @@ cargo bench --bench borrowed_ops
 cargo bench --bench float_convert
 cargo bench --bench library_perf
 cargo bench --bench dispatch_trace --features dispatch-trace
+cargo bench --bench real_representations
+scripts/memory_profile.sh 64
 ```
 
 Cross-crate regression checks:
@@ -52,7 +54,7 @@ records the current direct binary32 conversion cost independently.
 
 ## Fuzz coverage
 
-The standalone `fuzz` workspace covers four runtime-bearing public families:
+The standalone `fuzz` workspace covers six runtime-bearing public families:
 
 | Target | Exactness and API boundary |
 | --- | --- |
@@ -60,6 +62,8 @@ The standalone `fuzz` workspace covers four runtime-bearing public families:
 | `real_exact` | Exact Real arithmetic, fused dot/product-sum and dyadic line-intersection kernels, lazy-coordinate canonical boundaries, retained determinant filters, certified facts/comparisons, exact conversion, and serde round trips |
 | `real_elementary` | Domain-bearing roots, logarithms, powers, trigonometric, inverse/hyperbolic, normal, error, and gamma-family construction with forced lazy evaluation |
 | `computable_approximation` | Direct Computable graph construction, transcendental dispatch, repeatable multi-precision approximation, structural facts, and bounded sign refinement |
+| `structural_representations` | All 20 private optimized `Real` certificate forms, every ordered binary dispatch pairing, every public structural kind, and variable-depth shared `Computable` DAGs |
+| `string_parsing` | UTF-8 numeric text across integer, fraction, decimal, scientific, resource-boundary, and invalid forms, with `Rational`/`Real` acceptance consistency |
 
 Inputs remain bounded exact rationals. Primitive-float values are requested only
 through the explicitly lossy output API and are checked for finiteness, never
@@ -73,11 +77,32 @@ CCACHE_DISABLE=1 cargo +nightly fuzz run -s none rational_arithmetic --fuzz-dir 
 CCACHE_DISABLE=1 cargo +nightly fuzz run -s none real_exact --fuzz-dir fuzz -- -runs=1000 -timeout=10 -max_len=64
 CCACHE_DISABLE=1 cargo +nightly fuzz run -s none real_elementary --fuzz-dir fuzz -- -runs=1000 -timeout=10 -max_len=64
 CCACHE_DISABLE=1 cargo +nightly fuzz run -s none computable_approximation --fuzz-dir fuzz -- -runs=1000 -timeout=10 -max_len=64
+CCACHE_DISABLE=1 cargo +nightly fuzz run -s none structural_representations --fuzz-dir fuzz -- -runs=1000 -timeout=10 -max_len=64
+CCACHE_DISABLE=1 cargo +nightly fuzz run -s none string_parsing --fuzz-dir fuzz -- -runs=1000 -timeout=10 -max_len=256
 ```
 
 The `-s none` smoke setting is needed only in ptrace-managed environments where
 LeakSanitizer cannot attach. Normal local campaigns should retain the default
 AddressSanitizer configuration.
+
+## Representation performance and memory
+
+`benches/real_representations.rs` keeps the optimized `Real` certificate
+inventory synchronized with performance measurement. For each of the 20
+forms, it measures exact-symbolic construction plus binary64 export, retained
+clone/export, and 192-bit certified enclosure. Construction, clone, and export
+rows are paired with the equivalent value represented by Rug/MPFR at 192-bit
+precision. Those rows compare useful boundaries, but not identical semantics:
+Hyperreal retains an exact symbolic value while MPFR retains a fixed-precision
+approximation.
+
+`examples/allocation_profile.rs` installs a counting wrapper over the system
+allocator and runs the same 20-form inventory through construction, structural
+facts, 128-bit certification, binary64 export, inversion, and destruction. It
+reports allocation/deallocation/reallocation events, allocated/deallocated
+bytes, peak live-byte growth, and retained bytes as CSV. Shared process caches
+are warmed before each measured form; retained accelerator storage created by
+the measured workload remains visible.
 
 ## Rational Path
 

@@ -1185,6 +1185,9 @@ fn replace_section(contents: &str, section: &str) -> String {
 }
 
 fn update_benchmarks_score(score: PromotedScore, timed: &[TimedCase]) {
+    if std::env::var_os("HYPERREAL_SKIP_BENCHMARK_REPORTS").is_some() {
+        return;
+    }
     let path = crate_benchmarks_path();
     let section = promoted_score_section(score, timed);
     let contents = fs::read_to_string(&path).unwrap_or_default();
@@ -1246,6 +1249,9 @@ fn write_report_to(report_path: &Path, title: &str, cases: &[TimedCase]) {
 }
 
 fn write_report(cases: &[TimedCase]) {
+    if std::env::var_os("HYPERREAL_SKIP_BENCHMARK_REPORTS").is_some() {
+        return;
+    }
     write_report_to(
         &crate_report_path(),
         "Hyperreal Slow Performer History",

@@ -17,6 +17,9 @@ pub fn write_benchmark_docs(
     description: &'static str,
     groups: &'static [BenchGroupDoc],
 ) {
+    if std::env::var_os("HYPERREAL_SKIP_BENCHMARK_REPORTS").is_some() {
+        return;
+    }
     let root = Path::new(env!("CARGO_MANIFEST_DIR"));
     let path = root.join("benchmarks.md");
     let begin = format!("<!-- BEGIN {bench_binary} -->");

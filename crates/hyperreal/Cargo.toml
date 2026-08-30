@@ -77,3 +77,7 @@ harness = false
 [[bench]]
 name = "adversarial_library"
 harness = false
+
+[[bench]]
+name = "real_representations"
+harness = false

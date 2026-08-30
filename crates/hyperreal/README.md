@@ -270,6 +270,8 @@ triangulations, meshes, boundary representations, and CSG grammar.
 - [`src/README.md`](src/README.md) introduces the source architecture.
 - [`PERFORMANCE.md`](PERFORMANCE.md) records benchmark methodology and retained
   optimization evidence.
+- [`COVERAGE.md`](COVERAGE.md) defines the exhaustive representation matrix,
+  feature matrix, fuzzing, and executable-line measurement.
 - [`benchmarks.md`](benchmarks.md) contains generated benchmark summaries.
 - Generate the complete API reference with `cargo doc --open`.
 
