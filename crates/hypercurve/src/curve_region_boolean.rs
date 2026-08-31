@@ -2789,9 +2789,16 @@ impl<'a> CurveRegionBooleanContext<'a> {
         } else {
             pair.first_carrier_index
         };
-        let source_parameter = match shared_source_parameter {
-            Some(BezierParameter2::Algebraic(parameter)) => Some(parameter),
-            Some(BezierParameter2::Exact(_)) | None => None,
+        let (source_parameter, include_authored_endpoint) = match shared_source_parameter {
+            Some(BezierParameter2::Algebraic(parameter)) => (Some(parameter.clone()), false),
+            Some(BezierParameter2::Exact(_)) => (None, false),
+            None => match chord
+                .algebraic_endpoint_parameter(&self.data.policy)
+                .map_err(|cause| self.invalid(other_index, cause))?
+            {
+                Classification::Decided(parameter) => (parameter, true),
+                Classification::Uncertain(_) => (None, false),
+            },
         };
         let general_intersections = || {
             #[cfg(feature = "dispatch-trace")]
@@ -2844,9 +2851,14 @@ impl<'a> CurveRegionBooleanContext<'a> {
                     .map_err(|cause| self.invalid(other_index, cause))?,
                 ranged => ranged,
             }
-        } else if let Some(source_parameter) = source_parameter {
+        } else if let Some(source_parameter) = source_parameter.as_ref() {
             match chord
-                .source_related_intersections(rational, source_parameter, &self.data.policy)
+                .source_related_intersections(
+                    rational,
+                    source_parameter,
+                    include_authored_endpoint,
+                    &self.data.policy,
+                )
                 .map_err(|cause| self.invalid(other_index, cause))?
             {
                 Classification::Decided(
@@ -2859,10 +2871,6 @@ impl<'a> CurveRegionBooleanContext<'a> {
                 intersections => intersections,
             }
         } else {
-            // The source-related kernel removes its authored endpoint by
-            // construction. Only adjacent carriers own that endpoint through
-            // common loop topology; every nonadjacent pair requires the
-            // complete general contact set.
             general_intersections()?
         };
         let complete = match intersections {
@@ -18282,10 +18290,16 @@ mod certified_successor_tests {
                 panic!("expected one selected-fiber contact: {selected_contact:?}");
             };
             assert_eq!(
-                selected_contact.second_parameter.as_bezier_parameter(),
-                Some(&BezierParameter2::Exact(
-                    (Real::one() / Real::from(2_i8)).expect("nonzero denominator"),
-                )),
+                selected_contact
+                    .second_parameter
+                    .cmp_by_refinement(
+                        &carrier_parameter(BezierParameter2::Exact(
+                            (Real::one() / Real::from(2_i8)).expect("nonzero denominator"),
+                        )),
+                        &policy,
+                    )
+                    .expect("the retained local root must compare exactly"),
+                Classification::Decided(Ordering::Equal),
             );
             assert!(selected_evidence.is_complete(), "{selected_evidence:?}");
 
@@ -18480,6 +18494,12 @@ mod certified_successor_tests {
                 let ph_trace = hyperreal::dispatch_trace::take_trace();
                 assert!(ph_result.blockers.is_empty(), "{ph_result:?}");
                 assert!(ph_result.overlaps.is_empty(), "{ph_result:?}");
+                #[cfg(feature = "dispatch-trace")]
+                assert!(
+                    !ph_result.contacts.is_empty(),
+                    "{ph_result:?}; trace: {ph_trace:?}"
+                );
+                #[cfg(not(feature = "dispatch-trace"))]
                 assert!(!ph_result.contacts.is_empty(), "{ph_result:?}");
                 assert!(ph_evidence.is_complete(), "{ph_evidence:?}");
                 assert!(ph_evidence.contacts().iter().any(|contact| {
@@ -18498,6 +18518,10 @@ mod certified_successor_tests {
                 }));
                 #[cfg(feature = "dispatch-trace")]
                 for (operation, path) in [
+                    (
+                        "algebraic-chord-parallel-monotonicity",
+                        "interior-singularity",
+                    ),
                     (
                         "analytic-parallel-rational-component",
                         "regularized-pythagorean-hodograph",

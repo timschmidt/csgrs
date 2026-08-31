@@ -70917,16 +70917,19 @@ impl BezierAlgebraicChord2 {
         evaluator.forward_ray_winding_delta_from_exact(origin, direction_x, direction_y, policy)
     }
 
-    /// Replays every residual contact with the source curve that supplied one
-    /// selected chord endpoint.
+    /// Replays contacts with the source curve that supplied one selected chord
+    /// endpoint.
     ///
     /// The authored endpoint is removed as an exact diagonal fiber factor.
     /// Remaining source parameters are projected and replayed in that selected
-    /// field, then represented on the chord by their exact point evidence.
+    /// field, then represented on the chord by their exact point evidence. A
+    /// nonadjacent caller may retain the authored endpoint as well; adjacent
+    /// topology already owns it and requests residual contacts only.
     pub(crate) fn source_related_intersections(
         &self,
         source: &RationalBezier2,
         source_parameter: &BezierAlgebraicParameter2,
+        include_authored_endpoint: bool,
         policy: &CurveContext,
     ) -> CurveResult<Classification<BezierAlgebraicChordRationalIntersections2>> {
         let system = match self.source_incidence_system(source, source_parameter, policy)? {
@@ -70998,14 +71001,10 @@ impl BezierAlgebraicChord2 {
         if count.certainty == PredicateCertainty::Approximate {
             policy.observe_approximate_512();
         }
-        match count.status {
-            AlgebraicFiberRootCountStatus::Counted if count.distinct_root_count == Some(0) => {
-                return Ok(Classification::Decided(
-                    BezierAlgebraicChordRationalIntersections2::Contacts(Vec::new()),
-                ));
-            }
+        let has_residual_contacts = match count.status {
+            AlgebraicFiberRootCountStatus::Counted if count.distinct_root_count == Some(0) => false,
             AlgebraicFiberRootCountStatus::Counted
-            | AlgebraicFiberRootCountStatus::EndpointRoot => {}
+            | AlgebraicFiberRootCountStatus::EndpointRoot => true,
             AlgebraicFiberRootCountStatus::IdenticallyZeroFiber => {
                 return Ok(Classification::Decided(
                     BezierAlgebraicChordRationalIntersections2::DegenerateProjection,
@@ -71021,14 +71020,14 @@ impl BezierAlgebraicChord2 {
             AlgebraicFiberRootCountStatus::Undecided => {
                 return Ok(Classification::Uncertain(UncertaintyReason::Predicate));
             }
-        }
+        };
 
         // Diagonal deflation returns a fiber polynomial already reduced
         // modulo the retained root's defining polynomial. Project it directly
         // in that quotient ring; the reduced projector preserves the general
         // resultant as its complete fallback for a degenerate or undecided
         // construction.
-        let candidates =
+        let candidates = if has_residual_contacts {
             match algebraic_selected_reduced_fiber_parameters(&residual, source_parameter, policy)?
             {
                 Classification::Decided(BezierAlgebraicFiberProjection2::Parameters(
@@ -71043,7 +71042,10 @@ impl BezierAlgebraicChord2 {
                 Classification::Uncertain(reason) => {
                     return Ok(Classification::Uncertain(reason));
                 }
-            };
+            }
+        } else {
+            Vec::new()
+        };
         let retained_parameter = BezierParameter2::Algebraic(source_parameter.clone());
         // Most authored chord/source pairs have no residual root. Build the
         // tangent-cross polynomial only after the root count proves that a
@@ -71055,7 +71057,49 @@ impl BezierAlgebraicChord2 {
             &bivariate_outer_product(&system.line_x, &source_tangent_y),
             &bivariate_outer_product(&system.line_y, &source_tangent_x),
         );
-        let mut contacts = Vec::with_capacity(candidates.len());
+        let mut contacts = Vec::with_capacity(
+            candidates
+                .len()
+                .saturating_add(usize::from(include_authored_endpoint)),
+        );
+        if include_authored_endpoint {
+            let point =
+                match rational_point_evidence_at_parameter(source, &retained_parameter, policy)? {
+                    Classification::Decided(point) => point,
+                    Classification::Uncertain(reason) => {
+                        return Ok(Classification::Uncertain(reason));
+                    }
+                };
+            let chord_parameter = match self.parameter_at_certified_point(point.clone(), policy)? {
+                Classification::Decided(Some(parameter)) => parameter,
+                Classification::Decided(None) => {
+                    return Ok(Classification::Decided(
+                        BezierAlgebraicChordRationalIntersections2::NotSourceRelated,
+                    ));
+                }
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            };
+            let tangent_cross_sign = match algebraic_selected_correlated_predicate_sign(
+                &system.incidence,
+                &tangent_cross,
+                &retained_parameter,
+                &retained_parameter,
+                policy,
+            )? {
+                Classification::Decided(sign) => product_sign(sign, system.chord_denominator_sign),
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            };
+            contacts.push(BezierAlgebraicChordRationalContact2 {
+                chord_parameter,
+                other_parameter: CurveRegionParameter2::from_bezier(retained_parameter.clone()),
+                point,
+                tangent_cross_sign,
+            });
+        }
         for candidate in candidates {
             let point = match rational_point_evidence_at_parameter(source, &candidate, policy)? {
                 Classification::Decided(point) => point,
@@ -71092,6 +71136,23 @@ impl BezierAlgebraicChord2 {
         Ok(Classification::Decided(
             BezierAlgebraicChordRationalIntersections2::Contacts(contacts),
         ))
+    }
+
+    /// Returns one algebraic endpoint field that can seed source-related
+    /// incidence replay. Transformed images retain their root representation
+    /// even when no deferred coordinate expression remains cached.
+    pub(crate) fn algebraic_endpoint_parameter(
+        &self,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<Option<BezierAlgebraicParameter2>>> {
+        for point in [self.start(), self.end()] {
+            let RationalBezierIntersectionPointEvidence2::Algebraic(point) = point else {
+                continue;
+            };
+            return algebraic_chord_image_parameter(point, policy)
+                .map(|parameter| parameter.map(Some));
+        }
+        Ok(Classification::Decided(None))
     }
 
     /// Certifies that the oriented support incidence is strictly monotone on
@@ -71136,6 +71197,51 @@ impl BezierAlgebraicChord2 {
                     return Ok(Classification::Uncertain(reason));
                 }
             };
+            let singularities = match parallel.singularity_analysis(strict)? {
+                Classification::Decided(analysis) => analysis,
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            };
+            for parameter in singularities
+                .source_singularities()
+                .iter()
+                .chain(singularities.parallel_cusps())
+            {
+                let parameter = CurveRegionParameter2::from_bezier(parameter.clone());
+                let start_order = match parameter.cmp_by_refinement(range.start(), strict)? {
+                    Classification::Decided(order) => order,
+                    Classification::Uncertain(reason) => {
+                        return Ok(Classification::Uncertain(reason));
+                    }
+                };
+                let end_order = match parameter.cmp_by_refinement(range.end(), strict)? {
+                    Classification::Decided(order) => order,
+                    Classification::Uncertain(reason) => {
+                        return Ok(Classification::Uncertain(reason));
+                    }
+                };
+                let lies_strictly_inside = match range_order {
+                    std::cmp::Ordering::Less => {
+                        start_order == std::cmp::Ordering::Greater
+                            && end_order == std::cmp::Ordering::Less
+                    }
+                    std::cmp::Ordering::Greater => {
+                        start_order == std::cmp::Ordering::Less
+                            && end_order == std::cmp::Ordering::Greater
+                    }
+                    std::cmp::Ordering::Equal => unreachable!("validated above"),
+                };
+                if lies_strictly_inside {
+                    #[cfg(feature = "dispatch-trace")]
+                    hyperreal::dispatch_trace::record(
+                        "hypercurve",
+                        "algebraic-chord-parallel-monotonicity",
+                        "interior-singularity",
+                    );
+                    return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
+                }
+            }
             let interior = match range.strict_rational_interior(strict)? {
                 Classification::Decided(interior) => interior,
                 Classification::Uncertain(reason) => {
@@ -122118,7 +122224,7 @@ mod conversion_tests {
             let Classification::Decided(BezierAlgebraicChordRationalIntersections2::Contacts(
                 single_contacts,
             )) = single_contact_chord
-                .source_related_intersections(&single_contact_source, &parameter, &policy)
+                .source_related_intersections(&single_contact_source, &parameter, false, &policy)
                 .unwrap()
             else {
                 panic!("the source-related chord pair must complete");
@@ -122193,7 +122299,7 @@ mod conversion_tests {
             let Classification::Decided(BezierAlgebraicChordRationalIntersections2::Contacts(
                 repeated_contacts,
             )) = repeated_contact_chord
-                .source_related_intersections(&repeated_contact_source, &parameter, &policy)
+                .source_related_intersections(&repeated_contact_source, &parameter, false, &policy)
                 .unwrap()
             else {
                 panic!("the repeated source-related chord pair must complete");

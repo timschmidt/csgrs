@@ -22141,16 +22141,12 @@ mod tests {
                 panic!("a genuine offset carrier switch must complete selected projection");
             };
             assert!(!span.fragments.is_empty());
-            let Some(ExactOffsetTangent2::RetainedParallel {
-                selected_source_parameter: Some(retained),
-                ..
-            }) = span.start_tangent
-            else {
-                panic!("the offset span must retain its compact source tangent parameter");
+            let Some(ExactOffsetTangent2::AlgebraicChord(retained)) = span.start_tangent else {
+                panic!("the offset span must retain its compact local tangent chord");
             };
             assert_eq!(
-                retained.cmp_by_refinement(&start, &policy).unwrap(),
-                Classification::Decided(std::cmp::Ordering::Equal)
+                retained.certified_axis_direction(),
+                Some(BezierAlgebraicChordAxisDirection2::PositiveX),
             );
         }
     }

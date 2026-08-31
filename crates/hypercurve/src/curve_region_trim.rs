@@ -297,15 +297,8 @@ impl Curve2 {
             Vec::with_capacity(result.contacts().len().saturating_add(endpoint_count));
         let mut boundary_overlaps = Vec::with_capacity(result.overlaps().len());
         for contact in result.contacts() {
-            let Some(source_parameter) = contact.first_parameter().as_bezier_parameter() else {
-                return Err(ExactCurveError::invalid(
-                    CurveOperation2::Subdivision,
-                    self.family(),
-                    crate::CurveError::Topology(
-                        "curve trim source carrier lost its Bezier parameter".into(),
-                    ),
-                ));
-            };
+            let source_parameter =
+                trim_source_bezier_parameter(contact.first_parameter(), self, policy)?;
             let Some(&(kind, contour_index)) = loop_boundaries.get(contact.second().loop_index())
             else {
                 return Err(ExactCurveError::invalid(
@@ -320,7 +313,7 @@ impl Curve2 {
             split_parameters.push((promoted_span_index, source_parameter.clone()));
             boundary_contacts.push(PendingBoundaryContact {
                 promoted_span_index,
-                source_parameter: source_parameter.clone(),
+                source_parameter,
                 contact: CurveRegionBoundaryContact2 {
                     kind,
                     contour_index,
@@ -331,16 +324,10 @@ impl Curve2 {
             });
         }
         for overlap in result.overlaps() {
-            let Some((source_start, source_end)) = overlap.first_range().as_bezier_parameters()
-            else {
-                return Err(ExactCurveError::invalid(
-                    CurveOperation2::Subdivision,
-                    self.family(),
-                    crate::CurveError::Topology(
-                        "curve trim source overlap lost its Bezier parameter range".into(),
-                    ),
-                ));
-            };
+            let source_start =
+                trim_source_bezier_parameter(overlap.first_range().start(), self, policy)?;
+            let source_end =
+                trim_source_bezier_parameter(overlap.first_range().end(), self, policy)?;
             let Some(&(kind, contour_index)) = loop_boundaries.get(overlap.second().loop_index())
             else {
                 return Err(ExactCurveError::invalid(
@@ -351,7 +338,7 @@ impl Curve2 {
                     ),
                 ));
             };
-            let source_order = compared_parameter_order(source_start, source_end, self, policy)?;
+            let source_order = compared_parameter_order(&source_start, &source_end, self, policy)?;
             let (ordered_start, ordered_end) = match source_order {
                 std::cmp::Ordering::Less => (source_start.clone(), source_end.clone()),
                 std::cmp::Ordering::Greater => (source_end.clone(), source_start.clone()),
@@ -385,8 +372,8 @@ impl Curve2 {
                 end: ordered_end,
             });
             for (source_parameter, boundary_parameter) in [
-                (source_start, overlap.second_range().start()),
-                (source_end, overlap.second_range().end()),
+                (&source_start, overlap.second_range().start()),
+                (&source_end, overlap.second_range().end()),
             ] {
                 split_parameters.push((promoted_span_index, source_parameter.clone()));
                 boundary_contacts.push(PendingBoundaryContact {
@@ -786,6 +773,32 @@ fn compared_parameters_are_equal(
     policy: &CurveContext,
 ) -> ExactCurveResult<bool> {
     Ok(compared_parameter_order(left, right, source_curve, policy)?.is_eq())
+}
+
+/// Materializes a retained source parameter only at the public curve-trim
+/// boundary, where [`BezierSplitFragment2`] must express cuts in the source
+/// curve's ordinary parameter domain. Boolean topology and carrier clipping
+/// keep the compact retained scalar until this cold consumer requests it.
+fn trim_source_bezier_parameter(
+    parameter: &CurveRegionParameter2,
+    source_curve: &Curve2,
+    policy: &CurveContext,
+) -> ExactCurveResult<BezierParameter2> {
+    if let Some(parameter) = parameter.as_bezier_parameter() {
+        return Ok(parameter.clone());
+    }
+    match policy
+        .strict_predicate_pass(|| parameter.promoted_bezier_parameter_complete(policy))
+        .map_err(|cause| {
+            ExactCurveError::invalid(CurveOperation2::Subdivision, source_curve.family(), cause)
+        })? {
+        Classification::Decided(parameter) => Ok(parameter),
+        Classification::Uncertain(reason) => Err(ExactCurveError::blocked(
+            CurveOperation2::Subdivision,
+            source_curve.family(),
+            reason,
+        )),
+    }
 }
 
 fn compared_parameter_order(
