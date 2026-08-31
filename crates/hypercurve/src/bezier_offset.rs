@@ -121057,11 +121057,13 @@ mod conversion_tests {
                     Classification::Decided(std::cmp::Ordering::Equal)
                 );
             }
-            let excluded = contacts[0]
+            let Classification::Decided(excluded) = contacts[0]
                 .other_parameter()
-                .as_bezier_parameter()
-                .expect("the ordinary retraced source retains an ordinary parameter")
-                .clone();
+                .promoted_bezier_parameter_complete(&policy)
+                .unwrap()
+            else {
+                panic!("the retained retraced-source parameter must promote exactly");
+            };
             let excluded_result = chord
                 .rational_intersections(&retraced, Some(&excluded), &policy)
                 .unwrap();
@@ -126170,10 +126172,10 @@ mod conversion_tests {
                     parallel_mapped_cap_trace.path_count(
                         "hypercurve",
                         "algebraic-chord-pair",
-                        "chord-contact-complete",
+                        "adjacent-certified-tangent-complete",
                     ),
-                    1,
-                    "the analytic-carrier cap must reject its disjoint retained chord in the authoritative chord kernel: {parallel_mapped_cap_trace:?}",
+                    2,
+                    "the analytic-carrier cap must discharge both adjacent offset-chord pairs through the authoritative tangent certificate: {parallel_mapped_cap_trace:?}",
                 );
             }
 
@@ -130401,7 +130403,14 @@ mod conversion_tests {
                 },
             )
             .unwrap();
-            assert_eq!(outcome.certainty, crate::CurveCertainty::Certified);
+            assert_eq!(
+                outcome.certainty,
+                if policy == CurveContext::APPROXIMATE_512 {
+                    crate::CurveCertainty::Approximate512Consumed
+                } else {
+                    crate::CurveCertainty::Certified
+                },
+            );
         }
     }
 
