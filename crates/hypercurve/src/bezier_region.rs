@@ -28376,6 +28376,25 @@ mod tests {
                 "the deep selected-radial crossing must stay in the recursive projective rational kernel: {trace:?}",
             );
             #[cfg(feature = "dispatch-trace")]
+            assert!(
+                trace.path_count(
+                    "hypercurve",
+                    "recursive-polynomial-unit-roots",
+                    "local-bernstein",
+                ) > 0,
+                "the deep selected-radial crossing must isolate its target roots in the retained coefficient field: {trace:?}",
+            );
+            #[cfg(feature = "dispatch-trace")]
+            assert_eq!(
+                trace.path_count(
+                    "hypercurve",
+                    "recursive-polynomial-unit-roots",
+                    "projected-replay",
+                ),
+                0,
+                "the transverse recursive quartic must not construct a dense global norm: {trace:?}",
+            );
+            #[cfg(feature = "dispatch-trace")]
             assert_eq!(
                 trace.path_count(
                     "hypercurve",
