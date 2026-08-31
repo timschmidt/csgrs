@@ -34,6 +34,7 @@ pub mod interval;
 pub mod jacobian;
 pub mod linalg;
 pub mod model;
+pub mod ordered_field_roots;
 pub mod polynomial;
 pub mod predicates;
 pub mod rank;
@@ -272,6 +273,11 @@ pub use linalg::{
     LinearSolveReport,
 };
 pub use model::{Constraint, ConstraintKind, Problem, Variable, VariableId};
+pub use ordered_field_roots::{
+    OrderedFieldPolynomialContext, OrderedFieldRootIsolationConfig,
+    OrderedFieldRootIsolationReport, OrderedFieldRootIsolationStatus,
+    isolate_ordered_field_polynomial_roots,
+};
 pub use polynomial::{
     QuadraticLinearTerm, QuadraticResidual, QuadraticTerm, UnivariateQuadraticResidual,
 };

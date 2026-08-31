@@ -19,6 +19,10 @@ use crate::algebraic::{
     evaluate_polynomial_at_algebraic_root, validate_algebraic_root_representation,
 };
 use crate::curve_resultant::{BivariatePolynomial, CurveResultantParameter};
+use crate::ordered_field_roots::{
+    OrderedFieldPolynomialContext, OrderedFieldRootIsolationConfig,
+    OrderedFieldRootIsolationStatus, isolate_ordered_field_polynomial_roots,
+};
 use crate::resultant::quotient_ring_fiber_resultant_polynomial;
 use crate::root_isolation::{
     IsolatedRootInterval, IsolatedRootRefinementStatus, RootIsolationConfig, polynomial_div_rem,
@@ -832,309 +836,72 @@ pub fn isolate_bivariate_fiber_roots_at_algebraic_parameter(
 /// bookkeeping does not identify a unique child. Repeated irrational roots
 /// are the normal depth-limit case.
 fn isolate_local_polynomial_roots_bernstein(
-    mut polynomial: Vec<LocalFieldElement>,
+    polynomial: Vec<LocalFieldElement>,
     fiber_lower: &Real,
     fiber_upper: &Real,
     config: AlgebraicFiberRootIsolationConfig,
     field: &mut LocalAlgebraicField,
 ) -> Result<(Option<Vec<IsolatedRootInterval>>, usize), LocalFieldError> {
-    #[derive(Clone)]
-    struct Node {
-        lower: Real,
-        upper: Real,
-        controls: Vec<LocalFieldElement>,
-        depth: usize,
+    struct Context<'a> {
+        field: &'a mut LocalAlgebraicField,
     }
 
-    let mut exact_roots = Vec::new();
-    for endpoint in [fiber_lower, fiber_upper] {
-        let (deflated, had_root) =
-            match deflate_local_polynomial_at_rational_root(polynomial.clone(), endpoint, field) {
-                Ok(result) => result,
-                // Endpoint deflation is an optimization, not a prerequisite
-                // for Bernstein isolation. With general exact-`Real` base
-                // coefficients a nonroot endpoint can remain locally
-                // undecided even though subdivision proves the interior root
-                // count. Preserve the polynomial and let Bernstein carry all
-                // possible endpoint signs; a genuine unresolved endpoint root
-                // will remain ambiguous and request the exact Sturm fallback.
-                Err(LocalFieldError::Undecided) => continue,
-                Err(error) => return Err(error),
-            };
-        polynomial = deflated;
-        if had_root {
-            exact_roots.push(endpoint.clone());
+    impl OrderedFieldPolynomialContext<LocalFieldElement> for Context<'_> {
+        type Error = LocalFieldError;
+
+        fn zero(&mut self) -> Result<LocalFieldElement, Self::Error> {
+            Ok(LocalFieldElement::zero())
+        }
+
+        fn add(
+            &mut self,
+            left: &LocalFieldElement,
+            right: &LocalFieldElement,
+        ) -> Result<LocalFieldElement, Self::Error> {
+            left.add(right, self.field)
+        }
+
+        fn scale(
+            &mut self,
+            value: &LocalFieldElement,
+            scale: &Real,
+        ) -> Result<LocalFieldElement, Self::Error> {
+            value.scale(scale, self.field)
+        }
+
+        fn sign(&mut self, value: &LocalFieldElement) -> Result<Ordering, Self::Error> {
+            value.sign(self.field)
+        }
+
+        fn sign_if_separated(
+            &mut self,
+            value: &LocalFieldElement,
+        ) -> Result<Option<Ordering>, Self::Error> {
+            value.sign_if_separated(self.field)
         }
     }
 
-    let mut subdivision_steps = 0_usize;
-    loop {
-        if polynomial.len() == 1 {
-            exact_roots.sort_by(|left, right| left.partial_cmp(right).unwrap_or(Ordering::Equal));
-            exact_roots.dedup();
-            let intervals = exact_roots
-                .into_iter()
-                .map(|root| IsolatedRootInterval {
-                    lower: root.clone(),
-                    upper: root.clone(),
-                    exact_root: Some(root),
-                    distinct_root_count: 1,
-                })
-                .collect();
-            return Ok((Some(intervals), subdivision_steps));
+    let mut context = Context { field };
+    let report = isolate_ordered_field_polynomial_roots(
+        polynomial,
+        fiber_lower,
+        fiber_upper,
+        OrderedFieldRootIsolationConfig {
+            max_subdivision_depth: config.max_subdivision_depth,
+            refinement_steps: config.refinement_steps,
+        },
+        &mut context,
+    )?;
+    match report.status {
+        OrderedFieldRootIsolationStatus::Isolated => {
+            Ok((Some(report.intervals), report.subdivision_steps))
         }
-
-        // A discovered rational root is a boundary for subsequent isolation.
-        // Although it has been deflated from `polynomial`, allowing another
-        // interval to straddle it would not isolate a root of the original
-        // fiber.
-        exact_roots.sort_by(|left, right| left.partial_cmp(right).unwrap_or(Ordering::Equal));
-        exact_roots.dedup();
-        let mut boundaries = Vec::with_capacity(exact_roots.len() + 2);
-        boundaries.push(fiber_lower.clone());
-        for root in &exact_roots {
-            if field.compare(root, fiber_lower)? == Ordering::Greater
-                && field.compare(root, fiber_upper)? == Ordering::Less
-            {
-                boundaries.push(root.clone());
-            }
+        OrderedFieldRootIsolationStatus::CompleteFallbackRequired => {
+            Ok((None, report.subdivision_steps))
         }
-        boundaries.push(fiber_upper.clone());
-
-        let mut stack = Vec::with_capacity(boundaries.len());
-        for segment in boundaries.windows(2).rev() {
-            let controls =
-                local_power_to_bernstein_on_interval(&polynomial, &segment[0], &segment[1], field)?;
-            let Some(controls) = controls else {
-                return Ok((None, subdivision_steps));
-            };
-            stack.push(Node {
-                lower: segment[0].clone(),
-                upper: segment[1].clone(),
-                controls,
-                depth: 0,
-            });
-        }
-
-        let mut isolated = Vec::new();
-        let mut rational_root = None;
-        while let Some(mut node) = stack.pop() {
-            let variations = local_bernstein_sign_variations(&node.controls, field)?;
-            if variations == Some(0) {
-                continue;
-            }
-            if variations == Some(1) {
-                let lower_sign = node
-                    .controls
-                    .first()
-                    .ok_or(LocalFieldError::Undecided)?
-                    .sign_if_separated(field)?;
-                for _ in 0..config.refinement_steps {
-                    let Some(lower_sign) = lower_sign else {
-                        break;
-                    };
-                    if lower_sign == Ordering::Equal {
-                        break;
-                    }
-                    if node.depth >= config.max_subdivision_depth {
-                        return Ok((None, subdivision_steps));
-                    }
-                    let midpoint = ((&node.lower + &node.upper) / Real::from(2_u8))
-                        .map_err(|_| LocalFieldError::Undecided)?;
-                    subdivision_steps = subdivision_steps.saturating_add(1);
-                    let Some(midpoint_sign) =
-                        local_polynomial_sign_at_if_separated(&polynomial, &midpoint, field)?
-                    else {
-                        break;
-                    };
-                    if midpoint_sign == Ordering::Equal {
-                        rational_root = Some(midpoint);
-                        break;
-                    }
-                    if midpoint_sign == lower_sign {
-                        node.lower = midpoint;
-                    } else {
-                        node.upper = midpoint;
-                    }
-                    node.depth += 1;
-                }
-                if rational_root.is_some() {
-                    break;
-                }
-                isolated.push(IsolatedRootInterval {
-                    lower: node.lower,
-                    upper: node.upper,
-                    exact_root: None,
-                    distinct_root_count: 1,
-                });
-                continue;
-            }
-            if node.depth >= config.max_subdivision_depth {
-                return Ok((None, subdivision_steps));
-            }
-            let midpoint = ((&node.lower + &node.upper) / Real::from(2_u8))
-                .map_err(|_| LocalFieldError::Undecided)?;
-            // Recompose each child from the original power basis instead of
-            // recursively applying de Casteljau.  Recursive controls retain
-            // the complete subdivision history in every `Real` expression;
-            // recomposition keeps expression depth bounded by the polynomial
-            // degree while remaining an exact affine basis conversion.
-            let Some(left) =
-                local_power_to_bernstein_on_interval(&polynomial, &node.lower, &midpoint, field)?
-            else {
-                return Ok((None, subdivision_steps));
-            };
-            let Some(right) =
-                local_power_to_bernstein_on_interval(&polynomial, &midpoint, &node.upper, field)?
-            else {
-                return Ok((None, subdivision_steps));
-            };
-            subdivision_steps = subdivision_steps.saturating_add(1);
-            if let Some(Ordering::Equal) = left
-                .last()
-                .ok_or(LocalFieldError::Undecided)?
-                .sign_if_separated(field)?
-            {
-                rational_root = Some(midpoint);
-                break;
-            }
-            let left_variations = local_bernstein_sign_variations(&left, field)?;
-            let right_variations = local_bernstein_sign_variations(&right, field)?;
-            let next_depth = node.depth + 1;
-            if right_variations != Some(0) {
-                stack.push(Node {
-                    lower: midpoint.clone(),
-                    upper: node.upper,
-                    controls: right,
-                    depth: next_depth,
-                });
-            }
-            if left_variations != Some(0) {
-                stack.push(Node {
-                    lower: node.lower,
-                    upper: midpoint,
-                    controls: left,
-                    depth: next_depth,
-                });
-            }
-        }
-
-        if let Some(root) = rational_root {
-            let (deflated, had_root) =
-                deflate_local_polynomial_at_rational_root(polynomial, &root, field)?;
-            if !had_root {
-                return Err(LocalFieldError::Undecided);
-            }
-            polynomial = deflated;
-            if !exact_roots.contains(&root) {
-                exact_roots.push(root);
-            }
-            continue;
-        }
-
-        isolated.extend(exact_roots.into_iter().map(|root| IsolatedRootInterval {
-            lower: root.clone(),
-            upper: root.clone(),
-            exact_root: Some(root),
-            distinct_root_count: 1,
-        }));
-        isolated.sort_by(|first, second| {
-            first
-                .lower
-                .partial_cmp(&second.lower)
-                .unwrap_or(Ordering::Equal)
-        });
-        return Ok((Some(isolated), subdivision_steps));
+        OrderedFieldRootIsolationStatus::IdenticallyZero
+        | OrderedFieldRootIsolationStatus::InvalidInterval => Err(LocalFieldError::Undecided),
     }
-}
-
-fn local_power_to_bernstein_on_interval(
-    polynomial: &[LocalFieldElement],
-    lower: &Real,
-    upper: &Real,
-    field: &LocalAlgebraicField,
-) -> Result<Option<Vec<LocalFieldElement>>, LocalFieldError> {
-    let Some(leading) = polynomial.last() else {
-        return Err(LocalFieldError::Undecided);
-    };
-    let degree = polynomial.len().saturating_sub(1);
-    let width = upper - lower;
-    // Compose by `lower + width*x` using Horner form. This has no binomial
-    // size ceiling and keeps the local-field path division-free.
-    let mut shifted_power = vec![leading.clone()];
-    for coefficient in polynomial[..degree].iter().rev() {
-        let old_len = shifted_power.len();
-        shifted_power.push(LocalFieldElement::zero());
-        for power in (1..=old_len).rev() {
-            let same_power = shifted_power[power].clone().scale(lower, field)?;
-            let prior_power = shifted_power[power - 1].scale(&width, field)?;
-            shifted_power[power] = same_power.add(&prior_power, field)?;
-        }
-        shifted_power[0] = shifted_power[0]
-            .scale(lower, field)?
-            .add(coefficient, field)?;
-    }
-
-    // x^j = sum_{i=j}^n C(i,j)/C(n,j) B_i^n(x).
-    let mut controls = Vec::with_capacity(degree + 1);
-    for index in 0..=degree {
-        let mut control = LocalFieldElement::zero();
-        let mut ratio = Real::one();
-        for (power, coefficient) in shifted_power.iter().enumerate().take(index + 1) {
-            control = control.add(&coefficient.scale(&ratio, field)?, field)?;
-            if power != index {
-                let Ok(numerator) = u64::try_from(index - power) else {
-                    return Ok(None);
-                };
-                let Ok(denominator) = u64::try_from(degree - power) else {
-                    return Ok(None);
-                };
-                ratio = ((ratio * Real::from(numerator)) / Real::from(denominator))
-                    .map_err(|_| LocalFieldError::Undecided)?;
-            }
-        }
-        controls.push(control);
-    }
-    Ok(Some(controls))
-}
-
-fn local_bernstein_sign_variations(
-    controls: &[LocalFieldElement],
-    field: &mut LocalAlgebraicField,
-) -> Result<Option<usize>, LocalFieldError> {
-    // An interval-ambiguous local coefficient is not an error and is never
-    // treated as zero. Enumerate the compact set of possible preceding signs
-    // and variation counts. If every exact assignment gives the same count,
-    // Descartes' rule remains decisive; otherwise the caller subdivides the
-    // target interval and retries with tighter Bernstein controls.
-    let mut states = vec![(None, 0_usize)];
-    for control in controls {
-        let sign = control.sign_if_separated(field)?;
-        let options: &[Option<Ordering>] = match sign {
-            Some(Ordering::Less) => &[Some(Ordering::Less)],
-            Some(Ordering::Equal) => &[None],
-            Some(Ordering::Greater) => &[Some(Ordering::Greater)],
-            None => &[None, Some(Ordering::Less), Some(Ordering::Greater)],
-        };
-        let mut next = Vec::with_capacity(states.len().saturating_mul(options.len()));
-        for &(previous, variations) in &states {
-            for &option in options {
-                let state = match option {
-                    None => (previous, variations),
-                    Some(sign) => (
-                        Some(sign),
-                        variations + usize::from(previous.is_some_and(|value| value != sign)),
-                    ),
-                };
-                if !next.contains(&state) {
-                    next.push(state);
-                }
-            }
-        }
-        states = next;
-    }
-    let first = states.first().map(|state| state.1).unwrap_or(0);
-    Ok(states.iter().all(|state| state.1 == first).then_some(first))
 }
 
 /// Count distinct common roots of two exact bivariate fibers over a represented root.
@@ -3120,18 +2887,6 @@ fn local_polynomial_sign_at(
         value = value.scale(parameter, field)?.add(coefficient, field)?;
     }
     value.sign(field)
-}
-
-fn local_polynomial_sign_at_if_separated(
-    polynomial: &[LocalFieldElement],
-    parameter: &Real,
-    field: &mut LocalAlgebraicField,
-) -> Result<Option<Ordering>, LocalFieldError> {
-    let mut value = LocalFieldElement::zero();
-    for coefficient in polynomial.iter().rev() {
-        value = value.scale(parameter, field)?.add(coefficient, field)?;
-    }
-    value.sign_if_separated(field)
 }
 
 fn local_sign_variations(
