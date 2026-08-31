@@ -209,7 +209,7 @@ exact signatures.
   intersect_contour, intersect_self, split_at_intersections,
   split_at_self_intersections}` handles closed line/arc boundaries.
 - `CurveRegion2::{empty, arrange_unordered_segments,
-  arrange_unordered_line_segments, try_from_native_contours,
+  try_from_native_contours,
   try_from_native_material_contours, try_from_native_boundary_contours,
   try_from_boundary_paths, classify_point, signed_depth, signed_area,
   filled_area, boundary_profiles, materialized_boundary_paths,

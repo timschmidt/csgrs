@@ -1832,11 +1832,11 @@ fn bench_boundary_contour_region_build(iterations: u32) -> CurveResult<()> {
 }
 
 fn bench_unordered_line_segment_region_build(iterations: u32) -> CurveResult<()> {
-    let lines = vec![
-        line(0, 0, 10, 0),
-        line(0, 10, 10, 10),
-        line(0, 0, 0, 10),
-        line(10, 0, 10, 10),
+    let segments = vec![
+        Segment2::Line(line(0, 0, 10, 0)),
+        Segment2::Line(line(0, 10, 10, 10)),
+        Segment2::Line(line(0, 0, 0, 10)),
+        Segment2::Line(line(10, 0, 10, 10)),
     ];
     let policy = CurveContext::STRICT;
     let started = Instant::now();
@@ -1847,8 +1847,8 @@ fn bench_unordered_line_segment_region_build(iterations: u32) -> CurveResult<()>
     let mut total_endpoint_checks = 0_usize;
 
     for _ in 0..iterations {
-        let result = CurveRegion2::arrange_unordered_line_segments_borrowed(
-            &lines,
+        let result = CurveRegion2::arrange_unordered_segments_borrowed(
+            &segments,
             FillRule::NonZero,
             &policy,
         )
@@ -1861,9 +1861,8 @@ fn bench_unordered_line_segment_region_build(iterations: u32) -> CurveResult<()>
         total_evidence_counts += black_box(result.status().is_native_exact() as usize);
         total_retained_outputs += black_box(result.output_ring_count().unwrap_or(0));
         total_segments += black_box(result.output_boundary_segment_count().unwrap_or_default());
-        total_endpoint_checks += black_box(
-            (result.stage() == CurveRegionArrangementStage2::RegionRoleAssignment) as usize,
-        );
+        total_endpoint_checks +=
+            black_box((result.stage() == CurveRegionArrangementStage2::CurveArrangement) as usize);
     }
 
     let elapsed = started.elapsed();
@@ -1902,9 +1901,8 @@ fn bench_unordered_native_segment_region_build(iterations: u32) -> CurveResult<(
         total_evidence_counts += black_box(result.status().is_native_exact() as usize);
         total_retained_outputs += black_box(result.output_ring_count().unwrap_or(0));
         total_segments += black_box(result.output_boundary_segment_count().unwrap_or_default());
-        total_endpoint_checks += black_box(
-            (result.stage() == CurveRegionArrangementStage2::RegionRoleAssignment) as usize,
-        );
+        total_endpoint_checks +=
+            black_box((result.stage() == CurveRegionArrangementStage2::CurveArrangement) as usize);
     }
 
     let elapsed = started.elapsed();
@@ -1916,14 +1914,14 @@ fn bench_unordered_native_segment_region_build(iterations: u32) -> CurveResult<(
 }
 
 fn bench_region_arrangement_immediate_replay(iterations: u32) -> CurveResult<()> {
-    let lines = vec![
-        line(0, 0, 10, 0),
-        line(10, 0, 10, 10),
-        line(10, 10, 0, 10),
-        line(0, 10, 0, 0),
+    let segments = vec![
+        Segment2::Line(line(0, 0, 10, 0)),
+        Segment2::Line(line(10, 0, 10, 10)),
+        Segment2::Line(line(10, 10, 0, 10)),
+        Segment2::Line(line(0, 10, 0, 0)),
     ];
     let policy = CurveContext::STRICT;
-    let result = CurveRegion2::arrange_unordered_line_segments(lines, FillRule::NonZero, &policy)
+    let result = CurveRegion2::arrange_unordered_segments(segments, FillRule::NonZero, &policy)
         .expect("native line arrangement must evaluate")
         .into_value();
     let started = Instant::now();

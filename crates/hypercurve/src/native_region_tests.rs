@@ -74,16 +74,25 @@ fn filled_area(region: &CurveRegion2) -> Classification<Option<Real>> {
 }
 
 fn arrange_lines(segments: Vec<crate::LineSeg2>, fill_rule: FillRule) -> CurveRegionArrangement2 {
-    CurveRegion2::arrange_unordered_line_segments(segments, fill_rule, &policy())
-        .unwrap()
-        .into_value()
+    CurveRegion2::arrange_unordered_segments(
+        segments.into_iter().map(Segment2::Line).collect(),
+        fill_rule,
+        &policy(),
+    )
+    .unwrap()
+    .into_value()
 }
 
 fn arrange_lines_borrowed(
     segments: &[crate::LineSeg2],
     fill_rule: FillRule,
 ) -> CurveRegionArrangement2 {
-    CurveRegion2::arrange_unordered_line_segments_borrowed(segments, fill_rule, &policy())
+    let segments = segments
+        .iter()
+        .cloned()
+        .map(Segment2::Line)
+        .collect::<Vec<_>>();
+    CurveRegion2::arrange_unordered_segments_borrowed(&segments, fill_rule, &policy())
         .unwrap()
         .into_value()
 }
@@ -305,7 +314,10 @@ fn unordered_open_lines_retain_a_boundary_blocker() {
     let built = arrange_lines(vec![line(0, 0, 1, 0), line(3, 0, 4, 0)], FillRule::NonZero);
     assert!(built.region().is_none());
     assert!(built.status().is_retained_evidence());
-    assert_eq!(built.stage(), CurveRegionArrangementStage2::RingAssembly);
+    assert_eq!(
+        built.stage(),
+        CurveRegionArrangementStage2::EndpointAssembly
+    );
     assert_eq!(built.blocker(), Some(UncertaintyReason::Boundary));
 }
 
@@ -322,6 +334,82 @@ fn unordered_crossing_and_overlapping_lines_remain_explicit_blockers() {
 }
 
 #[test]
+fn unordered_self_crossing_walk_uses_the_authoritative_curve_arrangement() {
+    let source = vec![
+        line(4, 4, 0, 4),
+        line(4, 0, 0, 0),
+        line(0, 4, 4, 0),
+        line(0, 0, 4, 4),
+    ];
+    for fill_rule in [FillRule::NonZero, FillRule::EvenOdd] {
+        let built = arrange_lines(source.clone(), fill_rule);
+        assert!(built.status().is_native_exact());
+        assert_eq!(
+            built.stage(),
+            CurveRegionArrangementStage2::CurveArrangement
+        );
+        assert_eq!(built.output_ring_count(), Some(2));
+        let region = built
+            .region()
+            .expect("the exact self-crossing walk should regularize");
+        for (point, expected) in [
+            (p(2, 3), RegionPointLocation::Inside),
+            (p(2, 1), RegionPointLocation::Inside),
+            (p(0, 2), RegionPointLocation::Outside),
+        ] {
+            assert_eq!(classify(region, &point), Classification::Decided(expected));
+        }
+    }
+}
+
+#[test]
+fn unordered_crossing_walks_are_regularized_by_global_parity() {
+    let source = vec![
+        line(4, 4, 0, 4),
+        line(0, 0, 4, 0),
+        line(0, 4, 0, 0),
+        line(4, 0, 4, 4),
+        line(6, 3, 2, 3),
+        line(2, -1, 6, -1),
+        line(2, 3, 2, -1),
+        line(6, -1, 6, 3),
+    ];
+    for fill_rule in [FillRule::NonZero, FillRule::EvenOdd] {
+        let built = arrange_lines(source.clone(), fill_rule);
+        let region = built
+            .region()
+            .expect("crossing closed walks should reach unified face selection");
+        for (point, expected) in [
+            (p(1, 1), RegionPointLocation::Inside),
+            (p(3, 1), RegionPointLocation::Outside),
+            (p(5, 1), RegionPointLocation::Inside),
+            (p(8, 1), RegionPointLocation::Outside),
+        ] {
+            assert_eq!(classify(region, &point), Classification::Decided(expected));
+        }
+    }
+}
+
+#[test]
+fn unordered_single_full_circle_is_a_closed_walk() {
+    let start = p(2, 0);
+    let circle = CircularArc2::try_from_center(start.clone(), start, p(0, 0), false).unwrap();
+    let built = arrange_segments(vec![Segment2::Arc(circle)], FillRule::NonZero);
+    let region = built
+        .region()
+        .expect("a native full circle should regularize exactly");
+    assert_eq!(built.output_ring_count(), Some(1));
+    assert_eq!(
+        classify(region, &p(0, 0)),
+        Classification::Decided(RegionPointLocation::Inside)
+    );
+    assert_eq!(
+        classify(region, &p(3, 0)),
+        Classification::Decided(RegionPointLocation::Outside)
+    );
+}
+
+#[test]
 fn unordered_line_arc_segments_materialize_without_exposing_native_ownership() {
     let built = arrange_segments(
         vec![
@@ -334,27 +422,40 @@ fn unordered_line_arc_segments_materialize_without_exposing_native_ownership() {
     assert_eq!(built.source_segment_count(), 2);
     assert_eq!(
         built.output_boundary_segment_kind_counts(),
-        Some(SegmentKindCounts { lines: 1, arcs: 1 })
+        None,
+        "the unified arrangement may retain the circular span as an exact conic"
     );
     let region = built.region().expect("semicircle should materialize");
     assert_eq!(
         classify(region, &p(2, -1)),
         Classification::Decided(RegionPointLocation::Inside)
     );
-    let Classification::Decided(facts) = region.structural_facts(&policy()).unwrap().into_value()
-    else {
-        panic!("native specialization should expose structural facts");
-    };
-    assert_eq!(facts.segment_kinds, SegmentKindCounts { lines: 1, arcs: 1 });
+    assert_eq!(
+        region.structural_facts(&policy()).unwrap().into_value(),
+        Classification::Uncertain(UncertaintyReason::Unsupported),
+        "the exact conic result does not pretend to be a native line/arc carrier"
+    );
 }
 
 #[test]
-fn native_overlap_and_mixed_crossings_do_not_invent_regions() {
-    let cases = [
+fn native_overlap_regularizes_empty_and_open_crossings_remain_blocked() {
+    let coincident = arrange_segments(
         vec![
             Segment2::Arc(arc_bulge(0, 0, 4, 0, 1)),
             Segment2::Arc(arc_bulge(0, 0, 4, 0, 1)),
         ],
+        FillRule::NonZero,
+    );
+    assert!(coincident.status().is_native_exact());
+    assert!(
+        coincident
+            .region()
+            .expect("oppositely traversed coincident arcs have decided topology")
+            .is_empty()
+    );
+    assert_eq!(coincident.output_ring_count(), Some(0));
+
+    let cases = [
         vec![
             Segment2::Arc(arc_bulge(0, 0, 4, 0, 1)),
             Segment2::Line(line(2, -3, 2, 1)),
@@ -605,8 +706,9 @@ fn unordered_native_arrangement_obeys_the_approximate_512_terminal() {
         .unwrap(),
     ];
 
-    let strict = CurveRegion2::arrange_unordered_line_segments_borrowed(
-        &lines,
+    let segments = lines.into_iter().map(Segment2::Line).collect::<Vec<_>>();
+    let strict = CurveRegion2::arrange_unordered_segments_borrowed(
+        &segments,
         FillRule::NonZero,
         &CurveContext::STRICT,
     )
@@ -615,20 +717,6 @@ fn unordered_native_arrangement_obeys_the_approximate_512_terminal() {
     assert!(strict.value.region().is_none());
     assert!(strict.value.status().is_retained_evidence());
 
-    let approximate = CurveRegion2::arrange_unordered_line_segments_borrowed(
-        &lines,
-        FillRule::NonZero,
-        &CurveContext::APPROXIMATE_512,
-    )
-    .unwrap();
-    assert_eq!(
-        approximate.certainty,
-        CurveCertainty::Approximate512Consumed
-    );
-    assert!(approximate.value.region().is_some());
-    assert!(approximate.value.status().is_native_exact());
-
-    let segments = lines.into_iter().map(Segment2::Line).collect::<Vec<_>>();
     let approximate = CurveRegion2::arrange_unordered_segments_borrowed(
         &segments,
         FillRule::NonZero,
@@ -640,6 +728,19 @@ fn unordered_native_arrangement_obeys_the_approximate_512_terminal() {
         CurveCertainty::Approximate512Consumed
     );
     assert!(approximate.value.region().is_some());
+    assert!(approximate.value.status().is_native_exact());
+
+    let approximate_owned = CurveRegion2::arrange_unordered_segments(
+        segments,
+        FillRule::NonZero,
+        &CurveContext::APPROXIMATE_512,
+    )
+    .unwrap();
+    assert_eq!(
+        approximate_owned.certainty,
+        CurveCertainty::Approximate512Consumed
+    );
+    assert!(approximate_owned.value.region().is_some());
 }
 
 proptest! {
@@ -711,7 +812,7 @@ proptest! {
         prop_assert_eq!(built.source_segment_count(), 2);
         prop_assert_eq!(
             built.output_boundary_segment_kind_counts(),
-            Some(SegmentKindCounts { lines: 1, arcs: 1 })
+            None
         );
         prop_assert_eq!(
             classify(

@@ -52,7 +52,7 @@ use crate::policy::{
     resolve_cached_evaluation, resolve_certified_operation, resolve_certified_value,
 };
 use crate::region::LineArcRegion2;
-use crate::region_nesting::RegionArrangement2;
+use crate::region_nesting::assemble_unordered_segment_rings;
 use crate::{
     Aabb2, BezierAlgebraicEndpointImage2, BezierAreaMoments2, BezierArrangementGraph2,
     BezierArrangementTraversal2, BezierEndpoint, BezierEndpointPointImage2,
@@ -276,16 +276,16 @@ impl<'a> CurveRegionNativeContourView2<'a> {
     }
 }
 
-/// Furthest exact stage reached by unified native-boundary arrangement.
+/// Furthest exact stage reached by unified unordered-boundary arrangement.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum CurveRegionArrangementStage2 {
-    /// The unordered endpoint graph was being assembled into closed rings.
-    RingAssembly,
-    /// Checked contours were being assigned material/hole roles.
-    RegionRoleAssignment,
+    /// The unordered endpoint graph was being assembled into closed walks.
+    EndpointAssembly,
+    /// Closed walks were being split and selected by the unified curve arrangement.
+    CurveArrangement,
 }
 
-/// Immediate native line/arc arrangement with a unified curved output.
+/// Immediate unordered line/arc input arrangement with a unified curved output.
 #[derive(Clone, Debug)]
 pub struct CurveRegionArrangement2 {
     region: Option<CurveRegion2>,
@@ -326,7 +326,7 @@ pub struct CurveRegionCertifiedSegmentationResult2 {
 }
 
 impl CurveRegionArrangement2 {
-    /// Returns the materialized unified region, if role assignment succeeded.
+    /// Returns the unified region when exact arrangement succeeded.
     pub const fn region(&self) -> Option<&CurveRegion2> {
         self.region.as_ref()
     }
@@ -341,7 +341,7 @@ impl CurveRegionArrangement2 {
         }
     }
 
-    /// Returns the fill rule used by the completed native arrangement.
+    /// Returns the fill rule used by the arrangement.
     pub const fn fill_rule(&self) -> FillRule {
         self.fill_rule
     }
@@ -366,17 +366,18 @@ impl CurveRegionArrangement2 {
         self.blocker
     }
 
-    /// Returns output ring count when role assignment completed.
+    /// Returns output ring count when curve arrangement completed.
     pub const fn output_ring_count(&self) -> Option<usize> {
         self.output_ring_count
     }
 
-    /// Returns output boundary segment count when role assignment completed.
+    /// Returns output retained boundary-span count when curve arrangement completed.
     pub const fn output_boundary_segment_count(&self) -> Option<usize> {
         self.output_boundary_segment_count
     }
 
-    /// Returns output native primitive-family counts when role assignment completed.
+    /// Returns output native primitive-family counts when every retained span
+    /// admits an exact line/arc lowering.
     pub const fn output_boundary_segment_kind_counts(&self) -> Option<SegmentKindCounts> {
         self.output_boundary_segment_kind_counts
     }
@@ -1849,36 +1850,128 @@ fn curve_region_promotion_error(cause: CurveError) -> ExactCurveError {
     ExactCurveError::invalid(CurveOperation2::Construction, CurveFamily2::Line, cause)
 }
 
-fn promote_native_region_arrangement(
-    arrangement: RegionArrangement2,
+fn arrange_unordered_native_segments_raw(
+    source_segments: &[Segment2],
+    fill_rule: FillRule,
     policy: &CurveContext,
 ) -> ExactCurveResult<CurveRegionArrangement2> {
-    let RegionArrangement2 {
-        region,
-        fill_rule,
-        source_segment_count,
-        stage,
-        status,
-        blocker,
-        output_ring_count,
-        output_boundary_segment_count,
-        output_boundary_segment_kind_counts,
-    } = arrangement;
-    let region = region
-        .as_ref()
-        .map(|region| CurveRegion2::try_from_line_arc_region_raw(region, policy))
-        .transpose()?;
+    if source_segments.is_empty() {
+        return Err(curve_region_promotion_error(CurveError::EmptyCurveString));
+    }
+    let rings = match assemble_unordered_segment_rings(source_segments, policy) {
+        Ok(rings) => rings,
+        Err(reason) => {
+            return Ok(blocked_unordered_curve_region_arrangement(
+                fill_rule,
+                source_segments.len(),
+                CurveRegionArrangementStage2::EndpointAssembly,
+                reason,
+            ));
+        }
+    };
+    let paths = rings
+        .into_iter()
+        .map(|ring| {
+            CurvePath2::from_structurally_closed_curves(
+                ring.into_iter()
+                    .map(|segment| match segment {
+                        Segment2::Line(line) => Curve2::from(line),
+                        Segment2::Arc(arc) => Curve2::from(arc),
+                    })
+                    .collect(),
+            )
+        })
+        .collect::<Vec<_>>();
+    let mut raw = match CurveRegion2::try_from_boundary_paths_raw(&paths, policy) {
+        Ok(raw) => raw,
+        Err(ExactCurveError::Blocked(blocker)) => {
+            return Ok(blocked_unordered_curve_region_arrangement(
+                fill_rule,
+                source_segments.len(),
+                CurveRegionArrangementStage2::CurveArrangement,
+                blocker.reason(),
+            ));
+        }
+        Err(error) => return Err(error),
+    };
+    raw.data_mut_for_construction().certified_loop_fill_rules =
+        Some(Arc::from(vec![fill_rule; paths.len()]));
+    let region = match raw.regularized_region_raw(policy) {
+        Ok(region) => region,
+        Err(ExactCurveError::Blocked(blocker)) => {
+            return Ok(blocked_unordered_curve_region_arrangement(
+                fill_rule,
+                source_segments.len(),
+                CurveRegionArrangementStage2::CurveArrangement,
+                blocker.reason(),
+            ));
+        }
+        Err(error) => return Err(error),
+    };
+    let output_ring_count = region.boundary_loops().len();
+    let output_boundary_segment_count = region
+        .boundary_loops()
+        .iter()
+        .map(CurveRegionBoundaryLoop2::len)
+        .sum();
+    let output_boundary_segment_kind_counts = match region
+        .native_line_arc_region(policy)
+        .map_err(curve_region_promotion_error)?
+    {
+        Classification::Decided(native) => Some(region_segment_kind_counts(native)),
+        Classification::Uncertain(_) => None,
+    };
     Ok(CurveRegionArrangement2 {
-        region,
+        region: Some(region),
         fill_rule,
-        source_segment_count,
-        stage,
-        status,
-        blocker,
-        output_ring_count,
-        output_boundary_segment_count,
+        source_segment_count: source_segments.len(),
+        stage: CurveRegionArrangementStage2::CurveArrangement,
+        status: RetainedTopologyStatus::NativeExact,
+        blocker: None,
+        output_ring_count: Some(output_ring_count),
+        output_boundary_segment_count: Some(output_boundary_segment_count),
         output_boundary_segment_kind_counts,
     })
+}
+
+fn blocked_unordered_curve_region_arrangement(
+    fill_rule: FillRule,
+    source_segment_count: usize,
+    stage: CurveRegionArrangementStage2,
+    blocker: UncertaintyReason,
+) -> CurveRegionArrangement2 {
+    CurveRegionArrangement2 {
+        region: None,
+        fill_rule,
+        source_segment_count,
+        stage,
+        status: match blocker {
+            UncertaintyReason::Boundary | UncertaintyReason::Unsupported => {
+                RetainedTopologyStatus::Unsupported
+            }
+            _ => RetainedTopologyStatus::Unresolved,
+        },
+        blocker: Some(blocker),
+        output_ring_count: None,
+        output_boundary_segment_count: None,
+        output_boundary_segment_kind_counts: None,
+    }
+}
+
+fn region_segment_kind_counts(region: &LineArcRegion2) -> SegmentKindCounts {
+    let mut counts = SegmentKindCounts::default();
+    for segment in region
+        .material_contours()
+        .iter()
+        .chain(region.hole_contours())
+        .flat_map(|contour| contour.segments())
+    {
+        match segment {
+            Segment2::Line(_) => counts.lines += 1,
+            Segment2::Arc(_) => counts.arcs += 1,
+        }
+    }
+    counts
 }
 
 fn curve_region_edit_error(operation: CurveOperation2, cause: CurveError) -> ExactCurveError {
@@ -10280,21 +10373,19 @@ impl CurveRegion2 {
         Self::default()
     }
 
-    /// Arranges unordered exact line/arc segments into unified region topology.
+    /// Arranges unordered exact line/arc segments through unified region topology.
     ///
-    /// The specialized native arrangement remains the retained fast path and
-    /// diagnostic source, while any materialized output is promoted immediately
-    /// into `CurveRegion2`.
+    /// The input adapter only orders endpoint-disjoint closed walks. Interior
+    /// contacts, overlaps, winding, face selection, and output roles are all
+    /// decided by the same all-family arrangement used by Boolean and offset
+    /// operations.
     pub fn arrange_unordered_segments(
         source_segments: Vec<Segment2>,
         fill_rule: FillRule,
         policy: &CurveContext,
     ) -> ExactCurveResult<CurveOutcome<CurveRegionArrangement2>> {
         resolve_certified_operation(policy, |attempt| {
-            let arrangement =
-                LineArcRegion2::arrange_unordered_segments(source_segments, fill_rule, attempt)
-                    .map_err(curve_region_promotion_error)?;
-            promote_native_region_arrangement(arrangement, attempt)
+            arrange_unordered_native_segments_raw(&source_segments, fill_rule, attempt)
         })
     }
 
@@ -10305,47 +10396,7 @@ impl CurveRegion2 {
         policy: &CurveContext,
     ) -> ExactCurveResult<CurveOutcome<CurveRegionArrangement2>> {
         resolve_certified_operation(policy, |attempt| {
-            let arrangement = LineArcRegion2::arrange_unordered_segments_borrowed(
-                source_segments,
-                fill_rule,
-                attempt,
-            )
-            .map_err(curve_region_promotion_error)?;
-            promote_native_region_arrangement(arrangement, attempt)
-        })
-    }
-
-    /// Arranges unordered exact lines through the specialized line pipeline.
-    pub fn arrange_unordered_line_segments(
-        source_segments: Vec<LineSeg2>,
-        fill_rule: FillRule,
-        policy: &CurveContext,
-    ) -> ExactCurveResult<CurveOutcome<CurveRegionArrangement2>> {
-        resolve_certified_operation(policy, |attempt| {
-            let arrangement = LineArcRegion2::arrange_unordered_line_segments(
-                source_segments,
-                fill_rule,
-                attempt,
-            )
-            .map_err(curve_region_promotion_error)?;
-            promote_native_region_arrangement(arrangement, attempt)
-        })
-    }
-
-    /// Arranges borrowed unordered exact lines through the specialized line pipeline.
-    pub fn arrange_unordered_line_segments_borrowed(
-        source_segments: &[LineSeg2],
-        fill_rule: FillRule,
-        policy: &CurveContext,
-    ) -> ExactCurveResult<CurveOutcome<CurveRegionArrangement2>> {
-        resolve_certified_operation(policy, |attempt| {
-            let arrangement = LineArcRegion2::arrange_unordered_line_segments_borrowed(
-                source_segments,
-                fill_rule,
-                attempt,
-            )
-            .map_err(curve_region_promotion_error)?;
-            promote_native_region_arrangement(arrangement, attempt)
+            arrange_unordered_native_segments_raw(source_segments, fill_rule, attempt)
         })
     }
 

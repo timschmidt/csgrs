@@ -1,5 +1,6 @@
 use hypercurve::{
     Classification, CurveContext, CurveRegion2, FillRule, LineSeg2, Point2, RegionPointLocation,
+    Segment2,
 };
 use hyperreal::Real;
 
@@ -20,9 +21,12 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         line(0, 4, 0, 0)?,
     ];
 
-    let result =
-        CurveRegion2::arrange_unordered_line_segments(boundary, FillRule::NonZero, &policy)?
-            .into_value();
+    let result = CurveRegion2::arrange_unordered_segments(
+        boundary.into_iter().map(Segment2::Line).collect(),
+        FillRule::NonZero,
+        &policy,
+    )?
+    .into_value();
     let region = match result.region_classification() {
         Classification::Decided(region) => region,
         Classification::Uncertain(reason) => {
