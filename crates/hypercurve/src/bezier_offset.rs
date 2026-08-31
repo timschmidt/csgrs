@@ -69942,11 +69942,40 @@ impl BezierAlgebraicChord2 {
         Some(line)
     }
 
+    /// Materializes a construction-certified axis support with a canonical
+    /// unit tangent.
+    ///
+    /// Retained provenance can represent the same line with an arbitrary
+    /// nonzero algebraic endpoint separation.  That scale is irrelevant to
+    /// support predicates but expensive when it is carried into a resultant
+    /// or quadratic formula, so axis-aware consumers use this normalized
+    /// representation first.
+    fn strict_canonical_axis_support_line(&self, policy: &CurveContext) -> Option<LineSeg2> {
+        self.validate_policy(policy).ok()?;
+        let direction = self.certified_axis_direction()?;
+        let constant = self.exact_axis_support_coordinate(policy).ok()??;
+        let (tangent_x, tangent_y) = direction.unit_tangent();
+        let anchor = match direction.axis() {
+            Axis2::X => Point2::new(Real::zero(), constant),
+            Axis2::Y => Point2::new(constant, Real::zero()),
+        };
+        LineSeg2::try_new(anchor.clone(), anchor.translated(tangent_x, tangent_y)).ok()
+    }
+
     /// Extends the STRICT support adapter with authored axis and retained
     /// source provenance for algorithms whose finite-domain checks remain on
     /// this chord. Existing Boolean paths deliberately keep the narrower
     /// endpoint-coefficient authority above.
     pub(crate) fn strict_provenance_support_line(&self, policy: &CurveContext) -> Option<LineSeg2> {
+        if let Some(line) = self.strict_canonical_axis_support_line(policy) {
+            #[cfg(feature = "dispatch-trace")]
+            hyperreal::dispatch_trace::record(
+                "hypercurve",
+                "algebraic-chord-support-line",
+                "canonical-axis",
+            );
+            return Some(line);
+        }
         if let Some(line) = self.strict_retained_support_line(policy) {
             return Some(line);
         }
@@ -120568,6 +120597,9 @@ mod conversion_tests {
                 .expect("the retained transforms preserve the exact physical support");
             assert_eq!(support.start().y(), &Real::zero());
             assert_eq!(support.end().y(), &Real::zero());
+            let (support_dx, support_dy) = support.delta();
+            assert_eq!(support_dx, Real::one());
+            assert_eq!(support_dy, Real::zero());
             assert_eq!(
                 real_sign(&(support.end().x() - support.start().x()), &policy),
                 Some(RealSign::Positive),
