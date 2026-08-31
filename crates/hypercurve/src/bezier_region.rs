@@ -28847,7 +28847,15 @@ mod tests {
                 "topology-only algebraic chords must not require coordinate tangent reconstruction: {trace:?}",
             );
         }
-        assert_eq!(offset.certainty, CurveCertainty::Certified);
+        assert_eq!(
+            offset.certainty,
+            if policy == CurveContext::APPROXIMATE_512 {
+                CurveCertainty::Approximate512Consumed
+            } else {
+                CurveCertainty::Certified
+            },
+            "the retained boundary must report the weakest predicate actually consumed"
+        );
         assert!(!offset.value.is_empty());
     }
 
@@ -28862,12 +28870,12 @@ mod tests {
     }
 
     #[test]
-    fn pair_native_boolean_boundary_offsets_exactly_approximate_forward() {
+    fn pair_native_boolean_boundary_offset_obeys_approximate_policy_forward() {
         assert_pair_native_boolean_boundary_offsets_exactly(CurveContext::APPROXIMATE_512, false);
     }
 
     #[test]
-    fn pair_native_boolean_boundary_offsets_exactly_approximate_reversed() {
+    fn pair_native_boolean_boundary_offset_obeys_approximate_policy_reversed() {
         assert_pair_native_boolean_boundary_offsets_exactly(CurveContext::APPROXIMATE_512, true);
     }
 
@@ -29009,7 +29017,15 @@ mod tests {
                             "the retained pair-native Boolean boundary must offset exactly: policy={policy:?}, reversed={reversed}, error={error:?}"
                         )
                     });
-                assert_eq!(offset.certainty, CurveCertainty::Certified);
+                assert_eq!(
+                    offset.certainty,
+                    if policy == CurveContext::APPROXIMATE_512 {
+                        CurveCertainty::Approximate512Consumed
+                    } else {
+                        CurveCertainty::Certified
+                    },
+                    "the retained boundary must report the weakest predicate actually consumed"
+                );
                 assert!(!offset.value.is_empty());
                 assert!(
                     offset

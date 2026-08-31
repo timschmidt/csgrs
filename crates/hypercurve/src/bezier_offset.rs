@@ -121918,7 +121918,7 @@ mod conversion_tests {
     }
 
     #[test]
-    fn independent_field_chord_certifies_a_third_algebraic_contact_field() {
+    fn independent_field_chord_retains_a_third_contact_in_its_recursive_field() {
         let half = (Real::one() / Real::from(2_i8)).unwrap();
         let third = (Real::one() / Real::from(3_i8)).unwrap();
         for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
@@ -121962,8 +121962,9 @@ mod conversion_tests {
                 panic!("independent-axis chord endpoints must be distinct");
             };
             // Centering the source maps the opposite endpoint-field conjugates
-            // to another unit-interval resultant root; selected-triple replay
-            // must discard that foreign candidate.
+            // to another unit-interval resultant root. Recursive selected-sheet
+            // replay must discard that foreign candidate without materializing
+            // an unrelated primitive-element scalar for the retained root.
             let diagonal = RationalBezier2::try_from_subcurve(&BezierSubcurve2::Quadratic(
                 QuadraticBezier2::from_line_segment(
                     LineSeg2::try_new(Point2::from_values(-1, -1), Point2::from_values(1, 1))
@@ -121983,10 +121984,19 @@ mod conversion_tests {
             let [contact] = contacts.as_slice() else {
                 panic!("expected one third-field contact, got {contacts:?}");
             };
-            assert!(matches!(
-                contact.other_parameter().as_bezier_parameter(),
-                Some(BezierParameter2::Algebraic(_))
-            ));
+            let parameter = contact
+                .other_parameter()
+                .as_recursive_projective()
+                .expect("the third-field root must retain its recursive authority");
+            assert_eq!(
+                parameter.chord_rational_tangent_cross_sign(
+                    &chord,
+                    &diagonal,
+                    RealSign::Positive,
+                    &policy,
+                ),
+                Some(Ok(Classification::Decided(contact.tangent_cross_sign())))
+            );
             assert_ne!(contact.tangent_cross_sign(), RealSign::Zero);
             assert!(matches!(
                 contact
