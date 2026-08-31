@@ -7116,10 +7116,12 @@ fn represented_similarity_point(
 fn represented_similarity_vector(
     vector: &[AlgebraicRootRepresentation; 2],
     transform: &Similarity2,
+    output_scale: &Real,
 ) -> Classification<[AlgebraicRootRepresentation; 2]> {
     let (a, b, d, e, _, _) = transform.affine_components();
-    let x = represented_affine_coordinate(&[(&vector[0], a), (&vector[1], b)], &Real::zero());
-    let y = represented_affine_coordinate(&[(&vector[0], d), (&vector[1], e)], &Real::zero());
+    let [a, b, d, e] = [a, b, d, e].map(|coefficient| coefficient * output_scale);
+    let x = represented_affine_coordinate(&[(&vector[0], &a), (&vector[1], &b)], &Real::zero());
+    let y = represented_affine_coordinate(&[(&vector[0], &d), (&vector[1], &e)], &Real::zero());
     match (x, y) {
         (Classification::Decided(x), Classification::Decided(y)) => Classification::Decided([x, y]),
         (Classification::Uncertain(UncertaintyReason::Unsupported), _)
@@ -18721,7 +18723,15 @@ impl BezierAlgebraicCuspSemicircle2 {
                 return Ok(Classification::Uncertain(reason));
             }
         };
-        let unit_radial_scale = (Real::one() / &frame.normal_denominator)?;
+        // Keep the unscaled retained radial through a similarity. Scaling its
+        // coordinates first would form two scaled projective eliminants and
+        // then a second tensor image, discarding the cheap shared-frame form.
+        // Normalize in the final transformed image instead.
+        let unit_radial_scale = if similarity.is_some() {
+            Real::one()
+        } else {
+            (Real::one() / &frame.normal_denominator)?
+        };
         let mut unit_radial = match pair_map.represented_selected_radial_vector(
             pair_contact,
             support_first,
@@ -18756,7 +18766,12 @@ impl BezierAlgebraicCuspSemicircle2 {
                 return Ok(Classification::Uncertain(reason));
             }
         };
-        let unit_radial = match represented_similarity_vector(&unit_radial, &similarity) {
+        let inverse_normal_denominator = (Real::one() / &frame.normal_denominator)?;
+        let unit_radial = match represented_similarity_vector(
+            &unit_radial,
+            &similarity,
+            &inverse_normal_denominator,
+        ) {
             Classification::Decided(unit_radial) => unit_radial,
             Classification::Uncertain(reason) => {
                 return Ok(Classification::Uncertain(reason));
