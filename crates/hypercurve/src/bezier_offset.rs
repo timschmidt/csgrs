@@ -6899,7 +6899,27 @@ fn represented_tensor_coordinate_refined(
             .iter()
             .map(|source| refined_represented_root(source, refinement_steps))
             .collect::<Vec<_>>();
-        if let Some(interval) = image_interval(&refined_sources, refinement_steps) {
+        if let Some(mut interval) = image_interval(&refined_sources, refinement_steps) {
+            // A retained exact `Real` expression can collapse interval
+            // arithmetic to one non-rational endpoint before its canonical
+            // univariate polynomial has been replayed. Treating that endpoint
+            // as an `ExactRationalWitness` asks Hyperreal to rediscover a deep
+            // eliminant cancellation and can reject otherwise valid evidence.
+            // Replace only this degenerate non-rational enclosure with certified
+            // dyadic bounds. The tensor-image authority still proves singleton
+            // isolation under STRICT; no approximation selects the root.
+            if compare_reals(&interval.lower, &interval.upper, &CurveContext::STRICT)
+                == Some(std::cmp::Ordering::Equal)
+                && interval.lower.exact_rational_normal_form().is_none()
+            {
+                let precision = refinement_steps.max(64).min(i32::MAX as usize) as i32;
+                if let Some([lower, upper]) = interval.lower.certified_dyadic_interval(-precision) {
+                    interval = BezierAlgebraicChordRealInterval2 {
+                        lower: Real::new(lower),
+                        upper: Real::new(upper),
+                    };
+                }
+            }
             let unchanged = previous
                 .as_ref()
                 .is_some_and(|(old_sources, old_interval)| {
