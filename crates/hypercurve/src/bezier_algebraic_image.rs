@@ -139,11 +139,13 @@ mod policy_tests {
     };
     use num::{BigInt, BigUint};
 
-    use super::arithmetic_algebraic_representations_with_policy;
+    use super::{
+        arithmetic_algebraic_representations_with_policy, exact_real_algebraic_representation,
+    };
     use crate::{CurveCertainty, CurveContext, policy::resolve_certified_operation};
 
     #[test]
-    fn arithmetic_adapter_retries_policy_dependent_validation() {
+    fn arithmetic_adapter_rejects_evidence_that_does_not_replay_strictly() {
         let epsilon = Real::new(
             Rational::from_bigint_fraction(BigInt::from(1_u8), BigUint::from(1_u8) << 1200)
                 .expect("positive dyadic epsilon"),
@@ -175,11 +177,10 @@ mod policy_tests {
             AlgebraicRootArithmeticOp::Negate,
             &CurveContext::STRICT,
         );
-        assert!(!matches!(
+        assert_eq!(
             strict.status,
-            AlgebraicRootArithmeticStatus::ComputedExactRationalWitness
-                | AlgebraicRootArithmeticStatus::ComputedRepresentation
-        ));
+            AlgebraicRootArithmeticStatus::InvalidEvidence
+        );
 
         let outcome = resolve_certified_operation(&CurveContext::APPROXIMATE_512, |policy| {
             Ok::<_, ()>(arithmetic_algebraic_representations_with_policy(
@@ -192,9 +193,29 @@ mod policy_tests {
         .expect("infallible operation");
         assert_eq!(
             outcome.value.status,
-            AlgebraicRootArithmeticStatus::ComputedRepresentation
+            AlgebraicRootArithmeticStatus::InvalidEvidence
         );
-        assert_eq!(outcome.certainty, CurveCertainty::Approximate512Consumed);
+        assert_eq!(outcome.certainty, CurveCertainty::Certified);
+    }
+
+    #[test]
+    fn exact_real_representation_does_not_claim_a_rational_witness_kind() {
+        let irrational = exact_real_algebraic_representation(&Real::pi());
+        assert_eq!(irrational.kind, AlgebraicRootKind::IsolatingInterval);
+        let exact = irrational
+            .exact_point_witness()
+            .expect("an exact Real representation retains its point");
+        assert_eq!(exact, &Real::pi());
+        assert!(exact.exact_rational_ref().is_none());
+
+        let rational = exact_real_algebraic_representation(&Real::from(3_i8));
+        assert_eq!(rational.kind, AlgebraicRootKind::ExactRationalWitness);
+        assert!(
+            rational
+                .exact_point_witness()
+                .and_then(Real::exact_rational_ref)
+                .is_some()
+        );
     }
 }
 
@@ -203,7 +224,7 @@ fn compare_root_representation_to_real(
     value: &Real,
     policy: &CurveContext,
 ) -> crate::Classification<Ordering> {
-    if let Some(exact) = representation.exact_rational_witness() {
+    if let Some(exact) = representation.exact_point_witness() {
         return compare_reals(exact, value, policy)
             .map(crate::Classification::Decided)
             .unwrap_or(crate::Classification::Uncertain(
@@ -299,12 +320,9 @@ pub(crate) fn arithmetic_algebraic_representations_with_policy(
         operation,
         hypersolve::PredicatePolicy::STRICT,
     );
-    if matches!(
-        strict.status,
-        AlgebraicRootArithmeticStatus::ComputedExactRationalWitness
-            | AlgebraicRootArithmeticStatus::ComputedRepresentation
-            | AlgebraicRootArithmeticStatus::NonRationalInput
-    ) || !policy.permits_approximate_512()
+    if algebraic_arithmetic_succeeded(&strict.status)
+        || strict.status == AlgebraicRootArithmeticStatus::NonRationalInput
+        || !policy.permits_approximate_512()
     {
         return strict;
     }
@@ -314,14 +332,19 @@ pub(crate) fn arithmetic_algebraic_representations_with_policy(
         operation,
         hypersolve::PredicatePolicy::APPROXIMATE_512,
     );
-    if matches!(
-        approximate.status,
-        AlgebraicRootArithmeticStatus::ComputedExactRationalWitness
-            | AlgebraicRootArithmeticStatus::ComputedRepresentation
-    ) {
+    if algebraic_arithmetic_succeeded(&approximate.status) {
         policy.observe_approximate_512();
     }
     approximate
+}
+
+pub(crate) fn algebraic_arithmetic_succeeded(status: &AlgebraicRootArithmeticStatus) -> bool {
+    matches!(
+        status,
+        AlgebraicRootArithmeticStatus::ComputedExactRationalWitness
+            | AlgebraicRootArithmeticStatus::ComputedExactRealWitness
+            | AlgebraicRootArithmeticStatus::ComputedRepresentation
+    )
 }
 
 impl BezierAlgebraicCoordinateImage {
@@ -1005,12 +1028,15 @@ impl RationalBezierAlgebraicPointImage2 {
         Ok(Classification::Uncertain(UncertaintyReason::Unsupported))
     }
 
-    pub(crate) fn exact_rational_point(&self, policy: &CurveContext) -> Option<Point2> {
+    /// Returns a point when both coordinates can be materialized as exact
+    /// [`Real`] values. Callers that require rational payloads must inspect
+    /// [`Real::exact_rational_ref`].
+    pub(crate) fn exact_point(&self, policy: &CurveContext) -> Option<Point2> {
         if let (Some(parameter), Some((x_numerator, y_numerator, denominator))) = (
             self.retained_parameter(),
             self.retained_coordinate_polynomials(),
         ) && let Ok(Classification::Decided(Some(parameter))) =
-            parameter.represented_rational_root(policy)
+            parameter.represented_exact_point(policy)
         {
             let denominator = evaluate_coefficients(denominator, &parameter);
             if let (Ok(x), Ok(y)) = (
@@ -1023,16 +1049,8 @@ impl RationalBezierAlgebraicPointImage2 {
 
         let point = self.resolved(policy)?;
         Some(Point2::new(
-            point
-                .x()?
-                .representation()?
-                .exact_rational_witness()?
-                .clone(),
-            point
-                .y()?
-                .representation()?
-                .exact_rational_witness()?
-                .clone(),
+            point.x()?.representation()?.exact_point_witness()?.clone(),
+            point.y()?.representation()?.exact_point_witness()?.clone(),
         ))
     }
 
@@ -1041,17 +1059,14 @@ impl RationalBezierAlgebraicPointImage2 {
     ///
     /// Axis-support recovery must not require the complete point to collapse
     /// to a represented pair: a point such as `(alpha, 0)` carries an exact
-    /// reusable horizontal-line certificate in its second coordinate.
-    pub(crate) fn exact_rational_coordinate(
-        &self,
-        use_x: bool,
-        policy: &CurveContext,
-    ) -> Option<Real> {
+    /// reusable horizontal-line certificate in its second coordinate. The
+    /// returned [`Real`] can be non-rational.
+    pub(crate) fn exact_coordinate(&self, use_x: bool, policy: &CurveContext) -> Option<Real> {
         if let (Some(parameter), Some((x_numerator, y_numerator, denominator))) = (
             self.retained_parameter(),
             self.retained_coordinate_polynomials(),
         ) && let Ok(Classification::Decided(Some(parameter))) =
-            parameter.represented_rational_root(policy)
+            parameter.represented_exact_point(policy)
         {
             let denominator = evaluate_coefficients(denominator, &parameter);
             let numerator =
@@ -1063,10 +1078,7 @@ impl RationalBezierAlgebraicPointImage2 {
 
         let point = self.resolved(policy)?;
         let coordinate = if use_x { point.x()? } else { point.y()? };
-        coordinate
-            .representation()?
-            .exact_rational_witness()
-            .cloned()
+        coordinate.representation()?.exact_point_witness().cloned()
     }
 
     pub(crate) fn predicate_evaluator<'a>(
@@ -1478,17 +1490,17 @@ impl RationalBezierAlgebraicTangentImage2 {
     }
 
     /// Returns the derivative as two represented [`Real`] values when both
-    /// exact rational witnesses are already present in the retained image.
+    /// exact point witnesses are already present in the retained image.
     ///
     /// This is deliberately not an approximation or a request to construct a
     /// larger algebraic-number tower. Retained Real-coefficient expressions
-    /// are evaluated directly when their shared source root is rational;
-    /// otherwise only rational witnesses already proved by Hypersolve are
-    /// accepted.
-    pub(crate) fn exact_rational_vector(&self, policy: &CurveContext) -> Option<(Real, Real)> {
+    /// are evaluated directly when their shared source root has materialized
+    /// as an exact point; otherwise only exact point witnesses already proved
+    /// by Hypersolve are accepted.
+    pub(crate) fn exact_vector(&self, policy: &CurveContext) -> Option<(Real, Real)> {
         if let Some(expression) = self.data.retained_expression.as_ref()
             && let Ok(Classification::Decided(Some(parameter))) =
-                expression.parameter.represented_rational_root(policy)
+                expression.parameter.represented_exact_point(policy)
         {
             let denominator = evaluate_coefficients(&expression.denominator, &parameter);
             if let (Ok(dx), Ok(dy)) = (
@@ -1500,14 +1512,8 @@ impl RationalBezierAlgebraicTangentImage2 {
         }
 
         Some((
-            self.dx()?
-                .representation()?
-                .exact_rational_witness()?
-                .clone(),
-            self.dy()?
-                .representation()?
-                .exact_rational_witness()?
-                .clone(),
+            self.dx()?.representation()?.exact_point_witness()?.clone(),
+            self.dy()?.representation()?.exact_point_witness()?.clone(),
         ))
     }
 
@@ -1887,9 +1893,7 @@ pub(crate) fn rational_point_image_from_power_basis(
     let x_numerator = reduce_algebraic_image_polynomial(parameter, x_numerator, &strict)?;
     let y_numerator = reduce_algebraic_image_polynomial(parameter, y_numerator, &strict)?;
     let denominator = reduce_algebraic_image_polynomial(parameter, denominator, &strict)?;
-    if let Classification::Decided(Some(exact_root)) =
-        parameter.represented_rational_root(&strict)?
-    {
+    if let Classification::Decided(Some(exact_root)) = parameter.represented_exact_point(&strict)? {
         parameter_root.interval = IsolatedRootInterval {
             lower: exact_root.clone(),
             upper: exact_root.clone(),
@@ -2101,7 +2105,7 @@ fn coordinate_image(
     coefficients: Vec<Real>,
     policy: &CurveContext,
 ) -> Option<BezierAlgebraicCoordinateImage> {
-    if let Some(parameter_value) = parameter.exact_rational_witness() {
+    if let Some(parameter_value) = parameter.exact_point_witness() {
         let value = evaluate_power_polynomial(&coefficients, parameter_value);
         let representation = exact_real_algebraic_representation(&value);
         return Some(BezierAlgebraicCoordinateImage {
@@ -2236,11 +2240,19 @@ pub(crate) fn exact_real_algebraic_representation(value: &Real) -> AlgebraicRoot
             exact_root: Some(value.clone()),
             distinct_root_count: 1,
         },
-        kind: AlgebraicRootKind::ExactRationalWitness,
+        kind: algebraic_root_kind_for_exact_point(Some(value)),
         validation: AlgebraicRootValidationReport {
             status: AlgebraicRootValidationStatus::Valid,
             message: None,
         },
+    }
+}
+
+pub(crate) fn algebraic_root_kind_for_exact_point(exact_root: Option<&Real>) -> AlgebraicRootKind {
+    if exact_root.and_then(Real::exact_rational_ref).is_some() {
+        AlgebraicRootKind::ExactRationalWitness
+    } else {
+        AlgebraicRootKind::IsolatingInterval
     }
 }
 
@@ -2283,11 +2295,7 @@ pub(crate) fn certified_parameter_representation(
             exact_root: exact_root.clone(),
             distinct_root_count: parameter.root_count(),
         },
-        kind: if exact_root.is_some() {
-            AlgebraicRootKind::ExactRationalWitness
-        } else {
-            AlgebraicRootKind::IsolatingInterval
-        },
+        kind: algebraic_root_kind_for_exact_point(exact_root.as_ref()),
         validation: AlgebraicRootValidationReport {
             status: AlgebraicRootValidationStatus::Valid,
             message: None,

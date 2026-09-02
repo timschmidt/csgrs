@@ -4450,7 +4450,7 @@ impl RationalBezier2 {
             let source_parameter = contact.parameter().clone();
             let parameter = match source_parameter
                 .clone()
-                .promote_represented_rational_root(policy)?
+                .promote_represented_exact_point(policy)?
             {
                 Classification::Decided(parameter) => parameter,
                 Classification::Uncertain(_) => source_parameter,
@@ -7522,7 +7522,7 @@ fn overlap_parameter_through_injective_axis(
         }
     }
     if let Some(parameter) = matched {
-        return match parameter.promote_represented_rational_root(policy)? {
+        return match parameter.promote_represented_exact_point(policy)? {
             Classification::Decided(parameter) => Ok(Classification::Decided(Some(parameter))),
             Classification::Uncertain(reason) => Ok(Classification::Uncertain(reason)),
         };
@@ -9230,7 +9230,7 @@ fn unique_point_incidence_parameter(
         Ok(Classification::Decided(RationalBezierPointIncidence2::Parameters(mut parameters))) => {
             if parameters.len() == 1 {
                 let parameter = parameters.pop().expect("length checked above");
-                match parameter.promote_represented_rational_root(policy) {
+                match parameter.promote_represented_exact_point(policy) {
                     Ok(Classification::Decided(parameter)) => {
                         Classification::Decided(Some(parameter))
                     }
@@ -9307,10 +9307,8 @@ fn algebraic_coordinates_equal(
     second: &AlgebraicRootRepresentation,
     policy: &CurveContext,
 ) -> Option<bool> {
-    if let (Some(first), Some(second)) = (
-        first.exact_rational_witness(),
-        second.exact_rational_witness(),
-    ) {
+    if let (Some(first), Some(second)) = (first.exact_point_witness(), second.exact_point_witness())
+    {
         return compare_reals(first, second, policy).map(|ordering| ordering.is_eq());
     }
     compare_algebraic_coordinates(first, second, policy)

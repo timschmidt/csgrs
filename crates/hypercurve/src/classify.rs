@@ -141,6 +141,7 @@ pub(crate) fn orient2_real_expr(from: &Point2, to: &Point2, point: &Point2) -> R
     (&abx * &acy) - (&aby * &acx)
 }
 
+#[track_caller]
 pub(crate) fn real_sign(value: &Real, policy: &CurveContext) -> Option<RealSign> {
     if value.zero_status() == ZeroStatus::Zero {
         return Some(RealSign::Zero);
@@ -183,6 +184,7 @@ pub(crate) fn is_zero(value: &Real, policy: &CurveContext) -> Option<bool> {
     }
 }
 
+#[track_caller]
 pub(crate) fn compare_reals(left: &Real, right: &Real, policy: &CurveContext) -> Option<Ordering> {
     if std::ptr::eq(left, right) {
         return Some(Ordering::Equal);

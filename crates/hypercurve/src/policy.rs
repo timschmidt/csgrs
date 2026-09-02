@@ -37,12 +37,35 @@ std::thread_local! {
     /// path is allowed to consume APPROXIMATE_512.
     static STRICT_PREDICATE_PASS: Cell<bool> = const { Cell::new(false) };
 
+    /// Suppresses unbounded exact field promotion while retaining the
+    /// operation's actual STRICT/APPROXIMATE_512 identity. Complete kernels
+    /// use this for a cheap exact dispatch pass before their cold authority.
+    static BOUNDED_EXACT_PREDICATE_PASS: Cell<bool> = const { Cell::new(false) };
+
     /// Lossy tolerances scoped to an explicit preview adapter.
     static ACTIVE_PREVIEW_TOLERANCE: Cell<Option<PreviewTolerance>> = const { Cell::new(None) };
 }
 
 struct StrictPredicatePass {
     prior: bool,
+}
+
+struct BoundedExactPredicatePass {
+    prior: bool,
+}
+
+impl BoundedExactPredicatePass {
+    fn begin() -> Self {
+        Self {
+            prior: BOUNDED_EXACT_PREDICATE_PASS.with(|active| active.replace(true)),
+        }
+    }
+}
+
+impl Drop for BoundedExactPredicatePass {
+    fn drop(&mut self) {
+        BOUNDED_EXACT_PREDICATE_PASS.with(|active| active.set(self.prior));
+    }
 }
 
 impl StrictPredicatePass {
@@ -271,7 +294,17 @@ impl CurveContext {
 
     #[inline]
     pub(crate) fn permits_approximate_512(&self) -> bool {
-        self.0 & APPROXIMATE_512_CONTEXT != 0 && !STRICT_PREDICATE_PASS.with(Cell::get)
+        self.selects_approximate_512() && !STRICT_PREDICATE_PASS.with(Cell::get)
+    }
+
+    /// Returns whether this operation selected APPROXIMATE_512, including
+    /// while its bounded preliminary STRICT pass temporarily suppresses the
+    /// terminal. Kernels use this only to avoid unbounded cold promotion in
+    /// that preliminary pass; consuming approximation still requires
+    /// [`Self::permits_approximate_512`].
+    #[inline]
+    pub(crate) const fn selects_approximate_512(&self) -> bool {
+        self.0 & APPROXIMATE_512_CONTEXT != 0
     }
 
     /// Evaluate one complete kernel pass with terminal approximation disabled
@@ -284,6 +317,25 @@ impl CurveContext {
         evaluate()
     }
 
+    /// Evaluate one bounded exact dispatch pass before permitting either an
+    /// unbounded algebraic promotion or an APPROXIMATE_512 terminal. This is
+    /// policy-neutral: STRICT remains STRICT, and retained-object replay keeps
+    /// the caller's original policy identity.
+    pub(crate) fn bounded_exact_predicate_pass<T>(&self, evaluate: impl FnOnce() -> T) -> T {
+        let _strict = StrictPredicatePass::begin();
+        let _bounded = BoundedExactPredicatePass::begin();
+        evaluate()
+    }
+
+    /// Whether a speculative exact pass must decline field joins, recursive
+    /// norms, and represented tensor promotion so the complete caller can
+    /// choose its next authority.
+    #[inline]
+    pub(crate) fn defers_unbounded_exact_promotion(&self) -> bool {
+        BOUNDED_EXACT_PREDICATE_PASS.with(Cell::get)
+            || (self.selects_approximate_512() && !self.permits_approximate_512())
+    }
+
     const fn with_edge_preview(self) -> Self {
         Self(self.0 | EDGE_PREVIEW_CONTEXT)
     }
@@ -293,11 +345,21 @@ impl CurveContext {
         self.0 & EDGE_PREVIEW_CONTEXT != 0 && preview_tolerance().is_some()
     }
 
+    #[track_caller]
     pub(crate) fn observe_approximate_512(&self) {
         debug_assert!(
             !STRICT_PREDICATE_PASS.with(Cell::get),
             "a strict predicate pass cannot consume APPROXIMATE_512"
         );
+        #[cfg(test)]
+        if std::env::var_os("HYPERCURVE_DEBUG_APPROXIMATE_CONSUMPTION").is_some() {
+            let caller = std::panic::Location::caller();
+            eprintln!(
+                "approximate-512 consumed caller={}:{}",
+                caller.file(),
+                caller.line(),
+            );
+        }
         APPROXIMATE_512_CONSUMED.with(|consumed| consumed.set(true));
     }
 
@@ -315,6 +377,7 @@ impl CurveContext {
         }
     }
 
+    #[track_caller]
     pub(crate) fn consume_predicate<T>(
         &self,
         outcome: hypersolve::PredicateOutcome<T>,
@@ -818,6 +881,8 @@ mod tests {
             approximate.predicate_policy(),
             hyperlimit::PredicatePolicy::APPROXIMATE_512
         );
+        assert!(!CurveContext::STRICT.selects_approximate_512());
+        assert!(approximate.selects_approximate_512());
         assert!(approximate.permits_approximate_512());
 
         approximate.strict_predicate_pass(|| {
@@ -825,6 +890,7 @@ mod tests {
                 approximate.predicate_policy(),
                 hyperlimit::PredicatePolicy::STRICT
             );
+            assert!(approximate.selects_approximate_512());
             assert!(!approximate.permits_approximate_512());
             assert!(approximate.accepts_retained_policy(CurveContext::APPROXIMATE_512));
 
@@ -833,6 +899,7 @@ mod tests {
                     approximate.predicate_policy(),
                     hyperlimit::PredicatePolicy::STRICT
                 );
+                assert!(approximate.selects_approximate_512());
                 assert!(!approximate.permits_approximate_512());
             });
             assert!(!approximate.permits_approximate_512());

@@ -247,17 +247,38 @@ fn algebraic_parameter_recovers_represented_linear_root() {
     let parameter = isolate(polynomial(vec![r(-1), r(2)]), interval(q(2, 5), q(3, 5)));
     let clone = parameter.clone();
 
-    let represented = parameter.represented_rational_root(&policy()).unwrap();
+    let represented = parameter.represented_exact_point(&policy()).unwrap();
     assert_eq!(represented, Classification::Decided(Some(q(1, 2))));
     assert_eq!(
-        clone.represented_rational_root(&policy()).unwrap(),
+        clone.represented_exact_point(&policy()).unwrap(),
         represented
     );
     assert_eq!(
         BezierParameter2::algebraic(clone)
-            .promote_represented_rational_root(&policy())
+            .promote_represented_exact_point(&policy())
             .unwrap(),
         Classification::Decided(BezierParameter2::Exact(q(1, 2)))
+    );
+}
+
+#[test]
+fn nonrational_linear_parameter_uses_exact_point_api() {
+    let value = (Real::one() / Real::pi()).unwrap();
+    let parameter = isolate(
+        polynomial(vec![-value, Real::one()]),
+        interval(q(1, 4), q(1, 2)),
+    );
+
+    let exact = decided(parameter.represented_exact_point(&policy()).unwrap())
+        .expect("a linear scalar-tower root must materialize exactly");
+    assert!(exact.exact_rational_ref().is_none());
+    assert_eq!(
+        decided(
+            BezierParameter2::algebraic(parameter)
+                .promote_represented_exact_point(&policy())
+                .unwrap(),
+        ),
+        BezierParameter2::Exact(exact)
     );
 }
 
@@ -269,12 +290,12 @@ fn irrational_nonlinear_parameter_remains_algebraic() {
     );
 
     assert_eq!(
-        parameter.represented_rational_root(&policy()).unwrap(),
+        parameter.represented_exact_point(&policy()).unwrap(),
         Classification::Decided(None)
     );
     assert!(matches!(
         BezierParameter2::algebraic(parameter)
-            .promote_represented_rational_root(&policy())
+            .promote_represented_exact_point(&policy())
             .unwrap(),
         Classification::Decided(BezierParameter2::Algebraic(_))
     ));
@@ -303,7 +324,7 @@ fn oriented_parameter_range_retains_irrational_boundary() {
     assert!(range.exact_endpoints().is_none());
     let promoted = decided(
         range
-            .promote_represented_rational_endpoints(&policy())
+            .promote_represented_exact_endpoints(&policy())
             .unwrap(),
     );
     assert!(promoted.exact_endpoints().is_none());
@@ -323,7 +344,7 @@ fn parameter_range_promotes_represented_rational_boundary() {
 
     let promoted = decided(
         range
-            .promote_represented_rational_endpoints(&policy())
+            .promote_represented_exact_endpoints(&policy())
             .unwrap(),
     );
 
@@ -362,12 +383,12 @@ fn nonlinear_algebraic_parameter_reconstructs_exact_rational_root() {
     );
 
     assert_eq!(
-        parameter.represented_rational_root(&policy()).unwrap(),
+        parameter.represented_exact_point(&policy()).unwrap(),
         Classification::Decided(Some(q(1, 3)))
     );
     assert_eq!(
         BezierParameter2::algebraic(parameter)
-            .promote_represented_rational_root(&policy())
+            .promote_represented_exact_point(&policy())
             .unwrap(),
         Classification::Decided(BezierParameter2::Exact(q(1, 3)))
     );

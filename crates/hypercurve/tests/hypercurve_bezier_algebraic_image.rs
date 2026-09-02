@@ -79,7 +79,7 @@ fn quadratic_point_and_tangent_images_retain_algebraic_coordinate_evidence() {
             .unwrap()
             .representation()
             .unwrap()
-            .exact_rational_witness(),
+            .exact_point_witness(),
         Some(&r(2))
     );
 }
@@ -223,33 +223,25 @@ fn rational_point_image_transforms_exact_real_linear_root() {
 
     assert_eq!(point.status(), BezierAlgebraicImageStatus::Transformed);
     assert!(point.parameter().is_valid());
+    assert_eq!(point.parameter().kind, AlgebraicRootKind::IsolatingInterval);
     let exact_parameter = point
         .parameter()
-        .exact_rational_witness()
+        .exact_point_witness()
         .expect("a linear exact-Real polynomial has an exact point witness");
     assert_eq!(exact_parameter, &(Real::one() / Real::pi()).unwrap());
+    assert!(exact_parameter.exact_rational_ref().is_none());
     let Classification::Decided(exact_point) = conic.point_at(exact_parameter.clone(), &policy())
     else {
         panic!("the exact parameter must evaluate to an affine conic point");
     };
-    assert!(
-        point
-            .x()
-            .unwrap()
-            .representation()
-            .unwrap()
-            .exact_rational_witness()
-            .is_some()
-    );
-    assert!(
-        point
-            .y()
-            .unwrap()
-            .representation()
-            .unwrap()
-            .exact_rational_witness()
-            .is_some()
-    );
+    let x = point.x().unwrap().representation().unwrap();
+    let y = point.y().unwrap().representation().unwrap();
+    assert_eq!(x.kind, AlgebraicRootKind::IsolatingInterval);
+    assert_eq!(y.kind, AlgebraicRootKind::IsolatingInterval);
+    assert!(x.exact_point_witness().is_none());
+    assert!(y.exact_point_witness().is_none());
+    assert_eq!(x.interval.lower, x.interval.upper);
+    assert_eq!(y.interval.lower, y.interval.upper);
     assert_eq!(
         point
             .x()
@@ -345,11 +337,11 @@ proptest! {
 
         prop_assert_eq!(point.status(), BezierAlgebraicImageStatus::Transformed);
         prop_assert_eq!(
-            point.x().unwrap().representation().unwrap().exact_rational_witness(),
+            point.x().unwrap().representation().unwrap().exact_point_witness(),
             Some(exact_point.x())
         );
         prop_assert_eq!(
-            point.y().unwrap().representation().unwrap().exact_rational_witness(),
+            point.y().unwrap().representation().unwrap().exact_point_witness(),
             Some(exact_point.y())
         );
         prop_assert_eq!(tangent.status(), BezierAlgebraicImageStatus::Transformed);
@@ -387,11 +379,11 @@ proptest! {
 
         prop_assert_eq!(point.status(), BezierAlgebraicImageStatus::Transformed);
         prop_assert_eq!(
-            point.x().unwrap().representation().unwrap().exact_rational_witness(),
+            point.x().unwrap().representation().unwrap().exact_point_witness(),
             Some(exact_point.x())
         );
         prop_assert_eq!(
-            point.y().unwrap().representation().unwrap().exact_rational_witness(),
+            point.y().unwrap().representation().unwrap().exact_point_witness(),
             Some(exact_point.y())
         );
         prop_assert_eq!(tangent.status(), BezierAlgebraicImageStatus::Transformed);

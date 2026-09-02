@@ -140,7 +140,7 @@ fn main() -> CurveResult<()> {
     let mut reconstructed = 0_usize;
     for _ in 0..reconstruction_iterations {
         reconstructed += black_box(
-            decided(rational_parameter.represented_rational_root(&policy)?).is_some() as usize,
+            decided(rational_parameter.represented_exact_point(&policy)?).is_some() as usize,
         );
     }
     let elapsed = started.elapsed();

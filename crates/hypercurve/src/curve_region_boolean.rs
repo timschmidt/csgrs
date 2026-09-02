@@ -3198,31 +3198,138 @@ impl<'a> CurveRegionBooleanContext<'a> {
                                 return Ok(Classification::Uncertain(reason));
                             }
                         };
-                        let interval = chord.strict_oriented_side_by_interval_refinement(
+                        #[cfg(test)]
+                        let debug_kind = |point: &RationalBezierIntersectionPointEvidence2| {
+                            match point {
+                                RationalBezierIntersectionPointEvidence2::Exact(_) => "exact",
+                                RationalBezierIntersectionPointEvidence2::Algebraic(_) => {
+                                    "algebraic"
+                                }
+                                RationalBezierIntersectionPointEvidence2::AlgebraicChordPair(_) => {
+                                    "pair"
+                                }
+                                RationalBezierIntersectionPointEvidence2::AlgebraicCuspChord(_) => {
+                                    "cusp"
+                                }
+                                RationalBezierIntersectionPointEvidence2::AlgebraicCuspChordDerived(_) => {
+                                    "derived"
+                                }
+                                RationalBezierIntersectionPointEvidence2::AlgebraicChordParallel(_) => {
+                                    "parallel"
+                                }
+                                RationalBezierIntersectionPointEvidence2::AnalyticParallel(_) => {
+                                    "analytic"
+                                }
+                                RationalBezierIntersectionPointEvidence2::Similarity(_) => {
+                                    "similarity"
+                                }
+                            }
+                        };
+                        let retained_side =
+                            chord.retained_procedural_point_side(&point, &self.data.policy)?;
+                        #[cfg(test)]
+                        if std::env::var_os("HYPERCURVE_DEBUG_PARALLEL_ENDPOINT_SIDE").is_some() {
+                            eprintln!(
+                                "parallel endpoint side point={} chord=({},{}) retained={retained_side:?}",
+                                debug_kind(&point),
+                                debug_kind(chord.start()),
+                                debug_kind(chord.end()),
+                            );
+                        }
+                        if let Some(side) = retained_side {
+                            return Ok(Classification::Decided(side));
+                        }
+                        let interval = chord.strict_oriented_side_by_local_interval_refinement(
                             &point,
                             &self.data.policy,
                         )?;
+                        #[cfg(test)]
+                        if std::env::var_os("HYPERCURVE_DEBUG_PARALLEL_ENDPOINT_SIDE").is_some() {
+                            eprintln!("parallel endpoint local interval={interval:?}");
+                        }
                         if matches!(interval, Classification::Decided(_)) {
                             return Ok(interval);
                         }
-                        let certified = chord.certified_tangent_side(&point, &self.data.policy);
-                        if matches!(certified, Classification::Decided(_)) {
-                            Ok(certified)
-                        } else {
-                            chord.strict_oriented_side_by_fast_refinement(&point, &self.data.policy)
+                        if chord.certified_unit_tangent().is_some() {
+                            let certified = chord.certified_tangent_side(&point, &self.data.policy);
+                            if matches!(certified, Classification::Decided(_)) {
+                                return Ok(certified);
+                            }
                         }
+                        Ok(Classification::Uncertain(UncertaintyReason::Predicate))
                     })
                 };
                 let sides = [
                     endpoint_side(retained_range.start()),
                     endpoint_side(retained_range.end()),
                 ];
-                let sides = match sides {
+                let mut sides = match sides {
                     [Ok(first), Ok(second)] => [first, second],
                     [Err(cause), _] | [_, Err(cause)] => {
                         return Err(self.invalid(chord_index, cause));
                     }
                 };
+                // A strict derivative sign orders the two endpoint
+                // incidences. If one retained endpoint has a nonzero side and
+                // moving to the unknown endpoint changes incidence in that
+                // same direction, the unknown endpoint has the same side.
+                // This consumes only monotonicity and one compact contact
+                // certificate; no endpoint coordinate is materialized.
+                for known_index in 0..2 {
+                    let unknown_index = 1 - known_index;
+                    let Classification::Decided(known_side) = &sides[known_index] else {
+                        continue;
+                    };
+                    let known_side = *known_side;
+                    if matches!(sides[unknown_index], Classification::Decided(_)) {
+                        continue;
+                    }
+                    let parameter_order = match retained_range
+                        .start()
+                        .cmp_by_refinement(retained_range.end(), &self.data.policy)
+                        .map_err(|cause| self.invalid(parallel_index, cause))?
+                    {
+                        Classification::Decided(
+                            order @ (std::cmp::Ordering::Less | std::cmp::Ordering::Greater),
+                        ) => order,
+                        Classification::Decided(std::cmp::Ordering::Equal)
+                        | Classification::Uncertain(_) => continue,
+                    };
+                    let end_minus_start = if parameter_order == std::cmp::Ordering::Less {
+                        RealSign::Positive
+                    } else {
+                        RealSign::Negative
+                    };
+                    let unknown_minus_known = if unknown_index == 1 {
+                        end_minus_start
+                    } else {
+                        match end_minus_start {
+                            RealSign::Positive => RealSign::Negative,
+                            RealSign::Negative => RealSign::Positive,
+                            RealSign::Zero => unreachable!("a strict parameter order is nonzero"),
+                        }
+                    };
+                    let difference_sign = if monotonic_sign == unknown_minus_known {
+                        RealSign::Positive
+                    } else {
+                        RealSign::Negative
+                    };
+                    let known_sign = match known_side {
+                        LineSide::Left => RealSign::Positive,
+                        LineSide::On => RealSign::Zero,
+                        LineSide::Right => RealSign::Negative,
+                    };
+                    if known_sign == RealSign::Zero || known_sign == difference_sign {
+                        sides[unknown_index] =
+                            Classification::Decided(LineSide::from_real_sign(difference_sign));
+                        #[cfg(feature = "dispatch-trace")]
+                        hyperreal::dispatch_trace::record(
+                            "hypercurve",
+                            "algebraic-chord-pair",
+                            "parallel-monotone-endpoint-order",
+                        );
+                    }
+                }
                 if matches!(
                     sides,
                     [
@@ -6347,6 +6454,23 @@ impl<'a> CurveRegionBooleanContext<'a> {
         for pair in &self.data.pairs {
             let result = self.pair_result(pair)?;
             if let Some(blocker) = result.blockers.first() {
+                #[cfg(test)]
+                if std::env::var_os("HYPERCURVE_DEBUG_RATIONAL_BLOCKER").is_some() {
+                    eprintln!(
+                        "regularization pair blocker carriers=({}, {}) loops=({}, {}) fragments=({}, {}) context={:?} blocker={:?} adjacent={} selects-approximate={} permits-approximate={}",
+                        pair.first_carrier_index,
+                        pair.second_carrier_index,
+                        self.data.carriers[pair.first_carrier_index].loop_index,
+                        self.data.carriers[pair.second_carrier_index].loop_index,
+                        self.data.carriers[pair.first_carrier_index].fragment_index,
+                        self.data.carriers[pair.second_carrier_index].fragment_index,
+                        pair.context,
+                        blocker,
+                        self.authored_carriers_are_adjacent(pair),
+                        self.data.policy.selects_approximate_512(),
+                        self.data.policy.permits_approximate_512(),
+                    );
+                }
                 #[cfg(feature = "dispatch-trace")]
                 hyperreal::dispatch_trace::record(
                     "hypercurve",
@@ -9210,8 +9334,8 @@ impl<'a> CurveRegionBooleanContext<'a> {
             Classification::Uncertain(reason) => return Err(self.blocked(carrier_index, reason)),
         };
         let (Some(representative_point), Some((mut tangent_x, mut tangent_y))) = (
-            representative.exact_rational_point(&self.data.policy),
-            tangent.exact_rational_vector(&self.data.policy),
+            representative.exact_point(&self.data.policy),
+            tangent.exact_vector(&self.data.policy),
         ) else {
             match self.regularized_algebraic_cusp_fragment_decision_in_selected_field(
                 carrier_index,
@@ -15752,7 +15876,7 @@ impl RegionCarrierGeometry {
             },
             Self::AlgebraicCuspSemicircle(fragment) => {
                 Ok(match fragment.semicircle().point_at(parameter, policy)? {
-                    Classification::Decided(point) => point.exact_rational_point(policy).map_or(
+                    Classification::Decided(point) => point.exact_point(policy).map_or(
                         Classification::Uncertain(UncertaintyReason::Unsupported),
                         Classification::Decided,
                     ),
@@ -19729,7 +19853,7 @@ mod certified_successor_tests {
             let Classification::Decided(point) = fragment.representative_point().unwrap() else {
                 panic!("the selected cusp representative must retain an exact point image");
             };
-            assert!(point.exact_rational_point(&policy).is_none());
+            assert!(point.exact_point(&policy).is_none());
             assert_eq!(
                 square_region(-10, -10, 10, 10)
                     .classify_algebraic_point_raw(&point, &policy)

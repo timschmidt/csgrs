@@ -1594,7 +1594,7 @@ fn retained_fragment_endpoint_evidence(
                     (Some(point.clone()), None)
                 }
                 crate::RationalBezierIntersectionPointEvidence2::Algebraic(image) => (
-                    image.exact_rational_point(policy),
+                    image.exact_point(policy),
                     image.resolved(policy).and_then(|image| {
                         Some((
                             Box::new(image.x()?.representation()?.clone()),
@@ -1694,7 +1694,7 @@ fn retained_endpoint_point_evidence(
     policy: &CurveContext,
 ) -> CurveResult<Option<Point2>> {
     if let Some(image) = image
-        && let Some(point) = exact_rational_point_from_image(image.point(), None)
+        && let Some(point) = exact_point_from_image(image.point(), None)
     {
         return Ok(Some(point));
     }
@@ -14627,7 +14627,7 @@ impl CurveRegion2 {
         let exact_point = |point: &RationalBezierIntersectionPointEvidence2| match point {
             RationalBezierIntersectionPointEvidence2::Exact(point) => Some(point.clone()),
             RationalBezierIntersectionPointEvidence2::Algebraic(point) => {
-                point.exact_rational_point(&CurveContext::STRICT)
+                point.exact_point(&CurveContext::STRICT)
             }
             RationalBezierIntersectionPointEvidence2::AlgebraicChordPair(_)
             | RationalBezierIntersectionPointEvidence2::AlgebraicCuspChord(_)
@@ -15954,6 +15954,15 @@ impl CurveRegion2 {
         policy: &CurveContext,
     ) -> ExactCurveResult<CurveOutcome<Self>> {
         crate::policy::resolve_certified_operation(policy, |attempt| {
+            if attempt.permits_approximate_512() {
+                match attempt.strict_predicate_pass(|| {
+                    self.offset_raw(distance.clone(), corner_style, attempt)
+                }) {
+                    Ok(Classification::Decided(region)) => return Ok(region),
+                    Ok(Classification::Uncertain(_)) | Err(ExactCurveError::Blocked(_)) => {}
+                    Err(error) => return Err(error),
+                }
+            }
             match self.offset_raw(distance.clone(), corner_style, attempt)? {
                 Classification::Decided(region) => Ok(region),
                 Classification::Uncertain(reason) => Err(ExactCurveError::blocked(
@@ -18005,15 +18014,15 @@ fn retained_line_loop_to_contour(
 /// Returns exact line-segment endpoints for a retained line-image fragment.
 ///
 /// Materialized fragments must carry a certified exact endpoint line-image
-/// fit. Algebraic endpoint-image fragments are accepted
-/// only when the endpoint point evidence has exact rational witnesses, or when
-/// an exact boundary parameter can be replayed against the retained source
-/// curve. This follows the exactness model's retained-object discipline: algebraic endpoints
-/// become line-contour topology only through exact construction evidence, not
-/// by sampling isolating intervals. The native fit certificate proves every
+/// fit. Algebraic endpoint-image fragments are accepted only when the endpoint
+/// point evidence has exact point witnesses, or when an exact boundary
+/// parameter can be replayed against the retained source curve. This follows
+/// the exactness model's retained-object discipline: algebraic endpoints become
+/// line-contour topology only through exact construction evidence, not by
+/// sampling isolating intervals. The native fit certificate proves every
 /// control point lies on the endpoint segment, preserving the exact
-/// object/predicate split described by the exactness model while allowing non-affine
-/// parameterizations whose image is still exactly one line segment.
+/// object/predicate split while allowing non-affine parameterizations whose
+/// image is still exactly one line segment.
 fn retained_line_fragment_endpoints(
     fragment: &BezierSplitFragment2,
     policy: &CurveContext,
@@ -18129,7 +18138,7 @@ fn retained_line_fragment_endpoints(
                             Classification::Decided(Some(point.clone()))
                         }
                         RationalBezierIntersectionPointEvidence2::Algebraic(point) => {
-                            Classification::Decided(point.exact_rational_point(policy))
+                            Classification::Decided(point.exact_point(policy))
                         }
                         RationalBezierIntersectionPointEvidence2::AlgebraicChordPair(point) => {
                             point.exact_represented_point(policy)?
@@ -18214,7 +18223,7 @@ fn retained_line_endpoint_point(
             let Some(image) = image else {
                 return Classification::Uncertain(UncertaintyReason::Boundary);
             };
-            match exact_rational_point_from_image(image.point(), Some(policy)) {
+            match exact_point_from_image(image.point(), Some(policy)) {
                 Some(point) => Classification::Decided(point),
                 None => Classification::Uncertain(UncertaintyReason::Unsupported),
             }
@@ -18222,26 +18231,18 @@ fn retained_line_endpoint_point(
     }
 }
 
-fn exact_rational_point_from_image(
+fn exact_point_from_image(
     point: &BezierEndpointPointImage2,
     resolution_policy: Option<&CurveContext>,
 ) -> Option<Point2> {
     match point {
         BezierEndpointPointImage2::Polynomial(point) => Some(Point2::new(
-            point
-                .x()?
-                .representation()?
-                .exact_rational_witness()?
-                .clone(),
-            point
-                .y()?
-                .representation()?
-                .exact_rational_witness()?
-                .clone(),
+            point.x()?.representation()?.exact_point_witness()?.clone(),
+            point.y()?.representation()?.exact_point_witness()?.clone(),
         )),
         BezierEndpointPointImage2::Rational(point) => {
             let policy = resolution_policy.unwrap_or(&CurveContext::STRICT);
-            point.exact_rational_point(policy)
+            point.exact_point(policy)
         }
     }
 }
@@ -20756,49 +20757,50 @@ fn classify_point_with_retained_ray_skipping_origin(
                     if let Some(origin) = skipped_origin
                         && origin.fragment_index == Some(fragment_index)
                     {
-                        let is_origin = contact.supporting_line_parameter().map_or_else(
-                            || {
-                                origin
-                                    .parameter
-                                    .and_then(CurveRegionParameter2::as_bezier_parameter)
-                                    .map_or(
-                                        Ok(Classification::Uncertain(UncertaintyReason::Boundary)),
-                                        |parameter| {
-                                            retained_parameters_equal(
-                                                contact.parameter(),
-                                                parameter,
-                                                policy,
-                                            )
-                                        },
-                                    )
-                            },
-                            |line_parameter| {
-                                compare_reals(line_parameter, &Real::zero(), policy).map_or_else(
-                                    || {
-                                        origin
-                                            .parameter
-                                            .and_then(CurveRegionParameter2::as_bezier_parameter)
-                                            .map_or(
-                                                Ok(Classification::Uncertain(
-                                                    UncertaintyReason::Boundary,
-                                                )),
-                                                |parameter| {
-                                                    retained_parameters_equal(
-                                                        contact.parameter(),
-                                                        parameter,
-                                                        policy,
-                                                    )
-                                                },
-                                            )
-                                    },
-                                    |order| {
-                                        Ok(Classification::Decided(
-                                            order == std::cmp::Ordering::Equal,
-                                        ))
+                        let retained_origin_parameter = || {
+                            origin
+                                .parameter
+                                .and_then(CurveRegionParameter2::as_bezier_parameter)
+                                .map_or(
+                                    Ok(Classification::Uncertain(UncertaintyReason::Boundary)),
+                                    |parameter| {
+                                        retained_parameters_equal(
+                                            contact.parameter(),
+                                            parameter,
+                                            policy,
+                                        )
                                     },
                                 )
-                            },
-                        )?;
+                        };
+                        let is_origin =
+                            if let Some(line_parameter) = contact.supporting_line_parameter() {
+                                let strict_order = policy.strict_predicate_pass(|| {
+                                    compare_reals(line_parameter, &Real::zero(), policy)
+                                });
+                                if let Some(order) = strict_order {
+                                    Classification::Decided(order == std::cmp::Ordering::Equal)
+                                } else {
+                                    match policy.strict_predicate_pass(retained_origin_parameter)? {
+                                        decided @ Classification::Decided(_) => decided,
+                                        uncertain @ Classification::Uncertain(_)
+                                            if sole_crossing_contact =>
+                                        {
+                                            uncertain
+                                        }
+                                        Classification::Uncertain(_) => {
+                                            compare_reals(line_parameter, &Real::zero(), policy)
+                                                .map(|order| {
+                                                    Classification::Decided(
+                                                        order == std::cmp::Ordering::Equal,
+                                                    )
+                                                })
+                                                .map_or_else(retained_origin_parameter, Ok)?
+                                        }
+                                    }
+                                }
+                            } else {
+                                retained_origin_parameter()?
+                            };
                         match is_origin {
                             Classification::Decided(true) => {
                                 if source_origin_contact_was_skipped
@@ -21329,7 +21331,7 @@ fn control_points_may_be_ahead<'a>(
         let delta_x = control.x() - origin.x();
         let delta_y = control.y() - origin.y();
         let projection = Real::dot2_refs([&delta_x, &delta_y], [direction_x, direction_y]);
-        real_sign(&projection, policy) != Some(RealSign::Negative)
+        policy.strict_predicate_pass(|| real_sign(&projection, policy)) != Some(RealSign::Negative)
     })
 }
 
@@ -21345,7 +21347,7 @@ fn control_points_strict_order<'a>(
         let delta_x = control.x() - origin.x();
         let delta_y = control.y() - origin.y();
         let projection = Real::dot2_refs([&delta_x, &delta_y], [direction_x, direction_y]);
-        let current = match real_sign(&projection, policy)? {
+        let current = match policy.strict_predicate_pass(|| real_sign(&projection, policy))? {
             RealSign::Negative => std::cmp::Ordering::Less,
             RealSign::Zero => return None,
             RealSign::Positive => std::cmp::Ordering::Greater,
@@ -26950,7 +26952,7 @@ mod tests {
             first_circle
                 .center_point_image(policy)
                 .expect("the first center image remains exact")
-                .exact_rational_point(&CurveContext::STRICT)
+                .exact_point(&CurveContext::STRICT)
                 .is_none(),
             "the first support center must retain its selected field"
         );
@@ -26958,7 +26960,7 @@ mod tests {
             second_circle
                 .center_point_image(policy)
                 .expect("the second center image remains exact")
-                .exact_rational_point(&CurveContext::STRICT)
+                .exact_point(&CurveContext::STRICT)
                 .is_none(),
             "the second support center must retain its independent selected field"
         );

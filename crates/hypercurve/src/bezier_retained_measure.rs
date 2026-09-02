@@ -918,7 +918,7 @@ fn trim_polynomial_in_place(coefficients: &mut Vec<Real>) -> Option<()> {
 }
 
 fn represented_coordinate_interval(root: &AlgebraicRootRepresentation) -> CoordinateInterval {
-    if let Some(witness) = root.exact_rational_witness() {
+    if let Some(witness) = root.exact_point_witness() {
         return CoordinateInterval {
             lower: witness.clone(),
             upper: witness.clone(),

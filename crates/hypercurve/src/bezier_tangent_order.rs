@@ -4,7 +4,7 @@
 //! dot products.  Algebraic endpoint images need the same predicate without
 //! collapsing represented coordinates to sampled floats.  This module builds
 //! the cross/dot scalars as exact represented algebraic roots with
-//! `hypersolve` arithmetic, then reads their signs only from exact rational
+//! `hypersolve` arithmetic, then reads their signs only from exact point
 //! witnesses or isolating intervals certified away from zero.  This follows
 //! the exact-geometric-computation boundary between construction and
 //! decision.  The local angular ordering
@@ -1266,23 +1266,7 @@ fn representation_or_exact(
 }
 
 fn exact_value_representation(value: &Real) -> AlgebraicRootRepresentation {
-    AlgebraicRootRepresentation {
-        constraint_index: 0,
-        symbol: hypersolve::SymbolId(0),
-        interval_index: 0,
-        polynomial_coefficients: vec![-value.clone(), Real::one()],
-        interval: hypersolve::IsolatedRootInterval {
-            lower: value.clone(),
-            upper: value.clone(),
-            exact_root: Some(value.clone()),
-            distinct_root_count: 1,
-        },
-        kind: hypersolve::AlgebraicRootKind::ExactRationalWitness,
-        validation: hypersolve::AlgebraicRootValidationReport {
-            status: hypersolve::AlgebraicRootValidationStatus::Valid,
-            message: None,
-        },
-    }
+    crate::bezier_algebraic_image::exact_real_algebraic_representation(value)
 }
 
 fn missing_operand_evidence(
@@ -1310,11 +1294,7 @@ fn scalar_sign_evidence(
             message: Some("scalar construction produced no arithmetic evidence".to_owned()),
         };
     };
-    if !matches!(
-        last.status,
-        AlgebraicRootArithmeticStatus::ComputedExactRationalWitness
-            | AlgebraicRootArithmeticStatus::ComputedRepresentation
-    ) {
+    if !crate::bezier_algebraic_image::algebraic_arithmetic_succeeded(&last.status) {
         return BezierAlgebraicScalarSignEvidence {
             message: last.message.clone(),
             arithmetic,
@@ -1352,7 +1332,7 @@ fn represented_sign(
     value: &AlgebraicRootRepresentation,
     policy: &CurveContext,
 ) -> Option<Ordering> {
-    if let Some(witness) = value.exact_rational_witness() {
+    if let Some(witness) = value.exact_point_witness() {
         return compare_reals(witness, &Real::zero(), policy);
     }
     let lower = compare_reals(&value.interval.lower, &Real::zero(), policy)?;
@@ -1419,5 +1399,32 @@ fn same_tangent_evidence(
         second_curvature_cross,
         magnitude_difference,
         message,
+    }
+}
+
+#[cfg(test)]
+mod exact_real_status_tests {
+    use super::*;
+
+    #[test]
+    fn scalar_sign_accepts_an_exact_real_arithmetic_result() {
+        let evidence = scalar_sign_evidence(
+            vec![AlgebraicRootArithmeticReport {
+                operation: AlgebraicRootArithmeticOp::Negate,
+                status: AlgebraicRootArithmeticStatus::ComputedExactRealWitness,
+                exact_result: Some(Real::pi()),
+                result_representation: None,
+                message: None,
+            }],
+            &CurveContext::STRICT,
+        );
+
+        assert_eq!(evidence.sign, Some(Ordering::Greater));
+        let scalar = evidence.scalar.expect("the exact Real result is retained");
+        assert_eq!(
+            scalar.kind,
+            hypersolve::AlgebraicRootKind::IsolatingInterval
+        );
+        assert_eq!(scalar.exact_point_witness(), Some(&Real::pi()));
     }
 }

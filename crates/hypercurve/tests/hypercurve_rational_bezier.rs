@@ -906,7 +906,7 @@ fn rational_resultant_retains_algebraic_parameter_projections() {
         };
         coordinate
             .and_then(|coordinate| coordinate.representation())
-            .and_then(|coordinate| coordinate.exact_rational_witness())
+            .and_then(|coordinate| coordinate.exact_point_witness())
             .cloned()
     };
     assert_eq!(represented_coordinate(2, true), Some(r(0)));

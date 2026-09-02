@@ -1929,7 +1929,7 @@ fn rational_overlap_exact_ranges(
 ) -> Classification<Option<(ParamRange, ParamRange)>> {
     let first = match overlap
         .first_range()
-        .promote_represented_rational_endpoints(policy)
+        .promote_represented_exact_endpoints(policy)
     {
         Ok(Classification::Decided(range)) => range,
         Ok(Classification::Uncertain(reason)) => return Classification::Uncertain(reason),
@@ -1938,7 +1938,7 @@ fn rational_overlap_exact_ranges(
     };
     let second = match overlap
         .second_range()
-        .promote_represented_rational_endpoints(policy)
+        .promote_represented_exact_endpoints(policy)
     {
         Ok(Classification::Decided(range)) => range,
         Ok(Classification::Uncertain(reason)) => return Classification::Uncertain(reason),

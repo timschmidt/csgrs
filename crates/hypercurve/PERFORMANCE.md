@@ -8028,6 +8028,107 @@ and general retained-algebraic fillets remain explicit boundaries. Complete
 evidence is in
 [`2026-08-05-selected-algebraic-round-offset.json`](benchmarks/checkpoints/2026-08-05-selected-algebraic-round-offset.json).
 
+## Truthful exact-Real algebraic image bridge checkpoint (2026-09-02)
+
+Hypercurve now consumes Hypersolve's general exact-`Real` arithmetic terminal
+as a successful result everywhere the represented-root bridge uses it. A
+STRICT exact-`Real` result returns before an unnecessary APPROXIMATE_512 retry,
+and tangent-sign, arrangement-negation, and selected-parameter relation
+consumers retain the result instead of reporting unsupported arithmetic. The
+three result-bearing statuses are recognized through one shared predicate;
+reports that omit both result carriers still fail closed.
+
+Root metadata now describes the scalar payload rather than merely the presence
+of an exact point. `ExactRationalWitness` requires
+`Real::exact_rational_ref`; a radical, pi expression, or other exact scalar is
+an `IsolatingInterval` even when its point is retained. Tangent and arrangement
+construction share that rule instead of duplicating synthetic root builders.
+Conversely, a valid singleton received from Hypersolve with structurally equal
+lower and upper endpoints can become `BezierParameter2::Exact` even when the
+canonical representation intentionally omits `exact_root`. Policy-equal but
+structurally different bounds do not enter this path. No public carrier, cache
+field, persistent allocation/layout, coordinate order, or coefficient order
+changed.
+
+Four independent pre-fix library regressions captured the wrong kind, rejected
+exact-`Real` tangent scalar, rejected arrangement negation, and retained
+parameter wrapper; the public rational-Bezier image also failed its truthful
+kind assertion. Post-fix, the exact-`Real` filter passes 7/7 under default,
+all-feature, and no-default builds, the public algebraic-image suite passes 9/9
+under all three configurations, and all 26 parameter tests pass. The rational
+image retains its `[x,y]` order and common denominator, constructs under
+STRICT, and needs APPROXIMATE_512 only in the test's independent comparison of
+two mathematically equal but structurally different `Real` expressions.
+
+The existing release benchmark retains identical work counts. One pre-change
+sample and five post-change direct runs give post medians of 18.985 us for
+degree-32 Bernstein conversion, 2.336 us for Sturm isolation, 12.510 us for
+refined ordering, 17.616 us for quintic isolation, 35 ns for cached rational
+reconstruction, 2.304 us for polynomial point/tangent images, and 59 ns for
+cached rational point/tangent images. These are noise-neutral against the
+single 19.152 us / 2.337 us / 12.541 us / 17.099 us / 33 ns / 2.304 us / 56 ns
+baseline; no comparative timing claim is made from a one-process baseline.
+The current default/all-feature rlibs are 43,082,884 and 44,967,768 bytes, but
+the reopened worktree contains a concurrent 9,500-line offset change, so those
+absolute sizes are not misrepresented as byte-matched bridge deltas.
+
+Both release builds, warning-denied all-feature rustdoc, formatting, and diff
+checks pass. Strict all-target/all-feature Clippy stops on 15 diagnostics in
+the pre-existing concurrent offset/region edits; with exactly those unrelated
+lint classes exempted, the same complete Clippy surface passes. A default
+851-test library run passed every bridge-owned test but exposed multiple
+failures in that concurrent topology work and was interrupted after several
+silent minutes, so this checkpoint deliberately does not claim a green global
+Hypercurve gate. Complete machine-readable evidence and the caveat are in
+[`2026-09-02-exact-real-algebraic-image-bridge.json`](benchmarks/checkpoints/2026-09-02-exact-real-algebraic-image-bridge.json).
+
+## Stripped exact-point API checkpoint (2026-09-02)
+
+The represented-root bridge now exposes one point vocabulary. Hypercurve's
+public query is `represented_exact_point`; its parameter and range promotions
+are `promote_represented_exact_point` and
+`promote_represented_exact_endpoints`. The three rational-named public methods
+were deleted rather than retained as compatibility shims. Private point,
+coordinate, vector, center, and component-frame helpers were renamed in place.
+Hypersolve likewise exposes only `exact_point_witness`; a caller that truly
+needs a rational numerator and denominator must prove that narrower fact with
+`Real::exact_rational_ref`.
+
+All 39 production uses of the former Hypersolve alias were classified. None
+consumed a rational payload, while the actual rational-root theorem and
+reconstruction paths already used the explicit rational gate. The shared
+`OnceLock<Option<Real>>` cache and every persistent carrier retain their prior
+layout. A non-rational linear root such as `1/pi` now exercises the public
+exact-point query and promotion directly. A source-free `pi` point also folds
+through the selected tensor basis as a constant without manufacturing a
+source axis; represented roots without materialized points remain correlated
+field axes.
+
+The all-feature and no-default parameter integrations pass 27/27, the image
+integrations pass 9/9, and the exact-Real filters pass 7/7. The selected tensor
+constant regression, parameter module, and the three affected rational-curve
+controls pass. Both releases, no-default all-target checking, warning-denied
+rustdoc, formatting, and raw all-target/all-feature Clippy with `-D warnings`
+pass. Four unused recursive-projective target helpers were deleted, and the
+15 diagnostics inherited from the reopened offset/region work were resolved
+without lint allowances.
+
+Ten direct benchmark executions retain identical work counts. Their medians
+are 19.361 us Bernstein, 2.320 us Sturm, 12.686 us refined ordering, 17.187 us
+quintic isolation, 33.774 ns rational reconstruction, 2.280 us polynomial
+point/tangent images, and 58.018 ns cached rational point/tangent images. The
+movement from the preceding bridge medians is noise-scale. Matched rlibs shrink
+from 43,084,470 to 43,076,812 bytes by default (-7,658) and from 44,970,464 to
+44,962,270 bytes with all features (-8,194); these are directional archive-size
+measurements, not linked executable claims.
+
+This checkpoint does not claim global release readiness. The rational-Bezier
+aggregate passed 47 cases before its final polynomial-graph replay remained
+CPU-bound for several minutes, and the prior broad library run exposed
+unrelated topology failures in the reopened Boolean/offset work. Those are the
+next release blockers. Complete evidence is in
+[`2026-09-02-exact-point-payload-alias-reconciliation.json`](benchmarks/checkpoints/2026-09-02-exact-point-payload-alias-reconciliation.json).
+
 ## Optimization boundary
 
 The retained x sweep addresses broad-phase pair scheduling only. A full

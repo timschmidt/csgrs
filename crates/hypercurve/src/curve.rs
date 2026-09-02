@@ -5123,7 +5123,7 @@ impl FilletOffsetCarrier2<'_, '_> {
                 let support_center = match &center {
                     RationalBezierIntersectionPointEvidence2::Exact(point) => Some(point.clone()),
                     RationalBezierIntersectionPointEvidence2::Algebraic(image) => {
-                        image.exact_rational_point(&CurveContext::STRICT)
+                        image.exact_point(&CurveContext::STRICT)
                     }
                     RationalBezierIntersectionPointEvidence2::AlgebraicChordPair(_)
                     | RationalBezierIntersectionPointEvidence2::AlgebraicCuspChord(_)
@@ -5735,9 +5735,9 @@ fn retained_fillet_pair_contact_rational_point(
         .end_point_image(policy)
         .map_err(|cause| ExactCurveError::invalid(CurveOperation2::Fillet, family, cause))?;
     let (Some(center), Some(start), Some(end)) = (
-        center.exact_rational_point(&CurveContext::STRICT),
-        start.exact_rational_point(&CurveContext::STRICT),
-        end.exact_rational_point(&CurveContext::STRICT),
+        center.exact_point(&CurveContext::STRICT),
+        start.exact_point(&CurveContext::STRICT),
+        end.exact_point(&CurveContext::STRICT),
     ) else {
         return Ok(None);
     };
@@ -9973,11 +9973,9 @@ fn fillet_cut_from_center(
             };
             let point = if let (Some(center), Some(support_center)) = (
                 center.as_exact(),
-                support_semicircle
-                    .exact_rational_center(policy)
-                    .map_err(|cause| {
-                        ExactCurveError::invalid(CurveOperation2::Fillet, family, cause)
-                    })?,
+                support_semicircle.exact_center(policy).map_err(|cause| {
+                    ExactCurveError::invalid(CurveOperation2::Fillet, family, cause)
+                })?,
             ) {
                 // The selected offset contact and circle center already live
                 // in canonical Real. Replay the concentric radial map there
@@ -13525,17 +13523,17 @@ mod tests {
             let center = support
                 .center_point_image(&policy)
                 .unwrap()
-                .exact_rational_point(&CurveContext::STRICT)
+                .exact_point(&CurveContext::STRICT)
                 .expect("the fixture center is exactly rational");
             let start = support
                 .start_point_image(&policy)
                 .unwrap()
-                .exact_rational_point(&CurveContext::STRICT)
+                .exact_point(&CurveContext::STRICT)
                 .expect("the fixture start is exactly rational");
             let end = support
                 .end_point_image(&policy)
                 .unwrap()
-                .exact_rational_point(&CurveContext::STRICT)
+                .exact_point(&CurveContext::STRICT)
                 .expect("the fixture end is exactly rational");
             let authored = CircularArc2::try_from_center(
                 start.clone(),

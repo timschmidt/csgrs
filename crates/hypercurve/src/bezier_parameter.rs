@@ -105,7 +105,7 @@ struct BezierAlgebraicParameterData {
 
 #[derive(Debug, Default)]
 struct BezierAlgebraicParameterSharedData {
-    represented_rational_root: OnceLock<Option<Real>>,
+    represented_exact_point: OnceLock<Option<Real>>,
     sturm_sequence: OnceLock<Arc<[Vec<Real>]>>,
     simple_root: OnceLock<bool>,
     rational_images: Mutex<Vec<RetainedRationalBezierAlgebraicImages>>,
@@ -1195,28 +1195,30 @@ impl BezierAlgebraicParameter2 {
         });
     }
 
-    /// Returns the represented root when this isolator contains an exact rational root.
+    /// Returns the represented root when this isolator can materialize an exact scalar value.
     ///
-    /// Exact-rational coefficients are cleared to a primitive integer
-    /// polynomial. Small-prime reductions first reject polynomials that cannot
-    /// have any rational root. Otherwise the rational-root theorem bounds the
-    /// reduced denominator by the leading coefficient, and the retained Sturm
-    /// isolator is refined until rational reconstruction is unique under that
-    /// bound. Continued-fraction candidates are accepted only after exact
-    /// polynomial replay. Nonrational coefficients and irrational roots return
-    /// `None` without demoting the algebraic carrier.
+    /// A linear polynomial may return its exact scalar-tower quotient. For
+    /// higher degrees, exact-rational coefficients are cleared to a primitive
+    /// integer polynomial. Small-prime reductions first reject polynomials
+    /// that cannot have any rational root. Otherwise the rational-root theorem
+    /// bounds the reduced denominator by the leading coefficient, and the
+    /// retained Sturm isolator is refined until rational reconstruction is
+    /// unique under that bound. Continued-fraction candidates are accepted
+    /// only after exact polynomial replay. Nonlinear non-rational coefficients
+    /// and irrational roots return `None` without demoting the algebraic
+    /// carrier.
     #[inline]
-    pub fn represented_rational_root(
+    pub fn represented_exact_point(
         &self,
         policy: &CurveContext,
     ) -> CurveResult<Classification<Option<Real>>> {
-        if let Some(root) = self.data.shared.represented_rational_root.get() {
+        if let Some(root) = self.data.shared.represented_exact_point.get() {
             return Ok(Classification::Decided(root.clone()));
         }
-        self.compute_represented_rational_root(policy)
+        self.compute_represented_exact_point(policy)
     }
 
-    fn compute_represented_rational_root(
+    fn compute_represented_exact_point(
         &self,
         policy: &CurveContext,
     ) -> CurveResult<Classification<Option<Real>>> {
@@ -1225,7 +1227,7 @@ impl BezierAlgebraicParameter2 {
         } else {
             let Some(denominator_bound) = rational_root_denominator_bound(&self.data.polynomial)
             else {
-                return self.cache_represented_rational_root(None);
+                return self.cache_represented_exact_point(None);
             };
             let sequence = match sturm_sequence(self.data.polynomial.coefficients(), policy)? {
                 Classification::Decided(sequence) => sequence,
@@ -1240,7 +1242,7 @@ impl BezierAlgebraicParameter2 {
                 None,
             )?
         };
-        self.cache_decided_represented_rational_root(result)
+        self.cache_decided_represented_exact_point(result)
     }
 
     fn represented_rational_root_with_sequence(
@@ -1323,22 +1325,22 @@ impl BezierAlgebraicParameter2 {
         }
     }
 
-    fn represented_rational_root_with_cached_sequence(
+    fn represented_exact_point_with_cached_sequence(
         &self,
         policy: &CurveContext,
         denominator_bound: Option<&BigUint>,
         sequence: &[Vec<Real>],
         trace: Option<&mut BezierRootIsolationTrace2>,
     ) -> CurveResult<Classification<Option<Real>>> {
-        if let Some(root) = self.data.shared.represented_rational_root.get() {
+        if let Some(root) = self.data.shared.represented_exact_point.get() {
             return Ok(Classification::Decided(root.clone()));
         }
         if self.data.polynomial.degree() == 1 {
             let result = self.represented_linear_root(policy)?;
-            return self.cache_decided_represented_rational_root(result);
+            return self.cache_decided_represented_exact_point(result);
         }
         let Some(denominator_bound) = denominator_bound else {
-            return self.cache_represented_rational_root(None);
+            return self.cache_represented_exact_point(None);
         };
         let result = self.represented_rational_root_with_sequence(
             policy,
@@ -1346,24 +1348,24 @@ impl BezierAlgebraicParameter2 {
             sequence,
             trace,
         )?;
-        self.cache_decided_represented_rational_root(result)
+        self.cache_decided_represented_exact_point(result)
     }
 
-    fn cache_decided_represented_rational_root(
+    fn cache_decided_represented_exact_point(
         &self,
         result: Classification<Option<Real>>,
     ) -> CurveResult<Classification<Option<Real>>> {
         if let Classification::Decided(root) = &result {
-            let _ = self.data.shared.represented_rational_root.set(root.clone());
+            let _ = self.data.shared.represented_exact_point.set(root.clone());
         }
         Ok(result)
     }
 
-    fn cache_represented_rational_root(
+    fn cache_represented_exact_point(
         &self,
         root: Option<Real>,
     ) -> CurveResult<Classification<Option<Real>>> {
-        let _ = self.data.shared.represented_rational_root.set(root.clone());
+        let _ = self.data.shared.represented_exact_point.set(root.clone());
         Ok(Classification::Decided(root))
     }
 
@@ -1642,17 +1644,18 @@ impl BezierParameter2 {
         Ok(Classification::Decided(Self::Algebraic(mapped)))
     }
 
-    /// Promotes a rational algebraic parameter to a represented exact value.
+    /// Promotes an algebraic parameter that has a represented exact scalar value.
     ///
-    /// Irrational and nonrational-coefficient parameters remain algebraic.
-    /// Promotion occurs only through exact reconstruction and polynomial replay.
-    pub fn promote_represented_rational_root(
+    /// Linear exact-`Real` quotients and reconstructed rational roots are
+    /// promoted only after exact polynomial replay. Other roots whose exact
+    /// value is not materialized remain algebraic.
+    pub fn promote_represented_exact_point(
         self,
         policy: &CurveContext,
     ) -> CurveResult<Classification<Self>> {
         match self {
             Self::Exact(_) => Ok(Classification::Decided(self)),
-            Self::Algebraic(parameter) => match parameter.represented_rational_root(policy)? {
+            Self::Algebraic(parameter) => match parameter.represented_exact_point(policy)? {
                 Classification::Decided(Some(root)) => {
                     Ok(Classification::Decided(Self::Exact(root)))
                 }
@@ -1808,7 +1811,11 @@ impl BezierParameter2 {
         if !representation.is_valid() || representation.interval.distinct_root_count != 1 {
             return Ok(Classification::Uncertain(UncertaintyReason::Predicate));
         }
-        if let Some(exact) = representation.exact_rational_witness() {
+        let exact_point = representation.exact_point_witness().or_else(|| {
+            (representation.interval.lower == representation.interval.upper)
+                .then_some(&representation.interval.lower)
+        });
+        if let Some(exact) = exact_point {
             return if unit_domain {
                 Self::exact(exact.clone(), policy)
             } else {
@@ -3107,24 +3114,20 @@ impl BezierParameterRange2 {
         Some((self.start.as_exact()?, self.end.as_exact()?))
     }
 
-    /// Promotes exactly reconstructible rational endpoints to represented values.
+    /// Promotes endpoints that can be materialized as exact scalar values.
     ///
-    /// Irrational algebraic endpoints remain algebraic. Each successful
-    /// reconstruction is replayed against its defining polynomial before the
-    /// endpoint representation changes.
-    pub fn promote_represented_rational_endpoints(
+    /// An endpoint whose exact value is not materialized remains algebraic.
+    /// Each successful reconstruction is replayed against its defining
+    /// polynomial before the endpoint representation changes.
+    pub fn promote_represented_exact_endpoints(
         &self,
         policy: &CurveContext,
     ) -> CurveResult<Classification<Self>> {
-        let start = match self
-            .start
-            .clone()
-            .promote_represented_rational_root(policy)?
-        {
+        let start = match self.start.clone().promote_represented_exact_point(policy)? {
             Classification::Decided(start) => start,
             Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
         };
-        let end = match self.end.clone().promote_represented_rational_root(policy)? {
+        let end = match self.end.clone().promote_represented_exact_point(policy)? {
             Classification::Decided(end) => end,
             Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
         };
@@ -4430,7 +4433,7 @@ fn search_unit_roots(
                 interval,
                 Arc::clone(&sequence),
             );
-            match parameter.represented_rational_root_with_cached_sequence(
+            match parameter.represented_exact_point_with_cached_sequence(
                 policy,
                 rational_root_denominator_bound.as_ref(),
                 &sequence,
@@ -5587,7 +5590,7 @@ mod conversion_tests {
     }
 
     #[test]
-    fn nested_nonrational_quadratic_root_retains_its_polynomial_certificate() {
+    fn nested_nonrational_quadratic_root_materializes_exactly() {
         let alpha = (Real::one() / Real::from(2_i8)).unwrap().sqrt().unwrap();
         let coefficients = vec![-alpha, Real::one(), Real::one()];
 
@@ -5604,16 +5607,13 @@ mod conversion_tests {
             let [root] = roots.as_slice() else {
                 panic!("the nested-radical polynomial must have one unit root");
             };
-            match root {
-                BezierParameter2::Exact(root) => assert_eq!(
-                    real_sign(&polynomial.evaluate(root), &policy),
-                    Some(RealSign::Zero)
-                ),
-                BezierParameter2::Algebraic(_) => {}
-            }
-            if policy == CurveContext::STRICT {
-                assert!(matches!(root, BezierParameter2::Algebraic(_)));
-            }
+            let BezierParameter2::Exact(root) = root else {
+                panic!("a scalar-tower root retained an algebraic wrapper");
+            };
+            assert_eq!(
+                real_sign(&polynomial.evaluate(root), &policy),
+                Some(RealSign::Zero)
+            );
             assert_eq!(
                 polynomial
                     .simple_root_classifications(&roots, &policy)
@@ -5621,6 +5621,49 @@ mod conversion_tests {
                 vec![Classification::Decided(true)]
             );
         }
+    }
+
+    #[test]
+    fn collapsed_exact_real_representation_imports_as_an_exact_parameter() {
+        let value = (Real::one() / Real::pi()).unwrap();
+        let mut representation = AlgebraicRootRepresentation {
+            constraint_index: 0,
+            symbol: hypersolve::SymbolId(0),
+            interval_index: 0,
+            polynomial_coefficients: vec![-value.clone(), Real::one()],
+            interval: hypersolve::IsolatedRootInterval {
+                lower: value.clone(),
+                upper: value.clone(),
+                exact_root: None,
+                distinct_root_count: 1,
+            },
+            kind: hypersolve::AlgebraicRootKind::IsolatingInterval,
+            validation: hypersolve::AlgebraicRootValidationReport {
+                status: hypersolve::AlgebraicRootValidationStatus::Valid,
+                message: None,
+            },
+        };
+        representation.validation = hypersolve::validate_algebraic_root_representation(
+            &representation,
+            hypersolve::PredicatePolicy::STRICT,
+        );
+        assert!(representation.is_valid());
+
+        let imported = decided(
+            BezierParameter2::from_algebraic_root_representation(
+                &representation,
+                &CurveContext::STRICT,
+            )
+            .unwrap(),
+            "collapsed exact-Real representation",
+        );
+        let BezierParameter2::Exact(imported) = imported else {
+            panic!("a collapsed exact-Real isolator retained an algebraic wrapper");
+        };
+        assert_eq!(
+            compare_reals(&imported, &value, &CurveContext::STRICT),
+            Some(Ordering::Equal)
+        );
     }
 
     #[test]

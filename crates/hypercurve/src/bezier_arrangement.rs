@@ -34,9 +34,7 @@ use crate::{
     compare_algebraic_same_tangent_second_order, compare_algebraic_same_tangent_third_order,
 };
 use hyperreal::{Rational, Real, RealSign};
-use hypersolve::{
-    AlgebraicRootArithmeticOp, AlgebraicRootArithmeticStatus, AlgebraicRootRepresentation,
-};
+use hypersolve::{AlgebraicRootArithmeticOp, AlgebraicRootRepresentation};
 
 /// One retained Bezier arrangement fragment with source provenance.
 #[derive(Clone, Debug, PartialEq)]
@@ -323,7 +321,7 @@ impl BezierArrangementGraph2 {
     /// This is the first traversal consumer for
     /// [`BezierSplitFragment2::AlgebraicEndpointImages`]. It connects endpoints
     /// only when the retained point evidence is exact and structurally equal
-    /// (or when a represented coordinate has an exact rational witness matching
+    /// (or when a represented coordinate has an exact point witness matching
     /// a native point). At a branch vertex it compares outgoing tangents with
     /// either the native exact cross/dot predicate or
     /// [`crate::compare_algebraic_tangent_turn_from_base`].
@@ -1614,11 +1612,7 @@ fn negate_algebraic_root(
         AlgebraicRootArithmeticOp::Negate,
         policy,
     );
-    if !matches!(
-        evidence.status,
-        AlgebraicRootArithmeticStatus::ComputedExactRationalWitness
-            | AlgebraicRootArithmeticStatus::ComputedRepresentation
-    ) {
+    if !crate::bezier_algebraic_image::algebraic_arithmetic_succeeded(&evidence.status) {
         return None;
     }
     if let Some(result) = evidence.result_representation {
@@ -1630,23 +1624,7 @@ fn negate_algebraic_root(
 }
 
 fn exact_value_representation(value: &Real) -> AlgebraicRootRepresentation {
-    AlgebraicRootRepresentation {
-        constraint_index: 0,
-        symbol: hypersolve::SymbolId(0),
-        interval_index: 0,
-        polynomial_coefficients: vec![-value.clone(), Real::one()],
-        interval: hypersolve::IsolatedRootInterval {
-            lower: value.clone(),
-            upper: value.clone(),
-            exact_root: Some(value.clone()),
-            distinct_root_count: 1,
-        },
-        kind: hypersolve::AlgebraicRootKind::ExactRationalWitness,
-        validation: hypersolve::AlgebraicRootValidationReport {
-            status: hypersolve::AlgebraicRootValidationStatus::Valid,
-            message: None,
-        },
-    }
+    crate::bezier_algebraic_image::exact_real_algebraic_representation(value)
 }
 
 type EndpointAdjacency = (Vec<Option<usize>>, Vec<Option<usize>>);
@@ -1829,6 +1807,19 @@ fn retained_tangent_adjacency(
 #[cfg(test)]
 mod endpoint_adjacency_tests {
     use super::*;
+
+    #[test]
+    fn represented_tangent_negation_accepts_an_exact_real_result() {
+        let value = exact_value_representation(&Real::pi());
+        let negated = negate_algebraic_root(&value, &CurveContext::STRICT)
+            .expect("exact Real negation remains represented");
+
+        assert_eq!(
+            negated.kind,
+            hypersolve::AlgebraicRootKind::IsolatingInterval
+        );
+        assert_eq!(negated.exact_point_witness(), Some(&-Real::pi()));
+    }
 
     fn point(x: i32) -> Point2 {
         Point2::new(Real::from(x), Real::zero())
@@ -2977,10 +2968,9 @@ pub(crate) fn represented_roots_equal(
     if left == right {
         return Some(true);
     }
-    if let (Some(left_witness), Some(right_witness)) = (
-        left.exact_rational_witness(),
-        right.exact_rational_witness(),
-    ) {
+    if let (Some(left_witness), Some(right_witness)) =
+        (left.exact_point_witness(), right.exact_point_witness())
+    {
         return compare_reals_equal(left_witness, right_witness, policy);
     }
 

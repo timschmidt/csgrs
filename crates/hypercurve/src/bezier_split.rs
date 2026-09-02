@@ -2431,7 +2431,7 @@ fn split_curve_at_parameters<F, G, H>(
     parameters: &[BezierParameter2],
     policy: &CurveContext,
     refine_ordering: bool,
-    promote_rational_roots: bool,
+    promote_exact_points: bool,
     mut exact_boundary_is_regular: H,
     mut materialize: F,
     mut endpoint_image: G,
@@ -2448,11 +2448,8 @@ where
     ];
     for parameter in parameters {
         validate_parameter(parameter, policy)?;
-        let promoted = if promote_rational_roots {
-            match parameter
-                .clone()
-                .promote_represented_rational_root(policy)?
-            {
+        let promoted = if promote_exact_points {
+            match parameter.clone().promote_represented_exact_point(policy)? {
                 Classification::Decided(parameter) => parameter,
                 Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
             }
