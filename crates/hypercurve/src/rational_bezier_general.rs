@@ -8233,6 +8233,13 @@ fn locally_certified_rational_image_parameter(
     else {
         return Ok(None);
     };
+    // Interval subset expansion is exponential in the quotient degree and
+    // repeatedly reduces widening dyadic rationals. Above degree six the
+    // shared exact determinant/image-root authority is both smaller-work and
+    // complete, so do not attempt this local accelerator first.
+    if matrices.degree > 6 {
+        return Ok(None);
+    }
     let mut refinement = BezierParameterRefinement2::new(source_parameter, policy);
     for refinement_steps in [0, 2, 4, 8, 16, 32, 64, 128, 256] {
         let refined = refinement.refine_to(refinement_steps);
