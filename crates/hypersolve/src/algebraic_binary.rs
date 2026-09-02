@@ -14,6 +14,7 @@
 //! The construction combines a Sylvester resultant, Sturm root counting, the
 //! standard real-root isolation model, and exact replay.
 
+use std::borrow::Cow;
 use std::cmp::Ordering;
 
 use hyperlimit::{PredicatePolicy, compare_reals};
@@ -27,10 +28,10 @@ use crate::algebraic::{
 use crate::integer_interpolation::{
     interpolate_integer_samples_up_to_scale, primitive_integer_polynomial,
 };
-use crate::resultant::resultant_univariate_polynomials;
+use crate::resultant::resultant_exact_rational_polynomials_value;
 use crate::root_isolation::{
     IsolatedRootInterval, IsolatedRootRefinementStatus, RootIsolationConfig,
-    refine_isolated_univariate_polynomial_interval,
+    refine_isolated_univariate_polynomial_interval, square_free_part,
 };
 
 const MAX_BINARY_RESULTANT_DEGREE: usize = 9;
@@ -99,7 +100,13 @@ pub fn transform_algebraic_roots_binary(
     operation: AlgebraicRootArithmeticOp,
     policy: PredicatePolicy,
 ) -> AlgebraicRootBinaryTransformReport {
-    if !left.is_valid() || !right.is_valid() {
+    if !left.is_valid()
+        || !right.is_valid()
+        || validate_algebraic_root_representation(left, PredicatePolicy::STRICT).status
+            != AlgebraicRootValidationStatus::Valid
+        || validate_algebraic_root_representation(right, PredicatePolicy::STRICT).status
+            != AlgebraicRootValidationStatus::Valid
+    {
         return binary_report(
             operation,
             AlgebraicRootBinaryTransformStatus::InvalidEvidence,
@@ -147,8 +154,44 @@ pub fn transform_algebraic_roots_binary(
         );
     }
 
-    let resultant_degree =
-        (left.polynomial_coefficients.len() - 1) * (right.polynomial_coefficients.len() - 1);
+    let mut left_polynomial: Cow<'_, [Real]> = Cow::Borrowed(&left.polynomial_coefficients);
+    let mut right_polynomial: Cow<'_, [Real]> = Cow::Borrowed(&right.polynomial_coefficients);
+    let left_degree = left_polynomial.len() - 1;
+    let right_degree = right_polynomial.len() - 1;
+    if left_degree
+        .checked_mul(right_degree)
+        .is_none_or(|degree| degree > MAX_BINARY_RESULTANT_DEGREE)
+    {
+        let square_free_polynomials =
+            if left.polynomial_coefficients == right.polynomial_coefficients {
+                square_free_part(left_polynomial.into_owned(), PredicatePolicy::STRICT)
+                    .map(|polynomial| (polynomial.clone(), polynomial))
+            } else {
+                square_free_part(left_polynomial.into_owned(), PredicatePolicy::STRICT).zip(
+                    square_free_part(right_polynomial.into_owned(), PredicatePolicy::STRICT),
+                )
+            };
+        let Some((square_free_left, square_free_right)) = square_free_polynomials else {
+            return binary_report(
+                operation,
+                AlgebraicRootBinaryTransformStatus::Undecided,
+                None,
+                Some("could not square-free oversized binary source carriers".to_owned()),
+            );
+        };
+        left_polynomial = Cow::Owned(square_free_left);
+        right_polynomial = Cow::Owned(square_free_right);
+    }
+    let Some(resultant_degree) =
+        (left_polynomial.len() - 1).checked_mul(right_polynomial.len() - 1)
+    else {
+        return binary_report(
+            operation,
+            AlgebraicRootBinaryTransformStatus::UnsupportedDegree,
+            None,
+            Some("binary algebraic resultant degree overflowed the bounded package".to_owned()),
+        );
+    };
     if resultant_degree == 0 || resultant_degree > MAX_BINARY_RESULTANT_DEGREE {
         return binary_report(
             operation,
@@ -159,11 +202,10 @@ pub fn transform_algebraic_roots_binary(
     }
 
     let Some(polynomial_coefficients) = resultant_polynomial_for_binary_image(
-        &left.polynomial_coefficients,
-        &right.polynomial_coefficients,
+        &left_polynomial,
+        &right_polynomial,
         operation,
         resultant_degree,
-        policy,
     ) else {
         return binary_report(
             operation,
@@ -252,19 +294,23 @@ fn resultant_polynomial_for_binary_image(
     right_polynomial: &[Real],
     operation: AlgebraicRootArithmeticOp,
     resultant_degree: usize,
-    policy: PredicatePolicy,
 ) -> Option<Vec<Real>> {
+    let shared_polynomial = left_polynomial == right_polynomial;
     let left_polynomial = primitive_integer_polynomial(left_polynomial)?;
-    let right_polynomial = primitive_integer_polynomial(right_polynomial)?;
+    let right_polynomial: Cow<'_, [Real]> = if shared_polynomial {
+        Cow::Borrowed(&left_polynomial)
+    } else {
+        Cow::Owned(primitive_integer_polynomial(right_polynomial)?)
+    };
     let mut samples = Vec::with_capacity(resultant_degree + 1);
     for sample in 0..=resultant_degree {
         let y = Real::from(sample as i64);
         let right_in_x = match operation {
             AlgebraicRootArithmeticOp::Add => {
-                compose_with_linear(&right_polynomial, y, -Real::one())
+                compose_with_signed_unit_linear(&right_polynomial, y, true)
             }
             AlgebraicRootArithmeticOp::Subtract => {
-                compose_with_linear(&right_polynomial, -y, Real::one())
+                compose_with_signed_unit_linear(&right_polynomial, -y, false)
             }
             AlgebraicRootArithmeticOp::Multiply => {
                 reciprocal_product_polynomial(&right_polynomial, &y)
@@ -272,13 +318,12 @@ fn resultant_polynomial_for_binary_image(
             AlgebraicRootArithmeticOp::Divide => quotient_product_polynomial(&right_polynomial, &y),
             AlgebraicRootArithmeticOp::Negate => return None,
         };
-        let resultant = resultant_univariate_polynomials(&left_polynomial, &right_in_x, -64)
-            .ok()?
-            .resultant;
+        let resultant =
+            resultant_exact_rational_polynomials_value(&left_polynomial, &right_in_x, -64).ok()?;
         samples.push(resultant);
     }
     let polynomial = interpolate_integer_samples_up_to_scale(&samples)?;
-    trim_real_polynomial(polynomial, policy)
+    trim_exact_rational_polynomial(polynomial)
 }
 
 fn binary_image_interval(
@@ -329,48 +374,72 @@ fn binary_image_interval(
 }
 
 fn reciprocal_product_polynomial(right_polynomial: &[Real], y: &Real) -> Vec<Real> {
-    let degree = right_polynomial.len() - 1;
-    let mut result = vec![Real::zero(); degree + 1];
-    for (power, coefficient) in right_polynomial.iter().enumerate() {
-        result[degree - power] = coefficient.clone() * real_pow(y, power);
-    }
-    result
+    reversed_ascending_power_products(right_polynomial.iter(), y)
 }
 
 fn quotient_product_polynomial(right_polynomial: &[Real], y: &Real) -> Vec<Real> {
-    let degree = right_polynomial.len() - 1;
-    right_polynomial
-        .iter()
-        .enumerate()
-        .map(|(power, coefficient)| coefficient.clone() * real_pow(y, degree - power))
-        .collect()
+    reversed_ascending_power_products(right_polynomial.iter().rev(), y)
 }
 
-fn compose_with_linear(polynomial: &[Real], constant: Real, linear: Real) -> Vec<Real> {
-    let mut result = vec![Real::zero()];
-    let mut power = vec![Real::one()];
-    for coefficient in polynomial {
-        add_scaled_polynomial(&mut result, &power, coefficient);
-        power = multiply_by_linear_factor(&power, constant.clone(), linear.clone());
+fn reversed_ascending_power_products<'a>(
+    coefficients: impl ExactSizeIterator<Item = &'a Real>,
+    y: &Real,
+) -> Vec<Real> {
+    let mut result = Vec::with_capacity(coefficients.len());
+    let mut y_power = Real::one();
+    for (power, coefficient) in coefficients.enumerate() {
+        if power == 0 {
+            result.push(coefficient.clone());
+        } else {
+            y_power *= y.clone();
+            result.push(coefficient.clone() * y_power.clone());
+        }
+    }
+    result.reverse();
+    result
+}
+
+fn compose_with_signed_unit_linear(
+    polynomial: &[Real],
+    constant: Real,
+    negative_linear: bool,
+) -> Vec<Real> {
+    let Some((leading, lower_coefficients)) = polynomial.split_last() else {
+        return Vec::new();
+    };
+    let mut result = vec![leading.clone()];
+    for coefficient in lower_coefficients.iter().rev() {
+        result = multiply_by_signed_unit_linear_factor(&result, constant.clone(), negative_linear);
+        result[0] = result[0].clone() + coefficient.clone();
     }
     result
 }
 
-fn add_scaled_polynomial(target: &mut Vec<Real>, polynomial: &[Real], scale: &Real) {
-    if target.len() < polynomial.len() {
-        target.resize(polynomial.len(), Real::zero());
+fn multiply_by_signed_unit_linear_factor(
+    polynomial: &[Real],
+    constant: Real,
+    negative_linear: bool,
+) -> Vec<Real> {
+    let Some((first, coefficients)) = polynomial.split_first() else {
+        return Vec::new();
+    };
+    let mut result = Vec::with_capacity(polynomial.len() + 1);
+    result.push(first.clone() * constant.clone());
+    let mut previous = first;
+    for coefficient in coefficients {
+        let signed_previous = if negative_linear {
+            -previous.clone()
+        } else {
+            previous.clone()
+        };
+        result.push(signed_previous + coefficient.clone() * constant.clone());
+        previous = coefficient;
     }
-    for (index, coefficient) in polynomial.iter().enumerate() {
-        target[index] = target[index].clone() + coefficient.clone() * scale.clone();
-    }
-}
-
-fn multiply_by_linear_factor(polynomial: &[Real], constant: Real, linear: Real) -> Vec<Real> {
-    let mut result = vec![Real::zero(); polynomial.len() + 1];
-    for (degree, coefficient) in polynomial.iter().enumerate() {
-        result[degree] = result[degree].clone() + coefficient.clone() * constant.clone();
-        result[degree + 1] = result[degree + 1].clone() + coefficient.clone() * linear.clone();
-    }
+    result.push(if negative_linear {
+        -previous.clone()
+    } else {
+        previous.clone()
+    });
     result
 }
 
@@ -397,11 +466,15 @@ fn interval_div(
     right: &ValueInterval,
     policy: PredicatePolicy,
 ) -> Option<ValueInterval> {
-    if interval_value_contains_zero(right, policy)? {
+    let lower_order = compare_reals(&right.lower, &Real::zero(), policy).value()?;
+    let upper_order = compare_reals(&right.upper, &Real::zero(), policy).value()?;
+    if lower_order != Ordering::Greater && upper_order != Ordering::Less {
         return None;
     }
-    let lower_reciprocal = (Real::one() / right.lower.clone()).ok()?;
-    let upper_reciprocal = (Real::one() / right.upper.clone()).ok()?;
+    let lower_reciprocal =
+        crate::policy_division::reciprocal_after_certified_nonzero(&right.lower).ok()?;
+    let upper_reciprocal =
+        crate::policy_division::reciprocal_after_certified_nonzero(&right.upper).ok()?;
     let mut reciprocal = [lower_reciprocal, upper_reciprocal];
     sort_reals_exact(&mut reciprocal, policy)?;
     interval_mul(
@@ -418,37 +491,17 @@ fn interval_contains_zero(
     interval: &IsolatedRootInterval,
     policy: PredicatePolicy,
 ) -> Option<bool> {
-    interval_value_contains_zero(
-        &ValueInterval {
-            lower: interval.lower.clone(),
-            upper: interval.upper.clone(),
-        },
-        policy,
-    )
-}
-
-fn interval_value_contains_zero(interval: &ValueInterval, policy: PredicatePolicy) -> Option<bool> {
     let lower = compare_reals(&interval.lower, &Real::zero(), policy).value()?;
     let upper = compare_reals(&interval.upper, &Real::zero(), policy).value()?;
     Some(lower != Ordering::Greater && upper != Ordering::Less)
 }
 
-fn real_pow(base: &Real, exponent: usize) -> Real {
-    let mut value = Real::one();
-    for _ in 0..exponent {
-        value *= base.clone();
-    }
-    value
-}
-
-fn trim_real_polynomial(mut polynomial: Vec<Real>, policy: PredicatePolicy) -> Option<Vec<Real>> {
+fn trim_exact_rational_polynomial(mut polynomial: Vec<Real>) -> Option<Vec<Real>> {
     while polynomial.len() > 1 {
-        let trailing = polynomial.last()?;
-        match compare_reals(trailing, &Real::zero(), policy).value()? {
-            Ordering::Equal => {
-                polynomial.pop();
-            }
-            Ordering::Less | Ordering::Greater => break,
+        if polynomial.last()?.exact_rational_ref()?.is_zero() {
+            polynomial.pop();
+        } else {
+            break;
         }
     }
     (polynomial.len() > 1).then_some(polynomial)
@@ -591,6 +644,163 @@ mod tests {
     }
 
     #[test]
+    fn binary_constructs_difference_of_independent_square_roots() {
+        let left = AlgebraicRootRepresentation {
+            interval: IsolatedRootInterval {
+                lower: fraction(7, 5),
+                upper: fraction(3, 2),
+                exact_root: None,
+                distinct_root_count: 1,
+            },
+            ..sqrt_root(2, 1, 2)
+        };
+        let right = AlgebraicRootRepresentation {
+            interval: IsolatedRootInterval {
+                lower: fraction(5, 3),
+                upper: fraction(7, 4),
+                exact_root: None,
+                distinct_root_count: 1,
+            },
+            ..sqrt_root(3, 1, 2)
+        };
+        let report = transform_algebraic_roots_binary(
+            &left,
+            &right,
+            AlgebraicRootArithmeticOp::Subtract,
+            PredicatePolicy::STRICT,
+        );
+
+        assert_eq!(
+            report.status,
+            AlgebraicRootBinaryTransformStatus::Transformed
+        );
+        let root = report.representation.as_ref().unwrap();
+        assert_eq!(
+            root.polynomial_coefficients,
+            vec![
+                Real::one(),
+                Real::zero(),
+                real(-10),
+                Real::zero(),
+                Real::one()
+            ]
+        );
+        assert!(root.is_valid());
+    }
+
+    #[test]
+    fn binary_reuses_square_free_sources_beyond_the_stored_degree_cap() {
+        let left = sqrt_root(2, 1, 2);
+        let right = sqrt_root(3, 1, 2);
+        let expected = transform_algebraic_roots_binary(
+            &left,
+            &right,
+            AlgebraicRootArithmeticOp::Add,
+            PredicatePolicy::STRICT,
+        );
+        assert_eq!(
+            expected.status,
+            AlgebraicRootBinaryTransformStatus::Transformed
+        );
+
+        let mut repeated_left = left;
+        repeated_left.polynomial_coefficients = vec![
+            real(-8),
+            Real::zero(),
+            real(12),
+            Real::zero(),
+            real(-6),
+            Real::zero(),
+            Real::one(),
+        ];
+        let mut repeated_right = right;
+        repeated_right.polynomial_coefficients = vec![
+            real(-27),
+            Real::zero(),
+            real(27),
+            Real::zero(),
+            real(-9),
+            Real::zero(),
+            Real::one(),
+        ];
+        assert_eq!(
+            transform_algebraic_roots_binary(
+                &repeated_left,
+                &repeated_right,
+                AlgebraicRootArithmeticOp::Add,
+                PredicatePolicy::STRICT,
+            ),
+            expected
+        );
+    }
+
+    #[test]
+    fn binary_reuses_a_shared_square_free_carrier_for_distinct_conjugates() {
+        let mut positive = sqrt_root(2, 1, 2);
+        positive.polynomial_coefficients = vec![
+            real(-8),
+            Real::zero(),
+            real(12),
+            Real::zero(),
+            real(-6),
+            Real::zero(),
+            Real::one(),
+        ];
+        let mut negative = positive.clone();
+        negative.interval_index = 1;
+        negative.interval = IsolatedRootInterval {
+            lower: real(-2),
+            upper: real(-1),
+            exact_root: None,
+            distinct_root_count: 1,
+        };
+
+        let report = transform_algebraic_roots_binary(
+            &negative,
+            &positive,
+            AlgebraicRootArithmeticOp::Add,
+            PredicatePolicy::STRICT,
+        );
+        assert_eq!(
+            report.status,
+            AlgebraicRootBinaryTransformStatus::Transformed
+        );
+        assert_eq!(
+            report.representation.unwrap().interval.exact_root,
+            Some(Real::zero())
+        );
+    }
+
+    #[test]
+    fn binary_keeps_the_resultant_cap_after_square_free_reduction() {
+        let quartic = AlgebraicRootRepresentation {
+            polynomial_coefficients: vec![
+                real(-2),
+                Real::zero(),
+                Real::zero(),
+                Real::zero(),
+                Real::one(),
+            ],
+            ..sqrt_root(2, 1, 2)
+        };
+        let cubic = AlgebraicRootRepresentation {
+            polynomial_coefficients: vec![real(-3), Real::zero(), Real::zero(), Real::one()],
+            ..sqrt_root(3, 1, 2)
+        };
+        let report = transform_algebraic_roots_binary(
+            &quartic,
+            &cubic,
+            AlgebraicRootArithmeticOp::Multiply,
+            PredicatePolicy::STRICT,
+        );
+        assert_eq!(
+            report.status,
+            AlgebraicRootBinaryTransformStatus::UnsupportedDegree
+        );
+        assert!(report.representation.is_none());
+    }
+
+    #[test]
     fn binary_resultant_clears_source_denominators_before_elimination() {
         let left = AlgebraicRootRepresentation {
             polynomial_coefficients: vec![fraction(-2, 3), Real::zero(), fraction(1, 3)],
@@ -621,6 +831,19 @@ mod tests {
                 Real::one()
             ]
         );
+    }
+
+    #[test]
+    fn exact_rational_resultant_trimming_fails_closed() {
+        assert_eq!(
+            trim_exact_rational_polynomial(vec![real(1), Real::zero(), Real::one()]),
+            Some(vec![real(1), Real::zero(), Real::one()])
+        );
+        assert_eq!(
+            trim_exact_rational_polynomial(vec![real(1), Real::one(), Real::zero()]),
+            Some(vec![real(1), Real::one()])
+        );
+        assert!(trim_exact_rational_polynomial(vec![real(1), Real::pi()]).is_none());
     }
 
     #[test]
@@ -701,6 +924,24 @@ mod tests {
     }
 
     #[test]
+    fn binary_replays_source_validation_instead_of_trusting_stale_status() {
+        let mut invalid = sqrt_root(2, 1, 2);
+        invalid.interval.lower = real(2);
+        invalid.interval.upper = real(1);
+        let report = transform_algebraic_roots_binary(
+            &invalid,
+            &sqrt_root(3, 1, 2),
+            AlgebraicRootArithmeticOp::Add,
+            PredicatePolicy::APPROXIMATE_512,
+        );
+        assert_eq!(
+            report.status,
+            AlgebraicRootBinaryTransformStatus::InvalidEvidence
+        );
+        assert!(report.representation.is_none());
+    }
+
+    #[test]
     fn binary_constructs_quotient_of_independent_square_roots() {
         let report = transform_algebraic_roots_binary(
             &sqrt_root(2, 1, 2),
@@ -719,6 +960,52 @@ mod tests {
             vec![real(4), Real::zero(), real(-12), Real::zero(), real(9)]
         );
         assert!(root.is_valid());
+    }
+
+    #[test]
+    fn binary_interval_division_reuses_policy_nonzero_endpoints() {
+        let denominator = crate::test_support::exact_normal_positive();
+        assert_eq!(
+            Real::one() / denominator.clone(),
+            Err(hyperreal::Problem::UnknownZero)
+        );
+        let half = fraction(1, 2);
+        let numerator = denominator.clone() * &half;
+        let quotient = interval_div(
+            &ValueInterval {
+                lower: numerator.clone(),
+                upper: numerator,
+            },
+            &ValueInterval {
+                lower: denominator.clone(),
+                upper: denominator * Real::from(2),
+            },
+            PredicatePolicy::STRICT,
+        )
+        .expect("policy-certified endpoints should construct a quotient interval");
+        assert_eq!(
+            quotient.lower.exact_rational_normal_form(),
+            fraction(1, 4).exact_rational()
+        );
+        assert_eq!(
+            quotient.upper.exact_rational_normal_form(),
+            half.exact_rational()
+        );
+
+        assert!(
+            interval_div(
+                &ValueInterval {
+                    lower: Real::one(),
+                    upper: Real::one(),
+                },
+                &ValueInterval {
+                    lower: crate::test_support::terminal_zero(),
+                    upper: Real::one(),
+                },
+                PredicatePolicy::STRICT,
+            )
+            .is_none()
+        );
     }
 
     #[test]
@@ -747,6 +1034,42 @@ mod tests {
     }
 
     proptest! {
+        #[test]
+        fn generated_signed_unit_linear_compositions_evaluate_exactly(
+            coefficients in prop::collection::vec(-5_i16..=5, 1..=6),
+            constant in -4_i16..=4,
+            argument in -4_i16..=4,
+            negative_linear in any::<bool>(),
+        ) {
+            let polynomial = coefficients
+                .into_iter()
+                .map(|coefficient| real(i64::from(coefficient)))
+                .collect::<Vec<_>>();
+            let constant = real(i64::from(constant));
+            let argument = real(i64::from(argument));
+            let composed = compose_with_signed_unit_linear(
+                &polynomial,
+                constant.clone(),
+                negative_linear,
+            );
+            let evaluate = |polynomial: &[Real], argument: &Real| {
+                polynomial.iter().rev().fold(Real::zero(), |value, coefficient| {
+                    value * argument.clone() + coefficient.clone()
+                })
+            };
+            let actual = evaluate(&composed, &argument);
+            let signed_argument = if negative_linear {
+                -argument
+            } else {
+                argument
+            };
+            let expected = evaluate(&polynomial, &(constant + signed_argument));
+            prop_assert_eq!(
+                actual.exact_rational_normal_form(),
+                expected.exact_rational_normal_form()
+            );
+        }
+
         #[test]
         fn generated_square_root_products_match_expected_resultant_shape(
             left in 2_i16..=9,

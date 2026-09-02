@@ -130,7 +130,10 @@ blocks before an algorithm is selected.
   solves take an explicit `PredicatePolicy`, extend unresolved fast pivots
   through that policy, fall back to a pivot-free exact determinant construction
   when no pivot can be selected, and retain the weakest pivot,
-  determinant, and residual certainty in their reports.
+  determinant, and residual certainty in their reports. Sparse pattern,
+  pivot, and replay signs keep the requested refinement bound as their fast
+  path, then use the strict exact predicate cascade; unsupported identities
+  remain explicit rather than becoming approximate sparse decisions.
 - `analyze_exact_affine_rank` reports exact rank evidence.
 - `find_equality_substitutions`, `validate_equality_substitutions`,
   `equality_substitution_classes`, `apply_equality_substitutions`,
@@ -144,14 +147,94 @@ blocks before an algorithm is selected.
 ### Polynomial and algebraic roots
 
 - Root-isolation APIs provide Descartes/Bernstein bounds, recursive Bernstein
-  subdivision, square-free reduction, Sturm intervals, bounded refinement, and
-  exact rational-witness replay.
+  subdivision, square-free reduction, exact dyadic Fujiwara whole-line bounds,
+  Sturm intervals, bounded refinement, and exact rational-witness replay.
+  Positive-width Sturm partitions own `(lower, upper]`; explicit exact
+  witnesses own their point and are strictly checked for closed containment,
+  polynomial vanishing, and unique-root evidence. Linear carriers are solved
+  exactly, while validated one-root intervals bisect by exact midpoint and
+  defining-polynomial sign under hard step and optional exact-width bounds.
+  The public interval-presence query excludes both endpoints and returns an
+  explicit unknown when its configured exact predicates do not decide. It uses
+  endpoint/monotonicity proofs first, then exact Bernstein variation, a
+  repeated-quadratic discriminant rule, square-free reduction, and Sturm as the
+  complete fallback; a variation greater than one is never treated as a
+  disproof. Algebraic image admission uses `(lower, upper]` for positive-width
+  enclosures, strictly replays and collapses exact image witnesses, and bounds
+  source refinement to eight rounds.
 - `represent_univariate_algebraic_roots` and
   `validate_algebraic_root_representation` create and check retained isolated
   roots.
 - `compare_algebraic_root_representations`, affine/Möbius/binary transforms,
   polynomial images, rational images, and arithmetic reports operate without
   first lowering roots to primitive floats.
+- Represented-root comparison and sign replay cached-valid payloads under the
+  strict policy before making a decision. Exact witnesses supersede wider
+  stored bounds, exact operands are skipped during Sturm refinement, and
+  difference comparison preserves direct/self orders before trying point
+  polynomial replay, interval GCD evidence, narrowed-operand construction, or
+  a represented difference sign. Rational sign decisions stay in rational
+  payloads; unsupported identities remain explicit `Undecided` reports.
+- Möbius transforms strictly replay their source carrier, accept general exact
+  `Real` defining coefficients, and retain the power-sum construction as a
+  fallback when homogeneous Horner trimming is undecided. Exact rational
+  witnesses become canonical linear point representations, while mapped
+  exact-`Real` points use zero-width isolating representations rather than
+  being mislabeled as rational witnesses. Foreign poles are separated by
+  bounded source refinement, selected-root poles remain explicit, and
+  decreasing maps preserve `(lower, upper]` ownership. Rational determinant,
+  denominator, endpoint, and homogeneous-polynomial work stays in rational
+  payloads until final report values are constructed.
+- Affine root transforms also strictly replay source evidence. Homogeneous
+  Horner replaces repeated machine-binomial expansion, so degree is no longer
+  limited by `u64` binomial storage; rational coefficients stay in rational
+  payloads, exact point sources become canonical linear representations with
+  truthful rational-versus-exact-`Real` metadata, and the certified scale sign
+  orients reflected interval endpoints directly after bounded refinement has
+  removed any ownership-changing endpoint roots.
+- Represented-root arithmetic distinguishes stored exact rational results from
+  general exact `Real` results without a rational payload, accepts either as a
+  scalar for supported affine or Möbius lowering, and uses policy-certified
+  inversion when ordinary
+  exact division cannot decide a symbolic denominator. Direct point and
+  identity routes replay their source payloads under `STRICT`; missing binary
+  operands and unsupported coefficient fields retain distinct reports. Zero
+  divided by a certified nonzero represented root is exactly zero, a selected
+  nonzero root divides by itself exactly even when its interval touches zero,
+  same-root addition uses an affine image, and rational quadratic squares use
+  their defining linear relation instead of a general resultant.
+- Algebraic-root polynomial and rational-expression evaluation strictly
+  replays cached-valid point evidence and reports rational payloads separately
+  from general exact `Real` values. Borrowed trimming and leading-seeded Horner
+  avoid transient coefficient storage; rational intervals stay in `Rational`
+  through endpoint products and quotients. Rational expressions reuse one
+  source admission and the denominator/numerator sign proofs, with direct
+  exact-zero, same-value, unit-denominator, and rational-payload quotient paths.
+- Independent-root binary transforms strictly replay both source carriers,
+  square-free repeated defining polynomials before enforcing the bounded
+  resultant degree, and retain explicit unsupported-degree and denominator-
+  domain reports. Exact-integer resultants use a scalar fraction-free path;
+  general exact-rational coefficients keep the report-bearing fallback.
+- Signed square-root transforms strictly replay their source representation
+  and adaptively tighten exact dyadic image bounds when a nearby conjugate
+  defeats the initial enclosure. Exact rational sources produce the canonical
+  linear witness for rational square roots or the minimal quadratic relation
+  for irrational ones; every bounded failure remains an explicit report.
+- Unary polynomial-image transforms strictly replay their source evidence and
+  admit only nonempty exact-rational authored image storage. Exact relations
+  `q = scale * P + constant` collapse directly to a canonical rational point,
+  while an oversized repeated carrier is square-freed before the same bounded
+  Sylvester limit is enforced. Rational Horner and interval kernels stay in
+  rational payloads until their final report values are constructed.
+- Rational-image transforms keep the authored denominator authoritative:
+  exact GCD selection reports a true pole at the chosen algebraic root, while
+  a dependency-broadened interval triggers bounded exact source refinement.
+  After domain admission, common factors and exact remainders modulo the
+  source polynomial reduce the map before its fixed resultant budget. Exact
+  constants and linear-fractional maps reuse general exact-`Real` Möbius
+  support, decreasing maps preserve `(lower, upper]` endpoint ownership, and
+  fixed-size batches share denominator admission, refinement, and source
+  conversion without changing output order or per-image reports.
 - `resultant_parametric_curve_intersection` and
   `resultant_rational_parametric_curve_intersection` expose solver-level curve
   elimination reports. Equal-degree rational systems through degree 12 use a
@@ -160,6 +243,115 @@ blocks before an algorithm is selected.
   of repeated scalar determinants plus interpolation; the generic
   exact-coefficient path remains authoritative outside those bounded lanes.
   Curve topology still belongs to Hypercurve.
+- Univariate, typed trivariate/quadrivariate, and rank-independent tensor
+  resultants use the requested coefficient-refinement bound as their fast
+  path, then continue unresolved exact degree, trimming, zero, normalization,
+  and scheduled-resultant signs through the strict predicate cascade.
+  Unsupported identities remain explicit `UndecidedCoefficient` or
+  `UndecidedResultantSign` outcomes; no approximate sign enters elimination.
+- Algebraic-fiber polynomial images and exact-`Real` quotient-ring norms use
+  strict exact zero proofs when canonicalizing degree-bearing input,
+  determinant output, and projective output storage. An unsupported trailing
+  coefficient remains retained and participates in the configured degree
+  rather than being discarded as an approximate zero.
+- Direct tensor norms reuse already-certified retained degrees instead of
+  rebuilding nominal zero padding. Sampled norms skip only represented
+  rational zero arithmetic, and the quadratic closed form compacts only that
+  same structural padding; opaque or unsupported coefficients still
+  participate without an added sign decision.
+- Dense tensor quotient-ring reduction certifies and inverts its shared
+  modulus once, reuses one fiber buffer, and bypasses only entirely represented
+  rational-zero fibers. Already-reduced tensors take a validated clone path;
+  authored modulus shape and every opaque coefficient remain unchanged.
+- Algebraic tensor images move validated dense storage through rational
+  canonicalization, final square-free intake, and tagged bivariate conversion
+  without cloning the complete tensor. The existing exact-rational normal form
+  and all opaque coefficient decisions remain authoritative.
+- Square-free intake inspects borrowed rational coefficients before deciding
+  whether it needs an owned generic GCD. Modular coprimality can return the
+  original polynomial, and the primitive-integer GCD path avoids its source
+  clone; nonrational exact coefficients retain the generic path. Sturm setup
+  likewise relies on its primitive normalizer's single trim rather than
+  trimming each input twice.
+- Polynomial long division reuses its certified canonical degrees: it borrows
+  already-trimmed GCD/Sturm divisors, removes each algebraically canceled
+  leading slot directly, and writes each quotient degree once. Arbitrary public
+  divisors still pass through policy trimming, and exact nonrational fields use
+  the same field operations and predicate authority as before.
+- Local algebraic fields reuse the defining coefficients inside their owned,
+  refinable root representation instead of cloning a second modulus. Public
+  exact univariate division can trim borrowed divisor storage; internal
+  local-field and GCD schedules retain owned divisors where matched benchmarks
+  require them.
+- Local quotient arithmetic updates rational product accumulators in place,
+  moves certified leading cancellations, and seeds Horner evaluation from the
+  actual leading coefficient. Denominator clearing consumes its optional
+  denominators instead of cloning a parallel copy.
+- Local sign and zero queries reuse the reduced numerator invariant established
+  by every `LocalFieldElement` constructor and operation. Debug builds assert
+  the canonical degree/trailing-coefficient boundary; release builds avoid a
+  repeated clone, trim, and quotient reduction before consulting the sign
+  cache.
+- Local synthetic and exact division build quotient coefficients in descending
+  discovery order, allocating an owning zero only for a genuinely skipped
+  degree. Polynomial-image norms use direct 1-by-1 and 2-by-2 determinants;
+  larger matrices retain the division-free Berkowitz construction.
+- Local image convolution materializes only output degrees that receive a
+  product. Quotient-multiplication matrices move completed row-major entries
+  and eliminated high coefficients, while Berkowitz dot products move their
+  first term before retaining the original ordered accumulation.
+- Local-fiber exports consume their completed quotient-ring coefficients.
+  Second-parameter output moves numerator vectors directly; first-parameter
+  output moves each scalar into retained-power rows and pads only genuinely
+  ragged entries. Any local denominator still rejects the export unchanged.
+- Identically-zero image saturation computes the common image-coefficient
+  factor once, then intersects every residual source multiplicity with that
+  same factor. Fresh coefficient polynomials move into the GCD fold; local
+  reduction, denominator clearing, and explicit removed-component evidence
+  remain unchanged.
+- Selected-fiber ordered-field Bernstein isolation seeds Horner values and
+  controls from actual coefficients, creates the highest affine-composition
+  term directly, and builds represented-root synthetic quotients in descending
+  order. Endpoint ownership, variation counts, depth limits, and the complete
+  repeated-root fallback are unchanged. Retained-field rational export also
+  borrows its projective leading scalar while making a denominator monic.
+- Rational-fiber reduction borrows its already reduced pivot and residual
+  coefficients, materializes a shared zero only for a genuinely ragged power,
+  and reuses the pivot's nonzero proof. The pivot residual is the exact
+  cross-multiplied identity used to define the ratio; all other residuals keep
+  their full quotient-ring zero proofs and public status boundaries.
+- Polynomial-image projection constructs authored scalar image coefficients
+  directly as denominator-free local-field constants. A validated retained
+  modulus always has positive degree, so this removes an unreachable quotient
+  reduction/error layer without changing degree budgets, unsupported storage,
+  determinant arithmetic, or final retained/global relations.
+- Batched open-interval fiber counts evaluate the lower Sturm boundary first
+  and stop immediately when it is a root or an error. This matches the
+  single-interval report order and avoids irrelevant upper-boundary work and
+  retained-root refinement; ordinary boundary caching remains unchanged.
+- Selected-fiber Sturm fallback moves its source polynomial into the sequence
+  that already retains it, cloning that row back only for a rational-root
+  restart. Incomplete reports preserve the Sturm length, subdivision count,
+  retained-root refinements, certainty, and underlying error accumulated
+  before termination.
+- Plain algebraic-fiber projection shares the local field's exact evidence
+  admission without cloning the complete refinable root or creating an unused
+  sign cache. Retaining the second parameter also borrows the bivariate
+  polynomial's authored coefficient grid directly; retaining the first still
+  constructs the required transpose. The explicit degree budget bounds the
+  retained defining-polynomial degree that determines matrix size.
+- Selected-tensor tagged projection constructs `(z-source[0])^2` directly,
+  moves its final flat tensor into primitive bivariate fibers, and reuses an
+  exactly shared conjugate constraint. When exact square-free reduction lowers
+  the first carrier's degree, that already-proved carrier also bounds the final
+  quotient norm; repeated multiplicity cannot inflate the enumerator or its
+  determinant dimension.
+- Correlated tensor-image orchestration counts exact affine/duplicate-axis
+  collapses as completed eliminations, reuses square-free constraints shared
+  by non-affine conjugates, and skips quotient reductions whose stored power
+  bounds are already below the divisor degree. Rational-class coefficients
+  bypass symbolic normal-form traversal while opaque exact fields retain the
+  unchanged proof path.
 - Bézier, rational Bézier, B-spline span, and NURBS span substitution functions
   convert retained curve data into polynomial systems with explicit status.
 
@@ -245,16 +437,37 @@ their use case.
 
 ```sh
 cargo fmt --all -- --check
-cargo test --all-features
-cargo clippy --all-targets --all-features -- -D warnings
-RUSTDOCFLAGS="-D warnings" cargo doc --no-deps --all-features
-cargo check --benches --all-features
+cargo test --locked --all-targets --all-features
+cargo clippy --locked --all-targets --all-features -- -D warnings
+RUSTDOCFLAGS="-D warnings" cargo doc --locked --no-deps --all-features
+cargo check --locked --manifest-path fuzz/Cargo.toml --bins
+scripts/representation_coverage.sh
+scripts/coverage.sh
+scripts/allocation_profile.sh
+cargo bench --locked --bench representations
+cargo bench --locked --bench competitive
 ```
 
-The benchmark protocol, measured results, and retained/rejected optimization
-record are in [PERFORMANCE.md](PERFORMANCE.md). Fuzz replay instructions are in
-[fuzz/README.md](fuzz/README.md); dispatch instrumentation is documented in
-[dispatch_trace.md](dispatch_trace.md).
+The representation matrix explicitly inventories Hyperreal's 22 optimized
+finite certificate classes and all eight public structural kinds. It also
+exercises variable-depth opaque computable DAGs. The coverage script generates
+an HTML report and enforces an 85% production-line floor; the allocation
+profiler reports steady-state counts and bytes for analysis/certification,
+exact dense solving, and sparse replay for every class, and fails on a nonzero
+signed live-byte delta. Competitive Criterion rows compare exact Hypersolve
+roots and dense solves with the proposal-only `roots` and `nalgebra` float
+APIs; the CGAL/Gmpq harness remains the exact quadratic comparison.
+
+The benchmark protocol and retained/rejected optimization record are in
+[PERFORMANCE.md](PERFORMANCE.md). The automatically refreshed
+[benchmarks.md](benchmarks.md) catalogues every timing and diagnostic suite,
+all stored Criterion rows, and comparative ratios; the custom algebraic-fiber
+timings are retained in
+[algebraic_fiber_benchmarks.md](algebraic_fiber_benchmarks.md), and the external
+exact CGAL/Gmpq comparison writes
+[cgal_quadratic_benchmarks.md](cgal_quadratic_benchmarks.md). Fuzz replay
+instructions are in [fuzz/README.md](fuzz/README.md); dispatch instrumentation
+is documented in [dispatch_trace.md](dispatch_trace.md).
 
 ## References
 

@@ -65,6 +65,6 @@ fuzz_target!(|data: [i16; 5]| {
         let expected = (real(a * root + b) / real(c * root + d)).unwrap();
         let representation = report.representation.as_ref().unwrap();
         assert!(representation.is_valid());
-        assert_eq!(representation.exact_rational_witness(), Some(&expected));
+        assert_eq!(representation.exact_point_witness(), Some(&expected));
     }
 });

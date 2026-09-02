@@ -103,7 +103,7 @@ fuzz_target!(|data: &[u8]| {
     );
     match mode {
         0 => assert!(certification.all_satisfied()),
-        1 | 2 | 3 | 4 | 5 => assert!(!certification.all_satisfied()),
+        1..=5 => assert!(!certification.all_satisfied()),
         _ => unreachable!(),
     }
     if mode == 5 {

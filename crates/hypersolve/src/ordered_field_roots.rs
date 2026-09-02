@@ -115,8 +115,12 @@ fn polynomial_sign_at_if_separated<C: Clone, F: OrderedFieldPolynomialContext<C>
     parameter: &Real,
     field: &mut F,
 ) -> Result<Option<Ordering>, F::Error> {
-    let mut value = field.zero()?;
-    for coefficient in polynomial.iter().rev() {
+    let Some((leading, remaining)) = polynomial.split_last() else {
+        let zero = field.zero()?;
+        return field.sign_if_separated(&zero);
+    };
+    let mut value = leading.clone();
+    for coefficient in remaining.iter().rev() {
         let scaled = field.scale(&value, parameter)?;
         value = field.add(&scaled, coefficient)?;
     }
@@ -133,19 +137,20 @@ fn deflate_at_represented_root<C: Clone, F: OrderedFieldPolynomialContext<C>>(
         && polynomial_sign_at_if_separated(&polynomial, root, field)? == Some(Ordering::Equal)
     {
         let degree = polynomial.len() - 1;
-        let mut quotient = vec![field.zero()?; degree];
-        quotient[degree - 1] = polynomial[degree].clone();
+        let mut quotient = Vec::with_capacity(degree);
+        quotient.push(polynomial[degree].clone());
         for power in (1..degree).rev() {
-            let product = field.scale(&quotient[power], root)?;
-            quotient[power - 1] = field.add(&product, &polynomial[power])?;
+            let product = field.scale(&quotient[quotient.len() - 1], root)?;
+            quotient.push(field.add(&product, &polynomial[power])?);
         }
-        let product = field.scale(&quotient[0], root)?;
+        let product = field.scale(&quotient[quotient.len() - 1], root)?;
         let remainder = field.add(&product, &polynomial[0])?;
         if field.sign(&remainder)? != Ordering::Equal {
             // The exact sign predicate selected this root, so a nonzero
             // synthetic remainder means the caller's field contract broke.
             return Ok((polynomial, had_root));
         }
+        quotient.reverse();
         polynomial = quotient;
         trim_polynomial(&mut polynomial, field)?;
         had_root = true;
@@ -169,8 +174,9 @@ fn power_to_bernstein_on_interval<C: Clone, F: OrderedFieldPolynomialContext<C>>
     let mut shifted_power = vec![leading.clone()];
     for coefficient in polynomial[..degree].iter().rev() {
         let old_len = shifted_power.len();
-        shifted_power.push(field.zero()?);
-        for power in (1..=old_len).rev() {
+        let highest_power = field.scale(&shifted_power[old_len - 1], &width)?;
+        shifted_power.push(highest_power);
+        for power in (1..old_len).rev() {
             let same_power = field.scale(&shifted_power[power], lower)?;
             let prior_power = field.scale(&shifted_power[power - 1], &width)?;
             shifted_power[power] = field.add(&same_power, &prior_power)?;
@@ -182,9 +188,19 @@ fn power_to_bernstein_on_interval<C: Clone, F: OrderedFieldPolynomialContext<C>>
     // x^j = sum_{i=j}^n C(i,j)/C(n,j) B_i^n(x).
     let mut controls = Vec::with_capacity(degree + 1);
     for index in 0..=degree {
-        let mut control = field.zero()?;
+        let mut control = shifted_power[0].clone();
         let mut ratio = Real::one();
-        for (power, coefficient) in shifted_power.iter().enumerate().take(index + 1) {
+        if index != 0 {
+            let (Ok(numerator), Ok(denominator)) = (u64::try_from(index), u64::try_from(degree))
+            else {
+                return Ok(None);
+            };
+            let Ok(next) = (ratio * Real::from(numerator)) / Real::from(denominator) else {
+                return Ok(None);
+            };
+            ratio = next;
+        }
+        for (power, coefficient) in shifted_power.iter().enumerate().take(index + 1).skip(1) {
             let term = field.scale(coefficient, &ratio)?;
             control = field.add(&control, &term)?;
             if power != index {
@@ -499,5 +515,105 @@ where
             isolated,
             subdivision_steps,
         ));
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    struct RationalRealContext;
+
+    impl OrderedFieldPolynomialContext<Real> for RationalRealContext {
+        type Error = ();
+
+        fn zero(&mut self) -> Result<Real, Self::Error> {
+            Ok(Real::zero())
+        }
+
+        fn add(&mut self, left: &Real, right: &Real) -> Result<Real, Self::Error> {
+            Ok(left + right)
+        }
+
+        fn scale(&mut self, value: &Real, scale: &Real) -> Result<Real, Self::Error> {
+            Ok(value * scale)
+        }
+
+        fn sign(&mut self, value: &Real) -> Result<Ordering, Self::Error> {
+            value.partial_cmp(&Real::zero()).ok_or(())
+        }
+
+        fn sign_if_separated(&mut self, value: &Real) -> Result<Option<Ordering>, Self::Error> {
+            self.sign(value).map(Some)
+        }
+    }
+
+    fn fraction(numerator: i64, denominator: i64) -> Real {
+        (Real::from(numerator) / Real::from(denominator)).expect("nonzero integer denominator")
+    }
+
+    #[test]
+    fn rational_endpoint_and_midpoint_roots_deflate_to_distinct_witnesses() {
+        // x(x-1)(x-1/2)^2 has three distinct represented roots. This fixes
+        // both endpoint ownership and descending synthetic-division storage.
+        let polynomial = vec![
+            Real::zero(),
+            fraction(-1, 4),
+            fraction(5, 4),
+            Real::from(-2),
+            Real::one(),
+        ];
+        let report = isolate_ordered_field_polynomial_roots(
+            polynomial,
+            &Real::zero(),
+            &Real::one(),
+            OrderedFieldRootIsolationConfig {
+                max_subdivision_depth: 16,
+                refinement_steps: 2,
+            },
+            &mut RationalRealContext,
+        )
+        .expect("rational field operations are total");
+
+        assert_eq!(report.status, OrderedFieldRootIsolationStatus::Isolated);
+        assert_eq!(report.intervals.len(), 3);
+        assert_eq!(report.intervals[0].exact_root, Some(Real::zero()));
+        assert_eq!(report.intervals[1].exact_root, Some(fraction(1, 2)));
+        assert_eq!(report.intervals[2].exact_root, Some(Real::one()));
+        assert!(
+            report
+                .intervals
+                .iter()
+                .all(|interval| interval.distinct_root_count == 1)
+        );
+    }
+
+    #[test]
+    fn repeated_irrational_root_requests_the_complete_fallback() {
+        // (x^2-2)^2 has one repeated irrational root in (1,2); bounded
+        // division-free variation must not claim it is a simple isolator.
+        let report = isolate_ordered_field_polynomial_roots(
+            vec![
+                Real::from(4),
+                Real::zero(),
+                Real::from(-4),
+                Real::zero(),
+                Real::one(),
+            ],
+            &Real::one(),
+            &Real::from(2),
+            OrderedFieldRootIsolationConfig {
+                max_subdivision_depth: 4,
+                refinement_steps: 0,
+            },
+            &mut RationalRealContext,
+        )
+        .expect("rational field operations are total");
+
+        assert_eq!(
+            report.status,
+            OrderedFieldRootIsolationStatus::CompleteFallbackRequired
+        );
+        assert!(report.intervals.is_empty());
     }
 }

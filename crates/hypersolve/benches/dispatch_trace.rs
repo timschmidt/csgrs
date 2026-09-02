@@ -5,21 +5,27 @@ use std::hint::black_box;
 
 use hyperreal::{Rational, Real};
 use hypersolve::{
+    AlgebraicRootKind, AlgebraicRootRationalImageStatus, AlgebraicRootRefinementComparisonConfig,
+    AlgebraicRootRepresentation, AlgebraicRootValidationReport, AlgebraicRootValidationStatus,
     BatchPredicateScheduleConfig, BezierPowerBasisSubstitutionConfig, Constraint,
     CurveIntersectionResultantConfig, CurveResultantParameter, Expr,
-    IntervalBoxCertificationPackage, PolynomialCurvePoint2, PolynomialParametricCurve2, Problem,
-    ProposalEngineKind, RootIsolationConfig, SolverConfig, SolverState, SparseResidualTerm,
-    SymbolId, VariableBall, analyze_exact_affine_rank, audit_active_set,
-    certify_affine_krawczyk_box, certify_candidate, certify_candidate_batch,
+    IntervalBoxCertificationPackage, IsolatedRootInterval, PolynomialCurvePoint2,
+    PolynomialParametricCurve2, Problem, ProposalEngineKind, RootIsolationConfig, SolverConfig,
+    SolverState, SparseResidualTerm, SymbolId, VariableBall, analyze_exact_affine_rank,
+    audit_active_set, certify_affine_krawczyk_box, certify_candidate, certify_candidate_batch,
     certify_candidate_domains, certify_interval_box_candidate, certify_sketch_construction,
-    context_from_problem, determinant_bareiss, diagnose_failed_constraints,
-    isolate_univariate_polynomial_roots, preflight_sketch_degeneracies,
+    compare_algebraic_root_representations, compare_algebraic_root_representations_by_difference,
+    compare_algebraic_root_representations_with_refinement, context_from_problem,
+    determinant_bareiss, diagnose_failed_constraints, evaluate_polynomial_at_algebraic_root,
+    evaluate_rational_expression_at_algebraic_root, isolate_univariate_polynomial_roots,
+    polynomial_has_one_distinct_root_in_open_interval, preflight_sketch_degeneracies,
     preflight_sketch_entity_domains, preflight_sketch_parameter_domains,
-    represent_univariate_algebraic_roots, resultant_parametric_curve_intersection,
-    resultant_univariate_polynomials, schedule_candidate_batch_predicates,
-    solve_damped_least_squares, solve_dense_linear_system_bareiss,
-    solve_dense_linear_system_bareiss_multi_rhs, solve_direct_affine_system,
-    solve_sparse_linear_system_bareiss, substitute_bezier_power_basis,
+    represent_univariate_algebraic_roots, represented_root_sign,
+    resultant_parametric_curve_intersection, resultant_univariate_polynomials,
+    schedule_candidate_batch_predicates, solve_damped_least_squares,
+    solve_dense_linear_system_bareiss, solve_dense_linear_system_bareiss_multi_rhs,
+    solve_direct_affine_system, solve_sparse_linear_system_bareiss, substitute_bezier_power_basis,
+    transform_algebraic_root_rational_image, transform_algebraic_root_rational_images,
 };
 
 const MARKER_LAYER: &str = "hypersolve-benchmark";
@@ -267,6 +273,252 @@ fn trace_roots_and_interval_certification() -> hyperreal::dispatch_trace::TraceS
             IntervalBoxCertificationPackage::UnivariateQuadratic,
             hyperlimit::PredicatePolicy::APPROXIMATE_512,
         ));
+        let mut monotone_degree_16 = vec![Real::zero(); 17];
+        monotone_degree_16[0] = Real::new(Rational::fraction(-1, 2).unwrap());
+        monotone_degree_16[1] = Real::one();
+        monotone_degree_16[16] = Real::one();
+        assert_eq!(
+            black_box(polynomial_has_one_distinct_root_in_open_interval(
+                &monotone_degree_16,
+                &Real::zero(),
+                &Real::one(),
+                hyperlimit::PredicatePolicy::STRICT,
+            )),
+            Some(true)
+        );
+        assert_eq!(
+            black_box(polynomial_has_one_distinct_root_in_open_interval(
+                &[r(1), r(-4), r(4)],
+                &Real::zero(),
+                &Real::one(),
+                hyperlimit::PredicatePolicy::STRICT,
+            )),
+            Some(true)
+        );
+    })
+}
+
+fn trace_algebraic_evaluation() -> hyperreal::dispatch_trace::TraceSnapshot {
+    trace_case("algebraic_evaluation", || {
+        let root = AlgebraicRootRepresentation {
+            constraint_index: 0,
+            symbol: SymbolId(0),
+            interval_index: 0,
+            polynomial_coefficients: vec![r(-2), Real::zero(), Real::one()],
+            interval: IsolatedRootInterval {
+                lower: Real::one(),
+                upper: r(2),
+                exact_root: None,
+                distinct_root_count: 1,
+            },
+            kind: AlgebraicRootKind::IsolatingInterval,
+            validation: AlgebraicRootValidationReport {
+                status: AlgebraicRootValidationStatus::Valid,
+                message: None,
+            },
+        };
+        let dense_polynomial = vec![Real::one(); 17];
+        black_box(evaluate_polynomial_at_algebraic_root(
+            &root,
+            &dense_polynomial,
+            hyperlimit::PredicatePolicy::APPROXIMATE_512,
+        ));
+        black_box(evaluate_rational_expression_at_algebraic_root(
+            &root,
+            &[Real::one(), Real::one()],
+            &[r(2), Real::one()],
+            hyperlimit::PredicatePolicy::APPROXIMATE_512,
+        ));
+
+        let exact_value = r(2).sqrt().expect("positive radicand");
+        let exact_point = AlgebraicRootRepresentation {
+            constraint_index: 1,
+            symbol: SymbolId(0),
+            interval_index: 0,
+            polynomial_coefficients: vec![-exact_value.clone(), Real::one()],
+            interval: IsolatedRootInterval {
+                lower: exact_value.clone(),
+                upper: exact_value.clone(),
+                exact_root: Some(exact_value),
+                distinct_root_count: 1,
+            },
+            kind: AlgebraicRootKind::IsolatingInterval,
+            validation: AlgebraicRootValidationReport {
+                status: AlgebraicRootValidationStatus::Valid,
+                message: None,
+            },
+        };
+        black_box(evaluate_polynomial_at_algebraic_root(
+            &exact_point,
+            &[Real::one(), Real::one()],
+            hyperlimit::PredicatePolicy::STRICT,
+        ));
+    })
+}
+
+fn trace_algebraic_rational_images() -> hyperreal::dispatch_trace::TraceSnapshot {
+    trace_case("algebraic_rational_images", || {
+        let root = AlgebraicRootRepresentation {
+            constraint_index: 0,
+            symbol: SymbolId(0),
+            interval_index: 0,
+            polynomial_coefficients: vec![r(-2), Real::zero(), Real::one()],
+            interval: IsolatedRootInterval {
+                lower: Real::one(),
+                upper: r(2),
+                exact_root: None,
+                distinct_root_count: 1,
+            },
+            kind: AlgebraicRootKind::IsolatingInterval,
+            validation: AlgebraicRootValidationReport {
+                status: AlgebraicRootValidationStatus::Valid,
+                message: None,
+            },
+        };
+
+        let ordinary = black_box(transform_algebraic_root_rational_image(
+            &root,
+            &[Real::zero(), Real::one()],
+            &[Real::one(), Real::one()],
+            hyperlimit::PredicatePolicy::APPROXIMATE_512,
+        ));
+        assert_eq!(
+            ordinary.status,
+            AlgebraicRootRationalImageStatus::Transformed
+        );
+
+        let reduced = black_box(transform_algebraic_root_rational_image(
+            &root,
+            &[Real::zero(), Real::zero(), Real::one()],
+            &[Real::one()],
+            hyperlimit::PredicatePolicy::APPROXIMATE_512,
+        ));
+        assert_eq!(
+            reduced
+                .representation
+                .as_ref()
+                .and_then(AlgebraicRootRepresentation::exact_point_witness),
+            Some(&r(2))
+        );
+
+        let numerators = [
+            [Real::zero(), Real::one()],
+            [Real::one(), Real::one()],
+            [r(-1), r(2)],
+            [r(3), r(-1)],
+        ];
+        let numerator_refs = [
+            numerators[0].as_slice(),
+            numerators[1].as_slice(),
+            numerators[2].as_slice(),
+            numerators[3].as_slice(),
+        ];
+        let batch = black_box(transform_algebraic_root_rational_images(
+            &root,
+            numerator_refs,
+            &[r(2), r(-2), Real::one()],
+            hyperlimit::PredicatePolicy::APPROXIMATE_512,
+        ));
+        assert!(
+            batch
+                .iter()
+                .all(|report| report.status == AlgebraicRootRationalImageStatus::Transformed)
+        );
+
+        let pole = black_box(transform_algebraic_root_rational_image(
+            &root,
+            &[Real::one()],
+            &root.polynomial_coefficients,
+            hyperlimit::PredicatePolicy::APPROXIMATE_512,
+        ));
+        assert_eq!(
+            pole.status,
+            AlgebraicRootRationalImageStatus::CertifiedZeroDenominator
+        );
+    })
+}
+
+fn trace_algebraic_comparison() -> hyperreal::dispatch_trace::TraceSnapshot {
+    trace_case("algebraic_comparison", || {
+        let sqrt_two = AlgebraicRootRepresentation {
+            constraint_index: 0,
+            symbol: SymbolId(0),
+            interval_index: 0,
+            polynomial_coefficients: vec![r(-2), Real::zero(), Real::one()],
+            interval: IsolatedRootInterval {
+                lower: Real::one(),
+                upper: r(2),
+                exact_root: None,
+                distinct_root_count: 1,
+            },
+            kind: AlgebraicRootKind::IsolatingInterval,
+            validation: AlgebraicRootValidationReport {
+                status: AlgebraicRootValidationStatus::Valid,
+                message: None,
+            },
+        };
+        let sqrt_three = AlgebraicRootRepresentation {
+            constraint_index: 1,
+            polynomial_coefficients: vec![r(-3), Real::zero(), Real::one()],
+            ..sqrt_two.clone()
+        };
+        black_box(compare_algebraic_root_representations(
+            &sqrt_two,
+            &sqrt_three,
+            hyperlimit::PredicatePolicy::STRICT,
+        ));
+        black_box(compare_algebraic_root_representations_with_refinement(
+            &sqrt_two,
+            &sqrt_three,
+            AlgebraicRootRefinementComparisonConfig {
+                policy: hyperlimit::PredicatePolicy::STRICT,
+                max_refinement_rounds: 4,
+                steps_per_round: 1,
+            },
+        ));
+        black_box(compare_algebraic_root_representations_by_difference(
+            &sqrt_two,
+            &sqrt_three,
+            AlgebraicRootRefinementComparisonConfig {
+                policy: hyperlimit::PredicatePolicy::STRICT,
+                max_refinement_rounds: 0,
+                steps_per_round: 1,
+            },
+        ));
+        black_box(represented_root_sign(
+            &sqrt_two,
+            hyperlimit::PredicatePolicy::STRICT,
+        ));
+        let exact_sqrt_two_value = r(2).sqrt().expect("positive exact square root");
+        let exact_sqrt_two = AlgebraicRootRepresentation {
+            constraint_index: 2,
+            polynomial_coefficients: vec![-exact_sqrt_two_value.clone(), Real::one()],
+            interval: IsolatedRootInterval {
+                lower: exact_sqrt_two_value.clone(),
+                upper: exact_sqrt_two_value.clone(),
+                exact_root: Some(exact_sqrt_two_value),
+                distinct_root_count: 1,
+            },
+            ..sqrt_two.clone()
+        };
+        black_box(compare_algebraic_root_representations(
+            &exact_sqrt_two,
+            &sqrt_three,
+            hyperlimit::PredicatePolicy::STRICT,
+        ));
+        black_box(compare_algebraic_root_representations_by_difference(
+            &exact_sqrt_two,
+            &sqrt_two,
+            AlgebraicRootRefinementComparisonConfig {
+                policy: hyperlimit::PredicatePolicy::STRICT,
+                max_refinement_rounds: 0,
+                steps_per_round: 1,
+            },
+        ));
+        black_box(represented_root_sign(
+            &exact_sqrt_two,
+            hyperlimit::PredicatePolicy::STRICT,
+        ));
     })
 }
 
@@ -369,7 +621,9 @@ Generated by `cargo bench --bench dispatch_trace --features dispatch-trace`. Eac
         }
     }
 
-    fs::write("dispatch_trace.md", out).expect("dispatch trace report should be writable");
+    if std::env::var_os("HYPERSOLVE_SKIP_BENCHMARK_REPORTS").is_none() {
+        fs::write("dispatch_trace.md", out).expect("dispatch trace report should be writable");
+    }
 }
 
 fn main() {
@@ -391,6 +645,12 @@ fn main() {
             "roots_and_interval_certification",
             trace_roots_and_interval_certification(),
         ),
+        ("algebraic_evaluation", trace_algebraic_evaluation()),
+        (
+            "algebraic_rational_images",
+            trace_algebraic_rational_images(),
+        ),
+        ("algebraic_comparison", trace_algebraic_comparison()),
         (
             "affine_krawczyk_certification",
             trace_krawczyk_certification(),

@@ -48,7 +48,7 @@ fuzz_target!(|data: [i16; 4]| {
         let representation = report.representation.as_ref().unwrap();
         assert!(representation.is_valid());
         assert_eq!(
-            representation.exact_rational_witness(),
+            representation.exact_point_witness(),
             Some(&real(expected))
         );
     }

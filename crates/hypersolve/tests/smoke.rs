@@ -8370,6 +8370,37 @@ fn sketch_workplane_frame_respects_rotated_unit_quaternion_basis() {
 }
 
 #[test]
+fn sketch_workplane_frame_preserves_mixed_quaternion_handedness() {
+    let mut sketch = SketchSolveProblem::new();
+    let half = Real::new(Rational::fraction(1, 2).unwrap());
+    let origin = sketch.add_point3d("origin", real(10), real(20), real(30));
+    let normal = sketch.add_normal3d(
+        "cyclic frame",
+        half.clone(),
+        half.clone(),
+        half.clone(),
+        half,
+    );
+    let workplane = sketch.add_workplane("workplane", origin, normal);
+    let point2 = sketch.add_point2d("uv", real(2), real(3));
+    let point3 = sketch.add_point3d("xyz", real(10), real(24), real(35));
+
+    let frame = sketch_workplane_frame(&sketch, workplane);
+    let lift = lift_sketch_point2_to_workplane3(&sketch, workplane, point2);
+    let project = project_sketch_point3_to_workplane2(&sketch, workplane, point3);
+
+    assert_eq!(frame.status, SketchWorkplaneFrameStatus::Certified);
+    assert_eq!(frame.u_axis, Some([real(0), real(1), real(0)]));
+    assert_eq!(frame.v_axis, Some([real(0), real(0), real(1)]));
+    assert_eq!(frame.n_axis, Some([real(1), real(0), real(0)]));
+    assert_eq!(
+        lift.lifted_coordinates,
+        Some([real(10), real(22), real(33)])
+    );
+    assert_eq!(project.projected_coordinates, Some([real(4), real(5)]));
+}
+
+#[test]
 fn sketch_workplane_frame_reports_nonunit_and_invalid_references() {
     let mut sketch = SketchSolveProblem::new();
     let origin = sketch.add_point3d("origin", real(0), real(0), real(0));
@@ -10723,6 +10754,49 @@ fn root_isolation_sturm_reports_distinct_repeated_and_unsupported_rows() {
         RootIsolationStatus::UnsupportedCoefficient
     );
     assert!(reports[3].message.is_some());
+}
+
+#[test]
+fn sparse_quartic_and_its_translation_isolate_two_distinct_real_roots() {
+    let x = Expr::symbol(SymbolId(0), "x");
+    let mut problem = Problem::default();
+    problem.add_variable("x", real(0));
+    problem.add_constraint(Constraint::equality(
+        "sparse quartic with zero linear coefficient",
+        Expr::int(544) * x.clone().powi(4) - Expr::int(224) * x.clone().powi(3)
+            + Expr::int(80) * x.clone().powi(2)
+            - Expr::int(62),
+    ));
+    problem.add_constraint(Constraint::equality(
+        "unit-translated dense quartic",
+        Expr::int(544) * x.clone().powi(4)
+            + Expr::int(1952) * x.clone().powi(3)
+            + Expr::int(2672) * x.clone().powi(2)
+            + Expr::int(1664) * x
+            + Expr::int(338),
+    ));
+
+    let reports = isolate_univariate_polynomial_roots(
+        &problem.analyze(),
+        hyperlimit::PredicatePolicy::APPROXIMATE_512,
+    );
+
+    assert_eq!(reports.len(), 2);
+    for report in reports {
+        assert_eq!(report.status, RootIsolationStatus::Isolated);
+        assert_eq!(report.degree, Some(4));
+        assert_eq!(
+            report.multiplicity,
+            Some(RootMultiplicityStatus::SquareFree)
+        );
+        assert_eq!(report.intervals.len(), 2);
+        assert!(
+            report
+                .intervals
+                .iter()
+                .all(|interval| interval.distinct_root_count == 1)
+        );
+    }
 }
 
 #[test]

@@ -941,12 +941,13 @@ pub fn solve_sparse_linear_system_bareiss(
 /// Terms encode `A[row, column] += coefficient`. Duplicate terms are
 /// accumulated exactly; certified zeros are removed from the active sparse
 /// rows. Before numeric elimination, the same input is audited by
-/// [`crate::analyze_sparse_bareiss_elimination_pattern`]. Unknown structural
-/// signs or structural singularity are refused because accepting a sparse
-/// pattern after an undecided sign would violate the exact decision
-/// boundary. The numeric phase then applies Bareiss's recurrence only over row
-/// map unions that can become nonzero, preserving fill as explicit report
-/// evidence rather than hiding it inside a dense matrix.
+/// [`crate::analyze_sparse_bareiss_elimination_pattern`]. Entry and pivot signs
+/// use the caller's fast refinement bound followed by the strict exact
+/// predicate cascade; signs still unknown afterward and structural
+/// singularity are refused. The numeric phase then applies Bareiss's
+/// recurrence only over row map unions that can become nonzero, preserving
+/// fill as explicit report evidence rather than hiding it inside a dense
+/// matrix.
 pub fn solve_sparse_linear_system_bareiss_pattern_preserving(
     row_count: usize,
     column_count: usize,
@@ -1066,7 +1067,7 @@ pub fn solve_sparse_linear_system_bareiss_pattern_preserving(
         previous_pivot = pivot_value;
     }
 
-    let solution = sparse_back_substitution(&rows, &rhs_work, min_precision)?;
+    let solution = sparse_back_substitution(&rows, &rhs_work)?;
     let sparse_residual_replay = replay_assembled_sparse_rows(
         row_count,
         column_count,
@@ -1299,16 +1300,11 @@ fn select_sparse_pivot_row(
         let Some(value) = entries.get(&pivot) else {
             continue;
         };
-        match value.certified_sign_until(min_precision) {
-            CertifiedRealSign::Known {
-                sign: RealSign::Negative | RealSign::Positive,
-                ..
-            } => return Ok(Some(row)),
-            CertifiedRealSign::Known {
-                sign: RealSign::Zero,
-                ..
-            } => {}
-            CertifiedRealSign::Unknown { .. } => saw_unknown = true,
+        match sparse_certified_sign(value, min_precision) {
+            Ok(RealSign::Negative | RealSign::Positive) => return Ok(Some(row)),
+            Ok(RealSign::Zero) => {}
+            Err(SparseBareissError::UndecidedPivot { .. }) => saw_unknown = true,
+            Err(error) => return Err(error),
         }
     }
     if saw_unknown {
@@ -1321,47 +1317,38 @@ fn select_sparse_pivot_row(
 fn sparse_back_substitution(
     rows: &[BTreeMap<usize, Real>],
     rhs: &[Real],
-    min_precision: i32,
 ) -> Result<Vec<Real>, SparseBareissError> {
     let mut solution = vec![Real::zero(); rows.len()];
     for row in (0..rows.len()).rev() {
         let pivot = rows[row]
             .get(&row)
             .ok_or(SparseBareissError::Singular { pivot: row })?;
-        match pivot.certified_sign_until(min_precision) {
-            CertifiedRealSign::Known {
-                sign: RealSign::Negative | RealSign::Positive,
-                ..
-            } => {}
-            CertifiedRealSign::Known {
-                sign: RealSign::Zero,
-                ..
-            } => return Err(SparseBareissError::Singular { pivot: row }),
-            CertifiedRealSign::Unknown { .. } => {
-                return Err(SparseBareissError::UndecidedPivot { pivot: row });
-            }
-        }
         let trailing_sum = rows[row]
             .iter()
             .filter(|(column, _)| **column > row)
             .fold(Real::zero(), |sum, (column, coefficient)| {
                 sum + coefficient.clone() * solution[*column].clone()
             });
-        solution[row] = ((rhs[row].clone() - trailing_sum) / pivot.clone())
-            .map_err(|_| SparseBareissError::UnsupportedSolutionDivision { row })?;
+        let numerator = rhs[row].clone() - trailing_sum;
+        solution[row] = match numerator.clone() / pivot.clone() {
+            Ok(quotient) => quotient,
+            Err(_) => sparse_quotient_after_division_failure(numerator, pivot)
+                .map_err(|_| SparseBareissError::UnsupportedSolutionDivision { row })?,
+        };
     }
     Ok(solution)
 }
 
 fn is_certified_zero(value: &Real, min_precision: i32) -> Result<bool, SparseBareissError> {
-    match value.certified_sign_until(min_precision) {
-        CertifiedRealSign::Known {
-            sign: RealSign::Zero,
-            ..
-        } => Ok(true),
-        CertifiedRealSign::Known { .. } => Ok(false),
-        CertifiedRealSign::Unknown { .. } => Err(SparseBareissError::UndecidedPivot { pivot: 0 }),
+    match sparse_certified_sign(value, min_precision)? {
+        RealSign::Zero => Ok(true),
+        RealSign::Negative | RealSign::Positive => Ok(false),
     }
+}
+
+fn sparse_certified_sign(value: &Real, min_precision: i32) -> Result<RealSign, SparseBareissError> {
+    crate::policy_division::strict_sign_after_refinement(value, min_precision)
+        .ok_or(SparseBareissError::UndecidedPivot { pivot: 0 })
 }
 
 fn certified_sign(value: &Real, min_precision: i32) -> Result<RealSign, BareissError> {
@@ -1412,6 +1399,17 @@ fn quotient_after_nonzero(numerator: Real, denominator: &Real) -> Result<Real, h
     denominator
         .inverse_ref_assuming_nonzero()
         .map(|inverse| numerator * inverse)
+}
+
+/// Every sparse diagonal was already selected and certified nonzero. Keep the
+/// ordinary exact division hot, then reuse that proof only when `Real` cannot
+/// rediscover the denominator sign within its local bound.
+#[cold]
+fn sparse_quotient_after_division_failure(
+    numerator: Real,
+    denominator: &Real,
+) -> Result<Real, hyperreal::Problem> {
+    quotient_after_nonzero(numerator, denominator)
 }
 
 fn map_dense_replay_error(error: crate::residual_replay::DenseResidualReplayError) -> BareissError {
@@ -1866,6 +1864,31 @@ mod tests {
             .unwrap_err(),
             SparseBareissError::UncertifiedPattern
         );
+    }
+
+    #[test]
+    fn sparse_bareiss_reuses_strictly_certified_nonzero_pivot() {
+        let pivot = crate::test_support::exact_normal_positive();
+        assert!(pivot.inverse_ref().is_err());
+        let report = solve_sparse_linear_system_bareiss_pattern_preserving(
+            1,
+            1,
+            &[SparseResidualTerm {
+                row: 0,
+                column: 0,
+                coefficient: pivot.clone(),
+            }],
+            &[pivot],
+            -64,
+        )
+        .unwrap();
+
+        assert_eq!(
+            hyperlimit::compare_reals(&report.solution[0], &Real::one(), PredicatePolicy::STRICT,)
+                .value(),
+            Some(std::cmp::Ordering::Equal)
+        );
+        assert!(report.sparse_residual_replay.accepted);
     }
 
     #[test]

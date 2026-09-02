@@ -77,7 +77,7 @@ fuzz_target!(|data: [i16; 5]| {
             (real(numerator_constant + numerator_linear * root) / real(denominator)).unwrap();
         let representation = report.representation.as_ref().unwrap();
         assert!(representation.is_valid());
-        assert_eq!(representation.exact_rational_witness(), Some(&expected));
+        assert_eq!(representation.exact_point_witness(), Some(&expected));
     }
 
     let positive_constant = i64::from(data[0].unsigned_abs() % 16) + 9;

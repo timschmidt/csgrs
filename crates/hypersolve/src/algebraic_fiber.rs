@@ -23,6 +23,7 @@ use crate::ordered_field_roots::{
     OrderedFieldPolynomialContext, OrderedFieldRootIsolationConfig,
     OrderedFieldRootIsolationStatus, isolate_ordered_field_polynomial_roots,
 };
+use crate::policy_division::strict_exact_zero_for_storage;
 use crate::resultant::quotient_ring_fiber_resultant_polynomial;
 use crate::root_isolation::{
     IsolatedRootInterval, IsolatedRootRefinementStatus, RootIsolationConfig, polynomial_div_rem,
@@ -405,30 +406,45 @@ pub fn count_bivariate_fiber_roots_at_algebraic_parameter_intervals(
                     sequence_length: 1,
                 }),
                 LocalOpenIntervalRootCount::Sturm(sequence) => {
-                    let lower = cached_local_sturm_boundary_variations(
+                    // Match the single-interval endpoint/error order. Once the
+                    // lower boundary decides the report, evaluating the upper
+                    // boundary can only add irrelevant work and refinement.
+                    let lower = match cached_local_sturm_boundary_variations(
                         &mut sturm_boundary_cache,
                         sequence,
                         fiber_lower,
                         &mut field,
-                    );
-                    let upper = cached_local_sturm_boundary_variations(
+                    ) {
+                        Ok(Some(lower)) => lower,
+                        Ok(None) => {
+                            return fiber_root_count_outcome_report(
+                                Ok(LocalRootCountOutcome::EndpointRoot {
+                                    sequence_length: sequence.len(),
+                                }),
+                                &field,
+                            );
+                        }
+                        Err(error) => {
+                            return fiber_root_count_outcome_report(Err(error), &field);
+                        }
+                    };
+                    match cached_local_sturm_boundary_variations(
                         &mut sturm_boundary_cache,
                         sequence,
                         fiber_upper,
                         &mut field,
-                    );
-                    match (lower, upper) {
-                        (Ok(Some(lower)), Ok(Some(upper))) => lower
+                    ) {
+                        Ok(Some(upper)) => lower
                             .checked_sub(upper)
                             .map(|count| LocalRootCountOutcome::Counted {
                                 count,
                                 sequence_length: sequence.len(),
                             })
                             .ok_or(LocalFieldError::Undecided),
-                        (Ok(None), _) | (_, Ok(None)) => Ok(LocalRootCountOutcome::EndpointRoot {
+                        Ok(None) => Ok(LocalRootCountOutcome::EndpointRoot {
                             sequence_length: sequence.len(),
                         }),
-                        (Err(error), _) | (_, Err(error)) => Err(error),
+                        Err(error) => Err(error),
                     }
                 }
             };
@@ -504,15 +520,21 @@ pub fn isolate_bivariate_fiber_roots_at_algebraic_parameter(
                 "fiber root isolation requires lower < upper",
             );
         }
-        Err(error) => return fiber_root_isolation_error_report(error, field.certainty),
+        Err(error) => {
+            return fiber_root_isolation_error_report_with_progress(error, 0, 0, &field);
+        }
     }
     let mut fiber = match local_fiber_polynomial(polynomial, retained_parameter, &mut field) {
         Ok(fiber) => fiber,
-        Err(error) => return fiber_root_isolation_error_report(error, field.certainty),
+        Err(error) => {
+            return fiber_root_isolation_error_report_with_progress(error, 0, 0, &field);
+        }
     };
     if match local_polynomial_is_zero(&fiber, &mut field) {
         Ok(is_zero) => is_zero,
-        Err(error) => return fiber_root_isolation_error_report(error, field.certainty),
+        Err(error) => {
+            return fiber_root_isolation_error_report_with_progress(error, 0, 0, &field);
+        }
     } {
         return AlgebraicFiberRootIsolationReport {
             status: AlgebraicFiberRootIsolationStatus::IdenticallyZeroFiber,
@@ -549,7 +571,9 @@ pub fn isolate_bivariate_fiber_roots_at_algebraic_parameter(
         }
         Ok((None, subdivision_steps)) => subdivision_steps,
         Err(LocalFieldError::Undecided) => 0,
-        Err(error) => return fiber_root_isolation_error_report(error, field.certainty),
+        Err(error) => {
+            return fiber_root_isolation_error_report_with_progress(error, 0, 0, &field);
+        }
     };
 
     let mut exact_roots = Vec::new();
@@ -561,7 +585,14 @@ pub fn isolate_bivariate_fiber_roots_at_algebraic_parameter(
                     exact_roots.push(endpoint.clone());
                 }
             }
-            Err(error) => return fiber_root_isolation_error_report(error, field.certainty),
+            Err(error) => {
+                return fiber_root_isolation_error_report_with_progress(
+                    error,
+                    0,
+                    bernstein_subdivision_steps,
+                    &field,
+                );
+            }
         }
     }
 
@@ -582,9 +613,19 @@ pub fn isolate_bivariate_fiber_roots_at_algebraic_parameter(
             isolated.clear();
             break;
         }
-        let sequence = match local_sturm_sequence(fiber.clone(), &mut field) {
+        // The Sturm sequence retains the unchanged source as its first row.
+        // Move the carrier into that row; only a rational-root restart needs
+        // to clone it back out for destructive synthetic deflation.
+        let sequence = match local_sturm_sequence(std::mem::take(&mut fiber), &mut field) {
             Ok(sequence) => sequence,
-            Err(error) => return fiber_root_isolation_error_report(error, field.certainty),
+            Err(error) => {
+                return fiber_root_isolation_error_report_with_progress(
+                    error,
+                    sturm_sequence_length,
+                    subdivision_steps,
+                    &field,
+                );
+            }
         };
         sturm_sequence_length = sequence.len();
         let boundary_variations = |parameter: &Real, field: &mut LocalAlgebraicField| {
@@ -611,7 +652,14 @@ pub fn isolate_bivariate_fiber_roots_at_algebraic_parameter(
             .collect::<Result<Vec<_>, _>>()
         {
             Ok(variations) => variations,
-            Err(error) => return fiber_root_isolation_error_report(error, field.certainty),
+            Err(error) => {
+                return fiber_root_isolation_error_report_with_progress(
+                    error,
+                    sturm_sequence_length,
+                    subdivision_steps,
+                    &field,
+                );
+            }
         };
         let mut stack = boundaries
             .windows(2)
@@ -631,9 +679,11 @@ pub fn isolate_bivariate_fiber_roots_at_algebraic_parameter(
             let count = match node.lower_variations.checked_sub(node.upper_variations) {
                 Some(count) => count,
                 None => {
-                    return fiber_root_isolation_error_report(
+                    return fiber_root_isolation_error_report_with_progress(
                         LocalFieldError::Undecided,
-                        field.certainty,
+                        sturm_sequence_length,
+                        subdivision_steps,
+                        &field,
                     );
                 }
             };
@@ -661,19 +711,27 @@ pub fn isolate_bivariate_fiber_roots_at_algebraic_parameter(
                 let midpoint = match (&node.lower + &node.upper) / Real::from(2_u8) {
                     Ok(midpoint) => midpoint,
                     Err(_) => {
-                        return fiber_root_isolation_error_report(
+                        return fiber_root_isolation_error_report_with_progress(
                             LocalFieldError::Undecided,
-                            field.certainty,
+                            sturm_sequence_length,
+                            subdivision_steps,
+                            &field,
                         );
                     }
                 };
                 subdivision_steps = subdivision_steps.saturating_add(1);
-                let midpoint_sign = match local_polynomial_sign_at(&fiber, &midpoint, &mut field) {
-                    Ok(sign) => sign,
-                    Err(error) => {
-                        return fiber_root_isolation_error_report(error, field.certainty);
-                    }
-                };
+                let midpoint_sign =
+                    match local_polynomial_sign_at(&sequence[0], &midpoint, &mut field) {
+                        Ok(sign) => sign,
+                        Err(error) => {
+                            return fiber_root_isolation_error_report_with_progress(
+                                error,
+                                sturm_sequence_length,
+                                subdivision_steps,
+                                &field,
+                            );
+                        }
+                    };
                 if midpoint_sign == Ordering::Equal {
                     rational_root = Some(midpoint);
                     break;
@@ -681,24 +739,33 @@ pub fn isolate_bivariate_fiber_roots_at_algebraic_parameter(
                 let midpoint_variations = match boundary_variations(&midpoint, &mut field) {
                     Ok(variations) => variations,
                     Err(error) => {
-                        return fiber_root_isolation_error_report(error, field.certainty);
+                        return fiber_root_isolation_error_report_with_progress(
+                            error,
+                            sturm_sequence_length,
+                            subdivision_steps,
+                            &field,
+                        );
                     }
                 };
                 let left_count = match node.lower_variations.checked_sub(midpoint_variations) {
                     Some(count) => count,
                     None => {
-                        return fiber_root_isolation_error_report(
+                        return fiber_root_isolation_error_report_with_progress(
                             LocalFieldError::Undecided,
-                            field.certainty,
+                            sturm_sequence_length,
+                            subdivision_steps,
+                            &field,
                         );
                     }
                 };
                 let right_count = match midpoint_variations.checked_sub(node.upper_variations) {
                     Some(count) => count,
                     None => {
-                        return fiber_root_isolation_error_report(
+                        return fiber_root_isolation_error_report_with_progress(
                             LocalFieldError::Undecided,
-                            field.certainty,
+                            sturm_sequence_length,
+                            subdivision_steps,
+                            &field,
                         );
                     }
                 };
@@ -709,9 +776,11 @@ pub fn isolate_bivariate_fiber_roots_at_algebraic_parameter(
                     node.lower = midpoint;
                     node.lower_variations = midpoint_variations;
                 } else {
-                    return fiber_root_isolation_error_report(
+                    return fiber_root_isolation_error_report_with_progress(
                         LocalFieldError::Undecided,
-                        field.certainty,
+                        sturm_sequence_length,
+                        subdivision_steps,
+                        &field,
                     );
                 }
                 node.depth += 1;
@@ -743,16 +812,26 @@ pub fn isolate_bivariate_fiber_roots_at_algebraic_parameter(
             let midpoint = match (&node.lower + &node.upper) / Real::from(2_u8) {
                 Ok(midpoint) => midpoint,
                 Err(_) => {
-                    return fiber_root_isolation_error_report(
+                    return fiber_root_isolation_error_report_with_progress(
                         LocalFieldError::Undecided,
-                        field.certainty,
+                        sturm_sequence_length,
+                        subdivision_steps,
+                        &field,
                     );
                 }
             };
             subdivision_steps = subdivision_steps.saturating_add(1);
-            let midpoint_sign = match local_polynomial_sign_at(&fiber, &midpoint, &mut field) {
+            let midpoint_sign = match local_polynomial_sign_at(&sequence[0], &midpoint, &mut field)
+            {
                 Ok(sign) => sign,
-                Err(error) => return fiber_root_isolation_error_report(error, field.certainty),
+                Err(error) => {
+                    return fiber_root_isolation_error_report_with_progress(
+                        error,
+                        sturm_sequence_length,
+                        subdivision_steps,
+                        &field,
+                    );
+                }
             };
             if midpoint_sign == Ordering::Equal {
                 rational_root = Some(midpoint);
@@ -760,7 +839,14 @@ pub fn isolate_bivariate_fiber_roots_at_algebraic_parameter(
             }
             let midpoint_variations = match boundary_variations(&midpoint, &mut field) {
                 Ok(variations) => variations,
-                Err(error) => return fiber_root_isolation_error_report(error, field.certainty),
+                Err(error) => {
+                    return fiber_root_isolation_error_report_with_progress(
+                        error,
+                        sturm_sequence_length,
+                        subdivision_steps,
+                        &field,
+                    );
+                }
             };
             let next_depth = node.depth + 1;
             if midpoint_variations > node.upper_variations {
@@ -786,12 +872,25 @@ pub fn isolate_bivariate_fiber_roots_at_algebraic_parameter(
         let Some(root) = rational_root else {
             break;
         };
-        match deflate_local_polynomial_at_rational_root(fiber, &root, &mut field) {
+        // The sequence remains borrowed throughout subdivision, so defer this
+        // source clone until the rare restart that actually consumes it.
+        let source_fiber = sequence[0].clone();
+        match deflate_local_polynomial_at_rational_root(source_fiber, &root, &mut field) {
             Ok((deflated, true)) => fiber = deflated,
-            Ok((_, false)) | Err(_) => {
-                return fiber_root_isolation_error_report(
+            Ok((_, false)) => {
+                return fiber_root_isolation_error_report_with_progress(
                     LocalFieldError::Undecided,
-                    field.certainty,
+                    sturm_sequence_length,
+                    subdivision_steps,
+                    &field,
+                );
+            }
+            Err(error) => {
+                return fiber_root_isolation_error_report_with_progress(
+                    error,
+                    sturm_sequence_length,
+                    subdivision_steps,
+                    &field,
                 );
             }
         }
@@ -978,19 +1077,23 @@ pub fn deflate_bivariate_fiber_diagonal_root_at_algebraic_parameter(
     let mut multiplicity = 0_usize;
     while fiber.len() > 1 {
         let degree = fiber.len() - 1;
-        let mut quotient = vec![LocalFieldElement::zero(); degree];
-        quotient[degree - 1] = fiber[degree].clone();
+        // Synthetic division produces every quotient coefficient in descending
+        // order. Build that order directly so overwritten owning zeros never
+        // allocate a numerator vector for each degree.
+        let mut quotient = Vec::with_capacity(degree);
+        quotient.push(fiber[degree].clone());
         for power in (1..degree).rev() {
-            let product = match diagonal_root.multiply(&quotient[power], &field) {
+            let product = match diagonal_root.multiply(&quotient[quotient.len() - 1], &field) {
                 Ok(product) => product,
                 Err(error) => return diagonal_deflation_error_report(error, field.certainty),
             };
-            quotient[power - 1] = match fiber[power].add(&product, &field) {
+            let coefficient = match fiber[power].add(&product, &field) {
                 Ok(coefficient) => coefficient,
                 Err(error) => return diagonal_deflation_error_report(error, field.certainty),
             };
+            quotient.push(coefficient);
         }
-        let product = match diagonal_root.multiply(&quotient[0], &field) {
+        let product = match diagonal_root.multiply(&quotient[quotient.len() - 1], &field) {
             Ok(product) => product,
             Err(error) => return diagonal_deflation_error_report(error, field.certainty),
         };
@@ -1000,6 +1103,7 @@ pub fn deflate_bivariate_fiber_diagonal_root_at_algebraic_parameter(
         };
         match remainder.is_zero(&mut field) {
             Ok(true) => {
+                quotient.reverse();
                 fiber = quotient;
                 multiplicity += 1;
             }
@@ -1008,7 +1112,7 @@ pub fn deflate_bivariate_fiber_diagonal_root_at_algebraic_parameter(
         }
     }
 
-    let reduced_polynomial = match local_fiber_to_bivariate(&fiber, retained_parameter) {
+    let reduced_polynomial = match local_fiber_to_bivariate(fiber, retained_parameter) {
         Some(polynomial) => polynomial,
         None => {
             return AlgebraicFiberDiagonalDeflationReport {
@@ -1123,11 +1227,11 @@ pub fn reduce_bivariate_rational_function_at_algebraic_parameter(
             field.certainty,
         );
     };
+    let zero = std::cell::OnceCell::new();
     let numerator_pivot = numerator
         .get(pivot)
-        .cloned()
-        .unwrap_or_else(LocalFieldElement::zero);
-    let ratio = match numerator_pivot.divide(&denominator[pivot], &mut field) {
+        .unwrap_or_else(|| zero.get_or_init(LocalFieldElement::zero));
+    let ratio = match numerator_pivot.divide_after_nonzero(&denominator[pivot], &field) {
         Ok(ratio) => ratio,
         Err(error) => {
             return algebraic_fiber_rational_reduction_error_report(error, field.certainty);
@@ -1135,16 +1239,19 @@ pub fn reduce_bivariate_rational_function_at_algebraic_parameter(
     };
 
     for power in 0..numerator.len().max(denominator.len()) {
+        if power == pivot {
+            // `ratio` was constructed from this exact coefficient pair, so
+            // its cross-multiplied residual is identically zero.
+            continue;
+        }
         let numerator_coefficient = numerator
             .get(power)
-            .cloned()
-            .unwrap_or_else(LocalFieldElement::zero);
+            .unwrap_or_else(|| zero.get_or_init(LocalFieldElement::zero));
         let denominator_coefficient = denominator
             .get(power)
-            .cloned()
-            .unwrap_or_else(LocalFieldElement::zero);
+            .unwrap_or_else(|| zero.get_or_init(LocalFieldElement::zero));
         let residual = match ratio
-            .multiply(&denominator_coefficient, &field)
+            .multiply(denominator_coefficient, &field)
             .and_then(|product| numerator_coefficient.subtract(&product, &field))
         {
             Ok(residual) => residual,
@@ -1183,7 +1290,7 @@ fn normalized_local_field_rational_coefficients(
     // Make the denominator monic when its exact leading scalar is invertible;
     // otherwise an irrelevant division scale would be raised through every
     // coefficient of a later algebraic image polynomial.
-    if let Some(leading) = denominator.last().cloned()
+    if let Some(leading) = denominator.last()
         && let Ok(inverse) = Real::one() / leading
     {
         for coefficient in &mut numerator {
@@ -1352,7 +1459,7 @@ fn project_algebraic_fiber_polynomial_image_internal(
     }
     let fiber_degree = fiber.len() - 1;
     if fiber_degree > config.max_fiber_degree
-        || field.modulus.len() - 1 > config.max_retained_degree
+        || field.modulus().len() - 1 > config.max_retained_degree
     {
         return report(
             AlgebraicFiberPolynomialImageProjectionStatus::DegreeLimitExceeded,
@@ -1364,22 +1471,23 @@ fn project_algebraic_fiber_polynomial_image_internal(
     }
 
     // Coefficients are indexed first by source-fiber power, then by image
-    // power. Only structurally certified zero leading rows are discarded;
-    // an undecided coefficient remains in the exact determinant.
+    // power. Strictly proved zero storage does not contribute either degree;
+    // an unsupported coefficient remains in the exact determinant.
     let mut image_coefficients = fiber_coefficient_polynomials(image_relation, image_parameter);
+    for coefficient in &mut image_coefficients {
+        trim_strict_exact_zero_storage(coefficient);
+    }
     while image_coefficients.len() > 1
-        && image_coefficients.last().is_some_and(|coefficient| {
-            coefficient
-                .iter()
-                .all(|value| value.zero_status() == ZeroKnowledge::Zero)
-        })
+        && image_coefficients
+            .last()
+            .is_some_and(|coefficient| coefficient.iter().all(strict_exact_zero_for_storage))
     {
         image_coefficients.pop();
     }
     if image_coefficients
         .iter()
         .flatten()
-        .all(|coefficient| coefficient.zero_status() == ZeroKnowledge::Zero)
+        .all(strict_exact_zero_for_storage)
     {
         return report(
             AlgebraicFiberPolynomialImageProjectionStatus::IdenticallyZeroImageRelation,
@@ -1415,26 +1523,20 @@ fn project_algebraic_fiber_polynomial_image_internal(
             field.certainty,
         );
     }
-    let image_coefficients = match image_coefficients
+    // A scalar polynomial is already below every validated retained modulus,
+    // so no quotient reduction or fallible collection is needed here.
+    let image_coefficients = image_coefficients
         .into_iter()
         .map(|coefficient| {
             coefficient
                 .into_iter()
-                .map(|coefficient| LocalFieldElement::from_polynomial(vec![coefficient], &field))
-                .collect::<Result<Vec<_>, _>>()
+                .map(|coefficient| LocalFieldElement {
+                    numerator: vec![coefficient],
+                    denominator: None,
+                })
+                .collect()
         })
-        .collect::<Result<Vec<_>, _>>()
-    {
-        Ok(coefficients) => coefficients,
-        Err(error) => {
-            return algebraic_fiber_polynomial_image_error_report(
-                error,
-                fiber_degree,
-                image_degree_bound,
-                field.certainty,
-            );
-        }
-    };
+        .collect::<Vec<_>>();
     let mut norm_fiber = fiber;
     let mut identically_zero_fiber_factor = None;
     let primitive_image =
@@ -1548,7 +1650,7 @@ fn project_algebraic_fiber_polynomial_image_internal(
         };
     }
     let coefficients = quotient_ring_fiber_resultant_polynomial(
-        &field.modulus,
+        field.modulus(),
         &primitive_image,
         config.max_retained_degree,
     );
@@ -1620,19 +1722,31 @@ fn saturate_identically_zero_image_fiber_factor(
             coefficients.push(coefficient);
         }
     }
+    // The GCD of the image-parameter coefficients is independent of the
+    // residual source fiber. Compute it once, then intersect each successive
+    // residual with that same content so every primary multiplicity is
+    // removed even when the image contains the factor only once.
+    let mut common_image_factor = coefficients
+        .first_mut()
+        .map(std::mem::take)
+        .unwrap_or_else(|| vec![LocalFieldElement::zero()]);
+    for coefficient in coefficients.iter_mut().skip(1) {
+        common_image_factor = local_polynomial_greatest_common_divisor(
+            common_image_factor,
+            std::mem::take(coefficient),
+            field,
+        )?;
+        if common_image_factor.len() == 1 {
+            break;
+        }
+    }
     let mut residual = fiber.to_vec();
     loop {
-        let mut common_factor = residual.clone();
-        for coefficient in &coefficients {
-            common_factor = local_polynomial_greatest_common_divisor(
-                common_factor,
-                coefficient.clone(),
-                field,
-            )?;
-            if common_factor.len() == 1 {
-                break;
-            }
-        }
+        let common_factor = local_polynomial_greatest_common_divisor(
+            residual.clone(),
+            common_image_factor.clone(),
+            field,
+        )?;
         if common_factor.len() == 1 {
             break;
         }
@@ -1648,7 +1762,7 @@ fn saturate_identically_zero_image_fiber_factor(
     let residual = local_polynomial_clear_denominators(residual, field)?;
     let factor = local_polynomial_clear_denominators(factor, field)?;
     let factor =
-        local_fiber_to_bivariate(&factor, retained_parameter).ok_or(LocalFieldError::Undecided)?;
+        local_fiber_to_bivariate(factor, retained_parameter).ok_or(LocalFieldError::Undecided)?;
     Ok(Some((residual, factor)))
 }
 
@@ -1661,19 +1775,12 @@ fn local_image_retained_relation(image: Vec<Vec<Real>>) -> BivariatePolynomial {
         }
     }
     for row in &mut coefficients {
-        while row.len() > 1
-            && row
-                .last()
-                .is_some_and(|value| value.zero_status() == ZeroKnowledge::Zero)
-        {
-            row.pop();
-        }
+        trim_strict_exact_zero_storage(row);
     }
     while coefficients.len() > 1
-        && coefficients.last().is_some_and(|row| {
-            row.iter()
-                .all(|value| value.zero_status() == ZeroKnowledge::Zero)
-        })
+        && coefficients
+            .last()
+            .is_some_and(|row| row.iter().all(strict_exact_zero_for_storage))
     {
         coefficients.pop();
     }
@@ -1681,13 +1788,7 @@ fn local_image_retained_relation(image: Vec<Vec<Real>>) -> BivariatePolynomial {
 }
 
 fn normalize_projective_image_polynomial(mut coefficients: Vec<Real>) -> Vec<Real> {
-    while coefficients.len() > 1
-        && coefficients
-            .last()
-            .is_some_and(|coefficient| coefficient.zero_status() == ZeroKnowledge::Zero)
-    {
-        coefficients.pop();
-    }
+    trim_strict_exact_zero_storage(&mut coefficients);
     if let Some(leading) = coefficients.last().cloned()
         && let Ok(inverse) = Real::one() / leading
     {
@@ -1696,6 +1797,16 @@ fn normalize_projective_image_polynomial(mut coefficients: Vec<Real>) -> Vec<Rea
         }
     }
     coefficients
+}
+
+fn trim_strict_exact_zero_storage(coefficients: &mut Vec<Real>) {
+    while coefficients.len() > 1
+        && coefficients
+            .last()
+            .is_some_and(strict_exact_zero_for_storage)
+    {
+        coefficients.pop();
+    }
 }
 
 type LocalImagePolynomial = Vec<LocalFieldElement>;
@@ -1798,7 +1909,7 @@ fn local_image_polynomial_multiply(
         .checked_add(second.len())
         .and_then(|length| length.checked_sub(1))
         .ok_or(LocalFieldError::Undecided)?;
-    let mut result = vec![LocalFieldElement::zero(); length];
+    let mut result: Vec<Option<LocalFieldElement>> = vec![None; length];
     for (first_power, first_coefficient) in first.iter().enumerate() {
         if local_field_element_is_structurally_zero(first_coefficient) {
             continue;
@@ -1809,13 +1920,16 @@ fn local_image_polynomial_multiply(
             }
             let product = first_coefficient.multiply(second_coefficient, field)?;
             let target = &mut result[first_power + second_power];
-            *target = if local_field_element_is_structurally_zero(target) {
-                product
-            } else {
-                target.add(&product, field)?
-            };
+            match target {
+                Some(retained) => *retained = retained.add(&product, field)?,
+                None => *target = Some(product),
+            }
         }
     }
+    let mut result = result
+        .into_iter()
+        .map(|coefficient| coefficient.unwrap_or_else(LocalFieldElement::zero))
+        .collect::<Vec<_>>();
     trim_local_image_polynomial(&mut result, field)?;
     Ok(result)
 }
@@ -1870,11 +1984,11 @@ fn local_polynomial_quotient_multiplication_matrix(
     let matrix_len = degree
         .checked_mul(degree)
         .ok_or(LocalFieldError::Undecided)?;
-    let mut matrix = Vec::new();
+    let mut matrix: Vec<Option<LocalImagePolynomial>> = Vec::new();
     matrix
         .try_reserve_exact(matrix_len)
         .map_err(|_| LocalFieldError::Undecided)?;
-    matrix.resize_with(matrix_len, local_image_polynomial_zero);
+    matrix.resize_with(matrix_len, || None);
     let product_len = degree
         .checked_add(relation_degree)
         .ok_or(LocalFieldError::Undecided)?;
@@ -1888,7 +2002,7 @@ fn local_polynomial_quotient_multiplication_matrix(
             product[column + power].clone_from(coefficient);
         }
         for power in (degree..product_len).rev() {
-            let eliminand = product[power].clone();
+            let eliminand = std::mem::take(&mut product[power]);
             let shift = power - degree;
             for coefficient in &mut product[..shift] {
                 *coefficient = local_image_polynomial_scale(coefficient, leading, field)?;
@@ -1899,13 +2013,19 @@ fn local_polynomial_quotient_multiplication_matrix(
                 let removed = local_image_polynomial_scale(&eliminand, source_coefficient, field)?;
                 product[index] = local_image_polynomial_add(&retained, &removed, true, field)?;
             }
-            product[power] = local_image_polynomial_zero();
         }
         for row in 0..degree {
-            matrix[row * degree + column] = product[row].clone();
+            matrix[row * degree + column] = Some(std::mem::take(&mut product[row]));
         }
     }
-    Ok(matrix)
+    let mut completed = Vec::new();
+    completed
+        .try_reserve_exact(matrix_len)
+        .map_err(|_| LocalFieldError::Undecided)?;
+    for entry in matrix {
+        completed.push(entry.ok_or(LocalFieldError::Undecided)?);
+    }
+    Ok(completed)
 }
 
 /// Division-free Berkowitz determinant over the commutative polynomial ring
@@ -1916,14 +2036,33 @@ fn local_polynomial_matrix_determinant(
     dimension: usize,
     field: &mut LocalAlgebraicField,
 ) -> Result<LocalImagePolynomial, LocalFieldError> {
-    let characteristic = local_polynomial_matrix_characteristic(entries, dimension, field)?;
-    let mut determinant = characteristic
-        .last()
-        .cloned()
-        .ok_or(LocalFieldError::Undecided)?;
-    if dimension % 2 == 1 {
-        determinant = local_image_polynomial_negated(&determinant);
+    if entries.len()
+        != dimension
+            .checked_mul(dimension)
+            .ok_or(LocalFieldError::Undecided)?
+    {
+        return Err(LocalFieldError::Undecided);
     }
+    let mut determinant = match dimension {
+        0 => local_image_polynomial_one(field)?,
+        1 => entries[0].clone(),
+        2 => {
+            let diagonal = local_image_polynomial_multiply(&entries[0], &entries[3], field)?;
+            let off_diagonal = local_image_polynomial_multiply(&entries[1], &entries[2], field)?;
+            local_image_polynomial_add(&diagonal, &off_diagonal, true, field)?
+        }
+        _ => {
+            let characteristic = local_polynomial_matrix_characteristic(entries, dimension, field)?;
+            let mut determinant = characteristic
+                .last()
+                .cloned()
+                .ok_or(LocalFieldError::Undecided)?;
+            if dimension % 2 == 1 {
+                determinant = local_image_polynomial_negated(&determinant);
+            }
+            determinant
+        }
+    };
     trim_local_image_polynomial(&mut determinant, field)?;
     Ok(determinant)
 }
@@ -1978,7 +2117,7 @@ fn local_polynomial_matrix_characteristic(
         .map(|source_row| entries[source_row * dimension].clone())
         .collect::<Vec<_>>();
     for power in 0..minor_dimension {
-        let mut product = local_image_polynomial_zero();
+        let mut product: Option<LocalImagePolynomial> = None;
         for (left, right) in row.iter().zip(&vector) {
             if local_image_polynomial_is_structurally_zero(left)
                 || local_image_polynomial_is_structurally_zero(right)
@@ -1986,8 +2125,12 @@ fn local_polynomial_matrix_characteristic(
                 continue;
             }
             let term = local_image_polynomial_multiply(left, right, field)?;
-            product = local_image_polynomial_add(&product, &term, false, field)?;
+            product = Some(match product {
+                Some(product) => local_image_polynomial_add(&product, &term, false, field)?,
+                None => term,
+            });
         }
+        let product = product.unwrap_or_else(local_image_polynomial_zero);
         first_column.push(local_image_polynomial_negated(&product));
         if power + 1 == minor_dimension {
             break;
@@ -1996,7 +2139,7 @@ fn local_polynomial_matrix_characteristic(
         next.try_reserve_exact(minor_dimension)
             .map_err(|_| LocalFieldError::Undecided)?;
         for matrix_row in 0..minor_dimension {
-            let mut value = local_image_polynomial_zero();
+            let mut value: Option<LocalImagePolynomial> = None;
             for matrix_column in 0..minor_dimension {
                 if local_image_polynomial_is_structurally_zero(
                     &minor[matrix_row * minor_dimension + matrix_column],
@@ -2009,9 +2152,12 @@ fn local_polynomial_matrix_characteristic(
                     &vector[matrix_column],
                     field,
                 )?;
-                value = local_image_polynomial_add(&value, &term, false, field)?;
+                value = Some(match value {
+                    Some(value) => local_image_polynomial_add(&value, &term, false, field)?,
+                    None => term,
+                });
             }
-            next.push(value);
+            next.push(value.unwrap_or_else(local_image_polynomial_zero));
         }
         vector = next;
     }
@@ -2021,7 +2167,7 @@ fn local_polynomial_matrix_characteristic(
         .try_reserve_exact(dimension + 1)
         .map_err(|_| LocalFieldError::Undecided)?;
     for output_power in 0..=dimension {
-        let mut coefficient = local_image_polynomial_zero();
+        let mut coefficient: Option<LocalImagePolynomial> = None;
         for source_power in 0..minor_characteristic.len().min(output_power + 1) {
             let factor = &first_column[output_power - source_power];
             if local_image_polynomial_is_structurally_zero(factor)
@@ -2034,9 +2180,12 @@ fn local_polynomial_matrix_characteristic(
                 &minor_characteristic[source_power],
                 field,
             )?;
-            coefficient = local_image_polynomial_add(&coefficient, &term, false, field)?;
+            coefficient = Some(match coefficient {
+                Some(coefficient) => local_image_polynomial_add(&coefficient, &term, false, field)?,
+                None => term,
+            });
         }
-        characteristic.push(coefficient);
+        characteristic.push(coefficient.unwrap_or_else(local_image_polynomial_zero));
     }
     Ok(characteristic)
 }
@@ -2082,11 +2231,12 @@ fn primitive_local_image_coefficients(
             let (quotient, remainder) =
                 polynomial_div_rem(coefficient.numerator, &content, field.policy)
                     .ok_or(LocalFieldError::Undecided)?;
-            if remainder
-                .iter()
-                .any(|coefficient| coefficient.zero_status() != ZeroKnowledge::Zero)
-            {
-                return Err(LocalFieldError::Undecided);
+            for coefficient in &remainder {
+                if coefficient.zero_status() != ZeroKnowledge::Zero
+                    && field.compare(coefficient, &Real::zero())? != Ordering::Equal
+                {
+                    return Err(LocalFieldError::Undecided);
+                }
             }
             Ok(quotient)
         })
@@ -2147,43 +2297,42 @@ pub fn project_bivariate_fiber_at_algebraic_parameter(
 
 /// Projects one bivariate fiber with an explicit quotient-ring degree budget.
 ///
-/// The determinant construction is exponential in `max_source_degree`; callers
-/// should opt above the default degree eight only for bounded operation-specific
-/// fields whose generic resultant would be materially larger.
+/// The determinant construction is exponential in the retained root's defining
+/// degree, and `max_source_degree` bounds that matrix dimension. Callers should
+/// opt above the default degree eight only for bounded operation-specific fields
+/// whose generic resultant would be materially larger.
 pub fn project_bivariate_fiber_at_algebraic_parameter_with_max_degree(
     polynomial: &BivariatePolynomial,
     retained_parameter: CurveResultantParameter,
     retained_root: &AlgebraicRootRepresentation,
     max_source_degree: usize,
-    policy: PredicatePolicy,
+    _policy: PredicatePolicy,
 ) -> AlgebraicFiberProjectionReport {
-    let field = match LocalAlgebraicField::new(retained_root, policy) {
-        Ok(field) => field,
-        Err(LocalFieldError::InvalidEvidence | LocalFieldError::InvalidInterval) => {
-            return AlgebraicFiberProjectionReport {
-                status: AlgebraicFiberProjectionStatus::InvalidEvidence,
-                coefficients: Vec::new(),
-            };
+    // This quotient-ring norm needs only the immutable defining polynomial.
+    // Share the exact LocalAlgebraicField admission boundary, then avoid
+    // cloning the complete refinable root and constructing an unused cache.
+    if !is_valid_local_algebraic_field_evidence(retained_root) {
+        return AlgebraicFiberProjectionReport {
+            status: AlgebraicFiberProjectionStatus::InvalidEvidence,
+            coefficients: Vec::new(),
+        };
+    }
+    let coefficients = match retained_parameter {
+        CurveResultantParameter::First => {
+            let fiber_coefficients = fiber_coefficient_polynomials(polynomial, retained_parameter);
+            quotient_ring_fiber_resultant_polynomial(
+                &retained_root.polynomial_coefficients,
+                &fiber_coefficients,
+                max_source_degree,
+            )
         }
-        Err(LocalFieldError::UnsupportedCoefficient) => {
-            return AlgebraicFiberProjectionReport {
-                status: AlgebraicFiberProjectionStatus::UnsupportedCoefficient,
-                coefficients: Vec::new(),
-            };
-        }
-        Err(LocalFieldError::DivisionByZero | LocalFieldError::Undecided) => {
-            return AlgebraicFiberProjectionReport {
-                status: AlgebraicFiberProjectionStatus::Undecided,
-                coefficients: Vec::new(),
-            };
-        }
+        CurveResultantParameter::Second => quotient_ring_fiber_resultant_polynomial(
+            &retained_root.polynomial_coefficients,
+            &polynomial.coefficients,
+            max_source_degree,
+        ),
     };
-    let fiber_coefficients = fiber_coefficient_polynomials(polynomial, retained_parameter);
-    match quotient_ring_fiber_resultant_polynomial(
-        &field.modulus,
-        &fiber_coefficients,
-        max_source_degree,
-    ) {
+    match coefficients {
         Some(coefficients) => AlgebraicFiberProjectionReport {
             status: AlgebraicFiberProjectionStatus::Constructed,
             coefficients,
@@ -2196,37 +2345,41 @@ pub fn project_bivariate_fiber_at_algebraic_parameter_with_max_degree(
 }
 
 fn local_fiber_to_bivariate(
-    fiber: &[LocalFieldElement],
+    fiber: Vec<LocalFieldElement>,
     retained_parameter: CurveResultantParameter,
 ) -> Option<BivariatePolynomial> {
-    let coefficients = fiber
+    if fiber
         .iter()
-        .map(|coefficient| {
-            coefficient
-                .denominator
-                .is_none()
-                .then(|| coefficient.numerator.clone())
-        })
-        .collect::<Option<Vec<_>>>()?;
-    Some(BivariatePolynomial::new(match retained_parameter {
+        .any(|coefficient| coefficient.denominator.is_some())
+    {
+        return None;
+    }
+    let coefficients = match retained_parameter {
         CurveResultantParameter::First => {
-            let retained_count = coefficients.iter().map(Vec::len).max().unwrap_or(0);
-            (0..retained_count)
-                .map(|retained_power| {
-                    coefficients
-                        .iter()
-                        .map(|coefficient| {
-                            coefficient
-                                .get(retained_power)
-                                .cloned()
-                                .unwrap_or_else(Real::zero)
-                        })
-                        .collect()
-                })
-                .collect()
+            let retained_count = fiber
+                .iter()
+                .map(|coefficient| coefficient.numerator.len())
+                .max()
+                .unwrap_or(0);
+            let fiber_count = fiber.len();
+            let mut coefficients = (0..retained_count)
+                .map(|_| Vec::with_capacity(fiber_count))
+                .collect::<Vec<_>>();
+            for coefficient in fiber {
+                let mut numerator = coefficient.numerator.into_iter();
+                for retained_row in &mut coefficients {
+                    retained_row.push(numerator.next().unwrap_or_else(Real::zero));
+                }
+                debug_assert!(numerator.next().is_none());
+            }
+            coefficients
         }
-        CurveResultantParameter::Second => coefficients,
-    }))
+        CurveResultantParameter::Second => fiber
+            .into_iter()
+            .map(|coefficient| coefficient.numerator)
+            .collect(),
+    };
+    Some(BivariatePolynomial::new(coefficients))
 }
 
 fn diagonal_deflation_error_report(
@@ -2406,6 +2559,7 @@ fn local_evaluation_sign(
         }
         AlgebraicRootPolynomialEvaluationStatus::Undecided
         | AlgebraicRootPolynomialEvaluationStatus::EvaluatedExactRationalWitness
+        | AlgebraicRootPolynomialEvaluationStatus::EvaluatedExactRealWitness
         | AlgebraicRootPolynomialEvaluationStatus::IntervalCertifiedPositive
         | AlgebraicRootPolynomialEvaluationStatus::IntervalCertifiedNegative => {
             Err(LocalFieldError::Undecided)
@@ -2665,17 +2819,25 @@ fn deflate_local_polynomial_at_rational_root(
         && local_polynomial_sign_at(&polynomial, root, field)? == Ordering::Equal
     {
         let degree = polynomial.len() - 1;
-        let mut quotient = vec![LocalFieldElement::zero(); degree];
-        quotient[degree - 1] = polynomial[degree].clone();
+        let mut quotient = Vec::with_capacity(degree);
+        quotient.push(polynomial[degree].clone());
         for power in (1..degree).rev() {
-            quotient[power - 1] = quotient[power]
+            let coefficient = quotient
+                .last()
+                .ok_or(LocalFieldError::Undecided)?
                 .scale(root, field)?
                 .add(&polynomial[power], field)?;
+            quotient.push(coefficient);
         }
-        let remainder = quotient[0].scale(root, field)?.add(&polynomial[0], field)?;
+        let remainder = quotient
+            .last()
+            .ok_or(LocalFieldError::Undecided)?
+            .scale(root, field)?
+            .add(&polynomial[0], field)?;
         if !remainder.is_zero(field)? {
             return Err(LocalFieldError::Undecided);
         }
+        quotient.reverse();
         polynomial = quotient;
         had_root = true;
     }
@@ -2761,25 +2923,40 @@ fn local_polynomial_divide_exact(
         return Err(LocalFieldError::Undecided);
     }
     let divisor_degree = divisor.len() - 1;
-    let mut quotient = vec![LocalFieldElement::zero(); dividend.len() - divisor_degree];
+    let quotient_len = dividend.len() - divisor_degree;
+    // Long division discovers nonzero quotient terms from highest degree to
+    // lowest. Retain that order until the end, inserting owning zeros only for
+    // degrees genuinely skipped when exact cancellation trims the dividend.
+    let mut quotient = Vec::with_capacity(quotient_len);
+    let mut next_quotient_degree = quotient_len;
     while dividend.len() >= divisor.len() && !(dividend.len() == 1 && dividend[0].is_zero(field)?) {
         let degree_delta = dividend.len() - divisor.len();
+        while next_quotient_degree > degree_delta + 1 {
+            quotient.push(LocalFieldElement::zero());
+            next_quotient_degree -= 1;
+        }
         let scale = dividend.last().ok_or(LocalFieldError::Undecided)?.divide(
             divisor.last().ok_or(LocalFieldError::DivisionByZero)?,
             field,
         )?;
-        quotient[degree_delta] = scale.clone();
         for (power, divisor_coefficient) in divisor.iter().enumerate().take(divisor_degree) {
             let product = scale.multiply(divisor_coefficient, field)?;
             dividend[degree_delta + power] =
                 dividend[degree_delta + power].subtract(&product, field)?;
         }
-        dividend[degree_delta + divisor_degree] = LocalFieldElement::zero();
+        dividend.pop().ok_or(LocalFieldError::Undecided)?;
+        quotient.push(scale);
+        next_quotient_degree = degree_delta;
         trim_local_polynomial(&mut dividend, field)?;
     }
     if !local_polynomial_is_zero(&dividend, field)? {
         return Err(LocalFieldError::Undecided);
     }
+    while next_quotient_degree > 0 {
+        quotient.push(LocalFieldElement::zero());
+        next_quotient_degree -= 1;
+    }
+    quotient.reverse();
     trim_local_polynomial(&mut quotient, field)?;
     Ok(quotient)
 }
@@ -2798,32 +2975,25 @@ fn local_polynomial_clear_denominators(
     {
         return Ok(polynomial);
     }
-    let denominators = polynomial
-        .iter()
-        .map(|coefficient| {
-            coefficient
-                .denominator
-                .clone()
-                .unwrap_or_else(|| vec![Real::one()])
-        })
-        .collect::<Vec<_>>();
-    let mut prefixes = Vec::with_capacity(denominators.len() + 1);
+    let mut prefixes = Vec::with_capacity(polynomial.len() + 1);
     prefixes.push(vec![Real::one()]);
-    for denominator in &denominators {
-        let prefix = field.multiply_polynomials(
-            prefixes.last().ok_or(LocalFieldError::Undecided)?,
-            denominator,
-        )?;
+    for coefficient in &polynomial {
+        let previous = prefixes.last().ok_or(LocalFieldError::Undecided)?;
+        let prefix = match &coefficient.denominator {
+            Some(denominator) => field.multiply_polynomials(previous, denominator)?,
+            None => previous.clone(),
+        };
         prefixes.push(prefix);
     }
     let mut suffix = vec![Real::one()];
     for index in (0..polynomial.len()).rev() {
         let scale = field.multiply_polynomials(&prefixes[index], &suffix)?;
-        polynomial[index] = LocalFieldElement {
-            numerator: field.multiply_polynomials(&polynomial[index].numerator, &scale)?,
-            denominator: None,
-        };
-        suffix = field.multiply_polynomials(&denominators[index], &suffix)?;
+        let numerator = field.multiply_polynomials(&polynomial[index].numerator, &scale)?;
+        let denominator = polynomial[index].denominator.take();
+        polynomial[index].numerator = numerator;
+        if let Some(denominator) = denominator {
+            suffix = field.multiply_polynomials(&denominator, &suffix)?;
+        }
     }
     trim_local_polynomial(&mut polynomial, field)?;
     Ok(polynomial)
@@ -2853,7 +3023,7 @@ fn local_polynomial_remainder(
         // Long division chose `scale` precisely to cancel this coefficient.
         // Preserve that field identity directly: expanded numerator and
         // denominator products need not have identical scalar-DAG ordering.
-        dividend[degree_delta + divisor_degree] = LocalFieldElement::zero();
+        dividend.pop().ok_or(LocalFieldError::Undecided)?;
         trim_local_polynomial(&mut dividend, field)?;
     }
     Ok(dividend)
@@ -2882,8 +3052,11 @@ fn local_polynomial_sign_at(
     parameter: &Real,
     field: &mut LocalAlgebraicField,
 ) -> Result<Ordering, LocalFieldError> {
-    let mut value = LocalFieldElement::zero();
-    for coefficient in polynomial.iter().rev() {
+    let Some((leading, remaining)) = polynomial.split_last() else {
+        return Ok(Ordering::Equal);
+    };
+    let mut value = leading.clone();
+    for coefficient in remaining.iter().rev() {
         value = value.scale(parameter, field)?.add(coefficient, field)?;
     }
     value.sign(field)
@@ -3010,6 +3183,14 @@ impl LocalFieldElement {
         if other.is_zero(field)? {
             return Err(LocalFieldError::DivisionByZero);
         }
+        self.divide_after_nonzero(other, field)
+    }
+
+    fn divide_after_nonzero(
+        &self,
+        other: &Self,
+        field: &LocalAlgebraicField,
+    ) -> Result<Self, LocalFieldError> {
         let numerator = match &other.denominator {
             Some(denominator) => field.multiply_polynomials(&self.numerator, denominator)?,
             None => self.numerator.clone(),
@@ -3096,7 +3277,6 @@ impl LocalFieldElement {
 
 struct LocalAlgebraicField {
     root: AlgebraicRootRepresentation,
-    modulus: Vec<Real>,
     signed_polynomials: Vec<(Vec<Real>, Ordering)>,
     policy: PredicatePolicy,
     certainty: Certainty,
@@ -3104,12 +3284,21 @@ struct LocalAlgebraicField {
 }
 
 fn evaluate_real_polynomial(polynomial: &[Real], parameter: &Real) -> Real {
-    polynomial
+    let Some((leading, remaining)) = polynomial.split_last() else {
+        return Real::zero();
+    };
+    remaining
         .iter()
         .rev()
-        .fold(Real::zero(), |value, coefficient| {
+        .fold(leading.clone(), |value, coefficient| {
             value * parameter + coefficient
         })
+}
+
+fn is_valid_local_algebraic_field_evidence(root: &AlgebraicRootRepresentation) -> bool {
+    root.is_valid()
+        && root.interval.distinct_root_count == 1
+        && root.polynomial_coefficients.len() > 1
 }
 
 impl LocalAlgebraicField {
@@ -3117,20 +3306,20 @@ impl LocalAlgebraicField {
         root: &AlgebraicRootRepresentation,
         policy: PredicatePolicy,
     ) -> Result<Self, LocalFieldError> {
-        if !root.is_valid()
-            || root.interval.distinct_root_count != 1
-            || root.polynomial_coefficients.len() <= 1
-        {
+        if !is_valid_local_algebraic_field_evidence(root) {
             return Err(LocalFieldError::InvalidEvidence);
         }
         Ok(Self {
             root: root.clone(),
-            modulus: root.polynomial_coefficients.clone(),
             signed_polynomials: Vec::new(),
             policy,
             certainty: Certainty::Exact,
             refinement_steps: 0,
         })
+    }
+
+    fn modulus(&self) -> &[Real] {
+        &self.root.polynomial_coefficients
     }
 
     fn observe_certainty(&mut self, certainty: Certainty) {
@@ -3168,10 +3357,10 @@ impl LocalAlgebraicField {
         if polynomial.is_empty() {
             polynomial.push(Real::zero());
         }
-        if polynomial.len() < self.modulus.len() {
+        if polynomial.len() < self.modulus().len() {
             return Ok(polynomial);
         }
-        polynomial_div_rem(polynomial, &self.modulus, self.policy)
+        polynomial_div_rem(polynomial, self.modulus(), self.policy)
             .map(|(_, remainder)| remainder)
             .ok_or(LocalFieldError::Undecided)
     }
@@ -3212,15 +3401,25 @@ impl LocalAlgebraicField {
         let mut result = vec![Real::zero(); left.len() + right.len() - 1];
         for (left_power, left_coefficient) in left.iter().enumerate() {
             for (right_power, right_coefficient) in right.iter().enumerate() {
-                result[left_power + right_power] =
-                    result[left_power + right_power].clone() + left_coefficient * right_coefficient;
+                result[left_power + right_power] += left_coefficient * right_coefficient;
             }
         }
         self.reduce(result)
     }
 
+    fn debug_assert_reduced_polynomial(&self, polynomial: &[Real]) {
+        debug_assert!(!polynomial.is_empty());
+        debug_assert!(polynomial.len() < self.modulus().len());
+        debug_assert!(
+            polynomial.len() == 1
+                || polynomial
+                    .last()
+                    .is_some_and(|coefficient| coefficient.zero_status() != ZeroKnowledge::Zero)
+        );
+    }
+
     fn sign_polynomial(&mut self, polynomial: &[Real]) -> Result<Ordering, LocalFieldError> {
-        let polynomial = self.reduce(polynomial.to_vec())?;
+        self.debug_assert_reduced_polynomial(polynomial);
         if polynomial
             .iter()
             .all(|coefficient| coefficient.zero_status() == ZeroKnowledge::Zero)
@@ -3230,12 +3429,12 @@ impl LocalAlgebraicField {
         if let Some((_, sign)) = self
             .signed_polynomials
             .iter()
-            .find(|(signed, _)| signed == &polynomial)
+            .find(|(signed, _)| signed == polynomial)
         {
             return Ok(*sign);
         }
-        let sign = self.sign_reduced_polynomial(&polynomial)?;
-        self.signed_polynomials.push((polynomial, sign));
+        let sign = self.sign_reduced_polynomial(polynomial)?;
+        self.signed_polynomials.push((polynomial.to_vec(), sign));
         Ok(sign)
     }
 
@@ -3243,7 +3442,7 @@ impl LocalAlgebraicField {
         &mut self,
         polynomial: &[Real],
     ) -> Result<Option<Ordering>, LocalFieldError> {
-        let polynomial = self.reduce(polynomial.to_vec())?;
+        self.debug_assert_reduced_polynomial(polynomial);
         if polynomial
             .iter()
             .all(|coefficient| coefficient.zero_status() == ZeroKnowledge::Zero)
@@ -3253,33 +3452,32 @@ impl LocalAlgebraicField {
         if let Some((_, sign)) = self
             .signed_polynomials
             .iter()
-            .find(|(signed, _)| signed == &polynomial)
+            .find(|(signed, _)| signed == polynomial)
         {
             return Ok(Some(*sign));
         }
-        let evaluation =
-            evaluate_polynomial_at_algebraic_root(&self.root, &polynomial, self.policy);
+        let evaluation = evaluate_polynomial_at_algebraic_root(&self.root, polynomial, self.policy);
         let mut sign = local_evaluation_sign(&evaluation)?;
         // The primitive-rational local field has a fast modular GCD identity
         // path and should continue discovering exact dyadic subdivision roots.
         // General `Real` fields deliberately stay on interval evidence here.
         if sign.is_none()
             && self
-                .modulus
+                .modulus()
                 .iter()
-                .chain(&polynomial)
+                .chain(polynomial)
                 .all(|coefficient| coefficient.exact_rational_ref().is_some())
         {
-            sign = Some(self.sign_reduced_polynomial(&polynomial)?);
+            sign = Some(self.sign_reduced_polynomial(polynomial)?);
         }
         if let Some(sign) = sign {
-            self.signed_polynomials.push((polynomial, sign));
+            self.signed_polynomials.push((polynomial.to_vec(), sign));
         }
         Ok(sign)
     }
 
     fn is_zero_polynomial(&mut self, polynomial: &[Real]) -> Result<bool, LocalFieldError> {
-        let polynomial = self.reduce(polynomial.to_vec())?;
+        self.debug_assert_reduced_polynomial(polynomial);
         if polynomial
             .iter()
             .all(|coefficient| coefficient.zero_status() == ZeroKnowledge::Zero)
@@ -3289,25 +3487,25 @@ impl LocalAlgebraicField {
         if let Some((_, sign)) = self
             .signed_polynomials
             .iter()
-            .find(|(signed, _)| signed == &polynomial)
+            .find(|(signed, _)| signed == polynomial)
         {
             return Ok(*sign == Ordering::Equal);
         }
-        let evaluation =
-            evaluate_polynomial_at_algebraic_root(&self.root, &polynomial, self.policy);
+        let evaluation = evaluate_polynomial_at_algebraic_root(&self.root, polynomial, self.policy);
         if let Some(sign) = local_evaluation_sign(&evaluation)? {
-            self.signed_polynomials.push((polynomial, sign));
+            self.signed_polynomials.push((polynomial.to_vec(), sign));
             return Ok(sign == Ordering::Equal);
         }
         match polynomials_share_one_root_in_interval(
-            &self.modulus,
-            &polynomial,
+            self.modulus(),
+            polynomial,
             &self.root.interval.lower,
             &self.root.interval.upper,
             self.policy,
         ) {
             Some(true) => {
-                self.signed_polynomials.push((polynomial, Ordering::Equal));
+                self.signed_polynomials
+                    .push((polynomial.to_vec(), Ordering::Equal));
                 return Ok(true);
             }
             Some(false) => return Ok(false),
@@ -3320,21 +3518,22 @@ impl LocalAlgebraicField {
         for _ in 0..LOCAL_FIELD_INTERVAL_SIGN_REFINEMENT_ROUNDS {
             self.refine_root()?;
             let evaluation =
-                evaluate_polynomial_at_algebraic_root(&self.root, &polynomial, self.policy);
+                evaluate_polynomial_at_algebraic_root(&self.root, polynomial, self.policy);
             if let Some(sign) = local_evaluation_sign(&evaluation)? {
-                self.signed_polynomials.push((polynomial, sign));
+                self.signed_polynomials.push((polynomial.to_vec(), sign));
                 return Ok(sign == Ordering::Equal);
             }
         }
         match polynomials_share_one_root_in_interval(
-            &self.modulus,
-            &polynomial,
+            self.modulus(),
+            polynomial,
             &self.root.interval.lower,
             &self.root.interval.upper,
             self.policy,
         ) {
             Some(true) => {
-                self.signed_polynomials.push((polynomial, Ordering::Equal));
+                self.signed_polynomials
+                    .push((polynomial.to_vec(), Ordering::Equal));
                 Ok(true)
             }
             Some(false) => Ok(false),
@@ -3346,7 +3545,7 @@ impl LocalAlgebraicField {
         &mut self,
         polynomial: &[Real],
     ) -> Result<Ordering, LocalFieldError> {
-        if self.root.exact_rational_witness().is_some() {
+        if self.root.exact_point_witness().is_some() {
             return evaluate_polynomial_at_algebraic_root(&self.root, polynomial, self.policy)
                 .sign
                 .ok_or(LocalFieldError::Undecided);
@@ -3371,7 +3570,7 @@ impl LocalAlgebraicField {
         }
 
         if let Some(true) = polynomials_share_one_root_in_interval(
-            &self.modulus,
+            self.modulus(),
             polynomial,
             &self.root.interval.lower,
             &self.root.interval.upper,
@@ -3408,7 +3607,7 @@ impl LocalAlgebraicField {
         let mut lower = self.root.interval.lower.clone();
         let mut upper = self.root.interval.upper.clone();
         let mut lower_sign = match self.consume(compare_reals(
-            &evaluate_real_polynomial(&self.modulus, &lower),
+            &evaluate_real_polynomial(self.modulus(), &lower),
             &Real::zero(),
             self.policy,
         )) {
@@ -3416,7 +3615,7 @@ impl LocalAlgebraicField {
             Err(_) => return Ok(false),
         };
         let upper_sign = match self.consume(compare_reals(
-            &evaluate_real_polynomial(&self.modulus, &upper),
+            &evaluate_real_polynomial(self.modulus(), &upper),
             &Real::zero(),
             self.policy,
         )) {
@@ -3447,7 +3646,7 @@ impl LocalAlgebraicField {
             let midpoint =
                 ((&lower + &upper) / Real::from(2_u8)).map_err(|_| LocalFieldError::Undecided)?;
             let midpoint_sign = self.consume(compare_reals(
-                &evaluate_real_polynomial(&self.modulus, &midpoint),
+                &evaluate_real_polynomial(self.modulus(), &midpoint),
                 &Real::zero(),
                 self.policy,
             ))?;
@@ -3494,7 +3693,7 @@ impl LocalAlgebraicField {
             return Ok(());
         }
         let refinement = refine_isolated_univariate_polynomial_interval(
-            &self.modulus,
+            self.modulus(),
             &self.root.interval,
             RootIsolationConfig {
                 policy: self.policy,
@@ -3532,6 +3731,7 @@ impl LocalAlgebraicField {
     }
 }
 
+#[cold]
 fn fiber_root_isolation_error_report(
     error: LocalFieldError,
     certainty: Certainty,
@@ -3567,6 +3767,20 @@ fn fiber_root_isolation_error_report(
         certainty,
         message: Some(message),
     }
+}
+
+#[cold]
+fn fiber_root_isolation_error_report_with_progress(
+    error: LocalFieldError,
+    sturm_sequence_length: usize,
+    subdivision_steps: usize,
+    field: &LocalAlgebraicField,
+) -> AlgebraicFiberRootIsolationReport {
+    let mut report = fiber_root_isolation_error_report(error, field.certainty);
+    report.sturm_sequence_length = sturm_sequence_length;
+    report.subdivision_steps = subdivision_steps;
+    report.retained_refinement_steps = field.refinement_steps;
+    report
 }
 
 fn fiber_root_count_error_report(
@@ -3732,6 +3946,150 @@ mod tests {
     }
 
     #[test]
+    fn local_fiber_export_moves_ragged_coefficients_in_both_orientations() {
+        let fiber = vec![
+            LocalFieldElement {
+                numerator: vec![real(1), real(2)],
+                denominator: None,
+            },
+            LocalFieldElement {
+                numerator: vec![real(3)],
+                denominator: None,
+            },
+        ];
+        assert_eq!(
+            local_fiber_to_bivariate(fiber.clone(), CurveResultantParameter::First),
+            Some(BivariatePolynomial::new(vec![
+                vec![real(1), real(3)],
+                vec![real(2), Real::zero()],
+            ]))
+        );
+        assert_eq!(
+            local_fiber_to_bivariate(fiber, CurveResultantParameter::Second),
+            Some(BivariatePolynomial::new(vec![
+                vec![real(1), real(2)],
+                vec![real(3)],
+            ]))
+        );
+
+        assert_eq!(
+            local_fiber_to_bivariate(
+                vec![LocalFieldElement {
+                    numerator: vec![real(1)],
+                    denominator: Some(vec![Real::one()]),
+                }],
+                CurveResultantParameter::First,
+            ),
+            None
+        );
+    }
+
+    #[test]
+    fn local_exact_division_preserves_skipped_degrees_and_denominators() {
+        let policy = PredicatePolicy::STRICT;
+        let alpha = represented_root(
+            vec![real(-2), Real::zero(), Real::one()],
+            Real::one(),
+            real(2),
+            policy,
+        );
+        let mut field = LocalAlgebraicField::new(&alpha, policy).expect("valid local field");
+        let one = LocalFieldElement::from_polynomial(vec![Real::one()], &field)
+            .expect("unit coefficient");
+        let two =
+            LocalFieldElement::from_polynomial(vec![real(2)], &field).expect("integer coefficient");
+        let retained_root =
+            LocalFieldElement::from_polynomial(vec![Real::zero(), Real::one()], &field)
+                .expect("retained root coefficient");
+        let half_root = retained_root
+            .divide(&two, &mut field)
+            .expect("nonzero rational denominator");
+        assert!(half_root.denominator.is_some());
+
+        let divisor = vec![one.clone(), one.clone()];
+        let expected = vec![one, LocalFieldElement::zero(), half_root];
+        let dividend = local_image_polynomial_multiply(&divisor, &expected, &mut field)
+            .expect("exact product");
+        let quotient = local_polynomial_divide_exact(dividend, &divisor, &mut field)
+            .expect("the generated product divides exactly");
+
+        assert_eq!(quotient.len(), expected.len());
+        assert!(quotient[0].denominator.is_none());
+        assert!(quotient[1].denominator.is_none());
+        assert!(quotient[2].denominator.is_some());
+        for (actual, expected) in quotient.iter().zip(&expected) {
+            assert!(
+                actual
+                    .subtract(expected, &field)
+                    .expect("local difference")
+                    .is_zero(&mut field)
+                    .expect("decidable local identity")
+            );
+        }
+        assert_eq!(field.certainty, Certainty::Exact);
+    }
+
+    #[test]
+    fn local_small_determinant_preserves_row_major_orientation() {
+        let policy = PredicatePolicy::STRICT;
+        let alpha = represented_root(
+            vec![real(-2), Real::zero(), Real::one()],
+            Real::one(),
+            real(2),
+            policy,
+        );
+        let mut field = LocalAlgebraicField::new(&alpha, policy).expect("valid local field");
+        let constant = |value| {
+            vec![
+                LocalFieldElement::from_polynomial(vec![real(value)], &field)
+                    .expect("constant local coefficient"),
+            ]
+        };
+        let entries = vec![constant(1), constant(2), constant(3), constant(4)];
+        let determinant = local_polynomial_matrix_determinant(&entries, 2, &mut field)
+            .expect("valid two-by-two determinant");
+
+        assert_eq!(determinant.len(), 1);
+        assert_eq!(determinant[0].numerator, vec![real(-2)]);
+        assert!(determinant[0].denominator.is_none());
+        assert_eq!(field.certainty, Certainty::Exact);
+        assert!(matches!(
+            local_polynomial_matrix_determinant(&entries[..3], 2, &mut field),
+            Err(LocalFieldError::Undecided)
+        ));
+    }
+
+    #[test]
+    fn local_image_convolution_preserves_sparse_zero_slots() {
+        let policy = PredicatePolicy::STRICT;
+        let alpha = represented_root(
+            vec![real(-2), Real::zero(), Real::one()],
+            Real::one(),
+            real(2),
+            policy,
+        );
+        let mut field = LocalAlgebraicField::new(&alpha, policy).expect("valid local field");
+        let one = LocalFieldElement::from_polynomial(vec![Real::one()], &field)
+            .expect("unit coefficient");
+        let sparse = vec![one.clone(), LocalFieldElement::zero(), one];
+        let product = local_image_polynomial_multiply(&sparse, &sparse, &mut field)
+            .expect("sparse local convolution");
+
+        assert_eq!(product.len(), 5);
+        assert_eq!(product[0].numerator, vec![Real::one()]);
+        assert!(local_field_element_is_structurally_zero(&product[1]));
+        assert_eq!(product[2].numerator, vec![real(2)]);
+        assert!(local_field_element_is_structurally_zero(&product[3]));
+        assert_eq!(product[4].numerator, vec![Real::one()]);
+        assert!(
+            product
+                .iter()
+                .all(|coefficient| coefficient.denominator.is_none())
+        );
+        assert_eq!(field.certainty, Certainty::Exact);
+    }
+
+    #[test]
     fn rational_fiber_reduction_preserves_degree_fifteen_correlation() {
         // alpha^9 = 1/2 and 32768*u^15 = alpha make u a global degree-135
         // scalar. The correlated coordinate 3/5 + 32768*u^15 nevertheless
@@ -3807,6 +4165,207 @@ mod tests {
             assert_eq!(shared.denominator_coefficients, vec![Real::one()]);
             assert_eq!(shared.certainty, Certainty::Exact);
         }
+    }
+
+    #[test]
+    fn rational_fiber_reduction_preserves_ragged_zero_and_dependent_residuals() {
+        let zero = BivariatePolynomial::new(vec![vec![Real::zero()]]);
+
+        let first_fiber = BivariatePolynomial::new(vec![
+            vec![Real::zero(), Real::zero(), Real::zero(), Real::one()],
+            vec![real(-1)],
+        ]);
+        let first_denominator = BivariatePolynomial::new(vec![
+            vec![real(4), real(4), real(4)],
+            vec![real(2), real(2), real(2)],
+        ]);
+        let first_dependent = BivariatePolynomial::new(vec![vec![Real::zero(), Real::one()]]);
+
+        let second_fiber = BivariatePolynomial::new(vec![
+            vec![Real::zero(), real(-1)],
+            vec![],
+            vec![],
+            vec![Real::one()],
+        ]);
+        let second_denominator = BivariatePolynomial::new(vec![
+            vec![real(4), real(2)],
+            vec![real(4), real(2)],
+            vec![real(4), real(2)],
+        ]);
+        let second_dependent =
+            BivariatePolynomial::new(vec![vec![Real::zero()], vec![Real::one()]]);
+
+        for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
+            let irreducible = represented_root(
+                vec![real(-2), Real::zero(), Real::one()],
+                Real::one(),
+                real(2),
+                policy,
+            );
+            let reducible = represented_root(
+                vec![real(6), real(-2), real(-3), Real::one()],
+                Real::one(),
+                real(2),
+                policy,
+            );
+            for alpha in [&irreducible, &reducible] {
+                for (fiber, denominator, dependent, retained_parameter) in [
+                    (
+                        &first_fiber,
+                        &first_denominator,
+                        &first_dependent,
+                        CurveResultantParameter::First,
+                    ),
+                    (
+                        &second_fiber,
+                        &second_denominator,
+                        &second_dependent,
+                        CurveResultantParameter::Second,
+                    ),
+                ] {
+                    let reduced_zero = reduce_bivariate_rational_function_at_algebraic_parameter(
+                        fiber,
+                        &zero,
+                        denominator,
+                        retained_parameter,
+                        alpha,
+                        policy,
+                    );
+                    assert_eq!(
+                        reduced_zero.status,
+                        AlgebraicFiberRationalReductionStatus::ReducedToRetainedField
+                    );
+                    assert_eq!(reduced_zero.numerator_coefficients, vec![Real::zero()]);
+                    assert_eq!(
+                        reduced_zero.denominator_coefficients,
+                        vec![real(2), Real::one()]
+                    );
+                    assert_eq!(reduced_zero.certainty, Certainty::Exact);
+
+                    let fiber_dependent = reduce_bivariate_rational_function_at_algebraic_parameter(
+                        fiber,
+                        dependent,
+                        &BivariatePolynomial::new(vec![vec![Real::one()]]),
+                        retained_parameter,
+                        alpha,
+                        policy,
+                    );
+                    assert_eq!(
+                        fiber_dependent.status,
+                        AlgebraicFiberRationalReductionStatus::FiberDependent
+                    );
+
+                    let zero_denominator =
+                        reduce_bivariate_rational_function_at_algebraic_parameter(
+                            fiber,
+                            dependent,
+                            &zero,
+                            retained_parameter,
+                            alpha,
+                            policy,
+                        );
+                    assert_eq!(
+                        zero_denominator.status,
+                        AlgebraicFiberRationalReductionStatus::ZeroDenominator
+                    );
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn primitive_local_image_content_accepts_policy_certified_zero_remainders() {
+        let sqrt_two = real(2).sqrt().expect("positive square root");
+        let sqrt_three = real(3).sqrt().expect("positive square root");
+        let sum = &sqrt_two + &sqrt_three;
+        let radical_zero =
+            &sum * &sum - (real(5) + real(2) * real(6).sqrt().expect("positive square root"));
+        assert_eq!(radical_zero.zero_status(), ZeroKnowledge::Unknown);
+
+        for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
+            let alpha = represented_root(
+                vec![real(-2), Real::zero(), Real::one()],
+                Real::one(),
+                real(2),
+                policy,
+            );
+            let mut field = LocalAlgebraicField::new(&alpha, policy).expect("valid local field");
+            let image = vec![
+                LocalFieldElement::from_polynomial(vec![Real::one(), Real::one()], &field)
+                    .expect("reduced first coefficient"),
+                LocalFieldElement::from_polynomial(
+                    vec![Real::one() + radical_zero.clone(), Real::one()],
+                    &field,
+                )
+                .expect("reduced second coefficient"),
+            ];
+
+            let primitive = primitive_local_image_coefficients(image, &mut field)
+                .expect("the exact common content should divide both coefficients")
+                .expect("the image is not identically zero");
+            assert_eq!(primitive, vec![vec![Real::one()], vec![Real::one()]]);
+            assert_eq!(field.certainty, Certainty::Exact);
+
+            // u = alpha and (1 + u)(1 + z) + radical_zero = 0 reduce to
+            // the primitive image relation 1 + z = 0. Exercise the public
+            // projection boundary, not only its local content helper.
+            let fiber =
+                BivariatePolynomial::new(vec![vec![Real::zero(), Real::one()], vec![real(-1)]]);
+            let image = BivariatePolynomial::new(vec![
+                vec![Real::one() + radical_zero.clone(), Real::one()],
+                vec![Real::one(), Real::one()],
+            ]);
+            let report = project_algebraic_fiber_polynomial_image(
+                &fiber,
+                CurveResultantParameter::First,
+                &image,
+                CurveResultantParameter::Second,
+                &alpha,
+                AlgebraicFiberPolynomialImageProjectionConfig {
+                    max_fiber_degree: 1,
+                    max_retained_degree: 2,
+                    max_image_degree_bound: 1,
+                },
+                policy,
+            );
+            assert_eq!(
+                report.status,
+                AlgebraicFiberPolynomialImageProjectionStatus::Constructed
+            );
+            assert_eq!(report.coefficients, vec![Real::one(), Real::one()]);
+            assert_eq!(report.certainty, Certainty::Exact);
+        }
+    }
+
+    #[test]
+    fn primitive_local_image_content_rejects_unsupported_zero_remainders() {
+        let sine = real(1).sin();
+        let cosine = real(1).cos();
+        let unsupported_zero = &sine * &sine + &cosine * &cosine - Real::one();
+        assert_eq!(unsupported_zero.zero_status(), ZeroKnowledge::Unknown);
+
+        let policy = PredicatePolicy::STRICT;
+        let alpha = represented_root(
+            vec![real(-2), Real::zero(), Real::one()],
+            Real::one(),
+            real(2),
+            policy,
+        );
+        let mut field = LocalAlgebraicField::new(&alpha, policy).expect("valid local field");
+        let image = vec![
+            LocalFieldElement::from_polynomial(vec![Real::one(), Real::one()], &field)
+                .expect("reduced first coefficient"),
+            LocalFieldElement::from_polynomial(
+                vec![Real::one() + unsupported_zero, Real::one()],
+                &field,
+            )
+            .expect("reduced second coefficient"),
+        ];
+
+        assert_eq!(
+            primitive_local_image_coefficients(image, &mut field),
+            Err(LocalFieldError::Undecided)
+        );
     }
 
     #[test]
@@ -3955,6 +4514,93 @@ mod tests {
     }
 
     #[test]
+    fn polynomial_fiber_image_trims_only_strictly_exact_zero_degree() {
+        let positive = crate::test_support::exact_normal_positive();
+        let normalized_zero = real(2).powi_i64(-3000).unwrap() - positive.clone();
+        assert_eq!(normalized_zero.zero_status(), ZeroKnowledge::Unknown);
+        let fiber = BivariatePolynomial::new(vec![vec![Real::zero(), Real::one()], vec![real(-1)]]);
+        let relation = |trailing| {
+            BivariatePolynomial::new(vec![
+                vec![Real::zero(), Real::one(), trailing],
+                vec![real(-1)],
+            ])
+        };
+        let alpha = represented_root(
+            vec![real(-2), Real::zero(), Real::one()],
+            Real::one(),
+            real(2),
+            PredicatePolicy::STRICT,
+        );
+        let config = AlgebraicFiberPolynomialImageProjectionConfig {
+            max_fiber_degree: 1,
+            max_retained_degree: 2,
+            max_image_degree_bound: 1,
+        };
+
+        assert_eq!(
+            normalize_projective_image_polynomial(vec![Real::one(), normalized_zero.clone(),]),
+            vec![Real::one()]
+        );
+        let retained = local_image_retained_relation(vec![
+            vec![Real::one()],
+            vec![Real::zero()],
+            vec![normalized_zero.clone()],
+        ]);
+        assert_eq!(retained.coefficients, vec![vec![Real::one()]]);
+
+        let report = project_algebraic_fiber_polynomial_image(
+            &fiber,
+            CurveResultantParameter::First,
+            &relation(normalized_zero),
+            CurveResultantParameter::Second,
+            &alpha,
+            config,
+            PredicatePolicy::STRICT,
+        );
+        assert_eq!(
+            report.status,
+            AlgebraicFiberPolynomialImageProjectionStatus::Constructed
+        );
+        assert_eq!(report.image_degree_bound, 1);
+        assert_eq!(
+            report.coefficients,
+            vec![real(-2), Real::zero(), Real::one()]
+        );
+
+        let terminal_zero = crate::test_support::terminal_zero();
+        assert_eq!(
+            normalize_projective_image_polynomial(vec![Real::one(), terminal_zero.clone()]).len(),
+            2
+        );
+        assert_eq!(
+            local_image_retained_relation(vec![
+                vec![Real::one()],
+                vec![Real::zero()],
+                vec![terminal_zero.clone()],
+            ])
+            .coefficients[0]
+                .len(),
+            3
+        );
+        for trailing in [positive, terminal_zero] {
+            let retained = project_algebraic_fiber_polynomial_image(
+                &fiber,
+                CurveResultantParameter::First,
+                &relation(trailing),
+                CurveResultantParameter::Second,
+                &alpha,
+                config,
+                PredicatePolicy::STRICT,
+            );
+            assert_eq!(
+                retained.status,
+                AlgebraicFiberPolynomialImageProjectionStatus::DegreeLimitExceeded
+            );
+            assert_eq!(retained.image_degree_bound, 2);
+        }
+    }
+
+    #[test]
     fn polynomial_fiber_image_saturates_an_identically_zero_source_conjugate() {
         // F=(u-alpha)(u-1)^2. The image G=(u-1)(z-u) vanishes for every z on
         // the unrelated repeated u=1 source component, so the raw resultant
@@ -4032,6 +4678,75 @@ mod tests {
                 vec![real(-2), Real::zero(), Real::one()]
             );
             assert_eq!(global.certainty, Certainty::Exact);
+        }
+    }
+
+    #[test]
+    fn polynomial_fiber_image_saturates_a_fourfold_multicoefficient_component() {
+        // F=(u-alpha)(u-1)^4 and every z coefficient of G=(u-1)Q shares the
+        // unrelated u=1 component. Saturation must remove all four source
+        // multiplicities even though the image content contains it once.
+        let fiber = BivariatePolynomial::new(vec![
+            vec![real(0), real(1), real(-4), real(6), real(-4), real(1)],
+            vec![real(-1), real(4), real(-6), real(4), real(-1)],
+        ]);
+        let image = BivariatePolynomial::new(vec![
+            vec![real(-1), real(-1), real(0), real(-1)],
+            vec![real(1), real(0), real(-1), real(1)],
+            vec![real(-1), real(1), real(1)],
+            vec![real(1)],
+        ]);
+        let expected_factor =
+            BivariatePolynomial::new(vec![vec![real(1), real(-4), real(6), real(-4), real(1)]]);
+        let irreducible_retained = BivariatePolynomial::new(vec![
+            vec![real(-3), real(1), real(2), real(-1)],
+            vec![real(3), real(0), real(-1), real(1)],
+        ]);
+        for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
+            for (defining, lower, upper, expected_retained) in [
+                (
+                    vec![real(-2), Real::zero(), Real::one()],
+                    Real::one(),
+                    real(2),
+                    irreducible_retained.clone(),
+                ),
+                (
+                    vec![real(6), real(-2), real(-3), real(1)],
+                    rational(7, 5),
+                    rational(3, 2),
+                    BivariatePolynomial::new(vec![
+                        vec![real(-7), real(-1), real(0), real(-1)],
+                        vec![real(3), real(0), real(-1), real(1)],
+                        vec![real(2), real(1), real(1)],
+                    ]),
+                ),
+            ] {
+                let alpha = represented_root(defining, lower, upper, policy);
+                let report = project_algebraic_fiber_polynomial_image_relation(
+                    &fiber,
+                    CurveResultantParameter::First,
+                    &image,
+                    CurveResultantParameter::Second,
+                    &alpha,
+                    AlgebraicFiberPolynomialImageProjectionConfig {
+                        max_fiber_degree: 5,
+                        max_retained_degree: 3,
+                        max_image_degree_bound: 15,
+                    },
+                    policy,
+                );
+                assert_eq!(
+                    report.status,
+                    AlgebraicFiberPolynomialImageProjectionStatus::Constructed
+                );
+                assert_eq!(
+                    report.identically_zero_fiber_factor,
+                    Some(expected_factor.clone())
+                );
+                assert_eq!(report.retained_relation, Some(expected_retained));
+                assert!(report.coefficients.is_empty());
+                assert_eq!(report.certainty, Certainty::Exact);
+            }
         }
     }
 
@@ -4114,6 +4829,66 @@ mod tests {
                 real(2) * report.coefficients[0].clone() + report.coefficients[2].clone(),
                 Real::zero()
             );
+        }
+    }
+
+    #[test]
+    fn quotient_ring_fiber_projection_shares_local_field_admission_in_both_orientations() {
+        let retained_first =
+            BivariatePolynomial::new(vec![vec![Real::zero(), Real::one()], vec![real(-1)]]);
+        let retained_second =
+            BivariatePolynomial::new(vec![vec![Real::zero(), real(-1)], vec![Real::one()]]);
+
+        for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
+            for defining_polynomial in [
+                vec![real(-1), Real::zero(), real(2)],
+                vec![real(2), real(-1), real(-4), real(2)],
+            ] {
+                let retained_root =
+                    represented_root(defining_polynomial, rational(2, 3), rational(3, 4), policy);
+                let first = project_bivariate_fiber_at_algebraic_parameter(
+                    &retained_first,
+                    CurveResultantParameter::First,
+                    &retained_root,
+                    policy,
+                );
+                let second = project_bivariate_fiber_at_algebraic_parameter(
+                    &retained_second,
+                    CurveResultantParameter::Second,
+                    &retained_root,
+                    policy,
+                );
+                assert_eq!(first.status, AlgebraicFiberProjectionStatus::Constructed);
+                assert_eq!(second, first);
+            }
+        }
+
+        let valid = represented_root(
+            vec![real(-1), Real::zero(), real(2)],
+            rational(2, 3),
+            rational(3, 4),
+            PredicatePolicy::STRICT,
+        );
+        let mut invalid_validation = valid.clone();
+        invalid_validation.validation.status = AlgebraicRootValidationStatus::InvalidPolynomial;
+        let mut nonunit = valid.clone();
+        nonunit.interval.distinct_root_count = 2;
+        let mut constant = valid;
+        constant.polynomial_coefficients = vec![Real::one()];
+        for invalid in [invalid_validation, nonunit, constant] {
+            assert!(!is_valid_local_algebraic_field_evidence(&invalid));
+            assert!(LocalAlgebraicField::new(&invalid, PredicatePolicy::STRICT).is_err());
+            let report = project_bivariate_fiber_at_algebraic_parameter(
+                &retained_first,
+                CurveResultantParameter::First,
+                &invalid,
+                PredicatePolicy::STRICT,
+            );
+            assert_eq!(
+                report.status,
+                AlgebraicFiberProjectionStatus::InvalidEvidence
+            );
+            assert!(report.coefficients.is_empty());
         }
     }
 
@@ -4296,6 +5071,75 @@ mod tests {
     }
 
     #[test]
+    fn selected_fiber_incomplete_report_preserves_fallback_progress() {
+        // At alpha=sqrt(1/2), combine its repeated root with rational roots
+        // 1/4, 1/2, and 3/4. The bounded fallback remains undecided after
+        // doing real Sturm, subdivision, and retained-root refinement work;
+        // that attempted-work evidence must not be flattened to zero.
+        let q = vec![
+            rational(-3, 32),
+            rational(11, 16),
+            rational(-3, 2),
+            Real::one(),
+        ];
+        let retained_first_coefficients = vec![
+            {
+                let mut row = vec![Real::zero(), Real::zero()];
+                row.extend(q.iter().cloned());
+                row
+            },
+            {
+                let mut row = vec![Real::zero()];
+                row.extend(q.iter().map(|coefficient| coefficient * real(-2)));
+                row
+            },
+            q,
+        ];
+        let retained_second_coefficients = (0..retained_first_coefficients[0].len())
+            .map(|power| {
+                retained_first_coefficients
+                    .iter()
+                    .map(|row| row.get(power).cloned().unwrap_or_else(Real::zero))
+                    .collect()
+            })
+            .collect();
+        let retained_first = BivariatePolynomial::new(retained_first_coefficients);
+        let retained_second = BivariatePolynomial::new(retained_second_coefficients);
+
+        for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
+            for defining_polynomial in [
+                vec![real(-1), Real::zero(), real(2)],
+                vec![real(2), real(-1), real(-4), real(2)],
+            ] {
+                let alpha =
+                    represented_root(defining_polynomial, rational(2, 3), rational(3, 4), policy);
+                for (polynomial, retained_parameter) in [
+                    (&retained_first, CurveResultantParameter::First),
+                    (&retained_second, CurveResultantParameter::Second),
+                ] {
+                    let report = isolate_bivariate_fiber_roots_at_algebraic_parameter(
+                        polynomial,
+                        retained_parameter,
+                        &alpha,
+                        &Real::zero(),
+                        &Real::one(),
+                        AlgebraicFiberRootIsolationConfig {
+                            max_subdivision_depth: 16,
+                            refinement_steps: 0,
+                        },
+                        policy,
+                    );
+                    assert_eq!(report.status, AlgebraicFiberRootIsolationStatus::Undecided);
+                    assert!(report.sturm_sequence_length > 1);
+                    assert!(report.subdivision_steps > 0);
+                    assert!(report.retained_refinement_steps > 0);
+                    assert_eq!(report.certainty, Certainty::Exact);
+                }
+            }
+        }
+    }
+
+    #[test]
     fn local_field_sturm_counts_even_multiplicity_in_both_orientations() {
         // alpha = cbrt(1/2), beta = alpha^2 = cbrt(1/4).
         let relation = BivariatePolynomial::new(vec![
@@ -4433,6 +5277,55 @@ mod tests {
                 batched[3].status,
                 AlgebraicFiberRootCountStatus::InvalidInterval
             );
+        }
+    }
+
+    #[test]
+    fn local_field_sturm_batches_preserve_endpoint_reports_in_both_orientations() {
+        let retained_first = BivariatePolynomial::new(vec![vec![real(1), real(-2), real(1)]]);
+        let retained_second =
+            BivariatePolynomial::new(vec![vec![real(1)], vec![real(-2)], vec![real(1)]]);
+        let zero = real(0);
+        let one = real(1);
+        let two = real(2);
+        let three = real(3);
+        let intervals = [(&one, &two), (&one, &three), (&zero, &one)];
+
+        for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
+            for defining_polynomial in [
+                vec![real(-2), real(0), real(1)],
+                vec![real(6), real(-2), real(-3), real(1)],
+            ] {
+                let retained_root = represented_root(defining_polynomial, real(1), real(2), policy);
+                for (relation, retained_parameter) in [
+                    (&retained_first, CurveResultantParameter::First),
+                    (&retained_second, CurveResultantParameter::Second),
+                ] {
+                    let batched = count_bivariate_fiber_roots_at_algebraic_parameter_intervals(
+                        relation,
+                        retained_parameter,
+                        &retained_root,
+                        &intervals,
+                        policy,
+                    );
+                    for ((lower, upper), batch_report) in intervals.iter().zip(&batched) {
+                        let independent = count_bivariate_fiber_roots_at_algebraic_parameter(
+                            relation,
+                            retained_parameter,
+                            &retained_root,
+                            lower,
+                            upper,
+                            policy,
+                        );
+                        assert_eq!(batch_report, &independent);
+                        assert_eq!(batch_report.certainty, Certainty::Exact);
+                    }
+                    assert!(batched.iter().all(|report| {
+                        report.status == AlgebraicFiberRootCountStatus::EndpointRoot
+                            && report.distinct_root_count.is_none()
+                    }));
+                }
+            }
         }
     }
 

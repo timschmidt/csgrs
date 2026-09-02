@@ -18,7 +18,7 @@ use crate::integer_interpolation::primitive_integer_polynomial_gcd;
 use crate::resultant::{
     UnivariateResultantError, resultant_univariate_polynomials, sylvester_matrix,
 };
-use crate::root_isolation::{polynomial_div_rem, polynomial_gcd};
+use crate::root_isolation::{polynomial_div_rem_borrowed_divisor, polynomial_gcd};
 
 /// Selects which curve parameter remains after exact elimination.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -135,7 +135,8 @@ pub enum TrivariateConstraintResultantStatus {
     Constructed,
     /// The trivariate polynomial or univariate constraint was empty.
     EmptyPolynomial,
-    /// A coefficient needed for exact degree certification remained undecided.
+    /// A coefficient remained unknown after bounded refinement and the strict
+    /// exact predicate cascade.
     UndecidedCoefficient,
     /// The constraint was constant after certified trimming.
     InvalidConstraint,
@@ -172,7 +173,8 @@ pub enum TrivariateConstraintSubresultantStatus {
     Constructed,
     /// The trivariate polynomial or univariate constraint was empty.
     EmptyPolynomial,
-    /// A coefficient needed for exact degree certification remained undecided.
+    /// A coefficient remained unknown after bounded refinement and the strict
+    /// exact predicate cascade.
     UndecidedCoefficient,
     /// The constraint was constant after certified trimming.
     InvalidConstraint,
@@ -219,7 +221,8 @@ pub enum TrivariatePolynomialSystemSubresultantStatus {
     Constructed,
     /// At least one polynomial was identically zero.
     EmptyPolynomial,
-    /// A coefficient needed for exact degree certification remained undecided.
+    /// A coefficient remained unknown after bounded refinement and the strict
+    /// exact predicate cascade.
     UndecidedCoefficient,
     /// The requested order exceeded the smaller eliminated-axis degree.
     InvalidOrder,
@@ -508,8 +511,31 @@ fn normalize_bivariate_projective_scale(
                 .map(|coefficient| (coefficient / &scale).ok())
                 .collect::<Option<Vec<_>>>()
         })
-        .collect::<Option<Vec<_>>>()?;
+        .collect::<Option<Vec<_>>>();
+    let coefficients = match coefficients {
+        Some(coefficients) => coefficients,
+        None => normalize_bivariate_projective_scale_policy_fallback(polynomial, &scale)?,
+    };
     Some((canonical_exact_bivariate(coefficients), scale))
+}
+
+#[cold]
+fn normalize_bivariate_projective_scale_policy_fallback(
+    polynomial: &BivariatePolynomial,
+    scale: &Real,
+) -> Option<Vec<Vec<Real>>> {
+    let reciprocal = strict_reciprocal_after_inverse_failure(scale)?;
+    Some(
+        polynomial
+            .coefficients
+            .iter()
+            .map(|row| {
+                row.iter()
+                    .map(|coefficient| coefficient * &reciprocal)
+                    .collect()
+            })
+            .collect(),
+    )
 }
 
 fn scale_bivariate_in_place(polynomial: &mut BivariatePolynomial, scale: &Real) {
@@ -521,7 +547,8 @@ fn scale_bivariate_in_place(polynomial: &mut BivariatePolynomial, scale: &Real) 
 /// Configuration for bounded exact curve resultant construction.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct CurveIntersectionResultantConfig {
-    /// Precision bound used when coefficient signs are certified.
+    /// Fast scalar-refinement bound used before the strict exact predicate
+    /// cascade is attempted for an unresolved coefficient.
     pub min_precision: i32,
     /// Maximum retained-parameter degree this bounded helper may interpolate.
     pub max_resultant_degree: usize,
@@ -615,10 +642,8 @@ pub fn resultant_trivariate_polynomial_univariate_constraint(
     let leading = constraint
         .last()
         .expect("a nonconstant constraint has a leading coefficient");
-    let Some(constraint) = constraint
-        .iter()
-        .map(|coefficient| (coefficient / leading).ok())
-        .collect::<Option<Vec<_>>>()
+    let Ok(leading_reciprocal) =
+        crate::policy_division::reciprocal_after_certified_nonzero(leading)
     else {
         return report(
             TrivariateConstraintResultantStatus::InterpolationDivisionFailed,
@@ -627,6 +652,10 @@ pub fn resultant_trivariate_polynomial_univariate_constraint(
             None,
         );
     };
+    let constraint = constraint
+        .iter()
+        .map(|coefficient| coefficient * &leading_reciprocal)
+        .collect::<Vec<_>>();
     let constraint_degree = constraint.len() - 1;
     let degree_bounds =
         retained_axis_indices.map(|axis| constraint_degree.saturating_mul(degrees[axis]));
@@ -817,10 +846,8 @@ pub fn subresultant_trivariate_polynomial_univariate_constraint(
     let leading = constraint
         .last()
         .expect("a nonconstant constraint has a leading coefficient");
-    let Some(constraint) = constraint
-        .iter()
-        .map(|coefficient| (coefficient / leading).ok())
-        .collect::<Option<Vec<_>>>()
+    let Ok(leading_reciprocal) =
+        crate::policy_division::reciprocal_after_certified_nonzero(leading)
     else {
         return report(
             TrivariateConstraintSubresultantStatus::InterpolationDivisionFailed,
@@ -829,6 +856,10 @@ pub fn subresultant_trivariate_polynomial_univariate_constraint(
             None,
         );
     };
+    let constraint = constraint
+        .iter()
+        .map(|coefficient| coefficient * &leading_reciprocal)
+        .collect::<Vec<_>>();
 
     let eliminated_index = eliminated_axis.index();
     let polynomial_degree = degrees[eliminated_index];
@@ -1650,7 +1681,8 @@ pub enum CurveIntersectionResultantStatus {
     Constructed,
     /// At least one coordinate polynomial was empty.
     EmptyCoordinatePolynomial,
-    /// A coefficient needed for degree trimming could not be certified.
+    /// A coefficient remained unknown after bounded refinement and the strict
+    /// exact predicate cascade.
     UndecidedCoefficient,
     /// The conservative resultant degree bound exceeded the configured budget.
     DegreeBoundExceeded,
@@ -1698,7 +1730,8 @@ pub enum CurveIntersectionParameterLiftStatus {
     Constructed,
     /// At least one bivariate equation was empty.
     EmptyEquation,
-    /// A coefficient needed for degree certification remained undecided.
+    /// A coefficient remained unknown after bounded refinement and the strict
+    /// exact predicate cascade.
     UndecidedCoefficient,
     /// One equation is constant in the eliminated parameter, so a linear
     /// common-root lift cannot certify the pairing.
@@ -1752,7 +1785,8 @@ pub enum BivariatePolynomialComponentStatus {
     Implicit,
     /// At least one bivariate equation was empty.
     EmptyEquation,
-    /// A coefficient needed for degree certification remained undecided.
+    /// A coefficient remained unknown after bounded refinement and the strict
+    /// exact predicate cascade.
     UndecidedCoefficient,
     /// One equation is constant in the prospective lifted parameter.
     UnsupportedLiftedDegree,
@@ -2847,10 +2881,12 @@ fn sampled_common_fiber_component_report(
                 .map(|coefficient| coefficient * &scale)
                 .collect()
         } else {
+            let leading_reciprocal =
+                crate::policy_division::reciprocal_after_certified_nonzero(&leading).ok()?;
             gcd.into_iter()
                 .take(gcd_degree + 1)
-                .map(|coefficient| (coefficient * &scale / &leading).ok())
-                .collect::<Option<Vec<_>>>()?
+                .map(|coefficient| coefficient * &scale * &leading_reciprocal)
+                .collect()
         };
         let samples = &mut samples_by_degree[gcd_degree];
         if samples.is_empty() {
@@ -3301,6 +3337,7 @@ fn exact_polynomial_square_root(mut polynomial: Vec<Real>) -> Option<Vec<Real>> 
         return None;
     }
     let twice_leading = Real::from(2_i8) * &leading;
+    let twice_leading_reciprocal = strict_reciprocal(&twice_leading)?;
     let mut root = vec![Real::zero(); root_degree + 1];
     root[root_degree] = leading;
     for power in (0..root_degree).rev() {
@@ -3309,7 +3346,7 @@ fn exact_polynomial_square_root(mut polynomial: Vec<Real>) -> Option<Vec<Real>> 
             .get(root_degree + power)
             .cloned()
             .unwrap_or_else(Real::zero);
-        root[power] = ((polynomial[root_degree + power].clone() - known) / &twice_leading).ok()?;
+        root[power] = (polynomial[root_degree + power].clone() - known) * &twice_leading_reciprocal;
     }
     exact_polynomial_is_zero(&subtract_exact_polynomials(
         &multiply_exact_polynomials(&root, &root),
@@ -3611,7 +3648,7 @@ fn bivariate_from_fiber_coefficients(
     }
 }
 
-fn primitive_common_fiber_component(
+pub(crate) fn primitive_common_fiber_component(
     mut fibers: Vec<Vec<Real>>,
     retained_parameter: CurveResultantParameter,
 ) -> Option<BivariatePolynomial> {
@@ -3640,8 +3677,9 @@ fn primitive_common_fiber_component(
     let mut component = bivariate_from_fiber_coefficients(fibers, retained_parameter);
     let (_, _, leading) = leading_bivariate_term(&component.coefficients)?;
     if leading != Real::one() {
+        let reciprocal = strict_reciprocal(&leading)?;
         for coefficient in component.coefficients.iter_mut().flatten() {
-            *coefficient = (coefficient.clone() / &leading).ok()?;
+            *coefficient *= &reciprocal;
         }
     }
     (!exact_bivariate_is_zero(&component)).then_some(component)
@@ -3696,9 +3734,10 @@ pub fn divide_univariate_polynomial_exact(
 ///
 /// The divisor and dividend are canonicalized first. Multivariate long
 /// division proceeds over the exact `Real` field and succeeds only when every
-/// remainder coefficient is certified zero. No predicate policy or
-/// approximate equality participates. A zero divisor is rejected; a zero
-/// dividend has the canonical zero quotient.
+/// remainder coefficient is certified zero. The ordinary field path remains
+/// the fast path; if its bounded nonzero check cannot invert the leading
+/// coefficient, a `STRICT` retry reuses policy-certified nonzero evidence. A
+/// zero divisor is rejected; a zero dividend has the canonical zero quotient.
 pub fn divide_bivariate_polynomial_exact(
     dividend: &BivariatePolynomial,
     divisor: &BivariatePolynomial,
@@ -3714,7 +3753,12 @@ pub fn divide_bivariate_polynomial_exact(
         }
         let quotient_first_power = first_power - divisor_first_power;
         let quotient_second_power = second_power - divisor_second_power;
-        let scale = (leading / &divisor_leading).ok()?;
+        let scale = match (leading / &divisor_leading).ok() {
+            Some(scale) => scale,
+            None => {
+                return divide_bivariate_polynomial_exact_policy_fallback(dividend, &divisor);
+            }
+        };
         if quotient.len() <= quotient_first_power {
             quotient.resize_with(quotient_first_power + 1, Vec::new);
         }
@@ -3738,6 +3782,54 @@ pub fn divide_bivariate_polynomial_exact(
                 remainder[target_first][target_second] -= &scale * coefficient;
             }
         }
+    }
+    Some(canonical_exact_bivariate(quotient))
+}
+
+#[cold]
+fn divide_bivariate_polynomial_exact_policy_fallback(
+    dividend: &BivariatePolynomial,
+    divisor: &BivariatePolynomial,
+) -> Option<BivariatePolynomial> {
+    let divisor = canonical_exact_bivariate(divisor.coefficients.clone());
+    let (divisor_first_power, divisor_second_power, divisor_leading) =
+        leading_bivariate_term(&divisor.coefficients)?;
+    let divisor_leading_reciprocal = strict_reciprocal_after_inverse_failure(&divisor_leading)?;
+    let mut remainder = canonical_exact_bivariate(dividend.coefficients.clone()).coefficients;
+    let mut quotient = Vec::<Vec<Real>>::new();
+    while let Some((first_power, second_power, leading)) = leading_bivariate_term(&remainder) {
+        if first_power < divisor_first_power || second_power < divisor_second_power {
+            return None;
+        }
+        let quotient_first_power = first_power - divisor_first_power;
+        let quotient_second_power = second_power - divisor_second_power;
+        let scale = leading * &divisor_leading_reciprocal;
+        if quotient.len() <= quotient_first_power {
+            quotient.resize_with(quotient_first_power + 1, Vec::new);
+        }
+        if quotient[quotient_first_power].len() <= quotient_second_power {
+            quotient[quotient_first_power].resize_with(quotient_second_power + 1, Real::zero);
+        }
+        quotient[quotient_first_power][quotient_second_power] += &scale;
+        for (divisor_first, row) in divisor.coefficients.iter().enumerate() {
+            let target_first = quotient_first_power + divisor_first;
+            if remainder.len() <= target_first {
+                remainder.resize_with(target_first + 1, Vec::new);
+            }
+            for (divisor_second, coefficient) in row.iter().enumerate() {
+                if exact_real_is_zero(coefficient) {
+                    continue;
+                }
+                let target_second = quotient_second_power + divisor_second;
+                if remainder[target_first].len() <= target_second {
+                    remainder[target_first].resize_with(target_second + 1, Real::zero);
+                }
+                remainder[target_first][target_second] -= &scale * coefficient;
+            }
+        }
+        // This coefficient cancels by construction. Publishing that identity
+        // avoids re-proving `(a / b) * b == a` from an expanded exact DAG.
+        remainder[first_power][second_power] = Real::zero();
     }
     Some(canonical_exact_bivariate(quotient))
 }
@@ -4033,8 +4125,11 @@ fn divide_bivariate_by_axis(
 }
 
 fn divide_polynomial_exact(dividend: Vec<Real>, divisor: &[Real]) -> Option<Vec<Real>> {
-    let (quotient, remainder) =
-        polynomial_div_rem(dividend, divisor, hyperlimit::PredicatePolicy::STRICT)?;
+    let (quotient, remainder) = polynomial_div_rem_borrowed_divisor(
+        dividend,
+        divisor,
+        hyperlimit::PredicatePolicy::STRICT,
+    )?;
     exact_polynomial_is_zero(&remainder).then_some(quotient)
 }
 
@@ -4114,12 +4209,14 @@ fn normalized_constraint(constraint: &[Real], min_precision: i32) -> Result<Opti
     let leading = constraint
         .last()
         .expect("a nonconstant constraint has a leading coefficient");
-    constraint
-        .iter()
-        .map(|coefficient| (coefficient / leading).ok())
-        .collect::<Option<Vec<_>>>()
-        .map(Some)
-        .ok_or(())
+    let leading_reciprocal =
+        crate::policy_division::reciprocal_after_certified_nonzero(leading).map_err(|_| ())?;
+    Ok(Some(
+        constraint
+            .iter()
+            .map(|coefficient| coefficient * &leading_reciprocal)
+            .collect(),
+    ))
 }
 
 fn quadrivariate_grid_exceeds_budget(degree_bounds: [usize; 3], maximum_degree: usize) -> bool {
@@ -4132,6 +4229,7 @@ fn quadrivariate_grid_exceeds_budget(degree_bounds: [usize; 3], maximum_degree: 
             .is_none()
 }
 
+#[inline]
 fn certified_quadrivariate_degree(
     polynomial: &QuadrivariatePolynomial,
     min_precision: i32,
@@ -4153,7 +4251,21 @@ fn certified_quadrivariate_degree(
                             degrees[2] = degrees[2].max(third);
                             degrees[3] = degrees[3].max(fourth);
                         }
-                        CertifiedRealSign::Unknown { .. } => return Err(()),
+                        CertifiedRealSign::Unknown { .. } => {
+                            match crate::policy_division::strict_sign_after_refinement_failure(
+                                coefficient,
+                            ) {
+                                Some(RealSign::Zero) => {}
+                                Some(RealSign::Negative | RealSign::Positive) => {
+                                    let degrees = degrees.get_or_insert([0, 0, 0, 0]);
+                                    degrees[0] = degrees[0].max(first);
+                                    degrees[1] = degrees[1].max(second);
+                                    degrees[2] = degrees[2].max(third);
+                                    degrees[3] = degrees[3].max(fourth);
+                                }
+                                None => return Err(()),
+                            }
+                        }
                     }
                 }
             }
@@ -4241,6 +4353,7 @@ fn evaluate_quadrivariate_at_first_three_parameters(
     fiber
 }
 
+#[inline]
 fn certified_trivariate_degree(
     polynomial: &TrivariatePolynomial,
     min_precision: i32,
@@ -4260,7 +4373,20 @@ fn certified_trivariate_degree(
                         degrees[1] = degrees[1].max(second);
                         degrees[2] = degrees[2].max(third);
                     }
-                    CertifiedRealSign::Unknown { .. } => return Err(()),
+                    CertifiedRealSign::Unknown { .. } => {
+                        match crate::policy_division::strict_sign_after_refinement_failure(
+                            coefficient,
+                        ) {
+                            Some(RealSign::Zero) => {}
+                            Some(RealSign::Negative | RealSign::Positive) => {
+                                let degrees = degrees.get_or_insert([0, 0, 0]);
+                                degrees[0] = degrees[0].max(first);
+                                degrees[1] = degrees[1].max(second);
+                                degrees[2] = degrees[2].max(third);
+                            }
+                            None => return Err(()),
+                        }
+                    }
                 }
             }
         }
@@ -4333,17 +4459,30 @@ fn exact_unit_polynomial(polynomial: &[Real]) -> bool {
             .is_some_and(|coefficient| coefficient.is_one())
 }
 
+fn strict_reciprocal(value: &Real) -> Option<Real> {
+    crate::policy_division::reciprocal_with_policy(value, hyperlimit::PredicatePolicy::STRICT)
+}
+
+fn strict_reciprocal_after_inverse_failure(value: &Real) -> Option<Real> {
+    hyperlimit::reciprocal_real(value, hyperlimit::PredicatePolicy::STRICT)
+        .ok()?
+        .value()
+}
+
 fn exact_real_is_zero(value: &Real) -> bool {
     if let Some(coefficient) = value.exact_rational_ref() {
         return coefficient.is_zero();
     }
-    matches!(
-        value.certified_sign_until(hyperlimit::PredicatePolicy::MAX_REFINEMENT_PRECISION),
+    match value.certified_sign_until(hyperlimit::PredicatePolicy::MAX_REFINEMENT_PRECISION) {
         CertifiedRealSign::Known {
             sign: RealSign::Zero,
             ..
-        }
-    )
+        } => true,
+        CertifiedRealSign::Known { .. } => false,
+        CertifiedRealSign::Unknown { .. } => value
+            .exact_rational_normal_form()
+            .is_some_and(|value| value.is_zero()),
+    }
 }
 
 fn bivariate_polynomial_is_empty(polynomial: &BivariatePolynomial) -> bool {
@@ -4363,6 +4502,7 @@ fn certified_bivariate_degree(
     }
 }
 
+#[inline]
 fn certified_first_parameter_degree(
     polynomial: &BivariatePolynomial,
     min_precision: i32,
@@ -4376,7 +4516,14 @@ fn certified_first_parameter_degree(
                     ..
                 } => {}
                 CertifiedRealSign::Known { .. } => return Ok(Some(index)),
-                CertifiedRealSign::Unknown { .. } => unknown = true,
+                CertifiedRealSign::Unknown { .. } => {
+                    match crate::policy_division::strict_sign_after_refinement_failure(coefficient)
+                    {
+                        Some(RealSign::Zero) => {}
+                        Some(RealSign::Negative | RealSign::Positive) => return Ok(Some(index)),
+                        None => unknown = true,
+                    }
+                }
             }
         }
         if unknown {
@@ -4386,6 +4533,7 @@ fn certified_first_parameter_degree(
     Ok(None)
 }
 
+#[inline]
 fn certified_second_parameter_degree(
     polynomial: &BivariatePolynomial,
     min_precision: i32,
@@ -4408,7 +4556,14 @@ fn certified_second_parameter_degree(
                     ..
                 } => {}
                 CertifiedRealSign::Known { .. } => return Ok(Some(index)),
-                CertifiedRealSign::Unknown { .. } => unknown = true,
+                CertifiedRealSign::Unknown { .. } => {
+                    match crate::policy_division::strict_sign_after_refinement_failure(coefficient)
+                    {
+                        Some(RealSign::Zero) => {}
+                        Some(RealSign::Negative | RealSign::Positive) => return Ok(Some(index)),
+                        None => unknown = true,
+                    }
+                }
             }
         }
         if unknown {
@@ -4418,6 +4573,7 @@ fn certified_second_parameter_degree(
     Ok(None)
 }
 
+#[inline]
 fn certified_nonzero_degree(
     coefficients: &[Real],
     min_precision: i32,
@@ -4429,12 +4585,19 @@ fn certified_nonzero_degree(
                 ..
             } => {}
             CertifiedRealSign::Known { .. } => return Ok(Some(index)),
-            CertifiedRealSign::Unknown { .. } => return Err(()),
+            CertifiedRealSign::Unknown { .. } => {
+                match crate::policy_division::strict_sign_after_refinement_failure(coefficient) {
+                    Some(RealSign::Zero) => {}
+                    Some(RealSign::Negative | RealSign::Positive) => return Ok(Some(index)),
+                    None => return Err(()),
+                }
+            }
         }
     }
     Ok(None)
 }
 
+#[inline]
 fn trim_trailing_zeroes(coefficients: Vec<Real>, min_precision: i32) -> Result<Vec<Real>, ()> {
     for (index, coefficient) in coefficients.iter().enumerate().rev() {
         match coefficient.certified_sign_until(min_precision) {
@@ -4443,7 +4606,27 @@ fn trim_trailing_zeroes(coefficients: Vec<Real>, min_precision: i32) -> Result<V
                 ..
             } => {}
             CertifiedRealSign::Known { .. } => return Ok(coefficients[..=index].to_vec()),
-            CertifiedRealSign::Unknown { .. } => return Err(()),
+            CertifiedRealSign::Unknown { .. } => {
+                return trim_trailing_zeroes_strict_fallback(&coefficients, index, min_precision);
+            }
+        }
+    }
+    Ok(vec![Real::zero()])
+}
+
+#[cold]
+fn trim_trailing_zeroes_strict_fallback(
+    coefficients: &[Real],
+    start: usize,
+    min_precision: i32,
+) -> Result<Vec<Real>, ()> {
+    for (index, coefficient) in coefficients[..=start].iter().enumerate().rev() {
+        match crate::policy_division::strict_sign_after_refinement(coefficient, min_precision) {
+            Some(RealSign::Zero) => {}
+            Some(RealSign::Negative | RealSign::Positive) => {
+                return Ok(coefficients[..=index].to_vec());
+            }
+            None => return Err(()),
         }
     }
     Ok(vec![Real::zero()])
@@ -4453,15 +4636,38 @@ fn rational_curve_has_empty_polynomial(curve: &RationalParametricCurve2) -> bool
     curve.x_numerator.is_empty() || curve.y_numerator.is_empty() || curve.weight.is_empty()
 }
 
+#[inline]
 fn is_certified_zero_polynomial(coefficients: &[Real], min_precision: i32) -> Result<bool, ()> {
-    for coefficient in coefficients {
+    for (index, coefficient) in coefficients.iter().enumerate() {
         match coefficient.certified_sign_until(min_precision) {
             CertifiedRealSign::Known {
                 sign: RealSign::Zero,
                 ..
             } => {}
             CertifiedRealSign::Known { .. } => return Ok(false),
-            CertifiedRealSign::Unknown { .. } => return Err(()),
+            CertifiedRealSign::Unknown { .. } => {
+                return is_certified_zero_polynomial_strict_fallback(
+                    coefficients,
+                    index,
+                    min_precision,
+                );
+            }
+        }
+    }
+    Ok(true)
+}
+
+#[cold]
+fn is_certified_zero_polynomial_strict_fallback(
+    coefficients: &[Real],
+    start: usize,
+    min_precision: i32,
+) -> Result<bool, ()> {
+    for coefficient in &coefficients[start..] {
+        match crate::policy_division::strict_sign_after_refinement(coefficient, min_precision) {
+            Some(RealSign::Zero) => {}
+            Some(RealSign::Negative | RealSign::Positive) => return Ok(false),
+            None => return Err(()),
         }
     }
     Ok(true)
@@ -4702,13 +4908,22 @@ mod tests {
                     .and_then(|row| row.get(second_power))
                     .cloned()
                     .unwrap_or_else(Real::zero);
-                assert!(matches!(
-                    (left - right).certified_sign_until(-512),
-                    CertifiedRealSign::Known {
-                        sign: RealSign::Zero,
-                        ..
-                    }
-                ));
+                let difference = left - right;
+                assert!(
+                    matches!(
+                        difference.certified_sign_until(-512),
+                        CertifiedRealSign::Known {
+                            sign: RealSign::Zero,
+                            ..
+                        }
+                    ) || hyperlimit::compare_reals(
+                        &difference,
+                        &Real::zero(),
+                        hyperlimit::PredicatePolicy::STRICT,
+                    )
+                    .value()
+                        == Some(std::cmp::Ordering::Equal)
+                );
             }
         }
     }
@@ -5751,6 +5966,36 @@ mod tests {
                 .expect("the exact Real divisor must replay"),
             &quotient,
         );
+
+        let deep_scale = crate::test_support::exact_normal_positive();
+        let half = (Real::from(1) / Real::from(2)).unwrap();
+        let deep_divisor =
+            BivariatePolynomial::new(vec![vec![deep_scale.clone(), deep_scale.clone()]]);
+        let deep_quotient = BivariatePolynomial::new(vec![vec![half.clone()]]);
+        let deep_dividend = multiply_bivariate(&deep_divisor, &deep_quotient);
+        assert_eq!(
+            &deep_dividend.coefficients[0][1] / &deep_divisor.coefficients[0][1],
+            Err(hyperreal::Problem::UnknownZero)
+        );
+        assert_bivariate_exactly_equal(
+            &divide_bivariate_polynomial_exact(&deep_dividend, &deep_divisor)
+                .expect("the strict nonzero divisor leading term should be reused"),
+            &deep_quotient,
+        );
+
+        let normalized = normalize_bivariate_projective_scale(&deep_divisor)
+            .expect("the strict projective scale should normalize");
+        assert_bivariate_exactly_equal(
+            &normalized.0,
+            &BivariatePolynomial::new(vec![vec![Real::one(), Real::one()]]),
+        );
+        assert!(
+            normalize_bivariate_projective_scale(&BivariatePolynomial::new(vec![vec![
+                crate::test_support::terminal_zero(),
+                crate::test_support::terminal_zero(),
+            ]]))
+            .is_none()
+        );
     }
 
     #[test]
@@ -5766,6 +6011,27 @@ mod tests {
             Some(vec![real(2), real(1)])
         );
         assert!(divide_univariate_polynomial_exact(&left, &right).is_none());
+
+        let sqrt_two = real(2).sqrt().expect("positive square root");
+        let exact_real_divisor = vec![Real::one(), sqrt_two.clone()];
+        let exact_real_quotient = vec![
+            real(3).sqrt().expect("positive square root"),
+            sqrt_two + Real::one(),
+            Real::one(),
+        ];
+        let exact_real_dividend =
+            multiply_exact_polynomials(&exact_real_divisor, &exact_real_quotient);
+        let recovered =
+            divide_univariate_polynomial_exact(&exact_real_dividend, &exact_real_divisor)
+                .expect("exact-real long division should reuse its leading proof");
+        assert_eq!(recovered.len(), exact_real_quotient.len());
+        for (actual, expected) in recovered.iter().zip(&exact_real_quotient) {
+            assert_eq!(
+                hyperlimit::compare_reals(actual, expected, hyperlimit::PredicatePolicy::STRICT,)
+                    .value(),
+                Some(std::cmp::Ordering::Equal)
+            );
+        }
     }
 
     #[test]
@@ -6091,6 +6357,138 @@ mod tests {
             assert_eq!(report.degree_bounds, [2, 2]);
             assert_eq!(report.resultant, Some(expected.clone()));
         }
+    }
+
+    #[test]
+    fn curve_resultant_degree_helpers_complete_strict_exact_boundaries() {
+        let positive = crate::test_support::exact_normal_positive();
+        let normalized_zero = real(2).powi_i64(-3000).unwrap() - positive.clone();
+        assert!(matches!(
+            positive.certified_sign_until(-64),
+            CertifiedRealSign::Unknown { .. }
+        ));
+        assert!(matches!(
+            normalized_zero.certified_sign_until(-64),
+            CertifiedRealSign::Unknown { .. }
+        ));
+
+        assert_eq!(
+            certified_nonzero_degree(&[real(1), positive.clone(), normalized_zero.clone()], -64,),
+            Ok(Some(1))
+        );
+        assert_eq!(
+            trim_trailing_zeroes(
+                vec![real(1), positive.clone(), normalized_zero.clone()],
+                -64,
+            )
+            .unwrap()
+            .len(),
+            2
+        );
+        assert_eq!(
+            is_certified_zero_polynomial(std::slice::from_ref(&normalized_zero), -64),
+            Ok(true)
+        );
+
+        let bivariate = BivariatePolynomial::new(vec![
+            vec![normalized_zero.clone(), normalized_zero.clone()],
+            vec![positive.clone()],
+        ]);
+        let bivariate_degree = certified_bivariate_degree(&bivariate, -64)
+            .unwrap()
+            .expect("the strict nonzero coefficient sets both axis degrees");
+        assert_eq!(bivariate_degree.first, 1);
+        assert_eq!(bivariate_degree.second, 0);
+        let trivariate = TrivariatePolynomial::new(vec![
+            vec![vec![normalized_zero.clone()]],
+            vec![vec![positive.clone()]],
+        ]);
+        assert_eq!(
+            certified_trivariate_degree(&trivariate, -64),
+            Ok(Some([1, 0, 0]))
+        );
+        let quadrivariate = QuadrivariatePolynomial::new(vec![
+            vec![vec![vec![normalized_zero]]],
+            vec![vec![vec![positive]]],
+        ]);
+        assert_eq!(
+            certified_quadrivariate_degree(&quadrivariate, -64),
+            Ok(Some([1, 0, 0, 0]))
+        );
+
+        let terminal = crate::test_support::terminal_zero();
+        assert_eq!(
+            certified_nonzero_degree(std::slice::from_ref(&terminal), -64),
+            Err(())
+        );
+        assert!(matches!(
+            certified_bivariate_degree(
+                &BivariatePolynomial::new(vec![vec![terminal.clone()]]),
+                -64,
+            ),
+            Err(())
+        ));
+        assert_eq!(
+            certified_trivariate_degree(
+                &TrivariatePolynomial::new(vec![vec![vec![terminal.clone()]]]),
+                -64,
+            ),
+            Err(())
+        );
+        assert_eq!(
+            certified_quadrivariate_degree(
+                &QuadrivariatePolynomial::new(vec![vec![vec![vec![terminal.clone()]]]]),
+                -64,
+            ),
+            Err(())
+        );
+        assert_eq!(is_certified_zero_polynomial(&[terminal], -64), Err(()));
+    }
+
+    #[test]
+    fn constrained_trivariate_resultant_uses_strict_constraint_normalization() {
+        let positive = crate::test_support::exact_normal_positive();
+        let normalized_zero = real(2).powi_i64(-3000).unwrap() - positive.clone();
+        let polynomial = TrivariatePolynomial::new(vec![vec![vec![real(1), positive.clone()]]]);
+        let report = resultant_trivariate_polynomial_univariate_constraint(
+            &polynomial,
+            &[
+                real(-2) * &positive,
+                Real::zero(),
+                positive,
+                normalized_zero,
+            ],
+            TrivariatePolynomialAxis::Third,
+            CurveIntersectionResultantConfig {
+                min_precision: -64,
+                ..CurveIntersectionResultantConfig::default()
+            },
+        );
+        assert_eq!(
+            report.status,
+            TrivariateConstraintResultantStatus::Constructed
+        );
+        assert_eq!(report.degree_bounds, [0, 0]);
+        assert!(report.resultant.is_some());
+
+        let terminal = resultant_trivariate_polynomial_univariate_constraint(
+            &TrivariatePolynomial::new(vec![vec![vec![real(1), real(1)]]]),
+            &[
+                real(-2),
+                Real::zero(),
+                Real::one(),
+                crate::test_support::terminal_zero(),
+            ],
+            TrivariatePolynomialAxis::Third,
+            CurveIntersectionResultantConfig {
+                min_precision: -64,
+                ..CurveIntersectionResultantConfig::default()
+            },
+        );
+        assert_eq!(
+            terminal.status,
+            TrivariateConstraintResultantStatus::UndecidedCoefficient
+        );
     }
 
     #[test]

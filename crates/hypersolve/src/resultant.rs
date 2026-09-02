@@ -9,20 +9,20 @@
 //! constructions remain exact and report uncertain pivot decisions.
 
 use hyperreal::{CertifiedRealSign, Rational, Real, RealSign, ZeroKnowledge};
-#[cfg(test)]
 use num::Integer;
 use num::{BigInt, One, Zero};
 
 use crate::bareiss::{BareissDeterminantReport, BareissError, determinant_bareiss};
 use crate::integer_interpolation::primitive_integer_polynomial;
+use crate::policy_division::strict_exact_zero_for_storage;
 
 /// Failure mode for exact univariate resultant construction.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub enum UnivariateResultantError {
     /// One of the input coefficient slices was empty.
     EmptyPolynomial,
-    /// A coefficient needed for degree trimming could not be certified zero or
-    /// nonzero within the requested bound.
+    /// A coefficient needed for degree trimming remained unknown after the
+    /// requested refinement bound and strict exact predicate cascade.
     UndecidedCoefficient {
         /// Input side whose coefficient was undecided.
         side: ResultantInputSide,
@@ -38,8 +38,8 @@ pub enum UnivariateResultantError {
 pub enum UnivariateSubresultantChainError {
     /// One of the input coefficient slices was empty.
     EmptyPolynomial,
-    /// A coefficient needed for degree trimming could not be certified zero or
-    /// nonzero within the requested bound.
+    /// A coefficient needed for degree trimming remained unknown after the
+    /// requested refinement bound and strict exact predicate cascade.
     UndecidedCoefficient {
         /// Input side whose coefficient was undecided.
         side: ResultantInputSide,
@@ -224,6 +224,80 @@ pub fn resultant_univariate_polynomials(
     ))
 }
 
+/// Computes only the exact resultant value for exact-rational inputs.
+///
+/// Internal interpolation kernels already prove this coefficient boundary and
+/// discard the public report at every sample. Borrowing the certified-trimmed
+/// inputs avoids cloning two coefficient vectors merely to drop them with that
+/// report. General callers should keep using [`resultant_univariate_polynomials`]
+/// so unresolved coefficients retain the full predicate cascade and evidence.
+pub(crate) fn resultant_exact_rational_polynomials_value(
+    left: &[Real],
+    right: &[Real],
+    min_precision: i32,
+) -> Result<Real, UnivariateResultantError> {
+    if left.is_empty() || right.is_empty() {
+        return Err(UnivariateResultantError::EmptyPolynomial);
+    }
+    let left = trim_exact_rational_coefficients(left, ResultantInputSide::Left)?;
+    let right = trim_exact_rational_coefficients(right, ResultantInputSide::Right)?;
+    let left_degree = left.len() - 1;
+    let right_degree = right.len() - 1;
+
+    if left_degree == 0 && right_degree == 0 {
+        return Ok(Real::one());
+    }
+    if right_degree == 0 {
+        return Ok(real_pow(&right[0], left_degree));
+    }
+    if left_degree == 0 {
+        return Ok(real_pow(&left[0], right_degree));
+    }
+
+    if let (Some(left_integers), Some(right_integers)) = (
+        left.iter()
+            .map(|coefficient| coefficient.exact_rational_ref()?.to_big_integer())
+            .collect::<Option<Vec<_>>>(),
+        right
+            .iter()
+            .map(|coefficient| coefficient.exact_rational_ref()?.to_big_integer())
+            .collect::<Option<Vec<_>>>(),
+    ) {
+        let dimension =
+            left_degree
+                .checked_add(right_degree)
+                .ok_or(UnivariateResultantError::Determinant(
+                    BareissError::DimensionMismatch,
+                ))?;
+        let entries =
+            dimension
+                .checked_mul(dimension)
+                .ok_or(UnivariateResultantError::Determinant(
+                    BareissError::DimensionMismatch,
+                ))?;
+        let mut sylvester = vec![BigInt::zero(); entries];
+        for row in 0..right_degree {
+            for (degree, coefficient) in left_integers.iter().enumerate() {
+                sylvester[row * dimension + row + left_degree - degree] = coefficient.clone();
+            }
+        }
+        for row in 0..left_degree {
+            for (degree, coefficient) in right_integers.iter().enumerate() {
+                sylvester[(right_degree + row) * dimension + row + right_degree - degree] =
+                    coefficient.clone();
+            }
+        }
+        if let Some(determinant) = determinant_integer_bareiss_flat(&mut sylvester, dimension) {
+            return Ok(Real::from(Rational::from_bigint(determinant)));
+        }
+    }
+
+    let sylvester = sylvester_matrix(left, right);
+    determinant_bareiss(&sylvester, min_precision)
+        .map(|report| report.determinant)
+        .map_err(UnivariateResultantError::Determinant)
+}
+
 /// Constructs `Res_x(P(x), N(x) - y D(x))` up to one shared nonzero scale.
 ///
 /// Multiplication by the relation in `Q[x] / (P)` has dimension `deg(P)`,
@@ -376,11 +450,7 @@ fn quotient_ring_fiber_resultant_polynomial_real(
         }
     }
     let mut polynomial = determinant_polynomial_matrix_real(&polynomial_entries, degree)?;
-    while polynomial.len() > 1
-        && polynomial
-            .last()
-            .is_some_and(|coefficient| coefficient.zero_status() == ZeroKnowledge::Zero)
-    {
+    while polynomial.len() > 1 && polynomial.last().is_some_and(strict_exact_zero_for_storage) {
         polynomial.pop();
     }
     Some(polynomial)
@@ -585,7 +655,6 @@ fn quotient_ring_resultant_samples(
     Some(samples)
 }
 
-#[cfg(test)]
 fn determinant_integer_bareiss_flat(matrix: &mut [BigInt], dimension: usize) -> Option<BigInt> {
     if matrix.len() != dimension.checked_mul(dimension)? {
         return None;
@@ -924,14 +993,19 @@ fn schedule_one_resultant_pair(
     let resultant_sign = match resultant.resultant.certified_sign_until(min_precision) {
         CertifiedRealSign::Known { sign, .. } => sign,
         CertifiedRealSign::Unknown { .. } => {
-            return UnivariateResultantPairReport {
-                pair_index: pair.pair_index,
-                status: UnivariateResultantPairStatus::UndecidedResultantSign,
-                resultant: Some(resultant),
-                subresultant_chain: None,
-                resultant_error: None,
-                subresultant_error: None,
+            let Some(sign) =
+                crate::policy_division::strict_sign_after_refinement_failure(&resultant.resultant)
+            else {
+                return UnivariateResultantPairReport {
+                    pair_index: pair.pair_index,
+                    status: UnivariateResultantPairStatus::UndecidedResultantSign,
+                    resultant: Some(resultant),
+                    subresultant_chain: None,
+                    resultant_error: None,
+                    subresultant_error: None,
+                };
             };
+            sign
         }
     };
     if !matches!(resultant_sign, RealSign::Zero) {
@@ -978,6 +1052,7 @@ fn schedule_one_resultant_pair(
     }
 }
 
+#[inline]
 fn trim_coefficients(
     coefficients: &[Real],
     side: ResultantInputSide,
@@ -995,7 +1070,7 @@ fn trim_coefficients(
                 break;
             }
             CertifiedRealSign::Unknown { .. } => {
-                return Err(UnivariateResultantError::UndecidedCoefficient { side, index });
+                return trim_coefficients_strict_fallback(coefficients, side, index, min_precision);
             }
         }
     }
@@ -1004,6 +1079,42 @@ fn trim_coefficients(
         return Ok(vec![Real::zero()]);
     };
     Ok(coefficients[..=last_nonzero].to_vec())
+}
+
+fn trim_exact_rational_coefficients(
+    coefficients: &[Real],
+    side: ResultantInputSide,
+) -> Result<&[Real], UnivariateResultantError> {
+    for (index, coefficient) in coefficients.iter().enumerate().rev() {
+        let Some(coefficient) = coefficient.exact_rational_ref() else {
+            return Err(UnivariateResultantError::UndecidedCoefficient { side, index });
+        };
+        if !coefficient.is_zero() {
+            return Ok(&coefficients[..=index]);
+        }
+    }
+    Ok(&coefficients[..1])
+}
+
+#[cold]
+fn trim_coefficients_strict_fallback(
+    coefficients: &[Real],
+    side: ResultantInputSide,
+    start: usize,
+    min_precision: i32,
+) -> Result<Vec<Real>, UnivariateResultantError> {
+    for (index, coefficient) in coefficients[..=start].iter().enumerate().rev() {
+        match crate::policy_division::strict_sign_after_refinement(coefficient, min_precision) {
+            Some(RealSign::Zero) => {}
+            Some(RealSign::Negative | RealSign::Positive) => {
+                return Ok(coefficients[..=index].to_vec());
+            }
+            None => {
+                return Err(UnivariateResultantError::UndecidedCoefficient { side, index });
+            }
+        }
+    }
+    Ok(vec![Real::zero()])
 }
 
 fn map_trim_error_to_chain(error: UnivariateResultantError) -> UnivariateSubresultantChainError {
@@ -1056,6 +1167,7 @@ fn degree(polynomial: &[Real]) -> usize {
     polynomial.len().saturating_sub(1)
 }
 
+#[inline]
 fn is_zero_polynomial(
     polynomial: &[Real],
     min_precision: i32,
@@ -1067,7 +1179,26 @@ fn is_zero_polynomial(
                 ..
             } => {}
             CertifiedRealSign::Known { .. } => return Ok(false),
-            CertifiedRealSign::Unknown { .. } => return Err((ResultantInputSide::Left, index)),
+            CertifiedRealSign::Unknown { .. } => {
+                return is_zero_polynomial_strict_fallback(polynomial, index, min_precision);
+            }
+        }
+    }
+    Ok(true)
+}
+
+#[cold]
+fn is_zero_polynomial_strict_fallback(
+    polynomial: &[Real],
+    start: usize,
+    min_precision: i32,
+) -> Result<bool, (ResultantInputSide, usize)> {
+    for (offset, coefficient) in polynomial[start..].iter().enumerate() {
+        let index = start + offset;
+        match crate::policy_division::strict_sign_after_refinement(coefficient, min_precision) {
+            Some(RealSign::Zero) => {}
+            Some(RealSign::Negative | RealSign::Positive) => return Ok(false),
+            None => return Err((ResultantInputSide::Left, index)),
         }
     }
     Ok(true)
@@ -1111,6 +1242,7 @@ fn real_pow(value: &Real, exponent: usize) -> Real {
 
 #[cfg(test)]
 mod tests {
+    use hyperreal::CertifiedRealSign;
     use proptest::prelude::*;
 
     use super::*;
@@ -1142,6 +1274,39 @@ mod tests {
                 .unwrap();
 
         assert_eq!(report.resultant, real(-3));
+    }
+
+    #[test]
+    fn scalar_resultant_keeps_the_exact_rational_fallback() {
+        let fraction = |numerator, denominator| {
+            Real::from(Rational::fraction(numerator, denominator).unwrap())
+        };
+        let left = [fraction(1, 2), Real::one()];
+        let right = [fraction(1, 3), Real::one()];
+        let expected = resultant_univariate_polynomials(&left, &right, -64)
+            .unwrap()
+            .resultant;
+
+        assert_eq!(
+            resultant_exact_rational_polynomials_value(&left, &right, -64),
+            Ok(expected)
+        );
+    }
+
+    #[test]
+    fn scalar_integer_resultant_matches_full_report_at_binary_dimension_limit() {
+        let mut degree_nine = vec![Real::zero(); 10];
+        degree_nine[0] = real(-2);
+        degree_nine[9] = Real::one();
+        let linear = [real(-3), Real::one()];
+        let expected = resultant_univariate_polynomials(&degree_nine, &linear, -64)
+            .unwrap()
+            .resultant;
+
+        assert_eq!(
+            resultant_exact_rational_polynomials_value(&degree_nine, &linear, -64),
+            Ok(expected)
+        );
     }
 
     #[test]
@@ -1263,6 +1428,98 @@ mod tests {
     }
 
     #[test]
+    fn resultant_trimming_uses_strict_exact_signs_without_guessing() {
+        let positive = crate::test_support::exact_normal_positive();
+        assert!(matches!(
+            positive.certified_sign_until(-64),
+            CertifiedRealSign::Unknown { .. }
+        ));
+        let report =
+            resultant_univariate_polynomials(&[real(1), positive], &[real(2)], -64).unwrap();
+        assert_eq!(report.left_degree, 1);
+        assert_eq!(report.resultant, real(2));
+
+        let normalized_zero =
+            real(2).powi_i64(-3000).unwrap() - crate::test_support::exact_normal_positive();
+        assert!(matches!(
+            normalized_zero.certified_sign_until(-64),
+            CertifiedRealSign::Unknown { .. }
+        ));
+        let report = resultant_univariate_polynomials(
+            &[real(-1), real(1), normalized_zero],
+            &[real(-2), real(1)],
+            -64,
+        )
+        .unwrap();
+        assert_eq!(report.left_degree, 1);
+        assert_eq!(report.resultant, real(-1));
+
+        assert_eq!(
+            resultant_univariate_polynomials(
+                &[real(-1), real(1), crate::test_support::terminal_zero()],
+                &[real(-2), real(1)],
+                -64,
+            )
+            .unwrap_err(),
+            UnivariateResultantError::UndecidedCoefficient {
+                side: ResultantInputSide::Left,
+                index: 2,
+            }
+        );
+    }
+
+    #[test]
+    fn subresultant_and_scheduler_complete_strict_exact_boundaries() {
+        let normalized_zero =
+            real(2).powi_i64(-3000).unwrap() - crate::test_support::exact_normal_positive();
+        let chain = subresultant_chain_univariate_polynomials(
+            &[real(-1), real(1)],
+            &[real(-1) + normalized_zero, real(1)],
+            -64,
+        )
+        .unwrap();
+        assert!(chain.has_nonconstant_common_factor);
+        assert!(chain.steps.last().is_some_and(|step| step.zero_remainder));
+
+        let root = real(2).sqrt().unwrap();
+        let shifted = root.clone() + crate::test_support::exact_normal_positive();
+        let pair = UnivariateResultantPairInput {
+            pair_index: 0,
+            left_coefficients: vec![-root.clone(), real(1)],
+            right_coefficients: vec![-shifted, real(1)],
+        };
+        let resultant = resultant_univariate_polynomials(
+            &pair.left_coefficients,
+            &pair.right_coefficients,
+            -64,
+        )
+        .unwrap();
+        assert!(matches!(
+            resultant.resultant.certified_sign_until(-64),
+            CertifiedRealSign::Unknown { .. }
+        ));
+        let report = schedule_univariate_resultant_pairs(&[pair], -64);
+        assert_eq!(
+            report.pairs[0].status,
+            UnivariateResultantPairStatus::CertifiedCoprime
+        );
+
+        let unsupported_shifted = root.clone() + crate::test_support::terminal_zero();
+        let report = schedule_univariate_resultant_pairs(
+            &[UnivariateResultantPairInput {
+                pair_index: 1,
+                left_coefficients: vec![-root, real(1)],
+                right_coefficients: vec![-unsupported_shifted, real(1)],
+            }],
+            -64,
+        );
+        assert_eq!(
+            report.pairs[0].status,
+            UnivariateResultantPairStatus::UndecidedResultantSign
+        );
+    }
+
+    #[test]
     fn constant_resultant_uses_exact_binary_power_for_high_degree() {
         let mut polynomial = vec![Real::zero(); 65];
         polynomial[0] = real(-1);
@@ -1349,6 +1606,29 @@ mod tests {
     }
 
     proptest! {
+        #[test]
+        fn generated_exact_rational_scalar_resultants_match_full_reports(
+            left in prop::collection::vec(-4_i16..=4, 1..=4),
+            right in prop::collection::vec(-4_i16..=4, 1..=4),
+        ) {
+            let left = left
+                .into_iter()
+                .map(|coefficient| real(i64::from(coefficient)))
+                .collect::<Vec<_>>();
+            let right = right
+                .into_iter()
+                .map(|coefficient| real(i64::from(coefficient)))
+                .collect::<Vec<_>>();
+            let expected = resultant_univariate_polynomials(&left, &right, -64)
+                .unwrap()
+                .resultant;
+
+            prop_assert_eq!(
+                resultant_exact_rational_polynomials_value(&left, &right, -64),
+                Ok(expected),
+            );
+        }
+
         #[test]
         fn generated_flat_integer_bareiss_matches_reported_four_by_four(
             entries in prop::collection::vec(-8_i16..=8, 16),

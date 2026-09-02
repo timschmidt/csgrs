@@ -12,13 +12,15 @@ use std::cmp::Ordering;
 use std::collections::HashMap;
 
 use hyperlimit::{PredicatePolicy, compare_reals};
-use hyperreal::Real;
+use hyperreal::{Rational, Real};
 
 use crate::analysis::ProblemAnalysis;
+use crate::interval::rational_interval_product;
 use crate::model::{ConstraintKind, Problem};
 use crate::root_isolation::{
-    IsolatedRootInterval, IsolatedRootRefinementReport, IsolatedRootRefinementStatus,
-    RootIsolationConfig, RootIsolationStatus, UnivariateRootIsolationReport,
+    ALGEBRAIC_IMAGE_REFINEMENT_ROUNDS, ALGEBRAIC_IMAGE_REFINEMENT_STEPS, IsolatedRootInterval,
+    IsolatedRootRefinementReport, IsolatedRootRefinementStatus, RootIsolationConfig,
+    RootIsolationStatus, UnivariateRootIsolationReport,
     isolate_univariate_polynomial_roots_with_config, polynomials_share_one_root_in_interval,
     refine_isolated_univariate_polynomial_interval,
 };
@@ -34,8 +36,8 @@ use crate::{
 pub enum AlgebraicRootKind {
     /// The isolator found an exact rational root value.
     ExactRationalWitness,
-    /// The root is represented only by its exact polynomial and isolating
-    /// interval.
+    /// The root retains its exact polynomial and isolating interval instead
+    /// of being classified as an exact rational witness.
     IsolatingInterval,
 }
 
@@ -44,15 +46,16 @@ pub enum AlgebraicRootKind {
 pub enum AlgebraicRootValidationStatus {
     /// The representation is structurally valid.
     Valid,
-    /// The coefficient vector is empty, constant, or not exact-rational.
+    /// The coefficient vector is empty, constant, or has no certifiably
+    /// nonzero leading coefficient.
     InvalidPolynomial,
     /// The interval endpoints are ordered incorrectly.
     InvalidInterval,
     /// The interval does not claim exactly one distinct root.
     NonUnitIsolation,
-    /// The exact rational witness is outside the interval.
+    /// The exact point witness is outside the interval.
     WitnessOutsideInterval,
-    /// The exact rational witness does not satisfy the polynomial.
+    /// The exact point witness does not satisfy the polynomial.
     WitnessDoesNotSatisfyPolynomial,
     /// Exact comparisons did not decide.
     Undecided,
@@ -120,7 +123,7 @@ pub struct AlgebraicRootRefinementComparisonReport {
     pub left_refinements: Vec<IsolatedRootRefinementReport>,
     /// Refinement reports applied to the right root.
     pub right_refinements: Vec<IsolatedRootRefinementReport>,
-    /// Number of alternating refinement rounds used.
+    /// Number of refinement rounds entered.
     pub refinement_rounds: usize,
 }
 
@@ -157,6 +160,9 @@ pub enum AlgebraicRootArithmeticOp {
 pub enum AlgebraicRootArithmeticStatus {
     /// The operation was computed exactly from rational witnesses.
     ComputedExactRationalWitness,
+    /// The operation produced a general exact [`Real`] witness without a
+    /// stored rational payload.
+    ComputedExactRealWitness,
     /// The operation produced a new exact represented algebraic root.
     ComputedRepresentation,
     /// One or both inputs were invalid.
@@ -237,9 +243,11 @@ pub struct AlgebraicRootAffineRelation {
 /// Status for evaluating a polynomial at a represented algebraic root.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub enum AlgebraicRootPolynomialEvaluationStatus {
-    /// The represented root had an exact rational witness, so the polynomial
-    /// value was computed exactly.
+    /// Exact point evaluation produced a rational value.
     EvaluatedExactRationalWitness,
+    /// Exact point evaluation produced a general exact [`Real`] value without
+    /// a stored rational payload.
+    EvaluatedExactRealWitness,
     /// Interval arithmetic proved the polynomial value is strictly positive
     /// throughout the isolating interval.
     IntervalCertifiedPositive,
@@ -258,7 +266,7 @@ pub enum AlgebraicRootPolynomialEvaluationStatus {
 
 /// Exact or conservative value report for `q(alpha)`.
 ///
-/// The input polynomial is stored in ascending power order. For rational
+/// The input polynomial is stored in ascending power order. For exact point
 /// witnesses, `exact_value` is filled and compared exactly. For interval-only
 /// represented roots, `interval_value` is a conservative exact interval
 /// enclosure produced without primitive-float sampling.
@@ -266,7 +274,7 @@ pub enum AlgebraicRootPolynomialEvaluationStatus {
 pub struct AlgebraicRootPolynomialEvaluationReport {
     /// Final evaluation status.
     pub status: AlgebraicRootPolynomialEvaluationStatus,
-    /// Exact value when the represented root has a rational witness.
+    /// Exact value when the represented root has a point witness.
     pub exact_value: Option<Real>,
     /// Conservative interval value for interval-only roots.
     pub interval_value: Option<AlgebraicPolynomialValueInterval>,
@@ -288,12 +296,15 @@ pub struct AlgebraicPolynomialValueInterval {
 /// Status for evaluating a rational expression at a represented root.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub enum AlgebraicRootRationalEvaluationStatus {
-    /// Both numerator and denominator evaluated exactly at a rational witness.
+    /// Exact point evaluation produced a rational quotient.
     EvaluatedExactRationalWitness,
+    /// Exact point evaluation produced a general exact [`Real`] quotient
+    /// without a stored rational payload.
+    EvaluatedExactRealWitness,
     /// Interval arithmetic certified a nonzero denominator and produced a
     /// rational value enclosure.
     IntervalEvaluated,
-    /// The denominator is exactly zero at a rational witness.
+    /// The denominator is exactly zero at the selected algebraic root.
     CertifiedZeroDenominator,
     /// The denominator interval contains zero, so division is not certified.
     DenominatorMayContainZero,
@@ -318,7 +329,7 @@ pub struct AlgebraicRootRationalEvaluationReport {
     pub numerator: AlgebraicRootPolynomialEvaluationReport,
     /// Denominator evaluation evidence.
     pub denominator: AlgebraicRootPolynomialEvaluationReport,
-    /// Exact quotient when the root has a rational witness and the denominator
+    /// Exact quotient when the root has a point witness and the denominator
     /// is certified nonzero.
     pub exact_value: Option<Real>,
     /// Conservative interval quotient for interval-only roots.
@@ -372,7 +383,7 @@ pub struct AlgebraicRootRepresentation {
     pub polynomial_coefficients: Vec<Real>,
     /// Certified unit isolating interval or exact point interval.
     pub interval: IsolatedRootInterval,
-    /// Whether this is an exact rational witness or a non-rational interval
+    /// Whether this is an exact rational witness or an isolating-interval
     /// representation.
     pub kind: AlgebraicRootKind,
     /// Validation evidence for the representation.
@@ -380,9 +391,9 @@ pub struct AlgebraicRootRepresentation {
 }
 
 impl AlgebraicRootRepresentation {
-    /// Returns the exact rational witness, when the root is represented by a
-    /// point value.
-    pub fn exact_rational_witness(&self) -> Option<&Real> {
+    /// Returns the stored exact point witness, when present.
+    #[inline]
+    pub fn exact_point_witness(&self) -> Option<&Real> {
         self.interval.exact_root.as_ref()
     }
 
@@ -476,26 +487,38 @@ pub fn validate_algebraic_root_representation(
 /// Compare two represented algebraic roots without leaving the exact boundary.
 ///
 /// This is deliberately narrower than a complete algebraic-number ordering
-/// package. It certifies order when exact rational witnesses compare directly
-/// or when isolating intervals are disjoint. If intervals overlap, the report
-/// returns [`AlgebraicRootComparisonStatus::OverlappingIntervals`] instead of
-/// sampling a primitive approximation. This follows the exact construction/
-/// decision separation and the Collins-Loos isolating-interval model cited in
-/// the module docs.
+/// package. Both cached-valid payloads are replayed under [`PredicatePolicy::STRICT`]
+/// before the requested policy is used for ordering. It certifies order when
+/// exact point witnesses compare directly or when the effective isolating
+/// intervals are disjoint; a point witness supersedes its stored outer bounds.
+/// If intervals overlap, the report returns
+/// [`AlgebraicRootComparisonStatus::OverlappingIntervals`] instead of sampling
+/// a primitive approximation. This follows the exact construction/decision
+/// separation and the Collins-Loos isolating-interval model cited in the module
+/// docs.
 pub fn compare_algebraic_root_representations(
     left: &AlgebraicRootRepresentation,
     right: &AlgebraicRootRepresentation,
     policy: PredicatePolicy,
 ) -> AlgebraicRootComparisonReport {
-    if !left.is_valid() || !right.is_valid() {
+    if !algebraic_root_comparison_inputs_replay_strictly(left, right) {
         return algebraic_comparison_report(
             AlgebraicRootComparisonStatus::InvalidEvidence,
             None,
             Some(
-                "both algebraic roots must pass structural validation before comparison".to_owned(),
+                "both algebraic roots must replay valid local evidence before comparison"
+                    .to_owned(),
             ),
         );
     }
+    compare_admitted_algebraic_root_representations(left, right, policy)
+}
+
+fn compare_admitted_algebraic_root_representations(
+    left: &AlgebraicRootRepresentation,
+    right: &AlgebraicRootRepresentation,
+    policy: PredicatePolicy,
+) -> AlgebraicRootComparisonReport {
     if same_represented_root(left, right) {
         return algebraic_comparison_report(
             AlgebraicRootComparisonStatus::SameRepresentation,
@@ -503,15 +526,12 @@ pub fn compare_algebraic_root_representations(
             None,
         );
     }
-    if let (Some(left), Some(right)) = (
-        left.exact_rational_witness(),
-        right.exact_rational_witness(),
-    ) {
-        let Some(ordering) = compare_reals(left, right, policy).value() else {
+    if let (Some(left), Some(right)) = (left.exact_point_witness(), right.exact_point_witness()) {
+        let Some(ordering) = compare_algebraic_values(left, right, policy) else {
             return algebraic_comparison_report(
                 AlgebraicRootComparisonStatus::Undecided,
                 None,
-                Some("could not compare exact rational witnesses".to_owned()),
+                Some("could not compare exact point witnesses".to_owned()),
             );
         };
         return algebraic_comparison_report(
@@ -521,9 +541,12 @@ pub fn compare_algebraic_root_representations(
         );
     }
 
-    let Some(left_before_right) =
-        compare_reals(&left.interval.upper, &right.interval.lower, policy).value()
-    else {
+    let left_lower = left.exact_point_witness().unwrap_or(&left.interval.lower);
+    let left_upper = left.exact_point_witness().unwrap_or(&left.interval.upper);
+    let right_lower = right.exact_point_witness().unwrap_or(&right.interval.lower);
+    let right_upper = right.exact_point_witness().unwrap_or(&right.interval.upper);
+
+    let Some(left_before_right) = compare_algebraic_values(left_upper, right_lower, policy) else {
         return algebraic_comparison_report(
             AlgebraicRootComparisonStatus::Undecided,
             None,
@@ -538,9 +561,7 @@ pub fn compare_algebraic_root_representations(
         );
     }
 
-    let Some(left_after_right) =
-        compare_reals(&left.interval.lower, &right.interval.upper, policy).value()
-    else {
+    let Some(left_after_right) = compare_algebraic_values(left_lower, right_upper, policy) else {
         return algebraic_comparison_report(
             AlgebraicRootComparisonStatus::Undecided,
             None,
@@ -566,21 +587,48 @@ pub fn compare_algebraic_root_representations(
 ///
 /// This is still not a full algebraic-number field package: it performs only
 /// the exact predicate work needed for ordering. When ordinary comparison
-/// stops at overlapping isolating intervals, each root is refined with a
-/// Sturm sequence package in the standard real-root isolation style until the
-/// intervals become disjoint, an exact rational witness appears, or the
-/// configured work budget is exhausted. Refinement is a proof-producing
-/// operation, and failure remains an explicit
-/// undecided report rather than a sampled approximation.
+/// stops at overlapping isolating intervals, every non-point root is refined
+/// with a Sturm sequence package in the standard real-root isolation style
+/// until the intervals become disjoint, an exact rational witness appears, or
+/// the configured work budget is exhausted. Exact point operands are already
+/// maximally refined and therefore have no refinement report. Input admission
+/// is replayed once before the loop. Refinement is a proof-producing operation,
+/// and failure remains an explicit undecided report rather than a sampled
+/// approximation.
 pub fn compare_algebraic_root_representations_with_refinement(
     left: &AlgebraicRootRepresentation,
     right: &AlgebraicRootRepresentation,
     config: AlgebraicRootRefinementComparisonConfig,
 ) -> AlgebraicRootRefinementComparisonReport {
+    if !algebraic_root_comparison_inputs_replay_strictly(left, right) {
+        return algebraic_refinement_comparison_report(
+            algebraic_comparison_report(
+                AlgebraicRootComparisonStatus::InvalidEvidence,
+                None,
+                Some(
+                    "both algebraic roots must replay valid local evidence before refinement"
+                        .to_owned(),
+                ),
+            ),
+            left.clone(),
+            right.clone(),
+            Vec::new(),
+            Vec::new(),
+            0,
+        );
+    }
+    let comparison = compare_admitted_algebraic_root_representations(left, right, config.policy);
+    compare_admitted_algebraic_root_representations_with_refinement(left, right, config, comparison)
+}
+
+fn compare_admitted_algebraic_root_representations_with_refinement(
+    left: &AlgebraicRootRepresentation,
+    right: &AlgebraicRootRepresentation,
+    config: AlgebraicRootRefinementComparisonConfig,
+    mut comparison: AlgebraicRootComparisonReport,
+) -> AlgebraicRootRefinementComparisonReport {
     let mut refined_left = left.clone();
     let mut refined_right = right.clone();
-    let mut comparison =
-        compare_algebraic_root_representations(&refined_left, &refined_right, config.policy);
     let mut left_refinements = Vec::new();
     let mut right_refinements = Vec::new();
     let mut refinement_rounds = 0;
@@ -602,22 +650,32 @@ pub fn compare_algebraic_root_representations_with_refinement(
             max_interval_width: None,
             max_refinement_steps: config.steps_per_round,
         };
-        let left_refinement = refine_isolated_univariate_polynomial_interval(
-            &refined_left.polynomial_coefficients,
-            &refined_left.interval,
-            root_config.clone(),
-        );
-        let left_progress =
-            apply_refined_interval(&mut refined_left, &left_refinement, config.policy);
-        left_refinements.push(left_refinement);
-        let right_refinement = refine_isolated_univariate_polynomial_interval(
-            &refined_right.polynomial_coefficients,
-            &refined_right.interval,
-            root_config,
-        );
-        let right_progress =
-            apply_refined_interval(&mut refined_right, &right_refinement, config.policy);
-        right_refinements.push(right_refinement);
+        let left_progress = if refined_left.exact_point_witness().is_some() {
+            true
+        } else {
+            let left_refinement = refine_isolated_univariate_polynomial_interval(
+                &refined_left.polynomial_coefficients,
+                &refined_left.interval,
+                root_config.clone(),
+            );
+            let progress =
+                apply_refined_interval(&mut refined_left, &left_refinement, config.policy);
+            left_refinements.push(left_refinement);
+            progress
+        };
+        let right_progress = if refined_right.exact_point_witness().is_some() {
+            true
+        } else {
+            let right_refinement = refine_isolated_univariate_polynomial_interval(
+                &refined_right.polynomial_coefficients,
+                &refined_right.interval,
+                root_config,
+            );
+            let progress =
+                apply_refined_interval(&mut refined_right, &right_refinement, config.policy);
+            right_refinements.push(right_refinement);
+            progress
+        };
 
         if !left_progress || !right_progress {
             comparison = algebraic_comparison_report(
@@ -629,8 +687,11 @@ pub fn compare_algebraic_root_representations_with_refinement(
             );
             break;
         }
-        comparison =
-            compare_algebraic_root_representations(&refined_left, &refined_right, config.policy);
+        comparison = compare_admitted_algebraic_root_representations(
+            &refined_left,
+            &refined_right,
+            config.policy,
+        );
         if comparison.status != AlgebraicRootComparisonStatus::OverlappingIntervals {
             break;
         }
@@ -652,16 +713,56 @@ pub fn compare_algebraic_root_representations_with_refinement(
 /// package. It first tries ordinary interval comparison plus exact Sturm
 /// refinement. If source intervals still overlap, it constructs the algebraic
 /// difference and decides the sign of that constructed value from its
-/// certified isolating interval. This is the exactness boundary construction/decision split:
-/// the value is built as exact evidence, then the sign predicate reads only
-/// certified interval data., Sturm's theorem, and the standard real-root isolation model, matching the arithmetic and
-/// refinement modules cited at the point of use.
+/// certified isolating interval. Exact point/isolator equality is checked by
+/// polynomial replay at the point; interval-only equality uses a polynomial
+/// GCD and root count. If refinement narrows the operands without separating
+/// them, those narrowed carriers feed difference construction. This is the
+/// exactness-boundary construction/decision split: the value is built as exact
+/// evidence, then the sign predicate reads only certified interval data. The
+/// implementation follows Sturm's theorem and the standard real-root isolation
+/// model used by the arithmetic and refinement modules.
 pub fn compare_algebraic_root_representations_by_difference(
     left: &AlgebraicRootRepresentation,
     right: &AlgebraicRootRepresentation,
     config: AlgebraicRootRefinementComparisonConfig,
 ) -> AlgebraicRootDifferenceComparisonReport {
-    if represented_roots_share_isolated_common_root(left, right, config.policy) == Some(true) {
+    if !algebraic_root_comparison_inputs_replay_strictly(left, right) {
+        let comparison = algebraic_comparison_report(
+            AlgebraicRootComparisonStatus::InvalidEvidence,
+            None,
+            Some(
+                "both algebraic roots must replay valid local evidence before difference comparison"
+                    .to_owned(),
+            ),
+        );
+        let refinement = algebraic_refinement_comparison_report(
+            comparison.clone(),
+            left.clone(),
+            right.clone(),
+            Vec::new(),
+            Vec::new(),
+            0,
+        );
+        return algebraic_difference_comparison_report(comparison, refinement, None);
+    }
+    let direct = compare_admitted_algebraic_root_representations(left, right, config.policy);
+    if matches!(
+        direct.status,
+        AlgebraicRootComparisonStatus::Compared | AlgebraicRootComparisonStatus::SameRepresentation
+    ) {
+        let refinement = algebraic_refinement_comparison_report(
+            direct.clone(),
+            left.clone(),
+            right.clone(),
+            Vec::new(),
+            Vec::new(),
+            0,
+        );
+        return algebraic_difference_comparison_report(direct, refinement, None);
+    }
+    let common_root =
+        admitted_represented_roots_share_isolated_common_root(left, right, config.policy);
+    if common_root == Some(true) {
         let comparison = algebraic_comparison_report(
             AlgebraicRootComparisonStatus::Compared,
             Some(Ordering::Equal),
@@ -680,13 +781,28 @@ pub fn compare_algebraic_root_representations_by_difference(
         );
         return algebraic_difference_comparison_report(comparison, refinement, None);
     }
-    let refinement =
-        compare_algebraic_root_representations_with_refinement(left, right, config.clone());
-    if represented_roots_share_isolated_common_root(
-        &refinement.refined_left,
-        &refinement.refined_right,
-        config.policy,
-    ) == Some(true)
+    let refinement = compare_admitted_algebraic_root_representations_with_refinement(
+        left,
+        right,
+        config.clone(),
+        direct,
+    );
+    if matches!(
+        refinement.comparison.status,
+        AlgebraicRootComparisonStatus::Compared | AlgebraicRootComparisonStatus::SameRepresentation
+    ) {
+        return algebraic_difference_comparison_report(
+            refinement.comparison.clone(),
+            refinement,
+            None,
+        );
+    }
+    if common_root.is_none()
+        && admitted_represented_roots_share_isolated_common_root(
+            &refinement.refined_left,
+            &refinement.refined_right,
+            config.policy,
+        ) == Some(true)
     {
         return algebraic_difference_comparison_report(
             algebraic_comparison_report(
@@ -709,8 +825,7 @@ pub fn compare_algebraic_root_representations_by_difference(
         &refinement.refined_left,
         &refinement.refined_right,
         config.policy,
-    ) && let Some(ordering) =
-        compare_reals(&difference_value, &Real::zero(), config.policy).value()
+    ) && let Some(ordering) = algebraic_value_sign(&difference_value, config.policy)
     {
         let comparison = algebraic_comparison_report(
             AlgebraicRootComparisonStatus::Compared,
@@ -728,13 +843,14 @@ pub fn compare_algebraic_root_representations_by_difference(
     }
 
     let difference = arithmetic_algebraic_root_representations(
-        left,
-        Some(right),
+        &refinement.refined_left,
+        Some(&refinement.refined_right),
         AlgebraicRootArithmeticOp::Subtract,
         config.policy,
     );
     let comparison = match difference.status {
-        AlgebraicRootArithmeticStatus::ComputedExactRationalWitness => {
+        AlgebraicRootArithmeticStatus::ComputedExactRationalWitness
+        | AlgebraicRootArithmeticStatus::ComputedExactRealWitness => {
             let Some(value) = difference.exact_result.as_ref() else {
                 return algebraic_difference_comparison_report(
                     algebraic_comparison_report(
@@ -746,11 +862,11 @@ pub fn compare_algebraic_root_representations_by_difference(
                     Some(difference),
                 );
             };
-            match compare_reals(value, &Real::zero(), config.policy).value() {
+            match algebraic_value_sign(value, config.policy) {
                 Some(ordering) => algebraic_comparison_report(
                     AlgebraicRootComparisonStatus::Compared,
                     Some(ordering),
-                    Some("comparison decided by exact rational difference".to_owned()),
+                    Some("comparison decided by exact difference witness".to_owned()),
                 ),
                 None => algebraic_comparison_report(
                     AlgebraicRootComparisonStatus::Undecided,
@@ -812,6 +928,9 @@ pub fn translated_algebraic_root_difference(
     right: &AlgebraicRootRepresentation,
     policy: PredicatePolicy,
 ) -> Option<Real> {
+    if !algebraic_root_comparison_inputs_replay_strictly(left, right) {
+        return None;
+    }
     let left_coefficients = &left.polynomial_coefficients;
     let right_coefficients = &right.polynomial_coefficients;
     if left_coefficients.len() != right_coefficients.len() || left_coefficients.len() < 2 {
@@ -838,7 +957,7 @@ pub fn translated_algebraic_root_difference(
         return None;
     }
     let translated = translated.representation.as_ref()?;
-    (represented_roots_share_isolated_common_root(translated, right, policy) == Some(true))
+    (admitted_represented_roots_share_isolated_common_root(translated, right, policy) == Some(true))
         .then(|| -offset)
 }
 
@@ -858,8 +977,7 @@ pub fn algebraic_root_affine_relation(
 ) -> Option<AlgebraicRootAffineRelation> {
     let left_coefficients = &left.polynomial_coefficients;
     let right_coefficients = &right.polynomial_coefficients;
-    if !left.is_valid()
-        || !right.is_valid()
+    if !algebraic_root_comparison_inputs_replay_strictly(left, right)
         || left_coefficients.len() != right_coefficients.len()
         || left_coefficients.len() < 2
         || left_coefficients
@@ -930,30 +1048,39 @@ pub fn algebraic_root_affine_relation(
             continue;
         }
         let transformed = transformed.representation.as_ref()?;
-        if represented_roots_share_isolated_common_root(transformed, right, policy) == Some(true) {
+        if admitted_represented_roots_share_isolated_common_root(transformed, right, policy)
+            == Some(true)
+        {
             return Some(AlgebraicRootAffineRelation { scale, offset });
         }
     }
     None
 }
 
-fn represented_roots_share_isolated_common_root(
+fn admitted_represented_roots_share_isolated_common_root(
     left: &AlgebraicRootRepresentation,
     right: &AlgebraicRootRepresentation,
     policy: PredicatePolicy,
 ) -> Option<bool> {
-    if !left.is_valid()
-        || !right.is_valid()
-        || left.interval.distinct_root_count != 1
-        || right.interval.distinct_root_count != 1
-    {
-        return Some(false);
+    match (left.exact_point_witness(), right.exact_point_witness()) {
+        (Some(left), Some(right)) => {
+            return Some(compare_algebraic_values(left, right, policy)? == Ordering::Equal);
+        }
+        (Some(point), None) => {
+            return admitted_exact_point_is_represented_root(point, right, policy);
+        }
+        (None, Some(point)) => {
+            return admitted_exact_point_is_represented_root(point, left, policy);
+        }
+        (None, None) => {}
     }
-    let lower = match compare_reals(&left.interval.lower, &right.interval.lower, policy).value()? {
+    let lower = match compare_algebraic_values(&left.interval.lower, &right.interval.lower, policy)?
+    {
         Ordering::Less => &right.interval.lower,
         Ordering::Equal | Ordering::Greater => &left.interval.lower,
     };
-    let upper = match compare_reals(&left.interval.upper, &right.interval.upper, policy).value()? {
+    let upper = match compare_algebraic_values(&left.interval.upper, &right.interval.upper, policy)?
+    {
         Ordering::Greater => &right.interval.upper,
         Ordering::Equal | Ordering::Less => &left.interval.upper,
     };
@@ -966,21 +1093,42 @@ fn represented_roots_share_isolated_common_root(
     )
 }
 
+fn admitted_exact_point_is_represented_root(
+    point: &Real,
+    root: &AlgebraicRootRepresentation,
+    policy: PredicatePolicy,
+) -> Option<bool> {
+    if compare_algebraic_values(point, &root.interval.lower, policy)? == Ordering::Less
+        || compare_algebraic_values(point, &root.interval.upper, policy)? == Ordering::Greater
+    {
+        return Some(false);
+    }
+    Some(
+        algebraic_value_sign(
+            &evaluate_polynomial(&root.polynomial_coefficients, point),
+            policy,
+        )? == Ordering::Equal,
+    )
+}
+
 /// Compute exact arithmetic for represented roots under an explicit predicate
 /// policy.
 ///
 /// This is deliberately a witness arithmetic package, not a full algebraic
-/// number field. When both required inputs carry exact rational witnesses, the
-/// result is computed exactly in [`Real`]. When exactly one binary operand is
-/// an exact rational witness, add/subtract/multiply/divide by that scalar is
-/// lowered to exact affine or linear-fractional construction; unary negation
-/// is the same structural operation specialized to `scale = -1`.
+/// number field. When both required inputs carry exact point witnesses, the
+/// result is computed exactly in [`Real`]: rational results use the dedicated
+/// rational-witness status, while non-rational results use the exact-`Real`
+/// witness status. When exactly one binary operand is an exact point,
+/// add/subtract/multiply/divide by that scalar is lowered to exact affine or
+/// linear-fractional construction; unary negation is the same structural
+/// operation specialized to `scale = -1`.
 /// Independent represented roots use the bounded resultant construction when
 /// supported. These operations transform retained algebraic evidence rather
 /// than sampling approximations. Every comparison, validation, and refinement
-/// uses `policy`; in particular, a STRICT caller never crosses an implicit
-/// `APPROXIMATE_512` terminal. Unsupported algebraic arithmetic remains
-/// explicit. This follows the exact-object rule from the
+/// obeys `policy`; direct identity and point paths additionally replay their
+/// stored source evidence under `STRICT`, and a STRICT caller never crosses an
+/// implicit `APPROXIMATE_512` terminal. Unsupported algebraic arithmetic
+/// remains explicit. This follows the exact-object rule from the
 /// exact-geometric-computation model.
 pub fn arithmetic_algebraic_root_representations(
     left: &AlgebraicRootRepresentation,
@@ -997,7 +1145,19 @@ pub fn arithmetic_algebraic_root_representations(
             Some("algebraic root arithmetic requires valid represented inputs".to_owned()),
         );
     }
-    if let Some(report) = arithmetic_with_one_rational_scalar(left, right, operation, policy) {
+    if operation != AlgebraicRootArithmeticOp::Negate && right.is_none() {
+        return algebraic_arithmetic_report(
+            operation,
+            AlgebraicRootArithmeticStatus::InvalidEvidence,
+            None,
+            None,
+            Some("binary algebraic root arithmetic requires a right input".to_owned()),
+        );
+    }
+    if let Some(report) = arithmetic_with_exact_point_operands(left, right, operation, policy) {
+        return report;
+    }
+    if let Some(report) = arithmetic_with_one_exact_point_scalar(left, right, operation, policy) {
         return report;
     }
     if let Some(report) = arithmetic_with_same_representation(left, right, operation, policy) {
@@ -1008,97 +1168,299 @@ pub fn arithmetic_algebraic_root_representations(
     {
         return report;
     }
-    let Some(left_value) = left.exact_rational_witness() else {
-        if operation == AlgebraicRootArithmeticOp::Negate {
-            let representation = negate_algebraic_root_representation(left, policy);
-            let status = if representation.is_valid() {
-                AlgebraicRootArithmeticStatus::ComputedRepresentation
-            } else {
-                AlgebraicRootArithmeticStatus::Undecided
-            };
-            let message = (!representation.is_valid())
-                .then(|| "negated algebraic root representation did not validate".to_owned());
-            return algebraic_arithmetic_report(
-                operation,
-                status,
-                None,
-                Some(representation),
-                message,
-            );
+    if operation == AlgebraicRootArithmeticOp::Negate {
+        if !algebraic_root_payload_replays_strictly(left)
+            || right.is_some_and(|root| !algebraic_root_payload_replays_strictly(root))
+        {
+            return stale_arithmetic_input_report(operation);
         }
+        let representation = negate_algebraic_root_representation(left);
         return algebraic_arithmetic_report(
             operation,
-            AlgebraicRootArithmeticStatus::NonRationalInput,
+            AlgebraicRootArithmeticStatus::ComputedRepresentation,
             None,
+            Some(representation),
             None,
-            Some("left algebraic root has no exact rational witness".to_owned()),
         );
+    }
+    algebraic_arithmetic_report(
+        operation,
+        AlgebraicRootArithmeticStatus::NonRationalInput,
+        None,
+        None,
+        Some("represented-root arithmetic exceeded the supported exact constructions".to_owned()),
+    )
+}
+
+fn algebraic_root_payload_replays_strictly(root: &AlgebraicRootRepresentation) -> bool {
+    if let Some(valid) = replay_rational_arithmetic_input(root) {
+        return valid;
+    }
+    if let Some(point) = root.interval.exact_root.as_ref()
+        && root.interval.distinct_root_count == 1
+        && root.interval.lower == *point
+        && root.interval.upper == *point
+        && root.polynomial_coefficients.len() == 2
+        && root.polynomial_coefficients[1]
+            .exact_rational_ref()
+            .is_some_and(Rational::is_one)
+        && exact_values_are_negations(&root.polynomial_coefficients[0], point)
+    {
+        return true;
+    }
+    validate_algebraic_root_representation(root, PredicatePolicy::STRICT).status
+        == AlgebraicRootValidationStatus::Valid
+}
+
+#[inline]
+fn algebraic_root_comparison_inputs_replay_strictly(
+    left: &AlgebraicRootRepresentation,
+    right: &AlgebraicRootRepresentation,
+) -> bool {
+    left.is_valid()
+        && right.is_valid()
+        && algebraic_root_payload_replays_strictly(left)
+        && algebraic_root_payload_replays_strictly(right)
+}
+
+#[inline]
+fn compare_algebraic_values(
+    left: &Real,
+    right: &Real,
+    policy: PredicatePolicy,
+) -> Option<Ordering> {
+    if let (Some(left), Some(right)) = (left.exact_rational_ref(), right.exact_rational_ref()) {
+        return left.partial_cmp(right);
+    }
+    compare_reals(left, right, policy).value()
+}
+
+#[inline]
+fn algebraic_value_sign(value: &Real, policy: PredicatePolicy) -> Option<Ordering> {
+    if let Some(value) = value.exact_rational_ref() {
+        return Some(if value.is_negative() {
+            Ordering::Less
+        } else if value.is_zero() {
+            Ordering::Equal
+        } else {
+            Ordering::Greater
+        });
+    }
+    compare_reals(value, &Real::zero(), policy).value()
+}
+
+fn exact_values_are_negations(left: &Real, right: &Real) -> bool {
+    if let (Some(left), Some(right)) = (left.exact_rational_ref(), right.exact_rational_ref()) {
+        return rational_values_are_negations(left, right);
+    }
+    left.is_structural_negation_of(right)
+}
+
+#[inline]
+fn rational_values_are_negations(left: &Rational, right: &Rational) -> bool {
+    if left.is_zero() || right.is_zero() {
+        left.is_zero() && right.is_zero()
+    } else {
+        left.is_negative() != right.is_negative()
+            && left.numerator() == right.numerator()
+            && left.denominator() == right.denominator()
+    }
+}
+
+fn stale_arithmetic_input_report(
+    operation: AlgebraicRootArithmeticOp,
+) -> AlgebraicRootArithmeticReport {
+    algebraic_arithmetic_report(
+        operation,
+        AlgebraicRootArithmeticStatus::InvalidEvidence,
+        None,
+        None,
+        Some("algebraic root arithmetic rejected stale represented input evidence".to_owned()),
+    )
+}
+
+fn replay_rational_arithmetic_input(root: &AlgebraicRootRepresentation) -> Option<bool> {
+    if root.polynomial_coefficients.len() <= 1 {
+        return Some(false);
+    }
+    let leading = root.polynomial_coefficients.last()?.exact_rational_ref()?;
+    let lower = root.interval.lower.exact_rational_ref()?;
+    let upper = root.interval.upper.exact_rational_ref()?;
+    if let Some(point) = root
+        .interval
+        .exact_root
+        .as_ref()
+        .and_then(Real::exact_rational_ref)
+        && root.interval.distinct_root_count == 1
+        && root.polynomial_coefficients.len() == 2
+        && leading.is_one()
+        && lower == point
+        && upper == point
+        && root.polynomial_coefficients[0]
+            .exact_rational_ref()
+            .is_some_and(|constant| rational_values_are_negations(constant, point))
+    {
+        return Some(true);
+    }
+    if leading.is_zero() || lower > upper || root.interval.distinct_root_count != 1 {
+        return Some(false);
+    }
+    let Some(point) = root.interval.exact_root.as_ref() else {
+        return root
+            .polynomial_coefficients
+            .iter()
+            .all(|coefficient| coefficient.exact_rational_ref().is_some())
+            .then_some(true);
     };
+    let point = point.exact_rational_ref()?;
+    if point < lower || point > upper {
+        return Some(false);
+    }
+    if root.polynomial_coefficients.len() == 2
+        && leading.is_one()
+        && root.polynomial_coefficients[0]
+            .exact_rational_ref()
+            .is_some_and(|constant| rational_values_are_negations(constant, point))
+    {
+        return Some(true);
+    }
+    let mut value = Rational::zero();
+    for coefficient in root.polynomial_coefficients.iter().rev() {
+        value = &value * point + coefficient.exact_rational_ref()?;
+    }
+    Some(value.is_zero())
+}
+
+fn arithmetic_with_exact_point_operands(
+    left: &AlgebraicRootRepresentation,
+    right: Option<&AlgebraicRootRepresentation>,
+    operation: AlgebraicRootArithmeticOp,
+    policy: PredicatePolicy,
+) -> Option<AlgebraicRootArithmeticReport> {
+    let left_value = left.exact_point_witness()?;
+    let right_value = if operation == AlgebraicRootArithmeticOp::Negate {
+        None
+    } else {
+        Some(right?.exact_point_witness()?)
+    };
+    if !algebraic_root_payload_replays_strictly(left)
+        || right.is_some_and(|root| !algebraic_root_payload_replays_strictly(root))
+    {
+        return Some(stale_arithmetic_input_report(operation));
+    }
     let result = match operation {
         AlgebraicRootArithmeticOp::Negate => -left_value.clone(),
         AlgebraicRootArithmeticOp::Add
         | AlgebraicRootArithmeticOp::Subtract
         | AlgebraicRootArithmeticOp::Multiply
         | AlgebraicRootArithmeticOp::Divide => {
-            let Some(right) = right else {
-                return algebraic_arithmetic_report(
-                    operation,
-                    AlgebraicRootArithmeticStatus::InvalidEvidence,
-                    None,
-                    None,
-                    Some("binary algebraic root arithmetic requires a right input".to_owned()),
-                );
-            };
-            let Some(right_value) = right.exact_rational_witness() else {
-                return algebraic_arithmetic_report(
-                    operation,
-                    AlgebraicRootArithmeticStatus::NonRationalInput,
-                    None,
-                    None,
-                    Some("right algebraic root has no exact rational witness".to_owned()),
-                );
-            };
+            let right_value = right_value.expect("binary exact-point arithmetic has a right value");
             match operation {
                 AlgebraicRootArithmeticOp::Add => left_value.clone() + right_value.clone(),
                 AlgebraicRootArithmeticOp::Subtract => left_value.clone() - right_value.clone(),
                 AlgebraicRootArithmeticOp::Multiply => left_value.clone() * right_value.clone(),
                 AlgebraicRootArithmeticOp::Divide => {
-                    let Ok(quotient) = left_value.clone() / right_value.clone() else {
-                        return algebraic_arithmetic_report(
-                            operation,
-                            AlgebraicRootArithmeticStatus::Undecided,
-                            None,
-                            None,
-                            Some("exact rational witness division failed".to_owned()),
-                        );
-                    };
-                    quotient
+                    match left_value.clone() / right_value.clone() {
+                        Ok(quotient) => quotient,
+                        Err(_) => {
+                            let Some(reciprocal) =
+                                crate::policy_division::reciprocal_with_policy(right_value, policy)
+                            else {
+                                return Some(algebraic_arithmetic_report(
+                                    operation,
+                                    AlgebraicRootArithmeticStatus::Undecided,
+                                    None,
+                                    None,
+                                    Some("exact point division failed".to_owned()),
+                                ));
+                            };
+                            left_value.clone() * reciprocal
+                        }
+                    }
                 }
                 AlgebraicRootArithmeticOp::Negate => unreachable!("handled above"),
             }
         }
     };
+    Some(exact_point_arithmetic_report(operation, result))
+}
+
+fn exact_point_arithmetic_report(
+    operation: AlgebraicRootArithmeticOp,
+    result: Real,
+) -> AlgebraicRootArithmeticReport {
+    if result.exact_rational_ref().is_some() {
+        return algebraic_arithmetic_report(
+            operation,
+            AlgebraicRootArithmeticStatus::ComputedExactRationalWitness,
+            Some(result),
+            None,
+            None,
+        );
+    }
     algebraic_arithmetic_report(
         operation,
-        AlgebraicRootArithmeticStatus::ComputedExactRationalWitness,
+        AlgebraicRootArithmeticStatus::ComputedExactRealWitness,
         Some(result),
         None,
         None,
     )
 }
 
-/// Lower a supported mixed rational/non-rational operation to an affine image.
+#[inline(always)]
+pub(crate) fn canonical_linear_value_representation(
+    source: &AlgebraicRootRepresentation,
+    value: Real,
+) -> AlgebraicRootRepresentation {
+    let is_rational = value.exact_rational_ref().is_some();
+    canonical_linear_value_representation_with_kind(source, value, is_rational)
+}
+
+#[inline(always)]
+fn canonical_linear_value_representation_with_kind(
+    source: &AlgebraicRootRepresentation,
+    value: Real,
+    is_rational: bool,
+) -> AlgebraicRootRepresentation {
+    let exact_root = is_rational.then(|| value.clone());
+    let representation = AlgebraicRootRepresentation {
+        constraint_index: source.constraint_index,
+        symbol: source.symbol,
+        interval_index: source.interval_index,
+        polynomial_coefficients: vec![-value.clone(), Real::one()],
+        interval: IsolatedRootInterval {
+            lower: value.clone(),
+            upper: value,
+            exact_root,
+            distinct_root_count: 1,
+        },
+        kind: if is_rational {
+            AlgebraicRootKind::ExactRationalWitness
+        } else {
+            AlgebraicRootKind::IsolatingInterval
+        },
+        validation: AlgebraicRootValidationReport::valid(),
+    };
+    debug_assert_eq!(
+        validate_algebraic_root_representation(&representation, PredicatePolicy::STRICT).status,
+        AlgebraicRootValidationStatus::Valid,
+        "canonical linear exact-value representation must validate",
+    );
+    representation
+}
+
+/// Lower a supported mixed exact-point/interval operation to an affine image.
 ///
 /// the exact-geometric-computation model separates construction of exact
 /// algebraic objects from later predicate decisions. A scalar affine image of one represented
 /// root is a safe construction because `scale^n * P((y - offset) / scale)`
 /// gives exact polynomial evidence for the image and preserves interval
-/// evidence by exact endpoint transforms. A rational scalar divided by a
+/// evidence by exact endpoint transforms. An exact point divided by a
 /// represented nonzero root is delegated to the linear-fractional construction
 /// package. General products, sums, or quotients of two independent
 /// non-rational algebraic roots need resultants or a full algebraic-number
 /// package, so this helper refuses those cases.
-fn arithmetic_with_one_rational_scalar(
+fn arithmetic_with_one_exact_point_scalar(
     left: &AlgebraicRootRepresentation,
     right: Option<&AlgebraicRootRepresentation>,
     operation: AlgebraicRootArithmeticOp,
@@ -1108,86 +1470,92 @@ fn arithmetic_with_one_rational_scalar(
         return None;
     }
     let right = right?;
-    let left_value = left.exact_rational_witness();
-    let right_value = right.exact_rational_witness();
+    let left_value = left.exact_point_witness();
+    let right_value = right.exact_point_witness();
     match (left_value, right_value) {
         (Some(_), Some(_)) | (None, None) => None,
-        (Some(scalar), None) => match operation {
-            AlgebraicRootArithmeticOp::Add => Some(affine_transform_arithmetic_report(
-                right,
-                Real::one(),
-                scalar.clone(),
-                operation,
-                policy,
-                "left rational scalar added to represented right root",
-            )),
-            AlgebraicRootArithmeticOp::Subtract => Some(affine_transform_arithmetic_report(
-                right,
-                -Real::one(),
-                scalar.clone(),
-                operation,
-                policy,
-                "represented right root subtracted from left rational scalar",
-            )),
-            AlgebraicRootArithmeticOp::Multiply => Some(multiply_by_rational_scalar_report(
-                right, scalar, operation, policy,
-            )),
-            AlgebraicRootArithmeticOp::Divide => Some(mobius_transform_arithmetic_report(
-                right,
-                Real::zero(),
-                scalar.clone(),
-                Real::one(),
-                Real::zero(),
-                operation,
-                policy,
-                "left rational scalar divided by represented right root",
-            )),
-            AlgebraicRootArithmeticOp::Negate => unreachable!("handled above"),
-        },
-        (None, Some(scalar)) => match operation {
-            AlgebraicRootArithmeticOp::Add => Some(affine_transform_arithmetic_report(
-                left,
-                Real::one(),
-                scalar.clone(),
-                operation,
-                policy,
-                "right rational scalar added to represented left root",
-            )),
-            AlgebraicRootArithmeticOp::Subtract => Some(affine_transform_arithmetic_report(
-                left,
-                Real::one(),
-                -scalar.clone(),
-                operation,
-                policy,
-                "right rational scalar subtracted from represented left root",
-            )),
-            AlgebraicRootArithmeticOp::Multiply => Some(multiply_by_rational_scalar_report(
-                left, scalar, operation, policy,
-            )),
-            AlgebraicRootArithmeticOp::Divide => Some(divide_by_rational_scalar_report(
-                left, scalar, operation, policy,
-            )),
-            AlgebraicRootArithmeticOp::Negate => unreachable!("handled above"),
-        },
+        (Some(scalar), None) => {
+            if !algebraic_root_payload_replays_strictly(left) {
+                return Some(stale_arithmetic_input_report(operation));
+            }
+            match operation {
+                AlgebraicRootArithmeticOp::Add => Some(affine_transform_arithmetic_report(
+                    right,
+                    Real::one(),
+                    scalar.clone(),
+                    operation,
+                    policy,
+                    "left exact point scalar added to represented right root",
+                )),
+                AlgebraicRootArithmeticOp::Subtract => Some(affine_transform_arithmetic_report(
+                    right,
+                    -Real::one(),
+                    scalar.clone(),
+                    operation,
+                    policy,
+                    "represented right root subtracted from left exact point scalar",
+                )),
+                AlgebraicRootArithmeticOp::Multiply => Some(multiply_by_exact_scalar_report(
+                    right, scalar, operation, policy,
+                )),
+                AlgebraicRootArithmeticOp::Divide => Some(divide_exact_scalar_by_root_report(
+                    right, scalar, operation, policy,
+                )),
+                AlgebraicRootArithmeticOp::Negate => unreachable!("handled above"),
+            }
+        }
+        (None, Some(scalar)) => {
+            if !algebraic_root_payload_replays_strictly(right) {
+                return Some(stale_arithmetic_input_report(operation));
+            }
+            match operation {
+                AlgebraicRootArithmeticOp::Add => Some(affine_transform_arithmetic_report(
+                    left,
+                    Real::one(),
+                    scalar.clone(),
+                    operation,
+                    policy,
+                    "right exact point scalar added to represented left root",
+                )),
+                AlgebraicRootArithmeticOp::Subtract => Some(affine_transform_arithmetic_report(
+                    left,
+                    Real::one(),
+                    -scalar.clone(),
+                    operation,
+                    policy,
+                    "right exact point scalar subtracted from represented left root",
+                )),
+                AlgebraicRootArithmeticOp::Multiply => Some(multiply_by_exact_scalar_report(
+                    left, scalar, operation, policy,
+                )),
+                AlgebraicRootArithmeticOp::Divide => Some(divide_by_exact_scalar_report(
+                    left, scalar, operation, policy,
+                )),
+                AlgebraicRootArithmeticOp::Negate => unreachable!("handled above"),
+            }
+        }
     }
 }
 
-fn multiply_by_rational_scalar_report(
+fn multiply_by_exact_scalar_report(
     root: &AlgebraicRootRepresentation,
     scalar: &Real,
     operation: AlgebraicRootArithmeticOp,
     policy: PredicatePolicy,
 ) -> AlgebraicRootArithmeticReport {
-    let Some(ordering) = compare_reals(scalar, &Real::zero(), policy).value() else {
+    let Some(ordering) = affine_scale_order(scalar, policy) else {
         return algebraic_arithmetic_report(
             operation,
             AlgebraicRootArithmeticStatus::Undecided,
             None,
             None,
-            Some("could not certify rational scalar zero/nonzero for multiplication".to_owned()),
+            Some("could not certify exact point scalar zero/nonzero for multiplication".to_owned()),
         );
     };
     if ordering == Ordering::Equal {
+        if !algebraic_root_payload_replays_strictly(root) {
+            return stale_arithmetic_input_report(operation);
+        }
         return algebraic_arithmetic_report(
             operation,
             AlgebraicRootArithmeticStatus::ComputedExactRationalWitness,
@@ -1202,41 +1570,44 @@ fn multiply_by_rational_scalar_report(
         Real::zero(),
         operation,
         policy,
-        "represented root multiplied by nonzero rational scalar",
+        "represented root multiplied by nonzero exact point scalar",
     )
 }
 
-fn divide_by_rational_scalar_report(
+fn divide_by_exact_scalar_report(
     root: &AlgebraicRootRepresentation,
     scalar: &Real,
     operation: AlgebraicRootArithmeticOp,
     policy: PredicatePolicy,
 ) -> AlgebraicRootArithmeticReport {
-    let Some(ordering) = compare_reals(scalar, &Real::zero(), policy).value() else {
+    let Some(ordering) = affine_scale_order(scalar, policy) else {
         return algebraic_arithmetic_report(
             operation,
             AlgebraicRootArithmeticStatus::Undecided,
             None,
             None,
-            Some("could not certify rational divisor zero/nonzero".to_owned()),
+            Some("could not certify exact point divisor zero/nonzero".to_owned()),
         );
     };
     if ordering == Ordering::Equal {
+        if !algebraic_root_payload_replays_strictly(root) {
+            return stale_arithmetic_input_report(operation);
+        }
         return algebraic_arithmetic_report(
             operation,
             AlgebraicRootArithmeticStatus::Undecided,
             None,
             None,
-            Some("division by zero rational witness is not a constructed value".to_owned()),
+            Some("division by a zero exact point is not a constructed value".to_owned()),
         );
     }
-    let Ok(scale) = Real::one() / scalar.clone() else {
+    let Ok(scale) = crate::policy_division::reciprocal_after_certified_nonzero(scalar) else {
         return algebraic_arithmetic_report(
             operation,
             AlgebraicRootArithmeticStatus::Undecided,
             None,
             None,
-            Some("could not invert rational divisor exactly".to_owned()),
+            Some("could not invert exact point divisor exactly".to_owned()),
         );
     };
     affine_transform_arithmetic_report(
@@ -1245,7 +1616,62 @@ fn divide_by_rational_scalar_report(
         Real::zero(),
         operation,
         policy,
-        "represented root divided by nonzero rational scalar",
+        "represented root divided by nonzero exact point scalar",
+    )
+}
+
+fn divide_exact_scalar_by_root_report(
+    root: &AlgebraicRootRepresentation,
+    scalar: &Real,
+    operation: AlgebraicRootArithmeticOp,
+    policy: PredicatePolicy,
+) -> AlgebraicRootArithmeticReport {
+    let Some(ordering) = affine_scale_order(scalar, policy) else {
+        return algebraic_arithmetic_report(
+            operation,
+            AlgebraicRootArithmeticStatus::Undecided,
+            None,
+            None,
+            Some("could not certify exact point dividend zero/nonzero".to_owned()),
+        );
+    };
+    if ordering == Ordering::Equal {
+        if !algebraic_root_payload_replays_strictly(root) {
+            return stale_arithmetic_input_report(operation);
+        }
+        return match represented_root_sign_admitted(root, policy) {
+            Some(Ordering::Less | Ordering::Greater) => algebraic_arithmetic_report(
+                operation,
+                AlgebraicRootArithmeticStatus::ComputedExactRationalWitness,
+                Some(Real::zero()),
+                None,
+                None,
+            ),
+            Some(Ordering::Equal) => algebraic_arithmetic_report(
+                operation,
+                AlgebraicRootArithmeticStatus::Undecided,
+                None,
+                None,
+                Some("zero divided by a represented zero root is undefined".to_owned()),
+            ),
+            None => algebraic_arithmetic_report(
+                operation,
+                AlgebraicRootArithmeticStatus::Undecided,
+                None,
+                None,
+                Some("could not certify the represented divisor away from zero".to_owned()),
+            ),
+        };
+    }
+    mobius_transform_arithmetic_report(
+        root,
+        Real::zero(),
+        scalar.clone(),
+        Real::one(),
+        Real::zero(),
+        operation,
+        policy,
+        "left exact point scalar divided by represented right root",
     )
 }
 
@@ -1256,7 +1682,7 @@ fn divide_by_rational_scalar_report(
 /// general two-root algebraic-number field. They are respectively the exact
 /// polynomial images `2*x`, `0`, `x^2`, and the constant `1` on the same
 /// source evidence. This uses the resultant-backed image package and keeps the
-/// the exactness boundary construction boundary explicit: independent non-rational operands still
+/// the exact construction boundary explicit: independent non-rational operands still
 /// return [`AlgebraicRootArithmeticStatus::NonRationalInput`].
 fn arithmetic_with_same_representation(
     left: &AlgebraicRootRepresentation,
@@ -1269,8 +1695,20 @@ fn arithmetic_with_same_representation(
         return None;
     }
     let image = match operation {
-        AlgebraicRootArithmeticOp::Add => vec![Real::zero(), Real::from(2)],
+        AlgebraicRootArithmeticOp::Add => {
+            return Some(affine_transform_arithmetic_report(
+                left,
+                Real::from(2),
+                Real::zero(),
+                operation,
+                policy,
+                "same represented root addition lowered to affine image",
+            ));
+        }
         AlgebraicRootArithmeticOp::Subtract => {
+            if !algebraic_root_payload_replays_strictly(left) {
+                return Some(stale_arithmetic_input_report(operation));
+            }
             return Some(algebraic_arithmetic_report(
                 operation,
                 AlgebraicRootArithmeticStatus::ComputedExactRationalWitness,
@@ -1279,9 +1717,20 @@ fn arithmetic_with_same_representation(
                 Some("same represented root subtracted from itself".to_owned()),
             ));
         }
-        AlgebraicRootArithmeticOp::Multiply => vec![Real::zero(), Real::zero(), Real::one()],
+        AlgebraicRootArithmeticOp::Multiply => {
+            if let Some(report) = same_rational_quadratic_square_report(left, operation, policy) {
+                return Some(report);
+            }
+            vec![Real::zero(), Real::zero(), Real::one()]
+        }
         AlgebraicRootArithmeticOp::Divide => {
-            if root_interval_contains_zero(&left.interval, policy).unwrap_or(true) {
+            if !algebraic_root_payload_replays_strictly(left) {
+                return Some(stale_arithmetic_input_report(operation));
+            }
+            if !matches!(
+                represented_root_sign_admitted(left, policy),
+                Some(Ordering::Less | Ordering::Greater)
+            ) {
                 return Some(algebraic_arithmetic_report(
                     operation,
                     AlgebraicRootArithmeticStatus::Undecided,
@@ -1304,13 +1753,34 @@ fn arithmetic_with_same_representation(
     };
     let transform = transform_algebraic_root_polynomial_image(left, &image, policy);
     Some(match transform.status {
-        AlgebraicRootPolynomialImageStatus::Transformed => algebraic_arithmetic_report(
-            operation,
-            AlgebraicRootArithmeticStatus::ComputedRepresentation,
-            None,
-            transform.representation,
-            Some("same represented root arithmetic lowered to polynomial image".to_owned()),
-        ),
+        AlgebraicRootPolynomialImageStatus::Transformed => {
+            let exact_result = transform
+                .representation
+                .as_ref()
+                .and_then(AlgebraicRootRepresentation::exact_point_witness)
+                .filter(|value| value.exact_rational_ref().is_some())
+                .cloned();
+            if exact_result.is_some() {
+                algebraic_arithmetic_report(
+                    operation,
+                    AlgebraicRootArithmeticStatus::ComputedExactRationalWitness,
+                    exact_result,
+                    None,
+                    Some(
+                        "same represented root arithmetic reduced to an exact rational witness"
+                            .to_owned(),
+                    ),
+                )
+            } else {
+                algebraic_arithmetic_report(
+                    operation,
+                    AlgebraicRootArithmeticStatus::ComputedRepresentation,
+                    None,
+                    transform.representation,
+                    Some("same represented root arithmetic lowered to polynomial image".to_owned()),
+                )
+            }
+        }
         AlgebraicRootPolynomialImageStatus::InvalidEvidence
         | AlgebraicRootPolynomialImageStatus::InvalidTransformedEvidence => {
             algebraic_arithmetic_report(
@@ -1334,6 +1804,44 @@ fn arithmetic_with_same_representation(
     })
 }
 
+fn same_rational_quadratic_square_report(
+    left: &AlgebraicRootRepresentation,
+    operation: AlgebraicRootArithmeticOp,
+    policy: PredicatePolicy,
+) -> Option<AlgebraicRootArithmeticReport> {
+    let [constant, linear, quadratic] = left.polynomial_coefficients.as_slice() else {
+        return None;
+    };
+    let constant = constant.exact_rational_ref()?;
+    let linear = linear.exact_rational_ref()?;
+    let quadratic = quadratic.exact_rational_ref()?;
+    if quadratic.is_zero() {
+        return Some(stale_arithmetic_input_report(operation));
+    }
+    let scale = -(linear / quadratic);
+    let offset = -(constant / quadratic);
+    if scale.is_zero() {
+        if !algebraic_root_payload_replays_strictly(left) {
+            return Some(stale_arithmetic_input_report(operation));
+        }
+        return Some(algebraic_arithmetic_report(
+            operation,
+            AlgebraicRootArithmeticStatus::ComputedExactRationalWitness,
+            Some(Real::new(offset)),
+            None,
+            Some("same quadratic root square reduced to an exact rational witness".to_owned()),
+        ));
+    }
+    Some(affine_transform_arithmetic_report(
+        left,
+        Real::new(scale),
+        Real::new(offset),
+        operation,
+        policy,
+        "same quadratic root square reduced through its defining relation",
+    ))
+}
+
 /// Lowers independent add/subtract/multiply/divide to resultant-backed construction.
 ///
 /// This is the first bounded algebraic-number arithmetic slice for two
@@ -1349,7 +1857,7 @@ fn arithmetic_with_independent_representations(
     policy: PredicatePolicy,
 ) -> Option<AlgebraicRootArithmeticReport> {
     let right = right?;
-    if left.exact_rational_witness().is_some() || right.exact_rational_witness().is_some() {
+    if left.exact_point_witness().is_some() || right.exact_point_witness().is_some() {
         return None;
     }
     if !matches!(
@@ -1371,7 +1879,6 @@ fn arithmetic_with_independent_representations(
             Some("independent represented-root arithmetic lowered to exact resultant".to_owned()),
         ),
         AlgebraicRootBinaryTransformStatus::InvalidEvidence
-        | AlgebraicRootBinaryTransformStatus::UnsupportedCoefficient
         | AlgebraicRootBinaryTransformStatus::InvalidTransformedEvidence => {
             algebraic_arithmetic_report(
                 operation,
@@ -1381,6 +1888,13 @@ fn arithmetic_with_independent_representations(
                 transform.message,
             )
         }
+        AlgebraicRootBinaryTransformStatus::UnsupportedCoefficient => algebraic_arithmetic_report(
+            operation,
+            AlgebraicRootArithmeticStatus::NonRationalInput,
+            None,
+            transform.representation,
+            transform.message,
+        ),
         AlgebraicRootBinaryTransformStatus::UnsupportedOperation
         | AlgebraicRootBinaryTransformStatus::DenominatorMayContainZero
         | AlgebraicRootBinaryTransformStatus::UnsupportedDegree
@@ -1393,15 +1907,6 @@ fn arithmetic_with_independent_representations(
             transform.message,
         ),
     })
-}
-
-fn root_interval_contains_zero(
-    interval: &IsolatedRootInterval,
-    policy: PredicatePolicy,
-) -> Option<bool> {
-    let lower = compare_reals(&interval.lower, &Real::zero(), policy).value()?;
-    let upper = compare_reals(&interval.upper, &Real::zero(), policy).value()?;
-    Some(lower != Ordering::Greater && upper != Ordering::Less)
 }
 
 fn affine_transform_arithmetic_report(
@@ -1496,8 +2001,10 @@ fn mobius_transform_arithmetic_report(
 /// If `alpha` is represented by `P(x)` of degree `n` and `scale != 0`, then
 /// `beta` is represented by `scale^n * P((y - offset) / scale)`. This keeps
 /// all coefficients exact and preserves the isolating interval by transforming
-/// endpoints, rather than sampling a midpoint. The operation follows the exact
-/// exact-object boundary from the exact-geometric-computation model:
+/// endpoints, rather than sampling a midpoint. Positive-width isolators own
+/// `(lower, upper]`; a decreasing transform therefore boundedly refines any
+/// source endpoint roots before reversing the bounds. The operation follows
+/// the exact-object boundary from the exact-geometric-computation model:
 /// construction returns retained algebraic evidence, and later callers still
 /// use comparison/evaluation reports for certified decisions.
 pub fn transform_algebraic_root_affine(
@@ -1506,7 +2013,10 @@ pub fn transform_algebraic_root_affine(
     offset: Real,
     policy: PredicatePolicy,
 ) -> AlgebraicRootAffineTransformReport {
-    if !root.is_valid() {
+    if !root.is_valid()
+        || validate_algebraic_root_representation(root, PredicatePolicy::STRICT).status
+            != AlgebraicRootValidationStatus::Valid
+    {
         return algebraic_affine_transform_report(
             AlgebraicRootAffineTransformStatus::InvalidEvidence,
             scale,
@@ -1515,7 +2025,7 @@ pub fn transform_algebraic_root_affine(
             Some("algebraic root representation must be valid before transformation".to_owned()),
         );
     }
-    let Some(scale_sign) = compare_reals(&scale, &Real::zero(), policy).value() else {
+    let Some(scale_sign) = affine_scale_order(&scale, policy) else {
         return algebraic_affine_transform_report(
             AlgebraicRootAffineTransformStatus::Undecided,
             scale,
@@ -1533,6 +2043,46 @@ pub fn transform_algebraic_root_affine(
             Some("affine algebraic-root construction requires nonzero scale".to_owned()),
         );
     }
+    if root.exact_point_witness().is_none() && scale_sign == Ordering::Less {
+        let endpoints_are_roots = if integer_polynomial_modularly_excludes_endpoint_roots(
+            &root.polynomial_coefficients,
+            [&root.interval.lower, &root.interval.upper],
+        ) {
+            Some(false)
+        } else {
+            algebraic_root_interval_endpoints_are_roots_slow(root, policy)
+        };
+        match endpoints_are_roots {
+            Some(true) => {
+                return transform_affine_after_ownership_refinement(root, scale, offset, policy);
+            }
+            Some(false) => {}
+            None => {
+                return algebraic_affine_transform_report(
+                    AlgebraicRootAffineTransformStatus::Undecided,
+                    scale,
+                    offset,
+                    None,
+                    Some(
+                        "could not decide source endpoint ownership for decreasing affine transform"
+                            .to_owned(),
+                    ),
+                );
+            }
+        }
+    }
+    if let Some(source_value) = root.exact_point_witness() {
+        if let (Some(source_value), Some(scale_value), Some(offset_value)) = (
+            source_value.exact_rational_ref(),
+            scale.exact_rational_ref(),
+            offset.exact_rational_ref(),
+        ) {
+            let value = Real::from(scale_value * source_value + offset_value);
+            return exact_rational_affine_image(root, scale, offset, value);
+        }
+        let value = eval_affine(source_value, &scale, &offset);
+        return exact_affine_image(root, scale, offset, value);
+    }
     let Some(polynomial_coefficients) =
         affine_transformed_polynomial(&root.polynomial_coefficients, &scale, &offset, policy)
     else {
@@ -1544,7 +2094,7 @@ pub fn transform_algebraic_root_affine(
             Some("could not construct transformed polynomial exactly".to_owned()),
         );
     };
-    let Some(interval) = affine_transformed_interval(&root.interval, &scale, &offset, policy)
+    let Some(interval) = affine_transformed_interval(&root.interval, &scale, &offset, scale_sign)
     else {
         return algebraic_affine_transform_report(
             AlgebraicRootAffineTransformStatus::Undecided,
@@ -1554,6 +2104,236 @@ pub fn transform_algebraic_root_affine(
             Some("could not construct transformed isolating interval exactly".to_owned()),
         );
     };
+    finish_affine_transform(
+        root,
+        scale,
+        offset,
+        polynomial_coefficients,
+        interval,
+        policy,
+    )
+}
+
+#[cold]
+fn transform_affine_after_ownership_refinement(
+    root: &AlgebraicRootRepresentation,
+    scale: Real,
+    offset: Real,
+    policy: PredicatePolicy,
+) -> AlgebraicRootAffineTransformReport {
+    let Some(refined) = refine_reversed_algebraic_root_ownership(root, policy) else {
+        return algebraic_affine_transform_report(
+            AlgebraicRootAffineTransformStatus::Undecided,
+            scale,
+            offset,
+            None,
+            Some(
+                "could not refine source endpoint ownership for decreasing affine transform"
+                    .to_owned(),
+            ),
+        );
+    };
+    transform_algebraic_root_affine(&refined, scale, offset, policy)
+}
+
+/// Decides whether either stored endpoint annihilates a represented root's
+/// defining polynomial.
+///
+/// Positive-width isolators own `(lower, upper]`.  An orientation-reversing
+/// map swaps the numeric endpoints but not that ownership convention, so any
+/// defining-polynomial root at either endpoint must be removed or collapsed
+/// before the image interval can be stored safely.
+#[inline(never)]
+pub(crate) fn algebraic_root_interval_endpoints_are_roots(
+    root: &AlgebraicRootRepresentation,
+    policy: PredicatePolicy,
+) -> Option<bool> {
+    if integer_polynomial_modularly_excludes_endpoint_roots(
+        &root.polynomial_coefficients,
+        [&root.interval.lower, &root.interval.upper],
+    ) {
+        return Some(false);
+    }
+    algebraic_root_interval_endpoints_are_roots_slow(root, policy)
+}
+
+#[cold]
+fn algebraic_root_interval_endpoints_are_roots_slow(
+    root: &AlgebraicRootRepresentation,
+    policy: PredicatePolicy,
+) -> Option<bool> {
+    for endpoint in [&root.interval.lower, &root.interval.upper] {
+        if compare_reals(
+            &Real::eval_poly(&root.polynomial_coefficients, endpoint),
+            &Real::zero(),
+            policy,
+        )
+        .value()?
+            == Ordering::Equal
+        {
+            return Some(true);
+        }
+    }
+    Some(false)
+}
+
+const ENDPOINT_NONVANISHING_PRIME: u64 = 4_294_967_291;
+
+#[inline(always)]
+fn integer_polynomial_modularly_excludes_endpoint_roots(
+    polynomial: &[Real],
+    endpoints: [&Real; 2],
+) -> bool {
+    // One nonzero modular image is a complete certificate that an integer
+    // polynomial does not vanish.  This keeps the overwhelmingly common small
+    // integer endpoint check allocation-free; a zero residue is only
+    // inconclusive and falls through to exact rational or Real evaluation.
+    let Some(lower) = endpoints[0]
+        .exact_rational_ref()
+        .and_then(integer_mod_prime)
+    else {
+        return false;
+    };
+    let Some(upper) = endpoints[1]
+        .exact_rational_ref()
+        .and_then(integer_mod_prime)
+    else {
+        return false;
+    };
+    let mut values = [0_u64; 2];
+    for coefficient in polynomial.iter().rev() {
+        let Some(coefficient) = coefficient.exact_rational_ref().and_then(integer_mod_prime) else {
+            return false;
+        };
+        values[0] = (values[0] * lower + coefficient) % ENDPOINT_NONVANISHING_PRIME;
+        values[1] = (values[1] * upper + coefficient) % ENDPOINT_NONVANISHING_PRIME;
+    }
+    values.into_iter().all(|value| value != 0)
+}
+
+#[inline(always)]
+fn integer_mod_prime(value: &Rational) -> Option<u64> {
+    if !value.is_integer() {
+        return None;
+    }
+    let magnitude = u64::try_from(value.numerator()).ok()? % ENDPOINT_NONVANISHING_PRIME;
+    Some(if value.is_negative() && magnitude != 0 {
+        ENDPOINT_NONVANISHING_PRIME - magnitude
+    } else {
+        magnitude
+    })
+}
+
+/// Boundedly refines a source isolator until reversing it preserves `(l, u]`
+/// root ownership, or until the selected endpoint root becomes an exact point.
+pub(crate) fn refine_reversed_algebraic_root_ownership(
+    root: &AlgebraicRootRepresentation,
+    policy: PredicatePolicy,
+) -> Option<Box<AlgebraicRootRepresentation>> {
+    let mut refined_root = Box::new(root.clone());
+    for round in 0..=ALGEBRAIC_IMAGE_REFINEMENT_ROUNDS {
+        if refined_root.interval.exact_root.is_some()
+            || !algebraic_root_interval_endpoints_are_roots(&refined_root, policy)?
+        {
+            return Some(refined_root);
+        }
+        if round == ALGEBRAIC_IMAGE_REFINEMENT_ROUNDS {
+            break;
+        }
+        let refinement = refine_isolated_univariate_polynomial_interval(
+            &refined_root.polynomial_coefficients,
+            &refined_root.interval,
+            RootIsolationConfig {
+                policy,
+                max_interval_width: None,
+                max_refinement_steps: ALGEBRAIC_IMAGE_REFINEMENT_STEPS,
+            },
+        );
+        if !matches!(
+            refinement.status,
+            IsolatedRootRefinementStatus::Refined | IsolatedRootRefinementStatus::ExactRoot
+        ) {
+            return None;
+        }
+        let interval = refinement.refined_interval?;
+        if interval == refined_root.interval {
+            return None;
+        }
+        refined_root.interval = interval;
+        if let Some(exact_root) = refined_root.interval.exact_root.as_ref() {
+            refined_root.kind = if exact_root.exact_rational_ref().is_some() {
+                AlgebraicRootKind::ExactRationalWitness
+            } else {
+                AlgebraicRootKind::IsolatingInterval
+            };
+        }
+        refined_root.validation = validate_algebraic_root_representation(&refined_root, policy);
+        if !refined_root.is_valid() {
+            return None;
+        }
+    }
+    None
+}
+
+fn exact_affine_image(
+    root: &AlgebraicRootRepresentation,
+    scale: Real,
+    offset: Real,
+    value: Real,
+) -> AlgebraicRootAffineTransformReport {
+    let representation = canonical_linear_value_representation(root, value);
+    algebraic_affine_transform_report(
+        AlgebraicRootAffineTransformStatus::Transformed,
+        scale,
+        offset,
+        Some(representation),
+        None,
+    )
+}
+
+#[inline(always)]
+fn exact_rational_affine_image(
+    root: &AlgebraicRootRepresentation,
+    scale: Real,
+    offset: Real,
+    value: Real,
+) -> AlgebraicRootAffineTransformReport {
+    let representation = AlgebraicRootRepresentation {
+        constraint_index: root.constraint_index,
+        symbol: root.symbol,
+        interval_index: root.interval_index,
+        polynomial_coefficients: vec![-value.clone(), Real::one()],
+        interval: IsolatedRootInterval {
+            lower: value.clone(),
+            upper: value.clone(),
+            exact_root: Some(value),
+            distinct_root_count: 1,
+        },
+        kind: AlgebraicRootKind::ExactRationalWitness,
+        validation: AlgebraicRootValidationReport::valid(),
+    };
+    debug_assert_eq!(
+        validate_algebraic_root_representation(&representation, PredicatePolicy::STRICT).status,
+        AlgebraicRootValidationStatus::Valid,
+        "canonical exact affine image must validate",
+    );
+    algebraic_affine_transform_report(
+        AlgebraicRootAffineTransformStatus::Transformed,
+        scale,
+        offset,
+        Some(representation),
+        None,
+    )
+}
+
+fn finish_affine_transform(
+    root: &AlgebraicRootRepresentation,
+    scale: Real,
+    offset: Real,
+    polynomial_coefficients: Vec<Real>,
+    interval: IsolatedRootInterval,
+    policy: PredicatePolicy,
+) -> AlgebraicRootAffineTransformReport {
     let kind = if interval.exact_root.is_some() {
         AlgebraicRootKind::ExactRationalWitness
     } else {
@@ -1591,7 +2371,7 @@ pub fn transform_algebraic_root_affine(
 /// algebraic root.
 ///
 /// This is the first consumer-facing scalar operation for
-/// [`AlgebraicRootRepresentation`]. If the root carries an exact rational
+/// [`AlgebraicRootRepresentation`]. If the root carries an exact point
 /// witness, the value is computed by exact Horner evaluation. Otherwise the
 /// polynomial is evaluated over the isolating interval with conservative
 /// interval arithmetic and the sign is certified only when the whole enclosure
@@ -1602,15 +2382,26 @@ pub fn evaluate_polynomial_at_algebraic_root(
     polynomial_coefficients: &[Real],
     policy: PredicatePolicy,
 ) -> AlgebraicRootPolynomialEvaluationReport {
-    if !root.is_valid() {
+    if !root.is_valid() || !algebraic_root_payload_replays_strictly(root) {
         return algebraic_polynomial_evaluation_report(
             AlgebraicRootPolynomialEvaluationStatus::InvalidEvidence,
             None,
             None,
             None,
-            Some("algebraic root representation must be valid before evaluation".to_owned()),
+            Some(
+                "algebraic root representation must be cached-valid and replay strictly before evaluation"
+                    .to_owned(),
+            ),
         );
     }
+    evaluate_polynomial_at_admitted_algebraic_root(root, polynomial_coefficients, policy)
+}
+
+fn evaluate_polynomial_at_admitted_algebraic_root(
+    root: &AlgebraicRootRepresentation,
+    polynomial_coefficients: &[Real],
+    policy: PredicatePolicy,
+) -> AlgebraicRootPolynomialEvaluationReport {
     if polynomial_coefficients.is_empty() {
         return algebraic_polynomial_evaluation_report(
             AlgebraicRootPolynomialEvaluationStatus::InvalidPolynomial,
@@ -1620,7 +2411,7 @@ pub fn evaluate_polynomial_at_algebraic_root(
             Some("polynomial evaluation requires at least one coefficient".to_owned()),
         );
     }
-    let Some(polynomial) = trim_polynomial(polynomial_coefficients.to_vec(), policy) else {
+    let Some(polynomial) = trim_polynomial_for_evaluation(polynomial_coefficients, policy) else {
         return algebraic_polynomial_evaluation_report(
             AlgebraicRootPolynomialEvaluationStatus::Undecided,
             None,
@@ -1629,28 +2420,28 @@ pub fn evaluate_polynomial_at_algebraic_root(
             Some("could not trim evaluated polynomial coefficients exactly".to_owned()),
         );
     };
-    if let Some(witness) = root.exact_rational_witness() {
-        let value = evaluate_polynomial(&polynomial, witness);
-        let Some(sign) = compare_reals(&value, &Real::zero(), policy).value() else {
+    if let Some(witness) = root.exact_point_witness() {
+        let value = evaluate_polynomial(polynomial, witness);
+        let is_rational = value.exact_rational_ref().is_some();
+        let Some(sign) = exact_evaluation_value_sign(&value, policy) else {
             return algebraic_polynomial_evaluation_report(
                 AlgebraicRootPolynomialEvaluationStatus::Undecided,
                 Some(value),
                 None,
                 None,
-                Some("could not certify exact rational witness value sign".to_owned()),
+                Some("could not certify exact point value sign".to_owned()),
             );
         };
-        return algebraic_polynomial_evaluation_report(
-            AlgebraicRootPolynomialEvaluationStatus::EvaluatedExactRationalWitness,
-            Some(value),
-            None,
-            Some(sign),
-            None,
-        );
+        let status = if is_rational {
+            AlgebraicRootPolynomialEvaluationStatus::EvaluatedExactRationalWitness
+        } else {
+            AlgebraicRootPolynomialEvaluationStatus::EvaluatedExactRealWitness
+        };
+        return algebraic_polynomial_evaluation_report(status, Some(value), None, Some(sign), None);
     }
 
     let Some(interval) = evaluate_polynomial_interval(
-        &polynomial,
+        polynomial,
         &AlgebraicPolynomialValueInterval {
             lower: root.interval.lower.clone(),
             upper: root.interval.upper.clone(),
@@ -1710,11 +2501,11 @@ pub fn evaluate_polynomial_at_algebraic_root(
     )
 }
 
-/// Evaluate an exact-rational rational expression at a represented root.
+/// Evaluate an exact [`Real`]-coefficient rational expression at a represented root.
 ///
 /// Numerator and denominator are supplied in ascending power order. The
 /// denominator must be certified nonzero before division is performed. For
-/// rational witnesses, this is exact scalar division in [`Real`]. For
+/// point witnesses, this is exact scalar division in [`Real`]. For
 /// interval-only roots, denominator intervals that contain zero remain explicit
 /// domain uncertainty; certified positive or negative denominator intervals
 /// are inverted conservatively and multiplied by the numerator interval. This
@@ -1727,8 +2518,27 @@ pub fn evaluate_rational_expression_at_algebraic_root(
     denominator_coefficients: &[Real],
     policy: PredicatePolicy,
 ) -> AlgebraicRootRationalEvaluationReport {
-    let numerator = evaluate_polynomial_at_algebraic_root(root, numerator_coefficients, policy);
-    let denominator = evaluate_polynomial_at_algebraic_root(root, denominator_coefficients, policy);
+    if !root.is_valid() || !algebraic_root_payload_replays_strictly(root) {
+        let invalid = algebraic_polynomial_evaluation_report(
+            AlgebraicRootPolynomialEvaluationStatus::InvalidEvidence,
+            None,
+            None,
+            None,
+            Some(
+                "algebraic root representation must be cached-valid and replay strictly before evaluation"
+                    .to_owned(),
+            ),
+        );
+        return rational_expression_evaluation_from_polynomial_reports(
+            invalid.clone(),
+            invalid,
+            policy,
+        );
+    }
+    let numerator =
+        evaluate_polynomial_at_admitted_algebraic_root(root, numerator_coefficients, policy);
+    let denominator =
+        evaluate_polynomial_at_admitted_algebraic_root(root, denominator_coefficients, policy);
     rational_expression_evaluation_from_polynomial_reports(numerator, denominator, policy)
 }
 
@@ -1738,7 +2548,19 @@ pub(crate) fn evaluate_rational_expression_with_denominator_evaluation(
     denominator: AlgebraicRootPolynomialEvaluationReport,
     policy: PredicatePolicy,
 ) -> AlgebraicRootRationalEvaluationReport {
-    let numerator = evaluate_polynomial_at_algebraic_root(root, numerator_coefficients, policy);
+    // The denominator report came from the public evaluator for this same
+    // immutable root. A non-invalid report therefore already proves strict
+    // source admission for every numerator in the shared-denominator batch.
+    // Preserve the public invalid-root report shape by cloning its identical
+    // polynomial evidence instead of evaluating against rejected storage.
+    let numerator = if matches!(
+        denominator.status,
+        AlgebraicRootPolynomialEvaluationStatus::InvalidEvidence
+    ) {
+        denominator.clone()
+    } else {
+        evaluate_polynomial_at_admitted_algebraic_root(root, numerator_coefficients, policy)
+    };
     rational_expression_evaluation_from_polynomial_reports(numerator, denominator, policy)
 }
 
@@ -1761,7 +2583,10 @@ fn rational_expression_evaluation_from_polynomial_reports(
             None,
             None,
             None,
-            Some("algebraic root representation must be valid before evaluation".to_owned()),
+            Some(
+                "algebraic root representation must be cached-valid and replay strictly before evaluation"
+                    .to_owned(),
+            ),
         );
     }
     if matches!(
@@ -1786,9 +2611,7 @@ fn rational_expression_evaluation_from_polynomial_reports(
         numerator.exact_value.as_ref(),
         denominator.exact_value.as_ref(),
     ) {
-        let Some(denominator_sign) =
-            compare_reals(denominator_value, &Real::zero(), policy).value()
-        else {
+        let Some(denominator_sign) = denominator.sign else {
             return algebraic_rational_evaluation_report(
                 AlgebraicRootRationalEvaluationStatus::Undecided,
                 numerator,
@@ -1810,7 +2633,73 @@ fn rational_expression_evaluation_from_polynomial_reports(
                 Some("denominator evaluates exactly to zero".to_owned()),
             );
         }
-        let Ok(quotient) = numerator_value.clone() / denominator_value.clone() else {
+        if numerator.sign == Some(Ordering::Equal) {
+            return algebraic_rational_evaluation_report(
+                AlgebraicRootRationalEvaluationStatus::EvaluatedExactRationalWitness,
+                numerator,
+                denominator,
+                Some(Real::zero()),
+                None,
+                Some(Ordering::Equal),
+                None,
+            );
+        }
+        let quotient_sign = numerator.sign.map(|numerator_sign| {
+            if denominator_sign == Ordering::Less {
+                numerator_sign.reverse()
+            } else {
+                numerator_sign
+            }
+        });
+        if numerator_value == denominator_value {
+            return algebraic_rational_evaluation_report(
+                AlgebraicRootRationalEvaluationStatus::EvaluatedExactRationalWitness,
+                numerator,
+                denominator,
+                Some(Real::one()),
+                None,
+                Some(Ordering::Greater),
+                None,
+            );
+        }
+        if denominator_value
+            .exact_rational_ref()
+            .is_some_and(Rational::is_one)
+        {
+            let quotient = numerator_value.clone();
+            let status = if quotient.exact_rational_ref().is_some() {
+                AlgebraicRootRationalEvaluationStatus::EvaluatedExactRationalWitness
+            } else {
+                AlgebraicRootRationalEvaluationStatus::EvaluatedExactRealWitness
+            };
+            return algebraic_rational_evaluation_report(
+                status,
+                numerator,
+                denominator,
+                Some(quotient),
+                None,
+                quotient_sign,
+                None,
+            );
+        }
+        if let (Some(numerator_value), Some(denominator_value)) = (
+            numerator_value.exact_rational_ref(),
+            denominator_value.exact_rational_ref(),
+        ) {
+            let quotient = Real::from(numerator_value / denominator_value);
+            return algebraic_rational_evaluation_report(
+                AlgebraicRootRationalEvaluationStatus::EvaluatedExactRationalWitness,
+                numerator,
+                denominator,
+                Some(quotient),
+                None,
+                quotient_sign,
+                None,
+            );
+        }
+        let Ok(reciprocal) =
+            crate::policy_division::reciprocal_after_certified_nonzero(denominator_value)
+        else {
             return algebraic_rational_evaluation_report(
                 AlgebraicRootRationalEvaluationStatus::Undecided,
                 numerator,
@@ -1818,12 +2707,18 @@ fn rational_expression_evaluation_from_polynomial_reports(
                 None,
                 None,
                 None,
-                Some("exact rational division failed".to_owned()),
+                Some("exact point division failed".to_owned()),
             );
         };
-        let sign = compare_reals(&quotient, &Real::zero(), policy).value();
+        let quotient = numerator_value.clone() * reciprocal;
+        let sign = quotient_sign.or_else(|| exact_evaluation_value_sign(&quotient, policy));
+        let status = if quotient.exact_rational_ref().is_some() {
+            AlgebraicRootRationalEvaluationStatus::EvaluatedExactRationalWitness
+        } else {
+            AlgebraicRootRationalEvaluationStatus::EvaluatedExactRealWitness
+        };
         return algebraic_rational_evaluation_report(
-            AlgebraicRootRationalEvaluationStatus::EvaluatedExactRationalWitness,
+            status,
             numerator,
             denominator,
             Some(quotient),
@@ -1855,7 +2750,7 @@ fn rational_expression_evaluation_from_polynomial_reports(
             Some("denominator interval was not available".to_owned()),
         );
     };
-    if interval_contains_zero(denominator_interval, policy).unwrap_or(true) {
+    let Some(denominator_sign) = denominator.sign.filter(|sign| *sign != Ordering::Equal) else {
         return algebraic_rational_evaluation_report(
             AlgebraicRootRationalEvaluationStatus::DenominatorMayContainZero,
             numerator,
@@ -1867,8 +2762,10 @@ fn rational_expression_evaluation_from_polynomial_reports(
                 "denominator interval contains zero or could not be separated from zero".to_owned(),
             ),
         );
-    }
-    let Some(denominator_reciprocal) = interval_reciprocal(denominator_interval, policy) else {
+    };
+    let Some(denominator_reciprocal) =
+        interval_reciprocal_after_certified_nonzero(denominator_interval)
+    else {
         return algebraic_rational_evaluation_report(
             AlgebraicRootRationalEvaluationStatus::Undecided,
             numerator,
@@ -1890,7 +2787,16 @@ fn rational_expression_evaluation_from_polynomial_reports(
             Some("could not multiply numerator and reciprocal intervals exactly".to_owned()),
         );
     };
-    let sign = interval_sign(&quotient, policy);
+    let sign = numerator
+        .sign
+        .map(|numerator_sign| {
+            if denominator_sign == Ordering::Less {
+                numerator_sign.reverse()
+            } else {
+                numerator_sign
+            }
+        })
+        .or_else(|| interval_sign(&quotient, policy));
     algebraic_rational_evaluation_report(
         AlgebraicRootRationalEvaluationStatus::IntervalEvaluated,
         numerator,
@@ -1902,9 +2808,21 @@ fn rational_expression_evaluation_from_polynomial_reports(
     )
 }
 
+fn exact_evaluation_value_sign(value: &Real, policy: PredicatePolicy) -> Option<Ordering> {
+    if let Some(value) = value.exact_rational_ref() {
+        return Some(if value.is_negative() {
+            Ordering::Less
+        } else if value.is_zero() {
+            Ordering::Equal
+        } else {
+            Ordering::Greater
+        });
+    }
+    compare_reals(value, &Real::zero(), policy).value()
+}
+
 fn negate_algebraic_root_representation(
     root: &AlgebraicRootRepresentation,
-    policy: PredicatePolicy,
 ) -> AlgebraicRootRepresentation {
     // If p(r)=0, then q(x)=p(-x) has root -r. Reflecting the isolating
     // interval avoids a numeric midpoint estimate and preserves the exact
@@ -1936,7 +2854,7 @@ fn negate_algebraic_root_representation(
     } else {
         AlgebraicRootKind::IsolatingInterval
     };
-    let mut representation = AlgebraicRootRepresentation {
+    let representation = AlgebraicRootRepresentation {
         constraint_index: root.constraint_index,
         symbol: root.symbol,
         interval_index: root.interval_index,
@@ -1945,7 +2863,11 @@ fn negate_algebraic_root_representation(
         kind,
         validation: AlgebraicRootValidationReport::valid(),
     };
-    representation.validation = validate_algebraic_root_representation(&representation, policy);
+    debug_assert_eq!(
+        validate_algebraic_root_representation(&representation, PredicatePolicy::STRICT).status,
+        AlgebraicRootValidationStatus::Valid,
+        "negation of strictly replayed algebraic-root evidence must validate",
+    );
     representation
 }
 
@@ -2132,7 +3054,7 @@ fn validate_root_payload(
     if !point_lies_in_interval(root, &interval.lower, &interval.upper, policy) {
         return AlgebraicRootValidationReport::invalid(
             AlgebraicRootValidationStatus::WitnessOutsideInterval,
-            "exact rational witness is outside its isolating interval",
+            "exact point witness is outside its isolating interval",
         );
     }
     match compare_reals(
@@ -2145,11 +3067,11 @@ fn validate_root_payload(
         Some(Ordering::Equal) => AlgebraicRootValidationReport::valid(),
         Some(Ordering::Less | Ordering::Greater) => AlgebraicRootValidationReport::invalid(
             AlgebraicRootValidationStatus::WitnessDoesNotSatisfyPolynomial,
-            "exact rational witness does not satisfy the represented polynomial",
+            "exact point witness does not satisfy the represented polynomial",
         ),
         None => AlgebraicRootValidationReport::invalid(
             AlgebraicRootValidationStatus::Undecided,
-            "could not replay exact rational witness",
+            "could not replay exact point witness",
         ),
     }
 }
@@ -2305,17 +3227,118 @@ fn trim_polynomial(mut polynomial: Vec<Real>, policy: PredicatePolicy) -> Option
     Some(polynomial)
 }
 
+fn trim_polynomial_for_evaluation(polynomial: &[Real], policy: PredicatePolicy) -> Option<&[Real]> {
+    let mut len = polynomial.len();
+    while len > 1 {
+        let trailing = &polynomial[len - 1];
+        let is_zero = if let Some(trailing) = trailing.exact_rational_ref() {
+            trailing.is_zero()
+        } else {
+            compare_reals(trailing, &Real::zero(), policy).value()? == Ordering::Equal
+        };
+        if !is_zero {
+            break;
+        }
+        len -= 1;
+    }
+    (len > 0).then_some(&polynomial[..len])
+}
+
 fn evaluate_polynomial(polynomial: &[Real], point: &Real) -> Real {
-    polynomial
-        .iter()
-        .rev()
-        .cloned()
-        .fold(Real::zero(), |value, coefficient| {
-            value * point.clone() + coefficient
-        })
+    if let [constant] = polynomial {
+        if constant.exact_rational_ref().is_some() {
+            return constant.clone();
+        }
+        // Preserve the scalar reducer's canonicalization for symbolic
+        // constants. Besides proving the `0*x + c` identity, this can expose
+        // sign facts that a bare clone deliberately does not recompute.
+        return Real::zero() * point.clone() + constant.clone();
+    }
+    Real::eval_poly(polynomial, point)
 }
 
 fn affine_transformed_polynomial(
+    polynomial: &[Real],
+    scale: &Real,
+    offset: &Real,
+    policy: PredicatePolicy,
+) -> Option<Vec<Real>> {
+    if polynomial
+        .iter()
+        .chain([scale, offset])
+        .all(|coefficient| coefficient.exact_rational_ref().is_some())
+    {
+        return affine_transformed_polynomial_rational_horner(polynomial, scale, offset);
+    }
+    affine_transformed_polynomial_real_horner(polynomial, scale, offset, policy)
+}
+
+fn affine_transformed_polynomial_rational_horner(
+    polynomial: &[Real],
+    scale: &Real,
+    offset: &Real,
+) -> Option<Vec<Real>> {
+    let scale = scale.exact_rational_ref()?;
+    let negative_offset = -offset.exact_rational_ref()?;
+    let mut transformed = Vec::with_capacity(polynomial.len());
+    transformed.push(polynomial.last()?.exact_rational_ref()?.clone());
+    let mut scale_power = Rational::one();
+    for coefficient in polynomial[..polynomial.len() - 1].iter().rev() {
+        rational_polynomial_mul_monic_linear_in_place(&mut transformed, &negative_offset);
+        scale_power = &scale_power * scale;
+        let coefficient = coefficient.exact_rational_ref()?;
+        transformed[0] = &transformed[0] + coefficient * &scale_power;
+    }
+    while transformed.len() > 1 && transformed.last().is_some_and(Rational::is_zero) {
+        transformed.pop();
+    }
+    Some(transformed.into_iter().map(Real::from).collect())
+}
+
+fn affine_transformed_polynomial_real_horner(
+    polynomial: &[Real],
+    scale: &Real,
+    offset: &Real,
+    policy: PredicatePolicy,
+) -> Option<Vec<Real>> {
+    let negative_offset = -offset.clone();
+    let mut transformed = Vec::with_capacity(polynomial.len());
+    transformed.push(polynomial.last()?.clone());
+    let mut scale_power = Real::one();
+    for coefficient in polynomial[..polynomial.len() - 1].iter().rev() {
+        real_polynomial_mul_monic_linear_in_place(&mut transformed, &negative_offset);
+        scale_power *= scale.clone();
+        transformed[0] = transformed[0].clone() + coefficient.clone() * scale_power.clone();
+    }
+    trim_polynomial(transformed, policy)
+}
+
+fn rational_polynomial_mul_monic_linear_in_place(
+    polynomial: &mut Vec<Rational>,
+    constant: &Rational,
+) {
+    let old_len = polynomial.len();
+    debug_assert!(old_len < polynomial.capacity());
+    polynomial.push(polynomial[old_len - 1].clone());
+    for index in (1..old_len).rev() {
+        polynomial[index] = &polynomial[index] * constant + &polynomial[index - 1];
+    }
+    polynomial[0] = &polynomial[0] * constant;
+}
+
+fn real_polynomial_mul_monic_linear_in_place(polynomial: &mut Vec<Real>, constant: &Real) {
+    let old_len = polynomial.len();
+    debug_assert!(old_len < polynomial.capacity());
+    polynomial.push(polynomial[old_len - 1].clone());
+    for index in (1..old_len).rev() {
+        polynomial[index] =
+            polynomial[index].clone() * constant.clone() + polynomial[index - 1].clone();
+    }
+    polynomial[0] = polynomial[0].clone() * constant.clone();
+}
+
+#[cfg(test)]
+fn affine_transformed_polynomial_power_sum(
     polynomial: &[Real],
     scale: &Real,
     offset: &Real,
@@ -2341,23 +3364,51 @@ fn affine_transformed_interval(
     interval: &IsolatedRootInterval,
     scale: &Real,
     offset: &Real,
-    policy: PredicatePolicy,
+    scale_sign: Ordering,
 ) -> Option<IsolatedRootInterval> {
-    let first = scale.clone() * interval.lower.clone() + offset.clone();
-    let second = scale.clone() * interval.upper.clone() + offset.clone();
-    let mut endpoints = [first, second];
-    sort_reals_exact(&mut endpoints, policy)?;
+    let first = eval_affine(&interval.lower, scale, offset);
+    let second = eval_affine(&interval.upper, scale, offset);
+    let (lower, upper) = match scale_sign {
+        Ordering::Less => (second, first),
+        Ordering::Greater => (first, second),
+        Ordering::Equal => return None,
+    };
     Some(IsolatedRootInterval {
-        lower: endpoints[0].clone(),
-        upper: endpoints[1].clone(),
+        lower,
+        upper,
         exact_root: interval
             .exact_root
             .as_ref()
-            .map(|root| scale.clone() * root.clone() + offset.clone()),
+            .map(|root| eval_affine(root, scale, offset)),
         distinct_root_count: interval.distinct_root_count,
     })
 }
 
+fn affine_scale_order(scale: &Real, policy: PredicatePolicy) -> Option<Ordering> {
+    if let Some(scale) = scale.exact_rational_ref() {
+        return Some(if scale.is_negative() {
+            Ordering::Less
+        } else if scale.is_zero() {
+            Ordering::Equal
+        } else {
+            Ordering::Greater
+        });
+    }
+    compare_reals(scale, &Real::zero(), policy).value()
+}
+
+fn eval_affine(value: &Real, scale: &Real, offset: &Real) -> Real {
+    if let (Some(value), Some(scale), Some(offset)) = (
+        value.exact_rational_ref(),
+        scale.exact_rational_ref(),
+        offset.exact_rational_ref(),
+    ) {
+        return Real::from(scale * value + offset);
+    }
+    scale.clone() * value.clone() + offset.clone()
+}
+
+#[cfg(test)]
 fn real_pow_nonnegative(value: &Real, exponent: usize) -> Real {
     let mut result = Real::one();
     for _ in 0..exponent {
@@ -2366,6 +3417,7 @@ fn real_pow_nonnegative(value: &Real, exponent: usize) -> Real {
     result
 }
 
+#[cfg(test)]
 fn binomial_coefficient(n: usize, k: usize) -> u64 {
     let k = k.min(n - k);
     let mut result = 1_u64;
@@ -2380,11 +3432,16 @@ fn evaluate_polynomial_interval(
     point: &AlgebraicPolynomialValueInterval,
     policy: PredicatePolicy,
 ) -> Option<AlgebraicPolynomialValueInterval> {
+    if let Some(value) = evaluate_rational_polynomial_interval(polynomial, point) {
+        return Some(value);
+    }
+    let mut coefficients = polynomial.iter().rev();
+    let leading = coefficients.next()?;
     let mut value = AlgebraicPolynomialValueInterval {
-        lower: Real::zero(),
-        upper: Real::zero(),
+        lower: leading.clone(),
+        upper: leading.clone(),
     };
-    for coefficient in polynomial.iter().rev() {
+    for coefficient in coefficients {
         value = interval_add(
             interval_mul(&value, point, policy)?,
             &AlgebraicPolynomialValueInterval {
@@ -2394,6 +3451,31 @@ fn evaluate_polynomial_interval(
         );
     }
     Some(value)
+}
+
+fn evaluate_rational_polynomial_interval(
+    polynomial: &[Real],
+    point: &AlgebraicPolynomialValueInterval,
+) -> Option<AlgebraicPolynomialValueInterval> {
+    let point_lower = point.lower.exact_rational_ref()?;
+    let point_upper = point.upper.exact_rational_ref()?;
+    if point_lower > point_upper {
+        return None;
+    }
+    let mut coefficients = polynomial.iter().rev();
+    let leading = coefficients.next()?.exact_rational_ref()?;
+    let mut lower = leading.clone();
+    let mut upper = leading.clone();
+    for coefficient in coefficients {
+        let coefficient = coefficient.exact_rational_ref()?;
+        (lower, upper) = rational_interval_product(&lower, &upper, point_lower, point_upper);
+        lower = lower + coefficient;
+        upper = upper + coefficient;
+    }
+    Some(AlgebraicPolynomialValueInterval {
+        lower: Real::from(lower),
+        upper: Real::from(upper),
+    })
 }
 
 fn interval_add(
@@ -2411,6 +3493,19 @@ fn interval_mul(
     right: &AlgebraicPolynomialValueInterval,
     policy: PredicatePolicy,
 ) -> Option<AlgebraicPolynomialValueInterval> {
+    if let (Some(left_lower), Some(left_upper), Some(right_lower), Some(right_upper)) = (
+        left.lower.exact_rational_ref(),
+        left.upper.exact_rational_ref(),
+        right.lower.exact_rational_ref(),
+        right.upper.exact_rational_ref(),
+    ) {
+        let (lower, upper) =
+            rational_interval_product(left_lower, left_upper, right_lower, right_upper);
+        return Some(AlgebraicPolynomialValueInterval {
+            lower: Real::from(lower),
+            upper: Real::from(upper),
+        });
+    }
     let mut products = [
         left.lower.clone() * right.lower.clone(),
         left.lower.clone() * right.upper.clone(),
@@ -2424,36 +3519,35 @@ fn interval_mul(
     })
 }
 
-fn interval_reciprocal(
+fn interval_reciprocal_after_certified_nonzero(
     value: &AlgebraicPolynomialValueInterval,
-    policy: PredicatePolicy,
 ) -> Option<AlgebraicPolynomialValueInterval> {
-    if interval_contains_zero(value, policy)? {
-        return None;
-    }
-    let lower_reciprocal = (Real::one() / value.lower.clone()).ok()?;
-    let upper_reciprocal = (Real::one() / value.upper.clone()).ok()?;
-    let mut endpoints = [lower_reciprocal, upper_reciprocal];
-    sort_reals_exact(&mut endpoints, policy)?;
-    Some(AlgebraicPolynomialValueInterval {
-        lower: endpoints[0].clone(),
-        upper: endpoints[1].clone(),
-    })
-}
-
-fn interval_contains_zero(
-    value: &AlgebraicPolynomialValueInterval,
-    policy: PredicatePolicy,
-) -> Option<bool> {
-    let lower = compare_reals(&value.lower, &Real::zero(), policy).value()?;
-    let upper = compare_reals(&value.upper, &Real::zero(), policy).value()?;
-    Some(lower != Ordering::Greater && upper != Ordering::Less)
+    // Reciprocal is strictly decreasing on each side of zero. The caller has
+    // already certified that the whole ordered interval lies on one side, so
+    // swapping the endpoint images is exact and needs no second predicate.
+    let lower = crate::policy_division::reciprocal_after_certified_nonzero(&value.upper).ok()?;
+    let upper = crate::policy_division::reciprocal_after_certified_nonzero(&value.lower).ok()?;
+    Some(AlgebraicPolynomialValueInterval { lower, upper })
 }
 
 fn interval_sign(
     value: &AlgebraicPolynomialValueInterval,
     policy: PredicatePolicy,
 ) -> Option<Ordering> {
+    if let (Some(lower), Some(upper)) = (
+        value.lower.exact_rational_ref(),
+        value.upper.exact_rational_ref(),
+    ) {
+        return if lower.is_positive() {
+            Some(Ordering::Greater)
+        } else if upper.is_negative() {
+            Some(Ordering::Less)
+        } else if lower.is_zero() && upper.is_zero() {
+            Some(Ordering::Equal)
+        } else {
+            None
+        };
+    }
     let lower = compare_reals(&value.lower, &Real::zero(), policy).value()?;
     let upper = compare_reals(&value.upper, &Real::zero(), policy).value()?;
     if lower == Ordering::Greater {
@@ -2520,6 +3614,10 @@ fn apply_refined_interval(
 /// Certifies the sign of one represented algebraic root from its exact
 /// witness, isolating interval, and defining polynomial.
 ///
+/// Cached-valid input is replayed under [`PredicatePolicy::STRICT`] before the
+/// requested policy is used for the sign decision. Rational witnesses,
+/// endpoints, and constant terms stay in their rational payloads.
+///
 /// A unit isolator touching zero is resolved from the constant coefficient,
 /// so callers do not need arbitrary refinement merely to prove a strict sign
 /// or the selected zero root.
@@ -2527,14 +3625,24 @@ pub fn represented_root_sign(
     root: &AlgebraicRootRepresentation,
     policy: PredicatePolicy,
 ) -> Option<Ordering> {
-    if let Some(value) = root.exact_rational_witness() {
-        return compare_reals(value, &Real::zero(), policy).value();
+    if !root.is_valid() || !algebraic_root_payload_replays_strictly(root) {
+        return None;
     }
-    let upper = compare_reals(&root.interval.upper, &Real::zero(), policy).value()?;
+    represented_root_sign_admitted(root, policy)
+}
+
+pub(crate) fn represented_root_sign_admitted(
+    root: &AlgebraicRootRepresentation,
+    policy: PredicatePolicy,
+) -> Option<Ordering> {
+    if let Some(value) = root.exact_point_witness() {
+        return algebraic_value_sign(value, policy);
+    }
+    let upper = algebraic_value_sign(&root.interval.upper, policy)?;
     if upper == Ordering::Less {
         return Some(Ordering::Less);
     }
-    let lower = compare_reals(&root.interval.lower, &Real::zero(), policy).value()?;
+    let lower = algebraic_value_sign(&root.interval.lower, policy)?;
     if lower == Ordering::Greater {
         return Some(Ordering::Greater);
     }
@@ -2543,8 +3651,7 @@ pub fn represented_root_sign(
     // constant coefficient is zero, uniqueness makes zero the selected root.
     // This avoids arbitrarily deep bisection merely to move an endpoint away
     // from zero while preserving an exact proof in every case.
-    let zero_is_root =
-        compare_reals(root.polynomial_coefficients.first()?, &Real::zero(), policy).value()?;
+    let zero_is_root = algebraic_value_sign(root.polynomial_coefficients.first()?, policy)?;
     if zero_is_root == Ordering::Equal {
         return Some(Ordering::Equal);
     }
@@ -2700,6 +3807,31 @@ mod tests {
         (real(numerator) / real(denominator)).unwrap()
     }
 
+    fn exact_point_representation(
+        constraint_index: usize,
+        value: Real,
+    ) -> AlgebraicRootRepresentation {
+        let kind = if value.exact_rational_ref().is_some() {
+            AlgebraicRootKind::ExactRationalWitness
+        } else {
+            AlgebraicRootKind::IsolatingInterval
+        };
+        AlgebraicRootRepresentation {
+            constraint_index,
+            symbol: SymbolId(0),
+            interval_index: 0,
+            polynomial_coefficients: vec![-value.clone(), Real::one()],
+            interval: IsolatedRootInterval {
+                lower: value.clone(),
+                upper: value.clone(),
+                exact_root: Some(value),
+                distinct_root_count: 1,
+            },
+            kind,
+            validation: AlgebraicRootValidationReport::valid(),
+        }
+    }
+
     fn dyadic(exponent: usize) -> Real {
         Real::new(
             Rational::from_bigint_fraction(BigInt::from(1_u8), BigUint::from(1_u8) << exponent)
@@ -2769,7 +3901,7 @@ mod tests {
         );
         assert!(reports[0].roots.iter().any(|root| {
             root.kind == AlgebraicRootKind::ExactRationalWitness
-                && root.exact_rational_witness() == Some(&real(1))
+                && root.exact_point_witness() == Some(&real(1))
         }));
         assert!(reports[0].roots.iter().all(|root| {
             validate_algebraic_root_representation(root, PredicatePolicy::APPROXIMATE_512).status
@@ -2938,6 +4070,201 @@ mod tests {
     }
 
     #[test]
+    fn algebraic_root_comparison_and_sign_replay_cached_valid_payloads() {
+        let mut stale = exact_point_representation(0, real(2));
+        stale.interval.lower = real(3);
+        stale.interval.upper = real(3);
+        stale.interval.exact_root = Some(real(3));
+        let valid = exact_point_representation(1, real(4));
+
+        assert!(stale.is_valid());
+        assert_eq!(
+            validate_algebraic_root_representation(&stale, PredicatePolicy::STRICT).status,
+            AlgebraicRootValidationStatus::WitnessDoesNotSatisfyPolynomial
+        );
+        assert_eq!(
+            compare_algebraic_root_representations(&stale, &stale, PredicatePolicy::STRICT).status,
+            AlgebraicRootComparisonStatus::InvalidEvidence
+        );
+
+        let refined = compare_algebraic_root_representations_with_refinement(
+            &stale,
+            &valid,
+            AlgebraicRootRefinementComparisonConfig::default(),
+        );
+        assert_eq!(
+            refined.comparison.status,
+            AlgebraicRootComparisonStatus::InvalidEvidence
+        );
+        assert_eq!(refined.refinement_rounds, 0);
+        assert!(refined.left_refinements.is_empty());
+        assert!(refined.right_refinements.is_empty());
+
+        let difference = compare_algebraic_root_representations_by_difference(
+            &stale,
+            &valid,
+            AlgebraicRootRefinementComparisonConfig::default(),
+        );
+        assert_eq!(
+            difference.comparison.status,
+            AlgebraicRootComparisonStatus::InvalidEvidence
+        );
+        assert!(difference.difference.is_none());
+        assert_eq!(represented_root_sign(&stale, PredicatePolicy::STRICT), None);
+        assert_eq!(
+            translated_algebraic_root_difference(&stale, &valid, PredicatePolicy::STRICT),
+            None
+        );
+        assert_eq!(
+            algebraic_root_affine_relation(&stale, &valid, PredicatePolicy::STRICT),
+            None
+        );
+    }
+
+    #[test]
+    fn algebraic_root_comparison_uses_exact_witness_as_effective_interval() {
+        let mut exact_three = exact_point_representation(0, real(3));
+        exact_three.interval.lower = Real::zero();
+        exact_three.interval.upper = real(4);
+        let sqrt_two = AlgebraicRootRepresentation {
+            constraint_index: 1,
+            symbol: SymbolId(0),
+            interval_index: 0,
+            polynomial_coefficients: vec![real(-2), Real::zero(), Real::one()],
+            interval: IsolatedRootInterval {
+                lower: real(1),
+                upper: real(2),
+                exact_root: None,
+                distinct_root_count: 1,
+            },
+            kind: AlgebraicRootKind::IsolatingInterval,
+            validation: AlgebraicRootValidationReport::valid(),
+        };
+
+        let direct = compare_algebraic_root_representations(
+            &exact_three,
+            &sqrt_two,
+            PredicatePolicy::STRICT,
+        );
+        assert_eq!(direct.status, AlgebraicRootComparisonStatus::Compared);
+        assert_eq!(direct.ordering, Some(Ordering::Greater));
+
+        let refined = compare_algebraic_root_representations_with_refinement(
+            &exact_three,
+            &sqrt_two,
+            AlgebraicRootRefinementComparisonConfig::default(),
+        );
+        assert_eq!(refined.comparison.ordering, Some(Ordering::Greater));
+        assert_eq!(refined.refinement_rounds, 0);
+        assert!(refined.left_refinements.is_empty());
+        assert!(refined.right_refinements.is_empty());
+    }
+
+    #[test]
+    fn algebraic_root_refinement_skips_exact_point_operand() {
+        let sqrt_two_value = real(2).sqrt().expect("positive exact square root");
+        let sqrt_two = exact_point_representation(0, sqrt_two_value);
+        let sqrt_three = AlgebraicRootRepresentation {
+            constraint_index: 1,
+            symbol: SymbolId(0),
+            interval_index: 0,
+            polynomial_coefficients: vec![real(-3), Real::zero(), Real::one()],
+            interval: IsolatedRootInterval {
+                lower: real(1),
+                upper: real(2),
+                exact_root: None,
+                distinct_root_count: 1,
+            },
+            kind: AlgebraicRootKind::IsolatingInterval,
+            validation: AlgebraicRootValidationReport::valid(),
+        };
+
+        assert_eq!(
+            compare_algebraic_root_representations(
+                &sqrt_two,
+                &sqrt_three,
+                PredicatePolicy::STRICT,
+            )
+            .status,
+            AlgebraicRootComparisonStatus::OverlappingIntervals
+        );
+
+        let refined = compare_algebraic_root_representations_with_refinement(
+            &sqrt_two,
+            &sqrt_three,
+            AlgebraicRootRefinementComparisonConfig {
+                policy: PredicatePolicy::STRICT,
+                max_refinement_rounds: 4,
+                steps_per_round: 1,
+            },
+        );
+        assert_eq!(
+            refined.comparison.status,
+            AlgebraicRootComparisonStatus::Compared
+        );
+        assert_eq!(refined.comparison.ordering, Some(Ordering::Less));
+        assert_eq!(refined.refinement_rounds, 1);
+        assert!(refined.left_refinements.is_empty());
+        assert_eq!(refined.right_refinements.len(), 1);
+    }
+
+    #[test]
+    fn algebraic_root_refinement_supports_exact_real_coefficient_fields() {
+        let sqrt_two = real(2).sqrt().expect("positive exact square root");
+        let exact_real_coefficients = AlgebraicRootRepresentation {
+            constraint_index: 0,
+            symbol: SymbolId(0),
+            interval_index: 0,
+            polynomial_coefficients: vec![-sqrt_two, Real::one()],
+            interval: IsolatedRootInterval {
+                lower: real(1),
+                upper: ratio(3, 2),
+                exact_root: None,
+                distinct_root_count: 1,
+            },
+            kind: AlgebraicRootKind::IsolatingInterval,
+            validation: AlgebraicRootValidationReport::valid(),
+        };
+        let rational_coefficients = AlgebraicRootRepresentation {
+            constraint_index: 1,
+            polynomial_coefficients: vec![real(-3), Real::zero(), Real::one()],
+            interval: IsolatedRootInterval {
+                lower: ratio(7, 5),
+                upper: real(2),
+                exact_root: None,
+                distinct_root_count: 1,
+            },
+            ..exact_real_coefficients.clone()
+        };
+
+        let report = compare_algebraic_root_representations_with_refinement(
+            &exact_real_coefficients,
+            &rational_coefficients,
+            AlgebraicRootRefinementComparisonConfig {
+                policy: PredicatePolicy::STRICT,
+                max_refinement_rounds: 2,
+                steps_per_round: 1,
+            },
+        );
+
+        assert_eq!(
+            report.comparison.status,
+            AlgebraicRootComparisonStatus::Compared
+        );
+        assert_eq!(report.comparison.ordering, Some(Ordering::Less));
+        assert_eq!(report.refinement_rounds, 1);
+        assert!(matches!(
+            report.left_refinements[0].status,
+            IsolatedRootRefinementStatus::Refined | IsolatedRootRefinementStatus::ExactRoot
+        ));
+        assert!(matches!(
+            report.right_refinements[0].status,
+            IsolatedRootRefinementStatus::Refined | IsolatedRootRefinementStatus::ExactRoot
+        ));
+        assert!(report.refined_left.interval.upper < report.refined_right.interval.lower);
+    }
+
+    #[test]
     fn algebraic_root_refinement_comparison_orders_overlapping_intervals() {
         let sqrt_two = AlgebraicRootRepresentation {
             constraint_index: 0,
@@ -3049,6 +4376,114 @@ mod tests {
         );
         let difference_root = difference.result_representation.as_ref().unwrap();
         assert!(difference_root.interval.upper < Real::zero());
+    }
+
+    #[test]
+    fn algebraic_root_difference_comparison_returns_direct_orders_without_construction() {
+        let left = exact_point_representation(0, real(2));
+        let right = exact_point_representation(1, real(3));
+
+        let report = compare_algebraic_root_representations_by_difference(
+            &left,
+            &right,
+            AlgebraicRootRefinementComparisonConfig {
+                policy: PredicatePolicy::STRICT,
+                max_refinement_rounds: 0,
+                steps_per_round: 1,
+            },
+        );
+
+        assert_eq!(
+            report.comparison.status,
+            AlgebraicRootComparisonStatus::Compared
+        );
+        assert_eq!(report.comparison.ordering, Some(Ordering::Less));
+        assert_eq!(report.refinement.refinement_rounds, 0);
+        assert!(report.refinement.left_refinements.is_empty());
+        assert!(report.refinement.right_refinements.is_empty());
+        assert!(report.difference.is_none());
+
+        let same = compare_algebraic_root_representations_by_difference(
+            &left,
+            &left,
+            AlgebraicRootRefinementComparisonConfig::default(),
+        );
+        assert_eq!(
+            same.comparison.status,
+            AlgebraicRootComparisonStatus::SameRepresentation
+        );
+        assert_eq!(same.comparison.ordering, Some(Ordering::Equal));
+        assert_eq!(same.refinement.refinement_rounds, 0);
+        assert!(same.difference.is_none());
+    }
+
+    #[test]
+    fn algebraic_root_difference_comparison_matches_exact_point_to_isolator() {
+        let exact_two = exact_point_representation(0, real(2));
+        let interval_two = AlgebraicRootRepresentation {
+            constraint_index: 1,
+            symbol: SymbolId(0),
+            interval_index: 0,
+            polynomial_coefficients: vec![real(6), real(-5), Real::one()],
+            interval: IsolatedRootInterval {
+                lower: real(1),
+                upper: ratio(5, 2),
+                exact_root: None,
+                distinct_root_count: 1,
+            },
+            kind: AlgebraicRootKind::IsolatingInterval,
+            validation: AlgebraicRootValidationReport::valid(),
+        };
+
+        let report = compare_algebraic_root_representations_by_difference(
+            &exact_two,
+            &interval_two,
+            AlgebraicRootRefinementComparisonConfig {
+                policy: PredicatePolicy::STRICT,
+                max_refinement_rounds: 0,
+                steps_per_round: 1,
+            },
+        );
+
+        assert_eq!(
+            report.comparison.status,
+            AlgebraicRootComparisonStatus::Compared
+        );
+        assert_eq!(report.comparison.ordering, Some(Ordering::Equal));
+        assert!(
+            report
+                .comparison
+                .message
+                .as_deref()
+                .is_some_and(|message| message.contains("shared polynomial root"))
+        );
+        assert_eq!(report.refinement.refinement_rounds, 0);
+        assert!(report.difference.is_none());
+
+        let exact_sqrt_two =
+            exact_point_representation(2, real(2).sqrt().expect("positive exact square root"));
+        let sqrt_two_interval = AlgebraicRootRepresentation {
+            constraint_index: 3,
+            polynomial_coefficients: vec![real(-2), Real::zero(), Real::one()],
+            interval: IsolatedRootInterval {
+                lower: real(1),
+                upper: real(2),
+                exact_root: None,
+                distinct_root_count: 1,
+            },
+            ..interval_two
+        };
+        let exact_real_report = compare_algebraic_root_representations_by_difference(
+            &exact_sqrt_two,
+            &sqrt_two_interval,
+            AlgebraicRootRefinementComparisonConfig {
+                policy: PredicatePolicy::STRICT,
+                max_refinement_rounds: 0,
+                steps_per_round: 1,
+            },
+        );
+        assert_eq!(exact_real_report.comparison.ordering, Some(Ordering::Equal));
+        assert!(exact_real_report.difference.is_none());
     }
 
     #[test]
@@ -3381,6 +4816,337 @@ mod tests {
     }
 
     #[test]
+    fn algebraic_root_arithmetic_replays_cached_input_validation_strictly() {
+        let mut stale = exact_point_representation(0, real(2));
+        stale.polynomial_coefficients[0] = real(-3);
+        assert!(stale.is_valid());
+
+        let negation = arithmetic_algebraic_root_representations(
+            &stale,
+            None,
+            AlgebraicRootArithmeticOp::Negate,
+            PredicatePolicy::APPROXIMATE_512,
+        );
+        assert_eq!(
+            negation.status,
+            AlgebraicRootArithmeticStatus::InvalidEvidence
+        );
+        assert!(negation.exact_result.is_none());
+        assert!(negation.result_representation.is_none());
+
+        let valid = exact_point_representation(1, real(5));
+        let sum = arithmetic_algebraic_root_representations(
+            &valid,
+            Some(&stale),
+            AlgebraicRootArithmeticOp::Add,
+            PredicatePolicy::APPROXIMATE_512,
+        );
+        assert_eq!(sum.status, AlgebraicRootArithmeticStatus::InvalidEvidence);
+
+        let mut stale_interval = AlgebraicRootRepresentation {
+            constraint_index: 2,
+            symbol: SymbolId(0),
+            interval_index: 0,
+            polynomial_coefficients: vec![real(-2), Real::zero(), Real::one()],
+            interval: IsolatedRootInterval {
+                lower: real(1),
+                upper: real(2),
+                exact_root: None,
+                distinct_root_count: 1,
+            },
+            kind: AlgebraicRootKind::IsolatingInterval,
+            validation: AlgebraicRootValidationReport::valid(),
+        };
+        stale_interval.interval.lower = real(3);
+        let zero = exact_point_representation(3, Real::zero());
+        let zero_product = arithmetic_algebraic_root_representations(
+            &stale_interval,
+            Some(&zero),
+            AlgebraicRootArithmeticOp::Multiply,
+            PredicatePolicy::APPROXIMATE_512,
+        );
+        assert_eq!(
+            zero_product.status,
+            AlgebraicRootArithmeticStatus::InvalidEvidence
+        );
+        let identity = arithmetic_algebraic_root_representations(
+            &stale_interval,
+            Some(&stale_interval),
+            AlgebraicRootArithmeticOp::Subtract,
+            PredicatePolicy::APPROXIMATE_512,
+        );
+        assert_eq!(
+            identity.status,
+            AlgebraicRootArithmeticStatus::InvalidEvidence
+        );
+
+        let mut noncanonical = exact_point_representation(4, real(2));
+        noncanonical.polynomial_coefficients = vec![real(-4), real(2)];
+        let accepted = arithmetic_algebraic_root_representations(
+            &noncanonical,
+            None,
+            AlgebraicRootArithmeticOp::Negate,
+            PredicatePolicy::STRICT,
+        );
+        assert_eq!(
+            accepted.status,
+            AlgebraicRootArithmeticStatus::ComputedExactRationalWitness
+        );
+        assert_eq!(accepted.exact_result, Some(real(-2)));
+    }
+
+    #[test]
+    fn algebraic_root_arithmetic_rejects_missing_binary_operand_before_routing() {
+        let sqrt_two = AlgebraicRootRepresentation {
+            constraint_index: 0,
+            symbol: SymbolId(0),
+            interval_index: 0,
+            polynomial_coefficients: vec![real(-2), Real::zero(), Real::one()],
+            interval: IsolatedRootInterval {
+                lower: real(1),
+                upper: real(2),
+                exact_root: None,
+                distinct_root_count: 1,
+            },
+            kind: AlgebraicRootKind::IsolatingInterval,
+            validation: AlgebraicRootValidationReport::valid(),
+        };
+        let report = arithmetic_algebraic_root_representations(
+            &sqrt_two,
+            None,
+            AlgebraicRootArithmeticOp::Add,
+            PredicatePolicy::STRICT,
+        );
+        assert_eq!(
+            report.status,
+            AlgebraicRootArithmeticStatus::InvalidEvidence
+        );
+        assert!(report.message.as_deref().unwrap().contains("right input"));
+    }
+
+    #[test]
+    fn algebraic_root_arithmetic_returns_exact_nonrational_real_witnesses() {
+        let sqrt_two_value = real(2).sqrt().unwrap();
+        let pi_value = Real::pi();
+        let sqrt_two = exact_point_representation(0, sqrt_two_value.clone());
+        let pi = exact_point_representation(1, pi_value.clone());
+        let expected = sqrt_two_value + pi_value;
+        assert!(expected.exact_rational_ref().is_none());
+
+        let sum = arithmetic_algebraic_root_representations(
+            &sqrt_two,
+            Some(&pi),
+            AlgebraicRootArithmeticOp::Add,
+            PredicatePolicy::STRICT,
+        );
+        assert_eq!(
+            sum.status,
+            AlgebraicRootArithmeticStatus::ComputedExactRealWitness
+        );
+        assert_eq!(sum.exact_result, Some(expected));
+        assert!(sum.result_representation.is_none());
+
+        let negation = arithmetic_algebraic_root_representations(
+            &sqrt_two,
+            None,
+            AlgebraicRootArithmeticOp::Negate,
+            PredicatePolicy::STRICT,
+        );
+        assert_eq!(
+            negation.status,
+            AlgebraicRootArithmeticStatus::ComputedExactRealWitness
+        );
+        assert_eq!(negation.exact_result, Some(-real(2).sqrt().unwrap()));
+        assert!(negation.result_representation.is_none());
+    }
+
+    #[test]
+    fn algebraic_root_arithmetic_divides_by_policy_certified_exact_point() {
+        let denominator_value = crate::test_support::exact_normal_positive();
+        assert_eq!(
+            denominator_value.inverse_ref(),
+            Err(hyperreal::Problem::UnknownZero)
+        );
+        let numerator = exact_point_representation(0, Real::one());
+        let denominator = exact_point_representation(1, denominator_value.clone());
+
+        let quotient = arithmetic_algebraic_root_representations(
+            &numerator,
+            Some(&denominator),
+            AlgebraicRootArithmeticOp::Divide,
+            PredicatePolicy::STRICT,
+        );
+        assert_eq!(
+            quotient.status,
+            AlgebraicRootArithmeticStatus::ComputedExactRealWitness
+        );
+        assert!(quotient.result_representation.is_none());
+        let value = quotient.exact_result.as_ref().expect("exact Real quotient");
+        assert_eq!(
+            compare_reals(
+                &(value.clone() * denominator_value),
+                &Real::one(),
+                PredicatePolicy::STRICT,
+            )
+            .value(),
+            Some(Ordering::Equal)
+        );
+    }
+
+    #[test]
+    fn algebraic_root_arithmetic_certifies_zero_dividend_and_touching_nonzero_divisor() {
+        let sqrt_two = AlgebraicRootRepresentation {
+            constraint_index: 0,
+            symbol: SymbolId(0),
+            interval_index: 0,
+            polynomial_coefficients: vec![real(-2), Real::zero(), Real::one()],
+            interval: IsolatedRootInterval {
+                lower: real(1),
+                upper: real(2),
+                exact_root: None,
+                distinct_root_count: 1,
+            },
+            kind: AlgebraicRootKind::IsolatingInterval,
+            validation: AlgebraicRootValidationReport::valid(),
+        };
+        let zero = exact_point_representation(1, Real::zero());
+        let quotient = arithmetic_algebraic_root_representations(
+            &zero,
+            Some(&sqrt_two),
+            AlgebraicRootArithmeticOp::Divide,
+            PredicatePolicy::STRICT,
+        );
+        assert_eq!(
+            quotient.status,
+            AlgebraicRootArithmeticStatus::ComputedExactRationalWitness
+        );
+        assert_eq!(quotient.exact_result, Some(Real::zero()));
+
+        let touching_zero_one = AlgebraicRootRepresentation {
+            constraint_index: 2,
+            polynomial_coefficients: vec![real(-1), Real::one()],
+            interval: IsolatedRootInterval {
+                lower: Real::zero(),
+                upper: real(2),
+                exact_root: None,
+                distinct_root_count: 1,
+            },
+            ..sqrt_two
+        };
+        let identity = arithmetic_algebraic_root_representations(
+            &touching_zero_one,
+            Some(&touching_zero_one),
+            AlgebraicRootArithmeticOp::Divide,
+            PredicatePolicy::STRICT,
+        );
+        assert_eq!(
+            identity.status,
+            AlgebraicRootArithmeticStatus::ComputedExactRationalWitness
+        );
+        assert_eq!(identity.exact_result, Some(Real::one()));
+    }
+
+    #[test]
+    fn algebraic_root_arithmetic_reduces_same_quadratic_square_to_affine_relation() {
+        let root = AlgebraicRootRepresentation {
+            constraint_index: 0,
+            symbol: SymbolId(0),
+            interval_index: 0,
+            polynomial_coefficients: vec![real(-1), Real::one(), Real::one()],
+            interval: IsolatedRootInterval {
+                lower: Real::zero(),
+                upper: Real::one(),
+                exact_root: None,
+                distinct_root_count: 1,
+            },
+            kind: AlgebraicRootKind::IsolatingInterval,
+            validation: AlgebraicRootValidationReport::valid(),
+        };
+        let square = arithmetic_algebraic_root_representations(
+            &root,
+            Some(&root),
+            AlgebraicRootArithmeticOp::Multiply,
+            PredicatePolicy::STRICT,
+        );
+        let expected = transform_algebraic_root_affine(
+            &root,
+            -Real::one(),
+            Real::one(),
+            PredicatePolicy::STRICT,
+        );
+
+        assert_eq!(
+            square.status,
+            AlgebraicRootArithmeticStatus::ComputedRepresentation
+        );
+        assert_eq!(square.result_representation, expected.representation);
+    }
+
+    #[test]
+    fn algebraic_root_arithmetic_supports_exact_real_scalars_and_reports_unsupported_fields() {
+        let sqrt_two = AlgebraicRootRepresentation {
+            constraint_index: 0,
+            symbol: SymbolId(0),
+            interval_index: 0,
+            polynomial_coefficients: vec![real(-2), Real::zero(), Real::one()],
+            interval: IsolatedRootInterval {
+                lower: real(1),
+                upper: real(2),
+                exact_root: None,
+                distinct_root_count: 1,
+            },
+            kind: AlgebraicRootKind::IsolatingInterval,
+            validation: AlgebraicRootValidationReport::valid(),
+        };
+        let pi_value = Real::pi();
+        let pi = exact_point_representation(1, pi_value.clone());
+        let arithmetic = arithmetic_algebraic_root_representations(
+            &sqrt_two,
+            Some(&pi),
+            AlgebraicRootArithmeticOp::Add,
+            PredicatePolicy::STRICT,
+        );
+        let affine = transform_algebraic_root_affine(
+            &sqrt_two,
+            Real::one(),
+            pi_value,
+            PredicatePolicy::STRICT,
+        );
+        assert_eq!(
+            arithmetic.status,
+            AlgebraicRootArithmeticStatus::ComputedRepresentation
+        );
+        assert_eq!(arithmetic.result_representation, affine.representation);
+
+        let sqrt_two_value = real(2).sqrt().unwrap();
+        let exact_real_left = AlgebraicRootRepresentation {
+            polynomial_coefficients: vec![-sqrt_two_value, Real::one()],
+            ..sqrt_two.clone()
+        };
+        let exact_real_right = AlgebraicRootRepresentation {
+            constraint_index: 2,
+            polynomial_coefficients: vec![-Real::pi(), Real::one()],
+            interval: IsolatedRootInterval {
+                lower: real(3),
+                upper: real(4),
+                exact_root: None,
+                distinct_root_count: 1,
+            },
+            ..sqrt_two
+        };
+        let unsupported = arithmetic_algebraic_root_representations(
+            &exact_real_left,
+            Some(&exact_real_right),
+            AlgebraicRootArithmeticOp::Add,
+            PredicatePolicy::STRICT,
+        );
+        assert_eq!(
+            unsupported.status,
+            AlgebraicRootArithmeticStatus::NonRationalInput
+        );
+    }
+
+    #[test]
     fn algebraic_root_arithmetic_rejects_interval_only_and_invalid_inputs() {
         let interval_only = AlgebraicRootRepresentation {
             constraint_index: 0,
@@ -3590,6 +5356,24 @@ mod tests {
         assert_eq!(reciprocal_root.interval.lower, Real::one());
         assert_eq!(reciprocal_root.interval.upper, real(2));
 
+        let same_sum = arithmetic_algebraic_root_representations(
+            &sqrt_two,
+            Some(&sqrt_two),
+            AlgebraicRootArithmeticOp::Add,
+            PredicatePolicy::APPROXIMATE_512,
+        );
+        assert_eq!(
+            same_sum.status,
+            AlgebraicRootArithmeticStatus::ComputedRepresentation
+        );
+        let same_sum_root = same_sum.result_representation.as_ref().unwrap();
+        assert_eq!(
+            same_sum_root.polynomial_coefficients,
+            vec![real(-8), Real::zero(), Real::one()]
+        );
+        assert_eq!(same_sum_root.interval.lower, real(2));
+        assert_eq!(same_sum_root.interval.upper, real(4));
+
         let same_product = arithmetic_algebraic_root_representations(
             &sqrt_two,
             Some(&sqrt_two),
@@ -3598,13 +5382,10 @@ mod tests {
         );
         assert_eq!(
             same_product.status,
-            AlgebraicRootArithmeticStatus::ComputedRepresentation
+            AlgebraicRootArithmeticStatus::ComputedExactRationalWitness
         );
-        let square_root = same_product.result_representation.as_ref().unwrap();
-        assert_eq!(
-            square_root.polynomial_coefficients,
-            vec![real(4), real(-4), Real::one()]
-        );
+        assert_eq!(same_product.exact_result, Some(real(2)));
+        assert!(same_product.result_representation.is_none());
 
         let same_difference = arithmetic_algebraic_root_representations(
             &sqrt_two,
@@ -3742,6 +5523,120 @@ mod tests {
     }
 
     #[test]
+    fn algebraic_root_evaluation_distinguishes_exact_real_values_and_replays_input() {
+        let sqrt_two_value = real(2).sqrt().unwrap();
+        let sqrt_two = exact_point_representation(0, sqrt_two_value.clone());
+        assert_eq!(sqrt_two.kind, AlgebraicRootKind::IsolatingInterval);
+
+        let exact_real = evaluate_polynomial_at_algebraic_root(
+            &sqrt_two,
+            &[Real::one(), Real::one()],
+            PredicatePolicy::STRICT,
+        );
+        assert_eq!(
+            exact_real.status,
+            AlgebraicRootPolynomialEvaluationStatus::EvaluatedExactRealWitness
+        );
+        assert_eq!(
+            compare_reals(
+                exact_real.exact_value.as_ref().unwrap(),
+                &(Real::one() + &sqrt_two_value),
+                PredicatePolicy::STRICT,
+            )
+            .value(),
+            Some(Ordering::Equal)
+        );
+        assert_eq!(exact_real.sign, Some(Ordering::Greater));
+
+        let defining_zero = evaluate_polynomial_at_algebraic_root(
+            &sqrt_two,
+            &[real(-2), Real::zero(), Real::one()],
+            PredicatePolicy::STRICT,
+        );
+        assert_eq!(
+            defining_zero.status,
+            AlgebraicRootPolynomialEvaluationStatus::EvaluatedExactRationalWitness
+        );
+        assert_eq!(defining_zero.exact_value, Some(Real::zero()));
+
+        let rational_point = exact_point_representation(1, real(3));
+        let exact_constant = evaluate_polynomial_at_algebraic_root(
+            &rational_point,
+            &[Real::pi()],
+            PredicatePolicy::STRICT,
+        );
+        assert_eq!(
+            exact_constant.status,
+            AlgebraicRootPolynomialEvaluationStatus::EvaluatedExactRealWitness
+        );
+
+        let quotient = evaluate_rational_expression_at_algebraic_root(
+            &sqrt_two,
+            &[Real::one(), Real::one()],
+            &[Real::one()],
+            PredicatePolicy::STRICT,
+        );
+        assert_eq!(
+            quotient.status,
+            AlgebraicRootRationalEvaluationStatus::EvaluatedExactRealWitness
+        );
+        assert_eq!(
+            compare_reals(
+                quotient.exact_value.as_ref().unwrap(),
+                exact_real.exact_value.as_ref().unwrap(),
+                PredicatePolicy::STRICT,
+            )
+            .value(),
+            Some(Ordering::Equal)
+        );
+
+        let cancellation = evaluate_rational_expression_at_algebraic_root(
+            &sqrt_two,
+            &[Real::zero(), Real::one()],
+            &[Real::zero(), Real::one()],
+            PredicatePolicy::STRICT,
+        );
+        assert_eq!(
+            cancellation.status,
+            AlgebraicRootRationalEvaluationStatus::EvaluatedExactRationalWitness
+        );
+        assert_eq!(cancellation.exact_value, Some(Real::one()));
+
+        let mut stale = sqrt_two;
+        stale.polynomial_coefficients[0] = -Real::pi();
+        assert!(stale.is_valid());
+        let rejected = evaluate_polynomial_at_algebraic_root(
+            &stale,
+            &[Real::one()],
+            PredicatePolicy::APPROXIMATE_512,
+        );
+        assert_eq!(
+            rejected.status,
+            AlgebraicRootPolynomialEvaluationStatus::InvalidEvidence
+        );
+        assert!(rejected.exact_value.is_none());
+
+        let rejected = evaluate_rational_expression_at_algebraic_root(
+            &stale,
+            &[Real::one()],
+            &[Real::one()],
+            PredicatePolicy::APPROXIMATE_512,
+        );
+        assert_eq!(
+            rejected.status,
+            AlgebraicRootRationalEvaluationStatus::InvalidEvidence
+        );
+        assert_eq!(
+            rejected.numerator.status,
+            AlgebraicRootPolynomialEvaluationStatus::InvalidEvidence
+        );
+        assert_eq!(
+            rejected.denominator.status,
+            AlgebraicRootPolynomialEvaluationStatus::InvalidEvidence
+        );
+    }
+
+    #[test]
     fn algebraic_root_rational_evaluation_checks_denominator_domain() {
         let rational_root = AlgebraicRootRepresentation {
             constraint_index: 0,
@@ -3770,6 +5665,55 @@ mod tests {
         assert_eq!(exact.exact_value, Some(real(2)));
         assert_eq!(exact.sign, Some(Ordering::Greater));
 
+        let denominator = crate::test_support::exact_normal_positive();
+        let half = ratio(1, 2);
+        let numerator = denominator.clone() * &half;
+        assert_eq!(
+            &numerator / &denominator,
+            Err(hyperreal::Problem::UnknownZero)
+        );
+        let policy_exact = evaluate_rational_expression_at_algebraic_root(
+            &rational_root,
+            core::slice::from_ref(&numerator),
+            core::slice::from_ref(&denominator),
+            PredicatePolicy::STRICT,
+        );
+        assert_eq!(
+            policy_exact.status,
+            AlgebraicRootRationalEvaluationStatus::EvaluatedExactRealWitness
+        );
+        assert_eq!(
+            policy_exact
+                .exact_value
+                .as_ref()
+                .and_then(Real::exact_rational_normal_form),
+            half.exact_rational()
+        );
+
+        let zero_over_policy_nonzero = evaluate_rational_expression_at_algebraic_root(
+            &rational_root,
+            &[Real::zero()],
+            core::slice::from_ref(&denominator),
+            PredicatePolicy::STRICT,
+        );
+        assert_eq!(
+            zero_over_policy_nonzero.status,
+            AlgebraicRootRationalEvaluationStatus::EvaluatedExactRationalWitness
+        );
+        assert_eq!(zero_over_policy_nonzero.exact_value, Some(Real::zero()));
+        assert_eq!(zero_over_policy_nonzero.sign, Some(Ordering::Equal));
+
+        let unresolved = evaluate_rational_expression_at_algebraic_root(
+            &rational_root,
+            &[Real::one()],
+            &[crate::test_support::terminal_zero()],
+            PredicatePolicy::STRICT,
+        );
+        assert_eq!(
+            unresolved.status,
+            AlgebraicRootRationalEvaluationStatus::Undecided
+        );
+
         let zero_denominator = evaluate_rational_expression_at_algebraic_root(
             &rational_root,
             &[Real::one()],
@@ -3795,6 +5739,28 @@ mod tests {
             kind: AlgebraicRootKind::IsolatingInterval,
             validation: AlgebraicRootValidationReport::valid(),
         };
+        let policy_interval = evaluate_rational_expression_at_algebraic_root(
+            &sqrt_two,
+            core::slice::from_ref(&numerator),
+            core::slice::from_ref(&denominator),
+            PredicatePolicy::STRICT,
+        );
+        assert_eq!(
+            policy_interval.status,
+            AlgebraicRootRationalEvaluationStatus::IntervalEvaluated
+        );
+        let policy_interval = policy_interval
+            .interval_value
+            .expect("constant quotient interval");
+        assert_eq!(
+            policy_interval.lower.exact_rational_normal_form(),
+            half.exact_rational()
+        );
+        assert_eq!(
+            policy_interval.upper.exact_rational_normal_form(),
+            half.exact_rational()
+        );
+
         let interval = evaluate_rational_expression_at_algebraic_root(
             &sqrt_two,
             &[Real::one()],
@@ -3807,6 +5773,25 @@ mod tests {
         );
         assert_eq!(interval.sign, Some(Ordering::Greater));
         assert!(interval.interval_value.is_some());
+
+        let negative_denominator = evaluate_rational_expression_at_algebraic_root(
+            &sqrt_two,
+            &[Real::one()],
+            &[real(-4), Real::one()],
+            PredicatePolicy::APPROXIMATE_512,
+        );
+        assert_eq!(
+            negative_denominator.status,
+            AlgebraicRootRationalEvaluationStatus::IntervalEvaluated
+        );
+        assert_eq!(negative_denominator.sign, Some(Ordering::Less));
+        assert_eq!(
+            negative_denominator.interval_value,
+            Some(AlgebraicPolynomialValueInterval {
+                lower: ratio(-1, 2),
+                upper: ratio(-1, 3),
+            })
+        );
 
         let may_contain_zero = evaluate_rational_expression_at_algebraic_root(
             &sqrt_two,
@@ -3883,6 +5868,134 @@ mod tests {
     }
 
     #[test]
+    fn decreasing_affine_transform_excludes_a_foreign_source_endpoint_root() {
+        // P(x) = (x - 1)(x^2 - 2).  The owned interval (1, 2] contains only
+        // sqrt(2), while its excluded lower endpoint is another root.  Merely
+        // swapping the endpoints after y = -x would incorrectly include -1.
+        let source = AlgebraicRootRepresentation {
+            constraint_index: 0,
+            symbol: SymbolId(0),
+            interval_index: 0,
+            polynomial_coefficients: vec![real(2), real(-2), real(-1), Real::one()],
+            interval: IsolatedRootInterval {
+                lower: real(1),
+                upper: real(2),
+                exact_root: None,
+                distinct_root_count: 1,
+            },
+            kind: AlgebraicRootKind::IsolatingInterval,
+            validation: AlgebraicRootValidationReport::valid(),
+        };
+
+        let report = transform_algebraic_root_affine(
+            &source,
+            real(-1),
+            Real::zero(),
+            PredicatePolicy::STRICT,
+        );
+
+        assert_eq!(
+            report.status,
+            AlgebraicRootAffineTransformStatus::Transformed
+        );
+        let transformed = report.representation.expect("refined reflected root");
+        assert!(transformed.interval.upper < real(-1));
+        assert!(matches!(
+            refine_isolated_univariate_polynomial_interval(
+                &transformed.polynomial_coefficients,
+                &transformed.interval,
+                RootIsolationConfig {
+                    policy: PredicatePolicy::STRICT,
+                    max_interval_width: None,
+                    max_refinement_steps: 0,
+                },
+            )
+            .status,
+            IsolatedRootRefinementStatus::Refined | IsolatedRootRefinementStatus::ExactRoot
+        ));
+    }
+
+    #[test]
+    fn decreasing_affine_transform_retains_an_owned_upper_endpoint_root() {
+        let source = AlgebraicRootRepresentation {
+            constraint_index: 0,
+            symbol: SymbolId(0),
+            interval_index: 0,
+            polynomial_coefficients: vec![real(-2), Real::one()],
+            interval: IsolatedRootInterval {
+                lower: real(1),
+                upper: real(2),
+                exact_root: None,
+                distinct_root_count: 1,
+            },
+            kind: AlgebraicRootKind::IsolatingInterval,
+            validation: AlgebraicRootValidationReport::valid(),
+        };
+
+        let report = transform_algebraic_root_affine(
+            &source,
+            real(-1),
+            Real::zero(),
+            PredicatePolicy::STRICT,
+        );
+
+        assert_eq!(
+            report.status,
+            AlgebraicRootAffineTransformStatus::Transformed
+        );
+        let transformed = report.representation.expect("reflected exact root");
+        assert_eq!(transformed.interval.lower, real(-2));
+        assert_eq!(transformed.interval.upper, real(-2));
+        assert_eq!(transformed.interval.exact_root, Some(real(-2)));
+        assert_eq!(transformed.kind, AlgebraicRootKind::ExactRationalWitness);
+    }
+
+    #[test]
+    fn endpoint_root_detection_falls_back_after_inconclusive_modular_images() {
+        let prime = i64::try_from(ENDPOINT_NONVANISHING_PRIME).unwrap();
+        let modular_collision = AlgebraicRootRepresentation {
+            polynomial_coefficients: vec![real(prime), Real::zero(), Real::one()],
+            interval: IsolatedRootInterval {
+                lower: Real::zero(),
+                upper: Real::one(),
+                exact_root: None,
+                distinct_root_count: 1,
+            },
+            constraint_index: 0,
+            symbol: SymbolId(0),
+            interval_index: 0,
+            kind: AlgebraicRootKind::IsolatingInterval,
+            validation: AlgebraicRootValidationReport::valid(),
+        };
+        assert_eq!(
+            algebraic_root_interval_endpoints_are_roots(
+                &modular_collision,
+                PredicatePolicy::STRICT,
+            ),
+            Some(false)
+        );
+
+        let sqrt_two = real(2).sqrt().unwrap();
+        let exact_real_endpoint = AlgebraicRootRepresentation {
+            polynomial_coefficients: vec![-sqrt_two.clone(), Real::one()],
+            interval: IsolatedRootInterval {
+                lower: sqrt_two,
+                upper: real(2),
+                exact_root: None,
+                distinct_root_count: 1,
+            },
+            ..modular_collision
+        };
+        assert_eq!(
+            algebraic_root_interval_endpoints_are_roots(
+                &exact_real_endpoint,
+                PredicatePolicy::STRICT,
+            ),
+            Some(true)
+        );
+    }
+
+    #[test]
     fn algebraic_root_affine_transform_preserves_exact_real_coefficients() {
         let sqrt_two = real(2).sqrt().expect("positive exact square root");
         let source = AlgebraicRootRepresentation {
@@ -3928,6 +6041,367 @@ mod tests {
         assert_eq!(transformed.interval.lower, real(5));
         assert_eq!(transformed.interval.upper, real(7));
         assert!(transformed.is_valid());
+    }
+
+    #[test]
+    fn algebraic_root_affine_transform_preserves_exact_real_scale_and_offset() {
+        let source = AlgebraicRootRepresentation {
+            constraint_index: 0,
+            symbol: SymbolId(0),
+            interval_index: 0,
+            polynomial_coefficients: vec![real(-2), Real::zero(), Real::one()],
+            interval: IsolatedRootInterval {
+                lower: real(1),
+                upper: real(2),
+                exact_root: None,
+                distinct_root_count: 1,
+            },
+            kind: AlgebraicRootKind::IsolatingInterval,
+            validation: AlgebraicRootValidationReport::valid(),
+        };
+        let scale = real(2).sqrt().expect("positive exact square root");
+        let offset = Real::pi();
+        let report = transform_algebraic_root_affine(
+            &source,
+            scale.clone(),
+            offset.clone(),
+            PredicatePolicy::STRICT,
+        );
+
+        assert_eq!(
+            report.status,
+            AlgebraicRootAffineTransformStatus::Transformed
+        );
+        let transformed = report.representation.expect("exact-Real affine image");
+        let expected = [
+            offset.clone() * offset.clone() - real(4),
+            real(-2) * offset.clone(),
+            Real::one(),
+        ];
+        for (actual, expected) in transformed.polynomial_coefficients.iter().zip(expected) {
+            assert_eq!(
+                compare_reals(actual, &expected, PredicatePolicy::STRICT).value(),
+                Some(Ordering::Equal)
+            );
+        }
+        assert_eq!(
+            compare_reals(
+                &transformed.interval.lower,
+                &(offset.clone() + scale.clone()),
+                PredicatePolicy::STRICT,
+            )
+            .value(),
+            Some(Ordering::Equal)
+        );
+        assert_eq!(
+            compare_reals(
+                &transformed.interval.upper,
+                &(offset + real(2) * scale),
+                PredicatePolicy::STRICT,
+            )
+            .value(),
+            Some(Ordering::Equal)
+        );
+        assert!(transformed.is_valid());
+    }
+
+    #[test]
+    fn algebraic_root_affine_transform_does_not_mislabel_exact_real_point_image() {
+        let source = exact_point_representation(0, real(2));
+        let scale = real(2).sqrt().unwrap();
+        let offset = Real::pi();
+        let expected = real(2) * scale.clone() + offset.clone();
+        let report =
+            transform_algebraic_root_affine(&source, scale, offset, PredicatePolicy::STRICT);
+
+        assert_eq!(
+            report.status,
+            AlgebraicRootAffineTransformStatus::Transformed
+        );
+        let transformed = report.representation.expect("exact-Real point image");
+        assert_eq!(transformed.kind, AlgebraicRootKind::IsolatingInterval);
+        assert!(transformed.interval.exact_root.is_none());
+        assert_eq!(transformed.interval.lower, expected);
+        assert_eq!(
+            validate_algebraic_root_representation(&transformed, PredicatePolicy::STRICT).status,
+            AlgebraicRootValidationStatus::Valid
+        );
+    }
+
+    #[test]
+    fn algebraic_root_affine_transform_replays_cached_source_validation_strictly() {
+        let mut stale = AlgebraicRootRepresentation {
+            constraint_index: 0,
+            symbol: SymbolId(0),
+            interval_index: 0,
+            polynomial_coefficients: vec![real(-2), Real::zero(), Real::one()],
+            interval: IsolatedRootInterval {
+                lower: real(1),
+                upper: real(2),
+                exact_root: None,
+                distinct_root_count: 1,
+            },
+            kind: AlgebraicRootKind::IsolatingInterval,
+            validation: AlgebraicRootValidationReport::valid(),
+        };
+        stale.interval.lower = real(3);
+        assert!(stale.is_valid());
+
+        let report = transform_algebraic_root_affine(
+            &stale,
+            Real::one(),
+            Real::zero(),
+            PredicatePolicy::APPROXIMATE_512,
+        );
+
+        assert_eq!(
+            report.status,
+            AlgebraicRootAffineTransformStatus::InvalidEvidence
+        );
+        assert!(report.representation.is_none());
+    }
+
+    #[test]
+    fn algebraic_root_affine_transform_handles_degree_128_without_machine_binomials() {
+        let mut polynomial = vec![Real::zero(); 129];
+        polynomial[0] = real(-2);
+        polynomial[128] = Real::one();
+        let source = AlgebraicRootRepresentation {
+            constraint_index: 0,
+            symbol: SymbolId(0),
+            interval_index: 0,
+            polynomial_coefficients: polynomial.clone(),
+            interval: IsolatedRootInterval {
+                lower: real(1),
+                upper: real(2),
+                exact_root: None,
+                distinct_root_count: 1,
+            },
+            kind: AlgebraicRootKind::IsolatingInterval,
+            validation: AlgebraicRootValidationReport::valid(),
+        };
+
+        let report = transform_algebraic_root_affine(
+            &source,
+            Real::one(),
+            Real::one(),
+            PredicatePolicy::STRICT,
+        );
+
+        assert_eq!(
+            report.status,
+            AlgebraicRootAffineTransformStatus::Transformed
+        );
+        let transformed = report.representation.expect("degree-128 affine image");
+        let mut expected = Vec::with_capacity(129);
+        let mut binomial = BigUint::from(1_u8);
+        for power in 0..=128_usize {
+            let mut coefficient = BigInt::from(binomial.clone());
+            if (128 - power) % 2 == 1 {
+                coefficient = -coefficient;
+            }
+            if power == 0 {
+                coefficient -= 2;
+            }
+            expected.push(Real::from(Rational::from_bigint(coefficient)));
+            if power < 128 {
+                binomial = binomial * BigUint::from(128 - power) / BigUint::from(power + 1);
+            }
+        }
+        assert_eq!(transformed.polynomial_coefficients, expected);
+        assert_eq!(transformed.interval.lower, real(2));
+        assert_eq!(transformed.interval.upper, real(3));
+        assert!(transformed.is_valid());
+    }
+
+    #[test]
+    fn affine_homogeneous_horner_matches_retained_power_sum() {
+        let polynomial = [real(-7), real(3), Real::zero(), real(-2), real(5), real(1)];
+        let scale = real(2);
+        let offset = real(-1);
+        let horner =
+            affine_transformed_polynomial(&polynomial, &scale, &offset, PredicatePolicy::STRICT)
+                .unwrap();
+        let power_sum = affine_transformed_polynomial_power_sum(
+            &polynomial,
+            &scale,
+            &offset,
+            PredicatePolicy::STRICT,
+        )
+        .unwrap();
+
+        assert_eq!(horner, power_sum);
+    }
+
+    #[test]
+    fn affine_exact_real_horner_matches_retained_power_sum() {
+        let sqrt_two = real(2).sqrt().expect("positive exact square root");
+        let polynomial = [
+            -sqrt_two.clone(),
+            Real::pi(),
+            Real::zero(),
+            sqrt_two,
+            Real::one(),
+        ];
+        let scale = real(2);
+        let offset = real(-1);
+        let horner =
+            affine_transformed_polynomial(&polynomial, &scale, &offset, PredicatePolicy::STRICT)
+                .unwrap();
+        let power_sum = affine_transformed_polynomial_power_sum(
+            &polynomial,
+            &scale,
+            &offset,
+            PredicatePolicy::STRICT,
+        )
+        .unwrap();
+
+        assert_eq!(horner.len(), power_sum.len());
+        for (horner, power_sum) in horner.iter().zip(&power_sum) {
+            assert_eq!(
+                compare_reals(horner, power_sum, PredicatePolicy::STRICT).value(),
+                Some(Ordering::Equal)
+            );
+        }
+    }
+
+    proptest! {
+        #![proptest_config(ProptestConfig::with_cases(64))]
+
+        #[test]
+        fn generated_rational_affine_horner_matches_retained_power_sum(
+            coefficients in prop::collection::vec(-8_i16..=8, 1..7),
+            scale in (-5_i16..=5).prop_filter("nonzero affine scale", |value| *value != 0),
+            offset in -5_i16..=5,
+        ) {
+            prop_assume!(coefficients.last().is_some_and(|coefficient| *coefficient != 0));
+            let polynomial = coefficients
+                .into_iter()
+                .map(|coefficient| real(i64::from(coefficient)))
+                .collect::<Vec<_>>();
+            let scale = real(i64::from(scale));
+            let offset = real(i64::from(offset));
+            let horner = affine_transformed_polynomial(
+                &polynomial,
+                &scale,
+                &offset,
+                PredicatePolicy::STRICT,
+            );
+            let power_sum = affine_transformed_polynomial_power_sum(
+                &polynomial,
+                &scale,
+                &offset,
+                PredicatePolicy::STRICT,
+            );
+
+            prop_assert_eq!(horner, power_sum);
+        }
+
+        #[test]
+        fn generated_affine_exact_real_horner_matches_retained_power_sum(
+            coefficient_pairs in prop::collection::vec((-3_i8..=3, -3_i8..=3), 1..6),
+        ) {
+            let sqrt_two = real(2).sqrt().expect("positive exact square root");
+            let polynomial = coefficient_pairs
+                .into_iter()
+                .map(|(rational, radical)| {
+                    real(i64::from(rational)) + real(i64::from(radical)) * sqrt_two.clone()
+                })
+                .collect::<Vec<_>>();
+            let scale = real(2);
+            let offset = real(-1);
+            let horner = affine_transformed_polynomial(
+                &polynomial,
+                &scale,
+                &offset,
+                PredicatePolicy::STRICT,
+            );
+            let power_sum = affine_transformed_polynomial_power_sum(
+                &polynomial,
+                &scale,
+                &offset,
+                PredicatePolicy::STRICT,
+            );
+
+            prop_assert!(horner.is_some());
+            prop_assert!(power_sum.is_some());
+            let horner = horner.unwrap();
+            let power_sum = power_sum.unwrap();
+            prop_assert_eq!(horner.len(), power_sum.len());
+            for (horner, power_sum) in horner.iter().zip(&power_sum) {
+                prop_assert_eq!(
+                    compare_reals(horner, power_sum, PredicatePolicy::STRICT).value(),
+                    Some(Ordering::Equal)
+                );
+            }
+        }
+
+        #[test]
+        fn generated_endpoint_root_detection_matches_integer_horner(
+            coefficients in prop::collection::vec(-8_i8..=8, 2..7),
+            lower in -8_i8..=8,
+            upper in -8_i8..=8,
+        ) {
+            prop_assume!(coefficients.last().is_some_and(|coefficient| *coefficient != 0));
+            let evaluate = |point: i8| {
+                coefficients.iter().rev().fold(0_i128, |value, coefficient| {
+                    value * i128::from(point) + i128::from(*coefficient)
+                })
+            };
+            let expected = evaluate(lower) == 0 || evaluate(upper) == 0;
+            let root = AlgebraicRootRepresentation {
+                constraint_index: 0,
+                symbol: SymbolId(0),
+                interval_index: 0,
+                polynomial_coefficients: coefficients
+                    .iter()
+                    .map(|coefficient| real(i64::from(*coefficient)))
+                    .collect(),
+                interval: IsolatedRootInterval {
+                    lower: real(i64::from(lower)),
+                    upper: real(i64::from(upper)),
+                    exact_root: None,
+                    distinct_root_count: 1,
+                },
+                kind: AlgebraicRootKind::IsolatingInterval,
+                validation: AlgebraicRootValidationReport::valid(),
+            };
+
+            prop_assert_eq!(
+                algebraic_root_interval_endpoints_are_roots(
+                    &root,
+                    PredicatePolicy::STRICT,
+                ),
+                Some(expected)
+            );
+        }
+
+        #[test]
+        fn generated_exact_real_point_arithmetic_never_claims_rational_witness(
+            radicand in 1_u16..=64,
+            integer_offset in -8_i16..=8,
+        ) {
+            let left_value = real(i64::from(radicand)).sqrt().unwrap();
+            let right_value = Real::pi() + real(i64::from(integer_offset));
+            let expected = left_value.clone() + right_value.clone();
+            prop_assert!(expected.exact_rational_ref().is_none());
+            let left = exact_point_representation(0, left_value);
+            let right = exact_point_representation(1, right_value);
+
+            let report = arithmetic_algebraic_root_representations(
+                &left,
+                Some(&right),
+                AlgebraicRootArithmeticOp::Add,
+                PredicatePolicy::STRICT,
+            );
+
+            prop_assert_eq!(
+                report.status,
+                AlgebraicRootArithmeticStatus::ComputedExactRealWitness
+            );
+            prop_assert_eq!(report.exact_result.as_ref(), Some(&expected));
+            prop_assert!(report.result_representation.is_none());
+        }
     }
 
     proptest! {
@@ -4232,6 +6706,44 @@ mod tests {
         }
 
         #[test]
+        fn generated_rational_interval_product_matches_all_endpoint_products(
+            left_first in -32_i16..=32,
+            left_second in -32_i16..=32,
+            right_first in -32_i16..=32,
+            right_second in -32_i16..=32,
+        ) {
+            let left_lower = Rational::new(i64::from(left_first.min(left_second)));
+            let left_upper = Rational::new(i64::from(left_first.max(left_second)));
+            let right_lower = Rational::new(i64::from(right_first.min(right_second)));
+            let right_upper = Rational::new(i64::from(right_first.max(right_second)));
+            let (lower, upper) = rational_interval_product(
+                &left_lower,
+                &left_upper,
+                &right_lower,
+                &right_upper,
+            );
+            let products = [
+                &left_lower * &right_lower,
+                &left_lower * &right_upper,
+                &left_upper * &right_lower,
+                &left_upper * &right_upper,
+            ];
+            let mut expected_lower = products[0].clone();
+            let mut expected_upper = products[0].clone();
+            for product in &products[1..] {
+                if product < &expected_lower {
+                    expected_lower = product.clone();
+                }
+                if product > &expected_upper {
+                    expected_upper = product.clone();
+                }
+            }
+
+            prop_assert_eq!(lower, expected_lower);
+            prop_assert_eq!(upper, expected_upper);
+        }
+
+        #[test]
         fn generated_rational_witness_polynomial_evaluation_matches_integer_arithmetic(
             root in -32_i16..=32,
             constant in -32_i16..=32,
@@ -4354,7 +6866,14 @@ mod tests {
             prop_assert_eq!(report.status, AlgebraicRootAffineTransformStatus::Transformed);
             let transformed = report.representation.as_ref().unwrap();
             let expected = scale * root + offset;
-            prop_assert_eq!(transformed.exact_rational_witness(), Some(&real(expected)));
+            let expected = real(expected);
+            prop_assert_eq!(transformed.exact_point_witness(), Some(&expected));
+            prop_assert_eq!(
+                &transformed.polynomial_coefficients,
+                &vec![-expected.clone(), Real::one()]
+            );
+            prop_assert_eq!(&transformed.interval.lower, &expected);
+            prop_assert_eq!(&transformed.interval.upper, &expected);
             prop_assert!(transformed.is_valid());
         }
     }

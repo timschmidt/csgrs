@@ -35,7 +35,8 @@ pub enum SparseResidualReplayError {
         /// Offending term column.
         column: usize,
     },
-    /// A residual sign could not be certified within the requested bound.
+    /// A residual sign remained unknown after bounded refinement and the
+    /// strict exact predicate cascade.
     UnknownResidual,
 }
 
@@ -370,8 +371,9 @@ pub(crate) const fn weaker_certainty(
 ///
 /// The declared shape is validated before any proof decision is made. Sparse
 /// terms are then accumulated exactly into `row_count` residual slots, the
-/// right-hand side is subtracted, and each residual sign is certified through
-/// `Real::certified_sign_until`. This keeps sparse numeric solvers, fill
+/// right-hand side is subtracted, and each residual sign first uses
+/// `Real::certified_sign_until`, then the strict exact predicate cascade if the
+/// caller's refinement bound is exhausted. This keeps sparse numeric solvers, fill
 /// reducers, and domain-specific stamp assemblers outside the proof boundary:
 /// they may propose `x`, but this replay report decides whether `A*x-b` is
 /// actually zero. This is the same construction/proof separation emphasized by
@@ -454,12 +456,7 @@ pub(crate) fn replay_assembled_sparse_rows(
     let mut accepted = true;
     let mut rows = Vec::with_capacity(residuals.len());
     for (row_index, residual) in residuals.iter().enumerate() {
-        let sign = match residual.certified_sign_until(min_precision) {
-            CertifiedRealSign::Known { sign, .. } => sign,
-            CertifiedRealSign::Unknown { .. } => {
-                return Err(SparseResidualReplayError::UnknownResidual);
-            }
-        };
+        let sign = strict_sparse_residual_sign(residual, min_precision)?;
         match sign {
             RealSign::Zero => {}
             RealSign::Negative | RealSign::Positive => accepted = false,
@@ -476,6 +473,14 @@ pub(crate) fn replay_assembled_sparse_rows(
         rows,
         accepted,
     })
+}
+
+fn strict_sparse_residual_sign(
+    residual: &Real,
+    min_precision: i32,
+) -> Result<RealSign, SparseResidualReplayError> {
+    crate::policy_division::strict_sign_after_refinement(residual, min_precision)
+        .ok_or(SparseResidualReplayError::UnknownResidual)
 }
 
 fn sparse_batch_replay_from_report(
@@ -676,6 +681,50 @@ mod tests {
         assert!(!report.accepted);
         assert_eq!(report.residuals, vec![real(-1)]);
         assert_eq!(report.rows[0].sign, RealSign::Negative);
+    }
+
+    #[test]
+    fn sparse_replay_uses_strict_exact_zero_fallback_without_guessing() {
+        let expected = crate::test_support::exact_normal_positive();
+        let tiny = Real::from(2).powi_i64(-3000).unwrap();
+        let unresolved_residual = tiny.clone() - expected.clone();
+        assert!(matches!(
+            unresolved_residual.certified_sign_until(-64),
+            CertifiedRealSign::Unknown { .. }
+        ));
+
+        let report = replay_sparse_linear_residuals(
+            1,
+            1,
+            &[SparseResidualTerm {
+                row: 0,
+                column: 0,
+                coefficient: tiny,
+            }],
+            &[expected],
+            &[Real::one()],
+            -64,
+        )
+        .unwrap();
+        assert!(report.accepted);
+        assert_eq!(report.rows[0].sign, RealSign::Zero);
+
+        assert_eq!(
+            replay_sparse_linear_residuals(
+                1,
+                1,
+                &[SparseResidualTerm {
+                    row: 0,
+                    column: 0,
+                    coefficient: crate::test_support::terminal_zero(),
+                }],
+                &[Real::zero()],
+                &[Real::one()],
+                -64,
+            )
+            .unwrap_err(),
+            SparseResidualReplayError::UnknownResidual
+        );
     }
 
     #[test]

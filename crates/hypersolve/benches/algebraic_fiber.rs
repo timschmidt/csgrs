@@ -1,8 +1,10 @@
+use std::fs;
 use std::hint::black_box;
-use std::time::Instant;
+use std::time::{Duration, Instant};
 
 use hyperreal::Real;
 use hypersolve::{
+    AlgebraicFiberPolynomialImageProjectionConfig, AlgebraicFiberPolynomialImageProjectionStatus,
     AlgebraicFiberRootCountStatus, AlgebraicRootKind, AlgebraicRootRepresentation,
     AlgebraicRootValidationReport, AlgebraicRootValidationStatus, BivariatePolynomial,
     BivariatePolynomialComponentStatus, CurveIntersectionResultantConfig, CurveResultantParameter,
@@ -10,8 +12,75 @@ use hypersolve::{
     count_bivariate_common_fiber_roots_at_algebraic_parameter,
     count_bivariate_fiber_roots_at_algebraic_parameter,
     count_bivariate_fiber_roots_at_algebraic_parameter_intervals,
-    parameter_component_bivariate_polynomial_system,
+    parameter_component_bivariate_polynomial_system, project_algebraic_fiber_polynomial_image,
 };
+
+#[path = "support/benchmark_report.rs"]
+#[allow(dead_code)]
+mod benchmark_report;
+
+struct TimingRow {
+    name: &'static str,
+    iterations: u32,
+    elapsed: Duration,
+    detail: String,
+}
+
+fn record_timing(
+    rows: &mut Vec<TimingRow>,
+    name: &'static str,
+    iterations: u32,
+    elapsed: Duration,
+    detail: String,
+) {
+    println!(
+        "{name}: {iterations} iterations in {elapsed:?} ({:?}/iter), {detail}",
+        elapsed / iterations,
+    );
+    rows.push(TimingRow {
+        name,
+        iterations,
+        elapsed,
+        detail,
+    });
+}
+
+fn write_timing_report(rows: &[TimingRow]) {
+    if std::env::var_os("HYPERSOLVE_SKIP_BENCHMARK_REPORTS").is_some() {
+        return;
+    }
+    let mut report = String::from(
+        "# Hypersolve Algebraic Fiber Benchmarks\n\n\
+Generated automatically by `cargo bench --bench algebraic_fiber`. These are deterministic wall-clock throughput probes with exact result checks, not Criterion statistical estimates. Override the default iteration count with `HYPERSOLVE_FIBER_BENCH_ITERATIONS`.\n\n\
+| Benchmark | Iterations | Total | Mean per iteration | Validation checksum |\n\
+| --- | ---: | ---: | ---: | --- |\n",
+    );
+    for row in rows {
+        let mean_ns = row.elapsed.as_secs_f64() * 1_000_000_000.0 / f64::from(row.iterations);
+        report.push_str(&format!(
+            "| `{}` | {} | {:.3} s | {} | {} |\n",
+            row.name,
+            row.iterations,
+            row.elapsed.as_secs_f64(),
+            format_duration(mean_ns),
+            row.detail,
+        ));
+    }
+    fs::write("algebraic_fiber_benchmarks.md", report)
+        .expect("algebraic fiber benchmark report should be writable");
+}
+
+fn format_duration(ns: f64) -> String {
+    if ns < 1_000.0 {
+        format!("{ns:.2} ns")
+    } else if ns < 1_000_000.0 {
+        format!("{:.2} us", ns / 1_000.0)
+    } else if ns < 1_000_000_000.0 {
+        format!("{:.2} ms", ns / 1_000_000.0)
+    } else {
+        format!("{:.2} s", ns / 1_000_000_000.0)
+    }
+}
 
 fn r(value: i64) -> Real {
     Real::from(value)
@@ -45,6 +114,7 @@ fn multiply_bivariate(
 }
 
 fn main() {
+    let mut timing_rows = Vec::new();
     let retained_root = AlgebraicRootRepresentation {
         constraint_index: 0,
         symbol: SymbolId(0),
@@ -92,9 +162,12 @@ fn main() {
         refinement_steps += black_box(report.retained_refinement_steps);
     }
     let elapsed = started.elapsed();
-    println!(
-        "algebraic_fiber_even_multiplicity: {iterations} iterations in {elapsed:?} ({:?}/iter), root_checksum={root_count}, refinement_checksum={refinement_steps}",
-        elapsed / iterations
+    record_timing(
+        &mut timing_rows,
+        "algebraic_fiber_even_multiplicity",
+        iterations,
+        elapsed,
+        format!("root={root_count}; refinement={refinement_steps}"),
     );
 
     let batch_interval_values = [
@@ -128,9 +201,12 @@ fn main() {
         }
     }
     let elapsed = started.elapsed();
-    println!(
-        "algebraic_fiber_eight_independent_intervals: {iterations} iterations in {elapsed:?} ({:?}/iter), root_checksum={independent_checksum}",
-        elapsed / iterations
+    record_timing(
+        &mut timing_rows,
+        "algebraic_fiber_eight_independent_intervals",
+        iterations,
+        elapsed,
+        format!("root={independent_checksum}"),
     );
 
     let started = Instant::now();
@@ -150,9 +226,12 @@ fn main() {
         }
     }
     let elapsed = started.elapsed();
-    println!(
-        "algebraic_fiber_eight_batched_intervals: {iterations} iterations in {elapsed:?} ({:?}/iter), root_checksum={batch_checksum}",
-        elapsed / iterations
+    record_timing(
+        &mut timing_rows,
+        "algebraic_fiber_eight_batched_intervals",
+        iterations,
+        elapsed,
+        format!("root={batch_checksum}"),
     );
     assert_eq!(batch_checksum, independent_checksum);
 
@@ -186,9 +265,55 @@ fn main() {
         common_refinement_steps += black_box(report.retained_refinement_steps);
     }
     let elapsed = started.elapsed();
-    println!(
-        "algebraic_common_fiber_degree_drop: {iterations} iterations in {elapsed:?} ({:?}/iter), root_checksum={common_root_count}, refinement_checksum={common_refinement_steps}",
-        elapsed / iterations
+    record_timing(
+        &mut timing_rows,
+        "algebraic_common_fiber_degree_drop",
+        iterations,
+        elapsed,
+        format!("root={common_root_count}; refinement={common_refinement_steps}"),
+    );
+
+    let sqrt_two = r(2).sqrt().expect("positive square root");
+    let sqrt_three = r(3).sqrt().expect("positive square root");
+    let radical_sum = &sqrt_two + &sqrt_three;
+    let radical_zero =
+        &radical_sum * &radical_sum - (r(5) + r(2) * r(6).sqrt().expect("positive square root"));
+    let linear_fiber = BivariatePolynomial::new(vec![vec![Real::zero(), Real::one()], vec![r(-1)]]);
+    let image_relation = BivariatePolynomial::new(vec![
+        vec![Real::one() + radical_zero, Real::one()],
+        vec![Real::one(), Real::one()],
+    ]);
+    let image_config = AlgebraicFiberPolynomialImageProjectionConfig {
+        max_fiber_degree: 1,
+        max_retained_degree: 3,
+        max_image_degree_bound: 1,
+    };
+    let started = Instant::now();
+    let mut image_checksum = 0_usize;
+    for _ in 0..iterations {
+        let report = project_algebraic_fiber_polynomial_image(
+            black_box(&linear_fiber),
+            CurveResultantParameter::First,
+            black_box(&image_relation),
+            CurveResultantParameter::Second,
+            black_box(&retained_root),
+            image_config,
+            PredicatePolicy::STRICT,
+        );
+        assert_eq!(
+            report.status,
+            AlgebraicFiberPolynomialImageProjectionStatus::Constructed
+        );
+        assert_eq!(report.coefficients, vec![Real::one(), Real::one()]);
+        image_checksum += black_box(report.coefficients.len());
+    }
+    let elapsed = started.elapsed();
+    record_timing(
+        &mut timing_rows,
+        "algebraic_image_policy_zero_content",
+        iterations,
+        elapsed,
+        format!("coefficient={image_checksum}"),
     );
 
     let first_component = BivariatePolynomial::new(vec![vec![r(0), r(1)], vec![r(-1)]]);
@@ -238,9 +363,12 @@ fn main() {
         );
     }
     let elapsed = started.elapsed();
-    println!(
-        "rational_quadratic_common_fiber_two_components: {iterations} iterations in {elapsed:?} ({:?}/iter), component_checksum={component_checksum}",
-        elapsed / iterations
+    record_timing(
+        &mut timing_rows,
+        "rational_quadratic_common_fiber_two_components",
+        iterations,
+        elapsed,
+        format!("component={component_checksum}"),
     );
 
     let implicit_component =
@@ -275,9 +403,12 @@ fn main() {
         );
     }
     let elapsed = started.elapsed();
-    println!(
-        "implicit_quadratic_common_fiber: {iterations} iterations in {elapsed:?} ({:?}/iter), component_checksum={component_checksum}",
-        elapsed / iterations
+    record_timing(
+        &mut timing_rows,
+        "implicit_quadratic_common_fiber",
+        iterations,
+        elapsed,
+        format!("component={component_checksum}"),
     );
 
     let implicit_component = BivariatePolynomial::new(vec![
@@ -346,9 +477,12 @@ fn main() {
         );
     }
     let elapsed = started.elapsed();
-    println!(
-        "implicit_quadratic_high_cofactor: {iterations} iterations in {elapsed:?} ({:?}/iter), component_checksum={component_checksum}",
-        elapsed / iterations
+    record_timing(
+        &mut timing_rows,
+        "implicit_quadratic_high_cofactor",
+        iterations,
+        elapsed,
+        format!("component={component_checksum}"),
     );
 
     let repeated_component = BivariatePolynomial::new(vec![vec![r(0), r(1)], vec![r(-1)]]);
@@ -384,8 +518,24 @@ fn main() {
         }
     }
     let elapsed = started.elapsed();
-    println!(
-        "rational_repeated_cubic_common_fiber_three_components: {iterations} iterations in {elapsed:?} ({:?}/iter), component_checksum={component_checksum}",
-        elapsed / iterations
+    record_timing(
+        &mut timing_rows,
+        "rational_repeated_cubic_common_fiber_three_components",
+        iterations,
+        elapsed,
+        format!("component={component_checksum}"),
     );
+
+    write_timing_report(&timing_rows);
+    if !benchmark_report::reports_disabled() {
+        match benchmark_report::write_benchmarks_md() {
+            Ok(summary) => eprintln!(
+                "updated {} from {} Criterion rows and {} benchmark suites",
+                summary.path.display(),
+                summary.rows,
+                summary.suites,
+            ),
+            Err(error) => eprintln!("failed to update benchmarks.md: {error}"),
+        }
+    }
 }

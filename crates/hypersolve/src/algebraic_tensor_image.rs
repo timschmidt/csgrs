@@ -23,7 +23,7 @@ use crate::algebraic_fiber::{
     project_bivariate_fiber_at_algebraic_parameter_with_max_degree,
 };
 use crate::curve_resultant::{
-    BivariatePolynomial, CurveResultantParameter, primitive_bivariate_fiber_component_exact,
+    BivariatePolynomial, CurveResultantParameter, primitive_common_fiber_component,
 };
 use crate::root_isolation::{
     IsolatedRootInterval, IsolatedRootRefinementStatus, RootIsolationConfig, polynomial_div_rem,
@@ -73,6 +73,55 @@ pub struct AlgebraicTensorImageReport {
     pub message: Option<String>,
 }
 
+fn squared_tag_difference_tensor(rank: usize, tag_axis: usize) -> Option<DenseTensorPolynomial> {
+    if tag_axis == 0 || tag_axis >= rank {
+        return None;
+    }
+    // Every nonparticipating axis has dimension one, so row-major storage for
+    // (tag - source[0])^2 is the same 3 by 3 grid for every supported rank.
+    let mut dimensions = Vec::new();
+    dimensions.try_reserve_exact(rank).ok()?;
+    dimensions.resize(rank, 1);
+    dimensions[0] = 3;
+    dimensions[tag_axis] = 3;
+    let mut coefficients = vec![Real::zero(); 9];
+    coefficients[2] = Real::one();
+    coefficients[4] = Real::from(-2);
+    coefficients[6] = Real::one();
+    DenseTensorPolynomial::try_new(dimensions, coefficients)
+}
+
+fn primitive_first_parameter_component_from_flat_rows(
+    retained_count: usize,
+    fiber_count: usize,
+    coefficients: Vec<Real>,
+) -> Option<BivariatePolynomial> {
+    if retained_count == 0
+        || fiber_count == 0
+        || retained_count.checked_mul(fiber_count)? != coefficients.len()
+    {
+        return None;
+    }
+    // The tensor is already owned and row-major in [retained, fiber] order.
+    // Move its scalars into the primitive component's fiber-major input rather
+    // than nesting them, cloning a transpose, and discarding the first grid.
+    let mut fibers = Vec::new();
+    fibers.try_reserve_exact(fiber_count).ok()?;
+    for _ in 0..fiber_count {
+        let mut fiber = Vec::new();
+        fiber.try_reserve_exact(retained_count).ok()?;
+        fibers.push(fiber);
+    }
+    let mut coefficients = coefficients.into_iter();
+    for _ in 0..retained_count {
+        for fiber in &mut fibers {
+            fiber.push(coefficients.next()?);
+        }
+    }
+    debug_assert!(coefficients.next().is_none());
+    primitive_common_fiber_component(fibers, CurveResultantParameter::First)
+}
+
 /// Projects the final axis of one selected algebraic tensor after saturating
 /// target-wide conjugate components.
 ///
@@ -112,47 +161,42 @@ pub fn project_selected_tensor_fiber_via_tagged_norm(
     }) {
         return projection_report(AlgebraicFiberProjectionStatus::InvalidEvidence);
     }
-    let Some(constraints) = source_roots
-        .iter()
-        .map(|source| {
-            square_free_part(
-                source.polynomial_coefficients.clone(),
-                PredicatePolicy::STRICT,
-            )
-            .map(canonicalize_proven_rational_coefficients)
-        })
-        .collect::<Option<Vec<_>>>()
-    else {
-        return projection_report(AlgebraicFiberProjectionStatus::UnsupportedCoefficient);
-    };
+    let mut constraints: Vec<Vec<Real>> = Vec::new();
+    if constraints.try_reserve_exact(source_roots.len()).is_err() {
+        return projection_report(AlgebraicFiberProjectionStatus::Undecided);
+    }
+    for (source_index, source) in source_roots.iter().enumerate() {
+        // Conjugate selections commonly share one defining polynomial. Exact
+        // structural equality is sufficient to reuse its proved square-free
+        // constraint; a differently represented polynomial takes the full
+        // independent path.
+        if source_index > 0
+            && source_roots[0].polynomial_coefficients == source.polynomial_coefficients
+        {
+            constraints.push(constraints[0].clone());
+            continue;
+        }
+        let Some(constraint) = square_free_part(
+            source.polynomial_coefficients.clone(),
+            PredicatePolicy::STRICT,
+        )
+        .map(canonicalize_proven_rational_coefficients) else {
+            return projection_report(AlgebraicFiberProjectionStatus::UnsupportedCoefficient);
+        };
+        constraints.push(constraint);
+    }
 
     let source_count = source_roots.len();
     let rank = source_count + 2;
     let Some(lifted_relation) = relation.insert_independent_axis(source_count) else {
         return projection_report(AlgebraicFiberProjectionStatus::Undecided);
     };
-    let Some(tag) = DenseTensorPolynomial::from_axis_polynomial(
-        rank,
-        source_count,
-        &[Real::zero(), Real::one()],
-    ) else {
-        return projection_report(AlgebraicFiberProjectionStatus::Undecided);
-    };
-    let Some(tagged_source) =
-        DenseTensorPolynomial::from_axis_polynomial(rank, 0, &[Real::zero(), Real::one()])
-    else {
-        return projection_report(AlgebraicFiberProjectionStatus::Undecided);
-    };
-    let Some(tag_difference) = tag.subtract(&tagged_source) else {
+    let Some(tag_difference_square) = squared_tag_difference_tensor(rank, source_count) else {
         return projection_report(AlgebraicFiberProjectionStatus::Undecided);
     };
     let Some(mut tagged_relation) = lifted_relation
         .multiply(&lifted_relation)
-        .and_then(|square| {
-            tag_difference
-                .multiply(&tag_difference)
-                .and_then(|tag_square| square.add(&tag_square))
-        })
+        .and_then(|square| square.add(&tag_difference_square))
     else {
         return projection_report(AlgebraicFiberProjectionStatus::Undecided);
     };
@@ -200,35 +244,51 @@ pub fn project_selected_tensor_fiber_via_tagged_norm(
         tagged_relation = canonicalize_proven_rational_tensor(tagged_relation);
     }
 
-    let [tag_count, target_count] = tagged_relation.dimensions() else {
+    let (dimensions, coefficients) = tagged_relation.into_parts();
+    let [tag_count, target_count] = dimensions.as_slice() else {
         return projection_report(AlgebraicFiberProjectionStatus::Undecided);
     };
-    let coefficients = (0..*tag_count)
-        .map(|tag_power| {
-            (0..*target_count)
-                .map(|target_power| {
-                    tagged_relation
-                        .coefficient(&[tag_power, target_power])
-                        .cloned()
-                        .unwrap_or_else(Real::zero)
-                })
-                .collect::<Vec<_>>()
-        })
-        .collect::<Vec<_>>();
-    let Some(primitive) = primitive_bivariate_fiber_component_exact(
-        &BivariatePolynomial::new(coefficients),
-        CurveResultantParameter::First,
-    ) else {
+    let Some(primitive) =
+        primitive_first_parameter_component_from_flat_rows(*tag_count, *target_count, coefficients)
+    else {
         return projection_report(AlgebraicFiberProjectionStatus::Undecided);
     };
-    let max_source_degree = source_roots[0]
+    let first_constraint = constraints
+        .into_iter()
+        .next()
+        .expect("a nonempty selected source tuple retains its first constraint");
+    let mut square_free_projection_root = None;
+    if first_constraint.len() < source_roots[0].polynomial_coefficients.len() {
+        // All preceding reductions already used this exact square-free
+        // constraint. Reusing it for the final norm removes only repeated
+        // carrier multiplicity and preserves the enumerated root set.
+        let source = &source_roots[0];
+        let mut root = AlgebraicRootRepresentation {
+            constraint_index: source.constraint_index,
+            symbol: source.symbol,
+            interval_index: source.interval_index,
+            polynomial_coefficients: first_constraint,
+            interval: source.interval.clone(),
+            kind: source.kind.clone(),
+            validation: source.validation.clone(),
+        };
+        root.validation = validate_algebraic_root_representation(&root, PredicatePolicy::STRICT);
+        if !root.is_valid() {
+            return projection_report(AlgebraicFiberProjectionStatus::Undecided);
+        }
+        square_free_projection_root = Some(root);
+    }
+    let projection_root = square_free_projection_root
+        .as_ref()
+        .unwrap_or(&source_roots[0]);
+    let max_source_degree = projection_root
         .polynomial_coefficients
         .len()
         .saturating_sub(1);
     let mut projection = project_bivariate_fiber_at_algebraic_parameter_with_max_degree(
         &primitive,
         CurveResultantParameter::First,
-        &source_roots[0],
+        projection_root,
         max_source_degree,
         PredicatePolicy::STRICT,
     );
@@ -403,6 +463,10 @@ pub fn represent_algebraic_tensor_image(
     let original_source_count = source_roots.len();
     let mut source_roots = source_roots.to_vec();
     let mut relation = relation.clone();
+    // Affine substitution removes a source axis just as conclusively as a
+    // later resultant or certified independence proof. Keep the public count
+    // faithful on every early-return path, not only after full construction.
+    let mut eliminated_source_count = 0;
     let mut source_index = 0;
     while source_index < source_roots.len() {
         let affine =
@@ -433,7 +497,7 @@ pub fn represent_algebraic_tensor_image(
             ) else {
                 return report(
                     AlgebraicTensorImageStatus::InvalidRelationShape,
-                    0,
+                    eliminated_source_count,
                     None,
                     None,
                     "affine-related tensor-image source axes could not be collapsed exactly",
@@ -441,20 +505,31 @@ pub fn represent_algebraic_tensor_image(
             };
             relation = diagonal;
             source_roots.remove(source_index);
+            eliminated_source_count += 1;
         } else {
             source_index += 1;
         }
     }
 
-    let mut constraints = Vec::with_capacity(source_roots.len());
+    let mut constraints: Vec<Vec<Real>> = Vec::with_capacity(source_roots.len());
     for (source_index, source) in source_roots.iter().enumerate() {
+        if let Some(shared_index) = source_roots[..source_index]
+            .iter()
+            .position(|prior| prior.polynomial_coefficients == source.polynomial_coefficients)
+        {
+            // Distinct selected conjugates can retain the same exact carrier
+            // even after affine-related axes have been collapsed. Its proved
+            // square-free constraint is independent of the selected interval.
+            constraints.push(constraints[shared_index].clone());
+            continue;
+        }
         let Some(constraint) = square_free_part(
             source.polynomial_coefficients.clone(),
             PredicatePolicy::STRICT,
         ) else {
             return report(
                 AlgebraicTensorImageStatus::SourceSquareFreeFailed,
-                source_index,
+                eliminated_source_count,
                 None,
                 None,
                 "a tensor-image source constraint could not be square-freed exactly",
@@ -467,11 +542,21 @@ pub fn represent_algebraic_tensor_image(
     // this reduction for every still-live source after each resultant avoids
     // degree growth in powers already implied by those source constraints.
     for (axis, constraint) in constraints.iter().enumerate() {
+        // A stored power bound strictly below the divisor degree is already
+        // its own quotient-ring remainder. Avoid cloning (or zero-padding)
+        // the complete dense tensor for that exact no-op.
+        if relation
+            .dimensions()
+            .get(axis)
+            .is_some_and(|dimension| *dimension < constraint.len())
+        {
+            continue;
+        }
         let Some(reduced) = relation.reduce_axis_modulo(axis, constraint, PredicatePolicy::STRICT)
         else {
             return report(
                 AlgebraicTensorImageStatus::SourceSquareFreeFailed,
-                axis,
+                eliminated_source_count,
                 None,
                 None,
                 "a tensor-image source axis could not be reduced in its exact quotient ring",
@@ -503,7 +588,7 @@ pub fn represent_algebraic_tensor_image(
                 });
                 return AlgebraicTensorImageReport {
                     status: AlgebraicTensorImageStatus::EliminationFailed,
-                    elimination_count: source_index,
+                    elimination_count: eliminated_source_count,
                     failed_elimination: Some(elimination),
                     representation: None,
                     message: Some(message),
@@ -513,14 +598,22 @@ pub fn represent_algebraic_tensor_image(
                 .resultant
                 .expect("a constructed tensor resultant retains its polynomial")
         };
+        eliminated_source_count += 1;
         relation = canonicalize_proven_rational_tensor(relation);
         for (axis, remaining_constraint) in constraints.iter().skip(source_index + 1).enumerate() {
+            if relation
+                .dimensions()
+                .get(axis)
+                .is_some_and(|dimension| *dimension < remaining_constraint.len())
+            {
+                continue;
+            }
             let Some(reduced) =
                 relation.reduce_axis_modulo(axis, remaining_constraint, PredicatePolicy::STRICT)
             else {
                 return report(
                     AlgebraicTensorImageStatus::SourceSquareFreeFailed,
-                    source_index + axis + 1,
+                    eliminated_source_count,
                     None,
                     None,
                     "a remaining tensor-image source axis could not be reduced in its exact quotient ring",
@@ -531,6 +624,7 @@ pub fn represent_algebraic_tensor_image(
         relation = canonicalize_proven_rational_tensor(relation);
     }
     if relation.dimensions().len() != 1 {
+        debug_assert_eq!(eliminated_source_count, original_source_count);
         return report(
             AlgebraicTensorImageStatus::InvalidRelationShape,
             original_source_count,
@@ -539,8 +633,10 @@ pub fn represent_algebraic_tensor_image(
             "tensor-image elimination did not leave one output axis",
         );
     }
+    debug_assert_eq!(eliminated_source_count, original_source_count);
+    let (_, relation_coefficients) = relation.into_parts();
     let Some(polynomial_coefficients) =
-        square_free_part(relation.coefficients().to_vec(), PredicatePolicy::STRICT)
+        square_free_part(relation_coefficients, PredicatePolicy::STRICT)
     else {
         return report(
             AlgebraicTensorImageStatus::ImageSquareFreeFailed,
@@ -567,25 +663,28 @@ pub fn represent_algebraic_tensor_image(
     }
 
     let exact_linear_root = if polynomial_coefficients.len() == 2 {
-        (-polynomial_coefficients[0].clone() / polynomial_coefficients[1].clone())
-            .ok()
-            .and_then(|root| root.exact_rational_normal_form().map(Real::new))
-            .filter(|root| {
-                let exact_witness_matches =
-                    image_interval.exact_root.as_ref().is_none_or(|exact_root| {
-                        compare_reals(exact_root, root, PredicatePolicy::STRICT).value()
-                            == Some(std::cmp::Ordering::Equal)
-                    });
-                exact_witness_matches
-                    && matches!(
-                        compare_reals(&image_interval.lower, root, PredicatePolicy::STRICT).value(),
-                        Some(std::cmp::Ordering::Less | std::cmp::Ordering::Equal)
-                    )
-                    && matches!(
-                        compare_reals(root, &image_interval.upper, PredicatePolicy::STRICT).value(),
-                        Some(std::cmp::Ordering::Less | std::cmp::Ordering::Equal)
-                    )
-            })
+        crate::policy_division::reciprocal_with_policy(
+            &polynomial_coefficients[1],
+            PredicatePolicy::STRICT,
+        )
+        .map(|reciprocal| -polynomial_coefficients[0].clone() * reciprocal)
+        .and_then(|root| root.exact_rational_normal_form().map(Real::new))
+        .filter(|root| {
+            let exact_witness_matches =
+                image_interval.exact_root.as_ref().is_none_or(|exact_root| {
+                    compare_reals(exact_root, root, PredicatePolicy::STRICT).value()
+                        == Some(std::cmp::Ordering::Equal)
+                });
+            exact_witness_matches
+                && matches!(
+                    compare_reals(&image_interval.lower, root, PredicatePolicy::STRICT).value(),
+                    Some(std::cmp::Ordering::Less | std::cmp::Ordering::Equal)
+                )
+                && matches!(
+                    compare_reals(root, &image_interval.upper, PredicatePolicy::STRICT).value(),
+                    Some(std::cmp::Ordering::Less | std::cmp::Ordering::Equal)
+                )
+        })
     } else {
         None
     };
@@ -783,22 +882,24 @@ fn exact_bounded_denominator_root_in_interval(
     None
 }
 
-fn canonicalize_proven_rational_coefficients(coefficients: Vec<Real>) -> Vec<Real> {
+fn canonicalize_proven_rational_coefficients(mut coefficients: Vec<Real>) -> Vec<Real> {
+    for coefficient in &mut coefficients {
+        // A rational-class Real has no arithmetic DAG to collapse. Preserve
+        // its storage directly; Rational operations already consult the lazy
+        // canonical-coordinate cache when numeric normalization is required.
+        if coefficient.exact_rational_ref().is_some() {
+            continue;
+        }
+        if let Some(rational) = coefficient.exact_rational_normal_form() {
+            *coefficient = Real::new(rational);
+        }
+    }
     coefficients
-        .into_iter()
-        .map(|coefficient| {
-            coefficient
-                .exact_rational_normal_form()
-                .map(Real::new)
-                .unwrap_or(coefficient)
-        })
-        .collect()
 }
 
 fn canonicalize_proven_rational_tensor(polynomial: DenseTensorPolynomial) -> DenseTensorPolynomial {
-    let dimensions = polynomial.dimensions().to_vec();
-    let coefficients =
-        canonicalize_proven_rational_coefficients(polynomial.coefficients().to_vec());
+    let (dimensions, coefficients) = polynomial.into_parts();
+    let coefficients = canonicalize_proven_rational_coefficients(coefficients);
     DenseTensorPolynomial::try_new(dimensions, coefficients)
         .expect("canonicalizing tensor coefficients preserves its validated shape")
 }
@@ -991,6 +1092,51 @@ mod tests {
     }
 
     #[test]
+    fn direct_tag_difference_square_matches_tensor_arithmetic() {
+        assert!(squared_tag_difference_tensor(3, 0).is_none());
+        assert!(squared_tag_difference_tensor(3, 3).is_none());
+        for rank in 3..=6 {
+            let tag_axis = rank - 2;
+            let tag = DenseTensorPolynomial::from_axis_polynomial(
+                rank,
+                tag_axis,
+                &[Real::zero(), Real::one()],
+            )
+            .unwrap();
+            let source =
+                DenseTensorPolynomial::from_axis_polynomial(rank, 0, &[Real::zero(), Real::one()])
+                    .unwrap();
+            let difference = tag.subtract(&source).unwrap();
+            assert_eq!(
+                squared_tag_difference_tensor(rank, tag_axis).unwrap(),
+                difference.multiply(&difference).unwrap()
+            );
+        }
+    }
+
+    #[test]
+    fn flat_first_parameter_handoff_matches_public_primitive_component() {
+        let rows = vec![
+            vec![real(1), real(2), Real::zero(), real(1)],
+            vec![Real::zero(), real(1), real(1), Real::zero()],
+            vec![real(1), Real::zero(), Real::zero(), real(1)],
+        ];
+        let expected = crate::curve_resultant::primitive_bivariate_fiber_component_exact(
+            &BivariatePolynomial::new(rows.clone()),
+            CurveResultantParameter::First,
+        );
+        let flat = rows.into_iter().flatten().collect();
+        assert_eq!(
+            primitive_first_parameter_component_from_flat_rows(3, 4, flat),
+            expected
+        );
+        assert!(primitive_first_parameter_component_from_flat_rows(0, 4, Vec::new()).is_none());
+        assert!(
+            primitive_first_parameter_component_from_flat_rows(2, 2, vec![Real::one()]).is_none()
+        );
+    }
+
+    #[test]
     fn tagged_norm_projects_nonzero_selected_fiber_past_foreign_wide_components() {
         let positive = square_root(2);
         let mut negative = positive.clone();
@@ -1007,8 +1153,8 @@ mod tests {
         assert!(negative.is_valid());
 
         let relation = opposite_conjugate_cubic_fiber_relation();
-        let report =
-            project_selected_tensor_fiber_via_tagged_norm(&relation, &[positive, negative]);
+        let sources = [positive, negative];
+        let report = project_selected_tensor_fiber_via_tagged_norm(&relation, &sources);
         assert_eq!(report.status, AlgebraicFiberProjectionStatus::Constructed);
         assert!(report.coefficients.len() > 1);
         assert!(report.coefficients.iter().any(|coefficient| {
@@ -1028,6 +1174,89 @@ mod tests {
             value
                 .exact_rational_ref()
                 .is_some_and(|value| value.is_zero())
+        );
+
+        let mut repeated_sources = sources;
+        let repeated_sqrt_two = vec![
+            real(-8),
+            Real::zero(),
+            real(12),
+            Real::zero(),
+            real(-6),
+            Real::zero(),
+            Real::one(),
+        ];
+        for source in &mut repeated_sources {
+            source.polynomial_coefficients = repeated_sqrt_two.clone();
+        }
+        assert_eq!(
+            project_selected_tensor_fiber_via_tagged_norm(&relation, &repeated_sources),
+            report
+        );
+    }
+
+    #[test]
+    fn tagged_norm_reuses_a_square_free_exact_witness_carrier() {
+        let relation = DenseTensorPolynomial::try_new(
+            vec![2, 2],
+            vec![Real::zero(), Real::one(), real(-1), Real::zero()],
+        )
+        .unwrap();
+        let square_free = AlgebraicRootRepresentation {
+            constraint_index: 0,
+            symbol: SymbolId(0),
+            interval_index: 0,
+            polynomial_coefficients: vec![real(-1), Real::one()],
+            interval: IsolatedRootInterval {
+                lower: Real::one(),
+                upper: Real::one(),
+                exact_root: Some(Real::one()),
+                distinct_root_count: 1,
+            },
+            kind: AlgebraicRootKind::ExactRationalWitness,
+            validation: AlgebraicRootValidationReport {
+                status: AlgebraicRootValidationStatus::Valid,
+                message: None,
+            },
+        };
+        let mut repeated = square_free.clone();
+        repeated.polynomial_coefficients = vec![real(-1), real(3), real(-3), Real::one()];
+
+        let expected = project_selected_tensor_fiber_via_tagged_norm(
+            &relation,
+            std::slice::from_ref(&square_free),
+        );
+        assert_eq!(expected.status, AlgebraicFiberProjectionStatus::Constructed);
+        assert_eq!(
+            project_selected_tensor_fiber_via_tagged_norm(
+                &relation,
+                std::slice::from_ref(&repeated),
+            ),
+            expected
+        );
+
+        assert_eq!(
+            project_selected_tensor_fiber_via_tagged_norm(&relation, &[]).status,
+            AlgebraicFiberProjectionStatus::InvalidEvidence
+        );
+        let misshaped = DenseTensorPolynomial::try_new(vec![1, 1, 1], vec![Real::zero()]).unwrap();
+        assert_eq!(
+            project_selected_tensor_fiber_via_tagged_norm(
+                &misshaped,
+                std::slice::from_ref(&square_free),
+            )
+            .status,
+            AlgebraicFiberProjectionStatus::InvalidEvidence
+        );
+        let mut invalid = square_free;
+        invalid.validation.status = AlgebraicRootValidationStatus::InvalidPolynomial;
+        assert_eq!(
+            project_selected_tensor_fiber_via_tagged_norm(
+                &relation,
+                std::slice::from_ref(&invalid),
+            )
+            .status,
+            AlgebraicFiberProjectionStatus::InvalidEvidence
         );
     }
 
@@ -1101,6 +1330,104 @@ mod tests {
         assert_eq!(
             report.representation.unwrap().polynomial_coefficients,
             vec![real(-8), Real::zero(), Real::one()]
+        );
+    }
+
+    #[test]
+    fn tensor_image_counts_collapsed_axes_before_a_later_elimination_failure() {
+        let source = AlgebraicRootRepresentation {
+            constraint_index: 2,
+            symbol: SymbolId(2),
+            interval_index: 0,
+            polynomial_coefficients: vec![real(-2), Real::zero(), Real::zero(), Real::one()],
+            interval: IsolatedRootInterval {
+                lower: Real::one(),
+                upper: real(2),
+                exact_root: None,
+                distinct_root_count: 1,
+            },
+            kind: AlgebraicRootKind::IsolatingInterval,
+            validation: AlgebraicRootValidationReport {
+                status: AlgebraicRootValidationStatus::Valid,
+                message: None,
+            },
+        };
+        let dimensions = vec![3, 3, 2];
+        let mut coefficients = vec![Real::zero(); dimensions.iter().product()];
+        coefficients[flat_index(&dimensions, &[1, 0, 0])] = real(-1);
+        coefficients[flat_index(&dimensions, &[0, 1, 0])] = real(-1);
+        coefficients[flat_index(&dimensions, &[0, 0, 1])] = Real::one();
+        coefficients[flat_index(&dimensions, &[2, 0, 0])] = crate::test_support::terminal_zero();
+        let relation = DenseTensorPolynomial::try_new(dimensions, coefficients).unwrap();
+
+        let report = represent_algebraic_tensor_image(
+            &relation,
+            &[source.clone(), source],
+            &IsolatedRootInterval {
+                lower: real(2),
+                upper: real(3),
+                exact_root: None,
+                distinct_root_count: 1,
+            },
+        );
+        assert_eq!(report.status, AlgebraicTensorImageStatus::EliminationFailed);
+        assert_eq!(report.elimination_count, 1);
+        assert_eq!(
+            report.failed_elimination.unwrap().status,
+            TensorConstraintResultantStatus::UndecidedCoefficient
+        );
+    }
+
+    #[test]
+    fn tensor_image_reuses_square_free_constraint_for_selected_conjugates() {
+        let polynomial = vec![Real::one(), real(-3), Real::zero(), Real::one()];
+        let source = |interval_index, lower, upper| AlgebraicRootRepresentation {
+            constraint_index: 31,
+            symbol: SymbolId(31),
+            interval_index,
+            polynomial_coefficients: polynomial.clone(),
+            interval: IsolatedRootInterval {
+                lower: real(lower),
+                upper: real(upper),
+                exact_root: None,
+                distinct_root_count: 1,
+            },
+            kind: AlgebraicRootKind::IsolatingInterval,
+            validation: AlgebraicRootValidationReport {
+                status: AlgebraicRootValidationStatus::Valid,
+                message: None,
+            },
+        };
+        let sources = [source(0, -2, -1), source(1, 0, 1)];
+        assert!(
+            algebraic_root_affine_relation(&sources[0], &sources[1], PredicatePolicy::STRICT)
+                .is_none()
+        );
+        let relation = sum_relation(2, Real::zero());
+        let interval = IsolatedRootInterval {
+            lower: real(-2),
+            upper: real(-1),
+            exact_root: None,
+            distinct_root_count: 1,
+        };
+        let expected = represent_algebraic_tensor_image(&relation, &sources, &interval);
+        assert_eq!(expected.status, AlgebraicTensorImageStatus::Transformed);
+
+        let mut repeated = sources;
+        for source in &mut repeated {
+            source.polynomial_coefficients = vec![
+                Real::one(),
+                real(-6),
+                real(9),
+                real(2),
+                real(-6),
+                Real::zero(),
+                Real::one(),
+            ];
+        }
+        assert_eq!(
+            represent_algebraic_tensor_image(&relation, &repeated, &interval),
+            expected
         );
     }
 

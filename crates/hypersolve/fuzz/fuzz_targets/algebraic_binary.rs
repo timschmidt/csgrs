@@ -51,6 +51,6 @@ fuzz_target!(|data: [u8; 3]| {
     if report.status == AlgebraicRootBinaryTransformStatus::Transformed {
         let representation = report.representation.as_ref().unwrap();
         assert!(representation.is_valid());
-        assert!(representation.exact_rational_witness().is_none());
+        assert!(representation.exact_point_witness().is_none());
     }
 });

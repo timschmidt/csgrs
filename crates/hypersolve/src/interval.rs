@@ -16,7 +16,7 @@ use std::cmp::Ordering;
 use std::collections::HashMap;
 
 use hyperlimit::{PredicatePolicy, compare_reals};
-use hyperreal::{Real, RealSign};
+use hyperreal::{Rational, Real, RealSign};
 
 use crate::analysis::ProblemAnalysis;
 use crate::certification::{
@@ -25,6 +25,59 @@ use crate::certification::{
 use crate::eval::EvaluationContext;
 use crate::polynomial::QuadraticResidual;
 use crate::symbolic::SymbolId;
+
+/// Exact product hull for two ordered rational intervals.
+///
+/// Sign partitioning needs only the extremal two products except when both
+/// intervals straddle zero. Keeping this crate-private kernel shared avoids
+/// constructing and sorting four exact products in root and value enclosures.
+#[inline]
+pub(crate) fn rational_interval_product(
+    left_lower: &Rational,
+    left_upper: &Rational,
+    right_lower: &Rational,
+    right_upper: &Rational,
+) -> (Rational, Rational) {
+    if !left_lower.is_negative() {
+        if !right_lower.is_negative() {
+            return (left_lower * right_lower, left_upper * right_upper);
+        }
+        if !right_upper.is_positive() {
+            return (left_upper * right_lower, left_lower * right_upper);
+        }
+        return (left_upper * right_lower, left_upper * right_upper);
+    }
+    if !left_upper.is_positive() {
+        if !right_lower.is_negative() {
+            return (left_lower * right_upper, left_upper * right_lower);
+        }
+        if !right_upper.is_positive() {
+            return (left_upper * right_upper, left_lower * right_lower);
+        }
+        return (left_lower * right_upper, left_lower * right_lower);
+    }
+    if !right_lower.is_negative() {
+        return (left_lower * right_upper, left_upper * right_upper);
+    }
+    if !right_upper.is_positive() {
+        return (left_upper * right_lower, left_lower * right_lower);
+    }
+    let first_lower = left_lower * right_upper;
+    let second_lower = left_upper * right_lower;
+    let first_upper = left_lower * right_lower;
+    let second_upper = left_upper * right_upper;
+    let lower = if first_lower <= second_lower {
+        first_lower
+    } else {
+        second_lower
+    };
+    let upper = if first_upper >= second_upper {
+        first_upper
+    } else {
+        second_upper
+    };
+    (lower, upper)
+}
 
 /// Exact radius around one solver variable.
 #[derive(Clone, Debug, PartialEq)]
@@ -1584,18 +1637,18 @@ fn classify_quadratic_krawczyk_row(
             QuadraticKrawczykStatus::SingularOrUnsupportedDerivative,
         );
     }
-
     let step = match (-residual.clone() / derivative.clone()).ok() {
         Some(value) => value,
         None => {
-            return quadratic_krawczyk_row_with_values(
+            return classify_quadratic_krawczyk_row_policy_fallback(
                 constraint_index,
                 symbol,
                 candidate,
                 radius,
                 residual,
                 derivative,
-                QuadraticKrawczykStatus::SingularOrUnsupportedDerivative,
+                quadratic_coefficient,
+                policy,
             );
         }
     };
@@ -1605,17 +1658,18 @@ fn classify_quadratic_krawczyk_row(
     let contraction_numerator = quadratic_abs.clone() * Real::from(2) * radius.clone();
     let contraction_denominator = derivative_abs.clone();
     let remainder_radius =
-        match (contraction_numerator.clone() * radius.clone() / derivative_abs.clone()).ok() {
+        match (contraction_numerator.clone() * radius.clone() / derivative_abs).ok() {
             Some(value) => value,
             None => {
-                return quadratic_krawczyk_row_with_values(
+                return classify_quadratic_krawczyk_row_policy_fallback(
                     constraint_index,
                     symbol,
                     candidate,
                     radius,
                     residual,
                     derivative,
-                    QuadraticKrawczykStatus::SingularOrUnsupportedDerivative,
+                    quadratic_coefficient,
+                    policy,
                 );
             }
         };
@@ -1645,6 +1699,81 @@ fn classify_quadratic_krawczyk_row(
         remainder_radius: Some(remainder_radius),
         contraction_numerator: Some(contraction_numerator),
         contraction_denominator: Some(contraction_denominator),
+        status,
+    }
+}
+
+#[allow(clippy::too_many_arguments)]
+#[cold]
+fn classify_quadratic_krawczyk_row_policy_fallback(
+    constraint_index: usize,
+    symbol: SymbolId,
+    candidate: Real,
+    radius: Real,
+    residual: Real,
+    derivative: Real,
+    quadratic_coefficient: &Real,
+    policy: PredicatePolicy,
+) -> QuadraticKrawczykRow {
+    let Some(derivative_order @ (Ordering::Less | Ordering::Greater)) =
+        compare_reals(&derivative, &Real::zero(), policy).value()
+    else {
+        return quadratic_krawczyk_row_with_values(
+            constraint_index,
+            symbol,
+            candidate,
+            radius,
+            residual,
+            derivative,
+            QuadraticKrawczykStatus::SingularOrUnsupportedDerivative,
+        );
+    };
+    let Ok(derivative_reciprocal) = derivative.inverse_ref_assuming_nonzero() else {
+        return quadratic_krawczyk_row_with_values(
+            constraint_index,
+            symbol,
+            candidate,
+            radius,
+            residual,
+            derivative,
+            QuadraticKrawczykStatus::SingularOrUnsupportedDerivative,
+        );
+    };
+    let derivative_abs = match derivative_order {
+        Ordering::Less => -derivative.clone(),
+        Ordering::Greater => derivative.clone(),
+        Ordering::Equal => unreachable!("the derivative was certified nonzero"),
+    };
+    let step = -residual.clone() * &derivative_reciprocal;
+    let step_abs = abs_real(&step);
+    let contraction_numerator = abs_real(quadratic_coefficient) * Real::from(2) * radius.clone();
+    let remainder_radius =
+        contraction_numerator.clone() * radius.clone() * abs_real(&derivative_reciprocal);
+    let image_radius = step_abs + remainder_radius.clone();
+    let containment = compare_reals(&image_radius, &radius, policy).value();
+    let contraction = compare_reals(&contraction_numerator, &derivative_abs, policy).value();
+    let status = match (containment, contraction) {
+        (Some(Ordering::Less | Ordering::Equal), Some(Ordering::Less)) => {
+            QuadraticKrawczykStatus::CertifiedUniqueRoot
+        }
+        (Some(Ordering::Greater), _) => QuadraticKrawczykStatus::ImageOutsideBox,
+        (_, Some(Ordering::Equal | Ordering::Greater)) => {
+            QuadraticKrawczykStatus::NonContractiveDerivative
+        }
+        _ => QuadraticKrawczykStatus::Undecided,
+    };
+
+    QuadraticKrawczykRow {
+        constraint_index,
+        symbol,
+        candidate,
+        radius,
+        residual,
+        derivative,
+        step: Some(step),
+        remainder_radius: Some(remainder_radius),
+        contraction_numerator: Some(contraction_numerator),
+        contraction_denominator: Some(derivative_abs),
         status,
     }
 }
@@ -1771,10 +1900,24 @@ fn solve_exact_linear_system_raw(
         }
 
         let pivot_value = matrix[pivot][pivot].clone();
-        for value in matrix[pivot].iter_mut().skip(pivot) {
-            *value = (value.clone() / pivot_value.clone()).map_err(|_| pivot)?;
+        match matrix[pivot][pivot].clone() / pivot_value.clone() {
+            Ok(normalized_pivot) => {
+                matrix[pivot][pivot] = normalized_pivot;
+                for value in matrix[pivot].iter_mut().skip(pivot + 1) {
+                    *value = (value.clone() / pivot_value.clone()).map_err(|_| pivot)?;
+                }
+                rhs[pivot] = (rhs[pivot].clone() / pivot_value).map_err(|_| pivot)?;
+            }
+            Err(_) => {
+                let pivot_reciprocal = pivot_value
+                    .inverse_ref_assuming_nonzero()
+                    .map_err(|_| pivot)?;
+                for value in matrix[pivot].iter_mut().skip(pivot) {
+                    *value = value.clone() * &pivot_reciprocal;
+                }
+                rhs[pivot] = rhs[pivot].clone() * pivot_reciprocal;
+            }
         }
-        rhs[pivot] = (rhs[pivot].clone() / pivot_value).map_err(|_| pivot)?;
         let pivot_tail = matrix[pivot][pivot..].to_vec();
         let pivot_rhs = rhs[pivot].clone();
 
@@ -1830,5 +1973,75 @@ fn abs_real(value: &Real) -> Real {
         Some(RealSign::Negative) => -value.clone(),
         Some(RealSign::Zero | RealSign::Positive) => value.clone(),
         None => value.abs(),
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn krawczyk_divisions_reuse_policy_certified_nonzero_evidence() {
+        let derivative = crate::test_support::exact_normal_positive();
+        let half = (Real::from(1) / Real::from(2)).unwrap();
+        assert_eq!(
+            derivative.inverse_ref(),
+            Err(hyperreal::Problem::UnknownZero)
+        );
+        let half_scaled_derivative = derivative.clone() * &half;
+        assert_eq!(
+            &half_scaled_derivative / &derivative,
+            Err(hyperreal::Problem::UnknownZero)
+        );
+
+        let row = classify_quadratic_krawczyk_row(
+            0,
+            SymbolId(0),
+            Real::zero(),
+            Real::one(),
+            -(derivative.clone() * &half),
+            derivative.clone(),
+            &Real::zero(),
+            PredicatePolicy::STRICT,
+        );
+        assert_eq!(row.status, QuadraticKrawczykStatus::CertifiedUniqueRoot);
+        assert_eq!(
+            row.step.as_ref().and_then(Real::exact_rational_normal_form),
+            half.exact_rational()
+        );
+
+        let mut matrix = vec![vec![derivative.clone()]];
+        let mut rhs = vec![half_scaled_derivative];
+        let solution =
+            solve_exact_linear_system_raw(&mut matrix, &mut rhs, PredicatePolicy::STRICT)
+                .expect("the policy-certified pivot should normalize exactly");
+        assert_eq!(
+            solution[0].exact_rational_normal_form(),
+            half.exact_rational()
+        );
+
+        let unresolved = crate::test_support::terminal_zero();
+        let unresolved_row = classify_quadratic_krawczyk_row(
+            0,
+            SymbolId(0),
+            Real::zero(),
+            Real::one(),
+            unresolved.clone(),
+            unresolved.clone(),
+            &Real::zero(),
+            PredicatePolicy::STRICT,
+        );
+        assert_eq!(
+            unresolved_row.status,
+            QuadraticKrawczykStatus::SingularOrUnsupportedDerivative
+        );
+        assert_eq!(
+            solve_exact_linear_system_raw(
+                &mut [vec![unresolved]],
+                &mut [Real::one()],
+                PredicatePolicy::STRICT,
+            ),
+            Err(0)
+        );
     }
 }

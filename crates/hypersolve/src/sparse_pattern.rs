@@ -1,15 +1,16 @@
 //! Exact sparse linear-system pattern audits.
 //!
-//! This module does not solve a sparse system. It preserves the sparse caller
-//! shape and reports the symbolic elimination pattern that a future sparse
-//! fraction-free backend would have to honor. The symbolic fill rule follows
-//! sparse Gaussian-elimination graph ideas from fill-reducing sparse elimination, while keeping Bareiss-style exact solving and the exact
-//! proof boundary separate: structural scheduling is evidence, not a numeric
-//! certificate. See fraction-free elimination, and the exact-geometric-computation model.
+//! This module preserves sparse caller shape and reports the symbolic
+//! elimination pattern consumed by Hypersolve's pattern-preserving Bareiss
+//! backend. The fill rule follows sparse Gaussian-elimination graph ideas from
+//! fill-reducing sparse elimination while keeping scheduling and exact numeric
+//! proof separate: a structural schedule is evidence, not a solution
+//! certificate. See fraction-free elimination and the exact-geometric-
+//! computation model.
 
 use std::collections::{BTreeMap, BTreeSet};
 
-use hyperreal::{CertifiedRealSign, Real, RealSign};
+use hyperreal::{Real, RealSign};
 
 use crate::residual_replay::SparseResidualTerm;
 
@@ -109,8 +110,9 @@ impl SymbolicSparseFactorizationReport {
 ///
 /// Terms encode `A[row, column] += coefficient`, with duplicate terms
 /// accumulated exactly before structural classification. Certified zero
-/// entries are removed from the active pattern; unknown signs are retained
-/// conservatively because dropping them would be an approximate decision. The
+/// entries are removed from the active pattern; values that exhaust the
+/// caller's scalar-refinement bound receive one strict exact-predicate pass,
+/// while signs still unknown afterward remain conservatively active. The
 /// fill simulation uses the standard sparse-elimination pattern rule: when a
 /// row is eliminated by a pivot row, the row's trailing structure is unioned
 /// with the pivot row's trailing structure. This uses sparse triangular
@@ -238,13 +240,10 @@ pub fn analyze_sparse_bareiss_elimination_pattern(
 }
 
 fn classify_entry(value: &Real, min_precision: i32) -> SparsePatternEntryStatus {
-    match value.certified_sign_until(min_precision) {
-        CertifiedRealSign::Known {
-            sign: RealSign::Zero,
-            ..
-        } => SparsePatternEntryStatus::CertifiedZero,
-        CertifiedRealSign::Known { .. } => SparsePatternEntryStatus::CertifiedNonzero,
-        CertifiedRealSign::Unknown { .. } => SparsePatternEntryStatus::UnknownSign,
+    match crate::policy_division::strict_sign_after_refinement(value, min_precision) {
+        Some(RealSign::Zero) => SparsePatternEntryStatus::CertifiedZero,
+        Some(RealSign::Negative | RealSign::Positive) => SparsePatternEntryStatus::CertifiedNonzero,
+        None => SparsePatternEntryStatus::UnknownSign,
     }
 }
 
@@ -270,6 +269,7 @@ fn swap_active_rows(active: &mut BTreeSet<(usize, usize)>, left: usize, right: u
 
 #[cfg(test)]
 mod tests {
+    use hyperreal::CertifiedRealSign;
     use proptest::prelude::*;
 
     use super::*;
@@ -350,6 +350,49 @@ mod tests {
             )
             .unwrap_err(),
             SparsePatternError::TermOutOfBounds { row: 1, column: 0 }
+        );
+    }
+
+    #[test]
+    fn sparse_pattern_uses_strict_exact_fallback_without_guessing() {
+        let positive = crate::test_support::exact_normal_positive();
+        assert!(matches!(
+            positive.certified_sign_until(-64),
+            CertifiedRealSign::Unknown { .. }
+        ));
+        let report = analyze_sparse_bareiss_elimination_pattern(
+            1,
+            1,
+            &[SparseResidualTerm {
+                row: 0,
+                column: 0,
+                coefficient: positive,
+            }],
+            -64,
+        )
+        .unwrap();
+        assert!(report.fully_certified_pattern());
+        assert_eq!(
+            report.entries[0].status,
+            SparsePatternEntryStatus::CertifiedNonzero
+        );
+
+        let unsupported_zero = crate::test_support::terminal_zero();
+        let report = analyze_sparse_bareiss_elimination_pattern(
+            1,
+            1,
+            &[SparseResidualTerm {
+                row: 0,
+                column: 0,
+                coefficient: unsupported_zero,
+            }],
+            -64,
+        )
+        .unwrap();
+        assert!(!report.fully_certified_pattern());
+        assert_eq!(
+            report.entries[0].status,
+            SparsePatternEntryStatus::UnknownSign
         );
     }
 

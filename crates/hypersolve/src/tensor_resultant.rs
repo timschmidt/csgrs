@@ -18,7 +18,7 @@ use hyperreal::{CertifiedRealSign, Real, RealSign};
 
 use crate::resultant::quotient_ring_fiber_resultant_polynomial;
 use crate::resultant::{UnivariateResultantError, resultant_univariate_polynomials};
-use crate::root_isolation::polynomial_remainder_modulo_certified_divisor;
+use crate::root_isolation::CertifiedPolynomialDivisor;
 
 /// Dense ascending-power polynomial tensor with row-major coefficients.
 ///
@@ -54,6 +54,12 @@ impl DenseTensorPolynomial {
     /// Returns the flat row-major coefficient storage.
     pub fn coefficients(&self) -> &[Real] {
         &self.coefficients
+    }
+
+    /// Moves the validated shape and coefficient storage into an internal
+    /// consumer without cloning either dense vector.
+    pub(crate) fn into_parts(self) -> (Vec<usize>, Vec<Real>) {
+        (self.dimensions, self.coefficients)
     }
 
     /// Returns one coefficient by ascending-power exponent tuple.
@@ -306,10 +312,12 @@ impl DenseTensorPolynomial {
     /// Removes an axis whose every positive-power coefficient is certified
     /// zero.
     ///
-    /// `None` means either that the axis is invalid or that exact coefficient
-    /// certification did not prove independence. No uncertain coefficient is
-    /// discarded. This is useful when quotient or affine substitution has
-    /// made a selected source irrelevant to the remaining relation.
+    /// The caller's refinement bound is the fast path; unresolved coefficients
+    /// continue through the strict exact predicate cascade. `None` means either
+    /// that the axis is invalid or that exact certification did not prove
+    /// independence. No uncertain coefficient is discarded. This is useful
+    /// when quotient or affine substitution has made a selected source
+    /// irrelevant to the remaining relation.
     pub fn remove_certified_independent_axis(
         &self,
         axis: usize,
@@ -322,14 +330,20 @@ impl DenseTensorPolynomial {
             if exponents(&self.dimensions, index)[axis] == 0 {
                 continue;
             }
-            if !matches!(
-                coefficient.certified_sign_until(min_precision),
+            match coefficient.certified_sign_until(min_precision) {
                 CertifiedRealSign::Known {
                     sign: RealSign::Zero,
                     ..
+                } => {}
+                CertifiedRealSign::Known { .. } => return None,
+                CertifiedRealSign::Unknown { .. } => {
+                    if !matches!(
+                        crate::policy_division::strict_sign_after_refinement_failure(coefficient),
+                        Some(RealSign::Zero)
+                    ) {
+                        return None;
+                    }
                 }
-            ) {
-                return None;
             }
         }
         let mut dimensions = self.dimensions.clone();
@@ -362,45 +376,44 @@ impl DenseTensorPolynomial {
         if axis >= self.dimensions.len() || modulus.len() <= 1 {
             return None;
         }
+        let divisor = CertifiedPolynomialDivisor::new(modulus, policy)?;
         let target_axis_dimension = modulus.len() - 1;
+        let source_axis_dimension = self.dimensions[axis];
+        if source_axis_dimension == target_axis_dimension
+            && source_axis_dimension <= divisor.degree()
+        {
+            return Some(self.clone());
+        }
         let mut dimensions = self.dimensions.clone();
         dimensions[axis] = target_axis_dimension;
         let mut reduced = Self::zero(dimensions.clone())?;
-        let retained_dimensions = self
-            .dimensions
-            .iter()
-            .enumerate()
-            .filter_map(|(source_axis, dimension)| (source_axis != axis).then_some(*dimension))
-            .collect::<Vec<_>>();
-        let fiber_count = checked_coefficient_count(&retained_dimensions)?;
+        let axis_stride = checked_coefficient_count(&self.dimensions[axis + 1..])?;
+        let fiber_count = self.coefficients.len() / source_axis_dimension;
+        let mut fiber = Vec::new();
+        fiber.try_reserve_exact(source_axis_dimension).ok()?;
         for fiber_index in 0..fiber_count {
-            let retained_exponents = exponents(&retained_dimensions, fiber_index);
-            let mut source_exponents = vec![0; self.dimensions.len()];
-            let mut retained = 0;
-            for (source_axis, exponent) in source_exponents.iter_mut().enumerate() {
-                if source_axis == axis {
-                    continue;
-                }
-                *exponent = retained_exponents[retained];
-                retained += 1;
+            let outer = fiber_index / axis_stride;
+            let inner = fiber_index % axis_stride;
+            let source_base = outer * source_axis_dimension * axis_stride + inner;
+            let stored_nonzero = (0..source_axis_dimension).any(|power| {
+                !self.coefficients[source_base + power * axis_stride]
+                    .exact_rational_ref()
+                    .is_some_and(|coefficient| coefficient.is_zero())
+            });
+            if !stored_nonzero {
+                continue;
             }
-            let mut fiber = Vec::new();
-            fiber.try_reserve_exact(self.dimensions[axis]).ok()?;
-            for power in 0..self.dimensions[axis] {
-                source_exponents[axis] = power;
-                fiber.push(
-                    self.coefficient(&source_exponents)
-                        .cloned()
-                        .unwrap_or_else(Real::zero),
-                );
-            }
-            let remainder = polynomial_remainder_modulo_certified_divisor(fiber, modulus, policy)?;
-            for (power, coefficient) in remainder.into_iter().enumerate() {
+            fiber.extend(
+                (0..source_axis_dimension)
+                    .map(|power| self.coefficients[source_base + power * axis_stride].clone()),
+            );
+            divisor.remainder_in_place(&mut fiber);
+            let target_base = outer * target_axis_dimension * axis_stride + inner;
+            for (power, coefficient) in fiber.drain(..).enumerate() {
                 if power >= target_axis_dimension {
                     return None;
                 }
-                source_exponents[axis] = power;
-                let target = flat_index(&dimensions, &source_exponents);
+                let target = target_base + power * axis_stride;
                 reduced.coefficients[target] = coefficient;
             }
         }
@@ -439,7 +452,8 @@ pub enum TensorConstraintResultantStatus {
     Constructed,
     /// The input tensor shape was invalid for axis elimination.
     InvalidAxis,
-    /// A coefficient sign needed for exact degree certification was undecided.
+    /// A coefficient remained unknown after bounded refinement and the strict
+    /// exact predicate cascade.
     UndecidedCoefficient,
     /// The supplied univariate constraint was empty or constant.
     InvalidConstraint,
@@ -648,7 +662,10 @@ pub fn resultant_tensor_polynomial_univariate_constraint(
     // the selected source degree, not the retained fiber degree.
     if retained_axes.len() == 1 {
         let retained_axis = retained_axes[0];
-        let retained_count = polynomial.dimensions[retained_axis];
+        // Degree certification has already proved every higher stored
+        // retained-axis coefficient zero. Reuse that evidence instead of
+        // materializing nominal padding into the quotient-ring determinant.
+        let retained_count = degrees[retained_axis] + 1;
         let mut fiber_coefficients = Vec::new();
         if fiber_coefficients
             .try_reserve_exact(retained_count)
@@ -839,12 +856,14 @@ fn normalized_constraint(constraint: &[Real], min_precision: i32) -> Result<Opti
     let leading = constraint
         .last()
         .expect("a nonconstant constraint retains its leading coefficient");
-    constraint
-        .iter()
-        .map(|coefficient| (coefficient / leading).ok())
-        .collect::<Option<Vec<_>>>()
-        .map(Some)
-        .ok_or(())
+    let reciprocal =
+        crate::policy_division::reciprocal_after_certified_nonzero(leading).map_err(|_| ())?;
+    Ok(Some(
+        constraint
+            .iter()
+            .map(|coefficient| coefficient * &reciprocal)
+            .collect(),
+    ))
 }
 
 fn checked_coefficient_count(dimensions: &[usize]) -> Option<usize> {
@@ -864,14 +883,56 @@ fn tensor_axis_coefficient(
     let mut dimensions = polynomial.dimensions.clone();
     dimensions.remove(axis);
     let count = checked_coefficient_count(&dimensions)?;
-    let mut coefficients = Vec::new();
-    coefficients.try_reserve_exact(count).ok()?;
-    for index in 0..count {
-        let mut source = exponents(&dimensions, index);
-        source.insert(axis, power);
-        coefficients.push(polynomial.coefficient(&source)?.clone());
+    let mut source = vec![0; polynomial.dimensions.len()];
+    source[axis] = power;
+    let mut structural_degrees = None;
+    for _ in 0..count {
+        let coefficient = polynomial.coefficient(&source)?;
+        if !coefficient
+            .exact_rational_ref()
+            .is_some_and(|value| value.is_zero())
+        {
+            let degrees = structural_degrees.get_or_insert_with(|| vec![0; dimensions.len()]);
+            for (retained_axis, degree) in degrees.iter_mut().enumerate() {
+                let source_axis = retained_axis + usize::from(retained_axis >= axis);
+                *degree = (*degree).max(source[source_axis]);
+            }
+        }
+        advance_retained_tensor_exponents(&mut source, &dimensions, axis);
     }
-    DenseTensorPolynomial::try_new(dimensions, coefficients)
+    let Some(structural_degrees) = structural_degrees else {
+        return DenseTensorPolynomial::try_new(vec![1; dimensions.len()], vec![Real::zero()]);
+    };
+    let compact_dimensions = structural_degrees
+        .into_iter()
+        .map(|degree| degree + 1)
+        .collect::<Vec<_>>();
+    let compact_count = checked_coefficient_count(&compact_dimensions)?;
+    let mut coefficients = Vec::new();
+    coefficients.try_reserve_exact(compact_count).ok()?;
+    source.fill(0);
+    source[axis] = power;
+    for _ in 0..compact_count {
+        coefficients.push(polynomial.coefficient(&source)?.clone());
+        advance_retained_tensor_exponents(&mut source, &compact_dimensions, axis);
+    }
+    DenseTensorPolynomial::try_new(compact_dimensions, coefficients)
+}
+
+#[inline]
+fn advance_retained_tensor_exponents(
+    source: &mut [usize],
+    retained_dimensions: &[usize],
+    removed_axis: usize,
+) {
+    for retained_axis in (0..retained_dimensions.len()).rev() {
+        let source_axis = retained_axis + usize::from(retained_axis >= removed_axis);
+        source[source_axis] += 1;
+        if source[source_axis] < retained_dimensions[retained_axis] {
+            break;
+        }
+        source[source_axis] = 0;
+    }
 }
 
 fn flat_index(dimensions: &[usize], exponents: &[usize]) -> usize {
@@ -892,6 +953,7 @@ fn exponents(dimensions: &[usize], mut index: usize) -> Vec<usize> {
     exponents
 }
 
+#[inline]
 fn certified_tensor_degrees(
     polynomial: &DenseTensorPolynomial,
     min_precision: i32,
@@ -910,7 +972,20 @@ fn certified_tensor_degrees(
                     *degree = (*degree).max(exponent);
                 }
             }
-            CertifiedRealSign::Unknown { .. } => return Err(()),
+            CertifiedRealSign::Unknown { .. } => {
+                match crate::policy_division::strict_sign_after_refinement_failure(coefficient) {
+                    Some(RealSign::Zero) => {}
+                    Some(RealSign::Negative | RealSign::Positive) => {
+                        let source = exponents(&polynomial.dimensions, index);
+                        let degrees =
+                            degrees.get_or_insert_with(|| vec![0; polynomial.dimensions.len()]);
+                        for (degree, exponent) in degrees.iter_mut().zip(source) {
+                            *degree = (*degree).max(exponent);
+                        }
+                    }
+                    None => return Err(()),
+                }
+            }
         }
     }
     Ok(degrees)
@@ -937,6 +1012,16 @@ fn evaluate_retained_tensor_fiber(
         .collect::<Vec<_>>();
     let mut fiber = vec![Real::zero(); polynomial.dimensions[eliminated_axis]];
     for (index, coefficient) in polynomial.coefficients.iter().enumerate() {
+        // Nominal dense shapes commonly carry explicit rational padding.
+        // Degree certification has already handled semantic zero decisions;
+        // this is only a no-refinement arithmetic fast path, so every opaque
+        // or otherwise unknown exact coefficient still participates.
+        if coefficient
+            .exact_rational_ref()
+            .is_some_and(|value| value.is_zero())
+        {
+            continue;
+        }
         let source = exponents(&polynomial.dimensions, index);
         let mut value = coefficient.clone();
         for ((axis, powers), _) in retained_axes.iter().zip(&powers).zip(retained_values) {
@@ -1016,6 +1101,7 @@ fn multiply_by_linear_factor(polynomial: Vec<Real>, constant: Real) -> Vec<Real>
     result
 }
 
+#[inline]
 fn trim_trailing_zeroes(coefficients: Vec<Real>, min_precision: i32) -> Result<Vec<Real>, ()> {
     for (index, coefficient) in coefficients.iter().enumerate().rev() {
         match coefficient.certified_sign_until(min_precision) {
@@ -1024,7 +1110,27 @@ fn trim_trailing_zeroes(coefficients: Vec<Real>, min_precision: i32) -> Result<V
                 ..
             } => {}
             CertifiedRealSign::Known { .. } => return Ok(coefficients[..=index].to_vec()),
-            CertifiedRealSign::Unknown { .. } => return Err(()),
+            CertifiedRealSign::Unknown { .. } => {
+                return trim_trailing_zeroes_strict_fallback(&coefficients, index, min_precision);
+            }
+        }
+    }
+    Ok(vec![Real::zero()])
+}
+
+#[cold]
+fn trim_trailing_zeroes_strict_fallback(
+    coefficients: &[Real],
+    start: usize,
+    min_precision: i32,
+) -> Result<Vec<Real>, ()> {
+    for (index, coefficient) in coefficients[..=start].iter().enumerate().rev() {
+        match crate::policy_division::strict_sign_after_refinement(coefficient, min_precision) {
+            Some(RealSign::Zero) => {}
+            Some(RealSign::Negative | RealSign::Positive) => {
+                return Ok(coefficients[..=index].to_vec());
+            }
+            None => return Err(()),
         }
     }
     Ok(vec![Real::zero()])
@@ -1314,6 +1420,279 @@ mod tests {
     }
 
     #[test]
+    fn tensor_resultant_helpers_complete_strict_exact_boundaries() {
+        let positive = crate::test_support::exact_normal_positive();
+        let normalized_zero = real(2).powi_i64(-3000).unwrap() - positive.clone();
+        assert!(matches!(
+            positive.certified_sign_until(-64),
+            CertifiedRealSign::Unknown { .. }
+        ));
+        assert!(matches!(
+            normalized_zero.certified_sign_until(-64),
+            CertifiedRealSign::Unknown { .. }
+        ));
+
+        let polynomial = DenseTensorPolynomial::try_new(
+            vec![2, 2],
+            vec![
+                normalized_zero.clone(),
+                Real::zero(),
+                Real::zero(),
+                positive.clone(),
+            ],
+        )
+        .unwrap();
+        assert_eq!(
+            certified_tensor_degrees(&polynomial, -64),
+            Ok(Some(vec![1, 1]))
+        );
+        assert_eq!(
+            trim_trailing_zeroes(
+                vec![real(1), positive.clone(), normalized_zero.clone()],
+                -64,
+            )
+            .unwrap()
+            .len(),
+            2
+        );
+        let canonical = match canonical_tensor(
+            vec![3],
+            vec![real(1), positive.clone(), normalized_zero.clone()],
+            -64,
+        ) {
+            Ok(canonical) => canonical,
+            Err(_) => panic!("strict degree certification should canonicalize the tensor"),
+        };
+        assert_eq!(canonical.dimensions(), &[2]);
+
+        let independent =
+            DenseTensorPolynomial::try_new(vec![2, 1], vec![real(1), normalized_zero]).unwrap();
+        assert_eq!(
+            independent
+                .remove_certified_independent_axis(0, -64)
+                .unwrap()
+                .coefficients(),
+            &[real(1)]
+        );
+
+        let terminal = crate::test_support::terminal_zero();
+        let unsupported =
+            DenseTensorPolynomial::try_new(vec![2, 1], vec![real(1), terminal.clone()]).unwrap();
+        assert_eq!(certified_tensor_degrees(&unsupported, -64), Err(()));
+        assert!(
+            unsupported
+                .remove_certified_independent_axis(0, -64)
+                .is_none()
+        );
+        assert_eq!(trim_trailing_zeroes(vec![real(1), terminal], -64), Err(()));
+    }
+
+    #[test]
+    fn constrained_tensor_resultant_uses_strict_constraint_normalization() {
+        let positive = crate::test_support::exact_normal_positive();
+        let normalized_zero = real(2).powi_i64(-3000).unwrap() - positive.clone();
+        let polynomial =
+            DenseTensorPolynomial::try_new(vec![2, 2], vec![real(0), real(1), real(1), real(0)])
+                .unwrap();
+        let report = resultant_tensor_polynomial_univariate_constraint(
+            &polynomial,
+            &[
+                real(-2) * &positive,
+                Real::zero(),
+                positive,
+                normalized_zero,
+            ],
+            1,
+            -64,
+        );
+        assert_eq!(report.status, TensorConstraintResultantStatus::Constructed);
+        assert_eq!(report.degree_bounds, vec![2]);
+        assert!(
+            report
+                .resultant
+                .unwrap()
+                .coefficients()
+                .iter()
+                .zip([real(-2), Real::zero(), Real::one()])
+                .all(|(actual, expected)| {
+                    crate::policy_division::strict_sign_after_refinement(&(actual - expected), -64)
+                        == Some(RealSign::Zero)
+                })
+        );
+
+        let terminal = resultant_tensor_polynomial_univariate_constraint(
+            &polynomial,
+            &[
+                real(-2),
+                Real::zero(),
+                Real::one(),
+                crate::test_support::terminal_zero(),
+            ],
+            1,
+            -64,
+        );
+        assert_eq!(
+            terminal.status,
+            TensorConstraintResultantStatus::UndecidedCoefficient
+        );
+    }
+
+    #[test]
+    fn direct_tensor_norm_trims_strictly_exact_zero_output_degree() {
+        let alpha = real(2).sqrt().unwrap() + real(3).sqrt().unwrap();
+        let beta = real(5) + real(2) * real(6).sqrt().unwrap();
+        let radical_zero = &alpha * &alpha - beta.clone();
+        assert_eq!(
+            radical_zero.zero_status(),
+            hyperreal::ZeroKnowledge::Unknown
+        );
+        assert_eq!(
+            crate::policy_division::strict_sign_after_refinement_failure(&radical_zero),
+            Some(RealSign::Zero)
+        );
+
+        let project = |trailing: Real| {
+            // f(x, y) = 1 + y * (x^2 - beta + trailing), constrained by
+            // x = alpha.
+            let polynomial = DenseTensorPolynomial::try_new(
+                vec![3, 2],
+                vec![
+                    Real::one(),
+                    -beta.clone() + trailing,
+                    Real::zero(),
+                    Real::zero(),
+                    Real::zero(),
+                    Real::one(),
+                ],
+            )
+            .unwrap();
+            resultant_tensor_polynomial_univariate_constraint(
+                &polynomial,
+                &[-alpha.clone(), Real::one()],
+                0,
+                -64,
+            )
+        };
+
+        let report = project(Real::zero());
+        assert_eq!(report.status, TensorConstraintResultantStatus::Constructed);
+        assert_eq!(report.degree_bounds, vec![0]);
+        let resultant = report.resultant.unwrap();
+        assert_eq!(resultant.dimensions(), &[1]);
+        assert_eq!(resultant.coefficients(), &[Real::one()]);
+
+        let nonzero = project(Real::one());
+        assert_eq!(nonzero.degree_bounds, vec![1]);
+        let nonzero = nonzero.resultant.unwrap();
+        assert_eq!(nonzero.dimensions(), &[2]);
+        assert_eq!(
+            crate::policy_division::strict_sign_after_refinement_failure(
+                &nonzero.coefficients()[1]
+            ),
+            Some(RealSign::Positive)
+        );
+
+        let unsupported = project(crate::test_support::terminal_zero());
+        assert_eq!(unsupported.degree_bounds, vec![1]);
+        let unsupported = unsupported.resultant.unwrap();
+        assert_eq!(unsupported.dimensions(), &[2]);
+        assert_eq!(
+            crate::policy_division::strict_sign_after_refinement_failure(
+                &unsupported.coefficients()[1]
+            ),
+            None
+        );
+    }
+
+    #[test]
+    fn direct_tensor_norm_preserves_a_certified_degree_below_padded_storage() {
+        let compact = DenseTensorPolynomial::try_new(
+            vec![2, 2],
+            vec![Real::one(), Real::zero(), Real::zero(), Real::one()],
+        )
+        .unwrap();
+        let mut padded_coefficients = vec![Real::zero(); 2 * 64];
+        padded_coefficients[0] = Real::one();
+        padded_coefficients[64 + 1] = Real::one();
+        padded_coefficients[64 + 63] =
+            real(2).powi_i64(-3000).unwrap() - crate::test_support::exact_normal_positive();
+        let padded = DenseTensorPolynomial::try_new(vec![2, 64], padded_coefficients).unwrap();
+        let constraint = [real(-2), Real::one()];
+
+        let compact =
+            resultant_tensor_polynomial_univariate_constraint(&compact, &constraint, 0, -64);
+        let padded =
+            resultant_tensor_polynomial_univariate_constraint(&padded, &constraint, 0, -64);
+        assert_eq!(padded.status, TensorConstraintResultantStatus::Constructed);
+        assert_eq!(padded.degree_bounds, vec![1]);
+        assert_eq!(padded.resultant, compact.resultant);
+    }
+
+    #[test]
+    fn sampled_tensor_resultant_skips_only_structural_padding() {
+        let compact = DenseTensorPolynomial::try_new(
+            vec![2, 2, 2],
+            vec![
+                Real::zero(),
+                Real::one(),
+                Real::one(),
+                Real::zero(),
+                Real::one(),
+                Real::zero(),
+                Real::zero(),
+                Real::zero(),
+            ],
+        )
+        .unwrap();
+        let mut padded_coefficients = vec![Real::zero(); 2 * 8 * 8];
+        padded_coefficients[1] = Real::one();
+        padded_coefficients[8] = Real::one();
+        padded_coefficients[8 * 8] = Real::one();
+        padded_coefficients[8 * 8 + 7 * 8 + 7] =
+            real(2).powi_i64(-3000).unwrap() - crate::test_support::exact_normal_positive();
+        let padded = DenseTensorPolynomial::try_new(vec![2, 8, 8], padded_coefficients).unwrap();
+        let constraint = [real(-2), Real::one()];
+
+        let compact =
+            resultant_tensor_polynomial_univariate_constraint(&compact, &constraint, 0, -64);
+        let padded =
+            resultant_tensor_polynomial_univariate_constraint(&padded, &constraint, 0, -64);
+        assert_eq!(padded.status, TensorConstraintResultantStatus::Constructed);
+        assert_eq!(padded.degree_bounds, vec![1, 1]);
+        assert_eq!(padded.resultant, compact.resultant);
+    }
+
+    #[test]
+    fn quadratic_closed_form_compacts_only_structural_padding() {
+        let mut padded_coefficients = vec![Real::zero(); 2 * 64];
+        padded_coefficients[0] = Real::one();
+        padded_coefficients[64 + 1] = Real::one();
+        let padded = DenseTensorPolynomial::try_new(vec![2, 64], padded_coefficients).unwrap();
+        let constraint = [real(-2), Real::zero(), Real::one()];
+        let report =
+            resultant_tensor_polynomial_univariate_constraint(&padded, &constraint, 0, -64);
+        assert_eq!(report.status, TensorConstraintResultantStatus::Constructed);
+        assert_eq!(report.degree_bounds, vec![126]);
+        let resultant = report.resultant.unwrap();
+        assert_eq!(resultant.dimensions(), &[3]);
+        assert_eq!(resultant.coefficients(), &[real(1), Real::zero(), real(-2)]);
+
+        let mut unsupported_coefficients = vec![Real::zero(); 2 * 8];
+        unsupported_coefficients[0] = Real::one();
+        unsupported_coefficients[7] = crate::test_support::terminal_zero();
+        unsupported_coefficients[8 + 1] = Real::one();
+        let unsupported =
+            DenseTensorPolynomial::try_new(vec![2, 8], unsupported_coefficients).unwrap();
+        let unsupported =
+            resultant_tensor_polynomial_univariate_constraint(&unsupported, &constraint, 0, -64);
+        assert_eq!(
+            unsupported.status,
+            TensorConstraintResultantStatus::Constructed
+        );
+        assert_eq!(unsupported.resultant.unwrap().dimensions(), &[15]);
+    }
+
+    #[test]
     fn dense_tensor_arithmetic_preserves_rank_and_power_axes() {
         let first = DenseTensorPolynomial::from_axis_polynomial(5, 1, &[real(2), real(3)]).unwrap();
         let second =
@@ -1348,6 +1727,102 @@ mod tests {
         assert_eq!(reduced.coefficient(&[1, 0, 0]), Some(&real(2)));
         assert_eq!(reduced.coefficient(&[0, 0, 0]), Some(&real(5)));
         assert_eq!(reduced.coefficient(&[0, 1, 0]), Some(&real(7)));
+    }
+
+    #[test]
+    fn dense_tensor_axis_reduction_preserves_nominal_shape_and_opaque_fibers() {
+        let already_reduced =
+            DenseTensorPolynomial::try_new(vec![2, 1], vec![real(5), real(7)]).unwrap();
+        let nominally_padded = already_reduced
+            .reduce_axis_modulo(
+                0,
+                &[real(-2), Real::zero(), Real::one(), Real::zero()],
+                PredicatePolicy::STRICT,
+            )
+            .unwrap();
+        assert_eq!(nominally_padded.dimensions(), &[3, 1]);
+        assert_eq!(
+            nominally_padded.coefficients(),
+            &[real(5), real(7), Real::zero()]
+        );
+
+        let unsupported_zero = crate::test_support::terminal_zero();
+        let mut coefficients = vec![Real::zero(); 4 * 3];
+        coefficients[3 * 3 + 1] = Real::one();
+        coefficients[3 * 3 + 2] = unsupported_zero;
+        let polynomial = DenseTensorPolynomial::try_new(vec![4, 3], coefficients).unwrap();
+        let reduced = polynomial
+            .reduce_axis_modulo(
+                0,
+                &[real(-2), Real::zero(), Real::one()],
+                PredicatePolicy::STRICT,
+            )
+            .unwrap();
+        assert_eq!(reduced.dimensions(), &[2, 3]);
+        assert_eq!(reduced.coefficient(&[1, 1]), Some(&real(2)));
+        let opaque = reduced.coefficient(&[1, 2]).unwrap();
+        assert!(opaque.exact_rational_ref().is_none());
+        assert!(!opaque.definitely_zero());
+    }
+
+    #[test]
+    fn dense_tensor_axis_reduction_matches_coordinate_reference_on_every_axis() {
+        fn reference(polynomial: &DenseTensorPolynomial, axis: usize) -> DenseTensorPolynomial {
+            let modulus = [real(-2), Real::zero(), Real::one()];
+            let divisor = crate::root_isolation::CertifiedPolynomialDivisor::new(
+                &modulus,
+                PredicatePolicy::STRICT,
+            )
+            .unwrap();
+            let mut dimensions = polynomial.dimensions.clone();
+            dimensions[axis] = 2;
+            let mut reduced = DenseTensorPolynomial::zero(dimensions.clone()).unwrap();
+            let retained_dimensions = polynomial
+                .dimensions
+                .iter()
+                .enumerate()
+                .filter_map(|(source_axis, dimension)| (source_axis != axis).then_some(*dimension))
+                .collect::<Vec<_>>();
+            for fiber_index in 0..checked_coefficient_count(&retained_dimensions).unwrap() {
+                let retained_exponents = exponents(&retained_dimensions, fiber_index);
+                let mut source = vec![0; polynomial.dimensions.len()];
+                let mut retained_axis = 0;
+                for (source_axis, exponent) in source.iter_mut().enumerate() {
+                    if source_axis != axis {
+                        *exponent = retained_exponents[retained_axis];
+                        retained_axis += 1;
+                    }
+                }
+                let mut fiber = (0..polynomial.dimensions[axis])
+                    .map(|power| {
+                        source[axis] = power;
+                        polynomial.coefficient(&source).unwrap().clone()
+                    })
+                    .collect::<Vec<_>>();
+                divisor.remainder_in_place(&mut fiber);
+                for (power, coefficient) in fiber.into_iter().enumerate() {
+                    source[axis] = power;
+                    reduced.coefficients[flat_index(&dimensions, &source)] = coefficient;
+                }
+            }
+            reduced
+        }
+
+        let polynomial =
+            DenseTensorPolynomial::try_new(vec![3, 4, 2], (1_i64..=24).map(real).collect())
+                .unwrap();
+        let modulus = [real(-2), Real::zero(), Real::one()];
+        for axis in 0..3 {
+            let reduced = polynomial
+                .reduce_axis_modulo(axis, &modulus, PredicatePolicy::STRICT)
+                .unwrap();
+            assert_eq!(reduced, reference(&polynomial, axis));
+        }
+        assert!(
+            polynomial
+                .reduce_axis_modulo(0, &[Real::zero(), Real::zero()], PredicatePolicy::STRICT)
+                .is_none()
+        );
     }
 
     #[test]

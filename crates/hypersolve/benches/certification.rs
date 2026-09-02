@@ -1,15 +1,25 @@
-use criterion::{Criterion, criterion_group, criterion_main};
+use criterion::{BatchSize, Criterion, criterion_group, criterion_main};
 use hyperreal::{Rational, Real};
+use num::bigint::{BigInt, BigUint};
+
+#[path = "support/benchmark_report.rs"]
+mod benchmark_report;
 use hypersolve::{
-    AlgebraicFiberRootCountStatus, AlgebraicRootArithmeticOp, AlgebraicRootKind,
-    AlgebraicRootRationalMap, AlgebraicRootRefinementComparisonConfig, AlgebraicRootRepresentation,
+    AlgebraicFiberDiagonalDeflationStatus, AlgebraicFiberPolynomialImageProjectionConfig,
+    AlgebraicFiberPolynomialImageProjectionStatus, AlgebraicFiberProjectionStatus,
+    AlgebraicFiberRationalReductionStatus, AlgebraicFiberRootCountStatus,
+    AlgebraicFiberRootIsolationConfig, AlgebraicFiberRootIsolationStatus,
+    AlgebraicRootArithmeticOp, AlgebraicRootKind, AlgebraicRootRationalMap,
+    AlgebraicRootRefinementComparisonConfig, AlgebraicRootRepresentation,
     AlgebraicRootValidationReport, AlgebraicRootValidationStatus, BatchPredicateScheduleConfig,
-    BivariatePolynomial, BsplineKnotSpanSubstitutionConfig, Constraint, CurveResultantParameter,
+    BivariatePolynomial, BsplineKnotSpanSubstitutionConfig, Constraint,
+    CurveIntersectionResultantConfig, CurveResultantParameter, DenseTensorPolynomial,
     DraggedParameterWeight, EqualitySubstitution, Expr, IntervalBoxCertificationPackage,
     IsolatedRootInterval, PolynomialCurvePoint2, PolynomialParametricCurve2, Problem,
     ProposalEngineKind, ProposalEnginePrecision, ProposalEngineReport, RationalCurveControlPoint2,
-    RationalParametricCurve2, SolverBlock, SolverConfig, SolverPoint2, SolverState,
-    SparseLinearSystem, SparseResidualTerm, SymbolId, UnivariateResultantPairInput, VariableBall,
+    RationalParametricCurve2, RootIsolationConfig, SolverBlock, SolverConfig, SolverPoint2,
+    SolverState, SparseLinearSystem, SparseResidualTerm, SymbolId, TrivariatePolynomial,
+    TrivariatePolynomialAxis, UnivariateResultantPairInput, VariableBall,
     analyze_exact_affine_rank, analyze_sparse_bareiss_elimination_pattern,
     apply_equality_substitution_classes, arithmetic_algebraic_root_representations,
     audit_active_set, audit_sketch_unit_tolerances, certify_affine_krawczyk_box, certify_candidate,
@@ -23,18 +33,30 @@ use hypersolve::{
     count_bernstein_univariate_polynomial_interval_roots,
     count_bivariate_common_fiber_roots_at_algebraic_parameter,
     count_bivariate_fiber_roots_at_algebraic_parameter,
-    count_descartes_univariate_polynomial_roots, determinant_bareiss, diagnose_failed_constraints,
-    diagnose_sketch_failed_constraints, eliminate_affine_rows_with_substitution_classes,
+    count_bivariate_fiber_roots_at_algebraic_parameter_closed,
+    count_bivariate_fiber_roots_at_algebraic_parameter_intervals,
+    count_descartes_univariate_polynomial_roots,
+    deflate_bivariate_fiber_diagonal_root_at_algebraic_parameter, determinant_bareiss,
+    diagnose_failed_constraints, diagnose_sketch_failed_constraints,
+    divide_bivariate_polynomial_exact, divide_univariate_polynomial_exact,
+    eliminate_affine_rows_with_substitution_classes,
     enumerate_direct_univariate_quadratic_branches, equality_substitution_classes,
     evaluate_polynomial_at_algebraic_root, evaluate_rational_expression_at_algebraic_root,
-    isolate_univariate_polynomial_roots, lift_sketch_point2_to_workplane3,
+    isolate_bivariate_fiber_roots_at_algebraic_parameter, isolate_univariate_polynomial_roots,
+    lift_sketch_point2_to_workplane3, polynomial_has_one_distinct_root_in_open_interval,
     preflight_sketch_degeneracies, preflight_sketch_entity_domains,
-    preflight_sketch_parameter_domains, propose_active_set_update,
-    regenerate_active_set_affine_candidate, regenerate_active_set_quadratic_candidates,
-    replay_dense_linear_residuals, replay_sketch_compatibility_fixture,
-    replay_sparse_linear_residuals, report_lossy_adapter_only_candidate,
-    represent_univariate_algebraic_roots, resultant_parametric_curve_intersection,
-    resultant_rational_parametric_curve_intersection, resultant_univariate_polynomials,
+    preflight_sketch_parameter_domains, project_algebraic_fiber_polynomial_image,
+    project_algebraic_fiber_polynomial_image_relation,
+    project_bivariate_fiber_at_algebraic_parameter, project_selected_tensor_fiber_via_tagged_norm,
+    propose_active_set_update, reduce_bivariate_rational_function_at_algebraic_parameter,
+    refine_isolated_univariate_polynomial_interval, regenerate_active_set_affine_candidate,
+    regenerate_active_set_quadratic_candidates, replay_dense_linear_residuals,
+    replay_sketch_compatibility_fixture, replay_sparse_linear_residuals,
+    report_lossy_adapter_only_candidate, represent_algebraic_tensor_image,
+    represent_univariate_algebraic_roots, represented_root_sign,
+    resultant_parametric_curve_intersection, resultant_rational_parametric_curve_intersection,
+    resultant_tensor_polynomial_univariate_constraint,
+    resultant_trivariate_polynomial_univariate_constraint, resultant_univariate_polynomials,
     run_active_set_update_loop, schedule_candidate_batch_predicates,
     schedule_univariate_resultant_pairs, search_failed_constraint_minimal_removals,
     search_failed_constraint_pair_removals, search_failed_constraint_set_removals,
@@ -43,17 +65,149 @@ use hypersolve::{
     solve_dense_linear_system_bareiss_multi_rhs, solve_direct_affine_system,
     solve_direct_univariate_quadratic_equalities, solve_sparse_linear_system_bareiss,
     solve_sparse_linear_system_bareiss_minimum_degree,
-    solve_sparse_linear_system_bareiss_pattern_preserving, squared_distance_equation,
+    solve_sparse_linear_system_bareiss_pattern_preserving, square_free_part,
+    square_root_algebraic_root_representation, squared_distance_equation,
     subdivide_bernstein_univariate_polynomial_interval_roots,
     subresultant_chain_univariate_polynomials, substitute_bezier_power_basis,
     substitute_bspline_knot_span_power_basis, substitute_nurbs_knot_span_power_basis,
     substitute_rational_bezier_power_basis, transform_algebraic_root_affine,
     transform_algebraic_root_mobius, transform_algebraic_root_polynomial_image,
-    transform_algebraic_root_rational_image, transform_algebraic_roots_binary,
+    transform_algebraic_root_rational_image, transform_algebraic_root_rational_images,
+    transform_algebraic_roots_binary,
 };
 
 fn r(value: i64) -> Real {
     Real::new(Rational::new(value))
+}
+
+fn benchmark_dyadic(exponent: usize) -> Real {
+    Real::new(
+        Rational::from_bigint_fraction(BigInt::from(1_u8), BigUint::from(1_u8) << exponent)
+            .expect("a power-of-two denominator is nonzero"),
+    )
+}
+
+fn benchmark_polynomial_product(left: &[Real], right: &[Real]) -> Vec<Real> {
+    let mut product = vec![Real::zero(); left.len() + right.len() - 1];
+    for (left_power, left_coefficient) in left.iter().enumerate() {
+        for (right_power, right_coefficient) in right.iter().enumerate() {
+            product[left_power + right_power] =
+                product[left_power + right_power].clone() + left_coefficient * right_coefficient;
+        }
+    }
+    product
+}
+
+fn exact_normal_positive() -> Real {
+    let root_two = r(2).sqrt().unwrap();
+    let root_two_over_pi = (root_two.clone() / Real::pi()).unwrap();
+    let half = (r(1) / r(2)).unwrap();
+    let shared_offset = root_two.clone() * r(3) + half;
+    let contact = (((root_two.clone() * r(4) - shared_offset.clone()) * Real::pi())
+        * root_two_over_pi.clone()
+        / r(4))
+    .unwrap();
+    let domain = (((root_two * r(2) - shared_offset) * Real::pi()) * root_two_over_pi / r(4))
+        .unwrap()
+        + r(1);
+    contact - domain + r(2).powi_i64(-3000).unwrap()
+}
+
+fn selected_square_root(square: i64) -> AlgebraicRootRepresentation {
+    AlgebraicRootRepresentation {
+        constraint_index: square as usize,
+        symbol: SymbolId(square as u32),
+        interval_index: 0,
+        polynomial_coefficients: vec![-r(square), Real::zero(), Real::one()],
+        interval: IsolatedRootInterval {
+            lower: Real::one(),
+            upper: r(square),
+            exact_root: None,
+            distinct_root_count: 1,
+        },
+        kind: AlgebraicRootKind::IsolatingInterval,
+        validation: AlgebraicRootValidationReport {
+            status: AlgebraicRootValidationStatus::Valid,
+            message: None,
+        },
+    }
+}
+
+fn selected_cubic_root(
+    interval_index: usize,
+    lower: i64,
+    upper: i64,
+) -> AlgebraicRootRepresentation {
+    AlgebraicRootRepresentation {
+        constraint_index: 31,
+        symbol: SymbolId(31),
+        interval_index,
+        polynomial_coefficients: vec![Real::one(), r(-3), Real::zero(), Real::one()],
+        interval: IsolatedRootInterval {
+            lower: r(lower),
+            upper: r(upper),
+            exact_root: None,
+            distinct_root_count: 1,
+        },
+        kind: AlgebraicRootKind::IsolatingInterval,
+        validation: AlgebraicRootValidationReport {
+            status: AlgebraicRootValidationStatus::Valid,
+            message: None,
+        },
+    }
+}
+
+fn selected_repeated_cubic_root(
+    interval_index: usize,
+    lower: i64,
+    upper: i64,
+) -> AlgebraicRootRepresentation {
+    let mut root = selected_cubic_root(interval_index, lower, upper);
+    root.polynomial_coefficients = vec![
+        Real::one(),
+        r(-6),
+        r(9),
+        r(2),
+        r(-6),
+        Real::zero(),
+        Real::one(),
+    ];
+    root
+}
+
+fn selected_sum_tensor(source_count: usize) -> DenseTensorPolynomial {
+    selected_sum_tensor_with_output_dimension(source_count, 2)
+}
+
+fn selected_sum_tensor_with_output_dimension(
+    source_count: usize,
+    output_dimension: usize,
+) -> DenseTensorPolynomial {
+    let mut dimensions = vec![2; source_count + 1];
+    dimensions[source_count] = output_dimension;
+    let mut coefficients = vec![Real::zero(); dimensions.iter().product()];
+    for axis in 0..source_count {
+        let mut exponents = vec![0; dimensions.len()];
+        exponents[axis] = 1;
+        let index = dimensions
+            .iter()
+            .zip(exponents)
+            .fold(0, |index, (dimension, exponent)| {
+                index * dimension + exponent
+            });
+        coefficients[index] = -Real::one();
+    }
+    coefficients[1] = Real::one();
+    DenseTensorPolynomial::try_new(dimensions, coefficients).unwrap()
+}
+
+fn opposite_conjugate_cubic_tensor() -> DenseTensorPolynomial {
+    let dimensions = vec![2, 2, 4];
+    let mut coefficients = vec![Real::zero(); dimensions.iter().product()];
+    for (index, coefficient) in [(8, r(-1)), (11, r(8)), (4, Real::one()), (7, r(-8))] {
+        coefficients[index] = coefficient;
+    }
+    DenseTensorPolynomial::try_new(dimensions, coefficients).unwrap()
 }
 
 fn affine_problem(row_count: usize) -> Problem {
@@ -4203,6 +4357,28 @@ fn certification(c: &mut Criterion) {
             })
         },
     );
+    c.bench_function(
+        "solve_sparse_linear_system_bareiss_pattern_preserving/strict_exact_normal_pivot",
+        |b| {
+            b.iter_batched(
+                || {
+                    let pivot = exact_normal_positive();
+                    (
+                        [SparseResidualTerm {
+                            row: 0,
+                            column: 0,
+                            coefficient: pivot.clone(),
+                        }],
+                        [pivot],
+                    )
+                },
+                |(terms, rhs)| {
+                    solve_sparse_linear_system_bareiss_pattern_preserving(1, 1, &terms, &rhs, -64)
+                },
+                BatchSize::SmallInput,
+            )
+        },
+    );
     let arrowhead_order = 32_usize;
     let mut arrowhead_terms = Vec::with_capacity(arrowhead_order * 3);
     arrowhead_terms.push(SparseResidualTerm {
@@ -4366,15 +4542,486 @@ fn certification(c: &mut Criterion) {
     c.bench_function("resultant_univariate_polynomials", |b| {
         b.iter(|| resultant_univariate_polynomials(&[r(-1), r(0), r(1)], &[r(-2), r(1)], -64))
     });
+    c.bench_function(
+        "resultant_univariate_polynomials/strict_exact_normal_trimming",
+        |b| {
+            b.iter_batched(
+                || {
+                    let positive = exact_normal_positive();
+                    let normalized_zero = r(2).powi_i64(-3000).unwrap() - positive.clone();
+                    (vec![r(1), positive, normalized_zero], vec![r(2)])
+                },
+                |(left, right)| resultant_univariate_polynomials(&left, &right, -64),
+                BatchSize::SmallInput,
+            )
+        },
+    );
+    let trivariate_polynomial =
+        TrivariatePolynomial::new(vec![vec![vec![r(0), r(1)], vec![r(1)]], vec![vec![r(1)]]]);
+    let quadratic_constraint = [r(-2), r(0), r(1)];
+    c.bench_function(
+        "resultant_trivariate_polynomial_univariate_constraint",
+        |b| {
+            b.iter(|| {
+                resultant_trivariate_polynomial_univariate_constraint(
+                    &trivariate_polynomial,
+                    &quadratic_constraint,
+                    TrivariatePolynomialAxis::First,
+                    CurveIntersectionResultantConfig::default(),
+                )
+            })
+        },
+    );
+    c.bench_function(
+        "resultant_trivariate_polynomial_univariate_constraint/strict_exact_normal_constraint",
+        |b| {
+            b.iter_batched(
+                || {
+                    let positive = exact_normal_positive();
+                    let normalized_zero = r(2).powi_i64(-3000).unwrap() - positive.clone();
+                    (
+                        TrivariatePolynomial::new(vec![vec![vec![r(1), r(1)]]]),
+                        vec![r(-2) * &positive, Real::zero(), positive, normalized_zero],
+                    )
+                },
+                |(polynomial, constraint)| {
+                    resultant_trivariate_polynomial_univariate_constraint(
+                        &polynomial,
+                        &constraint,
+                        TrivariatePolynomialAxis::Third,
+                        CurveIntersectionResultantConfig {
+                            min_precision: -64,
+                            ..CurveIntersectionResultantConfig::default()
+                        },
+                    )
+                },
+                BatchSize::SmallInput,
+            )
+        },
+    );
+    let tensor_polynomial =
+        DenseTensorPolynomial::try_new(vec![2, 2], vec![r(0), r(1), r(1), r(0)]).unwrap();
+    c.bench_function("resultant_tensor_polynomial_univariate_constraint", |b| {
+        b.iter(|| {
+            resultant_tensor_polynomial_univariate_constraint(
+                &tensor_polynomial,
+                &quadratic_constraint,
+                1,
+                -64,
+            )
+        })
+    });
+    let direct_real_norm_alpha = r(2).sqrt().unwrap();
+    let direct_real_norm_constraint = vec![-direct_real_norm_alpha, Real::one()];
+    let direct_real_norm_polynomial =
+        DenseTensorPolynomial::try_new(vec![2, 2], vec![r(1), r(0), r(0), r(1)]).unwrap();
+    c.bench_function(
+        "resultant_tensor_polynomial_univariate_constraint/direct_real_norm",
+        |b| {
+            b.iter(|| {
+                resultant_tensor_polynomial_univariate_constraint(
+                    &direct_real_norm_polynomial,
+                    &direct_real_norm_constraint,
+                    0,
+                    -64,
+                )
+            })
+        },
+    );
+    let mut padded_direct_norm_coefficients = vec![Real::zero(); 2 * 1024];
+    padded_direct_norm_coefficients[0] = Real::one();
+    padded_direct_norm_coefficients[1024 + 1] = Real::one();
+    let padded_direct_norm =
+        DenseTensorPolynomial::try_new(vec![2, 1024], padded_direct_norm_coefficients).unwrap();
+    let padded_direct_norm_constraint = vec![r(-2), Real::one()];
+    c.bench_function(
+        "resultant_tensor_polynomial_univariate_constraint/padded_direct_norm_1024",
+        |b| {
+            b.iter(|| {
+                resultant_tensor_polynomial_univariate_constraint(
+                    &padded_direct_norm,
+                    &padded_direct_norm_constraint,
+                    0,
+                    -64,
+                )
+            })
+        },
+    );
+    c.bench_function(
+        "resultant_tensor_polynomial_univariate_constraint/padded_closed_form_norm_1024",
+        |b| {
+            b.iter(|| {
+                resultant_tensor_polynomial_univariate_constraint(
+                    &padded_direct_norm,
+                    &quadratic_constraint,
+                    0,
+                    -64,
+                )
+            })
+        },
+    );
+    let mut padded_grid_coefficients = vec![Real::zero(); 2 * 64 * 64];
+    padded_grid_coefficients[1] = Real::one();
+    padded_grid_coefficients[64] = Real::one();
+    padded_grid_coefficients[64 * 64] = Real::one();
+    let padded_grid =
+        DenseTensorPolynomial::try_new(vec![2, 64, 64], padded_grid_coefficients).unwrap();
+    let compact_grid = DenseTensorPolynomial::try_new(
+        vec![2, 2, 2],
+        vec![
+            Real::zero(),
+            Real::one(),
+            Real::one(),
+            Real::zero(),
+            Real::one(),
+            Real::zero(),
+            Real::zero(),
+            Real::zero(),
+        ],
+    )
+    .unwrap();
+    c.bench_function(
+        "resultant_tensor_polynomial_univariate_constraint/compact_grid_2x2",
+        |b| {
+            b.iter(|| {
+                resultant_tensor_polynomial_univariate_constraint(
+                    &compact_grid,
+                    &padded_direct_norm_constraint,
+                    0,
+                    -64,
+                )
+            })
+        },
+    );
+    c.bench_function(
+        "resultant_tensor_polynomial_univariate_constraint/padded_grid_64x64",
+        |b| {
+            b.iter(|| {
+                resultant_tensor_polynomial_univariate_constraint(
+                    &padded_grid,
+                    &padded_direct_norm_constraint,
+                    0,
+                    -64,
+                )
+            })
+        },
+    );
+    let compact_axis_reduction =
+        DenseTensorPolynomial::try_new(vec![8, 2, 2], vec![Real::one(); 8 * 2 * 2]).unwrap();
+    let mut padded_axis_reduction_coefficients = vec![Real::zero(); 8 * 64 * 64];
+    for power in 0..8 {
+        padded_axis_reduction_coefficients[power * 64 * 64 + 65] = r(power as i64 + 1);
+    }
+    let padded_axis_reduction =
+        DenseTensorPolynomial::try_new(vec![8, 64, 64], padded_axis_reduction_coefficients)
+            .unwrap();
+    let already_reduced_axis =
+        DenseTensorPolynomial::try_new(vec![2, 64, 64], vec![Real::one(); 2 * 64 * 64]).unwrap();
+    c.bench_function("dense_tensor_reduce_axis_modulo/compact_8x2x2", |b| {
+        b.iter(|| {
+            compact_axis_reduction.reduce_axis_modulo(
+                0,
+                &quadratic_constraint,
+                hyperlimit::PredicatePolicy::STRICT,
+            )
+        })
+    });
+    c.bench_function("dense_tensor_reduce_axis_modulo/padded_8x64x64", |b| {
+        b.iter(|| {
+            padded_axis_reduction.reduce_axis_modulo(
+                0,
+                &quadratic_constraint,
+                hyperlimit::PredicatePolicy::STRICT,
+            )
+        })
+    });
+    c.bench_function(
+        "dense_tensor_reduce_axis_modulo/already_reduced_2x64x64",
+        |b| {
+            b.iter(|| {
+                already_reduced_axis.reduce_axis_modulo(
+                    0,
+                    &quadratic_constraint,
+                    hyperlimit::PredicatePolicy::STRICT,
+                )
+            })
+        },
+    );
+    let selected_sum_sources = [2_i64, 3, 5, 7].map(selected_square_root);
+    let selected_sum_relation = selected_sum_tensor(selected_sum_sources.len());
+    let selected_sum_interval = IsolatedRootInterval {
+        lower: r(8),
+        upper: r(9),
+        exact_root: None,
+        distinct_root_count: 1,
+    };
+    c.bench_function("represent_algebraic_tensor_image/sum_four_roots", |b| {
+        b.iter(|| {
+            represent_algebraic_tensor_image(
+                &selected_sum_relation,
+                &selected_sum_sources,
+                &selected_sum_interval,
+            )
+        })
+    });
+    let padded_selected_sum_relation =
+        selected_sum_tensor_with_output_dimension(selected_sum_sources.len(), 256);
+    c.bench_function(
+        "represent_algebraic_tensor_image/sum_four_roots_padded_256",
+        |b| {
+            b.iter(|| {
+                represent_algebraic_tensor_image(
+                    &padded_selected_sum_relation,
+                    &selected_sum_sources,
+                    &selected_sum_interval,
+                )
+            })
+        },
+    );
+    let conjugate_cubic_sources = [selected_cubic_root(0, -2, -1), selected_cubic_root(1, 0, 1)];
+    let conjugate_cubic_relation = selected_sum_tensor(conjugate_cubic_sources.len());
+    let conjugate_cubic_interval = IsolatedRootInterval {
+        lower: r(-2),
+        upper: r(-1),
+        exact_root: None,
+        distinct_root_count: 1,
+    };
+    c.bench_function(
+        "represent_algebraic_tensor_image/two_conjugate_cubic_roots",
+        |b| {
+            b.iter(|| {
+                represent_algebraic_tensor_image(
+                    &conjugate_cubic_relation,
+                    &conjugate_cubic_sources,
+                    &conjugate_cubic_interval,
+                )
+            })
+        },
+    );
+    let repeated_cubic_sources = [
+        selected_repeated_cubic_root(0, -2, -1),
+        selected_repeated_cubic_root(1, 0, 1),
+    ];
+    c.bench_function(
+        "represent_algebraic_tensor_image/two_conjugate_repeated_degree_six_roots",
+        |b| {
+            b.iter(|| {
+                represent_algebraic_tensor_image(
+                    &conjugate_cubic_relation,
+                    &repeated_cubic_sources,
+                    &conjugate_cubic_interval,
+                )
+            })
+        },
+    );
+    let tagged_positive = selected_square_root(2);
+    let mut tagged_negative = tagged_positive.clone();
+    tagged_negative.constraint_index = 3;
+    tagged_negative.symbol = SymbolId(3);
+    tagged_negative.interval = IsolatedRootInterval {
+        lower: r(-2),
+        upper: r(-1),
+        exact_root: None,
+        distinct_root_count: 1,
+    };
+    let tagged_sources = [tagged_positive, tagged_negative];
+    let tagged_relation = opposite_conjugate_cubic_tensor();
+    c.bench_function(
+        "project_selected_tensor_fiber_via_tagged_norm/opposite_conjugate_cubic",
+        |b| {
+            b.iter(|| {
+                project_selected_tensor_fiber_via_tagged_norm(&tagged_relation, &tagged_sources)
+            })
+        },
+    );
+    let mut distinct_tagged_negative = selected_square_root(3);
+    distinct_tagged_negative.constraint_index = 4;
+    distinct_tagged_negative.symbol = SymbolId(4);
+    distinct_tagged_negative.interval = IsolatedRootInterval {
+        lower: r(-2),
+        upper: r(-1),
+        exact_root: None,
+        distinct_root_count: 1,
+    };
+    let distinct_tagged_sources = [tagged_sources[0].clone(), distinct_tagged_negative];
+    assert_eq!(
+        project_selected_tensor_fiber_via_tagged_norm(&tagged_relation, &distinct_tagged_sources)
+            .status,
+        AlgebraicFiberProjectionStatus::Constructed
+    );
+    c.bench_function(
+        "project_selected_tensor_fiber_via_tagged_norm/distinct_quadratic_carriers",
+        |b| {
+            b.iter(|| {
+                project_selected_tensor_fiber_via_tagged_norm(
+                    &tagged_relation,
+                    &distinct_tagged_sources,
+                )
+            })
+        },
+    );
+    let mut repeated_tagged_sources = tagged_sources.clone();
+    let repeated_sqrt_two = vec![
+        r(-8),
+        Real::zero(),
+        r(12),
+        Real::zero(),
+        r(-6),
+        Real::zero(),
+        r(1),
+    ];
+    for source in &mut repeated_tagged_sources {
+        source.polynomial_coefficients = repeated_sqrt_two.clone();
+    }
+    assert_eq!(
+        project_selected_tensor_fiber_via_tagged_norm(&tagged_relation, &repeated_tagged_sources)
+            .status,
+        AlgebraicFiberProjectionStatus::Constructed
+    );
+    c.bench_function(
+        "project_selected_tensor_fiber_via_tagged_norm/repeated_degree_six_carriers",
+        |b| {
+            b.iter(|| {
+                project_selected_tensor_fiber_via_tagged_norm(
+                    &tagged_relation,
+                    &repeated_tagged_sources,
+                )
+            })
+        },
+    );
+    c.bench_function(
+        "resultant_tensor_polynomial_univariate_constraint/strict_exact_zero_output_degree",
+        |b| {
+            b.iter_batched(
+                || {
+                    let alpha = r(2).sqrt().unwrap() + r(3).sqrt().unwrap();
+                    let beta = r(5) + r(2) * r(6).sqrt().unwrap();
+                    (
+                        DenseTensorPolynomial::try_new(
+                            vec![3, 2],
+                            vec![
+                                Real::one(),
+                                -beta,
+                                Real::zero(),
+                                Real::zero(),
+                                Real::zero(),
+                                Real::one(),
+                            ],
+                        )
+                        .unwrap(),
+                        vec![-alpha, Real::one()],
+                    )
+                },
+                |(polynomial, constraint)| {
+                    resultant_tensor_polynomial_univariate_constraint(
+                        &polynomial,
+                        &constraint,
+                        0,
+                        -64,
+                    )
+                },
+                BatchSize::SmallInput,
+            )
+        },
+    );
+    c.bench_function(
+        "resultant_tensor_polynomial_univariate_constraint/strict_exact_normal_constraint",
+        |b| {
+            b.iter_batched(
+                || {
+                    let positive = exact_normal_positive();
+                    let normalized_zero = r(2).powi_i64(-3000).unwrap() - positive.clone();
+                    (
+                        DenseTensorPolynomial::try_new(vec![2, 2], vec![r(0), r(1), r(1), r(0)])
+                            .unwrap(),
+                        vec![r(-2) * &positive, Real::zero(), positive, normalized_zero],
+                    )
+                },
+                |(polynomial, constraint)| {
+                    resultant_tensor_polynomial_univariate_constraint(
+                        &polynomial,
+                        &constraint,
+                        1,
+                        -64,
+                    )
+                },
+                BatchSize::SmallInput,
+            )
+        },
+    );
     let mut degree_64_polynomial = vec![r(0); 65];
     degree_64_polynomial[0] = r(-1);
     degree_64_polynomial[64] = r(1);
     c.bench_function("resultant_constant_degree_64", |b| {
         b.iter(|| resultant_univariate_polynomials(&degree_64_polynomial, &[r(2)], -64))
     });
+    c.bench_function("square_free_part/degree_64_square_free", |b| {
+        b.iter_batched(
+            || degree_64_polynomial.clone(),
+            |polynomial| square_free_part(polynomial, hyperlimit::PredicatePolicy::STRICT),
+            BatchSize::SmallInput,
+        )
+    });
+    let mut repeated_degree_64 = vec![r(0); 65];
+    repeated_degree_64[0] = r(1);
+    repeated_degree_64[32] = r(-2);
+    repeated_degree_64[64] = r(1);
+    c.bench_function("square_free_part/degree_64_repeated", |b| {
+        b.iter_batched(
+            || repeated_degree_64.clone(),
+            |polynomial| square_free_part(polynomial, hyperlimit::PredicatePolicy::STRICT),
+            BatchSize::SmallInput,
+        )
+    });
+    let square_root_two = r(2).sqrt().unwrap();
+    let exact_real_repeated_quadratic = vec![r(2), r(-2) * square_root_two.clone(), Real::one()];
+    c.bench_function("square_free_part/exact_real_repeated_quadratic", |b| {
+        b.iter_batched(
+            || exact_real_repeated_quadratic.clone(),
+            |polynomial| square_free_part(polynomial, hyperlimit::PredicatePolicy::STRICT),
+            BatchSize::SmallInput,
+        )
+    });
+    let dense_divisor = (0_i64..=16)
+        .map(|power| r(power % 5 + 1))
+        .collect::<Vec<_>>();
+    let dense_quotient = (0_i64..=32)
+        .map(|power| r((power * 3) % 7 + 1))
+        .collect::<Vec<_>>();
+    let dense_dividend = benchmark_polynomial_product(&dense_divisor, &dense_quotient);
+    assert!(divide_univariate_polynomial_exact(&dense_dividend, &dense_divisor).is_some());
+    c.bench_function(
+        "divide_univariate_polynomial_exact/dense_degree_48_by_16",
+        |b| b.iter(|| divide_univariate_polynomial_exact(&dense_dividend, &dense_divisor)),
+    );
+    let exact_real_divisor = vec![Real::one(), square_root_two.clone()];
+    let exact_real_quotient = vec![
+        r(3).sqrt().unwrap(),
+        square_root_two.clone() + Real::one(),
+        Real::one(),
+    ];
+    let exact_real_dividend =
+        benchmark_polynomial_product(&exact_real_divisor, &exact_real_quotient);
+    assert!(
+        divide_univariate_polynomial_exact(&exact_real_dividend, &exact_real_divisor).is_some()
+    );
+    c.bench_function(
+        "divide_univariate_polynomial_exact/exact_real_quadratic_by_linear",
+        |b| {
+            b.iter(|| divide_univariate_polynomial_exact(&exact_real_dividend, &exact_real_divisor))
+        },
+    );
     c.bench_function("subresultant_chain_univariate_polynomials", |b| {
         b.iter(|| {
             subresultant_chain_univariate_polynomials(&[r(2), r(-3), r(1)], &[r(-1), r(1)], -64)
+        })
+    });
+    let exact_bivariate_divisor = BivariatePolynomial::new(vec![vec![r(2), r(-3), r(1)]]);
+    let exact_bivariate_dividend =
+        BivariatePolynomial::new(vec![vec![r(-2), r(7), r(-7), r(8), r(-9), r(3)]]);
+    c.bench_function("divide_bivariate_polynomial_exact", |b| {
+        b.iter(|| {
+            divide_bivariate_polynomial_exact(&exact_bivariate_dividend, &exact_bivariate_divisor)
         })
     });
     c.bench_function("schedule_univariate_resultant_pairs", |b| {
@@ -4649,6 +5296,541 @@ fn certification(c: &mut Criterion) {
             message: None,
         },
     };
+    let diagonal_deflation_polynomial = BivariatePolynomial::new(vec![
+        vec![r(0), r(0), r(0), r(1), r(1)],
+        vec![r(0), r(0), r(-3), r(-3)],
+        vec![r(0), r(3), r(3)],
+        vec![r(-1), r(-1)],
+    ]);
+    assert_eq!(
+        deflate_bivariate_fiber_diagonal_root_at_algebraic_parameter(
+            &diagonal_deflation_polynomial,
+            CurveResultantParameter::First,
+            &sqrt_two,
+            hyperlimit::PredicatePolicy::STRICT,
+        )
+        .status,
+        AlgebraicFiberDiagonalDeflationStatus::Deflated
+    );
+    c.bench_function("deflate_bivariate_fiber_diagonal_root/triple_root", |b| {
+        b.iter(|| {
+            deflate_bivariate_fiber_diagonal_root_at_algebraic_parameter(
+                &diagonal_deflation_polynomial,
+                CurveResultantParameter::First,
+                &sqrt_two,
+                hyperlimit::PredicatePolicy::STRICT,
+            )
+        })
+    });
+    let diagonal_deflation_polynomial_second = BivariatePolynomial::new(vec![
+        vec![r(0), r(0), r(0), r(-1)],
+        vec![r(0), r(0), r(3), r(-1)],
+        vec![r(0), r(-3), r(3)],
+        vec![r(1), r(-3)],
+        vec![r(1)],
+    ]);
+    assert_eq!(
+        deflate_bivariate_fiber_diagonal_root_at_algebraic_parameter(
+            &diagonal_deflation_polynomial_second,
+            CurveResultantParameter::Second,
+            &sqrt_two,
+            hyperlimit::PredicatePolicy::STRICT,
+        )
+        .status,
+        AlgebraicFiberDiagonalDeflationStatus::Deflated
+    );
+    c.bench_function(
+        "deflate_bivariate_fiber_diagonal_root/triple_root_second_parameter",
+        |b| {
+            b.iter(|| {
+                deflate_bivariate_fiber_diagonal_root_at_algebraic_parameter(
+                    &diagonal_deflation_polynomial_second,
+                    CurveResultantParameter::Second,
+                    &sqrt_two,
+                    hyperlimit::PredicatePolicy::STRICT,
+                )
+            })
+        },
+    );
+    let quarter = (r(1) / r(4)).unwrap();
+    let sqrt_half = AlgebraicRootRepresentation {
+        constraint_index: 0,
+        symbol: SymbolId(0),
+        interval_index: 0,
+        polynomial_coefficients: vec![r(-1), Real::zero(), r(2)],
+        interval: IsolatedRootInterval {
+            lower: (r(2) / r(3)).unwrap(),
+            upper: (r(3) / r(4)).unwrap(),
+            exact_root: None,
+            distinct_root_count: 1,
+        },
+        kind: AlgebraicRootKind::IsolatingInterval,
+        validation: AlgebraicRootValidationReport {
+            status: AlgebraicRootValidationStatus::Valid,
+            message: None,
+        },
+    };
+    let projection_first =
+        BivariatePolynomial::new(vec![vec![Real::zero(), Real::one()], vec![r(-1)]]);
+    let projection_second =
+        BivariatePolynomial::new(vec![vec![Real::zero(), r(-1)], vec![Real::one()]]);
+    let projected_first = project_bivariate_fiber_at_algebraic_parameter(
+        &projection_first,
+        CurveResultantParameter::First,
+        &sqrt_half,
+        hyperlimit::PredicatePolicy::STRICT,
+    );
+    let projected_second = project_bivariate_fiber_at_algebraic_parameter(
+        &projection_second,
+        CurveResultantParameter::Second,
+        &sqrt_half,
+        hyperlimit::PredicatePolicy::STRICT,
+    );
+    assert_eq!(
+        projected_first.status,
+        AlgebraicFiberProjectionStatus::Constructed
+    );
+    assert_eq!(projected_second, projected_first);
+    c.bench_function("project_bivariate_fiber/retained_first_quadratic", |b| {
+        b.iter(|| {
+            project_bivariate_fiber_at_algebraic_parameter(
+                &projection_first,
+                CurveResultantParameter::First,
+                &sqrt_half,
+                hyperlimit::PredicatePolicy::STRICT,
+            )
+        })
+    });
+    c.bench_function("project_bivariate_fiber/retained_second_quadratic", |b| {
+        b.iter(|| {
+            project_bivariate_fiber_at_algebraic_parameter(
+                &projection_second,
+                CurveResultantParameter::Second,
+                &sqrt_half,
+                hyperlimit::PredicatePolicy::STRICT,
+            )
+        })
+    });
+    let bernstein_fiber = BivariatePolynomial::new(vec![
+        vec![Real::zero(), quarter.clone(), r(-1), Real::one()],
+        vec![-quarter, Real::one(), r(-1)],
+    ]);
+    let bernstein_config = AlgebraicFiberRootIsolationConfig {
+        max_subdivision_depth: 64,
+        refinement_steps: 4,
+    };
+    assert_eq!(
+        isolate_bivariate_fiber_roots_at_algebraic_parameter(
+            &bernstein_fiber,
+            CurveResultantParameter::First,
+            &sqrt_half,
+            &Real::zero(),
+            &Real::one(),
+            bernstein_config,
+            hyperlimit::PredicatePolicy::STRICT,
+        )
+        .status,
+        AlgebraicFiberRootIsolationStatus::Isolated
+    );
+    c.bench_function(
+        "isolate_bivariate_fiber_roots/bernstein_rational_deflation",
+        |b| {
+            b.iter(|| {
+                isolate_bivariate_fiber_roots_at_algebraic_parameter(
+                    &bernstein_fiber,
+                    CurveResultantParameter::First,
+                    &sqrt_half,
+                    &Real::zero(),
+                    &Real::one(),
+                    bernstein_config,
+                    hyperlimit::PredicatePolicy::STRICT,
+                )
+            })
+        },
+    );
+    let repeated_irrational_fiber = BivariatePolynomial::new(vec![
+        vec![(r(1) / r(2)).unwrap(), Real::zero(), Real::one()],
+        vec![Real::zero(), r(-2)],
+    ]);
+    let fallback_config = AlgebraicFiberRootIsolationConfig {
+        max_subdivision_depth: 4,
+        refinement_steps: 0,
+    };
+    let fallback_report = isolate_bivariate_fiber_roots_at_algebraic_parameter(
+        &repeated_irrational_fiber,
+        CurveResultantParameter::First,
+        &sqrt_half,
+        &Real::zero(),
+        &Real::one(),
+        fallback_config,
+        hyperlimit::PredicatePolicy::STRICT,
+    );
+    assert_eq!(
+        fallback_report.status,
+        AlgebraicFiberRootIsolationStatus::Isolated
+    );
+    assert!(fallback_report.sturm_sequence_length > 1);
+    c.bench_function(
+        "isolate_bivariate_fiber_roots/repeated_irrational_sturm_fallback",
+        |b| {
+            b.iter(|| {
+                isolate_bivariate_fiber_roots_at_algebraic_parameter(
+                    &repeated_irrational_fiber,
+                    CurveResultantParameter::First,
+                    &sqrt_half,
+                    &Real::zero(),
+                    &Real::one(),
+                    fallback_config,
+                    hyperlimit::PredicatePolicy::STRICT,
+                )
+            })
+        },
+    );
+    let rational_partition = benchmark_polynomial_product(
+        &[(-r(1) / r(4)).unwrap(), Real::one()],
+        &[(-r(1) / r(2)).unwrap(), Real::one()],
+    );
+    let mut partitioned_constant_row = vec![Real::zero(), Real::zero()];
+    partitioned_constant_row.extend(rational_partition.iter().cloned());
+    let mut partitioned_linear_row = vec![Real::zero()];
+    partitioned_linear_row.extend(
+        rational_partition
+            .iter()
+            .map(|coefficient| coefficient * r(-2)),
+    );
+    let partitioned_fallback_fiber = BivariatePolynomial::new(vec![
+        partitioned_constant_row,
+        partitioned_linear_row,
+        rational_partition,
+    ]);
+    let partitioned_fallback_config = AlgebraicFiberRootIsolationConfig {
+        max_subdivision_depth: 16,
+        refinement_steps: 4,
+    };
+    let partitioned_fallback_report = isolate_bivariate_fiber_roots_at_algebraic_parameter(
+        &partitioned_fallback_fiber,
+        CurveResultantParameter::First,
+        &sqrt_half,
+        &Real::zero(),
+        &Real::one(),
+        partitioned_fallback_config,
+        hyperlimit::PredicatePolicy::STRICT,
+    );
+    assert_eq!(
+        partitioned_fallback_report.status,
+        AlgebraicFiberRootIsolationStatus::Isolated,
+        "{partitioned_fallback_report:?}"
+    );
+    assert_eq!(partitioned_fallback_report.intervals.len(), 3);
+    assert_eq!(
+        partitioned_fallback_report
+            .intervals
+            .iter()
+            .filter(|interval| interval.exact_root.is_some())
+            .count(),
+        2
+    );
+    c.bench_function(
+        "isolate_bivariate_fiber_roots/partitioned_rational_sturm_fallback",
+        |b| {
+            b.iter(|| {
+                isolate_bivariate_fiber_roots_at_algebraic_parameter(
+                    &partitioned_fallback_fiber,
+                    CurveResultantParameter::First,
+                    &sqrt_half,
+                    &Real::zero(),
+                    &Real::one(),
+                    partitioned_fallback_config,
+                    hyperlimit::PredicatePolicy::STRICT,
+                )
+            })
+        },
+    );
+    let rational_reduction_fiber =
+        BivariatePolynomial::new(vec![vec![Real::zero(), Real::one()], vec![-Real::one()]]);
+    let rational_reduction_numerator = BivariatePolynomial::new(vec![vec![Real::one()]]);
+    let rational_reduction_denominator = BivariatePolynomial::new(vec![vec![r(4)], vec![r(2)]]);
+    let rational_reduction = reduce_bivariate_rational_function_at_algebraic_parameter(
+        &rational_reduction_fiber,
+        &rational_reduction_numerator,
+        &rational_reduction_denominator,
+        CurveResultantParameter::First,
+        &sqrt_half,
+        hyperlimit::PredicatePolicy::STRICT,
+    );
+    assert_eq!(
+        rational_reduction.status,
+        AlgebraicFiberRationalReductionStatus::ReducedToRetainedField
+    );
+    assert_eq!(
+        rational_reduction.numerator_coefficients,
+        vec![(r(1) / r(2)).unwrap()]
+    );
+    assert_eq!(
+        rational_reduction.denominator_coefficients,
+        vec![r(2), Real::one()]
+    );
+    c.bench_function(
+        "reduce_bivariate_rational_function/nonmonic_retained_denominator",
+        |b| {
+            b.iter(|| {
+                reduce_bivariate_rational_function_at_algebraic_parameter(
+                    &rational_reduction_fiber,
+                    &rational_reduction_numerator,
+                    &rational_reduction_denominator,
+                    CurveResultantParameter::First,
+                    &sqrt_half,
+                    hyperlimit::PredicatePolicy::STRICT,
+                )
+            })
+        },
+    );
+    let mut dense_reduction_fiber_row = vec![Real::zero(); 17];
+    dense_reduction_fiber_row[16] = Real::one();
+    let dense_reduction_fiber =
+        BivariatePolynomial::new(vec![dense_reduction_fiber_row, vec![-Real::one()]]);
+    let dense_reduction_denominator_row: Vec<_> = (1_i64..=16).map(r).collect();
+    let dense_reduction_numerator_row: Vec<_> = dense_reduction_denominator_row
+        .iter()
+        .map(|coefficient| coefficient * r(3))
+        .collect();
+    let dense_reduction_numerator = BivariatePolynomial::new(vec![dense_reduction_numerator_row]);
+    let dense_reduction_denominator =
+        BivariatePolynomial::new(vec![dense_reduction_denominator_row]);
+    let dense_reduction = reduce_bivariate_rational_function_at_algebraic_parameter(
+        &dense_reduction_fiber,
+        &dense_reduction_numerator,
+        &dense_reduction_denominator,
+        CurveResultantParameter::First,
+        &sqrt_half,
+        hyperlimit::PredicatePolicy::STRICT,
+    );
+    assert_eq!(
+        dense_reduction.status,
+        AlgebraicFiberRationalReductionStatus::ReducedToRetainedField
+    );
+    assert_eq!(dense_reduction.numerator_coefficients, vec![r(3)]);
+    assert_eq!(dense_reduction.denominator_coefficients, vec![Real::one()]);
+    c.bench_function(
+        "reduce_bivariate_rational_function/dense_degree_15_proportional",
+        |b| {
+            b.iter(|| {
+                reduce_bivariate_rational_function_at_algebraic_parameter(
+                    &dense_reduction_fiber,
+                    &dense_reduction_numerator,
+                    &dense_reduction_denominator,
+                    CurveResultantParameter::First,
+                    &sqrt_half,
+                    hyperlimit::PredicatePolicy::STRICT,
+                )
+            })
+        },
+    );
+    let repeated_endpoint_fiber =
+        BivariatePolynomial::new(vec![vec![r(0), r(0), r(0), r(0), r(-1), r(3), r(-3), r(1)]]);
+    let endpoint_lower = r(0);
+    let endpoint_upper = r(1);
+    let repeated_endpoint_report = count_bivariate_fiber_roots_at_algebraic_parameter_closed(
+        &repeated_endpoint_fiber,
+        CurveResultantParameter::First,
+        &sqrt_two,
+        &endpoint_lower,
+        &endpoint_upper,
+        hyperlimit::PredicatePolicy::STRICT,
+    );
+    assert_eq!(
+        repeated_endpoint_report.status,
+        AlgebraicFiberRootCountStatus::Counted
+    );
+    assert_eq!(repeated_endpoint_report.distinct_root_count, Some(2));
+    c.bench_function(
+        "count_bivariate_fiber_roots_closed/repeated_endpoints",
+        |b| {
+            b.iter(|| {
+                count_bivariate_fiber_roots_at_algebraic_parameter_closed(
+                    &repeated_endpoint_fiber,
+                    CurveResultantParameter::First,
+                    &sqrt_two,
+                    &endpoint_lower,
+                    &endpoint_upper,
+                    hyperlimit::PredicatePolicy::STRICT,
+                )
+            })
+        },
+    );
+    let polynomial_image_fiber =
+        BivariatePolynomial::new(vec![vec![Real::zero(), Real::one()], vec![r(-1)]]);
+    let polynomial_image_relation =
+        BivariatePolynomial::new(vec![vec![Real::zero(), Real::one()], vec![r(-1)]]);
+    let polynomial_image_config = AlgebraicFiberPolynomialImageProjectionConfig {
+        max_fiber_degree: 1,
+        max_retained_degree: 2,
+        max_image_degree_bound: 1,
+    };
+    c.bench_function("project_algebraic_fiber_polynomial_image", |b| {
+        b.iter(|| {
+            project_algebraic_fiber_polynomial_image(
+                &polynomial_image_fiber,
+                CurveResultantParameter::First,
+                &polynomial_image_relation,
+                CurveResultantParameter::Second,
+                &sqrt_two,
+                polynomial_image_config,
+                hyperlimit::PredicatePolicy::STRICT,
+            )
+        })
+    });
+    c.bench_function(
+        "project_algebraic_fiber_polynomial_image/strict_exact_zero_image_degree",
+        |b| {
+            b.iter_batched(
+                || {
+                    let normalized_zero = r(2).powi_i64(-3000).unwrap() - exact_normal_positive();
+                    BivariatePolynomial::new(vec![
+                        vec![Real::zero(), Real::one(), normalized_zero],
+                        vec![r(-1)],
+                    ])
+                },
+                |relation| {
+                    project_algebraic_fiber_polynomial_image(
+                        &polynomial_image_fiber,
+                        CurveResultantParameter::First,
+                        &relation,
+                        CurveResultantParameter::Second,
+                        &sqrt_two,
+                        polynomial_image_config,
+                        hyperlimit::PredicatePolicy::STRICT,
+                    )
+                },
+                BatchSize::SmallInput,
+            )
+        },
+    );
+    let saturated_fiber = BivariatePolynomial::new(vec![
+        vec![Real::zero(), Real::one(), r(-2), Real::one()],
+        vec![r(-1), r(2), r(-1)],
+    ]);
+    let saturated_image = BivariatePolynomial::new(vec![
+        vec![Real::zero(), r(-2)],
+        vec![r(2), r(2)],
+        vec![r(-2)],
+    ]);
+    let saturated_config = AlgebraicFiberPolynomialImageProjectionConfig {
+        max_fiber_degree: 3,
+        max_retained_degree: 2,
+        max_image_degree_bound: 3,
+    };
+    c.bench_function(
+        "project_algebraic_fiber_polynomial_image/saturated_conjugate_factor",
+        |b| {
+            b.iter(|| {
+                project_algebraic_fiber_polynomial_image_relation(
+                    &saturated_fiber,
+                    CurveResultantParameter::First,
+                    &saturated_image,
+                    CurveResultantParameter::Second,
+                    &sqrt_two,
+                    saturated_config,
+                    hyperlimit::PredicatePolicy::STRICT,
+                )
+            })
+        },
+    );
+    let fourfold_saturated_fiber = BivariatePolynomial::new(vec![
+        vec![r(0), r(1), r(-4), r(6), r(-4), r(1)],
+        vec![r(-1), r(4), r(-6), r(4), r(-1)],
+    ]);
+    let multicoefficient_image = BivariatePolynomial::new(vec![
+        vec![r(-1), r(-1), r(0), r(-1)],
+        vec![r(1), r(0), r(-1), r(1)],
+        vec![r(-1), r(1), r(1)],
+        vec![r(1)],
+    ]);
+    let fourfold_saturated_config = AlgebraicFiberPolynomialImageProjectionConfig {
+        max_fiber_degree: 5,
+        max_retained_degree: 2,
+        max_image_degree_bound: 15,
+    };
+    assert_eq!(
+        project_algebraic_fiber_polynomial_image_relation(
+            &fourfold_saturated_fiber,
+            CurveResultantParameter::First,
+            &multicoefficient_image,
+            CurveResultantParameter::Second,
+            &sqrt_two,
+            fourfold_saturated_config,
+            hyperlimit::PredicatePolicy::STRICT,
+        )
+        .status,
+        AlgebraicFiberPolynomialImageProjectionStatus::Constructed
+    );
+    c.bench_function(
+        "project_algebraic_fiber_polynomial_image/saturated_fourfold_multicoefficient",
+        |b| {
+            b.iter(|| {
+                project_algebraic_fiber_polynomial_image_relation(
+                    &fourfold_saturated_fiber,
+                    CurveResultantParameter::First,
+                    &multicoefficient_image,
+                    CurveResultantParameter::Second,
+                    &sqrt_two,
+                    fourfold_saturated_config,
+                    hyperlimit::PredicatePolicy::STRICT,
+                )
+            })
+        },
+    );
+    let cubic_image_fiber = BivariatePolynomial::new(vec![
+        vec![Real::zero(), Real::zero(), Real::zero(), Real::one()],
+        vec![r(-1)],
+    ]);
+    let cubic_image_relation = BivariatePolynomial::new(vec![
+        vec![r(-1), Real::zero(), Real::one()],
+        vec![Real::zero()],
+        vec![r(-1)],
+    ]);
+    let cubic_image_config = AlgebraicFiberPolynomialImageProjectionConfig {
+        max_fiber_degree: 3,
+        max_retained_degree: 2,
+        max_image_degree_bound: 6,
+    };
+    assert_eq!(
+        project_algebraic_fiber_polynomial_image(
+            &cubic_image_fiber,
+            CurveResultantParameter::First,
+            &cubic_image_relation,
+            CurveResultantParameter::Second,
+            &sqrt_two,
+            cubic_image_config,
+            hyperlimit::PredicatePolicy::STRICT,
+        )
+        .coefficients,
+        vec![
+            r(-3),
+            Real::zero(),
+            r(3),
+            Real::zero(),
+            r(-3),
+            Real::zero(),
+            Real::one(),
+        ]
+    );
+    c.bench_function(
+        "project_algebraic_fiber_polynomial_image/cubic_source_quadratic_image",
+        |b| {
+            b.iter(|| {
+                project_algebraic_fiber_polynomial_image(
+                    &cubic_image_fiber,
+                    CurveResultantParameter::First,
+                    &cubic_image_relation,
+                    CurveResultantParameter::Second,
+                    &sqrt_two,
+                    cubic_image_config,
+                    hyperlimit::PredicatePolicy::STRICT,
+                )
+            })
+        },
+    );
     let sqrt_three = AlgebraicRootRepresentation {
         constraint_index: 1,
         polynomial_coefficients: vec![r(-3), Real::zero(), Real::one()],
@@ -4709,6 +5891,113 @@ fn certification(c: &mut Criterion) {
             )
         })
     });
+    let batch_endpoints = (0_i64..=64)
+        .map(|value| (r(value) / r(64)).unwrap())
+        .collect::<Vec<_>>();
+    let adjacent_intervals = batch_endpoints
+        .windows(2)
+        .map(|bounds| (&bounds[0], &bounds[1]))
+        .collect::<Vec<_>>();
+    let shared_lower_intervals = batch_endpoints[1..]
+        .iter()
+        .map(|upper| (&batch_endpoints[0], upper))
+        .collect::<Vec<_>>();
+    let adjacent_reports = count_bivariate_fiber_roots_at_algebraic_parameter_intervals(
+        &even_fiber,
+        CurveResultantParameter::First,
+        &cube_alpha,
+        &adjacent_intervals,
+        hyperlimit::PredicatePolicy::STRICT,
+    );
+    assert!(
+        adjacent_reports
+            .iter()
+            .all(|report| report.status == AlgebraicFiberRootCountStatus::Counted)
+    );
+    assert_eq!(
+        adjacent_reports
+            .iter()
+            .filter_map(|report| report.distinct_root_count)
+            .sum::<usize>(),
+        1
+    );
+    let shared_lower_reports = count_bivariate_fiber_roots_at_algebraic_parameter_intervals(
+        &even_fiber,
+        CurveResultantParameter::First,
+        &cube_alpha,
+        &shared_lower_intervals,
+        hyperlimit::PredicatePolicy::STRICT,
+    );
+    assert!(
+        shared_lower_reports
+            .iter()
+            .all(|report| report.status == AlgebraicFiberRootCountStatus::Counted)
+    );
+    assert_eq!(
+        shared_lower_reports
+            .last()
+            .and_then(|report| report.distinct_root_count),
+        Some(1)
+    );
+    c.bench_function("count_bivariate_fiber_roots_intervals/adjacent_64", |b| {
+        b.iter(|| {
+            count_bivariate_fiber_roots_at_algebraic_parameter_intervals(
+                &even_fiber,
+                CurveResultantParameter::First,
+                &cube_alpha,
+                &adjacent_intervals,
+                hyperlimit::PredicatePolicy::STRICT,
+            )
+        })
+    });
+    c.bench_function(
+        "count_bivariate_fiber_roots_intervals/shared_lower_64",
+        |b| {
+            b.iter(|| {
+                count_bivariate_fiber_roots_at_algebraic_parameter_intervals(
+                    &even_fiber,
+                    CurveResultantParameter::First,
+                    &cube_alpha,
+                    &shared_lower_intervals,
+                    hyperlimit::PredicatePolicy::STRICT,
+                )
+            })
+        },
+    );
+    let endpoint_fiber = BivariatePolynomial::new(vec![vec![r(1), r(-2), Real::one()]]);
+    let endpoint_lower = Real::one();
+    let endpoint_upper_values = (0_i64..64)
+        .map(|value| r(2) + (r(value) / r(64)).unwrap())
+        .collect::<Vec<_>>();
+    let lower_endpoint_intervals = endpoint_upper_values
+        .iter()
+        .map(|upper| (&endpoint_lower, upper))
+        .collect::<Vec<_>>();
+    let lower_endpoint_reports = count_bivariate_fiber_roots_at_algebraic_parameter_intervals(
+        &endpoint_fiber,
+        CurveResultantParameter::First,
+        &cube_alpha,
+        &lower_endpoint_intervals,
+        hyperlimit::PredicatePolicy::STRICT,
+    );
+    assert!(lower_endpoint_reports.iter().all(|report| {
+        report.status == AlgebraicFiberRootCountStatus::EndpointRoot
+            && report.distinct_root_count.is_none()
+    }));
+    c.bench_function(
+        "count_bivariate_fiber_roots_intervals/lower_endpoint_64",
+        |b| {
+            b.iter(|| {
+                count_bivariate_fiber_roots_at_algebraic_parameter_intervals(
+                    &endpoint_fiber,
+                    CurveResultantParameter::First,
+                    &cube_alpha,
+                    &lower_endpoint_intervals,
+                    hyperlimit::PredicatePolicy::STRICT,
+                )
+            })
+        },
+    );
     let degree_drop_first = BivariatePolynomial::new(vec![
         vec![r(1), r(1), r(0), r(-4)],
         vec![],
@@ -4734,6 +6023,289 @@ fn certification(c: &mut Criterion) {
             )
         })
     });
+    let negative_sqrt_two = AlgebraicRootRepresentation {
+        interval_index: 1,
+        interval: IsolatedRootInterval {
+            lower: r(-2),
+            upper: r(-1),
+            exact_root: None,
+            distinct_root_count: 1,
+        },
+        ..sqrt_two.clone()
+    };
+    let exact_sqrt_two_coefficient = r(2).sqrt().unwrap();
+    let exact_real_coefficient_root = AlgebraicRootRepresentation {
+        constraint_index: 2,
+        polynomial_coefficients: vec![-exact_sqrt_two_coefficient.clone(), Real::one()],
+        interval: IsolatedRootInterval {
+            lower: r(1),
+            upper: (r(3) / r(2)).unwrap(),
+            exact_root: None,
+            distinct_root_count: 1,
+        },
+        ..sqrt_two.clone()
+    };
+    let one_sided_exact_real_sqrt_three = AlgebraicRootRepresentation {
+        interval: IsolatedRootInterval {
+            lower: (r(7) / r(5)).unwrap(),
+            upper: r(2),
+            exact_root: None,
+            distinct_root_count: 1,
+        },
+        ..sqrt_three.clone()
+    };
+    let refinement_interval = IsolatedRootInterval {
+        lower: r(1),
+        upper: r(2),
+        exact_root: None,
+        distinct_root_count: 1,
+    };
+    let four_step_refinement = RootIsolationConfig {
+        policy: hyperlimit::PredicatePolicy::STRICT,
+        max_interval_width: None,
+        max_refinement_steps: 4,
+    };
+    let quadratic = [r(-2), Real::zero(), Real::one()];
+    c.bench_function(
+        "refine_isolated_univariate_polynomial_interval/quadratic_steps_4",
+        |b| {
+            b.iter(|| {
+                refine_isolated_univariate_polynomial_interval(
+                    &quadratic,
+                    &refinement_interval,
+                    four_step_refinement.clone(),
+                )
+            })
+        },
+    );
+    let repeated_quadratic = [r(4), Real::zero(), r(-4), Real::zero(), Real::one()];
+    c.bench_function(
+        "refine_isolated_univariate_polynomial_interval/repeated_quadratic_steps_4",
+        |b| {
+            b.iter(|| {
+                refine_isolated_univariate_polynomial_interval(
+                    &repeated_quadratic,
+                    &refinement_interval,
+                    four_step_refinement.clone(),
+                )
+            })
+        },
+    );
+    let exact_linear_polynomial = [r(-2), Real::one()];
+    let exact_witness_interval = IsolatedRootInterval {
+        lower: r(2),
+        upper: r(2),
+        exact_root: Some(r(2)),
+        distinct_root_count: 1,
+    };
+    c.bench_function(
+        "refine_isolated_univariate_polynomial_interval/exact_linear_witness",
+        |b| {
+            b.iter(|| {
+                refine_isolated_univariate_polynomial_interval(
+                    &exact_linear_polynomial,
+                    &exact_witness_interval,
+                    RootIsolationConfig::default(),
+                )
+            })
+        },
+    );
+    let exact_quadratic_polynomial = [r(-4), Real::zero(), Real::one()];
+    c.bench_function(
+        "refine_isolated_univariate_polynomial_interval/exact_quadratic_witness",
+        |b| {
+            b.iter(|| {
+                refine_isolated_univariate_polynomial_interval(
+                    &exact_quadratic_polynomial,
+                    &exact_witness_interval,
+                    RootIsolationConfig::default(),
+                )
+            })
+        },
+    );
+    let wide_exact_witness_interval = IsolatedRootInterval {
+        lower: r(1),
+        upper: r(3),
+        exact_root: Some(r(2)),
+        distinct_root_count: 1,
+    };
+    c.bench_function(
+        "refine_isolated_univariate_polynomial_interval/wide_exact_quadratic_witness",
+        |b| {
+            b.iter(|| {
+                refine_isolated_univariate_polynomial_interval(
+                    &exact_quadratic_polynomial,
+                    &wide_exact_witness_interval,
+                    RootIsolationConfig::default(),
+                )
+            })
+        },
+    );
+    let lower_endpoint_quadratic = [r(-1), Real::zero(), Real::one()];
+    c.bench_function(
+        "refine_isolated_univariate_polynomial_interval/lower_endpoint_root",
+        |b| {
+            b.iter(|| {
+                refine_isolated_univariate_polynomial_interval(
+                    &lower_endpoint_quadratic,
+                    &refinement_interval,
+                    RootIsolationConfig::default(),
+                )
+            })
+        },
+    );
+    c.bench_function(
+        "refine_isolated_univariate_polynomial_interval/upper_endpoint_root",
+        |b| {
+            b.iter(|| {
+                refine_isolated_univariate_polynomial_interval(
+                    &exact_quadratic_polynomial,
+                    &refinement_interval,
+                    RootIsolationConfig::default(),
+                )
+            })
+        },
+    );
+    let exact_real_polynomial = [-exact_sqrt_two_coefficient.clone(), Real::one()];
+    c.bench_function(
+        "refine_isolated_univariate_polynomial_interval/exact_real_coefficients_steps_4",
+        |b| {
+            b.iter(|| {
+                refine_isolated_univariate_polynomial_interval(
+                    &exact_real_polynomial,
+                    &refinement_interval,
+                    four_step_refinement.clone(),
+                )
+            })
+        },
+    );
+    let width_satisfied_refinement = RootIsolationConfig {
+        max_interval_width: Some(Real::one()),
+        ..four_step_refinement.clone()
+    };
+    c.bench_function(
+        "refine_isolated_univariate_polynomial_interval/width_already_satisfied",
+        |b| {
+            b.iter(|| {
+                refine_isolated_univariate_polynomial_interval(
+                    &quadratic,
+                    &refinement_interval,
+                    width_satisfied_refinement.clone(),
+                )
+            })
+        },
+    );
+    let root_presence_lower = Real::zero();
+    let root_presence_upper = Real::one();
+    let root_presence_two = r(2);
+    let root_presence_policy = hyperlimit::PredicatePolicy::STRICT;
+    let root_presence_quadratic = [r(-1), Real::zero(), r(2)];
+    c.bench_function(
+        "polynomial_has_one_distinct_root_in_open_interval/quadratic_sign",
+        |b| {
+            b.iter(|| {
+                polynomial_has_one_distinct_root_in_open_interval(
+                    &root_presence_quadratic,
+                    &root_presence_lower,
+                    &root_presence_upper,
+                    root_presence_policy,
+                )
+            })
+        },
+    );
+    let mut monotone_degree_16 = vec![Real::zero(); 17];
+    monotone_degree_16[0] = (r(-1) / r(2)).unwrap();
+    monotone_degree_16[1] = Real::one();
+    monotone_degree_16[16] = Real::one();
+    c.bench_function(
+        "polynomial_has_one_distinct_root_in_open_interval/monotone_degree_16",
+        |b| {
+            b.iter(|| {
+                polynomial_has_one_distinct_root_in_open_interval(
+                    &monotone_degree_16,
+                    &root_presence_lower,
+                    &root_presence_upper,
+                    root_presence_policy,
+                )
+            })
+        },
+    );
+    let half_root = [r(-1), r(2)];
+    let outside_root = [r(2), Real::one()];
+    let mut bernstein_degree_16 = half_root.to_vec();
+    for _ in 0..15 {
+        bernstein_degree_16 = benchmark_polynomial_product(&bernstein_degree_16, &outside_root);
+    }
+    c.bench_function(
+        "polynomial_has_one_distinct_root_in_open_interval/bernstein_degree_16",
+        |b| {
+            b.iter(|| {
+                polynomial_has_one_distinct_root_in_open_interval(
+                    &bernstein_degree_16,
+                    &root_presence_lower,
+                    &root_presence_upper,
+                    root_presence_policy,
+                )
+            })
+        },
+    );
+    let repeated_quadratic_presence = [r(1), r(-4), r(4)];
+    c.bench_function(
+        "polynomial_has_one_distinct_root_in_open_interval/repeated_quadratic",
+        |b| {
+            b.iter(|| {
+                polynomial_has_one_distinct_root_in_open_interval(
+                    &repeated_quadratic_presence,
+                    &root_presence_lower,
+                    &root_presence_upper,
+                    root_presence_policy,
+                )
+            })
+        },
+    );
+    let exact_real_presence_root = r(2).sqrt().unwrap();
+    let repeated_exact_real_presence = [r(2), r(-2) * &exact_real_presence_root, Real::one()];
+    c.bench_function(
+        "polynomial_has_one_distinct_root_in_open_interval/repeated_exact_real",
+        |b| {
+            b.iter(|| {
+                polynomial_has_one_distinct_root_in_open_interval(
+                    &repeated_exact_real_presence,
+                    &root_presence_upper,
+                    &root_presence_two,
+                    root_presence_policy,
+                )
+            })
+        },
+    );
+    let sturm_fallback_cubic = [r(-2), r(9), r(-15), r(10)];
+    c.bench_function(
+        "polynomial_has_one_distinct_root_in_open_interval/sturm_fallback_cubic",
+        |b| {
+            b.iter(|| {
+                polynomial_has_one_distinct_root_in_open_interval(
+                    &sturm_fallback_cubic,
+                    &root_presence_lower,
+                    &root_presence_upper,
+                    root_presence_policy,
+                )
+            })
+        },
+    );
+    let endpoint_and_interior_quadratic = [Real::zero(), r(-1), r(2)];
+    c.bench_function(
+        "polynomial_has_one_distinct_root_in_open_interval/endpoint_and_interior",
+        |b| {
+            b.iter(|| {
+                polynomial_has_one_distinct_root_in_open_interval(
+                    &endpoint_and_interior_quadratic,
+                    &root_presence_lower,
+                    &root_presence_upper,
+                    root_presence_policy,
+                )
+            })
+        },
+    );
     c.bench_function("compare_algebraic_root_representations", |b| {
         b.iter(|| {
             compare_algebraic_root_representations(
@@ -4743,6 +6315,18 @@ fn certification(c: &mut Criterion) {
             )
         })
     });
+    c.bench_function(
+        "compare_algebraic_root_representations/disjoint_intervals",
+        |b| {
+            b.iter(|| {
+                compare_algebraic_root_representations(
+                    &negative_sqrt_two,
+                    &sqrt_three,
+                    hyperlimit::PredicatePolicy::STRICT,
+                )
+            })
+        },
+    );
     c.bench_function(
         "compare_algebraic_root_representations_with_refinement",
         |b| {
@@ -4760,6 +6344,22 @@ fn certification(c: &mut Criterion) {
         },
     );
     c.bench_function(
+        "compare_algebraic_root_representations_with_refinement/one_sided_exact_real_coefficients",
+        |b| {
+            b.iter(|| {
+                compare_algebraic_root_representations_with_refinement(
+                    &exact_real_coefficient_root,
+                    &one_sided_exact_real_sqrt_three,
+                    AlgebraicRootRefinementComparisonConfig {
+                        policy: hyperlimit::PredicatePolicy::STRICT,
+                        max_refinement_rounds: 2,
+                        steps_per_round: 1,
+                    },
+                )
+            })
+        },
+    );
+    c.bench_function(
         "compare_algebraic_root_representations_by_difference",
         |b| {
             b.iter(|| {
@@ -4769,6 +6369,22 @@ fn certification(c: &mut Criterion) {
                     AlgebraicRootRefinementComparisonConfig {
                         max_refinement_rounds: 0,
                         ..AlgebraicRootRefinementComparisonConfig::default()
+                    },
+                )
+            })
+        },
+    );
+    c.bench_function(
+        "compare_algebraic_root_representations_by_difference/disjoint_intervals",
+        |b| {
+            b.iter(|| {
+                compare_algebraic_root_representations_by_difference(
+                    &negative_sqrt_two,
+                    &sqrt_three,
+                    AlgebraicRootRefinementComparisonConfig {
+                        policy: hyperlimit::PredicatePolicy::STRICT,
+                        max_refinement_rounds: 0,
+                        steps_per_round: 1,
                     },
                 )
             })
@@ -4802,6 +6418,204 @@ fn certification(c: &mut Criterion) {
         },
         ..rational_two.clone()
     };
+    let rational_zero = AlgebraicRootRepresentation {
+        constraint_index: 4,
+        polynomial_coefficients: vec![Real::zero(), Real::one()],
+        interval: IsolatedRootInterval {
+            lower: Real::zero(),
+            upper: Real::zero(),
+            exact_root: Some(Real::zero()),
+            distinct_root_count: 1,
+        },
+        ..rational_two.clone()
+    };
+    let touching_zero_one = AlgebraicRootRepresentation {
+        constraint_index: 5,
+        polynomial_coefficients: vec![r(-1), Real::one()],
+        interval: IsolatedRootInterval {
+            lower: Real::zero(),
+            upper: r(2),
+            exact_root: None,
+            distinct_root_count: 1,
+        },
+        kind: AlgebraicRootKind::IsolatingInterval,
+        ..rational_two.clone()
+    };
+    let affine_square_root = AlgebraicRootRepresentation {
+        constraint_index: 6,
+        polynomial_coefficients: vec![r(-1), Real::one(), Real::one()],
+        interval: IsolatedRootInterval {
+            lower: Real::zero(),
+            upper: Real::one(),
+            exact_root: None,
+            distinct_root_count: 1,
+        },
+        kind: AlgebraicRootKind::IsolatingInterval,
+        ..rational_two.clone()
+    };
+    let exact_sqrt_two = r(2).sqrt().unwrap();
+    let exact_sqrt_two_point = AlgebraicRootRepresentation {
+        constraint_index: 7,
+        polynomial_coefficients: vec![-exact_sqrt_two.clone(), Real::one()],
+        interval: IsolatedRootInterval {
+            lower: exact_sqrt_two.clone(),
+            upper: exact_sqrt_two.clone(),
+            exact_root: Some(exact_sqrt_two),
+            distinct_root_count: 1,
+        },
+        kind: AlgebraicRootKind::IsolatingInterval,
+        ..rational_two.clone()
+    };
+    let exact_pi = Real::pi();
+    let exact_pi_point = AlgebraicRootRepresentation {
+        constraint_index: 8,
+        polynomial_coefficients: vec![-exact_pi.clone(), Real::one()],
+        interval: IsolatedRootInterval {
+            lower: exact_pi.clone(),
+            upper: exact_pi.clone(),
+            exact_root: Some(exact_pi),
+            distinct_root_count: 1,
+        },
+        kind: AlgebraicRootKind::IsolatingInterval,
+        ..rational_two.clone()
+    };
+    let exact_normal = exact_normal_positive();
+    let exact_normal_point = AlgebraicRootRepresentation {
+        constraint_index: 9,
+        polynomial_coefficients: vec![-exact_normal.clone(), Real::one()],
+        interval: IsolatedRootInterval {
+            lower: exact_normal.clone(),
+            upper: exact_normal.clone(),
+            exact_root: Some(exact_normal.clone()),
+            distinct_root_count: 1,
+        },
+        kind: AlgebraicRootKind::IsolatingInterval,
+        ..rational_two.clone()
+    };
+    c.bench_function(
+        "compare_algebraic_root_representations/exact_rational_points",
+        |b| {
+            b.iter(|| {
+                compare_algebraic_root_representations(
+                    &rational_two,
+                    &rational_three,
+                    hyperlimit::PredicatePolicy::STRICT,
+                )
+            })
+        },
+    );
+    c.bench_function(
+        "compare_algebraic_root_representations/exact_real_points",
+        |b| {
+            b.iter(|| {
+                compare_algebraic_root_representations(
+                    &exact_sqrt_two_point,
+                    &exact_pi_point,
+                    hyperlimit::PredicatePolicy::STRICT,
+                )
+            })
+        },
+    );
+    let mut wide_exact_three = rational_three.clone();
+    wide_exact_three.interval.lower = Real::zero();
+    wide_exact_three.interval.upper = r(4);
+    c.bench_function(
+        "compare_algebraic_root_representations/wide_exact_point",
+        |b| {
+            b.iter(|| {
+                compare_algebraic_root_representations(
+                    &wide_exact_three,
+                    &sqrt_two,
+                    hyperlimit::PredicatePolicy::STRICT,
+                )
+            })
+        },
+    );
+    c.bench_function(
+        "compare_algebraic_root_representations_with_refinement/exact_point_against_interval",
+        |b| {
+            b.iter(|| {
+                compare_algebraic_root_representations_with_refinement(
+                    &exact_sqrt_two_point,
+                    &sqrt_three,
+                    AlgebraicRootRefinementComparisonConfig {
+                        policy: hyperlimit::PredicatePolicy::STRICT,
+                        max_refinement_rounds: 4,
+                        steps_per_round: 1,
+                    },
+                )
+            })
+        },
+    );
+    c.bench_function(
+        "compare_algebraic_root_representations_by_difference/exact_rational_points",
+        |b| {
+            b.iter(|| {
+                compare_algebraic_root_representations_by_difference(
+                    &rational_two,
+                    &rational_three,
+                    AlgebraicRootRefinementComparisonConfig {
+                        policy: hyperlimit::PredicatePolicy::STRICT,
+                        max_refinement_rounds: 0,
+                        steps_per_round: 1,
+                    },
+                )
+            })
+        },
+    );
+    c.bench_function(
+        "compare_algebraic_root_representations_by_difference/same_representation",
+        |b| {
+            b.iter(|| {
+                compare_algebraic_root_representations_by_difference(
+                    &sqrt_two,
+                    &sqrt_two,
+                    AlgebraicRootRefinementComparisonConfig {
+                        policy: hyperlimit::PredicatePolicy::STRICT,
+                        max_refinement_rounds: 0,
+                        steps_per_round: 1,
+                    },
+                )
+            })
+        },
+    );
+    let interval_two = AlgebraicRootRepresentation {
+        constraint_index: 10,
+        polynomial_coefficients: vec![r(6), r(-5), Real::one()],
+        interval: IsolatedRootInterval {
+            lower: Real::one(),
+            upper: (r(5) / r(2)).unwrap(),
+            exact_root: None,
+            distinct_root_count: 1,
+        },
+        kind: AlgebraicRootKind::IsolatingInterval,
+        ..rational_two.clone()
+    };
+    c.bench_function(
+        "compare_algebraic_root_representations_by_difference/exact_point_common_root",
+        |b| {
+            b.iter(|| {
+                compare_algebraic_root_representations_by_difference(
+                    &rational_two,
+                    &interval_two,
+                    AlgebraicRootRefinementComparisonConfig {
+                        policy: hyperlimit::PredicatePolicy::STRICT,
+                        max_refinement_rounds: 0,
+                        steps_per_round: 1,
+                    },
+                )
+            })
+        },
+    );
+    c.bench_function("represented_root_sign/isolating_interval", |b| {
+        b.iter(|| represented_root_sign(&sqrt_two, hyperlimit::PredicatePolicy::STRICT))
+    });
+    c.bench_function("represented_root_sign/exact_rational_point", |b| {
+        b.iter(|| represented_root_sign(&rational_two, hyperlimit::PredicatePolicy::STRICT))
+    });
+    c.bench_function("represented_root_sign/exact_real_point", |b| {
+        b.iter(|| represented_root_sign(&exact_sqrt_two_point, hyperlimit::PredicatePolicy::STRICT))
+    });
     c.bench_function("arithmetic_algebraic_root_representations", |b| {
         b.iter(|| {
             arithmetic_algebraic_root_representations(
@@ -4825,6 +6639,120 @@ fn certification(c: &mut Criterion) {
             })
         },
     );
+    c.bench_function(
+        "arithmetic_algebraic_root_representations/same_root_multiply",
+        |b| {
+            b.iter(|| {
+                arithmetic_algebraic_root_representations(
+                    &sqrt_two,
+                    Some(&sqrt_two),
+                    AlgebraicRootArithmeticOp::Multiply,
+                    hyperlimit::PredicatePolicy::APPROXIMATE_512,
+                )
+            })
+        },
+    );
+    c.bench_function(
+        "arithmetic_algebraic_root_representations/same_root_add",
+        |b| {
+            b.iter(|| {
+                arithmetic_algebraic_root_representations(
+                    &sqrt_two,
+                    Some(&sqrt_two),
+                    AlgebraicRootArithmeticOp::Add,
+                    hyperlimit::PredicatePolicy::APPROXIMATE_512,
+                )
+            })
+        },
+    );
+    c.bench_function(
+        "arithmetic_algebraic_root_representations/same_quadratic_affine_square",
+        |b| {
+            b.iter(|| {
+                arithmetic_algebraic_root_representations(
+                    &affine_square_root,
+                    Some(&affine_square_root),
+                    AlgebraicRootArithmeticOp::Multiply,
+                    hyperlimit::PredicatePolicy::STRICT,
+                )
+            })
+        },
+    );
+    c.bench_function("arithmetic_algebraic_root_representations/negate", |b| {
+        b.iter(|| {
+            arithmetic_algebraic_root_representations(
+                &sqrt_two,
+                None,
+                AlgebraicRootArithmeticOp::Negate,
+                hyperlimit::PredicatePolicy::APPROXIMATE_512,
+            )
+        })
+    });
+    c.bench_function(
+        "arithmetic_algebraic_root_representations/zero_dividend",
+        |b| {
+            b.iter(|| {
+                arithmetic_algebraic_root_representations(
+                    &rational_zero,
+                    Some(&sqrt_two),
+                    AlgebraicRootArithmeticOp::Divide,
+                    hyperlimit::PredicatePolicy::APPROXIMATE_512,
+                )
+            })
+        },
+    );
+    c.bench_function(
+        "arithmetic_algebraic_root_representations/same_root_touching_zero_divide",
+        |b| {
+            b.iter(|| {
+                arithmetic_algebraic_root_representations(
+                    &touching_zero_one,
+                    Some(&touching_zero_one),
+                    AlgebraicRootArithmeticOp::Divide,
+                    hyperlimit::PredicatePolicy::APPROXIMATE_512,
+                )
+            })
+        },
+    );
+    c.bench_function(
+        "arithmetic_algebraic_root_representations/exact_real_points",
+        |b| {
+            b.iter(|| {
+                arithmetic_algebraic_root_representations(
+                    &exact_sqrt_two_point,
+                    Some(&exact_pi_point),
+                    AlgebraicRootArithmeticOp::Add,
+                    hyperlimit::PredicatePolicy::APPROXIMATE_512,
+                )
+            })
+        },
+    );
+    c.bench_function(
+        "arithmetic_algebraic_root_representations/mixed_exact_real_scalar",
+        |b| {
+            b.iter(|| {
+                arithmetic_algebraic_root_representations(
+                    &sqrt_two,
+                    Some(&exact_pi_point),
+                    AlgebraicRootArithmeticOp::Add,
+                    hyperlimit::PredicatePolicy::APPROXIMATE_512,
+                )
+            })
+        },
+    );
+    c.bench_function(
+        "arithmetic_algebraic_root_representations/exact_normal_point_divide",
+        |b| {
+            b.iter(|| {
+                arithmetic_algebraic_root_representations(
+                    &rational_two,
+                    Some(&exact_normal_point),
+                    AlgebraicRootArithmeticOp::Divide,
+                    hyperlimit::PredicatePolicy::STRICT,
+                )
+            })
+        },
+    );
     c.bench_function("evaluate_polynomial_at_algebraic_root", |b| {
         b.iter(|| {
             evaluate_polynomial_at_algebraic_root(
@@ -4834,6 +6762,56 @@ fn certification(c: &mut Criterion) {
             )
         })
     });
+    c.bench_function(
+        "evaluate_polynomial_at_algebraic_root/exact_rational_point",
+        |b| {
+            b.iter(|| {
+                evaluate_polynomial_at_algebraic_root(
+                    &rational_three,
+                    &[r(1), r(1), r(1)],
+                    hyperlimit::PredicatePolicy::APPROXIMATE_512,
+                )
+            })
+        },
+    );
+    c.bench_function(
+        "evaluate_polynomial_at_algebraic_root/exact_real_point",
+        |b| {
+            b.iter(|| {
+                evaluate_polynomial_at_algebraic_root(
+                    &exact_sqrt_two_point,
+                    &[r(1), r(1)],
+                    hyperlimit::PredicatePolicy::STRICT,
+                )
+            })
+        },
+    );
+    let dense_evaluation_coefficients = vec![Real::one(); 17];
+    c.bench_function(
+        "evaluate_polynomial_at_algebraic_root/degree_16_interval",
+        |b| {
+            b.iter(|| {
+                evaluate_polynomial_at_algebraic_root(
+                    &sqrt_two,
+                    &dense_evaluation_coefficients,
+                    hyperlimit::PredicatePolicy::APPROXIMATE_512,
+                )
+            })
+        },
+    );
+    let exact_normal_polynomial = [exact_normal_positive()];
+    c.bench_function(
+        "evaluate_polynomial_at_algebraic_root/exact_normal_constant",
+        |b| {
+            b.iter(|| {
+                evaluate_polynomial_at_algebraic_root(
+                    &rational_two,
+                    &exact_normal_polynomial,
+                    hyperlimit::PredicatePolicy::STRICT,
+                )
+            })
+        },
+    );
     c.bench_function("evaluate_rational_expression_at_algebraic_root", |b| {
         b.iter(|| {
             evaluate_rational_expression_at_algebraic_root(
@@ -4844,10 +6822,183 @@ fn certification(c: &mut Criterion) {
             )
         })
     });
+    c.bench_function(
+        "evaluate_rational_expression_at_algebraic_root/exact_rational_point",
+        |b| {
+            b.iter(|| {
+                evaluate_rational_expression_at_algebraic_root(
+                    &rational_three,
+                    &[r(1), r(1)],
+                    &[r(-1), r(1)],
+                    hyperlimit::PredicatePolicy::APPROXIMATE_512,
+                )
+            })
+        },
+    );
+    c.bench_function(
+        "evaluate_rational_expression_at_algebraic_root/exact_real_point",
+        |b| {
+            b.iter(|| {
+                evaluate_rational_expression_at_algebraic_root(
+                    &exact_sqrt_two_point,
+                    &[r(1), r(1)],
+                    &[Real::one()],
+                    hyperlimit::PredicatePolicy::STRICT,
+                )
+            })
+        },
+    );
+    let exact_point_identity = [Real::zero(), Real::one()];
+    c.bench_function(
+        "evaluate_rational_expression_at_algebraic_root/same_exact_real_value",
+        |b| {
+            b.iter(|| {
+                evaluate_rational_expression_at_algebraic_root(
+                    &exact_sqrt_two_point,
+                    &exact_point_identity,
+                    &exact_point_identity,
+                    hyperlimit::PredicatePolicy::STRICT,
+                )
+            })
+        },
+    );
+    let exact_normal_numerator = [r(2)];
+    let exact_normal_denominator = [exact_normal_positive()];
+    c.bench_function(
+        "evaluate_rational_expression_at_algebraic_root/exact_normal_denominator",
+        |b| {
+            b.iter(|| {
+                evaluate_rational_expression_at_algebraic_root(
+                    &rational_two,
+                    &exact_normal_numerator,
+                    &exact_normal_denominator,
+                    hyperlimit::PredicatePolicy::STRICT,
+                )
+            })
+        },
+    );
+    let zero_exact_normal_denominator = [exact_normal_positive()];
+    c.bench_function(
+        "evaluate_rational_expression_at_algebraic_root/zero_over_exact_normal_denominator",
+        |b| {
+            b.iter(|| {
+                evaluate_rational_expression_at_algebraic_root(
+                    &rational_two,
+                    &[Real::zero()],
+                    &zero_exact_normal_denominator,
+                    hyperlimit::PredicatePolicy::STRICT,
+                )
+            })
+        },
+    );
     c.bench_function("transform_algebraic_root_affine", |b| {
         b.iter(|| {
             transform_algebraic_root_affine(
                 &sqrt_two,
+                r(2),
+                r(3),
+                hyperlimit::PredicatePolicy::APPROXIMATE_512,
+            )
+        })
+    });
+    c.bench_function("transform_algebraic_root_affine/translation", |b| {
+        b.iter(|| {
+            transform_algebraic_root_affine(
+                &sqrt_two,
+                Real::one(),
+                r(3),
+                hyperlimit::PredicatePolicy::APPROXIMATE_512,
+            )
+        })
+    });
+    c.bench_function("transform_algebraic_root_affine/scaling", |b| {
+        b.iter(|| {
+            transform_algebraic_root_affine(
+                &sqrt_two,
+                r(2),
+                Real::zero(),
+                hyperlimit::PredicatePolicy::APPROXIMATE_512,
+            )
+        })
+    });
+    c.bench_function("transform_algebraic_root_affine/negative_scaling", |b| {
+        b.iter(|| {
+            transform_algebraic_root_affine(
+                &sqrt_two,
+                r(-2),
+                Real::zero(),
+                hyperlimit::PredicatePolicy::APPROXIMATE_512,
+            )
+        })
+    });
+    let endpoint_root_source = AlgebraicRootRepresentation {
+        polynomial_coefficients: vec![r(2), r(-2), r(-1), Real::one()],
+        ..sqrt_two.clone()
+    };
+    c.bench_function(
+        "transform_algebraic_root_affine/negative_scaling_endpoint_refinement",
+        |b| {
+            b.iter(|| {
+                transform_algebraic_root_affine(
+                    &endpoint_root_source,
+                    r(-1),
+                    Real::zero(),
+                    hyperlimit::PredicatePolicy::STRICT,
+                )
+            })
+        },
+    );
+    c.bench_function("transform_algebraic_root_affine/exact_witness", |b| {
+        b.iter(|| {
+            transform_algebraic_root_affine(
+                &rational_three,
+                r(2),
+                r(3),
+                hyperlimit::PredicatePolicy::APPROXIMATE_512,
+            )
+        })
+    });
+    let exact_real_affine_source = AlgebraicRootRepresentation {
+        polynomial_coefficients: vec![-r(2).sqrt().unwrap(), Real::one()],
+        ..sqrt_two.clone()
+    };
+    c.bench_function("transform_algebraic_root_affine/exact_real_source", |b| {
+        b.iter(|| {
+            transform_algebraic_root_affine(
+                &exact_real_affine_source,
+                r(2),
+                r(3),
+                hyperlimit::PredicatePolicy::STRICT,
+            )
+        })
+    });
+    let mut degree_sixteen_affine_coefficients = vec![Real::zero(); 17];
+    degree_sixteen_affine_coefficients[0] = r(-2);
+    degree_sixteen_affine_coefficients[16] = Real::one();
+    let degree_sixteen_affine_source = AlgebraicRootRepresentation {
+        polynomial_coefficients: degree_sixteen_affine_coefficients,
+        ..sqrt_two.clone()
+    };
+    c.bench_function("transform_algebraic_root_affine/degree_16", |b| {
+        b.iter(|| {
+            transform_algebraic_root_affine(
+                &degree_sixteen_affine_source,
+                r(2),
+                r(3),
+                hyperlimit::PredicatePolicy::APPROXIMATE_512,
+            )
+        })
+    });
+    let mut dense_degree_sixteen_affine_coefficients = vec![Real::one(); 17];
+    dense_degree_sixteen_affine_coefficients[0] = r(-100);
+    let dense_degree_sixteen_affine_source = AlgebraicRootRepresentation {
+        polynomial_coefficients: dense_degree_sixteen_affine_coefficients,
+        ..sqrt_two.clone()
+    };
+    c.bench_function("transform_algebraic_root_affine/degree_16_dense", |b| {
+        b.iter(|| {
+            transform_algebraic_root_affine(
+                &dense_degree_sixteen_affine_source,
                 r(2),
                 r(3),
                 hyperlimit::PredicatePolicy::APPROXIMATE_512,
@@ -4866,6 +7017,91 @@ fn certification(c: &mut Criterion) {
             )
         })
     });
+    c.bench_function(
+        "transform_algebraic_root_mobius/constant_denominator",
+        |b| {
+            b.iter(|| {
+                transform_algebraic_root_mobius(
+                    &sqrt_two,
+                    r(2),
+                    r(3),
+                    Real::zero(),
+                    Real::one(),
+                    hyperlimit::PredicatePolicy::APPROXIMATE_512,
+                )
+            })
+        },
+    );
+    c.bench_function("transform_algebraic_root_mobius/reciprocal", |b| {
+        b.iter(|| {
+            transform_algebraic_root_mobius(
+                &sqrt_two,
+                Real::zero(),
+                Real::one(),
+                Real::one(),
+                Real::zero(),
+                hyperlimit::PredicatePolicy::APPROXIMATE_512,
+            )
+        })
+    });
+    c.bench_function(
+        "transform_algebraic_root_mobius/reversed_endpoint_refinement",
+        |b| {
+            b.iter(|| {
+                transform_algebraic_root_mobius(
+                    &endpoint_root_source,
+                    r(-1),
+                    Real::zero(),
+                    Real::zero(),
+                    Real::one(),
+                    hyperlimit::PredicatePolicy::STRICT,
+                )
+            })
+        },
+    );
+    c.bench_function(
+        "transform_algebraic_root_mobius/excluded_endpoint_pole_refinement",
+        |b| {
+            b.iter(|| {
+                transform_algebraic_root_mobius(
+                    &sqrt_two,
+                    Real::zero(),
+                    Real::one(),
+                    Real::one(),
+                    r(-1),
+                    hyperlimit::PredicatePolicy::STRICT,
+                )
+            })
+        },
+    );
+    c.bench_function("transform_algebraic_root_mobius/exact_witness", |b| {
+        b.iter(|| {
+            transform_algebraic_root_mobius(
+                &rational_three,
+                r(2),
+                r(1),
+                r(1),
+                r(1),
+                hyperlimit::PredicatePolicy::APPROXIMATE_512,
+            )
+        })
+    });
+    let exact_real_mobius_source = AlgebraicRootRepresentation {
+        polynomial_coefficients: vec![-r(2).sqrt().unwrap(), Real::one()],
+        ..sqrt_two.clone()
+    };
+    c.bench_function("transform_algebraic_root_mobius/exact_real_source", |b| {
+        b.iter(|| {
+            transform_algebraic_root_mobius(
+                &exact_real_mobius_source,
+                r(1),
+                r(1),
+                r(1),
+                r(3),
+                hyperlimit::PredicatePolicy::STRICT,
+            )
+        })
+    });
     c.bench_function("transform_algebraic_root_polynomial_image", |b| {
         b.iter(|| {
             transform_algebraic_root_polynomial_image(
@@ -4875,6 +7111,115 @@ fn certification(c: &mut Criterion) {
             )
         })
     });
+    c.bench_function("transform_algebraic_root_polynomial_image/constant", |b| {
+        b.iter(|| {
+            transform_algebraic_root_polynomial_image(
+                &sqrt_two,
+                &[r(3)],
+                hyperlimit::PredicatePolicy::APPROXIMATE_512,
+            )
+        })
+    });
+    c.bench_function(
+        "transform_algebraic_root_polynomial_image/exact_witness",
+        |b| {
+            b.iter(|| {
+                transform_algebraic_root_polynomial_image(
+                    &rational_three,
+                    &[r(1), r(2), r(3)],
+                    hyperlimit::PredicatePolicy::APPROXIMATE_512,
+                )
+            })
+        },
+    );
+    c.bench_function(
+        "transform_algebraic_root_polynomial_image/rational_modulus_image",
+        |b| {
+            b.iter(|| {
+                transform_algebraic_root_polynomial_image(
+                    &sqrt_two,
+                    &[r(0), r(0), r(1)],
+                    hyperlimit::PredicatePolicy::APPROXIMATE_512,
+                )
+            })
+        },
+    );
+    let repeated_polynomial_image_source = AlgebraicRootRepresentation {
+        polynomial_coefficients: vec![r(16), r(0), r(-32), r(0), r(24), r(0), r(-8), r(0), r(1)],
+        ..sqrt_two.clone()
+    };
+    c.bench_function(
+        "transform_algebraic_root_polynomial_image/repeated_degree_eight_carrier",
+        |b| {
+            b.iter(|| {
+                transform_algebraic_root_polynomial_image(
+                    &repeated_polynomial_image_source,
+                    &[r(0), r(1), r(1)],
+                    hyperlimit::PredicatePolicy::APPROXIMATE_512,
+                )
+            })
+        },
+    );
+    let repeated_degree_six_polynomial_image_source = AlgebraicRootRepresentation {
+        polynomial_coefficients: vec![r(-8), r(0), r(12), r(0), r(-6), r(0), r(1)],
+        ..sqrt_two.clone()
+    };
+    c.bench_function(
+        "transform_algebraic_root_polynomial_image/repeated_degree_six_carrier",
+        |b| {
+            b.iter(|| {
+                transform_algebraic_root_polynomial_image(
+                    &repeated_degree_six_polynomial_image_source,
+                    &[r(0), r(1), r(1)],
+                    hyperlimit::PredicatePolicy::APPROXIMATE_512,
+                )
+            })
+        },
+    );
+    let square_free_degree_six_polynomial_image_source = AlgebraicRootRepresentation {
+        polynomial_coefficients: vec![r(-4), r(0), r(-4), r(0), r(1), r(0), r(1)],
+        ..sqrt_two.clone()
+    };
+    c.bench_function(
+        "transform_algebraic_root_polynomial_image/square_free_degree_six_carrier",
+        |b| {
+            b.iter(|| {
+                transform_algebraic_root_polynomial_image(
+                    &square_free_degree_six_polynomial_image_source,
+                    &[r(0), r(1), r(1)],
+                    hyperlimit::PredicatePolicy::APPROXIMATE_512,
+                )
+            })
+        },
+    );
+    c.bench_function(
+        "transform_algebraic_root_polynomial_image/stationary",
+        |b| {
+            b.iter(|| {
+                transform_algebraic_root_polynomial_image(
+                    &sqrt_two,
+                    &[r(0), r(-6), r(0), r(1)],
+                    hyperlimit::PredicatePolicy::APPROXIMATE_512,
+                )
+            })
+        },
+    );
+    let polynomial_image_foreign_source = AlgebraicRootRepresentation {
+        polynomial_coefficients: vec![r(6), r(-2), r(-3), r(1)],
+        ..sqrt_two.clone()
+    };
+    c.bench_function(
+        "transform_algebraic_root_polynomial_image/foreign_root_refinement",
+        |b| {
+            b.iter(|| {
+                transform_algebraic_root_polynomial_image(
+                    &polynomial_image_foreign_source,
+                    &[r(0), r(-4), r(1)],
+                    hyperlimit::PredicatePolicy::APPROXIMATE_512,
+                )
+            })
+        },
+    );
     c.bench_function("transform_algebraic_root_rational_image", |b| {
         b.iter(|| {
             transform_algebraic_root_rational_image(
@@ -4885,6 +7230,193 @@ fn certification(c: &mut Criterion) {
             )
         })
     });
+    let batch_rational_numerators = [[r(0), r(1)], [r(1), r(1)], [r(-1), r(2)], [r(3), r(-1)]];
+    let batch_rational_numerator_refs = [
+        batch_rational_numerators[0].as_slice(),
+        batch_rational_numerators[1].as_slice(),
+        batch_rational_numerators[2].as_slice(),
+        batch_rational_numerators[3].as_slice(),
+    ];
+    let batch_rational_denominator = [r(1), r(1)];
+    assert!(
+        transform_algebraic_root_rational_images(
+            &sqrt_two,
+            batch_rational_numerator_refs,
+            &batch_rational_denominator,
+            hyperlimit::PredicatePolicy::APPROXIMATE_512,
+        )
+        .iter()
+        .all(|report| report.representation.is_some())
+    );
+    c.bench_function(
+        "transform_algebraic_root_rational_images/batch_four_linear",
+        |b| {
+            b.iter(|| {
+                transform_algebraic_root_rational_images(
+                    &sqrt_two,
+                    batch_rational_numerator_refs,
+                    &batch_rational_denominator,
+                    hyperlimit::PredicatePolicy::APPROXIMATE_512,
+                )
+            })
+        },
+    );
+    let batch_dependency_denominator = [r(2), r(-2), r(1)];
+    c.bench_function(
+        "transform_algebraic_root_rational_images/batch_four_dependency_denominator",
+        |b| {
+            b.iter(|| {
+                transform_algebraic_root_rational_images(
+                    &sqrt_two,
+                    batch_rational_numerator_refs,
+                    &batch_dependency_denominator,
+                    hyperlimit::PredicatePolicy::APPROXIMATE_512,
+                )
+            })
+        },
+    );
+    let constant_rational_denominator = vec![r(2), r(1), r(1), r(1), r(1), r(1), r(1)];
+    let constant_rational_numerator = constant_rational_denominator
+        .iter()
+        .cloned()
+        .map(|coefficient| coefficient * r(3))
+        .collect::<Vec<_>>();
+    assert_eq!(
+        transform_algebraic_root_rational_image(
+            &sqrt_two,
+            &constant_rational_numerator,
+            &constant_rational_denominator,
+            hyperlimit::PredicatePolicy::APPROXIMATE_512,
+        )
+        .representation
+        .as_ref()
+        .and_then(AlgebraicRootRepresentation::exact_point_witness),
+        Some(&r(3))
+    );
+    c.bench_function(
+        "transform_algebraic_root_rational_image/constant_degree_6",
+        |b| {
+            b.iter(|| {
+                transform_algebraic_root_rational_image(
+                    &sqrt_two,
+                    &constant_rational_numerator,
+                    &constant_rational_denominator,
+                    hyperlimit::PredicatePolicy::APPROXIMATE_512,
+                )
+            })
+        },
+    );
+    let stationary_rational_numerator = [r(0), r(-6), r(0), r(1)];
+    let monotone_rational_numerator = [r(0), r(0), r(1)];
+    c.bench_function(
+        "transform_algebraic_root_rational_image/monotone_quadratic",
+        |b| {
+            b.iter(|| {
+                transform_algebraic_root_rational_image(
+                    &sqrt_two,
+                    &monotone_rational_numerator,
+                    &[r(1)],
+                    hyperlimit::PredicatePolicy::APPROXIMATE_512,
+                )
+            })
+        },
+    );
+    c.bench_function(
+        "transform_algebraic_root_rational_image/stationary_cubic",
+        |b| {
+            b.iter(|| {
+                transform_algebraic_root_rational_image(
+                    &sqrt_two,
+                    &stationary_rational_numerator,
+                    &[r(1)],
+                    hyperlimit::PredicatePolicy::APPROXIMATE_512,
+                )
+            })
+        },
+    );
+    let dependency_broadened_denominator = [r(2), r(-2), r(1)];
+    c.bench_function(
+        "transform_algebraic_root_rational_image/dependency_broadened_denominator",
+        |b| {
+            b.iter(|| {
+                transform_algebraic_root_rational_image(
+                    &sqrt_two,
+                    &[r(1)],
+                    &dependency_broadened_denominator,
+                    hyperlimit::PredicatePolicy::APPROXIMATE_512,
+                )
+            })
+        },
+    );
+    c.bench_function(
+        "transform_algebraic_root_rational_image/certified_algebraic_pole",
+        |b| {
+            b.iter(|| {
+                transform_algebraic_root_rational_image(
+                    &sqrt_two,
+                    &[r(1)],
+                    &sqrt_two.polynomial_coefficients,
+                    hyperlimit::PredicatePolicy::APPROXIMATE_512,
+                )
+            })
+        },
+    );
+    let shared_rational_factor = vec![r(1), r(1)];
+    let shared_factor_numerator =
+        benchmark_polynomial_product(&shared_rational_factor, &[r(1), r(0), r(1)]);
+    let shared_factor_denominator =
+        benchmark_polynomial_product(&shared_rational_factor, &[r(2), r(0), r(1)]);
+    assert!(
+        transform_algebraic_root_rational_image(
+            &sqrt_two,
+            &shared_factor_numerator,
+            &shared_factor_denominator,
+            hyperlimit::PredicatePolicy::APPROXIMATE_512,
+        )
+        .representation
+        .is_some()
+    );
+    c.bench_function(
+        "transform_algebraic_root_rational_image/shared_linear_factor",
+        |b| {
+            b.iter(|| {
+                transform_algebraic_root_rational_image(
+                    &sqrt_two,
+                    &shared_factor_numerator,
+                    &shared_factor_denominator,
+                    hyperlimit::PredicatePolicy::APPROXIMATE_512,
+                )
+            })
+        },
+    );
+    let shared_nonmonic_factor = vec![r(1), r(2)];
+    let shared_nonmonic_numerator =
+        benchmark_polynomial_product(&shared_nonmonic_factor, &[r(1), r(0), r(1)]);
+    let shared_nonmonic_denominator =
+        benchmark_polynomial_product(&shared_nonmonic_factor, &[r(2), r(0), r(1)]);
+    assert!(
+        transform_algebraic_root_rational_image(
+            &sqrt_two,
+            &shared_nonmonic_numerator,
+            &shared_nonmonic_denominator,
+            hyperlimit::PredicatePolicy::APPROXIMATE_512,
+        )
+        .representation
+        .is_some()
+    );
+    c.bench_function(
+        "transform_algebraic_root_rational_image/shared_nonmonic_linear_factor",
+        |b| {
+            b.iter(|| {
+                transform_algebraic_root_rational_image(
+                    &sqrt_two,
+                    &shared_nonmonic_numerator,
+                    &shared_nonmonic_denominator,
+                    hyperlimit::PredicatePolicy::APPROXIMATE_512,
+                )
+            })
+        },
+    );
     let rational_map = AlgebraicRootRationalMap::new(
         &sqrt_two.polynomial_coefficients,
         &[r(0), r(1), r(1)],
@@ -4918,6 +7450,121 @@ fn certification(c: &mut Criterion) {
             )
         })
     });
+    assert!(
+        square_root_algebraic_root_representation(&sqrt_two, 1)
+            .representation
+            .is_some()
+    );
+    c.bench_function("square_root_algebraic_root", |b| {
+        b.iter(|| square_root_algebraic_root_representation(&sqrt_two, 1))
+    });
+    let repeated_exact_two = AlgebraicRootRepresentation {
+        constraint_index: 3,
+        polynomial_coefficients: vec![r(64), r(-192), r(240), r(-160), r(60), r(-12), r(1)],
+        interval: IsolatedRootInterval {
+            lower: r(2),
+            upper: r(2),
+            exact_root: Some(r(2)),
+            distinct_root_count: 1,
+        },
+        kind: AlgebraicRootKind::ExactRationalWitness,
+        ..sqrt_two.clone()
+    };
+    assert!(
+        square_root_algebraic_root_representation(&repeated_exact_two, 1)
+            .representation
+            .is_some()
+    );
+    c.bench_function("square_root_algebraic_root/repeated_exact_witness", |b| {
+        b.iter(|| square_root_algebraic_root_representation(&repeated_exact_two, 1))
+    });
+    let repeated_exact_four = AlgebraicRootRepresentation {
+        constraint_index: 4,
+        polynomial_coefficients: vec![r(4096), r(-6144), r(3840), r(-1280), r(240), r(-24), r(1)],
+        interval: IsolatedRootInterval {
+            lower: r(4),
+            upper: r(4),
+            exact_root: Some(r(4)),
+            distinct_root_count: 1,
+        },
+        kind: AlgebraicRootKind::ExactRationalWitness,
+        ..sqrt_two.clone()
+    };
+    assert!(
+        square_root_algebraic_root_representation(&repeated_exact_four, -1)
+            .representation
+            .is_some()
+    );
+    c.bench_function(
+        "square_root_algebraic_root/repeated_rational_square_witness",
+        |b| b.iter(|| square_root_algebraic_root_representation(&repeated_exact_four, -1)),
+    );
+    let close_unit = benchmark_dyadic(200);
+    let close_first = r(2) - close_unit.clone();
+    let close_selected = r(2) + close_unit;
+    let close_neighbor_source = AlgebraicRootRepresentation {
+        constraint_index: 5,
+        polynomial_coefficients: vec![
+            close_first.clone() * close_selected.clone(),
+            -(close_first + close_selected),
+            Real::one(),
+        ],
+        interval: IsolatedRootInterval {
+            lower: r(2),
+            upper: (r(5) / r(2)).unwrap(),
+            exact_root: None,
+            distinct_root_count: 1,
+        },
+        ..sqrt_two.clone()
+    };
+    assert!(
+        square_root_algebraic_root_representation(&close_neighbor_source, 1)
+            .representation
+            .is_some()
+    );
+    c.bench_function("square_root_algebraic_root/adaptive_neighbor", |b| {
+        b.iter(|| square_root_algebraic_root_representation(&close_neighbor_source, 1))
+    });
+    let mut tight_sqrt_two = sqrt_two.clone();
+    tight_sqrt_two.interval.lower =
+        Real::from(Rational::fraction(7, 5).expect("nonzero denominator"));
+    tight_sqrt_two.interval.upper =
+        Real::from(Rational::fraction(3, 2).expect("nonzero denominator"));
+    let mut tight_sqrt_three = sqrt_three.clone();
+    tight_sqrt_three.interval.lower =
+        Real::from(Rational::fraction(5, 3).expect("nonzero denominator"));
+    tight_sqrt_three.interval.upper =
+        Real::from(Rational::fraction(7, 4).expect("nonzero denominator"));
+    assert!(
+        transform_algebraic_roots_binary(
+            &tight_sqrt_two,
+            &tight_sqrt_three,
+            AlgebraicRootArithmeticOp::Subtract,
+            hyperlimit::PredicatePolicy::STRICT,
+        )
+        .representation
+        .is_some()
+    );
+    c.bench_function("transform_algebraic_roots_binary_subtract", |b| {
+        b.iter(|| {
+            transform_algebraic_roots_binary(
+                &tight_sqrt_two,
+                &tight_sqrt_three,
+                AlgebraicRootArithmeticOp::Subtract,
+                hyperlimit::PredicatePolicy::STRICT,
+            )
+        })
+    });
+    c.bench_function("transform_algebraic_roots_binary_multiply", |b| {
+        b.iter(|| {
+            transform_algebraic_roots_binary(
+                &sqrt_two,
+                &sqrt_three,
+                AlgebraicRootArithmeticOp::Multiply,
+                hyperlimit::PredicatePolicy::APPROXIMATE_512,
+            )
+        })
+    });
     c.bench_function("transform_algebraic_roots_binary_divide", |b| {
         b.iter(|| {
             transform_algebraic_roots_binary(
@@ -4928,6 +7575,80 @@ fn certification(c: &mut Criterion) {
             )
         })
     });
+    let mut repeated_sqrt_two = sqrt_two.clone();
+    repeated_sqrt_two.polynomial_coefficients = vec![
+        r(-8),
+        Real::zero(),
+        r(12),
+        Real::zero(),
+        r(-6),
+        Real::zero(),
+        Real::one(),
+    ];
+    let mut repeated_sqrt_three = sqrt_three.clone();
+    repeated_sqrt_three.polynomial_coefficients = vec![
+        r(-27),
+        Real::zero(),
+        r(27),
+        Real::zero(),
+        r(-9),
+        Real::zero(),
+        Real::one(),
+    ];
+    assert!(
+        transform_algebraic_roots_binary(
+            &repeated_sqrt_two,
+            &repeated_sqrt_three,
+            AlgebraicRootArithmeticOp::Add,
+            hyperlimit::PredicatePolicy::STRICT,
+        )
+        .representation
+        .is_some()
+    );
+    c.bench_function(
+        "transform_algebraic_roots_binary/repeated_degree_six_carriers",
+        |b| {
+            b.iter(|| {
+                transform_algebraic_roots_binary(
+                    &repeated_sqrt_two,
+                    &repeated_sqrt_three,
+                    AlgebraicRootArithmeticOp::Add,
+                    hyperlimit::PredicatePolicy::STRICT,
+                )
+            })
+        },
+    );
+    let mut negative_repeated_sqrt_two = repeated_sqrt_two.clone();
+    negative_repeated_sqrt_two.interval_index = 1;
+    negative_repeated_sqrt_two.interval = IsolatedRootInterval {
+        lower: r(-2),
+        upper: r(-1),
+        exact_root: None,
+        distinct_root_count: 1,
+    };
+    assert!(
+        transform_algebraic_roots_binary(
+            &negative_repeated_sqrt_two,
+            &repeated_sqrt_two,
+            AlgebraicRootArithmeticOp::Add,
+            hyperlimit::PredicatePolicy::STRICT,
+        )
+        .representation
+        .is_some()
+    );
+    c.bench_function(
+        "transform_algebraic_roots_binary/shared_repeated_degree_six_carrier",
+        |b| {
+            b.iter(|| {
+                transform_algebraic_roots_binary(
+                    &negative_repeated_sqrt_two,
+                    &repeated_sqrt_two,
+                    AlgebraicRootArithmeticOp::Add,
+                    hyperlimit::PredicatePolicy::STRICT,
+                )
+            })
+        },
+    );
     c.bench_function("count_descartes_univariate_polynomial_roots", |b| {
         b.iter(|| {
             count_descartes_univariate_polynomial_roots(
@@ -5533,5 +8254,9 @@ fn certification(c: &mut Criterion) {
     });
 }
 
-criterion_group!(benches, certification);
+criterion_group!(
+    benches,
+    certification,
+    benchmark_report::finish_benchmark_report
+);
 criterion_main!(benches);

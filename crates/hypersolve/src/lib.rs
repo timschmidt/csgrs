@@ -35,6 +35,7 @@ pub mod jacobian;
 pub mod linalg;
 pub mod model;
 pub mod ordered_field_roots;
+mod policy_division;
 pub mod polynomial;
 pub mod predicates;
 pub mod rank;
@@ -65,6 +66,8 @@ pub mod solver_block;
 pub mod sparse_pattern;
 pub mod symbolic;
 pub mod tensor_resultant;
+#[cfg(test)]
+mod test_support;
 
 pub use active_set::{
     ActiveSetAffineRegenerationReport, ActiveSetAffineRegenerationStatus, ActiveSetAuditReport,
