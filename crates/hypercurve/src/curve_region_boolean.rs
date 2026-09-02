@@ -2815,8 +2815,11 @@ impl<'a> CurveRegionBooleanContext<'a> {
             regular_component.and_then(BezierParallelRationalComponent2::support_line)
         {
             matches!(
-                chord
-                    .has_non_collinear_support_with_exact_line(line, &self.data.policy)
+                self.data
+                    .policy
+                    .strict_predicate_pass(|| {
+                        chord.has_non_collinear_support_with_exact_line(line, &self.data.policy)
+                    })
                     .map_err(|cause| self.invalid(other_index, cause))?,
                 Classification::Decided(false),
             )
@@ -18300,7 +18303,7 @@ mod certified_successor_tests {
                 };
                 let result = context
                     .pair_result(&context.data.pairs[0])
-                    .expect("the chord/analytic-parallel relation must complete");
+                    .expect("the chord/analytic-parallel pair must complete");
                 let evidence = context
                     .build_intersection_evidence()
                     .expect("the chord/analytic-parallel evidence must complete");
@@ -18594,7 +18597,7 @@ mod certified_successor_tests {
                             contact_point.x() + Real::one(),
                             contact_point.y().clone(),
                         )),
-                        &CurveContext::STRICT,
+                        &policy,
                     )
                     .expect("valid regularized PH crossing chord"),
                 );

@@ -26412,18 +26412,8 @@ mod tests {
                 let corner = if reversed { 2 } else { 1 };
                 let solve = |region: &CurveRegion2, mode| {
                     region
-                        .fillet_loop_vertex_by_radius(
-                            0,
-                            corner,
-                            q(1, 10),
-                            mode,
-                            &policy,
-                        )
-                        .unwrap_or_else(|error| {
-                            panic!(
-                                "the selected-circle/line support must extend exactly: policy={policy:?}, reversed={reversed}, mode={mode:?}, error={error:?}"
-                            )
-                        })
+                        .fillet_loop_vertex_by_radius(0, corner, q(1, 10), mode, &policy)
+                        .expect("the selected-circle/line support must extend exactly")
                 };
                 let promoted_extension = solve(&promoted_line, CurveCornerMode2::TrimOrExtend);
                 let retained_extension = solve(&retained_line, CurveCornerMode2::TrimOrExtend);
@@ -28844,7 +28834,16 @@ mod tests {
         let trace = hyperreal::dispatch_trace::take_trace();
         let offset = offset.unwrap_or_else(|error| {
             #[cfg(feature = "dispatch-trace")]
-            panic!("the Boolean-fragmented pair-native boundary must offset: {error:?}; {trace:?}");
+            {
+                let hypercurve_trace = trace
+                    .dispatch
+                    .iter()
+                    .filter(|entry| entry.layer == "hypercurve")
+                    .collect::<Vec<_>>();
+                panic!(
+                    "the Boolean-fragmented pair-native boundary must offset: {error:?}; hypercurve trace: {hypercurve_trace:?}"
+                );
+            }
             #[cfg(not(feature = "dispatch-trace"))]
             panic!("the Boolean-fragmented pair-native boundary must offset: {error:?}");
         });
@@ -33582,6 +33581,10 @@ mod tests {
                 CurveRegionLoopRole::Hole,
                 CurveRegionLoopRole::Material,
             ];
+            assert_eq!(
+                region.regularized_retained_loop_roles_raw(&policy),
+                Ok(Classification::Decided(expected.clone()))
+            );
             #[cfg(feature = "dispatch-trace")]
             hyperreal::dispatch_trace::reset();
             let regularize = || region.regularized_region(&policy);
@@ -33614,11 +33617,6 @@ mod tests {
                 regularized.value.loop_roles_raw(&policy),
                 Ok(Classification::Decided(expected.clone()))
             );
-            assert_eq!(
-                region.regularized_retained_loop_roles_raw(&policy),
-                Ok(Classification::Decided(expected.clone()))
-            );
-
             let profiled = region
                 .with_certified_loop_roles(expected)
                 .expect("the exact nesting roles match the retained loops");

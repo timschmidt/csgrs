@@ -743,7 +743,47 @@ fn map_compact_incident_ray_root(
         })
     };
     match compact {
-        BezierParameter2::Exact(parameter) => Ok(BezierParameter2::Exact(map(&parameter)?)),
+        BezierParameter2::Exact(parameter) => {
+            let mapped = map(&parameter)?;
+            if mapped.exact_rational_ref().is_some() {
+                return Ok(BezierParameter2::Exact(mapped));
+            }
+            // The mapped value can be a canonical low-degree `Real`, but the
+            // incident source polynomial remains the authoritative carrier
+            // used by later root-count and sign predicates. Retain that
+            // isolator and cache the already-proved point instead of replacing
+            // it with an unrelated scalar-only parameter.
+            let strict = CurveContext::STRICT;
+            for precision in [-16, -32, -64, -128, -256, -512] {
+                let Some([lower, upper]) = mapped.certified_dyadic_interval(precision) else {
+                    break;
+                };
+                if lower == upper {
+                    break;
+                }
+                let interval = match BezierParameterInterval::try_new_ordered(
+                    Real::new(lower),
+                    Real::new(upper),
+                    &strict,
+                )? {
+                    Classification::Decided(interval) => interval,
+                    Classification::Uncertain(_) => continue,
+                };
+                if source.root_count_in_interval(&interval, &strict)? != Classification::Decided(1)
+                {
+                    continue;
+                }
+                let retained =
+                    BezierAlgebraicParameter2::from_certified_singleton(source.clone(), interval);
+                let _ = retained
+                    .data
+                    .shared
+                    .represented_exact_point
+                    .set(Some(mapped));
+                return Ok(BezierParameter2::Algebraic(retained));
+            }
+            Ok(BezierParameter2::Exact(mapped))
+        }
         BezierParameter2::Algebraic(parameter) => {
             let first = map(parameter.interval().start())?;
             let second = map(parameter.interval().end())?;
