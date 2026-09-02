@@ -299,7 +299,7 @@ pub fn project_selected_tensor_fiber_via_tagged_norm(
     projection
 }
 
-/// Reduces a selected root to a rational or quadratic `x^2-q` factor when a
+/// Reduces a selected root to an exact rational or pure-quadratic point when a
 /// bounded rational proposal is proved by exact polynomial divisibility.
 ///
 /// This is an explicit recursive-frame optimization, not a topology
@@ -352,8 +352,35 @@ pub fn compact_algebraic_root_low_degree_witness(
         if !exact_polynomial_divides(&root.polynomial_coefficients, &factor) {
             continue;
         }
+        let positive = (-factor[0].clone()).sqrt().ok()?;
+        let inside = |candidate: &Real| {
+            matches!(
+                compare_reals(&root.interval.lower, candidate, PredicatePolicy::STRICT,).value(),
+                Some(std::cmp::Ordering::Less | std::cmp::Ordering::Equal)
+            ) && matches!(
+                compare_reals(candidate, &root.interval.upper, PredicatePolicy::STRICT,).value(),
+                Some(std::cmp::Ordering::Less | std::cmp::Ordering::Equal)
+            )
+        };
+        let negative = -positive.clone();
+        let witness = match (inside(&negative), inside(&positive)) {
+            (true, false) => negative,
+            (false, true) => positive,
+            (false, false) | (true, true) => continue,
+        };
         let mut compact = root.clone();
         compact.polynomial_coefficients = factor;
+        compact.interval = IsolatedRootInterval {
+            lower: witness.clone(),
+            upper: witness.clone(),
+            exact_root: Some(witness.clone()),
+            distinct_root_count: 1,
+        };
+        compact.kind = if witness.exact_rational_ref().is_some() {
+            AlgebraicRootKind::ExactRationalWitness
+        } else {
+            AlgebraicRootKind::IsolatingInterval
+        };
         compact.validation =
             validate_algebraic_root_representation(&compact, PredicatePolicy::STRICT);
         if compact.is_valid() {
@@ -361,48 +388,6 @@ pub fn compact_algebraic_root_low_degree_witness(
         }
     }
     None
-}
-
-/// Materializes a selected rational or pure-quadratic root as a canonical
-/// [`Real`] only after exact factor replay and STRICT interval selection.
-///
-/// This is the scalar counterpart of
-/// [`compact_algebraic_root_low_degree_witness`]. It lets geometry kernels
-/// reuse a root already present in their canonical `Real` coefficient field
-/// without retaining a redundant algebraic axis. Approximation proposes only
-/// the small factor inside the compaction routine; exact polynomial division,
-/// root validation, and interval membership remain authoritative.
-pub fn compact_algebraic_root_real_witness(root: &AlgebraicRootRepresentation) -> Option<Real> {
-    let compact = compact_algebraic_root_low_degree_witness(root)?;
-    if let Some(exact) = compact.interval.exact_root.as_ref() {
-        return Some(exact.clone());
-    }
-    let [constant, linear, quadratic] = compact.polynomial_coefficients.as_slice() else {
-        return None;
-    };
-    if linear
-        .exact_rational_ref()
-        .is_none_or(|coefficient| !coefficient.is_zero())
-        || quadratic != &Real::one()
-    {
-        return None;
-    }
-    let positive = (-constant.clone()).sqrt().ok()?;
-    let inside = |candidate: &Real| {
-        matches!(
-            compare_reals(&compact.interval.lower, candidate, PredicatePolicy::STRICT).value(),
-            Some(std::cmp::Ordering::Less | std::cmp::Ordering::Equal)
-        ) && matches!(
-            compare_reals(candidate, &compact.interval.upper, PredicatePolicy::STRICT).value(),
-            Some(std::cmp::Ordering::Less | std::cmp::Ordering::Equal)
-        )
-    };
-    let negative = -positive.clone();
-    match (inside(&negative), inside(&positive)) {
-        (true, false) => Some(negative),
-        (false, true) => Some(positive),
-        (false, false) | (true, true) => None,
-    }
 }
 
 fn exact_polynomial_divides(polynomial: &[Real], factor: &[Real]) -> bool {
@@ -1050,8 +1035,8 @@ mod tests {
             vec![-three_quarters, Real::zero(), Real::one()]
         );
         assert_eq!(
-            compact_algebraic_root_real_witness(&root),
-            Some(-((real(3) / real(4)).unwrap().sqrt().unwrap()))
+            compact.exact_point_witness(),
+            Some(&(-((real(3) / real(4)).unwrap().sqrt().unwrap())))
         );
 
         let mut nonfactor = root;

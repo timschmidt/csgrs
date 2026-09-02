@@ -576,6 +576,24 @@ fn compare_admitted_algebraic_root_representations(
         );
     }
 
+    // A validated unit-root isolator whose exact endpoints coincide is
+    // already an exact point even when the producer did not populate the
+    // optional point cache. Recognize two such points here so every consumer
+    // shares the same equality authority instead of reconstructing a
+    // difference merely to rediscover coincident singleton intervals.
+    if compare_algebraic_values(left_lower, left_upper, PredicatePolicy::STRICT)
+        == Some(Ordering::Equal)
+        && compare_algebraic_values(right_lower, right_upper, PredicatePolicy::STRICT)
+            == Some(Ordering::Equal)
+        && compare_algebraic_values(left_lower, right_lower, policy) == Some(Ordering::Equal)
+    {
+        return algebraic_comparison_report(
+            AlgebraicRootComparisonStatus::Compared,
+            Some(Ordering::Equal),
+            None,
+        );
+    }
+
     algebraic_comparison_report(
         AlgebraicRootComparisonStatus::OverlappingIntervals,
         None,
@@ -4415,6 +4433,31 @@ mod tests {
         assert_eq!(same.comparison.ordering, Some(Ordering::Equal));
         assert_eq!(same.refinement.refinement_rounds, 0);
         assert!(same.difference.is_none());
+    }
+
+    #[test]
+    fn algebraic_root_comparison_recognizes_equal_irrational_singletons() {
+        let sqrt_two = real(2).sqrt().expect("positive exact square root");
+        let cached = exact_point_representation(0, sqrt_two.clone());
+        let uncached = AlgebraicRootRepresentation {
+            constraint_index: 1,
+            symbol: SymbolId(0),
+            interval_index: 0,
+            polynomial_coefficients: vec![real(-2), Real::zero(), Real::one()],
+            interval: IsolatedRootInterval {
+                lower: sqrt_two.clone(),
+                upper: sqrt_two,
+                exact_root: None,
+                distinct_root_count: 1,
+            },
+            kind: AlgebraicRootKind::IsolatingInterval,
+            validation: AlgebraicRootValidationReport::valid(),
+        };
+
+        let comparison =
+            compare_algebraic_root_representations(&uncached, &cached, PredicatePolicy::STRICT);
+        assert_eq!(comparison.status, AlgebraicRootComparisonStatus::Compared);
+        assert_eq!(comparison.ordering, Some(Ordering::Equal));
     }
 
     #[test]

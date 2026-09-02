@@ -142,8 +142,8 @@ pub use algebraic_sqrt::{
 };
 pub use algebraic_tensor_image::{
     AlgebraicTensorImageReport, AlgebraicTensorImageStatus,
-    compact_algebraic_root_low_degree_witness, compact_algebraic_root_real_witness,
-    project_selected_tensor_fiber_via_tagged_norm, represent_algebraic_tensor_image,
+    compact_algebraic_root_low_degree_witness, project_selected_tensor_fiber_via_tagged_norm,
+    represent_algebraic_tensor_image,
 };
 pub use alpha::{
     UnivariateQuadraticAlphaReport, UnivariateQuadraticAlphaRow, UnivariateQuadraticAlphaStatus,
