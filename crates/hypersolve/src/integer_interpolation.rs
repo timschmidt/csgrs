@@ -1,5 +1,5 @@
 use hyperreal::{Rational, Real};
-use num::{BigInt, Integer, One, Signed, ToPrimitive, Zero};
+use num::{BigInt, Integer, One, Signed, Zero};
 
 pub(crate) fn primitive_integer_polynomial(polynomial: &[Real]) -> Option<Vec<Real>> {
     let rationals = polynomial
@@ -149,6 +149,21 @@ fn modular_multiply(left: u64, right: u64, modulus: u64) -> u64 {
     (u128::from(left) * u128::from(right) % u128::from(modulus)) as u64
 }
 
+fn bigint_modulo_u64(value: &BigInt, modulus: u64) -> u64 {
+    let modulus_wide = u128::from(modulus);
+    let limb_radix = ((u128::from(u64::MAX) + 1) % modulus_wide) as u64;
+    let mut remainder = 0_u64;
+    for limb in value.iter_u64_digits().rev() {
+        remainder = ((u128::from(remainder) * u128::from(limb_radix) + u128::from(limb % modulus))
+            % modulus_wide) as u64;
+    }
+    if value.is_negative() && remainder != 0 {
+        modulus - remainder
+    } else {
+        remainder
+    }
+}
+
 fn modular_trim(polynomial: &mut Vec<u64>) {
     while polynomial.len() > 1 && polynomial.last() == Some(&0) {
         polynomial.pop();
@@ -184,16 +199,13 @@ fn modular_integer_polynomial_gcd(left: &[BigInt], right: &[BigInt]) -> Option<V
     for _ in 0..256 {
         let prime = previous_prime(next_prime)?;
         next_prime = prime.checked_sub(2)?;
-        let modulus = BigInt::from(prime);
         let reduce = |polynomial: &[BigInt]| {
             polynomial
                 .iter()
-                .map(|coefficient| coefficient.mod_floor(&modulus).to_u64())
-                .collect::<Option<Vec<_>>>()
+                .map(|coefficient| bigint_modulo_u64(coefficient, prime))
+                .collect::<Vec<_>>()
         };
-        let (Some(left_modular), Some(right_modular)) = (reduce(left), reduce(right)) else {
-            continue;
-        };
+        let (left_modular, right_modular) = (reduce(left), reduce(right));
         if left_modular.last() == Some(&0) || right_modular.last() == Some(&0) {
             continue;
         }
@@ -247,11 +259,10 @@ fn extend_modular_reconstruction(
     if coefficients.len() != image.len() {
         return None;
     }
-    let prime_bigint = BigInt::from(prime);
-    let modulus_image = modulus.mod_floor(&prime_bigint).to_u64()?;
+    let modulus_image = bigint_modulo_u64(modulus, prime);
     let modulus_inverse = modular_power(modulus_image, prime.checked_sub(2)?, prime);
     for (coefficient, image) in coefficients.iter_mut().zip(image) {
-        let coefficient_image = coefficient.mod_floor(&prime_bigint).to_u64()?;
+        let coefficient_image = bigint_modulo_u64(coefficient, prime);
         let delta = (*image + prime - coefficient_image) % prime;
         let lift = modular_multiply(delta, modulus_inverse, prime);
         *coefficient += &*modulus * BigInt::from(lift);
@@ -317,11 +328,12 @@ fn rational_reconstruction(
         remainder = -remainder;
         denominator = -denominator;
     }
-    if euclidean_bigint_gcd(&remainder, &denominator) != BigInt::one()
-        || !(residue * &denominator - &remainder)
-            .mod_floor(modulus)
-            .is_zero()
-    {
+    // Extended Euclid maintains
+    // `remainder == residue * denominator (mod modulus)` at every step.
+    // The bound and coprimality checks are therefore the complete rational
+    // reconstruction certificate; the final polynomial candidate is still
+    // replayed by exact division against both inputs.
+    if euclidean_bigint_gcd(&remainder, &denominator) != BigInt::one() {
         return None;
     }
     Some((remainder, denominator))
@@ -624,6 +636,19 @@ mod tests {
             primitive_integer_polynomial_gcd(&left, &right),
             Some(vec![Real::one()])
         );
+    }
+
+    #[test]
+    fn limb_modulo_matches_exact_signed_remainders() {
+        let wide = (BigInt::one() << 521_usize) + (BigInt::one() << 257_usize) + 123_456_789_u64;
+        for value in [wide.clone(), -wide, BigInt::zero()] {
+            for modulus in [65_521_u64, 2_147_483_647] {
+                assert_eq!(
+                    BigInt::from(bigint_modulo_u64(&value, modulus)),
+                    value.mod_floor(&BigInt::from(modulus))
+                );
+            }
+        }
     }
 
     #[test]
