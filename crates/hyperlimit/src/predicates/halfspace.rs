@@ -20,9 +20,10 @@ use crate::predicate::PredicatePolicy;
 use hyperreal::Real;
 
 use crate::classify::{HalfspaceFeasibility, PlaneSide};
-use crate::geometry::{Plane3, Point3, intersect_three_planes};
+use crate::geometry::{HomogeneousPoint3, Plane3, Point3, intersect_three_planes};
 use crate::plane::classify_point_plane_without_filter_with_policy;
 use crate::predicate::{Certainty, Escalation, PredicateOutcome, RefinementNeed, Sign};
+use crate::predicates::order::reciprocal_real_with_policy;
 use crate::real::{add_ref, mul_ref, sub_ref};
 use crate::resolve::{resolve_composite_policy, resolve_real_sign_direct};
 
@@ -254,9 +255,12 @@ fn classify_halfspace_feasibility3_impl(
             for third in second + 1..planes.len() {
                 let homogeneous =
                     intersect_three_planes(&planes[first], &planes[second], &planes[third]);
-                let candidate = match homogeneous.to_affine_point() {
-                    Ok(point) => point,
-                    Err(_) => continue,
+                let candidate = match affine_point_with_policy(&homogeneous, policy) {
+                    CandidateConstruction::Point(point) => point,
+                    CandidateConstruction::Skip => continue,
+                    CandidateConstruction::Unknown { needed, stage } => {
+                        return PredicateOutcome::unknown(needed, stage);
+                    }
                 };
                 if let Some(outcome) = accept_candidate(
                     &candidate,
@@ -678,18 +682,21 @@ fn point_satisfies_halfspaces(
 
 fn closest_point_on_plane(plane: &Plane3, policy: PredicatePolicy) -> CandidateConstruction {
     let norm2 = dot(&plane.normal, &plane.normal);
-    match sign_of(&norm2, policy) {
-        PredicateOutcome::Decided {
-            value: Sign::Zero, ..
-        } => return CandidateConstruction::Skip,
-        PredicateOutcome::Decided { .. } => {}
-        PredicateOutcome::Unknown { needed, stage } => {
+    let reciprocal = match reciprocal_real_with_policy(&norm2, policy) {
+        Err(hyperreal::Problem::DivideByZero) => return CandidateConstruction::Skip,
+        Err(_) => {
+            return CandidateConstruction::Unknown {
+                needed: RefinementNeed::Unsupported,
+                stage: Escalation::Undecided,
+            };
+        }
+        Ok(PredicateOutcome::Decided { value, .. }) => value,
+        Ok(PredicateOutcome::Unknown { needed, stage }) => {
             return CandidateConstruction::Unknown { needed, stage };
         }
-    }
+    };
 
-    let scale = div(&neg(&plane.offset), &norm2)
-        .expect("a norm with certified nonzero sign is a valid divisor");
+    let scale = mul(&neg(&plane.offset), &reciprocal);
     CandidateConstruction::Point(scale_point(&plane.normal, &scale))
 }
 
@@ -702,29 +709,70 @@ fn closest_point_on_plane_pair(
     let b = dot(&first.normal, &second.normal);
     let c = dot(&second.normal, &second.normal);
     let det = sub(&mul(&a, &c), &mul(&b, &b));
-    match sign_of(&det, policy) {
-        PredicateOutcome::Decided {
-            value: Sign::Zero, ..
-        } => return CandidateConstruction::Skip,
-        PredicateOutcome::Decided { .. } => {}
-        PredicateOutcome::Unknown { needed, stage } => {
+    let reciprocal = match reciprocal_real_with_policy(&det, policy) {
+        Err(hyperreal::Problem::DivideByZero) => return CandidateConstruction::Skip,
+        Err(_) => {
+            return CandidateConstruction::Unknown {
+                needed: RefinementNeed::Unsupported,
+                stage: Escalation::Undecided,
+            };
+        }
+        Ok(PredicateOutcome::Decided { value, .. }) => value,
+        Ok(PredicateOutcome::Unknown { needed, stage }) => {
             return CandidateConstruction::Unknown { needed, stage };
         }
-    }
+    };
 
     let rhs_first = neg(&first.offset);
     let rhs_second = neg(&second.offset);
     let lambda_first_num = sub(&mul(&rhs_first, &c), &mul(&b, &rhs_second));
     let lambda_second_num = sub(&mul(&a, &rhs_second), &mul(&b, &rhs_first));
-    let lambda_first = div(&lambda_first_num, &det)
-        .expect("a Gram determinant with certified nonzero sign is a valid divisor");
-    let lambda_second = div(&lambda_second_num, &det)
-        .expect("a Gram determinant with certified nonzero sign is a valid divisor");
+    let lambda_first = mul(&lambda_first_num, &reciprocal);
+    let lambda_second = mul(&lambda_second_num, &reciprocal);
 
     CandidateConstruction::Point(add_points(
         &scale_point(&first.normal, &lambda_first),
         &scale_point(&second.normal, &lambda_second),
     ))
+}
+
+fn affine_point_with_policy(
+    point: &HomogeneousPoint3,
+    policy: PredicatePolicy,
+) -> CandidateConstruction {
+    match point.w.zero_status() {
+        hyperreal::ZeroKnowledge::Zero => return CandidateConstruction::Skip,
+        hyperreal::ZeroKnowledge::NonZero => {
+            return match point.to_affine_point() {
+                Ok(point) => CandidateConstruction::Point(point),
+                Err(_) => CandidateConstruction::Unknown {
+                    needed: RefinementNeed::Unsupported,
+                    stage: Escalation::Undecided,
+                },
+            };
+        }
+        hyperreal::ZeroKnowledge::Unknown => {}
+    }
+
+    match reciprocal_real_with_policy(&point.w, policy) {
+        Err(hyperreal::Problem::DivideByZero) => CandidateConstruction::Skip,
+        Err(_) => CandidateConstruction::Unknown {
+            needed: RefinementNeed::Unsupported,
+            stage: Escalation::Undecided,
+        },
+        Ok(PredicateOutcome::Decided {
+            value: reciprocal, ..
+        }) => CandidateConstruction::Point(Point3::new(
+            mul(&point.x, &reciprocal),
+            mul(&point.y, &reciprocal),
+            mul(&point.z, &reciprocal),
+        )),
+        Ok(PredicateOutcome::Unknown { needed, stage }) => match point.to_affine_point() {
+            Ok(point) => CandidateConstruction::Point(point),
+            Err(hyperreal::Problem::DivideByZero) => CandidateConstruction::Skip,
+            Err(_) => CandidateConstruction::Unknown { needed, stage },
+        },
+    }
 }
 
 fn weighted_normal_sum(normals: &[&Point3; 4], multipliers: &[Real; 4]) -> Point3 {
@@ -799,10 +847,6 @@ fn add_points(left: &Point3, right: &Point3) -> Point3 {
     )
 }
 
-fn div(numerator: &Real, denominator: &Real) -> Option<Real> {
-    (numerator / denominator).ok()
-}
-
 fn neg(value: &Real) -> Real {
     sub(&Real::from(0), value)
 }
@@ -858,6 +902,7 @@ fn stage_rank(stage: Escalation) -> u8 {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::test_support::exact_normal_positive;
 
     const APPROX: PredicatePolicy = PredicatePolicy::APPROXIMATE_512;
 
@@ -977,6 +1022,44 @@ mod tests {
             closest_point_on_plane_pair(&plane(1, 0, 0, -2), &plane(0, 1, 0, -3), APPROX),
             CandidateConstruction::Point(value) if value == p3(2, 3, 0)
         ));
+
+        let deep_positive = exact_normal_positive();
+        assert_eq!(
+            deep_positive.inverse_ref(),
+            Err(hyperreal::Problem::UnknownZero)
+        );
+        let deep_plane = Plane3::new(
+            point(deep_positive.clone(), Real::zero(), Real::zero()),
+            -(deep_positive.clone() * Real::from(2)),
+        );
+        let CandidateConstruction::Point(deep_point) =
+            closest_point_on_plane(&deep_plane, PredicatePolicy::STRICT)
+        else {
+            panic!("policy-certified norm should construct its closest point");
+        };
+        assert_eq!(
+            crate::compare_reals(&deep_point.x, &Real::from(2), PredicatePolicy::STRICT).value(),
+            Some(core::cmp::Ordering::Equal)
+        );
+
+        let first_deep = deep_plane;
+        let second_deep = Plane3::new(
+            point(Real::zero(), deep_positive.clone(), Real::zero()),
+            -(deep_positive * Real::from(3)),
+        );
+        let CandidateConstruction::Point(deep_point) =
+            closest_point_on_plane_pair(&first_deep, &second_deep, PredicatePolicy::STRICT)
+        else {
+            panic!("policy-certified Gram determinant should construct its closest point");
+        };
+        assert_eq!(
+            crate::compare_reals(&deep_point.x, &Real::from(2), PredicatePolicy::STRICT).value(),
+            Some(core::cmp::Ordering::Equal)
+        );
+        assert_eq!(
+            crate::compare_reals(&deep_point.y, &Real::from(3), PredicatePolicy::STRICT).value(),
+            Some(core::cmp::Ordering::Equal)
+        );
         let almost_parallel = Plane3::new(point(1.into(), terminal_zero(), 0.into()), 0.into());
         assert!(matches!(
             closest_point_on_plane_pair(
@@ -993,6 +1076,78 @@ mod tests {
             classify_halfspace_feasibility3_impl(&[first, second], PredicatePolicy::STRICT),
             PredicateOutcome::Unknown { .. }
         ));
+
+        assert!(matches!(
+            affine_point_with_policy(
+                &HomogeneousPoint3::new(1.into(), 2.into(), 3.into(), 0.into()),
+                PredicatePolicy::STRICT,
+            ),
+            CandidateConstruction::Skip
+        ));
+        assert!(matches!(
+            affine_point_with_policy(
+                &HomogeneousPoint3::new(1.into(), 2.into(), 3.into(), terminal_zero()),
+                PredicatePolicy::STRICT,
+            ),
+            CandidateConstruction::Unknown { .. }
+        ));
+    }
+
+    #[test]
+    fn active_set_reuses_policy_certified_nonzero_triple_weight() {
+        let deep_positive = exact_normal_positive();
+        let x_target = (Real::from(1) / Real::from(3)).unwrap();
+        let planes = [
+            Plane3::new(
+                point(-deep_positive.clone(), Real::zero(), Real::zero()),
+                deep_positive.clone() * &x_target,
+            ),
+            Plane3::new(
+                point(Real::zero(), -deep_positive.clone(), Real::zero()),
+                deep_positive.clone() * Real::from(3),
+            ),
+            Plane3::new(
+                point(Real::zero(), Real::zero(), -deep_positive.clone()),
+                deep_positive * Real::from(4),
+            ),
+        ];
+        let homogeneous = intersect_three_planes(&planes[0], &planes[1], &planes[2]);
+        assert_eq!(
+            homogeneous.w.zero_status(),
+            hyperreal::ZeroKnowledge::Unknown
+        );
+        assert_eq!(
+            homogeneous.w.inverse_ref(),
+            Err(hyperreal::Problem::UnknownZero)
+        );
+        assert_eq!(
+            homogeneous.to_affine_point(),
+            Err(hyperreal::Problem::UnknownZero)
+        );
+
+        let report = classify_halfspace_feasibility3_with_policy(&planes, PredicatePolicy::STRICT)
+            .value()
+            .expect("the exact-normal triple weight should construct a feasible vertex");
+
+        assert_eq!(report.status, HalfspaceFeasibility::Feasible);
+        assert_eq!(report.active_planes, [Some(0), Some(1), Some(2)]);
+        let witness = report.witness.as_ref().expect("feasible witness");
+        for (coordinate, expected) in [
+            (&witness.x, &x_target),
+            (&witness.y, &Real::from(3)),
+            (&witness.z, &Real::from(4)),
+        ] {
+            assert_eq!(
+                crate::compare_reals(coordinate, expected, PredicatePolicy::STRICT).value(),
+                Some(core::cmp::Ordering::Equal)
+            );
+        }
+        assert_eq!(
+            report
+                .validate_against_planes(&planes, PredicatePolicy::STRICT)
+                .value(),
+            Some(true)
+        );
     }
 
     #[test]

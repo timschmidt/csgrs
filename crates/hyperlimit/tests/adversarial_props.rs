@@ -7,7 +7,8 @@ use hyperlimit::{
     classify_ray_triangle3_intersection, classify_segment_triangle3_intersection,
     classify_segment3_intersection, classify_sphere3_intersection,
     compare_point_line3_distance_squared, compare_point_plane_distance_squared,
-    compare_point_segment3_distance_squared, incircle2, intersect_three_planes,
+    compare_point_segment2_distance_squared, compare_point_segment3_distance_squared,
+    compare_point_triangle3_distance_squared, incircle2, intersect_three_planes,
     intersect_two_planes, orient2, orient2_batch, orient3,
 };
 use proptest::prelude::*;
@@ -197,11 +198,88 @@ proptest! {
     }
 
     #[test]
+    fn point_triangle3_distance_is_permutation_invariant(
+        point in point3(),
+        a in point3(),
+        b in point3(),
+        c in point3(),
+        threshold_squared in 0_i32..=1_000_000,
+    ) {
+        let threshold_squared = Real::from(threshold_squared);
+        let relation = compare_point_triangle3_distance_squared(
+            &point, &a, &b, &c, &threshold_squared, APPROX,
+        ).value();
+        prop_assert_eq!(
+            relation,
+            compare_point_triangle3_distance_squared(
+                &point, &b, &c, &a, &threshold_squared, APPROX,
+            ).value()
+        );
+        prop_assert_eq!(
+            relation,
+            compare_point_triangle3_distance_squared(
+                &point, &a, &c, &b, &threshold_squared, APPROX,
+            ).value()
+        );
+    }
+
+    #[test]
+    fn point_triangle3_vertices_have_exactly_zero_distance(
+        a in point3(),
+        b in point3(),
+        c in point3(),
+    ) {
+        prop_assert_eq!(
+            compare_point_triangle3_distance_squared(
+                &a, &a, &b, &c, &Real::from(0), APPROX,
+            ).value(),
+            Some(std::cmp::Ordering::Equal)
+        );
+    }
+
+    #[test]
+    fn point_segment2_distance_is_symmetric_and_translation_invariant(
+        point in point2(),
+        a in point2(),
+        b in point2(),
+        threshold_squared in 0_i32..=1_000_000,
+        dx in -1000_i32..=1000,
+        dy in -1000_i32..=1000,
+    ) {
+        let threshold_squared = Real::from(threshold_squared);
+        let relation = compare_point_segment2_distance_squared(
+            &point, &a, &b, &threshold_squared, APPROX,
+        ).value();
+        prop_assert_eq!(
+            relation,
+            compare_point_segment2_distance_squared(
+                &point, &b, &a, &threshold_squared, APPROX,
+            ).value()
+        );
+        prop_assert_eq!(
+            relation,
+            compare_point_segment2_distance_squared(
+                &translate2i(&point, dx, dy),
+                &translate2i(&a, dx, dy),
+                &translate2i(&b, dx, dy),
+                &threshold_squared,
+                APPROX,
+            ).value()
+        );
+    }
+
+    #[test]
     fn zero_distance_feature_comparisons_remain_exact_on_incidence(
         a in point3(),
         b in point3(),
     ) {
         let zero = Real::from(0);
+        let a2 = Point2::new(a.x.clone(), a.y.clone());
+        let b2 = Point2::new(b.x.clone(), b.y.clone());
+        prop_assert_eq!(
+            compare_point_segment2_distance_squared(&a2, &a2, &b2, &zero, APPROX).value(),
+            Some(std::cmp::Ordering::Equal)
+        );
         prop_assert_eq!(
             compare_point_line3_distance_squared(&a, &a, &b, &zero, APPROX).value(),
             Some(std::cmp::Ordering::Equal)

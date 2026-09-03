@@ -10,7 +10,7 @@ use crate::classify::{
     SpherePointLocation,
 };
 use crate::geometry::{Point2, Point3};
-use crate::predicate::{Certainty, Escalation, PredicateOutcome, PredicatePolicy};
+use crate::predicate::{Certainty, Escalation, PredicateOutcome, PredicatePolicy, RefinementNeed};
 use crate::predicates::order::compare_reals_with_policy;
 use crate::real::{add_ref, mul_ref, sub_ref};
 use hyperreal::{Rational, Real};
@@ -370,6 +370,118 @@ pub fn compare_point_segment3_distance_squared_with_policy(
     compare_point_line3_distance_squared_with_policy(point, a, b, threshold_squared, policy)
 }
 
+/// Compare the squared distance from `point` to the closed 3D triangle `abc`
+/// against `threshold_squared` with an explicit predicate policy.
+///
+/// A non-degenerate triangle first classifies the orthogonal projection using
+/// unnormalized barycentric numerators. An interior projection uses the
+/// division-free point/plane comparison; an exterior projection uses the
+/// minimum of the three exact point/segment comparisons. Degenerate triangles
+/// reduce to that same closed-edge minimum, covering collinear and repeated
+/// vertices without dividing by a zero Gram determinant.
+pub fn compare_point_triangle3_distance_squared_with_policy(
+    point: &Point3,
+    a: &Point3,
+    b: &Point3,
+    c: &Point3,
+    threshold_squared: &Real,
+    policy: PredicatePolicy,
+) -> PredicateOutcome<Ordering> {
+    if let Some(outcome) =
+        exact_rational_point_triangle3_distance_ordering(point, a, b, c, threshold_squared)
+    {
+        return outcome;
+    }
+
+    let ab = vector3_between(a, b);
+    let ac = vector3_between(a, c);
+    let normal = cross3(&ab, &ac);
+    let normal_norm = norm_squared3(&normal);
+    let mut certainty = Certainty::Exact;
+    let mut stage = Escalation::Structural;
+    match compare_reals_with_policy(&normal_norm, &0.into(), policy) {
+        PredicateOutcome::Decided {
+            value: Ordering::Equal,
+            certainty: decision_certainty,
+            stage: decision_stage,
+        } => {
+            return merge_distance_outcome(
+                compare_point_triangle_edge_minimum(point, a, b, c, threshold_squared, policy),
+                decision_certainty,
+                decision_stage,
+            );
+        }
+        PredicateOutcome::Decided {
+            value: Ordering::Greater,
+            certainty: decision_certainty,
+            stage: decision_stage,
+        } => {
+            certainty = max_distance_certainty(certainty, decision_certainty);
+            stage = max_distance_stage(stage, decision_stage);
+        }
+        PredicateOutcome::Decided {
+            value: Ordering::Less,
+            stage,
+            ..
+        } => {
+            return PredicateOutcome::unknown(RefinementNeed::Unsupported, stage);
+        }
+        PredicateOutcome::Unknown { needed, stage } => {
+            return PredicateOutcome::unknown(needed, stage);
+        }
+    }
+
+    let ap = vector3_between(a, point);
+    let ab_norm = norm_squared3(&ab);
+    let ac_norm = norm_squared3(&ac);
+    let ab_ac = dot3(&ab, &ac);
+    let ap_ab = dot3(&ap, &ab);
+    let ap_ac = dot3(&ap, &ac);
+    let determinant = sub_ref(&mul_ref(&ab_norm, &ac_norm), &mul_ref(&ab_ac, &ab_ac));
+    let beta_numerator = sub_ref(&mul_ref(&ac_norm, &ap_ab), &mul_ref(&ab_ac, &ap_ac));
+    let gamma_numerator = sub_ref(&mul_ref(&ab_norm, &ap_ac), &mul_ref(&ab_ac, &ap_ab));
+    let alpha_numerator = sub_ref(&sub_ref(&determinant, &beta_numerator), &gamma_numerator);
+
+    let mut outside = false;
+    let mut unknown = None;
+    for numerator in [&alpha_numerator, &beta_numerator, &gamma_numerator] {
+        match compare_reals_with_policy(numerator, &0.into(), policy) {
+            PredicateOutcome::Decided {
+                value,
+                certainty: decision_certainty,
+                stage: decision_stage,
+            } => {
+                certainty = max_distance_certainty(certainty, decision_certainty);
+                stage = max_distance_stage(stage, decision_stage);
+                outside |= value == Ordering::Less;
+            }
+            PredicateOutcome::Unknown { needed, stage } => {
+                unknown.get_or_insert((needed, stage));
+            }
+        }
+    }
+
+    if outside {
+        return merge_distance_outcome(
+            compare_point_triangle_edge_minimum(point, a, b, c, threshold_squared, policy),
+            certainty,
+            stage,
+        );
+    }
+    if let Some((needed, stage)) = unknown {
+        return PredicateOutcome::unknown(needed, stage);
+    }
+
+    let signed_distance_numerator = dot3(&ap, &normal);
+    let numerator_squared = mul_ref(&signed_distance_numerator, &signed_distance_numerator);
+    let scaled_threshold = mul_ref(threshold_squared, &normal_norm);
+    merge_distance_outcome(
+        compare_reals_with_policy(&numerator_squared, &scaled_threshold, policy),
+        certainty,
+        stage,
+    )
+}
+
 /// Compare the squared distance from `point` to `plane` against
 /// `threshold_squared` with an explicit predicate policy.
 ///
@@ -589,6 +701,82 @@ fn outside_interval_delta(
     }
 }
 
+fn compare_point_triangle_edge_minimum(
+    point: &Point3,
+    a: &Point3,
+    b: &Point3,
+    c: &Point3,
+    threshold_squared: &Real,
+    policy: PredicatePolicy,
+) -> PredicateOutcome<Ordering> {
+    let mut certainty = Certainty::Exact;
+    let mut stage = Escalation::Structural;
+    let mut equal = false;
+    let mut unknown = None;
+    for (start, end) in [(a, b), (b, c), (c, a)] {
+        match compare_point_segment3_distance_squared_with_policy(
+            point,
+            start,
+            end,
+            threshold_squared,
+            policy,
+        ) {
+            PredicateOutcome::Decided {
+                value: Ordering::Less,
+                certainty,
+                stage,
+            } => return PredicateOutcome::decided(Ordering::Less, certainty, stage),
+            PredicateOutcome::Decided {
+                value,
+                certainty: decision_certainty,
+                stage: decision_stage,
+            } => {
+                equal |= value == Ordering::Equal;
+                certainty = max_distance_certainty(certainty, decision_certainty);
+                stage = max_distance_stage(stage, decision_stage);
+            }
+            PredicateOutcome::Unknown {
+                needed,
+                stage: unknown_stage,
+            } => {
+                unknown.get_or_insert((needed, unknown_stage));
+            }
+        }
+    }
+    if let Some((needed, stage)) = unknown {
+        PredicateOutcome::unknown(needed, stage)
+    } else {
+        PredicateOutcome::decided(
+            if equal {
+                Ordering::Equal
+            } else {
+                Ordering::Greater
+            },
+            certainty,
+            stage,
+        )
+    }
+}
+
+fn merge_distance_outcome(
+    outcome: PredicateOutcome<Ordering>,
+    certainty: Certainty,
+    stage: Escalation,
+) -> PredicateOutcome<Ordering> {
+    match outcome {
+        PredicateOutcome::Decided {
+            value,
+            certainty: decision_certainty,
+            stage: decision_stage,
+        } => PredicateOutcome::decided(
+            value,
+            max_distance_certainty(certainty, decision_certainty),
+            max_distance_stage(stage, decision_stage),
+        ),
+        PredicateOutcome::Unknown { needed, stage } => PredicateOutcome::unknown(needed, stage),
+    }
+}
+
 fn compare_point3_distance_squared_to_threshold_with_policy(
     point: &Point3,
     target: &Point3,
@@ -621,7 +809,14 @@ fn compare_point2_distance_squared_to_threshold_with_policy(
     compare_reals_with_policy(&distance_squared, threshold_squared, policy)
 }
 
-fn compare_point_segment2_distance_squared_with_policy(
+/// Compare the squared distance from `point` to the closed 2D segment `ab`
+/// against `threshold_squared` with an explicit predicate policy.
+///
+/// Projection signs select the closest endpoint or the interior line-distance
+/// branch exactly. No square roots, normalized direction vectors, or
+/// primitive-float tolerances are used. Degenerate segments reduce to an exact
+/// point-distance comparison.
+pub fn compare_point_segment2_distance_squared_with_policy(
     point: &Point2,
     a: &Point2,
     b: &Point2,
@@ -1046,6 +1241,136 @@ fn exact_rational_point_segment3_distance_ordering(
         return exact_rational_point3_distance_threshold_ordering(point, b, threshold_squared);
     }
     exact_rational_point_line3_distance_ordering(point, a, b, threshold_squared)
+}
+
+#[inline]
+fn exact_rational_point_triangle3_distance_ordering(
+    point: &Point3,
+    a: &Point3,
+    b: &Point3,
+    c: &Point3,
+    threshold_squared: &Real,
+) -> Option<PredicateOutcome<Ordering>> {
+    let [
+        Some(px),
+        Some(py),
+        Some(pz),
+        Some(ax),
+        Some(ay),
+        Some(az),
+        Some(bx),
+        Some(by),
+        Some(bz),
+        Some(cx),
+        Some(cy),
+        Some(cz),
+        Some(threshold),
+    ] = [
+        &point.x,
+        &point.y,
+        &point.z,
+        &a.x,
+        &a.y,
+        &a.z,
+        &b.x,
+        &b.y,
+        &b.z,
+        &c.x,
+        &c.y,
+        &c.z,
+        threshold_squared,
+    ]
+    .map(Real::exact_rational_ref)
+    else {
+        return None;
+    };
+
+    let abx = bx - ax;
+    let aby = by - ay;
+    let abz = bz - az;
+    let acx = cx - ax;
+    let acy = cy - ay;
+    let acz = cz - az;
+    let apx = px - ax;
+    let apy = py - ay;
+    let apz = pz - az;
+    let normal_x = Rational::signed_product_sum([true, false], [[&aby, &acz], [&abz, &acy]]);
+    let normal_y = Rational::signed_product_sum([true, false], [[&abz, &acx], [&abx, &acz]]);
+    let normal_z = Rational::signed_product_sum([true, false], [[&abx, &acy], [&aby, &acx]]);
+    let normal_norm = Rational::signed_product_sum(
+        [true; 3],
+        [
+            [&normal_x, &normal_x],
+            [&normal_y, &normal_y],
+            [&normal_z, &normal_z],
+        ],
+    );
+    if normal_norm.is_zero() {
+        return exact_rational_point_triangle_edge_minimum(point, a, b, c, threshold_squared)
+            .map(exact_distance_outcome);
+    }
+
+    let ab_norm =
+        Rational::signed_product_sum([true; 3], [[&abx, &abx], [&aby, &aby], [&abz, &abz]]);
+    let ac_norm =
+        Rational::signed_product_sum([true; 3], [[&acx, &acx], [&acy, &acy], [&acz, &acz]]);
+    let ab_ac = Rational::signed_product_sum([true; 3], [[&abx, &acx], [&aby, &acy], [&abz, &acz]]);
+    let ap_ab = Rational::signed_product_sum([true; 3], [[&apx, &abx], [&apy, &aby], [&apz, &abz]]);
+    let ap_ac = Rational::signed_product_sum([true; 3], [[&apx, &acx], [&apy, &acy], [&apz, &acz]]);
+    let determinant =
+        Rational::signed_product_sum([true, false], [[&ab_norm, &ac_norm], [&ab_ac, &ab_ac]]);
+    let beta_numerator =
+        Rational::signed_product_sum([true, false], [[&ac_norm, &ap_ab], [&ab_ac, &ap_ac]]);
+    let gamma_numerator =
+        Rational::signed_product_sum([true, false], [[&ab_norm, &ap_ac], [&ab_ac, &ap_ab]]);
+    let beta_gamma = &beta_numerator + &gamma_numerator;
+    let alpha_numerator = &determinant - &beta_gamma;
+    if alpha_numerator.is_negative()
+        || beta_numerator.is_negative()
+        || gamma_numerator.is_negative()
+    {
+        return exact_rational_point_triangle_edge_minimum(point, a, b, c, threshold_squared)
+            .map(exact_distance_outcome);
+    }
+
+    let signed_distance_numerator = Rational::signed_product_sum(
+        [true; 3],
+        [[&apx, &normal_x], [&apy, &normal_y], [&apz, &normal_z]],
+    );
+    Some(exact_distance_outcome(
+        Rational::signed_product_sum_ordering(
+            [true, false],
+            [
+                [&signed_distance_numerator, &signed_distance_numerator],
+                [threshold, &normal_norm],
+            ],
+        ),
+    ))
+}
+
+#[inline]
+fn exact_rational_point_triangle_edge_minimum(
+    point: &Point3,
+    a: &Point3,
+    b: &Point3,
+    c: &Point3,
+    threshold_squared: &Real,
+) -> Option<Ordering> {
+    let mut equal = false;
+    for (start, end) in [(a, b), (b, c), (c, a)] {
+        match exact_rational_point_segment3_distance_ordering(point, start, end, threshold_squared)?
+            .value()?
+        {
+            Ordering::Less => return Some(Ordering::Less),
+            Ordering::Equal => equal = true,
+            Ordering::Greater => {}
+        }
+    }
+    Some(if equal {
+        Ordering::Equal
+    } else {
+        Ordering::Greater
+    })
 }
 
 #[inline]
@@ -1527,6 +1852,149 @@ mod tests {
             )
             .value(),
             Some(Ordering::Greater)
+        );
+    }
+
+    #[test]
+    fn point_triangle3_distance_comparison_covers_face_edges_vertices_and_degeneracy() {
+        let a = p3(0, 0, 0);
+        let b = p3(4, 0, 0);
+        let c = p3(0, 4, 0);
+
+        for (point, threshold, expected) in [
+            (p3(1, 1, 3), 8, Ordering::Greater),
+            (p3(1, 1, 3), 9, Ordering::Equal),
+            (p3(1, 1, 3), 10, Ordering::Less),
+            (p3(2, -3, 4), 25, Ordering::Equal),
+            (p3(5, 0, 0), 1, Ordering::Equal),
+        ] {
+            assert_eq!(
+                crate::compare_point_triangle3_distance_squared(
+                    &point,
+                    &a,
+                    &b,
+                    &c,
+                    &Real::from(threshold),
+                    APPROX,
+                )
+                .value(),
+                Some(expected)
+            );
+        }
+        assert_eq!(
+            crate::compare_point_triangle3_distance_squared(
+                &shifted3(1, 1, 3),
+                &shifted3(0, 0, 0),
+                &shifted3(4, 0, 0),
+                &shifted3(0, 4, 0),
+                &Real::from(9),
+                APPROX,
+            )
+            .value(),
+            Some(Ordering::Equal)
+        );
+        assert_eq!(
+            crate::compare_point_triangle3_distance_squared(
+                &shifted3(2, -3, 4),
+                &shifted3(0, 0, 0),
+                &shifted3(4, 0, 0),
+                &shifted3(0, 4, 0),
+                &Real::from(25),
+                APPROX,
+            )
+            .value(),
+            Some(Ordering::Equal)
+        );
+        assert_eq!(
+            crate::compare_point_triangle3_distance_squared(
+                &shifted3(0, 0, 0),
+                &shifted3(-10, 0, 0),
+                &shifted3(10, 0, 0),
+                &shifted3(20, 0, 0),
+                &Real::from(0),
+                APPROX,
+            )
+            .value(),
+            Some(Ordering::Equal)
+        );
+
+        assert_eq!(
+            crate::compare_point_triangle3_distance_squared(
+                &p3(0, 0, 0),
+                &p3(-10, 0, 0),
+                &p3(10, 0, 0),
+                &p3(20, 0, 0),
+                &Real::from(0),
+                APPROX,
+            )
+            .value(),
+            Some(Ordering::Equal)
+        );
+        assert_eq!(
+            crate::compare_point_triangle3_distance_squared(
+                &p3(1, 2, 2),
+                &p3(0, 0, 0),
+                &p3(0, 0, 0),
+                &p3(0, 0, 0),
+                &Real::from(9),
+                APPROX,
+            )
+            .value(),
+            Some(Ordering::Equal)
+        );
+    }
+
+    #[test]
+    fn non_dyadic_point_triangle3_distance_uses_exact_rational_boundary() {
+        let a = rp3((0, 1), (0, 1), (1, 3));
+        let b = rp3((2, 1), (0, 1), (1, 3));
+        let c = rp3((0, 1), (2, 1), (1, 3));
+        let point = rp3((1, 3), (1, 3), (0, 1));
+        let threshold = r(1, 9);
+
+        assert!(matches!(
+            crate::compare_point_triangle3_distance_squared(&point, &a, &b, &c, &threshold, APPROX,),
+            PredicateOutcome::Decided {
+                value: Ordering::Equal,
+                certainty: Certainty::Exact,
+                stage: Escalation::Exact,
+            }
+        ));
+
+        let edge_point = rp3((1, 3), (-1, 3), (0, 1));
+        assert_eq!(
+            crate::compare_point_triangle3_distance_squared(
+                &edge_point,
+                &rp3((0, 1), (0, 1), (0, 1)),
+                &rp3((2, 1), (0, 1), (0, 1)),
+                &rp3((0, 1), (2, 1), (0, 1)),
+                &threshold,
+                APPROX,
+            )
+            .value(),
+            Some(Ordering::Equal)
+        );
+        assert_eq!(
+            crate::compare_point_triangle3_distance_squared(
+                &rp3((0, 1), (1, 3), (0, 1)),
+                &rp3((-1, 1), (0, 1), (0, 1)),
+                &rp3((1, 1), (0, 1), (0, 1)),
+                &rp3((2, 1), (0, 1), (0, 1)),
+                &threshold,
+                APPROX,
+            )
+            .value(),
+            Some(Ordering::Equal)
+        );
+        assert_eq!(
+            exact_rational_point_triangle3_distance_ordering(
+                &Point3::new(Real::pi(), Real::zero(), Real::zero()),
+                &a,
+                &b,
+                &c,
+                &threshold,
+            ),
+            None
         );
     }
 
@@ -2023,6 +2491,17 @@ mod tests {
                 &p3(0, 0, 0),
                 &p3(0, 0, 0),
                 &uncertain3,
+                &Real::from(1),
+                PredicatePolicy::STRICT,
+            ),
+            PredicateOutcome::Unknown { .. }
+        ));
+        assert!(matches!(
+            crate::compare_point_triangle3_distance_squared(
+                &p3(0, 1, 0),
+                &p3(0, 0, 0),
+                &p3(1, 0, 0),
+                &Point3::new(Real::from(0), zero.clone(), Real::from(0)),
                 &Real::from(1),
                 PredicatePolicy::STRICT,
             ),

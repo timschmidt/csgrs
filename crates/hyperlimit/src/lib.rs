@@ -25,6 +25,8 @@ mod predicate;
 mod predicates;
 mod real;
 mod resolve;
+#[cfg(test)]
+mod test_support;
 
 pub use hyperreal::{
     CertifiedRealSign, DomainFacts as RealDomainFacts, DomainStatus as RealDomainStatus,
@@ -152,7 +154,9 @@ pub use predicates::distance::{
     classify_sphere3_intersection_with_policy as classify_sphere3_intersection,
     compare_point_line3_distance_squared_with_policy as compare_point_line3_distance_squared,
     compare_point_plane_distance_squared_with_policy as compare_point_plane_distance_squared,
+    compare_point_segment2_distance_squared_with_policy as compare_point_segment2_distance_squared,
     compare_point_segment3_distance_squared_with_policy as compare_point_segment3_distance_squared,
+    compare_point_triangle3_distance_squared_with_policy as compare_point_triangle3_distance_squared,
     compare_point2_distance_squared_with_policy as compare_point2_distance_squared,
     compare_point3_distance_squared_with_policy as compare_point3_distance_squared,
 };
@@ -217,7 +221,7 @@ pub use predicates::segment::{
     classify_segment_intersection_with_policy as classify_segment_intersection,
     classify_segment_intersection_with_policy_and_facts as classify_segment_intersection_with_facts,
     classify_segment3_intersection_with_policy as classify_segment3_intersection,
-    construct_line_intersection_point,
+    construct_line_intersection_point, construct_line_intersection_point_with_policy,
     point_on_segment_with_orientation_and_policy as point_on_segment_with_orientation,
     point_on_segment_with_orientation_and_query_and_policy as point_on_segment_with_orientation_and_query,
     point_on_segment_with_policy as point_on_segment,

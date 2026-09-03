@@ -48,6 +48,17 @@ pub fn reciprocal_real_with_policy(
     }
 }
 
+pub(crate) fn divide_real_with_policy(
+    numerator: &Real,
+    denominator: &Real,
+    policy: PredicatePolicy,
+) -> Result<PredicateOutcome<Real>, Problem> {
+    Ok(map_outcome(
+        reciprocal_real_with_policy(denominator, policy)?,
+        |reciprocal| numerator * reciprocal,
+    ))
+}
+
 /// Decide two Real signs through one predicate cascade.
 ///
 /// This is useful for paired domain checks and vector-like sign queries. It

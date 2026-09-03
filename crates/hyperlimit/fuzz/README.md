@@ -20,3 +20,12 @@ cargo check --manifest-path fuzz/Cargo.toml --bins
 cargo +nightly fuzz run predicate_invariants --fuzz-dir fuzz -- -max_total_time=30
 cargo +nightly fuzz run hyperreal_representations --fuzz-dir fuzz -- -max_total_time=30
 ```
+
+## Retained performance offenders
+
+`cargo bench --bench retained_fuzz` deterministically replays inputs shaped by
+both registered fuzz targets. Each run merges worst-ever target/seed timings
+into `slow_performers.txt`, rotates the worst eligible offender into the
+100-case `promoted_slow_offenders.txt` lexicase set, emits a dedicated Criterion
+row for every promoted case, and refreshes the score, delta, and delta
+derivative in `benchmarks.md`.

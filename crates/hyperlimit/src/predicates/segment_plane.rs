@@ -11,9 +11,9 @@ use crate::classify::PlaneSide;
 use crate::geometry::{Plane3, Point3};
 use crate::oriented_plane3_evidence;
 use crate::predicate::PredicatePolicy;
-use crate::predicates::order::compare_reals_with_policy;
+use crate::predicates::order::{compare_reals_with_policy, divide_real_with_policy};
 use crate::predicates::orient::orient3d_with_policy;
-use hyperreal::Real;
+use hyperreal::{Problem, Real};
 
 /// Exact segment relation to an oriented plane.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -197,13 +197,11 @@ impl SegmentPlaneIntersection {
                 let Some(ratio) = self.parameter_ratio.as_ref() else {
                     return Err(SegmentPlaneValidationError::MissingProperCrossingRatio);
                 };
-                if matches!(
-                    compare_reals_with_policy(&ratio.denominator, &Real::from(0), policy).value(),
-                    Some(core::cmp::Ordering::Equal) | None
-                ) {
-                    return Err(SegmentPlaneValidationError::ProperCrossingRatioMismatch);
-                }
-                let Some(ratio_parameter) = (&ratio.numerator / &ratio.denominator).ok() else {
+                let Some(ratio_parameter) =
+                    divide_real_with_policy(&ratio.numerator, &ratio.denominator, policy)
+                        .ok()
+                        .and_then(crate::PredicateOutcome::value)
+                else {
                     return Err(SegmentPlaneValidationError::ProperCrossingRatioMismatch);
                 };
                 if !real_eq(&ratio_parameter, parameter, policy) {
@@ -377,14 +375,15 @@ pub fn construct_segment_plane_crossing_from_values_with_policy(
     policy: PredicatePolicy,
 ) -> Result<(Real, SegmentPlaneParameterRatio, Point3), SegmentPlaneConstructionFailure> {
     let denominator = d0.clone() - d1;
-    if matches!(
-        compare_reals_with_policy(&denominator, &Real::from(0), policy).value(),
-        Some(core::cmp::Ordering::Equal)
-    ) {
-        return Err(SegmentPlaneConstructionFailure::ZeroDenominator);
-    }
-    let t = (d0 / &denominator)
-        .map_err(|_| SegmentPlaneConstructionFailure::ParameterDivisionFailed)?;
+    let t = match divide_real_with_policy(d0, &denominator, policy) {
+        Ok(outcome) => outcome
+            .value()
+            .ok_or(SegmentPlaneConstructionFailure::ParameterDivisionFailed)?,
+        Err(Problem::DivideByZero) => {
+            return Err(SegmentPlaneConstructionFailure::ZeroDenominator);
+        }
+        Err(_) => return Err(SegmentPlaneConstructionFailure::ParameterDivisionFailed),
+    };
     let point = interpolate_point3(p0, p1, &t);
     let ratio = SegmentPlaneParameterRatio {
         numerator: d0.clone(),
@@ -418,13 +417,9 @@ pub fn segment_parameter_from_axis_with_policy(
     policy: PredicatePolicy,
 ) -> Option<Real> {
     let denominator = end.clone() - start;
-    if matches!(
-        compare_reals_with_policy(&denominator, &Real::from(0), policy).value(),
-        Some(core::cmp::Ordering::Equal) | None
-    ) {
-        return None;
-    }
-    ((point.clone() - start) / &denominator).ok()
+    divide_real_with_policy(&(point.clone() - start), &denominator, policy)
+        .ok()?
+        .value()
 }
 
 fn plane_side_from_value(value: &Real, policy: PredicatePolicy) -> Option<PlaneSide> {
@@ -971,6 +966,40 @@ mod tests {
                 APPROX,
             ),
             Some((Real::from(1) / &Real::from(2)).unwrap())
+        );
+
+        let half = (Real::from(1) / Real::from(2)).unwrap();
+        let denominator = crate::test_support::exact_normal_positive();
+        assert_eq!(denominator.zero_status(), hyperreal::ZeroKnowledge::Unknown);
+        assert_eq!(
+            denominator.inverse_ref(),
+            Err(hyperreal::Problem::UnknownZero)
+        );
+        let midpoint = &denominator * &half;
+        let parameter = crate::segment_parameter_from_axis(
+            &midpoint,
+            &Real::zero(),
+            &denominator,
+            PredicatePolicy::STRICT,
+        )
+        .expect("policy-certified denominator should construct a parameter");
+        assert_eq!(
+            parameter.exact_rational_normal_form(),
+            half.exact_rational()
+        );
+
+        let tiny = "1e-2000".parse::<Real>().unwrap();
+        let left = (Real::pi() + tiny.clone() + tiny.clone()).exp().unwrap();
+        let right = (Real::pi() + tiny).exp().unwrap();
+        let unsupported = left - right;
+        assert_eq!(
+            crate::segment_parameter_from_axis(
+                &(&unsupported * &half),
+                &Real::zero(),
+                &unsupported,
+                PredicatePolicy::STRICT,
+            ),
+            None
         );
     }
 }

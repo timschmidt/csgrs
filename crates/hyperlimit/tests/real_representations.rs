@@ -7,7 +7,7 @@ use std::sync::{
 use hyperlimit::{
     Plane3, PlaneSide, Point2, Point3, PointSegmentLocation, PredicateOutcome, PredicatePolicy,
     Sign, TriangleLocation, classify_point_plane, classify_point_segment, classify_point_triangle,
-    classify_real_sign, compare_reals, orient2, orient3,
+    classify_real_sign, compare_point_triangle3_distance_squared, compare_reals, orient2, orient3,
 };
 use hyperreal::{PrimitiveFloatStatus, Rational, RationalStorageClass, Real, StructuralKind};
 
@@ -247,6 +247,11 @@ fn assert_translation_predicates(case: &RepresentationCase, policy: PredicatePol
     assert_decided(
         orient3(&a3, &b3, &c3, &d3, policy),
         Sign::Negative,
+        case.certificate,
+    );
+    assert_decided(
+        compare_point_triangle3_distance_squared(&a3, &a3, &a3, &a3, &Real::zero(), policy),
+        Ordering::Equal,
         case.certificate,
     );
 
@@ -987,6 +992,10 @@ fn exhaustive_computable_nodes() -> Vec<(&'static str, hyperreal::Computable)> {
                 "NormalQuantile": { "p": half, "seed": int_zero, "seed_prec": -16 }
             })),
         ),
+        (
+            "NthRoot",
+            computable_from_internal(serde_json::json!({ "NthRoot": [child, 3] })),
+        ),
     ]
 }
 
@@ -995,7 +1004,7 @@ fn exhaustive_computable_nodes() -> Vec<(&'static str, hyperreal::Computable)> {
 fn every_computable_node_and_shared_constant_representation_crosses_predicates() {
     use hyperreal::Computable;
 
-    const NODE_NAMES: [&str; 57] = [
+    const NODE_NAMES: [&str; 58] = [
         "Int",
         "One",
         "Constant",
@@ -1053,6 +1062,7 @@ fn every_computable_node_and_shared_constant_representation_crosses_predicates()
         "LogNormalSf",
         "LogDnorm",
         "NormalQuantile",
+        "NthRoot",
     ];
     const SHARED_CONSTANT_NAMES: [&str; 18] = [
         "E",

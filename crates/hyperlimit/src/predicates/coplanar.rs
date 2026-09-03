@@ -665,14 +665,9 @@ pub fn projected_line_parameter3_with_policy(
     let d0 = orient2d_value(&a, &b, &p0);
     let d1 = orient2d_value(&a, &b, &p1);
     let denominator = d0.clone() - &d1;
-    if matches!(
-        crate::predicates::order::compare_reals_with_policy(&denominator, &Real::from(0), policy,)
-            .value(),
-        Some(core::cmp::Ordering::Equal) | None
-    ) {
-        return None;
-    }
-    (d0 / &denominator).ok()
+    crate::predicates::order::divide_real_with_policy(&d0, &denominator, policy)
+        .ok()?
+        .value()
 }
 
 fn interpolate_projected_point3(start: &Point3, end: &Point3, t: &Real) -> Point3 {
@@ -810,6 +805,7 @@ fn unknown_with_projection(
 mod tests {
     use super::*;
     use crate::Real;
+    use crate::test_support::exact_normal_positive;
     use hyperreal::Rational;
 
     const APPROX: PredicatePolicy = PredicatePolicy::APPROXIMATE_512;
@@ -1190,6 +1186,54 @@ mod tests {
                 &p3(4, 1, 0),
                 CoplanarProjection::Xy,
                 APPROX,
+            ),
+            None
+        );
+
+        let half = (Real::from(1) / Real::from(2)).unwrap();
+        let deep_positive = exact_normal_positive();
+        let segment_start = Point3::new(Real::zero(), deep_positive.clone() * &half, Real::zero());
+        let segment_end = Point3::new(Real::zero(), -(deep_positive.clone() * &half), Real::zero());
+        assert_eq!(
+            deep_positive.inverse_ref(),
+            Err(hyperreal::Problem::UnknownZero)
+        );
+        let parameter = projected_line_parameter3_with_policy(
+            &segment_start,
+            &segment_end,
+            &p3(0, 0, 0),
+            &p3(1, 0, 0),
+            CoplanarProjection::Xy,
+            PredicatePolicy::STRICT,
+        )
+        .expect("the exact-normal projected denominator should construct a parameter");
+        assert_eq!(
+            parameter.exact_rational_normal_form(),
+            half.exact_rational()
+        );
+        let crossing = intersect_segment_with_projected_line3_with_policy(
+            &segment_start,
+            &segment_end,
+            &p3(0, 0, 0),
+            &p3(1, 0, 0),
+            CoplanarProjection::Xy,
+            PredicatePolicy::STRICT,
+        )
+        .expect("the certified parameter should construct the projected crossing");
+        assert_eq!(
+            crate::compare_reals(&crossing.y, &Real::zero(), PredicatePolicy::STRICT).value(),
+            Some(core::cmp::Ordering::Equal)
+        );
+
+        let unresolved = terminally_unresolved_zero();
+        assert_eq!(
+            projected_line_parameter3_with_policy(
+                &Point3::new(Real::zero(), unresolved.clone(), Real::zero()),
+                &Point3::new(Real::zero(), -unresolved, Real::zero()),
+                &p3(0, 0, 0),
+                &p3(1, 0, 0),
+                CoplanarProjection::Xy,
+                PredicatePolicy::STRICT,
             ),
             None
         );

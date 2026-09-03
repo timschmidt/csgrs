@@ -9,7 +9,7 @@ use crate::classify::{
 };
 use crate::geometry::{HomogeneousLine3, Plane3, Point2, Point3, Triangle2Facts};
 use crate::predicate::{Certainty, Escalation, PredicateOutcome, RefinementNeed, Sign};
-use crate::predicates::order::compare_reals_with_policy;
+use crate::predicates::order::{compare_reals_with_policy, divide_real_with_policy};
 use crate::predicates::orient::{orient2d_with_policy, orient3d_with_policy};
 use crate::predicates::segment_plane::{
     SegmentPlaneIntersection, SegmentPlaneRelation, SegmentPlaneValidationError,
@@ -695,8 +695,10 @@ fn classify_ray_triangle3_intersection_report_impl(
     }
 
     let numerator = neg_real(&origin_expression);
-    let parameter = (&numerator / &direction_expression)
+    let reciprocal = direction_expression
+        .inverse_ref_assuming_nonzero()
         .expect("a certified nonzero ray/plane denominator is a valid divisor");
+    let parameter = &numerator * reciprocal;
     let intersection = ray_point_at(origin, direction, &parameter);
     match classify_point_triangle3_with_policy(a, b, c, &intersection, policy) {
         PredicateOutcome::Decided { value, .. } => {
@@ -1341,8 +1343,10 @@ fn validate_ray_parameter_ratio(
     parameter: &Real,
     policy: PredicatePolicy,
 ) -> Result<(), RayTriangleValidationError> {
-    let quotient = (&ratio.numerator / &ratio.denominator)
-        .map_err(|_| RayTriangleValidationError::InvalidParameterRatio)?;
+    let quotient = divide_real_with_policy(&ratio.numerator, &ratio.denominator, policy)
+        .map_err(|_| RayTriangleValidationError::InvalidParameterRatio)?
+        .value()
+        .ok_or(RayTriangleValidationError::InvalidParameterRatio)?;
     match compare_reals_with_policy(&quotient, parameter, policy) {
         PredicateOutcome::Decided {
             value: Ordering::Equal,
@@ -1589,6 +1593,7 @@ fn stage_rank(stage: Escalation) -> u8 {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::test_support::exact_normal_positive;
 
     const APPROX: PredicatePolicy = PredicatePolicy::APPROXIMATE_512;
 
@@ -1950,6 +1955,65 @@ mod tests {
         assert_eq!(report.validate(APPROX), Ok(()));
         assert_eq!(
             report.validate_against_sources(&origin, &direction, &a, &b, &c, APPROX,),
+            Ok(())
+        );
+    }
+
+    #[test]
+    fn ray_triangle3_report_reuses_policy_certified_nonzero_direction() {
+        let a = p3(0.0, 0.0, 0.0);
+        let b = p3(2.0, 0.0, 0.0);
+        let c = p3(0.0, 2.0, 0.0);
+        let half = (Real::from(1) / Real::from(2)).unwrap();
+        let deep_positive = exact_normal_positive();
+        let origin = Point3::new(half.clone(), half.clone(), -(deep_positive.clone() * &half));
+        let direction = Point3::new(Real::zero(), Real::zero(), deep_positive);
+        let denominator = dot_point3(&triangle_support_plane(&a, &b, &c).normal, &direction);
+
+        assert_eq!(denominator.zero_status(), hyperreal::ZeroKnowledge::Unknown);
+        assert_eq!(
+            denominator.inverse_ref(),
+            Err(hyperreal::Problem::UnknownZero)
+        );
+
+        let report = crate::classify_ray_triangle3_intersection_report(
+            &origin,
+            &direction,
+            &a,
+            &b,
+            &c,
+            PredicatePolicy::STRICT,
+        )
+        .value()
+        .expect("the exact-normal direction should construct a ray crossing");
+
+        assert_eq!(report.relation, RayTriangleIntersection::Proper);
+        assert_eq!(
+            report
+                .parameter
+                .as_ref()
+                .and_then(Real::exact_rational_normal_form),
+            half.exact_rational()
+        );
+        assert_eq!(
+            crate::compare_reals(
+                &report.point.as_ref().expect("crossing point").z,
+                &Real::zero(),
+                PredicatePolicy::STRICT,
+            )
+            .value(),
+            Some(Ordering::Equal)
+        );
+        assert_eq!(report.validate(PredicatePolicy::STRICT), Ok(()));
+        assert_eq!(
+            report.validate_against_sources(
+                &origin,
+                &direction,
+                &a,
+                &b,
+                &c,
+                PredicatePolicy::STRICT,
+            ),
             Ok(())
         );
     }

@@ -143,7 +143,7 @@ that need an explicit `PredicatePolicy`.
 | Task | API |
 | --- | --- |
 | Point on segment | `classify_point_segment`, `classify_point_segment3`, `point_on_segment`, `point_on_segment3` |
-| Segment intersection | `classify_segment_intersection`, `classify_segment3_intersection`, `construct_line_intersection_point` |
+| Segment intersection | `classify_segment_intersection`, `classify_segment3_intersection`, `construct_line_intersection_point`, `construct_line_intersection_point_with_policy` |
 | Reuse 2D facts | `point2_displacement_facts`, `segment2_facts`, `triangle2_facts`, `classify_point_segment_with_facts`, `classify_segment_intersection_with_facts` |
 | Ring structure | `ring2_facts`, `indexed_ring2_facts`, `ring_area_sign`, `indexed_ring_area_sign`, `ring_convexity`, `indexed_ring_convexity` |
 | Point in ring | `classify_point_ring_even_odd`, `classify_point_indexed_ring_even_odd`, `point_in_ring_even_odd`, `point_in_indexed_ring_even_odd` |
@@ -158,7 +158,7 @@ that need an explicit `PredicatePolicy`.
 | AABB/AABB | `classify_aabb2_intersection`, `classify_aabb3_intersection`, `aabb2s_intersect`, `aabb3s_intersect` |
 | Ordered AABBs | `ordered_aabb2s_intersect_coordinates`, `point_in_ordered_aabb2_coordinates`, `ordered_aabb3_contains`, `ordered_aabb3s_intersect`, `point_in_ordered_aabb3_relative_interior` |
 | Reuse box facts | `aabb2_facts`, `classify_aabb2_intersection_with_facts`, `point_in_triangle2_aabb` |
-| Compare squared distances | `compare_point2_distance_squared`, `compare_point3_distance_squared`, `compare_point_line3_distance_squared`, `compare_point_segment3_distance_squared`, `compare_point_plane_distance_squared` |
+| Compare squared distances | `compare_point2_distance_squared`, `compare_point3_distance_squared`, `compare_point_segment2_distance_squared`, `compare_point_line3_distance_squared`, `compare_point_segment3_distance_squared`, `compare_point_triangle3_distance_squared`, `compare_point_plane_distance_squared` |
 | Circle relations | `classify_circle_line2`, `classify_circle_segment2` |
 | Sphere relations | `classify_point_sphere3`, `classify_sphere3_intersection`, `classify_aabb3_sphere_intersection` |
 

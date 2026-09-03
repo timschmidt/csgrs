@@ -100,8 +100,11 @@ case batch means were:
 | `incircle2d` | 24.98 us | 18.06 us | 2.91 us | 2.92 us | 2.50 us |
 | `insphere3d` | 71.31 us | 41.97 us | 14.21 us | 10.99 us | - |
 
-The complete 40-row result set, including near-degenerate inputs and confidence
-intervals, is generated in [`benchmarks.md`](benchmarks.md).
+The unfiltered result set, including internal regression rows, competitive
+implementations, near-degenerate inputs, confidence intervals, and relative
+timing ratios, is generated in [`benchmarks.md`](benchmarks.md). The predicate
+benchmark refreshes it automatically; `cargo run --example
+write_benchmarks_md` rebuilds it from stored Criterion output.
 
 ### Steady-state allocation profile
 
@@ -159,6 +162,44 @@ while the migrated row removed the wrapper overhead. The intersection pair
 measured 936.57/945.32 ns before and 930.88/922.66 ns after; the sub-2% reversal
 between identical post-change bodies is harness-layout noise rather than a
 predicate regression.
+
+## Exact 3D point/triangle distance completion
+
+The exactCore `students/xinwei` sphere-planning snapshot needs point-to-triangle
+distance, but its copied binary32 closest-point routine divides by a zero Gram
+determinant on collinear triangles and feeds `NaN` into a classifier that then
+returns `FREE`. Hyperlimit now completes its squared-distance predicate family
+with `compare_point_triangle3_distance_squared`. Non-degenerate triangles use
+unnormalized barycentric projection numerators and a division-free plane
+comparison; exterior projections and all degenerate triangles reduce to the
+minimum of the three existing closed-segment comparisons.
+
+A dedicated rational kernel avoids materializing the larger generic `Real`
+graph. Each Criterion iteration processes 512 prebuilt cases, one quarter of
+them degenerate:
+
+| Exact-rational workload | Generic composition | Dedicated kernel | Change |
+| --- | ---: | ---: | ---: |
+| Non-dyadic coordinates and threshold | 1.4861 ms | 1.2294 ms | -17.27% |
+| Non-dyadic coordinates, dyadic threshold | 1.1729 ms | 0.78962 ms | -32.68% |
+| Integer coordinates and threshold | 1.5646 ms | 0.96167 ms | -38.54% |
+
+The retained kernel uses 36 allocations/2,016 requested bytes for the measured
+interior and degenerate calls and 72/4,032 for the exterior call. Against the
+generic composition this saves 3 allocations/168 bytes on the interior path,
+is equal on the degenerate path, and costs 3 allocations/168 bytes on the
+exterior path. The all-feature release rlib grows by 22,140 file bytes and its
+metadata by 5,585 bytes; summed object sections grow by 11,407 text bytes while
+data falls by 8 bytes, for 11,399 additional loadable bytes.
+
+Exact analytic tests cover face, edge, vertex, repeated-vertex, collinear, and
+strict-uncertainty cases. A 512-case property matrix checks permutation
+invariance and zero vertex distance, every public Hyperreal representation
+crosses the API under both policies, and an independent Ericson-region release
+oracle agreed on all 49,997 non-boundary integer cases (three exact/near
+boundaries were left to the analytic tests). The exactCore regression preserves
+the diagonal-shell case whose squared distance is `25/12`: outside the legacy
+`sqrt(2)` shell but inside the sound `sqrt(3)` shell.
 
 ## Immediate facts-aware 2D segment API gate
 
@@ -536,6 +577,34 @@ Serialized 100-sample Criterion gates found no regression:
 | Plane/triangle dyadic composition | 45.859 us | 44.887 us | -2.12% |
 
 Criterion classified the two small positive movements as noise.
+
+### Reuse policy-certified nonzero construction evidence
+
+Geometry construction now retains the same policy decision that established a
+denominator as nonzero. Segment/plane and coplanar parameters, halfspace
+active-set projections, affine conversion of three-plane intersections, and
+ray/triangle crossings construct one reciprocal with
+`inverse_ref_assuming_nonzero` instead of asking ordinary `Real` division to
+repeat its bounded zero proof. The 2D line constructor exposes the same route
+through `construct_line_intersection_point_with_policy`; the original API
+remains a strict-policy wrapper. HyperTri passes its evaluator policy through
+that boundary.
+
+Regressions use a positive expression equal to `2^-3000` whose structural zero
+status and ordinary inverse remain undecided, while the strict exact-normal
+stage proves it nonzero. The affected constructions now succeed exactly;
+independent unsupported transcendental zero controls still return `Unknown` or
+construction failure. The shared adversarial fixture also replaced four
+duplicate module-local copies and the inline segment/plane copy.
+
+Pinned same-machine Criterion A/B runs retained or improved ordinary exact-
+rational performance:
+
+| Workload | Legacy division | Retained policy reuse | Change |
+| --- | ---: | ---: | ---: |
+| Segment/plane determinant ratio | 1.8184 us | 1.7430 us | -4.15% |
+| Halfspace feasibility active sets | 16.416 us | 15.945 us | -2.25% |
+| Ray/triangle report replay | control distribution | 1.3698 ms | no detectable change (`p = 0.74`) |
 
 ## Rejected experiments
 

@@ -300,6 +300,23 @@ pub fn construct_line_intersection_point(
     c: &Point2,
     d: &Point2,
 ) -> Option<Point2> {
+    construct_line_intersection_point_with_policy(a, b, c, d, PredicatePolicy::STRICT)
+}
+
+/// Construct the exact intersection point of two supporting 2D lines under an
+/// explicit predicate policy.
+///
+/// This is the policy-bearing counterpart of
+/// [`construct_line_intersection_point`]. A certified nonzero line determinant
+/// is reused directly when forming the affine parameter; unresolved
+/// denominators still fail closed.
+pub fn construct_line_intersection_point_with_policy(
+    a: &Point2,
+    b: &Point2,
+    c: &Point2,
+    d: &Point2,
+    policy: PredicatePolicy,
+) -> Option<Point2> {
     if [&a.x, &a.y, &b.x, &b.y, &c.x, &c.y, &d.x, &d.y]
         .into_iter()
         .all(Real::is_exact_dyadic_rational)
@@ -360,7 +377,14 @@ pub fn construct_line_intersection_point(
 
     let denominator = cross2(&ab_x, &ab_y, &cd_x, &cd_y);
     let numerator = cross2(&ca_x, &ca_y, &cd_x, &cd_y);
-    let t = (&numerator / &denominator).ok()?;
+    let reciprocal = match compare_reals_with_policy(&denominator, &Real::zero(), policy).value() {
+        Some(Ordering::Equal) => return None,
+        Some(Ordering::Less | Ordering::Greater) => {
+            denominator.inverse_ref_assuming_nonzero().ok()?
+        }
+        None => denominator.inverse_ref().ok()?,
+    };
+    let t = numerator * reciprocal;
 
     Some(Point2::new(
         add_ref(&a.x, &mul_ref(&t, &ab_x)),
@@ -1162,6 +1186,7 @@ fn stage_rank(stage: Escalation) -> u8 {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::test_support::exact_normal_positive;
 
     const APPROX: PredicatePolicy = PredicatePolicy::APPROXIMATE_512;
 
@@ -1372,6 +1397,52 @@ mod tests {
         assert_eq!(
             crate::construct_line_intersection_point(&p2(0, 0), &p2(1, 0), &p2(2, -1), &p2(2, 1)),
             Some(p2(2, 0))
+        );
+    }
+
+    #[test]
+    fn line_intersection_point_reuses_policy_nonzero_determinant() {
+        let extent = exact_normal_positive();
+        let half = (Real::from(1) / Real::from(2)).unwrap();
+        let crossing_x = extent.clone() * &half;
+        let a = Point2::new(Real::zero(), Real::zero());
+        let b = Point2::new(extent.clone(), Real::zero());
+        let c = Point2::new(crossing_x.clone(), Real::from(-1));
+        let d = Point2::new(crossing_x.clone(), Real::from(1));
+        let denominator = extent.clone() * Real::from(2);
+        assert_eq!(
+            denominator.inverse_ref(),
+            Err(hyperreal::Problem::UnknownZero)
+        );
+        assert_eq!(
+            classify_segment_intersection_with_policy(&a, &b, &c, &d, PredicatePolicy::STRICT,)
+                .value(),
+            Some(SegmentIntersection::Proper)
+        );
+
+        for point in [
+            construct_line_intersection_point_with_policy(&a, &b, &c, &d, PredicatePolicy::STRICT),
+            construct_line_intersection_point(&a, &b, &c, &d),
+        ] {
+            let point = point.expect("the certified determinant should construct the crossing");
+            assert_eq!(
+                compare_reals_with_policy(&point.x, &crossing_x, PredicatePolicy::STRICT).value(),
+                Some(Ordering::Equal)
+            );
+            assert_eq!(point.y, Real::zero());
+        }
+
+        let unresolved_extent = terminal_zero();
+        let unresolved_x = unresolved_extent.clone() * &half;
+        assert!(
+            construct_line_intersection_point_with_policy(
+                &Point2::new(Real::zero(), Real::zero()),
+                &Point2::new(unresolved_extent, Real::zero()),
+                &Point2::new(unresolved_x.clone(), Real::from(-1)),
+                &Point2::new(unresolved_x, Real::from(1)),
+                PredicatePolicy::STRICT,
+            )
+            .is_none()
         );
     }
 

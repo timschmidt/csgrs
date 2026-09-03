@@ -26,17 +26,17 @@ use hyperlimit::{
     classify_triangle_against_oriented_plane, classify_triangle_triangle3,
     classify_triangle3_degeneracy, compare_point_line3_distance_squared,
     compare_point_plane_distance_squared, compare_point_segment3_distance_squared,
-    compare_point2_distance_squared, compare_point3_distance_squared, incircle2 as incircle2d,
-    incircle2_evidence, incircle2_with_evidence as incircle2d_with_evidence, insphere_d,
-    insphere3 as insphere3d, insphere3_evidence,
-    insphere3_with_evidence as insphere3d_with_evidence, intersect_segment_with_oriented_plane,
-    intersect_three_planes, intersect_two_planes, line2_orientation,
-    ordered_aabb2s_intersect_coordinates, ordered_aabb3_contains, ordered_aabb3s_intersect,
-    orient_d, orient2 as orient2d, orient3 as orient3d, oriented_plane3_evidence, plane3_evidence,
-    point_in_ordered_aabb2_coordinates, point_in_ordered_aabb3_relative_interior,
-    point2_displacement_facts, point2_equal, projected_line_parameter3,
-    projected_segment_parameter3, ring_area_sign, segment2_facts, support_dop3_from_points,
-    triangle3_orientation,
+    compare_point_triangle3_distance_squared, compare_point2_distance_squared,
+    compare_point3_distance_squared, incircle2 as incircle2d, incircle2_evidence,
+    incircle2_with_evidence as incircle2d_with_evidence, insphere_d, insphere3 as insphere3d,
+    insphere3_evidence, insphere3_with_evidence as insphere3d_with_evidence,
+    intersect_segment_with_oriented_plane, intersect_three_planes, intersect_two_planes,
+    line2_orientation, ordered_aabb2s_intersect_coordinates, ordered_aabb3_contains,
+    ordered_aabb3s_intersect, orient_d, orient2 as orient2d, orient3 as orient3d,
+    oriented_plane3_evidence, plane3_evidence, point_in_ordered_aabb2_coordinates,
+    point_in_ordered_aabb3_relative_interior, point2_displacement_facts, point2_equal,
+    projected_line_parameter3, projected_segment_parameter3, ring_area_sign, segment2_facts,
+    support_dop3_from_points, triangle3_orientation,
 };
 use robust::{Coord, Coord3D};
 
@@ -1672,6 +1672,57 @@ fn bench_exact_rational_kernels(c: &mut Criterion) {
             black_box(score)
         });
     });
+    let triangle_distance3 = exact_rational_point_triangle_distance_cases(11);
+    group.bench_function("distance3/point_triangle_scaled_thresholds", |b| {
+        b.iter(|| {
+            let mut score = 0_i64;
+            for (point, a, b, c) in &triangle_distance3 {
+                score += ordering_score(black_box(compare_point_triangle3_distance_squared(
+                    black_box(point),
+                    black_box(a),
+                    black_box(b),
+                    black_box(c),
+                    black_box(&threshold),
+                    APPROX,
+                )));
+            }
+            black_box(score)
+        });
+    });
+    let dyadic_threshold = hyperreal::Real::from(25);
+    group.bench_function("distance3/point_triangle_dyadic_thresholds", |b| {
+        b.iter(|| {
+            let mut score = 0_i64;
+            for (point, a, b, c) in &triangle_distance3 {
+                score += ordering_score(black_box(compare_point_triangle3_distance_squared(
+                    black_box(point),
+                    black_box(a),
+                    black_box(b),
+                    black_box(c),
+                    black_box(&dyadic_threshold),
+                    APPROX,
+                )));
+            }
+            black_box(score)
+        });
+    });
+    let integer_triangle_distance3 = exact_rational_point_triangle_distance_cases(1);
+    group.bench_function("distance3/point_triangle_integer_thresholds", |b| {
+        b.iter(|| {
+            let mut score = 0_i64;
+            for (point, a, b, c) in &integer_triangle_distance3 {
+                score += ordering_score(black_box(compare_point_triangle3_distance_squared(
+                    black_box(point),
+                    black_box(a),
+                    black_box(b),
+                    black_box(c),
+                    black_box(&dyadic_threshold),
+                    APPROX,
+                )));
+            }
+            black_box(score)
+        });
+    });
 
     let plane_aabb_cases = exact_rational_plane_aabb3_cases();
     group.bench_function("plane/aabb3_reports", |b| {
@@ -2953,6 +3004,32 @@ fn exact_rational_point_feature_distance_cases() -> Vec<(Point3, Point3, Point3,
     cases
 }
 
+fn exact_rational_point_triangle_distance_cases(
+    denominator: u64,
+) -> Vec<(Point3, Point3, Point3, Point3)> {
+    let mut cases = Vec::with_capacity(BATCH);
+    for i in 0..BATCH {
+        let j = i as i64;
+        let point = rational_point3(
+            j % 53 - 10,
+            denominator,
+            j % 47 - 10,
+            denominator,
+            j % 19 - 9,
+            denominator,
+        );
+        let a = rational_point3(0, denominator, 0, denominator, 0, denominator);
+        let b = rational_point3(40, denominator, 0, denominator, 0, denominator);
+        let c = if i % 4 == 0 {
+            rational_point3(80, denominator, 0, denominator, 0, denominator)
+        } else {
+            rational_point3(0, denominator, 40, denominator, 0, denominator)
+        };
+        cases.push((point, a, b, c));
+    }
+    cases
+}
+
 fn exact_rational_plane_aabb3_cases() -> Vec<(Plane3, Point3, Point3)> {
     let mut cases = Vec::with_capacity(BATCH);
     for i in 0..BATCH {
@@ -3506,13 +3583,17 @@ fn main() {
     } else {
         criterion.final_summary();
 
-        match benchmark_report::write_benchmarks_md() {
-            Ok(summary) => eprintln!(
-                "updated {} from {} Criterion benchmark results",
-                summary.path.display(),
-                summary.rows
-            ),
-            Err(error) => eprintln!("failed to update benchmarks.md: {error}"),
+        if !benchmark_report::reports_disabled() {
+            match benchmark_report::write_benchmarks_md() {
+                Ok(summary) => eprintln!(
+                    "updated {} from {} Criterion rows, {} comparisons, and {} benchmark suites",
+                    summary.path.display(),
+                    summary.rows,
+                    summary.comparisons,
+                    summary.suites,
+                ),
+                Err(error) => eprintln!("failed to update benchmarks.md: {error}"),
+            }
         }
     }
 }

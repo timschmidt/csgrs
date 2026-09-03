@@ -1,5 +1,6 @@
 [package]
 name = "hyperlimit"
+autobenches = false
 version = "0.4.1"
 edition = "2024"
 description = "Hyperreal-backed exact predicates with structural Real awareness."
@@ -35,4 +36,8 @@ name = "readme_quickstart"
 
 [[bench]]
 name = "predicates"
+harness = false
+
+[[bench]]
+name = "retained_fuzz"
 harness = false
