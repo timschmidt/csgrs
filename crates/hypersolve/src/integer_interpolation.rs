@@ -35,6 +35,56 @@ pub(crate) fn primitive_integer_polynomial_gcd(left: &[Real], right: &[Real]) ->
     )
 }
 
+/// Builds the sign-preserving primitive integer Sturm chain for an exact
+/// rational polynomial. Every member differs from the ordinary field chain by
+/// one positive rational scale.
+pub(crate) fn primitive_integer_sturm_sequence(coefficients: &[Real]) -> Option<Vec<Vec<Real>>> {
+    let rationals = coefficients
+        .iter()
+        .map(Real::exact_rational_ref)
+        .collect::<Option<Vec<_>>>()?;
+    let first = primitive_integer_content_part(Rational::primitive_bigint_ratio(&rationals));
+    let derivative = primitive_integer_content_part(
+        first
+            .iter()
+            .enumerate()
+            .skip(1)
+            .map(|(degree, coefficient)| coefficient * BigInt::from(degree))
+            .collect(),
+    );
+    let mut sequence = vec![first];
+    if !is_zero_integer_polynomial(&derivative) {
+        sequence.push(derivative);
+    }
+    while sequence.len() >= 2 {
+        let previous = sequence[sequence.len() - 2].clone();
+        let divisor = &sequence[sequence.len() - 1];
+        if divisor.len() == 1 {
+            break;
+        }
+        let mut remainder = primitive_pseudo_remainder(&previous, divisor)?;
+        if is_zero_integer_polynomial(&remainder) {
+            break;
+        }
+        for coefficient in &mut remainder {
+            *coefficient = -std::mem::take(coefficient);
+        }
+        sequence.push(remainder);
+    }
+    Some(
+        sequence
+            .into_iter()
+            .map(|polynomial| {
+                polynomial
+                    .into_iter()
+                    .map(Rational::from_bigint)
+                    .map(Real::from)
+                    .collect()
+            })
+            .collect(),
+    )
+}
+
 /// Certifies coprimality over `Q[x]` through a degree-preserving modular
 /// image. A gcd of one modulo any good prime proves the primitive integer
 /// polynomials are coprime in characteristic zero. Failure to find such a
@@ -151,6 +201,7 @@ fn primitive_pseudo_remainder(dividend: &[BigInt], divisor: &[BigInt]) -> Option
     let divisor_degree = divisor.len() - 1;
     let divisor_leading = divisor[divisor_degree].clone();
     let mut remainder = dividend.to_vec();
+    let mut steps = 0_usize;
     while !is_zero_integer_polynomial(&remainder) && remainder.len() > divisor_degree {
         let remainder_degree = remainder.len() - 1;
         let shift = remainder_degree - divisor_degree;
@@ -168,12 +219,20 @@ fn primitive_pseudo_remainder(dividend: &[BigInt], divisor: &[BigInt]) -> Option
         for (index, coefficient) in divisor.iter().enumerate() {
             remainder[index + shift] -= &divisor_scale * coefficient;
         }
-        remainder = primitive_integer_part(remainder);
+        while remainder.len() > 1 && remainder.last().is_some_and(BigInt::is_zero) {
+            remainder.pop();
+        }
+        steps += 1;
     }
-    Some(remainder)
+    if divisor_leading < BigInt::zero() && !steps.is_multiple_of(2) {
+        for coefficient in &mut remainder {
+            *coefficient = -std::mem::take(coefficient);
+        }
+    }
+    Some(primitive_integer_content_part(remainder))
 }
 
-fn primitive_integer_part(mut polynomial: Vec<BigInt>) -> Vec<BigInt> {
+fn primitive_integer_content_part(mut polynomial: Vec<BigInt>) -> Vec<BigInt> {
     while polynomial.len() > 1 && polynomial.last().is_some_and(BigInt::is_zero) {
         polynomial.pop();
     }
@@ -199,6 +258,11 @@ fn primitive_integer_part(mut polynomial: Vec<BigInt>) -> Vec<BigInt> {
             *coefficient /= &content;
         }
     }
+    polynomial
+}
+
+fn primitive_integer_part(polynomial: Vec<BigInt>) -> Vec<BigInt> {
+    let mut polynomial = primitive_integer_content_part(polynomial);
     if polynomial
         .last()
         .is_some_and(|coefficient| coefficient < &BigInt::zero())

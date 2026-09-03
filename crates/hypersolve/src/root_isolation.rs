@@ -22,7 +22,7 @@ use crate::certification::{
 use crate::eval::EvaluationContext;
 use crate::integer_interpolation::{
     primitive_integer_polynomial, primitive_integer_polynomial_gcd,
-    primitive_integer_polynomials_are_coprime_modular,
+    primitive_integer_polynomials_are_coprime_modular, primitive_integer_sturm_sequence,
 };
 use crate::interval::rational_interval_product;
 use crate::model::{ConstraintKind, Problem};
@@ -69,6 +69,79 @@ pub struct IsolatedRootInterval {
     pub exact_root: Option<Real>,
     /// Number of distinct roots certified in the interval.
     pub distinct_root_count: usize,
+}
+
+/// One exact, sign-preserving Sturm chain for a univariate polynomial.
+///
+/// Rational inputs use the shared fraction-free primitive-integer kernel;
+/// exact nonrational coefficients retain exact field division. The internal
+/// polynomials stay opaque so callers share root-count evidence instead of
+/// rebuilding or interpreting remainder infrastructure.
+#[derive(Clone, Debug, PartialEq)]
+pub struct UnivariateSturmSequence {
+    polynomials: Vec<Vec<Real>>,
+}
+
+/// Exact evidence at one point of a univariate Sturm chain.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum UnivariateSturmPoint {
+    /// The source polynomial vanishes at the point.
+    Root,
+    /// The source polynomial is nonzero and the chain has this many sign
+    /// variations after zero-valued remainder members are omitted.
+    NonRoot(usize),
+}
+
+impl UnivariateSturmSequence {
+    /// Constructs the complete exact chain, or returns `None` when a required
+    /// coefficient sign or division cannot be certified under `policy`.
+    pub fn new(polynomial: &[Real], policy: PredicatePolicy) -> Option<Self> {
+        if polynomial.is_empty() {
+            return None;
+        }
+        let polynomials = primitive_integer_sturm_sequence(polynomial)
+            .or_else(|| field_sturm_sequence(polynomial, policy))?;
+        if polynomials.first()?.len() == 1
+            && compare_reals(&polynomials[0][0], &Real::zero(), policy).value()? == Ordering::Equal
+        {
+            return None;
+        }
+        Some(Self { polynomials })
+    }
+
+    /// Returns the terminal nonzero remainder. For a chain of `p` and `p'`,
+    /// this is their GCD up to a nonzero constant scale.
+    pub fn terminal_polynomial(&self) -> &[Real] {
+        self.polynomials
+            .last()
+            .expect("a Sturm chain retains its source polynomial")
+    }
+
+    /// Classifies one exact point and returns its sign-variation count when it
+    /// is not a root of the source polynomial.
+    pub fn classify_point(
+        &self,
+        point: &Real,
+        policy: PredicatePolicy,
+    ) -> Option<UnivariateSturmPoint> {
+        let evaluation = evaluate_sturm_at(self, point, policy)?;
+        Some(if evaluation.polynomial_sign == Ordering::Equal {
+            UnivariateSturmPoint::Root
+        } else {
+            UnivariateSturmPoint::NonRoot(evaluation.variations)
+        })
+    }
+
+    /// Counts distinct roots in the Sturm-owned half-open interval
+    /// `(lower, upper]`.
+    pub fn count_distinct_roots(
+        &self,
+        lower: &Real,
+        upper: &Real,
+        policy: PredicatePolicy,
+    ) -> Option<usize> {
+        sturm_count(self, lower, upper, policy)
+    }
 }
 
 /// Report for isolating roots of one active univariate equality residual.
@@ -806,7 +879,7 @@ pub fn refine_isolated_univariate_polynomial_interval(
             Some("could not compute square-free polynomial part".to_owned()),
         );
     };
-    let Some(sturm) = sturm_sequence(&square_free, policy) else {
+    let Some(sturm) = UnivariateSturmSequence::new(&square_free, policy) else {
         return root_refinement_report(
             IsolatedRootRefinementStatus::Undecided,
             interval.clone(),
@@ -885,7 +958,7 @@ pub fn refine_isolated_univariate_polynomial_interval(
     }
 
     refine_owned_one_root_interval(
-        &sturm[0],
+        &sturm.polynomials[0],
         interval,
         config,
         upper_evaluation.polynomial_sign,
@@ -1700,12 +1773,12 @@ fn isolate_square_free_roots(
     config: &RootIsolationConfig,
 ) -> Option<Vec<IsolatedRootInterval>> {
     let policy = config.policy;
-    let sturm = sturm_sequence(polynomial, policy)?;
+    let sturm = UnivariateSturmSequence::new(polynomial, policy)?;
     let bound = power_of_two_fujiwara_bound(polynomial)?;
     let lower = -bound.clone();
     let upper = bound;
-    if sign_at(&sturm[0], &lower, policy)? == Ordering::Equal
-        || sign_at(&sturm[0], &upper, policy)? == Ordering::Equal
+    if sign_at(&sturm.polynomials[0], &lower, policy)? == Ordering::Equal
+        || sign_at(&sturm.polynomials[0], &upper, policy)? == Ordering::Equal
     {
         // Fujiwara's inequality is strict at these endpoints.  Refuse to use
         // a broken bound rather than silently changing the open-interval
@@ -1740,7 +1813,7 @@ struct SturmIsolationNode {
 }
 
 fn isolate_interval(
-    sturm: &[Vec<Real>],
+    sturm: &UnivariateSturmSequence,
     node: SturmIsolationNode,
     config: &RootIsolationConfig,
     intervals: &mut Vec<IsolatedRootInterval>,
@@ -1771,7 +1844,7 @@ fn isolate_interval(
     }
 
     let midpoint = ((lower.clone() + upper.clone()) / Real::from(2)).ok()?;
-    let first = &sturm[0];
+    let first = &sturm.polynomials[0];
     let midpoint_is_root = sign_at(first, &midpoint, policy)? == Ordering::Equal;
     // For a square-free Sturm chain, V(a)-V(b) counts roots in (a,b].  Remove
     // a midpoint root from the raw left count; the parent's open-interval
@@ -1843,7 +1916,7 @@ fn should_refine_one_root_interval(
     }
 }
 
-fn sturm_sequence(polynomial: &[Real], policy: PredicatePolicy) -> Option<Vec<Vec<Real>>> {
+fn field_sturm_sequence(polynomial: &[Real], policy: PredicatePolicy) -> Option<Vec<Vec<Real>>> {
     let p0 = sign_preserving_primitive_polynomial(polynomial.to_vec(), policy)?;
     let p1 = sign_preserving_primitive_polynomial(derivative(&p0), policy)?;
     let mut sequence = vec![p0, p1];
@@ -1896,7 +1969,7 @@ fn sign_preserving_primitive_polynomial(
 }
 
 fn sturm_count(
-    sturm: &[Vec<Real>],
+    sturm: &UnivariateSturmSequence,
     lower: &Real,
     upper: &Real,
     policy: PredicatePolicy,
@@ -1913,14 +1986,14 @@ struct SturmPointEvaluation {
 }
 
 fn evaluate_sturm_at(
-    sturm: &[Vec<Real>],
+    sturm: &UnivariateSturmSequence,
     point: &Real,
     policy: PredicatePolicy,
 ) -> Option<SturmPointEvaluation> {
     let mut previous = None;
     let mut variations = 0;
     let mut polynomial_sign = None;
-    for (index, polynomial) in sturm.iter().enumerate() {
+    for (index, polynomial) in sturm.polynomials.iter().enumerate() {
         let sign = sign_at(polynomial, point, policy)?;
         if index == 0 {
             polynomial_sign = Some(sign);
@@ -2060,7 +2133,7 @@ pub(crate) fn polynomials_share_one_root_in_interval(
         return Some(false);
     }
     let square_free = square_free_part(gcd, policy)?;
-    let sturm = sturm_sequence(&square_free, policy)?;
+    let sturm = UnivariateSturmSequence::new(&square_free, policy)?;
     match sturm_count(&sturm, lower, upper, policy)? {
         0 => Some(false),
         1 => Some(true),
@@ -2229,7 +2302,7 @@ fn polynomial_has_one_distinct_root_with_upper_ownership(
         ))?;
         return Some(root_count == 1);
     }
-    let sturm = sturm_sequence(&square_free, policy)?;
+    let sturm = UnivariateSturmSequence::new(&square_free, policy)?;
     let half_open_root_count = sturm_count(&sturm, lower, upper, policy)?;
     let root_count = if upper_ownership == UpperEndpointOwnership::Included {
         half_open_root_count
@@ -2295,7 +2368,7 @@ pub(crate) fn polynomial_has_no_distinct_root_in_closed_interval(
         return Some(true);
     }
     let square_free = square_free_part(polynomial.to_vec(), policy)?;
-    let sturm = sturm_sequence(&square_free, policy)?;
+    let sturm = UnivariateSturmSequence::new(&square_free, policy)?;
     Some(sturm_count(&sturm, lower, upper, policy)? == 0)
 }
 
@@ -3449,11 +3522,15 @@ mod tests {
         );
         let square_free = square_free_part(polynomial.to_vec(), PredicatePolicy::STRICT)
             .expect("the cubic is square-free");
-        let sturm = sturm_sequence(&square_free, PredicatePolicy::STRICT)
+        let sturm = UnivariateSturmSequence::new(&square_free, PredicatePolicy::STRICT)
             .expect("the exact cubic has a Sturm sequence");
         assert_eq!(
-            sturm_count(&sturm, &Real::zero(), &Real::one(), PredicatePolicy::STRICT,),
+            sturm.count_distinct_roots(&Real::zero(), &Real::one(), PredicatePolicy::STRICT,),
             Some(1)
+        );
+        assert_eq!(
+            sturm.classify_point(&(real(1) / real(2)).unwrap(), PredicatePolicy::STRICT,),
+            Some(UnivariateSturmPoint::Root)
         );
         assert_eq!(
             polynomial_has_one_distinct_root_in_open_interval(
