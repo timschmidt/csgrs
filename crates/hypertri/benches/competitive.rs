@@ -11,6 +11,9 @@ use hypertri::{Point2, PredicatePolicy, Real, TriangulationContext};
 use std::hint::black_box;
 use std::time::Duration;
 
+#[path = "support/benchmark_report.rs"]
+mod benchmark_report;
+
 const APPROX: TriangulationContext = TriangulationContext::new(PredicatePolicy::APPROXIMATE_512);
 
 fn lift(points: &[[f64; 2]]) -> Vec<Point2> {
@@ -118,6 +121,7 @@ fn bench_delaunay_competitors(c: &mut Criterion) {
 criterion_group!(
     benches,
     bench_earcut_competitors,
-    bench_delaunay_competitors
+    bench_delaunay_competitors,
+    benchmark_report::finish_benchmark_report
 );
 criterion_main!(benches);

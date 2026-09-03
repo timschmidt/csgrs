@@ -6,6 +6,9 @@ use hypertri::{
 use std::hint::black_box;
 use std::time::Duration;
 
+#[path = "support/benchmark_report.rs"]
+mod benchmark_report;
+
 const APPROX: TriangulationContext = TriangulationContext::new(PredicatePolicy::APPROXIMATE_512);
 
 fn fraction(numerator: i64, denominator: u64) -> Real {
@@ -127,5 +130,9 @@ fn bench_real_representations(c: &mut Criterion) {
     group.finish();
 }
 
-criterion_group!(benches, bench_real_representations);
+criterion_group!(
+    benches,
+    bench_real_representations,
+    benchmark_report::finish_benchmark_report
+);
 criterion_main!(benches);

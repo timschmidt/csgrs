@@ -6,6 +6,11 @@ only changes that survived tests and Criterion A/B measurements. Timings are loc
 Criterion estimates from an optimized build; they are evidence for relative changes,
 not portable absolute promises.
 
+The automatically maintained [`benchmarks.md`](benchmarks.md) catalogues every
+registered benchmark target and every stored Criterion row, and presents
+same-input implementation rows as explicit timing comparisons. The dispatch
+harness writes its complete non-timing evidence to `dispatch_trace.md`.
+
 The explicit-policy runtime, native/WASM size, and call-graph baseline is
 recorded separately in
 [`benchmarks/baselines/policy-context-2026-07-30.md`](benchmarks/baselines/policy-context-2026-07-30.md).
@@ -188,6 +193,18 @@ exact scalar comparisons from 141 to 8, and orientations from 87 to 8; refinemen
 remained zero. The full gate included 52 unit tests, 26 adversarial tests, six
 `earcutr` differential tests, eight property tests, and every benchmark and example
 target.
+
+### Preserve the triangulation policy through crossing construction
+
+Constraint planarization now passes its retained `PredicateEvaluator` into the
+policy-aware Hyperlimit line-intersection constructor. This closes a
+construction gap where the exact segment predicates could certify a proper
+crossing but a fresh ordinary scalar division could still reject the same
+nonzero determinant. A regression uses an exact-normal determinant equal to
+`2^-3000`: ordinary inversion is undecided, the evaluator's strict policy
+constructs the Steiner point, and an independently unsupported zero still
+fails closed. The change adds no second predicate policy or topology branch;
+the existing evaluator remains the single owner of the decision.
 
 ## Rejected experiment
 

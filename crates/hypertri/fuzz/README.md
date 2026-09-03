@@ -30,3 +30,12 @@ ASAN_OPTIONS=detect_leaks=0 cargo +nightly fuzz run hyperreal_representations \
 
 When a minimized input is found, convert it into the closest focused regression
 test in `tests/adversarial.rs` or `tests/fuzz_properties.rs`.
+
+## Retained performance offenders
+
+Run `cargo bench --bench retained_fuzz --features all-algorithms,runtime-select`
+to replay inputs shaped by every registered fuzz target. The run merges each
+target/seed pair's worst-ever timing into `slow_performers.txt`, rotates the
+worst eligible offender into the 100-case `promoted_slow_offenders.txt`
+lexicase set, emits a dedicated Criterion row for every promoted case, and
+updates the score, delta, and delta derivative in `benchmarks.md`.

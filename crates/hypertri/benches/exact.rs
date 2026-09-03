@@ -1,6 +1,9 @@
 use criterion::{Criterion, black_box, criterion_group, criterion_main};
 use hypertri::{Constraint, Point2, PredicatePolicy, Rational, Real, TriangulationContext};
 
+#[path = "support/benchmark_report.rs"]
+mod benchmark_report;
+
 const APPROX: TriangulationContext = TriangulationContext::new(PredicatePolicy::APPROXIMATE_512);
 
 fn r(value: i64) -> Real {
@@ -366,5 +369,9 @@ fn bench_exact_triangulation(c: &mut Criterion) {
     });
 }
 
-criterion_group!(benches, bench_exact_triangulation);
+criterion_group!(
+    benches,
+    bench_exact_triangulation,
+    benchmark_report::finish_benchmark_report
+);
 criterion_main!(benches);

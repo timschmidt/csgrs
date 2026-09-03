@@ -190,7 +190,7 @@ pub(crate) fn planarize_constraints(
             )?
             .is_proper_crossing()
             {
-                let point = segment_intersection_point(&planar_points, a, b)?;
+                let point = segment_intersection_point(evaluator, &planar_points, a, b)?;
                 push_unique_point(evaluator, &mut planar_points, point)?;
             }
         }
@@ -233,6 +233,7 @@ pub(crate) fn planarize_constraints(
 }
 
 fn segment_intersection_point(
+    evaluator: &PredicateEvaluator,
     points: &[Point2],
     first: Constraint,
     second: Constraint,
@@ -242,7 +243,8 @@ fn segment_intersection_point(
     let c = &points[second.from];
     let d = &points[second.to];
 
-    match hyperlimit::construct_line_intersection_point(a, b, c, d) {
+    match hyperlimit::construct_line_intersection_point_with_policy(a, b, c, d, evaluator.policy())
+    {
         Some(point) => Ok(Point2::new(point.x, point.y)),
         None => Err(Error::InvalidInput {
             reason: "properly crossing constraint lines have no constructible intersection",
@@ -1958,6 +1960,48 @@ mod tests {
 
     fn p(x: i64, y: i64) -> Point2 {
         Point2::new(Real::from(x), Real::from(y))
+    }
+
+    fn exact_normal_positive() -> Real {
+        let root_two = Real::from(2).sqrt().unwrap();
+        let root_two_over_pi = (root_two.clone() / Real::pi()).unwrap();
+        let half = (Real::from(1) / Real::from(2)).unwrap();
+        let shared_offset = root_two.clone() * Real::from(3) + half;
+        let contact = (((root_two.clone() * Real::from(4) - shared_offset.clone()) * Real::pi())
+            * root_two_over_pi.clone()
+            / Real::from(4))
+        .unwrap();
+        let domain = (((root_two * Real::from(2) - shared_offset) * Real::pi()) * root_two_over_pi
+            / Real::from(4))
+        .unwrap()
+            + Real::from(1);
+        contact - domain + Real::from(2).powi_i64(-3000).unwrap()
+    }
+
+    #[test]
+    fn crossing_planarization_reuses_the_evaluator_nonzero_policy() {
+        let context = TriangulationContext::new(hyperlimit::PredicatePolicy::STRICT);
+        let evaluator = PredicateEvaluator::new(&context);
+        let extent = exact_normal_positive();
+        let half = (Real::from(1) / Real::from(2)).unwrap();
+        let crossing_x = extent.clone() * &half;
+        let points = vec![
+            Point2::new(Real::zero(), Real::zero()),
+            Point2::new(extent, Real::zero()),
+            Point2::new(crossing_x.clone(), Real::from(-1)),
+            Point2::new(crossing_x.clone(), Real::from(1)),
+        ];
+        let constraints = [Constraint::new(0, 1), Constraint::new(2, 3)];
+
+        let planar = planarize_constraints(&evaluator, &points, &constraints)
+            .expect("strict policy should construct the certified crossing");
+        assert_eq!(planar.points.len(), 5);
+        assert_eq!(
+            evaluator.cmp(&planar.points[4].x, &crossing_x),
+            Ok(Ordering::Equal)
+        );
+        assert_eq!(planar.points[4].y, Real::zero());
+        assert_eq!(planar.constraints.len(), 4);
     }
 
     #[test]

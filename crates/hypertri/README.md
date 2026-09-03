@@ -275,7 +275,10 @@ cargo bench --bench competitive --features all-algorithms,f64-interop
 ## Further documentation
 
 [`PERFORMANCE.md`](PERFORMANCE.md) records benchmark methodology and retained
-optimization evidence. Generate the complete API reference with:
+optimization evidence. [`benchmarks.md`](benchmarks.md) is refreshed by every
+Criterion suite and catalogues all timing and diagnostic targets without
+filtering stored rows; `cargo run --example write_benchmarks_md` regenerates it
+without rerunning measurements. Generate the complete API reference with:
 
 ```sh
 cargo doc --open --all-features
