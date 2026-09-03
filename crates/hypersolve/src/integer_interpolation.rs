@@ -145,22 +145,28 @@ fn primitive_integer_coefficients(polynomial: &[Real]) -> Option<Vec<BigInt>> {
 }
 
 fn primitive_pseudo_remainder(dividend: &[BigInt], divisor: &[BigInt]) -> Option<Vec<BigInt>> {
-    let divisor = primitive_integer_part(divisor.to_vec());
-    if is_zero_integer_polynomial(&divisor) {
+    if is_zero_integer_polynomial(divisor) {
         return None;
     }
     let divisor_degree = divisor.len() - 1;
     let divisor_leading = divisor[divisor_degree].clone();
-    let mut remainder = primitive_integer_part(dividend.to_vec());
+    let mut remainder = dividend.to_vec();
     while !is_zero_integer_polynomial(&remainder) && remainder.len() > divisor_degree {
         let remainder_degree = remainder.len() - 1;
         let shift = remainder_degree - divisor_degree;
         let remainder_leading = remainder[remainder_degree].clone();
+        // CORE's fraction-free reduction cancels the leading-coefficient
+        // gcd before scaling either polynomial.  The resulting combination
+        // is still an exact pseudo-remainder up to a nonzero integer factor,
+        // but avoids manufacturing that factor in every coefficient.
+        let leading_gcd = remainder_leading.gcd(&divisor_leading);
+        let remainder_scale = &divisor_leading / &leading_gcd;
+        let divisor_scale = &remainder_leading / leading_gcd;
         for coefficient in &mut remainder {
-            *coefficient *= &divisor_leading;
+            *coefficient *= &remainder_scale;
         }
         for (index, coefficient) in divisor.iter().enumerate() {
-            remainder[index + shift] -= &remainder_leading * coefficient;
+            remainder[index + shift] -= &divisor_scale * coefficient;
         }
         remainder = primitive_integer_part(remainder);
     }
@@ -174,12 +180,20 @@ fn primitive_integer_part(mut polynomial: Vec<BigInt>) -> Vec<BigInt> {
     if polynomial.is_empty() {
         return vec![BigInt::zero()];
     }
-    let content = polynomial
+    let mut content = BigInt::zero();
+    for coefficient in polynomial
         .iter()
+        .rev()
         .filter(|coefficient| !coefficient.is_zero())
-        .fold(BigInt::zero(), |content, coefficient| {
-            content.gcd(coefficient)
-        });
+    {
+        content = content.gcd(coefficient);
+        // One is the terminal content. Continuing through large resultant
+        // coefficients can otherwise spend most of a primitive PRS in GCDs
+        // whose outcome is already known.
+        if content.is_one() {
+            break;
+        }
+    }
     if !content.is_zero() && !content.is_one() {
         for coefficient in &mut polynomial {
             *coefficient /= &content;
