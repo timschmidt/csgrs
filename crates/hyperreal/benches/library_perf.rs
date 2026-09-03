@@ -4,6 +4,8 @@ use num::bigint::BigInt;
 
 #[path = "support/bench_docs.rs"]
 mod bench_docs;
+#[path = "support/benchmark_report.rs"]
+mod benchmark_report;
 
 use bench_docs::{BenchDoc, BenchGroupDoc};
 
@@ -2206,6 +2208,16 @@ criterion_group!(
     bench_real_stable_scalar_substrate,
     bench_real_geometry_polynomial_substrate,
     bench_real_normal_scientific_substrate,
-    bench_simple_new_function_surface
+    bench_simple_new_function_surface,
+    finish_benchmark_report
 );
 criterion_main!(benches);
+
+fn finish_benchmark_report(c: &mut Criterion) {
+    bench_docs::write_benchmark_docs(
+        "library_perf",
+        "Library-level Criterion benchmarks for public `Rational`, `Real`, and `Simple` behavior.",
+        LIBRARY_PERF_GROUPS,
+    );
+    benchmark_report::finish_benchmark_report(c);
+}

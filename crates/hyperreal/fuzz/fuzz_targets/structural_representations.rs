@@ -52,6 +52,7 @@ fuzz_target!(|data: &[u8]| {
         let _ = value.clone().sin();
         let _ = value.clone().cos();
         let _ = value.clone().tan();
+        let _ = value.clone().cot();
         let _ = value.clone().atan();
         let _ = value.clone().sinh();
         let _ = value.clone().cosh();
@@ -101,19 +102,15 @@ fn assert_certificates_match_bounded_evaluation(left: &Real, right: &Real) {
 
     match left.certified_cmp_until(right, -512) {
         CertifiedRealOrdering::Known { ordering, .. } => match ordering {
-            core::cmp::Ordering::Less => assert!(&upper < &zero),
-            core::cmp::Ordering::Equal => assert!(&lower <= &zero && &upper >= &zero),
-            core::cmp::Ordering::Greater => assert!(&lower > &zero),
+            core::cmp::Ordering::Less => assert!(upper < zero),
+            core::cmp::Ordering::Equal => assert!(lower <= zero && upper >= zero),
+            core::cmp::Ordering::Greater => assert!(lower > zero),
         },
         CertifiedRealOrdering::Unknown { .. } => {}
     }
     match left.certified_eq_until(right, -512) {
-        CertifiedRealEquality::Equal { .. } => {
-            assert!(&lower <= &zero && &upper >= &zero)
-        }
-        CertifiedRealEquality::NotEqual { .. } => {
-            assert!(&upper < &zero || &lower > &zero)
-        }
+        CertifiedRealEquality::Equal { .. } => assert!(lower <= zero && upper >= zero),
+        CertifiedRealEquality::NotEqual { .. } => assert!(upper < zero || lower > zero),
         CertifiedRealEquality::Unknown { .. } => {}
     }
 }

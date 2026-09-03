@@ -3,6 +3,8 @@ use hyperreal::{Rational, Real};
 
 #[path = "support/bench_docs.rs"]
 mod bench_docs;
+#[path = "support/benchmark_report.rs"]
+mod benchmark_report;
 
 use bench_docs::{BenchDoc, BenchGroupDoc};
 
@@ -229,5 +231,20 @@ fn bench_real_irrational(c: &mut Criterion) {
     group.finish();
 }
 
-criterion_group!(benches, bench_rational, bench_real, bench_real_irrational);
+fn finish_benchmark_report(c: &mut Criterion) {
+    bench_docs::write_benchmark_docs(
+        "borrowed_ops",
+        "Compares owned arithmetic with borrowed arithmetic for exact and irrational values.",
+        BORROWED_OP_GROUPS,
+    );
+    benchmark_report::finish_benchmark_report(c);
+}
+
+criterion_group!(
+    benches,
+    bench_rational,
+    bench_real,
+    bench_real_irrational,
+    finish_benchmark_report
+);
 criterion_main!(benches);

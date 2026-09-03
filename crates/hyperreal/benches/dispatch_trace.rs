@@ -122,6 +122,55 @@ fn exp_unknown_sign_arg_chain() -> Computable {
     Computable::one().add(Computable::pi().negate()).exp()
 }
 
+fn mixed_pi_e_filter_expression() -> Computable {
+    Computable::pi()
+        .square()
+        .add(Computable::e().multiply(computable(-Rational::fraction(29, 21).unwrap())))
+}
+
+fn near_pi_filter_expression() -> Computable {
+    Computable::pi().add(computable(-Rational::fraction(103_993, 33_102).unwrap()))
+}
+
+fn unsupported_sin_difference_expression() -> Computable {
+    let one_third = rational(1, 3);
+    let near_sine = rational(1_095_149_352_672_539_061_i64, 3_347_087_722_986_034_159_u64);
+    computable(one_third).sin().add(computable(-near_sine))
+}
+
+fn algebraic_root(numerator: i64, denominator: u64, degree: u32) -> Real {
+    Real::new(rational(numerator, denominator))
+        .root_n(degree)
+        .unwrap()
+}
+
+fn ramanujan_one_identity() -> Real {
+    Real::from(3_i32)
+        * (algebraic_root(5, 1, 3) - algebraic_root(4, 1, 3))
+            .sqrt()
+            .unwrap()
+        - (algebraic_root(2, 1, 3) + algebraic_root(20, 1, 3) - algebraic_root(25, 1, 3))
+}
+
+fn ramanujan_two_identity() -> Real {
+    (algebraic_root(2, 1, 3) - Real::one()).root_n(3).unwrap()
+        - (algebraic_root(1, 9, 3) - algebraic_root(2, 9, 3) + algebraic_root(4, 9, 3))
+}
+
+fn many_digits_c10_identity() -> Real {
+    let fifth_root_two = algebraic_root(2, 1, 5);
+    (Real::from(7_i32) + fifth_root_two.clone() - Real::from(5_i32) * algebraic_root(8, 1, 5))
+        .root_n(3)
+        .unwrap()
+        + algebraic_root(4, 1, 5)
+        - fifth_root_two
+        - Real::one()
+}
+
+fn eighth_root_near_dyadic() -> Real {
+    algebraic_root(2, 1, 8) - Real::new(rational(1_199_025_932_245_i64, 1_u64 << 40))
+}
+
 fn trace_computable_approx(
     rows: &mut BTreeMap<String, hyperreal::dispatch_trace::TraceSnapshot>,
     filters: &[String],
@@ -331,6 +380,23 @@ fn collect_rows(filters: &[String]) -> BTreeMap<String, hyperreal::dispatch_trac
         let value = Real::new(Rational::new(18)) * Real::new(Rational::new(2)).exp().unwrap();
         black_box(value.sqrt().unwrap());
     });
+    trace_row(&mut rows, filters, "real/root_n/direct_degree5", || {
+        black_box(algebraic_root(17, 1, 5));
+    });
+    trace_row(&mut rows, filters, "real/root_n/direct_degree9", || {
+        black_box(algebraic_root(17, 1, 9));
+    });
+    trace_row(&mut rows, filters, "real/root_n/fallback_degree10", || {
+        black_box(algebraic_root(17, 1, 10));
+    });
+    trace_row(
+        &mut rows,
+        filters,
+        "real/pow_rational/direct_degree5",
+        || {
+            black_box(Real::from(17_i32).pow_rational(rational(2, 5)).unwrap());
+        },
+    );
     trace_row(&mut rows, filters, "real/structural_queries", || {
         let pi_minus_three = Real::pi() - Real::from(3);
         black_box(pi_minus_three.zero_status());
@@ -641,6 +707,70 @@ fn collect_rows(filters: &[String]) -> BTreeMap<String, hyperreal::dispatch_trac
         "computable/sign_until/deep_scaled_product_floor_128",
         || {
             black_box(deep_scaled_product_chain(200).sign_until(-128));
+        },
+    );
+    trace_row(
+        &mut rows,
+        filters,
+        "computable/sign_until/mixed_pi_e_floor_0",
+        || {
+            black_box(mixed_pi_e_filter_expression().sign_until(0));
+        },
+    );
+    trace_row(
+        &mut rows,
+        filters,
+        "computable/sign_until/near_pi_floor_64",
+        || {
+            black_box(near_pi_filter_expression().sign_until(-64));
+        },
+    );
+    trace_row(
+        &mut rows,
+        filters,
+        "computable/sign_until/near_pi_floor_0_inconclusive",
+        || {
+            black_box(near_pi_filter_expression().sign_until(0));
+        },
+    );
+    trace_row(
+        &mut rows,
+        filters,
+        "computable/sign_until/unsupported_sin_floor_64",
+        || {
+            black_box(unsupported_sin_difference_expression().sign_until(-64));
+        },
+    );
+    trace_row(
+        &mut rows,
+        filters,
+        "real/sign_until/eighth_root_near_dyadic_floor_64",
+        || {
+            black_box(eighth_root_near_dyadic().refine_sign_until(-64));
+        },
+    );
+    trace_row(
+        &mut rows,
+        filters,
+        "real/sign_until/ramanujan_one_zero_floor_2048",
+        || {
+            black_box(ramanujan_one_identity().refine_sign_until(-2_048));
+        },
+    );
+    trace_row(
+        &mut rows,
+        filters,
+        "real/sign_until/ramanujan_two_zero_floor_2048",
+        || {
+            black_box(ramanujan_two_identity().refine_sign_until(-2_048));
+        },
+    );
+    trace_row(
+        &mut rows,
+        filters,
+        "real/sign_until/many_digits_c10_zero_floor_2048",
+        || {
+            black_box(many_digits_c10_identity().refine_sign_until(-2_048));
         },
     );
     let cached_scaled_product = {

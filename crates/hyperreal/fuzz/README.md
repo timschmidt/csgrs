@@ -37,3 +37,23 @@ unbounded graph-topology dimension.
 also accepted by `Real`. Its seed corpus includes signed wide integers,
 general fractions, long decimals, scientific notation, and invalid
 zero-denominator input.
+
+`computable_approximation` also builds mixed exact-rational multiples of pi
+and e and requests signs at generated bounded floors. This exercises both
+successful outward-binary64 interval certificates and conservative fallback
+without accepting a primitive-float value as proof.
+
+`real_elementary` reconstructs generated positive rational roots of degrees
+three through nine and requires the independent root node and repeated-power
+graph to receive an exact-zero certificate at a bounded floor. This exercises
+direct root approximation, algebraic generator dependencies, and the
+zero-separation fallback together.
+
+## Retained performance offenders
+
+Run `cargo bench --bench adversarial_library --features simple` to refresh the
+deterministic fuzz timing history in `slow_performers.txt`. The run keeps each
+case's worst-ever observation, rotates the worst eligible offender into the
+100-case `promoted_slow_offenders.txt` lexicase set, and updates the score,
+delta, and delta derivative in `benchmarks.md`. The promoted set is replayed as
+dedicated Criterion rows by `adversarial_transcendentals`.

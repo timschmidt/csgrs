@@ -10,6 +10,9 @@ use criterion::{BenchmarkId, Criterion, Throughput, black_box, criterion_group, 
 use hyperreal::{Rational, Real};
 use rug::{Float, float::Constant};
 
+#[path = "support/benchmark_report.rs"]
+mod benchmark_report;
+
 const MPFR_PRECISION: u32 = 192;
 
 #[derive(Clone, Copy)]
@@ -242,5 +245,9 @@ fn benchmark_representations(criterion: &mut Criterion) {
     prepared.finish();
 }
 
-criterion_group!(benches, benchmark_representations);
+criterion_group!(
+    benches,
+    benchmark_representations,
+    benchmark_report::finish_benchmark_report
+);
 criterion_main!(benches);

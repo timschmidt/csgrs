@@ -3,7 +3,7 @@
 #![no_main]
 
 use arbitrary::Arbitrary;
-use hyperreal::{Rational, Real, RealStructuralFacts, ZeroKnowledge};
+use hyperreal::{Rational, Real, RealSign, RealStructuralFacts, ZeroKnowledge};
 use libfuzzer_sys::fuzz_target;
 use num::BigInt;
 
@@ -44,7 +44,7 @@ fuzz_target!(|input: Input| {
     let rational = Rational::fraction(numerator, denominator).expect("positive denominator");
     let value = Real::new(rational);
 
-    match input.selector % 24 {
+    match input.selector % 26 {
         0 => force(value.clone().sqrt()),
         1 => force(value.clone().cbrt()),
         2 => force(
@@ -85,6 +85,25 @@ fuzz_target!(|input: Input| {
             let result = value.clone().sin();
             let _ = result.to_f64_lossy();
             let _ = value.clone().cos().to_f64_lossy();
+        }
+        23 => force(value.clone().cot()),
+        24 => {
+            let degree = u32::from(input.exponent.unsigned_abs() % 7) + 3;
+            let positive = Real::new(
+                Rational::fraction(
+                    i64::try_from(numerator.unsigned_abs()).expect("bounded numerator") + 1,
+                    denominator,
+                )
+                    .expect("positive denominator"),
+            );
+            let root = positive.clone().root_n(degree).expect("positive radicand");
+            let reconstructed = (0..degree)
+                .fold(Real::one(), |product, _| product * root.clone())
+                - positive;
+            assert_eq!(
+                reconstructed.certified_sign_until(-512).sign(),
+                Some(RealSign::Zero)
+            );
         }
         _ => {
             let _ = value.clone().erf().to_f64_lossy();

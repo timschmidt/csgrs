@@ -18,6 +18,9 @@ use rug::{
     ops::Pow,
 };
 
+#[path = "support/benchmark_report.rs"]
+mod benchmark_report;
+
 const GMP_PRECISION: u32 = 128;
 
 fn real(value: f64) -> Real {
@@ -712,6 +715,7 @@ fn bench_real_elementary_api(c: &mut Criterion) {
     unary_value!("sin", 0.75, sin, sin);
     unary_value!("cos", 0.75, cos, cos);
     unary_result!("tan", 0.75, tan, tan);
+    unary_result!("cot", 0.75, cot, cot);
     unary_result!("asin", 0.75, asin, asin);
     unary_result!("acos", 0.75, acos, acos);
     unary_result!("atan", 0.75, atan, atan);
@@ -729,6 +733,13 @@ fn bench_real_elementary_api(c: &mut Criterion) {
         0.75,
         |x| x.tan_pi().unwrap(),
         Float::tan_pi,
+    );
+    bench_real_unary(
+        &mut group,
+        "cot_pi",
+        0.75,
+        |x| x.cot_pi().unwrap(),
+        |x| (x * Float::with_val(GMP_PRECISION, Constant::Pi)).cot(),
     );
     bench_real_unary(
         &mut group,
@@ -1973,5 +1984,6 @@ criterion_group!(
     bench_real_collection_and_conversion_api,
     bench_computable_api,
     bench_magnitude_backend_algorithms,
+    benchmark_report::finish_benchmark_report,
 );
 criterion_main!(benches);

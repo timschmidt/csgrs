@@ -5,6 +5,8 @@ use num::bigint::{BigInt, BigUint};
 
 #[path = "support/bench_docs.rs"]
 mod bench_docs;
+#[path = "support/benchmark_report.rs"]
+mod benchmark_report;
 
 use bench_docs::{BenchDoc, BenchGroupDoc};
 
@@ -248,6 +250,14 @@ const SCALAR_MICRO_GROUPS: &[BenchGroupDoc] = &[
             BenchDoc {
                 name: "dense_expr_structural_facts",
                 description: "Computes full structural facts for a dense composite expression.",
+            },
+            BenchDoc {
+                name: "structural_negation_match",
+                description: "Certifies opposite rational scales over one shared exact symbolic basis.",
+            },
+            BenchDoc {
+                name: "structural_negation_miss",
+                description: "Rejects an unrelated exact symbolic basis without constructing a negation.",
             },
         ],
     },
@@ -925,6 +935,38 @@ const SCALAR_MICRO_GROUPS: &[BenchGroupDoc] = &[
                 name: "real_sum_refs_64_symbolic_to_f64",
                 description: "Constructs and approximates the same arbitrary-length symbolic sum.",
             },
+            BenchDoc {
+                name: "real_sum_refs_1024_symbolic_sequential",
+                description: "Constructs a 1,024-term symbolic sum with the former sequential fold.",
+            },
+            BenchDoc {
+                name: "real_sum_refs_1024_symbolic",
+                description: "Constructs the same 1,024-term symbolic sum through the balanced public aggregate.",
+            },
+            BenchDoc {
+                name: "real_sum_refs_1024_symbolic_to_f64_sequential",
+                description: "Sequentially constructs and approximates a 1,024-term symbolic sum with cold child caches.",
+            },
+            BenchDoc {
+                name: "real_sum_refs_1024_symbolic_to_f64",
+                description: "Constructs and approximates the same cold 1,024-term symbolic sum through the balanced public aggregate.",
+            },
+            BenchDoc {
+                name: "real_sum_refs_1024_rational_sequential",
+                description: "Constructs a 1,024-term exact rational sum with the former sequential fold.",
+            },
+            BenchDoc {
+                name: "real_sum_refs_1024_rational",
+                description: "Constructs the same exact rational sum through the homogeneous-prefix public aggregate.",
+            },
+            BenchDoc {
+                name: "real_sum_owned_1024_symbolic_former_clone_path",
+                description: "Consumes a 1,024-term symbolic sum while reproducing the former extra per-value clone.",
+            },
+            BenchDoc {
+                name: "real_sum_owned_1024_symbolic",
+                description: "Consumes the same symbolic sum by moving owned values into the balanced reducer.",
+            },
         ],
     },
     BenchGroupDoc {
@@ -1026,6 +1068,36 @@ const SCALAR_MICRO_GROUPS: &[BenchGroupDoc] = &[
             BenchDoc {
                 name: "log2_ln_quotient_fold",
                 description: "Folds ln(5) / ln(2) into a Log2 certificate via the divide-recognize shortcut.",
+            },
+        ],
+    },
+    BenchGroupDoc {
+        name: "real_cotangent",
+        description: "Public cotangent construction and cold refinement against the two compositional alternatives.",
+        benches: &[
+            BenchDoc {
+                name: "atan_two_direct_construct",
+                description: "Folds cot(atan(2)) through the public exact inverse-trig rewrite.",
+            },
+            BenchDoc {
+                name: "atan_two_quotient_construct",
+                description: "Builds cot(atan(2)) as the control expression cos(x)/sin(x).",
+            },
+            BenchDoc {
+                name: "atan_two_inverse_tan_construct",
+                description: "Builds cot(atan(2)) as the incomplete control expression 1/tan(x).",
+            },
+            BenchDoc {
+                name: "tiny_direct_cold_p256",
+                description: "Constructs and certifies public cot(2^-10) at 256 fractional bits.",
+            },
+            BenchDoc {
+                name: "tiny_quotient_cold_p256",
+                description: "Constructs and certifies cos(2^-10)/sin(2^-10) at 256 fractional bits.",
+            },
+            BenchDoc {
+                name: "tiny_inverse_tan_cold_p256",
+                description: "Constructs and certifies 1/tan(2^-10) at 256 fractional bits.",
             },
         ],
     },
@@ -1315,6 +1387,18 @@ fn bench_structural_query_speed(c: &mut Criterion) {
             b.iter(|| black_box(black_box(&value).to_f64_lossy()))
         });
     }
+
+    let sqrt_two = Real::from(2).sqrt().expect("positive exact square root");
+    let negative_sqrt_two = -sqrt_two.clone();
+    let pi = Real::pi();
+    group.bench_function("structural_negation_match", |b| {
+        b.iter(|| {
+            black_box(black_box(&sqrt_two).is_structural_negation_of(black_box(&negative_sqrt_two)))
+        })
+    });
+    group.bench_function("structural_negation_miss", |b| {
+        b.iter(|| black_box(black_box(&sqrt_two).is_structural_negation_of(black_box(&pi))))
+    });
 
     group.finish();
 }
@@ -2622,6 +2706,22 @@ fn bench_dense_algebra(c: &mut Criterion) {
     let symbolic_sum: Vec<_> = (2..=65)
         .map(|n| Real::from(n).sqrt().expect("positive radicand"))
         .collect();
+    let large_symbolic_sum: Vec<_> = (2..=1_025)
+        .map(|n| Real::from(n).sqrt().expect("positive radicand"))
+        .collect();
+    let large_rational_sum: Vec<_> = (0_u64..1_024)
+        .map(|index| {
+            let magnitude = i64::try_from(index % 97 + 1).expect("small numerator fits i64");
+            let numerator = if index % 2 == 0 {
+                magnitude
+            } else {
+                -magnitude
+            };
+            real(numerator, 1_009 + 2 * index)
+        })
+        .collect();
+    let sequential_sum_refs =
+        |values: &[Real]| values.iter().fold(Real::zero(), |sum, value| sum + value);
 
     group.bench_function("rational_dot_64", |b| {
         b.iter(|| {
@@ -2654,8 +2754,69 @@ fn bench_dense_algebra(c: &mut Criterion) {
             black_box(sum.to_f64_lossy())
         })
     });
+    group.bench_function("real_sum_refs_1024_symbolic_sequential", |b| {
+        b.iter(|| black_box(sequential_sum_refs(black_box(&large_symbolic_sum))))
+    });
+    group.bench_function("real_sum_refs_1024_symbolic", |b| {
+        b.iter(|| black_box(Real::sum_refs(black_box(large_symbolic_sum.iter()))))
+    });
+    group.bench_function("real_sum_refs_1024_symbolic_to_f64_sequential", |b| {
+        b.iter_batched(
+            || {
+                (2..=1_025)
+                    .map(|n| Real::from(n).sqrt().expect("positive radicand"))
+                    .collect::<Vec<_>>()
+            },
+            |values| {
+                let sum = sequential_sum_refs(black_box(&values));
+                black_box(sum.to_f64_lossy())
+            },
+            BatchSize::SmallInput,
+        )
+    });
+    group.bench_function("real_sum_refs_1024_symbolic_to_f64", |b| {
+        b.iter_batched(
+            || {
+                (2..=1_025)
+                    .map(|n| Real::from(n).sqrt().expect("positive radicand"))
+                    .collect::<Vec<_>>()
+            },
+            |values| {
+                let sum = Real::sum_refs(black_box(values.iter()));
+                black_box(sum.to_f64_lossy())
+            },
+            BatchSize::SmallInput,
+        )
+    });
+    group.bench_function("real_sum_refs_1024_rational_sequential", |b| {
+        b.iter(|| black_box(sequential_sum_refs(black_box(&large_rational_sum))))
+    });
+    group.bench_function("real_sum_refs_1024_rational", |b| {
+        b.iter(|| black_box(Real::sum_refs(black_box(large_rational_sum.iter()))))
+    });
+    group.bench_function("real_sum_owned_1024_symbolic_former_clone_path", |b| {
+        b.iter_batched(
+            || large_symbolic_sum.clone(),
+            |values| black_box(sum_owned_with_former_per_value_clone(black_box(values))),
+            BatchSize::SmallInput,
+        )
+    });
+    group.bench_function("real_sum_owned_1024_symbolic", |b| {
+        b.iter_batched(
+            || large_symbolic_sum.clone(),
+            |values| black_box(Real::sum_owned(black_box(values))),
+            BatchSize::SmallInput,
+        )
+    });
 
     group.finish();
+}
+
+// This control deliberately reproduces the extra clone performed by the first
+// generic owned reducer so the retained move-preserving path stays measurable.
+#[allow(clippy::map_clone)]
+fn sum_owned_with_former_per_value_clone(values: Vec<Real>) -> Real {
+    Real::sum_owned(values.into_iter().map(|value| value.clone()))
 }
 
 fn bench_exact_transcendental_special_forms(c: &mut Criterion) {
@@ -2848,6 +3009,90 @@ fn bench_exact_transcendental_special_forms(c: &mut Criterion) {
         b.iter_batched(
             || (ln_five.clone(), ln_two_for_quotient.clone()),
             |(num, den)| black_box((num / den).unwrap()),
+            BatchSize::SmallInput,
+        )
+    });
+
+    group.finish();
+}
+
+fn cot_via_quotient(value: Real) -> Real {
+    (value.clone().cos() / value.sin()).expect("benchmark cotangent input has nonzero sine")
+}
+
+fn cot_via_inverse_tangent(value: Real) -> Real {
+    value
+        .tan()
+        .expect("benchmark cotangent input is not a tangent pole")
+        .inverse()
+        .expect("benchmark tangent is nonzero")
+}
+
+fn bench_real_cotangent(c: &mut Criterion) {
+    let mut group = c.benchmark_group("real_cotangent");
+    let atan_two = Real::from(2_i32).atan().unwrap();
+
+    group.bench_function("atan_two_direct_construct", |b| {
+        b.iter_batched(
+            || atan_two.clone(),
+            |value| black_box(value.cot().unwrap()),
+            BatchSize::SmallInput,
+        )
+    });
+    group.bench_function("atan_two_quotient_construct", |b| {
+        b.iter_batched(
+            || atan_two.clone(),
+            |value| black_box(cot_via_quotient(value)),
+            BatchSize::SmallInput,
+        )
+    });
+    group.bench_function("atan_two_inverse_tan_construct", |b| {
+        b.iter_batched(
+            || atan_two.clone(),
+            |value| black_box(cot_via_inverse_tangent(value)),
+            BatchSize::SmallInput,
+        )
+    });
+
+    let tiny = Real::new(Rational::fraction(1, 1_024).unwrap());
+    group.bench_function("tiny_direct_cold_p256", |b| {
+        b.iter_batched(
+            || tiny.clone(),
+            |value| {
+                black_box(
+                    value
+                        .cot()
+                        .unwrap()
+                        .certified_dyadic_interval(-256)
+                        .unwrap(),
+                )
+            },
+            BatchSize::SmallInput,
+        )
+    });
+    group.bench_function("tiny_quotient_cold_p256", |b| {
+        b.iter_batched(
+            || tiny.clone(),
+            |value| {
+                black_box(
+                    cot_via_quotient(value)
+                        .certified_dyadic_interval(-256)
+                        .unwrap(),
+                )
+            },
+            BatchSize::SmallInput,
+        )
+    });
+    group.bench_function("tiny_inverse_tan_cold_p256", |b| {
+        b.iter_batched(
+            || tiny.clone(),
+            |value| {
+                black_box(
+                    cot_via_inverse_tangent(value)
+                        .certified_dyadic_interval(-256)
+                        .unwrap(),
+                )
+            },
             BatchSize::SmallInput,
         )
     });
@@ -3187,7 +3432,18 @@ criterion_group!(
     bench_borrowed_op_overhead,
     bench_dense_algebra,
     bench_exact_transcendental_special_forms,
+    bench_real_cotangent,
     bench_symbolic_reductions,
-    bench_exact_product_sums
+    bench_exact_product_sums,
+    finish_benchmark_report
 );
 criterion_main!(benches);
+
+fn finish_benchmark_report(c: &mut Criterion) {
+    bench_docs::write_benchmark_docs(
+        "scalar_micro",
+        "Microbenchmarks for scalar operations, structural queries, cache hits, and dense exact arithmetic.",
+        SCALAR_MICRO_GROUPS,
+    );
+    benchmark_report::finish_benchmark_report(c);
+}

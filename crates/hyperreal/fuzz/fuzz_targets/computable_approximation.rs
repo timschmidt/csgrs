@@ -47,4 +47,13 @@ fuzz_target!(|input: Input| {
     let _ = value.structural_facts();
     let _ = value.zero_status();
     let _ = value.sign_until(-96);
+
+    // Exercise both hits and conservative fallbacks in the bounded mixed-
+    // expression sign filter. The coefficients stay exact; no primitive float
+    // becomes part of the value or its authoritative fallback.
+    let mixed = Computable::pi()
+        .multiply(a)
+        .add(Computable::e().multiply(b));
+    let floor = -i32::from(input.selector % 97);
+    let _ = mixed.sign_until(floor);
 });

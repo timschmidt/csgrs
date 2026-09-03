@@ -7,6 +7,9 @@ use std::ops::Neg;
 use std::path::{Path, PathBuf};
 use std::time::{Duration, Instant};
 
+#[path = "support/benchmark_report.rs"]
+mod benchmark_report;
+
 const REPORT_NAME: &str = "slow_performers.txt";
 const PROMOTED_NAME: &str = "promoted_slow_offenders.txt";
 const BENCHMARKS_NAME: &str = "benchmarks.md";
@@ -1062,7 +1065,7 @@ fn score_promoted_cases(promoted_path: &Path) -> Option<(PromotedScore, Vec<Time
     let average_nanos = average_nanos(&timed)?;
     let previous = read_previous_promoted_score(&crate_benchmarks_path());
     let previous_score = previous
-        .map(|score| score.previous_nanos)
+        .map(|score| score.average_nanos)
         .unwrap_or(average_nanos);
     let previous_delta = previous.map(|score| score.delta_nanos).unwrap_or(0);
     let delta_nanos = average_nanos as i128 - previous_score as i128;
@@ -1080,12 +1083,11 @@ fn score_promoted_cases(promoted_path: &Path) -> Option<(PromotedScore, Vec<Time
 }
 
 fn parse_metadata_i128(contents: &str, prefix: &str) -> Option<i128> {
-    if let Some(line) = contents.lines().next() {
+    contents.lines().find_map(|line| {
         let value = line.trim().strip_prefix(prefix)?.trim();
         let value = value.strip_suffix("-->")?.trim();
-        return value.parse().ok();
-    }
-    None
+        value.parse().ok()
+    })
 }
 
 fn read_previous_promoted_score(benchmarks_path: &Path) -> Option<PromotedScore> {
@@ -1260,6 +1262,14 @@ fn write_report(cases: &[TimedCase]) {
 }
 
 fn bench_adversarial_library(c: &mut Criterion) {
+    let args: Vec<_> = std::env::args().collect();
+    if !args.iter().any(|arg| arg == "--bench")
+        || args
+            .iter()
+            .any(|arg| arg == "--test" || arg == "--list" || arg == "--help")
+    {
+        return;
+    }
     let cases = collect_all_cases();
     write_report(&cases);
     if let Some((score, timed)) = score_promoted_cases(&crate_promoted_path()) {
@@ -1294,5 +1304,9 @@ fn bench_adversarial_library(c: &mut Criterion) {
     score_group.finish();
 }
 
-criterion_group!(benches, bench_adversarial_library);
+criterion_group!(
+    benches,
+    bench_adversarial_library,
+    benchmark_report::finish_benchmark_report
+);
 criterion_main!(benches);

@@ -226,15 +226,115 @@ impl AddAssign<f64> for Real {
     }
 }
 
+// Left folds keep short construction-only sums cheap. For longer sums, a
+// streaming binary carry bounds the addition depth logarithmically, preventing
+// the two guard bits requested by each computable Add node from accumulating
+// linearly on the earliest terms. The lower size hint is authoritative: an
+// iterator that selects the balanced path has at least this many values.
+const BALANCED_REAL_SUM_THRESHOLD: usize = 256;
+
+fn push_balanced_sum_partial(partials: &mut Vec<Option<Real>>, mut carry: Real) {
+    let mut level = 0;
+    loop {
+        if level == partials.len() {
+            partials.push(Some(carry));
+            break;
+        }
+        if let Some(left) = partials[level].take() {
+            carry = left + carry;
+            level += 1;
+        } else {
+            partials[level] = Some(carry);
+            break;
+        }
+    }
+}
+
+fn balanced_real_sum<I>(mut iter: I, guaranteed_len: usize) -> Real
+where
+    I: Iterator<Item = Real>,
+{
+    let levels = usize::try_from(usize::BITS - guaranteed_len.leading_zeros())
+        .expect("usize bit count fits usize");
+    let mut partials: Vec<Option<Real>> = Vec::with_capacity(levels);
+
+    // Homogeneous rational and symbolic sums collapse to one scaled value and
+    // do not accumulate computable guard bits. Preserve that cheaper path even
+    // for long iterators. If a distinct basis appears, the collapsed prefix is
+    // already one leaf and the remainder enters the balanced reducer normally.
+    let Some(first) = iter.next() else {
+        return Real::zero();
+    };
+    let mut homogeneous_prefix = Some(first);
+    for value in iter.by_ref() {
+        let prefix = homogeneous_prefix
+            .as_mut()
+            .expect("the homogeneous prefix exists until balancing begins");
+        if prefix.same_symbolic_basis(&value) {
+            *prefix += value;
+            continue;
+        }
+
+        push_balanced_sum_partial(
+            &mut partials,
+            homogeneous_prefix
+                .take()
+                .expect("the first distinct basis consumes the prefix"),
+        );
+        push_balanced_sum_partial(&mut partials, value);
+        break;
+    }
+
+    if let Some(prefix) = homogeneous_prefix {
+        return prefix;
+    }
+
+    for value in iter {
+        push_balanced_sum_partial(&mut partials, value);
+    }
+
+    partials
+        .into_iter()
+        .rev()
+        .flatten()
+        .reduce(|left, right| left + right)
+        .unwrap_or_else(Real::zero)
+}
+
+fn real_sum<I>(iter: I) -> Real
+where
+    I: Iterator<Item = Real>,
+{
+    let guaranteed_len = iter.size_hint().0;
+    if guaranteed_len < BALANCED_REAL_SUM_THRESHOLD {
+        return iter.fold(Real::zero(), |sum, value| sum + value);
+    }
+    balanced_real_sum(iter, guaranteed_len)
+}
+
+// Keep the short borrowed path clone-free, but materialize owned values only
+// after a proven-long iterator selects balancing. The owned entry point above
+// can feed its values straight through without cloning them first.
+fn real_sum_borrowed<'a, I>(iter: I) -> Real
+where
+    I: Iterator<Item = &'a Real>,
+{
+    let guaranteed_len = iter.size_hint().0;
+    if guaranteed_len < BALANCED_REAL_SUM_THRESHOLD {
+        return iter.fold(Real::zero(), |sum, value| sum + value);
+    }
+    balanced_real_sum(iter.cloned(), guaranteed_len)
+}
+
 impl std::iter::Sum for Real {
     fn sum<I: Iterator<Item = Self>>(iter: I) -> Self {
-        iter.fold(Self::zero(), |sum, value| sum + value)
+        real_sum(iter)
     }
 }
 
 impl<'a> std::iter::Sum<&'a Real> for Real {
     fn sum<I: Iterator<Item = &'a Real>>(iter: I) -> Self {
-        iter.fold(Self::zero(), |sum, value| sum + value)
+        real_sum_borrowed(iter)
     }
 }
 

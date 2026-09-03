@@ -16,6 +16,22 @@ mod tests {
     }
 
     #[test]
+    fn structural_negation_query_certifies_shared_exact_bases() {
+        let rational = Real::new(Rational::fraction(7, 11).unwrap());
+        let pi = Real::from(3_i8) * Real::pi();
+        let sqrt_two = Real::from(2_i8).sqrt().unwrap();
+        let opaque = Real::one().sin();
+
+        for value in [&rational, &pi, &sqrt_two, &opaque] {
+            assert!(value.is_structural_negation_of(&(-value)));
+            assert!((-value).is_structural_negation_of(value));
+            assert!(!value.is_structural_negation_of(value));
+        }
+        assert!(Real::zero().is_structural_negation_of(&Real::zero()));
+        assert!(!Real::pi().is_structural_negation_of(&Real::e()));
+    }
+
+    #[test]
     fn average_pair_preserves_exact_and_symbolic_fast_paths() {
         let left = Real::new(Rational::fraction(-7, 12).unwrap());
         let right = Real::new(Rational::fraction(11, 18).unwrap());
@@ -193,6 +209,110 @@ mod tests {
 
         let stddev = Real::sample_stddev(&values).unwrap();
         assert_eq!(stddev, Real::from(4_i32).sqrt().unwrap());
+    }
+
+    #[test]
+    fn long_symbolic_sums_enclose_an_independent_dyadic_reference() {
+        const TERMS: usize = BALANCED_REAL_SUM_THRESHOLD + 1;
+        const REFERENCE_BITS: usize = 384;
+        const RESULT_PRECISION: i32 = -256;
+
+        let values: Vec<_> = (2..TERMS + 2)
+            .map(|value| {
+                Real::from(u64::try_from(value).expect("test term fits u64"))
+                    .sqrt()
+                    .expect("positive integer has a square root")
+            })
+            .collect();
+
+        // floor(sqrt(n) * 2^k) and its successor independently bracket every
+        // term using only exact integer arithmetic.
+        let mut lower_numerator = BigUint::from(0_u8);
+        let mut upper_numerator = BigUint::from(0_u8);
+        for value in 2..TERMS + 2 {
+            let scaled_radicand = BigUint::from(value) << (2 * REFERENCE_BITS);
+            let floor = scaled_radicand.sqrt();
+            lower_numerator += &floor;
+            upper_numerator += floor + BigUint::from(1_u8);
+        }
+        let denominator = BigUint::from(1_u8) << REFERENCE_BITS;
+        let reference_lower = Rational::from_bigint_fraction(
+            BigInt::from(lower_numerator),
+            denominator.clone(),
+        )
+        .expect("dyadic denominator is nonzero");
+        let reference_upper =
+            Rational::from_bigint_fraction(BigInt::from(upper_numerator), denominator)
+                .expect("dyadic denominator is nonzero");
+
+        let candidates = [
+            Real::sum_refs(values.iter()),
+            Real::sum_owned(values.clone()),
+            values.iter().sum(),
+            values.clone().into_iter().sum(),
+        ];
+        for candidate in candidates {
+            let [lower, upper] = candidate
+                .certified_dyadic_interval(RESULT_PRECISION)
+                .expect("unaborted sum has a certified interval");
+            assert!(lower <= reference_lower);
+            assert!(upper >= reference_upper);
+        }
+    }
+
+    #[test]
+    fn long_homogeneous_sums_collapse_to_the_exact_rational() {
+        const TERMS: usize = 1_024;
+
+        let rationals: Vec<_> = (0..TERMS)
+            .map(|index| {
+                let magnitude = i64::try_from(index % 97 + 1).expect("small numerator fits i64");
+                let numerator = if index % 2 == 0 {
+                    magnitude
+                } else {
+                    -magnitude
+                };
+                let denominator =
+                    u64::try_from(1_009 + 2 * index).expect("test denominator fits u64");
+                Rational::fraction(numerator, denominator).expect("nonzero denominator")
+            })
+            .collect();
+        let expected = rationals
+            .iter()
+            .fold(Rational::zero(), |sum, value| sum + value);
+        let values: Vec<_> = rationals.into_iter().map(Real::new).collect();
+
+        let candidates = [
+            Real::sum_refs(values.iter()),
+            Real::sum_owned(values.clone()),
+            values.iter().sum(),
+            values.into_iter().sum(),
+        ];
+        for candidate in candidates {
+            assert_eq!(candidate.exact_rational(), Some(expected.clone()));
+        }
+    }
+
+    #[test]
+    fn long_homogeneous_symbolic_sums_preserve_one_scaled_basis() {
+        const TERMS: usize = 1_024;
+
+        let basis = Real::from(2_u8)
+            .sqrt()
+            .expect("positive integer has a square root");
+        let expected = Real::from(u64::try_from(TERMS).expect("test size fits u64")) * &basis;
+        let values = vec![basis; TERMS];
+        let candidates = [
+            Real::sum_refs(values.iter()),
+            Real::sum_owned(values.clone()),
+            values.iter().sum(),
+            values.into_iter().sum(),
+        ];
+
+        for candidate in candidates {
+            assert!(candidate.same_symbolic_basis(&expected));
+            assert_eq!(candidate.rational, expected.rational);
+        }
     }
 
     #[test]

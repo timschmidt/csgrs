@@ -67,9 +67,12 @@ shape unless benchmarks show no cost.
   cancellation-prone generic arithmetic; `softplus`, `logaddexp`,
   `logsubexp`, `logit`, and `sigmoid` are stable public compositions built on
   those primitives.
-- `sin_pi`, `cos_pi`, and `tan_pi` expose rational-turn trig directly; exact
-  rational inputs reuse the same `SinPi`/`TanPi` certificates and exact
-  small-denominator tables that ordinary trig reaches through `pi` products.
+- `sin_pi`, `cos_pi`, `tan_pi`, and `cot_pi` expose rational-turn trig
+  directly; exact rational inputs reuse the same `SinPi`/`TanPi` certificates
+  and exact small-denominator tables that ordinary trig reaches through `pi`
+  products. `cot`/`cot_pi` report certified integer-pi poles as
+  `Problem::NotANumber` and preserve bounded `UnknownZero` uncertainty for an
+  opaque sine denominator.
 - `sinc`, `sinc_pi`, and `cosc` preserve removable small-angle limits at zero
   instead of requiring users to spell them as division-heavy generic
   arithmetic.
@@ -90,9 +93,12 @@ shape unless benchmarks show no cost.
 - `hypot2` and `hypot3` reuse the exact dot-product reducers before square
   roots, so rational lengths such as 3-4-5 stay exact and symbolic zero axes
   reduce through `abs`.
-- `cbrt`, `root_n`, and `pow_rational` preserve exact rational perfect roots;
-  non-perfect positive roots fall back to rational-exponent computable forms,
-  and negative odd roots are handled by symmetry.
+- `cbrt`, `root_n`, and `pow_rational` preserve exact rational perfect roots.
+  Positive non-perfect roots of degree three through nine remain explicit
+  algebraic computable nodes, including modest matching rational powers; larger
+  degrees retain the general rational-exponent form, and negative odd roots are
+  handled by symmetry. Explicit roots let bounded sign refinement certify
+  supported radical identities as exact zero rather than diverging on equality.
 - `floor_certified`, `ceil_certified`, `round_certified`, `trunc_certified`,
   `fract_certified`, and `rem_euclid_certified` expose discontinuous integer
   decisions only when exact rational shortcuts or bounded exact-real comparison

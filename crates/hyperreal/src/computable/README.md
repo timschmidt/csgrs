@@ -8,8 +8,10 @@ rational/symbolic.
 
 The internal node graph represents constants, exact rational leaves, arithmetic
 operations, elementary functions, scale/shift nodes, and specialized kernels.
-Nodes carry caches for approximations and conservative facts so repeated
-queries do not rebuild work.
+Positive non-perfect roots of degree three through nine remain explicit
+algebraic nodes; larger degrees retain the general exponential/logarithmic
+lowering. Nodes carry caches for approximations and conservative facts so
+repeated queries do not rebuild work.
 
 The graph is safe to share between threads. `Computable` is a 16-byte pair of
 an `Arc<Node>` and an optional independently attached abort signal. A common
@@ -90,6 +92,23 @@ Approximation kernels should:
   same subgraph or approximation at each use site
 - sign, magnitude, and exact/symbolic facts propagated from `Real` should be
   checked before requesting a new scalar approximation
+- after those facts are exhausted, `sign_until` may use a 32-node on-demand
+  binary64 interval filter for small rational, pi/e, arithmetic, binary-scale,
+  and fused three-term forms. Every endpoint operation is widened outward and
+  a result must clear the caller's exact `2^precision` decision band. The
+  filter adds no node field or heap allocation; unsupported, oversized,
+  non-finite, out-of-range, or over-budget graphs enter the unchanged
+  arbitrary-precision path
+- when arbitrary-precision refinement remains ambiguous, a closed subset of
+  rational arithmetic, inverses already proved nonzero, squares, square roots,
+  bounded-degree positive roots, binary offsets, and fused three-term forms can
+  receive an on-demand algebraic-norm separation certificate. If a nonzero
+  value would have magnitude at least `2^-B`, an approximation still within one
+  scaled unit at `p <= -B-2` proves exact zero. The local analysis is capped at
+  256 nodes, 16 root generators, field-degree `2^20`, and bounded integer work;
+  unsupported or exhausted graphs remain unknown. It adds no node field, starts
+  only after ordinary refinement reaches 64 bits or its negative caller floor,
+  and never refines beyond that floor
 - lower-precision cache hits may accelerate refinement, but must not become
   certificates for higher precision than they actually justify
 

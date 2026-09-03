@@ -1,4 +1,6 @@
 impl Computable {
+    pub(crate) const MAX_DIRECT_NTH_ROOT_DEGREE: u32 = 9;
+
     pub(crate) fn sqrt_rational(r: Rational) -> Self {
         // Preserve the rational leaf so sqrt can still collapse perfect
         // rational squares before allocating a generic Sqrt node.
@@ -112,6 +114,23 @@ impl Computable {
         };
         Self {
             internal: Arc::new(Node::new(Approximation::Sqrt(self), BoundCache::Invalid, exact_sign)),
+            signal: None,
+        }
+    }
+
+    pub(crate) fn nth_root(self, degree: u32) -> Computable {
+        debug_assert!((3..=Self::MAX_DIRECT_NTH_ROOT_DEGREE).contains(&degree));
+        let exact_sign = match self.internal.facts.exact_sign() {
+            ExactSignCache::Valid(Sign::NoSign) => ExactSignCache::Valid(Sign::NoSign),
+            ExactSignCache::Valid(Sign::Plus) => ExactSignCache::Valid(Sign::Plus),
+            _ => ExactSignCache::Invalid,
+        };
+        Self {
+            internal: Arc::new(Node::new(
+                Approximation::NthRoot(self, degree),
+                BoundCache::Invalid,
+                exact_sign,
+            )),
             signal: None,
         }
     }

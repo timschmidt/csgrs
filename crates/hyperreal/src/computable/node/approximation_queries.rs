@@ -319,9 +319,19 @@ impl Computable {
             return Some(public_sign(sign));
         }
 
+        if let Some(sign) = self.binary64_filter_sign_until(min_precision) {
+            self.internal
+                .facts
+                .replace_exact_sign(ExactSignCache::Valid(sign));
+            crate::trace_dispatch!("computable", "sign_until", "binary64-filter-sign");
+            return Some(public_sign(sign));
+        }
+
         crate::trace_dispatch!("computable", "sign_until", "precision-refinement");
         let start = if min_precision > 0 { min_precision } else { 0 };
         let mut p = start;
+        let mut checked_algebraic_bound = false;
+        let mut algebraic_zero_precision = None;
         loop {
             let appr = self.approx(p);
             #[cfg(feature = "dispatch-trace")]
@@ -340,10 +350,52 @@ impl Computable {
                 return Some(public_sign(sign));
             }
 
+            // Ordinary nonzero inputs usually separate before 64 bits and pay
+            // no algebraic-metadata cost. At a shallower negative caller floor,
+            // inspect metadata only after ordinary refinement is exhausted;
+            // this still makes every certificate that fits that floor usable.
+            // A proved target then stops refinement without crossing the floor.
+            if p <= -64 || (p <= min_precision && min_precision <= -2) {
+                if !checked_algebraic_bound {
+                    checked_algebraic_bound = true;
+                    algebraic_zero_precision = self.algebraic_zero_precision(min_precision);
+                    if algebraic_zero_precision.is_some() {
+                        crate::trace_dispatch!(
+                            "computable",
+                            "sign_until",
+                            "algebraic-separation-target"
+                        );
+                    } else {
+                        crate::trace_dispatch!(
+                            "computable",
+                            "sign_until",
+                            "algebraic-separation-unavailable"
+                        );
+                    }
+                }
+                if algebraic_zero_precision.is_some_and(|target| p <= target) {
+                    self.internal
+                        .facts
+                        .replace_exact_sign(ExactSignCache::Valid(Sign::NoSign));
+                    crate::trace_dispatch!(
+                        "computable",
+                        "sign_until",
+                        "algebraic-separation-zero"
+                    );
+                    return Some(RealSign::Zero);
+                }
+            }
+
             if p <= min_precision {
                 break;
             }
-            let next = (p * 3) / 2 - 16;
+            let mut next = (p * 3) / 2 - 16;
+            if let Some(target) = algebraic_zero_precision
+                && target < p
+                && next < target
+            {
+                next = target;
+            }
             p = if next < min_precision {
                 min_precision
             } else {

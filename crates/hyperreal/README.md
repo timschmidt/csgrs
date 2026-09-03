@@ -135,7 +135,17 @@ the input as a decimal measurement.
 
 `Real` implements arithmetic operators while retaining recognized exact,
 symbolic, and computable forms. `PartialEq` is structural and is deliberately
-not a complete proof of mathematical equality.
+not a complete proof of mathematical equality. When a caller specifically
+needs to recognize opposite rational scales over one shared symbolic basis,
+`is_structural_negation_of` certifies that relation without allocating a
+temporary negated `Real`; `false` remains inconclusive for general identities.
+
+Long `Real` iterator sums are combined through a streaming balanced tree once
+their size hint proves enough terms, while short and size-unknown sums retain
+the cheaper sequential construction path. Long homogeneous rational or
+symbolic prefixes collapse to one scaled value before any balancing work.
+Owned sums move their values into that reducer; borrowed sums clone only after
+the proven-long path is selected.
 
 Square roots of recognized quadratic surds also stay exact when the conjugate
 norm is a nonnegative rational square. For example,
@@ -153,7 +163,7 @@ All entries below are methods on `Real`:
 | Roots and powers | `sqrt`, `cbrt`, `root_n`, `powi_i64`, `powi`, `pow_rational`, `pow` |
 | Exponential and logarithmic | `exp`, `exp2`, `exp10`, `expm1`, `ln`, `ln_1p`/`log1p`, `ln_1m`/`log1m`, `log2`, `log10` |
 | Stable probability transforms | `softplus`, `sigmoid`, `logit`, `logaddexp`, `logsubexp` |
-| Trigonometric | `sin`, `cos`, `tan`, `sin_pi`, `cos_pi`, `tan_pi`, `sinc`, `sinc_pi`, `cosc` |
+| Trigonometric | `sin`, `cos`, `tan`, `cot`, `sin_pi`, `cos_pi`, `tan_pi`, `cot_pi`, `sinc`, `sinc_pi`, `cosc` |
 | Inverse trigonometric | `asin`, `acos`, `atan`, `atan2` |
 | Hyperbolic | `sinh`, `cosh`, `tanh`, `asinh`, `acosh`, `atanh` |
 | Cancellation helpers | `sqrt1pm1`, `sqrt1m1`, `hypot_minus` |
@@ -162,6 +172,9 @@ All entries below are methods on `Real`:
 
 Domain errors are returned as `Problem`; these operations do not silently
 substitute a primitive-float result.
+`cot` and `cot_pi` return `Problem::NotANumber` at certified integer-pi poles;
+an opaque denominator that bounded refinement cannot separate from zero
+returns `Problem::UnknownZero`.
 
 ### Probability and special functions
 
@@ -185,6 +198,7 @@ as a general-purpose special-function library.
 | --- | --- |
 | Cheap object-independent facts | `definitely_zero`, `definitely_one`, `zero_or_one`, `zero_one_or_minus_one`, `immediate_sign`, `structural_facts`, `detailed_facts` |
 | Recover exact content | `exact_rational`, `exact_rational_ref`, `is_exact_dyadic_rational`, `exact_set_facts` |
+| Check an opposite structural scale | `is_structural_negation_of` |
 | Check a function domain | `domain_facts`, `reciprocal_domain`, `sqrt_domain`, `log_domain`, `asin_acos_domain`, `acosh_domain`, `atanh_domain` |
 | Refine a sign | `zero_status`, `refine_sign_until`, `certified_sign_until` |
 | Compare with bounded refinement | `certified_eq_until`, `certified_cmp_until`, `certified_dyadic_interval` |
@@ -210,6 +224,9 @@ sign, and `compare_absolute` reports tolerance overlap as `Equal`; neither
 turns an unresolved comparison into an exact decision. Partial-function expression
 constructors such as `inverse`, `sqrt`, and `ln` assume their mathematical
 domains. Prefer the checked `Real` operations at external decision boundaries.
+Supported rational-radical graphs may additionally receive a bounded
+algebraic-norm zero certificate; unsupported graphs preserve the same `None`
+result and caller-supplied precision floor.
 
 ### Advanced exact reducers
 

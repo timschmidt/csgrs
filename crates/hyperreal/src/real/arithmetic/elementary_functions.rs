@@ -306,7 +306,9 @@ impl Real {
     /// nth root of this Real.
     ///
     /// Odd roots support negative inputs by symmetry. Even roots of negative
-    /// values return [`Problem::SqrtNegative`].
+    /// values return [`Problem::SqrtNegative`]. Positive non-perfect roots of
+    /// degree three through nine retain an explicit algebraic node; larger
+    /// degrees use the general rational-exponent representation.
     pub fn root_n(self, n: u32) -> Result<Real, Problem> {
         if n == 0 {
             crate::trace_dispatch!("real", "root_n", "zero-degree-domain-error");
@@ -337,6 +339,17 @@ impl Real {
                 Ok(-(-self).root_n(n)?)
             }
             Sign::Plus => {
+                if (3..=Computable::MAX_DIRECT_NTH_ROOT_DEGREE).contains(&n) {
+                    crate::trace_dispatch!("real", "root_n", "positive-direct-nth-root");
+                    return Ok(Self {
+                        rational: Rational::one(),
+                        class: Irrational,
+                        computable: Some(Computable::nth_root(self.fold(), n)),
+                        primitive_approx_cache: AtomicPrimitiveApproxCache::new(
+                            PrimitiveApproxCache::Empty,
+                        ),
+                    });
+                }
                 crate::trace_dispatch!("real", "root_n", "positive-rational-exponent");
                 let exponent =
                     Rational::from_bigint_fraction(BigInt::from(1_u8), BigUint::from(n)).unwrap();
@@ -2698,6 +2711,94 @@ impl Real {
         })
     }
 
+    /// The cotangent of this Real.
+    ///
+    /// Integer multiples of pi are poles and return [`Problem::NotANumber`].
+    /// For an opaque value whose sine cannot be certified nonzero within the
+    /// bounded predicate budget, this returns [`Problem::UnknownZero`].
+    pub fn cot(self) -> Result<Real, Problem> {
+        if self.definitely_zero() {
+            crate::trace_dispatch!("real", "cot", "exact-zero-pole");
+            return Err(Problem::NotANumber);
+        }
+        if self.rational.sign() == Sign::Minus {
+            // Cotangent is odd. Normalize the exact outer scale before any
+            // domain proof so negative rational and symbolic inputs reuse the
+            // positive graph and retain the same canonical representation.
+            crate::trace_dispatch!("real", "cot", "negative-odd-rewrite");
+            return (-self).cot().map(Neg::neg);
+        }
+        if let Some(argument) = self.retained_atan_argument() {
+            crate::trace_dispatch!("real", "cot", "atan-inverse-rewrite");
+            return argument.inverse();
+        }
+        if let Some((_, argument)) = self.retained_signed_half_pi_minus_atan_argument() {
+            crate::trace_dispatch!("real", "cot", "half-pi-minus-atan-rewrite");
+            return Ok(argument);
+        }
+        if let Some((sine_sign, cosine_sign, argument)) =
+            self.retained_integer_pi_plus_or_minus_atan_argument()
+        {
+            crate::trace_dispatch!("real", "cot", "integer-pi-atan-rewrite");
+            let inverse = argument.inverse()?;
+            return Ok(if sine_sign == cosine_sign {
+                inverse
+            } else {
+                -inverse
+            });
+        }
+
+        match &self.class {
+            One => (),
+            Pi => return Self::cot_pi_rational(self.rational),
+            _ => (),
+        }
+        if let Some(rational) = self.fold_ref().pi_rational_multiple() {
+            crate::trace_dispatch!("real", "cot", "retained-pi-rational-special-form");
+            return Self::cot_pi_rational(rational);
+        }
+        if let Some((_negate, residual)) = self.integer_pi_offset_residual() {
+            crate::trace_dispatch!("real", "cot", "integer-pi-offset-rewrite");
+            return Self::new(residual).cot();
+        }
+
+        // The listed exact classes cannot equal an integer multiple of pi.
+        // Other classes may encode unknown relations among transcendental
+        // constants, so certify the actual sine denominator before proceeding.
+        let sine = self.clone().sin();
+        if !matches!(
+            &self.class,
+            One | Pi | PiPow(_) | PiInv | PiSqrt(_) | Sqrt(_) | SinPi(_)
+        ) {
+            match sine.require_nonzero() {
+                Ok(()) => {}
+                Err(Problem::DivideByZero) => return Err(Problem::NotANumber),
+                Err(problem) => return Err(problem),
+            }
+        }
+        // The denominator decision above (or the exact class theorem in the
+        // fast arm) authorizes constructing its reciprocal without a second
+        // bounded sign search inside division.
+        let inverse_sine = sine.inverse_ref_assuming_nonzero()?;
+        crate::trace_dispatch!("real", "cot", "checked-cos-over-sin");
+        Ok(self.cos() * inverse_sine)
+    }
+
+    /// Cotangent of `pi * x`, with exact rational-turn special cases.
+    pub fn cot_pi(self) -> Result<Real, Problem> {
+        if self.class == One {
+            return Self::cot_pi_rational(self.rational);
+        }
+        (self * Self::pi()).cot()
+    }
+
+    fn cot_pi_rational(rational: Rational) -> Result<Real, Problem> {
+        // cot(pi*x) = tan(pi*(1/2-x)). Reusing tangent's exact turn reducer
+        // preserves table values and compact TanPi certificates while mapping
+        // integer turns to the established NotANumber pole result.
+        Self::tan_pi_rational(rationals::HALF.clone() - rational)
+    }
+
     /// `sin(x) / x`, with the removable singularity `sinc(0) = 1`.
     pub fn sinc(self) -> Result<Real, Problem> {
         if self.definitely_zero() {
@@ -3945,18 +4046,46 @@ impl Real {
             return self.powi(integer);
         }
 
-        if self.operation_sign()? == Sign::Minus && exponent.denominator().bit(0) {
+        let base_sign = self.operation_sign()?;
+        if base_sign == Sign::Minus && exponent.denominator().bit(0) {
             let Some(denominator) = exponent.denominator().to_u32() else {
                 crate::trace_dispatch!("real", "pow_rational", "odd-denominator-exhausted");
                 return Err(Problem::Exhausted);
             };
             let numerator = BigInt::from_biguint(exponent.sign(), exponent.numerator().clone());
             crate::trace_dispatch!("real", "pow_rational", "negative-odd-denominator-root");
-            return self.root_n(denominator)?.powi(numerator);
+            let rooted = self.root_n(denominator)?;
+            if numerator.magnitude().bits() <= 16 {
+                let power = Self::recursive_powi(&rooted, numerator.magnitude());
+                return if numerator.sign() == Sign::Minus {
+                    power.inverse()
+                } else {
+                    Ok(power)
+                };
+            }
+            return rooted.powi(numerator);
+        }
+
+        if base_sign == Sign::Plus
+            && exponent.numerator().bits() <= 16
+            && let Some(denominator @ 3..=Computable::MAX_DIRECT_NTH_ROOT_DEGREE) =
+                exponent.denominator().to_u32()
+        {
+            // Keep modest rational powers inside the explicit algebraic graph.
+            // Repeated squaring uses O(log numerator) nodes, while the former
+            // exp(ln(x) * q) lowering permanently erased the root certificate.
+            let rooted = self.root_n(denominator)?;
+            let power = Self::recursive_powi(&rooted, exponent.numerator());
+            crate::trace_dispatch!("real", "pow_rational", "bounded-algebraic-root");
+            return if exponent.sign() == Sign::Minus {
+                power.inverse()
+            } else {
+                Ok(power)
+            };
         }
 
         crate::trace_dispatch!("real", "pow_rational", "generic-rational-exponent");
-        self.pow(Real::new(exponent))
+        self.pow_fraction(exponent)
     }
 
     /// Raise this Real to some Real exponent.
@@ -4012,7 +4141,7 @@ impl Real {
                 }
             }
             crate::trace_dispatch!("real", "pow", "rational-exponent");
-            return self.pow_fraction(r);
+            return self.pow_rational(r);
         }
         if exponent.definitely_zero() {
             crate::trace_dispatch!("real", "pow", "zero-exponent");

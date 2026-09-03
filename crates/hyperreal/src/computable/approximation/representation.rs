@@ -179,6 +179,32 @@ pub(super) enum Approximation {
     // common binary expression variants at 40 bytes instead of making every
     // node reserve space for the 56-byte quantile representation.
     NormalQuantile(Box<NormalQuantileData>),
+    // Positive algebraic nth root. Keep new variants at the end so existing
+    // externally tagged binary enum indices remain stable. Deserialization
+    // also enforces the private constructor's bounded-degree invariant.
+    NthRoot(
+        Computable,
+        #[cfg_attr(
+            feature = "serde",
+            serde(deserialize_with = "deserialize_nth_root_degree")
+        )]
+        u32,
+    ),
+}
+
+#[cfg(feature = "serde")]
+fn deserialize_nth_root_degree<'de, D>(deserializer: D) -> Result<u32, D::Error>
+where
+    D: serde::Deserializer<'de>,
+{
+    let degree = u32::deserialize(deserializer)?;
+    if (3..=Computable::MAX_DIRECT_NTH_ROOT_DEGREE).contains(&degree) {
+        Ok(degree)
+    } else {
+        Err(serde::de::Error::custom(
+            "direct nth-root degree is outside the supported range",
+        ))
+    }
 }
 
 #[derive(Clone, Debug)]

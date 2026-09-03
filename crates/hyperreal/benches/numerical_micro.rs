@@ -1,10 +1,12 @@
 use criterion::{BatchSize, Criterion, black_box, criterion_group, criterion_main};
-use hyperreal::{Computable, Rational};
+use hyperreal::{Computable, Rational, Real};
 use num::bigint::{BigInt, BigUint};
 use std::ops::Neg;
 
 #[path = "support/bench_docs.rs"]
 mod bench_docs;
+#[path = "support/benchmark_report.rs"]
+mod benchmark_report;
 
 use bench_docs::{BenchDoc, BenchGroupDoc};
 
@@ -90,6 +92,72 @@ const NUMERICAL_MICRO_GROUPS: &[BenchGroupDoc] = &[
             BenchDoc {
                 name: "exp_unknown_sign_arg_sign_cached",
                 description: "Reads cached sign for exp(1 - pi).",
+            },
+            BenchDoc {
+                name: "mixed_pi_e_sign_until_p0_cold",
+                description: "Certifies a fresh mixed pi/e expression with the bounded binary64 interval filter.",
+            },
+            BenchDoc {
+                name: "near_pi_sign_until_p64_cold",
+                description: "Certifies a fresh close pi/rational difference at its permitted p=-64 floor.",
+            },
+            BenchDoc {
+                name: "near_pi_sign_until_p0_inconclusive_cold",
+                description: "Preserves an inconclusive p=0 result for the same close pi/rational difference.",
+            },
+            BenchDoc {
+                name: "unsupported_sin_difference_sign_until_p0_cold",
+                description: "Measures bounded-filter rejection and arbitrary-precision fallback for an unsupported sine expression.",
+            },
+            BenchDoc {
+                name: "unsupported_sin_difference_sign_until_p64_cold",
+                description: "Measures algebraic-certificate rejection after ordinary refinement reaches p=-64.",
+            },
+        ],
+    },
+    BenchGroupDoc {
+        name: "computable_algebraic_roots",
+        description: "Explicit bounded-degree roots and exact algebraic-zero certification.",
+        benches: &[
+            BenchDoc {
+                name: "root5_construct",
+                description: "Constructs the non-perfect fifth root of 17.",
+            },
+            BenchDoc {
+                name: "root5_interval_p128_cold",
+                description: "Computes a p=-128 certified interval for a freshly constructed fifth root.",
+            },
+            BenchDoc {
+                name: "root5_interval_p2048_cold",
+                description: "Computes a p=-2048 certified interval for a freshly constructed fifth root.",
+            },
+            BenchDoc {
+                name: "root9_interval_p128_cold",
+                description: "Computes a p=-128 certified interval at the explicit-root degree cap.",
+            },
+            BenchDoc {
+                name: "root9_interval_p2048_cold",
+                description: "Computes a p=-2048 certified interval at the explicit-root degree cap.",
+            },
+            BenchDoc {
+                name: "root10_interval_p128_fallback_cold",
+                description: "Exercises the retained exp/ln fallback just above the explicit-root degree cap.",
+            },
+            BenchDoc {
+                name: "eighth_root_near_dyadic_sign_p64_cold",
+                description: "Certifies an ordinary nonzero eighth-root difference before algebraic zero metadata is needed.",
+            },
+            BenchDoc {
+                name: "ramanujan_one_zero_sign_p2048_cold",
+                description: "Certifies the first archived Ramanujan radical identity as exactly zero.",
+            },
+            BenchDoc {
+                name: "ramanujan_two_zero_sign_p2048_cold",
+                description: "Certifies the nested archived Ramanujan radical identity as exactly zero.",
+            },
+            BenchDoc {
+                name: "many_digits_c10_zero_sign_p2048_cold",
+                description: "Certifies the archived mixed cube/fifth-root C10 identity as exactly zero.",
             },
         ],
     },
@@ -606,6 +674,61 @@ fn perturbed_scaled_product_chain(depth: usize) -> Computable {
     value
 }
 
+fn mixed_pi_e_filter_expression() -> Computable {
+    Computable::pi()
+        .square()
+        .add(Computable::e().multiply(Computable::rational(-Rational::fraction(29, 21).unwrap())))
+}
+
+fn near_pi_filter_expression() -> Computable {
+    Computable::pi().add(Computable::rational(
+        -Rational::fraction(103_993, 33_102).unwrap(),
+    ))
+}
+
+fn unsupported_sin_difference_expression() -> Computable {
+    let one_third = Rational::fraction(1, 3).unwrap();
+    let near_sine =
+        Rational::fraction(1_095_149_352_672_539_061_i64, 3_347_087_722_986_034_159_u64).unwrap();
+    Computable::rational(one_third)
+        .sin()
+        .add(Computable::rational(-near_sine))
+}
+
+fn algebraic_root(numerator: i64, denominator: u64, degree: u32) -> Real {
+    Real::new(Rational::fraction(numerator, denominator).unwrap())
+        .root_n(degree)
+        .unwrap()
+}
+
+fn ramanujan_one_identity() -> Real {
+    Real::from(3_i32)
+        * (algebraic_root(5, 1, 3) - algebraic_root(4, 1, 3))
+            .sqrt()
+            .unwrap()
+        - (algebraic_root(2, 1, 3) + algebraic_root(20, 1, 3) - algebraic_root(25, 1, 3))
+}
+
+fn ramanujan_two_identity() -> Real {
+    (algebraic_root(2, 1, 3) - Real::one()).root_n(3).unwrap()
+        - (algebraic_root(1, 9, 3) - algebraic_root(2, 9, 3) + algebraic_root(4, 9, 3))
+}
+
+fn many_digits_c10_identity() -> Real {
+    let fifth_root_two = algebraic_root(2, 1, 5);
+    (Real::from(7_i32) + fifth_root_two.clone() - Real::from(5_i32) * algebraic_root(8, 1, 5))
+        .root_n(3)
+        .unwrap()
+        + algebraic_root(4, 1, 5)
+        - fifth_root_two
+        - Real::one()
+}
+
+fn eighth_root_near_dyadic() -> Real {
+    algebraic_root(2, 1, 8)
+        - Real::new(Rational::fraction(1_199_025_932_245_i64, 1_u64 << 40).unwrap())
+}
+
 fn inverse_scaled_product_chain(depth: usize) -> Computable {
     deep_scaled_product_chain(depth).inverse()
 }
@@ -794,6 +917,115 @@ fn bench_computable_bounds(c: &mut Criterion) {
     exp_unknown_sign_arg_cached.sign_until(-2000);
     group.bench_function("exp_unknown_sign_arg_sign_until_cached", |b| {
         b.iter(|| black_box(exp_unknown_sign_arg_cached.sign_until(-2000)))
+    });
+
+    group.bench_function("mixed_pi_e_sign_until_p0_cold", |b| {
+        b.iter_batched(
+            mixed_pi_e_filter_expression,
+            |value| black_box(value.sign_until(0)),
+            BatchSize::SmallInput,
+        )
+    });
+    group.bench_function("near_pi_sign_until_p64_cold", |b| {
+        b.iter_batched(
+            near_pi_filter_expression,
+            |value| black_box(value.sign_until(-64)),
+            BatchSize::SmallInput,
+        )
+    });
+    group.bench_function("near_pi_sign_until_p0_inconclusive_cold", |b| {
+        b.iter_batched(
+            near_pi_filter_expression,
+            |value| black_box(value.sign_until(0)),
+            BatchSize::SmallInput,
+        )
+    });
+    group.bench_function("unsupported_sin_difference_sign_until_p0_cold", |b| {
+        b.iter_batched(
+            unsupported_sin_difference_expression,
+            |value| black_box(value.sign_until(0)),
+            BatchSize::SmallInput,
+        )
+    });
+    group.bench_function("unsupported_sin_difference_sign_until_p64_cold", |b| {
+        b.iter_batched(
+            unsupported_sin_difference_expression,
+            |value| black_box(value.sign_until(-64)),
+            BatchSize::SmallInput,
+        )
+    });
+
+    group.finish();
+}
+
+fn bench_computable_algebraic_roots(c: &mut Criterion) {
+    let mut group = c.benchmark_group("computable_algebraic_roots");
+
+    group.bench_function("root5_construct", |b| {
+        b.iter(|| black_box(algebraic_root(17, 1, 5)))
+    });
+    group.bench_function("root5_interval_p128_cold", |b| {
+        b.iter_batched(
+            || algebraic_root(17, 1, 5),
+            |value| black_box(value.certified_dyadic_interval(-128)),
+            BatchSize::SmallInput,
+        )
+    });
+    group.bench_function("root5_interval_p2048_cold", |b| {
+        b.iter_batched(
+            || algebraic_root(17, 1, 5),
+            |value| black_box(value.certified_dyadic_interval(-2_048)),
+            BatchSize::SmallInput,
+        )
+    });
+    group.bench_function("root9_interval_p128_cold", |b| {
+        b.iter_batched(
+            || algebraic_root(17, 1, 9),
+            |value| black_box(value.certified_dyadic_interval(-128)),
+            BatchSize::SmallInput,
+        )
+    });
+    group.bench_function("root9_interval_p2048_cold", |b| {
+        b.iter_batched(
+            || algebraic_root(17, 1, 9),
+            |value| black_box(value.certified_dyadic_interval(-2_048)),
+            BatchSize::SmallInput,
+        )
+    });
+    group.bench_function("root10_interval_p128_fallback_cold", |b| {
+        b.iter_batched(
+            || algebraic_root(17, 1, 10),
+            |value| black_box(value.certified_dyadic_interval(-128)),
+            BatchSize::SmallInput,
+        )
+    });
+    group.bench_function("eighth_root_near_dyadic_sign_p64_cold", |b| {
+        b.iter_batched(
+            eighth_root_near_dyadic,
+            |value| black_box(value.refine_sign_until(-64)),
+            BatchSize::SmallInput,
+        )
+    });
+    group.bench_function("ramanujan_one_zero_sign_p2048_cold", |b| {
+        b.iter_batched(
+            ramanujan_one_identity,
+            |value| black_box(value.refine_sign_until(-2_048)),
+            BatchSize::SmallInput,
+        )
+    });
+    group.bench_function("ramanujan_two_zero_sign_p2048_cold", |b| {
+        b.iter_batched(
+            ramanujan_two_identity,
+            |value| black_box(value.refine_sign_until(-2_048)),
+            BatchSize::SmallInput,
+        )
+    });
+    group.bench_function("many_digits_c10_zero_sign_p2048_cold", |b| {
+        b.iter_batched(
+            many_digits_c10_identity,
+            |value| black_box(value.refine_sign_until(-2_048)),
+            BatchSize::SmallInput,
+        )
     });
 
     group.finish();
@@ -1559,7 +1791,18 @@ criterion_group!(
     benches,
     bench_computable_cache,
     bench_computable_bounds,
+    bench_computable_algebraic_roots,
     bench_computable_compare,
-    bench_computable_transcendentals
+    bench_computable_transcendentals,
+    finish_benchmark_report
 );
 criterion_main!(benches);
+
+fn finish_benchmark_report(c: &mut Criterion) {
+    bench_docs::write_benchmark_docs(
+        "numerical_micro",
+        "Low-level `Computable` microbenchmarks for approximation kernels, caches, structural facts, comparisons, and deep evaluator trees.",
+        NUMERICAL_MICRO_GROUPS,
+    );
+    benchmark_report::finish_benchmark_report(c);
+}

@@ -156,5 +156,55 @@ fn sqrt(signal: &Option<Signal>, c: &Computable, p: Precision) -> BigInt {
     }
 }
 
+fn nth_root(signal: &Option<Signal>, c: &Computable, degree: u32, p: Precision) -> BigInt {
+    // The only construction and deserialization paths validate this range.
+    // Retain a release-mode guard because approximation kernels are the final
+    // trust boundary for an expression graph.
+    assert!(
+        (3..=Computable::MAX_DIRECT_NTH_ROOT_DEGREE).contains(&degree),
+        "invalid direct nth-root degree {degree}"
+    );
+
+    // Let t = root(c, degree) * 2^-p and z = t * 2^GUARD_BITS. Asking the
+    // child for precision degree * (p - GUARD_BITS) produces an integer A
+    // within one of z^degree. Therefore floor_root(max(A - 1, 0)) and
+    // ceil_root(A + 1) enclose z. An integer interval of width two crosses at
+    // most two nonnegative perfect powers, so rounding its midpoint after the
+    // guard-bit shift stays strictly within one unit of t.
+    const GUARD_BITS: Precision = 4;
+    let Some(child_precision) = p
+        .checked_sub(GUARD_BITS)
+        .and_then(|precision| precision.checked_mul(Precision::try_from(degree).ok()?))
+    else {
+        // The public bounded-degree constructor makes this reachable only for
+        // an extreme precision request. Preserve total behavior through the
+        // established exp/ln kernel rather than wrapping precision arithmetic.
+        return c
+            .clone()
+            .ln()
+            .multiply(Computable::rational(
+                Rational::from_bigint_fraction(BigInt::one(), BigUint::from(degree)).unwrap(),
+            ))
+            .exp()
+            .approx_signal(signal, p);
+    };
+
+    let approximation = c.approx_signal(signal, child_precision);
+    if approximation <= BigInt::one() {
+        return BigInt::zero();
+    }
+
+    let lower_power = approximation.magnitude() - BigUint::one();
+    let upper_power = approximation.magnitude() + BigUint::one();
+    let lower = lower_power.nth_root(degree);
+    let mut upper = upper_power.nth_root(degree);
+    if upper.pow(degree) < upper_power {
+        upper += BigUint::one();
+    }
+
+    let rounding = BigUint::one() << usize::try_from(GUARD_BITS).unwrap();
+    BigInt::from((lower + upper + rounding) >> usize::try_from(GUARD_BITS + 1).unwrap())
+}
+
 // Compute cosine of |c| < 1
 // uses a Taylor series expansion.

@@ -17,7 +17,9 @@ pub fn write_benchmark_docs(
     description: &'static str,
     groups: &'static [BenchGroupDoc],
 ) {
-    if std::env::var_os("HYPERREAL_SKIP_BENCHMARK_REPORTS").is_some() {
+    if std::env::var_os("HYPERREAL_SKIP_BENCHMARK_REPORTS").is_some()
+        || std::env::args().any(|arg| arg == "--test" || arg == "--list" || arg == "--help")
+    {
         return;
     }
     let root = Path::new(env!("CARGO_MANIFEST_DIR"));
@@ -149,11 +151,16 @@ fn replace_section(current: &str, begin: &str, end: &str, section: &str) -> Stri
         return next;
     };
     let end_index = start + relative_end + end.len();
+    let suffix = current[end_index..].trim_start();
     let mut next = String::new();
     next.push_str(current[..start].trim_end());
     next.push_str("\n\n");
     next.push_str(section.trim_end());
-    next.push_str("\n\n");
-    next.push_str(current[end_index..].trim_start());
+    if suffix.is_empty() {
+        next.push('\n');
+    } else {
+        next.push_str("\n\n");
+        next.push_str(suffix);
+    }
     next
 }

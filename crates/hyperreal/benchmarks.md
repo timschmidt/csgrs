@@ -58,13 +58,35 @@ Structural sign and bound discovery for deep or perturbed computable trees.
 | `computable_bounds/sqrt_scaled_square_sign` | not run | not run | Finds the sign after taking a square root of a scaled square. |
 | `computable_bounds/deep_structural_bound_sign` | not run | not run | Finds sign through repeated multiply/inverse/negate structural transformations. |
 | `computable_bounds/deep_structural_bound_sign_cached` | not run | not run | Reads the cached sign of the deep structural-bound chain. |
-| `computable_bounds/deep_structural_bound_facts_cached` | not run | not run | Reads cached structural facts for the deep structural-bound chain. |
+| `computable_bounds/deep_structural_bound_facts_cached` | 8.15 ns | 8.06 ns - 8.25 ns | Reads cached structural facts for the deep structural-bound chain. |
 | `computable_bounds/perturbed_scaled_product_sign` | not run | not run | Finds sign for a deeply scaled value with a tiny perturbation. |
 | `computable_bounds/perturbed_scaled_product_sign_until` | not run | not run | Refines sign for the perturbed scaled product only to p=-128. |
 | `computable_bounds/pi_minus_tiny_sign` | not run | not run | Finds sign for pi minus a tiny exact rational. |
 | `computable_bounds/pi_minus_tiny_sign_cached` | not run | not run | Reads cached sign for pi minus a tiny exact rational. |
 | `computable_bounds/exp_unknown_sign_arg_sign` | not run | not run | Finds sign for exp(1 - pi), where exp can prove positivity structurally. |
 | `computable_bounds/exp_unknown_sign_arg_sign_cached` | not run | not run | Reads cached sign for exp(1 - pi). |
+| `computable_bounds/mixed_pi_e_sign_until_p0_cold` | 297.89 ns | 290.00 ns - 304.79 ns | Certifies a fresh mixed pi/e expression with the bounded binary64 interval filter. |
+| `computable_bounds/near_pi_sign_until_p64_cold` | 433.56 ns | 420.89 ns - 445.57 ns | Certifies a fresh close pi/rational difference at its permitted p=-64 floor. |
+| `computable_bounds/near_pi_sign_until_p0_inconclusive_cold` | 760.98 ns | 747.16 ns - 774.54 ns | Preserves an inconclusive p=0 result for the same close pi/rational difference. |
+| `computable_bounds/unsupported_sin_difference_sign_until_p0_cold` | 866.92 ns | 857.32 ns - 876.66 ns | Measures bounded-filter rejection and arbitrary-precision fallback for an unsupported sine expression. |
+| `computable_bounds/unsupported_sin_difference_sign_until_p64_cold` | 4.360 us | 4.335 us - 4.388 us | Measures algebraic-certificate rejection after ordinary refinement reaches p=-64. |
+
+### `computable_algebraic_roots`
+
+Explicit bounded-degree roots and exact algebraic-zero certification.
+
+| Benchmark output | Mean | 95% CI | What it measures |
+| --- | ---: | ---: | --- |
+| `computable_algebraic_roots/root5_construct` | 208.64 ns | 207.54 ns - 209.82 ns | Constructs the non-perfect fifth root of 17. |
+| `computable_algebraic_roots/root5_interval_p128_cold` | 3.079 us | 3.054 us - 3.106 us | Computes a p=-128 certified interval for a freshly constructed fifth root. |
+| `computable_algebraic_roots/root5_interval_p2048_cold` | 106.429 us | 105.784 us - 107.153 us | Computes a p=-2048 certified interval for a freshly constructed fifth root. |
+| `computable_algebraic_roots/root9_interval_p128_cold` | 6.164 us | 6.126 us - 6.205 us | Computes a p=-128 certified interval at the explicit-root degree cap. |
+| `computable_algebraic_roots/root9_interval_p2048_cold` | 289.832 us | 288.452 us - 291.251 us | Computes a p=-2048 certified interval at the explicit-root degree cap. |
+| `computable_algebraic_roots/root10_interval_p128_fallback_cold` | 6.102 us | 5.961 us - 6.366 us | Exercises the retained exp/ln fallback just above the explicit-root degree cap. |
+| `computable_algebraic_roots/eighth_root_near_dyadic_sign_p64_cold` | 5.866 us | 5.840 us - 5.896 us | Certifies an ordinary nonzero eighth-root difference before algebraic zero metadata is needed. |
+| `computable_algebraic_roots/ramanujan_one_zero_sign_p2048_cold` | 36.388 us | 36.087 us - 36.709 us | Certifies the first archived Ramanujan radical identity as exactly zero. |
+| `computable_algebraic_roots/ramanujan_two_zero_sign_p2048_cold` | 136.446 us | 134.612 us - 138.693 us | Certifies the nested archived Ramanujan radical identity as exactly zero. |
+| `computable_algebraic_roots/many_digits_c10_zero_sign_p2048_cold` | 41.704 us | 41.267 us - 42.235 us | Certifies the archived mixed cube/fifth-root C10 identity as exactly zero. |
 
 ### `computable_compare`
 
@@ -188,16 +210,16 @@ Cost of constructing common exact scalar identities and small integers.
 
 | Benchmark output | Mean | 95% CI | What it measures |
 | --- | ---: | ---: | --- |
-| `construction_speed/rational_one` | 3.02 ns | 3.00 ns - 3.03 ns | Constructs `Rational::one()`. |
-| `construction_speed/rational_new_one` | 3.27 ns | 3.25 ns - 3.30 ns | Constructs one through `Rational::new(1)`. |
-| `construction_speed/rational_from_u8_four` | 3.71 ns | 3.70 ns - 3.73 ns | Constructs positive four through unsigned primitive conversion. |
-| `construction_speed/rational_from_i8_minus_four` | 4.17 ns | 4.15 ns - 4.20 ns | Constructs negative four through signed primitive conversion. |
-| `construction_speed/computable_one` | 16.18 ns | 16.14 ns - 16.24 ns | Constructs `Computable::one()`. |
-| `construction_speed/real_new_rational_one` | 15.25 ns | 15.22 ns - 15.29 ns | Constructs one through `Real::new(Rational::one())`. |
-| `construction_speed/real_one` | 15.54 ns | 15.50 ns - 15.58 ns | Constructs one through `Real::one()`. |
-| `construction_speed/real_from_i32_one` | 15.80 ns | 15.75 ns - 15.86 ns | Constructs one through integer conversion. |
-| `construction_speed/real_from_u8_four` | 16.39 ns | 16.37 ns - 16.42 ns | Constructs positive four as an exact `Real` from `u8`. |
-| `construction_speed/real_from_i8_minus_four` | 16.28 ns | 16.22 ns - 16.37 ns | Constructs negative four as an exact `Real` from `i8`. |
+| `construction_speed/rational_one` | not run | not run | Constructs `Rational::one()`. |
+| `construction_speed/rational_new_one` | not run | not run | Constructs one through `Rational::new(1)`. |
+| `construction_speed/rational_from_u8_four` | not run | not run | Constructs positive four through unsigned primitive conversion. |
+| `construction_speed/rational_from_i8_minus_four` | not run | not run | Constructs negative four through signed primitive conversion. |
+| `construction_speed/computable_one` | not run | not run | Constructs `Computable::one()`. |
+| `construction_speed/real_new_rational_one` | not run | not run | Constructs one through `Real::new(Rational::one())`. |
+| `construction_speed/real_one` | not run | not run | Constructs one through `Real::one()`. |
+| `construction_speed/real_from_i32_one` | not run | not run | Constructs one through integer conversion. |
+| `construction_speed/real_from_u8_four` | not run | not run | Constructs positive four as an exact `Real` from `u8`. |
+| `construction_speed/real_from_i8_minus_four` | not run | not run | Constructs negative four as an exact `Real` from `i8`. |
 
 ### `raw_cache_hit_cost`
 
@@ -258,6 +280,8 @@ Speed of public structural queries across exact, transcendental, and composite `
 | `structural_query_speed/dense_expr_sign_query` | not run | not run | Reads sign facts for a dense composite expression. |
 | `structural_query_speed/dense_expr_msd_query` | not run | not run | Reads magnitude facts for a dense composite expression. |
 | `structural_query_speed/dense_expr_structural_facts` | not run | not run | Computes full structural facts for a dense composite expression. |
+| `structural_query_speed/structural_negation_match` | 14.47 ns | 14.36 ns - 14.57 ns | Certifies opposite rational scales over one shared exact symbolic basis. |
+| `structural_query_speed/structural_negation_miss` | 3.83 ns | 3.80 ns - 3.87 ns | Rejects an unrelated exact symbolic basis without constructing a negation. |
 
 ### `pure_scalar_algorithm_speed`
 
@@ -447,8 +471,16 @@ Small dense algebra kernels that stress repeated exact and symbolic operations.
 | `dense_algebra/rational_matmul_8` | not run | not run | Computes an 8x8 rational matrix multiply. |
 | `dense_algebra/real_dot_36` | not run | not run | Computes a 36-element dot product over symbolic `Real` values. |
 | `dense_algebra/real_matmul_6` | not run | not run | Computes a 6x6 matrix multiply over symbolic `Real` values. |
-| `dense_algebra/real_sum_refs_64_symbolic` | not run | not run | Constructs an arbitrary-length sum of 64 borrowed symbolic square roots. |
-| `dense_algebra/real_sum_refs_64_symbolic_to_f64` | not run | not run | Constructs and approximates the same arbitrary-length symbolic sum. |
+| `dense_algebra/real_sum_refs_64_symbolic` | 6.597 us | 6.557 us - 6.636 us | Constructs an arbitrary-length sum of 64 borrowed symbolic square roots. |
+| `dense_algebra/real_sum_refs_64_symbolic_to_f64` | 32.884 us | 32.752 us - 33.043 us | Constructs and approximates the same arbitrary-length symbolic sum. |
+| `dense_algebra/real_sum_refs_1024_symbolic_sequential` | 112.868 us | 112.185 us - 113.634 us | Constructs a 1,024-term symbolic sum with the former sequential fold. |
+| `dense_algebra/real_sum_refs_1024_symbolic` | 234.318 us | 233.449 us - 235.284 us | Constructs the same 1,024-term symbolic sum through the balanced public aggregate. |
+| `dense_algebra/real_sum_refs_1024_symbolic_to_f64_sequential` | 5.603 ms | 5.576 ms - 5.631 ms | Sequentially constructs and approximates a 1,024-term symbolic sum with cold child caches. |
+| `dense_algebra/real_sum_refs_1024_symbolic_to_f64` | 2.070 ms | 2.061 ms - 2.080 ms | Constructs and approximates the same cold 1,024-term symbolic sum through the balanced public aggregate. |
+| `dense_algebra/real_sum_refs_1024_rational_sequential` | 20.872 us | 20.748 us - 21.020 us | Constructs a 1,024-term exact rational sum with the former sequential fold. |
+| `dense_algebra/real_sum_refs_1024_rational` | 16.186 us | 16.087 us - 16.286 us | Constructs the same exact rational sum through the homogeneous-prefix public aggregate. |
+| `dense_algebra/real_sum_owned_1024_symbolic_former_clone_path` | 225.353 us | 217.042 us - 234.569 us | Consumes a 1,024-term symbolic sum while reproducing the former extra per-value clone. |
+| `dense_algebra/real_sum_owned_1024_symbolic` | 134.630 us | 129.586 us - 140.761 us | Consumes the same symbolic sum by moving owned values into the balanced reducer. |
 
 ### `exact_transcendental_special_forms`
 
@@ -480,6 +512,19 @@ Construction-time shortcuts for exact rational multiples of pi and inverse compo
 | `exact_transcendental_special_forms/log2_power_of_two` | not run | not run | Folds log2(1024) to the exact rational 10 via the integer-log-detection shortcut. |
 | `exact_transcendental_special_forms/log2_rational_three` | not run | not run | Builds log2(3) as a lightweight Log2 symbolic certificate. |
 | `exact_transcendental_special_forms/log2_ln_quotient_fold` | not run | not run | Folds ln(5) / ln(2) into a Log2 certificate via the divide-recognize shortcut. |
+
+### `real_cotangent`
+
+Public cotangent construction and cold refinement against the two compositional alternatives.
+
+| Benchmark output | Mean | 95% CI | What it measures |
+| --- | ---: | ---: | --- |
+| `real_cotangent/atan_two_direct_construct` | 41.15 ns | 40.91 ns - 41.42 ns | Folds cot(atan(2)) through the public exact inverse-trig rewrite. |
+| `real_cotangent/atan_two_quotient_construct` | 1.354 us | 1.349 us - 1.359 us | Builds cot(atan(2)) as the control expression cos(x)/sin(x). |
+| `real_cotangent/atan_two_inverse_tan_construct` | 4.257 us | 4.220 us - 4.300 us | Builds cot(atan(2)) as the incomplete control expression 1/tan(x). |
+| `real_cotangent/tiny_direct_cold_p256` | 9.172 us | 8.755 us - 9.624 us | Constructs and certifies public cot(2^-10) at 256 fractional bits. |
+| `real_cotangent/tiny_quotient_cold_p256` | 7.838 us | 7.799 us - 7.882 us | Constructs and certifies cos(2^-10)/sin(2^-10) at 256 fractional bits. |
+| `real_cotangent/tiny_inverse_tan_cold_p256` | 10.207 us | 10.171 us - 10.251 us | Constructs and certifies 1/tan(2^-10) at 256 fractional bits. |
 
 ### `symbolic_reductions`
 
@@ -905,11 +950,11 @@ Deterministic broad sweeps of sine, cosine, and tangent over tiny, ordinary, hug
 
 ### `promoted_library_slow_offenders_approx`
 
-Fifty structurally varied worst offenders promoted from the library-wide slow-performer history.
+One hundred structurally varied worst offenders promoted from the library-wide slow-performer history.
 
 | Benchmark output | Mean | 95% CI | What it measures |
 | --- | ---: | ---: | --- |
-| `promoted_library_slow_offenders_approx/promoted_50_structural_slow_offenders_p96` | not run | not run | Approximates 50 individual promoted slow cases spanning ln(1+x^2), atan, tan, sin, and cos over varied exact-rational structures. |
+| `promoted_library_slow_offenders_approx/promoted_100_structural_slow_offenders_p96` | not run | not run | Approximates 100 individual promoted slow cases spanning ln(1+x^2), atan, tan, sin, and cos over varied exact-rational structures. |
 
 ### `inverse_hyperbolic_adversarial_approx`
 
@@ -1013,13 +1058,334 @@ Exact conversion from IEEE-754 floats into `Rational` and `Real` values.
 
 | Benchmark output | Mean | 95% CI | What it measures |
 | --- | ---: | ---: | --- |
-| `float_convert/f32_normal` | not run | not run | Converts a normal `f32` into an exact `Rational`. |
+| `float_convert/f32_normal` | 45.89 ns | 45.36 ns - 46.48 ns | Converts a normal `f32` into an exact `Rational`. |
 | `float_convert/f64_normal` | not run | not run | Converts a normal `f64` into an exact `Rational`. |
 | `float_convert/f64_binary_fraction` | not run | not run | Converts an exactly representable binary `f64` fraction into `Rational`. |
 | `float_convert/f64_subnormal` | not run | not run | Converts a subnormal `f64` into an exact `Rational`. |
-| `float_convert/real_f32_normal` | not run | not run | Converts a normal `f32` through the public `Real::try_from` path. |
+| `float_convert/real_f32_normal` | 78.49 ns | 74.56 ns - 83.27 ns | Converts a normal `f32` through the public `Real::try_from` path. |
 | `float_convert/real_f64_normal` | not run | not run | Converts a normal `f64` through the public `Real::try_from` path. |
 | `float_convert/real_f64_binary_fraction` | not run | not run | Converts an exactly representable binary `f64` fraction through the public `Real::try_from` path. |
 | `float_convert/real_f64_subnormal` | not run | not run | Converts a subnormal `f64` through the public `Real::try_from` path. |
 
 <!-- END float_convert -->
+
+<!-- BEGIN COMPLETE BENCHMARK REPORT -->
+## Complete generated benchmark report
+
+Every registered benchmark target is catalogued below. Every Criterion result found under `target/criterion` is included without a name or implementation filter; non-Criterion targets write their own linked reports. Each timing binary refreshes this section after it runs.
+
+Run the complete non-instrumented timing set with:
+
+```sh
+cargo bench --features simple
+```
+
+Regenerate this Markdown from stored Criterion data without rerunning benchmarks:
+
+```sh
+cargo run --example write_benchmarks_md
+```
+
+### Registered benchmark suites
+
+| Target | Kind | Required features | Command | Generated report |
+| --- | --- | --- | --- | --- |
+| `adversarial_library` | Criterion timing | `default` | `cargo bench --bench adversarial_library` | this file |
+| `adversarial_transcendentals` | Criterion timing | `default` | `cargo bench --bench adversarial_transcendentals` | this file |
+| `borrowed_ops` | Criterion timing | `default` | `cargo bench --bench borrowed_ops` | this file |
+| `dispatch_trace` | diagnostic | `dispatch-trace` | `cargo bench --bench dispatch_trace --features dispatch-trace` | [dispatch_trace.md](dispatch_trace.md) |
+| `float_convert` | Criterion timing | `default` | `cargo bench --bench float_convert` | this file |
+| `gmp_api` | Criterion timing | `default` | `cargo bench --bench gmp_api` | this file |
+| `library_perf` | Criterion timing | `simple` | `cargo bench --bench library_perf --features simple` | this file |
+| `numerical_micro` | Criterion timing | `default` | `cargo bench --bench numerical_micro` | this file |
+| `real_representations` | Criterion timing | `default` | `cargo bench --bench real_representations` | this file |
+| `scalar_micro` | Criterion timing | `default` | `cargo bench --bench scalar_micro` | this file |
+
+### Comparative results
+
+Rows sharing a Criterion group and input are compared when they expose distinct implementations. Ratios are elapsed time relative to the fastest stored row; they do not imply identical guarantees or output semantics.
+
+| Group | Input | Implementation | Mean | Relative to fastest |
+| --- | --- | --- | ---: | ---: |
+| `gmp_real_elementary_api` | `cot` | `hyperreal` | 710.12 ns | 1.00x |
+| `gmp_real_elementary_api` | `cot` | `gmp_mpfr128` | 1.10 us | 1.55x |
+| `gmp_real_elementary_api` | `cot_pi` | `hyperreal` | 122.72 ns | 1.00x |
+| `gmp_real_elementary_api` | `cot_pi` | `gmp_mpfr128` | 1.74 us | 14.16x |
+| `gmp_real_elementary_api` | `exp10` | `hyperreal` | 168.58 ns | 1.00x |
+| `gmp_real_elementary_api` | `exp10` | `gmp_mpfr128` | 2.82 us | 16.76x |
+| `gmp_real_elementary_api` | `exp2` | `hyperreal` | 173.81 ns | 1.00x |
+| `gmp_real_elementary_api` | `exp2` | `gmp_mpfr128` | 1.19 us | 6.86x |
+| `gmp_real_elementary_api` | `root_n_5` | `hyperreal` | 176.74 ns | 1.00x |
+| `gmp_real_elementary_api` | `root_n_5` | `gmp_mpfr128` | 504.37 ns | 2.85x |
+| `real_representation_construction_export` | `const_offset` | `mpfr192` | 61.53 ns | 1.00x |
+| `real_representation_construction_export` | `const_offset` | `hyperreal_exact` | 141.45 ns | 2.30x |
+| `real_representation_construction_export` | `const_product` | `hyperreal_exact` | 1.15 us | 1.00x |
+| `real_representation_construction_export` | `const_product` | `mpfr192` | 1.43 us | 1.24x |
+| `real_representation_construction_export` | `const_product_sqrt` | `mpfr192` | 1.70 us | 1.00x |
+| `real_representation_construction_export` | `const_product_sqrt` | `hyperreal_exact` | 2.18 us | 1.28x |
+| `real_representation_construction_export` | `exp` | `hyperreal_exact` | 202.71 ns | 1.00x |
+| `real_representation_construction_export` | `exp` | `mpfr192` | 1.50 us | 7.40x |
+| `real_representation_construction_export` | `irrational` | `mpfr192` | 1.10 us | 1.00x |
+| `real_representation_construction_export` | `irrational` | `hyperreal_exact` | 2.79 us | 2.53x |
+| `real_representation_construction_export` | `ln` | `hyperreal_exact` | 167.71 ns | 1.00x |
+| `real_representation_construction_export` | `ln` | `mpfr192` | 1.96 us | 11.66x |
+| `real_representation_construction_export` | `ln_affine` | `hyperreal_exact` | 911.31 ns | 1.00x |
+| `real_representation_construction_export` | `ln_affine` | `mpfr192` | 3.44 us | 3.77x |
+| `real_representation_construction_export` | `ln_product` | `hyperreal_exact` | 973.88 ns | 1.00x |
+| `real_representation_construction_export` | `ln_product` | `mpfr192` | 3.76 us | 3.86x |
+| `real_representation_construction_export` | `log10` | `hyperreal_exact` | 1.25 us | 1.00x |
+| `real_representation_construction_export` | `log10` | `mpfr192` | 3.98 us | 3.18x |
+| `real_representation_construction_export` | `log2` | `hyperreal_exact` | 955.13 ns | 1.00x |
+| `real_representation_construction_export` | `log2` | `mpfr192` | 2.12 us | 2.22x |
+| `real_representation_construction_export` | `one` | `mpfr192` | 35.67 ns | 1.00x |
+| `real_representation_construction_export` | `one` | `hyperreal_exact` | 77.89 ns | 2.18x |
+| `real_representation_construction_export` | `pi` | `mpfr192` | 32.37 ns | 1.00x |
+| `real_representation_construction_export` | `pi` | `hyperreal_exact` | 46.14 ns | 1.43x |
+| `real_representation_construction_export` | `pi_exp` | `hyperreal_exact` | 189.34 ns | 1.00x |
+| `real_representation_construction_export` | `pi_exp` | `mpfr192` | 1.43 us | 7.54x |
+| `real_representation_construction_export` | `pi_inv` | `hyperreal_exact` | 71.90 ns | 1.00x |
+| `real_representation_construction_export` | `pi_inv` | `mpfr192` | 97.95 ns | 1.36x |
+| `real_representation_construction_export` | `pi_inv_exp` | `hyperreal_exact` | 197.04 ns | 1.00x |
+| `real_representation_construction_export` | `pi_inv_exp` | `mpfr192` | 1.46 us | 7.43x |
+| `real_representation_construction_export` | `pi_pow` | `mpfr192` | 64.03 ns | 1.00x |
+| `real_representation_construction_export` | `pi_pow` | `hyperreal_exact` | 135.71 ns | 2.12x |
+| `real_representation_construction_export` | `pi_sqrt` | `mpfr192` | 161.20 ns | 1.00x |
+| `real_representation_construction_export` | `pi_sqrt` | `hyperreal_exact` | 449.21 ns | 2.79x |
+| `real_representation_construction_export` | `sin_pi` | `mpfr192` | 1.42 us | 1.00x |
+| `real_representation_construction_export` | `sin_pi` | `hyperreal_exact` | 3.95 us | 2.77x |
+| `real_representation_construction_export` | `sqrt` | `hyperreal_exact` | 105.36 ns | 1.00x |
+| `real_representation_construction_export` | `sqrt` | `mpfr192` | 135.58 ns | 1.29x |
+| `real_representation_construction_export` | `tan_pi` | `mpfr192` | 1.84 us | 1.00x |
+| `real_representation_construction_export` | `tan_pi` | `hyperreal_exact` | 13.45 us | 7.29x |
+
+### All Criterion results
+
+| Benchmark | Mean | 95% CI | Median | Change vs baseline | Throughput |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| `computable_algebraic_roots/eighth_root_near_dyadic_sign_p64_cold` | 5.87 us | 5.84 us - 5.90 us | 5.84 us | -3.38% | - |
+| `computable_algebraic_roots/many_digits_c10_zero_sign_p2048_cold` | 41.70 us | 41.27 us - 42.23 us | 40.96 us | +0.73% | - |
+| `computable_algebraic_roots/ramanujan_one_zero_sign_p2048_cold` | 36.39 us | 36.09 us - 36.71 us | 36.15 us | -62.93% | - |
+| `computable_algebraic_roots/ramanujan_two_zero_sign_p2048_cold` | 136.45 us | 134.61 us - 138.69 us | 133.91 us | -1.94% | - |
+| `computable_algebraic_roots/root10_interval_p128_fallback_cold` | 6.10 us | 5.96 us - 6.37 us | 5.96 us | - | - |
+| `computable_algebraic_roots/root5_construct` | 208.64 ns | 207.54 ns - 209.82 ns | 207.16 ns | -30.52% | - |
+| `computable_algebraic_roots/root5_interval_p128_cold` | 3.08 us | 3.05 us - 3.11 us | 3.07 us | -5.77% | - |
+| `computable_algebraic_roots/root5_interval_p2048_cold` | 106.43 us | 105.78 us - 107.15 us | 105.53 us | +0.40% | - |
+| `computable_algebraic_roots/root9_interval_p128_cold` | 6.16 us | 6.13 us - 6.20 us | 6.14 us | - | - |
+| `computable_algebraic_roots/root9_interval_p128_fallback_cold` | 9.13 us | 8.41 us - 9.93 us | 7.50 us | - | - |
+| `computable_algebraic_roots/root9_interval_p2048_cold` | 289.83 us | 288.45 us - 291.25 us | 289.75 us | - | - |
+| `computable_bounds/deep_scaled_product_sign_until_p2000` | 5.97 ns | 5.93 ns - 6.02 ns | 5.94 ns | - | - |
+| `computable_bounds/deep_structural_bound_facts_cached` | 8.15 ns | 8.06 ns - 8.25 ns | 8.07 ns | - | - |
+| `computable_bounds/deep_structural_bound_sign_until_cached` | 4.04 ns | 4.02 ns - 4.06 ns | 4.02 ns | - | - |
+| `computable_bounds/deep_structural_bound_sign_until_p2000` | 6.19 ns | 6.15 ns - 6.24 ns | 6.15 ns | - | - |
+| `computable_bounds/exp_unknown_sign_arg_sign_until_cached` | 4.04 ns | 4.02 ns - 4.07 ns | 4.02 ns | - | - |
+| `computable_bounds/exp_unknown_sign_arg_sign_until_p2000` | 6.38 ns | 6.26 ns - 6.52 ns | 6.26 ns | - | - |
+| `computable_bounds/mixed_pi_e_sign_until_p0_cold` | 297.89 ns | 290.00 ns - 304.79 ns | 304.31 ns | -46.89% | - |
+| `computable_bounds/near_pi_sign_until_p0_inconclusive_cold` | 760.98 ns | 747.16 ns - 774.54 ns | 774.74 ns | +7.00% | - |
+| `computable_bounds/near_pi_sign_until_p64_cold` | 433.56 ns | 420.89 ns - 445.57 ns | 449.41 ns | -0.48% | - |
+| `computable_bounds/perturbed_scaled_product_sign_until_p128` | 5.94 ns | 5.89 ns - 6.01 ns | 5.89 ns | - | - |
+| `computable_bounds/perturbed_scaled_product_sign_until_p2000` | 6.13 ns | 6.01 ns - 6.24 ns | 6.13 ns | - | - |
+| `computable_bounds/pi_minus_tiny_sign_until_cached` | 4.05 ns | 4.01 ns - 4.09 ns | 4.02 ns | - | - |
+| `computable_bounds/pi_minus_tiny_sign_until_p2000` | 5.94 ns | 5.91 ns - 5.97 ns | 5.90 ns | - | - |
+| `computable_bounds/scaled_square_sign_until_p2000` | 6.04 ns | 5.98 ns - 6.09 ns | 5.98 ns | - | - |
+| `computable_bounds/sqrt_scaled_square_sign_until_p2000` | 65.59 ns | 59.39 ns - 71.04 ns | 72.13 ns | - | - |
+| `computable_bounds/unsupported_sin_difference_sign_until_p0_cold` | 866.92 ns | 857.32 ns - 876.66 ns | 867.27 ns | +0.73% | - |
+| `computable_bounds/unsupported_sin_difference_sign_until_p64_cold` | 4.36 us | 4.33 us - 4.39 us | 4.32 us | -44.02% | - |
+| `computable_transcendentals/cos_1e30_cold_p96` | 2.27 us | 2.26 us - 2.29 us | 2.26 us | -2.55% | - |
+| `computable_transcendentals/sin_1e30_cold_p96` | 2.11 us | 2.09 us - 2.13 us | 2.08 us | -45.54% | - |
+| `dense_algebra/real_sum_owned_1024_symbolic` | 134.63 us | 129.59 us - 140.76 us | 123.04 us | -6.71% | - |
+| `dense_algebra/real_sum_owned_1024_symbolic_former_clone_path` | 225.35 us | 217.04 us - 234.57 us | 201.08 us | -28.76% | - |
+| `dense_algebra/real_sum_refs_1024_rational` | 16.19 us | 16.09 us - 16.29 us | 16.00 us | - | - |
+| `dense_algebra/real_sum_refs_1024_rational_sequential` | 20.87 us | 20.75 us - 21.02 us | 20.85 us | - | - |
+| `dense_algebra/real_sum_refs_1024_symbolic` | 234.32 us | 233.45 us - 235.28 us | 232.68 us | -1.36% | - |
+| `dense_algebra/real_sum_refs_1024_symbolic_sequential` | 112.87 us | 112.19 us - 113.63 us | 111.74 us | -1.17% | - |
+| `dense_algebra/real_sum_refs_1024_symbolic_to_f64` | 2.07 ms | 2.06 ms - 2.08 ms | 2.05 ms | +1.47% | - |
+| `dense_algebra/real_sum_refs_1024_symbolic_to_f64_sequential` | 5.60 ms | 5.58 ms - 5.63 ms | 5.55 ms | +3.47% | - |
+| `dense_algebra/real_sum_refs_64_symbolic` | 6.60 us | 6.56 us - 6.64 us | 6.64 us | +0.49% | - |
+| `dense_algebra/real_sum_refs_64_symbolic_to_f64` | 32.88 us | 32.75 us - 33.04 us | 32.65 us | - | - |
+| `float_convert/f32_normal` | 45.89 ns | 45.36 ns - 46.48 ns | 45.47 ns | - | - |
+| `float_convert/real_f32_normal` | 78.49 ns | 74.56 ns - 83.27 ns | 76.03 ns | - | - |
+| `gmp_real_elementary_api/gmp_mpfr128/cot` | 1.10 us | 1.10 us - 1.11 us | 1.09 us | - | - |
+| `gmp_real_elementary_api/gmp_mpfr128/cot_pi` | 1.74 us | 1.73 us - 1.75 us | 1.72 us | - | - |
+| `gmp_real_elementary_api/gmp_mpfr128/exp10` | 2.82 us | 2.82 us - 2.83 us | 2.82 us | -28.33% | - |
+| `gmp_real_elementary_api/gmp_mpfr128/exp2` | 1.19 us | 1.19 us - 1.20 us | 1.19 us | - | - |
+| `gmp_real_elementary_api/gmp_mpfr128/root_n_5` | 504.37 ns | 502.11 ns - 506.85 ns | 503.61 ns | -0.62% | - |
+| `gmp_real_elementary_api/hyperreal/cot` | 710.12 ns | 706.82 ns - 713.79 ns | 703.57 ns | - | - |
+| `gmp_real_elementary_api/hyperreal/cot_pi` | 122.72 ns | 121.66 ns - 123.86 ns | 120.14 ns | - | - |
+| `gmp_real_elementary_api/hyperreal/exp10` | 168.58 ns | 167.34 ns - 170.02 ns | 167.16 ns | -96.95% | - |
+| `gmp_real_elementary_api/hyperreal/exp2` | 173.81 ns | 173.01 ns - 174.70 ns | 172.62 ns | -96.75% | - |
+| `gmp_real_elementary_api/hyperreal/root_n_5` | 176.74 ns | 176.05 ns - 177.43 ns | 176.90 ns | +1.83% | - |
+| `iterator_products/rational_wallis_borrowed_1000` | 1.65 ms | 1.64 ms - 1.67 ms | 1.64 ms | -17.51% | - |
+| `iterator_products/rational_wallis_owned_1000` | 1.67 ms | 1.66 ms - 1.67 ms | 1.66 ms | -39.21% | - |
+| `iterator_products/rational_wallis_sequential_1000` | 56.67 ms | 56.42 ms - 56.94 ms | 56.40 ms | -4.78% | - |
+| `iterator_products/real_wallis_owned_1000` | 1.69 ms | 1.68 ms - 1.70 ms | 1.67 ms | -0.89% | - |
+| `promoted_library_slow_offenders_approx/atan_generated_10869_1_123_155_p96` | 2.24 us | 2.22 us - 2.26 us | 2.24 us | - | - |
+| `promoted_library_slow_offenders_approx/atan_generated_11034_1_367_518_p96` | 2.42 us | 2.38 us - 2.48 us | 2.39 us | - | - |
+| `promoted_library_slow_offenders_approx/atan_generated_15279_1_403_522_p96` | 2.38 us | 2.32 us - 2.45 us | 2.37 us | - | - |
+| `promoted_library_slow_offenders_approx/atan_generated_15369_neg_1_74_93_p96` | 2.38 us | 2.33 us - 2.45 us | 2.34 us | - | - |
+| `promoted_library_slow_offenders_approx/atan_generated_15474_neg_1_13_19_p96` | 2.52 us | 2.46 us - 2.60 us | 2.48 us | - | - |
+| `promoted_library_slow_offenders_approx/atan_generated_15504_neg_1_228_413_p96` | 2.01 us | 1.96 us - 2.06 us | 1.99 us | - | - |
+| `promoted_library_slow_offenders_approx/atan_generated_2964_neg_1_146_373_p96` | 2.27 us | 2.23 us - 2.31 us | 2.24 us | - | - |
+| `promoted_library_slow_offenders_approx/atan_generated_5094_neg_1_347_604_p96` | 2.04 us | 2.01 us - 2.07 us | 2.03 us | - | - |
+| `promoted_library_slow_offenders_approx/atan_generated_5124_neg_1_237_523_p96` | 2.00 us | 1.94 us - 2.07 us | 1.97 us | - | - |
+| `promoted_library_slow_offenders_approx/atan_generated_849_neg_1_391_600_p96` | 2.51 us | 2.45 us - 2.59 us | 2.51 us | - | - |
+| `promoted_library_slow_offenders_approx/cos_generated_15110_7_5_27_p96` | 2.51 us | 2.46 us - 2.59 us | 2.47 us | - | - |
+| `promoted_library_slow_offenders_approx/cos_generated_16610_7_4_19_p96` | 2.48 us | 2.41 us - 2.57 us | 2.43 us | - | - |
+| `promoted_library_slow_offenders_approx/cos_generated_9365_7_14_139_p96` | 2.53 us | 2.50 us - 2.57 us | 2.50 us | - | - |
+| `promoted_library_slow_offenders_approx/cos_generated_9950_neg_5_1_5_p96` | 2.34 us | 2.29 us - 2.40 us | 2.36 us | - | - |
+| `promoted_library_slow_offenders_approx/ln_generated_10327_neg_1_19_732_p96` | 2.63 us | 2.59 us - 2.68 us | 2.59 us | - | - |
+| `promoted_library_slow_offenders_approx/ln_generated_10702_2_201_218_p96` | 3.42 us | 3.34 us - 3.50 us | 3.43 us | - | - |
+| `promoted_library_slow_offenders_approx/ln_generated_10732_6_6_137_p96` | 3.10 us | 3.02 us - 3.20 us | 3.04 us | - | - |
+| `promoted_library_slow_offenders_approx/ln_generated_10927_neg_8_57_109_p96` | 3.02 us | 3.01 us - 3.03 us | 3.02 us | - | - |
+| `promoted_library_slow_offenders_approx/ln_generated_11122_neg_8_13_27_p96` | 3.24 us | 3.12 us - 3.39 us | 3.19 us | - | - |
+| `promoted_library_slow_offenders_approx/ln_generated_11317_neg_8_21_53_p96` | 2.97 us | 2.92 us - 3.03 us | 2.96 us | - | - |
+| `promoted_library_slow_offenders_approx/ln_generated_11497_1_137_564_p96` | 3.54 us | 3.52 us - 3.57 us | 3.55 us | - | - |
+| `promoted_library_slow_offenders_approx/ln_generated_1297_neg_1_83_188_p96` | 3.64 us | 3.55 us - 3.77 us | 3.57 us | - | - |
+| `promoted_library_slow_offenders_approx/ln_generated_13537_neg_7_17_41_p96` | 2.99 us | 2.97 us - 3.03 us | 2.98 us | - | - |
+| `promoted_library_slow_offenders_approx/ln_generated_1372_neg_1_309_484_p96` | 3.03 us | 2.97 us - 3.11 us | 2.97 us | - | - |
+| `promoted_library_slow_offenders_approx/ln_generated_13837_neg_1_55_76_p96` | 2.36 us | 2.34 us - 2.40 us | 2.35 us | - | - |
+| `promoted_library_slow_offenders_approx/ln_generated_14377_neg_1_189_764_p96` | 3.54 us | 3.50 us - 3.59 us | 3.52 us | - | - |
+| `promoted_library_slow_offenders_approx/ln_generated_14947_3_11_222_p96` | 3.51 us | 3.48 us - 3.54 us | 3.50 us | - | - |
+| `promoted_library_slow_offenders_approx/ln_generated_14977_6_22_141_p96` | 3.22 us | 3.17 us - 3.27 us | 3.23 us | - | - |
+| `promoted_library_slow_offenders_approx/ln_generated_15082_1_181_356_p96` | 3.56 us | 3.45 us - 3.69 us | 3.43 us | - | - |
+| `promoted_library_slow_offenders_approx/ln_generated_15472_neg_3_13_50_p96` | 4.08 us | 3.95 us - 4.24 us | 4.00 us | - | - |
+| `promoted_library_slow_offenders_approx/ln_generated_16402_1_11_52_p96` | 3.36 us | 3.33 us - 3.40 us | 3.34 us | - | - |
+| `promoted_library_slow_offenders_approx/ln_generated_16447_1_9_20_p96` | 3.64 us | 3.58 us - 3.71 us | 3.61 us | - | - |
+| `promoted_library_slow_offenders_approx/ln_generated_16597_neg_1_15_188_p96` | 2.78 us | 2.72 us - 2.85 us | 2.74 us | - | - |
+| `promoted_library_slow_offenders_approx/ln_generated_16642_3_13_22_p96` | 3.24 us | 3.16 us - 3.33 us | 3.22 us | - | - |
+| `promoted_library_slow_offenders_approx/ln_generated_1687_1_27_44_p96` | 3.24 us | 3.15 us - 3.32 us | 3.27 us | - | - |
+| `promoted_library_slow_offenders_approx/ln_generated_17197_neg_7_29_43_p96` | 2.71 us | 2.68 us - 2.75 us | 2.69 us | - | - |
+| `promoted_library_slow_offenders_approx/ln_generated_17392_neg_7_41_101_p96` | 3.14 us | 3.08 us - 3.21 us | 3.09 us | - | - |
+| `promoted_library_slow_offenders_approx/ln_generated_17587_neg_6_68_73_p96` | 3.61 us | 3.54 us - 3.70 us | 3.57 us | - | - |
+| `promoted_library_slow_offenders_approx/ln_generated_17752_neg_3_11_18_p96` | 3.17 us | 3.10 us - 3.26 us | 3.15 us | - | - |
+| `promoted_library_slow_offenders_approx/ln_generated_18352_neg_1_133_500_p96` | 3.84 us | 3.72 us - 3.96 us | 3.84 us | - | - |
+| `promoted_library_slow_offenders_approx/ln_generated_1837_neg_1_107_724_p96` | 3.40 us | 3.28 us - 3.54 us | 3.38 us | - | - |
+| `promoted_library_slow_offenders_approx/ln_generated_2242_5_103_129_p96` | 2.86 us | 2.77 us - 2.96 us | 2.83 us | - | - |
+| `promoted_library_slow_offenders_approx/ln_generated_2632_neg_10_37_73_p96` | 3.12 us | 3.09 us - 3.16 us | 3.11 us | - | - |
+| `promoted_library_slow_offenders_approx/ln_generated_3007_1_65_556_p96` | 3.09 us | 3.03 us - 3.17 us | 3.04 us | - | - |
+| `promoted_library_slow_offenders_approx/ln_generated_322_1_95_164_p96` | 3.28 us | 3.20 us - 3.36 us | 3.26 us | - | - |
+| `promoted_library_slow_offenders_approx/ln_generated_5812_neg_1_51_460_p96` | 3.10 us | 3.04 us - 3.19 us | 3.05 us | - | - |
+| `promoted_library_slow_offenders_approx/ln_generated_6457_2_169_214_p96` | 2.92 us | 2.87 us - 2.98 us | 2.88 us | - | - |
+| `promoted_library_slow_offenders_approx/ln_generated_6487_5_123_133_p96` | 3.07 us | 3.01 us - 3.14 us | 3.08 us | - | - |
+| `promoted_library_slow_offenders_approx/ln_generated_6592_1_109_348_p96` | 3.94 us | 3.84 us - 4.05 us | 3.87 us | - | - |
+| `promoted_library_slow_offenders_approx/ln_generated_6682_neg_9_8_35_p96` | 3.72 us | 3.68 us - 3.76 us | 3.71 us | - | - |
+| `promoted_library_slow_offenders_approx/ln_generated_6877_neg_9_34_77_p96` | 3.81 us | 3.77 us - 3.86 us | 3.80 us | - | - |
+| `promoted_library_slow_offenders_approx/ln_generated_7072_neg_9_44_49_p96` | 3.58 us | 3.53 us - 3.63 us | 3.55 us | - | - |
+| `promoted_library_slow_offenders_approx/ln_generated_7447_1_53_76_p96` | 2.64 us | 2.58 us - 2.71 us | 2.60 us | - | - |
+| `promoted_library_slow_offenders_approx/ln_generated_7567_neg_1_31_52_p96` | 3.10 us | 3.06 us - 3.15 us | 3.07 us | - | - |
+| `promoted_library_slow_offenders_approx/ln_generated_7642_neg_1_25_36_p96` | 2.79 us | 2.74 us - 2.85 us | 2.75 us | - | - |
+| `promoted_library_slow_offenders_approx/ln_generated_7912_1_93_772_p96` | 3.11 us | 3.05 us - 3.19 us | 3.09 us | - | - |
+| `promoted_library_slow_offenders_approx/ln_generated_8152_3_11_62_p96` | 3.77 us | 3.67 us - 3.90 us | 3.70 us | - | - |
+| `promoted_library_slow_offenders_approx/ln_generated_9457_neg_3_23_90_p96` | 3.97 us | 3.93 us - 4.01 us | 3.96 us | - | - |
+| `promoted_library_slow_offenders_approx/ln_generated_9862_neg_1_221_492_p96` | 3.63 us | 3.59 us - 3.68 us | 3.60 us | - | - |
+| `promoted_library_slow_offenders_approx/tan_generated_1011_2_58_181_p96` | 10.77 us | 10.57 us - 11.00 us | 10.75 us | - | - |
+| `promoted_library_slow_offenders_approx/tan_generated_1071_neg_3_177_200_p96` | 3.27 us | 3.26 us - 3.29 us | 3.26 us | - | - |
+| `promoted_library_slow_offenders_approx/tan_generated_11391_3_29_36_p96` | 3.92 us | 3.86 us - 3.98 us | 3.91 us | - | - |
+| `promoted_library_slow_offenders_approx/tan_generated_11421_neg_4_55_57_p96` | 8.06 us | 7.81 us - 8.34 us | 8.00 us | - | - |
+| `promoted_library_slow_offenders_approx/tan_generated_11691_1_431_439_p96` | 11.18 us | 11.06 us - 11.31 us | 11.20 us | - | - |
+| `promoted_library_slow_offenders_approx/tan_generated_11841_neg_5_2_17_p96` | 8.36 us | 8.18 us - 8.57 us | 8.23 us | - | - |
+| `promoted_library_slow_offenders_approx/tan_generated_12081_neg_1_262_383_p96` | 11.37 us | 11.10 us - 11.67 us | 11.29 us | - | - |
+| `promoted_library_slow_offenders_approx/tan_generated_12111_neg_1_76_151_p96` | 10.84 us | 10.77 us - 10.91 us | 10.80 us | - | - |
+| `promoted_library_slow_offenders_approx/tan_generated_12186_neg_1_189_299_p96` | 11.07 us | 11.03 us - 11.10 us | 11.09 us | - | - |
+| `promoted_library_slow_offenders_approx/tan_generated_12216_neg_1_268_517_p96` | 11.04 us | 10.95 us - 11.14 us | 10.98 us | - | - |
+| `promoted_library_slow_offenders_approx/tan_generated_12561_4_19_21_p96` | 7.11 us | 7.05 us - 7.17 us | 7.10 us | - | - |
+| `promoted_library_slow_offenders_approx/tan_generated_1296_neg_3_71_91_p96` | 3.83 us | 3.79 us - 3.86 us | 3.82 us | - | - |
+| `promoted_library_slow_offenders_approx/tan_generated_13446_neg_5_15_187_p96` | 8.10 us | 8.06 us - 8.15 us | 8.08 us | - | - |
+| `promoted_library_slow_offenders_approx/tan_generated_13836_neg_3_73_131_p96` | 8.12 us | 8.00 us - 8.28 us | 8.05 us | - | - |
+| `promoted_library_slow_offenders_approx/tan_generated_13866_neg_5_1_2_p96` | 2.83 us | 2.70 us - 3.02 us | 2.76 us | - | - |
+| `promoted_library_slow_offenders_approx/tan_generated_13911_neg_2_134_427_p96` | 11.08 us | 10.84 us - 11.37 us | 10.84 us | - | - |
+| `promoted_library_slow_offenders_approx/tan_generated_14136_neg_1_79_106_p96` | 11.63 us | 11.39 us - 11.89 us | 11.41 us | - | - |
+| `promoted_library_slow_offenders_approx/tan_generated_14421_5_25_47_p96` | 3.48 us | 3.45 us - 3.51 us | 3.49 us | - | - |
+| `promoted_library_slow_offenders_approx/tan_generated_14946_4_104_125_p96` | 7.29 us | 7.02 us - 7.56 us | 7.48 us | - | - |
+| `promoted_library_slow_offenders_approx/tan_generated_15081_1_205_259_p96` | 11.33 us | 11.12 us - 11.61 us | 11.19 us | - | - |
+| `promoted_library_slow_offenders_approx/tan_generated_15891_neg_5_23_33_p96` | 4.35 us | 4.23 us - 4.49 us | 4.28 us | - | - |
+| `promoted_library_slow_offenders_approx/tan_generated_16806_5_3_22_p96` | 8.09 us | 8.04 us - 8.13 us | 8.09 us | - | - |
+| `promoted_library_slow_offenders_approx/tan_generated_17331_4_66_83_p96` | 6.35 us | 6.27 us - 6.44 us | 6.34 us | - | - |
+| `promoted_library_slow_offenders_approx/tan_generated_17496_3_190_219_p96` | 3.44 us | 3.41 us - 3.48 us | 3.43 us | - | - |
+| `promoted_library_slow_offenders_approx/tan_generated_18246_neg_1_187_188_p96` | 12.16 us | 11.93 us - 12.50 us | 12.02 us | - | - |
+| `promoted_library_slow_offenders_approx/tan_generated_18276_neg_1_77_107_p96` | 11.96 us | 11.62 us - 12.33 us | 11.93 us | - | - |
+| `promoted_library_slow_offenders_approx/tan_generated_18666_5_15_17_p96` | 8.20 us | 8.05 us - 8.34 us | 8.19 us | - | - |
+| `promoted_library_slow_offenders_approx/tan_generated_2016_1_101_141_p96` | 10.73 us | 10.58 us - 10.90 us | 10.65 us | - | - |
+| `promoted_library_slow_offenders_approx/tan_generated_321_1_214_231_p96` | 10.73 us | 10.60 us - 10.88 us | 10.71 us | - | - |
+| `promoted_library_slow_offenders_approx/tan_generated_3321_neg_4_17_107_p96` | 4.17 us | 4.14 us - 4.20 us | 4.15 us | - | - |
+| `promoted_library_slow_offenders_approx/tan_generated_3756_neg_1_123_214_p96` | 11.70 us | 11.44 us - 12.00 us | 11.54 us | - | - |
+| `promoted_library_slow_offenders_approx/tan_generated_4401_2_5_13_p96` | 11.32 us | 10.89 us - 11.96 us | 11.04 us | - | - |
+| `promoted_library_slow_offenders_approx/tan_generated_486_1_53_71_p96` | 10.94 us | 10.82 us - 11.05 us | 10.97 us | - | - |
+| `promoted_library_slow_offenders_approx/tan_generated_5676_neg_1_215_229_p96` | 11.65 us | 11.55 us - 11.74 us | 11.68 us | - | - |
+| `promoted_library_slow_offenders_approx/tan_generated_5916_neg_1_337_578_p96` | 11.00 us | 10.93 us - 11.07 us | 10.97 us | - | - |
+| `promoted_library_slow_offenders_approx/tan_generated_6426_1_15_22_p96` | 11.32 us | 10.97 us - 11.76 us | 11.01 us | - | - |
+| `promoted_library_slow_offenders_approx/tan_generated_6906_neg_87_128_p96` | 8.64 us | 8.46 us - 8.88 us | 8.50 us | - | - |
+| `promoted_library_slow_offenders_approx/tan_generated_8976_1_71_73_p96` | 11.13 us | 10.93 us - 11.38 us | 10.94 us | - | - |
+| `promoted_library_slow_offenders_approx/tan_generated_9231_neg_7_5_6_p96` | 5.70 us | 5.65 us - 5.77 us | 5.68 us | - | - |
+| `promoted_library_slow_offenders_approx/tan_generated_9396_neg_4_128_155_p96` | 6.80 us | 6.73 us - 6.88 us | 6.79 us | - | - |
+| `promoted_library_slow_offenders_approx/tan_generated_9591_neg_3_125_127_p96` | 3.60 us | 3.50 us - 3.73 us | 3.51 us | - | - |
+| `rational_algorithm_dispatch_speed/radix_parse_backend_chunked_10240_digits` | 103.06 us | 102.66 us - 103.55 us | 102.47 us | - | - |
+| `rational_algorithm_dispatch_speed/radix_parse_backend_chunked_20480_digits` | 379.24 us | 377.07 us - 381.66 us | 375.06 us | - | - |
+| `rational_algorithm_dispatch_speed/radix_parse_divide_conquer_10240_digits` | 106.62 us | 106.38 us - 106.88 us | 106.46 us | - | - |
+| `rational_algorithm_dispatch_speed/radix_parse_divide_conquer_20480_digits` | 301.23 us | 299.85 us - 302.75 us | 298.63 us | - | - |
+| `rational_algorithm_dispatch_speed/radix_parse_large_integer` | 1.86 us | 1.85 us - 1.87 us | 1.85 us | - | - |
+| `rational_algorithm_dispatch_speed/radix_parse_short_decimal` | 91.00 ns | 90.71 ns - 91.31 ns | 90.45 ns | -43.56% | - |
+| `rational_algorithm_dispatch_speed/radix_parse_short_scientific` | 75.16 ns | 74.64 ns - 75.80 ns | 74.84 ns | -0.72% | - |
+| `rational_algorithm_dispatch_speed/radix_parse_wide_scientific` | 42.51 us | 42.36 us - 42.68 us | 42.32 us | -1.79% | - |
+| `rational_algorithm_dispatch_speed/radix_parse_wide_scientific_expanded` | 39.33 us | 39.18 us - 39.52 us | 39.13 us | -0.64% | - |
+| `real_cotangent/atan_two_direct_construct` | 41.15 ns | 40.91 ns - 41.42 ns | 40.80 ns | - | - |
+| `real_cotangent/atan_two_inverse_tan_construct` | 4.26 us | 4.22 us - 4.30 us | 4.20 us | - | - |
+| `real_cotangent/atan_two_quotient_construct` | 1.35 us | 1.35 us - 1.36 us | 1.35 us | - | - |
+| `real_cotangent/tiny_direct_cold_p256` | 9.17 us | 8.75 us - 9.62 us | 7.96 us | - | - |
+| `real_cotangent/tiny_inverse_tan_cold_p256` | 10.21 us | 10.17 us - 10.25 us | 10.17 us | - | - |
+| `real_cotangent/tiny_quotient_cold_p256` | 7.84 us | 7.80 us - 7.88 us | 7.76 us | - | - |
+| `real_exact_exp_log10/exp_ln_1000` | 67.38 ns | 66.99 ns - 67.82 ns | 66.97 ns | +4.39% | - |
+| `real_exact_exp_log10/exp_ln_1_8` | 85.50 ns | 83.18 ns - 88.93 ns | 81.95 ns | +7.60% | - |
+| `real_exact_exp_log10/log10_1000` | 42.09 ns | 41.81 ns - 42.39 ns | 41.71 ns | -52.06% | - |
+| `real_exact_exp_log10/log10_1_1000` | 73.82 ns | 73.49 ns - 74.18 ns | 73.50 ns | -68.03% | - |
+| `real_exact_exp_log10/log10_exp10_6411_4096` | 112.69 ns | 105.87 ns - 119.78 ns | 98.92 ns | +26.76% | - |
+| `real_exact_exp_log10/log2_exp2_1_7` | 92.44 ns | 89.77 ns - 95.27 ns | 90.69 ns | +10.24% | - |
+| `real_exact_exp_log10/pow10_log10_2` | 101.69 ns | 100.05 ns - 103.53 ns | 100.03 ns | +0.49% | - |
+| `real_exact_exp_log10/pow2_log2_3` | 100.69 ns | 99.52 ns - 101.91 ns | 99.98 ns | +0.80% | - |
+| `real_irrational_ops/add_refs` | 62.54 ns | 62.07 ns - 63.09 ns | 61.68 ns | -2.45% | - |
+| `real_normal_scientific_substrate/gamma_integer` | 102.96 ns | 102.46 ns - 103.50 ns | 102.00 ns | -77.57% | - |
+| `real_representation_construction_export/hyperreal_exact/const_offset` | 141.45 ns | 138.94 ns - 144.17 ns | 140.20 ns | - | 1 elements |
+| `real_representation_construction_export/hyperreal_exact/const_product` | 1.15 us | 1.09 us - 1.26 us | 1.09 us | - | 1 elements |
+| `real_representation_construction_export/hyperreal_exact/const_product_sqrt` | 2.18 us | 2.16 us - 2.20 us | 2.17 us | - | 1 elements |
+| `real_representation_construction_export/hyperreal_exact/exp` | 202.71 ns | 193.79 ns - 217.34 ns | 195.42 ns | - | 1 elements |
+| `real_representation_construction_export/hyperreal_exact/irrational` | 2.79 us | 2.42 us - 3.17 us | 2.43 us | - | 1 elements |
+| `real_representation_construction_export/hyperreal_exact/ln` | 167.71 ns | 153.44 ns - 186.42 ns | 156.04 ns | - | 1 elements |
+| `real_representation_construction_export/hyperreal_exact/ln_affine` | 911.31 ns | 876.10 ns - 957.74 ns | 893.46 ns | - | 1 elements |
+| `real_representation_construction_export/hyperreal_exact/ln_product` | 973.88 ns | 870.50 ns - 1.08 us | 947.10 ns | - | 1 elements |
+| `real_representation_construction_export/hyperreal_exact/log10` | 1.25 us | 1.24 us - 1.26 us | 1.25 us | - | 1 elements |
+| `real_representation_construction_export/hyperreal_exact/log2` | 955.13 ns | 899.72 ns - 1.02 us | 889.10 ns | - | 1 elements |
+| `real_representation_construction_export/hyperreal_exact/one` | 77.89 ns | 71.53 ns - 84.63 ns | 71.04 ns | - | 1 elements |
+| `real_representation_construction_export/hyperreal_exact/pi` | 46.14 ns | 43.99 ns - 49.56 ns | 44.61 ns | - | 1 elements |
+| `real_representation_construction_export/hyperreal_exact/pi_exp` | 189.34 ns | 178.99 ns - 202.87 ns | 179.03 ns | - | 1 elements |
+| `real_representation_construction_export/hyperreal_exact/pi_inv` | 71.90 ns | 70.45 ns - 73.54 ns | 70.70 ns | - | 1 elements |
+| `real_representation_construction_export/hyperreal_exact/pi_inv_exp` | 197.04 ns | 186.71 ns - 215.30 ns | 187.06 ns | - | 1 elements |
+| `real_representation_construction_export/hyperreal_exact/pi_pow` | 135.71 ns | 128.26 ns - 147.52 ns | 128.76 ns | - | 1 elements |
+| `real_representation_construction_export/hyperreal_exact/pi_sqrt` | 449.21 ns | 428.97 ns - 474.83 ns | 439.76 ns | - | 1 elements |
+| `real_representation_construction_export/hyperreal_exact/sin_pi` | 3.95 us | 3.78 us - 4.16 us | 3.80 us | - | 1 elements |
+| `real_representation_construction_export/hyperreal_exact/sqrt` | 105.36 ns | 104.62 ns - 106.26 ns | 104.98 ns | - | 1 elements |
+| `real_representation_construction_export/hyperreal_exact/tan_pi` | 13.45 us | 12.47 us - 14.66 us | 12.49 us | - | 1 elements |
+| `real_representation_construction_export/mpfr192/const_offset` | 61.53 ns | 61.03 ns - 62.16 ns | 61.15 ns | - | 1 elements |
+| `real_representation_construction_export/mpfr192/const_product` | 1.43 us | 1.39 us - 1.48 us | 1.40 us | - | 1 elements |
+| `real_representation_construction_export/mpfr192/const_product_sqrt` | 1.70 us | 1.54 us - 1.89 us | 1.53 us | - | 1 elements |
+| `real_representation_construction_export/mpfr192/exp` | 1.50 us | 1.41 us - 1.61 us | 1.41 us | - | 1 elements |
+| `real_representation_construction_export/mpfr192/irrational` | 1.10 us | 1.06 us - 1.17 us | 1.06 us | - | 1 elements |
+| `real_representation_construction_export/mpfr192/ln` | 1.96 us | 1.85 us - 2.09 us | 1.87 us | - | 1 elements |
+| `real_representation_construction_export/mpfr192/ln_affine` | 3.44 us | 3.32 us - 3.57 us | 3.41 us | - | 1 elements |
+| `real_representation_construction_export/mpfr192/ln_product` | 3.76 us | 3.71 us - 3.82 us | 3.73 us | - | 1 elements |
+| `real_representation_construction_export/mpfr192/log10` | 3.98 us | 3.74 us - 4.42 us | 3.75 us | - | 1 elements |
+| `real_representation_construction_export/mpfr192/log2` | 2.12 us | 1.94 us - 2.38 us | 1.97 us | - | 1 elements |
+| `real_representation_construction_export/mpfr192/one` | 35.67 ns | 33.73 ns - 38.02 ns | 34.14 ns | - | 1 elements |
+| `real_representation_construction_export/mpfr192/pi` | 32.37 ns | 31.13 ns - 33.67 ns | 31.96 ns | - | 1 elements |
+| `real_representation_construction_export/mpfr192/pi_exp` | 1.43 us | 1.38 us - 1.49 us | 1.40 us | - | 1 elements |
+| `real_representation_construction_export/mpfr192/pi_inv` | 97.95 ns | 96.17 ns - 100.54 ns | 96.96 ns | - | 1 elements |
+| `real_representation_construction_export/mpfr192/pi_inv_exp` | 1.46 us | 1.40 us - 1.54 us | 1.40 us | - | 1 elements |
+| `real_representation_construction_export/mpfr192/pi_pow` | 64.03 ns | 58.21 ns - 70.90 ns | 57.00 ns | - | 1 elements |
+| `real_representation_construction_export/mpfr192/pi_sqrt` | 161.20 ns | 159.53 ns - 163.83 ns | 159.95 ns | - | 1 elements |
+| `real_representation_construction_export/mpfr192/sin_pi` | 1.42 us | 1.30 us - 1.59 us | 1.33 us | - | 1 elements |
+| `real_representation_construction_export/mpfr192/sqrt` | 135.58 ns | 124.92 ns - 147.59 ns | 130.10 ns | - | 1 elements |
+| `real_representation_construction_export/mpfr192/tan_pi` | 1.84 us | 1.68 us - 2.02 us | 1.85 us | - | 1 elements |
+| `real_stable_scalar_substrate/certified_compare_nested_radical_identity` | 226.20 ns | 224.22 ns - 228.38 ns | 222.37 ns | +4.69% | - |
+| `real_stable_scalar_substrate/sqrt_quadratic_surd_perfect_norm` | 1.18 us | 1.17 us - 1.20 us | 1.16 us | -5.10% | - |
+| `structural_query_speed/structural_negation_match` | 14.47 ns | 14.36 ns - 14.57 ns | 14.20 ns | - | - |
+| `structural_query_speed/structural_negation_miss` | 3.83 ns | 3.80 ns - 3.87 ns | 3.77 ns | - | - |
+
+<!-- END COMPLETE BENCHMARK REPORT -->

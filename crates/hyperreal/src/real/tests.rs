@@ -796,6 +796,58 @@ mod tests {
     }
 
     #[test]
+    fn cotangent_preserves_exact_turns_poles_and_inverse_trig_images() {
+        let half = Real::new(Rational::fraction(1, 2).unwrap());
+        let two = Real::from(2_i32);
+        let sqrt_three = Real::from(3_i32).sqrt().unwrap();
+        let sqrt_three_over_three =
+            Real::new(Rational::fraction(1, 3).unwrap()) * sqrt_three.clone();
+
+        assert_eq!(pi_fraction(1, 6).cot().unwrap(), sqrt_three);
+        assert_eq!(pi_fraction(1, 4).cot().unwrap(), Real::one());
+        assert_eq!(pi_fraction(1, 3).cot().unwrap(), sqrt_three_over_three);
+        assert_eq!(pi_fraction(1, 2).cot().unwrap(), Real::zero());
+        assert_eq!(pi_fraction(3, 4).cot().unwrap(), -Real::one());
+        assert_eq!(pi_fraction(-1, 4).cot().unwrap(), -Real::one());
+
+        for pole in [
+            Real::zero(),
+            Real::pi(),
+            -Real::pi(),
+            Real::from(2_i32) * Real::pi(),
+        ] {
+            assert_eq!(pole.cot(), Err(Problem::NotANumber));
+        }
+
+        assert_eq!(half.clone().cot_pi().unwrap(), Real::zero());
+        assert_eq!(Real::zero().cot_pi(), Err(Problem::NotANumber));
+        assert_eq!(Real::one().cot_pi(), Err(Problem::NotANumber));
+        assert_eq!(
+            Real::new(Rational::fraction(1, 5).unwrap())
+                .cot_pi()
+                .unwrap(),
+            pi_fraction(1, 5).cot().unwrap()
+        );
+
+        let atan_two = two.clone().atan().unwrap();
+        assert_eq!(atan_two.clone().cot().unwrap(), half.clone());
+        assert_eq!((-atan_two.clone()).cot().unwrap(), -half.clone());
+        assert_eq!((Real::pi() + atan_two.clone()).cot().unwrap(), half.clone());
+        assert_eq!((Real::pi() - atan_two.clone()).cot().unwrap(), -half);
+        assert_eq!((pi_fraction(1, 2) - atan_two).cot().unwrap(), two);
+
+        let three_fifths = Real::new(Rational::fraction(3, 5).unwrap());
+        assert_eq!(
+            three_fifths.clone().asin().unwrap().cot().unwrap(),
+            Real::new(Rational::fraction(4, 3).unwrap())
+        );
+        assert_eq!(
+            three_fifths.acos().unwrap().cot().unwrap(),
+            Real::new(Rational::fraction(3, 4).unwrap())
+        );
+    }
+
+    #[test]
     fn small_angle_helpers_remove_zero_singularities() {
         assert_eq!(Real::zero().sinc().unwrap(), Real::one());
         assert_eq!(Real::zero().sinc_pi().unwrap(), Real::one());
@@ -1660,6 +1712,57 @@ mod tests {
                 .pow_rational(Rational::fraction(3, 2).unwrap())
                 .unwrap(),
             Real::from(64_i32)
+        );
+
+        let cube_root_two = Real::from(2_i32)
+            .pow_rational(Rational::fraction(1, 3).unwrap())
+            .unwrap();
+        let reconstructed =
+            cube_root_two.clone() * cube_root_two.clone() * cube_root_two - Real::from(2_i32);
+        assert_eq!(reconstructed.refine_sign_until(-512), Some(RealSign::Zero));
+        let generic_cube_root = Real::from(2_i32)
+            .pow(Real::new(Rational::fraction(1, 3).unwrap()))
+            .unwrap();
+        let generic_reconstructed =
+            generic_cube_root.clone() * generic_cube_root.clone() * generic_cube_root
+                - Real::from(2_i32);
+        assert_eq!(
+            generic_reconstructed.refine_sign_until(-512),
+            Some(RealSign::Zero)
+        );
+        assert_eq!(
+            Real::from(-8_i32)
+                .pow(Real::new(Rational::fraction(1, 3).unwrap()))
+                .unwrap(),
+            Real::from(-2_i32)
+        );
+
+        let two_fifths = Real::from(2_i32)
+            .pow_rational(Rational::fraction(2, 5).unwrap())
+            .unwrap();
+        let fifth_power = (0..5).fold(Real::one(), |product, _| product * two_fifths.clone());
+        assert_eq!(
+            (fifth_power - Real::from(4_i32)).refine_sign_until(-512),
+            Some(RealSign::Zero)
+        );
+
+        let inverse_cube_root = Real::from(2_i32)
+            .pow_rational(Rational::fraction(-1, 3).unwrap())
+            .unwrap();
+        let inverse_identity = (0..3).fold(Real::one(), |product, _| {
+            product * inverse_cube_root.clone()
+        }) * Real::from(2_i32)
+            - Real::one();
+        assert_eq!(
+            inverse_identity.refine_sign_until(-512),
+            Some(RealSign::Zero)
+        );
+
+        let ninth_root = Real::from(17_i32).root_n(9).unwrap();
+        let ninth_power = (0..9).fold(Real::one(), |product, _| product * ninth_root.clone());
+        assert_eq!(
+            (ninth_power - Real::from(17_i32)).refine_sign_until(-1_024),
+            Some(RealSign::Zero)
         );
     }
 
@@ -5336,6 +5439,7 @@ mod tests {
         assert_eq!(value.best_sign(), num::bigint::Sign::NoSign);
         assert_eq!(value.clone().sqrt(), Err(Problem::Exhausted));
         assert_eq!(value.clone().inverse(), Err(Problem::UnknownZero));
+        assert_eq!(value.clone().cot(), Err(Problem::UnknownZero));
         assert_eq!(&Real::one() / &value, Err(Problem::UnknownZero));
         assert_eq!(
             value.clone().powi(num::BigInt::from(0_u8)),

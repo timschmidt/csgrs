@@ -5,6 +5,12 @@ These notes are hand-maintained profiling anchors. `benchmarks.md` and
 targets, the important dispatch paths behind them, and the goals to preserve or
 improve during later optimization work.
 
+Every Criterion benchmark binary refreshes the complete, unfiltered catalogue
+in `benchmarks.md` after it runs. `cargo run --example write_benchmarks_md`
+rebuilds that catalogue from all stored Criterion output without rerunning a
+timing suite; comparative implementations are also grouped with relative-time
+ratios.
+
 Timings below are Criterion medians from the stored benchmark data through
 2026-07-18. Treat them as local guardrails, not portable absolute limits.
 
@@ -60,7 +66,7 @@ The standalone `fuzz` workspace covers six runtime-bearing public families:
 | --- | --- |
 | `rational_arithmetic` | Rational construction, every core arithmetic ownership path, inverse/powers, truncation/fraction decomposition, and exact dyadic conversion |
 | `real_exact` | Exact Real arithmetic, fused dot/product-sum and dyadic line-intersection kernels, lazy-coordinate canonical boundaries, retained determinant filters, certified facts/comparisons, exact conversion, and serde round trips |
-| `real_elementary` | Domain-bearing roots, logarithms, powers, trigonometric, inverse/hyperbolic, normal, error, and gamma-family construction with forced lazy evaluation |
+| `real_elementary` | Domain-bearing roots, logarithms, powers, trigonometric, inverse/hyperbolic, normal, error, and gamma-family construction with forced lazy evaluation, plus degree-3--9 root reconstruction and exact-zero certification |
 | `computable_approximation` | Direct Computable graph construction, transcendental dispatch, repeatable multi-precision approximation, structural facts, and bounded sign refinement |
 | `structural_representations` | All 20 private optimized `Real` certificate forms, every ordered binary dispatch pairing, every public structural kind, and variable-depth shared `Computable` DAGs |
 | `string_parsing` | UTF-8 numeric text across integer, fraction, decimal, scientific, resource-boundary, and invalid forms, with `Rational`/`Real` acceptance consistency |
@@ -513,6 +519,24 @@ Relevant path notes:
   graph.
 - Medium exact rationals use direct `pi/2 - r` residual nodes for sin/cos and
   cotangent complement nodes for tan.
+- Public `Real::cot`/`cot_pi` use exact rational-turn and inverse-atan rewrites,
+  then retain the cached `cos(x)/sin(x)` graph for generic refinement after one
+  centralized sine nonzero decision. A direct `PrescaledCot` prototype was
+  rejected because it refined up to 74% slower at 1,024 fractional bits on the
+  sampled nontrivial inputs; `tan(x).inverse()` was also rejected as the
+  public definition because it incorrectly rejects the valid zero at odd
+  half-pi turns. In the retained paired Criterion rows, `cot(atan(2))`
+  constructs exactly in 41.15 ns versus 1.354 us for the quotient control and
+  4.257 us for inverse-tangent composition. Cold `cot(2^-10)` at p=-256 takes
+  9.172 us versus 7.838 us and 10.207 us for those controls respectively; the
+  modest policy overhead buys exact pole/uncertainty semantics and exact
+  inverse-trig images. A counting-allocator replay (input construction excluded)
+  measured exact `cot(atan(2))` at 3 calls/456 bytes versus 20/2,176 for the
+  quotient and 37/3,272 for inverse-tangent composition. For the cold p=-256
+  tiny row, the retained path used 152 calls/6,888 bytes versus 148/6,624 and
+  164/8,192 respectively. A same-source clean release comparison measured the
+  public API at +7,818 bytes in the rlib (+0.11%) and +2,827 aggregate text
+  bytes (+0.20%), with no data or BSS increase.
 - Small exact rationals now use rational-backed prescaled trig nodes so
   construction avoids a child Ratio node. The approximation dispatcher
   materializes the same rational input only when digits are requested.
@@ -542,6 +566,169 @@ Goals:
 - Reduce tan cold paths toward 3 us without changing pole behavior.
 - The biggest remaining low-level targets are inverse trig and hyperbolic
   cold paths: `acos`, `asin`, `atan`, `acosh`, and `asinh`.
+
+### Bounded outward binary64 sign filter
+
+Current Hyperlattice traces supplied the trigger that the historical
+exactCore filter corpus did not: symbolic 3x3 and 4x4 matrix dispatch repeatedly
+entered arbitrary-precision sign refinement and made two attempts before
+deciding at p=0. The retained implementation is independently derived rather
+than a port of exactCore's value/op-index heuristic. After exact signs, caches,
+and structural bounds are exhausted, `Computable::sign_until` tries an
+on-demand interval evaluation with a hard 32-node budget.
+
+The supported surface is deliberately narrow: small exact integers and
+rationals whose words convert exactly to binary64, independently MPFR-checked
+adjacent enclosures for e and pi, negate, normal binary offsets, inverse,
+square, add, multiply, and the existing fused three-term linear form. Each
+rounded addition, multiplication, or division endpoint is expanded by one
+representable value. Overflow, a reciprocal interval containing zero,
+unsupported nodes, oversized words, scales outside the supported range, and
+budget exhaustion all return `None` to the unchanged arbitrary-precision
+path. The decision threshold `2^p` is assembled directly from IEEE-754 bits,
+including subnormal thresholds, and a sign is accepted only when the whole
+interval lies beyond the caller's same precision band. Thus the filter cannot
+silently make `sign_until(0)` stronger; for example,
+`pi - 103993/33102` remains unknown at p=0 and certifies at p=-64.
+
+No field was added to the 56-byte node, and the evaluator allocates no scratch
+storage. A successful interval is an exact sign certificate and can use the
+existing packed fact word; an inconclusive interval retains nothing. MPFR
+constant containment, every supported wrapper, the 32-node cutoff, 10,000
+deterministic `a*pi + b*e + c` cases checked against independently separating
+p=-256 approximations, and generated mixed-expression fuzz traffic guard the
+proof boundary. Dispatch rows separately require `binary64-filter-sign` for
+the p=0 mixed and p=-64 close hits and ordinary `precision-refinement` plus
+`unknown` for the p=0 close fallback.
+
+An alternating same-process A/B harness, with named constants prewarmed and
+fresh graphs for every query, measured the mixed p=0 query at 938.26 ns without
+the filter versus 198.58 ns retained (-78.8%), and the close p=-64 query at
+1,122.29 versus 325.20 ns (-71.0%). Including construction and destruction,
+the same cases fell from 989.74 to 435.30 ns (-56.0%) and from 1,686.93 to
+951.07 ns (-43.6%). The deliberately inconclusive close p=0 control measured
+626.60 versus 637.04 ns for the query (+1.7%) and 1,200.76 versus 1,248.83 ns
+end to end (+4.0%). Across two alternated runs, an unsupported sine-difference
+query ranged from neutral to +2.3%; its fresh end-to-end movement changed sign
+between runs and was not repeatable.
+
+Successful mixed and close queries reduce measured allocations from 8 calls /
+536 bytes and 7 / 448 to 2 / 264 in both cases. The close p=0 fallback remains
+5 / 400 in both builds, and the unsupported fallback remains 6 / 488. At the
+downstream workload boundary, final-code Hyperlattice runs put the symbolic
+matrix3 sign-refinement mean at 4.0162 us versus the 5.6095 us baseline
+(-28.4%), and matrix4 at 9.6327 us versus 11.416 us (-15.6%); their
+construction-only controls remain statistically unchanged at 2.7488 and
+8.0610 us. A same-source
+default-release comparison isolates 13,188 rlib bytes (+0.19%) and 4,024 text
+bytes (+0.29%), with unchanged data, BSS, and public layouts.
+
+The complete default/all-feature Hyperreal matrices pass 605/685 library
+tests plus every target and benchmark smoke. Formatting, strict all-target
+Clippy, warning-denied rustdoc, fuzz-bin compilation, both release builds, and
+a 10,000-run sanitizer-backed Computable campaign pass; that campaign reached
+4,575 coverage points and 15,776 feature edges. Hyperlattice, Hyperlimit,
+Hypersolve, and Hypertri pass their default and all-feature/all-target matrices.
+Hypercurve was excluded at the user's direction during concurrent editing.
+
+### Bounded algebraic-zero separation and explicit small roots
+
+The archived exactCore `RootBounds.h` suggested revisiting equality of closed
+radical expressions, but its implementation was not transferred: it carries
+stale/uninitialized fields, unchecked exponent arithmetic, incorrect rounding,
+and a broken forwarding path. Hyperreal instead uses an independently derived
+on-demand certificate. It represents a supported value as `alpha = beta/q`,
+where `beta` is an algebraic integer, and retains upper bounds `Q` and `H` for
+`log2(q)` and every conjugate magnitude of `beta`. If `D` bounds the containing
+field degree and `alpha != 0`, the algebraic norm is a nonzero integer, giving
+`|alpha| >= 2^-(Q + (D-1)H)`. An approximation within one scaled unit at
+`p <= -(Q + (D-1)H)-2` therefore proves exact zero when its magnitude is at
+most one.
+
+The analysis is local to an unresolved sign query and adds no field to the
+16-byte `Computable` handle or 56-byte node. It supports exact rational leaves,
+negation, addition, multiplication, normal binary offsets, squares, square
+roots, positive bounded-degree roots, inverses whose child is already proved
+nonzero, and the fused three-term linear form. Rational roots of the same
+degree use an exact bounded multiplicative-dependency test, which keeps
+Ramanujan-style related radicals from inflating the field-degree product. Hard
+limits are 256 visited nodes, 16 root generators, field degree `2^20`, log
+bounds `2^17`, 4,096 dependency combinations, and 4,096-bit dependency
+operands. Overflow, unsupported nodes, or any exhausted limit fail closed.
+Ordinary values pay no metadata work if they separate before 64 bits; a
+shallower negative caller floor triggers the analysis only after ordinary
+refinement exhausts that floor. A proved target caps the next refinement and
+the caller's floor is never crossed.
+
+Positive non-perfect `Real::root_n` degrees three through nine now retain one
+explicit `NthRoot` node. Its integer kernel asks the radicand at `n*(p-4)`,
+encloses the scaled root between floor/ceiling integer nth roots of the child
+interval, and rounds the midpoint once. Degree ten and above retain the prior
+exp/ln representation. Modest rational powers with denominators three through
+nine reuse the explicit root plus logarithmic repeated squaring. The new serde
+variant is appended after every preexisting variant, preserving old JSON/CBOR
+encodings byte for byte, and deserialization rejects degrees outside the
+constructor's 3--9 invariant.
+
+The exact separation bounds for the two archived Ramanujan identities and Many
+Digits C10 are 85, 376, and 70 bits. All three formerly returned `Unknown` after
+2,048-bit refinement; they now return exact zero and stop near their proved
+thresholds. Alternating same-process source-matched A/B measurements, including
+fresh construction, report:
+
+| Operation | Prior representation | Retained representation | Change |
+| --- | ---: | ---: | ---: |
+| Construct `root_n(17,5)` | 3.856 us | 152.41 ns | -96.05% |
+| Fifth-root interval, p=-128 | 11.378 us | 3.019 us | -73.47% |
+| Fifth-root interval, p=-2048 | 339.843 us | 113.411 us | -66.63% |
+| Ramanujan one sign, floor -2048 | 5.242 ms (`Unknown`) | 36.542 us (`Zero`) | -99.30% |
+| Ramanujan two sign, floor -2048 | 3.802 ms (`Unknown`) | 133.624 us (`Zero`) | -96.49% |
+| Many Digits C10 sign, floor -2048 | 3.810 ms (`Unknown`) | 44.869 us (`Zero`) | -98.82% |
+| Close nonzero eighth-root sign, floor -64 | 17.676 us | 5.813 us | -67.11% |
+| Unsupported near-sine fallback, floor -64 | 4.402 us | 4.422 us | +0.45% |
+
+The p=-128 root interval drops from 147 allocations/7,792 bytes to 74/5,080.
+Ramanujan one drops from 25,462 allocations/4,333,496 bytes to 611/29,720, and
+C10 from 18,218/3,085,320 to 771/53,312. The p=0 unsupported control is neutral
+within run noise. In alternating matched runs, the deliberately unresolved
+near-sine p=-64 control added 0.45--4.2% (at most about 0.19 us) with unchanged
+allocations, bounding the cost of attempting and rejecting unsupported metadata.
+Permanent `computable_algebraic_roots` Criterion rows and
+dispatch rows preserve construction, p=-128/p=-2048 intervals, the degree-ten
+fallback, ordinary nonzero separation, all three exact-zero identities, and
+the unsupported fallback. A cap probe found degree nine faster than exp/ln by
+45.3% at p=-128, 10.6% at p=-2048, and 89.0% at p=-32768; degree ten was
+14.1% slower at p=-2048, establishing the retained cutoff. Broader nested
+composite-root prototypes were removed after representative medium-precision
+regressions reached 65--216%. MPFR tests cover degrees three through nine across
+integer, rational, and `2^+/-2048` radicands through p=-1024; exact dependency,
+inverse, tiny signed perturbation, resource-cap, serde-forgery, public rational
+power, and archived-identity tests guard the proof boundary.
+
+The implementation cost is measured rather than hidden. Relative to the exact
+pre-change source snapshot, production `src` code adds 522 lines and removes 6.
+A same-name clean default release grew the rlib by 173,040 bytes (2.452%); summed
+object sections grew by 20,568 text bytes (1.467%) and 96 data bytes, with no BSS
+change. With all features, the rlib grew by 166,896 bytes (1.606%), while summed
+sections grew by 33,772 text bytes (1.651%) and 168 data bytes, again with no BSS
+change. No public or private scalar layout changed. The source and binary costs
+are retained because they buy exact-zero completeness plus the large time and
+allocation reductions above; the slower broader composite-root prototypes were
+not retained.
+
+Final validation passes 609 default and 689 all-feature library tests, both
+complete all-target matrices, formatting, strict all-target Clippy, warning-
+denied rustdoc, default/all-feature release builds, every fuzz-target build, and
+sanitizer-backed `real_elementary` and `computable_approximation` campaigns. The
+AddressSanitizer campaigns replayed 2,712 and 1,192 executions without a finding,
+reaching 10,021/30,225 and 6,160/21,873 coverage points/feature edges; leak
+detection alone was disabled for the ptrace-managed environment. Hyperlattice,
+Hyperlimit, Hypersolve, and Hypertri pass default and all-feature/all-target
+matrices, strict all-feature Clippy, warning-denied rustdoc, and all-feature
+release builds. Hyperlimit's exhaustive private-node crossing inventory now
+includes `NthRoot`; Hypersolve's quotient-ring regression separately guards the
+newly decidable radical identity and an unsupported trigonometric-zero control.
+Hypercurve was excluded at the user's direction during concurrent editing.
 
 ### Retained asinh series crossover
 
@@ -593,7 +780,7 @@ benchmark, and correctness test supported it.
 | Reference | Transferable mechanism | Result in hyperreal |
 | --- | --- | --- |
 | Bareiss (1968) | Exact division and fraction-free elimination keep intermediate coefficients integral. | Already reflected in delayed rational reduction and product-sum aggregation.  General elimination is outside this scalar crate. |
-| Boehm et al. (1986) | Precision-driven functional exact reals, cached best approximations, variable-precision Newton steps, and balanced expression trees. | The representation, approximation cache, and Newton kernels already follow the paper. Balanced arbitrary-length symbolic sums were measured and rejected, while balanced exact iterator products were later measured and retained; details below. |
+| Boehm et al. (1986) | Precision-driven functional exact reals, cached best approximations, variable-precision Newton steps, and balanced expression trees. | The representation, approximation cache, and Newton kernels already follow the paper. A later scaling audit retained thresholded balanced symbolic sums without changing the previously rejected short-sum path; balanced exact iterator products are also retained. Details follow. |
 | Boehm (2020) | Separate terminating approximate comparison from potentially divergent exact comparison; preserve symbolic facts and cached recursive approximations. | Existing structural facts, bounded refinement, exact float import, explicit lossy export, and cached `Computable` graphs cover the applicable API.  A fixed rational-size cap would change exact-rational extraction semantics and was not adopted. |
 | Brent (1976) | Variable-precision Newton iteration and high-precision AGM/Landen elementary functions. | Newton reciprocal and square root are already variable precision.  AGM was not introduced because the paper itself notes that conventional kernels win at modest precision, which is the measured regime here. |
 | Brent--Zimmermann (2010) | Staged argument reduction, `ln1p` symmetry, binary splitting, and asymptotically fast pi/functions. | Existing trig reduction, the `x/(2+x)` logarithm transform, Newton kernels, and binary-split exponential cover the useful mechanisms. Binary-split Chudnovsky pi was subsequently retained after an exact 120,605-bit argument exposed the high-precision bottleneck; details below. |
@@ -627,15 +814,76 @@ The dispatch trace must contain `near-large-rational-deferred`,
 The numerical cross-reference test covers both signs and the inclusive upper
 boundary.
 
-### Rejected experiment: balanced arbitrary-length Real sums
+### Retained experiment: thresholded balanced arbitrary-length Real sums
 
-Boehm et al. suggest balancing long addition trees.  A pairwise balanced
-`Real::sum_refs`/`sum_owned` reducer was benchmarked on 64 symbolic square
-roots.  It increased construction from 5.87 us to 14.17 us and
-construction-plus-`to_f64_lossy` from 32.74 us to 118.87 us.  Vec allocation,
-extra cloning, and loss of the cheap left-fold shape outweighed the shallower
-tree.  The implementation was removed; the two `real_sum_refs_64_symbolic`
-benchmark rows remain as regression guards.
+Boehm et al. suggest balancing long addition trees. The first experiment used
+a full pairwise tree for only 64 symbolic square roots. It increased
+construction from 5.87 us to 14.17 us and construction-plus-`to_f64_lossy`
+from 32.74 us to 118.87 us, so that implementation was correctly removed.
+
+A later exactCore thesis audit supplied large-sum results and prompted a
+scaling check. The rejected experiment had measured below the crossover:
+every binary `Computable::Add` requests two child guard bits, so a sequential
+1,024-term sum drives its earliest leaves roughly 2,000 bits deeper than the
+root request. The retained reducer activates only when an iterator's lower
+size hint proves at least 256 terms. It carries adjacent partial sums through
+logarithmically many slots and combines the occupied slots from oldest to
+newest. Short and size-unknown iterators keep the former sequential fold. A
+homogeneous rational or symbolic prefix collapses in place before balancing;
+if the complete input shares one basis, no tree is built.
+
+The permanent Criterion rows construct fresh square-root children outside the
+timed sample so cache warming cannot turn later samples into a different
+workload. On 1,024 terms, a matched rerun measured sequential construction at
+113.14 us and balanced construction at 234.68 us, an explicit 107.4%
+construction-only cost. Cold construction plus binary64 approximation fell
+from 5.603 ms to 2.070 ms, a 63.1% reduction or 2.71x speedup. The 64-term
+construction guard remained statistically unchanged at 6.56 us. In an
+isolated five-run scaling
+probe, 4,096-term construction plus first approximation fell from 82.75 ms to
+8.25 ms, about 90.0% or 10.0x.
+
+A separate 15-round alternating threshold probe rebuilt cold children outside
+each timed interval and measured two evaluations per round. At the exact
+256-term activation boundary, sequential versus public construction plus first
+binary64 approximation was 715.9 versus 481.8 us (-32.7%). The corresponding
+512-term values were 1.897 ms versus 0.948 ms (-50.0%), and 1,024 terms were
+5.721 ms versus 1.918 ms (-66.5%). Counts through 255 retain the identical
+sequential implementation and were neutral within run noise. The boundary
+therefore pays its roughly 2x construction-only cost only where end-to-end cold
+evaluation already wins materially.
+
+An adversarial exact-rational probe caught an early balanced version regressing
+1,024-term construction from 25.8 us to 655.3 us. The homogeneous-prefix path
+removed that regression. Permanent matched Criterion rows now measure the
+former sequential fold at 20.71 us and the retained aggregate at 16.12 us, a
+22.2% reduction. A 1,024-term exact oracle covers all four owned and borrowed
+aggregate entry points.
+
+Final diff reconciliation found that the first generic reducer cloned every
+long owned input before consuming it. Separate owned and borrowed front ends
+now move owned values directly, keep short borrowed iteration clone-free, and
+clone borrowed values only after balancing is selected. Paired permanent
+Criterion rows reproduce the former extra clone at 225.353 us and measure the
+move-preserving path at 134.630 us, a 40.3% reduction. A structural 1,024-term
+square-root test proves that all four aggregate entry points retain one scaled
+symbolic basis.
+
+A counting allocator measured construction plus first 64-bit certification.
+At 1,024 terms, allocation calls fell from 50,372 to 26,701, allocated bytes
+from 3,982,712 to 1,171,920, peak live growth from 617,568 to 431,664 bytes,
+and retained bytes from 584,728 to 431,352. At 4,096 terms, calls fell from
+276,769 to 108,145, allocated bytes from 53,312,136 to 4,739,184, peak growth
+from 6,207,952 to 1,743,816 bytes, and retained bytes from 6,076,736 to
+1,743,264.
+
+An independent 384-bit integer-square-root oracle brackets every term of a
+257-square-root sum and checks the certified 256-bit result interval through
+`sum_owned`, `sum_refs`, and both iterator `Sum` implementations. The default
+release rlib grew by 47,578 file bytes (0.68%): loadable text grew 12,173 bytes
+(0.88%), data 16 bytes, and BSS did not change. These values come from
+sequential and retained builds at the same temporary source path after the
+owned-path refinement. Public scalar and node layouts are unchanged.
 
 ### Retained experiment: balanced exact iterator products
 
@@ -2150,6 +2398,33 @@ alongside the exact C08 quadrant regression and an abort-path test. Lowering
 the already-compiled kernel's gate is code-size neutral: the matched release
 probe changed by -48 file bytes, -12 text bytes, and +4 total loadable
 bytes.
+
+### Structural opposite-scale certificate
+
+Higher layers sometimes need to replay a canonical exact point whose linear
+polynomial stores `-point` as its constant coefficient. Constructing another
+negated `Real` solely to check that relationship allocated for symbolic values.
+`Real::is_structural_negation_of` now compares the existing symbolic bases and
+their rational scales directly. A `true` result is an exact certificate;
+`false` remains inconclusive for identities that require normalization or
+refinement. The method neither mutates caches nor adds a scalar field.
+
+Permanent Criterion rows measure 14.47 ns for a matching `sqrt(2)` pair and
+3.83 ns for an unrelated `sqrt(2)`/pi miss. The public regression covers
+rational, pi-scaled, quadratic-surd, and opaque computable bases in both
+directions, exact zero, same-sign rejection, and unrelated constants.
+Hypersolve's strict exact-`Real` point comparison fell from the first complete
+1.091 us path to 945.03 ns, while exact-`Real` represented-root sign fell from
+139.8 to 58.48 ns. The corresponding warmed allocation profiles fell from 25
+calls/1,400 bytes to 21/1,176 for comparison and from 3/152 to zero for sign.
+
+Against the preceding clean algebraic-root snapshot, the default rlib grows
+10,166 bytes (0.141%), from 7,229,290 to 7,239,456, and the all-feature rlib
+grows 10,226 bytes (0.097%), from 10,558,926 to 10,569,152. The catalog now
+contains 224 Criterion rows. Default/no-default and all-feature library suites
+pass 610/690 tests, every all-feature target passes, and strict Clippy,
+warning-denied rustdoc, release builds, every fuzz binary, API classification,
+formatting, and diff hygiene pass.
 
 ### Architecture and measurement triggers
 

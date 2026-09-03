@@ -3,6 +3,8 @@ use hyperreal::{Rational, Real};
 
 #[path = "support/bench_docs.rs"]
 mod bench_docs;
+#[path = "support/benchmark_report.rs"]
+mod benchmark_report;
 
 use bench_docs::{BenchDoc, BenchGroupDoc};
 
@@ -82,5 +84,14 @@ fn bench_float_convert(c: &mut Criterion) {
     group.finish();
 }
 
-criterion_group!(benches, bench_float_convert);
+fn finish_benchmark_report(c: &mut Criterion) {
+    bench_docs::write_benchmark_docs(
+        "float_convert",
+        "Covers exact import of floating-point values, including public `Real` conversion overhead.",
+        FLOAT_CONVERT_GROUPS,
+    );
+    benchmark_report::finish_benchmark_report(c);
+}
+
+criterion_group!(benches, bench_float_convert, finish_benchmark_report);
 criterion_main!(benches);

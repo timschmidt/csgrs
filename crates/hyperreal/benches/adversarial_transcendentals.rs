@@ -7,6 +7,8 @@ use std::time::Duration;
 
 #[path = "support/bench_docs.rs"]
 mod bench_docs;
+#[path = "support/benchmark_report.rs"]
+mod benchmark_report;
 
 use bench_docs::{BenchDoc, BenchGroupDoc};
 
@@ -215,10 +217,10 @@ const ADVERSARIAL_TRANSCENDENTAL_GROUPS: &[BenchGroupDoc] = &[
     },
     BenchGroupDoc {
         name: "promoted_library_slow_offenders_approx",
-        description: "Fifty structurally varied worst offenders promoted from the library-wide slow-performer history.",
+        description: "One hundred structurally varied worst offenders promoted from the library-wide slow-performer history.",
         benches: &[BenchDoc {
-            name: "promoted_50_structural_slow_offenders_p96",
-            description: "Approximates 50 individual promoted slow cases spanning ln(1+x^2), atan, tan, sin, and cos over varied exact-rational structures.",
+            name: "promoted_100_structural_slow_offenders_p96",
+            description: "Approximates 100 individual promoted slow cases spanning ln(1+x^2), atan, tan, sin, and cos over varied exact-rational structures.",
         }],
     },
     BenchGroupDoc {
@@ -1411,6 +1413,16 @@ criterion_group!(
     bench_trig_fuzz_adversarial,
     bench_promoted_library_slow_offenders,
     bench_inverse_hyperbolic_adversarial,
-    bench_real_shortcut_adversarial
+    bench_real_shortcut_adversarial,
+    finish_benchmark_report
 );
 criterion_main!(benches);
+
+fn finish_benchmark_report(c: &mut Criterion) {
+    bench_docs::write_benchmark_docs(
+        "adversarial_transcendentals",
+        "Adversarial transcendental benchmarks for `hyperreal` trig, inverse trig, and inverse hyperbolic construction and approximation paths.",
+        ADVERSARIAL_TRANSCENDENTAL_GROUPS,
+    );
+    benchmark_report::finish_benchmark_report(c);
+}

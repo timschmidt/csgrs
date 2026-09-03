@@ -52,6 +52,13 @@ impl Computable {
                 (Approximation::Sqrt(left), Approximation::Sqrt(right)) => {
                     Computable::internal_structural_eq(left, right)
                 }
+                (
+                    Approximation::NthRoot(left, left_degree),
+                    Approximation::NthRoot(right, right_degree),
+                ) => {
+                    left_degree == right_degree
+                        && Computable::internal_structural_eq(left, right)
+                }
                 (Approximation::PrescaledLn(left), Approximation::PrescaledLn(right)) => {
                     Computable::internal_structural_eq(left, right)
                 }

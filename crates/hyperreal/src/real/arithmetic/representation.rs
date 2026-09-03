@@ -219,19 +219,24 @@ impl Real {
     }
 
     /// Returns the exact sum of owned Real values.
+    ///
+    /// Proven-long heterogeneous iterators use a streaming balanced reducer so
+    /// computable guard precision grows logarithmically with the number of
+    /// terms. A homogeneous rational or symbolic prefix first collapses to one
+    /// scaled value. Short and size-unknown iterators retain the lower-overhead
+    /// sequential path.
     pub fn sum_owned(values: impl IntoIterator<Item = Real>) -> Real {
         crate::trace_dispatch!("real", "aggregate", "sum-owned");
-        values
-            .into_iter()
-            .fold(Self::zero(), |sum, value| sum + value)
+        real_sum(values.into_iter())
     }
 
     /// Returns the exact sum of borrowed Real values.
+    ///
+    /// Proven-long iterators use the same streaming balanced reducer as
+    /// [`Self::sum_owned`].
     pub fn sum_refs<'a>(values: impl IntoIterator<Item = &'a Real>) -> Real {
         crate::trace_dispatch!("real", "aggregate", "sum-refs");
-        values
-            .into_iter()
-            .fold(Self::zero(), |sum, value| sum + value)
+        real_sum_borrowed(values.into_iter())
     }
 
     /// Evaluates `origin + t * delta` without crossing a primitive-float boundary.

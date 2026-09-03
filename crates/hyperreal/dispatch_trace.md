@@ -88,14 +88,18 @@ This table groups raw trace labels into Yap-aligned diagnostic buckets so scalar
 | `computable/sign_until/deep_scaled_product_floor_2000` | 908 | 0 | 0 | 310 | 0 | 0 | 0 | 664 | 1 | 906 | 0 | 0 | 0 | 0 | 0 | 3 | 0 | 160 | 1 | 0 |
 | `computable/sign_until/exp_unknown_sign_arg_cached` | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 1 | 1 | 0 | 0 | 0 | 0 | 0 | 1 | 0 | 0 | 0 | 0 |
 | `computable/sign_until/exp_unknown_sign_arg_floor_2000` | 8 | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 1 | 4 | 0 | 0 | 0 | 0 | 0 | 2 | 0 | 29 | 2 | 2 |
+| `computable/sign_until/mixed_pi_e_floor_0` | 8 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 1 | 2 | 0 | 0 | 0 | 0 | 0 | 3 | 0 | 1 | 1 | 1 |
+| `computable/sign_until/near_pi_floor_0_inconclusive` | 20 | 0 | 0 | 0 | 0 | 0 | 1 | 0 | 4 | 14 | 0 | 0 | 0 | 1 | 0 | 1 | 1 | 28 | 3 | 3 |
+| `computable/sign_until/near_pi_floor_64` | 17 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 1 | 14 | 0 | 0 | 0 | 0 | 0 | 1 | 0 | 28 | 3 | 3 |
 | `computable/sign_until/perturbed_scaled_product_floor_2000` | 921 | 0 | 0 | 310 | 0 | 0 | 0 | 664 | 1 | 919 | 0 | 0 | 0 | 0 | 0 | 3 | 0 | 175 | 4 | 2 |
 | `computable/sign_until/pi_minus_one_cached` | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 1 | 1 | 0 | 0 | 0 | 0 | 0 | 1 | 0 | 0 | 0 | 0 |
 | `computable/sign_until/pi_minus_one_floor_128` | 15 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 1 | 12 | 0 | 0 | 0 | 0 | 0 | 2 | 0 | 19 | 2 | 2 |
 | `computable/sign_until/pi_minus_one_floor_2000` | 15 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 1 | 12 | 0 | 0 | 0 | 0 | 0 | 2 | 0 | 19 | 2 | 2 |
+| `computable/sign_until/unsupported_sin_floor_64` | 14 | 0 | 0 | 1 | 0 | 0 | 2 | 0 | 8 | 4 | 0 | 0 | 0 | 1 | 0 | 0 | 1 | 9 | 2 | 2 |
 | `computable/sqrt_squarefree_rational` | 6 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 4 | 0 | 0 |
 | `computable/trig` | 11 | 0 | 0 | 0 | 0 | 0 | 0 | 2 | 0 | 7 | 0 | 0 | 0 | 0 | 0 | 2 | 0 | 9 | 0 | 0 |
-| `computable/trig/large` | 22 | 0 | 0 | 1 | 0 | 0 | 0 | 1 | 0 | 10 | 0 | 0 | 0 | 0 | 0 | 6 | 0 | 20 | 2 | 2 |
-| `computable/trig/large-exact-rational` | 75 | 0 | 0 | 6 | 0 | 0 | 0 | 6 | 0 | 31 | 2 | 2 | 0 | 0 | 0 | 23 | 0 | 37 | 1 | 0 |
+| `computable/trig/large` | 22 | 0 | 0 | 1 | 0 | 0 | 0 | 1 | 0 | 10 | 0 | 0 | 0 | 0 | 0 | 6 | 0 | 18 | 2 | 2 |
+| `computable/trig/large-exact-rational` | 75 | 0 | 0 | 6 | 0 | 0 | 0 | 6 | 0 | 31 | 2 | 2 | 0 | 0 | 0 | 23 | 0 | 33 | 1 | 0 |
 | `computable/trig_adversarial/cos_1e30` | 10 | 0 | 0 | 1 | 0 | 0 | 0 | 1 | 0 | 4 | 0 | 0 | 0 | 0 | 0 | 3 | 0 | 7 | 0 | 0 |
 | `computable/trig_adversarial/cos_1e6` | 10 | 0 | 0 | 1 | 0 | 0 | 0 | 1 | 0 | 4 | 0 | 0 | 0 | 0 | 0 | 3 | 0 | 7 | 0 | 0 |
 | `computable/trig_adversarial/cos_f64_exact` | 5 | 0 | 0 | 0 | 0 | 0 | 0 | 1 | 0 | 3 | 0 | 0 | 0 | 0 | 0 | 1 | 0 | 4 | 0 | 0 |
@@ -140,14 +144,22 @@ This table groups raw trace labels into Yap-aligned diagnostic buckets so scalar
 | `real/inverse_trig/exact` | 40 | 0 | 0 | 0 | 6 | 1 | 0 | 1 | 5 | 23 | 0 | 0 | 0 | 0 | 0 | 10 | 0 | 6 | 5 | 2 |
 | `real/inverse_trig/mid-domain` | 45 | 0 | 0 | 7 | 4 | 0 | 0 | 11 | 4 | 42 | 0 | 0 | 0 | 0 | 0 | 0 | 1 | 16 | 5 | 1 |
 | `real/log/scaled_e` | 22 | 0 | 0 | 1 | 2 | 1 | 0 | 0 | 3 | 10 | 0 | 0 | 0 | 0 | 0 | 4 | 0 | 20 | 4 | 4 |
-| `real/normal_scientific_substrate` | 807 | 0 | 0 | 38 | 96 | 29 | 0 | 112 | 121 | 544 | 0 | 0 | 0 | 0 | 0 | 106 | 45 | 265 | 19 | 7 |
+| `real/normal_scientific_substrate` | 807 | 0 | 0 | 38 | 96 | 29 | 0 | 112 | 121 | 544 | 0 | 0 | 0 | 0 | 0 | 106 | 45 | 261 | 19 | 7 |
 | `real/pow/small_integer_exponent` | 8 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 7 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 2 | 1 | 1 |
 | `real/pow/symbolic_negative_one` | 18 | 0 | 0 | 1 | 3 | 0 | 0 | 0 | 3 | 4 | 0 | 0 | 0 | 0 | 0 | 5 | 0 | 2 | 0 | 0 |
+| `real/pow_rational/direct_degree5` | 13 | 0 | 0 | 0 | 4 | 2 | 0 | 2 | 2 | 8 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 4 | 1 | 1 |
 | `real/powi_i64/exact_17` | 6 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 6 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 1 | 1 | 1 |
+| `real/root_n/direct_degree5` | 6 | 0 | 0 | 0 | 2 | 1 | 0 | 1 | 1 | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 2 | 0 | 0 |
+| `real/root_n/direct_degree9` | 6 | 0 | 0 | 0 | 2 | 1 | 0 | 1 | 1 | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 2 | 0 | 0 |
+| `real/root_n/fallback_degree10` | 23 | 0 | 0 | 0 | 4 | 2 | 0 | 2 | 2 | 17 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 12 | 4 | 4 |
+| `real/sign_until/eighth_root_near_dyadic_floor_64` | 18 | 0 | 0 | 0 | 4 | 1 | 0 | 1 | 8 | 7 | 0 | 0 | 0 | 2 | 0 | 0 | 1 | 5 | 1 | 0 |
+| `real/sign_until/many_digits_c10_zero_floor_2048` | 75 | 0 | 0 | 0 | 10 | 3 | 0 | 3 | 16 | 46 | 0 | 0 | 0 | 4 | 0 | 6 | 5 | 75 | 0 | 0 |
+| `real/sign_until/ramanujan_one_zero_floor_2048` | 195 | 0 | 0 | 0 | 14 | 5 | 0 | 15 | 19 | 163 | 0 | 0 | 0 | 4 | 0 | 38 | 6 | 121 | 0 | 0 |
+| `real/sign_until/ramanujan_two_zero_floor_2048` | 153 | 0 | 0 | 0 | 12 | 4 | 0 | 5 | 21 | 119 | 0 | 0 | 0 | 4 | 0 | 18 | 4 | 62 | 3 | 3 |
 | `real/sqrt_oversized_rational_fallback` | 8 | 0 | 0 | 1 | 2 | 1 | 0 | 1 | 1 | 3 | 0 | 0 | 0 | 0 | 0 | 0 | 2 | 6 | 0 | 0 |
 | `real/sqrt_scaled_exp` | 16 | 0 | 0 | 1 | 3 | 1 | 0 | 0 | 4 | 8 | 0 | 0 | 0 | 0 | 0 | 2 | 2 | 9 | 0 | 0 |
 | `real/sqrt_scaled_rational` | 7 | 0 | 0 | 0 | 2 | 1 | 0 | 1 | 1 | 3 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 3 | 0 | 0 |
-| `real/stable_scalar_substrate` | 238 | 0 | 0 | 7 | 19 | 3 | 0 | 24 | 20 | 193 | 0 | 0 | 0 | 0 | 0 | 10 | 6 | 109 | 19 | 19 |
+| `real/stable_scalar_substrate` | 233 | 0 | 0 | 7 | 20 | 3 | 0 | 25 | 21 | 188 | 0 | 0 | 0 | 0 | 0 | 10 | 6 | 104 | 16 | 16 |
 | `real/structural_queries` | 21 | 0 | 0 | 1 | 2 | 0 | 0 | 0 | 3 | 13 | 0 | 0 | 0 | 0 | 0 | 5 | 0 | 22 | 2 | 2 |
 | `real/trig/general` | 22 | 0 | 0 | 0 | 3 | 0 | 0 | 3 | 3 | 22 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 17 | 1 | 0 |
 | `real/trig/large` | 13 | 0 | 0 | 0 | 2 | 0 | 0 | 0 | 2 | 13 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 21 | 0 | 0 |
@@ -912,6 +924,36 @@ This table groups raw trace labels into Yap-aligned diagnostic buckets so scalar
 | `computable/sign_until/exp_unknown_sign_arg_floor_2000` | `computable` | `sign_until` | `exact-sign-cache` | 1 |
 | `computable/sign_until/exp_unknown_sign_arg_floor_2000` | `rational` | `comparison` | `word-sized` | 1 |
 | `computable/sign_until/exp_unknown_sign_arg_floor_2000` | `rational_algorithm` | `gcd` | `binary-word` | 2 |
+| `computable/sign_until/mixed_pi_e_floor_0` | `computable` | `constructor` | `cached-e` | 1 |
+| `computable/sign_until/mixed_pi_e_floor_0` | `computable` | `constructor` | `cached-e-internal` | 1 |
+| `computable/sign_until/mixed_pi_e_floor_0` | `computable` | `constructor` | `cached-pi` | 1 |
+| `computable/sign_until/mixed_pi_e_floor_0` | `computable` | `constructor` | `rational-node` | 1 |
+| `computable/sign_until/mixed_pi_e_floor_0` | `computable` | `constructor` | `shared-constant-wrapper` | 2 |
+| `computable/sign_until/mixed_pi_e_floor_0` | `computable` | `sign_until` | `binary64-filter-sign` | 1 |
+| `computable/sign_until/mixed_pi_e_floor_0` | `rational_algorithm` | `gcd` | `binary-word` | 1 |
+| `computable/sign_until/near_pi_floor_0_inconclusive` | `computable` | `constructor` | `cached-pi` | 1 |
+| `computable/sign_until/near_pi_floor_0_inconclusive` | `computable` | `constructor` | `rational-node` | 1 |
+| `computable/sign_until/near_pi_floor_0_inconclusive` | `computable` | `constructor` | `shared-constant-wrapper` | 1 |
+| `computable/sign_until/near_pi_floor_0_inconclusive` | `computable` | `sign_until` | `precision-refinement` | 1 |
+| `computable/sign_until/near_pi_floor_0_inconclusive` | `computable` | `sign_until` | `unknown` | 1 |
+| `computable/sign_until/near_pi_floor_0_inconclusive` | `computable` | `sign_until_attempt_precision` | `p>=0` | 1 |
+| `computable/sign_until/near_pi_floor_0_inconclusive` | `computable` | `sign_until_unresolved_precision` | `p>=0` | 1 |
+| `computable/sign_until/near_pi_floor_0_inconclusive` | `rational` | `add` | `word-sized` | 2 |
+| `computable/sign_until/near_pi_floor_0_inconclusive` | `rational` | `arithmetic-reuse` | `first-observation` | 3 |
+| `computable/sign_until/near_pi_floor_0_inconclusive` | `rational` | `comparison` | `word-sized` | 1 |
+| `computable/sign_until/near_pi_floor_0_inconclusive` | `rational` | `word-reduction` | `other-word-odd-denominator` | 2 |
+| `computable/sign_until/near_pi_floor_0_inconclusive` | `rational` | `word-result` | `small-general-fraction` | 2 |
+| `computable/sign_until/near_pi_floor_0_inconclusive` | `rational_algorithm` | `gcd` | `binary-word` | 3 |
+| `computable/sign_until/near_pi_floor_64` | `computable` | `constructor` | `cached-pi` | 1 |
+| `computable/sign_until/near_pi_floor_64` | `computable` | `constructor` | `rational-node` | 1 |
+| `computable/sign_until/near_pi_floor_64` | `computable` | `constructor` | `shared-constant-wrapper` | 1 |
+| `computable/sign_until/near_pi_floor_64` | `computable` | `sign_until` | `binary64-filter-sign` | 1 |
+| `computable/sign_until/near_pi_floor_64` | `rational` | `add` | `word-sized` | 2 |
+| `computable/sign_until/near_pi_floor_64` | `rational` | `arithmetic-reuse` | `first-observation` | 3 |
+| `computable/sign_until/near_pi_floor_64` | `rational` | `comparison` | `word-sized` | 1 |
+| `computable/sign_until/near_pi_floor_64` | `rational` | `word-reduction` | `other-word-odd-denominator` | 2 |
+| `computable/sign_until/near_pi_floor_64` | `rational` | `word-result` | `small-general-fraction` | 2 |
+| `computable/sign_until/near_pi_floor_64` | `rational_algorithm` | `gcd` | `binary-word` | 3 |
 | `computable/sign_until/perturbed_scaled_product_floor_2000` | `computable` | `constructor` | `cached-pi` | 1 |
 | `computable/sign_until/perturbed_scaled_product_floor_2000` | `computable` | `constructor` | `rational-node` | 201 |
 | `computable/sign_until/perturbed_scaled_product_floor_2000` | `computable` | `constructor` | `shared-constant-wrapper` | 1 |
@@ -950,6 +992,17 @@ This table groups raw trace labels into Yap-aligned diagnostic buckets so scalar
 | `computable/sign_until/pi_minus_one_floor_2000` | `rational` | `comparison` | `word-sized` | 1 |
 | `computable/sign_until/pi_minus_one_floor_2000` | `rational` | `word-result` | `small-general-fraction` | 2 |
 | `computable/sign_until/pi_minus_one_floor_2000` | `rational_algorithm` | `gcd` | `binary-word` | 2 |
+| `computable/sign_until/unsupported_sin_floor_64` | `computable` | `constructor` | `prescaled-sin` | 1 |
+| `computable/sign_until/unsupported_sin_floor_64` | `computable` | `constructor` | `rational-node` | 2 |
+| `computable/sign_until/unsupported_sin_floor_64` | `computable` | `sign_until` | `algebraic-separation-unavailable` | 1 |
+| `computable/sign_until/unsupported_sin_floor_64` | `computable` | `sign_until` | `precision-refinement` | 1 |
+| `computable/sign_until/unsupported_sin_floor_64` | `computable` | `sign_until` | `unknown` | 1 |
+| `computable/sign_until/unsupported_sin_floor_64` | `computable` | `sign_until_attempt_precision` | `-32<=p<0` | 1 |
+| `computable/sign_until/unsupported_sin_floor_64` | `computable` | `sign_until_attempt_precision` | `-64<=p<-32` | 2 |
+| `computable/sign_until/unsupported_sin_floor_64` | `computable` | `sign_until_attempt_precision` | `p>=0` | 1 |
+| `computable/sign_until/unsupported_sin_floor_64` | `computable` | `sign_until_unresolved_precision` | `-64<=p<-32` | 1 |
+| `computable/sign_until/unsupported_sin_floor_64` | `computable` | `sin` | `structural-small-prescaled` | 1 |
+| `computable/sign_until/unsupported_sin_floor_64` | `rational_algorithm` | `gcd` | `binary-word` | 2 |
 | `computable/sqrt_squarefree_rational` | `computable` | `constructor` | `rational-integer-canonicalized` | 3 |
 | `computable/sqrt_squarefree_rational` | `computable` | `constructor` | `shared-constant-wrapper` | 1 |
 | `computable/sqrt_squarefree_rational` | `computable` | `constructor` | `shared-sqrt-constant-probe` | 1 |
@@ -1690,12 +1743,156 @@ This table groups raw trace labels into Yap-aligned diagnostic buckets so scalar
 | `real/pow/symbolic_negative_one` | `real` | `inverse` | `prechecked-pi` | 1 |
 | `real/pow/symbolic_negative_one` | `real` | `powi` | `negative-one-inverse` | 2 |
 | `real/pow/symbolic_negative_one` | `real` | `zero_status` | `symbolic-nonzero-scale` | 1 |
+| `real/pow_rational/direct_degree5` | `computable` | `constructor` | `rational-integer-canonicalized` | 1 |
+| `real/pow_rational/direct_degree5` | `rational_algorithm` | `gcd` | `binary-word` | 1 |
+| `real/pow_rational/direct_degree5` | `rational_algorithm` | `root-extraction` | `newton-nth-root` | 1 |
+| `real/pow_rational/direct_degree5` | `real` | `certified_sign_until` | `structural-facts` | 2 |
+| `real/pow_rational/direct_degree5` | `real` | `constructor` | `one` | 1 |
+| `real/pow_rational/direct_degree5` | `real` | `constructor` | `rational` | 1 |
+| `real/pow_rational/direct_degree5` | `real` | `mul` | `lhs-rational-scale` | 1 |
+| `real/pow_rational/direct_degree5` | `real` | `mul` | `symbolic-class-table` | 1 |
+| `real/pow_rational/direct_degree5` | `real` | `pow_rational` | `bounded-algebraic-root` | 1 |
+| `real/pow_rational/direct_degree5` | `real` | `root_n` | `positive-direct-nth-root` | 1 |
+| `real/pow_rational/direct_degree5` | `real` | `structural_facts` | `exact-rational` | 2 |
 | `real/powi_i64/exact_17` | `rational` | `powi` | `word-sized` | 1 |
 | `real/powi_i64/exact_17` | `rational` | `word-result` | `small-general-fraction` | 1 |
 | `real/powi_i64/exact_17` | `rational_algorithm` | `gcd` | `binary-word` | 1 |
 | `real/powi_i64/exact_17` | `rational_algorithm` | `powering` | `word-checked-pow` | 1 |
 | `real/powi_i64/exact_17` | `real` | `constructor` | `rational` | 1 |
 | `real/powi_i64/exact_17` | `real` | `powi-i64` | `rational-exact` | 1 |
+| `real/root_n/direct_degree5` | `computable` | `constructor` | `rational-integer-canonicalized` | 1 |
+| `real/root_n/direct_degree5` | `rational_algorithm` | `root-extraction` | `newton-nth-root` | 1 |
+| `real/root_n/direct_degree5` | `real` | `certified_sign_until` | `structural-facts` | 1 |
+| `real/root_n/direct_degree5` | `real` | `constructor` | `rational` | 1 |
+| `real/root_n/direct_degree5` | `real` | `root_n` | `positive-direct-nth-root` | 1 |
+| `real/root_n/direct_degree5` | `real` | `structural_facts` | `exact-rational` | 1 |
+| `real/root_n/direct_degree9` | `computable` | `constructor` | `rational-integer-canonicalized` | 1 |
+| `real/root_n/direct_degree9` | `rational_algorithm` | `root-extraction` | `newton-nth-root` | 1 |
+| `real/root_n/direct_degree9` | `real` | `certified_sign_until` | `structural-facts` | 1 |
+| `real/root_n/direct_degree9` | `real` | `constructor` | `rational` | 1 |
+| `real/root_n/direct_degree9` | `real` | `root_n` | `positive-direct-nth-root` | 1 |
+| `real/root_n/direct_degree9` | `real` | `structural_facts` | `exact-rational` | 1 |
+| `real/root_n/fallback_degree10` | `computable` | `constructor` | `rational-integer-canonicalized` | 1 |
+| `real/root_n/fallback_degree10` | `computable` | `constructor` | `rational-node` | 4 |
+| `real/root_n/fallback_degree10` | `computable` | `constructor` | `shared-constant-wrapper` | 1 |
+| `real/root_n/fallback_degree10` | `computable` | `exp` | `prescaled-kernel` | 1 |
+| `real/root_n/fallback_degree10` | `computable` | `ln` | `binary-scale-reduction` | 1 |
+| `real/root_n/fallback_degree10` | `computable` | `ln` | `prescaled-ln1p-kernel` | 1 |
+| `real/root_n/fallback_degree10` | `rational_algorithm` | `gcd` | `binary-word` | 4 |
+| `real/root_n/fallback_degree10` | `rational_algorithm` | `root-extraction` | `newton-nth-root` | 1 |
+| `real/root_n/fallback_degree10` | `real` | `certified_sign_until` | `structural-facts` | 2 |
+| `real/root_n/fallback_degree10` | `real` | `constructor` | `rational` | 2 |
+| `real/root_n/fallback_degree10` | `real` | `pow` | `fractional-arbitrary` | 1 |
+| `real/root_n/fallback_degree10` | `real` | `pow` | `positive-exp-ln` | 1 |
+| `real/root_n/fallback_degree10` | `real` | `root_n` | `positive-rational-exponent` | 1 |
+| `real/root_n/fallback_degree10` | `real` | `structural_facts` | `exact-rational` | 2 |
+| `real/sign_until/eighth_root_near_dyadic_floor_64` | `computable` | `constructor` | `rational-integer-canonicalized` | 1 |
+| `real/sign_until/eighth_root_near_dyadic_floor_64` | `computable` | `constructor` | `rational-node` | 2 |
+| `real/sign_until/eighth_root_near_dyadic_floor_64` | `computable` | `sign_until` | `precision-refinement` | 1 |
+| `real/sign_until/eighth_root_near_dyadic_floor_64` | `computable` | `sign_until_attempt_precision` | `-32<=p<0` | 1 |
+| `real/sign_until/eighth_root_near_dyadic_floor_64` | `computable` | `sign_until_attempt_precision` | `-64<=p<-32` | 2 |
+| `real/sign_until/eighth_root_near_dyadic_floor_64` | `computable` | `sign_until_attempt_precision` | `p>=0` | 1 |
+| `real/sign_until/eighth_root_near_dyadic_floor_64` | `computable` | `sign_until_decision_precision` | `-64<=p<-32` | 1 |
+| `real/sign_until/eighth_root_near_dyadic_floor_64` | `rational_algorithm` | `root-extraction` | `newton-nth-root` | 1 |
+| `real/sign_until/eighth_root_near_dyadic_floor_64` | `real` | `certified_sign_until` | `computable-refine` | 1 |
+| `real/sign_until/eighth_root_near_dyadic_floor_64` | `real` | `certified_sign_until` | `structural-facts` | 1 |
+| `real/sign_until/eighth_root_near_dyadic_floor_64` | `real` | `constructor` | `rational` | 2 |
+| `real/sign_until/eighth_root_near_dyadic_floor_64` | `real` | `root_n` | `positive-direct-nth-root` | 1 |
+| `real/sign_until/eighth_root_near_dyadic_floor_64` | `real` | `structural_facts` | `exact-rational` | 1 |
+| `real/sign_until/eighth_root_near_dyadic_floor_64` | `real` | `structural_facts` | `scaled-computable` | 1 |
+| `real/sign_until/eighth_root_near_dyadic_floor_64` | `real` | `sub` | `generic-computable` | 1 |
+| `real/sign_until/many_digits_c10_zero_floor_2048` | `computable` | `constructor` | `one` | 1 |
+| `real/sign_until/many_digits_c10_zero_floor_2048` | `computable` | `constructor` | `rational-integer-canonicalized` | 6 |
+| `real/sign_until/many_digits_c10_zero_floor_2048` | `computable` | `sign_until` | `algebraic-separation-target` | 1 |
+| `real/sign_until/many_digits_c10_zero_floor_2048` | `computable` | `sign_until` | `algebraic-separation-zero` | 1 |
+| `real/sign_until/many_digits_c10_zero_floor_2048` | `computable` | `sign_until` | `precision-refinement` | 2 |
+| `real/sign_until/many_digits_c10_zero_floor_2048` | `computable` | `sign_until_attempt_precision` | `-128<=p<-64` | 1 |
+| `real/sign_until/many_digits_c10_zero_floor_2048` | `computable` | `sign_until_attempt_precision` | `-32<=p<0` | 2 |
+| `real/sign_until/many_digits_c10_zero_floor_2048` | `computable` | `sign_until_attempt_precision` | `-64<=p<-32` | 1 |
+| `real/sign_until/many_digits_c10_zero_floor_2048` | `computable` | `sign_until_attempt_precision` | `p>=0` | 2 |
+| `real/sign_until/many_digits_c10_zero_floor_2048` | `computable` | `sign_until_decision_precision` | `-32<=p<0` | 1 |
+| `real/sign_until/many_digits_c10_zero_floor_2048` | `rational` | `div` | `word-sized` | 3 |
+| `real/sign_until/many_digits_c10_zero_floor_2048` | `rational` | `mul` | `retained-product` | 1 |
+| `real/sign_until/many_digits_c10_zero_floor_2048` | `rational` | `mul` | `word-sized` | 3 |
+| `real/sign_until/many_digits_c10_zero_floor_2048` | `rational` | `mul-div` | `proven-reduced-word-product` | 3 |
+| `real/sign_until/many_digits_c10_zero_floor_2048` | `rational` | `word-result` | `cached-small-integer` | 6 |
+| `real/sign_until/many_digits_c10_zero_floor_2048` | `rational_algorithm` | `root-extraction` | `newton-nth-root` | 15 |
+| `real/sign_until/many_digits_c10_zero_floor_2048` | `real` | `add` | `generic-computable` | 2 |
+| `real/sign_until/many_digits_c10_zero_floor_2048` | `real` | `certified_sign_until` | `computable-refine` | 2 |
+| `real/sign_until/many_digits_c10_zero_floor_2048` | `real` | `certified_sign_until` | `structural-facts` | 3 |
+| `real/sign_until/many_digits_c10_zero_floor_2048` | `real` | `constructor` | `one` | 1 |
+| `real/sign_until/many_digits_c10_zero_floor_2048` | `real` | `constructor` | `rational` | 5 |
+| `real/sign_until/many_digits_c10_zero_floor_2048` | `real` | `mul` | `lhs-rational-scale` | 1 |
+| `real/sign_until/many_digits_c10_zero_floor_2048` | `real` | `root_n` | `positive-direct-nth-root` | 4 |
+| `real/sign_until/many_digits_c10_zero_floor_2048` | `real` | `structural_facts` | `exact-rational` | 3 |
+| `real/sign_until/many_digits_c10_zero_floor_2048` | `real` | `structural_facts` | `scaled-computable` | 2 |
+| `real/sign_until/many_digits_c10_zero_floor_2048` | `real` | `sub` | `generic-computable` | 3 |
+| `real/sign_until/ramanujan_one_zero_floor_2048` | `computable` | `constructor` | `rational-integer-canonicalized` | 6 |
+| `real/sign_until/ramanujan_one_zero_floor_2048` | `computable` | `sign_until` | `algebraic-separation-target` | 1 |
+| `real/sign_until/ramanujan_one_zero_floor_2048` | `computable` | `sign_until` | `algebraic-separation-zero` | 1 |
+| `real/sign_until/ramanujan_one_zero_floor_2048` | `computable` | `sign_until` | `precision-refinement` | 2 |
+| `real/sign_until/ramanujan_one_zero_floor_2048` | `computable` | `sign_until_attempt_precision` | `-128<=p<-64` | 2 |
+| `real/sign_until/ramanujan_one_zero_floor_2048` | `computable` | `sign_until_attempt_precision` | `-32<=p<0` | 2 |
+| `real/sign_until/ramanujan_one_zero_floor_2048` | `computable` | `sign_until_attempt_precision` | `-64<=p<-32` | 1 |
+| `real/sign_until/ramanujan_one_zero_floor_2048` | `computable` | `sign_until_attempt_precision` | `p>=0` | 2 |
+| `real/sign_until/ramanujan_one_zero_floor_2048` | `computable` | `sign_until_decision_precision` | `-32<=p<0` | 1 |
+| `real/sign_until/ramanujan_one_zero_floor_2048` | `computable` | `sqrt` | `generic-sqrt-node` | 1 |
+| `real/sign_until/ramanujan_one_zero_floor_2048` | `rational` | `div` | `word-sized` | 23 |
+| `real/sign_until/ramanujan_one_zero_floor_2048` | `rational` | `mul` | `retained-product` | 5 |
+| `real/sign_until/ramanujan_one_zero_floor_2048` | `rational` | `mul` | `word-sized` | 15 |
+| `real/sign_until/ramanujan_one_zero_floor_2048` | `rational` | `mul-div` | `proven-reduced-word-product` | 23 |
+| `real/sign_until/ramanujan_one_zero_floor_2048` | `rational` | `word-result` | `cached-small-dyadic` | 10 |
+| `real/sign_until/ramanujan_one_zero_floor_2048` | `rational` | `word-result` | `cached-small-general-fraction` | 9 |
+| `real/sign_until/ramanujan_one_zero_floor_2048` | `rational` | `word-result` | `cached-small-integer` | 14 |
+| `real/sign_until/ramanujan_one_zero_floor_2048` | `rational` | `word-result` | `uncached-integer-1024-4095` | 1 |
+| `real/sign_until/ramanujan_one_zero_floor_2048` | `rational` | `word-result` | `uncached-integer-256-1023` | 2 |
+| `real/sign_until/ramanujan_one_zero_floor_2048` | `rational` | `word-result` | `uncached-integer-65-127` | 2 |
+| `real/sign_until/ramanujan_one_zero_floor_2048` | `rational_algorithm` | `root-extraction` | `newton-nth-root` | 41 |
+| `real/sign_until/ramanujan_one_zero_floor_2048` | `real` | `add` | `generic-computable` | 1 |
+| `real/sign_until/ramanujan_one_zero_floor_2048` | `real` | `certified_sign_until` | `computable-refine` | 2 |
+| `real/sign_until/ramanujan_one_zero_floor_2048` | `real` | `certified_sign_until` | `structural-facts` | 5 |
+| `real/sign_until/ramanujan_one_zero_floor_2048` | `real` | `constructor` | `rational` | 6 |
+| `real/sign_until/ramanujan_one_zero_floor_2048` | `real` | `mul` | `lhs-rational-scale` | 1 |
+| `real/sign_until/ramanujan_one_zero_floor_2048` | `real` | `root_n` | `positive-direct-nth-root` | 5 |
+| `real/sign_until/ramanujan_one_zero_floor_2048` | `real` | `sqrt` | `generic-computable` | 1 |
+| `real/sign_until/ramanujan_one_zero_floor_2048` | `real` | `structural_facts` | `exact-rational` | 5 |
+| `real/sign_until/ramanujan_one_zero_floor_2048` | `real` | `structural_facts` | `scaled-computable` | 2 |
+| `real/sign_until/ramanujan_one_zero_floor_2048` | `real` | `sub` | `generic-computable` | 3 |
+| `real/sign_until/ramanujan_two_zero_floor_2048` | `computable` | `constructor` | `one` | 1 |
+| `real/sign_until/ramanujan_two_zero_floor_2048` | `computable` | `constructor` | `rational-integer-canonicalized` | 2 |
+| `real/sign_until/ramanujan_two_zero_floor_2048` | `computable` | `constructor` | `rational-node` | 3 |
+| `real/sign_until/ramanujan_two_zero_floor_2048` | `computable` | `sign_until` | `algebraic-separation-target` | 1 |
+| `real/sign_until/ramanujan_two_zero_floor_2048` | `computable` | `sign_until` | `algebraic-separation-zero` | 1 |
+| `real/sign_until/ramanujan_two_zero_floor_2048` | `computable` | `sign_until` | `precision-refinement` | 2 |
+| `real/sign_until/ramanujan_two_zero_floor_2048` | `computable` | `sign_until_attempt_precision` | `-128<=p<-64` | 1 |
+| `real/sign_until/ramanujan_two_zero_floor_2048` | `computable` | `sign_until_attempt_precision` | `-256<=p<-128` | 2 |
+| `real/sign_until/ramanujan_two_zero_floor_2048` | `computable` | `sign_until_attempt_precision` | `-32<=p<0` | 2 |
+| `real/sign_until/ramanujan_two_zero_floor_2048` | `computable` | `sign_until_attempt_precision` | `-512<=p<-256` | 2 |
+| `real/sign_until/ramanujan_two_zero_floor_2048` | `computable` | `sign_until_attempt_precision` | `-64<=p<-32` | 1 |
+| `real/sign_until/ramanujan_two_zero_floor_2048` | `computable` | `sign_until_attempt_precision` | `p>=0` | 2 |
+| `real/sign_until/ramanujan_two_zero_floor_2048` | `computable` | `sign_until_decision_precision` | `-32<=p<0` | 1 |
+| `real/sign_until/ramanujan_two_zero_floor_2048` | `rational` | `div` | `word-sized` | 15 |
+| `real/sign_until/ramanujan_two_zero_floor_2048` | `rational` | `mul` | `retained-product` | 5 |
+| `real/sign_until/ramanujan_two_zero_floor_2048` | `rational` | `mul` | `word-dyadic-general-cross-cancel` | 1 |
+| `real/sign_until/ramanujan_two_zero_floor_2048` | `rational` | `mul` | `word-sized` | 9 |
+| `real/sign_until/ramanujan_two_zero_floor_2048` | `rational` | `mul-div` | `proven-reduced-word-product` | 21 |
+| `real/sign_until/ramanujan_two_zero_floor_2048` | `rational` | `word-result` | `cached-small-general-fraction` | 5 |
+| `real/sign_until/ramanujan_two_zero_floor_2048` | `rational` | `word-result` | `cached-small-integer` | 10 |
+| `real/sign_until/ramanujan_two_zero_floor_2048` | `rational` | `word-result` | `small-general-fraction` | 6 |
+| `real/sign_until/ramanujan_two_zero_floor_2048` | `rational` | `word-result` | `uncached-integer-128-255` | 1 |
+| `real/sign_until/ramanujan_two_zero_floor_2048` | `rational` | `word-result` | `uncached-integer-256-1023` | 1 |
+| `real/sign_until/ramanujan_two_zero_floor_2048` | `rational` | `word-result` | `uncached-integer-65-127` | 1 |
+| `real/sign_until/ramanujan_two_zero_floor_2048` | `rational_algorithm` | `gcd` | `binary-word` | 3 |
+| `real/sign_until/ramanujan_two_zero_floor_2048` | `rational_algorithm` | `root-extraction` | `newton-nth-root` | 28 |
+| `real/sign_until/ramanujan_two_zero_floor_2048` | `real` | `add` | `generic-computable` | 1 |
+| `real/sign_until/ramanujan_two_zero_floor_2048` | `real` | `certified_sign_until` | `computable-refine` | 2 |
+| `real/sign_until/ramanujan_two_zero_floor_2048` | `real` | `certified_sign_until` | `structural-facts` | 4 |
+| `real/sign_until/ramanujan_two_zero_floor_2048` | `real` | `constructor` | `one` | 1 |
+| `real/sign_until/ramanujan_two_zero_floor_2048` | `real` | `constructor` | `rational` | 4 |
+| `real/sign_until/ramanujan_two_zero_floor_2048` | `real` | `root_n` | `positive-direct-nth-root` | 5 |
+| `real/sign_until/ramanujan_two_zero_floor_2048` | `real` | `structural_facts` | `exact-rational` | 4 |
+| `real/sign_until/ramanujan_two_zero_floor_2048` | `real` | `structural_facts` | `scaled-computable` | 2 |
+| `real/sign_until/ramanujan_two_zero_floor_2048` | `real` | `sub` | `generic-computable` | 3 |
 | `real/sqrt_oversized_rational_fallback` | `computable` | `constructor` | `rational-integer-canonicalized` | 1 |
 | `real/sqrt_oversized_rational_fallback` | `computable` | `sqrt` | `generic-sqrt-node` | 1 |
 | `real/sqrt_oversized_rational_fallback` | `computable` | `structural` | `quadratic-surd` | 1 |
@@ -1727,7 +1924,7 @@ This table groups raw trace labels into Yap-aligned diagnostic buckets so scalar
 | `real/sqrt_scaled_rational` | `real` | `structural_facts` | `exact-rational` | 1 |
 | `real/stable_scalar_substrate` | `computable` | `constructor` | `one` | 4 |
 | `real/stable_scalar_substrate` | `computable` | `constructor` | `rational-integer-canonicalized` | 15 |
-| `real/stable_scalar_substrate` | `computable` | `constructor` | `rational-node` | 15 |
+| `real/stable_scalar_substrate` | `computable` | `constructor` | `rational-node` | 12 |
 | `real/stable_scalar_substrate` | `computable` | `constructor` | `rational-one-canonicalized` | 1 |
 | `real/stable_scalar_substrate` | `computable` | `constructor` | `shared-constant-wrapper` | 4 |
 | `real/stable_scalar_substrate` | `computable` | `exp` | `ln2-range-reduction` | 4 |
@@ -1752,14 +1949,14 @@ This table groups raw trace labels into Yap-aligned diagnostic buckets so scalar
 | `real/stable_scalar_substrate` | `rational` | `word-result` | `cached-small-integer` | 1 |
 | `real/stable_scalar_substrate` | `rational` | `word-result` | `small-general-fraction` | 14 |
 | `real/stable_scalar_substrate` | `rational_algorithm` | `exact-fractional-remainder` | `backend-single-limb` | 1 |
-| `real/stable_scalar_substrate` | `rational_algorithm` | `gcd` | `binary-word` | 19 |
+| `real/stable_scalar_substrate` | `rational_algorithm` | `gcd` | `binary-word` | 16 |
 | `real/stable_scalar_substrate` | `rational_algorithm` | `root-extraction` | `newton-nth-root` | 3 |
 | `real/stable_scalar_substrate` | `real` | `add` | `generic-computable` | 2 |
 | `real/stable_scalar_substrate` | `real` | `add` | `same-symbolic-basis` | 2 |
 | `real/stable_scalar_substrate` | `real` | `certified_cmp_until` | `exact-rational-comparison` | 1 |
 | `real/stable_scalar_substrate` | `real` | `certified_sign_until` | `structural-facts` | 3 |
 | `real/stable_scalar_substrate` | `real` | `constructor` | `bigint` | 1 |
-| `real/stable_scalar_substrate` | `real` | `constructor` | `one` | 5 |
+| `real/stable_scalar_substrate` | `real` | `constructor` | `one` | 6 |
 | `real/stable_scalar_substrate` | `real` | `constructor` | `rational` | 20 |
 | `real/stable_scalar_substrate` | `real` | `constructor` | `zero` | 1 |
 | `real/stable_scalar_substrate` | `real` | `definitely_zero` | `rational-sign` | 8 |
@@ -1776,8 +1973,8 @@ This table groups raw trace labels into Yap-aligned diagnostic buckets so scalar
 | `real/stable_scalar_substrate` | `real` | `logit` | `exact-rational-stable-logs` | 1 |
 | `real/stable_scalar_substrate` | `real` | `logsubexp` | `left-dominant` | 1 |
 | `real/stable_scalar_substrate` | `real` | `mul` | `exact-rational` | 1 |
+| `real/stable_scalar_substrate` | `real` | `mul` | `exact-rational-assign` | 1 |
 | `real/stable_scalar_substrate` | `real` | `pow_rational` | `negative-odd-denominator-root` | 1 |
-| `real/stable_scalar_substrate` | `real` | `powi` | `exponent-one` | 1 |
 | `real/stable_scalar_substrate` | `real` | `root_n` | `rational-perfect-root` | 3 |
 | `real/stable_scalar_substrate` | `real` | `sigmoid` | `exact-rational-tail` | 1 |
 | `real/stable_scalar_substrate` | `real` | `softplus` | `exact-rational-tail` | 2 |

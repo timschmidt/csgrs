@@ -78,6 +78,7 @@ const NO_GMP_ANALOG: &[&str] = &[
     "is_exact_dyadic_rational",
     "is_nonempty_exact_rational",
     "is_rational",
+    "is_structural_negation_of",
     "numerator_magnitude_gcd",
     "primitive_bigint_ratio",
     "primitive_integer_ratio",

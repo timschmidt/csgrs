@@ -232,13 +232,25 @@ fn rational_pi_turns_match_all_f64_quadrants_and_periods() {
             if radians.cos().abs() > 1.0e-12 {
                 assert_close(
                     turns
+                        .clone()
                         .tan_pi()
                         .unwrap_or_else(|error| panic!("tan_pi failed: {error:?}")),
                     radians.tan(),
                     &format!("tan_pi({numerator}/{denominator})"),
                 );
             } else {
-                assert_eq!(turns.tan_pi(), Err(Problem::NotANumber));
+                assert_eq!(turns.clone().tan_pi(), Err(Problem::NotANumber));
+            }
+            if radians.sin().abs() > 1.0e-12 {
+                assert_close(
+                    turns
+                        .cot_pi()
+                        .unwrap_or_else(|error| panic!("cot_pi failed: {error:?}")),
+                    1.0 / radians.tan(),
+                    &format!("cot_pi({numerator}/{denominator})"),
+                );
+            } else {
+                assert_eq!(turns.cot_pi(), Err(Problem::NotANumber));
             }
         }
     }
@@ -262,13 +274,38 @@ fn rational_radian_trig_matches_f64_over_multiple_periods() {
             );
             if expected.cos().abs() > 1.0e-10 {
                 assert_close(
-                    value.tan().expect("finite rational tangent"),
+                    value.clone().tan().expect("finite rational tangent"),
                     expected.tan(),
                     &format!("tan({numerator}/{denominator})"),
                 );
             }
+            if expected.sin().abs() > 1.0e-10 {
+                assert_close(
+                    value.cot().expect("finite rational cotangent"),
+                    1.0 / expected.tan(),
+                    &format!("cot({numerator}/{denominator})"),
+                );
+            } else {
+                assert_eq!(value.cot(), Err(Problem::NotANumber));
+            }
         }
     }
+}
+
+#[test]
+fn cotangent_refines_near_zero_and_preserves_odd_symmetry() {
+    for numerator in [-1_i64, 1] {
+        let value = rational(numerator, 1_u64 << 40);
+        let expected = 1.0 / (numerator as f64 * 2_f64.powi(-40)).tan();
+        assert_close(
+            value.clone().cot().expect("nonzero rational cotangent"),
+            expected,
+            &format!("cot({numerator}/2^40)"),
+        );
+    }
+
+    let value = rational(7, 5);
+    assert_eq!((-value.clone()).cot().unwrap(), -value.cot().unwrap());
 }
 
 #[test]

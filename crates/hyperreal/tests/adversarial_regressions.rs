@@ -86,6 +86,7 @@ fn serde_roundtrip_preserves_structural_facts_and_special_forms() {
         Real::tau(),
         r(355, 113),
         r(2, 1).sqrt().unwrap(),
+        r(17, 1).root_n(5).unwrap(),
         r(1024, 1).ln().unwrap(),
         (Real::pi() / Real::new(Rational::new(6))).unwrap().sin(),
     ];
@@ -100,6 +101,41 @@ fn serde_roundtrip_preserves_structural_facts_and_special_forms() {
         let decoded = Real::from_bytes(&bytes).unwrap();
         assert_eq!(decoded, value);
         assert_eq!(decoded.zero_status(), value.zero_status());
+    }
+}
+
+#[cfg(feature = "serde")]
+#[test]
+fn serde_rejects_forged_direct_nth_root_degrees() {
+    fn replace_degree(value: &mut serde_json::Value, replacement: u32) -> bool {
+        match value {
+            serde_json::Value::Object(fields) => {
+                if let Some(serde_json::Value::Array(arguments)) = fields.get_mut("NthRoot")
+                    && let Some(degree) = arguments.get_mut(1)
+                {
+                    *degree = serde_json::Value::from(replacement);
+                    return true;
+                }
+                fields
+                    .values_mut()
+                    .any(|child| replace_degree(child, replacement))
+            }
+            serde_json::Value::Array(values) => values
+                .iter_mut()
+                .any(|child| replace_degree(child, replacement)),
+            _ => false,
+        }
+    }
+
+    let root = r(17, 1).root_n(5).unwrap();
+    for invalid_degree in [0_u32, 1, 2, 10, u32::MAX] {
+        let mut json: serde_json::Value = serde_json::from_str(&root.to_json()).unwrap();
+        assert!(replace_degree(&mut json, invalid_degree));
+        assert_eq!(
+            Real::from_json(&json.to_string()),
+            Err(Problem::ParseError),
+            "degree {invalid_degree} should be rejected"
+        );
     }
 }
 
@@ -141,4 +177,60 @@ fn scheinerman_radical_sums_receive_the_correct_certified_order() {
         (left - right).certified_sign_until(-32).sign(),
         Some(RealSign::Positive)
     );
+}
+
+#[test]
+fn archived_nested_radical_identities_receive_exact_zero_certificates() {
+    let root = |numerator: i64, denominator: u64, degree: u32| {
+        r(numerator, denominator)
+            .root_n(degree)
+            .expect("positive rational radicand")
+    };
+
+    let ramanujan_one = Real::from(3)
+        * (root(5, 1, 3) - root(4, 1, 3))
+            .sqrt()
+            .expect("positive nested radicand")
+        - (root(2, 1, 3) + root(20, 1, 3) - root(25, 1, 3));
+    let ramanujan_two = (root(2, 1, 3) - Real::one())
+        .root_n(3)
+        .expect("positive nested radicand")
+        - (root(1, 9, 3) - root(2, 9, 3) + root(4, 9, 3));
+    let fifth2 = root(2, 1, 5);
+    let many_digits_c10 = (Real::from(7) + fifth2.clone() - Real::from(5) * root(8, 1, 5))
+        .root_n(3)
+        .expect("positive nested radicand")
+        + root(4, 1, 5)
+        - fifth2
+        - Real::one();
+
+    for (name, value) in [
+        ("Ramanujan one", ramanujan_one),
+        ("Ramanujan two", ramanujan_two),
+        ("Many Digits C10", many_digits_c10),
+    ] {
+        let tiny_positive = value.clone()
+            + Real::new(
+                Rational::from_bigint_fraction(
+                    num::BigInt::from(1_u8),
+                    num::BigUint::from(1_u8) << 512_usize,
+                )
+                .unwrap(),
+            );
+        assert_eq!(
+            tiny_positive.certified_sign_until(-2_048).sign(),
+            Some(RealSign::Positive),
+            "{name} control must not be conflated with zero"
+        );
+        assert_eq!(
+            value.certified_sign_until(0).sign(),
+            None,
+            "{name} should not be accepted by a coarse approximation"
+        );
+        assert_eq!(
+            value.certified_sign_until(-2_048).sign(),
+            Some(RealSign::Zero),
+            "{name} should receive a bounded exact-zero proof"
+        );
+    }
 }

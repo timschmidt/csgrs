@@ -20,6 +20,393 @@ mod tests {
     }
 
     #[test]
+    fn binary64_filter_constant_enclosures_cover_mpfr_values() {
+        use rug::{Float, float::Constant};
+
+        let pi = Float::with_val(256, Constant::Pi);
+        let pi_lower = Float::with_val(256, f64::from_bits(0x4009_21fb_5444_2d17));
+        let pi_upper = Float::with_val(256, f64::from_bits(0x4009_21fb_5444_2d19));
+        assert!(pi_lower < pi && pi < pi_upper);
+
+        let e = Float::with_val(256, 1).exp();
+        let e_lower = Float::with_val(256, f64::from_bits(0x4005_bf0a_8b14_5768));
+        let e_upper = Float::with_val(256, f64::from_bits(0x4005_bf0a_8b14_576a));
+        assert!(e_lower < e && e < e_upper);
+
+        assert_eq!(Binary64Interval::power_of_two(1_024), f64::INFINITY);
+        assert_eq!(Binary64Interval::power_of_two(1_023).to_bits(), 0x7fe0_0000_0000_0000);
+        assert_eq!(Binary64Interval::power_of_two(-1_022).to_bits(), 1_u64 << 52);
+        assert_eq!(Binary64Interval::power_of_two(-1_023).to_bits(), 1_u64 << 51);
+        assert_eq!(Binary64Interval::power_of_two(-1_074).to_bits(), 1);
+        assert_eq!(Binary64Interval::power_of_two(-1_075).to_bits(), 0);
+    }
+
+    #[test]
+    fn direct_nth_root_approximations_match_mpfr() {
+        use rug::{Float, float::Round};
+
+        for degree in 3_u32..=Computable::MAX_DIRECT_NTH_ROOT_DEGREE {
+            for radicand in [2_i64, 3, 17, 257] {
+                let root = Computable::integer(BigInt::from(radicand)).nth_root(degree);
+                assert!(matches!(
+                    &root.internal.approximation,
+                    Approximation::NthRoot(_, stored_degree) if *stored_degree == degree
+                ));
+                for precision in [4_i32, 0, -1, -7, -31, -64, -255, -1_024] {
+                    let actual = root.approx(precision);
+                    let oracle_precision = u32::try_from(precision.saturating_neg())
+                        .unwrap_or_default()
+                        .saturating_add(256);
+                    let mut oracle = Float::with_val(oracle_precision, radicand).root(degree);
+                    oracle <<= precision.saturating_neg();
+                    let expected = oracle
+                        .to_integer_round(Round::Nearest)
+                        .expect("finite positive nth-root oracle")
+                        .0
+                        .to_string()
+                        .parse::<BigInt>()
+                        .expect("MPFR integer parses as BigInt");
+                    let error = (&actual - expected).abs();
+                    assert!(
+                        error <= BigInt::one(),
+                        "root({radicand}, {degree}) at {precision} differs by {error} ulps"
+                    );
+                }
+            }
+
+            for (numerator, denominator) in [(1_i64, 257_u64), (1, 3), (2, 3), (17, 19), (257, 3)] {
+                let root = Computable::rational(
+                    Rational::fraction(numerator, denominator).unwrap(),
+                )
+                .nth_root(degree);
+                for precision in [4_i32, 0, -7, -31, -128, -511] {
+                    let actual = root.approx(precision);
+                    let oracle_precision = u32::try_from(precision.saturating_neg())
+                        .unwrap_or_default()
+                        .saturating_add(256);
+                    let mut oracle = Float::with_val(oracle_precision, numerator);
+                    oracle /= denominator;
+                    oracle.root_mut(degree);
+                    oracle <<= precision.saturating_neg();
+                    let expected = oracle
+                        .to_integer_round(Round::Nearest)
+                        .expect("finite positive rational nth-root oracle")
+                        .0
+                        .to_string()
+                        .parse::<BigInt>()
+                        .expect("MPFR integer parses as BigInt");
+                    let error = (&actual - expected).abs();
+                    assert!(
+                        error <= BigInt::one(),
+                        "root({numerator}/{denominator}, {degree}) at {precision} differs by {error} ulps"
+                    );
+                }
+            }
+
+            for exponent in [-2_048_i32, -257, 257, 2_048] {
+                let radicand = if exponent >= 0 {
+                    Rational::from_bigint(BigInt::one() << exponent as usize)
+                } else {
+                    Rational::from_bigint_fraction(
+                        BigInt::one(),
+                        BigUint::one() << exponent.unsigned_abs() as usize,
+                    )
+                    .unwrap()
+                };
+                let root = Computable::rational(radicand).nth_root(degree);
+                for precision in [32_i32, 0, -127, -1_024] {
+                    let actual = root.approx(precision);
+                    let oracle_precision = u32::try_from(precision.saturating_neg())
+                        .unwrap_or_default()
+                        .saturating_add(exponent.max(0) as u32 / degree)
+                        .saturating_add(256);
+                    let mut oracle = Float::with_val(oracle_precision, 1);
+                    if exponent >= 0 {
+                        oracle <<= exponent as u32;
+                    } else {
+                        oracle >>= exponent.unsigned_abs();
+                    }
+                    oracle.root_mut(degree);
+                    oracle <<= precision.saturating_neg();
+                    let expected = oracle
+                        .to_integer_round(Round::Nearest)
+                        .expect("finite dyadic nth-root oracle")
+                        .0
+                        .to_string()
+                        .parse::<BigInt>()
+                        .expect("MPFR integer parses as BigInt");
+                    let error = (&actual - expected).abs();
+                    assert!(
+                        error <= BigInt::one(),
+                        "root(2^{exponent}, {degree}) at {precision} differs by {error} ulps"
+                    );
+                }
+            }
+        }
+    }
+
+    fn positive_rational_nth_root(numerator: i64, denominator: u64, degree: u32) -> Computable {
+        Computable::rational(Rational::fraction(numerator, denominator).unwrap()).nth_root(degree)
+    }
+
+    #[test]
+    fn algebraic_separation_bounds_certify_archived_radical_identities() {
+        let cbrt2 = positive_rational_nth_root(2, 1, 3);
+        let cbrt4 = positive_rational_nth_root(4, 1, 3);
+        let cbrt5 = positive_rational_nth_root(5, 1, 3);
+        let cbrt20 = positive_rational_nth_root(20, 1, 3);
+        let cbrt25 = positive_rational_nth_root(25, 1, 3);
+        let first = cbrt5
+            .add(cbrt4.negate())
+            .sqrt()
+            .multiply(Computable::integer(BigInt::from(3_u8)))
+            .add(cbrt2.add(cbrt20).add(cbrt25.negate()).negate());
+
+        let second_left = positive_rational_nth_root(2, 1, 3)
+            .add(Computable::integer(BigInt::from(-1_i8)))
+            .nth_root(3);
+        let second_right = positive_rational_nth_root(1, 9, 3)
+            .add(positive_rational_nth_root(2, 9, 3).negate())
+            .add(positive_rational_nth_root(4, 9, 3));
+        let second = second_left.add(second_right.negate());
+
+        let fifth2 = positive_rational_nth_root(2, 1, 5);
+        let c10_inner = Computable::integer(BigInt::from(7_u8))
+            .add(fifth2.clone())
+            .add(
+                positive_rational_nth_root(8, 1, 5)
+                    .multiply(Computable::integer(BigInt::from(-5_i8))),
+            );
+        let c10 = c10_inner
+            .nth_root(3)
+            .add(positive_rational_nth_root(4, 1, 5))
+            .add(fifth2.negate())
+            .add(Computable::integer(BigInt::from(-1_i8)));
+
+        for (name, expected_bound, value) in [
+            ("ramanujan-1", 85_u64, first),
+            ("ramanujan-2", 376, second),
+            ("c10", 70, c10),
+        ] {
+            let bound = value
+                .algebraic_separation_bound_bits()
+                .unwrap_or_else(|| panic!("{name} should have bounded algebraic metadata"));
+            assert_eq!(bound, expected_bound);
+            assert!(bound <= 2_046, "{name} bound {bound} should fit the public floor");
+            assert_eq!(value.sign_until(0), None, "{name} should need exact certification");
+            assert_eq!(
+                value.sign_until(-2_048),
+                Some(RealSign::Zero),
+                "{name} should certify exact zero"
+            );
+            let (precision, approximation) = value
+                .internal
+                .cache_snapshot()
+                .expect("zero certificate retains its final approximation");
+            assert!(approximation.abs() <= BigInt::one());
+            assert!(
+                precision > -512,
+                "{name} should stop at its separation threshold, got {precision}"
+            );
+        }
+    }
+
+    #[test]
+    fn algebraic_generator_dependencies_and_perturbations_are_exact() {
+        let dyadic = |power: usize| {
+            Rational::from_bigint_fraction(
+                BigInt::one(),
+                BigUint::one() << power,
+            )
+            .unwrap()
+        };
+
+        for degree in 3_u32..=Computable::MAX_DIRECT_NTH_ROOT_DEGREE {
+            let first = Computable::rational(Rational::new(2)).nth_root(degree);
+            let second = Computable::rational(Rational::new(3)).nth_root(degree);
+            let mut radicand = Rational::one();
+            let mut expected = Computable::one();
+            for _ in 0..degree.saturating_sub(1) {
+                radicand *= Rational::new(2);
+                expected = expected.multiply(first.clone());
+            }
+            radicand *= Rational::new(3);
+            expected = expected.multiply(second);
+            for _ in 0..degree {
+                radicand *= Rational::new(2);
+            }
+            expected = expected.multiply(Computable::rational(Rational::new(2)));
+
+            let dependent = Computable::rational(radicand).nth_root(degree);
+            let identity = expected.add(dependent.negate());
+            let positive = identity
+                .clone()
+                .add(Computable::rational(dyadic(256)));
+            let negative = identity
+                .clone()
+                .add(Computable::rational(dyadic(256).neg()));
+
+            assert_eq!(positive.sign_until(-512), Some(RealSign::Positive));
+            assert_eq!(negative.sign_until(-512), Some(RealSign::Negative));
+            let bound = identity
+                .algebraic_separation_bound_bits()
+                .expect("generated radical identity should have a finite bound");
+            let floor = -i32::try_from(bound + 2).expect("bounded test precision");
+            assert_eq!(
+                identity.sign_until(floor),
+                Some(RealSign::Zero),
+                "degree {degree}, bound {bound}"
+            );
+        }
+
+        let root = Computable::rational(Rational::new(17)).nth_root(5);
+        let reciprocal_identity = root
+            .clone()
+            .inverse()
+            .multiply(root)
+            .add(Computable::integer(BigInt::from(-1_i8)));
+        assert_eq!(
+            reciprocal_identity.sign_until(-512),
+            Some(RealSign::Zero)
+        );
+
+        assert!(
+            Computable::pi()
+                .add(Computable::rational(Rational::new(-3)))
+                .algebraic_separation_bound_bits()
+                .is_none()
+        );
+    }
+
+    #[test]
+    fn algebraic_separation_resource_caps_fail_closed() {
+        let primes = [
+            2_i64, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47, 53, 59,
+        ];
+        let mut metadata =
+            AlgebraicSeparation::rational(&Rational::one()).expect("unit metadata");
+        for prime in &primes[..AlgebraicSeparation::MAX_GENERATORS] {
+            let root = Computable::rational(Rational::new(*prime)).sqrt();
+            metadata
+                .insert_generator(root, 2)
+                .expect("sixteen quadratic generators fit both caps");
+        }
+        assert_eq!(
+            metadata.generators.len(),
+            AlgebraicSeparation::MAX_GENERATORS
+        );
+        assert!(
+            metadata
+                .clone()
+                .insert_generator(
+                    Computable::rational(Rational::new(primes[16])).sqrt(),
+                    2,
+                )
+                .is_none(),
+            "a seventeenth generator must fail closed"
+        );
+
+        let mut too_deep = Computable::one();
+        for _ in 0..257 {
+            too_deep = Computable {
+                internal: Arc::new(Node::new(
+                    Approximation::Negate(too_deep),
+                    BoundCache::Invalid,
+                    ExactSignCache::Invalid,
+                )),
+                signal: None,
+            };
+        }
+        assert!(too_deep.algebraic_separation_bound_bits().is_none());
+    }
+
+    #[test]
+    fn binary64_filter_respects_floor_and_matches_fine_certified_signs() {
+        let near_pi = Computable::pi().add(Computable::rational(
+            -Rational::fraction(103_993, 33_102).unwrap(),
+        ));
+        assert_eq!(near_pi.binary64_filter_sign_until(0), None);
+        assert_eq!(near_pi.binary64_filter_sign_until(-64), Some(Sign::Plus));
+
+        let matrix_like = Computable::pi().square().add(
+            Computable::e().multiply(Computable::rational(
+                -Rational::fraction(29, 21).unwrap(),
+            )),
+        );
+        assert_eq!(
+            matrix_like.binary64_filter_sign_until(0),
+            Some(Sign::Plus)
+        );
+
+        let supported_wrappers = [
+            Computable::pi()
+                .add(Computable::one())
+                .inverse()
+                .shift_left(4)
+                .negate(),
+            Computable::e()
+                .add(Computable::rational(Rational::new(-3)))
+                .square(),
+            Computable::linear_combination3(
+                [Computable::pi(), Computable::e(), Computable::one()],
+                [
+                    Rational::new(2),
+                    Rational::new(-1),
+                    Rational::fraction(1, 3).unwrap(),
+                ],
+            ),
+        ];
+        for (index, value) in supported_wrappers.into_iter().enumerate() {
+            let filtered = value
+                .binary64_filter_sign_until(-64)
+                .unwrap_or_else(|| panic!("supported wrapper {index} should be separated"));
+            let approximation = value.approx(-256);
+            assert!(approximation.abs() > BigInt::one());
+            assert_eq!(filtered, approximation.sign());
+        }
+
+        let mut over_budget = Computable::e();
+        for _ in 0..40 {
+            over_budget = over_budget.multiply(Computable::pi());
+        }
+        assert_eq!(over_budget.binary64_filter_sign_until(0), None);
+
+        let mut state = 0x7d31_9a5b_4c27_18e3_u64;
+        for _ in 0..10_000 {
+            let mut next = || {
+                state = state
+                    .wrapping_mul(6_364_136_223_846_793_005)
+                    .wrapping_add(1_442_695_040_888_963_407);
+                state
+            };
+            let coefficient = |bits: u64, denominator_bits: u64| {
+                let numerator = i64::try_from(bits % 401).unwrap() - 200;
+                let denominator = denominator_bits % 97 + 1;
+                Rational::fraction(numerator, denominator).unwrap()
+            };
+            let a = coefficient(next(), next());
+            let b = coefficient(next(), next());
+            let c = coefficient(next(), next());
+            let value = Computable::pi()
+                .multiply(Computable::rational(a))
+                .add(Computable::e().multiply(Computable::rational(b)))
+                .add(Computable::rational(c));
+
+            for floor in [0, -16, -64] {
+                let Some(filtered) = value.binary64_filter_sign_until(floor) else {
+                    continue;
+                };
+                let approximation = value.approx(-256);
+                assert!(
+                    approximation.abs() > BigInt::one() || filtered == Sign::NoSign,
+                    "fine approximation should separate every filtered nonzero value"
+                );
+                assert_eq!(filtered, approximation.sign());
+            }
+        }
+    }
+
+    #[test]
     fn bigger() {
         let six: BigInt = "6".parse().unwrap();
         let five: BigInt = "5".parse().unwrap();

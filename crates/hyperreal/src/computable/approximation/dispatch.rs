@@ -47,6 +47,7 @@ impl Approximation {
             PrescaledExp(c) => exp(signal, c, p),
             Expm1(c) => expm1(signal, c, p),
             Sqrt(c) => sqrt(signal, c, p),
+            NthRoot(c, degree) => nth_root(signal, c, *degree, p),
             PrescaledLn(c) => ln(signal, c, p),
             PrescaledLnRational(r) => ln_rational(signal, r, p),
             BinaryScaledLnRational { residual, shift } => {

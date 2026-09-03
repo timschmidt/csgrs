@@ -2,7 +2,10 @@
 # Each report refresh promotes the worst promotable historical offender and releases the fastest regular promoted case.
 # The regular promoted set is backfilled from worst historical offenders until it reaches 100 entries when enough promotable cases exist.
 # Format: operation<TAB>input<TAB>worst_nanos<TAB>criterion_name
+generated_tan_p96	generated[12081] -1 262/383	277951	tan_generated_12081_neg_1_262_383_p96
 generated_tan_p96	generated[17496] 3 190/219	267572	tan_generated_17496_3_190_219_p96
+generated_tan_p96	generated[12216] -1 268/517	267302	tan_generated_12216_neg_1_268_517_p96
+generated_tan_p96	generated[12111] -1 76/151	265942	tan_generated_12111_neg_1_76_151_p96
 generated_tan_p96	generated[1071] -3 177/200	260352	tan_generated_1071_neg_3_177_200_p96
 generated_tan_p96	generated[1296] -3 71/91	259542	tan_generated_1296_neg_3_71_91_p96
 generated_tan_p96	generated[11391] 3 29/36	254603	tan_generated_11391_3_29_36_p96
@@ -35,7 +38,7 @@ generated_tan_p96	generated[9231] -7 5/6	118302	tan_generated_9231_neg_7_5_6_p96
 generated_tan_p96	generated[9396] -4 128/155	93463	tan_generated_9396_neg_4_128_155_p96
 generated_tan_p96	generated[3321] -4 17/107	82944	tan_generated_3321_neg_4_17_107_p96
 generated_tan_p96	generated[15891] -5 23/33	82814	tan_generated_15891_neg_5_23_33_p96
-generated_tan_p96	generated[14946] 4 104/125	74965	tan_generated_14946_4_104_125_p96
+generated_tan_p96	generated[14946] 4 104/125	75835	tan_generated_14946_4_104_125_p96
 generated_ln_abs_plus_one_p96	generated[1297] -1 83/188	74495	ln_generated_1297_neg_1_83_188_p96
 generated_ln_abs_plus_one_p96	generated[6682] -9 8/35	71775	ln_generated_6682_neg_9_8_35_p96
 generated_ln_abs_plus_one_p96	generated[17587] -6 68/73	71095	ln_generated_17587_neg_6_68_73_p96
@@ -43,8 +46,8 @@ generated_ln_abs_plus_one_p96	generated[15472] -3 13/50	70955	ln_generated_15472
 generated_ln_abs_plus_one_p96	generated[17392] -7 41/101	70886	ln_generated_17392_neg_7_41_101_p96
 generated_ln_abs_plus_one_p96	generated[15082] 1 181/356	70865	ln_generated_15082_1_181_356_p96
 generated_ln_abs_plus_one_p96	generated[9862] -1 221/492	70395	ln_generated_9862_neg_1_221_492_p96
+generated_tan_p96	generated[17331] 4 66/83	70235	tan_generated_17331_4_66_83_p96
 generated_ln_abs_plus_one_p96	generated[18352] -1 133/500	69446	ln_generated_18352_neg_1_133_500_p96
-generated_tan_p96	generated[17331] 4 66/83	69315	tan_generated_17331_4_66_83_p96
 generated_ln_abs_plus_one_p96	generated[2632] -10 37/73	69005	ln_generated_2632_neg_10_37_73_p96
 generated_ln_abs_plus_one_p96	generated[16642] 3 13/22	68805	ln_generated_16642_3_13_22_p96
 generated_tan_p96	generated[14421] 5 25/47	68126	tan_generated_14421_5_25_47_p96
@@ -52,9 +55,9 @@ generated_ln_abs_plus_one_p96	generated[16447] 1 9/20	67955	ln_generated_16447_1
 generated_ln_abs_plus_one_p96	generated[6877] -9 34/77	66535	ln_generated_6877_neg_9_34_77_p96
 generated_ln_abs_plus_one_p96	generated[322] 1 95/164	66515	ln_generated_322_1_95_164_p96
 generated_ln_abs_plus_one_p96	generated[9457] -3 23/90	66355	ln_generated_9457_neg_3_23_90_p96
+generated_ln_abs_plus_one_p96	generated[7072] -9 44/49	64695	ln_generated_7072_neg_9_44_49_p96
 generated_ln_abs_plus_one_p96	generated[6592] 1 109/348	63995	ln_generated_6592_1_109_348_p96
-generated_tan_p96	generated[9591] -3 125/127	61866	tan_generated_9591_neg_3_125_127_p96
-generated_ln_abs_plus_one_p96	generated[7072] -9 44/49	61476	ln_generated_7072_neg_9_44_49_p96
+generated_tan_p96	generated[9591] -3 125/127	62916	tan_generated_9591_neg_3_125_127_p96
 generated_ln_abs_plus_one_p96	generated[14947] 3 11/222	59696	ln_generated_14947_3_11_222_p96
 generated_ln_abs_plus_one_p96	generated[11497] 1 137/564	59206	ln_generated_11497_1_137_564_p96
 generated_ln_abs_plus_one_p96	generated[17752] -3 11/18	57886	ln_generated_17752_neg_3_11_18_p96
@@ -71,6 +74,7 @@ generated_ln_abs_plus_one_p96	generated[7642] -1 25/36	53396	ln_generated_7642_n
 generated_ln_abs_plus_one_p96	generated[1837] -1 107/724	53376	ln_generated_1837_neg_1_107_724_p96
 generated_ln_abs_plus_one_p96	generated[11122] -8 13/27	53356	ln_generated_11122_neg_8_13_27_p96
 generated_ln_abs_plus_one_p96	generated[10927] -8 57/109	53216	ln_generated_10927_neg_8_57_109_p96
+generated_ln_abs_plus_one_p96	generated[1372] -1 309/484	52446	ln_generated_1372_neg_1_309_484_p96
 generated_ln_abs_plus_one_p96	generated[7912] 1 93/772	51986	ln_generated_7912_1_93_772_p96
 generated_ln_abs_plus_one_p96	generated[10732] 6 6/137	51937	ln_generated_10732_6_6_137_p96
 generated_ln_abs_plus_one_p96	generated[7447] 1 53/76	51546	ln_generated_7447_1_53_76_p96
@@ -81,7 +85,6 @@ generated_ln_abs_plus_one_p96	generated[6487] 5 123/133	49717	ln_generated_6487_
 generated_atan_p96	generated[2964] -1 146/373	49357	atan_generated_2964_neg_1_146_373_p96
 generated_ln_abs_plus_one_p96	generated[16597] -1 15/188	49306	ln_generated_16597_neg_1_15_188_p96
 generated_ln_abs_plus_one_p96	generated[11317] -8 21/53	49196	ln_generated_11317_neg_8_21_53_p96
-generated_ln_abs_plus_one_p96	generated[1372] -1 309/484	49186	ln_generated_1372_neg_1_309_484_p96
 generated_atan_p96	generated[15369] -1 74/93	49036	atan_generated_15369_neg_1_74_93_p96
 generated_ln_abs_plus_one_p96	generated[5812] -1 51/460	48706	ln_generated_5812_neg_1_51_460_p96
 generated_atan_p96	generated[11034] 1 367/518	48677	atan_generated_11034_1_367_518_p96
@@ -99,6 +102,3 @@ generated_ln_abs_plus_one_p96	generated[13837] -1 55/76	44937	ln_generated_13837
 generated_ln_abs_plus_one_p96	generated[2242] 5 103/129	44907	ln_generated_2242_5_103_129_p96
 generated_atan_p96	generated[5094] -1 347/604	44857	atan_generated_5094_neg_1_347_604_p96
 generated_atan_p96	generated[15504] -1 228/413	44477	atan_generated_15504_neg_1_228_413_p96
-generated_ln_abs_plus_one_p96	generated[2797] -5 43/63	44077	ln_generated_2797_neg_5_43_63_p96
-generated_sin_p96	generated[12694] 5 1/4	44067	sin_generated_12694_5_1_4_p96
-generated_cos_p96	generated[14195] -4 10/59	43867	cos_generated_14195_neg_4_10_59_p96

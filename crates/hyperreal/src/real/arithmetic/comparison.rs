@@ -1,6 +1,30 @@
 // Best efforts only, definitely not adequate for Eq
 // Requirements: PartialEq should be transitive and symmetric
 // however it needn't be complete or reflexive.
+impl Real {
+    /// Returns whether both values have the same exact symbolic basis and
+    /// opposite rational scales.
+    ///
+    /// This is a structural exactness query: `true` certifies `self == -other`
+    /// without constructing a negated [`Real`], while `false` does not rule out
+    /// equality through a more general symbolic identity.
+    #[must_use]
+    #[inline]
+    pub fn is_structural_negation_of(&self, other: &Self) -> bool {
+        if !self.same_symbolic_basis(other) {
+            return false;
+        }
+        let left = &self.rational;
+        let right = &other.rational;
+        if left.is_zero() || right.is_zero() {
+            return left.is_zero() && right.is_zero();
+        }
+        left.is_negative() != right.is_negative()
+            && left.numerator() == right.numerator()
+            && left.denominator() == right.denominator()
+    }
+}
+
 impl PartialEq for Real {
     fn eq(&self, other: &Self) -> bool {
         self.rational == other.rational && self.same_symbolic_basis(other)

@@ -903,6 +903,10 @@ fn exhaustive_computable_nodes() -> Vec<(&'static str, hyperreal::Computable)> {
                 serde_json::json!({ "NormalQuantile": { "p": half, "seed": int_zero, "seed_prec": -16 } }),
             ),
         ),
+        (
+            "NthRoot",
+            computable_from_internal(serde_json::json!({ "NthRoot": [child, 3] })),
+        ),
     ]
 }
 
@@ -964,7 +968,7 @@ fn every_private_class_survives_json_and_cbor_without_cache_state() {
 fn every_computable_node_and_shared_constant_variant_round_trips_and_evaluates() {
     use hyperreal::Computable;
 
-    const NODE_NAMES: [&str; 57] = [
+    const NODE_NAMES: [&str; 58] = [
         "Int",
         "One",
         "Constant",
@@ -1022,6 +1026,7 @@ fn every_computable_node_and_shared_constant_variant_round_trips_and_evaluates()
         "LogNormalSf",
         "LogDnorm",
         "NormalQuantile",
+        "NthRoot",
     ];
     const SHARED_CONSTANT_NAMES: [&str; 18] = [
         "E",
