@@ -239,20 +239,7 @@ fn primitive_integer_content_part(mut polynomial: Vec<BigInt>) -> Vec<BigInt> {
     if polynomial.is_empty() {
         return vec![BigInt::zero()];
     }
-    let mut content = BigInt::zero();
-    for coefficient in polynomial
-        .iter()
-        .rev()
-        .filter(|coefficient| !coefficient.is_zero())
-    {
-        content = euclidean_bigint_gcd(&content, coefficient);
-        // One is the terminal content. Continuing through large resultant
-        // coefficients can otherwise spend most of a primitive PRS in GCDs
-        // whose outcome is already known.
-        if content.is_one() {
-            break;
-        }
-    }
+    let content = integer_polynomial_content(&polynomial);
     if !content.is_zero() && !content.is_one() {
         for coefficient in &mut polynomial {
             *coefficient /= &content;
@@ -293,6 +280,31 @@ fn euclidean_bigint_gcd(left: &BigInt, right: &BigInt) -> BigInt {
         right = remainder;
     }
     left
+}
+
+fn integer_polynomial_content(polynomial: &[BigInt]) -> BigInt {
+    let Some((smallest_index, smallest)) = polynomial
+        .iter()
+        .enumerate()
+        .filter(|(_, coefficient)| !coefficient.is_zero())
+        .min_by_key(|(_, coefficient)| coefficient.magnitude().bits())
+    else {
+        return BigInt::zero();
+    };
+    let mut content = smallest.abs();
+    for (index, coefficient) in polynomial.iter().enumerate() {
+        if index == smallest_index || coefficient.is_zero() {
+            continue;
+        }
+        content = euclidean_bigint_gcd(&content, coefficient);
+        // One is the terminal content. Continuing through large resultant
+        // coefficients can otherwise spend most of a primitive PRS in GCDs
+        // whose outcome is already known.
+        if content.is_one() {
+            break;
+        }
+    }
+    content
 }
 
 fn is_zero_integer_polynomial(polynomial: &[BigInt]) -> bool {
@@ -342,12 +354,7 @@ pub(crate) fn interpolate_integer_samples_up_to_scale(samples: &[Real]) -> Optio
             factorial_scale /= BigInt::from(old_len);
         }
     }
-    let content = result
-        .iter()
-        .filter(|coefficient| !coefficient.is_zero())
-        .fold(BigInt::zero(), |content, coefficient| {
-            euclidean_bigint_gcd(&content, coefficient)
-        });
+    let content = integer_polynomial_content(&result);
     if !content.is_zero() && !content.is_one() {
         for coefficient in &mut result {
             if !coefficient.is_zero() {
