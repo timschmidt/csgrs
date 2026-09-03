@@ -172,15 +172,15 @@ fn modular_integer_polynomial_gcd(left: &[BigInt], right: &[BigInt]) -> Option<V
     if is_zero_integer_polynomial(left) || is_zero_integer_polynomial(right) {
         return None;
     }
-    let mut common_leading = None;
     let mut next_prime = 2_147_483_647_u64;
     let mut best_degree = None;
     let mut reconstruction: Option<(BigInt, Vec<BigInt>)> = None;
+    let mut reconstruction_images = 0_usize;
 
-    // Each image contributes about 31 coefficient bits. This schedule covers
-    // factors up to roughly eight thousand bits before the complete PRS
-    // fallback; most geometric repeated factors reconstruct after one or two
-    // images.
+    // Each image contributes about 31 modulus bits. The rational uniqueness
+    // bound therefore covers roughly four-thousand-bit numerator/denominator
+    // height before the complete PRS fallback; geometric repeated factors are
+    // ordinarily much smaller.
     for _ in 0..256 {
         let prime = previous_prime(next_prime)?;
         next_prime = prime.checked_sub(2)?;
@@ -197,17 +197,10 @@ fn modular_integer_polynomial_gcd(left: &[BigInt], right: &[BigInt]) -> Option<V
         if left_modular.last() == Some(&0) || right_modular.last() == Some(&0) {
             continue;
         }
-        let mut modular_gcd = modular_polynomial_gcd(left_modular, right_modular, prime)?;
+        let modular_gcd = modular_polynomial_gcd(left_modular, right_modular, prime)?;
         let degree = modular_gcd.len().saturating_sub(1);
         if degree == 0 {
             return Some(vec![BigInt::one()]);
-        }
-        let common_leading = common_leading.get_or_insert_with(|| {
-            euclidean_bigint_gcd(&left[left.len() - 1], &right[right.len() - 1])
-        });
-        let common_leading_modular = common_leading.mod_floor(&modulus).to_u64()?;
-        if common_leading_modular == 0 {
-            continue;
         }
         match best_degree {
             Some(best) if degree > best => continue,
@@ -215,26 +208,20 @@ fn modular_integer_polynomial_gcd(left: &[BigInt], right: &[BigInt]) -> Option<V
             Some(_) | None => {
                 best_degree = Some(degree);
                 reconstruction = None;
+                reconstruction_images = 0;
             }
         }
-        for coefficient in &mut modular_gcd {
-            *coefficient = modular_multiply(*coefficient, common_leading_modular, prime);
-        }
         extend_modular_reconstruction(&mut reconstruction, &modular_gcd, prime)?;
+        reconstruction_images += 1;
+        if !reconstruction_images.is_multiple_of(4) {
+            continue;
+        }
         let (reconstruction_modulus, coefficients) = reconstruction.as_ref()?;
-        let half_modulus = reconstruction_modulus >> 1_usize;
-        let candidate = primitive_integer_part(
-            coefficients
-                .iter()
-                .map(|coefficient| {
-                    if coefficient > &half_modulus {
-                        coefficient - reconstruction_modulus
-                    } else {
-                        coefficient.clone()
-                    }
-                })
-                .collect(),
-        );
+        let Some(candidate) =
+            reconstruct_primitive_rational_polynomial(reconstruction_modulus, coefficients)
+        else {
+            continue;
+        };
         if candidate.len().saturating_sub(1) == degree
             && integer_polynomial_divides(left, &candidate)
             && integer_polynomial_divides(right, &candidate)
@@ -271,6 +258,73 @@ fn extend_modular_reconstruction(
     }
     *modulus *= prime;
     Some(())
+}
+
+fn reconstruct_primitive_rational_polynomial(
+    modulus: &BigInt,
+    residues: &[BigInt],
+) -> Option<Vec<BigInt>> {
+    let bound = BigInt::from((modulus.magnitude() >> 1_usize).sqrt());
+    if bound.is_zero() {
+        return None;
+    }
+    let rationals = residues
+        .iter()
+        .map(|residue| rational_reconstruction(residue, modulus, &bound))
+        .collect::<Option<Vec<_>>>()?;
+    let common_denominator = rationals
+        .iter()
+        .fold(BigInt::one(), |common, (_, denominator)| {
+            let gcd = euclidean_bigint_gcd(&common, denominator);
+            common / gcd * denominator
+        });
+    Some(primitive_integer_part(
+        rationals
+            .into_iter()
+            .map(|(numerator, denominator)| numerator * (&common_denominator / denominator))
+            .collect(),
+    ))
+}
+
+fn rational_reconstruction(
+    residue: &BigInt,
+    modulus: &BigInt,
+    bound: &BigInt,
+) -> Option<(BigInt, BigInt)> {
+    if residue.is_zero() {
+        return Some((BigInt::zero(), BigInt::one()));
+    }
+    let mut previous_remainder = modulus.clone();
+    let mut remainder = residue.clone();
+    let mut previous_denominator = BigInt::zero();
+    let mut denominator = BigInt::one();
+    while &remainder.abs() > bound {
+        if remainder.is_zero() {
+            return None;
+        }
+        let quotient = &previous_remainder / &remainder;
+        let next_remainder = previous_remainder - &quotient * &remainder;
+        let next_denominator = previous_denominator - quotient * &denominator;
+        previous_remainder = remainder;
+        remainder = next_remainder;
+        previous_denominator = denominator;
+        denominator = next_denominator;
+    }
+    if denominator.is_zero() || &denominator.abs() > bound {
+        return None;
+    }
+    if denominator.is_negative() {
+        remainder = -remainder;
+        denominator = -denominator;
+    }
+    if euclidean_bigint_gcd(&remainder, &denominator) != BigInt::one()
+        || !(residue * &denominator - &remainder)
+            .mod_floor(modulus)
+            .is_zero()
+    {
+        return None;
+    }
+    Some((remainder, denominator))
 }
 
 fn integer_polynomial_divides(dividend: &[BigInt], divisor: &[BigInt]) -> bool {
