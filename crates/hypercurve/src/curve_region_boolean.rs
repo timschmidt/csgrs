@@ -7,8 +7,9 @@ use std::sync::{Arc, OnceLock};
 use crate::bezier_moment::RationalQuadraticAreaIntegralCache;
 use crate::bezier_offset::{
     BezierAlgebraicChordAxisDirection2, BezierAlgebraicChordPairIntersections2,
-    BezierAlgebraicChordParallelIntersections2, BezierAlgebraicChordRationalIntersections2,
-    BezierAlgebraicChordRationalOverlap2, BezierAlgebraicCuspSemicircleRetainedChordContact2,
+    BezierAlgebraicChordParallelIntersections2, BezierAlgebraicChordParameter2,
+    BezierAlgebraicChordRationalIntersections2, BezierAlgebraicChordRationalOverlap2,
+    BezierAlgebraicCuspSemicircleRetainedChordContact2,
     BezierAlgebraicCuspSemicircleRetainedChordIntersections2,
     BezierAlgebraicCuspSemicircleRetainedParallelContact2,
     BezierAlgebraicCuspSemicircleSelectedFiberContact2,
@@ -1040,15 +1041,6 @@ impl CurveRegion2 {
         operation: BooleanOp,
         policy: &CurveContext,
     ) -> ExactCurveResult<Self> {
-        if policy.permits_approximate_512() {
-            match policy
-                .strict_predicate_pass(|| self.boolean_region_once(other, operation, policy))
-            {
-                Ok(region) => return Ok(region),
-                Err(ExactCurveError::Blocked(_)) => {}
-                Err(error) => return Err(error),
-            }
-        }
         self.boolean_region_once(other, operation, policy)
     }
 
@@ -1080,13 +1072,6 @@ impl CurveRegion2 {
         other: &Self,
         policy: &CurveContext,
     ) -> ExactCurveResult<CurveRegionBooleanResults2> {
-        if policy.permits_approximate_512() {
-            match policy.strict_predicate_pass(|| self.boolean_regions_once(other, policy)) {
-                Ok(regions) => return Ok(regions),
-                Err(ExactCurveError::Blocked(_)) => {}
-                Err(error) => return Err(error),
-            }
-        }
         self.boolean_regions_once(other, policy)
     }
 
@@ -1142,13 +1127,6 @@ impl CurveRegion2 {
     }
 
     pub(crate) fn regularized_region_raw(&self, policy: &CurveContext) -> ExactCurveResult<Self> {
-        if policy.permits_approximate_512() {
-            match policy.strict_predicate_pass(|| self.regularized_region_once(policy)) {
-                Ok(region) => return Ok(region),
-                Err(ExactCurveError::Blocked(_)) => {}
-                Err(error) => return Err(error),
-            }
-        }
         self.regularized_region_once(policy)
     }
 
@@ -3385,23 +3363,19 @@ impl<'a> CurveRegionBooleanContext<'a> {
         // analytic parameter and therefore enters the same rational overlap
         // authority as an ordinary PH carrier.
         if let Some(range) = regular_range.as_ref()
-            && let Classification::Decided(Some(component)) = parallel
-                .exact_rational_parallel_component_on_regular_range(range, &CurveContext::STRICT)
-                .map_err(|cause| self.invalid(parallel_index, cause))?
-            && let Some(result) = self.algebraic_chord_exact_linear_pair_result(
-                pair,
-                chord,
-                chord_index,
-                component.curve(),
-            )?
-        {
-            return Ok(result);
-        }
-        if let Some(range) = regular_range.as_ref()
             && let Classification::Decided(Some(rational)) = parallel
                 .exact_rational_parallel_component_on_regular_range(range, &CurveContext::STRICT)
                 .map_err(|cause| self.invalid(parallel_index, cause))?
-            && let shared_source_parameter = self.authored_carrier_shared_endpoints(pair).and_then(
+        {
+            if let Some(result) = self.algebraic_chord_exact_linear_pair_result(
+                pair,
+                chord,
+                chord_index,
+                rational.curve(),
+            )? {
+                return Ok(result);
+            }
+            let shared_source_parameter = self.authored_carrier_shared_endpoints(pair).and_then(
                 |(first_at_start, second_at_start)| {
                     let parallel_at_start = if parallel_index == pair.first_carrier_index {
                         first_at_start
@@ -3415,35 +3389,35 @@ impl<'a> CurveRegionBooleanContext<'a> {
                     }
                     .as_bezier_parameter()
                 },
-            )
-            && let Some(result) = self.algebraic_chord_rational_pair_result(
+            );
+            if let Some(result) = self.algebraic_chord_rational_pair_result(
                 pair,
                 chord,
                 chord_index,
                 rational.curve(),
                 Some(&rational),
                 shared_source_parameter,
-            )?
-        {
-            #[cfg(feature = "dispatch-trace")]
-            hyperreal::dispatch_trace::record(
-                "hypercurve",
-                "algebraic-chord-pair",
-                "analytic-parallel-strict-rational-component",
-            );
-            if result.blockers.is_empty() {
-                return Ok(result);
+            )? {
+                #[cfg(feature = "dispatch-trace")]
+                hyperreal::dispatch_trace::record(
+                    "hypercurve",
+                    "algebraic-chord-pair",
+                    "analytic-parallel-strict-rational-component",
+                );
+                if result.blockers.is_empty() {
+                    return Ok(result);
+                }
+                // A STRICT rational component is a representation fast path,
+                // not a completeness boundary. Selected endpoint fields can
+                // make its general rational replay inconclusive even though
+                // the retained analytic support decides the same carrier.
+                #[cfg(feature = "dispatch-trace")]
+                hyperreal::dispatch_trace::record(
+                    "hypercurve",
+                    "algebraic-chord-pair",
+                    "rational-component-fallback",
+                );
             }
-            // A STRICT rational component is a representation fast path, not
-            // a completeness boundary.  Selected endpoint fields can make
-            // its general rational replay inconclusive even though the
-            // retained analytic support decides the same finite carrier.
-            #[cfg(feature = "dispatch-trace")]
-            hyperreal::dispatch_trace::record(
-                "hypercurve",
-                "algebraic-chord-pair",
-                "rational-component-fallback",
-            );
         }
         let support_result = self.algebraic_chord_parallel_support_pair_result(
             pair,
@@ -12449,6 +12423,19 @@ fn split_carrier(
     exact_contact_point_index_by_vertex: &[usize],
     policy: &CurveContext,
 ) -> Result<Vec<SplitCarrierFragment>, CurveError> {
+    if carrier.selected_fiber_endpoint_points.is_some()
+        || events
+            .iter()
+            .any(|event| event.parameter.is_retained_scalar())
+    {
+        return split_selected_fiber_carrier(carrier, events, contact_points, policy);
+    }
+    if let RegionCarrierGeometry::AlgebraicChord(chord) = &carrier.geometry {
+        return split_algebraic_chord_carrier(carrier, chord, events, policy);
+    }
+    if let RegionCarrierGeometry::AlgebraicCuspSemicircle(fragment) = &carrier.geometry {
+        return split_algebraic_cusp_carrier(carrier, fragment, events, contact_points, policy);
+    }
     // Most retained events need very little isolator separation. Preserve the
     // former eight-step proof budget for close roots or endpoint images whose
     // complete topology replay needs a narrower interval.
@@ -12487,21 +12474,8 @@ fn split_carrier_with_refinement(
     // Their sorted event windows are therefore already within the finite
     // carrier. Only generic whole-curve materialization needs a second range
     // clip below.
-    if carrier.selected_fiber_endpoint_points.is_some()
-        || events
-            .iter()
-            .any(|event| event.parameter.is_retained_scalar())
-    {
-        return split_selected_fiber_carrier(carrier, events, contact_points, policy);
-    }
     if let RegionCarrierGeometry::AnalyticParallel(parallel) = &carrier.geometry {
         return split_analytic_carrier(carrier, parallel, events, max_refinement_steps, policy);
-    }
-    if let RegionCarrierGeometry::AlgebraicChord(chord) = &carrier.geometry {
-        return split_algebraic_chord_carrier(carrier, chord, events, policy);
-    }
-    if let RegionCarrierGeometry::AlgebraicCuspSemicircle(fragment) = &carrier.geometry {
-        return split_algebraic_cusp_carrier(carrier, fragment, events, contact_points, policy);
     }
     let parameters = events
         .iter()
@@ -12765,16 +12739,29 @@ fn split_algebraic_chord_carrier(
             }]);
         }
     }
-    let mut boundaries = events.to_vec();
+    let mut boundaries = (0..events.len()).collect::<Vec<_>>();
+    let mut comparisons = HashMap::new();
+    let mut compare =
+        |first_index: usize, second_index: usize| -> CurveResult<Classification<Ordering>> {
+            if let Some(order) = comparisons.get(&(first_index, second_index)).copied() {
+                return Ok(Classification::Decided(order));
+            }
+            let result = algebraic_chord_carrier_parameter_cmp(
+                chord,
+                &events[first_index].parameter,
+                &events[second_index].parameter,
+                policy,
+            )?;
+            if let Classification::Decided(order) = result {
+                comparisons.insert((first_index, second_index), order);
+                comparisons.insert((second_index, first_index), order.reverse());
+            }
+            Ok(result)
+        };
     for index in 1..boundaries.len() {
         let mut cursor = index;
         while cursor > 0 {
-            let order = match algebraic_chord_carrier_parameter_cmp(
-                chord,
-                &boundaries[cursor].parameter,
-                &boundaries[cursor - 1].parameter,
-                policy,
-            )? {
+            let order = match compare(boundaries[cursor], boundaries[cursor - 1])? {
                 Classification::Decided(order) => order,
                 Classification::Uncertain(reason) => {
                     return Err(CurveError::Topology(format!(
@@ -12792,12 +12779,7 @@ fn split_algebraic_chord_carrier(
 
     let mut output = Vec::with_capacity(boundaries.len().saturating_sub(1));
     for pair in boundaries.windows(2) {
-        match algebraic_chord_carrier_parameter_cmp(
-            chord,
-            &pair[0].parameter,
-            &pair[1].parameter,
-            policy,
-        )? {
+        match compare(pair[0], pair[1])? {
             Classification::Decided(Ordering::Less) => {}
             Classification::Decided(Ordering::Equal) => continue,
             Classification::Decided(Ordering::Greater) => {
@@ -12811,12 +12793,12 @@ fn split_algebraic_chord_carrier(
                 )));
             }
         }
-        let Some(start) = pair[0].parameter.as_algebraic_chord() else {
+        let Some(start) = events[pair[0]].parameter.as_algebraic_chord() else {
             return Err(CurveError::Topology(
                 "non-chord cut reached an algebraic chord carrier".into(),
             ));
         };
-        let Some(end) = pair[1].parameter.as_algebraic_chord() else {
+        let Some(end) = events[pair[1]].parameter.as_algebraic_chord() else {
             return Err(CurveError::Topology(
                 "non-chord cut reached an algebraic chord carrier".into(),
             ));
@@ -12826,8 +12808,8 @@ fn split_algebraic_chord_carrier(
         )?;
         output.push(SplitCarrierFragment {
             fragment: BezierSplitFragment2::AlgebraicChord(retained),
-            start_topology_vertex: pair[0].topology_vertex,
-            end_topology_vertex: pair[1].topology_vertex,
+            start_topology_vertex: events[pair[0]].topology_vertex,
+            end_topology_vertex: events[pair[1]].topology_vertex,
         });
     }
     if carrier.reversed {
@@ -12849,18 +12831,42 @@ fn split_algebraic_chord_carrier(
 /// a valid total order even when all represented points share this support.
 fn algebraic_chord_carrier_parameter_cmp(
     chord: &crate::BezierAlgebraicChord2,
-    first: &CurveRegionParameter2,
-    second: &CurveRegionParameter2,
+    first_parameter: &CurveRegionParameter2,
+    second_parameter: &CurveRegionParameter2,
     policy: &CurveContext,
 ) -> CurveResult<Classification<Ordering>> {
-    let (Some(first), Some(second)) = (first.as_algebraic_chord(), second.as_algebraic_chord())
-    else {
+    let (Some(first), Some(second)) = (
+        first_parameter.as_algebraic_chord(),
+        second_parameter.as_algebraic_chord(),
+    ) else {
         return Err(CurveError::Topology(
             "non-chord event reached an algebraic chord carrier".into(),
         ));
     };
     if first == second {
         return Ok(Classification::Decided(Ordering::Equal));
+    }
+    let certified_rank = |parameter: &BezierAlgebraicChordParameter2| {
+        if parameter.is_endpoint_of(chord, true) {
+            Some(0_u8)
+        } else if parameter.is_certified_strict_interior_of(chord) {
+            Some(1)
+        } else if parameter.is_endpoint_of(chord, false) {
+            Some(2)
+        } else {
+            None
+        }
+    };
+    let first_rank = certified_rank(first);
+    let second_rank = certified_rank(second);
+    if let (Some(first_rank), Some(second_rank)) = (first_rank, second_rank)
+        && (first_rank != second_rank || first_rank != 1)
+    {
+        // Endpoint identity and pair-kernel strict-containment certificates
+        // already provide the carrier's exact local order. Reconstructing a
+        // Cartesian comparison here can join otherwise independent endpoint
+        // fields merely to rediscover start < interior < end.
+        return Ok(Classification::Decided(first_rank.cmp(&second_rank)));
     }
     let (axis, increasing) = [Axis2::X, Axis2::Y]
         .into_iter()
@@ -12873,12 +12879,12 @@ fn algebraic_chord_carrier_parameter_cmp(
             CurveError::Topology("an algebraic chord lost its monotone parameter axis".into())
         })?;
     for refinement_steps in [0, 2, 4, 8, 16, 32, 64, 128, 256, 512] {
-        let first_bounds = crate::bezier_offset::algebraic_chord_endpoint_local_bounds_refined(
+        let first_bounds = crate::bezier_offset::algebraic_chord_endpoint_bounds_refined(
             first.point(),
             refinement_steps,
             policy,
         );
-        let second_bounds = crate::bezier_offset::algebraic_chord_endpoint_local_bounds_refined(
+        let second_bounds = crate::bezier_offset::algebraic_chord_endpoint_bounds_refined(
             second.point(),
             refinement_steps,
             policy,

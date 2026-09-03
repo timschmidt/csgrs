@@ -15690,21 +15690,6 @@ impl CurveRegion2 {
     ) -> ExactCurveResult<CurveOutcome<Self>> {
         let family = path.curves()[0].family();
         resolve_certified_operation(policy, |attempt| {
-            if attempt.permits_approximate_512() {
-                match attempt.strict_predicate_pass(|| {
-                    Self::stroke_path_raw(
-                        path,
-                        half_width.clone(),
-                        corner_style,
-                        cap_style,
-                        attempt,
-                    )
-                }) {
-                    Ok(Classification::Decided(region)) => return Ok(region),
-                    Ok(Classification::Uncertain(_)) | Err(ExactCurveError::Blocked(_)) => {}
-                    Err(error) => return Err(error),
-                }
-            }
             match Self::stroke_path_raw(path, half_width.clone(), corner_style, cap_style, attempt)?
             {
                 Classification::Decided(region) => Ok(region),
@@ -15954,15 +15939,6 @@ impl CurveRegion2 {
         policy: &CurveContext,
     ) -> ExactCurveResult<CurveOutcome<Self>> {
         crate::policy::resolve_certified_operation(policy, |attempt| {
-            if attempt.permits_approximate_512() {
-                match attempt.strict_predicate_pass(|| {
-                    self.offset_raw(distance.clone(), corner_style, attempt)
-                }) {
-                    Ok(Classification::Decided(region)) => return Ok(region),
-                    Ok(Classification::Uncertain(_)) | Err(ExactCurveError::Blocked(_)) => {}
-                    Err(error) => return Err(error),
-                }
-            }
             match self.offset_raw(distance.clone(), corner_style, attempt)? {
                 Classification::Decided(region) => Ok(region),
                 Classification::Uncertain(reason) => Err(ExactCurveError::blocked(
