@@ -1,5 +1,5 @@
 use hyperreal::{Rational, Real};
-use num::{BigInt, Integer, One, ToPrimitive, Zero};
+use num::{BigInt, Integer, One, Signed, ToPrimitive, Zero};
 
 pub(crate) fn primitive_integer_polynomial(polynomial: &[Real]) -> Option<Vec<Real>> {
     let rationals = polynomial
@@ -210,7 +210,7 @@ fn primitive_pseudo_remainder(dividend: &[BigInt], divisor: &[BigInt]) -> Option
         // gcd before scaling either polynomial.  The resulting combination
         // is still an exact pseudo-remainder up to a nonzero integer factor,
         // but avoids manufacturing that factor in every coefficient.
-        let leading_gcd = remainder_leading.gcd(&divisor_leading);
+        let leading_gcd = euclidean_bigint_gcd(&remainder_leading, &divisor_leading);
         let remainder_scale = &divisor_leading / &leading_gcd;
         let divisor_scale = &remainder_leading / leading_gcd;
         for coefficient in &mut remainder {
@@ -245,7 +245,7 @@ fn primitive_integer_content_part(mut polynomial: Vec<BigInt>) -> Vec<BigInt> {
         .rev()
         .filter(|coefficient| !coefficient.is_zero())
     {
-        content = content.gcd(coefficient);
+        content = euclidean_bigint_gcd(&content, coefficient);
         // One is the terminal content. Continuing through large resultant
         // coefficients can otherwise spend most of a primitive PRS in GCDs
         // whose outcome is already known.
@@ -272,6 +272,27 @@ fn primitive_integer_part(polynomial: Vec<BigInt>) -> Vec<BigInt> {
         }
     }
     polynomial
+}
+
+/// Exact Euclidean GCD for the large, similarly sized coefficients produced
+/// by fraction-free polynomial arithmetic.
+///
+/// `num-integer` uses the binary algorithm for `BigInt::gcd`; on large PRS
+/// coefficients its shift/subtract loop can dominate the complete Sturm
+/// construction. Quotient/remainder reduction reaches the identical positive
+/// gcd in far fewer big-integer operations for this workload.
+fn euclidean_bigint_gcd(left: &BigInt, right: &BigInt) -> BigInt {
+    let mut left = left.abs();
+    let mut right = right.abs();
+    if left < right {
+        std::mem::swap(&mut left, &mut right);
+    }
+    while !right.is_zero() {
+        let remainder = left % &right;
+        left = right;
+        right = remainder;
+    }
+    left
 }
 
 fn is_zero_integer_polynomial(polynomial: &[BigInt]) -> bool {
@@ -325,7 +346,7 @@ pub(crate) fn interpolate_integer_samples_up_to_scale(samples: &[Real]) -> Optio
         .iter()
         .filter(|coefficient| !coefficient.is_zero())
         .fold(BigInt::zero(), |content, coefficient| {
-            content.gcd(coefficient)
+            euclidean_bigint_gcd(&content, coefficient)
         });
     if !content.is_zero() && !content.is_one() {
         for coefficient in &mut result {
