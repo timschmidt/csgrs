@@ -1487,7 +1487,6 @@ impl<'a> CurveRegionBooleanContext<'a> {
         }
         let bezier_self_intersections = build_bezier_self_intersection_caches(&carriers, &pairs);
         let parallel_self_intersections = build_parallel_self_intersection_caches(&carriers);
-
         Ok(Self {
             data: CurveRegionBooleanContextData {
                 first: region,
@@ -3143,6 +3142,30 @@ impl<'a> CurveRegionBooleanContext<'a> {
                     blockers: Vec::new(),
                 }
             };
+        // Nonadjacent carriers have no authored endpoint to discharge.  Ask
+        // the authoritative retained-support kernel first; monotonicity is a
+        // completeness fallback for a support projection that stays blocked,
+        // not a reason to spend exponential endpoint-refinement work before a
+        // complete support answer that is already available.
+        let mut authoritative_support_result = if self.authored_carriers_are_adjacent(pair) {
+            None
+        } else {
+            Some(self.algebraic_chord_parallel_support_pair_result(
+                pair,
+                chord,
+                chord_index,
+                parallel,
+                parallel_index,
+            )?)
+        };
+        if authoritative_support_result
+            .as_ref()
+            .is_some_and(|result| result.blockers.is_empty())
+        {
+            return Ok(authoritative_support_result
+                .take()
+                .expect("the complete support result was retained above"));
+        }
         {
             let monotonic = chord
                 .parallel_tangent_cross_sign_on_region_range(
@@ -3419,13 +3442,16 @@ impl<'a> CurveRegionBooleanContext<'a> {
                 );
             }
         }
-        let support_result = self.algebraic_chord_parallel_support_pair_result(
-            pair,
-            chord,
-            chord_index,
-            parallel,
-            parallel_index,
-        )?;
+        let support_result = match authoritative_support_result.take() {
+            Some(result) => result,
+            None => self.algebraic_chord_parallel_support_pair_result(
+                pair,
+                chord,
+                chord_index,
+                parallel,
+                parallel_index,
+            )?,
+        };
         if support_result.blockers.is_empty() {
             return Ok(support_result);
         }
@@ -8287,8 +8313,11 @@ impl<'a> CurveRegionBooleanContext<'a> {
                     );
                     continue;
                 }
-                let decision =
-                    self.regularized_fragment_geometric_decision(carrier_index, &split.fragment);
+                let decision = self.regularized_fragment_geometric_decision(
+                    carrier_index,
+                    &split.fragment,
+                    true,
+                );
                 match decision {
                     Ok(decision) => {
                         actions[carrier_index][split_index] = Some(decision.action);
@@ -8806,8 +8835,11 @@ impl<'a> CurveRegionBooleanContext<'a> {
                 continue;
             }
             let split = &topology.split_fragments[carrier_index][split_index];
-            let decision =
-                self.regularized_fragment_geometric_decision(carrier_index, &split.fragment);
+            let decision = self.regularized_fragment_geometric_decision(
+                carrier_index,
+                &split.fragment,
+                !edge_overlapped[carrier_index][split_index],
+            );
             match decision {
                 Ok(decision) => {
                     actions[carrier_index][split_index] = Some(decision.action);
@@ -8989,12 +9021,17 @@ impl<'a> CurveRegionBooleanContext<'a> {
         &self,
         carrier_index: usize,
         fragment: &BezierSplitFragment2,
+        has_single_boundary_jump: bool,
     ) -> ExactCurveResult<RegularizedFragmentDecision> {
         if let BezierSplitFragment2::AlgebraicCuspSemicircle(fragment) = fragment {
             return self.regularized_algebraic_cusp_fragment_decision(carrier_index, fragment);
         }
         if let BezierSplitFragment2::AlgebraicChord(chord) = fragment {
-            return self.regularized_algebraic_chord_fragment_decision(carrier_index, chord);
+            return self.regularized_algebraic_chord_fragment_decision(
+                carrier_index,
+                chord,
+                has_single_boundary_jump,
+            );
         }
         let carrier = &self.data.carriers[carrier_index];
         let max_representatives = match &carrier.geometry {
@@ -9661,6 +9698,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
         &self,
         carrier_index: usize,
         chord: &crate::BezierAlgebraicChord2,
+        has_single_boundary_jump: bool,
     ) -> ExactCurveResult<RegularizedFragmentDecision> {
         let representative = match chord
             .representative_point(&self.data.policy)
@@ -9670,6 +9708,44 @@ impl<'a> CurveRegionBooleanContext<'a> {
             Classification::Uncertain(reason) => {
                 return Err(self.blocked(carrier_index, reason));
             }
+        };
+        // Complete pair replay has split every transverse contact away from
+        // this open fragment, and the caller excludes coincident spans.  Its
+        // two local sides therefore differ by exactly this oriented source
+        // edge's unit winding.  Classify one side and derive the other instead
+        // of intersecting a second, antiparallel boundary ray with the entire
+        // region.
+        let opposite_from_left = |left: &(Vec<i32>, RegionPointLocation)| {
+            if !has_single_boundary_jump {
+                return Ok(None);
+            }
+            let loop_index = self.data.carriers[carrier_index].loop_index;
+            let mut windings = left.0.clone();
+            let Some(winding) = windings.get_mut(loop_index) else {
+                return Err(self.invalid(
+                    carrier_index,
+                    CurveError::Topology(
+                        "a regularized fragment references a missing source loop".into(),
+                    ),
+                ));
+            };
+            *winding = winding.checked_sub(1).ok_or_else(|| {
+                self.invalid(
+                    carrier_index,
+                    CurveError::Topology("a regularized winding underflowed i32".into()),
+                )
+            })?;
+            let location = self
+                .region_for_carrier(carrier_index)
+                .region_location_from_loop_windings(&windings)
+                .map_err(|cause| self.invalid(carrier_index, cause))?;
+            #[cfg(feature = "dispatch-trace")]
+            hyperreal::dispatch_trace::record(
+                "hypercurve",
+                "regularization-fragment-side",
+                "single-boundary-winding-jump",
+            );
+            Ok(Some((windings, location)))
         };
         if let RationalBezierIntersectionPointEvidence2::Exact(representative) = representative {
             let tangent = chord
@@ -9724,17 +9800,20 @@ impl<'a> CurveRegionBooleanContext<'a> {
                 }
                 Err(error) => return Err(error),
             };
-            let right = match classify(false) {
-                Ok(classification) => classification,
-                Err(ExactCurveError::Blocked(blocker))
-                    if blocker.reason() == UncertaintyReason::Boundary =>
-                {
-                    return self.regularized_fragment_decision_by_boundary_probe(
-                        carrier_index,
-                        RationalBezierIntersectionPointEvidence2::Exact(representative),
-                    );
-                }
-                Err(error) => return Err(error),
+            let right = match opposite_from_left(&left)? {
+                Some(classification) => classification,
+                None => match classify(false) {
+                    Ok(classification) => classification,
+                    Err(ExactCurveError::Blocked(blocker))
+                        if blocker.reason() == UncertaintyReason::Boundary =>
+                    {
+                        return self.regularized_fragment_decision_by_boundary_probe(
+                            carrier_index,
+                            RationalBezierIntersectionPointEvidence2::Exact(representative),
+                        );
+                    }
+                    Err(error) => return Err(error),
+                },
             };
             return Ok(RegularizedFragmentDecision::from_classified_sides(
                 left, right,
@@ -9773,17 +9852,20 @@ impl<'a> CurveRegionBooleanContext<'a> {
             }
             Err(error) => return Err(error),
         };
-        let right = match classify(false) {
-            Ok(classification) => classification,
-            Err(ExactCurveError::Blocked(blocker))
-                if blocker.reason() == UncertaintyReason::Boundary =>
-            {
-                return self.regularized_fragment_decision_by_boundary_probe(
-                    carrier_index,
-                    RationalBezierIntersectionPointEvidence2::Algebraic(representative),
-                );
-            }
-            Err(error) => return Err(error),
+        let right = match opposite_from_left(&left)? {
+            Some(classification) => classification,
+            None => match classify(false) {
+                Ok(classification) => classification,
+                Err(ExactCurveError::Blocked(blocker))
+                    if blocker.reason() == UncertaintyReason::Boundary =>
+                {
+                    return self.regularized_fragment_decision_by_boundary_probe(
+                        carrier_index,
+                        RationalBezierIntersectionPointEvidence2::Algebraic(representative),
+                    );
+                }
+                Err(error) => return Err(error),
+            },
         };
         Ok(RegularizedFragmentDecision::from_classified_sides(
             left, right,
@@ -10330,7 +10412,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
         ];
         let mut last_reason = UncertaintyReason::Boundary;
         for (direction_x, direction_y) in directions.into_iter().flatten() {
-            match self
+            let result = self
                 .region_for_carrier(carrier_index)
                 .classify_point_from_boundary_side_ray_with_windings(
                     representative,
@@ -10347,8 +10429,8 @@ impl<'a> CurveRegionBooleanContext<'a> {
                     source_parameter,
                     &self.data.policy,
                 )
-                .map_err(|cause| self.invalid(carrier_index, cause))?
-            {
+                .map_err(|cause| self.invalid(carrier_index, cause))?;
+            match result {
                 Classification::Decided(classification) => return Ok(classification),
                 Classification::Uncertain(reason) => {
                     last_reason = reason;
@@ -17167,7 +17249,7 @@ mod certified_successor_tests {
             .expect("ordered exact subfragment");
             assert!(exact_subfragment.exact_line().is_some());
             let action = context
-                .regularized_algebraic_chord_fragment_decision(0, &exact_subfragment)
+                .regularized_algebraic_chord_fragment_decision(0, &exact_subfragment, true)
                 .map(|decision| decision.action);
             assert!(
                 action.is_ok(),
@@ -17426,7 +17508,7 @@ mod certified_successor_tests {
                     assert!(side.is_ok(), "split chord side {left}: {side:?}");
                 }
                 let action = context
-                    .regularized_algebraic_chord_fragment_decision(chord_index, chord)
+                    .regularized_algebraic_chord_fragment_decision(chord_index, chord, true)
                     .map(|decision| decision.action);
                 assert!(action.is_ok(), "split chord action: {action:?}");
             }

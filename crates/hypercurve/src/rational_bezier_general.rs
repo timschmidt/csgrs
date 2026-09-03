@@ -9330,7 +9330,7 @@ fn compare_algebraic_coordinates(
         .map(|ordering| ordering.is_eq())
 }
 
-fn resultant_parameter_polynomial(
+pub(crate) fn resultant_parameter_polynomial(
     evidence: CurveIntersectionResultantReport,
     policy: &CurveContext,
 ) -> CurveResult<Classification<Option<BezierParameterPolynomial>>> {

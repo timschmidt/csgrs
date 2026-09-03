@@ -3002,28 +3002,10 @@ fn retained_corner_fragment_trim(
         }
         let cut_parameter = parameter;
         let range = fragment.range();
-        let compare = |boundary: &CurveRegionParameter2| {
-            cut_parameter
-                .cmp_by_refinement(boundary, policy)
-                .map_err(|cause| curve_region_edit_error(operation, cause))
-                .and_then(|order| match order {
-                    Classification::Decided(order) => Ok(order),
-                    Classification::Uncertain(reason) => Err(ExactCurveError::blocked(
-                        operation,
-                        CurveFamily2::RationalBezier,
-                        reason,
-                    )),
-                })
-        };
-        if !compare(range.start())?.is_gt() || !compare(range.end())?.is_lt() {
-            return Err(curve_region_edit_error(
-                operation,
-                CurveError::Topology(
-                    "an exact selected-fiber corner cut lay outside its open source range".into(),
-                ),
-            ));
-        }
-
+        // A Trim cut reaches reconstruction only after the corner-domain
+        // authority has certified it in this fragment's open range. Preserve
+        // that proof instead of repeating two potentially multi-field scalar
+        // comparisons after the solver has already selected the candidate.
         let keep_lower_parameter_range = keep_before_cut != fragment.is_reversed();
         let (source_start_point, source_end_point) = if fragment.is_reversed() {
             (fragment.end_point(), fragment.start_point())
@@ -5569,9 +5551,33 @@ fn exact_parallel_region_endpoint_tangent(
             reversed,
         );
     }
+    if let Some(selected_source_parameter) = parameter.as_selected_fiber()
+        && let Classification::Decided(parameter) =
+            selected_source_parameter.promoted_bezier_parameter(policy)?
+    {
+        #[cfg(feature = "dispatch-trace")]
+        hyperreal::dispatch_trace::record(
+            "hypercurve",
+            "curve-region-exact-offset-tangent",
+            "selected-fiber-retained-parallel",
+        );
+        return Ok(Classification::Decided(
+            ExactOffsetTangent2::RetainedParallel {
+                parallel: parallel.clone(),
+                source_parallel: source_parallel.clone(),
+                parameter,
+                selected_source_parameter: Some(selected_source_parameter.clone()),
+                source_direction,
+            },
+        ));
+    }
+    // The tangent direction is shared by every signed parallel of one source,
+    // but a round join is centered on the unoffset boundary point. Retaining
+    // the composed parallel here would move that center by the offset a
+    // second time when the chord-normal fallback constructs its circle.
     Ok(
         crate::BezierAlgebraicChord2::from_certified_retained_parallel_oriented_unit_tangent(
-            parallel.clone(),
+            source_parallel.clone(),
             parameter,
             source_direction,
             policy,
@@ -7240,6 +7246,7 @@ fn append_retained_parallel_round_join(
         parallel,
         source_parallel,
         parameter,
+        selected_source_parameter,
         source_direction,
         companion,
         companion_at_start,
@@ -7254,10 +7261,10 @@ fn append_retained_parallel_round_join(
                 parallel,
                 source_parallel,
                 parameter,
+                selected_source_parameter,
                 source_direction,
-                ..
             }),
-            BezierSplitFragment2::AnalyticParallel(_),
+            BezierSplitFragment2::AnalyticParallel(_) | BezierSplitFragment2::SelectedFiber(_),
             _,
             BezierSplitFragment2::AlgebraicCuspSemicircle(companion),
         ) => (
@@ -7265,6 +7272,7 @@ fn append_retained_parallel_round_join(
             parallel,
             source_parallel,
             parameter,
+            selected_source_parameter.as_ref(),
             *source_direction,
             companion,
             true,
@@ -7276,15 +7284,16 @@ fn append_retained_parallel_round_join(
                 parallel,
                 source_parallel,
                 parameter,
+                selected_source_parameter,
                 source_direction,
-                ..
             }),
-            BezierSplitFragment2::AnalyticParallel(_),
+            BezierSplitFragment2::AnalyticParallel(_) | BezierSplitFragment2::SelectedFiber(_),
         ) => (
             false,
             parallel,
             source_parallel,
             parameter,
+            selected_source_parameter.as_ref(),
             *source_direction,
             companion,
             false,
@@ -7407,7 +7416,10 @@ fn append_retained_parallel_round_join(
                 companion.clone(),
                 companion_at_start,
                 parallel.clone(),
-                CurveRegionParameter2::from_bezier(parameter.clone()),
+                selected_source_parameter.map_or_else(
+                    || CurveRegionParameter2::from_bezier(parameter.clone()),
+                    |parameter| CurveRegionParameter2::from_selected_fiber(parameter.clone()),
+                ),
                 source_direction,
                 radial_product_sign,
                 other_point,
@@ -12305,7 +12317,7 @@ impl CurveRegion2 {
             {
                 return Ok(None);
             }
-            self.rebuild_retained_chamfer(
+            let rebuilt = self.rebuild_retained_chamfer(
                 loop_index,
                 previous_cut_index,
                 next_cut_index,
@@ -12315,8 +12327,8 @@ impl CurveRegion2 {
                 previous_replacement,
                 next_replacement,
                 policy,
-            )
-            .map(Some)
+            )?;
+            Ok(Some(rebuilt))
         })?;
         Ok(compact_optional_corner_solutions(solutions))
     }
@@ -12702,8 +12714,9 @@ impl CurveRegion2 {
         };
         let mut loops = self.data.boundary_loops.clone();
         loops[loop_index] = edited_loop;
-        Self::try_new_with_loop_topology(loops, roles, fill_rules, interior_sides)
-            .map_err(|cause| curve_region_edit_error(operation, cause))
+        let rebuilt = Self::try_new_with_loop_topology(loops, roles, fill_rules, interior_sides)
+            .map_err(|cause| curve_region_edit_error(operation, cause));
+        rebuilt
     }
 
     /// Solves a boundary-loop circular fillet from an exact radius.

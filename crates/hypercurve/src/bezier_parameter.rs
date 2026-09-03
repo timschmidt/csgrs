@@ -28,8 +28,10 @@ use std::sync::{Mutex, OnceLock};
 use hyperreal::{CertifiedRealSign, Rational as HyperRational, Real, RealSign};
 use hypersolve::{
     AlgebraicRootComparisonStatus, AlgebraicRootRefinementComparisonConfig,
-    AlgebraicRootRepresentation, compare_algebraic_root_representations_by_difference,
+    AlgebraicRootRepresentation, UnivariateSturmPoint as SturmPointEvidence,
+    UnivariateSturmSequence, compare_algebraic_root_representations_by_difference,
     compose_univariate_polynomial_linear_fractional,
+    greatest_common_divisor_univariate_polynomials_exact,
 };
 use num::{BigInt, BigRational, BigUint, Integer, One, ToPrimitive, Zero};
 
@@ -106,7 +108,7 @@ struct BezierAlgebraicParameterData {
 #[derive(Debug, Default)]
 struct BezierAlgebraicParameterSharedData {
     represented_exact_point: OnceLock<Option<Real>>,
-    sturm_sequence: OnceLock<Arc<[Vec<Real>]>>,
+    sturm_sequence: OnceLock<Arc<UnivariateSturmSequence>>,
     simple_root: OnceLock<bool>,
     rational_images: Mutex<Vec<RetainedRationalBezierAlgebraicImages>>,
 }
@@ -255,7 +257,7 @@ impl BezierParameterPolynomial {
     fn root_count_in_interval_with_sequence(
         &self,
         interval: &BezierParameterInterval,
-        sequence: &[Vec<Real>],
+        sequence: &UnivariateSturmSequence,
         policy: &CurveContext,
     ) -> CurveResult<Classification<usize>> {
         let start_variations = sign_variations_at(sequence, interval.start(), policy)?;
@@ -276,37 +278,17 @@ impl BezierParameterPolynomial {
         other: &Self,
         policy: &CurveContext,
     ) -> CurveResult<Classification<Option<Self>>> {
-        let mut first = self.coefficients.clone();
-        let mut second = other.coefficients.clone();
-        while !second.is_empty() {
-            let remainder = match scale_invariant_polynomial_remainder(first, &second, policy)? {
-                Classification::Decided(Some(remainder)) => remainder,
-                Classification::Decided(None) => Vec::new(),
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            };
-            first = second;
-            second = remainder;
-        }
-        let first = match normalize_coefficients(first, policy)? {
-            Classification::Decided(Some(first)) => first,
-            Classification::Decided(None) => return Ok(Classification::Decided(None)),
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
+        let Some(coefficients) = policy.strict_predicate_pass(|| {
+            greatest_common_divisor_univariate_polynomials_exact(
+                &self.coefficients,
+                &other.coefficients,
+            )
+        }) else {
+            return Ok(Classification::Uncertain(UncertaintyReason::RealSign));
         };
-        if first.len() == 1 {
-            return Ok(Classification::Decided(None));
-        }
-        let leading = first.last().expect("nonempty normalized polynomial");
-        let monic = first
-            .iter()
-            .map(|coefficient| coefficient / leading)
-            .collect::<Result<Vec<_>, _>>()?;
-        Ok(Classification::Decided(Some(Self {
-            coefficients: monic,
-        })))
+        Ok(Classification::Decided(
+            (coefficients.len() > 1).then_some(Self { coefficients }),
+        ))
     }
 
     /// Isolates every distinct root in `[0, 1]` as an exact parameter carrier.
@@ -317,6 +299,36 @@ impl BezierParameterPolynomial {
         Ok(self
             .isolate_unit_interval_roots_with_trace(policy)?
             .map(BezierRootIsolationResult2::into_roots))
+    }
+
+    /// Isolates every distinct root in one finite represented interval.
+    ///
+    /// This uses the same authoritative Sturm carrier as unit-interval
+    /// isolation, but evaluates the original polynomial at the requested
+    /// boundaries. Avoiding an affine polynomial composition keeps large
+    /// rational endpoints from inflating every coefficient and later replay.
+    pub(crate) fn isolate_interval_roots(
+        &self,
+        lower: &Real,
+        upper: &Real,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<Vec<BezierParameter2>>> {
+        match compare_reals(lower, upper, policy) {
+            Some(Ordering::Less) => {}
+            Some(Ordering::Equal | Ordering::Greater) => {
+                return Err(CurveError::InvalidBezierRange);
+            }
+            None => return Ok(Classification::Uncertain(UncertaintyReason::Ordering)),
+        }
+        Ok(isolate_roots_in_interval(
+            self.coefficients.clone(),
+            lower,
+            upper,
+            false,
+            BezierRootIsolationTrace2::default(),
+            policy,
+        )?
+        .map(BezierRootIsolationResult2::into_roots))
     }
 
     /// Isolates an exactly square-free rational polynomial on `[0, 1]` with
@@ -361,6 +373,29 @@ impl BezierParameterPolynomial {
         direction: BezierParameterRayDirection2,
         policy: &CurveContext,
     ) -> CurveResult<Classification<Vec<BezierParameter2>>> {
+        self.isolate_incident_ray_roots_impl(anchor, direction, false, policy)
+    }
+
+    /// Isolates an incident-ray chart of a caller-certified square-free
+    /// polynomial. An invertible linear-fractional substitution preserves
+    /// root multiplicity on the open chart, so the transformed polynomial can
+    /// retain the same square-free Bernstein certificate.
+    pub(crate) fn isolate_square_free_incident_ray_roots(
+        &self,
+        anchor: &Real,
+        direction: BezierParameterRayDirection2,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<Vec<BezierParameter2>>> {
+        self.isolate_incident_ray_roots_impl(anchor, direction, true, policy)
+    }
+
+    fn isolate_incident_ray_roots_impl(
+        &self,
+        anchor: &Real,
+        direction: BezierParameterRayDirection2,
+        square_free: bool,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<Vec<BezierParameter2>>> {
         let signed_unit = match direction {
             BezierParameterRayDirection2::Decreasing => -Real::one(),
             BezierParameterRayDirection2::Increasing => Real::one(),
@@ -383,7 +418,11 @@ impl BezierParameterPolynomial {
                 return Ok(Classification::Uncertain(reason));
             }
         };
-        let compact_roots = match transformed.isolate_unit_interval_roots(policy)? {
+        let compact_roots = match if square_free {
+            transformed.isolate_square_free_unit_interval_roots(policy)?
+        } else {
+            transformed.isolate_unit_interval_roots(policy)?
+        } {
             Classification::Decided(roots) => roots,
             Classification::Uncertain(reason) => {
                 return Ok(Classification::Uncertain(reason));
@@ -490,11 +529,10 @@ impl BezierParameterPolynomial {
         policy: &CurveContext,
     ) -> CurveResult<Vec<Classification<bool>>> {
         enum RepeatedRootEvidence {
-            NoDerivative,
             SquareFree,
             Repeated {
                 polynomial: BezierParameterPolynomial,
-                sturm_sequence: Vec<Vec<Real>>,
+                sturm_sequence: UnivariateSturmSequence,
             },
             Uncertain(UncertaintyReason),
         }
@@ -534,19 +572,15 @@ impl BezierParameterPolynomial {
                 }
             }
         }
-        let algebraic_derivative_coefficients = algebraic_polynomial
-            .map(|polynomial| derivative_coefficients(polynomial.coefficients()));
         let repeated_evidence = if let Some(algebraic) = algebraic_needing_classification {
             match algebraic.retained_sturm_sequence(policy)? {
                 Classification::Decided(sequence) => {
-                    let gcd_coefficients = sequence
-                        .last()
-                        .expect("a Sturm sequence contains its source polynomial");
+                    let gcd_coefficients = sequence.terminal_polynomial();
                     if gcd_coefficients.len() == 1 {
                         RepeatedRootEvidence::SquareFree
-                    } else if sequence.len() < 64 {
+                    } else {
                         let polynomial = BezierParameterPolynomial {
-                            coefficients: gcd_coefficients.clone(),
+                            coefficients: gcd_coefficients.to_vec(),
                         };
                         match sturm_sequence(polynomial.coefficients(), policy)? {
                             Classification::Decided(sturm_sequence) => {
@@ -558,52 +592,6 @@ impl BezierParameterPolynomial {
                             Classification::Uncertain(reason) => {
                                 RepeatedRootEvidence::Uncertain(reason)
                             }
-                        }
-                    } else {
-                        // A nonconstant 64th remainder may be the bounded
-                        // Sturm builder's last permitted step rather than the
-                        // completed gcd. Retain the unbounded classification
-                        // path for that high-degree case.
-                        match Self::try_new_power_basis(
-                            algebraic_derivative_coefficients
-                                .as_ref()
-                                .expect("an algebraic carrier has a derivative")
-                                .clone(),
-                            policy,
-                        ) {
-                            Ok(Classification::Decided(derivative)) => {
-                                match algebraic_polynomial
-                                    .expect("an algebraic parameter retains its carrier")
-                                    .greatest_common_divisor(&derivative, policy)?
-                                {
-                                    Classification::Decided(Some(polynomial)) => {
-                                        match sturm_sequence(polynomial.coefficients(), policy)? {
-                                            Classification::Decided(sturm_sequence) => {
-                                                RepeatedRootEvidence::Repeated {
-                                                    polynomial,
-                                                    sturm_sequence,
-                                                }
-                                            }
-                                            Classification::Uncertain(reason) => {
-                                                RepeatedRootEvidence::Uncertain(reason)
-                                            }
-                                        }
-                                    }
-                                    Classification::Decided(None) => {
-                                        RepeatedRootEvidence::SquareFree
-                                    }
-                                    Classification::Uncertain(reason) => {
-                                        RepeatedRootEvidence::Uncertain(reason)
-                                    }
-                                }
-                            }
-                            Err(CurveError::InvalidBezierPolynomial) => {
-                                RepeatedRootEvidence::NoDerivative
-                            }
-                            Ok(Classification::Uncertain(reason)) => {
-                                RepeatedRootEvidence::Uncertain(reason)
-                            }
-                            Err(error) => return Err(error),
                         }
                     }
                 }
@@ -640,7 +628,6 @@ impl BezierParameterPolynomial {
                         continue;
                     }
                     match &repeated_evidence {
-                        RepeatedRootEvidence::NoDerivative => Classification::Decided(false),
                         RepeatedRootEvidence::SquareFree => Classification::Decided(true),
                         RepeatedRootEvidence::Repeated {
                             polynomial,
@@ -981,7 +968,7 @@ impl BezierAlgebraicParameter2 {
     fn from_certified_singleton_with_sturm_sequence(
         polynomial: BezierParameterPolynomial,
         interval: BezierParameterInterval,
-        sturm_sequence: Arc<[Vec<Real>]>,
+        sturm_sequence: Arc<UnivariateSturmSequence>,
     ) -> Self {
         let parameter = Self::from_certified_singleton(polynomial, interval);
         let _ = parameter.data.shared.sturm_sequence.set(sturm_sequence);
@@ -1017,12 +1004,12 @@ impl BezierAlgebraicParameter2 {
     fn retained_sturm_sequence(
         &self,
         policy: &CurveContext,
-    ) -> CurveResult<Classification<Arc<[Vec<Real>]>>> {
+    ) -> CurveResult<Classification<Arc<UnivariateSturmSequence>>> {
         if let Some(sequence) = self.data.shared.sturm_sequence.get() {
             return Ok(Classification::Decided(Arc::clone(sequence)));
         }
         let sequence = match sturm_sequence(self.polynomial().coefficients(), policy)? {
-            Classification::Decided(sequence) => Arc::<[Vec<Real>]>::from(sequence),
+            Classification::Decided(sequence) => Arc::new(sequence),
             Classification::Uncertain(reason) => {
                 return Ok(Classification::Uncertain(reason));
             }
@@ -1289,7 +1276,7 @@ impl BezierAlgebraicParameter2 {
         &self,
         policy: &CurveContext,
         denominator_bound: BigUint,
-        sequence: &[Vec<Real>],
+        sequence: &UnivariateSturmSequence,
         mut trace: Option<&mut BezierRootIsolationTrace2>,
     ) -> CurveResult<Classification<Option<Real>>> {
         let two = BigInt::from(2_u8);
@@ -1369,7 +1356,7 @@ impl BezierAlgebraicParameter2 {
         &self,
         policy: &CurveContext,
         denominator_bound: Option<&BigUint>,
-        sequence: &[Vec<Real>],
+        sequence: &UnivariateSturmSequence,
         trace: Option<&mut BezierRootIsolationTrace2>,
     ) -> CurveResult<Classification<Option<Real>>> {
         if let Some(root) = self.data.shared.represented_exact_point.get() {
@@ -2653,7 +2640,7 @@ enum RefinedParameter<'a> {
     Algebraic {
         parameter: &'a BezierAlgebraicParameter2,
         interval: BezierParameterInterval,
-        sturm_sequence: Arc<[Vec<Real>]>,
+        sturm_sequence: Arc<UnivariateSturmSequence>,
     },
 }
 
@@ -3357,92 +3344,17 @@ fn reconstruct_rational_root(
 fn sturm_sequence(
     coefficients: &[Real],
     policy: &CurveContext,
-) -> CurveResult<Classification<Vec<Vec<Real>>>> {
-    if let Some(sequence) = primitive_integer_sturm_sequence(coefficients) {
-        return Ok(Classification::Decided(sequence));
-    }
-    let p0 = coefficients.to_vec();
-    let p1 = derivative_coefficients(coefficients);
-    let p1 = match normalize_coefficients(p1, policy)? {
-        Classification::Decided(Some(coefficients)) => coefficients,
-        Classification::Decided(None) => return Ok(Classification::Decided(vec![p0])),
-        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-    };
-
-    let maximum_sequence_len = p0.len();
-    let mut sequence = vec![p0, p1];
-    while sequence.len() < maximum_sequence_len {
-        let previous = sequence[sequence.len() - 2].clone();
-        let divisor_len = sequence[sequence.len() - 1].len();
-        let remainder = match scale_invariant_polynomial_remainder(
-            previous,
-            &sequence[sequence.len() - 1],
-            policy,
-        )? {
-            Classification::Decided(Some(remainder)) => remainder,
-            Classification::Decided(None) => break,
-            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-        };
-        if remainder.len() >= divisor_len {
-            return Ok(Classification::Uncertain(UncertaintyReason::Predicate));
-        }
-        sequence.push(negate_coefficients(remainder));
-    }
-
-    Ok(Classification::Decided(sequence))
-}
-
-fn primitive_integer_sturm_sequence(coefficients: &[Real]) -> Option<Vec<Vec<Real>>> {
-    let rationals = coefficients
-        .iter()
-        .map(Real::exact_rational_ref)
-        .collect::<Option<Vec<_>>>()?;
-    let p0 = HyperRational::primitive_bigint_ratio(&rationals);
-    let p1 = primitive_bigint_coefficients(
-        p0.iter()
-            .enumerate()
-            .skip(1)
-            .map(|(degree, coefficient)| coefficient * BigInt::from(degree))
-            .collect(),
-    );
-    let mut integer_sequence = vec![p0];
-    if !p1.is_empty() {
-        integer_sequence.push(p1);
-    }
-    let maximum_sequence_len = coefficients.len();
-    while integer_sequence.len() >= 2 && integer_sequence.len() < maximum_sequence_len {
-        let previous = integer_sequence[integer_sequence.len() - 2].clone();
-        let divisor_len = integer_sequence[integer_sequence.len() - 1].len();
-        let mut remainder = primitive_integer_pseudo_remainder_bigint(
-            previous,
-            &integer_sequence[integer_sequence.len() - 1],
-        )?;
-        if remainder.is_empty() {
-            break;
-        }
-        if remainder.len() >= divisor_len {
-            return None;
-        }
-        for coefficient in &mut remainder {
-            *coefficient = -std::mem::take(coefficient);
-        }
-        integer_sequence.push(remainder);
-    }
-    Some(
-        integer_sequence
-            .into_iter()
-            .map(|polynomial| {
-                polynomial
-                    .into_iter()
-                    .map(|coefficient| Real::new(HyperRational::from_bigint(coefficient)))
-                    .collect()
-            })
-            .collect(),
+) -> CurveResult<Classification<UnivariateSturmSequence>> {
+    Ok(
+        match UnivariateSturmSequence::new(coefficients, policy.predicate_policy()) {
+            Some(sequence) => Classification::Decided(sequence),
+            None => Classification::Uncertain(UncertaintyReason::RealSign),
+        },
     )
 }
 
 fn sign_variations_at(
-    sequence: &[Vec<Real>],
+    sequence: &UnivariateSturmSequence,
     parameter: &Real,
     policy: &CurveContext,
 ) -> CurveResult<Classification<usize>> {
@@ -3457,203 +3369,17 @@ fn sign_variations_at(
     }
 }
 
-enum SturmPointEvidence {
-    Root,
-    NonRoot(usize),
-}
-
 fn sturm_point_evidence(
-    sequence: &[Vec<Real>],
+    sequence: &UnivariateSturmSequence,
     parameter: &Real,
     policy: &CurveContext,
 ) -> CurveResult<Classification<SturmPointEvidence>> {
-    let mut previous = None;
-    let mut variations = 0_usize;
-
-    for (index, polynomial) in sequence.iter().enumerate() {
-        let sign = match exact_integer_polynomial_sign(polynomial, parameter)
-            .or_else(|| real_sign(&evaluate_coefficients(polynomial, parameter), policy))
-        {
-            Some(RealSign::Zero) if index == 0 => {
-                return Ok(Classification::Decided(SturmPointEvidence::Root));
-            }
-            Some(RealSign::Zero) => continue,
-            Some(sign) => sign,
-            None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
-        };
-        if let Some(previous) = previous
-            && previous != sign
-        {
-            variations += 1;
-        }
-        previous = Some(sign);
-    }
-
-    Ok(Classification::Decided(SturmPointEvidence::NonRoot(
-        variations,
-    )))
-}
-
-fn exact_integer_polynomial_sign(coefficients: &[Real], parameter: &Real) -> Option<RealSign> {
-    let parameter = parameter.exact_rational_ref()?;
-    let (leading, coefficients) = coefficients.split_last()?;
-    let leading = leading.exact_rational_ref()?;
-    if !leading.denominator().is_one()
-        || !coefficients.iter().all(|coefficient| {
-            coefficient
-                .exact_rational_ref()
-                .is_some_and(|coefficient| coefficient.denominator().is_one())
-        })
-    {
-        return None;
-    }
-    if let Some(sign) = exact_integer_polynomial_sign_i128(coefficients, leading, parameter) {
-        return Some(sign);
-    }
-    let parameter_numerator = BigInt::from_biguint(parameter.sign(), parameter.numerator().clone());
-    let parameter_denominator = BigInt::from(parameter.denominator().clone());
-    let mut denominator_power = BigInt::one();
-    let mut accumulator = BigInt::from_biguint(leading.sign(), leading.numerator().clone());
-    for coefficient in coefficients.iter().rev() {
-        let coefficient = coefficient
-            .exact_rational_ref()
-            .expect("integer coefficients were checked");
-        denominator_power *= &parameter_denominator;
-        accumulator *= &parameter_numerator;
-        accumulator += BigInt::from_biguint(coefficient.sign(), coefficient.numerator().clone())
-            * &denominator_power;
-    }
-    Some(match accumulator.sign() {
-        num::bigint::Sign::Minus => RealSign::Negative,
-        num::bigint::Sign::NoSign => RealSign::Zero,
-        num::bigint::Sign::Plus => RealSign::Positive,
-    })
-}
-
-fn exact_integer_polynomial_sign_i128(
-    coefficients: &[Real],
-    leading: &HyperRational,
-    parameter: &HyperRational,
-) -> Option<RealSign> {
-    let parameter_numerator = rational_signed_numerator_i128(parameter)?;
-    let parameter_denominator = i128::try_from(parameter.denominator().to_u128()?).ok()?;
-    let mut denominator_power = 1_i128;
-    let mut accumulator = rational_signed_numerator_i128(leading)?;
-    for coefficient in coefficients.iter().rev() {
-        denominator_power = denominator_power.checked_mul(parameter_denominator)?;
-        accumulator = accumulator.checked_mul(parameter_numerator)?.checked_add(
-            rational_signed_numerator_i128(
-                coefficient
-                    .exact_rational_ref()
-                    .expect("integer coefficients were checked"),
-            )?
-            .checked_mul(denominator_power)?,
-        )?;
-    }
-    Some(match accumulator.cmp(&0) {
-        Ordering::Less => RealSign::Negative,
-        Ordering::Equal => RealSign::Zero,
-        Ordering::Greater => RealSign::Positive,
-    })
-}
-
-fn rational_signed_numerator_i128(value: &HyperRational) -> Option<i128> {
-    let magnitude = value.numerator().to_u128()?;
-    match value.sign() {
-        num::bigint::Sign::NoSign => Some(0),
-        num::bigint::Sign::Plus => i128::try_from(magnitude).ok(),
-        num::bigint::Sign::Minus if magnitude == 1_u128 << 127 => Some(i128::MIN),
-        num::bigint::Sign::Minus => i128::try_from(magnitude).ok()?.checked_neg(),
-    }
-}
-
-fn scale_invariant_polynomial_remainder(
-    dividend: Vec<Real>,
-    divisor: &[Real],
-    policy: &CurveContext,
-) -> CurveResult<Classification<Option<Vec<Real>>>> {
-    if let Some(remainder) = primitive_integer_pseudo_remainder(&dividend, divisor) {
-        return Ok(Classification::Decided(
-            (!remainder.is_empty()).then_some(remainder),
-        ));
-    }
-    polynomial_remainder(dividend, divisor, policy)
-}
-
-/// Returns a positive multiple of the field remainder for rational inputs.
-///
-/// GCDs and Sturm chains are invariant under positive polynomial scaling, so
-/// they can avoid coefficient division by clearing denominators once and
-/// pseudo-dividing with integers. A negative divisor leading coefficient
-/// contributes one sign per elimination step; correcting that parity keeps
-/// every returned Sturm member a positive multiple of the ordinary remainder.
-fn primitive_integer_pseudo_remainder(dividend: &[Real], divisor: &[Real]) -> Option<Vec<Real>> {
-    let dividend = dividend
-        .iter()
-        .map(Real::exact_rational_ref)
-        .collect::<Option<Vec<_>>>()?;
-    let divisor = divisor
-        .iter()
-        .map(Real::exact_rational_ref)
-        .collect::<Option<Vec<_>>>()?;
-    let remainder = HyperRational::primitive_bigint_ratio(&dividend);
-    let divisor = HyperRational::primitive_bigint_ratio(&divisor);
-    primitive_integer_pseudo_remainder_bigint(remainder, &divisor).map(|remainder| {
-        remainder
-            .into_iter()
-            .map(|coefficient| Real::new(HyperRational::from_bigint(coefficient)))
-            .collect()
-    })
-}
-
-fn primitive_integer_pseudo_remainder_bigint(
-    mut remainder: Vec<BigInt>,
-    divisor: &[BigInt],
-) -> Option<Vec<BigInt>> {
-    let divisor_leading = divisor.last()?;
-    if divisor_leading.is_zero() {
-        return None;
-    }
-
-    let mut steps = 0_usize;
-    while remainder.len() >= divisor.len() {
-        let remainder_leading = remainder.last()?.clone();
-        let shift = remainder.len() - divisor.len();
-        for coefficient in &mut remainder[..shift] {
-            *coefficient *= divisor_leading;
-        }
-        for (index, divisor_coefficient) in divisor[..divisor.len() - 1].iter().enumerate() {
-            let target = shift + index;
-            remainder[target] *= divisor_leading;
-            remainder[target] -= &remainder_leading * divisor_coefficient;
-        }
-        remainder.pop();
-        while remainder.last().is_some_and(BigInt::is_zero) {
-            remainder.pop();
-        }
-        steps += 1;
-    }
-
-    if divisor_leading < &BigInt::zero() && !steps.is_multiple_of(2) {
-        for coefficient in &mut remainder {
-            *coefficient = -std::mem::take(coefficient);
-        }
-    }
-    Some(primitive_bigint_coefficients(remainder))
-}
-
-fn primitive_bigint_coefficients(mut coefficients: Vec<BigInt>) -> Vec<BigInt> {
-    let content = coefficients
-        .iter()
-        .fold(BigInt::zero(), |content, coefficient| {
-            content.gcd(coefficient)
-        });
-    if !content.is_zero() && !content.is_one() {
-        for coefficient in &mut coefficients {
-            *coefficient /= &content;
-        }
-    }
-    coefficients
+    Ok(
+        match sequence.classify_point(parameter, policy.predicate_policy()) {
+            Some(evidence) => Classification::Decided(evidence),
+            None => Classification::Uncertain(UncertaintyReason::RealSign),
+        },
+    )
 }
 
 fn polynomial_remainder(
@@ -3780,13 +3506,6 @@ pub(crate) fn evaluate_coefficients(coefficients: &[Real], parameter: &Real) -> 
         .fold(Real::zero(), |accumulator, coefficient| {
             (&accumulator * parameter) + coefficient
         })
-}
-
-fn negate_coefficients(coefficients: Vec<Real>) -> Vec<Real> {
-    coefficients
-        .into_iter()
-        .map(|coefficient| Real::zero() - coefficient)
-        .collect()
 }
 
 enum UnitRootSearch {
@@ -4209,8 +3928,27 @@ fn isolate_unit_roots(
             coefficients = polynomial.coefficients;
         }
     }
+
+    isolate_roots_in_interval(
+        coefficients,
+        &Real::zero(),
+        &Real::one(),
+        true,
+        trace,
+        policy,
+    )
+}
+
+fn isolate_roots_in_interval(
+    mut coefficients: Vec<Real>,
+    lower: &Real,
+    upper: &Real,
+    allow_unit_bernstein: bool,
+    mut trace: BezierRootIsolationTrace2,
+    policy: &CurveContext,
+) -> CurveResult<Classification<BezierRootIsolationResult2>> {
     let mut represented = Vec::new();
-    for endpoint in [Real::zero(), Real::one()] {
+    for endpoint in [lower.clone(), upper.clone()] {
         let mut found = false;
         loop {
             if coefficients.len() <= 1 {
@@ -4246,17 +3984,25 @@ fn isolate_unit_roots(
             .cloned()
             .collect::<Vec<_>>();
         let has_interior_represented_root = represented_boundaries.iter().any(|root| {
-            compare_reals(root, &Real::zero(), policy) == Some(Ordering::Greater)
-                && compare_reals(root, &Real::one(), policy) == Some(Ordering::Less)
+            compare_reals(root, lower, policy) == Some(Ordering::Greater)
+                && compare_reals(root, upper, policy) == Some(Ordering::Less)
         });
-        if !has_interior_represented_root
+        if allow_unit_bernstein
+            && !has_interior_represented_root
             && let Some(mut algebraic) =
                 exact_nonrational_bernstein_unit_roots(&polynomial, policy, &mut trace)?
         {
             represented.append(&mut algebraic);
             break;
         }
-        match search_unit_roots(&polynomial, &represented_boundaries, policy, &mut trace)? {
+        match search_interval_roots(
+            &polynomial,
+            &represented_boundaries,
+            lower,
+            upper,
+            policy,
+            &mut trace,
+        )? {
             Classification::Decided(UnitRootSearch::Isolated(mut algebraic)) => {
                 represented.append(&mut algebraic);
                 break;
@@ -4384,22 +4130,24 @@ fn ordered_root_isolation_result(
     }))
 }
 
-fn search_unit_roots(
+fn search_interval_roots(
     polynomial: &BezierParameterPolynomial,
     represented_roots: &[Real],
+    domain_start: &Real,
+    domain_end: &Real,
     policy: &CurveContext,
     trace: &mut BezierRootIsolationTrace2,
 ) -> CurveResult<Classification<UnitRootSearch>> {
     let sequence = match sturm_sequence(polynomial.coefficients(), policy)? {
-        Classification::Decided(sequence) => Arc::<[Vec<Real>]>::from(sequence),
+        Classification::Decided(sequence) => Arc::new(sequence),
         Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
     };
     let rational_root_denominator_bound = rational_root_denominator_bound(polynomial);
     trace.sturm_sequence_builds += 1;
-    let mut boundaries = vec![Real::zero()];
+    let mut boundaries = vec![domain_start.clone()];
     for root in represented_roots {
-        if compare_reals(root, &Real::zero(), policy) == Some(Ordering::Greater)
-            && compare_reals(root, &Real::one(), policy) == Some(Ordering::Less)
+        if compare_reals(root, domain_start, policy) == Some(Ordering::Greater)
+            && compare_reals(root, domain_end, policy) == Some(Ordering::Less)
         {
             let insert_at = boundaries
                 .iter()
@@ -4414,7 +4162,7 @@ fn search_unit_roots(
             }
         }
     }
-    boundaries.push(Real::one());
+    boundaries.push(domain_end.clone());
     let mut boundary_variations = Vec::with_capacity(boundaries.len());
     for boundary in &boundaries {
         match sturm_point_evidence(&sequence, boundary, policy)? {
@@ -4446,12 +4194,13 @@ fn search_unit_roots(
     let mut isolated = Vec::new();
     while let Some((start, end, start_variations, end_variations, depth)) = pending.pop() {
         trace.maximum_depth = trace.maximum_depth.max(depth);
-        let interval = match BezierParameterInterval::try_new(start.clone(), end.clone(), policy)? {
-            Classification::Decided(interval) => interval,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
+        let interval =
+            match BezierParameterInterval::try_new_ordered(start.clone(), end.clone(), policy)? {
+                Classification::Decided(interval) => interval,
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            };
         let count = start_variations.saturating_sub(end_variations);
         trace.interval_root_counts += 1;
         if count == 0 {
@@ -4461,9 +4210,9 @@ fn search_unit_roots(
             compare_reals(root, &start, policy) == Some(Ordering::Equal)
                 || compare_reals(root, &end, policy) == Some(Ordering::Equal)
         });
-        let touches_domain_endpoint = compare_reals(&start, &Real::zero(), policy)
+        let touches_domain_endpoint = compare_reals(&start, domain_start, policy)
             == Some(Ordering::Equal)
-            || compare_reals(&end, &Real::one(), policy) == Some(Ordering::Equal);
+            || compare_reals(&end, domain_end, policy) == Some(Ordering::Equal);
         if count == 1 && !touches_represented_root && !touches_domain_endpoint {
             // `count == 1` above was proved with the cached Sturm sequence.
             // Reusing that certificate avoids rebuilding the identical
@@ -4731,60 +4480,6 @@ mod conversion_tests {
             .expect("one parameter produces one classification")
     }
 
-    fn primitive_ratio(coefficients: &[Real]) -> Vec<Real> {
-        let rationals = coefficients
-            .iter()
-            .map(Real::exact_rational_ref)
-            .collect::<Option<Vec<_>>>()
-            .expect("test coefficients are rational");
-        HyperRational::primitive_bigint_ratio(&rationals)
-            .into_iter()
-            .map(HyperRational::from_bigint)
-            .map(Real::from)
-            .collect()
-    }
-
-    fn ordinary_field_sturm_sequence(
-        coefficients: &[Real],
-        policy: &CurveContext,
-    ) -> Vec<Vec<Real>> {
-        let p0 = coefficients.to_vec();
-        let p1 =
-            match normalize_coefficients(derivative_coefficients(coefficients), policy).unwrap() {
-                Classification::Decided(Some(coefficients)) => coefficients,
-                Classification::Decided(None) => return vec![p0],
-                Classification::Uncertain(reason) => {
-                    panic!("field Sturm derivative unexpectedly uncertain: {reason:?}")
-                }
-            };
-        let mut sequence = vec![p0, p1];
-        while sequence.len() < 64 {
-            let previous = sequence[sequence.len() - 2].clone();
-            let remainder = match polynomial_remainder(
-                previous,
-                &sequence[sequence.len() - 1],
-                policy,
-            )
-            .unwrap()
-            {
-                Classification::Decided(Some(remainder)) => remainder,
-                Classification::Decided(None) => break,
-                Classification::Uncertain(reason) => {
-                    panic!("field Sturm remainder unexpectedly uncertain: {reason:?}")
-                }
-            };
-            sequence.push(negate_coefficients(remainder));
-        }
-        sequence
-    }
-
-    fn sturm_evidence_key(evidence: SturmPointEvidence) -> Option<usize> {
-        match evidence {
-            SturmPointEvidence::Root => None,
-            SturmPointEvidence::NonRoot(variations) => Some(variations),
-        }
-    }
-
     fn decided<T>(classification: Classification<T>, context: &str) -> T {
         match classification {
             Classification::Decided(value) => value,
@@ -4885,112 +4580,7 @@ mod conversion_tests {
     }
 
     #[test]
-    fn primitive_pseudo_remainder_is_positive_field_remainder_scale() {
-        let policy = CurveContext::STRICT;
-        for (dividend, divisor) in [
-            (
-                vec![
-                    rational(2, 3),
-                    rational(-5, 4),
-                    rational(3, 2),
-                    rational(-7, 3),
-                ],
-                vec![rational(1, 5), rational(-2, 3)],
-            ),
-            (
-                vec![
-                    rational(-3, 7),
-                    rational(4, 9),
-                    rational(5, 6),
-                    rational(-2, 5),
-                    rational(8, 3),
-                ],
-                vec![rational(2, 11), rational(3, 5), rational(-4, 7)],
-            ),
-            (
-                vec![rational(-2, 3), rational(1, 3), rational(1, 3)],
-                vec![rational(-1, 2), rational(1, 2)],
-            ),
-            (
-                vec![rational(1, 3), rational(2, 5), rational(3, 7)],
-                vec![rational(2, 9), rational(-1, 4)],
-            ),
-        ] {
-            let expected = match polynomial_remainder(dividend.clone(), &divisor, &policy).unwrap()
-            {
-                Classification::Decided(Some(remainder)) => primitive_ratio(&remainder),
-                Classification::Decided(None) => Vec::new(),
-                Classification::Uncertain(reason) => {
-                    panic!("field remainder unexpectedly uncertain: {reason:?}")
-                }
-            };
-            assert_eq!(
-                primitive_integer_pseudo_remainder(&dividend, &divisor),
-                Some(expected)
-            );
-        }
-    }
-
-    #[test]
-    fn primitive_integer_sturm_matches_field_sequence_variations() {
-        let policy = CurveContext::STRICT;
-        let polynomials = [
-            vec![rational(-1, 3), rational(0, 1), rational(2, 5)],
-            vec![
-                rational(1, 2),
-                rational(-7, 3),
-                rational(4, 5),
-                rational(9, 7),
-            ],
-            vec![
-                rational(-5, 11),
-                rational(0, 1),
-                rational(13, 6),
-                rational(0, 1),
-                rational(-3, 2),
-            ],
-            vec![
-                rational(1, 4),
-                rational(-1, 1),
-                rational(3, 2),
-                rational(-1, 1),
-                rational(1, 4),
-            ],
-        ];
-        let samples = [
-            rational(0, 1),
-            rational(1, 8),
-            rational(1, 3),
-            rational(1, 2),
-            rational(5, 7),
-            rational(1, 1),
-        ];
-        for coefficients in polynomials {
-            let optimized = decided(
-                sturm_sequence(&coefficients, &policy).unwrap(),
-                "rational Sturm sequence",
-            );
-            let field = ordinary_field_sturm_sequence(&coefficients, &policy);
-            for sample in &samples {
-                let optimized = decided(
-                    sturm_point_evidence(&optimized, sample, &policy).unwrap(),
-                    "integer Sturm evidence",
-                );
-                let field = decided(
-                    sturm_point_evidence(&field, sample, &policy).unwrap(),
-                    "field Sturm evidence",
-                );
-                assert_eq!(
-                    sturm_evidence_key(optimized),
-                    sturm_evidence_key(field),
-                    "different variation evidence for {coefficients:?} at {sample:?}"
-                );
-            }
-        }
-    }
-
-    #[test]
-    fn primitive_integer_sturm_sequence_has_no_historical_degree_cap() {
+    fn authoritative_sturm_sequence_has_no_historical_degree_cap() {
         let policy = CurveContext::STRICT;
         let mut previous = vec![Real::one()];
         let mut current = vec![Real::zero(), Real::one()];
@@ -5005,10 +4595,9 @@ mod conversion_tests {
             previous = current;
             current = next;
         }
-        let sequence = primitive_integer_sturm_sequence(&current)
-            .expect("the degree-seventy Chebyshev polynomial has an integer Sturm chain");
-        assert!(sequence.len() > 64);
-        assert_eq!(sequence.last().map(Vec::len), Some(1));
+        let sequence = UnivariateSturmSequence::new(&current, hypersolve::PredicatePolicy::STRICT)
+            .expect("the degree-seventy Chebyshev polynomial has an exact Sturm chain");
+        assert_eq!(sequence.terminal_polynomial().len(), 1);
         let start = decided(
             sturm_point_evidence(&sequence, &Real::zero(), &policy).unwrap(),
             "Chebyshev Sturm start",
@@ -5083,6 +4672,35 @@ mod conversion_tests {
             sturm_point_evidence(&linear_sequence, &rational(1, 2), &policy).unwrap(),
             Classification::Decided(SturmPointEvidence::Root)
         ));
+    }
+
+    #[test]
+    fn interval_root_isolation_uses_original_polynomial_and_closed_boundaries() {
+        let policy = CurveContext::STRICT;
+        // (5t - 1)(2t - 1)(5t - 4) has roots 1/5, 1/2, and 4/5.
+        let defining = polynomial(&[-4, 33, -75, 50]);
+        let interior = decided(
+            defining
+                .isolate_interval_roots(&rational(1, 3), &rational(2, 3), &policy)
+                .unwrap(),
+            "interior interval isolation",
+        );
+        assert_eq!(interior.len(), 1);
+        assert_eq!(interior[0].as_exact(), Some(&rational(1, 2)));
+
+        let closed = decided(
+            defining
+                .isolate_interval_roots(&rational(1, 5), &rational(4, 5), &policy)
+                .unwrap(),
+            "closed interval isolation",
+        );
+        assert_eq!(closed.len(), 3);
+        for (root, expected) in closed
+            .iter()
+            .zip([rational(1, 5), rational(1, 2), rational(4, 5)])
+        {
+            assert_eq!(root.as_exact(), Some(&expected));
+        }
     }
 
     #[test]
@@ -5506,39 +5124,6 @@ mod conversion_tests {
                 );
             }
         }
-    }
-
-    #[test]
-    fn integer_polynomial_sign_matches_exact_rational_evaluation() {
-        let policy = CurveContext::STRICT;
-        let wide = (BigInt::one() << 200_usize) + BigInt::from(123_456_789_u64);
-        let polynomials = [
-            vec![rational(-2, 1), rational(0, 1), rational(1, 1)],
-            vec![
-                Real::new(HyperRational::from_bigint(-wide.clone())),
-                rational(7, 1),
-                Real::new(HyperRational::from_bigint(wide)),
-            ],
-            vec![rational(0, 1)],
-        ];
-        let parameters = [
-            rational(-3, 7),
-            rational(0, 1),
-            rational(1, 2),
-            rational(5, 3),
-        ];
-        for polynomial in &polynomials {
-            for parameter in &parameters {
-                assert_eq!(
-                    exact_integer_polynomial_sign(polynomial, parameter),
-                    real_sign(&evaluate_coefficients(polynomial, parameter), &policy)
-                );
-            }
-        }
-        assert_eq!(
-            exact_integer_polynomial_sign(&[rational(1, 2)], &Real::zero()),
-            None
-        );
     }
 
     #[test]

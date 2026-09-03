@@ -11159,6 +11159,7 @@ fn selected_fiber_chamfer_cuts(
             .fixed_distance_incidence_from_selected_parameter(
                 center_parameter,
                 setback,
+                fragment.range(),
                 (mode == CurveCornerMode2::TrimOrExtend).then_some(direction),
                 policy,
             )
