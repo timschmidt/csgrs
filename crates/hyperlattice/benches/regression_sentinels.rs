@@ -2,6 +2,9 @@ use criterion::{Criterion, criterion_group, criterion_main};
 use hyperlattice::{Complex, Matrix3, Matrix4, Real, SharedScaleVec, Vector3, Vector4, sqrt};
 use std::hint::black_box;
 
+#[path = "support/benchmark_report.rs"]
+mod benchmark_report;
+
 fn r(value: i32) -> Real {
     value.into()
 }
@@ -313,5 +316,9 @@ fn bench_regression_sentinels(c: &mut Criterion) {
     });
 }
 
-criterion_group!(benches, bench_regression_sentinels);
+criterion_group!(
+    benches,
+    bench_regression_sentinels,
+    benchmark_report::finish_benchmark_report
+);
 criterion_main!(benches);

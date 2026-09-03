@@ -40,6 +40,10 @@ name = "regression_sentinels"
 harness = false
 
 [[bench]]
+name = "retained_fuzz"
+harness = false
+
+[[bench]]
 name = "api_dispatch_trace"
 harness = false
 required-features = ["hyperreal-dispatch-trace"]

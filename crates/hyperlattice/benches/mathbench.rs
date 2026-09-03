@@ -5,6 +5,10 @@ use hyperlattice::Rational;
 use hyperlattice::{Complex, Matrix3, Matrix4, Real, SignedAxis4, Vector3, Vector4};
 use symbolica::domains::float::RealLike;
 
+#[path = "support/benchmark_report.rs"]
+#[allow(dead_code)]
+mod benchmark_report;
+
 include!("mathbench/engines.rs");
 include!("mathbench/fixtures.rs");
 include!("mathbench/comparisons.rs");
@@ -62,6 +66,7 @@ fn main() {
 
     if args.iter().any(|arg| arg == "--update-benchmarks-md") {
         update_benchmarks_doc();
+        update_complete_benchmark_report();
         return;
     }
 
@@ -100,5 +105,22 @@ fn main() {
     } else {
         criterion.final_summary();
         update_benchmarks_doc();
+        update_complete_benchmark_report();
+    }
+}
+
+fn update_complete_benchmark_report() {
+    if benchmark_report::reports_disabled() {
+        return;
+    }
+    match benchmark_report::write_benchmarks_md() {
+        Ok(summary) => eprintln!(
+            "updated {} from {} Criterion rows, {} comparisons, and {} benchmark suites",
+            summary.path.display(),
+            summary.rows,
+            summary.comparisons,
+            summary.suites,
+        ),
+        Err(error) => eprintln!("failed to update complete benchmark report: {error}"),
     }
 }

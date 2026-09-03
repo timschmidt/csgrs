@@ -272,8 +272,11 @@ Symbolica; methodology and retained results live in
   [Hypermesh](https://github.com/timschmidt/hypermesh) own higher geometry.
 
 [`PERFORMANCE.md`](PERFORMANCE.md) records benchmark methodology and retained
-optimization evidence. Generate the complete signatures and trait
-implementations with `cargo doc --open`.
+optimization evidence. [`benchmarks.md`](benchmarks.md) is refreshed after
+either Criterion timing binary runs and includes every stored row, including
+competitive and regression-sentinel results. Regenerate it without measuring
+with `cargo run --example write_benchmarks_md`. Generate the complete
+signatures and trait implementations with `cargo doc --open`.
 
 ## References
 

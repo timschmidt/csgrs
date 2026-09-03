@@ -150,10 +150,10 @@ fn complex_fuzz(input: Input) {
     // powi returns Complex::one() directly for exponent 0 on non-zero inputs.
     let is_zero_re = z.re.zero_status() == ZeroStatus::Zero;
     let is_zero_im = z.im.zero_status() == ZeroStatus::Zero;
-    if !is_zero_re || !is_zero_im {
-        if let Ok(result) = z.clone().powi(0) {
-            assert_eq!(result, Complex::one(), "powi(non-zero z, 0) must equal 1");
-        }
+    if (!is_zero_re || !is_zero_im)
+        && let Ok(result) = z.clone().powi(0)
+    {
+        assert_eq!(result, Complex::one(), "powi(non-zero z, 0) must equal 1");
     }
 
     // ── Invariant: owned + borrowed operators agree ───────────────────────────
