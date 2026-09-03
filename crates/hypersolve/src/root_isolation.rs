@@ -22,7 +22,7 @@ use crate::certification::{
 use crate::eval::EvaluationContext;
 use crate::integer_interpolation::{
     primitive_integer_polynomial, primitive_integer_polynomial_gcd,
-    primitive_integer_polynomials_are_coprime_modular, primitive_integer_sturm_sequence,
+    primitive_integer_sturm_sequence,
 };
 use crate::interval::rational_interval_product;
 use crate::model::{ConstraintKind, Problem};
@@ -2096,9 +2096,6 @@ pub(crate) fn polynomial_gcd(
 ) -> Option<Vec<Real>> {
     left = trim_polynomial(left, policy)?;
     right = trim_polynomial(right, policy)?;
-    if primitive_integer_polynomials_are_coprime_modular(&left, &right) == Some(true) {
-        return Some(vec![Real::one()]);
-    }
     if let Some(gcd) = primitive_integer_polynomial_gcd(&left, &right) {
         return gcd_monic_normalize(gcd, policy);
     }
@@ -2726,10 +2723,6 @@ pub fn square_free_part(polynomial: Vec<Real>, policy: PredicatePolicy) -> Optio
         .all(|coefficient| coefficient.exact_rational_ref().is_some())
     {
         let derivative = trim_polynomial(derivative, policy)?;
-        if primitive_integer_polynomials_are_coprime_modular(&polynomial, &derivative) == Some(true)
-        {
-            return Some(polynomial);
-        }
         if let Some(gcd) = primitive_integer_polynomial_gcd(&polynomial, &derivative) {
             gcd_monic_normalize(gcd, policy)?
         } else {

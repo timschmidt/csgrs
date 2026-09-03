@@ -21,6 +21,14 @@ pub(crate) fn primitive_integer_polynomial_gcd(left: &[Real], right: &[Real]) ->
     if left.len() < right.len() {
         std::mem::swap(&mut left, &mut right);
     }
+    if let Some(gcd) = modular_integer_polynomial_gcd(&left, &right) {
+        return Some(
+            gcd.into_iter()
+                .map(Rational::from_bigint)
+                .map(Real::from)
+                .collect(),
+        );
+    }
     while !is_zero_integer_polynomial(&right) {
         let remainder = primitive_pseudo_remainder(&left, &right)?;
         left = right;
@@ -85,45 +93,7 @@ pub(crate) fn primitive_integer_sturm_sequence(coefficients: &[Real]) -> Option<
     )
 }
 
-/// Certifies coprimality over `Q[x]` through a degree-preserving modular
-/// image. A gcd of one modulo any good prime proves the primitive integer
-/// polynomials are coprime in characteristic zero. Failure to find such a
-/// prime is inconclusive and deliberately returns `false`.
-pub(crate) fn primitive_integer_polynomials_are_coprime_modular(
-    left: &[Real],
-    right: &[Real],
-) -> Option<bool> {
-    let left = primitive_integer_coefficients(left)?;
-    let right = primitive_integer_coefficients(right)?;
-    if is_zero_integer_polynomial(&left) || is_zero_integer_polynomial(&right) {
-        return Some(false);
-    }
-    for prime in [65_521_u64, 65_519, 65_497, 65_479] {
-        let reduce = |polynomial: &[BigInt]| {
-            let modulus = BigInt::from(prime);
-            polynomial
-                .iter()
-                .map(|coefficient| coefficient.mod_floor(&modulus).to_u64())
-                .collect::<Option<Vec<_>>>()
-        };
-        let (Some(left_modular), Some(right_modular)) = (reduce(&left), reduce(&right)) else {
-            continue;
-        };
-        if left_modular.last() == Some(&0) || right_modular.last() == Some(&0) {
-            continue;
-        }
-        if modular_polynomial_gcd_degree(left_modular, right_modular, prime) == Some(0) {
-            return Some(true);
-        }
-    }
-    Some(false)
-}
-
-fn modular_polynomial_gcd_degree(
-    mut left: Vec<u64>,
-    mut right: Vec<u64>,
-    prime: u64,
-) -> Option<usize> {
+fn modular_polynomial_gcd(mut left: Vec<u64>, mut right: Vec<u64>, prime: u64) -> Option<Vec<u64>> {
     modular_trim(&mut left);
     modular_trim(&mut right);
     while !modular_is_zero(&right) {
@@ -132,7 +102,11 @@ fn modular_polynomial_gcd_degree(
         right = remainder;
     }
     modular_trim(&mut left);
-    Some(left.len().saturating_sub(1))
+    let leading_inverse = modular_power(*left.last()?, prime.checked_sub(2)?, prime);
+    for coefficient in &mut left {
+        *coefficient = modular_multiply(*coefficient, leading_inverse, prime);
+    }
+    Some(left)
 }
 
 fn modular_polynomial_remainder(
@@ -148,9 +122,9 @@ fn modular_polynomial_remainder(
     let inverse = modular_power(*divisor.last()?, prime.checked_sub(2)?, prime);
     while !modular_is_zero(&dividend) && dividend.len() >= divisor.len() {
         let shift = dividend.len() - divisor.len();
-        let scale = dividend.last()?.checked_mul(inverse)? % prime;
+        let scale = modular_multiply(*dividend.last()?, inverse, prime);
         for (index, coefficient) in divisor.iter().enumerate().take(divisor_degree + 1) {
-            let product = scale.checked_mul(*coefficient)? % prime;
+            let product = modular_multiply(scale, *coefficient, prime);
             let target = shift + index;
             dividend[target] = (dividend[target] + prime - product) % prime;
         }
@@ -163,12 +137,16 @@ fn modular_power(mut base: u64, mut exponent: u64, modulus: u64) -> u64 {
     let mut result = 1_u64;
     while exponent != 0 {
         if exponent & 1 != 0 {
-            result = result * base % modulus;
+            result = modular_multiply(result, base, modulus);
         }
-        base = base * base % modulus;
+        base = modular_multiply(base, base, modulus);
         exponent >>= 1;
     }
     result
+}
+
+fn modular_multiply(left: u64, right: u64, modulus: u64) -> u64 {
+    (u128::from(left) * u128::from(right) % u128::from(modulus)) as u64
 }
 
 fn modular_trim(polynomial: &mut Vec<u64>) {
@@ -182,6 +160,184 @@ fn modular_trim(polynomial: &mut Vec<u64>) {
 
 fn modular_is_zero(polynomial: &[u64]) -> bool {
     polynomial.iter().all(|coefficient| *coefficient == 0)
+}
+
+/// Reconstructs the primitive integer GCD from degree-preserving modular
+/// images and accepts it only after exact division of both source polynomials.
+/// Unlucky primes can only raise the modular GCD degree; keeping the smallest
+/// degree seen and requiring exact divisibility makes every returned result a
+/// complete characteristic-zero certificate. Exhausting the reconstruction
+/// schedule deliberately falls through to the fraction-free PRS.
+fn modular_integer_polynomial_gcd(left: &[BigInt], right: &[BigInt]) -> Option<Vec<BigInt>> {
+    if is_zero_integer_polynomial(left) || is_zero_integer_polynomial(right) {
+        return None;
+    }
+    let mut common_leading = None;
+    let mut next_prime = 2_147_483_647_u64;
+    let mut best_degree = None;
+    let mut reconstruction: Option<(BigInt, Vec<BigInt>)> = None;
+
+    // Each image contributes about 31 coefficient bits. This schedule covers
+    // factors up to roughly eight thousand bits before the complete PRS
+    // fallback; most geometric repeated factors reconstruct after one or two
+    // images.
+    for _ in 0..256 {
+        let prime = previous_prime(next_prime)?;
+        next_prime = prime.checked_sub(2)?;
+        let modulus = BigInt::from(prime);
+        let reduce = |polynomial: &[BigInt]| {
+            polynomial
+                .iter()
+                .map(|coefficient| coefficient.mod_floor(&modulus).to_u64())
+                .collect::<Option<Vec<_>>>()
+        };
+        let (Some(left_modular), Some(right_modular)) = (reduce(left), reduce(right)) else {
+            continue;
+        };
+        if left_modular.last() == Some(&0) || right_modular.last() == Some(&0) {
+            continue;
+        }
+        let mut modular_gcd = modular_polynomial_gcd(left_modular, right_modular, prime)?;
+        let degree = modular_gcd.len().saturating_sub(1);
+        if degree == 0 {
+            return Some(vec![BigInt::one()]);
+        }
+        let common_leading = common_leading.get_or_insert_with(|| {
+            euclidean_bigint_gcd(&left[left.len() - 1], &right[right.len() - 1])
+        });
+        let common_leading_modular = common_leading.mod_floor(&modulus).to_u64()?;
+        if common_leading_modular == 0 {
+            continue;
+        }
+        match best_degree {
+            Some(best) if degree > best => continue,
+            Some(best) if degree == best => {}
+            Some(_) | None => {
+                best_degree = Some(degree);
+                reconstruction = None;
+            }
+        }
+        for coefficient in &mut modular_gcd {
+            *coefficient = modular_multiply(*coefficient, common_leading_modular, prime);
+        }
+        extend_modular_reconstruction(&mut reconstruction, &modular_gcd, prime)?;
+        let (reconstruction_modulus, coefficients) = reconstruction.as_ref()?;
+        let half_modulus = reconstruction_modulus >> 1_usize;
+        let candidate = primitive_integer_part(
+            coefficients
+                .iter()
+                .map(|coefficient| {
+                    if coefficient > &half_modulus {
+                        coefficient - reconstruction_modulus
+                    } else {
+                        coefficient.clone()
+                    }
+                })
+                .collect(),
+        );
+        if candidate.len().saturating_sub(1) == degree
+            && integer_polynomial_divides(left, &candidate)
+            && integer_polynomial_divides(right, &candidate)
+        {
+            return Some(candidate);
+        }
+    }
+    None
+}
+
+fn extend_modular_reconstruction(
+    reconstruction: &mut Option<(BigInt, Vec<BigInt>)>,
+    image: &[u64],
+    prime: u64,
+) -> Option<()> {
+    let Some((modulus, coefficients)) = reconstruction else {
+        *reconstruction = Some((
+            BigInt::from(prime),
+            image.iter().copied().map(BigInt::from).collect(),
+        ));
+        return Some(());
+    };
+    if coefficients.len() != image.len() {
+        return None;
+    }
+    let prime_bigint = BigInt::from(prime);
+    let modulus_image = modulus.mod_floor(&prime_bigint).to_u64()?;
+    let modulus_inverse = modular_power(modulus_image, prime.checked_sub(2)?, prime);
+    for (coefficient, image) in coefficients.iter_mut().zip(image) {
+        let coefficient_image = coefficient.mod_floor(&prime_bigint).to_u64()?;
+        let delta = (*image + prime - coefficient_image) % prime;
+        let lift = modular_multiply(delta, modulus_inverse, prime);
+        *coefficient += &*modulus * BigInt::from(lift);
+    }
+    *modulus *= prime;
+    Some(())
+}
+
+fn integer_polynomial_divides(dividend: &[BigInt], divisor: &[BigInt]) -> bool {
+    if is_zero_integer_polynomial(divisor) {
+        return false;
+    }
+    let mut remainder = dividend.to_vec();
+    while remainder.len() > 1 && remainder.last().is_some_and(BigInt::is_zero) {
+        remainder.pop();
+    }
+    while !is_zero_integer_polynomial(&remainder) && remainder.len() >= divisor.len() {
+        let Some(quotient) = remainder.last().and_then(|coefficient| {
+            coefficient
+                .is_multiple_of(divisor.last()?)
+                .then(|| coefficient / divisor.last().expect("a nonzero divisor has a leader"))
+        }) else {
+            return false;
+        };
+        let shift = remainder.len() - divisor.len();
+        for (index, coefficient) in divisor[..divisor.len() - 1].iter().enumerate() {
+            remainder[shift + index] -= &quotient * coefficient;
+        }
+        remainder.pop();
+        while remainder.len() > 1 && remainder.last().is_some_and(BigInt::is_zero) {
+            remainder.pop();
+        }
+    }
+    is_zero_integer_polynomial(&remainder)
+}
+
+fn previous_prime(mut candidate: u64) -> Option<u64> {
+    if candidate.is_multiple_of(2) {
+        candidate = candidate.checked_sub(1)?;
+    }
+    loop {
+        if is_prime(candidate) {
+            return Some(candidate);
+        }
+        candidate = candidate.checked_sub(2)?;
+    }
+}
+
+fn is_prime(candidate: u64) -> bool {
+    if candidate < 2 {
+        return false;
+    }
+    for prime in [2_u64, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37] {
+        if candidate.is_multiple_of(prime) {
+            return candidate == prime;
+        }
+    }
+    let exponent_twos = (candidate - 1).trailing_zeros();
+    let odd_exponent = (candidate - 1) >> exponent_twos;
+    'witness: for base in [2_u64, 3, 5, 7, 11] {
+        let mut value = modular_power(base % candidate, odd_exponent, candidate);
+        if value == 1 || value == candidate - 1 {
+            continue;
+        }
+        for _ in 1..exponent_twos {
+            value = modular_multiply(value, value, candidate);
+            if value == candidate - 1 {
+                continue 'witness;
+            }
+        }
+        return false;
+    }
+    true
 }
 
 fn primitive_integer_coefficients(polynomial: &[Real]) -> Option<Vec<BigInt>> {
@@ -403,7 +559,7 @@ mod tests {
     }
 
     #[test]
-    fn modular_image_certifies_coprimality_without_integer_coefficient_growth() {
+    fn modular_gcd_certifies_coprimality_without_integer_coefficient_growth() {
         let mut left = vec![Real::zero(); 129];
         left[0] = real(1);
         left[128] = real(1);
@@ -411,24 +567,30 @@ mod tests {
         right[0] = real(3);
         right[127] = real(128);
         assert_eq!(
-            primitive_integer_polynomials_are_coprime_modular(&left, &right),
-            Some(true)
+            primitive_integer_polynomial_gcd(&left, &right),
+            Some(vec![Real::one()])
         );
     }
 
     #[test]
-    fn modular_image_never_certifies_polynomials_with_a_shared_factor() {
+    fn modular_gcd_retains_a_shared_factor() {
         let shared = [real(-2), real(1)];
         let left = [real(-6), real(1), real(1)];
         let right = [real(-2), real(1), real(-2), real(1)];
         assert_eq!(
-            primitive_integer_polynomials_are_coprime_modular(&left, &right),
-            Some(false)
-        );
-        assert_eq!(
             primitive_integer_polynomial_gcd(&left, &right),
             Some(shared.to_vec())
         );
+    }
+
+    #[test]
+    fn modular_reconstruction_certifies_a_wide_primitive_gcd() {
+        let wide = BigInt::one() << 192_usize;
+        let factor = vec![&wide + 17_u8, -(&wide >> 1_usize) + 5_u8, BigInt::one()];
+        let left = multiply_integer_polynomials(&factor, &[BigInt::from(-2_i8), BigInt::one()]);
+        let right = multiply_integer_polynomials(&factor, &[BigInt::from(3_i8), BigInt::one()]);
+
+        assert_eq!(modular_integer_polynomial_gcd(&left, &right), Some(factor));
     }
 
     fn multiply_integer_polynomials(left: &[BigInt], right: &[BigInt]) -> Vec<BigInt> {
