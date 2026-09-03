@@ -374,6 +374,27 @@ impl Real {
                         primitive_approx_cache: AtomicPrimitiveApproxCache::new(PrimitiveApproxCache::Empty),
                     });
                 }
+                if self.rational.denominator() == unsigned::TWO.deref() {
+                    if self.rational.numerator() == unsigned::ONE.deref() {
+                        let root = Self::new(ln.clone()).sqrt()?;
+                        crate::trace_dispatch!("real", "exp", "signed-half-log-collapse");
+                        return if self.rational.sign() == Sign::Minus {
+                            root.inverse()
+                        } else {
+                            Ok(root)
+                        };
+                    }
+                    // Preserve the particularly common n^(k/2) form without
+                    // passing through arbitrary-exponent domain dispatch.
+                    let power = self.rational.shifted_big_integer(1);
+                    crate::trace_dispatch!("real", "exp", "half-integer-log-collapse");
+                    return Self::new(ln.clone()).powi(power)?.sqrt();
+                }
+                // exp(q ln n) = n^q for every exact rational q. Bounded
+                // algebraic roots remain exact; larger denominators retain the
+                // ordinary computable fallback through `pow_rational`.
+                crate::trace_dispatch!("real", "exp", "rational-log-collapse");
+                return Self::new(ln.clone()).pow_rational(self.rational.clone());
             }
             _ => (),
         }
@@ -747,6 +768,40 @@ impl Real {
         }
         match &self.class {
             One => return Self::ln_rational(self.rational),
+            Sqrt(radicand) => {
+                let exponent = if self.rational.is_one() {
+                    Some(rationals::HALF.clone())
+                } else {
+                    radicand
+                        .to_integer_i64()
+                        .and_then(|base| u32::try_from(base).ok())
+                        .and_then(|base| Self::rational_integer_log(&self.rational, base))
+                        .map(|power| power + rationals::HALF.clone())
+                };
+                if let Some(exponent) = exponent {
+                    // ln(n^k*sqrt(n)) = (k+1/2)ln(n). Pure retained square
+                    // roots use k=0; exact rational powers in the outer scale
+                    // extend the same identity without approximation.
+                    crate::trace_dispatch!("real", "ln", "sqrt-rational-power-collapse");
+                    return Ok(
+                        Self::ln_rational(radicand.clone())?.scaled_by_rational(&exponent)
+                    );
+                }
+            }
+            Pow2(exponent) => {
+                if let Some(scale_power) = Self::rational_integer_log(&self.rational, 2) {
+                    crate::trace_dispatch!("real", "ln", "pow2-rational-scale-collapse");
+                    return Ok(Self::ln_rational(rationals::TWO.clone())?
+                        .scaled_by_rational(&(scale_power + exponent)));
+                }
+            }
+            Pow10(exponent) => {
+                if let Some(scale_power) = Self::rational_integer_log(&self.rational, 10) {
+                    crate::trace_dispatch!("real", "ln", "pow10-rational-scale-collapse");
+                    return Ok(Self::ln_rational(rationals::TEN.clone())?
+                        .scaled_by_rational(&(scale_power + exponent)));
+                }
+            }
             Exp(exp) => {
                 if self.rational.is_one() {
                     // ln(e^x) collapses exactly for the pure exponential class.
@@ -1761,11 +1816,53 @@ impl Real {
     }
 
     fn factorial_biguint(n: u64) -> BigUint {
-        let mut result = BigUint::from(1_u8);
-        for k in 2..=n {
-            result *= BigUint::from(k);
+        if n <= 20 {
+            // 20! fits in a machine word. This keeps the overwhelmingly common
+            // small gamma path below the recursive product-tree crossover.
+            let mut factorial = 1_u64;
+            for factor in 2..=n {
+                factorial *= factor;
+            }
+            return BigUint::from(factorial);
         }
-        result
+        Self::product_biguint_range(2, n)
+    }
+
+    fn product_biguint_range(start: u64, end: u64) -> BigUint {
+        const LEAF_FACTORS: u64 = 512;
+
+        if start > end {
+            return BigUint::from(1_u8);
+        }
+        if end - start < LEAF_FACTORS {
+            // Accumulate machine-word batches before touching the BigUint. This
+            // keeps leaves cheap while the recursive tree presents similarly
+            // sized operands to sub-quadratic large-integer multiplication.
+            let mut result = None::<BigUint>;
+            let mut word = 1_u64;
+            for factor in start..=end {
+                if let Some(product) = word.checked_mul(factor) {
+                    word = product;
+                } else {
+                    match &mut result {
+                        Some(result) => *result *= word,
+                        None => result = Some(BigUint::from(word)),
+                    }
+                    word = factor;
+                }
+            }
+            return match result {
+                Some(mut result) => {
+                    result *= word;
+                    result
+                }
+                None => BigUint::from(word),
+            };
+        }
+
+        let midpoint = start + (end - start) / 2;
+        Self::product_biguint_range(start, midpoint)
+            * Self::product_biguint_range(midpoint + 1, end)
     }
 
     fn binomial_biguint(n: u64, k: u64) -> BigUint {
@@ -1801,8 +1898,10 @@ impl Real {
         let sqrt_pi = Self::pi().sqrt()?;
         if twice > 0 {
             let k = u64::try_from((twice - 1) / 2).map_err(|_| Problem::OutOfRange)?;
-            let numerator = Self::factorial_biguint(2 * k);
-            let denominator = (BigUint::from(1_u8) << (2 * k)) * Self::factorial_biguint(k);
+            // (2k)!/k! is the rising product (k+1)..=2k. Cancelling before
+            // construction avoids two much larger factorial temporaries.
+            let numerator = Self::product_biguint_range(k + 1, 2 * k);
+            let denominator = BigUint::from(1_u8) << (2 * k);
             let scale = Rational::from_bigint_fraction(
                 BigInt::from_biguint(Sign::Plus, numerator),
                 denominator,
@@ -1811,9 +1910,11 @@ impl Real {
             return Ok(Self::new(scale) * sqrt_pi);
         }
 
-        let m = u64::try_from((1 - twice) / 2).map_err(|_| Problem::OutOfRange)?;
-        let numerator = (BigUint::from(1_u8) << (2 * m)) * Self::factorial_biguint(m);
-        let denominator = Self::factorial_biguint(2 * m);
+        let m = twice.unsigned_abs().div_ceil(2);
+        // 4^m m!/(2m)! = 4^m/((m+1)..=2m). Keep the cancellation
+        // structural so neither full factorial is allocated.
+        let numerator = BigUint::from(1_u8) << (2 * m);
+        let denominator = Self::product_biguint_range(m + 1, 2 * m);
         let scale = Rational::from_bigint_fraction(
             BigInt::from_biguint(
                 if m.is_multiple_of(2) {
@@ -1844,8 +1945,8 @@ impl Real {
 
         if twice > 0 {
             let k = u64::try_from((twice - 1) / 2).map_err(|_| Problem::OutOfRange)?;
-            let numerator = Self::factorial_biguint(2 * k);
-            let denominator = (BigUint::from(1_u8) << (2 * k)) * Self::factorial_biguint(k);
+            let numerator = Self::product_biguint_range(k + 1, 2 * k);
+            let denominator = BigUint::from(1_u8) << (2 * k);
             return Ok((
                 Rational::from_bigint_fraction(
                     BigInt::from_biguint(Sign::Plus, numerator),
@@ -1856,9 +1957,9 @@ impl Real {
             ));
         }
 
-        let m = u64::try_from((1 - twice) / 2).map_err(|_| Problem::OutOfRange)?;
-        let numerator = (BigUint::from(1_u8) << (2 * m)) * Self::factorial_biguint(m);
-        let denominator = Self::factorial_biguint(2 * m);
+        let m = twice.unsigned_abs().div_ceil(2);
+        let numerator = BigUint::from(1_u8) << (2 * m);
+        let denominator = Self::product_biguint_range(m + 1, 2 * m);
         Ok((
             Rational::from_bigint_fraction(
                 BigInt::from_biguint(Sign::Plus, numerator),
@@ -1896,8 +1997,12 @@ impl Real {
                 .and_then(|sum| sum.checked_sub(1))
                 .ok_or(Problem::OutOfRange)?;
             crate::trace_dispatch!("real", "beta", "positive-integer-factorial-ratio");
-            let numerator = Self::factorial_biguint(a_int - 1) * Self::factorial_biguint(b_int - 1);
-            let denominator = Self::factorial_biguint(denominator_arg);
+            // Cancel the larger input factorial before constructing either
+            // side: B(a,b) = (min(a,b)-1)! / (max(a,b)..=a+b-1).
+            let smaller = a_int.min(b_int);
+            let larger = a_int.max(b_int);
+            let numerator = Self::factorial_biguint(smaller - 1);
+            let denominator = Self::product_biguint_range(larger, denominator_arg);
             return Ok(Self::new(
                 Rational::from_bigint_fraction(
                     BigInt::from_biguint(Sign::Plus, numerator),
@@ -2063,8 +2168,8 @@ impl Real {
         }
 
         let k = current_twice.div_ceil(2);
-        let numerator = (BigUint::from(1_u8) << (2 * k)) * Self::factorial_biguint(k);
-        let denominator = Self::factorial_biguint(2 * k);
+        let numerator = BigUint::from(1_u8) << (2 * k);
+        let denominator = Self::product_biguint_range(k + 1, 2 * k);
         let rational =
             Rational::from_bigint_fraction(BigInt::from_biguint(Sign::Plus, numerator), denominator)
                 .unwrap();

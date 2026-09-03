@@ -21,6 +21,17 @@ impl Real {
         )
     }
 
+    /// Returns whether retained exact structure proves this value irrational.
+    ///
+    /// `false` is deliberately inconclusive: opaque computables and symbolic
+    /// products whose rationality is mathematically unresolved are not claimed
+    /// to be rational. A nonzero rational scale preserves irrationality.
+    #[inline]
+    pub fn definitely_irrational(&self) -> bool {
+        crate::trace_dispatch!("real", "definitely_irrational", "symbolic-class");
+        self.rational.sign() != Sign::NoSign && self.class.definitely_irrational()
+    }
+
     /// Classifies the value as exact zero or exact one when structural facts prove it.
     ///
     /// Returns `Some(false)` for zero, `Some(true)` for one, and `None` for
@@ -1214,6 +1225,19 @@ impl Real {
                 CertifiedRealEquality::NotEqual {
                     certificate: RealEqualityCertificate::ExactRationalComparison,
                 }
+            };
+        }
+
+        if (self.exact_rational_ref().is_some() && other.definitely_irrational())
+            || (other.exact_rational_ref().is_some() && self.definitely_irrational())
+        {
+            crate::trace_dispatch!(
+                "real",
+                "certified_eq_until",
+                "irrational-rational-inequality"
+            );
+            return CertifiedRealEquality::NotEqual {
+                certificate: RealEqualityCertificate::StructuralFacts,
             };
         }
 

@@ -39,6 +39,7 @@ const NO_GMP_ANALOG: &[&str] = &[
     "checked_exact_integer_quotient",
     "clear_common_denominator_slice",
     "dyadic_difference_numerator_magnitude",
+    "definitely_irrational",
     "definitely_not_equal",
     "definitely_one",
     "definitely_zero",

@@ -1434,19 +1434,17 @@ mod tests {
     }
 
     #[test]
-    fn certified_eq_until_refines_nearby_values_or_reports_unknown() {
+    fn certified_eq_until_structurally_separates_nearby_rational_and_irrational_values() {
         let near_pi = Real::new(Rational::fraction(103_993, 33_102).unwrap());
 
-        assert_eq!(
-            Real::pi().certified_eq_until(&near_pi, 0),
-            CertifiedRealEquality::Unknown { min_precision: 0 }
-        );
-        assert_eq!(
-            Real::pi().certified_eq_until(&near_pi, -64),
-            CertifiedRealEquality::NotEqual {
-                certificate: RealEqualityCertificate::BoundedRefinement { min_precision: -64 },
-            }
-        );
+        for min_precision in [0, -64] {
+            assert_eq!(
+                Real::pi().certified_eq_until(&near_pi, min_precision),
+                CertifiedRealEquality::NotEqual {
+                    certificate: RealEqualityCertificate::StructuralFacts,
+                }
+            );
+        }
     }
 
     #[test]
@@ -1740,6 +1738,105 @@ mod tests {
         let ln_25th = Real::new(twenty_fifth).ln().unwrap();
         let answer = ln_25th / ln_5th;
         assert_eq!(answer.unwrap(), Rational::new(2));
+    }
+
+    #[test]
+    fn retained_roots_and_rational_powers_have_exact_log_exp_round_trips() {
+        let half = Rational::fraction(1, 2).unwrap();
+        let minus_half = Rational::fraction(-1, 2).unwrap();
+        let three_halves = Rational::fraction(3, 2).unwrap();
+        let third = Rational::fraction(1, 3).unwrap();
+        let ln_two = Real::from(2_i32).ln().unwrap();
+        let ln_ten = Real::from(10_i32).ln().unwrap();
+        let sqrt_two = Real::from(2_i32).sqrt().unwrap();
+
+        assert_eq!(
+            sqrt_two.clone().ln().unwrap(),
+            Real::new(half.clone()) * ln_two.clone()
+        );
+        assert_eq!(
+            Real::from(8_i32).sqrt().unwrap().ln().unwrap(),
+            Real::new(three_halves.clone()) * ln_two.clone()
+        );
+        assert_eq!(
+            (sqrt_two.clone() / Real::from(2_i32))
+                .unwrap()
+                .ln()
+                .unwrap(),
+            -Real::new(half.clone()) * ln_two.clone()
+        );
+        assert_eq!(
+            (Real::new(half.clone()) * ln_two.clone()).exp().unwrap(),
+            sqrt_two
+        );
+        assert_eq!(
+            (Real::new(minus_half) * ln_two.clone()).exp().unwrap(),
+            Real::from(2_i32).sqrt().unwrap().inverse().unwrap()
+        );
+        assert_eq!(
+            (Real::new(three_halves) * ln_two.clone()).exp().unwrap(),
+            Real::from(8_i32).sqrt().unwrap()
+        );
+
+        let two_to_third = Real::new(third.clone()).exp2().unwrap();
+        assert_eq!(
+            two_to_third.clone().ln().unwrap(),
+            Real::new(third.clone()) * ln_two.clone()
+        );
+        assert_eq!(
+            (Real::new(third.clone()) * ln_two).exp().unwrap(),
+            Real::from(2_i32).pow_rational(third.clone()).unwrap()
+        );
+        assert_eq!(
+            (Real::from(4_i32) * two_to_third).ln().unwrap(),
+            Real::new(Rational::fraction(7, 3).unwrap()) * Real::from(2_i32).ln().unwrap()
+        );
+        let ten_to_third = Real::new(third.clone()).exp10().unwrap();
+        assert_eq!(
+            ten_to_third.clone().ln().unwrap(),
+            Real::new(third.clone()) * ln_ten.clone()
+        );
+        assert_eq!(
+            (Real::new(third.clone()) * ln_ten).exp().unwrap(),
+            Real::from(10_i32).pow_rational(third).unwrap()
+        );
+        assert_eq!(
+            (Real::from(1_000_i32) * ten_to_third).ln().unwrap(),
+            Real::new(Rational::fraction(10, 3).unwrap()) * Real::from(10_i32).ln().unwrap()
+        );
+
+        for base in [2_i32, 3, 5, 6, 7, 10, 11, 17] {
+            let base_real = Real::from(base);
+            let root = base_real.clone().sqrt().unwrap();
+            let log = base_real.clone().ln().unwrap();
+            for power in -3_i32..=3 {
+                let scale = base_real.clone().powi(num::BigInt::from(power)).unwrap();
+                let exponent = Rational::fraction(i64::from(2 * power + 1), 2).unwrap();
+                assert_eq!(
+                    (scale * root.clone()).ln().unwrap(),
+                    Real::new(exponent) * log.clone(),
+                    "sqrt/log base {base}, outer power {power}"
+                );
+            }
+        }
+
+        for base in [2_i32, 3, 5, 7, 10, 17] {
+            let base_real = Real::from(base);
+            let log = base_real.clone().ln().unwrap();
+            for denominator in 2_u64..=9 {
+                for numerator in -5_i64..=5 {
+                    if numerator == 0 {
+                        continue;
+                    }
+                    let exponent = Rational::fraction(numerator, denominator).unwrap();
+                    assert_eq!(
+                        (Real::new(exponent.clone()) * log.clone()).exp().unwrap(),
+                        base_real.clone().pow_rational(exponent).unwrap(),
+                        "exp/log base {base}, exponent {numerator}/{denominator}"
+                    );
+                }
+            }
+        }
     }
 
     #[test]
@@ -2992,6 +3089,95 @@ mod tests {
             0.31731050786291404,
             1e-15,
         );
+    }
+
+    #[test]
+    fn balanced_gamma_and_beta_products_match_sequential_closed_forms() {
+        fn sequential_factorial(n: u64) -> num::BigUint {
+            let mut result = num::BigUint::from(1_u8);
+            for factor in 2..=n {
+                result *= num::BigUint::from(factor);
+            }
+            result
+        }
+
+        fn exact_ratio(numerator: num::BigUint, denominator: num::BigUint, negative: bool) -> Real {
+            Real::new(
+                Rational::from_bigint_fraction(
+                    num::BigInt::from_biguint(
+                        if negative {
+                            num::bigint::Sign::Minus
+                        } else {
+                            num::bigint::Sign::Plus
+                        },
+                        numerator,
+                    ),
+                    denominator,
+                )
+                .unwrap(),
+            )
+        }
+
+        fn reference_gamma(twice: i64) -> Real {
+            if twice > 0 && twice % 2 == 0 {
+                return exact_ratio(
+                    sequential_factorial((twice / 2) as u64 - 1),
+                    num::BigUint::from(1_u8),
+                    false,
+                );
+            }
+
+            let sqrt_pi = Real::pi().sqrt().unwrap();
+            if twice > 0 {
+                let k = ((twice - 1) / 2) as u64;
+                return exact_ratio(
+                    sequential_factorial(2 * k),
+                    (num::BigUint::from(1_u8) << (2 * k)) * sequential_factorial(k),
+                    false,
+                ) * sqrt_pi;
+            }
+
+            let m = ((1 - twice) / 2) as u64;
+            exact_ratio(
+                (num::BigUint::from(1_u8) << (2 * m)) * sequential_factorial(m),
+                sequential_factorial(2 * m),
+                m % 2 == 1,
+            ) * sqrt_pi
+        }
+
+        for n in [
+            0_u64, 1, 2, 19, 20, 21, 31, 32, 511, 512, 513, 1_000, 10_000,
+        ] {
+            assert_eq!(
+                Real::from((n + 1) as i64).gamma().unwrap(),
+                exact_ratio(sequential_factorial(n), num::BigUint::from(1_u8), false,)
+            );
+        }
+
+        for twice in (-199_i64..=201).filter(|twice| *twice > 0 || twice % 2 != 0) {
+            assert_eq!(
+                Real::new(Rational::fraction(twice, 2).unwrap())
+                    .gamma()
+                    .unwrap(),
+                reference_gamma(twice),
+                "twice the gamma argument was {twice}"
+            );
+        }
+
+        for a in [1_u64, 2, 3, 7, 20, 65] {
+            for b in [1_u64, 2, 3, 11, 32, 67] {
+                let expected = exact_ratio(
+                    sequential_factorial(a - 1) * sequential_factorial(b - 1),
+                    sequential_factorial(a + b - 1),
+                    false,
+                );
+                assert_eq!(
+                    Real::beta(&Real::from(a as i64), &Real::from(b as i64)).unwrap(),
+                    expected,
+                    "beta arguments were ({a}, {b})"
+                );
+            }
+        }
     }
 
     #[test]
@@ -5160,6 +5346,83 @@ mod tests {
             Err(Problem::Exhausted)
         );
         assert_eq!(value.try_atan2(-Real::one()), Err(Problem::Exhausted));
+    }
+
+    #[test]
+    fn retained_classes_conservatively_certify_irrationality() {
+        use crate::Computable;
+
+        let third = Rational::fraction(1, 3).unwrap();
+        let fifth = Rational::fraction(1, 5).unwrap();
+        let sqrt_two = Real::from(2_i32).sqrt().unwrap();
+        let ln_two = Real::from(2_i32).ln().unwrap();
+        let known = [
+            Real::pi(),
+            Real::pi() * Real::pi(),
+            Real::pi().inverse().unwrap(),
+            sqrt_two.clone(),
+            Real::e(),
+            ln_two.clone(),
+            Real::pi() + Real::from(3_i32),
+            Real::e() + Real::from(2_i32),
+            Real::from(3_i32).log2().unwrap(),
+            Real::from(2_i32).log10().unwrap(),
+            Real::new(third.clone()).exp2().unwrap(),
+            Real::new(third).exp10().unwrap(),
+            Real::new(fifth.clone()).sin_pi(),
+            Real::new(fifth).tan_pi().unwrap(),
+            Real::pi() * sqrt_two.clone(),
+            Real::e() * sqrt_two,
+        ];
+        let exact_rational = Real::from(1_234_i32);
+        for value in &known {
+            assert!(value.definitely_irrational());
+            assert_eq!(
+                value.certified_eq_until(&exact_rational, 0),
+                CertifiedRealEquality::NotEqual {
+                    certificate: RealEqualityCertificate::StructuralFacts,
+                }
+            );
+        }
+
+        let unresolved = [
+            Real::from(7_i32),
+            Real::pi() * Real::e(),
+            ln_two * Real::from(3_i32).ln().unwrap(),
+            Real::pi() * Real::e() * Real::from(2_i32).sqrt().unwrap(),
+            Real::irrational_from_computable(Computable::pi()),
+            Real::zero() * Real::pi(),
+        ];
+        assert!(
+            unresolved
+                .iter()
+                .all(|value| !value.definitely_irrational())
+        );
+    }
+
+    #[test]
+    fn certified_equality_separates_irrational_from_nearby_rational() {
+        let pi = Real::pi();
+        let bits = 4_096_usize;
+        let nearby = Rational::from_bigint_fraction(
+            pi.fold_ref().approx(-(bits as i32)),
+            num::BigUint::from(1_u8) << bits,
+        )
+        .unwrap();
+        let nearby = Real::new(nearby);
+
+        assert_eq!(
+            pi.certified_eq_until(&nearby, 0),
+            CertifiedRealEquality::NotEqual {
+                certificate: RealEqualityCertificate::StructuralFacts,
+            }
+        );
+        assert_eq!(
+            nearby.certified_eq_until(&pi, 0),
+            CertifiedRealEquality::NotEqual {
+                certificate: RealEqualityCertificate::StructuralFacts,
+            }
+        );
     }
 
     #[test]

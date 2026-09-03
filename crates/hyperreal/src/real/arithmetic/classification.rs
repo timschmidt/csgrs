@@ -239,6 +239,36 @@ impl PartialEq for Class {
 }
 
 impl Class {
+    /// Whether this exact symbolic class proves that its value is irrational.
+    ///
+    /// Keep this deliberately narrower than "non-rational class". Products
+    /// involving both powers of pi and powers of e, and products of logarithms,
+    /// include familiar constants whose rationality is not known. A single
+    /// transcendental factor times a nonzero algebraic factor is safe, as are
+    /// the retained algebraic roots and rational-angle trigonometric values.
+    fn definitely_irrational(&self) -> bool {
+        match self {
+            One | PiExp(_) | PiInvExp(_) | LnProduct(_) | Irrational => false,
+            Pi | PiPow(_) | PiInv | PiSqrt(_) | Sqrt(_) | Exp(_) | Ln(_) | LnAffine(_)
+            | Log10(_) | Log2(_) | Pow10(_) | Pow2(_) | SinPi(_) | TanPi(_) => true,
+            ConstProduct(product) => {
+                let has_pi = product.pi_power != 0;
+                let has_exp = product.exp_power.sign() != Sign::NoSign;
+                has_pi ^ has_exp
+            }
+            ConstOffset(offset) => {
+                let has_pi = offset.pi_power != 0;
+                let has_exp = offset.exp_power.sign() != Sign::NoSign;
+                has_pi ^ has_exp
+            }
+            ConstProductSqrt(product) => {
+                let has_pi = product.pi_power != 0;
+                let has_exp = product.exp_power.sign() != Sign::NoSign;
+                !(has_pi && has_exp)
+            }
+        }
+    }
+
     fn is_ln(&self) -> bool {
         // Only simple `Ln(base)` values participate in the two-log sum/difference
         // collapse. Wider log classes intentionally skip that shortcut so the
