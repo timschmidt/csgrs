@@ -57724,6 +57724,21 @@ impl BezierRecursiveQuadraticProjectiveScalar2 {
                 return Ok(Classification::Uncertain(reason));
             }
         }
+        let exact_numerator = self.numerator.exact_real_value_with_retained_witnesses();
+        let exact_denominator = self.denominator.exact_real_value_with_retained_witnesses();
+        if let (Some(numerator), Some(denominator)) = (exact_numerator, exact_denominator)
+            && let Ok(inverse) = denominator.inverse_ref_assuming_nonzero()
+        {
+            #[cfg(feature = "dispatch-trace")]
+            hyperreal::dispatch_trace::record(
+                "hypercurve",
+                "recursive-projective-scalar-image",
+                "compact-real-witness",
+            );
+            return Ok(Classification::Decided(
+                exact_real_algebraic_representation(&(numerator * inverse)),
+            ));
+        }
         let Some((base, mut relation)) = recursive_quadratic_polynomial_projection(vec![
             self.numerator.clone(),
             self.denominator.scale(&Real::from(-1_i8)).ok_or_else(|| {
@@ -57734,7 +57749,20 @@ impl BezierRecursiveQuadraticProjectiveScalar2 {
         ]) else {
             return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
         };
-        let mut sources = base.sources.clone();
+        // Publish each proved compact source to the tensor authority itself;
+        // keeping it only as interval side data would force Hypersolve to
+        // eliminate a source whose exact value is already known.
+        let mut sources = base
+            .sources
+            .iter()
+            .zip(&base.source_real_witnesses)
+            .map(|(source, witness)| {
+                witness
+                    .as_ref()
+                    .map(exact_real_algebraic_representation)
+                    .unwrap_or_else(|| source.clone())
+            })
+            .collect::<Vec<_>>();
         if sources.is_empty() {
             // The tensor-image authority requires at least one selected axis.
             // A constant exact-zero axis is certified independent and removed
