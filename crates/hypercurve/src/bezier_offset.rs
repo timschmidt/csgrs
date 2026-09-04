@@ -95988,13 +95988,11 @@ impl BezierAlgebraicChord2 {
         }
         if self.is_reversed() {
             // `left(reverse(C), d) = reverse(left(C, -d))`. Re-enter the
-            // stable construction-order support before authoring procedural
-            // endpoints, so a reversed offset does not retain an avoidable
-            // reversed-chord layer inside both endpoint fields. Besides being
-            // smaller, this preserves the projection complexity of the
-            // forward chord for every exact incidence consumer.
+            // construction order before authoring procedural endpoints, but
+            // preserve this finite interval: a clipped or extended descendant
+            // need not have the same endpoints as its retained support.
             return self
-                .retained_support()
+                .reversed()
                 .parallel_left_retained(-distance, policy)
                 .map(|parallel| parallel.reversed());
         }
@@ -131572,6 +131570,84 @@ mod conversion_tests {
                                         .unwrap(),
                                     "direction=({dx}, {dy}), reverse={reverse}, side={side}, ray={direction}",
                                 );
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn retained_parallel_preserves_reversed_finite_chord_domains() {
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            for (dx, dy, length) in [(4, 0, 4), (0, 4, 4), (3, 4, 5), (-3, 4, 5)] {
+                let Classification::Decided(base) = BezierAlgebraicChord2::try_new(
+                    RationalBezierIntersectionPointEvidence2::Exact(Point2::from_values(0, 0)),
+                    RationalBezierIntersectionPointEvidence2::Exact(Point2::from_values(dx, dy)),
+                    &policy,
+                )
+                .unwrap() else {
+                    panic!("distinct represented endpoints must construct");
+                };
+                let normal_x = (-Real::from(dy) / Real::from(length)).unwrap();
+                let normal_y = (Real::from(dx) / Real::from(length)).unwrap();
+                let point = |parameter, displacement| {
+                    let parameter = (Real::from(parameter) / Real::from(4)).unwrap();
+                    Point2::new(
+                        Real::from(dx) * &parameter + &normal_x * Real::from(displacement),
+                        Real::from(dy) * parameter + &normal_y * Real::from(displacement),
+                    )
+                };
+                for initial_distance in [0, 1] {
+                    let support = base
+                        .parallel_left_retained(Real::from(initial_distance), &policy)
+                        .unwrap();
+                    for (start, end) in [(1, 3), (-1, 5)] {
+                        let finite = support
+                            .chord_between_certified_ordered_support_points(
+                                RationalBezierIntersectionPointEvidence2::Exact(point(
+                                    start,
+                                    initial_distance,
+                                )),
+                                RationalBezierIntersectionPointEvidence2::Exact(point(
+                                    end,
+                                    initial_distance,
+                                )),
+                                &policy,
+                            )
+                            .unwrap();
+                        for reverse in [false, true] {
+                            let finite = if reverse {
+                                finite.reversed()
+                            } else {
+                                finite.clone()
+                            };
+                            for distance in [-1, 0, 1] {
+                                let parallel = finite
+                                    .parallel_left_retained(Real::from(distance), &policy)
+                                    .unwrap();
+                                let displacement =
+                                    initial_distance + if reverse { -distance } else { distance };
+                                let parameters = if reverse { [end, start] } else { [start, end] };
+                                for (endpoint, parameter) in [parallel.start(), parallel.end()]
+                                    .into_iter()
+                                    .zip(parameters)
+                                {
+                                    let expected = point(parameter, displacement);
+                                    for (axis, coordinate) in
+                                        [(Axis2::X, expected.x()), (Axis2::Y, expected.y())]
+                                    {
+                                        assert_eq!(
+                                            BezierAlgebraicChord2::point_axis_order_to_real(
+                                                endpoint, axis, coordinate, &policy,
+                                            )
+                                            .unwrap(),
+                                            Classification::Decided(std::cmp::Ordering::Equal),
+                                            "direction=({dx}, {dy}), initial={initial_distance}, interval=({start}, {end}), reverse={reverse}, distance={distance}, parameter={parameter}, axis={axis:?}",
+                                        );
+                                    }
+                                }
                             }
                         }
                     }
