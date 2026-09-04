@@ -635,6 +635,9 @@ type BezierAlgebraicCuspSemicircleParameterCacheEntry2 = (
 #[derive(Clone, Debug)]
 enum BezierAlgebraicCuspSemicircleParameterCacheEvidence2 {
     RepresentedRational(Option<Real>),
+    /// Exact represented radial coordinate reused by every angular-order
+    /// comparison for the same rational contact.
+    RepresentedDiameterCoordinate(Box<AlgebraicRootRepresentation>),
     /// Box the uncommon refinement state so it does not enlarge every entry.
     ParameterBracket(Box<BezierAlgebraicCuspSemicircleCachedParameterBracket2>),
     /// Fast replay of a just-certified cross-map inverse. Weak ownership
@@ -9109,37 +9112,45 @@ fn represented_circle_diameter_predicate_sign(
     curve_parameter: &BezierParameter2,
     radial_coefficient: &Real,
     parameter_denominator: &Real,
+    cache: &BezierAlgebraicCuspSemicircleParameterCache2,
     policy: &CurveContext,
 ) -> CurveResult<Classification<RealSign>> {
-    let point = match rational_point_evidence_at_parameter(curve, curve_parameter, policy)? {
-        Classification::Decided(point) => point,
-        Classification::Uncertain(reason) => {
-            return Ok(Classification::Uncertain(reason));
-        }
-    };
-    let point = match represented_point_evidence_coordinates(&point, policy)? {
-        Classification::Decided(point) => point,
-        Classification::Uncertain(reason) => {
-            return Ok(Classification::Uncertain(reason));
-        }
-    };
-    let difference = |point: &AlgebraicRootRepresentation, center: &AlgebraicRootRepresentation| {
-        represented_affine_coordinate(
-            &[(point, &Real::one()), (center, &Real::from(-1_i8))],
-            &Real::zero(),
-        )
-    };
-    let (Classification::Decided(dx), Classification::Decided(dy)) = (
-        difference(&point[0], &frame.center[0]),
-        difference(&point[1], &frame.center[1]),
-    ) else {
-        return Ok(Classification::Uncertain(UncertaintyReason::Predicate));
-    };
-    let dot = match represented_vector_dot_cross(&frame.unit_radial, &[dx, dy]) {
-        Classification::Decided([dot, _]) => dot,
-        Classification::Uncertain(reason) => {
-            return Ok(Classification::Uncertain(reason));
-        }
+    let dot = if let Some(dot) = cache.cached_represented_diameter_coordinate(curve_parameter) {
+        dot
+    } else {
+        let point = match rational_point_evidence_at_parameter(curve, curve_parameter, policy)? {
+            Classification::Decided(point) => point,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        let point = match represented_point_evidence_coordinates(&point, policy)? {
+            Classification::Decided(point) => point,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        let difference = |point: &AlgebraicRootRepresentation,
+                          center: &AlgebraicRootRepresentation| {
+            represented_affine_coordinate(
+                &[(point, &Real::one()), (center, &Real::from(-1_i8))],
+                &Real::zero(),
+            )
+        };
+        let (Classification::Decided(dx), Classification::Decided(dy)) = (
+            difference(&point[0], &frame.center[0]),
+            difference(&point[1], &frame.center[1]),
+        ) else {
+            return Ok(Classification::Uncertain(UncertaintyReason::Predicate));
+        };
+        let dot = match represented_vector_dot_cross(&frame.unit_radial, &[dx, dy]) {
+            Classification::Decided([dot, _]) => dot,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        cache.retain_represented_diameter_coordinate(curve_parameter.clone(), dot.clone());
+        dot
     };
     let diameter_scale = parameter_denominator * &frame.signed_radius;
     let radius_squared = &frame.signed_radius * &frame.signed_radius;
@@ -41928,6 +41939,50 @@ impl BezierAlgebraicCuspSemicircleSelectedFiberParallelParameterMap2 {
 }
 
 impl BezierAlgebraicCuspSemicircleParameterCache2 {
+    fn cached_represented_diameter_coordinate(
+        &self,
+        parameter: &BezierParameter2,
+    ) -> Option<AlgebraicRootRepresentation> {
+        self.entries
+            .lock()
+            .expect("cusp parameter cache mutex poisoned")
+            .iter()
+            .find_map(|(cached, evidence)| {
+                match evidence {
+                BezierAlgebraicCuspSemicircleParameterCacheEvidence2::RepresentedDiameterCoordinate(
+                    coordinate,
+                ) if cached == parameter => Some(coordinate.as_ref().clone()),
+                _ => None,
+            }
+            })
+    }
+
+    fn retain_represented_diameter_coordinate(
+        &self,
+        parameter: BezierParameter2,
+        coordinate: AlgebraicRootRepresentation,
+    ) {
+        let mut cache = self
+            .entries
+            .lock()
+            .expect("cusp parameter cache mutex poisoned");
+        if cache.iter().any(|(cached, evidence)| {
+            cached == &parameter
+                && matches!(
+                    evidence,
+                    BezierAlgebraicCuspSemicircleParameterCacheEvidence2::RepresentedDiameterCoordinate(_)
+                )
+        }) {
+            return;
+        }
+        cache.push((
+            parameter,
+            BezierAlgebraicCuspSemicircleParameterCacheEvidence2::RepresentedDiameterCoordinate(
+                Box::new(coordinate),
+            ),
+        ));
+    }
+
     fn cached_parameter_bracket(
         &self,
         parameter: &BezierParameter2,
@@ -42707,6 +42762,7 @@ impl BezierAlgebraicCuspSemicircleRationalParameterMap2 {
                     &other_parameter,
                     &radial_coefficient,
                     &denominator,
+                    &self.data.parameter_cache,
                     policy,
                 )?
             }
