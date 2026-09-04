@@ -5491,18 +5491,32 @@ fn retained_parallel_traversal_end(
 fn exact_retained_parallel_fragment(
     fragment: RetainedParallelOffsetFragmentRef2<'_>,
     parallel: BezierParallel2,
-) -> Option<crate::BezierParallelFragment2> {
+    policy: &CurveContext,
+) -> CurveResult<Option<crate::BezierParallelFragment2>> {
+    let promote = |parameter: &CurveRegionParameter2| -> CurveResult<Option<BezierParameter2>> {
+        if let Some(parameter) = parameter.as_bezier_parameter() {
+            return Ok(Some(parameter.clone()));
+        }
+        let Some(parameter) = parameter.as_selected_fiber() else {
+            return Ok(None);
+        };
+        Ok(match parameter.promoted_bezier_parameter(policy)? {
+            Classification::Decided(parameter) => Some(parameter),
+            Classification::Uncertain(_) => None,
+        })
+    };
     let range = fragment.range();
-    let start = retained_parallel_represented_parameter(range.start())?.clone();
-    let end = retained_parallel_represented_parameter(range.end())?.clone();
-    Some(crate::BezierParallelFragment2::from_certified_range(
+    let Some(start) = promote(range.start())? else {
+        return Ok(None);
+    };
+    let Some(end) = promote(range.end())? else {
+        return Ok(None);
+    };
+    Ok(Some(crate::BezierParallelFragment2::from_certified_range(
         parallel,
-        BezierParameterRange2::new_validated(
-            BezierParameter2::Exact(start),
-            BezierParameter2::Exact(end),
-        ),
+        BezierParameterRange2::new_validated(start, end),
         fragment.is_reversed(),
-    ))
+    )))
 }
 
 fn exact_parallel_region_point_evidence(
@@ -5596,6 +5610,13 @@ fn exact_offset_span_from_selected_parallel_fragment(
     policy: &CurveContext,
 ) -> CurveResult<Classification<ExactOffsetSpan2>> {
     let parallel = fragment.parallel_carrier();
+    if let Some(promoted) = exact_retained_parallel_fragment(
+        RetainedParallelOffsetFragmentRef2::Selected(fragment),
+        parallel.clone(),
+        policy,
+    )? {
+        return exact_offset_span_from_analytic_parallel(&promoted, distance, policy);
+    }
     let range = fragment.range();
     let source_scale_result = retained_parallel_range_scale_sign(&parallel, range, policy);
     let source_scale = match source_scale_result? {
@@ -5958,7 +5979,9 @@ impl RegionCornerCarrier2 {
                 self.promoted_parallel = exact_retained_parallel_fragment(
                     RetainedParallelOffsetFragmentRef2::Selected(fragment),
                     RetainedParallelOffsetFragmentRef2::Selected(fragment).parallel(),
-                );
+                    policy,
+                )
+                .map_err(|cause| curve_region_edit_error(operation, cause))?;
             }
             BezierSplitFragment2::AlgebraicChord(_)
             | BezierSplitFragment2::AnalyticParallel(_)
@@ -6095,7 +6118,7 @@ fn coalesced_retained_parallel_offset_run(
         return Ok(Classification::Decided(None));
     };
     let parallel = first.parallel();
-    if exact_retained_parallel_fragment(first, parallel.clone()).is_some()
+    if exact_retained_parallel_fragment(first, parallel.clone(), policy)?.is_some()
         || retained_parallel_represented_parameter(&retained_parallel_traversal_start(first))
             .is_none()
     {
@@ -21139,7 +21162,7 @@ pub(crate) fn retained_fragment_query_bounds(
             .conservative_bounds(policy)
             .unwrap_or_else(|_| Classification::Uncertain(UncertaintyReason::Unsupported)),
         BezierSplitFragment2::AlgebraicChord(chord) => chord
-            .conservative_bounds(policy)
+            .conservative_local_bounds_refined(0, policy)
             .unwrap_or_else(|_| Classification::Uncertain(UncertaintyReason::Unsupported)),
         BezierSplitFragment2::AlgebraicCuspSemicircle(fragment) => fragment
             .conservative_bounds()

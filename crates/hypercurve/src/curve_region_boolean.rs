@@ -553,8 +553,16 @@ fn unite_regularized_vertex_sectors(
 ) {
     for &(first, second) in pairs {
         face_union.unite(first, second);
-        vertex_sector_links.push((vertex, first, second));
     }
+    record_regularized_vertex_sectors(vertex_sector_links, vertex, pairs);
+}
+
+fn record_regularized_vertex_sectors(
+    vertex_sector_links: &mut Vec<(usize, usize, usize)>,
+    vertex: usize,
+    pairs: &[(usize, usize)],
+) {
+    vertex_sector_links.extend(pairs.iter().map(|&(first, second)| (vertex, first, second)));
 }
 
 #[derive(Clone, Copy, Debug)]
@@ -566,6 +574,7 @@ struct RegularizedFaceAdjacency {
 
 #[derive(Clone, Debug)]
 enum RegularizedWindingJump {
+    Zero,
     Single(usize),
     Aggregate(Box<[(usize, i32)]>),
 }
@@ -623,6 +632,7 @@ fn propagate_regularized_face_windings(
                 Ok(())
             };
             match jump {
+                RegularizedWindingJump::Zero => {}
                 RegularizedWindingJump::Single(loop_index) => apply(*loop_index, 1)?,
                 RegularizedWindingJump::Aggregate(components) => {
                     for &(loop_index, delta) in components.as_ref() {
@@ -7382,10 +7392,20 @@ impl<'a> CurveRegionBooleanContext<'a> {
     }
 
     fn build_regularized_region(&self) -> ExactCurveResult<CurveRegion2> {
-        let topology = self.build_split_topology()?;
+        let topology = match self.build_split_topology() {
+            Ok(topology) => topology,
+            Err(error) => {
+                return Err(error);
+            }
+        };
         let simple_loop_filled_side = self.certified_simple_single_loop_filled_side(&topology);
         let fragment_selection =
-            self.regularized_fragment_actions(&topology, simple_loop_filled_side)?;
+            match self.regularized_fragment_actions(&topology, simple_loop_filled_side) {
+                Ok(selection) => selection,
+                Err(error) => {
+                    return Err(error);
+                }
+            };
         let mut arrangement_fragments = Vec::new();
         let mut arrangement_directions = Vec::new();
         let mut arrangement_source_edge_ids = Vec::new();
@@ -7486,12 +7506,16 @@ impl<'a> CurveRegionBooleanContext<'a> {
             &self.data.policy,
         ) {
             Classification::Decided(traversal) => traversal,
-            Classification::Uncertain(reason) => return Err(self.blocked(0, reason)),
+            Classification::Uncertain(reason) => {
+                return Err(self.blocked(0, reason));
+            }
         };
         let mut region =
             match CurveRegion2::from_certified_retained_arrangement_traversal(&graph, &traversal) {
                 Classification::Decided(region) => region,
-                Classification::Uncertain(reason) => return Err(self.blocked(0, reason)),
+                Classification::Uncertain(reason) => {
+                    return Err(self.blocked(0, reason));
+                }
             }
             .with_certified_regularized_filled_left_topology()
             .map_err(|cause| self.invalid(0, cause))?;
@@ -7620,6 +7644,8 @@ impl<'a> CurveRegionBooleanContext<'a> {
         let right_face = |edge: usize| edge.saturating_mul(2).saturating_add(1);
         let mut face_union = RegularizedFaceUnion::new(edge_count.saturating_mul(2));
         let mut vertex_sector_links = Vec::new();
+        let mut winding_sector_links = Vec::new();
+        let mut transverse_winding_sector_links = Vec::new();
 
         // An authored continuation with no transverse event preserves both
         // local face sectors exactly.
@@ -7649,6 +7675,8 @@ impl<'a> CurveRegionBooleanContext<'a> {
             let outgoing = edge_index(outgoing.0, outgoing.1);
             face_union.unite(left_face(incoming), left_face(outgoing));
             face_union.unite(right_face(incoming), right_face(outgoing));
+            winding_sector_links.push((left_face(incoming), left_face(outgoing)));
+            winding_sector_links.push((right_face(incoming), right_face(outgoing)));
         }
 
         let overlap_orientation_between_edges = |first_edge: usize,
@@ -7833,8 +7861,11 @@ impl<'a> CurveRegionBooleanContext<'a> {
                             (right_face(second_out), right_face(first_in)),
                         ]
                     };
-                    unite_regularized_vertex_sectors(
-                        &mut face_union,
+                    // Coincident endpoint sectors are exact local traversal
+                    // links, but the same face can occupy several pinched
+                    // sectors at the vertex. The overlap group's aggregate
+                    // edge below is the sole global winding constraint.
+                    record_regularized_vertex_sectors(
                         &mut vertex_sector_links,
                         vertex,
                         &sector_pairs,
@@ -7855,8 +7886,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
                             (left_face(second_in), left_face(first_out)),
                         ]
                     };
-                    unite_regularized_vertex_sectors(
-                        &mut face_union,
+                    record_regularized_vertex_sectors(
                         &mut vertex_sector_links,
                         vertex,
                         &sector_pairs,
@@ -7884,6 +7914,8 @@ impl<'a> CurveRegionBooleanContext<'a> {
                     vertex,
                     &sector_pairs,
                 );
+                winding_sector_links.extend(sector_pairs);
+                transverse_winding_sector_links.extend(sector_pairs);
                 continue;
             }
             let (Some(mut same_direction), Some(mut side)) = (
@@ -7933,6 +7965,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
                 vertex,
                 &sector_pairs,
             );
+            winding_sector_links.extend(sector_pairs);
         }
 
         let mut face_roots = topology
@@ -8099,31 +8132,26 @@ impl<'a> CurveRegionBooleanContext<'a> {
             for (first_edge, second_edge, reversed) in pairs {
                 overlap_links[first_edge].push((second_edge, reversed));
                 overlap_links[second_edge].push((first_edge, reversed));
-                if reversed {
-                    face_union.unite(left_face(first_edge), right_face(second_edge));
-                    face_union.unite(right_face(first_edge), left_face(second_edge));
-                } else {
-                    face_union.unite(left_face(first_edge), left_face(second_edge));
-                    face_union.unite(right_face(first_edge), right_face(second_edge));
-                }
             }
         }
 
-        // Overlap unions were added after the transverse-sector pass; refresh
-        // every sparse face root before constructing winding equations.
+        // Source winding is local to an open face sector. A global component
+        // can touch itself at a point while carrying different winding values
+        // in those sectors, so retain one node per oriented edge side and use
+        // explicit zero-jump links for the certified local adjacencies.
         for (carrier_index, roots) in face_roots.iter_mut().enumerate() {
             for (split_index, roots) in roots.iter_mut().enumerate() {
                 let edge = edge_index(carrier_index, split_index);
-                roots[0] = face_union.find(left_face(edge));
-                roots[1] = face_union.find(right_face(edge));
+                *roots = [left_face(edge), right_face(edge)];
             }
         }
 
         let mut face_adjacency = vec![Vec::new(); edge_count.saturating_mul(2)];
+        let mut transverse_face_adjacency = vec![Vec::new(); edge_count.saturating_mul(2)];
         let mut winding_jumps = Vec::new();
         let mut edge_overlap_grouped = vec![false; edge_count];
         let mut overlap_orientation = vec![None; edge_count];
-        let mut face_equations_valid = true;
+        let mut invalid_face_roots = vec![false; edge_count.saturating_mul(2)];
         for edge in 0..edge_count {
             if overlap_links[edge].is_empty() || overlap_orientation[edge].is_some() {
                 continue;
@@ -8187,10 +8215,10 @@ impl<'a> CurveRegionBooleanContext<'a> {
             if left == right {
                 // A contact-sector union may conservatively collapse both
                 // sides of a same-image span at a multi-branch endpoint. A
-                // nonzero aggregate winding jump cannot be a self-loop, so
-                // disable the derived face accelerator below and retain the
-                // authoritative per-fragment geometric classification path.
-                face_equations_valid = false;
+                // nonzero aggregate winding jump cannot be a self-loop. Mark
+                // only this connected face component unusable; disjoint exact
+                // sector equations remain authoritative.
+                invalid_face_roots[left] = true;
                 continue;
             }
             let jump = winding_jumps.len();
@@ -8219,10 +8247,9 @@ impl<'a> CurveRegionBooleanContext<'a> {
                 if left == right {
                     // Contact-sector unions can conservatively collapse the
                     // two local sides of a neighboring non-overlap edge as
-                    // well as an overlap edge.  The sparse face equations are
-                    // then unusable, but the per-fragment geometric
-                    // classifier below remains authoritative and exact.
-                    face_equations_valid = false;
+                    // well as an overlap edge. Quarantine that component and
+                    // leave its per-fragment geometric classifier authoritative.
+                    invalid_face_roots[left] = true;
                     continue;
                 }
                 debug_assert!(!edge_overlap_grouped[edge]);
@@ -8238,29 +8265,73 @@ impl<'a> CurveRegionBooleanContext<'a> {
                     jump,
                     direction: -1,
                 });
+                transverse_face_adjacency[right].push(RegularizedFaceAdjacency {
+                    face: left,
+                    jump,
+                    direction: 1,
+                });
+                transverse_face_adjacency[left].push(RegularizedFaceAdjacency {
+                    face: right,
+                    jump,
+                    direction: -1,
+                });
             }
         }
-        if !face_equations_valid {
-            for (carrier_index, roots) in face_roots.iter_mut().enumerate() {
-                for (split_index, roots) in roots.iter_mut().enumerate() {
-                    let edge = edge_index(carrier_index, split_index);
-                    *roots = [left_face(edge), right_face(edge)];
-                }
+        if !winding_sector_links.is_empty() || !transverse_winding_sector_links.is_empty() {
+            let zero = winding_jumps.len();
+            winding_jumps.push(RegularizedWindingJump::Zero);
+            for (first, second) in winding_sector_links {
+                face_adjacency[first].push(RegularizedFaceAdjacency {
+                    face: second,
+                    jump: zero,
+                    direction: 0,
+                });
+                face_adjacency[second].push(RegularizedFaceAdjacency {
+                    face: first,
+                    jump: zero,
+                    direction: 0,
+                });
             }
-            for adjacency in &mut face_adjacency {
-                adjacency.clear();
+            for (first, second) in transverse_winding_sector_links {
+                transverse_face_adjacency[first].push(RegularizedFaceAdjacency {
+                    face: second,
+                    jump: zero,
+                    direction: 0,
+                });
+                transverse_face_adjacency[second].push(RegularizedFaceAdjacency {
+                    face: first,
+                    jump: zero,
+                    direction: 0,
+                });
+            }
+        }
+        // A root can be found invalid after another edge has already added an
+        // equation to it. Remove both directions of every such equation while
+        // preserving independent exact face components.
+        for face in 0..face_adjacency.len() {
+            if invalid_face_roots[face] {
+                face_adjacency[face].clear();
+            } else {
+                face_adjacency[face]
+                    .retain(|edge| !invalid_face_roots.get(edge.face).copied().unwrap_or(true));
             }
         }
         let mut face_windings = vec![None; edge_count.saturating_mul(2)];
-        let action_from_face_windings = |carrier_index: usize,
-                                         split_index: usize,
-                                         face_windings: &[Option<Vec<i32>>]|
+        let mut transverse_face_windings = vec![None; edge_count.saturating_mul(2)];
+        let action_from_windings = |carrier_index: usize,
+                                    split_index: usize,
+                                    windings: &[Option<Vec<i32>>],
+                                    reject_invalid_roots: bool|
          -> ExactCurveResult<Option<RegionFragmentAction>> {
             let [left_face, right_face] = face_roots[carrier_index][split_index];
-            let (Some(left), Some(right)) = (
-                face_windings[left_face].as_ref(),
-                face_windings[right_face].as_ref(),
-            ) else {
+            if reject_invalid_roots
+                && (invalid_face_roots[left_face] || invalid_face_roots[right_face])
+            {
+                return Ok(None);
+            }
+            let (Some(left), Some(right)) =
+                (windings[left_face].as_ref(), windings[right_face].as_ref())
+            else {
                 return Ok(None);
             };
             let left = self
@@ -8301,18 +8372,6 @@ impl<'a> CurveRegionBooleanContext<'a> {
                 {
                     continue;
                 }
-                if let Some(action) =
-                    action_from_face_windings(carrier_index, split_index, &face_windings)?
-                {
-                    actions[carrier_index][split_index] = Some(action);
-                    #[cfg(feature = "dispatch-trace")]
-                    hyperreal::dispatch_trace::record(
-                        "hypercurve",
-                        "regularization-fragment-action",
-                        "propagated-face-winding",
-                    );
-                    continue;
-                }
                 let decision = self.regularized_fragment_geometric_decision(
                     carrier_index,
                     &split.fragment,
@@ -8324,10 +8383,19 @@ impl<'a> CurveRegionBooleanContext<'a> {
                         let [left, right] = decision.side_windings;
                         let roots = face_roots[carrier_index][split_index];
                         propagate_regularized_face_windings(
+                            &mut transverse_face_windings,
+                            &transverse_face_adjacency,
+                            &winding_jumps,
+                            [(roots[0], left.clone()), (roots[1], right.clone())],
+                        )
+                        .map_err(|cause| self.invalid(carrier_index, cause))?;
+                        propagate_regularized_face_windings(
                             &mut face_windings,
                             &face_adjacency,
                             &winding_jumps,
-                            [(roots[0], left), (roots[1], right)],
+                            [(roots[0], left), (roots[1], right)]
+                                .into_iter()
+                                .filter(|(face, _)| !invalid_face_roots[*face]),
                         )
                         .map_err(|cause| self.invalid(carrier_index, cause))?;
                     }
@@ -8347,7 +8415,10 @@ impl<'a> CurveRegionBooleanContext<'a> {
                     splits.iter().enumerate().all(|(split_index, _)| {
                         actions[carrier_index][split_index].is_some() || {
                             let [left, right] = face_roots[carrier_index][split_index];
-                            face_windings[left].is_some() && face_windings[right].is_some()
+                            !invalid_face_roots[left]
+                                && !invalid_face_roots[right]
+                                && face_windings[left].is_some()
+                                && face_windings[right].is_some()
                         }
                     })
                 });
@@ -8675,6 +8746,9 @@ impl<'a> CurveRegionBooleanContext<'a> {
                             } else {
                                 roots[1]
                             };
+                            if invalid_face_roots[exterior_face] {
+                                continue;
+                            }
                             propagate_regularized_face_windings(
                                 &mut face_windings,
                                 &face_adjacency,
@@ -8693,10 +8767,15 @@ impl<'a> CurveRegionBooleanContext<'a> {
         }
 
         let update_actions_from_faces = |actions: &mut Vec<Vec<Option<RegionFragmentAction>>>,
-                                         face_windings: &[Option<Vec<i32>>]|
+                                         face_windings: &[Option<Vec<i32>>],
+                                         transverse_face_windings: &[Option<Vec<i32>>],
+                                         _blockers: &[Vec<Option<ExactCurveError>>]|
          -> ExactCurveResult<()> {
             for (derived_carrier_index, roots) in face_roots.iter().enumerate() {
                 for derived_split_index in 0..roots.len() {
+                    if actions[derived_carrier_index][derived_split_index].is_some() {
+                        continue;
+                    }
                     let derived_edge = edge_index(derived_carrier_index, derived_split_index);
                     if edge_overlapped[derived_carrier_index][derived_split_index]
                         && (!edge_overlap_grouped[derived_edge]
@@ -8704,12 +8783,18 @@ impl<'a> CurveRegionBooleanContext<'a> {
                     {
                         continue;
                     }
-                    let Some(derived) = action_from_face_windings(
+                    let derived = action_from_windings(
+                        derived_carrier_index,
+                        derived_split_index,
+                        &transverse_face_windings,
+                        false,
+                    )?;
+                    let Some(derived) = derived.or(action_from_windings(
                         derived_carrier_index,
                         derived_split_index,
                         face_windings,
-                    )?
-                    else {
+                        true,
+                    )?) else {
                         continue;
                     };
                     match actions[derived_carrier_index][derived_split_index] {
@@ -8731,75 +8816,80 @@ impl<'a> CurveRegionBooleanContext<'a> {
             }
             Ok(())
         };
-        update_actions_from_faces(&mut actions, &face_windings)?;
-
-        let propagate_authored_actions =
-            |actions: &mut Vec<Vec<Option<RegionFragmentAction>>>| -> ExactCurveResult<()> {
-                let mut changed = true;
-                while changed {
-                    changed = false;
-                    for (vertex, incident) in incidents.iter().enumerate() {
-                        if incident.len() != 2
-                            || topology
-                                .transverse_vertices
-                                .get(vertex)
-                                .copied()
-                                .unwrap_or(false)
-                        {
-                            continue;
+        let propagate_authored_actions = |actions: &mut Vec<Vec<Option<RegionFragmentAction>>>,
+                                          blockers: &[Vec<Option<ExactCurveError>>]|
+         -> ExactCurveResult<()> {
+            let mut changed = true;
+            while changed {
+                changed = false;
+                for (vertex, incident) in incidents.iter().enumerate() {
+                    if incident.len() != 2
+                        || topology
+                            .transverse_vertices
+                            .get(vertex)
+                            .copied()
+                            .unwrap_or(false)
+                    {
+                        continue;
+                    }
+                    let (incoming, outgoing) = match (incident[0], incident[1]) {
+                        ((carrier, split, false), (next_carrier, next_split, true)) => {
+                            ((carrier, split), (next_carrier, next_split))
                         }
-                        let (incoming, outgoing) = match (incident[0], incident[1]) {
-                            ((carrier, split, false), (next_carrier, next_split, true)) => {
-                                ((carrier, split), (next_carrier, next_split))
-                            }
-                            ((next_carrier, next_split, true), (carrier, split, false)) => {
-                                ((carrier, split), (next_carrier, next_split))
-                            }
-                            _ => continue,
-                        };
-                        if !authored_successor(incoming, outgoing) {
-                            continue;
+                        ((next_carrier, next_split, true), (carrier, split, false)) => {
+                            ((carrier, split), (next_carrier, next_split))
                         }
-                        // A coincident edge that lost deterministic overlap
-                        // ownership is discarded as a duplicate image.  That
-                        // ownership action belongs only to the overlap cell;
-                        // it cannot propagate through the authored endpoint
-                        // into an adjacent unique edge.
-                        if edge_overlapped[incoming.0][incoming.1]
-                            && !edge_owns_overlap[incoming.0][incoming.1]
-                            || edge_overlapped[outgoing.0][outgoing.1]
-                                && !edge_owns_overlap[outgoing.0][outgoing.1]
-                        {
-                            continue;
+                        _ => continue,
+                    };
+                    if !authored_successor(incoming, outgoing) {
+                        continue;
+                    }
+                    // A coincident edge that lost deterministic overlap
+                    // ownership is discarded as a duplicate image.  That
+                    // ownership action belongs only to the overlap cell;
+                    // it cannot propagate through the authored endpoint
+                    // into an adjacent unique edge.
+                    if edge_overlapped[incoming.0][incoming.1]
+                        && !edge_owns_overlap[incoming.0][incoming.1]
+                        || edge_overlapped[outgoing.0][outgoing.1]
+                            && !edge_owns_overlap[outgoing.0][outgoing.1]
+                    {
+                        continue;
+                    }
+                    let first = actions[incoming.0][incoming.1];
+                    let second = actions[outgoing.0][outgoing.1];
+                    match (first, second) {
+                        (Some(first), Some(second)) if first != second => {
+                            return Err(self.invalid(
+                                incoming.0,
+                                CurveError::Topology(
+                                    "a degree-two authored continuation changed regularized faces"
+                                        .into(),
+                                ),
+                            ));
                         }
-                        let first = actions[incoming.0][incoming.1];
-                        let second = actions[outgoing.0][outgoing.1];
-                        match (first, second) {
-                            (Some(first), Some(second)) if first != second => {
-                                return Err(self.invalid(
-                                    incoming.0,
-                                    CurveError::Topology(
-                                        "a degree-two authored continuation changed regularized faces"
-                                            .into(),
-                                    ),
-                                ));
-                            }
-                            (Some(action), None) => {
-                                actions[outgoing.0][outgoing.1] = Some(action);
-                                changed = true;
-                            }
-                            (None, Some(action)) => {
-                                actions[incoming.0][incoming.1] = Some(action);
-                                changed = true;
-                            }
-                            (Some(_), Some(_)) | (None, None) => {}
+                        (Some(action), None) if blockers[outgoing.0][outgoing.1].is_some() => {
+                            actions[outgoing.0][outgoing.1] = Some(action);
+                            changed = true;
                         }
+                        (None, Some(action)) if blockers[incoming.0][incoming.1].is_some() => {
+                            actions[incoming.0][incoming.1] = Some(action);
+                            changed = true;
+                        }
+                        (Some(_), Some(_)) | (Some(_), None) | (None, Some(_)) | (None, None) => {}
                     }
                 }
-                Ok(())
-            };
+            }
+            Ok(())
+        };
 
-        propagate_authored_actions(&mut actions)?;
+        update_actions_from_faces(
+            &mut actions,
+            &face_windings,
+            &transverse_face_windings,
+            &blockers,
+        )?;
+        propagate_authored_actions(&mut actions, &blockers)?;
 
         let mut work = topology
             .split_fragments
@@ -8846,25 +8936,54 @@ impl<'a> CurveRegionBooleanContext<'a> {
                     let [left, right] = decision.side_windings;
                     let roots = face_roots[carrier_index][split_index];
                     propagate_regularized_face_windings(
-                        &mut face_windings,
-                        &face_adjacency,
+                        &mut transverse_face_windings,
+                        &transverse_face_adjacency,
                         &winding_jumps,
-                        [(roots[0], left), (roots[1], right)],
+                        [(roots[0], left.clone()), (roots[1], right.clone())],
                     )
                     .map_err(|cause| self.invalid(carrier_index, cause))?;
+                    let compatible = [(roots[0], &left), (roots[1], &right)].into_iter().all(
+                        |(face, winding)| {
+                            invalid_face_roots[face]
+                                || face_windings[face]
+                                    .as_ref()
+                                    .is_none_or(|existing| existing == winding)
+                        },
+                    );
+                    if compatible {
+                        propagate_regularized_face_windings(
+                            &mut face_windings,
+                            &face_adjacency,
+                            &winding_jumps,
+                            [(roots[0], left), (roots[1], right)]
+                                .into_iter()
+                                .filter(|(face, _)| !invalid_face_roots[*face]),
+                        )
+                        .map_err(|cause| self.invalid(carrier_index, cause))?;
+                    } else {
+                        #[cfg(feature = "dispatch-trace")]
+                        hyperreal::dispatch_trace::record(
+                            "hypercurve",
+                            "regularization-fragment-action",
+                            "geometric-seed-overrides-face-accelerator",
+                        );
+                    }
                 }
                 Err(error @ ExactCurveError::Blocked(_)) => {
                     blockers[carrier_index][split_index] = Some(error);
                 }
                 Err(error @ ExactCurveError::Invalid { .. }) => return Err(error),
             }
-
-            update_actions_from_faces(&mut actions, &face_windings)?;
-            propagate_authored_actions(&mut actions)?;
-            if actions.iter().flatten().all(Option::is_some) {
-                break;
-            }
         }
+
+        propagate_authored_actions(&mut actions, &blockers)?;
+        update_actions_from_faces(
+            &mut actions,
+            &face_windings,
+            &transverse_face_windings,
+            &blockers,
+        )?;
+        propagate_authored_actions(&mut actions, &blockers)?;
 
         let mut decided = Vec::with_capacity(actions.len());
         for (carrier_index, carrier_actions) in actions.into_iter().enumerate() {
@@ -9904,7 +10023,23 @@ impl<'a> CurveRegionBooleanContext<'a> {
                 ),
             ));
         }
-        let candidate_count = self.data.carriers.len().saturating_mul(2).saturating_add(5);
+        let retained_probe = match (&representative, &self.data.carriers[carrier_index].geometry) {
+            (
+                RationalBezierIntersectionPointEvidence2::AlgebraicChordPair(point),
+                RegionCarrierGeometry::AlgebraicChord(boundary),
+            ) => point
+                .exterior_axis_probe_avoiding(boundary, &outer_bounds, &self.data.policy)
+                .map_err(|cause| self.invalid(carrier_index, cause))?,
+            _ => None,
+        };
+        let retained_probe_count = usize::from(retained_probe.is_some());
+        let candidate_count = self
+            .data
+            .carriers
+            .len()
+            .saturating_mul(2)
+            .saturating_add(5)
+            .saturating_add(retained_probe_count);
         let mut last_reason = UncertaintyReason::Unsupported;
         let authored_successor = |first_index: usize, second_index: usize| {
             let first = &self.data.carriers[first_index];
@@ -9919,21 +10054,37 @@ impl<'a> CurveRegionBooleanContext<'a> {
         };
 
         'candidate: for candidate_index in 0..candidate_count {
-            let Some(outside) = retained_probe_exterior_candidate(&outer_bounds, candidate_index)
-            else {
-                continue;
-            };
-            let probe = match crate::BezierAlgebraicChord2::try_new(
-                RationalBezierIntersectionPointEvidence2::Exact(outside),
-                representative.clone(),
-                &self.data.policy,
-            )
-            .map_err(|cause| self.invalid(carrier_index, cause))?
-            {
-                Classification::Decided(probe) => probe,
-                Classification::Uncertain(reason) => {
-                    last_reason = reason;
+            let probe = if candidate_index < retained_probe_count {
+                #[cfg(feature = "dispatch-trace")]
+                hyperreal::dispatch_trace::record(
+                    "hypercurve",
+                    "curve-region-regularization-chord-side",
+                    "retained-axis-probe",
+                );
+                retained_probe
+                    .as_ref()
+                    .expect("the retained probe count reflects its value")
+                    .0
+                    .clone()
+            } else {
+                let Some(outside) = retained_probe_exterior_candidate(
+                    &outer_bounds,
+                    candidate_index - retained_probe_count,
+                ) else {
                     continue;
+                };
+                match crate::BezierAlgebraicChord2::try_new(
+                    RationalBezierIntersectionPointEvidence2::Exact(outside),
+                    representative.clone(),
+                    &self.data.policy,
+                )
+                .map_err(|cause| self.invalid(carrier_index, cause))?
+                {
+                    Classification::Decided(probe) => probe,
+                    Classification::Uncertain(reason) => {
+                        last_reason = reason;
+                        continue;
+                    }
                 }
             };
             let probe_end = CurveRegionParameter2::from_algebraic_chord(probe.end_parameter());
@@ -9956,13 +10107,17 @@ impl<'a> CurveRegionBooleanContext<'a> {
                 continue;
             }
 
+            let mut has_nontransverse_endpoint_contact = false;
             for contact in evidence.contacts() {
-                match contact
+                let order = contact
                     .first_parameter()
                     .cmp_by_refinement(&probe_end, &self.data.policy)
-                    .map_err(|cause| self.invalid(carrier_index, cause))?
-                {
-                    Classification::Decided(Ordering::Less | Ordering::Equal) => {}
+                    .map_err(|cause| self.invalid(carrier_index, cause))?;
+                match order {
+                    Classification::Decided(Ordering::Less) => {}
+                    Classification::Decided(Ordering::Equal) => {
+                        has_nontransverse_endpoint_contact |= !contact.is_certified_transverse();
+                    }
                     Classification::Decided(Ordering::Greater) => {
                         return Err(self.invalid(
                             carrier_index,
@@ -10244,6 +10399,60 @@ impl<'a> CurveRegionBooleanContext<'a> {
                 }
                 group_start = group_end;
             }
+            if has_nontransverse_endpoint_contact {
+                last_reason = UncertaintyReason::Boundary;
+                continue;
+            }
+            let Some((_, source_cross_is_positive)) = retained_probe
+                .as_ref()
+                .filter(|_| candidate_index < retained_probe_count)
+            else {
+                continue;
+            };
+            // This retained probe ends at a point constructed strictly inside
+            // the split source support. If generic finite-incidence replay did
+            // not rediscover that endpoint, its defining-support cross still
+            // owns the exact missing source jump. The representative cannot
+            // be another event because complete pair replay selected it in an
+            // open split fragment.
+            let source_cross_is_positive =
+                *source_cross_is_positive ^ self.data.carriers[carrier_index].reversed;
+            let mut opposite = windings.clone();
+            opposite[source_loop_index] = opposite[source_loop_index]
+                .checked_add(if source_cross_is_positive { -1 } else { 1 })
+                .ok_or_else(|| {
+                    self.invalid(
+                        carrier_index,
+                        CurveError::Topology(
+                            "retained boundary-side winding overflowed i32".into(),
+                        ),
+                    )
+                })?;
+            let (left_windings, right_windings) = if source_cross_is_positive {
+                (windings, opposite)
+            } else {
+                (opposite, windings)
+            };
+            let left = self
+                .data
+                .first
+                .region_location_from_loop_windings(&left_windings)
+                .map_err(|cause| self.invalid(carrier_index, cause))?;
+            let right = self
+                .data
+                .first
+                .region_location_from_loop_windings(&right_windings)
+                .map_err(|cause| self.invalid(carrier_index, cause))?;
+            #[cfg(feature = "dispatch-trace")]
+            hyperreal::dispatch_trace::record(
+                "hypercurve",
+                "curve-region-regularization-chord-side",
+                "retained-constructed-endpoint-winding-probe",
+            );
+            return Ok(RegularizedFragmentDecision::from_classified_sides(
+                (left_windings, left),
+                (right_windings, right),
+            ));
         }
         Err(self.blocked(carrier_index, last_reason))
     }
@@ -13468,6 +13677,7 @@ fn certified_boolean_successors(
         directions,
         &topology.transverse_contacts,
         &starts_by_vertex,
+        false,
         |contact, vertex| transverse_carrier_cross_is_positive(topology, contact, vertex, carriers),
     );
     certify_nontransverse_authored_continuity(
@@ -13677,7 +13887,14 @@ fn certified_regularization_successors(
         directions,
         &topology.transverse_contacts,
         &starts_by_vertex,
-        |contact, _| contact.cross_is_positive,
+        true,
+        |contact, _| {
+            Some(
+                contact.cross_is_positive?
+                    ^ carriers.get(contact.first_carrier)?.reversed
+                    ^ carriers.get(contact.second_carrier)?.reversed,
+            )
+        },
     );
     let mut successors = (0..graph.len())
         .map(|index| {
@@ -13813,6 +14030,7 @@ fn certified_transverse_successors(
     directions: &[BooleanArrangementFragmentDirection],
     contacts: &HashMap<usize, TransitionContactCandidate>,
     starts_by_vertex: &HashMap<usize, Vec<usize>>,
+    filled_left_faces: bool,
     mut crossing_is_positive: impl FnMut(&TransitionContactCandidate, usize) -> Option<bool>,
 ) -> Vec<Option<usize>> {
     graph
@@ -13839,15 +14057,20 @@ fn certified_transverse_successors(
             let first = certified_contact_direction(*directions.get(first_index)?, true, contact)?;
             let second =
                 certified_contact_direction(*directions.get(second_index)?, true, contact)?;
-            certified_turn_preference(current, first, second, crossing_is_positive).map(
-                |first_before_second| {
-                    if first_before_second {
-                        first_index
-                    } else {
-                        second_index
-                    }
-                },
+            certified_turn_preference(
+                current,
+                first,
+                second,
+                crossing_is_positive,
+                filled_left_faces,
             )
+            .map(|first_before_second| {
+                if first_before_second {
+                    first_index
+                } else {
+                    second_index
+                }
+            })
         })
         .collect()
 }
@@ -13921,6 +14144,7 @@ fn certified_turn_preference(
     first: CertifiedContactDirection,
     second: CertifiedContactDirection,
     crossing_is_positive: bool,
+    filled_left_faces: bool,
 ) -> Option<bool> {
     let first_half = certified_turn_half(base, first, crossing_is_positive)?;
     let second_half = certified_turn_half(base, second, crossing_is_positive)?;
@@ -13928,8 +14152,8 @@ fn certified_turn_preference(
         return Some(first_half < second_half);
     }
     match certified_direction_cross(first, second, crossing_is_positive)? {
-        1 => Some(true),
-        -1 => Some(false),
+        1 => Some(!filled_left_faces),
+        -1 => Some(filled_left_faces),
         _ => None,
     }
 }
@@ -20794,6 +21018,7 @@ mod certified_successor_tests {
         base: (i8, i8),
         first: (i8, i8),
         second: (i8, i8),
+        filled_left_faces: bool,
     ) -> Option<bool> {
         let half = |candidate: (i8, i8)| {
             let cross = base.0 * candidate.1 - base.1 * candidate.0;
@@ -20813,8 +21038,8 @@ mod certified_successor_tests {
             return Some(first_half < second_half);
         }
         match (first.0 * second.1 - first.1 * second.0).cmp(&0) {
-            Ordering::Greater => Some(true),
-            Ordering::Less => Some(false),
+            Ordering::Greater => Some(!filled_left_faces),
+            Ordering::Less => Some(filled_left_faces),
             Ordering::Equal => None,
         }
     }
@@ -21138,19 +21363,23 @@ mod certified_successor_tests {
                                     let base = direction(base_carrier, base_forward);
                                     let first = direction(first_carrier, first_forward);
                                     let second = direction(second_carrier, second_forward);
-                                    assert_eq!(
-                                        certified_turn_preference(
-                                            contact_direction(base_carrier, base_forward),
-                                            contact_direction(first_carrier, first_forward),
-                                            contact_direction(second_carrier, second_forward),
-                                            crossing_is_positive,
-                                        ),
-                                        numerical_turn_preference(
-                                            vector(base, crossing_is_positive),
-                                            vector(first, crossing_is_positive),
-                                            vector(second, crossing_is_positive),
-                                        ),
-                                    );
+                                    for filled_left_faces in [false, true] {
+                                        assert_eq!(
+                                            certified_turn_preference(
+                                                contact_direction(base_carrier, base_forward),
+                                                contact_direction(first_carrier, first_forward),
+                                                contact_direction(second_carrier, second_forward),
+                                                crossing_is_positive,
+                                                filled_left_faces,
+                                            ),
+                                            numerical_turn_preference(
+                                                vector(base, crossing_is_positive),
+                                                vector(first, crossing_is_positive),
+                                                vector(second, crossing_is_positive),
+                                                filled_left_faces,
+                                            ),
+                                        );
+                                    }
                                 }
                             }
                         }

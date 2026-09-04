@@ -401,7 +401,9 @@ impl BezierArrangementGraph2 {
 
         let (outgoing, predecessors) = match retained_tangent_adjacency(&endpoints, policy) {
             Classification::Decided(adjacency) => adjacency,
-            Classification::Uncertain(reason) => return Classification::Uncertain(reason),
+            Classification::Uncertain(reason) => {
+                return Classification::Uncertain(reason);
+            }
         };
         if defer_tangent_order_evidence
             && outgoing.iter().enumerate().any(|(index, candidates)| {
@@ -2114,7 +2116,9 @@ fn follow_retained_tangent_ordered_chain(
             policy,
         ) {
             Classification::Decided(next) => next,
-            Classification::Uncertain(reason) => return Classification::Uncertain(reason),
+            Classification::Uncertain(reason) => {
+                return Classification::Uncertain(reason);
+            }
         };
         let Some(next) = next else {
             let closed = match retained_endpoints_equal(
