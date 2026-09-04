@@ -87,7 +87,9 @@ fn sqrt(signal: &Option<Signal>, c: &Computable, p: Precision) -> BigInt {
     // Newton refinement for deeper requests. This avoids pulling in floating
     // approximations while keeping high-precision sqrt from scaling quadratically.
     // Newton sqrt/reciprocal-sqrt refinement is the standard arbitrary-precision strategy.
-    let fp_prec: i32 = 140;
+    // Larger integer seeds cost more than one extra Newton refinement near
+    // the machine-word boundary; the measured crossover is 59 result bits.
+    let fp_prec: i32 = 59;
     let fp_op_prec: i32 = 150;
 
     let max_prec_needed = p.saturating_mul(2).saturating_sub(1);
@@ -145,12 +147,9 @@ fn sqrt(signal: &Option<Signal>, c: &Computable, p: Precision) -> BigInt {
         // If A approximates 2^(2*g)*x within one, then floor(sqrt(A))
         // approximates 2^g*sqrt(x) within two, including near zero. Four
         // guard bits and final rounding therefore give error below 5/8 ulp.
-        // Size the integer root to this request, not the largest seed that
-        // the Newton branch can use. Keep the established large-seed path
-        // beyond the measured small-request crossover.
-        if result_digits <= 96
-            && let Some(op_prec) = p.checked_sub(4).and_then(|prec| prec.checked_mul(2))
-        {
+        // Size the integer root to this request. Retain the established seed
+        // below if the precision arithmetic cannot represent this request.
+        if let Some(op_prec) = p.checked_sub(4).and_then(|prec| prec.checked_mul(2)) {
             let scaled_bi_appr = c.approx_signal(signal, op_prec);
             return scale(scaled_bi_appr.sqrt(), -4);
         }

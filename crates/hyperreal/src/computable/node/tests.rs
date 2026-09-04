@@ -84,9 +84,12 @@ mod tests {
             }
         };
 
-        for exponent in [-600_i32, -80, 0, 80, 600] {
-            let precisions = [0, 1, 16, 32, 64, 95, 96, 97, 128, 139, 140, 141, 256, 1_024]
-                .map(|digits| exponent / 2 - digits);
+        for exponent in [-601_i32, -600, -80, 0, 80, 600, 601] {
+            let precisions = [
+                0, 1, 16, 32, 56, 57, 58, 59, 60, 61, 63, 64, 95, 96, 97, 128, 139, 140, 141, 256,
+                1_024,
+            ]
+            .map(|digits| exponent / 2 - digits);
             for n in [2_u32, 3, 5, 17] {
                 let mut numerator = BigInt::from(n);
                 let mut denominator = BigUint::one();
@@ -102,7 +105,11 @@ mod tests {
         for n in [1_u32, 2, 17] {
             for delta in [-1_i32, 0, 1] {
                 let numerator = (BigInt::from(n * n) << 256_usize) + delta;
-                check(numerator, denominator.clone(), &[0, -16, -64, -96, -140, -256]);
+                check(
+                    numerator,
+                    denominator.clone(),
+                    &[0, -16, -56, -59, -60, -64, -96, -128, -140, -256],
+                );
             }
         }
     }
