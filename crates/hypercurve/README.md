@@ -307,15 +307,14 @@ The quick start is compiled as `examples/basic.rs` and checked byte-for-byte
 against this README. The test suite also covers adversarial exact predicates,
 mixed-family region Booleans, regression corpora, and finite adapters.
 
-The rank-independent public-Boolean matrix and recursive radial/projective
-regressions, including fourth-generation offsets, run in the normal suite.
-Longer selected-fiber, source-cusp stroke, and release-scale PCB corpora can
-also be run explicitly:
+The rank-independent public-Boolean matrix, recursive radial/projective
+regressions (including fourth-generation offsets), and release-scale PCB
+corpora run in the normal suite. Longer selected-fiber and source-cusp stroke
+corpora can also be run explicitly:
 
 ```sh
 cargo test --release --locked --all-features --lib selected_fiber_genuinely_analytic_contacts_complete_region_booleans -- --ignored
 cargo test --release --locked --all-features --test hypercurve_curve_region_stroke -- --ignored
-cargo test --release --locked --all-features --test hypercurve_pcb_boolean_regressions -- --ignored
 ```
 
 Detailed benchmark definitions and interpretation live in

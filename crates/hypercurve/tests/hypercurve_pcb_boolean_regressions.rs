@@ -121,7 +121,6 @@ fn pcb_process_image_containment_regression_decides_exactly() {
 }
 
 #[test]
-#[ignore = "release-scale performance corpus; run explicitly when profiling region Booleans"]
 fn easyduino_scale_process_image_containment_corpus() {
     // Matches the order of magnitude observed in the Easyduino Nano release:
     // 138 paste components against 479 front-copper components.
@@ -129,7 +128,6 @@ fn easyduino_scale_process_image_containment_corpus() {
 }
 
 #[test]
-#[ignore = "release-scale performance corpus; run explicitly when profiling region Booleans"]
 fn easyduino_uno_scale_process_image_with_holes_corpus() {
     // Matches the Easyduino Uno front-copper topology that originally took
     // about a minute to classify: 1,098 material components, 455 holes, and
