@@ -15,6 +15,7 @@ use num::{One, Zero};
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
 use std::{
+    collections::HashSet,
     ops::{Deref, Neg},
     sync::{Arc, LazyLock},
 };

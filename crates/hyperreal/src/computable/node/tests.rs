@@ -2018,6 +2018,27 @@ mod tests {
     }
 
     #[test]
+    fn structural_equality_visits_shared_dag_pairs_once() {
+        let mut left = Computable::pi()
+            .exp()
+            .add(Computable::integer(BigInt::from(-100)));
+        let mut right = Computable::pi()
+            .exp()
+            .add(Computable::integer(BigInt::from(-100)));
+        let mut different = Computable::pi()
+            .exp()
+            .add(Computable::integer(BigInt::from(-101)));
+        for _ in 0..128 {
+            left = left.clone().add(left);
+            right = right.clone().add(right);
+            different = different.clone().add(different);
+        }
+
+        assert!(Computable::internal_structural_eq(&left, &right));
+        assert!(!Computable::internal_structural_eq(&left, &different));
+    }
+
+    #[test]
     fn huge_trig_arguments_reduce_correctly() {
         let huge_multiple = BigInt::from(1_u8) << 200;
         let offset = Computable::rational(Rational::fraction(7, 5).unwrap());

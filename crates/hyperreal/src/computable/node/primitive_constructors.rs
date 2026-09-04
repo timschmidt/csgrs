@@ -9,63 +9,124 @@ impl Computable {
     }
 
     pub(crate) fn internal_structural_eq(left: &Self, right: &Self) -> bool {
-        if Arc::ptr_eq(&left.internal, &right.internal) {
-            return true;
+        enum NodeComparison<'a> {
+            Decided(bool),
+            One((&'a Computable, &'a Computable)),
+            Two(
+                (&'a Computable, &'a Computable),
+                (&'a Computable, &'a Computable),
+            ),
         }
 
-        fn compare_nodes(left: &Approximation, right: &Approximation) -> bool {
-            match (left, right) {
-                (Approximation::One, Approximation::One) => true,
-                (Approximation::Int(left), Approximation::Int(right)) => left == right,
-                (Approximation::Constant(left), Approximation::Constant(right)) => left == right,
-                (Approximation::Inverse(left), Approximation::Inverse(right)) => {
-                    Computable::internal_structural_eq(left, right)
+        #[inline(always)]
+        fn compare_nodes<'a>(left: &'a Computable, right: &'a Computable) -> NodeComparison<'a> {
+            match (&left.internal.approximation, &right.internal.approximation) {
+                (Approximation::One, Approximation::One) => NodeComparison::Decided(true),
+                (Approximation::Int(left), Approximation::Int(right))
+                | (Approximation::IntegralAtan(left), Approximation::IntegralAtan(right)) => {
+                    NodeComparison::Decided(left == right)
                 }
-                (Approximation::Negate(left), Approximation::Negate(right)) => {
-                    Computable::internal_structural_eq(left, right)
+                (Approximation::Constant(left), Approximation::Constant(right)) => {
+                    NodeComparison::Decided(left == right)
                 }
-                (Approximation::Add(left, right), Approximation::Add(left_rhs, right_rhs)) => {
-                    Computable::internal_structural_eq(left, left_rhs)
-                        && Computable::internal_structural_eq(right, right_rhs)
+                (Approximation::Inverse(left), Approximation::Inverse(right))
+                | (Approximation::Negate(left), Approximation::Negate(right))
+                | (Approximation::Square(left), Approximation::Square(right))
+                | (Approximation::PrescaledExp(left), Approximation::PrescaledExp(right))
+                | (Approximation::Expm1(left), Approximation::Expm1(right))
+                | (Approximation::Sqrt(left), Approximation::Sqrt(right))
+                | (Approximation::PrescaledLn(left), Approximation::PrescaledLn(right))
+                | (Approximation::PrescaledAtan(left), Approximation::PrescaledAtan(right))
+                | (Approximation::AtanDeferred(left), Approximation::AtanDeferred(right))
+                | (Approximation::PrescaledAsin(left), Approximation::PrescaledAsin(right))
+                | (Approximation::AsinDeferred(left), Approximation::AsinDeferred(right))
+                | (Approximation::AcosPositive(left), Approximation::AcosPositive(right))
+                | (Approximation::AcoshNearOne(left), Approximation::AcoshNearOne(right))
+                | (Approximation::AcoshDirect(left), Approximation::AcoshDirect(right))
+                | (Approximation::AsinhNearZero(left), Approximation::AsinhNearZero(right))
+                | (Approximation::AsinhDirect(left), Approximation::AsinhDirect(right))
+                | (Approximation::PrescaledAsinh(left), Approximation::PrescaledAsinh(right))
+                | (Approximation::AtanhDirect(left), Approximation::AtanhDirect(right))
+                | (Approximation::PrescaledAtanh(left), Approximation::PrescaledAtanh(right))
+                | (Approximation::PrescaledCos(left), Approximation::PrescaledCos(right))
+                | (Approximation::PrescaledSin(left), Approximation::PrescaledSin(right))
+                | (Approximation::PrescaledTan(left), Approximation::PrescaledTan(right))
+                | (Approximation::PrescaledCot(left), Approximation::PrescaledCot(right))
+                | (Approximation::ErfSeries(left), Approximation::ErfSeries(right))
+                | (Approximation::Erfc(left), Approximation::Erfc(right))
+                | (Approximation::NormalSf(left), Approximation::NormalSf(right))
+                | (Approximation::LogPnorm(left), Approximation::LogPnorm(right))
+                | (Approximation::LogNormalSf(left), Approximation::LogNormalSf(right))
+                | (Approximation::LogDnorm(left), Approximation::LogDnorm(right))
+                | (Approximation::SincSmall(left), Approximation::SincSmall(right))
+                | (Approximation::CoscSmall(left), Approximation::CoscSmall(right)) => {
+                    NodeComparison::One((left, right))
                 }
-                (
+                (Approximation::Add(left, right), Approximation::Add(left_rhs, right_rhs))
+                | (
                     Approximation::Multiply(left, right),
                     Approximation::Multiply(left_rhs, right_rhs),
                 ) => {
-                    Computable::internal_structural_eq(left, left_rhs)
-                        && Computable::internal_structural_eq(right, right_rhs)
+                    if Arc::ptr_eq(&left.internal, &right.internal)
+                        && Arc::ptr_eq(&left_rhs.internal, &right_rhs.internal)
+                    {
+                        NodeComparison::One((left, left_rhs))
+                    } else {
+                        NodeComparison::Two((left, left_rhs), (right, right_rhs))
+                    }
                 }
-                (Approximation::Square(left), Approximation::Square(right)) => {
-                    Computable::internal_structural_eq(left, right)
-                }
-                (Approximation::Ratio(left), Approximation::Ratio(right)) => left == right,
+                (Approximation::Ratio(left), Approximation::Ratio(right))
+                | (
+                    Approximation::PrescaledLnRational(left),
+                    Approximation::PrescaledLnRational(right),
+                )
+                | (Approximation::AtanRational(left), Approximation::AtanRational(right))
+                | (Approximation::AsinRational(left), Approximation::AsinRational(right))
+                | (
+                    Approximation::AcosPositiveRational(left),
+                    Approximation::AcosPositiveRational(right),
+                )
+                | (
+                    Approximation::AcosNegativeRational(left),
+                    Approximation::AcosNegativeRational(right),
+                )
+                | (Approximation::AsinhRational(left), Approximation::AsinhRational(right))
+                | (Approximation::AtanhRational(left), Approximation::AtanhRational(right))
+                | (
+                    Approximation::PrescaledCosRational(left),
+                    Approximation::PrescaledCosRational(right),
+                )
+                | (Approximation::CosLargeRational(left), Approximation::CosLargeRational(right))
+                | (
+                    Approximation::PrescaledCosHalfPiMinusRational(left),
+                    Approximation::PrescaledCosHalfPiMinusRational(right),
+                )
+                | (
+                    Approximation::PrescaledSinRational(left),
+                    Approximation::PrescaledSinRational(right),
+                )
+                | (Approximation::SinLargeRational(left), Approximation::SinLargeRational(right))
+                | (
+                    Approximation::PrescaledSinHalfPiMinusRational(left),
+                    Approximation::PrescaledSinHalfPiMinusRational(right),
+                )
+                | (
+                    Approximation::PrescaledCotHalfPiMinusRational(left),
+                    Approximation::PrescaledCotHalfPiMinusRational(right),
+                )
+                | (Approximation::TanLargeRational(left), Approximation::TanLargeRational(right))
+                | (
+                    Approximation::PrescaledTanRational(left),
+                    Approximation::PrescaledTanRational(right),
+                ) => NodeComparison::Decided(left == right),
                 (
                     Approximation::Offset(left, left_shift),
                     Approximation::Offset(right, right_shift),
-                ) => left_shift == right_shift && Computable::internal_structural_eq(left, right),
-                (Approximation::PrescaledExp(left), Approximation::PrescaledExp(right)) => {
-                    Computable::internal_structural_eq(left, right)
-                }
-                (Approximation::Expm1(left), Approximation::Expm1(right)) => {
-                    Computable::internal_structural_eq(left, right)
-                }
-                (Approximation::Sqrt(left), Approximation::Sqrt(right)) => {
-                    Computable::internal_structural_eq(left, right)
-                }
+                ) if left_shift == right_shift => NodeComparison::One((left, right)),
                 (
                     Approximation::NthRoot(left, left_degree),
                     Approximation::NthRoot(right, right_degree),
-                ) => {
-                    left_degree == right_degree
-                        && Computable::internal_structural_eq(left, right)
-                }
-                (Approximation::PrescaledLn(left), Approximation::PrescaledLn(right)) => {
-                    Computable::internal_structural_eq(left, right)
-                }
-                (
-                    Approximation::PrescaledLnRational(left),
-                    Approximation::PrescaledLnRational(right),
-                ) => left == right,
+                ) if left_degree == right_degree => NodeComparison::One((left, right)),
                 (
                     Approximation::BinaryScaledLnRational {
                         residual: left_residual,
@@ -75,118 +136,9 @@ impl Computable {
                         residual: right_residual,
                         shift: right_shift,
                     },
-                ) => left_residual == right_residual && left_shift == right_shift,
-                (Approximation::IntegralAtan(left), Approximation::IntegralAtan(right)) => {
-                    left == right
-                }
-                (Approximation::PrescaledAtan(left), Approximation::PrescaledAtan(right)) => {
-                    Computable::internal_structural_eq(left, right)
-                }
-                (Approximation::AtanDeferred(left), Approximation::AtanDeferred(right)) => {
-                    Computable::internal_structural_eq(left, right)
-                }
-                (Approximation::AtanRational(left), Approximation::AtanRational(right)) => {
-                    left == right
-                }
-                (Approximation::AsinRational(left), Approximation::AsinRational(right)) => {
-                    left == right
-                }
-                (Approximation::PrescaledAsin(left), Approximation::PrescaledAsin(right)) => {
-                    Computable::internal_structural_eq(left, right)
-                }
-                (Approximation::AsinDeferred(left), Approximation::AsinDeferred(right)) => {
-                    Computable::internal_structural_eq(left, right)
-                }
-                (Approximation::AcosPositive(left), Approximation::AcosPositive(right)) => {
-                    Computable::internal_structural_eq(left, right)
-                }
-                (
-                    Approximation::AcosPositiveRational(left),
-                    Approximation::AcosPositiveRational(right),
-                )
-                | (
-                    Approximation::AcosNegativeRational(left),
-                    Approximation::AcosNegativeRational(right),
-                ) => left == right,
-                (Approximation::AcoshNearOne(left), Approximation::AcoshNearOne(right)) => {
-                    Computable::internal_structural_eq(left, right)
-                }
-                (Approximation::AcoshDirect(left), Approximation::AcoshDirect(right)) => {
-                    Computable::internal_structural_eq(left, right)
-                }
-                (Approximation::AsinhNearZero(left), Approximation::AsinhNearZero(right)) => {
-                    Computable::internal_structural_eq(left, right)
-                }
-                (Approximation::AsinhDirect(left), Approximation::AsinhDirect(right)) => {
-                    Computable::internal_structural_eq(left, right)
-                }
-                (Approximation::PrescaledAsinh(left), Approximation::PrescaledAsinh(right)) => {
-                    Computable::internal_structural_eq(left, right)
-                }
-                (Approximation::AsinhRational(left), Approximation::AsinhRational(right)) => {
-                    left == right
-                }
-                (Approximation::AtanhDirect(left), Approximation::AtanhDirect(right)) => {
-                    Computable::internal_structural_eq(left, right)
-                }
-                (Approximation::PrescaledAtanh(left), Approximation::PrescaledAtanh(right)) => {
-                    Computable::internal_structural_eq(left, right)
-                }
-                (Approximation::AtanhRational(left), Approximation::AtanhRational(right)) => {
-                    left == right
-                }
-                (Approximation::PrescaledCos(left), Approximation::PrescaledCos(right)) => {
-                    Computable::internal_structural_eq(left, right)
-                }
-                (
-                    Approximation::PrescaledCosRational(left),
-                    Approximation::PrescaledCosRational(right),
-                ) => left == right,
-                (Approximation::CosLargeRational(left), Approximation::CosLargeRational(right)) => {
-                    left == right
-                }
-                (
-                    Approximation::PrescaledCosHalfPiMinusRational(left),
-                    Approximation::PrescaledCosHalfPiMinusRational(right),
-                ) => left == right,
-                (Approximation::PrescaledSin(left), Approximation::PrescaledSin(right)) => {
-                    Computable::internal_structural_eq(left, right)
-                }
-                (
-                    Approximation::PrescaledSinRational(left),
-                    Approximation::PrescaledSinRational(right),
-                ) => left == right,
-                (Approximation::SinLargeRational(left), Approximation::SinLargeRational(right)) => {
-                    left == right
-                }
-                (
-                    Approximation::PrescaledSinHalfPiMinusRational(left),
-                    Approximation::PrescaledSinHalfPiMinusRational(right),
-                ) => left == right,
-                (
-                    Approximation::PrescaledCotHalfPiMinusRational(left),
-                    Approximation::PrescaledCotHalfPiMinusRational(right),
-                ) => left == right,
-                (Approximation::TanLargeRational(left), Approximation::TanLargeRational(right)) => {
-                    left == right
-                }
-                (Approximation::PrescaledTan(left), Approximation::PrescaledTan(right)) => {
-                    Computable::internal_structural_eq(left, right)
-                }
-                (
-                    Approximation::PrescaledTanRational(left),
-                    Approximation::PrescaledTanRational(right),
-                ) => left == right,
-                (Approximation::PrescaledCot(left), Approximation::PrescaledCot(right)) => {
-                    Computable::internal_structural_eq(left, right)
-                }
-                (Approximation::ErfSeries(left), Approximation::ErfSeries(right)) => {
-                    Computable::internal_structural_eq(left, right)
-                }
-                (Approximation::Erfc(left), Approximation::Erfc(right))
-                | (Approximation::NormalSf(left), Approximation::NormalSf(right)) => {
-                    Computable::internal_structural_eq(left, right)
-                }
+                ) => NodeComparison::Decided(
+                    left_residual == right_residual && left_shift == right_shift,
+                ),
                 (
                     Approximation::NormalInterval {
                         lo: left_lo,
@@ -196,29 +148,80 @@ impl Computable {
                         lo: right_lo,
                         hi: right_hi,
                     },
-                ) => {
-                    Computable::internal_structural_eq(left_lo, right_lo)
-                        && Computable::internal_structural_eq(left_hi, right_hi)
+                ) => NodeComparison::Two((left_lo, right_lo), (left_hi, right_hi)),
+                (Approximation::NormalQuantile(left), Approximation::NormalQuantile(right))
+                    if left.seed == right.seed && left.seed_prec == right.seed_prec =>
+                {
+                    NodeComparison::One((&left.p, &right.p))
                 }
-                (Approximation::LogPnorm(left), Approximation::LogPnorm(right))
-                | (Approximation::LogNormalSf(left), Approximation::LogNormalSf(right))
-                | (Approximation::LogDnorm(left), Approximation::LogDnorm(right)) => {
-                    Computable::internal_structural_eq(left, right)
-                }
-                (Approximation::NormalQuantile(left), Approximation::NormalQuantile(right)) => {
-                    left.seed == right.seed
-                        && left.seed_prec == right.seed_prec
-                        && Computable::internal_structural_eq(&left.p, &right.p)
-                }
-                (Approximation::SincSmall(left), Approximation::SincSmall(right))
-                | (Approximation::CoscSmall(left), Approximation::CoscSmall(right)) => {
-                    Computable::internal_structural_eq(left, right)
-                }
-                _ => false,
+                _ => NodeComparison::Decided(false),
             }
         }
 
-        compare_nodes(&left.internal, &right.internal)
+        fn compare_bounded(
+            left: &Computable,
+            right: &Computable,
+            remaining: &mut usize,
+        ) -> Option<bool> {
+            if Arc::ptr_eq(&left.internal, &right.internal) {
+                return Some(true);
+            }
+            if *remaining == 0 {
+                return None;
+            }
+            *remaining -= 1;
+            match compare_nodes(left, right) {
+                NodeComparison::Decided(equal) => Some(equal),
+                NodeComparison::One((left, right)) => compare_bounded(left, right, remaining),
+                NodeComparison::Two((left, left_rhs), (right, right_rhs)) => {
+                    match compare_bounded(left, left_rhs, remaining) {
+                        Some(true) => compare_bounded(right, right_rhs, remaining),
+                        Some(false) => Some(false),
+                        None => None,
+                    }
+                }
+            }
+        }
+
+        // Preserve the allocation-free path for ordinary shallow comparisons.
+        // A computable is an immutable DAG, not necessarily a tree, so cap that
+        // walk before shared binary edges can cause exponential revisitation.
+        let mut remaining = 64;
+        if let Some(equal) = compare_bounded(left, right, &mut remaining) {
+            return equal;
+        }
+
+        // Retain one identity pair per already-compared node and finish the
+        // comparison iteratively. This also makes unusually deep graphs safe.
+        let mut pending = vec![(left, right)];
+        let mut compared = HashSet::new();
+        while let Some((left, right)) = pending.pop() {
+            if Arc::ptr_eq(&left.internal, &right.internal) {
+                continue;
+            }
+            match compare_nodes(left, right) {
+                NodeComparison::Decided(true) => continue,
+                NodeComparison::Decided(false) => return false,
+                children => {
+                    let identity = (
+                        Arc::as_ptr(&left.internal),
+                        Arc::as_ptr(&right.internal),
+                    );
+                    if !compared.insert(identity) {
+                        continue;
+                    }
+                    match children {
+                        NodeComparison::One(pair) => pending.push(pair),
+                        NodeComparison::Two(first, second) => {
+                            pending.push(second);
+                            pending.push(first);
+                        }
+                        NodeComparison::Decided(_) => unreachable!("matched above"),
+                    }
+                }
+            }
+        }
+        true
     }
 
     fn exact_shared_perturbation_order(&self, other: &Self) -> Option<Ordering> {
