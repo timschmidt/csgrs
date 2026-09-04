@@ -631,7 +631,7 @@ pub(crate) fn intersect_contours_with_cached_aabbs(
     }
 
     let mut events = Vec::new();
-    if let Some(result) = visit_swept_segment_pair_candidates(
+    if let Some(result) = visit_aabb_pair_candidates(
         a_segment_boxes,
         b_segment_boxes,
         a.segments().len(),
@@ -1016,7 +1016,12 @@ fn sorted_box_coordinate_partition(
     Some(start)
 }
 
-fn visit_swept_segment_pair_candidates<F>(
+pub(crate) const MIN_AABB_SWEEP_PAIR_COUNT: usize = 256;
+
+/// Visits certified box candidates in authored Cartesian order. Missing or
+/// undecidable boxes never reject a pair. `None` requests the caller's complete
+/// Cartesian fallback and is returned only before any candidate is visited.
+pub(crate) fn visit_aabb_pair_candidates<F, E>(
     first_boxes: &[Option<Aabb2>],
     second_boxes: &[Option<Aabb2>],
     first_segment_count: usize,
@@ -1024,16 +1029,15 @@ fn visit_swept_segment_pair_candidates<F>(
     prepared_second_index: Option<&SegmentAabbXIndex>,
     policy: &CurveContext,
     mut visit: F,
-) -> Option<CurveResult<()>>
+) -> Option<Result<(), E>>
 where
-    F: FnMut(usize, usize, bool) -> CurveResult<()>,
+    F: FnMut(usize, usize, bool) -> Result<(), E>,
 {
-    const MIN_CARTESIAN_PAIR_COUNT: usize = 256;
     const MIN_RANKED_PAIR_COUNT: usize = 4_096;
     const MIN_INDEXED_PAIR_COUNT: usize = 16_384;
 
     let cartesian_pair_count = first_segment_count.checked_mul(second_segment_count)?;
-    if cartesian_pair_count < MIN_CARTESIAN_PAIR_COUNT {
+    if cartesian_pair_count < MIN_AABB_SWEEP_PAIR_COUNT {
         return None;
     }
 
@@ -1809,7 +1813,7 @@ mod tests {
         second[7] = None;
 
         let mut swept = Vec::new();
-        visit_swept_segment_pair_candidates(
+        visit_aabb_pair_candidates(
             &first,
             &second,
             first.len(),
@@ -1818,7 +1822,7 @@ mod tests {
             &policy,
             |first_index, second_index, _| {
                 swept.push((first_index, second_index));
-                Ok(())
+                Ok::<_, CurveError>(())
             },
         )
         .expect("large exact boxes support the retained x sweep")
@@ -1826,7 +1830,7 @@ mod tests {
         let mut index = SegmentAabbXIndex::try_new(&second, second.len(), &policy).unwrap();
         assert!(index.prepare_interval_queries(&second, &policy));
         let mut prepared = Vec::new();
-        visit_swept_segment_pair_candidates(
+        visit_aabb_pair_candidates(
             &first,
             &second,
             first.len(),
@@ -1835,7 +1839,7 @@ mod tests {
             &policy,
             |first_index, second_index, _| {
                 prepared.push((first_index, second_index));
-                Ok(())
+                Ok::<_, CurveError>(())
             },
         )
         .unwrap()
@@ -1858,7 +1862,7 @@ mod tests {
         second[7] = None;
 
         let mut ranked = Vec::new();
-        visit_swept_segment_pair_candidates(
+        visit_aabb_pair_candidates(
             &first,
             &second,
             first.len(),
@@ -1867,7 +1871,7 @@ mod tests {
             &policy,
             |first_index, second_index, aabb_overlap_certified| {
                 ranked.push((first_index, second_index, aabb_overlap_certified));
-                Ok(())
+                Ok::<_, CurveError>(())
             },
         )
         .expect("dense exact boxes support the retained rank schedule")
@@ -1884,6 +1888,58 @@ mod tests {
                 .iter()
                 .all(|&(_, second, certified)| certified == (second != 7))
         );
+    }
+
+    #[test]
+    fn aabb_candidates_preserve_unknown_queries_and_visitor_errors() {
+        for count in [16, 64, 128] {
+            let mut first = (0..count)
+                .map(|index| Some(bbox(index * 3, -1, index * 3 + 2, 1)))
+                .collect::<Vec<_>>();
+            let mut second = (0..count)
+                .map(|index| Some(bbox(index * 3 + 1, 0, index * 3 + 3, 2)))
+                .collect::<Vec<_>>();
+            first[3] = None;
+            second[7] = None;
+            let mut candidates = Vec::new();
+            let result = visit_aabb_pair_candidates(
+                &first,
+                &second,
+                first.len(),
+                second.len(),
+                None,
+                &CurveContext::STRICT,
+                |first_index, second_index, _| {
+                    candidates.push((first_index, second_index));
+                    Ok::<_, &'static str>(())
+                },
+            );
+            assert_eq!(result, Some(Ok(())));
+            assert_eq!(
+                candidates,
+                flat_candidates(&first, &second, &CurveContext::STRICT)
+            );
+            assert_eq!(
+                candidates.iter().filter(|(first, _)| *first == 3).count(),
+                count as usize
+            );
+
+            let mut visits = 0;
+            let result = visit_aabb_pair_candidates(
+                &first,
+                &second,
+                first.len(),
+                second.len(),
+                None,
+                &CurveContext::STRICT,
+                |_, _, _| {
+                    visits += 1;
+                    Err("retained kernel blocker")
+                },
+            );
+            assert_eq!(result, Some(Err("retained kernel blocker")));
+            assert_eq!(visits, 1);
+        }
     }
 
     #[test]

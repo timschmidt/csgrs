@@ -25,6 +25,7 @@ use crate::bezier_split::{BezierSelectedFiberFragment2, BezierSelectedFiberSourc
 use crate::bezier_tangent_order::algebraic_endpoint_tangent_cross_sign;
 use crate::classify::{compare_reals, real_sign};
 use crate::curve_intersection::{CurveIntersectionBatchCache, CurveIntersectionContext};
+use crate::events::{MIN_AABB_SWEEP_PAIR_COUNT, visit_aabb_pair_candidates};
 use crate::policy::resolve_certified_operation;
 use crate::rational_bezier_general::{
     RationalBezierOverlapParameterCorrespondence2, RationalParameterImageMap2,
@@ -1414,35 +1415,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
 
         let authored_carrier_pair_count =
             first_carrier_count.saturating_mul(carriers.len() - first_carrier_count);
-        let curves = carriers
-            .iter()
-            .map(|carrier| match &carrier.geometry {
-                RegionCarrierGeometry::Bezier(curve) => Some(Curve2::from(curve.clone())),
-                RegionCarrierGeometry::AnalyticParallel(_)
-                | RegionCarrierGeometry::AlgebraicChord(_)
-                | RegionCarrierGeometry::AlgebraicCuspSemicircle(_) => None,
-            })
-            .collect::<Vec<_>>();
-        let mut pairs = Vec::with_capacity(
-            first_carrier_count
-                .saturating_add(carriers.len() - first_carrier_count)
-                .min(authored_carrier_pair_count),
-        );
-        let mut intersection_cache = CurveIntersectionBatchCache::default();
-        for first_carrier_index in 0..first_carrier_count {
-            for second_carrier_index in first_carrier_count..carriers.len() {
-                if let Some(pair) = build_candidate_carrier_pair(
-                    &carriers,
-                    &curves,
-                    first_carrier_index,
-                    second_carrier_index,
-                    policy,
-                    &mut intersection_cache,
-                )? {
-                    pairs.push(pair);
-                }
-            }
-        }
+        let pairs = build_cross_operand_carrier_pairs(&carriers, first_carrier_count, policy)?;
         let bezier_self_intersections = build_bezier_self_intersection_caches(&carriers, &pairs);
         let parallel_self_intersections = build_parallel_self_intersection_caches(&carriers);
 
@@ -1503,36 +1476,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
 
         let authored_carrier_pair_count =
             first_carrier_count.saturating_mul(carriers.len() - first_carrier_count);
-        let second_carrier_count = carriers.len() - first_carrier_count;
-        let curves = carriers
-            .iter()
-            .map(|carrier| match &carrier.geometry {
-                RegionCarrierGeometry::Bezier(curve) => Some(Curve2::from(curve.clone())),
-                RegionCarrierGeometry::AnalyticParallel(_)
-                | RegionCarrierGeometry::AlgebraicChord(_)
-                | RegionCarrierGeometry::AlgebraicCuspSemicircle(_) => None,
-            })
-            .collect::<Vec<_>>();
-        let mut pairs = Vec::with_capacity(
-            first_carrier_count
-                .saturating_add(second_carrier_count)
-                .min(authored_carrier_pair_count),
-        );
-        let mut intersection_cache = CurveIntersectionBatchCache::default();
-        for first_carrier_index in 0..first_carrier_count {
-            for second_carrier_index in first_carrier_count..carriers.len() {
-                if let Some(pair) = build_candidate_carrier_pair(
-                    &carriers,
-                    &curves,
-                    first_carrier_index,
-                    second_carrier_index,
-                    policy,
-                    &mut intersection_cache,
-                )? {
-                    pairs.push(pair);
-                }
-            }
-        }
+        let pairs = build_cross_operand_carrier_pairs(&carriers, first_carrier_count, policy)?;
 
         Ok(Self {
             data: CurveRegionBooleanContextData {
@@ -12401,6 +12345,72 @@ fn region_carrier_count(region: &CurveRegion2) -> usize {
         .sum()
 }
 
+fn build_cross_operand_carrier_pairs(
+    carriers: &[RegionCarrier],
+    first_carrier_count: usize,
+    policy: &CurveContext,
+) -> ExactCurveResult<Vec<RegionCarrierPair>> {
+    let second_carrier_count = carriers.len() - first_carrier_count;
+    let cartesian_pair_count = first_carrier_count.saturating_mul(second_carrier_count);
+    let curves = carriers
+        .iter()
+        .map(|carrier| match &carrier.geometry {
+            RegionCarrierGeometry::Bezier(curve) => Some(Curve2::from(curve.clone())),
+            _ => None,
+        })
+        .collect::<Vec<_>>();
+    let mut pairs = Vec::with_capacity(carriers.len().min(cartesian_pair_count));
+    let mut intersection_cache = CurveIntersectionBatchCache::default();
+    let mut visit = |first_index, second_index, _| -> ExactCurveResult<()> {
+        if let Some(pair) = build_candidate_carrier_pair(
+            carriers,
+            &curves,
+            first_index,
+            first_carrier_count + second_index,
+            policy,
+            &mut intersection_cache,
+        )? {
+            pairs.push(pair);
+        }
+        Ok(())
+    };
+    if cartesian_pair_count >= MIN_AABB_SWEEP_PAIR_COUNT {
+        // Retain one optional envelope per carrier, not one per Cartesian
+        // pair. Only the rejection proof suppresses terminal approximation;
+        // surviving pairs still enter their kernel with the original policy.
+        let bounds = policy.strict_predicate_pass(|| {
+            carriers
+                .iter()
+                .map(
+                    |carrier| match carrier_optional_outer_bounds_refined(carrier, 0, policy) {
+                        Classification::Decided(bounds) => Some(bounds),
+                        Classification::Uncertain(_) => None,
+                    },
+                )
+                .collect::<Vec<_>>()
+        });
+        let (first_bounds, second_bounds) = bounds.split_at(first_carrier_count);
+        if let Some(result) = visit_aabb_pair_candidates(
+            first_bounds,
+            second_bounds,
+            first_carrier_count,
+            second_carrier_count,
+            None,
+            &CurveContext::STRICT,
+            &mut visit,
+        ) {
+            result?;
+            return Ok(pairs);
+        }
+    }
+    for first_index in 0..first_carrier_count {
+        for second_index in 0..second_carrier_count {
+            visit(first_index, second_index, false)?;
+        }
+    }
+    Ok(pairs)
+}
+
 fn build_candidate_carrier_pair(
     carriers: &[RegionCarrier],
     curves: &[Option<Curve2>],
@@ -21426,6 +21436,85 @@ mod certified_successor_tests {
         )
         .unwrap()
         .into_value()
+    }
+
+    #[test]
+    fn retained_aabb_candidates_match_cartesian_pairs_in_authored_order() {
+        let region = |offset, policy: &CurveContext| {
+            let contours = (0..16)
+                .map(|index| {
+                    let x = (index % 4) * 10 + offset;
+                    let y = (index / 4) * 10;
+                    crate::Contour2::from_bulge_vertices(
+                        &[(x, y), (x + 4, y), (x + 4, y + 4), (x, y + 4)].map(|(x, y)| {
+                            crate::BulgeVertex2::new(Point2::from_values(x, y), Real::zero())
+                        }),
+                    )
+                    .unwrap()
+                })
+                .collect();
+            let result =
+                CurveRegion2::try_from_native_contours(contours, Vec::new(), policy).unwrap();
+            assert_eq!(result.certainty, crate::CurveCertainty::Certified);
+            result.into_value()
+        };
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let first = region(0, &policy);
+            // Each pair of components shares an edge and its two endpoints.
+            let second = region(4, &policy);
+            let context = CurveRegionBooleanContext::try_new(&first, &second, &policy).unwrap();
+            assert_eq!(context.data.authored_carrier_pair_count, 4_096);
+            assert!(!context.data.pairs.is_empty());
+            let mut carriers = context.data.carriers;
+            let first_count = context.data.first_carrier_count;
+            // Exercise both an unknown query and an unknown indexed box. The
+            // exact pair kernel may still reject them after local refinement.
+            for index in [3, first_count + 7] {
+                carriers[index].bounds =
+                    OnceLock::from(Classification::Uncertain(UncertaintyReason::Unsupported));
+            }
+            let indexed =
+                build_cross_operand_carrier_pairs(&carriers, first_count, &policy).unwrap();
+            let curves = carriers
+                .iter()
+                .map(|carrier| match &carrier.geometry {
+                    RegionCarrierGeometry::Bezier(curve) => Some(Curve2::from(curve.clone())),
+                    _ => None,
+                })
+                .collect::<Vec<_>>();
+            let mut cache = CurveIntersectionBatchCache::default();
+            let mut cartesian = Vec::new();
+            for first_index in 0..first_count {
+                for second_index in first_count..carriers.len() {
+                    if let Some(pair) = build_candidate_carrier_pair(
+                        &carriers,
+                        &curves,
+                        first_index,
+                        second_index,
+                        &policy,
+                        &mut cache,
+                    )
+                    .unwrap()
+                    {
+                        cartesian.push((pair.first_carrier_index, pair.second_carrier_index));
+                    }
+                }
+            }
+            for pairs in [&context.data.pairs, &indexed] {
+                assert_eq!(
+                    pairs
+                        .iter()
+                        .map(|pair| (pair.first_carrier_index, pair.second_carrier_index))
+                        .collect::<Vec<_>>(),
+                    cartesian
+                );
+            }
+            let evidence = first.intersect_region(&second, &policy).unwrap();
+            assert_eq!(evidence.certainty, crate::CurveCertainty::Certified);
+            assert!(evidence.value.is_complete());
+            assert_eq!(evidence.value.overlaps().len(), 16);
+            assert!(!evidence.value.contacts().is_empty());
+        }
     }
 
     #[test]
