@@ -42,6 +42,72 @@ mod tests {
     }
 
     #[test]
+    fn demand_sized_sqrt_seeds_match_directed_mpfr() {
+        use rug::{Float, Integer, Rational as RugRational, float::Round};
+
+        let check = |numerator: BigInt, denominator: BigUint, precisions: &[i32]| {
+            let exact = Rational::from_bigint_fraction(numerator.clone(), denominator.clone())
+                .expect("positive denominator");
+            let oracle = RugRational::from((
+                Integer::from_str_radix(&numerator.to_string(), 10).unwrap(),
+                Integer::from_str_radix(&denominator.to_string(), 10).unwrap(),
+            ));
+            let mut lower = Float::with_val_round(2_048, &oracle, Round::Down).0;
+            let mut upper = Float::with_val_round(2_048, &oracle, Round::Up).0;
+            lower.sqrt_round(Round::Down);
+            upper.sqrt_round(Round::Up);
+            for &precision in precisions {
+                // Bypass symbolic square folding to exercise the numeric seed,
+                // including exact squares and values near a rounding boundary.
+                let root = Computable {
+                    internal: Arc::new(Node::new(
+                        Approximation::Sqrt(Computable::rational(exact.clone())),
+                        BoundCache::Invalid,
+                        ExactSignCache::Invalid,
+                    )),
+                    signal: None,
+                };
+                let actual = root.approx(precision);
+                let actual = Float::with_val(
+                    2_048,
+                    Integer::from_str_radix(&actual.to_string(), 10).unwrap(),
+                );
+                let mut low = lower.clone();
+                let mut high = upper.clone();
+                low >>= precision;
+                high >>= precision;
+                assert!(
+                    Float::with_val(2_048, &actual - low).abs() <= 1
+                        && Float::with_val(2_048, &actual - high).abs() <= 1,
+                    "sqrt({exact:?}) exceeds one ulp at precision {precision}"
+                );
+            }
+        };
+
+        for exponent in [-600_i32, -80, 0, 80, 600] {
+            let precisions = [0, 1, 16, 32, 64, 95, 96, 97, 128, 139, 140, 141, 256, 1_024]
+                .map(|digits| exponent / 2 - digits);
+            for n in [2_u32, 3, 5, 17] {
+                let mut numerator = BigInt::from(n);
+                let mut denominator = BigUint::one();
+                if exponent >= 0 {
+                    numerator <<= exponent as usize;
+                } else {
+                    denominator <<= (-exponent) as usize;
+                }
+                check(numerator, denominator, &precisions);
+            }
+        }
+        let denominator = BigUint::one() << 256_usize;
+        for n in [1_u32, 2, 17] {
+            for delta in [-1_i32, 0, 1] {
+                let numerator = (BigInt::from(n * n) << 256_usize) + delta;
+                check(numerator, denominator.clone(), &[0, -16, -64, -96, -140, -256]);
+            }
+        }
+    }
+
+    #[test]
     fn direct_nth_root_approximations_match_mpfr() {
         use rug::{Float, float::Round};
 

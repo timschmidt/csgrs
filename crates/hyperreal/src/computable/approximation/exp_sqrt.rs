@@ -142,6 +142,19 @@ fn sqrt(signal: &Option<Signal>, c: &Computable, p: Precision) -> BigInt {
 
         (shifted_result + signed::ONE.deref()) / signed::TWO.deref()
     } else {
+        // If A approximates 2^(2*g)*x within one, then floor(sqrt(A))
+        // approximates 2^g*sqrt(x) within two, including near zero. Four
+        // guard bits and final rounding therefore give error below 5/8 ulp.
+        // Size the integer root to this request, not the largest seed that
+        // the Newton branch can use. Keep the established large-seed path
+        // beyond the measured small-request crossover.
+        if result_digits <= 96
+            && let Some(op_prec) = p.checked_sub(4).and_then(|prec| prec.checked_mul(2))
+        {
+            let scaled_bi_appr = c.approx_signal(signal, op_prec);
+            return scale(scaled_bi_appr.sqrt(), -4);
+        }
+
         // Use an approximation from the Num crate
         // Make sure all precisions are even
         let op_prec = (msd - fp_op_prec) & !1;
