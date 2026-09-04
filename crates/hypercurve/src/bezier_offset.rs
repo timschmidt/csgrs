@@ -110860,15 +110860,8 @@ impl BezierParallel2 {
             }
         };
         let source = self.source_power_basis()?;
-        let differential = self.differential()?;
 
         if let Classification::Uncertain(reason) = Self::certify_finite_source(&source, policy)? {
-            return Ok(Classification::Uncertain(reason));
-        }
-        if distance_sign != RealSign::Zero
-            && let Classification::Uncertain(reason) =
-                Self::certify_regular_differential(differential, policy)?
-        {
             return Ok(Classification::Uncertain(reason));
         }
 
@@ -110878,6 +110871,16 @@ impl BezierParallel2 {
         };
         let delta_x = polynomial_subtract(&weighted_target(point.x()), source.x_numerator);
         let delta_y = polynomial_subtract(&weighted_target(point.y()), source.y_numerator);
+        if distance_sign == RealSign::Zero {
+            return common_unit_polynomial_roots(delta_x, delta_y, policy);
+        }
+
+        let differential = self.differential()?;
+        if let Classification::Uncertain(reason) =
+            Self::certify_regular_differential(differential, policy)?
+        {
+            return Ok(Classification::Uncertain(reason));
+        }
         let orthogonality = polynomial_add(
             &polynomial_multiply(&delta_x, &differential.tangent_x),
             &polynomial_multiply(&delta_y, &differential.tangent_y),
@@ -110900,9 +110903,6 @@ impl BezierParallel2 {
                     return Ok(Classification::Uncertain(reason));
                 }
             };
-        if distance_sign == RealSign::Zero {
-            return Ok(Classification::Decided(incidence));
-        }
 
         let orientation = polynomial_subtract(
             &polynomial_multiply(&delta_y, &differential.tangent_x),
@@ -116812,6 +116812,17 @@ impl BezierParallel2 {
             Some(sign) => sign,
             None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
         };
+        if distance_sign == RealSign::Zero {
+            let source = self.source().to_rational_bezier()?;
+            return Ok(source
+                .intersection_candidates_classified(other, policy)?
+                .map(|candidates| {
+                    BezierParallelIntersectionCandidateSystem2::projected(
+                        parallel_candidates_from_rational(candidates),
+                        None,
+                    )
+                }));
+        }
         if tangent_field.is_none()
             && let Some(Some(offset)) = self.data.certified_ph_offset.get()
         {
@@ -116866,9 +116877,8 @@ impl BezierParallel2 {
             Some(differential) => differential,
             None => self.differential()?,
         };
-        if distance_sign != RealSign::Zero
-            && let Classification::Uncertain(reason) =
-                Self::certify_regular_differential(differential, policy)?
+        if let Classification::Uncertain(reason) =
+            Self::certify_regular_differential(differential, policy)?
         {
             return Ok(Classification::Uncertain(reason));
         }
