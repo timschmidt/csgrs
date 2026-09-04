@@ -448,6 +448,9 @@ pub fn represent_algebraic_tensor_image(
     let first_source = source_roots[0].clone();
     let mut source_roots = source_roots.to_vec();
     let mut relation = relation.clone();
+    let has_unresolved_source = source_roots
+        .iter()
+        .any(|source| source.exact_point_witness().is_none());
     // Exact-value and affine substitutions remove a source axis just as
     // conclusively as a later resultant or certified independence proof.
     // Keep the public count faithful on every early-return path, not only
@@ -455,8 +458,18 @@ pub fn represent_algebraic_tensor_image(
     let mut eliminated_source_count = 0;
     let mut source_index = 0;
     while source_index < source_roots.len() {
-        if let Some(value) = source_roots[source_index].exact_point_witness() {
-            let Some(substituted) = relation.substitute_axis_value(source_index, value) else {
+        let substitution_value =
+            source_roots[source_index]
+                .exact_point_witness()
+                .and_then(|value| {
+                    if has_unresolved_source {
+                        Some(value.clone())
+                    } else {
+                        value.exact_rational_normal_form().map(Real::new)
+                    }
+                });
+        if let Some(value) = substitution_value {
+            let Some(substituted) = relation.substitute_axis_value(source_index, &value) else {
                 return report(
                     AlgebraicTensorImageStatus::InvalidRelationShape,
                     eliminated_source_count,
@@ -973,6 +986,18 @@ mod tests {
         }
     }
 
+    fn exact_square_root(square: i64) -> AlgebraicRootRepresentation {
+        let mut root = square_root(square);
+        let value = real(square).sqrt().expect("a positive integer has a root");
+        root.interval = IsolatedRootInterval {
+            lower: value.clone(),
+            upper: value.clone(),
+            exact_root: Some(value),
+            distinct_root_count: 1,
+        };
+        root
+    }
+
     fn flat_index(dimensions: &[usize], exponents: &[usize]) -> usize {
         dimensions
             .iter()
@@ -1344,6 +1369,32 @@ mod tests {
         assert_eq!(
             mixed_report.representation.unwrap().polynomial_coefficients,
             vec![real(2), real(-4), Real::one()]
+        );
+    }
+
+    #[test]
+    fn tensor_image_retains_carriers_for_a_complete_nonrational_point_tuple() {
+        let report = represent_algebraic_tensor_image(
+            &sum_relation(2, Real::zero()),
+            &[exact_square_root(2), exact_square_root(3)],
+            &IsolatedRootInterval {
+                lower: real(3),
+                upper: real(4),
+                exact_root: None,
+                distinct_root_count: 1,
+            },
+        );
+        assert_eq!(report.status, AlgebraicTensorImageStatus::Transformed);
+        assert_eq!(report.elimination_count, 2);
+        assert_eq!(
+            report.representation.unwrap().polynomial_coefficients,
+            vec![
+                Real::one(),
+                Real::zero(),
+                real(-10),
+                Real::zero(),
+                Real::one()
+            ]
         );
     }
 
