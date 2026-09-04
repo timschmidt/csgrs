@@ -28617,6 +28617,11 @@ impl BezierAlgebraicCuspSemicircle2 {
             RationalBezierIntersectionPointEvidence2::AlgebraicChordParallel(point) => point.at_end,
             _ => return Ok(Classification::Decided(None)),
         };
+        // The target axis below is the source-support parameter retained by a
+        // full procedural endpoint pair.  When the current finite chord is
+        // exactly that pair, `[0, 1]` is already its complete domain (possibly
+        // with reversed traversal); no Cartesian point replay is needed.
+        let finite_parameter_reversed = chord.procedural_parallel_parameter_reversed();
         let source_support = structural.source.retained_support();
         let [source_start, source_end] =
             if structural.source.retained_support_orientation_is_reversed() {
@@ -29134,7 +29139,7 @@ impl BezierAlgebraicCuspSemicircle2 {
             chord,
             system,
             authored_candidates,
-            false,
+            clip_to_finite_chord && finite_parameter_reversed.is_some(),
             policy,
         )? {
             Classification::Decided(intersections) => intersections,
@@ -29155,11 +29160,33 @@ impl BezierAlgebraicCuspSemicircle2 {
         for contact in contacts {
             let (cusp_parameter, point) = parameter_map.contact_evidence(&contact);
             let chord_parameter = if clip_to_finite_chord {
-                match chord.parameter_at_certified_point(point, policy)? {
-                    Classification::Decided(Some(parameter)) => parameter,
-                    Classification::Decided(None) => continue,
-                    Classification::Uncertain(reason) => {
-                        return Ok(Classification::Uncertain(reason));
+                if let Some(reversed) = finite_parameter_reversed {
+                    match contact.chord_location {
+                        BezierAlgebraicCuspSemicircleContactLocation2::Start => {
+                            if reversed {
+                                chord.end_parameter()
+                            } else {
+                                chord.start_parameter()
+                            }
+                        }
+                        BezierAlgebraicCuspSemicircleContactLocation2::End => {
+                            if reversed {
+                                chord.start_parameter()
+                            } else {
+                                chord.end_parameter()
+                            }
+                        }
+                        BezierAlgebraicCuspSemicircleContactLocation2::Interior => {
+                            chord.parameter_at_certified_interior_point(point)
+                        }
+                    }
+                } else {
+                    match chord.parameter_at_certified_point(point, policy)? {
+                        Classification::Decided(Some(parameter)) => parameter,
+                        Classification::Decided(None) => continue,
+                        Classification::Uncertain(reason) => {
+                            return Ok(Classification::Uncertain(reason));
+                        }
                     }
                 }
             } else {
@@ -31995,15 +32022,34 @@ impl BezierAlgebraicCuspSemicircle2 {
         policy: &CurveContext,
     ) -> CurveResult<Classification<BezierAlgebraicCuspSemicircleRetainedChordIntersections2>> {
         if policy.permits_approximate_512() {
-            let strict = policy.strict_predicate_pass(|| {
+            let strict_policy = policy.strict_counterpart();
+            let can_replay_strict = self.data.frame.selected_radial().is_some_and(|frame| {
+                strict_policy.accepts_retained_policy(frame.policy)
+                    && BezierAlgebraicCuspSemicircleParameter2::Mapped(
+                        frame.center_parameter.clone(),
+                    )
+                    .validate_policy(&strict_policy)
+                    .is_ok()
+            }) && strict_policy.accepts_retained_policy(chord.policy());
+            let strict = if can_replay_strict {
                 self.chord_intersections_in_domain_once(
                     chord,
                     clip_to_finite_chord,
                     prefer_exact_line,
                     certified_endpoint_incidence,
-                    policy,
+                    &strict_policy,
                 )
-            });
+            } else {
+                policy.strict_predicate_pass(|| {
+                    self.chord_intersections_in_domain_once(
+                        chord,
+                        clip_to_finite_chord,
+                        prefer_exact_line,
+                        certified_endpoint_incidence,
+                        policy,
+                    )
+                })
+            };
             match strict {
                 Ok(decided @ Classification::Decided(_)) => return Ok(decided),
                 Ok(Classification::Uncertain(_)) => {}
@@ -71878,6 +71924,30 @@ impl BezierAlgebraicChord2 {
 
     pub(crate) fn retained_support(&self) -> &Self {
         self.data.source.as_ref().unwrap_or(self)
+    }
+
+    /// Returns whether this chord is the complete parameter interval of one
+    /// procedural parallel carrier and whether its traversal reverses that
+    /// carrier's `[0, 1]` parameter.
+    fn procedural_parallel_parameter_reversed(&self) -> Option<bool> {
+        let (
+            RationalBezierIntersectionPointEvidence2::AlgebraicChordParallel(start),
+            RationalBezierIntersectionPointEvidence2::AlgebraicChordParallel(end),
+        ) = (self.start(), self.end())
+        else {
+            return None;
+        };
+        let retained = self.retained_support();
+        let RationalBezierIntersectionPointEvidence2::AlgebraicChordParallel(retained_start) =
+            retained.start()
+        else {
+            return None;
+        };
+        (Arc::ptr_eq(&start.data, &end.data)
+            && Arc::ptr_eq(&start.data, &retained_start.data)
+            && start.data.source_point.is_none()
+            && start.at_end != end.at_end)
+            .then_some(start.at_end)
     }
 
     /// Returns the oldest retained chord on this exact affine support and
