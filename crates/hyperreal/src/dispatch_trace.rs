@@ -1,5 +1,6 @@
-use std::cell::{Cell, RefCell};
-use std::collections::BTreeMap;
+use std::cell::RefCell;
+use std::collections::{BTreeMap, HashMap};
+use std::hash::{BuildHasherDefault, Hash, Hasher};
 
 use num::{BigUint, One, Zero};
 
@@ -429,15 +430,78 @@ struct DispatchKey {
     path: &'static str,
 }
 
-thread_local! {
-    static RECORDING: Cell<bool> = const { Cell::new(false) };
-    static COUNTS: RefCell<BTreeMap<DispatchKey, u64>> = const { RefCell::new(BTreeMap::new()) };
-    static RATIONAL_STATS: RefCell<RationalTraceStats> = RefCell::new(RationalTraceStats::default());
+/// Hot-path identity for compile-time trace labels.
+///
+/// Trace labels are required to be static, so a call site presents the same
+/// string addresses on every invocation. Keying the live counter table by
+/// those addresses avoids repeatedly comparing label contents inside exact
+/// arithmetic loops. Snapshots merge identity-distinct labels with equal text
+/// back into the public content-keyed representation.
+#[derive(Clone, Copy)]
+struct ActiveDispatchKey {
+    layer: &'static str,
+    operation: &'static str,
+    path: &'static str,
 }
 
-#[inline]
-fn is_recording() -> bool {
-    RECORDING.with(Cell::get)
+impl PartialEq for ActiveDispatchKey {
+    fn eq(&self, other: &Self) -> bool {
+        std::ptr::eq(self.layer, other.layer)
+            && std::ptr::eq(self.operation, other.operation)
+            && std::ptr::eq(self.path, other.path)
+    }
+}
+
+impl Eq for ActiveDispatchKey {}
+
+impl Hash for ActiveDispatchKey {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        state.write_usize(self.layer.as_ptr() as usize);
+        state.write_usize(self.layer.len());
+        state.write_usize(self.operation.as_ptr() as usize);
+        state.write_usize(self.operation.len());
+        state.write_usize(self.path.as_ptr() as usize);
+        state.write_usize(self.path.len());
+    }
+}
+
+#[derive(Default)]
+struct DispatchHasher(u64);
+
+impl Hasher for DispatchHasher {
+    fn finish(&self) -> u64 {
+        self.0
+    }
+
+    fn write(&mut self, bytes: &[u8]) {
+        for byte in bytes {
+            self.0 ^= u64::from(*byte);
+            self.0 = self.0.wrapping_mul(0x100_0000_01b3);
+        }
+    }
+
+    fn write_usize(&mut self, value: usize) {
+        let mut mixed = value as u64;
+        mixed ^= mixed >> 30;
+        mixed = mixed.wrapping_mul(0xbf58_476d_1ce4_e5b9);
+        mixed ^= mixed >> 27;
+        mixed = mixed.wrapping_mul(0x94d0_49bb_1331_11eb);
+        mixed ^= mixed >> 31;
+        self.0 = self.0.rotate_left(21) ^ mixed;
+    }
+}
+
+type ActiveCounts = HashMap<ActiveDispatchKey, u64, BuildHasherDefault<DispatchHasher>>;
+
+#[derive(Default)]
+struct TraceState {
+    recording: bool,
+    counts: ActiveCounts,
+    rational: RationalTraceStats,
+}
+
+thread_local! {
+    static TRACE_STATE: RefCell<TraceState> = RefCell::new(TraceState::default());
 }
 
 pub struct RecordingGuard {
@@ -446,19 +510,23 @@ pub struct RecordingGuard {
 
 impl Drop for RecordingGuard {
     fn drop(&mut self) {
-        RECORDING.with(|recording| recording.set(self.previous));
+        TRACE_STATE.with(|state| state.borrow_mut().recording = self.previous);
     }
 }
 
 pub fn reset() {
-    COUNTS.with(|counts| counts.borrow_mut().clear());
-    reset_rational_stats();
+    TRACE_STATE.with(|state| {
+        let mut state = state.borrow_mut();
+        state.counts.clear();
+        state.rational = RationalTraceStats::default();
+    });
 }
 
 pub fn recording_scope() -> RecordingGuard {
-    let previous = RECORDING.with(|recording| {
-        let previous = recording.get();
-        recording.set(true);
+    let previous = TRACE_STATE.with(|state| {
+        let mut state = state.borrow_mut();
+        let previous = state.recording;
+        state.recording = true;
         previous
     });
     RecordingGuard { previous }
@@ -471,23 +539,28 @@ pub fn with_recording<T>(f: impl FnOnce() -> T) -> T {
 
 #[inline]
 pub fn record(layer: &'static str, operation: &'static str, path: &'static str) {
-    if !is_recording() {
-        return;
-    }
-    record_active(layer, operation, path);
+    TRACE_STATE.with(|state| {
+        let mut state = state.borrow_mut();
+        if state.recording {
+            record_active(&mut state.counts, layer, operation, path);
+        }
+    });
 }
 
 #[cold]
 #[inline(never)]
-fn record_active(layer: &'static str, operation: &'static str, path: &'static str) {
-    let key = DispatchKey {
+fn record_active(
+    counts: &mut ActiveCounts,
+    layer: &'static str,
+    operation: &'static str,
+    path: &'static str,
+) {
+    let key = ActiveDispatchKey {
         layer,
         operation,
         path,
     };
-    COUNTS.with(|counts| {
-        *counts.borrow_mut().entry(key).or_insert(0) += 1;
-    });
+    *counts.entry(key).or_insert(0) += 1;
 }
 
 pub(crate) fn record_sign_refinement_precision(operation: &'static str, precision: i32) {
@@ -524,30 +597,32 @@ fn record_common_factor(stats: &mut RationalTraceStats, divisor: &BigUint) {
 }
 
 pub fn record_rational_temporary() {
-    if !is_recording() {
-        return;
-    }
-    RATIONAL_STATS.with(|stats| stats.borrow_mut().temporary_rationals += 1);
+    TRACE_STATE.with(|state| {
+        let mut state = state.borrow_mut();
+        if state.recording {
+            state.rational.temporary_rationals += 1;
+        }
+    });
 }
 
 pub fn record_rational_reduction(numerator: &BigUint, denominator: &BigUint) {
-    if !is_recording() {
-        return;
-    }
-    RATIONAL_STATS.with(|stats| {
-        let mut stats = stats.borrow_mut();
-        stats.reductions += 1;
-        update_peak(&mut stats, numerator);
-        update_peak(&mut stats, denominator);
+    TRACE_STATE.with(|state| {
+        let mut state = state.borrow_mut();
+        if state.recording {
+            state.rational.reductions += 1;
+            update_peak(&mut state.rational, numerator);
+            update_peak(&mut state.rational, denominator);
+        }
     });
 }
 
 pub fn record_rational_gcd(left: &BigUint, right: &BigUint, divisor: &BigUint) {
-    if !is_recording() {
-        return;
-    }
-    RATIONAL_STATS.with(|stats| {
-        let mut stats = stats.borrow_mut();
+    TRACE_STATE.with(|state| {
+        let mut state = state.borrow_mut();
+        if !state.recording {
+            return;
+        }
+        let stats = &mut state.rational;
         stats.gcds += 1;
         let left_bits = left.bits();
         let right_bits = right.bits();
@@ -562,19 +637,20 @@ pub fn record_rational_gcd(left: &BigUint, right: &BigUint, divisor: &BigUint) {
         } else {
             stats.gcd_operand_widths.arbitrary_precision += 1;
         }
-        update_peak(&mut stats, left);
-        update_peak(&mut stats, right);
-        update_peak(&mut stats, divisor);
-        record_common_factor(&mut stats, divisor);
+        update_peak(stats, left);
+        update_peak(stats, right);
+        update_peak(stats, divisor);
+        record_common_factor(stats, divisor);
     });
 }
 
 pub fn record_rational_power_of_two_common_factor(shift: u64) {
-    if !is_recording() {
-        return;
-    }
-    RATIONAL_STATS.with(|stats| {
-        let mut stats = stats.borrow_mut();
+    TRACE_STATE.with(|state| {
+        let mut state = state.borrow_mut();
+        if !state.recording {
+            return;
+        }
+        let stats = &mut state.rational;
         if shift == 0 {
             stats.common_factors.none += 1;
         } else {
@@ -584,49 +660,60 @@ pub fn record_rational_power_of_two_common_factor(shift: u64) {
 }
 
 pub fn reset_rational_stats() {
-    RATIONAL_STATS.with(|stats| *stats.borrow_mut() = RationalTraceStats::default());
+    TRACE_STATE.with(|state| state.borrow_mut().rational = RationalTraceStats::default());
 }
 
 pub fn snapshot_rational_stats() -> RationalTraceStats {
-    RATIONAL_STATS.with(|stats| *stats.borrow())
+    TRACE_STATE.with(|state| state.borrow().rational)
 }
 
 pub fn take_rational_stats() -> RationalTraceStats {
-    RATIONAL_STATS.with(|stats| {
-        let mut stats = stats.borrow_mut();
-        std::mem::take(&mut *stats)
+    TRACE_STATE.with(|state| {
+        let mut state = state.borrow_mut();
+        std::mem::take(&mut state.rational)
     })
 }
 
-pub fn snapshot() -> Vec<DispatchCount> {
-    COUNTS.with(|counts| {
-        counts
-            .borrow()
-            .iter()
-            .map(|(key, count)| DispatchCount {
+fn collect_dispatch_counts(
+    counts: impl IntoIterator<Item = (ActiveDispatchKey, u64)>,
+) -> Vec<DispatchCount> {
+    let mut grouped = BTreeMap::<DispatchKey, u64>::new();
+    for (key, count) in counts {
+        *grouped
+            .entry(DispatchKey {
                 layer: key.layer,
                 operation: key.operation,
                 path: key.path,
-                count: *count,
             })
-            .collect()
+            .or_insert(0) += count;
+    }
+    grouped
+        .into_iter()
+        .map(|(key, count)| DispatchCount {
+            layer: key.layer,
+            operation: key.operation,
+            path: key.path,
+            count,
+        })
+        .collect()
+}
+
+pub fn snapshot() -> Vec<DispatchCount> {
+    TRACE_STATE.with(|state| {
+        collect_dispatch_counts(
+            state
+                .borrow()
+                .counts
+                .iter()
+                .map(|(key, count)| (*key, *count)),
+        )
     })
 }
 
 pub fn take() -> Vec<DispatchCount> {
-    COUNTS.with(|counts| {
-        let mut counts = counts.borrow_mut();
-        let snapshot = counts
-            .iter()
-            .map(|(key, count)| DispatchCount {
-                layer: key.layer,
-                operation: key.operation,
-                path: key.path,
-                count: *count,
-            })
-            .collect();
-        counts.clear();
-        snapshot
+    TRACE_STATE.with(|state| {
+        let mut state = state.borrow_mut();
+        collect_dispatch_counts(state.counts.drain())
     })
 }
 
@@ -671,6 +758,30 @@ mod tests {
                 && entry.count == 2
         }));
         assert!(snapshot().is_empty());
+    }
+
+    #[test]
+    fn dispatch_snapshot_merges_equal_labels_from_distinct_static_storage() {
+        let label = || -> &'static str { Box::leak(String::from("same").into_boxed_str()) };
+        let first = (label(), label(), label());
+        let second = (label(), label(), label());
+        assert!(!std::ptr::eq(first.0, second.0));
+
+        reset();
+        with_recording(|| {
+            record(first.0, first.1, first.2);
+            record(second.0, second.1, second.2);
+        });
+
+        assert_eq!(
+            take(),
+            vec![DispatchCount {
+                layer: "same",
+                operation: "same",
+                path: "same",
+                count: 2,
+            }]
+        );
     }
 
     #[test]
