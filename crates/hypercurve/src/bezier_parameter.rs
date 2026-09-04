@@ -2023,11 +2023,18 @@ impl BezierParameter2 {
         let mut left_refinement = BezierParameterRefinement2::new(self, policy);
         let mut right_refinement = BezierParameterRefinement2::new(other, policy);
         for steps in [1, 3, 7, 15, 31] {
-            let left = match left_refinement.refine_to(steps).known_interval(policy)? {
+            let refined_left = left_refinement.refine_to(steps);
+            let refined_right = right_refinement.refine_to(steps);
+            if let (Self::Exact(left), Self::Exact(right)) = (refined_left, refined_right) {
+                return Ok(compare_reals(left, right, policy)
+                    .map(Classification::Decided)
+                    .unwrap_or(Classification::Uncertain(UncertaintyReason::Ordering)));
+            }
+            let left = match refined_left.known_interval(policy)? {
                 Classification::Decided(interval) => interval,
                 Classification::Uncertain(_) => continue,
             };
-            let right = match right_refinement.refine_to(steps).known_interval(policy)? {
+            let right = match refined_right.known_interval(policy)? {
                 Classification::Decided(interval) => interval,
                 Classification::Uncertain(_) => continue,
             };
@@ -2776,6 +2783,12 @@ fn compare_distinct_parameters(
         }
     };
     for refinement_count in 0..=max_ordering_refinements {
+        if let (RefinedParameter::Exact(first), RefinedParameter::Exact(second)) = (&first, &second)
+        {
+            return Ok(compare_reals(first, second, policy)
+                .map(Classification::Decided)
+                .unwrap_or(Classification::Uncertain(UncertaintyReason::Ordering)));
+        }
         let (first_start, first_end) = first.bounds();
         let (second_start, second_end) = second.bounds();
         if matches!(
@@ -2792,11 +2805,6 @@ fn compare_distinct_parameters(
         }
 
         match (&first, &second) {
-            (RefinedParameter::Exact(first), RefinedParameter::Exact(second)) => {
-                return Ok(compare_reals(first, second, policy)
-                    .map(Classification::Decided)
-                    .unwrap_or(Classification::Uncertain(UncertaintyReason::Ordering)));
-            }
             _ if refinement_count == EXACT_DIFFERENCE_REFINEMENTS => {
                 if let Some(ordering) = compare_parameters_by_exact_difference(
                     first_parameter,
@@ -4554,6 +4562,35 @@ mod conversion_tests {
             assert_eq!(
                 source.simple_root_classifications(&roots, &policy).unwrap(),
                 vec![Classification::Decided(true)]
+            );
+        }
+    }
+
+    #[test]
+    fn refinement_to_an_exact_root_precedes_touching_interval_order() {
+        let defining = polynomial(&[-3, 2]);
+        let interval = BezierParameterInterval::try_new_ordered(
+            rational(4, 3),
+            Real::from(2_i8),
+            &CurveContext::STRICT,
+        )
+        .unwrap();
+        let Classification::Decided(interval) = interval else {
+            panic!("the rational isolator must construct");
+        };
+        let isolated = BezierParameter2::Algebraic(
+            BezierAlgebraicParameter2::from_certified_singleton(defining, interval),
+        );
+        let exact = BezierParameter2::Exact(rational(3, 2));
+
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            assert_eq!(
+                isolated.cmp_by_refinement(&exact, &policy).unwrap(),
+                Classification::Decided(Ordering::Equal),
+            );
+            assert_eq!(
+                exact.cmp_by_refinement(&isolated, &policy).unwrap(),
+                Classification::Decided(Ordering::Equal),
             );
         }
     }

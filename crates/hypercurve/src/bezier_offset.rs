@@ -7771,21 +7771,23 @@ fn projected_selected_dense_candidate_box_incidence(
         }
         let mut selected = refined_sources.clone();
         selected.push(refined_candidate.clone());
-        if dense_polynomial_value_interval_with_coefficient_precision(
+        let selected_sign = dense_polynomial_value_interval_with_coefficient_precision(
             polynomial,
             &selected,
             -coefficient_bits,
         )
         .as_ref()
-        .and_then(dense_strict_interval_sign)
-        .is_some()
-        {
-            return Some(BezierDenseCandidateBoxIncidence2::Disjoint(
-                BezierDenseSelectedCandidateBox2 {
-                    sources: refined_sources,
-                    candidate: refined_candidate,
-                },
-            ));
+        .and_then(dense_strict_interval_sign);
+        if let Some(sign) = selected_sign {
+            let certificate = BezierDenseSelectedCandidateBox2 {
+                sources: refined_sources,
+                candidate: refined_candidate,
+            };
+            return Some(if sign == RealSign::Zero {
+                BezierDenseCandidateBoxIncidence2::Root(certificate)
+            } else {
+                BezierDenseCandidateBoxIncidence2::Disjoint(certificate)
+            });
         }
         if matches!(
             face_signs,
@@ -77139,6 +77141,12 @@ impl BezierAlgebraicChord2 {
                     return Ok(Classification::Uncertain(reason));
                 }
             }
+            let candidate = projected_certificate
+                .as_ref()
+                .and_then(|certificate| certificate.candidate.exact_point_witness())
+                .cloned()
+                .map(BezierParameter2::Exact)
+                .unwrap_or(candidate);
             let point = RationalBezierIntersectionPointEvidence2::AnalyticParallel(
                 if let Some(frame) = frame_tangent {
                     BezierAnalyticParallelPoint2::new_with_regularized_tangent_distance(
