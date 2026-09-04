@@ -27125,6 +27125,114 @@ impl BezierAlgebraicCuspSemicircle2 {
         let Some(direction) = chord.certified_axis_direction() else {
             return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
         };
+        // A finite endpoint strictly outside the conservative projection of
+        // the whole circle has the same oriented sign against every eventual
+        // line contact. Reuse that stronger certificate before constructing
+        // a contact coordinate in an independent selected field.
+        let mut endpoint_projection_signs = [None, None];
+        if clip_to_finite_chord {
+            for refinement_steps in [0, 2, 4, 8] {
+                let circle = match self.conservative_bounds_refined(refinement_steps, policy)? {
+                    Classification::Decided(bounds) => bounds,
+                    Classification::Uncertain(_) => continue,
+                };
+                let start = match algebraic_chord_endpoint_bounds_refined(
+                    chord.start(),
+                    refinement_steps,
+                    policy,
+                ) {
+                    Classification::Decided(bounds) => bounds,
+                    Classification::Uncertain(_) => continue,
+                };
+                let end = match algebraic_chord_endpoint_bounds_refined(
+                    chord.end(),
+                    refinement_steps,
+                    policy,
+                ) {
+                    Classification::Decided(bounds) => bounds,
+                    Classification::Uncertain(_) => continue,
+                };
+                let (circle_min, circle_max, start_min, start_max, end_min, end_max) =
+                    match direction.axis() {
+                        Axis2::X => (
+                            circle.min_x(),
+                            circle.max_x(),
+                            start.min_x(),
+                            start.max_x(),
+                            end.min_x(),
+                            end.max_x(),
+                        ),
+                        Axis2::Y => (
+                            circle.min_y(),
+                            circle.max_y(),
+                            start.min_y(),
+                            start.max_y(),
+                            end.min_y(),
+                            end.max_y(),
+                        ),
+                    };
+                let positive_direction = matches!(
+                    direction,
+                    BezierAlgebraicChordAxisDirection2::PositiveX
+                        | BezierAlgebraicChordAxisDirection2::PositiveY
+                );
+                let endpoint_sign = |minimum: &Real, maximum: &Real| {
+                    if positive_direction {
+                        if compare_reals(maximum, circle_min, &CurveContext::STRICT)
+                            == Some(std::cmp::Ordering::Less)
+                        {
+                            Some(RealSign::Positive)
+                        } else if compare_reals(circle_max, minimum, &CurveContext::STRICT)
+                            == Some(std::cmp::Ordering::Less)
+                        {
+                            Some(RealSign::Negative)
+                        } else {
+                            None
+                        }
+                    } else if compare_reals(circle_max, minimum, &CurveContext::STRICT)
+                        == Some(std::cmp::Ordering::Less)
+                    {
+                        Some(RealSign::Positive)
+                    } else if compare_reals(maximum, circle_min, &CurveContext::STRICT)
+                        == Some(std::cmp::Ordering::Less)
+                    {
+                        Some(RealSign::Negative)
+                    } else {
+                        None
+                    }
+                };
+                if endpoint_projection_signs[0].is_none() {
+                    endpoint_projection_signs[0] = endpoint_sign(start_min, start_max);
+                }
+                if endpoint_projection_signs[1].is_none() {
+                    endpoint_projection_signs[1] = endpoint_sign(end_min, end_max);
+                }
+                if endpoint_projection_signs.iter().all(Option::is_some) {
+                    #[cfg(feature = "dispatch-trace")]
+                    hyperreal::dispatch_trace::record(
+                        "hypercurve",
+                        "algebraic-circle-axis-chord-clip",
+                        "endpoint-projection-signs",
+                    );
+                    break;
+                }
+            }
+        }
+        // A point strictly inside the supporting disk certifies that its line
+        // is a secant. It also lies strictly between the negative and positive
+        // radical contacts, so the same incidence proof orders both contacts
+        // without constructing either endpoint in a second selected field.
+        let mut endpoint_inside_circle = [false; 2];
+        if clip_to_finite_chord {
+            for (index, endpoint) in [(0, chord.start()), (1, chord.end())] {
+                if endpoint_projection_signs[index].is_none() {
+                    endpoint_inside_circle[index] = matches!(
+                        self.strict_point_incidence_sign(endpoint, policy)?,
+                        Classification::Decided(RealSign::Negative)
+                    );
+                }
+            }
+        }
         // A represented descendant may retain a procedural offset ancestor
         // solely as provenance. Its immediate endpoint is the smaller exact
         // support authority; descending first would needlessly replace a
@@ -27149,10 +27257,20 @@ impl BezierAlgebraicCuspSemicircle2 {
                 policy,
             )
         };
-        let discriminant_sign = match sign(&system.discriminant)? {
-            Classification::Decided(sign) => sign,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
+        let discriminant_sign = if endpoint_inside_circle.iter().any(|inside| *inside) {
+            #[cfg(feature = "dispatch-trace")]
+            hyperreal::dispatch_trace::record(
+                "hypercurve",
+                "algebraic-circle-axis-chord-clip",
+                "interior-endpoint-secant",
+            );
+            RealSign::Positive
+        } else {
+            match sign(&system.discriminant)? {
+                Classification::Decided(sign) => sign,
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
             }
         };
         let branches: &[i8] = match discriminant_sign {
@@ -27206,35 +27324,57 @@ impl BezierAlgebraicCuspSemicircle2 {
                 },
             };
             let chord_location = if clip_to_finite_chord {
-                let start_sign = match self.axis_chord_contact_minus_point_sign_cached(
-                    chord,
-                    &system,
-                    support,
-                    chord.start(),
-                    &mut start_system,
-                    direction,
-                    branch,
-                    policy,
-                )? {
-                    Classification::Decided(sign) => sign,
-                    Classification::Uncertain(reason) => {
-                        return Ok(Classification::Uncertain(reason));
+                let start_sign = match endpoint_projection_signs[0] {
+                    Some(sign) => sign,
+                    None if endpoint_inside_circle[0] => {
+                        debug_assert_ne!(branch, 0);
+                        if branch < 0 {
+                            RealSign::Negative
+                        } else {
+                            RealSign::Positive
+                        }
                     }
+                    None => match self.axis_chord_contact_minus_point_sign_cached(
+                        chord,
+                        &system,
+                        support,
+                        chord.start(),
+                        &mut start_system,
+                        direction,
+                        branch,
+                        policy,
+                    )? {
+                        Classification::Decided(sign) => sign,
+                        Classification::Uncertain(reason) => {
+                            return Ok(Classification::Uncertain(reason));
+                        }
+                    },
                 };
-                let end_sign = match self.axis_chord_contact_minus_point_sign_cached(
-                    chord,
-                    &system,
-                    support,
-                    chord.end(),
-                    &mut end_system,
-                    direction,
-                    branch,
-                    policy,
-                )? {
-                    Classification::Decided(sign) => sign,
-                    Classification::Uncertain(reason) => {
-                        return Ok(Classification::Uncertain(reason));
+                let end_sign = match endpoint_projection_signs[1] {
+                    Some(sign) => sign,
+                    None if endpoint_inside_circle[1] => {
+                        debug_assert_ne!(branch, 0);
+                        if branch < 0 {
+                            RealSign::Negative
+                        } else {
+                            RealSign::Positive
+                        }
                     }
+                    None => match self.axis_chord_contact_minus_point_sign_cached(
+                        chord,
+                        &system,
+                        support,
+                        chord.end(),
+                        &mut end_system,
+                        direction,
+                        branch,
+                        policy,
+                    )? {
+                        Classification::Decided(sign) => sign,
+                        Classification::Uncertain(reason) => {
+                            return Ok(Classification::Uncertain(reason));
+                        }
+                    },
                 };
                 if start_sign == RealSign::Negative || end_sign == RealSign::Positive {
                     continue;
@@ -102626,6 +102766,29 @@ impl BezierAlgebraicCuspSemicircleFragment2 {
                 return Ok(Classification::Decided(location));
             }
         }
+        let endpoint_side =
+            policy.strict_predicate_pass(|| self.endpoint_chord_side(point, policy))?;
+        if let Classification::Decided(side) = endpoint_side
+            && side != crate::classify::LineSide::On
+        {
+            let clockwise = self.data.semicircle.is_clockwise() ^ self.data.reversed;
+            let interior_side = if clockwise {
+                crate::classify::LineSide::Left
+            } else {
+                crate::classify::LineSide::Right
+            };
+            #[cfg(feature = "dispatch-trace")]
+            hyperreal::dispatch_trace::record(
+                "hypercurve",
+                "algebraic-circle-fragment-location",
+                "endpoint-chord-decision",
+            );
+            return Ok(Classification::Decided(if side == interior_side {
+                BezierAlgebraicCuspSemicircleIncidentLocation2::Interior
+            } else {
+                BezierAlgebraicCuspSemicircleIncidentLocation2::Exterior
+            }));
+        }
         let point_order = |source_start: bool,
                            scalar_order: Classification<std::cmp::Ordering>|
          -> CurveResult<Classification<std::cmp::Ordering>> {
@@ -102668,10 +102831,15 @@ impl BezierAlgebraicCuspSemicircleFragment2 {
                 self.incident_location_from_orders(start, end),
             ));
         }
-        let side = match policy.strict_predicate_pass(|| self.endpoint_chord_side(point, policy))? {
+        let side = match endpoint_side {
             Classification::Decided(side) => side,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
+            Classification::Uncertain(_) => {
+                match policy.strict_predicate_pass(|| self.endpoint_chord_side(point, policy))? {
+                    Classification::Decided(side) => side,
+                    Classification::Uncertain(reason) => {
+                        return Ok(Classification::Uncertain(reason));
+                    }
+                }
             }
         };
         if side != crate::classify::LineSide::On {

@@ -4406,11 +4406,21 @@ impl<'a> CurveRegionBooleanContext<'a> {
             };
             for (chord_at_start, endpoint) in [(true, chord.start()), (false, chord.end())] {
                 if !point.shares_storage(endpoint) {
-                    let first = point.same_point(endpoint, &self.data.policy);
+                    // Endpoint replay is only an accelerator. Suppress the
+                    // terminal here so an inconclusive retained-point
+                    // comparison falls through to the complete circle/chord
+                    // kernel instead of weakening an otherwise certified
+                    // arrangement.
+                    let first = self
+                        .data
+                        .policy
+                        .strict_predicate_pass(|| point.same_point(endpoint, &self.data.policy));
                     let second = if first == Classification::Decided(true) {
                         Classification::Decided(true)
                     } else {
-                        endpoint.same_point(&point, &self.data.policy)
+                        self.data.policy.strict_predicate_pass(|| {
+                            endpoint.same_point(&point, &self.data.policy)
+                        })
                     };
                     match (first, second) {
                         (Classification::Decided(true), _) | (_, Classification::Decided(true)) => {
@@ -5393,8 +5403,15 @@ impl<'a> CurveRegionBooleanContext<'a> {
                                 );
                                 return Ok(RegionPairResult::empty());
                             }
-                            match chord
-                                .has_non_collinear_support_with_exact_line(&line, &self.data.policy)
+                            match self
+                                .data
+                                .policy
+                                .strict_predicate_pass(|| {
+                                    chord.has_non_collinear_support_with_exact_line(
+                                        &line,
+                                        &self.data.policy,
+                                    )
+                                })
                                 .map_err(|cause| self.invalid(other_index, cause))?
                             {
                                 Classification::Decided(true) => {
