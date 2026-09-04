@@ -277,7 +277,20 @@ impl Rational {
             }
         }
         crate::trace_dispatch!("rational", "average_pair", "arbitrary-precision");
-        Self::from_signed_magnitude_difference(positive, negative, denominator)
+        let (sign, numerator) = match positive.cmp(&negative) {
+            Ordering::Greater => (Plus, positive - negative),
+            Ordering::Less => (Minus, negative - positive),
+            Ordering::Equal => return Self::zero(),
+        };
+
+        // With reduced inputs and g = gcd(b, d), the cross-sum numerator is
+        // coprime to b/g and d/g. Only factors of 2g can therefore cancel
+        // from the mean's denominator 2*lcm(b, d). Restricting reduction to
+        // that proven divisor avoids a second GCD over the much wider LCM.
+        let possible_divisor = &common_denominator << 1_usize;
+        trace_rational_temporary!();
+        Self::from_parts_raw(sign, numerator, denominator)
+            .reduce_with_possible_divisor(&possible_divisor)
     }
 
     fn from_reduced_word_sum(

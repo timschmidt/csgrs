@@ -2589,6 +2589,32 @@ mod tests {
         }
     }
 
+    #[cfg(feature = "dispatch-trace")]
+    #[test]
+    fn average_pair_bounds_final_reduction_by_shared_denominator_content() {
+        let power = BigUint::one() << 300_usize;
+        let left = Rational::from_parts_raw(Plus, BigUint::one(), power.clone());
+        let right = Rational::from_parts_raw(
+            Plus,
+            BigUint::one(),
+            &power + BigUint::one(),
+        );
+        let expected = (&left + &right) * Rational::fraction(1, 2).unwrap();
+
+        crate::dispatch_trace::reset();
+        let actual = crate::dispatch_trace::with_recording(|| {
+            Rational::average_pair(&left, &right)
+        });
+        let trace = crate::dispatch_trace::take_trace();
+
+        assert_eq!(actual, expected);
+        assert_eq!(trace.rational.gcds, 1);
+        assert_eq!(
+            trace.path_count("rational", "average_pair", "arbitrary-precision"),
+            1,
+        );
+    }
+
     #[test]
     fn mean_refs_matches_expanded_exact_arithmetic() {
         let schedules = [
