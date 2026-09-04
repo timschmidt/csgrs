@@ -994,7 +994,15 @@ fn exhaustive_computable_nodes() -> Vec<(&'static str, hyperreal::Computable)> {
         ),
         (
             "NthRoot",
-            computable_from_internal(serde_json::json!({ "NthRoot": [child, 3] })),
+            computable_from_internal(serde_json::json!({ "NthRoot": [child.clone(), 3] })),
+        ),
+        (
+            "SincSmall",
+            computable_from_internal(serde_json::json!({ "SincSmall": child.clone() })),
+        ),
+        (
+            "CoscSmall",
+            computable_from_internal(serde_json::json!({ "CoscSmall": child })),
         ),
     ]
 }
@@ -1004,7 +1012,7 @@ fn exhaustive_computable_nodes() -> Vec<(&'static str, hyperreal::Computable)> {
 fn every_computable_node_and_shared_constant_representation_crosses_predicates() {
     use hyperreal::Computable;
 
-    const NODE_NAMES: [&str; 58] = [
+    const NODE_NAMES: [&str; 60] = [
         "Int",
         "One",
         "Constant",
@@ -1063,6 +1071,8 @@ fn every_computable_node_and_shared_constant_representation_crosses_predicates()
         "LogDnorm",
         "NormalQuantile",
         "NthRoot",
+        "SincSmall",
+        "CoscSmall",
     ];
     const SHARED_CONSTANT_NAMES: [&str; 18] = [
         "E",
