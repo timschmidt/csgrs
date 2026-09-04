@@ -86529,13 +86529,17 @@ impl BezierAlgebraicChord2 {
             let (
                 RationalBezierIntersectionPointEvidence2::AlgebraicChordParallel(start),
                 RationalBezierIntersectionPointEvidence2::AlgebraicChordParallel(end),
-            ) = (&support.data.start, &support.data.end)
+            ) = (support.start(), support.end())
             else {
                 return (support, reversed);
             };
-            if !start.shares_carrier(end) || start.at_end || !end.at_end {
+            if !start.shares_carrier(end) || start.at_end == end.at_end {
                 return (support, reversed);
             }
+            // Displacement preserves the source tangent in endpoint order.
+            // The retained support may itself be reversed even when the
+            // current finite chord was constructed in traversal order.
+            reversed ^= start.at_end;
             current = &start.data.source;
         }
     }
@@ -131483,6 +131487,97 @@ mod conversion_tests {
         assert_eq!(reversed.end(), &start);
         assert!(reversed.is_reversed());
         assert_eq!(reversed.reversed(), chord);
+    }
+
+    #[test]
+    fn nested_procedural_chord_reversals_match_exact_side_and_winding() {
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let exact_chord = |start, end| {
+                let Classification::Decided(chord) = BezierAlgebraicChord2::try_new(
+                    RationalBezierIntersectionPointEvidence2::Exact(start),
+                    RationalBezierIntersectionPointEvidence2::Exact(end),
+                    &policy,
+                )
+                .unwrap() else {
+                    panic!("distinct represented endpoints must construct");
+                };
+                chord
+            };
+            for (dx, dy, length) in [(4, 0, 4), (0, 4, 4), (3, 4, 5), (-3, 4, 5)] {
+                let base = exact_chord(Point2::from_values(0, 0), Point2::from_values(dx, dy));
+                let normal_x = (-Real::from(dy) / Real::from(length)).unwrap();
+                let normal_y = (Real::from(dx) / Real::from(length)).unwrap();
+                let start = Point2::new(normal_x.clone(), normal_y.clone());
+                let end = start.translated(Real::from(dx), Real::from(dy));
+                let exact = exact_chord(start, end);
+                let parallel = base.parallel_left_retained(Real::one(), &policy).unwrap();
+                for reverse in [false, true] {
+                    let mut retained = if reverse {
+                        parallel.reversed()
+                    } else {
+                        parallel.clone()
+                    };
+                    let oracle = if reverse {
+                        exact.reversed()
+                    } else {
+                        exact.clone()
+                    };
+                    for _ in 0..4 {
+                        retained = retained
+                            .chord_between_certified_ordered_support_points(
+                                retained.start().clone(),
+                                retained.end().clone(),
+                                &policy,
+                            )
+                            .unwrap();
+                        assert_eq!(
+                            base.tangent_dot_sign(&retained, &policy).unwrap(),
+                            Classification::Decided(if reverse {
+                                RealSign::Negative
+                            } else {
+                                RealSign::Positive
+                            }),
+                        );
+                        let line = oracle.exact_line().unwrap();
+                        let midpoint = line.point_at((Real::one() / Real::from(2)).unwrap());
+                        for side in [-1, 1] {
+                            let query = midpoint.translated(
+                                &normal_x * Real::from(side),
+                                &normal_y * Real::from(side),
+                            );
+                            assert_eq!(
+                                retained
+                                    .normal_offset_point_side_by_local_refinement(
+                                        &RationalBezierIntersectionPointEvidence2::Exact(
+                                            query.clone()
+                                        ),
+                                        &policy,
+                                    )
+                                    .unwrap(),
+                                match line.classify_point(&query, &policy) {
+                                    Classification::Decided(side) => Some(side),
+                                    Classification::Uncertain(reason) =>
+                                        panic!("exact side: {reason:?}"),
+                                },
+                            );
+                            for direction in [-1, 1] {
+                                let ray_x = &normal_x * Real::from(direction);
+                                let ray_y = &normal_y * Real::from(direction);
+                                assert_eq!(
+                                    retained
+                                        .forward_ray_winding_delta(&query, &ray_x, &ray_y, &policy)
+                                        .unwrap(),
+                                    oracle
+                                        .forward_ray_winding_delta(&query, &ray_x, &ray_y, &policy)
+                                        .unwrap(),
+                                    "direction=({dx}, {dy}), reverse={reverse}, side={side}, ray={direction}",
+                                );
+                            }
+                        }
+                    }
+                }
+            }
+        }
     }
 
     #[test]
