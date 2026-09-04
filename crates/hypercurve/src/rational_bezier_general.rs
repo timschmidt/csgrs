@@ -8686,7 +8686,8 @@ pub(crate) fn rational_parameter_image_matches(
                 Some(RealSign::Positive | RealSign::Negative) => {}
                 None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
             }
-            let image = (evaluate_power_polynomial(numerator, source) / denominator)?;
+            let image = evaluate_power_polynomial(numerator, source)
+                * denominator.inverse_ref_assuming_nonzero()?;
             BezierParameter2::Exact(image).same_value(target, policy)
         }
         BezierParameter2::Algebraic(source) => {
@@ -8848,7 +8849,8 @@ fn exact_rational_parameter_image(
         Some(RealSign::Zero) => return Ok(Classification::Decided(None)),
         None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
     }
-    let value = (evaluate_power_polynomial(numerator, source) / denominator_value)?;
+    let value = evaluate_power_polynomial(numerator, source)
+        * denominator_value.inverse_ref_assuming_nonzero()?;
     if !unit_domain {
         return Ok(Classification::Decided(Some(BezierParameter2::Exact(
             value,

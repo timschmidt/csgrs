@@ -5855,7 +5855,9 @@ fn support_pair_future_tangencies(
             for (numerator, denominator, direction) in equations {
                 let denominator_sign = real_sign(&denominator, policy);
                 let time = match denominator_sign {
-                    Some(RealSign::Positive | RealSign::Negative) => (numerator / denominator)?,
+                    Some(RealSign::Positive | RealSign::Negative) => {
+                        numerator * denominator.inverse_ref_assuming_nonzero()?
+                    }
                     Some(RealSign::Zero) => continue,
                     None => {
                         return Ok(Err(StraightSkeletonBlocker2::UncertainWavefrontRelation));

@@ -558,14 +558,15 @@ impl QuadraticBezier2 {
                 Some(RealSign::Positive | RealSign::Negative) => {}
                 None => return Classification::Uncertain(UncertaintyReason::RealSign),
             }
+            let Ok(denominator_reciprocal) = denominator.inverse_ref_assuming_nonzero() else {
+                return Classification::Uncertain(UncertaintyReason::Unsupported);
+            };
             let (from_image_x, from_image_y) = line.start().delta_from(image.start());
             let source_numerator = Real::signed_product_sum(
                 [true, false],
                 [[&from_image_x, &line_dy], [&from_image_y, &line_dx]],
             );
-            let Ok(source_parameter) = source_numerator / &denominator else {
-                return Classification::Uncertain(UncertaintyReason::Unsupported);
-            };
+            let source_parameter = source_numerator * &denominator_reciprocal;
             match in_closed_unit_interval(&source_parameter, policy) {
                 Some(false) => {
                     return Classification::Decided(BezierLineContactRelation::NoContact);
@@ -577,9 +578,7 @@ impl QuadraticBezier2 {
                 [true, false],
                 [[&from_image_x, &image_dy], [&from_image_y, &image_dx]],
             );
-            let Ok(line_parameter) = line_numerator / denominator else {
-                return Classification::Uncertain(UncertaintyReason::Unsupported);
-            };
+            let line_parameter = line_numerator * denominator_reciprocal;
             let crossing_direction = match real_sign(
                 &Real::signed_product_sum(
                     [true, false],

@@ -1216,21 +1216,19 @@ fn intersect_non_parallel(
     if u_exact_location == Some(ExactUnitIntervalLocation::Outside) {
         return Ok(LineLineIntersection::None);
     }
-    let (t, exact_dyadic_point) = if exact_dyadic_fragments {
+    let (t, u, exact_dyadic_point) = if exact_dyadic_fragments {
         let (parameter, [x, y]) = Real::exact_rational_parameterized_point2_known_dyadic(
             [a.start().x(), a.start().y()],
             [rx, ry],
             &t_numerator,
             &denominator,
         )?;
-        (parameter, Some(Point2::new(x, y)))
+        let other_parameter =
+            Real::exact_rational_quotient_known_dyadic(&u_numerator, &denominator)?;
+        (parameter, other_parameter, Some(Point2::new(x, y)))
     } else {
-        ((t_numerator / &denominator)?, None)
-    };
-    let u = if exact_dyadic_fragments {
-        Real::exact_rational_quotient_known_dyadic(&u_numerator, &denominator)?
-    } else {
-        (u_numerator / &denominator)?
+        let reciprocal = denominator.inverse_ref_assuming_nonzero()?;
+        (&t_numerator * &reciprocal, &u_numerator * reciprocal, None)
     };
 
     let t_in_range = match t_exact_location {
@@ -2214,6 +2212,67 @@ fn point_on_arc_endpoint(
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    fn exact_normal_positive() -> Real {
+        let root_two = Real::from(2).sqrt().unwrap();
+        let root_two_over_pi = (root_two.clone() / Real::pi()).unwrap();
+        let half = (Real::one() / Real::from(2)).unwrap();
+        let shared_offset = root_two.clone() * Real::from(3) + half;
+        let contact = (((root_two.clone() * Real::from(4) - shared_offset.clone()) * Real::pi())
+            * root_two_over_pi.clone()
+            / Real::from(4))
+        .unwrap();
+        let domain = (((root_two * Real::from(2) - shared_offset) * Real::pi()) * root_two_over_pi
+            / Real::from(4))
+        .unwrap()
+            + Real::one();
+        contact - domain + Real::from(2).powi_i64(-3000).unwrap()
+    }
+
+    #[test]
+    fn line_intersection_reuses_a_certified_nonzero_determinant() {
+        let extent = exact_normal_positive();
+        assert_eq!(extent.zero_status(), hyperreal::ZeroKnowledge::Unknown);
+        assert_eq!(extent.inverse_ref(), Err(hyperreal::Problem::UnknownZero));
+        let half = (Real::one() / Real::from(2)).unwrap();
+        let crossing_x = &extent * &half;
+        let horizontal = LineSeg2::try_new(
+            Point2::new(Real::zero(), Real::zero()),
+            Point2::new(extent, Real::zero()),
+        )
+        .unwrap();
+        let vertical = LineSeg2::try_new(
+            Point2::new(crossing_x.clone(), Real::from(-1)),
+            Point2::new(crossing_x.clone(), Real::one()),
+        )
+        .unwrap();
+
+        let LineLineIntersection::Point {
+            point,
+            a_param,
+            b_param,
+            kind,
+        } = horizontal
+            .intersect_line(&vertical, &CurveContext::STRICT)
+            .unwrap()
+        else {
+            panic!("the certified crossing must construct");
+        };
+        assert_eq!(kind, IntersectionKind::Crossing);
+        assert_eq!(
+            compare_reals(point.x(), &crossing_x, &CurveContext::STRICT),
+            Some(Ordering::Equal)
+        );
+        assert_eq!(point.y(), &Real::zero());
+        assert_eq!(
+            compare_reals(&a_param, &half, &CurveContext::STRICT),
+            Some(Ordering::Equal)
+        );
+        assert_eq!(
+            compare_reals(&b_param, &half, &CurveContext::STRICT),
+            Some(Ordering::Equal)
+        );
+    }
 
     #[test]
     fn exact_rational_quotient_interval_handles_both_denominator_signs() {

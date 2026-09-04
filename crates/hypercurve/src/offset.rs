@@ -185,7 +185,7 @@ pub(crate) fn line_support_intersection(
         Some(RealSign::Positive | RealSign::Negative) => {
             let qmp = next.start().delta_from(previous.start());
             let numerator = cross(&qmp.0, &qmp.1, &sx, &sy);
-            let t = (numerator / &denominator)?;
+            let t = numerator * denominator.inverse_ref_assuming_nonzero()?;
             Ok(Classification::Decided(Some(previous.point_at(t))))
         }
         None => Ok(Classification::Uncertain(UncertaintyReason::RealSign)),

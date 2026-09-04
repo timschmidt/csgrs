@@ -10310,6 +10310,11 @@ fn solve_line_fillet_corner(
             ));
         }
     };
+    let denominator_reciprocal = denominator
+        .inverse_ref_assuming_nonzero()
+        .map_err(|cause| {
+            ExactCurveError::invalid(CurveOperation2::Fillet, previous_family, cause.into())
+        })?;
 
     let mut candidates = CornerSolutionAccumulator::Empty;
     // For connected incoming/outgoing lines, only the offset side matching the
@@ -10340,12 +10345,8 @@ fn solve_line_fillet_corner(
             &between_offsets.0 * &next_delta.1 - &between_offsets.1 * &next_delta.0;
         let next_numerator =
             &between_offsets.0 * &previous_delta.1 - &between_offsets.1 * &previous_delta.0;
-        let previous_parameter = (previous_numerator / &denominator).map_err(|cause| {
-            ExactCurveError::invalid(CurveOperation2::Fillet, previous_family, cause.into())
-        })?;
-        let next_parameter = (next_numerator / &denominator).map_err(|cause| {
-            ExactCurveError::invalid(CurveOperation2::Fillet, next_family, cause.into())
-        })?;
+        let previous_parameter = previous_numerator * &denominator_reciprocal;
+        let next_parameter = next_numerator * &denominator_reciprocal;
         let Some(previous_placement) = corner_parameter_placement(
             &previous_parameter,
             true,

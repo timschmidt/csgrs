@@ -8299,9 +8299,10 @@ fn append_exact_miter_join(
             Some(RealSign::Positive | RealSign::Negative) => unreachable!(),
         };
     };
+    let denominator_reciprocal = denominator.inverse_ref_assuming_nonzero()?;
     let delta = next_offset_start.delta_from(previous_offset_end);
     let numerator = &delta.0 * &next_tangent.1 - &delta.1 * &next_tangent.0;
-    let parameter = (numerator / denominator)?;
+    let parameter = numerator * denominator_reciprocal;
     let miter = previous_offset_end.translated(
         &previous_tangent.0 * &parameter,
         &previous_tangent.1 * parameter,
