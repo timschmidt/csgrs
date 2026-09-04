@@ -1728,6 +1728,52 @@ mod tests {
     }
 
     #[test]
+    fn large_signed_rational_powers_match_mpfr() {
+        use rug::{Float, Rational as MpfrRational, float::Round, ops::Pow};
+
+        for numerator in [-65_537_i64, -65_535, 65_535, 65_537] {
+            let rational = Rational::fraction(numerator, 65_536).unwrap();
+            for exponent in [-4_001_i32, -4_000, 4_000, 4_001] {
+                // Exercise the lazy route without producing an enormous real
+                // magnitude: the base is close to either +1 or -1.
+                assert_eq!(
+                    rational.clone().powi(num::BigInt::from(exponent)),
+                    Err(Problem::Exhausted)
+                );
+                let oracle =
+                    Float::with_val(512, MpfrRational::from((numerator, 65_536))).pow(exponent);
+                let base = Real::new(rational.clone());
+                let powers = [
+                    base.clone().powi(num::BigInt::from(exponent)).unwrap(),
+                    base.clone().powi_i64(i64::from(exponent)).unwrap(),
+                    base.pow(Real::from(exponent)).unwrap(),
+                ];
+
+                for (route, power) in powers.into_iter().enumerate() {
+                    let computable = power.fold();
+                    for bits in [128_i32, 256] {
+                        let mut scaled_oracle = oracle.clone();
+                        scaled_oracle <<= bits;
+                        let expected = scaled_oracle
+                            .to_integer_round(Round::Nearest)
+                            .unwrap()
+                            .0
+                            .to_string()
+                            .parse::<num::BigInt>()
+                            .unwrap();
+                        let actual = computable.approx(-bits);
+                        let error = (actual - expected).abs();
+                        assert!(
+                            error <= num::BigInt::from(1),
+                            "({numerator}/65536)^{exponent}, route={route}, bits={bits}: error={error}"
+                        );
+                    }
+                }
+            }
+        }
+    }
+
+    #[test]
     fn powi_negative_unknown_sign_matches_inverse() {
         let near_pi = Real::pi() - Real::new(Rational::fraction(103_993, 33_102).unwrap());
         assert_eq!(near_pi.structural_facts().sign, None);

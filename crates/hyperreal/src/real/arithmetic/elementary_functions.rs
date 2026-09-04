@@ -3850,7 +3850,9 @@ impl Real {
             }
             Some(Sign::Minus) => {
                 let odd = exp.bit(0);
-                let value = self.fold();
+                // The logarithm is defined on the positive magnitude. Restore
+                // the base's sign after exponentiation, according to parity.
+                let value = self.fold().negate();
                 let exp = Computable::integer(exp);
                 if odd {
                     Ok(Self {
