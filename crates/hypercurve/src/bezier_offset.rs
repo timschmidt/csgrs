@@ -4645,6 +4645,8 @@ impl BezierAlgebraicSelectedFiberParameter2 {
                 &anchor,
                 direction,
                 None,
+                MAX_PARALLEL_INTERSECTION_RESULTANT_DEGREE,
+                MAX_SELECTED_FIBER_QUOTIENT_DEGREE,
                 policy,
             )?
         } else {
@@ -23265,6 +23267,8 @@ impl BezierAlgebraicCuspSemicircle2 {
                     &incident.anchor,
                     incident.direction,
                     incident.barrier.as_ref(),
+                    usize::MAX,
+                    MAX_SELECTED_FIBER_QUOTIENT_DEGREE,
                     policy,
                 )?
             } else if let Some(witness) = shared_cusp_witness.as_ref() {
@@ -23374,6 +23378,8 @@ impl BezierAlgebraicCuspSemicircle2 {
                         &incident.anchor,
                         incident.direction,
                         incident.barrier.as_ref(),
+                        usize::MAX,
+                        MAX_SELECTED_FIBER_QUOTIENT_DEGREE,
                         policy,
                     )?;
                     match projected {
@@ -104412,28 +104418,6 @@ fn algebraic_selected_fiber_parameters_with_incident_ray(
     anchor: &Real,
     direction: BezierParameterRayDirection2,
     barrier: Option<&BezierParameter2>,
-    policy: &CurveContext,
-) -> CurveResult<Classification<BezierAlgebraicFiberProjection2>> {
-    algebraic_selected_fiber_parameters_with_incident_ray_and_limits(
-        incidence,
-        cusp,
-        finite_range,
-        anchor,
-        direction,
-        barrier,
-        MAX_PARALLEL_INTERSECTION_RESULTANT_DEGREE,
-        MAX_SELECTED_FIBER_QUOTIENT_DEGREE,
-        policy,
-    )
-}
-
-fn algebraic_selected_fiber_parameters_with_incident_ray_and_limits(
-    incidence: &BivariatePolynomial,
-    cusp: &BezierAlgebraicParameter2,
-    finite_range: &BezierParameterRange2,
-    anchor: &Real,
-    direction: BezierParameterRayDirection2,
-    barrier: Option<&BezierParameter2>,
     max_resultant_degree: usize,
     max_quotient_degree: usize,
     policy: &CurveContext,
@@ -104466,7 +104450,7 @@ fn algebraic_selected_fiber_parameters_with_incident_ray_and_limits(
                     .map(|coefficient| vec![coefficient.clone()])
                     .collect(),
             );
-            let report = resultant_bivariate_polynomial_system_complete(
+            let report = resultant_bivariate_polynomial_system(
                 &defining,
                 incidence,
                 CurveResultantParameter::Second,
@@ -157067,7 +157051,7 @@ mod conversion_tests {
     }
 
     #[test]
-    fn incident_selected_fiber_projection_rejoins_the_complete_resultant() {
+    fn incident_selected_fiber_projection_honors_the_requested_resultant_schedule() {
         let half = (Real::one() / Real::from(2_i8)).unwrap();
         let BezierParameter2::Algebraic(retained) =
             algebraic_parameter(vec![-half, Real::zero(), Real::one()])
@@ -157083,30 +157067,39 @@ mod conversion_tests {
             BezierParameter2::Exact(Real::one()),
         );
         for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
-            #[cfg(feature = "dispatch-trace")]
-            hyperreal::dispatch_trace::reset();
-            let work = || {
-                crate::policy::resolve_certified_value(&policy, |attempt| {
-                    algebraic_selected_fiber_parameters_with_incident_ray_and_limits(
-                        &incidence,
-                        &retained,
-                        &range,
-                        &Real::one(),
-                        BezierParameterRayDirection2::Increasing,
-                        None,
-                        0,
-                        0,
-                        attempt,
-                    )
-                    .unwrap()
-                })
-            };
-            #[cfg(feature = "dispatch-trace")]
-            let outcome = hyperreal::dispatch_trace::with_recording(work);
-            #[cfg(not(feature = "dispatch-trace"))]
-            let outcome = work();
-            #[cfg(feature = "dispatch-trace")]
-            let trace = hyperreal::dispatch_trace::take_trace();
+            let bounded = crate::policy::resolve_certified_value(&policy, |attempt| {
+                algebraic_selected_fiber_parameters_with_incident_ray(
+                    &incidence,
+                    &retained,
+                    &range,
+                    &Real::one(),
+                    BezierParameterRayDirection2::Increasing,
+                    None,
+                    0,
+                    0,
+                    attempt,
+                )
+                .unwrap()
+            });
+            assert!(matches!(
+                bounded.value,
+                Classification::Uncertain(UncertaintyReason::Unsupported)
+            ));
+
+            let outcome = crate::policy::resolve_certified_value(&policy, |attempt| {
+                algebraic_selected_fiber_parameters_with_incident_ray(
+                    &incidence,
+                    &retained,
+                    &range,
+                    &Real::one(),
+                    BezierParameterRayDirection2::Increasing,
+                    None,
+                    usize::MAX,
+                    0,
+                    attempt,
+                )
+                .unwrap()
+            });
             let Classification::Decided(BezierAlgebraicFiberProjection2::Parameters(candidates)) =
                 outcome.value
             else {
@@ -157122,25 +157115,6 @@ mod conversion_tests {
                 Classification::Decided(std::cmp::Ordering::Equal),
             );
             assert_eq!(outcome.certainty, crate::CurveCertainty::Certified);
-            #[cfg(feature = "dispatch-trace")]
-            {
-                assert!(
-                    trace.path_count(
-                        "hypercurve",
-                        "algebraic-selected-incident-fiber-projection",
-                        "general-resultant-fallback",
-                    ) >= 1,
-                    "the bounded quotient must rejoin the general authority: {trace:?}",
-                );
-                assert!(
-                    trace.path_count(
-                        "hypercurve",
-                        "bivariate-resultant",
-                        "unbounded-cold-continuation",
-                    ) >= 1,
-                    "the bounded general resultant must continue exactly: {trace:?}",
-                );
-            }
         }
     }
 
