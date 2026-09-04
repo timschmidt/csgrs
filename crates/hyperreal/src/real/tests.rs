@@ -331,6 +331,13 @@ mod tests {
     }
 
     #[test]
+    fn division_checks_the_denominator_before_identity_rewrites() {
+        let zero = Real::zero();
+        assert_eq!(&zero / &zero, Err(Problem::DivideByZero));
+        assert_eq!(&zero / &Real::one(), Ok(Real::zero()));
+    }
+
+    #[test]
     fn homogeneous_quadratic_interpolation_division_preserves_nonzero_numerator() {
         let third = Real::new(Rational::fraction(1, 3).unwrap());
         let two_thirds = Real::new(Rational::fraction(2, 3).unwrap());
@@ -5511,6 +5518,7 @@ mod tests {
         assert_eq!(value.clone().inverse(), Err(Problem::UnknownZero));
         assert_eq!(value.clone().cot(), Err(Problem::UnknownZero));
         assert_eq!(&Real::one() / &value, Err(Problem::UnknownZero));
+        assert_eq!(&value / &value, Err(Problem::UnknownZero));
         assert_eq!(
             value.clone().powi(num::BigInt::from(0_u8)),
             Err(Problem::UnknownZero)
