@@ -12737,9 +12737,8 @@ impl CurveRegion2 {
         };
         let mut loops = self.data.boundary_loops.clone();
         loops[loop_index] = edited_loop;
-        let rebuilt = Self::try_new_with_loop_topology(loops, roles, fill_rules, interior_sides)
-            .map_err(|cause| curve_region_edit_error(operation, cause));
-        rebuilt
+        Self::try_new_with_loop_topology(loops, roles, fill_rules, interior_sides)
+            .map_err(|cause| curve_region_edit_error(operation, cause))
     }
 
     /// Solves a boundary-loop circular fillet from an exact radius.

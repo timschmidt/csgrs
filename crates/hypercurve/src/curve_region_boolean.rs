@@ -501,62 +501,6 @@ impl RegularizedFragmentDecision {
     }
 }
 
-#[derive(Debug)]
-struct RegularizedFaceUnion {
-    parent: Vec<usize>,
-}
-
-impl RegularizedFaceUnion {
-    fn new(count: usize) -> Self {
-        Self {
-            parent: (0..count).collect(),
-        }
-    }
-
-    fn find(&mut self, mut node: usize) -> usize {
-        let mut root = node;
-        while self.parent[root] != root {
-            root = self.parent[root];
-        }
-        while self.parent[node] != node {
-            let parent = self.parent[node];
-            self.parent[node] = root;
-            node = parent;
-        }
-        root
-    }
-
-    fn unite(&mut self, first: usize, second: usize) {
-        let first = self.find(first);
-        let second = self.find(second);
-        if first == second {
-            return;
-        }
-        let (root, child) = if first < second {
-            (first, second)
-        } else {
-            (second, first)
-        };
-        self.parent[child] = root;
-    }
-}
-
-/// Unites an exact local face sector and retains that direct (non-transitive)
-/// adjacency for boundary traversal. Global face-component identity is not
-/// sufficient at a crossing because one connected face can occupy multiple
-/// local sectors around the same vertex.
-fn unite_regularized_vertex_sectors(
-    face_union: &mut RegularizedFaceUnion,
-    vertex_sector_links: &mut Vec<(usize, usize, usize)>,
-    vertex: usize,
-    pairs: &[(usize, usize)],
-) {
-    for &(first, second) in pairs {
-        face_union.unite(first, second);
-    }
-    record_regularized_vertex_sectors(vertex_sector_links, vertex, pairs);
-}
-
 fn record_regularized_vertex_sectors(
     vertex_sector_links: &mut Vec<(usize, usize, usize)>,
     vertex: usize,
@@ -581,37 +525,56 @@ enum RegularizedWindingJump {
 
 fn propagate_regularized_face_windings(
     face_windings: &mut [Option<Vec<i32>>],
+    equation_faces_valid: &[bool],
     adjacency: &[Vec<RegularizedFaceAdjacency>],
     jumps: &[RegularizedWindingJump],
     seeds: impl IntoIterator<Item = (usize, Vec<i32>)>,
-) -> Result<(), CurveError> {
+) -> Result<Option<usize>, CurveError> {
+    // Stage a complete propagation before publishing it. These sparse
+    // equations are an accelerator over the authoritative geometric side
+    // classifier, and contact-sector graphs can conservatively join distinct
+    // local faces. A contradictory component must therefore decline the
+    // acceleration without leaving a partially assigned winding graph.
+    if equation_faces_valid.len() != face_windings.len() || adjacency.len() != face_windings.len() {
+        return Err(CurveError::Topology(
+            "regularized arrangement face storage is inconsistent".into(),
+        ));
+    }
+    let mut staged = vec![None; face_windings.len()];
     let mut queue = std::collections::VecDeque::new();
     for (face, winding) in seeds {
-        match face_windings.get(face) {
-            Some(Some(existing)) if existing != &winding => {
-                return Err(CurveError::Topology(
-                    "regularized arrangement assigned inconsistent winding vectors to one face"
-                        .into(),
-                ));
-            }
-            Some(Some(_)) => {}
-            Some(None) => {
-                face_windings[face] = Some(winding);
-                queue.push_back(face);
-            }
+        let Some(published) = face_windings.get(face) else {
+            return Err(CurveError::Topology(
+                "regularized arrangement referenced a missing face".into(),
+            ));
+        };
+        if !equation_faces_valid[face] {
+            continue;
+        }
+        match staged[face].as_ref().or(published.as_ref()) {
+            Some(existing) if existing != &winding => return Ok(Some(face)),
+            Some(_) => {}
             None => {
-                return Err(CurveError::Topology(
-                    "regularized arrangement referenced a missing face".into(),
-                ));
+                staged[face] = Some(winding);
+                queue.push_back(face);
             }
         }
     }
     while let Some(face) = queue.pop_front() {
-        let source = face_windings[face]
+        let source = staged[face]
             .as_ref()
-            .expect("queued regularized face has a winding vector")
+            .or(face_windings[face].as_ref())
+            .expect("queued regularized face has a staged winding vector")
             .clone();
         for edge in &adjacency[face] {
+            if edge.face >= face_windings.len() {
+                return Err(CurveError::Topology(
+                    "regularized arrangement referenced a missing face".into(),
+                ));
+            }
+            if !equation_faces_valid[edge.face] {
+                continue;
+            }
             let mut target = source.clone();
             let jump = jumps.get(edge.jump).ok_or_else(|| {
                 CurveError::Topology("regularized arrangement references a missing jump".into())
@@ -640,21 +603,194 @@ fn propagate_regularized_face_windings(
                     }
                 }
             }
-            match &face_windings[edge.face] {
-                Some(existing) if existing != &target => {
-                    return Err(CurveError::Topology(
-                        "regularized arrangement has inconsistent winding equations".into(),
-                    ));
-                }
+            match staged[edge.face]
+                .as_ref()
+                .or(face_windings[edge.face].as_ref())
+            {
+                Some(existing) if existing != &target => return Ok(Some(edge.face)),
                 Some(_) => {}
                 None => {
-                    face_windings[edge.face] = Some(target);
+                    staged[edge.face] = Some(target);
                     queue.push_back(edge.face);
                 }
             }
         }
     }
-    Ok(())
+    for (published, staged) in face_windings.iter_mut().zip(staged) {
+        if published.is_none() {
+            *published = staged;
+        }
+    }
+    Ok(None)
+}
+
+fn seed_regularized_face_windings(
+    face_windings: &mut [Option<Vec<i32>>],
+    equation_faces_valid: &mut [bool],
+    adjacency: &[Vec<RegularizedFaceAdjacency>],
+    jumps: &[RegularizedWindingJump],
+    seeds: impl IntoIterator<Item = (usize, Vec<i32>)>,
+) -> Result<bool, CurveError> {
+    let seeds = seeds.into_iter().collect::<Vec<_>>();
+    let mut disabled_component = false;
+    while let Some(conflicting_face) = propagate_regularized_face_windings(
+        face_windings,
+        equation_faces_valid,
+        adjacency,
+        jumps,
+        seeds.iter().cloned(),
+    )? {
+        // Quarantine only the contradictory equation components. Independent
+        // face components remain useful exact accelerators, and subsequent
+        // geometric seeds stay authoritative for every quarantined face.
+        disabled_component = true;
+        if conflicting_face >= face_windings.len() {
+            return Err(CurveError::Topology(
+                "regularized arrangement referenced a missing face".into(),
+            ));
+        }
+        let mut queue = std::collections::VecDeque::from([conflicting_face]);
+        equation_faces_valid[conflicting_face] = false;
+        face_windings[conflicting_face] = None;
+        while let Some(face) = queue.pop_front() {
+            for edge in &adjacency[face] {
+                if edge.face >= face_windings.len() {
+                    return Err(CurveError::Topology(
+                        "regularized arrangement referenced a missing face".into(),
+                    ));
+                }
+                if equation_faces_valid[edge.face] {
+                    equation_faces_valid[edge.face] = false;
+                    face_windings[edge.face] = None;
+                    queue.push_back(edge.face);
+                }
+            }
+        }
+        #[cfg(feature = "dispatch-trace")]
+        hyperreal::dispatch_trace::record(
+            "hypercurve",
+            "regularization-face-winding",
+            "contradictory-component-disabled",
+        );
+    }
+    Ok(disabled_component)
+}
+
+#[cfg(test)]
+mod regularized_face_winding_tests {
+    use super::{
+        RegularizedFaceAdjacency, RegularizedWindingJump, propagate_regularized_face_windings,
+        seed_regularized_face_windings,
+    };
+
+    fn one_boundary_adjacency() -> (
+        Vec<Vec<RegularizedFaceAdjacency>>,
+        Vec<RegularizedWindingJump>,
+    ) {
+        (
+            vec![
+                vec![RegularizedFaceAdjacency {
+                    face: 1,
+                    jump: 0,
+                    direction: -1,
+                }],
+                vec![RegularizedFaceAdjacency {
+                    face: 0,
+                    jump: 0,
+                    direction: 1,
+                }],
+            ],
+            vec![RegularizedWindingJump::Single(0)],
+        )
+    }
+
+    #[test]
+    fn winding_propagation_publishes_only_a_consistent_component() {
+        let (adjacency, jumps) = one_boundary_adjacency();
+        let mut windings = vec![None, None];
+        let valid = vec![true; 2];
+        assert_eq!(
+            propagate_regularized_face_windings(
+                &mut windings,
+                &valid,
+                &adjacency,
+                &jumps,
+                [(1, vec![0])],
+            )
+            .unwrap(),
+            None,
+        );
+        assert_eq!(windings, vec![Some(vec![1]), Some(vec![0])]);
+    }
+
+    #[test]
+    fn contradictory_winding_propagation_is_transactional() {
+        let (adjacency, jumps) = one_boundary_adjacency();
+        let mut windings = vec![None, None];
+        let valid = vec![true; 2];
+        assert_eq!(
+            propagate_regularized_face_windings(
+                &mut windings,
+                &valid,
+                &adjacency,
+                &jumps,
+                [(0, vec![0]), (1, vec![0])],
+            )
+            .unwrap(),
+            Some(1),
+        );
+        assert_eq!(windings, vec![None, None]);
+    }
+
+    #[test]
+    fn contradictory_winding_accelerator_is_disabled() {
+        let (adjacency, jumps) = one_boundary_adjacency();
+        let mut windings = vec![Some(vec![1]), Some(vec![0])];
+        let mut valid = vec![true; 2];
+        assert!(
+            seed_regularized_face_windings(
+                &mut windings,
+                &mut valid,
+                &adjacency,
+                &jumps,
+                [(0, vec![0])],
+            )
+            .unwrap()
+        );
+        assert_eq!(valid, vec![false, false]);
+        assert_eq!(windings, vec![None, None]);
+    }
+
+    #[test]
+    fn contradiction_preserves_independent_winding_components() {
+        let (mut adjacency, jumps) = one_boundary_adjacency();
+        adjacency.extend([
+            vec![RegularizedFaceAdjacency {
+                face: 3,
+                jump: 0,
+                direction: -1,
+            }],
+            vec![RegularizedFaceAdjacency {
+                face: 2,
+                jump: 0,
+                direction: 1,
+            }],
+        ]);
+        let mut windings = vec![Some(vec![1]), Some(vec![0]), None, None];
+        let mut valid = vec![true; 4];
+        assert!(
+            seed_regularized_face_windings(
+                &mut windings,
+                &mut valid,
+                &adjacency,
+                &jumps,
+                [(0, vec![0]), (3, vec![3])],
+            )
+            .unwrap()
+        );
+        assert_eq!(valid, vec![false, false, true, true]);
+        assert_eq!(windings, vec![None, None, Some(vec![4]), Some(vec![3])]);
+    }
 }
 
 fn retained_probe_outer_bounds(
@@ -7642,7 +7778,6 @@ impl<'a> CurveRegionBooleanContext<'a> {
         };
         let left_face = |edge: usize| edge.saturating_mul(2);
         let right_face = |edge: usize| edge.saturating_mul(2).saturating_add(1);
-        let mut face_union = RegularizedFaceUnion::new(edge_count.saturating_mul(2));
         let mut vertex_sector_links = Vec::new();
         let mut winding_sector_links = Vec::new();
         let mut transverse_winding_sector_links = Vec::new();
@@ -7673,8 +7808,6 @@ impl<'a> CurveRegionBooleanContext<'a> {
             }
             let incoming = edge_index(incoming.0, incoming.1);
             let outgoing = edge_index(outgoing.0, outgoing.1);
-            face_union.unite(left_face(incoming), left_face(outgoing));
-            face_union.unite(right_face(incoming), right_face(outgoing));
             winding_sector_links.push((left_face(incoming), left_face(outgoing)));
             winding_sector_links.push((right_face(incoming), right_face(outgoing)));
         }
@@ -7908,12 +8041,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
                         (right_face(first_in), right_face(second_out)),
                     ]
                 };
-                unite_regularized_vertex_sectors(
-                    &mut face_union,
-                    &mut vertex_sector_links,
-                    vertex,
-                    &sector_pairs,
-                );
+                record_regularized_vertex_sectors(&mut vertex_sector_links, vertex, &sector_pairs);
                 winding_sector_links.extend(sector_pairs);
                 transverse_winding_sector_links.extend(sector_pairs);
                 continue;
@@ -7959,38 +8087,8 @@ impl<'a> CurveRegionBooleanContext<'a> {
                 ],
                 (_, LineSide::On) => continue,
             };
-            unite_regularized_vertex_sectors(
-                &mut face_union,
-                &mut vertex_sector_links,
-                vertex,
-                &sector_pairs,
-            );
+            record_regularized_vertex_sectors(&mut vertex_sector_links, vertex, &sector_pairs);
             winding_sector_links.extend(sector_pairs);
-        }
-
-        let mut face_roots = topology
-            .split_fragments
-            .iter()
-            .enumerate()
-            .map(|(carrier_index, splits)| {
-                splits
-                    .iter()
-                    .enumerate()
-                    .map(|(split_index, _)| {
-                        let edge = edge_index(carrier_index, split_index);
-                        [
-                            face_union.find(left_face(edge)),
-                            face_union.find(right_face(edge)),
-                        ]
-                    })
-                    .collect::<Vec<_>>()
-            })
-            .collect::<Vec<_>>();
-        // Compress roots once more after the last union. This also makes the
-        // sparse root indices stable for the adjacency lists below.
-        for roots in face_roots.iter_mut().flatten() {
-            roots[0] = face_union.find(roots[0]);
-            roots[1] = face_union.find(roots[1]);
         }
 
         let mut edge_overlapped = topology
@@ -8139,12 +8237,21 @@ impl<'a> CurveRegionBooleanContext<'a> {
         // can touch itself at a point while carrying different winding values
         // in those sectors, so retain one node per oriented edge side and use
         // explicit zero-jump links for the certified local adjacencies.
-        for (carrier_index, roots) in face_roots.iter_mut().enumerate() {
-            for (split_index, roots) in roots.iter_mut().enumerate() {
-                let edge = edge_index(carrier_index, split_index);
-                *roots = [left_face(edge), right_face(edge)];
-            }
-        }
+        let face_roots = topology
+            .split_fragments
+            .iter()
+            .enumerate()
+            .map(|(carrier_index, splits)| {
+                splits
+                    .iter()
+                    .enumerate()
+                    .map(|(split_index, _)| {
+                        let edge = edge_index(carrier_index, split_index);
+                        [left_face(edge), right_face(edge)]
+                    })
+                    .collect::<Vec<_>>()
+            })
+            .collect::<Vec<_>>();
 
         let mut face_adjacency = vec![Vec::new(); edge_count.saturating_mul(2)];
         let mut transverse_face_adjacency = vec![Vec::new(); edge_count.saturating_mul(2)];
@@ -8316,8 +8423,18 @@ impl<'a> CurveRegionBooleanContext<'a> {
                     .retain(|edge| !invalid_face_roots.get(edge.face).copied().unwrap_or(true));
             }
         }
+        // Keep direct overlap and geometric classifications separate from
+        // actions inferred through sparse face equations. If later exact
+        // evidence disproves an equation component, inference is rebuilt from
+        // these authoritative actions instead of retaining stale decisions.
+        let mut authoritative_actions = actions.clone();
         let mut face_windings = vec![None; edge_count.saturating_mul(2)];
         let mut transverse_face_windings = vec![None; edge_count.saturating_mul(2)];
+        let mut face_equation_faces_valid = invalid_face_roots
+            .iter()
+            .map(|invalid| !invalid)
+            .collect::<Vec<_>>();
+        let mut transverse_face_equation_faces_valid = vec![true; edge_count.saturating_mul(2)];
         let action_from_windings = |carrier_index: usize,
                                     split_index: usize,
                                     windings: &[Option<Vec<i32>>],
@@ -8380,17 +8497,20 @@ impl<'a> CurveRegionBooleanContext<'a> {
                 match decision {
                     Ok(decision) => {
                         actions[carrier_index][split_index] = Some(decision.action);
+                        authoritative_actions[carrier_index][split_index] = Some(decision.action);
                         let [left, right] = decision.side_windings;
                         let roots = face_roots[carrier_index][split_index];
-                        propagate_regularized_face_windings(
+                        seed_regularized_face_windings(
                             &mut transverse_face_windings,
+                            &mut transverse_face_equation_faces_valid,
                             &transverse_face_adjacency,
                             &winding_jumps,
                             [(roots[0], left.clone()), (roots[1], right.clone())],
                         )
                         .map_err(|cause| self.invalid(carrier_index, cause))?;
-                        propagate_regularized_face_windings(
+                        seed_regularized_face_windings(
                             &mut face_windings,
+                            &mut face_equation_faces_valid,
                             &face_adjacency,
                             &winding_jumps,
                             [(roots[0], left), (roots[1], right)]
@@ -8749,8 +8869,9 @@ impl<'a> CurveRegionBooleanContext<'a> {
                             if invalid_face_roots[exterior_face] {
                                 continue;
                             }
-                            propagate_regularized_face_windings(
+                            seed_regularized_face_windings(
                                 &mut face_windings,
+                                &mut face_equation_faces_valid,
                                 &face_adjacency,
                                 &winding_jumps,
                                 [(
@@ -8786,7 +8907,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
                     let derived = action_from_windings(
                         derived_carrier_index,
                         derived_split_index,
-                        &transverse_face_windings,
+                        transverse_face_windings,
                         false,
                     )?;
                     let Some(derived) = derived.or(action_from_windings(
@@ -8920,39 +9041,36 @@ impl<'a> CurveRegionBooleanContext<'a> {
             })
             .collect::<Vec<_>>();
         work.sort_by_key(|&(rank, _, _)| rank);
-        for (_, carrier_index, split_index) in work {
-            if actions[carrier_index][split_index].is_some() {
-                continue;
-            }
-            let split = &topology.split_fragments[carrier_index][split_index];
-            let decision = self.regularized_fragment_geometric_decision(
-                carrier_index,
-                &split.fragment,
-                !edge_overlapped[carrier_index][split_index],
-            );
-            match decision {
-                Ok(decision) => {
-                    actions[carrier_index][split_index] = Some(decision.action);
-                    let [left, right] = decision.side_windings;
-                    let roots = face_roots[carrier_index][split_index];
-                    propagate_regularized_face_windings(
-                        &mut transverse_face_windings,
-                        &transverse_face_adjacency,
-                        &winding_jumps,
-                        [(roots[0], left.clone()), (roots[1], right.clone())],
-                    )
-                    .map_err(|cause| self.invalid(carrier_index, cause))?;
-                    let compatible = [(roots[0], &left), (roots[1], &right)].into_iter().all(
-                        |(face, winding)| {
-                            invalid_face_roots[face]
-                                || face_windings[face]
-                                    .as_ref()
-                                    .is_none_or(|existing| existing == winding)
-                        },
-                    );
-                    if compatible {
-                        propagate_regularized_face_windings(
+        loop {
+            let mut equation_component_changed = false;
+            for &(_, carrier_index, split_index) in &work {
+                if actions[carrier_index][split_index].is_some() {
+                    continue;
+                }
+                let split = &topology.split_fragments[carrier_index][split_index];
+                let decision = self.regularized_fragment_geometric_decision(
+                    carrier_index,
+                    &split.fragment,
+                    !edge_overlapped[carrier_index][split_index],
+                );
+                match decision {
+                    Ok(decision) => {
+                        actions[carrier_index][split_index] = Some(decision.action);
+                        authoritative_actions[carrier_index][split_index] = Some(decision.action);
+                        blockers[carrier_index][split_index] = None;
+                        let [left, right] = decision.side_windings;
+                        let roots = face_roots[carrier_index][split_index];
+                        let transverse_changed = seed_regularized_face_windings(
+                            &mut transverse_face_windings,
+                            &mut transverse_face_equation_faces_valid,
+                            &transverse_face_adjacency,
+                            &winding_jumps,
+                            [(roots[0], left.clone()), (roots[1], right.clone())],
+                        )
+                        .map_err(|cause| self.invalid(carrier_index, cause))?;
+                        let face_changed = seed_regularized_face_windings(
                             &mut face_windings,
+                            &mut face_equation_faces_valid,
                             &face_adjacency,
                             &winding_jumps,
                             [(roots[0], left), (roots[1], right)]
@@ -8960,19 +9078,31 @@ impl<'a> CurveRegionBooleanContext<'a> {
                                 .filter(|(face, _)| !invalid_face_roots[*face]),
                         )
                         .map_err(|cause| self.invalid(carrier_index, cause))?;
-                    } else {
-                        #[cfg(feature = "dispatch-trace")]
-                        hyperreal::dispatch_trace::record(
-                            "hypercurve",
-                            "regularization-fragment-action",
-                            "geometric-seed-overrides-face-accelerator",
-                        );
+                        if transverse_changed || face_changed {
+                            // A declined equation component may have supplied
+                            // earlier actions. Rebuild every derived decision
+                            // from the surviving equations and direct exact
+                            // classifications before continuing the worklist.
+                            actions.clone_from(&authoritative_actions);
+                            update_actions_from_faces(
+                                &mut actions,
+                                &face_windings,
+                                &transverse_face_windings,
+                                &blockers,
+                            )?;
+                            propagate_authored_actions(&mut actions, &blockers)?;
+                            equation_component_changed = true;
+                            break;
+                        }
                     }
+                    Err(error @ ExactCurveError::Blocked(_)) => {
+                        blockers[carrier_index][split_index] = Some(error);
+                    }
+                    Err(error @ ExactCurveError::Invalid { .. }) => return Err(error),
                 }
-                Err(error @ ExactCurveError::Blocked(_)) => {
-                    blockers[carrier_index][split_index] = Some(error);
-                }
-                Err(error @ ExactCurveError::Invalid { .. }) => return Err(error),
+            }
+            if !equation_component_changed {
+                break;
             }
         }
 
@@ -13896,24 +14026,140 @@ fn certified_regularization_successors(
             )
         },
     );
-    let mut successors = (0..graph.len())
-        .map(|index| {
-            face_sector_successors
-                .get(index)
-                .copied()
-                .flatten()
-                .or_else(|| transverse_successors.get(index).copied().flatten())
-        })
-        .collect::<Vec<_>>();
+    let mut authored_successors = vec![None; graph.len()];
     certify_nontransverse_regularization_authored_continuity(
-        &mut successors,
+        &mut authored_successors,
         graph,
         directions,
         topology,
         carriers,
         &starts_by_vertex,
     );
+    let mut ends_by_vertex = HashMap::<usize, Vec<usize>>::new();
+    for (index, fragment) in graph.fragments().iter().enumerate() {
+        if let Some(vertex) = fragment.end_topology_vertex() {
+            ends_by_vertex.entry(vertex).or_default().push(index);
+        }
+    }
+    let mut successors = vec![None; graph.len()];
+    for (vertex, incoming) in ends_by_vertex {
+        let Some(outgoing) = starts_by_vertex.get(&vertex) else {
+            continue;
+        };
+        certify_regularization_vertex_successors(
+            &mut successors,
+            &incoming,
+            outgoing,
+            face_sector_successors,
+            &transverse_successors,
+            &authored_successors,
+        );
+    }
     successors
+}
+
+/// Combines two exact but independently conservative successor sources.
+///
+/// Local face-sector links take precedence, followed by transverse-contact
+/// tangent order. Only unique target claims are published. If those exact
+/// claims leave one incoming and one outgoing edge at the same topology
+/// vertex, bijectivity of the oriented regularized boundary forces the final
+/// pair without requiring either retained tangent to be materialized.
+fn certify_regularization_vertex_successors(
+    successors: &mut [Option<usize>],
+    incoming: &[usize],
+    outgoing: &[usize],
+    face_sector_successors: &[Option<usize>],
+    transverse_successors: &[Option<usize>],
+    authored_successors: &[Option<usize>],
+) {
+    if incoming.len() != outgoing.len() {
+        return;
+    }
+    let mut claimed = Vec::with_capacity(outgoing.len());
+    for source in [
+        face_sector_successors,
+        transverse_successors,
+        authored_successors,
+    ] {
+        let candidates = incoming
+            .iter()
+            .copied()
+            .filter(|&edge| successors.get(edge).is_some_and(Option::is_none))
+            .filter_map(|edge| {
+                source
+                    .get(edge)
+                    .copied()
+                    .flatten()
+                    .filter(|target| outgoing.contains(target) && !claimed.contains(target))
+                    .map(|target| (edge, target))
+            })
+            .collect::<Vec<_>>();
+        for &(edge, target) in &candidates {
+            if candidates
+                .iter()
+                .filter(|(_, candidate)| *candidate == target)
+                .count()
+                == 1
+            {
+                successors[edge] = Some(target);
+                claimed.push(target);
+            }
+        }
+    }
+    let unmatched_incoming = incoming
+        .iter()
+        .copied()
+        .filter(|&edge| successors.get(edge).is_some_and(Option::is_none))
+        .collect::<Vec<_>>();
+    let unmatched_outgoing = outgoing
+        .iter()
+        .copied()
+        .filter(|target| !claimed.contains(target))
+        .collect::<Vec<_>>();
+    if let ([incoming], [outgoing]) = (unmatched_incoming.as_slice(), unmatched_outgoing.as_slice())
+    {
+        successors[*incoming] = Some(*outgoing);
+        #[cfg(feature = "dispatch-trace")]
+        hyperreal::dispatch_trace::record(
+            "hypercurve",
+            "regularization-successor",
+            "forced-bijection",
+        );
+    }
+}
+
+#[cfg(test)]
+mod regularization_successor_tests {
+    use super::certify_regularization_vertex_successors;
+
+    #[test]
+    fn face_sector_claim_forces_the_unmaterialized_complement() {
+        let mut successors = vec![None; 4];
+        certify_regularization_vertex_successors(
+            &mut successors,
+            &[0, 1],
+            &[2, 3],
+            &[Some(2), None, None, None],
+            &[Some(2), Some(2), None, None],
+            &[None; 4],
+        );
+        assert_eq!(successors, vec![Some(2), Some(3), None, None]);
+    }
+
+    #[test]
+    fn colliding_contact_claims_remain_unselected() {
+        let mut successors = vec![None; 4];
+        certify_regularization_vertex_successors(
+            &mut successors,
+            &[0, 1],
+            &[2, 3],
+            &[None; 4],
+            &[Some(2), Some(2), None, None],
+            &[None; 4],
+        );
+        assert_eq!(successors, vec![None; 4]);
+    }
 }
 
 /// Certifies a retained authored walk through a nontransverse unary contact.

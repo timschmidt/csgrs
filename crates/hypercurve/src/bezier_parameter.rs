@@ -4384,6 +4384,10 @@ pub(crate) fn power_to_bernstein_coefficients(
         }
     }
 
+    let exact_coefficients = coefficients
+        .iter()
+        .map(Real::exact_rational_ref)
+        .collect::<Option<Vec<_>>>();
     let mut bernstein = Vec::with_capacity(degree + 1);
     let mut row = vec![BigUint::one()];
     for index in 0..=degree {
@@ -4393,14 +4397,73 @@ pub(crate) fn power_to_bernstein_coefficients(
                 row[power] = &row[power - 1] + &row[power];
             }
         }
-        let mut value = Real::zero();
-        for (power, coefficient) in coefficients.iter().enumerate().take(index + 1) {
-            let numerator = exact_nonnegative_integer_real(&row[power])?;
-            value = &value + coefficient * (numerator / &degree_binomials[power])?;
-        }
+        let value = if let Some(exact_coefficients) = &exact_coefficients {
+            // Dense exact-rational basis changes belong in Hyperreal's fused
+            // product-sum kernel. Reducing four terms at a time avoids the
+            // quadratic growth caused by normalizing every partial fraction;
+            // the few chunk results retain the same exact rational value.
+            let weights = (0..coefficients.len())
+                .take(index + 1)
+                .map(|power| -> CurveResult<Real> {
+                    let numerator = exact_nonnegative_integer_real(&row[power])?;
+                    (numerator / &degree_binomials[power]).map_err(Into::into)
+                })
+                .collect::<CurveResult<Vec<_>>>()?;
+            let terms = exact_coefficients
+                .iter()
+                .copied()
+                .zip(weights.iter().map(|weight| {
+                    weight
+                        .exact_rational_ref()
+                        .expect("a binomial ratio is an exact rational")
+                }))
+                .collect::<Vec<_>>();
+            let chunks = terms
+                .chunks(4)
+                .map(exact_rational_product_sum_chunk)
+                .collect::<Vec<_>>();
+            Real::new(
+                chunks
+                    .into_iter()
+                    .reduce(|left, right| left + right)
+                    .unwrap_or_else(HyperRational::zero),
+            )
+        } else {
+            let mut value = Real::zero();
+            for (power, coefficient) in coefficients.iter().enumerate().take(index + 1) {
+                let numerator = exact_nonnegative_integer_real(&row[power])?;
+                value = &value + coefficient * (numerator / &degree_binomials[power])?;
+            }
+            value
+        };
         bernstein.push(value);
     }
     Ok(bernstein)
+}
+
+fn exact_rational_product_sum_chunk(terms: &[(&HyperRational, &HyperRational)]) -> HyperRational {
+    match terms {
+        [] => HyperRational::zero(),
+        [first] => first.0 * first.1,
+        [first, second] => HyperRational::signed_product_sum2(
+            [true; 2],
+            [[first.0, first.1], [second.0, second.1]],
+        ),
+        [first, second, third] => HyperRational::signed_product_sum(
+            [true; 3],
+            [[first.0, first.1], [second.0, second.1], [third.0, third.1]],
+        ),
+        [first, second, third, fourth] => HyperRational::signed_product_sum(
+            [true; 4],
+            [
+                [first.0, first.1],
+                [second.0, second.1],
+                [third.0, third.1],
+                [fourth.0, fourth.1],
+            ],
+        ),
+        _ => unreachable!("exact product sums are reduced in four-term chunks"),
+    }
 }
 
 pub(crate) fn subdivide_scalar_bernstein_half(

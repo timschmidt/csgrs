@@ -4070,11 +4070,20 @@ struct BezierAlgebraicSelectedFiberAuthority2 {
     data: Arc<BezierAlgebraicSelectedFiberAuthorityData2>,
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug)]
 struct BezierAlgebraicSelectedFiberAuthorityData2 {
     incidence: BivariatePolynomial,
     retained_parameter: BezierAlgebraicParameter2,
     policy: CurveContext,
+    retained_refinement_64: OnceLock<Arc<BezierParameter2>>,
+}
+
+impl PartialEq for BezierAlgebraicSelectedFiberAuthorityData2 {
+    fn eq(&self, other: &Self) -> bool {
+        self.incidence == other.incidence
+            && self.retained_parameter == other.retained_parameter
+            && self.policy == other.policy
+    }
 }
 
 impl PartialEq for BezierAlgebraicSelectedFiberAuthority2 {
@@ -4129,8 +4138,27 @@ impl BezierAlgebraicSelectedFiberAuthority2 {
                 incidence,
                 retained_parameter,
                 policy: policy.retained_object_policy(),
+                retained_refinement_64: OnceLock::new(),
             }),
         }
+    }
+
+    fn retained_parameter_refined(&self, refinement_steps: usize) -> BezierParameter2 {
+        if refinement_steps <= 64 {
+            return self
+                .data
+                .retained_refinement_64
+                .get_or_init(|| {
+                    Arc::new(
+                        BezierParameter2::Algebraic(self.data.retained_parameter.clone())
+                            .refined_isolating_interval(64, &CurveContext::STRICT),
+                    )
+                })
+                .as_ref()
+                .clone();
+        }
+        BezierParameter2::Algebraic(self.data.retained_parameter.clone())
+            .refined_isolating_interval(refinement_steps, &CurveContext::STRICT)
     }
 
     fn parameter(&self, root: IsolatedRootInterval) -> BezierAlgebraicSelectedFiberParameter2 {
@@ -4974,8 +5002,7 @@ impl BezierAlgebraicSelectedFiberParameter2 {
     ) -> CurveResult<Classification<Self>> {
         self.validate_policy(policy)?;
         Ok(algebraic_selected_fiber_root_interval_refined(
-            &self.data.authority.data.incidence,
-            &self.data.authority.data.retained_parameter,
+            &self.data.authority,
             &self.data.root,
             refinement_steps,
             policy,
@@ -4994,9 +5021,8 @@ impl BezierAlgebraicSelectedFiberParameter2 {
     ) -> CurveResult<Classification<RealSign>> {
         self.validate_policy(policy)?;
         algebraic_selected_fiber_root_predicate_sign(
-            &self.data.authority.data.incidence,
+            &self.data.authority,
             predicate,
-            &self.data.authority.data.retained_parameter,
             &self.data.root,
             policy,
         )
@@ -5010,10 +5036,9 @@ impl BezierAlgebraicSelectedFiberParameter2 {
     ) -> CurveResult<Classification<RealSign>> {
         self.validate_policy(policy)?;
         algebraic_selected_fiber_root_radical_sum_sign(
-            &self.data.authority.data.incidence,
+            &self.data.authority,
             expression,
             speed_squared,
-            &self.data.authority.data.retained_parameter,
             &self.data.root,
             policy,
         )
@@ -5027,10 +5052,9 @@ impl BezierAlgebraicSelectedFiberParameter2 {
     ) -> CurveResult<Classification<RealSign>> {
         self.validate_policy(policy)?;
         algebraic_selected_fiber_root_square_root_sum_sign(
-            &self.data.authority.data.incidence,
+            &self.data.authority,
             expression,
             radicand,
-            &self.data.authority.data.retained_parameter,
             &self.data.root,
             policy,
         )
@@ -5045,11 +5069,10 @@ impl BezierAlgebraicSelectedFiberParameter2 {
     ) -> CurveResult<Classification<RealSign>> {
         self.validate_policy(policy)?;
         algebraic_selected_fiber_root_two_normal_sum_sign(
-            &self.data.authority.data.incidence,
+            &self.data.authority,
             expression,
             center_speed_squared,
             candidate_speed_squared,
-            &self.data.authority.data.retained_parameter,
             &self.data.root,
             policy,
         )
@@ -11268,6 +11291,24 @@ fn analytic_parallel_point_bounds_refined(
         tangent_distance,
         translation_x,
         translation_y,
+    )
+}
+
+fn retained_analytic_parallel_point_bounds_at_bezier_parameter(
+    point: &BezierAnalyticParallelPoint2,
+    parameter: &BezierParameter2,
+) -> Classification<Aabb2> {
+    analytic_parallel_point_bounds_over_interval_with_tangent(
+        &point.data.parallel,
+        &BezierAlgebraicChordRealInterval2::from_parameter(parameter),
+        point
+            .data
+            .frame_tangent
+            .as_ref()
+            .map(|tangent| (&tangent.x[..], &tangent.y[..])),
+        &point.data.tangent_distance,
+        &point.data.translation_x,
+        &point.data.translation_y,
     )
 }
 
@@ -25906,6 +25947,108 @@ impl BezierAlgebraicCuspSemicircle2 {
     /// into an existing recursive endpoint field. This is the cold shared-
     /// tower bridge for a later bevel or offset endpoint meeting an earlier
     /// selected circle; no standalone Cartesian primitive element is needed.
+    fn recursive_exact_parallel_normal_frame_chord_intersections(
+        &self,
+        chord: &BezierAlgebraicChord2,
+        clip_to_finite_chord: bool,
+        certified_endpoint_incidence: Option<BezierCertifiedFiniteChordEndpointIncidence2>,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<Option<BezierAlgebraicCuspSemicircleChordIntersections2>>> {
+        let Some(frame) = self.data.frame.parallel_normal() else {
+            return Ok(Classification::Decided(None));
+        };
+        if !policy.accepts_retained_policy(frame.policy) {
+            return Err(CurveError::Topology(
+                "an exact parallel-normal circle frame crossed predicate policies".into(),
+            ));
+        }
+        let Some(parameter) = frame.center_parameter.as_exact() else {
+            return Ok(Classification::Decided(None));
+        };
+        let center = match frame.center_support.point_at(parameter, policy)? {
+            Classification::Decided(center) => center,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        let tangent = match frame.center_support.source_tangent_at(parameter, policy)? {
+            Classification::Decided(tangent) => tangent,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        let speed_squared = Real::dot2_refs([&tangent.0, &tangent.1], [&tangent.0, &tangent.1]);
+        match real_sign(&speed_squared, &CurveContext::STRICT) {
+            Some(RealSign::Positive) => {}
+            Some(RealSign::Zero) => {
+                return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
+            }
+            Some(RealSign::Negative) => {
+                return Err(CurveError::Topology(
+                    "an exact parallel-normal circle frame had negative squared speed".into(),
+                ));
+            }
+            None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
+        }
+        let speed = speed_squared.sqrt()?;
+        let points =
+            match recursive_projective_evidence_points(&[chord.start(), chord.end()], policy)? {
+                Classification::Decided(Some(points)) => points,
+                Classification::Decided(None) => return Ok(Classification::Decided(None)),
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            };
+        let [start, end]: [BezierRecursiveQuadraticProjectivePoint2; 2] = points
+            .try_into()
+            .expect("an exact-frame chord bridge retains two authored endpoints");
+        let start = match positive_recursive_projective_point(start)? {
+            Classification::Decided(point) => point,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        let end = match positive_recursive_projective_point(end)? {
+            Classification::Decided(point) => point,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        let field = start.denominator.field();
+        let Some(authority) = (|| {
+            let denominator = field.constant(Real::one())?;
+            Some(BezierRecursiveSelectedRadialFrame2 {
+                field: field.clone(),
+                center: BezierRecursiveQuadraticProjectivePoint2 {
+                    x: field.constant(center.x().clone())?,
+                    y: field.constant(center.y().clone())?,
+                    denominator: denominator.clone(),
+                },
+                // The unnormalized left normal is `(-ty, tx)`. Therefore
+                // `C - support_center` is that vector and `speed` is its
+                // positive normalization denominator. Keeping this
+                // projective frame avoids introducing two exact quotients.
+                support_center: BezierRecursiveQuadraticProjectivePoint2 {
+                    x: field.constant(center.x() + &tangent.1)?,
+                    y: field.constant(center.y() - &tangent.0)?,
+                    denominator,
+                },
+                normal_denominator: speed,
+            })
+        })() else {
+            return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+        };
+        self.recursive_projective_chord_intersections(
+            chord,
+            authority,
+            start,
+            end,
+            clip_to_finite_chord,
+            certified_endpoint_incidence,
+            policy,
+        )
+    }
+
     fn recursive_projective_retained_chord_intersections(
         &self,
         chord: &BezierAlgebraicChord2,
@@ -25913,6 +26056,23 @@ impl BezierAlgebraicCuspSemicircle2 {
         certified_endpoint_incidence: Option<BezierCertifiedFiniteChordEndpointIncidence2>,
         policy: &CurveContext,
     ) -> CurveResult<Classification<Option<BezierAlgebraicCuspSemicircleChordIntersections2>>> {
+        match self.recursive_exact_parallel_normal_frame_chord_intersections(
+            chord,
+            clip_to_finite_chord,
+            certified_endpoint_incidence,
+            policy,
+        )? {
+            Classification::Decided(Some(intersections)) => {
+                #[cfg(feature = "dispatch-trace")]
+                hyperreal::dispatch_trace::record(
+                    "hypercurve",
+                    "algebraic-circle-chord-kernel",
+                    "recursive-exact-parallel-normal-frame",
+                );
+                return Ok(Classification::Decided(Some(intersections)));
+            }
+            Classification::Decided(None) | Classification::Uncertain(_) => {}
+        }
         let center = match self.center_point_evidence(policy)? {
             Classification::Decided(center) => center,
             Classification::Uncertain(reason) => {
@@ -28949,16 +29109,14 @@ impl BezierAlgebraicCuspSemicircle2 {
                 lower: radius_squared.clone(),
                 upper: radius_squared,
             };
+            let mut start_bounds =
+                AlgebraicChordEndpointBoundsRefinement2::new(chord.start(), policy);
+            let mut end_bounds = AlgebraicChordEndpointBoundsRefinement2::new(chord.end(), policy);
+            let mut center_bounds = AlgebraicChordEndpointBoundsRefinement2::new(&center, policy);
             for refinement_steps in [0, 2, 4, 8, 16, 32, 64, 128, 256, 512] {
-                let start_bounds = algebraic_chord_endpoint_bounds_refined(
-                    chord.start(),
-                    refinement_steps,
-                    policy,
-                );
-                let end_bounds =
-                    algebraic_chord_endpoint_bounds_refined(chord.end(), refinement_steps, policy);
-                let center_bounds =
-                    algebraic_chord_endpoint_bounds_refined(&center, refinement_steps, policy);
+                let start_bounds = start_bounds.refine_to(refinement_steps);
+                let end_bounds = end_bounds.refine_to(refinement_steps);
+                let center_bounds = center_bounds.refine_to(refinement_steps);
                 let (
                     Classification::Decided(start_bounds),
                     Classification::Decided(end_bounds),
@@ -83817,6 +83975,48 @@ fn recursive_projective_endpoint_bounds_refined(
     }
 }
 
+enum AlgebraicChordEndpointBoundsRefinement2<'a> {
+    AnalyticParallelBezier {
+        point: &'a BezierAnalyticParallelPoint2,
+        parameter: BezierParameterRefinement2<'a>,
+    },
+    General {
+        endpoint: &'a RationalBezierIntersectionPointEvidence2,
+        policy: &'a CurveContext,
+    },
+}
+
+impl<'a> AlgebraicChordEndpointBoundsRefinement2<'a> {
+    fn new(
+        endpoint: &'a RationalBezierIntersectionPointEvidence2,
+        policy: &'a CurveContext,
+    ) -> Self {
+        if let RationalBezierIntersectionPointEvidence2::AnalyticParallel(point) = endpoint
+            && let BezierAnalyticParallelPointParameter2::Bezier(parameter) = &point.data.parameter
+        {
+            return Self::AnalyticParallelBezier {
+                point,
+                parameter: BezierParameterRefinement2::new(parameter, policy),
+            };
+        }
+        Self::General { endpoint, policy }
+    }
+
+    fn refine_to(&mut self, refinement_steps: usize) -> Classification<Aabb2> {
+        match self {
+            Self::AnalyticParallelBezier { point, parameter } => {
+                retained_analytic_parallel_point_bounds_at_bezier_parameter(
+                    point,
+                    parameter.refine_to(refinement_steps),
+                )
+            }
+            Self::General { endpoint, policy } => {
+                algebraic_chord_endpoint_bounds_refined(endpoint, refinement_steps, policy)
+            }
+        }
+    }
+}
+
 pub(crate) fn algebraic_chord_endpoint_bounds_refined(
     endpoint: &RationalBezierIntersectionPointEvidence2,
     refinement_steps: usize,
@@ -94224,29 +94424,10 @@ impl BezierAnalyticParallelPoint2 {
         }
         match &self.data.parameter {
             BezierAnalyticParallelPointParameter2::Bezier(parameter) => {
-                if let Some(tangent) = &self.data.frame_tangent {
-                    let parameter = parameter
-                        .clone()
-                        .refined_isolating_interval(refinement_steps, policy);
-                    analytic_parallel_point_bounds_over_interval_with_tangent(
-                        &self.data.parallel,
-                        &BezierAlgebraicChordRealInterval2::from_parameter(&parameter),
-                        Some((&tangent.x, &tangent.y)),
-                        &self.data.tangent_distance,
-                        &self.data.translation_x,
-                        &self.data.translation_y,
-                    )
-                } else {
-                    analytic_parallel_point_bounds_refined(
-                        &self.data.parallel,
-                        parameter,
-                        &self.data.tangent_distance,
-                        &self.data.translation_x,
-                        &self.data.translation_y,
-                        refinement_steps,
-                        policy,
-                    )
-                }
+                let parameter = parameter
+                    .clone()
+                    .refined_isolating_interval(refinement_steps, policy);
+                retained_analytic_parallel_point_bounds_at_bezier_parameter(self, &parameter)
             }
             BezierAnalyticParallelPointParameter2::SelectedFiber(parameter) => {
                 let parameter = match parameter.refined(refinement_steps, policy) {
@@ -97168,26 +97349,25 @@ impl BezierAlgebraicChordPairPoint2 {
                 order.map(std::cmp::Ordering::reverse)
             });
         };
-        if let Some((at_end, order)) = owner_anchor {
-            if let Some(pair_to_other) =
+        if let Some((at_end, order)) = owner_anchor
+            && let Some(pair_to_other) =
                 Self::anchor_separation_order_on_owner(owner, at_end, order, other, policy)
-            {
-                let reversed = owner.shared_tangent_orientation(chord).unwrap_or(
-                    owner.data.parameter_axis.coordinate_increases
-                        != chord.data.parameter_axis.coordinate_increases,
-                );
-                #[cfg(feature = "dispatch-trace")]
-                hyperreal::dispatch_trace::record(
-                    "hypercurve",
-                    "algebraic-chord-pair-order",
-                    "certified-offset-anchor-separation",
-                );
-                return Ok(Classification::Decided(if reversed {
-                    pair_to_other.reverse()
-                } else {
-                    pair_to_other
-                }));
-            }
+        {
+            let reversed = owner.shared_tangent_orientation(chord).unwrap_or(
+                owner.data.parameter_axis.coordinate_increases
+                    != chord.data.parameter_axis.coordinate_increases,
+            );
+            #[cfg(feature = "dispatch-trace")]
+            hyperreal::dispatch_trace::record(
+                "hypercurve",
+                "algebraic-chord-pair-order",
+                "certified-offset-anchor-separation",
+            );
+            return Ok(Classification::Decided(if reversed {
+                pair_to_other.reverse()
+            } else {
+                pair_to_other
+            }));
         }
         // Event sorting needs only the order on this chord's certified
         // injective axis.  Most unrelated contacts separate in their native
@@ -104815,8 +104995,7 @@ fn selected_fiber_parameter_at_exact_retained(
 }
 
 fn algebraic_selected_fiber_root_interval_refined(
-    incidence: &BivariatePolynomial,
-    retained: &BezierAlgebraicParameter2,
+    authority: &BezierAlgebraicSelectedFiberAuthority2,
     root: &IsolatedRootInterval,
     refinement_steps: usize,
     policy: &CurveContext,
@@ -104824,8 +105003,8 @@ fn algebraic_selected_fiber_root_interval_refined(
     if refinement_steps == 0 || root.exact_root.is_some() {
         return Ok(Classification::Decided(root.clone()));
     }
-    let retained_parameter = BezierParameter2::Algebraic(retained.clone())
-        .refined_isolating_interval(refinement_steps.max(64), &CurveContext::STRICT);
+    let incidence = &authority.data.incidence;
+    let retained_parameter = authority.retained_parameter_refined(refinement_steps.max(64));
     let BezierParameter2::Algebraic(retained_parameter) = retained_parameter else {
         let BezierParameter2::Exact(retained_parameter) = retained_parameter else {
             unreachable!()
@@ -104908,17 +105087,16 @@ fn algebraic_selected_fiber_root_interval_refined(
 /// final 512-step equality query may consume APPROXIMATE_512; STRICT continues
 /// exact isolation without treating that schedule as a mathematical bound.
 fn algebraic_selected_fiber_root_predicate_sign(
-    incidence: &BivariatePolynomial,
+    authority: &BezierAlgebraicSelectedFiberAuthority2,
     predicate: &BivariatePolynomial,
-    retained: &BezierAlgebraicParameter2,
     root: &IsolatedRootInterval,
     policy: &CurveContext,
 ) -> CurveResult<Classification<RealSign>> {
     if matches!(bivariate_exact_nonzero_metadata(predicate), Some(None)) {
         return Ok(Classification::Decided(RealSign::Zero));
     }
-    let retained_parameter = BezierParameter2::Algebraic(retained.clone())
-        .refined_isolating_interval(64, &CurveContext::STRICT);
+    let incidence = &authority.data.incidence;
+    let retained_parameter = authority.retained_parameter_refined(64);
     if let BezierParameter2::Exact(retained_value) = &retained_parameter {
         if let Some(exact_root) = &root.exact_root {
             return Ok(real_sign(
@@ -104971,8 +105149,7 @@ fn algebraic_selected_fiber_root_predicate_sign(
     loop {
         if refinement_steps != 0 {
             latest = match algebraic_selected_fiber_root_interval_refined(
-                incidence,
-                retained,
+                authority,
                 root,
                 refinement_steps,
                 policy,
@@ -104990,9 +105167,7 @@ fn algebraic_selected_fiber_root_predicate_sign(
                 policy,
             );
         }
-        let retained_refined = BezierParameter2::Algebraic(retained.clone())
-            .clone()
-            .refined_isolating_interval(refinement_steps.max(64), &CurveContext::STRICT);
+        let retained_refined = authority.retained_parameter_refined(refinement_steps.max(64));
         let BezierParameter2::Algebraic(retained_refined) = retained_refined else {
             unreachable!("a selected-fiber root has an algebraic retained parameter")
         };
@@ -106117,15 +106292,16 @@ fn algebraic_selected_fiber_pair_two_normal_sum_sign(
 }
 
 fn algebraic_selected_fiber_root_radical_sum_sign(
-    incidence: &BivariatePolynomial,
+    authority: &BezierAlgebraicSelectedFiberAuthority2,
     expression: &BezierAlgebraicCuspTwoTermExpression2,
     speed_squared: &BivariatePolynomial,
-    retained: &BezierAlgebraicParameter2,
     root: &IsolatedRootInterval,
     policy: &CurveContext,
 ) -> CurveResult<Classification<RealSign>> {
+    let incidence = &authority.data.incidence;
+    let retained = &authority.data.retained_parameter;
     let sign = |polynomial: &BivariatePolynomial| {
-        algebraic_selected_fiber_root_predicate_sign(incidence, polynomial, retained, root, policy)
+        algebraic_selected_fiber_root_predicate_sign(authority, polynomial, root, policy)
     };
     let rational = match sign(&expression.rational)? {
         Classification::Decided(sign) => sign,
@@ -106184,15 +106360,16 @@ fn algebraic_selected_fiber_root_radical_sum_sign(
 /// `B/sqrt(S)`. Both keep equality on the local selected-fiber authority and
 /// therefore share the same STRICT/APPROXIMATE_512 terminal.
 fn algebraic_selected_fiber_root_square_root_sum_sign(
-    incidence: &BivariatePolynomial,
+    authority: &BezierAlgebraicSelectedFiberAuthority2,
     expression: &BezierAlgebraicCuspTwoTermExpression2,
     radicand: &BivariatePolynomial,
-    retained: &BezierAlgebraicParameter2,
     root: &IsolatedRootInterval,
     policy: &CurveContext,
 ) -> CurveResult<Classification<RealSign>> {
+    let incidence = &authority.data.incidence;
+    let retained = &authority.data.retained_parameter;
     let sign = |polynomial: &BivariatePolynomial| {
-        algebraic_selected_fiber_root_predicate_sign(incidence, polynomial, retained, root, policy)
+        algebraic_selected_fiber_root_predicate_sign(authority, polynomial, root, policy)
     };
     let rational = match sign(&expression.rational)? {
         Classification::Decided(sign) => sign,
@@ -106251,20 +106428,18 @@ fn algebraic_selected_fiber_root_square_root_sum_sign(
 /// one-radical signer. Opposite term signs are distinguished by the exact
 /// local predicate `L^2-M^2*T`; no primitive element or global norm is built.
 fn algebraic_selected_fiber_root_two_normal_sum_sign(
-    incidence: &BivariatePolynomial,
+    authority: &BezierAlgebraicSelectedFiberAuthority2,
     expression: &BezierParallelTwoNormalExpression2,
     center_speed_squared: &BivariatePolynomial,
     candidate_speed_squared: &BivariatePolynomial,
-    retained: &BezierAlgebraicParameter2,
     root: &IsolatedRootInterval,
     policy: &CurveContext,
 ) -> CurveResult<Classification<RealSign>> {
     let square_root_sign = |expression: &BezierAlgebraicCuspTwoTermExpression2| {
         algebraic_selected_fiber_root_square_root_sum_sign(
-            incidence,
+            authority,
             expression,
             center_speed_squared,
-            retained,
             root,
             policy,
         )
@@ -128761,25 +128936,36 @@ fn strict_polynomial_sign_on_curve_region_range(
             }
             Classification::Uncertain(_) => return Ok(None),
         };
-        for (steps, precision) in [
-            (0, -32),
-            (2, -64),
-            (4, -96),
-            (8, -128),
-            (16, -192),
-            (32, -256),
-            (64, -384),
-            (128, -512),
-            (256, -768),
-            (512, -1024),
-        ] {
-            let start = match range.start().refined_for_finite_envelope(steps, strict)? {
-                Classification::Decided(parameter) => parameter,
-                Classification::Uncertain(_) => continue,
+        let mut start_refinement = range
+            .start()
+            .as_bezier_parameter()
+            .map(|parameter| BezierParameterRefinement2::new(parameter, strict));
+        let mut end_refinement = range
+            .end()
+            .as_bezier_parameter()
+            .map(|parameter| BezierParameterRefinement2::new(parameter, strict));
+        // This is only a cheap accelerator for the complete polynomial-root
+        // kernel below. Keep the proof budget bounded: a root on or extremely
+        // near an endpoint can never produce a strict interval sign, and deep
+        // speculative bisection makes the fallback strictly more expensive.
+        for (steps, precision) in [(0, -32), (2, -64), (4, -96), (8, -128), (16, -192)] {
+            let start = match start_refinement.as_mut() {
+                Some(refinement) => {
+                    CurveRegionParameter2::from_bezier(refinement.refine_to(steps).clone())
+                }
+                None => match range.start().refined_for_finite_envelope(steps, strict)? {
+                    Classification::Decided(parameter) => parameter,
+                    Classification::Uncertain(_) => continue,
+                },
             };
-            let end = match range.end().refined_for_finite_envelope(steps, strict)? {
-                Classification::Decided(parameter) => parameter,
-                Classification::Uncertain(_) => continue,
+            let end = match end_refinement.as_mut() {
+                Some(refinement) => {
+                    CurveRegionParameter2::from_bezier(refinement.refine_to(steps).clone())
+                }
+                None => match range.end().refined_for_finite_envelope(steps, strict)? {
+                    Classification::Decided(parameter) => parameter,
+                    Classification::Uncertain(_) => continue,
+                },
             };
             let (Some(start), Some(end)) =
                 (start.finite_envelope_bounds(), end.finite_envelope_bounds())
@@ -160625,6 +160811,13 @@ mod conversion_tests {
                     .represented_value()
                     .is_none()
             );
+            assert!(matches!(
+                reparameterized_contact_evidence
+                    .other_parameter()
+                    .promoted_bezier_parameter(&policy)
+                    .unwrap(),
+                Classification::Decided(_),
+            ));
             let Classification::Decided(Some(recursive_child)) =
                 BezierAlgebraicCuspSemicircle2::from_selected_circle_radial(
                     &exact_center_circle,
@@ -160757,14 +160950,6 @@ mod conversion_tests {
                 assert!(
                     transverse_offset_trace.path_count(
                         "hypercurve",
-                        "curve-region-exact-offset-tangent",
-                        "selected-fiber-retained-parallel",
-                    ) > 0,
-                    "the exact offset must preserve the selected source parameter on its retained parallel: {transverse_offset_trace:?}",
-                );
-                assert!(
-                    transverse_offset_trace.path_count(
-                        "hypercurve",
                         "algebraic-circle-parallel-kernel",
                         "selected-normal-diagonal-rootless",
                     ) > 0,
@@ -160785,6 +160970,14 @@ mod conversion_tests {
                         "procedural-endpoints-canonicalized",
                     ) > 0,
                     "finite retained-chord clipping must canonicalize its exact procedural endpoints",
+                );
+                assert!(
+                    transverse_offset_trace.path_count(
+                        "hypercurve",
+                        "algebraic-circle-chord-kernel",
+                        "recursive-exact-parallel-normal-frame",
+                    ) > 0,
+                    "recursive retained-chord clipping must preserve the exact parallel-normal frame: {transverse_offset_trace:?}",
                 );
                 assert_eq!(
                     transverse_offset_trace.path_count(
