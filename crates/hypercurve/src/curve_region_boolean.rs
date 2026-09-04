@@ -19219,25 +19219,36 @@ mod certified_successor_tests {
                         })
                 }));
                 #[cfg(feature = "dispatch-trace")]
-                for (operation, path) in [
-                    (
-                        "algebraic-chord-parallel-monotonicity",
-                        "interior-singularity",
-                    ),
-                    (
-                        "analytic-parallel-rational-component",
-                        "regularized-pythagorean-hodograph",
-                    ),
-                    ("algebraic-chord-pair", "general-rational"),
-                    (
-                        "algebraic-chord-pair",
-                        "analytic-parallel-strict-rational-component",
-                    ),
-                ] {
+                {
                     assert!(
-                        ph_trace.path_count("hypercurve", operation, path) > 0,
-                        "the nonconstant PH branch must traverse {operation}/{path}: {ph_trace:?}",
+                        ph_trace.path_count(
+                            "hypercurve",
+                            "algebraic-chord-pair",
+                            "analytic-parallel-certified-support",
+                        ) > 0,
+                        "the nonconstant PH branch must use the authoritative retained-support kernel: {ph_trace:?}",
                     );
+                    for (operation, path) in [
+                        (
+                            "algebraic-chord-parallel-monotonicity",
+                            "interior-singularity",
+                        ),
+                        (
+                            "analytic-parallel-rational-component",
+                            "regularized-pythagorean-hodograph",
+                        ),
+                        ("algebraic-chord-pair", "general-rational"),
+                        (
+                            "algebraic-chord-pair",
+                            "analytic-parallel-strict-rational-component",
+                        ),
+                    ] {
+                        assert_eq!(
+                            ph_trace.path_count("hypercurve", operation, path),
+                            0,
+                            "the retained-support answer must bypass superseded {operation}/{path} machinery: {ph_trace:?}",
+                        );
+                    }
                 }
             };
 

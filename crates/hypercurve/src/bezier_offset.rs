@@ -96108,6 +96108,9 @@ impl BezierAlgebraicChordPairPoint2 {
         &self,
         policy: &CurveContext,
     ) -> CurveResult<Classification<Option<Point2>>> {
+        if !self.accepts_policy(policy) {
+            return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+        }
         let x = self.exact_axis_coordinate(Axis2::X, policy)?;
         let y = self.exact_axis_coordinate(Axis2::Y, policy)?;
         if let (Classification::Decided(Some(x)), Classification::Decided(Some(y))) = (&x, &y) {

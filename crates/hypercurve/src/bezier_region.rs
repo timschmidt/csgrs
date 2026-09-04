@@ -6118,9 +6118,7 @@ fn coalesced_retained_parallel_offset_run(
         return Ok(Classification::Decided(None));
     };
     let parallel = first.parallel();
-    if exact_retained_parallel_fragment(first, parallel.clone(), policy)?.is_some()
-        || retained_parallel_represented_parameter(&retained_parallel_traversal_start(first))
-            .is_none()
+    if retained_parallel_represented_parameter(&retained_parallel_traversal_start(first)).is_none()
     {
         return Ok(Classification::Decided(None));
     }
@@ -11160,8 +11158,9 @@ impl CurveRegion2 {
     ) -> Self {
         if self.data.certified_loop_roles.is_none()
             && self.data.boundary_loops.len() > 1
-            && retained_loops_have_pairwise_disjoint_bounds(&self.data.boundary_loops, policy)
-                == Classification::Decided(true)
+            && policy.strict_predicate_pass(|| {
+                retained_loops_have_pairwise_disjoint_bounds(&self.data.boundary_loops, policy)
+            }) == Classification::Decided(true)
         {
             let role_count = self.data.boundary_loops.len();
             self.data_mut_for_construction().certified_loop_roles =
@@ -25615,7 +25614,11 @@ mod tests {
                                             "the retained circular chamfer must re-enter the Boolean kernel: policy={policy:?}, major={major}, elevated={elevated}, candidate={candidate_index}, error={error:?}"
                                         )
                                     });
-                                    assert_eq!(replay.certainty, CurveCertainty::Certified);
+                                    assert_eq!(
+                                        replay.certainty,
+                                        CurveCertainty::Certified,
+                                        "policy={policy:?}, scale={homogeneous_scale}, major={major}, elevated={elevated}, reversed={reversed}, candidate={candidate_index}",
+                                    );
                                     assert_eq!(replay.value.union().boundary_loops().len(), 2);
                                     assert!(replay.value.intersection().is_empty());
                                 }
@@ -28876,12 +28879,8 @@ mod tests {
         }
         assert_eq!(
             offset.certainty,
-            if policy == CurveContext::APPROXIMATE_512 {
-                CurveCertainty::Approximate512Consumed
-            } else {
-                CurveCertainty::Certified
-            },
-            "the retained boundary must report the weakest predicate actually consumed"
+            CurveCertainty::Certified,
+            "strict-compatible retained evidence must not consume the approximate terminal"
         );
         assert!(!offset.value.is_empty());
     }
@@ -28897,12 +28896,12 @@ mod tests {
     }
 
     #[test]
-    fn pair_native_boolean_boundary_offset_obeys_approximate_policy_forward() {
+    fn pair_native_boolean_boundary_offset_remains_certified_under_approximate_policy_forward() {
         assert_pair_native_boolean_boundary_offsets_exactly(CurveContext::APPROXIMATE_512, false);
     }
 
     #[test]
-    fn pair_native_boolean_boundary_offset_obeys_approximate_policy_reversed() {
+    fn pair_native_boolean_boundary_offset_remains_certified_under_approximate_policy_reversed() {
         assert_pair_native_boolean_boundary_offsets_exactly(CurveContext::APPROXIMATE_512, true);
     }
 
@@ -29046,12 +29045,8 @@ mod tests {
                     });
                 assert_eq!(
                     offset.certainty,
-                    if policy == CurveContext::APPROXIMATE_512 {
-                        CurveCertainty::Approximate512Consumed
-                    } else {
-                        CurveCertainty::Certified
-                    },
-                    "the retained boundary must report the weakest predicate actually consumed"
+                    CurveCertainty::Certified,
+                    "strict-compatible retained evidence must not consume the approximate terminal"
                 );
                 assert!(!offset.value.is_empty());
                 assert!(
