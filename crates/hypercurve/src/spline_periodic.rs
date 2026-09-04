@@ -156,12 +156,7 @@ fn terminal_periodic_remainder(
     policy: &CurveContext,
 ) -> ExactCurveResult<Real> {
     let quotient = (displacement / period).map_err(|_| periodic_evaluation_blocker(family))?;
-    let half =
-        (Real::one() / Real::from(2_i8)).expect("the exact positive integer two has a reciprocal");
-    let nearest = (&quotient + half)
-        .floor_certified()
-        .map_err(|_| periodic_evaluation_blocker(family))?;
-    let nearest = Real::integer(nearest);
+    let nearest = Real::integer(quotient.near_integer());
     // `nearest` differs from floor(quotient) by at most one.  The policy is
     // therefore consumed only to choose between those two exact integers; the
     // returned remainder retains the authored symbolic displacement and period.
@@ -183,4 +178,32 @@ fn periodic_evaluation_blocker(family: CurveFamily2) -> ExactCurveError {
 
 fn periodic_error(family: CurveFamily2, cause: CurveError) -> ExactCurveError {
     ExactCurveError::invalid(CurveOperation2::Construction, family, cause)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn adjacent_integer_remainder_resolves_opaque_half_boundaries() {
+        let angle = Real::e();
+        let sine = angle.clone().sin();
+        let cosine = angle.cos();
+        let opaque_one = sine.clone() * sine + cosine.clone() * cosine;
+        let half = (Real::one() / Real::from(2_i8)).unwrap();
+
+        for displacement in [&opaque_one - &half, &half - &opaque_one] {
+            let remainder = terminal_periodic_remainder(
+                &displacement,
+                &Real::one(),
+                CurveFamily2::PolynomialBSpline,
+                &CurveContext::APPROXIMATE_512,
+            )
+            .unwrap();
+            assert_eq!(
+                crate::classify::compare_reals(&remainder, &half, &CurveContext::APPROXIMATE_512,),
+                Some(std::cmp::Ordering::Equal),
+            );
+        }
+    }
 }
