@@ -444,16 +444,32 @@ pub fn represent_algebraic_tensor_image(
             );
         }
     }
-
     let original_source_count = source_roots.len();
+    let first_source = source_roots[0].clone();
     let mut source_roots = source_roots.to_vec();
     let mut relation = relation.clone();
-    // Affine substitution removes a source axis just as conclusively as a
-    // later resultant or certified independence proof. Keep the public count
-    // faithful on every early-return path, not only after full construction.
+    // Exact-value and affine substitutions remove a source axis just as
+    // conclusively as a later resultant or certified independence proof.
+    // Keep the public count faithful on every early-return path, not only
+    // after full construction.
     let mut eliminated_source_count = 0;
     let mut source_index = 0;
     while source_index < source_roots.len() {
+        if let Some(value) = source_roots[source_index].exact_point_witness() {
+            let Some(substituted) = relation.substitute_axis_value(source_index, value) else {
+                return report(
+                    AlgebraicTensorImageStatus::InvalidRelationShape,
+                    eliminated_source_count,
+                    None,
+                    None,
+                    "an exact tensor-image source axis could not be substituted",
+                );
+            };
+            relation = substituted;
+            source_roots.remove(source_index);
+            eliminated_source_count += 1;
+            continue;
+        }
         let affine =
             source_roots[..source_index]
                 .iter()
@@ -495,7 +511,6 @@ pub fn represent_algebraic_tensor_image(
             source_index += 1;
         }
     }
-
     let mut constraints: Vec<Vec<Real>> = Vec::with_capacity(source_roots.len());
     for (source_index, source) in source_roots.iter().enumerate() {
         if let Some(shared_index) = source_roots[..source_index]
@@ -522,7 +537,6 @@ pub fn represent_algebraic_tensor_image(
         };
         constraints.push(canonicalize_proven_rational_coefficients(constraint));
     }
-
     // Keep every selected source axis canonical from the outset. Repeating
     // this reduction for every still-live source after each resultant avoids
     // degree growth in powers already implied by those source constraints.
@@ -744,7 +758,6 @@ pub fn represent_algebraic_tensor_image(
         };
         interval
     };
-    let first_source = &source_roots[0];
     let polynomial_coefficients =
         exact_rational_root.map_or(polynomial_coefficients, |root| vec![-root, Real::one()]);
     let mut representation = AlgebraicRootRepresentation {
@@ -933,6 +946,26 @@ mod tests {
                 distinct_root_count: 1,
             },
             kind: AlgebraicRootKind::IsolatingInterval,
+            validation: AlgebraicRootValidationReport {
+                status: AlgebraicRootValidationStatus::Valid,
+                message: None,
+            },
+        }
+    }
+
+    fn exact_root(value: i64) -> AlgebraicRootRepresentation {
+        AlgebraicRootRepresentation {
+            constraint_index: value.unsigned_abs() as usize,
+            symbol: SymbolId(value.unsigned_abs() as u32),
+            interval_index: 0,
+            polynomial_coefficients: vec![real(-value), Real::one()],
+            interval: IsolatedRootInterval {
+                lower: real(value),
+                upper: real(value),
+                exact_root: Some(real(value)),
+                distinct_root_count: 1,
+            },
+            kind: AlgebraicRootKind::ExactRationalWitness,
             validation: AlgebraicRootValidationReport {
                 status: AlgebraicRootValidationStatus::Valid,
                 message: None,
@@ -1271,6 +1304,46 @@ mod tests {
         assert_eq!(
             represented_root_sign(&representation, PredicatePolicy::STRICT),
             Some(std::cmp::Ordering::Greater)
+        );
+    }
+
+    #[test]
+    fn tensor_image_substitutes_exact_source_axes_before_elimination() {
+        let exact_sources = [exact_root(2), exact_root(3), exact_root(5)];
+        let exact_report = represent_algebraic_tensor_image(
+            &sum_relation(3, Real::zero()),
+            &exact_sources,
+            &IsolatedRootInterval {
+                lower: real(9),
+                upper: real(11),
+                exact_root: None,
+                distinct_root_count: 1,
+            },
+        );
+        assert_eq!(exact_report.status, AlgebraicTensorImageStatus::Transformed);
+        assert_eq!(exact_report.elimination_count, 3);
+        let exact_image = exact_report.representation.unwrap();
+        assert_eq!(
+            exact_image.polynomial_coefficients,
+            vec![real(-10), Real::one()]
+        );
+        assert_eq!(exact_image.exact_point_witness(), Some(&real(10)));
+
+        let mixed_report = represent_algebraic_tensor_image(
+            &sum_relation(2, Real::zero()),
+            &[exact_root(2), square_root(2)],
+            &IsolatedRootInterval {
+                lower: real(3),
+                upper: real(4),
+                exact_root: None,
+                distinct_root_count: 1,
+            },
+        );
+        assert_eq!(mixed_report.status, AlgebraicTensorImageStatus::Transformed);
+        assert_eq!(mixed_report.elimination_count, 2);
+        assert_eq!(
+            mixed_report.representation.unwrap().polynomial_coefficients,
+            vec![real(2), real(-4), Real::one()]
         );
     }
 

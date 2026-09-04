@@ -234,6 +234,42 @@ impl DenseTensorPolynomial {
         Some(result)
     }
 
+    /// Evaluates one tensor axis at an exact value and removes that axis.
+    ///
+    /// Callers use this only after independently validating the selected
+    /// value. Horner evaluation preserves every remaining tensor axis and
+    /// avoids taking a resultant over a source that is already known exactly.
+    pub(crate) fn substitute_axis_value(&self, axis: usize, value: &Real) -> Option<Self> {
+        let axis_dimension = *self.dimensions.get(axis)?;
+        let stride = checked_coefficient_count(&self.dimensions[axis + 1..])?;
+        let outer_count = self
+            .coefficients
+            .len()
+            .checked_div(axis_dimension.checked_mul(stride)?)?;
+        let coefficient_count = outer_count.checked_mul(stride)?;
+        let mut coefficients = Vec::new();
+        coefficients.try_reserve_exact(coefficient_count).ok()?;
+        for outer in 0..outer_count {
+            let outer_base = outer.checked_mul(axis_dimension)?.checked_mul(stride)?;
+            for inner in 0..stride {
+                let source = |power: usize| {
+                    outer_base
+                        .checked_add(power.checked_mul(stride)?)?
+                        .checked_add(inner)
+                        .and_then(|index| self.coefficients.get(index))
+                };
+                let mut evaluated = source(axis_dimension - 1)?.clone();
+                for power in (0..axis_dimension - 1).rev() {
+                    evaluated = Real::mul_add(&evaluated, value, source(power)?);
+                }
+                coefficients.push(evaluated);
+            }
+        }
+        let mut dimensions = self.dimensions.clone();
+        dimensions.remove(axis);
+        Self::try_new(dimensions, coefficients)
+    }
+
     /// Substitutes `removed = scale * retained + offset` and removes that
     /// affine-related tensor axis.
     ///
@@ -1850,6 +1886,35 @@ mod tests {
             .unwrap();
         assert_eq!(reverse.dimensions(), &[3, 1]);
         assert_eq!(reverse.coefficient(&[2, 0]), Some(&Real::one()));
+    }
+
+    #[test]
+    fn dense_tensor_exact_axis_substitution_preserves_row_major_layout() {
+        let polynomial =
+            DenseTensorPolynomial::try_new(vec![2, 3, 2], (1_i64..=12).map(real).collect())
+                .unwrap();
+
+        let middle = polynomial.substitute_axis_value(1, &real(2)).unwrap();
+        assert_eq!(middle.dimensions(), &[2, 2]);
+        assert_eq!(
+            middle.coefficients(),
+            &[real(27), real(34), real(69), real(76)]
+        );
+
+        let first = polynomial.substitute_axis_value(0, &real(2)).unwrap();
+        assert_eq!(first.dimensions(), &[3, 2]);
+        assert_eq!(
+            first.coefficients(),
+            &[real(15), real(18), real(21), real(24), real(27), real(30)]
+        );
+
+        let last = polynomial.substitute_axis_value(2, &real(2)).unwrap();
+        assert_eq!(last.dimensions(), &[2, 3]);
+        assert_eq!(
+            last.coefficients(),
+            &[real(5), real(11), real(17), real(23), real(29), real(35)]
+        );
+        assert!(polynomial.substitute_axis_value(3, &real(2)).is_none());
     }
 
     #[test]

@@ -1437,7 +1437,7 @@ pub fn count_bernstein_univariate_polynomial_interval_expr(
         );
     }
     let endpoint_lower =
-        match compare_reals(&evaluate_polynomial(&poly, &lower), &Real::zero(), policy).value() {
+        match compare_reals(&Real::eval_poly(&poly, &lower), &Real::zero(), policy).value() {
             Some(ordering) => ordering == Ordering::Equal,
             None => {
                 return bernstein_report(
@@ -1456,7 +1456,7 @@ pub fn count_bernstein_univariate_polynomial_interval_expr(
             }
         };
     let endpoint_upper =
-        match compare_reals(&evaluate_polynomial(&poly, &upper), &Real::zero(), policy).value() {
+        match compare_reals(&Real::eval_poly(&poly, &upper), &Real::zero(), policy).value() {
             Some(ordering) => ordering == Ordering::Equal,
             None => {
                 return bernstein_report(
@@ -2015,7 +2015,7 @@ fn evaluate_sturm_at(
 }
 
 fn sign_at(polynomial: &[Real], point: &Real, policy: PredicatePolicy) -> Option<Ordering> {
-    let value = evaluate_polynomial(polynomial, point);
+    let value = Real::eval_poly(polynomial, point);
     compare_reals(&value, &Real::zero(), policy).value()
 }
 
@@ -2065,16 +2065,6 @@ fn power_of_two_fujiwara_bound(polynomial: &[Real]) -> Option<Real> {
     Some(Real::from(HyperRational::from_bigint(
         BigInt::one() << bound_exponent,
     )))
-}
-
-fn evaluate_polynomial(polynomial: &[Real], point: &Real) -> Real {
-    polynomial
-        .iter()
-        .rev()
-        .cloned()
-        .fold(Real::zero(), |value, coefficient| {
-            value * point.clone() + coefficient
-        })
 }
 
 fn derivative(polynomial: &[Real]) -> Vec<Real> {
