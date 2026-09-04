@@ -235,13 +235,9 @@ pub fn classify_triangle3_degeneracy_with_policy(
     for (index, (a, b, c)) in projections.iter().copied().enumerate() {
         if signs[index].is_none()
             && let Some(sign) = super::exact::orient2d_coordinates(a, b, c)
+            && let Some(value) = record_exact_projection_sign(sign, &mut signs[index])
         {
-            debug_assert_eq!(
-                sign,
-                Sign::Zero,
-                "a nonzero exact rational projection is certified by the preceding filter"
-            );
-            signs[index] = Some(Sign::Zero);
+            return PredicateOutcome::decided(value, Certainty::Exact, Escalation::Exact);
         }
     }
     for (index, (a, b, c)) in projections.iter().copied().enumerate() {
@@ -856,6 +852,43 @@ mod tests {
                     TriangleDegeneracy::NonDegenerate,
                     Certainty::Exact,
                     Escalation::Exact
+                )
+            );
+        }
+    }
+
+    #[test]
+    fn triangle3_degeneracy_replays_nonzero_underflowed_dyadic_projection() {
+        let denominator = Rational::new(2)
+            .powi(2048.into())
+            .expect("the test power fits the exact eager budget");
+        let tiny = Real::new(Rational::one() / denominator);
+        let zero = Real::zero();
+        let one = Real::one();
+        let a = Point3::new(zero.clone(), zero.clone(), zero.clone());
+        let b = Point3::new(one, zero.clone(), zero.clone());
+        let c = Point3::new(zero.clone(), tiny, zero);
+        let xy = ([&a.x, &a.y], [&b.x, &b.y], [&c.x, &c.y]);
+
+        assert_eq!(
+            super::super::orient::orient2d_certified_real_filter(xy.0, xy.1, xy.2),
+            None
+        );
+        assert_eq!(
+            super::super::orient::orient2d_exact_word_filter(xy.0, xy.1, xy.2),
+            None
+        );
+        assert_eq!(
+            super::super::orient::orient2d_certified_rational_filter(xy.0, xy.1, xy.2),
+            None
+        );
+        for policy in [PredicatePolicy::STRICT, APPROX] {
+            assert_eq!(
+                classify_triangle3_degeneracy_with_policy(&a, &b, &c, policy),
+                PredicateOutcome::decided(
+                    TriangleDegeneracy::NonDegenerate,
+                    Certainty::Exact,
+                    Escalation::Exact,
                 )
             );
         }
