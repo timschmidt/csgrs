@@ -116966,14 +116966,19 @@ impl BezierParallel2 {
         };
         if distance_sign == RealSign::Zero {
             let source = self.source().to_rational_bezier()?;
-            return Ok(source
-                .intersection_candidates_classified(other, policy)?
-                .map(|candidates| {
-                    BezierParallelIntersectionCandidateSystem2::projected(
-                        parallel_candidates_from_rational(candidates),
-                        None,
-                    )
-                }));
+            if let Classification::Decided(candidates) =
+                source.intersection_candidates_classified(other, policy)?
+            {
+                let candidates = parallel_candidates_from_rational(candidates);
+                if !matches!(
+                    candidates,
+                    BezierParallelIntersectionCandidates2::DegenerateResultant
+                ) {
+                    return Ok(Classification::Decided(
+                        BezierParallelIntersectionCandidateSystem2::projected(candidates, None),
+                    ));
+                }
+            }
         }
         if tangent_field.is_none()
             && let Some(Some(offset)) = self.data.certified_ph_offset.get()
@@ -117029,8 +117034,9 @@ impl BezierParallel2 {
             Some(differential) => differential,
             None => self.differential()?,
         };
-        if let Classification::Uncertain(reason) =
-            Self::certify_regular_differential(differential, policy)?
+        if distance_sign != RealSign::Zero
+            && let Classification::Uncertain(reason) =
+                Self::certify_regular_differential(differential, policy)?
         {
             return Ok(Classification::Uncertain(reason));
         }
