@@ -429,6 +429,19 @@ struct BezierSelectedRadialFrameData2 {
     /// rebuilt composita on transformed line/circle predicates.
     similarity_source: Option<Arc<BezierSelectedRadialSimilaritySource2>>,
     policy: CurveContext,
+    /// One immutable circle/parallel authority retained by carrier identity.
+    /// A weak target key avoids extending the analytic curve's lifetime.
+    parallel_system_cache: Mutex<Option<BezierSelectedRadialParallelSystemCacheEntry2>>,
+}
+
+#[derive(Debug)]
+struct BezierSelectedRadialParallelSystemCacheEntry2 {
+    target: Weak<BezierParallelData2>,
+    radial_distance: Real,
+    clockwise: bool,
+    policy: CurveContext,
+    permits_approximate_512: bool,
+    system: Arc<BezierRecursiveSelectedRadialParallelSystem2>,
 }
 
 #[derive(Debug)]
@@ -862,7 +875,7 @@ pub(crate) enum BezierAlgebraicCuspSemicircleRationalIntersections2 {
     DegenerateProjection,
 }
 
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub(crate) enum BezierAlgebraicFiberProjection2 {
     Parameters(Vec<BezierParameter2>),
     IdenticallyZero,
@@ -6195,6 +6208,8 @@ struct BezierRecursiveSelectedRadialParallelSystem2 {
     /// target derivative norm, preserving singular rational contacts.
     unit_target_speed: bool,
     projection: Option<DenseTensorPolynomial>,
+    incidence_univariate: OnceLock<BezierSelectedDenseLastAxisUnivariate2>,
+    represented_center_schedule: OnceLock<BezierRepresentedCenterParallelSchedule2>,
     circle: BezierRecursiveQuadraticParallelExpression2,
     selected_half_plane: BezierRecursiveQuadraticParallelExpression2,
     diameter: BezierRecursiveQuadraticParallelExpression2,
@@ -7841,6 +7856,7 @@ fn projected_selected_dense_candidate_box_incidence(
     None
 }
 
+#[derive(Debug)]
 enum BezierSelectedDenseLastAxisUnivariate2 {
     IdenticallyZero,
     Empty,
@@ -7848,6 +7864,12 @@ enum BezierSelectedDenseLastAxisUnivariate2 {
         polynomial: BezierParameterPolynomial,
         square_free: bool,
     },
+}
+
+#[derive(Debug)]
+struct BezierRepresentedCenterParallelSchedule2 {
+    univariate: BezierSelectedDenseLastAxisUnivariate2,
+    unit_interval: OnceLock<BezierAlgebraicFiberProjection2>,
 }
 
 /// Eliminates every already-selected source axis into one reusable exact
@@ -8041,6 +8063,40 @@ fn selected_dense_last_axis_parameters(
         }
     };
     isolate_selected_dense_last_axis_univariate(&univariate, domain, policy)
+}
+
+/// Projects one selected dense fiber once, then isolates its finite span and
+/// optional incident ray from that same exact univariate authority.
+fn selected_dense_last_axis_parameters_with_incident_domain(
+    polynomial: &DenseTensorPolynomial,
+    sources: &[AlgebraicRootRepresentation],
+    range: Option<&BezierParameterRange2>,
+    incident: Option<&BezierParallelIncidentDomain2>,
+    policy: &CurveContext,
+) -> CurveResult<Classification<BezierAlgebraicFiberProjection2>> {
+    let univariate = match selected_dense_last_axis_univariate(polynomial, sources, policy)? {
+        Classification::Decided(univariate) => univariate,
+        Classification::Uncertain(reason) => {
+            return Ok(Classification::Uncertain(reason));
+        }
+    };
+    selected_dense_last_axis_univariate_parameters_with_incident_domain(
+        &univariate,
+        range,
+        incident,
+        policy,
+    )
+}
+
+fn selected_dense_last_axis_univariate_parameters_with_incident_domain(
+    univariate: &BezierSelectedDenseLastAxisUnivariate2,
+    range: Option<&BezierParameterRange2>,
+    incident: Option<&BezierParallelIncidentDomain2>,
+    policy: &CurveContext,
+) -> CurveResult<Classification<BezierAlgebraicFiberProjection2>> {
+    parallel_parameters_with_incident_domain(range, incident, policy, |domain| {
+        isolate_selected_dense_last_axis_univariate(univariate, domain, policy)
+    })
 }
 
 /// Returns the exact degree of a dense target polynomial after fixing every
@@ -15099,6 +15155,7 @@ impl BezierAlgebraicCuspSemicircleSimilarityCache2 {
                         normal_denominator,
                         similarity_source: frame.similarity_source.clone(),
                         policy: frame.policy,
+                        parallel_system_cache: Mutex::default(),
                     },
                 ))
             }
@@ -15147,6 +15204,7 @@ impl BezierAlgebraicCuspSemicircleSimilarityCache2 {
                     normal_denominator: transformed_frame.normal_denominator.clone(),
                     similarity_source: Some(similarity_source),
                     policy: transformed_frame.policy,
+                    parallel_system_cache: Mutex::default(),
                 },
             ));
         }
@@ -16418,6 +16476,7 @@ impl BezierAlgebraicCuspSemicircle2 {
                         normal_denominator,
                         similarity_source: None,
                         policy: policy.retained_object_policy(),
+                        parallel_system_cache: Mutex::default(),
                     },
                 )),
                 radial_distance,
@@ -21611,38 +21670,68 @@ impl BezierAlgebraicCuspSemicircle2 {
     /// every returned parameter.
     fn represented_center_parallel_candidates(
         &self,
+        system: &BezierRecursiveSelectedRadialParallelSystem2,
         other: &BezierParallel2,
         range: Option<&BezierParameterRange2>,
         incident: Option<&BezierParallelIncidentDomain2>,
         policy: &CurveContext,
     ) -> CurveResult<Option<Vec<BezierParameter2>>> {
-        let center = match self.center_point_evidence(policy)? {
-            Classification::Decided(center) => center,
-            Classification::Uncertain(_) => return Ok(None),
-        };
-        let center = match represented_point_evidence_coordinates(&center, policy)? {
-            Classification::Decided(center) => center.map(|coordinate| {
-                hypersolve::compact_algebraic_root_low_degree_witness(&coordinate)
-                    .unwrap_or(coordinate)
-            }),
-            Classification::Uncertain(_) => match self.represented_circle_frame(policy)? {
-                Classification::Decided(frame) => frame.center,
+        let schedule = if let Some(schedule) = system.represented_center_schedule.get() {
+            schedule
+        } else {
+            let center = match self.center_point_evidence(policy)? {
+                Classification::Decided(center) => center,
                 Classification::Uncertain(_) => return Ok(None),
-            },
-        };
-        let common = match self.represented_center_parallel_system(other, &center, policy)? {
-            Classification::Decided(common) => common,
-            Classification::Uncertain(_) => return Ok(None),
-        };
-        let univariate =
-            match selected_dense_last_axis_univariate(&common.projection, &common.sources, policy)?
-            {
+            };
+            let center = match represented_point_evidence_coordinates(&center, policy)? {
+                Classification::Decided(center) => center.map(|coordinate| {
+                    hypersolve::compact_algebraic_root_low_degree_witness(&coordinate)
+                        .unwrap_or(coordinate)
+                }),
+                Classification::Uncertain(_) => match self.represented_circle_frame(policy)? {
+                    Classification::Decided(frame) => frame.center,
+                    Classification::Uncertain(_) => return Ok(None),
+                },
+            };
+            let common = match self.represented_center_parallel_system(other, &center, policy)? {
+                Classification::Decided(common) => common,
+                Classification::Uncertain(_) => return Ok(None),
+            };
+            let univariate = match selected_dense_last_axis_univariate(
+                &common.projection,
+                &common.sources,
+                policy,
+            )? {
                 Classification::Decided(univariate) => univariate,
                 Classification::Uncertain(_) => return Ok(None),
             };
+            let _ =
+                system
+                    .represented_center_schedule
+                    .set(BezierRepresentedCenterParallelSchedule2 {
+                        univariate,
+                        unit_interval: OnceLock::new(),
+                    });
+            system
+                .represented_center_schedule
+                .get()
+                .expect("a represented-center schedule was just retained")
+        };
         let projected =
             parallel_parameters_with_incident_domain(range, incident, policy, |domain| {
-                isolate_selected_dense_last_axis_univariate(&univariate, domain, policy)
+                let unit_interval = matches!(domain, SelectedThirdAxisDomain2::UnitInterval);
+                if unit_interval && let Some(projected) = schedule.unit_interval.get() {
+                    return Ok(Classification::Decided(projected.clone()));
+                }
+                let projected = isolate_selected_dense_last_axis_univariate(
+                    &schedule.univariate,
+                    domain,
+                    policy,
+                )?;
+                if unit_interval && let Classification::Decided(projected) = &projected {
+                    let _ = schedule.unit_interval.set(projected.clone());
+                }
+                Ok(projected)
             })?;
         Ok(match projected {
             Classification::Decided(BezierAlgebraicFiberProjection2::Parameters(candidates)) => {
@@ -21715,7 +21804,7 @@ impl BezierAlgebraicCuspSemicircle2 {
             Ok(Some(candidates))
         })()?;
         let represented_center_candidates = if exact_center_candidates.is_none() {
-            self.represented_center_parallel_candidates(other, range, incident, policy)?
+            self.represented_center_parallel_candidates(&system, other, range, incident, policy)?
         } else {
             None
         };
@@ -25104,6 +25193,7 @@ impl BezierAlgebraicCuspSemicircle2 {
                         normal_denominator,
                         similarity_source: None,
                         policy: frame.policy,
+                        parallel_system_cache: Mutex::default(),
                     }),
                     radial_distance,
                     self.is_clockwise() ^ transform.reverses_orientation(),
@@ -38156,7 +38246,44 @@ impl BezierAlgebraicCuspSemicircle2 {
         other: &BezierParallel2,
         policy: &CurveContext,
     ) -> CurveResult<Classification<Arc<BezierRecursiveSelectedRadialParallelSystem2>>> {
-        self.recursive_selected_radial_target_system(other, false, true, policy)
+        let Some(frame) = self.data.frame.selected_radial() else {
+            return self.recursive_selected_radial_target_system(other, false, true, policy);
+        };
+        let cached = frame
+            .parallel_system_cache
+            .lock()
+            .unwrap_or_else(std::sync::PoisonError::into_inner)
+            .as_ref()
+            .filter(|cached| {
+                cached.policy == *policy
+                    && cached.permits_approximate_512 == policy.permits_approximate_512()
+                    && cached.clockwise == self.is_clockwise()
+                    && &cached.radial_distance == self.radial_distance()
+                    && cached
+                        .target
+                        .upgrade()
+                        .is_some_and(|target| Arc::ptr_eq(&target, &other.data))
+            })
+            .map(|cached| Arc::clone(&cached.system));
+        if let Some(cached) = cached {
+            return Ok(Classification::Decided(cached));
+        }
+        let built = self.recursive_selected_radial_target_system(other, false, true, policy)?;
+        if let Classification::Decided(system) = &built {
+            *frame
+                .parallel_system_cache
+                .lock()
+                .unwrap_or_else(std::sync::PoisonError::into_inner) =
+                Some(BezierSelectedRadialParallelSystemCacheEntry2 {
+                    target: Arc::downgrade(&other.data),
+                    radial_distance: self.radial_distance().clone(),
+                    clockwise: self.is_clockwise(),
+                    policy: *policy,
+                    permits_approximate_512: policy.permits_approximate_512(),
+                    system: Arc::clone(system),
+                });
+        }
+        Ok(built)
     }
 
     fn recursive_selected_radial_rational_system(
@@ -38428,6 +38555,8 @@ impl BezierAlgebraicCuspSemicircle2 {
                 direct_pair_fast_path,
                 unit_target_speed,
                 projection,
+                incidence_univariate: OnceLock::new(),
+                represented_center_schedule: OnceLock::new(),
                 circle,
                 selected_half_plane,
                 diameter,
@@ -62862,8 +62991,14 @@ impl BezierRecursiveSelectedRadialParallelSystem2 {
         incident: Option<&BezierParallelIncidentDomain2>,
         policy: &CurveContext,
     ) -> CurveResult<Classification<BezierAlgebraicFiberProjection2>> {
-        parallel_parameters_with_incident_domain(range, incident, policy, |domain| {
-            self.expression_parameters(polynomial, domain, policy)
+        policy.strict_predicate_pass(|| {
+            selected_dense_last_axis_parameters_with_incident_domain(
+                polynomial,
+                &self.base.sources,
+                range,
+                incident,
+                policy,
+            )
         })
     }
 
@@ -62879,7 +63014,29 @@ impl BezierRecursiveSelectedRadialParallelSystem2 {
         let Some(projection) = self.projection.as_ref() else {
             return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
         };
-        self.parameters_with_incident_domain(projection, range, incident, policy)
+        policy.strict_predicate_pass(|| {
+            let univariate = if let Some(univariate) = self.incidence_univariate.get() {
+                univariate
+            } else {
+                let univariate = match selected_dense_last_axis_univariate(
+                    projection,
+                    &self.base.sources,
+                    policy,
+                )? {
+                    Classification::Decided(univariate) => univariate,
+                    Classification::Uncertain(reason) => {
+                        return Ok(Classification::Uncertain(reason));
+                    }
+                };
+                let _ = self.incidence_univariate.set(univariate);
+                self.incidence_univariate
+                    .get()
+                    .expect("a selected-fiber univariate was just retained")
+            };
+            selected_dense_last_axis_univariate_parameters_with_incident_domain(
+                univariate, range, incident, policy,
+            )
+        })
     }
 
     fn contact_location_with_evaluation(
@@ -70389,15 +70546,6 @@ impl BezierRepresentedCircleParallelSystem2 {
         )
     }
 
-    fn expression_parameters(
-        &self,
-        expression: &DenseTensorPolynomial,
-        domain: SelectedThirdAxisDomain2<'_>,
-        policy: &CurveContext,
-    ) -> CurveResult<Classification<BezierAlgebraicFiberProjection2>> {
-        selected_dense_last_axis_parameters(expression, &self.sources, domain, policy)
-    }
-
     fn parameters_with_incident_domain(
         &self,
         polynomial: &DenseTensorPolynomial,
@@ -70405,9 +70553,13 @@ impl BezierRepresentedCircleParallelSystem2 {
         incident: Option<&BezierParallelIncidentDomain2>,
         policy: &CurveContext,
     ) -> CurveResult<Classification<BezierAlgebraicFiberProjection2>> {
-        parallel_parameters_with_incident_domain(range, incident, policy, |domain| {
-            self.expression_parameters(polynomial, domain, policy)
-        })
+        selected_dense_last_axis_parameters_with_incident_domain(
+            polynomial,
+            &self.sources,
+            range,
+            incident,
+            policy,
+        )
     }
 
     fn target_is_regular(
