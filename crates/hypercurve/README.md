@@ -307,15 +307,15 @@ The quick start is compiled as `examples/basic.rs` and checked byte-for-byte
 against this README. The test suite also covers adversarial exact predicates,
 mixed-family region Booleans, regression corpora, and finite adapters.
 
-The exhaustive rank-independent public-Boolean matrix and three recursive
-radial/projective cases are retained as manual stress tests because an
-individual case can consume a GitHub-hosted job's six-hour budget. Run them on
-a suitably provisioned workstation with:
+The rank-independent public-Boolean matrix and recursive radial/projective
+regressions, including fourth-generation offsets, run in the normal suite.
+Longer selected-fiber, source-cusp stroke, and release-scale PCB corpora can
+also be run explicitly:
 
 ```sh
-cargo test --release --locked --all-features rank_independent_public_booleans_ -- --ignored --test-threads=1
-cargo test --release --locked --all-features recursive_selected_radial_diameter_chord_intersects_a_rational_quadratic_ -- --ignored --test-threads=1
-cargo test --release --locked --all-features recursive_selected_radial_rational_kernel_retains_singular_circle_contacts -- --ignored --test-threads=1
+cargo test --release --locked --all-features --lib selected_fiber_genuinely_analytic_contacts_complete_region_booleans -- --ignored
+cargo test --release --locked --all-features --test hypercurve_curve_region_stroke -- --ignored
+cargo test --release --locked --all-features --test hypercurve_pcb_boolean_regressions -- --ignored
 ```
 
 Detailed benchmark definitions and interpretation live in

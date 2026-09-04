@@ -28798,13 +28798,11 @@ mod tests {
     }
 
     #[test]
-    #[ignore = "multi-minute exact unary-arrangement performance sentinel"]
     fn recursively_nested_selected_radial_public_offset_regularizes_strict() {
         assert_fourth_selected_radial_public_offset_regularizes(CurveContext::STRICT);
     }
 
     #[test]
-    #[ignore = "multi-minute exact unary-arrangement performance sentinel"]
     fn recursively_nested_selected_radial_public_offset_regularizes_approximate_512() {
         assert_fourth_selected_radial_public_offset_regularizes(CurveContext::APPROXIMATE_512);
     }
