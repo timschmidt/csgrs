@@ -57728,16 +57728,17 @@ impl BezierRecursiveQuadraticProjectiveScalar2 {
         let exact_denominator = self.denominator.exact_real_value_with_retained_witnesses();
         if let (Some(numerator), Some(denominator)) = (exact_numerator, exact_denominator)
             && let Ok(inverse) = denominator.inverse_ref_assuming_nonzero()
+            && let Some(value) = (numerator * inverse).exact_rational_normal_form()
         {
             #[cfg(feature = "dispatch-trace")]
             hyperreal::dispatch_trace::record(
                 "hypercurve",
                 "recursive-projective-scalar-image",
-                "compact-real-witness",
+                "exact-rational-witness",
             );
-            return Ok(Classification::Decided(
-                exact_real_algebraic_representation(&(numerator * inverse)),
-            ));
+            return Ok(Classification::Decided(exact_real_algebraic_representation(
+                &Real::new(value),
+            )));
         }
         let Some((base, mut relation)) = recursive_quadratic_polynomial_projection(vec![
             self.numerator.clone(),
@@ -57749,20 +57750,26 @@ impl BezierRecursiveQuadraticProjectiveScalar2 {
         ]) else {
             return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
         };
-        // Publish each proved compact source to the tensor authority itself;
-        // keeping it only as interval side data would force Hypersolve to
-        // eliminate a source whose exact value is already known.
-        let mut sources = base
-            .sources
-            .iter()
-            .zip(&base.source_real_witnesses)
-            .map(|(source, witness)| {
-                witness
-                    .as_ref()
-                    .map(exact_real_algebraic_representation)
-                    .unwrap_or_else(|| source.clone())
-            })
-            .collect::<Vec<_>>();
+        // When at least one source remains unresolved, publish every proved
+        // compact source so Hypersolve can remove those axes before the
+        // necessary resultant. If the complete tuple is already evaluable,
+        // retain its rational-coefficient algebraic carriers: a non-rational
+        // exact `Real` result is not itself a replacement for their ordering
+        // and equality evidence.
+        let mut sources = if base.source_real_witnesses.iter().any(Option::is_none) {
+            base.sources
+                .iter()
+                .zip(&base.source_real_witnesses)
+                .map(|(source, witness)| {
+                    witness
+                        .as_ref()
+                        .map(exact_real_algebraic_representation)
+                        .unwrap_or_else(|| source.clone())
+                })
+                .collect::<Vec<_>>()
+        } else {
+            base.sources.clone()
+        };
         if sources.is_empty() {
             // The tensor-image authority requires at least one selected axis.
             // A constant exact-zero axis is certified independent and removed
