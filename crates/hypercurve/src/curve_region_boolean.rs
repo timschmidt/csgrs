@@ -1187,15 +1187,6 @@ impl CurveRegion2 {
         operation: BooleanOp,
         policy: &CurveContext,
     ) -> ExactCurveResult<Self> {
-        self.boolean_region_once(other, operation, policy)
-    }
-
-    fn boolean_region_once(
-        &self,
-        other: &Self,
-        operation: BooleanOp,
-        policy: &CurveContext,
-    ) -> ExactCurveResult<Self> {
         if let Some(region) = boolean_trivial_region(self, other, operation)? {
             return Ok(region);
         }
@@ -1214,14 +1205,6 @@ impl CurveRegion2 {
     }
 
     pub(crate) fn boolean_regions_raw(
-        &self,
-        other: &Self,
-        policy: &CurveContext,
-    ) -> ExactCurveResult<CurveRegionBooleanResults2> {
-        self.boolean_regions_once(other, policy)
-    }
-
-    fn boolean_regions_once(
         &self,
         other: &Self,
         policy: &CurveContext,
@@ -1273,10 +1256,6 @@ impl CurveRegion2 {
     }
 
     pub(crate) fn regularized_region_raw(&self, policy: &CurveContext) -> ExactCurveResult<Self> {
-        self.regularized_region_once(policy)
-    }
-
-    fn regularized_region_once(&self, policy: &CurveContext) -> ExactCurveResult<Self> {
         if self.is_empty() {
             return Ok(self.clone());
         }
@@ -4436,11 +4415,13 @@ impl<'a> CurveRegionBooleanContext<'a> {
                     }
                 }
                 if !supporting_circle_tangent {
-                    match cusp.certified_adjacent_chord_is_endpoint_only(
-                        chord,
-                        cusp_at_start,
-                        &self.data.policy,
-                    )? {
+                    match self.data.policy.strict_predicate_pass(|| {
+                        cusp.certified_adjacent_chord_is_endpoint_only(
+                            chord,
+                            cusp_at_start,
+                            &self.data.policy,
+                        )
+                    })? {
                         Classification::Decided(true) => {}
                         Classification::Decided(false) => continue,
                         Classification::Uncertain(reason) => {
@@ -4882,12 +4863,16 @@ impl<'a> CurveRegionBooleanContext<'a> {
                             )
                             .map_err(|cause| self.invalid(chord_index, cause))?;
                         let endpoint_only = structural_endpoint_only
-                            || cusp
-                                .certified_adjacent_chord_is_endpoint_only(
-                                    chord,
-                                    cusp_at_start,
-                                    &self.data.policy,
-                                )
+                            || self
+                                .data
+                                .policy
+                                .strict_predicate_pass(|| {
+                                    cusp.certified_adjacent_chord_is_endpoint_only(
+                                        chord,
+                                        cusp_at_start,
+                                        &self.data.policy,
+                                    )
+                                })
                                 .map_err(|cause| self.invalid(chord_index, cause))?
                                 == Classification::Decided(true);
                         if endpoint_only {

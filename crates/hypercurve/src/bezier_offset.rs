@@ -49846,6 +49846,9 @@ impl BezierAlgebraicCuspChordDerivedPoint2 {
     ) -> Classification<std::cmp::Ordering> {
         let mut terminal_refined = false;
         for refinement_steps in [0, 2, 4, 8, 16, 32, 64, 128, 256, 512] {
+            if policy.defers_unbounded_exact_promotion() && refinement_steps > 8 {
+                break;
+            }
             let Classification::Decided(bounds) =
                 self.affine_bounds_refined(refinement_steps, policy)
             else {
@@ -49998,11 +50001,16 @@ impl BezierAlgebraicCuspChordDerivedPoint2 {
             Axis2::X => (Real::one(), Real::zero()),
             Axis2::Y => (Real::zero(), Real::one()),
         };
-        let order = self.linear_order_to_real(&x_factor, &y_factor, value, policy)?;
+        let order = policy.strict_predicate_pass(|| {
+            self.linear_order_to_real(&x_factor, &y_factor, value, policy)
+        })?;
         if matches!(order, Classification::Decided(_)) {
             return Ok(order);
         }
-        if let Classification::Decided(Some(coordinates)) = self.represented_coordinates(policy)? {
+        if !policy.defers_unbounded_exact_promotion()
+            && let Classification::Decided(Some(coordinates)) =
+                self.represented_coordinates(policy)?
+        {
             let coordinate = match axis {
                 Axis2::X => &coordinates[0],
                 Axis2::Y => &coordinates[1],
@@ -50012,7 +50020,11 @@ impl BezierAlgebraicCuspChordDerivedPoint2 {
                 return Ok(represented);
             }
         }
-        Ok(order)
+        if policy.permits_approximate_512() {
+            self.linear_order_to_real(&x_factor, &y_factor, value, policy)
+        } else {
+            Ok(order)
+        }
     }
 
     /// Recognizes the equal tangent-frame coordinate of complementary points
@@ -82943,7 +82955,7 @@ pub(crate) fn algebraic_chord_point_coordinate_order(
             if policy.defers_unbounded_exact_promotion() && refinement_steps > 8 {
                 break;
             }
-            if let Some(order) = algebraic_chord_point_coordinate_order_from_bounds(
+            if let Some(Some(order)) = algebraic_chord_point_coordinate_order_from_bounds(
                 first,
                 second,
                 axis,
@@ -83314,14 +83326,14 @@ fn algebraic_chord_point_coordinate_order_from_bounds(
     axis: Axis2,
     refinement_steps: usize,
     policy: &CurveContext,
-) -> Option<std::cmp::Ordering> {
+) -> Option<Option<std::cmp::Ordering>> {
     let (Classification::Decided(first), Classification::Decided(second)) = (
         algebraic_chord_endpoint_bounds_refined(first, refinement_steps, policy),
         algebraic_chord_endpoint_bounds_refined(second, refinement_steps, policy),
     ) else {
         return None;
     };
-    algebraic_chord_bounds_axis_order(&first, &second, axis)
+    Some(algebraic_chord_bounds_axis_order(&first, &second, axis))
 }
 
 fn algebraic_chord_point_coordinate_order_by_refinement(
@@ -83334,7 +83346,7 @@ fn algebraic_chord_point_coordinate_order_by_refinement(
         if policy.defers_unbounded_exact_promotion() && refinement_steps > 8 {
             break;
         }
-        if let Some(order) = algebraic_chord_point_coordinate_order_from_bounds(
+        if let Some(Some(order)) = algebraic_chord_point_coordinate_order_from_bounds(
             first,
             second,
             axis,
@@ -83350,15 +83362,13 @@ fn algebraic_chord_point_coordinate_order_by_refinement(
     // Coordinate boxes are best for cheap separation. Before their rational
     // endpoints grow through hundreds of bisections, compare the exact final
     // algebraic coordinates already retained by both point carriers.
-    if !policy.selects_approximate_512()
-        && let (
-            Ok(Classification::Decided(first_coordinates)),
-            Ok(Classification::Decided(second_coordinates)),
-        ) = (
-            represented_point_evidence_coordinates(first, policy),
-            represented_point_evidence_coordinates(second, policy),
-        )
-    {
+    if let (
+        Ok(Classification::Decided(first_coordinates)),
+        Ok(Classification::Decided(second_coordinates)),
+    ) = (
+        represented_point_evidence_coordinates(first, policy),
+        represented_point_evidence_coordinates(second, policy),
+    ) {
         let coordinate_index = usize::from(axis == Axis2::Y);
         if let Classification::Decided(difference) = represented_affine_coordinate(
             &[
@@ -83366,7 +83376,7 @@ fn algebraic_chord_point_coordinate_order_by_refinement(
                 (&second_coordinates[coordinate_index], &Real::from(-1_i8)),
             ],
             &Real::zero(),
-        ) && let Classification::Decided(sign) = represented_policy_sign(&difference, policy)
+        ) && let Some(sign) = represented_strict_sign(&difference)
         {
             #[cfg(feature = "dispatch-trace")]
             hyperreal::dispatch_trace::record(
@@ -83383,15 +83393,16 @@ fn algebraic_chord_point_coordinate_order_by_refinement(
     }
     let mut terminal_refined = false;
     for refinement_steps in [32, 64, 128, 256, 512] {
-        terminal_refined |= refinement_steps == 512;
-        if let Some(order) = algebraic_chord_point_coordinate_order_from_bounds(
+        match algebraic_chord_point_coordinate_order_from_bounds(
             first,
             second,
             axis,
             refinement_steps,
             policy,
         ) {
-            return Classification::Decided(order);
+            Some(Some(order)) => return Classification::Decided(order),
+            Some(None) => terminal_refined |= refinement_steps == 512,
+            None => {}
         }
     }
     if terminal_refined && policy.permits_approximate_512() {
@@ -86015,7 +86026,7 @@ pub(crate) fn algebraic_chord_point_linear_order_to_exact(
     // oblique projection is exactly zero. Compare the retained final
     // algebraic image before applying the policy terminal; this is the same
     // exact cold authority used by point equality and axis ordering.
-    if !policy.selects_approximate_512()
+    if !policy.defers_unbounded_exact_promotion()
         && let Classification::Decided([x, y]) = policy
             .strict_predicate_pass(|| represented_point_evidence_coordinates(point, policy))?
     {
@@ -88225,7 +88236,7 @@ impl BezierAlgebraicChord2 {
             )
         });
         if recursive_prepass
-            && !policy.selects_approximate_512()
+            && !policy.defers_unbounded_exact_promotion()
             && procedural_point
             && procedural_support
         {
@@ -88313,13 +88324,8 @@ impl BezierAlgebraicChord2 {
                 }
             }
         }
-        if terminal_refined && policy.permits_approximate_512() {
-            policy.observe_approximate_512();
-            return Ok(Classification::Decided(crate::classify::LineSide::On));
-        }
         if recursive_prepass
             && !policy.defers_unbounded_exact_promotion()
-            && !policy.selects_approximate_512()
             && maximum_refinement_steps >= 512
         {
             match self.represented_oriented_side(point, policy)? {
@@ -88346,6 +88352,10 @@ impl BezierAlgebraicChord2 {
                     return Ok(Classification::Decided(crate::classify::LineSide::On));
                 }
             }
+        }
+        if terminal_refined && policy.permits_approximate_512() {
+            policy.observe_approximate_512();
+            return Ok(Classification::Decided(crate::classify::LineSide::On));
         }
         Ok(Classification::Uncertain(UncertaintyReason::Predicate))
     }
@@ -96886,12 +96896,19 @@ impl BezierAlgebraicChordPairPoint2 {
             Classification::Decided(support_point) => {
                 BezierAlgebraicChord2::point_axis_order_to_real(support_point, axis, value, policy)
             }
-            Classification::Uncertain(_) => Ok(retained_bounds_axis_order_to_real(
-                |refinement_steps| self.conservative_bounds_refined(refinement_steps, policy),
-                axis,
-                value,
-                policy,
-            )),
+            Classification::Uncertain(_) => {
+                // Use the complete coordinate authority, including its retained
+                // algebraic proof, before a terminal interval interpretation.
+                let point =
+                    RationalBezierIntersectionPointEvidence2::AlgebraicChordPair(self.clone());
+                let query = RationalBezierIntersectionPointEvidence2::Exact(Point2::new(
+                    value.clone(),
+                    value.clone(),
+                ));
+                Ok(algebraic_chord_point_coordinate_order_by_refinement(
+                    &point, &query, axis, policy,
+                ))
+            }
         }
     }
 
@@ -131574,6 +131591,38 @@ mod conversion_tests {
                         }
                     }
                 }
+            }
+        }
+    }
+
+    #[test]
+    fn coordinate_refinement_requires_valid_terminal_bounds() {
+        let preview = crate::CurvePreviewOptions::try_approximate_512(1.0e-6, 1.0e-6).unwrap();
+        let escaped = preview.evaluate(|policy| {
+            let Classification::Decided(chord) = BezierAlgebraicChord2::try_new(
+                RationalBezierIntersectionPointEvidence2::Exact(Point2::from_values(0, 0)),
+                RationalBezierIntersectionPointEvidence2::Exact(Point2::from_values(4, 0)),
+                policy,
+            )
+            .unwrap() else {
+                panic!("the preview chord must construct");
+            };
+            chord
+                .parallel_left_retained(Real::one(), policy)
+                .unwrap()
+                .start()
+                .clone()
+        });
+        let query = RationalBezierIntersectionPointEvidence2::Exact(Point2::from_values(0, 1));
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            for axis in [Axis2::X, Axis2::Y] {
+                let outcome = crate::policy::resolve_certified_value(&policy, |policy| {
+                    algebraic_chord_point_coordinate_order_by_refinement(
+                        &escaped, &query, axis, policy,
+                    )
+                });
+                assert!(matches!(outcome.value, Classification::Uncertain(_)));
+                assert_eq!(outcome.certainty, crate::CurveCertainty::Certified);
             }
         }
     }

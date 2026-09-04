@@ -20065,9 +20065,14 @@ fn classify_point_against_retained_loop_with_fill_rule(
             "retained region evaluator cache fragment count is inconsistent".into(),
         ));
     }
-    if let Classification::Decided(bounds) = retained_loop_query_bounds(boundary_loop, policy)
-        && bounds.contains_point(point, policy) == Classification::Decided(false)
-    {
+    if policy.strict_predicate_pass(|| {
+        matches!(
+            retained_loop_query_bounds(boundary_loop, policy),
+            Classification::Decided(bounds)
+                if bounds.contains_point(point, &CurveContext::STRICT)
+                    == Classification::Decided(false)
+        )
+    }) {
         return Ok(Classification::Decided(ContourPointLocation::Outside));
     }
     for (fragment, evaluator) in boundary_loop.fragments().iter().zip(evaluators) {
@@ -20079,7 +20084,9 @@ fn classify_point_against_retained_loop_with_fill_rule(
         {
             continue;
         }
-        match retained_fragment_contains_point(fragment, evaluator.as_ref(), point, policy)? {
+        match policy.strict_predicate_pass(|| {
+            retained_fragment_contains_point(fragment, evaluator.as_ref(), point, policy)
+        })? {
             Classification::Decided(true) => {
                 return Ok(Classification::Decided(ContourPointLocation::Boundary));
             }
@@ -20087,12 +20094,27 @@ fn classify_point_against_retained_loop_with_fill_rule(
         }
     }
     let mut last_reason = UncertaintyReason::Boundary;
-    for ray in ray_candidates(point) {
-        match classify_point_with_retained_ray(boundary_loop, point, &ray, fill_rule, policy)? {
-            Classification::Decided(location) => {
-                return Ok(Classification::Decided(location));
+    let rays = ray_candidates(point);
+    // A ray that meets an unresolved endpoint is only one possible witness.
+    // Exhaust every exact ray before permitting any terminal interpretation.
+    for approximate in [false, true] {
+        if approximate && !policy.permits_approximate_512() {
+            break;
+        }
+        for ray in &rays {
+            let classify =
+                || classify_point_with_retained_ray(boundary_loop, point, ray, fill_rule, policy);
+            let result = if approximate {
+                classify()
+            } else {
+                policy.strict_predicate_pass(classify)
+            }?;
+            match result {
+                Classification::Decided(location) => {
+                    return Ok(Classification::Decided(location));
+                }
+                Classification::Uncertain(reason) => last_reason = reason,
             }
-            Classification::Uncertain(reason) => last_reason = reason,
         }
     }
     Ok(Classification::Uncertain(last_reason))

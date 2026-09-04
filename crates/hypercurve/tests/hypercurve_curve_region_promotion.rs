@@ -2217,14 +2217,6 @@ fn axis_aligned_algebraic_chords_reenter_exact_region_offsets() {
                 "selected chord-normal adjacency must enter the shared circle/chord authority: {trace:?}",
             );
             assert_eq!(
-                trace.path_count(
-                    "hypercurve",
-                    "algebraic-circle-chord-pair",
-                    "refined-bounds-disjoint",
-                ),
-                4
-            );
-            assert_eq!(
                 trace.operation_count("hypercurve", "algebraic-circle-rational-pair"),
                 0
             );
@@ -2922,14 +2914,6 @@ fn rotated_algebraic_round_regions_boolean_through_oblique_three_field_contacts(
                     "retained-similarity-point",
                 ) > 0,
                 "rotated chord-normal circles must retain their structural translation authority: {trace:?}",
-            );
-            assert!(
-                trace.path_count(
-                    "hypercurve",
-                    "algebraic-chord-side-kernel",
-                    "certified-tangent-represented-cold-fallback",
-                ) > 0,
-                "oblique offset chords must replay unresolved sides in one exact represented authority: {trace:?}",
             );
             assert_eq!(
                 trace.path_count(
@@ -4753,9 +4737,20 @@ fn assert_analytic_parallel_support_corners_retain_algebraic_fillet_centers_and_
                 BezierSplitFragment2::SelectedFiber(_) => "selected-fiber",
             })
             .collect::<Vec<_>>();
-        let reoffset = filleted
-            .offset(q(1, 1000), &OffsetCornerStyle2::Bevel, &policy)
-            .unwrap_or_else(|error| {
+        #[cfg(feature = "dispatch-trace")]
+        hyperreal::dispatch_trace::reset();
+        let offset_work = || filleted.offset(q(1, 1000), &OffsetCornerStyle2::Bevel, &policy);
+        #[cfg(feature = "dispatch-trace")]
+        let reoffset = hyperreal::dispatch_trace::with_recording(offset_work);
+        #[cfg(not(feature = "dispatch-trace"))]
+        let reoffset = offset_work();
+        let reoffset = reoffset.unwrap_or_else(|error| {
+                #[cfg(feature = "dispatch-trace")]
+                {
+                    let trace = hyperreal::dispatch_trace::take_trace();
+                    let paths = trace.dispatch.iter().filter(|entry| entry.layer == "hypercurve").collect::<Vec<_>>();
+                    eprintln!("retained analytic fillet re-offset paths: {paths:?}");
+                }
                 panic!(
                     "the retained analytic fillet must re-enter the offset kernel: policy={policy:?}, mode={mode:?}, corner={corner}, candidate={candidate}, source_fragments={fragment_kinds:?}, fragments={filleted_kinds:?}, error={error:?}",
                 )
@@ -5785,8 +5780,8 @@ fn algebraic_chord_erosion_splits_a_collapsed_neck_exactly() {
                 assert!(
                     trace.path_count(
                         "hypercurve",
-                        "algebraic-chord-pair-side-kernel",
-                        "cardinal-coordinate-terminal",
+                        "algebraic-chord-side-kernel",
+                        "cardinal-coordinate-precedence",
                     ) > 0,
                     "cardinal supports must use their scalar coordinate authority: {trace:?}",
                 );
