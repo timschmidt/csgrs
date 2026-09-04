@@ -108,15 +108,26 @@ impl DenseTensorPolynomial {
 
     /// Scales every coefficient by one exact scalar.
     pub fn scale(&self, scale: &Real) -> Option<Self> {
+        if stored_rational_zero(scale) {
+            return Self::zero(self.dimensions.clone());
+        }
+        if scale
+            .exact_rational_ref()
+            .is_some_and(|value| value.is_one())
+        {
+            return Some(self.clone());
+        }
         let mut coefficients = Vec::new();
         coefficients
             .try_reserve_exact(self.coefficients.len())
             .ok()?;
-        coefficients.extend(
-            self.coefficients
-                .iter()
-                .map(|coefficient| coefficient * scale),
-        );
+        coefficients.extend(self.coefficients.iter().map(|coefficient| {
+            if stored_rational_zero(coefficient) {
+                Real::zero()
+            } else {
+                coefficient * scale
+            }
+        }));
         Self::try_new(self.dimensions.clone(), coefficients)
     }
 
@@ -137,9 +148,21 @@ impl DenseTensorPolynomial {
         if other.coefficients.len() == 1 {
             return self.scale(&other.coefficients[0]);
         }
-        let mut result = Self::zero(dimensions.clone())?;
         let target_strides = row_major_strides(&dimensions)?;
         let left_terms = embedded_nonzero_terms(self, &target_strides)?;
+        let mut result = Self::zero(dimensions)?;
+        if std::ptr::eq(self, other) {
+            for (position, (left_index, left)) in left_terms.iter().enumerate() {
+                result.coefficients[left_index.checked_add(*left_index)?] += *left * *left;
+                for (right_index, right) in &left_terms[position + 1..] {
+                    let target = left_index.checked_add(*right_index)?;
+                    let product = *left * *right;
+                    result.coefficients[target] += &product;
+                    result.coefficients[target] += product;
+                }
+            }
+            return Some(result);
+        }
         let right_terms = embedded_nonzero_terms(other, &target_strides)?;
         for (left_index, left) in left_terms {
             for (right_index, right) in &right_terms {
@@ -1003,6 +1026,12 @@ fn embedded_flat_index(
     Some(target_index)
 }
 
+fn stored_rational_zero(coefficient: &Real) -> bool {
+    coefficient
+        .exact_rational_ref()
+        .is_some_and(|value| value.is_zero())
+}
+
 /// Return stored nonzero terms embedded in a common target shape. Asking an
 /// opaque coefficient for `zero_status()` can launch unbounded refinement, so
 /// only a represented rational zero is omitted.
@@ -1010,20 +1039,15 @@ fn embedded_nonzero_terms<'a>(
     polynomial: &'a DenseTensorPolynomial,
     target_strides: &[usize],
 ) -> Option<Vec<(usize, &'a Real)>> {
-    let is_stored_zero = |coefficient: &Real| {
-        coefficient
-            .exact_rational_ref()
-            .is_some_and(|value| value.is_zero())
-    };
     let count = polynomial
         .coefficients
         .iter()
-        .filter(|coefficient| !is_stored_zero(coefficient))
+        .filter(|coefficient| !stored_rational_zero(coefficient))
         .count();
     let mut terms = Vec::new();
     terms.try_reserve_exact(count).ok()?;
     for (source_index, coefficient) in polynomial.coefficients.iter().enumerate() {
-        if !is_stored_zero(coefficient) {
+        if !stored_rational_zero(coefficient) {
             terms.push((
                 embedded_flat_index(&polynomial.dimensions, target_strides, source_index)?,
                 coefficient,
@@ -1792,6 +1816,21 @@ mod tests {
         assert_eq!(product.coefficient(&[0, 1, 0, 1, 2]), Some(&real(3)));
         let replay = product.add(&product.scale(&real(-1)).unwrap()).unwrap();
         assert!(replay.coefficients().iter().all(Real::definitely_zero));
+    }
+
+    #[test]
+    fn dense_tensor_square_accumulates_symmetric_terms_once() {
+        let polynomial = DenseTensorPolynomial::try_new(
+            vec![2, 2],
+            [1_i64, 2, 3, 4].into_iter().map(real).collect(),
+        )
+        .unwrap();
+        let square = polynomial.multiply(&polynomial).unwrap();
+        assert_eq!(square.dimensions(), &[3, 3]);
+        assert_eq!(
+            square.coefficients(),
+            [1_i64, 4, 4, 6, 20, 16, 9, 24, 16].map(real).as_slice(),
+        );
     }
 
     #[test]
