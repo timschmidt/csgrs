@@ -83,25 +83,9 @@ impl ExactGpuMeshBuffers {
         approximate_gpu_mesh_f32(&self.vertices, &self.indices)
     }
 
-    /// Approximates attributes as `f32`, replacing an unrepresentable position
-    /// row or normal component with zero while still rejecting invalid indices.
-    ///
-    /// This compatibility policy matches renderers that require a total lossy
-    /// export. Exact topology is never changed; only the affected position row
-    /// or normal component receives the documented zero fallback.
-    pub fn approximate_f32_or_zero(&self) -> Result<GpuMeshBuffersF32, GpuMeshError> {
-        approximate_gpu_mesh_f32_or_zero(&self.vertices, &self.indices)
-    }
-
     /// Approximates every exact attribute as finite `f64` values.
     pub fn try_approximate_f64(&self) -> Result<GpuMeshBuffersF64, GpuMeshError> {
         approximate_gpu_mesh_f64(&self.vertices, &self.indices)
-    }
-
-    /// Approximates attributes as `f64`, replacing an unrepresentable position
-    /// row or normal component with zero while still rejecting invalid indices.
-    pub fn approximate_f64_or_zero(&self) -> Result<GpuMeshBuffersF64, GpuMeshError> {
-        approximate_gpu_mesh_f64_or_zero(&self.vertices, &self.indices)
     }
 }
 
@@ -262,21 +246,6 @@ pub fn approximate_gpu_mesh_f32(
     })
 }
 
-/// Approximates exact render rows and substitutes zero for an unrepresentable
-/// position row or normal component.
-pub fn approximate_gpu_mesh_f32_or_zero(
-    vertices: &[ExactGpuVertex],
-    indices: &[u32],
-) -> Result<GpuMeshBuffersF32, GpuMeshError> {
-    validate_indices(vertices.len(), indices)?;
-    let (positions, normals) = approximate_rows_or_zero(vertices, 0.0_f32, Real::to_f32_lossy);
-    Ok(GpuMeshBuffersF32 {
-        positions,
-        normals,
-        indices: indices.to_vec(),
-    })
-}
-
 /// Approximates exact render rows into backend-neutral binary64 GPU buffers.
 pub fn approximate_gpu_mesh_f64(
     vertices: &[ExactGpuVertex],
@@ -313,21 +282,6 @@ pub fn approximate_interleaved_gpu_mesh_f64(
     validate_indices(vertices.len(), indices)?;
     Ok(InterleavedGpuMeshBuffersF64 {
         vertices: try_approximate_interleaved_rows(vertices, Real::to_f64_lossy)?,
-        indices: indices.to_vec(),
-    })
-}
-
-/// Approximates exact render rows as binary64 values and substitutes zero for
-/// an unrepresentable position row or normal component.
-pub fn approximate_gpu_mesh_f64_or_zero(
-    vertices: &[ExactGpuVertex],
-    indices: &[u32],
-) -> Result<GpuMeshBuffersF64, GpuMeshError> {
-    validate_indices(vertices.len(), indices)?;
-    let (positions, normals) = approximate_rows_or_zero(vertices, 0.0_f64, Real::to_f64_lossy);
-    Ok(GpuMeshBuffersF64 {
-        positions,
-        normals,
         indices: indices.to_vec(),
     })
 }
@@ -372,16 +326,6 @@ impl BooleanMeshResult {
             .try_approximate_f32()
     }
 
-    /// Produces finite-`f32` GPU buffers, using zero for an unrepresentable
-    /// position row or normal component.
-    pub fn to_gpu_mesh_f32_or_zero(
-        &self,
-        vertices: &[Point3],
-    ) -> Result<GpuMeshBuffersF32, GpuMeshError> {
-        self.to_exact_gpu_mesh_buffers(vertices)?
-            .approximate_f32_or_zero()
-    }
-
     /// Produces strict finite-`f64` GPU buffers from this exact triangle soup.
     pub fn try_to_gpu_mesh_f64(
         &self,
@@ -389,16 +333,6 @@ impl BooleanMeshResult {
     ) -> Result<GpuMeshBuffersF64, GpuMeshError> {
         self.to_exact_gpu_mesh_buffers(vertices)?
             .try_approximate_f64()
-    }
-
-    /// Produces finite-`f64` GPU buffers, using zero for an unrepresentable
-    /// position row or normal component.
-    pub fn to_gpu_mesh_f64_or_zero(
-        &self,
-        vertices: &[Point3],
-    ) -> Result<GpuMeshBuffersF64, GpuMeshError> {
-        self.to_exact_gpu_mesh_buffers(vertices)?
-            .approximate_f64_or_zero()
     }
 }
 
@@ -530,26 +464,6 @@ fn try_approximate_interleaved_rows<T: Copy>(
     Ok(approximated)
 }
 
-fn approximate_rows_or_zero<T: Copy>(
-    vertices: &[ExactGpuVertex],
-    zero: T,
-    approximate: impl Fn(&Real) -> Option<T> + Copy,
-) -> (Vec<[T; 3]>, Vec<[T; 3]>) {
-    let mut positions = Vec::with_capacity(vertices.len());
-    let mut normals = Vec::with_capacity(vertices.len());
-
-    for (position, normal) in vertices {
-        positions.push(try_approximate_row(position, approximate).unwrap_or([zero; 3]));
-        normals.push(
-            normal
-                .each_ref()
-                .map(|value| approximate(value).unwrap_or(zero)),
-        );
-    }
-
-    (positions, normals)
-}
-
 fn validate_indices(vertex_count: usize, indices: &[u32]) -> Result<(), GpuMeshError> {
     if !indices.len().is_multiple_of(3) {
         return Err(GpuMeshError::IndexCountNotTriangleList {
@@ -655,7 +569,7 @@ mod tests {
     }
 
     #[test]
-    fn strict_and_zero_fallback_policies_are_explicit() {
+    fn approximation_failure_is_explicit_at_each_precision() {
         let mut huge = Real::from(2);
         for _ in 0..8 {
             huge = huge.clone() * huge;
@@ -677,11 +591,6 @@ mod tests {
                 attribute: GpuVertexAttribute::Position,
             })
         );
-        let fallback = approximate_gpu_mesh_f32_or_zero(&vertices, &indices).unwrap();
-        assert_eq!(fallback.positions[0], [0.0; 3]);
-        assert_eq!(fallback.normals[1], [0.0, 1.0, 0.0]);
-        assert_eq!(fallback.indices, indices);
-
         let binary64 = approximate_gpu_mesh_f64(&vertices, &indices).unwrap();
         assert!(binary64.positions[0][0] > f64::from(f32::MAX));
         assert_eq!(binary64.positions[0][1..], [1.0, 2.0]);
@@ -699,8 +608,6 @@ mod tests {
                 attribute: GpuVertexAttribute::Position,
             })
         );
-        let fallback64 = approximate_gpu_mesh_f64_or_zero(&binary64_overflow, &indices).unwrap();
-        assert_eq!(fallback64.positions[0], [0.0; 3]);
     }
 
     #[test]
