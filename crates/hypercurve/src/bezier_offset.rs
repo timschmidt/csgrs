@@ -14209,6 +14209,7 @@ struct BezierAnalyticParallelPointData2 {
     translation_x: Real,
     translation_y: Real,
     policy: CurveContext,
+    bounds_cache: Mutex<Option<(CurveContext, usize, Aabb2)>>,
 }
 
 #[derive(Debug, PartialEq)]
@@ -93569,6 +93570,7 @@ impl BezierAnalyticParallelPoint2 {
                 translation_x: Real::zero(),
                 translation_y: Real::zero(),
                 policy: policy.retained_object_policy(),
+                bounds_cache: Mutex::new(None),
             }),
         })
     }
@@ -93685,6 +93687,7 @@ impl BezierAnalyticParallelPoint2 {
                 translation_x: Real::zero(),
                 translation_y: Real::zero(),
                 policy: policy.retained_object_policy(),
+                bounds_cache: Mutex::new(None),
             }),
         }
     }
@@ -93704,6 +93707,7 @@ impl BezierAnalyticParallelPoint2 {
                 translation_x: Real::zero(),
                 translation_y: Real::zero(),
                 policy: policy.retained_object_policy(),
+                bounds_cache: Mutex::new(None),
             }),
         }
     }
@@ -95036,6 +95040,7 @@ impl BezierAnalyticParallelPoint2 {
                 translation_x: &self.data.translation_x + delta_x,
                 translation_y: &self.data.translation_y + delta_y,
                 policy: policy.retained_object_policy(),
+                bounds_cache: Mutex::new(None),
             }),
         })
     }
@@ -95048,7 +95053,14 @@ impl BezierAnalyticParallelPoint2 {
         if !policy.accepts_retained_policy(self.data.policy) {
             return Classification::Uncertain(UncertaintyReason::Unsupported);
         }
-        match &self.data.parameter {
+        if let Ok(cache) = self.data.bounds_cache.lock()
+            && let Some((cached_policy, cached_steps, bounds)) = cache.as_ref()
+            && cached_policy == policy
+            && *cached_steps >= refinement_steps
+        {
+            return Classification::Decided(bounds.clone());
+        }
+        let result = match &self.data.parameter {
             BezierAnalyticParallelPointParameter2::Bezier(parameter) => {
                 let parameter = parameter
                     .clone()
@@ -95106,7 +95118,18 @@ impl BezierAnalyticParallelPoint2 {
                     &self.data.translation_y,
                 )
             }
+        };
+        if let Classification::Decided(bounds) = &result
+            && let Ok(mut cache) = self.data.bounds_cache.lock()
+            && cache
+                .as_ref()
+                .is_none_or(|(cached_policy, cached_steps, _)| {
+                    cached_policy != policy || *cached_steps <= refinement_steps
+                })
+        {
+            *cache = Some((*policy, refinement_steps, bounds.clone()));
         }
+        result
     }
 
     fn axis_coordinate_order_to_real(
