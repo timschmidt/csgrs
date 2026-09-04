@@ -54934,6 +54934,37 @@ impl BezierDenseTwoSquareRootExpression2 {
         })
     }
 
+    fn polynomial_is_stored_zero(polynomial: &DenseTensorPolynomial) -> bool {
+        polynomial.coefficients().iter().all(|coefficient| {
+            coefficient
+                .exact_rational_ref()
+                .is_some_and(|value| value.is_zero())
+        })
+    }
+
+    fn is_stored_zero(&self) -> bool {
+        [&self.rational, &self.first, &self.second, &self.product]
+            .into_iter()
+            .all(Self::polynomial_is_stored_zero)
+    }
+
+    fn is_stored_one(&self) -> bool {
+        let Some((constant, remainder)) = self.rational.coefficients().split_first() else {
+            return false;
+        };
+        constant
+            .exact_rational_ref()
+            .is_some_and(|value| value.is_one())
+            && remainder.iter().all(|value| {
+                value
+                    .exact_rational_ref()
+                    .is_some_and(|value| value.is_zero())
+            })
+            && [&self.first, &self.second, &self.product]
+                .into_iter()
+                .all(Self::polynomial_is_stored_zero)
+    }
+
     fn combine(&self, other: &Self, subtract: bool) -> Option<Self> {
         let combine = |first: &DenseTensorPolynomial, second: &DenseTensorPolynomial| {
             if subtract {
@@ -56166,8 +56197,15 @@ impl BezierRecursiveQuadraticField2 {
                 })
             }
             Self::Extension(field) => {
+                let is_zero = value
+                    .exact_rational_ref()
+                    .is_some_and(|value| value.is_zero());
                 let retained = field.parent.constant(value)?;
-                let radical = field.parent.constant(Real::zero())?;
+                let radical = if is_zero {
+                    retained.clone()
+                } else {
+                    field.parent.constant(Real::zero())?
+                };
                 BezierRecursiveQuadraticValue2::from_extension(field.clone(), retained, radical)
             }
         }
@@ -56368,6 +56406,15 @@ impl BezierRecursiveQuadraticValue2 {
     }
 
     fn add(&self, other: &Self) -> Option<Self> {
+        if !self.field().same_field(&other.field()) {
+            return None;
+        }
+        if self.is_coefficientwise_stored_zero() {
+            return Some(other.clone());
+        }
+        if other.is_coefficientwise_stored_zero() {
+            return Some(self.clone());
+        }
         match (self.data.as_ref(), other.data.as_ref()) {
             (
                 BezierRecursiveQuadraticValueData2::Base { field, expression },
@@ -56399,10 +56446,28 @@ impl BezierRecursiveQuadraticValue2 {
     }
 
     fn subtract(&self, other: &Self) -> Option<Self> {
+        if !self.field().same_field(&other.field()) {
+            return None;
+        }
+        if other.is_coefficientwise_stored_zero() {
+            return Some(self.clone());
+        }
         self.add(&other.scale(&Real::from(-1_i8))?)
     }
 
     fn scale(&self, scale: &Real) -> Option<Self> {
+        if scale
+            .exact_rational_ref()
+            .is_some_and(|value| value.is_zero())
+        {
+            return self.field().constant(Real::zero());
+        }
+        if scale
+            .exact_rational_ref()
+            .is_some_and(|value| value.is_one())
+        {
+            return Some(self.clone());
+        }
         match self.data.as_ref() {
             BezierRecursiveQuadraticValueData2::Base { field, expression } => {
                 Self::from_base(field.clone(), expression.scale(scale)?)
@@ -56416,6 +56481,21 @@ impl BezierRecursiveQuadraticValue2 {
     }
 
     fn multiply(&self, other: &Self) -> Option<Self> {
+        if !self.field().same_field(&other.field()) {
+            return None;
+        }
+        if self.is_coefficientwise_stored_zero() {
+            return Some(self.clone());
+        }
+        if other.is_coefficientwise_stored_zero() {
+            return Some(other.clone());
+        }
+        if self.is_coefficientwise_stored_one() {
+            return Some(other.clone());
+        }
+        if other.is_coefficientwise_stored_one() {
+            return Some(self.clone());
+        }
         if Arc::ptr_eq(&self.data, &other.data) {
             return self.square();
         }
@@ -56481,6 +56561,9 @@ impl BezierRecursiveQuadraticValue2 {
     }
 
     fn square(&self) -> Option<Self> {
+        if self.is_coefficientwise_stored_zero() || self.is_coefficientwise_stored_one() {
+            return Some(self.clone());
+        }
         match self.data.as_ref() {
             BezierRecursiveQuadraticValueData2::Base { field, expression } => Self::from_base(
                 field.clone(),
@@ -56533,25 +56616,27 @@ impl BezierRecursiveQuadraticValue2 {
     /// field sign authority below.
     fn is_coefficientwise_stored_zero(&self) -> bool {
         match self.data.as_ref() {
-            BezierRecursiveQuadraticValueData2::Base { expression, .. } => [
-                &expression.rational,
-                &expression.first,
-                &expression.second,
-                &expression.product,
-            ]
-            .into_iter()
-            .all(|polynomial| {
-                polynomial.coefficients().iter().all(|coefficient| {
-                    coefficient
-                        .exact_rational_ref()
-                        .is_some_and(|value| value.is_zero())
-                })
-            }),
+            BezierRecursiveQuadraticValueData2::Base { expression, .. } => {
+                expression.is_stored_zero()
+            }
             BezierRecursiveQuadraticValueData2::Extension {
                 retained, radical, ..
             } => {
                 retained.is_coefficientwise_stored_zero()
                     && radical.is_coefficientwise_stored_zero()
+            }
+        }
+    }
+
+    fn is_coefficientwise_stored_one(&self) -> bool {
+        match self.data.as_ref() {
+            BezierRecursiveQuadraticValueData2::Base { expression, .. } => {
+                expression.is_stored_one()
+            }
+            BezierRecursiveQuadraticValueData2::Extension {
+                retained, radical, ..
+            } => {
+                retained.is_coefficientwise_stored_one() && radical.is_coefficientwise_stored_zero()
             }
         }
     }
@@ -146197,6 +146282,37 @@ mod conversion_tests {
         assert_eq!(square.first, general.first);
         assert_eq!(square.second, general.second);
         assert_eq!(square.product, general.product);
+    }
+
+    #[test]
+    fn recursive_field_shares_zero_towers_and_folds_identities() {
+        let scalar =
+            |value| DenseTensorPolynomial::try_new(Vec::new(), vec![Real::from(value)]).unwrap();
+        let base = BezierRecursiveQuadraticField2::base(Vec::new(), scalar(2), scalar(3)).unwrap();
+        let extension = base
+            .extension(base.constant(Real::from(5_i8)).unwrap())
+            .unwrap();
+        let zero = extension.constant(Real::zero()).unwrap();
+        let BezierRecursiveQuadraticValueData2::Extension {
+            retained, radical, ..
+        } = zero.data.as_ref()
+        else {
+            panic!("the extended-field zero must retain its tower")
+        };
+        assert!(Arc::ptr_eq(&retained.data, &radical.data));
+
+        let one = extension.constant(Real::one()).unwrap();
+        let value = extension.constant(Real::from(7_i8)).unwrap();
+        assert!(Arc::ptr_eq(&zero.add(&value).unwrap().data, &value.data));
+        assert!(Arc::ptr_eq(
+            &zero.multiply(&value).unwrap().data,
+            &zero.data
+        ));
+        assert!(Arc::ptr_eq(
+            &one.multiply(&value).unwrap().data,
+            &value.data
+        ));
+        assert!(Arc::ptr_eq(&one.square().unwrap().data, &one.data));
     }
 
     #[test]
