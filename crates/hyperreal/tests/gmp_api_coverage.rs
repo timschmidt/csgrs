@@ -89,6 +89,9 @@ const NO_GMP_ANALOG: &[&str] = &[
     "structural_facts",
     "zero_one_or_minus_one",
     "zero_or_one",
+    // Total multivalued floor-or-ceiling choice; MPFR exposes directional or
+    // nearest rounding, not this constructive relation.
+    "near_integer",
     // Certified domain/evidence queries. MPFR reports a value or NaN but does
     // not expose Hyperreal's proof state, precision schedule, or refinement API.
     "acosh_domain",

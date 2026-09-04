@@ -11,6 +11,8 @@ use std::sync::{
     atomic::{AtomicBool, Ordering as AtomicOrdering},
 };
 
+#[cfg(feature = "serde")]
+use hyperreal::ZeroKnowledge;
 use hyperreal::{
     CertifiedRealEquality, CertifiedRealOrdering, CertifiedRealSign, PrimitiveFloatStatus,
     Rational, RationalStorageClass, Real, RealSign, StructuralKind,
@@ -905,7 +907,15 @@ fn exhaustive_computable_nodes() -> Vec<(&'static str, hyperreal::Computable)> {
         ),
         (
             "NthRoot",
-            computable_from_internal(serde_json::json!({ "NthRoot": [child, 3] })),
+            computable_from_internal(serde_json::json!({ "NthRoot": [child.clone(), 3] })),
+        ),
+        (
+            "SincSmall",
+            computable_from_internal(serde_json::json!({ "SincSmall": child.clone() })),
+        ),
+        (
+            "CoscSmall",
+            computable_from_internal(serde_json::json!({ "CoscSmall": child })),
         ),
     ]
 }
@@ -968,7 +978,7 @@ fn every_private_class_survives_json_and_cbor_without_cache_state() {
 fn every_computable_node_and_shared_constant_variant_round_trips_and_evaluates() {
     use hyperreal::Computable;
 
-    const NODE_NAMES: [&str; 58] = [
+    const NODE_NAMES: [&str; 60] = [
         "Int",
         "One",
         "Constant",
@@ -1027,6 +1037,8 @@ fn every_computable_node_and_shared_constant_variant_round_trips_and_evaluates()
         "LogDnorm",
         "NormalQuantile",
         "NthRoot",
+        "SincSmall",
+        "CoscSmall",
     ];
     const SHARED_CONSTANT_NAMES: [&str; 18] = [
         "E",
@@ -1068,6 +1080,9 @@ fn every_computable_node_and_shared_constant_variant_round_trips_and_evaluates()
         let restored: Computable = serde_json::from_value(serialized_computable(&value)).unwrap();
         assert_eq!(restored.approx(-24), value.approx(-24), "{expected_name}");
         assert_eq!(restored.approx(-48), value.approx(-48), "{expected_name}");
+        if matches!(expected_name, "SincSmall" | "CoscSmall") {
+            assert_eq!(restored.zero_status(), ZeroKnowledge::NonZero);
+        }
 
         let carrier = opaque_real_from_computable(&restored);
         assert_eq!(

@@ -48,7 +48,10 @@ impl Node {
             | Approximation::AcosPositive(_)
             | Approximation::AcosPositiveRational(_)
             | Approximation::AcosNegativeRational(_) => true,
-            Approximation::Negate(child) | Approximation::Offset(child, _) => {
+            Approximation::Negate(child)
+            | Approximation::Offset(child, _)
+            | Approximation::SincSmall(child)
+            | Approximation::CoscSmall(child) => {
                 child.internal.contains_inverse_trig_or_pi()
             }
             Approximation::Add(left, right) | Approximation::Multiply(left, right) => {

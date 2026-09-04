@@ -525,6 +525,18 @@ const LIBRARY_PERF_GROUPS: &[BenchGroupDoc] = &[
                 description: "Routes a negative rational base through odd-root symmetry.",
             },
             BenchDoc {
+                name: "near_integer_rational",
+                description: "Chooses one adjacent integer from an exact rational without refinement.",
+            },
+            BenchDoc {
+                name: "near_integer_sqrt2",
+                description: "Chooses one adjacent integer from a cold irrational expression with one bounded approximation.",
+            },
+            BenchDoc {
+                name: "floor_certified_sqrt2",
+                description: "Certifies the directional floor of the same cold irrational expression.",
+            },
+            BenchDoc {
                 name: "floor_certified_rational",
                 description: "Certifies rational floor structurally.",
             },
@@ -569,6 +581,18 @@ const LIBRARY_PERF_GROUPS: &[BenchGroupDoc] = &[
             BenchDoc {
                 name: "cosc_tiny",
                 description: "Builds the small-angle (1 - cos x) / x^2 helper.",
+            },
+            BenchDoc {
+                name: "sinc_opaque_zero",
+                description: "Continues sinc across a freshly built opaque trigonometric zero.",
+            },
+            BenchDoc {
+                name: "sinc_pi_opaque_zero",
+                description: "Continues normalized sinc across a freshly built opaque trigonometric zero.",
+            },
+            BenchDoc {
+                name: "cosc_opaque_zero",
+                description: "Continues cosc across a freshly built opaque trigonometric zero.",
             },
             BenchDoc {
                 name: "atan2_axis",
@@ -1674,6 +1698,27 @@ fn bench_real_stable_scalar_substrate(c: &mut Criterion) {
             BatchSize::SmallInput,
         )
     });
+    group.bench_function("near_integer_rational", |b| {
+        b.iter_batched(
+            || rational_floor.clone(),
+            |value| black_box(value.near_integer()),
+            BatchSize::SmallInput,
+        )
+    });
+    group.bench_function("near_integer_sqrt2", |b| {
+        b.iter_batched(
+            || Real::from(2_i32).sqrt().unwrap(),
+            |value| black_box(value.near_integer()),
+            BatchSize::SmallInput,
+        )
+    });
+    group.bench_function("floor_certified_sqrt2", |b| {
+        b.iter_batched(
+            || Real::from(2_i32).sqrt().unwrap(),
+            |value| black_box(value.floor_certified().unwrap()),
+            BatchSize::SmallInput,
+        )
+    });
     group.bench_function("rem_euclid_certified_rational", |b| {
         b.iter_batched(
             || (rational_rem.clone(), modulus.clone()),
@@ -1762,6 +1807,42 @@ fn bench_real_geometry_polynomial_substrate(c: &mut Criterion) {
     group.bench_function("cosc_tiny", |b| {
         b.iter_batched(
             || tiny.clone(),
+            |value| black_box(value.cosc().unwrap()),
+            BatchSize::SmallInput,
+        )
+    });
+    group.bench_function("sinc_opaque_zero", |b| {
+        b.iter_batched(
+            || {
+                let angle = Real::e();
+                let sine = angle.clone().sin();
+                let cosine = angle.cos();
+                sine.clone() * sine + cosine.clone() * cosine - Real::one()
+            },
+            |value| black_box(value.sinc().unwrap()),
+            BatchSize::SmallInput,
+        )
+    });
+    group.bench_function("sinc_pi_opaque_zero", |b| {
+        b.iter_batched(
+            || {
+                let angle = Real::e();
+                let sine = angle.clone().sin();
+                let cosine = angle.cos();
+                sine.clone() * sine + cosine.clone() * cosine - Real::one()
+            },
+            |value| black_box(value.sinc_pi().unwrap()),
+            BatchSize::SmallInput,
+        )
+    });
+    group.bench_function("cosc_opaque_zero", |b| {
+        b.iter_batched(
+            || {
+                let angle = Real::e();
+                let sine = angle.clone().sin();
+                let cosine = angle.cos();
+                sine.clone() * sine + cosine.clone() * cosine - Real::one()
+            },
             |value| black_box(value.cosc().unwrap()),
             BatchSize::SmallInput,
         )

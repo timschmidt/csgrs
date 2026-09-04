@@ -210,6 +210,10 @@ impl Computable {
                         && left.seed_prec == right.seed_prec
                         && Computable::internal_structural_eq(&left.p, &right.p)
                 }
+                (Approximation::SincSmall(left), Approximation::SincSmall(right))
+                | (Approximation::CoscSmall(left), Approximation::CoscSmall(right)) => {
+                    Computable::internal_structural_eq(left, right)
+                }
                 _ => false,
             }
         }
@@ -418,6 +422,46 @@ impl Computable {
             internal: Arc::new(Node::new(Approximation::PrescaledCos(value), BoundCache::Invalid, ExactSignCache::Invalid)),
             signal: None,
         }
+    }
+
+    fn has_certified_small_angle(&self) -> bool {
+        // approx(-2) differs from 4*x by at most one. Therefore |a| <= 2
+        // certifies |x| <= 3/4. Use an explicit un-aborted evaluation because
+        // this result authorizes a kernel precondition rather than merely
+        // choosing an optional optimization.
+        self.approx_signal(&None, -2).magnitude() <= signed::TWO.magnitude()
+    }
+
+    pub(crate) fn sinc_small_if_certified(self) -> Option<Computable> {
+        if !self.has_certified_small_angle() {
+            return None;
+        }
+        let signal = self.signal.clone();
+        crate::trace_dispatch!("computable", "constructor", "certified-small-sinc");
+        Some(Self {
+            internal: Arc::new(Node::new(
+                Approximation::SincSmall(self),
+                BoundCache::Invalid,
+                ExactSignCache::Valid(Sign::Plus),
+            )),
+            signal,
+        })
+    }
+
+    pub(crate) fn cosc_small_if_certified(self) -> Option<Computable> {
+        if !self.has_certified_small_angle() {
+            return None;
+        }
+        let signal = self.signal.clone();
+        crate::trace_dispatch!("computable", "constructor", "certified-small-cosc");
+        Some(Self {
+            internal: Arc::new(Node::new(
+                Approximation::CoscSmall(self),
+                BoundCache::Invalid,
+                ExactSignCache::Valid(Sign::Plus),
+            )),
+            signal,
+        })
     }
 
     fn prescaled_cos_rational(rational: Rational) -> Computable {

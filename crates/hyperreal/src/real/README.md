@@ -73,9 +73,10 @@ shape unless benchmarks show no cost.
   products. `cot`/`cot_pi` report certified integer-pi poles as
   `Problem::NotANumber` and preserve bounded `UnknownZero` uncertainty for an
   opaque sine denominator.
-- `sinc`, `sinc_pi`, and `cosc` preserve removable small-angle limits at zero
-  instead of requiring users to spell them as division-heavy generic
-  arithmetic.
+- `sinc`, `sinc_pi`, and `cosc` preserve removable small-angle limits even when
+  an argument is only computably, not structurally, zero. A coarse certified
+  enclosure admits a direct analytic series; known rational and symbolic
+  inputs keep their existing exact quotient paths.
 - `sqrt1pm1`, `sqrt1m1`, and `hypot_minus` preserve common square-root
   cancellation patterns used by offsets, normalized vectors, and curvature
   calculations.
@@ -99,10 +100,11 @@ shape unless benchmarks show no cost.
   degrees retain the general rational-exponent form, and negative odd roots are
   handled by symmetry. Explicit roots let bounded sign refinement certify
   supported radical identities as exact zero rather than diverging on equality.
-- `floor_certified`, `ceil_certified`, `round_certified`, `trunc_certified`,
-  `fract_certified`, and `rem_euclid_certified` expose discontinuous integer
-  decisions only when exact rational shortcuts or bounded exact-real comparison
-  can certify the relevant boundary.
+- `near_integer` always returns either floor or ceiling without deciding an
+  integer boundary. `floor_certified`, `ceil_certified`, `round_certified`,
+  `trunc_certified`, `fract_certified`, and `rem_euclid_certified` expose
+  directional discontinuous decisions only when exact rational shortcuts or
+  bounded exact-real comparison can certify the relevant boundary.
 - `erf`, `erfc`, `erfcx`, `dnorm`, `pnorm`, `normal_sf`, `pnorm_upper`,
   `normal_interval`, `pnorm_diff`, `log_pnorm`, `log_normal_sf`, `log_dnorm`,
   `erfinv`, `erfcinv`, `qnorm`, and `qnorm_upper` expose computable Gaussian

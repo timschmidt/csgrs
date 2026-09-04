@@ -13,6 +13,7 @@ mod tests {
         RealSignCertificate, RealStructuralFacts, StructuralComparison, StructuralKind,
         SymbolicDependencyMask, ZeroKnowledge, ZeroOneMinusOneStatus,
     };
+    use num::Signed;
 
     fn rational_linear_form4_filter_matches_exact_sum(
         coefficients: [Rational; 4],
@@ -868,6 +869,75 @@ mod tests {
                 .unwrap()
                 .definitely_zero()
         );
+
+        // This identity is mathematically zero but deliberately remains an
+        // opaque computable graph: resolving its sign by bounded refinement is
+        // impossible. The analytic small-angle nodes must remove the three
+        // singularities without misclassifying that uncertainty as exact zero.
+        let angle = Real::e();
+        let sine = angle.clone().sin();
+        let cosine = angle.cos();
+        let opaque_zero = sine.clone() * sine + cosine.clone() * cosine - Real::one();
+        assert_eq!(opaque_zero.zero_status(), ZeroKnowledge::Unknown);
+
+        let sinc = opaque_zero.clone().sinc().expect("opaque-zero sinc");
+        let sinc_pi = opaque_zero
+            .clone()
+            .sinc_pi()
+            .expect("opaque-zero normalized sinc");
+        let cosc = opaque_zero.cosc().expect("opaque-zero cosc");
+        assert_eq!(sinc.zero_status(), ZeroKnowledge::NonZero);
+        assert_eq!(sinc_pi.zero_status(), ZeroKnowledge::NonZero);
+        assert_eq!(cosc.zero_status(), ZeroKnowledge::NonZero);
+
+        for precision in [-16, -64, -256, -1_024] {
+            let expected_one = Real::one().fold_ref().approx(precision);
+            let expected_half = Real::new(Rational::fraction(1, 2).unwrap())
+                .fold_ref()
+                .approx(precision);
+            assert!(
+                (sinc.fold_ref().approx(precision) - &expected_one).abs() <= num::BigInt::from(1),
+                "opaque-zero sinc missed its limit at {precision}"
+            );
+            assert!(
+                (sinc_pi.fold_ref().approx(precision) - &expected_one).abs()
+                    <= num::BigInt::from(1),
+                "opaque-zero sinc_pi missed its limit at {precision}"
+            );
+            assert!(
+                (cosc.fold_ref().approx(precision) - &expected_half).abs() <= num::BigInt::from(1),
+                "opaque-zero cosc missed its limit at {precision}"
+            );
+        }
+        assert_eq!(format!("{sinc:#.12}"), "1.000000000000");
+        assert_eq!(format!("{sinc_pi:#.12}"), "1.000000000000");
+        assert_eq!(format!("{cosc:#.12}"), "0.500000000000");
+
+        use std::sync::{Arc, atomic::AtomicBool};
+        let signal = Arc::new(AtomicBool::new(false));
+        let mut signaled = {
+            let angle = Real::e();
+            let sine = angle.clone().sin();
+            let cosine = angle.cos();
+            sine.clone() * sine + cosine.clone() * cosine - Real::one()
+        };
+        signaled.abort(Arc::clone(&signal));
+        let continued = signaled.sinc().expect("untriggered signal permits sinc");
+        assert!(
+            continued
+                .abort_signal()
+                .is_some_and(|attached| Arc::ptr_eq(attached, &signal))
+        );
+
+        signal.store(true, std::sync::atomic::Ordering::Relaxed);
+        let mut pre_aborted = {
+            let angle = Real::e();
+            let sine = angle.clone().sin();
+            let cosine = angle.cos();
+            sine.clone() * sine + cosine.clone() * cosine - Real::one()
+        };
+        pre_aborted.abort(signal);
+        assert_eq!(pre_aborted.sinc(), Err(Problem::UnknownZero));
     }
 
     #[test]

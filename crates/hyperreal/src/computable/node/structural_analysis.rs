@@ -845,7 +845,9 @@ impl Computable {
             Approximation::PrescaledSinRational(r) | Approximation::PrescaledTanRational(r) => {
                 Some(BoundInfo::with_sign_msd(r.sign(), None, false))
             }
-            Approximation::PrescaledCosRational(_) => {
+            Approximation::PrescaledCosRational(_)
+            | Approximation::SincSmall(_)
+            | Approximation::CoscSmall(_) => {
                 Some(BoundInfo::with_sign_msd(Sign::Plus, None, false))
             }
             Approximation::PrescaledCosHalfPiMinusRational(_)
@@ -940,7 +942,9 @@ impl Computable {
                 Approximation::PrescaledSinRational(r) | Approximation::PrescaledTanRational(r) => {
                     Some(BoundInfo::with_sign_msd(r.sign(), None, false))
                 }
-                Approximation::PrescaledCosRational(_) => {
+                Approximation::PrescaledCosRational(_)
+                | Approximation::SincSmall(_)
+                | Approximation::CoscSmall(_) => {
                     Some(BoundInfo::with_sign_msd(Sign::Plus, None, false))
                 }
                 Approximation::PrescaledCosHalfPiMinusRational(_)
@@ -1238,7 +1242,9 @@ impl Computable {
                 Approximation::PrescaledSinRational(r) | Approximation::PrescaledTanRational(r) => {
                     Some(Some(r.sign()))
                 }
-                Approximation::PrescaledCosRational(_) => Some(Some(Sign::Plus)),
+                Approximation::PrescaledCosRational(_)
+                | Approximation::SincSmall(_)
+                | Approximation::CoscSmall(_) => Some(Some(Sign::Plus)),
                 Approximation::PrescaledCosHalfPiMinusRational(_)
                 | Approximation::PrescaledSinHalfPiMinusRational(_)
                 | Approximation::PrescaledCotHalfPiMinusRational(_) => Some(Some(Sign::Plus)),

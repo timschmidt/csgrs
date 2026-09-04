@@ -131,7 +131,7 @@ the input as a decimal measurement.
 | Lift an exact value | `Real::new`, integer and finite-float `From`/`TryFrom` implementations |
 | Aggregate | owned or borrowed `Iterator::product::<Real>()`, `sum_owned`, `sum_refs`, `mean`, `sample_stddev`, `min`, `max` |
 | Common transforms | `abs`, `inverse`, `inverse_ref`, `to_radians`, `to_degrees` |
-| Certified integer operations | `floor_certified`, `ceil_certified`, `round_certified`, `trunc_certified`, `fract_certified`, `rem_euclid_certified` |
+| Integer operations | total `near_integer`; certified directional `floor_certified`, `ceil_certified`, `round_certified`, `trunc_certified`, `fract_certified`, `rem_euclid_certified` |
 
 `Real` implements arithmetic operators while retaining recognized exact,
 symbolic, and computable forms. `PartialEq` is structural and is deliberately

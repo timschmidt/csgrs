@@ -2806,6 +2806,14 @@ impl Real {
             return Ok(Self::one());
         }
 
+        if !self.is_aborted()
+            && self.zero_status() == ZeroKnowledge::Unknown
+            && let Some(value) = self.fold_ref().sinc_small_if_certified()
+        {
+            crate::trace_dispatch!("real", "sinc", "opaque-small-angle-series");
+            return Ok(Self::irrational_from_computable(value));
+        }
+
         crate::trace_dispatch!("real", "sinc", "sin-over-x");
         self.clone().sin() / self
     }
@@ -2815,6 +2823,14 @@ impl Real {
         if self.definitely_zero() {
             crate::trace_dispatch!("real", "sinc_pi", "exact-zero-one");
             return Ok(Self::one());
+        }
+
+        if !self.is_aborted() && self.zero_status() == ZeroKnowledge::Unknown {
+            let angle = self.fold_ref().multiply(Computable::pi());
+            if let Some(value) = angle.sinc_small_if_certified() {
+                crate::trace_dispatch!("real", "sinc_pi", "opaque-small-angle-series");
+                return Ok(Self::irrational_from_computable(value));
+            }
         }
 
         crate::trace_dispatch!("real", "sinc_pi", "sinpi-over-pi-x");
@@ -2827,6 +2843,14 @@ impl Real {
         if self.definitely_zero() {
             crate::trace_dispatch!("real", "cosc", "exact-zero-half");
             return Ok(constants::half());
+        }
+
+        if !self.is_aborted()
+            && self.zero_status() == ZeroKnowledge::Unknown
+            && let Some(value) = self.fold_ref().cosc_small_if_certified()
+        {
+            crate::trace_dispatch!("real", "cosc", "opaque-small-angle-series");
+            return Ok(Self::irrational_from_computable(value));
         }
 
         crate::trace_dispatch!("real", "cosc", "one-minus-cos-over-square");

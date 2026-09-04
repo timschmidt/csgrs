@@ -319,6 +319,22 @@ impl Real {
         upper_ok.then(|| candidate.clone())
     }
 
+    /// Return either the floor or the ceiling of this value.
+    ///
+    /// This is a total multivalued alternative to the directional certified
+    /// rounding methods: it never has to decide whether a non-rational value is
+    /// exactly on an integer boundary. The particular adjacent integer is
+    /// deliberately unspecified and need not be the nearest integer.
+    pub fn near_integer(&self) -> BigInt {
+        if let Some(rational) = self.exact_rational_ref() {
+            crate::trace_dispatch!("real", "integer-rounding", "near-integer-exact-rational");
+            return Self::exact_rational_floor(rational);
+        }
+
+        crate::trace_dispatch!("real", "integer-rounding", "near-integer-computable");
+        self.fold_ref().near_integer()
+    }
+
     /// Certified floor as an integer.
     ///
     /// Returns [`Problem::Exhausted`] when bounded exact-real refinement cannot

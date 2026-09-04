@@ -190,6 +190,12 @@ pub(super) enum Approximation {
         )]
         u32,
     ),
+    // Removable small-angle quotients. Their private constructors admit only
+    // arguments with a certified |x| <= 3/4, so these nodes can evaluate the
+    // analytic continuations directly without deciding whether x is zero.
+    // Keep new variants after NthRoot to preserve every existing binary index.
+    SincSmall(Computable),
+    CoscSmall(Computable),
 }
 
 #[cfg(feature = "serde")]

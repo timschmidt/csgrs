@@ -1,4 +1,4 @@
-use hyperreal::{Problem, Rational, Real};
+use hyperreal::{Computable, Problem, Rational, Real};
 use num::BigInt;
 
 fn r(numerator: i64, denominator: u64) -> Real {
@@ -27,6 +27,58 @@ fn certified_integer_operations_cover_signs_and_half_ties() {
         assert_eq!(value.round_certified().unwrap(), BigInt::from(round));
         assert_eq!(value.fract_certified().unwrap(), value - Real::from(trunc),);
     }
+}
+
+#[test]
+fn near_integer_is_a_total_adjacent_integer_choice() {
+    for denominator in 1_i64..=32 {
+        for numerator in -128_i64..=128 {
+            let exact = Rational::fraction(numerator, denominator as u64).unwrap();
+            let value = Real::new(exact.clone());
+            let choice = value.near_integer();
+            let computable_choice = Computable::rational(exact).near_integer();
+            let floor = numerator.div_euclid(denominator);
+            let ceil = -(-numerator).div_euclid(denominator);
+            assert!(
+                choice == BigInt::from(floor) || choice == BigInt::from(ceil),
+                "near_integer({numerator}/{denominator}) returned {choice}"
+            );
+            assert!(
+                computable_choice == BigInt::from(floor) || computable_choice == BigInt::from(ceil),
+                "Computable::near_integer({numerator}/{denominator}) returned {computable_choice}"
+            );
+        }
+    }
+
+    for (value, floor, ceil) in [
+        (Real::pi(), 3_i64, 4_i64),
+        (-Real::pi(), -4, -3),
+        (Real::from(2_i32).sqrt().unwrap(), 1, 2),
+        (Real::from(2_i32).sqrt().unwrap().exp().unwrap(), 4, 5),
+    ] {
+        let choice = value.near_integer();
+        assert!(choice == BigInt::from(floor) || choice == BigInt::from(ceil));
+    }
+
+    let huge = BigInt::from(1_u8) << 4_096_usize;
+    let shifted = Real::integer(huge.clone()) + Real::pi();
+    let cold = shifted.near_integer();
+    assert!(cold == &huge + 3_u8 || cold == &huge + 4_u8);
+
+    // A finer query may change which permitted adjacent integer a cache yields,
+    // but it cannot make the multivalued result leave the certified pair.
+    let warmed = Real::integer(huge.clone()) + Real::pi();
+    let _ = warmed.to_string();
+    let warm_choice = warmed.near_integer();
+    assert!(warm_choice == &huge + 3_u8 || warm_choice == huge + 4_u8);
+
+    let angle = Real::from(2_i32).sqrt().unwrap();
+    let sine = angle.clone().sin();
+    let cosine = angle.cos();
+    let trig_identity = &sine * &sine + &cosine * &cosine;
+    // This exact integer boundary needs no equality decision: either adjacent
+    // choice is necessarily the integer itself.
+    assert_eq!(trig_identity.near_integer(), BigInt::from(1_u8));
 }
 
 #[test]

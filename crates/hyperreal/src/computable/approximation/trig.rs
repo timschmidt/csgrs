@@ -50,6 +50,81 @@ fn cos(signal: &Option<Signal>, c: &Computable, p: Precision) -> BigInt {
     scale(current_sum, calc_precision - p)
 }
 
+// Evaluate the analytic continuations
+//
+//   sin(x) / x             = sum (-1)^k x^(2k) / (2k + 1)!
+//   (1 - cos(x)) / x^2     = sum (-1)^k x^(2k) / (2k + 2)!
+//
+// for a constructor-certified |x| <= 3/4. On this interval the alternating
+// terms decrease from the outset, so the first omitted term bounds the tail.
+// The integral forms
+//
+//   sinc(x) = integral_0^1 cos(tx) dt
+//   cosc(x) = integral_0^1 (1-t) cos(tx) dt
+//
+// bound the absolute derivatives by |x|/3 <= 1/4 and |x|/12 <= 1/16.
+// Requesting x at p-2 therefore spends at most 1/4 output ulp on argument
+// error. The remaining guard budget matches the established sin/cos kernels:
+// at most 1/16 ulp each for fixed-point arithmetic and the omitted tail, plus
+// the final 1/2-ulp scale operation, keeping the total strictly below one ulp.
+fn small_angle_quotient(
+    signal: &Option<Signal>,
+    c: &Computable,
+    p: Precision,
+    first_denominator: i32,
+) -> BigInt {
+    debug_assert!(first_denominator == 1 || first_denominator == 2);
+
+    if first_denominator == 1 && p >= 0 {
+        return signed::ONE.deref().clone();
+    }
+    if first_denominator == 2 && p >= 0 {
+        return BigInt::zero();
+    }
+    if should_stop(signal) {
+        return if first_denominator == 1 {
+            signed::ONE.deref().clone()
+        } else {
+            BigInt::zero()
+        };
+    }
+
+    let iterations_needed = -p / 2 + 4;
+    let calc_precision = p - bound_log2(2 * iterations_needed) - 4;
+    let op_prec = p - 2;
+    let op_appr = c.approx_signal(signal, op_prec);
+    let op_squared = scale(&op_appr * &op_appr, op_prec);
+    let max_trunc_error = BigUint::one()
+        << usize::try_from(p - 4 - calc_precision).expect("truncation shift is nonnegative");
+
+    let mut n = first_denominator;
+    let mut current_term = signed::ONE.deref() << (-calc_precision);
+    if first_denominator == 2 {
+        current_term >>= 1;
+    }
+    let mut current_sum = current_term.clone();
+
+    while current_term.magnitude() > &max_trunc_error {
+        if should_stop(signal) {
+            break;
+        }
+        n += 2;
+        current_term = scale(current_term * &op_squared, op_prec);
+        current_term /= -(n * (n - 1));
+        current_sum += &current_term;
+    }
+
+    scale(current_sum, calc_precision - p)
+}
+
+fn sinc_small(signal: &Option<Signal>, c: &Computable, p: Precision) -> BigInt {
+    small_angle_quotient(signal, c, p, 1)
+}
+
+fn cosc_small(signal: &Option<Signal>, c: &Computable, p: Precision) -> BigInt {
+    small_angle_quotient(signal, c, p, 2)
+}
+
 // Compute cosine of an exact rational |r| < 1 without allocating a temporary
 // Ratio node. This preserves the same Taylor algorithm as `cos` while keeping
 // the stored rational symbolic until the final requested precision. 2026-05

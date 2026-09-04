@@ -111,7 +111,7 @@ Low-level approximation kernels and deep expression-tree stress cases.
 | --- | ---: | ---: | --- |
 | `computable_transcendentals/e_constant_cold_p128` | not run | not run | Approximates the shared e constant from a fresh clone. |
 | `computable_transcendentals/e_constant_cached_p128` | not run | not run | Repeats a cached approximation of e. |
-| `computable_transcendentals/exp_cold_p128` | not run | not run | Approximates exp(7/5) from a fresh clone. |
+| `computable_transcendentals/exp_cold_p128` | 3.826 us | 3.789 us - 3.875 us | Approximates exp(7/5) from a fresh clone. |
 | `computable_transcendentals/exp_cached_p128` | not run | not run | Repeats a cached exp(7/5) approximation. |
 | `computable_transcendentals/exp_large_cold_p128` | not run | not run | Approximates exp(128), exercising the bounded exact-integer power path. |
 | `computable_transcendentals/exp_negative_integer_cold_p128` | not run | not run | Approximates exp(-32), retaining signed ln(2) range reduction. |
@@ -131,11 +131,11 @@ Low-level approximation kernels and deep expression-tree stress cases.
 | `computable_transcendentals/ln_near_limit_cold_p128` | not run | not run | Approximates ln near the prescaled-ln limit. |
 | `computable_transcendentals/ln_near_limit_cached_p128` | not run | not run | Repeats a cached near-limit ln approximation. |
 | `computable_transcendentals/ln_one_cold_p128` | not run | not run | Approximates ln(1). |
-| `computable_transcendentals/sqrt_cold_p128` | not run | not run | Approximates sqrt(2). |
+| `computable_transcendentals/sqrt_cold_p128` | 646.47 ns | 637.05 ns - 658.30 ns | Approximates sqrt(2). |
 | `computable_transcendentals/sqrt_squarefree_scaled_cold_p128` | not run | not run | Approximates sqrt(12), which can reduce to 2*sqrt(3). |
 | `computable_transcendentals/sqrt_cached_p128` | not run | not run | Repeats a cached sqrt(2) approximation. |
 | `computable_transcendentals/sqrt_single_scaled_square_cold_p128` | not run | not run | Builds and approximates sqrt((7*pi/8)^2). |
-| `computable_transcendentals/sin_cold_p96` | not run | not run | Approximates sin(7/5). |
+| `computable_transcendentals/sin_cold_p96` | 1.593 us | 1.576 us - 1.614 us | Approximates sin(7/5). |
 | `computable_transcendentals/sin_cached_p96` | not run | not run | Repeats a cached sin(7/5) approximation. |
 | `computable_transcendentals/cos_cold_p96` | not run | not run | Approximates cos(7/5). |
 | `computable_transcendentals/sin_f64_cold_p96` | not run | not run | Approximates sin of the exact binary64-derived dyadic for 1.23456789. |
@@ -155,25 +155,25 @@ Low-level approximation kernels and deep expression-tree stress cases.
 | `computable_transcendentals/sin_huge_cold_p96` | not run | not run | Approximates sine of a huge pi multiple plus offset. |
 | `computable_transcendentals/cos_huge_cold_p96` | not run | not run | Approximates cosine of a huge pi multiple plus offset. |
 | `computable_transcendentals/tan_huge_cold_p96` | not run | not run | Approximates tangent of a huge pi multiple plus offset. |
-| `computable_transcendentals/asin_cold_p96` | not run | not run | Approximates a computable asin expression. |
+| `computable_transcendentals/asin_cold_p96` | 6.449 us | 6.403 us - 6.498 us | Approximates a computable asin expression. |
 | `computable_transcendentals/asin_cached_p96` | not run | not run | Repeats a cached computable asin approximation. |
-| `computable_transcendentals/acos_cold_p96` | not run | not run | Approximates a computable acos expression. |
+| `computable_transcendentals/acos_cold_p96` | 5.831 us | 5.813 us - 5.851 us | Approximates a computable acos expression. |
 | `computable_transcendentals/acos_cached_p96` | not run | not run | Repeats a cached computable acos approximation. |
 | `computable_transcendentals/asin_tiny_cold_p96` | not run | not run | Approximates asin(1e-12), exercising the tiny-input series. |
 | `computable_transcendentals/acos_tiny_cold_p96` | not run | not run | Approximates acos(1e-12), exercising the tiny-input complement. |
 | `computable_transcendentals/asin_near_one_cold_p96` | not run | not run | Approximates asin(0.999999), exercising the endpoint complement. |
 | `computable_transcendentals/acos_near_one_cold_p96` | not run | not run | Approximates acos(0.999999), exercising the endpoint transform. |
-| `computable_transcendentals/atan_cold_p96` | not run | not run | Approximates atan(7/10). |
+| `computable_transcendentals/atan_cold_p96` | 2.012 us | 2.000 us - 2.025 us | Approximates atan(7/10). |
 | `computable_transcendentals/atan_cached_p96` | not run | not run | Repeats a cached atan(7/10) approximation. |
 | `computable_transcendentals/atan_large_cold_p96` | not run | not run | Approximates atan(8), exercising argument reduction. |
 | `computable_transcendentals/asin_zero_cold_p96` | not run | not run | Approximates asin(0) expression. |
 | `computable_transcendentals/atan_zero_cold_p96` | not run | not run | Approximates atan(0). |
-| `computable_transcendentals/asinh_cold_p128` | not run | not run | Approximates a computable asinh expression. |
+| `computable_transcendentals/asinh_cold_p128` | 6.665 us | 6.596 us - 6.743 us | Approximates a computable asinh expression. |
 | `computable_transcendentals/asinh_three_quarters_cold_p128` | not run | not run | Approximates asinh(3/4) across the series/ln1p crossover. |
 | `computable_transcendentals/asinh_cached_p128` | not run | not run | Repeats a cached computable asinh approximation. |
 | `computable_transcendentals/acosh_cold_p128` | not run | not run | Approximates a computable acosh expression. |
 | `computable_transcendentals/acosh_cached_p128` | not run | not run | Repeats a cached computable acosh approximation. |
-| `computable_transcendentals/atanh_cold_p128` | not run | not run | Approximates a computable atanh expression. |
+| `computable_transcendentals/atanh_cold_p128` | 101.99 ns | 100.76 ns - 103.23 ns | Approximates a computable atanh expression. |
 | `computable_transcendentals/atanh_cached_p128` | not run | not run | Repeats a cached computable atanh approximation. |
 | `computable_transcendentals/atanh_tiny_cold_p128` | not run | not run | Approximates atanh(1e-12), exercising the tiny-input series. |
 | `computable_transcendentals/atanh_near_one_cold_p128` | not run | not run | Approximates atanh(0.999999), exercising the endpoint log transform. |
@@ -788,7 +788,10 @@ Stable scalar constructors that preserve small residuals, dominance, roots, rati
 | `real_stable_scalar_substrate/cbrt_negative_perfect` | not run | not run | Collapses a negative perfect cube. |
 | `real_stable_scalar_substrate/root_n_perfect_fourth` | not run | not run | Collapses an exact fourth root. |
 | `real_stable_scalar_substrate/pow_rational_negative_odd_denominator` | not run | not run | Routes a negative rational base through odd-root symmetry. |
-| `real_stable_scalar_substrate/floor_certified_rational` | not run | not run | Certifies rational floor structurally. |
+| `real_stable_scalar_substrate/near_integer_rational` | 78.31 ns | 77.69 ns - 79.18 ns | Chooses one adjacent integer from an exact rational without refinement. |
+| `real_stable_scalar_substrate/near_integer_sqrt2` | 728.40 ns | 719.51 ns - 738.87 ns | Chooses one adjacent integer from a cold irrational expression with one bounded approximation. |
+| `real_stable_scalar_substrate/floor_certified_sqrt2` | 4.000 us | 3.987 us - 4.013 us | Certifies the directional floor of the same cold irrational expression. |
+| `real_stable_scalar_substrate/floor_certified_rational` | 78.35 ns | 77.76 ns - 79.08 ns | Certifies rational floor structurally. |
 | `real_stable_scalar_substrate/rem_euclid_certified_rational` | not run | not run | Computes rational Euclidean remainder through certified quotient floor. |
 
 ### `real_geometry_polynomial_substrate`
@@ -805,6 +808,9 @@ Geometry-facing scalar helpers for rational-turn trig, removable small-angle lim
 | `real_geometry_polynomial_substrate/sinc_tiny` | not run | not run | Builds sinc for a tiny exact input. |
 | `real_geometry_polynomial_substrate/sinc_pi_half` | not run | not run | Builds normalized sinc for an exact half turn. |
 | `real_geometry_polynomial_substrate/cosc_tiny` | not run | not run | Builds the small-angle (1 - cos x) / x^2 helper. |
+| `real_geometry_polynomial_substrate/sinc_opaque_zero` | 3.586 us | 3.565 us - 3.608 us | Continues sinc across a freshly built opaque trigonometric zero. |
+| `real_geometry_polynomial_substrate/sinc_pi_opaque_zero` | 5.783 us | 5.747 us - 5.821 us | Continues normalized sinc across a freshly built opaque trigonometric zero. |
+| `real_geometry_polynomial_substrate/cosc_opaque_zero` | 3.740 us | 3.707 us - 3.779 us | Continues cosc across a freshly built opaque trigonometric zero. |
 | `real_geometry_polynomial_substrate/atan2_axis` | not run | not run | Classifies an axis-aligned atan2 input exactly. |
 | `real_geometry_polynomial_substrate/atan2_quadrant` | not run | not run | Builds a quadrant-correct atan2 expression. |
 | `real_geometry_polynomial_substrate/hypot2_3_4` | not run | not run | Collapses a 3-4-5 norm through exact dot products. |
@@ -847,7 +853,7 @@ Gaussian tail helpers and exact/finite scientific special-function forms added f
 | `real_normal_scientific_substrate/standard_normal_moment_12` | not run | not run | Uses double-factorial closed form. |
 | `real_normal_scientific_substrate/normal_interval_moment_3` | not run | not run | Uses interval mass and density-boundary recurrence. |
 | `real_normal_scientific_substrate/truncated_normal_mean` | not run | not run | Builds truncated-normal mean from stable interval mass. |
-| `real_normal_scientific_substrate/gamma_integer` | not run | not run | Uses exact integer gamma closed form. |
+| `real_normal_scientific_substrate/gamma_integer` | 102.96 ns | 102.46 ns - 103.50 ns | Uses exact integer gamma closed form. |
 | `real_normal_scientific_substrate/gamma_half_integer` | not run | not run | Uses exact half-integer gamma closed form. |
 | `real_normal_scientific_substrate/lgamma_half_integer` | not run | not run | Logs the absolute half-integer gamma value. |
 | `real_normal_scientific_substrate/beta_integer` | not run | not run | Builds integer beta through an exact factorial ratio. |
@@ -1190,8 +1196,16 @@ Rows sharing a Criterion group and input are compared when they expose distinct 
 | `computable_bounds/sqrt_scaled_square_sign_until_p2000` | 65.59 ns | 59.39 ns - 71.04 ns | 72.13 ns | - | - |
 | `computable_bounds/unsupported_sin_difference_sign_until_p0_cold` | 866.92 ns | 857.32 ns - 876.66 ns | 867.27 ns | +0.73% | - |
 | `computable_bounds/unsupported_sin_difference_sign_until_p64_cold` | 4.36 us | 4.33 us - 4.39 us | 4.32 us | -44.02% | - |
+| `computable_transcendentals/acos_cold_p96` | 5.83 us | 5.81 us - 5.85 us | 5.82 us | - | - |
+| `computable_transcendentals/asin_cold_p96` | 6.45 us | 6.40 us - 6.50 us | 6.46 us | - | - |
+| `computable_transcendentals/asinh_cold_p128` | 6.66 us | 6.60 us - 6.74 us | 6.59 us | - | - |
+| `computable_transcendentals/atan_cold_p96` | 2.01 us | 2.00 us - 2.03 us | 2.00 us | - | - |
+| `computable_transcendentals/atanh_cold_p128` | 101.99 ns | 100.76 ns - 103.23 ns | 101.91 ns | - | - |
 | `computable_transcendentals/cos_1e30_cold_p96` | 2.27 us | 2.26 us - 2.29 us | 2.26 us | -2.55% | - |
+| `computable_transcendentals/exp_cold_p128` | 3.83 us | 3.79 us - 3.87 us | 3.77 us | - | - |
 | `computable_transcendentals/sin_1e30_cold_p96` | 2.11 us | 2.09 us - 2.13 us | 2.08 us | -45.54% | - |
+| `computable_transcendentals/sin_cold_p96` | 1.59 us | 1.58 us - 1.61 us | 1.58 us | - | - |
+| `computable_transcendentals/sqrt_cold_p128` | 646.47 ns | 637.05 ns - 658.30 ns | 637.76 ns | - | - |
 | `dense_algebra/real_sum_owned_1024_symbolic` | 134.63 us | 129.59 us - 140.76 us | 123.04 us | -6.71% | - |
 | `dense_algebra/real_sum_owned_1024_symbolic_former_clone_path` | 225.35 us | 217.04 us - 234.57 us | 201.08 us | -28.76% | - |
 | `dense_algebra/real_sum_refs_1024_rational` | 16.19 us | 16.09 us - 16.29 us | 16.00 us | - | - |
@@ -1341,6 +1355,9 @@ Rows sharing a Criterion group and input are compared when they expose distinct 
 | `real_exact_exp_log10/log2_exp2_1_7` | 92.44 ns | 89.77 ns - 95.27 ns | 90.69 ns | +10.24% | - |
 | `real_exact_exp_log10/pow10_log10_2` | 101.69 ns | 100.05 ns - 103.53 ns | 100.03 ns | +0.49% | - |
 | `real_exact_exp_log10/pow2_log2_3` | 100.69 ns | 99.52 ns - 101.91 ns | 99.98 ns | +0.80% | - |
+| `real_geometry_polynomial_substrate/cosc_opaque_zero` | 3.74 us | 3.71 us - 3.78 us | 3.66 us | +1.05% | - |
+| `real_geometry_polynomial_substrate/sinc_opaque_zero` | 3.59 us | 3.57 us - 3.61 us | 3.54 us | +1.47% | - |
+| `real_geometry_polynomial_substrate/sinc_pi_opaque_zero` | 5.78 us | 5.75 us - 5.82 us | 5.69 us | +2.30% | - |
 | `real_irrational_ops/add_refs` | 62.54 ns | 62.07 ns - 63.09 ns | 61.68 ns | -2.45% | - |
 | `real_normal_scientific_substrate/gamma_integer` | 102.96 ns | 102.46 ns - 103.50 ns | 102.00 ns | -77.57% | - |
 | `real_representation_construction_export/hyperreal_exact/const_offset` | 141.45 ns | 138.94 ns - 144.17 ns | 140.20 ns | - | 1 elements |
@@ -1384,6 +1401,10 @@ Rows sharing a Criterion group and input are compared when they expose distinct 
 | `real_representation_construction_export/mpfr192/sqrt` | 135.58 ns | 124.92 ns - 147.59 ns | 130.10 ns | - | 1 elements |
 | `real_representation_construction_export/mpfr192/tan_pi` | 1.84 us | 1.68 us - 2.02 us | 1.85 us | - | 1 elements |
 | `real_stable_scalar_substrate/certified_compare_nested_radical_identity` | 226.20 ns | 224.22 ns - 228.38 ns | 222.37 ns | +4.69% | - |
+| `real_stable_scalar_substrate/floor_certified_rational` | 78.35 ns | 77.76 ns - 79.08 ns | 77.69 ns | - | - |
+| `real_stable_scalar_substrate/floor_certified_sqrt2` | 4.00 us | 3.99 us - 4.01 us | 3.98 us | -1.79% | - |
+| `real_stable_scalar_substrate/near_integer_rational` | 78.31 ns | 77.69 ns - 79.18 ns | 77.56 ns | - | - |
+| `real_stable_scalar_substrate/near_integer_sqrt2` | 728.40 ns | 719.51 ns - 738.87 ns | 720.55 ns | -6.13% | - |
 | `real_stable_scalar_substrate/sqrt_quadratic_surd_perfect_norm` | 1.18 us | 1.17 us - 1.20 us | 1.16 us | -5.10% | - |
 | `structural_query_speed/structural_negation_match` | 14.47 ns | 14.36 ns - 14.57 ns | 14.20 ns | - | - |
 | `structural_query_speed/structural_negation_miss` | 3.83 ns | 3.80 ns - 3.87 ns | 3.77 ns | - | - |

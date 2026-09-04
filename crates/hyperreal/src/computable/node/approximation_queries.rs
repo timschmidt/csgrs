@@ -79,6 +79,21 @@ impl Computable {
         self.approx_signal(&self.signal, p)
     }
 
+    /// Return either the floor or the ceiling of this value.
+    ///
+    /// Unlike choosing one particular direction, this multivalued rounding
+    /// operation does not need to decide whether the value is an integer. It
+    /// therefore terminates after one bounded approximation (unless evaluation
+    /// is externally aborted). The particular adjacent integer is deliberately
+    /// unspecified; use a certified directional rounding operation when that
+    /// distinction matters.
+    pub fn near_integer(&self) -> BigInt {
+        // `approx(-2)` differs from 4*x by at most one. Rounding it after a
+        // division by four adds at most another half, so the returned integer
+        // differs from x by at most 3/4 and must be floor(x) or ceil(x).
+        scale(self.approx(-2), -2)
+    }
+
     /// Like `approx` but specifying an atomic abort/ stop signal.
     pub fn approx_signal(&self, signal: &Option<Signal>, p: Precision) -> BigInt {
         enum Frame<'a> {

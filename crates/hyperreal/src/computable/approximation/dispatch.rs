@@ -99,6 +99,8 @@ impl Approximation {
                 data.seed_prec,
                 p,
             ),
+            SincSmall(c) => sinc_small(signal, c, p),
+            CoscSmall(c) => cosc_small(signal, c, p),
         }
     }
 }

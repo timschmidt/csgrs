@@ -63,8 +63,9 @@ Approximation kernels should:
 - avoid cancellation-prone forms when a stable transform is available
 - preserve stable substrate forms such as `ln(1+x)`, `ln(1-x)`, and `exp(x)-1`
   as dedicated graph shapes when callers expose that intent
-- keep removable small-angle helpers at the semantic API boundary so exact zero
-  does not become a false division-by-zero problem
+- keep removable small-angle helpers at the semantic API boundary and use
+  certified local analytic-continuation nodes when an opaque argument may be
+  zero, so bounded equality refinement is not required at the removable hole
 - reuse shared constants such as `pi`, `tau`, `e`, `sqrt(2)`, `sqrt(3)`, and
   common logarithms
 - provide dedicated kernels for supported statistical functions such as `erf`,

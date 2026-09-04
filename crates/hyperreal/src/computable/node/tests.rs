@@ -558,6 +558,115 @@ mod tests {
     }
 
     #[test]
+    fn certified_small_angle_quotients_match_mpfr() {
+        use rug::{Float, float::Round};
+
+        fn rounded_scaled(mut value: Float, precision: Precision) -> BigInt {
+            value <<= precision.saturating_neg();
+            value
+                .to_integer_round(Round::Nearest)
+                .expect("finite small-angle oracle")
+                .0
+                .to_string()
+                .parse()
+                .expect("MPFR integer parses as BigInt")
+        }
+
+        let mut state = 0x6a09_e667_f3bc_c909_u64;
+        let mut inputs = vec![
+            (0_i64, 1_u64),
+            (-1, 2),
+            (1, 2),
+            (-255, 512),
+            (255, 512),
+            (-639, 1_024),
+            (639, 1_024),
+        ];
+        for _ in 0..128 {
+            state ^= state << 13;
+            state ^= state >> 7;
+            state ^= state << 17;
+            let numerator = i64::try_from(state % 1_001).unwrap() - 500;
+            inputs.push((numerator, 1_024));
+        }
+
+        for (numerator, denominator) in inputs {
+            let argument = Computable::rational(
+                Rational::fraction(numerator, denominator).expect("nonzero denominator"),
+            );
+            let sinc = argument
+                .clone()
+                .sinc_small_if_certified()
+                .expect("test input is within the certified small-angle window");
+            let cosc = argument
+                .cosc_small_if_certified()
+                .expect("test input is within the certified small-angle window");
+
+            for precision in [4_i32, 1, 0, -1, -7, -31, -128, -511, -1_024] {
+                let oracle_precision = precision
+                    .saturating_neg()
+                    .unsigned_abs()
+                    .saturating_add(256);
+                let mut x = Float::with_val(oracle_precision, numerator);
+                x /= denominator;
+
+                let sinc_oracle = if numerator == 0 {
+                    Float::with_val(oracle_precision, 1)
+                } else {
+                    let mut value = x.clone().sin();
+                    value /= &x;
+                    value
+                };
+                let cosc_oracle = if numerator == 0 {
+                    Float::with_val(oracle_precision, 0.5)
+                } else {
+                    let mut value = Float::with_val(oracle_precision, 1);
+                    value -= x.clone().cos();
+                    let mut square = x.clone();
+                    square.square_mut();
+                    value /= square;
+                    value
+                };
+
+                let expected_sinc = rounded_scaled(sinc_oracle, precision);
+                let expected_cosc = rounded_scaled(cosc_oracle, precision);
+                let sinc_error = (sinc.approx(precision) - expected_sinc).abs();
+                let cosc_error = (cosc.approx(precision) - expected_cosc).abs();
+                assert!(
+                    sinc_error <= BigInt::one(),
+                    "sinc({numerator}/{denominator}) at {precision} differs by {sinc_error} ulps"
+                );
+                assert!(
+                    cosc_error <= BigInt::one(),
+                    "cosc({numerator}/{denominator}) at {precision} differs by {cosc_error} ulps"
+                );
+            }
+        }
+
+        assert!(
+            Computable::rational(Rational::new(1))
+                .sinc_small_if_certified()
+                .is_none(),
+            "the local series must reject an uncertified large argument"
+        );
+
+        use std::sync::{Arc, atomic::AtomicBool};
+        let signal = Arc::new(AtomicBool::new(false));
+        let mut signaled = Computable::rational(Rational::fraction(1, 2).unwrap());
+        signaled.abort(Arc::clone(&signal));
+        let continued = signaled
+            .sinc_small_if_certified()
+            .expect("a signaled small input remains certified");
+        assert!(
+            continued
+                .signal
+                .as_ref()
+                .is_some_and(|attached| Arc::ptr_eq(attached, &signal)),
+            "the removable quotient must retain its caller's abort signal"
+        );
+    }
+
+    #[test]
     fn prec_atan_5() {
         let five: BigInt = "5".parse().unwrap();
         let atan_5 = Computable::prescaled_atan(five);
