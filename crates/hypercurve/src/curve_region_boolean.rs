@@ -135,6 +135,14 @@ struct CurveRegionBooleanContextData<'a> {
     bezier_self_intersections: Vec<BezierSelfIntersectionCache>,
     parallel_self_intersections: Vec<ParallelSelfIntersectionCache>,
     strict_line_image_only: OnceLock<bool>,
+    operand_bounds: [OnceLock<Box<RegionOperandBounds>>; 2],
+}
+
+const CARRIER_BOUND_REFINEMENTS: [usize; 10] = [0, 2, 4, 8, 16, 32, 64, 128, 256, 512];
+
+#[derive(Debug, Default)]
+struct RegionOperandBounds {
+    refinements: [OnceLock<Option<Aabb2>>; CARRIER_BOUND_REFINEMENTS.len()],
 }
 
 #[derive(Clone, Copy)]
@@ -1386,6 +1394,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
                 bezier_self_intersections: Vec::new(),
                 parallel_self_intersections: Vec::new(),
                 strict_line_image_only: OnceLock::new(),
+                operand_bounds: std::array::from_fn(|_| OnceLock::new()),
             },
         })
     }
@@ -1431,6 +1440,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
                 bezier_self_intersections,
                 parallel_self_intersections,
                 strict_line_image_only: OnceLock::new(),
+                operand_bounds: std::array::from_fn(|_| OnceLock::new()),
             },
         })
     }
@@ -1493,6 +1503,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
                 bezier_self_intersections: Vec::new(),
                 parallel_self_intersections: Vec::new(),
                 strict_line_image_only: OnceLock::new(),
+                operand_bounds: std::array::from_fn(|_| OnceLock::new()),
             },
         })
     }
@@ -1568,6 +1579,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
                 bezier_self_intersections,
                 parallel_self_intersections,
                 strict_line_image_only: OnceLock::new(),
+                operand_bounds: std::array::from_fn(|_| OnceLock::new()),
             },
         })
     }
@@ -1642,6 +1654,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
                 bezier_self_intersections: Vec::new(),
                 parallel_self_intersections: Vec::new(),
                 strict_line_image_only: OnceLock::new(),
+                operand_bounds: std::array::from_fn(|_| OnceLock::new()),
             },
         }
         .build_intersection_evidence()
@@ -11955,9 +11968,18 @@ impl<'a> CurveRegionBooleanContext<'a> {
         // point/region classifier below must get the decision.
         self.data.policy.strict_predicate_pass(|| {
             let carrier = &self.data.carriers[carrier_index];
-            [0, 2, 4, 8, 16, 32, 64, 128, 256, 512]
+            let other_operand = match carrier.operand {
+                CurveRegionBooleanOperand2::First => 1,
+                CurveRegionBooleanOperand2::Second => 0,
+            };
+            // Each operand/refinement owns one lazy envelope. Rebuilding this
+            // union for every fragment is another Cartesian scan, even after
+            // the pair broad phase has discarded all distant components.
+            let other_bounds = self.data.operand_bounds[other_operand].get_or_init(Box::default);
+            CARRIER_BOUND_REFINEMENTS
                 .into_iter()
-                .any(|refinement_steps| {
+                .enumerate()
+                .any(|(level, refinement_steps)| {
                     let Classification::Decided(carrier_bounds) =
                         carrier_optional_outer_bounds_refined(
                             carrier,
@@ -11967,32 +11989,44 @@ impl<'a> CurveRegionBooleanContext<'a> {
                     else {
                         return false;
                     };
-                    let mut other_bounds = None::<Aabb2>;
-                    for other in &self.data.carriers {
-                        if other.operand == carrier.operand {
-                            continue;
-                        }
-                        let Classification::Decided(bounds) = carrier_optional_outer_bounds_refined(
-                            other,
-                            refinement_steps,
-                            &self.data.policy,
-                        ) else {
-                            return false;
-                        };
-                        other_bounds = Some(match other_bounds {
-                            None => bounds,
-                            Some(accumulated) => {
-                                let Classification::Decided(bounds) =
-                                    accumulated.union(&bounds, &self.data.policy)
-                                else {
-                                    return false;
-                                };
-                                bounds
+                    let cell = &other_bounds.refinements[level];
+                    let other_bounds = if let Some(bounds) = cell.get() {
+                        bounds
+                    } else {
+                        let mut accumulated = None::<Aabb2>;
+                        for other in &self.data.carriers {
+                            if other.operand == carrier.operand {
+                                continue;
                             }
-                        });
-                    }
-                    other_bounds.is_none_or(|other_bounds| {
-                        carrier_bounds.overlaps(&other_bounds, &self.data.policy)
+                            let bounds = match carrier_optional_outer_bounds_refined(
+                                other,
+                                refinement_steps,
+                                &self.data.policy,
+                            ) {
+                                Classification::Decided(bounds) => bounds,
+                                Classification::Uncertain(_) => {
+                                    // Unavailable evidence may become decidable
+                                    // after another exact kernel refines it.
+                                    return false;
+                                }
+                            };
+                            accumulated = Some(match accumulated {
+                                None => bounds,
+                                Some(previous) => {
+                                    match previous.union(&bounds, &self.data.policy) {
+                                        Classification::Decided(bounds) => bounds,
+                                        Classification::Uncertain(_) => {
+                                            return false;
+                                        }
+                                    }
+                                }
+                            });
+                        }
+                        let _ = cell.set(accumulated);
+                        cell.get().expect("the exact operand envelope was retained")
+                    };
+                    other_bounds.as_ref().is_none_or(|other_bounds| {
+                        carrier_bounds.overlaps(other_bounds, &self.data.policy)
                             == Classification::Decided(false)
                     })
                 })
@@ -16777,6 +16811,7 @@ mod certified_successor_tests {
                         bezier_self_intersections: Vec::new(),
                         parallel_self_intersections: Vec::new(),
                         strict_line_image_only: OnceLock::new(),
+                        operand_bounds: std::array::from_fn(|_| OnceLock::new()),
                     },
                 };
                 let pair = RegionCarrierPair {
@@ -17340,6 +17375,7 @@ mod certified_successor_tests {
                                     bezier_self_intersections: Vec::new(),
                                     parallel_self_intersections: Vec::new(),
                                     strict_line_image_only: OnceLock::new(),
+                                    operand_bounds: std::array::from_fn(|_| OnceLock::new()),
                                 },
                             };
                             let outcome = crate::policy::resolve_certified_value(&policy, |_| {
@@ -17452,6 +17488,7 @@ mod certified_successor_tests {
                     bezier_self_intersections: Vec::new(),
                     parallel_self_intersections: Vec::new(),
                     strict_line_image_only: OnceLock::new(),
+                    operand_bounds: std::array::from_fn(|_| OnceLock::new()),
                 },
             };
             let result = context
@@ -17564,6 +17601,7 @@ mod certified_successor_tests {
                     bezier_self_intersections: Vec::new(),
                     parallel_self_intersections: Vec::new(),
                     strict_line_image_only: OnceLock::new(),
+                    operand_bounds: std::array::from_fn(|_| OnceLock::new()),
                 },
             };
             let result = context
@@ -17704,6 +17742,7 @@ mod certified_successor_tests {
                     bezier_self_intersections: Vec::new(),
                     parallel_self_intersections: Vec::new(),
                     strict_line_image_only: OnceLock::new(),
+                    operand_bounds: std::array::from_fn(|_| OnceLock::new()),
                 },
             };
             let result = context
@@ -18621,6 +18660,7 @@ mod certified_successor_tests {
                     bezier_self_intersections: Vec::new(),
                     parallel_self_intersections: Vec::new(),
                     strict_line_image_only: OnceLock::new(),
+                    operand_bounds: std::array::from_fn(|_| OnceLock::new()),
                 },
             };
             let clipping_pair = RegionCarrierPair {
@@ -18809,6 +18849,7 @@ mod certified_successor_tests {
                     bezier_self_intersections: Vec::new(),
                     parallel_self_intersections: Vec::new(),
                     strict_line_image_only: OnceLock::new(),
+                    operand_bounds: std::array::from_fn(|_| OnceLock::new()),
                 },
             };
             let pair_result = context
@@ -18906,6 +18947,7 @@ mod certified_successor_tests {
                         bezier_self_intersections: Vec::new(),
                         parallel_self_intersections: Vec::new(),
                         strict_line_image_only: OnceLock::new(),
+                        operand_bounds: std::array::from_fn(|_| OnceLock::new()),
                     },
                 };
                 context
@@ -19116,6 +19158,7 @@ mod certified_successor_tests {
                         bezier_self_intersections: Vec::new(),
                         parallel_self_intersections: Vec::new(),
                         strict_line_image_only: OnceLock::new(),
+                        operand_bounds: std::array::from_fn(|_| OnceLock::new()),
                     },
                 };
                 let result = context
@@ -19808,6 +19851,7 @@ mod certified_successor_tests {
                     bezier_self_intersections: Vec::new(),
                     parallel_self_intersections: Vec::new(),
                     strict_line_image_only: OnceLock::new(),
+                    operand_bounds: std::array::from_fn(|_| OnceLock::new()),
                 },
             };
             let result = context
@@ -20236,6 +20280,7 @@ mod certified_successor_tests {
                     bezier_self_intersections: Vec::new(),
                     parallel_self_intersections: Vec::new(),
                     strict_line_image_only: OnceLock::new(),
+                    operand_bounds: std::array::from_fn(|_| OnceLock::new()),
                 },
             };
             let pair_result = context
@@ -21436,6 +21481,85 @@ mod certified_successor_tests {
         )
         .unwrap()
         .into_value()
+    }
+
+    #[test]
+    fn operand_bounds_are_lazy_shared_and_policy_neutral() {
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let first = square_region(0, 0, 4, 4);
+            let second = square_region(10, 10, 14, 14);
+            let context = CurveRegionBooleanContext::try_new(&first, &second, &policy).unwrap();
+            assert!(
+                context
+                    .data
+                    .operand_bounds
+                    .iter()
+                    .all(|bounds| bounds.get().is_none())
+            );
+            for index in 0..context.data.carriers.len() {
+                let result = resolve_certified_operation(&policy, |_| {
+                    Ok::<_, ExactCurveError>(context.carrier_bounds_are_outside_other_region(index))
+                })
+                .unwrap();
+                assert!(result.value);
+                assert_eq!(result.certainty, crate::CurveCertainty::Certified);
+            }
+            for bounds in &context.data.operand_bounds {
+                let bounds = bounds.get().unwrap();
+                assert!(matches!(bounds.refinements[0].get(), Some(Some(_))));
+                assert!(
+                    bounds.refinements[1..]
+                        .iter()
+                        .all(|bounds| bounds.get().is_none())
+                );
+            }
+
+            let mut unresolved =
+                CurveRegionBooleanContext::try_new(&first, &second, &policy).unwrap();
+            unresolved.data.carriers[unresolved.data.first_carrier_count].bounds =
+                OnceLock::from(Classification::Uncertain(UncertaintyReason::Unsupported));
+            assert!(unresolved.carrier_bounds_are_outside_other_region(0));
+            assert!(unresolved.data.operand_bounds[0].get().is_none());
+            let bounds = unresolved.data.operand_bounds[1].get().unwrap();
+            assert!(bounds.refinements[0].get().is_none());
+            assert!(matches!(bounds.refinements[1].get(), Some(Some(_))));
+            assert!(
+                bounds.refinements[2..]
+                    .iter()
+                    .all(|bounds| bounds.get().is_none())
+            );
+            unresolved.data.carriers[unresolved.data.first_carrier_count].bounds = OnceLock::new();
+            assert!(unresolved.carrier_bounds_are_outside_other_region(0));
+            assert!(matches!(
+                unresolved.data.operand_bounds[1].get().unwrap().refinements[0].get(),
+                Some(Some(_))
+            ));
+
+            let intersecting = square_region(2, 2, 6, 6);
+            let context =
+                CurveRegionBooleanContext::try_new(&first, &intersecting, &policy).unwrap();
+            // The right edge intersects the other operand's exact envelope at
+            // every refinement. Replaying it cannot become an absence proof.
+            for _ in 0..2 {
+                assert!(!context.carrier_bounds_are_outside_other_region(1));
+            }
+            assert!(
+                context.data.operand_bounds[1]
+                    .get()
+                    .unwrap()
+                    .refinements
+                    .iter()
+                    .all(|bounds| { matches!(bounds.get(), Some(Some(_))) })
+            );
+
+            let empty = CurveRegion2::default();
+            let context = CurveRegionBooleanContext::try_new(&first, &empty, &policy).unwrap();
+            assert!(context.carrier_bounds_are_outside_other_region(0));
+            assert!(matches!(
+                context.data.operand_bounds[1].get().unwrap().refinements[0].get(),
+                Some(None)
+            ));
+        }
     }
 
     #[test]
