@@ -89,10 +89,9 @@ impl DenseTensorPolynomial {
         let mut dimensions = vec![1; rank];
         dimensions[axis] = coefficients.len();
         let mut polynomial = Self::zero(dimensions.clone())?;
+        let stride = checked_coefficient_count(&dimensions[axis + 1..])?;
         for (power, coefficient) in coefficients.iter().enumerate() {
-            let mut exponent = vec![0; rank];
-            exponent[axis] = power;
-            polynomial.coefficients[flat_index(&dimensions, &exponent)] = coefficient.clone();
+            polynomial.coefficients[power.checked_mul(stride)?] = coefficient.clone();
         }
         Some(polynomial)
     }
@@ -132,33 +131,19 @@ impl DenseTensorPolynomial {
             .zip(&other.dimensions)
             .map(|(left, right)| left.checked_add(*right)?.checked_sub(1))
             .collect::<Option<Vec<_>>>()?;
+        if self.coefficients.len() == 1 {
+            return other.scale(&self.coefficients[0]);
+        }
+        if other.coefficients.len() == 1 {
+            return self.scale(&other.coefficients[0]);
+        }
         let mut result = Self::zero(dimensions.clone())?;
-        // Zero pruning is only a storage fast path. Asking `zero_status()` on
-        // an opaque coefficient can recursively refine a large exact-real DAG
-        // before a convolution that remains correct when the term is simply
-        // retained. Skip only represented rational zero; every unknown exact
-        // coefficient participates in the ordinary exact product.
-        let is_stored_zero = |coefficient: &Real| {
-            coefficient
-                .exact_rational_ref()
-                .is_some_and(|value| value.is_zero())
-        };
-        for (left_index, left) in self.coefficients.iter().enumerate() {
-            if is_stored_zero(left) {
-                continue;
-            }
-            let left_exponents = exponents(&self.dimensions, left_index);
-            for (right_index, right) in other.coefficients.iter().enumerate() {
-                if is_stored_zero(right) {
-                    continue;
-                }
-                let right_exponents = exponents(&other.dimensions, right_index);
-                let product_exponents = left_exponents
-                    .iter()
-                    .zip(right_exponents)
-                    .map(|(left, right)| left + right)
-                    .collect::<Vec<_>>();
-                result.coefficients[flat_index(&dimensions, &product_exponents)] += left * right;
+        let target_strides = row_major_strides(&dimensions)?;
+        let left_terms = embedded_nonzero_terms(self, &target_strides)?;
+        let right_terms = embedded_nonzero_terms(other, &target_strides)?;
+        for (left_index, left) in left_terms {
+            for (right_index, right) in &right_terms {
+                result.coefficients[left_index.checked_add(*right_index)?] += left * *right;
             }
         }
         Some(result)
@@ -175,10 +160,11 @@ impl DenseTensorPolynomial {
         let mut dimensions = self.dimensions.clone();
         dimensions[axis] = dimensions[axis].checked_add(power)?;
         let mut result = Self::zero(dimensions.clone())?;
+        let target_strides = row_major_strides(&dimensions)?;
+        let shift = power.checked_mul(target_strides[axis])?;
         for (index, coefficient) in self.coefficients.iter().enumerate() {
-            let mut target = exponents(&self.dimensions, index);
-            target[axis] += power;
-            result.coefficients[flat_index(&dimensions, &target)] = coefficient.clone();
+            let target = embedded_flat_index(&self.dimensions, &target_strides, index)?;
+            result.coefficients[target.checked_add(shift)?] = coefficient.clone();
         }
         Some(result)
     }
@@ -460,6 +446,18 @@ impl DenseTensorPolynomial {
         if self.dimensions.len() != other.dimensions.len() {
             return None;
         }
+        if self.dimensions == other.dimensions {
+            let mut coefficients = Vec::new();
+            coefficients
+                .try_reserve_exact(self.coefficients.len())
+                .ok()?;
+            coefficients.extend(self.coefficients.iter().zip(&other.coefficients).map(
+                |(left, right)| {
+                    if subtract { left - right } else { left + right }
+                },
+            ));
+            return Self::try_new(self.dimensions.clone(), coefficients);
+        }
         let dimensions = self
             .dimensions
             .iter()
@@ -467,9 +465,10 @@ impl DenseTensorPolynomial {
             .map(|(left, right)| (*left).max(*right))
             .collect::<Vec<_>>();
         let mut result = Self::zero(dimensions.clone())?;
+        let target_strides = row_major_strides(&dimensions)?;
         for (source, subtract_source) in [(self, false), (other, subtract)] {
             for (index, coefficient) in source.coefficients.iter().enumerate() {
-                let target = flat_index(&dimensions, &exponents(&source.dimensions, index));
+                let target = embedded_flat_index(&source.dimensions, &target_strides, index)?;
                 if subtract_source {
                     result.coefficients[target] -= coefficient;
                 } else {
@@ -978,6 +977,60 @@ fn flat_index(dimensions: &[usize], exponents: &[usize]) -> usize {
         .fold(0_usize, |index, (dimension, exponent)| {
             index * dimension + exponent
         })
+}
+
+fn row_major_strides(dimensions: &[usize]) -> Option<Vec<usize>> {
+    let mut strides = vec![1; dimensions.len()];
+    let mut stride = 1_usize;
+    for axis in (0..dimensions.len()).rev() {
+        strides[axis] = stride;
+        stride = stride.checked_mul(dimensions[axis])?;
+    }
+    Some(strides)
+}
+
+fn embedded_flat_index(
+    source_dimensions: &[usize],
+    target_strides: &[usize],
+    mut source_index: usize,
+) -> Option<usize> {
+    let mut target_index = 0_usize;
+    for axis in (0..source_dimensions.len()).rev() {
+        let exponent = source_index % source_dimensions[axis];
+        source_index /= source_dimensions[axis];
+        target_index = target_index.checked_add(exponent.checked_mul(target_strides[axis])?)?;
+    }
+    Some(target_index)
+}
+
+/// Return stored nonzero terms embedded in a common target shape. Asking an
+/// opaque coefficient for `zero_status()` can launch unbounded refinement, so
+/// only a represented rational zero is omitted.
+fn embedded_nonzero_terms<'a>(
+    polynomial: &'a DenseTensorPolynomial,
+    target_strides: &[usize],
+) -> Option<Vec<(usize, &'a Real)>> {
+    let is_stored_zero = |coefficient: &Real| {
+        coefficient
+            .exact_rational_ref()
+            .is_some_and(|value| value.is_zero())
+    };
+    let count = polynomial
+        .coefficients
+        .iter()
+        .filter(|coefficient| !is_stored_zero(coefficient))
+        .count();
+    let mut terms = Vec::new();
+    terms.try_reserve_exact(count).ok()?;
+    for (source_index, coefficient) in polynomial.coefficients.iter().enumerate() {
+        if !is_stored_zero(coefficient) {
+            terms.push((
+                embedded_flat_index(&polynomial.dimensions, target_strides, source_index)?,
+                coefficient,
+            ));
+        }
+    }
+    Some(terms)
 }
 
 fn exponents(dimensions: &[usize], mut index: usize) -> Vec<usize> {
