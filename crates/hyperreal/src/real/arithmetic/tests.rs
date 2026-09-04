@@ -2249,6 +2249,47 @@ mod tests {
     }
 
     #[test]
+    fn long_polynomial_evaluation_matches_exact_even_odd_decomposition() {
+        let coefficients = (0_i32..129)
+            .map(|index| Real::from(index % 7 - 3))
+            .collect::<Vec<_>>();
+        let root_two = Real::from(2_i32).sqrt().unwrap();
+
+        #[cfg(feature = "dispatch-trace")]
+        crate::dispatch_trace::reset();
+        #[cfg(feature = "dispatch-trace")]
+        let actual = crate::dispatch_trace::with_recording(|| {
+            Real::eval_poly(&coefficients, &root_two)
+        });
+        #[cfg(not(feature = "dispatch-trace"))]
+        let actual = Real::eval_poly(&coefficients, &root_two);
+        #[cfg(feature = "dispatch-trace")]
+        {
+            let trace = crate::dispatch_trace::take_trace();
+            assert_eq!(
+                trace.path_count("real", "polynomial", "eval-poly-balanced"),
+                1,
+            );
+        }
+
+        let mut even = Rational::zero();
+        let mut odd = Rational::zero();
+        let mut power = Rational::one();
+        for pair in coefficients.chunks(2) {
+            even = &even + &(pair[0].exact_rational_ref().unwrap() * &power);
+            if let Some(coefficient) = pair.get(1) {
+                odd = &odd + &(coefficient.exact_rational_ref().unwrap() * &power);
+            }
+            power = &power * &Rational::new(2_i64);
+        }
+        let expected = Real::new(even) + Real::new(odd) * root_two;
+        assert_eq!(
+            actual.certified_eq_until(&expected, -256).as_bool(),
+            Some(true)
+        );
+    }
+
+    #[test]
     fn certified_integer_helpers_make_discontinuous_decisions() {
         let seven_thirds = Real::new(Rational::fraction(7, 3).unwrap());
         assert_eq!(seven_thirds.floor_certified(), Ok(BigInt::from(2_i32)));

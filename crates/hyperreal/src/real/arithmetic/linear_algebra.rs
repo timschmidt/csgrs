@@ -2164,7 +2164,7 @@ impl Real {
         Self::signed_product_sum2([true, false], [[a, b], [c, d]])
     }
 
-    /// Evaluate a polynomial in constant-first coefficient order using Horner form.
+    /// Evaluate a polynomial in constant-first coefficient order.
     ///
     /// `coeffs = [c0, c1, c2]` evaluates as `c0 + c1*x + c2*x^2`.
     pub fn eval_poly(coeffs: &[Real], x: &Real) -> Real {
@@ -2218,6 +2218,66 @@ impl Real {
                     (None, _) => Real::new(rational_value),
                 };
             }
+        }
+
+        // Long Horner chains make every multiplication request three more
+        // guard bits from the complete suffix. Split even and odd powers over
+        // a shared x^(2^k) ladder instead, bounding expression depth
+        // logarithmically without materializing coefficient sub-vectors.
+        const BALANCED_THRESHOLD: usize = 64;
+        const HORNER_LEAF: usize = 8;
+        if coeffs.len() >= BALANCED_THRESHOLD {
+            fn balanced(
+                coeffs: &[Real],
+                offset: usize,
+                stride: usize,
+                count: usize,
+                powers: &[Real],
+                level: usize,
+            ) -> Real {
+                if count <= HORNER_LEAF {
+                    let mut value = coeffs[offset + (count - 1) * stride].clone();
+                    for index in (0..count - 1).rev() {
+                        value = Real::mul_add(
+                            &value,
+                            &powers[level],
+                            &coeffs[offset + index * stride],
+                        );
+                    }
+                    return value;
+                }
+
+                let next_stride = stride * 2;
+                let even = balanced(
+                    coeffs,
+                    offset,
+                    next_stride,
+                    count.div_ceil(2),
+                    powers,
+                    level + 1,
+                );
+                let odd = balanced(
+                    coeffs,
+                    offset + stride,
+                    next_stride,
+                    count / 2,
+                    powers,
+                    level + 1,
+                );
+                Real::mul_add(&odd, &powers[level], &even)
+            }
+
+            let mut powers = vec![x.clone()];
+            let mut count = coeffs.len();
+            while count > HORNER_LEAF {
+                let previous = powers
+                    .last()
+                    .expect("a nonempty power ladder retains its last power");
+                powers.push(previous * previous);
+                count = count.div_ceil(2);
+            }
+            crate::trace_dispatch!("real", "polynomial", "eval-poly-balanced");
+            return balanced(coeffs, 0, 1, coeffs.len(), &powers, 0);
         }
 
         crate::trace_dispatch!("real", "polynomial", "eval-poly-horner");

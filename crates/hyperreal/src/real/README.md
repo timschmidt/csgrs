@@ -87,7 +87,7 @@ shape unless benchmarks show no cost.
 - `mul_add`, `sum_products`, and `diff_of_products` expose common product-sum
   forms directly, reusing exact-rational product reducers and omitting
   known-zero product lanes.
-- `eval_poly` and `eval_rational_poly` preserve Horner and
+- `eval_poly` and `eval_rational_poly` use exact depth-bounded evaluation and
   rational-polynomial evaluation structure instead of requiring callers to
   expand polynomial arithmetic by hand. Bernstein and de Casteljau operations
   carry curve-basis semantics and live in higher geometry crates.
