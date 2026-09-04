@@ -46,12 +46,12 @@ use crate::rational_bezier_general::{
 use crate::{
     Aabb2, Axis2, BezierAlgebraicImageStatus, BezierAlgebraicParameter2, BezierLineContact,
     BezierLineContactKind, BezierLineContactRelation, BezierLineCrossingDirection,
-    BezierParameter2, BezierParameterInterval, BezierParameterPolynomial, BezierParameterRange2,
-    BezierParameterRayDirection2, Classification, CubicBezier2, Curve2, CurveContext,
-    CurveDerivative2, CurveError, CurveGeometry2, CurveOperation2, CurvePath2,
-    CurveRegionParameter2, CurveRegionParameterRange2, CurveResult, ExactCurveError,
-    ExactCurveResult, LineCircleRelation, LineSeg2, Point2, QuadraticBezier2, RationalBezier2,
-    RationalBezierAlgebraicPointImage2, RationalBezierAlgebraicTangentImage2,
+    BezierLineImageFitRelation, BezierParameter2, BezierParameterInterval,
+    BezierParameterPolynomial, BezierParameterRange2, BezierParameterRayDirection2, Classification,
+    CubicBezier2, Curve2, CurveContext, CurveDerivative2, CurveError, CurveGeometry2,
+    CurveOperation2, CurvePath2, CurveRegionParameter2, CurveRegionParameterRange2, CurveResult,
+    ExactCurveError, ExactCurveResult, LineCircleRelation, LineSeg2, Point2, QuadraticBezier2,
+    RationalBezier2, RationalBezierAlgebraicPointImage2, RationalBezierAlgebraicTangentImage2,
     RationalBezierIntersectionCandidates2, RationalBezierIntersectionContacts2,
     RationalBezierIntersectionOverlap2, RationalBezierIntersectionPointEvidence2,
     RationalBezierOverlapOrientation2, RationalQuadraticBezier2, Real, Similarity2,
@@ -38971,16 +38971,17 @@ impl BezierAlgebraicCuspSemicircle2 {
         )))
     }
 
-    /// Adapts an exactly affine rational carrier to the authoritative
-    /// selected-circle/chord kernel.
+    /// Adapts an exact rational line image to the authoritative selected-
+    /// circle/chord kernel.
     ///
     /// A retained pair-radial center already lives in a recursive quadratic
     /// tower. Intersecting it with a line adds at most one positive quadratic
     /// generator, whereas projecting the equivalent circle/rational system
     /// takes a dense norm over every selected source axis. Keep the compact
-    /// chord solve as the contact authority and promote only its one scalar
-    /// parameter at the rational API boundary.
-    fn exact_linear_selected_radial_rational_intersections(
+    /// chord solve as the contact authority. An affine parameterization reuses
+    /// the chord scalar directly; a nonlinear line image inverts only the
+    /// certified contact coordinate on the target's native parameter axis.
+    fn exact_line_image_selected_radial_rational_intersections(
         &self,
         other: &RationalBezier2,
         retain_parameter_map: bool,
@@ -38993,9 +38994,22 @@ impl BezierAlgebraicCuspSemicircle2 {
             )>,
         >,
     > {
-        let Some(line) = other.exact_linear_parameterization_line() else {
-            return Ok(Classification::Decided(None));
-        };
+        let (line, affine_parameterization) =
+            if let Some(line) = other.exact_linear_parameterization_line() {
+                (line, true)
+            } else {
+                let fit = match other.fit_exact_line_image(&policy.strict_counterpart())? {
+                    Classification::Decided(BezierLineImageFitRelation::Fit(fit)) => fit,
+                    Classification::Decided(BezierLineImageFitRelation::NotLine)
+                    | Classification::Uncertain(_) => {
+                        return Ok(Classification::Decided(None));
+                    }
+                };
+                if retain_parameter_map {
+                    return Ok(Classification::Decided(None));
+                }
+                (fit.line().clone(), false)
+            };
         let chord = match BezierAlgebraicChord2::try_new(
             RationalBezierIntersectionPointEvidence2::Exact(line.start().clone()),
             RationalBezierIntersectionPointEvidence2::Exact(line.end().clone()),
@@ -39005,45 +39019,52 @@ impl BezierAlgebraicCuspSemicircle2 {
             Classification::Uncertain(_) => return Ok(Classification::Decided(None)),
         };
         let similarity_source = self.selected_radial_similarity_source(policy)?;
-        let (solve_circle, solve_chord, similarity) = if let Some((source_circle, transform)) =
-            similarity_source
-        {
-            let (a, b, d, e, xoff, yoff) = transform.affine_components();
-            let inverse_scale_squared = (Real::one() / (transform.scale() * transform.scale()))?;
-            let diagonal = real_sign(b, &CurveContext::STRICT) == Some(RealSign::Zero)
-                && real_sign(d, &CurveContext::STRICT) == Some(RealSign::Zero);
-            let anti_diagonal = real_sign(a, &CurveContext::STRICT) == Some(RealSign::Zero)
-                && real_sign(e, &CurveContext::STRICT) == Some(RealSign::Zero);
-            let inverse_point = |point: &Point2| -> CurveResult<Point2> {
-                let x = point.x() - xoff;
-                let y = point.y() - yoff;
-                if diagonal {
-                    return Ok(Point2::new((x / a)?, (y / e)?));
-                }
-                if anti_diagonal {
-                    return Ok(Point2::new((y / d)?, (x / b)?));
-                }
-                Ok(Point2::new(
-                    Real::dot2_refs([a, d], [&x, &y]) * &inverse_scale_squared,
-                    Real::dot2_refs([b, e], [&x, &y]) * &inverse_scale_squared,
-                ))
+        let (solve_circle, solve_chord, solve_other, similarity) =
+            if let Some((source_circle, transform)) = similarity_source {
+                let (a, b, d, e, xoff, yoff) = transform.affine_components();
+                let inverse_scale_squared =
+                    (Real::one() / (transform.scale() * transform.scale()))?;
+                let diagonal = real_sign(b, &CurveContext::STRICT) == Some(RealSign::Zero)
+                    && real_sign(d, &CurveContext::STRICT) == Some(RealSign::Zero);
+                let anti_diagonal = real_sign(a, &CurveContext::STRICT) == Some(RealSign::Zero)
+                    && real_sign(e, &CurveContext::STRICT) == Some(RealSign::Zero);
+                let inverse_point = |point: &Point2| -> CurveResult<Point2> {
+                    let x = point.x() - xoff;
+                    let y = point.y() - yoff;
+                    if diagonal {
+                        return Ok(Point2::new((x / a)?, (y / e)?));
+                    }
+                    if anti_diagonal {
+                        return Ok(Point2::new((y / d)?, (x / b)?));
+                    }
+                    Ok(Point2::new(
+                        Real::dot2_refs([a, d], [&x, &y]) * &inverse_scale_squared,
+                        Real::dot2_refs([b, e], [&x, &y]) * &inverse_scale_squared,
+                    ))
+                };
+                let source_line =
+                    LineSeg2::try_new(inverse_point(line.start())?, inverse_point(line.end())?)?;
+                let source_chord = match BezierAlgebraicChord2::try_new(
+                    RationalBezierIntersectionPointEvidence2::Exact(source_line.start().clone()),
+                    RationalBezierIntersectionPointEvidence2::Exact(source_line.end().clone()),
+                    policy,
+                )? {
+                    Classification::Decided(chord) => chord,
+                    Classification::Uncertain(_) => {
+                        return Ok(Classification::Decided(None));
+                    }
+                };
+                let source_controls = other
+                    .control_points()
+                    .iter()
+                    .map(inverse_point)
+                    .collect::<CurveResult<Vec<_>>>()?;
+                let source_other =
+                    RationalBezier2::try_new(source_controls, other.weights().to_vec())?;
+                (source_circle, source_chord, source_other, Some(transform))
+            } else {
+                (self.clone(), chord.clone(), other.clone(), None)
             };
-            let source_line =
-                LineSeg2::try_new(inverse_point(line.start())?, inverse_point(line.end())?)?;
-            let source_chord = match BezierAlgebraicChord2::try_new(
-                RationalBezierIntersectionPointEvidence2::Exact(source_line.start().clone()),
-                RationalBezierIntersectionPointEvidence2::Exact(source_line.end().clone()),
-                policy,
-            )? {
-                Classification::Decided(chord) => chord,
-                Classification::Uncertain(_) => {
-                    return Ok(Classification::Decided(None));
-                }
-            };
-            (source_circle, source_chord, Some(transform))
-        } else {
-            (self.clone(), chord.clone(), None)
-        };
         let intersections =
             match solve_circle.chord_intersections_prefer_exact_line(&solve_chord, true, policy)? {
                 Classification::Decided(intersections) => intersections,
@@ -39060,21 +39081,36 @@ impl BezierAlgebraicCuspSemicircle2 {
 
         let zero = Real::zero();
         let one = Real::one();
+        let nonlinear_tangent = if affine_parameterization {
+            None
+        } else {
+            let source = other.homogeneous_power_basis()?;
+            let axis_numerator = match chord.data.parameter_axis.axis {
+                Axis2::X => &source.x_numerator,
+                Axis2::Y => &source.y_numerator,
+            };
+            Some(polynomial_subtract(
+                &polynomial_multiply(&polynomial_derivative(axis_numerator), &source.weight),
+                &polynomial_multiply(axis_numerator, &polynomial_derivative(&source.weight)),
+            ))
+        };
+        let line_axis_sign = if nonlinear_tangent.is_some() {
+            let axis_delta = match chord.data.parameter_axis.axis {
+                Axis2::X => line.end().x() - line.start().x(),
+                Axis2::Y => line.end().y() - line.start().y(),
+            };
+            match real_sign(&axis_delta, &CurveContext::STRICT) {
+                Some(sign @ (RealSign::Positive | RealSign::Negative)) => Some(sign),
+                Some(RealSign::Zero) | None => return Ok(Classification::Decided(None)),
+            }
+        } else {
+            None
+        };
         let mut retained_parameters = Vec::with_capacity(contacts.len());
         let mut rational_contacts = Vec::with_capacity(contacts.len());
         for contact in contacts {
-            let retained_parameter =
-                match contact.chord_parameter.exact_line_curve_parameter(policy)? {
-                    Classification::Decided(parameter) => parameter,
-                    Classification::Uncertain(_) => return Ok(Classification::Decided(None)),
-                };
-            let retained_parameter = if let Some(transform) = similarity.as_ref() {
-                retained_parameter.transported_recursive_line_identity(line.clone(), transform)
-            } else {
-                retained_parameter
-            };
-            let other_parameter = retained_parameter;
-            let tangent_dot_sign = if other.degree() == 1 {
+            let solve_point = contact.point.clone();
+            let tangent_dot_sign = if affine_parameterization && other.degree() == 1 {
                 match contact.tangent_dot_sign(&solve_circle, &solve_chord, policy)? {
                     Classification::Decided(sign) => Some(sign),
                     Classification::Uncertain(_) => return Ok(Classification::Decided(None)),
@@ -39128,14 +39164,129 @@ impl BezierAlgebraicCuspSemicircle2 {
                     BezierAlgebraicCuspSemicircleContactLocation2::Interior
                 }
             };
-            retained_parameters.push((other_parameter.clone(), cusp_parameter));
-            rational_contacts.push(BezierAlgebraicCuspSemicircleRationalContact2 {
-                other_parameter,
-                point,
-                tangent_cross_sign,
-                tangent_dot_sign,
-                location,
-            });
+            if affine_parameterization {
+                let retained_parameter =
+                    match contact.chord_parameter.exact_line_curve_parameter(policy)? {
+                        Classification::Decided(parameter) => parameter,
+                        Classification::Uncertain(_) => return Ok(Classification::Decided(None)),
+                    };
+                let other_parameter = if let Some(transform) = similarity.as_ref() {
+                    retained_parameter.transported_recursive_line_identity(line.clone(), transform)
+                } else {
+                    retained_parameter
+                };
+                retained_parameters.push((other_parameter.clone(), cusp_parameter.clone()));
+                rational_contacts.push(BezierAlgebraicCuspSemicircleRationalContact2 {
+                    other_parameter,
+                    point,
+                    tangent_cross_sign,
+                    tangent_dot_sign,
+                    location,
+                });
+                continue;
+            }
+
+            let exact_parameters =
+                match represented_point_evidence_coordinates(&solve_point, policy)? {
+                    Classification::Decided([x, y]) => {
+                        match (x.exact_point_witness(), y.exact_point_witness()) {
+                            (Some(x), Some(y)) => {
+                                match solve_other.point_incidence_classified(
+                                    &Point2::new(x.clone(), y.clone()),
+                                    policy,
+                                )? {
+                                    Classification::Decided(
+                                        crate::RationalBezierPointIncidence2::Parameters(
+                                            parameters,
+                                        ),
+                                    ) => Some(
+                                        parameters
+                                            .into_iter()
+                                            .map(CurveRegionParameter2::from_bezier)
+                                            .collect(),
+                                    ),
+                                    Classification::Decided(
+                                        crate::RationalBezierPointIncidence2::EntireCurve,
+                                    )
+                                    | Classification::Uncertain(_) => {
+                                        return Ok(Classification::Decided(None));
+                                    }
+                                }
+                            }
+                            _ => None,
+                        }
+                    }
+                    Classification::Uncertain(_) => None,
+                };
+            let source_parameters = if let Some(parameters) = exact_parameters {
+                parameters
+            } else {
+                match solve_chord.collinear_source_parameters_at_chord_endpoint(
+                    &solve_other,
+                    &solve_point,
+                    policy,
+                )? {
+                    Classification::Decided(parameters) => parameters,
+                    Classification::Uncertain(_) => return Ok(Classification::Decided(None)),
+                }
+            };
+            let tangent = nonlinear_tangent
+                .as_ref()
+                .expect("a nonlinear line image retains its axis tangent");
+            let line_axis_sign =
+                line_axis_sign.expect("a nonlinear line image has a nonzero chord axis");
+            for other_parameter in source_parameters {
+                let source_tangent_sign =
+                    if let Some(parameter) = other_parameter.as_bezier_parameter() {
+                        signed_coefficients_at_parameter(tangent.clone(), parameter, policy)?
+                    } else if let Some(parameter) = other_parameter.as_recursive_projective() {
+                        parameter.polynomial_sign(tangent, policy)?
+                    } else {
+                        return Ok(Classification::Decided(None));
+                    };
+                let source_tangent_sign = match source_tangent_sign {
+                    Classification::Decided(sign) => product_sign(sign, line_axis_sign),
+                    Classification::Uncertain(_) => return Ok(Classification::Decided(None)),
+                };
+                let target_point = match rational_point_evidence_at_region_parameter(
+                    other,
+                    &other_parameter,
+                    policy,
+                )? {
+                    Classification::Decided(point) => point,
+                    Classification::Uncertain(_) => {
+                        return Ok(Classification::Decided(None));
+                    }
+                };
+                rational_contacts.push(BezierAlgebraicCuspSemicircleRationalContact2 {
+                    other_parameter,
+                    point: target_point,
+                    tangent_cross_sign: product_sign(tangent_cross_sign, source_tangent_sign),
+                    tangent_dot_sign: None,
+                    location,
+                });
+            }
+        }
+
+        if !affine_parameterization {
+            for index in 1..rational_contacts.len() {
+                let mut cursor = index;
+                while cursor > 0 {
+                    match rational_contacts[cursor]
+                        .other_parameter
+                        .cmp_by_refinement(&rational_contacts[cursor - 1].other_parameter, policy)?
+                    {
+                        Classification::Decided(std::cmp::Ordering::Less) => {
+                            rational_contacts.swap(cursor, cursor - 1);
+                            cursor -= 1;
+                        }
+                        Classification::Decided(_) => break,
+                        Classification::Uncertain(_) => {
+                            return Ok(Classification::Decided(None));
+                        }
+                    }
+                }
+            }
         }
 
         let parameter_map = if retain_parameter_map
@@ -39170,7 +39321,11 @@ impl BezierAlgebraicCuspSemicircle2 {
         hyperreal::dispatch_trace::record(
             "hypercurve",
             "algebraic-circle-rational-kernel",
-            "exact-linear-chord-authority",
+            if affine_parameterization {
+                "exact-linear-chord-authority"
+            } else {
+                "exact-line-image-chord-authority"
+            },
         );
         Ok(Classification::Decided(Some((
             BezierAlgebraicCuspSemicircleRationalIntersections2::Contacts(rational_contacts),
@@ -39226,7 +39381,7 @@ impl BezierAlgebraicCuspSemicircle2 {
         }
         if self.uses_selected_radial_frame() {
             if let Classification::Decided(Some(intersections)) = self
-                .exact_linear_selected_radial_rational_intersections(
+                .exact_line_image_selected_radial_rational_intersections(
                     other,
                     retain_parameter_map,
                     policy,
@@ -72177,6 +72332,15 @@ impl BezierAlgebraicChord2 {
         let parameter = self.parameter_on_retained_support(point.clone());
         let start = self.start_parameter();
         let end = self.end_parameter();
+        let retained_endpoint = |parameter| {
+            #[cfg(feature = "dispatch-trace")]
+            hyperreal::dispatch_trace::record(
+                "hypercurve",
+                "algebraic-chord-finite-parameter",
+                "strict-retained-endpoint",
+            );
+            Some(parameter)
+        };
         // A support solve can rebuild a Boolean-split endpoint in a different
         // correlated field. If monotone coordinate order cannot rediscover
         // that equality, replay point identity under STRICT and retain the
@@ -72191,13 +72355,7 @@ impl BezierAlgebraicChord2 {
                         .then_some(at_end)
                     })
             })?;
-            #[cfg(feature = "dispatch-trace")]
-            hyperreal::dispatch_trace::record(
-                "hypercurve",
-                "algebraic-chord-finite-parameter",
-                "strict-retained-endpoint",
-            );
-            Some(if at_end { end.clone() } else { start.clone() })
+            retained_endpoint(if at_end { end.clone() } else { start.clone() })
         };
         let orders = if let Some(direction) = self.certified_axis_direction() {
             let axis = direction.axis();
@@ -72252,8 +72410,8 @@ impl BezierAlgebraicChord2 {
             }
         };
         Ok(Classification::Decided(match (lower, upper) {
-            (std::cmp::Ordering::Equal, _) => Some(start),
-            (_, std::cmp::Ordering::Equal) => Some(end),
+            (std::cmp::Ordering::Equal, _) => retained_endpoint(start),
+            (_, std::cmp::Ordering::Equal) => retained_endpoint(end),
             (std::cmp::Ordering::Greater, std::cmp::Ordering::Less) => {
                 Some(self.parameter_at_certified_interior_point(point))
             }
@@ -82027,6 +82185,75 @@ pub(crate) fn algebraic_chord_point_coordinate_order(
             derived.selected_chord_normal_parallel_axis_order(parallel, axis, policy)
     {
         return Ok(order?.map(std::cmp::Ordering::reverse));
+    }
+    let cusp_parallel_order = |cusp: &BezierAlgebraicCuspChordPoint2,
+                               parallel: &BezierAlgebraicChordParallelPoint2|
+     -> CurveResult<Classification<std::cmp::Ordering>> {
+        let coordinate = match parallel.exact_axis_coordinate(axis, policy)? {
+            Classification::Decided(Some(coordinate)) => coordinate,
+            Classification::Decided(None) | Classification::Uncertain(_) => {
+                return Ok(Classification::Uncertain(UncertaintyReason::Ordering));
+            }
+        };
+        let order = cusp.axis_coordinate_order_to_real(axis, &coordinate, policy)?;
+        #[cfg(feature = "dispatch-trace")]
+        if matches!(order, Classification::Decided(_)) {
+            hyperreal::dispatch_trace::record(
+                "hypercurve",
+                "algebraic-chord-parallel-axis-order",
+                "exact-cardinal-coordinate",
+            );
+        }
+        Ok(order)
+    };
+    match (first, second) {
+        (
+            RationalBezierIntersectionPointEvidence2::AlgebraicCuspChord(cusp),
+            RationalBezierIntersectionPointEvidence2::AlgebraicChordParallel(parallel),
+        ) => {
+            if let order @ Classification::Decided(_) = cusp_parallel_order(cusp, parallel)? {
+                return Ok(order);
+            }
+        }
+        (
+            RationalBezierIntersectionPointEvidence2::AlgebraicChordParallel(parallel),
+            RationalBezierIntersectionPointEvidence2::AlgebraicCuspChord(cusp),
+        ) => {
+            if let Classification::Decided(order) = cusp_parallel_order(cusp, parallel)? {
+                return Ok(Classification::Decided(order.reverse()));
+            }
+        }
+        _ => {}
+    }
+    if matches!(
+        (first, second),
+        (
+            RationalBezierIntersectionPointEvidence2::AlgebraicCuspChord(_),
+            RationalBezierIntersectionPointEvidence2::Algebraic(_),
+        ) | (
+            RationalBezierIntersectionPointEvidence2::Algebraic(_),
+            RationalBezierIntersectionPointEvidence2::AlgebraicCuspChord(_),
+        )
+    ) && let (
+        Classification::Decided(first_coordinates),
+        Classification::Decided(second_coordinates),
+    ) = (
+        represented_point_evidence_coordinates(first, policy)?,
+        represented_point_evidence_coordinates(second, policy)?,
+    ) {
+        let coordinate = usize::from(axis == Axis2::Y);
+        if let Some(order) = represented_strict_order(
+            &first_coordinates[coordinate],
+            &second_coordinates[coordinate],
+        ) {
+            #[cfg(feature = "dispatch-trace")]
+            hyperreal::dispatch_trace::record(
+                "hypercurve",
+                "algebraic-chord-point-axis-order",
+                "direct-represented-coordinate",
+            );
+            return Ok(Classification::Decided(order));
+        }
     }
     if let (
         RationalBezierIntersectionPointEvidence2::AlgebraicChordParallel(first),
@@ -150258,7 +150485,6 @@ mod conversion_tests {
     }
 
     #[test]
-    #[ignore = "manual exact-certification stress case; exceeds hosted CI deadline"]
     fn recursive_selected_radial_rational_kernel_retains_singular_circle_contacts() {
         let half = (Real::one() / Real::from(2_i8)).unwrap();
         let singular_parameter = BezierParameter2::Exact(half);
@@ -150305,7 +150531,7 @@ mod conversion_tests {
                     trace.path_count(
                         "hypercurve",
                         "algebraic-circle-rational-kernel",
-                        "exact-rational-frame",
+                        "exact-line-image-chord-authority",
                     ),
                     1,
                 );
@@ -150330,6 +150556,55 @@ mod conversion_tests {
             assert!(
                 retained_singular_contact,
                 "a zero target derivative must not erase its incident circle point: policy={policy:?}",
+            );
+        }
+    }
+
+    #[test]
+    fn recursive_selected_radial_line_image_preserves_target_orientation() {
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let circle = recursively_pair_radial_rational_center_half(&policy);
+            let target = |reversed| {
+                let mut controls = vec![
+                    Point2::from_values(-1, -1),
+                    Point2::from_values(0, -1),
+                    Point2::from_values(1, -1),
+                    Point2::from_values(2, -1),
+                ];
+                if reversed {
+                    controls.reverse();
+                }
+                RationalBezier2::try_new(controls, vec![Real::one(); 4]).unwrap()
+            };
+            let contacts = |reversed| {
+                let result = circle
+                    .rational_intersections(&target(reversed), &policy)
+                    .unwrap();
+                let Classification::Decided(
+                    BezierAlgebraicCuspSemicircleRationalIntersections2::Contacts(contacts),
+                ) = result
+                else {
+                    panic!(
+                        "the nonlinear line image must use the exact chord authority: policy={policy:?}, reversed={reversed}, result={result:?}"
+                    );
+                };
+                contacts
+            };
+            let forward = contacts(false);
+            let reversed = contacts(true);
+            let ([forward], [reversed]) = (forward.as_slice(), reversed.as_slice()) else {
+                panic!(
+                    "the selected half must retain one contact in each traversal: policy={policy:?}, forward={forward:?}, reversed={reversed:?}"
+                );
+            };
+            assert_ne!(forward.tangent_cross_sign, RealSign::Zero);
+            assert_eq!(
+                reversed.tangent_cross_sign,
+                product_sign(forward.tangent_cross_sign, RealSign::Negative),
+            );
+            assert_eq!(
+                forward.point.same_point(&reversed.point, &policy),
+                Classification::Decided(true),
             );
         }
     }
