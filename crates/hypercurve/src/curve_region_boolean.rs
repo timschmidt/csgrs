@@ -2472,13 +2472,14 @@ impl<'a> CurveRegionBooleanContext<'a> {
     /// Recovers a full-circle endpoint tangency from an adjacent sibling
     /// chart. Long selected arcs are stored as consecutive half-circle
     /// fragments; a chord adjacent to one half is still tangent to the same
-    /// complete circle represented by the other half. The returned Boolean
-    /// names the chord's traversal-start endpoint.
+    /// complete circle represented by the other half. Retain the sibling
+    /// chart and its endpoint as well as the chord endpoint: the authored
+    /// angular parameter decides half-chart ownership without a new solve.
     fn certified_supporting_circle_chord_endpoint_tangency(
         &self,
         cusp_index: usize,
         chord_index: usize,
-    ) -> Option<bool> {
+    ) -> Option<(usize, bool, bool)> {
         let cusp = match &self.data.carriers.get(cusp_index)?.geometry {
             RegionCarrierGeometry::AlgebraicCuspSemicircle(cusp) => cusp,
             _ => return None,
@@ -2517,9 +2518,9 @@ impl<'a> CurveRegionBooleanContext<'a> {
                 continue;
             }
             match certified {
-                Some(previous) if previous != chord_at_start => return None,
+                Some((_, _, previous)) if previous != chord_at_start => return None,
                 Some(_) => {}
-                None => certified = Some(chord_at_start),
+                None => certified = Some((candidate_index, candidate_at_start, chord_at_start)),
             }
         }
         certified
@@ -4374,7 +4375,6 @@ impl<'a> CurveRegionBooleanContext<'a> {
         &self,
         cusp: &crate::BezierAlgebraicCuspSemicircleFragment2,
         chord: &crate::BezierAlgebraicChord2,
-        supporting_circle_tangent: bool,
     ) -> CurveResult<Classification<Option<BezierAlgebraicCuspSemicircleRetainedChordContact2>>>
     {
         let mut uncertainty = None;
@@ -4414,20 +4414,18 @@ impl<'a> CurveRegionBooleanContext<'a> {
                         }
                     }
                 }
-                if !supporting_circle_tangent {
-                    match self.data.policy.strict_predicate_pass(|| {
-                        cusp.certified_adjacent_chord_is_endpoint_only(
-                            chord,
-                            cusp_at_start,
-                            &self.data.policy,
-                        )
-                    })? {
-                        Classification::Decided(true) => {}
-                        Classification::Decided(false) => continue,
-                        Classification::Uncertain(reason) => {
-                            uncertainty.get_or_insert(reason);
-                            continue;
-                        }
+                match self.data.policy.strict_predicate_pass(|| {
+                    cusp.certified_adjacent_chord_is_endpoint_only(
+                        chord,
+                        cusp_at_start,
+                        &self.data.policy,
+                    )
+                })? {
+                    Classification::Decided(true) => {}
+                    Classification::Decided(false) => continue,
+                    Classification::Uncertain(reason) => {
+                        uncertainty.get_or_insert(reason);
+                        continue;
                     }
                 }
                 return Ok(Classification::Decided(Some(
@@ -4890,7 +4888,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
                             first_at_start
                         });
                     }
-                    if let Some(chord_at_start) = self
+                    if let Some((sibling_index, sibling_at_start, chord_at_start)) = self
                         .certified_supporting_circle_chord_endpoint_tangency(
                             cusp_index,
                             chord_index,
@@ -4904,35 +4902,82 @@ impl<'a> CurveRegionBooleanContext<'a> {
                             "algebraic-circle-chord-pair",
                             "supporting-circle-sibling-endpoint-tangent",
                         );
-                        match self
-                            .certified_cusp_chord_endpoint_contact(cusp, chord, true)
-                            .map_err(|cause| self.invalid(chord_index, cause))?
-                        {
-                            Classification::Decided(Some(contact)) => {
-                                return self.retained_cusp_chord_pair_result(
-                                    cusp,
-                                    chord,
-                                    chord_index,
-                                    *cusp_is_first,
-                                    vec![contact],
-                                );
+                        let sibling = self.data.carriers[sibling_index].geometry.algebraic_cusp();
+                        let parameter = sibling.endpoint_parameter(sibling_at_start);
+                        let mapped = self.data.policy.strict_predicate_pass(|| {
+                            use std::cmp::Ordering::{Equal, Greater, Less};
+                            Ok::<_, CurveError>(match cusp.semicircle().shared_frame_chart_relation(
+                                sibling.semicircle(),
+                                &self.data.policy,
+                            ) {
+                                Classification::Decided(Some(false)) => {
+                                    Classification::Decided(Some(parameter.clone()))
+                                }
+                                Classification::Decided(Some(true)) => {
+                                    match (
+                                        parameter.order_to_real(&Real::zero(), &self.data.policy)?,
+                                        parameter.order_to_real(&Real::one(), &self.data.policy)?,
+                                    ) {
+                                        (Classification::Decided(Equal), _) => Classification::Decided(Some(
+                                            BezierAlgebraicCuspSemicircleParameter2::Exact(Real::one()),
+                                        )),
+                                        (_, Classification::Decided(Equal)) => Classification::Decided(Some(
+                                            BezierAlgebraicCuspSemicircleParameter2::Exact(Real::zero()),
+                                        )),
+                                        (Classification::Decided(Greater), Classification::Decided(Less)) => {
+                                            Classification::Decided(None)
+                                        }
+                                        _ => Classification::Uncertain(UncertaintyReason::Ordering),
+                                    }
+                                }
+                                _ => Classification::Uncertain(UncertaintyReason::Unsupported),
+                            })
+                        }).map_err(|cause| self.invalid(cusp_index, cause))?;
+                        match mapped {
+                            Classification::Decided(None) => return Ok(RegionPairResult::empty()),
+                            Classification::Decided(Some(cusp_parameter)) => {
+                                match self
+                                    .data
+                                    .policy
+                                    .strict_predicate_pass(|| {
+                                        cusp.contains_parameter(
+                                            &cusp_parameter,
+                                            true,
+                                            true,
+                                            &self.data.policy,
+                                        )
+                                    })
+                                    .map_err(|cause| self.invalid(cusp_index, cause))?
+                                {
+                                    Classification::Decided(false) => {
+                                        return Ok(RegionPairResult::empty());
+                                    }
+                                    Classification::Decided(true) => {
+                                        let (chord_parameter, point) = if chord_at_start {
+                                            (chord.start_parameter(), chord.start().clone())
+                                        } else {
+                                            (chord.end_parameter(), chord.end().clone())
+                                        };
+                                        return self.retained_cusp_chord_pair_result(
+                                            cusp, chord, chord_index, *cusp_is_first,
+                                            vec![BezierAlgebraicCuspSemicircleRetainedChordContact2 {
+                                                cusp_parameter, chord_parameter, point,
+                                                tangent_cross_sign: RealSign::Zero,
+                                            }],
+                                        );
+                                    }
+                                    Classification::Uncertain(_) => {}
+                                }
                             }
-                            Classification::Decided(None) => {
-                                return Ok(RegionPairResult::empty());
-                            }
-                            Classification::Uncertain(_) => {
-                                // The full-circle certificate still provides
-                                // exact endpoint incidence. Let the common
-                                // kernel decide selected-half ownership when
-                                // endpoint identity could not be replayed
-                                // structurally.
-                                certified_chord_endpoint_incidence = Some(chord_at_start);
-                            }
+                            Classification::Uncertain(_) => {}
                         }
+                        // A failed chart comparison does not erase the exact
+                        // full-circle incidence or prove absence of a contact.
+                        certified_chord_endpoint_incidence = Some(chord_at_start);
                     }
                     if certified_chord_endpoint_incidence.is_none()
                         && let Classification::Decided(Some(contact)) = self
-                            .certified_cusp_chord_endpoint_contact(cusp, chord, false)
+                            .certified_cusp_chord_endpoint_contact(cusp, chord)
                             .map_err(|cause| self.invalid(chord_index, cause))?
                     {
                         #[cfg(feature = "dispatch-trace")]
@@ -17126,6 +17171,208 @@ mod certified_successor_tests {
             vec![crate::CurveBoundaryInteriorSide2::Left],
         )
         .expect("valid selected-field region")
+    }
+
+    #[test]
+    fn sibling_circle_tangency_preserves_half_chart_and_finite_range_ownership() {
+        let half = (Real::one() / Real::from(2_i8)).unwrap();
+        let quarter = (Real::one() / Real::from(4_i8)).unwrap();
+        let three_quarters = &quarter * Real::from(3_i8);
+        let parameters = [Real::zero(), half.clone(), Real::one()];
+        let points = [
+            Point2::from_values(0, 1),
+            Point2::from_values(-1, 0),
+            Point2::from_values(0, -1),
+        ];
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let circle = decided(
+                BezierAlgebraicCuspSemicircle2::from_selected_parallel_normal(
+                    QuadraticBezier2::new(
+                        Point2::from_values(-1, 0),
+                        Point2::from_values(0, 0),
+                        Point2::from_values(1, 0),
+                    )
+                    .parallel_left(Real::zero())
+                    .unwrap(),
+                    BezierParameter2::Exact(half.clone()),
+                    Real::one(),
+                    false,
+                    &policy,
+                )
+                .unwrap(),
+            )
+            .unwrap();
+            for (lower, upper, reversed) in
+                [(0, 1, false), (1, 2, true), (0, 2, false), (0, 2, true)]
+            {
+                let fragment = decided(
+                    BezierAlgebraicCuspSemicircleFragment2::try_new(
+                        circle.clone(),
+                        BezierAlgebraicCuspSemicircleParameter2::Exact(parameters[lower].clone()),
+                        BezierAlgebraicCuspSemicircleParameter2::Exact(parameters[upper].clone()),
+                        reversed,
+                        &policy,
+                    )
+                    .unwrap(),
+                )
+                .with_certified_tangent_endpoints();
+                let (start_index, end_index) = if reversed {
+                    (upper, lower)
+                } else {
+                    (lower, upper)
+                };
+                let start = &points[start_index];
+                let end = &points[end_index];
+                let tangent = |point: &Point2| {
+                    if reversed {
+                        (point.y().clone(), -point.x())
+                    } else {
+                        (-point.y(), point.x().clone())
+                    }
+                };
+                let end_tangent = tangent(end);
+                let start_tangent = tangent(start);
+                let chord_end = end.translated(end_tangent.0, end_tangent.1);
+                let closing_start = start.translated(-start_tangent.0, -start_tangent.1);
+                let chord = decided(
+                    crate::BezierAlgebraicChord2::try_new(
+                        RationalBezierIntersectionPointEvidence2::Exact(end.clone()),
+                        RationalBezierIntersectionPointEvidence2::Exact(chord_end.clone()),
+                        &policy,
+                    )
+                    .unwrap(),
+                );
+                let line = |start, end| BezierSplitFragment2::Materialized {
+                    start: BezierParameter2::Exact(Real::zero()),
+                    end: BezierParameter2::Exact(Real::one()),
+                    curve: BezierSubcurve2::Quadratic(QuadraticBezier2::from_line_segment(
+                        LineSeg2::try_new(start, end).unwrap(),
+                    )),
+                };
+                let source = CurveRegion2::try_new_with_loop_topology(
+                    vec![
+                        CurveRegionBoundaryLoop2::new(
+                            vec![
+                                BezierSplitFragment2::AlgebraicCuspSemicircle(fragment.clone()),
+                                BezierSplitFragment2::AlgebraicChord(chord.clone()),
+                                line(chord_end, closing_start.clone()),
+                                line(closing_start, start.clone()),
+                            ],
+                            &policy,
+                        )
+                        .unwrap(),
+                    ],
+                    vec![CurveRegionLoopRole::Material],
+                    vec![FillRule::NonZero],
+                    vec![crate::CurveBoundaryInteriorSide2::Left],
+                )
+                .unwrap();
+                for complementary in [false, true] {
+                    for clipped in [false, true] {
+                        for target_reversed in [false, true] {
+                            let mut sibling = cusp_test_carrier(
+                                circle.clone(),
+                                parameters[lower].clone(),
+                                parameters[upper].clone(),
+                                CurveRegionBooleanOperand2::First,
+                                &policy,
+                            );
+                            sibling.geometry =
+                                RegionCarrierGeometry::AlgebraicCuspSemicircle(fragment.clone());
+                            sibling.reversed = reversed;
+                            let mut chord_carrier = algebraic_chord_carrier(
+                                CurveRegionBooleanOperand2::First,
+                                chord.clone(),
+                            );
+                            chord_carrier.fragment_index = 1;
+                            let mut target = cusp_test_carrier(
+                                if complementary {
+                                    circle.complementary_half()
+                                } else {
+                                    circle.clone()
+                                },
+                                if clipped {
+                                    quarter.clone()
+                                } else {
+                                    Real::zero()
+                                },
+                                if clipped {
+                                    three_quarters.clone()
+                                } else {
+                                    Real::one()
+                                },
+                                CurveRegionBooleanOperand2::Second,
+                                &policy,
+                            );
+                            if target_reversed {
+                                target.geometry = RegionCarrierGeometry::AlgebraicCuspSemicircle(
+                                    target.geometry.algebraic_cusp().reversed(),
+                                );
+                                target.reversed = true;
+                            }
+                            let empty = CurveRegion2::empty();
+                            let pair = RegionCarrierPair {
+                                first_carrier_index: 2,
+                                second_carrier_index: 1,
+                                context: RegionCarrierPairContext::CuspChord {
+                                    cusp_is_first: true,
+                                },
+                            };
+                            let context = CurveRegionBooleanContext {
+                                data: CurveRegionBooleanContextData {
+                                    first: &source,
+                                    second: &empty,
+                                    policy,
+                                    carriers: vec![sibling, chord_carrier, target],
+                                    first_carrier_count: 2,
+                                    authored_carrier_pair_count: 1,
+                                    pairs: vec![pair],
+                                    bezier_self_intersections: Vec::new(),
+                                    parallel_self_intersections: Vec::new(),
+                                    strict_line_image_only: OnceLock::new(),
+                                },
+                            };
+                            let outcome = crate::policy::resolve_certified_value(&policy, |_| {
+                                context.pair_result(&context.data.pairs[0]).unwrap()
+                            });
+                            assert_eq!(outcome.certainty, crate::CurveCertainty::Certified);
+                            let result = outcome.value;
+                            assert!(result.blockers.is_empty(), "{result:?}");
+                            let expected = if clipped {
+                                !complementary && end_index == 1
+                            } else {
+                                !complementary || end_index != 1
+                            };
+                            assert_eq!(
+                                result.contacts.len(),
+                                usize::from(expected),
+                                "policy={policy:?} source=({lower},{upper},{reversed}) complementary={complementary} clipped={clipped} reversed={target_reversed}"
+                            );
+                            if expected {
+                                let contact = &result.contacts[0];
+                                assert!(!contact.is_certified_transverse());
+                                assert_eq!(contact.tangent_cross_sign, Some(RealSign::Zero));
+                                assert_eq!(contact.point().unwrap().as_exact(), Some(end));
+                                let expected_parameter = if complementary {
+                                    Real::one() - &parameters[end_index]
+                                } else {
+                                    parameters[end_index].clone()
+                                };
+                                assert_eq!(
+                                    contact
+                                        .first_parameter()
+                                        .as_algebraic_cusp()
+                                        .unwrap()
+                                        .order_to_real(&expected_parameter, &policy)
+                                        .unwrap(),
+                                    Classification::Decided(Ordering::Equal)
+                                );
+                            }
+                        }
+                    }
+                }
+            }
+        }
     }
 
     #[test]
