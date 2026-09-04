@@ -55055,7 +55055,60 @@ impl BezierDenseTwoSquareRootExpression2 {
         first_speed_squared: &DenseTensorPolynomial,
         second_speed_squared: &DenseTensorPolynomial,
     ) -> Option<Self> {
-        self.multiply(self, first_speed_squared, second_speed_squared)
+        let speed_product = first_speed_squared.multiply(second_speed_squared)?;
+        let rational = self
+            .rational
+            .multiply(&self.rational)?
+            .add(
+                &self
+                    .first
+                    .multiply(&self.first)?
+                    .multiply(first_speed_squared)?,
+            )?
+            .add(
+                &self
+                    .second
+                    .multiply(&self.second)?
+                    .multiply(second_speed_squared)?,
+            )?
+            .add(
+                &self
+                    .product
+                    .multiply(&self.product)?
+                    .multiply(&speed_product)?,
+            )?;
+        let two = Real::from(2_i8);
+        let first = self
+            .rational
+            .multiply(&self.first)?
+            .add(
+                &self
+                    .second
+                    .multiply(&self.product)?
+                    .multiply(second_speed_squared)?,
+            )?
+            .scale(&two)?;
+        let second = self
+            .rational
+            .multiply(&self.second)?
+            .add(
+                &self
+                    .first
+                    .multiply(&self.product)?
+                    .multiply(first_speed_squared)?,
+            )?
+            .scale(&two)?;
+        let product = self
+            .rational
+            .multiply(&self.product)?
+            .add(&self.first.multiply(&self.second)?)?
+            .scale(&two)?;
+        Some(Self {
+            rational,
+            first,
+            second,
+            product,
+        })
     }
 
     fn reduced(&self, sources: &[AlgebraicRootRepresentation]) -> Option<Self> {
@@ -56363,6 +56416,9 @@ impl BezierRecursiveQuadraticValue2 {
     }
 
     fn multiply(&self, other: &Self) -> Option<Self> {
+        if Arc::ptr_eq(&self.data, &other.data) {
+            return self.square();
+        }
         match (self.data.as_ref(), other.data.as_ref()) {
             (
                 BezierRecursiveQuadraticValueData2::Base { field, expression },
@@ -56393,10 +56449,7 @@ impl BezierRecursiveQuadraticValue2 {
                 let retained_product = retained.multiply(other_retained)?;
                 let radical_product = radical.multiply(other_radical)?.multiply(&field.radicand)?;
                 let retained = retained_product.add(&radical_product)?;
-                let radical = retained
-                    .field()
-                    .constant(Real::zero())?
-                    .add(&self.extension_cross_term(other)?)?;
+                let radical = self.extension_cross_term(other)?;
                 Self::from_extension(field.clone(), retained, radical)
             }
             _ => None,
@@ -56428,7 +56481,23 @@ impl BezierRecursiveQuadraticValue2 {
     }
 
     fn square(&self) -> Option<Self> {
-        self.multiply(self)
+        match self.data.as_ref() {
+            BezierRecursiveQuadraticValueData2::Base { field, expression } => Self::from_base(
+                field.clone(),
+                expression.square(&field.first_speed_squared, &field.second_speed_squared)?,
+            ),
+            BezierRecursiveQuadraticValueData2::Extension {
+                field,
+                retained,
+                radical,
+            } => Self::from_extension(
+                field.clone(),
+                retained
+                    .square()?
+                    .add(&radical.square()?.multiply(&field.radicand)?)?,
+                retained.multiply(radical)?.scale(&Real::from(2_i8))?,
+            ),
+        }
     }
 
     /// Returns true only when every retained coefficient is structurally the
@@ -57736,9 +57805,9 @@ impl BezierRecursiveQuadraticProjectiveScalar2 {
                 "recursive-projective-scalar-image",
                 "exact-rational-witness",
             );
-            return Ok(Classification::Decided(exact_real_algebraic_representation(
-                &Real::new(value),
-            )));
+            return Ok(Classification::Decided(
+                exact_real_algebraic_representation(&Real::new(value)),
+            ));
         }
         let Some((base, mut relation)) = recursive_quadratic_polynomial_projection(vec![
             self.numerator.clone(),
@@ -146094,6 +146163,40 @@ mod conversion_tests {
             diameter: zero_expression.clone(),
             radius_squared_denominator: zero_expression,
         }
+    }
+
+    #[test]
+    fn dense_two_radical_square_matches_general_field_product() {
+        let polynomial = |coefficients: &[i8]| {
+            let coefficients = coefficients
+                .iter()
+                .copied()
+                .map(Real::from)
+                .collect::<Vec<_>>();
+            DenseTensorPolynomial::from_axis_polynomial(1, 0, &coefficients).unwrap()
+        };
+        let expression = BezierDenseTwoSquareRootExpression2 {
+            rational: polynomial(&[1, 2]),
+            first: polynomial(&[-3, 1]),
+            second: polynomial(&[2, 4]),
+            product: polynomial(&[1, -2]),
+        };
+        let first_speed_squared = polynomial(&[2, 1]);
+        let second_speed_squared = polynomial(&[3, -1]);
+        let square = expression
+            .square(&first_speed_squared, &second_speed_squared)
+            .unwrap();
+        let general = expression
+            .multiply(
+                &expression.clone(),
+                &first_speed_squared,
+                &second_speed_squared,
+            )
+            .unwrap();
+        assert_eq!(square.rational, general.rational);
+        assert_eq!(square.first, general.first);
+        assert_eq!(square.second, general.second);
+        assert_eq!(square.product, general.product);
     }
 
     #[test]
