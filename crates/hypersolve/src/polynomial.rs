@@ -15,6 +15,12 @@ use hyperreal::{Real, RealExactSetFacts};
 use crate::model::{Problem, Variable};
 use crate::symbolic::{Expr, ExprEvalError, SymbolId, SymbolRef};
 
+// These extractors are bounded quadratic recognizers, not unrestricted CAS
+// expansion. Retain enough of a higher-degree tail to prove ordinary
+// cancellations, but never turn resource exhaustion into a zero coefficient.
+const MAX_CANCELLATION_DEGREE: usize = 64;
+const MAX_CANCELLATION_TERMS: usize = 256;
+
 /// One exact linear term retained in a multivariate quadratic row.
 #[derive(Clone, Debug, PartialEq)]
 pub struct QuadraticLinearTerm {
@@ -57,23 +63,14 @@ impl QuadraticResidual {
     ///
     /// Returns `None` when the expression is not quadratic in the problem's
     /// variables or refers to a symbol outside the problem.
+    /// Intermediate higher-degree cancellations are retained through degree
+    /// 64 and at most 256 nonzero higher-degree terms. Exceeding either limit
+    /// returns `None`, even if a larger expansion would eventually cancel.
     pub fn from_expr(expression: &Expr, problem: &Problem) -> Option<Self> {
-        let poly = collect_multivariate_quadratic(expression)?;
+        let poly = collect_multivariate_quadratic(expression, problem)?;
         if !poly.is_higher_zero() {
             return None;
         }
-        for symbols in poly.terms.keys() {
-            for symbol in symbols {
-                if !problem
-                    .variables
-                    .iter()
-                    .any(|variable| variable.symbol == *symbol)
-                {
-                    return None;
-                }
-            }
-        }
-
         let mut constant = Real::zero();
         let mut linear_terms = Vec::new();
         let mut quadratic_terms = Vec::new();
@@ -184,6 +181,8 @@ impl UnivariateQuadraticResidual {
     ///
     /// Returns `None` when the expression is not a quadratic in exactly one
     /// problem variable.
+    /// Intermediate higher-degree cancellations are retained through degree
+    /// 64; exceeding this expansion limit returns `None`.
     pub fn from_expr(expression: &Expr, problem: &Problem) -> Option<Self> {
         let poly = collect_polynomial(expression)?;
         let symbol = poly.symbol?;
@@ -263,7 +262,7 @@ struct PolynomialAccumulator {
     constant: Real,
     linear: Real,
     quadratic: Real,
-    higher: Real,
+    higher: Vec<(usize, Real)>,
 }
 
 impl PolynomialAccumulator {
@@ -273,7 +272,7 @@ impl PolynomialAccumulator {
             constant: value,
             linear: Real::zero(),
             quadratic: Real::zero(),
-            higher: Real::zero(),
+            higher: Vec::new(),
         }
     }
 
@@ -283,7 +282,7 @@ impl PolynomialAccumulator {
             constant: Real::zero(),
             linear: Real::one(),
             quadratic: Real::zero(),
-            higher: Real::zero(),
+            higher: Vec::new(),
         }
     }
 
@@ -291,18 +290,25 @@ impl PolynomialAccumulator {
         self.constant *= scale.clone();
         self.linear *= scale.clone();
         self.quadratic *= scale.clone();
-        self.higher *= scale;
+        self.higher.retain_mut(|(_, coefficient)| {
+            *coefficient *= scale.clone();
+            !is_structural_zero(coefficient)
+        });
         self
     }
 
     fn add(self, other: Self) -> Option<Self> {
         let symbol = merge_symbol(self.symbol, other.symbol)?;
+        let mut higher = self.higher;
+        for (degree, coefficient) in other.higher {
+            add_univariate_coefficient(&mut higher, degree, coefficient);
+        }
         Some(Self {
             symbol,
             constant: self.constant + other.constant,
             linear: self.linear + other.linear,
             quadratic: self.quadratic + other.quadratic,
-            higher: self.higher + other.higher,
+            higher,
         })
     }
 
@@ -314,11 +320,21 @@ impl PolynomialAccumulator {
         let quadratic = self.constant.clone() * other.quadratic.clone()
             + self.linear.clone() * other.linear.clone()
             + self.quadratic.clone() * other.constant.clone();
-        let higher = self.linear * other.quadratic.clone()
-            + self.quadratic.clone() * other.linear
-            + self.quadratic * other.quadratic
-            + self.higher
-            + other.higher;
+        let mut higher = Vec::new();
+        add_univariate_coefficient(
+            &mut higher,
+            3,
+            self.linear.clone() * other.quadratic.clone()
+                + self.quadratic.clone() * other.linear.clone(),
+        );
+        add_univariate_coefficient(
+            &mut higher,
+            4,
+            self.quadratic.clone() * other.quadratic.clone(),
+        );
+        if !self.higher.is_empty() || !other.higher.is_empty() {
+            multiply_higher_terms(&mut higher, &self, &other)?;
+        }
         Some(Self {
             symbol,
             constant,
@@ -329,11 +345,79 @@ impl PolynomialAccumulator {
     }
 
     fn is_higher_zero(&self) -> bool {
-        matches!(
-            self.higher.structural_facts().zero,
-            hyperreal::ZeroKnowledge::Zero
-        )
+        self.higher.is_empty()
     }
+}
+
+fn add_univariate_coefficient(terms: &mut Vec<(usize, Real)>, degree: usize, coefficient: Real) {
+    if is_structural_zero(&coefficient) {
+        return;
+    }
+    match terms.binary_search_by_key(&degree, |(degree, _)| *degree) {
+        Ok(index) => {
+            terms[index].1 += coefficient;
+            if is_structural_zero(&terms[index].1) {
+                terms.remove(index);
+            }
+        }
+        Err(index) => terms.insert(index, (degree, coefficient)),
+    }
+}
+
+fn add_coefficient(
+    terms: &mut BTreeMap<Vec<SymbolId>, Real>,
+    key: Vec<SymbolId>,
+    coefficient: Real,
+) {
+    use std::collections::btree_map::Entry;
+    if is_structural_zero(&coefficient) {
+        return;
+    }
+    match terms.entry(key) {
+        Entry::Vacant(entry) => {
+            entry.insert(coefficient);
+        }
+        Entry::Occupied(mut entry) => {
+            *entry.get_mut() += coefficient;
+            if is_structural_zero(entry.get()) {
+                entry.remove();
+            }
+        }
+    }
+}
+
+#[cold]
+fn multiply_higher_terms(
+    higher: &mut Vec<(usize, Real)>,
+    left: &PolynomialAccumulator,
+    right: &PolynomialAccumulator,
+) -> Option<()> {
+    let left_low = [&left.constant, &left.linear, &left.quadratic];
+    let right_low = [&right.constant, &right.linear, &right.quadratic];
+    let mut accumulate = |degree: usize, first: &Real, second: &Real| {
+        if is_structural_zero(first) || is_structural_zero(second) {
+            return Some(());
+        }
+        if degree > MAX_CANCELLATION_DEGREE {
+            return None;
+        }
+        add_univariate_coefficient(higher, degree, first.clone() * second.clone());
+        Some(())
+    };
+    for (degree, coefficient) in &left.higher {
+        for (offset, low) in right_low.iter().enumerate() {
+            accumulate(degree + offset, coefficient, low)?;
+        }
+        for (other_degree, other_coefficient) in &right.higher {
+            accumulate(degree + other_degree, coefficient, other_coefficient)?;
+        }
+    }
+    for (degree, coefficient) in &right.higher {
+        for (offset, low) in left_low.iter().enumerate() {
+            accumulate(degree + offset, low, coefficient)?;
+        }
+    }
+    Some(())
 }
 
 fn collect_polynomial(expression: &Expr) -> Option<PolynomialAccumulator> {
@@ -393,99 +477,115 @@ fn constant_value(expression: &Expr) -> Option<Real> {
 #[derive(Clone, Debug)]
 struct MultivariateQuadraticAccumulator {
     terms: BTreeMap<Vec<SymbolId>, Real>,
-    higher: Real,
 }
 
 impl MultivariateQuadraticAccumulator {
     fn constant(value: Real) -> Self {
         let mut terms = BTreeMap::new();
         terms.insert(Vec::new(), value);
-        Self {
-            terms,
-            higher: Real::zero(),
-        }
+        Self { terms }
     }
 
     fn symbol(symbol: SymbolId) -> Self {
         let mut terms = BTreeMap::new();
         terms.insert(vec![symbol], Real::one());
-        Self {
-            terms,
-            higher: Real::zero(),
-        }
+        Self { terms }
     }
 
     fn scale(mut self, scale: Real) -> Self {
-        for coefficient in self.terms.values_mut() {
-            *coefficient = coefficient.clone() * scale.clone();
-        }
-        self.higher *= scale;
+        self.terms.retain(|_, coefficient| {
+            *coefficient *= scale.clone();
+            !is_structural_zero(coefficient)
+        });
         self
     }
 
-    fn add(mut self, other: Self) -> Self {
+    fn add(mut self, other: Self) -> Option<Self> {
         for (symbols, coefficient) in other.terms {
-            let entry = self.terms.entry(symbols).or_insert_with(Real::zero);
-            *entry = entry.clone() + coefficient;
+            add_coefficient(&mut self.terms, symbols, coefficient);
         }
-        self.higher += other.higher;
-        self
+        self.within_cancellation_limit().then_some(self)
     }
 
-    fn multiply(self, other: Self) -> Self {
+    fn multiply(self, other: Self) -> Option<Self> {
         let mut result = Self {
             terms: BTreeMap::new(),
-            higher: self.higher + other.higher,
         };
+        let mut higher_count = 0;
         for (left_symbols, left_coefficient) in self.terms {
+            if is_structural_zero(&left_coefficient) {
+                continue;
+            }
             for (right_symbols, right_coefficient) in &other.terms {
+                if is_structural_zero(right_coefficient) {
+                    continue;
+                }
+                if left_symbols.len() + right_symbols.len() > MAX_CANCELLATION_DEGREE {
+                    return None;
+                }
                 let mut symbols = left_symbols.clone();
                 symbols.extend(right_symbols.iter().copied());
                 symbols.sort();
                 let coefficient = left_coefficient.clone() * right_coefficient.clone();
-                if symbols.len() <= 2 {
-                    let entry = result.terms.entry(symbols).or_insert_with(Real::zero);
-                    *entry = entry.clone() + coefficient;
-                } else {
-                    result.higher += coefficient;
+                let higher = symbols.len() > 2;
+                let before = result.terms.len();
+                add_coefficient(&mut result.terms, symbols, coefficient);
+                if higher {
+                    higher_count = higher_count + result.terms.len() - before;
+                    if higher_count > MAX_CANCELLATION_TERMS {
+                        return None;
+                    }
                 }
             }
         }
-        result
+        Some(result)
     }
 
     fn is_higher_zero(&self) -> bool {
-        is_structural_zero(&self.higher)
+        self.terms.keys().all(|symbols| symbols.len() <= 2)
+    }
+
+    fn within_cancellation_limit(&self) -> bool {
+        self.terms
+            .keys()
+            .filter(|symbols| symbols.len() > 2)
+            .count()
+            <= MAX_CANCELLATION_TERMS
     }
 }
 
-fn collect_multivariate_quadratic(expression: &Expr) -> Option<MultivariateQuadraticAccumulator> {
+fn collect_multivariate_quadratic(
+    expression: &Expr,
+    problem: &Problem,
+) -> Option<MultivariateQuadraticAccumulator> {
     match expression {
         Expr::Constant(value) => Some(MultivariateQuadraticAccumulator::constant(value.clone())),
-        Expr::Symbol(symbol) => Some(MultivariateQuadraticAccumulator::symbol(symbol.id)),
-        Expr::Add(left, right) => {
-            Some(collect_multivariate_quadratic(left)?.add(collect_multivariate_quadratic(right)?))
+        Expr::Symbol(symbol) => problem
+            .variables
+            .iter()
+            .any(|variable| variable.symbol == symbol.id)
+            .then(|| MultivariateQuadraticAccumulator::symbol(symbol.id)),
+        Expr::Add(left, right) => collect_multivariate_quadratic(left, problem)?
+            .add(collect_multivariate_quadratic(right, problem)?),
+        Expr::Sub(left, right) => collect_multivariate_quadratic(left, problem)?
+            .add(collect_multivariate_quadratic(right, problem)?.scale(-Real::one())),
+        Expr::Neg(value) => {
+            Some(collect_multivariate_quadratic(value, problem)?.scale(-Real::one()))
         }
-        Expr::Sub(left, right) => Some(
-            collect_multivariate_quadratic(left)?
-                .add(collect_multivariate_quadratic(right)?.scale(-Real::one())),
-        ),
-        Expr::Neg(value) => Some(collect_multivariate_quadratic(value)?.scale(-Real::one())),
-        Expr::Mul(left, right) => Some(
-            collect_multivariate_quadratic(left)?.multiply(collect_multivariate_quadratic(right)?),
-        ),
+        Expr::Mul(left, right) => collect_multivariate_quadratic(left, problem)?
+            .multiply(collect_multivariate_quadratic(right, problem)?),
         Expr::Div(left, right) => {
             let denominator = constant_value(right)?;
             let reciprocal = (Real::one() / denominator).ok()?;
-            Some(collect_multivariate_quadratic(left)?.scale(reciprocal))
+            Some(collect_multivariate_quadratic(left, problem)?.scale(reciprocal))
         }
         // See the univariate collector above: retaining `x^0` is necessary to
         // preserve the undefined `0^0` case.
         Expr::PowI(_, 0) => None,
-        Expr::PowI(value, 1) => collect_multivariate_quadratic(value),
+        Expr::PowI(value, 1) => collect_multivariate_quadratic(value, problem),
         Expr::PowI(value, 2) => {
-            let value = collect_multivariate_quadratic(value)?;
-            Some(value.clone().multiply(value))
+            let value = collect_multivariate_quadratic(value, problem)?;
+            value.clone().multiply(value)
         }
         Expr::PowI(_, _)
         | Expr::Sqrt(_)
@@ -509,8 +609,15 @@ fn ensure_problem_symbol(variables: &[Variable], symbol: SymbolId) -> Result<(),
 }
 
 fn is_structural_zero(value: &Real) -> bool {
-    matches!(
-        value.structural_facts().zero,
-        hyperreal::ZeroKnowledge::Zero
-    )
+    match value.zero_status() {
+        hyperreal::ZeroKnowledge::Zero => true,
+        hyperreal::ZeroKnowledge::NonZero => false,
+        // Preserve any additional exact-rational normalization available to
+        // structural_facts without collecting magnitude facts in the common
+        // rational and named-symbolic cases.
+        hyperreal::ZeroKnowledge::Unknown => matches!(
+            value.structural_facts().zero,
+            hyperreal::ZeroKnowledge::Zero
+        ),
+    }
 }

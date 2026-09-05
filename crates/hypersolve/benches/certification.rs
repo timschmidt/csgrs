@@ -4,6 +4,8 @@ use num::bigint::{BigInt, BigUint};
 
 #[path = "support/benchmark_report.rs"]
 mod benchmark_report;
+#[path = "support/quadratic_extraction.rs"]
+mod quadratic_extraction;
 use hypersolve::{
     AlgebraicFiberDiagonalDeflationStatus, AlgebraicFiberPolynomialImageProjectionConfig,
     AlgebraicFiberPolynomialImageProjectionStatus, AlgebraicFiberProjectionStatus,
@@ -8414,6 +8416,7 @@ criterion_group!(
     benches,
     certification,
     bernstein_subdivision,
+    quadratic_extraction::quadratic_extraction,
     benchmark_report::finish_benchmark_report
 );
 criterion_main!(benches);
