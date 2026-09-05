@@ -3265,18 +3265,6 @@ struct LocalAlgebraicField {
     refinement_steps: usize,
 }
 
-fn evaluate_real_polynomial(polynomial: &[Real], parameter: &Real) -> Real {
-    let Some((leading, remaining)) = polynomial.split_last() else {
-        return Real::zero();
-    };
-    remaining
-        .iter()
-        .rev()
-        .fold(leading.clone(), |value, coefficient| {
-            value * parameter + coefficient
-        })
-}
-
 fn is_valid_local_algebraic_field_evidence(root: &AlgebraicRootRepresentation) -> bool {
     root.is_valid()
         && root.interval.distinct_root_count == 1
@@ -3584,7 +3572,7 @@ impl LocalAlgebraicField {
         let mut lower = self.root.interval.lower.clone();
         let mut upper = self.root.interval.upper.clone();
         let mut lower_sign = match self.consume(compare_reals(
-            &evaluate_real_polynomial(self.modulus(), &lower),
+            &Real::eval_poly(self.modulus(), &lower),
             &Real::zero(),
             self.policy,
         )) {
@@ -3592,7 +3580,7 @@ impl LocalAlgebraicField {
             Err(_) => return Ok(false),
         };
         let upper_sign = match self.consume(compare_reals(
-            &evaluate_real_polynomial(self.modulus(), &upper),
+            &Real::eval_poly(self.modulus(), &upper),
             &Real::zero(),
             self.policy,
         )) {
@@ -3619,7 +3607,7 @@ impl LocalAlgebraicField {
         for _ in 0..max_refinement_steps {
             let midpoint = Real::average_pair(&lower, &upper);
             let midpoint_sign = self.consume(compare_reals(
-                &evaluate_real_polynomial(self.modulus(), &midpoint),
+                &Real::eval_poly(self.modulus(), &midpoint),
                 &Real::zero(),
                 self.policy,
             ))?;
@@ -4280,6 +4268,36 @@ mod tests {
                 field.refine_root().unwrap();
                 assert_eq!(field.root, alpha);
                 assert_eq!(field.refinement_steps, 0);
+            }
+        }
+    }
+
+    #[test]
+    fn local_sign_refinement_retains_nested_quadratic_root_certificates() {
+        let half = rational(1, 2);
+        let alpha = half.clone().sqrt().unwrap();
+        let selected = -half + (&alpha + rational(1, 4)).sqrt().unwrap();
+        for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
+            for (scale, upper, steps) in [
+                (Real::one(), &selected + rational(1, 8), 1),
+                (-Real::pi(), selected.clone(), 0),
+            ] {
+                let root = represented_root(
+                    vec![-&alpha * &scale, scale.clone(), scale],
+                    &selected - rational(1, 8),
+                    upper,
+                    policy,
+                );
+                let mut field = LocalAlgebraicField::new(&root, policy).unwrap();
+                assert_eq!(field.refine_root_by_sign_change(1), Ok(true));
+                let witness = field.root.exact_point_witness().unwrap();
+                assert_eq!(
+                    compare_reals(witness, &selected, PredicatePolicy::STRICT).value(),
+                    Some(Ordering::Equal)
+                );
+                assert!(algebraic_root_payload_replays_strictly(&field.root));
+                assert_eq!(field.refinement_steps, steps);
+                assert_eq!(field.certainty, Certainty::Exact);
             }
         }
     }

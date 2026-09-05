@@ -784,7 +784,7 @@ pub fn refine_isolated_univariate_polynomial_interval(
                 );
             }
         }
-        match refinement_sign_at(trimmed, root, policy) {
+        match sign_at(trimmed, root, policy) {
             Some(Ordering::Equal) => {}
             Some(Ordering::Less | Ordering::Greater) => {
                 return root_refinement_report(
@@ -838,8 +838,11 @@ pub fn refine_isolated_univariate_polynomial_interval(
         }
     }
     if trimmed.len() <= 3 {
-        let endpoint_signs = refinement_sign_at(trimmed, &interval.lower, policy)
-            .zip(refinement_sign_at(trimmed, &interval.upper, policy));
+        let endpoint_signs = sign_at(trimmed, &interval.lower, policy).zip(sign_at(
+            trimmed,
+            &interval.upper,
+            policy,
+        ));
         if let Some((lower_sign, upper_sign)) = endpoint_signs {
             if lower_sign != Ordering::Equal
                 && upper_sign != Ordering::Equal
@@ -997,7 +1000,7 @@ fn refine_owned_one_root_interval(
             }
         }
         let midpoint = Real::average_pair(&lower, &upper);
-        match refinement_sign_at(polynomial, &midpoint, policy) {
+        match sign_at(polynomial, &midpoint, policy) {
             Some(Ordering::Equal) => {
                 return exact_root_refinement_report(interval, midpoint, steps + 1);
             }
@@ -2022,15 +2025,6 @@ fn sign_at(polynomial: &[Real], point: &Real, policy: PredicatePolicy) -> Option
     compare_reals(&value, &Real::zero(), policy).value()
 }
 
-fn refinement_sign_at(
-    polynomial: &[Real],
-    point: &Real,
-    policy: PredicatePolicy,
-) -> Option<Ordering> {
-    let value = Real::eval_poly(polynomial, point);
-    compare_reals(&value, &Real::zero(), policy).value()
-}
-
 /// Return a rational power-of-two instance of Fujiwara's real-root bound.
 ///
 /// For `p(x) = a_n x^n + ... + a_0`, put
@@ -2515,7 +2509,7 @@ where
                 let upper_ordering = compare_reals(&root, &image_interval.upper, policy).value()?;
                 if lower_ordering == Ordering::Less
                     || upper_ordering == Ordering::Greater
-                    || refinement_sign_at(image_polynomial, &root, policy)? != Ordering::Equal
+                    || sign_at(image_polynomial, &root, policy)? != Ordering::Equal
                 {
                     return None;
                 }

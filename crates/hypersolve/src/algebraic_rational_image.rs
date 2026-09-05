@@ -1193,7 +1193,7 @@ fn promote_image_root_candidate(
     );
     if !inside
         || compare_reals(
-            &evaluate_real_polynomial(&representation.polynomial_coefficients, &root),
+            &Real::eval_poly(&representation.polynomial_coefficients, &root),
             &Real::zero(),
             policy,
         )
@@ -1421,8 +1421,8 @@ fn evaluate_rational_polynomial(
     point: &Real,
     policy: PredicatePolicy,
 ) -> Option<Real> {
-    let numerator = evaluate_real_polynomial(numerator, point);
-    let denominator = evaluate_real_polynomial(denominator, point);
+    let numerator = Real::eval_poly(numerator, point);
+    let denominator = Real::eval_poly(denominator, point);
     Some(numerator * crate::policy_division::reciprocal_with_policy(&denominator, policy)?)
 }
 
@@ -1528,10 +1528,6 @@ fn derivative_coefficients(polynomial: &[Real]) -> Vec<Real> {
         .skip(1)
         .map(|(degree, coefficient)| coefficient.clone() * Real::from(degree as i64))
         .collect()
-}
-
-fn evaluate_real_polynomial(polynomial: &[Real], point: &Real) -> Real {
-    Real::eval_poly(polynomial, point)
 }
 
 fn evaluate_interval_polynomial(
