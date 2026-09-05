@@ -1,0 +1,71 @@
+{
+  "schema": "hypercurve.performance-checkpoint.v1",
+  "captured_on": "2026-09-04",
+  "checkpoint": "reuse authoritative Sturm point certificates during rational reconstruction",
+  "baseline_revision": "9cf66fd",
+  "implementation_revision": "365221b",
+  "benchmark_dependency_revisions": {
+    "hyperreal": "93c44ab",
+    "hyperlattice": "d783af0",
+    "hyperlimit": "7bf9261",
+    "hypersolve": "1a742c6",
+    "hypertri": "6a2092c"
+  },
+  "final_validation_hyperreal_revision": "3f57867",
+  "retained_change": "Rational-root reconstruction consumes the retained Sturm midpoint certificate for both root detection and the left-child count. The unchanged lower endpoint's variation count is carried forward; a right-child selection replaces it with the certified midpoint count.",
+  "exactness": {
+    "authority": "The existing Hypersolve UnivariateSturmSequence remains the sole root-count authority.",
+    "midpoint_root": "A midpoint root is returned as an exact point before it can become an interval endpoint.",
+    "ownership": "The isolator's non-root endpoint convention and single-root ownership are preserved. An invalid negative variation difference is rejected explicitly.",
+    "reconstruction": "The rational-root denominator bound, continued-fraction reconstruction, exact candidate replay, and irrational-root outcome are unchanged.",
+    "policy": "No approximation permission, terminal interpretation, or uncertainty conversion is added.",
+    "new_regression": "24 combinations cover positive and negative rational roots, repeated roots, an irrational selected root, midpoint roots, both policies, and signed rational coefficient scaling.",
+    "public_api_added": false,
+    "compatibility_shims_added": false
+  },
+  "measurement": {
+    "compiler": "rustc 1.97.0 (2d8144b78 2026-07-07)",
+    "profile": "release",
+    "features": "all",
+    "driver": "hypercurve_curve direct_bezier_pair_fillet_materializes_both_incident_extensions --exact",
+    "affinity": "taskset -c 6",
+    "method": "All six source repositories were archived at fixed revisions into one separate workspace. The baseline test executable was preserved before applying only the 365221b patch and rebuilding in the same workspace. Each executable ran once with GNU time -v on the same logical CPU.",
+    "caveat": "Other validation work was running. The baseline obtained 77 percent CPU versus 99 percent for the candidate; report user CPU as well as wall time and do not treat the wall-time ratio as an isolated-machine measurement.",
+    "baseline": { "wall_seconds": 413.89, "user_seconds": 321.04, "system_seconds": 0.05, "peak_rss_kib": 21736 },
+    "retained": { "wall_seconds": 33.43, "user_seconds": 33.29, "system_seconds": 0.01, "peak_rss_kib": 21620 },
+    "interpretation": "About 9.6x less user CPU; both executions preserve the exact expected cuts, center, carrier families, both policies, and both traversal directions."
+  },
+  "linked_test_sizes": {
+    "baseline": { "text_bytes": 13619333, "data_bytes": 410584, "bss_bytes": 5180 },
+    "retained": { "text_bytes": 13610269, "data_bytes": 410120, "bss_bytes": 2428 },
+    "allocated_delta_bytes": -12280,
+    "rlib_comparison": "Not retained; no archive-size delta is claimed for this slice."
+  },
+  "validation": {
+    "parameter_unit_tests": "26 passed",
+    "parameter_integration_tests": "27 passed",
+    "rational_curve_integration_tests": "48 passed",
+    "promotion_integration_tests": "100 passed",
+    "direct_fillet": "passed, including the fixed-snapshot comparison",
+    "same_support_fillet": "passed in 50.14 s in the integration environment",
+    "all_features_release": { "passed": 1716, "ignored": 9, "active_unit_tests": 875, "test_targets_including_doctests": 45 },
+    "minimal_release": { "passed": 1687, "ignored": 4, "active_unit_tests": 871, "test_targets_including_doctests": 45 },
+    "ignored_unit_cases": "All six passed explicitly in 107.89 s; every manual benchmark driver reported complete=true.",
+    "ignored_stroke_cases": "All three passed explicitly in 60.54 s.",
+    "pcb_discovery": "All four PCB regressions passed in normal all-feature discovery, with no ignored cases.",
+    "strict_clippy": "Locked all-target/all-feature -D warnings passed.",
+    "rustdoc": "All-feature no-dependency documentation with -D warnings passed.",
+    "benches": "All-feature benchmark compilation passed.",
+    "fuzz": "Every fuzz target passed cargo check.",
+    "formatting": "passed",
+    "hypercurve_ui": "37 tests, strict Clippy, and the locked release Trunk build passed after the final dependency update.",
+    "hypermesh": "Local CI commands passed; all-feature tests and the locked Trunk build were repeated after the final dependency update."
+  },
+  "registry_release": {
+    "status": "blocked on dependency availability, not a local test failure",
+    "command": "cargo package --locked",
+    "requirement": "hyperlimit ^0.4.1",
+    "registry_candidates_reported": ["0.4.0", "0.3.0", "0.2.0"],
+    "action_taken": "No dependency downgrade, compatibility shim, external publication, or push was performed. Coordinated dependency-release direction is required before registry package verification can complete."
+  }
+}
