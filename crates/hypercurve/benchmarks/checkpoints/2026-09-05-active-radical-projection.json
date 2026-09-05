@@ -1,0 +1,639 @@
+{
+  "schema_version": 1,
+  "recorded_utc": "2026-09-05 05:31 UTC",
+  "title": "Avoid redundant quadratic norm powers while retaining conjugate-sheet replay",
+  "status": "Retained on main; this checkpoint does not claim complete Hypercurve release readiness.",
+  "source_revisions": {
+    "hypercurve": "f7de3c032cd35534a94626c7b2b52ff44c495891",
+    "hyperreal": "c2d147c4613540fe5c2a43dfdaa5c0d010455bba",
+    "hyperlimit": "7bf9261fea34bb2ddc96ca612c40babf4244f71f",
+    "hyperlattice": "d783af0b5ba52cacfeac62b1b25e1f9e36a8e7b0",
+    "hypersolve": "a20be2326e585f8224dfc5bfd7054c9e2970825f",
+    "hypertri": "6a2092c066964f3b7528299a72ef0ed1af4b1ff0",
+    "hypermesh": "d9db5c45a0cecc2307aa66a6f7f1b0396350e4ee"
+  },
+  "source_identity": {
+    "production_commit": "f7de3c032cd35534a94626c7b2b52ff44c495891",
+    "baseline_curve_revision": "1eda35a",
+    "bezier_offset_rs_sha256": "7311e43512aefa34b3ec181cfd2044cab17570ed28129c2bf26cd446a0c82d99",
+    "cargo_lock_sha256": "dd5d29eaf1ab3a6ca6f7d1362ad75f68e6045b124eb3c5033f379c3ab77cc05a",
+    "production_prefix_sha256": "2327c6ce1d40adefcfabad1d302d111f0aa1aa79e9049eee0b969a221d86a7e8",
+    "production_prefix_command": "awk '/^mod conversion_tests/{exit} {print}' src/bezier_offset.rs | sha256sum",
+    "frozen_production_prefix_matches": true
+  },
+  "change": {
+    "authority": "BezierDenseTwoSquareRootExpression2::projection",
+    "description": "Skip the second-generator norm when its two coefficient polynomials are stored zero after selected-source reduction. Skip the final norm when its radical coefficient is stored zero. Keep every radicand factor already present in the retained polynomial.",
+    "production_lines_added_net": 16,
+    "regression_lines_added_net": 210,
+    "total_rust_lines_added_net": 226,
+    "test_deduplication": "Four coefficient factories, including one pre-existing test factory, share one private cfg(test) helper.",
+    "public_api_added": false,
+    "compatibility_layers_added": false
+  },
+  "exactness": {
+    "invariant": "For R + A sqrt(F) + B sqrt(S) + C sqrt(F S), eliminating an absent generator only introduces a redundant square. Removing that square preserves the union of conjugate-sheet zero sets. It does not preserve norm sign or artificial multiplicity; callers require neither.",
+    "validations_retained": "Reduce the expression and both radicands against the selected-source relations before branching. Absent coefficients are recognized only by existing stored exact-rational zero checks; this adds no deep symbolic zero query.",
+    "caller_audit": ["recursive_quadratic_polynomial_projection uses the base projection for zero certification or scalar-image/root enumeration. Sign decisions still replay the retained positive-root tower; a nonzero projection does not provide the expression's sign.", "chord_normal_dense_expression_parameters enumerates candidates from the projection, then replays transverse and signed authored-sheet evidence to reject foreign conjugates."],
+    "regressions": [
+      {
+        "name": "dense_projection_does_not_square_an_absent_radical",
+        "coverage": "Pure scalar repeated root retains degree two instead of eight; either single generator retains its quadratic norm; all-zero expression; cancellation with all four components present; a coefficient that vanishes only after selected-source reduction."
+      },
+      {
+        "name": "dense_projection_keeps_roots_of_vanishing_radicands",
+        "coverage": "First-only, second-only and product-only radical terms retain the roots of nonconstant radicands, including their exact endpoint zeros."
+      },
+      {
+        "name": "dense_projection_single_radical_replays_the_authored_sheet",
+        "coverage": "Eight cases across STRICT and APPROXIMATE_512, either radical and either sign retain only the authored root and reject the opposite conjugate."
+      },
+      {
+        "name": "dense_projection_zero_set_matches_all_four_conjugates",
+        "coverage": "1,008 zero-set comparisons: 16 component masks, three first-root values, three second-root values and seven exact rational sample points. Includes zero radicands and explicit evaluation of all four signed conjugates."
+      }
+    ],
+    "existing_sheet_regressions": "Both chord_normal_dense_sheet_replay tests still pass, including even roots, zero components and rejection of foreign conjugates.",
+    "before_change": {
+      "passed": 1,
+      "failed": 2,
+      "log": "/tmp/hypercurve-active-radical-before-tests.log",
+      "qualification": "Expected failures assert redundant polynomial degree/powers, not an incorrect old zero set. The fourth grid regression was added after this red run."
+    },
+    "after_change": {
+      "passed": 4,
+      "failed": 0,
+      "log": "/tmp/hypercurve-active-radical-after-tests.log"
+    }
+  },
+  "radial_timing": {
+    "fixture": "bezier_offset::conversion_tests::recursively_pair_radial_circle_intersects_a_genuine_analytic_parallel",
+    "fixture_unchanged": true,
+    "command": "/usr/bin/time -v taskset -c 7 EXECUTABLE bezier_offset::conversion_tests::recursively_pair_radial_circle_intersects_a_genuine_analytic_parallel --exact --nocapture --test-threads=1",
+    "build_features": "release, all-features",
+    "order": ["baseline-1", "candidate-1", "candidate-2", "baseline-2"],
+    "summary": {
+      "wall_seconds": {
+        "baseline": 61.91,
+        "candidate": 29.869999999999997,
+        "candidate_over_baseline": 0.4824745598449362,
+        "percent_change": -51.75254401550637
+      },
+      "user_seconds": {
+        "baseline": 59.980000000000004,
+        "candidate": 28.88,
+        "candidate_over_baseline": 0.48149383127709233,
+        "percent_change": -51.850616872290765
+      },
+      "peak_rss_kib": {
+        "baseline": 49312,
+        "candidate": 49282,
+        "candidate_over_baseline": 0.9993916288124595,
+        "percent_change": -0.06083711875405351
+      },
+      "wall_speedup": 2.0726481419484433,
+      "user_speedup": 2.076869806094183
+    },
+    "samples": [
+      {
+        "sample": "baseline-1",
+        "log": "/tmp/hypercurve-active-radical-matched-baseline-1.log",
+        "passed": 1,
+        "test_seconds": 63.57,
+        "user_seconds": 61.61,
+        "system_seconds": 0.2,
+        "cpu_percent": 97,
+        "wall_seconds": 63.58,
+        "peak_rss_kib": 49508,
+        "involuntary_context_switches": 44126,
+        "exit_status": 0
+      },
+      {
+        "sample": "candidate-1",
+        "log": "/tmp/hypercurve-active-radical-matched-candidate-1.log",
+        "passed": 1,
+        "test_seconds": 29.83,
+        "user_seconds": 28.86,
+        "system_seconds": 0.11,
+        "cpu_percent": 97,
+        "wall_seconds": 29.83,
+        "peak_rss_kib": 49388,
+        "involuntary_context_switches": 20867,
+        "exit_status": 0
+      },
+      {
+        "sample": "candidate-2",
+        "log": "/tmp/hypercurve-active-radical-matched-candidate-2.log",
+        "passed": 1,
+        "test_seconds": 29.91,
+        "user_seconds": 28.9,
+        "system_seconds": 0.13,
+        "cpu_percent": 97,
+        "wall_seconds": 29.91,
+        "peak_rss_kib": 49176,
+        "involuntary_context_switches": 20940,
+        "exit_status": 0
+      },
+      {
+        "sample": "baseline-2",
+        "log": "/tmp/hypercurve-active-radical-matched-baseline-2.log",
+        "passed": 1,
+        "test_seconds": 60.24,
+        "user_seconds": 58.35,
+        "system_seconds": 0.2,
+        "cpu_percent": 97,
+        "wall_seconds": 60.24,
+        "peak_rss_kib": 49116,
+        "involuntary_context_switches": 41993,
+        "exit_status": 0
+      }
+    ],
+    "qualification": "Two samples per version; the reported median is their midpoint. Each invocation was sequential and pinned to CPU 7, whose SMT sibling is CPU 15. This turn's test/build/profiling work was finished before timing; unrelated machine activity was not controlled. Each sample reports 97% CPU. No time budget or workload reduction was used.",
+    "binary_qualification": "Baseline contains 887 unit-test table entries; candidate contains 891. Candidate was captured before a cfg(test)-only helper deduplication; its production change is identical to the committed version. The selected existing fixture is unchanged.",
+    "binaries": {
+      "baseline": {
+        "path": "/tmp/hypercurve-active-radical-baseline-test",
+        "sha256": "9bfddd3587e21798ab8461b2a9cb099991eebf109e5d02973a87e8a3434e8af0"
+      },
+      "candidate": {
+        "path": "/tmp/hypercurve-active-radical-candidate-test",
+        "sha256": "1a1a159761b1549f972cfe1193da01f863416edb0787547b3cb146b9c3b61db9"
+      }
+    },
+    "screening_only": {
+      "radial_wall_seconds": 28.66,
+      "radial_user_seconds": 28.52,
+      "radial_peak_rss_kib": 48240,
+      "chord_wall_seconds": 64.05,
+      "chord_user_seconds": 63.73,
+      "chord_peak_rss_kib": 45644,
+      "qualification": "Unpinned candidate-only runs, executed concurrently. There is no matched chord before/after claim.",
+      "logs": ["/tmp/hypercurve-active-radical-candidate-radial.log", "/tmp/hypercurve-active-radical-candidate-chord.log"]
+    }
+  },
+  "instruction_and_allocation_control": {
+    "fixture": "chord_normal_dense_sheet_replay --nocapture --test-threads=1",
+    "existing_tests": 2,
+    "passed_before_and_after": true,
+    "callgrind": {
+      "baseline_instructions": 5978140,
+      "candidate_instructions": 5500535,
+      "percent_change": -7.989190617817588,
+      "command": "valgrind --tool=callgrind --vgdb=no --callgrind-out-file=OUTPUT EXECUTABLE chord_normal_dense_sheet_replay --nocapture --test-threads=1",
+      "logs": ["/tmp/hypercurve-active-radical-baseline-sheets-callgrind.log", "/tmp/hypercurve-active-radical-candidate-sheets-callgrind.log"]
+    },
+    "heaptrack": {
+      "baseline": {
+        "allocations": 7646,
+        "temporary_allocations": 1341,
+        "reported_peak_heap": "220.28K",
+        "reported_live_at_exit": "26.19K",
+        "reported_peak_rss_including_profiler": "14.73M"
+      },
+      "candidate": {
+        "allocations": 6601,
+        "temporary_allocations": 1120,
+        "reported_peak_heap": "220.88K",
+        "reported_live_at_exit": "17.00K",
+        "reported_peak_rss_including_profiler": "14.50M"
+      },
+      "raw_files": ["/tmp/hypercurve-active-radical-baseline-sheets.heap.zst", "/tmp/hypercurve-active-radical-candidate-sheets.heap.zst"],
+      "qualification": "Process-wide measurements include test-harness startup and different-sized test tables. Allocations fall, but measured peak heap rises slightly. End-live allocations are not a scoped lifetime proof; no leak-freedom or peak-heap improvement is claimed."
+    },
+    "qualification": "This is an unchanged small sheet-replay control, not instruction or allocation accounting for the long radial fixture."
+  },
+  "production_region_control": {
+    "frozen_workspace": "/tmp/hypercurve-dyadic-bernstein-control.a5ZKq2",
+    "frozen_workspace_contents": "The same six local crate snapshots used by the previous checkpoint, with only the current 16-production-line projection change applied. Its production prefix matches f7de3c0. The benchmark and all dependencies are unchanged.",
+    "benchmark_source": "benches/bezier_region.rs",
+    "benchmark_source_sha256": "2b13d3562d5f9b08c13e5c4e968b29f62f375ce1840998e75c00731daec97c91",
+    "build_command": "cargo bench --locked --bench bezier_region --no-run --message-format=json",
+    "build_features": "default",
+    "command": "/usr/bin/time -v taskset -c 7 EXECUTABLE",
+    "order": ["baseline-1", "candidate-1", "candidate-2", "baseline-2", "baseline-3", "candidate-3"],
+    "preserved_rows": 19,
+    "emitted_checksums_match_all_runs": true,
+    "summary": {
+      "wall_seconds": {
+        "baseline": 6.04,
+        "candidate": 5.98,
+        "candidate_over_baseline": 0.990066225165563,
+        "percent_change": -0.9933774834437026
+      },
+      "user_seconds": {
+        "baseline": 5.84,
+        "candidate": 5.78,
+        "candidate_over_baseline": 0.9897260273972603,
+        "percent_change": -1.0273972602739656
+      },
+      "peak_rss_kib": {
+        "baseline": 10072,
+        "candidate": 9884,
+        "candidate_over_baseline": 0.9813343923749007,
+        "percent_change": -1.8665607625099279
+      }
+    },
+    "samples": [
+      {
+        "sample": "baseline-1",
+        "log": "/tmp/hypercurve-active-radical-region-matched-baseline-1.log",
+        "passed": null,
+        "test_seconds": null,
+        "user_seconds": 5.89,
+        "system_seconds": 0.01,
+        "cpu_percent": 97,
+        "wall_seconds": 6.08,
+        "peak_rss_kib": 10072,
+        "involuntary_context_switches": 4131,
+        "exit_status": 0
+      },
+      {
+        "sample": "candidate-1",
+        "log": "/tmp/hypercurve-active-radical-region-matched-candidate-1.log",
+        "passed": null,
+        "test_seconds": null,
+        "user_seconds": 5.78,
+        "system_seconds": 0.02,
+        "cpu_percent": 96,
+        "wall_seconds": 5.99,
+        "peak_rss_kib": 9880,
+        "involuntary_context_switches": 4304,
+        "exit_status": 0
+      },
+      {
+        "sample": "candidate-2",
+        "log": "/tmp/hypercurve-active-radical-region-matched-candidate-2.log",
+        "passed": null,
+        "test_seconds": null,
+        "user_seconds": 5.73,
+        "system_seconds": 0.01,
+        "cpu_percent": 97,
+        "wall_seconds": 5.92,
+        "peak_rss_kib": 10068,
+        "involuntary_context_switches": 4122,
+        "exit_status": 0
+      },
+      {
+        "sample": "baseline-2",
+        "log": "/tmp/hypercurve-active-radical-region-matched-baseline-2.log",
+        "passed": null,
+        "test_seconds": null,
+        "user_seconds": 5.81,
+        "system_seconds": 0.02,
+        "cpu_percent": 97,
+        "wall_seconds": 6.01,
+        "peak_rss_kib": 9928,
+        "involuntary_context_switches": 4159,
+        "exit_status": 0
+      },
+      {
+        "sample": "baseline-3",
+        "log": "/tmp/hypercurve-active-radical-region-matched-baseline-3.log",
+        "passed": null,
+        "test_seconds": null,
+        "user_seconds": 5.84,
+        "system_seconds": 0.01,
+        "cpu_percent": 96,
+        "wall_seconds": 6.04,
+        "peak_rss_kib": 10072,
+        "involuntary_context_switches": 4150,
+        "exit_status": 0
+      },
+      {
+        "sample": "candidate-3",
+        "log": "/tmp/hypercurve-active-radical-region-matched-candidate-3.log",
+        "passed": null,
+        "test_seconds": null,
+        "user_seconds": 5.79,
+        "system_seconds": 0.02,
+        "cpu_percent": 97,
+        "wall_seconds": 5.98,
+        "peak_rss_kib": 9884,
+        "involuntary_context_switches": 4008,
+        "exit_status": 0
+      }
+    ],
+    "rows": [
+      {
+        "name": "curve_region_clone",
+        "iterations": 1000000,
+        "checks": "checksum=1000000",
+        "baseline_ns": [3.529869, 3.614133, 3.465623],
+        "candidate_ns": [3.656559, 3.50995, 3.477722],
+        "baseline_median_ns": 3.529869,
+        "candidate_median_ns": 3.50995,
+        "percent_change": -0.5642985617879903
+      },
+      {
+        "name": "curve_region_empty",
+        "iterations": 1000000,
+        "checks": "checksum=0",
+        "baseline_ns": [3.112717, 3.236819, 3.112057],
+        "candidate_ns": [3.102378, 3.145145, 3.138995],
+        "baseline_median_ns": 3.112717,
+        "candidate_median_ns": 3.138995,
+        "percent_change": 0.8442142347023562
+      },
+      {
+        "name": "cubic_bezier_exact_area_moments",
+        "iterations": 20000,
+        "checks": null,
+        "baseline_ns": [13837.56465, 13764.71715, 14011.24975],
+        "candidate_ns": [13877.4619, 13659.6973, 13739.21535],
+        "baseline_median_ns": 13837.56465,
+        "candidate_median_ns": 13739.21535,
+        "percent_change": -0.7107413948017172
+      },
+      {
+        "name": "cubic_bezier_prefix_area_moments",
+        "iterations": 20000,
+        "checks": null,
+        "baseline_ns": [18171.3366, 18067.7842, 18125.69175],
+        "candidate_ns": [18235.89215, 17915.7446, 18032.8391],
+        "baseline_median_ns": 18125.69175,
+        "candidate_median_ns": 18032.8391,
+        "percent_change": -0.512270931673553
+      },
+      {
+        "name": "cubic_bezier_prefix_length_bounds",
+        "iterations": 20000,
+        "checks": null,
+        "baseline_ns": [3946.31845, 4072.12285, 3987.96215],
+        "candidate_ns": [3932.7054, 3853.2298, 3725.4466],
+        "baseline_median_ns": 3987.96215,
+        "candidate_median_ns": 3853.2298,
+        "percent_change": -3.378476147272358
+      },
+      {
+        "name": "curve_region_boolean_immediate_union",
+        "iterations": 1000,
+        "checks": "checksum=0",
+        "baseline_ns": [182181.103, 180775.15, 180063.409],
+        "candidate_ns": [181150.495, 180075.668, 181969.948],
+        "baseline_median_ns": 180775.15,
+        "candidate_median_ns": 181150.495,
+        "percent_change": 0.20763086076820425
+      },
+      {
+        "name": "curve_region_boolean_immediate_all_ops",
+        "iterations": 1000,
+        "checks": "checksum=0",
+        "baseline_ns": [356162.039, 359071.08, 355127.399],
+        "candidate_ns": [363249.714, 355483.026, 362434.909],
+        "baseline_median_ns": 356162.039,
+        "candidate_median_ns": 362434.909,
+        "percent_change": 1.761240478522752
+      },
+      {
+        "name": "curve_region_boolean_retained_algebraic_all_ops",
+        "iterations": 100,
+        "checks": "checksum=1100",
+        "baseline_ns": [205453.04, 211031.46, 211817.11],
+        "candidate_ns": [209979.13, 211256.74, 202669.53],
+        "baseline_median_ns": 211031.46,
+        "candidate_median_ns": 209979.13,
+        "percent_change": -0.49866024714987356
+      },
+      {
+        "name": "bezier_region_algebraic_ray_classification",
+        "iterations": 2000,
+        "checks": "checksum=4000",
+        "baseline_ns": [55633.608, 54905.918, 55020.0205],
+        "candidate_ns": [54275.186, 54989.967, 54970.6385],
+        "baseline_median_ns": 55020.0205,
+        "candidate_median_ns": 54970.6385,
+        "percent_change": -0.08975278371624595
+      },
+      {
+        "name": "bezier_region_materialization",
+        "iterations": 20000,
+        "checks": "checksum=0",
+        "baseline_ns": [2926.42875, 2917.75685, 2891.77965],
+        "candidate_ns": [2960.23895, 2878.8885, 2911.4268],
+        "baseline_median_ns": 2917.75685,
+        "candidate_median_ns": 2911.4268,
+        "percent_change": -0.216949195064009
+      },
+      {
+        "name": "curve_region_cached_classification",
+        "iterations": 2000,
+        "checks": "checksum=4000",
+        "baseline_ns": [35636.0315, 35459.9985, 35516.89],
+        "candidate_ns": [34602.1375, 34991.4305, 35231.464],
+        "baseline_median_ns": 35516.89,
+        "candidate_median_ns": 34991.4305,
+        "percent_change": -1.4794637143060618
+      },
+      {
+        "name": "curve_region_immediate_native_signed_depth",
+        "iterations": 2000,
+        "checks": "checksum=2000",
+        "baseline_ns": [907.883, 860.951, 866.1005],
+        "candidate_ns": [871.0655, 859.4115, 900.158],
+        "baseline_median_ns": 866.1005,
+        "candidate_median_ns": 871.0655,
+        "percent_change": 0.5732591079210758
+      },
+      {
+        "name": "bezier_retained_region_materialization",
+        "iterations": 20000,
+        "checks": "checksum=0",
+        "baseline_ns": [11827.63665, 11927.8593, 12286.4598],
+        "candidate_ns": [11935.1948, 11621.3018, 11741.45905],
+        "baseline_median_ns": 11927.8593,
+        "candidate_median_ns": 11741.45905,
+        "percent_change": -1.5627301203997357
+      },
+      {
+        "name": "curve_region_cached_algebraic_classification",
+        "iterations": 2000,
+        "checks": "checksum=4000",
+        "baseline_ns": [45647.0465, 45709.427, 45564.7075],
+        "candidate_ns": [44854.176, 44324.307, 44580.1045],
+        "baseline_median_ns": 45647.0465,
+        "candidate_median_ns": 44580.1045,
+        "percent_change": -2.3373735691749387
+      },
+      {
+        "name": "bezier_retained_algebraic_source_envelope",
+        "iterations": 20000,
+        "checks": "checksum=0",
+        "baseline_ns": [13500.0457, 13570.30045, 13882.4581],
+        "candidate_ns": [13146.4214, 13082.807249999998, 13321.10645],
+        "baseline_median_ns": 13570.30045,
+        "candidate_median_ns": 13146.4214,
+        "percent_change": -3.1235789624687427
+      },
+      {
+        "name": "bezier_retained_algebraic_exact_endpoint_envelope",
+        "iterations": 20000,
+        "checks": "checksum=0",
+        "baseline_ns": [5840.99485, 5760.21535, 5960.59765],
+        "candidate_ns": [5803.0069, 5771.1036, 5836.35665],
+        "baseline_median_ns": 5840.99485,
+        "candidate_median_ns": 5803.0069,
+        "percent_change": -0.6503678050666317
+      },
+      {
+        "name": "bezier_retained_algebraic_line_authoritative_roles",
+        "iterations": 20000,
+        "checks": "checksum=0",
+        "baseline_ns": [141557.53865, 137958.2209, 138897.20565],
+        "candidate_ns": [137557.84735, 135388.38375, 137541.8544],
+        "baseline_median_ns": 138897.20565,
+        "candidate_median_ns": 137541.8544,
+        "percent_change": -0.9757944687636577
+      },
+      {
+        "name": "bezier_resolved_overlap_region_materialization",
+        "iterations": 20000,
+        "checks": "checksum=0",
+        "baseline_ns": [24141.72405, 23741.225, 23977.5528],
+        "candidate_ns": [23930.696, 24209.9294, 24416.1883],
+        "baseline_median_ns": 23977.5528,
+        "candidate_median_ns": 24209.9294,
+        "percent_change": 0.9691422721004317
+      },
+      {
+        "name": "bezier_conic_region_exact_area",
+        "iterations": 20000,
+        "checks": "checksum=0",
+        "baseline_ns": [26197.087399999997, 26874.56055, 26332.451650000003],
+        "candidate_ns": [26099.4466, 25827.504199999996, 25641.4869],
+        "baseline_median_ns": 26332.451650000003,
+        "candidate_median_ns": 25827.504199999996,
+        "percent_change": -1.9175861659657012
+      }
+    ],
+    "binaries": {
+      "baseline": {
+        "path": "/tmp/hypercurve-active-radical-region-baseline-benchmark",
+        "sha256": "3396872edb94164cc3973a42542373c2c9bb3eca9ac41dccd3ebfaf2138d2869",
+        "text_bytes": 11856042,
+        "data_bytes": 320496,
+        "bss_bytes": 2632,
+        "allocated_bytes": 12179170,
+        "file_bytes": 14900944
+      },
+      "candidate": {
+        "path": "/tmp/hypercurve-active-radical-region-candidate-benchmark",
+        "sha256": "744e61f262bdef99e6e5883a0479b5704fe35af260730e69f67de26a297c2a9d",
+        "text_bytes": 11856998,
+        "data_bytes": 320496,
+        "bss_bytes": 1672,
+        "allocated_bytes": 12179166,
+        "file_bytes": 14902712
+      }
+    },
+    "qualification": "Three sequential pinned samples per version, after radial timings. Per-iteration values are total measured duration divided by the unchanged iteration count, not rounded printed per-iteration values. Control lanes are mixed by a few percent; whole-driver median user CPU changes from 5.84 to 5.78 seconds. No blanket speedup or universal binary-size claim. Text/data/BSS sum falls four bytes; file size grows 1,768 bytes."
+  },
+  "final_validation": {
+    "all_features": {
+      "command": "cargo test --release --locked --all-features",
+      "targets": 45,
+      "passed": 1727,
+      "failed": 0,
+      "ignored": 9,
+      "unit_passed": 885,
+      "unit_seconds": 89.81,
+      "exit_status": 0,
+      "log": "/tmp/hypercurve-active-radical-all-features.log"
+    },
+    "minimal_features": {
+      "command": "cargo test --release --locked --no-default-features",
+      "targets": 45,
+      "passed": 1698,
+      "failed": 0,
+      "ignored": 4,
+      "unit_passed": 881,
+      "unit_seconds": 81.32,
+      "exit_status": 0,
+      "log": "/tmp/hypercurve-active-radical-minimal.log"
+    },
+    "ignored_units": {
+      "passed": 6,
+      "failed": 0,
+      "seconds": 128.09,
+      "manual_drivers_complete": 5,
+      "exit_status": 0,
+      "log": "/tmp/hypercurve-active-radical-ignored-units.log"
+    },
+    "ignored_stroke_tests": {
+      "passed": 3,
+      "failed": 0,
+      "seconds": 45.97,
+      "exit_status": 0,
+      "log": "/tmp/hypercurve-active-radical-ignored-stroke.log"
+    },
+    "ui_tests": {
+      "passed": 37,
+      "failed": 0,
+      "seconds": 2.87,
+      "exit_status": 0,
+      "log": "/tmp/hypercurve-active-radical-ui-tests.log"
+    },
+    "auxiliary_gates": [
+      {
+        "gate": "Strict all-feature/all-target Clippy",
+        "exit_status": 0,
+        "log": "/tmp/hypercurve-active-radical-clippy.log"
+      },
+      {
+        "gate": "Fuzz-bin compilation",
+        "exit_status": 0,
+        "log": "/tmp/hypercurve-active-radical-fuzz-check.log"
+      },
+      {
+        "gate": "All-feature warning-denied rustdoc",
+        "exit_status": 0,
+        "log": "/tmp/hypercurve-active-radical-docs.log"
+      },
+      {
+        "gate": "All-feature benchmark compilation",
+        "exit_status": 0,
+        "log": "/tmp/hypercurve-active-radical-bench-build.log"
+      },
+      {
+        "gate": "Strict UI Clippy",
+        "exit_status": 0,
+        "log": "/tmp/hypercurve-active-radical-ui-clippy.log"
+      },
+      {
+        "gate": "cargo fmt --check",
+        "exit_status": 0
+      }
+    ],
+    "qualification": "Final feature suites and auxiliary gates cover the committed cfg(test) helper deduplication. All nine opt-in cases were executed at their normal iteration counts and completed. All-benchmark compilation is not execution of every benchmark. Lower-stack sources and Hypermesh are unchanged and were not requalified in this checkpoint. No fresh WASM/Trunk/registry-publication claim."
+  },
+  "remaining_profile": {
+    "fixture": "bezier_offset::conversion_tests::recursive_selected_radial_diameter_chord_intersects_a_rational_quadratic_strict",
+    "fixture_unchanged": true,
+    "features": "no-default-features",
+    "instrumentation": "CARGO_PROFILE_RELEASE_DEBUG=1 RUSTFLAGS='-C force-frame-pointers=yes'; perf record -F 99 --call-graph fp",
+    "samples": 7686,
+    "lost_samples": 0,
+    "passed": 1,
+    "wall_seconds": 79.9,
+    "user_seconds": 76.43,
+    "peak_rss_kib": 44220,
+    "inclusive_cycle_percent": {
+      "recursive_quadratic_interval": 89.6,
+      "compare_reals": 86.45,
+      "interval_compare_to_zero": 85.67,
+      "interval_multiply": 81.57,
+      "chord_endpoint_bounds": 81.43,
+      "hyperlimit_direct_sign": 65.79,
+      "exact_rational_normal_form": 62.61
+    },
+    "raw_file": "/tmp/hypercurve-active-radical-chord.perf",
+    "report": "/tmp/hypercurve-active-radical-chord-report.csv",
+    "log": "/tmp/hypercurve-active-radical-chord-profile.log",
+    "next_lead": "Use the existing native certified bounded sign refinement before the expensive generic sign fallback for interval endpoint signs. Preserve exact-zero proof requirements and the full fallback on unknown. Not implemented by this checkpoint.",
+    "qualification": "Instrumented diagnostic under other build/test activity, not paired timing. Inclusive percentages overlap and must not be summed. The strict chord and one opt-in analytic-Boolean fixture remain long-running, although both complete."
+  },
+  "milestone_status": {
+    "exactcorelib_mining_and_idea_uplift": "Previously closed; remains closed.",
+    "hypercurve_release_readiness": "Not complete. Remaining long-running paths and registry dependency-release coordination are not closed by this change.",
+    "publication_or_push": false
+  }
+}
