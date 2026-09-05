@@ -14,10 +14,9 @@ use hyperlimit::{Certainty, PredicateOutcome, PredicatePolicy, compare_reals};
 use hyperreal::{Real, RealSign, ZeroKnowledge};
 
 use crate::algebraic::{
-    AlgebraicRootKind, AlgebraicRootPolynomialEvaluationReport,
-    AlgebraicRootPolynomialEvaluationStatus, AlgebraicRootRepresentation,
-    algebraic_root_payload_replays_strictly, evaluate_polynomial_at_algebraic_root,
-    validate_algebraic_root_representation,
+    AlgebraicRootPolynomialEvaluationReport, AlgebraicRootPolynomialEvaluationStatus,
+    AlgebraicRootRepresentation, algebraic_root_payload_replays_strictly,
+    evaluate_polynomial_at_algebraic_root, validate_algebraic_root_representation,
 };
 use crate::curve_resultant::{BivariatePolynomial, CurveResultantParameter};
 use crate::ordered_field_roots::{
@@ -3681,15 +3680,6 @@ impl LocalAlgebraicField {
             self.refinement_steps += refinement.refinement_steps;
             self.root.interval = refined_interval;
         }
-        self.root.kind = if self
-            .root
-            .exact_point_witness()
-            .is_some_and(|witness| witness.exact_rational_ref().is_some())
-        {
-            AlgebraicRootKind::ExactRationalWitness
-        } else {
-            AlgebraicRootKind::IsolatingInterval
-        };
         self.root.validation = validate_algebraic_root_representation(&self.root, self.policy);
         if !self.root.is_valid() {
             return Err(LocalFieldError::InvalidEvidence);
@@ -3841,7 +3831,6 @@ mod tests {
                 exact_root: None,
                 distinct_root_count: 1,
             },
-            kind: AlgebraicRootKind::IsolatingInterval,
             validation: AlgebraicRootValidationReport {
                 status: AlgebraicRootValidationStatus::Valid,
                 message: None,
@@ -3853,11 +3842,6 @@ mod tests {
     }
 
     fn represented_exact_root(value: Real, policy: PredicatePolicy) -> AlgebraicRootRepresentation {
-        let kind = if value.exact_rational_ref().is_some() {
-            AlgebraicRootKind::ExactRationalWitness
-        } else {
-            AlgebraicRootKind::IsolatingInterval
-        };
         let mut root = AlgebraicRootRepresentation {
             constraint_index: 0,
             symbol: SymbolId(0),
@@ -3869,7 +3853,6 @@ mod tests {
                 exact_root: Some(value),
                 distinct_root_count: 1,
             },
-            kind,
             validation: AlgebraicRootValidationReport {
                 status: AlgebraicRootValidationStatus::Valid,
                 message: None,
@@ -4268,7 +4251,7 @@ mod tests {
     }
 
     #[test]
-    fn local_refinement_preserves_nonrational_exact_point_kind() {
+    fn local_refinement_preserves_exact_point_payloads() {
         for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
             for selected in [rational(1, 2), real(2).sqrt().unwrap(), Real::pi()] {
                 for (polynomial, upper) in [
@@ -4288,14 +4271,7 @@ mod tests {
                         compare_reals(witness, &selected, PredicatePolicy::STRICT).value(),
                         Some(Ordering::Equal)
                     );
-                    assert_eq!(
-                        field.root.kind,
-                        if selected.exact_rational_ref().is_some() {
-                            AlgebraicRootKind::ExactRationalWitness
-                        } else {
-                            AlgebraicRootKind::IsolatingInterval
-                        }
-                    );
+                    assert_eq!(witness.exact_rational_ref(), selected.exact_rational_ref());
                     assert!(algebraic_root_payload_replays_strictly(&field.root));
                     assert_eq!(field.certainty, Certainty::Exact);
                 }

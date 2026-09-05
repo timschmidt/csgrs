@@ -3,9 +3,9 @@
 use hyperlimit::PredicatePolicy;
 use hyperreal::Real;
 use hypersolve::{
-    AlgebraicRootArithmeticOp, AlgebraicRootBinaryTransformStatus, AlgebraicRootKind,
-    AlgebraicRootRepresentation, AlgebraicRootValidationReport, AlgebraicRootValidationStatus,
-    IsolatedRootInterval, SymbolId, transform_algebraic_roots_binary,
+    AlgebraicRootArithmeticOp, AlgebraicRootBinaryTransformStatus, AlgebraicRootRepresentation,
+    AlgebraicRootValidationReport, AlgebraicRootValidationStatus, IsolatedRootInterval, SymbolId,
+    transform_algebraic_roots_binary,
 };
 use libfuzzer_sys::fuzz_target;
 
@@ -25,7 +25,6 @@ fn sqrt_root(square: i64) -> AlgebraicRootRepresentation {
             exact_root: None,
             distinct_root_count: 1,
         },
-        kind: AlgebraicRootKind::IsolatingInterval,
         validation: AlgebraicRootValidationReport {
             status: AlgebraicRootValidationStatus::Valid,
             message: None,

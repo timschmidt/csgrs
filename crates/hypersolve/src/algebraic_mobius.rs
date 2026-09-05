@@ -19,10 +19,9 @@ use hyperlimit::{PredicatePolicy, compare_reals};
 use hyperreal::{Rational, Real};
 
 use crate::algebraic::{
-    AlgebraicRootKind, AlgebraicRootRepresentation, AlgebraicRootValidationReport,
-    AlgebraicRootValidationStatus, algebraic_root_interval_endpoints_are_roots,
-    canonical_linear_value_representation, refine_reversed_algebraic_root_ownership,
-    validate_algebraic_root_representation,
+    AlgebraicRootRepresentation, AlgebraicRootValidationReport, AlgebraicRootValidationStatus,
+    algebraic_root_interval_endpoints_are_roots, canonical_linear_value_representation,
+    refine_reversed_algebraic_root_ownership, validate_algebraic_root_representation,
 };
 use crate::root_isolation::{
     ALGEBRAIC_IMAGE_REFINEMENT_ROUNDS, ALGEBRAIC_IMAGE_REFINEMENT_STEPS, IsolatedRootInterval,
@@ -246,18 +245,12 @@ pub fn transform_algebraic_root_mobius(
             Some("could not construct transformed interval exactly".to_owned()),
         );
     };
-    let kind = if interval.exact_root.is_some() {
-        AlgebraicRootKind::ExactRationalWitness
-    } else {
-        AlgebraicRootKind::IsolatingInterval
-    };
     let mut representation = AlgebraicRootRepresentation {
         constraint_index: root.constraint_index,
         symbol: root.symbol,
         interval_index: root.interval_index,
         polynomial_coefficients,
         interval,
-        kind,
         validation: AlgebraicRootValidationReport {
             status: AlgebraicRootValidationStatus::Valid,
             message: None,
@@ -511,13 +504,6 @@ fn refine_root_away_from_mobius_denominator(
             return None;
         }
         refined_root.interval = interval;
-        if let Some(exact_root) = refined_root.interval.exact_root.as_ref() {
-            refined_root.kind = if exact_root.exact_rational_ref().is_some() {
-                AlgebraicRootKind::ExactRationalWitness
-            } else {
-                AlgebraicRootKind::IsolatingInterval
-            };
-        }
         refined_root.validation = validate_algebraic_root_representation(&refined_root, policy);
         if !refined_root.is_valid() {
             return None;
@@ -1138,7 +1124,6 @@ mod tests {
                 exact_root: None,
                 distinct_root_count: 1,
             },
-            kind: AlgebraicRootKind::IsolatingInterval,
             validation: AlgebraicRootValidationReport {
                 status: AlgebraicRootValidationStatus::Valid,
                 message: None,
@@ -1184,7 +1169,6 @@ mod tests {
                 exact_root: Some(real(2)),
                 distinct_root_count: 1,
             },
-            kind: AlgebraicRootKind::ExactRationalWitness,
             validation: AlgebraicRootValidationReport {
                 status: AlgebraicRootValidationStatus::Valid,
                 message: None,
@@ -1207,7 +1191,6 @@ mod tests {
             AlgebraicRootMobiusTransformStatus::Transformed
         );
         let transformed = report.representation.expect("exact-Real point image");
-        assert_eq!(transformed.kind, AlgebraicRootKind::IsolatingInterval);
         assert!(transformed.interval.exact_root.is_none());
         assert_eq!(transformed.interval.lower, expected);
         assert_eq!(
@@ -1451,7 +1434,6 @@ mod tests {
                 exact_root: Some(real(2)),
                 distinct_root_count: 1,
             },
-            kind: AlgebraicRootKind::ExactRationalWitness,
             ..sqrt_two()
         };
         let report = transform_algebraic_root_mobius(
@@ -1513,7 +1495,6 @@ mod tests {
                 exact_root: Some(real(3)),
                 distinct_root_count: 1,
             },
-            kind: AlgebraicRootKind::ExactRationalWitness,
             ..sqrt_two()
         };
 
@@ -1816,7 +1797,6 @@ mod tests {
                     exact_root: Some(real(root)),
                     distinct_root_count: 1,
                 },
-                kind: AlgebraicRootKind::ExactRationalWitness,
                 ..sqrt_two()
             };
 

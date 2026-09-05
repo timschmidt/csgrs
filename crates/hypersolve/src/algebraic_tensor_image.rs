@@ -14,8 +14,8 @@ use hyperlimit::{PredicatePolicy, compare_reals};
 use hyperreal::Real;
 
 use crate::algebraic::{
-    AlgebraicRootAffineRelation, AlgebraicRootKind, AlgebraicRootRepresentation,
-    AlgebraicRootValidationReport, AlgebraicRootValidationStatus, algebraic_root_affine_relation,
+    AlgebraicRootAffineRelation, AlgebraicRootRepresentation, AlgebraicRootValidationReport,
+    AlgebraicRootValidationStatus, algebraic_root_affine_relation,
     validate_algebraic_root_representation,
 };
 use crate::algebraic_fiber::{
@@ -269,7 +269,6 @@ pub fn project_selected_tensor_fiber_via_tagged_norm(
             interval_index: source.interval_index,
             polynomial_coefficients: first_constraint,
             interval: source.interval.clone(),
-            kind: source.kind.clone(),
             validation: source.validation.clone(),
         };
         root.validation = validate_algebraic_root_representation(&root, PredicatePolicy::STRICT);
@@ -321,7 +320,6 @@ pub fn compact_algebraic_root_low_degree_witness(
     ) {
         let mut compact = root.clone();
         compact.polynomial_coefficients = vec![-witness.clone(), Real::one()];
-        compact.kind = AlgebraicRootKind::ExactRationalWitness;
         compact.interval = IsolatedRootInterval {
             lower: witness.clone(),
             upper: witness.clone(),
@@ -372,13 +370,8 @@ pub fn compact_algebraic_root_low_degree_witness(
         compact.interval = IsolatedRootInterval {
             lower: witness.clone(),
             upper: witness.clone(),
-            exact_root: Some(witness.clone()),
+            exact_root: Some(witness),
             distinct_root_count: 1,
-        };
-        compact.kind = if witness.exact_rational_ref().is_some() {
-            AlgebraicRootKind::ExactRationalWitness
-        } else {
-            AlgebraicRootKind::IsolatingInterval
         };
         compact.validation =
             validate_algebraic_root_representation(&compact, PredicatePolicy::STRICT);
@@ -777,11 +770,6 @@ pub fn represent_algebraic_tensor_image(
         symbol: first_source.symbol,
         interval_index: first_source.interval_index,
         polynomial_coefficients,
-        kind: if interval.exact_root.is_some() {
-            AlgebraicRootKind::ExactRationalWitness
-        } else {
-            AlgebraicRootKind::IsolatingInterval
-        },
         interval,
         validation: AlgebraicRootValidationReport {
             status: AlgebraicRootValidationStatus::Valid,
@@ -936,7 +924,7 @@ mod tests {
     use hyperreal::Real;
 
     use crate::algebraic::{
-        AlgebraicRootAffineTransformStatus, AlgebraicRootKind, AlgebraicRootValidationReport,
+        AlgebraicRootAffineTransformStatus, AlgebraicRootValidationReport,
         AlgebraicRootValidationStatus, represented_root_sign, transform_algebraic_root_affine,
     };
     use crate::symbolic::SymbolId;
@@ -957,7 +945,6 @@ mod tests {
                 exact_root: None,
                 distinct_root_count: 1,
             },
-            kind: AlgebraicRootKind::IsolatingInterval,
             validation: AlgebraicRootValidationReport {
                 status: AlgebraicRootValidationStatus::Valid,
                 message: None,
@@ -977,7 +964,6 @@ mod tests {
                 exact_root: Some(real(value)),
                 distinct_root_count: 1,
             },
-            kind: AlgebraicRootKind::ExactRationalWitness,
             validation: AlgebraicRootValidationReport {
                 status: AlgebraicRootValidationStatus::Valid,
                 message: None,
@@ -1049,7 +1035,6 @@ mod tests {
                 exact_root: None,
                 distinct_root_count: 1,
             },
-            kind: AlgebraicRootKind::IsolatingInterval,
             validation: AlgebraicRootValidationReport {
                 status: AlgebraicRootValidationStatus::Valid,
                 message: None,
@@ -1079,7 +1064,6 @@ mod tests {
                 exact_root: None,
                 distinct_root_count: 1,
             },
-            kind: AlgebraicRootKind::IsolatingInterval,
             validation: AlgebraicRootValidationReport {
                 status: AlgebraicRootValidationStatus::Valid,
                 message: None,
@@ -1255,7 +1239,6 @@ mod tests {
                 exact_root: Some(Real::one()),
                 distinct_root_count: 1,
             },
-            kind: AlgebraicRootKind::ExactRationalWitness,
             validation: AlgebraicRootValidationReport {
                 status: AlgebraicRootValidationStatus::Valid,
                 message: None,
@@ -1454,7 +1437,6 @@ mod tests {
                 exact_root: None,
                 distinct_root_count: 1,
             },
-            kind: AlgebraicRootKind::IsolatingInterval,
             validation: AlgebraicRootValidationReport {
                 status: AlgebraicRootValidationStatus::Valid,
                 message: None,
@@ -1500,7 +1482,6 @@ mod tests {
                 exact_root: None,
                 distinct_root_count: 1,
             },
-            kind: AlgebraicRootKind::IsolatingInterval,
             validation: AlgebraicRootValidationReport {
                 status: AlgebraicRootValidationStatus::Valid,
                 message: None,
@@ -1652,7 +1633,6 @@ mod tests {
                 exact_root: None,
                 distinct_root_count: 1,
             },
-            kind: AlgebraicRootKind::IsolatingInterval,
             validation: AlgebraicRootValidationReport {
                 status: AlgebraicRootValidationStatus::Valid,
                 message: None,

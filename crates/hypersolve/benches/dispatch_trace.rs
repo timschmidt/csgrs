@@ -5,7 +5,7 @@ use std::hint::black_box;
 
 use hyperreal::{Rational, Real};
 use hypersolve::{
-    AlgebraicRootKind, AlgebraicRootRationalImageStatus, AlgebraicRootRefinementComparisonConfig,
+    AlgebraicRootRationalImageStatus, AlgebraicRootRefinementComparisonConfig,
     AlgebraicRootRepresentation, AlgebraicRootValidationReport, AlgebraicRootValidationStatus,
     BatchPredicateScheduleConfig, BezierPowerBasisSubstitutionConfig, Constraint,
     CurveIntersectionResultantConfig, CurveResultantParameter, Expr,
@@ -311,7 +311,6 @@ fn trace_algebraic_evaluation() -> hyperreal::dispatch_trace::TraceSnapshot {
                 exact_root: None,
                 distinct_root_count: 1,
             },
-            kind: AlgebraicRootKind::IsolatingInterval,
             validation: AlgebraicRootValidationReport {
                 status: AlgebraicRootValidationStatus::Valid,
                 message: None,
@@ -342,7 +341,6 @@ fn trace_algebraic_evaluation() -> hyperreal::dispatch_trace::TraceSnapshot {
                 exact_root: Some(exact_value),
                 distinct_root_count: 1,
             },
-            kind: AlgebraicRootKind::IsolatingInterval,
             validation: AlgebraicRootValidationReport {
                 status: AlgebraicRootValidationStatus::Valid,
                 message: None,
@@ -369,7 +367,6 @@ fn trace_algebraic_rational_images() -> hyperreal::dispatch_trace::TraceSnapshot
                 exact_root: None,
                 distinct_root_count: 1,
             },
-            kind: AlgebraicRootKind::IsolatingInterval,
             validation: AlgebraicRootValidationReport {
                 status: AlgebraicRootValidationStatus::Valid,
                 message: None,
@@ -451,7 +448,6 @@ fn trace_algebraic_comparison() -> hyperreal::dispatch_trace::TraceSnapshot {
                 exact_root: None,
                 distinct_root_count: 1,
             },
-            kind: AlgebraicRootKind::IsolatingInterval,
             validation: AlgebraicRootValidationReport {
                 status: AlgebraicRootValidationStatus::Valid,
                 message: None,

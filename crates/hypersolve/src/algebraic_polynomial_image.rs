@@ -22,8 +22,8 @@ use hyperlimit::PredicatePolicy;
 use hyperreal::{Rational, Real};
 
 use crate::algebraic::{
-    AlgebraicRootKind, AlgebraicRootRepresentation, AlgebraicRootValidationReport,
-    AlgebraicRootValidationStatus, validate_algebraic_root_representation,
+    AlgebraicRootRepresentation, AlgebraicRootValidationReport, AlgebraicRootValidationStatus,
+    validate_algebraic_root_representation,
 };
 use crate::algebraic_mobius::{
     AlgebraicRootMobiusTransformStatus, transform_algebraic_root_mobius,
@@ -248,18 +248,12 @@ pub fn transform_algebraic_root_polynomial_image(
             Some("could not certify a one-root polynomial image interval".to_owned()),
         );
     };
-    let kind = if interval.exact_root.is_some() {
-        AlgebraicRootKind::ExactRationalWitness
-    } else {
-        AlgebraicRootKind::IsolatingInterval
-    };
     let mut representation = AlgebraicRootRepresentation {
         constraint_index: root.constraint_index,
         symbol: root.symbol,
         interval_index: root.interval_index,
         polynomial_coefficients,
         interval,
-        kind,
         validation: AlgebraicRootValidationReport {
             status: AlgebraicRootValidationStatus::Valid,
             message: None,
@@ -300,7 +294,6 @@ fn exact_constant_image(
         interval_index: root.interval_index,
         polynomial_coefficients: vec![-value, Real::one()],
         interval,
-        kind: AlgebraicRootKind::ExactRationalWitness,
         validation: AlgebraicRootValidationReport {
             status: AlgebraicRootValidationStatus::Valid,
             message: None,
@@ -712,7 +705,6 @@ mod tests {
                 exact_root: None,
                 distinct_root_count: 1,
             },
-            kind: AlgebraicRootKind::IsolatingInterval,
             validation: AlgebraicRootValidationReport {
                 status: AlgebraicRootValidationStatus::Valid,
                 message: None,
@@ -1048,7 +1040,6 @@ mod tests {
                 exact_root: Some(real(3)),
                 distinct_root_count: 1,
             },
-            kind: AlgebraicRootKind::ExactRationalWitness,
             ..sqrt_two_positive()
         };
         let report = transform_algebraic_root_polynomial_image(
@@ -1145,7 +1136,6 @@ mod tests {
                     exact_root: Some(real(root)),
                     distinct_root_count: 1,
                 },
-                kind: AlgebraicRootKind::ExactRationalWitness,
                 ..sqrt_two_positive()
             };
 

@@ -11,11 +11,10 @@ use hypersolve::{
     AlgebraicFiberPolynomialImageProjectionStatus, AlgebraicFiberProjectionStatus,
     AlgebraicFiberRationalReductionStatus, AlgebraicFiberRootCountStatus,
     AlgebraicFiberRootIsolationConfig, AlgebraicFiberRootIsolationStatus,
-    AlgebraicRootArithmeticOp, AlgebraicRootKind, AlgebraicRootRationalMap,
-    AlgebraicRootRefinementComparisonConfig, AlgebraicRootRepresentation,
-    AlgebraicRootValidationReport, AlgebraicRootValidationStatus, BatchPredicateScheduleConfig,
-    BivariatePolynomial, BsplineKnotSpanSubstitutionConfig, Constraint,
-    CurveIntersectionResultantConfig, CurveResultantParameter, DenseTensorPolynomial,
+    AlgebraicRootArithmeticOp, AlgebraicRootRationalMap, AlgebraicRootRefinementComparisonConfig,
+    AlgebraicRootRepresentation, AlgebraicRootValidationReport, AlgebraicRootValidationStatus,
+    BatchPredicateScheduleConfig, BivariatePolynomial, BsplineKnotSpanSubstitutionConfig,
+    Constraint, CurveIntersectionResultantConfig, CurveResultantParameter, DenseTensorPolynomial,
     DraggedParameterWeight, EqualitySubstitution, Expr, IntervalBoxCertificationPackage,
     IsolatedRootInterval, PolynomialCurvePoint2, PolynomialParametricCurve2, Problem,
     ProposalEngineKind, ProposalEnginePrecision, ProposalEngineReport, RationalCurveControlPoint2,
@@ -127,7 +126,6 @@ fn selected_square_root(square: i64) -> AlgebraicRootRepresentation {
             exact_root: None,
             distinct_root_count: 1,
         },
-        kind: AlgebraicRootKind::IsolatingInterval,
         validation: AlgebraicRootValidationReport {
             status: AlgebraicRootValidationStatus::Valid,
             message: None,
@@ -151,7 +149,6 @@ fn selected_cubic_root(
             exact_root: None,
             distinct_root_count: 1,
         },
-        kind: AlgebraicRootKind::IsolatingInterval,
         validation: AlgebraicRootValidationReport {
             status: AlgebraicRootValidationStatus::Valid,
             message: None,
@@ -5292,7 +5289,6 @@ fn certification(c: &mut Criterion) {
             exact_root: None,
             distinct_root_count: 1,
         },
-        kind: AlgebraicRootKind::IsolatingInterval,
         validation: AlgebraicRootValidationReport {
             status: AlgebraicRootValidationStatus::Valid,
             message: None,
@@ -5366,7 +5362,6 @@ fn certification(c: &mut Criterion) {
             exact_root: None,
             distinct_root_count: 1,
         },
-        kind: AlgebraicRootKind::IsolatingInterval,
         validation: AlgebraicRootValidationReport {
             status: AlgebraicRootValidationStatus::Valid,
             message: None,
@@ -6403,7 +6398,6 @@ fn certification(c: &mut Criterion) {
             exact_root: Some(r(2)),
             distinct_root_count: 1,
         },
-        kind: AlgebraicRootKind::ExactRationalWitness,
         validation: AlgebraicRootValidationReport {
             status: AlgebraicRootValidationStatus::Valid,
             message: None,
@@ -6440,7 +6434,6 @@ fn certification(c: &mut Criterion) {
             exact_root: None,
             distinct_root_count: 1,
         },
-        kind: AlgebraicRootKind::IsolatingInterval,
         ..rational_two.clone()
     };
     let affine_square_root = AlgebraicRootRepresentation {
@@ -6452,7 +6445,6 @@ fn certification(c: &mut Criterion) {
             exact_root: None,
             distinct_root_count: 1,
         },
-        kind: AlgebraicRootKind::IsolatingInterval,
         ..rational_two.clone()
     };
     let exact_sqrt_two = r(2).sqrt().unwrap();
@@ -6465,7 +6457,6 @@ fn certification(c: &mut Criterion) {
             exact_root: Some(exact_sqrt_two),
             distinct_root_count: 1,
         },
-        kind: AlgebraicRootKind::IsolatingInterval,
         ..rational_two.clone()
     };
     let exact_pi = Real::pi();
@@ -6478,7 +6469,6 @@ fn certification(c: &mut Criterion) {
             exact_root: Some(exact_pi),
             distinct_root_count: 1,
         },
-        kind: AlgebraicRootKind::IsolatingInterval,
         ..rational_two.clone()
     };
     let exact_normal = exact_normal_positive();
@@ -6491,7 +6481,6 @@ fn certification(c: &mut Criterion) {
             exact_root: Some(exact_normal.clone()),
             distinct_root_count: 1,
         },
-        kind: AlgebraicRootKind::IsolatingInterval,
         ..rational_two.clone()
     };
     c.bench_function(
@@ -6590,7 +6579,6 @@ fn certification(c: &mut Criterion) {
             exact_root: None,
             distinct_root_count: 1,
         },
-        kind: AlgebraicRootKind::IsolatingInterval,
         ..rational_two.clone()
     };
     c.bench_function(
@@ -7469,7 +7457,6 @@ fn certification(c: &mut Criterion) {
             exact_root: Some(r(2)),
             distinct_root_count: 1,
         },
-        kind: AlgebraicRootKind::ExactRationalWitness,
         ..sqrt_two.clone()
     };
     assert!(
@@ -7489,7 +7476,6 @@ fn certification(c: &mut Criterion) {
             exact_root: Some(r(4)),
             distinct_root_count: 1,
         },
-        kind: AlgebraicRootKind::ExactRationalWitness,
         ..sqrt_two.clone()
     };
     assert!(

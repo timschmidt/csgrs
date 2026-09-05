@@ -12,9 +12,8 @@ use hyperlimit::PredicatePolicy;
 use hyperreal::Real;
 
 use crate::algebraic::{
-    AlgebraicRootKind, AlgebraicRootRepresentation, AlgebraicRootValidationReport,
-    AlgebraicRootValidationStatus, represented_root_sign_admitted,
-    validate_algebraic_root_representation,
+    AlgebraicRootRepresentation, AlgebraicRootValidationReport, AlgebraicRootValidationStatus,
+    represented_root_sign_admitted, validate_algebraic_root_representation,
 };
 use crate::root_isolation::{
     IsolatedRootInterval, IsolatedRootRefinementStatus, RootIsolationConfig,
@@ -210,18 +209,12 @@ pub fn square_root_algebraic_root_representation(
             };
         }
     };
-    let kind = if interval.exact_root.is_some() {
-        AlgebraicRootKind::ExactRationalWitness
-    } else {
-        AlgebraicRootKind::IsolatingInterval
-    };
     let mut representation = AlgebraicRootRepresentation {
         constraint_index: root.constraint_index,
         symbol: root.symbol,
         interval_index: root.interval_index,
         polynomial_coefficients,
         interval,
-        kind,
         validation: AlgebraicRootValidationReport {
             status: AlgebraicRootValidationStatus::Valid,
             message: None,
@@ -352,7 +345,6 @@ fn transformed_exact_root(
             exact_root: Some(root),
             distinct_root_count: 1,
         },
-        kind: AlgebraicRootKind::ExactRationalWitness,
         validation: AlgebraicRootValidationReport {
             status: AlgebraicRootValidationStatus::Valid,
             message: None,
@@ -422,7 +414,6 @@ mod tests {
                 exact_root: None,
                 distinct_root_count: 1,
             },
-            kind: AlgebraicRootKind::IsolatingInterval,
             validation: AlgebraicRootValidationReport {
                 status: AlgebraicRootValidationStatus::Valid,
                 message: None,
@@ -443,7 +434,6 @@ mod tests {
                 exact_root: Some(value),
                 distinct_root_count: 1,
             },
-            kind: AlgebraicRootKind::ExactRationalWitness,
             validation: AlgebraicRootValidationReport {
                 status: AlgebraicRootValidationStatus::Valid,
                 message: None,
@@ -634,7 +624,6 @@ mod tests {
             exact_root: Some(Real::zero()),
             distinct_root_count: 1,
         };
-        zero.kind = AlgebraicRootKind::ExactRationalWitness;
         for branch in -1..=1 {
             let report = square_root_algebraic_root_representation(&zero, branch);
             assert_eq!(report.status, AlgebraicRootSquareRootStatus::Transformed);
@@ -682,7 +671,6 @@ mod tests {
                     exact_root: Some(source_root.clone()),
                     distinct_root_count: 1,
                 },
-                kind: AlgebraicRootKind::ExactRationalWitness,
                 validation: AlgebraicRootValidationReport {
                     status: AlgebraicRootValidationStatus::Valid,
                     message: None,

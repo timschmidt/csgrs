@@ -3,8 +3,8 @@
 use hyperlimit::PredicatePolicy;
 use hyperreal::Real;
 use hypersolve::{
-    AlgebraicRootKind, AlgebraicRootRationalImageStatus, AlgebraicRootRepresentation,
-    AlgebraicRootValidationReport, AlgebraicRootValidationStatus, IsolatedRootInterval, SymbolId,
+    AlgebraicRootRationalImageStatus, AlgebraicRootRepresentation, AlgebraicRootValidationReport,
+    AlgebraicRootValidationStatus, IsolatedRootInterval, SymbolId,
     transform_algebraic_root_rational_image,
 };
 use libfuzzer_sys::fuzz_target;
@@ -25,7 +25,6 @@ fn represented_rational_root(root: i64) -> AlgebraicRootRepresentation {
             exact_root: Some(real(root)),
             distinct_root_count: 1,
         },
-        kind: AlgebraicRootKind::ExactRationalWitness,
         validation: AlgebraicRootValidationReport {
             status: AlgebraicRootValidationStatus::Valid,
             message: None,
@@ -45,7 +44,6 @@ fn sqrt_two_positive() -> AlgebraicRootRepresentation {
             exact_root: None,
             distinct_root_count: 1,
         },
-        kind: AlgebraicRootKind::IsolatingInterval,
         validation: AlgebraicRootValidationReport {
             status: AlgebraicRootValidationStatus::Valid,
             message: None,

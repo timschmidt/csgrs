@@ -3,9 +3,8 @@
 use hyperlimit::PredicatePolicy;
 use hyperreal::Real;
 use hypersolve::{
-    AlgebraicRootKind, AlgebraicRootMobiusTransformStatus, AlgebraicRootRepresentation,
-    AlgebraicRootValidationReport, AlgebraicRootValidationStatus, IsolatedRootInterval, SymbolId,
-    transform_algebraic_root_mobius,
+    AlgebraicRootMobiusTransformStatus, AlgebraicRootRepresentation, AlgebraicRootValidationReport,
+    AlgebraicRootValidationStatus, IsolatedRootInterval, SymbolId, transform_algebraic_root_mobius,
 };
 use libfuzzer_sys::fuzz_target;
 
@@ -25,7 +24,6 @@ fn represented_rational_root(root: i64) -> AlgebraicRootRepresentation {
             exact_root: Some(real(root)),
             distinct_root_count: 1,
         },
-        kind: AlgebraicRootKind::ExactRationalWitness,
         validation: AlgebraicRootValidationReport {
             status: AlgebraicRootValidationStatus::Valid,
             message: None,

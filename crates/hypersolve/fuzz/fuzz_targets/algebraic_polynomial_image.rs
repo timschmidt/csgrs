@@ -3,8 +3,8 @@
 use hyperlimit::PredicatePolicy;
 use hyperreal::Real;
 use hypersolve::{
-    AlgebraicRootKind, AlgebraicRootPolynomialImageStatus, AlgebraicRootRepresentation,
-    AlgebraicRootValidationReport, AlgebraicRootValidationStatus, IsolatedRootInterval, SymbolId,
+    AlgebraicRootPolynomialImageStatus, AlgebraicRootRepresentation, AlgebraicRootValidationReport,
+    AlgebraicRootValidationStatus, IsolatedRootInterval, SymbolId,
     transform_algebraic_root_polynomial_image,
 };
 use libfuzzer_sys::fuzz_target;
@@ -25,7 +25,6 @@ fn represented_rational_root(root: i64) -> AlgebraicRootRepresentation {
             exact_root: Some(real(root)),
             distinct_root_count: 1,
         },
-        kind: AlgebraicRootKind::ExactRationalWitness,
         validation: AlgebraicRootValidationReport {
             status: AlgebraicRootValidationStatus::Valid,
             message: None,
@@ -47,9 +46,6 @@ fuzz_target!(|data: [i16; 4]| {
         let expected = constant + linear * root + quadratic * root * root;
         let representation = report.representation.as_ref().unwrap();
         assert!(representation.is_valid());
-        assert_eq!(
-            representation.exact_point_witness(),
-            Some(&real(expected))
-        );
+        assert_eq!(representation.exact_point_witness(), Some(&real(expected)));
     }
 });

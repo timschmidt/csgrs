@@ -2,7 +2,7 @@
 
 use hyperreal::Real;
 use hypersolve::{
-    AlgebraicRootComparisonStatus, AlgebraicRootKind, AlgebraicRootRefinementComparisonConfig,
+    AlgebraicRootComparisonStatus, AlgebraicRootRefinementComparisonConfig,
     AlgebraicRootRepresentation, AlgebraicRootValidationReport, AlgebraicRootValidationStatus,
     IsolatedRootInterval, SymbolId, compare_algebraic_root_representations_by_difference,
 };
@@ -24,7 +24,6 @@ fn sqrt_root(square: i64) -> AlgebraicRootRepresentation {
             exact_root: None,
             distinct_root_count: 1,
         },
-        kind: AlgebraicRootKind::IsolatingInterval,
         validation: AlgebraicRootValidationReport {
             status: AlgebraicRootValidationStatus::Valid,
             message: None,

@@ -31,16 +31,6 @@ use crate::{
     transform_algebraic_root_polynomial_image, transform_algebraic_roots_binary,
 };
 
-/// Representation kind for one isolated algebraic root.
-#[derive(Clone, Debug, Eq, PartialEq)]
-pub enum AlgebraicRootKind {
-    /// The isolator found an exact rational root value.
-    ExactRationalWitness,
-    /// The root retains its exact polynomial and isolating interval instead
-    /// of being classified as an exact rational witness.
-    IsolatingInterval,
-}
-
 /// Validation status for represented algebraic-root evidence.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub enum AlgebraicRootValidationStatus {
@@ -383,15 +373,14 @@ pub struct AlgebraicRootRepresentation {
     pub polynomial_coefficients: Vec<Real>,
     /// Certified unit isolating interval or exact point interval.
     pub interval: IsolatedRootInterval,
-    /// Whether this is an exact rational witness or an isolating-interval
-    /// representation.
-    pub kind: AlgebraicRootKind,
     /// Validation evidence for the representation.
     pub validation: AlgebraicRootValidationReport,
 }
 
 impl AlgebraicRootRepresentation {
     /// Returns the stored exact point witness, when present.
+    ///
+    /// Point witnesses may be any exact `Real`, not only rationals.
     #[inline]
     pub fn exact_point_witness(&self) -> Option<&Real> {
         self.interval.exact_root.as_ref()
@@ -1431,15 +1420,6 @@ pub(crate) fn canonical_linear_value_representation(
     value: Real,
 ) -> AlgebraicRootRepresentation {
     let is_rational = value.exact_rational_ref().is_some();
-    canonical_linear_value_representation_with_kind(source, value, is_rational)
-}
-
-#[inline(always)]
-fn canonical_linear_value_representation_with_kind(
-    source: &AlgebraicRootRepresentation,
-    value: Real,
-    is_rational: bool,
-) -> AlgebraicRootRepresentation {
     let exact_root = is_rational.then(|| value.clone());
     let representation = AlgebraicRootRepresentation {
         constraint_index: source.constraint_index,
@@ -1451,11 +1431,6 @@ fn canonical_linear_value_representation_with_kind(
             upper: value,
             exact_root,
             distinct_root_count: 1,
-        },
-        kind: if is_rational {
-            AlgebraicRootKind::ExactRationalWitness
-        } else {
-            AlgebraicRootKind::IsolatingInterval
         },
         validation: AlgebraicRootValidationReport::valid(),
     };
@@ -2278,13 +2253,6 @@ pub(crate) fn refine_reversed_algebraic_root_ownership(
             return None;
         }
         refined_root.interval = interval;
-        if let Some(exact_root) = refined_root.interval.exact_root.as_ref() {
-            refined_root.kind = if exact_root.exact_rational_ref().is_some() {
-                AlgebraicRootKind::ExactRationalWitness
-            } else {
-                AlgebraicRootKind::IsolatingInterval
-            };
-        }
         refined_root.validation = validate_algebraic_root_representation(&refined_root, policy);
         if !refined_root.is_valid() {
             return None;
@@ -2327,7 +2295,6 @@ fn exact_rational_affine_image(
             exact_root: Some(value),
             distinct_root_count: 1,
         },
-        kind: AlgebraicRootKind::ExactRationalWitness,
         validation: AlgebraicRootValidationReport::valid(),
     };
     debug_assert_eq!(
@@ -2352,18 +2319,12 @@ fn finish_affine_transform(
     interval: IsolatedRootInterval,
     policy: PredicatePolicy,
 ) -> AlgebraicRootAffineTransformReport {
-    let kind = if interval.exact_root.is_some() {
-        AlgebraicRootKind::ExactRationalWitness
-    } else {
-        AlgebraicRootKind::IsolatingInterval
-    };
     let mut representation = AlgebraicRootRepresentation {
         constraint_index: root.constraint_index,
         symbol: root.symbol,
         interval_index: root.interval_index,
         polynomial_coefficients,
         interval,
-        kind,
         validation: AlgebraicRootValidationReport::valid(),
     };
     representation.validation = validate_algebraic_root_representation(&representation, policy);
@@ -2867,18 +2828,12 @@ fn negate_algebraic_root_representation(
             .map(|value| -value.clone()),
         distinct_root_count: root.interval.distinct_root_count,
     };
-    let kind = if interval.exact_root.is_some() {
-        AlgebraicRootKind::ExactRationalWitness
-    } else {
-        AlgebraicRootKind::IsolatingInterval
-    };
     let representation = AlgebraicRootRepresentation {
         constraint_index: root.constraint_index,
         symbol: root.symbol,
         interval_index: root.interval_index,
         polynomial_coefficients,
         interval,
-        kind,
         validation: AlgebraicRootValidationReport::valid(),
     };
     debug_assert_eq!(
@@ -2989,11 +2944,6 @@ fn represent_one_report(
                 interval_index,
                 polynomial_coefficients: polynomial.clone(),
                 interval: interval.clone(),
-                kind: if interval.exact_root.is_some() {
-                    AlgebraicRootKind::ExactRationalWitness
-                } else {
-                    AlgebraicRootKind::IsolatingInterval
-                },
                 validation,
             }
         })
@@ -3620,11 +3570,6 @@ fn apply_refined_interval(
         return false;
     };
     root.interval = interval.clone();
-    root.kind = if root.interval.exact_root.is_some() {
-        AlgebraicRootKind::ExactRationalWitness
-    } else {
-        AlgebraicRootKind::IsolatingInterval
-    };
     root.validation = validate_algebraic_root_representation(root, policy);
     root.is_valid()
 }
@@ -3829,11 +3774,6 @@ mod tests {
         constraint_index: usize,
         value: Real,
     ) -> AlgebraicRootRepresentation {
-        let kind = if value.exact_rational_ref().is_some() {
-            AlgebraicRootKind::ExactRationalWitness
-        } else {
-            AlgebraicRootKind::IsolatingInterval
-        };
         AlgebraicRootRepresentation {
             constraint_index,
             symbol: SymbolId(0),
@@ -3845,7 +3785,6 @@ mod tests {
                 exact_root: Some(value),
                 distinct_root_count: 1,
             },
-            kind,
             validation: AlgebraicRootValidationReport::valid(),
         }
     }
@@ -3887,7 +3826,7 @@ mod tests {
             reports[0]
                 .roots
                 .iter()
-                .all(|root| root.kind == AlgebraicRootKind::IsolatingInterval)
+                .all(|root| root.exact_point_witness().is_none())
         );
         assert_eq!(
             reports[0].roots[0].polynomial_coefficients,
@@ -3917,10 +3856,12 @@ mod tests {
             reports[0].status,
             AlgebraicRootRepresentationStatus::Represented
         );
-        assert!(reports[0].roots.iter().any(|root| {
-            root.kind == AlgebraicRootKind::ExactRationalWitness
-                && root.exact_point_witness() == Some(&real(1))
-        }));
+        assert!(
+            reports[0]
+                .roots
+                .iter()
+                .any(|root| root.exact_point_witness() == Some(&real(1)))
+        );
         assert!(reports[0].roots.iter().all(|root| {
             validate_algebraic_root_representation(root, PredicatePolicy::APPROXIMATE_512).status
                 == AlgebraicRootValidationStatus::Valid
@@ -3940,7 +3881,6 @@ mod tests {
                 exact_root: None,
                 distinct_root_count: 2,
             },
-            kind: AlgebraicRootKind::IsolatingInterval,
             validation: AlgebraicRootValidationReport::valid(),
         };
         assert_eq!(
@@ -3959,7 +3899,6 @@ mod tests {
                 exact_root: Some(real(2)),
                 distinct_root_count: 1,
             },
-            kind: AlgebraicRootKind::ExactRationalWitness,
             ..invalid_count
         };
         assert_eq!(
@@ -3983,7 +3922,6 @@ mod tests {
                 exact_root: None,
                 distinct_root_count: 1,
             },
-            kind: AlgebraicRootKind::IsolatingInterval,
             validation: AlgebraicRootValidationReport::valid(),
         };
         assert_eq!(
@@ -4005,7 +3943,6 @@ mod tests {
                 exact_root: None,
                 distinct_root_count: 1,
             },
-            kind: AlgebraicRootKind::IsolatingInterval,
             validation: AlgebraicRootValidationReport::valid(),
         };
         let right = AlgebraicRootRepresentation {
@@ -4047,7 +3984,6 @@ mod tests {
                 exact_root: None,
                 distinct_root_count: 1,
             },
-            kind: AlgebraicRootKind::IsolatingInterval,
             validation: AlgebraicRootValidationReport::valid(),
         };
         let mut overlapping = valid.clone();
@@ -4155,7 +4091,6 @@ mod tests {
                 exact_root: None,
                 distinct_root_count: 1,
             },
-            kind: AlgebraicRootKind::IsolatingInterval,
             validation: AlgebraicRootValidationReport::valid(),
         };
 
@@ -4193,7 +4128,6 @@ mod tests {
                 exact_root: None,
                 distinct_root_count: 1,
             },
-            kind: AlgebraicRootKind::IsolatingInterval,
             validation: AlgebraicRootValidationReport::valid(),
         };
 
@@ -4240,7 +4174,6 @@ mod tests {
                 exact_root: None,
                 distinct_root_count: 1,
             },
-            kind: AlgebraicRootKind::IsolatingInterval,
             validation: AlgebraicRootValidationReport::valid(),
         };
         let rational_coefficients = AlgebraicRootRepresentation {
@@ -4295,7 +4228,6 @@ mod tests {
                 exact_root: None,
                 distinct_root_count: 1,
             },
-            kind: AlgebraicRootKind::IsolatingInterval,
             validation: AlgebraicRootValidationReport::valid(),
         };
         let sqrt_three = AlgebraicRootRepresentation {
@@ -4353,7 +4285,6 @@ mod tests {
                 exact_root: None,
                 distinct_root_count: 1,
             },
-            kind: AlgebraicRootKind::IsolatingInterval,
             validation: AlgebraicRootValidationReport::valid(),
         };
         let sqrt_three = AlgebraicRootRepresentation {
@@ -4450,7 +4381,6 @@ mod tests {
                 exact_root: None,
                 distinct_root_count: 1,
             },
-            kind: AlgebraicRootKind::IsolatingInterval,
             validation: AlgebraicRootValidationReport::valid(),
         };
 
@@ -4474,7 +4404,6 @@ mod tests {
                 exact_root: None,
                 distinct_root_count: 1,
             },
-            kind: AlgebraicRootKind::IsolatingInterval,
             validation: AlgebraicRootValidationReport::valid(),
         };
 
@@ -4542,7 +4471,6 @@ mod tests {
                 exact_root: None,
                 distinct_root_count: 1,
             },
-            kind: AlgebraicRootKind::IsolatingInterval,
             validation: AlgebraicRootValidationReport::valid(),
         };
         let same_root_with_extra_factor = AlgebraicRootRepresentation {
@@ -4582,7 +4510,6 @@ mod tests {
                 exact_root: None,
                 distinct_root_count: 1,
             },
-            kind: AlgebraicRootKind::IsolatingInterval,
             validation: AlgebraicRootValidationReport::valid(),
         };
         let right = AlgebraicRootRepresentation {
@@ -4651,7 +4578,6 @@ mod tests {
                 exact_root: None,
                 distinct_root_count: 1,
             },
-            kind: AlgebraicRootKind::IsolatingInterval,
             validation: AlgebraicRootValidationReport::valid(),
         };
         let right = AlgebraicRootRepresentation {
@@ -4669,7 +4595,6 @@ mod tests {
                 exact_root: None,
                 distinct_root_count: 1,
             },
-            kind: AlgebraicRootKind::IsolatingInterval,
             validation: AlgebraicRootValidationReport::valid(),
         };
 
@@ -4704,7 +4629,6 @@ mod tests {
                 exact_root: None,
                 distinct_root_count: 1,
             },
-            kind: AlgebraicRootKind::IsolatingInterval,
             validation: AlgebraicRootValidationReport::valid(),
         };
         let positive_sqrt_two = AlgebraicRootRepresentation {
@@ -4764,7 +4688,6 @@ mod tests {
                 exact_root: Some(real(2)),
                 distinct_root_count: 1,
             },
-            kind: AlgebraicRootKind::ExactRationalWitness,
             validation: AlgebraicRootValidationReport::valid(),
         };
         let right = AlgebraicRootRepresentation {
@@ -4806,7 +4729,6 @@ mod tests {
                 exact_root: Some(real(2)),
                 distinct_root_count: 1,
             },
-            kind: AlgebraicRootKind::ExactRationalWitness,
             validation: AlgebraicRootValidationReport::valid(),
         };
         let right = AlgebraicRootRepresentation {
@@ -4897,7 +4819,6 @@ mod tests {
                 exact_root: None,
                 distinct_root_count: 1,
             },
-            kind: AlgebraicRootKind::IsolatingInterval,
             validation: AlgebraicRootValidationReport::valid(),
         };
         stale_interval.interval.lower = real(3);
@@ -4951,7 +4872,6 @@ mod tests {
                 exact_root: None,
                 distinct_root_count: 1,
             },
-            kind: AlgebraicRootKind::IsolatingInterval,
             validation: AlgebraicRootValidationReport::valid(),
         };
         let report = arithmetic_algebraic_root_representations(
@@ -5049,7 +4969,6 @@ mod tests {
                 exact_root: None,
                 distinct_root_count: 1,
             },
-            kind: AlgebraicRootKind::IsolatingInterval,
             validation: AlgebraicRootValidationReport::valid(),
         };
         let zero = exact_point_representation(1, Real::zero());
@@ -5102,7 +5021,6 @@ mod tests {
                 exact_root: None,
                 distinct_root_count: 1,
             },
-            kind: AlgebraicRootKind::IsolatingInterval,
             validation: AlgebraicRootValidationReport::valid(),
         };
         let square = arithmetic_algebraic_root_representations(
@@ -5138,7 +5056,6 @@ mod tests {
                 exact_root: None,
                 distinct_root_count: 1,
             },
-            kind: AlgebraicRootKind::IsolatingInterval,
             validation: AlgebraicRootValidationReport::valid(),
         };
         let pi_value = Real::pi();
@@ -5202,7 +5119,6 @@ mod tests {
                 exact_root: None,
                 distinct_root_count: 1,
             },
-            kind: AlgebraicRootKind::IsolatingInterval,
             validation: AlgebraicRootValidationReport::valid(),
         };
         let report = arithmetic_algebraic_root_representations(
@@ -5222,7 +5138,7 @@ mod tests {
         );
         assert_eq!(negated.interval.lower, real(-2));
         assert_eq!(negated.interval.upper, real(-1));
-        assert_eq!(negated.kind, AlgebraicRootKind::IsolatingInterval);
+        assert!(negated.exact_point_witness().is_none());
 
         let mut invalid = interval_only;
         invalid.validation = AlgebraicRootValidationReport::invalid(
@@ -5254,7 +5170,6 @@ mod tests {
                 exact_root: None,
                 distinct_root_count: 1,
             },
-            kind: AlgebraicRootKind::IsolatingInterval,
             validation: AlgebraicRootValidationReport::valid(),
         };
         let rational_three = AlgebraicRootRepresentation {
@@ -5268,7 +5183,6 @@ mod tests {
                 exact_root: Some(real(3)),
                 distinct_root_count: 1,
             },
-            kind: AlgebraicRootKind::ExactRationalWitness,
             validation: AlgebraicRootValidationReport::valid(),
         };
         let rational_two = AlgebraicRootRepresentation {
@@ -5513,7 +5427,6 @@ mod tests {
                 exact_root: Some(real(3)),
                 distinct_root_count: 1,
             },
-            kind: AlgebraicRootKind::ExactRationalWitness,
             validation: AlgebraicRootValidationReport::valid(),
         };
         let rational = evaluate_polynomial_at_algebraic_root(
@@ -5539,7 +5452,6 @@ mod tests {
                 exact_root: None,
                 distinct_root_count: 1,
             },
-            kind: AlgebraicRootKind::IsolatingInterval,
             validation: AlgebraicRootValidationReport::valid(),
         };
         let positive = evaluate_polynomial_at_algebraic_root(
@@ -5569,7 +5481,13 @@ mod tests {
     fn algebraic_root_evaluation_distinguishes_exact_real_values_and_replays_input() {
         let sqrt_two_value = real(2).sqrt().unwrap();
         let sqrt_two = exact_point_representation(0, sqrt_two_value.clone());
-        assert_eq!(sqrt_two.kind, AlgebraicRootKind::IsolatingInterval);
+        assert!(
+            sqrt_two
+                .exact_point_witness()
+                .unwrap()
+                .exact_rational_ref()
+                .is_none()
+        );
 
         let exact_real = evaluate_polynomial_at_algebraic_root(
             &sqrt_two,
@@ -5692,7 +5610,6 @@ mod tests {
                 exact_root: Some(real(3)),
                 distinct_root_count: 1,
             },
-            kind: AlgebraicRootKind::ExactRationalWitness,
             validation: AlgebraicRootValidationReport::valid(),
         };
         let exact = evaluate_rational_expression_at_algebraic_root(
@@ -5779,7 +5696,6 @@ mod tests {
                 exact_root: None,
                 distinct_root_count: 1,
             },
-            kind: AlgebraicRootKind::IsolatingInterval,
             validation: AlgebraicRootValidationReport::valid(),
         };
         let policy_interval = evaluate_rational_expression_at_algebraic_root(
@@ -5861,7 +5777,6 @@ mod tests {
                 exact_root: None,
                 distinct_root_count: 1,
             },
-            kind: AlgebraicRootKind::IsolatingInterval,
             validation: AlgebraicRootValidationReport::valid(),
         };
         let transformed = transform_algebraic_root_affine(
@@ -5881,7 +5796,7 @@ mod tests {
         );
         assert_eq!(representation.interval.lower, real(5));
         assert_eq!(representation.interval.upper, real(7));
-        assert_eq!(representation.kind, AlgebraicRootKind::IsolatingInterval);
+        assert!(representation.exact_point_witness().is_none());
         assert!(representation.is_valid());
 
         let reflected = transform_algebraic_root_affine(
@@ -5926,7 +5841,6 @@ mod tests {
                 exact_root: None,
                 distinct_root_count: 1,
             },
-            kind: AlgebraicRootKind::IsolatingInterval,
             validation: AlgebraicRootValidationReport::valid(),
         };
 
@@ -5971,7 +5885,6 @@ mod tests {
                 exact_root: None,
                 distinct_root_count: 1,
             },
-            kind: AlgebraicRootKind::IsolatingInterval,
             validation: AlgebraicRootValidationReport::valid(),
         };
 
@@ -5990,7 +5903,6 @@ mod tests {
         assert_eq!(transformed.interval.lower, real(-2));
         assert_eq!(transformed.interval.upper, real(-2));
         assert_eq!(transformed.interval.exact_root, Some(real(-2)));
-        assert_eq!(transformed.kind, AlgebraicRootKind::ExactRationalWitness);
     }
 
     #[test]
@@ -6007,7 +5919,6 @@ mod tests {
             constraint_index: 0,
             symbol: SymbolId(0),
             interval_index: 0,
-            kind: AlgebraicRootKind::IsolatingInterval,
             validation: AlgebraicRootValidationReport::valid(),
         };
         assert_eq!(
@@ -6052,7 +5963,6 @@ mod tests {
                 exact_root: None,
                 distinct_root_count: 1,
             },
-            kind: AlgebraicRootKind::IsolatingInterval,
             validation: AlgebraicRootValidationReport::valid(),
         };
         assert!(source.is_valid());
@@ -6099,7 +6009,6 @@ mod tests {
                 exact_root: None,
                 distinct_root_count: 1,
             },
-            kind: AlgebraicRootKind::IsolatingInterval,
             validation: AlgebraicRootValidationReport::valid(),
         };
         let scale = real(2).sqrt().expect("positive exact square root");
@@ -6162,7 +6071,6 @@ mod tests {
             AlgebraicRootAffineTransformStatus::Transformed
         );
         let transformed = report.representation.expect("exact-Real point image");
-        assert_eq!(transformed.kind, AlgebraicRootKind::IsolatingInterval);
         assert!(transformed.interval.exact_root.is_none());
         assert_eq!(transformed.interval.lower, expected);
         assert_eq!(
@@ -6184,7 +6092,6 @@ mod tests {
                 exact_root: None,
                 distinct_root_count: 1,
             },
-            kind: AlgebraicRootKind::IsolatingInterval,
             validation: AlgebraicRootValidationReport::valid(),
         };
         stale.interval.lower = real(3);
@@ -6220,7 +6127,6 @@ mod tests {
                 exact_root: None,
                 distinct_root_count: 1,
             },
-            kind: AlgebraicRootKind::IsolatingInterval,
             validation: AlgebraicRootValidationReport::valid(),
         };
 
@@ -6406,7 +6312,6 @@ mod tests {
                     exact_root: None,
                     distinct_root_count: 1,
                 },
-                kind: AlgebraicRootKind::IsolatingInterval,
                 validation: AlgebraicRootValidationReport::valid(),
             };
 
@@ -6495,7 +6400,6 @@ mod tests {
                     exact_root: Some(real(left)),
                     distinct_root_count: 1,
                 },
-                kind: AlgebraicRootKind::ExactRationalWitness,
                 validation: AlgebraicRootValidationReport::valid(),
             };
             let right_root = AlgebraicRootRepresentation {
@@ -6539,7 +6443,6 @@ mod tests {
                     exact_root: Some(real(left)),
                     distinct_root_count: 1,
                 },
-                kind: AlgebraicRootKind::ExactRationalWitness,
                 validation: AlgebraicRootValidationReport::valid(),
             };
             let right_root = AlgebraicRootRepresentation {
@@ -6584,7 +6487,6 @@ mod tests {
                     exact_root: Some(real(left)),
                     distinct_root_count: 1,
                 },
-                kind: AlgebraicRootKind::ExactRationalWitness,
                 validation: AlgebraicRootValidationReport::valid(),
             };
             let right_root = AlgebraicRootRepresentation {
@@ -6657,7 +6559,6 @@ mod tests {
                     exact_root: None,
                     distinct_root_count: 1,
                 },
-                kind: AlgebraicRootKind::IsolatingInterval,
                 validation: AlgebraicRootValidationReport::valid(),
             };
 
@@ -6679,7 +6580,7 @@ mod tests {
             );
             prop_assert_eq!(&representation.interval.lower, &real(-upper));
             prop_assert_eq!(&representation.interval.upper, &real(-lower));
-            prop_assert_eq!(&representation.kind, &AlgebraicRootKind::IsolatingInterval);
+            prop_assert!(representation.exact_point_witness().is_none());
         }
 
         #[test]
@@ -6709,7 +6610,6 @@ mod tests {
                     exact_root: None,
                     distinct_root_count: 1,
                 },
-                kind: AlgebraicRootKind::IsolatingInterval,
                 validation: AlgebraicRootValidationReport::valid(),
             };
             let scalar = AlgebraicRootRepresentation {
@@ -6723,7 +6623,6 @@ mod tests {
                     exact_root: Some(real(offset)),
                     distinct_root_count: 1,
                 },
-                kind: AlgebraicRootKind::ExactRationalWitness,
                 validation: AlgebraicRootValidationReport::valid(),
             };
 
@@ -6808,7 +6707,6 @@ mod tests {
                     exact_root: Some(real(root)),
                     distinct_root_count: 1,
                 },
-                kind: AlgebraicRootKind::ExactRationalWitness,
                 validation: AlgebraicRootValidationReport::valid(),
             };
 
@@ -6854,7 +6752,6 @@ mod tests {
                     exact_root: Some(real(root)),
                     distinct_root_count: 1,
                 },
-                kind: AlgebraicRootKind::ExactRationalWitness,
                 validation: AlgebraicRootValidationReport::valid(),
             };
 
@@ -6895,7 +6792,6 @@ mod tests {
                     exact_root: Some(real(root)),
                     distinct_root_count: 1,
                 },
-                kind: AlgebraicRootKind::ExactRationalWitness,
                 validation: AlgebraicRootValidationReport::valid(),
             };
 

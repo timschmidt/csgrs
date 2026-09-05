@@ -29,7 +29,7 @@ use hyperreal::{Rational, Real};
 
 use crate::algebraic::{
     AlgebraicPolynomialValueInterval, AlgebraicRootArithmeticOp, AlgebraicRootArithmeticReport,
-    AlgebraicRootArithmeticStatus, AlgebraicRootKind, AlgebraicRootPolynomialEvaluationReport,
+    AlgebraicRootArithmeticStatus, AlgebraicRootPolynomialEvaluationReport,
     AlgebraicRootRationalEvaluationReport, AlgebraicRootRationalEvaluationStatus,
     AlgebraicRootRepresentation, AlgebraicRootValidationReport, AlgebraicRootValidationStatus,
     arithmetic_algebraic_root_representations, canonical_linear_value_representation,
@@ -1065,15 +1065,11 @@ fn direct_rational_image_representation(
         interval_index: root.interval_index,
         polynomial_coefficients,
         interval,
-        kind: AlgebraicRootKind::IsolatingInterval,
         validation: AlgebraicRootValidationReport {
             status: AlgebraicRootValidationStatus::Valid,
             message: None,
         },
     };
-    if representation.interval.exact_root.is_some() {
-        representation.kind = AlgebraicRootKind::ExactRationalWitness;
-    }
     representation = promote_linear_square_free_image_root(representation, policy);
     representation.validation = validate_algebraic_root_representation(&representation, policy);
     Some(representation)
@@ -1755,7 +1751,6 @@ fn exact_constant_representation(
         interval_index: source.interval_index,
         polynomial_coefficients: vec![-value, Real::one()],
         interval,
-        kind: AlgebraicRootKind::ExactRationalWitness,
         validation: AlgebraicRootValidationReport {
             status: AlgebraicRootValidationStatus::Valid,
             message: None,
@@ -1879,7 +1874,6 @@ mod tests {
                 exact_root: None,
                 distinct_root_count: 1,
             },
-            kind: AlgebraicRootKind::IsolatingInterval,
             validation: AlgebraicRootValidationReport {
                 status: AlgebraicRootValidationStatus::Valid,
                 message: None,
@@ -2273,7 +2267,6 @@ mod tests {
                 exact_root: Some(real(3)),
                 distinct_root_count: 1,
             },
-            kind: AlgebraicRootKind::ExactRationalWitness,
             ..sqrt_two_positive()
         };
 
@@ -2319,7 +2312,6 @@ mod tests {
             AlgebraicRootRationalEvaluationStatus::EvaluatedExactRealWitness
         );
         let root = report.representation.as_ref().unwrap();
-        assert_eq!(root.kind, AlgebraicRootKind::IsolatingInterval);
         assert!(root.interval.exact_root.is_none());
         assert_eq!(root.interval.lower, sqrt_two_value);
         assert_eq!(root.interval.lower, root.interval.upper);
@@ -2355,7 +2347,6 @@ mod tests {
         assert_eq!(report.status, AlgebraicRootRationalImageStatus::Transformed);
         let image = report.representation.as_ref().unwrap();
         assert!(image.is_valid());
-        assert_eq!(image.kind, AlgebraicRootKind::IsolatingInterval);
         assert!(image.interval.exact_root.is_none());
         assert!(report.numerator_image.is_none());
         assert!(report.denominator_image.is_none());
@@ -2375,7 +2366,6 @@ mod tests {
             AlgebraicRootRationalImageStatus::Transformed
         );
         let constant = constant.representation.as_ref().unwrap();
-        assert_eq!(constant.kind, AlgebraicRootKind::IsolatingInterval);
         assert!(constant.interval.exact_root.is_none());
         assert_eq!(constant.interval.lower, sqrt_two_value);
         assert_eq!(constant.interval.lower, constant.interval.upper);
@@ -2442,7 +2432,6 @@ mod tests {
                 exact_root: None,
                 distinct_root_count: 1,
             },
-            kind: AlgebraicRootKind::IsolatingInterval,
             ..sqrt_two_positive()
         };
 
@@ -2837,7 +2826,6 @@ mod tests {
                     exact_root: Some(real(root)),
                     distinct_root_count: 1,
                 },
-                kind: AlgebraicRootKind::ExactRationalWitness,
                 ..sqrt_two_positive()
             };
 

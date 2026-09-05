@@ -21,9 +21,8 @@ use hyperlimit::{PredicatePolicy, compare_reals};
 use hyperreal::Real;
 
 use crate::algebraic::{
-    AlgebraicRootArithmeticOp, AlgebraicRootKind, AlgebraicRootRepresentation,
-    AlgebraicRootValidationReport, AlgebraicRootValidationStatus,
-    validate_algebraic_root_representation,
+    AlgebraicRootArithmeticOp, AlgebraicRootRepresentation, AlgebraicRootValidationReport,
+    AlgebraicRootValidationStatus, validate_algebraic_root_representation,
 };
 use crate::integer_interpolation::{
     interpolate_integer_samples_up_to_scale, primitive_integer_polynomial,
@@ -260,11 +259,6 @@ pub fn transform_algebraic_roots_binary(
         symbol: left.symbol,
         interval_index: left.interval_index,
         polynomial_coefficients,
-        kind: if interval.exact_root.is_some() {
-            AlgebraicRootKind::ExactRationalWitness
-        } else {
-            AlgebraicRootKind::IsolatingInterval
-        },
         interval,
         validation: AlgebraicRootValidationReport {
             status: AlgebraicRootValidationStatus::Valid,
@@ -576,7 +570,6 @@ mod tests {
                 exact_root: None,
                 distinct_root_count: 1,
             },
-            kind: AlgebraicRootKind::IsolatingInterval,
             validation: AlgebraicRootValidationReport {
                 status: AlgebraicRootValidationStatus::Valid,
                 message: None,
@@ -608,7 +601,6 @@ mod tests {
                 exact_root: None,
                 distinct_root_count: 1,
             },
-            kind: AlgebraicRootKind::IsolatingInterval,
             validation: AlgebraicRootValidationReport {
                 status: AlgebraicRootValidationStatus::Valid,
                 message: None,

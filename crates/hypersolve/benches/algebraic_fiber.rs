@@ -5,11 +5,10 @@ use std::time::{Duration, Instant};
 use hyperreal::Real;
 use hypersolve::{
     AlgebraicFiberPolynomialImageProjectionConfig, AlgebraicFiberPolynomialImageProjectionStatus,
-    AlgebraicFiberRootCountStatus, AlgebraicRootKind, AlgebraicRootRepresentation,
-    AlgebraicRootValidationReport, AlgebraicRootValidationStatus, BivariatePolynomial,
-    BivariatePolynomialComponentStatus, CurveIntersectionResultantConfig, CurveResultantParameter,
-    IsolatedRootInterval, PredicatePolicy, SymbolId,
-    count_bivariate_common_fiber_roots_at_algebraic_parameter,
+    AlgebraicFiberRootCountStatus, AlgebraicRootRepresentation, AlgebraicRootValidationReport,
+    AlgebraicRootValidationStatus, BivariatePolynomial, BivariatePolynomialComponentStatus,
+    CurveIntersectionResultantConfig, CurveResultantParameter, IsolatedRootInterval,
+    PredicatePolicy, SymbolId, count_bivariate_common_fiber_roots_at_algebraic_parameter,
     count_bivariate_fiber_roots_at_algebraic_parameter,
     count_bivariate_fiber_roots_at_algebraic_parameter_intervals,
     parameter_component_bivariate_polynomial_system, project_algebraic_fiber_polynomial_image,
@@ -126,7 +125,6 @@ fn main() {
             exact_root: None,
             distinct_root_count: 1,
         },
-        kind: AlgebraicRootKind::IsolatingInterval,
         validation: AlgebraicRootValidationReport {
             status: AlgebraicRootValidationStatus::Valid,
             message: None,

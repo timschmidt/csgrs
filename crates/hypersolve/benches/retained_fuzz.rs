@@ -2,7 +2,7 @@ use criterion::{Criterion, criterion_group, criterion_main};
 use hyperlimit::PredicatePolicy;
 use hyperreal::Real;
 use hypersolve::{
-    ActiveSetQuadraticRegenerationConfig, AlgebraicRootArithmeticOp, AlgebraicRootKind,
+    ActiveSetQuadraticRegenerationConfig, AlgebraicRootArithmeticOp,
     AlgebraicRootRefinementComparisonConfig, AlgebraicRootRepresentation,
     AlgebraicRootValidationReport, AlgebraicRootValidationStatus,
     BezierPowerBasisSubstitutionConfig, Constraint, CurveIntersectionResultantConfig,
@@ -64,7 +64,6 @@ fn represented_rational_root(root: i64, symbol: u32) -> AlgebraicRootRepresentat
             exact_root: Some(real(root)),
             distinct_root_count: 1,
         },
-        kind: AlgebraicRootKind::ExactRationalWitness,
         validation: AlgebraicRootValidationReport {
             status: AlgebraicRootValidationStatus::Valid,
             message: None,
