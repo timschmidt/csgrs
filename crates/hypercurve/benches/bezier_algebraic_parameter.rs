@@ -25,6 +25,44 @@ fn decided<T>(classification: Classification<T>) -> T {
 
 fn main() -> CurveResult<()> {
     let policy = CurveContext::STRICT;
+    // Repeated exact comparisons must reuse a proved opaque cancellation.
+    // The cold lane keeps the cost of constructing and proving a fresh value.
+    let atom = (r(2).sqrt()? + Real::one()).sin();
+    let normal_form_zero = || {
+        let lower = &atom - Real::one();
+        let upper = &atom + r(2);
+        BezierParameter2::Exact(
+            Real::diff_of_products(&Real::one(), &upper, &Real::one(), &lower) - r(3),
+        )
+    };
+    let zero = BezierParameter2::Exact(Real::zero());
+    let sign_iterations = 20_000_u32;
+    for reuse in [false, true] {
+        let retained = normal_form_zero();
+        assert_eq!(
+            decided(retained.cmp_by_interval(&zero, &policy)?),
+            Ordering::Equal
+        );
+        let started = Instant::now();
+        let mut equal = 0_u32;
+        for _ in 0..sign_iterations {
+            let parameter = if reuse {
+                retained.clone()
+            } else {
+                normal_form_zero()
+            };
+            equal += (black_box(decided(parameter.cmp_by_interval(&zero, &policy)?))
+                == Ordering::Equal) as u32;
+        }
+        let elapsed = started.elapsed();
+        assert_eq!(equal, sign_iterations);
+        let label = if reuse { "reused" } else { "cold" };
+        println!(
+            "bezier_parameter_normal_form_zero_{label}: {sign_iterations} iterations in {elapsed:?} ({:?}/iter), equal={equal}",
+            elapsed / sign_iterations,
+        );
+    }
+
     let bernstein_coefficients = (0..=32).map(|index| r((index % 7) - 3)).collect::<Vec<_>>();
     let conversion_iterations = 20_000_u32;
     let started = Instant::now();
