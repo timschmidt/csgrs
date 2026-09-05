@@ -28,7 +28,7 @@ use crate::policy_division::strict_exact_zero_for_storage;
 use crate::resultant::quotient_ring_fiber_resultant_polynomial;
 use crate::root_isolation::{
     IsolatedRootInterval, IsolatedRootRefinementStatus, RootIsolationConfig, polynomial_div_rem,
-    polynomial_gcd, polynomials_share_one_root_in_interval,
+    polynomial_gcd, polynomial_vanishes_at_owned_root,
     refine_isolated_univariate_polynomial_interval,
 };
 
@@ -3474,11 +3474,10 @@ impl LocalAlgebraicField {
             self.signed_polynomials.push((polynomial.to_vec(), sign));
             return Ok(sign == Ordering::Equal);
         }
-        match polynomials_share_one_root_in_interval(
+        match polynomial_vanishes_at_owned_root(
             self.modulus(),
             polynomial,
-            &self.root.interval.lower,
-            &self.root.interval.upper,
+            &self.root.interval,
             self.policy,
         ) {
             Some(true) => {
@@ -3502,11 +3501,10 @@ impl LocalAlgebraicField {
                 return Ok(sign == Ordering::Equal);
             }
         }
-        match polynomials_share_one_root_in_interval(
+        match polynomial_vanishes_at_owned_root(
             self.modulus(),
             polynomial,
-            &self.root.interval.lower,
-            &self.root.interval.upper,
+            &self.root.interval,
             self.policy,
         ) {
             Some(true) => {
@@ -3547,11 +3545,10 @@ impl LocalAlgebraicField {
             return Ok(sign);
         }
 
-        if let Some(true) = polynomials_share_one_root_in_interval(
+        if let Some(true) = polynomial_vanishes_at_owned_root(
             self.modulus(),
             polynomial,
-            &self.root.interval.lower,
-            &self.root.interval.upper,
+            &self.root.interval,
             self.policy,
         ) {
             return Ok(Ordering::Equal);
@@ -4119,6 +4116,82 @@ mod tests {
                             AlgebraicFiberProjectionStatus::InvalidEvidence
                         );
                         assert!(projected.coefficients.is_empty());
+                    }
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn local_field_zero_test_recognizes_an_uncached_singleton() {
+        for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
+            for point in [rational(1, 2), real(2).sqrt().unwrap(), Real::pi()] {
+                let neighbor = &point + Real::one();
+                let root = represented_root(
+                    vec![&point * &neighbor, -(&point + neighbor), Real::one()],
+                    point.clone(),
+                    point.clone(),
+                    policy,
+                );
+                assert!(root.exact_point_witness().is_none());
+                let mut field = LocalAlgebraicField::new(&root, policy).unwrap();
+                assert_eq!(field.is_zero_polynomial(&[-&point, Real::one()]), Ok(true));
+                assert_eq!(field.root.exact_point_witness(), Some(&point));
+                assert_eq!(
+                    field.is_zero_polynomial(&[Real::one() - &point, Real::one()]),
+                    Ok(false)
+                );
+                assert_eq!(field.certainty, Certainty::Exact);
+            }
+        }
+    }
+
+    #[test]
+    fn local_fiber_count_preserves_uncached_singleton_identities() {
+        for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
+            for point in [rational(1, 2), real(2).sqrt().unwrap(), Real::pi()] {
+                let neighbor = &point + Real::one();
+                let root = represented_root(
+                    vec![&point * &neighbor, -(&point + neighbor), Real::one()],
+                    point.clone(),
+                    point.clone(),
+                    policy,
+                );
+                let mut witnessed = root.clone();
+                witnessed.interval.exact_root = Some(point.clone());
+                assert!(algebraic_root_payload_replays_strictly(&witnessed));
+                for parameter in [
+                    CurveResultantParameter::First,
+                    CurveResultantParameter::Second,
+                ] {
+                    for shift in [Real::zero(), Real::one()] {
+                        let constant = &shift - &point;
+                        let polynomial = BivariatePolynomial::new(match parameter {
+                            CurveResultantParameter::First => {
+                                vec![vec![constant], vec![Real::one()]]
+                            }
+                            CurveResultantParameter::Second => vec![vec![constant, Real::one()]],
+                        });
+                        let count = |source| {
+                            count_bivariate_fiber_roots_at_algebraic_parameter(
+                                &polynomial,
+                                parameter,
+                                source,
+                                &real(-1),
+                                &Real::one(),
+                                policy,
+                            )
+                        };
+                        let expected = count(&witnessed);
+                        assert_eq!(
+                            expected.status,
+                            if shift == Real::zero() {
+                                AlgebraicFiberRootCountStatus::IdenticallyZeroFiber
+                            } else {
+                                AlgebraicFiberRootCountStatus::Counted
+                            }
+                        );
+                        assert_eq!(count(&root), expected);
                     }
                 }
             }
