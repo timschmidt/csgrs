@@ -1846,29 +1846,24 @@ fn solve_exact_linear_system(
 }
 
 fn invert_exact_matrix(
-    matrix: Vec<Vec<Real>>,
+    mut matrix: Vec<Vec<Real>>,
     policy: PredicatePolicy,
 ) -> Result<Vec<Vec<Real>>, usize> {
     let n = matrix.len();
-    let mut inverse_columns = Vec::with_capacity(n);
-    for column in 0..n {
-        let mut rhs = vec![Real::zero(); n];
-        rhs[column] = Real::from(1);
-        let mut matrix_copy = matrix.clone();
-        inverse_columns.push(solve_exact_linear_system_raw(
-            &mut matrix_copy,
-            &mut rhs,
-            policy,
-        )?);
+    // Reduce [A | I] once, preserving the same certified pivot rules as a
+    // single solve. Repeating the elimination for each column costs O(n^4).
+    for (row_index, row) in matrix.iter_mut().enumerate() {
+        row.reserve_exact(n);
+        row.extend((0..n).map(|column| {
+            if row_index == column {
+                Real::one()
+            } else {
+                Real::zero()
+            }
+        }));
     }
-
-    let mut inverse = vec![vec![Real::zero(); n]; n];
-    for (column, solution) in inverse_columns.into_iter().enumerate() {
-        for (row, value) in solution.into_iter().enumerate() {
-            inverse[row][column] = value;
-        }
-    }
-    Ok(inverse)
+    gauss_jordan::<false>(&mut matrix, &mut [], policy)?;
+    Ok(matrix.into_iter().map(|mut row| row.split_off(n)).collect())
 }
 
 fn solve_exact_linear_system_raw(
@@ -1876,7 +1871,21 @@ fn solve_exact_linear_system_raw(
     rhs: &mut [Real],
     policy: PredicatePolicy,
 ) -> Result<Vec<Real>, usize> {
-    let n = rhs.len();
+    gauss_jordan::<true>(matrix, rhs, policy)?;
+    Ok(rhs.to_vec())
+}
+
+// A scalar RHS stays separate for the affine solve; inverse columns live in
+// the augmented matrix. The const flag removes dummy-RHS work from inversion.
+// Keep this large kernel out of the proof-report callers' instruction streams.
+#[inline(never)]
+fn gauss_jordan<const SCALAR_RHS: bool>(
+    matrix: &mut [Vec<Real>],
+    rhs: &mut [Real],
+    policy: PredicatePolicy,
+) -> Result<(), usize> {
+    let n = matrix.len();
+    debug_assert!(!SCALAR_RHS || rhs.len() == n);
     for pivot in 0..n {
         let pivot_row = (pivot..n).find(|&row| {
             !matches!(
@@ -1889,7 +1898,9 @@ fn solve_exact_linear_system_raw(
         };
         if pivot_row != pivot {
             matrix.swap(pivot_row, pivot);
-            rhs.swap(pivot_row, pivot);
+            if SCALAR_RHS {
+                rhs.swap(pivot_row, pivot);
+            }
         }
 
         let pivot_value = matrix[pivot][pivot].clone();
@@ -1899,7 +1910,9 @@ fn solve_exact_linear_system_raw(
                 for value in matrix[pivot].iter_mut().skip(pivot + 1) {
                     *value = (value.clone() / pivot_value.clone()).map_err(|_| pivot)?;
                 }
-                rhs[pivot] = (rhs[pivot].clone() / pivot_value).map_err(|_| pivot)?;
+                if SCALAR_RHS {
+                    rhs[pivot] = (rhs[pivot].clone() / pivot_value).map_err(|_| pivot)?;
+                }
             }
             Err(_) => {
                 let pivot_reciprocal = pivot_value
@@ -1908,11 +1921,17 @@ fn solve_exact_linear_system_raw(
                 for value in matrix[pivot].iter_mut().skip(pivot) {
                     *value = value.clone() * &pivot_reciprocal;
                 }
-                rhs[pivot] = rhs[pivot].clone() * pivot_reciprocal;
+                if SCALAR_RHS {
+                    rhs[pivot] = rhs[pivot].clone() * pivot_reciprocal;
+                }
             }
         }
         let pivot_tail = matrix[pivot][pivot..].to_vec();
-        let pivot_rhs = rhs[pivot].clone();
+        let pivot_rhs = if SCALAR_RHS {
+            rhs[pivot].clone()
+        } else {
+            Real::zero()
+        };
 
         for row in 0..n {
             if row == pivot {
@@ -1925,10 +1944,12 @@ fn solve_exact_linear_system_raw(
             for (value, pivot_value) in matrix[row].iter_mut().skip(pivot).zip(&pivot_tail) {
                 *value = value.clone() - factor.clone() * pivot_value.clone();
             }
-            rhs[row] = rhs[row].clone() - factor * pivot_rhs.clone();
+            if SCALAR_RHS {
+                rhs[row] = rhs[row].clone() - factor * pivot_rhs.clone();
+            }
         }
     }
-    Ok(rhs.to_vec())
+    Ok(())
 }
 
 fn affine_krawczyk_report(
@@ -1972,6 +1993,178 @@ fn abs_real(value: &Real) -> Real {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn joint_inverse_and_scalar_solve_satisfy_independent_rational_identities() {
+        use num::{BigInt, BigRational};
+
+        let to_real = |q: &BigRational| {
+            Real::new(
+                Rational::from_bigint_fraction(q.numer().clone(), q.denom().to_biguint().unwrap())
+                    .unwrap(),
+            )
+        };
+        let to_rational = |value: &Real| {
+            let q = value.exact_rational_normal_form().unwrap();
+            let numerator = BigInt::from(q.numerator().clone());
+            BigRational::new(
+                if q.is_negative() {
+                    -numerator
+                } else {
+                    numerator
+                },
+                BigInt::from(q.denominator().clone()),
+            )
+        };
+        for n in [0, 1, 2, 3, 4, 6, 8] {
+            for family in 0..4 {
+                for seed in 0..7 {
+                    let q = (0..n)
+                        .map(|i| {
+                            (0..n)
+                                .map(|j| {
+                                    let (numerator, denominator) = match family {
+                                        0 => (
+                                            ((i * 17 + j * 13 + seed * 7) % 11) as i64 - 5,
+                                            1 + (i * 3 + j * 5 + seed) % 7,
+                                        ),
+                                        1 => (1, i + j + n + seed + 1),
+                                        2 => (if i == j { (i + seed + 1) as i64 } else { 0 }, 1),
+                                        _ => (
+                                            if j == (i + 1) % n {
+                                                (i + seed + 1) as i64
+                                            } else {
+                                                0
+                                            },
+                                            seed + 1,
+                                        ),
+                                    };
+                                    let mut entry = BigRational::new(
+                                        BigInt::from(numerator),
+                                        BigInt::from(denominator),
+                                    );
+                                    if family == 0 && i == j {
+                                        entry += BigRational::from_integer(BigInt::from(
+                                            6 * n + seed + 1,
+                                        ));
+                                    }
+                                    entry
+                                })
+                                .collect::<Vec<_>>()
+                        })
+                        .collect::<Vec<_>>();
+                    let matrix = q
+                        .iter()
+                        .map(|row| row.iter().map(&to_real).collect())
+                        .collect::<Vec<_>>();
+                    let inverse = invert_exact_matrix(matrix.clone(), PredicatePolicy::STRICT)
+                        .unwrap()
+                        .iter()
+                        .map(|row| row.iter().map(&to_rational).collect::<Vec<_>>())
+                        .collect::<Vec<_>>();
+                    for i in 0..n {
+                        for j in 0..n {
+                            let left: BigRational = (0..n).map(|k| &q[i][k] * &inverse[k][j]).sum();
+                            let right: BigRational =
+                                (0..n).map(|k| &inverse[i][k] * &q[k][j]).sum();
+                            let expected =
+                                BigRational::from_integer(BigInt::from(u8::from(i == j)));
+                            assert_eq!(left, expected, "A*C: n={n}, family={family}, seed={seed}");
+                            assert_eq!(right, expected, "C*A: n={n}, family={family}, seed={seed}");
+                        }
+                    }
+                    let rhs = q
+                        .iter()
+                        .map(|row| {
+                            let value: BigRational = row
+                                .iter()
+                                .enumerate()
+                                .map(|(i, entry)| {
+                                    entry * BigRational::from_integer(BigInt::from(i + 1))
+                                })
+                                .sum();
+                            to_real(&value)
+                        })
+                        .collect();
+                    let solved =
+                        solve_exact_linear_system(matrix, rhs, PredicatePolicy::STRICT).unwrap();
+                    for (i, value) in solved.iter().enumerate() {
+                        assert_eq!(
+                            to_rational(value),
+                            BigRational::from_integer(BigInt::from(i + 1))
+                        );
+                    }
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn joint_inverse_preserves_algebraic_pivots_and_partial_decisions() {
+        let root = Real::from(2).sqrt().unwrap();
+        let matrix = vec![
+            vec![root.clone(), Real::one()],
+            vec![Real::one(), root.clone()],
+        ];
+        let inverse = invert_exact_matrix(matrix, PredicatePolicy::STRICT).unwrap();
+        let expected = [vec![root.clone(), -Real::one()], vec![-Real::one(), root]];
+        for (row, wanted) in inverse.iter().zip(&expected) {
+            for (value, expected) in row.iter().zip(wanted) {
+                assert_eq!(
+                    compare_reals(value, expected, PredicatePolicy::STRICT).value(),
+                    Some(Ordering::Equal)
+                );
+            }
+        }
+
+        let positive = crate::test_support::exact_normal_positive();
+        assert_eq!(positive.inverse_ref(), Err(hyperreal::Problem::UnknownZero));
+        let inverse = invert_exact_matrix(
+            vec![
+                vec![Real::zero(), positive],
+                vec![Real::one(), Real::zero()],
+            ],
+            PredicatePolicy::STRICT,
+        )
+        .unwrap();
+        assert_eq!(inverse[0], vec![Real::zero(), Real::one()]);
+        assert_eq!(inverse[1][1], Real::zero());
+        assert_eq!(
+            compare_reals(
+                &inverse[1][0],
+                &Real::from(2).powi_i64(3000).unwrap(),
+                PredicatePolicy::STRICT
+            )
+            .value(),
+            Some(Ordering::Equal)
+        );
+
+        for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
+            assert_eq!(
+                invert_exact_matrix(vec![vec![Real::zero()]], policy),
+                Err(0)
+            );
+            assert_eq!(
+                invert_exact_matrix(vec![vec![Real::one(); 2]; 2], policy),
+                Err(1)
+            );
+            let unresolved = crate::test_support::terminal_zero();
+            assert_eq!(
+                invert_exact_matrix(vec![vec![unresolved.clone()]], policy),
+                Err(0)
+            );
+            assert_eq!(
+                invert_exact_matrix(
+                    vec![
+                        vec![Real::one(), Real::zero()],
+                        vec![Real::zero(), unresolved]
+                    ],
+                    policy
+                ),
+                Err(1)
+            );
+        }
+    }
 
     fn scalar_quadratic_box(
         linear: Real,
