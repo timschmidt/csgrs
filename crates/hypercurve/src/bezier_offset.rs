@@ -69,7 +69,7 @@ use hypersolve::{
     deflate_bivariate_fiber_diagonal_root_at_algebraic_parameter,
     isolate_bivariate_fiber_roots_at_algebraic_parameter, project_algebraic_fiber_polynomial_image,
     project_algebraic_fiber_polynomial_image_relation,
-    project_bivariate_fiber_at_algebraic_parameter_with_max_degree,
+    project_bivariate_fiber_at_algebraic_parameter,
     reduce_bivariate_rational_function_at_algebraic_parameter,
 };
 use hypersolve::{
@@ -104601,12 +104601,11 @@ fn algebraic_selected_fiber_parameters_with_incident_ray(
     policy: &CurveContext,
 ) -> CurveResult<Classification<BezierAlgebraicFiberProjection2>> {
     let cusp_root = parameter_representation(cusp, policy);
-    let report = project_bivariate_fiber_at_algebraic_parameter_with_max_degree(
+    let report = project_bivariate_fiber_at_algebraic_parameter(
         incidence,
         CurveResultantParameter::First,
         &cusp_root,
         max_quotient_degree,
-        policy.predicate_policy(),
     );
     let coefficients = match report.status {
         AlgebraicFiberProjectionStatus::Constructed => report.coefficients,
@@ -105317,12 +105316,11 @@ fn algebraic_selected_quotient_ring_fiber_projection_with_max_degree(
     range: Option<&BezierParameterRange2>,
     policy: &CurveContext,
 ) -> CurveResult<Classification<ResultantParameterProjection>> {
-    let report = project_bivariate_fiber_at_algebraic_parameter_with_max_degree(
+    let report = project_bivariate_fiber_at_algebraic_parameter(
         incidence,
         CurveResultantParameter::First,
         cusp_root,
         max_quotient_degree,
-        policy.predicate_policy(),
     );
     match report.status {
         AlgebraicFiberProjectionStatus::Constructed => {}
