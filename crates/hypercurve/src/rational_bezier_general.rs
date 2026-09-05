@@ -5101,15 +5101,22 @@ impl RationalBezier2 {
         if derivatives.try_reserve_exact(value_count).is_err() {
             return Classification::Uncertain(UncertaintyReason::Unsupported);
         }
+        // Denominator derivatives above its degree are exactly
+        // zero. Do not construct their binomial coefficients or products;
+        // a rational curve with an affine denominator can still have
+        // derivatives of arbitrarily high order. Only trim certified zeros.
+        let denominator_degree = power_basis
+            .weight
+            .iter()
+            .rposition(|coefficient| !coefficient.definitely_zero())
+            .unwrap_or(0);
         for derivative_order in 0..=max_order {
             let mut x = numerator_x[derivative_order].clone();
             let mut y = numerator_y[derivative_order].clone();
-            for denominator_order in 1..=derivative_order {
-                let Some(coefficient) = checked_binomial(derivative_order, denominator_order)
-                else {
+            for denominator_order in 1..=derivative_order.min(denominator_degree) {
+                let Some(coefficient) = exact_binomial(derivative_order, denominator_order) else {
                     return Classification::Uncertain(UncertaintyReason::Unsupported);
                 };
-                let coefficient = Real::from(coefficient);
                 let previous = &derivatives[derivative_order - denominator_order];
                 x -= &coefficient * &denominator[denominator_order] * &previous.0;
                 y -= &coefficient * &denominator[denominator_order] * &previous.1;
@@ -9492,20 +9499,40 @@ fn evaluate_power_polynomial_endpoint_derivatives(
     max_order: usize,
 ) -> Option<Vec<Real>> {
     let value_count = max_order.checked_add(1)?;
-    let mut derivatives = vec![Real::zero(); value_count];
+    let mut derivatives = Vec::new();
+    derivatives.try_reserve_exact(value_count).ok()?;
+    derivatives.resize(value_count, Real::zero());
     if !at_end {
-        let mut factorial = 1_u64;
-        for (order, derivative) in derivatives.iter_mut().enumerate() {
-            if order > 1 {
-                factorial = factorial.checked_mul(u64::try_from(order).ok()?)?;
-            }
-            if let Some(coefficient) = coefficients.get(order) {
-                *derivative = if factorial == 1 {
+        // Endpoint tangents normally request only the first three orders.
+        // Keep those factorials inline, including low-degree zero tails.
+        if coefficients.len().min(value_count) <= 4 {
+            for ((derivative, coefficient), factor) in derivatives
+                .iter_mut()
+                .zip(coefficients)
+                .zip([1_u64, 1, 2, 6])
+            {
+                *derivative = if factor == 1 {
                     coefficient.clone()
                 } else {
-                    Real::from(factorial) * coefficient
+                    Real::from(factor) * coefficient
                 };
             }
+            return Some(derivatives);
+        }
+        // At zero, the k-th derivative is k! times coefficient k. The
+        // remaining derivatives vanish without computing larger factorials.
+        let mut factorial = Real::one();
+        for (order, (derivative, coefficient)) in
+            derivatives.iter_mut().zip(coefficients).enumerate()
+        {
+            if order > 1 {
+                factorial *= Real::from(u64::try_from(order).ok()?);
+            }
+            *derivative = if order < 2 {
+                coefficient.clone()
+            } else {
+                &factorial * coefficient
+            };
         }
         return Some(derivatives);
     }
@@ -10816,6 +10843,50 @@ mod tests {
         assert_eq!(clone.data.x_axis_monotonicity.get(), Some(&true));
         assert!(curve.data.y_derivative_numerator_bernstein.get().is_none());
         assert!(curve.data.y_axis_monotonicity.get().is_none());
+    }
+
+    #[test]
+    fn endpoint_derivatives_preserve_large_factorials_and_zero_tails() {
+        let short = vec![Real::from(7), Real::from(3)];
+        let derivatives = evaluate_power_polynomial_endpoint_derivatives(&short, false, 128)
+            .expect("zero derivatives do not require growing factorials");
+        assert_eq!(&derivatives[..2], &short);
+        assert!(derivatives[2..].iter().all(|value| value == &Real::zero()));
+
+        let cubic = vec![Real::from(1), Real::from(2), Real::from(3), Real::from(4)];
+        for max_order in 0..=8 {
+            let derivatives =
+                evaluate_power_polynomial_endpoint_derivatives(&cubic, false, max_order).unwrap();
+            let expected = [1, 2, 6, 24]
+                .into_iter()
+                .chain(std::iter::repeat(0))
+                .take(max_order + 1)
+                .map(Real::from)
+                .collect::<Vec<_>>();
+            assert_eq!(derivatives, expected);
+        }
+
+        let mut monomial = vec![Real::zero(); 25];
+        monomial[24] = Real::pi();
+        for at_end in [false, true] {
+            let derivatives = evaluate_power_polynomial_endpoint_derivatives(&monomial, at_end, 80)
+                .expect("24! is an exact integer even though it exceeds u64");
+            let mut falling_factorial = Real::one();
+            for (order, derivative) in derivatives.iter().enumerate() {
+                if (1..=24).contains(&order) {
+                    falling_factorial *= Real::from((25 - order) as u64);
+                }
+                let expected = if order <= 24 && (at_end || order == 24) {
+                    &falling_factorial * Real::pi()
+                } else {
+                    Real::zero()
+                };
+                assert_eq!(derivative, &expected, "endpoint {at_end}, order {order}");
+            }
+        }
+        assert!(
+            evaluate_power_polynomial_endpoint_derivatives(&short, false, usize::MAX).is_none()
+        );
     }
 
     #[test]
