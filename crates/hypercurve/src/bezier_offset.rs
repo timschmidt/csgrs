@@ -56843,42 +56843,6 @@ impl BezierRecursiveQuadraticValue2 {
         }
     }
 
-    /// Evaluates a source-free recursive tower directly into canonical
-    /// `Real` arithmetic. Such a tower contains only authored positive square
-    /// roots of exact `Real` values, so retaining an algebraic-root wrapper
-    /// would add an unnecessary resultant and can obscure cancellations
-    /// already understood by Hyperreal.
-    fn exact_real_value(&self) -> Option<Real> {
-        let scalar = |polynomial: &DenseTensorPolynomial| {
-            (polynomial.dimensions().is_empty() && polynomial.coefficients().len() == 1)
-                .then(|| polynomial.coefficients()[0].clone())
-        };
-        match self.data.as_ref() {
-            BezierRecursiveQuadraticValueData2::Base { field, expression }
-                if field.sources.is_empty() =>
-            {
-                let first_root = scalar(&field.first_speed_squared)?.sqrt().ok()?;
-                let second_root = scalar(&field.second_speed_squared)?.sqrt().ok()?;
-                Some(
-                    scalar(&expression.rational)?
-                        + scalar(&expression.first)? * &first_root
-                        + scalar(&expression.second)? * &second_root
-                        + scalar(&expression.product)? * first_root * second_root,
-                )
-            }
-            BezierRecursiveQuadraticValueData2::Extension {
-                field,
-                retained,
-                radical,
-            } => Some(
-                retained.exact_real_value()?
-                    + radical.exact_real_value()?
-                        * field.radicand.exact_real_value()?.sqrt().ok()?,
-            ),
-            BezierRecursiveQuadraticValueData2::Base { .. } => None,
-        }
-    }
-
     /// Evaluates a recursive value as one canonical `Real` when every dense
     /// selected axis owns Hypersolve's exact compact witness.  This is a cold
     /// tower-equivalence certificate: it reuses already-proved scalar roots
@@ -58052,8 +58016,28 @@ impl BezierRecursiveQuadraticProjectiveScalar2 {
         )
     }
 
+    /// Only source-free parameters may bypass selected-root publication.
+    /// Their arithmetic shares the retained-witness evaluator; witnessing a
+    /// selected axis alone does not permit changing its parameter authority.
     fn exact_real_value(&self) -> Option<Real> {
-        (self.numerator.exact_real_value()? / self.denominator.exact_real_value()?).ok()
+        for value in [&self.numerator, &self.denominator] {
+            let field = value.field();
+            let mut field = &field;
+            loop {
+                match field {
+                    BezierRecursiveQuadraticField2::Base(base) if base.sources.is_empty() => break,
+                    BezierRecursiveQuadraticField2::Base(_) => return None,
+                    BezierRecursiveQuadraticField2::Extension(extension) => {
+                        field = &extension.parent
+                    }
+                }
+            }
+        }
+        (self.numerator.exact_real_value_with_retained_witnesses()?
+            / self
+                .denominator
+                .exact_real_value_with_retained_witnesses()?)
+        .ok()
     }
 
     /// Publishes this projective scalar as one selected algebraic root.
