@@ -236,6 +236,18 @@ const NUMERICAL_MICRO_GROUPS: &[BenchGroupDoc] = &[
                 description: "Approximates exp(128), exercising the bounded exact-integer power path.",
             },
             BenchDoc {
+                name: "expm1_tiny_cold_p128",
+                description: "Approximates expm1(1/1000000) directly without subtractive cancellation.",
+            },
+            BenchDoc {
+                name: "expm1_coarse_cold_p1",
+                description: "Approximates expm1(3/2) at coarse precision after checking the argument range.",
+            },
+            BenchDoc {
+                name: "expm1_coarse_negative_cold_p1",
+                description: "Approximates expm1(-32) at coarse precision, where zero is a valid result.",
+            },
+            BenchDoc {
                 name: "exp_negative_integer_cold_p128",
                 description: "Approximates exp(-32), retaining signed ln(2) range reduction.",
             },
@@ -1194,6 +1206,33 @@ fn bench_computable_transcendentals(c: &mut Criterion) {
         b.iter_batched(
             || exp_integer_above_limit_input.clone().exp(),
             |value| black_box(value.approx(p)),
+            BatchSize::SmallInput,
+        )
+    });
+
+    let expm1_tiny = Computable::rational(Rational::fraction(1, 1_000_000).unwrap());
+    group.bench_function("expm1_tiny_cold_p128", |b| {
+        b.iter_batched(
+            || expm1_tiny.clone().expm1(),
+            |value| black_box(value.approx(p)),
+            BatchSize::SmallInput,
+        )
+    });
+    let expm1_coarse = Computable::rational(Rational::fraction(3, 2).unwrap());
+    let coarse_result = expm1_coarse.clone().expm1().approx(1);
+    assert!(coarse_result == BigInt::from(1) || coarse_result == BigInt::from(2));
+    group.bench_function("expm1_coarse_cold_p1", |b| {
+        b.iter_batched(
+            || expm1_coarse.clone().expm1(),
+            |value| black_box(value.approx(1)),
+            BatchSize::SmallInput,
+        )
+    });
+    let expm1_negative = Computable::rational(Rational::new(-32));
+    group.bench_function("expm1_coarse_negative_cold_p1", |b| {
+        b.iter_batched(
+            || expm1_negative.clone().expm1(),
+            |value| black_box(value.approx(1)),
             BatchSize::SmallInput,
         )
     });

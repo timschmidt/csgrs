@@ -2579,6 +2579,115 @@ mod tests {
     }
 
     #[test]
+    fn expm1_range_guard_and_cache_orders_match_directed_mpfr() {
+        use rug::{Float, Integer, Rational as RugRational, float::Round};
+
+        fn check(input: Rational, precisions: &[Precision]) {
+            // e^10000 needs over 14,000 integer bits before absolute guards.
+            let bits = 16_384;
+            let mut numerator = Integer::from_str_radix(&input.numerator().to_string(), 10).unwrap();
+            if input.sign() == Sign::Minus {
+                numerator = -numerator;
+            }
+            let oracle = RugRational::from((
+                numerator,
+                Integer::from_str_radix(&input.denominator().to_string(), 10).unwrap(),
+            ));
+            let mut low = Float::with_val_round(bits, &oracle, Round::Down).0;
+            let mut high = Float::with_val_round(bits, &oracle, Round::Up).0;
+            // Evaluate expm1 directly: subtracting one from a rounded exp
+            // would erase the tiny inputs this kernel is intended to preserve.
+            low.exp_m1_round(Round::Down);
+            high.exp_m1_round(Round::Up);
+            let make = || Computable::rational(input.clone()).expm1();
+            let compare = |value: &Computable, precision: Precision| {
+                let actual = value.approx(precision);
+                let actual = Float::with_val(
+                    bits,
+                    Integer::from_str_radix(&actual.to_string(), 10).unwrap(),
+                );
+                let mut lower = low.clone();
+                let mut upper = high.clone();
+                lower >>= precision;
+                upper >>= precision;
+                assert!(
+                    Float::with_val(bits, &actual - lower).abs() <= 1
+                        && Float::with_val(bits, &actual - upper).abs() <= 1,
+                    "expm1({input}), precision={precision} violates one-unit bound"
+                );
+            };
+            for &precision in precisions {
+                compare(&make(), precision);
+            }
+            let ascending = make();
+            for &precision in precisions {
+                compare(&ascending, precision);
+            }
+            let descending = make();
+            for &precision in precisions.iter().rev() {
+                compare(&descending, precision);
+            }
+        }
+
+        let precisions = [4, 1, 0, -1, -8, -64, -256];
+        for denominator in [3_u64, 7] {
+            for numerator in -(8 * denominator as i64)..=8 * denominator as i64 {
+                check(Rational::fraction(numerator, denominator).unwrap(), &precisions);
+            }
+        }
+        for numerator in [-10_000, -4_096, -17, 0, 17, 4_096, 10_000] {
+            check(Rational::new(numerator), &[4, 1, -64, -256]);
+        }
+        for numerator in [-9, -8, -7, 7, 8, 9] {
+            check(Rational::fraction(numerator, 16).unwrap(), &precisions);
+        }
+        for sign in [-1, 1] {
+            check(
+                Rational::from_bigint_fraction(BigInt::from(sign), BigUint::one() << 512).unwrap(),
+                &[1, 0, -511, -512, -513, -1024],
+            );
+        }
+    }
+
+    #[test]
+    fn expm1_coarse_shortcut_requires_a_proven_range() {
+        let negative = Computable::rational(Rational::new(-32));
+        let value = negative.clone().expm1();
+        assert_eq!(negative.immediate_sign(), Some(RealSign::Negative));
+        assert!(value.approx(1).is_zero());
+        assert!(negative.cached().is_none(), "retained sign needs no evaluation");
+
+        for (numerator, denominator) in [(-32, 1), (3, 2)] {
+            // Bypass constructor sign analysis to exercise inconclusive facts,
+            // as can also occur when a serialized node is first evaluated.
+            let input = Computable {
+                internal: Arc::new(Node::new(
+                    Approximation::Ratio(Rational::fraction(numerator, denominator).unwrap()),
+                    BoundCache::Invalid,
+                    ExactSignCache::Invalid,
+                )),
+                signal: None,
+            };
+            assert_eq!(input.immediate_sign(), None);
+            let value = Computable {
+                internal: Arc::new(Node::new(
+                    Approximation::Expm1(input.clone()),
+                    BoundCache::Invalid,
+                    ExactSignCache::Invalid,
+                )),
+                signal: None,
+            };
+            let actual = value.approx(1);
+            if numerator < 0 {
+                assert!(actual.is_zero());
+            } else {
+                assert!(actual == BigInt::from(1) || actual == BigInt::from(2));
+            }
+            assert!(input.cached().is_some(), "unknown range must be checked");
+        }
+    }
+
+    #[test]
     fn normal_quantile_inverts_cdf() {
         let two = Computable::rational(Rational::new(2));
         let p = two.clone().pnorm();

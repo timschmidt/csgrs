@@ -70,12 +70,24 @@ fn exp(signal: &Option<Signal>, c: &Computable, p: Precision) -> BigInt {
 }
 
 fn expm1(signal: &Option<Signal>, c: &Computable, p: Precision) -> BigInt {
-    if p >= 1 {
+    // For x <= 0, -1 < exp(x) - 1 <= 0. Use a retained sign proof without
+    // evaluating the operand or walking its expression graph.
+    if p >= 1
+        && matches!(
+            c.immediate_sign(),
+            Some(crate::RealSign::Negative | crate::RealSign::Zero)
+        )
+    {
         return Zero::zero();
     }
 
     let low_prec = -4;
     let rough = c.approx_signal(signal, low_prec);
+    // rough <= 8 proves c < 9/16, including the one-unit error. There is
+    // no lower-bound requirement: exp(c) - 1 is always greater than -1.
+    if p >= 1 && rough <= *signed::EIGHT {
+        return Zero::zero();
+    }
     if rough > *signed::EIGHT || rough < -signed::EIGHT.clone() {
         return c
             .clone()
