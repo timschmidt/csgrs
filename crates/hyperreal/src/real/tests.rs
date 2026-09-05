@@ -5107,6 +5107,21 @@ mod tests {
             determinant.exact_rational_normal_form(),
             Some(Rational::new(3)),
         );
+        for (scale, sign) in [
+            (-7_i64, RealSign::Negative),
+            (0, RealSign::Zero),
+            (5, RealSign::Positive),
+        ] {
+            let scaled = &determinant * Real::from(scale);
+            assert_eq!(
+                scaled.exact_rational_normal_form(),
+                Some(Rational::new(3 * scale)),
+            );
+            assert_eq!(scaled.immediate_sign(), Some(sign));
+        }
+        let zero = determinant - Real::from(3_i32);
+        assert_eq!(zero.exact_rational_normal_form(), Some(Rational::zero()));
+        assert_eq!(zero.immediate_sign(), Some(RealSign::Zero));
     }
 
     #[test]

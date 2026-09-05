@@ -516,17 +516,9 @@ impl Computable {
         result
     }
 
-    pub(crate) fn bounded_laurent_rational(&self) -> Option<Rational> {
-        self.bounded_laurent_rational_with_budget(48)
-    }
-
-    pub(crate) fn extended_laurent_rational(&self) -> Option<Rational> {
-        self.bounded_laurent_rational_with_budget(64)
-    }
-
-    fn bounded_laurent_rational_with_budget(&self, budget: usize) -> Option<Rational> {
+    pub(crate) fn bounded_laurent_rational(&self, budget: usize) -> Option<Rational> {
         let polynomial = self.pi_laurent_polynomial(budget)?;
-        match polynomial.terms.as_slice() {
+        let rational = match polynomial.terms.as_slice() {
             [] => Some(Rational::zero()),
             [(0, coefficient)]
                 if coefficient.radical.sign() == Sign::NoSign
@@ -535,7 +527,11 @@ impl Computable {
                 Some(coefficient.rational.clone())
             }
             _ => None,
-        }
+        }?;
+        // A successful symbolic proof remains valid for every clone. Retain
+        // its sign so later predicates do not rebuild the same normal form.
+        self.internal.facts.replace_exact_sign(ExactSignCache::Valid(rational.sign()));
+        Some(rational)
     }
 
     fn without_scaled_shared_factor(&self, factor: SharedConstant) -> Option<Computable> {
@@ -1808,8 +1804,8 @@ impl Computable {
             return Self::zero();
         }
         let exact_order = lo
-            .bounded_laurent_rational()
-            .zip(hi.bounded_laurent_rational())
+            .bounded_laurent_rational(48)
+            .zip(hi.bounded_laurent_rational(48))
             .map(|(lo, hi)| {
                 lo.partial_cmp(&hi)
                     .expect("exact rational ordering is total")

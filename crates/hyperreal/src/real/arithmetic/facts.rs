@@ -79,7 +79,7 @@ impl Real {
         if let Some(rational) = self.exact_rational() {
             return Some(rational);
         }
-        Some(self.computable_ref().extended_laurent_rational()? * &self.rational)
+        Some(self.computable_ref().bounded_laurent_rational(64)? * &self.rational)
     }
 
     /// Return a borrowed exact rational when that is structurally known.

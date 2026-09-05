@@ -227,7 +227,7 @@ impl Computable {
         }
         if let Some(rational) = self
             .exact_rational()
-            .or_else(|| self.bounded_laurent_rational())
+            .or_else(|| self.bounded_laurent_rational(48))
         {
             if rational.sign() == Sign::NoSign {
                 crate::trace_dispatch!("computable", "atan", "exact-zero");
@@ -504,7 +504,7 @@ impl Computable {
             }
         }
 
-        if let Some(rational) = self.bounded_laurent_rational() {
+        if let Some(rational) = self.bounded_laurent_rational(48) {
             crate::trace_dispatch!("computable", "acos", "exact-normal-form");
             return Self::rational(rational).acos();
         }

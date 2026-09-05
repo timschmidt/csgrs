@@ -2676,7 +2676,7 @@ fn inverse_atan_linear_sign_includes_the_argument_sign() {
         assert_eq!(
             contact_parameter
                 .add(domain_parameter.negate())
-                .bounded_laurent_rational(),
+                .bounded_laurent_rational(48),
             Some(Rational::zero())
         );
 
@@ -2686,7 +2686,7 @@ fn inverse_atan_linear_sign_includes_the_argument_sign() {
                 .clone()
                 .shift_right(2)
                 .multiply(root_two.clone().inverse().shift_left(2))
-                .bounded_laurent_rational(),
+                .bounded_laurent_rational(48),
             Some(Rational::one())
         );
         assert!(Computable::internal_structural_eq(
@@ -2724,7 +2724,7 @@ fn inverse_atan_linear_sign_includes_the_argument_sign() {
         assert_eq!(
             contact_parameter
                 .add(domain_parameter.negate())
-                .bounded_laurent_rational(),
+                .bounded_laurent_rational(48),
             Some(Rational::zero())
         );
 
@@ -2755,9 +2755,74 @@ fn inverse_atan_linear_sign_includes_the_argument_sign() {
         assert_eq!(
             contact_parameter
                 .add(domain_parameter.negate())
-                .bounded_laurent_rational(),
+                .bounded_laurent_rational(48),
             Some(Rational::zero())
         );
+    }
+
+    #[test]
+    fn rational_normal_form_retains_only_successful_sign_proofs() {
+        let opaque = |approximation| Computable {
+            internal: Arc::new(Node::new(
+                approximation,
+                BoundCache::Invalid,
+                ExactSignCache::Unknown,
+            )),
+            signal: None,
+        };
+        let pi = Computable::pi();
+        let root = Computable::sqrt_rational(Rational::new(5));
+        let atom = Computable::rational(Rational::fraction(3, 4).unwrap()).atan();
+        let tiny = Rational::from_bigint_fraction(
+            BigInt::one(),
+            BigUint::one() << 2_000,
+        )
+        .unwrap();
+        for budget in [48, 64] {
+            for zero in [
+                Approximation::Add(pi.clone(), pi.clone().negate()),
+                Approximation::Add(
+                    opaque(Approximation::Square(root.clone())),
+                    Computable::rational(Rational::new(-5)),
+                ),
+                Approximation::Add(atom.clone(), atom.clone().negate()),
+            ] {
+                let zero = opaque(zero);
+                for expected in [
+                    Rational::zero(),
+                    Rational::fraction(7, 9).unwrap(),
+                    Rational::fraction(-7, 9).unwrap(),
+                    tiny.clone(),
+                    -tiny.clone(),
+                ] {
+                    let value = opaque(Approximation::Add(
+                        zero.clone(),
+                        Computable::rational(expected.clone()),
+                    ));
+                    let shared = value.clone();
+                    assert_eq!(value.immediate_sign(), None);
+                    // Exhausting a proof budget must not manufacture a fact.
+                    assert_eq!(value.bounded_laurent_rational(0), None);
+                    assert_eq!(value.immediate_sign(), None);
+                    assert_eq!(
+                        value.bounded_laurent_rational(budget),
+                        Some(expected.clone()),
+                    );
+                    let sign = public_sign(expected.sign());
+                    assert_eq!(value.immediate_sign(), Some(sign));
+                    assert_eq!(shared.immediate_sign(), Some(sign));
+                    assert_eq!(value.sign_until(0), Some(sign));
+                    assert!(value.cached().is_none(), "a symbolic proof must not approximate");
+                }
+            }
+        }
+        let different_atom =
+            Computable::rational(Rational::fraction(4, 5).unwrap()).atan();
+        let unresolved = opaque(Approximation::Add(atom, different_atom.negate()));
+        assert_eq!(unresolved.bounded_laurent_rational(64), None);
+        assert_eq!(unresolved.immediate_sign(), None);
+        assert!(unresolved.cached().is_none());
+        assert_eq!(unresolved.sign_until(-128), Some(RealSign::Negative));
     }
 
     #[test]
@@ -2784,7 +2849,7 @@ fn inverse_atan_linear_sign_includes_the_argument_sign() {
         }
         let expression = layer.pop().expect("the balanced expression is nonempty");
 
-        assert!(expression.bounded_laurent_rational().is_none());
+        assert!(expression.bounded_laurent_rational(48).is_none());
     }
 
     #[test]
