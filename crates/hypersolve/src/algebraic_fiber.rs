@@ -3582,6 +3582,9 @@ impl LocalAlgebraicField {
         &mut self,
         max_refinement_steps: usize,
     ) -> Result<bool, LocalFieldError> {
+        if self.root.exact_point_witness().is_some() {
+            return Ok(true);
+        }
         let mut lower = self.root.interval.lower.clone();
         let mut upper = self.root.interval.upper.clone();
         let mut lower_sign = match self.consume(compare_reals(
@@ -3600,29 +3603,25 @@ impl LocalAlgebraicField {
             Ok(sign) => sign,
             Err(_) => return Ok(false),
         };
-        if lower_sign == Ordering::Equal || upper_sign == Ordering::Equal {
-            let root = if lower_sign == Ordering::Equal {
-                lower
-            } else {
-                upper
-            };
+        if upper_sign == Ordering::Equal {
             self.root.interval = IsolatedRootInterval {
-                lower: root.clone(),
-                upper: root.clone(),
-                exact_root: Some(root),
+                lower: upper.clone(),
+                upper: upper.clone(),
+                exact_root: Some(upper),
                 distinct_root_count: 1,
             };
-            self.root.kind = AlgebraicRootKind::ExactRationalWitness;
             return Ok(true);
         }
-        if lower_sign == upper_sign {
+        // A positive-width isolator owns (lower, upper], not its lower
+        // endpoint. Let the shared refiner recover the square-free sign
+        // bracket when that excluded endpoint is another root.
+        if lower_sign == Ordering::Equal || lower_sign == upper_sign {
             return Ok(false);
         }
 
         let mut steps = 0_usize;
         for _ in 0..max_refinement_steps {
-            let midpoint =
-                ((&lower + &upper) / Real::from(2_u8)).map_err(|_| LocalFieldError::Undecided)?;
+            let midpoint = Real::average_pair(&lower, &upper);
             let midpoint_sign = self.consume(compare_reals(
                 &evaluate_real_polynomial(self.modulus(), &midpoint),
                 &Real::zero(),
@@ -3646,57 +3645,50 @@ impl LocalAlgebraicField {
         if steps == 0 {
             return Ok(false);
         }
-        let exact_root = (lower == upper).then(|| lower.clone());
         self.refinement_steps += steps;
         self.root.interval = IsolatedRootInterval {
+            exact_root: (lower == upper).then(|| lower.clone()),
             lower,
             upper,
-            exact_root: exact_root.clone(),
             distinct_root_count: 1,
         };
-        self.root.kind = if exact_root.is_some() {
-            AlgebraicRootKind::ExactRationalWitness
-        } else {
-            AlgebraicRootKind::IsolatingInterval
-        };
-        self.root.validation = validate_algebraic_root_representation(&self.root, self.policy);
-        if !self.root.is_valid() {
-            return Err(LocalFieldError::InvalidEvidence);
-        }
         Ok(true)
     }
 
     fn refine_root(&mut self) -> Result<(), LocalFieldError> {
-        if self.refine_root_by_sign_change(4)? {
-            return Ok(());
+        if !self.refine_root_by_sign_change(4)? {
+            let refinement = refine_isolated_univariate_polynomial_interval(
+                self.modulus(),
+                &self.root.interval,
+                RootIsolationConfig {
+                    policy: self.policy,
+                    max_interval_width: None,
+                    max_refinement_steps: 4,
+                },
+            );
+            let Some(refined_interval) = refinement.refined_interval else {
+                return Err(match refinement.status {
+                    IsolatedRootRefinementStatus::InvalidPolynomial
+                    | IsolatedRootRefinementStatus::InvalidInterval
+                    | IsolatedRootRefinementStatus::NonUnitIsolation => {
+                        LocalFieldError::InvalidEvidence
+                    }
+                    IsolatedRootRefinementStatus::Refined
+                    | IsolatedRootRefinementStatus::ExactRoot
+                    | IsolatedRootRefinementStatus::Undecided => LocalFieldError::Undecided,
+                });
+            };
+            if refined_interval == self.root.interval {
+                return Err(LocalFieldError::Undecided);
+            }
+            self.refinement_steps += refinement.refinement_steps;
+            self.root.interval = refined_interval;
         }
-        let refinement = refine_isolated_univariate_polynomial_interval(
-            self.modulus(),
-            &self.root.interval,
-            RootIsolationConfig {
-                policy: self.policy,
-                max_interval_width: None,
-                max_refinement_steps: 4,
-            },
-        );
-        let Some(refined_interval) = refinement.refined_interval else {
-            return Err(match refinement.status {
-                IsolatedRootRefinementStatus::InvalidPolynomial
-                | IsolatedRootRefinementStatus::InvalidInterval
-                | IsolatedRootRefinementStatus::NonUnitIsolation => {
-                    LocalFieldError::InvalidEvidence
-                }
-                IsolatedRootRefinementStatus::Refined
-                | IsolatedRootRefinementStatus::ExactRoot
-                | IsolatedRootRefinementStatus::Undecided => LocalFieldError::Undecided,
-            });
-        };
-        if refined_interval == self.root.interval {
-            return Err(LocalFieldError::Undecided);
-        }
-        self.refinement_steps += refinement.refinement_steps;
-        self.root.interval = refined_interval;
-        self.root.kind = if self.root.interval.exact_root.is_some() {
+        self.root.kind = if self
+            .root
+            .exact_point_witness()
+            .is_some_and(|witness| witness.exact_rational_ref().is_some())
+        {
             AlgebraicRootKind::ExactRationalWitness
         } else {
             AlgebraicRootKind::IsolatingInterval
@@ -3863,10 +3855,12 @@ mod tests {
         root
     }
 
-    fn represented_rational_root(
-        value: Real,
-        policy: PredicatePolicy,
-    ) -> AlgebraicRootRepresentation {
+    fn represented_exact_root(value: Real, policy: PredicatePolicy) -> AlgebraicRootRepresentation {
+        let kind = if value.exact_rational_ref().is_some() {
+            AlgebraicRootKind::ExactRationalWitness
+        } else {
+            AlgebraicRootKind::IsolatingInterval
+        };
         let mut root = AlgebraicRootRepresentation {
             constraint_index: 0,
             symbol: SymbolId(0),
@@ -3878,7 +3872,7 @@ mod tests {
                 exact_root: Some(value),
                 distinct_root_count: 1,
             },
-            kind: AlgebraicRootKind::ExactRationalWitness,
+            kind,
             validation: AlgebraicRootValidationReport {
                 status: AlgebraicRootValidationStatus::Valid,
                 message: None,
@@ -4073,14 +4067,13 @@ mod tests {
         reversed.interval.lower = real(3);
         let mut zero_leading = valid;
         zero_leading.polynomial_coefficients[2] = Real::zero();
-        let mut wrong_rational_witness =
-            represented_rational_root(real(2), PredicatePolicy::STRICT);
+        let mut wrong_rational_witness = represented_exact_root(real(2), PredicatePolicy::STRICT);
         wrong_rational_witness.polynomial_coefficients[0] = real(-3);
-        let mut outside_witness = represented_rational_root(real(2), PredicatePolicy::STRICT);
+        let mut outside_witness = represented_exact_root(real(2), PredicatePolicy::STRICT);
         outside_witness.interval.lower = real(3);
         outside_witness.interval.upper = real(4);
         let mut wrong_analytic_witness =
-            represented_rational_root(Real::pi(), PredicatePolicy::STRICT);
+            represented_exact_root(Real::pi(), PredicatePolicy::STRICT);
         wrong_analytic_witness.polynomial_coefficients[0] = -Real::pi() - Real::one();
         for invalid in [
             reversed,
@@ -4128,6 +4121,116 @@ mod tests {
                         assert!(projected.coefficients.is_empty());
                     }
                 }
+            }
+        }
+    }
+
+    #[test]
+    fn local_refinement_preserves_half_open_selected_root_ownership() {
+        for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
+            for selected in [Real::one(), rational(1, 2)] {
+                // x(x - selected) has one owned root in (0, 1]. The zero at
+                // the excluded lower endpoint must never replace it.
+                let alpha = represented_root(
+                    vec![Real::zero(), -&selected, Real::one()],
+                    Real::zero(),
+                    Real::one(),
+                    policy,
+                );
+                let oracle = refine_isolated_univariate_polynomial_interval(
+                    &alpha.polynomial_coefficients,
+                    &alpha.interval,
+                    RootIsolationConfig {
+                        policy,
+                        max_interval_width: None,
+                        max_refinement_steps: 4,
+                    },
+                );
+                assert_eq!(
+                    oracle.refined_interval.unwrap().exact_root,
+                    Some(selected.clone())
+                );
+                let mut field = LocalAlgebraicField::new(&alpha, policy).unwrap();
+                assert_eq!(
+                    field.sign_polynomial(&[-(&selected * rational(1, 2)), Real::one()]),
+                    Ok(Ordering::Greater)
+                );
+                assert_eq!(field.root.exact_point_witness(), Some(&selected));
+                assert!(algebraic_root_payload_replays_strictly(&field.root));
+                assert_eq!(field.certainty, Certainty::Exact);
+            }
+        }
+    }
+
+    #[test]
+    fn local_fiber_count_preserves_half_open_selected_root_ownership() {
+        let diagonal =
+            BivariatePolynomial::new(vec![vec![Real::zero(), -Real::one()], vec![Real::one()]]);
+        for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
+            for selected in [Real::one(), rational(1, 2)] {
+                let alpha = represented_root(
+                    vec![Real::zero(), -&selected, Real::one()],
+                    Real::zero(),
+                    Real::one(),
+                    policy,
+                );
+                for parameter in [
+                    CurveResultantParameter::First,
+                    CurveResultantParameter::Second,
+                ] {
+                    for (lower, upper, count) in [
+                        (&selected * rational(3, 4), &selected * rational(5, 4), 1),
+                        (-(&selected * rational(1, 4)), &selected * rational(1, 4), 0),
+                    ] {
+                        let report = count_bivariate_fiber_roots_at_algebraic_parameter(
+                            &diagonal, parameter, &alpha, &lower, &upper, policy,
+                        );
+                        assert_eq!(report.status, AlgebraicFiberRootCountStatus::Counted);
+                        assert_eq!(report.distinct_root_count, Some(count));
+                        assert_eq!(report.certainty, Certainty::Exact);
+                    }
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn local_refinement_preserves_nonrational_exact_point_kind() {
+        for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
+            for selected in [rational(1, 2), real(2).sqrt().unwrap(), Real::pi()] {
+                for (polynomial, upper) in [
+                    (vec![-&selected, Real::one()], selected.clone()),
+                    (vec![-&selected, Real::one()], &selected + Real::one()),
+                    (
+                        vec![&selected * &selected, -(&selected * real(2)), Real::one()],
+                        &selected + Real::one(),
+                    ),
+                ] {
+                    let alpha =
+                        represented_root(polynomial, &selected - Real::one(), upper, policy);
+                    let mut field = LocalAlgebraicField::new(&alpha, policy).unwrap();
+                    field.refine_root().unwrap();
+                    let witness = field.root.exact_point_witness().unwrap();
+                    assert_eq!(
+                        compare_reals(witness, &selected, PredicatePolicy::STRICT).value(),
+                        Some(Ordering::Equal)
+                    );
+                    assert_eq!(
+                        field.root.kind,
+                        if selected.exact_rational_ref().is_some() {
+                            AlgebraicRootKind::ExactRationalWitness
+                        } else {
+                            AlgebraicRootKind::IsolatingInterval
+                        }
+                    );
+                    assert!(algebraic_root_payload_replays_strictly(&field.root));
+                    assert_eq!(field.certainty, Certainty::Exact);
+                }
+                let alpha = represented_exact_root(selected, policy);
+                let mut field = LocalAlgebraicField::new(&alpha, policy).unwrap();
+                field.refine_root().unwrap();
+                assert_eq!(field.root, alpha);
+                assert_eq!(field.refinement_steps, 0);
             }
         }
     }
@@ -5695,7 +5798,7 @@ mod tests {
     fn local_field_sturm_reports_rational_endpoint_roots_and_input_boundaries() {
         let policy = PredicatePolicy::STRICT;
         let half = rational(1, 2);
-        let alpha = represented_rational_root(half.clone(), policy);
+        let alpha = represented_exact_root(half.clone(), policy);
         let relation = BivariatePolynomial::new(vec![
             vec![real(0), real(0), real(1)],
             vec![real(0), real(-2)],
