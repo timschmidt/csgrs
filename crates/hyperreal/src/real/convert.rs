@@ -951,6 +951,81 @@ mod tests {
     }
 
     #[test]
+    fn borrowed_f64_preserves_values_with_large_denominators() {
+        use num::{BigUint, One};
+        use rug::{Float, Integer, Rational as GmpRational, float::Round, integer::Order};
+
+        let check = |numerator: BigUint, denominator: BigUint, exact_float: bool| {
+            let exact = GmpRational::from((
+                Integer::from_digits(&numerator.to_u64_digits(), Order::Lsf),
+                Integer::from_digits(&denominator.to_u64_digits(), Order::Lsf),
+            ));
+            let lower = Float::with_val_round(4096, &exact, Round::Down).0.to_f64();
+            let upper = Float::with_val_round(4096, &exact, Round::Up).0.to_f64();
+            assert_eq!(
+                lower.to_bits(),
+                upper.to_bits(),
+                "oracle must resolve rounding"
+            );
+            for negative in [false, true] {
+                let mut rational = Rational::from_bigint_fraction(
+                    BigInt::from(numerator.clone()),
+                    denominator.clone(),
+                )
+                .unwrap();
+                if negative {
+                    rational = -rational;
+                }
+                let value = Real::new(rational.clone());
+                let expected = if negative && lower != 0.0 {
+                    -lower
+                } else {
+                    lower
+                };
+                let actual = value.to_f64_lossy().unwrap();
+                // Borrowed exports may differ by one ULP from nearest rounding.
+                // Exact subnormals must survive without losing any bits.
+                assert!(
+                    actual.abs().to_bits().abs_diff(expected.abs().to_bits())
+                        <= u64::from(!exact_float),
+                    "{value}: {actual:e} versus {expected:e}"
+                );
+                if actual != 0.0 {
+                    assert_eq!(actual.is_sign_negative(), negative);
+                }
+                assert_eq!(
+                    value.to_f64_lossy().map(f64::to_bits),
+                    Some(actual.to_bits())
+                );
+                if exact_float {
+                    // A sibling can retain the exact-view fact before this Real
+                    // is built. Its certified export must still be lossless.
+                    assert_eq!(rational.dyadic_to_f64_exact(), Some(expected));
+                    assert_eq!(Real::new(rational).to_f64_exact_dyadic(), Some(expected));
+                }
+            }
+        };
+
+        for units in [1_u64, 2, 3, (1 << 26) + 1, 1 << 51, (1 << 52) - 1] {
+            check(BigUint::from(units), BigUint::one() << 1074_usize, true);
+        }
+        let numerator = (BigUint::one() << 54_usize) - BigUint::one();
+        let denominator = BigUint::one() << 1076_usize;
+        check(numerator.clone(), denominator.clone(), false);
+        check(numerator * 3_u8, denominator * 3_u8 + BigUint::one(), false);
+        for exponent in [1000_usize, 1022, 1040, 1050, 1070, 1074] {
+            check(BigUint::one(), (BigUint::one() << exponent) * 3_u8, false);
+        }
+        for exponent in [1024_usize, 1050, 1074, 1500] {
+            check(
+                (BigUint::one() << 1000_usize) + BigUint::one(),
+                (BigUint::one() << exponent) + BigUint::one(),
+                false,
+            );
+        }
+    }
+
+    #[test]
     fn borrowed_f64_lossy_underflow_and_overflow() {
         let tiny = Real::new(
             Rational::from_bigint_fraction(BigInt::from(1), num::BigUint::from(1_u8) << 1200)

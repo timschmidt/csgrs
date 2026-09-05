@@ -364,7 +364,10 @@ impl Rational {
         }
 
         let numerator = self.numerator.to_f64()?;
-        let denominator = self.denominator.to_f64()?;
+        // BigUint conversion can return infinity rather than None. Dividing
+        // by that infinity would erase a representable finite result;
+        // leave such ratios to the magnitude-aware computable fallback.
+        let denominator = self.denominator.to_f64().filter(|value| value.is_finite())?;
         let value = numerator / denominator;
         if !value.is_finite() {
             return None;
