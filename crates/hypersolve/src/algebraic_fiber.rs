@@ -2273,7 +2273,7 @@ fn algebraic_fiber_polynomial_image_error_report(
     }
 }
 
-/// Projects one bivariate fiber through a low-degree algebraic quotient ring.
+/// Projects one bivariate fiber through a degree-bounded algebraic quotient ring.
 ///
 /// This is the bounded-memory fallback for systems whose generic bivariate
 /// resultant has a large interpolation-degree bound. It computes the norm of
@@ -2281,33 +2281,15 @@ fn algebraic_fiber_polynomial_image_error_report(
 /// root's defining-polynomial degree. As with any resultant, roots contributed
 /// by other defining-polynomial branches remain candidates that the caller
 /// must replay against the selected root.
+///
+/// The determinant construction is exponential in the retained root's defining
+/// degree, and `max_source_degree` explicitly bounds that matrix dimension.
+/// Admission always replays the retained payload under the strict policy.
 pub fn project_bivariate_fiber_at_algebraic_parameter(
     polynomial: &BivariatePolynomial,
     retained_parameter: CurveResultantParameter,
     retained_root: &AlgebraicRootRepresentation,
-    policy: PredicatePolicy,
-) -> AlgebraicFiberProjectionReport {
-    project_bivariate_fiber_at_algebraic_parameter_with_max_degree(
-        polynomial,
-        retained_parameter,
-        retained_root,
-        8,
-        policy,
-    )
-}
-
-/// Projects one bivariate fiber with an explicit quotient-ring degree budget.
-///
-/// The determinant construction is exponential in the retained root's defining
-/// degree, and `max_source_degree` bounds that matrix dimension. Callers should
-/// opt above the default degree eight only for bounded operation-specific fields
-/// whose generic resultant would be materially larger.
-pub fn project_bivariate_fiber_at_algebraic_parameter_with_max_degree(
-    polynomial: &BivariatePolynomial,
-    retained_parameter: CurveResultantParameter,
-    retained_root: &AlgebraicRootRepresentation,
     max_source_degree: usize,
-    _policy: PredicatePolicy,
 ) -> AlgebraicFiberProjectionReport {
     // This quotient-ring norm needs only the immutable defining polynomial.
     // Share the exact LocalAlgebraicField admission boundary, then avoid
@@ -4137,7 +4119,7 @@ mod tests {
                             &polynomial,
                             retained_parameter,
                             &invalid,
-                            policy,
+                            8,
                         );
                         assert_eq!(
                             projected.status,
@@ -4985,7 +4967,7 @@ mod tests {
                 &polynomial,
                 CurveResultantParameter::First,
                 &alpha,
-                policy,
+                8,
             );
             assert_eq!(report.status, AlgebraicFiberProjectionStatus::Constructed);
             assert_eq!(report.coefficients.len(), 3);
@@ -5016,13 +4998,13 @@ mod tests {
                     &retained_first,
                     CurveResultantParameter::First,
                     &retained_root,
-                    policy,
+                    8,
                 );
                 let second = project_bivariate_fiber_at_algebraic_parameter(
                     &retained_second,
                     CurveResultantParameter::Second,
                     &retained_root,
-                    policy,
+                    8,
                 );
                 assert_eq!(first.status, AlgebraicFiberProjectionStatus::Constructed);
                 assert_eq!(second, first);
@@ -5048,7 +5030,7 @@ mod tests {
                 &retained_first,
                 CurveResultantParameter::First,
                 &invalid,
-                PredicatePolicy::STRICT,
+                8,
             );
             assert_eq!(
                 report.status,
@@ -5061,9 +5043,8 @@ mod tests {
     #[test]
     fn quotient_ring_fiber_projection_obeys_an_explicit_degree_budget() {
         // For 2 alpha^10 - 1 = 0 and F(alpha, y) = y - alpha, the norm is a
-        // nonzero scalar multiple of 2 y^10 - 1. The general entry point keeps
-        // its degree-eight allocation ceiling, while an operation that owns a
-        // degree-ten field can opt into the exact 2^10-state determinant.
+        // nonzero scalar multiple of 2 y^10 - 1. Smaller explicit budgets must
+        // reject the field before constructing the exact 2^10-state determinant.
         let polynomial = BivariatePolynomial::new(vec![vec![real(0), real(1)], vec![real(-1)]]);
         let mut defining_polynomial = vec![Real::zero(); 11];
         defining_polynomial[0] = real(-1);
@@ -5075,21 +5056,22 @@ mod tests {
                 Real::one(),
                 policy,
             );
-            let bounded = project_bivariate_fiber_at_algebraic_parameter(
-                &polynomial,
-                CurveResultantParameter::First,
-                &alpha,
-                policy,
-            );
-            assert_eq!(bounded.status, AlgebraicFiberProjectionStatus::Undecided);
-            assert!(bounded.coefficients.is_empty());
+            for max_degree in [0, 1, 8, 9] {
+                let bounded = project_bivariate_fiber_at_algebraic_parameter(
+                    &polynomial,
+                    CurveResultantParameter::First,
+                    &alpha,
+                    max_degree,
+                );
+                assert_eq!(bounded.status, AlgebraicFiberProjectionStatus::Undecided);
+                assert!(bounded.coefficients.is_empty());
+            }
 
-            let projected = project_bivariate_fiber_at_algebraic_parameter_with_max_degree(
+            let projected = project_bivariate_fiber_at_algebraic_parameter(
                 &polynomial,
                 CurveResultantParameter::First,
                 &alpha,
                 10,
-                policy,
             );
             assert_eq!(
                 projected.status,
@@ -5843,7 +5825,7 @@ mod tests {
                 &relation,
                 CurveResultantParameter::First,
                 &alpha,
-                policy,
+                8,
             );
             assert_eq!(
                 projection.status,

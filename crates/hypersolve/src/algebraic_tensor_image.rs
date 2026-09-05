@@ -20,7 +20,7 @@ use crate::algebraic::{
 };
 use crate::algebraic_fiber::{
     AlgebraicFiberProjectionReport, AlgebraicFiberProjectionStatus,
-    project_bivariate_fiber_at_algebraic_parameter_with_max_degree,
+    project_bivariate_fiber_at_algebraic_parameter,
 };
 use crate::curve_resultant::{
     BivariatePolynomial, CurveResultantParameter, primitive_common_fiber_component,
@@ -285,12 +285,11 @@ pub fn project_selected_tensor_fiber_via_tagged_norm(
         .polynomial_coefficients
         .len()
         .saturating_sub(1);
-    let mut projection = project_bivariate_fiber_at_algebraic_parameter_with_max_degree(
+    let mut projection = project_bivariate_fiber_at_algebraic_parameter(
         &primitive,
         CurveResultantParameter::First,
         projection_root,
         max_source_degree,
-        PredicatePolicy::STRICT,
     );
     if projection.status == AlgebraicFiberProjectionStatus::Constructed {
         projection.coefficients =

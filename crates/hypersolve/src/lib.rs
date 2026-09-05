@@ -120,7 +120,6 @@ pub use algebraic_fiber::{
     isolate_bivariate_fiber_roots_at_algebraic_parameter, project_algebraic_fiber_polynomial_image,
     project_algebraic_fiber_polynomial_image_relation,
     project_bivariate_fiber_at_algebraic_parameter,
-    project_bivariate_fiber_at_algebraic_parameter_with_max_degree,
     reduce_bivariate_rational_function_at_algebraic_parameter,
 };
 pub use algebraic_mobius::{

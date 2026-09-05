@@ -5378,13 +5378,13 @@ fn certification(c: &mut Criterion) {
         &projection_first,
         CurveResultantParameter::First,
         &sqrt_half,
-        hyperlimit::PredicatePolicy::STRICT,
+        8,
     );
     let projected_second = project_bivariate_fiber_at_algebraic_parameter(
         &projection_second,
         CurveResultantParameter::Second,
         &sqrt_half,
-        hyperlimit::PredicatePolicy::STRICT,
+        8,
     );
     assert_eq!(
         projected_first.status,
@@ -5397,7 +5397,7 @@ fn certification(c: &mut Criterion) {
                 &projection_first,
                 CurveResultantParameter::First,
                 &sqrt_half,
-                hyperlimit::PredicatePolicy::STRICT,
+                8,
             )
         })
     });
@@ -5407,7 +5407,7 @@ fn certification(c: &mut Criterion) {
                 &projection_second,
                 CurveResultantParameter::Second,
                 &sqrt_half,
-                hyperlimit::PredicatePolicy::STRICT,
+                8,
             )
         })
     });
