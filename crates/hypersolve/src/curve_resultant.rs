@@ -5972,7 +5972,9 @@ mod tests {
         let deep_divisor =
             BivariatePolynomial::new(vec![vec![deep_scale.clone(), deep_scale.clone()]]);
         let deep_quotient = BivariatePolynomial::new(vec![vec![half.clone()]]);
-        let deep_dividend = multiply_bivariate(&deep_divisor, &deep_quotient);
+        // Keep the product cold: multiply_bivariate canonicalizes its
+        // coefficients and retains the shared scale's exact nonzero proof.
+        let deep_dividend = BivariatePolynomial::new(vec![vec![&deep_scale * &half; 2]]);
         assert_eq!(
             &deep_dividend.coefficients[0][1] / &deep_divisor.coefficients[0][1],
             Err(hyperreal::Problem::UnknownZero)
@@ -5981,6 +5983,11 @@ mod tests {
             &divide_bivariate_polynomial_exact(&deep_dividend, &deep_divisor)
                 .expect("the strict nonzero divisor leading term should be reused"),
             &deep_quotient,
+        );
+        assert_eq!(
+            &deep_dividend.coefficients[0][1] / &deep_divisor.coefficients[0][1],
+            Ok(half),
+            "ordinary division must reuse the leading coefficient's exact nonzero proof"
         );
 
         let normalized = normalize_bivariate_projective_scale(&deep_divisor)
