@@ -76,10 +76,30 @@ impl Computable {
         None
     }
 
+    /// A retained exact magnitude can certify |x| < 1/2 without evaluating x.
+    /// Inexact planning bounds and missing facts must use the numeric guard.
+    pub(crate) fn exp_argument_is_known_small(&self) -> bool {
+        self.cached_bound()
+            .and_then(|bound| bound.known_msd())
+            .flatten()
+            .is_some_and(|msd| msd <= -2)
+    }
+
+    /// Try ln(2) reduction with a checked small residual. The approximation
+    /// kernel also uses this when construction deferred the reduction work.
+    pub(crate) fn reduced_exp(&self) -> Option<Self> {
+        let (reduced, multiple) = self.reduce_by_divisor(&Self::ln2(), -4, 64)?;
+        Some(reduced.prescaled_exp().shift_left(
+            multiple
+                .try_into()
+                .expect("binary exponent should fit in i32"),
+        ))
+    }
+
     fn prescaled_exp(self) -> Self {
         // Preserve structural form while deferring the expensive approximation of
-        // exp to the requested precision; this avoids recursive constructor
-        // expansion when explicit reduction has already normalized the input.
+        // exp to the requested precision. This node may also hold an unreduced
+        // operand; its kernel verifies the range before using the Taylor series.
         // exp(x) stays strictly positive across all domain values, so cache
         // that fact directly for fast sign/zero checks.
         Self {
@@ -115,24 +135,16 @@ impl Computable {
         }
         if let Some(msd) = self.planning_sign_and_msd().1.flatten() {
             if msd <= 2 {
+                // This is only a construction-cost shortcut, not a proof that
+                // the argument is inside the small Taylor kernel's domain.
                 crate::trace_dispatch!("computable", "exp", "structural-small-prescaled");
                 return self.prescaled_exp();
             }
             if msd >= 4 {
                 crate::trace_dispatch!("computable", "exp", "structural-large-range-reduction");
-                let ln2 = Self::ln2();
-                let low_prec: Precision = -4;
-                const REDUCTION_MAX_ATTEMPTS: u32 = 64;
-
-                if let Some((reduced, multiple)) =
-                    self.reduce_by_divisor(&ln2, low_prec, REDUCTION_MAX_ATTEMPTS)
-                {
+                if let Some(reduced) = self.reduced_exp() {
                     crate::trace_dispatch!("computable", "exp", "ln2-range-reduction");
-                    return reduced.prescaled_exp().shift_left(
-                        multiple
-                            .try_into()
-                            .expect("binary exponent should fit in i32"),
-                    );
+                    return reduced;
                 }
 
                 // If the cheap correction loop cannot converge at this scale,
@@ -148,18 +160,9 @@ impl Computable {
         if rough_appr > *signed::EIGHT || rough_appr < -signed::EIGHT.clone() {
             // Keep the Taylor kernel near zero by subtracting k*ln(2), then reapply
             // the scale as a binary shift. This avoids slow huge-argument series work.
-            let ln2 = Self::ln2();
-            const REDUCTION_MAX_ATTEMPTS: u32 = 64;
-
-            if let Some((reduced, multiple)) =
-                self.reduce_by_divisor(&ln2, low_prec, REDUCTION_MAX_ATTEMPTS)
-            {
+            if let Some(reduced) = self.reduced_exp() {
                 crate::trace_dispatch!("computable", "exp", "ln2-range-reduction");
-                return reduced.prescaled_exp().shift_left(
-                    multiple
-                        .try_into()
-                        .expect("binary exponent should fit in i32"),
-                );
+                return reduced;
             }
 
             // Fallback keeps large, symbolic arguments on the cold path and

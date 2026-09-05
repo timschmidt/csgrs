@@ -220,6 +220,18 @@ const NUMERICAL_MICRO_GROUPS: &[BenchGroupDoc] = &[
                 description: "Repeats a cached exp(7/5) approximation.",
             },
             BenchDoc {
+                name: "exp_deferred_constructor",
+                description: "Constructs exp(7/2) without requesting an approximation.",
+            },
+            BenchDoc {
+                name: "exp_coarse_cold_p1",
+                description: "Approximates exp(3/2) at coarse precision, requiring certified range reduction.",
+            },
+            BenchDoc {
+                name: "exp_deferred_negative_cold_p128",
+                description: "Approximates exp(-10000), exercising deferred binary-scaling fallback.",
+            },
+            BenchDoc {
                 name: "exp_large_cold_p128",
                 description: "Approximates exp(128), exercising the bounded exact-integer power path.",
             },
@@ -1125,6 +1137,32 @@ fn bench_computable_transcendentals(c: &mut Criterion) {
     exp_cached.approx(p);
     group.bench_function("exp_cached_p128", |b| {
         b.iter(|| black_box(exp_cached.approx(p)))
+    });
+
+    let deferred_input = Computable::rational(Rational::fraction(7, 2).unwrap());
+    group.bench_function("exp_deferred_constructor", |b| {
+        b.iter(|| black_box(deferred_input.clone().exp()))
+    });
+    let coarse_input = Computable::rational(Rational::fraction(3, 2).unwrap());
+    // e^(3/2)/2 lies strictly between 2 and 3. Zero is not a valid coarse
+    // approximation, even though it is valid for the small Taylor domain.
+    let coarse_result = coarse_input.clone().exp().approx(1);
+    assert!(coarse_result == BigInt::from(2) || coarse_result == BigInt::from(3));
+    group.bench_function("exp_coarse_cold_p1", |b| {
+        b.iter_batched(
+            || coarse_input.clone().exp(),
+            |value| black_box(value.approx(1)),
+            BatchSize::SmallInput,
+        )
+    });
+    let deferred_negative = Computable::rational(Rational::new(-10_000));
+    assert_eq!(deferred_negative.clone().exp().approx(p), BigInt::from(0));
+    group.bench_function("exp_deferred_negative_cold_p128", |b| {
+        b.iter_batched(
+            || deferred_negative.clone().exp(),
+            |value| black_box(value.approx(p)),
+            BatchSize::SmallInput,
+        )
     });
 
     let exp_large_input = Computable::rational(Rational::new(128));

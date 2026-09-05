@@ -6,6 +6,174 @@ mod tests {
     use std::mem::size_of;
 
     #[test]
+    fn exp_constructor_and_deferred_kernel_match_directed_mpfr() {
+        use rug::{Float, Integer, Rational as RugRational, float::Round};
+
+        fn check(input: Rational, raw: bool, precisions: &[Precision]) {
+            // Includes e^10000 at absolute 256-bit accuracy, so 2048 relative
+            // oracle bits would be insufficient for these largest inputs.
+            let oracle_bits = 16_384;
+            let mut numerator = Integer::from_str_radix(&input.numerator().to_string(), 10).unwrap();
+            if input.sign() == Sign::Minus {
+                numerator = -numerator;
+            }
+            let oracle = RugRational::from((
+                numerator,
+                Integer::from_str_radix(&input.denominator().to_string(), 10).unwrap(),
+            ));
+            let mut lower = Float::with_val_round(oracle_bits, &oracle, Round::Down).0;
+            let mut upper = Float::with_val_round(oracle_bits, &oracle, Round::Up).0;
+            lower.exp_round(Round::Down);
+            upper.exp_round(Round::Up);
+            let make = || {
+                let input = Computable::rational(input.clone());
+                if raw {
+                    Computable {
+                        internal: Arc::new(Node::new(
+                            Approximation::PrescaledExp(input),
+                            BoundCache::Invalid,
+                            ExactSignCache::Valid(Sign::Plus),
+                        )),
+                        signal: None,
+                    }
+                } else {
+                    input.exp()
+                }
+            };
+            let compare = |value: &Computable, precision: Precision| {
+                let actual = value.approx(precision);
+                let actual = Float::with_val(
+                    oracle_bits,
+                    Integer::from_str_radix(&actual.to_string(), 10).unwrap(),
+                );
+                let mut low = lower.clone();
+                let mut high = upper.clone();
+                low >>= precision;
+                high >>= precision;
+                assert!(
+                    Float::with_val(oracle_bits, &actual - low).abs() <= 1
+                        && Float::with_val(oracle_bits, &actual - high).abs() <= 1,
+                    "exp({input}), raw={raw}, precision={precision} violates one-unit bound"
+                );
+            };
+            // Cold requests cannot be masked by a high-precision cache.
+            for &precision in precisions {
+                compare(&make(), precision);
+            }
+            let ascending = make();
+            for &precision in precisions {
+                compare(&ascending, precision);
+            }
+            let descending = make();
+            for &precision in precisions.iter().rev() {
+                compare(&descending, precision);
+            }
+        }
+
+        let precisions = [4, 1, 0, -1, -8, -64, -256];
+        for denominator in [3_u64, 7] {
+            for numerator in -(8 * denominator as i64)..=8 * denominator as i64 {
+                check(
+                    Rational::fraction(numerator, denominator).unwrap(),
+                    false,
+                    &precisions,
+                );
+            }
+        }
+        for numerator in [-10_000, -4_096, -17, -7, -1, 0, 1, 7, 17, 4_096, 10_000] {
+            for raw in [false, true] {
+                check(Rational::new(numerator), raw, &[4, 1, -64, -256]);
+            }
+        }
+        for numerator in [-9, -8, -7, 7, 8, 9] {
+            check(Rational::fraction(numerator, 16).unwrap(), true, &precisions);
+        }
+    }
+
+    #[test]
+    fn exp_of_shared_and_inexact_magnitude_nodes_matches_directed_mpfr() {
+        use rug::{
+            Float, Integer,
+            float::{Constant, Round},
+        };
+        let bits = 2048;
+        let pi_low = Float::with_val_round(bits, Constant::Pi, Round::Down).0;
+        let pi_high = Float::with_val_round(bits, Constant::Pi, Round::Up).0;
+        let mut root_low = Float::with_val(bits, 2);
+        let mut root_high = root_low.clone();
+        root_low.sqrt_round(Round::Down);
+        root_high.sqrt_round(Round::Up);
+        for (input, mut low, mut high) in [
+            (Computable::pi(), pi_low.clone(), pi_high.clone()),
+            (
+                Computable::integer(BigInt::from(2)).sqrt(),
+                root_low.clone(),
+                root_high.clone(),
+            ),
+            (
+                Computable::pi().add(Computable::integer(BigInt::from(2)).sqrt()),
+                Float::with_val_round(bits, &pi_low + &root_low, Round::Down).0,
+                Float::with_val_round(bits, &pi_high + &root_high, Round::Up).0,
+            ),
+            (
+                Computable::pi().inverse(),
+                Float::with_val_round(bits, 1 / &pi_high, Round::Down).0,
+                Float::with_val_round(bits, 1 / &pi_low, Round::Up).0,
+            ),
+        ] {
+            low.exp_round(Round::Down);
+            high.exp_round(Round::Up);
+            for precision in [4, 1, 0, -1, -64, -256] {
+                let actual = input.clone().exp().approx(precision);
+                let actual = Float::with_val(
+                    bits,
+                    Integer::from_str_radix(&actual.to_string(), 10).unwrap(),
+                );
+                let mut lower = low.clone();
+                let mut upper = high.clone();
+                lower >>= precision;
+                upper >>= precision;
+                assert!(
+                    Float::with_val(bits, &actual - lower).abs() <= 1
+                        && Float::with_val(bits, &actual - upper).abs() <= 1,
+                    "composite exponential exceeds one unit at {precision}"
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn deferred_exp_does_not_cache_an_aborted_range_check() {
+        use std::sync::atomic::{AtomicBool, Ordering as AtomicOrdering};
+        let input = Computable::rational(Rational::fraction(7, 2).unwrap());
+        let value = input.clone().prescaled_exp();
+        let stopped = Arc::new(AtomicBool::new(true));
+        assert!(value.approx_signal(&Some(stopped.clone()), -128).is_zero());
+        assert!(value.cached().is_none());
+        stopped.store(false, AtomicOrdering::Relaxed);
+        assert_eq!(
+            value.approx_signal(&Some(stopped), -128),
+            input.exp().approx(-128),
+        );
+        assert!(value.cached().is_some());
+    }
+
+    #[test]
+    fn exp_range_filter_requires_exact_cached_magnitude() {
+        let small = Computable::rational(Rational::fraction(1, 4).unwrap());
+        small.planning_sign_and_msd();
+        assert!(small.exp_argument_is_known_small());
+        assert!(!Computable::pi().exp_argument_is_known_small());
+        let small_inexact = Computable::pi()
+            .add(Computable::one())
+            .inverse()
+            .shift_left(-3);
+        let (_, estimate) = small_inexact.planning_sign_and_msd();
+        assert!(estimate.flatten().unwrap() <= -2);
+        assert!(!small_inexact.exp_argument_is_known_small());
+    }
+
+    #[test]
     fn compare() {
         let six: BigInt = "6".parse().unwrap();
         let five: BigInt = "5".parse().unwrap();

@@ -1,8 +1,32 @@
 fn exp(signal: &Option<Signal>, c: &Computable, p: Precision) -> BigInt {
-    // Kernel precondition: caller has reduced |c| below roughly 1/2. The series
-    // is intentionally simple here; range reduction belongs in `Computable::exp`.
-    // That split mirrors standard multiple-precision exp algorithms: reduce
-    // first, evaluate the Taylor series on the reduced input, and reconstruct.
+    if should_stop(signal) {
+        return Zero::zero();
+    }
+    // Construction can defer range reduction, and bounded ln(2) correction
+    // can fail. Serialized nodes also reach this boundary directly. Prove the
+    // small-series domain before its coarse-zero shortcut or fixed error budget.
+    let rough = (!c.exp_argument_is_known_small()).then(|| c.approx_signal(signal, -4));
+    if let Some(rough) = rough.filter(|value| value.magnitude() > signed::EIGHT.magnitude()) {
+        if should_stop(signal) {
+            return Zero::zero();
+        }
+        if let Some(reduced) = c.reduced_exp() {
+            return reduced.approx_signal(signal, p);
+        }
+        // |16*c - rough| < 1; with b = bits(|rough|), scaling by 2^(b-3)
+        // puts |c| below 9/16. Reconstruct through the certified square kernel.
+        let steps = i32::try_from(rough.magnitude().bits())
+            .expect("exponential input magnitude fits precision")
+            - 3;
+        let mut reduced = c.clone().shift_left(-steps).exp();
+        for _ in 0..steps {
+            reduced = reduced.square();
+        }
+        return reduced.approx_signal(signal, p);
+    }
+    // Here |c| < 9/16 (or < 1/2 from exact cached facts), including the
+    // one-unit rough-approximation error. In particular exp(c) < 2, so zero
+    // satisfies the coarse request below.
     if p >= 1 {
         return Zero::zero();
     }
