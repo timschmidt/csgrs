@@ -1618,7 +1618,7 @@ pub fn subdivide_bernstein_univariate_polynomial_interval_expr(
         BernsteinSubdivisionNode {
             lower: lower.clone(),
             upper: upper.clone(),
-            coefficients: first.bernstein_coefficients,
+            coefficients: BernsteinControls::Real(first.bernstein_coefficients),
             variation_bound,
             root_at_lower,
             root_at_upper,
@@ -3022,10 +3022,101 @@ fn power_to_bernstein_on_interval(
 struct BernsteinSubdivisionNode {
     lower: Real,
     upper: Real,
-    coefficients: Vec<Real>,
+    coefficients: BernsteinControls,
     variation_bound: usize,
     root_at_lower: bool,
     root_at_upper: bool,
+}
+
+// Public coefficient reports retain their exact magnitudes. Subdivision only
+// needs signs and endpoint zeros, so a common positive scale may be omitted.
+enum BernsteinControls {
+    Real(Vec<Real>),
+    Integer(Vec<BigInt>),
+}
+
+impl BernsteinControls {
+    fn split_midpoint(self, depth: usize) -> Option<(Self, Self)> {
+        match self {
+            Self::Real(coefficients) => {
+                // A quadratic often finishes after one cheap split. Convert
+                // it only when another subdivision actually becomes necessary.
+                let rationals = if depth != 0 || coefficients.len() > 3 {
+                    coefficients
+                        .iter()
+                        .map(Real::exact_rational_ref)
+                        .collect::<Option<Vec<_>>>()
+                } else {
+                    None
+                };
+                if let Some(rationals) = rationals {
+                    let integers = HyperRational::primitive_bigint_ratio(&rationals);
+                    let (left, right) = midpoint_subdivide_integer_bernstein(integers)?;
+                    Some((Self::Integer(left), Self::Integer(right)))
+                } else {
+                    let (left, right) = midpoint_subdivide_bernstein(&coefficients)?;
+                    Some((Self::Real(left), Self::Real(right)))
+                }
+            }
+            Self::Integer(coefficients) => {
+                let (left, right) = midpoint_subdivide_integer_bernstein(coefficients)?;
+                Some((Self::Integer(left), Self::Integer(right)))
+            }
+        }
+    }
+
+    fn first_sign(&self, policy: PredicatePolicy) -> Option<Ordering> {
+        match self {
+            Self::Real(coefficients) => {
+                compare_reals(coefficients.first()?, &Real::zero(), policy).value()
+            }
+            Self::Integer(coefficients) => Some(coefficients.first()?.cmp(&BigInt::zero())),
+        }
+    }
+
+    fn variations(&self, policy: PredicatePolicy) -> Option<usize> {
+        match self {
+            Self::Real(coefficients) => sign_variations_for_coefficients(coefficients, policy),
+            Self::Integer(coefficients) => {
+                let mut previous = None;
+                let mut variations = 0;
+                for coefficient in coefficients {
+                    let sign = coefficient.sign();
+                    if sign == Sign::NoSign {
+                        continue;
+                    }
+                    if previous.is_some_and(|previous| previous != sign) {
+                        variations += 1;
+                    }
+                    previous = Some(sign);
+                }
+                Some(variations)
+            }
+        }
+    }
+}
+
+fn midpoint_subdivide_integer_bernstein(
+    mut work: Vec<BigInt>,
+) -> Option<(Vec<BigInt>, Vec<BigInt>)> {
+    let degree = work.len().checked_sub(1)?;
+    let mut left = Vec::with_capacity(work.len());
+    let mut right = vec![BigInt::zero(); work.len()];
+    left.push(work.first()? << degree);
+    right[degree] = work.get(degree)? << degree;
+
+    // At level l, unhalved sums are 2^l times the usual tableau. Scale each
+    // emitted boundary by 2^(n-l), giving every child control the SAME
+    // positive factor 2^n. Keep one work row instead of the whole tableau.
+    for level in 1..=degree {
+        for index in 0..=degree - level {
+            let (prefix, suffix) = work.split_at_mut(index + 1);
+            prefix[index] += &suffix[0];
+        }
+        left.push(&work[0] << (degree - level));
+        right[degree - level] = &work[degree - level] << (degree - level);
+    }
+    Some((left, right))
 }
 
 /// Split exact Bernstein coefficients at the midpoint with de Casteljau's
@@ -3111,29 +3202,21 @@ fn subdivide_bernstein_interval(
                 *undecided = Some("could not bisect Bernstein interval".to_owned());
                 return;
             };
-            let Some((left_coefficients, right_coefficients)) =
-                midpoint_subdivide_bernstein(&coefficients)
+            let Some((left_coefficients, right_coefficients)) = coefficients.split_midpoint(depth)
             else {
                 *undecided = Some("could not subdivide exact Bernstein coefficients".to_owned());
                 return;
             };
-            let Some(midpoint_sign) = right_coefficients
-                .first()
-                .and_then(|value| compare_reals(value, &Real::zero(), config.policy).value())
-            else {
+            let Some(midpoint_sign) = right_coefficients.first_sign(config.policy) else {
                 *undecided = Some("could not decide Bernstein midpoint sign".to_owned());
                 return;
             };
             let midpoint_is_root = midpoint_sign == Ordering::Equal;
-            let Some(left_variation) =
-                sign_variations_for_coefficients(&left_coefficients, config.policy)
-            else {
+            let Some(left_variation) = left_coefficients.variations(config.policy) else {
                 *undecided = Some("could not decide left Bernstein coefficient signs".to_owned());
                 return;
             };
-            let Some(right_variation) =
-                sign_variations_for_coefficients(&right_coefficients, config.policy)
-            else {
+            let Some(right_variation) = right_coefficients.variations(config.policy) else {
                 *undecided = Some("could not decide right Bernstein coefficient signs".to_owned());
                 return;
             };
@@ -4641,6 +4724,345 @@ mod tests {
             .filter_map(|interval| interval.exact_root.clone())
             .collect::<Vec<_>>();
         assert_eq!(exact_roots, vec![real(0), real(2)]);
+    }
+
+    // Closed-form boundary sums provide an oracle independent of the
+    // adjacent-sum/de Casteljau implementation being tested.
+    fn binomial_midpoint_controls(
+        coefficients: &[num::BigRational],
+    ) -> (Vec<num::BigRational>, Vec<num::BigRational>) {
+        let binomial = |n: usize, k: usize| {
+            let mut value = BigInt::one();
+            for i in 0..k {
+                value *= n - i;
+                value /= i + 1;
+            }
+            value
+        };
+        let n = coefficients.len() - 1;
+        let left = (0..=n)
+            .map(|j| {
+                (0..=j)
+                    .map(|k| &coefficients[k] * binomial(j, k))
+                    .sum::<num::BigRational>()
+                    / (BigInt::one() << j)
+            })
+            .collect();
+        let right = (0..=n)
+            .map(|j| {
+                (0..=n - j)
+                    .map(|k| &coefficients[j + k] * binomial(n - j, k))
+                    .sum::<num::BigRational>()
+                    / (BigInt::one() << (n - j))
+            })
+            .collect();
+        (left, right)
+    }
+
+    #[test]
+    fn integer_bernstein_subdivision_preserves_one_positive_scale() {
+        use num::{BigRational, Signed};
+
+        assert!(midpoint_subdivide_integer_bernstein(Vec::new()).is_none());
+        for degree in (0..=8).chain([16, 32, 64]) {
+            for seed in 0..6 {
+                let mut values: Vec<_> = (0..=degree)
+                    .map(|i| {
+                        let numerator = match seed {
+                            0 => BigInt::zero(),
+                            1 => BigInt::from(if i % 2 == 0 { 1 } else { -1 }),
+                            2 if i % 3 != 0 => BigInt::zero(),
+                            _ => {
+                                BigInt::from(((i * 17 + seed * 13) % 31) as i64 - 15) << (seed * 30)
+                            }
+                        };
+                        let denominator = if seed == 1 {
+                            BigInt::one()
+                        } else {
+                            BigInt::from(1 + (i * 7 + seed) % 23)
+                        };
+                        BigRational::new(numerator, denominator)
+                    })
+                    .collect();
+                let rationals: Vec<_> = values
+                    .iter()
+                    .map(|q| {
+                        HyperRational::from_bigint_fraction(
+                            q.numer().clone(),
+                            q.denom().to_biguint().unwrap(),
+                        )
+                        .unwrap()
+                    })
+                    .collect();
+                let mut controls =
+                    HyperRational::primitive_bigint_ratio(&rationals.iter().collect::<Vec<_>>());
+                let mut scale = values
+                    .iter()
+                    .zip(&controls)
+                    .find(|(q, _)| !q.is_zero())
+                    .map(|(q, c)| BigRational::from_integer(c.clone()) / q)
+                    .unwrap_or_else(BigRational::one);
+                assert!(scale.is_positive());
+                for depth in 0..3 {
+                    let (expected_left, expected_right) = binomial_midpoint_controls(&values);
+                    let (left, right) = midpoint_subdivide_integer_bernstein(controls).unwrap();
+                    scale *= BigInt::one() << degree;
+                    for (expected, actual) in expected_left
+                        .iter()
+                        .chain(&expected_right)
+                        .zip(left.iter().chain(&right))
+                    {
+                        assert_eq!(
+                            expected * &scale,
+                            BigRational::from_integer(actual.clone()),
+                            "degree={degree}, seed={seed}, depth={depth}"
+                        );
+                    }
+                    assert_eq!(left.last(), right.first());
+                    if (seed + depth) % 2 == 0 {
+                        values = expected_left;
+                        controls = left;
+                    } else {
+                        values = expected_right;
+                        controls = right;
+                    }
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn bernstein_subdivision_keeps_nonrational_and_undecided_controls() {
+        let coefficients: Vec<_> = [2, -1, 0, 4, -3]
+            .into_iter()
+            .map(|value| real(value) * Real::pi())
+            .collect();
+        let expected = midpoint_subdivide_bernstein(&coefficients).unwrap();
+        let (left, right) = BernsteinControls::Real(coefficients)
+            .split_midpoint(0)
+            .unwrap();
+        for (actual, expected) in [(left, expected.0), (right, expected.1)] {
+            let BernsteinControls::Real(actual) = actual else {
+                panic!("nonrational controls must keep exact Real arithmetic");
+            };
+            assert_eq!(actual, expected);
+        }
+        let undecided =
+            BernsteinControls::Real(vec![crate::test_support::terminal_zero(), real(1)]);
+        assert_eq!(undecided.first_sign(PredicatePolicy::STRICT), None);
+        assert_eq!(undecided.variations(PredicatePolicy::STRICT), None);
+    }
+
+    #[test]
+    fn bernstein_subdivision_preserves_nonrational_interval_and_unknown_reports() {
+        let x = Expr::symbol(SymbolId(0), "x");
+        let expression = (x.clone() - Expr::int(1)) * (x - Expr::int(2));
+        let mut problem = Problem::default();
+        problem.add_variable("x", real(0));
+        let config = BernsteinSubdivisionConfig {
+            policy: PredicatePolicy::STRICT,
+            max_depth: 4,
+        };
+        let report = subdivide_bernstein_univariate_polynomial_interval_expr(
+            0,
+            &expression,
+            &problem,
+            real(0),
+            Real::pi(),
+            config,
+        );
+        assert_eq!(report.status, BernsteinSubdivisionStatus::Completed);
+        assert_eq!(report.intervals.len(), 2);
+        let midpoint = (Real::pi() / real(2)).unwrap();
+        for (interval, (lower, upper)) in report
+            .intervals
+            .iter()
+            .zip([(real(0), midpoint.clone()), (midpoint, Real::pi())])
+        {
+            assert_eq!(
+                interval.status,
+                BernsteinSubdivisionIntervalStatus::Isolating
+            );
+            assert_eq!(interval.lower, lower);
+            assert_eq!(interval.upper, upper);
+            assert_eq!(interval.variation_bound, Some(1));
+            assert!(interval.exact_root.is_none());
+        }
+        let limited = subdivide_bernstein_univariate_polynomial_interval_expr(
+            0,
+            &expression,
+            &problem,
+            real(0),
+            Real::pi(),
+            BernsteinSubdivisionConfig {
+                max_depth: 0,
+                ..config
+            },
+        );
+        assert_eq!(limited.status, BernsteinSubdivisionStatus::DepthLimit);
+        assert_eq!(limited.intervals.len(), 1);
+        assert_eq!(limited.intervals[0].variation_bound, Some(2));
+        let unknown = subdivide_bernstein_univariate_polynomial_interval_expr(
+            0,
+            &expression,
+            &problem,
+            real(0),
+            crate::test_support::terminal_zero(),
+            config,
+        );
+        assert_eq!(unknown.status, BernsteinSubdivisionStatus::Undecided);
+        assert!(unknown.intervals.is_empty());
+    }
+
+    #[test]
+    fn bernstein_public_coefficients_keep_actual_magnitudes() {
+        let x = Expr::symbol(SymbolId(0), "x");
+        let mut problem = Problem::default();
+        problem.add_variable("x", real(0));
+        let expression = (x.clone() - Expr::real((real(1) / real(3)).unwrap()))
+            * (x - Expr::real((real(2) / real(3)).unwrap()));
+        let report = count_bernstein_univariate_polynomial_interval_expr(
+            0,
+            &expression,
+            &problem,
+            real(0),
+            real(1),
+            PredicatePolicy::STRICT,
+        );
+        assert_eq!(report.status, BernsteinRootCountStatus::Counted);
+        assert_eq!(
+            report.bernstein_coefficients,
+            vec![
+                (real(2) / real(9)).unwrap(),
+                (real(-5) / real(18)).unwrap(),
+                (real(2) / real(9)).unwrap(),
+            ]
+        );
+    }
+
+    #[test]
+    fn bernstein_subdivision_partitions_known_rational_root_multisets() {
+        let compare = |a: &Real, b: &Real| {
+            compare_reals(a, b, PredicatePolicy::STRICT)
+                .value()
+                .unwrap()
+        };
+        let ratio = |n, d| (real(n) / real(d)).unwrap();
+        let x = Expr::symbol(SymbolId(0), "x");
+        let mut problem = Problem::default();
+        problem.add_variable("x", real(0));
+        let config = BernsteinSubdivisionConfig {
+            policy: PredicatePolicy::STRICT,
+            max_depth: 24,
+        };
+        for degree in [2, 4, 8] {
+            for seed in 0..3 {
+                for kind in ["spread", "cluster", "repeated", "endpoint", "positive"] {
+                    let mut roots: Vec<_> = (0..degree)
+                        .map(|i| match kind {
+                            "cluster" => ratio(1, 3) + ratio(i + 1 + seed, 1 << 12),
+                            "repeated" => ratio(1, 3) + ratio(seed, 64),
+                            "endpoint" if i == 0 => real(0),
+                            "endpoint" if i == degree - 1 => real(1),
+                            _ => ratio(8 * (i + 1) + seed, 8 * (degree + 1)),
+                        })
+                        .collect();
+                    let mut expression =
+                        Expr::int(if seed % 2 == 0 { seed + 1 } else { -seed - 1 });
+                    if kind == "positive" {
+                        let factor = (x.clone() - Expr::real(ratio(1, 2))).powi(2)
+                            + Expr::real(ratio(1, 1 << 20));
+                        for _ in 0..degree / 2 {
+                            expression = expression * factor.clone();
+                        }
+                        roots.clear();
+                    } else {
+                        for root in &roots {
+                            expression = expression * (x.clone() - Expr::real(root.clone()));
+                        }
+                    }
+                    let report = subdivide_bernstein_univariate_polynomial_interval_expr(
+                        7,
+                        &expression,
+                        &problem,
+                        real(0),
+                        real(1),
+                        config,
+                    );
+                    assert!(matches!(
+                        report.status,
+                        BernsteinSubdivisionStatus::Completed
+                            | BernsteinSubdivisionStatus::DepthLimit
+                    ));
+                    assert_eq!(report.constraint_index, 7);
+                    assert_eq!(report.degree, Some(degree as usize));
+                    assert_eq!(report.symbol, Some(SymbolId(0)));
+                    let mut cursor = real(0);
+                    let mut points = Vec::new();
+                    let mut limited = false;
+                    for interval in &report.intervals {
+                        if interval.status == BernsteinSubdivisionIntervalStatus::EndpointRoot {
+                            assert_eq!(interval.lower, interval.upper);
+                            assert_eq!(interval.exact_root.as_ref(), Some(&interval.lower));
+                            assert_eq!(interval.variation_bound, Some(0));
+                            assert!(roots.contains(&interval.lower));
+                            assert!(!points.contains(&interval.lower));
+                            points.push(interval.lower.clone());
+                            continue;
+                        }
+                        assert_eq!(compare(&interval.lower, &interval.upper), Ordering::Less);
+                        assert_eq!(interval.lower, cursor);
+                        cursor = interval.upper.clone();
+                        assert!(interval.exact_root.is_none());
+                        let inside = roots
+                            .iter()
+                            .filter(|root| {
+                                compare(&interval.lower, root) == Ordering::Less
+                                    && compare(root, &interval.upper) == Ordering::Less
+                            })
+                            .count();
+                        let variation = interval.variation_bound.unwrap();
+                        assert!(inside <= variation);
+                        assert_eq!(inside % 2, variation % 2);
+                        match interval.status {
+                            BernsteinSubdivisionIntervalStatus::Empty => {
+                                assert_eq!(inside, 0);
+                                assert_eq!(variation, 0);
+                            }
+                            BernsteinSubdivisionIntervalStatus::Isolating => {
+                                assert_eq!(inside, 1);
+                                assert_eq!(variation, 1);
+                                assert!(!roots.contains(&interval.lower));
+                                assert!(!roots.contains(&interval.upper));
+                            }
+                            BernsteinSubdivisionIntervalStatus::DepthLimit => {
+                                limited = true;
+                                assert_eq!(
+                                    interval.upper.clone() - &interval.lower,
+                                    ratio(1, 1 << 24)
+                                );
+                            }
+                            BernsteinSubdivisionIntervalStatus::EndpointRoot => unreachable!(),
+                        }
+                    }
+                    assert_eq!(cursor, real(1));
+                    assert_eq!(
+                        report.status == BernsteinSubdivisionStatus::DepthLimit,
+                        limited
+                    );
+                    for root in roots {
+                        assert!(
+                            points.contains(&root)
+                                || report.intervals.iter().any(|interval| {
+                                    interval.status != BernsteinSubdivisionIntervalStatus::Empty
+                                        && compare(&interval.lower, &root) == Ordering::Less
+                                        && compare(&root, &interval.upper) == Ordering::Less
+                                })
+                        );
+                    }
+                }
+            }
+        }
     }
 
     proptest! {

@@ -7670,6 +7670,24 @@ fn certification(c: &mut Criterion) {
             })
         },
     );
+    let subdivision = subdivide_bernstein_univariate_polynomial_interval_roots(
+        &quadratic_analysis,
+        r(0),
+        r(4),
+        hypersolve::BernsteinSubdivisionConfig {
+            policy: hyperlimit::PredicatePolicy::APPROXIMATE_512,
+            max_depth: 8,
+        },
+    );
+    assert_eq!(subdivision.len(), 16);
+    assert!(subdivision.iter().all(|report| {
+        report.status == hypersolve::BernsteinSubdivisionStatus::Completed
+            && report
+                .intervals
+                .iter()
+                .filter_map(|interval| interval.exact_root.as_ref())
+                .eq([&r(1)])
+    }));
     c.bench_function(
         "subdivide_bernstein_univariate_polynomial_interval_roots",
         |b| {
@@ -8276,9 +8294,126 @@ fn certification(c: &mut Criterion) {
     });
 }
 
+fn bernstein_subdivision(c: &mut Criterion) {
+    use hypersolve::{
+        BernsteinSubdivisionConfig, BernsteinSubdivisionIntervalStatus as IntervalStatus,
+        BernsteinSubdivisionStatus as Status,
+        subdivide_bernstein_univariate_polynomial_interval_expr,
+    };
+    let ratio = |n, d| (r(n) / r(d)).unwrap();
+    let x = Expr::symbol(SymbolId(0), "x");
+    let mut problem = Problem::default();
+    problem.add_variable("x", r(0));
+    let mut group = c.benchmark_group("bernstein_subdivision");
+    for (degree, kind, max_depth) in [
+        (1, "outside", 8),
+        (2, "spread", 8),
+        (4, "spread", 8),
+        (8, "spread", 16),
+        (16, "spread", 16),
+        (2, "cluster", 32),
+        (4, "cluster", 32),
+        (8, "cluster", 32),
+        (2, "repeated", 16),
+        (4, "repeated", 16),
+        (2, "endpoint", 8),
+        (4, "endpoint", 8),
+        (8, "endpoint", 16),
+        (2, "positive", 24),
+        (4, "positive", 24),
+        (4, "cluster", 0),
+    ] {
+        let inputs: Vec<_> = (0..13)
+            .map(|seed| {
+                let mut expression = Expr::int(if seed % 2 == 0 { seed + 1 } else { -seed - 1 });
+                if kind == "positive" {
+                    let factor = (x.clone() - Expr::real(ratio(1, 2))).powi(2)
+                        + Expr::real(ratio(1, 1 << (20 + seed)));
+                    for _ in 0..degree / 2 {
+                        expression = expression * factor.clone();
+                    }
+                } else {
+                    for i in 0..degree {
+                        let root = match kind {
+                            "cluster" => ratio(1, 3) + ratio(i + 1 + seed, 1 << 20),
+                            "repeated" => ratio(1, 3) + ratio(seed, 64),
+                            "endpoint" if i == 0 => r(0),
+                            "endpoint" if i == degree - 1 => r(1),
+                            "endpoint" => ratio(16 * i + seed, 16 * (degree - 1)),
+                            "outside" => r(2) + ratio(16 * (i + 1) + seed, 16 * (degree + 1)),
+                            _ => ratio(16 * (i + 1) + seed, 16 * (degree + 1)),
+                        };
+                        expression = expression * (x.clone() - Expr::real(root));
+                    }
+                }
+                expression
+            })
+            .collect();
+        let config = BernsteinSubdivisionConfig {
+            policy: hyperlimit::PredicatePolicy::STRICT,
+            max_depth,
+        };
+        let evaluate = |index| {
+            subdivide_bernstein_univariate_polynomial_interval_expr(
+                0,
+                std::hint::black_box(&inputs[index]),
+                &problem,
+                r(0),
+                r(1),
+                config,
+            )
+        };
+        // Certify workload outcomes outside timing; the short/no-work cases
+        // are deliberate crossover controls, not accidental failed requests.
+        for index in 0..inputs.len() {
+            let report = evaluate(index);
+            assert_eq!(report.degree, Some(degree as usize));
+            if kind == "repeated" || max_depth == 0 {
+                assert_eq!(report.status, Status::DepthLimit);
+                assert!(
+                    report
+                        .intervals
+                        .iter()
+                        .any(|interval| interval.status == IntervalStatus::DepthLimit)
+                );
+            } else {
+                assert_eq!(report.status, Status::Completed);
+                let root_count = report
+                    .intervals
+                    .iter()
+                    .filter(|interval| {
+                        matches!(
+                            interval.status,
+                            IntervalStatus::Isolating | IntervalStatus::EndpointRoot
+                        )
+                    })
+                    .count();
+                assert_eq!(
+                    root_count,
+                    if matches!(kind, "positive" | "outside") {
+                        0
+                    } else {
+                        degree as usize
+                    }
+                );
+            }
+        }
+        group.bench_function(format!("{kind}/degree_{degree}/depth_{max_depth}"), |b| {
+            let mut index = 0;
+            b.iter(|| {
+                let report = evaluate(index);
+                index = (index + 1) % inputs.len();
+                report
+            });
+        });
+    }
+    group.finish();
+}
+
 criterion_group!(
     benches,
     certification,
+    bernstein_subdivision,
     benchmark_report::finish_benchmark_report
 );
 criterion_main!(benches);
