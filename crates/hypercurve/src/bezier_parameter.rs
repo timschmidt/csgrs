@@ -264,7 +264,11 @@ impl BezierParameterPolynomial {
         let end_variations = sign_variations_at(sequence, interval.end(), policy)?;
         match (start_variations, end_variations) {
             (Classification::Decided(start), Classification::Decided(end)) => {
-                Ok(Classification::Decided(start.saturating_sub(end)))
+                Ok(Classification::Decided(
+                    start
+                        .checked_sub(end)
+                        .ok_or(CurveError::InvalidBezierAlgebraicParameter)?,
+                ))
             }
             (Classification::Uncertain(reason), _) | (_, Classification::Uncertain(reason)) => {
                 Ok(Classification::Uncertain(reason))
@@ -3983,32 +3987,37 @@ fn search_interval_roots(
                 variations[0],
                 variations[1],
                 0_usize,
+                true,
+                true,
             )
         })
         .collect::<Vec<_>>();
     let mut isolated = Vec::new();
-    while let Some((start, end, start_variations, end_variations, depth)) = pending.pop() {
+    while let Some((
+        start,
+        end,
+        start_variations,
+        end_variations,
+        depth,
+        touches_start,
+        touches_end,
+    )) = pending.pop()
+    {
         trace.maximum_depth = trace.maximum_depth.max(depth);
-        let interval =
-            match BezierParameterInterval::try_new_ordered(start.clone(), end.clone(), policy)? {
+        let count = start_variations
+            .checked_sub(end_variations)
+            .ok_or(CurveError::InvalidBezierAlgebraicParameter)?;
+        trace.interval_root_counts += 1;
+        if count == 0 {
+            continue;
+        }
+        if count == 1 && !touches_start && !touches_end {
+            let interval = match BezierParameterInterval::try_new_ordered(start, end, policy)? {
                 Classification::Decided(interval) => interval,
                 Classification::Uncertain(reason) => {
                     return Ok(Classification::Uncertain(reason));
                 }
             };
-        let count = start_variations.saturating_sub(end_variations);
-        trace.interval_root_counts += 1;
-        if count == 0 {
-            continue;
-        }
-        let touches_represented_root = represented_roots.iter().any(|root| {
-            compare_reals(root, &start, policy) == Some(Ordering::Equal)
-                || compare_reals(root, &end, policy) == Some(Ordering::Equal)
-        });
-        let touches_domain_endpoint = compare_reals(&start, domain_start, policy)
-            == Some(Ordering::Equal)
-            || compare_reals(&end, domain_end, policy) == Some(Ordering::Equal);
-        if count == 1 && !touches_represented_root && !touches_domain_endpoint {
             // `count == 1` above was proved with the cached Sturm sequence.
             // Reusing that certificate avoids rebuilding the identical
             // sequence solely to construct the carrier.
@@ -4049,24 +4058,40 @@ fn search_interval_roots(
                 return Ok(Classification::Uncertain(reason));
             }
         };
-        if depth >= 256 {
-            return Ok(Classification::Uncertain(UncertaintyReason::Ordering));
+        if midpoint_variations < end_variations || midpoint_variations > start_variations {
+            return Err(CurveError::InvalidBezierAlgebraicParameter);
         }
+        // The midpoint is a certified non-root and its two variation counts
+        // partition the parent's roots. Carry original boundary ownership,
+        // discard certified-empty children, and keep refining every live
+        // interval without an arbitrary dyadic-depth cutoff.
         trace.bisections += 1;
-        pending.push((
-            midpoint.clone(),
-            end,
-            midpoint_variations,
-            end_variations,
-            depth + 1,
-        ));
-        pending.push((
-            start,
-            midpoint,
-            start_variations,
-            midpoint_variations,
-            depth + 1,
-        ));
+        if midpoint_variations != end_variations {
+            pending.push((
+                midpoint.clone(),
+                end,
+                midpoint_variations,
+                end_variations,
+                depth + 1,
+                false,
+                touches_end,
+            ));
+        } else {
+            trace.interval_root_counts += 1;
+        }
+        if start_variations != midpoint_variations {
+            pending.push((
+                start,
+                midpoint,
+                start_variations,
+                midpoint_variations,
+                depth + 1,
+                touches_start,
+                false,
+            ));
+        } else {
+            trace.interval_root_counts += 1;
+        }
     }
     Ok(Classification::Decided(UnitRootSearch::Isolated(isolated)))
 }
@@ -4559,6 +4584,17 @@ mod conversion_tests {
             sturm_point_evidence(&linear_sequence, &rational(1, 2), &policy).unwrap(),
             Classification::Decided(SturmPointEvidence::Root)
         ));
+        let reversed = BezierParameterInterval {
+            start: rational(3, 4),
+            end: rational(1, 4),
+        };
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            assert_eq!(
+                linear.root_count_in_interval(&reversed, &policy),
+                Err(CurveError::InvalidBezierAlgebraicParameter),
+                "inverted Sturm variations must not certify an empty interval"
+            );
+        }
     }
 
     #[test]
@@ -4587,6 +4623,39 @@ mod conversion_tests {
             .zip([rational(1, 5), rational(1, 2), rational(4, 5)])
         {
             assert_eq!(root.as_exact(), Some(&expected));
+        }
+    }
+
+    #[test]
+    fn finite_interval_isolation_has_no_fixed_dyadic_depth_limit() {
+        let epsilon = Real::new(
+            HyperRational::from_bigint_fraction(BigInt::one(), BigUint::one() << 600_usize)
+                .unwrap(),
+        );
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            for (lower, upper) in [(-1, 2), (2, 3), (-3, -2)] {
+                let lower = Real::from(lower);
+                let upper = Real::from(upper);
+                for root in [&lower + &epsilon, &upper - &epsilon] {
+                    for scale in [Real::one(), Real::pi(), -Real::pi()] {
+                        let defining = decided(
+                            BezierParameterPolynomial::try_new_power_basis(
+                                vec![-&root * &scale, scale],
+                                &policy,
+                            )
+                            .unwrap(),
+                            "finite-interval linear polynomial",
+                        );
+                        let isolated = decided(
+                            defining
+                                .isolate_interval_roots(&lower, &upper, &policy)
+                                .unwrap(),
+                            "finite-interval deep isolation",
+                        );
+                        assert_eq!(isolated, vec![BezierParameter2::Exact(root.clone())]);
+                    }
+                }
+            }
         }
     }
 

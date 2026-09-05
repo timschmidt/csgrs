@@ -135,6 +135,35 @@ fn main() -> CurveResult<()> {
         quintic_trace.trace().maximum_depth(),
     );
 
+    let boundary_scale = Real::new(hyperreal::Rational::from_bigint(
+        num::BigInt::from(3_u8) << 128_usize,
+    ));
+    let boundary_root = (Real::one() / &boundary_scale)?;
+    let boundary = decided(BezierParameterPolynomial::try_new_power_basis(
+        vec![-Real::one(), boundary_scale],
+        &policy,
+    )?);
+    let boundary_trace = decided(boundary.isolate_unit_interval_roots_with_trace(&policy)?);
+    assert_eq!(
+        boundary_trace.roots(),
+        &[BezierParameter2::Exact(boundary_root)]
+    );
+    let boundary_iterations = 2_000_u32;
+    let started = Instant::now();
+    let mut boundary_isolated = 0_usize;
+    for _ in 0..boundary_iterations {
+        boundary_isolated +=
+            black_box(decided(boundary.isolate_unit_interval_roots(&policy)?).len());
+    }
+    let elapsed = started.elapsed();
+    println!(
+        "bezier_parameter_boundary_root_isolation: {boundary_iterations} iterations in {elapsed:?} ({:?}/iter), isolated={boundary_isolated}, interval_counts={}, bisections={}, max_depth={}",
+        elapsed / boundary_iterations,
+        boundary_trace.trace().interval_root_counts(),
+        boundary_trace.trace().bisections(),
+        boundary_trace.trace().maximum_depth(),
+    );
+
     let rational_polynomial = decided(BezierParameterPolynomial::try_new_power_basis(
         vec![r(-1), r(3), r(-1), r(3)],
         &policy,

@@ -78,6 +78,75 @@ fn unit_root_isolation_orders_represented_and_algebraic_roots() {
 }
 
 #[test]
+fn unit_root_isolation_has_no_fixed_dyadic_depth_limit() {
+    for bits in [300_usize, 600] {
+        let epsilon = Real::new(
+            hyperreal::Rational::from_bigint_fraction(
+                num::BigInt::from(1),
+                num::BigUint::from(1_u8) << bits,
+            )
+            .unwrap(),
+        );
+        let half = q(1, 2);
+        let third_epsilon = (&epsilon / r(3)).unwrap();
+        let irrational = &epsilon * r(2).sqrt().unwrap();
+        let cases = [
+            (vec![-epsilon.clone(), r(1)], vec![epsilon.clone()]),
+            (vec![&epsilon - r(1), r(1)], vec![r(1) - &epsilon]),
+            (
+                vec![&half * (&half + &epsilon), -(r(1) + &epsilon), r(1)],
+                vec![half.clone(), &half + &epsilon],
+            ),
+            (
+                vec![&epsilon * &epsilon, -r(2) * &epsilon, r(1)],
+                vec![epsilon.clone()],
+            ),
+            (
+                vec![-r(2) * &epsilon * &epsilon, r(0), r(1)],
+                vec![irrational],
+            ),
+            (vec![-third_epsilon.clone(), r(1)], vec![third_epsilon]),
+        ];
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            for scale in [r(1), r(-3), Real::pi()] {
+                for (case, (coefficients, expected)) in cases.iter().enumerate() {
+                    let polynomial = polynomial(
+                        coefficients
+                            .iter()
+                            .map(|coefficient| coefficient * &scale)
+                            .collect(),
+                    );
+                    let result = match polynomial
+                        .isolate_unit_interval_roots_with_trace(&policy)
+                        .unwrap()
+                    {
+                        Classification::Decided(result) => result,
+                        Classification::Uncertain(reason) => panic!(
+                            "bits={bits}, case={case}, scale={scale:?}, policy={policy:?}: {reason:?}"
+                        ),
+                    };
+                    assert_eq!(result.roots().len(), expected.len());
+                    if scale.exact_rational_ref().is_some() {
+                        assert!(result.trace().maximum_depth() > 256);
+                    }
+                    for (root, expected) in result.roots().iter().zip(expected) {
+                        assert_eq!(
+                            root.cmp_by_interval(
+                                &BezierParameter2::Exact(expected.clone()),
+                                &policy
+                            )
+                            .unwrap(),
+                            Classification::Decided(Ordering::Equal),
+                            "bits={bits}, case={case}, scale={scale:?}, policy={policy:?}"
+                        );
+                    }
+                }
+            }
+        }
+    }
+}
+
+#[test]
 fn quintic_root_isolation_trace_reuses_sturm_certificates() {
     // (7t-1)(7t-2)(7t-3)(7t-5)(7t-6)
     let polynomial = polynomial(vec![
