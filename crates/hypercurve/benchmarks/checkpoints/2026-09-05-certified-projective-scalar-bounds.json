@@ -1,0 +1,1622 @@
+{
+  "schema_version": 1,
+  "title": "Reuse certified positive denominators for recursive point bounds and consolidate scalar evaluation",
+  "status": "Retained on main; complete recorded local gates pass. Full release readiness and flat competitive performance remain ongoing goals.",
+  "source_revisions": {
+    "hyperreal": "90797d766d8a92523996c98728329dbb423f1051",
+    "hyperlimit": "0f1a32d54a1c063d134b0476082e49168516102a",
+    "hyperlattice": "d783af0b5ba52cacfeac62b1b25e1f9e36a8e7b0",
+    "hypersolve": "0b00cb20083f7d4525c401e236328e03e13efcdb",
+    "hypertri": "6a2092c066964f3b7528299a72ef0ed1af4b1ff0",
+    "hypercurve": "61c136e56849421c54f8630367d3ba440da08ab9",
+    "hypermesh": "d9db5c45a0cecc2307aa66a6f7f1b0396350e4ee"
+  },
+  "source_identity": {
+    "baseline_curve_commit": "835c8a8d03593e5a36dc1bb9a7b566282d193039",
+    "bounds_commit": "388aa508928f1b71bab97ad7eea9683669bf9623",
+    "consolidation_commit": "61c136e56849421c54f8630367d3ba440da08ab9",
+    "bezier_offset_rs_sha256": "ed536e497cb04a527cb621f23a3ef57da8c8e8c34fd2de07efe368e6a9281398",
+    "curve_cargo_lock_sha256": "dd5d29eaf1ab3a6ca6f7d1362ad75f68e6045b124eb3c5033f379c3ab77cc05a",
+    "main_and_frozen_prefix_through_conversion_test_module_sha256": "a47966bc5096f857e2a00c6d73f0052a56e366c53dbb1ac9ba19e65ff1720a96",
+    "frozen_native_production_sha256": {
+      "src/computable/node/algebra.rs": "a7cff21f30cc6ba38c39ef1f0a3c16eee7aa64aee869719c735647bb8b25c719",
+      "src/computable/node/roots_inverse_hyperbolic.rs": "258159a2bd5daf4cb2bcebe5f7323e0d0f3ba71c7ee38b91083c54812080c06c",
+      "src/real/arithmetic/facts.rs": "6cf82475a883525f1ba7e3b9309cd3060399ef1f8426c454cad23b5a4e5913b5"
+    },
+    "toolchain": "rustc 1.97.0 (2d8144b7880597b6e6d3dfd63a9a9efae3f533d3, 2026-07-07), x86_64-unknown-linux-gnu, LLVM 22.1.6",
+    "revalidated_after_permission_wait": "All seven repository heads and clean main worktrees still match these revisions; source and lockfile hashes are unchanged."
+  },
+  "change": {
+    "bounds_authority": "BezierRecursiveQuadraticProjectivePoint2::bounds_refined",
+    "bounds": "Replay retained exact x, y and denominator witnesses as native scalars. Consume the point's existing strictly-positive denominator certificate through inverse_ref_assuming_nonzero, preserve coordinate correlations, and request certified dyadic enclosures before interval-tower expansion.",
+    "fallback": "Keep the complete original selected-root interval path if any needed witness, reciprocal, or certified native interval is unavailable.",
+    "deduplication": "Delete BezierRecursiveQuadraticValue2::exact_real_value, the separate source-free arithmetic evaluator. The projective scalar's publication method checks both fields for selected sources, then uses the same retained-witness evaluator as other recursive predicates.",
+    "public_api_added": false,
+    "compatibility_layers_added": false,
+    "new_cache_fields": 0,
+    "bounds_production_lines_net": 27,
+    "consolidation_production_lines_net": -16,
+    "production_rust_lines_net": 11,
+    "regression_rust_lines_net": 243,
+    "total_rust_lines_net": 254,
+    "benchmark_source_lines_net": 0
+  },
+  "exactness": {
+    "denominator_precondition": "Affine recursive points certify a strictly positive denominator by construction. Existing homogeneous oriented-side predicates already rely on this invariant. Constants use denominator one; lifts/rebases preserve values; derived point transforms multiply existing positive denominators.",
+    "scope_caution": "The private three-coordinate storage also represents homogeneous support-line coefficients in other algorithms. Their third coefficient need not be positive. Those coefficient-enclosure paths are unchanged and do not call this affine point-bounds method.",
+    "certification": "All accepted bounds have exact rational endpoints obtained from Hyperreal's certified_dyadic_interval. Its precision applies before the exact rational scale; no floating-point comparison, approximate-zero acceptance, or discarded uncertainty certifies a bound.",
+    "publication": "Selected-root parameter publication is unchanged, including unused selected axes with compact witnesses. Only source-free projective parameters bypass that authority.",
+    "regressions": [
+      {
+        "name": "recursive_projective_bounds_reuse_positive_denominator_certificate",
+        "coverage": "Exactly positive 2^-3000 expressed through opaque affine cancellation. Native zero_status remains Unknown both before point construction and on the replayed denominator immediately before bounds. Require exact enclosure of (3,-1), narrow rational widths, and the retained-scalar dispatch path."
+      },
+      {
+        "name": "recursive_projective_bounds_enclose_scaled_nested_radicals",
+        "coverage": "A selected sqrt(1/2) source and an additional positive nested radical. Six scales (-2^600, -1, 0, 2^-600, 1, 2^600) at four refinement depths (0,64,256,1024): 24 boxes, exact coordinate containment, rational endpoints, and nonincreasing widths."
+      },
+      {
+        "name": "recursive_projective_bounds_keep_unwitnessed_source_fallback",
+        "coverage": "Selected cube root of 1/2 with no compact scalar witness. Retain full interval refinement at four depths, certify cubed rational endpoint inequalities, preserve the exact constant ordinate, and reject a canonical zero denominator."
+      },
+      {
+        "name": "recursive_scalar_native_replay_preserves_selected_source_authority",
+        "coverage": "Source-free two-radical coefficients plus a nested extension publish the expected exact scalar. The same value over an unused but witnessed selected axis must not bypass selected-root parameter publication. Passes both before and after evaluator consolidation."
+      }
+    ],
+    "targeted_logs": [
+      "/tmp/hypercurve-positive-denominator-bounds-regressions-final.log",
+      "/tmp/hypercurve-source-free-replay-before.log",
+      "/tmp/hypercurve-source-free-replay-after.log",
+      "/tmp/hypercurve-unified-scalar-bounds-regressions.log"
+    ],
+    "test_development": "Corrected two over-strong assertions before qualification: a valid enclosure need not be an exact point, and certificates at different native rational scales need not nest. Final tests compare against exact coordinates, not the containment of a separately scaled certificate."
+  },
+  "diagnostic": {
+    "disproved_lead": "The remaining strict chord fixture is not blocked by missing selected-axis scalar witnesses.",
+    "point_bounds_calls": 1154,
+    "scalar_witnesses_present_on_every_observed_call": [
+      "x",
+      "y",
+      "denominator"
+    ],
+    "observed_source_degrees": [
+      2,
+      2,
+      1
+    ],
+    "baseline": {
+      "passed": 1,
+      "wall_seconds": 64.73,
+      "user_seconds": 64.37,
+      "peak_rss_kib": 46084,
+      "log": "/tmp/hypercurve-lazy-radical-witness-diagnostic.log"
+    },
+    "candidate_screen": {
+      "passed": 1,
+      "wall_seconds": 16.52,
+      "user_seconds": 16.42,
+      "log": "/tmp/hypercurve-positive-denominator-bounds-chord-screen.log"
+    },
+    "interpretation": "Reusing the already-owned nonzero proof permits native correlated point bounds. The earlier prototype that re-ran zero_status did not establish a benefit. The temporary witness-printing diagnostic was removed from the committed source.",
+    "qualification": "Screening runs are not the matched headline. The candidate screen retained all existing contact, root-count, arrangement, Boolean, re-offset and dispatch assertions."
+  },
+  "matched_benchmarks": {
+    "frozen_workspace": "/tmp/hypercurve-dyadic-bernstein-control.a5ZKq2",
+    "production_region_source_sha256": "2b13d3562d5f9b08c13e5c4e968b29f62f375ce1840998e75c00731daec97c91",
+    "build_command": "cargo bench --locked --bench bezier_region --no-run --message-format=json",
+    "region_features": "default",
+    "unit_features": "all",
+    "protocol": "Three sequential samples per version in baseline/candidate/candidate/baseline/baseline/candidate order, using /usr/bin/time -v taskset -c 7 EXECUTABLE. All own compiler, test and profiler workers finished before each matched phase. CPU 7 shares an SMT core with CPU 15; unrelated host activity was not controlled.",
+    "unit_command_suffix": "FULL_TEST_NAME --exact --nocapture --test-threads=1",
+    "fixtures": {
+      "chord": "bezier_offset::conversion_tests::recursive_selected_radial_diameter_chord_intersects_a_rational_quadratic_strict",
+      "radial": "bezier_offset::conversion_tests::recursively_pair_radial_circle_intersects_a_genuine_analytic_parallel",
+      "region": "Complete unchanged 19-row bezier_region driver with default iteration counts."
+    },
+    "bounds_phase_qualification": "Both immutable unit binaries have the same 891-test table and a disabled test-only witness diagnostic. No diagnostic flags are set in matched runs. Candidate differs by the 27 production bounds lines. The production region binaries contain no test diagnostic.",
+    "consolidation_phase_qualification": "Both immutable unit binaries have the same 895-test table, including all four new regressions and no temporary diagnostic. Only the evaluator consolidation differs. Frozen production benchmark sources, native dependency production, compiler and profile match.",
+    "interpretation": "Bounds-only chord median wall time falls 65.58 to 17.52 seconds (3.74x); median user CPU falls 73.37%. Radial and region controls are near-flat with mixed lanes. Consolidation comparisons change median wall time by +0.65% chord, +0.58% radial and +0.86% region in these small samples; there is no additional speedup claim or statistically established regression claim.",
+    "bounds": [
+      {
+        "fixture": "chord",
+        "order": [
+          "baseline-1",
+          "candidate-1",
+          "candidate-2",
+          "baseline-2",
+          "baseline-3",
+          "candidate-3"
+        ],
+        "summary": {
+          "user": {
+            "baseline": 63.69,
+            "candidate": 16.96,
+            "percent_change": -73.37101585806249
+          },
+          "wall": {
+            "baseline": 65.58,
+            "candidate": 17.52,
+            "percent_change": -73.28453796889296
+          },
+          "rss_kib": {
+            "baseline": 46364,
+            "candidate": 45940,
+            "percent_change": -0.91450263135191
+          }
+        },
+        "samples": [
+          {
+            "sample": "baseline-1",
+            "log": "/tmp/hypercurve-positive-denominator-bounds-chord-baseline-1.log",
+            "exit": 0,
+            "passed": 1,
+            "user": 63.77,
+            "system": 0.21,
+            "wall": 65.64,
+            "rss_kib": 46520
+          },
+          {
+            "sample": "candidate-1",
+            "log": "/tmp/hypercurve-positive-denominator-bounds-chord-candidate-1.log",
+            "exit": 0,
+            "passed": 1,
+            "user": 17.09,
+            "system": 0.08,
+            "wall": 17.65,
+            "rss_kib": 46016
+          },
+          {
+            "sample": "candidate-2",
+            "log": "/tmp/hypercurve-positive-denominator-bounds-chord-candidate-2.log",
+            "exit": 0,
+            "passed": 1,
+            "user": 16.96,
+            "system": 0.08,
+            "wall": 17.52,
+            "rss_kib": 45940
+          },
+          {
+            "sample": "baseline-2",
+            "log": "/tmp/hypercurve-positive-denominator-bounds-chord-baseline-2.log",
+            "exit": 0,
+            "passed": 1,
+            "user": 63.69,
+            "system": 0.22,
+            "wall": 65.58,
+            "rss_kib": 45948
+          },
+          {
+            "sample": "baseline-3",
+            "log": "/tmp/hypercurve-positive-denominator-bounds-chord-baseline-3.log",
+            "exit": 0,
+            "passed": 1,
+            "user": 63.62,
+            "system": 0.2,
+            "wall": 65.49,
+            "rss_kib": 46364
+          },
+          {
+            "sample": "candidate-3",
+            "log": "/tmp/hypercurve-positive-denominator-bounds-chord-candidate-3.log",
+            "exit": 0,
+            "passed": 1,
+            "user": 16.72,
+            "system": 0.07,
+            "wall": 17.24,
+            "rss_kib": 45848
+          }
+        ]
+      },
+      {
+        "fixture": "radial",
+        "order": [
+          "baseline-1",
+          "candidate-1",
+          "candidate-2",
+          "baseline-2",
+          "baseline-3",
+          "candidate-3"
+        ],
+        "summary": {
+          "user": {
+            "baseline": 28.63,
+            "candidate": 28.87,
+            "percent_change": 0.8382815228781038
+          },
+          "wall": {
+            "baseline": 29.42,
+            "candidate": 29.65,
+            "percent_change": 0.7817811012916343
+          },
+          "rss_kib": {
+            "baseline": 49232,
+            "candidate": 48932,
+            "percent_change": -0.6093597660058458
+          }
+        },
+        "samples": [
+          {
+            "sample": "baseline-1",
+            "log": "/tmp/hypercurve-positive-denominator-bounds-radial-baseline-1.log",
+            "exit": 0,
+            "passed": 1,
+            "user": 28.7,
+            "system": 0.08,
+            "wall": 29.46,
+            "rss_kib": 49116
+          },
+          {
+            "sample": "candidate-1",
+            "log": "/tmp/hypercurve-positive-denominator-bounds-radial-candidate-1.log",
+            "exit": 0,
+            "passed": 1,
+            "user": 28.82,
+            "system": 0.09,
+            "wall": 29.58,
+            "rss_kib": 48908
+          },
+          {
+            "sample": "candidate-2",
+            "log": "/tmp/hypercurve-positive-denominator-bounds-radial-candidate-2.log",
+            "exit": 0,
+            "passed": 1,
+            "user": 28.87,
+            "system": 0.11,
+            "wall": 29.65,
+            "rss_kib": 49068
+          },
+          {
+            "sample": "baseline-2",
+            "log": "/tmp/hypercurve-positive-denominator-bounds-radial-baseline-2.log",
+            "exit": 0,
+            "passed": 1,
+            "user": 28.47,
+            "system": 0.11,
+            "wall": 29.25,
+            "rss_kib": 49232
+          },
+          {
+            "sample": "baseline-3",
+            "log": "/tmp/hypercurve-positive-denominator-bounds-radial-baseline-3.log",
+            "exit": 0,
+            "passed": 1,
+            "user": 28.63,
+            "system": 0.11,
+            "wall": 29.42,
+            "rss_kib": 49640
+          },
+          {
+            "sample": "candidate-3",
+            "log": "/tmp/hypercurve-positive-denominator-bounds-radial-candidate-3.log",
+            "exit": 0,
+            "passed": 1,
+            "user": 30.22,
+            "system": 0.1,
+            "wall": 31.06,
+            "rss_kib": 48932
+          }
+        ]
+      },
+      {
+        "fixture": "region",
+        "order": [
+          "baseline-1",
+          "candidate-1",
+          "candidate-2",
+          "baseline-2",
+          "baseline-3",
+          "candidate-3"
+        ],
+        "summary": {
+          "user": {
+            "baseline": 5.77,
+            "candidate": 5.72,
+            "percent_change": -0.8665511265164572
+          },
+          "wall": {
+            "baseline": 5.93,
+            "candidate": 5.89,
+            "percent_change": -0.6745362563237767
+          },
+          "rss_kib": {
+            "baseline": 9948,
+            "candidate": 10004,
+            "percent_change": 0.5629272215520675
+          }
+        },
+        "samples": [
+          {
+            "sample": "baseline-1",
+            "log": "/tmp/hypercurve-positive-denominator-bounds-region-baseline-1.log",
+            "exit": 0,
+            "passed": null,
+            "user": 5.75,
+            "system": 0.01,
+            "wall": 5.91,
+            "rss_kib": 9948
+          },
+          {
+            "sample": "candidate-1",
+            "log": "/tmp/hypercurve-positive-denominator-bounds-region-candidate-1.log",
+            "exit": 0,
+            "passed": null,
+            "user": 5.72,
+            "system": 0.02,
+            "wall": 5.89,
+            "rss_kib": 10068
+          },
+          {
+            "sample": "candidate-2",
+            "log": "/tmp/hypercurve-positive-denominator-bounds-region-candidate-2.log",
+            "exit": 0,
+            "passed": null,
+            "user": 5.68,
+            "system": 0.01,
+            "wall": 5.84,
+            "rss_kib": 9864
+          },
+          {
+            "sample": "baseline-2",
+            "log": "/tmp/hypercurve-positive-denominator-bounds-region-baseline-2.log",
+            "exit": 0,
+            "passed": null,
+            "user": 5.78,
+            "system": 0.01,
+            "wall": 5.93,
+            "rss_kib": 10012
+          },
+          {
+            "sample": "baseline-3",
+            "log": "/tmp/hypercurve-positive-denominator-bounds-region-baseline-3.log",
+            "exit": 0,
+            "passed": null,
+            "user": 5.77,
+            "system": 0.01,
+            "wall": 5.94,
+            "rss_kib": 9584
+          },
+          {
+            "sample": "candidate-3",
+            "log": "/tmp/hypercurve-positive-denominator-bounds-region-candidate-3.log",
+            "exit": 0,
+            "passed": null,
+            "user": 5.8,
+            "system": 0.02,
+            "wall": 5.98,
+            "rss_kib": 10004
+          }
+        ],
+        "rows": [
+          {
+            "name": "curve_region_clone",
+            "iterations": 1000000,
+            "checks": "checksum=1000000",
+            "baseline_ns": [
+              3.674699,
+              3.640091,
+              3.613523
+            ],
+            "candidate_ns": [
+              3.698347,
+              3.385718,
+              3.370759
+            ],
+            "median_baseline_ns": 3.640091,
+            "median_candidate_ns": 3.385718,
+            "percent_change": -6.98809452840603
+          },
+          {
+            "name": "curve_region_empty",
+            "iterations": 1000000,
+            "checks": "checksum=0",
+            "baseline_ns": [
+              3.044011,
+              3.097467,
+              2.992294
+            ],
+            "candidate_ns": [
+              3.070129,
+              3.139455,
+              3.025033
+            ],
+            "median_baseline_ns": 3.044011,
+            "median_candidate_ns": 3.070129,
+            "percent_change": 0.8580126681539735
+          },
+          {
+            "name": "cubic_bezier_exact_area_moments",
+            "iterations": 20000,
+            "checks": null,
+            "baseline_ns": [
+              13616.2579,
+              13625.6403,
+              13539.15975
+            ],
+            "candidate_ns": [
+              12977.575200000001,
+              12958.076550000002,
+              13007.504599999998
+            ],
+            "median_baseline_ns": 13616.2579,
+            "median_candidate_ns": 12977.575200000001,
+            "percent_change": -4.690589034744996
+          },
+          {
+            "name": "cubic_bezier_prefix_area_moments",
+            "iterations": 20000,
+            "checks": null,
+            "baseline_ns": [
+              17909.7902,
+              17918.6561,
+              18161.9669
+            ],
+            "candidate_ns": [
+              17662.82865,
+              17554.5316,
+              17494.11965
+            ],
+            "median_baseline_ns": 17918.6561,
+            "median_candidate_ns": 17554.5316,
+            "percent_change": -2.03209715041075
+          },
+          {
+            "name": "cubic_bezier_prefix_length_bounds",
+            "iterations": 20000,
+            "checks": null,
+            "baseline_ns": [
+              3979.2798,
+              3871.5412,
+              3900.5177
+            ],
+            "candidate_ns": [
+              3828.23265,
+              3868.7484,
+              3760.8323
+            ],
+            "median_baseline_ns": 3900.5177,
+            "median_candidate_ns": 3828.23265,
+            "percent_change": -1.8532168178598485
+          },
+          {
+            "name": "curve_region_boolean_immediate_union",
+            "iterations": 1000,
+            "checks": "checksum=0",
+            "baseline_ns": [
+              178686.465,
+              178351.179,
+              179969.127
+            ],
+            "candidate_ns": [
+              182247.032,
+              178526.156,
+              184818.005
+            ],
+            "median_baseline_ns": 178686.465,
+            "median_candidate_ns": 182247.032,
+            "percent_change": 1.992633857298598
+          },
+          {
+            "name": "curve_region_boolean_immediate_all_ops",
+            "iterations": 1000,
+            "checks": "checksum=0",
+            "baseline_ns": [
+              352995.23,
+              352928.525,
+              356946.24
+            ],
+            "candidate_ns": [
+              356889.304,
+              359098.693,
+              358370.192
+            ],
+            "median_baseline_ns": 352995.23,
+            "median_candidate_ns": 358370.192,
+            "percent_change": 1.5226727001381946
+          },
+          {
+            "name": "curve_region_boolean_retained_algebraic_all_ops",
+            "iterations": 100,
+            "checks": "checksum=1100",
+            "baseline_ns": [
+              207402.19,
+              211218.23,
+              204481.89
+            ],
+            "candidate_ns": [
+              206905.42,
+              211340.82,
+              210159
+            ],
+            "median_baseline_ns": 207402.19,
+            "median_candidate_ns": 210159,
+            "percent_change": 1.3292096867443925
+          },
+          {
+            "name": "bezier_region_algebraic_ray_classification",
+            "iterations": 2000,
+            "checks": "checksum=4000",
+            "baseline_ns": [
+              54274.8655,
+              54059.7155,
+              54001.2045
+            ],
+            "candidate_ns": [
+              54142.05,
+              54669.134,
+              53836.1905
+            ],
+            "median_baseline_ns": 54059.7155,
+            "median_candidate_ns": 54142.05,
+            "percent_change": 0.15230287329204284
+          },
+          {
+            "name": "bezier_region_materialization",
+            "iterations": 20000,
+            "checks": "checksum=0",
+            "baseline_ns": [
+              2877.7183,
+              2894.46915,
+              2889.20005
+            ],
+            "candidate_ns": [
+              2935.84235,
+              2853.9609,
+              2894.1267
+            ],
+            "median_baseline_ns": 2889.20005,
+            "median_candidate_ns": 2894.1267,
+            "percent_change": 0.1705195180236707
+          },
+          {
+            "name": "curve_region_cached_classification",
+            "iterations": 2000,
+            "checks": "checksum=4000",
+            "baseline_ns": [
+              35015.3405,
+              35224.761,
+              34666.7645
+            ],
+            "candidate_ns": [
+              34514.175,
+              34909.9525,
+              34937.591
+            ],
+            "median_baseline_ns": 35015.3405,
+            "median_candidate_ns": 34909.9525,
+            "percent_change": -0.30097665336139556
+          },
+          {
+            "name": "curve_region_immediate_native_signed_depth",
+            "iterations": 2000,
+            "checks": "checksum=2000",
+            "baseline_ns": [
+              855.3865,
+              855.6415,
+              891.6085
+            ],
+            "candidate_ns": [
+              840.4325,
+              884.459,
+              865.3955
+            ],
+            "median_baseline_ns": 855.6415,
+            "median_candidate_ns": 865.3955,
+            "percent_change": 1.1399634075719867
+          },
+          {
+            "name": "bezier_retained_region_materialization",
+            "iterations": 20000,
+            "checks": "checksum=0",
+            "baseline_ns": [
+              11481.7642,
+              11733.8954,
+              11612.65775
+            ],
+            "candidate_ns": [
+              11455.742,
+              11481.17975,
+              11591.1672
+            ],
+            "median_baseline_ns": 11612.65775,
+            "median_candidate_ns": 11481.17975,
+            "percent_change": -1.1321955992373955
+          },
+          {
+            "name": "curve_region_cached_algebraic_classification",
+            "iterations": 2000,
+            "checks": "checksum=4000",
+            "baseline_ns": [
+              44149.7745,
+              44810.334,
+              45236.69
+            ],
+            "candidate_ns": [
+              44464.003,
+              44352.3505,
+              45079.881
+            ],
+            "median_baseline_ns": 44810.334,
+            "median_candidate_ns": 44464.003,
+            "percent_change": -0.7728819874451398
+          },
+          {
+            "name": "bezier_retained_algebraic_source_envelope",
+            "iterations": 20000,
+            "checks": "checksum=0",
+            "baseline_ns": [
+              13165.903800000002,
+              13201.748850000002,
+              13071.72875
+            ],
+            "candidate_ns": [
+              13104.3695,
+              12743.29275,
+              12683.1129
+            ],
+            "median_baseline_ns": 13165.903800000002,
+            "median_candidate_ns": 12743.29275,
+            "percent_change": -3.2098901558129334
+          },
+          {
+            "name": "bezier_retained_algebraic_exact_endpoint_envelope",
+            "iterations": 20000,
+            "checks": "checksum=0",
+            "baseline_ns": [
+              5777.5786,
+              5793.5525,
+              5770.8585
+            ],
+            "candidate_ns": [
+              6182.21535,
+              5624.4411,
+              5536.72355
+            ],
+            "median_baseline_ns": 5777.5786,
+            "median_candidate_ns": 5624.4411,
+            "percent_change": -2.6505481033178846
+          },
+          {
+            "name": "bezier_retained_algebraic_line_authoritative_roles",
+            "iterations": 20000,
+            "checks": "checksum=0",
+            "baseline_ns": [
+              135841.39625,
+              136651.9552,
+              136700.0214
+            ],
+            "candidate_ns": [
+              135612.9044,
+              134185.9487,
+              137117.6963
+            ],
+            "median_baseline_ns": 136651.9552,
+            "median_candidate_ns": 135612.9044,
+            "percent_change": -0.7603629223447816
+          },
+          {
+            "name": "bezier_resolved_overlap_region_materialization",
+            "iterations": 20000,
+            "checks": "checksum=0",
+            "baseline_ns": [
+              24031.00275,
+              23804.7947,
+              23518.80735
+            ],
+            "candidate_ns": [
+              23889.75645,
+              23657.60685,
+              25793.7479
+            ],
+            "median_baseline_ns": 23804.7947,
+            "median_candidate_ns": 23889.75645,
+            "percent_change": 0.3569102404399338
+          },
+          {
+            "name": "bezier_conic_region_exact_area",
+            "iterations": 20000,
+            "checks": "checksum=0",
+            "baseline_ns": [
+              25664.2918,
+              25781.5898,
+              26024.20315
+            ],
+            "candidate_ns": [
+              25432.59415,
+              25594.4611,
+              26994.82565
+            ],
+            "median_baseline_ns": 25781.5898,
+            "median_candidate_ns": 25594.4611,
+            "percent_change": -0.7258229668986593
+          }
+        ],
+        "emitted_checksums_match_all_runs": true
+      }
+    ],
+    "consolidation": [
+      {
+        "fixture": "chord",
+        "order": [
+          "baseline-1",
+          "candidate-1",
+          "candidate-2",
+          "baseline-2",
+          "baseline-3",
+          "candidate-3"
+        ],
+        "summary": {
+          "user": {
+            "baseline": 16.5,
+            "candidate": 16.62,
+            "percent_change": 0.727272727272732
+          },
+          "wall": {
+            "baseline": 17.03,
+            "candidate": 17.14,
+            "percent_change": 0.6459189665296572
+          },
+          "rss_kib": {
+            "baseline": 46192,
+            "candidate": 45964,
+            "percent_change": -0.49359196397644745
+          }
+        },
+        "samples": [
+          {
+            "sample": "baseline-1",
+            "log": "/tmp/hypercurve-unified-scalar-replay-chord-baseline-1.log",
+            "exit": 0,
+            "passed": 1,
+            "user": 16.59,
+            "system": 0.08,
+            "wall": 17.12,
+            "rss_kib": 46192
+          },
+          {
+            "sample": "candidate-1",
+            "log": "/tmp/hypercurve-unified-scalar-replay-chord-candidate-1.log",
+            "exit": 0,
+            "passed": 1,
+            "user": 16.62,
+            "system": 0.07,
+            "wall": 17.11,
+            "rss_kib": 45964
+          },
+          {
+            "sample": "candidate-2",
+            "log": "/tmp/hypercurve-unified-scalar-replay-chord-candidate-2.log",
+            "exit": 0,
+            "passed": 1,
+            "user": 16.81,
+            "system": 0.07,
+            "wall": 17.35,
+            "rss_kib": 45808
+          },
+          {
+            "sample": "baseline-2",
+            "log": "/tmp/hypercurve-unified-scalar-replay-chord-baseline-2.log",
+            "exit": 0,
+            "passed": 1,
+            "user": 16.41,
+            "system": 0.08,
+            "wall": 16.92,
+            "rss_kib": 46472
+          },
+          {
+            "sample": "baseline-3",
+            "log": "/tmp/hypercurve-unified-scalar-replay-chord-baseline-3.log",
+            "exit": 0,
+            "passed": 1,
+            "user": 16.5,
+            "system": 0.08,
+            "wall": 17.03,
+            "rss_kib": 45848
+          },
+          {
+            "sample": "candidate-3",
+            "log": "/tmp/hypercurve-unified-scalar-replay-chord-candidate-3.log",
+            "exit": 0,
+            "passed": 1,
+            "user": 16.62,
+            "system": 0.06,
+            "wall": 17.14,
+            "rss_kib": 46384
+          }
+        ]
+      },
+      {
+        "fixture": "radial",
+        "order": [
+          "baseline-1",
+          "candidate-1",
+          "candidate-2",
+          "baseline-2",
+          "baseline-3",
+          "candidate-3"
+        ],
+        "summary": {
+          "user": {
+            "baseline": 28.46,
+            "candidate": 28.63,
+            "percent_change": 0.5973295853829885
+          },
+          "wall": {
+            "baseline": 29.22,
+            "candidate": 29.39,
+            "percent_change": 0.5817932922655755
+          },
+          "rss_kib": {
+            "baseline": 49248,
+            "candidate": 49268,
+            "percent_change": 0.040610786224815065
+          }
+        },
+        "samples": [
+          {
+            "sample": "baseline-1",
+            "log": "/tmp/hypercurve-unified-scalar-replay-radial-baseline-1.log",
+            "exit": 0,
+            "passed": 1,
+            "user": 28.46,
+            "system": 0.1,
+            "wall": 29.22,
+            "rss_kib": 49164
+          },
+          {
+            "sample": "candidate-1",
+            "log": "/tmp/hypercurve-unified-scalar-replay-radial-candidate-1.log",
+            "exit": 0,
+            "passed": 1,
+            "user": 28.63,
+            "system": 0.07,
+            "wall": 29.39,
+            "rss_kib": 49148
+          },
+          {
+            "sample": "candidate-2",
+            "log": "/tmp/hypercurve-unified-scalar-replay-radial-candidate-2.log",
+            "exit": 0,
+            "passed": 1,
+            "user": 28.64,
+            "system": 0.1,
+            "wall": 29.44,
+            "rss_kib": 49584
+          },
+          {
+            "sample": "baseline-2",
+            "log": "/tmp/hypercurve-unified-scalar-replay-radial-baseline-2.log",
+            "exit": 0,
+            "passed": 1,
+            "user": 28.39,
+            "system": 0.11,
+            "wall": 29.2,
+            "rss_kib": 49248
+          },
+          {
+            "sample": "baseline-3",
+            "log": "/tmp/hypercurve-unified-scalar-replay-radial-baseline-3.log",
+            "exit": 0,
+            "passed": 1,
+            "user": 28.64,
+            "system": 0.09,
+            "wall": 29.45,
+            "rss_kib": 49332
+          },
+          {
+            "sample": "candidate-3",
+            "log": "/tmp/hypercurve-unified-scalar-replay-radial-candidate-3.log",
+            "exit": 0,
+            "passed": 1,
+            "user": 28.53,
+            "system": 0.1,
+            "wall": 29.32,
+            "rss_kib": 49268
+          }
+        ]
+      },
+      {
+        "fixture": "region",
+        "order": [
+          "baseline-1",
+          "candidate-1",
+          "candidate-2",
+          "baseline-2",
+          "baseline-3",
+          "candidate-3"
+        ],
+        "summary": {
+          "user": {
+            "baseline": 5.65,
+            "candidate": 5.72,
+            "percent_change": 1.2389380530973382
+          },
+          "wall": {
+            "baseline": 5.82,
+            "candidate": 5.87,
+            "percent_change": 0.8591065292096189
+          },
+          "rss_kib": {
+            "baseline": 9896,
+            "candidate": 9804,
+            "percent_change": -0.929668552950691
+          }
+        },
+        "samples": [
+          {
+            "sample": "baseline-1",
+            "log": "/tmp/hypercurve-unified-scalar-replay-region-baseline-1.log",
+            "exit": 0,
+            "passed": null,
+            "user": 5.64,
+            "system": 0.02,
+            "wall": 5.79,
+            "rss_kib": 9896
+          },
+          {
+            "sample": "candidate-1",
+            "log": "/tmp/hypercurve-unified-scalar-replay-region-candidate-1.log",
+            "exit": 0,
+            "passed": null,
+            "user": 5.78,
+            "system": 0.02,
+            "wall": 5.95,
+            "rss_kib": 9724
+          },
+          {
+            "sample": "candidate-2",
+            "log": "/tmp/hypercurve-unified-scalar-replay-region-candidate-2.log",
+            "exit": 0,
+            "passed": null,
+            "user": 5.72,
+            "system": 0.01,
+            "wall": 5.87,
+            "rss_kib": 9868
+          },
+          {
+            "sample": "baseline-2",
+            "log": "/tmp/hypercurve-unified-scalar-replay-region-baseline-2.log",
+            "exit": 0,
+            "passed": null,
+            "user": 5.67,
+            "system": 0.01,
+            "wall": 5.83,
+            "rss_kib": 9968
+          },
+          {
+            "sample": "baseline-3",
+            "log": "/tmp/hypercurve-unified-scalar-replay-region-baseline-3.log",
+            "exit": 0,
+            "passed": null,
+            "user": 5.65,
+            "system": 0.01,
+            "wall": 5.82,
+            "rss_kib": 9880
+          },
+          {
+            "sample": "candidate-3",
+            "log": "/tmp/hypercurve-unified-scalar-replay-region-candidate-3.log",
+            "exit": 0,
+            "passed": null,
+            "user": 5.66,
+            "system": 0.02,
+            "wall": 5.84,
+            "rss_kib": 9804
+          }
+        ],
+        "rows": [
+          {
+            "name": "curve_region_clone",
+            "iterations": 1000000,
+            "checks": "checksum=1000000",
+            "baseline_ns": [
+              3.681727,
+              3.610332,
+              3.543557
+            ],
+            "candidate_ns": [
+              3.614793,
+              3.515499,
+              3.679078
+            ],
+            "median_baseline_ns": 3.610332,
+            "median_candidate_ns": 3.614793,
+            "percent_change": 0.12356204360153278
+          },
+          {
+            "name": "curve_region_empty",
+            "iterations": 1000000,
+            "checks": "checksum=0",
+            "baseline_ns": [
+              3.115557,
+              3.123136,
+              3.107167
+            ],
+            "candidate_ns": [
+              3.05901,
+              3.167553,
+              2.974586
+            ],
+            "median_baseline_ns": 3.115557,
+            "median_candidate_ns": 3.05901,
+            "percent_change": -1.8149884595274668
+          },
+          {
+            "name": "cubic_bezier_exact_area_moments",
+            "iterations": 20000,
+            "checks": null,
+            "baseline_ns": [
+              12953.2626,
+              12884.92075,
+              12866.670049999999
+            ],
+            "candidate_ns": [
+              13750.6559,
+              12912.194349999998,
+              12934.075899999998
+            ],
+            "median_baseline_ns": 12884.92075,
+            "median_candidate_ns": 12934.075899999998,
+            "percent_change": 0.3814936153177184
+          },
+          {
+            "name": "cubic_bezier_prefix_area_moments",
+            "iterations": 20000,
+            "checks": null,
+            "baseline_ns": [
+              17351.0821,
+              17151.87925,
+              17104.7705
+            ],
+            "candidate_ns": [
+              18142.3514,
+              17523.93675,
+              17339.4539
+            ],
+            "median_baseline_ns": 17151.87925,
+            "median_candidate_ns": 17523.93675,
+            "percent_change": 2.1691937925693905
+          },
+          {
+            "name": "cubic_bezier_prefix_length_bounds",
+            "iterations": 20000,
+            "checks": null,
+            "baseline_ns": [
+              3727.277,
+              3723.0088,
+              3699.5649
+            ],
+            "candidate_ns": [
+              4085.7184,
+              3959.4106,
+              3974.68305
+            ],
+            "median_baseline_ns": 3723.0088,
+            "median_candidate_ns": 3974.68305,
+            "percent_change": 6.759969248528241
+          },
+          {
+            "name": "curve_region_boolean_immediate_union",
+            "iterations": 1000,
+            "checks": "checksum=0",
+            "baseline_ns": [
+              179708.061,
+              178383.022,
+              178654.423
+            ],
+            "candidate_ns": [
+              179899.308,
+              176869.096,
+              177484.194
+            ],
+            "median_baseline_ns": 178654.423,
+            "median_candidate_ns": 177484.194,
+            "percent_change": -0.6550238053720125
+          },
+          {
+            "name": "curve_region_boolean_immediate_all_ops",
+            "iterations": 1000,
+            "checks": "checksum=0",
+            "baseline_ns": [
+              355205.312,
+              357815.662,
+              355827.859
+            ],
+            "candidate_ns": [
+              351933.145,
+              351907.908,
+              355403.287
+            ],
+            "median_baseline_ns": 355827.859,
+            "median_candidate_ns": 351933.145,
+            "percent_change": -1.0945500475835312
+          },
+          {
+            "name": "curve_region_boolean_retained_algebraic_all_ops",
+            "iterations": 100,
+            "checks": "checksum=1100",
+            "baseline_ns": [
+              202650.5,
+              209905.91,
+              206641.93
+            ],
+            "candidate_ns": [
+              206488.35,
+              207482.28,
+              208430.02
+            ],
+            "median_baseline_ns": 206641.93,
+            "median_candidate_ns": 207482.28,
+            "percent_change": 0.40666964347457757
+          },
+          {
+            "name": "bezier_region_algebraic_ray_classification",
+            "iterations": 2000,
+            "checks": "checksum=4000",
+            "baseline_ns": [
+              53523.066,
+              54285.469,
+              54032.9415
+            ],
+            "candidate_ns": [
+              53830.22,
+              54383.657,
+              53701.834
+            ],
+            "median_baseline_ns": 54032.9415,
+            "median_candidate_ns": 53830.22,
+            "percent_change": -0.3751813141618432
+          },
+          {
+            "name": "bezier_region_materialization",
+            "iterations": 20000,
+            "checks": "checksum=0",
+            "baseline_ns": [
+              2844.9615,
+              2875.3329,
+              2848.9572
+            ],
+            "candidate_ns": [
+              2854.12885,
+              2832.4943,
+              2805.97515
+            ],
+            "median_baseline_ns": 2848.9572,
+            "median_candidate_ns": 2832.4943,
+            "percent_change": -0.5778570488879198
+          },
+          {
+            "name": "curve_region_cached_classification",
+            "iterations": 2000,
+            "checks": "checksum=4000",
+            "baseline_ns": [
+              34311.398,
+              34401.0515,
+              34184.0015
+            ],
+            "candidate_ns": [
+              35248.0485,
+              35490.297,
+              34397.242
+            ],
+            "median_baseline_ns": 34311.398,
+            "median_candidate_ns": 35248.0485,
+            "percent_change": 2.729852336532579
+          },
+          {
+            "name": "curve_region_immediate_native_signed_depth",
+            "iterations": 2000,
+            "checks": "checksum=2000",
+            "baseline_ns": [
+              833.658,
+              838.7975,
+              838.4425
+            ],
+            "candidate_ns": [
+              926.7765,
+              864.361,
+              833.4725
+            ],
+            "median_baseline_ns": 838.4425,
+            "median_candidate_ns": 864.361,
+            "percent_change": 3.0912674393294814
+          },
+          {
+            "name": "bezier_retained_region_materialization",
+            "iterations": 20000,
+            "checks": "checksum=0",
+            "baseline_ns": [
+              11658.6513,
+              11352.93975,
+              11426.19425
+            ],
+            "candidate_ns": [
+              11468.69885,
+              11493.96165,
+              11382.1228
+            ],
+            "median_baseline_ns": 11426.19425,
+            "median_candidate_ns": 11468.69885,
+            "percent_change": 0.37199262562861435
+          },
+          {
+            "name": "curve_region_cached_algebraic_classification",
+            "iterations": 2000,
+            "checks": "checksum=4000",
+            "baseline_ns": [
+              44025.967,
+              43765.565,
+              44265.8305
+            ],
+            "candidate_ns": [
+              49055.0075,
+              44855.34,
+              44506.149
+            ],
+            "median_baseline_ns": 44025.967,
+            "median_candidate_ns": 44855.34,
+            "percent_change": 1.8838268788054169
+          },
+          {
+            "name": "bezier_retained_algebraic_source_envelope",
+            "iterations": 20000,
+            "checks": "checksum=0",
+            "baseline_ns": [
+              12656.3984,
+              12560.11055,
+              12530.64705
+            ],
+            "candidate_ns": [
+              13210.89945,
+              12926.292950000001,
+              12684.441
+            ],
+            "median_baseline_ns": 12560.11055,
+            "median_candidate_ns": 12926.292950000001,
+            "percent_change": 2.915439307180323
+          },
+          {
+            "name": "bezier_retained_algebraic_exact_endpoint_envelope",
+            "iterations": 20000,
+            "checks": "checksum=0",
+            "baseline_ns": [
+              5578.7376,
+              5483.3341,
+              5506.59505
+            ],
+            "candidate_ns": [
+              5665.82615,
+              5593.82955,
+              5518.6542
+            ],
+            "median_baseline_ns": 5506.59505,
+            "median_candidate_ns": 5593.82955,
+            "percent_change": 1.584182225275499
+          },
+          {
+            "name": "bezier_retained_algebraic_line_authoritative_roles",
+            "iterations": 20000,
+            "checks": "checksum=0",
+            "baseline_ns": [
+              132793.80275,
+              135072.02455,
+              134704.54875
+            ],
+            "candidate_ns": [
+              136614.55485,
+              135891.73285,
+              134900.13235
+            ],
+            "median_baseline_ns": 134704.54875,
+            "median_candidate_ns": 135891.73285,
+            "percent_change": 0.8813244326316916
+          },
+          {
+            "name": "bezier_resolved_overlap_region_materialization",
+            "iterations": 20000,
+            "checks": "checksum=0",
+            "baseline_ns": [
+              23518.7753,
+              23597.9934,
+              23133.6662
+            ],
+            "candidate_ns": [
+              24038.2907,
+              23612.99435,
+              23463.4401
+            ],
+            "median_baseline_ns": 23518.7753,
+            "median_candidate_ns": 23612.99435,
+            "percent_change": 0.4006120590811513
+          },
+          {
+            "name": "bezier_conic_region_exact_area",
+            "iterations": 20000,
+            "checks": "checksum=0",
+            "baseline_ns": [
+              25345.6941,
+              25473.21835,
+              25819.70415
+            ],
+            "candidate_ns": [
+              25824.481250000004,
+              25654.591449999996,
+              25641.305849999997
+            ],
+            "median_baseline_ns": 25473.21835,
+            "median_candidate_ns": 25654.591449999996,
+            "percent_change": 0.7120148601089449
+          }
+        ],
+        "emitted_checksums_match_all_runs": true
+      }
+    ]
+  },
+  "artifacts": {
+    "bounds_baseline_unit": {
+      "path": "/tmp/hypercurve-lazy-radical-witness-baseline-test",
+      "sha256": "544f3fac3952a9bb2f153e0f0d36e4e62c4aae187013cc0ec02a4c507a267d1a"
+    },
+    "bounds_candidate_unit": {
+      "path": "/tmp/hypercurve-positive-denominator-bounds-candidate-test",
+      "sha256": "ef6d8ebdcef419789b66b6cb93bb889099d1a511f610d45ffd9fd6f1e87aebc9"
+    },
+    "consolidation_baseline_unit": {
+      "path": "/tmp/hypercurve-positive-denominator-bounds-qualified-test",
+      "sha256": "f50f2a8e91f2dce037f1cdac5acc477544e9b5fef8cdaf2f184a57f8e48752d7"
+    },
+    "consolidation_candidate_unit": {
+      "path": "/tmp/hypercurve-unified-scalar-replay-test",
+      "sha256": "37c66477846c6eb14975e438e7bb60d09690689bd9651e542c2fa6e19f3b6bb7"
+    },
+    "region": [
+      {
+        "version": "baseline",
+        "path": "/tmp/hypercurve-normal-form-facts-region-candidate-benchmark",
+        "sha256": "6717d4bd4dbc614d8f7f786a19c1bcc37495da776d4f37b4afb414d8755945bd",
+        "text": 11857134,
+        "data": 320496,
+        "bss": 1544,
+        "allocated_bytes": 12179174,
+        "file_bytes": 14902800
+      },
+      {
+        "version": "bounds-only",
+        "path": "/tmp/hypercurve-positive-denominator-bounds-region-candidate-benchmark",
+        "sha256": "685e882f21360803c97eaf7c1ebd0e244fb3fc7d39e462076c57285c910f7bff",
+        "text": 11854978,
+        "data": 320416,
+        "bss": 3768,
+        "allocated_bytes": 12179162,
+        "file_bytes": 14900096
+      },
+      {
+        "version": "bounds-and-consolidation",
+        "path": "/tmp/hypercurve-unified-scalar-replay-region-candidate-benchmark",
+        "sha256": "b623ca90a5905c176f0c6fabfcd28ce35b034818eca4e975dcfcad753e4ec598",
+        "text": 11853266,
+        "data": 320416,
+        "bss": 5496,
+        "allocated_bytes": 12179178,
+        "file_bytes": 14898696
+      }
+    ],
+    "size_interpretation": "Final matched region executable file shrinks 4104 bytes. Text falls 3868 bytes and data falls 80 bytes, while BSS rises 3952 bytes; combined text/data/BSS grows four bytes. This is one matched linked driver, not a universal binary-size result."
+  },
+  "instruction_and_allocation_control": {
+    "fixture": "recursive_scalar_native_replay_preserves_selected_source_authority --exact --nocapture --test-threads=1",
+    "qualification": "One unchanged small regression, with identical 895-test tables, comparing bounds-only against consolidation. Counts include process/test-harness startup. Tiny differences are not attributed to a meaningful performance improvement; these are not instruction/allocation measurements for the long chord fixture.",
+    "callgrind": {
+      "command": "valgrind --tool=callgrind --vgdb=no --callgrind-out-file=OUTPUT EXECUTABLE FULL_TEST_NAME --exact --nocapture --test-threads=1",
+      "baseline_instructions": 2123256,
+      "candidate_instructions": 2121891,
+      "logs": [
+        "/tmp/hypercurve-unified-scalar-replay-baseline-callgrind.log",
+        "/tmp/hypercurve-unified-scalar-replay-candidate-callgrind.log"
+      ]
+    },
+    "heaptrack": {
+      "command": "heaptrack --record-only -o OUTPUT EXECUTABLE FULL_TEST_NAME --exact --nocapture --test-threads=1",
+      "baseline": {
+        "allocations": 2101,
+        "temporary_allocations": 143,
+        "reported_peak_heap": "245.09K",
+        "reported_live_at_exit": "9.42K"
+      },
+      "candidate": {
+        "allocations": 2100,
+        "temporary_allocations": 142,
+        "reported_peak_heap": "245.07K",
+        "reported_live_at_exit": "9.42K"
+      },
+      "raw_files": [
+        "/tmp/hypercurve-unified-scalar-replay-baseline.heap.zst",
+        "/tmp/hypercurve-unified-scalar-replay-candidate.heap.zst"
+      ],
+      "qualification": "Process-end live bytes include persistent shared state and are not a scoped lifetime proof. No leak-freedom or material peak-memory improvement is claimed."
+    }
+  },
+  "validation": {
+    "script": "/tmp/hypercurve-positive-denominator-bounds-curve-gates.sh",
+    "script_exit_status": 0,
+    "source_qualification": "The complete script ran against the final consolidated production source. Later commits changed no tested Rust source. These gate timings overlap other validation work and are not matched performance data.",
+    "commands": [
+      "cargo test --release --locked --all-features --no-fail-fast -- --test-threads=2",
+      "cargo test --release --locked --no-default-features --no-fail-fast -- --test-threads=2",
+      "cargo test --release --locked --all-features --lib -- --ignored --nocapture --test-threads=2",
+      "cargo test --release --locked --all-features --test hypercurve_curve_region_stroke -- --ignored --nocapture --test-threads=2",
+      "cargo clippy --locked --all-targets --all-features -- -D warnings",
+      "cargo check --locked --manifest-path fuzz/Cargo.toml --bins",
+      "RUSTDOCFLAGS='-D warnings' cargo doc --locked --all-features --no-deps",
+      "cargo bench --locked --all-features --no-run",
+      "cargo fmt --all -- --check",
+      "cargo test --locked --manifest-path examples/hypercurve_ui/Cargo.toml --no-fail-fast",
+      "cargo clippy --locked --manifest-path examples/hypercurve_ui/Cargo.toml --all-targets -- -D warnings",
+      "cargo build --locked --manifest-path examples/hypercurve_ui/Cargo.toml --release --target wasm32-unknown-unknown"
+    ],
+    "gates": [
+      {
+        "label": "all-features",
+        "log": "/tmp/hypercurve-positive-denominator-bounds-all-features.log",
+        "targets": 45,
+        "passed": 1731,
+        "failed": 0,
+        "ignored": 9,
+        "exit_status": 0
+      },
+      {
+        "label": "minimal",
+        "log": "/tmp/hypercurve-positive-denominator-bounds-minimal.log",
+        "targets": 45,
+        "passed": 1702,
+        "failed": 0,
+        "ignored": 4,
+        "exit_status": 0
+      },
+      {
+        "label": "ignored-units",
+        "log": "/tmp/hypercurve-positive-denominator-bounds-ignored-units.log",
+        "targets": 1,
+        "passed": 6,
+        "failed": 0,
+        "ignored": 0,
+        "exit_status": 0,
+        "seconds": 87.42
+      },
+      {
+        "label": "ignored-stroke",
+        "log": "/tmp/hypercurve-positive-denominator-bounds-ignored-stroke.log",
+        "targets": 1,
+        "passed": 3,
+        "failed": 0,
+        "ignored": 0,
+        "exit_status": 0,
+        "seconds": 53.85
+      },
+      {
+        "label": "clippy",
+        "log": "/tmp/hypercurve-positive-denominator-bounds-clippy.log",
+        "targets": 0,
+        "passed": 0,
+        "failed": 0,
+        "ignored": 0,
+        "exit_status": 0,
+        "milestone": "Finished `dev` profile [unoptimized + debuginfo] target(s) in 17.79s"
+      },
+      {
+        "label": "fuzz-check",
+        "log": "/tmp/hypercurve-positive-denominator-bounds-fuzz-check.log",
+        "targets": 0,
+        "passed": 0,
+        "failed": 0,
+        "ignored": 0,
+        "exit_status": 0,
+        "milestone": "Finished `dev` profile [unoptimized + debuginfo] target(s) in 5.07s"
+      },
+      {
+        "label": "docs",
+        "log": "/tmp/hypercurve-positive-denominator-bounds-docs.log",
+        "targets": 0,
+        "passed": 0,
+        "failed": 0,
+        "ignored": 0,
+        "exit_status": 0,
+        "milestone": "Finished `dev` profile [unoptimized + debuginfo] target(s) in 5.40s\n   Generated /home/tim/Documents/GitHub/workspace/hypercurve/target/doc/hypercurve/index.html"
+      },
+      {
+        "label": "bench-build",
+        "log": "/tmp/hypercurve-positive-denominator-bounds-bench-build.log",
+        "targets": 0,
+        "passed": 0,
+        "failed": 0,
+        "ignored": 0,
+        "exit_status": 0,
+        "milestone": "Finished `bench` profile [optimized] target(s) in 6.82s"
+      },
+      {
+        "label": "fmt",
+        "log": "/tmp/hypercurve-positive-denominator-bounds-fmt.log",
+        "targets": 0,
+        "passed": 0,
+        "failed": 0,
+        "ignored": 0,
+        "exit_status": 0,
+        "milestone": ""
+      },
+      {
+        "label": "ui-tests",
+        "log": "/tmp/hypercurve-positive-denominator-bounds-ui-tests.log",
+        "targets": 1,
+        "passed": 37,
+        "failed": 0,
+        "ignored": 0,
+        "exit_status": 0,
+        "seconds": 35.22
+      },
+      {
+        "label": "ui-clippy",
+        "log": "/tmp/hypercurve-positive-denominator-bounds-ui-clippy.log",
+        "targets": 0,
+        "passed": 0,
+        "failed": 0,
+        "ignored": 0,
+        "exit_status": 0,
+        "milestone": "Finished `dev` profile [unoptimized + debuginfo] target(s) in 5.75s"
+      },
+      {
+        "label": "ui-wasm",
+        "log": "/tmp/hypercurve-positive-denominator-bounds-ui-wasm.log",
+        "targets": 0,
+        "passed": 0,
+        "failed": 0,
+        "ignored": 0,
+        "exit_status": 0,
+        "milestone": "Finished `release` profile [optimized] target(s) in 0.18s"
+      }
+    ],
+    "manual_drivers_complete": 5,
+    "downstream": "Hyperreal, Hyperlimit, Hyperlattice, Hypersolve, Hypertri and Hypermesh sources and heads are unchanged from the previous fully recorded downstream qualification. Their entire matrices were not rerun in this pass."
+  },
+  "local_pages": {
+    "trunk_version": "0.21.14",
+    "command": "env -u NO_COLOR trunk --skip-version-check build index.html --release --locked --dist /tmp/hypercurve-pages-dist.Nooh7K --public-url /hypercurve/",
+    "exit_status": 0,
+    "log": "/tmp/hypercurve-positive-denominator-bounds-trunk.log",
+    "artifacts": [
+      {
+        "file": "index.html",
+        "bytes": 1691,
+        "sha256": "61bfda76a07d9413bb20acacda6d20af8964b834d82189ae47c8d00204910c42"
+      },
+      {
+        "file": "hypercurve_ui.js",
+        "bytes": 72209,
+        "sha256": "941b5ce35852e0398c32572a64d5d6cd1e0044d8fe70907e739bd26868a37e7a"
+      },
+      {
+        "file": "hypercurve_ui_bg.wasm",
+        "bytes": 12429245,
+        "sha256": "00a2c10e4c0c2aac2b341d62dc276ca6baa19c2ffa22aa13f8a9276499df42dd"
+      }
+    ],
+    "dependency_layout_check": "An isolated Hypercurve checkout with the four sibling checkouts used by Pages passes locked offline Cargo metadata without Hypertri. The UI does not enable that optional dependency. No unnecessary workflow checkout or compatibility change was added.",
+    "dependency_layout_log": "/tmp/hypercurve-pages-layout-before.log",
+    "browser": {
+      "command": "node /tmp/hypercurve-pages-startup-smoke.mjs /tmp/hypercurve-pages-dist.Nooh7K",
+      "exit_status": 0,
+      "report": "/tmp/hypercurve-pages-startup.json",
+      "assertions": "The /hypercurve/ page, JavaScript and WASM all return 200; the loading indicator is removed, the canvas has positive dimensions, and there are no runtime exceptions, failed network requests, or console errors.",
+      "visual_inspection": "The captured default scene renders curved and polygonal boundaries, grid, controls and tabs.",
+      "screenshot": "/tmp/hypercurve-pages-startup.png",
+      "screenshot_sha256": "70c7e48325ca9476f30710cc805d6fbed8db6ef2c6f975204b5a854c99db2cb1",
+      "qualification": "Isolated headless Chromium with a temporary profile and software WebGL. Startup/default scene only, not interactive all-tab or end-to-end geometry qualification. The browser and local server exited."
+    }
+  },
+  "remaining": {
+    "next": "Profile the still-long opt-in selected-fiber Boolean certification fixture and the genuine analytic radial fixture. Do not transfer this affine nonzero assumption to arbitrary homogeneous line coefficients or globally change selected-root publication.",
+    "long_tests": "All six opt-in units finish in 87.42 seconds and all three opt-in strokes in 53.85 seconds. The named selected-fiber Boolean unit still reports running for over 60 seconds; completion is not a claim that all long runtimes are optimized.",
+    "exactcorelib": "Idea mining/uplift remains closed.",
+    "release": "The recorded local gates and Pages startup pass. Full release readiness, universally competitive operation performance, registry coordination and hosted deployment are not claimed.",
+    "push_or_publication": false
+  }
+}
