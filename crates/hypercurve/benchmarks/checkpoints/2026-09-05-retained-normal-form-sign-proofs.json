@@ -1,0 +1,1297 @@
+{
+  "schema_version": 1,
+  "title": "Retain successful normal-form sign proofs in the authoritative native fact cache",
+  "status": "Retained on main; no complete Hypercurve release-readiness claim.",
+  "source_revisions": {
+    "hyperreal": "90797d766d8a92523996c98728329dbb423f1051",
+    "hyperlimit": "0f1a32d54a1c063d134b0476082e49168516102a",
+    "hyperlattice": "d783af0b5ba52cacfeac62b1b25e1f9e36a8e7b0",
+    "hypersolve": "0b00cb20083f7d4525c401e236328e03e13efcdb",
+    "hypertri": "6a2092c066964f3b7528299a72ef0ed1af4b1ff0",
+    "hypercurve": "7b7ab10e24d157c853cd1f9e34d52d7d049d0218",
+    "hypermesh": "d9db5c45a0cecc2307aa66a6f7f1b0396350e4ee"
+  },
+  "source_identity": {
+    "hyperreal_baseline": "c2d147c4613540fe5c2a43dfdaa5c0d010455bba",
+    "hyperreal_production_commit": "90797d766d8a92523996c98728329dbb423f1051",
+    "curve_benchmark_commit": "7b7ab10e24d157c853cd1f9e34d52d7d049d0218",
+    "curve_production_unchanged": true,
+    "bezier_offset_rs_sha256": "7311e43512aefa34b3ec181cfd2044cab17570ed28129c2bf26cd446a0c82d99",
+    "curve_cargo_lock_sha256": "dd5d29eaf1ab3a6ca6f7d1362ad75f68e6045b124eb3c5033f379c3ab77cc05a",
+    "native_production_sha256": {
+      "src/computable/node/algebra.rs": "a7cff21f30cc6ba38c39ef1f0a3c16eee7aa64aee869719c735647bb8b25c719",
+      "src/computable/node/roots_inverse_hyperbolic.rs": "258159a2bd5daf4cb2bcebe5f7323e0d0f3ba71c7ee38b91083c54812080c06c",
+      "src/real/arithmetic/facts.rs": "6cf82475a883525f1ba7e3b9309cd3060399ef1f8426c454cad23b5a4e5913b5"
+    }
+  },
+  "change": {
+    "authority": "Computable::bounded_laurent_rational",
+    "description": "Publish the sign of a successfully proved rational normal form in the existing root atomic fact cache. Clones and subsequent predicates reuse that proof without rebuilding the normal form.",
+    "deduplication": "Delete the bounded/extended private forwarding pair. All callers use one budgeted implementation with their unchanged budgets of 48 or 64.",
+    "public_api_added": false,
+    "compatibility_layers_added": false,
+    "new_cache_fields": 0,
+    "production_rust_lines_net": -4,
+    "native_regression_lines_net": 80,
+    "curve_benchmark_lines_net": 38,
+    "downstream_test_lines_net": 50,
+    "total_rust_lines_net": 164
+  },
+  "exactness": {
+    "invariant": "Only a successful symbolic rational proof publishes its exact sign. Exhausted budgets and unsupported expressions remain inconclusive; neither numerical refinement nor approximate zero is used to manufacture a fact.",
+    "native_regressions": [
+      {
+        "name": "computable::node::tests::rational_normal_form_retains_only_successful_sign_proofs",
+        "coverage": "Thirty cases: budgets 48 and 64; cancelling pi, quadratic, and opaque affine atoms; zero, +/-7/9 and +/-2^-2000. Explicitly unknown initial root, zero-budget failure, exact normal form, immediate sign on root and clone, and sign_until(0) reuse without populating the numerical approximation cache. Distinct atan atoms stay inconclusive until ordinary negative-sign refinement."
+      },
+      {
+        "name": "real::tests::tests::exact_normal_form_cancels_shared_opaque_affine_atoms",
+        "coverage": "Retained determinant proof with negative, zero, and positive rational scales, plus a nonstructural exact-zero cancellation."
+      }
+    ],
+    "before": {
+      "passed": 0,
+      "failed": 1,
+      "log": "/tmp/hyperreal-normal-form-facts-before.log",
+      "qualification": "Expected failure: a successful normal-form query did not retain the zero sign."
+    },
+    "downstream_test_corrections": [
+      {
+        "crate": "hyperlimit",
+        "file": "src/predicates/order.rs",
+        "description": "Keep exact-stage requirements on fresh tiny positive expressions; require structural, still-exact results after the first proof. Cold comparison and point-equality paths are tested independently.",
+        "red_log": "/tmp/hyperlimit-normal-form-facts-all-features-before-stage.log"
+      },
+      {
+        "crate": "hyperlimit",
+        "file": "tests/real_representations.rs",
+        "description": "Replace unconditional uncached binary32 bit-stability with exact comparisons enclosing both exports between adjacent floats, with explicit intervening 128-bit refinement. Cache-enabled layout tests still require identical bits and the retained private cache variant; all exact geometry predicates remain checked.",
+        "red_log": "/tmp/hyperlimit-normal-form-facts-minimal-before-f32.log",
+        "qualification": "Lossy exports are not certified predicates and an uncached view need not preserve bits across underlying scalar refinement. No compatibility behavior was added to the exporter."
+      },
+      {
+        "crate": "hypersolve",
+        "file": "src/curve_resultant.rs",
+        "description": "Construct the deep bivariate product without the test helper's eager coefficient canonicalization. Keep the cold UnknownZero division check, require exact policy-aware quotient replay, then require ordinary division to reuse the retained nonzero proof.",
+        "red_log": "/tmp/hypersolve-normal-form-facts-all-features-before-retention.log"
+      }
+    ]
+  },
+  "matched_benchmarks": {
+    "frozen_workspace": "/tmp/hypercurve-dyadic-bernstein-control.a5ZKq2",
+    "production_qualification": "Identical six-crate frozen production workspace, compiler/profile and benchmark sources. Only the three Hyperreal production files differ. Candidate production hashes match the committed native change; later Hyperlimit/Hypersolve changes are cfg(test)/integration tests only.",
+    "build_command": "cargo bench --locked --bench bezier_algebraic_parameter --bench bezier_region --no-run --message-format=json",
+    "build_features": "default",
+    "command": "/usr/bin/time -v taskset -c 7 EXECUTABLE",
+    "timing_qualification": "Three sequential samples per version, in baseline/candidate/candidate/baseline/baseline/candidate order. All own build/test/profiler jobs finished before timing. CPU 7 has SMT sibling CPU 15; unrelated machine activity was not controlled. Per-iteration values use total elapsed duration divided by iteration count. All printed checksums match; rows without printed checksums remain unchanged controls.",
+    "parameter_source_sha256": "6cac0534c8b3787357948f9d1182b1b698af2292144edc0b043f45d44294ea36",
+    "region_source_sha256": "2b13d3562d5f9b08c13e5c4e968b29f62f375ce1840998e75c00731daec97c91",
+    "interpretation": "Reused exact-zero comparison median falls from 2353.33 ns to 47.66 ns (49.38x). Cold construction/proof rises 7.62% in these samples. Whole parameter-driver median user CPU falls 3.33%; region user CPU changes +0.17%, with mixed small lane changes. There is no universal performance or peak-RSS improvement claim.",
+    "parameter": {
+      "order": [
+        "baseline-1",
+        "candidate-1",
+        "candidate-2",
+        "baseline-2",
+        "baseline-3",
+        "candidate-3"
+      ],
+      "preserved_rows": 11,
+      "emitted_checksums_match_all_runs": true,
+      "summary": {
+        "user_seconds": {
+          "baseline": 1.5,
+          "candidate": 1.45,
+          "percent_change": -3.3333333333333326
+        },
+        "wall_seconds": {
+          "baseline": 1.55,
+          "candidate": 1.51,
+          "percent_change": -2.580645161290329
+        },
+        "peak_rss_kib": {
+          "baseline": 4804,
+          "candidate": 4936,
+          "percent_change": 2.747710241465451
+        }
+      },
+      "rows": [
+        {
+          "name": "bezier_parameter_normal_form_zero_cold",
+          "iterations": 20000,
+          "checks": "equal=20000",
+          "baseline_ns": [
+            10142.3473,
+            10911.9096,
+            10508.3532
+          ],
+          "candidate_ns": [
+            11496.26105,
+            11309.29035,
+            10333.27975
+          ],
+          "baseline_median_ns": 10508.3532,
+          "candidate_median_ns": 11309.29035,
+          "percent_change": 7.621909301640151
+        },
+        {
+          "name": "bezier_parameter_normal_form_zero_reused",
+          "iterations": 20000,
+          "checks": "equal=20000",
+          "baseline_ns": [
+            2209.50215,
+            2353.3278,
+            2354.9867
+          ],
+          "candidate_ns": [
+            48.88465,
+            47.66225,
+            47.5877
+          ],
+          "baseline_median_ns": 2353.3278,
+          "candidate_median_ns": 47.66225,
+          "percent_change": -97.9746871642786
+        },
+        {
+          "name": "bezier_parameter_bernstein_32_to_power",
+          "iterations": 20000,
+          "checks": "degree_checksum=640000",
+          "baseline_ns": [
+            19891.22955,
+            20548.9485,
+            19845.35225
+          ],
+          "candidate_ns": [
+            20536.7613,
+            20264.87495,
+            19730.40355
+          ],
+          "baseline_median_ns": 19891.22955,
+          "candidate_median_ns": 20264.87495,
+          "percent_change": 1.878442954271775
+        },
+        {
+          "name": "bezier_algebraic_parameter_sturm",
+          "iterations": 20000,
+          "checks": "total=40000",
+          "baseline_ns": [
+            3749.57865,
+            3789.54445,
+            3812.1529
+          ],
+          "candidate_ns": [
+            3787.72505,
+            3966.3713,
+            3753.6339
+          ],
+          "baseline_median_ns": 3789.54445,
+          "candidate_median_ns": 3787.72505,
+          "percent_change": -0.048011047871465706
+        },
+        {
+          "name": "bezier_algebraic_parameter_refined_ordering",
+          "iterations": 10000,
+          "checks": "ordered=10000",
+          "baseline_ns": [
+            12384.7668,
+            12961.099200000002,
+            13488.3461
+          ],
+          "candidate_ns": [
+            12323.3259,
+            12233.8111,
+            12168.0966
+          ],
+          "baseline_median_ns": 12961.099200000002,
+          "candidate_median_ns": 12233.8111,
+          "percent_change": -5.611314972421488
+        },
+        {
+          "name": "bezier_algebraic_parameter_refined_even_root_ordering",
+          "iterations": 10000,
+          "checks": "ordered=10000",
+          "baseline_ns": [
+            45453.0087,
+            45320.7667,
+            52835
+          ],
+          "candidate_ns": [
+            44924.211,
+            45882.6062,
+            44854.6197
+          ],
+          "baseline_median_ns": 45453.0087,
+          "candidate_median_ns": 44924.211,
+          "percent_change": -1.1633942727315993
+        },
+        {
+          "name": "bezier_parameter_quintic_unit_isolation",
+          "iterations": 2000,
+          "checks": "isolated=10000, sturm_builds=1, interval_counts=19, bisections=9, rational_refinements=0, max_depth=5",
+          "baseline_ns": [
+            33140.18,
+            31331.049,
+            36148.554
+          ],
+          "candidate_ns": [
+            33424.7205,
+            31237.8155,
+            31827.265
+          ],
+          "baseline_median_ns": 33140.18,
+          "candidate_median_ns": 31827.265,
+          "percent_change": -3.9617014753691726
+        },
+        {
+          "name": "bezier_parameter_boundary_root_isolation",
+          "iterations": 2000,
+          "checks": "isolated=2000, interval_counts=263, bisections=130, max_depth=130",
+          "baseline_ns": [
+            43803.445,
+            43909.0475,
+            44276.9575
+          ],
+          "candidate_ns": [
+            48499.4685,
+            43490.961,
+            42963.1725
+          ],
+          "baseline_median_ns": 43909.0475,
+          "candidate_median_ns": 43490.961,
+          "percent_change": -0.9521648129579563
+        },
+        {
+          "name": "bezier_algebraic_parameter_exact_rational_reconstruction",
+          "iterations": 500000,
+          "checks": "reconstructed=500000",
+          "baseline_ns": [
+            34.647566,
+            35.932778,
+            34.534514
+          ],
+          "candidate_ns": [
+            36.788762,
+            34.419622,
+            34.056168
+          ],
+          "baseline_median_ns": 34.647566,
+          "candidate_median_ns": 34.419622,
+          "percent_change": -0.6578932557629091
+        },
+        {
+          "name": "bezier_algebraic_point_tangent_image",
+          "iterations": 20000,
+          "checks": "transformed=40000",
+          "baseline_ns": [
+            2526.055,
+            2369.4002,
+            2406.20165
+          ],
+          "candidate_ns": [
+            2543.3163,
+            2356.4476,
+            2379.2645
+          ],
+          "baseline_median_ns": 2406.20165,
+          "candidate_median_ns": 2379.2645,
+          "percent_change": -1.119488468474772
+        },
+        {
+          "name": "rational_bezier_algebraic_point_tangent_image",
+          "iterations": 20000,
+          "checks": "transformed=40000",
+          "baseline_ns": [
+            57.4961,
+            58.2145,
+            56.34465
+          ],
+          "candidate_ns": [
+            57.70255,
+            58.58445,
+            57.0381
+          ],
+          "baseline_median_ns": 57.4961,
+          "candidate_median_ns": 57.70255,
+          "percent_change": 0.3590678324268959
+        }
+      ],
+      "samples": [
+        {
+          "sample": "baseline-1",
+          "log": "/tmp/hypercurve-normal-form-facts-parameter-matched-baseline-1.log",
+          "user_seconds": 1.46,
+          "system_seconds": 0.01,
+          "cpu_percent": 97,
+          "wall_seconds": 1.52,
+          "peak_rss_kib": 4788,
+          "exit_status": 0
+        },
+        {
+          "sample": "candidate-1",
+          "log": "/tmp/hypercurve-normal-form-facts-parameter-matched-candidate-1.log",
+          "user_seconds": 1.47,
+          "system_seconds": 0,
+          "cpu_percent": 97,
+          "wall_seconds": 1.52,
+          "peak_rss_kib": 4788,
+          "exit_status": 0
+        },
+        {
+          "sample": "candidate-2",
+          "log": "/tmp/hypercurve-normal-form-facts-parameter-matched-candidate-2.log",
+          "user_seconds": 1.45,
+          "system_seconds": 0.01,
+          "cpu_percent": 97,
+          "wall_seconds": 1.51,
+          "peak_rss_kib": 5152,
+          "exit_status": 0
+        },
+        {
+          "sample": "baseline-2",
+          "log": "/tmp/hypercurve-normal-form-facts-parameter-matched-baseline-2.log",
+          "user_seconds": 1.5,
+          "system_seconds": 0,
+          "cpu_percent": 96,
+          "wall_seconds": 1.55,
+          "peak_rss_kib": 4804,
+          "exit_status": 0
+        },
+        {
+          "sample": "baseline-3",
+          "log": "/tmp/hypercurve-normal-form-facts-parameter-matched-baseline-3.log",
+          "user_seconds": 1.57,
+          "system_seconds": 0,
+          "cpu_percent": 97,
+          "wall_seconds": 1.62,
+          "peak_rss_kib": 4876,
+          "exit_status": 0
+        },
+        {
+          "sample": "candidate-3",
+          "log": "/tmp/hypercurve-normal-form-facts-parameter-matched-candidate-3.log",
+          "user_seconds": 1.42,
+          "system_seconds": 0,
+          "cpu_percent": 97,
+          "wall_seconds": 1.46,
+          "peak_rss_kib": 4936,
+          "exit_status": 0
+        }
+      ]
+    },
+    "region": {
+      "order": [
+        "baseline-1",
+        "candidate-1",
+        "candidate-2",
+        "baseline-2",
+        "baseline-3",
+        "candidate-3"
+      ],
+      "preserved_rows": 19,
+      "emitted_checksums_match_all_runs": true,
+      "summary": {
+        "user_seconds": {
+          "baseline": 5.81,
+          "candidate": 5.82,
+          "percent_change": 0.1721170395869276
+        },
+        "wall_seconds": {
+          "baseline": 6.03,
+          "candidate": 6.03,
+          "percent_change": 0
+        },
+        "peak_rss_kib": {
+          "baseline": 9876,
+          "candidate": 9996,
+          "percent_change": 1.2150668286755817
+        }
+      },
+      "rows": [
+        {
+          "name": "curve_region_clone",
+          "iterations": 1000000,
+          "checks": "checksum=1000000",
+          "baseline_ns": [
+            3.653349,
+            3.497141,
+            3.615772
+          ],
+          "candidate_ns": [
+            3.611543,
+            3.295134,
+            3.610653
+          ],
+          "baseline_median_ns": 3.615772,
+          "candidate_median_ns": 3.610653,
+          "percent_change": -0.14157419217805112
+        },
+        {
+          "name": "curve_region_empty",
+          "iterations": 1000000,
+          "checks": "checksum=0",
+          "baseline_ns": [
+            3.182292,
+            3.032313,
+            3.106428
+          ],
+          "candidate_ns": [
+            3.143475,
+            3.160084,
+            3.139375
+          ],
+          "baseline_median_ns": 3.106428,
+          "candidate_median_ns": 3.143475,
+          "percent_change": 1.1925916196995345
+        },
+        {
+          "name": "cubic_bezier_exact_area_moments",
+          "iterations": 20000,
+          "checks": null,
+          "baseline_ns": [
+            13696.0019,
+            13929.7159,
+            13762.58935
+          ],
+          "candidate_ns": [
+            13713.9202,
+            13908.71435,
+            13787.05815
+          ],
+          "baseline_median_ns": 13762.58935,
+          "candidate_median_ns": 13787.05815,
+          "percent_change": 0.17779212456121574
+        },
+        {
+          "name": "cubic_bezier_prefix_area_moments",
+          "iterations": 20000,
+          "checks": null,
+          "baseline_ns": [
+            18207.77335,
+            18103.82445,
+            17887.9328
+          ],
+          "candidate_ns": [
+            18460.54955,
+            18174.2002,
+            18132.8345
+          ],
+          "baseline_median_ns": 18103.82445,
+          "candidate_median_ns": 18174.2002,
+          "percent_change": 0.3887341605325778
+        },
+        {
+          "name": "cubic_bezier_prefix_length_bounds",
+          "iterations": 20000,
+          "checks": null,
+          "baseline_ns": [
+            3967.25475,
+            3949.57995,
+            3776.8048
+          ],
+          "candidate_ns": [
+            3942.69895,
+            4155.81785,
+            3947.32215
+          ],
+          "baseline_median_ns": 3949.57995,
+          "candidate_median_ns": 3947.32215,
+          "percent_change": -0.05716557275919909
+        },
+        {
+          "name": "curve_region_boolean_immediate_union",
+          "iterations": 1000,
+          "checks": "checksum=0",
+          "baseline_ns": [
+            180328.328,
+            183742.925,
+            181700.924
+          ],
+          "candidate_ns": [
+            181303.052,
+            184178.075,
+            183267.677
+          ],
+          "baseline_median_ns": 181700.924,
+          "candidate_median_ns": 183267.677,
+          "percent_change": 0.862270243600971
+        },
+        {
+          "name": "curve_region_boolean_immediate_all_ops",
+          "iterations": 1000,
+          "checks": "checksum=0",
+          "baseline_ns": [
+            358488.825,
+            408005.614,
+            358750.667
+          ],
+          "candidate_ns": [
+            358018.408,
+            360318.51,
+            361089.587
+          ],
+          "baseline_median_ns": 358750.667,
+          "candidate_median_ns": 360318.51,
+          "percent_change": 0.43702859512733117
+        },
+        {
+          "name": "curve_region_boolean_retained_algebraic_all_ops",
+          "iterations": 100,
+          "checks": "checksum=1100",
+          "baseline_ns": [
+            215011.27,
+            213560.57,
+            211209.13
+          ],
+          "candidate_ns": [
+            215797.72,
+            210140.21,
+            223623.39
+          ],
+          "baseline_median_ns": 213560.57,
+          "candidate_median_ns": 215797.72,
+          "percent_change": 1.0475482435732264
+        },
+        {
+          "name": "bezier_region_algebraic_ray_classification",
+          "iterations": 2000,
+          "checks": "checksum=4000",
+          "baseline_ns": [
+            56199.7255,
+            54942.022,
+            55249.4455
+          ],
+          "candidate_ns": [
+            55865.0935,
+            55823.5715,
+            56822.433
+          ],
+          "baseline_median_ns": 55249.4455,
+          "candidate_median_ns": 55865.0935,
+          "percent_change": 1.1143062060233744
+        },
+        {
+          "name": "bezier_region_materialization",
+          "iterations": 20000,
+          "checks": "checksum=0",
+          "baseline_ns": [
+            2987.26285,
+            2990.30815,
+            2966.7318
+          ],
+          "candidate_ns": [
+            3071.5886,
+            2905.62995,
+            2871.5828
+          ],
+          "baseline_median_ns": 2987.26285,
+          "candidate_median_ns": 2905.62995,
+          "percent_change": -2.7326989320675343
+        },
+        {
+          "name": "curve_region_cached_classification",
+          "iterations": 2000,
+          "checks": "checksum=4000",
+          "baseline_ns": [
+            35588.7475,
+            35086.8715,
+            35313.8865
+          ],
+          "candidate_ns": [
+            38831.26,
+            35406.2245,
+            36740.4435
+          ],
+          "baseline_median_ns": 35313.8865,
+          "candidate_median_ns": 36740.4435,
+          "percent_change": 4.039648822000941
+        },
+        {
+          "name": "curve_region_immediate_native_signed_depth",
+          "iterations": 2000,
+          "checks": "checksum=2000",
+          "baseline_ns": [
+            937.141,
+            887.0845,
+            875.49
+          ],
+          "candidate_ns": [
+            902.318,
+            869.9855,
+            852.4465
+          ],
+          "baseline_median_ns": 887.0845,
+          "candidate_median_ns": 869.9855,
+          "percent_change": -1.927550306650616
+        },
+        {
+          "name": "bezier_retained_region_materialization",
+          "iterations": 20000,
+          "checks": "checksum=0",
+          "baseline_ns": [
+            11889.06965,
+            11821.94775,
+            11911.9381
+          ],
+          "candidate_ns": [
+            12694.60195,
+            11937.9818,
+            12183.82695
+          ],
+          "baseline_median_ns": 11889.06965,
+          "candidate_median_ns": 12183.82695,
+          "percent_change": 2.4792293146335576
+        },
+        {
+          "name": "curve_region_cached_algebraic_classification",
+          "iterations": 2000,
+          "checks": "checksum=4000",
+          "baseline_ns": [
+            44910.399,
+            45559.5995,
+            45643.4085
+          ],
+          "candidate_ns": [
+            46102.457,
+            44980.434,
+            44846.988
+          ],
+          "baseline_median_ns": 45559.5995,
+          "candidate_median_ns": 44980.434,
+          "percent_change": -1.2712260563221056
+        },
+        {
+          "name": "bezier_retained_algebraic_source_envelope",
+          "iterations": 20000,
+          "checks": "checksum=0",
+          "baseline_ns": [
+            13335.725550000001,
+            13210.14365,
+            13371.07265
+          ],
+          "candidate_ns": [
+            13973.49685,
+            13407.18215,
+            13215.196850000002
+          ],
+          "baseline_median_ns": 13335.725550000001,
+          "candidate_median_ns": 13407.18215,
+          "percent_change": 0.535828363684332
+        },
+        {
+          "name": "bezier_retained_algebraic_exact_endpoint_envelope",
+          "iterations": 20000,
+          "checks": "checksum=0",
+          "baseline_ns": [
+            5988.18785,
+            5865.19925,
+            5932.49865
+          ],
+          "candidate_ns": [
+            5882.50205,
+            5817.8355,
+            5801.5561
+          ],
+          "baseline_median_ns": 5932.49865,
+          "candidate_median_ns": 5817.8355,
+          "percent_change": -1.9327969000043521
+        },
+        {
+          "name": "bezier_retained_algebraic_line_authoritative_roles",
+          "iterations": 20000,
+          "checks": "checksum=0",
+          "baseline_ns": [
+            139164.7784,
+            139005.9083,
+            139094.9352
+          ],
+          "candidate_ns": [
+            138114.9428,
+            138566.7069,
+            137589.4453
+          ],
+          "baseline_median_ns": 139094.9352,
+          "candidate_median_ns": 138114.9428,
+          "percent_change": -0.7045493055451102
+        },
+        {
+          "name": "bezier_resolved_overlap_region_materialization",
+          "iterations": 20000,
+          "checks": "checksum=0",
+          "baseline_ns": [
+            24402.0631,
+            24005.56775,
+            23853.73765
+          ],
+          "candidate_ns": [
+            24402.68455,
+            24031.63245,
+            25111.372
+          ],
+          "baseline_median_ns": 24005.56775,
+          "candidate_median_ns": 24402.68455,
+          "percent_change": 1.6542695600273882
+        },
+        {
+          "name": "bezier_conic_region_exact_area",
+          "iterations": 20000,
+          "checks": "checksum=0",
+          "baseline_ns": [
+            26001.695,
+            26110.9775,
+            26792.051400000004
+          ],
+          "candidate_ns": [
+            26598.8876,
+            25994.571000000004,
+            26226.9561
+          ],
+          "baseline_median_ns": 26110.9775,
+          "candidate_median_ns": 26226.9561,
+          "percent_change": 0.444175634558297
+        }
+      ],
+      "samples": [
+        {
+          "sample": "baseline-1",
+          "log": "/tmp/hypercurve-normal-form-facts-region-matched-baseline-1.log",
+          "user_seconds": 5.81,
+          "system_seconds": 0.02,
+          "cpu_percent": 96,
+          "wall_seconds": 6.03,
+          "peak_rss_kib": 10020,
+          "exit_status": 0
+        },
+        {
+          "sample": "candidate-1",
+          "log": "/tmp/hypercurve-normal-form-facts-region-matched-candidate-1.log",
+          "user_seconds": 5.82,
+          "system_seconds": 0.02,
+          "cpu_percent": 96,
+          "wall_seconds": 6.07,
+          "peak_rss_kib": 9816,
+          "exit_status": 0
+        },
+        {
+          "sample": "candidate-2",
+          "log": "/tmp/hypercurve-normal-form-facts-region-matched-candidate-2.log",
+          "user_seconds": 5.8,
+          "system_seconds": 0.01,
+          "cpu_percent": 96,
+          "wall_seconds": 6.02,
+          "peak_rss_kib": 9996,
+          "exit_status": 0
+        },
+        {
+          "sample": "baseline-2",
+          "log": "/tmp/hypercurve-normal-form-facts-region-matched-baseline-2.log",
+          "user_seconds": 5.84,
+          "system_seconds": 0.02,
+          "cpu_percent": 96,
+          "wall_seconds": 6.07,
+          "peak_rss_kib": 9876,
+          "exit_status": 0
+        },
+        {
+          "sample": "baseline-3",
+          "log": "/tmp/hypercurve-normal-form-facts-region-matched-baseline-3.log",
+          "user_seconds": 5.8,
+          "system_seconds": 0.02,
+          "cpu_percent": 96,
+          "wall_seconds": 6.03,
+          "peak_rss_kib": 9868,
+          "exit_status": 0
+        },
+        {
+          "sample": "candidate-3",
+          "log": "/tmp/hypercurve-normal-form-facts-region-matched-candidate-3.log",
+          "user_seconds": 5.82,
+          "system_seconds": 0.02,
+          "cpu_percent": 96,
+          "wall_seconds": 6.03,
+          "peak_rss_kib": 10108,
+          "exit_status": 0
+        }
+      ]
+    },
+    "binaries": {
+      "parameter_baseline": {
+        "path": "/tmp/hypercurve-normal-form-facts-parameter-baseline-final-benchmark",
+        "sha256": "77215441087d5c8b6a92f14e30c2e4c46742575ce7df90b01e97893bf8e57697",
+        "text_bytes": 3571586,
+        "data_bytes": 252208,
+        "bss_bytes": 3032,
+        "file_bytes": 4945880
+      },
+      "parameter_candidate": {
+        "path": "/tmp/hypercurve-normal-form-facts-parameter-candidate-benchmark",
+        "sha256": "7c885cc1410a46d6bc1f6e5973bc5887ef58aa51214ea75535ae90a1f499f568",
+        "text_bytes": 3571722,
+        "data_bytes": 252208,
+        "bss_bytes": 2904,
+        "file_bytes": 4945976
+      },
+      "region_baseline": {
+        "path": "/tmp/hypercurve-normal-form-facts-region-baseline-final-benchmark",
+        "sha256": "744e61f262bdef99e6e5883a0479b5704fe35af260730e69f67de26a297c2a9d",
+        "text_bytes": 11856998,
+        "data_bytes": 320496,
+        "bss_bytes": 1672,
+        "file_bytes": 14902712
+      },
+      "region_candidate": {
+        "path": "/tmp/hypercurve-normal-form-facts-region-candidate-benchmark",
+        "sha256": "6717d4bd4dbc614d8f7f786a19c1bcc37495da776d4f37b4afb414d8755945bd",
+        "text_bytes": 11857134,
+        "data_bytes": 320496,
+        "bss_bytes": 1544,
+        "file_bytes": 14902800
+      }
+    },
+    "binary_size_qualification": "Text/data/BSS grows 8 bytes in each matched production driver. File size grows 96 bytes for parameters and 88 bytes for regions. No general binary-size reduction is claimed."
+  },
+  "instruction_and_allocation_control": {
+    "workload": "Complete unchanged eleven-row public parameter benchmark, including the two new cold/reused lanes in both binaries.",
+    "callgrind": {
+      "command": "valgrind --tool=callgrind --vgdb=no --callgrind-out-file=OUTPUT EXECUTABLE",
+      "baseline_instructions": 19248005600,
+      "candidate_instructions": 18771343303,
+      "percent_change": -2.4764243470502767,
+      "logs": [
+        "/tmp/hypercurve-normal-form-facts-baseline-callgrind.log",
+        "/tmp/hypercurve-normal-form-facts-candidate-callgrind.log"
+      ]
+    },
+    "heaptrack": {
+      "command": "heaptrack --record-only -o OUTPUT EXECUTABLE; heaptrack_print OUTPUT.zst",
+      "baseline_allocations": 34455169,
+      "candidate_allocations": 33595169,
+      "baseline_temporary_allocations": 2892509,
+      "candidate_temporary_allocations": 2612509,
+      "baseline_reported_peak_heap": "217.00K",
+      "candidate_reported_peak_heap": "217.00K",
+      "baseline_reported_live_at_exit": "113.66K",
+      "candidate_reported_live_at_exit": "113.66K",
+      "logs": [
+        "/tmp/hypercurve-normal-form-facts-baseline-final-heaptrack-report.log",
+        "/tmp/hypercurve-normal-form-facts-candidate-final-heaptrack-report.log"
+      ],
+      "raw_files": [
+        "/tmp/hypercurve-normal-form-facts-baseline-final.heap.zst",
+        "/tmp/hypercurve-normal-form-facts-candidate-final.heap.zst"
+      ]
+    },
+    "qualification": "Both profilers execute every normal iteration and output check. Profiling overlapped other builds/tests; instruction/allocation counts, not profiler wall time, are compared. Heap statistics include startup and shared constant caches. Equal process-end live bytes are not a scoped lifetime or leak-freedom proof."
+  },
+  "chord_diagnostic": {
+    "fixture": "bezier_offset::conversion_tests::recursive_selected_radial_diameter_chord_intersects_a_rational_quadratic_strict",
+    "cache_only_screen": {
+      "passed": 1,
+      "wall_seconds": 66.81,
+      "user_seconds": 64.54,
+      "peak_rss_kib": 46412,
+      "log": "/tmp/hypercurve-normal-form-facts-chord-screen.log",
+      "binary": "/tmp/hypercurve-normal-form-facts-candidate-test",
+      "sha256": "465894ef09f447f3a016fc53bf42f0f76dcad2d87d92a631b4abd4323c846d86"
+    },
+    "trace": {
+      "passed": 1,
+      "exact_normal_form_success": 0,
+      "exact_normal_form_unresolved": 38663,
+      "structural": 169815,
+      "refinement": 4920,
+      "wall_seconds": 62.85,
+      "user_seconds": 62.52,
+      "peak_rss_kib": 45208,
+      "log": "/tmp/hypercurve-normal-form-facts-diagnostic-run.log",
+      "binary": "/tmp/hypercurve-normal-form-facts-diagnostic-test",
+      "sha256": "a334e8d673951e1967e004aa96133bf435824ac45fbd596bc743892c3e017de4"
+    },
+    "qualification": "Candidate-only, unpinned diagnostic screens, not matched timing. Temporary printing read existing trace counters and was removed from source. The cache-only first screen predates private forwarding-method deduplication; the diagnostic includes that deduplication. No improvement to the long chord fixture is claimed."
+  },
+  "rejected_experiments": [
+    {
+      "name": "Global certified dyadic rounding of retained source witnesses",
+      "retained": false,
+      "description": "Round dense source witnesses when coefficient precision is requested. The direct outward-bound regression passed, but the full fixtures switched away from direct quadratic publication and became much slower.",
+      "decision": "Rejected after both end-to-end runs were observed still active beyond 237 seconds, versus roughly 67 and 30 seconds for retained production. Every prototype production/test change was removed.",
+      "termination": {
+        "signal": 2,
+        "shell_exit_status": 130,
+        "reported_wall_seconds": 13665,
+        "chord_peak_rss_kib": 5852480,
+        "radial_peak_rss_kib": 88496,
+        "qualification": "The SIGINT approval pause extended these already-rejected runs to 3:47:45. Neither completed. GNU time's printed Exit status: 0 is not a passing test result; shell status was 130. This is not a matched performance estimate."
+      },
+      "logs": [
+        "/tmp/hypercurve-dyadic-source-witness-bounds-test.log",
+        "/tmp/hypercurve-dyadic-source-witness-chord-test.log",
+        "/tmp/hypercurve-dyadic-source-witness-radial-test.log"
+      ],
+      "binary_sha256": "293397d728e807dd16f0570af3b884d4ad0e38ffa64dc358a67a04f9cb0ad74c"
+    },
+    {
+      "name": "Whole retained point scalar replay before projective interval bounds",
+      "retained": false,
+      "description": "A 23-line branch reused complete authored scalar witnesses and native certified dyadic intervals when the denominator was proved nonzero; missing proof kept the existing interval fallback.",
+      "results": {
+        "chord_passed": 1,
+        "chord_wall_seconds": 64.43,
+        "chord_user_seconds": 64.08,
+        "chord_peak_rss_kib": 45568,
+        "radial_passed": 1,
+        "radial_wall_seconds": 28.79,
+        "radial_user_seconds": 28.63,
+        "radial_peak_rss_kib": 48232
+      },
+      "decision": "Both unchanged fixtures passed, but the screen did not establish an improvement to the long chord. Removed rather than adding an unvalidated extra path.",
+      "qualification": "Unpinned concurrent candidate-only screens. Each experimental invocation had a declared 180-second rejection deadline; neither reached it. Final validation suites have no timeout.",
+      "logs": [
+        "/tmp/hypercurve-point-witness-bounds-chord-screen.log",
+        "/tmp/hypercurve-point-witness-bounds-radial-screen.log"
+      ],
+      "binary_sha256": "9e85c6f0fc719f5fab31774a69fb5de3ce129c58beb7ada76ace1fdcf8a04781"
+    }
+  ],
+  "final_validation": {
+    "native": {
+      "all_features": {
+        "command": "env HYPERREAL_SKIP_BENCHMARK_REPORTS=1 cargo test --release --locked --all-features --all-targets",
+        "log": "/tmp/hyperreal-normal-form-facts-all-features.log",
+        "targets": 19,
+        "passed": 786,
+        "failed": 0,
+        "ignored": 0,
+        "exit_status": 0,
+        "first_target_passed": 709,
+        "first_target_seconds": 0.54
+      },
+      "minimal_features": {
+        "command": "env HYPERREAL_SKIP_BENCHMARK_REPORTS=1 cargo test --release --locked --no-default-features --all-targets",
+        "log": "/tmp/hyperreal-normal-form-facts-minimal.log",
+        "targets": 18,
+        "passed": 687,
+        "failed": 0,
+        "ignored": 0,
+        "exit_status": 0,
+        "first_target_passed": 627,
+        "first_target_seconds": 0.6
+      },
+      "ci_debug": {
+        "command": "env HYPERREAL_SKIP_BENCHMARK_REPORTS=1 cargo test --locked --all-targets",
+        "log": "/tmp/hyperreal-normal-form-facts-ci-tests.log",
+        "targets": 18,
+        "passed": 687,
+        "failed": 0,
+        "ignored": 0,
+        "exit_status": 0,
+        "first_target_passed": 627,
+        "first_target_seconds": 6.65
+      },
+      "layouts": {
+        "command": "bash scripts/representation_coverage.sh",
+        "log": "/tmp/hyperreal-normal-form-facts-layouts.log",
+        "targets": 5,
+        "passed": 22,
+        "failed": 0,
+        "ignored": 0,
+        "exit_status": 0
+      },
+      "auxiliary_gates": [
+        {
+          "gate": "clippy-all",
+          "exit_status": 0,
+          "log": "/tmp/hyperreal-normal-form-facts-clippy-all.log"
+        },
+        {
+          "gate": "clippy-minimal",
+          "exit_status": 0,
+          "log": "/tmp/hyperreal-normal-form-facts-clippy-minimal.log"
+        },
+        {
+          "gate": "check",
+          "exit_status": 0,
+          "log": "/tmp/hyperreal-normal-form-facts-check.log"
+        },
+        {
+          "gate": "fuzz",
+          "exit_status": 0,
+          "log": "/tmp/hyperreal-normal-form-facts-fuzz.log"
+        },
+        {
+          "gate": "docs",
+          "exit_status": 0,
+          "log": "/tmp/hyperreal-normal-form-facts-docs.log"
+        },
+        {
+          "gate": "allocations",
+          "exit_status": 0,
+          "log": "/tmp/hyperreal-normal-form-facts-allocations.log"
+        },
+        {
+          "gate": "fmt",
+          "exit_status": 0,
+          "log": "/tmp/hyperreal-normal-form-facts-fmt.log"
+        }
+      ],
+      "qualification": "Criterion targets ran in cargo test mode; this is not a fresh full native benchmark report. The 20-representation allocation example ran 64 lifecycles; process-shared cache warm-up allocations are not treated as leaks or proof of zero retention."
+    },
+    "hypercurve": {
+      "all_features": {
+        "command": "cargo test --release --locked --all-features --no-fail-fast -- --test-threads=2",
+        "log": "/tmp/hypercurve-normal-form-facts-all-features.log",
+        "targets": 45,
+        "passed": 1727,
+        "failed": 0,
+        "ignored": 9,
+        "exit_status": 0,
+        "first_target_passed": 885,
+        "first_target_seconds": 204.02
+      },
+      "minimal_features": {
+        "command": "cargo test --release --locked --no-default-features --no-fail-fast -- --test-threads=2",
+        "log": "/tmp/hypercurve-normal-form-facts-minimal.log",
+        "targets": 45,
+        "passed": 1698,
+        "failed": 0,
+        "ignored": 4,
+        "exit_status": 0,
+        "first_target_passed": 881,
+        "first_target_seconds": 193.99
+      },
+      "ignored_units": {
+        "command": "cargo test --release --locked --all-features --lib -- --ignored --nocapture --test-threads=2",
+        "log": "/tmp/hypercurve-normal-form-facts-ignored-units.log",
+        "targets": 1,
+        "passed": 6,
+        "failed": 0,
+        "ignored": 0,
+        "exit_status": 0,
+        "first_target_passed": 6,
+        "first_target_seconds": 89.52,
+        "manual_drivers_complete": 5
+      },
+      "ignored_strokes": {
+        "command": "cargo test --release --locked --all-features --test hypercurve_curve_region_stroke -- --ignored --nocapture --test-threads=2",
+        "log": "/tmp/hypercurve-normal-form-facts-ignored-stroke.log",
+        "targets": 1,
+        "passed": 3,
+        "failed": 0,
+        "ignored": 0,
+        "exit_status": 0,
+        "first_target_passed": 3,
+        "first_target_seconds": 55.15
+      },
+      "qualification": "All normal iterations and exactness assertions remain. Suites are uncapped and use two test workers, with other build/test/profiling jobs active during portions of qualification; these suite durations are not matched performance measurements. Later Hyperlimit and Hypersolve fixture corrections do not change their production code. All-feature benchmark compilation is not execution of every benchmark. The release WASM binary built locally; Trunk packaging, browser interaction and hosted deployment were not rerun.",
+      "ui_tests": {
+        "command": "cargo test --locked --manifest-path examples/hypercurve_ui/Cargo.toml --no-fail-fast",
+        "log": "/tmp/hypercurve-normal-form-facts-ui-tests.log",
+        "targets": 1,
+        "passed": 37,
+        "failed": 0,
+        "ignored": 0,
+        "exit_status": 0,
+        "first_target_passed": 37,
+        "first_target_seconds": 35.56
+      },
+      "auxiliary_gates": [
+        {
+          "gate": "clippy",
+          "exit_status": 0,
+          "log": "/tmp/hypercurve-normal-form-facts-clippy.log"
+        },
+        {
+          "gate": "fuzz-check",
+          "exit_status": 0,
+          "log": "/tmp/hypercurve-normal-form-facts-fuzz-check.log"
+        },
+        {
+          "gate": "docs",
+          "exit_status": 0,
+          "log": "/tmp/hypercurve-normal-form-facts-docs.log"
+        },
+        {
+          "gate": "bench-build",
+          "exit_status": 0,
+          "log": "/tmp/hypercurve-normal-form-facts-bench-build.log"
+        },
+        {
+          "gate": "fmt",
+          "exit_status": 0,
+          "log": "/tmp/hypercurve-normal-form-facts-fmt.log"
+        },
+        {
+          "gate": "ui-clippy",
+          "exit_status": 0,
+          "log": "/tmp/hypercurve-normal-form-facts-ui-clippy.log"
+        },
+        {
+          "gate": "Release WASM demo build",
+          "command": "cargo build --locked --manifest-path examples/hypercurve_ui/Cargo.toml --release --target wasm32-unknown-unknown",
+          "exit_status": 0,
+          "log": "/tmp/hypercurve-normal-form-facts-ui-wasm.log"
+        }
+      ]
+    },
+    "consumers": {
+      "command": "cargo test --release --locked FEATURES --no-fail-fast -- --test-threads=2; cargo clippy --locked --all-features --all-targets -- -D warnings",
+      "hyperlimit": {
+        "all_features": {
+          "log": "/tmp/hyperlimit-normal-form-facts-all-features.log",
+          "targets": 17,
+          "passed": 361,
+          "failed": 0,
+          "ignored": 0,
+          "exit_status": 0,
+          "first_target_passed": 252,
+          "first_target_seconds": 0.17
+        },
+        "minimal_features": {
+          "log": "/tmp/hyperlimit-normal-form-facts-minimal.log",
+          "targets": 17,
+          "passed": 348,
+          "failed": 0,
+          "ignored": 0,
+          "exit_status": 0,
+          "first_target_passed": 242,
+          "first_target_seconds": 0.17
+        },
+        "layouts": {
+          "log": "/tmp/hyperlimit-normal-form-facts-layouts.log",
+          "targets": 4,
+          "passed": 18,
+          "failed": 0,
+          "ignored": 0,
+          "exit_status": 0
+        },
+        "clippy": {
+          "exit_status": 0,
+          "log": "/tmp/hyperlimit-normal-form-facts-clippy.log"
+        }
+      },
+      "hyperlattice": {
+        "all_features": {
+          "log": "/tmp/hyperlattice-normal-form-facts-all-features.log",
+          "targets": 19,
+          "passed": 200,
+          "failed": 0,
+          "ignored": 0,
+          "exit_status": 0,
+          "first_target_passed": 19,
+          "first_target_seconds": 0
+        },
+        "minimal_features": {
+          "log": "/tmp/hyperlattice-normal-form-facts-minimal.log",
+          "targets": 19,
+          "passed": 198,
+          "failed": 0,
+          "ignored": 0,
+          "exit_status": 0,
+          "first_target_passed": 19,
+          "first_target_seconds": 0
+        },
+        "clippy": {
+          "exit_status": 0,
+          "log": "/tmp/hyperlattice-normal-form-facts-clippy.log"
+        }
+      },
+      "hypersolve": {
+        "all_features": {
+          "log": "/tmp/hypersolve-normal-form-facts-all-features.log",
+          "targets": 7,
+          "passed": 773,
+          "failed": 0,
+          "ignored": 0,
+          "exit_status": 0,
+          "first_target_passed": 416,
+          "first_target_seconds": 0.18
+        },
+        "minimal_features": {
+          "log": "/tmp/hypersolve-normal-form-facts-minimal.log",
+          "targets": 7,
+          "passed": 772,
+          "failed": 0,
+          "ignored": 0,
+          "exit_status": 0,
+          "first_target_passed": 415,
+          "first_target_seconds": 0.17
+        },
+        "clippy": {
+          "exit_status": 0,
+          "log": "/tmp/hypersolve-normal-form-facts-clippy.log"
+        }
+      },
+      "hypertri": {
+        "all_features": {
+          "log": "/tmp/hypertri-normal-form-facts-all-features.log",
+          "targets": 9,
+          "passed": 191,
+          "failed": 0,
+          "ignored": 0,
+          "exit_status": 0,
+          "first_target_passed": 119,
+          "first_target_seconds": 0.01
+        },
+        "minimal_features": {
+          "log": "/tmp/hypertri-normal-form-facts-minimal.log",
+          "targets": 9,
+          "passed": 7,
+          "failed": 0,
+          "ignored": 0,
+          "exit_status": 0,
+          "first_target_passed": 3,
+          "first_target_seconds": 0
+        },
+        "clippy": {
+          "exit_status": 0,
+          "log": "/tmp/hypertri-normal-form-facts-clippy.log"
+        }
+      },
+      "hypermesh": {
+        "all_features": {
+          "log": "/tmp/hypermesh-normal-form-facts-all-features.log",
+          "targets": 8,
+          "passed": 222,
+          "failed": 0,
+          "ignored": 7,
+          "exit_status": 0,
+          "first_target_passed": 168,
+          "first_target_seconds": 0.04
+        },
+        "minimal_features": {
+          "log": "/tmp/hypermesh-normal-form-facts-minimal.log",
+          "targets": 8,
+          "passed": 221,
+          "failed": 0,
+          "ignored": 7,
+          "exit_status": 0,
+          "first_target_passed": 167,
+          "first_target_seconds": 0.04
+        },
+        "dense_crossing": {
+          "command": "cargo test --release --locked --all-features --test competitive dense_crossing_grid_large_policy_outputs_are_exactly_equal -- --ignored --exact --nocapture --test-threads=1",
+          "log": "/tmp/hypermesh-normal-form-facts-dense-crossing.log",
+          "targets": 1,
+          "passed": 1,
+          "failed": 0,
+          "ignored": 0,
+          "exit_status": 0,
+          "first_target_passed": 1,
+          "first_target_seconds": 70.59
+        },
+        "clippy": {
+          "exit_status": 0,
+          "log": "/tmp/hypermesh-normal-form-facts-clippy.log"
+        },
+        "qualification": "The dense-crossing policy-equality stress completed at its normal workload. External benchmark-fixture and other manual memory-pressure tests were not rerun; no fresh Mesh UI, fuzz, size-harness or release-publication claim."
+      }
+    }
+  },
+  "remaining_work": {
+    "exactcorelib_mining_and_uplift": "Previously closed; remains closed.",
+    "hypercurve_release_readiness": "Not claimed complete. The strict chord and opt-in analytic Boolean fixture still warrant performance work; registry coordination/publication has not been rechecked or authorized.",
+    "next_bounded_lead": "Identify which selected source axes prevent whole-point native witness replay in the remaining interval-bound hotspot. Keep missing proof and unsuccessful normal forms inconclusive, retain the full exact fallback, and avoid globally changing scalar root publication.",
+    "public_api_and_authority": "No public API or compatibility layer added. Hypercurve's authoritative CurveRegion2 kernel and existing exact fallbacks are unchanged.",
+    "publication": "No push or publication performed."
+  },
+  "recorded_utc": "2026-09-05 10:48:01 UTC"
+}
