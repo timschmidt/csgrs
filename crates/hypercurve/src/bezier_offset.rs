@@ -38294,18 +38294,6 @@ impl BezierAlgebraicCuspSemicircle2 {
         self.recursive_selected_radial_target_system(&target, true, false, policy)
     }
 
-    fn recursive_selected_radial_rational_component_system(
-        &self,
-        other: &RationalBezier2,
-        policy: &CurveContext,
-    ) -> CurveResult<Classification<Arc<BezierRecursiveSelectedRadialParallelSystem2>>> {
-        let target = BezierParallel2::from_source(
-            BezierParallelSource2::Rational(other.clone()),
-            Real::zero(),
-        );
-        self.recursive_selected_radial_target_system(&target, true, false, policy)
-    }
-
     fn recursive_selected_radial_target_system(
         &self,
         other: &BezierParallel2,
@@ -39622,11 +39610,10 @@ impl BezierAlgebraicCuspSemicircle2 {
             && rational_contacts.iter().any(|contact| {
                 contact.location == BezierAlgebraicCuspSemicircleContactLocation2::Interior
             }) {
-            let system =
-                match self.recursive_selected_radial_rational_component_system(other, policy)? {
-                    Classification::Decided(system) => system,
-                    Classification::Uncertain(_) => return Ok(Classification::Decided(None)),
-                };
+            let system = match self.recursive_selected_radial_rational_system(other, policy)? {
+                Classification::Decided(system) => system,
+                Classification::Uncertain(_) => return Ok(Classification::Decided(None)),
+            };
             let parameter_cache = BezierAlgebraicCuspSemicircleParameterCache2::default();
             for (other_parameter, cusp_parameter) in retained_parameters {
                 parameter_cache.retain_cusp_parameter(other_parameter, &cusp_parameter);
@@ -39728,14 +39715,13 @@ impl BezierAlgebraicCuspSemicircle2 {
                             policy,
                         )? == Classification::Decided(true)
                     {
-                        let component = match self
-                            .recursive_selected_radial_rational_component_system(other, policy)?
-                        {
-                            Classification::Decided(system) => system,
-                            Classification::Uncertain(reason) => {
-                                return Ok(Classification::Uncertain(reason));
-                            }
-                        };
+                        let component =
+                            match self.recursive_selected_radial_rational_system(other, policy)? {
+                                Classification::Decided(system) => system,
+                                Classification::Uncertain(reason) => {
+                                    return Ok(Classification::Uncertain(reason));
+                                }
+                            };
                         #[cfg(feature = "dispatch-trace")]
                         hyperreal::dispatch_trace::record(
                             "hypercurve",
@@ -151275,7 +151261,7 @@ mod conversion_tests {
                         intersections
                     } else {
                         let system = match recursive
-                            .recursive_selected_radial_rational_component_system(quarter, &policy)
+                            .recursive_selected_radial_rational_system(quarter, &policy)
                             .unwrap()
                         {
                             Classification::Decided(system) => system,

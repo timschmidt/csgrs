@@ -1593,7 +1593,7 @@ impl QuadraticBezier2 {
     ) -> CurveResult<BezierAlgebraicTangentImage2> {
         tangent_image(
             parameter,
-            second_derivative_polynomials(quadratic_tangent_coefficients(self)),
+            derivative_polynomials(quadratic_tangent_coefficients(self)),
             policy,
         )
     }
@@ -1638,7 +1638,7 @@ impl CubicBezier2 {
     ) -> CurveResult<BezierAlgebraicTangentImage2> {
         tangent_image(
             parameter,
-            second_derivative_polynomials(cubic_tangent_coefficients(self)),
+            derivative_polynomials(cubic_tangent_coefficients(self)),
             policy,
         )
     }
@@ -1656,9 +1656,7 @@ impl CubicBezier2 {
     ) -> CurveResult<BezierAlgebraicTangentImage2> {
         tangent_image(
             parameter,
-            second_derivative_polynomials(second_derivative_polynomials(
-                cubic_tangent_coefficients(self),
-            )),
+            derivative_polynomials(derivative_polynomials(cubic_tangent_coefficients(self))),
             policy,
         )
     }
@@ -2492,10 +2490,6 @@ fn derivative_polynomials(polynomials: CoordinatePolynomials) -> CoordinatePolyn
         x: derivative_coefficients(&polynomials.x),
         y: derivative_coefficients(&polynomials.y),
     }
-}
-
-fn second_derivative_polynomials(polynomials: CoordinatePolynomials) -> CoordinatePolynomials {
-    derivative_polynomials(polynomials)
 }
 
 fn derivative_coefficients(coefficients: &[Real]) -> Vec<Real> {
