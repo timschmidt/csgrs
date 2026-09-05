@@ -2,10 +2,14 @@
 
 use crate::curve::{self, CurveRegionExt};
 use crate::wasm::{
+    context_js::{GeometryBoolResultJs, GeometryBoundsResultJs},
+    geometry_context,
+};
+use crate::wasm::{
     matrix_js::Matrix4Js, mesh_js::MeshJs, point_js::Point3Js, real_from_js,
     real_from_js_named, real_to_js,
 };
-use crate::{GeometryCertainty, GeometryContext, GeometryOutcome, TriangleMesh};
+use crate::{GeometryCertainty, GeometryOutcome, TriangleMesh};
 use hypercurve::{Contour2, CurveCertainty, CurveContext, CurveOutcome, CurveRegion2};
 use hyperlattice::Real;
 use js_sys::{Float64Array, Object, Reflect, Uint32Array};
@@ -129,14 +133,6 @@ const fn boolean_policy(approximate_512: bool) -> CurveContext {
         CurveContext::APPROXIMATE_512
     } else {
         CurveContext::STRICT
-    }
-}
-
-const fn geometry_context(approximate_512: bool) -> GeometryContext {
-    if approximate_512 {
-        GeometryContext::APPROXIMATE_512
-    } else {
-        GeometryContext::STRICT
     }
 }
 
@@ -349,6 +345,97 @@ impl CurveRegionJs {
             real_from_js_named(x, "x")?,
             real_from_js_named(y, "y")?,
         ))
+    }
+
+    #[wasm_bindgen(js_name = transformWithContext)]
+    pub fn transform_with_context(
+        &self,
+        matrix: &Matrix4Js,
+        approximate_512: bool,
+    ) -> Result<CurveBooleanResultJs, JsValue> {
+        let context = geometry_context(approximate_512);
+        curve::try_transformed_with_context(&self.inner, &matrix.inner, &context)
+            .map(Into::into)
+            .map_err(js_error)
+    }
+
+    #[wasm_bindgen(js_name = translateWithContext)]
+    pub fn translate_with_context(
+        &self,
+        x: f64,
+        y: f64,
+        approximate_512: bool,
+    ) -> Result<CurveBooleanResultJs, JsValue> {
+        let context = geometry_context(approximate_512);
+        curve::try_translated_with_context(
+            &self.inner,
+            real_from_js_named(x, "x")?,
+            real_from_js_named(y, "y")?,
+            &context,
+        )
+        .map(Into::into)
+        .map_err(js_error)
+    }
+
+    #[wasm_bindgen(js_name = rotateWithContext)]
+    pub fn rotate_with_context(
+        &self,
+        degrees: f64,
+        approximate_512: bool,
+    ) -> Result<CurveBooleanResultJs, JsValue> {
+        let context = geometry_context(approximate_512);
+        curve::try_rotated_with_context(
+            &self.inner,
+            real_from_js_named(degrees, "degrees")?,
+            &context,
+        )
+        .map(Into::into)
+        .map_err(js_error)
+    }
+
+    #[wasm_bindgen(js_name = scaleWithContext)]
+    pub fn scale_with_context(
+        &self,
+        x: f64,
+        y: f64,
+        approximate_512: bool,
+    ) -> Result<CurveBooleanResultJs, JsValue> {
+        let context = geometry_context(approximate_512);
+        curve::try_scaled_with_context(
+            &self.inner,
+            real_from_js_named(x, "x")?,
+            real_from_js_named(y, "y")?,
+            &context,
+        )
+        .map(Into::into)
+        .map_err(js_error)
+    }
+
+    #[wasm_bindgen(js_name = containsXYWithContext)]
+    pub fn contains_xy_with_context(
+        &self,
+        x: f64,
+        y: f64,
+        approximate_512: bool,
+    ) -> Result<GeometryBoolResultJs, JsValue> {
+        curve::contains_xy_with_context(
+            &self.inner,
+            real_from_js_named(x, "x")?,
+            real_from_js_named(y, "y")?,
+            &geometry_context(approximate_512),
+        )
+        .map(Into::into)
+        .map_err(js_error)
+    }
+
+    #[wasm_bindgen(js_name = boundingBoxWithContext)]
+    pub fn bounding_box_with_context(
+        &self,
+        approximate_512: bool,
+    ) -> Result<GeometryBoundsResultJs, JsValue> {
+        curve::try_bounding_box_with_context(&self.inner, &geometry_context(approximate_512))
+            .map(Into::into)
+            .map_err(js_error)
     }
 
     pub fn extrude(

@@ -4,6 +4,7 @@ use super::scalar::{
     scalar3_to_real,
 };
 use crate::solid::{self, SolidExt};
+use crate::{GeometryContext, GeometryOutcome};
 use hyperlattice::{Matrix4, Point3, Vector3};
 use hypermesh::{Triangle, TriangleMesh};
 use std::{
@@ -147,6 +148,54 @@ where
             .map_err(|error| AdapterError::Validation(error.to_string()))
     }
 
+    /// Computes the Boolean with the selected policy and aggregate certainty.
+    pub fn union_with_context(
+        &self,
+        other: &Self,
+        context: &GeometryContext,
+    ) -> AdapterResult<GeometryOutcome<Self>> {
+        self.inner
+            .try_union_with_context(&other.inner, context)
+            .map(|outcome| outcome.map(Self::from_native))
+            .map_err(|error| AdapterError::Validation(error.to_string()))
+    }
+
+    /// Computes the Boolean with the selected policy and aggregate certainty.
+    pub fn difference_with_context(
+        &self,
+        other: &Self,
+        context: &GeometryContext,
+    ) -> AdapterResult<GeometryOutcome<Self>> {
+        self.inner
+            .try_difference_with_context(&other.inner, context)
+            .map(|outcome| outcome.map(Self::from_native))
+            .map_err(|error| AdapterError::Validation(error.to_string()))
+    }
+
+    /// Computes the Boolean with the selected policy and aggregate certainty.
+    pub fn intersection_with_context(
+        &self,
+        other: &Self,
+        context: &GeometryContext,
+    ) -> AdapterResult<GeometryOutcome<Self>> {
+        self.inner
+            .try_intersection_with_context(&other.inner, context)
+            .map(|outcome| outcome.map(Self::from_native))
+            .map_err(|error| AdapterError::Validation(error.to_string()))
+    }
+
+    /// Computes the Boolean with the selected policy and aggregate certainty.
+    pub fn xor_with_context(
+        &self,
+        other: &Self,
+        context: &GeometryContext,
+    ) -> AdapterResult<GeometryOutcome<Self>> {
+        self.inner
+            .try_xor_with_context(&other.inner, context)
+            .map(|outcome| outcome.map(Self::from_native))
+            .map_err(|error| AdapterError::Validation(error.to_string()))
+    }
+
     pub fn transform(&self, matrix: &Matrix4) -> AdapterResult<Self> {
         solid::try_transform(&self.inner, matrix)
             .map(Self::from_native)
@@ -225,6 +274,135 @@ where
                 A::from_real(&bounds.maxs.z)?,
             ],
         })
+    }
+
+    /// Applies the operation with the selected policy and aggregate certainty.
+    pub fn transform_with_context(
+        &self,
+        matrix: &Matrix4,
+        context: &GeometryContext,
+    ) -> AdapterResult<GeometryOutcome<Self>> {
+        solid::try_transform_with_context(&self.inner, matrix, context)
+            .map(|outcome| outcome.map(Self::from_native))
+            .map_err(|error| AdapterError::Validation(error.to_string()))
+    }
+
+    /// Applies the operation with the selected policy and aggregate certainty.
+    pub fn translate_with_context(
+        &self,
+        x: A::Scalar,
+        y: A::Scalar,
+        z: A::Scalar,
+        context: &GeometryContext,
+    ) -> AdapterResult<GeometryOutcome<Self>> {
+        solid::try_transform_with_context(
+            &self.inner,
+            &Matrix4::affine_translation([
+                A::into_real(x)?,
+                A::into_real(y)?,
+                A::into_real(z)?,
+            ]),
+            context,
+        )
+        .map(|outcome| outcome.map(Self::from_native))
+        .map_err(|error| AdapterError::Validation(error.to_string()))
+    }
+
+    /// Applies the operation with the selected policy and aggregate certainty.
+    pub fn scale_with_context(
+        &self,
+        x: A::Scalar,
+        y: A::Scalar,
+        z: A::Scalar,
+        context: &GeometryContext,
+    ) -> AdapterResult<GeometryOutcome<Self>> {
+        solid::try_scale_with_context(
+            &self.inner,
+            A::into_real(x)?,
+            A::into_real(y)?,
+            A::into_real(z)?,
+            context,
+        )
+        .map(|outcome| outcome.map(Self::from_native))
+        .map_err(|error| AdapterError::Validation(error.to_string()))
+    }
+
+    /// Applies the operation with the selected policy and aggregate certainty.
+    pub fn rotate_with_context(
+        &self,
+        x: A::Scalar,
+        y: A::Scalar,
+        z: A::Scalar,
+        context: &GeometryContext,
+    ) -> AdapterResult<GeometryOutcome<Self>> {
+        solid::try_rotate_with_context(
+            &self.inner,
+            A::into_real(x)?,
+            A::into_real(y)?,
+            A::into_real(z)?,
+            context,
+        )
+        .map(|outcome| outcome.map(Self::from_native))
+        .map_err(|error| AdapterError::Validation(error.to_string()))
+    }
+
+    /// Applies the operation with the selected policy and aggregate certainty.
+    pub fn center_with_context(
+        &self,
+        context: &GeometryContext,
+    ) -> AdapterResult<GeometryOutcome<Self>> {
+        solid::try_center_with_context(&self.inner, context)
+            .map(|outcome| outcome.map(Self::from_native))
+            .map_err(|error| AdapterError::Validation(error.to_string()))
+    }
+
+    /// Applies the operation with the selected policy and aggregate certainty.
+    pub fn float_with_context(
+        &self,
+        context: &GeometryContext,
+    ) -> AdapterResult<GeometryOutcome<Self>> {
+        solid::try_float_with_context(&self.inner, context)
+            .map(|outcome| outcome.map(Self::from_native))
+            .map_err(|error| AdapterError::Validation(error.to_string()))
+    }
+
+    /// Computes bounds before scalar conversion, retaining predicate certainty.
+    pub fn bounding_box_with_context(
+        &self,
+        context: &GeometryContext,
+    ) -> AdapterResult<GeometryOutcome<Aabb3<A::Scalar>>> {
+        solid::try_bounding_box_with_context(&self.inner, context)
+            .map_err(|error| AdapterError::Validation(error.to_string()))?
+            .try_map(|bounds| {
+                Ok(Aabb3 {
+                    mins: [
+                        A::from_real(&bounds.mins.x)?,
+                        A::from_real(&bounds.mins.y)?,
+                        A::from_real(&bounds.mins.z)?,
+                    ],
+                    maxs: [
+                        A::from_real(&bounds.maxs.x)?,
+                        A::from_real(&bounds.maxs.y)?,
+                        A::from_real(&bounds.maxs.z)?,
+                    ],
+                })
+            })
+    }
+
+    /// Triangulates faces with the selected policy after promoting scalar coordinates.
+    pub fn polyhedron_with_context(
+        points: &[[A::Scalar; 3]],
+        faces: &[&[usize]],
+        context: &GeometryContext,
+    ) -> AdapterResult<GeometryOutcome<Self>> {
+        let points = points
+            .iter()
+            .cloned()
+            .map(scalar3_to_real::<A>)
+            .collect::<AdapterResult<Vec<_>>>()?;
+        solid::polyhedron_with_context(&points, faces, context)
+            .map(|outcome| outcome.map(Self::from_native))
+            .map_err(|error| AdapterError::Validation(error.to_string()))
     }
 
     pub fn graphics_mesh(&self) -> AdapterResult<GraphicsMesh<A::Scalar>> {

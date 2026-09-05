@@ -5,7 +5,9 @@
 //! attributes are intentionally ignored. Unsupported geometry fails explicitly
 //! instead of producing an incomplete mesh.
 
+use crate::context::GeometryDecisions;
 use crate::io::{IoError, triangulate_planar_face};
+use crate::{GeometryContext, GeometryOutcome};
 use hashbrown::HashMap;
 use hyperlattice::{Matrix4, Point3, Real, Vector3};
 use hypermesh::{Triangle, TriangleMesh};
@@ -23,7 +25,7 @@ pub struct VrmlMeshImport {
     pub ignored_non_mesh_geometry_count: usize,
     /// Number of degenerate polygons that could not form a surface.
     pub ignored_degenerate_polygon_count: usize,
-    /// Number of emitted triangles omitted after exact degeneracy checks.
+    /// Number of emitted triangles omitted after degeneracy checks under the selected policy.
     pub ignored_degenerate_triangle_count: usize,
 }
 
@@ -34,6 +36,16 @@ pub struct VrmlMeshImport {
 /// Appearance, material, normal, color, and texture data are accepted but do
 /// not cross this geometry-only boundary.
 pub fn from_vrml(bytes: &[u8]) -> Result<VrmlMeshImport, IoError> {
+    from_vrml_with_context(bytes, &GeometryContext::STRICT).map(GeometryOutcome::into_value)
+}
+
+/// Import a VRML scene with the selected mesh and triangulation policy.
+/// Undecided degeneracy checks return an error instead of omitting geometry.
+pub fn from_vrml_with_context(
+    bytes: &[u8],
+    context: &GeometryContext,
+) -> Result<GeometryOutcome<VrmlMeshImport>, IoError> {
+    let decisions = GeometryDecisions::new(context);
     let text = std::str::from_utf8(bytes)
         .map_err(|error| malformed(format!("document is not UTF-8: {error}")))?;
     let header = text
@@ -54,7 +66,7 @@ pub fn from_vrml(bytes: &[u8]) -> Result<VrmlMeshImport, IoError> {
     let mut flattened = Flattened::default();
     let identity = Matrix4::identity();
     for root in &roots {
-        flatten_node(root, &identity, &mut flattened)?;
+        flatten_node(root, &identity, &mut flattened, &decisions)?;
     }
     if flattened.triangles.is_empty() {
         return Err(IoError::Geometry {
@@ -66,9 +78,18 @@ pub fn from_vrml(bytes: &[u8]) -> Result<VrmlMeshImport, IoError> {
     let mut native_triangles = Vec::with_capacity(flattened.triangles.len());
     let triangles = std::mem::take(&mut flattened.triangles);
     for [a, b, c] in triangles {
-        let ab = &flattened.positions[b] - &flattened.positions[a];
-        let ac = &flattened.positions[c] - &flattened.positions[a];
-        let Ok(normal) = ab.unit_cross_checked(&ac) else {
+        let nondegenerate = hypermesh::Plane::points_are_nondegenerate(
+            decisions.mesh_context(),
+            &flattened.positions[a],
+            &flattened.positions[b],
+            &flattened.positions[c],
+        )
+        .map(|outcome| decisions.consume_mesh(outcome))
+        .map_err(|error| IoError::Geometry {
+            format: "VRML",
+            detail: error.to_string(),
+        })?;
+        if !nondegenerate {
             flattened.ignored_degenerate_triangle_count = flattened
                 .ignored_degenerate_triangle_count
                 .checked_add(1)
@@ -77,26 +98,26 @@ pub fn from_vrml(bytes: &[u8]) -> Result<VrmlMeshImport, IoError> {
                     limit: "ignored degenerate triangle count",
                 })?;
             continue;
-        };
-        let _ = normal;
+        }
         native_triangles.push(Triangle::new(a, b, c));
     }
     if native_triangles.is_empty() {
         return Err(IoError::Geometry {
             format: "VRML",
-            detail: "scene contains no certifiably nondegenerate triangles".into(),
+            detail: "scene contains no nondegenerate triangles under the selected policy"
+                .into(),
         });
     }
     let mesh = TriangleMesh::new(flattened.positions, native_triangles);
 
-    Ok(VrmlMeshImport {
+    Ok(decisions.finish(VrmlMeshImport {
         mesh,
         shape_count: flattened.shape_count,
         indexed_face_set_count: flattened.indexed_face_set_count,
         ignored_non_mesh_geometry_count: flattened.ignored_non_mesh_geometry_count,
         ignored_degenerate_polygon_count: flattened.ignored_degenerate_polygon_count,
         ignored_degenerate_triangle_count: flattened.ignored_degenerate_triangle_count,
-    })
+    }))
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -599,6 +620,7 @@ fn flatten_node(
     node: &Node,
     parent: &Matrix4,
     flattened: &mut Flattened,
+    decisions: &GeometryDecisions,
 ) -> Result<(), IoError> {
     match node {
         Node::Transform(transform) => {
@@ -611,12 +633,12 @@ fn flatten_node(
             )?;
             let world = parent * &local;
             for child in &transform.children {
-                flatten_node(child, &world, flattened)?;
+                flatten_node(child, &world, flattened, decisions)?;
             }
         },
         Node::Group(children) => {
             for child in children {
-                flatten_node(child, parent, flattened)?;
+                flatten_node(child, parent, flattened, decisions)?;
             }
         },
         Node::Shape(geometry) => {
@@ -629,7 +651,7 @@ fn flatten_node(
                         limit: "shape count",
                     })?;
             if let Some(geometry) = geometry {
-                flatten_node(geometry, parent, flattened)?;
+                flatten_node(geometry, parent, flattened, decisions)?;
             }
         },
         Node::IndexedFaceSet {
@@ -688,7 +710,7 @@ fn flatten_node(
                     let mut nondegenerate = false;
                     for index in 1..points.len() - 1 {
                         if hypermesh::Plane::points_are_nondegenerate(
-                            &crate::MESH_CONTEXT,
+                            decisions.mesh_context(),
                             points[0],
                             points[index],
                             points[index + 1],
@@ -696,8 +718,8 @@ fn flatten_node(
                         .map_err(|error| IoError::Geometry {
                             format: "VRML",
                             detail: error.to_string(),
-                        })?
-                        .into_value()
+                        })
+                        .map(|outcome| decisions.consume_mesh(outcome))?
                         {
                             nondegenerate = true;
                             break;
@@ -714,8 +736,12 @@ fn flatten_node(
                         continue;
                     }
                 }
-                let face_triangles =
-                    triangulate_planar_face(&flattened.positions, &face_indices, "VRML")?;
+                let face_triangles = triangulate_planar_face(
+                    &flattened.positions,
+                    &face_indices,
+                    "VRML",
+                    decisions,
+                )?;
                 if face_triangles.is_empty() {
                     flattened.ignored_degenerate_polygon_count = flattened
                         .ignored_degenerate_polygon_count

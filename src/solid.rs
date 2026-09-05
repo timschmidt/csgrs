@@ -4,7 +4,7 @@
 //! constructors, transforms, and Boolean composition all accept or return the
 //! native Hypermesh type.
 
-use crate::context::GeometryDecisions;
+use crate::context::{GeometryContext, GeometryDecisions, GeometryOutcome};
 use crate::errors::ValidationError;
 use hyperlattice::{Aabb, Matrix4, Point3, Real, Vector3};
 use hypermesh::{BooleanOp, BooleanProgram, HypermeshResult, Plane, Triangle, TriangleMesh};
@@ -79,7 +79,8 @@ struct CachedDistribution {
     positions: Arc<[Point3]>,
     triangles: Arc<[Triangle]>,
     parameters: DistributionParameters,
-    result: TriangleMesh,
+    context: GeometryContext,
+    result: GeometryOutcome<TriangleMesh>,
 }
 
 type MeshStorage = (Arc<[Point3]>, Arc<[Triangle]>);
@@ -101,11 +102,13 @@ thread_local! {
 struct CachedFlatten {
     positions: Arc<[Point3]>,
     triangles: Arc<[Triangle]>,
-    region: hypercurve::CurveRegion2,
+    context: GeometryContext,
+    region: GeometryOutcome<hypercurve::CurveRegion2>,
 }
 
 #[cfg(feature = "curve")]
-type SliceResult = (
+/// Filled region, open strings, and open paths produced by a horizontal slice.
+pub type SliceResult = (
     hypercurve::CurveRegion2,
     Vec<hypercurve::CurveString2>,
     Vec<hypercurve::CurvePath2>,
@@ -117,7 +120,8 @@ struct CachedSlice {
     positions: Arc<[Point3]>,
     triangles: Arc<[Triangle]>,
     z: Real,
-    result: SliceResult,
+    context: GeometryContext,
+    result: GeometryOutcome<SliceResult>,
 }
 
 #[cfg(feature = "curve")]
@@ -129,7 +133,8 @@ thread_local! {
 fn retained_distribution(
     mesh: &TriangleMesh,
     parameters: &DistributionParameters,
-) -> Option<TriangleMesh> {
+    context: &GeometryContext,
+) -> Option<GeometryOutcome<TriangleMesh>> {
     DISTRIBUTION_CACHE.with_borrow(|entries| {
         entries
             .iter()
@@ -137,6 +142,7 @@ fn retained_distribution(
                 Arc::ptr_eq(&entry.positions, &mesh.positions)
                     && Arc::ptr_eq(&entry.triangles, &mesh.triangles)
                     && &entry.parameters == parameters
+                    && &entry.context == context
             })
             .map(|entry| entry.result.clone())
     })
@@ -145,7 +151,8 @@ fn retained_distribution(
 fn retain_distribution(
     mesh: &TriangleMesh,
     parameters: DistributionParameters,
-    result: &TriangleMesh,
+    context: &GeometryContext,
+    result: &GeometryOutcome<TriangleMesh>,
 ) {
     DISTRIBUTION_CACHE.with_borrow_mut(|entries| {
         const CAPACITY: usize = 8;
@@ -156,6 +163,7 @@ fn retain_distribution(
             positions: Arc::clone(&mesh.positions),
             triangles: Arc::clone(&mesh.triangles),
             parameters,
+            context: *context,
             result: result.clone(),
         });
     });
@@ -175,12 +183,6 @@ fn nonnegative(value: &Real) -> bool {
         crate::hyper_math::hreal_sign(value),
         Some(RealSign::Positive | RealSign::Zero)
     )
-}
-
-fn exact_point3_equal(left: &Point3, right: &Point3) -> Option<bool> {
-    let left = hyperlimit::Point3::new(left.x.clone(), left.y.clone(), left.z.clone());
-    let right = hyperlimit::Point3::new(right.x.clone(), right.y.clone(), right.z.clone());
-    hyperlimit::point3_equal(&left, &right, crate::PREDICATE_POLICY).value()
 }
 
 fn sampled_circle(count: usize) -> Option<Vec<(Real, Real)>> {
@@ -991,6 +993,17 @@ pub fn polyhedron(
     points: &[[Real; 3]],
     faces: &[&[usize]],
 ) -> Result<TriangleMesh, ValidationError> {
+    polyhedron_with_context(points, faces, &GeometryContext::STRICT)
+        .map(GeometryOutcome::into_value)
+}
+
+/// Triangulates polyhedron faces with the selected policy and aggregate certainty.
+pub fn polyhedron_with_context(
+    points: &[[Real; 3]],
+    faces: &[&[usize]],
+    context: &GeometryContext,
+) -> Result<GeometryOutcome<TriangleMesh>, ValidationError> {
+    let decisions = GeometryDecisions::new(context);
     let positions = points
         .iter()
         .map(|[x, y, z]| Point3::new(x.clone(), y.clone(), z.clone()))
@@ -1013,69 +1026,126 @@ pub fn polyhedron(
                 });
             }
         }
-        let origin = &positions[face[0]];
-        let support = (1..face.len() - 1).find_map(|left| {
-            (left + 1..face.len()).find_map(|right| {
-                let x = &positions[face[left]] - origin;
-                let y = &positions[face[right]] - origin;
-                let support_normal = x.cross(&y);
-                support_normal
-                    .normalize_checked()
-                    .ok()
-                    .map(|normal| (x, support_normal, normal))
-            })
-        });
-        let Some((axis_x, support_normal, normal)) = support else {
-            return Err(ValidationError::InvalidArguments);
-        };
-        for &index in &face[1..] {
-            let offset = &positions[index] - origin;
-            if !matches!(
-                crate::hyper_math::hreal_sign(&support_normal.dot(&offset)),
-                Some(RealSign::Zero)
-            ) {
-                return Err(ValidationError::InvalidArguments);
-            }
-        }
-        let axis_x = axis_x
-            .normalize_checked()
-            .map_err(|_| ValidationError::InvalidArguments)?;
-        let axis_y = normal.cross(&axis_x);
-        let projected = face
+        let points = face
             .iter()
-            .map(|&index| {
-                let offset = &positions[index] - origin;
-                hypertri::Point2::new(axis_x.dot(&offset), axis_y.dot(&offset))
-            })
+            .map(|&index| &positions[index])
             .collect::<Vec<_>>();
-        let indices = hypertri::earcut(&crate::TRIANGULATION_CONTEXT, &projected, &[])
-            .map_err(|error| ValidationError::Geometry(error.to_string()))?
-            .into_value();
+        let (projected, _) = project_planar_ring(&points, &decisions)?;
+        let indices = decisions.consume_triangulation(
+            hypertri::earcut(&decisions.triangulation_context(), &projected, &[])
+                .map_err(|error| ValidationError::Geometry(error.to_string()))?,
+        );
         triangles.extend(indices.as_chunks::<3>().0.iter().map(|triangle| {
             Triangle::new(face[triangle[0]], face[triangle[1]], face[triangle[2]])
         }));
     }
-    Ok(TriangleMesh::new(positions, triangles))
+    Ok(decisions.finish(TriangleMesh::new(positions, triangles)))
 }
 
-/// Computes one exact regularized Boolean and returns reusable native geometry.
+// A planar ring only needs an invertible coordinate projection for triangulation.
+// Normalizing its support vectors adds square roots and strict scalar guards
+// that do not contribute to topology or to the returned triangle coordinates.
+fn project_planar_ring(
+    points: &[&Point3],
+    decisions: &GeometryDecisions,
+) -> Result<(Vec<hypertri::Point2>, Vector3), ValidationError> {
+    let origin = points[0];
+    let mut normal = None;
+    let mut blocker = None;
+    'support: for left in 1..points.len() - 1 {
+        for right in left + 1..points.len() {
+            match hypermesh::Plane::points_are_nondegenerate(
+                decisions.mesh_context(),
+                origin,
+                points[left],
+                points[right],
+            ) {
+                Ok(outcome) => {
+                    if decisions.consume_mesh(outcome) {
+                        normal =
+                            Some((points[left] - origin).cross(&(points[right] - origin)));
+                        break 'support;
+                    }
+                },
+                Err(error) => blocker = Some(ValidationError::Geometry(error.to_string())),
+            }
+        }
+    }
+    let normal = normal.ok_or_else(|| blocker.unwrap_or(ValidationError::InvalidArguments))?;
+    for point in points {
+        if decisions.sign(&normal.dot(&(*point - origin)), "ring planarity")? != RealSign::Zero
+        {
+            return Err(ValidationError::InvalidArguments);
+        }
+    }
+    // Any decidably nonzero normal component gives an invertible projection.
+    // An undecided component need not block another component's certified proof.
+    let (axis, sign) = normal
+        .0
+        .iter()
+        .enumerate()
+        .find_map(|(axis, value)| {
+            decisions
+                .sign(value, "ring projection normal")
+                .ok()
+                .filter(|sign| *sign != RealSign::Zero)
+                .map(|sign| (axis, sign))
+        })
+        .ok_or_else(|| {
+            ValidationError::Geometry("ring has no decidably nonzero projection normal".into())
+        })?;
+    let projected = points
+        .iter()
+        .map(|point| {
+            let (u, v) = match axis {
+                0 => (point.y.clone(), point.z.clone()),
+                1 => (point.z.clone(), point.x.clone()),
+                _ => (point.x.clone(), point.y.clone()),
+            };
+            hypertri::Point2::new(u, if sign == RealSign::Negative { -v } else { v })
+        })
+        .collect();
+    Ok((projected, normal))
+}
+
+/// Computes one regularized Boolean under [`GeometryContext::STRICT`].
+///
+/// Use [`boolean_with_context`] to select a predicate policy and retain the
+/// operation's aggregate certainty.
 pub fn boolean(
     left: &TriangleMesh,
     right: &TriangleMesh,
     operation: BooleanOp,
 ) -> HypermeshResult<TriangleMesh> {
-    let batch = hypermesh::boolean(
-        &crate::MESH_CONTEXT,
+    boolean_with_context(left, right, operation, &GeometryContext::STRICT)
+        .map(GeometryOutcome::into_value)
+}
+
+/// Computes one regularized Boolean with the selected predicate policy.
+///
+/// The context applies to input validation, the Boolean operation, and output
+/// certification. The returned certainty records whether any predicate consumed
+/// the approximate 512-bit terminal; choosing an approximate context does not
+/// by itself make a certified result approximate.
+pub fn boolean_with_context(
+    left: &TriangleMesh,
+    right: &TriangleMesh,
+    operation: BooleanOp,
+    context: &GeometryContext,
+) -> HypermeshResult<GeometryOutcome<TriangleMesh>> {
+    let decisions = GeometryDecisions::new(context);
+    let batch = decisions.consume_mesh(hypermesh::boolean(
+        decisions.mesh_context(),
         &[left.as_ref(), right.as_ref()],
         BooleanProgram::Operation(operation),
-    )?
-    .into_value();
+    )?);
     let mut meshes = batch.into_triangle_meshes()?;
-    meshes
+    let mesh = meshes
         .pop()
         .ok_or(hypermesh::HypermeshError::InvalidBooleanProgram {
             reason: "one CSG Boolean operation produced no result row",
-        })
+        })?;
+    Ok(decisions.finish(mesh))
 }
 
 /// Applies a homogeneous transform and returns native geometry.
@@ -1083,28 +1153,40 @@ pub fn try_transform(
     mesh: &TriangleMesh,
     matrix: &Matrix4,
 ) -> Result<TriangleMesh, ValidationError> {
-    let orientation = crate::hyper_math::hreal_sign(&matrix.determinant())
-        .ok_or(ValidationError::InvalidArguments)?;
-    let transformed = mesh
-        .try_transformed(&crate::MESH_CONTEXT, matrix)
-        .map_err(|_| ValidationError::InvalidArguments)?
-        .into_value();
-    match orientation {
-        RealSign::Positive => Ok(transformed),
-        RealSign::Negative => Ok(transformed.reversed_winding()),
-        RealSign::Zero => Err(ValidationError::InvalidArguments),
+    try_transform_with_context(mesh, matrix, &GeometryContext::STRICT)
+        .map(GeometryOutcome::into_value)
+}
+
+/// Applies a transform with the selected policy, preserving orientation and certainty.
+pub fn try_transform_with_context(
+    mesh: &TriangleMesh,
+    matrix: &Matrix4,
+    context: &GeometryContext,
+) -> Result<GeometryOutcome<TriangleMesh>, ValidationError> {
+    let decisions = GeometryDecisions::new(context);
+    let orientation = decisions.sign(&matrix.determinant(), "transform determinant")?;
+    if orientation == RealSign::Zero {
+        return Err(ValidationError::InvalidArguments);
     }
+    let transformed = try_transform_with_known_orientation(
+        mesh,
+        matrix,
+        orientation == RealSign::Negative,
+        &decisions,
+    )?;
+    Ok(decisions.finish(transformed))
 }
 
 fn try_transform_with_known_orientation(
     mesh: &TriangleMesh,
     matrix: &Matrix4,
     reverse_winding: bool,
+    decisions: &GeometryDecisions,
 ) -> Result<TriangleMesh, ValidationError> {
-    let transformed = mesh
-        .try_transformed(&crate::MESH_CONTEXT, matrix)
-        .map_err(|_| ValidationError::InvalidArguments)?
-        .into_value();
+    let transformed = decisions.consume_mesh(
+        mesh.try_transformed(decisions.mesh_context(), matrix)
+            .map_err(|error| ValidationError::Geometry(error.to_string()))?,
+    );
     Ok(if reverse_winding {
         transformed.reversed_winding()
     } else {
@@ -1124,9 +1206,24 @@ pub fn try_rotate(
     y: Real,
     z: Real,
 ) -> Result<TriangleMesh, ValidationError> {
-    mesh.try_rotated_xyz_degrees(&crate::MESH_CONTEXT, x, y, z)
-        .map(hypermesh::MeshOutcome::into_value)
-        .map_err(|_| ValidationError::InvalidArguments)
+    try_rotate_with_context(mesh, x, y, z, &GeometryContext::STRICT)
+        .map(GeometryOutcome::into_value)
+}
+
+/// Rotates with the selected policy and reports aggregate certainty.
+pub fn try_rotate_with_context(
+    mesh: &TriangleMesh,
+    x: Real,
+    y: Real,
+    z: Real,
+    context: &GeometryContext,
+) -> Result<GeometryOutcome<TriangleMesh>, ValidationError> {
+    let decisions = GeometryDecisions::new(context);
+    let rotated = decisions.consume_mesh(
+        mesh.try_rotated_xyz_degrees(decisions.mesh_context(), x, y, z)
+            .map_err(|error| ValidationError::Geometry(error.to_string()))?,
+    );
+    Ok(decisions.finish(rotated))
 }
 
 /// Rotates native geometry by Euler angles in degrees.
@@ -1141,11 +1238,23 @@ pub fn try_scale(
     y: Real,
     z: Real,
 ) -> Result<TriangleMesh, ValidationError> {
+    try_scale_with_context(mesh, x, y, z, &GeometryContext::STRICT)
+        .map(GeometryOutcome::into_value)
+}
+
+/// Scales with the selected policy, rejecting collapsed axes and retaining certainty.
+pub fn try_scale_with_context(
+    mesh: &TriangleMesh,
+    x: Real,
+    y: Real,
+    z: Real,
+    context: &GeometryContext,
+) -> Result<GeometryOutcome<TriangleMesh>, ValidationError> {
+    let decisions = GeometryDecisions::new(context);
     let signs = [&x, &y, &z]
-        .map(crate::hyper_math::hreal_sign)
+        .map(|value| decisions.sign(value, "scale axis"))
         .into_iter()
-        .collect::<Option<Vec<_>>>()
-        .ok_or(ValidationError::InvalidArguments)?;
+        .collect::<Result<Vec<_>, _>>()?;
     if signs.contains(&RealSign::Zero) {
         return Err(ValidationError::InvalidArguments);
     }
@@ -1155,11 +1264,13 @@ pub fn try_scale(
         .count()
         % 2
         == 1;
-    try_transform_with_known_orientation(
+    let scaled = try_transform_with_known_orientation(
         mesh,
         &Matrix4::affine_nonuniform_scale([x, y, z]),
         reverse_winding,
-    )
+        &decisions,
+    )?;
+    Ok(decisions.finish(scaled))
 }
 
 /// Scales native geometry independently along each axis.
@@ -1172,12 +1283,25 @@ pub fn try_mirror(
     mesh: &TriangleMesh,
     plane: &Plane,
 ) -> Result<TriangleMesh, ValidationError> {
-    let matrix = plane
-        .reflection_matrix(&crate::MESH_CONTEXT)
-        .map_err(|_| ValidationError::InvalidArguments)?
-        .into_value();
+    try_mirror_with_context(mesh, plane, &GeometryContext::STRICT)
+        .map(GeometryOutcome::into_value)
+}
+
+/// Reflects across a plane with the selected policy and aggregate certainty.
+pub fn try_mirror_with_context(
+    mesh: &TriangleMesh,
+    plane: &Plane,
+    context: &GeometryContext,
+) -> Result<GeometryOutcome<TriangleMesh>, ValidationError> {
+    let decisions = GeometryDecisions::new(context);
+    let matrix = decisions.consume_mesh(
+        plane
+            .reflection_matrix(decisions.mesh_context())
+            .map_err(|error| ValidationError::Geometry(error.to_string()))?,
+    );
     // A valid plane reflection always reverses orientation.
-    try_transform_with_known_orientation(mesh, &matrix, true)
+    let mirrored = try_transform_with_known_orientation(mesh, &matrix, true, &decisions)?;
+    Ok(decisions.finish(mirrored))
 }
 
 /// Reflects native geometry across a plane.
@@ -1300,6 +1424,86 @@ pub fn sdf_expr_with_diagnostics(
     )
 }
 
+/// Samples and meshes a scalar field with the selected policy, retaining errors and certainty.
+/// As with [`sdf`], certification covers the sampled grid, not the continuous field.
+#[cfg(feature = "sdf")]
+pub fn sdf_with_context(
+    field: impl Fn(&Point3) -> Real,
+    resolution: (usize, usize, usize),
+    min: Point3,
+    max: Point3,
+    iso_value: Real,
+    context: &GeometryContext,
+) -> Result<GeometryOutcome<TriangleMesh>, ValidationError> {
+    crate::implicit::sdf::sample_with_context(
+        |point| Ok(field(point)),
+        resolution,
+        min,
+        max,
+        iso_value,
+        false,
+        context,
+    )
+    .map(|outcome| outcome.map(|(mesh, _)| mesh))
+}
+
+/// Samples a field with the selected policy and retains sampling diagnostics.
+#[cfg(feature = "sdf")]
+pub fn sdf_with_diagnostics_and_context(
+    field: impl Fn(&Point3) -> Real,
+    resolution: (usize, usize, usize),
+    min: Point3,
+    max: Point3,
+    iso_value: Real,
+    context: &GeometryContext,
+) -> Result<GeometryOutcome<(TriangleMesh, SdfDiagnostics)>, ValidationError> {
+    crate::implicit::sdf::sample_with_context(
+        |point| Ok(field(point)),
+        resolution,
+        min,
+        max,
+        iso_value,
+        true,
+        context,
+    )
+}
+
+/// Samples a Hypersdf expression and meshes its scalar values with the selected policy.
+/// Expression evaluation retains Hypersdf's own domain checks.
+#[cfg(feature = "sdf")]
+pub fn sdf_expr_with_context(
+    expression: hypersdf::SdfExpr,
+    resolution: (usize, usize, usize),
+    min: Point3,
+    max: Point3,
+    iso_value: Real,
+    context: &GeometryContext,
+) -> Result<GeometryOutcome<TriangleMesh>, ValidationError> {
+    let sdf = hypersdf::Sdf::new(expression);
+    crate::implicit::sdf::sample_with_context(
+        |point| {
+            sdf.classify_point(&hyperlimit::Point3::new(
+                point.x.clone(),
+                point.y.clone(),
+                point.z.clone(),
+            ))
+            .scalar_value
+            .ok_or_else(|| {
+                ValidationError::Geometry(
+                    "SDF expression has no scalar value at a sample".into(),
+                )
+            })
+        },
+        resolution,
+        min,
+        max,
+        iso_value,
+        false,
+        context,
+    )
+    .map(|outcome| outcome.map(|(mesh, _)| mesh))
+}
+
 /// Bounded gyroid solid sampled through the established SDF boundary.
 #[cfg(feature = "sdf")]
 pub fn gyroid_solid(
@@ -1389,15 +1593,26 @@ pub fn schwarz_d(
 
 /// Exact bounds of native triangle positions.
 pub fn try_bounding_box(mesh: &TriangleMesh) -> Result<Aabb, ValidationError> {
-    match mesh
-        .exact_bounds(&crate::MESH_CONTEXT)
-        .map_err(|_| ValidationError::InvalidArguments)?
-        .into_value()
-    {
-        Some(bounds) => Ok(bounds),
-        None if mesh.positions.is_empty() && mesh.triangles.is_empty() => Ok(Aabb::origin()),
-        None => Err(ValidationError::InvalidArguments),
-    }
+    try_bounding_box_with_context(mesh, &GeometryContext::STRICT)
+        .map(GeometryOutcome::into_value)
+}
+
+/// Returns bounds with the selected policy and aggregate certainty.
+pub fn try_bounding_box_with_context(
+    mesh: &TriangleMesh,
+    context: &GeometryContext,
+) -> Result<GeometryOutcome<Aabb>, ValidationError> {
+    let decisions = GeometryDecisions::new(context);
+    let bounds = decisions.consume_mesh(
+        mesh.exact_bounds(decisions.mesh_context())
+            .map_err(|error| ValidationError::Geometry(error.to_string()))?,
+    );
+    let bounds = match bounds {
+        Some(bounds) => bounds,
+        None if mesh.positions.is_empty() && mesh.triangles.is_empty() => Aabb::origin(),
+        None => return Err(ValidationError::InvalidArguments),
+    };
+    Ok(decisions.finish(bounds))
 }
 
 /// Exact bounds, using the origin box only for empty or invalid geometry.
@@ -1407,7 +1622,16 @@ pub fn bounding_box(mesh: &TriangleMesh) -> Aabb {
 
 /// Translates the center of the exact bounds to the origin.
 pub fn try_center(mesh: &TriangleMesh) -> Result<TriangleMesh, ValidationError> {
-    let bounds = try_bounding_box(mesh)?;
+    try_center_with_context(mesh, &GeometryContext::STRICT).map(GeometryOutcome::into_value)
+}
+
+/// Centers the selected-policy bounds, retaining certainty through the translation.
+pub fn try_center_with_context(
+    mesh: &TriangleMesh,
+    context: &GeometryContext,
+) -> Result<GeometryOutcome<TriangleMesh>, ValidationError> {
+    let decisions = GeometryDecisions::new(context);
+    let bounds = decisions.consume_geometry(try_bounding_box_with_context(mesh, context)?);
     let two = Real::from(2_u8);
     let x = -((&bounds.mins.x + &bounds.maxs.x) / &two)
         .map_err(|_| ValidationError::InvalidArguments)?;
@@ -1415,7 +1639,13 @@ pub fn try_center(mesh: &TriangleMesh) -> Result<TriangleMesh, ValidationError> 
         .map_err(|_| ValidationError::InvalidArguments)?;
     let z = -((&bounds.mins.z + &bounds.maxs.z) / &two)
         .map_err(|_| ValidationError::InvalidArguments)?;
-    Ok(mesh.translated(x, y, z))
+    let centered = try_transform_with_known_orientation(
+        mesh,
+        &Matrix4::affine_translation([x, y, z]),
+        false,
+        &decisions,
+    )?;
+    Ok(decisions.finish(centered))
 }
 
 /// Translates the center of the exact bounds to the origin.
@@ -1425,8 +1655,23 @@ pub fn center(mesh: &TriangleMesh) -> TriangleMesh {
 
 /// Translates the minimum Z bound to zero.
 pub fn try_float(mesh: &TriangleMesh) -> Result<TriangleMesh, ValidationError> {
-    let bounds = try_bounding_box(mesh)?;
-    Ok(mesh.translated(Real::zero(), Real::zero(), -bounds.mins.z.clone()))
+    try_float_with_context(mesh, &GeometryContext::STRICT).map(GeometryOutcome::into_value)
+}
+
+/// Moves the selected-policy minimum Z bound to zero and retains certainty.
+pub fn try_float_with_context(
+    mesh: &TriangleMesh,
+    context: &GeometryContext,
+) -> Result<GeometryOutcome<TriangleMesh>, ValidationError> {
+    let decisions = GeometryDecisions::new(context);
+    let bounds = decisions.consume_geometry(try_bounding_box_with_context(mesh, context)?);
+    let floated = try_transform_with_known_orientation(
+        mesh,
+        &Matrix4::affine_translation([Real::zero(), Real::zero(), -bounds.mins.z]),
+        false,
+        &decisions,
+    )?;
+    Ok(decisions.finish(floated))
 }
 
 /// Translates the minimum Z bound to zero.
@@ -1484,79 +1729,115 @@ pub fn merge(meshes: &[TriangleMesh]) -> TriangleMesh {
     result
 }
 
-fn union_copies(copies: Vec<TriangleMesh>) -> TriangleMesh {
-    let pairwise_disjoint = copies
+fn union_copies(
+    copies: Vec<TriangleMesh>,
+    decisions: &GeometryDecisions,
+) -> Result<TriangleMesh, ValidationError> {
+    let bounds = copies
         .iter()
         .map(|mesh| {
-            mesh.exact_bounds(&crate::MESH_CONTEXT)
+            mesh.exact_bounds(decisions.mesh_context())
                 .ok()
-                .and_then(|outcome| outcome.into_value())
+                .and_then(|outcome| decisions.consume_mesh(outcome))
         })
-        .collect::<Option<Vec<_>>>()
-        .is_some_and(|bounds| {
-            bounds.iter().enumerate().all(|(left_index, left)| {
-                bounds.iter().skip(left_index + 1).all(|right| {
-                    matches!(
-                        hyperlimit::ordered_aabb3s_intersect(
-                            &left.mins,
-                            &left.maxs,
-                            &right.mins,
-                            &right.maxs,
-                            crate::PREDICATE_POLICY,
-                        )
-                        .value(),
-                        Some(false)
-                    )
-                })
-            })
-        });
+        .collect::<Option<Vec<_>>>();
+    let mut pairwise_disjoint = bounds.is_some();
+    if let Some(bounds) = bounds {
+        for (index, left) in bounds.iter().enumerate() {
+            for right in &bounds[index + 1..] {
+                let disjoint = decisions.decide(
+                    hyperlimit::ordered_aabb3s_intersect(
+                        &left.mins,
+                        &left.maxs,
+                        &right.mins,
+                        &right.maxs,
+                        decisions.predicate_policy(),
+                    ),
+                    "distribution bounds overlap",
+                );
+                if !matches!(disjoint, Ok(false)) {
+                    pairwise_disjoint = false;
+                    break;
+                }
+            }
+            if !pairwise_disjoint {
+                break;
+            }
+        }
+    }
     if pairwise_disjoint {
-        return merge(&copies);
+        return Ok(merge(&copies));
     }
     let mut copies = copies.into_iter();
     let Some(first) = copies.next() else {
-        return empty();
+        return Ok(empty());
     };
-    copies
-        .try_fold(first, |left, right| boolean(&left, &right, BooleanOp::Union))
-        .unwrap_or_else(|_| empty())
+    let context = GeometryContext::new(decisions.predicate_policy());
+    copies.try_fold(first, |left, right| {
+        boolean_with_context(&left, &right, BooleanOp::Union, &context)
+            .map(|outcome| decisions.consume_geometry(outcome))
+            .map_err(|error| ValidationError::Geometry(error.to_string()))
+    })
 }
 
-/// Places `count` copies along a direction at exact spacing.
+/// Places `count` copies along a direction at exact spacing under strict policy.
 pub fn distribute_linear(
     mesh: &TriangleMesh,
     count: usize,
     direction: Vector3,
     spacing: Real,
 ) -> TriangleMesh {
+    distribute_linear_with_context(mesh, count, direction, spacing, &GeometryContext::STRICT)
+        .map(GeometryOutcome::into_value)
+        .unwrap_or_else(|_| empty())
+}
+
+/// Distributes and unions copies with the selected policy, preserving errors and certainty.
+pub fn distribute_linear_with_context(
+    mesh: &TriangleMesh,
+    count: usize,
+    direction: Vector3,
+    spacing: Real,
+    context: &GeometryContext,
+) -> Result<GeometryOutcome<TriangleMesh>, ValidationError> {
+    let decisions = GeometryDecisions::new(context);
     if count == 0 {
-        return empty();
+        return Ok(decisions.finish(empty()));
     }
     let parameters = DistributionParameters::Linear {
         count,
         direction: direction.clone(),
         spacing: spacing.clone(),
     };
-    if let Some(result) = retained_distribution(mesh, &parameters) {
-        return result;
+    if let Some(result) = retained_distribution(mesh, &parameters, context) {
+        return Ok(result);
     }
-    let Ok(direction) = direction.normalize_checked() else {
-        return empty();
-    };
-    let step = direction * spacing;
-    let result = union_copies(
-        (0..count)
-            .map(|index| {
-                let offset = step.clone() * Real::from(index as u64);
-                mesh.translated(offset.0[0].clone(), offset.0[1].clone(), offset.0[2].clone())
-            })
-            .collect(),
-    );
-    retain_distribution(mesh, parameters, &result);
-    result
+    if decisions.sign(&direction.dot(&direction), "distribution direction")?
+        != RealSign::Positive
+    {
+        return Err(ValidationError::InvalidArguments);
+    }
+    let step = direction
+        .normalize_checked()
+        .map_err(|_| ValidationError::InvalidArguments)?
+        * spacing;
+    let copies = (0..count)
+        .map(|index| {
+            let offset = step.clone() * Real::from(index as u64);
+            try_transform_with_known_orientation(
+                mesh,
+                &Matrix4::affine_translation(offset.0),
+                false,
+                &decisions,
+            )
+        })
+        .collect::<Result<Vec<_>, _>>()?;
+    let result = decisions.finish(union_copies(copies, &decisions)?);
+    retain_distribution(mesh, parameters, context, &result);
+    Ok(result)
 }
 
-/// Places copies in an XY grid.
+/// Places copies in an XY grid under strict policy.
 pub fn distribute_grid(
     mesh: &TriangleMesh,
     rows: usize,
@@ -1564,8 +1845,23 @@ pub fn distribute_grid(
     dx: Real,
     dy: Real,
 ) -> TriangleMesh {
+    distribute_grid_with_context(mesh, rows, columns, dx, dy, &GeometryContext::STRICT)
+        .map(GeometryOutcome::into_value)
+        .unwrap_or_else(|_| empty())
+}
+
+/// Distributes and unions a grid with the selected policy and aggregate certainty.
+pub fn distribute_grid_with_context(
+    mesh: &TriangleMesh,
+    rows: usize,
+    columns: usize,
+    dx: Real,
+    dy: Real,
+    context: &GeometryContext,
+) -> Result<GeometryOutcome<TriangleMesh>, ValidationError> {
+    let decisions = GeometryDecisions::new(context);
     if rows == 0 || columns == 0 {
-        return empty();
+        return Ok(decisions.finish(empty()));
     }
     let parameters = DistributionParameters::Grid {
         rows,
@@ -1573,25 +1869,33 @@ pub fn distribute_grid(
         dx: dx.clone(),
         dy: dy.clone(),
     };
-    if let Some(result) = retained_distribution(mesh, &parameters) {
-        return result;
+    if let Some(result) = retained_distribution(mesh, &parameters, context) {
+        return Ok(result);
     }
-    let mut copies = Vec::with_capacity(rows.saturating_mul(columns));
+    let capacity = rows
+        .checked_mul(columns)
+        .ok_or(ValidationError::InvalidArguments)?;
+    let mut copies = Vec::with_capacity(capacity);
     for row in 0..rows {
         for column in 0..columns {
-            copies.push(mesh.translated(
-                dx.clone() * Real::from(column as u64),
-                dy.clone() * Real::from(row as u64),
-                Real::zero(),
-            ));
+            copies.push(try_transform_with_known_orientation(
+                mesh,
+                &Matrix4::affine_translation([
+                    dx.clone() * Real::from(column as u64),
+                    dy.clone() * Real::from(row as u64),
+                    Real::zero(),
+                ]),
+                false,
+                &decisions,
+            )?);
         }
     }
-    let result = union_copies(copies);
-    retain_distribution(mesh, parameters, &result);
-    result
+    let result = decisions.finish(union_copies(copies, &decisions)?);
+    retain_distribution(mesh, parameters, context, &result);
+    Ok(result)
 }
 
-/// Places copies along a circular arc in the XY plane.
+/// Places copies along a circular arc in the XY plane under strict policy.
 pub fn distribute_arc(
     mesh: &TriangleMesh,
     count: usize,
@@ -1599,8 +1903,30 @@ pub fn distribute_arc(
     start_angle_degrees: Real,
     end_angle_degrees: Real,
 ) -> TriangleMesh {
+    distribute_arc_with_context(
+        mesh,
+        count,
+        radius,
+        start_angle_degrees,
+        end_angle_degrees,
+        &GeometryContext::STRICT,
+    )
+    .map(GeometryOutcome::into_value)
+    .unwrap_or_else(|_| empty())
+}
+
+/// Distributes and unions an arc with the selected policy and aggregate certainty.
+pub fn distribute_arc_with_context(
+    mesh: &TriangleMesh,
+    count: usize,
+    radius: Real,
+    start_angle_degrees: Real,
+    end_angle_degrees: Real,
+    context: &GeometryContext,
+) -> Result<GeometryOutcome<TriangleMesh>, ValidationError> {
+    let decisions = GeometryDecisions::new(context);
     if count == 0 {
-        return empty();
+        return Ok(decisions.finish(empty()));
     }
     let parameters = DistributionParameters::Arc {
         count,
@@ -1608,28 +1934,37 @@ pub fn distribute_arc(
         start_angle_degrees: start_angle_degrees.clone(),
         end_angle_degrees: end_angle_degrees.clone(),
     };
-    if let Some(result) = retained_distribution(mesh, &parameters) {
-        return result;
+    if let Some(result) = retained_distribution(mesh, &parameters, context) {
+        return Ok(result);
     }
     let start = start_angle_degrees.to_radians();
     let sweep = end_angle_degrees.to_radians() - start.clone();
-    let result = union_copies(
-        (0..count)
-            .map(|index| {
-                let fraction = if count == 1 {
-                    (Real::one() / Real::from(2_u8)).expect("two is nonzero")
-                } else {
-                    (Real::from(index as u64) / Real::from((count - 1) as u64))
-                        .expect("count minus one is nonzero")
-                };
-                let angle = start.clone() + sweep.clone() * fraction;
-                let translated = mesh.translated(radius.clone(), Real::zero(), Real::zero());
-                transform(&translated, &Matrix4::rotation_z(angle))
-            })
-            .collect(),
-    );
-    retain_distribution(mesh, parameters, &result);
-    result
+    let translated = try_transform_with_known_orientation(
+        mesh,
+        &Matrix4::affine_translation([radius, Real::zero(), Real::zero()]),
+        false,
+        &decisions,
+    )?;
+    let copies = (0..count)
+        .map(|index| {
+            let fraction = if count == 1 {
+                (Real::one() / Real::from(2_u8)).expect("two is nonzero")
+            } else {
+                (Real::from(index as u64) / Real::from((count - 1) as u64))
+                    .expect("count minus one is nonzero")
+            };
+            let angle = start.clone() + sweep.clone() * fraction;
+            try_transform_with_known_orientation(
+                &translated,
+                &Matrix4::rotation_z(angle),
+                false,
+                &decisions,
+            )
+        })
+        .collect::<Result<Vec<_>, _>>()?;
+    let result = decisions.finish(union_copies(copies, &decisions)?);
+    retain_distribution(mesh, parameters, context, &result);
+    Ok(result)
 }
 
 /// Exact point containment through the retained native triangle query path.
@@ -1637,8 +1972,19 @@ pub fn contains_point(
     mesh: &TriangleMesh,
     point: &Point3,
 ) -> hypermesh::HypermeshResult<bool> {
-    mesh.contains_point(&crate::MESH_CONTEXT, point)
-        .map(hypermesh::MeshOutcome::into_value)
+    contains_point_with_context(mesh, point, &GeometryContext::STRICT)
+        .map(GeometryOutcome::into_value)
+}
+
+/// Classifies a point with the selected policy and reports aggregate certainty.
+pub fn contains_point_with_context(
+    mesh: &TriangleMesh,
+    point: &Point3,
+    context: &GeometryContext,
+) -> HypermeshResult<GeometryOutcome<bool>> {
+    let decisions = GeometryDecisions::new(context);
+    let inside = decisions.consume_mesh(mesh.contains_point(decisions.mesh_context(), point)?);
+    Ok(decisions.finish(inside))
 }
 
 /// Exact ray intersections sorted by ray parameter.
@@ -1662,8 +2008,20 @@ pub fn polyline_intersections(
     mesh: &TriangleMesh,
     polyline: &[Point3],
 ) -> hypermesh::HypermeshResult<Vec<Point3>> {
-    mesh.polyline_intersections(&crate::MESH_CONTEXT, polyline)
-        .map(hypermesh::MeshOutcome::into_value)
+    polyline_intersections_with_context(mesh, polyline, &GeometryContext::STRICT)
+        .map(GeometryOutcome::into_value)
+}
+
+/// Intersects a polyline with the selected policy and reports aggregate certainty.
+pub fn polyline_intersections_with_context(
+    mesh: &TriangleMesh,
+    polyline: &[Point3],
+    context: &GeometryContext,
+) -> HypermeshResult<GeometryOutcome<Vec<Point3>>> {
+    let decisions = GeometryDecisions::new(context);
+    let hits = decisions
+        .consume_mesh(mesh.polyline_intersections(decisions.mesh_context(), polyline)?);
+    Ok(decisions.finish(hits))
 }
 
 /// Exact dihedral angle between two indexed triangles.
@@ -1674,9 +2032,25 @@ pub fn dihedral_angle(
     first: hypermesh::Triangle,
     second: hypermesh::Triangle,
 ) -> Option<Real> {
-    mesh.dihedral_angle(&crate::MESH_CONTEXT, first, second)
+    dihedral_angle_with_context(mesh, first, second, &GeometryContext::STRICT)
         .ok()
-        .map(hypermesh::MeshOutcome::into_value)
+        .map(GeometryOutcome::into_value)
+}
+
+/// Measures a dihedral angle with the selected policy, preserving errors and certainty.
+pub fn dihedral_angle_with_context(
+    mesh: &TriangleMesh,
+    first: Triangle,
+    second: Triangle,
+    context: &GeometryContext,
+) -> HypermeshResult<GeometryOutcome<Real>> {
+    let decisions = GeometryDecisions::new(context);
+    let angle = decisions.consume_mesh(mesh.dihedral_angle(
+        decisions.mesh_context(),
+        first,
+        second,
+    )?);
+    Ok(decisions.finish(angle))
 }
 
 /// Exact uniform-density mass properties through Hyperphysics.
@@ -1691,7 +2065,18 @@ pub fn exact_mass_properties(
 /// Flattens native triangle faces into native filled curve topology.
 #[cfg(feature = "curve")]
 pub fn flatten(mesh: &TriangleMesh) -> hypercurve::CurveRegion2 {
-    use hypercurve::{BooleanOp as CurveBooleanOp, Contour2, CurveContext, CurveRegion2};
+    flatten_with_context(mesh, &GeometryContext::STRICT)
+        .map(GeometryOutcome::into_value)
+        .unwrap_or_else(|_| hypercurve::CurveRegion2::empty())
+}
+
+/// Flattens faces with the selected policy, retaining errors and aggregate certainty.
+#[cfg(feature = "curve")]
+pub fn flatten_with_context(
+    mesh: &TriangleMesh,
+    context: &GeometryContext,
+) -> Result<GeometryOutcome<hypercurve::CurveRegion2>, ValidationError> {
+    use hypercurve::{BooleanOp as CurveBooleanOp, Contour2, CurveRegion2};
 
     if let Some(region) = FLATTEN_CACHE.with_borrow(|entries| {
         entries
@@ -1699,12 +2084,14 @@ pub fn flatten(mesh: &TriangleMesh) -> hypercurve::CurveRegion2 {
             .find(|entry| {
                 Arc::ptr_eq(&entry.positions, &mesh.positions)
                     && Arc::ptr_eq(&entry.triangles, &mesh.triangles)
+                    && entry.context == *context
             })
             .map(|entry| entry.region.clone())
     }) {
-        return region;
+        return Ok(region);
     }
-    let policy = CurveContext::STRICT;
+    let decisions = GeometryDecisions::new(context);
+    let policy = decisions.curve_policy();
     let mut output = CurveRegion2::empty();
     for triangle in mesh.triangles.iter() {
         let [a, b, c] = triangle.indices();
@@ -1713,7 +2100,7 @@ pub fn flatten(mesh: &TriangleMesh) -> hypercurve::CurveRegion2 {
             mesh.positions.get(b),
             mesh.positions.get(c),
         ) else {
-            return CurveRegion2::empty();
+            return Err(ValidationError::InvalidArguments);
         };
         let mut points = [
             [a.x.clone(), a.y.clone()],
@@ -1724,31 +2111,31 @@ pub fn flatten(mesh: &TriangleMesh) -> hypercurve::CurveRegion2 {
             .iter()
             .map(|[x, y]| hyperlimit::Point2::new(x.clone(), y.clone()))
             .collect::<Vec<_>>();
-        match hyperlimit::ring_area_sign(&limit, crate::PREDICATE_POLICY).value() {
-            Some(hyperlimit::Sign::Negative) => points.swap(1, 2),
-            Some(hyperlimit::Sign::Positive) => {},
-            Some(hyperlimit::Sign::Zero) => continue,
-            None => return CurveRegion2::empty(),
+        match decisions.decide(
+            hyperlimit::ring_area_sign(&limit, decisions.predicate_policy()),
+            "projected face orientation",
+        )? {
+            hyperlimit::Sign::Negative => points.swap(1, 2),
+            hyperlimit::Sign::Positive => {},
+            hyperlimit::Sign::Zero => continue,
         }
-        let Ok(contour) = Contour2::from_real_ring(&points) else {
-            return CurveRegion2::empty();
-        };
-        let Ok(region) =
-            CurveRegion2::try_from_native_material_contours(vec![contour], &policy)
-        else {
-            return CurveRegion2::empty();
-        };
-        let region = region.into_value();
+        let contour = Contour2::from_real_ring(&points)
+            .map_err(|error| ValidationError::Geometry(error.to_string()))?;
+        let region = decisions.consume_curve(
+            CurveRegion2::try_from_native_material_contours(vec![contour], policy)
+                .map_err(|error| ValidationError::Geometry(error.to_string()))?,
+        );
         output = if output.is_empty() {
             region
         } else {
-            let Ok(union) = output.boolean_region(&region, CurveBooleanOp::Union, &policy)
-            else {
-                return CurveRegion2::empty();
-            };
-            union.into_value()
+            decisions.consume_curve(
+                output
+                    .boolean_region(&region, CurveBooleanOp::Union, policy)
+                    .map_err(|error| ValidationError::Geometry(error.to_string()))?,
+            )
         };
     }
+    let output = decisions.finish(output);
     FLATTEN_CACHE.with_borrow_mut(|entries| {
         const CAPACITY: usize = 8;
         if entries.len() == CAPACITY {
@@ -1757,19 +2144,29 @@ pub fn flatten(mesh: &TriangleMesh) -> hypercurve::CurveRegion2 {
         entries.push(CachedFlatten {
             positions: Arc::clone(&mesh.positions),
             triangles: Arc::clone(&mesh.triangles),
+            context: *context,
             region: output.clone(),
         });
     });
-    output
+    Ok(output)
 }
 
 /// Intersects native geometry with the XY plane at an exact Z coordinate.
 #[cfg(feature = "curve")]
 pub fn slice_z(mesh: &TriangleMesh, z: Real) -> SliceResult {
-    use hypercurve::{
-        BooleanOp as CurveBooleanOp, Contour2, CurveContext, CurveRegion2, CurveString2,
-    };
-    let empty_result = || (CurveRegion2::empty(), Vec::new(), Vec::new());
+    slice_z_with_context(mesh, z, &GeometryContext::STRICT)
+        .map(GeometryOutcome::into_value)
+        .unwrap_or_else(|_| (hypercurve::CurveRegion2::empty(), Vec::new(), Vec::new()))
+}
+
+/// Slices with the selected policy for intersections, stitching, and region Booleans.
+#[cfg(feature = "curve")]
+pub fn slice_z_with_context(
+    mesh: &TriangleMesh,
+    z: Real,
+    context: &GeometryContext,
+) -> Result<GeometryOutcome<SliceResult>, ValidationError> {
+    use hypercurve::{BooleanOp as CurveBooleanOp, Contour2, CurveRegion2, CurveString2};
 
     if let Some(result) = SLICE_CACHE.with_borrow(|entries| {
         entries
@@ -1778,12 +2175,14 @@ pub fn slice_z(mesh: &TriangleMesh, z: Real) -> SliceResult {
                 Arc::ptr_eq(&entry.positions, &mesh.positions)
                     && Arc::ptr_eq(&entry.triangles, &mesh.triangles)
                     && entry.z == z
+                    && entry.context == *context
             })
             .map(|entry| entry.result.clone())
     }) {
-        return result;
+        return Ok(result);
     }
-    let equal = exact_point3_equal;
+    let decisions = GeometryDecisions::new(context);
+    let equal = |left: &Point3, right: &Point3| decisions.points_equal(left, right);
     let mut edges = Vec::<[Point3; 2]>::new();
     let mut coplanar_positions = Vec::new();
     let mut coplanar_triangles = Vec::new();
@@ -1794,15 +2193,12 @@ pub fn slice_z(mesh: &TriangleMesh, z: Real) -> SliceResult {
             .map(|index| mesh.positions.get(index).cloned())
             .collect::<Option<Vec<_>>>()
         else {
-            return empty_result();
+            return Err(ValidationError::InvalidArguments);
         };
-        let Some(signs) = points
+        let signs = points
             .iter()
-            .map(|point| crate::hyper_math::hreal_sign(&(point.z.clone() - z.clone())))
-            .collect::<Option<Vec<_>>>()
-        else {
-            return empty_result();
-        };
+            .map(|point| decisions.sign(&(point.z.clone() - z.clone()), "slice plane side"))
+            .collect::<Result<Vec<_>, _>>()?;
         if signs.iter().all(|sign| *sign == RealSign::Zero) {
             let base = coplanar_positions.len();
             coplanar_positions.extend(points);
@@ -1821,7 +2217,7 @@ pub fn slice_z(mesh: &TriangleMesh, z: Real) -> SliceResult {
             ) {
                 let denominator = points[end].z.clone() - points[start].z.clone();
                 let Ok(parameter) = (z.clone() - points[start].z.clone()) / denominator else {
-                    return empty_result();
+                    return Err(ValidationError::InvalidArguments);
                 };
                 Some(Point3::new(
                     points[start].x.clone()
@@ -1835,13 +2231,10 @@ pub fn slice_z(mesh: &TriangleMesh, z: Real) -> SliceResult {
                 None
             };
             if let Some(point) = point {
-                let Some(duplicate) =
+                let duplicate =
                     intersections.iter().try_fold(false, |duplicate, existing| {
-                        Some(duplicate || equal(existing, &point)?)
-                    })
-                else {
-                    return empty_result();
-                };
+                        Ok::<_, ValidationError>(duplicate || equal(existing, &point)?)
+                    })?;
                 if !duplicate {
                     intersections.push(point);
                 }
@@ -1866,17 +2259,16 @@ pub fn slice_z(mesh: &TriangleMesh, z: Real) -> SliceResult {
                 if used[index] {
                     continue;
                 }
-                match (equal(last, &edge[0]), equal(last, &edge[1])) {
-                    (Some(true), _) => {
+                match (equal(last, &edge[0])?, equal(last, &edge[1])?) {
+                    (true, _) => {
                         next = Some((index, edge[1].clone()));
                         break;
                     },
-                    (Some(false), Some(true)) => {
+                    (false, true) => {
                         next = Some((index, edge[0].clone()));
                         break;
                     },
-                    (Some(false), Some(false)) => {},
-                    (None, _) | (_, None) => return empty_result(),
+                    (false, false) => {},
                 }
             }
             let Some((index, point)) = next else {
@@ -1888,11 +2280,14 @@ pub fn slice_z(mesh: &TriangleMesh, z: Real) -> SliceResult {
         chains.push(chain);
     }
 
-    let policy = CurveContext::STRICT;
+    let policy = decisions.curve_policy();
     let mut region = if coplanar_triangles.is_empty() {
         CurveRegion2::empty()
     } else {
-        flatten(&TriangleMesh::new(coplanar_positions, coplanar_triangles))
+        decisions.consume_geometry(flatten_with_context(
+            &TriangleMesh::new(coplanar_positions, coplanar_triangles),
+            context,
+        )?)
     };
     let mut wires = Vec::new();
     for chain in chains {
@@ -1901,42 +2296,33 @@ pub fn slice_z(mesh: &TriangleMesh, z: Real) -> SliceResult {
             .map(|point| [point.x.clone(), point.y.clone()])
             .collect::<Vec<_>>();
         let closed = match chain.first().zip(chain.last()) {
-            Some((first, last)) => {
-                let Some(equal) = equal(first, last) else {
-                    return empty_result();
-                };
-                equal
-            },
+            Some((first, last)) => equal(first, last)?,
             None => false,
         };
         if closed {
-            let Ok(contour) = Contour2::from_real_ring(&points) else {
-                return empty_result();
-            };
-            let Ok(loop_region) =
-                CurveRegion2::try_from_native_material_contours(vec![contour], &policy)
-            else {
-                return empty_result();
-            };
-            let loop_region = loop_region.into_value();
+            let contour = Contour2::from_real_ring(&points)
+                .map_err(|error| ValidationError::Geometry(error.to_string()))?;
+            let loop_region = decisions.consume_curve(
+                CurveRegion2::try_from_native_material_contours(vec![contour], policy)
+                    .map_err(|error| ValidationError::Geometry(error.to_string()))?,
+            );
             region = if region.is_empty() {
                 loop_region
             } else {
-                let Ok(union) =
-                    region.boolean_region(&loop_region, CurveBooleanOp::Union, &policy)
-                else {
-                    return empty_result();
-                };
-                union.into_value()
+                decisions.consume_curve(
+                    region
+                        .boolean_region(&loop_region, CurveBooleanOp::Union, policy)
+                        .map_err(|error| ValidationError::Geometry(error.to_string()))?,
+                )
             };
         } else {
             let Ok(wire) = CurveString2::from_real_point_iter(points) else {
-                return empty_result();
+                return Err(ValidationError::InvalidArguments);
             };
             wires.push(wire);
         }
     }
-    let result = (region, wires, Vec::new());
+    let result = decisions.finish((region, wires, Vec::new()));
     SLICE_CACHE.with_borrow_mut(|entries| {
         const CAPACITY: usize = 8;
         if entries.len() == CAPACITY {
@@ -1946,10 +2332,11 @@ pub fn slice_z(mesh: &TriangleMesh, z: Real) -> SliceResult {
             positions: Arc::clone(&mesh.positions),
             triangles: Arc::clone(&mesh.triangles),
             z,
+            context: *context,
             result: result.clone(),
         });
     });
-    result
+    Ok(result)
 }
 
 /// Converts native geometry to a Bevy triangle mesh at the renderer boundary.
@@ -1971,8 +2358,17 @@ pub fn to_bevy_mesh(mesh: &TriangleMesh) -> bevy_mesh::Mesh {
 
 /// Exact convex hull of all native mesh positions.
 pub fn convex_hull(mesh: &TriangleMesh) -> HypermeshResult<TriangleMesh> {
-    mesh.convex_hull(&crate::MESH_CONTEXT)
-        .map(hypermesh::MeshOutcome::into_value)
+    convex_hull_with_context(mesh, &GeometryContext::STRICT).map(GeometryOutcome::into_value)
+}
+
+/// Computes the convex hull with the selected policy and aggregate certainty.
+pub fn convex_hull_with_context(
+    mesh: &TriangleMesh,
+    context: &GeometryContext,
+) -> HypermeshResult<GeometryOutcome<TriangleMesh>> {
+    let decisions = GeometryDecisions::new(context);
+    let hull = decisions.consume_mesh(mesh.convex_hull(decisions.mesh_context())?);
+    Ok(decisions.finish(hull))
 }
 
 /// Exact Minkowski sum of two native triangle meshes.
@@ -1980,8 +2376,19 @@ pub fn minkowski_sum(
     left: &TriangleMesh,
     right: &TriangleMesh,
 ) -> Result<TriangleMesh, ValidationError> {
+    minkowski_sum_with_context(left, right, &GeometryContext::STRICT)
+        .map(GeometryOutcome::into_value)
+}
+
+/// Computes the Minkowski hull with the selected policy and aggregate certainty.
+pub fn minkowski_sum_with_context(
+    left: &TriangleMesh,
+    right: &TriangleMesh,
+    context: &GeometryContext,
+) -> Result<GeometryOutcome<TriangleMesh>, ValidationError> {
+    let decisions = GeometryDecisions::new(context);
     if left.positions.is_empty() || right.positions.is_empty() {
-        return Ok(empty());
+        return Ok(decisions.finish(empty()));
     }
     let capacity = left
         .positions
@@ -1998,13 +2405,24 @@ pub fn minkowski_sum(
             ));
         }
     }
-    hypermesh::convex_hull(&crate::MESH_CONTEXT, &points)
-        .map(hypermesh::MeshOutcome::into_value)
-        .map_err(|error| ValidationError::Geometry(error.to_string()))
+    let hull = decisions.consume_mesh(
+        hypermesh::convex_hull(decisions.mesh_context(), &points)
+            .map_err(|error| ValidationError::Geometry(error.to_string()))?,
+    );
+    Ok(decisions.finish(hull))
 }
 
 /// Lofts corresponding closed point loops into reusable native geometry.
 pub fn loft(sections: &[Vec<Point3>]) -> Result<TriangleMesh, ValidationError> {
+    loft_with_context(sections, &GeometryContext::STRICT).map(GeometryOutcome::into_value)
+}
+
+/// Lofts sections with the selected policy for validation and cap triangulation.
+pub fn loft_with_context(
+    sections: &[Vec<Point3>],
+    context: &GeometryContext,
+) -> Result<GeometryOutcome<TriangleMesh>, ValidationError> {
+    let decisions = GeometryDecisions::new(context);
     if sections.len() < 2 {
         return Err(ValidationError::FieldLessThan {
             name: "sections",
@@ -2022,76 +2440,39 @@ pub fn loft(sections: &[Vec<Point3>]) -> Result<TriangleMesh, ValidationError> {
         });
     }
 
-    let section_basis =
-        |section: &[Point3]| -> Result<(Vector3, Vector3, Vector3), ValidationError> {
+    let projections = sections
+        .iter()
+        .map(|section| {
             for (left, right) in section.iter().zip(section.iter().cycle().skip(1)) {
-                match exact_point3_equal(left, right) {
-                    Some(false) => {},
-                    Some(true) | None => return Err(ValidationError::InvalidArguments),
+                if decisions.points_equal(left, right)? {
+                    return Err(ValidationError::InvalidArguments);
                 }
             }
-            let origin = &section[0];
-            let axis_x = (&section[1] - origin)
-                .normalize_checked()
-                .map_err(|_| ValidationError::InvalidArguments)?;
-            let normal = section[2..]
-                .iter()
-                .find_map(|point| axis_x.cross(&(point - origin)).normalize_checked().ok())
-                .ok_or(ValidationError::InvalidArguments)?;
-            if section.iter().any(|point| {
-                crate::hyper_math::hreal_sign(&normal.dot(&(point - origin)))
-                    != Some(RealSign::Zero)
-            }) {
-                return Err(ValidationError::InvalidArguments);
-            }
-            let axis_y = normal
-                .cross(&axis_x)
-                .normalize_checked()
-                .map_err(|_| ValidationError::InvalidArguments)?;
-            Ok((axis_x, axis_y, normal))
-        };
-    let bases = sections
-        .iter()
-        .map(|section| section_basis(section))
+            project_planar_ring(&section.iter().collect::<Vec<_>>(), &decisions)
+        })
         .collect::<Result<Vec<_>, _>>()?;
     let first = &sections[0];
-    let normal = &bases[0].2;
+    let normal = &projections[0].1;
     let travel = &sections[sections.len() - 1][0] - &first[0];
-    let forward = matches!(
-        crate::hyper_math::hreal_sign(&normal.dot(&travel)),
-        Some(RealSign::Positive)
-    );
-    if !forward
-        && !matches!(
-            crate::hyper_math::hreal_sign(&normal.dot(&travel)),
-            Some(RealSign::Negative)
-        )
-    {
-        return Err(ValidationError::InvalidArguments);
-    }
-
-    let triangulate_cap = |section: &[Point3],
-                           axis_x: &Vector3,
-                           axis_y: &Vector3|
-     -> Result<Vec<[usize; 3]>, ValidationError> {
-        let origin = &section[0];
-        let points = section
-            .iter()
-            .map(|point| {
-                let offset = point - origin;
-                hypertri::Point2::new(axis_x.dot(&offset), axis_y.dot(&offset))
-            })
-            .collect::<Vec<_>>();
-        let flat = hypertri::earcut(&crate::TRIANGULATION_CONTEXT, &points, &[])
-            .map_err(|error| ValidationError::Geometry(error.to_string()))?
-            .into_value();
-        Ok(flat
-            .as_chunks::<3>()
-            .0
-            .iter()
-            .map(|triangle| [triangle[0], triangle[1], triangle[2]])
-            .collect())
+    let forward = match decisions.sign(&normal.dot(&travel), "loft orientation")? {
+        RealSign::Positive => true,
+        RealSign::Negative => false,
+        RealSign::Zero => return Err(ValidationError::InvalidArguments),
     };
+
+    let triangulate_cap =
+        |points: &[hypertri::Point2]| -> Result<Vec<[usize; 3]>, ValidationError> {
+            let flat = decisions.consume_triangulation(
+                hypertri::earcut(&decisions.triangulation_context(), points, &[])
+                    .map_err(|error| ValidationError::Geometry(error.to_string()))?,
+            );
+            Ok(flat
+                .as_chunks::<3>()
+                .0
+                .iter()
+                .map(|triangle| [triangle[0], triangle[1], triangle[2]])
+                .collect())
+        };
 
     let position_capacity = sections
         .len()
@@ -2113,18 +2494,14 @@ pub fn loft(sections: &[Vec<Point3>]) -> Result<TriangleMesh, ValidationError> {
     let mut positions = Vec::with_capacity(position_capacity);
     positions.extend(sections.iter().flatten().cloned());
     let mut triangles = Vec::with_capacity(triangle_capacity);
-    for mut triangle in triangulate_cap(first, &bases[0].0, &bases[0].1)? {
+    for mut triangle in triangulate_cap(&projections[0].0)? {
         if forward {
             triangle.swap(1, 2);
         }
         triangles.push(triangle);
     }
     let top_base = (sections.len() - 1) * vertex_count;
-    for mut triangle in triangulate_cap(
-        &sections[sections.len() - 1],
-        &bases[bases.len() - 1].0,
-        &bases[bases.len() - 1].1,
-    )? {
+    for mut triangle in triangulate_cap(&projections[projections.len() - 1].0)? {
         if !forward {
             triangle.swap(1, 2);
         }
@@ -2149,19 +2526,47 @@ pub fn loft(sections: &[Vec<Point3>]) -> Result<TriangleMesh, ValidationError> {
             triangles.push(second);
         }
     }
-    Ok(indexed(positions, triangles))
+    Ok(decisions.finish(indexed(positions, triangles)))
 }
 
 /// Fluent CSG grammar implemented directly for native Hypermesh geometry.
 pub trait SolidExt: Sized {
-    /// Exact regularized union.
+    /// Regularized union under [`GeometryContext::STRICT`].
+    /// See [`Self::try_union_with_context`] to select a predicate policy.
     fn try_union(&self, other: &Self) -> HypermeshResult<Self>;
-    /// Exact regularized difference.
+    /// Regularized difference under [`GeometryContext::STRICT`].
+    /// See [`Self::try_difference_with_context`] to select a predicate policy.
     fn try_difference(&self, other: &Self) -> HypermeshResult<Self>;
-    /// Exact regularized intersection.
+    /// Regularized intersection under [`GeometryContext::STRICT`].
+    /// See [`Self::try_intersection_with_context`] to select a predicate policy.
     fn try_intersection(&self, other: &Self) -> HypermeshResult<Self>;
-    /// Exact regularized symmetric difference.
+    /// Regularized symmetric difference under [`GeometryContext::STRICT`].
+    /// See [`Self::try_xor_with_context`] to select a predicate policy.
     fn try_xor(&self, other: &Self) -> HypermeshResult<Self>;
+    /// Regularized union with the selected policy and aggregate certainty.
+    fn try_union_with_context(
+        &self,
+        other: &Self,
+        context: &GeometryContext,
+    ) -> HypermeshResult<GeometryOutcome<Self>>;
+    /// Regularized difference with the selected policy and aggregate certainty.
+    fn try_difference_with_context(
+        &self,
+        other: &Self,
+        context: &GeometryContext,
+    ) -> HypermeshResult<GeometryOutcome<Self>>;
+    /// Regularized intersection with the selected policy and aggregate certainty.
+    fn try_intersection_with_context(
+        &self,
+        other: &Self,
+        context: &GeometryContext,
+    ) -> HypermeshResult<GeometryOutcome<Self>>;
+    /// Regularized symmetric difference with the selected policy and aggregate certainty.
+    fn try_xor_with_context(
+        &self,
+        other: &Self,
+        context: &GeometryContext,
+    ) -> HypermeshResult<GeometryOutcome<Self>>;
     /// Apply a homogeneous transform.
     fn transformed(&self, matrix: &Matrix4) -> Self;
     /// Translate by an exact vector.
@@ -2189,6 +2594,38 @@ impl SolidExt for TriangleMesh {
 
     fn try_xor(&self, other: &Self) -> HypermeshResult<Self> {
         boolean(self, other, BooleanOp::SymmetricDifference)
+    }
+
+    fn try_union_with_context(
+        &self,
+        other: &Self,
+        context: &GeometryContext,
+    ) -> HypermeshResult<GeometryOutcome<Self>> {
+        boolean_with_context(self, other, BooleanOp::Union, context)
+    }
+
+    fn try_difference_with_context(
+        &self,
+        other: &Self,
+        context: &GeometryContext,
+    ) -> HypermeshResult<GeometryOutcome<Self>> {
+        boolean_with_context(self, other, BooleanOp::Difference, context)
+    }
+
+    fn try_intersection_with_context(
+        &self,
+        other: &Self,
+        context: &GeometryContext,
+    ) -> HypermeshResult<GeometryOutcome<Self>> {
+        boolean_with_context(self, other, BooleanOp::Intersection, context)
+    }
+
+    fn try_xor_with_context(
+        &self,
+        other: &Self,
+        context: &GeometryContext,
+    ) -> HypermeshResult<GeometryOutcome<Self>> {
+        boolean_with_context(self, other, BooleanOp::SymmetricDifference, context)
     }
 
     fn transformed(&self, matrix: &Matrix4) -> Self {

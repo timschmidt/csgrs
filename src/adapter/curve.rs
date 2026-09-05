@@ -167,6 +167,113 @@ where
         })
     }
 
+    /// Applies the curve transform with the selected policy and aggregate certainty.
+    pub fn transform_with_context(
+        &self,
+        matrix: &Matrix4,
+        context: &GeometryContext,
+    ) -> AdapterResult<GeometryOutcome<Self>> {
+        curve::try_transformed_with_context(&self.inner, matrix, context)
+            .map(|outcome| outcome.map(Self::from_native))
+            .map_err(|error| AdapterError::Validation(error.to_string()))
+    }
+
+    /// Applies the curve transform with the selected policy and aggregate certainty.
+    pub fn translate_with_context(
+        &self,
+        x: A::Scalar,
+        y: A::Scalar,
+        z: A::Scalar,
+        context: &GeometryContext,
+    ) -> AdapterResult<GeometryOutcome<Self>> {
+        {
+            let _ = A::into_real(z)?;
+            curve::try_translated_with_context(
+                &self.inner,
+                A::into_real(x)?,
+                A::into_real(y)?,
+                context,
+            )
+        }
+        .map(|outcome| outcome.map(Self::from_native))
+        .map_err(|error| AdapterError::Validation(error.to_string()))
+    }
+
+    /// Applies the curve transform with the selected policy and aggregate certainty.
+    pub fn scale_with_context(
+        &self,
+        x: A::Scalar,
+        y: A::Scalar,
+        z: A::Scalar,
+        context: &GeometryContext,
+    ) -> AdapterResult<GeometryOutcome<Self>> {
+        {
+            let _ = A::into_real(z)?;
+            curve::try_scaled_with_context(
+                &self.inner,
+                A::into_real(x)?,
+                A::into_real(y)?,
+                context,
+            )
+        }
+        .map(|outcome| outcome.map(Self::from_native))
+        .map_err(|error| AdapterError::Validation(error.to_string()))
+    }
+
+    /// Applies the curve transform with the selected policy and aggregate certainty.
+    pub fn rotate_with_context(
+        &self,
+        x: A::Scalar,
+        y: A::Scalar,
+        z: A::Scalar,
+        context: &GeometryContext,
+    ) -> AdapterResult<GeometryOutcome<Self>> {
+        {
+            let _ = (A::into_real(x)?, A::into_real(y)?);
+            curve::try_rotated_with_context(&self.inner, A::into_real(z)?, context)
+        }
+        .map(|outcome| outcome.map(Self::from_native))
+        .map_err(|error| AdapterError::Validation(error.to_string()))
+    }
+
+    /// Computes bounds before scalar conversion, retaining predicate certainty.
+    pub fn bounding_box_with_context(
+        &self,
+        context: &GeometryContext,
+    ) -> AdapterResult<GeometryOutcome<Aabb3<A::Scalar>>> {
+        curve::try_bounding_box_with_context(&self.inner, context)
+            .map_err(|error| AdapterError::Validation(error.to_string()))?
+            .try_map(|bounds| {
+                Ok(Aabb3 {
+                    mins: [
+                        A::from_real(&bounds.mins.x)?,
+                        A::from_real(&bounds.mins.y)?,
+                        A::from_real(&bounds.mins.z)?,
+                    ],
+                    maxs: [
+                        A::from_real(&bounds.maxs.x)?,
+                        A::from_real(&bounds.maxs.y)?,
+                        A::from_real(&bounds.maxs.z)?,
+                    ],
+                })
+            })
+    }
+
+    /// Publishes a ring with the selected policy after promoting scalar coordinates.
+    pub fn polygon_with_context(
+        points: &[[A::Scalar; 2]],
+        context: &GeometryContext,
+    ) -> AdapterResult<GeometryOutcome<Self>> {
+        let points = points
+            .iter()
+            .cloned()
+            .map(scalar2_to_real::<A>)
+            .collect::<AdapterResult<Vec<_>>>()?;
+        curve::polygon_with_context(&points, context)
+            .map(|outcome| outcome.map(Self::from_native))
+            .map_err(|error| AdapterError::Validation(error.to_string()))
+    }
+
     pub fn extrude(
         &self,
         height: A::Scalar,

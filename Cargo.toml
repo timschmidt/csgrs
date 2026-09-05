@@ -53,6 +53,11 @@ path = "benchmarks/rust/mesh_pipeline.rs"
 harness = false
 
 [[bench]]
+name = "mesh_boolean_context"
+path = "benchmarks/rust/mesh_boolean_context.rs"
+harness = false
+
+[[bench]]
 name = "kernel_comparison"
 path = "benchmarks/rust/kernel_comparison.rs"
 harness = false

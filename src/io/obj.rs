@@ -1,6 +1,8 @@
 //! Wavefront OBJ import and export for native Hypermesh triangles.
 
 use super::{IoError, finite_f64, single_line_metadata, triangulate_planar_face};
+use crate::context::GeometryDecisions;
+use crate::{GeometryContext, GeometryOutcome};
 use hyperlattice::{Point3, Real};
 use hypermesh::{Triangle, TriangleMesh};
 #[cfg(feature = "attributed")]
@@ -68,12 +70,23 @@ fn triangulate_face(
     positions: &[Point3],
     face: &[usize],
     line: usize,
+    decisions: &GeometryDecisions,
 ) -> Result<Vec<Triangle>, IoError> {
-    triangulate_planar_face(positions, face, "OBJ").map_err(|error| malformed(line, error))
+    triangulate_planar_face(positions, face, "OBJ", decisions)
+        .map_err(|error| malformed(line, error))
 }
 
 /// Import OBJ vertex and face records into native triangle geometry.
 pub fn from_obj<R: BufRead>(reader: R) -> Result<TriangleMesh, IoError> {
+    from_obj_with_context(reader, &GeometryContext::STRICT).map(GeometryOutcome::into_value)
+}
+
+/// Import OBJ geometry with the selected triangulation policy and aggregate certainty.
+pub fn from_obj_with_context<R: BufRead>(
+    reader: R,
+    context: &GeometryContext,
+) -> Result<GeometryOutcome<TriangleMesh>, IoError> {
+    let decisions = GeometryDecisions::new(context);
     let mut positions = Vec::new();
     let mut triangles = Vec::new();
     for (line_index, line) in reader.lines().enumerate() {
@@ -97,12 +110,17 @@ pub fn from_obj<R: BufRead>(reader: R) -> Result<TriangleMesh, IoError> {
                 let face = fields
                     .map(|field| parse_index(field, positions.len(), line_number))
                     .collect::<Result<Vec<_>, _>>()?;
-                triangles.extend(triangulate_face(&positions, &face, line_number)?);
+                triangles.extend(triangulate_face(
+                    &positions,
+                    &face,
+                    line_number,
+                    &decisions,
+                )?);
             },
             _ => {},
         }
     }
-    Ok(TriangleMesh::new(positions, triangles))
+    Ok(decisions.finish(TriangleMesh::new(positions, triangles)))
 }
 
 /// Imports OBJ geometry with an optional per-position authored-normal sidecar.
@@ -114,6 +132,17 @@ pub fn from_obj<R: BufRead>(reader: R) -> Result<TriangleMesh, IoError> {
 pub fn from_obj_attributed<R: BufRead>(
     reader: R,
 ) -> Result<crate::AttributedMesh<()>, IoError> {
+    from_obj_attributed_with_context(reader, &GeometryContext::STRICT)
+        .map(GeometryOutcome::into_value)
+}
+
+/// Import OBJ geometry and authored normals using the selected triangulation policy.
+#[cfg(feature = "attributed")]
+pub fn from_obj_attributed_with_context<R: BufRead>(
+    reader: R,
+    context: &GeometryContext,
+) -> Result<GeometryOutcome<crate::AttributedMesh<()>>, IoError> {
+    let decisions = GeometryDecisions::new(context);
     let mut source_positions = Vec::new();
     let mut source_normals = Vec::new();
     let mut positions = Vec::new();
@@ -168,7 +197,8 @@ pub fn from_obj_attributed<R: BufRead>(
                     .iter()
                     .map(|(position, _)| *position)
                     .collect::<Vec<_>>();
-                let face_triangles = triangulate_face(&source_positions, &face, line_number)?;
+                let face_triangles =
+                    triangulate_face(&source_positions, &face, line_number, &decisions)?;
                 let normal_for_position = |position| {
                     corners
                         .iter()
@@ -213,7 +243,7 @@ pub fn from_obj_attributed<R: BufRead>(
         detail: error.to_string(),
     })?;
     let _ = attributed.exact_gpu_mesh_buffers();
-    Ok(attributed)
+    Ok(decisions.finish(attributed))
 }
 
 /// Export native triangle geometry as Wavefront OBJ.

@@ -21,12 +21,12 @@ runs:
           git -C "${destination}" checkout --detach FETCH_HEAD
         }
 
-        checkout_repo hypercurve https://github.com/timschmidt/hypercurve.git b8d11abd86a3c763f5fd023d33d16a149329e493
-        checkout_repo hyperlattice https://github.com/timschmidt/hyperlattice.git ac2aaebeaf676f837b28ed103a4391f473bd7786
-        checkout_repo hyperlimit https://github.com/timschmidt/hyperlimit.git c508d739a5745591857c55b90b81ea5d8729b4a8
-        checkout_repo hypermesh https://github.com/timschmidt/hypermesh.git 33ca2048a7af378dc97d5d7989f1993916df2332
+        checkout_repo hypercurve https://github.com/timschmidt/hypercurve.git 9e2796cbf36dde2f56087a717b34d31edbf80f51
+        checkout_repo hyperlattice https://github.com/timschmidt/hyperlattice.git d783af0b5ba52cacfeac62b1b25e1f9e36a8e7b0
+        checkout_repo hyperlimit https://github.com/timschmidt/hyperlimit.git 0f1a32d54a1c063d134b0476082e49168516102a
+        checkout_repo hypermesh https://github.com/timschmidt/hypermesh.git d9db5c45a0cecc2307aa66a6f7f1b0396350e4ee
         checkout_repo hyperphysics https://github.com/timschmidt/hyperphysics.git dcbc7cf3489a1299de16a946fd7f5e5658b6f15f
-        checkout_repo hyperreal https://github.com/timschmidt/hyperreal.git 8d25d62c508471a4b783f03173342c1595e5f3c6
+        checkout_repo hyperreal https://github.com/timschmidt/hyperreal.git 2808bc886db969d487263ea073eb1cf9df562eac
         checkout_repo hypersdf https://github.com/timschmidt/hypersdf.git b37825900457420cb64da385b8525acab33e31c5
-        checkout_repo hypersolve https://github.com/timschmidt/hypersolve.git d2f5907c5420d57854fce82773eaf2f80c682b1a
-        checkout_repo hypertri https://github.com/timschmidt/hypertriangulate.git 79dc4a4661960c7ebb90cdb84991385fb5d06874
+        checkout_repo hypersolve https://github.com/timschmidt/hypersolve.git d897ff0a5d416daa16c83f1bfe32334077fd07de
+        checkout_repo hypertri https://github.com/timschmidt/hypertriangulate.git 6a2092c066964f3b7528299a72ef0ed1af4b1ff0

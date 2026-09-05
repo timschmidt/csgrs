@@ -2,6 +2,11 @@
 
 use crate::solid::{self, SolidExt};
 use crate::wasm::{
+    context_js::{GeometryBoolResultJs, GeometryBoundsResultJs},
+    curve_js::GeometryMeshResultJs,
+    geometry_context,
+};
+use crate::wasm::{
     matrix_js::Matrix4Js, plane_js::PlaneJs, point_js::Point3Js, real_from_js,
     real_from_js_named, real_to_js,
 };
@@ -204,6 +209,210 @@ impl MeshJs {
     pub fn xor(&self, other: &Self) -> Result<Self, JsValue> {
         self.inner
             .try_xor(&other.inner)
+            .map(Into::into)
+            .map_err(js_error)
+    }
+
+    #[wasm_bindgen(js_name = unionWithContext)]
+    pub fn union_with_context(
+        &self,
+        other: &Self,
+        approximate_512: bool,
+    ) -> Result<GeometryMeshResultJs, JsValue> {
+        self.inner
+            .try_union_with_context(&other.inner, &geometry_context(approximate_512))
+            .map(Into::into)
+            .map_err(js_error)
+    }
+
+    #[wasm_bindgen(js_name = differenceWithContext)]
+    pub fn difference_with_context(
+        &self,
+        other: &Self,
+        approximate_512: bool,
+    ) -> Result<GeometryMeshResultJs, JsValue> {
+        self.inner
+            .try_difference_with_context(&other.inner, &geometry_context(approximate_512))
+            .map(Into::into)
+            .map_err(js_error)
+    }
+
+    #[wasm_bindgen(js_name = intersectionWithContext)]
+    pub fn intersection_with_context(
+        &self,
+        other: &Self,
+        approximate_512: bool,
+    ) -> Result<GeometryMeshResultJs, JsValue> {
+        self.inner
+            .try_intersection_with_context(&other.inner, &geometry_context(approximate_512))
+            .map(Into::into)
+            .map_err(js_error)
+    }
+
+    #[wasm_bindgen(js_name = xorWithContext)]
+    pub fn xor_with_context(
+        &self,
+        other: &Self,
+        approximate_512: bool,
+    ) -> Result<GeometryMeshResultJs, JsValue> {
+        self.inner
+            .try_xor_with_context(&other.inner, &geometry_context(approximate_512))
+            .map(Into::into)
+            .map_err(js_error)
+    }
+
+    #[wasm_bindgen(js_name = transformWithContext)]
+    pub fn transform_with_context(
+        &self,
+        matrix: &Matrix4Js,
+        approximate_512: bool,
+    ) -> Result<GeometryMeshResultJs, JsValue> {
+        let context = geometry_context(approximate_512);
+        solid::try_transform_with_context(&self.inner, &matrix.inner, &context)
+            .map(Into::into)
+            .map_err(js_error)
+    }
+
+    #[wasm_bindgen(js_name = translateWithContext)]
+    pub fn translate_with_context(
+        &self,
+        x: f64,
+        y: f64,
+        z: f64,
+        approximate_512: bool,
+    ) -> Result<GeometryMeshResultJs, JsValue> {
+        let context = geometry_context(approximate_512);
+        solid::try_transform_with_context(
+            &self.inner,
+            &hyperlattice::Matrix4::affine_translation([
+                real_from_js_named(x, "x")?,
+                real_from_js_named(y, "y")?,
+                real_from_js_named(z, "z")?,
+            ]),
+            &context,
+        )
+        .map(Into::into)
+        .map_err(js_error)
+    }
+
+    #[wasm_bindgen(js_name = rotateWithContext)]
+    pub fn rotate_with_context(
+        &self,
+        x: f64,
+        y: f64,
+        z: f64,
+        approximate_512: bool,
+    ) -> Result<GeometryMeshResultJs, JsValue> {
+        let context = geometry_context(approximate_512);
+        solid::try_rotate_with_context(
+            &self.inner,
+            real_from_js_named(x, "x")?,
+            real_from_js_named(y, "y")?,
+            real_from_js_named(z, "z")?,
+            &context,
+        )
+        .map(Into::into)
+        .map_err(js_error)
+    }
+
+    #[wasm_bindgen(js_name = scaleWithContext)]
+    pub fn scale_with_context(
+        &self,
+        x: f64,
+        y: f64,
+        z: f64,
+        approximate_512: bool,
+    ) -> Result<GeometryMeshResultJs, JsValue> {
+        let context = geometry_context(approximate_512);
+        solid::try_scale_with_context(
+            &self.inner,
+            real_from_js_named(x, "x")?,
+            real_from_js_named(y, "y")?,
+            real_from_js_named(z, "z")?,
+            &context,
+        )
+        .map(Into::into)
+        .map_err(js_error)
+    }
+
+    #[wasm_bindgen(js_name = centerWithContext)]
+    pub fn center_with_context(
+        &self,
+        approximate_512: bool,
+    ) -> Result<GeometryMeshResultJs, JsValue> {
+        let context = geometry_context(approximate_512);
+        solid::try_center_with_context(&self.inner, &context)
+            .map(Into::into)
+            .map_err(js_error)
+    }
+
+    #[wasm_bindgen(js_name = floatOnZWithContext)]
+    pub fn float_on_z_with_context(
+        &self,
+        approximate_512: bool,
+    ) -> Result<GeometryMeshResultJs, JsValue> {
+        let context = geometry_context(approximate_512);
+        solid::try_float_with_context(&self.inner, &context)
+            .map(Into::into)
+            .map_err(js_error)
+    }
+
+    #[wasm_bindgen(js_name = mirrorWithContext)]
+    pub fn mirror_with_context(
+        &self,
+        plane: &PlaneJs,
+        approximate_512: bool,
+    ) -> Result<GeometryMeshResultJs, JsValue> {
+        let context = geometry_context(approximate_512);
+        solid::try_mirror_with_context(&self.inner, &plane.inner, &context)
+            .map(Into::into)
+            .map_err(js_error)
+    }
+
+    #[wasm_bindgen(js_name = convexHullWithContext)]
+    pub fn convex_hull_with_context(
+        &self,
+        approximate_512: bool,
+    ) -> Result<GeometryMeshResultJs, JsValue> {
+        let context = geometry_context(approximate_512);
+        solid::convex_hull_with_context(&self.inner, &context)
+            .map(Into::into)
+            .map_err(js_error)
+    }
+
+    #[wasm_bindgen(js_name = minkowskiSumWithContext)]
+    pub fn minkowski_sum_with_context(
+        &self,
+        other: &Self,
+        approximate_512: bool,
+    ) -> Result<GeometryMeshResultJs, JsValue> {
+        let context = geometry_context(approximate_512);
+        solid::minkowski_sum_with_context(&self.inner, &other.inner, &context)
+            .map(Into::into)
+            .map_err(js_error)
+    }
+
+    #[wasm_bindgen(js_name = containsPointWithContext)]
+    pub fn contains_point_with_context(
+        &self,
+        point: &Point3Js,
+        approximate_512: bool,
+    ) -> Result<GeometryBoolResultJs, JsValue> {
+        solid::contains_point_with_context(
+            &self.inner,
+            &point.inner,
+            &geometry_context(approximate_512),
+        )
+        .map(|outcome| outcome.map(Some).into())
+        .map_err(js_error)
+    }
+
+    #[wasm_bindgen(js_name = boundingBoxWithContext)]
+    pub fn bounding_box_with_context(
+        &self,
+        approximate_512: bool,
+    ) -> Result<GeometryBoundsResultJs, JsValue> {
+        solid::try_bounding_box_with_context(&self.inner, &geometry_context(approximate_512))
             .map(Into::into)
             .map_err(js_error)
     }

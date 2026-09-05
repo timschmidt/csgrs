@@ -226,15 +226,19 @@ explicit tessellation choices; CSGRS has no global tolerance setting.
 
 `solid::SolidExt` supplies fluent native operations:
 
-- `try_union`, `try_difference`, `try_intersection`, and `try_xor`;
+- `try_union`, `try_difference`, `try_intersection`, and `try_xor` use
+  `GeometryContext::STRICT`;
+- `try_union_with_context`, `try_difference_with_context`,
+  `try_intersection_with_context`, and `try_xor_with_context` accept
+  `&GeometryContext` and return `HypermeshResult<GeometryOutcome<TriangleMesh>>`;
 - `transformed` and `translated`;
 - `exact_bounds`;
 - `visit_native_triangles`.
 
 The corresponding free functions and additional operations are:
 
-- Booleans and transforms: `boolean`, `transform`, `rotate`, `scale`,
-  `mirror`, `inverse`, `translation`, and `translation_to`;
+- Booleans and transforms: `boolean`, `boolean_with_context`, `transform`,
+  `rotate`, `scale`, `mirror`, `inverse`, `translation`, and `translation_to`;
 - positioning and repetition: `bounding_box`, `center`, `float`, `merge`,
   `distribute_linear`, `distribute_grid`, and `distribute_arc`;
 - topology/refinement: `subdivide`, `renormalized`, `materialize_finite`,
@@ -249,6 +253,63 @@ The corresponding free functions and additional operations are:
 Hypermesh retains reusable bounds, topology, transform, convexity, and
 Boolean facts on `TriangleMesh`. Cloning a mesh shares its immutable geometry
 and retained facts.
+
+For sampled curved solids whose predicates remain undecided in strict mode,
+select `GeometryContext::APPROXIMATE_512` explicitly:
+
+```rust
+use csgrs::{GeometryContext, Real, solid::{self, SolidExt}};
+
+fn main() -> Result<(), Box<dyn std::error::Error>> {
+    let body = solid::cuboid(Real::from(12), Real::from(12), Real::from(4));
+    let drill = solid::cylinder(Real::from(2), Real::from(6), 16)
+        .translated(Real::from(6), Real::from(6), Real::from(-1));
+    let result = body.try_difference_with_context(
+        &drill,
+        &GeometryContext::APPROXIMATE_512,
+    )?;
+    println!("Predicate certainty: {:?}", result.certainty);
+    let drilled_body = result.into_value();
+    println!("Output triangles: {}", drilled_body.triangles.len());
+    Ok(())
+}
+```
+
+The context reaches Hypermesh's input validation, Boolean evaluation, and
+output certification. `GeometryCertainty::Approximate512Consumed` means at
+least one predicate used the terminal 512-bit interpretation. Operations
+whose decisions are all certified still report `Certified` with this context.
+
+Context-bearing variants also cover the operations below. Each returns a
+`Result<GeometryOutcome<T>, _>`; `T` is the mesh, region, query value, or import
+report. The existing convenience entry points retain their strict default.
+
+| Operation | Context-bearing API |
+|---|---|
+| Mesh transforms and positioning | `solid::try_transform_with_context`, `try_rotate_with_context`, `try_scale_with_context`, `try_mirror_with_context`, `try_center_with_context`, `try_float_with_context` |
+| Mesh bounds and queries | `solid::try_bounding_box_with_context`, `contains_point_with_context`, `polyline_intersections_with_context`, `dihedral_angle_with_context` |
+| Hulls, copies, and polygon caps | `solid::convex_hull_with_context`, `minkowski_sum_with_context`, `distribute_linear_with_context`, `distribute_grid_with_context`, `distribute_arc_with_context`, `polyhedron_with_context`, `loft_with_context` |
+| Projection and slicing | `solid::flatten_with_context`, `slice_z_with_context` |
+| Native Real SDF meshing | `solid::sdf_with_context`, `sdf_with_diagnostics_and_context`, `sdf_expr_with_context` |
+| Curve construction | `curve::polygon_with_context`, `rectangle_with_context`, `square_with_context`, `circle_with_context`, `ellipse_with_context`, `regular_ngon_with_context`, `rounded_rectangle_with_context`, `bezier_region_with_context`, `bspline_path_with_context` |
+| Curve transforms and queries | `curve::try_transformed_with_context`, `try_translated_with_context`, `try_rotated_with_context`, `try_scaled_with_context`, `try_bounding_box_with_context`, `contains_xy_with_context`, `hilbert_strings_with_context` |
+| Mesh imports | `io::obj::from_obj_with_context`, `from_obj_attributed_with_context`, `io::dxf::from_dxf_with_context`, `io::vrml::from_vrml_with_context` |
+| Gerber conversion | `io::gerber::import_gerber_with_context`, `export_gerber_with_options_and_context` |
+
+Curve composites such as `ring`, `crescent`, and `circle_with_keyway` pass their
+existing context through component construction, transforms, and Booleans.
+Mesh distributions, flattening, and slicing retain certainty in their caches
+and include the policy in cache keys. Their context-bearing APIs report
+undecided predicates as errors rather than substituting empty geometry.
+
+Scalar mesh adapters expose `union_with_context`, `difference_with_context`,
+`intersection_with_context`, `xor_with_context`, and context-bearing transform,
+positioning, bounds, and polyhedron methods. Scalar curve adapters expose
+context-bearing transforms, bounds, and polygon construction. JavaScript mesh,
+curve, and plane wrappers provide corresponding `*WithContext` methods; the
+last argument selects the approximate terminal and the result exposes
+`approximate512Consumed` alongside its value. Selecting approximation does not
+suppress invalid-input or unsupported-operation errors.
 
 Rendered solid operations:
 

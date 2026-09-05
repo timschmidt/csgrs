@@ -1,6 +1,8 @@
-//! Strict DXF import and triangle export.
+//! DXF import and triangle export with explicit geometry policy selection.
 
+use crate::context::GeometryDecisions;
 use crate::io::{IoError, finite_f64, finite_triangle_normal, triangulate_planar_face};
+use crate::{GeometryContext, GeometryOutcome};
 use chrono::{DateTime, Local, Utc};
 use dxf::Drawing;
 use dxf::entities::{Entity, EntityType, Face3D};
@@ -33,7 +35,10 @@ fn real(value: f64, field: &'static str) -> Result<Real, IoError> {
     })
 }
 
-fn ocs_basis(normal: dxf::Vector) -> Result<(Vector3, Vector3, Vector3), IoError> {
+fn ocs_basis(
+    normal: dxf::Vector,
+    decisions: &GeometryDecisions,
+) -> Result<(Vector3, Vector3, Vector3), IoError> {
     let normal = Vector3::from_xyz(
         real(normal.x, "normal x")?,
         real(normal.y, "normal y")?,
@@ -46,8 +51,12 @@ fn ocs_basis(normal: dxf::Vector) -> Result<(Vector3, Vector3, Vector3), IoError
         detail: "could not construct OCS basis threshold".into(),
     })?;
     let component_is_small = |component: &Real| {
-        hyperlimit::compare_reals(&component.abs(), &threshold, crate::PREDICATE_POLICY)
-            .value()
+        decisions
+            .probe(hyperlimit::compare_reals(
+                &component.abs(),
+                &threshold,
+                decisions.predicate_policy(),
+            ))
             .map(|ordering| ordering == Ordering::Less)
             .ok_or_else(|| IoError::Geometry {
                 format: "DXF",
@@ -82,27 +91,49 @@ fn ocs_point(
     ))
 }
 
-fn push_polygon(points: Vec<Point3>) -> Result<(Vec<Point3>, Vec<Triangle>), IoError> {
-    let normal = (&points[1] - &points[0])
-        .unit_cross_checked(&(&points[2] - &points[0]))
-        .map_err(|error| IoError::Geometry {
+fn push_polygon(
+    points: Vec<Point3>,
+    decisions: &GeometryDecisions,
+) -> Result<(Vec<Point3>, Vec<Triangle>), IoError> {
+    let nondegenerate = hypermesh::Plane::points_are_nondegenerate(
+        decisions.mesh_context(),
+        &points[0],
+        &points[1],
+        &points[2],
+    )
+    .map(|outcome| decisions.consume_mesh(outcome))
+    .map_err(|error| IoError::Geometry {
+        format: "DXF",
+        detail: error.to_string(),
+    })?;
+    if !nondegenerate {
+        return Err(IoError::Geometry {
             format: "DXF",
-            detail: format!("entity has a degenerate surface normal: {error}"),
-        })?;
-    let _ = normal;
+            detail: "entity has a degenerate surface normal".into(),
+        });
+    }
     let face = (0..points.len()).collect::<Vec<_>>();
-    let triangles = triangulate_planar_face(&points, &face, "DXF")?;
+    let triangles = triangulate_planar_face(&points, &face, "DXF", decisions)?;
     Ok((points, triangles))
 }
 
 /// Imports supported DXF surface entities as native triangle geometry.
 pub fn from_dxf(data: &[u8]) -> Result<TriangleMesh, IoError> {
+    from_dxf_with_context(data, &GeometryContext::STRICT).map(GeometryOutcome::into_value)
+}
+
+/// Import DXF surfaces using the selected predicates and triangulation policy.
+pub fn from_dxf_with_context(
+    data: &[u8],
+    context: &GeometryContext,
+) -> Result<GeometryOutcome<TriangleMesh>, IoError> {
+    let decisions = GeometryDecisions::new(context);
     let drawing = Drawing::load(&mut Cursor::new(data))?;
     let mut positions = Vec::new();
     let mut triangles = Vec::new();
     let mut append_polygon = |points: Vec<Point3>| -> Result<(), IoError> {
         let base = positions.len();
-        let (new_positions, new_triangles) = push_polygon(points)?;
+        let (new_positions, new_triangles) = push_polygon(points, &decisions)?;
         positions.extend(new_positions);
         triangles.extend(new_triangles.into_iter().map(|triangle| {
             let [a, b, c] = triangle.indices();
@@ -120,7 +151,7 @@ pub fn from_dxf(data: &[u8]) -> Result<TriangleMesh, IoError> {
                         detail: "closed POLYLINE thickness is not yet supported".into(),
                     });
                 }
-                let basis = ocs_basis(polyline.normal.clone())?;
+                let basis = ocs_basis(polyline.normal.clone(), &decisions)?;
                 let points = polyline
                     .vertices()
                     .map(|vertex| ocs_point(vertex.location.clone(), &basis))
@@ -144,7 +175,7 @@ pub fn from_dxf(data: &[u8]) -> Result<TriangleMesh, IoError> {
                         "DXF CIRCLE radius must be finite and positive".into(),
                     ));
                 }
-                let basis = ocs_basis(circle.normal.clone())?;
+                let basis = ocs_basis(circle.normal.clone(), &decisions)?;
                 let center = ocs_point(circle.center.clone(), &basis)?;
                 let radius = real(circle.radius, "circle radius")?;
                 let mut points = Vec::with_capacity(64);
@@ -158,7 +189,7 @@ pub fn from_dxf(data: &[u8]) -> Result<TriangleMesh, IoError> {
                 append_polygon(points)?;
             },
             EntityType::Solid(solid) => {
-                let basis = ocs_basis(solid.extrusion_direction.clone())?;
+                let basis = ocs_basis(solid.extrusion_direction.clone(), &decisions)?;
                 let bottom = vec![
                     ocs_point(solid.first_corner.clone(), &basis)?,
                     ocs_point(solid.second_corner.clone(), &basis)?,
@@ -206,16 +237,16 @@ pub fn from_dxf(data: &[u8]) -> Result<TriangleMesh, IoError> {
                     points[2].y.clone(),
                     points[2].z.clone(),
                 );
-                let same_as_third = hyperlimit::point3_equal(
-                    &fourth_limit,
-                    &third_limit,
-                    crate::PREDICATE_POLICY,
-                )
-                .value()
-                .ok_or_else(|| IoError::Geometry {
-                    format: "DXF",
-                    detail: "3DFACE fourth-corner incidence is indeterminate".into(),
-                })?;
+                let same_as_third = decisions
+                    .probe(hyperlimit::point3_equal(
+                        &fourth_limit,
+                        &third_limit,
+                        decisions.predicate_policy(),
+                    ))
+                    .ok_or_else(|| IoError::Geometry {
+                        format: "DXF",
+                        detail: "3DFACE fourth-corner incidence is indeterminate".into(),
+                    })?;
                 if !same_as_third {
                     points.push(fourth);
                 }
@@ -229,7 +260,7 @@ pub fn from_dxf(data: &[u8]) -> Result<TriangleMesh, IoError> {
             },
         }
     }
-    Ok(TriangleMesh::new(positions, triangles))
+    Ok(decisions.finish(TriangleMesh::new(positions, triangles)))
 }
 
 fn point_from_wcs(point: dxf::Point) -> Result<Point3, IoError> {

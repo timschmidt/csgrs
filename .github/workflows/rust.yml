@@ -30,7 +30,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-      - uses: ./.github/actions/hyper-workspace
+      - uses: $/.github/actions/hyper-workspace
       - name: Install Rust
         run: |
           rustup toolchain install stable --profile minimal
@@ -56,7 +56,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-      - uses: ./.github/actions/hyper-workspace
+      - uses: $/.github/actions/hyper-workspace
       - name: Install Rust
         run: |
           rustup toolchain install stable --profile minimal
@@ -87,7 +87,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-      - uses: ./.github/actions/hyper-workspace
+      - uses: $/.github/actions/hyper-workspace
       - name: Install Rust
         run: |
           rustup toolchain install stable --profile minimal --component clippy
