@@ -398,14 +398,39 @@ fn sign_scale_cache_and_abort_states_preserve_predicate_results() {
         // materialize both private cache variants instead of upgrading one
         // object from F32 to F64 before predicate use.
         let warmed_f32 = case.value.clone();
-        let first_f32 = warmed_f32.to_f32_lossy();
-        assert_eq!(warmed_f32.to_f32_lossy(), first_f32);
+        let first_f32 = warmed_f32.to_f32_lossy().expect("finite representative");
+        assert!(warmed_f32.certified_dyadic_interval(-128).is_some());
+        let second_f32 = warmed_f32.to_f32_lossy().expect("finite representative");
+        // Without the optional binary32 cache, scalar refinement may select
+        // the other adjacent float. Check both lossy views against the exact
+        // value, not an unsupported bit-stability contract for uncached IO.
+        for approximation in [first_f32, second_f32] {
+            let lower = Real::try_from(approximation.next_down()).expect("finite neighbor");
+            let upper = Real::try_from(approximation.next_up()).expect("finite neighbor");
+            for (lower, upper) in [(lower, warmed_f32.clone()), (warmed_f32.clone(), upper)] {
+                assert!(
+                    matches!(
+                        compare_reals(&lower, &upper, STRICT).value(),
+                        Some(Ordering::Less | Ordering::Equal)
+                    ),
+                    "{}: binary32 view must enclose the exact value within adjacent floats",
+                    case.certificate,
+                );
+            }
+        }
         match std::env::var("HYPERLIMIT_EXPECT_F32_CACHE").as_deref() {
-            Ok("present") => assert_private_cache_debug(
-                &warmed_f32,
-                "primitive_approx_cache: F32(Some(",
-                case.certificate,
-            ),
+            Ok("present") => {
+                assert_eq!(
+                    first_f32, second_f32,
+                    "{} cached binary32",
+                    case.certificate
+                );
+                assert_private_cache_debug(
+                    &warmed_f32,
+                    "primitive_approx_cache: F32(Some(",
+                    case.certificate,
+                );
+            }
             Ok("absent") => assert_private_cache_debug_excludes(
                 &warmed_f32,
                 "primitive_approx_cache: F32(",

@@ -568,27 +568,41 @@ mod tests {
 
     #[test]
     fn exact_normal_form_precedes_terminal_approximate_equality() {
-        let root_two = real(2).sqrt().unwrap();
-        let root_two_over_pi = (root_two.clone() / Real::pi()).unwrap();
-        let half = (real(1) / real(2)).unwrap();
-        let shared_offset = root_two.clone() * real(3) + half;
-        let contact = (((root_two.clone() * real(4) - shared_offset.clone()) * Real::pi())
-            * root_two_over_pi.clone()
-            / real(4))
-        .unwrap();
-        let domain = (((root_two * real(2) - shared_offset) * Real::pi()) * root_two_over_pi
-            / real(4))
-        .unwrap()
-            + real(1);
-        let tiny = real(2).powi_i64(-600).unwrap();
-        let positive = contact - domain + tiny;
+        let fresh_positive = || {
+            let root_two = real(2).sqrt().unwrap();
+            let root_two_over_pi = (root_two.clone() / Real::pi()).unwrap();
+            let half = (real(1) / real(2)).unwrap();
+            let shared_offset = root_two.clone() * real(3) + half;
+            let contact = (((root_two.clone() * real(4) - shared_offset.clone()) * Real::pi())
+                * root_two_over_pi.clone()
+                / real(4))
+            .unwrap();
+            let domain = (((root_two * real(2) - shared_offset) * Real::pi()) * root_two_over_pi
+                / real(4))
+            .unwrap()
+                + real(1);
+            let tiny = real(2).powi_i64(-600).unwrap();
+            contact - domain + tiny
+        };
+        let positive = fresh_positive();
 
+        assert_eq!(positive.immediate_sign(), None);
         assert_eq!(
             classify_real_sign_with_policy(&positive, APPROX),
             PredicateOutcome::decided(Sign::Positive, Certainty::Exact, Escalation::Exact)
         );
+        // The first symbolic proof must be retained, not recomputed or
+        // replaced by terminal approximate equality on a later query.
+        assert_eq!(
+            positive.immediate_sign(),
+            Some(hyperreal::RealSign::Positive)
+        );
         assert_eq!(
             compare_reals_with_policy(&positive, &Real::zero(), APPROX),
+            PredicateOutcome::decided(Ordering::Greater, Certainty::Exact, Escalation::Structural)
+        );
+        assert_eq!(
+            compare_reals_with_policy(&fresh_positive(), &Real::zero(), APPROX),
             PredicateOutcome::decided(Ordering::Greater, Certainty::Exact, Escalation::Exact)
         );
 
@@ -596,6 +610,10 @@ mod tests {
         let right = Point2::new(Real::zero(), Real::zero());
         assert_eq!(
             point2_equal_with_policy(&left, &right, APPROX),
+            PredicateOutcome::decided(false, Certainty::Exact, Escalation::Structural)
+        );
+        assert_eq!(
+            point2_equal_with_policy(&Point2::new(fresh_positive(), Real::zero()), &right, APPROX),
             PredicateOutcome::decided(false, Certainty::Exact, Escalation::Exact)
         );
     }
