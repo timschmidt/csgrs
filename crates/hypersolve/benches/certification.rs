@@ -7754,25 +7754,47 @@ fn certification(c: &mut Criterion) {
             )
         })
     });
-    c.bench_function("certify_multivariate_quadratic_krawczyk_rows", |b| {
-        b.iter(|| {
+    // A nonsquare fixture returns ShapeMismatch before constructing an inverse.
+    // Time successful proof paths, with retained exact roots and nonzero boxes.
+    for dimension in [1, 2, 4, 8] {
+        let mut square_problem = Problem::default();
+        let offsets = (0..dimension)
+            .map(|index| {
+                square_problem.add_variable(format!("x{index}"), Real::one());
+                Expr::symbol(SymbolId(index as u32), format!("x{index}")) - Expr::int(1)
+            })
+            .collect::<Vec<_>>();
+        for row in 0..dimension {
+            let mut residual = offsets[row].clone().powi(2);
+            for (column, offset) in offsets.iter().enumerate() {
+                let coefficient = if column == row { 2 * dimension + 1 } else { 1 };
+                residual = residual + Expr::int(coefficient as i64) * offset.clone();
+            }
+            square_problem
+                .add_constraint(Constraint::equality(format!("square row {row}"), residual));
+        }
+        let square_analysis = square_problem.analyze();
+        let square_context = context_from_problem(&square_problem);
+        let balls = (0..dimension)
+            .map(|index| VariableBall {
+                symbol: SymbolId(index as u32),
+                radius: Real::new(Rational::fraction(1, 16).unwrap()),
+            })
+            .collect::<Vec<_>>();
+        let certify = || {
             certify_multivariate_quadratic_krawczyk_box(
-                &multivariate_quadratic_analysis,
-                &multivariate_quadratic_context,
-                &[
-                    VariableBall {
-                        symbol: SymbolId(0),
-                        radius: r(0),
-                    },
-                    VariableBall {
-                        symbol: SymbolId(1),
-                        radius: r(0),
-                    },
-                ],
-                hyperlimit::PredicatePolicy::APPROXIMATE_512,
+                &square_analysis,
+                &square_context,
+                &balls,
+                hyperlimit::PredicatePolicy::STRICT,
             )
-        })
-    });
+        };
+        assert!(certify().certified_unique_root());
+        c.bench_function(
+            &format!("certify_multivariate_quadratic_krawczyk_square/{dimension}"),
+            |b| b.iter(&certify),
+        );
+    }
     c.bench_function("quadratic_form_candidate_replay", |b| {
         b.iter(|| {
             for row in 0..multivariate_quadratic_analysis.problem().constraints.len() {

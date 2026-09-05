@@ -490,7 +490,8 @@ pub struct MultivariateQuadraticKrawczykVariable {
     pub step: Real,
     /// Exact Krawczyk image-radius bound for this coordinate.
     pub image_radius: Real,
-    /// Exact derivative-variation contraction bound for this coordinate.
+    /// Dimensionless infinity-norm row bound for `I - J(x0)^-1 * J(X)`.
+    /// Variable radii enter the derivative variation, not a second image scaling.
     pub contraction_bound: Real,
 }
 
@@ -1091,12 +1092,8 @@ pub fn certify_multivariate_quadratic_krawczyk_box(
         let step_abs = abs_real(&step);
         let remainder_image_radius = weighted_sum_abs(&inverse[variable_index], &remainder_radii);
         let image_radius = step_abs + remainder_image_radius;
-        let contraction_bound = contraction_row_bound(
-            &inverse[variable_index],
-            &derivative_variation,
-            analysis.problem().variables.as_slice(),
-            &radius_by_symbol,
-        );
+        let contraction_bound =
+            contraction_row_bound(&inverse[variable_index], &derivative_variation);
         let radius = radius_by_symbol
             .get(&variable.symbol)
             .expect("radius presence checked before Krawczyk construction");
@@ -1593,23 +1590,19 @@ fn weighted_sum_abs(weights: &[Real], values: &[Real]) -> Real {
     sum
 }
 
-fn contraction_row_bound(
-    inverse_row: &[Real],
-    derivative_variation: &[Vec<Real>],
-    variables: &[crate::model::Variable],
-    radius_by_symbol: &HashMap<SymbolId, Real>,
-) -> Real {
+fn contraction_row_bound(inverse_row: &[Real], derivative_variation: &[Vec<Real>]) -> Real {
+    // For g(x) = x - C*f(x), C = J(x0)^-1, the derivative is
+    // -C*(J(x)-J(x0)). Its infinity-norm row bound is
+    // sum_j sum_k |C_ik| * variation_kj. Multiplying by the variable
+    // radii again would bound an image displacement, not a contraction
+    // factor that can be compared with one.
     let mut bound = Real::zero();
-    for (column, variable) in variables.iter().enumerate() {
-        let mut operator_entry = Real::zero();
-        for (weight, row_variation) in inverse_row.iter().zip(derivative_variation) {
-            operator_entry += abs_real(weight) * row_variation[column].clone();
+    for (weight, row_variation) in inverse_row.iter().zip(derivative_variation) {
+        let mut row_sum = Real::zero();
+        for variation in row_variation {
+            row_sum += variation.clone();
         }
-        let radius = radius_by_symbol
-            .get(&variable.symbol)
-            .cloned()
-            .unwrap_or_else(Real::zero);
-        bound += operator_entry * radius;
+        bound += abs_real(weight) * row_sum;
     }
     bound
 }
@@ -1979,6 +1972,132 @@ fn abs_real(value: &Real) -> Real {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    fn scalar_quadratic_box(
+        linear: Real,
+        center: Real,
+        radius: Real,
+    ) -> MultivariateQuadraticKrawczykReport {
+        use crate::{Constraint, Expr, Problem, context_from_problem};
+        let x = Expr::symbol(SymbolId(0), "x");
+        let mut problem = Problem::default();
+        problem.add_variable("x", center);
+        problem.add_constraint(Constraint::equality(
+            "x*(x+a)",
+            x.clone().powi(2) + Expr::real(linear) * x,
+        ));
+        certify_multivariate_quadratic_krawczyk_box(
+            &problem.analyze(),
+            &context_from_problem(&problem),
+            &[VariableBall {
+                symbol: SymbolId(0),
+                radius,
+            }],
+            PredicatePolicy::STRICT,
+        )
+    }
+
+    #[test]
+    fn multivariate_krawczyk_rejects_two_roots_in_small_box() {
+        let quarter = (Real::one() / Real::from(4)).unwrap();
+        // Both 0 and -1/4 are roots in this closed box. Its image is contained,
+        // but the derivative operator has norm two, not the radius-weighted 1/2.
+        let report = scalar_quadratic_box(quarter.clone(), Real::zero(), quarter);
+        assert_eq!(
+            report.status,
+            MultivariateQuadraticKrawczykStatus::NonContractiveDerivative {
+                symbol: SymbolId(0)
+            },
+        );
+    }
+
+    #[test]
+    fn multivariate_krawczyk_contraction_is_dimensionless_across_scales() {
+        for numerator in [-64, -16, -4, -1, 1, 4, 16, 64] {
+            let a = (Real::from(numerator) / Real::from(4)).unwrap();
+            let magnitude = abs_real(&a);
+            for center in [Real::zero(), -a.clone()] {
+                for radius_numerator in [0, 1, 2, 4, 8] {
+                    let radius =
+                        (&magnitude * Real::from(radius_numerator) / Real::from(4)).unwrap();
+                    let report = scalar_quadratic_box(a.clone(), center.clone(), radius);
+                    match radius_numerator {
+                        0 | 1 => {
+                            assert_eq!(
+                                report.status,
+                                MultivariateQuadraticKrawczykStatus::CertifiedUniqueRoot
+                            );
+                            assert_eq!(report.variables[0].step, Real::zero());
+                            assert_eq!(
+                                report.variables[0].contraction_bound,
+                                (Real::from(radius_numerator) / Real::from(2)).unwrap(),
+                            );
+                        }
+                        2 | 4 => assert_eq!(
+                            report.status,
+                            MultivariateQuadraticKrawczykStatus::NonContractiveDerivative {
+                                symbol: SymbolId(0)
+                            }
+                        ),
+                        8 => assert_eq!(
+                            report.status,
+                            MultivariateQuadraticKrawczykStatus::ImageOutsideBox {
+                                symbol: SymbolId(0)
+                            }
+                        ),
+                        _ => unreachable!(),
+                    }
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn multivariate_krawczyk_coupled_unequal_radii_match_exact_operator_norm() {
+        use crate::{Constraint, Expr, Problem, context_from_problem};
+        let x = Expr::symbol(SymbolId(0), "x");
+        let y = Expr::symbol(SymbolId(1), "y");
+        let mut problem = Problem::default();
+        problem.add_variable("x", Real::zero());
+        problem.add_variable("y", Real::zero());
+        problem.add_constraint(Constraint::equality(
+            "2x+y+x^2+2xy",
+            Expr::int(2) * x.clone()
+                + y.clone()
+                + x.clone().powi(2)
+                + Expr::int(2) * x.clone() * y.clone(),
+        ));
+        problem.add_constraint(Constraint::equality(
+            "x+3y-3x^2+y^2",
+            x.clone() + Expr::int(3) * y.clone() - Expr::int(3) * x.powi(2) + y.powi(2),
+        ));
+        let fraction = |n, d| Real::new(Rational::fraction(n, d).unwrap());
+        let report = certify_multivariate_quadratic_krawczyk_box(
+            &problem.analyze(),
+            &context_from_problem(&problem),
+            &[
+                VariableBall {
+                    symbol: SymbolId(0),
+                    radius: fraction(1, 100),
+                },
+                VariableBall {
+                    symbol: SymbolId(1),
+                    radius: fraction(1, 10),
+                },
+            ],
+            PredicatePolicy::STRICT,
+        );
+        assert_eq!(
+            report.status,
+            MultivariateQuadraticKrawczykStatus::CertifiedUniqueRoot
+        );
+        // C = [[3,-1],[-1,2]]/5, V = [[22,2],[6,20]]/100.
+        // These constants are the row sums of |C|*V, without radius scaling.
+        assert_eq!(report.variables[0].contraction_bound, fraction(49, 250));
+        assert_eq!(report.variables[1].contraction_bound, fraction(19, 125));
+        assert_eq!(report.variables[0].image_radius, fraction(83, 25000));
+        assert_eq!(report.variables[1].image_radius, fraction(227, 50000));
+    }
 
     #[test]
     fn krawczyk_divisions_reuse_policy_certified_nonzero_evidence() {
