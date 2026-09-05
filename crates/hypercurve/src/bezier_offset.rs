@@ -55348,6 +55348,8 @@ impl BezierDenseTwoSquareRootExpression2 {
         })
     }
 
+    /// Enumerates conjugate-sheet zeros without multiplicities introduced only
+    /// by absent generators. Callers must still replay the authored sheet.
     fn projection(
         &self,
         first_speed_squared: &DenseTensorPolynomial,
@@ -55360,30 +55362,44 @@ impl BezierDenseTwoSquareRootExpression2 {
         let second_speed_squared =
             dense_reduce_selected_root_relations(second_speed_squared.clone(), sources)?;
         let reduce = |polynomial| dense_reduce_selected_root_relations(polynomial, sources);
-        let rational_squared = reduce(expression.rational.multiply(&expression.rational)?)?;
-        let first_squared = reduce(expression.first.multiply(&expression.first)?)?;
-        let second_squared = reduce(expression.second.multiply(&expression.second)?)?;
-        let product_squared = reduce(expression.product.multiply(&expression.product)?)?;
-        let retained_rational = reduce(
-            rational_squared
-                .add(&reduce(first_squared.multiply(&first_speed_squared)?)?)?
-                .subtract(&reduce(
-                    second_speed_squared.multiply(
-                        &second_squared
-                            .add(&reduce(product_squared.multiply(&first_speed_squared)?)?)?,
-                    )?,
-                )?)?,
-        )?;
-        let retained_radical = reduce(
-            expression
-                .rational
-                .multiply(&expression.first)?
-                .subtract(&reduce(
-                    second_speed_squared
-                        .multiply(&expression.second.multiply(&expression.product)?)?,
-                )?)?
-                .scale(&Real::from(2_i8))?,
-        )?;
+        let (retained_rational, retained_radical) =
+            if Self::polynomial_is_stored_zero(&expression.second)
+                && Self::polynomial_is_stored_zero(&expression.product)
+            {
+                // An absent second generator would only square the retained
+                // first-generator equation, doubling its eventual norm degree.
+                (expression.rational, expression.first)
+            } else {
+                let rational_squared = reduce(expression.rational.multiply(&expression.rational)?)?;
+                let first_squared = reduce(expression.first.multiply(&expression.first)?)?;
+                let second_squared = reduce(expression.second.multiply(&expression.second)?)?;
+                let product_squared = reduce(expression.product.multiply(&expression.product)?)?;
+                let retained_rational = reduce(
+                    rational_squared
+                        .add(&reduce(first_squared.multiply(&first_speed_squared)?)?)?
+                        .subtract(&reduce(
+                            second_speed_squared.multiply(&second_squared.add(&reduce(
+                                product_squared.multiply(&first_speed_squared)?,
+                            )?)?)?,
+                        )?)?,
+                )?;
+                let retained_radical = reduce(
+                    expression
+                        .rational
+                        .multiply(&expression.first)?
+                        .subtract(&reduce(
+                            second_speed_squared
+                                .multiply(&expression.second.multiply(&expression.product)?)?,
+                        )?)?
+                        .scale(&Real::from(2_i8))?,
+                )?;
+                (retained_rational, retained_radical)
+            };
+        if Self::polynomial_is_stored_zero(&retained_radical) {
+            // The final norm would be a square. Keep its base, including any
+            // radicand factors: their zeros have not been proved absent.
+            return Some(retained_rational);
+        }
         reduce(
             retained_rational
                 .multiply(&retained_rational)?
@@ -146670,24 +146686,234 @@ mod conversion_tests {
         }
     }
 
-    #[test]
-    fn dense_two_radical_square_matches_general_field_product() {
-        let polynomial = |coefficients: &[i8]| {
-            let coefficients = coefficients
+    fn dense_test_polynomial(coefficients: &[i8]) -> DenseTensorPolynomial {
+        DenseTensorPolynomial::from_axis_polynomial(
+            1,
+            0,
+            &coefficients
                 .iter()
                 .copied()
                 .map(Real::from)
-                .collect::<Vec<_>>();
-            DenseTensorPolynomial::from_axis_polynomial(1, 0, &coefficients).unwrap()
-        };
+                .collect::<Vec<_>>(),
+        )
+        .unwrap()
+    }
+
+    #[test]
+    fn dense_projection_does_not_square_an_absent_radical() {
+        let zero = dense_test_polynomial(&[0]);
+        for (rational, first, second, product, expected) in [
+            // Retain a scalar double root with its original degree.
+            (vec![1, -4, 4], vec![0], vec![0], vec![0], vec![1, -4, 4]),
+            // Each one-radical equation needs one quadratic norm, not its square.
+            (vec![-1, 3], vec![1], vec![0], vec![0], vec![-3, -6, 9]),
+            (vec![-1, 3], vec![0], vec![1], vec![0], vec![-8, -6, 9]),
+            // With every component zero the projection is still identically zero.
+            (vec![0], vec![0], vec![0], vec![0], vec![0]),
+        ] {
+            let expression = BezierDenseTwoSquareRootExpression2 {
+                rational: dense_test_polynomial(&rational),
+                first: dense_test_polynomial(&first),
+                second: dense_test_polynomial(&second),
+                product: dense_test_polynomial(&product),
+            };
+            assert_eq!(
+                expression.projection(
+                    &dense_test_polynomial(&[4]),
+                    &dense_test_polynomial(&[9]),
+                    &[]
+                ),
+                Some(dense_test_polynomial(&expected)),
+            );
+        }
+
+        // All four components can be present while their first-generator
+        // cross term cancels exactly after the second-generator norm.
         let expression = BezierDenseTwoSquareRootExpression2 {
-            rational: polynomial(&[1, 2]),
-            first: polynomial(&[-3, 1]),
-            second: polynomial(&[2, 4]),
-            product: polynomial(&[1, -2]),
+            rational: dense_test_polynomial(&[0, 2]),
+            first: dense_test_polynomial(&[1]),
+            second: dense_test_polynomial(&[0, 1]),
+            product: dense_test_polynomial(&[2]),
         };
-        let first_speed_squared = polynomial(&[2, 1]);
-        let second_speed_squared = polynomial(&[3, -1]);
+        assert_eq!(
+            expression.projection(
+                &dense_test_polynomial(&[1]),
+                &dense_test_polynomial(&[1]),
+                &[]
+            ),
+            Some(dense_test_polynomial(&[-3, 0, 3])),
+        );
+        // The first coefficient is absent only after source-root reduction.
+        let source = exact_real_algebraic_representation(&Real::one());
+        let expression = BezierDenseTwoSquareRootExpression2 {
+            rational: dense_test_polynomial(&[1, -4, 4])
+                .insert_independent_axis(0)
+                .unwrap(),
+            first: DenseTensorPolynomial::try_new(vec![2, 1], vec![-Real::one(), Real::one()])
+                .unwrap(),
+            second: zero.insert_independent_axis(0).unwrap(),
+            product: zero.insert_independent_axis(0).unwrap(),
+        };
+        let one = dense_test_polynomial(&[1])
+            .insert_independent_axis(0)
+            .unwrap();
+        assert_eq!(
+            expression.projection(&one, &one, &[source]),
+            Some(
+                dense_test_polynomial(&[1, -4, 4])
+                    .insert_independent_axis(0)
+                    .unwrap()
+            ),
+        );
+    }
+
+    #[test]
+    fn dense_projection_keeps_roots_of_vanishing_radicands() {
+        for (first, second, product, first_radicand, second_radicand, expected) in [
+            (1, 0, 0, vec![0, 1], vec![1], vec![0, -1]),
+            (0, 1, 0, vec![1], vec![0, 1], vec![0, -1]),
+            (0, 0, 1, vec![0, 1], vec![1, 1], vec![0, -1, -1]),
+        ] {
+            let expression = BezierDenseTwoSquareRootExpression2 {
+                rational: dense_test_polynomial(&[0]),
+                first: dense_test_polynomial(&[first]),
+                second: dense_test_polynomial(&[second]),
+                product: dense_test_polynomial(&[product]),
+            };
+            assert_eq!(
+                expression.projection(
+                    &dense_test_polynomial(&first_radicand),
+                    &dense_test_polynomial(&second_radicand),
+                    &[],
+                ),
+                Some(dense_test_polynomial(&expected)),
+            );
+        }
+    }
+
+    #[test]
+    fn dense_projection_single_radical_replays_the_authored_sheet() {
+        let map = exact_chord_normal_dense_test_map();
+        let scalar = |value| DenseTensorPolynomial::from_axis_polynomial(1, 0, &[value]).unwrap();
+        let zero = scalar(Real::zero());
+        let half = (Real::one() / Real::from(2_i8)).unwrap();
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            for first in [false, true] {
+                for sign in [-1_i8, 1] {
+                    let radical = scalar((Real::from(sign) / Real::from(10_i8)).unwrap());
+                    let expression = BezierDenseTwoSquareRootExpression2 {
+                        rational: DenseTensorPolynomial::from_axis_polynomial(
+                            1,
+                            0,
+                            &[-half.clone(), Real::one()],
+                        )
+                        .unwrap(),
+                        first: if first { radical.clone() } else { zero.clone() },
+                        second: if first { zero.clone() } else { radical },
+                        product: zero.clone(),
+                    };
+                    let Classification::Decided(BezierAlgebraicFiberProjection2::Parameters(roots)) =
+                        chord_normal_dense_expression_parameters(
+                            &map,
+                            &expression,
+                            SelectedThirdAxisDomain2::UnitInterval,
+                            &policy,
+                        )
+                        .unwrap()
+                    else {
+                        panic!("the single-radical sheet must project exactly");
+                    };
+                    assert_eq!(roots.len(), 1);
+                    assert_eq!(
+                        roots[0]
+                            .same_value(
+                                &BezierParameter2::Exact(
+                                    (Real::from(5_i8 - sign) / Real::from(10_i8)).unwrap(),
+                                ),
+                                &policy,
+                            )
+                            .unwrap(),
+                        Classification::Decided(true),
+                    );
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn dense_projection_zero_set_matches_all_four_conjugates() {
+        let components = [
+            dense_test_polynomial(&[1, -4, 4]),
+            dense_test_polynomial(&[0, 1]),
+            dense_test_polynomial(&[1, -1]),
+            dense_test_polynomial(&[1]),
+        ];
+        let points =
+            [-4_i8, -2, 0, 1, 2, 4, 8].map(|value| (Real::from(value) / Real::from(4_i8)).unwrap());
+        for mask in 0..16 {
+            let selected: [DenseTensorPolynomial; 4] = std::array::from_fn(|index| {
+                if mask & (1 << index) == 0 {
+                    dense_test_polynomial(&[0])
+                } else {
+                    components[index].clone()
+                }
+            });
+            let expression = BezierDenseTwoSquareRootExpression2 {
+                rational: selected[0].clone(),
+                first: selected[1].clone(),
+                second: selected[2].clone(),
+                product: selected[3].clone(),
+            };
+            for first_root in [0_i8, 1, 2] {
+                for second_root in [0_i8, 1, 3] {
+                    let projection = expression
+                        .projection(
+                            &dense_test_polynomial(&[first_root * first_root]),
+                            &dense_test_polynomial(&[second_root * second_root]),
+                            &[],
+                        )
+                        .unwrap();
+                    for point in &points {
+                        let values = selected
+                            .each_ref()
+                            .map(|component| Real::eval_poly(component.coefficients(), point));
+                        let conjugate_zero = [-1_i8, 1].into_iter().any(|first_sign| {
+                            [-1_i8, 1].into_iter().any(|second_sign| {
+                                let first = Real::from(first_sign * first_root);
+                                let second = Real::from(second_sign * second_root);
+                                (&values[0]
+                                    + &values[1] * &first
+                                    + &values[2] * &second
+                                    + &values[3] * first * second)
+                                    .exact_rational_ref()
+                                    .unwrap()
+                                    .is_zero()
+                            })
+                        });
+                        assert_eq!(
+                            Real::eval_poly(projection.coefficients(), point)
+                                .exact_rational_ref()
+                                .unwrap()
+                                .is_zero(),
+                            conjugate_zero,
+                            "mask={mask}, first_root={first_root}, second_root={second_root}, point={point:?}",
+                        );
+                    }
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn dense_two_radical_square_matches_general_field_product() {
+        let expression = BezierDenseTwoSquareRootExpression2 {
+            rational: dense_test_polynomial(&[1, 2]),
+            first: dense_test_polynomial(&[-3, 1]),
+            second: dense_test_polynomial(&[2, 4]),
+            product: dense_test_polynomial(&[1, -2]),
+        };
+        let first_speed_squared = dense_test_polynomial(&[2, 1]);
+        let second_speed_squared = dense_test_polynomial(&[3, -1]);
         let square = expression
             .square(&first_speed_squared, &second_speed_squared)
             .unwrap();
