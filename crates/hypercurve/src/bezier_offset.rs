@@ -60892,6 +60892,33 @@ impl BezierRecursiveQuadraticProjectivePoint2 {
     }
 
     fn bounds_refined(&self, refinement_steps: usize) -> Classification<Aabb2> {
+        // This point already certifies its denominator strictly positive.
+        // Replay the correlated scalar coordinates before interval expansion.
+        let scalar_bounds = || {
+            let inverse = self
+                .denominator
+                .exact_real_value_with_retained_witnesses()?
+                .inverse_ref_assuming_nonzero()
+                .ok()?;
+            let precision = -(refinement_steps.max(64).min(i32::MAX as usize) as i32);
+            let x = self.x.exact_real_value_with_retained_witnesses()? * &inverse;
+            let y = self.y.exact_real_value_with_retained_witnesses()? * inverse;
+            let [x_lower, x_upper] = x.certified_dyadic_interval(precision)?.map(Real::new);
+            let [y_lower, y_upper] = y.certified_dyadic_interval(precision)?.map(Real::new);
+            Some(Aabb2::new_unchecked(
+                Point2::new(x_lower, y_lower),
+                Point2::new(x_upper, y_upper),
+            ))
+        };
+        if let Some(bounds) = scalar_bounds() {
+            #[cfg(feature = "dispatch-trace")]
+            hyperreal::dispatch_trace::record(
+                "hypercurve",
+                "recursive-projective-bounds",
+                "retained-scalar",
+            );
+            return Classification::Decided(bounds);
+        }
         let (Some(x), Some(y), Some(denominator)) = (
             self.x.interval(refinement_steps),
             self.y.interval(refinement_steps),
@@ -130664,6 +130691,249 @@ mod conversion_tests {
             Real::zero(),
             Real::one(),
         ))
+    }
+
+    #[test]
+    fn recursive_projective_bounds_reuse_positive_denominator_certificate() {
+        let one = DenseTensorPolynomial::try_new(vec![], vec![Real::one()]).unwrap();
+        let field = BezierRecursiveQuadraticField2::base(vec![], one.clone(), one).unwrap();
+        let atom = (Real::from(2_i8).sqrt().unwrap() + Real::one()).sin();
+        let upper = &atom + Real::from(2_i8);
+        let lower = &atom - Real::one();
+        // The cancellation is exactly zero, so the denominator is 2^-3000.
+        // Its positivity is construction evidence, not a bounded sign query.
+        let scale = Real::diff_of_products(&Real::one(), &upper, &Real::one(), &lower)
+            - Real::from(3_i8)
+            + Real::from(2_i8).powi_i64(-3000).unwrap();
+        assert_eq!(scale.zero_status(), ZeroStatus::Unknown);
+        let point = BezierRecursiveQuadraticProjectivePoint2 {
+            x: field.constant(&scale * Real::from(3_i8)).unwrap(),
+            y: field.constant(-scale.clone()).unwrap(),
+            denominator: field.constant(scale).unwrap(),
+        };
+        assert_eq!(
+            point
+                .denominator
+                .exact_real_value_with_retained_witnesses()
+                .unwrap()
+                .zero_status(),
+            ZeroStatus::Unknown,
+        );
+        #[cfg(feature = "dispatch-trace")]
+        hyperreal::dispatch_trace::reset();
+        let bounds = || point.bounds_refined(0);
+        #[cfg(feature = "dispatch-trace")]
+        let bounds = hyperreal::dispatch_trace::with_recording(bounds);
+        #[cfg(not(feature = "dispatch-trace"))]
+        let bounds = bounds();
+        let Classification::Decided(bounds) = bounds else {
+            panic!("the retained nonzero proof must permit native coordinate bounds");
+        };
+        let expected = Point2::from_values(3, -1);
+        let max_width = Real::from(2_i8).powi_i64(-60).unwrap();
+        for (lower, value, upper) in [
+            (bounds.min().x(), expected.x(), bounds.max().x()),
+            (bounds.min().y(), expected.y(), bounds.max().y()),
+        ] {
+            assert!(lower <= value && value <= upper);
+            assert!(upper - lower <= max_width);
+        }
+        #[cfg(feature = "dispatch-trace")]
+        assert_eq!(
+            hyperreal::dispatch_trace::take_trace().path_count(
+                "hypercurve",
+                "recursive-projective-bounds",
+                "retained-scalar",
+            ),
+            1,
+        );
+    }
+
+    #[test]
+    fn recursive_projective_bounds_enclose_scaled_nested_radicals() {
+        let half = (Real::one() / Real::from(2_i8)).unwrap();
+        let source = bezier_parameter_root_representation(&algebraic_parameter(vec![
+            -half.clone(),
+            Real::zero(),
+            Real::one(),
+        ]));
+        let one = DenseTensorPolynomial::try_new(vec![1], vec![Real::one()]).unwrap();
+        let field = BezierRecursiveQuadraticField2::base(vec![source], one.clone(), one).unwrap();
+        let BezierRecursiveQuadraticField2::Base(base) = &field else {
+            unreachable!();
+        };
+        assert!(base.source_real_witnesses[0].is_some());
+        let coordinate = recursive_quadratic_rational_value(
+            base,
+            DenseTensorPolynomial::try_new(vec![2], vec![Real::zero(), Real::one()]).unwrap(),
+        )
+        .unwrap();
+        let radicand = coordinate
+            .add(&field.constant(Real::from(3_i8)).unwrap())
+            .unwrap();
+        let extension = field.extension(radicand).unwrap();
+        let x = extension
+            .element(coordinate.clone(), field.constant(Real::one()).unwrap())
+            .unwrap();
+        let y = extension
+            .element(coordinate, field.constant(Real::from(-1_i8)).unwrap())
+            .unwrap();
+        let denominator = extension.constant(Real::from(2_i8)).unwrap();
+        let selected = half.sqrt().unwrap();
+        let root = (&selected + Real::from(3_i8)).sqrt().unwrap();
+        let expected_x = ((&selected + &root) / Real::from(2_i8)).unwrap();
+        let expected_y = ((selected - root) / Real::from(2_i8)).unwrap();
+
+        for scale in [
+            -Real::from(2_i8).powi_i64(600).unwrap(),
+            Real::from(-1_i8),
+            Real::zero(),
+            Real::from(2_i8).powi_i64(-600).unwrap(),
+            Real::one(),
+            Real::from(2_i8).powi_i64(600).unwrap(),
+        ] {
+            let point = BezierRecursiveQuadraticProjectivePoint2 {
+                x: x.scale(&scale).unwrap(),
+                y: y.scale(&scale).unwrap(),
+                denominator: denominator.clone(),
+            };
+            let expected = [&expected_x * &scale, &expected_y * scale];
+            let mut previous_widths: Option<[HyperRational; 2]> = None;
+            for steps in [0_usize, 64, 256, 1024] {
+                let Classification::Decided(bounds) = point.bounds_refined(steps) else {
+                    panic!("retained nested witnesses must enclose both coordinates");
+                };
+                let intervals = [
+                    [bounds.min().x(), bounds.max().x()],
+                    [bounds.min().y(), bounds.max().y()],
+                ];
+                let widths = std::array::from_fn(|axis| {
+                    // Native precision applies before the rational scale.
+                    // Compare against the exact coordinate, not another
+                    // representation's potentially wider dyadic certificate.
+                    assert!(
+                        intervals[axis][0] <= &expected[axis],
+                        "axis {axis}, steps {steps}"
+                    );
+                    assert!(
+                        &expected[axis] <= intervals[axis][1],
+                        "axis {axis}, steps {steps}"
+                    );
+                    let lower = intervals[axis][0].exact_rational_ref().unwrap();
+                    let upper = intervals[axis][1].exact_rational_ref().unwrap();
+                    upper - lower
+                });
+                if let Some(previous) = previous_widths {
+                    assert!(widths[0] <= previous[0] && widths[1] <= previous[1]);
+                }
+                previous_widths = Some(widths);
+            }
+        }
+    }
+
+    #[test]
+    fn recursive_projective_bounds_keep_unwitnessed_source_fallback() {
+        let half = (Real::one() / Real::from(2_i8)).unwrap();
+        let source = bezier_parameter_root_representation(&algebraic_parameter(vec![
+            -half.clone(),
+            Real::zero(),
+            Real::zero(),
+            Real::one(),
+        ]));
+        let one = DenseTensorPolynomial::try_new(vec![1], vec![Real::one()]).unwrap();
+        let field = BezierRecursiveQuadraticField2::base(vec![source], one.clone(), one).unwrap();
+        let BezierRecursiveQuadraticField2::Base(base) = &field else {
+            unreachable!();
+        };
+        assert!(base.source_real_witnesses[0].is_none());
+        let point = BezierRecursiveQuadraticProjectivePoint2 {
+            x: recursive_quadratic_rational_value(
+                base,
+                DenseTensorPolynomial::try_new(vec![2], vec![Real::zero(), Real::one()]).unwrap(),
+            )
+            .unwrap(),
+            y: field.constant(Real::from(-1_i8)).unwrap(),
+            denominator: field.constant(Real::one()).unwrap(),
+        };
+        assert!(point.x.exact_real_value_with_retained_witnesses().is_none());
+        for steps in [0, 4, 8, 32] {
+            let Classification::Decided(bounds) = point.bounds_refined(steps) else {
+                panic!("a missing scalar witness must retain selected-root refinement");
+            };
+            assert!(bounds.min().x() >= &Real::zero());
+            assert!(bounds.max().x() <= &Real::one());
+            assert!(bounds.min().x().clone().powi_i64(3).unwrap() <= half);
+            assert!(bounds.max().x().clone().powi_i64(3).unwrap() >= half);
+            assert_eq!(bounds.min().y(), &Real::from(-1_i8));
+            assert_eq!(bounds.max().y(), &Real::from(-1_i8));
+        }
+        let zero_denominator = BezierRecursiveQuadraticProjectivePoint2 {
+            x: field.constant(Real::one()).unwrap(),
+            y: field.constant(Real::zero()).unwrap(),
+            denominator: field.constant(Real::zero()).unwrap(),
+        };
+        assert!(matches!(
+            zero_denominator.bounds_refined(0),
+            Classification::Uncertain(_)
+        ));
+    }
+
+    #[test]
+    fn recursive_scalar_native_replay_preserves_selected_source_authority() {
+        let half = (Real::one() / Real::from(2_i8)).unwrap();
+        let source = bezier_parameter_root_representation(&algebraic_parameter(vec![
+            -half,
+            Real::zero(),
+            Real::one(),
+        ]));
+        let value = Real::one()
+            + Real::from(2_i8).sqrt().unwrap()
+            + Real::from(3_i8).sqrt().unwrap()
+            + Real::from(6_i8).sqrt().unwrap();
+        let expected = ((&value + value.clone().sqrt().unwrap()) / Real::from(2_i8)).unwrap();
+        for sources in [vec![], vec![source]] {
+            let rank = sources.len();
+            let constant = |value| {
+                DenseTensorPolynomial::try_new(vec![1; rank], vec![Real::from(value)]).unwrap()
+            };
+            let field =
+                BezierRecursiveQuadraticField2::base(sources, constant(2_i8), constant(3_i8))
+                    .unwrap();
+            let BezierRecursiveQuadraticField2::Base(base) = &field else {
+                unreachable!();
+            };
+            let value = BezierRecursiveQuadraticValue2::from_base(
+                base.clone(),
+                BezierDenseTwoSquareRootExpression2 {
+                    rational: constant(1_i8),
+                    first: constant(1_i8),
+                    second: constant(1_i8),
+                    product: constant(1_i8),
+                },
+            )
+            .unwrap();
+            let extension = field.extension(value.clone()).unwrap();
+            let scalar = BezierRecursiveQuadraticProjectiveScalar2 {
+                numerator: extension
+                    .element(value, field.constant(Real::one()).unwrap())
+                    .unwrap(),
+                denominator: extension.constant(Real::from(2_i8)).unwrap(),
+            };
+            assert!(
+                scalar
+                    .numerator
+                    .exact_real_value_with_retained_witnesses()
+                    .is_some()
+            );
+            if rank == 0 {
+                assert_eq!(scalar.exact_real_value(), Some(expected.clone()));
+            } else {
+                // Even an unused, witnessed axis retains its selected-root
+                // publication path. Native coefficient replay is not license
+                // to replace that parameter authority with an opaque scalar.
+                assert!(scalar.exact_real_value().is_none());
+            }
+        }
     }
 
     #[test]
