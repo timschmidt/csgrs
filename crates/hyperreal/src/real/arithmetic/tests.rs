@@ -2318,7 +2318,11 @@ mod tests {
     }
 
     #[test]
-    fn polynomial_evaluation_matches_independent_rational_horner() {
+    fn polynomial_evaluation_matches_independent_rational_power_sum() {
+        let to_gmp = |value: &Rational| {
+            let numerator = BigInt::from_biguint(value.sign(), value.numerator().clone());
+            format!("{numerator}/{}", value.denominator()).parse::<rug::Rational>().unwrap()
+        };
         let tiny = Rational::from_bigint_fraction(BigInt::from(1_u8), BigUint::from(3_u8) << 600_usize).unwrap();
         for count in [0, 1, 3, 9, 33, 65] {
             let coefficients = (0..count).map(|index| {
@@ -2329,10 +2333,19 @@ mod tests {
                 ).unwrap()
             }).collect::<Vec<_>>();
             let reals = coefficients.iter().cloned().map(Real::new).collect::<Vec<_>>();
+            let oracle_coefficients = coefficients.iter().map(to_gmp).collect::<Vec<_>>();
             for x in [Rational::new(-3), Rational::new(-1), Rational::zero(), Rational::one(), Rational::fraction(1, 3).unwrap(), Rational::fraction(-2, 7).unwrap(), tiny.clone()] {
-                let expected = coefficients.iter().rev().fold(Rational::zero(), |value, coefficient| (&value * &x) + coefficient);
+                let oracle_x = to_gmp(&x);
+                let mut expected = rug::Rational::new();
+                let mut power = rug::Rational::from(1);
+                for coefficient in &oracle_coefficients {
+                    let mut term = coefficient.clone();
+                    term *= &power;
+                    expected += term;
+                    power *= &oracle_x;
+                }
                 let actual = Real::eval_poly(&reals, &Real::new(x));
-                assert_eq!(actual.exact_rational_ref(), Some(&expected), "count={count}");
+                assert_eq!(to_gmp(actual.exact_rational_ref().unwrap()), expected, "count={count}");
             }
         }
     }

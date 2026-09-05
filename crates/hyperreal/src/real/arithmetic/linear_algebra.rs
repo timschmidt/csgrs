@@ -2187,15 +2187,11 @@ impl Real {
                     .exact_rational_ref()
                     .expect("checked exact rational coefficients")
                     .clone();
-                let one = Rational::one();
                 for coeff in rest.iter().rev() {
                     let coeff = coeff
                         .exact_rational_ref()
                         .expect("checked exact rational coefficients");
-                    value = Rational::signed_product_sum2(
-                        [true, true],
-                        [[&value, x], [coeff, &one]],
-                    );
+                    value = &value * x + coeff;
                 }
                 crate::trace_dispatch!("real", "polynomial", "eval-poly-exact-rational");
                 return Real::new(value);
