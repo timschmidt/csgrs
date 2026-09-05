@@ -3535,6 +3535,21 @@ fn exact_rational_square_free_bernstein_unit_roots(
         return Ok(None);
     }
     let controls = power_to_bernstein_coefficients(polynomial.coefficients(), polynomial.degree())?;
+    // Isolation consumes only coefficient signs. One positive common scale
+    // leaves every de Casteljau sign and zero unchanged, while integer initial
+    // controls keep all later averages dyadic. Clear the original denominators
+    // once instead of repeatedly reducing their odd factors at every level.
+    let Some(rationals) = controls
+        .iter()
+        .map(Real::exact_rational_ref)
+        .collect::<Option<Vec<_>>>()
+    else {
+        return Ok(None);
+    };
+    let controls = HyperRational::clear_common_denominator_slice(&rationals)
+        .into_iter()
+        .map(Real::new)
+        .collect::<Vec<_>>();
     let endpoint_sign = |value: &Real| match real_sign(value, policy) {
         Some(RealSign::Positive) => Some(RealSign::Positive),
         Some(RealSign::Negative) => Some(RealSign::Negative),
@@ -4800,6 +4815,140 @@ mod conversion_tests {
                 compare_reals(root.interval().end(), &expected, &policy),
                 Some(Ordering::Greater)
             );
+        }
+    }
+
+    #[test]
+    fn square_free_bernstein_preserves_wide_signed_scale_certificates() {
+        // (9t² - 9t + 2)(25t² - 30t + 8)(t^8 + 1) has four simple
+        // nondyadic unit roots. Its signed scales must not change subdivision
+        // decisions, and the published certificates must retain the authored
+        // polynomial rather than the integer-scaled Bernstein controls.
+        let mut coefficients = vec![Real::zero(); 13];
+        for (power, coefficient) in [16_i16, -132, 392, -495, 225].into_iter().enumerate() {
+            coefficients[power] = Real::from(coefficient);
+            coefficients[8 + power] = Real::from(coefficient);
+        }
+        let denominator = (BigUint::one() << 521_usize) - BigUint::one();
+        let tiny = Real::new(
+            HyperRational::from_bigint_fraction(BigInt::one(), denominator.clone()).unwrap(),
+        );
+        let wide = Real::new(
+            HyperRational::from_bigint_fraction(
+                (BigInt::one() << 257_usize) + BigInt::one(),
+                denominator,
+            )
+            .unwrap(),
+        );
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let mut reference = None;
+            for scale in [Real::one(), -Real::one(), tiny.clone(), -wide.clone()] {
+                let polynomial = decided(
+                    BezierParameterPolynomial::try_new_power_basis(
+                        coefficients.iter().map(|value| value * &scale).collect(),
+                        &policy,
+                    )
+                    .unwrap(),
+                    "scaled square-free polynomial",
+                );
+                let mut trace = BezierRootIsolationTrace2::default();
+                let roots = exact_rational_square_free_bernstein_unit_roots(
+                    &polynomial,
+                    &policy,
+                    &mut trace,
+                )
+                .unwrap()
+                .expect("nondyadic simple roots have Bernstein isolators");
+                assert_eq!(roots.len(), 4);
+                assert_eq!(trace.sturm_sequence_builds(), 0);
+                let intervals = roots
+                    .iter()
+                    .zip([
+                        rational(1, 3),
+                        rational(2, 5),
+                        rational(2, 3),
+                        rational(4, 5),
+                    ])
+                    .map(|(root, expected)| {
+                        let BezierParameter2::Algebraic(root) = root else {
+                            panic!("a Bernstein singleton retains algebraic evidence");
+                        };
+                        assert_eq!(root.polynomial(), &polynomial);
+                        assert_eq!(root.root_count(), 1);
+                        assert_eq!(
+                            Real::eval_poly(polynomial.coefficients(), &expected),
+                            Real::zero()
+                        );
+                        assert_eq!(
+                            compare_reals(root.interval().start(), &expected, &policy),
+                            Some(Ordering::Less),
+                        );
+                        assert_eq!(
+                            compare_reals(root.interval().end(), &expected, &policy),
+                            Some(Ordering::Greater),
+                        );
+                        root.interval().clone()
+                    })
+                    .collect::<Vec<_>>();
+                if let Some(reference) = &reference {
+                    assert_eq!(&(trace, intervals), reference);
+                } else {
+                    reference = Some((trace, intervals));
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn square_free_bernstein_scaled_endpoint_and_midpoint_roots_keep_fallback() {
+        let scale = Real::new(
+            HyperRational::from_bigint_fraction(
+                -BigInt::one(),
+                (BigUint::one() << 521_usize) - BigUint::one(),
+            )
+            .unwrap(),
+        );
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            for (coefficients, expected) in [
+                ([0_i8, -2, 3], vec![Real::zero(), rational(2, 3)]),
+                ([-1, 1, 2], vec![rational(1, 2)]),
+                ([0, -1, 1], vec![Real::zero(), Real::one()]),
+            ] {
+                let polynomial = decided(
+                    BezierParameterPolynomial::try_new_power_basis(
+                        coefficients
+                            .iter()
+                            .map(|value| Real::from(*value) * &scale)
+                            .collect(),
+                        &policy,
+                    )
+                    .unwrap(),
+                    "scaled polynomial with a subdivision endpoint root",
+                );
+                assert!(
+                    exact_rational_square_free_bernstein_unit_roots(
+                        &polynomial,
+                        &policy,
+                        &mut BezierRootIsolationTrace2::default(),
+                    )
+                    .unwrap()
+                    .is_none(),
+                );
+                let roots = decided(
+                    polynomial
+                        .isolate_square_free_unit_interval_roots(&policy)
+                        .unwrap(),
+                    "scaled endpoint and midpoint roots",
+                );
+                assert_eq!(roots.len(), expected.len());
+                for (root, expected) in roots.iter().zip(expected) {
+                    assert_eq!(
+                        root.same_value(&BezierParameter2::Exact(expected), &policy)
+                            .unwrap(),
+                        Classification::Decided(true),
+                    );
+                }
+            }
         }
     }
 
