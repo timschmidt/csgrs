@@ -628,8 +628,39 @@
     "raw_file": "/tmp/hypercurve-active-radical-chord.perf",
     "report": "/tmp/hypercurve-active-radical-chord-report.csv",
     "log": "/tmp/hypercurve-active-radical-chord-profile.log",
-    "next_lead": "Use the existing native certified bounded sign refinement before the expensive generic sign fallback for interval endpoint signs. Preserve exact-zero proof requirements and the full fallback on unknown. Not implemented by this checkpoint.",
+    "next_lead": "Inspect successful versus unsuccessful symbolic normal-form proofs at the slow endpoints. Computable::bounded_laurent_rational_with_budget returns its proof result without publishing its sign to the existing root fact cache; determine whether retaining successful facts avoids replay. No cache change is implemented here.",
     "qualification": "Instrumented diagnostic under other build/test activity, not paired timing. Inclusive percentages overlap and must not be summed. The strict chord and one opt-in analytic-Boolean fixture remain long-running, although both complete."
+  },
+  "rejected_followup_experiment": {
+    "recorded_utc": "2026-09-05 05:43 UTC",
+    "description": "Try value.certified_sign_until(-4096).sign() after immediate_sign and before the unchanged interval endpoint comparator fallback.",
+    "reason_for_screen": "Source inspection established that Hyperlimit already tries native refinement before exact rational normalization. Another shallow attempt would repeat work; deeper native refinement was screened instead.",
+    "fixture": "bezier_offset::conversion_tests::recursive_selected_radial_diameter_chord_intersects_a_rational_quadratic_strict",
+    "command": "/usr/bin/time -v taskset -c 7 EXECUTABLE bezier_offset::conversion_tests::recursive_selected_radial_diameter_chord_intersects_a_rational_quadratic_strict --exact --nocapture --test-threads=1",
+    "build_features": "release, all-features",
+    "same_test_table_entries": 891,
+    "baseline": {
+      "binary": "/tmp/hypercurve-interval-sign-baseline-test",
+      "sha256": "e149ace38e1223304268f11696681cea977f253f4a5234a6371689b95e4fbdab",
+      "passed": 1,
+      "wall_seconds": 67.51,
+      "user_seconds": 65.26,
+      "peak_rss_kib": 46208,
+      "exit_status": 0,
+      "log": "/tmp/hypercurve-interval-sign-baseline-screen.log"
+    },
+    "candidate": {
+      "binary": "/tmp/hypercurve-interval-sign-candidate-test",
+      "sha256": "d041e563bc147d4b1cc75c765fdd5f67e9b5d6d395d1c12935c0ef824855a27a",
+      "passed": 1,
+      "wall_seconds": 69.37,
+      "user_seconds": 67.13,
+      "peak_rss_kib": 49788,
+      "exit_status": 0,
+      "log": "/tmp/hypercurve-interval-sign-candidate-screen.log"
+    },
+    "qualification": "One sequential pinned sample per version with compilation between them, not a statistical regression claim. The candidate showed no benefit and higher measured RSS, so its four added source lines were removed. The restored source hash matches the fully validated f7de3c0 source. No test or API was changed by the experiment.",
+    "retained": false
   },
   "milestone_status": {
     "exactcorelib_mining_and_idea_uplift": "Previously closed; remains closed.",
