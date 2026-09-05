@@ -26,8 +26,6 @@ use crate::bezier_algebraic_image::{
     rational_point_image_from_power_basis, rational_tangent_image_from_power_basis,
 };
 use crate::bezier_moment::exact_rational_polynomial_root;
-#[cfg(test)]
-use crate::bezier_parameter::signed_polynomial_on_isolating_interval;
 use crate::bezier_parameter::{
     BezierParameterRefinement2, bernstein_to_power_coefficients,
     coefficients_value_interval_on_parameter_interval,
@@ -167726,62 +167724,5 @@ mod conversion_tests {
                 Classification::Uncertain(UncertaintyReason::Boundary)
             );
         }
-    }
-
-    #[test]
-    fn algebraic_sign_filter_has_no_fixed_refinement_cap() {
-        // The 104th continued-fraction convergent to sqrt(2) lies below the
-        // exact value by roughly 2^-264. Distinguishing its half from the root
-        // of `2t^2-1` therefore requires more than the retired 256 bisections.
-        let mut numerator = num::BigUint::from(1_u8);
-        let mut denominator = num::BigUint::from(1_u8);
-        for _ in 0..104 {
-            let next_numerator = &numerator + &denominator * num::BigUint::from(2_u8);
-            let next_denominator = &numerator + &denominator;
-            numerator = next_numerator;
-            denominator = next_denominator;
-        }
-        let nearby_root = Real::new(
-            hyperreal::Rational::from_bigint_fraction(
-                num::BigInt::from(numerator),
-                denominator * num::BigUint::from(2_u8),
-            )
-            .unwrap(),
-        );
-        let policy = CurveContext::STRICT;
-        let defining = match BezierParameterPolynomial::try_new_power_basis(
-            vec![Real::from(-1_i8), Real::zero(), Real::from(2_i8)],
-            &policy,
-        )
-        .unwrap()
-        {
-            Classification::Decided(polynomial) => polynomial,
-            Classification::Uncertain(reason) => panic!("defining polynomial: {reason:?}"),
-        };
-        let filter = match BezierParameterPolynomial::try_new_power_basis(
-            vec![-nearby_root, Real::one()],
-            &policy,
-        )
-        .unwrap()
-        {
-            Classification::Decided(polynomial) => polynomial,
-            Classification::Uncertain(reason) => panic!("filter polynomial: {reason:?}"),
-        };
-        let interval = match BezierParameterInterval::try_new(
-            (Real::one() / Real::from(2_i8)).unwrap(),
-            Real::one(),
-            &policy,
-        )
-        .unwrap()
-        {
-            Classification::Decided(interval) => interval,
-            Classification::Uncertain(reason) => panic!("isolating interval: {reason:?}"),
-        };
-
-        assert_eq!(
-            signed_polynomial_on_isolating_interval(&filter, &defining, &interval, &policy)
-                .unwrap(),
-            Classification::Decided(RealSign::Positive)
-        );
     }
 }

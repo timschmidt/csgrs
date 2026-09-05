@@ -2254,34 +2254,24 @@ pub(crate) fn signed_polynomial_at_root(
     parameter: &BezierParameter2,
     policy: &CurveContext,
 ) -> CurveResult<Classification<RealSign>> {
-    let Some(polynomial) = polynomial else {
+    let Some(filter) = polynomial else {
         return Ok(Classification::Decided(RealSign::Zero));
     };
-    match parameter {
+    let algebraic = match parameter {
         BezierParameter2::Exact(parameter) => {
-            match real_sign(&polynomial.evaluate(parameter), policy) {
+            return match real_sign(&filter.evaluate(parameter), policy) {
                 Some(sign) => Ok(Classification::Decided(sign)),
                 None => Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
-            }
+            };
         }
-        BezierParameter2::Algebraic(parameter) => signed_polynomial_on_isolating_interval(
-            polynomial,
-            parameter.polynomial(),
-            parameter.interval(),
-            policy,
-        ),
-    }
-}
-
-pub(crate) fn signed_polynomial_on_isolating_interval(
-    filter: &BezierParameterPolynomial,
-    defining: &BezierParameterPolynomial,
-    interval: &BezierParameterInterval,
-    policy: &CurveContext,
-) -> CurveResult<Classification<RealSign>> {
-    match defining.greatest_common_divisor(filter, policy)? {
+        BezierParameter2::Algebraic(parameter) => parameter,
+    };
+    match algebraic
+        .polynomial()
+        .greatest_common_divisor(filter, policy)?
+    {
         Classification::Decided(Some(common)) => {
-            match common.root_count_in_interval(interval, policy)? {
+            match common.root_count_in_interval(algebraic.interval(), policy)? {
                 Classification::Decided(0) => {}
                 Classification::Decided(1) => {
                     return Ok(Classification::Decided(RealSign::Zero));
@@ -2298,9 +2288,21 @@ pub(crate) fn signed_polynomial_on_isolating_interval(
         Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
     }
 
-    let mut interval = interval.clone();
+    let filter_sequence = match sturm_sequence(filter.coefficients(), policy)? {
+        Classification::Decided(sequence) => sequence,
+        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+    };
+    let mut refined = RefinedParameter::from_parameter(parameter);
     loop {
-        match filter.root_count_in_interval(&interval, policy) {
+        let interval = match &refined {
+            RefinedParameter::Exact(root) => {
+                return Ok(real_sign(&filter.evaluate(root), policy)
+                    .map(Classification::Decided)
+                    .unwrap_or(Classification::Uncertain(UncertaintyReason::RealSign)));
+            }
+            RefinedParameter::Algebraic { interval, .. } => interval,
+        };
+        match filter.root_count_in_interval_with_sequence(interval, &filter_sequence, policy) {
             Ok(Classification::Decided(0)) => {
                 return match real_sign(&filter.evaluate(interval.start()), policy) {
                     Some(sign @ (RealSign::Positive | RealSign::Negative)) => {
@@ -2317,57 +2319,9 @@ pub(crate) fn signed_polynomial_on_isolating_interval(
             Err(error) => return Err(error),
         }
 
-        let midpoint = Real::average_pair(interval.start(), interval.end());
-        match real_sign(&defining.evaluate(&midpoint), policy) {
-            Some(RealSign::Zero) => {
-                return match real_sign(&filter.evaluate(&midpoint), policy) {
-                    Some(sign) => Ok(Classification::Decided(sign)),
-                    None => Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
-                };
-            }
-            Some(RealSign::Positive | RealSign::Negative) => {}
-            None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
+        if let Classification::Uncertain(reason) = refined.refine_once(policy)? {
+            return Ok(Classification::Uncertain(reason));
         }
-        let left = match BezierParameterInterval::try_new_ordered(
-            interval.start().clone(),
-            midpoint.clone(),
-            policy,
-        )? {
-            Classification::Decided(interval) => interval,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
-        let right = match BezierParameterInterval::try_new_ordered(
-            midpoint,
-            interval.end().clone(),
-            policy,
-        )? {
-            Classification::Decided(interval) => interval,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
-        let left_count = match defining.root_count_in_interval(&left, policy)? {
-            Classification::Decided(count) => count,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
-        interval = if left_count == 1 {
-            left
-        } else {
-            let right_count = match defining.root_count_in_interval(&right, policy)? {
-                Classification::Decided(count) => count,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            };
-            if right_count != 1 {
-                return Err(CurveError::InvalidBezierAlgebraicParameter);
-            }
-            right
-        };
     }
 }
 
@@ -5003,6 +4957,42 @@ mod conversion_tests {
     }
 
     #[test]
+    fn algebraic_sign_filter_has_no_fixed_refinement_cap() {
+        // The 104th continued-fraction convergent to sqrt(2) lies below the
+        // exact value by roughly 2^-264. Distinguishing its half from the root
+        // of `2t^2-1` therefore requires more than the retired 256 bisections.
+        let mut numerator = BigUint::one();
+        let mut denominator = BigUint::one();
+        for _ in 0..104 {
+            let next_numerator = &numerator + &denominator * BigUint::from(2_u8);
+            let next_denominator = &numerator + &denominator;
+            numerator = next_numerator;
+            denominator = next_denominator;
+        }
+        let nearby_root = Real::new(
+            HyperRational::from_bigint_fraction(
+                BigInt::from(numerator),
+                denominator * BigUint::from(2_u8),
+            )
+            .unwrap(),
+        );
+        let policy = CurveContext::STRICT;
+        let parameter = algebraic_parameter(&polynomial(&[-1, 0, 2]));
+        let filter = decided(
+            BezierParameterPolynomial::try_new_power_basis(
+                vec![-nearby_root, Real::one()],
+                &policy,
+            )
+            .unwrap(),
+            "filter polynomial",
+        );
+        assert_eq!(
+            signed_polynomial_at_root(Some(&filter), &parameter, &policy).unwrap(),
+            Classification::Decided(RealSign::Positive)
+        );
+    }
+
+    #[test]
     fn progressive_refinement_matches_one_pass_proof_budget() {
         let policy = CurveContext::STRICT;
         let source = algebraic_parameter(&polynomial(&[-1, 0, 2]));
@@ -5013,6 +5003,74 @@ mod conversion_tests {
         let _ = progressive.refine_to(2);
         let _ = progressive.refine_to(4);
         assert_eq!(progressive.refine_to(8), &direct);
+    }
+
+    #[test]
+    fn algebraic_sign_filter_preserves_selected_root_and_boundary_ownership() {
+        let filters = [
+            (&[-1, 2][..], RealSign::Positive),
+            (&[-1, 1][..], RealSign::Negative),
+            (&[-3, 4][..], RealSign::Negative),
+            (&[1, -3, 2][..], RealSign::Negative),
+            (&[-1, 0, 2][..], RealSign::Zero),
+            (&[1, 1][..], RealSign::Positive),
+            (&[1][..], RealSign::Positive),
+        ];
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            for defining in [&[-1, 0, 2][..], &[1, 0, -4, 0, 4], &[-1, -1, 2, 2]] {
+                let root = algebraic_parameter(&polynomial(defining));
+                let BezierParameter2::Algebraic(owner) = &root else {
+                    unreachable!()
+                };
+                assert!(owner.data.shared.sturm_sequence.get().is_none());
+                assert_eq!(
+                    signed_polynomial_at_root(None, &root, &policy).unwrap(),
+                    Classification::Decided(RealSign::Zero)
+                );
+                for scale in [Real::one(), Real::pi()] {
+                    for (coefficients, expected) in filters {
+                        let filter = decided(
+                            BezierParameterPolynomial::try_new_power_basis(
+                                coefficients
+                                    .iter()
+                                    .map(|coefficient| Real::from(*coefficient) * &scale)
+                                    .collect(),
+                                &policy,
+                            )
+                            .unwrap(),
+                            "scaled sign filter",
+                        );
+                        assert_eq!(
+                            signed_polynomial_at_root(Some(&filter), &root, &policy).unwrap(),
+                            Classification::Decided(expected),
+                            "defining={defining:?}, filter={coefficients:?}, scale={scale:?}, policy={policy:?}"
+                        );
+                    }
+                }
+                assert!(
+                    owner.data.shared.sturm_sequence.get().is_some(),
+                    "sign queries must share the retained root's Sturm certificate"
+                );
+            }
+            let midpoint_root = algebraic_parameter(&polynomial(&[-3, 4]));
+            for root in [
+                midpoint_root.clone(),
+                BezierParameter2::Exact(rational(3, 4)),
+            ] {
+                assert_eq!(
+                    signed_polynomial_at_root(Some(&polynomial(&[-13, 16])), &root, &policy)
+                        .unwrap(),
+                    Classification::Decided(RealSign::Negative)
+                );
+            }
+            let BezierParameter2::Algebraic(midpoint_root) = midpoint_root else {
+                unreachable!()
+            };
+            assert!(
+                midpoint_root.data.shared.sturm_sequence.get().is_none(),
+                "an exact midpoint needs no defining Sturm chain"
+            );
+        }
     }
 
     #[test]
