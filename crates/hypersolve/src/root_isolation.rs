@@ -1918,6 +1918,9 @@ fn should_refine_one_root_interval(
 
 fn field_sturm_sequence(polynomial: &[Real], policy: PredicatePolicy) -> Option<Vec<Vec<Real>>> {
     let p0 = sign_preserving_primitive_polynomial(polynomial.to_vec(), policy)?;
+    if p0.len() == 1 {
+        return Some(vec![p0]);
+    }
     let p1 = sign_preserving_primitive_polynomial(derivative(&p0), policy)?;
     let mut sequence = vec![p0, p1];
     loop {
@@ -3291,6 +3294,40 @@ mod tests {
 
     fn real(value: i64) -> Real {
         Real::from(value)
+    }
+
+    #[test]
+    fn nonzero_constant_sturm_chains_need_no_derivative() {
+        for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
+            for constant in [
+                Real::pi(),
+                -Real::pi(),
+                real(2).sqrt().unwrap(),
+                -real(2).sqrt().unwrap(),
+                real(5),
+                real(-5),
+            ] {
+                for padding in 0..=2 {
+                    let mut polynomial = vec![constant.clone()];
+                    polynomial.resize(padding + 1, Real::zero());
+                    let sequence = UnivariateSturmSequence::new(&polynomial, policy)
+                        .expect("a certified nonzero constant owns an exact one-row Sturm chain");
+                    assert_eq!(sequence.terminal_polynomial().len(), 1);
+                    for point in [real(-1), Real::zero(), Real::pi()] {
+                        assert_eq!(
+                            sequence.classify_point(&point, policy),
+                            Some(UnivariateSturmPoint::NonRoot(0))
+                        );
+                    }
+                    assert_eq!(
+                        sequence.count_distinct_roots(&real(-1), &real(1), policy),
+                        Some(0)
+                    );
+                }
+            }
+            assert!(UnivariateSturmSequence::new(&[], policy).is_none());
+            assert!(UnivariateSturmSequence::new(&[Real::zero(), Real::zero()], policy).is_none());
+        }
     }
 
     #[test]
