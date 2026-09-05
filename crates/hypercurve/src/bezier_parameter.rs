@@ -1747,7 +1747,7 @@ impl BezierParameter2 {
             }
             Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
         }
-        strict_rational_between_known_order(self, other, &left, &right, policy)
+        strict_rational_between_known_order(self, other, policy)
     }
 
     pub(crate) fn strict_rational_between_ordered(
@@ -1781,7 +1781,11 @@ impl BezierParameter2 {
                 return midpoint_real(left.end(), right.start()).map(Classification::Decided);
             }
         }
-        strict_rational_between_known_order(self, other, &left, &right, policy)
+        strict_rational_between_known_order(
+            &left_refinement.parameter,
+            &right_refinement.parameter,
+            policy,
+        )
     }
 }
 
@@ -1806,19 +1810,32 @@ fn unit_complement_power_coefficients(coefficients: &[Real]) -> Vec<Real> {
 fn strict_rational_between_known_order(
     left_parameter: &BezierParameter2,
     right_parameter: &BezierParameter2,
-    left: &BezierParameterInterval,
-    right: &BezierParameterInterval,
     policy: &CurveContext,
 ) -> CurveResult<Classification<Real>> {
-    match (left_parameter, right_parameter) {
-        (BezierParameter2::Algebraic(parameter), _) => {
-            refine_algebraic_upper_gap(parameter, right.start(), policy)
+    let mut left = RefinedParameter::from_parameter(left_parameter);
+    let mut right = RefinedParameter::from_parameter(right_parameter);
+    loop {
+        let (_, left_end) = left.bounds();
+        let (right_start, _) = right.bounds();
+        if compare_reals(left_end, right_start, policy) == Some(Ordering::Less) {
+            return Ok(Classification::Decided(Real::average_pair(
+                left_end,
+                right_start,
+            )));
         }
-        (_, BezierParameter2::Algebraic(parameter)) => {
-            refine_algebraic_lower_gap(parameter, left.end(), policy)
+        // Overlapping isolators do not make either original bound an
+        // interior point. Refine both owners, retaining any usable progress
+        // even when the other owner's next proof is unavailable.
+        let mut progressed = false;
+        let mut uncertainty = UncertaintyReason::Ordering;
+        for parameter in [&mut left, &mut right] {
+            match parameter.refine_once(policy)? {
+                Classification::Decided(refined) => progressed |= refined,
+                Classification::Uncertain(reason) => uncertainty = reason,
+            }
         }
-        (BezierParameter2::Exact(_), BezierParameter2::Exact(_)) => {
-            Ok(Classification::Uncertain(UncertaintyReason::Ordering))
+        if !progressed {
+            return Ok(Classification::Uncertain(uncertainty));
         }
     }
 }
@@ -1909,22 +1926,19 @@ impl BezierParameter2 {
         {
             return refined;
         }
-        let sturm_sequence = match algebraic.retained_sturm_sequence(policy) {
-            Ok(Classification::Decided(sequence)) => sequence,
-            Ok(Classification::Uncertain(_)) | Err(_) => return Self::Algebraic(algebraic),
-        };
         let mut refined = RefinedParameter::Algebraic {
             parameter: &algebraic,
             interval: algebraic.interval().clone(),
-            sturm_sequence,
+            sturm_sequence: algebraic.data.shared.sturm_sequence.get().map(Arc::clone),
+            start_variations: None,
         };
         for _ in 0..max_refinement_steps {
-            refined = match refined.refine_once(policy) {
-                Ok(Classification::Decided(refined)) => refined,
+            match refined.refine_once(policy) {
+                Ok(Classification::Decided(_)) => {}
                 Ok(Classification::Uncertain(_)) | Err(_) => {
                     return Self::Algebraic(algebraic);
                 }
-            };
+            }
             if matches!(refined, RefinedParameter::Exact(_)) {
                 break;
             }
@@ -2659,32 +2673,21 @@ enum RefinedParameter<'a> {
     Algebraic {
         parameter: &'a BezierAlgebraicParameter2,
         interval: BezierParameterInterval,
-        sturm_sequence: Arc<UnivariateSturmSequence>,
+        sturm_sequence: Option<Arc<UnivariateSturmSequence>>,
+        start_variations: Option<usize>,
     },
 }
 
 impl<'a> RefinedParameter<'a> {
-    fn from_parameter(
-        parameter: &'a BezierParameter2,
-        policy: &CurveContext,
-    ) -> CurveResult<Classification<Self>> {
+    fn from_parameter(parameter: &'a BezierParameter2) -> Self {
         match parameter {
-            BezierParameter2::Exact(value) => {
-                Ok(Classification::Decided(Self::Exact(value.clone())))
-            }
-            BezierParameter2::Algebraic(parameter) => {
-                let sturm_sequence = match parameter.retained_sturm_sequence(policy)? {
-                    Classification::Decided(sequence) => sequence,
-                    Classification::Uncertain(reason) => {
-                        return Ok(Classification::Uncertain(reason));
-                    }
-                };
-                Ok(Classification::Decided(Self::Algebraic {
-                    parameter,
-                    interval: parameter.interval().clone(),
-                    sturm_sequence,
-                }))
-            }
+            BezierParameter2::Exact(value) => Self::Exact(value.clone()),
+            BezierParameter2::Algebraic(parameter) => Self::Algebraic {
+                parameter,
+                interval: parameter.interval().clone(),
+                sturm_sequence: parameter.data.shared.sturm_sequence.get().map(Arc::clone),
+                start_variations: None,
+            },
         }
     }
 
@@ -2695,58 +2698,70 @@ impl<'a> RefinedParameter<'a> {
         }
     }
 
-    fn refine_once(self, policy: &CurveContext) -> CurveResult<Classification<Self>> {
+    /// Advances a certified owner in place. An unavailable proof leaves the
+    /// previous enclosure intact; exact owners have no further refinement.
+    fn refine_once(&mut self, policy: &CurveContext) -> CurveResult<Classification<bool>> {
         let Self::Algebraic {
             parameter,
             interval,
             sturm_sequence,
+            start_variations,
         } = self
         else {
-            return Ok(Classification::Decided(self));
+            return Ok(Classification::Decided(false));
         };
-        let midpoint = midpoint_real(interval.start(), interval.end())?;
+        let midpoint = Real::average_pair(interval.start(), interval.end());
         match real_sign(&parameter.polynomial().evaluate(&midpoint), policy) {
-            Some(RealSign::Zero) => return Ok(Classification::Decided(Self::Exact(midpoint))),
+            Some(RealSign::Zero) => {
+                *self = Self::Exact(midpoint);
+                return Ok(Classification::Decided(true));
+            }
             Some(_) => {}
             None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
         }
-        let left = match BezierParameterInterval::try_new_ordered(
-            interval.start().clone(),
-            midpoint.clone(),
-            policy,
-        )? {
-            Classification::Decided(interval) => interval,
-            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-        };
-        let interval = match parameter
-            .polynomial()
-            .root_count_in_interval_with_sequence(&left, &sturm_sequence, policy)?
-        {
-            Classification::Decided(1) => left,
-            Classification::Decided(0) => {
-                match BezierParameterInterval::try_new_ordered(
-                    midpoint,
-                    interval.end().clone(),
-                    policy,
-                )? {
-                    Classification::Decided(interval) => interval,
-                    Classification::Uncertain(reason) => {
-                        return Ok(Classification::Uncertain(reason));
-                    }
+        if sturm_sequence.is_none() {
+            match parameter.retained_sturm_sequence(policy)? {
+                Classification::Decided(sequence) => *sturm_sequence = Some(sequence),
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
                 }
             }
-            Classification::Decided(_) => {
-                return Err(CurveError::InvalidBezierAlgebraicParameter);
-            }
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
+        }
+        let sequence = sturm_sequence.as_ref().expect("retained Sturm certificate");
+        let midpoint_variations = match sign_variations_at(sequence, &midpoint, policy)? {
+            Classification::Decided(variations) => variations,
+            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
         };
-        Ok(Classification::Decided(Self::Algebraic {
-            parameter,
-            interval,
-            sturm_sequence,
-        }))
+        let start_count = match *start_variations {
+            Some(variations) => variations,
+            None => match sign_variations_at(sequence, interval.start(), policy)? {
+                Classification::Decided(variations) => {
+                    *start_variations = Some(variations);
+                    variations
+                }
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            },
+        };
+        let left_count = start_count
+            .checked_sub(midpoint_variations)
+            .ok_or(CurveError::InvalidBezierAlgebraicParameter)?;
+        let (start, end) = match left_count {
+            1 => (interval.start().clone(), midpoint),
+            0 => (midpoint, interval.end().clone()),
+            _ => return Err(CurveError::InvalidBezierAlgebraicParameter),
+        };
+        match BezierParameterInterval::try_new_ordered(start, end, policy)? {
+            Classification::Decided(refined) => {
+                *interval = refined;
+                if left_count == 0 {
+                    *start_variations = Some(midpoint_variations);
+                }
+                Ok(Classification::Decided(true))
+            }
+            Classification::Uncertain(reason) => Ok(Classification::Uncertain(reason)),
+        }
     }
 }
 
@@ -2768,32 +2783,8 @@ fn compare_distinct_parameters(
         EXACT_DIFFERENCE_REFINEMENTS
     };
 
-    let mut first = match RefinedParameter::from_parameter(first_parameter, policy)? {
-        Classification::Decided(parameter) => parameter,
-        Classification::Uncertain(reason) => {
-            return Ok(exact_difference_or_uncertain(
-                first_parameter,
-                second_parameter,
-                None,
-                None,
-                policy,
-                reason,
-            ));
-        }
-    };
-    let mut second = match RefinedParameter::from_parameter(second_parameter, policy)? {
-        Classification::Decided(parameter) => parameter,
-        Classification::Uncertain(reason) => {
-            return Ok(exact_difference_or_uncertain(
-                first_parameter,
-                second_parameter,
-                Some(&first),
-                None,
-                policy,
-                reason,
-            ));
-        }
-    };
+    let mut first = RefinedParameter::from_parameter(first_parameter);
+    let mut second = RefinedParameter::from_parameter(second_parameter);
     for refinement_count in 0..=max_ordering_refinements {
         if let (RefinedParameter::Exact(first), RefinedParameter::Exact(second)) = (&first, &second)
         {
@@ -2834,66 +2825,25 @@ fn compare_distinct_parameters(
             break;
         }
 
-        match (&first, &second) {
-            (RefinedParameter::Exact(_), RefinedParameter::Exact(_)) => break,
-            (RefinedParameter::Exact(_), RefinedParameter::Algebraic { .. }) => {
-                second = match second.refine_once(policy)? {
-                    Classification::Decided(second) => second,
-                    Classification::Uncertain(reason) => {
-                        return Ok(exact_difference_or_uncertain(
-                            first_parameter,
-                            second_parameter,
-                            Some(&first),
-                            None,
-                            policy,
-                            reason,
-                        ));
-                    }
-                };
-            }
-            (RefinedParameter::Algebraic { .. }, RefinedParameter::Exact(_)) => {
-                first = match first.refine_once(policy)? {
-                    Classification::Decided(first) => first,
-                    Classification::Uncertain(reason) => {
-                        return Ok(exact_difference_or_uncertain(
-                            first_parameter,
-                            second_parameter,
-                            None,
-                            Some(&second),
-                            policy,
-                            reason,
-                        ));
-                    }
-                };
-            }
-            (RefinedParameter::Algebraic { .. }, RefinedParameter::Algebraic { .. }) => {
-                first = match first.refine_once(policy)? {
-                    Classification::Decided(first) => first,
-                    Classification::Uncertain(reason) => {
-                        return Ok(exact_difference_or_uncertain(
-                            first_parameter,
-                            second_parameter,
-                            None,
-                            Some(&second),
-                            policy,
-                            reason,
-                        ));
-                    }
-                };
-                second = match second.refine_once(policy)? {
-                    Classification::Decided(second) => second,
-                    Classification::Uncertain(reason) => {
-                        return Ok(exact_difference_or_uncertain(
-                            first_parameter,
-                            second_parameter,
-                            Some(&first),
-                            None,
-                            policy,
-                            reason,
-                        ));
-                    }
-                };
-            }
+        if let Classification::Uncertain(reason) = first.refine_once(policy)? {
+            return Ok(exact_difference_or_uncertain(
+                first_parameter,
+                second_parameter,
+                Some(&first),
+                Some(&second),
+                policy,
+                reason,
+            ));
+        }
+        if let Classification::Uncertain(reason) = second.refine_once(policy)? {
+            return Ok(exact_difference_or_uncertain(
+                first_parameter,
+                second_parameter,
+                Some(&first),
+                Some(&second),
+                policy,
+                reason,
+            ));
         }
     }
     if policy.permits_approximate_512() {
@@ -2978,116 +2928,6 @@ fn parameter_algebraic_representation(
                 representation.interval.distinct_root_count = 1;
             }
             representation.is_valid().then_some(representation)
-        }
-    }
-}
-
-fn refine_algebraic_upper_gap(
-    parameter: &BezierAlgebraicParameter2,
-    upper_bound: &Real,
-    policy: &CurveContext,
-) -> CurveResult<Classification<Real>> {
-    let sequence = match parameter.retained_sturm_sequence(policy)? {
-        Classification::Decided(sequence) => sequence,
-        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-    };
-    let mut interval = parameter.interval().clone();
-    loop {
-        if compare_reals(interval.end(), upper_bound, policy) == Some(Ordering::Less) {
-            return midpoint_real(interval.end(), upper_bound).map(Classification::Decided);
-        }
-        let midpoint = midpoint_real(interval.start(), interval.end())?;
-        match real_sign(&parameter.polynomial().evaluate(&midpoint), policy) {
-            Some(RealSign::Zero) => {
-                return midpoint_real(&midpoint, upper_bound).map(Classification::Decided);
-            }
-            Some(_) => {}
-            None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
-        }
-        let left = match BezierParameterInterval::try_new_ordered(
-            interval.start().clone(),
-            midpoint.clone(),
-            policy,
-        )? {
-            Classification::Decided(interval) => interval,
-            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-        };
-        match parameter
-            .polynomial()
-            .root_count_in_interval_with_sequence(&left, sequence.as_ref(), policy)?
-        {
-            Classification::Decided(1) => interval = left,
-            Classification::Decided(0) => {
-                interval = match BezierParameterInterval::try_new_ordered(
-                    midpoint,
-                    interval.end().clone(),
-                    policy,
-                )? {
-                    Classification::Decided(interval) => interval,
-                    Classification::Uncertain(reason) => {
-                        return Ok(Classification::Uncertain(reason));
-                    }
-                };
-            }
-            Classification::Decided(_) => {
-                return Err(CurveError::InvalidBezierAlgebraicParameter);
-            }
-            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-        }
-    }
-}
-
-fn refine_algebraic_lower_gap(
-    parameter: &BezierAlgebraicParameter2,
-    lower_bound: &Real,
-    policy: &CurveContext,
-) -> CurveResult<Classification<Real>> {
-    let sequence = match parameter.retained_sturm_sequence(policy)? {
-        Classification::Decided(sequence) => sequence,
-        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-    };
-    let mut interval = parameter.interval().clone();
-    loop {
-        if compare_reals(lower_bound, interval.start(), policy) == Some(Ordering::Less) {
-            return midpoint_real(lower_bound, interval.start()).map(Classification::Decided);
-        }
-        let midpoint = midpoint_real(interval.start(), interval.end())?;
-        match real_sign(&parameter.polynomial().evaluate(&midpoint), policy) {
-            Some(RealSign::Zero) => {
-                return midpoint_real(lower_bound, &midpoint).map(Classification::Decided);
-            }
-            Some(_) => {}
-            None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
-        }
-        let left = match BezierParameterInterval::try_new_ordered(
-            interval.start().clone(),
-            midpoint.clone(),
-            policy,
-        )? {
-            Classification::Decided(interval) => interval,
-            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-        };
-        match parameter
-            .polynomial()
-            .root_count_in_interval_with_sequence(&left, sequence.as_ref(), policy)?
-        {
-            Classification::Decided(1) => interval = left,
-            Classification::Decided(0) => {
-                interval = match BezierParameterInterval::try_new_ordered(
-                    midpoint,
-                    interval.end().clone(),
-                    policy,
-                )? {
-                    Classification::Decided(interval) => interval,
-                    Classification::Uncertain(reason) => {
-                        return Ok(Classification::Uncertain(reason));
-                    }
-                };
-            }
-            Classification::Decided(_) => {
-                return Err(CurveError::InvalidBezierAlgebraicParameter);
-            }
-            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
         }
     }
 }
@@ -5192,6 +5032,120 @@ mod conversion_tests {
         let _ = progressive.refine_to(2);
         let _ = progressive.refine_to(4);
         assert_eq!(progressive.refine_to(8), &direct);
+    }
+
+    #[test]
+    fn strict_gap_refines_both_overlapping_algebraic_parameters() {
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            for (left_numerator, right_numerator, denominator) in [(6, 7, 8), (769, 771, 1024)] {
+                let left = algebraic_parameter(&polynomial(&[-left_numerator, denominator]));
+                let right = algebraic_parameter(&polynomial(&[-right_numerator, denominator]));
+                let lower = rational(left_numerator, denominator);
+                let upper = rational(right_numerator, denominator);
+                for ordered in [false, true] {
+                    let gap = decided(
+                        if ordered {
+                            left.strict_rational_between_ordered(&right, &policy)
+                        } else {
+                            left.strict_rational_between(&right, &policy)
+                        }
+                        .unwrap(),
+                        "strict interior of overlapping algebraic isolators",
+                    );
+                    assert_eq!(
+                        compare_reals(&lower, &gap, &policy),
+                        Some(Ordering::Less),
+                        "{gap:?} must exceed {lower:?} (ordered={ordered})"
+                    );
+                    assert_eq!(compare_reals(&gap, &upper, &policy), Some(Ordering::Less));
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn strict_gap_preserves_irrational_and_repeated_root_ownership() {
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            for scale in [Real::one(), rational(-7, 97), Real::pi()] {
+                for (left_coefficients, right_coefficients, left_square, right_square) in [
+                    (&[-1, 0, 2][..], &[-3, 0, 4][..], [1, 2], [3, 4]),
+                    (&[1, 0, -4, 0, 4], &[9, 0, -24, 0, 16], [1, 2], [3, 4]),
+                    (
+                        &[-1, 0, 2],
+                        &[-524_289, 0, 1_048_576],
+                        [1, 2],
+                        [524_289, 1_048_576],
+                    ),
+                ] {
+                    let make_parameter = |coefficients: &[i32]| {
+                        algebraic_parameter(&decided(
+                            BezierParameterPolynomial::try_new_power_basis(
+                                coefficients
+                                    .iter()
+                                    .map(|value| Real::from(*value) * &scale)
+                                    .collect(),
+                                &policy,
+                            )
+                            .unwrap(),
+                            "scaled root polynomial",
+                        ))
+                    };
+                    let left = make_parameter(left_coefficients);
+                    let right = make_parameter(right_coefficients);
+                    for ordered in [false, true] {
+                        let gap = decided(
+                            if ordered {
+                                left.strict_rational_between_ordered(&right, &policy)
+                            } else {
+                                left.strict_rational_between(&right, &policy)
+                            }
+                            .unwrap(),
+                            "strict interior of irrational isolators",
+                        );
+                        assert!(gap.exact_rational_ref().is_some());
+                        let square = &gap * &gap;
+                        assert_eq!(
+                            compare_reals(
+                                &square,
+                                &rational(left_square[0], left_square[1]),
+                                &policy
+                            ),
+                            Some(Ordering::Greater)
+                        );
+                        assert_eq!(
+                            compare_reals(
+                                &square,
+                                &rational(right_square[0], right_square[1]),
+                                &policy
+                            ),
+                            Some(Ordering::Less)
+                        );
+                    }
+                }
+            }
+            let root = algebraic_parameter(&polynomial(&[-1, 0, 2]));
+            for (left, right, lower, upper) in [
+                (
+                    BezierParameter2::Exact(rational(3, 5)),
+                    root.clone(),
+                    rational(3, 5),
+                    rational(1, 2).sqrt().unwrap(),
+                ),
+                (
+                    root,
+                    BezierParameter2::Exact(rational(4, 5)),
+                    rational(1, 2).sqrt().unwrap(),
+                    rational(4, 5),
+                ),
+            ] {
+                let gap = decided(
+                    left.strict_rational_between(&right, &policy).unwrap(),
+                    "mixed exact/algebraic interior",
+                );
+                assert_eq!(compare_reals(&lower, &gap, &policy), Some(Ordering::Less));
+                assert_eq!(compare_reals(&gap, &upper, &policy), Some(Ordering::Less));
+            }
+        }
     }
 
     #[test]
