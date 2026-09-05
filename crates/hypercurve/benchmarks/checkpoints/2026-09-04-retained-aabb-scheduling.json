@@ -1,0 +1,83 @@
+{
+  "schema": "hypercurve.performance-checkpoint.v1",
+  "captured_on": "2026-09-04",
+  "checkpoint": "share certified AABB scheduling and retain lazy operand envelopes",
+  "baseline_revision": "f5361b3",
+  "implementation_revisions": ["c82cb52", "336d39c", "9cf66fd"],
+  "dependency_revisions": {
+    "hyperreal": "93c44ab",
+    "hyperlattice": "d783af0",
+    "hyperlimit": "7bf9261",
+    "hypersolve": "1a742c6",
+    "hypertri": "6a2092c"
+  },
+  "retained_changes": [
+    "Region/region and curve/region pair construction share one private implementation.",
+    "The existing certified AABB scheduler serves native contour and retained region pairs without a second spatial index implementation.",
+    "Optional rational outer envelopes are prepared once per carrier for scheduling, rather than once per Cartesian pair.",
+    "Each opposite operand's union envelope is retained once per requested refinement level during fragment classification.",
+    "Envelope caches are lazy and operation-owned. Unavailable evidence is not cached and can be retried after later exact refinement.",
+    "Both release-scale PCB corpora run in normal test discovery."
+  ],
+  "exactness_contract": {
+    "unknown_bounds": "Unknown query or indexed boxes retain every potentially incident pair.",
+    "ordering": "Candidates retain the original authored Cartesian order, including closed-box edge and endpoint contacts.",
+    "fallback": "An unavailable certified schedule requests complete Cartesian enumeration before invoking any visitor.",
+    "errors": "Visitor errors propagate unchanged and stop enumeration.",
+    "policy": "Bounds and their ordering are optional strict rejection proofs. Surviving pairs enter the existing kernel with the original policy and terminal authority.",
+    "refinement": "All ten existing refinement levels remain available lazily; overlapping boxes never certify absence.",
+    "public_api_added": false,
+    "compatibility_shims_added": false,
+    "alternate_intersection_kernel_added": false,
+    "approximate_geometry_added": false
+  },
+  "correctness": {
+    "aabb_scheduler": "Existing sparse/indexed and dense/ranked comparisons pass against exhaustive box filtering; new tests cover unknown queries and callback failure propagation.",
+    "retained_pairs": "A 4096-pair exact square-component matrix matches exhaustive carrier-pair enumeration in authored order under both policies, including unknown boxes, shared edges, and endpoint contacts.",
+    "lazy_envelopes": "Both policies preserve certified disjointness, separate operand caches, lazy refinement, retryable missing evidence, persistent overlap, and empty-operand semantics.",
+    "pcb": "All four regression cases pass, including both full release-scale corpora.",
+    "all_features": "The complete cached-bounds release run passed 874 active unit tests and every integration and documentation target. Its already-compiled PCB binary retained the old ignore attributes; all four PCB cases were also run explicitly.",
+    "lint": "Locked all-target/all-feature Clippy with -D warnings and formatting passed."
+  },
+  "measurement": {
+    "compiler": "rustc 1.97.0 (2d8144b78 2026-07-07)",
+    "profile": "release",
+    "features": "all",
+    "driver": "hypercurve_pcb_boolean_regressions --include-ignored --test-threads=1",
+    "affinity": "taskset -c 7",
+    "method": "One complete before/after run of the same four fixtures, with GNU time -v. Baseline source was archived at f5361b3 and rebuilt in an isolated target directory against the recorded dependency snapshot. Both test executables were preserved before later builds.",
+    "build_control": "An initial shared-target archive build incorrectly reported fresh artifacts and was discarded. The measured isolated baseline explicitly reported fresh=false for its library and test executable.",
+    "caveat": "The machine was not otherwise idle. These are fixed-source, fixed-feature, same-affinity observations, not exclusive-machine or statistically repeated benchmark claims.",
+    "baseline": {
+      "passed": 4,
+      "wall_seconds": 879.07,
+      "user_seconds": 824.67,
+      "system_seconds": 3.02,
+      "peak_rss_kib": 367236
+    },
+    "retained": {
+      "passed": 4,
+      "wall_seconds": 11.35,
+      "user_seconds": 10.21,
+      "system_seconds": 0.36,
+      "peak_rss_kib": 371960
+    },
+    "unaffined_retained_control": {
+      "wall_seconds": 5.81,
+      "user_seconds": 5.47,
+      "system_seconds": 0.31,
+      "peak_rss_kib": 371156,
+      "interpretation": "Recorded separately; not used for the same-affinity speed comparison."
+    }
+  },
+  "artifact_sizes": {
+    "baseline_all_feature_rlib_bytes": 45562788,
+    "retained_all_feature_rlib_bytes": 45596816,
+    "rlib_delta_bytes": 34028,
+    "baseline_linked_test": { "text_bytes": 12140307, "data_bytes": 339528, "bss_bytes": 2632 },
+    "retained_linked_test": { "text_bytes": 12186523, "data_bytes": 341176, "bss_bytes": 3928 },
+    "linked_allocated_delta_bytes": 49160,
+    "interpretation": "This performance slice grows the archive and linked test image slightly. No binary-size or overall source-size reduction is claimed. Small path/diagnostic-layout differences are included in the archived-source comparison."
+  },
+  "decision": "Retain: exactness and completeness controls pass; removing repeated Cartesian work improves the measured pinned runtime by about 77x, at about 1.3 percent more peak RSS and 0.4 percent more linked allocated bytes. These tradeoffs follow exactness, completeness, performance, memory, binary size, then code size."
+}
