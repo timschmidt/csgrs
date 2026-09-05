@@ -2249,6 +2249,123 @@ mod tests {
     }
 
     #[test]
+    fn polynomial_evaluation_retains_nested_quadratic_root_certificates() {
+        let half = Real::new(Rational::fraction(1, 2).unwrap());
+        let quarter = Real::new(Rational::fraction(1, 4).unwrap());
+        let alpha = half.clone().sqrt().unwrap();
+        let delta = (&alpha + &quarter).sqrt().unwrap();
+        let epsilon = Real::new(Rational::from_bigint_fraction(
+            BigInt::from(1_u8), BigUint::from(1_u8) << 600_usize,
+        ).unwrap());
+        for (scale_index, scale) in [Real::one(), Real::from(-3_i8), Real::pi(), -Real::pi()].into_iter().enumerate() {
+            let coefficients = [-&alpha * &scale, scale.clone(), scale];
+            for (root_index, root) in [-&half - &delta, -&half + &delta].into_iter().enumerate() {
+                let value = Real::eval_poly(&coefficients, &root);
+                assert_eq!(
+                    value.certified_sign_until(-512).sign(),
+                    Some(RealSign::Zero),
+                    "root={root_index}, scale={scale_index}",
+                );
+                for (direction, displacement) in [-&epsilon, epsilon.clone()].into_iter().enumerate() {
+                    let sign = if (root_index == 0) ^ (scale_index % 2 == 1) ^ (direction == 0) {
+                        RealSign::Negative
+                    } else {
+                        RealSign::Positive
+                    };
+                    assert_eq!(
+                        Real::eval_poly(&coefficients, &(&root + displacement))
+                            .certified_sign_until(-1024).sign(),
+                        Some(sign),
+                        "root={root_index}, scale={scale_index}, direction={direction}",
+                    );
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn polynomial_evaluation_preserves_factored_root_cancellation() {
+        let mut reference_certificates = 0;
+        for (root_index, root) in [
+            Real::pi(),
+            Real::e(),
+            Real::from(2_i8).sqrt().unwrap(),
+            Real::one().sin(),
+            Real::from(3_i8).ln().unwrap(),
+        ].into_iter().enumerate() {
+            for (leading_index, leading) in [Real::one(), Real::pi(), -Real::pi()].into_iter().enumerate() {
+                for (linear_index, linear) in [Real::one(), Real::pi()].into_iter().enumerate() {
+                    // (t - root) * (leading*t + linear).
+                    let coefficients = [
+                        -&linear * &root,
+                        &linear - &leading * &root,
+                        leading.clone(),
+                    ];
+                    let fused = Real::mul_add(&Real::mul_add(&leading, &root, &coefficients[1]), &root, &coefficients[0]);
+                    let actual = Real::eval_poly(&coefficients, &root);
+                    let actual_sign = actual.certified_sign_until(-512).sign();
+                    assert!(matches!(actual_sign, None | Some(RealSign::Zero)));
+                    // An alternate quadratic form must not discard a zero
+                    // certificate available in the original fused expression.
+                    if fused.certified_sign_until(-512).sign() == Some(RealSign::Zero) {
+                        reference_certificates += 1;
+                        assert_eq!(actual_sign, Some(RealSign::Zero), "case={root_index},{leading_index},{linear_index}");
+                    }
+                }
+            }
+        }
+        assert!(reference_certificates >= 13);
+    }
+
+    #[test]
+    fn polynomial_evaluation_matches_independent_rational_horner() {
+        let tiny = Rational::from_bigint_fraction(BigInt::from(1_u8), BigUint::from(3_u8) << 600_usize).unwrap();
+        for count in [0, 1, 3, 9, 33, 65] {
+            let coefficients = (0..count).map(|index| {
+                let magnitude = (BigInt::from(index * 37 + 1) << (index % 3 * 130)) - BigInt::from(index * 5);
+                Rational::from_bigint_fraction(
+                    if index % 2 == 0 { magnitude } else { -magnitude },
+                    BigUint::from(index as u32 * 2 + 1),
+                ).unwrap()
+            }).collect::<Vec<_>>();
+            let reals = coefficients.iter().cloned().map(Real::new).collect::<Vec<_>>();
+            for x in [Rational::new(-3), Rational::new(-1), Rational::zero(), Rational::one(), Rational::fraction(1, 3).unwrap(), Rational::fraction(-2, 7).unwrap(), tiny.clone()] {
+                let expected = coefficients.iter().rev().fold(Rational::zero(), |value, coefficient| (&value * &x) + coefficient);
+                let actual = Real::eval_poly(&reals, &Real::new(x));
+                assert_eq!(actual.exact_rational_ref(), Some(&expected), "count={count}");
+            }
+        }
+    }
+
+    #[test]
+    fn polynomial_evaluation_keeps_horner_for_ill_conditioned_nonroots() {
+        let scale = Real::new(Rational::from_bigint(BigInt::from(1_u8) << 2_000_usize));
+        let x = (Real::one().sin() / (&scale * &scale)).unwrap();
+        let coefficients = [Real::one(), Real::from(-2_i8) * scale * Real::pi(), Real::one()];
+        assert_eq!(Real::eval_poly(&coefficients, &x).certified_sign_until(-64).sign(), Some(RealSign::Positive));
+    }
+
+    #[test]
+    fn polynomial_evaluation_preserves_endpoint_and_zero_leading_forms() {
+        let coefficients = [
+            Real::pi(),
+            Real::e(),
+            Real::from(2_i8).sqrt().unwrap(),
+            Real::from(3_i8).ln().unwrap(),
+            Real::from(5_i8).sqrt().unwrap(),
+        ];
+        assert_eq!(Real::eval_poly(&coefficients, &Real::zero()), coefficients[0]);
+        assert_eq!(Real::eval_poly(&coefficients, &Real::one()), Real::sum_refs(&coefficients));
+        let x = Real::from(2_i8).sqrt().unwrap();
+        assert_eq!(Real::eval_poly(&[], &x), Real::zero());
+        assert_eq!(Real::eval_poly(&[Real::pi()], &x), Real::pi());
+        assert_eq!(
+            Real::eval_poly(&[Real::pi(), Real::one(), Real::zero()], &x),
+            &x + Real::pi()
+        );
+    }
+
+    #[test]
     fn long_polynomial_evaluation_matches_exact_even_odd_decomposition() {
         let coefficients = (0_i32..129)
             .map(|index| Real::from(index % 7 - 3))

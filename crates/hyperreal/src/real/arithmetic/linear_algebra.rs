@@ -2173,34 +2173,42 @@ impl Real {
             return Real::zero();
         };
 
-        if let Some(x) = x.exact_rational_ref()
-            && coeffs.iter().all(|coeff| coeff.exact_rational_ref().is_some())
-        {
-            let mut value = last
-                .exact_rational_ref()
-                .expect("checked exact rational coefficients")
-                .clone();
-            for coeff in rest.iter().rev() {
-                let coeff = coeff
-                    .exact_rational_ref()
-                    .expect("checked exact rational coefficients");
-                value = (&value * x) + coeff;
-            }
-            crate::trace_dispatch!("real", "polynomial", "eval-poly-exact-rational");
-            return Real::new(value);
-        }
-
         if let Some(x) = x.exact_rational_ref() {
+            if x.is_zero() {
+                crate::trace_dispatch!("real", "polynomial", "eval-poly-zero-argument");
+                return coeffs[0].clone();
+            }
+            if x.is_one() {
+                crate::trace_dispatch!("real", "polynomial", "eval-poly-unit-argument");
+                return Self::sum_refs(coeffs);
+            }
+            if coeffs.iter().all(|coeff| coeff.exact_rational_ref().is_some()) {
+                let mut value = last
+                    .exact_rational_ref()
+                    .expect("checked exact rational coefficients")
+                    .clone();
+                let one = Rational::one();
+                for coeff in rest.iter().rev() {
+                    let coeff = coeff
+                        .exact_rational_ref()
+                        .expect("checked exact rational coefficients");
+                    value = Rational::signed_product_sum2(
+                        [true, true],
+                        [[&value, x], [coeff, &one]],
+                    );
+                }
+                crate::trace_dispatch!("real", "polynomial", "eval-poly-exact-rational");
+                return Real::new(value);
+            }
+
             let mut power = Rational::one();
             let mut rational_value = Rational::zero();
             let mut symbolic_total = None::<Real>;
-            let mut symbolic_terms = 0_usize;
 
             for coeff in coeffs {
                 if let Some(coeff) = coeff.exact_rational_ref() {
                     rational_value = &rational_value + &(coeff * &power);
                 } else {
-                    symbolic_terms += 1;
                     let term = coeff.scaled_by_rational(&power);
                     symbolic_total = Some(match symbolic_total.take() {
                         Some(total) => &total + &term,
@@ -2210,13 +2218,33 @@ impl Real {
                 power = &power * x;
             }
 
-            if symbolic_terms > 0 {
-                crate::trace_dispatch!("real", "polynomial", "eval-poly-rational-x-split");
-                return match (symbolic_total, rational_value.sign()) {
-                    (Some(total), Sign::NoSign) => total,
-                    (Some(total), _) => &total + &Real::new(rational_value),
-                    (None, _) => Real::new(rational_value),
-                };
+            crate::trace_dispatch!("real", "polynomial", "eval-poly-rational-x-split");
+            return match (symbolic_total, rational_value.sign()) {
+                (Some(total), Sign::NoSign) => total,
+                (Some(total), _) => &total + &Real::new(rational_value),
+                (None, _) => Real::new(rational_value),
+            };
+        }
+
+        if let [constant, linear, quadratic] = coeffs
+            && coeffs.iter().any(|coeff| coeff.exact_rational_ref().is_none())
+        {
+            // Completing the square preserves the shared radical witness of
+            // a represented quadratic root. Normalize before testing the
+            // residual so a symbolic leading factor cannot hide exact zero.
+            // Keep Horner for every nonzero or still-uncertified residual.
+            // Checked division leaves zero/uncertified leading terms untouched.
+            let twice_quadratic = Real::from(2_i8) * quadratic;
+            let vertex = (-linear.clone()) / &twice_quadratic;
+            let normalized_constant = constant / quadratic;
+            if let (Ok(vertex), Ok(normalized_constant)) = (vertex, normalized_constant) {
+                let offset = x - &vertex;
+                let square = offset.make_computable(Computable::square);
+                let residual = square - (&vertex * &vertex - normalized_constant);
+                if residual.structural_facts().zero == ZeroKnowledge::Zero {
+                    crate::trace_dispatch!("real", "polynomial", "eval-poly-completed-square");
+                    return Real::zero();
+                }
             }
         }
 
