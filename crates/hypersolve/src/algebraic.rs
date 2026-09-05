@@ -1210,7 +1210,7 @@ pub fn arithmetic_algebraic_root_representations(
     )
 }
 
-fn algebraic_root_payload_replays_strictly(root: &AlgebraicRootRepresentation) -> bool {
+pub(super) fn algebraic_root_payload_replays_strictly(root: &AlgebraicRootRepresentation) -> bool {
     if let Some(valid) = replay_rational_arithmetic_input(root) {
         return valid;
     }

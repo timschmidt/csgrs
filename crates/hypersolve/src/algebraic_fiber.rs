@@ -11,12 +11,13 @@
 use std::cmp::Ordering;
 
 use hyperlimit::{Certainty, PredicateOutcome, PredicatePolicy, compare_reals};
-use hyperreal::{Real, ZeroKnowledge};
+use hyperreal::{Real, RealSign, ZeroKnowledge};
 
 use crate::algebraic::{
     AlgebraicRootKind, AlgebraicRootPolynomialEvaluationReport,
     AlgebraicRootPolynomialEvaluationStatus, AlgebraicRootRepresentation,
-    evaluate_polynomial_at_algebraic_root, validate_algebraic_root_representation,
+    algebraic_root_payload_replays_strictly, evaluate_polynomial_at_algebraic_root,
+    validate_algebraic_root_representation,
 };
 use crate::curve_resultant::{BivariatePolynomial, CurveResultantParameter};
 use crate::ordered_field_roots::{
@@ -3299,6 +3300,7 @@ fn is_valid_local_algebraic_field_evidence(root: &AlgebraicRootRepresentation) -
     root.is_valid()
         && root.interval.distinct_root_count == 1
         && root.polynomial_coefficients.len() > 1
+        && algebraic_root_payload_replays_strictly(root)
 }
 
 impl LocalAlgebraicField {
@@ -3418,20 +3420,34 @@ impl LocalAlgebraicField {
         );
     }
 
-    fn sign_polynomial(&mut self, polynomial: &[Real]) -> Result<Ordering, LocalFieldError> {
-        self.debug_assert_reduced_polynomial(polynomial);
+    fn known_polynomial_sign(&self, polynomial: &[Real]) -> Option<Ordering> {
+        // Constants do not depend on the selected root. Reuse native exact
+        // facts without searching or populating the local polynomial cache.
+        if let [constant] = polynomial
+            && let Some(sign) = constant.immediate_sign()
+        {
+            return Some(match sign {
+                RealSign::Negative => Ordering::Less,
+                RealSign::Zero => Ordering::Equal,
+                RealSign::Positive => Ordering::Greater,
+            });
+        }
         if polynomial
             .iter()
             .all(|coefficient| coefficient.zero_status() == ZeroKnowledge::Zero)
         {
-            return Ok(Ordering::Equal);
+            return Some(Ordering::Equal);
         }
-        if let Some((_, sign)) = self
-            .signed_polynomials
+        self.signed_polynomials
             .iter()
             .find(|(signed, _)| signed == polynomial)
-        {
-            return Ok(*sign);
+            .map(|(_, sign)| *sign)
+    }
+
+    fn sign_polynomial(&mut self, polynomial: &[Real]) -> Result<Ordering, LocalFieldError> {
+        self.debug_assert_reduced_polynomial(polynomial);
+        if let Some(sign) = self.known_polynomial_sign(polynomial) {
+            return Ok(sign);
         }
         let sign = self.sign_reduced_polynomial(polynomial)?;
         self.signed_polynomials.push((polynomial.to_vec(), sign));
@@ -3443,18 +3459,8 @@ impl LocalAlgebraicField {
         polynomial: &[Real],
     ) -> Result<Option<Ordering>, LocalFieldError> {
         self.debug_assert_reduced_polynomial(polynomial);
-        if polynomial
-            .iter()
-            .all(|coefficient| coefficient.zero_status() == ZeroKnowledge::Zero)
-        {
-            return Ok(Some(Ordering::Equal));
-        }
-        if let Some((_, sign)) = self
-            .signed_polynomials
-            .iter()
-            .find(|(signed, _)| signed == polynomial)
-        {
-            return Ok(Some(*sign));
+        if let Some(sign) = self.known_polynomial_sign(polynomial) {
+            return Ok(Some(sign));
         }
         let evaluation = evaluate_polynomial_at_algebraic_root(&self.root, polynomial, self.policy);
         let mut sign = local_evaluation_sign(&evaluation)?;
@@ -3478,18 +3484,8 @@ impl LocalAlgebraicField {
 
     fn is_zero_polynomial(&mut self, polynomial: &[Real]) -> Result<bool, LocalFieldError> {
         self.debug_assert_reduced_polynomial(polynomial);
-        if polynomial
-            .iter()
-            .all(|coefficient| coefficient.zero_status() == ZeroKnowledge::Zero)
-        {
-            return Ok(true);
-        }
-        if let Some((_, sign)) = self
-            .signed_polynomials
-            .iter()
-            .find(|(signed, _)| signed == polynomial)
-        {
-            return Ok(*sign == Ordering::Equal);
+        if let Some(sign) = self.known_polynomial_sign(polynomial) {
+            return Ok(sign == Ordering::Equal);
         }
         let evaluation = evaluate_polynomial_at_algebraic_root(&self.root, polynomial, self.policy);
         if let Some(sign) = local_evaluation_sign(&evaluation)? {
@@ -3982,6 +3978,176 @@ mod tests {
             ),
             None
         );
+    }
+
+    #[test]
+    fn local_constant_signs_reuse_native_proofs_without_field_cache_entries() {
+        let tiny = real(2).powi_i64(-3000).unwrap();
+        let atom = (real(2).sqrt().unwrap() + Real::one()).sin();
+        let upper = &atom + real(2);
+        let lower = &atom - Real::one();
+        let retained =
+            Real::diff_of_products(&Real::one(), &upper, &Real::one(), &lower) - real(3) + &tiny;
+        assert!(retained.immediate_sign().is_none());
+        assert_eq!(retained.exact_rational_normal_form(), tiny.exact_rational());
+        assert!(retained.exact_rational_ref().is_none());
+        assert_eq!(
+            retained.immediate_sign(),
+            Some(hyperreal::RealSign::Positive)
+        );
+        let constants = [
+            (real(-2), Ordering::Less),
+            (Real::zero(), Ordering::Equal),
+            (real(2), Ordering::Greater),
+            (-tiny.clone(), Ordering::Less),
+            (tiny, Ordering::Greater),
+            (-real(2).sqrt().unwrap(), Ordering::Less),
+            (real(2).sqrt().unwrap(), Ordering::Greater),
+            (-Real::pi(), Ordering::Less),
+            (Real::pi(), Ordering::Greater),
+            (-retained.clone(), Ordering::Less),
+            (retained, Ordering::Greater),
+        ];
+        for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
+            let alpha = represented_root(
+                vec![real(-2), Real::zero(), Real::one()],
+                Real::one(),
+                real(2),
+                policy,
+            );
+            let mut field = LocalAlgebraicField::new(&alpha, policy).unwrap();
+            let dependent = vec![Real::one(), Real::one()];
+            assert_eq!(field.sign_polynomial(&dependent), Ok(Ordering::Greater));
+            assert_eq!(field.signed_polynomials.len(), 1);
+            for (constant, expected) in &constants {
+                let polynomial = std::slice::from_ref(constant);
+                assert_eq!(field.sign_polynomial(polynomial), Ok(*expected));
+                assert_eq!(
+                    field.sign_polynomial_if_separated(polynomial),
+                    Ok(Some(*expected))
+                );
+                assert_eq!(
+                    field.is_zero_polynomial(polynomial),
+                    Ok(*expected == Ordering::Equal)
+                );
+                assert_eq!(field.signed_polynomials.len(), 1);
+                assert_eq!(field.refinement_steps, 0);
+                assert_eq!(field.certainty, Certainty::Exact);
+            }
+            assert_eq!(
+                field.sign_polynomial_if_separated(&dependent),
+                Ok(Some(Ordering::Greater))
+            );
+            assert_eq!(field.is_zero_polynomial(&dependent), Ok(false));
+            assert_eq!(
+                field.signed_polynomials,
+                vec![(dependent, Ordering::Greater)]
+            );
+        }
+    }
+
+    #[test]
+    fn local_constant_signs_keep_the_unresolved_native_fact_fallback() {
+        for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
+            let atom = (real(2).sqrt().unwrap() + Real::one()).sin();
+            let upper = &atom + real(2);
+            let lower = &atom - Real::one();
+            let constant = Real::diff_of_products(&Real::one(), &upper, &Real::one(), &lower)
+                - real(3)
+                + real(2).powi_i64(-3000).unwrap();
+            assert!(constant.immediate_sign().is_none());
+            let alpha = represented_root(
+                vec![real(-2), Real::zero(), Real::one()],
+                Real::one(),
+                real(2),
+                policy,
+            );
+            let mut field = LocalAlgebraicField::new(&alpha, policy).unwrap();
+            let polynomial = vec![constant];
+            assert_eq!(
+                field.sign_polynomial_if_separated(&polynomial),
+                Ok(Some(Ordering::Greater))
+            );
+            assert_eq!(
+                field.signed_polynomials,
+                vec![(polynomial.clone(), Ordering::Greater)]
+            );
+            assert_eq!(field.sign_polynomial(&polynomial), Ok(Ordering::Greater));
+            assert_eq!(field.is_zero_polynomial(&polynomial), Ok(false));
+            assert_eq!(field.refinement_steps, 0);
+            assert_eq!(field.certainty, Certainty::Exact);
+        }
+    }
+
+    #[test]
+    fn local_field_replays_stale_root_payloads_before_constant_fiber_shortcuts() {
+        let valid = represented_root(
+            vec![real(-2), Real::zero(), Real::one()],
+            Real::one(),
+            real(2),
+            PredicatePolicy::STRICT,
+        );
+        let mut reversed = valid.clone();
+        reversed.interval.lower = real(3);
+        let mut zero_leading = valid;
+        zero_leading.polynomial_coefficients[2] = Real::zero();
+        let mut wrong_rational_witness =
+            represented_rational_root(real(2), PredicatePolicy::STRICT);
+        wrong_rational_witness.polynomial_coefficients[0] = real(-3);
+        let mut outside_witness = represented_rational_root(real(2), PredicatePolicy::STRICT);
+        outside_witness.interval.lower = real(3);
+        outside_witness.interval.upper = real(4);
+        let mut wrong_analytic_witness =
+            represented_rational_root(Real::pi(), PredicatePolicy::STRICT);
+        wrong_analytic_witness.polynomial_coefficients[0] = -Real::pi() - Real::one();
+        for invalid in [
+            reversed,
+            zero_leading,
+            wrong_rational_witness,
+            outside_witness,
+            wrong_analytic_witness,
+        ] {
+            assert!(
+                invalid.is_valid(),
+                "the stale cached flag is deliberately still valid"
+            );
+            for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
+                assert!(LocalAlgebraicField::new(&invalid, policy).is_err());
+                for value in [-1, 0, 1] {
+                    let polynomial = BivariatePolynomial::new(vec![vec![real(value)]]);
+                    for retained_parameter in [
+                        CurveResultantParameter::First,
+                        CurveResultantParameter::Second,
+                    ] {
+                        let isolated = isolate_bivariate_fiber_roots_at_algebraic_parameter(
+                            &polynomial,
+                            retained_parameter,
+                            &invalid,
+                            &Real::zero(),
+                            &Real::one(),
+                            AlgebraicFiberRootIsolationConfig::default(),
+                            policy,
+                        );
+                        assert_eq!(
+                            isolated.status,
+                            AlgebraicFiberRootIsolationStatus::InvalidEvidence
+                        );
+                        assert!(isolated.intervals.is_empty());
+                        let projected = project_bivariate_fiber_at_algebraic_parameter(
+                            &polynomial,
+                            retained_parameter,
+                            &invalid,
+                            policy,
+                        );
+                        assert_eq!(
+                            projected.status,
+                            AlgebraicFiberProjectionStatus::InvalidEvidence
+                        );
+                        assert!(projected.coefficients.is_empty());
+                    }
+                }
+            }
+        }
     }
 
     #[test]
