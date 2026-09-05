@@ -140,9 +140,12 @@ mod policy_tests {
     use num::{BigInt, BigUint};
 
     use super::{
-        arithmetic_algebraic_representations_with_policy, exact_real_algebraic_representation,
+        arithmetic_algebraic_representations_with_policy, coordinate_image,
+        exact_real_algebraic_representation,
     };
-    use crate::{CurveCertainty, CurveContext, policy::resolve_certified_operation};
+    use crate::{
+        Classification, CurveCertainty, CurveContext, policy::resolve_certified_operation,
+    };
 
     #[test]
     fn arithmetic_adapter_rejects_evidence_that_does_not_replay_strictly() {
@@ -195,6 +198,49 @@ mod policy_tests {
             AlgebraicRootArithmeticStatus::InvalidEvidence
         );
         assert_eq!(outcome.certainty, CurveCertainty::Certified);
+    }
+
+    #[test]
+    fn coordinate_images_preserve_native_polynomial_point_values() {
+        let half = Real::new(Rational::fraction(1, 2).unwrap());
+        let quarter = Real::new(Rational::fraction(1, 4).unwrap());
+        let alpha = half.clone().sqrt().unwrap();
+        let nested = -&half + (&alpha + &quarter).sqrt().unwrap();
+        let root_two = Real::from(2_i8).sqrt().unwrap();
+        let mut high_degree = vec![Real::zero(); 65];
+        high_degree[0] = -Real::from(1_u64 << 32);
+        high_degree[64] = Real::one();
+        for (coefficients, parameter, expected) in [
+            (vec![], Real::pi(), Real::zero()),
+            (vec![Real::pi()], root_two.clone(), Real::pi()),
+            (vec![Real::pi(), Real::e()], Real::zero(), Real::pi()),
+            (
+                vec![Real::pi(), -Real::pi(), Real::one()],
+                Real::one(),
+                Real::one(),
+            ),
+            (
+                vec![Real::pi(), Real::from(-2_i8) * Real::pi(), Real::one()],
+                half,
+                quarter,
+            ),
+            (vec![-alpha, Real::one(), Real::one()], nested, Real::zero()),
+            (high_degree, root_two, Real::zero()),
+        ] {
+            for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+                let image = coordinate_image(
+                    &exact_real_algebraic_representation(&parameter),
+                    coefficients.clone(),
+                    &policy,
+                )
+                .expect("a stored exact point admits its polynomial image");
+                assert_eq!(image.coefficients, coefficients);
+                assert_eq!(
+                    image.compare_to_real(&expected, &policy),
+                    Classification::Decided(std::cmp::Ordering::Equal)
+                );
+            }
+        }
     }
 
     #[test]
@@ -2100,7 +2146,7 @@ fn coordinate_image(
     policy: &CurveContext,
 ) -> Option<BezierAlgebraicCoordinateImage> {
     if let Some(parameter_value) = parameter.exact_point_witness() {
-        let value = evaluate_power_polynomial(&coefficients, parameter_value);
+        let value = Real::eval_poly(&coefficients, parameter_value);
         let representation = exact_real_algebraic_representation(&value);
         return Some(BezierAlgebraicCoordinateImage {
             evidence: AlgebraicRootPolynomialImageReport {
@@ -2239,15 +2285,6 @@ pub(crate) fn exact_real_algebraic_representation(value: &Real) -> AlgebraicRoot
             message: None,
         },
     }
-}
-
-fn evaluate_power_polynomial(coefficients: &[Real], parameter: &Real) -> Real {
-    coefficients
-        .iter()
-        .rev()
-        .fold(Real::zero(), |accumulator, coefficient| {
-            (accumulator * parameter) + coefficient
-        })
 }
 
 pub(crate) fn parameter_representation(

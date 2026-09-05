@@ -1131,7 +1131,7 @@ fn integrate_polynomial_over_square_free_quadratic_square(
         return Ok(None);
     };
     let rational_at = |t: &Real| -> CurveResult<Option<Real>> {
-        let q_at = evaluate_polynomial(&q, t);
+        let q_at = Real::eval_poly(&q, t);
         match evaluate_linear(&solution[0], &solution[1], t) / q_at {
             Ok(value) => Ok(Some(value)),
             Err(_) => Ok(None),
@@ -1255,7 +1255,7 @@ fn integrate_polynomial_over_square_free_quadratic_fourth(
         return Ok(None);
     };
     let rational_at = |t: &Real| -> CurveResult<Option<Real>> {
-        let q_at = evaluate_polynomial(&q, t);
+        let q_at = Real::eval_poly(&q, t);
         let a_term = evaluate_linear(&solution[0], &solution[1], t);
         let b_term = evaluate_linear(&solution[2], &solution[3], t);
         let c_term = evaluate_linear(&solution[4], &solution[5], t);
@@ -1382,11 +1382,11 @@ fn integrate_polynomial_over_cubic_power(
         return Ok(None);
     };
     let rational_at = |t: &Real| -> CurveResult<Option<Real>> {
-        let denominator_at = evaluate_polynomial(denominator, t);
+        let denominator_at = Real::eval_poly(denominator, t);
         let mut total = Real::zero();
         let mut offset = 0;
         for denominator_exponent in (1..power).rev() {
-            let polynomial_at = evaluate_polynomial(&solution[offset..offset + 3], t);
+            let polynomial_at = Real::eval_poly(&solution[offset..offset + 3], t);
             let denominator_power = integer_power(
                 &denominator_at,
                 i32::try_from(denominator_exponent)
@@ -1464,7 +1464,7 @@ fn integrate_quadratic_over_cubic(
                 let root = &radius * angle.cos() - &shift;
                 let derivative_at =
                     Real::from(3_i8) * a * &root * &root + Real::from(2_i8) * b * &root + c;
-                let coefficient = (evaluate_polynomial(numerator, &root) / derivative_at)?;
+                let coefficient = (Real::eval_poly(numerator, &root) / derivative_at)?;
                 let log_ratio = ((Real::one() - &root) / (Real::zero() - &root))?.ln()?;
                 total += coefficient * log_ratio;
             }
@@ -1823,11 +1823,8 @@ fn exact_rational_polynomial_factors(
                 .checked_add(1)
                 .ok_or(CurveError::InvalidBezierPolynomial)?;
             if remaining.len() <= 1
-                || compare_reals(
-                    &evaluate_polynomial(&remaining, &root),
-                    &Real::zero(),
-                    policy,
-                ) != Some(std::cmp::Ordering::Equal)
+                || compare_reals(&Real::eval_poly(&remaining, &root), &Real::zero(), policy)
+                    != Some(std::cmp::Ordering::Equal)
             {
                 break;
             }
@@ -2061,7 +2058,7 @@ pub(crate) fn exact_rational_polynomial_root(polynomial: &[Real]) -> Option<Real
                 let candidate = Real::new(
                     hyperreal::Rational::fraction(signed_numerator, *factor_denominator).ok()?,
                 );
-                if evaluate_polynomial(polynomial, &candidate).definitely_zero() {
+                if Real::eval_poly(polynomial, &candidate).definitely_zero() {
                     return Some(candidate);
                 }
             }
@@ -2101,8 +2098,8 @@ fn integrate_quadratic_over_linear_quadratic_factor(
         &denominator[2] + &(&denominator[3] * root),
         denominator[3].clone(),
     ];
-    let quadratic_at_root = evaluate_polynomial(&quadratic, root);
-    let linear_coefficient = (evaluate_polynomial(numerator, root) / quadratic_at_root)?;
+    let quadratic_at_root = Real::eval_poly(&quadratic, root);
+    let linear_coefficient = (Real::eval_poly(numerator, root) / quadratic_at_root)?;
     let remainder = polynomial_difference(
         numerator,
         &polynomial_scaled(&quadratic, &linear_coefficient),
@@ -2350,15 +2347,6 @@ fn polynomial_division(
     }
     remainder.truncate(divisor_degree);
     Ok(Some((quotient, remainder)))
-}
-
-fn evaluate_polynomial(coefficients: &[Real], parameter: &Real) -> Real {
-    coefficients
-        .iter()
-        .rev()
-        .fold(Real::zero(), |value, coefficient| {
-            value * parameter + coefficient
-        })
 }
 
 fn evaluate_linear(constant: &Real, linear: &Real, parameter: &Real) -> Real {

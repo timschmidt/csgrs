@@ -2334,9 +2334,9 @@ impl RationalBezier2 {
         };
         project_homogeneous(
             &HomogeneousPoint2 {
-                x: evaluate_power_polynomial(&power_basis.x_numerator, parameter),
-                y: evaluate_power_polynomial(&power_basis.y_numerator, parameter),
-                weight: evaluate_power_polynomial(&power_basis.weight, parameter),
+                x: Real::eval_poly(&power_basis.x_numerator, parameter),
+                y: Real::eval_poly(&power_basis.y_numerator, parameter),
+                weight: Real::eval_poly(&power_basis.weight, parameter),
             },
             policy,
         )
@@ -8388,8 +8388,8 @@ fn real_coefficient_rational_image_parameter(
 ) -> CurveResult<Classification<Option<BezierParameter2>>> {
     let strict = policy.strict_counterpart();
     if let Some(source) = source_parameter.as_exact() {
-        let numerator = evaluate_power_polynomial(&candidate.numerator, source);
-        let denominator = evaluate_power_polynomial(&candidate.denominator, source);
+        let numerator = Real::eval_poly(&candidate.numerator, source);
+        let denominator = Real::eval_poly(&candidate.denominator, source);
         match is_zero(&denominator, &strict) {
             Some(true) => return Ok(Classification::Decided(None)),
             Some(false) => {}
@@ -8678,7 +8678,7 @@ pub(crate) fn rational_parameter_image_matches(
 ) -> CurveResult<Classification<bool>> {
     match source {
         BezierParameter2::Exact(source) => {
-            let denominator = evaluate_power_polynomial(denominator, source);
+            let denominator = Real::eval_poly(denominator, source);
             match real_sign(&denominator, policy) {
                 Some(RealSign::Zero) => {
                     return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
@@ -8686,8 +8686,8 @@ pub(crate) fn rational_parameter_image_matches(
                 Some(RealSign::Positive | RealSign::Negative) => {}
                 None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
             }
-            let image = evaluate_power_polynomial(numerator, source)
-                * denominator.inverse_ref_assuming_nonzero()?;
+            let image =
+                Real::eval_poly(numerator, source) * denominator.inverse_ref_assuming_nonzero()?;
             BezierParameter2::Exact(image).same_value(target, policy)
         }
         BezierParameter2::Algebraic(source) => {
@@ -8843,14 +8843,14 @@ fn exact_rational_parameter_image(
     unit_domain: bool,
     policy: &CurveContext,
 ) -> CurveResult<Classification<Option<BezierParameter2>>> {
-    let denominator_value = evaluate_power_polynomial(denominator, source);
+    let denominator_value = Real::eval_poly(denominator, source);
     match real_sign(&denominator_value, policy) {
         Some(RealSign::Positive | RealSign::Negative) => {}
         Some(RealSign::Zero) => return Ok(Classification::Decided(None)),
         None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
     }
-    let value = evaluate_power_polynomial(numerator, source)
-        * denominator_value.inverse_ref_assuming_nonzero()?;
+    let value =
+        Real::eval_poly(numerator, source) * denominator_value.inverse_ref_assuming_nonzero()?;
     if !unit_domain {
         return Ok(Classification::Decided(Some(BezierParameter2::Exact(
             value,
@@ -9465,15 +9465,6 @@ pub(crate) fn resultant_parameter_projection_with_incident_ray(
     } else {
         ResultantParameterProjection::Parameters(parameters)
     }))
-}
-
-fn evaluate_power_polynomial(coefficients: &[Real], parameter: &Real) -> Real {
-    coefficients
-        .iter()
-        .rev()
-        .fold(Real::zero(), |accumulator, coefficient| {
-            (accumulator * parameter) + coefficient
-        })
 }
 
 fn evaluate_power_polynomial_derivatives(
@@ -10870,8 +10861,8 @@ mod tests {
         let third = (Real::one() / Real::from(3_i8)).unwrap();
 
         for parameter in [Real::zero(), third, Real::one()] {
-            let image = (evaluate_power_polynomial(numerator, &parameter)
-                / evaluate_power_polynomial(denominator, &parameter))
+            let image = (Real::eval_poly(numerator, &parameter)
+                / Real::eval_poly(denominator, &parameter))
             .unwrap();
             assert_eq!(image, parameter);
         }
@@ -11151,7 +11142,7 @@ mod tests {
             .expect("the test candidate root cache was empty");
 
         let selected_source = ((&one - fifth.sqrt().unwrap()) / &two).unwrap();
-        let expected = evaluate_power_polynomial(&numerator, &selected_source);
+        let expected = Real::eval_poly(&numerator, &selected_source);
         for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
             #[cfg(feature = "dispatch-trace")]
             hyperreal::dispatch_trace::reset();
@@ -11265,11 +11256,7 @@ mod tests {
             .unwrap()
             .resultant;
             assert_eq!(
-                compare_reals(
-                    &evaluate_power_polynomial(&coefficients, &value),
-                    &sampled,
-                    &policy,
-                ),
+                compare_reals(&Real::eval_poly(&coefficients, &value), &sampled, &policy,),
                 Some(Ordering::Equal)
             );
         }
