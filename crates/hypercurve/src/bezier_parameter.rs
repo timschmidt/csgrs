@@ -1283,6 +1283,7 @@ impl BezierAlgebraicParameter2 {
         let bound = BigInt::from(denominator_bound);
         let target_width = BigRational::new(BigInt::one(), &two * &bound * &bound);
         let mut interval = self.data.interval.clone();
+        let mut start_variations = None;
         loop {
             let Some(start) = real_as_big_rational(interval.start()) else {
                 return Ok(Classification::Decided(None));
@@ -1302,28 +1303,38 @@ impl BezierAlgebraicParameter2 {
 
             let midpoint = (&start + &end) / &two;
             let midpoint_real = real_from_big_rational(&midpoint)?;
-            match real_sign(&self.data.polynomial.evaluate(&midpoint_real), policy) {
-                Some(RealSign::Zero) => {
+            let midpoint_variations = match sturm_point_evidence(sequence, &midpoint_real, policy)?
+            {
+                Classification::Decided(SturmPointEvidence::Root) => {
                     return Ok(Classification::Decided(Some(midpoint_real)));
                 }
-                Some(_) => {}
-                None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
-            }
+                Classification::Decided(SturmPointEvidence::NonRoot(variations)) => variations,
+                Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+            };
+            // The same Sturm point certificate owns both the root test and
+            // the left-child count. Preserve the unchanged left endpoint's
+            // variation count instead of replaying its entire chain again.
+            let start_count = match start_variations {
+                Some(variations) => variations,
+                None => match sign_variations_at(sequence, interval.start(), policy)? {
+                    Classification::Decided(variations) => {
+                        start_variations = Some(variations);
+                        variations
+                    }
+                    Classification::Uncertain(reason) => {
+                        return Ok(Classification::Uncertain(reason));
+                    }
+                },
+            };
+            let left_count = start_count
+                .checked_sub(midpoint_variations)
+                .ok_or(CurveError::InvalidBezierAlgebraicParameter)?;
             let left = match BezierParameterInterval::try_new_ordered(
                 interval.start().clone(),
                 midpoint_real.clone(),
                 policy,
             )? {
                 Classification::Decided(interval) => interval,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            };
-            let left_count = match self
-                .polynomial()
-                .root_count_in_interval_with_sequence(&left, sequence, policy)?
-            {
-                Classification::Decided(count) => count,
                 Classification::Uncertain(reason) => {
                     return Ok(Classification::Uncertain(reason));
                 }
@@ -1339,6 +1350,7 @@ impl BezierAlgebraicParameter2 {
             if left_count != 0 {
                 return Err(CurveError::InvalidBezierAlgebraicParameter);
             }
+            start_variations = Some(midpoint_variations);
             interval = match BezierParameterInterval::try_new_ordered(
                 midpoint_real,
                 interval.end().clone(),
@@ -5180,6 +5192,83 @@ mod conversion_tests {
         let _ = progressive.refine_to(2);
         let _ = progressive.refine_to(4);
         assert_eq!(progressive.refine_to(8), &direct);
+    }
+
+    #[test]
+    fn rational_reconstruction_reuses_sturm_ownership_across_both_children() {
+        let cases = [
+            (&[1, -3, -2, 6][..], [1, 4], [1, 2], Some([1, 3])),
+            (&[-1, -3, 2, 6][..], [-1, 2], [-1, 4], Some([-1, 3])),
+            (&[4, -5, -8, 10][..], [3, 4], [7, 8], Some([4, 5])),
+            (&[-1, 6, -7, -12, 18][..], [1, 4], [1, 2], Some([1, 3])),
+            // This isolator owns sqrt(1/2), not the rational root 1/3.
+            (&[1, -3, -2, 6][..], [2, 3], [3, 4], None),
+            // A midpoint root must return before treating it as a new bound.
+            (&[1, -2, -2, 4][..], [3, 8], [5, 8], Some([1, 2])),
+        ];
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            for scale in [Real::one(), rational(-7, 97)] {
+                for (coefficients, lower, upper, expected) in cases {
+                    let Classification::Decided(polynomial) =
+                        BezierParameterPolynomial::try_new_power_basis(
+                            coefficients
+                                .iter()
+                                .map(|value| Real::from(*value) * &scale)
+                                .collect(),
+                            &policy,
+                        )
+                        .unwrap()
+                    else {
+                        panic!("exact rational polynomial");
+                    };
+                    let Classification::Decided(interval) =
+                        BezierParameterInterval::try_new_ordered(
+                            rational(lower[0], lower[1]),
+                            rational(upper[0], upper[1]),
+                            &policy,
+                        )
+                        .unwrap()
+                    else {
+                        panic!("exact ordered interval");
+                    };
+                    let Classification::Decided(root) = BezierAlgebraicParameter2::try_isolate(
+                        polynomial.clone(),
+                        interval,
+                        &policy,
+                    )
+                    .unwrap() else {
+                        panic!("one exact isolated root");
+                    };
+                    let Classification::Decided(sequence) =
+                        root.retained_sturm_sequence(&policy).unwrap()
+                    else {
+                        panic!("exact rational Sturm chain");
+                    };
+                    let mut trace = BezierRootIsolationTrace2::default();
+                    let result = root
+                        .represented_rational_root_with_sequence(
+                            &policy,
+                            rational_root_denominator_bound(&polynomial).unwrap(),
+                            &sequence,
+                            Some(&mut trace),
+                        )
+                        .unwrap();
+                    assert_eq!(
+                        result,
+                        Classification::Decided(expected.map(|value| rational(value[0], value[1])))
+                    );
+                    assert_eq!(
+                        trace.interval_root_counts,
+                        trace.rational_reconstruction_refinements
+                    );
+                    if expected == Some([1, 2]) {
+                        assert_eq!(trace.rational_reconstruction_refinements, 0);
+                    } else {
+                        assert!(trace.rational_reconstruction_refinements >= 2);
+                    }
+                }
+            }
+        }
     }
 
     #[test]
