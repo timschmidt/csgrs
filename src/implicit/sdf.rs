@@ -4,6 +4,9 @@
 use crate::hyper_math::{
     hreal_from_f32, hreal_from_f64, hreal_sign, hreal_to_f64, hvector3_from_point3,
 };
+use crate::{
+    GeometryContext, GeometryOutcome, context::GeometryDecisions, errors::ValidationError,
+};
 use hyperlattice::{Point3, Real};
 use hyperlimit::Point3 as HPoint3;
 use hypermesh::{SurfaceNetsError, SurfaceNetsGrid, TriangleMesh, surface_nets};
@@ -104,6 +107,89 @@ fn validated_resolution(resolution: (usize, usize, usize)) -> Option<(u32, u32, 
     let nz = u32::try_from(resolution.2.max(2)).ok()?;
     let sample_count = nx.checked_mul(ny)?.checked_mul(nz)?;
     Some((nx, ny, nz, sample_count as usize))
+}
+
+pub(crate) fn sample_with_context(
+    mut field: impl FnMut(&Point3) -> Result<Real, ValidationError>,
+    resolution: (usize, usize, usize),
+    min: Point3,
+    max: Point3,
+    iso_value: Real,
+    collect_diagnostics: bool,
+    context: &GeometryContext,
+) -> Result<GeometryOutcome<(TriangleMesh, SdfDiagnostics)>, ValidationError> {
+    let decisions = GeometryDecisions::new(context);
+    let (nx, ny, nz, sample_count) =
+        validated_resolution(resolution).ok_or(ValidationError::InvalidArguments)?;
+    let grid = SamplingGrid::from_bounds(min, max, nx, ny, nz, iso_value)
+        .ok_or(ValidationError::InvalidArguments)?;
+    let mut diagnostics = SdfDiagnostics {
+        resolution: (nx, ny, nz),
+        sample_count,
+        ..SdfDiagnostics::default()
+    };
+    let mut values = Vec::with_capacity(sample_count);
+    let x_coordinates = grid.axis_coordinates(&grid.origin.x, &grid.step.x, nx);
+    let y_coordinates = grid.axis_coordinates(&grid.origin.y, &grid.step.y, ny);
+    let z_coordinates = grid.axis_coordinates(&grid.origin.z, &grid.step.z, nz);
+    for z in &z_coordinates {
+        for y in &y_coordinates {
+            for x in &x_coordinates {
+                let value = field(&Point3::new(x.clone(), y.clone(), z.clone()))?;
+                let shifted = &value - &grid.iso;
+                if collect_diagnostics {
+                    match decisions.sign(&shifted, "SDF sample sign")? {
+                        RealSign::Negative => diagnostics.negative_sample_count += 1,
+                        RealSign::Zero => diagnostics.zero_sample_count += 1,
+                        RealSign::Positive => diagnostics.positive_sample_count += 1,
+                    }
+                    diagnostics.finite_sample_count += 1;
+                    diagnostics.min_finite_value =
+                        Some(match diagnostics.min_finite_value.take() {
+                            Some(current) => decisions
+                                .decide(
+                                    hyperlimit::real_min(
+                                        &current,
+                                        &value,
+                                        decisions.predicate_policy(),
+                                    ),
+                                    "SDF minimum sample",
+                                )?
+                                .clone(),
+                            None => value.clone(),
+                        });
+                    diagnostics.max_finite_value =
+                        Some(match diagnostics.max_finite_value.take() {
+                            Some(current) => decisions
+                                .decide(
+                                    hyperlimit::real_max(
+                                        &current,
+                                        &value,
+                                        decisions.predicate_policy(),
+                                    ),
+                                    "SDF maximum sample",
+                                )?
+                                .clone(),
+                            None => value,
+                        });
+                }
+                values.push(shifted);
+            }
+        }
+    }
+    let step = grid.step.to_vector();
+    let output = decisions.consume_mesh(
+        surface_nets(
+            decisions.mesh_context(),
+            SurfaceNetsGrid::new(&grid.origin, &step, [nx, ny, nz], &values),
+        )
+        .map_err(|error| ValidationError::Geometry(error.to_string()))?,
+    );
+    diagnostics.crossing_cell_count = output.active_cell_count;
+    diagnostics.surface_nets_vertex_count = output.mesh.positions.len();
+    diagnostics.surface_nets_index_count = output.mesh.triangles.len() * 3;
+    diagnostics.emitted_triangle_count = output.mesh.triangles.len();
+    Ok(decisions.finish((output.mesh, diagnostics)))
 }
 
 pub(crate) fn sdf(

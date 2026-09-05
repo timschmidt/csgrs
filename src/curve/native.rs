@@ -53,6 +53,127 @@ fn region_from_ring(points: &[[Real; 2]]) -> CurveRegion2 {
     region
 }
 
+fn curve_validation(error: ValidationError) -> CurveBooleanError {
+    hypercurve::CurveError::Topology(error.to_string()).into()
+}
+
+fn positive_with(
+    value: &Real,
+    decisions: &GeometryDecisions,
+) -> Result<bool, CurveBooleanError> {
+    decisions
+        .sign(value, "positive curve dimension")
+        .map(|sign| sign == hyperreal::RealSign::Positive)
+        .map_err(curve_validation)
+}
+
+fn nonnegative_with(
+    value: &Real,
+    decisions: &GeometryDecisions,
+) -> Result<bool, CurveBooleanError> {
+    decisions
+        .sign(value, "nonnegative curve dimension")
+        .map(|sign| sign != hyperreal::RealSign::Negative)
+        .map_err(curve_validation)
+}
+
+fn compare_with(
+    left: &Real,
+    right: &Real,
+    decisions: &GeometryDecisions,
+) -> Result<Ordering, CurveBooleanError> {
+    decisions
+        .decide(
+            hyperlimit::compare_reals(left, right, decisions.predicate_policy()),
+            "curve dimensions",
+        )
+        .map_err(curve_validation)
+}
+
+fn ring_with(
+    points: &[[Real; 2]],
+    decisions: &GeometryDecisions,
+) -> Result<CurveRegion2, CurveBooleanError> {
+    let contour = Contour2::from_real_ring(points)?;
+    Ok(
+        decisions.consume_curve(CurveRegion2::try_from_native_material_contours(
+            vec![contour],
+            decisions.curve_policy(),
+        )?),
+    )
+}
+
+fn rectangle_with(
+    width: Real,
+    height: Real,
+    decisions: &GeometryDecisions,
+) -> Result<CurveRegion2, CurveBooleanError> {
+    if !positive_with(&width, decisions)? || !positive_with(&height, decisions)? {
+        return Ok(empty());
+    }
+    ring_with(
+        &[
+            [Real::zero(), Real::zero()],
+            [width.clone(), Real::zero()],
+            [width, height.clone()],
+            [Real::zero(), height],
+        ],
+        decisions,
+    )
+}
+
+fn ellipse_with(
+    radius_x: Real,
+    radius_y: Real,
+    segments: usize,
+    decisions: &GeometryDecisions,
+) -> Result<CurveRegion2, CurveBooleanError> {
+    if segments < 3
+        || !positive_with(&radius_x, decisions)?
+        || !positive_with(&radius_y, decisions)?
+    {
+        return Ok(empty());
+    }
+    let denominator = Real::from(segments as u64);
+    let points = (0..segments)
+        .map(|index| {
+            let fraction = (Real::from(index as u64) / &denominator)
+                .expect("validated nonzero segment count");
+            let angle = Real::tau() * fraction;
+            [
+                radius_x.clone() * angle.clone().cos(),
+                radius_y.clone() * angle.sin(),
+            ]
+        })
+        .collect::<Vec<_>>();
+    ring_with(&points, decisions)
+}
+
+fn circle_with(
+    radius: Real,
+    segments: usize,
+    decisions: &GeometryDecisions,
+) -> Result<CurveRegion2, CurveBooleanError> {
+    ellipse_with(radius.clone(), radius, segments, decisions)
+}
+
+fn translate_with(
+    region: &CurveRegion2,
+    x: Real,
+    y: Real,
+    decisions: &GeometryDecisions,
+) -> Result<CurveRegion2, CurveBooleanError> {
+    Ok(decisions.consume_curve(region.transform_affine(
+        &Real::one(),
+        &Real::zero(),
+        &Real::zero(),
+        &Real::one(),
+        &x,
+        &y,
+        decisions.curve_policy(),
+    )?))
+}
+
 fn sampled_ellipse(radius_x: Real, radius_y: Real, segments: usize) -> CurveRegion2 {
     if segments < 3 || !positive_real(&radius_x) || !positive_real(&radius_y) {
         return CurveRegion2::empty();
@@ -87,13 +208,6 @@ fn nonnegative_real(value: &Real) -> bool {
 
 fn real_cmp(left: &Real, right: &Real) -> Option<Ordering> {
     crate::hyper_math::hreal_try_cmp(left, right)
-}
-
-fn points_equal(left: &Point2, right: &Point2) -> Option<bool> {
-    Some(
-        real_cmp(left.x(), right.x())? == Ordering::Equal
-            && real_cmp(left.y(), right.y())? == Ordering::Equal,
-    )
 }
 
 fn finite_ring_sign(
@@ -186,6 +300,63 @@ pub fn circle(radius: Real, segments: usize) -> CurveRegion2 {
     sampled_ellipse(radius.clone(), radius, segments)
 }
 
+/// Constructs a rectangle with the selected policy and retains predicate certainty.
+pub fn rectangle_with_context(
+    width: Real,
+    height: Real,
+    context: &GeometryContext,
+) -> Result<GeometryOutcome<CurveRegion2>, CurveBooleanError> {
+    let decisions = GeometryDecisions::new(context);
+    let region = rectangle_with(width, height, &decisions)?;
+    Ok(decisions.finish(region))
+}
+
+/// Constructs a square with the selected policy and retains predicate certainty.
+pub fn square_with_context(
+    width: Real,
+    context: &GeometryContext,
+) -> Result<GeometryOutcome<CurveRegion2>, CurveBooleanError> {
+    rectangle_with_context(width.clone(), width, context)
+}
+
+/// Constructs a sampled circle with the selected policy and retains predicate certainty.
+pub fn circle_with_context(
+    radius: Real,
+    segments: usize,
+    context: &GeometryContext,
+) -> Result<GeometryOutcome<CurveRegion2>, CurveBooleanError> {
+    let decisions = GeometryDecisions::new(context);
+    let region = circle_with(radius, segments, &decisions)?;
+    Ok(decisions.finish(region))
+}
+
+/// Constructs a sampled ellipse with the selected policy and retains predicate certainty.
+pub fn ellipse_with_context(
+    width: Real,
+    height: Real,
+    segments: usize,
+    context: &GeometryContext,
+) -> Result<GeometryOutcome<CurveRegion2>, CurveBooleanError> {
+    let decisions = GeometryDecisions::new(context);
+    let two = Real::from(2_u8);
+    let region = ellipse_with(
+        (width / &two).expect("two is nonzero"),
+        (height / two).expect("two is nonzero"),
+        segments,
+        &decisions,
+    )?;
+    Ok(decisions.finish(region))
+}
+
+/// Constructs a regular polygon with the selected policy and retains predicate certainty.
+pub fn regular_ngon_with_context(
+    sides: usize,
+    radius: Real,
+    context: &GeometryContext,
+) -> Result<GeometryOutcome<CurveRegion2>, CurveBooleanError> {
+    circle_with_context(radius, sides, context)
+}
+
 /// Right triangle with its right-angle corner at the origin.
 pub fn right_triangle(width: Real, height: Real) -> CurveRegion2 {
     if !positive_real(&width) || !positive_real(&height) {
@@ -201,6 +372,24 @@ pub fn right_triangle(width: Real, height: Real) -> CurveRegion2 {
 /// Closed polygon from exact coordinate rows.
 pub fn polygon(points: &[[Real; 2]]) -> CurveRegion2 {
     region_from_ring(points)
+}
+
+/// Publishes a filled ring with the selected policy and aggregate certainty.
+pub fn polygon_with_context(
+    points: &[[Real; 2]],
+    context: &GeometryContext,
+) -> Result<GeometryOutcome<CurveRegion2>, ValidationError> {
+    let decisions = GeometryDecisions::new(context);
+    let contour = Contour2::from_real_ring(points)
+        .map_err(|error| ValidationError::Geometry(error.to_string()))?;
+    let region = decisions.consume_curve(
+        CurveRegion2::try_from_native_material_contours(
+            vec![contour],
+            decisions.curve_policy(),
+        )
+        .map_err(|error| ValidationError::Geometry(error.to_string()))?,
+    );
+    Ok(decisions.finish(region))
 }
 
 /// Closed polygon from native Hypercurve points.
@@ -419,23 +608,44 @@ pub fn rounded_rectangle(
     corner_radius: Real,
     corner_segments: usize,
 ) -> CurveRegion2 {
-    if !positive_real(&width) || !positive_real(&height) || !nonnegative_real(&corner_radius) {
-        return empty();
+    rounded_rectangle_with_context(
+        width,
+        height,
+        corner_radius,
+        corner_segments,
+        &GeometryContext::STRICT,
+    )
+    .map(GeometryOutcome::into_value)
+    .unwrap_or_else(|_| empty())
+}
+
+/// Constructs a rounded rectangle with the selected policy and aggregate certainty.
+pub fn rounded_rectangle_with_context(
+    width: Real,
+    height: Real,
+    corner_radius: Real,
+    corner_segments: usize,
+    context: &GeometryContext,
+) -> Result<GeometryOutcome<CurveRegion2>, CurveBooleanError> {
+    let decisions = GeometryDecisions::new(context);
+    if !positive_with(&width, &decisions)?
+        || !positive_with(&height, &decisions)?
+        || !nonnegative_with(&corner_radius, &decisions)?
+    {
+        return Ok(decisions.finish(empty()));
     }
     let half_width = (&width / Real::from(2_u8)).expect("two is nonzero");
     let half_height = (&height / Real::from(2_u8)).expect("two is nonzero");
-    let radius = match real_cmp(&corner_radius, &half_width) {
-        Some(Ordering::Greater) => half_width,
-        Some(Ordering::Equal | Ordering::Less) => corner_radius,
-        None => return empty(),
+    let radius = match compare_with(&corner_radius, &half_width, &decisions)? {
+        Ordering::Greater => half_width,
+        Ordering::Equal | Ordering::Less => corner_radius,
     };
-    let radius = match real_cmp(&radius, &half_height) {
-        Some(Ordering::Greater) => half_height,
-        Some(Ordering::Equal | Ordering::Less) => radius,
-        None => return empty(),
+    let radius = match compare_with(&radius, &half_height, &decisions)? {
+        Ordering::Greater => half_height,
+        Ordering::Equal | Ordering::Less => radius,
     };
-    if corner_segments == 0 || !positive_real(&radius) {
-        return rectangle(width, height);
+    if corner_segments == 0 || !positive_with(&radius, &decisions)? {
+        return Ok(decisions.finish(rectangle_with(width, height, &decisions)?));
     }
     let half_pi = (Real::pi() / Real::from(2_u8)).expect("two is nonzero");
     let centers = [
@@ -453,7 +663,7 @@ pub fn rounded_rectangle(
         (radius.clone(), height - radius.clone(), half_pi.clone()),
     ];
     let Some(point_capacity) = corner_segments.checked_mul(4) else {
-        return empty();
+        return Ok(decisions.finish(empty()));
     };
     let mut points = Vec::with_capacity(point_capacity);
     let corner_count = centers.len();
@@ -471,7 +681,7 @@ pub fn rounded_rectangle(
             let Some(fraction) =
                 (Real::from(index as u64) / Real::from(corner_segments as u64)).ok()
             else {
-                return empty();
+                return Ok(decisions.finish(empty()));
             };
             let angle = start.clone() + half_pi.clone() * fraction;
             points.push([
@@ -480,7 +690,8 @@ pub fn rounded_rectangle(
             ]);
         }
     }
-    region_from_ring(&points)
+    let region = ring_with(&points, &decisions)?;
+    Ok(decisions.finish(region))
 }
 
 /// Squircle region.
@@ -532,20 +743,22 @@ pub fn keyhole(
 ) -> Result<GeometryOutcome<CurveRegion2>, CurveBooleanError> {
     let decisions = GeometryDecisions::new(context);
     if segments < 3
-        || !positive_real(&circle_radius)
-        || !positive_real(&handle_width)
-        || !positive_real(&handle_height)
+        || !positive_with(&circle_radius, &decisions)?
+        || !positive_with(&handle_width, &decisions)?
+        || !positive_with(&handle_height, &decisions)?
     {
         return Ok(decisions.finish(empty()));
     }
     let handle_x = -(handle_width.clone() / Real::from(2_u8)).expect("two is nonzero");
-    let handle = translated(
-        &rectangle(handle_width, handle_height),
+    let handle = translate_with(
+        &rectangle_with(handle_width, handle_height, &decisions)?,
         handle_x,
         Real::zero(),
-    );
+        &decisions,
+    )?;
     let region = decisions.consume_curve(
-        circle(circle_radius, segments).try_union(&handle, decisions.curve_policy())?,
+        circle_with(circle_radius, segments, &decisions)?
+            .try_union(&handle, decisions.curve_policy())?,
     );
     Ok(decisions.finish(region))
 }
@@ -558,7 +771,10 @@ pub fn reuleaux(
     context: &GeometryContext,
 ) -> Result<GeometryOutcome<CurveRegion2>, CurveBooleanError> {
     let decisions = GeometryDecisions::new(context);
-    if sides < 3 || sides.is_multiple_of(2) || circle_segments < 6 || !positive_real(&diameter)
+    if sides < 3
+        || sides.is_multiple_of(2)
+        || circle_segments < 6
+        || !positive_with(&diameter, &decisions)?
     {
         return Ok(decisions.finish(empty()));
     }
@@ -578,11 +794,12 @@ pub fn reuleaux(
         let angle = Real::tau()
             * (Real::from(index as u64) / &denominator)
                 .expect("the validated side count is nonzero");
-        let disk = translated(
-            &circle(diameter.clone(), circle_segments),
+        let disk = translate_with(
+            &circle_with(diameter.clone(), circle_segments, &decisions)?,
             circumradius.clone() * angle.clone().cos(),
             circumradius.clone() * angle.sin(),
-        );
+            &decisions,
+        )?;
         result = Some(match result {
             None => disk,
             Some(current) => decisions
@@ -600,15 +817,18 @@ pub fn ring(
     context: &GeometryContext,
 ) -> Result<GeometryOutcome<CurveRegion2>, CurveBooleanError> {
     let decisions = GeometryDecisions::new(context);
-    if segments < 3 || !positive_real(&inner_diameter) || !positive_real(&thickness) {
+    if segments < 3
+        || !positive_with(&inner_diameter, &decisions)?
+        || !positive_with(&thickness, &decisions)?
+    {
         return Ok(decisions.finish(empty()));
     }
     let Some(inner_radius) = (inner_diameter / Real::from(2_u8)).ok() else {
         return Ok(decisions.finish(empty()));
     };
-    let inner = circle(inner_radius.clone(), segments);
+    let inner = circle_with(inner_radius.clone(), segments, &decisions)?;
     let region = decisions.consume_curve(
-        circle(inner_radius + thickness, segments)
+        circle_with(inner_radius + thickness, segments, &decisions)?
             .try_difference(&inner, decisions.curve_policy())?,
     );
     Ok(decisions.finish(region))
@@ -725,13 +945,18 @@ pub fn crescent(
 ) -> Result<GeometryOutcome<CurveRegion2>, CurveBooleanError> {
     let decisions = GeometryDecisions::new(context);
     if segments < 6
-        || !positive_real(&inner_radius)
-        || real_cmp(&outer_radius, &inner_radius) != Some(Ordering::Greater)
+        || !positive_with(&inner_radius, &decisions)?
+        || compare_with(&outer_radius, &inner_radius, &decisions)? != Ordering::Greater
     {
         return Ok(decisions.finish(empty()));
     }
-    let outer = circle(outer_radius, segments);
-    let inner = translated(&circle(inner_radius, segments), offset, Real::zero());
+    let outer = circle_with(outer_radius, segments, &decisions)?;
+    let inner = translate_with(
+        &circle_with(inner_radius, segments, &decisions)?,
+        offset,
+        Real::zero(),
+        &decisions,
+    )?;
     let region =
         decisions.consume_curve(outer.try_difference(&inner, decisions.curve_policy())?);
     Ok(decisions.finish(region))
@@ -786,22 +1011,24 @@ pub fn circle_with_keyway(
     let decisions = GeometryDecisions::new(context);
     let diameter = Real::from(2_u8) * radius.clone();
     if segments < 3
-        || !positive_real(&radius)
-        || !positive_real(&key_width)
-        || !positive_real(&key_depth)
-        || real_cmp(&key_width, &diameter) != Some(Ordering::Less)
-        || real_cmp(&key_depth, &diameter) != Some(Ordering::Less)
+        || !positive_with(&radius, &decisions)?
+        || !positive_with(&key_width, &decisions)?
+        || !positive_with(&key_depth, &decisions)?
+        || compare_with(&key_width, &diameter, &decisions)? != Ordering::Less
+        || compare_with(&key_depth, &diameter, &decisions)? != Ordering::Less
     {
         return Ok(decisions.finish(empty()));
     }
     let key_y = -(key_width.clone() / Real::from(2_u8)).expect("two is nonzero");
-    let cutter = translated(
-        &rectangle(key_depth.clone(), key_width),
+    let cutter = translate_with(
+        &rectangle_with(key_depth.clone(), key_width, &decisions)?,
         radius.clone() - key_depth,
         key_y,
-    );
+        &decisions,
+    )?;
     let region = decisions.consume_curve(
-        circle(radius, segments).try_difference(&cutter, decisions.curve_policy())?,
+        circle_with(radius, segments, &decisions)?
+            .try_difference(&cutter, decisions.curve_policy())?,
     );
     Ok(decisions.finish(region))
 }
@@ -815,20 +1042,22 @@ pub fn circle_with_flat(
 ) -> Result<GeometryOutcome<CurveRegion2>, CurveBooleanError> {
     let decisions = GeometryDecisions::new(context);
     if segments < 3
-        || !positive_real(&radius)
-        || !nonnegative_real(&flat_distance)
-        || real_cmp(&flat_distance, &radius) != Some(Ordering::Less)
+        || !positive_with(&radius, &decisions)?
+        || !nonnegative_with(&flat_distance, &decisions)?
+        || compare_with(&flat_distance, &radius, &decisions)? != Ordering::Less
     {
         return Ok(decisions.finish(empty()));
     }
     let diameter = Real::from(2_u8) * radius.clone();
-    let clip = translated(
-        &rectangle(diameter, radius.clone() + flat_distance.clone()),
+    let clip = translate_with(
+        &rectangle_with(diameter, radius.clone() + flat_distance.clone(), &decisions)?,
         -radius.clone(),
         -flat_distance,
-    );
+        &decisions,
+    )?;
     let region = decisions.consume_curve(
-        circle(radius, segments).try_intersection(&clip, decisions.curve_policy())?,
+        circle_with(radius, segments, &decisions)?
+            .try_intersection(&clip, decisions.curve_policy())?,
     );
     Ok(decisions.finish(region))
 }
@@ -842,22 +1071,25 @@ pub fn circle_with_two_flats(
 ) -> Result<GeometryOutcome<CurveRegion2>, CurveBooleanError> {
     let decisions = GeometryDecisions::new(context);
     if segments < 3
-        || !positive_real(&radius)
-        || !nonnegative_real(&flat_distance)
-        || real_cmp(&flat_distance, &radius) != Some(Ordering::Less)
+        || !positive_with(&radius, &decisions)?
+        || !nonnegative_with(&flat_distance, &decisions)?
+        || compare_with(&flat_distance, &radius, &decisions)? != Ordering::Less
     {
         return Ok(decisions.finish(empty()));
     }
-    let clip = translated(
-        &rectangle(
+    let clip = translate_with(
+        &rectangle_with(
             Real::from(2_u8) * radius.clone(),
             Real::from(2_u8) * flat_distance.clone(),
-        ),
+            &decisions,
+        )?,
         -radius.clone(),
         -flat_distance,
-    );
+        &decisions,
+    )?;
     let region = decisions.consume_curve(
-        circle(radius, segments).try_intersection(&clip, decisions.curve_policy())?,
+        circle_with(radius, segments, &decisions)?
+            .try_intersection(&clip, decisions.curve_policy())?,
     );
     Ok(decisions.finish(region))
 }
@@ -1527,15 +1759,36 @@ pub fn bezier_path(control: &[[Real; 2]], display_segments: usize) -> Option<Cur
 
 /// Closed arbitrary-degree Bezier boundary as a filled region.
 pub fn bezier_region(control: &[[Real; 2]], display_segments: usize) -> CurveRegion2 {
-    let Some(path) = bezier_path(control, display_segments) else {
-        return empty();
-    };
-    if points_equal(path.start(), path.end()) != Some(true) {
-        return empty();
-    }
-    CurveRegion2::try_from_boundary_paths(std::slice::from_ref(&path), &CurveContext::STRICT)
-        .map(CurveOutcome::into_value)
+    bezier_region_with_context(control, display_segments, &GeometryContext::STRICT)
+        .map(GeometryOutcome::into_value)
         .unwrap_or_else(|_| empty())
+}
+
+/// Publishes a closed Bezier boundary with the selected policy and aggregate certainty.
+pub fn bezier_region_with_context(
+    control: &[[Real; 2]],
+    display_segments: usize,
+    context: &GeometryContext,
+) -> Result<GeometryOutcome<CurveRegion2>, ValidationError> {
+    let decisions = GeometryDecisions::new(context);
+    let path =
+        bezier_path(control, display_segments).ok_or(ValidationError::InvalidArguments)?;
+    let start = hyperlimit::Point2::new(path.start().x().clone(), path.start().y().clone());
+    let end = hyperlimit::Point2::new(path.end().x().clone(), path.end().y().clone());
+    if !decisions.decide(
+        hyperlimit::point2_equal(&start, &end, decisions.predicate_policy()),
+        "Bezier boundary closure",
+    )? {
+        return Err(ValidationError::InvalidArguments);
+    }
+    let region = decisions.consume_curve(
+        CurveRegion2::try_from_boundary_paths(
+            std::slice::from_ref(&path),
+            decisions.curve_policy(),
+        )
+        .map_err(|error| ValidationError::Geometry(error.to_string()))?,
+    );
+    Ok(decisions.finish(region))
 }
 
 /// Exact open-uniform polynomial B-spline path.
@@ -1544,12 +1797,35 @@ pub fn bspline_path(
     degree: usize,
     display_segments_per_span: usize,
 ) -> Option<CurvePath2> {
-    let minimum_control_count = degree.checked_add(1)?;
+    bspline_path_with_context(
+        control,
+        degree,
+        display_segments_per_span,
+        &GeometryContext::STRICT,
+    )
+    .ok()
+    .map(GeometryOutcome::into_value)
+}
+
+/// Constructs a B-spline with the selected policy and aggregate certainty.
+pub fn bspline_path_with_context(
+    control: &[[Real; 2]],
+    degree: usize,
+    display_segments_per_span: usize,
+    context: &GeometryContext,
+) -> Result<GeometryOutcome<CurvePath2>, ValidationError> {
+    let decisions = GeometryDecisions::new(context);
+    let minimum_control_count = degree
+        .checked_add(1)
+        .ok_or(ValidationError::InvalidArguments)?;
     if control.len() < minimum_control_count || display_segments_per_span < 1 {
-        return None;
+        return Err(ValidationError::InvalidArguments);
     }
     let n = control.len() - 1;
-    let m = n.checked_add(degree)?.checked_add(1)?;
+    let m = n
+        .checked_add(degree)
+        .and_then(|count| count.checked_add(1))
+        .ok_or(ValidationError::InvalidArguments)?;
     let span_count = n - degree + 1;
     let knots = (0..=m)
         .map(|index| {
@@ -1566,10 +1842,13 @@ pub fn bspline_path(
         .iter()
         .map(|point| Point2::new(point[0].clone(), point[1].clone()))
         .collect();
-    let spline = PolynomialSplineCurve2::try_new(degree, points, knots, &CurveContext::STRICT)
-        .ok()?
-        .into_value();
-    CurvePath2::try_new(vec![Curve2::from(spline)]).ok()
+    let spline = decisions.consume_curve(
+        PolynomialSplineCurve2::try_new(degree, points, knots, decisions.curve_policy())
+            .map_err(|error| ValidationError::Geometry(error.to_string()))?,
+    );
+    let path = CurvePath2::try_new(vec![Curve2::from(spline)])
+        .map_err(|error| ValidationError::Geometry(error.to_string()))?;
+    Ok(decisions.finish(path))
 }
 
 /// Hilbert infill returned as native open curve strings.
@@ -1578,30 +1857,41 @@ pub fn hilbert_strings(
     order: usize,
     padding: Real,
 ) -> Vec<CurveString2> {
+    hilbert_strings_with_context(boundary, order, padding, &GeometryContext::STRICT)
+        .map(GeometryOutcome::into_value)
+        .unwrap_or_default()
+}
+
+/// Clips Hilbert strings with the selected policy and aggregate certainty.
+pub fn hilbert_strings_with_context(
+    boundary: &CurveRegion2,
+    order: usize,
+    padding: Real,
+    context: &GeometryContext,
+) -> Result<GeometryOutcome<Vec<CurveString2>>, ValidationError> {
+    let decisions = GeometryDecisions::new(context);
     if order == 0
         || order > 10
         || !matches!(
-            crate::hyper_math::hreal_sign(&padding),
-            Some(hyperreal::RealSign::Positive | hyperreal::RealSign::Zero)
+            decisions.sign(&padding, "Hilbert padding")?,
+            hyperreal::RealSign::Positive | hyperreal::RealSign::Zero
         )
     {
-        return Vec::new();
+        return Err(ValidationError::InvalidArguments);
     }
-    let Ok(bounds) = try_bounding_box(boundary) else {
-        return Vec::new();
-    };
+    let bounds = decisions.consume_geometry(try_bounding_box_with_context(boundary, context)?);
     let width =
         bounds.maxs.x.clone() - bounds.mins.x.clone() - Real::from(2_u8) * padding.clone();
     let height =
         bounds.maxs.y.clone() - bounds.mins.y.clone() - Real::from(2_u8) * padding.clone();
     if !matches!(
-        crate::hyper_math::hreal_sign(&width),
-        Some(hyperreal::RealSign::Positive)
+        decisions.sign(&width, "Hilbert width")?,
+        hyperreal::RealSign::Positive
     ) || !matches!(
-        crate::hyper_math::hreal_sign(&height),
-        Some(hyperreal::RealSign::Positive)
+        decisions.sign(&height, "Hilbert height")?,
+        hyperreal::RealSign::Positive
     ) {
-        return Vec::new();
+        return Err(ValidationError::InvalidArguments);
     }
     const fn rotate_quadrant(size: u64, x: &mut u64, y: &mut u64, rx: u64, ry: u64) {
         if ry == 0 {
@@ -1645,19 +1935,19 @@ pub fn hilbert_strings(
         })
         .collect::<Vec<_>>();
     if points.len() != (size * size) as usize {
-        return Vec::new();
+        return Err(ValidationError::InvalidArguments);
     }
     let mut runs = Vec::<Vec<(Real, Real)>>::new();
     let mut run = Vec::new();
     for pair in points.windows(2) {
         let midpoint_x = ((&pair[0].0 + &pair[1].0) / Real::from(2_u8)).ok();
         let midpoint_y = ((&pair[0].1 + &pair[1].1) / Real::from(2_u8)).ok();
-        let Some(keep) = midpoint_x
+        let (x, y) = midpoint_x
             .zip(midpoint_y)
-            .and_then(|(x, y)| contains_xy(boundary, x, y))
-        else {
-            return Vec::new();
-        };
+            .ok_or(ValidationError::InvalidArguments)?;
+        let keep = decisions
+            .consume_geometry(contains_xy_with_context(boundary, x, y, context)?)
+            .ok_or(ValidationError::InvalidArguments)?;
         if keep {
             if run.is_empty() {
                 run.push(pair[0].clone());
@@ -1676,7 +1966,7 @@ pub fn hilbert_strings(
             CurveString2::from_real_point_iter(run.into_iter().map(|(x, y)| [x, y])).ok()
         })
         .collect::<Option<Vec<_>>>();
-    strings.unwrap_or_default()
+    Ok(decisions.finish(strings.ok_or(ValidationError::InvalidArguments)?))
 }
 
 /// Exact regularized offset of a native filled region.
@@ -2624,6 +2914,18 @@ pub fn try_transformed(
     input: &CurveRegion2,
     matrix: &Matrix4,
 ) -> ExactCurveResult<CurveRegion2> {
+    try_transformed_with_context(input, matrix, &GeometryContext::STRICT)
+        .map(GeometryOutcome::into_value)
+}
+
+/// Applies the curve transform with the selected policy and aggregate certainty.
+pub fn try_transformed_with_context(
+    input: &CurveRegion2,
+    matrix: &Matrix4,
+    context: &GeometryContext,
+) -> ExactCurveResult<GeometryOutcome<CurveRegion2>> {
+    let decisions = GeometryDecisions::new(context);
+
     input
         .transform_affine(
             &matrix.0[0][0],
@@ -2632,9 +2934,9 @@ pub fn try_transformed(
             &matrix.0[1][1],
             &matrix.0[0][3],
             &matrix.0[1][3],
-            &CurveContext::STRICT,
+            decisions.curve_policy(),
         )
-        .map(CurveOutcome::into_value)
+        .map(|outcome| decisions.finish(decisions.consume_curve(outcome)))
 }
 
 pub fn transformed(input: &CurveRegion2, matrix: &Matrix4) -> CurveRegion2 {
@@ -2647,6 +2949,19 @@ pub fn try_translated(
     x: Real,
     y: Real,
 ) -> ExactCurveResult<CurveRegion2> {
+    try_translated_with_context(input, x, y, &GeometryContext::STRICT)
+        .map(GeometryOutcome::into_value)
+}
+
+/// Applies the curve transform with the selected policy and aggregate certainty.
+pub fn try_translated_with_context(
+    input: &CurveRegion2,
+    x: Real,
+    y: Real,
+    context: &GeometryContext,
+) -> ExactCurveResult<GeometryOutcome<CurveRegion2>> {
+    let decisions = GeometryDecisions::new(context);
+
     input
         .transform_affine(
             &Real::one(),
@@ -2655,9 +2970,9 @@ pub fn try_translated(
             &Real::one(),
             &x,
             &y,
-            &CurveContext::STRICT,
+            decisions.curve_policy(),
         )
-        .map(CurveOutcome::into_value)
+        .map(|outcome| decisions.finish(decisions.consume_curve(outcome)))
 }
 
 pub fn translated(input: &CurveRegion2, x: Real, y: Real) -> CurveRegion2 {
@@ -2666,6 +2981,18 @@ pub fn translated(input: &CurveRegion2, x: Real, y: Real) -> CurveRegion2 {
 
 /// Rotates a filled native region counterclockwise about the origin in degrees.
 pub fn try_rotated(input: &CurveRegion2, z_degrees: Real) -> ExactCurveResult<CurveRegion2> {
+    try_rotated_with_context(input, z_degrees, &GeometryContext::STRICT)
+        .map(GeometryOutcome::into_value)
+}
+
+/// Applies the curve transform with the selected policy and aggregate certainty.
+pub fn try_rotated_with_context(
+    input: &CurveRegion2,
+    z_degrees: Real,
+    context: &GeometryContext,
+) -> ExactCurveResult<GeometryOutcome<CurveRegion2>> {
+    let decisions = GeometryDecisions::new(context);
+
     let radians = (z_degrees * Real::pi() / Real::from(180_u16)).expect("180 is nonzero");
     let cosine = radians.clone().cos();
     let sine = radians.sin();
@@ -2677,9 +3004,9 @@ pub fn try_rotated(input: &CurveRegion2, z_degrees: Real) -> ExactCurveResult<Cu
             &cosine,
             &Real::zero(),
             &Real::zero(),
-            &CurveContext::STRICT,
+            decisions.curve_policy(),
         )
-        .map(CurveOutcome::into_value)
+        .map(|outcome| decisions.finish(decisions.consume_curve(outcome)))
 }
 
 pub fn rotated(input: &CurveRegion2, z_degrees: Real) -> CurveRegion2 {
@@ -2688,6 +3015,19 @@ pub fn rotated(input: &CurveRegion2, z_degrees: Real) -> CurveRegion2 {
 
 /// Scales a filled native region independently along the planar axes.
 pub fn try_scaled(input: &CurveRegion2, x: Real, y: Real) -> ExactCurveResult<CurveRegion2> {
+    try_scaled_with_context(input, x, y, &GeometryContext::STRICT)
+        .map(GeometryOutcome::into_value)
+}
+
+/// Applies the curve transform with the selected policy and aggregate certainty.
+pub fn try_scaled_with_context(
+    input: &CurveRegion2,
+    x: Real,
+    y: Real,
+    context: &GeometryContext,
+) -> ExactCurveResult<GeometryOutcome<CurveRegion2>> {
+    let decisions = GeometryDecisions::new(context);
+
     input
         .transform_affine(
             &x,
@@ -2696,9 +3036,9 @@ pub fn try_scaled(input: &CurveRegion2, x: Real, y: Real) -> ExactCurveResult<Cu
             &y,
             &Real::zero(),
             &Real::zero(),
-            &CurveContext::STRICT,
+            decisions.curve_policy(),
         )
-        .map(CurveOutcome::into_value)
+        .map(|outcome| decisions.finish(decisions.consume_curve(outcome)))
 }
 
 pub fn scaled(input: &CurveRegion2, x: Real, y: Real) -> CurveRegion2 {
@@ -2707,39 +3047,73 @@ pub fn scaled(input: &CurveRegion2, x: Real, y: Real) -> CurveRegion2 {
 
 /// Classifies an exact XY point, returning `None` on boundaries or uncertainty.
 pub fn contains_xy(input: &CurveRegion2, x: Real, y: Real) -> Option<bool> {
+    contains_xy_with_context(input, x, y, &GeometryContext::STRICT)
+        .ok()
+        .and_then(GeometryOutcome::into_value)
+}
+
+/// Classifies a point with the selected policy. Boundaries return `None`;
+/// undecided classifications return an error.
+pub fn contains_xy_with_context(
+    input: &CurveRegion2,
+    x: Real,
+    y: Real,
+    context: &GeometryContext,
+) -> Result<GeometryOutcome<Option<bool>>, ValidationError> {
+    let decisions = GeometryDecisions::new(context);
     if input.is_empty() {
-        return None;
+        return Ok(decisions.finish(None));
     }
-    match input
-        .classify_point(&Point2::new(x, y), &CurveContext::STRICT)
-        .ok()?
-        .value
-    {
+    let classification = decisions.consume_curve(
+        input
+            .classify_point(&Point2::new(x, y), decisions.curve_policy())
+            .map_err(|error| ValidationError::Geometry(error.to_string()))?,
+    );
+    let inside = match classification {
         Classification::Decided(RegionPointLocation::Inside) => Some(true),
         Classification::Decided(RegionPointLocation::Outside) => Some(false),
-        Classification::Decided(RegionPointLocation::Boundary)
-        | Classification::Uncertain(_) => None,
-    }
+        Classification::Decided(RegionPointLocation::Boundary) => None,
+        Classification::Uncertain(reason) => {
+            return Err(ValidationError::Geometry(format!(
+                "curve point classification is uncertain: {reason:?}"
+            )));
+        },
+    };
+    Ok(decisions.finish(inside))
 }
 
 /// Returns the certified exact planar bounds, embedded in the XY plane.
 pub fn try_bounding_box(input: &CurveRegion2) -> Result<Aabb, ValidationError> {
+    try_bounding_box_with_context(input, &GeometryContext::STRICT)
+        .map(GeometryOutcome::into_value)
+}
+
+/// Computes curve bounds with the selected policy and aggregate certainty.
+pub fn try_bounding_box_with_context(
+    input: &CurveRegion2,
+    context: &GeometryContext,
+) -> Result<GeometryOutcome<Aabb>, ValidationError> {
+    let decisions = GeometryDecisions::new(context);
     if input.is_empty() {
-        return Ok(Aabb::origin());
+        return Ok(decisions.finish(Aabb::origin()));
     }
-    match input
-        .bounds(&CurveContext::STRICT)
-        .map(CurveOutcome::into_value)
-    {
-        Ok(Classification::Decided(bounds)) => Ok(Aabb::new(
+    let classification = decisions.consume_curve(
+        input
+            .bounds(decisions.curve_policy())
+            .map_err(|error| ValidationError::Geometry(error.to_string()))?,
+    );
+    let bounds = match classification {
+        Classification::Decided(bounds) => Aabb::new(
             Point3::new(bounds.min_x().clone(), bounds.min_y().clone(), Real::zero()),
             Point3::new(bounds.max_x().clone(), bounds.max_y().clone(), Real::zero()),
-        )),
-        Ok(Classification::Uncertain(reason)) => Err(ValidationError::Geometry(format!(
-            "curve bounds are uncertain: {reason:?}"
-        ))),
-        Err(error) => Err(ValidationError::Geometry(error.to_string())),
-    }
+        ),
+        Classification::Uncertain(reason) => {
+            return Err(ValidationError::Geometry(format!(
+                "curve bounds are uncertain: {reason:?}"
+            )));
+        },
+    };
+    Ok(decisions.finish(bounds))
 }
 
 /// Returns exact bounds, using the origin box only for empty or invalid input.

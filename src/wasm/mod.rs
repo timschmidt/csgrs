@@ -3,12 +3,21 @@
 use crate::hyper_math::{hreal_from_f64, hreal_to_f64};
 use hyperlattice::{Matrix4, Point3, Real, Vector3};
 
+pub mod context_js;
 pub mod curve_js;
 pub mod matrix_js;
 pub mod mesh_js;
 pub mod plane_js;
 pub mod point_js;
 pub mod vector_js;
+
+pub(crate) const fn geometry_context(approximate_512: bool) -> crate::GeometryContext {
+    if approximate_512 {
+        crate::GeometryContext::APPROXIMATE_512
+    } else {
+        crate::GeometryContext::STRICT
+    }
+}
 
 pub(crate) fn finite_matrix4(values: [Real; 16]) -> Option<Matrix4> {
     Some(Matrix4::from_row_major(values))

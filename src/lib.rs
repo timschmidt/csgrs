@@ -74,10 +74,9 @@ pub use hyperreal::Real;
 
 pub(crate) const PREDICATE_POLICY: hyperlimit::PredicatePolicy =
     hyperlimit::PredicatePolicy::STRICT;
+#[cfg(any(test, feature = "sdf"))]
 pub(crate) const MESH_CONTEXT: hypermesh::MeshContext =
     hypermesh::MeshContext::new(PREDICATE_POLICY);
-pub(crate) const TRIANGULATION_CONTEXT: hypertri::TriangulationContext =
-    hypertri::TriangulationContext::new(PREDICATE_POLICY);
 
 #[cfg(feature = "wasm")]
 pub mod wasm;

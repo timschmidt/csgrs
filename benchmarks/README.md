@@ -128,6 +128,22 @@ For example, this runs only Boolean cases with five samples:
 CSGRS_BENCH_FILTER=boolean CSGRS_BENCH_SAMPLES=5 benchmarks/run.sh
 ```
 
+The focused mesh context benchmark subtracts 16- and 32-segment drill cylinders
+from a 12×12×4 body under both `GeometryContext` policies:
+
+```sh
+cargo bench --locked --no-default-features --bench mesh_boolean_context
+```
+
+It reports completed operations, consumed approximation, undecided predicates,
+triangle counts, and first/median operation times in microseconds. Construction
+is excluded. Each policy starts with fresh mesh storage; later samples reuse
+those inputs and their retained facts. Set `CSGRS_BOOLEAN_CONTEXT_BENCH_ITERS`
+to change the default five samples. Scalar expression caches may already be
+warm, so the first sample is not a cold-process measurement.
+The [2026-09-05 measurement](mesh-boolean-context-2026-09-05.md) records the
+workload, local timings, output counts, and correctness checks.
+
 ## Runtime path tracing
 
 Enable `dispatch-trace` to record the exact-computation path selected by every

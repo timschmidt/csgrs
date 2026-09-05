@@ -5,6 +5,7 @@ use std::cell::Cell;
 use hypercurve::{CurveCertainty, CurveContext, CurveOutcome};
 use hyperlimit::{Certainty, PredicateOutcome, PredicatePolicy};
 use hypermesh::{MeshCertainty, MeshContext, MeshOutcome};
+use hypertri::{TriangulationCertainty, TriangulationContext, TriangulationOutcome};
 
 use crate::errors::ValidationError;
 
@@ -44,6 +45,11 @@ impl GeometryContext {
     /// Derive the matching Hypermesh context.
     pub const fn mesh_context(self) -> MeshContext {
         MeshContext::new(self.predicates)
+    }
+
+    /// Derive the matching Hypertri context.
+    pub const fn triangulation_context(self) -> TriangulationContext {
+        TriangulationContext::new(self.predicates)
     }
 }
 
@@ -123,6 +129,10 @@ impl GeometryDecisions {
         &self.mesh_context
     }
 
+    pub(crate) const fn triangulation_context(&self) -> TriangulationContext {
+        self.context.triangulation_context()
+    }
+
     pub(crate) const fn finish<T>(&self, value: T) -> GeometryOutcome<T> {
         GeometryOutcome::new(value, self.certainty.get())
     }
@@ -147,6 +157,47 @@ impl GeometryDecisions {
         outcome.value
     }
 
+    pub(crate) fn consume_geometry<T>(&self, outcome: GeometryOutcome<T>) -> T {
+        self.observe(outcome.certainty);
+        outcome.value
+    }
+
+    pub(crate) fn consume_triangulation<T>(&self, outcome: TriangulationOutcome<T>) -> T {
+        if outcome.certainty == TriangulationCertainty::Approximate512Consumed {
+            self.observe(GeometryCertainty::Approximate512Consumed);
+        }
+        outcome.value
+    }
+
+    pub(crate) fn sign(
+        &self,
+        value: &hyperreal::Real,
+        predicate: &'static str,
+    ) -> Result<hyperreal::RealSign, ValidationError> {
+        self.decide(
+            hyperlimit::classify_real_sign(value, self.predicate_policy()),
+            predicate,
+        )
+        .map(|sign| match sign {
+            hyperlimit::Sign::Negative => hyperreal::RealSign::Negative,
+            hyperlimit::Sign::Zero => hyperreal::RealSign::Zero,
+            hyperlimit::Sign::Positive => hyperreal::RealSign::Positive,
+        })
+    }
+
+    pub(crate) fn points_equal(
+        &self,
+        left: &hyperlattice::Point3,
+        right: &hyperlattice::Point3,
+    ) -> Result<bool, ValidationError> {
+        let left = hyperlimit::Point3::new(left.x.clone(), left.y.clone(), left.z.clone());
+        let right = hyperlimit::Point3::new(right.x.clone(), right.y.clone(), right.z.clone());
+        self.decide(
+            hyperlimit::point3_equal(&left, &right, self.predicate_policy()),
+            "point equality",
+        )
+    }
+
     pub(crate) fn decide<T>(
         &self,
         outcome: PredicateOutcome<T>,
@@ -167,6 +218,10 @@ impl GeometryDecisions {
             ))),
         }
     }
+
+    pub(crate) fn probe<T>(&self, outcome: PredicateOutcome<T>) -> Option<T> {
+        self.decide(outcome, "optional geometry predicate").ok()
+    }
 }
 
 #[cfg(test)]
@@ -180,7 +235,7 @@ mod tests {
     }
 
     #[test]
-    fn one_context_derives_matching_curve_and_mesh_policies() {
+    fn one_context_derives_matching_kernel_policies() {
         assert_eq!(GeometryContext::STRICT.curve_policy(), CurveContext::STRICT);
         assert_eq!(
             GeometryContext::APPROXIMATE_512.curve_policy(),
@@ -196,5 +251,11 @@ mod tests {
                 .predicate_policy(),
             PredicatePolicy::APPROXIMATE_512
         );
+        for context in [GeometryContext::STRICT, GeometryContext::APPROXIMATE_512] {
+            assert_eq!(
+                context.triangulation_context().predicate_policy(),
+                context.predicate_policy()
+            );
+        }
     }
 }

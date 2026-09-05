@@ -7,6 +7,7 @@
 //! standard apertures by constructing the swept aperture area.
 
 use crate::curve::{self, CurveRegionExt};
+use crate::{GeometryContext, GeometryOutcome, context::GeometryDecisions};
 use gerber_types::{
     Aperture, ApertureDefinition, AxisSelect, Circle, Command, CommentContent,
     CoordinateFormat, CoordinateMode, CoordinateNumber, CoordinateOffset, Coordinates, DCode,
@@ -15,8 +16,8 @@ use gerber_types::{
     Rectangular, Rotation, Scaling, StepAndRepeat, Unit, ZeroOmission,
 };
 use hypercurve::{
-    Classification, Contour2, CurveContext, CurveOutcome, CurveRegion2, CurveString2,
-    FiniteProjectionOptions, FiniteRegionProfile2,
+    Classification, Contour2, CurveRegion2, CurveString2, FiniteProjectionOptions,
+    FiniteRegionProfile2,
 };
 use hyperlattice::Real;
 use std::cmp::Ordering;
@@ -104,11 +105,22 @@ impl Default for GerberExportOptions {
     }
 }
 
+/// Distinct native filled, string, and path carriers imported from Gerber.
+pub type GerberImport = (CurveRegion2, Vec<CurveString2>, Vec<hypercurve::CurvePath2>);
+
 /// Parses Gerber into distinct native filled, string, and path carriers.
-pub fn import_gerber(
+pub fn import_gerber(data: &[u8]) -> Result<GerberImport, IoError> {
+    import_gerber_with_context(data, &GeometryContext::STRICT).map(GeometryOutcome::into_value)
+}
+
+/// Parses Gerber with the selected policy through region construction and composition.
+pub fn import_gerber_with_context(
     data: &[u8],
-) -> Result<(CurveRegion2, Vec<CurveString2>, Vec<hypercurve::CurvePath2>), IoError> {
-    parse_gerber(data).map(|region| (region, Vec::new(), Vec::new()))
+    context: &GeometryContext,
+) -> Result<GeometryOutcome<GerberImport>, IoError> {
+    let decisions = GeometryDecisions::new(context);
+    let region = parse_gerber(data, &decisions)?;
+    Ok(decisions.finish((region, Vec::new(), Vec::new())))
 }
 
 /// Serializes a native filled region to Gerber.
@@ -117,7 +129,10 @@ pub fn export_gerber(region: &CurveRegion2) -> Result<Vec<u8>, IoError> {
 }
 
 #[allow(clippy::result_large_err)]
-fn parse_gerber(gerber_data: &[u8]) -> Result<CurveRegion2, IoError> {
+fn parse_gerber(
+    gerber_data: &[u8],
+    decisions: &GeometryDecisions,
+) -> Result<CurveRegion2, IoError> {
     preflight_gerber_input(gerber_data)?;
 
     let reader = BufReader::new(Cursor::new(gerber_data));
@@ -138,7 +153,7 @@ fn parse_gerber(gerber_data: &[u8]) -> Result<CurveRegion2, IoError> {
     let units = doc.units.ok_or_else(|| {
         IoError::MalformedInput("Gerber input does not declare units".into())
     })?;
-    let mut state = ImportState::new(units);
+    let mut state = ImportState::new(units, decisions);
     for command in doc.commands() {
         state.apply_command(command, &doc.apertures)?;
     }
@@ -156,6 +171,18 @@ pub fn export_gerber_with_options(
     region: &CurveRegion2,
     options: GerberExportOptions,
 ) -> Result<Vec<u8>, IoError> {
+    export_gerber_with_options_and_context(region, options, &GeometryContext::STRICT)
+        .map(GeometryOutcome::into_value)
+}
+
+/// Exports projected curve topology with the selected policy and aggregate certainty.
+pub fn export_gerber_with_options_and_context(
+    region: &CurveRegion2,
+    options: GerberExportOptions,
+    context: &GeometryContext,
+) -> Result<GeometryOutcome<Vec<u8>>, IoError> {
+    let decisions = GeometryDecisions::new(context);
+
     if options.coordinate_format.coordinate_mode != CoordinateMode::Absolute {
         return Err(IoError::Unsupported {
             format: "Gerber",
@@ -202,13 +229,12 @@ pub fn export_gerber_with_options(
                 detail: format!("invalid projection configuration: {error}"),
             })?;
         match region
-            .project_to_finite_profiles(&projection_options, &CurveContext::STRICT)
+            .project_to_finite_profiles(&projection_options, decisions.curve_policy())
+            .map(|outcome| decisions.consume_curve(outcome))
             .map_err(|error| IoError::Geometry {
                 format: "Gerber",
                 detail: format!("native region projection failed: {error}"),
-            })?
-            .into_value()
-        {
+            })? {
             Classification::Decided(region_profiles) => {
                 emit_region_profiles(&region_profiles, &mut commands, options)?;
             },
@@ -225,10 +251,11 @@ pub fn export_gerber_with_options(
 
     let mut bytes = Vec::new();
     commands.serialize(&mut bytes)?;
-    Ok(bytes)
+    Ok(decisions.finish(bytes))
 }
 
-struct ImportState {
+struct ImportState<'a> {
+    decisions: &'a GeometryDecisions,
     curve: CurveRegion2,
     pending_dark: Vec<CurveRegion2>,
     unit_scale: f64,
@@ -244,9 +271,10 @@ struct ImportState {
     region: Option<RegionBuilder>,
 }
 
-impl ImportState {
-    fn new(unit: Unit) -> Self {
+impl<'a> ImportState<'a> {
+    fn new(unit: Unit, decisions: &'a GeometryDecisions) -> Self {
         Self {
+            decisions,
             curve: CurveRegion2::empty(),
             pending_dark: Vec::new(),
             unit_scale: unit_scale(unit),
@@ -361,7 +389,7 @@ impl ImportState {
                             "Gerber region mode was closed while not active".into(),
                         )
                     })?;
-                    let curve = region.into_curve()?;
+                    let curve = region.into_curve(self.decisions)?;
                     self.apply_polarity(curve)?;
                 }
             },
@@ -431,7 +459,7 @@ impl ImportState {
     }
 
     fn apply_polarity(&mut self, curve: CurveRegion2) -> Result<(), IoError> {
-        let curves = repeat_curves(curve, self.step_repeat)?;
+        let curves = repeat_curves(curve, self.step_repeat, self.decisions)?;
         for curve in curves {
             match self.polarity {
                 Polarity::Dark => self.pending_dark.push(curve),
@@ -439,8 +467,8 @@ impl ImportState {
                     self.flush_pending_dark()?;
                     self.curve = self
                         .curve
-                        .try_difference(&curve, &CurveContext::STRICT)
-                        .map(hypercurve::CurveOutcome::into_value)
+                        .try_difference(&curve, self.decisions.curve_policy())
+                        .map(|outcome| self.decisions.consume_curve(outcome))
                         .map_err(|error| IoError::Geometry {
                             format: "Gerber",
                             detail: error.to_string(),
@@ -471,8 +499,8 @@ impl ImportState {
                     break;
                 };
                 next.push(
-                    left.try_union(&right, &CurveContext::STRICT)
-                        .map(hypercurve::CurveOutcome::into_value)
+                    left.try_union(&right, self.decisions.curve_policy())
+                        .map(|outcome| self.decisions.consume_curve(outcome))
                         .map_err(|error| IoError::Geometry {
                             format: "Gerber",
                             detail: error.to_string(),
@@ -488,8 +516,8 @@ impl ImportState {
             dark
         } else {
             self.curve
-                .try_union(&dark, &CurveContext::STRICT)
-                .map(hypercurve::CurveOutcome::into_value)
+                .try_union(&dark, self.decisions.curve_policy())
+                .map(|outcome| self.decisions.consume_curve(outcome))
                 .map_err(|error| IoError::Geometry {
                     format: "Gerber",
                     detail: error.to_string(),
@@ -593,6 +621,7 @@ impl ImportState {
                         arc,
                         self.unit_scale,
                         self.aperture_transform,
+                        self.decisions,
                     )?;
                     self.apply_polarity(curve)?;
                     self.source_current = source_target;
@@ -608,6 +637,7 @@ impl ImportState {
                         point,
                         self.unit_scale,
                         self.aperture_transform,
+                        self.decisions,
                     )?;
                     self.apply_polarity(curve)?;
                     start = point;
@@ -641,6 +671,7 @@ impl ImportState {
                     self.current,
                     self.unit_scale,
                     self.aperture_transform,
+                    self.decisions,
                 )?;
                 self.apply_polarity(curve)?;
             },
@@ -751,7 +782,7 @@ impl RegionBuilder {
         Ok(())
     }
 
-    fn into_curve(mut self) -> Result<CurveRegion2, IoError> {
+    fn into_curve(mut self, decisions: &GeometryDecisions) -> Result<CurveRegion2, IoError> {
         self.finish_ring()?;
 
         let mut rings = self.rings;
@@ -769,16 +800,16 @@ impl RegionBuilder {
                 })
             })
             .collect::<Result<Vec<_>, _>>()?;
-        let region = match CurveRegion2::try_from_native_boundary_contours(
-            contours,
-            &CurveContext::STRICT,
-        )
-        .map_err(|error| IoError::Geometry {
-            format: "Gerber",
-            detail: error.to_string(),
-        })?
-        .value
-        {
+        let region = match decisions.consume_curve(
+            CurveRegion2::try_from_native_boundary_contours(
+                contours,
+                decisions.curve_policy(),
+            )
+            .map_err(|error| IoError::Geometry {
+                format: "Gerber",
+                detail: error.to_string(),
+            })?,
+        ) {
             Classification::Decided(region) => region,
             Classification::Uncertain(reason) => {
                 return Err(IoError::Geometry {
@@ -1013,6 +1044,7 @@ fn flash_to_curve(
     center: Coord<f64>,
     unit_scale: f64,
     aperture_transform: ApertureTransform,
+    decisions: &GeometryDecisions,
 ) -> Result<CurveRegion2, IoError> {
     let mut curve = match aperture {
         Aperture::Circle(circle) => {
@@ -1020,8 +1052,16 @@ fn flash_to_curve(
                 aperture_transform.scale_length(circle.diameter * unit_scale),
                 "circle aperture diameter",
             )?;
-            let mut curve =
-                curve::circle(required_real(diameter * 0.5, "circle aperture radius")?, 64);
+            let mut curve = curve::circle_with_context(
+                required_real(diameter * 0.5, "circle aperture radius")?,
+                64,
+                &GeometryContext::new(decisions.predicate_policy()),
+            )
+            .map(|outcome| decisions.consume_geometry(outcome))
+            .map_err(|error| IoError::Geometry {
+                format: "Gerber",
+                detail: error.to_string(),
+            })?;
             if let Some(hole_diameter) = circle.hole_diameter {
                 let hole_diameter = positive(
                     aperture_transform.scale_length(hole_diameter * unit_scale),
@@ -1034,19 +1074,26 @@ fn flash_to_curve(
                 }
                 curve = add_aperture_hole(
                     curve,
-                    curve::circle(
+                    curve::circle_with_context(
                         required_real(hole_diameter * 0.5, "circle aperture hole radius")?,
                         64,
-                    ),
+                        &GeometryContext::new(decisions.predicate_policy()),
+                    )
+                    .map(|outcome| decisions.consume_geometry(outcome))
+                    .map_err(|error| IoError::Geometry {
+                        format: "Gerber",
+                        detail: error.to_string(),
+                    })?,
+                    decisions,
                 )?;
             }
             curve
         },
         Aperture::Rectangle(rect) => {
-            aperture_rect_curve(rect, unit_scale, aperture_transform, false)?
+            aperture_rect_curve(rect, unit_scale, aperture_transform, false, decisions)?
         },
         Aperture::Obround(rect) => {
-            aperture_rect_curve(rect, unit_scale, aperture_transform, true)?
+            aperture_rect_curve(rect, unit_scale, aperture_transform, true, decisions)?
         },
         Aperture::Polygon(polygon) => {
             if polygon.vertices < 3 {
@@ -1059,13 +1106,21 @@ fn flash_to_curve(
                 "polygon aperture diameter",
             )?;
             let rotation = polygon.rotation.unwrap_or(0.0);
-            let mut curve = curve::try_rotated(
-                &curve::regular_ngon(
+            let mut curve = curve::try_rotated_with_context(
+                &curve::regular_ngon_with_context(
                     polygon.vertices as usize,
                     required_real(diameter * 0.5, "polygon aperture radius")?,
-                ),
+                    &GeometryContext::new(decisions.predicate_policy()),
+                )
+                .map(|outcome| decisions.consume_geometry(outcome))
+                .map_err(|error| IoError::Geometry {
+                    format: "Gerber",
+                    detail: error.to_string(),
+                })?,
                 required_real(rotation, "polygon rotation")?,
+                &GeometryContext::new(decisions.predicate_policy()),
             )
+            .map(|outcome| decisions.consume_geometry(outcome))
             .map_err(|error| IoError::Geometry {
                 format: "Gerber",
                 detail: format!("polygon aperture rotation failed: {error}"),
@@ -1082,10 +1137,17 @@ fn flash_to_curve(
                 }
                 curve = add_aperture_hole(
                     curve,
-                    curve::circle(
+                    curve::circle_with_context(
                         required_real(hole_diameter * 0.5, "polygon aperture hole radius")?,
                         64,
-                    ),
+                        &GeometryContext::new(decisions.predicate_policy()),
+                    )
+                    .map(|outcome| decisions.consume_geometry(outcome))
+                    .map_err(|error| IoError::Geometry {
+                        format: "Gerber",
+                        detail: error.to_string(),
+                    })?,
+                    decisions,
                 )?;
             }
             curve
@@ -1098,12 +1160,14 @@ fn flash_to_curve(
         },
     };
 
-    curve = apply_aperture_transform(curve, aperture_transform)?;
-    curve::try_translated(
+    curve = apply_aperture_transform(curve, aperture_transform, decisions)?;
+    curve::try_translated_with_context(
         &curve,
         required_real(center.x, "flash center x")?,
         required_real(center.y, "flash center y")?,
+        &GeometryContext::new(decisions.predicate_policy()),
     )
+    .map(|outcome| decisions.consume_geometry(outcome))
     .map_err(|error| IoError::Geometry {
         format: "Gerber",
         detail: format!("aperture translation failed: {error}"),
@@ -1113,10 +1177,11 @@ fn flash_to_curve(
 fn add_aperture_hole(
     outer: CurveRegion2,
     hole: CurveRegion2,
+    decisions: &GeometryDecisions,
 ) -> Result<CurveRegion2, IoError> {
     outer
-        .try_difference(&hole, &CurveContext::STRICT)
-        .map(hypercurve::CurveOutcome::into_value)
+        .try_difference(&hole, decisions.curve_policy())
+        .map(|outcome| decisions.consume_curve(outcome))
         .map_err(|error| IoError::Geometry {
             format: "Gerber",
             detail: format!("aperture-hole subtraction failed: {error}"),
@@ -1134,6 +1199,7 @@ fn aperture_rect_curve(
     unit_scale: f64,
     aperture_transform: ApertureTransform,
     rounded: bool,
+    decisions: &GeometryDecisions,
 ) -> Result<CurveRegion2, IoError> {
     let width = positive(
         aperture_transform.scale_length(rect.x * unit_scale),
@@ -1143,23 +1209,37 @@ fn aperture_rect_curve(
         aperture_transform.scale_length(rect.y * unit_scale),
         "rectangular aperture height",
     )?;
-    let mut curve = curve::try_translated(
+    let mut curve = curve::try_translated_with_context(
         &if rounded {
-            curve::rounded_rectangle(
+            curve::rounded_rectangle_with_context(
                 required_real(width, "rectangular aperture width")?,
                 required_real(height, "rectangular aperture height")?,
                 required_real(width.min(height) * 0.5, "obround aperture radius")?,
                 16,
+                &GeometryContext::new(decisions.predicate_policy()),
             )
+            .map(|outcome| decisions.consume_geometry(outcome))
+            .map_err(|error| IoError::Geometry {
+                format: "Gerber",
+                detail: error.to_string(),
+            })?
         } else {
-            curve::rectangle(
+            curve::rectangle_with_context(
                 required_real(width, "rectangular aperture width")?,
                 required_real(height, "rectangular aperture height")?,
+                &GeometryContext::new(decisions.predicate_policy()),
             )
+            .map(|outcome| decisions.consume_geometry(outcome))
+            .map_err(|error| IoError::Geometry {
+                format: "Gerber",
+                detail: error.to_string(),
+            })?
         },
         required_real(-width * 0.5, "rectangular aperture x origin")?,
         required_real(-height * 0.5, "rectangular aperture y origin")?,
+        &GeometryContext::new(decisions.predicate_policy()),
     )
+    .map(|outcome| decisions.consume_geometry(outcome))
     .map_err(|error| IoError::Geometry {
         format: "Gerber",
         detail: format!("rectangular aperture translation failed: {error}"),
@@ -1177,10 +1257,17 @@ fn aperture_rect_curve(
         }
         curve = add_aperture_hole(
             curve,
-            curve::circle(
+            curve::circle_with_context(
                 required_real(hole_diameter * 0.5, "rectangular aperture hole radius")?,
                 64,
-            ),
+                &GeometryContext::new(decisions.predicate_policy()),
+            )
+            .map(|outcome| decisions.consume_geometry(outcome))
+            .map_err(|error| IoError::Geometry {
+                format: "Gerber",
+                detail: error.to_string(),
+            })?,
+            decisions,
         )?;
     }
 
@@ -1193,15 +1280,16 @@ fn trace_to_curve(
     end: Coord<f64>,
     unit_scale: f64,
     aperture_transform: ApertureTransform,
+    decisions: &GeometryDecisions,
 ) -> Result<CurveRegion2, IoError> {
     if nearly_same(start, end) {
-        return flash_to_curve(aperture, start, unit_scale, aperture_transform);
+        return flash_to_curve(aperture, start, unit_scale, aperture_transform, decisions);
     }
 
     match aperture {
         Aperture::Circle(circle) => {
             let radius = aperture_transform.scale_length(circle.diameter * unit_scale) * 0.5;
-            linear_circular_sweep_curve(start, end, radius)
+            linear_circular_sweep_curve(start, end, radius, decisions)
         },
         Aperture::Rectangle(_) | Aperture::Obround(_) | Aperture::Polygon(_) => {
             let points = aperture_outline_points(aperture, unit_scale, aperture_transform)?;
@@ -1220,7 +1308,7 @@ fn trace_to_curve(
                     ]
                 })
                 .collect::<Vec<_>>();
-            polygon_from_coords(convex_hull(swept_points)?)
+            polygon_from_coords(convex_hull(swept_points)?, decisions)
         },
         Aperture::Macro(..) => Err(IoError::Unsupported {
             format: "Gerber",
@@ -1233,6 +1321,7 @@ fn linear_circular_sweep_curve(
     start: Coord<f64>,
     end: Coord<f64>,
     radius: f64,
+    decisions: &GeometryDecisions,
 ) -> Result<CurveRegion2, IoError> {
     let points = circle_points(positive(radius, "circular stroke radius")?, 64)
         .into_iter()
@@ -1243,7 +1332,7 @@ fn linear_circular_sweep_curve(
             })
         })
         .collect();
-    polygon_from_coords(convex_hull(points)?)
+    polygon_from_coords(convex_hull(points)?, decisions)
 }
 
 fn trace_arc_to_curve(
@@ -1251,11 +1340,12 @@ fn trace_arc_to_curve(
     arc: &CircularInterpolation,
     unit_scale: f64,
     aperture_transform: ApertureTransform,
+    decisions: &GeometryDecisions,
 ) -> Result<CurveRegion2, IoError> {
     match aperture {
         Aperture::Circle(circle) => {
             let radius = aperture_transform.scale_length(circle.diameter * unit_scale) * 0.5;
-            circular_arc_sweep_curve(arc, radius)
+            circular_arc_sweep_curve(arc, radius, decisions)
         },
         Aperture::Rectangle(_) | Aperture::Obround(_) | Aperture::Polygon(_) => {
             Err(IoError::Unsupported {
@@ -1279,6 +1369,7 @@ fn trace_arc_to_curve(
 fn circular_arc_sweep_curve(
     arc: &CircularInterpolation,
     aperture_radius: f64,
+    decisions: &GeometryDecisions,
 ) -> Result<CurveRegion2, IoError> {
     if !aperture_radius.is_finite() || aperture_radius <= 0.0 {
         return Err(IoError::Geometry {
@@ -1289,14 +1380,18 @@ fn circular_arc_sweep_curve(
     let outer_radius = arc.radius + aperture_radius;
     let inner_radius = arc.radius - aperture_radius;
     if arc.full_circle {
-        let outer =
-            polygon_from_coords(translated_circle_points(arc.center, outer_radius, 96))?;
+        let outer = polygon_from_coords(
+            translated_circle_points(arc.center, outer_radius, 96),
+            decisions,
+        )?;
         if inner_radius <= 0.0 {
             return Ok(outer);
         }
-        let inner =
-            polygon_from_coords(translated_circle_points(arc.center, inner_radius, 96))?;
-        return add_aperture_hole(outer, inner);
+        let inner = polygon_from_coords(
+            translated_circle_points(arc.center, inner_radius, 96),
+            decisions,
+        )?;
+        return add_aperture_hole(outer, inner, decisions);
     }
     if inner_radius <= 0.0 {
         return Err(IoError::Unsupported {
@@ -1342,7 +1437,7 @@ fn circular_arc_sweep_curve(
         .into_iter()
         .skip(1),
     );
-    polygon_from_coords(boundary)
+    polygon_from_coords(boundary, decisions)
 }
 
 fn aperture_outline_points(
@@ -1579,7 +1674,10 @@ fn rounded_rect_points(
         .collect()
 }
 
-fn polygon_from_coords(mut points: Vec<Coord<f64>>) -> Result<CurveRegion2, IoError> {
+fn polygon_from_coords(
+    mut points: Vec<Coord<f64>>,
+    decisions: &GeometryDecisions,
+) -> Result<CurveRegion2, IoError> {
     if points.len() < 3 {
         return Err(IoError::Geometry {
             format: "Gerber",
@@ -1597,8 +1695,8 @@ fn polygon_from_coords(mut points: Vec<Coord<f64>>) -> Result<CurveRegion2, IoEr
         format: "Gerber",
         detail: format!("invalid finite contour: {error}"),
     })?;
-    CurveRegion2::try_from_native_material_contours(vec![contour], &CurveContext::STRICT)
-        .map(CurveOutcome::into_value)
+    CurveRegion2::try_from_native_material_contours(vec![contour], decisions.curve_policy())
+        .map(|outcome| decisions.consume_curve(outcome))
         .map_err(|error| IoError::Geometry {
             format: "Gerber",
             detail: error.to_string(),
@@ -1612,6 +1710,7 @@ const fn point_from_coord(coord: Coord<f64>) -> [f64; 2] {
 fn repeat_curves(
     curve: CurveRegion2,
     step_repeat: Option<StepRepeatState>,
+    decisions: &GeometryDecisions,
 ) -> Result<Vec<CurveRegion2>, IoError> {
     let Some(step_repeat) = step_repeat else {
         return Ok(vec![curve]);
@@ -1635,7 +1734,7 @@ fn repeat_curves(
     for x in 0..step_repeat.repeat_x {
         for y in 0..step_repeat.repeat_y {
             curves.push(
-                curve::try_translated(
+                curve::try_translated_with_context(
                     &curve,
                     real(f64::from(x) * step_repeat.distance_x).ok_or_else(|| {
                         IoError::UnrepresentableCoordinate {
@@ -1651,7 +1750,9 @@ fn repeat_curves(
                             target: "Real",
                         }
                     })?,
+                    &GeometryContext::new(decisions.predicate_policy()),
                 )
+                .map(|outcome| decisions.consume_geometry(outcome))
                 .map_err(|error| IoError::Geometry {
                     format: "Gerber",
                     detail: format!("step-repeat translation failed: {error}"),
@@ -1665,6 +1766,7 @@ fn repeat_curves(
 fn apply_aperture_transform(
     curve: CurveRegion2,
     aperture_transform: ApertureTransform,
+    decisions: &GeometryDecisions,
 ) -> Result<CurveRegion2, IoError> {
     let (sx, sy) = match aperture_transform.mirroring {
         Mirroring::None => (1.0, 1.0),
@@ -1672,19 +1774,23 @@ fn apply_aperture_transform(
         Mirroring::Y => (1.0, -1.0),
         Mirroring::XY => (-1.0, -1.0),
     };
-    let scaled = curve::try_scaled(
+    let scaled = curve::try_scaled_with_context(
         &curve,
         required_real(sx, "aperture mirror x")?,
         required_real(sy, "aperture mirror y")?,
+        &GeometryContext::new(decisions.predicate_policy()),
     )
+    .map(|outcome| decisions.consume_geometry(outcome))
     .map_err(|error| IoError::Geometry {
         format: "Gerber",
         detail: format!("aperture mirroring failed: {error}"),
     })?;
-    curve::try_rotated(
+    curve::try_rotated_with_context(
         &scaled,
         required_real(aperture_transform.rotation.rotation, "aperture rotation")?,
+        &GeometryContext::new(decisions.predicate_policy()),
     )
+    .map(|outcome| decisions.consume_geometry(outcome))
     .map_err(|error| IoError::Geometry {
         format: "Gerber",
         detail: format!("aperture rotation failed: {error}"),
