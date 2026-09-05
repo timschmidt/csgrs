@@ -29,8 +29,8 @@ use hypersolve::{
     validate_algebraic_root_representation,
 };
 
+use crate::bezier_parameter::signed_coefficients_at_parameter;
 use crate::bezier_parameter::strict_coefficients_sign_on_parameter_interval;
-use crate::bezier_parameter::{evaluate_coefficients, signed_coefficients_at_parameter};
 use crate::classify::{compare_reals, real_sign};
 use crate::{
     Aabb2, BezierAlgebraicParameter2, BezierParameter2, Classification, CubicBezier2, CurveContext,
@@ -244,7 +244,7 @@ fn compare_algebraic_representation_to_real(
     // polynomial before constructing a second synthetic root.  A zero is
     // sufficient only inside the validated isolating interval, which rejects
     // every foreign conjugate without adjoining the two representations.
-    let residual = evaluate_coefficients(&representation.polynomial_coefficients, value);
+    let residual = Real::eval_poly(&representation.polynomial_coefficients, value);
     if real_sign(&residual, policy) == Some(RealSign::Zero)
         && matches!(
             compare_reals(value, &representation.interval.lower, policy),
@@ -1038,10 +1038,10 @@ impl RationalBezierAlgebraicPointImage2 {
         ) && let Ok(Classification::Decided(Some(parameter))) =
             parameter.represented_exact_point(policy)
         {
-            let denominator = evaluate_coefficients(denominator, &parameter);
+            let denominator = Real::eval_poly(denominator, &parameter);
             if let (Ok(x), Ok(y)) = (
-                evaluate_coefficients(x_numerator, &parameter) / &denominator,
-                evaluate_coefficients(y_numerator, &parameter) / denominator,
+                Real::eval_poly(x_numerator, &parameter) / &denominator,
+                Real::eval_poly(y_numerator, &parameter) / denominator,
             ) {
                 return Some(Point2::new(x, y));
             }
@@ -1068,9 +1068,9 @@ impl RationalBezierAlgebraicPointImage2 {
         ) && let Ok(Classification::Decided(Some(parameter))) =
             parameter.represented_exact_point(policy)
         {
-            let denominator = evaluate_coefficients(denominator, &parameter);
+            let denominator = Real::eval_poly(denominator, &parameter);
             let numerator =
-                evaluate_coefficients(if use_x { x_numerator } else { y_numerator }, &parameter);
+                Real::eval_poly(if use_x { x_numerator } else { y_numerator }, &parameter);
             if let Ok(coordinate) = numerator / denominator {
                 return Some(coordinate);
             }
@@ -1502,10 +1502,10 @@ impl RationalBezierAlgebraicTangentImage2 {
             && let Ok(Classification::Decided(Some(parameter))) =
                 expression.parameter.represented_exact_point(policy)
         {
-            let denominator = evaluate_coefficients(&expression.denominator, &parameter);
+            let denominator = Real::eval_poly(&expression.denominator, &parameter);
             if let (Ok(dx), Ok(dy)) = (
-                evaluate_coefficients(&expression.dx_numerator, &parameter) / &denominator,
-                evaluate_coefficients(&expression.dy_numerator, &parameter) / denominator,
+                Real::eval_poly(&expression.dx_numerator, &parameter) / &denominator,
+                Real::eval_poly(&expression.dy_numerator, &parameter) / denominator,
             ) {
                 return Some((dx, dy));
             }

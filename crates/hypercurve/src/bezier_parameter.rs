@@ -214,9 +214,9 @@ impl BezierParameterPolynomial {
         self.coefficients.len() - 1
     }
 
-    /// Evaluates the polynomial at `parameter` using Horner's rule.
+    /// Evaluates the polynomial through the shared exact-real kernel.
     pub fn evaluate(&self, parameter: &Real) -> Real {
-        evaluate_coefficients(&self.coefficients, parameter)
+        Real::eval_poly(&self.coefficients, parameter)
     }
 
     /// Reduces a power-basis expression modulo this defining polynomial.
@@ -474,7 +474,7 @@ impl BezierParameterPolynomial {
                 let mut coefficients = self.coefficients.clone();
                 let mut multiplicity = 0_usize;
                 while coefficients.len() > 1 {
-                    match real_sign(&evaluate_coefficients(&coefficients, root), policy) {
+                    match real_sign(&Real::eval_poly(&coefficients, root), policy) {
                         Some(RealSign::Zero) => {
                             multiplicity += 1;
                             coefficients = divide_by_linear_root(&coefficients, root);
@@ -613,7 +613,7 @@ impl BezierParameterPolynomial {
                         return Err(CurveError::InvalidBezierParameter);
                     }
                     match real_sign(
-                        &evaluate_coefficients(&source_derivative_coefficients, root),
+                        &Real::eval_poly(&source_derivative_coefficients, root),
                         policy,
                     ) {
                         Some(RealSign::Positive | RealSign::Negative) => {
@@ -669,7 +669,7 @@ impl BezierParameterPolynomial {
                 let mut coefficients = self.coefficients.clone();
                 let mut multiplicity = 0_usize;
                 let residual_sign = loop {
-                    match real_sign(&evaluate_coefficients(&coefficients, root), policy) {
+                    match real_sign(&Real::eval_poly(&coefficients, root), policy) {
                         Some(RealSign::Zero) if coefficients.len() > 1 => {
                             multiplicity += 1;
                             coefficients = divide_by_linear_root(&coefficients, root);
@@ -2379,7 +2379,7 @@ pub(crate) fn deep_exact_coefficients_sign_at_parameter(
         let parameter = refinement.refine_to(target_steps);
         let restricted = match parameter {
             BezierParameter2::Exact(parameter) => {
-                vec![evaluate_coefficients(coefficients, parameter)]
+                vec![Real::eval_poly(coefficients, parameter)]
             }
             BezierParameter2::Algebraic(parameter) => restrict_power_basis_to_interval(
                 coefficients,
@@ -2431,10 +2431,9 @@ pub(crate) fn strict_coefficients_sign_on_parameter_interval(
     policy: &CurveContext,
 ) -> CurveResult<Option<RealSign>> {
     match parameter {
-        BezierParameter2::Exact(parameter) => Ok(real_sign(
-            &evaluate_coefficients(coefficients, parameter),
-            policy,
-        )),
+        BezierParameter2::Exact(parameter) => {
+            Ok(real_sign(&Real::eval_poly(coefficients, parameter), policy))
+        }
         BezierParameter2::Algebraic(parameter) => {
             let interval = parameter.interval();
             let restricted =
@@ -2457,7 +2456,7 @@ pub(crate) fn coefficients_value_interval_on_parameter_interval(
 ) -> CurveResult<Option<[HyperRational; 2]>> {
     let restricted = match parameter {
         BezierParameter2::Exact(parameter) => {
-            vec![evaluate_coefficients(coefficients, parameter)]
+            vec![Real::eval_poly(coefficients, parameter)]
         }
         BezierParameter2::Algebraic(parameter) => restrict_power_basis_to_interval(
             coefficients,
@@ -3247,66 +3246,6 @@ fn derivative_coefficients(coefficients: &[Real]) -> Vec<Real> {
     derivative
 }
 
-pub(crate) fn evaluate_coefficients(coefficients: &[Real], parameter: &Real) -> Real {
-    if let Some(parameter) = parameter.exact_rational_ref() {
-        if parameter == &HyperRational::zero() {
-            return coefficients.first().cloned().unwrap_or_else(Real::zero);
-        }
-        if coefficients
-            .iter()
-            .all(|coefficient| coefficient.exact_rational_ref().is_some())
-        {
-            let Some((leading, coefficients)) = coefficients.split_last() else {
-                return Real::zero();
-            };
-            let mut accumulator = leading
-                .exact_rational_ref()
-                .expect("all coefficients were checked")
-                .clone();
-            let one = HyperRational::one();
-            for coefficient in coefficients.iter().rev() {
-                accumulator = HyperRational::signed_product_sum2(
-                    [true, true],
-                    [
-                        [&accumulator, parameter],
-                        [
-                            coefficient
-                                .exact_rational_ref()
-                                .expect("all coefficients were checked"),
-                            &one,
-                        ],
-                    ],
-                );
-            }
-            return Real::new(accumulator);
-        }
-        if parameter == &HyperRational::one() {
-            return Real::sum_refs(coefficients);
-        }
-    }
-    if let [constant, linear, quadratic] = coefficients
-        && parameter.exact_rational_ref().is_none()
-        && coefficients
-            .iter()
-            .any(|coefficient| coefficient.exact_rational_ref().is_none())
-    {
-        let twice_quadratic = Real::from(2_i8) * quadratic;
-        let vertex = (-linear.clone()) / &twice_quadratic;
-        let correction = (linear * linear) / (&twice_quadratic * Real::from(2_i8));
-        if let (Ok(vertex), Ok(correction)) = (vertex, correction) {
-            let vertex_value = constant - correction;
-            let offset = parameter - vertex;
-            return quadratic * &offset * offset + vertex_value;
-        }
-    }
-    coefficients
-        .iter()
-        .rev()
-        .fold(Real::zero(), |accumulator, coefficient| {
-            (&accumulator * parameter) + coefficient
-        })
-}
-
 enum UnitRootSearch {
     Isolated(Vec<BezierParameter2>),
     RepresentedRoot(Real),
@@ -3753,7 +3692,7 @@ fn isolate_roots_in_interval(
             if coefficients.len() <= 1 {
                 break;
             }
-            match real_sign(&evaluate_coefficients(&coefficients, &endpoint), policy) {
+            match real_sign(&Real::eval_poly(&coefficients, &endpoint), policy) {
                 Some(RealSign::Zero) => {
                     coefficients = divide_by_linear_root(&coefficients, &endpoint);
                     found = true;
@@ -3811,7 +3750,7 @@ fn isolate_roots_in_interval(
                 coefficients = polynomial.coefficients;
                 loop {
                     if coefficients.len() <= 1
-                        || real_sign(&evaluate_coefficients(&coefficients, &root), policy)
+                        || real_sign(&Real::eval_poly(&coefficients, &root), policy)
                             != Some(RealSign::Zero)
                     {
                         break;
@@ -3898,7 +3837,7 @@ fn exact_nonrational_low_degree_unit_roots(
 
     let mut roots = Vec::with_capacity(candidates.len());
     for candidate in candidates.drain(..) {
-        match real_sign(&evaluate_coefficients(coefficients, &candidate), policy) {
+        match real_sign(&Real::eval_poly(coefficients, &candidate), policy) {
             Some(RealSign::Zero) => {}
             Some(RealSign::Positive | RealSign::Negative) | None => return Ok(None),
         }
@@ -5388,11 +5327,11 @@ mod conversion_tests {
         ];
 
         assert_eq!(
-            evaluate_coefficients(&coefficients, &Real::zero()),
+            Real::eval_poly(&coefficients, &Real::zero()),
             coefficients[0]
         );
         assert_eq!(
-            evaluate_coefficients(&coefficients, &Real::one()),
+            Real::eval_poly(&coefficients, &Real::one()),
             Real::sum_refs(&coefficients)
         );
     }

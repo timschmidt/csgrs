@@ -6851,10 +6851,8 @@ fn represented_univariate_coordinate(
         return Classification::Uncertain(UncertaintyReason::Predicate);
     };
     let coefficients = if let Some(root) = interval.exact_root.as_ref() {
-        if real_sign(
-            &polynomial_evaluate(coefficients, root),
-            &CurveContext::STRICT,
-        ) != Some(RealSign::Zero)
+        if real_sign(&Real::eval_poly(coefficients, root), &CurveContext::STRICT)
+            != Some(RealSign::Zero)
         {
             return Classification::Uncertain(UncertaintyReason::Predicate);
         }
@@ -6933,7 +6931,7 @@ fn represented_tensor_coordinate(
             return Classification::Uncertain(UncertaintyReason::Predicate);
         };
         return match real_sign(
-            &polynomial_evaluate(relation.coefficients(), root),
+            &Real::eval_poly(relation.coefficients(), root),
             &CurveContext::STRICT,
         ) {
             Some(RealSign::Zero) => {
@@ -7741,11 +7739,11 @@ fn projected_selected_dense_candidate_box_incidence(
             return None;
         }
         let lower = real_sign(
-            &polynomial_evaluate(coefficients, &root.interval.lower),
+            &Real::eval_poly(coefficients, &root.interval.lower),
             &CurveContext::STRICT,
         )?;
         let upper = real_sign(
-            &polynomial_evaluate(coefficients, &root.interval.upper),
+            &Real::eval_poly(coefficients, &root.interval.upper),
             &CurveContext::STRICT,
         )?;
         matches!(
@@ -8287,11 +8285,11 @@ fn selected_dense_guided_quadratic_parameters(
                 continue;
             };
             let lower_sign = real_sign(
-                &polynomial_evaluate(&coefficients, &lower),
+                &Real::eval_poly(&coefficients, &lower),
                 &CurveContext::STRICT,
             );
             let upper_sign = real_sign(
-                &polynomial_evaluate(&coefficients, &upper),
+                &Real::eval_poly(&coefficients, &upper),
                 &CurveContext::STRICT,
             );
             if !matches!(
@@ -19374,7 +19372,7 @@ impl BezierAlgebraicCuspSemicircle2 {
                 hypersolve::compact_algebraic_root_low_degree_witness(&representation)
                     .and_then(|root| root.exact_point_witness().cloned())
             {
-                let denominator = polynomial_evaluate(&frame.data.denominator, &parameter);
+                let denominator = Real::eval_poly(&frame.data.denominator, &parameter);
                 match real_sign(&denominator, &CurveContext::STRICT) {
                     Some(RealSign::Positive | RealSign::Negative) => {}
                     Some(RealSign::Zero) => {
@@ -19387,7 +19385,7 @@ impl BezierAlgebraicCuspSemicircle2 {
                     }
                 }
                 let represented = |coefficients: &[Real]| {
-                    polynomial_evaluate(coefficients, &parameter) / &denominator
+                    Real::eval_poly(coefficients, &parameter) / &denominator
                 };
                 let center_x = represented(&center_x)?;
                 let center_y = represented(&center_y)?;
@@ -28561,11 +28559,11 @@ impl BezierAlgebraicCuspSemicircle2 {
                 for refinement_step in 0..=256_usize {
                     if refinement_step >= 16 {
                         let projection_lower_sign = real_sign(
-                            &polynomial_evaluate(&coefficients, &lower),
+                            &Real::eval_poly(&coefficients, &lower),
                             &CurveContext::STRICT,
                         );
                         let projection_upper_sign = real_sign(
-                            &polynomial_evaluate(&coefficients, &upper),
+                            &Real::eval_poly(&coefficients, &upper),
                             &CurveContext::STRICT,
                         );
                         let parameter_interval = BezierAlgebraicChordRealInterval2 {
@@ -35027,7 +35025,7 @@ impl BezierAlgebraicCuspSemicircle2 {
             target,
             move |coefficients| {
                 if let Some(parameter) = exact.as_ref() {
-                    return target_value.constant(polynomial_evaluate(&coefficients, parameter));
+                    return target_value.constant(Real::eval_poly(&coefficients, parameter));
                 }
                 let (axis, scale, offset) = relation.as_ref()?;
                 let linear = [offset.clone(), scale.clone()];
@@ -58590,7 +58588,7 @@ impl BezierRecursiveMonotoneParameter2 {
             }
             completed_steps = steps;
             if let Some(exact) = refined.exact_source_value() {
-                return Ok(real_sign(&polynomial_evaluate(coefficients, exact), policy)
+                return Ok(real_sign(&Real::eval_poly(coefficients, exact), policy)
                     .map(Classification::Decided)
                     .unwrap_or(Classification::Uncertain(UncertaintyReason::RealSign)));
             }
@@ -58662,11 +58660,9 @@ impl BezierRecursiveMonotoneParameter2 {
             if compare_reals(&lower, &upper, &CurveContext::STRICT)
                 == Some(std::cmp::Ordering::Equal)
             {
-                return Ok(
-                    real_sign(&polynomial_evaluate(coefficients, &lower), policy)
-                        .map(Classification::Decided)
-                        .unwrap_or(Classification::Uncertain(UncertaintyReason::RealSign)),
-                );
+                return Ok(real_sign(&Real::eval_poly(coefficients, &lower), policy)
+                    .map(Classification::Decided)
+                    .unwrap_or(Classification::Uncertain(UncertaintyReason::RealSign)));
             }
             if let Some([lower, upper]) = coefficients_value_interval_on_real_interval(
                 coefficients,
@@ -66066,11 +66062,11 @@ fn projected_selected_trivariate_candidate_has_box_root(
             let BezierParameter2::Algebraic(parameter) = parameter else {
                 return None;
             };
-            let lower = polynomial_evaluate(
+            let lower = Real::eval_poly(
                 parameter.polynomial().coefficients(),
                 parameter.interval().start(),
             );
-            let upper = polynomial_evaluate(
+            let upper = Real::eval_poly(
                 parameter.polynomial().coefficients(),
                 parameter.interval().end(),
             );
@@ -67653,7 +67649,7 @@ fn bivariate_evaluate_exact(polynomial: &BivariatePolynomial, first: &Real, seco
         .iter()
         .rev()
         .fold(Real::zero(), |value, row| {
-            value * first + polynomial_evaluate(row, second)
+            value * first + Real::eval_poly(row, second)
         })
 }
 
@@ -67911,8 +67907,8 @@ fn bivariate_bilinear_factor_matches_roots_at_sample(
     if roots.is_empty() {
         return true;
     }
-    let constant = polynomial_evaluate(&factor.coefficients[0], sample);
-    let linear = polynomial_evaluate(&factor.coefficients[1], sample);
+    let constant = Real::eval_poly(&factor.coefficients[0], sample);
+    let linear = Real::eval_poly(&factor.coefficients[1], sample);
     match real_sign(&linear, &CurveContext::STRICT) {
         Some(RealSign::Zero) | None => true,
         Some(RealSign::Negative | RealSign::Positive) => {
@@ -68207,7 +68203,7 @@ fn trivariate_axis_lift_taylor_slice(
                     })
                     .collect::<Option<Vec<_>>>()?;
             }
-            *target = polynomial_evaluate(&fiber, anchor);
+            *target = Real::eval_poly(&fiber, anchor);
         }
     }
     Some(BivariatePolynomial::new(slice))
@@ -68221,8 +68217,8 @@ fn rational_multi_affine_lift_scale(
 ) -> Option<Real> {
     let base = try_bivariate_multiply(top_factor, anchor_quotient)?;
     for retained in [0_i8, 1, -1, 2, -2, 3, -3].map(Real::from) {
-        let constant = polynomial_evaluate(&anchor_factor.coefficients[0], &retained);
-        let linear = polynomial_evaluate(&anchor_factor.coefficients[1], &retained);
+        let constant = Real::eval_poly(&anchor_factor.coefficients[0], &retained);
+        let linear = Real::eval_poly(&anchor_factor.coefficients[1], &retained);
         if !matches!(
             real_sign(&linear, &CurveContext::STRICT),
             Some(RealSign::Negative | RealSign::Positive)
@@ -69453,7 +69449,7 @@ fn quadrivariate_specialize_axis_trivariate(
                             .unwrap_or_else(Real::zero),
                     );
                 }
-                *coefficient = polynomial_evaluate(&fiber, value);
+                *coefficient = Real::eval_poly(&fiber, value);
             }
         }
     }
@@ -95208,8 +95204,8 @@ impl BezierAnalyticParallelPoint2 {
             ))));
         }
         let (frame_tangent_x, frame_tangent_y) = self.frame_tangent_power_basis()?;
-        let tangent_x = polynomial_evaluate(frame_tangent_x, parameter);
-        let tangent_y = polynomial_evaluate(frame_tangent_y, parameter);
+        let tangent_x = Real::eval_poly(frame_tangent_x, parameter);
+        let tangent_y = Real::eval_poly(frame_tangent_y, parameter);
         let speed_squared = &tangent_x * &tangent_x + &tangent_y * &tangent_y;
         match real_sign(&speed_squared, policy) {
             Some(RealSign::Positive) => {}
@@ -104402,7 +104398,7 @@ fn parallel_normal_positive_dimensional_projection(
                     return Ok(Classification::Uncertain(reason));
                 }
             };
-            match real_sign(&polynomial_evaluate(&speed, &sample), &strict) {
+            match real_sign(&Real::eval_poly(&speed, &sample), &strict) {
                 Some(RealSign::Positive) => {}
                 Some(RealSign::Negative) => {
                     speed = polynomial_scale(&speed, &Real::from(-1_i8));
@@ -105744,7 +105740,7 @@ pub(crate) fn algebraic_selected_correlated_predicate_sign(
         return match cusp_parameter {
             BezierParameter2::Exact(parameter) => {
                 Ok(
-                    real_sign(&polynomial_evaluate(&diagonal, parameter), policy).map_or(
+                    real_sign(&Real::eval_poly(&diagonal, parameter), policy).map_or(
                         Classification::Uncertain(UncertaintyReason::RealSign),
                         Classification::Decided,
                     ),
@@ -106513,8 +106509,8 @@ fn algebraic_selected_fiber_pair_trivariate_root(
         }
         previous = Some((alpha.clone(), source.clone(), image.clone()));
 
-        let defining_lower = polynomial_evaluate(&base, alpha.interval().start());
-        let defining_upper = polynomial_evaluate(&base, alpha.interval().end());
+        let defining_lower = Real::eval_poly(&base, alpha.interval().start());
+        let defining_upper = Real::eval_poly(&base, alpha.interval().end());
         if !strict_signs_are_opposite(
             real_sign(&defining_lower, &strict),
             real_sign(&defining_upper, &strict),
@@ -106882,9 +106878,9 @@ fn algebraic_selected_fiber_pair_projected_root(
             }
 
             let defining_lower =
-                polynomial_evaluate(alpha.polynomial().coefficients(), alpha.interval().start());
+                Real::eval_poly(alpha.polynomial().coefficients(), alpha.interval().start());
             let defining_upper =
-                polynomial_evaluate(alpha.polynomial().coefficients(), alpha.interval().end());
+                Real::eval_poly(alpha.polynomial().coefficients(), alpha.interval().end());
             if !strict_signs_are_opposite(
                 real_sign(&defining_lower, strict),
                 real_sign(&defining_upper, strict),
@@ -107053,7 +107049,7 @@ fn unit_interval_positive_polynomial_speed(
     };
     let half = (Real::one() / Real::from(2_i8))?;
     match real_sign(
-        &polynomial_evaluate(&speed, &half),
+        &Real::eval_poly(&speed, &half),
         &policy.strict_counterpart(),
     ) {
         Some(RealSign::Positive) => {}
@@ -110153,8 +110149,8 @@ impl BezierParallel2 {
         }
         let differential = self.differential()?;
         let tangent = (
-            polynomial_evaluate(&differential.tangent_x, parameter),
-            polynomial_evaluate(&differential.tangent_y, parameter),
+            Real::eval_poly(&differential.tangent_x, parameter),
+            Real::eval_poly(&differential.tangent_y, parameter),
         );
         let speed_squared = &tangent.0 * &tangent.0 + &tangent.1 * &tangent.1;
         Ok(match real_sign(&speed_squared, policy) {
@@ -110220,7 +110216,7 @@ impl BezierParallel2 {
             ));
         };
         let strict = policy.strict_counterpart();
-        match real_sign(&polynomial_evaluate(&common_factor, interior), &strict) {
+        match real_sign(&Real::eval_poly(&common_factor, interior), &strict) {
             Some(RealSign::Positive) => {}
             Some(RealSign::Negative) => {
                 let negative_one = Real::from(-1_i8);
@@ -110258,8 +110254,8 @@ impl BezierParallel2 {
         policy: &CurveContext,
     ) -> CurveResult<Classification<Option<Arc<BezierAnalyticParallelTangentField2>>>> {
         let strict = policy.strict_counterpart();
-        let tangent_x = polynomial_evaluate(&differential.tangent_x, interior);
-        let tangent_y = polynomial_evaluate(&differential.tangent_y, interior);
+        let tangent_x = Real::eval_poly(&differential.tangent_x, interior);
+        let tangent_y = Real::eval_poly(&differential.tangent_y, interior);
         let tangent_x_sign = real_sign(&tangent_x, &strict);
         let tangent_y_sign = real_sign(&tangent_y, &strict);
         let (direction_x, direction_y) = match (tangent_x_sign, tangent_y_sign) {
@@ -116833,12 +116829,10 @@ impl BezierParallel2 {
         }
         let source = self.source_power_basis()?;
         let differential = self.differential()?;
-        let tangent_x = polynomial_evaluate(&differential.tangent_x, parameter);
-        let tangent_y = polynomial_evaluate(&differential.tangent_y, parameter);
-        let tangent_derivative_x =
-            polynomial_evaluate(&differential.tangent_derivative_x, parameter);
-        let tangent_derivative_y =
-            polynomial_evaluate(&differential.tangent_derivative_y, parameter);
+        let tangent_x = Real::eval_poly(&differential.tangent_x, parameter);
+        let tangent_y = Real::eval_poly(&differential.tangent_y, parameter);
+        let tangent_derivative_x = Real::eval_poly(&differential.tangent_derivative_x, parameter);
+        let tangent_derivative_y = Real::eval_poly(&differential.tangent_derivative_y, parameter);
         let speed_squared = &tangent_x * &tangent_x + &tangent_y * &tangent_y;
         match real_sign(&speed_squared, policy) {
             Some(RealSign::Positive) => {}
@@ -116854,7 +116848,7 @@ impl BezierParallel2 {
             &tangent_derivative_x * &tangent_y - &tangent_derivative_y * &tangent_x;
         let mut signed_curvature = curvature_cross * self.distance();
         if let Some(weight) = source.weight {
-            let weight = polynomial_evaluate(weight, parameter);
+            let weight = Real::eval_poly(weight, parameter);
             match real_sign(&weight, policy) {
                 Some(RealSign::Positive | RealSign::Negative) => {}
                 Some(RealSign::Zero) => {
@@ -118528,7 +118522,7 @@ impl BezierParallel2 {
         let differential = self.differential()?;
         let source_point = if let Some(source) = self.rational_source() {
             let source = source.homogeneous_power_basis()?;
-            let weight = polynomial_evaluate(&source.weight, parameter);
+            let weight = Real::eval_poly(&source.weight, parameter);
             match real_sign(&weight, policy) {
                 Some(RealSign::Positive | RealSign::Negative) => {}
                 Some(RealSign::Zero) => {
@@ -118537,18 +118531,18 @@ impl BezierParallel2 {
                 None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
             }
             Point2::new(
-                (polynomial_evaluate(&source.x_numerator, parameter) / &weight)?,
-                (polynomial_evaluate(&source.y_numerator, parameter) / weight)?,
+                (Real::eval_poly(&source.x_numerator, parameter) / &weight)?,
+                (Real::eval_poly(&source.y_numerator, parameter) / weight)?,
             )
         } else {
             let (source_x, source_y) = self.polynomial_power_basis()?;
             Point2::new(
-                polynomial_evaluate(source_x, parameter),
-                polynomial_evaluate(source_y, parameter),
+                Real::eval_poly(source_x, parameter),
+                Real::eval_poly(source_y, parameter),
             )
         };
-        let tangent_x = polynomial_evaluate(&differential.tangent_x, parameter);
-        let tangent_y = polynomial_evaluate(&differential.tangent_y, parameter);
+        let tangent_x = Real::eval_poly(&differential.tangent_x, parameter);
+        let tangent_y = Real::eval_poly(&differential.tangent_y, parameter);
         let speed_squared = &tangent_x * &tangent_x + &tangent_y * &tangent_y;
         match real_sign(&speed_squared, policy) {
             Some(RealSign::Positive) => {}
@@ -118587,8 +118581,8 @@ impl BezierParallel2 {
                 BezierParallelSource2::Quadratic(_) | BezierParallelSource2::Cubic(_) => {
                     let differential = self.differential()?;
                     Ok(Classification::Decided(CurveDerivative2::new(
-                        polynomial_evaluate(&differential.tangent_x, parameter),
-                        polynomial_evaluate(&differential.tangent_y, parameter),
+                        Real::eval_poly(&differential.tangent_x, parameter),
+                        Real::eval_poly(&differential.tangent_y, parameter),
                     )))
                 }
                 BezierParallelSource2::Rational(source) => {
@@ -118599,7 +118593,7 @@ impl BezierParallel2 {
         let differential = self.differential()?;
         let weight = if let Some(source) = self.rational_source() {
             let source = source.homogeneous_power_basis()?;
-            let weight = polynomial_evaluate(&source.weight, parameter);
+            let weight = Real::eval_poly(&source.weight, parameter);
             match real_sign(&weight, policy) {
                 Some(RealSign::Positive | RealSign::Negative) => {}
                 Some(RealSign::Zero) => {
@@ -118611,12 +118605,10 @@ impl BezierParallel2 {
         } else {
             None
         };
-        let tangent_x = polynomial_evaluate(&differential.tangent_x, parameter);
-        let tangent_y = polynomial_evaluate(&differential.tangent_y, parameter);
-        let tangent_derivative_x =
-            polynomial_evaluate(&differential.tangent_derivative_x, parameter);
-        let tangent_derivative_y =
-            polynomial_evaluate(&differential.tangent_derivative_y, parameter);
+        let tangent_x = Real::eval_poly(&differential.tangent_x, parameter);
+        let tangent_y = Real::eval_poly(&differential.tangent_y, parameter);
+        let tangent_derivative_x = Real::eval_poly(&differential.tangent_derivative_x, parameter);
+        let tangent_derivative_y = Real::eval_poly(&differential.tangent_derivative_y, parameter);
         let speed_squared = &tangent_x * &tangent_x + &tangent_y * &tangent_y;
         match real_sign(&speed_squared, policy) {
             Some(RealSign::Positive) => {}
@@ -119061,7 +119053,7 @@ impl BezierParallel2 {
             Classification::Decided(None) => return Ok(Classification::Decided(None)),
             Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
         };
-        let speed_at_orientation = polynomial_evaluate(&speed, orientation_parameter);
+        let speed_at_orientation = Real::eval_poly(&speed, orientation_parameter);
         match real_sign(&speed_at_orientation, policy) {
             Some(RealSign::Positive) => {}
             Some(RealSign::Negative) => {
@@ -119125,7 +119117,7 @@ impl BezierParallel2 {
         let mut numerator_y =
             polynomial_add(&polynomial_multiply(source_y, &speed), &normal_y_term);
         if weight.is_some() {
-            match real_sign(&polynomial_evaluate(&denominator, &Real::zero()), policy) {
+            match real_sign(&Real::eval_poly(&denominator, &Real::zero()), policy) {
                 Some(RealSign::Positive) => {}
                 Some(RealSign::Negative) => {
                     let negative_one = Real::from(-1_i8);
@@ -120531,10 +120523,6 @@ fn construct_cubic_reduced_half(
         depth,
         trace,
     )
-}
-
-fn polynomial_evaluate(coefficients: &[Real], parameter: &Real) -> Real {
-    crate::bezier_parameter::evaluate_coefficients(coefficients, parameter)
 }
 
 fn polynomial_trim_structural_zeros(mut coefficients: Vec<Real>) -> Vec<Real> {
@@ -122268,7 +122256,7 @@ fn bivariate_unit_square_has_preconditioned_poincare_miranda_root(
     }
     let half = (Real::one() / Real::from(2_i8))?;
     let evaluate_midpoint = |polynomial: &BivariatePolynomial| {
-        polynomial_evaluate(&bivariate_specialize_first(polynomial, &half), &half)
+        Real::eval_poly(&bivariate_specialize_first(polynomial, &half), &half)
     };
     let first_first = evaluate_midpoint(&bivariate_parameter_derivative(
         first,
@@ -125526,8 +125514,7 @@ fn rational_parameter_component_domains(
                 return Ok(Classification::Uncertain(reason));
             }
         };
-        let direction = match real_sign(&polynomial_evaluate(derivative_numerator, &sample), policy)
-        {
+        let direction = match real_sign(&Real::eval_poly(derivative_numerator, &sample), policy) {
             Some(RealSign::Positive) => std::cmp::Ordering::Less,
             Some(RealSign::Negative) => std::cmp::Ordering::Greater,
             Some(RealSign::Zero) => return Ok(Classification::Decided(None)),
@@ -125832,14 +125819,14 @@ fn rational_parameter_map_at(
     parameter: &Real,
     policy: &CurveContext,
 ) -> CurveResult<Classification<Real>> {
-    let denominator = polynomial_evaluate(&map.denominator_coefficients, parameter);
+    let denominator = Real::eval_poly(&map.denominator_coefficients, parameter);
     match real_sign(&denominator, policy) {
         Some(RealSign::Positive | RealSign::Negative) => {}
         Some(RealSign::Zero) => return Ok(Classification::Uncertain(UncertaintyReason::Boundary)),
         None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
     }
     Ok(Classification::Decided(
-        (polynomial_evaluate(&map.numerator_coefficients, parameter) / denominator)?,
+        (Real::eval_poly(&map.numerator_coefficients, parameter) / denominator)?,
     ))
 }
 
@@ -129150,7 +129137,7 @@ pub(crate) fn signed_bivariate_at_parameter_pair(
     match (first_parameter, second_parameter) {
         (BezierParameter2::Exact(first), BezierParameter2::Exact(second)) => {
             match real_sign(
-                &polynomial_evaluate(&bivariate_specialize_first(polynomial, first), second),
+                &Real::eval_poly(&bivariate_specialize_first(polynomial, first), second),
                 policy,
             ) {
                 Some(sign) => Ok(Classification::Decided(sign)),
@@ -129410,7 +129397,7 @@ fn bivariate_specialize_first(polynomial: &BivariatePolynomial, value: &Real) ->
                     .iter()
                     .any(|coefficient| coefficient.exact_rational_ref().is_none())
                 {
-                    return polynomial_evaluate(&coefficients, value);
+                    return Real::eval_poly(&coefficients, value);
                 }
             }
             polynomial
@@ -129428,7 +129415,7 @@ fn bivariate_specialize_second(polynomial: &BivariatePolynomial, value: &Real) -
     polynomial
         .coefficients
         .iter()
-        .map(|row| polynomial_evaluate(row, value))
+        .map(|row| Real::eval_poly(row, value))
         .collect()
 }
 
@@ -130194,7 +130181,7 @@ fn polynomial_incident_anchor_sign(
     };
     let mut derivative_order = 0_usize;
     loop {
-        match real_sign(&polynomial_evaluate(&coefficients, anchor), policy) {
+        match real_sign(&Real::eval_poly(&coefficients, anchor), policy) {
             Some(RealSign::Zero) => {}
             Some(sign @ (RealSign::Positive | RealSign::Negative)) => {
                 return Classification::Decided(
@@ -146480,8 +146467,7 @@ mod conversion_tests {
                             .iter()
                             .rev()
                             .fold(Real::zero(), |second_accumulator, row| {
-                                second_accumulator * &values[1]
-                                    + polynomial_evaluate(row, &values[2])
+                                second_accumulator * &values[1] + Real::eval_poly(row, &values[2])
                             })
                 })
         };
@@ -146500,7 +146486,7 @@ mod conversion_tests {
             values[retained_axis] = retained_value.clone();
             values[substituted_axis] = &scale * &retained_value + &offset;
             values[remaining_axis] = remaining_value.clone();
-            let reduced_value = polynomial_evaluate(
+            let reduced_value = Real::eval_poly(
                 &bivariate_specialize_second(&reduced, &remaining_value),
                 &retained_value,
             );
@@ -146536,8 +146522,7 @@ mod conversion_tests {
                             .iter()
                             .rev()
                             .fold(Real::zero(), |second_accumulator, row| {
-                                second_accumulator * &values[1]
-                                    + polynomial_evaluate(row, &values[2])
+                                second_accumulator * &values[1] + Real::eval_poly(row, &values[2])
                             })
                 })
         };
@@ -146557,7 +146542,7 @@ mod conversion_tests {
             values[left_axis] = left_value.clone();
             values[right_axis] = right_value.clone();
             values[result_axis] = &left_value * &right_value;
-            let reduced_value = polynomial_evaluate(
+            let reduced_value = Real::eval_poly(
                 &bivariate_specialize_second(&reduced, &right_value),
                 &left_value,
             );
@@ -146567,7 +146552,7 @@ mod conversion_tests {
                 trivariate_substitute_sum_axis(&polynomial, left_axis, right_axis, result_axis)
                     .expect("the bounded sum substitution must fit");
             values[result_axis] = &left_value + &right_value;
-            let reduced_value = polynomial_evaluate(
+            let reduced_value = Real::eval_poly(
                 &bivariate_specialize_second(&reduced, &right_value),
                 &left_value,
             );
@@ -149337,8 +149322,7 @@ mod conversion_tests {
                             .iter()
                             .rev()
                             .fold(Real::zero(), |second_accumulator, row| {
-                                second_accumulator * &values[1]
-                                    + polynomial_evaluate(row, &values[2])
+                                second_accumulator * &values[1] + Real::eval_poly(row, &values[2])
                             })
                 })
         };
