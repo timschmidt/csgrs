@@ -73,30 +73,40 @@ fn main() -> CurveResult<()> {
         elapsed / iterations
     );
 
-    let irrational_polynomial = decided(BezierParameterPolynomial::try_new_power_basis(
-        vec![r(-1), r(0), r(2)],
-        &policy,
-    )?);
-    let irrational_interval = decided(BezierParameterInterval::try_new(q(2, 3), q(3, 4), &policy)?);
-    let irrational = BezierParameter2::algebraic(decided(BezierAlgebraicParameter2::try_isolate(
-        irrational_polynomial,
-        irrational_interval,
-        &policy,
-    )?));
     let close_rational = decided(BezierParameter2::exact(q(353_553, 500_000), &policy)?);
     let refinement_iterations = 10_000_u32;
-    let started = Instant::now();
-    let mut ordered = 0_usize;
-    for _ in 0..refinement_iterations {
-        ordered += black_box(
-            decided(close_rational.cmp_by_refinement(&irrational, &policy)?) == Ordering::Less,
-        ) as usize;
+    for (label, coefficients) in [
+        ("refined_ordering", vec![r(-1), r(0), r(2)]),
+        (
+            "refined_even_root_ordering",
+            vec![r(1), r(0), r(-4), r(0), r(4)],
+        ),
+    ] {
+        let irrational_polynomial = decided(BezierParameterPolynomial::try_new_power_basis(
+            coefficients,
+            &policy,
+        )?);
+        let irrational_interval =
+            decided(BezierParameterInterval::try_new(q(2, 3), q(3, 4), &policy)?);
+        let irrational =
+            BezierParameter2::algebraic(decided(BezierAlgebraicParameter2::try_isolate(
+                irrational_polynomial,
+                irrational_interval,
+                &policy,
+            )?));
+        let started = Instant::now();
+        let mut ordered = 0_usize;
+        for _ in 0..refinement_iterations {
+            ordered += black_box(
+                decided(close_rational.cmp_by_refinement(&irrational, &policy)?) == Ordering::Less,
+            ) as usize;
+        }
+        let elapsed = started.elapsed();
+        println!(
+            "bezier_algebraic_parameter_{label}: {refinement_iterations} iterations in {elapsed:?} ({:?}/iter), ordered={ordered}",
+            elapsed / refinement_iterations
+        );
     }
-    let elapsed = started.elapsed();
-    println!(
-        "bezier_algebraic_parameter_refined_ordering: {refinement_iterations} iterations in {elapsed:?} ({:?}/iter), ordered={ordered}",
-        elapsed / refinement_iterations
-    );
 
     // This is (B(t)-P) dot B'(t) for the cubic with controls
     // (0,0), (6,10), (-8,-8), (-4,10) and query point (-3,3), using the

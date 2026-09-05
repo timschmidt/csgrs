@@ -1256,7 +1256,7 @@ impl BezierAlgebraicParameter2 {
             else {
                 return self.cache_represented_exact_point(None);
             };
-            let sequence = match sturm_sequence(self.data.polynomial.coefficients(), policy)? {
+            let sequence = match self.retained_sturm_sequence(policy)? {
                 Classification::Decided(sequence) => sequence,
                 Classification::Uncertain(reason) => {
                     return Ok(Classification::Uncertain(reason));
@@ -1276,15 +1276,25 @@ impl BezierAlgebraicParameter2 {
         &self,
         policy: &CurveContext,
         denominator_bound: BigUint,
-        sequence: &UnivariateSturmSequence,
+        sequence: &Arc<UnivariateSturmSequence>,
         mut trace: Option<&mut BezierRootIsolationTrace2>,
     ) -> CurveResult<Classification<Option<Real>>> {
         let two = BigInt::from(2_u8);
         let bound = BigInt::from(denominator_bound);
         let target_width = BigRational::new(BigInt::one(), &two * &bound * &bound);
-        let mut interval = self.data.interval.clone();
-        let mut start_variations = None;
+        let mut refined = RefinedParameter::Algebraic {
+            parameter: self,
+            interval: self.data.interval.clone(),
+            sturm_sequence: Some(Arc::clone(sequence)),
+            start_variations: None,
+        };
         loop {
+            let interval = match &refined {
+                RefinedParameter::Exact(root) => {
+                    return Ok(Classification::Decided(Some(root.clone())));
+                }
+                RefinedParameter::Algebraic { interval, .. } => interval,
+            };
             let Some(start) = real_as_big_rational(interval.start()) else {
                 return Ok(Classification::Decided(None));
             };
@@ -1294,73 +1304,22 @@ impl BezierAlgebraicParameter2 {
             if &end - &start < target_width {
                 return reconstruct_rational_root(
                     &self.data.polynomial,
-                    &interval,
+                    interval,
                     (&start + &end) / &two,
                     &bound,
                     policy,
                 );
             }
 
-            let midpoint = (&start + &end) / &two;
-            let midpoint_real = real_from_big_rational(&midpoint)?;
-            let midpoint_variations = match sturm_point_evidence(sequence, &midpoint_real, policy)?
+            if let Classification::Uncertain(reason) = refined.refine_once(policy)? {
+                return Ok(Classification::Uncertain(reason));
+            }
+            if matches!(refined, RefinedParameter::Algebraic { .. })
+                && let Some(trace) = trace.as_deref_mut()
             {
-                Classification::Decided(SturmPointEvidence::Root) => {
-                    return Ok(Classification::Decided(Some(midpoint_real)));
-                }
-                Classification::Decided(SturmPointEvidence::NonRoot(variations)) => variations,
-                Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-            };
-            // The same Sturm point certificate owns both the root test and
-            // the left-child count. Preserve the unchanged left endpoint's
-            // variation count instead of replaying its entire chain again.
-            let start_count = match start_variations {
-                Some(variations) => variations,
-                None => match sign_variations_at(sequence, interval.start(), policy)? {
-                    Classification::Decided(variations) => {
-                        start_variations = Some(variations);
-                        variations
-                    }
-                    Classification::Uncertain(reason) => {
-                        return Ok(Classification::Uncertain(reason));
-                    }
-                },
-            };
-            let left_count = start_count
-                .checked_sub(midpoint_variations)
-                .ok_or(CurveError::InvalidBezierAlgebraicParameter)?;
-            let left = match BezierParameterInterval::try_new_ordered(
-                interval.start().clone(),
-                midpoint_real.clone(),
-                policy,
-            )? {
-                Classification::Decided(interval) => interval,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            };
-            if let Some(trace) = trace.as_deref_mut() {
                 trace.interval_root_counts += 1;
                 trace.rational_reconstruction_refinements += 1;
             }
-            if left_count == 1 {
-                interval = left;
-                continue;
-            }
-            if left_count != 0 {
-                return Err(CurveError::InvalidBezierAlgebraicParameter);
-            }
-            start_variations = Some(midpoint_variations);
-            interval = match BezierParameterInterval::try_new_ordered(
-                midpoint_real,
-                interval.end().clone(),
-                policy,
-            )? {
-                Classification::Decided(interval) => interval,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            };
         }
     }
 
@@ -1368,7 +1327,7 @@ impl BezierAlgebraicParameter2 {
         &self,
         policy: &CurveContext,
         denominator_bound: Option<&BigUint>,
-        sequence: &UnivariateSturmSequence,
+        sequence: &Arc<UnivariateSturmSequence>,
         trace: Option<&mut BezierRootIsolationTrace2>,
     ) -> CurveResult<Classification<Option<Real>>> {
         if let Some(root) = self.data.shared.represented_exact_point.get() {
@@ -1738,7 +1697,10 @@ impl BezierParameter2 {
             Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
         };
         if compare_reals(left.end(), right.start(), policy) == Some(Ordering::Less) {
-            return midpoint_real(left.end(), right.start()).map(Classification::Decided);
+            return Ok(Classification::Decided(Real::average_pair(
+                left.end(),
+                right.start(),
+            )));
         }
         match self.cmp_by_refinement(other, policy)? {
             Classification::Decided(Ordering::Less) => {}
@@ -1764,7 +1726,10 @@ impl BezierParameter2 {
             Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
         };
         if compare_reals(left.end(), right.start(), policy) == Some(Ordering::Less) {
-            return midpoint_real(left.end(), right.start()).map(Classification::Decided);
+            return Ok(Classification::Decided(Real::average_pair(
+                left.end(),
+                right.start(),
+            )));
         }
         let mut left_refinement = BezierParameterRefinement2::new(self, policy);
         let mut right_refinement = BezierParameterRefinement2::new(other, policy);
@@ -1778,7 +1743,10 @@ impl BezierParameter2 {
                 continue;
             };
             if compare_reals(left.end(), right.start(), policy) == Some(Ordering::Less) {
-                return midpoint_real(left.end(), right.start()).map(Classification::Decided);
+                return Ok(Classification::Decided(Real::average_pair(
+                    left.end(),
+                    right.start(),
+                )));
             }
         }
         strict_rational_between_known_order(
@@ -2349,7 +2317,7 @@ pub(crate) fn signed_polynomial_on_isolating_interval(
             Err(error) => return Err(error),
         }
 
-        let midpoint = ((interval.start() + interval.end()) / Real::from(2_i8))?;
+        let midpoint = Real::average_pair(interval.start(), interval.end());
         match real_sign(&defining.evaluate(&midpoint), policy) {
             Some(RealSign::Zero) => {
                 return match real_sign(&filter.evaluate(&midpoint), policy) {
@@ -2645,7 +2613,7 @@ fn refine_algebraic_sign_change(
         return None;
     }
     for _ in 0..max_refinement_steps {
-        let midpoint = midpoint_real(&start, &end).ok()?;
+        let midpoint = Real::average_pair(&start, &end);
         let midpoint_sign = real_sign(&polynomial.evaluate(&midpoint), policy)?;
         if midpoint_sign == RealSign::Zero {
             return Some(BezierParameter2::Exact(midpoint));
@@ -2711,15 +2679,16 @@ impl<'a> RefinedParameter<'a> {
             return Ok(Classification::Decided(false));
         };
         let midpoint = Real::average_pair(interval.start(), interval.end());
-        match real_sign(&parameter.polynomial().evaluate(&midpoint), policy) {
-            Some(RealSign::Zero) => {
+        if sturm_sequence.is_none() {
+            // A represented midpoint can be certified without constructing
+            // a chain, including when non-rational coefficient division is
+            // undecidable under the caller's policy.
+            if real_sign(&parameter.polynomial().evaluate(&midpoint), policy)
+                == Some(RealSign::Zero)
+            {
                 *self = Self::Exact(midpoint);
                 return Ok(Classification::Decided(true));
             }
-            Some(_) => {}
-            None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
-        }
-        if sturm_sequence.is_none() {
             match parameter.retained_sturm_sequence(policy)? {
                 Classification::Decided(sequence) => *sturm_sequence = Some(sequence),
                 Classification::Uncertain(reason) => {
@@ -2728,10 +2697,26 @@ impl<'a> RefinedParameter<'a> {
             }
         }
         let sequence = sturm_sequence.as_ref().expect("retained Sturm certificate");
-        let midpoint_variations = match sign_variations_at(sequence, &midpoint, policy)? {
-            Classification::Decided(variations) => variations,
-            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+        let midpoint_variations = match sturm_point_evidence(sequence, &midpoint, policy)? {
+            Classification::Decided(SturmPointEvidence::Root) => {
+                *self = Self::Exact(midpoint);
+                return Ok(Classification::Decided(true));
+            }
+            Classification::Decided(SturmPointEvidence::NonRoot(variations)) => variations,
+            Classification::Uncertain(reason) => {
+                // The original row can still prove zero when an auxiliary
+                // Sturm row is undecidable. Do not discard that exact witness.
+                if real_sign(&parameter.polynomial().evaluate(&midpoint), policy)
+                    == Some(RealSign::Zero)
+                {
+                    *self = Self::Exact(midpoint);
+                    return Ok(Classification::Decided(true));
+                }
+                return Ok(Classification::Uncertain(reason));
+            }
         };
+        // One point certificate owns both the root test and the child count;
+        // the unchanged left endpoint's variations remain valid after a split.
         let start_count = match *start_variations {
             Some(variations) => variations,
             None => match sign_variations_at(sequence, interval.start(), policy)? {
@@ -2930,10 +2915,6 @@ fn parameter_algebraic_representation(
             representation.is_valid().then_some(representation)
         }
     }
-}
-
-fn midpoint_real(first: &Real, second: &Real) -> CurveResult<Real> {
-    Ok(Real::average_pair(first, second))
 }
 
 impl BezierParameterRange2 {
@@ -3604,7 +3585,7 @@ fn exact_nonrational_bernstein_unit_roots(
         if depth >= 64 {
             return Ok(None);
         }
-        let midpoint = midpoint_real(&start, &end)?;
+        let midpoint = Real::average_pair(&start, &end);
         let (left, right) = subdivide_rational_bernstein_half(&controls);
         let midpoint_sign = match rational_bernstein_basis_sign(
             coefficients,
@@ -3723,7 +3704,7 @@ fn exact_rational_square_free_bernstein_unit_roots(
             ));
             continue;
         }
-        let midpoint = midpoint_real(&start, &end)?;
+        let midpoint = Real::average_pair(&start, &end);
         let (left, right) = subdivide_scalar_bernstein_half(&controls)?;
         let Some(midpoint_sign) = endpoint_sign(&left[left.len() - 1]) else {
             return Ok(None);
@@ -4102,7 +4083,7 @@ fn search_interval_roots(
             }
             continue;
         }
-        let midpoint = ((&start + &end) / Real::from(2_i8))?;
+        let midpoint = Real::average_pair(&start, &end);
         let midpoint_variations = match sturm_point_evidence(&sequence, &midpoint, policy)? {
             Classification::Decided(SturmPointEvidence::Root) => {
                 return Ok(Classification::Decided(UnitRootSearch::RepresentedRoot(
@@ -4333,7 +4314,7 @@ pub(crate) fn subdivide_scalar_bernstein_half(
     right.push(work[degree].clone());
     for level in 1..=degree {
         for index in 0..=degree - level {
-            work[index] = midpoint_real(&work[index], &work[index + 1])?;
+            work[index] = Real::average_pair(&work[index], &work[index + 1]);
         }
         left.push(work[0].clone());
         right.push(work[degree - level].clone());
