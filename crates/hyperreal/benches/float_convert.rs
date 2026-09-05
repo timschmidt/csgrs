@@ -10,7 +10,7 @@ use bench_docs::{BenchDoc, BenchGroupDoc};
 
 const FLOAT_CONVERT_GROUPS: &[BenchGroupDoc] = &[BenchGroupDoc {
     name: "float_convert",
-    description: "Exact conversion from IEEE-754 floats into `Rational` and `Real` values.",
+    description: "Exact IEEE-754 imports and finite outward binary64 enclosures of rationals.",
     benches: &[
         BenchDoc {
             name: "f32_normal",
@@ -43,6 +43,18 @@ const FLOAT_CONVERT_GROUPS: &[BenchGroupDoc] = &[BenchGroupDoc {
         BenchDoc {
             name: "real_f64_subnormal",
             description: "Converts a subnormal `f64` through the public `Real::try_from` path.",
+        },
+        BenchDoc {
+            name: "f64_enclosure_exact",
+            description: "Exports an exactly representable dyadic as a finite binary64 singleton.",
+        },
+        BenchDoc {
+            name: "f64_enclosure_rounded",
+            description: "Exports a dyadic requiring outward binary64 rounding.",
+        },
+        BenchDoc {
+            name: "f64_enclosure_near_max",
+            description: "Exports an exact value just below binary64 MAX without an infinite endpoint.",
         },
     ],
 }];
@@ -80,6 +92,19 @@ fn bench_float_convert(c: &mut Criterion) {
     group.bench_function("real_f64_subnormal", |b| {
         b.iter(|| black_box(Real::try_from(black_box(f64::from_bits(2))).unwrap()))
     });
+
+    let exact = Rational::fraction(3, 4).unwrap();
+    let rounded = Rational::fraction((1_i64 << 54) + 1, 8).unwrap();
+    let near_max = Rational::try_from(f64::MAX).unwrap() - Rational::one();
+    for (name, value) in [
+        ("f64_enclosure_exact", exact),
+        ("f64_enclosure_rounded", rounded),
+        ("f64_enclosure_near_max", near_max),
+    ] {
+        group.bench_function(name, |b| {
+            b.iter(|| black_box(black_box(&value).to_f64_enclosure()))
+        });
+    }
 
     group.finish();
 }

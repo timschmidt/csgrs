@@ -536,18 +536,26 @@ impl Rational {
                 };
                 return Some(if exact {
                     [value, value]
+                } else if magnitude == f64::MAX {
+                    return self.f64_enclosure_at_rounded_max();
                 } else {
                     [value.next_down(), value.next_up()]
                 });
             }
         }
 
-        let msd = self.msd_exact()?;
-        if !(-1022..=1022).contains(&msd) {
+        // Leading numerator/denominator words already enclose the ratio.
+        // Their bit-length difference supplies an exact power-of-two scale;
+        // locating the ratio's exact binade would add a full bigint comparison
+        // without strengthening these outward bounds.
+        let scale_exponent =
+            i128::from(self.numerator.bits()) - i128::from(self.denominator.bits());
+        if !(-1022..=1023).contains(&scale_exponent) {
             return None;
         }
-        let (lower, upper) = normalized_rational_magnitude_interval(self, msd)?;
-        let scale = f64::from_bits(u64::try_from(msd + 1023).ok()? << 52);
+        let scale_exponent = i32::try_from(scale_exponent).ok()?;
+        let (lower, upper) = normalized_rational_magnitude_interval(self, scale_exponent)?;
+        let scale = f64::from_bits(u64::try_from(scale_exponent + 1023).ok()? << 52);
         let lower = (lower * scale).next_down();
         let upper = (upper * scale).next_up();
         if !lower.is_finite() || !upper.is_finite() {
@@ -557,6 +565,29 @@ impl Rational {
             Minus => [-upper, -lower],
             NoSign => [0.0, 0.0],
             Plus => [lower, upper],
+        })
+    }
+
+    /// Called only for an inexact dyadic whose rounded magnitude is MAX.
+    #[cold]
+    #[inline(never)]
+    fn f64_enclosure_at_rounded_max(&self) -> Option<[f64; 2]> {
+        // The exact exponent is 1023 here. Rounding to MAX does not prove
+        // the value is at most MAX: compare the normalized integer head.
+        // MAX has 53 one bits; the odd sticky bit distinguishes a discarded
+        // positive tail from equality without constructing a large rational.
+        const MAX_HEAD: u64 = ((1_u64 << 53) - 1) << 11;
+        let head = Self::normalized_high_u64_round_to_odd(
+            &self.numerator,
+            self.numerator.bits(),
+        )?;
+        if head > MAX_HEAD {
+            return None;
+        }
+        Some(if self.sign == Minus {
+            [-f64::MAX, -f64::MAX.next_down()]
+        } else {
+            [f64::MAX.next_down(), f64::MAX]
         })
     }
 

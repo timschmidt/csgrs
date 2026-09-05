@@ -2095,6 +2095,98 @@ mod tests {
     }
 
     #[test]
+    fn f64_enclosure_stays_finite_at_both_overflow_boundaries() {
+        use rug::{Integer, Rational as GmpRational, integer::Order};
+
+        let max_integer = (BigUint::one() << 1024_usize) - (BigUint::one() << 971_usize);
+        let gmp_max = GmpRational::from((Integer::from(1) << 1024_usize)
+            - (Integer::from(1) << 971_usize));
+        let mut checked = 0;
+        for shift in [0_usize, 1, 11, 64, 129, 1074, 4096] {
+            let center = BigInt::from(&max_integer << shift);
+            let ulp = BigInt::one() << (971 + shift);
+            let offsets = [
+                BigInt::zero(), BigInt::one(), -BigInt::one(),
+                &ulp >> 2_usize, -(&ulp >> 2_usize), &ulp >> 1_usize, -(&ulp >> 1_usize),
+                ulp.clone(), -ulp,
+            ];
+            for offset in offsets {
+                let numerator = &center + offset;
+                let gmp_magnitude = GmpRational::from((
+                    Integer::from_digits(&numerator.magnitude().to_u64_digits(), Order::Lsf),
+                    Integer::from(1) << shift,
+                ));
+                for negative in [false, true] {
+                    let value = Rational::from_bigint_fraction(
+                        if negative { -numerator.clone() } else { numerator.clone() },
+                        BigUint::one() << shift,
+                    ).unwrap();
+                    let bounds = value.to_f64_enclosure();
+                    if gmp_magnitude > gmp_max {
+                        assert!(bounds.is_none(), "finite enclosure above MAX: {bounds:?}");
+                    } else {
+                        let [lower, upper] = bounds.expect("finite dyadic boundary is supported");
+                        assert!(lower.is_finite() && upper.is_finite());
+                        let exact = if negative { -gmp_magnitude.clone() } else { gmp_magnitude.clone() };
+                        assert!(GmpRational::from_f64(lower).unwrap() <= exact);
+                        assert!(GmpRational::from_f64(upper).unwrap() >= exact);
+                    }
+                    checked += 1;
+                }
+            }
+        }
+        assert_eq!(checked, 126);
+    }
+
+    #[test]
+    fn f64_enclosure_bit_length_scaling_matches_gmp() {
+        use rug::{Integer, Rational as GmpRational, integer::Order};
+
+        let mut state = 0xa409_3822_299f_31d0_u64;
+        let mut next = || {
+            state ^= state << 13;
+            state ^= state >> 7;
+            state ^= state << 17;
+            state
+        };
+        let mut checked = 0;
+        for width in [8_usize, 54, 129, 4096] {
+            let top = BigUint::one() << width;
+            let mask = &top - BigUint::one();
+            for _ in 0..16 {
+                let n = &top | (BigUint::from(next()) & &mask) | BigUint::one();
+                let d = &top | (BigUint::from(next()) & &mask) | BigUint::one();
+                for exponent in [-1074_i32, -1023, -1022, -1021, -1, 0, 1, 1021, 1022, 1023, 1024] {
+                    let numerator = &n << usize::try_from(exponent.max(0)).unwrap();
+                    let denominator = &d << usize::try_from((-exponent).max(0)).unwrap();
+                    let gmp_magnitude = GmpRational::from((
+                        Integer::from_digits(&numerator.to_u64_digits(), Order::Lsf),
+                        Integer::from_digits(&denominator.to_u64_digits(), Order::Lsf),
+                    ));
+                    for negative in [false, true] {
+                        let value = Rational::from_bigint_fraction(
+                            BigInt::from_biguint(if negative { Minus } else { Plus }, numerator.clone()),
+                            denominator.clone(),
+                        ).unwrap();
+                        let bounds = value.to_f64_enclosure();
+                        if (-1021..=1021).contains(&exponent) {
+                            assert!(bounds.is_some(), "lost a supported normal enclosure");
+                        }
+                        if let Some([lower, upper]) = bounds {
+                            assert!(lower.is_finite() && upper.is_finite());
+                            let exact = if negative { -gmp_magnitude.clone() } else { gmp_magnitude.clone() };
+                            assert!(GmpRational::from_f64(lower).unwrap() <= exact);
+                            assert!(GmpRational::from_f64(upper).unwrap() >= exact);
+                        }
+                        checked += 1;
+                    }
+                }
+            }
+        }
+        assert_eq!(checked, 1408);
+    }
+
+    #[test]
     fn f64_enclosure_contains_wide_non_dyadic_rationals() {
         let wide = BigUint::one() << 4096_usize;
         let below_one = Rational::from_bigint_fraction(
