@@ -4,7 +4,6 @@ use hypercurve::{
     RationalQuadraticBezier2, Real,
 };
 use hypercurve::{CubicBezier2, RationalBezier2};
-use hypersolve::AlgebraicRootKind;
 use proptest::prelude::*;
 
 fn r(value: i32) -> Real {
@@ -65,9 +64,14 @@ fn quadratic_point_and_tangent_images_retain_algebraic_coordinate_evidence() {
     assert_eq!(point.x().unwrap().coefficients(), &[r(0), r(0), r(1)]);
     assert!(point.x().unwrap().representation().unwrap().is_valid());
     assert_eq!(point.y().unwrap().coefficients(), &[r(0), r(2), r(0)]);
-    assert_eq!(
-        point.y().unwrap().representation().unwrap().kind,
-        AlgebraicRootKind::IsolatingInterval
+    assert!(
+        point
+            .y()
+            .unwrap()
+            .representation()
+            .unwrap()
+            .exact_point_witness()
+            .is_none()
     );
 
     assert_eq!(tangent.status(), BezierAlgebraicImageStatus::Transformed);
@@ -223,7 +227,6 @@ fn rational_point_image_transforms_exact_real_linear_root() {
 
     assert_eq!(point.status(), BezierAlgebraicImageStatus::Transformed);
     assert!(point.parameter().is_valid());
-    assert_eq!(point.parameter().kind, AlgebraicRootKind::IsolatingInterval);
     let exact_parameter = point
         .parameter()
         .exact_point_witness()
@@ -236,8 +239,6 @@ fn rational_point_image_transforms_exact_real_linear_root() {
     };
     let x = point.x().unwrap().representation().unwrap();
     let y = point.y().unwrap().representation().unwrap();
-    assert_eq!(x.kind, AlgebraicRootKind::IsolatingInterval);
-    assert_eq!(y.kind, AlgebraicRootKind::IsolatingInterval);
     assert!(x.exact_point_witness().is_none());
     assert!(y.exact_point_witness().is_none());
     assert_eq!(x.interval.lower, x.interval.upper);

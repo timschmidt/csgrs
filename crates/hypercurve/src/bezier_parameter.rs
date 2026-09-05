@@ -5601,7 +5601,6 @@ mod conversion_tests {
                 exact_root: None,
                 distinct_root_count: 1,
             },
-            kind: hypersolve::AlgebraicRootKind::IsolatingInterval,
             validation: hypersolve::AlgebraicRootValidationReport {
                 status: hypersolve::AlgebraicRootValidationStatus::Valid,
                 message: None,

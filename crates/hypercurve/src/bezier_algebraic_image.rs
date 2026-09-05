@@ -14,7 +14,7 @@
 use hyperreal::{Real, RealSign};
 use hypersolve::{
     AlgebraicRootArithmeticOp, AlgebraicRootArithmeticReport, AlgebraicRootArithmeticStatus,
-    AlgebraicRootKind, AlgebraicRootPolynomialImageReport, AlgebraicRootPolynomialImageStatus,
+    AlgebraicRootPolynomialImageReport, AlgebraicRootPolynomialImageStatus,
     AlgebraicRootRationalImageReport, AlgebraicRootRepresentation, AlgebraicRootValidationReport,
     AlgebraicRootValidationStatus, IsolatedRootInterval, SymbolId,
     arithmetic_algebraic_root_representations,
@@ -133,9 +133,9 @@ impl BezierAlgebraicCoordinateImage {
 mod policy_tests {
     use hyperreal::{Rational, Real};
     use hypersolve::{
-        AlgebraicRootArithmeticOp, AlgebraicRootArithmeticStatus, AlgebraicRootKind,
-        AlgebraicRootRepresentation, AlgebraicRootValidationReport, AlgebraicRootValidationStatus,
-        IsolatedRootInterval, SymbolId,
+        AlgebraicRootArithmeticOp, AlgebraicRootArithmeticStatus, AlgebraicRootRepresentation,
+        AlgebraicRootValidationReport, AlgebraicRootValidationStatus, IsolatedRootInterval,
+        SymbolId,
     };
     use num::{BigInt, BigUint};
 
@@ -164,7 +164,6 @@ mod policy_tests {
                 exact_root: None,
                 distinct_root_count: 1,
             },
-            kind: AlgebraicRootKind::IsolatingInterval,
             validation: AlgebraicRootValidationReport {
                 status: AlgebraicRootValidationStatus::Valid,
                 message: None,
@@ -199,9 +198,8 @@ mod policy_tests {
     }
 
     #[test]
-    fn exact_real_representation_does_not_claim_a_rational_witness_kind() {
+    fn exact_real_representation_preserves_native_point_payloads() {
         let irrational = exact_real_algebraic_representation(&Real::pi());
-        assert_eq!(irrational.kind, AlgebraicRootKind::IsolatingInterval);
         let exact = irrational
             .exact_point_witness()
             .expect("an exact Real representation retains its point");
@@ -209,7 +207,6 @@ mod policy_tests {
         assert!(exact.exact_rational_ref().is_none());
 
         let rational = exact_real_algebraic_representation(&Real::from(3_i8));
-        assert_eq!(rational.kind, AlgebraicRootKind::ExactRationalWitness);
         assert!(
             rational
                 .exact_point_witness()
@@ -1898,7 +1895,6 @@ pub(crate) fn rational_point_image_from_power_basis(
             exact_root: Some(exact_root),
             distinct_root_count: 1,
         };
-        parameter_root.kind = AlgebraicRootKind::ExactRationalWitness;
         validate_parameter_representation(&mut parameter_root, &strict);
     }
     rational_point_image_with_parameter_representation(
@@ -2238,19 +2234,10 @@ pub(crate) fn exact_real_algebraic_representation(value: &Real) -> AlgebraicRoot
             exact_root: Some(value.clone()),
             distinct_root_count: 1,
         },
-        kind: algebraic_root_kind_for_exact_point(Some(value)),
         validation: AlgebraicRootValidationReport {
             status: AlgebraicRootValidationStatus::Valid,
             message: None,
         },
-    }
-}
-
-pub(crate) fn algebraic_root_kind_for_exact_point(exact_root: Option<&Real>) -> AlgebraicRootKind {
-    if exact_root.and_then(Real::exact_rational_ref).is_some() {
-        AlgebraicRootKind::ExactRationalWitness
-    } else {
-        AlgebraicRootKind::IsolatingInterval
     }
 }
 
@@ -2290,10 +2277,9 @@ pub(crate) fn certified_parameter_representation(
         interval: IsolatedRootInterval {
             lower: interval.start().clone(),
             upper: interval.end().clone(),
-            exact_root: exact_root.clone(),
+            exact_root,
             distinct_root_count: parameter.root_count(),
         },
-        kind: algebraic_root_kind_for_exact_point(exact_root.as_ref()),
         validation: AlgebraicRootValidationReport {
             status: AlgebraicRootValidationStatus::Valid,
             message: None,

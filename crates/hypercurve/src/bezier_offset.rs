@@ -6891,16 +6891,12 @@ fn represented_univariate_coordinate(
         }
         coefficients.to_vec()
     };
-    let kind = crate::bezier_algebraic_image::algebraic_root_kind_for_exact_point(
-        interval.exact_root.as_ref(),
-    );
     let mut representation = AlgebraicRootRepresentation {
         constraint_index: provenance.constraint_index,
         symbol: provenance.symbol,
         interval_index: provenance.interval_index,
         polynomial_coefficients: coefficients,
         interval,
-        kind,
         validation: provenance.validation.clone(),
     };
     representation.validation = validate_algebraic_root_representation(
@@ -7010,8 +7006,8 @@ fn represented_tensor_coordinate_refined(
         if let Some(mut interval) = image_interval(&refined_sources, refinement_steps) {
             // A retained exact `Real` expression can collapse interval
             // arithmetic to one non-rational endpoint before its canonical
-            // univariate polynomial has been replayed. Treating that endpoint
-            // as an `ExactRationalWitness` asks Hyperreal to rediscover a deep
+            // univariate polynomial has been replayed. Replaying that endpoint
+            // against the eliminant asks Hyperreal to rediscover a deep
             // eliminant cancellation and can reject otherwise valid evidence.
             // Replace only this degenerate non-rational enclosure with certified
             // dyadic bounds. The tensor-image authority still proves singleton
@@ -7392,9 +7388,6 @@ fn refined_represented_root(
         return source.clone();
     };
     let mut refined = source.clone();
-    refined.kind = crate::bezier_algebraic_image::algebraic_root_kind_for_exact_point(
-        interval.exact_root.as_ref(),
-    );
     refined.interval = interval;
     refined.validation =
         validate_algebraic_root_representation(&refined, hypersolve::PredicatePolicy::STRICT);
@@ -158249,10 +158242,6 @@ mod conversion_tests {
         else {
             panic!("a source-free exact Real scalar must not enter root separation");
         };
-        assert_eq!(
-            constant.kind,
-            hypersolve::AlgebraicRootKind::IsolatingInterval
-        );
         assert_eq!(constant.exact_point_witness(), Some(&Real::pi()));
         let (sources, coordinates) =
             represented_affine_tensor_basis(std::slice::from_ref(&constant))

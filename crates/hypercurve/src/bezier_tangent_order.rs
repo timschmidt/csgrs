@@ -1421,10 +1421,6 @@ mod exact_real_status_tests {
 
         assert_eq!(evidence.sign, Some(Ordering::Greater));
         let scalar = evidence.scalar.expect("the exact Real result is retained");
-        assert_eq!(
-            scalar.kind,
-            hypersolve::AlgebraicRootKind::IsolatingInterval
-        );
         assert_eq!(scalar.exact_point_witness(), Some(&Real::pi()));
     }
 }

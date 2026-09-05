@@ -1816,10 +1816,6 @@ mod endpoint_adjacency_tests {
         let negated = negate_algebraic_root(&value, &CurveContext::STRICT)
             .expect("exact Real negation remains represented");
 
-        assert_eq!(
-            negated.kind,
-            hypersolve::AlgebraicRootKind::IsolatingInterval
-        );
         assert_eq!(negated.exact_point_witness(), Some(&-Real::pi()));
     }
 
