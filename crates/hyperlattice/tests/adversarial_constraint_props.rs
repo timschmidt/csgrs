@@ -1,4 +1,4 @@
-use hyperlattice::{Real, Vector3, ZeroStatus};
+use hyperlattice::{Real, Vector3, ZeroKnowledge};
 use proptest::prelude::*;
 
 fn s(value: i32) -> Real {
@@ -12,7 +12,7 @@ fn point3() -> impl Strategy<Value = Vector3> {
 
 fn nonzero_direction3() -> impl Strategy<Value = Vector3> {
     point3().prop_filter("nonzero direction", |value| {
-        value.dot(value).zero_status() == ZeroStatus::NonZero
+        value.dot(value).zero_status() == ZeroKnowledge::NonZero
     })
 }
 
@@ -33,7 +33,7 @@ proptest! {
         let residual = squared_distance(&point, &point);
 
         prop_assert_eq!(residual.clone(), s(0));
-        prop_assert_eq!(residual.zero_status(), ZeroStatus::Zero);
+        prop_assert_eq!(residual.zero_status(), ZeroKnowledge::Zero);
     }
 
     #[test]
@@ -54,7 +54,7 @@ proptest! {
 
         prop_assert_eq!(residual.clone(), Vector3::zero());
         for lane in 0..3 {
-            prop_assert_eq!(residual[lane].zero_status(), ZeroStatus::Zero);
+            prop_assert_eq!(residual[lane].zero_status(), ZeroKnowledge::Zero);
         }
     }
 
@@ -65,7 +65,7 @@ proptest! {
         let residual = lhs.dot(&rhs);
 
         prop_assert_eq!(residual.clone(), s(0));
-        prop_assert_eq!(residual.zero_status(), ZeroStatus::Zero);
+        prop_assert_eq!(residual.zero_status(), ZeroKnowledge::Zero);
     }
 
     #[test]
@@ -75,6 +75,6 @@ proptest! {
         let residual = (point - projection).dot(&axis);
 
         prop_assert_eq!(residual.clone(), s(0));
-        prop_assert_eq!(residual.zero_status(), ZeroStatus::Zero);
+        prop_assert_eq!(residual.zero_status(), ZeroKnowledge::Zero);
     }
 }

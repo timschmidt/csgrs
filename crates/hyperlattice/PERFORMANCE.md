@@ -6,6 +6,92 @@ dense exact-rational 4x4 determinant dispatch and rejected a zero-mask multiplic
 experiment. It also retained focused exact-rational sentinels and regenerated the
 complete dispatch trace so future changes have a reproducible guardrail.
 
+## Native scalar API ownership (2026-09-05)
+
+Scalar arithmetic and structural facts now use Hyperreal's native API and type
+names. Hyperlattice deletes 36 scalar forwarding functions, including their
+abort-specific variants, rather than retaining compatibility aliases. The two
+remaining scalar functions, `reciprocal_checked` and `reciprocal_ref_checked`,
+have a distinct contract: they reject structurally unknown divisors without
+refinement. Native `Real::inverse` may refine to prove a divisor nonzero.
+
+Native `ln`, `log10`, `asin`, and `acos` already own their exact domain checks;
+the duplicate lattice preflights are gone. Cancellation is attached directly
+with `Real::abort` before scalar arithmetic. Structural `zero_status` neither
+refines nor observes cancellation, so its abort wrapper, 21 identical private
+matrix helpers, and eight no-op public triangular abort methods are deleted.
+General matrix operations retain their genuinely cancellable arithmetic paths.
+No replacement interface or persistent cache is added. Production source falls
+by 689 lines; `src/scalar.rs` falls from 347 to 64 lines.
+
+The measurements below compare frozen release executables against a snapshot
+taken after canonical type renaming but before these deletions. Both use the
+same unchanged Hyperreal source, compiler, feature selection, and build target.
+The `hyperreal` fixtures construct exact inputs from `f64`; the
+`hyperreal-rational` fixtures parse their decimal strings as exact rationals.
+Comparisons are within each fixture family, not between those representations.
+Timing is pinned to CPU 7 of a Ryzen 7 5800X3D, with compilation and test workers
+stopped. Criterion's automatic change reports are not used: each result is the
+median of separately recorded process point estimates for that exact row.
+
+Three alternating scalar pairs use 40 samples, 0.1 seconds of warm-up, and
+0.5 seconds of measurement per row. The native `asin` rows improve 31.8-32.9%,
+`acos` 15.6-18.3%, integer powers 10.4-11.5%, and structural zero queries
+10.2-12.3%. The `ln` and `log10` rows improve 2.9-12.0%; explicitly attached
+abort variants improve 5.1-27.0%. Unchanged `exp` controls move +0.2% and +1.6%.
+These are focused construction/query measurements, not end-to-end geometry
+performance claims.
+
+Five longer alternating matrix pairs use 100 samples, 0.5 seconds of warm-up,
+and 2 seconds of measurement per row. The complete retained medians are:
+
+| Checked abort operation | f64-derived exact input | Decimal-rational input |
+| --- | ---: | ---: |
+| Matrix3 inverse | 5.0295 -> 5.0359 us (+0.1%) | 2.8801 -> 2.9354 us (+1.9%) |
+| Matrix3 right division | 23.792 -> 24.582 us (+3.3%) | 6.1677 -> 6.0344 us (-2.2%) |
+| Matrix4 inverse | 7.5360 -> 7.6492 us (+1.5%) | 6.4780 -> 6.3463 us (-2.0%) |
+| Matrix4 right division | 37.442 -> 38.491 us (+2.8%) | 9.9092 -> 9.7470 us (-1.6%) |
+
+The initial two short pairs suggested 4.9-6.7% slower f64-derived division;
+three longer pairs then had a noisy +5.0% rational Matrix3 inverse row. All five
+longer pairs are retained, including their outliers; the table does not claim
+uniform flatness or a matrix speedup. An isolated `checked_pivot` forced-inlining
+trial did not establish an overall improvement and was not applied. The native
+scalar wins and machinery deletion are retained with the small measured matrix
+tradeoff explicitly open for further optimization.
+
+The matched counting-allocator harness checks four scalar operations in both
+construction and explicit `f64` export modes, plus checked Matrix3/Matrix4
+inversion with exact identity assertions. All 24 baseline/candidate comparisons
+at 64 and 256 iterations have identical allocation counts, allocated bytes,
+extra peak live bytes, end-live growth, and checksums. Construction-only scalar
+checksums summarize structural zero tags, not independently proven values;
+export rows and the functional tests cover the arithmetic results. Scalar
+end-live growth is zero. Matrix lifetime-cache setup is constant across iteration
+counts, not a per-operation leak. This small harness does not replace full slow-fixture
+memory accounting.
+
+The unchanged regression-sentinel executable is essentially size-neutral:
+text/data/bss total 5,805,199 -> 5,805,259 bytes. The matched memory executable
+shrinks 20,500 loaded-section bytes. Mathbench shrinks 147,424 loaded-section
+bytes, but also loses obsolete benchmark rows; that number is not a library-only
+size improvement.
+
+Final local gates pass 203 default all-target tests, 205 all-feature all-target
+tests, 203 all-feature release library/integration tests, and the doctest.
+Default and all-feature strict Clippy, warning-denied rustdoc, formatting, and
+all fuzz-target builds pass. A deterministic scalar fuzz smoke completes 1,024
+runs with inputs up to 64 bytes. Its initial sandbox run hit LeakSanitizer's
+ptrace restriction; the host rerun passes without disabling the sanitizer.
+The representation oracle additionally verifies that native domain operations
+preserve every invalid certificate exposed by all 22 finite scalar recipes,
+four signed scales, and both cancellation states.
+
+The cross-crate evidence is recorded in Hypercurve's
+`benchmarks/checkpoints/2026-09-05-native-scalar-api.json`. Historical sections
+below describe earlier experiments; references to scalar facades there do not
+describe the current public API.
+
 ## Reference-to-code map
 
 | Reference | Applicable idea | Result in `hyperlattice` |

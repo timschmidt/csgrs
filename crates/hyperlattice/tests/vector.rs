@@ -4,10 +4,10 @@ use std::mem::{align_of, size_of};
 
 use common::{abort_signal, frac, r, unknown_zero};
 use hyperlattice::{
-    Axis2, Problem, RationalStorageClass, RealExactSetDenominatorKind,
-    RealExactSetDyadicExponentClass, RealExactSetSignPattern, RealSymbolicDependencyMask,
-    SharedScaleVec, SignedAxis2, Vector2, Vector3, Vector4, Vector4HomogeneousKind,
-    VectorSharedScaleFacts, ZeroStatus, one, pi, zero,
+    Axis2, Problem, RationalStorageClass, Real, RealExactSetDenominatorKind,
+    RealExactSetDyadicExponentClass, RealExactSetSignPattern, SharedScaleVec, SignedAxis2,
+    SymbolicDependencyMask, Vector2, Vector3, Vector4, Vector4HomogeneousKind,
+    VectorSharedScaleFacts, ZeroKnowledge,
 };
 
 #[test]
@@ -16,7 +16,7 @@ fn vector_dot_and_normalize() {
     assert_eq!(v.dot(&v), r(25));
 
     let normalized = v.normalize().unwrap();
-    assert_eq!(normalized.dot(&normalized), one());
+    assert_eq!(normalized.dot(&normalized), Real::one());
 
     let signal = abort_signal();
     assert_eq!(v.dot_with_abort(&v, &signal), r(25));
@@ -25,7 +25,7 @@ fn vector_dot_and_normalize() {
         v.normalize_checked_with_abort(&signal)
             .unwrap()
             .dot(&normalized),
-        one()
+        Real::one()
     );
 }
 
@@ -37,11 +37,14 @@ fn vector2_structural_facts_expose_zero_mask_without_topology() {
     let x_axis_facts = x_axis.structural_facts();
     assert_eq!(
         x_axis_facts.component_zero,
-        [ZeroStatus::NonZero, ZeroStatus::Zero]
+        [ZeroKnowledge::NonZero, ZeroKnowledge::Zero]
     );
     assert_eq!(Axis2::X.index(), 0);
     assert_eq!(Axis2::Y.bit(), 0b10);
-    assert_eq!(x_axis_facts.component_zero(Axis2::X), ZeroStatus::NonZero);
+    assert_eq!(
+        x_axis_facts.component_zero(Axis2::X),
+        ZeroKnowledge::NonZero
+    );
     assert_eq!(x_axis_facts.known_axis, Some(Axis2::X));
     assert_eq!(x_axis_facts.known_signed_axis, None);
     assert!(!x_axis_facts.is_signed_unit_axis());
@@ -52,7 +55,10 @@ fn vector2_structural_facts_expose_zero_mask_without_topology() {
     assert_eq!(x_axis_facts.known_nonzero_count(), 1);
     assert_eq!(x_axis_facts.unknown_zero_count(), 0);
     assert!(x_axis_facts.symbolic_dependencies.is_empty());
-    assert_eq!(x_axis_facts.squared_norm_zero_status(), ZeroStatus::NonZero);
+    assert_eq!(
+        x_axis_facts.squared_norm_zero_status(),
+        ZeroKnowledge::NonZero
+    );
     assert!(!x_axis_facts.has_unknown_zero());
     assert!(!x_axis_facts.known_zero);
     assert!(x_axis_facts.exact.is_nonempty_exact_rational());
@@ -61,58 +67,58 @@ fn vector2_structural_facts_expose_zero_mask_without_topology() {
     let zero_facts = zero_vector.structural_facts();
     assert_eq!(
         zero_facts.component_zero,
-        [ZeroStatus::Zero, ZeroStatus::Zero]
+        [ZeroKnowledge::Zero, ZeroKnowledge::Zero]
     );
     assert_eq!(zero_facts.known_axis, None);
     assert_eq!(zero_facts.known_signed_axis, None);
     assert_eq!(zero_facts.known_zero_mask(), 0b11);
     assert_eq!(zero_facts.known_nonzero_mask(), 0);
     assert_eq!(zero_facts.known_zero_count(), 2);
-    assert_eq!(zero_facts.squared_norm_zero_status(), ZeroStatus::Zero);
+    assert_eq!(zero_facts.squared_norm_zero_status(), ZeroKnowledge::Zero);
     assert!(zero_facts.known_zero);
 }
 
 #[test]
 fn vector_structural_facts_summarize_symbolic_dependencies() {
-    let vector2 = Vector2::new([pi(), frac(1, 5) * pi().sin()]);
+    let vector2 = Vector2::new([Real::pi(), frac(1, 5) * Real::pi().sin()]);
     let facts2 = vector2.structural_facts();
     assert!(
         facts2
             .symbolic_dependencies
-            .contains(RealSymbolicDependencyMask::PI)
+            .contains(SymbolicDependencyMask::PI)
     );
     assert!(
         !facts2
             .symbolic_dependencies
-            .contains(RealSymbolicDependencyMask::LOG)
+            .contains(SymbolicDependencyMask::LOG)
     );
 
     let log_two = r(2).ln().unwrap();
-    let vector3 = Vector3::new([log_two, zero(), r(7)]);
+    let vector3 = Vector3::new([log_two, Real::zero(), r(7)]);
     let facts3 = vector3.structural_facts();
     assert!(
         facts3
             .symbolic_dependencies
-            .contains(RealSymbolicDependencyMask::LOG)
+            .contains(SymbolicDependencyMask::LOG)
     );
     assert!(
         !facts3
             .symbolic_dependencies
-            .contains(RealSymbolicDependencyMask::TRIG)
+            .contains(SymbolicDependencyMask::TRIG)
     );
 
-    let trig = (frac(1, 5) * pi()).sin();
-    let vector4 = Vector4::new([trig, zero(), r(1), zero()]);
+    let trig = (frac(1, 5) * Real::pi()).sin();
+    let vector4 = Vector4::new([trig, Real::zero(), r(1), Real::zero()]);
     let facts4 = vector4.structural_facts();
     assert!(
         facts4
             .symbolic_dependencies
-            .contains(RealSymbolicDependencyMask::TRIG)
+            .contains(SymbolicDependencyMask::TRIG)
     );
     assert!(
         facts4
             .symbolic_dependencies
-            .contains(RealSymbolicDependencyMask::PI)
+            .contains(SymbolicDependencyMask::PI)
     );
 }
 
@@ -124,7 +130,7 @@ fn vector_facts_classify_squared_norm_zero_status_without_self_dot() {
     assert_eq!(vector3_facts.unknown_zero_count(), 1);
     assert_eq!(
         vector3_facts.squared_norm_zero_status(),
-        ZeroStatus::NonZero
+        ZeroKnowledge::NonZero
     );
     assert!(vector3.normalize_checked().is_ok());
 
@@ -132,7 +138,7 @@ fn vector_facts_classify_squared_norm_zero_status_without_self_dot() {
     let unknown_facts = unknown_vector.structural_facts();
     assert_eq!(
         unknown_facts.squared_norm_zero_status(),
-        ZeroStatus::Unknown
+        ZeroKnowledge::Unknown
     );
     assert_eq!(
         unknown_vector.normalize_checked(),
@@ -142,16 +148,16 @@ fn vector_facts_classify_squared_norm_zero_status_without_self_dot() {
     let zero_vector = Vector4::zero();
     assert_eq!(
         zero_vector.structural_facts().squared_norm_zero_status(),
-        ZeroStatus::Zero
+        ZeroKnowledge::Zero
     );
     assert_eq!(zero_vector.normalize_checked(), Err(Problem::DivideByZero));
 }
 
 #[test]
 fn vector2_structural_facts_certify_signed_unit_axes() {
-    let pos_x = Vector2::new([one(), zero()]);
-    let neg_y = Vector2::new([zero(), -one()]);
-    let scaled_axis = Vector2::new([r(5), zero()]);
+    let pos_x = Vector2::new([Real::one(), Real::zero()]);
+    let neg_y = Vector2::new([Real::zero(), -Real::one()]);
+    let scaled_axis = Vector2::new([r(5), Real::zero()]);
 
     let pos_x_facts = pos_x.structural_facts();
     assert_eq!(pos_x_facts.known_axis, Some(Axis2::X));
@@ -159,14 +165,20 @@ fn vector2_structural_facts_certify_signed_unit_axes() {
     assert!(pos_x_facts.is_signed_unit_axis());
     assert_eq!(pos_x_facts.known_signed_axis.unwrap().axis(), Axis2::X);
     assert!(!pos_x_facts.known_signed_axis.unwrap().is_negative());
-    assert_eq!(pos_x_facts.known_signed_axis.unwrap().sign_real(), one());
+    assert_eq!(
+        pos_x_facts.known_signed_axis.unwrap().sign_real(),
+        Real::one()
+    );
 
     let neg_y_facts = neg_y.structural_facts();
     assert_eq!(neg_y_facts.known_axis, Some(Axis2::Y));
     assert_eq!(neg_y_facts.known_signed_axis, Some(SignedAxis2::NegY));
     assert_eq!(neg_y_facts.known_signed_axis.unwrap().axis(), Axis2::Y);
     assert!(neg_y_facts.known_signed_axis.unwrap().is_negative());
-    assert_eq!(neg_y_facts.known_signed_axis.unwrap().sign_real(), -one());
+    assert_eq!(
+        neg_y_facts.known_signed_axis.unwrap().sign_real(),
+        -Real::one()
+    );
 
     let scaled_facts = scaled_axis.structural_facts();
     assert_eq!(scaled_facts.known_axis, Some(Axis2::X));
@@ -213,11 +225,15 @@ fn vector_exact_facts_carry_common_scale_without_denominator_access() {
 
 #[test]
 fn vector3_and_vector4_structural_facts_expose_sparse_masks_and_homogeneous_kind() {
-    let vector3 = Vector3::new([zero(), r(5), zero()]);
+    let vector3 = Vector3::new([Real::zero(), r(5), Real::zero()]);
     let facts3 = vector3.structural_facts();
     assert_eq!(
         facts3.component_zero,
-        [ZeroStatus::Zero, ZeroStatus::NonZero, ZeroStatus::Zero]
+        [
+            ZeroKnowledge::Zero,
+            ZeroKnowledge::NonZero,
+            ZeroKnowledge::Zero
+        ]
     );
     assert_eq!(facts3.known_zero_mask, 0b101);
     assert_eq!(facts3.known_nonzero_mask, 0b010);
@@ -230,7 +246,7 @@ fn vector3_and_vector4_structural_facts_expose_sparse_masks_and_homogeneous_kind
     assert!(!facts3.known_zero);
     assert!(facts3.exact.has_integer_grid_schedule());
 
-    let point = Vector4::new([r(3), zero(), r(4), one()]);
+    let point = Vector4::new([r(3), Real::zero(), r(4), Real::one()]);
     let point_facts = point.structural_facts();
     assert_eq!(point_facts.homogeneous, Vector4HomogeneousKind::Point);
     assert_eq!(point_facts.known_zero_mask, 0b0010);
@@ -238,7 +254,7 @@ fn vector3_and_vector4_structural_facts_expose_sparse_masks_and_homogeneous_kind
     assert_eq!(point_facts.known_axis_index, None);
     assert_eq!(point_facts.known_zero_count(), 1);
 
-    let direction = Vector4::new([zero(), one(), zero(), zero()]);
+    let direction = Vector4::new([Real::zero(), Real::one(), Real::zero(), Real::zero()]);
     let direction_facts = direction.structural_facts();
     assert_eq!(
         direction_facts.homogeneous,
@@ -248,7 +264,7 @@ fn vector3_and_vector4_structural_facts_expose_sparse_masks_and_homogeneous_kind
     assert_eq!(direction_facts.known_zero_mask, 0b1101);
     assert_eq!(direction_facts.one_mask, 0b0010);
 
-    let negative_weight = Vector4::new([zero(), zero(), zero(), -one()]);
+    let negative_weight = Vector4::new([Real::zero(), Real::zero(), Real::zero(), -Real::one()]);
     let negative_facts = negative_weight.structural_facts();
     assert_eq!(negative_facts.homogeneous, Vector4HomogeneousKind::Unknown);
     assert_eq!(negative_facts.known_axis_index, Some(3));
@@ -383,7 +399,7 @@ fn owned_shared_scale_vectors_preserve_common_scale_across_lifetimes() {
         [frac(1, 4), frac(3, 4), frac(-5, 4)]
     );
 
-    let zero_units = Vector4::new([zero(), one(), -one(), zero()])
+    let zero_units = Vector4::new([Real::zero(), Real::one(), -Real::one(), Real::zero()])
         .into_shared_scale()
         .expect("signed unit coordinates are integer-grid shared scale");
     assert!(zero_units.facts().exact.has_integer_grid_schedule());
@@ -438,8 +454,9 @@ fn shared_scale_vectors_use_known_exact_dot_products() {
     assert_eq!(left.squared_norm(), frac(51, 36));
     assert_eq!(left.as_view().squared_norm(), frac(51, 36));
 
-    let zeros = SharedScaleVec::from_components([zero(), zero()]).expect("zero grid is shared");
-    assert_eq!(zeros.dot(&zeros), zero());
+    let zeros =
+        SharedScaleVec::from_components([Real::zero(), Real::zero()]).expect("zero grid is shared");
+    assert_eq!(zeros.dot(&zeros), Real::zero());
     assert!(zeros.facts().exact.has_signed_unit_schedule());
 
     let dyadic_left =
@@ -472,7 +489,7 @@ fn shared_scale_vectors_use_known_exact_wedge_products() {
         .expect("elevenths share a reduced denominator");
     let parallel_right = SharedScaleVec::from_components([frac(-5, 13), frac(-10, 13)])
         .expect("thirteenths share a reduced denominator");
-    assert_eq!(parallel_left.wedge(&parallel_right), zero());
+    assert_eq!(parallel_left.wedge(&parallel_right), Real::zero());
 
     let dyadic_left = SharedScaleVec::from_components([frac(3, 8), frac(-5, 8)])
         .expect("eighths share a dyadic denominator");
@@ -514,12 +531,15 @@ fn shared_scale_vectors_use_known_exact_cross_products() {
             .is_some()
     );
 
-    let axis_left = SharedScaleVec::from_components([one(), zero(), zero()])
+    let axis_left = SharedScaleVec::from_components([Real::one(), Real::zero(), Real::zero()])
         .expect("integer axis vector has shared scale");
-    let axis_right = SharedScaleVec::from_components([zero(), one(), zero()])
+    let axis_right = SharedScaleVec::from_components([Real::zero(), Real::one(), Real::zero()])
         .expect("integer axis vector has shared scale");
     let axis_cross = axis_left.cross(&axis_right);
-    assert_eq!(axis_cross, Vector3::new([zero(), zero(), one()]));
+    assert_eq!(
+        axis_cross,
+        Vector3::new([Real::zero(), Real::zero(), Real::one()])
+    );
     assert!(axis_cross.into_shared_scale().is_some());
 }
 
@@ -579,7 +599,7 @@ fn vector_affine_aggregate_helpers_keep_components_in_hyperreal_space() {
         Some([2.0, 4.0, 6.0])
     );
     assert_eq!(
-        Vector3::weighted_sum(&[origin, target], &[one(), r(2)])
+        Vector3::weighted_sum(&[origin, target], &[Real::one(), r(2)])
             .unwrap()
             .to_f64_array_lossy(),
         Some([8.0, 16.0, 24.0])
@@ -590,19 +610,19 @@ fn vector_affine_aggregate_helpers_keep_components_in_hyperreal_space() {
 
 #[test]
 fn vector3_checked_basis_and_unit_cross_are_owned_lattice_helpers() {
-    let x = Vector3::new([one(), zero(), zero()]);
-    let y = Vector3::new([zero(), one(), zero()]);
-    let z = Vector3::new([zero(), zero(), one()]);
+    let x = Vector3::new([Real::one(), Real::zero(), Real::zero()]);
+    let y = Vector3::new([Real::zero(), Real::one(), Real::zero()]);
+    let z = Vector3::new([Real::zero(), Real::zero(), Real::one()]);
 
     assert_eq!(x.unit_cross_checked(&y).unwrap(), z);
     assert_eq!(x.unit_cross_checked(&x), Err(Problem::DivideByZero));
 
     let (u, v) = x.orthonormal_basis_checked().unwrap();
-    assert_eq!(u.dot(&x), zero());
-    assert_eq!(v.dot(&x), zero());
-    assert_eq!(u.dot(&v), zero());
-    assert_eq!(u.dot(&u), one());
-    assert_eq!(v.dot(&v), one());
+    assert_eq!(u.dot(&x), Real::zero());
+    assert_eq!(v.dot(&x), Real::zero());
+    assert_eq!(u.dot(&v), Real::zero());
+    assert_eq!(u.dot(&u), Real::one());
+    assert_eq!(v.dot(&v), Real::one());
     assert_eq!(u.cross(&v), x);
     assert_eq!(
         Vector3::zero().orthonormal_basis_checked(),
@@ -624,10 +644,10 @@ fn checked_vector_operations_reject_zero_divisors() {
     let zero_vector: Vector3 = Vector3::zero();
 
     assert_eq!(zero_vector.clone().normalize(), Err(Problem::DivideByZero));
-    assert_eq!(vector.clone() / zero(), Err(Problem::DivideByZero));
+    assert_eq!(vector.clone() / Real::zero(), Err(Problem::DivideByZero));
     assert_eq!(zero_vector.normalize_checked(), Err(Problem::DivideByZero));
     assert_eq!(
-        vector.clone().div_scalar_checked(zero()),
+        vector.clone().div_scalar_checked(Real::zero()),
         Err(Problem::DivideByZero)
     );
     assert_eq!(

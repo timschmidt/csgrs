@@ -1,11 +1,11 @@
 mod common;
 
 use common::{frac, r};
-use hyperlattice::{Complex, Problem, i, zero};
+use hyperlattice::{Complex, Problem, Real};
 
 #[test]
 fn complex_i_squared() {
-    assert_eq!((i() ^ 2).unwrap(), Complex::new(r(-1), r(0)));
+    assert_eq!((Complex::i() ^ 2).unwrap(), Complex::new(r(-1), r(0)));
 }
 
 #[test]
@@ -68,7 +68,7 @@ fn checked_complex_operations_reject_zero_denominators() {
         value.clone() / zero_complex.clone(),
         Err(Problem::DivideByZero)
     );
-    assert_eq!(value.clone() / zero(), Err(Problem::DivideByZero));
+    assert_eq!(value.clone() / Real::zero(), Err(Problem::DivideByZero));
     assert_eq!(zero_complex.clone().powi(-1), Err(Problem::DivideByZero));
     assert_eq!(
         zero_complex.clone().powi_checked(0),
@@ -79,7 +79,7 @@ fn checked_complex_operations_reject_zero_denominators() {
         Err(Problem::DivideByZero)
     );
     assert_eq!(
-        value.clone().div_real_checked(zero()),
+        value.clone().div_real_checked(Real::zero()),
         Err(Problem::DivideByZero)
     );
     assert_eq!(

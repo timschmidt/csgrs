@@ -20,7 +20,7 @@ fn scalar_owned_and_borrowed_paths_match_for_adversarial_values() {
         assert_eq!(&left + &right, left.clone() + right.clone());
         assert_eq!(&left - &right, left.clone() - right.clone());
         assert_eq!(&left * &right, left.clone() * right.clone());
-        if right.zero_status() == hyperlattice::ZeroStatus::NonZero {
+        if right.zero_status() == hyperlattice::ZeroKnowledge::NonZero {
             assert_eq!(
                 (&left / &right).unwrap(),
                 (left.clone() / right.clone()).unwrap()

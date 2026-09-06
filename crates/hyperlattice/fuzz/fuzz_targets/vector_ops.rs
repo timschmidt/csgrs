@@ -11,7 +11,7 @@
 use std::sync::{Arc, atomic::AtomicBool};
 
 use arbitrary::Arbitrary;
-use hyperlattice::{Real, Vector3, Vector4, ZeroStatus};
+use hyperlattice::{Real, Vector3, Vector4, ZeroKnowledge};
 use libfuzzer_sys::fuzz_target;
 
 #[derive(Debug)]
@@ -130,7 +130,7 @@ fn vector_fuzz(input: Input) {
     for i in 0..3 {
         assert_ne!(
             zero3[i].zero_status(),
-            ZeroStatus::NonZero,
+            ZeroKnowledge::NonZero,
             "Vector3 component {i} of v + (-v) must be within error bounds of zero"
         );
     }
@@ -186,7 +186,7 @@ fn vector_fuzz(input: Input) {
     for i in 0..4 {
         assert_ne!(
             zero4[i].zero_status(),
-            ZeroStatus::NonZero,
+            ZeroKnowledge::NonZero,
             "Vector4 component {i} of v + (-v) must be within error bounds of zero"
         );
     }

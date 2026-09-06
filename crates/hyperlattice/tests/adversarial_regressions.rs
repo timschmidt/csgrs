@@ -3,7 +3,7 @@ mod common;
 use common::{frac, r, unknown_zero};
 use hyperlattice::{
     Complex, HomogeneousLine3, Matrix3, Matrix4, Point3, Problem, ProjectivePlane3, Real, Vector3,
-    Vector4, ZeroStatus,
+    Vector4, ZeroKnowledge,
 };
 
 #[test]
@@ -48,7 +48,7 @@ fn hidden_singular_matrix_by_symbolic_cancellation_is_detected() {
         [r(0), r(0), r(1)],
     ]);
 
-    assert_eq!(matrix.determinant().zero_status(), ZeroStatus::Zero);
+    assert_eq!(matrix.determinant().zero_status(), ZeroKnowledge::Zero);
     assert!(matches!(
         matrix.inverse_checked(),
         Err(Problem::DivideByZero | Problem::UnknownZero)
@@ -97,7 +97,7 @@ fn homogeneous_transform_helpers_match_direct_multiplication_for_points_and_dire
     );
     assert_eq!(
         transform.transform_vec4_direction(&direction)[3].zero_status(),
-        ZeroStatus::Zero
+        ZeroKnowledge::Zero
     );
 }
 
@@ -123,7 +123,7 @@ fn algebraic_line_plane_intersections_replay_exact_incidence() {
 
             assert_eq!(
                 intersection.plane_expression(&plane).zero_status(),
-                ZeroStatus::Zero
+                ZeroKnowledge::Zero
             );
         }
     }

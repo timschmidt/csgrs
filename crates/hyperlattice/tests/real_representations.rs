@@ -162,6 +162,55 @@ fn structural_kind_index(kind: StructuralKind) -> usize {
     }
 }
 
+#[test]
+fn native_scalar_domains_keep_invalid_certificates_across_all_representations() {
+    use hyperlattice::DomainStatus;
+    use std::sync::Arc;
+    use std::sync::atomic::{AtomicBool, Ordering};
+
+    for case in representation_cases() {
+        for scale in [-10, -1, 1, 10] {
+            let value = &case.value * &Real::from(scale);
+            let domains = value.domain_facts();
+            for active in [false, true] {
+                let signal = Arc::new(AtomicBool::new(active));
+                let mut input = value.clone();
+                input.abort(signal.clone());
+                if domains.log == DomainStatus::Invalid {
+                    assert_eq!(
+                        input.clone().ln(),
+                        Err(hyperlattice::Problem::NotANumber),
+                        "ln: {}, scale {scale}, abort {active}",
+                        case.certificate
+                    );
+                    assert_eq!(
+                        input.clone().log10(),
+                        Err(hyperlattice::Problem::NotANumber),
+                        "log10: {}, scale {scale}, abort {active}",
+                        case.certificate
+                    );
+                }
+                if domains.asin_acos == DomainStatus::Invalid {
+                    assert_eq!(
+                        input.clone().asin(),
+                        Err(hyperlattice::Problem::NotANumber),
+                        "asin: {}, scale {scale}, abort {active}",
+                        case.certificate
+                    );
+                    assert_eq!(
+                        input.acos(),
+                        Err(hyperlattice::Problem::NotANumber),
+                        "acos: {}, scale {scale}, abort {active}",
+                        case.certificate
+                    );
+                }
+                // The scalar does not mutate the caller's cancellation flag.
+                assert_eq!(signal.load(Ordering::Relaxed), active);
+            }
+        }
+    }
+}
+
 fn assert_same_real(left: &Real, right: &Real, context: &str) {
     if matches!(
         left.certified_eq_until(right, -160),

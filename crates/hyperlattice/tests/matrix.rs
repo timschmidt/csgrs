@@ -3,8 +3,8 @@ mod common;
 use common::{abort_signal, frac, r, unknown_zero};
 use hyperlattice::{
     Matrix3, Matrix3TransformKind, Matrix4, Matrix4TransformKind, MatrixDeterminantScheduleHint,
-    Point3, Problem, Real, RealSign, RealSymbolicDependencyMask, SignedAxis4, Vector3, Vector4,
-    ZeroStatus, zero,
+    Point3, Problem, Real, RealSign, SignedAxis4, SymbolicDependencyMask, Vector3, Vector4,
+    ZeroKnowledge,
 };
 
 fn assert_singular_error<T: std::fmt::Debug>(result: Result<T, Problem>) {
@@ -178,7 +178,7 @@ fn matrix_structural_facts_expose_transform_kind_provenance() {
     let affine3 = Matrix3::new([
         [r(2), r(1), r(3)],
         [r(4), r(5), r(6)],
-        [zero(), zero(), r(1)],
+        [Real::zero(), Real::zero(), r(1)],
     ]);
     assert_eq!(
         affine3.structural_facts().transform_kind,
@@ -203,10 +203,10 @@ fn matrix_structural_facts_expose_transform_kind_provenance() {
     );
 
     let projective4 = Matrix4::new([
-        [r(1), zero(), zero(), zero()],
-        [zero(), r(1), zero(), zero()],
-        [zero(), zero(), r(1), zero()],
-        [r(1), zero(), zero(), r(1)],
+        [r(1), Real::zero(), Real::zero(), Real::zero()],
+        [Real::zero(), r(1), Real::zero(), Real::zero()],
+        [Real::zero(), Real::zero(), r(1), Real::zero()],
+        [r(1), Real::zero(), Real::zero(), r(1)],
     ]);
     assert_eq!(
         projective4.structural_facts().transform_kind,
@@ -218,7 +218,7 @@ fn matrix_structural_facts_expose_transform_kind_provenance() {
 fn matrix_structural_facts_expose_zero_lane_certificates() {
     let zero_row = Matrix3::new([
         [r(1), r(2), r(3)],
-        [zero(), zero(), zero()],
+        [Real::zero(), Real::zero(), Real::zero()],
         [r(4), r(5), r(6)],
     ]);
     let row_facts = zero_row.structural_facts();
@@ -234,10 +234,10 @@ fn matrix_structural_facts_expose_zero_lane_certificates() {
     );
 
     let zero_column = Matrix4::new([
-        [r(1), zero(), r(2), r(3)],
-        [r(4), zero(), r(5), r(6)],
-        [r(7), zero(), r(8), r(9)],
-        [r(10), zero(), r(11), r(12)],
+        [r(1), Real::zero(), r(2), r(3)],
+        [r(4), Real::zero(), r(5), r(6)],
+        [r(7), Real::zero(), r(8), r(9)],
+        [r(10), Real::zero(), r(11), r(12)],
     ]);
     let column_facts = zero_column.structural_facts();
     assert_eq!(column_facts.column_is_known_zero(1), Some(true));
@@ -296,10 +296,10 @@ fn matrix4_structural_facts_certify_signed_permutation_rows() {
     );
 
     let duplicate_column = Matrix4::new([
-        [r(1), zero(), zero(), zero()],
-        [r(-1), zero(), zero(), zero()],
-        [zero(), zero(), r(1), zero()],
-        [zero(), zero(), zero(), r(1)],
+        [r(1), Real::zero(), Real::zero(), Real::zero()],
+        [r(-1), Real::zero(), Real::zero(), Real::zero()],
+        [Real::zero(), Real::zero(), r(1), Real::zero()],
+        [Real::zero(), Real::zero(), Real::zero(), r(1)],
     ]);
     let duplicate_facts = duplicate_column.structural_facts();
     assert_eq!(duplicate_facts.signed_permutation_rows, None);
@@ -309,49 +309,49 @@ fn matrix4_structural_facts_certify_signed_permutation_rows() {
 #[test]
 fn matrix_structural_facts_summarize_symbolic_dependencies() {
     let matrix3 = Matrix3::new([
-        [Real::pi(), zero(), zero()],
-        [zero(), r(2).ln().unwrap(), zero()],
-        [zero(), zero(), r(1)],
+        [Real::pi(), Real::zero(), Real::zero()],
+        [Real::zero(), r(2).ln().unwrap(), Real::zero()],
+        [Real::zero(), Real::zero(), r(1)],
     ]);
     let facts3 = matrix3.structural_facts();
     assert!(
         facts3
             .symbolic_dependencies
-            .contains(RealSymbolicDependencyMask::PI)
+            .contains(SymbolicDependencyMask::PI)
     );
     assert!(
         facts3
             .symbolic_dependencies
-            .contains(RealSymbolicDependencyMask::LOG)
+            .contains(SymbolicDependencyMask::LOG)
     );
     assert!(
         !facts3
             .symbolic_dependencies
-            .contains(RealSymbolicDependencyMask::TRIG)
+            .contains(SymbolicDependencyMask::TRIG)
     );
 
     let trig = (frac(1, 5) * Real::pi()).sin();
     let matrix4 = Matrix4::new([
-        [trig, zero(), zero(), zero()],
-        [zero(), Real::e(), zero(), zero()],
-        [zero(), zero(), r(1), zero()],
-        [zero(), zero(), zero(), r(1)],
+        [trig, Real::zero(), Real::zero(), Real::zero()],
+        [Real::zero(), Real::e(), Real::zero(), Real::zero()],
+        [Real::zero(), Real::zero(), r(1), Real::zero()],
+        [Real::zero(), Real::zero(), Real::zero(), r(1)],
     ]);
     let facts4 = matrix4.structural_facts();
     assert!(
         facts4
             .symbolic_dependencies
-            .contains(RealSymbolicDependencyMask::TRIG)
+            .contains(SymbolicDependencyMask::TRIG)
     );
     assert!(
         facts4
             .symbolic_dependencies
-            .contains(RealSymbolicDependencyMask::PI)
+            .contains(SymbolicDependencyMask::PI)
     );
     assert!(
         facts4
             .symbolic_dependencies
-            .contains(RealSymbolicDependencyMask::EXP)
+            .contains(SymbolicDependencyMask::EXP)
     );
 }
 
@@ -359,7 +359,7 @@ fn matrix_structural_facts_summarize_symbolic_dependencies() {
 fn matrix_structural_facts_select_advisory_determinant_schedules() {
     let zero_row = Matrix3::new([
         [r(1), r(2), r(3)],
-        [zero(), zero(), zero()],
+        [Real::zero(), Real::zero(), Real::zero()],
         [r(4), r(5), r(6)],
     ]);
     assert_eq!(
@@ -381,8 +381,8 @@ fn matrix_structural_facts_select_advisory_determinant_schedules() {
 
     let triangular = Matrix3::new([
         [r(2), r(1), r(4)],
-        [zero(), r(3), r(5)],
-        [zero(), zero(), r(7)],
+        [Real::zero(), r(3), r(5)],
+        [Real::zero(), Real::zero(), r(7)],
     ]);
     assert_eq!(
         triangular.structural_facts().determinant_schedule_hint(),
@@ -390,10 +390,10 @@ fn matrix_structural_facts_select_advisory_determinant_schedules() {
     );
 
     let sparse_permutation = Matrix4::new([
-        [zero(), r(2), zero(), zero()],
-        [r(3), zero(), zero(), zero()],
-        [zero(), zero(), zero(), r(5)],
-        [zero(), zero(), r(7), zero()],
+        [Real::zero(), r(2), Real::zero(), Real::zero()],
+        [r(3), Real::zero(), Real::zero(), Real::zero()],
+        [Real::zero(), Real::zero(), Real::zero(), r(5)],
+        [Real::zero(), Real::zero(), r(7), Real::zero()],
     ]);
     assert_eq!(
         sparse_permutation
@@ -755,7 +755,10 @@ fn checked_matrix_inverse_rejects_singular_matrices() {
     assert_singular_error(singular.clone().reciprocal());
     assert_singular_error(singular.clone().powi(-1));
     assert_singular_error(Matrix3::identity() / singular.clone());
-    assert_eq!(Matrix3::identity() / zero(), Err(Problem::DivideByZero));
+    assert_eq!(
+        Matrix3::identity() / Real::zero(),
+        Err(Problem::DivideByZero)
+    );
     assert_singular_error(singular.inverse_checked());
     assert_eq!(
         invertible.clone() * invertible.clone().inverse_checked().unwrap(),
@@ -1090,13 +1093,6 @@ fn matrix4_known_upper_triangular_inverse_matches_matrix_inverse() {
     );
     assert_eq!(matrix.clone().inverse_checked().unwrap(), inverse);
     assert_eq!(
-        matrix
-            .clone()
-            .upper_triangular_inverse_checked_with_abort(&abort_signal())
-            .unwrap(),
-        inverse
-    );
-    assert_eq!(
         matrix.inverse_checked_with_abort(&abort_signal()).unwrap(),
         inverse
     );
@@ -1120,13 +1116,6 @@ fn matrix4_known_lower_triangular_inverse_matches_matrix_inverse() {
     );
     assert_eq!(matrix.clone().inverse_checked().unwrap(), inverse);
     assert_eq!(
-        matrix
-            .clone()
-            .lower_triangular_inverse_checked_with_abort(&abort_signal())
-            .unwrap(),
-        inverse
-    );
-    assert_eq!(
         matrix.inverse_checked_with_abort(&abort_signal()).unwrap(),
         inverse
     );
@@ -1142,11 +1131,6 @@ fn matrix4_known_upper_triangular_inverse_checked_rejects_singular_divisor() {
     ]);
 
     assert_singular_error(matrix.clone().upper_triangular_inverse_checked());
-    assert_singular_error(
-        matrix
-            .clone()
-            .upper_triangular_inverse_checked_with_abort(&abort_signal()),
-    );
     assert_singular_error(matrix.clone().inverse_checked());
     assert_singular_error(matrix.inverse_checked_with_abort(&abort_signal()));
 }
@@ -1161,11 +1145,6 @@ fn matrix4_known_lower_triangular_inverse_checked_rejects_singular_divisor() {
     ]);
 
     assert_singular_error(matrix.clone().lower_triangular_inverse_checked());
-    assert_singular_error(
-        matrix
-            .clone()
-            .lower_triangular_inverse_checked_with_abort(&abort_signal()),
-    );
     assert_singular_error(matrix.clone().inverse_checked());
     assert_singular_error(matrix.inverse_checked_with_abort(&abort_signal()));
 }
@@ -1302,13 +1281,6 @@ fn matrix3_known_upper_triangular_inverse_matches_matrix_inverse() {
     );
     assert_eq!(matrix.clone().inverse_checked().unwrap(), expected);
     assert_eq!(
-        matrix
-            .clone()
-            .upper_triangular_inverse_checked_with_abort(&abort_signal())
-            .unwrap(),
-        expected
-    );
-    assert_eq!(
         matrix.inverse_checked_with_abort(&abort_signal()).unwrap(),
         expected
     );
@@ -1331,13 +1303,6 @@ fn matrix3_known_lower_triangular_inverse_matches_matrix_inverse() {
     );
     assert_eq!(matrix.clone().inverse_checked().unwrap(), expected);
     assert_eq!(
-        matrix
-            .clone()
-            .lower_triangular_inverse_checked_with_abort(&abort_signal())
-            .unwrap(),
-        expected
-    );
-    assert_eq!(
         matrix.inverse_checked_with_abort(&abort_signal()).unwrap(),
         expected
     );
@@ -1348,11 +1313,6 @@ fn matrix3_known_upper_triangular_inverse_checked_rejects_singular_divisor() {
     let matrix = Matrix3::new([[r(2), r(3), r(5)], [r(0), r(0), r(11)], [r(0), r(0), r(13)]]);
 
     assert_singular_error(matrix.clone().upper_triangular_inverse_checked());
-    assert_singular_error(
-        matrix
-            .clone()
-            .upper_triangular_inverse_checked_with_abort(&abort_signal()),
-    );
     assert_singular_error(matrix.clone().inverse_checked());
     assert_singular_error(matrix.inverse_checked_with_abort(&abort_signal()));
 }
@@ -1362,11 +1322,6 @@ fn matrix3_known_lower_triangular_inverse_checked_rejects_singular_divisor() {
     let matrix = Matrix3::new([[r(2), r(0), r(0)], [r(3), r(11), r(0)], [r(5), r(13), r(0)]]);
 
     assert_singular_error(matrix.clone().lower_triangular_inverse_checked());
-    assert_singular_error(
-        matrix
-            .clone()
-            .lower_triangular_inverse_checked_with_abort(&abort_signal()),
-    );
     assert_singular_error(matrix.clone().inverse_checked());
     assert_singular_error(matrix.inverse_checked_with_abort(&abort_signal()));
 }
@@ -1419,21 +1374,11 @@ fn matrix3_known_upper_triangular_div_matrix_checked_matches_ordinary() {
         .clone()
         .div_matrix_checked(divisor.clone())
         .unwrap();
-    let signal = abort_signal();
 
     let ordinary = (numerator.clone() / divisor.clone()).unwrap();
     assert_eq!(expected, ordinary);
     assert_eq!(
-        numerator
-            .clone()
-            .div_upper_triangular_checked(divisor.clone())
-            .unwrap(),
-        ordinary
-    );
-    assert_eq!(
-        numerator
-            .div_upper_triangular_checked_with_abort(divisor, &signal)
-            .unwrap(),
+        numerator.div_upper_triangular_checked(divisor).unwrap(),
         ordinary,
     );
 }
@@ -1587,8 +1532,8 @@ fn hyperreal_matrix_transform_preserves_exact_rational_facts() {
     assert_eq!(output[0].structural_facts().sign, Some(RealSign::Negative));
     assert_eq!(output[1].structural_facts().sign, Some(RealSign::Positive));
     assert_eq!(output[2].structural_facts().sign, Some(RealSign::Positive));
-    assert_eq!(output[0].zero_status(), ZeroStatus::NonZero);
-    assert_eq!(output[1].zero_status(), ZeroStatus::NonZero);
+    assert_eq!(output[0].zero_status(), ZeroKnowledge::NonZero);
+    assert_eq!(output[1].zero_status(), ZeroKnowledge::NonZero);
 }
 
 #[test]
@@ -1635,7 +1580,7 @@ fn hyperreal_matrix_transform_diagonal_and_translation_semantics() {
     assert_eq!(output[1].structural_facts().sign, Some(RealSign::Negative));
     assert_eq!(output[2].structural_facts().sign, Some(RealSign::Zero));
     assert_eq!(output[3].structural_facts().sign, Some(RealSign::Positive));
-    assert_eq!(output[2].zero_status(), ZeroStatus::Zero);
+    assert_eq!(output[2].zero_status(), ZeroKnowledge::Zero);
 }
 
 #[test]
@@ -1667,11 +1612,11 @@ fn hyperreal_matrix_transform_preserves_homogeneous_direction_points_semantics()
     }
     assert_eq!(
         transformed_direction[3].structural_facts().zero,
-        ZeroStatus::Zero
+        ZeroKnowledge::Zero
     );
     assert_eq!(
         translated_point[3].structural_facts().zero,
-        ZeroStatus::NonZero
+        ZeroKnowledge::NonZero
     );
 }
 
@@ -1693,10 +1638,13 @@ fn hyperreal_matrix_transform_direction_zero_lane_facts() {
     assert_eq!(transformed_direction[1], frac(0, 1));
     assert_eq!(transformed_direction[2], frac(28, 1));
     assert_eq!(transformed_direction[3], frac(0, 1));
-    assert_eq!(transformed_direction[0].zero_status(), ZeroStatus::Zero);
-    assert_eq!(transformed_direction[1].zero_status(), ZeroStatus::Zero);
-    assert_eq!(transformed_direction[3].zero_status(), ZeroStatus::Zero);
-    assert_eq!(transformed_direction[2].zero_status(), ZeroStatus::NonZero);
+    assert_eq!(transformed_direction[0].zero_status(), ZeroKnowledge::Zero);
+    assert_eq!(transformed_direction[1].zero_status(), ZeroKnowledge::Zero);
+    assert_eq!(transformed_direction[3].zero_status(), ZeroKnowledge::Zero);
+    assert_eq!(
+        transformed_direction[2].zero_status(),
+        ZeroKnowledge::NonZero
+    );
 }
 
 #[test]
@@ -1716,10 +1664,10 @@ fn hyperreal_matrix_transform_symbolic_no_translation_zero_lane_facts() {
     // This guards against future constructor changes that would accidentally
     // materialize symbolic terms as full 4-lane work and erase demand-driven
     // zero/sign separation.
-    assert_eq!(transformed[0].zero_status(), ZeroStatus::NonZero);
-    assert_eq!(transformed[1].zero_status(), ZeroStatus::Zero);
-    assert_eq!(transformed[2].zero_status(), ZeroStatus::NonZero);
-    assert_eq!(transformed[3].zero_status(), ZeroStatus::Zero);
+    assert_eq!(transformed[0].zero_status(), ZeroKnowledge::NonZero);
+    assert_eq!(transformed[1].zero_status(), ZeroKnowledge::Zero);
+    assert_eq!(transformed[2].zero_status(), ZeroKnowledge::NonZero);
+    assert_eq!(transformed[3].zero_status(), ZeroKnowledge::Zero);
     assert_eq!(
         transformed[0].structural_facts().sign,
         Some(RealSign::Positive)
@@ -1757,9 +1705,9 @@ fn hyperreal_matrix_transform_propagates_zero_and_sign() {
         transformed[2].structural_facts().sign,
         Some(RealSign::Negative)
     );
-    assert_eq!(transformed[0].zero_status(), ZeroStatus::NonZero);
-    assert_eq!(transformed[1].zero_status(), ZeroStatus::Zero);
-    assert_eq!(transformed[2].zero_status(), ZeroStatus::NonZero);
+    assert_eq!(transformed[0].zero_status(), ZeroKnowledge::NonZero);
+    assert_eq!(transformed[1].zero_status(), ZeroKnowledge::Zero);
+    assert_eq!(transformed[2].zero_status(), ZeroKnowledge::NonZero);
 }
 
 #[test]

@@ -75,7 +75,7 @@ Replace `src/main.rs` with:
 
 <!-- quickstart:start -->
 ```rust
-use hyperlattice::{Matrix3, Real, Vector3, sqrt};
+use hyperlattice::{Matrix3, Real, Vector3};
 
 fn r(value: i32) -> Real {
     value.into()
@@ -84,7 +84,7 @@ fn r(value: i32) -> Real {
 fn main() -> hyperlattice::BlasResult<()> {
     let vector = Vector3::new([r(3), r(4), r(0)]);
     assert_eq!(vector.dot(&vector), r(25));
-    assert_eq!(sqrt(vector.dot(&vector))?, r(5));
+    assert_eq!(Real::sqrt(vector.dot(&vector))?, r(5));
 
     let identity = Matrix3::identity();
     assert_eq!(identity.clone() * vector.clone(), vector);
@@ -104,15 +104,19 @@ the test suite, and compared with the README block.
 
 | Task | API |
 | --- | --- |
-| Constants | `zero`, `one`, `e`, `pi`, `tau`, `i` |
-| Zero knowledge | `zero_status`, `zero_status_with_abort` |
-| Reciprocal and powers | `reciprocal`, `reciprocal_ref`, checked variants, `pow`, `powi` |
-| Elementary functions | `sqrt`, `exp`, `ln`, `log10`, `sin`, `cos`, `tan`, `sinh`, `cosh`, `tanh` |
-| Inverse functions | `asin`, `acos`, `atan`, `asinh`, `acosh`, `atanh`, including abort-aware variants |
+| Constants | `Real::zero`, `Real::one`, `Real::e`, `Real::pi`, `Real::tau`, `Complex::i` |
+| Zero knowledge | `Real::zero_status`, returning `ZeroKnowledge` without refinement |
+| Reciprocal and powers | `Real::inverse`, `Real::inverse_ref`, `Real::pow`, `Real::powi_i64` |
+| Structural checked reciprocal | `reciprocal_checked`, `reciprocal_ref_checked` |
+| Elementary functions | Native `Real` methods: `sqrt`, `exp`, `ln`, `log10`, `sin`, `cos`, `tan`, `sinh`, `cosh`, `tanh` |
+| Inverse functions | Native `Real` methods: `asin`, `acos`, `atan`, `asinh`, `acosh`, `atanh` |
 | Complex values | `Complex::new`, `zero`, `one`, `i`, `conjugate`, `norm_squared`, `reciprocal`, `powi`, checked division variants |
 
-Scalar wrappers keep a consistent `BlasResult` surface for linear-algebra
-callers. More specialized scalar functions remain in Hyperreal.
+Hyperreal owns scalar arithmetic, domain checks, and structural type names;
+Hyperlattice does not wrap or rename those APIs. Attach cancellation directly
+with `Real::abort` before invoking a scalar operation. The two structural checked
+reciprocal functions reject unknown-zero divisors without refinement, unlike
+`Real::inverse`, which may refine to establish a nonzero denominator.
 
 ### Vectors
 
@@ -185,8 +189,10 @@ Both matrix types provide `new`, `zero`, `identity`, `transpose`, `determinant`,
 | Transform values | `transform_vec3`, `transform_vec4`, `transform_point3`, `transform_direction3` and corresponding batch methods |
 | Inspect scheduling | `exact_facts`, `structural_facts`, `determinant_schedule_hint` |
 
-Specialized division and inverse methods also have checked and abort-aware
-variants where a divisor or pivot can be unresolved.
+Specialized division and inverse methods have checked variants that reject
+unresolved divisors or pivots. General matrix operations provide
+`inverse_checked_with_abort` and `div_matrix_checked_with_abort` for cancellable
+refinement; structural zero queries do not need an abort-specific API.
 
 ### Facts and cancellation
 

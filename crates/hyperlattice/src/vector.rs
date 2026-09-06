@@ -8,7 +8,7 @@ use std::sync::atomic::Ordering;
 use crate::scalar::{clone_with_abort, reject_definite_zero, require_known_nonzero, with_abort};
 use crate::{
     AbortSignal, BlasResult, CheckedBlasResult, Problem, Real, RealExactSetFacts, RealKernelExt,
-    RealSymbolicDependencyMask, RealZeroOneMinusOneStatus, ZeroStatus,
+    SymbolicDependencyMask, ZeroKnowledge, ZeroOneMinusOneStatus,
 };
 
 /// Coordinate axis in a 2D vector.
@@ -504,9 +504,9 @@ fn vector_zero_status_masks<const N: usize>(components: [&Real; N]) -> (u128, u1
     for (index, component) in components.into_iter().enumerate() {
         let bit = 1_u128 << index;
         match component.zero_status() {
-            ZeroStatus::Zero => known_zero_mask |= bit,
-            ZeroStatus::NonZero => known_nonzero_mask |= bit,
-            ZeroStatus::Unknown => unknown_zero_mask |= bit,
+            ZeroKnowledge::Zero => known_zero_mask |= bit,
+            ZeroKnowledge::NonZero => known_nonzero_mask |= bit,
+            ZeroKnowledge::Unknown => unknown_zero_mask |= bit,
         }
     }
     (known_zero_mask, known_nonzero_mask, unknown_zero_mask)
@@ -554,28 +554,18 @@ fn signed_axis2_from_components(values: &[Real; 2]) -> Option<SignedAxis2> {
         values[0].zero_one_or_minus_one(),
         values[1].zero_one_or_minus_one(),
     ) {
-        (RealZeroOneMinusOneStatus::One, RealZeroOneMinusOneStatus::Zero) => {
-            Some(SignedAxis2::PosX)
-        }
-        (RealZeroOneMinusOneStatus::MinusOne, RealZeroOneMinusOneStatus::Zero) => {
-            Some(SignedAxis2::NegX)
-        }
-        (RealZeroOneMinusOneStatus::Zero, RealZeroOneMinusOneStatus::One) => {
-            Some(SignedAxis2::PosY)
-        }
-        (RealZeroOneMinusOneStatus::Zero, RealZeroOneMinusOneStatus::MinusOne) => {
-            Some(SignedAxis2::NegY)
-        }
+        (ZeroOneMinusOneStatus::One, ZeroOneMinusOneStatus::Zero) => Some(SignedAxis2::PosX),
+        (ZeroOneMinusOneStatus::MinusOne, ZeroOneMinusOneStatus::Zero) => Some(SignedAxis2::NegX),
+        (ZeroOneMinusOneStatus::Zero, ZeroOneMinusOneStatus::One) => Some(SignedAxis2::PosY),
+        (ZeroOneMinusOneStatus::Zero, ZeroOneMinusOneStatus::MinusOne) => Some(SignedAxis2::NegY),
         _ => None,
     }
 }
 
-fn vector_symbolic_dependency_mask<const N: usize>(
-    values: [&Real; N],
-) -> RealSymbolicDependencyMask {
+fn vector_symbolic_dependency_mask<const N: usize>(values: [&Real; N]) -> SymbolicDependencyMask {
     values
         .into_iter()
-        .fold(RealSymbolicDependencyMask::NONE, |mask, value| {
+        .fold(SymbolicDependencyMask::NONE, |mask, value| {
             mask.union(value.detailed_facts().symbolic.dependencies)
         })
 }
@@ -584,7 +574,7 @@ fn vector_symbolic_dependency_mask<const N: usize>(
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct Vector2Facts {
     /// Zero status for `[x, y]` components.
-    pub component_zero: [ZeroStatus; 2],
+    pub component_zero: [ZeroKnowledge; 2],
     /// Exact-rational representation facts for the coordinate set.
     ///
     /// This gives predicate, triangulation, and transform callers a stable way
@@ -599,7 +589,7 @@ pub struct Vector2Facts {
     /// inspecting `Real` internals. It is deliberately a dependency-family
     /// certificate, not a CAS expression graph. Expression structure remains
     /// separate from geometric decisions.
-    pub symbolic_dependencies: RealSymbolicDependencyMask,
+    pub symbolic_dependencies: SymbolicDependencyMask,
     /// Axis occupied by a known nonzero component when the other component is
     /// known zero.
     pub known_axis: Option<Axis2>,
@@ -616,7 +606,7 @@ pub struct Vector2Facts {
 
 impl Vector2Facts {
     /// Return the zero status for one component.
-    pub fn component_zero(self, axis: Axis2) -> ZeroStatus {
+    pub fn component_zero(self, axis: Axis2) -> ZeroKnowledge {
         self.component_zero[axis.index()]
     }
 
@@ -627,10 +617,10 @@ impl Vector2Facts {
     /// itself.
     pub fn known_zero_mask(self) -> u8 {
         let mut mask = 0;
-        if matches!(self.component_zero[0], ZeroStatus::Zero) {
+        if matches!(self.component_zero[0], ZeroKnowledge::Zero) {
             mask |= Axis2::X.bit();
         }
-        if matches!(self.component_zero[1], ZeroStatus::Zero) {
+        if matches!(self.component_zero[1], ZeroKnowledge::Zero) {
             mask |= Axis2::Y.bit();
         }
         mask
@@ -643,10 +633,10 @@ impl Vector2Facts {
     /// still route sidedness and incidence decisions through `hyperlimit`.
     pub fn known_nonzero_mask(self) -> u8 {
         let mut mask = 0;
-        if matches!(self.component_zero[0], ZeroStatus::NonZero) {
+        if matches!(self.component_zero[0], ZeroKnowledge::NonZero) {
             mask |= Axis2::X.bit();
         }
-        if matches!(self.component_zero[1], ZeroStatus::NonZero) {
+        if matches!(self.component_zero[1], ZeroKnowledge::NonZero) {
             mask |= Axis2::Y.bit();
         }
         mask
@@ -655,10 +645,10 @@ impl Vector2Facts {
     /// Return a bit mask of components whose zero status is unknown.
     pub fn unknown_zero_mask(self) -> u8 {
         let mut mask = 0;
-        if matches!(self.component_zero[0], ZeroStatus::Unknown) {
+        if matches!(self.component_zero[0], ZeroKnowledge::Unknown) {
             mask |= Axis2::X.bit();
         }
-        if matches!(self.component_zero[1], ZeroStatus::Unknown) {
+        if matches!(self.component_zero[1], ZeroKnowledge::Unknown) {
             mask |= Axis2::Y.bit();
         }
         mask
@@ -698,7 +688,7 @@ impl Vector2Facts {
     /// at the vector boundary follows the object-structure-first exact
     /// computation model and lets normalization or distance code reject
     /// zero/unknown cases before building a product-sum.
-    pub fn squared_norm_zero_status(self) -> ZeroStatus {
+    pub fn squared_norm_zero_status(self) -> ZeroKnowledge {
         squared_norm_zero_status_from_counts(self.known_nonzero_count(), self.unknown_zero_count())
     }
 
@@ -718,14 +708,14 @@ impl Vector2Facts {
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct Vector3Facts {
     /// Zero status for `[x, y, z]` components.
-    pub component_zero: [ZeroStatus; 3],
+    pub component_zero: [ZeroKnowledge; 3],
     /// Exact-rational representation facts for the coordinate set.
     pub exact: RealExactSetFacts,
     /// Union of scalar symbolic dependency families across all components.
     ///
     /// This is structural metadata for algorithm selection only. Incidence,
     /// orientation, and containment still belong in `hyperlimit`.
-    pub symbolic_dependencies: RealSymbolicDependencyMask,
+    pub symbolic_dependencies: SymbolicDependencyMask,
     /// Bit mask of components known to be exactly zero.
     pub known_zero_mask: u8,
     /// Bit mask of components known to be nonzero.
@@ -763,7 +753,7 @@ impl Vector3Facts {
     /// expression just to discover definite zero or definite nonzero norm
     /// status. It is conservative metadata only; exact distance comparisons
     /// still belong in predicate code.
-    pub fn squared_norm_zero_status(self) -> ZeroStatus {
+    pub fn squared_norm_zero_status(self) -> ZeroKnowledge {
         squared_norm_zero_status_from_counts(self.known_nonzero_count(), self.unknown_zero_count())
     }
 }
@@ -778,7 +768,7 @@ impl Vector3Facts {
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct Vector4Facts {
     /// Zero status for `[x, y, z, w]` components.
-    pub component_zero: [ZeroStatus; 4],
+    pub component_zero: [ZeroKnowledge; 4],
     /// Exact-rational representation facts for the coordinate set.
     pub exact: RealExactSetFacts,
     /// Union of scalar symbolic dependency families across all components.
@@ -786,7 +776,7 @@ pub struct Vector4Facts {
     /// Homogeneous transform pipelines can use this to keep symbolic constants
     /// and opaque computable lanes visible at the vector-object boundary
     /// without exposing scalar representation details.
-    pub symbolic_dependencies: RealSymbolicDependencyMask,
+    pub symbolic_dependencies: SymbolicDependencyMask,
     /// Bit mask of components known to be exactly zero.
     pub known_zero_mask: u8,
     /// Bit mask of components known to be nonzero.
@@ -825,7 +815,7 @@ impl Vector4Facts {
     /// For homogeneous vectors this is still only an algebraic norm fact over
     /// the four stored components. It does not classify projective points or
     /// directions topologically.
-    pub fn squared_norm_zero_status(self) -> ZeroStatus {
+    pub fn squared_norm_zero_status(self) -> ZeroKnowledge {
         squared_norm_zero_status_from_counts(self.known_nonzero_count(), self.unknown_zero_count())
     }
 }
@@ -879,9 +869,9 @@ fn vector4_geometric_facts(values: &[Real; 4]) -> Vector4GeometricFacts {
     // used throughout 3D affine pipelines and lets robust kernels specialize
     // direction and point paths before exact reductions.
     let homogeneous = match values[3].zero_one_or_minus_one() {
-        RealZeroOneMinusOneStatus::Zero => Vector4HomogeneousKind::Direction,
-        RealZeroOneMinusOneStatus::One => Vector4HomogeneousKind::Point,
-        RealZeroOneMinusOneStatus::MinusOne | RealZeroOneMinusOneStatus::NeitherOrUnknown => {
+        ZeroOneMinusOneStatus::Zero => Vector4HomogeneousKind::Direction,
+        ZeroOneMinusOneStatus::One => Vector4HomogeneousKind::Point,
+        ZeroOneMinusOneStatus::MinusOne | ZeroOneMinusOneStatus::NeitherOrUnknown => {
             Vector4HomogeneousKind::Unknown
         }
     };
@@ -889,18 +879,18 @@ fn vector4_geometric_facts(values: &[Real; 4]) -> Vector4GeometricFacts {
 }
 
 #[inline(always)]
-fn squared_norm_zero_status_from_counts(known_nonzero: u32, unknown_zero: u32) -> ZeroStatus {
+fn squared_norm_zero_status_from_counts(known_nonzero: u32, unknown_zero: u32) -> ZeroKnowledge {
     if known_nonzero > 0 {
-        ZeroStatus::NonZero
+        ZeroKnowledge::NonZero
     } else if unknown_zero > 0 {
-        ZeroStatus::Unknown
+        ZeroKnowledge::Unknown
     } else {
-        ZeroStatus::Zero
+        ZeroKnowledge::Zero
     }
 }
 
 #[inline]
-fn squared_norm_zero_status<const N: usize>(values: &[Real; N]) -> ZeroStatus {
+fn squared_norm_zero_status<const N: usize>(values: &[Real; N]) -> ZeroKnowledge {
     // In an ordered real field, a sum of squares is nonzero exactly when at
     // least one component is nonzero. Checked normalization only needs that
     // certificate, so avoid constructing the vector's broader structural
@@ -910,16 +900,16 @@ fn squared_norm_zero_status<const N: usize>(values: &[Real; N]) -> ZeroStatus {
     let mut unknown_zero = false;
     for value in values {
         match value.zero_status() {
-            ZeroStatus::NonZero => {
+            ZeroKnowledge::NonZero => {
                 crate::trace_dispatch!(
                     "hyperlattice_vector",
                     "norm-certificate",
                     "component-nonzero"
                 );
-                return ZeroStatus::NonZero;
+                return ZeroKnowledge::NonZero;
             }
-            ZeroStatus::Unknown => unknown_zero = true,
-            ZeroStatus::Zero => {}
+            ZeroKnowledge::Unknown => unknown_zero = true,
+            ZeroKnowledge::Zero => {}
         }
     }
 
@@ -929,29 +919,29 @@ fn squared_norm_zero_status<const N: usize>(values: &[Real; N]) -> ZeroStatus {
             "norm-certificate",
             "component-unknown"
         );
-        ZeroStatus::Unknown
+        ZeroKnowledge::Unknown
     } else {
         crate::trace_dispatch!(
             "hyperlattice_vector",
             "norm-certificate",
             "all-components-zero"
         );
-        ZeroStatus::Zero
+        ZeroKnowledge::Zero
     }
 }
 
 #[inline(always)]
-fn require_known_nonzero_status(status: ZeroStatus) -> CheckedBlasResult<()> {
+fn require_known_nonzero_status(status: ZeroKnowledge) -> CheckedBlasResult<()> {
     match status {
-        ZeroStatus::Zero => {
+        ZeroKnowledge::Zero => {
             crate::trace_dispatch!("hyperlattice_vector", "norm-facts", "checked-zero-rejected");
             Err(Problem::DivideByZero)
         }
-        ZeroStatus::NonZero => {
+        ZeroKnowledge::NonZero => {
             crate::trace_dispatch!("hyperlattice_vector", "norm-facts", "checked-nonzero");
             Ok(())
         }
-        ZeroStatus::Unknown => {
+        ZeroKnowledge::Unknown => {
             crate::trace_dispatch!(
                 "hyperlattice_vector",
                 "norm-facts",
@@ -1649,10 +1639,10 @@ impl Vector2 {
     pub fn structural_facts(&self) -> Vector2Facts {
         crate::trace_dispatch!("hyperlattice_vector", "query", "vector2-structural-facts");
         let component_zero = [self.0[0].zero_status(), self.0[1].zero_status()];
-        let known_zero = matches!(component_zero, [ZeroStatus::Zero, ZeroStatus::Zero]);
+        let known_zero = matches!(component_zero, [ZeroKnowledge::Zero, ZeroKnowledge::Zero]);
         let known_axis = match component_zero {
-            [ZeroStatus::NonZero, ZeroStatus::Zero] => Some(Axis2::X),
-            [ZeroStatus::Zero, ZeroStatus::NonZero] => Some(Axis2::Y),
+            [ZeroKnowledge::NonZero, ZeroKnowledge::Zero] => Some(Axis2::X),
+            [ZeroKnowledge::Zero, ZeroKnowledge::NonZero] => Some(Axis2::Y),
             _ => None,
         };
 
@@ -1849,7 +1839,7 @@ impl Vector3 {
         crate::trace_dispatch!("hyperlattice_vector", "method", "angle-to");
         let lhs = self.normalize_checked()?;
         let rhs = rhs.normalize_checked()?;
-        crate::acos(lhs.dot(&rhs))
+        lhs.dot(&rhs).acos()
     }
 
     /// Returns the dot product with `rhs`.

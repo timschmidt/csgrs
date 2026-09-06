@@ -1,7 +1,7 @@
 mod common;
 
 use common::frac;
-use hyperlattice::{Complex, Matrix3, Matrix4, Problem, Real, RealSign, Vector3, ZeroStatus};
+use hyperlattice::{Complex, Matrix3, Matrix4, Problem, Real, RealSign, Vector3, ZeroKnowledge};
 use proptest::prelude::*;
 
 fn scalar_i(value: i32) -> Real {
@@ -18,7 +18,7 @@ fn small_scalar() -> impl Strategy<Value = Real> {
         (-64_i64..=64, 1_u64..=64).prop_map(|(n, d)| frac(n, d)),
         Just(Real::pi()),
         Just(Real::e()),
-        Just(hyperlattice::sqrt(scalar_i(2)).unwrap()),
+        Just(Real::sqrt(scalar_i(2)).unwrap()),
     ]
 }
 
@@ -79,7 +79,7 @@ proptest! {
         prop_assert_eq!(&a - &b, a.clone() - b.clone());
         prop_assert_eq!(&a * &b, a.clone() * b.clone());
 
-        if b.zero_status() == ZeroStatus::NonZero {
+        if b.zero_status() == ZeroKnowledge::NonZero {
             prop_assert_eq!((&a / &b).unwrap(), (a.clone() / b.clone()).unwrap());
             prop_assert_eq!((a.clone() / &b).unwrap(), (a.clone() / b.clone()).unwrap());
             prop_assert_eq!((&a / b.clone()).unwrap(), (a / b).unwrap());
@@ -93,12 +93,12 @@ proptest! {
 
         prop_assert_eq!(value.structural_facts(), facts);
         prop_assert_eq!(value.zero_status(), facts.zero);
-        prop_assert_eq!(value.definitely_zero(), facts.zero == ZeroStatus::Zero);
-        if facts.zero == ZeroStatus::Zero {
+        prop_assert_eq!(value.definitely_zero(), facts.zero == ZeroKnowledge::Zero);
+        if facts.zero == ZeroKnowledge::Zero {
             prop_assert_eq!(facts.sign, Some(RealSign::Zero));
             prop_assert!(facts.magnitude.is_none());
         }
-        if facts.zero == ZeroStatus::NonZero {
+        if facts.zero == ZeroKnowledge::NonZero {
             prop_assert_ne!(facts.sign, Some(RealSign::Zero));
             prop_assert!(facts.magnitude.is_some());
         }
@@ -113,7 +113,7 @@ proptest! {
         prop_assert_eq!(&a - &b, a.clone() - b.clone());
         prop_assert_eq!(&a * &b, a.clone() * b.clone());
 
-        if b.norm_squared().zero_status() == ZeroStatus::NonZero {
+        if b.norm_squared().zero_status() == ZeroKnowledge::NonZero {
             prop_assert_eq!((&a / &b).unwrap(), (a / b).unwrap());
         }
     }
@@ -136,7 +136,7 @@ proptest! {
         prop_assert_eq!(matrix.clone() * inverse.clone(), Matrix3::identity());
         prop_assert_eq!(inverse * matrix.clone(), Matrix3::identity());
         prop_assert_eq!(matrix.transpose().transpose(), matrix.clone());
-        prop_assert_eq!(determinant.zero_status(), ZeroStatus::NonZero);
+        prop_assert_eq!(determinant.zero_status(), ZeroKnowledge::NonZero);
         prop_assert_eq!((matrix.clone() / matrix.clone()).unwrap(), Matrix3::identity());
         prop_assert_eq!(matrix.clone().div_matrix_checked(matrix.clone()).unwrap(), Matrix3::identity());
         prop_assert_eq!(matrix.clone().powi_checked(0).unwrap(), Matrix3::identity());
@@ -151,7 +151,7 @@ proptest! {
         prop_assert_eq!(matrix.clone() * inverse.clone(), Matrix4::identity());
         prop_assert_eq!(inverse * matrix.clone(), Matrix4::identity());
         prop_assert_eq!(matrix.transpose().transpose(), matrix.clone());
-        prop_assert_eq!(determinant.zero_status(), ZeroStatus::NonZero);
+        prop_assert_eq!(determinant.zero_status(), ZeroKnowledge::NonZero);
         prop_assert_eq!((matrix.clone() / matrix.clone()).unwrap(), Matrix4::identity());
         prop_assert_eq!(matrix.clone().div_matrix_checked(matrix.clone()).unwrap(), Matrix4::identity());
         prop_assert_eq!(matrix.clone().powi_checked(0).unwrap(), Matrix4::identity());

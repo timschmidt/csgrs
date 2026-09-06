@@ -7,10 +7,10 @@ use common::{abort_signal, frac, r, unknown_zero};
 use hyperlattice::{
     Axis2, Complex, Displacement2Facts, HomogeneousPoint3, Point2, Point3, PointSharedScaleFacts,
     PointSharedScaleView, Problem, ProductSum2Facts, Real, SharedScaleVec, SignedAxis2, Vector2,
-    Vector3, Vector4, VectorSharedScaleFacts, VectorSharedScaleView, ZeroStatus, acos, asin,
-    displacement2, displacement2_facts, dot2, e, ln, orient2_expr, orient2_expr_facts, pi,
-    positive_product_sum2, product_sum2_facts, product_term2_facts, signed_product_sum2, sqrt,
-    squared_distance2, squared_norm2, wedge2, zero_status_with_abort,
+    Vector3, Vector4, VectorSharedScaleFacts, VectorSharedScaleView, ZeroKnowledge, displacement2,
+    displacement2_facts, dot2, orient2_expr, orient2_expr_facts, positive_product_sum2,
+    product_sum2_facts, product_term2_facts, signed_product_sum2, squared_distance2, squared_norm2,
+    wedge2,
 };
 
 #[test]
@@ -36,9 +36,9 @@ fn algebra_fact_packets_cover_zero_nonzero_unknown_and_large_masks() {
     assert!(unknown_term.unknown_zero());
 
     let product_facts = product_sum2_facts([[&zero, &two], [&one, &two], [&unknown, &two]]);
-    assert_eq!(product_facts.term_zero(0), ZeroStatus::Zero);
-    assert_eq!(product_facts.term_zero(1), ZeroStatus::NonZero);
-    assert_eq!(product_facts.term_zero(2), ZeroStatus::Unknown);
+    assert_eq!(product_facts.term_zero(0), ZeroKnowledge::Zero);
+    assert_eq!(product_facts.term_zero(1), ZeroKnowledge::NonZero);
+    assert_eq!(product_facts.term_zero(2), ZeroKnowledge::Unknown);
     assert_eq!(product_facts.known_zero_mask(), 0b001);
     assert_eq!(product_facts.known_nonzero_mask(), 0b010);
     assert_eq!(product_facts.unknown_zero_mask(), 0b100);
@@ -47,10 +47,10 @@ fn algebra_fact_packets_cover_zero_nonzero_unknown_and_large_masks() {
     assert_eq!(product_facts.unknown_zero_count(), 1);
     assert!(!product_facts.all_terms_known_zero());
 
-    let mut statuses = [ZeroStatus::NonZero; 65];
-    statuses[0] = ZeroStatus::Zero;
-    statuses[63] = ZeroStatus::Unknown;
-    statuses[64] = ZeroStatus::Zero;
+    let mut statuses = [ZeroKnowledge::NonZero; 65];
+    statuses[0] = ZeroKnowledge::Zero;
+    statuses[63] = ZeroKnowledge::Unknown;
+    statuses[64] = ZeroKnowledge::Zero;
     let large = ProductSum2Facts::new(statuses);
     assert_eq!(large.known_zero_mask(), 1);
     assert_eq!(large.known_nonzero_mask(), u64::MAX ^ 1 ^ (1_u64 << 63));
@@ -60,8 +60,11 @@ fn algebra_fact_packets_cover_zero_nonzero_unknown_and_large_masks() {
     assert_eq!(large.unknown_zero_count(), 1);
 
     let x_displacement = Displacement2Facts::from_components([&one, &zero]);
-    assert_eq!(x_displacement.component_zero(Axis2::X), ZeroStatus::NonZero);
-    assert_eq!(x_displacement.component_zero(Axis2::Y), ZeroStatus::Zero);
+    assert_eq!(
+        x_displacement.component_zero(Axis2::X),
+        ZeroKnowledge::NonZero
+    );
+    assert_eq!(x_displacement.component_zero(Axis2::Y), ZeroKnowledge::Zero);
     assert_eq!(x_displacement.known_zero_mask(), Axis2::Y.bit());
     assert_eq!(x_displacement.known_nonzero_mask(), Axis2::X.bit());
     assert_eq!(x_displacement.unknown_zero_mask(), 0);
@@ -605,7 +608,7 @@ fn complex_power_status_ownership_and_symbolic_fallbacks_are_covered() {
 
     let imaginary = Complex::i();
     assert_eq!(imaginary.clone().powi(0).unwrap(), Complex::one());
-    let symbolic_nonzero = Complex::new(pi(), r(0));
+    let symbolic_nonzero = Complex::new(Real::pi(), r(0));
     assert_eq!(symbolic_nonzero.clone().powi(0).unwrap(), Complex::one());
     let unknown_real_nonzero_imaginary = Complex::new(unknown_zero(), r(1));
     assert_eq!(
@@ -635,35 +638,38 @@ fn complex_power_status_ownership_and_symbolic_fallbacks_are_covered() {
     let _ = (base.clone() / r(2)).unwrap();
     let _ = (base.clone() / &r(2)).unwrap();
 
-    let symbolic_left = Complex::new(pi(), sqrt(r(2)).unwrap());
-    let symbolic_right = Complex::new(e(), pi() + r(1));
+    let symbolic_left = Complex::new(Real::pi(), Real::sqrt(r(2)).unwrap());
+    let symbolic_right = Complex::new(Real::e(), Real::pi() + r(1));
     let _ = &symbolic_left * &symbolic_right;
     let _ = (&symbolic_left / &symbolic_right).unwrap();
     let _ = symbolic_left
         .clone()
         .div_checked(symbolic_right.clone())
         .unwrap();
-    let _ = symbolic_left.div_real_checked(pi()).unwrap();
+    let _ = symbolic_left.div_real_checked(Real::pi()).unwrap();
 
-    let negative_first = signed_product_sum2([false], [[&pi(), &r(1)]]);
-    assert_eq!(negative_first, -pi());
+    let negative_first = signed_product_sum2([false], [[&Real::pi(), &r(1)]]);
+    assert_eq!(negative_first, -Real::pi());
 }
 
 #[test]
 fn scalar_unknown_domain_active_abort_and_projective_general_path_are_covered() {
-    let unknown = unknown_zero();
+    let mut unknown = unknown_zero();
     let active = abort_signal();
     active.store(true, Ordering::Relaxed);
-    assert_eq!(
-        zero_status_with_abort(&unknown, &active),
-        ZeroStatus::Unknown
+    unknown.abort(active);
+    assert_eq!(unknown.zero_status(), ZeroKnowledge::Unknown);
+
+    let _ = Real::asin(unknown.clone());
+    let _ = Real::acos(unknown.clone());
+    let _ = Real::ln(unknown);
+
+    let homogeneous = HomogeneousPoint3::new(
+        Real::pi(),
+        Real::sqrt(r(2)).unwrap(),
+        Real::e(),
+        Real::pi() + r(1),
     );
-
-    let _ = asin(unknown.clone());
-    let _ = acos(unknown.clone());
-    let _ = ln(unknown);
-
-    let homogeneous = HomogeneousPoint3::new(pi(), sqrt(r(2)).unwrap(), e(), pi() + r(1));
     let affine = homogeneous.to_affine_point().unwrap();
     assert_eq!(affine.x, (&homogeneous.x / &homogeneous.w).unwrap());
     assert_eq!(affine.y, (&homogeneous.y / &homogeneous.w).unwrap());

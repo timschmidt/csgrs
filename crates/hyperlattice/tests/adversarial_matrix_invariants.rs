@@ -1,7 +1,7 @@
 mod common;
 
 use common::{frac, r, unknown_zero};
-use hyperlattice::{Matrix3, Matrix4, Problem, Real, Vector3, Vector4, ZeroStatus};
+use hyperlattice::{Matrix3, Matrix4, Problem, Real, Vector3, Vector4, ZeroKnowledge};
 
 fn assert_matrix3_inverse_invariants(matrix: Matrix3) {
     let inverse = matrix.clone().inverse().unwrap();
@@ -118,10 +118,10 @@ fn sparse_symbolic_transform_preserves_zero_and_sign_facts() {
     let direction = Vector4::new([r(3), r(7), r(0), r(0)]);
     let transformed = matrix * direction;
 
-    assert_eq!(transformed[0].zero_status(), ZeroStatus::NonZero);
-    assert_eq!(transformed[1].zero_status(), ZeroStatus::Zero);
-    assert_eq!(transformed[2].zero_status(), ZeroStatus::NonZero);
-    assert_eq!(transformed[3].zero_status(), ZeroStatus::Zero);
+    assert_eq!(transformed[0].zero_status(), ZeroKnowledge::NonZero);
+    assert_eq!(transformed[1].zero_status(), ZeroKnowledge::Zero);
+    assert_eq!(transformed[2].zero_status(), ZeroKnowledge::NonZero);
+    assert_eq!(transformed[3].zero_status(), ZeroKnowledge::Zero);
 }
 
 #[test]

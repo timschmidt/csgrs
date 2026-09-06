@@ -4,8 +4,8 @@ use std::sync::atomic::Ordering;
 
 use common::{abort_signal, frac, r, unknown_zero};
 use hyperlattice::{
-    Matrix3, Matrix4, MatrixDeterminantScheduleHint, Point3, Problem, SignedAxis4, Vector3,
-    Vector4, pi, sqrt,
+    Matrix3, Matrix4, MatrixDeterminantScheduleHint, Point3, Problem, Real, SignedAxis4, Vector3,
+    Vector4,
 };
 
 fn dense3() -> Matrix3 {
@@ -23,7 +23,7 @@ fn dense4() -> Matrix4 {
 
 fn symbolic_dense3() -> Matrix3 {
     Matrix3::new([
-        [pi() + r(5), r(1), r(2)],
+        [Real::pi() + r(5), r(1), r(2)],
         [r(1), r(6), r(3)],
         [r(2), r(3), r(8)],
     ])
@@ -31,7 +31,7 @@ fn symbolic_dense3() -> Matrix3 {
 
 fn symbolic_dense4() -> Matrix4 {
     Matrix4::new([
-        [pi() + r(9), r(1), r(2), r(3)],
+        [Real::pi() + r(9), r(1), r(2), r(3)],
         [r(1), r(10), r(3), r(4)],
         [r(2), r(3), r(11), r(5)],
         [r(3), r(4), r(5), r(12)],
@@ -388,32 +388,16 @@ fn triangular_diagonal_and_uniform_known_shape_apis_cover_both_sizes() {
         Matrix3::identity()
     );
     let _ = up3.clone().upper_triangular_inverse_checked().unwrap();
-    let _ = up3
-        .clone()
-        .upper_triangular_inverse_checked_with_abort(&signal)
-        .unwrap();
     let _ = low3.clone().lower_triangular_inverse_checked().unwrap();
-    let _ = low3
-        .clone()
-        .lower_triangular_inverse_checked_with_abort(&signal)
-        .unwrap();
     let _ = left3.clone().div_upper_triangular(up3.clone()).unwrap();
     let _ = left3
         .clone()
         .div_upper_triangular_checked(up3.clone())
         .unwrap();
-    let _ = left3
-        .clone()
-        .div_upper_triangular_checked_with_abort(up3.clone(), &signal)
-        .unwrap();
     let _ = left3.clone().div_lower_triangular(low3.clone()).unwrap();
     let _ = left3
         .clone()
         .div_lower_triangular_checked(low3.clone())
-        .unwrap();
-    let _ = left3
-        .clone()
-        .div_lower_triangular_checked_with_abort(low3.clone(), &signal)
         .unwrap();
     let diagonal3 = [r(2), r(3), r(5)];
     let d3 = Matrix3::diagonal(diagonal3.clone());
@@ -459,32 +443,16 @@ fn triangular_diagonal_and_uniform_known_shape_apis_cover_both_sizes() {
         Matrix4::identity()
     );
     let _ = up4.clone().upper_triangular_inverse_checked().unwrap();
-    let _ = up4
-        .clone()
-        .upper_triangular_inverse_checked_with_abort(&signal)
-        .unwrap();
     let _ = low4.clone().lower_triangular_inverse_checked().unwrap();
-    let _ = low4
-        .clone()
-        .lower_triangular_inverse_checked_with_abort(&signal)
-        .unwrap();
     let _ = left4.clone().div_upper_triangular(up4.clone()).unwrap();
     let _ = left4
         .clone()
         .div_upper_triangular_checked(up4.clone())
         .unwrap();
-    let _ = left4
-        .clone()
-        .div_upper_triangular_checked_with_abort(up4.clone(), &signal)
-        .unwrap();
     let _ = left4.clone().div_lower_triangular(low4.clone()).unwrap();
     let _ = left4
         .clone()
         .div_lower_triangular_checked(low4.clone())
-        .unwrap();
-    let _ = left4
-        .clone()
-        .div_lower_triangular_checked_with_abort(low4.clone(), &signal)
         .unwrap();
     let diagonal4 = [r(2), r(3), r(5), r(7)];
     let d4 = Matrix4::diagonal(diagonal4.clone());
@@ -762,7 +730,7 @@ fn affine_rotation_signed_permutation_and_transform_apis_cover_object_routes() {
         Matrix4::transform_signed_permutation_batch(negative_rows, std::slice::from_ref(&vector));
     let _ = dense4().div_signed_permutation(negative_rows);
 
-    let quarter_turn = pi() / r(2);
+    let quarter_turn = Real::pi() / r(2);
     let quarter_turn = quarter_turn.unwrap();
     let _ = Matrix4::rotation_x(quarter_turn.clone());
     let _ = Matrix4::rotation_y(quarter_turn.clone());
@@ -933,5 +901,5 @@ fn pivot_errors_and_unknown_zero_checked_paths_are_explicit() {
     active.store(true, Ordering::Relaxed);
     let _ = dense3().inverse_checked_with_abort(&active);
     let _ = dense4().inverse_checked_with_abort(&active);
-    let _ = sqrt(frac(2, 1));
+    let _ = Real::sqrt(frac(2, 1));
 }

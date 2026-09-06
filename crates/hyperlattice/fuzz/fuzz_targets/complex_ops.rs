@@ -10,7 +10,7 @@
 #![no_main]
 
 use arbitrary::Arbitrary;
-use hyperlattice::{Complex, ZeroStatus};
+use hyperlattice::{Complex, ZeroKnowledge};
 use libfuzzer_sys::fuzz_target;
 
 #[derive(Debug)]
@@ -99,12 +99,12 @@ fn complex_fuzz(input: Input) {
     let zero_candidate = z.clone() + (-z.clone());
     assert_ne!(
         zero_candidate.re.zero_status(),
-        ZeroStatus::NonZero,
+        ZeroKnowledge::NonZero,
         "real part of z + (-z) must be within error bounds of zero"
     );
     assert_ne!(
         zero_candidate.im.zero_status(),
-        ZeroStatus::NonZero,
+        ZeroKnowledge::NonZero,
         "imaginary part of z + (-z) must be within error bounds of zero"
     );
 
@@ -142,14 +142,14 @@ fn complex_fuzz(input: Input) {
     // im(z·conj(z)) = re·(−im) + im·re = 0 exactly in IEEE 754 (a + (−a) = 0).
     assert_ne!(
         z_times_conj.im.zero_status(),
-        ZeroStatus::NonZero,
+        ZeroKnowledge::NonZero,
         "imaginary part of z·conj(z) must be within error bounds of zero"
     );
 
     // ── Invariant: powi(NonZero, 0) is the identity ──────────────────────────
     // powi returns Complex::one() directly for exponent 0 on non-zero inputs.
-    let is_zero_re = z.re.zero_status() == ZeroStatus::Zero;
-    let is_zero_im = z.im.zero_status() == ZeroStatus::Zero;
+    let is_zero_re = z.re.zero_status() == ZeroKnowledge::Zero;
+    let is_zero_im = z.im.zero_status() == ZeroKnowledge::Zero;
     if (!is_zero_re || !is_zero_im)
         && let Ok(result) = z.clone().powi(0)
     {

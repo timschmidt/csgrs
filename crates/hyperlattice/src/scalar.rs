@@ -1,15 +1,8 @@
-//! Compatibility scalar facades and lattice-specific zero guards.
+//! Lattice-specific zero guards and cancellation attachment.
 //!
-//! Canonical scalar semantics live on [`Real`](crate::Real). This module keeps
-//! existing free-function facades for callers, while the lattice-specific
-//! ownership is limited to zero classification, checked reciprocal guards, and
-//! abort-aware helpers used by vector and matrix code.
+//! Scalar arithmetic and structural queries use the native `Real` API.
 
-use crate::complex::Complex;
-use crate::{
-    AbortSignal, BlasResult, CheckedBlasResult, Problem, Real, RealDomainStatus, ZeroStatus,
-};
-use std::sync::atomic::Ordering;
+use crate::{AbortSignal, BlasResult, CheckedBlasResult, Problem, Real, ZeroKnowledge};
 
 #[inline(always)]
 pub(crate) fn with_abort(mut value: Real, signal: &AbortSignal) -> Real {
@@ -22,33 +15,6 @@ pub(crate) fn with_abort(mut value: Real, signal: &AbortSignal) -> Real {
 pub(crate) fn clone_with_abort(value: &Real, signal: &AbortSignal) -> Real {
     crate::trace_dispatch!("hyperlattice", "abort", "clone-and-attach");
     with_abort(value.clone(), signal)
-}
-
-/// Classifies a real value as zero, non-zero, or unknown.
-#[inline(always)]
-pub fn zero_status(value: &Real) -> ZeroStatus {
-    crate::trace_dispatch!("hyperlattice", "zero_status", "real-query");
-    value.zero_status()
-}
-
-/// Classifies a real value after attaching an abort signal.
-///
-/// This lets long-running zero checks on opaque computable reals observe
-/// cancellation while keeping the structural fast path allocation-free.
-#[inline(always)]
-pub fn zero_status_with_abort(value: &Real, signal: &AbortSignal) -> ZeroStatus {
-    let status = zero_status(value);
-    if status != ZeroStatus::Unknown || !signal.load(Ordering::Relaxed) {
-        crate::trace_dispatch!("hyperlattice", "zero_status_abort", "no-clone-fast-path");
-        return status;
-    }
-
-    crate::trace_dispatch!(
-        "hyperlattice",
-        "zero_status_abort",
-        "clone-with-active-abort"
-    );
-    zero_status(&clone_with_abort(value, signal))
 }
 
 #[inline(always)]
@@ -64,284 +30,35 @@ pub(crate) fn reject_definite_zero(value: &Real) -> BlasResult<()> {
 
 #[inline(always)]
 pub(crate) fn require_known_nonzero(value: &Real) -> CheckedBlasResult<()> {
-    match zero_status(value) {
-        ZeroStatus::Zero => {
+    match value.zero_status() {
+        ZeroKnowledge::Zero => {
             crate::trace_dispatch!("hyperlattice", "zero_guard", "checked-zero-rejected");
             Err(Problem::DivideByZero)
         }
-        ZeroStatus::NonZero => {
+        ZeroKnowledge::NonZero => {
             crate::trace_dispatch!("hyperlattice", "zero_guard", "checked-nonzero");
             Ok(())
         }
-        ZeroStatus::Unknown => {
+        ZeroKnowledge::Unknown => {
             crate::trace_dispatch!("hyperlattice", "zero_guard", "checked-unknown-rejected");
             Err(Problem::UnknownZero)
         }
     }
 }
 
-#[inline(always)]
-pub(crate) fn require_known_nonzero_with_abort(
-    value: &Real,
-    signal: &AbortSignal,
-) -> CheckedBlasResult<()> {
-    match zero_status_with_abort(value, signal) {
-        ZeroStatus::Zero => Err(Problem::DivideByZero),
-        ZeroStatus::NonZero => Ok(()),
-        ZeroStatus::Unknown => Err(Problem::UnknownZero),
-    }
-}
-
-/// Returns the additive identity.
-pub fn zero() -> Real {
-    crate::trace_dispatch!("hyperlattice", "free_function", "zero");
-    Real::zero()
-}
-
-/// Returns the multiplicative identity.
-pub fn one() -> Real {
-    crate::trace_dispatch!("hyperlattice", "free_function", "one");
-    Real::one()
-}
-
-/// Returns Euler's number.
-pub fn e() -> Real {
-    crate::trace_dispatch!("hyperlattice", "free_function", "e");
-    Real::e()
-}
-
-/// Returns pi.
-pub fn pi() -> Real {
-    crate::trace_dispatch!("hyperlattice", "free_function", "pi");
-    Real::pi()
-}
-
-/// Returns tau, equal to `2 * pi`.
-pub fn tau() -> Real {
-    crate::trace_dispatch!("hyperlattice", "free_function", "tau");
-    Real::tau()
-}
-
-/// Returns the imaginary unit as a complex scalar.
-pub fn i() -> Complex {
-    Complex::i()
-}
-
-/// Returns the multiplicative inverse of `value`.
-pub fn reciprocal(value: Real) -> BlasResult<Real> {
-    crate::trace_dispatch!("hyperlattice", "free_function", "reciprocal-owned");
-    value.inverse()
-}
-
-/// Returns the multiplicative inverse of `value` without consuming it.
-pub fn reciprocal_ref(value: &Real) -> BlasResult<Real> {
-    crate::trace_dispatch!("hyperlattice", "free_function", "reciprocal-ref");
-    value.inverse_ref()
-}
-
 /// Returns the multiplicative inverse after rejecting zero and unknown-zero values.
+///
+/// Unlike `Real::inverse`, this requires structural nonzero knowledge and does
+/// not refine an unknown divisor.
 pub fn reciprocal_checked(value: Real) -> CheckedBlasResult<Real> {
-    crate::trace_dispatch!("hyperlattice", "free_function", "reciprocal-checked-owned");
     require_known_nonzero(&value)?;
     value.inverse()
 }
 
 /// Returns the checked multiplicative inverse without consuming `value`.
+///
+/// Like [`reciprocal_checked`], this rejects unknown-zero values without refinement.
 pub fn reciprocal_ref_checked(value: &Real) -> CheckedBlasResult<Real> {
-    crate::trace_dispatch!("hyperlattice", "free_function", "reciprocal-checked-ref");
     require_known_nonzero(value)?;
     value.inverse_ref()
-}
-
-/// Returns the checked multiplicative inverse after attaching an abort signal.
-pub fn reciprocal_checked_with_abort(value: Real, signal: &AbortSignal) -> CheckedBlasResult<Real> {
-    crate::trace_dispatch!(
-        "hyperlattice",
-        "free_function",
-        "reciprocal-checked-with-abort"
-    );
-    let value = with_abort(value, signal);
-    require_known_nonzero_with_abort(&value, signal)?;
-    value.inverse()
-}
-
-/// Raises `base` to a scalar exponent.
-pub fn pow(base: Real, exponent: Real) -> BlasResult<Real> {
-    crate::trace_dispatch!("hyperlattice", "free_function", "pow");
-    base.pow(exponent)
-}
-
-/// Raises `base` to an integer exponent.
-///
-/// Negative exponents require the result to be invertible. `0^0` returns
-/// [`Problem::NotANumber`].
-pub fn powi(base: Real, exponent: i64) -> BlasResult<Real> {
-    // Hyperreal's native integer-power kernel raises retained rational scales
-    // directly and preserves radical or symbolic classes. Delegating avoids
-    // constructing and reducing a chain of intermediate `Real` products.
-    crate::trace_dispatch!("hyperlattice", "powi", "native-real-i64-kernel");
-    base.powi_i64(exponent)
-}
-
-/// Returns `e` raised to `value`.
-pub fn exp(value: Real) -> BlasResult<Real> {
-    crate::trace_dispatch!("hyperlattice", "free_function", "exp");
-    value.exp()
-}
-
-/// Returns the natural logarithm of `value`.
-pub fn ln(value: Real) -> BlasResult<Real> {
-    crate::trace_dispatch!("hyperlattice", "free_function", "ln");
-    reject_invalid_domain(value.log_domain(), Problem::NotANumber)?;
-    value.ln()
-}
-
-/// Returns the base-10 logarithm of `value`.
-pub fn log10(value: Real) -> BlasResult<Real> {
-    crate::trace_dispatch!("hyperlattice", "free_function", "log10");
-    reject_invalid_domain(value.log_domain(), Problem::NotANumber)?;
-    value.log10()
-}
-
-/// Returns the base-10 logarithm after attaching an abort signal.
-pub fn log10_with_abort(value: Real, signal: &AbortSignal) -> BlasResult<Real> {
-    crate::trace_dispatch!("hyperlattice", "free_function", "log10-with-abort");
-    reject_invalid_domain(value.log_domain(), Problem::NotANumber)?;
-    with_abort(value, signal).log10()
-}
-
-/// Returns the principal square root of `value`.
-pub fn sqrt(value: Real) -> BlasResult<Real> {
-    crate::trace_dispatch!("hyperlattice", "free_function", "sqrt");
-    value.sqrt()
-}
-
-/// Returns the sine of `value`.
-pub fn sin(value: Real) -> Real {
-    crate::trace_dispatch!("hyperlattice", "free_function", "sin");
-    value.sin()
-}
-
-/// Returns the cosine of `value`.
-pub fn cos(value: Real) -> Real {
-    crate::trace_dispatch!("hyperlattice", "free_function", "cos");
-    value.cos()
-}
-
-/// Returns the tangent of `value`.
-pub fn tan(value: Real) -> BlasResult<Real> {
-    crate::trace_dispatch!("hyperlattice", "free_function", "tan");
-    value.tan()
-}
-
-/// Returns the hyperbolic sine of `value`.
-pub fn sinh(value: Real) -> BlasResult<Real> {
-    crate::trace_dispatch!("hyperlattice", "free_function", "sinh");
-    value.sinh()
-}
-
-/// Returns the hyperbolic cosine of `value`.
-pub fn cosh(value: Real) -> BlasResult<Real> {
-    crate::trace_dispatch!("hyperlattice", "free_function", "cosh");
-    value.cosh()
-}
-
-/// Returns the hyperbolic tangent of `value`.
-pub fn tanh(value: Real) -> BlasResult<Real> {
-    crate::trace_dispatch!("hyperlattice", "free_function", "tanh");
-    value.tanh()
-}
-
-/// Returns the inverse sine of `value`.
-pub fn asin(value: Real) -> BlasResult<Real> {
-    crate::trace_dispatch!("hyperlattice", "free_function", "asin");
-    reject_invalid_domain(value.asin_acos_domain(), Problem::NotANumber)?;
-    value.asin()
-}
-
-/// Returns the inverse sine after attaching an abort signal.
-pub fn asin_with_abort(value: Real, signal: &AbortSignal) -> BlasResult<Real> {
-    crate::trace_dispatch!("hyperlattice", "free_function", "asin-with-abort");
-    reject_invalid_domain(value.asin_acos_domain(), Problem::NotANumber)?;
-    with_abort(value, signal).asin()
-}
-
-/// Returns the inverse cosine of `value`.
-pub fn acos(value: Real) -> BlasResult<Real> {
-    crate::trace_dispatch!("hyperlattice", "free_function", "acos");
-    reject_invalid_domain(value.asin_acos_domain(), Problem::NotANumber)?;
-    value.acos()
-}
-
-/// Returns the inverse cosine after attaching an abort signal.
-pub fn acos_with_abort(value: Real, signal: &AbortSignal) -> BlasResult<Real> {
-    crate::trace_dispatch!("hyperlattice", "free_function", "acos-with-abort");
-    reject_invalid_domain(value.asin_acos_domain(), Problem::NotANumber)?;
-    with_abort(value, signal).acos()
-}
-
-/// Returns the inverse tangent of `value`.
-pub fn atan(value: Real) -> BlasResult<Real> {
-    crate::trace_dispatch!("hyperlattice", "free_function", "atan");
-    value.atan()
-}
-
-/// Returns the inverse tangent after attaching an abort signal.
-pub fn atan_with_abort(value: Real, signal: &AbortSignal) -> BlasResult<Real> {
-    crate::trace_dispatch!("hyperlattice", "free_function", "atan-with-abort");
-    with_abort(value, signal).atan()
-}
-
-/// Returns the inverse hyperbolic sine of `value`.
-pub fn asinh(value: Real) -> BlasResult<Real> {
-    crate::trace_dispatch!("hyperlattice", "free_function", "asinh");
-    value.asinh()
-}
-
-/// Returns the inverse hyperbolic sine after attaching an abort signal.
-pub fn asinh_with_abort(value: Real, signal: &AbortSignal) -> BlasResult<Real> {
-    crate::trace_dispatch!("hyperlattice", "free_function", "asinh-with-abort");
-    with_abort(value, signal).asinh()
-}
-
-/// Returns the inverse hyperbolic cosine of `value`.
-pub fn acosh(value: Real) -> BlasResult<Real> {
-    crate::trace_dispatch!("hyperlattice", "free_function", "acosh");
-    value.acosh()
-}
-
-/// Returns the inverse hyperbolic cosine after attaching an abort signal.
-pub fn acosh_with_abort(value: Real, signal: &AbortSignal) -> BlasResult<Real> {
-    crate::trace_dispatch!("hyperlattice", "free_function", "acosh-with-abort");
-    with_abort(value, signal).acosh()
-}
-
-/// Returns the inverse hyperbolic tangent of `value`.
-pub fn atanh(value: Real) -> BlasResult<Real> {
-    crate::trace_dispatch!("hyperlattice", "free_function", "atanh");
-    value.atanh()
-}
-
-/// Returns the inverse hyperbolic tangent after attaching an abort signal.
-pub fn atanh_with_abort(value: Real, signal: &AbortSignal) -> BlasResult<Real> {
-    crate::trace_dispatch!("hyperlattice", "free_function", "atanh-with-abort");
-    with_abort(value, signal).atanh()
-}
-
-#[inline(always)]
-fn reject_invalid_domain(status: RealDomainStatus, problem: Problem) -> BlasResult<()> {
-    match status {
-        RealDomainStatus::Invalid => {
-            crate::trace_dispatch!("hyperlattice", "domain", "structural-invalid");
-            Err(problem)
-        }
-        RealDomainStatus::Valid => {
-            crate::trace_dispatch!("hyperlattice", "domain", "structural-valid");
-            Ok(())
-        }
-        RealDomainStatus::Unknown => {
-            crate::trace_dispatch!("hyperlattice", "domain", "structural-unknown");
-            Ok(())
-        }
-    }
 }

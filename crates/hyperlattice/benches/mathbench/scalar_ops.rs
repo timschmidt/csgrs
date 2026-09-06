@@ -84,151 +84,179 @@ fn bench_scalar_operations_for<F>(
     });
 
     trace_dispatch_cases(format!("scalar_ops/{label}/pow"), &pow_cases, |(lhs, rhs)| {
-        let _ = black_box(hyperlattice::pow(lhs.clone(), rhs.clone()).unwrap());
+        let _ = black_box(Real::pow(lhs.clone(), rhs.clone()).unwrap());
     });
     trace_dispatch_cases(
         format!("scalar_ops/{label}/powi"),
         &reciprocal_cases,
         |value| {
-            let _ = black_box(hyperlattice::powi(value.clone(), 5).unwrap());
+            let _ = black_box(Real::powi_i64(value.clone(), 5).unwrap());
         },
     );
     trace_dispatch_cases(
         format!("scalar_ops/{label}/powi_negative_one"),
         &reciprocal_cases,
         |value| {
-            let _ = black_box(hyperlattice::powi(value.clone(), -1).unwrap());
+            let _ = black_box(Real::powi_i64(value.clone(), -1).unwrap());
         },
     );
     trace_dispatch_cases(
         format!("scalar_ops/{label}/exp"),
         &unit_interval_cases,
         |value| {
-            let _ = black_box(hyperlattice::exp(value.clone()).unwrap());
+            let _ = black_box(Real::exp(value.clone()).unwrap());
         },
     );
     trace_dispatch_cases(format!("scalar_ops/{label}/ln"), &positive_cases, |value| {
-        let _ = black_box(hyperlattice::ln(value.clone()).unwrap());
+        let _ = black_box(Real::ln(value.clone()).unwrap());
     });
     trace_dispatch_cases(
         format!("scalar_ops/{label}/log10"),
         &positive_cases,
         |value| {
-            let _ = black_box(hyperlattice::log10(value.clone()).unwrap());
+            let _ = black_box(Real::log10(value.clone()).unwrap());
         },
     );
     trace_dispatch_cases(
         format!("scalar_ops/{label}/log10_abort"),
         &positive_cases,
         |value| {
-            let _ = black_box(hyperlattice::log10_with_abort(value.clone(), &signal).unwrap());
+            let _ = black_box({
+let mut value = value.clone();
+value.abort(signal.clone());
+value.log10()
+}.unwrap());
         },
     );
     trace_dispatch_cases(format!("scalar_ops/{label}/sqrt"), &positive_cases, |value| {
-        let _ = black_box(hyperlattice::sqrt(value.clone()).unwrap());
-        let _ = black_box(hyperlattice::sqrt(value.clone()).unwrap());
-        let _ = black_box(hyperlattice::sqrt(value.clone()).unwrap());
+        let _ = black_box(Real::sqrt(value.clone()).unwrap());
+        let _ = black_box(Real::sqrt(value.clone()).unwrap());
+        let _ = black_box(Real::sqrt(value.clone()).unwrap());
     });
     trace_dispatch_cases(format!("scalar_ops/{label}/sin"), &trig_cases, |value| {
-        let _ = black_box(hyperlattice::sin(value.clone()));
+        let _ = black_box(Real::sin(value.clone()));
     });
     trace_dispatch_cases(format!("scalar_ops/{label}/cos"), &trig_cases, |value| {
-        let _ = black_box(hyperlattice::cos(value.clone()));
+        let _ = black_box(Real::cos(value.clone()));
     });
     trace_dispatch_cases(format!("scalar_ops/{label}/tan"), &trig_cases, |value| {
-        let _ = black_box(hyperlattice::tan(value.clone()).unwrap());
+        let _ = black_box(Real::tan(value.clone()).unwrap());
     });
     trace_dispatch_cases(
         format!("scalar_ops/{label}/sinh"),
         &hyperbolic_cases,
         |value| {
-            let _ = black_box(hyperlattice::sinh(value.clone()).unwrap());
+            let _ = black_box(Real::sinh(value.clone()).unwrap());
         },
     );
     trace_dispatch_cases(
         format!("scalar_ops/{label}/cosh"),
         &hyperbolic_cases,
         |value| {
-            let _ = black_box(hyperlattice::cosh(value.clone()).unwrap());
+            let _ = black_box(Real::cosh(value.clone()).unwrap());
         },
     );
     trace_dispatch_cases(
         format!("scalar_ops/{label}/tanh"),
         &hyperbolic_cases,
         |value| {
-            let _ = black_box(hyperlattice::tanh(value.clone()).unwrap());
+            let _ = black_box(Real::tanh(value.clone()).unwrap());
         },
     );
     trace_dispatch_cases(
         format!("scalar_ops/{label}/asin"),
         &unit_interval_cases,
         |value| {
-            let _ = black_box(hyperlattice::asin(value.clone()).unwrap());
+            let _ = black_box(Real::asin(value.clone()).unwrap());
         },
     );
     trace_dispatch_cases(
         format!("scalar_ops/{label}/asin_abort"),
         &unit_interval_cases,
         |value| {
-            let _ = black_box(hyperlattice::asin_with_abort(value.clone(), &signal).unwrap());
+            let _ = black_box({
+let mut value = value.clone();
+value.abort(signal.clone());
+value.asin()
+}.unwrap());
         },
     );
     trace_dispatch_cases(
         format!("scalar_ops/{label}/acos"),
         &unit_interval_cases,
         |value| {
-            let _ = black_box(hyperlattice::acos(value.clone()).unwrap());
+            let _ = black_box(Real::acos(value.clone()).unwrap());
         },
     );
     trace_dispatch_cases(
         format!("scalar_ops/{label}/acos_abort"),
         &unit_interval_cases,
         |value| {
-            let _ = black_box(hyperlattice::acos_with_abort(value.clone(), &signal).unwrap());
+            let _ = black_box({
+let mut value = value.clone();
+value.abort(signal.clone());
+value.acos()
+}.unwrap());
         },
     );
     trace_dispatch_cases(format!("scalar_ops/{label}/atan"), &trig_cases, |value| {
-        let _ = black_box(hyperlattice::atan(value.clone()).unwrap());
+        let _ = black_box(Real::atan(value.clone()).unwrap());
     });
     trace_dispatch_cases(
         format!("scalar_ops/{label}/atan_abort"),
         &trig_cases,
         |value| {
-            let _ = black_box(hyperlattice::atan_with_abort(value.clone(), &signal).unwrap());
+            let _ = black_box({
+let mut value = value.clone();
+value.abort(signal.clone());
+value.atan()
+}.unwrap());
         },
     );
     trace_dispatch_cases(format!("scalar_ops/{label}/asinh"), &trig_cases, |value| {
-        let _ = black_box(hyperlattice::asinh(value.clone()).unwrap());
+        let _ = black_box(Real::asinh(value.clone()).unwrap());
     });
     trace_dispatch_cases(
         format!("scalar_ops/{label}/asinh_abort"),
         &trig_cases,
         |value| {
-            let _ = black_box(hyperlattice::asinh_with_abort(value.clone(), &signal).unwrap());
+            let _ = black_box({
+let mut value = value.clone();
+value.abort(signal.clone());
+value.asinh()
+}.unwrap());
         },
     );
     trace_dispatch_cases(format!("scalar_ops/{label}/acosh"), &acosh_cases, |value| {
-        let _ = black_box(hyperlattice::acosh(value.clone()).unwrap());
+        let _ = black_box(Real::acosh(value.clone()).unwrap());
     });
     trace_dispatch_cases(
         format!("scalar_ops/{label}/acosh_abort"),
         &acosh_cases,
         |value| {
-            let _ = black_box(hyperlattice::acosh_with_abort(value.clone(), &signal).unwrap());
+            let _ = black_box({
+let mut value = value.clone();
+value.abort(signal.clone());
+value.acosh()
+}.unwrap());
         },
     );
     trace_dispatch_cases(
         format!("scalar_ops/{label}/atanh"),
         &unit_interval_cases,
         |value| {
-            let _ = black_box(hyperlattice::atanh(value.clone()).unwrap());
+            let _ = black_box(Real::atanh(value.clone()).unwrap());
         },
     );
     trace_dispatch_cases(
         format!("scalar_ops/{label}/atanh_abort"),
         &unit_interval_cases,
         |value| {
-            let _ = black_box(hyperlattice::atanh_with_abort(value.clone(), &signal).unwrap());
+            let _ = black_box({
+let mut value = value.clone();
+value.abort(signal.clone());
+value.atanh()
+}.unwrap());
         },
     );
 
@@ -283,7 +311,7 @@ fn bench_scalar_operations_for<F>(
         let cursor = Cell::new(0);
         b.iter(|| {
             black_box(
-                hyperlattice::reciprocal(black_box(
+                Real::inverse(black_box(
                     next_case(&reciprocal_cases, &cursor).clone(),
                 ))
                 .unwrap(),
@@ -305,10 +333,11 @@ fn bench_scalar_operations_for<F>(
         let cursor = Cell::new(0);
         b.iter(|| {
             black_box(
-                hyperlattice::reciprocal_checked_with_abort(
-                    black_box(next_case(&reciprocal_cases, &cursor).clone()),
-                    &signal,
-                )
+                {
+let mut value = black_box(next_case(&reciprocal_cases, &cursor).clone());
+value.abort(signal.clone());
+hyperlattice::reciprocal_checked(value)
+}
                 .unwrap(),
             )
         })
@@ -317,14 +346,14 @@ fn bench_scalar_operations_for<F>(
         let cursor = Cell::new(0);
         b.iter(|| {
             let (lhs, rhs) = next_case(&pow_cases, &cursor);
-            black_box(hyperlattice::pow(black_box(lhs.clone()), black_box(rhs.clone())).unwrap())
+            black_box(Real::pow(black_box(lhs.clone()), black_box(rhs.clone())).unwrap())
         })
     });
     group.bench_function(format!("{label}/powi"), |b| {
         let cursor = Cell::new(0);
         b.iter(|| {
             black_box(
-                hyperlattice::powi(black_box(next_case(&reciprocal_cases, &cursor).clone()), 5)
+                Real::powi_i64(black_box(next_case(&reciprocal_cases, &cursor).clone()), 5)
                     .unwrap(),
             )
         })
@@ -333,7 +362,7 @@ fn bench_scalar_operations_for<F>(
         let cursor = Cell::new(0);
         b.iter(|| {
             black_box(
-                hyperlattice::powi(black_box(next_case(&reciprocal_cases, &cursor).clone()), -1)
+                Real::powi_i64(black_box(next_case(&reciprocal_cases, &cursor).clone()), -1)
                     .unwrap(),
             )
         })
@@ -342,7 +371,7 @@ fn bench_scalar_operations_for<F>(
         let cursor = Cell::new(0);
         b.iter(|| {
             black_box(
-                hyperlattice::exp(black_box(next_case(&unit_interval_cases, &cursor).clone()))
+                Real::exp(black_box(next_case(&unit_interval_cases, &cursor).clone()))
                     .unwrap(),
             )
         })
@@ -351,7 +380,7 @@ fn bench_scalar_operations_for<F>(
         let cursor = Cell::new(0);
         b.iter(|| {
             black_box(
-                hyperlattice::ln(black_box(next_case(&positive_cases, &cursor).clone())).unwrap(),
+                Real::ln(black_box(next_case(&positive_cases, &cursor).clone())).unwrap(),
             )
         })
     });
@@ -359,7 +388,7 @@ fn bench_scalar_operations_for<F>(
         let cursor = Cell::new(0);
         b.iter(|| {
             black_box(
-                hyperlattice::log10(black_box(next_case(&positive_cases, &cursor).clone()))
+                Real::log10(black_box(next_case(&positive_cases, &cursor).clone()))
                     .unwrap(),
             )
         })
@@ -368,10 +397,11 @@ fn bench_scalar_operations_for<F>(
         let cursor = Cell::new(0);
         b.iter(|| {
             black_box(
-                hyperlattice::log10_with_abort(
-                    black_box(next_case(&positive_cases, &cursor).clone()),
-                    &signal,
-                )
+                {
+let mut value = black_box(next_case(&positive_cases, &cursor).clone());
+value.abort(signal.clone());
+value.log10()
+}
                 .unwrap(),
             )
         })
@@ -380,7 +410,7 @@ fn bench_scalar_operations_for<F>(
         let cursor = Cell::new(0);
         b.iter(|| {
             black_box(
-                hyperlattice::sqrt(black_box(next_case(&positive_cases, &cursor).clone()))
+                Real::sqrt(black_box(next_case(&positive_cases, &cursor).clone()))
                     .unwrap(),
             )
         })
@@ -388,7 +418,7 @@ fn bench_scalar_operations_for<F>(
     group.bench_function(format!("{label}/sin"), |b| {
         let cursor = Cell::new(0);
         b.iter(|| {
-            black_box(hyperlattice::sin(black_box(
+            black_box(Real::sin(black_box(
                 next_case(&trig_cases, &cursor).clone(),
             )))
         })
@@ -396,7 +426,7 @@ fn bench_scalar_operations_for<F>(
     group.bench_function(format!("{label}/cos"), |b| {
         let cursor = Cell::new(0);
         b.iter(|| {
-            black_box(hyperlattice::cos(black_box(
+            black_box(Real::cos(black_box(
                 next_case(&trig_cases, &cursor).clone(),
             )))
         })
@@ -405,7 +435,7 @@ fn bench_scalar_operations_for<F>(
         let cursor = Cell::new(0);
         b.iter(|| {
             black_box(
-                hyperlattice::tan(black_box(next_case(&trig_cases, &cursor).clone())).unwrap(),
+                Real::tan(black_box(next_case(&trig_cases, &cursor).clone())).unwrap(),
             )
         })
     });
@@ -413,7 +443,7 @@ fn bench_scalar_operations_for<F>(
         let cursor = Cell::new(0);
         b.iter(|| {
             black_box(
-                hyperlattice::sinh(black_box(next_case(&hyperbolic_cases, &cursor).clone()))
+                Real::sinh(black_box(next_case(&hyperbolic_cases, &cursor).clone()))
                     .unwrap(),
             )
         })
@@ -422,7 +452,7 @@ fn bench_scalar_operations_for<F>(
         let cursor = Cell::new(0);
         b.iter(|| {
             black_box(
-                hyperlattice::cosh(black_box(next_case(&hyperbolic_cases, &cursor).clone()))
+                Real::cosh(black_box(next_case(&hyperbolic_cases, &cursor).clone()))
                     .unwrap(),
             )
         })
@@ -431,7 +461,7 @@ fn bench_scalar_operations_for<F>(
         let cursor = Cell::new(0);
         b.iter(|| {
             black_box(
-                hyperlattice::tanh(black_box(next_case(&hyperbolic_cases, &cursor).clone()))
+                Real::tanh(black_box(next_case(&hyperbolic_cases, &cursor).clone()))
                     .unwrap(),
             )
         })
@@ -440,7 +470,7 @@ fn bench_scalar_operations_for<F>(
         let cursor = Cell::new(0);
         b.iter(|| {
             black_box(
-                hyperlattice::asin(black_box(next_case(&unit_interval_cases, &cursor).clone()))
+                Real::asin(black_box(next_case(&unit_interval_cases, &cursor).clone()))
                     .unwrap(),
             )
         })
@@ -449,10 +479,11 @@ fn bench_scalar_operations_for<F>(
         let cursor = Cell::new(0);
         b.iter(|| {
             black_box(
-                hyperlattice::asin_with_abort(
-                    black_box(next_case(&unit_interval_cases, &cursor).clone()),
-                    &signal,
-                )
+                {
+let mut value = black_box(next_case(&unit_interval_cases, &cursor).clone());
+value.abort(signal.clone());
+value.asin()
+}
                 .unwrap(),
             )
         })
@@ -461,7 +492,7 @@ fn bench_scalar_operations_for<F>(
         let cursor = Cell::new(0);
         b.iter(|| {
             black_box(
-                hyperlattice::acos(black_box(next_case(&unit_interval_cases, &cursor).clone()))
+                Real::acos(black_box(next_case(&unit_interval_cases, &cursor).clone()))
                     .unwrap(),
             )
         })
@@ -470,10 +501,11 @@ fn bench_scalar_operations_for<F>(
         let cursor = Cell::new(0);
         b.iter(|| {
             black_box(
-                hyperlattice::acos_with_abort(
-                    black_box(next_case(&unit_interval_cases, &cursor).clone()),
-                    &signal,
-                )
+                {
+let mut value = black_box(next_case(&unit_interval_cases, &cursor).clone());
+value.abort(signal.clone());
+value.acos()
+}
                 .unwrap(),
             )
         })
@@ -482,7 +514,7 @@ fn bench_scalar_operations_for<F>(
         let cursor = Cell::new(0);
         b.iter(|| {
             black_box(
-                hyperlattice::atan(black_box(next_case(&trig_cases, &cursor).clone())).unwrap(),
+                Real::atan(black_box(next_case(&trig_cases, &cursor).clone())).unwrap(),
             )
         })
     });
@@ -490,10 +522,11 @@ fn bench_scalar_operations_for<F>(
         let cursor = Cell::new(0);
         b.iter(|| {
             black_box(
-                hyperlattice::atan_with_abort(
-                    black_box(next_case(&trig_cases, &cursor).clone()),
-                    &signal,
-                )
+                {
+let mut value = black_box(next_case(&trig_cases, &cursor).clone());
+value.abort(signal.clone());
+value.atan()
+}
                 .unwrap(),
             )
         })
@@ -502,7 +535,7 @@ fn bench_scalar_operations_for<F>(
         let cursor = Cell::new(0);
         b.iter(|| {
             black_box(
-                hyperlattice::asinh(black_box(next_case(&trig_cases, &cursor).clone())).unwrap(),
+                Real::asinh(black_box(next_case(&trig_cases, &cursor).clone())).unwrap(),
             )
         })
     });
@@ -510,10 +543,11 @@ fn bench_scalar_operations_for<F>(
         let cursor = Cell::new(0);
         b.iter(|| {
             black_box(
-                hyperlattice::asinh_with_abort(
-                    black_box(next_case(&trig_cases, &cursor).clone()),
-                    &signal,
-                )
+                {
+let mut value = black_box(next_case(&trig_cases, &cursor).clone());
+value.abort(signal.clone());
+value.asinh()
+}
                 .unwrap(),
             )
         })
@@ -522,7 +556,7 @@ fn bench_scalar_operations_for<F>(
         let cursor = Cell::new(0);
         b.iter(|| {
             black_box(
-                hyperlattice::acosh(black_box(next_case(&acosh_cases, &cursor).clone())).unwrap(),
+                Real::acosh(black_box(next_case(&acosh_cases, &cursor).clone())).unwrap(),
             )
         })
     });
@@ -530,10 +564,11 @@ fn bench_scalar_operations_for<F>(
         let cursor = Cell::new(0);
         b.iter(|| {
             black_box(
-                hyperlattice::acosh_with_abort(
-                    black_box(next_case(&acosh_cases, &cursor).clone()),
-                    &signal,
-                )
+                {
+let mut value = black_box(next_case(&acosh_cases, &cursor).clone());
+value.abort(signal.clone());
+value.acosh()
+}
                 .unwrap(),
             )
         })
@@ -542,7 +577,7 @@ fn bench_scalar_operations_for<F>(
         let cursor = Cell::new(0);
         b.iter(|| {
             black_box(
-                hyperlattice::atanh(black_box(next_case(&unit_interval_cases, &cursor).clone()))
+                Real::atanh(black_box(next_case(&unit_interval_cases, &cursor).clone()))
                     .unwrap(),
             )
         })
@@ -551,10 +586,11 @@ fn bench_scalar_operations_for<F>(
         let cursor = Cell::new(0);
         b.iter(|| {
             black_box(
-                hyperlattice::atanh_with_abort(
-                    black_box(next_case(&unit_interval_cases, &cursor).clone()),
-                    &signal,
-                )
+                {
+let mut value = black_box(next_case(&unit_interval_cases, &cursor).clone());
+value.abort(signal.clone());
+value.atanh()
+}
                 .unwrap(),
             )
         })
@@ -562,19 +598,10 @@ fn bench_scalar_operations_for<F>(
     group.bench_function(format!("{label}/zero_status"), |b| {
         let cursor = Cell::new(0);
         b.iter(|| {
-            black_box(hyperlattice::zero_status(black_box(next_case(
+            black_box(Real::zero_status(black_box(next_case(
                 &zero_status_cases,
                 &cursor,
             ))))
-        })
-    });
-    group.bench_function(format!("{label}/zero_status_abort"), |b| {
-        let cursor = Cell::new(0);
-        b.iter(|| {
-            black_box(hyperlattice::zero_status_with_abort(
-                black_box(next_case(&zero_status_cases, &cursor)),
-                &signal,
-            ))
         })
     });
 }
@@ -612,11 +639,11 @@ fn bench_scalar_sqrt_cases(c: &mut Criterion) {
         let symbolica = symbolica_ctx.f(value);
 
         group.bench_function(format!("hyperreal/{name}"), |b| {
-            b.iter(|| black_box(hyperlattice::sqrt(black_box(hyperreal.clone())).unwrap()))
+            b.iter(|| black_box(Real::sqrt(black_box(hyperreal.clone())).unwrap()))
         });
         group.bench_function(format!("hyperreal-rational/{name}"), |b| {
             b.iter(|| {
-                black_box(hyperlattice::sqrt(black_box(hyperreal_rational.clone())).unwrap())
+                black_box(Real::sqrt(black_box(hyperreal_rational.clone())).unwrap())
             })
         });
         group.bench_function(format!("numerica128/{name}"), |b| {
@@ -655,9 +682,9 @@ fn bench_scalar_hyperbolic_cases(c: &mut Criterion) {
                 b.iter(|| {
                     let value = black_box(hyperreal.clone());
                     black_box(match operation {
-                        "sinh" => hyperlattice::sinh(value),
-                        "cosh" => hyperlattice::cosh(value),
-                        _ => hyperlattice::tanh(value),
+                        "sinh" => Real::sinh(value),
+                        "cosh" => Real::cosh(value),
+                        _ => Real::tanh(value),
                     }
                     .unwrap())
                 })
@@ -666,9 +693,9 @@ fn bench_scalar_hyperbolic_cases(c: &mut Criterion) {
                 b.iter(|| {
                     let value = black_box(hyperreal_rational.clone());
                     black_box(match operation {
-                        "sinh" => hyperlattice::sinh(value),
-                        "cosh" => hyperlattice::cosh(value),
-                        _ => hyperlattice::tanh(value),
+                        "sinh" => Real::sinh(value),
+                        "cosh" => Real::cosh(value),
+                        _ => Real::tanh(value),
                     }
                     .unwrap())
                 })
@@ -726,9 +753,9 @@ fn bench_scalar_hyperbolic_f64_cases(c: &mut Criterion) {
                 b.iter(|| {
                     let value = black_box(hyperreal.clone());
                     let result = match operation {
-                        "sinh" => hyperlattice::sinh(value),
-                        "cosh" => hyperlattice::cosh(value),
-                        _ => hyperlattice::tanh(value),
+                        "sinh" => Real::sinh(value),
+                        "cosh" => Real::cosh(value),
+                        _ => Real::tanh(value),
                     }
                     .unwrap();
                     black_box(result.to_f64_lossy().unwrap())
@@ -738,9 +765,9 @@ fn bench_scalar_hyperbolic_f64_cases(c: &mut Criterion) {
                 b.iter(|| {
                     let value = black_box(hyperreal_rational.clone());
                     let result = match operation {
-                        "sinh" => hyperlattice::sinh(value),
-                        "cosh" => hyperlattice::cosh(value),
-                        _ => hyperlattice::tanh(value),
+                        "sinh" => Real::sinh(value),
+                        "cosh" => Real::cosh(value),
+                        _ => Real::tanh(value),
                     }
                     .unwrap();
                     black_box(result.to_f64_lossy().unwrap())
@@ -783,21 +810,21 @@ fn bench_large_integer_exp(c: &mut Criterion) {
     let symbolica = symbolica_ctx.f(128.0);
 
     trace_dispatch_row("scalar_large_integer_exp/hyperreal/exp_128", || {
-        black_box(hyperlattice::exp(hyperreal.clone()).unwrap());
+        black_box(Real::exp(hyperreal.clone()).unwrap());
     });
     trace_dispatch_row(
         "scalar_large_integer_exp/hyperreal-rational/exp_128",
         || {
-            black_box(hyperlattice::exp(hyperreal_rational.clone()).unwrap());
+            black_box(Real::exp(hyperreal_rational.clone()).unwrap());
         },
     );
 
     group.bench_function("hyperreal/exp_128", |b| {
-        b.iter(|| black_box(hyperlattice::exp(black_box(hyperreal.clone())).unwrap()))
+        b.iter(|| black_box(Real::exp(black_box(hyperreal.clone())).unwrap()))
     });
     group.bench_function("hyperreal-rational/exp_128", |b| {
         b.iter(|| {
-            black_box(hyperlattice::exp(black_box(hyperreal_rational.clone())).unwrap())
+            black_box(Real::exp(black_box(hyperreal_rational.clone())).unwrap())
         })
     });
     group.bench_function("numerica128/exp_128", |b| {

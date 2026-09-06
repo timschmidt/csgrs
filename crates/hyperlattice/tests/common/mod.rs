@@ -1,7 +1,7 @@
 use std::sync::Arc;
 use std::sync::atomic::AtomicBool;
 
-use hyperlattice::{Real, sin};
+use hyperlattice::Real;
 
 pub fn r(value: i32) -> Real {
     value.into()
@@ -23,5 +23,5 @@ pub fn abort_signal() -> hyperlattice::AbortSignal {
 pub fn unknown_zero() -> Real {
     let one = r(1);
     let nearby = one.clone() + frac(1, 1_u64 << 60);
-    sin(one) - sin(nearby)
+    Real::sin(one) - Real::sin(nearby)
 }

@@ -5,7 +5,7 @@ use std::ops::{Add, BitXor, Div, Mul, Neg, Sub};
 
 use crate::scalar::require_known_nonzero;
 use crate::{
-    BlasResult, CheckedBlasResult, ExactRationalKind, Problem, Real, RealKernelExt, ZeroStatus,
+    BlasResult, CheckedBlasResult, ExactRationalKind, Problem, Real, RealKernelExt, ZeroKnowledge,
 };
 
 /// Complex scalar with real and imaginary components.
@@ -92,9 +92,9 @@ impl Complex {
         crate::trace_dispatch!("hyperlattice_complex", "method", "powi");
         if exponent == 0 {
             match complex_zero_status(&self) {
-                ZeroStatus::Zero => return Err(Problem::NotANumber),
-                ZeroStatus::Unknown => return Err(Problem::UnknownZero),
-                ZeroStatus::NonZero => {}
+                ZeroKnowledge::Zero => return Err(Problem::NotANumber),
+                ZeroKnowledge::Unknown => return Err(Problem::UnknownZero),
+                ZeroKnowledge::NonZero => {}
             }
             return Ok(Self::one());
         }
@@ -116,9 +116,9 @@ impl Complex {
         crate::trace_dispatch!("hyperlattice_complex", "method", "powi-checked");
         if exponent == 0 {
             match complex_zero_status(&self) {
-                ZeroStatus::Zero => return Err(Problem::NotANumber),
-                ZeroStatus::Unknown => return Err(Problem::UnknownZero),
-                ZeroStatus::NonZero => {}
+                ZeroKnowledge::Zero => return Err(Problem::NotANumber),
+                ZeroKnowledge::Unknown => return Err(Problem::UnknownZero),
+                ZeroKnowledge::NonZero => {}
             }
             return Ok(Self::one());
         }
@@ -160,19 +160,19 @@ impl Complex {
 }
 
 #[inline]
-fn complex_zero_status(value: &Complex) -> ZeroStatus {
+fn complex_zero_status(value: &Complex) -> ZeroKnowledge {
     if let Some(real) = value.re.exact_rational_ref() {
         if !real.is_zero() {
-            return ZeroStatus::NonZero;
+            return ZeroKnowledge::NonZero;
         }
         return value.im.zero_status();
     }
     match value.re.zero_status() {
-        ZeroStatus::NonZero => ZeroStatus::NonZero,
-        ZeroStatus::Zero => value.im.zero_status(),
-        ZeroStatus::Unknown => match value.im.zero_status() {
-            ZeroStatus::NonZero => ZeroStatus::NonZero,
-            ZeroStatus::Zero | ZeroStatus::Unknown => ZeroStatus::Unknown,
+        ZeroKnowledge::NonZero => ZeroKnowledge::NonZero,
+        ZeroKnowledge::Zero => value.im.zero_status(),
+        ZeroKnowledge::Unknown => match value.im.zero_status() {
+            ZeroKnowledge::NonZero => ZeroKnowledge::NonZero,
+            ZeroKnowledge::Zero | ZeroKnowledge::Unknown => ZeroKnowledge::Unknown,
         },
     }
 }

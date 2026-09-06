@@ -5,7 +5,7 @@
 //! decisions should pass the resulting scalar to `hyperlimit` so predicate
 //! policy and provenance stay at the predicate layer.
 
-use crate::{Axis2, Real, RealKernelExt, ZeroStatus};
+use crate::{Axis2, Real, RealKernelExt, ZeroKnowledge};
 
 /// Cheap structural facts known about a 2D displacement.
 ///
@@ -16,7 +16,7 @@ use crate::{Axis2, Real, RealKernelExt, ZeroStatus};
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct Displacement2Facts {
     /// Zero status for `[dx, dy]`.
-    pub component_zero: [ZeroStatus; 2],
+    pub component_zero: [ZeroKnowledge; 2],
     /// Axis occupied by a known nonzero component when the other component is
     /// known zero.
     pub known_axis: Option<Axis2>,
@@ -31,25 +31,25 @@ pub struct Displacement2Facts {
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct ProductTerm2Facts {
     /// Zero status for the two product factors.
-    pub factor_zero: [ZeroStatus; 2],
+    pub factor_zero: [ZeroKnowledge; 2],
     /// Zero status for the product term itself.
-    pub term_zero: ZeroStatus,
+    pub term_zero: ZeroKnowledge,
 }
 
 impl ProductTerm2Facts {
     /// Return whether the product term is known to be exactly zero.
     pub const fn known_zero(self) -> bool {
-        matches!(self.term_zero, ZeroStatus::Zero)
+        matches!(self.term_zero, ZeroKnowledge::Zero)
     }
 
     /// Return whether the product term is known not to be zero.
     pub const fn known_nonzero(self) -> bool {
-        matches!(self.term_zero, ZeroStatus::NonZero)
+        matches!(self.term_zero, ZeroKnowledge::NonZero)
     }
 
     /// Return whether the product term zero status is unknown.
     pub const fn unknown_zero(self) -> bool {
-        matches!(self.term_zero, ZeroStatus::Unknown)
+        matches!(self.term_zero, ZeroKnowledge::Unknown)
     }
 }
 
@@ -61,7 +61,7 @@ impl ProductTerm2Facts {
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct ProductSum2Facts<const TERMS: usize> {
     /// Zero status for each pairwise product term.
-    pub term_zero: [ZeroStatus; TERMS],
+    pub term_zero: [ZeroKnowledge; TERMS],
 }
 
 /// Cheap structural facts for a 2D orientation determinant.
@@ -91,7 +91,7 @@ pub struct Orient2Facts {
 
 impl<const TERMS: usize> ProductSum2Facts<TERMS> {
     /// Build product-sum facts from term facts.
-    pub const fn new(term_zero: [ZeroStatus; TERMS]) -> Self {
+    pub const fn new(term_zero: [ZeroKnowledge; TERMS]) -> Self {
         Self { term_zero }
     }
 
@@ -100,7 +100,7 @@ impl<const TERMS: usize> ProductSum2Facts<TERMS> {
     /// # Panics
     ///
     /// Panics when `index >= TERMS`.
-    pub const fn term_zero(self, index: usize) -> ZeroStatus {
+    pub const fn term_zero(self, index: usize) -> ZeroKnowledge {
         self.term_zero[index]
     }
 
@@ -110,28 +110,28 @@ impl<const TERMS: usize> ProductSum2Facts<TERMS> {
     /// short determinant, distance, and cofactor expressions this module is
     /// meant to expose.
     pub fn known_zero_mask(self) -> u64 {
-        term_mask(self.term_zero, ZeroStatus::Zero)
+        term_mask(self.term_zero, ZeroKnowledge::Zero)
     }
 
     /// Return a bit mask of product terms known to be nonzero.
     ///
     /// Bits above 63 are not represented.
     pub fn known_nonzero_mask(self) -> u64 {
-        term_mask(self.term_zero, ZeroStatus::NonZero)
+        term_mask(self.term_zero, ZeroKnowledge::NonZero)
     }
 
     /// Return a bit mask of product terms with unknown zero status.
     ///
     /// Bits above 63 are not represented.
     pub fn unknown_zero_mask(self) -> u64 {
-        term_mask(self.term_zero, ZeroStatus::Unknown)
+        term_mask(self.term_zero, ZeroKnowledge::Unknown)
     }
 
     /// Count product terms known to be exactly zero.
     pub fn known_zero_count(self) -> u32 {
         self.term_zero
             .into_iter()
-            .filter(|status| matches!(status, ZeroStatus::Zero))
+            .filter(|status| matches!(status, ZeroKnowledge::Zero))
             .count() as u32
     }
 
@@ -139,7 +139,7 @@ impl<const TERMS: usize> ProductSum2Facts<TERMS> {
     pub fn known_nonzero_count(self) -> u32 {
         self.term_zero
             .into_iter()
-            .filter(|status| matches!(status, ZeroStatus::NonZero))
+            .filter(|status| matches!(status, ZeroKnowledge::NonZero))
             .count() as u32
     }
 
@@ -147,7 +147,7 @@ impl<const TERMS: usize> ProductSum2Facts<TERMS> {
     pub fn unknown_zero_count(self) -> u32 {
         self.term_zero
             .into_iter()
-            .filter(|status| matches!(status, ZeroStatus::Unknown))
+            .filter(|status| matches!(status, ZeroKnowledge::Unknown))
             .count() as u32
     }
 
@@ -213,10 +213,10 @@ impl Displacement2Facts {
     /// predicate decisions separate.
     pub fn from_components(components: [&Real; 2]) -> Self {
         let component_zero = [components[0].zero_status(), components[1].zero_status()];
-        let known_zero = matches!(component_zero, [ZeroStatus::Zero, ZeroStatus::Zero]);
+        let known_zero = matches!(component_zero, [ZeroKnowledge::Zero, ZeroKnowledge::Zero]);
         let known_axis = match component_zero {
-            [ZeroStatus::NonZero, ZeroStatus::Zero] => Some(Axis2::X),
-            [ZeroStatus::Zero, ZeroStatus::NonZero] => Some(Axis2::Y),
+            [ZeroKnowledge::NonZero, ZeroKnowledge::Zero] => Some(Axis2::X),
+            [ZeroKnowledge::Zero, ZeroKnowledge::NonZero] => Some(Axis2::Y),
             _ => None,
         };
 
@@ -228,7 +228,7 @@ impl Displacement2Facts {
     }
 
     /// Return the zero status for one displacement component.
-    pub fn component_zero(self, axis: Axis2) -> ZeroStatus {
+    pub fn component_zero(self, axis: Axis2) -> ZeroKnowledge {
         self.component_zero[axis.index()]
     }
 
@@ -237,10 +237,10 @@ impl Displacement2Facts {
     /// Bit 0 is `dx` and bit 1 is `dy`.
     pub fn known_zero_mask(self) -> u8 {
         let mut mask = 0;
-        if matches!(self.component_zero[0], ZeroStatus::Zero) {
+        if matches!(self.component_zero[0], ZeroKnowledge::Zero) {
             mask |= Axis2::X.bit();
         }
-        if matches!(self.component_zero[1], ZeroStatus::Zero) {
+        if matches!(self.component_zero[1], ZeroKnowledge::Zero) {
             mask |= Axis2::Y.bit();
         }
         mask
@@ -249,10 +249,10 @@ impl Displacement2Facts {
     /// Return a bit mask of components known to be nonzero.
     pub fn known_nonzero_mask(self) -> u8 {
         let mut mask = 0;
-        if matches!(self.component_zero[0], ZeroStatus::NonZero) {
+        if matches!(self.component_zero[0], ZeroKnowledge::NonZero) {
             mask |= Axis2::X.bit();
         }
-        if matches!(self.component_zero[1], ZeroStatus::NonZero) {
+        if matches!(self.component_zero[1], ZeroKnowledge::NonZero) {
             mask |= Axis2::Y.bit();
         }
         mask
@@ -261,10 +261,10 @@ impl Displacement2Facts {
     /// Return a bit mask of components whose zero status is unknown.
     pub fn unknown_zero_mask(self) -> u8 {
         let mut mask = 0;
-        if matches!(self.component_zero[0], ZeroStatus::Unknown) {
+        if matches!(self.component_zero[0], ZeroKnowledge::Unknown) {
             mask |= Axis2::X.bit();
         }
-        if matches!(self.component_zero[1], ZeroStatus::Unknown) {
+        if matches!(self.component_zero[1], ZeroKnowledge::Unknown) {
             mask |= Axis2::Y.bit();
         }
         mask
@@ -290,7 +290,7 @@ impl Displacement2Facts {
     }
 }
 
-fn term_mask<const TERMS: usize>(statuses: [ZeroStatus; TERMS], needle: ZeroStatus) -> u64 {
+fn term_mask<const TERMS: usize>(statuses: [ZeroKnowledge; TERMS], needle: ZeroKnowledge) -> u64 {
     let mut mask = 0;
     let limit = TERMS.min(64);
     for (index, status) in statuses.into_iter().enumerate().take(limit) {
@@ -337,14 +337,17 @@ pub fn displacement2_facts(from: [&Real; 2], to: [&Real; 2]) -> Displacement2Fac
 pub fn product_term2_facts(term: [&Real; 2]) -> ProductTerm2Facts {
     crate::trace_dispatch!("hyperlattice_algebra2", "helper", "product-term2-facts");
     let factor_zero = [term[0].zero_status(), term[1].zero_status()];
-    let term_zero = if matches!(factor_zero[0], ZeroStatus::Zero)
-        || matches!(factor_zero[1], ZeroStatus::Zero)
+    let term_zero = if matches!(factor_zero[0], ZeroKnowledge::Zero)
+        || matches!(factor_zero[1], ZeroKnowledge::Zero)
     {
-        ZeroStatus::Zero
-    } else if matches!(factor_zero, [ZeroStatus::NonZero, ZeroStatus::NonZero]) {
-        ZeroStatus::NonZero
+        ZeroKnowledge::Zero
+    } else if matches!(
+        factor_zero,
+        [ZeroKnowledge::NonZero, ZeroKnowledge::NonZero]
+    ) {
+        ZeroKnowledge::NonZero
     } else {
-        ZeroStatus::Unknown
+        ZeroKnowledge::Unknown
     };
 
     ProductTerm2Facts {
@@ -537,8 +540,8 @@ mod tests {
         let three = s(3);
 
         let facts = product_sum2_facts([[&zero, &two], [&one, &three]]);
-        assert_eq!(facts.term_zero(0), ZeroStatus::Zero);
-        assert_eq!(facts.term_zero(1), ZeroStatus::NonZero);
+        assert_eq!(facts.term_zero(0), ZeroKnowledge::Zero);
+        assert_eq!(facts.term_zero(1), ZeroKnowledge::NonZero);
         assert_eq!(facts.known_zero_mask(), 0b01);
         assert_eq!(facts.known_nonzero_mask(), 0b10);
         assert_eq!(facts.unknown_zero_count(), 0);

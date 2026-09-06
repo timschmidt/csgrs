@@ -8,7 +8,7 @@
 //! other external libraries.
 //!
 //! Most arithmetic that can fail returns [`BlasResult`]. Checked APIs use
-//! [`ZeroStatus`] and reject both definite zero and unknown-zero divisors,
+//! [`ZeroKnowledge`] and reject both definite zero and unknown-zero divisors,
 //! returning [`Problem::UnknownZero`] for the latter.
 //!
 //! Exactness is carried as conservative structure, not by eagerly
@@ -20,7 +20,7 @@
 //! # Examples
 //!
 //! ```
-//! use hyperlattice::{Matrix3, Real, Vector3, sqrt};
+//! use hyperlattice::{Matrix3, Real, Vector3};
 //!
 //! fn r(value: i32) -> Real {
 //!     value.into()
@@ -28,7 +28,7 @@
 //!
 //! let v = Vector3::new([r(3), r(4), r(0)]);
 //! assert_eq!(v.dot(&v), r(25));
-//! assert_eq!(sqrt(v.dot(&v)).unwrap(), r(5));
+//! assert_eq!(Real::sqrt(v.dot(&v)).unwrap(), r(5));
 //!
 //! let identity = Matrix3::identity();
 //! assert_eq!(identity * v.clone(), v);
@@ -37,12 +37,10 @@
 #![warn(missing_docs)]
 
 pub use hyperreal::{
-    DomainFacts as RealDomainFacts, DomainStatus as RealDomainStatus,
-    ExpressionDegree as RealExpressionDegree, MagnitudeBits as RealMagnitudeBits, Rational,
-    RationalStorageClass, Real, RealExactSetDenominatorKind, RealExactSetDyadicExponentClass,
-    RealExactSetFacts, RealExactSetSignPattern, RealSign, RealStructuralFacts as RealFacts,
-    SymbolicDependencyMask as RealSymbolicDependencyMask, ZeroKnowledge as ZeroStatus,
-    ZeroOneMinusOneStatus as RealZeroOneMinusOneStatus,
+    DomainFacts, DomainStatus, ExpressionDegree, MagnitudeBits, Rational, RationalStorageClass,
+    Real, RealExactSetDenominatorKind, RealExactSetDyadicExponentClass, RealExactSetFacts,
+    RealExactSetSignPattern, RealSign, RealStructuralFacts, SymbolicDependencyMask, ZeroKnowledge,
+    ZeroOneMinusOneStatus,
 };
 
 mod trace;
@@ -63,13 +61,7 @@ pub use algebra2::{
 };
 
 mod scalar;
-pub use scalar::{
-    acos, acos_with_abort, acosh, acosh_with_abort, asin, asin_with_abort, asinh, asinh_with_abort,
-    atan, atan_with_abort, atanh, atanh_with_abort, cos, cosh, e, exp, i, ln, log10,
-    log10_with_abort, one, pi, pow, powi, reciprocal, reciprocal_checked,
-    reciprocal_checked_with_abort, reciprocal_ref, reciprocal_ref_checked, sin, sinh, sqrt, tan,
-    tanh, tau, zero, zero_status, zero_status_with_abort,
-};
+pub use scalar::{reciprocal_checked, reciprocal_ref_checked};
 
 mod complex;
 pub use complex::Complex;

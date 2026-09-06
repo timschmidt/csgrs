@@ -13,15 +13,12 @@ use std::mem;
 use std::ops::{Add, BitXor, Div, Index, IndexMut, Mul, Neg, Sub};
 
 use crate::point::Point3;
-use crate::scalar::{
-    clone_with_abort, reject_definite_zero, require_known_nonzero,
-    require_known_nonzero_with_abort, with_abort, zero_status, zero_status_with_abort,
-};
+use crate::scalar::{clone_with_abort, reject_definite_zero, require_known_nonzero, with_abort};
 use crate::vector::{Vector3, Vector4, Vector4GeometricFacts, Vector4HomogeneousKind};
 use crate::{
     AbortSignal, BlasResult, CheckedBlasResult, ExactRationalKind, Problem, Real,
-    RealExactSetFacts, RealKernelExt, RealSign, RealSymbolicDependencyMask,
-    RealZeroOneMinusOneStatus, ZeroStatus,
+    RealExactSetFacts, RealKernelExt, RealSign, SymbolicDependencyMask, ZeroKnowledge,
+    ZeroOneMinusOneStatus,
 };
 
 fn identity_array<const N: usize>() -> [[Real; N]; N] {
@@ -234,11 +231,11 @@ fn matrix_one_mask<const N: usize>(matrix: &[[Real; N]; N]) -> u16 {
 #[inline]
 fn matrix_symbolic_dependency_mask<const N: usize>(
     matrix: &[[Real; N]; N],
-) -> RealSymbolicDependencyMask {
+) -> SymbolicDependencyMask {
     matrix
         .iter()
         .flat_map(|row| row.iter())
-        .fold(RealSymbolicDependencyMask::NONE, |mask, value| {
+        .fold(SymbolicDependencyMask::NONE, |mask, value| {
             mask.union(value.detailed_facts().symbolic.dependencies)
         })
 }
@@ -315,13 +312,11 @@ fn matrix4_signed_axis_row_refs(row: [&Real; 4]) -> Option<SignedAxis4> {
     for (index, value) in row.into_iter().enumerate() {
         let status = value.zero_one_or_minus_one();
         match status {
-            RealZeroOneMinusOneStatus::Zero => {}
-            RealZeroOneMinusOneStatus::One | RealZeroOneMinusOneStatus::MinusOne
-                if axis.is_none() =>
-            {
+            ZeroOneMinusOneStatus::Zero => {}
+            ZeroOneMinusOneStatus::One | ZeroOneMinusOneStatus::MinusOne if axis.is_none() => {
                 axis = Some(signed_axis4_from_index(
                     index,
-                    matches!(status, RealZeroOneMinusOneStatus::MinusOne),
+                    matches!(status, ZeroOneMinusOneStatus::MinusOne),
                 )?);
             }
             _ => return None,
@@ -539,7 +534,7 @@ pub struct Matrix3StructuralFacts {
     /// separation between expression packages and geometric object packages;
     /// see the exact object-structure policy *Computational
     /// Geometry* 7.1-2 (1997).
-    pub symbolic_dependencies: RealSymbolicDependencyMask,
+    pub symbolic_dependencies: SymbolicDependencyMask,
     /// Bit mask of entries known to be exactly zero, in row-major order.
     pub zero_mask: u16,
     /// Bit mask of entries known to be exactly one, in row-major order.
@@ -710,7 +705,7 @@ pub struct Matrix4StructuralFacts {
     /// select exact or symbolic-aware algebra routes without peeking into
     /// scalar storage. It is not a determinant, invertibility, or topology
     /// certificate.
-    pub symbolic_dependencies: RealSymbolicDependencyMask,
+    pub symbolic_dependencies: SymbolicDependencyMask,
     /// Bit mask of entries known to be exactly zero, in row-major order.
     pub zero_mask: u16,
     /// Bit mask of entries known to be exactly one, in row-major order.
@@ -1160,9 +1155,9 @@ fn matrix4_facts(matrix: &[[Real; 4]; 4]) -> Matrix4Facts {
     let is_affine = m30_zero && m31_zero && m32_zero && m33_one;
     let is_affine_translation = is_affine && m00_one && m11_one && m22_one && linear_is_diagonal;
     let affine_linear_diagonal_is_definitely_nonzero =
-        matches!(matrix[0][0].zero_status(), ZeroStatus::NonZero)
-            && matches!(matrix[1][1].zero_status(), ZeroStatus::NonZero)
-            && matches!(matrix[2][2].zero_status(), ZeroStatus::NonZero);
+        matches!(matrix[0][0].zero_status(), ZeroKnowledge::NonZero)
+            && matches!(matrix[1][1].zero_status(), ZeroKnowledge::NonZero)
+            && matches!(matrix[2][2].zero_status(), ZeroKnowledge::NonZero);
     let exact = crate::kernels::exact_real_set_facts(matrix.iter().flat_map(|row| row.iter()));
     let (zero_mask, row_zero_masks, column_zero_masks) = matrix_zero_masks(matrix);
     let one_mask = matrix_one_mask(matrix);
@@ -1518,37 +1513,30 @@ fn matrix_power4(base: [[Real; 4]; 4], exponent: u32) -> [[Real; 4]; 4] {
 
 fn ordinary_pivot<const N: usize>(left: &[[Real; N]; N], col: usize) -> Option<usize> {
     let mut unknown = None;
-    match zero_status(&left[col][col]) {
-        ZeroStatus::NonZero => return Some(col),
-        ZeroStatus::Unknown => unknown = Some(col),
-        ZeroStatus::Zero => {}
+    match Real::zero_status(&left[col][col]) {
+        ZeroKnowledge::NonZero => return Some(col),
+        ZeroKnowledge::Unknown => unknown = Some(col),
+        ZeroKnowledge::Zero => {}
     }
 
     for (row, values) in left.iter().enumerate().skip(col + 1) {
-        match zero_status(&values[col]) {
-            ZeroStatus::NonZero => return Some(row),
-            ZeroStatus::Unknown if unknown.is_none() => unknown = Some(row),
-            ZeroStatus::Zero | ZeroStatus::Unknown => {}
+        match Real::zero_status(&values[col]) {
+            ZeroKnowledge::NonZero => return Some(row),
+            ZeroKnowledge::Unknown if unknown.is_none() => unknown = Some(row),
+            ZeroKnowledge::Zero | ZeroKnowledge::Unknown => {}
         }
     }
 
     unknown
 }
 
-fn checked_pivot<const N: usize, F>(
-    left: &[[Real; N]; N],
-    col: usize,
-    mut classify: F,
-) -> CheckedBlasResult<usize>
-where
-    F: FnMut(&Real) -> ZeroStatus,
-{
+fn checked_pivot<const N: usize>(left: &[[Real; N]; N], col: usize) -> CheckedBlasResult<usize> {
     let mut has_unknown = false;
     for (row, values) in left.iter().enumerate().skip(col) {
-        match classify(&values[col]) {
-            ZeroStatus::NonZero => return Ok(row),
-            ZeroStatus::Unknown => has_unknown = true,
-            ZeroStatus::Zero => {}
+        match values[col].zero_status() {
+            ZeroKnowledge::NonZero => return Ok(row),
+            ZeroKnowledge::Unknown => has_unknown = true,
+            ZeroKnowledge::Zero => {}
         }
     }
 
@@ -1645,7 +1633,7 @@ macro_rules! impl_solve_left_system_fixed {
             let mut right = rhs;
 
             for col in 0..$n {
-                let pivot = checked_pivot(&left, col, zero_status)?;
+                let pivot = checked_pivot(&left, col)?;
                 if pivot != col {
                     left.swap(col, pivot);
                     right.swap(col, pivot);
@@ -1700,8 +1688,7 @@ macro_rules! impl_solve_left_system_fixed {
             let mut right = rhs;
 
             for col in 0..$n {
-                let pivot =
-                    checked_pivot(&left, col, |value| zero_status_with_abort(value, signal))?;
+                let pivot = checked_pivot(&left, col)?;
                 if pivot != col {
                     left.swap(col, pivot);
                     right.swap(col, pivot);
@@ -1903,9 +1890,9 @@ fn matrix3_is_definitely_dense_for_inverse(matrix: &[[Real; 3]; 3]) -> bool {
     // paths keep their structural reductions. This preserves the object-level
     // structure principle the exact object-structure policy while
     // keeping dense cofactor kernels thin.
-    matches!(matrix[1][0].zero_status(), ZeroStatus::NonZero)
-        && matches!(matrix[0][1].zero_status(), ZeroStatus::NonZero)
-        && matches!(matrix[2][0].zero_status(), ZeroStatus::NonZero)
+    matches!(matrix[1][0].zero_status(), ZeroKnowledge::NonZero)
+        && matches!(matrix[0][1].zero_status(), ZeroKnowledge::NonZero)
+        && matches!(matrix[2][0].zero_status(), ZeroKnowledge::NonZero)
 }
 
 #[inline]
@@ -1917,9 +1904,9 @@ fn matrix4_is_definitely_dense_for_inverse(matrix: &[[Real; 4]; 4]) -> bool {
     // cheap structural facts and never approximates, matching the exact
     // geometric-computation rule of exploiting structure only when it is known.
     // the exact object-structure policy
-    matches!(matrix[1][0].zero_status(), ZeroStatus::NonZero)
-        && matches!(matrix[0][1].zero_status(), ZeroStatus::NonZero)
-        && matches!(matrix[3][0].zero_status(), ZeroStatus::NonZero)
+    matches!(matrix[1][0].zero_status(), ZeroKnowledge::NonZero)
+        && matches!(matrix[0][1].zero_status(), ZeroKnowledge::NonZero)
+        && matches!(matrix[3][0].zero_status(), ZeroKnowledge::NonZero)
 }
 
 #[inline]
@@ -1931,7 +1918,7 @@ fn matrix3_has_dense_multiply_certificate(matrix: &[[Real; 3]; 3]) -> bool {
     matrix
         .iter()
         .flatten()
-        .all(|value| matches!(value.zero_status(), ZeroStatus::NonZero))
+        .all(|value| matches!(value.zero_status(), ZeroKnowledge::NonZero))
 }
 
 #[inline]
@@ -1939,7 +1926,7 @@ fn matrix4_has_dense_multiply_certificate(matrix: &[[Real; 4]; 4]) -> bool {
     matrix
         .iter()
         .flatten()
-        .all(|value| matches!(value.zero_status(), ZeroStatus::NonZero))
+        .all(|value| matches!(value.zero_status(), ZeroKnowledge::NonZero))
 }
 
 #[inline]
@@ -2008,17 +1995,6 @@ fn invert_matrix4_affine_linear_diagonal_checked(
     require_known_nonzero(&matrix[0][0])?;
     require_known_nonzero(&matrix[1][1])?;
     require_known_nonzero(&matrix[2][2])?;
-    invert_matrix4_affine_linear_diagonal(matrix)
-}
-
-#[inline]
-fn invert_matrix4_affine_linear_diagonal_checked_with_abort(
-    matrix: &[[Real; 4]; 4],
-    signal: &AbortSignal,
-) -> CheckedBlasResult<[[Real; 4]; 4]> {
-    require_known_nonzero_with_abort(&matrix[0][0], signal)?;
-    require_known_nonzero_with_abort(&matrix[1][1], signal)?;
-    require_known_nonzero_with_abort(&matrix[2][2], signal)?;
     invert_matrix4_affine_linear_diagonal(matrix)
 }
 
@@ -2266,7 +2242,7 @@ fn invert_matrix4_affine_checked_with_abort(
             "helper",
             "invert-matrix4-checked-with-abort-affine-linear-diagonal"
         );
-        return invert_matrix4_affine_linear_diagonal_checked_with_abort(matrix, signal);
+        return invert_matrix4_affine_linear_diagonal_checked(matrix);
     }
     if is_affine_translation {
         crate::trace_dispatch!(
@@ -2493,18 +2469,6 @@ fn divide_matrix4_by_affine_linear_diagonal_checked(
 }
 
 #[inline]
-fn divide_matrix4_by_affine_linear_diagonal_checked_with_abort(
-    left: [[Real; 4]; 4],
-    right: &[[Real; 4]; 4],
-    signal: &AbortSignal,
-) -> CheckedBlasResult<[[Real; 4]; 4]> {
-    require_known_nonzero_with_abort(&right[0][0], signal)?;
-    require_known_nonzero_with_abort(&right[1][1], signal)?;
-    require_known_nonzero_with_abort(&right[2][2], signal)?;
-    divide_matrix4_by_affine_linear_diagonal(left, right)
-}
-
-#[inline]
 fn divide_matrix4_by_affine_linear_diagonal_ref(
     left: &[[Real; 4]; 4],
     right: &[[Real; 4]; 4],
@@ -2634,15 +2598,6 @@ fn divide_matrix4_affine_by_affine_linear_diagonal_checked(
     right: &[[Real; 4]; 4],
 ) -> CheckedBlasResult<[[Real; 4]; 4]> {
     divide_matrix4_by_affine_linear_diagonal_checked(left, right)
-}
-
-#[inline]
-fn divide_matrix4_affine_by_affine_linear_diagonal_checked_with_abort(
-    left: [[Real; 4]; 4],
-    right: &[[Real; 4]; 4],
-    signal: &AbortSignal,
-) -> CheckedBlasResult<[[Real; 4]; 4]> {
-    divide_matrix4_by_affine_linear_diagonal_checked_with_abort(left, right, signal)
 }
 
 #[inline]
@@ -3423,17 +3378,6 @@ fn invert_matrix3_by_diagonal_checked(
 }
 
 #[inline]
-fn invert_matrix3_by_diagonal_checked_with_abort(
-    matrix: &[[Real; 3]; 3],
-    signal: &AbortSignal,
-) -> CheckedBlasResult<[[Real; 3]; 3]> {
-    require_known_nonzero_with_abort(&matrix[0][0], signal)?;
-    require_known_nonzero_with_abort(&matrix[1][1], signal)?;
-    require_known_nonzero_with_abort(&matrix[2][2], signal)?;
-    invert_matrix3_by_diagonal(matrix)
-}
-
-#[inline]
 fn invert_matrix3_upper_triangular(matrix: &[[Real; 3]; 3]) -> BlasResult<[[Real; 3]; 3]> {
     // Upper-triangular inversion uses three pivot inverses plus short substitution:
     // exactly the arithmetic savings expected from specialized triangular kernels
@@ -3468,17 +3412,6 @@ fn invert_matrix3_upper_triangular_checked(
 }
 
 #[inline]
-fn invert_matrix3_upper_triangular_checked_with_abort(
-    matrix: &[[Real; 3]; 3],
-    signal: &AbortSignal,
-) -> CheckedBlasResult<[[Real; 3]; 3]> {
-    require_known_nonzero_with_abort(&matrix[0][0], signal)?;
-    require_known_nonzero_with_abort(&matrix[1][1], signal)?;
-    require_known_nonzero_with_abort(&matrix[2][2], signal)?;
-    invert_matrix3_upper_triangular(matrix)
-}
-
-#[inline]
 fn invert_matrix3_lower_triangular(matrix: &[[Real; 3]; 3]) -> BlasResult<[[Real; 3]; 3]> {
     // Lower-triangular inversion is the dual of upper-triangular back-substitution.
     // Selecting this path preserves the same O(n²) schedule and avoids expensive
@@ -3508,17 +3441,6 @@ fn invert_matrix3_lower_triangular_checked(
     require_known_nonzero(&matrix[0][0])?;
     require_known_nonzero(&matrix[1][1])?;
     require_known_nonzero(&matrix[2][2])?;
-    invert_matrix3_lower_triangular(matrix)
-}
-
-#[inline]
-fn invert_matrix3_lower_triangular_checked_with_abort(
-    matrix: &[[Real; 3]; 3],
-    signal: &AbortSignal,
-) -> CheckedBlasResult<[[Real; 3]; 3]> {
-    require_known_nonzero_with_abort(&matrix[0][0], signal)?;
-    require_known_nonzero_with_abort(&matrix[1][1], signal)?;
-    require_known_nonzero_with_abort(&matrix[2][2], signal)?;
     invert_matrix3_lower_triangular(matrix)
 }
 
@@ -3612,8 +3534,8 @@ fn invert_matrix3_affine_linear_diagonal_checked_with_abort(
     let a11 = with_abort(matrix[1][1].clone(), signal);
     let inv_a00 = a00;
     let inv_a11 = a11;
-    require_known_nonzero_with_abort(&inv_a00, signal)?;
-    require_known_nonzero_with_abort(&inv_a11, signal)?;
+    require_known_nonzero(&inv_a00)?;
+    require_known_nonzero(&inv_a11)?;
     let inv_a00 = inv_a00.inverse()?;
     let inv_a11 = inv_a11.inverse()?;
     let inv_tx = Real::zero() - (matrix[0][2].clone() * &inv_a00);
@@ -3708,17 +3630,6 @@ fn divide_matrix3_by_affine_linear_diagonal_checked(
 }
 
 #[inline]
-fn divide_matrix3_by_affine_linear_diagonal_checked_with_abort(
-    left: [[Real; 3]; 3],
-    right: &[[Real; 3]; 3],
-    signal: &AbortSignal,
-) -> CheckedBlasResult<[[Real; 3]; 3]> {
-    require_known_nonzero_with_abort(&right[0][0], signal)?;
-    require_known_nonzero_with_abort(&right[1][1], signal)?;
-    divide_matrix3_by_affine_linear_diagonal(left, right)
-}
-
-#[inline]
 fn divide_matrix3_by_affine_ref_linear_diagonal(
     left: &[[Real; 3]; 3],
     right: &[[Real; 3]; 3],
@@ -3805,15 +3716,6 @@ fn divide_matrix3_affine_by_affine_linear_diagonal_checked(
     right: &[[Real; 3]; 3],
 ) -> CheckedBlasResult<[[Real; 3]; 3]> {
     divide_matrix3_by_affine_linear_diagonal_checked(left, right)
-}
-
-#[inline]
-fn divide_matrix3_affine_by_affine_linear_diagonal_checked_with_abort(
-    left: [[Real; 3]; 3],
-    right: &[[Real; 3]; 3],
-    signal: &AbortSignal,
-) -> CheckedBlasResult<[[Real; 3]; 3]> {
-    divide_matrix3_by_affine_linear_diagonal_checked_with_abort(left, right, signal)
 }
 
 #[inline]
@@ -4025,30 +3927,6 @@ fn invert_matrix4_by_lower_triangular_checked(
 }
 
 #[inline]
-fn invert_matrix4_by_upper_triangular_checked_with_abort(
-    matrix: &[[Real; 4]; 4],
-    signal: &AbortSignal,
-) -> CheckedBlasResult<[[Real; 4]; 4]> {
-    require_known_nonzero_with_abort(&matrix[0][0], signal)?;
-    require_known_nonzero_with_abort(&matrix[1][1], signal)?;
-    require_known_nonzero_with_abort(&matrix[2][2], signal)?;
-    require_known_nonzero_with_abort(&matrix[3][3], signal)?;
-    invert_matrix4_by_upper_triangular(matrix)
-}
-
-#[inline]
-fn invert_matrix4_by_lower_triangular_checked_with_abort(
-    matrix: &[[Real; 4]; 4],
-    signal: &AbortSignal,
-) -> CheckedBlasResult<[[Real; 4]; 4]> {
-    require_known_nonzero_with_abort(&matrix[0][0], signal)?;
-    require_known_nonzero_with_abort(&matrix[1][1], signal)?;
-    require_known_nonzero_with_abort(&matrix[2][2], signal)?;
-    require_known_nonzero_with_abort(&matrix[3][3], signal)?;
-    invert_matrix4_by_lower_triangular(matrix)
-}
-
-#[inline]
 fn invert_matrix4_by_diagonal_checked(
     matrix: &[[Real; 4]; 4],
 ) -> CheckedBlasResult<[[Real; 4]; 4]> {
@@ -4056,18 +3934,6 @@ fn invert_matrix4_by_diagonal_checked(
     require_known_nonzero(&matrix[1][1])?;
     require_known_nonzero(&matrix[2][2])?;
     require_known_nonzero(&matrix[3][3])?;
-    invert_matrix4_by_diagonal(matrix)
-}
-
-#[inline]
-fn invert_matrix4_by_diagonal_checked_with_abort(
-    matrix: &[[Real; 4]; 4],
-    signal: &AbortSignal,
-) -> CheckedBlasResult<[[Real; 4]; 4]> {
-    require_known_nonzero_with_abort(&matrix[0][0], signal)?;
-    require_known_nonzero_with_abort(&matrix[1][1], signal)?;
-    require_known_nonzero_with_abort(&matrix[2][2], signal)?;
-    require_known_nonzero_with_abort(&matrix[3][3], signal)?;
     invert_matrix4_by_diagonal(matrix)
 }
 
@@ -4352,28 +4218,6 @@ fn divide_matrix3_affine_by_affine_upper_triangular_checked(
 }
 
 #[inline]
-fn divide_matrix3_by_affine_upper_triangular_checked_with_abort(
-    left: [[Real; 3]; 3],
-    right: &[[Real; 3]; 3],
-    signal: &AbortSignal,
-) -> CheckedBlasResult<[[Real; 3]; 3]> {
-    require_known_nonzero_with_abort(&right[0][0], signal)?;
-    require_known_nonzero_with_abort(&right[1][1], signal)?;
-    divide_matrix3_by_affine_upper_triangular(left, right)
-}
-
-#[inline]
-fn divide_matrix3_affine_by_affine_upper_triangular_checked_with_abort(
-    left: [[Real; 3]; 3],
-    right: &[[Real; 3]; 3],
-    signal: &AbortSignal,
-) -> CheckedBlasResult<[[Real; 3]; 3]> {
-    require_known_nonzero_with_abort(&right[0][0], signal)?;
-    require_known_nonzero_with_abort(&right[1][1], signal)?;
-    divide_matrix3_affine_by_affine_upper_triangular(left, right)
-}
-
-#[inline]
 fn divide_matrix3_by_upper_triangular_checked(
     left: [[Real; 3]; 3],
     right: &[[Real; 3]; 3],
@@ -4381,18 +4225,6 @@ fn divide_matrix3_by_upper_triangular_checked(
     require_known_nonzero(&right[0][0])?;
     require_known_nonzero(&right[1][1])?;
     require_known_nonzero(&right[2][2])?;
-    divide_matrix3_by_upper_triangular(left, right)
-}
-
-#[inline]
-fn divide_matrix3_by_upper_triangular_checked_with_abort(
-    left: [[Real; 3]; 3],
-    right: &[[Real; 3]; 3],
-    signal: &AbortSignal,
-) -> CheckedBlasResult<[[Real; 3]; 3]> {
-    require_known_nonzero_with_abort(&right[0][0], signal)?;
-    require_known_nonzero_with_abort(&right[1][1], signal)?;
-    require_known_nonzero_with_abort(&right[2][2], signal)?;
     divide_matrix3_by_upper_triangular(left, right)
 }
 
@@ -4434,18 +4266,6 @@ fn divide_matrix3_by_lower_triangular_checked(
     require_known_nonzero(&right[0][0])?;
     require_known_nonzero(&right[1][1])?;
     require_known_nonzero(&right[2][2])?;
-    divide_matrix3_by_lower_triangular(left, right)
-}
-
-#[inline]
-fn divide_matrix3_by_lower_triangular_checked_with_abort(
-    left: [[Real; 3]; 3],
-    right: &[[Real; 3]; 3],
-    signal: &AbortSignal,
-) -> CheckedBlasResult<[[Real; 3]; 3]> {
-    require_known_nonzero_with_abort(&right[0][0], signal)?;
-    require_known_nonzero_with_abort(&right[1][1], signal)?;
-    require_known_nonzero_with_abort(&right[2][2], signal)?;
     divide_matrix3_by_lower_triangular(left, right)
 }
 
@@ -4870,18 +4690,6 @@ fn divide_matrix3_by_diagonal_checked(
 }
 
 #[inline]
-fn divide_matrix3_by_diagonal_checked_with_abort(
-    left: [[Real; 3]; 3],
-    right: &[[Real; 3]; 3],
-    signal: &AbortSignal,
-) -> CheckedBlasResult<[[Real; 3]; 3]> {
-    require_known_nonzero_with_abort(&right[0][0], signal)?;
-    require_known_nonzero_with_abort(&right[1][1], signal)?;
-    require_known_nonzero_with_abort(&right[2][2], signal)?;
-    divide_matrix3_by_diagonal(left, right)
-}
-
-#[inline]
 fn divide_matrix3_by_affine_checked(
     left: [[Real; 3]; 3],
     right: &[[Real; 3]; 3],
@@ -5187,19 +4995,6 @@ fn divide_matrix4_by_diagonal_checked(
 }
 
 #[inline]
-fn divide_matrix4_by_diagonal_checked_with_abort(
-    left: [[Real; 4]; 4],
-    right: &[[Real; 4]; 4],
-    signal: &AbortSignal,
-) -> CheckedBlasResult<[[Real; 4]; 4]> {
-    require_known_nonzero_with_abort(&right[0][0], signal)?;
-    require_known_nonzero_with_abort(&right[1][1], signal)?;
-    require_known_nonzero_with_abort(&right[2][2], signal)?;
-    require_known_nonzero_with_abort(&right[3][3], signal)?;
-    divide_matrix4_by_diagonal(left, right)
-}
-
-#[inline]
 #[allow(clippy::needless_range_loop)]
 fn divide_matrix4_by_upper_triangular(
     mut left: [[Real; 4]; 4],
@@ -5346,30 +5141,6 @@ fn divide_matrix4_affine_by_affine_upper_triangular_checked(
 }
 
 #[inline]
-fn divide_matrix4_by_affine_upper_triangular_checked_with_abort(
-    left: [[Real; 4]; 4],
-    right: &[[Real; 4]; 4],
-    signal: &AbortSignal,
-) -> CheckedBlasResult<[[Real; 4]; 4]> {
-    require_known_nonzero_with_abort(&right[0][0], signal)?;
-    require_known_nonzero_with_abort(&right[1][1], signal)?;
-    require_known_nonzero_with_abort(&right[2][2], signal)?;
-    divide_matrix4_by_affine_upper_triangular(left, right)
-}
-
-#[inline]
-fn divide_matrix4_affine_by_affine_upper_triangular_checked_with_abort(
-    left: [[Real; 4]; 4],
-    right: &[[Real; 4]; 4],
-    signal: &AbortSignal,
-) -> CheckedBlasResult<[[Real; 4]; 4]> {
-    require_known_nonzero_with_abort(&right[0][0], signal)?;
-    require_known_nonzero_with_abort(&right[1][1], signal)?;
-    require_known_nonzero_with_abort(&right[2][2], signal)?;
-    divide_matrix4_affine_by_affine_upper_triangular(left, right)
-}
-
-#[inline]
 fn divide_matrix4_by_upper_triangular_checked(
     left: [[Real; 4]; 4],
     right: &[[Real; 4]; 4],
@@ -5378,19 +5149,6 @@ fn divide_matrix4_by_upper_triangular_checked(
     require_known_nonzero(&right[1][1])?;
     require_known_nonzero(&right[2][2])?;
     require_known_nonzero(&right[3][3])?;
-    divide_matrix4_by_upper_triangular(left, right)
-}
-
-#[inline]
-fn divide_matrix4_by_upper_triangular_checked_with_abort(
-    left: [[Real; 4]; 4],
-    right: &[[Real; 4]; 4],
-    signal: &AbortSignal,
-) -> CheckedBlasResult<[[Real; 4]; 4]> {
-    require_known_nonzero_with_abort(&right[0][0], signal)?;
-    require_known_nonzero_with_abort(&right[1][1], signal)?;
-    require_known_nonzero_with_abort(&right[2][2], signal)?;
-    require_known_nonzero_with_abort(&right[3][3], signal)?;
     divide_matrix4_by_upper_triangular(left, right)
 }
 
@@ -5446,19 +5204,6 @@ fn divide_matrix4_by_lower_triangular_checked(
     require_known_nonzero(&right[1][1])?;
     require_known_nonzero(&right[2][2])?;
     require_known_nonzero(&right[3][3])?;
-    divide_matrix4_by_lower_triangular(left, right)
-}
-
-#[inline]
-fn divide_matrix4_by_lower_triangular_checked_with_abort(
-    left: [[Real; 4]; 4],
-    right: &[[Real; 4]; 4],
-    signal: &AbortSignal,
-) -> CheckedBlasResult<[[Real; 4]; 4]> {
-    require_known_nonzero_with_abort(&right[0][0], signal)?;
-    require_known_nonzero_with_abort(&right[1][1], signal)?;
-    require_known_nonzero_with_abort(&right[2][2], signal)?;
-    require_known_nonzero_with_abort(&right[3][3], signal)?;
     divide_matrix4_by_lower_triangular(left, right)
 }
 
@@ -5899,7 +5644,7 @@ fn right_divide_matrix3_checked_with_abort(
             "helper",
             "right-divide3-checked-abort-diagonal"
         );
-        return divide_matrix3_by_diagonal_checked_with_abort(left, &right, signal);
+        return divide_matrix3_by_diagonal_checked(left, &right);
     }
     if right_facts.is_affine_translation {
         let left_facts = matrix3_facts(&left);
@@ -5926,16 +5671,14 @@ fn right_divide_matrix3_checked_with_abort(
                 "helper",
                 "right-divide3-checked-abort-affine-left-affine-upper-triangular"
             );
-            return divide_matrix3_affine_by_affine_upper_triangular_checked_with_abort(
-                left, &right, signal,
-            );
+            return divide_matrix3_affine_by_affine_upper_triangular_checked(left, &right);
         }
         crate::trace_dispatch!(
             "hyperlattice_matrix",
             "helper",
             "right-divide3-checked-abort-affine-upper-triangular"
         );
-        return divide_matrix3_by_affine_upper_triangular_checked_with_abort(left, &right, signal);
+        return divide_matrix3_by_affine_upper_triangular_checked(left, &right);
     }
     if right_facts.is_upper_triangular && !(right_facts.is_affine && right_facts.linear_is_diagonal)
     {
@@ -5944,7 +5687,7 @@ fn right_divide_matrix3_checked_with_abort(
             "helper",
             "right-divide3-checked-abort-upper-triangular"
         );
-        return divide_matrix3_by_upper_triangular_checked_with_abort(left, &right, signal);
+        return divide_matrix3_by_upper_triangular_checked(left, &right);
     }
     if right_facts.is_lower_triangular {
         crate::trace_dispatch!(
@@ -5952,7 +5695,7 @@ fn right_divide_matrix3_checked_with_abort(
             "helper",
             "right-divide3-checked-abort-lower-triangular"
         );
-        return divide_matrix3_by_lower_triangular_checked_with_abort(left, &right, signal);
+        return divide_matrix3_by_lower_triangular_checked(left, &right);
     }
     if right_facts.is_affine {
         // Keep abort-aware checked code on the same fact-on-demand fast path as
@@ -5974,9 +5717,7 @@ fn right_divide_matrix3_checked_with_abort(
                     "helper",
                     "right-divide3-checked-abort-affine-left-affine-linear-diagonal"
                 );
-                return divide_matrix3_affine_by_affine_linear_diagonal_checked_with_abort(
-                    left, &right, signal,
-                );
+                return divide_matrix3_affine_by_affine_linear_diagonal_checked(left, &right);
             }
             crate::trace_dispatch!(
                 "hyperlattice_matrix",
@@ -5991,9 +5732,7 @@ fn right_divide_matrix3_checked_with_abort(
                 "helper",
                 "right-divide3-checked-abort-affine-linear-diagonal"
             );
-            return divide_matrix3_by_affine_linear_diagonal_checked_with_abort(
-                left, &right, signal,
-            );
+            return divide_matrix3_by_affine_linear_diagonal_checked(left, &right);
         }
         return divide_matrix3_by_affine_checked_with_abort(left, &right, signal);
     }
@@ -6575,7 +6314,7 @@ fn right_divide_matrix4_checked_with_abort(
             "helper",
             "right-divide4-checked-abort-diagonal"
         );
-        return divide_matrix4_by_diagonal_checked_with_abort(left, &right, signal);
+        return divide_matrix4_by_diagonal_checked(left, &right);
     }
     if right_facts.is_affine_translation {
         let left_facts = matrix4_facts(&left);
@@ -6606,16 +6345,14 @@ fn right_divide_matrix4_checked_with_abort(
                 "helper",
                 "right-divide4-checked-abort-affine-left-affine-upper-triangular"
             );
-            return divide_matrix4_affine_by_affine_upper_triangular_checked_with_abort(
-                left, &right, signal,
-            );
+            return divide_matrix4_affine_by_affine_upper_triangular_checked(left, &right);
         }
         crate::trace_dispatch!(
             "hyperlattice_matrix",
             "helper",
             "right-divide4-checked-abort-affine-upper-triangular"
         );
-        return divide_matrix4_by_affine_upper_triangular_checked_with_abort(left, &right, signal);
+        return divide_matrix4_by_affine_upper_triangular_checked(left, &right);
     }
     if right_facts.is_upper_triangular && !(right_facts.is_affine && right_facts.linear_is_diagonal)
     {
@@ -6624,7 +6361,7 @@ fn right_divide_matrix4_checked_with_abort(
             "helper",
             "right-divide4-checked-abort-upper-triangular"
         );
-        return divide_matrix4_by_upper_triangular_checked_with_abort(left, &right, signal);
+        return divide_matrix4_by_upper_triangular_checked(left, &right);
     }
     if right_facts.is_lower_triangular {
         crate::trace_dispatch!(
@@ -6632,7 +6369,7 @@ fn right_divide_matrix4_checked_with_abort(
             "helper",
             "right-divide4-checked-abort-lower-triangular"
         );
-        return divide_matrix4_by_lower_triangular_checked_with_abort(left, &right, signal);
+        return divide_matrix4_by_lower_triangular_checked(left, &right);
     }
     if right_facts.is_affine {
         // Defer left-structure extraction until affine handling is required so short-circuit
@@ -6666,9 +6403,7 @@ fn right_divide_matrix4_checked_with_abort(
                     );
                     return divide_matrix4_affine_by_affine_linear_diagonal(left, &right);
                 }
-                return divide_matrix4_affine_by_affine_linear_diagonal_checked_with_abort(
-                    left, &right, signal,
-                );
+                return divide_matrix4_affine_by_affine_linear_diagonal_checked(left, &right);
             }
             return divide_matrix4_affine_by_affine_checked_with_abort(left, &right, signal);
         }
@@ -6686,9 +6421,7 @@ fn right_divide_matrix4_checked_with_abort(
                 );
                 return divide_matrix4_by_affine_linear_diagonal(left, &right);
             }
-            return divide_matrix4_by_affine_linear_diagonal_checked_with_abort(
-                left, &right, signal,
-            );
+            return divide_matrix4_by_affine_linear_diagonal_checked(left, &right);
         }
         return divide_matrix4_by_affine_checked_with_abort(left, &right, signal);
     }
@@ -7511,7 +7244,7 @@ fn transform_vector_rhs_ref<const N: usize>(left: &[[Real; N]; N], right: &[Real
         // on the generic homogeneous path. That preserves the object-fact
         // boundary used by the generic homogeneous path.
         match right[3].zero_one_or_minus_one() {
-            RealZeroOneMinusOneStatus::Zero => {
+            ZeroOneMinusOneStatus::Zero => {
                 crate::trace_dispatch!(
                     "hyperlattice_matrix",
                     "helper",
@@ -7537,7 +7270,7 @@ fn transform_vector_rhs_ref<const N: usize>(left: &[[Real; N]; N], right: &[Real
                     Real::linear_combination3(matrix_terms, vector_terms)
                 });
             }
-            RealZeroOneMinusOneStatus::One => {
+            ZeroOneMinusOneStatus::One => {
                 crate::trace_dispatch!("hyperlattice_matrix", "helper", "transform-vector-point");
                 if left_facts.is_affine && left_facts.linear_is_diagonal {
                     crate::trace_dispatch!(
@@ -7578,7 +7311,7 @@ fn transform_vector_rhs_ref<const N: usize>(left: &[[Real; N]; N], right: &[Real
                     }
                 });
             }
-            RealZeroOneMinusOneStatus::MinusOne | RealZeroOneMinusOneStatus::NeitherOrUnknown => {}
+            ZeroOneMinusOneStatus::MinusOne | ZeroOneMinusOneStatus::NeitherOrUnknown => {}
         }
 
         // Cache per-row translation entries once for non-direction/non-point rows to
@@ -8210,7 +7943,7 @@ impl<'a> BatchTransform4<'a> {
             let mut transformed = Vec::with_capacity(rhs.len());
             if let Some(first) = rhs.first() {
                 match first.0[3].zero_one_or_minus_one() {
-                    RealZeroOneMinusOneStatus::Zero => {
+                    ZeroOneMinusOneStatus::Zero => {
                         if rhs
                             .iter()
                             .skip(1)
@@ -8237,7 +7970,7 @@ impl<'a> BatchTransform4<'a> {
                             return transformed;
                         }
                     }
-                    RealZeroOneMinusOneStatus::One
+                    ZeroOneMinusOneStatus::One
                         if self.facts.is_affine
                             && rhs
                                 .iter()
@@ -8264,9 +7997,9 @@ impl<'a> BatchTransform4<'a> {
                         }
                         return transformed;
                     }
-                    RealZeroOneMinusOneStatus::MinusOne
-                    | RealZeroOneMinusOneStatus::One
-                    | RealZeroOneMinusOneStatus::NeitherOrUnknown => {}
+                    ZeroOneMinusOneStatus::MinusOne
+                    | ZeroOneMinusOneStatus::One
+                    | ZeroOneMinusOneStatus::NeitherOrUnknown => {}
                 }
             }
             for vector in rhs {
@@ -9225,7 +8958,7 @@ fn invert_matrix3_checked_with_abort(
             "helper",
             "invert-matrix3-checked-with-abort-diagonal"
         );
-        return invert_matrix3_by_diagonal_checked_with_abort(&matrix, signal);
+        return invert_matrix3_by_diagonal_checked(&matrix);
     }
     if facts.is_upper_triangular && !(facts.is_affine && facts.linear_is_diagonal) {
         crate::trace_dispatch!(
@@ -9233,7 +8966,7 @@ fn invert_matrix3_checked_with_abort(
             "helper",
             "invert-matrix3-checked-with-abort-upper-triangular"
         );
-        return invert_matrix3_upper_triangular_checked_with_abort(&matrix, signal);
+        return invert_matrix3_upper_triangular_checked(&matrix);
     }
     if facts.is_lower_triangular {
         crate::trace_dispatch!(
@@ -9241,7 +8974,7 @@ fn invert_matrix3_checked_with_abort(
             "helper",
             "invert-matrix3-checked-with-abort-lower-triangular"
         );
-        return invert_matrix3_lower_triangular_checked_with_abort(&matrix, signal);
+        return invert_matrix3_lower_triangular_checked(&matrix);
     }
     if facts.is_affine {
         crate::trace_dispatch!(
@@ -9789,7 +9522,7 @@ fn invert_matrix4_checked_with_abort(
             "helper",
             "invert-matrix4-checked-with-abort-diagonal"
         );
-        return invert_matrix4_by_diagonal_checked_with_abort(&matrix, signal);
+        return invert_matrix4_by_diagonal_checked(&matrix);
     }
     if facts.is_upper_triangular && !(facts.is_affine && facts.linear_is_diagonal) {
         crate::trace_dispatch!(
@@ -9797,7 +9530,7 @@ fn invert_matrix4_checked_with_abort(
             "helper",
             "invert-matrix4-checked-with-abort-upper-triangular"
         );
-        return invert_matrix4_by_upper_triangular_checked_with_abort(&matrix, signal);
+        return invert_matrix4_by_upper_triangular_checked(&matrix);
     }
     if facts.is_lower_triangular {
         crate::trace_dispatch!(
@@ -9805,7 +9538,7 @@ fn invert_matrix4_checked_with_abort(
             "helper",
             "invert-matrix4-checked-with-abort-lower-triangular"
         );
-        return invert_matrix4_by_lower_triangular_checked_with_abort(&matrix, signal);
+        return invert_matrix4_by_lower_triangular_checked(&matrix);
     }
     if facts.is_affine {
         crate::trace_dispatch!(
@@ -10627,21 +10360,6 @@ impl Matrix3 {
         Ok(Self(invert_matrix3_upper_triangular_checked(&self.0)?))
     }
 
-    /// Abort-aware checked variant of [`Matrix3::upper_triangular_inverse`].
-    pub fn upper_triangular_inverse_checked_with_abort(
-        self,
-        signal: &AbortSignal,
-    ) -> CheckedBlasResult<Self> {
-        crate::trace_dispatch!(
-            "hyperlattice_matrix",
-            "method",
-            "upper-triangular3-inverse-checked-with-abort"
-        );
-        Ok(Self(invert_matrix3_upper_triangular_checked_with_abort(
-            &self.0, signal,
-        )?))
-    }
-
     /// Inverts a caller-certified lower-triangular 3x3 matrix.
     pub fn lower_triangular_inverse(self) -> BlasResult<Self> {
         crate::trace_dispatch!("hyperlattice_matrix", "method", "lower-triangular3-inverse");
@@ -10656,21 +10374,6 @@ impl Matrix3 {
             "lower-triangular3-inverse-checked"
         );
         Ok(Self(invert_matrix3_lower_triangular_checked(&self.0)?))
-    }
-
-    /// Abort-aware checked variant of [`Matrix3::lower_triangular_inverse`].
-    pub fn lower_triangular_inverse_checked_with_abort(
-        self,
-        signal: &AbortSignal,
-    ) -> CheckedBlasResult<Self> {
-        crate::trace_dispatch!(
-            "hyperlattice_matrix",
-            "method",
-            "lower-triangular3-inverse-checked-with-abort"
-        );
-        Ok(Self(invert_matrix3_lower_triangular_checked_with_abort(
-            &self.0, signal,
-        )?))
     }
 
     /// Right-divides by a caller-certified upper-triangular 3x3 matrix.
@@ -10693,22 +10396,6 @@ impl Matrix3 {
         )?))
     }
 
-    /// Abort-aware checked variant of [`Matrix3::div_upper_triangular`].
-    pub fn div_upper_triangular_checked_with_abort(
-        self,
-        divisor: Self,
-        signal: &AbortSignal,
-    ) -> CheckedBlasResult<Self> {
-        crate::trace_dispatch!(
-            "hyperlattice_matrix",
-            "method",
-            "div-upper-triangular3-checked-with-abort"
-        );
-        Ok(Self(divide_matrix3_by_upper_triangular_checked_with_abort(
-            self.0, &divisor.0, signal,
-        )?))
-    }
-
     /// Right-divides by a caller-certified lower-triangular 3x3 matrix.
     pub fn div_lower_triangular(self, divisor: Self) -> BlasResult<Self> {
         crate::trace_dispatch!("hyperlattice_matrix", "method", "div-lower-triangular3");
@@ -10726,22 +10413,6 @@ impl Matrix3 {
         );
         Ok(Self(divide_matrix3_by_lower_triangular_checked(
             self.0, &divisor.0,
-        )?))
-    }
-
-    /// Abort-aware checked variant of [`Matrix3::div_lower_triangular`].
-    pub fn div_lower_triangular_checked_with_abort(
-        self,
-        divisor: Self,
-        signal: &AbortSignal,
-    ) -> CheckedBlasResult<Self> {
-        crate::trace_dispatch!(
-            "hyperlattice_matrix",
-            "method",
-            "div-lower-triangular3-checked-with-abort"
-        );
-        Ok(Self(divide_matrix3_by_lower_triangular_checked_with_abort(
-            self.0, &divisor.0, signal,
         )?))
     }
 
@@ -11441,21 +11112,6 @@ impl Matrix4 {
         Ok(Self(invert_matrix4_by_upper_triangular_checked(&self.0)?))
     }
 
-    /// Abort-aware checked variant of [`Matrix4::upper_triangular_inverse`].
-    pub fn upper_triangular_inverse_checked_with_abort(
-        self,
-        signal: &AbortSignal,
-    ) -> CheckedBlasResult<Self> {
-        crate::trace_dispatch!(
-            "hyperlattice_matrix",
-            "method",
-            "upper-triangular4-inverse-checked-with-abort"
-        );
-        Ok(Self(invert_matrix4_by_upper_triangular_checked_with_abort(
-            &self.0, signal,
-        )?))
-    }
-
     /// Inverts a caller-certified lower-triangular 4x4 matrix.
     pub fn lower_triangular_inverse(self) -> BlasResult<Self> {
         crate::trace_dispatch!("hyperlattice_matrix", "method", "lower-triangular4-inverse");
@@ -11470,21 +11126,6 @@ impl Matrix4 {
             "lower-triangular4-inverse-checked"
         );
         Ok(Self(invert_matrix4_by_lower_triangular_checked(&self.0)?))
-    }
-
-    /// Abort-aware checked variant of [`Matrix4::lower_triangular_inverse`].
-    pub fn lower_triangular_inverse_checked_with_abort(
-        self,
-        signal: &AbortSignal,
-    ) -> CheckedBlasResult<Self> {
-        crate::trace_dispatch!(
-            "hyperlattice_matrix",
-            "method",
-            "lower-triangular4-inverse-checked-with-abort"
-        );
-        Ok(Self(invert_matrix4_by_lower_triangular_checked_with_abort(
-            &self.0, signal,
-        )?))
     }
 
     /// Right-divides by a caller-certified upper-triangular 4x4 matrix.
@@ -11507,22 +11148,6 @@ impl Matrix4 {
         )?))
     }
 
-    /// Abort-aware checked variant of [`Matrix4::div_upper_triangular`].
-    pub fn div_upper_triangular_checked_with_abort(
-        self,
-        divisor: Self,
-        signal: &AbortSignal,
-    ) -> CheckedBlasResult<Self> {
-        crate::trace_dispatch!(
-            "hyperlattice_matrix",
-            "method",
-            "div-upper-triangular4-checked-with-abort"
-        );
-        Ok(Self(divide_matrix4_by_upper_triangular_checked_with_abort(
-            self.0, &divisor.0, signal,
-        )?))
-    }
-
     /// Right-divides by a caller-certified lower-triangular 4x4 matrix.
     pub fn div_lower_triangular(self, divisor: Self) -> BlasResult<Self> {
         crate::trace_dispatch!("hyperlattice_matrix", "method", "div-lower-triangular4");
@@ -11540,22 +11165,6 @@ impl Matrix4 {
         );
         Ok(Self(divide_matrix4_by_lower_triangular_checked(
             self.0, &divisor.0,
-        )?))
-    }
-
-    /// Abort-aware checked variant of [`Matrix4::div_lower_triangular`].
-    pub fn div_lower_triangular_checked_with_abort(
-        self,
-        divisor: Self,
-        signal: &AbortSignal,
-    ) -> CheckedBlasResult<Self> {
-        crate::trace_dispatch!(
-            "hyperlattice_matrix",
-            "method",
-            "div-lower-triangular4-checked-with-abort"
-        );
-        Ok(Self(divide_matrix4_by_lower_triangular_checked_with_abort(
-            self.0, &divisor.0, signal,
         )?))
     }
 

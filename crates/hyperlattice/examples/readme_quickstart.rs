@@ -1,4 +1,4 @@
-use hyperlattice::{Matrix3, Real, Vector3, sqrt};
+use hyperlattice::{Matrix3, Real, Vector3};
 
 fn r(value: i32) -> Real {
     value.into()
@@ -7,7 +7,7 @@ fn r(value: i32) -> Real {
 fn main() -> hyperlattice::BlasResult<()> {
     let vector = Vector3::new([r(3), r(4), r(0)]);
     assert_eq!(vector.dot(&vector), r(25));
-    assert_eq!(sqrt(vector.dot(&vector))?, r(5));
+    assert_eq!(Real::sqrt(vector.dot(&vector))?, r(5));
 
     let identity = Matrix3::identity();
     assert_eq!(identity.clone() * vector.clone(), vector);

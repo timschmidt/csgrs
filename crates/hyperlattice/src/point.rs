@@ -6,7 +6,7 @@
 //! metadata for downstream predicates, not topology decisions.
 
 use crate::{
-    BlasResult, Real, RealExactSetFacts, RealSymbolicDependencyMask, Vector2, Vector3, ZeroStatus,
+    BlasResult, Real, RealExactSetFacts, SymbolicDependencyMask, Vector2, Vector3, ZeroKnowledge,
 };
 use std::ops::{Add, Sub};
 
@@ -144,7 +144,7 @@ pub struct Point2Facts {
     /// Exact-rational representation facts for the coordinate set.
     pub exact: RealExactSetFacts,
     /// Union of scalar symbolic dependency families across all coordinates.
-    pub symbolic_dependencies: RealSymbolicDependencyMask,
+    pub symbolic_dependencies: SymbolicDependencyMask,
     /// Bit mask of coordinates known to be exactly zero.
     pub known_zero_mask: u8,
     /// Bit mask of coordinates known to be nonzero.
@@ -197,7 +197,7 @@ pub struct Point3Facts {
     /// Exact-rational representation facts for the coordinate set.
     pub exact: RealExactSetFacts,
     /// Union of scalar symbolic dependency families across all coordinates.
-    pub symbolic_dependencies: RealSymbolicDependencyMask,
+    pub symbolic_dependencies: SymbolicDependencyMask,
     /// Bit mask of coordinates known to be exactly zero.
     pub known_zero_mask: u8,
     /// Bit mask of coordinates known to be nonzero.
@@ -699,9 +699,9 @@ fn coordinate_zero_status_masks<const N: usize>(coordinates: [&Real; N]) -> (u12
     for (index, coordinate) in coordinates.into_iter().enumerate() {
         let bit = 1_u128 << index;
         match coordinate.zero_status() {
-            ZeroStatus::Zero => known_zero_mask |= bit,
-            ZeroStatus::NonZero => known_nonzero_mask |= bit,
-            ZeroStatus::Unknown => unknown_zero_mask |= bit,
+            ZeroKnowledge::Zero => known_zero_mask |= bit,
+            ZeroKnowledge::NonZero => known_nonzero_mask |= bit,
+            ZeroKnowledge::Unknown => unknown_zero_mask |= bit,
         }
     }
     (known_zero_mask, known_nonzero_mask, unknown_zero_mask)
@@ -721,10 +721,10 @@ fn coordinate_one_mask<const N: usize>(coordinates: [&Real; N]) -> u128 {
 #[inline]
 fn coordinate_symbolic_dependency_mask<const N: usize>(
     coordinates: [&Real; N],
-) -> RealSymbolicDependencyMask {
+) -> SymbolicDependencyMask {
     coordinates
         .into_iter()
-        .fold(RealSymbolicDependencyMask::NONE, |mask, coordinate| {
+        .fold(SymbolicDependencyMask::NONE, |mask, coordinate| {
             mask.union(coordinate.detailed_facts().symbolic.dependencies)
         })
 }

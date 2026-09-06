@@ -14,7 +14,7 @@ use std::sync::{Arc, atomic::AtomicBool};
 use arbitrary::Arbitrary;
 use hyperlattice::{
     Matrix3, Matrix3StructuralFacts, Matrix3TransformKind, Matrix4, Matrix4StructuralFacts,
-    Matrix4TransformKind, Real, Vector3, Vector4, ZeroStatus,
+    Matrix4TransformKind, Real, Vector3, Vector4, ZeroKnowledge,
 };
 use libfuzzer_sys::fuzz_target;
 
@@ -218,7 +218,7 @@ fn matrix_fuzz(input: Input) {
         for col in 0..3 {
             assert_ne!(
                 zero3[row][col].zero_status(),
-                ZeroStatus::NonZero,
+                ZeroKnowledge::NonZero,
                 "Matrix3 entry [{row}][{col}] of M + (-M) must be within error bounds of zero"
             );
         }
@@ -316,7 +316,7 @@ fn matrix_fuzz(input: Input) {
         for col in 0..4 {
             assert_ne!(
                 zero4[row][col].zero_status(),
-                ZeroStatus::NonZero,
+                ZeroKnowledge::NonZero,
                 "Matrix4 entry [{row}][{col}] of M + (-M) must be within error bounds of zero"
             );
         }

@@ -2510,61 +2510,61 @@ fn bench_blas_scalar_trig(
     for case in trig_cases() {
         let blas_value = s(case.value);
         trace_dispatch_row(format!("scalar_trig/{label}/{}/sin", case.name), || {
-            let _ = black_box(hyperlattice::sin(black_box(blas_value.clone())));
+            let _ = black_box(Real::sin(black_box(blas_value.clone())));
         });
         group.bench_function(format!("{label}/{}/sin", case.name), |b| {
-            b.iter(|| black_box(hyperlattice::sin(black_box(blas_value.clone()))))
+            b.iter(|| black_box(Real::sin(black_box(blas_value.clone()))))
         });
         trace_dispatch_row(format!("scalar_trig/{label}/{}/cos", case.name), || {
-            let _ = black_box(hyperlattice::cos(black_box(blas_value.clone())));
+            let _ = black_box(Real::cos(black_box(blas_value.clone())));
         });
         group.bench_function(format!("{label}/{}/cos", case.name), |b| {
-            b.iter(|| black_box(hyperlattice::cos(black_box(blas_value.clone()))))
+            b.iter(|| black_box(Real::cos(black_box(blas_value.clone()))))
         });
     }
     for case in inverse_unit_cases() {
         let blas_value = s(case.value);
         trace_dispatch_row(format!("scalar_trig/{label}/{}/asin", case.name), || {
-            let _ = black_box(hyperlattice::asin(black_box(blas_value.clone())).unwrap());
+            let _ = black_box(Real::asin(black_box(blas_value.clone())).unwrap());
         });
         group.bench_function(format!("{label}/{}/asin", case.name), |b| {
-            b.iter(|| black_box(hyperlattice::asin(black_box(blas_value.clone())).unwrap()))
+            b.iter(|| black_box(Real::asin(black_box(blas_value.clone())).unwrap()))
         });
         trace_dispatch_row(format!("scalar_trig/{label}/{}/acos", case.name), || {
-            let _ = black_box(hyperlattice::acos(black_box(blas_value.clone())).unwrap());
+            let _ = black_box(Real::acos(black_box(blas_value.clone())).unwrap());
         });
         group.bench_function(format!("{label}/{}/acos", case.name), |b| {
-            b.iter(|| black_box(hyperlattice::acos(black_box(blas_value.clone())).unwrap()))
+            b.iter(|| black_box(Real::acos(black_box(blas_value.clone())).unwrap()))
         });
         trace_dispatch_row(format!("scalar_trig/{label}/{}/atanh", case.name), || {
-            let _ = black_box(hyperlattice::atanh(black_box(blas_value.clone())).unwrap());
+            let _ = black_box(Real::atanh(black_box(blas_value.clone())).unwrap());
         });
         group.bench_function(format!("{label}/{}/atanh", case.name), |b| {
-            b.iter(|| black_box(hyperlattice::atanh(black_box(blas_value.clone())).unwrap()))
+            b.iter(|| black_box(Real::atanh(black_box(blas_value.clone())).unwrap()))
         });
     }
     for case in inverse_real_cases() {
         let blas_value = s(case.value);
         trace_dispatch_row(format!("scalar_trig/{label}/{}/atan", case.name), || {
-            let _ = black_box(hyperlattice::atan(black_box(blas_value.clone())).unwrap());
+            let _ = black_box(Real::atan(black_box(blas_value.clone())).unwrap());
         });
         group.bench_function(format!("{label}/{}/atan", case.name), |b| {
-            b.iter(|| black_box(hyperlattice::atan(black_box(blas_value.clone())).unwrap()))
+            b.iter(|| black_box(Real::atan(black_box(blas_value.clone())).unwrap()))
         });
         trace_dispatch_row(format!("scalar_trig/{label}/{}/asinh", case.name), || {
-            let _ = black_box(hyperlattice::asinh(black_box(blas_value.clone())).unwrap());
+            let _ = black_box(Real::asinh(black_box(blas_value.clone())).unwrap());
         });
         group.bench_function(format!("{label}/{}/asinh", case.name), |b| {
-            b.iter(|| black_box(hyperlattice::asinh(black_box(blas_value.clone())).unwrap()))
+            b.iter(|| black_box(Real::asinh(black_box(blas_value.clone())).unwrap()))
         });
     }
     for case in inverse_acosh_cases() {
         let blas_value = s(case.value);
         trace_dispatch_row(format!("scalar_trig/{label}/{}/acosh", case.name), || {
-            let _ = black_box(hyperlattice::acosh(black_box(blas_value.clone())).unwrap());
+            let _ = black_box(Real::acosh(black_box(blas_value.clone())).unwrap());
         });
         group.bench_function(format!("{label}/{}/acosh", case.name), |b| {
-            b.iter(|| black_box(hyperlattice::acosh(black_box(blas_value.clone())).unwrap()))
+            b.iter(|| black_box(Real::acosh(black_box(blas_value.clone())).unwrap()))
         });
     }
 }
@@ -2579,20 +2579,20 @@ fn bench_scalar_trig(c: &mut Criterion) {
         trace_dispatch_row(
             format!("scalar_trig/hyperreal-rational/{}/sin", case.name),
             || {
-                let _ = black_box(hyperlattice::sin(black_box(rational_value.clone())));
+                let _ = black_box(Real::sin(black_box(rational_value.clone())));
             },
         );
         group.bench_function(format!("hyperreal-rational/{}/sin", case.name), |b| {
-            b.iter(|| black_box(hyperlattice::sin(black_box(rational_value.clone()))))
+            b.iter(|| black_box(Real::sin(black_box(rational_value.clone()))))
         });
         trace_dispatch_row(
             format!("scalar_trig/hyperreal-rational/{}/cos", case.name),
             || {
-                let _ = black_box(hyperlattice::cos(black_box(rational_value.clone())));
+                let _ = black_box(Real::cos(black_box(rational_value.clone())));
             },
         );
         group.bench_function(format!("hyperreal-rational/{}/cos", case.name), |b| {
-            b.iter(|| black_box(hyperlattice::cos(black_box(rational_value.clone()))))
+            b.iter(|| black_box(Real::cos(black_box(rational_value.clone()))))
         });
     }
     for case in inverse_unit_cases() {
@@ -2600,29 +2600,29 @@ fn bench_scalar_trig(c: &mut Criterion) {
         trace_dispatch_row(
             format!("scalar_trig/hyperreal-rational/{}/asin", case.name),
             || {
-                let _ = black_box(hyperlattice::asin(black_box(rational_value.clone())).unwrap());
+                let _ = black_box(Real::asin(black_box(rational_value.clone())).unwrap());
             },
         );
         group.bench_function(format!("hyperreal-rational/{}/asin", case.name), |b| {
-            b.iter(|| black_box(hyperlattice::asin(black_box(rational_value.clone())).unwrap()))
+            b.iter(|| black_box(Real::asin(black_box(rational_value.clone())).unwrap()))
         });
         trace_dispatch_row(
             format!("scalar_trig/hyperreal-rational/{}/acos", case.name),
             || {
-                let _ = black_box(hyperlattice::acos(black_box(rational_value.clone())).unwrap());
+                let _ = black_box(Real::acos(black_box(rational_value.clone())).unwrap());
             },
         );
         group.bench_function(format!("hyperreal-rational/{}/acos", case.name), |b| {
-            b.iter(|| black_box(hyperlattice::acos(black_box(rational_value.clone())).unwrap()))
+            b.iter(|| black_box(Real::acos(black_box(rational_value.clone())).unwrap()))
         });
         trace_dispatch_row(
             format!("scalar_trig/hyperreal-rational/{}/atanh", case.name),
             || {
-                let _ = black_box(hyperlattice::atanh(black_box(rational_value.clone())).unwrap());
+                let _ = black_box(Real::atanh(black_box(rational_value.clone())).unwrap());
             },
         );
         group.bench_function(format!("hyperreal-rational/{}/atanh", case.name), |b| {
-            b.iter(|| black_box(hyperlattice::atanh(black_box(rational_value.clone())).unwrap()))
+            b.iter(|| black_box(Real::atanh(black_box(rational_value.clone())).unwrap()))
         });
     }
     for case in inverse_real_cases() {
@@ -2630,21 +2630,21 @@ fn bench_scalar_trig(c: &mut Criterion) {
         trace_dispatch_row(
             format!("scalar_trig/hyperreal-rational/{}/atan", case.name),
             || {
-                let _ = black_box(hyperlattice::atan(black_box(rational_value.clone())).unwrap());
+                let _ = black_box(Real::atan(black_box(rational_value.clone())).unwrap());
             },
         );
         group.bench_function(format!("hyperreal-rational/{}/atan", case.name), |b| {
-            b.iter(|| black_box(hyperlattice::atan(black_box(rational_value.clone())).unwrap()))
+            b.iter(|| black_box(Real::atan(black_box(rational_value.clone())).unwrap()))
         });
         trace_dispatch_row(
             format!("scalar_trig/hyperreal-rational/{}/asinh", case.name),
             || {
                 let _ =
-                    black_box(hyperlattice::asinh(black_box(rational_value.clone())).unwrap());
+                    black_box(Real::asinh(black_box(rational_value.clone())).unwrap());
             },
         );
         group.bench_function(format!("hyperreal-rational/{}/asinh", case.name), |b| {
-            b.iter(|| black_box(hyperlattice::asinh(black_box(rational_value.clone())).unwrap()))
+            b.iter(|| black_box(Real::asinh(black_box(rational_value.clone())).unwrap()))
         });
     }
     for case in inverse_acosh_cases() {
@@ -2653,11 +2653,11 @@ fn bench_scalar_trig(c: &mut Criterion) {
             format!("scalar_trig/hyperreal-rational/{}/acosh", case.name),
             || {
                 let _ =
-                    black_box(hyperlattice::acosh(black_box(rational_value.clone())).unwrap());
+                    black_box(Real::acosh(black_box(rational_value.clone())).unwrap());
             },
         );
         group.bench_function(format!("hyperreal-rational/{}/acosh", case.name), |b| {
-            b.iter(|| black_box(hyperlattice::acosh(black_box(rational_value.clone())).unwrap()))
+            b.iter(|| black_box(Real::acosh(black_box(rational_value.clone())).unwrap()))
         });
     }
     let numerica_ctx = numerica_engine::Ctx::new(128);

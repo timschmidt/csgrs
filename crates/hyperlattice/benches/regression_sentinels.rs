@@ -1,5 +1,5 @@
 use criterion::{Criterion, criterion_group, criterion_main};
-use hyperlattice::{Complex, Matrix3, Matrix4, Real, SharedScaleVec, Vector3, Vector4, sqrt};
+use hyperlattice::{Complex, Matrix3, Matrix4, Real, SharedScaleVec, Vector3, Vector4};
 use std::hint::black_box;
 
 #[path = "support/benchmark_report.rs"]
@@ -30,7 +30,7 @@ fn bench_regression_sentinels(c: &mut Criterion) {
     });
 
     c.bench_function("sentinel/scalar/sqrt2_minus_convergent_sign", |b| {
-        let value = sqrt(r(2)).unwrap() - frac(99, 70);
+        let value = Real::sqrt(r(2)).unwrap() - frac(99, 70);
         b.iter(|| value.refine_sign_until(-128))
     });
 
@@ -40,7 +40,7 @@ fn bench_regression_sentinels(c: &mut Criterion) {
     });
 
     c.bench_function("sentinel/vector/dot_sparse_symbolic", |b| {
-        let left = Vector3::new([Real::pi(), r(0), sqrt(r(2)).unwrap()]);
+        let left = Vector3::new([Real::pi(), r(0), Real::sqrt(r(2)).unwrap()]);
         let right = Vector3::new([frac(2, 3), Real::e(), r(0)]);
         b.iter(|| left.dot(&right))
     });

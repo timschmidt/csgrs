@@ -1,18 +1,14 @@
 //! In-depth fuzz testing of scalar operations and algebraic laws.
 //!
-//! Covers all arithmetic operations across every ownership variant, free
-//! functions (`powi`, `reciprocal`, `sinh`, `cosh`, `tanh`, …), and a
-//! comprehensive set of algebraic invariants for hyperreal-backed scalars.
+//! Covers native `Real` operations across every ownership variant, structural
+//! checked reciprocals, and algebraic invariants for hyperreal-backed scalars.
 //!
 //! Run with: `cargo +nightly fuzz run scalar_ops` from the `fuzz/` directory.
 
 #![no_main]
 
 use arbitrary::{Arbitrary, Error, Unstructured};
-use hyperlattice::{
-    Real, ZeroStatus, cosh, powi, reciprocal, reciprocal_checked, reciprocal_ref,
-    reciprocal_ref_checked, sinh, tanh,
-};
+use hyperlattice::{Real, ZeroKnowledge, reciprocal_checked, reciprocal_ref_checked};
 use libfuzzer_sys::fuzz_target;
 
 #[derive(Debug)]
@@ -97,18 +93,16 @@ fn scalar_fuzz(input: Input) {
     let pow_exponent = Real::try_from(pow_exponent).expect("finite dyadic exponent");
     let _ = a.clone().pow(pow_exponent);
 
-    // ── No-panic: free function variants ────────────────────────────────────
-    let _ = reciprocal(a.clone());
-    let _ = reciprocal_ref(&a);
+    // ── No-panic: checked reciprocals and hyperbolic operations ──────────────
     let _ = reciprocal_checked(a.clone());
     let _ = reciprocal_ref_checked(&a);
-    let _ = sinh(a.clone());
-    let _ = cosh(a.clone());
-    let _ = tanh(a.clone());
+    let _ = Real::sinh(a.clone());
+    let _ = Real::cosh(a.clone());
+    let _ = Real::tanh(a.clone());
 
     // ── No-panic: powi with a range of exponents ────────────────────────────
     for e in [0_i64, 1, 2, 3, 4, 5, -1, -2, -3, i64::from(exp)] {
-        let _ = powi(a.clone(), e);
+        let _ = Real::powi_i64(a.clone(), e);
     }
 
     // ── No-panic: query and classification methods ───────────────────────────
@@ -125,7 +119,7 @@ fn scalar_fuzz(input: Input) {
     // ── Invariant: a + (−a) is within error bounds of zero ──────────────────
     assert_ne!(
         (a.clone() + (-a.clone())).zero_status(),
-        ZeroStatus::NonZero,
+        ZeroKnowledge::NonZero,
         "a + (-a) must be within error bounds of zero"
     );
 
@@ -172,7 +166,7 @@ fn scalar_fuzz(input: Input) {
     );
 
     // ── Invariant: zero_status and definitely_zero consistency ───────────────
-    if a.zero_status() == ZeroStatus::NonZero {
+    if a.zero_status() == ZeroKnowledge::NonZero {
         assert!(
             !a.definitely_zero(),
             "NonZero zero_status contradicts definitely_zero()"
@@ -181,31 +175,31 @@ fn scalar_fuzz(input: Input) {
     if a.definitely_zero() {
         assert_eq!(
             a.zero_status(),
-            ZeroStatus::Zero,
+            ZeroKnowledge::Zero,
             "definitely_zero() implies Zero status"
         );
     }
 
-    // ── Invariant: powi(a, 1) is the identity ────────────────────────────────
-    match powi(a.clone(), 1) {
-        Ok(result) => assert_eq!(result, a, "powi(a, 1) must equal a"),
-        Err(e) => panic!("powi(a, 1) must always succeed; got {e:?}"),
+    // ── Invariant: Real::powi_i64(a, 1) is the identity ────────────────────────────────
+    match Real::powi_i64(a.clone(), 1) {
+        Ok(result) => assert_eq!(result, a, "Real::powi_i64(a, 1) must equal a"),
+        Err(e) => panic!("Real::powi_i64(a, 1) must always succeed; got {e:?}"),
     }
 
-    // ── Invariant: powi(a, 2) equals a * a ──────────────────────────────────
+    // ── Invariant: Real::powi_i64(a, 2) equals a * a ──────────────────────────────────
     // Both paths route through mul_refs on identical operands so results must
     // be bit-identical, not merely within error bounds.
     let a_squared = a.clone() * a.clone();
-    match powi(a.clone(), 2) {
-        Ok(result) => assert_eq!(result, a_squared, "powi(a, 2) must equal a * a"),
-        Err(e) => panic!("powi(a, 2) must always succeed; got {e:?}"),
+    match Real::powi_i64(a.clone(), 2) {
+        Ok(result) => assert_eq!(result, a_squared, "Real::powi_i64(a, 2) must equal a * a"),
+        Err(e) => panic!("Real::powi_i64(a, 2) must always succeed; got {e:?}"),
     }
 
-    // ── Invariant: powi(NonZero, 0) is the multiplicative identity ───────────
-    if a.zero_status() == ZeroStatus::NonZero {
-        match powi(a.clone(), 0) {
-            Ok(result) => assert_eq!(result, one, "powi(NonZero, 0) must equal 1"),
-            Err(e) => panic!("powi(NonZero, 0) must succeed; got {e:?}"),
+    // ── Invariant: Real::powi_i64(NonZero, 0) is the multiplicative identity ───────────
+    if a.zero_status() == ZeroKnowledge::NonZero {
+        match Real::powi_i64(a.clone(), 0) {
+            Ok(result) => assert_eq!(result, one, "Real::powi_i64(NonZero, 0) must equal 1"),
+            Err(e) => panic!("Real::powi_i64(NonZero, 0) must succeed; got {e:?}"),
         }
     }
 }
