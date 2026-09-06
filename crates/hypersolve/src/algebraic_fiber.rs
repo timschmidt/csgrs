@@ -4280,6 +4280,8 @@ mod tests {
         for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
             for (scale, upper, steps) in [
                 (Real::one(), &selected + rational(1, 8), 1),
+                (Real::pi(), &selected + rational(1, 8), 1),
+                (-Real::pi(), &selected + rational(1, 8), 1),
                 (-Real::pi(), selected.clone(), 0),
             ] {
                 let root = represented_root(
