@@ -2436,12 +2436,12 @@ fn rational_mapped_cusp_represented_rational(
         }
     };
     let radius_squared_denominator =
-        bivariate_exact_second_fiber(radius_squared_denominator, &represented_other_parameter);
+        bivariate_specialize_second(radius_squared_denominator, &represented_other_parameter);
     let denominator = [Real::one(), Real::from(-2_i8), Real::from(2_i8)];
     let radial = [Real::one(), Real::from(-2_i8)];
     let incidence = match diameter {
         BezierAlgebraicCuspSemicircleRationalDiameter2::Rational(diameter) => {
-            let diameter = bivariate_exact_second_fiber(diameter, &represented_other_parameter);
+            let diameter = bivariate_specialize_second(diameter, &represented_other_parameter);
             bivariate_subtract(
                 &bivariate_tensor_product(&diameter, &denominator),
                 &bivariate_tensor_product(&radius_squared_denominator, &radial),
@@ -2452,11 +2452,11 @@ fn rational_mapped_cusp_represented_rational(
             speed_squared,
         } => {
             let diameter_rational =
-                bivariate_exact_second_fiber(&coordinate.rational, &represented_other_parameter);
+                bivariate_specialize_second(&coordinate.rational, &represented_other_parameter);
             let diameter_radical =
-                bivariate_exact_second_fiber(&coordinate.radical, &represented_other_parameter);
+                bivariate_specialize_second(&coordinate.radical, &represented_other_parameter);
             let speed_squared =
-                bivariate_exact_second_fiber(speed_squared, &represented_other_parameter);
+                bivariate_specialize_second(speed_squared, &represented_other_parameter);
             let rational = bivariate_subtract(
                 &bivariate_tensor_product(&diameter_rational, &denominator),
                 &bivariate_tensor_product(&radius_squared_denominator, &radial),
@@ -2519,11 +2519,11 @@ fn parallel_mapped_cusp_represented_rational(
             return Ok(Classification::Uncertain(reason));
         }
     };
-    let diameter_rational = bivariate_exact_second_fiber(&diameter.rational, &other_parameter);
-    let diameter_radical = bivariate_exact_second_fiber(&diameter.radical, &other_parameter);
+    let diameter_rational = bivariate_specialize_second(&diameter.rational, &other_parameter);
+    let diameter_radical = bivariate_specialize_second(&diameter.radical, &other_parameter);
     let radius_squared_denominator =
-        bivariate_exact_second_fiber(radius_squared_denominator, &other_parameter);
-    let speed_squared = bivariate_exact_second_fiber(speed_squared, &other_parameter);
+        bivariate_specialize_second(radius_squared_denominator, &other_parameter);
+    let speed_squared = bivariate_specialize_second(speed_squared, &other_parameter);
     let denominator = [Real::one(), Real::from(-2_i8), Real::from(2_i8)];
     let rational = bivariate_subtract(
         &bivariate_tensor_product(&diameter_rational, &denominator),
@@ -3310,18 +3310,6 @@ fn bivariate_projective_second_parameter(
             })
             .collect(),
     )
-}
-
-fn bivariate_exact_second_fiber(polynomial: &BivariatePolynomial, parameter: &Real) -> Vec<Real> {
-    polynomial
-        .coefficients
-        .iter()
-        .map(|row| {
-            row.iter().rev().fold(Real::zero(), |value, coefficient| {
-                value * parameter + coefficient
-            })
-        })
-        .collect()
 }
 
 fn bivariate_tensor_product(first: &[Real], second: &[Real]) -> BivariatePolynomial {
@@ -7636,9 +7624,7 @@ fn dense_specialize_last_axis(
     let mut coefficients = Vec::new();
     coefficients.try_reserve_exact(fiber_count).ok()?;
     for fiber in polynomial.coefficients().chunks_exact(target_count) {
-        coefficients.push(fiber.iter().rev().fold(Real::zero(), |value, coefficient| {
-            value * parameter + coefficient
-        }));
+        coefficients.push(Real::eval_poly(fiber, parameter));
     }
     DenseTensorPolynomial::try_new(dimensions, coefficients)
 }
@@ -130669,6 +130655,87 @@ mod conversion_tests {
             Real::zero(),
             Real::one(),
         ))
+    }
+
+    #[test]
+    fn fiber_specialization_retains_native_quadratic_root_certificates() {
+        let half = (Real::one() / Real::from(2_i8)).unwrap();
+        let alpha = half.clone().sqrt().unwrap();
+        let delta = (&alpha + &half * &half).sqrt().unwrap();
+        for root in [-&half - &delta, -&half + &delta] {
+            let width = (Real::from(2_i8) / Real::from(7_i8)).unwrap();
+            let parameter = Real::average_pair(&(&root - &width), &(&root + &width));
+            let rows: Vec<Vec<Real>> = [Real::one(), Real::pi(), -Real::pi()]
+                .into_iter()
+                .map(|scale| vec![-&alpha * &scale, scale.clone(), scale])
+                .collect();
+            let bivariate = BivariatePolynomial::new(rows.clone());
+            let dense =
+                DenseTensorPolynomial::try_new(vec![3, 3], rows.into_iter().flatten().collect())
+                    .unwrap();
+            let second_fiber = bivariate_specialize_second(&bivariate, &parameter);
+            let last_axis = dense_specialize_last_axis(&dense, &parameter).unwrap();
+            assert_eq!(last_axis.dimensions(), &[3, 1]);
+            for (lane, values) in [
+                ("bivariate second fiber", second_fiber.as_slice()),
+                ("dense last axis", last_axis.coefficients()),
+            ] {
+                assert_eq!(values.len(), 3);
+                for (row, value) in values.iter().enumerate() {
+                    assert_eq!(
+                        value.zero_status(),
+                        ZeroKnowledge::Zero,
+                        "{lane}, coefficient row {row}",
+                    );
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn fiber_specialization_preserves_axis_order_and_ragged_zero_rows() {
+        let rows = vec![
+            vec![],
+            vec![3.into()],
+            vec![2.into(), (-1).into(), 4.into()],
+        ];
+        let bivariate = BivariatePolynomial::new(rows);
+        let dense = DenseTensorPolynomial::try_new(
+            vec![2, 3, 4],
+            (0..24).map(|index| Real::from(index - 11)).collect(),
+        )
+        .unwrap();
+        for (numerator, denominator) in [(-3, 2), (0, 1), (1, 1), (7, 3)] {
+            let parameter = (Real::from(numerator) / Real::from(denominator)).unwrap();
+            assert_eq!(
+                bivariate_specialize_second(&bivariate, &parameter),
+                vec![
+                    Real::zero(),
+                    Real::from(3_i8),
+                    Real::from(2_i8) - &parameter + Real::from(4_i8) * &parameter * &parameter,
+                ],
+            );
+            let specialized = dense_specialize_last_axis(&dense, &parameter).unwrap();
+            assert_eq!(specialized.dimensions(), &[2, 3, 1]);
+            for (fiber, value) in dense
+                .coefficients()
+                .chunks_exact(4)
+                .zip(specialized.coefficients())
+            {
+                let expected =
+                    fiber
+                        .iter()
+                        .enumerate()
+                        .fold(Real::zero(), |sum, (power, coefficient)| {
+                            sum + if power == 0 {
+                                coefficient.clone()
+                            } else {
+                                coefficient * parameter.clone().powi_i64(power as i64).unwrap()
+                            }
+                        });
+                assert_eq!(value, &expected);
+            }
+        }
     }
 
     #[test]
