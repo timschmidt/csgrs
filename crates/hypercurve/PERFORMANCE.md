@@ -8398,6 +8398,96 @@ audit. Other mapped angle queries and their retained caches require joint
 policy review before extending this change beyond the uncached selected-fiber
 maps.
 
+## Authored-circle components and overlap correspondence (2026-09-06)
+
+Source commit `5156f67` repairs four selected-fiber rational-circle regressions.
+The squared incidence can vanish on the conjugate speed sheet without
+describing the authored circle. The existing selected-field identity proof
+now certifies the unsquared authored equation before component publication.
+When only the conjugate factor vanishes identically, the nonzero authored
+factor has exactly the zeros of its radical coefficient; that coefficient
+returns to the same finite-contact authority. This retains a true tangent
+contact for tangent conjugate circles and no contacts for disjoint ones,
+instead of publishing false overlap arcs. No alternate solver is introduced.
+
+Component boundaries now use the shared complete finite-fiber authority,
+including centers that refine to `Exact`. Publication predicates run before
+the one shared map captures the weakest policy actually consumed. Certified
+`APPROXIMATE_512` construction therefore replays under `STRICT`, while actual
+terminal consumption still forbids it. One orientation-aware endpoint pairing
+serves location, forward mapping, and inversion. Point-evidence publication
+also checks the requested policy before returning an object.
+
+The authored-support proof and complete angular-root partitions establish
+strict order directly on regular cells, removing repeated mapped-root ordering.
+Duplicate seeding/status handling and three polynomial clones are removed.
+Production grows 27 Rust lines and tests grow 361; no retained-object field,
+public API, compatibility interface, alias, or shim is added. The four new
+tests fail with the old production and pass with the repair. Their matrices
+cover exact-refining and genuinely algebraic centers, both traversals, both
+policies, consumed-terminal rejection, exact points/angles, and inverse maps.
+Importantly, the first intermediate candidate passed every qualification gate
+before the conjugate-circle probe exposed the remaining false-overlap defect.
+Its artifacts are preserved separately, not reported as final evidence.
+
+Final pinned-snapshot qualification passes 1,757 all-feature tests with none
+ignored, 1,719 minimal-feature tests with four opt-in cases covered by the full
+run, and 37 UI tests. Formatting, both strict lint and documentation matrices,
+fuzz-target compilation, and release WASM pass. All six source repositories
+were archived from recorded commits; concurrent Hyperreal changes are excluded.
+No fresh fuzz campaign, coverage run, or lower-stack/Hypermesh qualification
+is claimed by this checkpoint.
+
+Complete raw Heaptrack streams of the unchanged folded-overlap libtest record
+718,910 -> 719,508 allocations (+598), 52,260,475 -> 52,258,931 requested bytes
+(-1,544), and 1,529,585 -> 1,528,513 peak live bytes (-1,072). End-live heap
+remains 542,168 bytes. This is full-process accounting with identical test
+catalogs and measured test bodies, not geometry-only counts or a leak claim.
+Both compressed streams validate and final live-state accounting reconciles.
+The direct overlap instruction control costs +0.10027%; rectangle, circle,
+and capsule controls change -0.05722%, +0.04386%, and -0.06830%, respectively.
+These are instruction counts, not timings from instrumented runs.
+
+Matched default-feature native size changes are:
+
+| Artifact | `.text` change (bytes) | File change (bytes) |
+| --- | ---: | ---: |
+| `bezier_region` | -1,568 | -7,912 |
+| `rational_bezier` | +2,560 | +1,488 |
+| `curve_region_boolean_batch` | -1,072 | -4,904 |
+
+The release WASM demo shrinks 2,953 bytes, from 17,032,621 to 17,029,668.
+The rational-Bezier text increase and extra heap allocation calls remain
+explicit lower-priority costs of the correctness/completeness repair.
+
+Three alternating CPU-7 pairs give selected-fiber Boolean medians of
+20.86 -> 21.34 seconds (+2.30%), general contacts 11.46 -> 11.67 (+1.83%),
+radial contacts 30.48 -> 31.06 (+1.90%), chord replay 17.11 -> 17.19 (+0.47%),
+and region 5.90 -> 5.91 (+0.17%). The folded-overlap process is 0.04 seconds
+on both sides at the timer's coarse resolution. These results do not satisfy
+a uniform no-regression gate. Seven additional native pairs put region at
+5.84 -> 5.88 seconds (+0.68%). Immediate union costs +2.43% and region
+materialization +1.62%, versus their initial +4.02%/+3.35%. The largest
+additional-pair lane cost is disjoint conic/cubic candidates at +4.20%;
+immediate all-operations Booleans cost +2.70% and resolved-overlap region
+materialization +2.56%. Those remaining costs are not dismissed as noise.
+
+All 88 completed timing invocations and 856 lane measurements are recorded in
+[`2026-09-06-authored-circle-components.json`](benchmarks/checkpoints/2026-09-06-authored-circle-components.json),
+alongside complete heap/instruction records and source/artifact checksums.
+An initial timing attempt was stopped after an external audit occupied the
+SMT sibling threads; its two completed runs and one incomplete invocation
+are preserved separately and excluded. The final matrix began after those
+workers disappeared, with a compact midpoint process check confirming no
+external build/test/profile worker. Desktop load and frequency scaling were
+not controlled.
+
+ExactCorelib mining/recorded uplift remains closed. Full Hypercurve release
+readiness, uniform performance, remaining heap coverage, and integration with
+the live lower-stack work remain open. Other mapped-circle query policies
+must be audited together with their retained caches before extending this
+repair. No push or publication is part of this checkpoint.
+
 ## Optimization boundary
 
 The retained x sweep addresses broad-phase pair scheduling only. A full
