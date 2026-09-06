@@ -169,8 +169,8 @@ fn power_to_bernstein_on_interval<C: Clone, F: OrderedFieldPolynomialContext<C>>
     };
     let degree = polynomial.len().saturating_sub(1);
     let width = upper - lower;
-    // Compose by `lower + width*x` using Horner form. Recomposition at each
-    // child bounds expression depth by the authored polynomial degree.
+    // Compose by `lower + width*x` using Horner form. Periodic recomposition
+    // bounds expression depth even when field operations retain lazy nodes.
     let mut shifted_power = vec![leading.clone()];
     for coefficient in polynomial[..degree].iter().rev() {
         let old_len = shifted_power.len();
@@ -218,6 +218,28 @@ fn power_to_bernstein_on_interval<C: Clone, F: OrderedFieldPolynomialContext<C>>
         controls.push(control);
     }
     Ok(Some(controls))
+}
+
+fn midpoint_subdivide<C: Clone, F: OrderedFieldPolynomialContext<C>>(
+    mut work: Vec<C>,
+    field: &mut F,
+) -> Result<(Vec<C>, Vec<C>), F::Error> {
+    let degree = work.len() - 1;
+    let half = (Real::one() / Real::from(2_u8)).expect("two is nonzero");
+    let mut left = Vec::with_capacity(work.len());
+    let mut right = Vec::with_capacity(work.len());
+    left.push(work[0].clone());
+    right.push(work[degree].clone());
+    for level in 1..=degree {
+        for index in 0..=degree - level {
+            let sum = field.add(&work[index], &work[index + 1])?;
+            work[index] = field.scale(&sum, &half)?;
+        }
+        left.push(work[0].clone());
+        right.push(work[degree - level].clone());
+    }
+    right.reverse();
+    Ok((left, right))
 }
 
 fn bernstein_sign_variations<C, F: OrderedFieldPolynomialContext<C>>(
@@ -366,6 +388,21 @@ where
         let mut isolated = Vec::new();
         let mut rational_root = None;
         while let Some(mut node) = stack.pop() {
+            // Share the midpoint tableau between both children, but restart
+            // from the authored polynomial every eight levels. Thus lazy
+            // coefficient expressions cannot grow with subdivision depth.
+            if node.depth != 0 && node.depth.is_multiple_of(8) {
+                let Some(controls) =
+                    power_to_bernstein_on_interval(&polynomial, &node.lower, &node.upper, field)?
+                else {
+                    return Ok(report(
+                        OrderedFieldRootIsolationStatus::CompleteFallbackRequired,
+                        Vec::new(),
+                        subdivision_steps,
+                    ));
+                };
+                node.controls = controls;
+            }
             let variations = bernstein_sign_variations(&node.controls, field)?;
             if variations == Some(0) {
                 continue;
@@ -440,16 +477,7 @@ where
                     subdivision_steps,
                 ));
             };
-            let (Some(left), Some(right)) = (
-                power_to_bernstein_on_interval(&polynomial, &node.lower, &midpoint, field)?,
-                power_to_bernstein_on_interval(&polynomial, &midpoint, &node.upper, field)?,
-            ) else {
-                return Ok(report(
-                    OrderedFieldRootIsolationStatus::CompleteFallbackRequired,
-                    Vec::new(),
-                    subdivision_steps,
-                ));
-            };
+            let (left, right) = midpoint_subdivide(node.controls, field)?;
             subdivision_steps = subdivision_steps.saturating_add(1);
             if matches!(
                 left.last()
@@ -550,6 +578,172 @@ mod tests {
 
     fn fraction(numerator: i64, denominator: i64) -> Real {
         (Real::from(numerator) / Real::from(denominator)).expect("nonzero integer denominator")
+    }
+
+    #[test]
+    fn midpoint_tableau_matches_authored_polynomial_on_both_children() {
+        for degree in 0..=9 {
+            let polynomial: Vec<_> = (0..=degree)
+                .map(|power| fraction((-1_i64).pow(power as u32) * (power + 2), power + 3))
+                .collect();
+            for (lower, upper) in [
+                (fraction(-5, 3), fraction(-2, 3)),
+                (Real::zero(), Real::one()),
+                (fraction(7, 9), fraction(11, 6)),
+            ] {
+                let controls = power_to_bernstein_on_interval(
+                    &polynomial,
+                    &lower,
+                    &upper,
+                    &mut RationalRealContext,
+                )
+                .unwrap()
+                .unwrap();
+                let (left, right) = midpoint_subdivide(controls, &mut RationalRealContext).unwrap();
+                let midpoint = midpoint(&lower, &upper).unwrap();
+                for (actual, lower, upper) in
+                    [(&left, &lower, &midpoint), (&right, &midpoint, &upper)]
+                {
+                    let expected = power_to_bernstein_on_interval(
+                        &polynomial,
+                        lower,
+                        upper,
+                        &mut RationalRealContext,
+                    )
+                    .unwrap()
+                    .unwrap();
+                    assert_eq!(actual, &expected, "degree {degree} on [{lower}, {upper}]");
+                }
+                assert_eq!(left.last(), right.first());
+            }
+        }
+    }
+
+    #[derive(Clone)]
+    struct DepthTracked {
+        value: Real,
+        depth: usize,
+    }
+
+    #[derive(Default)]
+    struct DepthTrackingContext {
+        max_depth: usize,
+    }
+
+    impl OrderedFieldPolynomialContext<DepthTracked> for DepthTrackingContext {
+        type Error = ();
+
+        fn zero(&mut self) -> Result<DepthTracked, Self::Error> {
+            Ok(DepthTracked {
+                value: Real::zero(),
+                depth: 0,
+            })
+        }
+
+        fn add(
+            &mut self,
+            left: &DepthTracked,
+            right: &DepthTracked,
+        ) -> Result<DepthTracked, Self::Error> {
+            let depth = left.depth.max(right.depth) + 1;
+            self.max_depth = self.max_depth.max(depth);
+            Ok(DepthTracked {
+                value: &left.value + &right.value,
+                depth,
+            })
+        }
+
+        fn scale(
+            &mut self,
+            value: &DepthTracked,
+            scale: &Real,
+        ) -> Result<DepthTracked, Self::Error> {
+            let depth = value.depth + 1;
+            self.max_depth = self.max_depth.max(depth);
+            Ok(DepthTracked {
+                value: &value.value * scale,
+                depth,
+            })
+        }
+
+        fn sign(&mut self, value: &DepthTracked) -> Result<Ordering, Self::Error> {
+            value.value.partial_cmp(&Real::zero()).ok_or(())
+        }
+
+        fn sign_if_separated(
+            &mut self,
+            value: &DepthTracked,
+        ) -> Result<Option<Ordering>, Self::Error> {
+            self.sign(value).map(Some)
+        }
+    }
+
+    #[test]
+    fn repeated_root_subdivision_keeps_coefficient_expression_depth_bounded() {
+        let mut depths = Vec::new();
+        for max_subdivision_depth in [16, 96] {
+            let polynomial = [4, 0, -4, 0, 1].map(|value| DepthTracked {
+                value: Real::from(value),
+                depth: 0,
+            });
+            let mut field = DepthTrackingContext::default();
+            let report = isolate_ordered_field_polynomial_roots(
+                polynomial.to_vec(),
+                &Real::one(),
+                &Real::from(2),
+                OrderedFieldRootIsolationConfig {
+                    max_subdivision_depth,
+                    refinement_steps: 0,
+                },
+                &mut field,
+            )
+            .unwrap();
+            assert_eq!(
+                report.status,
+                OrderedFieldRootIsolationStatus::CompleteFallbackRequired
+            );
+            assert!(report.intervals.is_empty());
+            assert!(report.subdivision_steps >= max_subdivision_depth);
+            assert!(field.max_depth <= 81, "depth {}", field.max_depth);
+            depths.push(field.max_depth);
+        }
+        assert_eq!(depths[0], depths[1]);
+    }
+
+    #[test]
+    fn clustered_simple_roots_survive_periodic_coefficient_recomposition() {
+        let center = fraction(1, 5);
+        let radius = fraction(1, 1 << 20);
+        let polynomial = vec![
+            &center * &center - &radius * &radius,
+            Real::from(-2) * &center,
+            Real::one(),
+        ];
+        let report = isolate_ordered_field_polynomial_roots(
+            polynomial,
+            &Real::zero(),
+            &Real::one(),
+            OrderedFieldRootIsolationConfig {
+                max_subdivision_depth: 64,
+                refinement_steps: 8,
+            },
+            &mut RationalRealContext,
+        )
+        .unwrap();
+        assert_eq!(report.status, OrderedFieldRootIsolationStatus::Isolated);
+        assert_eq!(report.intervals.len(), 2);
+        assert!(report.subdivision_steps > 16);
+        assert!(report.intervals[0].upper < report.intervals[1].lower);
+        for (interval, root) in report
+            .intervals
+            .iter()
+            .zip([&center - &radius, &center + &radius])
+        {
+            assert_eq!(interval.distinct_root_count, 1);
+            assert!(interval.exact_root.is_none());
+            assert!(interval.lower < root && root < interval.upper);
+            assert!(&interval.upper - &interval.lower < radius);
+        }
     }
 
     #[test]
