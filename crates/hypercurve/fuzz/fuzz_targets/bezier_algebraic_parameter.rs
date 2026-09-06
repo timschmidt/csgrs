@@ -2,7 +2,7 @@
 
 use hypercurve::{
     BezierAlgebraicParameter2, BezierParameterInterval, BezierParameterPolynomial, Classification,
-    CurveError, CurveContext, Real,
+    CurveContext, CurveError, Real,
 };
 use libfuzzer_sys::fuzz_target;
 

@@ -121,12 +121,7 @@ fuzz_target!(|data: &[u8]| {
             CurveCornerMode2::TrimOnly,
             &policy,
         );
-        let _ = path.fillet_vertex_by_radius(
-            1,
-            q(data[14]),
-            CurveCornerMode2::TrimOnly,
-            &policy,
-        );
+        let _ = path.fillet_vertex_by_radius(1, q(data[14]), CurveCornerMode2::TrimOnly, &policy);
     }
 
     if let Ok(Classification::Decided(linked)) =

@@ -2,7 +2,7 @@
 
 use hypercurve::{
     BezierAlgebraicImageStatus, BezierAlgebraicParameter2, BezierParameterInterval,
-    BezierParameterPolynomial, Classification, CurveError, CurveContext, Point2, QuadraticBezier2,
+    BezierParameterPolynomial, Classification, CurveContext, CurveError, Point2, QuadraticBezier2,
     RationalQuadraticBezier2, Real,
 };
 use libfuzzer_sys::fuzz_target;
@@ -40,7 +40,7 @@ fuzz_target!(|data: &[u8]| {
         )
     } else {
         // x(t) = (t - 3/4)^2 is deliberately non-monotone over the
-        // sqrt(1/2) isolator; this should evidence failure instead of sampling.
+        // sqrt(1/2) isolator; its image must still be certified without sampling.
         QuadraticBezier2::new(
             Point2::new(q(9, 16), r(0)),
             Point2::new(q(-3, 16), r(1)),
@@ -96,7 +96,19 @@ fuzz_target!(|data: &[u8]| {
         assert!(point.x().unwrap().representation().is_some());
         assert!(point.y().unwrap().representation().is_some());
     } else if mode == 1 {
-        assert_eq!(point.status(), BezierAlgebraicImageStatus::XImageFailed);
+        assert_eq!(point.status(), BezierAlgebraicImageStatus::Transformed);
+        assert_eq!(tangent.status(), BezierAlgebraicImageStatus::Transformed);
+        let x = point.x().unwrap();
+        assert_eq!(x.coefficients(), &[q(9, 16), q(-3, 2), r(1)]);
+        for (bound, ordering) in [
+            (Real::zero(), std::cmp::Ordering::Greater),
+            (q(1, 16), std::cmp::Ordering::Less),
+        ] {
+            assert_eq!(
+                x.compare_to_real(&bound, &policy),
+                Classification::Decided(ordering)
+            );
+        }
     }
 
     if let Some(conic) = conic {
