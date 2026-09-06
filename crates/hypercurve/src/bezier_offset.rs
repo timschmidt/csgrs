@@ -21263,40 +21263,18 @@ impl BezierAlgebraicCuspSemicircle2 {
                     None
                 }
             } else {
-                let refined_center = center.refined_isolating_interval(64, &CurveContext::STRICT);
-                let report = isolate_bivariate_fiber_roots_at_algebraic_parameter_complete(
-                    &incidence,
-                    CurveResultantParameter::First,
-                    &match refined_center {
-                        BezierParameter2::Algebraic(parameter) => {
-                            parameter_representation(&parameter, policy)
-                        }
-                        BezierParameter2::Exact(parameter) => {
-                            exact_real_algebraic_representation(&parameter)
-                        }
-                    },
-                    &Real::zero(),
-                    &Real::one(),
-                    AlgebraicFiberRootIsolationConfig {
-                        max_subdivision_depth: 512,
-                        refinement_steps: 8,
-                    },
-                    hypersolve::PredicatePolicy::STRICT,
-                );
-                match report.status {
-                    AlgebraicFiberRootIsolationStatus::Isolated => Some(report.intervals),
-                    AlgebraicFiberRootIsolationStatus::NoRoots => Some(Vec::new()),
-                    AlgebraicFiberRootIsolationStatus::IdenticallyZeroFiber => None,
-                    AlgebraicFiberRootIsolationStatus::InvalidEvidence
-                    | AlgebraicFiberRootIsolationStatus::InvalidInterval => {
-                        return Err(CurveError::InvalidBezierAlgebraicParameter);
-                    }
-                    AlgebraicFiberRootIsolationStatus::UnsupportedCoefficient => {
-                        return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
-                    }
-                    AlgebraicFiberRootIsolationStatus::DepthLimit
-                    | AlgebraicFiberRootIsolationStatus::Undecided => {
-                        return Ok(Classification::Uncertain(UncertaintyReason::Predicate));
+                match policy.strict_predicate_pass(|| {
+                    selected_fiber_root_intervals_in_interval(
+                        &incidence,
+                        center,
+                        &Real::zero(),
+                        &Real::one(),
+                        policy,
+                    )
+                })? {
+                    Classification::Decided(roots) => roots,
+                    Classification::Uncertain(reason) => {
+                        return Ok(Classification::Uncertain(reason));
                     }
                 }
             };
@@ -36357,33 +36335,27 @@ impl BezierAlgebraicCuspSemicircle2 {
                 )
             },
         );
-        let refined_center = BezierParameter2::Algebraic(center_parameter.clone())
-            .refined_isolating_interval(64, &CurveContext::STRICT);
-        let BezierParameter2::Algebraic(refined_center) = refined_center else {
-            unreachable!("a selected-fiber rational map has an algebraic center")
-        };
-        let report = isolate_bivariate_fiber_roots_at_algebraic_parameter_complete(
-            &candidate_incidence,
-            CurveResultantParameter::First,
-            &parameter_representation(&refined_center, policy),
-            &Real::zero(),
-            &Real::one(),
-            AlgebraicFiberRootIsolationConfig {
-                max_subdivision_depth: 512,
-                refinement_steps: 8,
-            },
-            hypersolve::PredicatePolicy::STRICT,
-        );
-        let roots = match report.status {
-            AlgebraicFiberRootIsolationStatus::Isolated => report.intervals,
-            AlgebraicFiberRootIsolationStatus::NoRoots => {
+        // Seed under STRICT while retaining the caller's policy identity in
+        // the contact authority below. Refinement may represent the center
+        // exactly; the common finite-fiber kernel handles either form.
+        let roots = match policy.strict_predicate_pass(|| {
+            selected_fiber_root_intervals_in_interval(
+                &candidate_incidence,
+                BezierParameter2::Algebraic(center_parameter.clone()),
+                &Real::zero(),
+                &Real::one(),
+                policy,
+            )
+        })? {
+            Classification::Decided(Some(roots)) if roots.is_empty() => {
                 return Ok(Classification::Decided(
                     BezierAlgebraicCuspSemicircleRationalIntersections2::SelectedFiberContacts(
                         Vec::new(),
                     ),
                 ));
             }
-            AlgebraicFiberRootIsolationStatus::IdenticallyZeroFiber => {
+            Classification::Decided(Some(roots)) => roots,
+            Classification::Decided(None) => {
                 if tangent_candidates {
                     return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
                 }
@@ -36394,16 +36366,8 @@ impl BezierAlgebraicCuspSemicircle2 {
                     policy,
                 );
             }
-            AlgebraicFiberRootIsolationStatus::InvalidEvidence
-            | AlgebraicFiberRootIsolationStatus::InvalidInterval => {
-                return Err(CurveError::InvalidBezierAlgebraicParameter);
-            }
-            AlgebraicFiberRootIsolationStatus::UnsupportedCoefficient => {
-                return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
-            }
-            AlgebraicFiberRootIsolationStatus::DepthLimit
-            | AlgebraicFiberRootIsolationStatus::Undecided => {
-                return Ok(Classification::Uncertain(UncertaintyReason::Predicate));
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
             }
         };
         let authority = BezierAlgebraicSelectedFiberAuthority2::new(
@@ -104757,20 +104721,17 @@ fn isolate_bivariate_fiber_roots_at_algebraic_parameter_complete(
 
 /// Isolates one selected bivariate fiber between represented affine bounds.
 ///
-/// The retained first-axis parameter stays in its local algebraic field and
-/// all second-axis roots share one compact authority. This is the bounded
-/// counterpart of [`selected_fiber_parameters_on_incident_ray`]; together the
-/// two cover a ray whose authored endpoint is itself algebraic without ever
-/// turning an isolating bound into construction evidence.
-fn selected_fiber_parameters_in_interval(
+/// Seeds the finite selected fiber shared by scalar and circle-contact
+/// authorities. Borrow the incidence and consume the caller's refinement
+/// parameter; seeding adds no retained polynomial copies.
+fn selected_fiber_root_intervals_in_interval(
     incidence: &BivariatePolynomial,
-    retained_parameter: &BezierAlgebraicParameter2,
+    retained_parameter: BezierParameter2,
     lower: &Real,
     upper: &Real,
     policy: &CurveContext,
-) -> CurveResult<Classification<Option<Vec<BezierAlgebraicSelectedFiberParameter2>>>> {
-    let refined_retained = BezierParameter2::Algebraic(retained_parameter.clone())
-        .refined_isolating_interval(64, &CurveContext::STRICT);
+) -> CurveResult<Classification<Option<Vec<IsolatedRootInterval>>>> {
+    let refined_retained = retained_parameter.refined_isolating_interval(64, &CurveContext::STRICT);
     let retained_root = match refined_retained {
         BezierParameter2::Algebraic(parameter) => parameter_representation(&parameter, policy),
         BezierParameter2::Exact(parameter) => exact_real_algebraic_representation(&parameter),
@@ -104790,23 +104751,48 @@ fn selected_fiber_parameters_in_interval(
     if report.certainty == PredicateCertainty::Approximate {
         policy.observe_approximate_512();
     }
-    let roots = match report.status {
-        AlgebraicFiberRootIsolationStatus::Isolated => report.intervals,
-        AlgebraicFiberRootIsolationStatus::NoRoots => Vec::new(),
-        AlgebraicFiberRootIsolationStatus::IdenticallyZeroFiber => {
-            return Ok(Classification::Decided(None));
+    Ok(match report.status {
+        AlgebraicFiberRootIsolationStatus::Isolated => {
+            Classification::Decided(Some(report.intervals))
         }
+        AlgebraicFiberRootIsolationStatus::NoRoots => Classification::Decided(Some(Vec::new())),
+        AlgebraicFiberRootIsolationStatus::IdenticallyZeroFiber => Classification::Decided(None),
         AlgebraicFiberRootIsolationStatus::InvalidEvidence
         | AlgebraicFiberRootIsolationStatus::InvalidInterval => {
             return Err(CurveError::InvalidBezierAlgebraicParameter);
         }
         AlgebraicFiberRootIsolationStatus::UnsupportedCoefficient => {
-            return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+            Classification::Uncertain(UncertaintyReason::Unsupported)
         }
         AlgebraicFiberRootIsolationStatus::DepthLimit
         | AlgebraicFiberRootIsolationStatus::Undecided => {
-            return Ok(Classification::Uncertain(UncertaintyReason::Predicate));
+            Classification::Uncertain(UncertaintyReason::Predicate)
         }
+    })
+}
+
+/// The retained first-axis parameter stays in its local algebraic field and
+/// all second-axis roots share one compact authority. This is the bounded
+/// counterpart of [`selected_fiber_parameters_on_incident_ray`]; together the
+/// two cover a ray whose authored endpoint is itself algebraic without ever
+/// turning an isolating bound into construction evidence.
+fn selected_fiber_parameters_in_interval(
+    incidence: &BivariatePolynomial,
+    retained_parameter: &BezierAlgebraicParameter2,
+    lower: &Real,
+    upper: &Real,
+    policy: &CurveContext,
+) -> CurveResult<Classification<Option<Vec<BezierAlgebraicSelectedFiberParameter2>>>> {
+    let roots = match selected_fiber_root_intervals_in_interval(
+        incidence,
+        BezierParameter2::Algebraic(retained_parameter.clone()),
+        lower,
+        upper,
+        policy,
+    )? {
+        Classification::Decided(Some(roots)) => roots,
+        Classification::Decided(None) => return Ok(Classification::Decided(None)),
+        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
     };
     let authority = BezierAlgebraicSelectedFiberAuthority2::new(
         incidence.clone(),
@@ -159502,6 +159488,95 @@ mod conversion_tests {
                 mapped_point.same_point(&contact.point, &policy),
                 Classification::Decided(true),
             );
+        }
+    }
+
+    #[test]
+    fn selected_parallel_normal_circle_keeps_contacts_when_center_refines_to_exact() {
+        let half = (Real::one() / Real::from(2_i8)).unwrap();
+        let root_three_half = (Real::from(3_i8).sqrt().unwrap() / Real::from(2_i8)).unwrap();
+        let support = QuadraticBezier2::from_line_segment(
+            LineSeg2::try_new(Point2::from_values(0, 0), Point2::from_values(1, 0)).unwrap(),
+        )
+        .parallel_left(Real::zero())
+        .unwrap();
+        let cutter = RationalBezier2::try_new(
+            vec![Point2::from_values(0, -1), Point2::from_values(0, 1)],
+            vec![Real::one(), Real::one()],
+        )
+        .unwrap();
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let Classification::Decided(polynomial) =
+                BezierParameterPolynomial::try_new_power_basis(
+                    vec![-half.clone(), Real::one()],
+                    &policy,
+                )
+                .unwrap()
+            else {
+                panic!("the linear center polynomial must construct");
+            };
+            let Classification::Decided(interval) =
+                BezierParameterInterval::try_new(Real::zero(), Real::one(), &policy).unwrap()
+            else {
+                panic!("the center interval must construct");
+            };
+            let Classification::Decided(center) =
+                BezierAlgebraicParameter2::try_isolate(polynomial, interval, &policy).unwrap()
+            else {
+                panic!("the center root must isolate");
+            };
+            let center = BezierParameter2::Algebraic(center);
+            assert_eq!(
+                center
+                    .clone()
+                    .refined_isolating_interval(64, &CurveContext::STRICT),
+                BezierParameter2::Exact(half.clone()),
+            );
+            let Classification::Decided(Some(circle)) =
+                BezierAlgebraicCuspSemicircle2::from_selected_parallel_normal(
+                    support.clone(),
+                    center,
+                    Real::one(),
+                    false,
+                    &policy,
+                )
+                .unwrap()
+            else {
+                panic!("the regular selected circle must construct");
+            };
+            // The circle centered at (1/2, 0) has two irrational contacts
+            // with x=0, both in the selected left semicircle.
+            let outcome = crate::policy::resolve_certified_value(&policy, |attempt| {
+                circle.rational_intersections(&cutter, attempt).unwrap()
+            });
+            assert_eq!(outcome.certainty, crate::CurveCertainty::Certified);
+            let Classification::Decided(
+                BezierAlgebraicCuspSemicircleRationalIntersections2::SelectedFiberContacts(
+                    contacts,
+                ),
+            ) = outcome.value
+            else {
+                panic!("the exact-center transition must preserve selected-fiber contacts");
+            };
+            assert_eq!(contacts.len(), 2);
+            for (contact, (y, cross)) in contacts.iter().zip([
+                (-root_three_half.clone(), RealSign::Positive),
+                (root_three_half.clone(), RealSign::Negative),
+            ]) {
+                assert_eq!(
+                    contact.location(),
+                    BezierAlgebraicCuspSemicircleContactLocation2::Interior,
+                );
+                assert_eq!(contact.tangent_cross_sign(), cross);
+                for (axis, coordinate) in [(Axis2::X, Real::zero()), (Axis2::Y, y)] {
+                    assert_eq!(
+                        contact
+                            .point_coordinate_order_to_real(axis, &coordinate, &policy)
+                            .unwrap(),
+                        Classification::Decided(std::cmp::Ordering::Equal),
+                    );
+                }
+            }
         }
     }
 

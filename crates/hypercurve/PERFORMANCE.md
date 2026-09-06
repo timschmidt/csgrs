@@ -8299,6 +8299,56 @@ uniform performance, and remaining slow/pathological heap coverage stay open.
 A separate algebraic-only assumption in selected-circle rational contact
 seeding remains under audit; this fix does not claim to cover it.
 
+## Shared finite-fiber seeding (2026-09-06)
+
+Scalar parameters, rational circle contacts, and analytic circle contacts now
+share finite-fiber refinement, exact-center representation, complete Hypersolve
+root isolation, and status translation. The seed operation borrows incidence
+and consumes the caller's refinement parameter; contact authorities retain
+their original ownership. Both circle seed paths validate and isolate inside
+an explicit STRICT predicate pass, while later predicates keep the requested
+context. Production shrinks 14 Rust lines and tests grow 89. No public API,
+compatibility shim, or parallel root solver is added.
+
+The regression constructs a regular circle centered at `(1/2, 0)` from a
+certified algebraic representation of its center parameter. The baseline
+panics when refinement represents that center exactly. The shared dispatch
+instead certifies both irrational contacts with `x=0`, their coordinates
+`y=+/-sqrt(3)/2`, and opposite tangent-cross signs under both policies.
+All-feature release qualification passes 1,751 tests with none ignored;
+minimal features pass 1,713 with four opt-in cases covered by the full run.
+Strict lint, docs, fuzz-target compilation, 37 UI tests, and release WASM pass.
+
+Complete heap recordings of the existing general rational-contact test each
+contain 137,180,221 allocations. Requested traffic is 21,093,473,768 ->
+21,093,473,921 bytes; peak live heap is 12,806,848 -> 12,806,553 bytes, and
+end-live heap remains 443,528 bytes. These are full libtest processes, not
+geometry-only counts or leak diagnoses. Both streams validate completely;
+streaming accounting uses 9,540/9,652 KiB analysis RSS. Independent stack sums
+agree with raw totals. Rational equality accounts for 74.9257% of nearest
+exact-stack allocation ownership in both versions; that remains an upstream
+optimization candidate, not a speedup delivered by this consolidation.
+
+Three alternating pinned pairs give selected-fiber medians of 20.86 -> 20.62
+seconds (-1.15%), general contacts 11.60 -> 11.39 (-1.81%), chord 17.20 ->
+17.13 (-0.41%), radial 29.94 -> 30.23 (+0.97%), and region 6.61 -> 6.48
+(-1.97%). Seven additional native pairs put region at 6.49 -> 6.43 (-0.92%),
+but retain degree elevation at 11.89968 -> 12.69673 ns (+6.70%) and algebraic
+line-image overlap at 12,111.39 -> 12,769.022 ns (+5.43%). Cached point
+incidence is -0.17% in those additional pairs, versus the initial +3.71%.
+Rectangle/circle/capsule instruction controls change -0.08260%, +0.03951%,
+and +0.01668%. This does not satisfy a uniform no-regression gate.
+Native text grows 304--1,072 bytes and files grow 1,368--1,696 bytes;
+the WASM demo shrinks 542 bytes. These costs remain explicit.
+
+All 82 timing invocations, 856 lane measurements, both complete heap profiles,
+and 216 reverified artifacts are retained in
+[`2026-09-06-shared-fiber-seeding.json`](benchmarks/checkpoints/2026-09-06-shared-fiber-seeding.json).
+No new fuzz campaign ran. ExactCorelib mining/uplift remains closed; full
+release readiness, uniform performance, and remaining slow/pathological heap
+coverage stay open. STRICT replay of exact contacts created under approximate
+policy remains a separate audit; this regression does not yet cover it.
+
 ## Optimization boundary
 
 The retained x sweep addresses broad-phase pair scheduling only. A full
