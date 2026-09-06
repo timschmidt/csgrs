@@ -8212,6 +8212,50 @@ including regressions, are retained in
 [`2026-09-06-native-fiber-specialization.json`](benchmarks/checkpoints/2026-09-06-native-fiber-specialization.json).
 ExactCorelib mining/uplift remains closed; full release readiness remains open.
 
+## Ordered-field subdivision reuse (2026-09-06)
+
+Hypersolve `42f2bdb` reuses the existing ordered-field Bernstein kernel's
+midpoint tableau for both children. Recomposition every eight levels bounds
+the accumulated coefficient-arithmetic depth above each fresh interval
+composition. The public API, represented-root deflation, exact sign authority,
+and complete caller fallback are unchanged. This adds 28 production Rust lines
+and 166 regression-test lines; it introduces no compatibility interface.
+
+Complete allocation-stack attribution identified interval power-to-Bernstein
+recomposition on 99.3821% of the baseline selected-fiber allocation paths.
+The matched complete libtest processes fall from 1,438,323,054 to 581,778,683
+allocations (-59.55%), and from 55,945,825,259 to 24,045,842,988 requested bytes
+(-57.02%). Peak live heap falls from 1,822,879 to 1,495,808 bytes (-17.94%);
+end-live heap falls from 993,904 to 574,240 bytes. These include libtest and
+retained process state; end-live bytes are not a leak diagnosis. Both profiles
+use Hyperreal `bd92d87` and the same Hypercurve source. The validated streaming
+counter analyzes the complete traces using 14,844/14,412 KiB RSS. Initial
+recordings split by a sandbox FIFO collision are excluded.
+
+Matched all-feature native benchmark images grow by 2,912--5,328 `.text` bytes
+and 5,704--10,360 file bytes; the matched WASM demo shrinks by 14,044 bytes.
+The native growth is an explicit cost of the higher-priority improvement.
+Three alternating, CPU-pinned timing pairs reduce the selected-fiber median
+from 52.80 to 20.76 seconds (-60.68%). The chord control is 17.27 -> 17.37
+seconds (+0.58%), radial control 30.23 -> 30.12 (-0.36%), and the broader
+Bézier-region benchmark 6.47 -> 6.59 (+1.85%). The rational-Bézier process
+median remains 0.36 seconds at coarse whole-process timing resolution.
+An initial +7.44% algebraic-derivative lane becomes +1.29% across seven
+additional pairs (177.104 -> 179.388 ns); both sets remain in the report.
+Rectangle/circle/capsule instruction controls change by +0.0990%, -0.0347%,
+and +0.0145%. This is not a blanket no-regression result. All 62 timing
+invocations and 590 per-lane measurements are retained in
+[`2026-09-06-ordered-field-subdivision.json`](benchmarks/checkpoints/2026-09-06-ordered-field-subdivision.json).
+
+The all-feature suite passes 1,749 tests with none ignored; the minimal-feature
+suite passes 1,711 with four ignored cases covered by the full run. Hypersolve
+passes 799 optimized all-target checks and its 85% production-coverage gate
+at 86.30%. Strict lint, representation/cache layouts, allocation lifetimes,
+fuzz-target compilation, docs, and UI/WASM gates also pass.
+ExactCorelib mining/uplift remains closed. Full Hypercurve release readiness,
+uniform performance, and complete memory accounting for the other slow and
+pathological workloads remain open.
+
 ## Optimization boundary
 
 The retained x sweep addresses broad-phase pair scheduling only. A full
