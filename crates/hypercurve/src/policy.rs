@@ -299,9 +299,9 @@ impl CurveContext {
 
     /// Returns whether this operation selected APPROXIMATE_512, including
     /// while its bounded preliminary STRICT pass temporarily suppresses the
-    /// terminal. Kernels use this only to avoid unbounded cold promotion in
-    /// that preliminary pass; consuming approximation still requires
-    /// [`Self::permits_approximate_512`].
+    /// terminal. Kernels use this for retained-policy identity and to avoid
+    /// unbounded cold promotion in that preliminary pass. Consuming
+    /// approximation requires [`Self::permits_approximate_512`].
     #[inline]
     pub(crate) const fn selects_approximate_512(&self) -> bool {
         self.0 & APPROXIMATE_512_CONTEXT != 0

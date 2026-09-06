@@ -646,9 +646,12 @@ type BezierAlgebraicCuspSemicircleParameterCacheEntry2 = (
 #[derive(Clone, Debug)]
 enum BezierAlgebraicCuspSemicircleParameterCacheEvidence2 {
     RepresentedRational(Option<Real>),
+    /// Only terminal-consumed values need this box; a second inline Real
+    /// payload would enlarge every cache entry.
+    Approximate512Rational(Box<Option<Real>>),
     /// Exact represented radial coordinate reused by every angular-order
     /// comparison for the same rational contact.
-    RepresentedDiameterCoordinate(Box<AlgebraicRootRepresentation>),
+    RepresentedDiameterCoordinate(Box<(AlgebraicRootRepresentation, CurveContext)>),
     /// Box the uncommon refinement state so it does not enlarge every entry.
     ParameterBracket(Box<BezierAlgebraicCuspSemicircleCachedParameterBracket2>),
     /// Fast replay of a just-certified cross-map inverse. Weak ownership
@@ -668,6 +671,7 @@ struct BezierAlgebraicCuspSemicircleCachedParameterBracket2 {
     location: BezierAlgebraicCuspSemicircleContactLocation2,
     refinement_steps: usize,
     bracket: BezierAlgebraicCuspSemicircleParameterBracket2,
+    policy: CurveContext,
 }
 
 #[derive(Debug, Default)]
@@ -2025,9 +2029,11 @@ fn rational_overlap_parameter_for_exact_cusp(
             } else {
                 candidate.clone()
             };
-            map.data
-                .parameter_cache
-                .retain_represented_rational_value(map_parameter, Some(parameter.clone()));
+            map.data.parameter_cache.retain_represented_rational_value(
+                map_parameter,
+                Some(parameter.clone()),
+                policy,
+            );
         }
         return Ok(retained);
     }
@@ -2103,9 +2109,11 @@ fn rational_overlap_parameter_for_exact_cusp(
             } else {
                 candidate.clone()
             };
-            map.data
-                .parameter_cache
-                .retain_represented_rational_value(map_parameter, Some(parameter.clone()));
+            map.data.parameter_cache.retain_represented_rational_value(
+                map_parameter,
+                Some(parameter.clone()),
+                policy,
+            );
         }
         return Ok(retained);
     }
@@ -2183,9 +2191,11 @@ fn rational_overlap_parameter_for_exact_cusp(
             } else {
                 candidate.clone()
             };
-            map.data
-                .parameter_cache
-                .retain_represented_rational_value(map_parameter, Some(parameter.clone()));
+            map.data.parameter_cache.retain_represented_rational_value(
+                map_parameter,
+                Some(parameter.clone()),
+                policy,
+            );
         }
         return Ok(retained);
     }
@@ -2269,9 +2279,11 @@ fn rational_overlap_parameter_for_exact_cusp(
         } else {
             candidate.clone()
         };
-        map.data
-            .parameter_cache
-            .retain_represented_rational_value(map_parameter, Some(parameter.clone()));
+        map.data.parameter_cache.retain_represented_rational_value(
+            map_parameter,
+            Some(parameter.clone()),
+            policy,
+        );
     }
     Ok(retained)
 }
@@ -2419,7 +2431,7 @@ fn rational_mapped_cusp_represented_rational(
     if let Some(value) = map
         .data
         .parameter_cache
-        .cached_represented_rational_value(&other_parameter)
+        .cached_represented_rational_value(&other_parameter, policy)
     {
         return Ok(Classification::Decided(value));
     }
@@ -2475,12 +2487,14 @@ fn rational_mapped_cusp_represented_rational(
         incidence,
         cusp_parameter,
         policy,
-        |parameter| map.mapped_contact_order_to_real(contact, parameter),
+        |parameter| map.mapped_contact_order_to_real(contact, parameter, policy),
     )?;
     if let Classification::Decided(value) = &result {
-        map.data
-            .parameter_cache
-            .retain_represented_rational_value(other_parameter, value.clone());
+        map.data.parameter_cache.retain_represented_rational_value(
+            other_parameter,
+            value.clone(),
+            policy,
+        );
     }
     Ok(result)
 }
@@ -2493,7 +2507,7 @@ fn parallel_mapped_cusp_represented_rational(
     if let Some(value) = map
         .data
         .parameter_cache
-        .cached_represented_rational_value(&contact.parallel_parameter)
+        .cached_represented_rational_value(&contact.parallel_parameter, policy)
     {
         return Ok(Classification::Decided(value));
     }
@@ -2544,12 +2558,14 @@ fn parallel_mapped_cusp_represented_rational(
         incidence,
         cusp_parameter,
         policy,
-        |parameter| map.contact_order_to_real(contact, parameter),
+        |parameter| map.contact_order_to_real(contact, parameter, policy),
     )?;
     if let Classification::Decided(value) = &result {
-        map.data
-            .parameter_cache
-            .retain_represented_rational_value(contact.parallel_parameter.clone(), value.clone());
+        map.data.parameter_cache.retain_represented_rational_value(
+            contact.parallel_parameter.clone(),
+            value.clone(),
+            policy,
+        );
     }
     Ok(result)
 }
@@ -9148,7 +9164,9 @@ fn represented_circle_diameter_predicate_sign(
     cache: &BezierAlgebraicCuspSemicircleParameterCache2,
     policy: &CurveContext,
 ) -> CurveResult<Classification<RealSign>> {
-    let dot = if let Some(dot) = cache.cached_represented_diameter_coordinate(curve_parameter) {
+    let dot = if let Some(dot) =
+        cache.cached_represented_diameter_coordinate(curve_parameter, policy)
+    {
         dot
     } else {
         let point = match rational_point_evidence_at_parameter(curve, curve_parameter, policy)? {
@@ -9182,7 +9200,7 @@ fn represented_circle_diameter_predicate_sign(
                 return Ok(Classification::Uncertain(reason));
             }
         };
-        cache.retain_represented_diameter_coordinate(curve_parameter.clone(), dot.clone());
+        cache.retain_represented_diameter_coordinate(curve_parameter.clone(), dot.clone(), policy);
         dot
     };
     let diameter_scale = parameter_denominator * &frame.signed_radius;
@@ -42020,18 +42038,24 @@ impl BezierAlgebraicCuspSemicircleParameterCache2 {
     fn cached_represented_diameter_coordinate(
         &self,
         parameter: &BezierParameter2,
+        policy: &CurveContext,
     ) -> Option<AlgebraicRootRepresentation> {
         self.entries
             .lock()
             .expect("cusp parameter cache mutex poisoned")
             .iter()
-            .find_map(|(cached, evidence)| {
-                match evidence {
+            .find_map(|(cached, evidence)| match evidence {
                 BezierAlgebraicCuspSemicircleParameterCacheEvidence2::RepresentedDiameterCoordinate(
-                    coordinate,
-                ) if cached == parameter => Some(coordinate.as_ref().clone()),
+                    evidence,
+                ) if cached == parameter
+                    && (!evidence.1.selects_approximate_512() || policy.permits_approximate_512()) =>
+                {
+                    if evidence.1.selects_approximate_512() {
+                        policy.observe_approximate_512();
+                    }
+                    Some(evidence.0.clone())
+                }
                 _ => None,
-            }
             })
     }
 
@@ -42039,24 +42063,29 @@ impl BezierAlgebraicCuspSemicircleParameterCache2 {
         &self,
         parameter: BezierParameter2,
         coordinate: AlgebraicRootRepresentation,
+        policy: &CurveContext,
     ) {
+        let retained_policy = policy.retained_object_policy();
         let mut cache = self
             .entries
             .lock()
             .expect("cusp parameter cache mutex poisoned");
-        if cache.iter().any(|(cached, evidence)| {
+        if let Some((_, BezierAlgebraicCuspSemicircleParameterCacheEvidence2::RepresentedDiameterCoordinate(evidence))) = cache.iter_mut().find(|(cached, evidence)| {
             cached == &parameter
                 && matches!(
                     evidence,
                     BezierAlgebraicCuspSemicircleParameterCacheEvidence2::RepresentedDiameterCoordinate(_)
                 )
         }) {
+            if evidence.1.selects_approximate_512() && !retained_policy.selects_approximate_512() {
+                **evidence = (coordinate, retained_policy);
+            }
             return;
         }
         cache.push((
             parameter,
             BezierAlgebraicCuspSemicircleParameterCacheEvidence2::RepresentedDiameterCoordinate(
-                Box::new(coordinate),
+                Box::new((coordinate, retained_policy)),
             ),
         ));
     }
@@ -42065,18 +42094,36 @@ impl BezierAlgebraicCuspSemicircleParameterCache2 {
         &self,
         parameter: &BezierParameter2,
         location: BezierAlgebraicCuspSemicircleContactLocation2,
+        policy: &CurveContext,
     ) -> Option<(usize, BezierAlgebraicCuspSemicircleParameterBracket2)> {
         self.entries
             .lock()
             .expect("cusp parameter cache mutex poisoned")
             .iter()
-            .find_map(|(cached, evidence)| match evidence {
+            .filter_map(|(cached, evidence)| match evidence {
                 BezierAlgebraicCuspSemicircleParameterCacheEvidence2::ParameterBracket(
                     evidence,
-                ) if cached == parameter && evidence.location == location => {
-                    Some((evidence.refinement_steps, evidence.bracket.clone()))
+                ) if cached == parameter
+                    && evidence.location == location
+                    && policy.accepts_retained_policy(evidence.policy)
+                    && (!evidence.policy.selects_approximate_512()
+                        || policy.permits_approximate_512()) =>
+                {
+                    Some(evidence.as_ref())
                 }
                 _ => None,
+            })
+            .max_by_key(|evidence| {
+                (
+                    evidence.refinement_steps,
+                    !evidence.policy.selects_approximate_512(),
+                )
+            })
+            .map(|evidence| {
+                if evidence.policy.selects_approximate_512() {
+                    policy.observe_approximate_512();
+                }
+                (evidence.refinement_steps, evidence.bracket.clone())
             })
     }
 
@@ -42086,7 +42133,17 @@ impl BezierAlgebraicCuspSemicircleParameterCache2 {
         location: BezierAlgebraicCuspSemicircleContactLocation2,
         refinement_steps: usize,
         bracket: BezierAlgebraicCuspSemicircleParameterBracket2,
+        policy: &CurveContext,
     ) {
+        let retained_policy = policy.retained_object_policy();
+        let bracket = BezierAlgebraicCuspSemicircleParameterCacheEvidence2::ParameterBracket(
+            Box::new(BezierAlgebraicCuspSemicircleCachedParameterBracket2 {
+                location,
+                refinement_steps,
+                bracket,
+                policy: retained_policy,
+            }),
+        );
         let mut cache = self
             .entries
             .lock()
@@ -42097,33 +42154,24 @@ impl BezierAlgebraicCuspSemicircleParameterCache2 {
                     evidence,
                     BezierAlgebraicCuspSemicircleParameterCacheEvidence2::ParameterBracket(
                         evidence
-                    ) if evidence.location == location
+                    ) if evidence.location == location && evidence.policy == retained_policy
                 )
         }) {
-            *evidence = BezierAlgebraicCuspSemicircleParameterCacheEvidence2::ParameterBracket(
-                Box::new(BezierAlgebraicCuspSemicircleCachedParameterBracket2 {
-                    location,
-                    refinement_steps,
-                    bracket,
-                }),
-            );
+            if let BezierAlgebraicCuspSemicircleParameterCacheEvidence2::ParameterBracket(old) =
+                evidence
+                && old.refinement_steps < refinement_steps
+            {
+                *evidence = bracket;
+            }
         } else {
-            cache.push((
-                parameter,
-                BezierAlgebraicCuspSemicircleParameterCacheEvidence2::ParameterBracket(Box::new(
-                    BezierAlgebraicCuspSemicircleCachedParameterBracket2 {
-                        location,
-                        refinement_steps,
-                        bracket,
-                    },
-                )),
-            ));
+            cache.push((parameter, bracket));
         }
     }
 
     fn cached_represented_rational_value(
         &self,
         parameter: &BezierParameter2,
+        policy: &CurveContext,
     ) -> Option<Option<Real>> {
         self.entries
             .lock()
@@ -42133,41 +42181,51 @@ impl BezierAlgebraicCuspSemicircleParameterCache2 {
                 BezierAlgebraicCuspSemicircleParameterCacheEvidence2::RepresentedRational(
                     value,
                 ) if cached == parameter => Some(value.clone()),
+                BezierAlgebraicCuspSemicircleParameterCacheEvidence2::Approximate512Rational(
+                    value,
+                ) if cached == parameter && policy.permits_approximate_512() => {
+                    policy.observe_approximate_512();
+                    Some(value.as_ref().clone())
+                }
                 _ => None,
             })
     }
 
-    fn retain_evidence(
+    fn retain_represented_rational_value(
         &self,
         parameter: BezierParameter2,
-        evidence: BezierAlgebraicCuspSemicircleParameterCacheEvidence2,
+        value: Option<Real>,
+        policy: &CurveContext,
     ) {
+        let evidence = if policy.retained_object_policy().selects_approximate_512() {
+            BezierAlgebraicCuspSemicircleParameterCacheEvidence2::Approximate512Rational(Box::new(
+                value,
+            ))
+        } else {
+            BezierAlgebraicCuspSemicircleParameterCacheEvidence2::RepresentedRational(value)
+        };
         let mut cache = self
             .entries
             .lock()
             .expect("cusp parameter cache mutex poisoned");
-        let represented = matches!(
-            &evidence,
-            BezierAlgebraicCuspSemicircleParameterCacheEvidence2::RepresentedRational(_)
-        );
         if let Some((_, retained)) = cache.iter_mut().find(|(cached, retained)| {
             cached == &parameter
                 && matches!(
                     retained,
                     BezierAlgebraicCuspSemicircleParameterCacheEvidence2::RepresentedRational(_)
-                ) == represented
+                        | BezierAlgebraicCuspSemicircleParameterCacheEvidence2::Approximate512Rational(_)
+                )
         }) {
-            *retained = evidence;
+            if !matches!(
+                (&*retained, &evidence),
+                (BezierAlgebraicCuspSemicircleParameterCacheEvidence2::RepresentedRational(_),
+                 BezierAlgebraicCuspSemicircleParameterCacheEvidence2::Approximate512Rational(_))
+            ) {
+                *retained = evidence;
+            }
         } else {
             cache.push((parameter, evidence));
         }
-    }
-
-    fn retain_represented_rational_value(&self, parameter: BezierParameter2, value: Option<Real>) {
-        self.retain_evidence(
-            parameter,
-            BezierAlgebraicCuspSemicircleParameterCacheEvidence2::RepresentedRational(value),
-        );
     }
 
     fn retained_cusp_parameter(
@@ -42260,11 +42318,12 @@ impl BezierAlgebraicCuspSemicircleRationalParameterMap2 {
     fn retained_chord_cusp_parameter(
         &self,
         parameter: &CurveRegionParameter2,
+        policy: &CurveContext,
     ) -> Option<BezierAlgebraicCuspSemicircleParameter2> {
         let cusp = self
             .data
             .parameter_cache
-            .retained_cusp_parameter(parameter, &self.data.policy)??;
+            .retained_cusp_parameter(parameter, policy)??;
         matches!(
             &cusp,
             BezierAlgebraicCuspSemicircleParameter2::Mapped(data)
@@ -42395,7 +42454,7 @@ impl BezierAlgebraicCuspSemicircleRationalParameterMap2 {
             return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
         }
         if let Some(BezierAlgebraicCuspSemicircleParameter2::Mapped(data)) =
-            self.retained_chord_cusp_parameter(&contact.other_parameter)
+            self.retained_chord_cusp_parameter(&contact.other_parameter, policy)
             && let BezierAlgebraicCuspSemicircleMappedParameterData2::Chord {
                 map,
                 contact: chord_contact,
@@ -42630,14 +42689,14 @@ impl BezierAlgebraicCuspSemicircleRationalParameterMap2 {
         &self,
         contact: &BezierAlgebraicCuspSemicircleRationalMapContact2,
         parameter: &Real,
+        policy: &CurveContext,
     ) -> CurveResult<Classification<std::cmp::Ordering>> {
-        let policy = &self.data.policy;
         if let Some(order) =
             algebraic_cusp_semicircle_endpoint_contact_order(contact.location, parameter, policy)
         {
             return Ok(order);
         }
-        if let Some(cusp) = self.retained_chord_cusp_parameter(&contact.other_parameter) {
+        if let Some(cusp) = self.retained_chord_cusp_parameter(&contact.other_parameter, policy) {
             return cusp.order_to_real(parameter, policy);
         }
         let represented = contact
@@ -42646,7 +42705,7 @@ impl BezierAlgebraicCuspSemicircleRationalParameterMap2 {
             .and_then(|parameter| {
                 self.data
                     .parameter_cache
-                    .cached_represented_rational_value(parameter)
+                    .cached_represented_rational_value(parameter, policy)
             })
             .flatten();
         if let Some(represented) = represented {
@@ -42850,32 +42909,17 @@ impl BezierAlgebraicCuspSemicircleRationalParameterMap2 {
         })
     }
 
-    /// Refines one contact to a represented witness or a certified rational
-    /// bracket in the semicircle's parameter domain.
-    #[cfg(test)]
-    pub(crate) fn contact_parameter_bracket(
-        &self,
-        contact: &BezierAlgebraicCuspSemicircleRationalContact2,
-        refinement_steps: usize,
-    ) -> CurveResult<Classification<BezierAlgebraicCuspSemicircleParameterBracket2>> {
-        let contact = BezierAlgebraicCuspSemicircleRationalMapContact2 {
-            other_parameter: contact.other_parameter.clone(),
-            location: contact.location,
-            correlation: BezierAlgebraicCuspSemicircleRationalCorrelation2::Map,
-        };
-        self.mapped_contact_parameter_bracket(&contact, refinement_steps)
-    }
-
     fn mapped_contact_parameter_bracket(
         &self,
         contact: &BezierAlgebraicCuspSemicircleRationalMapContact2,
         refinement_steps: usize,
+        policy: &CurveContext,
     ) -> CurveResult<Classification<BezierAlgebraicCuspSemicircleParameterBracket2>> {
         algebraic_cusp_semicircle_contact_parameter_bracket(
             contact.location,
             refinement_steps,
-            &self.data.policy,
-            |parameter| self.mapped_contact_order_to_real(contact, parameter),
+            policy,
+            |parameter| self.mapped_contact_order_to_real(contact, parameter, policy),
         )
     }
 
@@ -42910,7 +42954,9 @@ impl BezierAlgebraicCuspSemicircleRationalParameterMap2 {
         contact: BezierAlgebraicCuspSemicircleRationalMapContact2,
     ) -> BezierAlgebraicCuspSemicircleParameter2 {
         algebraic_cusp_semicircle_endpoint_parameter(contact.location).unwrap_or_else(|| {
-            if let Some(parameter) = self.retained_chord_cusp_parameter(&contact.other_parameter) {
+            if let Some(parameter) =
+                self.retained_chord_cusp_parameter(&contact.other_parameter, &self.data.policy)
+            {
                 let preserves_tangent = match &contact.correlation {
                     BezierAlgebraicCuspSemicircleRationalCorrelation2::Map => true,
                     BezierAlgebraicCuspSemicircleRationalCorrelation2::MapWithChordTangent {
@@ -43070,12 +43116,12 @@ impl BezierAlgebraicCuspSemicircleParallelParameterMap2 {
     }
 
     /// Orders one analytic-parallel contact against a represented semicircle parameter.
-    pub(crate) fn contact_order_to_real(
+    fn contact_order_to_real(
         &self,
         contact: &BezierAlgebraicCuspSemicircleParallelContact2,
         parameter: &Real,
+        policy: &CurveContext,
     ) -> CurveResult<Classification<std::cmp::Ordering>> {
-        let policy = &self.data.policy;
         if let Some(order) =
             algebraic_cusp_semicircle_endpoint_contact_order(contact.location, parameter, policy)
         {
@@ -43167,15 +43213,17 @@ impl BezierAlgebraicCuspSemicircleParallelParameterMap2 {
     }
 
     /// Refines one analytic-parallel contact to an exact witness or rational bracket.
-    pub(crate) fn contact_parameter_bracket(
+    fn contact_parameter_bracket(
         &self,
         contact: &BezierAlgebraicCuspSemicircleParallelContact2,
         refinement_steps: usize,
+        policy: &CurveContext,
     ) -> CurveResult<Classification<BezierAlgebraicCuspSemicircleParameterBracket2>> {
-        let cached = self
-            .data
-            .parameter_cache
-            .cached_parameter_bracket(&contact.parallel_parameter, contact.location);
+        let cached = self.data.parameter_cache.cached_parameter_bracket(
+            &contact.parallel_parameter,
+            contact.location,
+            policy,
+        );
         if let Some((completed_steps, bracket)) = &cached
             && *completed_steps >= refinement_steps
         {
@@ -43186,14 +43234,14 @@ impl BezierAlgebraicCuspSemicircleParallelParameterMap2 {
             refine_algebraic_cusp_semicircle_parameter_bracket(
                 &bracket,
                 refinement_steps.saturating_sub(completed_steps),
-                |parameter| self.contact_order_to_real(contact, parameter),
+                |parameter| self.contact_order_to_real(contact, parameter, policy),
             )?
         } else {
             algebraic_cusp_semicircle_contact_parameter_bracket(
                 contact.location,
                 refinement_steps,
-                &self.data.policy,
-                |parameter| self.contact_order_to_real(contact, parameter),
+                policy,
+                |parameter| self.contact_order_to_real(contact, parameter, policy),
             )?
         };
         if let Classification::Decided(bracket) = &bracket {
@@ -43202,6 +43250,7 @@ impl BezierAlgebraicCuspSemicircleParallelParameterMap2 {
                 contact.location,
                 refinement_steps,
                 bracket.clone(),
+                policy,
             );
         }
         Ok(bracket)
@@ -53497,7 +53546,7 @@ impl BezierAlgebraicCuspSemicircleParameter2 {
                 .unwrap_or(Classification::Uncertain(UncertaintyReason::Ordering))),
             Self::Mapped(data) => match data.as_ref() {
                 BezierAlgebraicCuspSemicircleMappedParameterData2::Rational { map, contact } => {
-                    map.mapped_contact_order_to_real(contact, parameter)
+                    map.mapped_contact_order_to_real(contact, parameter, policy)
                 }
                 BezierAlgebraicCuspSemicircleMappedParameterData2::SelectedFiberRational {
                     map,
@@ -53512,7 +53561,7 @@ impl BezierAlgebraicCuspSemicircleParameter2 {
                     ..
                 } => map.contact_order_to_real(other_parameter, *location, parameter, policy),
                 BezierAlgebraicCuspSemicircleMappedParameterData2::Parallel { map, contact } => {
-                    map.contact_order_to_real(contact, parameter)
+                    map.contact_order_to_real(contact, parameter, policy)
                 }
                 BezierAlgebraicCuspSemicircleMappedParameterData2::Pair {
                     map,
@@ -53578,7 +53627,7 @@ impl BezierAlgebraicCuspSemicircleParameter2 {
             )),
             Self::Mapped(data) => match data.as_ref() {
                 BezierAlgebraicCuspSemicircleMappedParameterData2::Rational { map, contact } => {
-                    map.mapped_contact_parameter_bracket(contact, refinement_steps)
+                    map.mapped_contact_parameter_bracket(contact, refinement_steps, policy)
                 }
                 BezierAlgebraicCuspSemicircleMappedParameterData2::SelectedFiberRational {
                     map,
@@ -53593,7 +53642,7 @@ impl BezierAlgebraicCuspSemicircleParameter2 {
                     ..
                 } => map.parameter_bracket(other_parameter, *location, refinement_steps, policy),
                 BezierAlgebraicCuspSemicircleMappedParameterData2::Parallel { map, contact } => {
-                    map.contact_parameter_bracket(contact, refinement_steps)
+                    map.contact_parameter_bracket(contact, refinement_steps, policy)
                 }
                 BezierAlgebraicCuspSemicircleMappedParameterData2::Pair {
                     map,
@@ -132085,6 +132134,286 @@ mod conversion_tests {
         );
     }
 
+    #[test]
+    fn mapped_parallel_angle_query_observes_requested_policy() {
+        let (_, _, overlap) = general_analytic_circle_overlap(&CurveContext::STRICT);
+        let half = (Real::one() / Real::from(2_i8)).unwrap();
+        let Classification::Decided(parameter) = overlap
+            .cusp_parameter_for_other(
+                &region_parameter(BezierParameter2::Exact(half)),
+                &CurveContext::STRICT,
+            )
+            .unwrap()
+        else {
+            panic!("the interior analytic cut must remain mapped");
+        };
+        assert!(matches!(
+            &parameter,
+            BezierAlgebraicCuspSemicircleParameter2::Mapped(data)
+                if matches!(data.as_ref(), BezierAlgebraicCuspSemicircleMappedParameterData2::Parallel { .. })
+        ));
+        let sine = Real::e().sin();
+        let cosine = Real::e().cos();
+        let zero = &sine * &sine + &cosine * &cosine - Real::one();
+        let strict = crate::policy::resolve_certified_value(&CurveContext::STRICT, |attempt| {
+            parameter.order_to_real(&zero, attempt).unwrap()
+        });
+        assert_eq!(strict.certainty, CurveCertainty::Certified);
+        assert!(matches!(strict.value, Classification::Uncertain(_)));
+        let approximate =
+            crate::policy::resolve_certified_value(&CurveContext::APPROXIMATE_512, |attempt| {
+                parameter.order_to_real(&zero, attempt).unwrap()
+            });
+        assert_eq!(
+            approximate.certainty,
+            CurveCertainty::Approximate512Consumed
+        );
+        assert_eq!(
+            approximate.value,
+            Classification::Decided(std::cmp::Ordering::Greater)
+        );
+        assert_eq!(
+            parameter
+                .order_to_real(&Real::zero(), &CurveContext::STRICT)
+                .unwrap(),
+            Classification::Decided(std::cmp::Ordering::Greater)
+        );
+    }
+
+    #[test]
+    fn mapped_rational_angle_query_observes_requested_policy() {
+        let policy = CurveContext::STRICT;
+        let semicircle = synthetic_reducible_cusp_semicircle((3, 4), ((2, 3), (4, 5)), &policy);
+        let height = (Real::from(4_i8) / Real::from(5_i8)).unwrap();
+        let cutter = RationalBezier2::try_new(
+            vec![
+                Point2::new(Real::zero(), height.clone()),
+                Point2::new(Real::one(), height),
+            ],
+            vec![Real::one(), Real::one()],
+        )
+        .unwrap();
+        let Classification::Decided((
+            BezierAlgebraicCuspSemicircleRationalIntersections2::Contacts(contacts),
+            Some(map),
+        )) = semicircle
+            .rational_intersections_with_parameter_map(&cutter, &policy)
+            .unwrap()
+        else {
+            panic!("the transverse rational contact must retain its map");
+        };
+        assert_eq!(map.data.policy, CurveContext::STRICT);
+        let [contact] = contacts.as_slice() else {
+            panic!("the upper semicircle must have one transverse contact");
+        };
+        assert_eq!(
+            contact.location,
+            BezierAlgebraicCuspSemicircleContactLocation2::Interior
+        );
+        let parameter = map.contact_parameter(contact);
+        let sine = Real::e().sin();
+        let cosine = Real::e().cos();
+        let zero = &sine * &sine + &cosine * &cosine - Real::one();
+        let strict = crate::policy::resolve_certified_value(&CurveContext::STRICT, |attempt| {
+            parameter.order_to_real(&zero, attempt).unwrap()
+        });
+        assert_eq!(strict.certainty, CurveCertainty::Certified);
+        assert!(matches!(strict.value, Classification::Uncertain(_)));
+        let approximate =
+            crate::policy::resolve_certified_value(&CurveContext::APPROXIMATE_512, |attempt| {
+                parameter.order_to_real(&zero, attempt).unwrap()
+            });
+        assert_eq!(
+            approximate.certainty,
+            CurveCertainty::Approximate512Consumed
+        );
+        assert_eq!(
+            approximate.value,
+            Classification::Decided(std::cmp::Ordering::Greater)
+        );
+    }
+
+    #[test]
+    fn mapped_parallel_bracket_cache_does_not_launder_a_terminal() {
+        eprintln!(
+            "cache-layout entry={} evidence={} bracket={}",
+            std::mem::size_of::<BezierAlgebraicCuspSemicircleParameterCacheEntry2>(),
+            std::mem::size_of::<BezierAlgebraicCuspSemicircleParameterCacheEvidence2>(),
+            std::mem::size_of::<BezierAlgebraicCuspSemicircleCachedParameterBracket2>(),
+        );
+        let (_, _, overlap) = general_analytic_circle_overlap(&CurveContext::STRICT);
+        let BezierAlgebraicCuspSemicircleMappedOverlapMap2::Parallel(map) = overlap.parameter_map
+        else {
+            panic!("the analytic overlap must retain its parallel map");
+        };
+        let half = (Real::one() / Real::from(2_i8)).unwrap();
+        let sine = Real::e().sin();
+        let cosine = Real::e().cos();
+        let zero = &sine * &sine + &cosine * &cosine - Real::one();
+        // The source quarter's endpoint is (0, 2); its inward unit parallel
+        // is (0, 1), the selected semicircle's exact angular midpoint.
+        // The expression is exactly one but needs a terminal to decide so.
+        let parameter = map.contact_parameter(&BezierAlgebraicCuspSemicircleParallelContact2 {
+            parallel_parameter: BezierParameter2::Exact(Real::one() + zero),
+            tangent_cross_sign: Some(RealSign::Zero),
+            location: BezierAlgebraicCuspSemicircleContactLocation2::Interior,
+            correlated: false,
+        });
+        let strict = crate::policy::resolve_certified_value(&CurveContext::STRICT, |attempt| {
+            parameter.parameter_bracket(1, attempt).unwrap()
+        });
+        assert_eq!(strict.certainty, CurveCertainty::Certified);
+        assert!(matches!(strict.value, Classification::Uncertain(_)));
+        for steps in [1, 4, 8] {
+            let approximate =
+                crate::policy::resolve_certified_value(&CurveContext::APPROXIMATE_512, |attempt| {
+                    parameter.parameter_bracket(steps, attempt).unwrap()
+                });
+            assert_eq!(
+                approximate.certainty,
+                CurveCertainty::Approximate512Consumed
+            );
+            let Classification::Decided(BezierAlgebraicCuspSemicircleParameterBracket2::Exact(
+                value,
+            )) = approximate.value
+            else {
+                panic!("the approximate bracket must retain the exact angular midpoint");
+            };
+            assert_eq!(value, half);
+            let replay = crate::policy::resolve_certified_value(&CurveContext::STRICT, |attempt| {
+                parameter.parameter_bracket(steps, attempt).unwrap()
+            });
+            assert_eq!(replay.certainty, CurveCertainty::Certified);
+            assert!(matches!(replay.value, Classification::Uncertain(_)));
+            let forced =
+                crate::policy::resolve_certified_value(&CurveContext::APPROXIMATE_512, |attempt| {
+                    attempt.strict_predicate_pass(|| {
+                        parameter.parameter_bracket(steps, attempt).unwrap()
+                    })
+                });
+            assert_eq!(forced.certainty, CurveCertainty::Certified);
+            assert!(matches!(forced.value, Classification::Uncertain(_)));
+        }
+    }
+
+    #[test]
+    fn mapped_circle_rational_cache_preserves_consumed_policy() {
+        let (_, _, overlap) = general_analytic_circle_overlap(&CurveContext::STRICT);
+        let half = (Real::one() / Real::from(2_i8)).unwrap();
+        let third = (Real::one() / Real::from(3_i8)).unwrap();
+        let Classification::Decided(parameter) = overlap
+            .cusp_parameter_for_other(
+                &region_parameter(BezierParameter2::Exact(half)),
+                &CurveContext::STRICT,
+            )
+            .unwrap()
+        else {
+            panic!("the interior analytic cut must remain mapped");
+        };
+        let sine = Real::e().sin();
+        let cosine = Real::e().cos();
+        let zero = &sine * &sine + &cosine * &cosine - Real::one();
+        let constructed =
+            crate::policy::resolve_certified_value(&CurveContext::APPROXIMATE_512, |attempt| {
+                assert_eq!(real_sign(&zero, attempt), Some(RealSign::Zero));
+                parameter.represented_rational_value(attempt).unwrap()
+            });
+        assert_eq!(
+            constructed.certainty,
+            CurveCertainty::Approximate512Consumed
+        );
+        assert_eq!(
+            constructed.value,
+            Classification::Decided(Some(third.clone()))
+        );
+        let replayed =
+            crate::policy::resolve_certified_value(&CurveContext::APPROXIMATE_512, |attempt| {
+                parameter.represented_rational_value(attempt).unwrap()
+            });
+        assert_eq!(replayed.certainty, CurveCertainty::Approximate512Consumed);
+        assert_eq!(replayed.value, Classification::Decided(Some(third.clone())));
+        // A strict request must independently certify the value. That stronger
+        // cache entry can then answer either policy without a terminal.
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let certified = crate::policy::resolve_certified_value(&policy, |attempt| {
+                parameter.represented_rational_value(attempt).unwrap()
+            });
+            assert_eq!(certified.certainty, CurveCertainty::Certified);
+            assert_eq!(
+                certified.value,
+                Classification::Decided(Some(third.clone()))
+            );
+        }
+    }
+
+    #[test]
+    fn mapped_circle_diameter_cache_preserves_consumed_policy() {
+        let zero = exact_real_algebraic_representation(&Real::zero());
+        let one = exact_real_algebraic_representation(&Real::one());
+        let frame = BezierRepresentedSelectedRadialCircleFrame2 {
+            center: [zero.clone(), zero.clone()],
+            unit_radial: [one, zero],
+            signed_radius: Real::one(),
+        };
+        let curve = RationalBezier2::from(
+            RationalQuadraticBezier2::try_new(
+                Point2::new(Real::one(), Real::zero()),
+                Point2::new(Real::one(), Real::one()),
+                Point2::new(Real::zero(), Real::one()),
+                Real::one(),
+                Real::one(),
+                Real::from(2_i8),
+            )
+            .unwrap(),
+        );
+        let half = (Real::one() / Real::from(2_i8)).unwrap();
+        let parameter = BezierParameter2::Exact(half.clone());
+        let cache = BezierAlgebraicCuspSemicircleParameterCache2::default();
+        let query = |attempt: &CurveContext| {
+            represented_circle_diameter_predicate_sign(
+                &frame,
+                &curve,
+                &parameter,
+                &Real::zero(),
+                &half,
+                &cache,
+                attempt,
+            )
+            .unwrap()
+        };
+        let sine = Real::e().sin();
+        let cosine = Real::e().cos();
+        let zero = &sine * &sine + &cosine * &cosine - Real::one();
+        let constructed =
+            crate::policy::resolve_certified_value(&CurveContext::APPROXIMATE_512, |attempt| {
+                assert_eq!(real_sign(&zero, attempt), Some(RealSign::Zero));
+                query(attempt)
+            });
+        assert_eq!(
+            constructed.certainty,
+            CurveCertainty::Approximate512Consumed
+        );
+        assert_eq!(
+            constructed.value,
+            Classification::Decided(RealSign::Positive)
+        );
+        let replayed =
+            crate::policy::resolve_certified_value(&CurveContext::APPROXIMATE_512, query);
+        assert_eq!(replayed.certainty, CurveCertainty::Approximate512Consumed);
+        assert_eq!(replayed.value, Classification::Decided(RealSign::Positive));
+        let forced =
+            crate::policy::resolve_certified_value(&CurveContext::APPROXIMATE_512, |attempt| {
+                attempt.strict_predicate_pass(|| query(attempt))
+            });
+        assert_eq!(forced.certainty, CurveCertainty::Certified);
+        assert_eq!(forced.value, Classification::Decided(RealSign::Positive));
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let upgraded = crate::policy::resolve_certified_value(&policy, query);
+            assert_eq!(upgraded.certainty, CurveCertainty::Certified);
+            assert_eq!(upgraded.value, Classification::Decided(RealSign::Positive));
+        }
+    }
+
     fn incident_domain(
         parallel: &BezierParallel2,
         anchor: Real,
@@ -136999,7 +137328,10 @@ mod conversion_tests {
             );
             let Classification::Decided(BezierAlgebraicCuspSemicircleParameterBracket2::Interval(
                 interval,
-            )) = map.contact_parameter_bracket(contact, 4).unwrap()
+            )) = map
+                .contact_parameter(contact)
+                .parameter_bracket(4, &policy)
+                .unwrap()
             else {
                 panic!("the irrational semicircle parameter must retain a bracket");
             };
@@ -137097,7 +137429,9 @@ mod conversion_tests {
                 Classification::Decided(std::cmp::Ordering::Less),
             );
             assert_eq!(
-                map.contact_parameter_bracket(contact, 4).unwrap(),
+                map.contact_parameter(contact)
+                    .parameter_bracket(4, &policy)
+                    .unwrap(),
                 Classification::Decided(BezierAlgebraicCuspSemicircleParameterBracket2::Exact(
                     half.clone()
                 )),
@@ -137196,7 +137530,10 @@ mod conversion_tests {
             );
             let Classification::Decided(BezierAlgebraicCuspSemicircleParameterBracket2::Interval(
                 interval,
-            )) = map.contact_parameter_bracket(contact, 4).unwrap()
+            )) = map
+                .contact_parameter(contact)
+                .parameter_bracket(4, &policy)
+                .unwrap()
             else {
                 panic!("the pair-radial analytic contact must retain a compact bracket");
             };
@@ -151520,7 +151857,9 @@ mod conversion_tests {
                 ));
                 for contact in &contacts {
                     assert!(matches!(
-                        map.contact_parameter_bracket(contact, 8).unwrap(),
+                        map.contact_parameter(contact)
+                            .parameter_bracket(8, &policy)
+                            .unwrap(),
                         Classification::Decided(_),
                     ));
                 }
@@ -152529,7 +152868,9 @@ mod conversion_tests {
                 };
                 for contact in &contacts {
                     assert!(matches!(
-                        map.contact_parameter_bracket(contact, 8).unwrap(),
+                        map.contact_parameter(contact)
+                            .parameter_bracket(8, &policy)
+                            .unwrap(),
                         Classification::Decided(_),
                     ));
                     assert!(matches!(

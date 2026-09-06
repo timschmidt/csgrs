@@ -41,6 +41,9 @@ because neither their blocker nor their resolver remains executable.
 | Certified selected-fiber overlaps and isolated component endpoints rejected STRICT replay after APPROXIMATE_512 construction | `selected_fiber_rational_overlap_replays_certified_policy`; `selected_fiber_rational_component_publishes_its_isolated_endpoint` |
 | Reversed selected-fiber overlap shortcuts paired the wrong source/circle endpoints in mapping, inversion, and point location | `selected_fiber_rational_overlap_keeps_exact_center`; `selected_fiber_rational_overlap_replays_certified_policy` |
 | A vanishing squared circle incidence on the conjugate speed sheet published false overlap arcs instead of the authored tangent contact or empty result | `selected_fiber_rational_component_rejects_the_conjugate_circle` |
+| Ordinary rational and analytic-parallel angular queries used construction policy instead of the caller's permitted terminal | `mapped_rational_angle_query_observes_requested_policy`; `mapped_parallel_angle_query_observes_requested_policy`; `nonrepresented_center_transverse_chamfer_inverts_by_correlated_point` |
+| An analytic-parallel bracket cache could replay terminal-consumed evidence into STRICT or a forced-strict subpass after caller-policy forwarding | `mapped_parallel_bracket_cache_does_not_launder_a_terminal` |
+| Represented rational-value and diameter-coordinate caches forgot actual terminal provenance instead of preserving it until independent certification | `mapped_circle_rational_cache_preserves_consumed_policy`; `mapped_circle_diameter_cache_preserves_consumed_policy`; `nonrepresented_center_nonrational_chamfer_inverts_with_retained_authority` |
 
 The retained Sturm-chain optimization is additionally guarded by
 `retained_sturm_certificate_classifies_mixed_root_multiplicity`, which proves

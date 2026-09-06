@@ -32129,7 +32129,9 @@ mod tests {
                 for contact in &contacts {
                     assert_ne!(contact.tangent_cross_sign, RealSign::Zero);
                     assert!(matches!(
-                        map.contact_parameter_bracket(contact, 16).unwrap(),
+                        map.contact_parameter(contact)
+                            .parameter_bracket(16, &policy)
+                            .unwrap(),
                         Classification::Decided(_)
                     ));
                 }
