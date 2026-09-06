@@ -8129,6 +8129,40 @@ unrelated topology failures in the reopened Boolean/offset work. Those are the
 next release blockers. Complete evidence is in
 [`2026-09-02-exact-point-payload-alias-reconciliation.json`](benchmarks/checkpoints/2026-09-02-exact-point-payload-alias-reconciliation.json).
 
+## Canonical scalar API qualification (2026-09-05)
+
+Hypercurve exposes Hyperreal's `ZeroKnowledge` directly; the `ZeroStatus` alias
+is deleted, with no compatibility export. Hyperlimit and Hyperlattice likewise
+use the canonical structural type names. Thirteen production files across
+Hypercurve and Hyperlimit were verified to differ only in those names and
+formatting. A public endpoint-tangent regression pins Hypercurve's canonical
+return type. Hyperlattice's accompanying cleanup removes 36 scalar forwarding
+functions, 21 duplicate private matrix helpers, and eight no-op public abort
+methods; native scalar domain checks and genuine matrix cancellation remain.
+
+The complete all-feature release suite now passes 1,747 tests with zero failures
+and zero ignored cases, using `--include-ignored --test-threads=2`. This includes
+all six opt-in offset/analytic-contact unit cases and all three opt-in cusp or
+stationary-source stroke cases. The no-default release suite passes 1,709 tests;
+its four ignored cases are covered by the all-feature run. Strict all-target,
+all-feature Clippy, warning-denied rustdoc, minimal all-target checking, fuzz
+target builds, formatting, and diff checks pass. The UI passes 37 tests, strict
+Clippy, and a release WASM build.
+
+Downstream release qualification passes Hyperlimit 361 all-feature and 348
+minimal tests, Hyperlattice 203 library/integration tests, Hypertri 191 tests,
+Hypersolve 794 tests, and Hypermesh 222 tests. Hypermesh's seven manual/external
+stress cases remain ignored. Hyperreal source is unchanged from the preceding
+qualified checkpoint. These current gates supersede the historical incomplete
+or failing aggregate runs described in the September 2 entries above.
+
+This is a green local functional gate, not a claim that uniform geometry
+performance, full slow-fixture memory accounting, or release readiness is
+finished. No browser, coverage, deployment, publication, or push is included.
+Matched scalar/matrix timings, allocation checks, executable sizes, source
+fingerprints, and validation-log hashes are retained in
+[`2026-09-05-native-scalar-api.json`](benchmarks/checkpoints/2026-09-05-native-scalar-api.json).
+
 ## Optimization boundary
 
 The retained x sweep addresses broad-phase pair scheduling only. A full
