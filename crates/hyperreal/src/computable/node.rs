@@ -31,3 +31,4 @@ include!("node/algebra.rs");
 include!("node/approximation_queries.rs");
 include!("node/scale.rs");
 include!("node/tests.rs");
+include!("node/linear_demand_tests.rs");

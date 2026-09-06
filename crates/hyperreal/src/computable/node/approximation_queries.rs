@@ -160,8 +160,21 @@ impl Computable {
                             // round once. This mirrors the recursive add kernel
                             // but avoids stack growth for chained additions.
                             frames.push(Frame::FinishAdd(node, prec));
-                            frames.push(Frame::Eval(right, prec - 2));
-                            frames.push(Frame::Eval(left, prec - 2));
+                            // Evaluate larger predicted precision demands
+                            // first, allowing siblings to reuse finer caches.
+                            // Binary scaling participates in the hint: depth
+                            // alone reverses the right order for decaying terms.
+                            // Both operands retain exactly the same precision;
+                            // this hint cannot alter the enclosure contract.
+                            let (first, second) = if right.internal.facts.linear_demand()
+                                > left.internal.facts.linear_demand()
+                            {
+                                (right, left)
+                            } else {
+                                (left, right)
+                            };
+                            frames.push(Frame::Eval(second, prec - 2));
+                            frames.push(Frame::Eval(first, prec - 2));
                         }
                         Approximation::Offset(child, n) => {
                             // Binary offsets translate the requested precision

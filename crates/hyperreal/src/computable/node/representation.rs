@@ -30,13 +30,47 @@ impl Node {
         bound: BoundCache,
         exact_sign: ExactSignCache,
     ) -> Self {
-        let contains_inverse_trig_or_pi =
-            Self::approximation_contains_inverse_trig_or_pi(&approximation);
+        let (contains_inverse_trig_or_pi, linear_demand) = match &approximation {
+            Approximation::Add(left, right) => {
+                let (left_inverse, left_demand) = left.internal.construction_hints();
+                let (right_inverse, right_demand) = right.internal.construction_hints();
+                (
+                    left_inverse || right_inverse,
+                    left_demand.max(right_demand).saturating_add(2),
+                )
+            }
+            Approximation::Negate(child) => child.internal.construction_hints(),
+            Approximation::Offset(child, shift) => {
+                let (inverse, demand) = child.internal.construction_hints();
+                let demand = i32::from(demand)
+                    .saturating_add(*shift)
+                    .clamp(i32::from(i16::MIN), i32::from(i16::MAX));
+                (inverse, demand as i16)
+            }
+            _ => (
+                Self::approximation_contains_inverse_trig_or_pi(&approximation),
+                0,
+            ),
+        };
         Self {
-            facts: AtomicFacts::new(bound, exact_sign, contains_inverse_trig_or_pi),
+            facts: AtomicFacts::new(bound, exact_sign, contains_inverse_trig_or_pi, linear_demand),
             approximation,
             cache: ApproximationCache::new(),
         }
+    }
+
+    fn construction_hints(&self) -> (bool, i16) {
+        // Read both retained hints in the same atomic snapshot. The inverse
+        // trig flag already needs this load during Add construction.
+        let bits = self.facts.0.load(std::sync::atomic::Ordering::Relaxed);
+        let contains_inverse_trig_or_pi = if bits & AtomicFacts::INVERSE_TRIG_OR_PI_KNOWN != 0 {
+            bits & AtomicFacts::CONTAINS_INVERSE_TRIG_OR_PI != 0
+        } else {
+            self.contains_inverse_trig_or_pi()
+        };
+        let demand = ((bits & AtomicFacts::LINEAR_DEMAND_MASK)
+            >> AtomicFacts::LINEAR_DEMAND_SHIFT) as u16 as i16;
+        (contains_inverse_trig_or_pi, demand)
     }
 
     fn approximation_contains_inverse_trig_or_pi(approximation: &Approximation) -> bool {
@@ -235,19 +269,27 @@ impl AtomicFacts {
     const EXACT_SIGN_MASK: u64 = 0b111 << Self::EXACT_SIGN_SHIFT;
     const INVERSE_TRIG_OR_PI_KNOWN: u64 = 1 << 9;
     const CONTAINS_INVERSE_TRIG_OR_PI: u64 = 1 << 10;
+    // Signed saturated precision decrement along Add/Negate/Offset paths.
+    // Used only for child ordering, never as a numerical bound. Deserialized
+    // nodes default to zero and retain ordinary evaluation order.
+    const LINEAR_DEMAND_SHIFT: u32 = 16;
+    const LINEAR_DEMAND_MASK: u64 = (u16::MAX as u64) << Self::LINEAR_DEMAND_SHIFT;
     const NON_BOUND_MASK: u64 = Self::EXACT_SIGN_MASK
         | Self::INVERSE_TRIG_OR_PI_KNOWN
-        | Self::CONTAINS_INVERSE_TRIG_OR_PI;
+        | Self::CONTAINS_INVERSE_TRIG_OR_PI
+        | Self::LINEAR_DEMAND_MASK;
     const MSD_SHIFT: u32 = 32;
 
     fn new(
         bound: BoundCache,
         exact_sign: ExactSignCache,
         contains_inverse_trig_or_pi: bool,
+        linear_demand: i16,
     ) -> Self {
         Self(std::sync::atomic::AtomicU64::new(
             Self::encode_bound(bound)
                 | Self::encode_exact_sign(exact_sign)
+                | ((linear_demand as u16 as u64) << Self::LINEAR_DEMAND_SHIFT)
                 | Self::INVERSE_TRIG_OR_PI_KNOWN
                 | if contains_inverse_trig_or_pi {
                     Self::CONTAINS_INVERSE_TRIG_OR_PI
@@ -255,6 +297,11 @@ impl AtomicFacts {
                     0
                 },
         ))
+    }
+
+    fn linear_demand(&self) -> i16 {
+        ((self.0.load(std::sync::atomic::Ordering::Relaxed) & Self::LINEAR_DEMAND_MASK)
+            >> Self::LINEAR_DEMAND_SHIFT) as u16 as i16
     }
 
     fn contains_inverse_trig_or_pi(&self) -> Option<bool> {
