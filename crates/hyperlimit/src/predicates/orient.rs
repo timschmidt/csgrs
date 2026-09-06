@@ -1,6 +1,6 @@
 //! Orientation predicates.
 
-use crate::RealSymbolicDependencyMask;
+use crate::SymbolicDependencyMask;
 use crate::classify::LineSide;
 pub use crate::geometry::{Point2, Point3};
 use crate::predicate::PredicatePolicy;
@@ -294,7 +294,7 @@ pub struct PredicateFacts {
     /// retain the same symbolic-family summary as their fixed point objects
     /// without exposing `Real` internals. Reusable expression structure reaches
     /// arithmetic selection, while predicate signs remain separately certified.
-    pub fixed_symbolic_dependencies: RealSymbolicDependencyMask,
+    pub fixed_symbolic_dependencies: SymbolicDependencyMask,
     /// Exact kernel that can be attempted when the query coordinates match.
     pub exact_kernel_hint: Option<ExactPredicateKernel>,
 }
@@ -1461,7 +1461,7 @@ struct FixedPointStructureMasks {
     origin: u128,
     one_hot: u128,
     unknown_zero: u128,
-    symbolic_dependencies: RealSymbolicDependencyMask,
+    symbolic_dependencies: SymbolicDependencyMask,
 }
 
 #[inline]

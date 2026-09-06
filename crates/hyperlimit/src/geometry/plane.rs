@@ -9,7 +9,7 @@ use hyperreal::{
     ZeroKnowledge,
 };
 
-use crate::RealSymbolicDependencyMask;
+use crate::SymbolicDependencyMask;
 use crate::classify::{PlaneAabbRelation, PlaneSegmentRelation, PlaneSide, PlaneTriangleRelation};
 use crate::geometry::Point3;
 use crate::predicate::{Certainty, Escalation, PredicateOutcome, RefinementNeed, Sign};
@@ -47,7 +47,7 @@ pub struct Plane3Facts {
     /// and sparse coefficient facts without inspecting `Real` internals. It is
     /// not a side classification certificate; point-plane sidedness still comes
     /// from exact sign resolution.
-    pub coefficient_symbolic_dependencies: RealSymbolicDependencyMask,
+    pub coefficient_symbolic_dependencies: SymbolicDependencyMask,
     /// Structural facts for the normal vector.
     pub normal: crate::geometry::Point3Facts,
     /// Bit mask of coefficients known to be exactly zero.
@@ -1034,10 +1034,10 @@ fn plane3_facts(plane: &Plane3) -> Plane3Facts {
     }
 }
 
-fn plane_coefficient_symbolic_dependencies(coordinates: [&Real; 4]) -> RealSymbolicDependencyMask {
+fn plane_coefficient_symbolic_dependencies(coordinates: [&Real; 4]) -> SymbolicDependencyMask {
     coordinates
         .into_iter()
-        .fold(RealSymbolicDependencyMask::NONE, |mask, coordinate| {
+        .fold(SymbolicDependencyMask::NONE, |mask, coordinate| {
             mask.union(coordinate.detailed_facts().symbolic.dependencies)
         })
 }
@@ -1542,17 +1542,17 @@ mod tests {
         assert!(
             facts
                 .coefficient_symbolic_dependencies
-                .contains(RealSymbolicDependencyMask::PI)
+                .contains(SymbolicDependencyMask::PI)
         );
         assert!(
             facts
                 .coefficient_symbolic_dependencies
-                .contains(RealSymbolicDependencyMask::TRIG)
+                .contains(SymbolicDependencyMask::TRIG)
         );
         assert!(
             facts
                 .coefficient_symbolic_dependencies
-                .contains(RealSymbolicDependencyMask::EXP)
+                .contains(SymbolicDependencyMask::EXP)
         );
 
         let evidence = plane3_evidence(&plane);

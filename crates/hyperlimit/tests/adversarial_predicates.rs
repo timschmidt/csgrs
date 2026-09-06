@@ -1,7 +1,7 @@
 use hyperlimit::{
     DeterminantScheduleHint, ExactPredicateKernel, LineSide, Plane3, PlaneSide, Point2, Point3,
     PredicateOutcome, RationalStorageClass, RealExactSetDenominatorKind,
-    RealExactSetDyadicExponentClass, RealExactSetSignPattern, RealSymbolicDependencyMask, Sign,
+    RealExactSetDyadicExponentClass, RealExactSetSignPattern, Sign, SymbolicDependencyMask,
     classify_point_line, classify_point_oriented_plane, classify_point_plane, classify_real_sign,
     compare_reals, incircle2, orient2, orient2_batch, orient3,
 };
@@ -281,17 +281,17 @@ fn point_structural_facts_summarize_symbolic_dependencies() {
     assert!(
         facts2
             .symbolic_dependencies
-            .contains(RealSymbolicDependencyMask::PI)
+            .contains(SymbolicDependencyMask::PI)
     );
     assert!(
         facts2
             .symbolic_dependencies
-            .contains(RealSymbolicDependencyMask::LOG)
+            .contains(SymbolicDependencyMask::LOG)
     );
     assert!(
         !facts2
             .symbolic_dependencies
-            .contains(RealSymbolicDependencyMask::TRIG)
+            .contains(SymbolicDependencyMask::TRIG)
     );
 
     let trig = (rational(1, 5) * Real::pi()).sin();
@@ -300,17 +300,17 @@ fn point_structural_facts_summarize_symbolic_dependencies() {
     assert!(
         facts3
             .symbolic_dependencies
-            .contains(RealSymbolicDependencyMask::TRIG)
+            .contains(SymbolicDependencyMask::TRIG)
     );
     assert!(
         facts3
             .symbolic_dependencies
-            .contains(RealSymbolicDependencyMask::PI)
+            .contains(SymbolicDependencyMask::PI)
     );
     assert!(
         facts3
             .symbolic_dependencies
-            .contains(RealSymbolicDependencyMask::EXP)
+            .contains(SymbolicDependencyMask::EXP)
     );
 }
 
@@ -345,12 +345,12 @@ fn predicate_facts_preserve_point_local_shared_scales() {
     assert!(
         facts
             .fixed_symbolic_dependencies
-            .contains(RealSymbolicDependencyMask::PI)
+            .contains(SymbolicDependencyMask::PI)
     );
     assert!(
         !facts
             .fixed_symbolic_dependencies
-            .contains(RealSymbolicDependencyMask::LOG)
+            .contains(SymbolicDependencyMask::LOG)
     );
 
     let trig = (rational(1, 5) * Real::pi()).sin();
@@ -368,17 +368,17 @@ fn predicate_facts_preserve_point_local_shared_scales() {
     assert!(
         facts
             .fixed_symbolic_dependencies
-            .contains(RealSymbolicDependencyMask::TRIG)
+            .contains(SymbolicDependencyMask::TRIG)
     );
     assert!(
         facts
             .fixed_symbolic_dependencies
-            .contains(RealSymbolicDependencyMask::PI)
+            .contains(SymbolicDependencyMask::PI)
     );
     assert!(
         facts
             .fixed_symbolic_dependencies
-            .contains(RealSymbolicDependencyMask::EXP)
+            .contains(SymbolicDependencyMask::EXP)
     );
 
     let origin = Point2::new(Real::from(0), Real::from(0));

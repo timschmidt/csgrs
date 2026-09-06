@@ -29,11 +29,9 @@ mod resolve;
 mod test_support;
 
 pub use hyperreal::{
-    CertifiedRealSign, DomainFacts as RealDomainFacts, DomainStatus as RealDomainStatus,
-    ExpressionDegree as RealExpressionDegree, RationalStorageClass, Real,
+    CertifiedRealSign, DomainFacts, DomainStatus, ExpressionDegree, RationalStorageClass, Real,
     RealExactSetDenominatorKind, RealExactSetDyadicExponentClass, RealExactSetSignPattern,
-    RealSignCertificate, SymbolicDependencyMask as RealSymbolicDependencyMask,
-    ZeroOneMinusOneStatus as RealZeroOneMinusOneStatus,
+    RealSignCertificate, SymbolicDependencyMask, ZeroOneMinusOneStatus,
 };
 
 pub use batch::{
