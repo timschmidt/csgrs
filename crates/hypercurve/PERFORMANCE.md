@@ -8488,6 +8488,113 @@ the live lower-stack work remain open. Other mapped-circle query policies
 must be audited together with their retained caches before extending this
 repair. No push or publication is part of this checkpoint.
 
+## Mapped-circle query policies and cache certainty (2026-09-06)
+
+Source commit `42272fc` fixes requested-policy handling in ordinary rational
+and analytic-parallel circle maps. Angular ordering, bracket refinement,
+rational-value promotion, and retained-chord replay use the caller's context
+instead of silently selecting the construction context. Brackets, represented
+rational values, and represented diameter coordinates retain actual terminal
+provenance. Permitted cache replay observes that consumption; STRICT and
+forced-strict subpasses cannot reuse terminal-consumed values as certified.
+Independent certification upgrades the scalar caches without downgrading
+existing certified evidence. Bracket caches keep monotone refinement state
+per policy and prefer certified evidence at equal refinement depth.
+
+Five new regressions fail against original production and pass with the fix.
+Forwarding parallel queries alone first exposed bracket laundering; checking
+only raw context identity still failed the forced-strict assertion. The first
+wide-entry candidate then failed the existing cache-size guard and transverse
+chamfer round-trip test. Passing the rational caller policy restores that
+ordering. Boxing only terminal-consumed rational values restores the original
+96-byte cache entry, instead of growing every entry to 104 bytes. Evidence
+remains 48 bytes and the bracket record remains 112 bytes on this host.
+The diameter cache adds policy to its existing boxed payload, not a second
+allocation. All intermediate sources and failures are preserved separately.
+
+The unused rational-map test-only bracket interface and a single-use generic
+cache-retention helper are deleted; tests call the shared parameter API.
+Two map methods become private. No public API, compatibility alias, shim, or
+alternate kernel is added. Rust source grows 343 lines: the production prefix
+grows 49 (including deletion of the test-only forwarder outside the test
+module), and test modules grow 294. These are source counts, not compiled-size
+estimates. Final original-code, layout-only, and compact controls have identical
+912-test catalogs and byte-identical final conversion-test modules.
+
+All eleven final qualification gates pass: 1,762 all-feature tests across 46
+suites with none ignored, 1,724 minimal-feature tests across 46 suites with
+four opt-in tests covered by the full run, and 37 UI tests. Formatting, both
+warning-denied lint/documentation matrices, fuzz-target compilation, and
+release WASM pass. All six source repositories are archived from pinned
+commits; concurrent Hyperreal work is excluded. This is not a fresh fuzz
+campaign, coverage run, lower-stack suite, or Hypermesh requalification.
+
+Complete raw Heaptrack streams for the existing mapped-inverse/cache-expiry
+workload record 85,169 allocations on both sides. Requested bytes are
+4,394,462 -> 4,394,455; peak live bytes 410,612 -> 410,605; end-live bytes
+remain 218,792. A passing layout-only control isolates the terminal-value box:
+55,310 -> 55,311 allocations, 2,839,772 -> 2,839,783 requested bytes, and
+346,197 -> 346,208 peak live bytes, with end-live bytes unchanged at 171,512.
+These are whole-libtest records with different executable-name lengths;
+byte-level startup differences are not claimed as geometry savings or leak
+proof. Both comparisons use matching catalogs and measured test bodies;
+compressed streams validate and final live-state accounting reconciles.
+
+The mapped instruction control costs +0.00596%. Rectangle, circle, and capsule
+controls change +0.04671%, +0.04057%, and -0.02211%, respectively. Instrumented
+durations are not elapsed-time performance comparisons. Matched default-feature
+native sizes change as follows:
+
+| Artifact | `.text` change (bytes) | File change (bytes) |
+| --- | ---: | ---: |
+| `bezier_region` | +2,512 | +5,032 |
+| `rational_bezier` | +1,824 | +3,248 |
+| `curve_region_boolean_batch` | +2,080 | +4,376 |
+
+Release WASM grows 1,060 bytes, from 17,028,942 to 17,030,002. The extra
+terminal-path allocation and binary growth are explicit lower-priority costs
+of the exactness/completeness repair.
+
+The first full timing matrix and seven-pair follow-up crossed a large machine-
+state change affecting both unchanged binaries: region runs moved from about
+6 seconds to 11–15 seconds and recovered. Both CPU and elapsed times rose;
+the cause was not established. All 88 invocations and 856 lane records remain
+under `variable-host-timing`, excluded from interpreted latency comparisons.
+Their apparent radial gain and region cost are not presented as code effects.
+
+Before one fresh retry, the recorded rule required every nontrivial whole-
+process fixture's within-binary maximum/minimum ratio to stay at or below 1.5
+in each matrix; a repeat violation would be reported as inconclusive without
+another retry. The retry passes, with maximum ratio 1.125. Three alternating
+CPU-7 pairs give selected medians 20.99 -> 20.70 seconds (-1.38%), radial
+30.37 -> 29.95 (-1.38%), contacts 11.55 -> 11.30 (-2.16%), chord
+16.92 -> 17.01 (+0.53%), and region 5.94 -> 5.82 (-2.02%). The mapped test
+rounds to zero at centisecond resolution, so its timer gives no percentage.
+
+Seven additional native pairs give region 6.05 -> 5.96 seconds (-1.49%) and
+rational Bezier 0.33 -> 0.33. Remaining median lane costs include cached point
+incidence +9.64%, algebraic polynomial-graph overlap +6.96%, signed-depth
+queries +6.54%, immediate contacts +5.91%, cached basis resultants +4.16%,
+and resolved-overlap materialization +3.61%. This is not a uniform no-regression
+result, and those costs are not dismissed as noise. Host snapshots observed
+the owned measurement worker and desktop processes; desktop activity,
+frequency scaling, scheduling, and thermal conditions were not controlled.
+Instantaneous CPU-frequency samples are not continuous stability evidence.
+
+The final 88 invocations/856 lane records, the complete excluded attempt,
+source hashes, heap/instruction records, and 542 independently verified
+artifacts are recorded in
+[`2026-09-06-mapped-circle-policy.json`](benchmarks/checkpoints/2026-09-06-mapped-circle-policy.json).
+The checkpoint SHA256 is
+`9968c654c8a72ae251a89d2543e7fe8adddc6b0168decdbc93b1cbf617184a21`.
+
+ExactCorelib mining/recorded uplift remains closed; full Hypercurve release
+readiness and uniform performance remain open. Pair, chord, overlap-pair, and
+specialized mapped-circle query families still require a joint policy/cache
+audit. The pair-map first/second ordering and bracket forwarders are a concrete
+next deduplication target. Concurrent lower-stack work and the native lane
+costs above remain separate follow-ups. No push or publication is performed.
+
 ## Optimization boundary
 
 The retained x sweep addresses broad-phase pair scheduling only. A full
