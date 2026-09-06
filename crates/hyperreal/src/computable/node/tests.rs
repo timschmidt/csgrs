@@ -6,6 +6,58 @@ mod tests {
     use std::mem::size_of;
 
     #[test]
+    fn sqrt_square_raw_nodes_preserve_exact_prefix_bounds_and_history() {
+        use rug::{Integer, Rational as RugRational};
+
+        let raw = |kind| Computable {
+            internal: Arc::new(Node::new(kind, BoundCache::Invalid, ExactSignCache::Invalid)),
+            signal: None,
+        };
+        for numerator in [-65_i64, -17, -1, 0, 1, 17, 65] {
+            for denominator in [1_u64, 2, 3, 16, 257] {
+                let q = Rational::fraction(numerator, denominator).unwrap();
+                let leaf = Computable::rational(q);
+                let squared = raw(Approximation::Square(leaf.clone()));
+                let value = raw(Approximation::Sqrt(squared.clone()));
+                for precision in [64, 1, 0, -1, -8, -59, -128, -512, -2048, -16, 0] {
+                    let actual =
+                        Integer::from_str_radix(&value.approx(precision).to_string(), 10).unwrap();
+                    let mut expected = RugRational::from((numerator.unsigned_abs(), denominator));
+                    if precision < 0 {
+                        expected *= Integer::from(1) << -precision;
+                    } else {
+                        expected /= Integer::from(1) << precision;
+                    }
+                    assert!((RugRational::from(actual) - expected).abs() <= 1);
+                }
+                // The fused evaluator never materializes the squared approximation.
+                assert!(squared.cached().is_none());
+            }
+        }
+    }
+
+    #[test]
+    fn sqrt_square_unresolved_sign_reuses_one_child_and_does_not_cache_aborts() {
+        use std::sync::atomic::{AtomicBool, Ordering};
+        let x = Computable::rational(Rational::fraction(1, 8).unwrap())
+            .sin()
+            .add(Computable::rational(Rational::fraction(-1, 2).unwrap()));
+        assert_eq!(x.exact_sign(), None);
+        let squared = x.clone().square();
+        let value = squared.clone().sqrt();
+        let signal = Arc::new(AtomicBool::new(true));
+        let _ = value.approx_signal(&Some(signal.clone()), -256);
+        assert!(value.cached().is_none());
+        assert!(squared.cached().is_none());
+        signal.store(false, Ordering::Relaxed);
+        let actual = value.approx_signal(&Some(signal), -256);
+        let (precision, child) = x.cached().expect("child approximation retained");
+        assert_eq!(precision, -256);
+        assert_eq!(actual, child.abs());
+        assert!(squared.cached().is_none());
+    }
+
+    #[test]
     fn exp_constructor_and_deferred_kernel_match_directed_mpfr() {
         use rug::{Float, Integer, Rational as RugRational, float::Round};
 

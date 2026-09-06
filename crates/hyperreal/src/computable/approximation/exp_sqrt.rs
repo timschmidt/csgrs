@@ -119,6 +119,13 @@ fn expm1(signal: &Option<Signal>, c: &Computable, p: Precision) -> BigInt {
 }
 
 fn sqrt(signal: &Option<Signal>, c: &Computable, p: Precision) -> BigInt {
+    // sqrt(x^2) is |x| even when x's sign is unresolved. Absolute value is
+    // 1-Lipschitz, so applying it to one p-precision integer approximation
+    // preserves the same one-unit error bound without evaluating x^2.
+    if let Some(child) = c.square_operand() {
+        return child.approx_signal(signal, p).abs();
+    }
+
     // Sqrt uses a fixed-size integer sqrt for moderate precision and recursive
     // Newton refinement for deeper requests. This avoids pulling in floating
     // approximations while keeping high-precision sqrt from scaling quadratically.

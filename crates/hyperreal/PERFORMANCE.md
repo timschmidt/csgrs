@@ -41,6 +41,32 @@ cargo bench --manifest-path ../hyperlimit/Cargo.toml --bench predicates
 cargo bench --manifest-path ../hyperlimit/Cargo.toml --bench predicates --features dispatch-trace -- --write-dispatch-trace-md
 ```
 
+## Unresolved absolute-value evaluation
+
+`sqrt(Square(x))` now approximates `x` once at the requested precision and
+takes the integer magnitude. Absolute value is 1-Lipschitz, so this preserves
+the existing one-unit approximation bound even when the sign is unresolved.
+No node variant, field, public API or serialization format changes. Known-sign
+constructor simplifications remain unchanged; the squared intermediate is not
+evaluated or cached, and aborted evaluations do not publish a result.
+
+The 2026-09-05 Escardo comparison uses fresh graphs, CPU6-pinned process CPU,
+nine alternating-order samples per case, and separate allocation-count runs.
+Across 32/128/512/2048-bit demands, unresolved positive/negative examples are
+2.68--3.70x faster and allocate49--78% fewer cumulative bytes. An opaque
+trigonometric identity perturbed by +/-2^-256 is2.01--2.69x faster once the
+request resolves the perturbation; exact zero is effectively unchanged at
+2048bits. Ordinary square-root controls are within1.5%, with identical
+allocation counts/bytes. Initial short-run noise is excluded from these claims.
+
+The linked serde/oracle driver changes text by-368 bytes, data by0 and BSS
+by+384; this is a scoped artifact observation, not a general binary-size claim.
+Independent MPFR/exact controls cover coarse requests, both signs, zero,
+cancellation, cache history and serde. Two regressions additionally verify
+raw-node rational bounds and abort/cache behavior. Raw sources,480 final
+timing/allocation rows and the pilot are retained in the workspace's
+`exact-real-references/escardo-qualification/` directory.
+
 ## Binary32 export fast path
 
 Exact-rational `Real::to_f32_lossy` now narrows the allocation-free binary64

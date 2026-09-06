@@ -1,4 +1,11 @@
 impl Computable {
+    pub(super) fn square_operand(&self) -> Option<&Computable> {
+        match &self.internal.approximation {
+            Approximation::Square(child) => Some(child),
+            _ => None,
+        }
+    }
+
     pub(crate) const MAX_DIRECT_NTH_ROOT_DEGREE: u32 = 9;
 
     pub(crate) fn sqrt_rational(r: Rational) -> Self {
