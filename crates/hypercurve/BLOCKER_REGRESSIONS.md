@@ -37,6 +37,10 @@ because neither their blocker nor their resolver remains executable.
 | Fully certified rational and analytic selected-fiber contacts constructed under `APPROXIMATE_512` rejected later `STRICT` replay | `selected_parallel_normal_circle_keeps_contacts_when_center_refines_to_exact`; `selected_parallel_normal_circle_intersects_genuinely_analytic_parallel_in_one_fiber` |
 | A selected-fiber angle query used its construction policy instead of the caller's requested terminal policy | `selected_fiber_angle_query_observes_its_requested_policy` |
 | Rational circle-contact tangent dot products used the opposite traversal sign, including cached pair-radial publication | `rational_circle_tangent_dot_follows_both_traversals`; `selected_parallel_normal_circle_keeps_contacts_when_center_refines_to_exact` |
+| Rational-circle component boundary isolation panicked when its retained center refined to an exact value | `selected_fiber_rational_overlap_keeps_exact_center`; `selected_fiber_rational_component_publishes_its_isolated_endpoint` |
+| Certified selected-fiber overlaps and isolated component endpoints rejected STRICT replay after APPROXIMATE_512 construction | `selected_fiber_rational_overlap_replays_certified_policy`; `selected_fiber_rational_component_publishes_its_isolated_endpoint` |
+| Reversed selected-fiber overlap shortcuts paired the wrong source/circle endpoints in mapping, inversion, and point location | `selected_fiber_rational_overlap_keeps_exact_center`; `selected_fiber_rational_overlap_replays_certified_policy` |
+| A vanishing squared circle incidence on the conjugate speed sheet published false overlap arcs instead of the authored tangent contact or empty result | `selected_fiber_rational_component_rejects_the_conjugate_circle` |
 
 The retained Sturm-chain optimization is additionally guarded by
 `retained_sturm_certificate_classifies_mixed_root_multiplicity`, which proves
