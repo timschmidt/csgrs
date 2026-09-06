@@ -105975,8 +105975,10 @@ fn algebraic_selected_fiber_root_predicate_sign(
     }
     let incidence = &authority.data.incidence;
     let retained_parameter = authority.retained_parameter_refined(64);
-    if let BezierParameter2::Exact(retained_value) = &retained_parameter {
-        if let Some(exact_root) = &root.exact_root {
+    // Any refinement stage may discover a represented retained root. Share
+    // its exact univariate dispatch with the initial 64-step fast path.
+    let sign_at_exact_retained = |retained_value: &Real, selected_root: &IsolatedRootInterval| {
+        if let Some(exact_root) = &selected_root.exact_root {
             return Ok(real_sign(
                 &bivariate_evaluate_exact(predicate, retained_value, exact_root),
                 policy,
@@ -105986,18 +105988,24 @@ fn algebraic_selected_fiber_root_predicate_sign(
                 Classification::Decided,
             ));
         }
-        let parameter =
-            match selected_fiber_parameter_at_exact_retained(incidence, retained_value, root)? {
-                Classification::Decided(parameter) => parameter,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            };
-        return signed_coefficients_at_parameter(
+        let parameter = match selected_fiber_parameter_at_exact_retained(
+            incidence,
+            retained_value,
+            selected_root,
+        )? {
+            Classification::Decided(parameter) => parameter,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        signed_coefficients_at_parameter(
             bivariate_specialize_first(predicate, retained_value),
             &parameter,
             policy,
-        );
+        )
+    };
+    if let BezierParameter2::Exact(retained_value) = &retained_parameter {
+        return sign_at_exact_retained(retained_value, root);
     }
     if let Some(exact_root) = &root.exact_root
         && let Classification::Decided(sign) = signed_coefficients_at_parameter(
@@ -106045,9 +106053,10 @@ fn algebraic_selected_fiber_root_predicate_sign(
                 policy,
             );
         }
-        let retained_refined = authority.retained_parameter_refined(refinement_steps.max(64));
-        let BezierParameter2::Algebraic(retained_refined) = retained_refined else {
-            unreachable!("a selected-fiber root has an algebraic retained parameter")
+        let retained_refined = match authority.retained_parameter_refined(refinement_steps.max(64))
+        {
+            BezierParameter2::Algebraic(parameter) => parameter,
+            BezierParameter2::Exact(value) => return sign_at_exact_retained(&value, &latest),
         };
         let restricted = bivariate_restrict_to_box_bounds(
             predicate,
@@ -158150,6 +158159,76 @@ mod conversion_tests {
                 ) >= 1,
                 "the bounded isolator must continue exact subdivision: {trace:?}",
             );
+        }
+    }
+
+    #[test]
+    fn selected_fiber_predicate_handles_a_retained_root_becoming_exact_after_64_steps() {
+        let half = (Real::one() / Real::from(2_i8)).unwrap();
+        let retained_value = Real::new(
+            hyperreal::Rational::from_bigint_fraction(
+                num::BigInt::from(1_u8),
+                num::BigUint::from(1_u8) << 100,
+            )
+            .unwrap(),
+        );
+        let Classification::Decided(polynomial) = BezierParameterPolynomial::try_new_power_basis(
+            vec![-retained_value.clone(), Real::one()],
+            &CurveContext::STRICT,
+        )
+        .unwrap() else {
+            panic!("the linear retained polynomial must be exact")
+        };
+        let Classification::Decided(interval) =
+            BezierParameterInterval::try_new(Real::zero(), Real::one(), &CurveContext::STRICT)
+                .unwrap()
+        else {
+            panic!("the retained interval must be exact")
+        };
+        let Classification::Decided(retained) =
+            BezierAlgebraicParameter2::try_isolate(polynomial, interval, &CurveContext::STRICT)
+                .unwrap()
+        else {
+            panic!("the retained root must be certified")
+        };
+        let incidence =
+            BivariatePolynomial::new(vec![vec![-half.clone(), Real::zero(), Real::one()]]);
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let Classification::Decided(Some(parameters)) = selected_fiber_parameters_in_interval(
+                &incidence,
+                &retained,
+                &half,
+                &Real::one(),
+                &policy,
+            )
+            .unwrap() else {
+                panic!("the positive fiber root must isolate")
+            };
+            let [selected] = parameters.as_slice() else {
+                panic!("one positive fiber root")
+            };
+            assert!(matches!(
+                selected.data.authority.retained_parameter_refined(64),
+                BezierParameter2::Algebraic(_)
+            ));
+            assert_eq!(
+                selected.data.authority.retained_parameter_refined(128),
+                BezierParameter2::Exact(retained_value.clone())
+            );
+            // At u^2=1/2 these predicates have signs +/-2^-100. The initial
+            // product boxes do not separate them, but later refinement finds
+            // the represented retained root while u stays irrational.
+            for (scale, sign) in [(1_i8, RealSign::Positive), (-1_i8, RealSign::Negative)] {
+                let predicate = BivariatePolynomial::new(vec![
+                    vec![-half.clone(), Real::zero(), Real::one()],
+                    vec![Real::from(scale)],
+                ]);
+                let outcome = crate::policy::resolve_certified_value(&policy, |attempt| {
+                    selected.predicate_sign(&predicate, attempt).unwrap()
+                });
+                assert_eq!(outcome.value, Classification::Decided(sign));
+                assert_eq!(outcome.certainty, crate::CurveCertainty::Certified);
+            }
         }
     }
 

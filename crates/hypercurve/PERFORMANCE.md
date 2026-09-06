@@ -8256,6 +8256,49 @@ ExactCorelib mining/uplift remains closed. Full Hypercurve release readiness,
 uniform performance, and complete memory accounting for the other slow and
 pathological workloads remain open.
 
+## Late exact retained-root refinement (2026-09-06)
+
+A certified algebraic parameter can become exactly represented during any
+refinement stage, not only the initial 64-step pass. Selected-fiber predicate
+signs now reuse the existing exact univariate specialization when that happens
+later. This removes a reachable panic without changing the public API, root
+refinement schedule, terminal policy, or root authority. Production grows nine
+Rust lines and regression tests grow 70; no compatibility interface is added.
+The regression retains `2^-100` algebraically after 64 steps and discovers its
+exact value by 128 while the selected fiber stays irrational. Positive and
+negative predicates remain certified under both STRICT and APPROXIMATE_512.
+The frozen baseline fails this test; the candidate passes. An initial command
+that selected zero tests is explicitly excluded from the regression gate.
+
+All-feature release qualification passes 1,750 tests with none ignored;
+minimal features pass 1,712 with four opt-in cases covered by the full run.
+Strict lint, documentation, fuzz-target compilation, 37 UI tests, and release
+WASM gates pass. No new fuzz campaign or full heap profile ran in this slice.
+
+Three alternating pinned pairs give selected-fiber medians of 20.42 -> 20.44
+seconds (+0.10%), chord 16.77 -> 16.85 (+0.48%), radial 29.61 -> 29.60
+(-0.03%), and the Bézier-region process 6.37 -> 6.43 (+0.94%). Seven additional
+native benchmark pairs put the region process at 6.39 -> 6.37 (-0.31%) and
+cached classification at 37,790.761 -> 37,911.063 ns (+0.32%), compared with
+the initial +5.49%. The repeated degree-12 axis-monotonicity lane is +4.32%
+and algebraic contact replay +2.89%; these remain explicit performance
+follow-ups. Rectangle/circle/capsule instruction controls change -0.08630%,
+-0.00113%, and +0.00200%. This is not a uniform no-regression result.
+Matched native images each lose 96 `.text` bytes and 8--32 file bytes;
+the WASM demo grows 296 bytes. Memory observations here are whole-process
+peak RSS, not fresh allocation or complete-heap accounting.
+
+An independent pilot that reused each narrowed fiber interval with unchanged
+refinement tranche sizes was slower (20.71 -> 21.77 seconds) and was removed
+before qualification of this correctness fix. All 76 retained timing
+invocations, 856 lane measurements, rejected-pilot evidence, and 198 reverified
+artifacts are recorded in
+[`2026-09-06-late-exact-fiber-refinement.json`](benchmarks/checkpoints/2026-09-06-late-exact-fiber-refinement.json).
+ExactCorelib mining/uplift remains closed. Full Hypercurve release readiness,
+uniform performance, and remaining slow/pathological heap coverage stay open.
+A separate algebraic-only assumption in selected-circle rational contact
+seeding remains under audit; this fix does not claim to cover it.
+
 ## Optimization boundary
 
 The retained x sweep addresses broad-phase pair scheduling only. A full
