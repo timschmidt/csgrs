@@ -130673,13 +130673,14 @@ mod conversion_tests {
         let one = DenseTensorPolynomial::try_new(vec![], vec![Real::one()]).unwrap();
         let field = BezierRecursiveQuadraticField2::base(vec![], one.clone(), one).unwrap();
         let atom = (Real::from(2_i8).sqrt().unwrap() + Real::one()).sin();
-        let upper = &atom + Real::from(2_i8);
-        let lower = &atom - Real::one();
+        let second = (Real::from(3_i8).sqrt().unwrap() + Real::one()).sin();
+        let third = (Real::from(5_i8).sqrt().unwrap() + Real::one()).sin();
+        let left = (&atom + &second) + &third;
+        let right = &atom + (&second + &third);
         // The cancellation is exactly zero, so the denominator is 2^-3000.
+        // Reassociation keeps the native scalar sign undecided.
         // Its positivity is construction evidence, not a bounded sign query.
-        let scale = Real::diff_of_products(&Real::one(), &upper, &Real::one(), &lower)
-            - Real::from(3_i8)
-            + Real::from(2_i8).powi_i64(-3000).unwrap();
+        let scale = left - right + Real::from(2_i8).powi_i64(-3000).unwrap();
         assert_eq!(scale.zero_status(), ZeroStatus::Unknown);
         let point = BezierRecursiveQuadraticProjectivePoint2 {
             x: field.constant(&scale * Real::from(3_i8)).unwrap(),
