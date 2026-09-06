@@ -1,6 +1,7 @@
 use hypercurve::{
-    BulgeVertex2, Classification, Contour2, CurveContext, CurveRegion2, CurveString2, FillRule,
-    LineLineIntersection, LineSeg2, Point2, Real, Segment2, SegmentKind, SymbolicDependencyMask,
+    BulgeVertex2, Classification, Contour2, CurveContext, CurveRegion2, CurveString2,
+    EndpointTangent2, FillRule, LineLineIntersection, LineSeg2, Point2, Real, Segment2,
+    SegmentKind, SymbolicDependencyMask, ZeroKnowledge,
 };
 
 fn r(value: i32) -> Real {
@@ -17,6 +18,18 @@ fn vertex(x: i32, y: i32, bulge: i32) -> BulgeVertex2 {
 
 fn policy() -> CurveContext {
     CurveContext::STRICT
+}
+
+#[test]
+fn endpoint_tangents_use_canonical_scalar_zero_knowledge() {
+    for (dx, dy, expected) in [
+        (r(0), r(0), ZeroKnowledge::Zero),
+        (Real::pi(), r(0), ZeroKnowledge::NonZero),
+        (r(0), r(-1), ZeroKnowledge::NonZero),
+    ] {
+        let status: ZeroKnowledge = EndpointTangent2::new(dx, dy).zero_status();
+        assert_eq!(status, expected);
+    }
 }
 
 #[test]

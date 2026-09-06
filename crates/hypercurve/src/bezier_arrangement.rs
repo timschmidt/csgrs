@@ -30,7 +30,7 @@ use crate::{
     BezierEndpointPointImage2, BezierEndpointTangentImage2, BezierParameter2,
     BezierRetainedOverlapEvidence2, BezierSplitFragment2, BezierSplitMaterialization2,
     BezierSubcurve2, BezierTangentTurnOrdering2, Classification, CurveContext, CurveError,
-    CurveResult, Point2, UncertaintyReason, ZeroStatus,
+    CurveResult, Point2, UncertaintyReason, ZeroKnowledge,
     compare_algebraic_same_tangent_second_order, compare_algebraic_same_tangent_third_order,
 };
 use hyperreal::{Rational, Real, RealSign};
@@ -3255,8 +3255,8 @@ mod rational_quadratic_endpoint_derivative_tests {
     fn polynomial_endpoint_tangent_keeps_its_structural_zero_evidence() {
         let policy = CurveContext::STRICT;
         for (dx, expected_status, expected_nonzero) in [
-            (Real::zero(), ZeroStatus::Zero, false),
-            (Real::from(7_i8), ZeroStatus::NonZero, true),
+            (Real::zero(), ZeroKnowledge::Zero, false),
+            (Real::from(7_i8), ZeroKnowledge::NonZero, true),
         ] {
             let endpoint = crate::EndpointTangent2::new(dx, Real::zero());
             let (tangent, status) = TangentVector::from_endpoint_tangent(endpoint);
@@ -3346,29 +3346,29 @@ mod rational_quadratic_endpoint_derivative_tests {
 }
 
 impl TangentVector {
-    fn from_endpoint_tangent(tangent: crate::EndpointTangent2) -> (Self, ZeroStatus) {
+    fn from_endpoint_tangent(tangent: crate::EndpointTangent2) -> (Self, ZeroKnowledge) {
         let (dx, dy, zero_status) = tangent.into_components();
         (Self { dx, dy }, zero_status)
     }
 
     fn is_nonzero_with_status(
         &self,
-        zero_status: Option<ZeroStatus>,
+        zero_status: Option<ZeroKnowledge>,
         policy: &CurveContext,
     ) -> bool {
         match zero_status {
-            Some(ZeroStatus::NonZero) => true,
-            Some(ZeroStatus::Zero) => false,
-            Some(ZeroStatus::Unknown) | None => self.is_nonzero(policy),
+            Some(ZeroKnowledge::NonZero) => true,
+            Some(ZeroKnowledge::Zero) => false,
+            Some(ZeroKnowledge::Unknown) | None => self.is_nonzero(policy),
         }
     }
 
     fn is_nonzero(&self, policy: &CurveContext) -> bool {
         let length_squared = &self.dx * &self.dx + &self.dy * &self.dy;
         match length_squared.zero_status() {
-            ZeroStatus::NonZero => true,
-            ZeroStatus::Zero => false,
-            ZeroStatus::Unknown => is_zero(&length_squared, policy) == Some(false),
+            ZeroKnowledge::NonZero => true,
+            ZeroKnowledge::Zero => false,
+            ZeroKnowledge::Unknown => is_zero(&length_squared, policy) == Some(false),
         }
     }
 }
@@ -3423,8 +3423,8 @@ fn square(value: &Real) -> Real {
 
 fn definitely_nonzero(value: &Real, policy: &CurveContext) -> bool {
     match value.zero_status() {
-        ZeroStatus::NonZero => true,
-        ZeroStatus::Zero => false,
-        ZeroStatus::Unknown => is_zero(value, policy) == Some(false),
+        ZeroKnowledge::NonZero => true,
+        ZeroKnowledge::Zero => false,
+        ZeroKnowledge::Unknown => is_zero(value, policy) == Some(false),
     }
 }

@@ -11,7 +11,7 @@
 use std::cmp::Ordering;
 use std::sync::Arc;
 
-use hyperreal::{Real, RealSign, ZeroKnowledge as ZeroStatus};
+use hyperreal::{Real, RealSign, ZeroKnowledge};
 
 use crate::bezier_parameter::subdivide_scalar_bernstein_half;
 use crate::bezier_topology::exact_line_contact_relation_from_bernstein_distances;
@@ -149,7 +149,7 @@ impl RationalQuadraticBezier2 {
             control_weight.zero_status(),
             end_weight.zero_status(),
         ]
-        .contains(&ZeroStatus::Zero)
+        .contains(&ZeroKnowledge::Zero)
         {
             return Err(CurveError::ZeroRationalBezierWeight);
         }

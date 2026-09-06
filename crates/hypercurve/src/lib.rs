@@ -278,7 +278,7 @@ pub use translation_obstacle::{
 pub use triangulation::{FiniteTriangle2, triangulate_finite_rings};
 
 pub use hyperreal::Rational;
-pub use hyperreal::{Real, RealSign, SymbolicDependencyMask, ZeroKnowledge as ZeroStatus};
+pub use hyperreal::{Real, RealSign, SymbolicDependencyMask, ZeroKnowledge};
 
 pub use hyperlimit::PredicatePolicy;
 

@@ -1,6 +1,6 @@
 //! Line and circular-arc segment primitives.
 
-use hyperreal::{Real, RealSign, ZeroKnowledge as ZeroStatus};
+use hyperreal::{Real, RealSign, ZeroKnowledge};
 use std::{
     sync::Arc,
     sync::{Mutex, OnceLock},
@@ -76,9 +76,9 @@ impl LineSeg2 {
             return Err(CurveError::ZeroLengthLine);
         }
         let endpoints_decided_distinct = match start.distance_squared(&end).zero_status() {
-            ZeroStatus::Zero => return Err(CurveError::ZeroLengthLine),
-            ZeroStatus::NonZero => true,
-            ZeroStatus::Unknown => false,
+            ZeroKnowledge::Zero => return Err(CurveError::ZeroLengthLine),
+            ZeroKnowledge::NonZero => true,
+            ZeroKnowledge::Unknown => false,
         };
         Ok(Self {
             start,
@@ -265,9 +265,9 @@ impl LineSeg2 {
             return Err(CurveError::ZeroLengthLine);
         }
         let endpoints_decided_distinct = match start.distance_squared(&end).zero_status() {
-            ZeroStatus::Zero => return Err(CurveError::ZeroLengthLine),
-            ZeroStatus::NonZero => true,
-            ZeroStatus::Unknown => false,
+            ZeroKnowledge::Zero => return Err(CurveError::ZeroLengthLine),
+            ZeroKnowledge::NonZero => true,
+            ZeroKnowledge::Unknown => false,
         };
         let support = self
             .has_retained_support
@@ -532,16 +532,16 @@ impl CircularArc2 {
         clockwise: bool,
     ) -> CurveResult<Self> {
         let start_radius_squared = start.distance_squared(&center);
-        if start_radius_squared.zero_status() == ZeroStatus::Zero {
+        if start_radius_squared.zero_status() == ZeroKnowledge::Zero {
             return Err(CurveError::ZeroRadiusArc);
         }
 
         let end_radius_squared = end.distance_squared(&center);
         let mismatch = &start_radius_squared - &end_radius_squared;
         let endpoints_on_stored_circle = match mismatch.zero_status() {
-            ZeroStatus::Zero => true,
-            ZeroStatus::NonZero => return Err(CurveError::RadiusMismatch),
-            ZeroStatus::Unknown => false,
+            ZeroKnowledge::Zero => true,
+            ZeroKnowledge::NonZero => return Err(CurveError::RadiusMismatch),
+            ZeroKnowledge::Unknown => false,
         };
 
         Ok(Self::from_geometry(
@@ -610,7 +610,7 @@ impl CircularArc2 {
     /// The formula keeps the center computation in rational operations:
     /// `center = midpoint + left_perp(chord) * ((1 - b^2) / (4b))`.
     pub fn from_bulge(start: Point2, end: Point2, bulge: Real) -> CurveResult<Self> {
-        if start.distance_squared(&end).zero_status() == ZeroStatus::Zero {
+        if start.distance_squared(&end).zero_status() == ZeroKnowledge::Zero {
             return Err(CurveError::ZeroLengthLine);
         }
 
@@ -1384,9 +1384,9 @@ impl Segment2 {
     /// Zero bulge maps to a line. Nonzero bulge maps to a circular arc.
     pub fn from_bulge(start: Point2, end: Point2, bulge: Real) -> CurveResult<Self> {
         match bulge.zero_status() {
-            ZeroStatus::Zero => LineSeg2::try_new(start, end).map(Self::Line),
-            ZeroStatus::NonZero => CircularArc2::from_bulge(start, end, bulge).map(Self::Arc),
-            ZeroStatus::Unknown => Err(CurveError::AmbiguousBulge),
+            ZeroKnowledge::Zero => LineSeg2::try_new(start, end).map(Self::Line),
+            ZeroKnowledge::NonZero => CircularArc2::from_bulge(start, end, bulge).map(Self::Arc),
+            ZeroKnowledge::Unknown => Err(CurveError::AmbiguousBulge),
         }
     }
 

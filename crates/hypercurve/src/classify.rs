@@ -9,7 +9,7 @@
 
 use std::cmp::Ordering;
 
-use hyperreal::{Real, RealSign, ZeroKnowledge as ZeroStatus};
+use hyperreal::{Real, RealSign, ZeroKnowledge};
 
 use crate::{CurveContext, Point2};
 
@@ -143,7 +143,7 @@ pub(crate) fn orient2_real_expr(from: &Point2, to: &Point2, point: &Point2) -> R
 
 #[track_caller]
 pub(crate) fn real_sign(value: &Real, policy: &CurveContext) -> Option<RealSign> {
-    if value.zero_status() == ZeroStatus::Zero {
+    if value.zero_status() == ZeroKnowledge::Zero {
         return Some(RealSign::Zero);
     }
 
@@ -178,9 +178,9 @@ pub(crate) fn real_sign(value: &Real, policy: &CurveContext) -> Option<RealSign>
 
 pub(crate) fn is_zero(value: &Real, policy: &CurveContext) -> Option<bool> {
     match value.zero_status() {
-        ZeroStatus::Zero => Some(true),
-        ZeroStatus::NonZero => Some(false),
-        ZeroStatus::Unknown => real_sign(value, policy).map(|sign| sign == RealSign::Zero),
+        ZeroKnowledge::Zero => Some(true),
+        ZeroKnowledge::NonZero => Some(false),
+        ZeroKnowledge::Unknown => real_sign(value, policy).map(|sign| sign == RealSign::Zero),
     }
 }
 

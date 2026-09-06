@@ -6,7 +6,7 @@
 //! geometric computation split between exact representations, certified
 //! predicates, and explicit approximate output adapters.
 
-use hyperreal::{Real, ZeroKnowledge as ZeroStatus};
+use hyperreal::{Real, ZeroKnowledge};
 
 use std::cmp::Ordering;
 use std::sync::Arc;
@@ -37,7 +37,7 @@ pub enum BezierEndpoint {
 pub struct EndpointTangent2 {
     dx: Real,
     dy: Real,
-    zero_status: ZeroStatus,
+    zero_status: ZeroKnowledge,
 }
 
 impl EndpointTangent2 {
@@ -63,11 +63,11 @@ impl EndpointTangent2 {
     }
 
     /// Returns whether the derivative vector is structurally zero.
-    pub const fn zero_status(&self) -> ZeroStatus {
+    pub const fn zero_status(&self) -> ZeroKnowledge {
         self.zero_status
     }
 
-    pub(crate) fn into_components(self) -> (Real, Real, ZeroStatus) {
+    pub(crate) fn into_components(self) -> (Real, Real, ZeroKnowledge) {
         (self.dx, self.dy, self.zero_status)
     }
 }
@@ -467,7 +467,7 @@ impl QuadraticBezier2 {
     }
 
     /// Returns whether the endpoints are structurally known to coincide.
-    pub fn endpoints_coincident_status(&self) -> ZeroStatus {
+    pub fn endpoints_coincident_status(&self) -> ZeroKnowledge {
         self.start.distance_squared(&self.end).zero_status()
     }
 
@@ -650,7 +650,7 @@ impl CubicBezier2 {
     }
 
     /// Returns whether the endpoints are structurally known to coincide.
-    pub fn endpoints_coincident_status(&self) -> ZeroStatus {
+    pub fn endpoints_coincident_status(&self) -> ZeroKnowledge {
         self.start.distance_squared(&self.end).zero_status()
     }
 

@@ -18,7 +18,7 @@
 use std::cmp::Ordering;
 use std::collections::{BTreeMap, BTreeSet};
 
-use hyperreal::{Real, RealSign, ZeroKnowledge as ZeroStatus};
+use hyperreal::{Real, RealSign, ZeroKnowledge};
 
 use crate::arc_bezier::{rational_bezier_circular_arc, rational_quadratic_circular_arc};
 use crate::classify::{compare_reals, is_zero, real_sign};
@@ -9573,9 +9573,9 @@ fn edge_event_candidate(
     let residual_y = &delta_origin_y + &delta_velocity_y * &time;
     for residual in [&residual_x, &residual_y] {
         match residual.zero_status() {
-            ZeroStatus::Zero => {}
-            ZeroStatus::NonZero => return Ok(Ok(None)),
-            ZeroStatus::Unknown => {
+            ZeroKnowledge::Zero => {}
+            ZeroKnowledge::NonZero => return Ok(Ok(None)),
+            ZeroKnowledge::Unknown => {
                 return Ok(Err(StraightSkeletonBlocker2::UncertainWavefrontRelation));
             }
         }

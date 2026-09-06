@@ -2,7 +2,7 @@
 
 use std::{cmp::Ordering, sync::Arc, sync::OnceLock};
 
-use hyperreal::{Real, ZeroKnowledge as ZeroStatus};
+use hyperreal::{Real, ZeroKnowledge};
 
 use crate::bbox::{Aabb2, aabb_decided_misses_point, decided_contour_aabb, decided_segment_aabb};
 use crate::classify::{classify_oriented_line, compare_reals, is_zero};
@@ -967,9 +967,9 @@ fn closed_curve_string_status(curve: &CurveString2) -> CurveResult<Classificatio
 
 fn closure_status_from_distance(distance_squared: &Real) -> Classification<()> {
     match distance_squared.zero_status() {
-        ZeroStatus::Zero => Classification::Decided(()),
-        ZeroStatus::NonZero => Classification::Uncertain(UncertaintyReason::Boundary),
-        ZeroStatus::Unknown => match is_zero(distance_squared, &CurveContext::STRICT) {
+        ZeroKnowledge::Zero => Classification::Decided(()),
+        ZeroKnowledge::NonZero => Classification::Uncertain(UncertaintyReason::Boundary),
+        ZeroKnowledge::Unknown => match is_zero(distance_squared, &CurveContext::STRICT) {
             Some(true) => Classification::Decided(()),
             Some(false) => Classification::Uncertain(UncertaintyReason::Boundary),
             None => Classification::Uncertain(UncertaintyReason::RealSign),

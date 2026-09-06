@@ -1,6 +1,6 @@
 //! Two-dimensional points backed by [`hyperreal::Real`].
 
-use hyperreal::{Real, ZeroKnowledge as ZeroStatus};
+use hyperreal::{Real, ZeroKnowledge};
 use std::{fmt, sync::Arc};
 
 /// A two-dimensional point.
@@ -24,8 +24,8 @@ impl fmt::Debug for Point2 {
 impl PartialEq for Point2 {
     fn eq(&self, other: &Self) -> bool {
         Arc::ptr_eq(&self.0, &other.0)
-            || ((self.x() - other.x()).zero_status() == ZeroStatus::Zero
-                && (self.y() - other.y()).zero_status() == ZeroStatus::Zero)
+            || ((self.x() - other.x()).zero_status() == ZeroKnowledge::Zero
+                && (self.y() - other.y()).zero_status() == ZeroKnowledge::Zero)
     }
 }
 

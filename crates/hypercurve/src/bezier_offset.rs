@@ -55,7 +55,7 @@ use crate::{
     RationalBezierOverlapOrientation2, RationalQuadraticBezier2, Real, Similarity2,
     UncertaintyReason,
 };
-use hyperreal::{Rational as HyperRational, RealSign, ZeroKnowledge as ZeroStatus};
+use hyperreal::{Rational as HyperRational, RealSign, ZeroKnowledge};
 use hypersolve::{
     AlgebraicFiberDiagonalDeflationStatus, AlgebraicFiberPolynomialImageProjectionConfig,
     AlgebraicFiberPolynomialImageProjectionStatus, AlgebraicFiberProjectionStatus,
@@ -4854,7 +4854,7 @@ impl BezierAlgebraicSelectedFiberParameter2 {
             Some(RealSign::Zero) => return Err(CurveError::InvalidBezierRange),
             None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
         };
-        if scale == &Real::one() && offset.zero_status() == ZeroStatus::Zero {
+        if scale == &Real::one() && offset.zero_status() == ZeroKnowledge::Zero {
             return Ok(Classification::Decided(self.clone()));
         }
         let inverse_scale = (Real::one() / scale)?;
@@ -7085,7 +7085,7 @@ fn represented_affine_coordinate(
     let active = terms
         .iter()
         .filter_map(|(source, scale)| {
-            if scale.zero_status() == ZeroStatus::Zero {
+            if scale.zero_status() == ZeroKnowledge::Zero {
                 return None;
             }
             if let Some(value) = source.exact_point_witness() {
@@ -7099,10 +7099,10 @@ fn represented_affine_coordinate(
         return Classification::Decided(exact_real_algebraic_representation(&affine_offset));
     }
     let affine_image = |source: &AlgebraicRootRepresentation, scale: &Real, offset: &Real| {
-        if scale.zero_status() == ZeroStatus::Zero {
+        if scale.zero_status() == ZeroKnowledge::Zero {
             return Classification::Decided(exact_real_algebraic_representation(offset));
         }
-        if scale == &Real::one() && offset.zero_status() == ZeroStatus::Zero {
+        if scale == &Real::one() && offset.zero_status() == ZeroKnowledge::Zero {
             return Classification::Decided(source.clone());
         }
         let report = transform_algebraic_root_affine(
@@ -8425,7 +8425,7 @@ fn represented_tensor_nested_value_refined(
     if candidate
         .coefficients()
         .iter()
-        .all(|coefficient| coefficient.zero_status() == ZeroStatus::Zero)
+        .all(|coefficient| coefficient.zero_status() == ZeroKnowledge::Zero)
     {
         return represented_dense_value_refined(retained, sources);
     }
@@ -11931,14 +11931,15 @@ impl BezierAlgebraicCuspSemicircleMappedParameterData2 {
             };
         let certified = if semicircle.data.frame.chord_normal().is_some() {
             None
-        } else if tangential.zero_status() == ZeroStatus::Zero
+        } else if tangential.zero_status() == ZeroKnowledge::Zero
             || *tangent_dot_sign == RealSign::Zero
         {
             Some(signed_term(
                 &(-(radial.clone() * &turn)),
                 *tangent_cross_sign,
             )?)
-        } else if radial.zero_status() == ZeroStatus::Zero || *tangent_cross_sign == RealSign::Zero
+        } else if radial.zero_status() == ZeroKnowledge::Zero
+            || *tangent_cross_sign == RealSign::Zero
         {
             Some(signed_term(&tangential, *tangent_dot_sign)?)
         } else {
@@ -12457,10 +12458,10 @@ impl BezierAlgebraicCuspSemicircleMappedParameterData2 {
         // unique half-circle chart, so this mapped contact is strictly inside
         // that chart. Preserve those two endpoint orders without rebuilding
         // the higher-dimensional chord/parallel predicate during splitting.
-        if represented.zero_status() == ZeroStatus::Zero {
+        if represented.zero_status() == ZeroKnowledge::Zero {
             return Ok(Classification::Decided(std::cmp::Ordering::Greater));
         }
-        if (represented - Real::one()).zero_status() == ZeroStatus::Zero {
+        if (represented - Real::one()).zero_status() == ZeroKnowledge::Zero {
             return Ok(Classification::Decided(std::cmp::Ordering::Less));
         }
         let one_minus = Real::one() - represented;
@@ -13573,7 +13574,7 @@ impl BezierAlgebraicCuspSemicircleMappedParameterData2 {
                     )?)
                 }
                 Self::Parallel { map, contact } => Some(
-                    if dot_scale.zero_status() == ZeroStatus::Zero
+                    if dot_scale.zero_status() == ZeroKnowledge::Zero
                         && let Some(cross_scale_sign) =
                             real_sign(cross_scale, &CurveContext::STRICT)
                         && let Some(sign) = contact.tangent_cross_sign
@@ -13598,7 +13599,7 @@ impl BezierAlgebraicCuspSemicircleMappedParameterData2 {
                     ..
                 } => {
                     map.validate_policy(policy)?;
-                    if dot_scale.zero_status() == ZeroStatus::Zero
+                    if dot_scale.zero_status() == ZeroKnowledge::Zero
                         && let Some(scale) = real_sign(cross_scale, &CurveContext::STRICT)
                     {
                         Some(Classification::Decided(product_sign(
@@ -13621,7 +13622,7 @@ impl BezierAlgebraicCuspSemicircleMappedParameterData2 {
                     ..
                 } => {
                     map.validate_policy(policy)?;
-                    if dot_scale.zero_status() == ZeroStatus::Zero
+                    if dot_scale.zero_status() == ZeroKnowledge::Zero
                         && let Some(scale) = real_sign(cross_scale, &CurveContext::STRICT)
                     {
                         Some(Classification::Decided(product_sign(
@@ -16011,7 +16012,7 @@ impl BezierParallelAlgebraicCuspFrame2 {
         let denominator = &self.data.denominator;
         let Some(pivot) = denominator
             .iter()
-            .position(|coefficient| coefficient.zero_status() == ZeroStatus::NonZero)
+            .position(|coefficient| coefficient.zero_status() == ZeroKnowledge::NonZero)
         else {
             #[cfg(feature = "dispatch-trace")]
             hyperreal::dispatch_trace::record(
@@ -16036,7 +16037,7 @@ impl BezierParallelAlgebraicCuspFrame2 {
                     denominator_coefficient,
                 )
                 .zero_status()
-                    != ZeroStatus::Zero
+                    != ZeroKnowledge::Zero
                 {
                     return Ok(None);
                 }
@@ -16055,7 +16056,8 @@ impl BezierParallelAlgebraicCuspFrame2 {
             );
             return Ok(None);
         };
-        if (Real::dot2_refs([&x, &y], [&x, &y]) - Real::one()).zero_status() != ZeroStatus::Zero {
+        if (Real::dot2_refs([&x, &y], [&x, &y]) - Real::one()).zero_status() != ZeroKnowledge::Zero
+        {
             #[cfg(feature = "dispatch-trace")]
             hyperreal::dispatch_trace::record(
                 "hypercurve",
@@ -17609,8 +17611,8 @@ impl BezierAlgebraicCuspSemicircle2 {
                     return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
                 };
                 let expected_normal = (-anchor_tangent.1.clone(), anchor_tangent.0.clone());
-                if (frame_normal.0 - &expected_normal.0).zero_status() != ZeroStatus::Zero
-                    || (frame_normal.1 - &expected_normal.1).zero_status() != ZeroStatus::Zero
+                if (frame_normal.0 - &expected_normal.0).zero_status() != ZeroKnowledge::Zero
+                    || (frame_normal.1 - &expected_normal.1).zero_status() != ZeroKnowledge::Zero
                 {
                     return Err(CurveError::Topology(
                         "a selected chord-normal contact did not share its circle frame".into(),
@@ -31845,8 +31847,8 @@ impl BezierAlgebraicCuspSemicircle2 {
             let accepts_policy = displaced.accepts_policy(policy);
             let left_normal =
                 displaced.data.direction == BezierAlgebraicChordUnitDisplacement2::LeftNormal;
-            let zero_x = displaced.data.translation_x.zero_status() == ZeroStatus::Zero;
-            let zero_y = displaced.data.translation_y.zero_status() == ZeroStatus::Zero;
+            let zero_x = displaced.data.translation_x.zero_status() == ZeroKnowledge::Zero;
+            let zero_y = displaced.data.translation_y.zero_status() == ZeroKnowledge::Zero;
             let shares_center = displaced.source_endpoint().same_point(&center, policy);
             if !accepts_policy
                 || !left_normal
@@ -32841,9 +32843,9 @@ impl BezierAlgebraicCuspSemicircle2 {
                     "a chord-normal tangent crossed predicate policies".into(),
                 ));
             }
-            let diameter_sign = if parameter.zero_status() == ZeroStatus::Zero {
+            let diameter_sign = if parameter.zero_status() == ZeroKnowledge::Zero {
                 RealSign::Negative
-            } else if (parameter - Real::one()).zero_status() == ZeroStatus::Zero {
+            } else if (parameter - Real::one()).zero_status() == ZeroKnowledge::Zero {
                 RealSign::Positive
             } else {
                 return Ok(Classification::Decided(None));
@@ -41916,7 +41918,7 @@ impl BezierAlgebraicCuspSemicircleSelectedFiberParallelParameterMap2 {
                 &bivariate_scale(self.data.tangent_cross_source.rational.clone(), cross_scale),
                 &bivariate_scale(self.data.tangent_dot_source.center.clone(), dot_scale),
             ),
-            candidate: if dot_scale.zero_status() == ZeroStatus::Zero {
+            candidate: if dot_scale.zero_status() == ZeroKnowledge::Zero {
                 zero
             } else {
                 bivariate_scale(self.data.tangent_dot_source.candidate.clone(), dot_scale)
@@ -45694,7 +45696,7 @@ impl BezierAlgebraicCuspSemicircleChordParameterMap2 {
         // vanishes (notably at both selected-half endpoints), that sign is
         // the complete predicate authority regardless of the map's scalar
         // representation. Avoid expanding the same fact in a deeper field.
-        if dot_scale.zero_status() == ZeroStatus::Zero
+        if dot_scale.zero_status() == ZeroKnowledge::Zero
             && let Some(scale_sign) = real_sign(cross_scale, &self.data.policy)
         {
             return Ok(Classification::Decided(product_sign(
@@ -45752,7 +45754,7 @@ impl BezierAlgebraicCuspSemicircleChordParameterMap2 {
         }
         if let Some(system) = self.recursive_quadratic_line_system() {
             let retained = system.contact(contact.branch)?;
-            if cross_scale.zero_status() == ZeroStatus::Zero
+            if cross_scale.zero_status() == ZeroKnowledge::Zero
                 && let Some(tangent_dot_sign) = retained.tangent_dot_sign
                 && let Some(scale_sign) = real_sign(dot_scale, &self.data.policy)
             {
@@ -48473,7 +48475,7 @@ impl BezierAlgebraicCuspChordPoint2 {
                         &other_point.data.translation_x,
                     ),
                 };
-                if perpendicular.zero_status() == ZeroStatus::Zero {
+                if perpendicular.zero_status() == ZeroKnowledge::Zero {
                     let sign = match real_sign(delta, policy) {
                         Some(sign) => sign,
                         None => {
@@ -49019,9 +49021,9 @@ impl BezierAlgebraicCuspChordDerivedPoint2 {
     ) -> Option<&RationalBezierIntersectionPointEvidence2> {
         self.data.source.validate_policy(policy).ok()?;
         if self.data.radial_scale != Real::one()
-            || self.data.perpendicular_scale.zero_status() != ZeroStatus::Zero
-            || self.data.translation_x.zero_status() != ZeroStatus::Zero
-            || self.data.translation_y.zero_status() != ZeroStatus::Zero
+            || self.data.perpendicular_scale.zero_status() != ZeroKnowledge::Zero
+            || self.data.translation_x.zero_status() != ZeroKnowledge::Zero
+            || self.data.translation_y.zero_status() != ZeroKnowledge::Zero
         {
             return None;
         }
@@ -49046,8 +49048,8 @@ impl BezierAlgebraicCuspChordDerivedPoint2 {
     ) -> CurveResult<Option<std::cmp::Ordering>> {
         self.data.source.validate_policy(policy)?;
         other.data.source.validate_policy(policy)?;
-        if self.data.perpendicular_scale.zero_status() != ZeroStatus::Zero
-            || other.data.perpendicular_scale.zero_status() != ZeroStatus::Zero
+        if self.data.perpendicular_scale.zero_status() != ZeroKnowledge::Zero
+            || other.data.perpendicular_scale.zero_status() != ZeroKnowledge::Zero
             || self.data.radial_scale != other.data.radial_scale
             || self.data.translation_x != other.data.translation_x
             || self.data.translation_y != other.data.translation_y
@@ -49107,12 +49109,12 @@ impl BezierAlgebraicCuspChordDerivedPoint2 {
         other: &Self,
         policy: &CurveContext,
     ) -> CurveResult<Option<RealSign>> {
-        if self.data.perpendicular_scale.zero_status() != ZeroStatus::Zero
-            || other.data.perpendicular_scale.zero_status() != ZeroStatus::Zero
-            || self.data.translation_x.zero_status() != ZeroStatus::Zero
-            || self.data.translation_y.zero_status() != ZeroStatus::Zero
-            || other.data.translation_x.zero_status() != ZeroStatus::Zero
-            || other.data.translation_y.zero_status() != ZeroStatus::Zero
+        if self.data.perpendicular_scale.zero_status() != ZeroKnowledge::Zero
+            || other.data.perpendicular_scale.zero_status() != ZeroKnowledge::Zero
+            || self.data.translation_x.zero_status() != ZeroKnowledge::Zero
+            || self.data.translation_y.zero_status() != ZeroKnowledge::Zero
+            || other.data.translation_x.zero_status() != ZeroKnowledge::Zero
+            || other.data.translation_y.zero_status() != ZeroKnowledge::Zero
             || !self.data.source.shares_exact_evidence(&other.data.source)
             || self.data.source.semicircle() != other.data.source.semicircle()
         {
@@ -49490,9 +49492,9 @@ impl BezierAlgebraicCuspChordDerivedPoint2 {
                 &transported_source_point.data.source,
                 RationalBezierIntersectionPointEvidence2::AlgebraicCuspChordDerived(point)
                     if point.data.radial_scale == Real::one()
-                        && point.data.perpendicular_scale.zero_status() == ZeroStatus::Zero
-                        && point.data.translation_x.zero_status() == ZeroStatus::Zero
-                        && point.data.translation_y.zero_status() == ZeroStatus::Zero
+                        && point.data.perpendicular_scale.zero_status() == ZeroKnowledge::Zero
+                        && point.data.translation_x.zero_status() == ZeroKnowledge::Zero
+                        && point.data.translation_y.zero_status() == ZeroKnowledge::Zero
                         && matches!(
                             &point.data.source,
                             BezierAlgebraicCuspDerivedPointSource2::Mapped {
@@ -49895,9 +49897,9 @@ impl BezierAlgebraicCuspChordDerivedPoint2 {
         local_only: bool,
     ) -> Classification<Aabb2> {
         if self.data.radial_scale == Real::one()
-            && self.data.perpendicular_scale.zero_status() == ZeroStatus::Zero
-            && self.data.translation_x.zero_status() == ZeroStatus::Zero
-            && self.data.translation_y.zero_status() == ZeroStatus::Zero
+            && self.data.perpendicular_scale.zero_status() == ZeroKnowledge::Zero
+            && self.data.translation_x.zero_status() == ZeroKnowledge::Zero
+            && self.data.translation_y.zero_status() == ZeroKnowledge::Zero
         {
             return self.data.source.conservative_bounds_refined_impl(
                 refinement_steps,
@@ -49905,7 +49907,7 @@ impl BezierAlgebraicCuspChordDerivedPoint2 {
                 local_only,
             );
         }
-        if self.data.perpendicular_scale.zero_status() == ZeroStatus::Zero
+        if self.data.perpendicular_scale.zero_status() == ZeroKnowledge::Zero
             && let Some((map, contact)) = self.data.source.chord_map_contact()
         {
             if map.validate_policy(policy).is_err() {
@@ -49956,7 +49958,7 @@ impl BezierAlgebraicCuspChordDerivedPoint2 {
             };
             return Ok(represented_order_to_real(coordinate, value, policy));
         }
-        if self.data.perpendicular_scale.zero_status() == ZeroStatus::Zero
+        if self.data.perpendicular_scale.zero_status() == ZeroKnowledge::Zero
             && let Some((map, contact)) = self.data.source.chord_map_contact()
         {
             map.validate_policy(policy)?;
@@ -50042,8 +50044,8 @@ impl BezierAlgebraicCuspChordDerivedPoint2 {
     ) -> CurveResult<Option<(Real, Real)>> {
         self.data.source.validate_policy(policy)?;
         other.data.source.validate_policy(policy)?;
-        if self.data.perpendicular_scale.zero_status() != ZeroStatus::Zero
-            || other.data.perpendicular_scale.zero_status() != ZeroStatus::Zero
+        if self.data.perpendicular_scale.zero_status() != ZeroKnowledge::Zero
+            || other.data.perpendicular_scale.zero_status() != ZeroKnowledge::Zero
             || self.data.radial_scale != other.data.radial_scale
             || self.data.perpendicular_scale != other.data.perpendicular_scale
             || self.data.translation_x != other.data.translation_x
@@ -50106,8 +50108,8 @@ impl BezierAlgebraicCuspChordDerivedPoint2 {
         strict_parallel_only: bool,
         policy: &CurveContext,
     ) -> CurveResult<Option<std::cmp::Ordering>> {
-        if self.data.perpendicular_scale.zero_status() != ZeroStatus::Zero
-            || other.data.perpendicular_scale.zero_status() != ZeroStatus::Zero
+        if self.data.perpendicular_scale.zero_status() != ZeroKnowledge::Zero
+            || other.data.perpendicular_scale.zero_status() != ZeroKnowledge::Zero
             || self.data.radial_scale != other.data.radial_scale
             || self.data.perpendicular_scale != other.data.perpendicular_scale
             || self.data.translation_x != other.data.translation_x
@@ -50116,7 +50118,7 @@ impl BezierAlgebraicCuspChordDerivedPoint2 {
         {
             return Ok(None);
         }
-        if self.data.radial_scale.zero_status() == ZeroStatus::Zero && !strict_parallel_only {
+        if self.data.radial_scale.zero_status() == ZeroKnowledge::Zero && !strict_parallel_only {
             return Ok(Some(std::cmp::Ordering::Equal));
         }
         let (
@@ -50169,7 +50171,7 @@ impl BezierAlgebraicCuspChordDerivedPoint2 {
     ) -> CurveResult<Classification<std::cmp::Ordering>> {
         if let Some((map, contact)) = self.data.source.chord_map_contact() {
             map.validate_policy(policy)?;
-            if self.data.perpendicular_scale.zero_status() == ZeroStatus::Zero {
+            if self.data.perpendicular_scale.zero_status() == ZeroKnowledge::Zero {
                 return map.derived_linear_order_to_real(
                     contact,
                     &self.data.radial_scale,
@@ -50237,8 +50239,8 @@ impl BezierAlgebraicCuspChordDerivedPoint2 {
         if self.data.source.validate_policy(policy).is_err() {
             return Classification::Uncertain(UncertaintyReason::Unsupported);
         }
-        if self.data.perpendicular_scale.zero_status() == ZeroStatus::Zero
-            && other_perpendicular_scale.zero_status() == ZeroStatus::Zero
+        if self.data.perpendicular_scale.zero_status() == ZeroKnowledge::Zero
+            && other_perpendicular_scale.zero_status() == ZeroKnowledge::Zero
             && let Some((map, contact)) = self.data.source.chord_map_contact()
         {
             return match map.derived_points_equal(
@@ -50269,7 +50271,7 @@ impl BezierAlgebraicCuspChordDerivedPoint2 {
         &self,
         axis: Axis2,
     ) -> Option<BezierAlgebraicCuspTwoTermExpression2> {
-        if self.data.perpendicular_scale.zero_status() != ZeroStatus::Zero {
+        if self.data.perpendicular_scale.zero_status() != ZeroKnowledge::Zero {
             return None;
         }
         let (map, _) = self.data.source.chord_map_contact()?;
@@ -50298,8 +50300,8 @@ impl BezierAlgebraicCuspChordDerivedPoint2 {
     ) -> Option<Real> {
         let source_semicircle = self.data.source.semicircle();
         if source_semicircle.data.frame != semicircle.data.frame
-            || self.data.translation_x.zero_status() != ZeroStatus::Zero
-            || self.data.translation_y.zero_status() != ZeroStatus::Zero
+            || self.data.translation_x.zero_status() != ZeroKnowledge::Zero
+            || self.data.translation_y.zero_status() != ZeroKnowledge::Zero
         {
             return None;
         }
@@ -50325,7 +50327,7 @@ impl BezierAlgebraicCuspChordDerivedPoint2 {
         &self,
         semicircle: &BezierAlgebraicCuspSemicircle2,
     ) -> CurveResult<Option<RealSign>> {
-        if self.data.perpendicular_scale.zero_status() != ZeroStatus::Zero
+        if self.data.perpendicular_scale.zero_status() != ZeroKnowledge::Zero
             || self.data.translation_x != Real::zero()
             || self.data.translation_y != Real::zero()
         {
@@ -50382,7 +50384,7 @@ impl BezierAlgebraicCuspChordDerivedPoint2 {
                 |sign| Classification::Decided(Some(sign)),
             ));
         }
-        if self.data.perpendicular_scale.zero_status() != ZeroStatus::Zero {
+        if self.data.perpendicular_scale.zero_status() != ZeroKnowledge::Zero {
             return Ok(Classification::Decided(None));
         }
         let Some((map, contact)) = self.data.source.chord_map_contact() else {
@@ -50580,7 +50582,7 @@ impl BezierAlgebraicCuspChordDerivedPoint2 {
         branch: i8,
         policy: &CurveContext,
     ) -> CurveResult<Classification<Option<RealSign>>> {
-        if self.data.perpendicular_scale.zero_status() != ZeroStatus::Zero {
+        if self.data.perpendicular_scale.zero_status() != ZeroKnowledge::Zero {
             return Ok(Classification::Decided(None));
         }
         let Some((map, contact)) = self.data.source.chord_map_contact() else {
@@ -50813,13 +50815,13 @@ impl BezierAlgebraicCuspChordDerivedPoint2 {
         other: &BezierAlgebraicChordParallelPoint2,
         policy: &CurveContext,
     ) -> Option<(Real, BezierAlgebraicChord2)> {
-        if self.data.perpendicular_scale.zero_status() != ZeroStatus::Zero
-            || self.data.translation_x.zero_status() != ZeroStatus::Zero
-            || self.data.translation_y.zero_status() != ZeroStatus::Zero
+        if self.data.perpendicular_scale.zero_status() != ZeroKnowledge::Zero
+            || self.data.translation_x.zero_status() != ZeroKnowledge::Zero
+            || self.data.translation_y.zero_status() != ZeroKnowledge::Zero
             || !other.accepts_policy(policy)
             || other.data.direction != BezierAlgebraicChordUnitDisplacement2::LeftNormal
-            || other.data.translation_x.zero_status() != ZeroStatus::Zero
-            || other.data.translation_y.zero_status() != ZeroStatus::Zero
+            || other.data.translation_x.zero_status() != ZeroKnowledge::Zero
+            || other.data.translation_y.zero_status() != ZeroKnowledge::Zero
         {
             return None;
         }
@@ -50918,13 +50920,13 @@ impl BezierAlgebraicCuspChordDerivedPoint2 {
         axis: Axis2,
         policy: &CurveContext,
     ) -> Option<CurveResult<Classification<std::cmp::Ordering>>> {
-        if self.data.perpendicular_scale.zero_status() != ZeroStatus::Zero
-            || self.data.translation_x.zero_status() != ZeroStatus::Zero
-            || self.data.translation_y.zero_status() != ZeroStatus::Zero
+        if self.data.perpendicular_scale.zero_status() != ZeroKnowledge::Zero
+            || self.data.translation_x.zero_status() != ZeroKnowledge::Zero
+            || self.data.translation_y.zero_status() != ZeroKnowledge::Zero
             || !other.accepts_policy(policy)
             || other.data.direction != BezierAlgebraicChordUnitDisplacement2::LeftNormal
-            || other.data.translation_x.zero_status() != ZeroStatus::Zero
-            || other.data.translation_y.zero_status() != ZeroStatus::Zero
+            || other.data.translation_x.zero_status() != ZeroKnowledge::Zero
+            || other.data.translation_y.zero_status() != ZeroKnowledge::Zero
         {
             return None;
         }
@@ -52793,7 +52795,7 @@ impl BezierAlgebraicCuspSemicircleParameter2 {
                 parameter,
                 ..
             }) = data.coincident_tangent_source()
-            && parallel.distance().zero_status() == ZeroStatus::Zero
+            && parallel.distance().zero_status() == ZeroKnowledge::Zero
         {
             let source = parallel.source().to_rational_bezier()?;
             if let Some(point) = exact_contact_point_evidence(&source, parameter, policy)? {
@@ -54645,7 +54647,7 @@ impl TrivariatePolynomial2 {
             && coefficients.last().is_some_and(|rows| {
                 rows.iter()
                     .flatten()
-                    .all(|coefficient| coefficient.zero_status() == ZeroStatus::Zero)
+                    .all(|coefficient| coefficient.zero_status() == ZeroKnowledge::Zero)
             })
         {
             coefficients.pop();
@@ -54654,7 +54656,7 @@ impl TrivariatePolynomial2 {
             && coefficients.iter().all(|rows| {
                 rows[second_count - 1]
                     .iter()
-                    .all(|coefficient| coefficient.zero_status() == ZeroStatus::Zero)
+                    .all(|coefficient| coefficient.zero_status() == ZeroKnowledge::Zero)
             })
         {
             second_count -= 1;
@@ -54662,7 +54664,7 @@ impl TrivariatePolynomial2 {
         while third_count > 1
             && coefficients.iter().all(|rows| {
                 rows.iter()
-                    .all(|row| row[third_count - 1].zero_status() == ZeroStatus::Zero)
+                    .all(|row| row[third_count - 1].zero_status() == ZeroKnowledge::Zero)
             })
         {
             third_count -= 1;
@@ -54760,7 +54762,7 @@ impl TrivariatePolynomial2 {
         let mut coefficients =
             try_zero_trivariate_coefficients([dimensions.0, dimensions.1, dimensions.2])?;
         for (term, scale) in terms {
-            if scale.zero_status() == ZeroStatus::Zero {
+            if scale.zero_status() == ZeroKnowledge::Zero {
                 continue;
             }
             for (first, rows) in term.coefficients.iter().enumerate() {
@@ -54998,7 +55000,7 @@ impl QuadrivariatePolynomial2 {
         });
         let mut result = Self::zero(dimensions)?;
         for (term, scale) in terms {
-            if scale.zero_status() == ZeroStatus::Zero {
+            if scale.zero_status() == ZeroKnowledge::Zero {
                 continue;
             }
             for (index, coefficient) in term.coefficients.iter().enumerate() {
@@ -56559,7 +56561,7 @@ impl BezierRecursiveQuadraticValue2 {
             || difference
                 .exact_rational_normal_form()
                 .is_some_and(|difference| difference.is_zero())
-            || difference.zero_status() == ZeroStatus::Zero;
+            || difference.zero_status() == ZeroKnowledge::Zero;
         #[cfg(feature = "dispatch-trace")]
         if equivalent {
             hyperreal::dispatch_trace::record(
@@ -56795,7 +56797,7 @@ impl BezierRecursiveQuadraticValue2 {
                 polynomial
                     .coefficients()
                     .iter()
-                    .all(|coefficient| coefficient.zero_status() == ZeroStatus::Zero)
+                    .all(|coefficient| coefficient.zero_status() == ZeroKnowledge::Zero)
             }),
             BezierRecursiveQuadraticValueData2::Extension {
                 retained, radical, ..
@@ -57110,7 +57112,7 @@ impl BezierRecursiveQuadraticValue2 {
     /// particular, this helper never applies APPROXIMATE_512 equality.
     fn exact_real_witness_sign_through(&self, minimum_precision: i32) -> Option<RealSign> {
         let value = self.exact_real_value_with_retained_witnesses()?;
-        if value.zero_status() == ZeroStatus::Zero {
+        if value.zero_status() == ZeroKnowledge::Zero {
             return Some(RealSign::Zero);
         }
         value
@@ -57430,7 +57432,7 @@ impl BezierRecursiveQuadraticValue2 {
                     value.certified_sign_until(-512).sign(),
                 );
             }
-            if value.zero_status() == ZeroStatus::Zero {
+            if value.zero_status() == ZeroKnowledge::Zero {
                 #[cfg(feature = "dispatch-trace")]
                 hyperreal::dispatch_trace::record(
                     "hypercurve",
@@ -58539,7 +58541,7 @@ impl BezierRecursiveMonotoneParameter2 {
     ) -> CurveResult<Classification<RealSign>> {
         let Some(_) = coefficients
             .iter()
-            .rposition(|coefficient| coefficient.zero_status() != ZeroStatus::Zero)
+            .rposition(|coefficient| coefficient.zero_status() != ZeroKnowledge::Zero)
         else {
             return Ok(Classification::Decided(RealSign::Zero));
         };
@@ -58606,7 +58608,7 @@ impl BezierRecursiveMonotoneParameter2 {
     ) -> CurveResult<Classification<RealSign>> {
         let Some(_) = coefficients
             .iter()
-            .rposition(|coefficient| coefficient.zero_status() != ZeroStatus::Zero)
+            .rposition(|coefficient| coefficient.zero_status() != ZeroKnowledge::Zero)
         else {
             return Ok(Classification::Decided(RealSign::Zero));
         };
@@ -59368,7 +59370,7 @@ impl BezierRecursiveProjectiveParameter2 {
         if coefficients
             .iter()
             .skip(degree.saturating_add(1))
-            .any(|coefficient| coefficient.zero_status() != ZeroStatus::Zero)
+            .any(|coefficient| coefficient.zero_status() != ZeroKnowledge::Zero)
         {
             return None;
         }
@@ -59404,7 +59406,7 @@ impl BezierRecursiveProjectiveParameter2 {
         self.validate_policy(policy)?;
         let Some(degree) = coefficients
             .iter()
-            .rposition(|coefficient| coefficient.zero_status() != ZeroStatus::Zero)
+            .rposition(|coefficient| coefficient.zero_status() != ZeroKnowledge::Zero)
         else {
             return Ok(Classification::Decided(RealSign::Zero));
         };
@@ -61196,7 +61198,7 @@ fn recursive_quadratic_polynomial_projection(
                             select(expression)
                                 .coefficients()
                                 .iter()
-                                .all(|coefficient| coefficient.zero_status() == ZeroStatus::Zero)
+                                .all(|coefficient| coefficient.zero_status() == ZeroKnowledge::Zero)
                         })
                     };
                 let component =
@@ -63987,7 +63989,7 @@ fn bivariate_first_active_degree(polynomial: &BivariatePolynomial) -> usize {
         .iter()
         .rposition(|row| {
             row.iter()
-                .any(|coefficient| coefficient.zero_status() != ZeroStatus::Zero)
+                .any(|coefficient| coefficient.zero_status() != ZeroKnowledge::Zero)
         })
         .unwrap_or(0)
 }
@@ -69649,7 +69651,7 @@ fn dense_strict_interval_sign(value: &BezierAlgebraicChordRealInterval2) -> Opti
     // This is substantially smaller than projecting a recursive algebraic
     // norm for tiny but already-known-nonzero endpoint values.
     let certified_nonzero_sign = |value: &Real| {
-        (value.zero_status() == ZeroStatus::NonZero)
+        (value.zero_status() == ZeroKnowledge::NonZero)
             .then(|| {
                 value
                     .immediate_sign()
@@ -69666,8 +69668,8 @@ fn dense_strict_interval_sign(value: &BezierAlgebraicChordRealInterval2) -> Opti
         Some(RealSign::Negative)
     } else if lower_sign == Some(RealSign::Positive) {
         Some(RealSign::Positive)
-    } else if value.lower.zero_status() == ZeroStatus::Zero
-        && value.upper.zero_status() == ZeroStatus::Zero
+    } else if value.lower.zero_status() == ZeroKnowledge::Zero
+        && value.upper.zero_status() == ZeroKnowledge::Zero
     {
         Some(RealSign::Zero)
     } else {
@@ -70158,7 +70160,7 @@ fn dense_two_positive_square_root_sum_sign_at_projected_zero(
         polynomial
             .coefficients()
             .iter()
-            .all(|coefficient| coefficient.zero_status() == ZeroStatus::Zero)
+            .all(|coefficient| coefficient.zero_status() == ZeroKnowledge::Zero)
     };
     let nonzero_components = [
         &expression.rational,
@@ -71766,7 +71768,7 @@ impl BezierAlgebraicChord2 {
         let structurally_zero = |coefficients: &[Real]| {
             coefficients
                 .iter()
-                .all(|coefficient| coefficient.zero_status() == ZeroStatus::Zero)
+                .all(|coefficient| coefficient.zero_status() == ZeroKnowledge::Zero)
         };
         // One certified nonzero component is a complete monotone-axis proof.
         // Do not solve the complementary component merely to discover an
@@ -71957,7 +71959,7 @@ impl BezierAlgebraicChord2 {
             strict_common_retained_line_unit_tangent(&start, &end, parameter_axis, policy)
         });
         let pair_axis_aligned = pair_unit_tangent.as_ref().is_some_and(|(x, y)| {
-            x.zero_status() == ZeroStatus::Zero || y.zero_status() == ZeroStatus::Zero
+            x.zero_status() == ZeroKnowledge::Zero || y.zero_status() == ZeroKnowledge::Zero
         });
         // A selected coordinate can be constant without being a rational
         // literal.  Retain that STRICT proof here: later round joins need the
@@ -72776,8 +72778,8 @@ impl BezierAlgebraicChord2 {
             || start.at_end == end.at_end
             || start.data.source_point.is_some()
             || start.data.direction != BezierAlgebraicChordUnitDisplacement2::LeftNormal
-            || start.data.translation_x.zero_status() != ZeroStatus::Zero
-            || start.data.translation_y.zero_status() != ZeroStatus::Zero
+            || start.data.translation_x.zero_status() != ZeroKnowledge::Zero
+            || start.data.translation_y.zero_status() != ZeroKnowledge::Zero
         {
             return None;
         }
@@ -73783,7 +73785,7 @@ impl BezierAlgebraicChord2 {
                 } else {
                     -512
                 };
-                let sign = (value.zero_status() == ZeroStatus::Zero)
+                let sign = (value.zero_status() == ZeroKnowledge::Zero)
                     .then_some(RealSign::Zero)
                     .or_else(|| value.immediate_sign())
                     .or_else(|| value.certified_sign_until(minimum_precision).sign())
@@ -77737,7 +77739,7 @@ impl BezierAlgebraicChord2 {
         let (tangent_x_coefficients, tangent_y_coefficients) = frame_tangent
             .map(|frame| (&frame.x[..], &frame.y[..]))
             .unwrap_or((&differential.tangent_x, &differential.tangent_y));
-        if parallel.distance().zero_status() != ZeroStatus::Zero
+        if parallel.distance().zero_status() != ZeroKnowledge::Zero
             && let Classification::Uncertain(reason) = policy.strict_predicate_pass(|| {
                 BezierParallel2::certify_regular_tangent_field(
                     tangent_x_coefficients,
@@ -85907,9 +85909,9 @@ pub(crate) fn algebraic_chord_point_linear_order_to_exact(
         let value = coefficient_x * origin.x() + coefficient_y * origin.y();
         return point.linear_order_to_real(coefficient_x, coefficient_y, &value, policy);
     }
-    let cardinal_axis = if coefficient_y.zero_status() == ZeroStatus::Zero {
+    let cardinal_axis = if coefficient_y.zero_status() == ZeroKnowledge::Zero {
         Some((Axis2::X, origin.x(), coefficient_x))
-    } else if coefficient_x.zero_status() == ZeroStatus::Zero {
+    } else if coefficient_x.zero_status() == ZeroKnowledge::Zero {
         Some((Axis2::Y, origin.y(), coefficient_y))
     } else {
         None
@@ -86638,7 +86640,7 @@ impl BezierAlgebraicChord2 {
         policy: &CurveContext,
     ) -> bool {
         if !policy.accepts_retained_policy(point.data.policy)
-            || point.data.tangent_distance.zero_status() != ZeroStatus::Zero
+            || point.data.tangent_distance.zero_status() != ZeroKnowledge::Zero
         {
             return false;
         }
@@ -87006,7 +87008,7 @@ impl BezierAlgebraicChord2 {
                     })
                 });
         }
-        if dot_scale.zero_status() == ZeroStatus::Zero
+        if dot_scale.zero_status() == ZeroKnowledge::Zero
             && let Some(cross_scale_sign @ (RealSign::Negative | RealSign::Positive)) =
                 real_sign(cross_scale, &CurveContext::STRICT)
             && let Some(sign) = self.retained_tangent_cross_sign(other, policy)
@@ -88114,7 +88116,7 @@ impl BezierAlgebraicChord2 {
             let compact_real = incidence.exact_real_value_with_retained_witnesses();
             let compact_real_zero = compact_real
                 .as_ref()
-                .is_some_and(|value| value.zero_status() == ZeroStatus::Zero);
+                .is_some_and(|value| value.zero_status() == ZeroKnowledge::Zero);
             #[cfg(test)]
             if std::env::var_os("HYPERCURVE_DEBUG_CHORD_PAIR_SIDES").is_some() {
                 eprintln!(
@@ -91792,14 +91794,14 @@ impl BezierAlgebraicChordParallelPoint2 {
         };
         let radical_sign = real_sign(&normal_delta, &CurveContext::STRICT);
         let retained_sign = if self.data.source_point.is_none()
-            && source.data.parallel.distance().zero_status() == ZeroStatus::Zero
-            && source.data.tangent_distance.zero_status() == ZeroStatus::Zero
-            && source.data.translation_x.zero_status() == ZeroStatus::Zero
-            && source.data.translation_y.zero_status() == ZeroStatus::Zero
-            && self.data.translation_x.zero_status() == ZeroStatus::Zero
-            && self.data.translation_y.zero_status() == ZeroStatus::Zero
-            && start.data.translation_x.zero_status() == ZeroStatus::Zero
-            && start.data.translation_y.zero_status() == ZeroStatus::Zero
+            && source.data.parallel.distance().zero_status() == ZeroKnowledge::Zero
+            && source.data.tangent_distance.zero_status() == ZeroKnowledge::Zero
+            && source.data.translation_x.zero_status() == ZeroKnowledge::Zero
+            && source.data.translation_y.zero_status() == ZeroKnowledge::Zero
+            && self.data.translation_x.zero_status() == ZeroKnowledge::Zero
+            && self.data.translation_y.zero_status() == ZeroKnowledge::Zero
+            && start.data.translation_x.zero_status() == ZeroKnowledge::Zero
+            && start.data.translation_y.zero_status() == ZeroKnowledge::Zero
             && source.data.frame_tangent.is_none()
         {
             let point_index = usize::from(self.at_end);
@@ -92109,8 +92111,8 @@ impl BezierAlgebraicChordParallelPoint2 {
         // translations are folded into `distance` by `translated`, so this
         // certificate survives subsequent exact offsets without projection.
         if self.accepts_policy(policy)
-            && self.data.translation_x.zero_status() == ZeroStatus::Zero
-            && self.data.translation_y.zero_status() == ZeroStatus::Zero
+            && self.data.translation_x.zero_status() == ZeroKnowledge::Zero
+            && self.data.translation_y.zero_status() == ZeroKnowledge::Zero
             && let Some(source_point) = self.data.source_point.as_deref()
         {
             let center = match semicircle.center_point_evidence(policy)? {
@@ -92133,8 +92135,8 @@ impl BezierAlgebraicChordParallelPoint2 {
         if !self.accepts_policy(policy)
             || self.data.source_point.is_some()
             || self.data.direction != BezierAlgebraicChordUnitDisplacement2::LeftNormal
-            || self.data.translation_x.zero_status() != ZeroStatus::Zero
-            || self.data.translation_y.zero_status() != ZeroStatus::Zero
+            || self.data.translation_x.zero_status() != ZeroKnowledge::Zero
+            || self.data.translation_y.zero_status() != ZeroKnowledge::Zero
         {
             return Ok(None);
         }
@@ -92144,8 +92146,8 @@ impl BezierAlgebraicChordParallelPoint2 {
             return Ok(None);
         };
         source.data.source.validate_policy(policy)?;
-        if source.data.translation_x.zero_status() != ZeroStatus::Zero
-            || source.data.translation_y.zero_status() != ZeroStatus::Zero
+        if source.data.translation_x.zero_status() != ZeroKnowledge::Zero
+            || source.data.translation_y.zero_status() != ZeroKnowledge::Zero
         {
             return Ok(None);
         }
@@ -92471,9 +92473,9 @@ impl BezierAlgebraicChordParallelPoint2 {
         {
             return Classification::Decided(self.at_end == other.at_end);
         }
-        if self.data.distance.zero_status() == ZeroStatus::Zero
-            && self.data.translation_x.zero_status() == ZeroStatus::Zero
-            && self.data.translation_y.zero_status() == ZeroStatus::Zero
+        if self.data.distance.zero_status() == ZeroKnowledge::Zero
+            && self.data.translation_x.zero_status() == ZeroKnowledge::Zero
+            && self.data.translation_y.zero_status() == ZeroKnowledge::Zero
         {
             let same = self.source_endpoint().same_point(other, policy);
             if matches!(same, Classification::Decided(_)) {
@@ -92952,7 +92954,7 @@ impl BezierAnalyticParallelPoint2 {
         policy: &CurveContext,
     ) -> CurveResult<Option<crate::classify::LineSide>> {
         if !policy.accepts_retained_policy(self.data.policy)
-            || self.data.tangent_distance.zero_status() != ZeroStatus::Zero
+            || self.data.tangent_distance.zero_status() != ZeroKnowledge::Zero
         {
             return Ok(None);
         }
@@ -93028,9 +93030,9 @@ impl BezierAnalyticParallelPoint2 {
         policy: &CurveContext,
     ) -> CurveResult<bool> {
         if !policy.accepts_retained_policy(self.data.policy)
-            || self.data.tangent_distance.zero_status() != ZeroStatus::Zero
-            || self.data.translation_x.zero_status() != ZeroStatus::Zero
-            || self.data.translation_y.zero_status() != ZeroStatus::Zero
+            || self.data.tangent_distance.zero_status() != ZeroKnowledge::Zero
+            || self.data.translation_x.zero_status() != ZeroKnowledge::Zero
+            || self.data.translation_y.zero_status() != ZeroKnowledge::Zero
         {
             return Ok(false);
         }
@@ -93061,9 +93063,9 @@ impl BezierAnalyticParallelPoint2 {
         policy: &CurveContext,
     ) -> CurveResult<Option<crate::classify::LineSide>> {
         if !policy.accepts_retained_policy(self.data.policy)
-            || self.data.tangent_distance.zero_status() != ZeroStatus::Zero
-            || self.data.translation_x.zero_status() != ZeroStatus::Zero
-            || self.data.translation_y.zero_status() != ZeroStatus::Zero
+            || self.data.tangent_distance.zero_status() != ZeroKnowledge::Zero
+            || self.data.translation_x.zero_status() != ZeroKnowledge::Zero
+            || self.data.translation_y.zero_status() != ZeroKnowledge::Zero
         {
             return Ok(None);
         }
@@ -93614,10 +93616,10 @@ impl BezierAnalyticParallelPoint2 {
         shared_endpoint: &RationalBezierIntersectionPointEvidence2,
         policy: &CurveContext,
     ) -> Option<&'a RationalBezierIntersectionPointEvidence2> {
-        if self.data.parallel.distance().zero_status() != ZeroStatus::Zero
-            || self.data.tangent_distance.zero_status() != ZeroStatus::Zero
-            || self.data.translation_x.zero_status() != ZeroStatus::Zero
-            || self.data.translation_y.zero_status() != ZeroStatus::Zero
+        if self.data.parallel.distance().zero_status() != ZeroKnowledge::Zero
+            || self.data.tangent_distance.zero_status() != ZeroKnowledge::Zero
+            || self.data.translation_x.zero_status() != ZeroKnowledge::Zero
+            || self.data.translation_y.zero_status() != ZeroKnowledge::Zero
             || !policy.accepts_retained_policy(self.data.policy)
         {
             return None;
@@ -93814,10 +93816,10 @@ impl BezierAnalyticParallelPoint2 {
         policy: &CurveContext,
     ) -> CurveResult<Option<Classification<Vec<BezierParameter2>>>> {
         if !policy.accepts_retained_policy(self.data.policy)
-            || self.data.parallel.distance().zero_status() != ZeroStatus::Zero
-            || self.data.tangent_distance.zero_status() != ZeroStatus::Zero
-            || self.data.translation_x.zero_status() != ZeroStatus::Zero
-            || self.data.translation_y.zero_status() != ZeroStatus::Zero
+            || self.data.parallel.distance().zero_status() != ZeroKnowledge::Zero
+            || self.data.tangent_distance.zero_status() != ZeroKnowledge::Zero
+            || self.data.translation_x.zero_status() != ZeroKnowledge::Zero
+            || self.data.translation_y.zero_status() != ZeroKnowledge::Zero
         {
             return Ok(None);
         }
@@ -93846,7 +93848,7 @@ impl BezierAnalyticParallelPoint2 {
             .iter()
             .skip(1)
             .flatten()
-            .all(|coefficient| coefficient.zero_status() == ZeroStatus::Zero)
+            .all(|coefficient| coefficient.zero_status() == ZeroKnowledge::Zero)
         {
             let coefficients = equation
                 .coefficients
@@ -94289,8 +94291,8 @@ impl BezierAnalyticParallelPoint2 {
         else {
             return Ok(Classification::Decided(None));
         };
-        let zero_frame = self.data.parallel.distance().zero_status() == ZeroStatus::Zero
-            && self.data.tangent_distance.zero_status() == ZeroStatus::Zero;
+        let zero_frame = self.data.parallel.distance().zero_status() == ZeroKnowledge::Zero
+            && self.data.tangent_distance.zero_status() == ZeroKnowledge::Zero;
         let point = if zero_frame {
             BezierRecursiveQuadraticProjectivePoint2 {
                 x: translated_x,
@@ -94304,7 +94306,7 @@ impl BezierAnalyticParallelPoint2 {
             for component in [tangent_x, tangent_y] {
                 if component
                     .iter()
-                    .all(|coefficient| coefficient.zero_status() == ZeroStatus::Zero)
+                    .all(|coefficient| coefficient.zero_status() == ZeroKnowledge::Zero)
                 {
                     continue;
                 }
@@ -94514,8 +94516,8 @@ impl BezierAnalyticParallelPoint2 {
         let Some(one) = tensor(std::slice::from_ref(&Real::one())) else {
             return Ok(Classification::Decided(None));
         };
-        let zero_frame = self.data.parallel.distance().zero_status() == ZeroStatus::Zero
-            && self.data.tangent_distance.zero_status() == ZeroStatus::Zero;
+        let zero_frame = self.data.parallel.distance().zero_status() == ZeroKnowledge::Zero
+            && self.data.tangent_distance.zero_status() == ZeroKnowledge::Zero;
         let point = if zero_frame {
             let Some(field) =
                 BezierRecursiveQuadraticField2::base(vec![parameter_source], one.clone(), one)
@@ -94653,9 +94655,9 @@ impl BezierAnalyticParallelPoint2 {
             ));
         }
         if self.data.parallel != other.data.parallel
-            || self.data.parallel.distance().zero_status() != ZeroStatus::Zero
-            || self.data.tangent_distance.zero_status() != ZeroStatus::Zero
-            || other.data.tangent_distance.zero_status() != ZeroStatus::Zero
+            || self.data.parallel.distance().zero_status() != ZeroKnowledge::Zero
+            || self.data.tangent_distance.zero_status() != ZeroKnowledge::Zero
+            || other.data.tangent_distance.zero_status() != ZeroKnowledge::Zero
             || self.data.translation_x != other.data.translation_x
             || self.data.translation_y != other.data.translation_y
         {
@@ -94826,8 +94828,8 @@ impl BezierAnalyticParallelPoint2 {
         let source = self.data.parallel.source_power_basis()?;
         let unit = [Real::one()];
         let weight = source.weight.unwrap_or(&unit);
-        let zero_frame = self.data.parallel.distance().zero_status() == ZeroStatus::Zero
-            && self.data.tangent_distance.zero_status() == ZeroStatus::Zero;
+        let zero_frame = self.data.parallel.distance().zero_status() == ZeroKnowledge::Zero
+            && self.data.tangent_distance.zero_status() == ZeroKnowledge::Zero;
         let translated_coordinates =
             |x: AlgebraicRootRepresentation, y: AlgebraicRootRepresentation| {
                 let x =
@@ -95201,8 +95203,8 @@ impl BezierAnalyticParallelPoint2 {
                 return Ok(Classification::Uncertain(reason));
             }
         };
-        if self.data.parallel.distance().zero_status() == ZeroStatus::Zero
-            && self.data.tangent_distance.zero_status() == ZeroStatus::Zero
+        if self.data.parallel.distance().zero_status() == ZeroKnowledge::Zero
+            && self.data.tangent_distance.zero_status() == ZeroKnowledge::Zero
         {
             return Ok(Classification::Decided(Some(source.translated(
                 self.data.translation_x.clone(),
@@ -95770,8 +95772,8 @@ impl BezierAlgebraicChord2 {
         if let RationalBezierIntersectionPointEvidence2::AlgebraicChordParallel(displaced) = point
             && displaced.accepts_policy(policy)
             && displaced.data.direction == BezierAlgebraicChordUnitDisplacement2::LeftNormal
-            && displaced.data.translation_x.zero_status() == ZeroStatus::Zero
-            && displaced.data.translation_y.zero_status() == ZeroStatus::Zero
+            && displaced.data.translation_x.zero_status() == ZeroKnowledge::Zero
+            && displaced.data.translation_y.zero_status() == ZeroKnowledge::Zero
         {
             #[cfg(feature = "dispatch-trace")]
             hyperreal::dispatch_trace::record(
@@ -95846,7 +95848,7 @@ impl BezierAlgebraicChord2 {
             );
             return Ok(Classification::Decided(fallback_distance.clone()));
         }
-        if fallback_distance.zero_status() == ZeroStatus::Zero {
+        if fallback_distance.zero_status() == ZeroKnowledge::Zero {
             return Ok(match forward {
                 Classification::Decided(false) => {
                     Classification::Uncertain(UncertaintyReason::Predicate)
@@ -95912,7 +95914,7 @@ impl BezierAlgebraicChord2 {
         policy: &CurveContext,
     ) -> CurveResult<RationalBezierIntersectionPointEvidence2> {
         self.validate_policy(policy)?;
-        if distance.zero_status() == ZeroStatus::Zero {
+        if distance.zero_status() == ZeroKnowledge::Zero {
             return Ok(point);
         }
         if let Some((tangent_x, tangent_y)) = self.certified_unit_tangent()
@@ -95956,7 +95958,7 @@ impl BezierAlgebraicChord2 {
         policy: &CurveContext,
     ) -> CurveResult<RationalBezierIntersectionPointEvidence2> {
         self.validate_policy(policy)?;
-        if distance.zero_status() == ZeroStatus::Zero {
+        if distance.zero_status() == ZeroKnowledge::Zero {
             return Ok(point);
         }
         if let Some((tangent_x, tangent_y)) = self.certified_unit_tangent() {
@@ -95993,7 +95995,7 @@ impl BezierAlgebraicChord2 {
         policy: &CurveContext,
     ) -> CurveResult<Self> {
         self.validate_policy(policy)?;
-        if distance.zero_status() == ZeroStatus::Zero {
+        if distance.zero_status() == ZeroKnowledge::Zero {
             return Ok(self.clone());
         }
         if self.is_reversed() {
@@ -97636,8 +97638,8 @@ impl BezierAlgebraicChordPairPoint2 {
                 continue;
             };
             if self != origin
-                || endpoint.data.translation_x.zero_status() != ZeroStatus::Zero
-                || endpoint.data.translation_y.zero_status() != ZeroStatus::Zero
+                || endpoint.data.translation_x.zero_status() != ZeroKnowledge::Zero
+                || endpoint.data.translation_y.zero_status() != ZeroKnowledge::Zero
             {
                 continue;
             }
@@ -99190,11 +99192,12 @@ impl BezierAlgebraicCuspSemicircleFragment2 {
         else {
             return Ok(Classification::Decided(None));
         };
-        let parameter_slot = if parameter.zero_status() == ZeroStatus::Zero {
+        let parameter_slot = if parameter.zero_status() == ZeroKnowledge::Zero {
             0_u8
-        } else if (Real::from(2_i8) * parameter - Real::one()).zero_status() == ZeroStatus::Zero {
+        } else if (Real::from(2_i8) * parameter - Real::one()).zero_status() == ZeroKnowledge::Zero
+        {
             1
-        } else if (parameter - Real::one()).zero_status() == ZeroStatus::Zero {
+        } else if (parameter - Real::one()).zero_status() == ZeroKnowledge::Zero {
             2
         } else {
             return Ok(Classification::Decided(None));
@@ -99803,7 +99806,7 @@ impl BezierAlgebraicCuspSemicircleFragment2 {
         let BezierAlgebraicCuspSemicircleParameter2::Exact(parameter) = endpoint else {
             return Ok(Classification::Decided(None));
         };
-        if parameter.zero_status() != ZeroStatus::Zero {
+        if parameter.zero_status() != ZeroKnowledge::Zero {
             return Ok(Classification::Decided(None));
         }
         let Some(frame) = self.data.semicircle.data.frame.selected_radial() else {
@@ -99880,9 +99883,9 @@ impl BezierAlgebraicCuspSemicircleFragment2 {
         else {
             return Ok(Classification::Decided(None));
         };
-        let diameter_orientation = if parameter.zero_status() == ZeroStatus::Zero {
+        let diameter_orientation = if parameter.zero_status() == ZeroKnowledge::Zero {
             RealSign::Positive
-        } else if (parameter - Real::one()).zero_status() == ZeroStatus::Zero {
+        } else if (parameter - Real::one()).zero_status() == ZeroKnowledge::Zero {
             RealSign::Negative
         } else {
             return Ok(Classification::Decided(None));
@@ -101000,18 +101003,18 @@ impl BezierAlgebraicCuspSemicircleFragment2 {
             "selected-circle-vector-tangent-endpoint",
             match self.endpoint_parameter(start_endpoint) {
                 BezierAlgebraicCuspSemicircleParameter2::Exact(parameter)
-                    if parameter.zero_status() == ZeroStatus::Zero =>
+                    if parameter.zero_status() == ZeroKnowledge::Zero =>
                 {
                     "exact-zero"
                 }
                 BezierAlgebraicCuspSemicircleParameter2::Exact(parameter)
-                    if (parameter - Real::one()).zero_status() == ZeroStatus::Zero =>
+                    if (parameter - Real::one()).zero_status() == ZeroKnowledge::Zero =>
                 {
                     "exact-one"
                 }
                 BezierAlgebraicCuspSemicircleParameter2::Exact(parameter)
                     if (Real::from(2_i8) * parameter - Real::one()).zero_status()
-                        == ZeroStatus::Zero =>
+                        == ZeroKnowledge::Zero =>
                 {
                     "exact-half"
                 }
@@ -101053,8 +101056,8 @@ impl BezierAlgebraicCuspSemicircleFragment2 {
         }
         if let BezierAlgebraicCuspSemicircleParameter2::Exact(endpoint) =
             self.endpoint_parameter(start_endpoint)
-            && (endpoint.zero_status() == ZeroStatus::Zero
-                || (endpoint - Real::one()).zero_status() == ZeroStatus::Zero)
+            && (endpoint.zero_status() == ZeroKnowledge::Zero
+                || (endpoint - Real::one()).zero_status() == ZeroKnowledge::Zero)
         {
             if let Some(frame) = self.data.semicircle.data.frame.rational()
                 && let Classification::Decided(mut radial_projection) =
@@ -101075,7 +101078,7 @@ impl BezierAlgebraicCuspSemicircleFragment2 {
                     }
                 };
                 radial_projection = product_sign(radial_projection, radial_sign);
-                if (endpoint - Real::one()).zero_status() == ZeroStatus::Zero {
+                if (endpoint - Real::one()).zero_status() == ZeroKnowledge::Zero {
                     radial_projection = product_sign(radial_projection, RealSign::Negative);
                 }
                 if self.data.semicircle.is_clockwise() == self.data.reversed {
@@ -102745,7 +102748,7 @@ impl BezierAlgebraicCuspSemicircleFragment2 {
                     &chord_tangent.0,
                 )
                 .zero_status()
-                    != ZeroStatus::Zero
+                    != ZeroKnowledge::Zero
                 {
                     continue;
                 }
@@ -111621,7 +111624,7 @@ impl BezierParallel2 {
             coefficients
                 .iter()
                 .skip(2)
-                .all(|coefficient| coefficient.zero_status() == ZeroStatus::Zero)
+                .all(|coefficient| coefficient.zero_status() == ZeroKnowledge::Zero)
         };
         if !structurally_affine(source.x_numerator) || !structurally_affine(source.y_numerator) {
             return Ok(Classification::Decided(None));
@@ -111632,7 +111635,7 @@ impl BezierParallel2 {
                 if weight
                     .iter()
                     .skip(1)
-                    .all(|coefficient| coefficient.zero_status() == ZeroStatus::Zero) =>
+                    .all(|coefficient| coefficient.zero_status() == ZeroKnowledge::Zero) =>
             {
                 let Some(weight) = weight.first() else {
                     return Err(CurveError::Topology(
@@ -118647,7 +118650,7 @@ impl BezierParallel2 {
             source_derivative_x + self.distance() * normal_derivative_x,
             source_derivative_y + self.distance() * normal_derivative_y,
         );
-        if derivative.zero_status() == ZeroStatus::Unknown
+        if derivative.zero_status() == ZeroKnowledge::Unknown
             && let Ok(Classification::Decided(analysis)) = self.singularity_analysis(policy)
             && analysis
                 .parallel_cusps()
@@ -119219,8 +119222,8 @@ impl BezierParallel2 {
             Classification::Decided(derivative) => derivative,
             Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
         };
-        if start_derivative.zero_status() != ZeroStatus::NonZero
-            || end_derivative.zero_status() != ZeroStatus::NonZero
+        if start_derivative.zero_status() != ZeroKnowledge::NonZero
+            || end_derivative.zero_status() != ZeroKnowledge::NonZero
         {
             return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
         }
@@ -120085,14 +120088,14 @@ impl CurvePath2 {
         let output_closed = output
             .first()
             .zip(output.last())
-            .map_or(ZeroStatus::NonZero, |(first, last)| {
+            .map_or(ZeroKnowledge::NonZero, |(first, last)| {
                 first.start().distance_squared(last.end()).zero_status()
             });
         match (source_closed, output_closed) {
-            (ZeroStatus::Zero, ZeroStatus::NonZero) => {
+            (ZeroKnowledge::Zero, ZeroKnowledge::NonZero) => {
                 return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
             }
-            (ZeroStatus::Zero, ZeroStatus::Unknown) | (ZeroStatus::Unknown, _) => {
+            (ZeroKnowledge::Zero, ZeroKnowledge::Unknown) | (ZeroKnowledge::Unknown, _) => {
                 return Ok(Classification::Uncertain(UncertaintyReason::RealSign));
             }
             _ => {}
@@ -120184,7 +120187,7 @@ fn parallel_curves_are_connected(curves: &[Curve2]) -> bool {
                 .end()
                 .distance_squared(pair[1].start())
                 .zero_status()
-                == ZeroStatus::Zero
+                == ZeroKnowledge::Zero
     })
 }
 
@@ -120533,7 +120536,7 @@ fn polynomial_trim_structural_zeros(mut coefficients: Vec<Real>) -> Vec<Real> {
     while coefficients.len() > 1
         && coefficients
             .last()
-            .is_some_and(|coefficient| coefficient.zero_status() == ZeroStatus::Zero)
+            .is_some_and(|coefficient| coefficient.zero_status() == ZeroKnowledge::Zero)
     {
         coefficients.pop();
     }
@@ -130681,7 +130684,7 @@ mod conversion_tests {
         // Reassociation keeps the native scalar sign undecided.
         // Its positivity is construction evidence, not a bounded sign query.
         let scale = left - right + Real::from(2_i8).powi_i64(-3000).unwrap();
-        assert_eq!(scale.zero_status(), ZeroStatus::Unknown);
+        assert_eq!(scale.zero_status(), ZeroKnowledge::Unknown);
         let point = BezierRecursiveQuadraticProjectivePoint2 {
             x: field.constant(&scale * Real::from(3_i8)).unwrap(),
             y: field.constant(-scale.clone()).unwrap(),
@@ -130693,7 +130696,7 @@ mod conversion_tests {
                 .exact_real_value_with_retained_witnesses()
                 .unwrap()
                 .zero_status(),
-            ZeroStatus::Unknown,
+            ZeroKnowledge::Unknown,
         );
         #[cfg(feature = "dispatch-trace")]
         hyperreal::dispatch_trace::reset();
@@ -132275,7 +132278,7 @@ mod conversion_tests {
             .unwrap(),
         );
         let opaque = epsilon.cos() - Real::one();
-        assert_eq!(opaque.zero_status(), ZeroStatus::Unknown);
+        assert_eq!(opaque.zero_status(), ZeroKnowledge::Unknown);
         let half = (Real::one() / Real::from(2_i8)).unwrap();
         let third = (Real::one() / Real::from(3_i8)).unwrap();
         let BezierParameter2::Algebraic(first_parameter) =
@@ -156226,7 +156229,7 @@ mod conversion_tests {
             .unwrap(),
         );
         let opaque = epsilon.cos() - Real::one();
-        assert_eq!(opaque.zero_status(), ZeroStatus::Unknown);
+        assert_eq!(opaque.zero_status(), ZeroKnowledge::Unknown);
         let third = (Real::one() / Real::from(3_i8)).unwrap();
         let quarter = (Real::one() / Real::from(4_i8)).unwrap();
         let shoulder = -((&opaque + Real::one()) * quarter);
@@ -160129,7 +160132,7 @@ mod conversion_tests {
                     !cuts.is_empty(),
                     "the interior recursive center must retain a nearby nonlinear cut",
                 );
-                if parallel.distance().zero_status() != ZeroStatus::Zero {
+                if parallel.distance().zero_status() != ZeroKnowledge::Zero {
                     assert_eq!(cuts.len(), 2);
                     for expected in [std::cmp::Ordering::Less, std::cmp::Ordering::Greater] {
                         assert!(cuts.iter().any(|candidate| {
