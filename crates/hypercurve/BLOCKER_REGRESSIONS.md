@@ -34,6 +34,9 @@ because neither their blocker nor their resolver remains executable.
 | Exact quadratic-surd equality at a convex erosion collapse | `unified_region_convex_erosion_keeps_symbolic_diagonal_offsets_and_collapse_exact`; Hyperreal `exact_sign_reduces_quadratic_surd_field_identities`, `exact_sign_orders_nonzero_quadratic_surds`, and `opposite_sign_quadratic_surd_is_certified_nonzero` |
 | Retained overlap orientation, indices, spans, and traversal materialization (`92af76a`, `561fc1f`, `047caba`, `c6d3d1c`) | `retained_linear_overlap_split_graph_rejects_forged_orientation`; `retained_resolved_overlap_constructor_rejects_unordered_indices`; `resolved_linear_overlap_traversal_materializes_native_and_retained_regions`; `retained_linear_overlap_refinement_evidence_reversed_span_orientation` |
 | Simple Bezier arrangement branches (`516c7c0`) | `tangent_ordered_traversal_resolves_simple_branch_vertex`; `tangent_ordered_traversal_uses_second_order_for_equal_outgoing_tangents`; `tangent_ordered_traversal_rejects_equal_second_order_outgoing_tangents` |
+| Fully certified rational and analytic selected-fiber contacts constructed under `APPROXIMATE_512` rejected later `STRICT` replay | `selected_parallel_normal_circle_keeps_contacts_when_center_refines_to_exact`; `selected_parallel_normal_circle_intersects_genuinely_analytic_parallel_in_one_fiber` |
+| A selected-fiber angle query used its construction policy instead of the caller's requested terminal policy | `selected_fiber_angle_query_observes_its_requested_policy` |
+| Rational circle-contact tangent dot products used the opposite traversal sign, including cached pair-radial publication | `rational_circle_tangent_dot_follows_both_traversals`; `selected_parallel_normal_circle_keeps_contacts_when_center_refines_to_exact` |
 
 The retained Sturm-chain optimization is additionally guarded by
 `retained_sturm_certificate_classifies_mixed_root_multiplicity`, which proves

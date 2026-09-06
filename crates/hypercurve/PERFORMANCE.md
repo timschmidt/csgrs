@@ -8349,6 +8349,55 @@ release readiness, uniform performance, and remaining slow/pathological heap
 coverage stay open. STRICT replay of exact contacts created under approximate
 policy remains a separate audit; this regression does not yet cover it.
 
+## Certified contact replay and tangent orientation (2026-09-06)
+
+Certified selected-fiber rational and analytic contacts constructed under
+`APPROXIMATE_512` now replay under `STRICT`. Publication uses the existing
+consumed-policy authority; an actual terminal decision still prevents strict
+replay. Selected-fiber angle order and bracket queries use the caller's policy
+instead of silently reusing the construction policy. No public API or
+compatibility interface is added, and duplicate contact construction is removed.
+
+Independent tangent assertions also exposed reversed rational-circle dot
+signs. For radius vector `r`, target tangent `v`, and traversal `turn`, the
+correct relation is `dot(turn*J(r), v) = turn*cross(r, v)`. The selected-fiber,
+ordinary one-field, and pair-radial replay/publication sites now share the
+existing turn-sign convention. Both circle traversals, both horizontal cutter
+traversals, and both policies are covered. Production shrinks 21 Rust lines;
+tests grow 153. All four focused regressions pass after their recorded failures.
+
+Pinned-snapshot qualification passes 1,753 all-feature tests with none ignored,
+1,715 minimal-feature tests with four opt-in cases covered by the full run, and
+37 UI tests. Both warning-denied lint and documentation matrices, formatting,
+fuzz-target compilation, and release WASM pass. Every dependency was archived
+from its recorded commit; the concurrent Hyperreal formatter draft is excluded.
+No new fuzz campaign, coverage run, or complete heap recording ran here.
+
+Matched default-feature native text shrinks 1,744 bytes in the region and batch
+artifacts and 1,632 bytes in the rational-Bezier artifact. The WASM demo grows
+2,103 bytes. Rectangle/circle/capsule instruction controls change +0.05672%,
++0.01181%, and +0.00685%, respectively. These costs remain explicit. Paired
+three-round medians are 21.31 -> 21.16 seconds for selected-fiber Booleans,
+11.58 -> 11.41 for general contacts, 31.13 -> 30.67 for radial contacts,
+17.18 -> 17.40 for chord replay, and 5.89 -> 5.86 for the region benchmark.
+The chord cost and initial 3--6% increases in several short native lanes mean
+this is not a uniform no-regression result. Seven additional native pairs put
+the region process at 5.86 -> 5.87 seconds (+0.17%). Their largest lane costs
+are immediate rational contacts (+2.68%) and retained algebraic source bounds
+(+2.51%); none of the initial greater-than-3% increases repeats at that size.
+All 82 invocations and 856 lane observations are recorded in
+[`2026-09-06-certified-contact-replay.json`](benchmarks/checkpoints/2026-09-06-certified-contact-replay.json).
+Memory evidence in this slice is whole-process peak RSS, not fresh allocation
+or peak-live-heap accounting.
+
+ExactCorelib mining/uplift remains closed. Full release readiness, uniform
+performance, and remaining slow/pathological heap coverage stay open. Rational
+overlap publication must separately preserve decisions consumed after its map
+is created; its algebraic-only boundary-seeding assumption also remains under
+audit. Other mapped angle queries and their retained caches require joint
+policy review before extending this change beyond the uncached selected-fiber
+maps.
+
 ## Optimization boundary
 
 The retained x sweep addresses broad-phase pair scheduling only. A full
