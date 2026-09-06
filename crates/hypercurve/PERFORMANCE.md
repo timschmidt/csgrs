@@ -8163,6 +8163,55 @@ Matched scalar/matrix timings, allocation checks, executable sizes, source
 fingerprints, and validation-log hashes are retained in
 [`2026-09-05-native-scalar-api.json`](benchmarks/checkpoints/2026-09-05-native-scalar-api.json).
 
+## Native fiber specialization qualification (2026-09-06)
+
+The selected-fiber paths now reuse `bivariate_specialize_second` and native
+`Real::eval_poly`; the duplicate Horner evaluator is deleted. Production
+shrinks 14 lines, with no public API, compatibility layer, or carrier-layout
+change. Two regressions cover native quadratic-root zero certificates and
+ragged/dense coefficient ordering. The former evaluator lost a known-zero
+certificate; this is not a claim that its numerical result was wrong or that
+an observed end-to-end Boolean blocker was fixed.
+
+The current stack, including concurrent Hyperreal `bd92d87`, passes 1,749
+all-feature release tests with zero ignored cases, 1,711 minimal release tests,
+and 37 UI tests. The four minimal opt-in cases are covered by the all-feature
+run. Strict lint, documentation, fuzz compilation, formatting, and release
+WASM checks pass. A stale fuzz assertion expected a nonmonotone coordinate
+image to fail despite its existing exact-success regression. The corrected
+oracle checks the represented coefficients and strict bounds; the saved input
+and a fresh 1,024-run sanitizer-enabled corpus replay pass.
+
+Three alternating CPU-pinned pairs put selected-fiber, recursive chord, and
+recursive radial test medians at 53.86 -> 52.28, 16.98 -> 16.87, and
+31.20 -> 29.93 seconds. The region benchmark moves 5.84 -> 5.79 seconds.
+This is not a uniform speedup: seven further rational-benchmark pairs confirm
+cached point incidence at 148.104 -> 176.752 ns (+19.34%). Twenty-iteration
+whole-process Callgrind controls move -0.08387% for rectangles, +0.04474% for
+circles, and -0.03045% for capsules. The circle result is not a strict
+no-instruction-regression pass. Native certificate preservation takes priority
+over these recorded costs; flat performance remains an open objective.
+
+Complete raw Heaptrack recordings of the selected-fiber test both contain
+1,438,323,054 allocations. Requested allocation traffic is 55,945,825,188
+versus 55,945,825,493 bytes; peak live heap is 1,822,814 versus 1,822,815 bytes,
+and end-live heap is unchanged at 993,904 bytes. These are complete libtest
+processes, not geometry-only counts, and end-live bytes are not a leak diagnosis.
+Heaptrack's allocation-index rehash exhausted memory during interpretation.
+A local streaming counter, checked against its small-workload interpreter and
+allocation histogram, accounts for both full traces with about 14 MiB analysis
+RSS. Partial recordings and failed interpretations are excluded from the gate.
+Full memory accounting for the other slow/pathological workloads remains open.
+
+Matched production benchmark images each lose 2,016 `.text` bytes, with file
+reductions of 3,480--3,632 bytes; matched WASM shrinks 2,281 bytes. The frozen
+unit/timing/heap pair uses Hyperreal `21e76ea`; the separate production benchmark
+and WASM pairs both use `bd92d87`. Live functional gates were repeated on the
+new dependency revision. All 62 timing invocations and 590 per-lane measurements,
+including regressions, are retained in
+[`2026-09-06-native-fiber-specialization.json`](benchmarks/checkpoints/2026-09-06-native-fiber-specialization.json).
+ExactCorelib mining/uplift remains closed; full release readiness remains open.
+
 ## Optimization boundary
 
 The retained x sweep addresses broad-phase pair scheduling only. A full
