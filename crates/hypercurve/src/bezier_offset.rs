@@ -9902,6 +9902,7 @@ impl BezierAlgebraicCuspSemicircleRetainedChordContact2 {
                 contact,
                 &Real::zero(),
                 &Real::one(),
+                policy,
             )?;
             #[cfg(feature = "dispatch-trace")]
             if matches!(sign, Classification::Decided(_)) {
@@ -11890,6 +11891,7 @@ impl BezierAlgebraicCuspSemicircleMappedParameterData2 {
     fn selected_parallel_contact_order_to_real(
         &self,
         represented: &Real,
+        policy: &CurveContext,
     ) -> CurveResult<Classification<std::cmp::Ordering>> {
         let Self::SelectedParallelContact {
             semicircle,
@@ -11899,7 +11901,7 @@ impl BezierAlgebraicCuspSemicircleMappedParameterData2 {
             radial_product_sign,
             tangent_cross_sign,
             tangent_dot_sign,
-            policy,
+            policy: _,
         } = self
         else {
             return Err(CurveError::Topology(
@@ -12095,26 +12097,6 @@ impl BezierAlgebraicCuspSemicircleMappedParameterData2 {
         }))
     }
 
-    fn selected_parallel_contact_parameter_bracket(
-        &self,
-        refinement_steps: usize,
-    ) -> CurveResult<Classification<BezierAlgebraicCuspSemicircleParameterBracket2>> {
-        let Self::SelectedParallelContact {
-            location, policy, ..
-        } = self
-        else {
-            return Err(CurveError::Topology(
-                "a non-selected contact requested selected-frame angular refinement".into(),
-            ));
-        };
-        algebraic_cusp_semicircle_contact_parameter_bracket(
-            *location,
-            refinement_steps,
-            policy,
-            |parameter| self.selected_parallel_contact_order_to_real(parameter),
-        )
-    }
-
     /// Returns the selected circle's increasing-parameter tangent orientation
     /// relative to the retained contact source tangent.
     ///
@@ -12174,6 +12156,7 @@ impl BezierAlgebraicCuspSemicircleMappedParameterData2 {
     fn selected_circular_tangent_contact_order_to_real(
         &self,
         represented: &Real,
+        policy: &CurveContext,
     ) -> CurveResult<Classification<std::cmp::Ordering>> {
         let Self::SelectedCircularTangentContact {
             semicircle,
@@ -12183,7 +12166,6 @@ impl BezierAlgebraicCuspSemicircleMappedParameterData2 {
             parameter,
             source_direction,
             radial_product_sign,
-            policy,
             ..
         } = self
         else {
@@ -12250,26 +12232,10 @@ impl BezierAlgebraicCuspSemicircleMappedParameterData2 {
         }))
     }
 
-    fn selected_circular_tangent_contact_parameter_bracket(
-        &self,
-        refinement_steps: usize,
-    ) -> CurveResult<Classification<BezierAlgebraicCuspSemicircleParameterBracket2>> {
-        let Self::SelectedCircularTangentContact { policy, .. } = self else {
-            return Err(CurveError::Topology(
-                "a non-circular contact requested selected-circle angular refinement".into(),
-            ));
-        };
-        algebraic_cusp_semicircle_contact_parameter_bracket(
-            BezierAlgebraicCuspSemicircleContactLocation2::Interior,
-            refinement_steps,
-            policy,
-            |parameter| self.selected_circular_tangent_contact_order_to_real(parameter),
-        )
-    }
-
     fn selected_pair_contact_order_to_real(
         &self,
         represented: &Real,
+        policy: &CurveContext,
     ) -> CurveResult<Classification<std::cmp::Ordering>> {
         let Self::SelectedPairContact {
             semicircle,
@@ -12277,7 +12243,6 @@ impl BezierAlgebraicCuspSemicircleMappedParameterData2 {
             contact,
             anchor_first,
             radial_product_sign,
-            policy,
             ..
         } = self
         else {
@@ -12317,33 +12282,16 @@ impl BezierAlgebraicCuspSemicircleMappedParameterData2 {
         }))
     }
 
-    fn selected_pair_contact_parameter_bracket(
-        &self,
-        refinement_steps: usize,
-    ) -> CurveResult<Classification<BezierAlgebraicCuspSemicircleParameterBracket2>> {
-        let Self::SelectedPairContact { policy, .. } = self else {
-            return Err(CurveError::Topology(
-                "a non-pair contact requested selected-circle angular refinement".into(),
-            ));
-        };
-        algebraic_cusp_semicircle_contact_parameter_bracket(
-            BezierAlgebraicCuspSemicircleContactLocation2::Interior,
-            refinement_steps,
-            policy,
-            |parameter| self.selected_pair_contact_order_to_real(parameter),
-        )
-    }
-
     fn selected_chord_normal_contact_order_to_real(
         &self,
         represented: &Real,
+        policy: &CurveContext,
     ) -> CurveResult<Classification<std::cmp::Ordering>> {
         let Self::SelectedChordNormalContact {
             semicircle,
             anchor_tangent,
             chord,
             radial_product_sign,
-            policy,
             ..
         } = self
         else {
@@ -12395,6 +12343,7 @@ impl BezierAlgebraicCuspSemicircleMappedParameterData2 {
                     contact,
                     &cross_scale,
                     &tangential,
+                    policy,
                 )?
             }
             BezierSelectedChordNormalAnchor2::RetainedCircleRationalChord { map, contact } => map
@@ -12418,26 +12367,10 @@ impl BezierAlgebraicCuspSemicircleMappedParameterData2 {
         }))
     }
 
-    fn selected_chord_normal_contact_parameter_bracket(
-        &self,
-        refinement_steps: usize,
-    ) -> CurveResult<Classification<BezierAlgebraicCuspSemicircleParameterBracket2>> {
-        let Self::SelectedChordNormalContact { policy, .. } = self else {
-            return Err(CurveError::Topology(
-                "a non-chord contact requested selected-circle angular refinement".into(),
-            ));
-        };
-        algebraic_cusp_semicircle_contact_parameter_bracket(
-            BezierAlgebraicCuspSemicircleContactLocation2::Interior,
-            refinement_steps,
-            policy,
-            |parameter| self.selected_chord_normal_contact_order_to_real(parameter),
-        )
-    }
-
     fn selected_chord_parallel_normal_contact_order_to_real(
         &self,
         represented: &Real,
+        policy: &CurveContext,
     ) -> CurveResult<Classification<std::cmp::Ordering>> {
         let Self::SelectedChordParallelNormalContact {
             semicircle,
@@ -12445,7 +12378,6 @@ impl BezierAlgebraicCuspSemicircleMappedParameterData2 {
             parallel_parameter,
             chord,
             radial_product_sign,
-            policy,
             ..
         } = self
         else {
@@ -12500,23 +12432,6 @@ impl BezierAlgebraicCuspSemicircleMappedParameterData2 {
             RealSign::Negative => std::cmp::Ordering::Greater,
             RealSign::Zero => std::cmp::Ordering::Equal,
         }))
-    }
-
-    fn selected_chord_parallel_normal_contact_parameter_bracket(
-        &self,
-        refinement_steps: usize,
-    ) -> CurveResult<Classification<BezierAlgebraicCuspSemicircleParameterBracket2>> {
-        let Self::SelectedChordParallelNormalContact { policy, .. } = self else {
-            return Err(CurveError::Topology(
-                "a non-chord contact requested selected parallel-frame angular refinement".into(),
-            ));
-        };
-        algebraic_cusp_semicircle_contact_parameter_bracket(
-            BezierAlgebraicCuspSemicircleContactLocation2::Interior,
-            refinement_steps,
-            policy,
-            |parameter| self.selected_chord_parallel_normal_contact_order_to_real(parameter),
-        )
     }
 
     /// Returns the original mapped carrier below every exact
@@ -18000,7 +17915,7 @@ impl BezierAlgebraicCuspSemicircle2 {
                 (Real::zero(), std::cmp::Ordering::Greater),
                 (Real::one(), std::cmp::Ordering::Less),
             ] {
-                match parameter.selected_chord_normal_contact_order_to_real(&boundary)? {
+                match parameter.selected_chord_normal_contact_order_to_real(&boundary, policy)? {
                     Classification::Decided(order) if order == expected => {}
                     Classification::Decided(_) => {
                         return Ok(Classification::Decided(false));
@@ -40860,62 +40775,20 @@ fn algebraic_cusp_semicircle_endpoint_contact_order(
     )
 }
 
-fn algebraic_cusp_semicircle_contact_parameter_bracket(
-    location: BezierAlgebraicCuspSemicircleContactLocation2,
-    refinement_steps: usize,
-    policy: &CurveContext,
-    mut contact_order_to_real: impl FnMut(&Real) -> CurveResult<Classification<std::cmp::Ordering>>,
-) -> CurveResult<Classification<BezierAlgebraicCuspSemicircleParameterBracket2>> {
-    match location {
-        BezierAlgebraicCuspSemicircleContactLocation2::Start => {
-            return Ok(Classification::Decided(
-                BezierAlgebraicCuspSemicircleParameterBracket2::Exact(Real::zero()),
-            ));
-        }
-        BezierAlgebraicCuspSemicircleContactLocation2::End => {
-            return Ok(Classification::Decided(
-                BezierAlgebraicCuspSemicircleParameterBracket2::Exact(Real::one()),
-            ));
-        }
-        BezierAlgebraicCuspSemicircleContactLocation2::Interior => {}
-    }
-    let mut start = Real::zero();
-    let mut end = Real::one();
-    for _ in 0..refinement_steps {
-        let midpoint = ((&start + &end) / Real::from(2_i8))?;
-        match contact_order_to_real(&midpoint)? {
-            Classification::Decided(std::cmp::Ordering::Less) => end = midpoint,
-            Classification::Decided(std::cmp::Ordering::Greater) => start = midpoint,
-            Classification::Decided(std::cmp::Ordering::Equal) => {
-                return Ok(Classification::Decided(
-                    BezierAlgebraicCuspSemicircleParameterBracket2::Exact(midpoint),
-                ));
-            }
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        }
-    }
-    Ok(
-        match BezierParameterInterval::try_new(start, end, policy)? {
-            Classification::Decided(interval) => Classification::Decided(
-                BezierAlgebraicCuspSemicircleParameterBracket2::Interval(interval),
-            ),
-            Classification::Uncertain(reason) => Classification::Uncertain(reason),
-        },
-    )
-}
-
 fn refine_algebraic_cusp_semicircle_parameter_bracket(
-    bracket: &BezierAlgebraicCuspSemicircleParameterBracket2,
+    bracket: Option<&BezierAlgebraicCuspSemicircleParameterBracket2>,
     refinement_steps: usize,
     mut contact_order_to_real: impl FnMut(&Real) -> CurveResult<Classification<std::cmp::Ordering>>,
 ) -> CurveResult<Classification<BezierAlgebraicCuspSemicircleParameterBracket2>> {
-    let BezierAlgebraicCuspSemicircleParameterBracket2::Interval(bounds) = bracket else {
-        return Ok(Classification::Decided(bracket.clone()));
+    let (mut start, mut end) = match bracket {
+        Some(exact @ BezierAlgebraicCuspSemicircleParameterBracket2::Exact(_)) => {
+            return Ok(Classification::Decided(exact.clone()));
+        }
+        Some(BezierAlgebraicCuspSemicircleParameterBracket2::Interval(bounds)) => {
+            (bounds.start().clone(), bounds.end().clone())
+        }
+        None => (Real::zero(), Real::one()),
     };
-    let mut start = bounds.start().clone();
-    let mut end = bounds.end().clone();
     for _ in 0..refinement_steps {
         let midpoint = ((&start + &end) / Real::from(2_i8))?;
         match contact_order_to_real(&midpoint)? {
@@ -41769,21 +41642,6 @@ impl BezierAlgebraicCuspSemicircleSelectedFiberRationalParameterMap2 {
         };
         rational_bezier_point_bounds_over_interval(&self.data.curve, &parameter)
     }
-
-    fn parameter_bracket(
-        &self,
-        other_parameter: &BezierAlgebraicSelectedFiberParameter2,
-        location: BezierAlgebraicCuspSemicircleContactLocation2,
-        refinement_steps: usize,
-        policy: &CurveContext,
-    ) -> CurveResult<Classification<BezierAlgebraicCuspSemicircleParameterBracket2>> {
-        algebraic_cusp_semicircle_contact_parameter_bracket(
-            location,
-            refinement_steps,
-            policy,
-            |parameter| self.contact_order_to_real(other_parameter, location, parameter, policy),
-        )
-    }
 }
 
 impl BezierAlgebraicCuspSemicircleSelectedFiberParallelParameterMap2 {
@@ -42016,21 +41874,6 @@ impl BezierAlgebraicCuspSemicircleSelectedFiberParallelParameterMap2 {
             value,
             policy,
         ))
-    }
-
-    fn parameter_bracket(
-        &self,
-        other_parameter: &BezierAlgebraicSelectedFiberParameter2,
-        location: BezierAlgebraicCuspSemicircleContactLocation2,
-        refinement_steps: usize,
-        policy: &CurveContext,
-    ) -> CurveResult<Classification<BezierAlgebraicCuspSemicircleParameterBracket2>> {
-        algebraic_cusp_semicircle_contact_parameter_bracket(
-            location,
-            refinement_steps,
-            policy,
-            |parameter| self.contact_order_to_real(other_parameter, location, parameter, policy),
-        )
     }
 }
 
@@ -42481,6 +42324,7 @@ impl BezierAlgebraicCuspSemicircleRationalParameterMap2 {
                     chord_contact,
                     cross_scale,
                     dot_scale,
+                    policy,
                 )?
                 .map(|sign| {
                     if reversed {
@@ -42909,20 +42753,6 @@ impl BezierAlgebraicCuspSemicircleRationalParameterMap2 {
         })
     }
 
-    fn mapped_contact_parameter_bracket(
-        &self,
-        contact: &BezierAlgebraicCuspSemicircleRationalMapContact2,
-        refinement_steps: usize,
-        policy: &CurveContext,
-    ) -> CurveResult<Classification<BezierAlgebraicCuspSemicircleParameterBracket2>> {
-        algebraic_cusp_semicircle_contact_parameter_bracket(
-            contact.location,
-            refinement_steps,
-            policy,
-            |parameter| self.mapped_contact_order_to_real(contact, parameter, policy),
-        )
-    }
-
     pub(crate) fn contact_parameter(
         &self,
         contact: &BezierAlgebraicCuspSemicircleRationalContact2,
@@ -43230,20 +43060,12 @@ impl BezierAlgebraicCuspSemicircleParallelParameterMap2 {
             return Ok(Classification::Decided(bracket.clone()));
         }
         let completed_steps = cached.as_ref().map_or(0, |(steps, _)| *steps);
-        let bracket = if let Some((_, bracket)) = cached {
-            refine_algebraic_cusp_semicircle_parameter_bracket(
-                &bracket,
-                refinement_steps.saturating_sub(completed_steps),
-                |parameter| self.contact_order_to_real(contact, parameter, policy),
-            )?
-        } else {
-            algebraic_cusp_semicircle_contact_parameter_bracket(
-                contact.location,
-                refinement_steps,
-                policy,
-                |parameter| self.contact_order_to_real(contact, parameter, policy),
-            )?
-        };
+        let bracket = refine_algebraic_cusp_semicircle_parameter_bracket(
+            cached.as_ref().map(|(_, bracket)| bracket),
+            refinement_steps.saturating_sub(completed_steps),
+            |parameter| self.contact_order_to_real(contact, parameter, policy),
+        )?;
+        drop(cached);
         if let Classification::Decided(bracket) = &bracket {
             self.data.parameter_cache.retain_parameter_bracket(
                 contact.parallel_parameter.clone(),
@@ -44165,6 +43987,7 @@ impl BezierAlgebraicCuspSemicirclePairParameterMap2 {
         contact: &BezierAlgebraicCuspSemicirclePairContact2,
         first: bool,
         parameter: &Real,
+        policy: &CurveContext,
     ) -> CurveResult<Classification<std::cmp::Ordering>> {
         let (location, semicircle) = if first {
             (contact.first_location, &self.data.first_semicircle)
@@ -44172,11 +43995,11 @@ impl BezierAlgebraicCuspSemicirclePairParameterMap2 {
             (contact.second_location, &self.data.second_semicircle)
         };
         if let Some(order) =
-            algebraic_cusp_semicircle_endpoint_contact_order(location, parameter, &self.data.policy)
+            algebraic_cusp_semicircle_endpoint_contact_order(location, parameter, policy)
         {
             return Ok(order);
         }
-        match in_closed_unit_interval(parameter, &self.data.policy) {
+        match in_closed_unit_interval(parameter, policy) {
             Some(true) => {}
             Some(false) => return Err(CurveError::InvalidBezierParameter),
             None => return Ok(Classification::Uncertain(UncertaintyReason::Ordering)),
@@ -44201,7 +44024,7 @@ impl BezierAlgebraicCuspSemicirclePairParameterMap2 {
                             .into(),
                     )
                 })?;
-            return Ok(predicate.sign(&self.data.policy)?.map(|sign| match sign {
+            return Ok(predicate.sign(policy)?.map(|sign| match sign {
                 RealSign::Positive => std::cmp::Ordering::Less,
                 RealSign::Zero => std::cmp::Ordering::Equal,
                 RealSign::Negative => std::cmp::Ordering::Greater,
@@ -44219,10 +44042,8 @@ impl BezierAlgebraicCuspSemicirclePairParameterMap2 {
         };
         match contact_parameter {
             BezierRepresentedCircleContactParameterData2::Materialized(contact_parameter) => {
-                contact_parameter.cmp_by_refinement(
-                    &BezierParameter2::Exact(parameter.clone()),
-                    &self.data.policy,
-                )
+                contact_parameter
+                    .cmp_by_refinement(&BezierParameter2::Exact(parameter.clone()), policy)
             }
             BezierRepresentedCircleContactParameterData2::Retained {
                 parameter: contact_parameter,
@@ -44234,7 +44055,7 @@ impl BezierAlgebraicCuspSemicirclePairParameterMap2 {
                     } else {
                         parameter.clone()
                     }),
-                    &self.data.policy,
+                    policy,
                 )?;
                 Ok(if *unit_complement {
                     comparison.map(std::cmp::Ordering::reverse)
@@ -44270,7 +44091,7 @@ impl BezierAlgebraicCuspSemicirclePairParameterMap2 {
                     }
                 };
                 Ok(
-                    represented_policy_sign(&predicate, &self.data.policy).map(|sign| match sign {
+                    represented_policy_sign(&predicate, policy).map(|sign| match sign {
                         RealSign::Negative => std::cmp::Ordering::Less,
                         RealSign::Zero => std::cmp::Ordering::Equal,
                         RealSign::Positive => std::cmp::Ordering::Greater,
@@ -44278,7 +44099,7 @@ impl BezierAlgebraicCuspSemicirclePairParameterMap2 {
                 )
             }
             BezierRepresentedCircleContactParameterData2::ExactContactRadial(contact_radial) => {
-                let frame = match semicircle.represented_circle_frame(&self.data.policy)? {
+                let frame = match semicircle.represented_circle_frame(policy)? {
                     Classification::Decided(frame) => frame,
                     Classification::Uncertain(reason) => {
                         return Ok(Classification::Uncertain(reason));
@@ -44322,53 +44143,9 @@ impl BezierAlgebraicCuspSemicirclePairParameterMap2 {
                         return Ok(Classification::Uncertain(reason));
                     }
                 };
-                Ok(represented_policy_sign(&predicate, &self.data.policy).map(ordering))
+                Ok(represented_policy_sign(&predicate, policy).map(ordering))
             }
         }
-    }
-
-    /// Orders the contact against a represented parameter on the first carrier.
-    pub(crate) fn first_contact_order_to_real(
-        &self,
-        contact: &BezierAlgebraicCuspSemicirclePairContact2,
-        parameter: &Real,
-    ) -> CurveResult<Classification<std::cmp::Ordering>> {
-        self.represented_contact_order_to_real_for_side(contact, true, parameter)
-    }
-
-    /// Orders the contact against a represented parameter on the second carrier.
-    pub(crate) fn second_contact_order_to_real(
-        &self,
-        contact: &BezierAlgebraicCuspSemicirclePairContact2,
-        parameter: &Real,
-    ) -> CurveResult<Classification<std::cmp::Ordering>> {
-        self.represented_contact_order_to_real_for_side(contact, false, parameter)
-    }
-
-    pub(crate) fn first_contact_parameter_bracket(
-        &self,
-        contact: &BezierAlgebraicCuspSemicirclePairContact2,
-        refinement_steps: usize,
-    ) -> CurveResult<Classification<BezierAlgebraicCuspSemicircleParameterBracket2>> {
-        algebraic_cusp_semicircle_contact_parameter_bracket(
-            contact.first_location,
-            refinement_steps,
-            &self.data.policy,
-            |parameter| self.first_contact_order_to_real(contact, parameter),
-        )
-    }
-
-    pub(crate) fn second_contact_parameter_bracket(
-        &self,
-        contact: &BezierAlgebraicCuspSemicirclePairContact2,
-        refinement_steps: usize,
-    ) -> CurveResult<Classification<BezierAlgebraicCuspSemicircleParameterBracket2>> {
-        algebraic_cusp_semicircle_contact_parameter_bracket(
-            contact.second_location,
-            refinement_steps,
-            &self.data.policy,
-            |parameter| self.second_contact_order_to_real(contact, parameter),
-        )
     }
 
     pub(crate) fn first_contact_parameter(
@@ -44712,6 +44489,7 @@ impl BezierAlgebraicCuspSemicircleChordParameterMap2 {
         contact: &BezierAlgebraicCuspSemicircleChordContact2,
         cross_scale: &Real,
         dot_scale: &Real,
+        policy: &CurveContext,
     ) -> CurveResult<Classification<RealSign>> {
         let data = self.represented_oblique_contact(contact)?;
         Ok(
@@ -44722,9 +44500,7 @@ impl BezierAlgebraicCuspSemicircleChordParameterMap2 {
                 ],
                 &Real::zero(),
             ) {
-                Classification::Decided(value) => {
-                    represented_policy_sign(&value, &self.data.policy)
-                }
+                Classification::Decided(value) => represented_policy_sign(&value, policy),
                 Classification::Uncertain(reason) => Classification::Uncertain(reason),
             },
         )
@@ -45455,6 +45231,7 @@ impl BezierAlgebraicCuspSemicircleChordParameterMap2 {
         &self,
         contact: &BezierAlgebraicCuspSemicircleChordContact2,
         expression: &BezierDenseTwoSquareRootExpression2,
+        policy: &CurveContext,
     ) -> CurveResult<Classification<RealSign>> {
         let system = self.chord_normal_projective_system().ok_or_else(|| {
             CurveError::Topology(
@@ -45464,7 +45241,7 @@ impl BezierAlgebraicCuspSemicircleChordParameterMap2 {
         system.projective.expression_sign(
             expression,
             self.chord_normal_projective_parameter(contact)?,
-            &self.data.policy,
+            policy,
         )
     }
 
@@ -45484,7 +45261,7 @@ impl BezierAlgebraicCuspSemicircleChordParameterMap2 {
         else {
             return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
         };
-        self.chord_normal_dense_expression_sign(contact, &predicate)
+        self.chord_normal_dense_expression_sign(contact, &predicate, &self.data.policy)
     }
 
     fn chord_normal_dense_derived_coordinate_expression(
@@ -45615,13 +45392,14 @@ impl BezierAlgebraicCuspSemicircleChordParameterMap2 {
         &self,
         expression: &BezierSelectedRadialCircleChordNestedExpression2,
         branch: i8,
+        policy: &CurveContext,
     ) -> CurveResult<Classification<RealSign>> {
         let system = self.selected_radial_system().ok_or_else(|| {
             CurveError::Topology(
                 "a non-radial cusp/chord map used the pair-radial predicate kernel".into(),
             )
         })?;
-        selected_radial_chord_nested_expression_sign(system, expression, branch, &self.data.policy)
+        selected_radial_chord_nested_expression_sign(system, expression, branch, policy)
     }
 
     fn selected_radial_derived_coordinate_expression(
@@ -45651,8 +45429,14 @@ impl BezierAlgebraicCuspSemicircleChordParameterMap2 {
         &self,
         expression: &BezierAlgebraicCuspTrivariateSquareRootExpression2,
         branch: i8,
+        policy: &CurveContext,
     ) -> CurveResult<Classification<RealSign>> {
-        self.trivariate_radical_components_sign(&expression.rational, &expression.radical, branch)
+        self.trivariate_radical_components_sign(
+            &expression.rational,
+            &expression.radical,
+            branch,
+            policy,
+        )
     }
 
     fn trivariate_radical_components_sign(
@@ -45660,6 +45444,7 @@ impl BezierAlgebraicCuspSemicircleChordParameterMap2 {
         rational: &TrivariatePolynomial2,
         radical: &TrivariatePolynomial2,
         branch: i8,
+        policy: &CurveContext,
     ) -> CurveResult<Classification<RealSign>> {
         let system = self.oblique_system().ok_or_else(|| {
             CurveError::Topology("an axis cusp/chord map used the oblique radical kernel".into())
@@ -45672,7 +45457,7 @@ impl BezierAlgebraicCuspSemicircleChordParameterMap2 {
             &system.second_parameter,
             &system.cusp_parameter,
             branch,
-            &self.data.policy,
+            policy,
         )
     }
 
@@ -45680,13 +45465,14 @@ impl BezierAlgebraicCuspSemicircleChordParameterMap2 {
         &self,
         expression: &BezierAlgebraicCuspRetainedOffsetChordNestedExpression2,
         branch: i8,
+        policy: &CurveContext,
     ) -> CurveResult<Classification<RealSign>> {
         let system = self.retained_offset_system().ok_or_else(|| {
             CurveError::Topology(
                 "a non-offset cusp/chord map used the retained-offset radical kernel".into(),
             )
         })?;
-        retained_offset_chord_nested_expression_sign(system, expression, branch, &self.data.policy)
+        retained_offset_chord_nested_expression_sign(system, expression, branch, policy)
     }
 
     fn retained_tangent_cross_dot_linear_combination_sign(
@@ -45694,14 +45480,16 @@ impl BezierAlgebraicCuspSemicircleChordParameterMap2 {
         contact: &BezierAlgebraicCuspSemicircleChordContact2,
         cross_scale: &Real,
         dot_scale: &Real,
+        policy: &CurveContext,
     ) -> CurveResult<Classification<RealSign>> {
+        self.validate_policy(policy)?;
         // Every contact constructor already certifies and retains the exact
         // circle-tangent/chord-tangent cross sign.  When the dot coefficient
         // vanishes (notably at both selected-half endpoints), that sign is
         // the complete predicate authority regardless of the map's scalar
         // representation. Avoid expanding the same fact in a deeper field.
         if dot_scale.zero_status() == ZeroKnowledge::Zero
-            && let Some(scale_sign) = real_sign(cross_scale, &self.data.policy)
+            && let Some(scale_sign) = real_sign(cross_scale, policy)
         {
             return Ok(Classification::Decided(product_sign(
                 contact.tangent_cross_sign,
@@ -45747,20 +45535,21 @@ impl BezierAlgebraicCuspSemicircleChordParameterMap2 {
                     &bivariate_scale(radial_y.radical, &radial_y_scale),
                 ),
             };
-            return self.radical_sign(&expression, contact.branch);
+            return self.radical_sign(&expression, contact.branch, policy);
         }
         if self.represented_oblique_system().is_some() {
             return self.represented_oblique_tangent_cross_dot_linear_combination_sign(
                 contact,
                 cross_scale,
                 dot_scale,
+                policy,
             );
         }
         if let Some(system) = self.recursive_quadratic_line_system() {
             let retained = system.contact(contact.branch)?;
             if cross_scale.zero_status() == ZeroKnowledge::Zero
                 && let Some(tangent_dot_sign) = retained.tangent_dot_sign
-                && let Some(scale_sign) = real_sign(dot_scale, &self.data.policy)
+                && let Some(scale_sign) = real_sign(dot_scale, policy)
             {
                 return Ok(Classification::Decided(product_sign(
                     tangent_dot_sign,
@@ -45777,7 +45566,7 @@ impl BezierAlgebraicCuspSemicircleChordParameterMap2 {
                 cross_scale,
                 dot_scale,
                 &turn,
-                &self.data.policy,
+                policy,
             );
         }
         let angular_scale = dot_scale
@@ -45798,7 +45587,7 @@ impl BezierAlgebraicCuspSemicircleChordParameterMap2 {
             return system.projective.expression_sign(
                 &expression,
                 self.chord_normal_projective_parameter(contact)?,
-                &self.data.policy,
+                policy,
             );
         }
         let system = self.retained_offset_system().ok_or_else(|| {
@@ -45832,7 +45621,7 @@ impl BezierAlgebraicCuspSemicircleChordParameterMap2 {
                 candidate,
             },
             contact.branch,
-            &self.data.policy,
+            policy,
         )
     }
 
@@ -45840,15 +45629,16 @@ impl BezierAlgebraicCuspSemicircleChordParameterMap2 {
         &self,
         contact: &BezierAlgebraicCuspSemicircleChordContact2,
         parameter: &Real,
+        policy: &CurveContext,
     ) -> CurveResult<Classification<std::cmp::Ordering>> {
         if let Some(order) = algebraic_cusp_semicircle_endpoint_contact_order(
             contact.cusp_location,
             parameter,
-            &self.data.policy,
+            policy,
         ) {
             return Ok(order);
         }
-        match in_closed_unit_interval(parameter, &self.data.policy) {
+        match in_closed_unit_interval(parameter, policy) {
             Some(true) => {}
             Some(false) => return Err(CurveError::InvalidBezierParameter),
             None => return Ok(Classification::Uncertain(UncertaintyReason::Ordering)),
@@ -45858,7 +45648,7 @@ impl BezierAlgebraicCuspSemicircleChordParameterMap2 {
         })?;
         let one_minus = Real::one() - parameter;
         let denominator = &one_minus * &one_minus + parameter * parameter;
-        match real_sign(&denominator, &self.data.policy) {
+        match real_sign(&denominator, policy) {
             Some(RealSign::Positive) => {}
             Some(RealSign::Zero | RealSign::Negative) => {
                 return Err(CurveError::Topology(
@@ -45883,7 +45673,7 @@ impl BezierAlgebraicCuspSemicircleChordParameterMap2 {
             return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
         };
         Ok(
-            match self.retained_offset_nested_sign(&predicate, contact.branch)? {
+            match self.retained_offset_nested_sign(&predicate, contact.branch, policy)? {
                 Classification::Decided(RealSign::Positive) => {
                     Classification::Decided(std::cmp::Ordering::Less)
                 }
@@ -45911,6 +45701,7 @@ impl BezierAlgebraicCuspSemicircleChordParameterMap2 {
         &self,
         expression: &BezierAlgebraicCuspTwoTermExpression2,
         branch: i8,
+        policy: &CurveContext,
     ) -> CurveResult<Classification<RealSign>> {
         let system = self.axis_system().ok_or_else(|| {
             CurveError::Topology("an oblique cusp/chord map used the axis radical kernel".into())
@@ -45921,7 +45712,7 @@ impl BezierAlgebraicCuspSemicircleChordParameterMap2 {
             &system.discriminant,
             &system.cusp_parameter,
             &system.support_parameter,
-            &self.data.policy,
+            policy,
         )
     }
 
@@ -45929,37 +45720,36 @@ impl BezierAlgebraicCuspSemicircleChordParameterMap2 {
         &self,
         contact: &BezierAlgebraicCuspSemicircleChordContact2,
         parameter: &Real,
+        policy: &CurveContext,
     ) -> CurveResult<Classification<std::cmp::Ordering>> {
         if self.represented_oblique_system().is_some() {
-            match in_closed_unit_interval(parameter, &self.data.policy) {
+            match in_closed_unit_interval(parameter, policy) {
                 Some(true) => {}
                 Some(false) => return Err(CurveError::InvalidBezierParameter),
                 None => return Ok(Classification::Uncertain(UncertaintyReason::Ordering)),
             }
             return match &self.represented_oblique_contact(contact)?.cusp_parameter {
                 BezierRepresentedCircleChordAngularParameter2::Materialized(cusp_parameter) => {
-                    cusp_parameter.cmp_by_refinement(
-                        &BezierParameter2::Exact(parameter.clone()),
-                        &self.data.policy,
-                    )
+                    cusp_parameter
+                        .cmp_by_refinement(&BezierParameter2::Exact(parameter.clone()), policy)
                 }
                 BezierRepresentedCircleChordAngularParameter2::Recursive(cusp_parameter) => {
-                    cusp_parameter.order_to_real(parameter, &self.data.policy)
+                    cusp_parameter.order_to_real(parameter, policy)
                 }
             };
         }
         if let Some(system) = self.recursive_quadratic_line_system() {
-            return system.contact_order_to_real(contact, parameter, &self.data.policy);
+            return system.contact_order_to_real(contact, parameter, policy);
         }
         if let Some(system) = self.chord_normal_projective_system() {
             if let Some(order) = algebraic_cusp_semicircle_endpoint_contact_order(
                 contact.cusp_location,
                 parameter,
-                &self.data.policy,
+                policy,
             ) {
                 return Ok(order);
             }
-            match in_closed_unit_interval(parameter, &self.data.policy) {
+            match in_closed_unit_interval(parameter, policy) {
                 Some(true) => {}
                 Some(false) => return Err(CurveError::InvalidBezierParameter),
                 None => return Ok(Classification::Uncertain(UncertaintyReason::Ordering)),
@@ -45983,7 +45773,7 @@ impl BezierAlgebraicCuspSemicircleChordParameterMap2 {
                 return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
             };
             return Ok(
-                match self.chord_normal_dense_expression_sign(contact, &predicate)? {
+                match self.chord_normal_dense_expression_sign(contact, &predicate, policy)? {
                     Classification::Decided(RealSign::Positive) => {
                         Classification::Decided(std::cmp::Ordering::Less)
                     }
@@ -45998,13 +45788,13 @@ impl BezierAlgebraicCuspSemicircleChordParameterMap2 {
             );
         }
         if self.retained_offset_system().is_some() {
-            return self.retained_offset_contact_order_to_real(contact, parameter);
+            return self.retained_offset_contact_order_to_real(contact, parameter, policy);
         }
         if self.oblique_system().is_some() {
-            return self.oblique_contact_order_to_real(contact, parameter);
+            return self.oblique_contact_order_to_real(contact, parameter, policy);
         }
         if self.selected_radial_system().is_some() {
-            return self.selected_radial_contact_order_to_real(contact, parameter);
+            return self.selected_radial_contact_order_to_real(contact, parameter, policy);
         }
         let Some(system) = self.axis_system() else {
             return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
@@ -46012,18 +45802,18 @@ impl BezierAlgebraicCuspSemicircleChordParameterMap2 {
         if let Some(order) = algebraic_cusp_semicircle_endpoint_contact_order(
             contact.cusp_location,
             parameter,
-            &self.data.policy,
+            policy,
         ) {
             return Ok(order);
         }
-        match in_closed_unit_interval(parameter, &self.data.policy) {
+        match in_closed_unit_interval(parameter, policy) {
             Some(true) => {}
             Some(false) => return Err(CurveError::InvalidBezierParameter),
             None => return Ok(Classification::Uncertain(UncertaintyReason::Ordering)),
         }
         let one_minus = Real::one() - parameter;
         let denominator = &one_minus * &one_minus + parameter * parameter;
-        match real_sign(&denominator, &self.data.policy) {
+        match real_sign(&denominator, policy) {
             Some(RealSign::Positive) => {}
             Some(RealSign::Zero | RealSign::Negative) => {
                 return Err(CurveError::Topology(
@@ -46045,7 +45835,7 @@ impl BezierAlgebraicCuspSemicircleChordParameterMap2 {
                 &(denominator * Real::from(contact.branch)),
             ),
         };
-        Ok(match self.radical_sign(&predicate, 1)? {
+        Ok(match self.radical_sign(&predicate, 1, policy)? {
             // The normalized diameter coordinate decreases strictly with u.
             Classification::Decided(RealSign::Positive) => {
                 Classification::Decided(std::cmp::Ordering::Less)
@@ -46064,15 +45854,16 @@ impl BezierAlgebraicCuspSemicircleChordParameterMap2 {
         &self,
         contact: &BezierAlgebraicCuspSemicircleChordContact2,
         parameter: &Real,
+        policy: &CurveContext,
     ) -> CurveResult<Classification<std::cmp::Ordering>> {
         if let Some(order) = algebraic_cusp_semicircle_endpoint_contact_order(
             contact.cusp_location,
             parameter,
-            &self.data.policy,
+            policy,
         ) {
             return Ok(order);
         }
-        match in_closed_unit_interval(parameter, &self.data.policy) {
+        match in_closed_unit_interval(parameter, policy) {
             Some(true) => {}
             Some(false) => return Err(CurveError::InvalidBezierParameter),
             None => return Ok(Classification::Uncertain(UncertaintyReason::Ordering)),
@@ -46082,7 +45873,7 @@ impl BezierAlgebraicCuspSemicircleChordParameterMap2 {
         })?;
         let one_minus = Real::one() - parameter;
         let denominator = &one_minus * &one_minus + parameter * parameter;
-        match real_sign(&denominator, &self.data.policy) {
+        match real_sign(&denominator, policy) {
             Some(RealSign::Positive) => {}
             Some(RealSign::Zero | RealSign::Negative) => {
                 return Err(CurveError::Topology(
@@ -46103,7 +45894,7 @@ impl BezierAlgebraicCuspSemicircleChordParameterMap2 {
             return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
         };
         Ok(
-            match self.selected_radial_nested_sign(&predicate, contact.branch)? {
+            match self.selected_radial_nested_sign(&predicate, contact.branch, policy)? {
                 // The normalized diameter coordinate decreases strictly with u.
                 Classification::Decided(RealSign::Positive) => {
                     Classification::Decided(std::cmp::Ordering::Less)
@@ -46123,15 +45914,16 @@ impl BezierAlgebraicCuspSemicircleChordParameterMap2 {
         &self,
         contact: &BezierAlgebraicCuspSemicircleChordContact2,
         parameter: &Real,
+        policy: &CurveContext,
     ) -> CurveResult<Classification<std::cmp::Ordering>> {
         if let Some(order) = algebraic_cusp_semicircle_endpoint_contact_order(
             contact.cusp_location,
             parameter,
-            &self.data.policy,
+            policy,
         ) {
             return Ok(order);
         }
-        match in_closed_unit_interval(parameter, &self.data.policy) {
+        match in_closed_unit_interval(parameter, policy) {
             Some(true) => {}
             Some(false) => return Err(CurveError::InvalidBezierParameter),
             None => return Ok(Classification::Uncertain(UncertaintyReason::Ordering)),
@@ -46141,7 +45933,7 @@ impl BezierAlgebraicCuspSemicircleChordParameterMap2 {
         })?;
         let one_minus = Real::one() - parameter;
         let denominator = &one_minus * &one_minus + parameter * parameter;
-        match real_sign(&denominator, &self.data.policy) {
+        match real_sign(&denominator, policy) {
             Some(RealSign::Positive) => {}
             Some(RealSign::Zero | RealSign::Negative) => {
                 return Err(CurveError::Topology(
@@ -46172,6 +45964,7 @@ impl BezierAlgebraicCuspSemicircleChordParameterMap2 {
             match self.trivariate_radical_sign(
                 &BezierAlgebraicCuspTrivariateSquareRootExpression2 { rational, radical },
                 contact.branch,
+                policy,
             )? {
                 Classification::Decided(RealSign::Positive) => {
                     Classification::Decided(std::cmp::Ordering::Less)
@@ -46184,19 +45977,6 @@ impl BezierAlgebraicCuspSemicircleChordParameterMap2 {
                 }
                 Classification::Uncertain(reason) => Classification::Uncertain(reason),
             },
-        )
-    }
-
-    fn contact_parameter_bracket(
-        &self,
-        contact: &BezierAlgebraicCuspSemicircleChordContact2,
-        refinement_steps: usize,
-    ) -> CurveResult<Classification<BezierAlgebraicCuspSemicircleParameterBracket2>> {
-        algebraic_cusp_semicircle_contact_parameter_bracket(
-            contact.cusp_location,
-            refinement_steps,
-            &self.data.policy,
-            |parameter| self.contact_order_to_real(contact, parameter),
         )
     }
 
@@ -46310,7 +46090,7 @@ impl BezierAlgebraicCuspSemicircleChordParameterMap2 {
                 return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
             };
             return Ok(self
-                .retained_offset_nested_sign(&predicate, contact.branch)?
+                .retained_offset_nested_sign(&predicate, contact.branch, &self.data.policy)?
                 .map(|sign| match sign {
                     RealSign::Negative => std::cmp::Ordering::Less,
                     RealSign::Zero => std::cmp::Ordering::Equal,
@@ -46330,7 +46110,12 @@ impl BezierAlgebraicCuspSemicircleChordParameterMap2 {
                 return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
             };
             return Ok(self
-                .trivariate_radical_components_sign(&rational, &expression.radical, contact.branch)?
+                .trivariate_radical_components_sign(
+                    &rational,
+                    &expression.radical,
+                    contact.branch,
+                    &self.data.policy,
+                )?
                 .map(|sign| match sign {
                     RealSign::Negative => std::cmp::Ordering::Less,
                     RealSign::Zero => std::cmp::Ordering::Equal,
@@ -46353,7 +46138,7 @@ impl BezierAlgebraicCuspSemicircleChordParameterMap2 {
                 return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
             };
             return Ok(self
-                .selected_radial_nested_sign(&predicate, contact.branch)?
+                .selected_radial_nested_sign(&predicate, contact.branch, &self.data.policy)?
                 .map(|sign| match sign {
                     RealSign::Negative => std::cmp::Ordering::Less,
                     RealSign::Zero => std::cmp::Ordering::Equal,
@@ -46375,7 +46160,7 @@ impl BezierAlgebraicCuspSemicircleChordParameterMap2 {
             radical: expression.radical.clone(),
         };
         Ok(self
-            .radical_sign(&predicate, contact.branch)?
+            .radical_sign(&predicate, contact.branch, &self.data.policy)?
             .map(|sign| match sign {
                 RealSign::Negative => std::cmp::Ordering::Less,
                 RealSign::Zero => std::cmp::Ordering::Equal,
@@ -46470,7 +46255,7 @@ impl BezierAlgebraicCuspSemicircleChordParameterMap2 {
                 return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
             };
             return Ok(self
-                .retained_offset_nested_sign(&predicate, contact.branch)?
+                .retained_offset_nested_sign(&predicate, contact.branch, &self.data.policy)?
                 .map(|sign| match sign {
                     RealSign::Negative => std::cmp::Ordering::Less,
                     RealSign::Zero => std::cmp::Ordering::Equal,
@@ -46496,6 +46281,7 @@ impl BezierAlgebraicCuspSemicircleChordParameterMap2 {
                 .trivariate_radical_sign(
                     &BezierAlgebraicCuspTrivariateSquareRootExpression2 { rational, radical },
                     contact.branch,
+                    &self.data.policy,
                 )?
                 .map(|sign| match sign {
                     RealSign::Negative => std::cmp::Ordering::Less,
@@ -46519,7 +46305,7 @@ impl BezierAlgebraicCuspSemicircleChordParameterMap2 {
                 return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
             };
             return Ok(self
-                .selected_radial_nested_sign(&predicate, contact.branch)?
+                .selected_radial_nested_sign(&predicate, contact.branch, &self.data.policy)?
                 .map(|sign| match sign {
                     RealSign::Negative => std::cmp::Ordering::Less,
                     RealSign::Zero => std::cmp::Ordering::Equal,
@@ -46544,6 +46330,7 @@ impl BezierAlgebraicCuspSemicircleChordParameterMap2 {
             .radical_sign(
                 &BezierAlgebraicCuspTwoTermExpression2 { rational, radical },
                 contact.branch,
+                &self.data.policy,
             )?
             .map(|sign| match sign {
                 RealSign::Negative => std::cmp::Ordering::Less,
@@ -46729,7 +46516,7 @@ impl BezierAlgebraicCuspSemicircleChordParameterMap2 {
                 return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
             };
             return Ok(self
-                .retained_offset_nested_sign(&predicate, contact.branch)?
+                .retained_offset_nested_sign(&predicate, contact.branch, &self.data.policy)?
                 .map(|sign| match sign {
                     RealSign::Negative => std::cmp::Ordering::Less,
                     RealSign::Zero => std::cmp::Ordering::Equal,
@@ -46749,7 +46536,7 @@ impl BezierAlgebraicCuspSemicircleChordParameterMap2 {
                 return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
             };
             return Ok(self
-                .selected_radial_nested_sign(&predicate, contact.branch)?
+                .selected_radial_nested_sign(&predicate, contact.branch, &self.data.policy)?
                 .map(|sign| match sign {
                     RealSign::Negative => std::cmp::Ordering::Less,
                     RealSign::Zero => std::cmp::Ordering::Equal,
@@ -46774,7 +46561,12 @@ impl BezierAlgebraicCuspSemicircleChordParameterMap2 {
                 return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
             };
             return Ok(self
-                .trivariate_radical_components_sign(&rational, &radical, contact.branch)?
+                .trivariate_radical_components_sign(
+                    &rational,
+                    &radical,
+                    contact.branch,
+                    &self.data.policy,
+                )?
                 .map(|sign| match sign {
                     RealSign::Negative => std::cmp::Ordering::Less,
                     RealSign::Zero => std::cmp::Ordering::Equal,
@@ -46793,7 +46585,7 @@ impl BezierAlgebraicCuspSemicircleChordParameterMap2 {
             radical: expression.radical,
         };
         Ok(self
-            .radical_sign(&predicate, contact.branch)?
+            .radical_sign(&predicate, contact.branch, &self.data.policy)?
             .map(|sign| match sign {
                 RealSign::Negative => std::cmp::Ordering::Less,
                 RealSign::Zero => std::cmp::Ordering::Equal,
@@ -47045,7 +46837,7 @@ impl BezierAlgebraicCuspSemicircleChordParameterMap2 {
                 return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
             };
             return Ok(self
-                .retained_offset_nested_sign(&predicate, contact.branch)?
+                .retained_offset_nested_sign(&predicate, contact.branch, &self.data.policy)?
                 .map(|sign| match sign {
                     RealSign::Negative => std::cmp::Ordering::Less,
                     RealSign::Zero => std::cmp::Ordering::Equal,
@@ -47082,7 +46874,7 @@ impl BezierAlgebraicCuspSemicircleChordParameterMap2 {
                 return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
             };
             return Ok(self
-                .selected_radial_nested_sign(&predicate, contact.branch)?
+                .selected_radial_nested_sign(&predicate, contact.branch, &self.data.policy)?
                 .map(|sign| match sign {
                     RealSign::Negative => std::cmp::Ordering::Less,
                     RealSign::Zero => std::cmp::Ordering::Equal,
@@ -47115,6 +46907,7 @@ impl BezierAlgebraicCuspSemicircleChordParameterMap2 {
                 .trivariate_radical_sign(
                     &BezierAlgebraicCuspTrivariateSquareRootExpression2 { rational, radical },
                     contact.branch,
+                    &self.data.policy,
                 )?
                 .map(|sign| match sign {
                     RealSign::Negative => std::cmp::Ordering::Less,
@@ -47142,6 +46935,7 @@ impl BezierAlgebraicCuspSemicircleChordParameterMap2 {
             .radical_sign(
                 &BezierAlgebraicCuspTwoTermExpression2 { rational, radical },
                 contact.branch,
+                &self.data.policy,
             )?
             .map(|sign| match sign {
                 RealSign::Negative => std::cmp::Ordering::Less,
@@ -47231,8 +47025,8 @@ impl BezierAlgebraicCuspSemicircleChordParameterMap2 {
             ) else {
                 return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
             };
-            let x = self.chord_normal_dense_expression_sign(contact, &x)?;
-            let y = self.chord_normal_dense_expression_sign(contact, &y)?;
+            let x = self.chord_normal_dense_expression_sign(contact, &x, &self.data.policy)?;
+            let y = self.chord_normal_dense_expression_sign(contact, &y, &self.data.policy)?;
             return Ok(match (x, y) {
                 (
                     Classification::Decided(RealSign::Zero),
@@ -47266,8 +47060,8 @@ impl BezierAlgebraicCuspSemicircleChordParameterMap2 {
             ) else {
                 return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
             };
-            let x = self.retained_offset_nested_sign(&x, contact.branch)?;
-            let y = self.retained_offset_nested_sign(&y, contact.branch)?;
+            let x = self.retained_offset_nested_sign(&x, contact.branch, &self.data.policy)?;
+            let y = self.retained_offset_nested_sign(&y, contact.branch, &self.data.policy)?;
             return Ok(match (x, y) {
                 (
                     Classification::Decided(RealSign::Zero),
@@ -47301,8 +47095,8 @@ impl BezierAlgebraicCuspSemicircleChordParameterMap2 {
             ) else {
                 return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
             };
-            let x = self.selected_radial_nested_sign(&x, contact.branch)?;
-            let y = self.selected_radial_nested_sign(&y, contact.branch)?;
+            let x = self.selected_radial_nested_sign(&x, contact.branch, &self.data.policy)?;
+            let y = self.selected_radial_nested_sign(&y, contact.branch, &self.data.policy)?;
             return Ok(match (x, y) {
                 (
                     Classification::Decided(RealSign::Zero),
@@ -47341,8 +47135,8 @@ impl BezierAlgebraicCuspSemicircleChordParameterMap2 {
             ) else {
                 return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
             };
-            let x = self.trivariate_radical_sign(&x, contact.branch)?;
-            let y = self.trivariate_radical_sign(&y, contact.branch)?;
+            let x = self.trivariate_radical_sign(&x, contact.branch, &self.data.policy)?;
+            let y = self.trivariate_radical_sign(&y, contact.branch, &self.data.policy)?;
             return Ok(match (x, y) {
                 (
                     Classification::Decided(RealSign::Zero),
@@ -47373,10 +47167,12 @@ impl BezierAlgebraicCuspSemicircleChordParameterMap2 {
         let x = self.radical_sign(
             &difference(Axis2::X, first_translation_x, second_translation_x),
             contact.branch,
+            &self.data.policy,
         )?;
         let y = self.radical_sign(
             &difference(Axis2::Y, first_translation_y, second_translation_y),
             contact.branch,
+            &self.data.policy,
         )?;
         Ok(match (x, y) {
             (Classification::Decided(RealSign::Zero), Classification::Decided(RealSign::Zero)) => {
@@ -50461,7 +50257,7 @@ impl BezierAlgebraicCuspChordDerivedPoint2 {
                 return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
             };
             return Ok(map
-                .selected_radial_nested_sign(&incidence, contact.branch)?
+                .selected_radial_nested_sign(&incidence, contact.branch, policy)?
                 .map(Some));
         }
         if let Some(system) = map.oblique_system() {
@@ -50526,7 +50322,7 @@ impl BezierAlgebraicCuspChordDerivedPoint2 {
                 return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
             };
             return Ok(map
-                .trivariate_radical_components_sign(&rational, &radical, contact.branch)?
+                .trivariate_radical_components_sign(&rational, &radical, contact.branch, policy)?
                 .map(Some));
         }
         let Some(system) = map.axis_system() else {
@@ -50567,7 +50363,9 @@ impl BezierAlgebraicCuspChordDerivedPoint2 {
             ),
             radical: bivariate_add(&x_squared.radical, &y_squared.radical),
         };
-        Ok(map.radical_sign(&incidence, contact.branch)?.map(Some))
+        Ok(map
+            .radical_sign(&incidence, contact.branch, policy)?
+            .map(Some))
     }
 
     /// Orders one contact of `semicircle` with the certified axis support
@@ -50618,7 +50416,7 @@ impl BezierAlgebraicCuspChordDerivedPoint2 {
                 coordinate
             }
         };
-        let point_side = match map.radical_sign(&directed_axis, contact.branch)? {
+        let point_side = match map.radical_sign(&directed_axis, contact.branch, policy)? {
             Classification::Decided(sign) => sign,
             Classification::Uncertain(reason) => {
                 return Ok(Classification::Uncertain(reason));
@@ -51501,15 +51299,15 @@ impl BezierAlgebraicCuspSemicirclePairOverlap2 {
         endpoint: BezierAlgebraicCuspSemicirclePairEndpoint2,
         first: bool,
         parameter: &Real,
+        policy: &CurveContext,
     ) -> CurveResult<Classification<std::cmp::Ordering>> {
         if let BezierAlgebraicCuspSemicirclePairOverlapParameterMapData2::SimilarityTransport {
             source,
             ..
         } = &self.data.parameter_map
         {
-            return source.endpoint_order_to_real(endpoint, first, parameter);
+            return source.endpoint_order_to_real(endpoint, first, parameter, policy);
         }
-        let policy = &self.data.policy;
         let location = Self::endpoint_location(endpoint, first);
         if let Some(order) =
             algebraic_cusp_semicircle_endpoint_contact_order(location, parameter, policy)
@@ -51590,34 +51388,25 @@ impl BezierAlgebraicCuspSemicirclePairOverlap2 {
         })
     }
 
-    fn endpoint_parameter_bracket(
-        &self,
-        endpoint: BezierAlgebraicCuspSemicirclePairEndpoint2,
-        first: bool,
-        refinement_steps: usize,
-    ) -> CurveResult<Classification<BezierAlgebraicCuspSemicircleParameterBracket2>> {
-        algebraic_cusp_semicircle_contact_parameter_bracket(
-            Self::endpoint_location(endpoint, first),
-            refinement_steps,
-            &self.data.policy,
-            |parameter| self.endpoint_order_to_real(endpoint, first, parameter),
-        )
-    }
-
     fn mapped_exact_parameter_order_to_real(
         &self,
         source: &Real,
         source_first: bool,
         target: &Real,
+        policy: &CurveContext,
     ) -> CurveResult<Classification<std::cmp::Ordering>> {
         if let BezierAlgebraicCuspSemicirclePairOverlapParameterMapData2::SimilarityTransport {
             source: overlap,
             ..
         } = &self.data.parameter_map
         {
-            return overlap.mapped_exact_parameter_order_to_real(source, source_first, target);
+            return overlap.mapped_exact_parameter_order_to_real(
+                source,
+                source_first,
+                target,
+                policy,
+            );
         }
-        let policy = &self.data.policy;
         for parameter in [source, target] {
             match in_closed_unit_interval(parameter, policy) {
                 Some(true) => {}
@@ -51733,9 +51522,15 @@ impl BezierAlgebraicCuspSemicirclePairOverlap2 {
         source: &BezierAlgebraicCuspSemicircleParameter2,
         source_first: bool,
         target: &Real,
+        policy: &CurveContext,
     ) -> CurveResult<Classification<std::cmp::Ordering>> {
         if let BezierAlgebraicCuspSemicircleParameter2::Exact(source) = source {
-            return self.mapped_exact_parameter_order_to_real(source, source_first, target);
+            return self.mapped_exact_parameter_order_to_real(source, source_first, target, policy);
+        }
+        match in_closed_unit_interval(target, policy) {
+            Some(true) => {}
+            Some(false) => return Err(CurveError::InvalidBezierParameter),
+            None => return Ok(Classification::Uncertain(UncertaintyReason::Ordering)),
         }
         // A partial coincident-circle overlap does not define the inverse map
         // outside its retained target range. In particular, mapping target
@@ -51744,28 +51539,28 @@ impl BezierAlgebraicCuspSemicirclePairOverlap2 {
         // already-authoritative forward image instead. This proves strict
         // interior cuts are inside [0, 1] without adjoining the source field
         // to either selected-circle field.
-        if target == &Real::zero() || target == &Real::one() {
+        if compare_reals(target, &Real::zero(), policy) == Some(std::cmp::Ordering::Equal)
+            || compare_reals(target, &Real::one(), policy) == Some(std::cmp::Ordering::Equal)
+        {
             for refinement_steps in [0, 2, 4, 8, 16, 32, 64, 128, 256, 512] {
-                let bracket =
-                    match self.mapped_parameter_bracket(source, source_first, refinement_steps)? {
-                        Classification::Decided(bracket) => bracket,
-                        Classification::Uncertain(_) => continue,
-                    };
+                let bracket = match self.mapped_parameter_bracket(
+                    source,
+                    source_first,
+                    refinement_steps,
+                    policy,
+                )? {
+                    Classification::Decided(bracket) => bracket,
+                    Classification::Uncertain(_) => continue,
+                };
                 let (start, end) = cusp_semicircle_parameter_bracket_bounds(&bracket);
-                if compare_reals(end, target, &CurveContext::STRICT)
-                    == Some(std::cmp::Ordering::Less)
-                {
+                if compare_reals(end, target, policy) == Some(std::cmp::Ordering::Less) {
                     return Ok(Classification::Decided(std::cmp::Ordering::Less));
                 }
-                if compare_reals(start, target, &CurveContext::STRICT)
-                    == Some(std::cmp::Ordering::Greater)
-                {
+                if compare_reals(start, target, policy) == Some(std::cmp::Ordering::Greater) {
                     return Ok(Classification::Decided(std::cmp::Ordering::Greater));
                 }
-                if compare_reals(start, end, &CurveContext::STRICT)
-                    == Some(std::cmp::Ordering::Equal)
-                    && compare_reals(start, target, &CurveContext::STRICT)
-                        == Some(std::cmp::Ordering::Equal)
+                if compare_reals(start, end, policy) == Some(std::cmp::Ordering::Equal)
+                    && compare_reals(start, target, policy) == Some(std::cmp::Ordering::Equal)
                 {
                     return Ok(Classification::Decided(std::cmp::Ordering::Equal));
                 }
@@ -51776,29 +51571,13 @@ impl BezierAlgebraicCuspSemicirclePairOverlap2 {
             &BezierAlgebraicCuspSemicircleParameter2::Exact(target.clone()),
             !source_first,
         );
-        Ok(source
-            .cmp_by_refinement(&inverse, &self.data.policy)?
-            .map(|order| {
-                if self.data.orientation == RationalBezierOverlapOrientation2::Same {
-                    order
-                } else {
-                    order.reverse()
-                }
-            }))
-    }
-
-    fn mapped_exact_parameter_bracket(
-        &self,
-        source: &Real,
-        source_first: bool,
-        refinement_steps: usize,
-    ) -> CurveResult<Classification<BezierAlgebraicCuspSemicircleParameterBracket2>> {
-        algebraic_cusp_semicircle_contact_parameter_bracket(
-            BezierAlgebraicCuspSemicircleContactLocation2::Interior,
-            refinement_steps,
-            &self.data.policy,
-            |target| self.mapped_exact_parameter_order_to_real(source, source_first, target),
-        )
+        Ok(source.cmp_by_refinement(&inverse, policy)?.map(|order| {
+            if self.data.orientation == RationalBezierOverlapOrientation2::Same {
+                order
+            } else {
+                order.reverse()
+            }
+        }))
     }
 
     fn mapped_parameter_bracket(
@@ -51806,33 +51585,28 @@ impl BezierAlgebraicCuspSemicirclePairOverlap2 {
         source: &BezierAlgebraicCuspSemicircleParameter2,
         source_first: bool,
         refinement_steps: usize,
+        policy: &CurveContext,
     ) -> CurveResult<Classification<BezierAlgebraicCuspSemicircleParameterBracket2>> {
-        if self.has_exact_endpoint_map() {
-            let bracket = match source.parameter_bracket(refinement_steps, &self.data.policy)? {
-                Classification::Decided(bracket) => bracket,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            };
-            return if self.data.orientation == RationalBezierOverlapOrientation2::Same {
-                Ok(Classification::Decided(bracket))
-            } else {
-                complement_cusp_parameter_bracket(bracket, &self.data.policy)
-            };
-        }
-
-        let source_bracket = match source.parameter_bracket(refinement_steps, &self.data.policy)? {
+        let source_bracket = match source.parameter_bracket(refinement_steps, policy)? {
             Classification::Decided(bracket) => bracket,
             Classification::Uncertain(reason) => {
                 return Ok(Classification::Uncertain(reason));
             }
         };
+        if self.has_exact_endpoint_map() {
+            return if self.data.orientation == RationalBezierOverlapOrientation2::Same {
+                Ok(Classification::Decided(source_bracket))
+            } else {
+                complement_cusp_parameter_bracket(source_bracket, policy)
+            };
+        }
+        let mapped_bracket = |source: &Real| {
+            refine_algebraic_cusp_semicircle_parameter_bracket(None, refinement_steps, |target| {
+                self.mapped_exact_parameter_order_to_real(source, source_first, target, policy)
+            })
+        };
         let (source_start, source_end) = cusp_semicircle_parameter_bracket_bounds(&source_bracket);
-        let first = match self.mapped_exact_parameter_bracket(
-            source_start,
-            source_first,
-            refinement_steps,
-        )? {
+        let first = match mapped_bracket(source_start)? {
             Classification::Decided(bracket) => bracket,
             Classification::Uncertain(reason) => {
                 return Ok(Classification::Uncertain(reason));
@@ -51841,11 +51615,7 @@ impl BezierAlgebraicCuspSemicirclePairOverlap2 {
         if source_start == source_end {
             return Ok(Classification::Decided(first));
         }
-        let second = match self.mapped_exact_parameter_bracket(
-            source_end,
-            source_first,
-            refinement_steps,
-        )? {
+        let second = match mapped_bracket(source_end)? {
             Classification::Decided(bracket) => bracket,
             Classification::Uncertain(reason) => {
                 return Ok(Classification::Uncertain(reason));
@@ -51853,17 +51623,17 @@ impl BezierAlgebraicCuspSemicirclePairOverlap2 {
         };
         let (first_start, first_end) = cusp_semicircle_parameter_bracket_bounds(&first);
         let (second_start, second_end) = cusp_semicircle_parameter_bracket_bounds(&second);
-        let start = match compare_reals(first_start, second_start, &self.data.policy) {
+        let start = match compare_reals(first_start, second_start, policy) {
             Some(std::cmp::Ordering::Greater) => second_start.clone(),
             Some(std::cmp::Ordering::Equal | std::cmp::Ordering::Less) => first_start.clone(),
             None => return Ok(Classification::Uncertain(UncertaintyReason::Ordering)),
         };
-        let end = match compare_reals(first_end, second_end, &self.data.policy) {
+        let end = match compare_reals(first_end, second_end, policy) {
             Some(std::cmp::Ordering::Less) => second_end.clone(),
             Some(std::cmp::Ordering::Equal | std::cmp::Ordering::Greater) => first_end.clone(),
             None => return Ok(Classification::Uncertain(UncertaintyReason::Ordering)),
         };
-        match compare_reals(&start, &end, &self.data.policy) {
+        match compare_reals(&start, &end, policy) {
             Some(std::cmp::Ordering::Equal) => {
                 return Ok(Classification::Decided(
                     BezierAlgebraicCuspSemicircleParameterBracket2::Exact(start),
@@ -51878,45 +51648,13 @@ impl BezierAlgebraicCuspSemicirclePairOverlap2 {
             None => return Ok(Classification::Uncertain(UncertaintyReason::Ordering)),
         }
         Ok(
-            match BezierParameterInterval::try_new(start, end, &self.data.policy)? {
+            match BezierParameterInterval::try_new(start, end, policy)? {
                 Classification::Decided(interval) => Classification::Decided(
                     BezierAlgebraicCuspSemicircleParameterBracket2::Interval(interval),
                 ),
                 Classification::Uncertain(reason) => Classification::Uncertain(reason),
             },
         )
-    }
-
-    #[cfg(test)]
-    pub(crate) fn first_start_parameter_bracket(
-        &self,
-        refinement_steps: usize,
-    ) -> CurveResult<Classification<BezierAlgebraicCuspSemicircleParameterBracket2>> {
-        self.endpoint_parameter_bracket(self.data.first_boundaries[0], true, refinement_steps)
-    }
-
-    #[cfg(test)]
-    pub(crate) fn first_end_parameter_bracket(
-        &self,
-        refinement_steps: usize,
-    ) -> CurveResult<Classification<BezierAlgebraicCuspSemicircleParameterBracket2>> {
-        self.endpoint_parameter_bracket(self.data.first_boundaries[1], true, refinement_steps)
-    }
-
-    #[cfg(test)]
-    pub(crate) fn second_start_parameter_bracket(
-        &self,
-        refinement_steps: usize,
-    ) -> CurveResult<Classification<BezierAlgebraicCuspSemicircleParameterBracket2>> {
-        self.endpoint_parameter_bracket(self.data.second_boundaries[0], false, refinement_steps)
-    }
-
-    #[cfg(test)]
-    pub(crate) fn second_end_parameter_bracket(
-        &self,
-        refinement_steps: usize,
-    ) -> CurveResult<Classification<BezierAlgebraicCuspSemicircleParameterBracket2>> {
-        self.endpoint_parameter_bracket(self.data.second_boundaries[1], false, refinement_steps)
     }
 }
 
@@ -53568,25 +53306,21 @@ impl BezierAlgebraicCuspSemicircleParameter2 {
                     contact,
                     first,
                 } => {
-                    if *first {
-                        map.first_contact_order_to_real(contact, parameter)
-                    } else {
-                        map.second_contact_order_to_real(contact, parameter)
-                    }
+                    map.represented_contact_order_to_real_for_side(contact, *first, parameter, policy)
                 }
                 BezierAlgebraicCuspSemicircleMappedParameterData2::Chord { map, contact } => {
-                    map.contact_order_to_real(contact, parameter)
+                    map.contact_order_to_real(contact, parameter, policy)
                 }
                 BezierAlgebraicCuspSemicircleMappedParameterData2::PairOverlap {
                     overlap,
                     endpoint,
                     first,
-                } => overlap.endpoint_order_to_real(*endpoint, *first, parameter),
+                } => overlap.endpoint_order_to_real(*endpoint, *first, parameter, policy),
                 BezierAlgebraicCuspSemicircleMappedParameterData2::PairOverlapMap {
                     overlap,
                     source,
                     source_first,
-                } => overlap.mapped_parameter_order_to_real(source, *source_first, parameter),
+                } => overlap.mapped_parameter_order_to_real(source, *source_first, parameter, policy),
                 BezierAlgebraicCuspSemicircleMappedParameterData2::SimilarityTransport {
                     source,
                     ..
@@ -53598,19 +53332,19 @@ impl BezierAlgebraicCuspSemicircleParameter2 {
                 } => cusp_chamfer_parameter_order_to_real(source, half_angle, parameter, policy),
                 selected @ BezierAlgebraicCuspSemicircleMappedParameterData2::SelectedParallelContact {
                     ..
-                } => selected.selected_parallel_contact_order_to_real(parameter),
+                } => selected.selected_parallel_contact_order_to_real(parameter, policy),
                 selected @ BezierAlgebraicCuspSemicircleMappedParameterData2::SelectedCircularTangentContact {
                     ..
-                } => selected.selected_circular_tangent_contact_order_to_real(parameter),
+                } => selected.selected_circular_tangent_contact_order_to_real(parameter, policy),
                 selected @ BezierAlgebraicCuspSemicircleMappedParameterData2::SelectedPairContact {
                     ..
-                } => selected.selected_pair_contact_order_to_real(parameter),
+                } => selected.selected_pair_contact_order_to_real(parameter, policy),
                 selected @ BezierAlgebraicCuspSemicircleMappedParameterData2::SelectedChordNormalContact {
                     ..
-                } => selected.selected_chord_normal_contact_order_to_real(parameter),
+                } => selected.selected_chord_normal_contact_order_to_real(parameter, policy),
                 selected @ BezierAlgebraicCuspSemicircleMappedParameterData2::SelectedChordParallelNormalContact {
                     ..
-                } => selected.selected_chord_parallel_normal_contact_order_to_real(parameter),
+                } => selected.selected_chord_parallel_normal_contact_order_to_real(parameter, policy),
             },
         }
     }
@@ -53621,80 +53355,68 @@ impl BezierAlgebraicCuspSemicircleParameter2 {
         policy: &CurveContext,
     ) -> CurveResult<Classification<BezierAlgebraicCuspSemicircleParameterBracket2>> {
         self.validate_policy(policy)?;
-        match self {
-            Self::Exact(parameter) => Ok(Classification::Decided(
-                BezierAlgebraicCuspSemicircleParameterBracket2::Exact(parameter.clone()),
-            )),
-            Self::Mapped(data) => match data.as_ref() {
-                BezierAlgebraicCuspSemicircleMappedParameterData2::Rational { map, contact } => {
-                    map.mapped_contact_parameter_bracket(contact, refinement_steps, policy)
-                }
-                BezierAlgebraicCuspSemicircleMappedParameterData2::SelectedFiberRational {
-                    map,
-                    other_parameter,
-                    location,
-                    ..
-                } => map.parameter_bracket(other_parameter, *location, refinement_steps, policy),
-                BezierAlgebraicCuspSemicircleMappedParameterData2::SelectedFiberParallel {
-                    map,
-                    other_parameter,
-                    location,
-                    ..
-                } => map.parameter_bracket(other_parameter, *location, refinement_steps, policy),
-                BezierAlgebraicCuspSemicircleMappedParameterData2::Parallel { map, contact } => {
-                    map.contact_parameter_bracket(contact, refinement_steps, policy)
-                }
-                BezierAlgebraicCuspSemicircleMappedParameterData2::Pair {
-                    map,
-                    contact,
-                    first,
-                } => {
-                    if *first {
-                        map.first_contact_parameter_bracket(contact, refinement_steps)
-                    } else {
-                        map.second_contact_parameter_bracket(contact, refinement_steps)
-                    }
-                }
-                BezierAlgebraicCuspSemicircleMappedParameterData2::Chord { map, contact } => {
-                    map.contact_parameter_bracket(contact, refinement_steps)
-                }
-                BezierAlgebraicCuspSemicircleMappedParameterData2::PairOverlap {
-                    overlap,
-                    endpoint,
-                    first,
-                } => overlap.endpoint_parameter_bracket(*endpoint, *first, refinement_steps),
-                BezierAlgebraicCuspSemicircleMappedParameterData2::PairOverlapMap {
-                    overlap,
-                    source,
-                    source_first,
-                } => overlap.mapped_parameter_bracket(source, *source_first, refinement_steps),
-                BezierAlgebraicCuspSemicircleMappedParameterData2::SimilarityTransport {
-                    source,
-                    ..
-                } => source.parameter_bracket(refinement_steps, policy),
-                BezierAlgebraicCuspSemicircleMappedParameterData2::Chamfer {
-                    source,
-                    half_angle,
-                    ..
-                } => cusp_chamfer_parameter_bracket(source, half_angle, refinement_steps, policy),
-                selected @ BezierAlgebraicCuspSemicircleMappedParameterData2::SelectedParallelContact {
-                    ..
-                } => selected.selected_parallel_contact_parameter_bracket(refinement_steps),
-                selected @ BezierAlgebraicCuspSemicircleMappedParameterData2::SelectedCircularTangentContact {
-                    ..
-                } => selected.selected_circular_tangent_contact_parameter_bracket(refinement_steps),
-                selected @ BezierAlgebraicCuspSemicircleMappedParameterData2::SelectedPairContact {
-                    ..
-                } => selected.selected_pair_contact_parameter_bracket(refinement_steps),
-                selected @ BezierAlgebraicCuspSemicircleMappedParameterData2::SelectedChordNormalContact {
-                    ..
-                } => selected.selected_chord_normal_contact_parameter_bracket(refinement_steps),
-                selected @ BezierAlgebraicCuspSemicircleMappedParameterData2::SelectedChordParallelNormalContact {
-                    ..
-                } => selected
-                    .selected_chord_parallel_normal_contact_parameter_bracket(refinement_steps),
-            },
-        }
+        let data = match self {
+            Self::Exact(parameter) => {
+                return Ok(Classification::Decided(
+                    BezierAlgebraicCuspSemicircleParameterBracket2::Exact(parameter.clone()),
+                ));
+            }
+            Self::Mapped(data) => data,
+        };
+        let location = match data.as_ref() {
+            BezierAlgebraicCuspSemicircleMappedParameterData2::Rational { contact, .. } => {
+                contact.location
+            }
+            BezierAlgebraicCuspSemicircleMappedParameterData2::SelectedFiberRational { location, .. }
+            | BezierAlgebraicCuspSemicircleMappedParameterData2::SelectedFiberParallel { location, .. }
+            | BezierAlgebraicCuspSemicircleMappedParameterData2::SelectedParallelContact { location, .. } => *location,
+            BezierAlgebraicCuspSemicircleMappedParameterData2::Parallel { contact, .. }
+                if contact.location != BezierAlgebraicCuspSemicircleContactLocation2::Interior =>
+            {
+                contact.location
+            }
+            BezierAlgebraicCuspSemicircleMappedParameterData2::Parallel { map, contact } => {
+                return map.contact_parameter_bracket(contact, refinement_steps, policy);
+            }
+            BezierAlgebraicCuspSemicircleMappedParameterData2::Pair { contact, first, .. } => {
+                if *first { contact.first_location } else { contact.second_location }
+            }
+            BezierAlgebraicCuspSemicircleMappedParameterData2::Chord { contact, .. } => {
+                contact.cusp_location
+            }
+            BezierAlgebraicCuspSemicircleMappedParameterData2::PairOverlap { endpoint, first, .. } => {
+                BezierAlgebraicCuspSemicirclePairOverlap2::endpoint_location(*endpoint, *first)
+            }
+            BezierAlgebraicCuspSemicircleMappedParameterData2::PairOverlapMap { overlap, source, source_first } => {
+                return overlap.mapped_parameter_bracket(source, *source_first, refinement_steps, policy);
+            }
+            BezierAlgebraicCuspSemicircleMappedParameterData2::SimilarityTransport { source, .. } => {
+                return source.parameter_bracket(refinement_steps, policy);
+            }
+            BezierAlgebraicCuspSemicircleMappedParameterData2::Chamfer { source, half_angle, .. } => {
+                return cusp_chamfer_parameter_bracket(source, half_angle, refinement_steps, policy);
+            }
+            BezierAlgebraicCuspSemicircleMappedParameterData2::SelectedCircularTangentContact { .. }
+            | BezierAlgebraicCuspSemicircleMappedParameterData2::SelectedPairContact { .. }
+            | BezierAlgebraicCuspSemicircleMappedParameterData2::SelectedChordNormalContact { .. }
+            | BezierAlgebraicCuspSemicircleMappedParameterData2::SelectedChordParallelNormalContact { .. } => {
+                BezierAlgebraicCuspSemicircleContactLocation2::Interior
+            }
+        };
+        let endpoint = match location {
+            BezierAlgebraicCuspSemicircleContactLocation2::Start => Real::zero(),
+            BezierAlgebraicCuspSemicircleContactLocation2::End => Real::one(),
+            BezierAlgebraicCuspSemicircleContactLocation2::Interior => {
+                return refine_algebraic_cusp_semicircle_parameter_bracket(
+                    None,
+                    refinement_steps,
+                    |parameter| self.order_to_real(parameter, policy),
+                );
+            }
+        };
+        Ok(Classification::Decided(
+            BezierAlgebraicCuspSemicircleParameterBracket2::Exact(endpoint),
+        ))
     }
 
     /// Orders two incident points in the shared recursive selected-circle
@@ -132152,32 +131874,7 @@ mod conversion_tests {
             BezierAlgebraicCuspSemicircleParameter2::Mapped(data)
                 if matches!(data.as_ref(), BezierAlgebraicCuspSemicircleMappedParameterData2::Parallel { .. })
         ));
-        let sine = Real::e().sin();
-        let cosine = Real::e().cos();
-        let zero = &sine * &sine + &cosine * &cosine - Real::one();
-        let strict = crate::policy::resolve_certified_value(&CurveContext::STRICT, |attempt| {
-            parameter.order_to_real(&zero, attempt).unwrap()
-        });
-        assert_eq!(strict.certainty, CurveCertainty::Certified);
-        assert!(matches!(strict.value, Classification::Uncertain(_)));
-        let approximate =
-            crate::policy::resolve_certified_value(&CurveContext::APPROXIMATE_512, |attempt| {
-                parameter.order_to_real(&zero, attempt).unwrap()
-            });
-        assert_eq!(
-            approximate.certainty,
-            CurveCertainty::Approximate512Consumed
-        );
-        assert_eq!(
-            approximate.value,
-            Classification::Decided(std::cmp::Ordering::Greater)
-        );
-        assert_eq!(
-            parameter
-                .order_to_real(&Real::zero(), &CurveContext::STRICT)
-                .unwrap(),
-            Classification::Decided(std::cmp::Ordering::Greater)
-        );
+        assert_mapped_angle_query_policy(&parameter);
     }
 
     #[test]
@@ -132211,25 +131908,234 @@ mod conversion_tests {
             BezierAlgebraicCuspSemicircleContactLocation2::Interior
         );
         let parameter = map.contact_parameter(contact);
+        assert_mapped_angle_query_policy(&parameter);
+    }
+
+    fn assert_mapped_angle_query_policy(parameter: &BezierAlgebraicCuspSemicircleParameter2) {
+        assert!(matches!(
+            parameter,
+            BezierAlgebraicCuspSemicircleParameter2::Mapped(_)
+        ));
         let sine = Real::e().sin();
         let cosine = Real::e().cos();
         let zero = &sine * &sine + &cosine * &cosine - Real::one();
-        let strict = crate::policy::resolve_certified_value(&CurveContext::STRICT, |attempt| {
-            parameter.order_to_real(&zero, attempt).unwrap()
+        // The bounded exact pass cannot certify this identity on the pinned
+        // scalar stack. A terminal-enabled query may consume its zero decision,
+        // but must not change a subsequent strict query's authority.
+        for (query, expected) in [
+            (zero.clone(), std::cmp::Ordering::Greater),
+            (Real::one() + zero, std::cmp::Ordering::Less),
+        ] {
+            for _ in 0..2 {
+                let strict =
+                    crate::policy::resolve_certified_value(&CurveContext::STRICT, |attempt| {
+                        parameter.order_to_real(&query, attempt).unwrap()
+                    });
+                assert_eq!(strict.certainty, CurveCertainty::Certified);
+                assert!(matches!(strict.value, Classification::Uncertain(_)));
+                let approximate = crate::policy::resolve_certified_value(
+                    &CurveContext::APPROXIMATE_512,
+                    |attempt| parameter.order_to_real(&query, attempt).unwrap(),
+                );
+                assert_eq!(
+                    approximate.certainty,
+                    CurveCertainty::Approximate512Consumed
+                );
+                assert_eq!(approximate.value, Classification::Decided(expected));
+                let forced = crate::policy::resolve_certified_value(
+                    &CurveContext::APPROXIMATE_512,
+                    |attempt| {
+                        attempt.strict_predicate_pass(|| {
+                            parameter.order_to_real(&query, attempt).unwrap()
+                        })
+                    },
+                );
+                assert_eq!(forced.certainty, CurveCertainty::Certified);
+                assert!(matches!(forced.value, Classification::Uncertain(_)));
+            }
+        }
+        let exact = crate::policy::resolve_certified_value(&CurveContext::STRICT, |attempt| {
+            parameter.order_to_real(&Real::zero(), attempt).unwrap()
         });
-        assert_eq!(strict.certainty, CurveCertainty::Certified);
-        assert!(matches!(strict.value, Classification::Uncertain(_)));
-        let approximate =
-            crate::policy::resolve_certified_value(&CurveContext::APPROXIMATE_512, |attempt| {
-                parameter.order_to_real(&zero, attempt).unwrap()
-            });
+        assert_eq!(exact.certainty, CurveCertainty::Certified);
         assert_eq!(
-            approximate.certainty,
-            CurveCertainty::Approximate512Consumed
-        );
-        assert_eq!(
-            approximate.value,
+            exact.value,
             Classification::Decided(std::cmp::Ordering::Greater)
+        );
+    }
+
+    #[test]
+    fn mapped_pair_angle_queries_observe_requested_policy_on_both_sides() {
+        let policy = CurveContext::STRICT;
+        let first = synthetic_reducible_cusp_semicircle((3, 4), ((2, 3), (4, 5)), &policy);
+        let translation = Similarity2::try_from_real_affine(
+            Real::one(),
+            Real::zero(),
+            Real::zero(),
+            Real::one(),
+            Real::from(6_i8),
+            Real::zero(),
+        )
+        .unwrap();
+        let second = synthetic_reducible_cusp_semicircle((1, 4), ((1, 5), (1, 3)), &policy)
+            .transform_similarity(&translation)
+            .unwrap();
+        let Classification::Decided(BezierAlgebraicCuspSemicirclePairIntersections2::Contacts {
+            contacts,
+            parameter_map: map,
+        }) = first.pair_intersections(&second, &policy).unwrap()
+        else {
+            panic!("the independent upper halves must retain their transverse contact");
+        };
+        let [contact] = contacts.as_slice() else {
+            panic!("expected one contact");
+        };
+        for parameter in [
+            map.first_contact_parameter(contact),
+            map.second_contact_parameter(contact),
+        ] {
+            assert_mapped_angle_query_policy(&parameter);
+            assert!(matches!(
+                parameter.parameter_bracket(8, &policy).unwrap(),
+                Classification::Decided(_)
+            ));
+        }
+    }
+
+    #[test]
+    fn recursive_pair_angle_queries_observe_requested_policy_on_both_sides() {
+        let circle = recursively_pair_radial_half(&CurveContext::STRICT);
+        let frame = circle
+            .data
+            .frame
+            .selected_radial()
+            .expect("the recursive circle retains its selected center");
+        let BezierAlgebraicCuspSemicircleMappedParameterData2::Pair { map, contact, .. } =
+            frame.center_parameter.as_ref()
+        else {
+            panic!("the center must retain its pair map");
+        };
+        for parameter in [
+            map.first_contact_parameter(contact),
+            map.second_contact_parameter(contact),
+        ] {
+            assert_mapped_angle_query_policy(&parameter);
+        }
+    }
+
+    #[test]
+    fn mapped_chord_angle_query_observes_requested_policy() {
+        let policy = CurveContext::STRICT;
+        let circle = dense_chord_normal_unit_semicircle(&policy);
+        let Classification::Decided(chord) = BezierAlgebraicChord2::try_new(
+            RationalBezierIntersectionPointEvidence2::Exact(Point2::from_values(1, -2)),
+            RationalBezierIntersectionPointEvidence2::Exact(Point2::from_values(1, 2)),
+            &policy,
+        )
+        .unwrap() else {
+            panic!("the vertical tangent chord must construct");
+        };
+        let Classification::Decided(
+            BezierAlgebraicCuspSemicircleRetainedChordIntersections2::Contacts(contacts),
+        ) = circle.chord_intersections(&chord, &policy).unwrap()
+        else {
+            panic!("the selected half must retain its finite tangency");
+        };
+        let [contact] = contacts.as_slice() else {
+            panic!("expected one tangent contact");
+        };
+        assert!(
+            matches!(&contact.cusp_parameter, BezierAlgebraicCuspSemicircleParameter2::Mapped(data)
+            if matches!(data.as_ref(), BezierAlgebraicCuspSemicircleMappedParameterData2::Chord { .. }))
+        );
+        assert_mapped_angle_query_policy(&contact.cusp_parameter);
+        assert_eq!(
+            contact
+                .cusp_parameter
+                .parameter_bracket(1, &policy)
+                .unwrap(),
+            Classification::Decided(BezierAlgebraicCuspSemicircleParameterBracket2::Exact(
+                (Real::one() / Real::from(2_i8)).unwrap(),
+            )),
+        );
+    }
+
+    #[test]
+    fn mapped_overlap_angle_queries_observe_requested_policy() {
+        let policy = CurveContext::STRICT;
+        let first = synthetic_reducible_cusp_semicircle((3, 4), ((2, 3), (4, 5)), &policy);
+        let rotation = Similarity2::try_from_real_affine(
+            Real::zero(),
+            Real::from(-1_i8),
+            Real::one(),
+            Real::zero(),
+            Real::zero(),
+            Real::from(5_i8),
+        )
+        .unwrap();
+        let second = synthetic_reducible_cusp_semicircle((1, 4), ((1, 5), (1, 3)), &policy)
+            .transform_similarity(&rotation)
+            .unwrap();
+        let Classification::Decided(BezierAlgebraicCuspSemicirclePairIntersections2::Overlap(
+            overlap,
+        )) = first.pair_intersections(&second, &policy).unwrap()
+        else {
+            panic!("the selected halves must retain their shared quadrant");
+        };
+        let quarter = (Real::one() / Real::from(4_i8)).unwrap();
+        for parameter in [
+            overlap.first_start_parameter(),
+            overlap.second_end_parameter(),
+            overlap.map_parameter(
+                &BezierAlgebraicCuspSemicircleParameter2::Exact(Real::from(3_i8) * &quarter),
+                true,
+            ),
+            overlap.map_parameter(
+                &BezierAlgebraicCuspSemicircleParameter2::Exact(quarter),
+                false,
+            ),
+        ] {
+            assert_mapped_angle_query_policy(&parameter);
+            assert!(matches!(
+                parameter.parameter_bracket(8, &policy).unwrap(),
+                Classification::Decided(_)
+            ));
+        }
+        let (_, _, analytic_overlap) = general_analytic_circle_overlap(&policy);
+        let Classification::Decided(source) = analytic_overlap
+            .cusp_parameter_for_other(
+                &region_parameter(BezierParameter2::Exact(
+                    (Real::one() / Real::from(2_i8)).unwrap(),
+                )),
+                &policy,
+            )
+            .unwrap()
+        else {
+            panic!("the analytic third must retain its source map");
+        };
+        let mapped = overlap.map_parameter(&source, false);
+        assert_mapped_angle_query_policy(&mapped);
+        let half = (Real::one() / Real::from(2_i8)).unwrap();
+        let three_quarters = Real::from(3_i8) * &half * &half;
+        let Classification::Decided(bracket) = mapped.parameter_bracket(8, &policy).unwrap() else {
+            panic!("the transported analytic cut must refine its source enclosure");
+        };
+        let (start, end) = cusp_semicircle_parameter_bracket_bounds(&bracket);
+        assert!(matches!(
+            compare_reals(start, &three_quarters, &policy),
+            Some(std::cmp::Ordering::Less | std::cmp::Ordering::Equal)
+        ));
+        assert!(matches!(
+            compare_reals(&three_quarters, end, &policy),
+            Some(std::cmp::Ordering::Less | std::cmp::Ordering::Equal)
+        ));
+        assert_eq!(
+            compare_reals(
+                &(end - start),
+                &(Real::one() / Real::from(32_i8)).unwrap(),
+                &policy
+            ),
+            Some(std::cmp::Ordering::Less),
         );
     }
 
@@ -142242,13 +142148,17 @@ mod conversion_tests {
                 Classification::Decided(std::cmp::Ordering::Greater),
             );
             assert!(matches!(
-                map.first_contact_parameter_bracket(contact, 4).unwrap(),
+                map.first_contact_parameter(contact)
+                    .parameter_bracket(4, &policy)
+                    .unwrap(),
                 Classification::Decided(BezierAlgebraicCuspSemicircleParameterBracket2::Interval(
                     _
                 ))
             ));
             assert!(matches!(
-                map.second_contact_parameter_bracket(contact, 4).unwrap(),
+                map.second_contact_parameter(contact)
+                    .parameter_bracket(4, &policy)
+                    .unwrap(),
                 Classification::Decided(BezierAlgebraicCuspSemicircleParameterBracket2::Interval(
                     _
                 ))
@@ -143774,13 +143684,17 @@ mod conversion_tests {
             );
             assert_eq!(contact.tangent_cross_sign, RealSign::Zero);
             assert_eq!(
-                map.first_contact_parameter_bracket(contact, 1).unwrap(),
+                map.first_contact_parameter(contact)
+                    .parameter_bracket(1, &policy)
+                    .unwrap(),
                 Classification::Decided(BezierAlgebraicCuspSemicircleParameterBracket2::Exact(
                     Real::zero(),
                 )),
             );
             assert_eq!(
-                map.second_contact_parameter_bracket(contact, 1).unwrap(),
+                map.second_contact_parameter(contact)
+                    .parameter_bracket(1, &policy)
+                    .unwrap(),
                 Classification::Decided(BezierAlgebraicCuspSemicircleParameterBracket2::Exact(
                     Real::one(),
                 )),
@@ -143911,13 +143825,19 @@ mod conversion_tests {
                     std::mem::size_of::<usize>(),
                 );
                 assert_eq!(
-                    overlap.first_start_parameter_bracket(1).unwrap(),
+                    overlap
+                        .first_start_parameter()
+                        .parameter_bracket(1, &policy)
+                        .unwrap(),
                     Classification::Decided(BezierAlgebraicCuspSemicircleParameterBracket2::Exact(
                         Real::zero()
                     ),),
                 );
                 assert_eq!(
-                    overlap.second_end_parameter_bracket(1).unwrap(),
+                    overlap
+                        .second_end_parameter()
+                        .parameter_bracket(1, &policy)
+                        .unwrap(),
                     Classification::Decided(BezierAlgebraicCuspSemicircleParameterBracket2::Exact(
                         Real::one()
                     ),),
@@ -143961,25 +143881,37 @@ mod conversion_tests {
                 ],
             );
             assert_eq!(
-                overlap.first_start_parameter_bracket(2).unwrap(),
+                overlap
+                    .first_start_parameter()
+                    .parameter_bracket(2, &policy)
+                    .unwrap(),
                 Classification::Decided(BezierAlgebraicCuspSemicircleParameterBracket2::Exact(
                     half.clone()
                 ),),
             );
             assert_eq!(
-                overlap.first_end_parameter_bracket(2).unwrap(),
+                overlap
+                    .first_end_parameter()
+                    .parameter_bracket(2, &policy)
+                    .unwrap(),
                 Classification::Decided(BezierAlgebraicCuspSemicircleParameterBracket2::Exact(
                     Real::one(),
                 )),
             );
             assert_eq!(
-                overlap.second_start_parameter_bracket(2).unwrap(),
+                overlap
+                    .second_start_parameter()
+                    .parameter_bracket(2, &policy)
+                    .unwrap(),
                 Classification::Decided(BezierAlgebraicCuspSemicircleParameterBracket2::Exact(
                     Real::zero(),
                 )),
             );
             assert_eq!(
-                overlap.second_end_parameter_bracket(2).unwrap(),
+                overlap
+                    .second_end_parameter()
+                    .parameter_bracket(2, &policy)
+                    .unwrap(),
                 Classification::Decided(BezierAlgebraicCuspSemicircleParameterBracket2::Exact(
                     half.clone(),
                 )),
@@ -144521,6 +144453,7 @@ mod conversion_tests {
                         BezierAlgebraicCuspSemicirclePairEndpoint2::SecondStart,
                         true,
                         &third,
+                        &oblique_overlap.data.policy
                     )
                     .unwrap(),
                 Classification::Decided(std::cmp::Ordering::Equal),
@@ -148968,6 +148901,7 @@ mod conversion_tests {
                     retained_contact,
                     &Real::one(),
                     &Real::zero(),
+                    &map.data.policy
                 )
                 .unwrap(),
                 Classification::Decided(RealSign::Zero),
@@ -148977,6 +148911,7 @@ mod conversion_tests {
                     retained_contact,
                     &Real::zero(),
                     &Real::one(),
+                    &map.data.policy
                 )
                 .unwrap(),
                 Classification::Decided(RealSign::Negative),
@@ -151383,12 +151318,16 @@ mod conversion_tests {
         for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
             let Classification::Decided(BezierAlgebraicCuspSemicircleParameterBracket2::Interval(
                 refined,
-            )) = refine_algebraic_cusp_semicircle_parameter_bracket(&initial, 8, |parameter| {
-                Ok(Classification::Decided(
-                    compare_reals(&root, parameter, &policy)
-                        .expect("rational parameters have an exact order"),
-                ))
-            })
+            )) = refine_algebraic_cusp_semicircle_parameter_bracket(
+                Some(&initial),
+                8,
+                |parameter| {
+                    Ok(Classification::Decided(
+                        compare_reals(&root, parameter, &policy)
+                            .expect("rational parameters have an exact order"),
+                    ))
+                },
+            )
             .unwrap()
             else {
                 panic!("one third cannot become exact under dyadic bisection");

@@ -44,6 +44,8 @@ because neither their blocker nor their resolver remains executable.
 | Ordinary rational and analytic-parallel angular queries used construction policy instead of the caller's permitted terminal | `mapped_rational_angle_query_observes_requested_policy`; `mapped_parallel_angle_query_observes_requested_policy`; `nonrepresented_center_transverse_chamfer_inverts_by_correlated_point` |
 | An analytic-parallel bracket cache could replay terminal-consumed evidence into STRICT or a forced-strict subpass after caller-policy forwarding | `mapped_parallel_bracket_cache_does_not_launder_a_terminal` |
 | Represented rational-value and diameter-coordinate caches forgot actual terminal provenance instead of preserving it until independent certification | `mapped_circle_rational_cache_preserves_consumed_policy`; `mapped_circle_diameter_cache_preserves_consumed_policy`; `nonrepresented_center_nonrational_chamfer_inverts_with_retained_authority` |
+| Circle-pair, recursive pair, chord, and coincident-overlap angle queries ignored the requested terminal policy | `mapped_pair_angle_queries_observe_requested_policy_on_both_sides`; `recursive_pair_angle_queries_observe_requested_policy_on_both_sides`; `mapped_chord_angle_query_observes_requested_policy`; `mapped_overlap_angle_queries_observe_requested_policy` |
+| A terminal-resolved overlap endpoint missed the forward-refinement path and selected the antipodal inverse image, reversing its angular ordering | `mapped_overlap_angle_queries_observe_requested_policy` (mapped analytic source, both terminal-resolved endpoints, repeated STRICT and forced-strict replay) |
 
 The retained Sturm-chain optimization is additionally guarded by
 `retained_sturm_certificate_classifies_mixed_root_multiplicity`, which proves
