@@ -1959,6 +1959,100 @@ mod tests {
     }
 
     #[test]
+    fn affine_offset_scaling_keeps_extreme_binary_exponents_exact() {
+        let atom = Computable::one().sin();
+        for (inner, outer) in [(i32::MAX, 1), (i32::MIN, -1)] {
+            let base = atom.clone().shift_left(inner);
+            let shifted = base.clone().shift_left(outer);
+            assert!(matches!(&shifted.internal.approximation,
+                Approximation::Offset(child, shift) if *shift == outer
+                    && Arc::ptr_eq(&child.internal, &base.internal)));
+            assert!(Computable::internal_structural_eq(
+                &shifted.shift_left(-outer), &base,
+            ));
+            let affine = base.clone().add(Computable::one()).shift_left(outer);
+            let offset = Computable::power_of_two_rational(outer).add_one();
+            let recovered = affine.add(Computable::one())
+                .add(Computable::rational(-offset)).shift_left(-outer);
+            assert!(Computable::internal_structural_eq(&recovered, &base));
+            assert!(recovered.cached().is_none());
+        }
+    }
+
+    #[test]
+    fn affine_offsets_preserve_shared_bases_through_exact_scaling() {
+        let atom = Computable::one().sin();
+        let left_offset = Rational::fraction(-5, 8).unwrap();
+        let right_offset = Rational::fraction(-3, 8).unwrap();
+        let scales = [
+            Rational::one(), Rational::new(-1), Rational::new(-3),
+            Rational::fraction(7, 11).unwrap(),
+            Rational::fraction(-1, 1024).unwrap(),
+            Rational::new(1024),
+        ];
+        for left_scale in &scales {
+            for right_scale in &scales {
+                for left_reversed in [false, true] {
+                    for right_reversed in [false, true] {
+                        let affine = |offset: &Rational, scale: &Rational, reversed| {
+                            let offset = Computable::rational(offset.clone());
+                            let sum = if reversed {
+                                offset.add(atom.clone())
+                            } else {
+                                atom.clone().add(offset)
+                            };
+                            sum.multiply_rational(scale.clone())
+                        };
+                        let actual = affine(&left_offset, left_scale, left_reversed)
+                            .add(affine(&right_offset, right_scale, right_reversed));
+                        let expected = atom.clone().multiply_rational(left_scale + right_scale)
+                            .add(Computable::rational(
+                                &left_offset * left_scale + &right_offset * right_scale,
+                            ));
+                        let (base, scale, offset) = actual.rational_offset_parts(&mut 8).unwrap();
+                        assert!(Computable::internal_structural_eq(base, &atom));
+                        assert_eq!(scale, left_scale + right_scale);
+                        assert_eq!(offset, &left_offset * left_scale + &right_offset * right_scale);
+                        assert!(actual.cached().is_none(), "folding must not approximate");
+                        let cancelled = actual.add(expected.negate());
+                        assert_eq!(cancelled.sign_until(0), Some(RealSign::Zero));
+                    }
+                }
+            }
+        }
+        // Merely constructing the sum must retain its shared operands, even
+        // though a later cancellation can expose their common affine base.
+        let lower = atom.clone().add(Computable::rational(left_offset.clone()));
+        let upper = atom.clone().add(Computable::rational(right_offset.clone()));
+        let sum = lower.clone().add(upper.clone());
+        assert!(matches!(&sum.internal.approximation, Approximation::Add(left, right)
+            if Arc::ptr_eq(&left.internal, &lower.internal)
+                && Arc::ptr_eq(&right.internal, &upper.internal)));
+        assert!(sum.rational_offset_parts(&mut 2).is_none());
+        let mut budget = 3;
+        assert!(sum.rational_offset_parts(&mut budget).is_some());
+        assert_eq!(budget, 0, "both branches share one traversal budget");
+        let affine = atom.clone().add(Computable::rational(left_offset.clone()))
+            .multiply_rational(Rational::fraction(-7, 11).unwrap());
+        assert!(affine.rational_offset_parts(&mut 0).is_none());
+        assert!(affine.rational_offset_parts(&mut 1).is_none());
+        assert!(affine.rational_offset_parts(&mut 8).is_some());
+        assert!(affine.clone().shift_left(i32::MAX).rational_offset_parts(&mut 8).is_none());
+        assert!(affine.clone().shift_left(i32::MIN).rational_offset_parts(&mut 8).is_none());
+        let large_scale = Rational::from_bigint((BigInt::one() << 8192_usize) + BigInt::one());
+        assert!(affine.multiply_rational(large_scale).rational_offset_parts(&mut 8).is_none());
+
+        // Different symbolic bases must not be merged merely because the
+        // rational offsets and scales agree.
+        let distinct = Computable::rational(Rational::new(2)).sin();
+        let actual = atom.clone().add(Computable::rational(left_offset.clone()))
+            .add(distinct.clone().add(Computable::rational(right_offset.clone())));
+        let expected = atom.add(distinct)
+            .add(Computable::rational(left_offset + right_offset));
+        assert_close(actual, expected, -128, 2);
+    }
+
+    #[test]
     fn square_of_negative_value_collapses_to_square_of_positive_value() {
         let value = Computable::pi().negate().square();
         let expected = Computable::pi().square();

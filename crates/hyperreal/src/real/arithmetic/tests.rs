@@ -57,6 +57,13 @@ mod tests {
         let mixed = Real::average_pair(&Real::pi(), &Real::e());
         let expanded = ((&Real::pi() + &Real::e()) / Real::from(2_u8)).unwrap();
         assert_eq!(mixed, expanded);
+        let width = Real::new(Rational::fraction(7, 11).unwrap());
+        for center in [Real::one().sin(), Real::from(3).ln().unwrap()] {
+            let mean = Real::average_pair(&(&center - &width), &(&center + &width));
+            assert_eq!((&mean - &center).certified_sign_until(0).sign(), Some(RealSign::Zero));
+            assert_eq!((&center - &mean).certified_sign_until(0).sign(), Some(RealSign::Zero));
+            assert_eq!((-&mean + &center).certified_sign_until(0).sign(), Some(RealSign::Zero));
+        }
     }
 
     #[test]
@@ -2278,6 +2285,56 @@ mod tests {
                         Some(sign),
                         "root={root_index}, scale={scale_index}, direction={direction}",
                     );
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn polynomial_evaluation_retains_reconstructed_quadratic_midpoints() {
+        let half = Real::new(Rational::fraction(1, 2).unwrap());
+        let alpha = half.clone().sqrt().unwrap();
+        let delta = (&alpha + &half * &half).sqrt().unwrap();
+        let epsilon = Real::new(Rational::from_bigint_fraction(
+            BigInt::from(1_u8), BigUint::from(1_u8) << 600_usize,
+        ).unwrap());
+        for (root_index, root) in [-&half - &delta, -&half + &delta].into_iter().enumerate() {
+            for width in [
+                Real::new(Rational::fraction(1, 8).unwrap()),
+                Real::new(Rational::fraction(2, 7).unwrap()),
+            ] {
+                let lower = &root - &width;
+                let upper = &root + &width;
+                for midpoint in [
+                    Real::average_pair(&lower, &upper),
+                    Real::average_pair(&upper, &lower),
+                    &half * &lower + &half * &upper,
+                    Real::mul_add(&half, &lower, &(&half * &upper)),
+                ] {
+                    assert_eq!(
+                        (&midpoint - &root).certified_sign_until(-512).sign(),
+                        Some(RealSign::Zero),
+                    );
+                    for (scale_index, scale) in [Real::one(), Real::pi(), -Real::pi()].into_iter().enumerate() {
+                        let coefficients = [-&alpha * &scale, scale.clone(), scale];
+                        assert_eq!(
+                            Real::eval_poly(&coefficients, &midpoint)
+                                .certified_sign_until(-512).sign(),
+                            Some(RealSign::Zero),
+                        );
+                        for (direction, displacement) in [-&epsilon, epsilon.clone()].into_iter().enumerate() {
+                            let sign = if (root_index == 0) ^ (scale_index == 2) ^ (direction == 0) {
+                                RealSign::Negative
+                            } else {
+                                RealSign::Positive
+                            };
+                            assert_eq!(
+                                Real::eval_poly(&coefficients, &(&midpoint + displacement))
+                                    .certified_sign_until(-1024).sign(),
+                                Some(sign),
+                            );
+                        }
+                    }
                 }
             }
         }

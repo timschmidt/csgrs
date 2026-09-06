@@ -1223,10 +1223,12 @@ impl Computable {
             // expanded products retain the common unsigned expression.
             return child.clone().shift_left(n).negate();
         }
-        if let Approximation::Offset(child, inner) = &self.internal.approximation {
+        if let Approximation::Offset(child, inner) = &self.internal.approximation
+            && let Some(combined) = inner.checked_add(n)
+        {
             // Combine nested binary offsets rather than growing a chain of
-            // no-op-ish wrappers.
-            return child.clone().shift_left(inner + n);
+            // wrappers, but retain both when their exact sum does not fit.
+            return child.clone().shift_left(combined);
         }
         // Exact sign is unchanged by binary scaling when the inner sign is
         // already proven; this makes compare/sign predicates avoid descending
@@ -1534,9 +1536,70 @@ impl Computable {
         }
     }
 
+    // Expose an exact affine offset only when cancellation needs it. Keep
+    // ordinary sums and their shared approximation caches intact. Bound the
+    // total traversal and scale materialization; never approximate here.
+    fn rational_offset_parts(&self, budget: &mut usize) -> Option<(&Self, Rational, Rational)> {
+        *budget = budget.checked_sub(1)?;
+        let (child, scale) = match &self.internal.approximation {
+            Approximation::Add(left, right) => {
+                if let Some(offset) = left.exact_rational() {
+                    return Some((right, Rational::one(), offset));
+                }
+                if let Some(offset) = right.exact_rational() {
+                    return Some((left, Rational::one(), offset));
+                }
+                let (left, left_scale, left_offset) = left.rational_offset_parts(budget)?;
+                let (right, right_scale, right_offset) = right.rational_offset_parts(budget)?;
+                return Self::internal_structural_eq(left, right).then(|| {
+                    (left, left_scale + right_scale, left_offset + right_offset)
+                });
+            }
+            Approximation::Negate(child) => (child, Rational::new(-1)),
+            Approximation::Offset(child, shift) if shift.unsigned_abs() <= 4096 => {
+                (child, Self::power_of_two_rational(*shift))
+            }
+            Approximation::Multiply(left, right) => {
+                if let Some(scale) = left.exact_rational() {
+                    (right, scale)
+                } else {
+                    (left, right.exact_rational()?)
+                }
+            }
+            _ => return None,
+        };
+        if scale.numerator().bits().max(scale.denominator().bits()) > 4097 {
+            return None;
+        }
+        let (base, coefficient, offset) = child.rational_offset_parts(budget)?;
+        Some((base, coefficient * &scale, offset * scale))
+    }
+
     /// Add some other number to this number.
     #[allow(clippy::should_implement_trait)]
     pub fn add(self, other: Computable) -> Computable {
+        fn affine_offset_eq(left: &Computable, right: &Computable) -> bool {
+            let left_parts = left.rational_offset_parts(&mut 8);
+            let right_parts = right.rational_offset_parts(&mut 8);
+            let (left, left_scale, right, right_scale) = match (left_parts, right_parts) {
+                (Some((left, left_scale, left_offset)), Some((right, right_scale, right_offset)))
+                    if left_offset == right_offset => (left, left_scale, right, right_scale),
+                (Some((base, scale, offset)), None) if offset.sign() == Sign::NoSign =>
+                    (base, scale, right, Rational::one()),
+                (None, Some((base, scale, offset))) if offset.sign() == Sign::NoSign =>
+                    (left, Rational::one(), base, scale),
+                _ => return false,
+            };
+            if left_scale == right_scale {
+                Computable::internal_structural_eq(left, right)
+            } else {
+                Computable::internal_structural_eq(
+                    &left.clone().multiply_rational(left_scale),
+                    &right.clone().multiply_rational(right_scale),
+                )
+            }
+        }
+
         fn commuted_add_pair_eq(left: &Computable, right: &Computable) -> bool {
             matches!(
                 (&left.internal.approximation, &right.internal.approximation),
@@ -1572,37 +1635,21 @@ impl Computable {
             crate::trace_dispatch!("computable", "add", "inverse-trig-linear-collapse");
             return Self::rational(rational);
         }
-        if let Approximation::Add(left, right) = &self.internal.approximation
-            && let Some(other_rational) = other.exact_rational()
+        let left_exact = self.exact_rational();
+        let right_exact = other.exact_rational();
+        if let Some(rational) = &right_exact
+            && let Some((base, scale, offset)) = self.rational_offset_parts(&mut 8)
         {
-            if let Some(left_rational) = left.exact_rational() {
-                crate::trace_dispatch!("computable", "add", "nested-left-rational-fold");
-                return right
-                    .clone()
-                    .add(Self::rational(left_rational + other_rational));
-            }
-            if let Some(right_rational) = right.exact_rational() {
-                crate::trace_dispatch!("computable", "add", "nested-right-rational-fold");
-                return left
-                    .clone()
-                    .add(Self::rational(right_rational + other_rational));
-            }
+            crate::trace_dispatch!("computable", "add", "rational-offset-fold");
+            return base.clone().multiply_rational(scale)
+                .add(Self::rational(offset + rational));
         }
-        if let Some(self_rational) = self.exact_rational()
-            && let Approximation::Add(left, right) = &other.internal.approximation
+        if let Some(rational) = &left_exact
+            && let Some((base, scale, offset)) = other.rational_offset_parts(&mut 8)
         {
-            if let Some(left_rational) = left.exact_rational() {
-                crate::trace_dispatch!("computable", "add", "nested-left-rational-fold");
-                return right
-                    .clone()
-                    .add(Self::rational(self_rational + left_rational));
-            }
-            if let Some(right_rational) = right.exact_rational() {
-                crate::trace_dispatch!("computable", "add", "nested-right-rational-fold");
-                return left
-                    .clone()
-                    .add(Self::rational(self_rational + right_rational));
-            }
+            crate::trace_dispatch!("computable", "add", "rational-offset-fold");
+            return base.clone().multiply_rational(scale)
+                .add(Self::rational(offset + rational));
         }
         if let Approximation::Add(left, right) = &self.internal.approximation
             && let Approximation::Negate(cancelled) = &other.internal.approximation
@@ -1629,8 +1676,15 @@ impl Computable {
             }
         }
 
-        let left_exact = self.exact_rational();
-        let right_exact = other.exact_rational();
+        let cancelled_pair = match (&self.internal.approximation, &other.internal.approximation) {
+            (_, Approximation::Negate(cancelled)) => Some((&self, cancelled)),
+            (Approximation::Negate(cancelled), _) => Some((&other, cancelled)),
+            _ => None,
+        };
+        if cancelled_pair.is_some_and(|(left, right)| affine_offset_eq(left, right)) {
+            crate::trace_dispatch!("computable", "add", "affine-offset-cancellation");
+            return Self::zero();
+        }
 
         if matches!(left_exact.as_ref(), Some(r) if r.sign() == Sign::NoSign) {
             // Exact zero leaves are common after symbolic cancellation; avoid
