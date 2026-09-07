@@ -8826,6 +8826,103 @@ The one-item coarse-sign loop is a separate simplification: undecided coarse
 comparisons must still fall through to exact-fiber specialization.
 No push, publication, or external-worker termination is performed.
 
+## Recursive transformed bounds (2026-09-07)
+
+Source commit `da72dfe5ac9b79881434c0e5e5d5d7446ac5e3a3` closes the two
+recursive transformed-bounds failures preserved by the affine-query checkpoint.
+A contact may extend its center's field by a discriminant root. The old helper
+multiplied their values before lifting the center; multiplication correctly
+rejects different fields even for constant denominators. Bounds now reuse the
+existing projective `rotated_radial_image` authority, which performs that exact
+ancestor-field lift. The duplicate bounds arithmetic is deleted.
+
+The change removes 30 production lines and adds 42 test lines (12 more Rust
+lines overall). No public API, compatibility interface, cache, object field,
+or retained representation is added. Positive projective denominators,
+certified interval evaluation, and requested-policy validation are preserved.
+
+Both original recursive controls fail with `Uncertain(Unsupported)`; all eight
+candidate controls pass. Their conversion-test modules and 920-test catalogs
+match byte for byte. Six signed/radial/rotated transforms now exercise the
+independent affine-bounds oracle across all seven retained carrier families.
+Translated recursive contacts on exact `y=-1` must enclose `y=1` at refinement
+steps 0, 2, 16, and 64 under both construction policies. Field diagnostics
+confirm that direct multiplication fails while the exact lifted product works.
+
+All eleven gates pass: 1,770 full-feature executions across 46 suites with
+none ignored, 1,732 minimal-feature executions across 46 suites (four opt-in
+cases covered by full), and 37 UI tests. Both warning-denied lint/docs matrices,
+formatting, fuzz-target compilation, and release WASM pass. Seven repositories
+are pinned in source archives without live dependency symlinks. Concurrent
+Hyperreal drafts are untouched and excluded. This is not a fresh fuzz campaign,
+coverage/browser qualification, lower-stack suite, or Hypermesh requalification.
+
+The same-field recursive tangent control completes identical work in both
+versions. Whole-libtest allocations change 755,084 -> 755,228 and requested
+bytes 42,656,437 -> 42,665,013. Peak live bytes remain 659,994; end-live bytes
+remain 313,224 with 4,313 allocations. Whole-test instructions change
+455,963,380 -> 455,978,519 (+0.00332%).
+
+The newly complete recursive fixture is profiled candidate-only: 5,063,698
+allocations, 250,035,299 requested bytes, 1,277,658 peak-live bytes, and
+294,112 end-live bytes in 4,060 allocations; 2,943,985,967 instructions.
+An original unsupported early exit is not equivalent work. Every Heaptrack
+format-3 stream reconciles, with two untracked frees, and compressed-stream
+integrity checks pass. Callgrind summaries equal totals. These are single
+whole-libtest profiles, not geometry-only attribution or leak proof;
+instrumented durations are not latency measurements.
+
+| Artifact | Native `.text` change (bytes) | File change (bytes) |
+| --- | ---: | ---: |
+| `bezier_region` | -1,760 | -2,232 |
+| `rational_bezier` | -1,760 | -2,184 |
+| `curve_region_boolean_batch` | -1,760 | -2,208 |
+
+Matched-path release WASM shrinks 1,329 bytes, from 16,973,976 to 16,972,647.
+
+Three prespecified alternating CPU-7 pairs ran from 2026-09-07 05:19:31 to
+05:30:02 UTC after owned builds/profiles finished. All 60 invocations pass;
+all 282 lane records remain, without retries or favorable subrange selection.
+Every nontrivial within-binary whole-process max/min guard passes its 1.5
+limit (maximum 1.16723). Scheduling, desktop activity, frequency scaling, and
+thermal state remain uncontrolled; this guard does not prove host stability.
+
+The unchanged recursive-chord workload improves 17.37 -> 12.27 s (-29.36%).
+Radial changes 31.87 -> 30.88 s (-3.11%), contacts 11.66 -> 11.48 s (-1.54%),
+selected 21.18 -> 21.27 s (+0.42%), and region 5.86 -> 5.91 s (+0.85%).
+Rectangle/circle/capsule medians improve 1.85%/1.14%/0.44%; rational Bezier
+remains 0.32 s. Mapped rounds to zero and is correctness-only. Recorded lane
+costs include algebraic line-image overlap +7.90%, cubic exact area moments
++2.94%, and rational exact derivatives +2.79%. These costs remain in the report;
+the higher-priority completeness fix is not a uniform speedup claim.
+
+The stronger selected-radial oracle now takes 61.45/61.68 s in the original/
+candidate controls, compared with 26.71 s for the previous three-transform
+test. This adds complete work, not a matched historical performance comparison.
+A separate sampled run passes with 6,538 samples and none lost. Its flat
+profile is dominated by big-integer division/shifting and rational GCD; it
+does not attribute the cost to a specific caller. Preserve the assertions
+and investigate that cost, as detailed in the evidence root's `FOLLOWUPS.md`.
+
+The full report is
+[2026-09-07-recursive-transformed-bounds.json](benchmarks/checkpoints/2026-09-07-recursive-transformed-bounds.json),
+SHA256 `bbcd76c3d422e80f93f3ffd960f6994a9f646e4548b9ea6ab6cdb5a139484cab`.
+Raw evidence remains in `target/recursive-bounds.tCa7hH`. All 1,530 sealed
+artifacts independently verify; manifest SHA256:
+`e31bb5c41d0e540f04fb0558ed99c8166607b041354bc25d2465e99354189543`.
+The /tmp quota required approved host execution with workspace-local temporary
+files. Only the previous chord-query experiment's completed Cargo cache was
+cleaned (10,968 files, 3.8 GiB), after all 1,639 prior proof entries verified.
+All sources, logs, frozen binaries, and proof remain; rebuilding regenerates
+the deleted cache.
+
+ExactCorelib mining/recorded uplift remains closed. The preserved recursive
+transformed-bounds failures are resolved. Full Hypercurve readiness, the
+selected-radial cost, uniform performance, broader allocation coverage, and
+finalized lower-stack integration remain open. No push or publication is
+performed.
+
+
 ## Optimization boundary
 
 The retained x sweep addresses broad-phase pair scheduling only. A full
