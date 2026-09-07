@@ -4884,6 +4884,58 @@ mod tests {
     }
 
     #[test]
+    fn equality_matches_cross_products_across_retained_representations() {
+        let mut values = vec![
+            Rational::zero(),
+            Rational::from_parts_raw_unreduced(NoSign, BigUint::ZERO, BigUint::from(17_u8)),
+        ];
+        for sign in [Plus, Minus] {
+            for (numerator, denominator) in [(1_u8, 2_u8), (3, 7), (6, 14), (4, 7)] {
+                values.push(Rational::from_parts_raw_unreduced(
+                    sign,
+                    BigUint::from(numerator),
+                    BigUint::from(denominator),
+                ));
+            }
+            for bits in [129_usize, 257, 521, 1025, 4097] {
+                let scale = BigUint::one() << bits;
+                for (numerator, denominator) in [
+                    (&scale + (&scale >> 2_usize) + 3_u8, &scale + 65_537_u32),
+                    (&scale + (&scale >> 3_usize) + 5_u8, &scale + 131_071_u32),
+                    (&scale + 1_u8, &scale + 3_u8),
+                    (&scale + 3_u8, &scale + 5_u8),
+                    (BigUint::from(5_u8), scale.clone()),
+                ] {
+                    values.push(Rational::from_parts_raw(
+                        sign,
+                        numerator.clone(),
+                        denominator.clone(),
+                    ));
+                    values.push(Rational::from_parts_raw_unreduced(
+                        sign,
+                        numerator * 7_u8,
+                        denominator * 7_u8,
+                    ));
+                }
+            }
+        }
+        for (i, left) in values.iter().enumerate() {
+            for (j, right) in values.iter().enumerate() {
+                let expected = left.sign == right.sign
+                    && &left.numerator * &right.denominator == &right.numerator * &left.denominator;
+                for _ in 0..2 {
+                    assert_eq!(left == right, expected, "pair {i}, {j}");
+                    assert_eq!(
+                        left.partial_cmp(right) == Some(Ordering::Equal),
+                        expected,
+                        "ordering pair {i}, {j}",
+                    );
+                }
+            }
+        }
+    }
+
+    #[test]
     fn lazy_internal_fraction_is_canonical_at_observable_boundaries() {
         use std::collections::hash_map::DefaultHasher;
         use std::hash::{Hash, Hasher};

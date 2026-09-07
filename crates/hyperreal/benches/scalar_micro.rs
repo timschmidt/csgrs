@@ -428,6 +428,38 @@ const SCALAR_MICRO_GROUPS: &[BenchGroupDoc] = &[
                 description: "Compares retained wide dyadics with equal scaled width and a five-bit denominator-shift difference.",
             },
             BenchDoc {
+                name: "equality_leading_significand_retained_1024_bits",
+                description: "Compares unequal retained wide fractions with separated leading significands.",
+            },
+            BenchDoc {
+                name: "equality_dyadic_shifted_retained_1024_bits",
+                description: "Rejects unequal retained wide dyadics without cross products.",
+            },
+            BenchDoc {
+                name: "equality_shared_identity_retained",
+                description: "Compares two references to one retained rational allocation.",
+            },
+            BenchDoc {
+                name: "equality_same_denominator_retained",
+                description: "Rejects unequal small numerators with a common denominator.",
+            },
+            BenchDoc {
+                name: "equality_word_retained",
+                description: "Rejects unequal small fractions with different non-dyadic denominators.",
+            },
+            BenchDoc {
+                name: "equality_equal_distinct_retained",
+                description: "Recognizes equal small fractions held in distinct allocations.",
+            },
+            BenchDoc {
+                name: "equality_different_signs_retained",
+                description: "Rejects wide fractions with opposite signs before magnitude comparison.",
+            },
+            BenchDoc {
+                name: "equality_close_retained_1024_bits",
+                description: "Rejects near-equal wide fractions through the exact cross-product fallback.",
+            },
+            BenchDoc {
                 name: "mul_backend_basecase_cold",
                 description: "Multiplies fresh balanced 16-limb integers through the backend basecase kernel.",
             },
@@ -1837,6 +1869,62 @@ fn bench_rational_algorithm_dispatch_speed(c: &mut Criterion) {
     group.bench_function("compare_dyadic_shifted_retained_1024_bits", |b| {
         b.iter(|| black_box(black_box(&dyadic_left).partial_cmp(black_box(&dyadic_right))))
     });
+
+    for (name, left, right, expected) in [
+        (
+            "equality_leading_significand_retained_1024_bits",
+            compare_left.clone(),
+            compare_right,
+            false,
+        ),
+        (
+            "equality_dyadic_shifted_retained_1024_bits",
+            dyadic_left,
+            dyadic_right,
+            false,
+        ),
+        (
+            "equality_shared_identity_retained",
+            compare_left.clone(),
+            compare_left.clone(),
+            true,
+        ),
+        (
+            "equality_same_denominator_retained",
+            Rational::fraction(7, 13).unwrap(),
+            Rational::fraction(8, 13).unwrap(),
+            false,
+        ),
+        (
+            "equality_word_retained",
+            Rational::fraction(7, 15).unwrap(),
+            Rational::fraction(8, 17).unwrap(),
+            false,
+        ),
+        (
+            "equality_equal_distinct_retained",
+            Rational::fraction(7, 13).unwrap(),
+            Rational::fraction(7, 13).unwrap(),
+            true,
+        ),
+        (
+            "equality_different_signs_retained",
+            compare_left.clone(),
+            -compare_left,
+            false,
+        ),
+        (
+            "equality_close_retained_1024_bits",
+            Rational::from_bigint_fraction(BigInt::from(&scale + 1_u8), &scale + 3_u8).unwrap(),
+            Rational::from_bigint_fraction(BigInt::from(&scale + 3_u8), &scale + 5_u8).unwrap(),
+            false,
+        ),
+    ] {
+        assert_eq!(left == right, expected);
+        group.bench_function(name, |b| {
+            b.iter(|| black_box(black_box(&left) == black_box(&right)))
+        });
+    }
 
     for (name, left_limbs, right_limbs) in [
         ("mul_backend_basecase_cold", 16, 16),
