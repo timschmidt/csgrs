@@ -46365,13 +46365,21 @@ impl BezierAlgebraicCuspSemicircleChordParameterMap2 {
             ));
         }
         if let Some(system) = self.recursive_quadratic_line_system() {
-            return system.derived_contact_bounds_refined(
-                contact,
+            let Ok(contact) = system.contact(contact.branch) else {
+                return Classification::Uncertain(UncertaintyReason::Unsupported);
+            };
+            // A contact can extend its center's field by a discriminant root.
+            // Reuse the projective transform's exact ancestor-field lift.
+            let Some(point) = contact.point.rotated_radial_image(
+                &system.center,
                 radial_scale,
+                &Real::zero(),
                 translation_x,
                 translation_y,
-                refinement_steps,
-            );
+            ) else {
+                return Classification::Uncertain(UncertaintyReason::Unsupported);
+            };
+            return point.bounds_refined(refinement_steps);
         }
         if self.chord_normal_projective_system().is_some() {
             let (Some(point_x), Some(point_y)) = (
@@ -63931,44 +63939,6 @@ impl BezierRecursiveQuadraticLineParameterMapSystem2 {
             return Classification::Uncertain(UncertaintyReason::Unsupported);
         };
         contact.point.bounds_refined(refinement_steps)
-    }
-
-    fn derived_contact_bounds_refined(
-        &self,
-        contact: &BezierAlgebraicCuspSemicircleChordContact2,
-        radial_scale: &Real,
-        translation_x: &Real,
-        translation_y: &Real,
-        refinement_steps: usize,
-    ) -> Classification<Aabb2> {
-        let Ok(contact) = self.contact(contact.branch) else {
-            return Classification::Uncertain(UncertaintyReason::Unsupported);
-        };
-        let one_minus_radial = Real::one() - radial_scale;
-        let Some(denominator) = contact.point.denominator.multiply(&self.center.denominator) else {
-            return Classification::Uncertain(UncertaintyReason::Unsupported);
-        };
-        let coordinate = |point: &BezierRecursiveQuadraticValue2,
-                          center: &BezierRecursiveQuadraticValue2,
-                          translation: &Real| {
-            point
-                .multiply(&self.center.denominator)?
-                .scale(radial_scale)?
-                .add(
-                    &center
-                        .multiply(&contact.point.denominator)?
-                        .scale(&one_minus_radial)?,
-                )?
-                .add(&denominator.scale(translation)?)
-        };
-        let (Some(x), Some(y)) = (
-            coordinate(&contact.point.x, &self.center.x, translation_x),
-            coordinate(&contact.point.y, &self.center.y, translation_y),
-        ) else {
-            return Classification::Uncertain(UncertaintyReason::Unsupported);
-        };
-        BezierRecursiveQuadraticProjectivePoint2 { x, y, denominator }
-            .bounds_refined(refinement_steps)
     }
 }
 
@@ -131068,9 +131038,14 @@ mod conversion_tests {
                 "chord-normal-projective"
             }
         };
-        for (radial, perpendicular, tx, ty) in
-            [(1_i8, 0_i8, 2_i8, 3_i8), (2, 3, 4, 5), (-2, 1, 0, -4)]
-        {
+        for (radial, perpendicular, tx, ty) in [
+            (1_i8, 0_i8, 2_i8, 3_i8),
+            (2, 0, 4, 5),
+            (-2, 0, 0, -4),
+            (0, 0, 2, -3),
+            (2, 3, 4, 5),
+            (-2, 1, 0, -4),
+        ] {
             let point = BezierAlgebraicCuspChordDerivedPoint2 {
                 data: Arc::new(BezierAlgebraicCuspChordDerivedPointData2 {
                     source: BezierAlgebraicCuspDerivedPointSource2::Chord(source.clone()),
@@ -131084,9 +131059,11 @@ mod conversion_tests {
             // Round its endpoints outward to rational dyadics, then bracket
             // 2*x-3*y with an extra unit of strict separation. This oracle
             // neither samples a contact nor reuses the affine sign predicate.
-            let Classification::Decided(bounds) = point.conservative_bounds_refined(64, policy)
-            else {
-                panic!("{family}: the derived point must retain certified bounds");
+            let result = point.conservative_bounds_refined(64, policy);
+            let Classification::Decided(bounds) = result else {
+                panic!(
+                    "{family}: transform ({radial},{perpendicular},{tx},{ty}) must retain certified bounds: {result:?}"
+                );
             };
             let [x, y] = [Axis2::X, Axis2::Y].map(|axis| {
                 let interval = BezierAlgebraicChordRealInterval2::from_axis(&bounds, axis);
@@ -131256,7 +131233,41 @@ mod conversion_tests {
                         .is_some()
                 );
                 // Both contact points lie on the authored exact line y=-1.
+                let (map, contact) = source.map_contact();
+                let system = map.recursive_quadratic_line_system().unwrap();
+                let retained = &system.contact(contact.branch).unwrap().point;
+                let center = system
+                    .center
+                    .lifted_to(&retained.denominator.field())
+                    .unwrap();
+                assert!(retained.denominator.multiply(&center.denominator).is_some());
+                eprintln!(
+                    "recursive bounds center lift: direct_product={}, lifted_product=true",
+                    retained
+                        .denominator
+                        .multiply(&system.center.denominator)
+                        .is_some(),
+                );
+                assert_retained_chord_affine_bounds_oracle(source, &policy);
                 let point = source.translated(&Real::zero(), &Real::from(2_i8));
+                for steps in [0, 2, 16, 64] {
+                    let Classification::Decided(bounds) =
+                        point.conservative_bounds_refined(steps, &policy)
+                    else {
+                        panic!(
+                            "the translated recursive line contact must have bounds at {steps} steps"
+                        );
+                    };
+                    for (bound, permitted) in [
+                        (bounds.min().y(), std::cmp::Ordering::Less),
+                        (bounds.max().y(), std::cmp::Ordering::Greater),
+                    ] {
+                        let order = compare_reals(bound, &Real::one(), &CurveContext::STRICT);
+                        assert!(
+                            order == Some(permitted) || order == Some(std::cmp::Ordering::Equal)
+                        );
+                    }
+                }
                 for (factor, value, order) in [
                     (1_i8, 0_i8, std::cmp::Ordering::Greater),
                     (1, 1, std::cmp::Ordering::Equal),
@@ -136154,6 +136165,7 @@ mod conversion_tests {
                 else {
                     panic!("the oblique contact must retain its correlated three-field map");
                 };
+                assert_retained_chord_affine_bounds_oracle(point, &policy);
                 for axis in [Axis2::X, Axis2::Y] {
                     assert_eq!(
                         point
