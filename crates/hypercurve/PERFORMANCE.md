@@ -8595,6 +8595,135 @@ audit. The pair-map first/second ordering and bracket forwarders are a concrete
 next deduplication target. Concurrent lower-stack work and the native lane
 costs above remain separate follow-ups. No push or publication is performed.
 
+## Unified mapped-circle angular query kernel (2026-09-06)
+
+Source commit `6d8ab40` merges fresh and resumed angular bisection into one
+optional-seed refinement loop. Simple mapped families use the existing common
+parameter API; the analytic-parallel map retains its provenance-safe incremental
+cache. Exact/complement, overlap, similarity, and chamfer transports keep their
+specialized behavior. Pair, chord, overlap-pair, and selected-contact angular
+predicates now honor the requested policy throughout their retained queries.
+
+Forwarding policy alone exposed a second error: a terminal-resolved zero on a
+partial overlap missed endpoint recognition and selected the antipodal inverse
+image, reversing angular order. Requested-policy boundary recognition now selects
+forward refinement. Retained chord tangent queries also validate the requested
+evidence policy. This extends the preceding checkpoint without weakening STRICT
+or forced-strict replay.
+
+Twenty functions are removed: sixteen runtime functions and four test-only
+overlap-bracket forwarders outside the conversion-test module. The production
+prefix shrinks 278 lines, the test module grows 217, and the Rust file shrinks
+61 lines overall. No retained-object field, public API, compatibility alias,
+shim, or alternate kernel is added. These source counts are separate from
+compiled-size measurements.
+
+Four final regressions fail against unchanged original production; the seven
+existing policy/cache/chamfer guards pass there. All eleven pass in the final
+candidate. The shared helper checks both terminal-resolved endpoints, repeated
+STRICT replay, and forced-strict subpasses. Original, matched-original, and
+candidate catalogs contain the same 916 tests. The final regression helper,
+six angle-query test bodies, and seven measured workload bodies match the
+control byte for byte; the entire conversion-test module does not, because
+other tests migrate from deleted private APIs to the common parameter API.
+
+All eleven final qualification gates pass: 1,766 all-feature tests across
+46 suites with none ignored; 1,728 minimal-feature tests across 46 suites with
+four opt-in cases covered by the full run; and 37 UI tests. Formatting, both
+warning-denied lint/documentation matrices, all fuzz-target compilation, and
+release WASM pass. An earlier epoch passed its tests but both lint matrices
+rejected four redundant ignored-field patterns. Those patterns were removed
+and every final gate rerun. The first fuzz compile encountered a read-only
+ccache in the sandbox; its approved escalated retry succeeded. Earlier sources,
+failures, qualification logs, and superseded profiles remain separately
+preserved under `pre-lint-cleanup`, not used as final-source evidence.
+
+Six repositories are archived at fixed commits, without live dependency
+symlinks. Both revisions build in the same archived Hypercurve path. Unit
+controls use all features; native benches use the empty default feature set;
+UI/WASM uses UI defaults. Concurrent Hyperreal drafts are excluded and untouched.
+This is not a fresh fuzz campaign, coverage run, lower-stack suite, or Hypermesh
+requalification.
+
+Complete, validated Heaptrack streams use equal-length executable names and
+reconcile final live allocation state. The mapped inverse/cache-expiry workload
+has identical allocation totals, requested bytes, peak, and end-live state.
+The retained lens and nested-chord reoffset workloads have small recorded
+allocation costs:
+
+| Whole-libtest workload | Allocations, before -> after | Requested bytes, before -> after | Peak live bytes, both | End-live bytes, both |
+| --- | ---: | ---: | ---: | ---: |
+| Mapped inverse/cache expiry | 85,169 -> 85,169 | 4,395,055 -> 4,395,055 | 410,597 | 218,792 |
+| Pair-mapped lens reoffset | 524,719 -> 524,720 | 37,946,714 -> 37,947,346 | 374,232 | 139,096 |
+| Nested-chord cap reoffset | 1,559,426 -> 1,559,434 | 119,858,142 -> 119,863,582 | 1,723,164 | 916,224 |
+
+These are single whole-libtest traces, not geometry-only accounting, RSS
+attribution, or ecosystem leak proof. The final equal-length-name controls
+supersede the earlier profile epoch; its small startup-byte differences are
+not claimed as geometry savings.
+
+Instruction counts change +0.01240%/-0.01277%/-0.04989% for rectangle/circle/
+capsule controls, and +0.00581%/+0.01593%/+0.02199% for mapped/lens/chord
+controls. Every trace's summary and total agree. Instrumented durations are
+not latency measurements, and these results do not establish a broad speedup.
+
+| Artifact | `.text` change (bytes) | File change (bytes) |
+| --- | ---: | ---: |
+| `bezier_region` | -16,832 | -21,496 |
+| `rational_bezier` | -16,752 | -24,208 |
+| `curve_region_boolean_batch` | -16,832 | -21,504 |
+
+Matched-path release WASM shrinks 34,250 bytes, from 17,029,294 to 16,995,044.
+Prior-checkpoint WASM builds used a different archive path and are not the
+baseline for this comparison.
+
+One prespecified timing matrix ran from 2026-09-06 23:50:56 UTC to
+2026-09-07 00:03:04 UTC, after owned build/profile workers finished. Three
+alternating CPU-7 pairs cover five unit workloads, two native matrices, and
+three Boolean batches; seven additional pairs cover both native matrices.
+All 88 invocations pass and all 856 lane measurements are retained, with
+no retry or favorable subrange selection. Every nontrivial whole-process
+fixture stays within the prespecified within-binary max/min guard of 1.5;
+the maximum observed ratio is 1.125. Passing that guard does not establish
+continuous host stability.
+
+Three-pair medians give selected 20.97 -> 21.17 seconds (+0.95%), radial
+30.32 -> 30.44 (+0.40%), contacts 11.40 -> 11.67 (+2.37%), chord
+17.26 -> 17.48 (+1.27%), and region 5.86 -> 5.88 (+0.34%). Rectangle,
+circle, and capsule whole-process medians cost +1.89%, +1.00%, and +1.94%.
+Rational Bezier is 0.32 -> 0.32 seconds. The mapped test rounds to zero at
+centisecond resolution and has no meaningful percentage.
+
+Seven additional native pairs give region 5.89 -> 5.90 seconds (+0.17%) and
+rational Bezier 0.33 -> 0.32 (-3.03%, only one process-timer tick). Median
+lane costs include resolved-overlap region materialization +3.46%, pi-conic/
+cubic contacts +3.11%, immediate contacts +2.84%, immediate topology +2.38%,
+and retained algebraic endpoint envelopes +2.18%. Other lanes are faster;
+the complete report retains both directions. The algebraic-derivative lane,
+for example, changes +11.77% in the first three pairs and -8.55% in the seven
+additional pairs. Neither matrix is selected away. These measurements are
+not a uniform no-regression result, and recorded costs are not dismissed as
+noise. Host snapshots are point observations; desktop activity, scheduling,
+frequency scaling, and thermal state were not controlled.
+
+The source hashes, final regressions, complete timing/allocation/instruction
+results, earlier epoch, and 440 independently verified artifacts are recorded in
+[`2026-09-06-angular-query-kernel.json`](benchmarks/checkpoints/2026-09-06-angular-query-kernel.json).
+The checkpoint SHA256 is
+`a2643f4719acee2d5f94fb6e1a13bcb6369a2a1c0219e682de9e86445ef42454`.
+Raw evidence remains in `target/angular-kernel.STP6dx`. Only this run's finished
+scratch-check build cache was removed with approval (1.4 GiB); sources, logs,
+frozen binaries, and previous proof artifacts remain intact. Rebuilding
+regenerates the deleted cache.
+
+ExactCorelib mining/recorded uplift remains closed. Full Hypercurve release
+readiness, uniform performance, broader allocation coverage, and live
+lower-stack integration remain open. Next audits include non-angular retained
+point/coordinate policy paths and the native costs above. Rational equality
+delegation to its existing exact ordering and the one-item coarse-sign loop
+are separate deduplication candidates, not new filter/cache interfaces.
+No push, publication, or external-worker termination is performed.
+
 ## Optimization boundary
 
 The retained x sweep addresses broad-phase pair scheduling only. A full
