@@ -8724,6 +8724,108 @@ delegation to its existing exact ordering and the one-item coarse-sign loop
 are separate deduplication candidates, not new filter/cache interfaces.
 No push, publication, or external-worker termination is performed.
 
+## Retained chord affine-query kernel (2026-09-07)
+
+Source commit `884605e1ac5da51eb078daf952d66f3813db75c3` unifies six
+private retained circle/chord query paths under one affine predicate,
+`a.P + b.C + offset`. Derived queries pull coefficients through
+`C+r(P-C)+sJ(P-C)+T` before entering the existing retained field.
+Four unused arithmetic/query helpers are also removed. The change removes
+1,046 production lines, adds 393 test lines, and reduces Rust source by
+653 lines overall. No public API, compatibility shim, cache, object field,
+or retained representation is added.
+
+The requested policy now controls each decision after construction-provenance
+validation. Recursive unrotated linear queries and previously unsupported
+rotated carrier queries complete in the same authority. Same-source equality
+also recognizes distinct rotated transforms denoting the same point.
+Recursive projective denominators remain positive; signed dense quotients
+use the sign of `N*D`, not merely `N`.
+
+All eight final focused checks pass; six fail on unchanged original production.
+Separate initial controls preserve the two original requested-policy failures
+before the stronger oracle assertions. Final baseline/candidate catalogs each
+contain 920 tests, with byte-identical conversion-test modules. Closed-form
+coordinates, exact transform cancellation, a retained exact-line oracle,
+policy/forced-strict replay, and independent certified interval brackets cover
+all seven actual carrier families: axis, oblique, represented oblique,
+retained offset, recursive quadratic line, selected radial, and dense
+chord-normal projective. Explicit fallback constructors prevent newer preferred
+dispatch from silently bypassing the intended coverage.
+
+All eleven qualification gates pass: 1,770 all-feature executions across
+46 suites with none ignored, 1,732 minimal-feature executions across 46 suites
+(the four opt-in cases are covered by the full run), and 37 UI tests.
+Both warning-denied lint/documentation matrices, formatting, fuzz-target
+compilation, and release WASM pass. Seven repositories are archived at pinned
+commits without live dependency symlinks. Concurrent Hyperreal drafts are
+excluded and untouched. This is not a new fuzz campaign, coverage run,
+browser qualification, lower-stack suite, or Hypermesh requalification.
+
+Only workloads completing in both versions are allocation/instruction controls;
+an unsupported early exit is not equivalent work. Equal-length executable
+names and complete Heaptrack format-3 streams give:
+
+| Whole-libtest workload | Allocations, before -> after | Requested bytes, before -> after | Peak live bytes, both | End-live bytes, before -> after |
+| --- | ---: | ---: | ---: | ---: |
+| Independent-field oblique contacts | 1,337,343 -> 1,337,343 | 146,088,780 -> 146,088,780 | 644,405 | 231,888 -> 231,888 |
+| Represented rank-independent contacts | 108,348,219 -> 108,348,050 | 13,862,847,407 -> 13,862,833,671 | 4,490,156 | 939,536 -> 938,640 |
+
+End-live allocation counts reconcile (3,114 in both oblique runs;
+12,907 -> 12,899 represented), with two untracked frees in every stream.
+These are single whole-test profiles, not geometry-only attribution or leak
+proof. Callgrind summaries equal totals: 856,839,817 -> 856,851,758
+(+0.00139%) and 78,063,902,507 -> 78,113,865,429 (+0.06400%).
+Instrumented durations are not latency measurements.
+
+Native `.text` shrinks 32,656/32,656/32,752 bytes for region/rational/batch
+benchmarks; their files shrink 42,440/43,384/42,704 bytes. Matched-path release
+WASM shrinks 21,218 bytes, from 16,995,497 to 16,974,279.
+
+One prespecified CPU-7 matrix ran from 2026-09-07 03:51:47 to 04:03:56 UTC
+after owned builds and profiles finished: three alternating pairs over five
+geometry guards, two native matrices, and three Boolean batches, then seven
+additional native pairs. All 88 invocations pass; all 856 lane records remain.
+Every nontrivial within-binary whole-process max/min guard passes its 1.5
+limit (maximum 1.09678). There is no retry or favorable subrange selection.
+Host scheduling, desktop activity, frequency scaling, and thermal state
+remain uncontrolled; passing the guard does not establish host stability.
+
+Three-pair medians change selected 21.21 -> 20.74 s (-2.22%), radial
+31.18 -> 30.30 (-2.82%), chord 17.36 -> 17.49 (+0.75%), contacts
+11.57 -> 11.62 (+0.43%), and region 5.95 -> 5.91 (-0.67%).
+Rectangle/circle/capsule medians change +0.96%/+0.36%/-1.32%.
+Rational Bezier remains 0.32 s; mapped rounds to zero and is correctness-only.
+Seven further pairs give region 5.88 -> 5.98 s (+1.70%), with rational
+Bezier still 0.32 s. Persistent lane costs include cached point incidence
+(+9.28% in three pairs, +7.88% in seven), retained source envelopes
+(+5.00%/+7.28%), and exact endpoint envelopes (+3.28%/+5.76%).
+Other lanes improve; both complete matrices are retained. The higher-priority
+policy/completeness repairs are kept despite these recorded costs, not claimed
+as a uniform speedup or no-regression result.
+
+The full report is
+[2026-09-07-retained-chord-affine-kernel.json](benchmarks/checkpoints/2026-09-07-retained-chord-affine-kernel.json),
+SHA256 `43f102fe692b4d71a1af3fd1ac535753dd6ccf6814d5745a932964b5694e60f7`.
+Raw evidence remains in `target/chord-query-kernel.bgTImi`; all 1,639 final
+manifest entries independently verify. Manifest SHA256:
+`bb2d70f7596da4e5f0c5eec7cf709cc3dcb6c3259d7df6c929f3c3fcc9051dcb`.
+Earlier failing oracle fixtures and the preliminary report seal are preserved.
+The /tmp quota required approved host execution with workspace-local temporary
+files. Only the previous rational-equality experiment's completed Cargo cache
+was cleaned with approval (14,665 files, 5.2 GiB); all earlier proof remains,
+and rebuilding regenerates that cache.
+
+ExactCorelib mining/recorded uplift remains closed. Full Hypercurve readiness,
+uniform performance, broader allocation coverage, and finalized lower-stack
+integration remain open. The first expanded oracle preserved a separate
+recursive transformed-bounds limitation at refinement 64; `FOLLOWUPS.md`
+in the evidence root identifies both failed fixtures. Diagnose that gap,
+investigate the native costs above, and continue single-authority/policy audits.
+The one-item coarse-sign loop is a separate simplification: undecided coarse
+comparisons must still fall through to exact-fiber specialization.
+No push, publication, or external-worker termination is performed.
+
 ## Optimization boundary
 
 The retained x sweep addresses broad-phase pair scheduling only. A full
