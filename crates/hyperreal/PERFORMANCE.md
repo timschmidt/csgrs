@@ -67,6 +67,54 @@ raw-node rational bounds and abort/cache behavior. Raw sources,480 final
 timing/allocation rows and the pilot are retained in the workspace's
 `exact-real-references/escardo-qualification/` directory.
 
+## Rational equality unification evaluation (2026-09-06)
+
+Delegating rational equality to the existing exact ordering cascade was
+evaluated and **not retained**. Reusing its leading-significand bounds removes
+duplicate numeric dispatch, but the measured geometry and matrix costs outweigh
+the 15-line runtime reduction under the project's priority order. Production
+equality remains unchanged; no filter, cache, public API, or compatibility shim
+was added.
+
+The final guarded candidate preserved inline identity/sign exits. Three paired
+Criterion runs gave the following median-of-mean changes:
+
+| Evaluated case | Change |
+| --- | ---: |
+| Separated 1024-bit equality | -72.49% |
+| Shared-identity equality | -68.42% |
+| Close 1024-bit equality | +17.13% |
+| Hyperlimit equal-point predicate | -53.14% |
+| Hyperlattice fractional matrix inverse | +4.67% |
+
+The complete Hypercurve comparison retained all 88 invocations and 856 lane
+records. Selected-fiber replay cost +3.94%; the seven additional native pairs
+showed cold conic/cubic contacts +6.96%, candidates +6.00%, and region process
+time +1.22%. Both favorable and unfavorable lanes, plus two superseded scalar
+variants, remain in the [evaluation checkpoint](benchmarks/checkpoints/2026-09-06-rational-equality.json).
+The prespecified within-binary whole-process range guard passed; desktop,
+frequency and thermal effects remain uncontrolled.
+
+A complete equality-oracle Heaptrack run reduced allocations from 28,247 to
+25,495 and requested bytes from 8,218,780 to 7,459,484. Peak/end-live bytes stayed
+196,512/1,056. Callgrind instructions fell from 44,947,244 to 42,685,011. These
+are whole-test observations, not geometry attribution or ecosystem leak proof.
+Final-guarded native text grew 1,088--4,256 bytes across six fixtures; matched-path
+UI WASM shrank 2,918 bytes. Lower-priority memory/size observations do not
+override the measured performance costs.
+
+The retained additions are one independent cross-product oracle over 110
+values (12,100 ordered pairs, two replay passes) and eight equality cases in
+`scalar_micro`. Final retained-source validation passes 705 default test
+executions plus 1,271 benchmark smoke cases, 827 all-feature test executions,
+formatting, and both warning-denied all-target Clippy configurations.
+The separate rejected-candidate qualification passed Hypercurve's 1,766
+full-feature tests, 1,728 minimal-feature tests (four opt-in tests covered in
+full), 37 UI tests, and Hypermesh's 228/229 default/full-feature executions
+including every opt-in YeahRight case. Its remaining lint/docs/WASM/fuzz-compile
+gates also passed after an approved sandbox retry. No new fuzz campaign or
+qualification of the concurrent live Computable drafts is claimed.
+
 ## Binary32 export fast path
 
 Exact-rational `Real::to_f32_lossy` now narrows the allocation-free binary64
