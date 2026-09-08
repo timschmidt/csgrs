@@ -45986,8 +45986,19 @@ impl BezierAlgebraicCuspSemicircleChordParameterMap2 {
                 Classification::Decided(predicate) => represented_policy_sign(&predicate, policy),
                 Classification::Uncertain(reason) => Classification::Uncertain(reason),
             }
-        } else if let Some(system) = self.recursive_quadratic_line_system() {
-            let point = &system.contact(contact.branch)?.point;
+        } else if self.recursive_quadratic_line_system().is_some()
+            || self.selected_radial_system().is_some()
+        {
+            let frame = match self.recursive_contact_frame(contact, policy)? {
+                Classification::Decided(Some(frame)) => frame,
+                Classification::Decided(None) => {
+                    return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+                }
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            };
+            let point = &frame.point;
             let predicate = (|| {
                 let predicate = point.linear_numerator(px, py, &(-offset))?;
                 if [cx, cy]
@@ -45996,7 +46007,7 @@ impl BezierAlgebraicCuspSemicircleChordParameterMap2 {
                 {
                     return Some(predicate);
                 }
-                let center = system.center.lifted_to(&point.denominator.field())?;
+                let center = &frame.center;
                 let center_predicate = center.x.scale(cx)?.add(&center.y.scale(cy)?)?;
                 predicate
                     .multiply(&center.denominator)?
@@ -46071,30 +46082,6 @@ impl BezierAlgebraicCuspSemicircleChordParameterMap2 {
                 return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
             };
             self.trivariate_radical_components_sign(&rational, &radical, contact.branch, policy)?
-        } else if let Some(system) = self.selected_radial_system() {
-            let predicate = (|| {
-                let mut predicate =
-                    BezierSelectedRadialCircleChordNestedExpression2::linear_combination(&[
-                        (&system.point_x, px),
-                        (&system.point_y, py),
-                    ])?;
-                predicate.retained.rational = QuadrivariatePolynomial2::linear_combination(&[
-                    (&predicate.retained.rational, &one),
-                    (&system.center_x.rational, cx),
-                    (&system.center_y.rational, cy),
-                    (&system.common_denominator, offset),
-                ])?;
-                predicate.retained.radical = QuadrivariatePolynomial2::linear_combination(&[
-                    (&predicate.retained.radical, &one),
-                    (&system.center_x.radical, cx),
-                    (&system.center_y.radical, cy),
-                ])?;
-                Some(predicate)
-            })();
-            let Some(predicate) = predicate else {
-                return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
-            };
-            self.selected_radial_nested_sign(&predicate, contact.branch, policy)?
         } else if let Some(system) = self.axis_system() {
             let combine = |terms: &[(&BivariatePolynomial, &Real)]| {
                 terms
@@ -154196,6 +154183,24 @@ mod conversion_tests {
                     panic!("the tangent support must retain one contact: {contacts:?}");
                 };
                 assert_eq!(contact.tangent_cross_sign, RealSign::Zero);
+
+                let RationalBezierIntersectionPointEvidence2::AlgebraicCuspChord(point) =
+                    &contact.point
+                else {
+                    panic!("the selected-radial tangent must retain its chord map");
+                };
+                assert!(point.map_contact().0.selected_radial_system().is_some());
+                if policy == CurveContext::STRICT {
+                    let sine = Real::e().sin();
+                    let cosine = Real::e().cos();
+                    let opaque_zero = &sine * &sine + &cosine * &cosine - Real::one();
+                    for (axis, coordinate) in [(Axis2::X, expected.x()), (Axis2::Y, expected.y())] {
+                        let value = coordinate + &opaque_zero;
+                        assert_chord_query_terminal_replay(|requested| {
+                            point.axis_coordinate_order_to_real(axis, &value, requested)
+                        });
+                    }
+                }
                 assert_eq!(
                     contact
                         .chord_parameter
