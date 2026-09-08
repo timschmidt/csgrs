@@ -8923,6 +8923,131 @@ finalized lower-stack integration remain open. No push or publication is
 performed.
 
 
+## Selected-radial affine signs (2026-09-08)
+
+Source commit: `74ceac36216c59da100002824a9fa2d7ae6a2eba`.
+
+The unchanged four-field, six-transform oracle spent 59.70 seconds in its
+affine-sign calls, versus 0.030 seconds in all transformed-bounds calls in one
+63.61-second instrumented diagnostic. Reuse the existing recursive point/center
+frame and its reduced-field affine predicate instead of expanding a separate
+quadrivariate nested-radical norm for every selected-radial query. The diagnostic
+candidate completes in 3.28 seconds. These stage runs identify the work; the
+paired measurements below, not their instrumented duration, gate latency.
+
+For positive projective denominators, the shared numerator is
+`(a.Np + offset*Dp)*Dc + (b.Nc)*Dp`. The existing kernel preserves retained
+selected roots, field identity, positive denominators and branch validation;
+the requested policy still controls the sign. The zero-center-coefficient case
+omits the second denominator product. No API, compatibility shim, production
+function, object field, cache, or representation is added. Production Rust
+shrinks 13 lines; stronger tests add 18, for a net five source lines.
+
+Nine matched original and candidate regression invocations pass. Test modules
+and 920-test catalogs are byte-identical. Six signed/radial/rotated interval
+brackets remain across seven retained carrier families. The exact four-field
+tangent fixture additionally checks its retained map and opaque-zero coordinate
+queries under STRICT, APPROXIMATE_512 and forced-strict replay, repeated in both
+chord orientations. All assertions are retained.
+
+### Matched timings
+
+All 72 invocations and
+282 native lane records pass:
+three alternating CPU-7 pairs, Tue Sep  8 07:04:40 UTC 2026 through
+Tue Sep  8 07:18:11 UTC 2026. Six geometry workloads are unchanged from main;
+the strengthened tangent workload is identical in both revisions. Two native
+matrices and three 1,000-iteration Boolean batch fixtures complete the matrix.
+The tangent fixture was added before any timing began because its allocation
+profile showed a cost. Every timing sample is retained without retries or
+favorable subrange selection.
+
+| Workload | Original median, s | Candidate median, s | Change |
+| --- | ---: | ---: | ---: |
+| affine | 63.65 | 3.14 | -95.07% |
+| bezier_region | 5.90 | 6.01 | +1.86% |
+| capsules | 4.61 | 4.58 | -0.65% |
+| chord | 11.85 | 11.89 | +0.34% |
+| circles | 13.95 | 13.61 | -2.44% |
+| contacts | 11.45 | 11.86 | +3.58% |
+| mapped | 0.00 | 0.00 | correctness only |
+| radial | 30.87 | 30.57 | -0.97% |
+| rational_bezier | 0.33 | 0.32 | -3.03% |
+| rectangles | 1.05 | 1.05 | +0.00% |
+| selected | 21.28 | 21.14 | -0.66% |
+| tangent | 0.33 | 0.57 | +72.73% |
+
+Maximum nonzero within-binary whole-process max/min is
+1.04167 against the prespecified 1.5 guard
+(all pass).
+This is not proof of host stability: scheduling, desktop activity, frequency
+scaling and thermal state remain uncontrolled. Native lane costs include
+bezier_region/curve_region_empty +17.85%; bezier_region/curve_region_cached_algebraic_classification +10.29%; rational_bezier/rational_bezier_algebraic_derivatives_1_through_3 +8.70%.
+The complete lane-level measurements remain in the report. Do not infer a
+uniform speedup or geometry-only attribution from whole-process measurements.
+
+### Memory, instructions and size
+
+Complete matched whole-libtest Heaptrack format-3 streams reconcile, with
+compression-integrity checks and two untracked frees in each stream. Equal-length
+control/candidate binary names are used. Requested allocation traffic is not
+simultaneously live memory; final live counts are not leak proof.
+
+| Fixture | Allocation count, original -> candidate | Requested bytes | Peak live bytes | End-live bytes |
+| --- | ---: | ---: | ---: | ---: |
+| affine | 659,320,334 -> 24,056,600 | 355,193,588,807 -> 1,492,541,782 | 23,976,557 -> 23,687,765 | 1,092,400 -> 765,088 |
+| tangent | 6,481,310 -> 9,814,408 | 275,096,337 -> 414,536,025 | 1,102,401 -> 1,182,001 | 434,552 -> 486,840 |
+
+The large affine improvement has a real tangent cost: its allocation count
+rises 51.43%, traffic rises 50.69%, and peak live bytes rise 7.22%.
+Tangent whole-libtest instruction count moves
+3,802,190,638 -> 5,836,296,723
+(+53.50%); each Callgrind summary equals its total.
+No instruction-count claim is made for the long affine fixture. Instrumented
+durations are not latency evidence.
+
+Each matched native artifact's `.text` shrinks 1,888 bytes; the
+region/rational/batch files shrink 2,184/2,168/2,200 bytes respectively.
+Matched-path WASM shrinks 1,759 bytes.
+The substantial affine-work reduction and smaller shared implementation are
+retained with the tangent tradeoff explicitly open for further optimization
+within the shared kernel.
+
+### Qualification and remaining work
+
+All eleven gates pass: full 1,770 test executions/46
+suites, 0 ignored; minimal 1,732/46,
+4 opt-in cases covered by full; 37 UI tests. Both
+warning-denied lint/docs matrices, formatting, fuzz-target compilation and UI
+release WASM pass. Seven committed source archives are pinned with no live
+dependency symlinks. No new fuzz campaign, coverage/browser run, lower-stack
+suite, or Hypermesh requalification is claimed. Concurrent Hyperreal drafts
+remain untouched and excluded.
+
+A separate opaque-shifted tangent construction probe fails identically in the
+original and affine candidate before affine queries: a selected-circle fallback
+enters a rational-frame-only operation. An isolated rational-frame guard removes
+that topology error but the construction remains Unsupported. Stage diagnostics
+show the selected system builds and its contact discriminant is
+Uncertain(RealSign). Preserve these failed complete-tangent assertions for a
+later construction/completeness repair. Neither that experimental guard nor a
+relaxed discriminant proof is included in this source commit.
+
+Report:
+[2026-09-08-selected-radial-affine-kernel.json](benchmarks/checkpoints/2026-09-08-selected-radial-affine-kernel.json).
+Raw evidence: `target/selected-radial.TKAekH`, with all
+1,654 manifest entries independently verified.
+Manifest SHA256: `8eb149c403df233abe0ce797c93083b97da99bba9a148eb31fcec36807ec42db`.
+The /tmp quota required approved host execution with workspace-local TMPDIR and
+apply_patch. A formatting-only test correction preceded both final builds;
+the preformat sources and failed check remain preserved.
+
+ExactCorelib mining/recorded uplift stays closed. This selected-radial affine
+hotspot is resolved for the qualified fixture. Opaque-tangent construction,
+uniform performance, broader allocation coverage, finalized lower-stack
+integration and full Hypercurve release readiness remain open. No push or
+publication is performed.
+
 ## Optimization boundary
 
 The retained x sweep addresses broad-phase pair scheduling only. A full
