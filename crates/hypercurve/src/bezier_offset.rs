@@ -115815,7 +115815,10 @@ impl BezierParallel2 {
             }
         }
         if other.degree() >= 4 && bivariate_system_may_have_component(&equations) {
-            let reduced = rootless_axis_primitive_system(&equations, policy)?;
+            let reduced = hypersolve::saturate_rootless_bivariate_axis_factors(
+                &equations,
+                [[&Real::zero(), &Real::one()]; 2],
+            );
             let component_equations = reduced.as_ref().unwrap_or(&equations);
             if bivariate_system_may_have_component(component_equations) {
                 if tangent_field.is_none()
@@ -119447,8 +119450,10 @@ fn parallel_intersection_candidate_system(
     if matches!(
         candidates,
         BezierParallelIntersectionCandidates2::DegenerateResultant
-    ) && let Some(reduced) = rootless_axis_primitive_system(&equations, policy)?
-    {
+    ) && let Some(reduced) = hypersolve::saturate_rootless_bivariate_axis_factors(
+        &equations,
+        [[&Real::zero(), &Real::one()]; 2],
+    ) {
         let candidates =
             match project_parallel_intersection_system(&reduced[0], &reduced[1], policy)? {
                 Classification::Decided(candidates) => candidates,
@@ -119605,35 +119610,6 @@ fn project_parallel_intersection_equations_with_incident_rays(
         },
     };
     Ok(Classification::Decided(candidates))
-}
-
-/// Returns the axis-primitive system only after proving saturation preserves
-/// the complete solution set on the closed parameter square.
-fn rootless_axis_primitive_system(
-    equations: &[BivariatePolynomial; 2],
-    policy: &CurveContext,
-) -> CurveResult<Option<[BivariatePolynomial; 2]>> {
-    let report = extract_bivariate_polynomial_system_axis_factors(&equations[0], &equations[1]);
-    if report.status != BivariatePolynomialAxisFactorStatus::Reduced {
-        return Ok(None);
-    }
-    for factor in [
-        &report.first_parameter_factor,
-        &report.second_parameter_factor,
-    ] {
-        if factor.len() <= 1 {
-            continue;
-        }
-        let polynomial = match polynomial_from_coefficients(factor.clone(), policy)? {
-            Classification::Decided(Some(polynomial)) => polynomial,
-            Classification::Decided(None) | Classification::Uncertain(_) => return Ok(None),
-        };
-        match polynomial.isolate_unit_interval_roots(policy)? {
-            Classification::Decided(roots) if roots.is_empty() => {}
-            Classification::Decided(_) | Classification::Uncertain(_) => return Ok(None),
-        }
-    }
-    Ok(report.reduced_equations)
 }
 
 fn bivariate_system_may_have_component(equations: &[BivariatePolynomial; 2]) -> bool {
@@ -168297,66 +168273,6 @@ mod conversion_tests {
             .unwrap(),
             Classification::Decided(None)
         );
-    }
-
-    #[test]
-    fn axis_saturation_requires_every_removed_factor_to_be_rootless() {
-        let rootless = [
-            BivariatePolynomial::new(vec![
-                vec![Real::from(2_i8), Real::from(2_i8)],
-                vec![Real::one(), Real::one()],
-            ]),
-            BivariatePolynomial::new(vec![
-                vec![Real::from(4_i8), Real::from(2_i8)],
-                vec![Real::from(2_i8), Real::one()],
-            ]),
-        ];
-        let rootful = [
-            BivariatePolynomial::new(vec![
-                vec![Real::from(-1_i8), Real::from(-1_i8)],
-                vec![Real::from(2_i8), Real::from(2_i8)],
-            ]),
-            BivariatePolynomial::new(vec![
-                vec![Real::from(-2_i8), Real::from(-1_i8)],
-                vec![Real::from(4_i8), Real::from(2_i8)],
-            ]),
-        ];
-        let expected = [
-            BivariatePolynomial::new(vec![vec![Real::one(), Real::one()]]),
-            BivariatePolynomial::new(vec![vec![Real::from(2_i8), Real::one()]]),
-        ];
-        let alpha = (Real::one() / Real::from(2_i8)).unwrap().sqrt().unwrap();
-        let nonrational_rootless_factor =
-            BivariatePolynomial::new(vec![vec![alpha.clone()], vec![Real::one()]]);
-        let nonrational_rootful_factor =
-            BivariatePolynomial::new(vec![vec![-alpha], vec![Real::one()]]);
-        let nonrational_rootless = [
-            bivariate_multiply(&nonrational_rootless_factor, &expected[0]),
-            bivariate_multiply(&nonrational_rootless_factor, &expected[1]),
-        ];
-        let nonrational_rootful = [
-            bivariate_multiply(&nonrational_rootful_factor, &expected[0]),
-            bivariate_multiply(&nonrational_rootful_factor, &expected[1]),
-        ];
-
-        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
-            assert_eq!(
-                rootless_axis_primitive_system(&rootless, &policy).unwrap(),
-                Some(expected.clone())
-            );
-            assert_eq!(
-                rootless_axis_primitive_system(&rootful, &policy).unwrap(),
-                None
-            );
-            assert_eq!(
-                rootless_axis_primitive_system(&nonrational_rootless, &policy).unwrap(),
-                Some(expected.clone())
-            );
-            assert_eq!(
-                rootless_axis_primitive_system(&nonrational_rootful, &policy).unwrap(),
-                None
-            );
-        }
     }
 
     #[test]

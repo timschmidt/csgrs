@@ -1616,6 +1616,16 @@ fn project_symmetric_self_intersection_system(
     equations: &[BivariatePolynomial; 2],
     policy: &CurveContext,
 ) -> CurveResult<Classification<RationalBezierIntersectionCandidates2>> {
+    // Degree elevation and projective parameter changes can leave common
+    // homogeneous factors in both residual equations after the diagonal is
+    // removed. Their rootless fibers do not describe self-contacts. Saturate
+    // only with the shared algebraic domain certificate, preserving every
+    // genuine component and the original parameter chart for replay.
+    let primitive = hypersolve::saturate_rootless_bivariate_axis_factors(
+        equations,
+        [[&Real::zero(), &Real::one()]; 2],
+    );
+    let equations = primitive.as_ref().unwrap_or(equations);
     let report = resultant_bivariate_polynomial_system_complete(
         &equations[0],
         &equations[1],
