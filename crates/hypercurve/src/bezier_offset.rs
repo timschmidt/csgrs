@@ -78370,20 +78370,6 @@ impl BezierAlgebraicChord2 {
             let geometric_crossing = policy.bounded_exact_predicate_pass(|| -> CurveResult<
                 (Option<BezierRecursiveQuadraticUnitCrossing2>, bool),
             > {
-                let (Some(weight_sign), Some(side_to_incidence_sign)) = (
-                    system.source_weight_sign,
-                    system.tangent_from_incidence_derivative_sign,
-                ) else {
-                    #[cfg(test)]
-                    if std::env::var_os("HYPERCURVE_DEBUG_RATIONAL_BLOCKER").is_some() {
-                        eprintln!(
-                            "algebraic chord/rational geometric crossing stage=factors weight={:?} side-factor={:?}",
-                            system.source_weight_sign,
-                            system.tangent_from_incidence_derivative_sign,
-                        );
-                    }
-                    return Ok((None, false));
-                };
                 let (predicate_chord, predicate_reversed) = self.smallest_incidence_support();
                 let predicate = match BezierAlgebraicChordSupportPredicate2::try_new(
                     predicate_chord,
@@ -78400,6 +78386,37 @@ impl BezierAlgebraicChord2 {
                         return Ok((None, false));
                     }
                 };
+                let point_side = |point: Point2| -> CurveResult<Option<RealSign>> {
+                    let point = RationalBezierIntersectionPointEvidence2::Exact(point);
+                    Ok(match predicate.oriented_side(&point, policy)? {
+                        Classification::Decided(crate::classify::LineSide::Left) => {
+                            Some(RealSign::Positive)
+                        }
+                        Classification::Decided(crate::classify::LineSide::Right) => {
+                            Some(RealSign::Negative)
+                        }
+                        Classification::Decided(crate::classify::LineSide::On) => {
+                            Some(RealSign::Zero)
+                        }
+                        Classification::Uncertain(_) => None,
+                    })
+                };
+                let start_side = point_side(source.start().clone())?;
+                let end_side = point_side(source.end().clone())?;
+                // A finite endpoint on the supporting line is an incidence
+                // root regardless of the other endpoint's sign or the signs
+                // of the homogeneous controls. Mixed-weight major conics
+                // retain this proof even when a convex-hull test is invalid.
+                certified_endpoint_roots = [
+                    start_side == Some(RealSign::Zero),
+                    end_side == Some(RealSign::Zero),
+                ];
+                let (Some(weight_sign), Some(side_to_incidence_sign)) = (
+                    system.source_weight_sign,
+                    system.tangent_from_incidence_derivative_sign,
+                ) else {
+                    return Ok((None, false));
+                };
                 let incidence_factor = product_sign(
                     product_sign(weight_sign, side_to_incidence_sign),
                     if predicate_reversed {
@@ -78409,22 +78426,10 @@ impl BezierAlgebraicChord2 {
                     },
                 );
                 let point_sign = |point: Point2| -> CurveResult<Option<RealSign>> {
-                    let point = RationalBezierIntersectionPointEvidence2::Exact(point);
-                    Ok(match predicate.oriented_side(&point, policy)? {
-                        Classification::Decided(crate::classify::LineSide::Left) => {
-                            Some(incidence_factor)
-                        }
-                        Classification::Decided(crate::classify::LineSide::Right) => {
-                            Some(product_sign(incidence_factor, RealSign::Negative))
-                        }
-                        Classification::Decided(crate::classify::LineSide::On) => {
-                            Some(RealSign::Zero)
-                        }
-                        Classification::Uncertain(_) => None,
-                    })
+                    Ok(point_side(point)?.map(|side| product_sign(incidence_factor, side)))
                 };
-                let start_sign = point_sign(source.start().clone())?;
-                let end_sign = point_sign(source.end().clone())?;
+                let start_sign = start_side.map(|side| product_sign(incidence_factor, side));
+                let end_sign = end_side.map(|side| product_sign(incidence_factor, side));
                 #[cfg(test)]
                 if std::env::var_os("HYPERCURVE_DEBUG_RATIONAL_BLOCKER").is_some() {
                     eprintln!(
@@ -78434,7 +78439,6 @@ impl BezierAlgebraicChord2 {
                 let (Some(start_sign), Some(end_sign)) = (start_sign, end_sign) else {
                     return Ok((None, false));
                 };
-                certified_endpoint_roots = [start_sign == RealSign::Zero, end_sign == RealSign::Zero];
                 // Opposite endpoint signs prove one unit root only when the
                 // incidence has degree at most two. Higher-degree curves can
                 // cross three or more times and need complete root isolation.

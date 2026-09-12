@@ -3289,6 +3289,68 @@ fn retained_corner_fragment_trim(
     ))
 }
 
+/// Publishes one cut in an existing circular cell cover. The parameter,
+/// point, and optional cell endpoint are already certified by the caller.
+/// Complementary cells extend the retained source; authored cells stand alone.
+fn retained_circular_cut_fragments(
+    extension_source: Option<&BezierSplitFragment2>,
+    spans: &[RationalQuadraticBezier2],
+    span_index: usize,
+    parameter: &CurveRegionParameter2,
+    point: &RationalBezierIntersectionPointEvidence2,
+    endpoint: Option<BezierEndpoint>,
+    keep_before_cut: bool,
+) -> Vec<BezierSplitFragment2> {
+    let span = &spans[span_index];
+    let materialized_span = |index: usize| BezierSplitFragment2::Materialized {
+        start: BezierParameter2::Exact(Real::zero()),
+        end: BezierParameter2::Exact(Real::one()),
+        curve: BezierSubcurve2::RationalQuadratic(spans[index].clone()),
+    };
+    let partial = match (keep_before_cut, endpoint) {
+        (true, Some(BezierEndpoint::End)) | (false, Some(BezierEndpoint::Start)) => {
+            Some(materialized_span(span_index))
+        }
+        (_, Some(_)) => None,
+        (_, None) => {
+            let (start, end, start_point, end_point) = if keep_before_cut {
+                (
+                    CurveRegionParameter2::from_bezier(BezierParameter2::Exact(Real::zero())),
+                    parameter.clone(),
+                    RationalBezierIntersectionPointEvidence2::Exact(span.start().clone()),
+                    point.clone(),
+                )
+            } else {
+                (
+                    parameter.clone(),
+                    CurveRegionParameter2::from_bezier(BezierParameter2::Exact(Real::one())),
+                    point.clone(),
+                    RationalBezierIntersectionPointEvidence2::Exact(span.end().clone()),
+                )
+            };
+            Some(BezierSplitFragment2::SelectedFiber(
+                crate::bezier_split::BezierSelectedFiberFragment2::new(
+                    BezierSelectedFiberSource2::Rational(RationalBezier2::from(span.clone())),
+                    CurveRegionParameterRange2::new_validated(start, end),
+                    start_point,
+                    end_point,
+                ),
+            ))
+        }
+    };
+    let mut fragments = Vec::with_capacity(spans.len() + usize::from(extension_source.is_some()));
+    if keep_before_cut {
+        fragments.extend(extension_source.cloned());
+        fragments.extend((0..span_index).map(materialized_span));
+        fragments.extend(partial);
+    } else {
+        fragments.extend(partial);
+        fragments.extend((span_index + 1..spans.len()).map(materialized_span));
+        fragments.extend(extension_source.cloned());
+    }
+    fragments
+}
+
 fn canonicalize_retained_corner_materialization(
     fragment: BezierSplitFragment2,
 ) -> BezierSplitFragment2 {
@@ -12301,9 +12363,15 @@ impl CurveRegion2 {
                 previous_retained_arc.as_ref(),
                 previous_cut.placement,
             ) {
-                (true, Some(support), CornerPlacement2::Extension) => Some(
-                    Self::retained_arc_chamfer_fragments(support, &previous_cut, true, policy)?,
-                ),
+                (true, Some(support), CornerPlacement2::Extension) => {
+                    Some(Self::retained_arc_chamfer_fragments(
+                        &boundary_loop.fragments()[previous_cut_index],
+                        support,
+                        &previous_cut,
+                        true,
+                        policy,
+                    )?)
+                }
                 _ => None,
             };
             let next_replacement = match (
@@ -12311,9 +12379,15 @@ impl CurveRegion2 {
                 next_retained_arc.as_ref(),
                 next_cut.placement,
             ) {
-                (true, Some(support), CornerPlacement2::Extension) => Some(
-                    Self::retained_arc_chamfer_fragments(support, &next_cut, false, policy)?,
-                ),
+                (true, Some(support), CornerPlacement2::Extension) => {
+                    Some(Self::retained_arc_chamfer_fragments(
+                        &boundary_loop.fragments()[next_cut_index],
+                        support,
+                        &next_cut,
+                        false,
+                        policy,
+                    )?)
+                }
                 _ => None,
             };
             if fragment_count == 1
@@ -12488,38 +12562,82 @@ impl CurveRegion2 {
     }
 
     fn retained_arc_chamfer_fragments(
+        source_fragment: &BezierSplitFragment2,
         support: &CircularArc2,
         cut: &CornerTrimCut2,
         previous: bool,
         policy: &CurveContext,
     ) -> ExactCurveResult<Vec<BezierSplitFragment2>> {
+        let operation = CurveOperation2::Chamfer;
+        let family = CurveFamily2::CircularArc;
         let point = cut.point.as_exact().ok_or_else(|| {
-            ExactCurveError::blocked(
-                CurveOperation2::Chamfer,
-                CurveFamily2::CircularArc,
-                UncertaintyReason::Unsupported,
-            )
+            ExactCurveError::blocked(operation, family, UncertaintyReason::Unsupported)
         })?;
-        let retained = if previous {
-            CircularArc2::new_with_certified_radius(
-                support.start().clone(),
-                point.clone(),
-                support.center().clone(),
-                support.radius_squared(),
-                support.is_clockwise(),
-                None,
-            )
-        } else {
-            CircularArc2::new_with_certified_radius(
-                point.clone(),
-                support.end().clone(),
-                support.center().clone(),
-                support.radius_squared(),
-                support.is_clockwise(),
-                None,
-            )
-        };
-        Self::materialized_corner_arc_fragments(&retained, CurveOperation2::Chamfer, policy)
+        let spans = crate::curve::retained_arc_complement_projective_spans(
+            support, operation, family, policy,
+        )?;
+        let mut selected = None;
+        for (span_index, span) in spans.iter().enumerate() {
+            let parameters = retained_corner_decision(
+                RationalBezier2::from(span.clone())
+                    .retained_circle_point_parameters(point, policy)
+                    .map_err(|cause| curve_region_edit_error(operation, cause))?,
+                operation,
+            )?;
+            for parameter in parameters {
+                let parameter = CurveRegionParameter2::from_bezier(parameter);
+                let boundary_order = |boundary| {
+                    retained_corner_decision(
+                        parameter
+                            .cmp_by_refinement(
+                                &CurveRegionParameter2::from_bezier(BezierParameter2::Exact(
+                                    boundary,
+                                )),
+                                policy,
+                            )
+                            .map_err(|cause| curve_region_edit_error(operation, cause))?,
+                        operation,
+                    )
+                };
+                let endpoint = if boundary_order(Real::zero())? == std::cmp::Ordering::Equal {
+                    Some(BezierEndpoint::Start)
+                } else if boundary_order(Real::one())? == std::cmp::Ordering::Equal {
+                    Some(BezierEndpoint::End)
+                } else {
+                    None
+                };
+                // Shared cell boundaries belong to the earlier cell. The
+                // authored source owns both outer complement endpoints.
+                if endpoint == Some(BezierEndpoint::Start)
+                    || (endpoint == Some(BezierEndpoint::End) && span_index + 1 == spans.len())
+                {
+                    continue;
+                }
+                if selected
+                    .replace((span_index, parameter, endpoint))
+                    .is_some()
+                {
+                    return Err(curve_region_edit_error(
+                        operation,
+                        CurveError::Topology(
+                            "one circular extension contact belongs to multiple cells".into(),
+                        ),
+                    ));
+                }
+            }
+        }
+        let (span_index, parameter, endpoint) = selected.ok_or_else(|| {
+            ExactCurveError::blocked(operation, family, UncertaintyReason::Predicate)
+        })?;
+        Ok(retained_circular_cut_fragments(
+            Some(source_fragment),
+            &spans,
+            span_index,
+            &parameter,
+            &cut.point,
+            endpoint,
+            previous,
+        ))
     }
 
     fn materialized_corner_arc_fragments(
@@ -13326,70 +13444,22 @@ impl CurveRegion2 {
                     )),
                 })
         };
-        let source_at_start = boundary_order(Real::zero())? == std::cmp::Ordering::Equal;
-        let source_at_end = boundary_order(Real::one())? == std::cmp::Ordering::Equal;
-        let materialized_span = |index: usize| BezierSplitFragment2::Materialized {
-            start: BezierParameter2::Exact(Real::zero()),
-            end: BezierParameter2::Exact(Real::one()),
-            curve: BezierSubcurve2::RationalQuadratic(source_spans[index].clone()),
-        };
-        let selected_span = |keep_before: bool| {
-            let zero = CurveRegionParameter2::from_bezier(BezierParameter2::Exact(Real::zero()));
-            let one = CurveRegionParameter2::from_bezier(BezierParameter2::Exact(Real::one()));
-            let (range, start, end) = if keep_before {
-                (
-                    CurveRegionParameterRange2::new_validated(zero, seed.parameter.clone()),
-                    RationalBezierIntersectionPointEvidence2::Exact(span.start().clone()),
-                    point.clone(),
-                )
-            } else {
-                (
-                    CurveRegionParameterRange2::new_validated(seed.parameter.clone(), one),
-                    point.clone(),
-                    RationalBezierIntersectionPointEvidence2::Exact(span.end().clone()),
-                )
-            };
-            BezierSplitFragment2::SelectedFiber(
-                crate::bezier_split::BezierSelectedFiberFragment2::new(
-                    BezierSelectedFiberSource2::Rational(RationalBezier2::from(span.clone())),
-                    range,
-                    start,
-                    end,
-                ),
-            )
-        };
-        let mut replacement = Vec::with_capacity(source_spans.len() + 1);
-        if authored && deferred.arc_is_previous {
-            replacement.extend((0..span_index).map(materialized_span));
-            if source_at_end {
-                replacement.push(materialized_span(span_index));
-            } else if !source_at_start {
-                replacement.push(selected_span(true));
-            }
-        } else if authored {
-            if source_at_start {
-                replacement.push(materialized_span(span_index));
-            } else if !source_at_end {
-                replacement.push(selected_span(false));
-            }
-            replacement.extend((span_index + 1..source_spans.len()).map(materialized_span));
-        } else if deferred.arc_is_previous {
-            replacement.push(source_fragment.clone());
-            replacement.extend((0..span_index).map(materialized_span));
-            if source_at_end {
-                replacement.push(materialized_span(span_index));
-            } else if !source_at_start {
-                replacement.push(selected_span(true));
-            }
+        let endpoint = if boundary_order(Real::zero())? == std::cmp::Ordering::Equal {
+            Some(BezierEndpoint::Start)
+        } else if boundary_order(Real::one())? == std::cmp::Ordering::Equal {
+            Some(BezierEndpoint::End)
         } else {
-            if source_at_start {
-                replacement.push(materialized_span(span_index));
-            } else if !source_at_end {
-                replacement.push(selected_span(false));
-            }
-            replacement.extend((span_index + 1..source_spans.len()).map(materialized_span));
-            replacement.push(source_fragment.clone());
-        }
+            None
+        };
+        let replacement = retained_circular_cut_fragments(
+            (!authored).then_some(source_fragment),
+            &source_spans,
+            span_index,
+            &seed.parameter,
+            &point,
+            endpoint,
+            deferred.arc_is_previous,
+        );
         Ok(RetainedPreselectedArcFilletContact2 {
             replacement: Some(replacement),
             source_parallel,
@@ -13492,63 +13562,22 @@ impl CurveRegion2 {
                 return Ok(None);
             };
 
-            let materialized_span = |index: usize| BezierSplitFragment2::Materialized {
-                start: BezierParameter2::Exact(Real::zero()),
-                end: BezierParameter2::Exact(Real::one()),
-                curve: BezierSubcurve2::RationalQuadratic(spans[index].clone()),
-            };
-            let selected_span = |keep_before: bool,
-                                 contact: &RetainedDeferredArcContact2|
-             -> BezierSplitFragment2 {
-                let span = &spans[span_index];
-                let source = RationalBezier2::from(span.clone());
-                let zero =
-                    CurveRegionParameter2::from_bezier(BezierParameter2::Exact(Real::zero()));
-                let one = CurveRegionParameter2::from_bezier(BezierParameter2::Exact(Real::one()));
-                let (range, start, end) = if keep_before {
-                    (
-                        CurveRegionParameterRange2::new_validated(
-                            zero,
-                            contact.source_parameter.clone(),
-                        ),
-                        RationalBezierIntersectionPointEvidence2::Exact(span.start().clone()),
-                        contact.point.clone(),
-                    )
-                } else {
-                    (
-                        CurveRegionParameterRange2::new_validated(
-                            contact.source_parameter.clone(),
-                            one,
-                        ),
-                        contact.point.clone(),
-                        RationalBezierIntersectionPointEvidence2::Exact(span.end().clone()),
-                    )
-                };
-                BezierSplitFragment2::SelectedFiber(
-                    crate::bezier_split::BezierSelectedFiberFragment2::new(
-                        BezierSelectedFiberSource2::Rational(source),
-                        range,
-                        start,
-                        end,
-                    ),
-                )
-            };
-            let mut replacement = Vec::with_capacity(spans.len() + 1);
-            if deferred.arc_is_previous {
-                replacement.push(source_fragment.clone());
-                replacement.extend((0..span_index).map(materialized_span));
-                if !contact.source_at_start {
-                    replacement.push(selected_span(true, &contact));
-                }
+            let endpoint = if contact.source_at_start {
+                Some(BezierEndpoint::Start)
+            } else if contact.source_at_end {
+                Some(BezierEndpoint::End)
             } else {
-                if contact.source_at_start {
-                    replacement.push(materialized_span(span_index));
-                } else if !contact.source_at_end {
-                    replacement.push(selected_span(false, &contact));
-                }
-                replacement.extend((span_index + 1..spans.len()).map(materialized_span));
-                replacement.push(source_fragment.clone());
-            }
+                None
+            };
+            let replacement = retained_circular_cut_fragments(
+                Some(source_fragment),
+                &spans,
+                span_index,
+                &contact.source_parameter,
+                &contact.point,
+                endpoint,
+                deferred.arc_is_previous,
+            );
             arc_replacement = Some(replacement);
             (contact, CornerPlacement2::Extension)
         };
@@ -25859,17 +25888,24 @@ mod tests {
                                 retained_rational_extension |= chamfered.boundary_loops()[0]
                                     .fragments()
                                     .iter()
-                                    .any(|fragment| match fragment {
-                                        BezierSplitFragment2::Materialized { curve, .. } => {
-                                            [curve.start(), curve.end()].iter().any(|point| {
-                                                point
-                                                    .distance_squared(&rational_extension)
-                                                    .certified_eq_until(&Real::zero(), -4096)
-                                                    .as_bool()
-                                                    == Some(true)
-                                            })
-                                        }
-                                        _ => false,
+                                    .any(|fragment| {
+                                        let endpoints = match fragment {
+                                            BezierSplitFragment2::Materialized {
+                                                curve, ..
+                                            } => [Some(curve.start()), Some(curve.end())],
+                                            BezierSplitFragment2::SelectedFiber(fragment) => [
+                                                fragment.start_point().as_exact(),
+                                                fragment.end_point().as_exact(),
+                                            ],
+                                            _ => return false,
+                                        };
+                                        endpoints.into_iter().flatten().any(|point| {
+                                            point
+                                                .distance_squared(&rational_extension)
+                                                .certified_eq_until(&Real::zero(), -4096)
+                                                .as_bool()
+                                                == Some(true)
+                                        })
                                     });
                                 if homogeneous_scale == 1 && !reversed {
                                     if major {
