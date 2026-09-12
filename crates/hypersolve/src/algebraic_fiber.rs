@@ -2583,8 +2583,8 @@ fn count_common_fiber_roots(
     endpoints: FiberIntervalEndpoints,
     field: &mut LocalAlgebraicField,
 ) -> Result<LocalRootCountOutcome, LocalFieldError> {
-    let mut first = local_fiber_polynomial(first, retained_parameter, field)?;
-    let mut second = local_fiber_polynomial(second, retained_parameter, field)?;
+    let first = local_fiber_polynomial(first, retained_parameter, field)?;
+    let second = local_fiber_polynomial(second, retained_parameter, field)?;
     let first_is_zero = local_polynomial_is_zero(&first, field)?;
     let second_is_zero = local_polynomial_is_zero(&second, field)?;
     match (first_is_zero, second_is_zero) {
@@ -2609,15 +2609,8 @@ fn count_common_fiber_roots(
             sequence_length: 1,
         });
     }
-    if first.len() < second.len() {
-        std::mem::swap(&mut first, &mut second);
-    }
-    while !local_polynomial_is_zero(&second, field)? {
-        let remainder = local_polynomial_remainder(first, &second, field)?;
-        first = second;
-        second = remainder;
-    }
-    count_local_polynomial_roots(first, fiber_lower, fiber_upper, endpoints, field)
+    let gcd = local_polynomial_greatest_common_divisor(first, second, field)?;
+    count_local_polynomial_roots(gcd, fiber_lower, fiber_upper, endpoints, field)
 }
 
 fn local_fiber_polynomial(
@@ -2731,9 +2724,38 @@ fn local_sturm_sequence(
         for coefficient in &mut remainder {
             coefficient.negate();
         }
-        sequence.push(remainder);
+        let sign = remainder
+            .last()
+            .ok_or(LocalFieldError::Undecided)?
+            .sign(field)?;
+        let leading = match sign {
+            Ordering::Less => Real::from(-1_i8),
+            Ordering::Greater => Real::one(),
+            Ordering::Equal => return Err(LocalFieldError::DivisionByZero),
+        };
+        sequence.push(normalize_local_polynomial(remainder, leading, field)?);
     }
     Ok(sequence)
+}
+
+/// Fixes a nonzero polynomial's leading coefficient to the requested unit.
+/// Sturm supplies the original sign so its scale is positive; a GCD needs
+/// only monic normalization and introduces no additional sign decision.
+fn normalize_local_polynomial(
+    mut polynomial: Vec<LocalFieldElement>,
+    unit: Real,
+    field: &mut LocalAlgebraicField,
+) -> Result<Vec<LocalFieldElement>, LocalFieldError> {
+    let leading = polynomial.pop().ok_or(LocalFieldError::Undecided)?;
+    let normalized = LocalFieldElement::from_polynomial(vec![unit], field)?;
+    if !polynomial.is_empty() {
+        let scale = normalized.divide_after_nonzero(&leading, field)?;
+        for coefficient in &mut polynomial {
+            *coefficient = coefficient.multiply(&scale, field)?;
+        }
+    }
+    polynomial.push(normalized);
+    Ok(polynomial)
 }
 
 fn count_local_sturm_sequence_roots(
@@ -2900,7 +2922,11 @@ fn local_polynomial_greatest_common_divisor(
     while !local_polynomial_is_zero(&second, field)? {
         let remainder = local_polynomial_remainder(first, &second, field)?;
         first = second;
-        second = remainder;
+        second = if local_polynomial_is_zero(&remainder, field)? {
+            remainder
+        } else {
+            normalize_local_polynomial(remainder, Real::one(), field)?
+        };
     }
     Ok(first)
 }
@@ -3383,6 +3409,29 @@ impl LocalAlgebraicField {
                     .push((polynomial.to_vec(), inverse.clone()));
                 return Some(inverse);
             }
+            // A modular inverse also declines at zero divisors of a reducible
+            // presentation. Reuse the shared GCD before constructing Bezout
+            // coefficients: those coefficients can be much larger than the
+            // foreign factor that needs to be removed.
+            let gcd = polynomial_gcd(modulus.clone(), polynomial.to_vec(), strict)?;
+            if gcd.len() > 1 {
+                if polynomial_vanishes_at_owned_root(&modulus, &gcd, &self.root.interval, strict)
+                    != Some(false)
+                {
+                    return None;
+                }
+                let (quotient, remainder) = polynomial_div_rem(modulus.clone(), &gcd, strict)?;
+                if quotient.len() <= 1
+                    || quotient.len() >= modulus.len()
+                    || !remainder
+                        .iter()
+                        .all(|value| strict_exact_zero_for_storage(value))
+                {
+                    return None;
+                }
+                modulus = quotient;
+                continue;
+            }
             let mut previous = modulus.clone();
             let mut current = polynomial_div_rem(polynomial.to_vec(), &modulus, strict)?.1;
             let mut previous_coefficient = vec![Real::zero()];
@@ -3391,6 +3440,14 @@ impl LocalAlgebraicField {
                 .iter()
                 .all(|value| strict_exact_zero_for_storage(value))
             {
+                // Scale the Euclidean row and its Bezout coefficient
+                // together. Retaining irrelevant rational contents here
+                // causes exponential height growth even when the reduced
+                // inverse itself has moderate coefficients.
+                let leading_inverse = (Real::one() / current.last()?).ok()?;
+                for coefficient in current.iter_mut().chain(&mut current_coefficient) {
+                    *coefficient *= &leading_inverse;
+                }
                 let (quotient, remainder) = polynomial_div_rem(previous, &current, strict)?;
                 let mut coefficient = vec![
                     Real::zero();
@@ -3422,21 +3479,7 @@ impl LocalAlgebraicField {
                     .push((polynomial.to_vec(), inverse.clone()));
                 return Some(inverse);
             }
-            if polynomial_vanishes_at_owned_root(&modulus, &previous, &self.root.interval, strict)
-                != Some(false)
-            {
-                return None;
-            }
-            let (quotient, remainder) = polynomial_div_rem(modulus.clone(), &previous, strict)?;
-            if quotient.len() <= 1
-                || quotient.len() >= modulus.len()
-                || !remainder
-                    .iter()
-                    .all(|value| strict_exact_zero_for_storage(value))
-            {
-                return None;
-            }
-            modulus = quotient;
+            return None;
         }
     }
 
@@ -4445,6 +4488,83 @@ mod tests {
                 assert_eq!(field.refinement_steps, steps);
                 assert_eq!(field.certainty, Certainty::Exact);
             }
+        }
+    }
+
+    #[test]
+    fn normalized_sturm_rows_preserve_variations_and_repeated_roots() {
+        for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
+            for scale_sign in [-1_i64, 1] {
+                let root = represented_root(
+                    vec![real(-2), Real::zero(), Real::one()],
+                    Real::one(),
+                    real(2),
+                    policy,
+                );
+                let mut field = LocalAlgebraicField::new(&root, policy).unwrap();
+                let element = |coefficients| {
+                    LocalFieldElement::from_polynomial(coefficients, &field).unwrap()
+                };
+                let one = element(vec![Real::one()]);
+                let selected_factor = vec![element(vec![Real::zero(), real(-1)]), one.clone()];
+                let mut polynomial = vec![element(vec![real(-scale_sign), real(scale_sign)])];
+                // Either sign of (alpha-1)*(u+1/2)*(u-alpha)^2*(u-3).
+                // Positive row scaling must retain all three distinct roots.
+                for factor in [
+                    vec![element(vec![rational(1, 2)]), one.clone()],
+                    selected_factor.clone(),
+                    selected_factor,
+                    vec![element(vec![real(-3)]), one],
+                ] {
+                    polynomial =
+                        local_image_polynomial_multiply(&polynomial, &factor, &mut field).unwrap();
+                }
+                let sequence = local_sturm_sequence(polynomial, &mut field).unwrap();
+                for row in sequence.iter().skip(2) {
+                    let leading = row.last().unwrap();
+                    assert!(leading.denominator.is_none());
+                    assert!(
+                        leading.numerator == vec![Real::one()]
+                            || leading.numerator == vec![real(-1)]
+                    );
+                }
+                for (lower, upper, expected) in [
+                    (real(-1), real(4), 3),
+                    (Real::zero(), real(2), 1),
+                    (rational(3, 2), real(2), 0),
+                ] {
+                    assert!(
+                        matches!(count_local_sturm_sequence_roots(&sequence, &lower, &upper, &mut field).unwrap(), LocalRootCountOutcome::Counted { count, .. } if count == expected)
+                    );
+                }
+                assert_eq!(field.certainty, Certainty::Exact);
+            }
+        }
+    }
+
+    #[test]
+    fn local_division_preserves_wide_exact_quotients_beyond_modular_reconstruction() {
+        let wide = Real::from(hyperreal::Rational::from_bigint(
+            num::BigInt::from(1) << 5000,
+        ));
+        let norm = &wide * &wide - real(2);
+        let expected = vec![(&wide / &norm).unwrap(), (real(-1) / &norm).unwrap()];
+        for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
+            let root = represented_root(
+                vec![real(-2), Real::zero(), Real::one()],
+                Real::one(),
+                real(2),
+                policy,
+            );
+            let mut field = LocalAlgebraicField::new(&root, policy).unwrap();
+            let one = LocalFieldElement::from_polynomial(vec![Real::one()], &field).unwrap();
+            let divisor =
+                LocalFieldElement::from_polynomial(vec![wide.clone(), Real::one()], &field)
+                    .unwrap();
+            let quotient = one.divide(&divisor, &mut field).unwrap();
+            assert!(quotient.denominator.is_none());
+            assert_eq!(quotient.numerator, expected);
+            assert_eq!(field.certainty, Certainty::Exact);
         }
     }
 
