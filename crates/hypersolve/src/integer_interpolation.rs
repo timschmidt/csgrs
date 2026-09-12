@@ -60,9 +60,34 @@ pub(crate) fn primitive_integer_sturm_sequence(coefficients: &[Real]) -> Option<
             .map(|(degree, coefficient)| coefficient * BigInt::from(degree))
             .collect(),
     );
+    primitive_integer_signed_sequence(first, derivative)
+}
+
+/// The same positive-scale remainder chain for an arbitrary rational pair.
+/// Used by the Sturm-Tarski sign query as well as ordinary root counting.
+pub(crate) fn primitive_integer_signed_remainder_sequence(
+    first: &[Real],
+    second: &[Real],
+) -> Option<Vec<Vec<Real>>> {
+    let primitive = |polynomial: &[Real]| {
+        let coefficients = polynomial
+            .iter()
+            .map(Real::exact_rational_ref)
+            .collect::<Option<Vec<_>>>()?;
+        Some(primitive_integer_content_part(
+            Rational::primitive_bigint_ratio(&coefficients),
+        ))
+    };
+    primitive_integer_signed_sequence(primitive(first)?, primitive(second)?)
+}
+
+fn primitive_integer_signed_sequence(
+    first: Vec<BigInt>,
+    second: Vec<BigInt>,
+) -> Option<Vec<Vec<Real>>> {
     let mut sequence = vec![first];
-    if !is_zero_integer_polynomial(&derivative) {
-        sequence.push(derivative);
+    if !is_zero_integer_polynomial(&second) {
+        sequence.push(second);
     }
     while sequence.len() >= 2 {
         let previous = sequence[sequence.len() - 2].clone();

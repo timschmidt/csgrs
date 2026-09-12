@@ -696,7 +696,15 @@ pub fn isolate_bivariate_fiber_roots_at_algebraic_parameter(
                 0
             };
             let mut retained_count = count;
-            for _ in 0..target_refinements {
+            let mut refinement_steps = 0_usize;
+            while count == 1
+                && (refinement_steps < target_refinements
+                    || exact_roots.contains(&node.lower)
+                    || exact_roots.contains(&node.upper))
+            {
+                // Deflation removed represented roots from this Sturm
+                // sequence, but the returned isolator belongs to the original
+                // fiber. Its boundaries must exclude those removed roots too.
                 if node.depth >= config.max_subdivision_depth {
                     return AlgebraicFiberRootIsolationReport {
                         status: AlgebraicFiberRootIsolationStatus::DepthLimit,
@@ -784,6 +792,7 @@ pub fn isolate_bivariate_fiber_roots_at_algebraic_parameter(
                     );
                 }
                 node.depth += 1;
+                refinement_steps += 1;
                 retained_count = left_count.max(right_count);
             }
             if rational_root.is_some() {
@@ -931,9 +940,9 @@ pub fn isolate_bivariate_fiber_roots_at_algebraic_parameter(
 ///
 /// `None` is a deliberate request to use the division-based Sturm fallback:
 /// it occurs only when a basis-change index cannot be represented exactly,
-/// subdivision exhausts the caller's depth budget, or exact variation
+/// subdivision exhausts its accelerator budget, or exact variation
 /// bookkeeping does not identify a unique child. Repeated irrational roots
-/// are the normal depth-limit case.
+/// require Sturm counting: Bernstein subdivision cannot separate them.
 fn isolate_local_polynomial_roots_bernstein(
     polynomial: Vec<LocalFieldElement>,
     fiber_lower: &Real,
@@ -986,7 +995,10 @@ fn isolate_local_polynomial_roots_bernstein(
         fiber_lower,
         fiber_upper,
         OrderedFieldRootIsolationConfig {
-            max_subdivision_depth: config.max_subdivision_depth,
+            // Deep subdivision cannot separate a repeated root. Keep this
+            // accelerator bounded; the complete Sturm fallback retains the
+            // caller's full isolation and refinement depth allowance.
+            max_subdivision_depth: config.max_subdivision_depth.min(32),
             refinement_steps: config.refinement_steps,
         },
         &mut context,
@@ -3532,12 +3544,13 @@ impl LocalAlgebraicField {
             return Ok(sign);
         }
 
-        if let Some(true) = polynomial_vanishes_at_owned_root(
+        let vanishes = polynomial_vanishes_at_owned_root(
             self.modulus(),
             polynomial,
             &self.root.interval,
-            self.policy,
-        ) {
+            PredicatePolicy::STRICT,
+        );
+        if vanishes == Some(true) {
             return Ok(Ordering::Equal);
         }
 
@@ -3553,6 +3566,30 @@ impl LocalAlgebraicField {
                 return Ok(sign);
             }
             self.refine_root()?;
+        }
+        // Sign determination by a Sturm-Tarski query avoids narrowing the
+        // source root to the magnitude of an expanded field coefficient.
+        if let Some(sign) =
+            crate::root_sign::sign_at_selected_root(self.modulus(), polynomial, &self.root.interval)
+        {
+            return Ok(sign);
+        }
+        // A certified nonzero polynomial image of a selected algebraic root
+        // eventually separates from zero. The hot refinement budget must not
+        // reject that proof merely because field arithmetic produced a small
+        // nonzero coefficient. An unresolved identity still returns Undecided.
+        if vanishes == Some(false) {
+            loop {
+                if self.root.exact_point_witness().is_some() {
+                    return Err(LocalFieldError::Undecided);
+                }
+                self.refine_root()?;
+                let evaluation =
+                    evaluate_polynomial_at_algebraic_root(&self.root, polynomial, self.policy);
+                if let Some(sign) = local_evaluation_sign(&evaluation)? {
+                    return Ok(sign);
+                }
+            }
         }
         Err(LocalFieldError::Undecided)
     }
@@ -5391,11 +5428,11 @@ mod tests {
     }
 
     #[test]
-    fn selected_fiber_incomplete_report_preserves_fallback_progress() {
+    fn selected_fiber_repeated_and_rational_roots_complete() {
         // At alpha=sqrt(1/2), combine its repeated root with rational roots
-        // 1/4, 1/2, and 3/4. The bounded fallback remains undecided after
-        // doing real Sturm, subdivision, and retained-root refinement work;
-        // that attempted-work evidence must not be flattened to zero.
+        // 1/4, 1/2, and 3/4. The Sturm coefficients include small nonzero
+        // values which exceed the hot local-field signing schedule. Their
+        // exact nonzero certificates must permit refinement to completion.
         let q = vec![
             rational(-3, 32),
             rational(11, 16),
@@ -5449,7 +5486,38 @@ mod tests {
                         },
                         policy,
                     );
-                    assert_eq!(report.status, AlgebraicFiberRootIsolationStatus::Undecided);
+                    assert_eq!(report.status, AlgebraicFiberRootIsolationStatus::Isolated);
+                    assert_eq!(report.intervals.len(), 4);
+                    for root in &report.intervals {
+                        if let Some(value) = &root.exact_root {
+                            assert_eq!(&root.lower, value);
+                            assert_eq!(&root.upper, value);
+                            assert!(
+                                [rational(1, 4), rational(1, 2), rational(3, 4)].contains(value)
+                            );
+                            continue;
+                        }
+                        let replay = count_bivariate_fiber_roots_at_algebraic_parameter_closed(
+                            polynomial,
+                            retained_parameter,
+                            &alpha,
+                            &root.lower,
+                            &root.upper,
+                            policy,
+                        );
+                        assert_eq!(replay.status, AlgebraicFiberRootCountStatus::Counted);
+                        assert_eq!(replay.distinct_root_count, Some(1));
+                    }
+                    for value in [rational(1, 4), rational(1, 2), rational(3, 4)] {
+                        assert!(report.intervals.iter().any(|root| {
+                            root.exact_root.as_ref() == Some(&value)
+                                || root.lower < value && value < root.upper
+                        }));
+                    }
+                    let irrational = &report.intervals[2];
+                    assert!(irrational.lower >= rational(1, 2));
+                    assert!(irrational.upper <= rational(3, 4));
+                    assert_eq!(irrational.distinct_root_count, 1);
                     assert!(report.sturm_sequence_length > 1);
                     assert!(report.subdivision_steps > 0);
                     assert!(report.retained_refinement_steps > 0);

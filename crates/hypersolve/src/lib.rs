@@ -42,6 +42,7 @@ pub mod rank;
 pub mod residual_replay;
 pub mod resultant;
 pub mod root_isolation;
+mod root_sign;
 pub mod simplex_projection;
 pub mod sketch;
 mod sketch_arc_incidence;
