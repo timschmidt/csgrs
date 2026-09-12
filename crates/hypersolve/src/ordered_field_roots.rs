@@ -127,6 +127,34 @@ fn polynomial_sign_at_if_separated<C: Clone, F: OrderedFieldPolynomialContext<C>
     field.sign_if_separated(&value)
 }
 
+/// Returns the Euclidean quotient by `x - root` in the caller's exact field.
+///
+/// Coefficients are in ascending power order. The remainder is deliberately
+/// not constructed or signed. A caller using the quotient as a deflation must
+/// already own a root certificate, which may come from geometric incidence
+/// rather than another evaluation of the polynomial. No division is required.
+pub fn ordered_field_polynomial_linear_quotient<C: Clone, F: OrderedFieldPolynomialContext<C>>(
+    polynomial: &[C],
+    root: &Real,
+    field: &mut F,
+) -> Result<Vec<C>, F::Error> {
+    let degree = polynomial.len().saturating_sub(1);
+    if degree == 0 {
+        return Ok(Vec::new());
+    }
+    let mut quotient = Vec::with_capacity(degree);
+    quotient.push(polynomial[degree].clone());
+    for coefficient in polynomial[1..degree].iter().rev() {
+        let product = field.scale(
+            quotient.last().expect("the quotient has a leading term"),
+            root,
+        )?;
+        quotient.push(field.add(&product, coefficient)?);
+    }
+    quotient.reverse();
+    Ok(quotient)
+}
+
 fn deflate_at_represented_root<C: Clone, F: OrderedFieldPolynomialContext<C>>(
     mut polynomial: Vec<C>,
     root: &Real,
@@ -136,22 +164,7 @@ fn deflate_at_represented_root<C: Clone, F: OrderedFieldPolynomialContext<C>>(
     while polynomial.len() > 1
         && polynomial_sign_at_if_separated(&polynomial, root, field)? == Some(Ordering::Equal)
     {
-        let degree = polynomial.len() - 1;
-        let mut quotient = Vec::with_capacity(degree);
-        quotient.push(polynomial[degree].clone());
-        for power in (1..degree).rev() {
-            let product = field.scale(&quotient[quotient.len() - 1], root)?;
-            quotient.push(field.add(&product, &polynomial[power])?);
-        }
-        let product = field.scale(&quotient[quotient.len() - 1], root)?;
-        let remainder = field.add(&product, &polynomial[0])?;
-        if field.sign(&remainder)? != Ordering::Equal {
-            // The exact sign predicate selected this root, so a nonzero
-            // synthetic remainder means the caller's field contract broke.
-            return Ok((polynomial, had_root));
-        }
-        quotient.reverse();
-        polynomial = quotient;
+        polynomial = ordered_field_polynomial_linear_quotient(&polynomial, root, field)?;
         trim_polynomial(&mut polynomial, field)?;
         had_root = true;
     }
@@ -578,6 +591,70 @@ mod tests {
 
     fn fraction(numerator: i64, denominator: i64) -> Real {
         (Real::from(numerator) / Real::from(denominator)).expect("nonzero integer denominator")
+    }
+
+    #[test]
+    fn linear_quotient_reuses_certified_nonrational_roots_without_predicates() {
+        struct ArithmeticOnly;
+        impl OrderedFieldPolynomialContext<Real> for ArithmeticOnly {
+            type Error = ();
+            fn zero(&mut self) -> Result<Real, ()> {
+                panic!("synthetic division does not reconstruct the zero remainder")
+            }
+            fn add(&mut self, left: &Real, right: &Real) -> Result<Real, ()> {
+                Ok(left + right)
+            }
+            fn scale(&mut self, value: &Real, scale: &Real) -> Result<Real, ()> {
+                Ok(value * scale)
+            }
+            fn sign(&mut self, _: &Real) -> Result<Ordering, ()> {
+                panic!("the caller already owns the incidence proof")
+            }
+            fn sign_if_separated(&mut self, _: &Real) -> Result<Option<Ordering>, ()> {
+                panic!("the quotient needs no speculative predicate")
+            }
+        }
+        for root in [
+            Real::zero(),
+            Real::one(),
+            Real::from(2).sqrt().unwrap(),
+            Real::pi(),
+        ] {
+            // (x-root)(x^2+3x+7), with a freely chosen remainder. The
+            // quotient remains the same even when root is not a zero.
+            for remainder in [Real::zero(), Real::from(11)] {
+                let polynomial = [
+                    -Real::from(7) * &root + remainder,
+                    Real::from(7) - Real::from(3) * &root,
+                    Real::from(3) - &root,
+                    Real::one(),
+                ];
+                let quotient = ordered_field_polynomial_linear_quotient(
+                    &polynomial,
+                    &root,
+                    &mut ArithmeticOnly,
+                )
+                .unwrap();
+                assert_eq!(
+                    quotient
+                        .iter()
+                        .map(Real::exact_rational_normal_form)
+                        .collect::<Vec<_>>(),
+                    [7, 3, 1].map(|value| Real::from(value).exact_rational())
+                );
+            }
+        }
+        for polynomial in [vec![], vec![Real::from(7)]] {
+            assert!(
+                ordered_field_polynomial_linear_quotient(
+                    &polynomial,
+                    &Real::pi(),
+                    &mut ArithmeticOnly,
+                )
+                .unwrap()
+                .is_empty()
+            );
+        }
     }
 
     #[test]
