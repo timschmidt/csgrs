@@ -1085,7 +1085,17 @@ fn approximate_offset_reports_a_consumed_terminal_for_symbolic_zero_distance() {
         .offset(distance, &sharp_offset(), &CurveContext::APPROXIMATE_512)
         .expect("the authorized 512-bit terminal should decide symbolic zero offset");
     assert_eq!(outcome.certainty, CurveCertainty::Approximate512Consumed);
-    assert_eq!(outcome.value, source);
+    assert_eq!(outcome.value.boundary_loops().len(), 1);
+    assert_location(&outcome.value, point(2, 2), RegionPointLocation::Inside);
+    assert_location(&outcome.value, point(-1, 2), RegionPointLocation::Outside);
+    assert_eq!(
+        outcome
+            .value
+            .filled_area(&CurveContext::STRICT)
+            .unwrap()
+            .value,
+        Classification::Decided(Some(Real::from(16))),
+    );
 }
 
 #[test]

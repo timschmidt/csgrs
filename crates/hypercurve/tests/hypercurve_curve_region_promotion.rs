@@ -2529,10 +2529,14 @@ fn selected_algebraic_round_join_retains_a_general_minor_cut() {
                 "hypercurve",
                 "algebraic-circle-chord-kernel",
                 "recursive-projective-retained-chord",
+            ) + trace.path_count(
+                "hypercurve",
+                "curve-region-exact-offset-regularization",
+                "convex-boundary-certificate",
             );
             assert!(
                 exact_tangent_replays > 0,
-                "regularization must reuse an exact retained tangent/support certificate: {trace:?}"
+                "regularization must reuse an exact tangent/support or convex-boundary certificate: {trace:?}"
             );
         }
         assert_eq!(rounded.certainty, CurveCertainty::Certified);
@@ -7494,13 +7498,19 @@ fn nonlinear_curved_winding_honors_authored_fill_rules_exactly() {
         .unwrap()
         .into_value();
 
+        let zero_offset = region
+            .offset(Real::zero(), &sharp_offset(), &policy)
+            .unwrap()
+            .into_value();
         assert_eq!(
-            region
-                .offset(Real::zero(), &sharp_offset(), &policy)
-                .unwrap()
-                .into_value(),
-            region,
-            "zero offset must preserve higher-order regions"
+            certified(zero_offset.classify_point(&p(0, 2), &policy).unwrap()),
+            Classification::Decided(expected),
+            "zero offset preserves the exact filled set",
+        );
+        assert_eq!(
+            zero_offset.boundary_loops().len(),
+            usize::from(fill_rule == FillRule::NonZero),
+            "zero offset regularizes the authored winding",
         );
 
         assert_eq!(

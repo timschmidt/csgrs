@@ -115181,6 +115181,56 @@ impl BezierParallel2 {
             .has_exact_affine_line_parameterization()
     }
 
+    /// Certifies nonnegative tangent turning on every regular fragment in the
+    /// unit source domain. Reversing traversal reverses the curvature sign.
+    ///
+    /// For the homogeneous tangent numerator `v`, both rational division and
+    /// a regular parallel multiply `cross(v, v')` by a positive factor. A
+    /// Bernstein hull therefore gives a cheap sufficient certificate without
+    /// constructing unit normals or isolating curvature roots. Source
+    /// regularity is essential: a cusp can reverse the tangent even when this
+    /// polynomial never changes sign. An inconclusive hull is not a rejection
+    /// of the curve; the caller must use its general arrangement path.
+    pub(crate) fn certifies_nonnegative_turn_on_unit_domain(
+        &self,
+        reversed: bool,
+    ) -> CurveResult<bool> {
+        let differential = self.differential()?;
+        let curvature = polynomial_trim_structural_zeros(polynomial_subtract(
+            &polynomial_multiply(&differential.tangent_x, &differential.tangent_derivative_y),
+            &polynomial_multiply(&differential.tangent_y, &differential.tangent_derivative_x),
+        ));
+        let positive_turn = if reversed {
+            RealSign::Negative
+        } else {
+            RealSign::Positive
+        };
+        for control in
+            power_to_bernstein_coefficients(&curvature, curvature.len().saturating_sub(1))?
+        {
+            match real_sign(&control, &CurveContext::STRICT) {
+                Some(RealSign::Zero) => {}
+                Some(sign) if sign == positive_turn => {}
+                _ => return Ok(false),
+            }
+        }
+        for component in [&differential.tangent_x, &differential.tangent_y] {
+            if univariate_unit_interval_strict_bernstein_sign(component, &CurveContext::STRICT)?
+                .is_some()
+            {
+                return Ok(true);
+            }
+        }
+        let speed_squared = polynomial_trim_structural_zeros(polynomial_add(
+            &polynomial_multiply(&differential.tangent_x, &differential.tangent_x),
+            &polynomial_multiply(&differential.tangent_y, &differential.tangent_y),
+        ));
+        Ok(
+            univariate_unit_interval_strict_bernstein_sign(&speed_squared, &CurveContext::STRICT)?
+                == Some(RealSign::Positive),
+        )
+    }
+
     /// Returns which strict side of its oriented tangent contains the local
     /// analytic-parallel branch.
     ///

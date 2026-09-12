@@ -226,6 +226,7 @@ fn shared_empty_curve_region_data() -> Arc<CurveRegionData2> {
     static EMPTY: OnceLock<Arc<CurveRegionData2>> = OnceLock::new();
     Arc::clone(EMPTY.get_or_init(|| {
         let mut data = CurveRegionData2::new(Vec::new());
+        data.certified_regularized_filled_left_topology = true;
         data.certified_loop_roles = Some(Arc::from(Vec::new()));
         data.certified_loop_fill_rules = Some(Arc::from(Vec::new()));
         data.filled_side_is_left.certify(Arc::from(Vec::new()));
@@ -1665,6 +1666,34 @@ fn retained_subcurve_parallel(
         BezierSubcurve2::Cubic(source) => source.parallel_left(distance),
         BezierSubcurve2::RationalQuadratic(source) => source.parallel_left(distance),
         BezierSubcurve2::Rational(source) => source.parallel_left(distance),
+    }
+}
+
+/// A normalized boundary can still be concave between its junctions. The
+/// convex-offset shortcut needs a certificate for every intervening carrier,
+/// in addition to the endpoint turn checks made during span assembly.
+fn fragment_certifies_nonnegative_turn(fragment: &BezierSplitFragment2) -> CurveResult<bool> {
+    match fragment {
+        BezierSplitFragment2::AlgebraicChord(_) => Ok(true),
+        BezierSplitFragment2::AlgebraicCuspSemicircle(fragment) => {
+            Ok(fragment.semicircle().is_clockwise() == fragment.is_reversed())
+        }
+        BezierSplitFragment2::Materialized { curve, .. } => {
+            retained_subcurve_parallel(curve, Real::zero())?
+                .certifies_nonnegative_turn_on_unit_domain(false)
+        }
+        BezierSplitFragment2::AlgebraicEndpointImages {
+            source_curve,
+            reversed,
+            ..
+        } => retained_subcurve_parallel(source_curve, Real::zero())?
+            .certifies_nonnegative_turn_on_unit_domain(*reversed),
+        BezierSplitFragment2::AnalyticParallel(fragment) => fragment
+            .parallel()
+            .certifies_nonnegative_turn_on_unit_domain(fragment.is_reversed()),
+        BezierSplitFragment2::SelectedFiber(fragment) => fragment
+            .parallel_carrier()
+            .certifies_nonnegative_turn_on_unit_domain(fragment.is_reversed()),
     }
 }
 
@@ -4917,11 +4946,17 @@ fn exact_offset_span_from_algebraic_chord(
     distance: &Real,
     policy: &CurveContext,
 ) -> CurveResult<Classification<ExactOffsetSpan2>> {
-    // Keep every exact line offset in the shared procedural normal carrier.
-    // The source chord retains cardinal and oblique tangent certificates, so
-    // flattening either case into independently translated endpoint
-    // polynomials only loses common normal-displacement authority and costs
-    // more memory.
+    if let (Some(start), Some(end)) = (chord.start().as_exact(), chord.end().as_exact()) {
+        // A normalized boundary can retain an ordinary represented line as a
+        // chord. Keep its native offset, measurement, and output capabilities;
+        // no selected coordinate or root is materialized by this branch.
+        let line = LineSeg2::try_new(start.clone(), end.clone())?;
+        let offset = Segment2::Line(line.offset_left(distance.clone())?);
+        let source = BezierSubcurve2::Quadratic(QuadraticBezier2::from_line_segment(line));
+        return exact_offset_span_from_native_segment(&source, &offset, policy);
+    }
+    // Selected endpoints keep the common normal-displacement authority;
+    // expanding them into unrelated coordinate expressions loses that proof.
     #[cfg(feature = "dispatch-trace")]
     hyperreal::dispatch_trace::record(
         "hypercurve",
@@ -10499,6 +10534,10 @@ impl CurveRegion2 {
         let mut data = CurveRegionData2::new(boundary_loops);
         data.certified_loop_roles = Some(roles);
         data.certified_loop_fill_rules = Some(fill_rules);
+        // The caller's arrangement already certified these oriented, merged
+        // line contours. Preserve that proof when choosing the compact native
+        // representation, so the next operation does not normalize again.
+        data.certified_regularized_filled_left_topology = true;
         data.filled_side_is_left
             .certify(Arc::from(vec![true; loop_count]));
         data.line_image_region
@@ -15950,7 +15989,14 @@ impl CurveRegion2 {
                 return Ok(Classification::Uncertain(reason));
             }
         }
-        self.offset_exact_general_raw(distance, corner_style, policy)
+        // Offsets act on the regularized filled set. Obtain its boundary
+        // ownership from the arrangement before asking for incident sides;
+        // authored Green integrals are neither necessary nor sufficient for
+        // that topology. Already-certified boundaries share their retained
+        // data, including for the zero-distance identity.
+        self.regularized_region_raw(policy)
+            .map_err(|error| error.with_operation(CurveOperation2::Offset))?
+            .offset_exact_general_raw(distance, corner_style, policy)
     }
 
     fn offset_exact_boundary_walk_raw(
@@ -15969,10 +16015,12 @@ impl CurveRegion2 {
                 return Ok(Classification::Uncertain(reason));
             }
         };
-        let fill_rules = self.loop_fill_rules().map_or_else(
-            || vec![FillRule::EvenOdd; self.data.boundary_loops.len()],
-            <[_]>::to_vec,
-        );
+        // The input is a normalized filled boundary. Its authored fill rule
+        // has already been consumed. The offset walk can cover an interior
+        // face more than once around a fold; parity would incorrectly turn
+        // that face into a hole. Retain its nonzero oriented coverage until
+        // the arrangement selects the regularized boundary.
+        let fill_rules = vec![FillRule::NonZero; self.data.boundary_loops.len()];
         if roles.len() != self.data.boundary_loops.len()
             || fill_rules.len() != self.data.boundary_loops.len()
             || filled_sides.len() != self.data.boundary_loops.len()
@@ -15991,6 +16039,16 @@ impl CurveRegion2 {
             && self.has_certified_regularized_filled_left_topology();
         let mut offset_loops = Vec::with_capacity(self.data.boundary_loops.len());
         for (loop_index, boundary_loop) in self.data.boundary_loops.iter().enumerate() {
+            if certified_convex_filled_left_dilation {
+                for fragment in boundary_loop.fragments() {
+                    if !fragment_certifies_nonnegative_turn(fragment)
+                        .map_err(|cause| curve_region_edit_error(CurveOperation2::Offset, cause))?
+                    {
+                        certified_convex_filled_left_dilation = false;
+                        break;
+                    }
+                }
+            }
             let signed_left_distance = if filled_sides[loop_index] {
                 Real::zero() - distance
             } else {
@@ -16110,6 +16168,12 @@ impl CurveRegion2 {
             .with_certified_filled_side_is_left(filled_sides.to_vec())
             .map_err(|cause| curve_region_edit_error(CurveOperation2::Offset, cause))?;
         if certified_convex_filled_left_dilation {
+            #[cfg(feature = "dispatch-trace")]
+            hyperreal::dispatch_trace::record(
+                "hypercurve",
+                "curve-region-exact-offset-regularization",
+                "convex-boundary-certificate",
+            );
             raw = raw
                 .with_certified_regularized_filled_left_topology()
                 .map_err(|cause| curve_region_edit_error(CurveOperation2::Offset, cause))?;
