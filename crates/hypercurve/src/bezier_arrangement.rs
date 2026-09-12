@@ -17,6 +17,7 @@
 //! model: when local
 //! order is not certified, traversal stops instead of guessing.
 
+use crate::CurvePointData2;
 use std::{cmp::Ordering, collections::HashMap, fmt, sync::OnceLock};
 
 use crate::bezier_tangent_order::{
@@ -815,8 +816,8 @@ fn materialized_endpoints(fragment: &BezierSplitFragment2) -> Option<(Point2, Po
         | BezierSplitFragment2::AlgebraicCuspSemicircle(_) => None,
         BezierSplitFragment2::SelectedFiber(fragment) => {
             let (
-                crate::RationalBezierIntersectionPointEvidence2::Exact(start),
-                crate::RationalBezierIntersectionPointEvidence2::Exact(end),
+                crate::CurvePoint2(CurvePointData2::Exact(start)),
+                crate::CurvePoint2(CurvePointData2::Exact(end)),
             ) = (fragment.start_point(), fragment.end_point())
             else {
                 return None;
@@ -1240,27 +1241,24 @@ fn retained_endpoint_data(
             }))
         }
         BezierSplitFragment2::AlgebraicChord(chord) => {
-            let endpoint_key =
-                |endpoint: &crate::RationalBezierIntersectionPointEvidence2| match endpoint {
-                    crate::RationalBezierIntersectionPointEvidence2::Exact(point) => {
-                        Some(RetainedEndpointKey::Exact(Box::new(point.clone())))
-                    }
-                    crate::RationalBezierIntersectionPointEvidence2::Algebraic(point) => {
-                        let point = point.resolved(policy)?;
-                        Some(RetainedEndpointKey::Algebraic {
-                            x: Box::new(point.x()?.representation()?.clone()),
-                            y: Box::new(point.y()?.representation()?.clone()),
-                        })
-                    }
-                    crate::RationalBezierIntersectionPointEvidence2::AlgebraicChordPair(_) => None,
-                    crate::RationalBezierIntersectionPointEvidence2::AlgebraicCuspChord(_)
-                    | crate::RationalBezierIntersectionPointEvidence2::AlgebraicCuspChordDerived(
-                        _,
-                    )
-                    | crate::RationalBezierIntersectionPointEvidence2::AlgebraicChordParallel(_)
-                    | crate::RationalBezierIntersectionPointEvidence2::AnalyticParallel(_)
-                    | crate::RationalBezierIntersectionPointEvidence2::Similarity(_) => None,
-                };
+            let endpoint_key = |endpoint: &crate::CurvePoint2| match endpoint {
+                crate::CurvePoint2(CurvePointData2::Exact(point)) => {
+                    Some(RetainedEndpointKey::Exact(Box::new(point.clone())))
+                }
+                crate::CurvePoint2(CurvePointData2::Algebraic(point)) => {
+                    let point = point.resolved(policy)?;
+                    Some(RetainedEndpointKey::Algebraic {
+                        x: Box::new(point.x()?.representation()?.clone()),
+                        y: Box::new(point.y()?.representation()?.clone()),
+                    })
+                }
+                crate::CurvePoint2(CurvePointData2::AlgebraicChordPair(_)) => None,
+                crate::CurvePoint2(CurvePointData2::AlgebraicCuspChord(_))
+                | crate::CurvePoint2(CurvePointData2::AlgebraicCuspChordDerived(_))
+                | crate::CurvePoint2(CurvePointData2::AlgebraicChordParallel(_))
+                | crate::CurvePoint2(CurvePointData2::AnalyticParallel(_))
+                | crate::CurvePoint2(CurvePointData2::Similarity(_)) => None,
+            };
             let mut data = retained_topology_endpoint_data(arrangement_fragment);
             data.start = endpoint_key(chord.start());
             data.end = endpoint_key(chord.end());

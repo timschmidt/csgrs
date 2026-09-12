@@ -1,5 +1,6 @@
 //! Top-level exact curve carriers.
 
+use crate::CurvePointData2;
 use std::sync::Arc;
 use std::sync::OnceLock;
 
@@ -16,9 +17,9 @@ use crate::rational_bezier_general::RationalBezierOverlapParameterCorrespondence
 use crate::{
     Aabb2, BezierBoundaryLoop2, BezierParallel2, BezierParameter2, BezierSubcurve2, CircularArc2,
     Classification, ContourPointLocation, CubicBezier2, CurveContext, CurveError, CurveOperation2,
-    CurveOutcome, CurveRegionParameter2, ExactCurveError, ExactCurveResult, LineSeg2, LineSide,
-    NurbsCurve2, ParamRange, Point2, PolynomialSplineCurve2, QuadraticBezier2, RationalBezier2,
-    RationalBezierIntersectionPointEvidence2, RationalQuadraticBezier2, Real, Similarity2,
+    CurveOutcome, CurvePoint2, CurveRegionParameter2, ExactCurveError, ExactCurveResult, LineSeg2,
+    LineSide, NurbsCurve2, ParamRange, Point2, PolynomialSplineCurve2, QuadraticBezier2,
+    RationalBezier2, RationalQuadraticBezier2, Real, Similarity2,
 };
 use crate::{BezierEndpoint, BezierParameterRange2};
 
@@ -1789,7 +1790,7 @@ impl CurvePath2 {
                     crate::UncertaintyReason::Unsupported,
                 )
             })?;
-            let center = solution.center.as_exact().cloned().ok_or_else(|| {
+            let center = solution.center.coordinates().cloned().ok_or_else(|| {
                 ExactCurveError::blocked(
                     CurveOperation2::Fillet,
                     previous.family(),
@@ -2841,13 +2842,13 @@ struct CornerCut2 {
     /// needs it. Native fillet arcs may defer their sweep parameter because
     /// exact Cartesian incidence is sufficient for reconstruction.
     parameter: Option<CurveRegionParameter2>,
-    point: RationalBezierIntersectionPointEvidence2,
+    point: CurvePoint2,
     placement: CornerPlacement2,
 }
 
 impl CornerCut2 {
     fn exact_point(&self) -> Option<&Point2> {
-        self.point.as_exact()
+        self.point.coordinates()
     }
 
     fn into_retained_evidence(self) -> Option<CornerTrimCut2> {
@@ -2923,7 +2924,7 @@ impl CornerReplacement2 {
 #[derive(Clone, Debug)]
 pub(crate) struct CornerTrimCut2 {
     pub(crate) parameter: CurveRegionParameter2,
-    pub(crate) point: RationalBezierIntersectionPointEvidence2,
+    pub(crate) point: CurvePoint2,
     pub(crate) placement: CornerPlacement2,
     pub(crate) replacement: Option<CornerReplacement2>,
 }
@@ -2967,7 +2968,7 @@ impl ChamferCorner2 {
 pub(crate) struct FilletCorner2 {
     previous: CornerCut2,
     next: CornerCut2,
-    center: RationalBezierIntersectionPointEvidence2,
+    center: CurvePoint2,
     clockwise: bool,
     retained_frame: Option<RetainedFilletFrame2>,
 }
@@ -3078,7 +3079,7 @@ impl FilletCorner2 {
     ) -> Option<(
         CornerTrimCut2,
         CornerTrimCut2,
-        RationalBezierIntersectionPointEvidence2,
+        CurvePoint2,
         bool,
         Option<RetainedFilletFrame2>,
     )> {
@@ -4415,9 +4416,7 @@ impl<'a> PreparedFilletCarrier2<'a> {
                 };
                 match crate::classify::real_sign(&signed_radius, policy) {
                     Some(RealSign::Zero) => Ok(FilletOffsetCarrier2::Point {
-                        point: RationalBezierIntersectionPointEvidence2::Exact(
-                            support.center().clone(),
-                        ),
+                        point: CurvePoint2::from(support.center().clone()),
                     }),
                     Some(RealSign::Positive | RealSign::Negative) => {
                         Ok(FilletOffsetCarrier2::Arc {
@@ -4562,7 +4561,7 @@ enum FilletOffsetCarrier2<'a, 'b> {
         signed_radius: Real,
     },
     Point {
-        point: RationalBezierIntersectionPointEvidence2,
+        point: CurvePoint2,
     },
     Parallel {
         source: FilletParallelSource2<'a>,
@@ -4813,16 +4812,16 @@ impl FilletOffsetCarrier2<'_, '_> {
                     (-support_radius.clone(), support_radius - source_radius)
                 };
                 let support_center = match &center {
-                    RationalBezierIntersectionPointEvidence2::Exact(point) => Some(point.clone()),
-                    RationalBezierIntersectionPointEvidence2::Algebraic(image) => {
+                    CurvePoint2(CurvePointData2::Exact(point)) => Some(point.clone()),
+                    CurvePoint2(CurvePointData2::Algebraic(image)) => {
                         image.exact_point(&CurveContext::STRICT)
                     }
-                    RationalBezierIntersectionPointEvidence2::AlgebraicChordPair(_)
-                    | RationalBezierIntersectionPointEvidence2::AlgebraicCuspChord(_)
-                    | RationalBezierIntersectionPointEvidence2::AlgebraicCuspChordDerived(_)
-                    | RationalBezierIntersectionPointEvidence2::AlgebraicChordParallel(_)
-                    | RationalBezierIntersectionPointEvidence2::AnalyticParallel(_)
-                    | RationalBezierIntersectionPointEvidence2::Similarity(_) => None,
+                    CurvePoint2(CurvePointData2::AlgebraicChordPair(_))
+                    | CurvePoint2(CurvePointData2::AlgebraicCuspChord(_))
+                    | CurvePoint2(CurvePointData2::AlgebraicCuspChordDerived(_))
+                    | CurvePoint2(CurvePointData2::AlgebraicChordParallel(_))
+                    | CurvePoint2(CurvePointData2::AnalyticParallel(_))
+                    | CurvePoint2(CurvePointData2::Similarity(_)) => None,
                 };
                 let selected_center_parameter = anchor_parameter
                     .and_then(CurveRegionParameter2::as_algebraic_cusp)
@@ -4913,7 +4912,7 @@ impl FilletOffsetCarrier2<'_, '_> {
 }
 
 struct FilletCenterWitness2 {
-    point: RationalBezierIntersectionPointEvidence2,
+    point: CurvePoint2,
     previous_parameter: Option<CurveRegionParameter2>,
     next_parameter: Option<CurveRegionParameter2>,
     retained_anchor_evidence: Option<RetainedFilletAnchorEvidence2>,
@@ -5088,7 +5087,7 @@ fn solve_carrier_fillet_corner(
                 // potentially high-degree Cartesian compositum solely for
                 // this degeneracy test.
                 Classification::Decided(false)
-            } else if center.point.as_exact().is_none()
+            } else if center.point.coordinates().is_none()
                 && center
                     .retained_anchor_evidence
                     .as_ref()
@@ -5413,7 +5412,7 @@ fn retained_fillet_pair_contact_rational_point(
     first: bool,
     family: CurveFamily2,
     policy: &CurveContext,
-) -> ExactCurveResult<Option<RationalBezierIntersectionPointEvidence2>> {
+) -> ExactCurveResult<Option<CurvePoint2>> {
     if !support.has_rational_frame() {
         return Ok(None);
     }
@@ -5456,7 +5455,7 @@ fn retained_fillet_pair_contact_rational_point_on_arc(
     first: bool,
     family: CurveFamily2,
     policy: &CurveContext,
-) -> ExactCurveResult<Option<RationalBezierIntersectionPointEvidence2>> {
+) -> ExactCurveResult<Option<CurvePoint2>> {
     let decomposition = match arc
         .rational_bezier_decomposition_with_policy(policy)
         .map_err(|error| error.with_operation(CurveOperation2::Fillet))?
@@ -5831,7 +5830,7 @@ fn retain_cusp_parallel_fillet_contact(
     analytic_support: &BezierParallel2,
     cusp_parameter: crate::bezier_offset::BezierAlgebraicCuspSemicircleParameter2,
     analytic_parameter: CurveRegionParameter2,
-    point: RationalBezierIntersectionPointEvidence2,
+    point: CurvePoint2,
     location: crate::bezier_offset::BezierAlgebraicCuspSemicircleContactLocation2,
     mut cross: RealSign,
     mut dot: RealSign,
@@ -7679,28 +7678,25 @@ fn fillet_offset_centers(
             // ancestry. The former selects the compact selected-fiber line
             // kernel; the latter is the exact tangent relation needed when a
             // recursively selected terminal circle is reconstructed.
-            let (support_chord, finite_source_domain) = if mode == CurveCornerMode2::TrimOnly
-                && !represented_line_names_finite_domain
-            {
-                // A canonical represented line names only the infinite
-                // support of this algebraic chord. For TrimOnly, intersect
-                // the translated authored chord itself so the common kernel
-                // owns and retains both exact finite-boundary inequalities.
-                (retained_support.clone(), true)
-            } else {
-                let support = retained_support
-                    .chord_between_certified_ordered_support_points(
-                        RationalBezierIntersectionPointEvidence2::Exact(
-                            line_support.start().clone(),
-                        ),
-                        RationalBezierIntersectionPointEvidence2::Exact(line_support.end().clone()),
-                        policy,
-                    )
-                    .map_err(|cause| {
-                        ExactCurveError::invalid(CurveOperation2::Fillet, line_family, cause)
-                    })?;
-                (support, represented_line_names_finite_domain)
-            };
+            let (support_chord, finite_source_domain) =
+                if mode == CurveCornerMode2::TrimOnly && !represented_line_names_finite_domain {
+                    // A canonical represented line names only the infinite
+                    // support of this algebraic chord. For TrimOnly, intersect
+                    // the translated authored chord itself so the common kernel
+                    // owns and retains both exact finite-boundary inequalities.
+                    (retained_support.clone(), true)
+                } else {
+                    let support = retained_support
+                        .chord_between_certified_ordered_support_points(
+                            CurvePoint2::from(line_support.start().clone()),
+                            CurvePoint2::from(line_support.end().clone()),
+                            policy,
+                        )
+                        .map_err(|cause| {
+                            ExactCurveError::invalid(CurveOperation2::Fillet, line_family, cause)
+                        })?;
+                    (support, represented_line_names_finite_domain)
+                };
             let promoted = FilletOffsetCarrier2::AlgebraicChord {
                 source: &source_chord,
                 support: support_chord,
@@ -7779,7 +7775,7 @@ fn fillet_offset_centers(
                            previous_complementary: bool,
                            next_parameter: crate::bezier_offset::BezierAlgebraicCuspSemicircleParameter2,
                            next_complementary: bool,
-                           point: RationalBezierIntersectionPointEvidence2,
+                           point: CurvePoint2,
                            retained_anchor_evidence: Option<RetainedFilletAnchorEvidence2>|
              -> ExactCurveResult<Option<FilletCenterWitness2>> {
                 if mode == CurveCornerMode2::TrimOnly {
@@ -8500,8 +8496,7 @@ fn fillet_offset_centers(
             } else {
                 chord_source.start()
             };
-            let arc_corner_evidence =
-                RationalBezierIntersectionPointEvidence2::Exact(arc_corner.clone());
+            let arc_corner_evidence = CurvePoint2::from(arc_corner.clone());
             let shares_strict_corner = chord_corner.shares_storage(&arc_corner_evidence)
                 || chord_corner.same_point(&arc_corner_evidence, &CurveContext::STRICT)
                     == Classification::Decided(true);
@@ -8585,7 +8580,7 @@ fn fillet_offset_centers(
             // charts enumerate the full circle, while the deferred tangent
             // replay below owns the authored/extension arc domain.
             let offset_circle = match crate::bezier_offset::BezierAlgebraicCuspSemicircle2::from_retained_center_and_chord_normal(
-                RationalBezierIntersectionPointEvidence2::Exact(
+                CurvePoint2::from(
                     arc.support().center().clone(),
                 ),
                 intersection_chord.clone(),
@@ -9049,7 +9044,7 @@ fn fillet_offset_centers(
 }
 
 fn point_on_fillet_offset(
-    point: &RationalBezierIntersectionPointEvidence2,
+    point: &CurvePoint2,
     support: &FilletOffsetCarrier2<'_, '_>,
     family: CurveFamily2,
     policy: &CurveContext,
@@ -9085,7 +9080,7 @@ fn point_on_fillet_offset(
             )),
         },
         FilletOffsetCarrier2::Line { support, .. } => {
-            if let Some(point) = point.as_exact() {
+            if let Some(point) = point.coordinates() {
                 let (dx, dy) = support.delta();
                 let from_start = point.delta_from(support.start());
                 return crate::classify::is_zero(
@@ -9101,8 +9096,8 @@ fn point_on_fillet_offset(
                 });
             }
             let chord = match crate::BezierAlgebraicChord2::try_new(
-                RationalBezierIntersectionPointEvidence2::Exact(support.start().clone()),
-                RationalBezierIntersectionPointEvidence2::Exact(support.end().clone()),
+                CurvePoint2::from(support.start().clone()),
+                CurvePoint2::from(support.end().clone()),
                 policy,
             )
             .map_err(|cause| ExactCurveError::invalid(CurveOperation2::Fillet, family, cause))?
@@ -9150,7 +9145,7 @@ fn point_on_fillet_offset(
 #[allow(clippy::too_many_arguments)]
 fn fillet_cut_from_center(
     offset: &FilletOffsetCarrier2<'_, '_>,
-    center: &RationalBezierIntersectionPointEvidence2,
+    center: &CurvePoint2,
     retained_parameter: Option<&CurveRegionParameter2>,
     deferred_arc_contact: bool,
     previous: bool,
@@ -9259,7 +9254,7 @@ fn fillet_cut_from_center(
             source_radius,
             signed_radius,
         } => {
-            let Some(center) = center.as_exact() else {
+            let Some(center) = center.coordinates() else {
                 if retained_parameter.is_none() {
                     // Direct arc/Bezier incidence retains the center in the
                     // Bezier parallel's selected normal field. The retained
@@ -9664,7 +9659,7 @@ fn fillet_cut_from_center(
                 (support.semicircle(), source.semicircle())
             };
             let point = if let (Some(center), Some(support_center)) = (
-                center.as_exact(),
+                center.coordinates(),
                 support_semicircle.exact_center(policy).map_err(|cause| {
                     ExactCurveError::invalid(CurveOperation2::Fillet, family, cause)
                 })?,
@@ -9680,7 +9675,7 @@ fn fillet_cut_from_center(
                     ExactCurveError::invalid(CurveOperation2::Fillet, family, cause.into())
                 })?;
                 let radial = center.delta_from(&support_center);
-                RationalBezierIntersectionPointEvidence2::Exact(
+                CurvePoint2::from(
                     support_center.translated(&radial.0 * &radial_scale, &radial.1 * radial_scale),
                 )
             } else {
@@ -9723,7 +9718,7 @@ fn fillet_cut_from_center(
 #[allow(clippy::too_many_arguments)]
 fn algebraic_chord_fillet_cut_from_center(
     source: &crate::BezierAlgebraicChord2,
-    center: &RationalBezierIntersectionPointEvidence2,
+    center: &CurvePoint2,
     retained_parameter: Option<&CurveRegionParameter2>,
     signed_distance: &Real,
     previous: bool,
@@ -9834,7 +9829,7 @@ fn algebraic_chord_parallel_parameter_placement(
 #[allow(clippy::too_many_arguments)]
 fn algebraic_chord_corner_cut_from_support_point(
     source: &crate::BezierAlgebraicChord2,
-    point: RationalBezierIntersectionPointEvidence2,
+    point: CurvePoint2,
     previous: bool,
     mode: CurveCornerMode2,
     operation: CurveOperation2,
@@ -9947,8 +9942,8 @@ fn algebraic_chord_from_line_support(
     policy: &CurveContext,
 ) -> ExactCurveResult<crate::BezierAlgebraicChord2> {
     match crate::BezierAlgebraicChord2::try_new_from_certified_distinct_endpoints(
-        RationalBezierIntersectionPointEvidence2::Exact(line.start().clone()),
-        RationalBezierIntersectionPointEvidence2::Exact(line.end().clone()),
+        CurvePoint2::from(line.start().clone()),
+        CurvePoint2::from(line.end().clone()),
         policy,
     )
     .map_err(|cause| ExactCurveError::invalid(operation, family, cause))?
@@ -10296,7 +10291,7 @@ fn bezier_parallel_source_point_evidence(
     operation: CurveOperation2,
     family: CurveFamily2,
     policy: &CurveContext,
-) -> ExactCurveResult<RationalBezierIntersectionPointEvidence2> {
+) -> ExactCurveResult<CurvePoint2> {
     if let Some(parameter) = parameter.as_exact() {
         return match parallel.source_point_at_unchecked(parameter, policy) {
             Classification::Decided(point) => Ok(point.into()),
@@ -10321,13 +10316,11 @@ fn bezier_parallel_source_point_evidence(
         // normalized-frame carrier used by analytic parallels instead of rejecting
         // an exact parameter merely because a one-field coordinate image was not
         // profitable to materialize.
-        Ok(RationalBezierIntersectionPointEvidence2::AnalyticParallel(
-            crate::BezierAnalyticParallelPoint2::new(
-                parallel.with_distance(Real::zero()),
-                parameter.clone(),
-                policy,
-            ),
-        ))
+        Ok(CurvePoint2::from(crate::BezierAnalyticParallelPoint2::new(
+            parallel.with_distance(Real::zero()),
+            parameter.clone(),
+            policy,
+        )))
     }
 }
 
@@ -10338,7 +10331,7 @@ fn curve_region_parallel_point_evidence(
     operation: CurveOperation2,
     family: CurveFamily2,
     policy: &CurveContext,
-) -> ExactCurveResult<RationalBezierIntersectionPointEvidence2> {
+) -> ExactCurveResult<CurvePoint2> {
     if let Some(parameter) = parameter.as_bezier_parameter() {
         return if source_point {
             bezier_parallel_source_point_evidence(parallel, parameter, operation, family, policy)
@@ -10352,7 +10345,7 @@ fn curve_region_parallel_point_evidence(
         } else {
             parallel.clone()
         };
-        return Ok(RationalBezierIntersectionPointEvidence2::AnalyticParallel(
+        return Ok(CurvePoint2::from(
             crate::BezierAnalyticParallelPoint2::new_selected_fiber(
                 parallel,
                 parameter.clone(),
@@ -10366,7 +10359,7 @@ fn curve_region_parallel_point_evidence(
         } else {
             parallel.clone()
         };
-        return Ok(RationalBezierIntersectionPointEvidence2::AnalyticParallel(
+        return Ok(CurvePoint2::from(
             crate::BezierAnalyticParallelPoint2::new_recursive_projective(
                 parallel,
                 parameter.clone(),
@@ -10679,14 +10672,16 @@ fn analytic_parallel_point_evidence(
     operation: CurveOperation2,
     family: CurveFamily2,
     policy: &CurveContext,
-) -> ExactCurveResult<RationalBezierIntersectionPointEvidence2> {
+) -> ExactCurveResult<CurvePoint2> {
     if let Some(parameter) = parameter.as_exact() {
         return decided_parallel_point(parallel, parameter, false, operation, family, policy)
             .map(Into::into);
     }
-    Ok(RationalBezierIntersectionPointEvidence2::AnalyticParallel(
-        crate::BezierAnalyticParallelPoint2::new(parallel.clone(), parameter.clone(), policy),
-    ))
+    Ok(CurvePoint2::from(crate::BezierAnalyticParallelPoint2::new(
+        parallel.clone(),
+        parameter.clone(),
+        policy,
+    )))
 }
 
 fn retained_parallel_corner_parameter_placement(
@@ -10897,19 +10892,18 @@ fn selected_fiber_chamfer_cuts(
             crate::bezier_offset::BezierParallelFixedDistanceParameter2::SelectedFiber(
                 parameter,
             ) => {
-                let point = RationalBezierIntersectionPointEvidence2::AnalyticParallel(
-                    crate::BezierAnalyticParallelPoint2::new_selected_fiber(
+                let point =
+                    CurvePoint2::from(crate::BezierAnalyticParallelPoint2::new_selected_fiber(
                         parallel.clone(),
                         parameter.clone(),
                         policy,
-                    ),
-                );
+                    ));
                 (CurveRegionParameter2::from_selected_fiber(parameter), point)
             }
             crate::bezier_offset::BezierParallelFixedDistanceParameter2::RecursiveProjective(
                 parameter,
             ) => {
-                let point = RationalBezierIntersectionPointEvidence2::AnalyticParallel(
+                let point = CurvePoint2::from(
                     crate::BezierAnalyticParallelPoint2::new_recursive_projective(
                         parallel.clone(),
                         parameter.clone(),
@@ -11045,13 +11039,12 @@ fn analytic_parallel_chamfer_cuts(
                 else {
                     continue;
                 };
-                let point = RationalBezierIntersectionPointEvidence2::AnalyticParallel(
-                    crate::BezierAnalyticParallelPoint2::new_selected_fiber(
+                let point =
+                    CurvePoint2::from(crate::BezierAnalyticParallelPoint2::new_selected_fiber(
                         fragment.parallel().clone(),
                         parameter.clone(),
                         policy,
-                    ),
-                );
+                    ));
                 (
                     CurveRegionParameter2::from_selected_fiber(parameter),
                     point,
@@ -11075,7 +11068,7 @@ fn analytic_parallel_chamfer_cuts(
                 else {
                     continue;
                 };
-                let point = RationalBezierIntersectionPointEvidence2::AnalyticParallel(
+                let point = CurvePoint2::from(
                     crate::BezierAnalyticParallelPoint2::new_recursive_projective(
                         fragment.parallel().clone(),
                         parameter,
@@ -12278,7 +12271,7 @@ mod tests {
             )
             .unwrap()
             .expect("the selected corner retains exact evidence");
-            let translated = |point: &RationalBezierIntersectionPointEvidence2, x, y| {
+            let translated = |point: &CurvePoint2, x, y| {
                 match crate::BezierAlgebraicChord2::translated_endpoint(
                     point,
                     &Real::from(x),
@@ -12313,7 +12306,7 @@ mod tests {
             let arc = CircularArc2::try_from_center(arc_start, arc_end.clone(), arc_center, false)
                 .expect("the native quarter circle is valid");
             let closing = match crate::BezierAlgebraicChord2::try_new(
-                RationalBezierIntersectionPointEvidence2::Exact(arc_end),
+                CurvePoint2::from(arc_end),
                 previous.start().clone(),
                 &policy,
             )
@@ -12634,23 +12627,19 @@ mod tests {
             );
             let source_fragment = |height: i8| {
                 let source = line(height).parallel_left(Real::zero()).unwrap();
-                let end = RationalBezierIntersectionPointEvidence2::AnalyticParallel(
-                    crate::BezierAnalyticParallelPoint2::new_selected_fiber(
+                let end =
+                    CurvePoint2::from(crate::BezierAnalyticParallelPoint2::new_selected_fiber(
                         source.clone(),
                         selected.clone(),
                         &policy,
-                    ),
-                );
+                    ));
                 (
                     crate::bezier_split::BezierSelectedFiberFragment2::new(
                         crate::bezier_split::BezierSelectedFiberSource2::AnalyticParallel(
                             source.clone(),
                         ),
                         range.clone(),
-                        RationalBezierIntersectionPointEvidence2::Exact(Point2::new(
-                            Real::zero(),
-                            Real::from(height),
-                        )),
+                        CurvePoint2::from(Point2::new(Real::zero(), Real::from(height))),
                         end,
                     ),
                     source,
@@ -12743,7 +12732,7 @@ mod tests {
             ));
             assert!(matches!(
                 contact.point_evidence(),
-                RationalBezierIntersectionPointEvidence2::AlgebraicCuspChordDerived(_)
+                CurvePoint2(CurvePointData2::AlgebraicCuspChordDerived(_))
             ));
             let Classification::Decided(bounds) =
                 crate::bezier_offset::algebraic_chord_endpoint_bounds_refined(
@@ -12820,7 +12809,7 @@ mod tests {
             vec![Real::one(), Real::one(), Real::one()],
         )
         .expect("the selected center source is valid");
-        let center = RationalBezierIntersectionPointEvidence2::Algebraic(
+        let center = CurvePoint2::from(
             center_source
                 .point_at_algebraic_parameter(&parameter, policy)
                 .expect("the selected center retains its exact image"),
@@ -13334,7 +13323,7 @@ mod tests {
                 "the externally tangent circles must have only one center contact"
             );
             let expected = Point2::from_values(1, 0);
-            assert_eq!(center.point.as_exact(), Some(&expected));
+            assert_eq!(center.point.coordinates(), Some(&expected));
             let evidence = center
                 .retained_anchor_evidence
                 .clone()

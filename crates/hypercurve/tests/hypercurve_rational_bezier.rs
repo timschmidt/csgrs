@@ -2,9 +2,9 @@ use hypercurve::BezierAlgebraicImageStatus;
 use hypercurve::{
     Axis2, BezierLineContactKind, BezierLineContactRelation, BezierParameter2,
     BezierSplitFragment2, BezierSubcurve2, Classification, CubicBezier2, Curve2, CurveContext,
-    CurveFamily2, CurveOperation2, ExactCurveError, LineSeg2, ParamRange, Point2, QuadraticBezier2,
-    RationalBezier2, RationalBezierIntersectionCandidates2, RationalBezierIntersectionContacts2,
-    RationalBezierIntersectionPointEvidence2, RationalBezierOverlapOrientation2,
+    CurveFamily2, CurveOperation2, CurvePoint2, ExactCurveError, LineSeg2, ParamRange, Point2,
+    QuadraticBezier2, RationalBezier2, RationalBezierIntersectionCandidates2,
+    RationalBezierIntersectionContacts2, RationalBezierOverlapOrientation2,
     RationalBezierPointIncidence2, RationalQuadraticBezier2, Real,
 };
 use hyperreal::Rational;
@@ -583,11 +583,9 @@ fn implicit_conic_route_replays_degree_elevated_line_contact_in_both_orders() {
     assert!(contacts[0].is_certified_transverse());
     assert_eq!(contacts[0].first_parameter().as_exact(), Some(&q(1, 2)));
     assert_eq!(contacts[0].second_parameter().as_exact(), Some(&q(3, 5)));
-    assert!(matches!(
-        contacts[0].point(),
-        RationalBezierIntersectionPointEvidence2::Exact(point)
-            if point == &Point2::new(q(3, 5), q(4, 5))
-    ));
+    assert!(
+        matches!((contacts[0].point()).coordinates(), Some(point) if point == &Point2::new(q(3, 5), q(4, 5)))
+    );
 
     let RationalBezierIntersectionContacts2::Contacts(reversed) =
         cubic_line.intersection_contacts(&conic, &policy).unwrap()
@@ -633,14 +631,20 @@ fn pi_weight_conic_replays_degree_elevated_horizontal_contact() {
         panic!("pi-weight conic contact did not retain its isolated evidence");
     };
     assert_eq!(contacts.len(), 1);
-    let RationalBezierIntersectionPointEvidence2::Algebraic(point) = contacts[0].point() else {
-        panic!("pi-weight conic contact did not retain its exact selected-root expression");
-    };
-    assert!(matches!(
-        point.status(),
-        BezierAlgebraicImageStatus::Transformed
-            | BezierAlgebraicImageStatus::RetainedRationalExpression
-    ));
+    let point = contacts[0].point();
+    assert!(point.coordinates().is_none());
+    let expected_height = CurvePoint2::from(Point2::new(Real::zero(), q(1, 2)));
+    let height_order = point
+        .compare_coordinate(&expected_height, hypercurve::Axis2::Y, &policy)
+        .expect("selected contact height remains exactly comparable");
+    assert_eq!(
+        height_order.certainty,
+        hypercurve::CurveCertainty::Certified
+    );
+    assert_eq!(
+        height_order.value,
+        Classification::Decided(std::cmp::Ordering::Equal)
+    );
 
     let reversed = cubic_line
         .intersection_contacts(&conic, &policy)
@@ -823,11 +827,9 @@ fn rational_resultant_certifies_disjoint_and_represented_crossing_parameters() {
         panic!("represented crossing candidates did not replay");
     };
     assert_eq!(contacts.len(), 1);
-    assert!(matches!(
-        contacts[0].point(),
-        RationalBezierIntersectionPointEvidence2::Exact(point)
-            if point == &Point2::new(q(1, 2), q(1, 2))
-    ));
+    assert!(
+        matches!((contacts[0].point()).coordinates(), Some(point) if point == &Point2::new(q(1, 2), q(1, 2)))
+    );
     let above = RationalBezier2::try_new(vec![p(0, 2), p(1, 2)], vec![r(1), r(1)]).unwrap();
     assert_eq!(
         rising.intersection_candidates(&above, &policy).unwrap(),
@@ -922,10 +924,7 @@ fn rational_resultant_retains_algebraic_parameter_projections() {
     assert_eq!(contacts.len(), 1);
     assert!(contacts[0].first_parameter().as_exact().is_none());
     assert!(contacts[0].second_parameter().as_exact().is_none());
-    assert!(matches!(
-        contacts[0].point(),
-        RationalBezierIntersectionPointEvidence2::Algebraic(_)
-    ));
+    assert!((contacts[0].point()).coordinates().is_none());
 
     let topology = parabola
         .intersection_topology(&horizontal, &policy)
@@ -1001,11 +1000,9 @@ fn rational_contacts_replay_represented_resultant_candidates() {
         panic!("represented resultant candidates were not replayed");
     };
     assert_eq!(contacts.len(), 1);
-    assert!(matches!(
-        contacts[0].point(),
-        RationalBezierIntersectionPointEvidence2::Exact(point)
-            if point == &Point2::new(q(1, 2), q(1, 4))
-    ));
+    assert!(
+        matches!((contacts[0].point()).coordinates(), Some(point) if point == &Point2::new(q(1, 2), q(1, 4)))
+    );
 }
 
 #[test]

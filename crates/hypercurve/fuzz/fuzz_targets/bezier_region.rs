@@ -4,8 +4,8 @@ use hypercurve::{
     BezierAlgebraicChord2, BezierAlgebraicParameter2, BezierArrangementGraph2, BezierParameter2,
     BezierParameterInterval, BezierParameterPolynomial, BezierRetainedCurveEnvelope2,
     BezierRetainedEndpointEnvelope2, BezierSplitFragment2, Classification, CurveContext,
-    CurveRegion2, CurveRegionBoundaryLoop2, Point2, QuadraticBezier2,
-    RationalBezierIntersectionPointEvidence2, RationalQuadraticBezier2, Real,
+    CurvePoint2, CurveRegion2, CurveRegionBoundaryLoop2, Point2, QuadraticBezier2,
+    RationalQuadraticBezier2, Real,
 };
 use libfuzzer_sys::fuzz_target;
 
@@ -78,8 +78,8 @@ fn algebraic_line_fragment(
 ) -> Option<BezierSplitFragment2> {
     Some(BezierSplitFragment2::AlgebraicChord(
         match BezierAlgebraicChord2::try_new(
-            RationalBezierIntersectionPointEvidence2::Exact(start),
-            RationalBezierIntersectionPointEvidence2::Exact(end),
+            CurvePoint2::from(start),
+            CurvePoint2::from(end),
             policy,
         )
         .ok()?

@@ -7,10 +7,10 @@ use hypercurve::{
     BezierParallelIntersectionSet2, BezierParallelPairIntersectionCandidates2,
     BezierParallelPairIntersectionContact2, BezierParallelPairIntersectionSet2,
     BezierParallelVerificationOptions, BezierParameter2, Classification, CubicBezier2, Curve2,
-    CurveContext, CurveError, CurvePath2, CurveRegion2, CurveRegionLoopRole, FillRule, LineSeg2,
-    OffsetCornerStyle2, Point2, QuadraticBezier2, Rational, RationalBezier2,
-    RationalBezierIntersectionOverlap2, RationalBezierIntersectionPointEvidence2,
-    RationalBezierOverlapOrientation2, RationalQuadraticBezier2, Real, RealSign,
+    CurveContext, CurveError, CurvePath2, CurvePoint2, CurveRegion2, CurveRegionLoopRole, FillRule,
+    LineSeg2, OffsetCornerStyle2, Point2, QuadraticBezier2, Rational, RationalBezier2,
+    RationalBezierIntersectionOverlap2, RationalBezierOverlapOrientation2,
+    RationalQuadraticBezier2, Real, RealSign,
 };
 use num::bigint::{BigInt, BigUint};
 use proptest::prelude::*;
@@ -1781,10 +1781,7 @@ fn parallel_rational_intersections_retain_a_boundary_parameter_fiber() {
             Some(&BezierParameter2::Exact(r(0)))
         );
         assert_eq!(component.other_parameter(), None);
-        assert_eq!(
-            component.point(),
-            &RationalBezierIntersectionPointEvidence2::Exact(p(0, 1))
-        );
+        assert_eq!(component.point(), &CurvePoint2::from(p(0, 1)));
         assert!(!component.is_entire_parameter_square());
     }
 }
@@ -1810,10 +1807,7 @@ fn collapsed_parallel_retain_a_fixed_other_parameter_fiber() {
             component.other_parameter(),
             Some(&BezierParameter2::Exact(q(1, 2)))
         );
-        assert_eq!(
-            component.point(),
-            &RationalBezierIntersectionPointEvidence2::Exact(p(0, 0))
-        );
+        assert_eq!(component.point(), &CurvePoint2::from(p(0, 0)));
         assert!(!component.is_entire_parameter_square());
     }
 }
@@ -1836,10 +1830,7 @@ fn coincident_constant_curves_retain_the_entire_parameter_square() {
         };
         assert_eq!(component.parallel_parameter(), None);
         assert_eq!(component.other_parameter(), None);
-        assert_eq!(
-            component.point(),
-            &RationalBezierIntersectionPointEvidence2::Exact(p(3, 4))
-        );
+        assert_eq!(component.point(), &CurvePoint2::from(p(3, 4)));
         assert!(component.is_entire_parameter_square());
     }
 }
@@ -1887,12 +1878,13 @@ fn parallel_rational_intersections_saturate_rootless_homogeneous_axis_content() 
                 decided_parallel_set(parallel.intersections(vertical, &policy).unwrap());
             let contacts = only_parallel_contacts(&intersections);
             assert_eq!(contacts.len(), 2);
+            assert!(
+                contacts
+                    .iter()
+                    .any(|contact| { contact.point() == &CurvePoint2::from(p(0, 1)) })
+            );
             assert!(contacts.iter().any(|contact| {
-                contact.point() == &RationalBezierIntersectionPointEvidence2::Exact(p(0, 1))
-            }));
-            assert!(contacts.iter().any(|contact| {
-                contact.point()
-                    == &RationalBezierIntersectionPointEvidence2::Exact(Point2::new(r(0), q(5, 4)))
+                contact.point() == &CurvePoint2::from(Point2::new(r(0), q(5, 4)))
             }));
         }
     }
@@ -2016,10 +2008,7 @@ fn parallel_rational_contacts_replay_exact_pair_and_transversality() {
             contacts[0].other_parameter(),
             &BezierParameter2::Exact(q(1, 2))
         );
-        assert_eq!(
-            contacts[0].point(),
-            &RationalBezierIntersectionPointEvidence2::Exact(p(1, 1))
-        );
+        assert_eq!(contacts[0].point(), &CurvePoint2::from(p(1, 1)));
         assert!(contacts[0].is_certified_transverse());
     }
 }
@@ -2044,10 +2033,7 @@ fn parallel_rational_contacts_reject_the_squared_opposite_branch() {
             contacts[0].other_parameter(),
             &BezierParameter2::Exact(q(3, 4))
         );
-        assert_eq!(
-            contacts[0].point(),
-            &RationalBezierIntersectionPointEvidence2::Exact(p(1, 1))
-        );
+        assert_eq!(contacts[0].point(), &CurvePoint2::from(p(1, 1)));
     }
 }
 
@@ -2073,10 +2059,7 @@ fn parallel_rational_contacts_preserve_negative_distance_and_weight_orientation(
             contacts[0].other_parameter(),
             &BezierParameter2::Exact(q(1, 4))
         );
-        assert_eq!(
-            contacts[0].point(),
-            &RationalBezierIntersectionPointEvidence2::Exact(p(1, -1))
-        );
+        assert_eq!(contacts[0].point(), &CurvePoint2::from(p(1, -1)));
 
         let intersections = decided_parallel_set(
             rational_source
@@ -2089,10 +2072,7 @@ fn parallel_rational_contacts_preserve_negative_distance_and_weight_orientation(
             contacts[0].other_parameter(),
             &BezierParameter2::Exact(q(3, 4))
         );
-        assert_eq!(
-            contacts[0].point(),
-            &RationalBezierIntersectionPointEvidence2::Exact(p(1, 1))
-        );
+        assert_eq!(contacts[0].point(), &CurvePoint2::from(p(1, 1)));
     }
 }
 
@@ -2116,10 +2096,7 @@ fn parallel_rational_contacts_replay_one_algebraic_parameter_exactly() {
             contacts[0].other_parameter(),
             &BezierParameter2::Exact(q(1, 2))
         );
-        assert_eq!(
-            contacts[0].point(),
-            &RationalBezierIntersectionPointEvidence2::Exact(p(1, 1))
-        );
+        assert_eq!(contacts[0].point(), &CurvePoint2::from(p(1, 1)));
     }
 }
 
@@ -2148,10 +2125,7 @@ fn parallel_rational_contacts_replay_identical_algebraic_parameters() {
                 BezierParameter2::Algebraic(_)
             )
         ));
-        assert!(matches!(
-            contacts[0].point(),
-            RationalBezierIntersectionPointEvidence2::Algebraic(_)
-        ));
+        assert!((contacts[0].point()).coordinates().is_none());
     }
 }
 
@@ -2178,10 +2152,7 @@ fn parallel_rational_contacts_lift_coupled_distinct_algebraic_parameters() {
             contacts[0].parallel_parameter(),
             contacts[0].other_parameter()
         );
-        assert!(matches!(
-            contacts[0].point(),
-            RationalBezierIntersectionPointEvidence2::Algebraic(_)
-        ));
+        assert!((contacts[0].point()).coordinates().is_none());
     }
 }
 
@@ -2251,10 +2222,7 @@ fn parallel_rational_contacts_handle_higher_nullity_algebraic_fibers() {
             contacts[0].other_parameter(),
             BezierParameter2::Algebraic(_)
         ));
-        assert!(matches!(
-            contacts[0].point(),
-            RationalBezierIntersectionPointEvidence2::Algebraic(_)
-        ));
+        assert!((contacts[0].point()).coordinates().is_none());
     }
 }
 
@@ -2274,10 +2242,7 @@ fn zero_distance_parallel_contacts_keep_stationary_source_contact() {
             contacts[0].parallel_parameter(),
             &BezierParameter2::Exact(r(0))
         );
-        assert_eq!(
-            contacts[0].point(),
-            &RationalBezierIntersectionPointEvidence2::Exact(p(0, 0))
-        );
+        assert_eq!(contacts[0].point(), &CurvePoint2::from(p(0, 0)));
         assert!(!contacts[0].is_certified_transverse());
     }
 }
@@ -2752,10 +2717,7 @@ fn parallel_rational_contacts_retain_an_isolated_component_domain_touch() {
             contacts[0].other_parameter(),
             &BezierParameter2::Exact(q(1, 2))
         );
-        assert_eq!(
-            contacts[0].point(),
-            &RationalBezierIntersectionPointEvidence2::Exact(p(0, 1))
-        );
+        assert_eq!(contacts[0].point(), &CurvePoint2::from(p(0, 1)));
         assert!(!contacts[0].is_certified_transverse());
     }
 }
@@ -2792,10 +2754,7 @@ fn parallel_rational_component_can_yield_overlaps_and_an_isolated_contact() {
             &BezierParameter2::Exact(Real::zero())
         );
         assert_eq!(contact.other_parameter(), &BezierParameter2::Exact(q(3, 4)));
-        assert_eq!(
-            contact.point(),
-            &RationalBezierIntersectionPointEvidence2::Exact(p(0, 1))
-        );
+        assert_eq!(contact.point(), &CurvePoint2::from(p(0, 1)));
         assert!(
             intersections
                 .overlaps()
@@ -2952,10 +2911,7 @@ fn parallel_rational_contacts_inherit_the_approximate_512_terminal() {
     );
     let contacts = only_parallel_contacts(&intersections);
     assert_eq!(contacts.len(), 1);
-    assert_eq!(
-        contacts[0].point(),
-        &RationalBezierIntersectionPointEvidence2::Exact(p(1, 0))
-    );
+    assert_eq!(contacts[0].point(), &CurvePoint2::from(p(1, 0)));
 }
 
 #[test]

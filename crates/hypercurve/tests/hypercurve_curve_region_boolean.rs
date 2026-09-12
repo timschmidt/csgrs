@@ -988,7 +988,7 @@ fn regularized_topology_does_not_upgrade_terminal_connectivity() {
                     }
                     hypercurve::BezierSplitFragment2::AlgebraicChord(chord) => {
                         let point = if start { chord.start() } else { chord.end() };
-                        point.as_exact().cloned()
+                        point.coordinates().cloned()
                     }
                     _ => None,
                 };

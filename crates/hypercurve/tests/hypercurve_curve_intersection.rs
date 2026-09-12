@@ -8,8 +8,7 @@ use hypercurve::{
 use hypercurve::{
     BooleanOp, CircularArc2, Classification, CubicBezier2, Curve2, CurveBoundaryInteriorSide2,
     CurveContext, CurveGeometry2, CurvePath2, CurveRegion2, CurveRegionLoopRole, FillRule,
-    LineSeg2, Point2, RationalBezier2, RationalBezierIntersectionPointEvidence2,
-    RationalBezierOverlapOrientation2, Real,
+    LineSeg2, Point2, RationalBezier2, RationalBezierOverlapOrientation2, Real,
 };
 
 fn r(value: i32) -> Real {
@@ -127,11 +126,9 @@ fn top_level_rational_intersection_immediately_returns_sources_and_topology() {
     let contact = &evidence.contacts()[0];
     assert_eq!(contact.first().exact_curve_parameter(), Some(q(1, 2)));
     assert_eq!(contact.second().exact_curve_parameter(), Some(q(1, 2)));
-    assert!(matches!(
-        contact.point(),
-        RationalBezierIntersectionPointEvidence2::Exact(point)
-            if point == &Point2::new(q(1, 2), q(1, 4))
-    ));
+    assert!(
+        matches!((contact.point()).coordinates(), Some(point) if point == &Point2::new(q(1, 2), q(1, 4)))
+    );
     assert_eq!(topology.first().len(), 1);
     assert_eq!(topology.second().len(), 1);
     assert_eq!(topology.first()[0].fragments().len(), 2);
@@ -608,10 +605,7 @@ fn top_level_arc_dispatch_filters_circle_witnesses_and_retains_exact_parameters(
     let contact = &evidence.contacts()[0];
     assert!(contact.first().local_parameter().is_exact());
     assert!(contact.second().local_parameter().is_exact());
-    assert!(matches!(
-        contact.point(),
-        RationalBezierIntersectionPointEvidence2::Exact(point) if point == &p(4, 3)
-    ));
+    assert!(matches!((contact.point()).coordinates(), Some(point) if point == &p(4, 3)));
     assert_eq!(topology.result().contacts().len(), 1);
 }
 
@@ -639,8 +633,8 @@ fn curve_and_path_intersections_report_terminal_use_without_upgrading_arc_caches
     assert!(approximate.value.is_complete());
     assert_eq!(approximate.value.contacts().len(), 1);
     assert!(matches!(
-        approximate.value.contacts()[0].point(),
-        RationalBezierIntersectionPointEvidence2::Exact(_)
+        (approximate.value.contacts()[0].point()).coordinates(),
+        Some(_)
     ));
 
     let strict = arc
@@ -703,10 +697,9 @@ fn native_line_arc_dispatch_preserves_operand_order_and_exact_parameters() {
         Some(q(7, 8))
     );
     assert!(evidence.contacts()[0].second().local_parameter().is_exact());
-    assert!(matches!(
-        evidence.contacts()[0].point(),
-        RationalBezierIntersectionPointEvidence2::Exact(point) if point == &p(4, 3)
-    ));
+    assert!(
+        matches!((evidence.contacts()[0].point()).coordinates(), Some(point) if point == &p(4, 3))
+    );
     assert_eq!(topology.first()[0].fragments().len(), 2);
     assert_eq!(topology.second()[0].fragments().len(), 2);
     assert_eq!(topology.second()[1].fragments().len(), 1);

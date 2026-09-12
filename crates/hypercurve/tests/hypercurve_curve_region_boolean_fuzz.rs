@@ -1440,11 +1440,7 @@ fn deterministic_tangent_curve_family_pair_matrix_completes() {
                 let origin = point(0, 0);
                 assert!(
                     evidence.contacts().iter().any(|contact| {
-                        matches!(
-                            contact.point(),
-                            Some(hypercurve::RationalBezierIntersectionPointEvidence2::Exact(point))
-                                if point == &origin
-                        ) && !contact.is_certified_transverse()
+                        matches!((contact.point()).and_then(|point| point.coordinates()), Some(point) if point == &origin) && !contact.is_certified_transverse()
                     }),
                     "{label}: the selected pair must retain its nontransverse contact"
                 );

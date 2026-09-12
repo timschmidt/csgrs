@@ -15,8 +15,8 @@ use curvo::prelude::{
 use geo::{BooleanOps as _, Coord, LineString, Polygon};
 use hypercurve::{
     BezierAlgebraicChord2, BezierAlgebraicParameter2, BezierParameterInterval,
-    BezierParameterPolynomial, BezierSplitFragment2, CurveBoundaryInteriorSide2,
-    CurveRegionBoundaryLoop2, RationalBezierIntersectionPointEvidence2, Similarity2,
+    BezierParameterPolynomial, BezierSplitFragment2, CurveBoundaryInteriorSide2, CurvePoint2,
+    CurveRegionBoundaryLoop2, Similarity2,
 };
 use hypercurve::{
     BezierParallelVerificationOptions, BooleanOp, BulgeVertex2, Classification, Contour2,
@@ -607,20 +607,18 @@ fn benchmark_algebraic_round_offset(runner: &Runner) {
         )
         .expect("valid benchmark line image")
     };
-    let bottom_right = RationalBezierIntersectionPointEvidence2::Algebraic(
+    let bottom_right = CurvePoint2::from(
         horizontal(Real::zero())
             .point_at_algebraic_parameter(&parameter, &policy)
             .expect("selected benchmark endpoint"),
     );
-    let top_right = RationalBezierIntersectionPointEvidence2::Algebraic(
+    let top_right = CurvePoint2::from(
         horizontal(Real::one())
             .point_at_algebraic_parameter(&parameter, &policy)
             .expect("selected benchmark endpoint"),
     );
-    let bottom_left =
-        RationalBezierIntersectionPointEvidence2::Exact(Point2::new(Real::zero(), Real::zero()));
-    let top_left =
-        RationalBezierIntersectionPointEvidence2::Exact(Point2::new(Real::zero(), Real::one()));
+    let bottom_left = CurvePoint2::from(Point2::new(Real::zero(), Real::zero()));
+    let top_left = CurvePoint2::from(Point2::new(Real::zero(), Real::one()));
     let chord = |start, end| {
         let chord =
             BezierAlgebraicChord2::try_new(start, end, &policy).expect("valid benchmark chord");
@@ -1015,24 +1013,19 @@ fn benchmark_algebraic_round_offset(runner: &Runner) {
             .into_value()
             .intersection()
             .clone();
-        let pair_endpoint_count = exact_intersection
+        let selected_endpoint_count = exact_intersection
             .boundary_loops()
             .iter()
             .flat_map(|boundary| boundary.fragments())
             .filter_map(|fragment| match fragment {
                 BezierSplitFragment2::AlgebraicChord(chord) => Some(
-                    usize::from(matches!(
-                        chord.start(),
-                        RationalBezierIntersectionPointEvidence2::AlgebraicChordPair(_)
-                    )) + usize::from(matches!(
-                        chord.end(),
-                        RationalBezierIntersectionPointEvidence2::AlgebraicChordPair(_)
-                    )),
+                    usize::from((chord.start()).coordinates().is_none())
+                        + usize::from((chord.end()).coordinates().is_none()),
                 ),
                 _ => None,
             })
             .sum::<usize>();
-        assert!(pair_endpoint_count >= 2);
+        assert!(selected_endpoint_count >= 2);
 
         let transformed_region = || {
             exact_intersection.transform_affine(

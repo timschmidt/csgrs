@@ -21,7 +21,7 @@ use hyperreal::{Real, RealSign};
 use std::cmp::Ordering;
 
 use crate::Aabb2;
-use crate::RationalBezierIntersectionPointEvidence2;
+use crate::CurvePoint2;
 use crate::bezier_offset::{
     BezierAlgebraicChordParameter2, BezierAlgebraicCuspSemicircleParameter2,
 };
@@ -989,8 +989,8 @@ pub struct BezierSelectedFiberFragment2 {
     source: BezierSelectedFiberSource2,
     range: CurveRegionParameterRange2,
     reversed: bool,
-    start_point: RationalBezierIntersectionPointEvidence2,
-    end_point: RationalBezierIntersectionPointEvidence2,
+    start_point: CurvePoint2,
+    end_point: CurvePoint2,
 }
 
 /// One fragment between adjacent split boundaries.
@@ -1133,8 +1133,8 @@ impl BezierSelectedFiberFragment2 {
     pub(crate) fn new(
         source: BezierSelectedFiberSource2,
         range: CurveRegionParameterRange2,
-        start_point: RationalBezierIntersectionPointEvidence2,
-        end_point: RationalBezierIntersectionPointEvidence2,
+        start_point: CurvePoint2,
+        end_point: CurvePoint2,
     ) -> Self {
         Self {
             source,
@@ -1187,7 +1187,7 @@ impl BezierSelectedFiberFragment2 {
         self.reversed
     }
 
-    pub(crate) const fn start_point(&self) -> &RationalBezierIntersectionPointEvidence2 {
+    pub(crate) const fn start_point(&self) -> &CurvePoint2 {
         if self.reversed {
             &self.end_point
         } else {
@@ -1195,7 +1195,7 @@ impl BezierSelectedFiberFragment2 {
         }
     }
 
-    pub(crate) const fn end_point(&self) -> &RationalBezierIntersectionPointEvidence2 {
+    pub(crate) const fn end_point(&self) -> &CurvePoint2 {
         if self.reversed {
             &self.start_point
         } else {

@@ -6,9 +6,9 @@ use hypercurve::{
     BezierArrangementGraph2, BezierBoundaryLoop2, BezierParameter2, BezierParameterInterval,
     BezierParameterPolynomial, BezierRetainedCurveEnvelope2, BezierRetainedEndpointEnvelope2,
     BezierSplitFragment2, BezierSubcurve2, BooleanOp, BulgeVertex2, Classification, Contour2,
-    Curve2, CurveBoundaryInteriorSide2, CurveContext, CurveError, CurvePath2, CurveRegion2,
-    CurveRegionBoundaryLoop2, CurveRegionLoopRole, CurveResult, FillRule, LineSeg2, Point2,
-    QuadraticBezier2, RationalBezierIntersectionPointEvidence2, RationalQuadraticBezier2, Real,
+    Curve2, CurveBoundaryInteriorSide2, CurveContext, CurveError, CurvePath2, CurvePoint2,
+    CurveRegion2, CurveRegionBoundaryLoop2, CurveRegionLoopRole, CurveResult, FillRule, LineSeg2,
+    Point2, QuadraticBezier2, RationalQuadraticBezier2, Real,
 };
 
 fn r(value: i32) -> Real {
@@ -151,11 +151,7 @@ fn retained_algebraic_line_fragment(
     policy: &CurveContext,
 ) -> CurveResult<BezierSplitFragment2> {
     Ok(BezierSplitFragment2::AlgebraicChord(decided(
-        BezierAlgebraicChord2::try_new(
-            RationalBezierIntersectionPointEvidence2::Exact(start),
-            RationalBezierIntersectionPointEvidence2::Exact(end),
-            policy,
-        )?,
+        BezierAlgebraicChord2::try_new(CurvePoint2::from(start), CurvePoint2::from(end), policy)?,
     )))
 }
 

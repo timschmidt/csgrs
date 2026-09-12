@@ -22,6 +22,7 @@ This README describes crate version `0.3.1`.
 | Type | Role |
 | --- | --- |
 | `Point2`, `Aabb2`, `Similarity2` | Exact planar coordinates, bounds, and similarity transforms |
+| `CurvePoint2` | Exact curve point retaining coordinates or selected geometric evidence |
 | `LineSeg2`, `CircularArc2`, `Segment2` | Native line/arc primitives and their common enum |
 | `QuadraticBezier2`, `CubicBezier2`, `RationalQuadraticBezier2`, `RationalBezier2` | Polynomial and rational Bézier carriers |
 | `PolynomialSplineCurve2`, `NurbsCurve2` | Validated B-spline and NURBS curves |
@@ -119,6 +120,11 @@ exact signatures.
 
 - `Point2::{new, from_values, x, y, delta_from, distance_squared, lerp,
   translated, structural_facts}` creates and inspects exact points.
+- `CurvePoint2::{from, coordinates, coincides_with, compare_coordinate, bounds}`
+  handles exact curve contacts through one opaque value. `coordinates()` is an
+  optional view of stored `Real` coordinates; selected points retain their
+  exact meaning and support geometric queries without that view. Predicates
+  return their certainty under the requested `CurveContext`.
 - `LineSeg2::{try_new, point_at, reversed, classify_point, contains_point,
   structural_facts}` covers checked segments and point predicates.
 - `CircularArc2::{try_from_center, from_bulge, contains_point,

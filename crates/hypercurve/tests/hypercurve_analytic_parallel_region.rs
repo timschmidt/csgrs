@@ -8,7 +8,7 @@ use hypercurve::{
 };
 use hypercurve::{
     CurveCornerMode2, CurveCornerNoSolution2, CurveCornerSolutions2, RationalBezier2,
-    RationalBezierIntersectionPointEvidence2, RationalQuadraticBezier2, RealSign,
+    RationalQuadraticBezier2, RealSign,
 };
 
 fn point(x: i64, y: i64) -> Point2 {
@@ -813,22 +813,13 @@ fn analytic_parallel_chamfers_retain_normalized_cut_points() {
                     _ => None,
                 })
                 .expect("the chamfer is retained as one authoritative exact chord");
-            let is_analytic = |endpoint: &RationalBezierIntersectionPointEvidence2| {
-                matches!(
-                    endpoint,
-                    RationalBezierIntersectionPointEvidence2::AnalyticParallel(_)
-                )
-            };
-            let is_exact = |endpoint: &RationalBezierIntersectionPointEvidence2| {
-                matches!(endpoint, RationalBezierIntersectionPointEvidence2::Exact(_))
-            };
             assert_eq!(
-                usize::from(is_analytic(chord.start())) + usize::from(is_analytic(chord.end())),
-                1
-            );
-            assert_eq!(
-                usize::from(is_exact(chord.start())) + usize::from(is_exact(chord.end())),
-                1
+                [chord.start(), chord.end()]
+                    .into_iter()
+                    .filter(|point| point.coordinates().is_some())
+                    .count(),
+                1,
+                "one chamfer endpoint retains selected evidence and the other has coordinates",
             );
 
             for (sample, expected) in [

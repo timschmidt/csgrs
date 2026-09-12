@@ -17,9 +17,8 @@ use crate::bezier_split::BezierSelectedFiberSource2;
 use crate::{
     BezierParallel2, BezierParallelSource2, BezierParameter2, BezierSplitFragment2,
     BezierSubcurve2, CircularArc2, Classification, Contour2, Curve2, CurveContext, CurveError,
-    CurveOutcome, CurvePath2, CurveRegion2, CurveRegionBoundaryLoop2, CurveRegionLoopRole,
-    CurveRegionParameter2, CurveResult, CurveString2, Point2,
-    RationalBezierIntersectionPointEvidence2, Segment2,
+    CurveOutcome, CurvePath2, CurvePoint2, CurveRegion2, CurveRegionBoundaryLoop2,
+    CurveRegionLoopRole, CurveRegionParameter2, CurveResult, CurveString2, Point2, Segment2,
 };
 use hyperreal::{Real, RealSign};
 
@@ -926,11 +925,11 @@ fn finite_region_parameter_projection(
 }
 
 fn finite_retained_point(
-    point: &RationalBezierIntersectionPointEvidence2,
+    point: &CurvePoint2,
     chord_error: f64,
     policy: &CurveContext,
 ) -> CurveResult<[f64; 2]> {
-    if let Some(point) = point.as_exact() {
+    if let Some(point) = point.coordinates() {
         return finite_point(point);
     }
     for refinement_steps in [0, 2, 4, 8, 16, 32, 64, 128, 256, 512] {
@@ -967,21 +966,17 @@ fn append_analytic_parallel_samples(
     let endpoint = |parameter: &BezierParameter2| -> CurveResult<_> {
         if let Some(parameter) = parameter.as_exact() {
             return match fragment.parallel().point_at(parameter, policy)? {
-                Classification::Decided(point) => {
-                    Ok(RationalBezierIntersectionPointEvidence2::Exact(point))
-                }
+                Classification::Decided(point) => Ok(CurvePoint2::from(point)),
                 Classification::Uncertain(reason) => Err(CurveError::Topology(format!(
                     "finite analytic-parallel endpoint evaluation remained uncertain: {reason:?}"
                 ))),
             };
         }
-        Ok(RationalBezierIntersectionPointEvidence2::AnalyticParallel(
-            crate::BezierAnalyticParallelPoint2::new(
-                fragment.parallel().clone(),
-                parameter.clone(),
-                policy,
-            ),
-        ))
+        Ok(CurvePoint2::from(crate::BezierAnalyticParallelPoint2::new(
+            fragment.parallel().clone(),
+            parameter.clone(),
+            policy,
+        )))
     };
     let source_start = endpoint(fragment.range().start())?;
     let source_end = endpoint(fragment.range().end())?;

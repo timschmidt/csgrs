@@ -15,12 +15,11 @@ use crate::rational_bezier_general::{
 use crate::{
     ArcArcIntersection, BezierArrangementGraph2, BezierParameter2, BezierParameterRange2,
     BezierSplitMaterialization2, CircleCircleRelation, CircularArc2, Classification, Curve2,
-    CurveContext, CurveError, CurveGeometry2, CurveOperation2, CurveOutcome, CurveResult,
-    CurveSpanRange2, ExactCurveError, ExactCurveResult, LineArcIntersection,
+    CurveContext, CurveError, CurveGeometry2, CurveOperation2, CurveOutcome, CurvePoint2,
+    CurveResult, CurveSpanRange2, ExactCurveError, ExactCurveResult, LineArcIntersection,
     LineArcIntersectionPoint, LineArcOrder, LineLineIntersection, ParamRange, Point2,
     RationalBezier2, RationalBezierIntersectionCandidates2, RationalBezierIntersectionContact2,
-    RationalBezierIntersectionContacts2, RationalBezierIntersectionPointEvidence2,
-    RationalBezierOverlapOrientation2, UncertaintyReason,
+    RationalBezierIntersectionContacts2, RationalBezierOverlapOrientation2, UncertaintyReason,
 };
 
 /// Exact source parameter retained for one top-level curve contact.
@@ -36,7 +35,7 @@ pub struct CurveIntersectionParameter2 {
 pub struct CurveIntersectionContact2 {
     first: CurveIntersectionParameter2,
     second: CurveIntersectionParameter2,
-    point: RationalBezierIntersectionPointEvidence2,
+    point: CurvePoint2,
     certified_transverse: bool,
     tangent_cross_sign: Option<hyperreal::RealSign>,
 }
@@ -475,7 +474,7 @@ fn certified_singleton_aabb_endpoint_contact(
     Ok(Some(CurveIntersectionContact2 {
         first: first_parameter,
         second: second_parameter,
-        point: RationalBezierIntersectionPointEvidence2::Exact(point),
+        point: CurvePoint2::from(point),
         certified_transverse: false,
         tangent_cross_sign: None,
     }))
@@ -639,7 +638,7 @@ fn build_native_line_evidence(
                 span_range: second_fragment.span_range().clone(),
                 local_parameter: BezierParameter2::Exact(second_parameter),
             },
-            point: RationalBezierIntersectionPointEvidence2::Exact(point),
+            point: CurvePoint2::from(point),
             certified_transverse: false,
             tangent_cross_sign: None,
         };
@@ -832,7 +831,7 @@ fn append_native_line_arc_contact(
         let candidate = CurveIntersectionContact2 {
             first: first_parameter,
             second: second_parameter,
-            point: RationalBezierIntersectionPointEvidence2::Exact(hit.point.clone()),
+            point: CurvePoint2::from(hit.point.clone()),
             certified_transverse: false,
             tangent_cross_sign: None,
         };
@@ -1019,7 +1018,7 @@ fn build_native_arc_evidence(
                             policy,
                         )?,
                     },
-                    point: RationalBezierIntersectionPointEvidence2::Exact(point.clone()),
+                    point: CurvePoint2::from(point.clone()),
                     certified_transverse: false,
                     tangent_cross_sign: None,
                 };
@@ -1268,7 +1267,7 @@ fn append_native_arc_span_contact(
                 policy,
             )?,
         },
-        point: RationalBezierIntersectionPointEvidence2::Exact(point.clone()),
+        point: CurvePoint2::from(point.clone()),
         certified_transverse: false,
         tangent_cross_sign: None,
     };
@@ -2010,7 +2009,7 @@ impl CurveIntersectionContact2 {
     }
 
     /// Returns exact affine point evidence retained by candidate replay.
-    pub const fn point(&self) -> &RationalBezierIntersectionPointEvidence2 {
+    pub const fn point(&self) -> &CurvePoint2 {
         &self.point
     }
 

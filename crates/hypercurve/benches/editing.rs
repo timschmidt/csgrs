@@ -13,7 +13,7 @@ use hypercurve::{Curve2, CurvePath2};
 use hypercurve::{
     BezierAlgebraicChord2, BezierAlgebraicParameter2, BezierParameter2, BezierParameterInterval,
     BezierParameterPolynomial, BezierSplitFragment2, BezierSubcurve2, CubicBezier2,
-    CurveBoundaryInteriorSide2, CurveRegionBoundaryLoop2, RationalBezierIntersectionPointEvidence2,
+    CurveBoundaryInteriorSide2, CurvePoint2, CurveRegionBoundaryLoop2,
 };
 
 fn s(value: i32) -> Real {
@@ -749,15 +749,10 @@ fn source_related_algebraic_chord_region() -> CurveResult<CurveRegion2> {
         "algebraic source split must remain exact",
     );
     let source_fragment = materialization.fragments()[0].clone();
-    let selected_point = RationalBezierIntersectionPointEvidence2::Algebraic(
-        source_rational.point_at_algebraic_parameter(&parameter, &policy)?,
-    );
+    let selected_point =
+        CurvePoint2::from(source_rational.point_at_algebraic_parameter(&parameter, &policy)?);
     let chord = expect_decided(
-        BezierAlgebraicChord2::try_new(
-            selected_point,
-            RationalBezierIntersectionPointEvidence2::Exact(p(0, 0)),
-            &policy,
-        )?,
+        BezierAlgebraicChord2::try_new(selected_point, CurvePoint2::from(p(0, 0)), &policy)?,
         "source-related algebraic chord must remain exact",
     );
     let closure = QuadraticBezier2::from_line_segment(line(0, 0, 1, 0));
@@ -795,10 +790,10 @@ fn independent_field_algebraic_chord_regions() -> CurveResult<[CurveRegion2; 2]>
             vec![Real::one(); 3],
         )
     };
-    let start = RationalBezierIntersectionPointEvidence2::Algebraic(
+    let start = CurvePoint2::from(
         rational_line(&x_axis)?.point_at_algebraic_parameter(&first_parameter, &policy)?,
     );
-    let end = RationalBezierIntersectionPointEvidence2::Algebraic(
+    let end = CurvePoint2::from(
         rational_line(&y_axis)?.point_at_algebraic_parameter(&second_parameter, &policy)?,
     );
     let chord = expect_decided(
@@ -864,7 +859,7 @@ fn noninjective_collinear_algebraic_chord_regions() -> CurveResult<[CurveRegion2
     let endpoint = |parameter: &BezierAlgebraicParameter2| {
         horizontal
             .point_at_algebraic_parameter(parameter, &policy)
-            .map(RationalBezierIntersectionPointEvidence2::Algebraic)
+            .map(CurvePoint2::from)
     };
     let first_endpoint = endpoint(&first_parameter)?;
     let second_endpoint = endpoint(&second_parameter)?;
@@ -917,7 +912,7 @@ fn strict_interior_algebraic_chord_regions() -> CurveResult<[CurveRegion2; 2]> {
         let parameter = positive_sqrt_ratio_parameter(numerator, denominator, &policy)?;
         source
             .point_at_algebraic_parameter(&parameter, &policy)
-            .map(RationalBezierIntersectionPointEvidence2::Algebraic)
+            .map(CurvePoint2::from)
     };
     let first_start = endpoint(&horizontal, 1, 2)?;
     let first_end = endpoint(&horizontal, 1, 3)?;
@@ -929,10 +924,8 @@ fn strict_interior_algebraic_chord_regions() -> CurveResult<[CurveRegion2; 2]> {
     };
     let first = chord(first_start.clone(), first_end.clone())?;
     let second = chord(second_start.clone(), second_end.clone())?;
-    let first_apex =
-        RationalBezierIntersectionPointEvidence2::Exact(Point2::new(q(16, 25), Real::from(-1_i8)));
-    let second_apex =
-        RationalBezierIntersectionPointEvidence2::Exact(Point2::new(Real::one(), q(1, 20)));
+    let first_apex = CurvePoint2::from(Point2::new(q(16, 25), Real::from(-1_i8)));
+    let second_apex = CurvePoint2::from(Point2::new(Real::one(), q(1, 20)));
     let first_loop = CurveRegionBoundaryLoop2::new(
         vec![
             BezierSplitFragment2::AlgebraicChord(first),
@@ -972,14 +965,14 @@ fn axis_aligned_algebraic_offset_region() -> CurveResult<CurveRegion2> {
             vec![Real::one(); 2],
         )
     };
-    let bottom_right = RationalBezierIntersectionPointEvidence2::Algebraic(
+    let bottom_right = CurvePoint2::from(
         horizontal(Real::zero())?.point_at_algebraic_parameter(&parameter, &policy)?,
     );
-    let top_right = RationalBezierIntersectionPointEvidence2::Algebraic(
+    let top_right = CurvePoint2::from(
         horizontal(Real::one())?.point_at_algebraic_parameter(&parameter, &policy)?,
     );
-    let bottom_left = RationalBezierIntersectionPointEvidence2::Exact(p(0, 0));
-    let top_left = RationalBezierIntersectionPointEvidence2::Exact(p(0, 1));
+    let bottom_left = CurvePoint2::from(p(0, 0));
+    let top_left = CurvePoint2::from(p(0, 1));
     let chord = |start, end| {
         BezierAlgebraicChord2::try_new(start, end, &policy).map(|chord| {
             BezierSplitFragment2::AlgebraicChord(expect_decided(
@@ -1017,14 +1010,14 @@ fn axis_aligned_algebraic_dumbbell_offset_region() -> CurveResult<CurveRegion2> 
             vec![Real::one(); 2],
         )
         .map(|curve| {
-            RationalBezierIntersectionPointEvidence2::Algebraic(
+            CurvePoint2::from(
                 curve
                     .point_at_algebraic_parameter(&parameter, &policy)
                     .expect("algebraic dumbbell endpoint must remain selected"),
             )
         })
     };
-    let exact = |x, y| RationalBezierIntersectionPointEvidence2::Exact(p(x, y));
+    let exact = |x, y| CurvePoint2::from(p(x, y));
     let points = [
         exact(0, 0),
         exact(4, 0),

@@ -4,9 +4,9 @@ use hypercurve::{
     BezierParameterInterval, BezierParameterPolynomial, BezierRetainedCurveEnvelope2,
     BezierRetainedEndpointEnvelope2, BezierRetainedEnvelopeSourceKind,
     BezierRetainedOverlapEvidence2, BezierSplitFragment2, BezierSubcurve2, Classification,
-    CurveCertainty, CurveContext, CurveError, CurveOutcome, CurveRegion2, CurveRegionBoundaryLoop2,
-    CurveRegionFragmentSource2, CurveRegionLoopRole, CurveRegionNestingRoleEvidence2, Point2,
-    QuadraticBezier2, RationalBezier2, RationalBezierIntersectionPointEvidence2,
+    CurveCertainty, CurveContext, CurveError, CurveOutcome, CurvePoint2, CurveRegion2,
+    CurveRegionBoundaryLoop2, CurveRegionFragmentSource2, CurveRegionLoopRole,
+    CurveRegionNestingRoleEvidence2, Point2, QuadraticBezier2, RationalBezier2,
     RationalQuadraticBezier2, Real, RegionPointLocation, UncertaintyReason,
 };
 use proptest::prelude::*;
@@ -120,12 +120,8 @@ fn algebraic_image(curve: &QuadraticBezier2) -> BezierAlgebraicEndpointImage2 {
 
 fn retained_algebraic_line_fragment(start: Point2, end: Point2) -> BezierSplitFragment2 {
     BezierSplitFragment2::AlgebraicChord(decided(
-        BezierAlgebraicChord2::try_new(
-            RationalBezierIntersectionPointEvidence2::Exact(start),
-            RationalBezierIntersectionPointEvidence2::Exact(end),
-            &policy(),
-        )
-        .unwrap(),
+        BezierAlgebraicChord2::try_new(CurvePoint2::from(start), CurvePoint2::from(end), &policy())
+            .unwrap(),
     ))
 }
 

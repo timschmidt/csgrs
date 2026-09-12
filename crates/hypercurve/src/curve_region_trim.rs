@@ -4,9 +4,9 @@ use crate::curve_intersection::split_curve_spans;
 use crate::policy::resolve_certified_operation;
 use crate::{
     BezierParameter2, BezierSplitFragment2, Classification, Curve2, CurveContext,
-    CurveIntersectionPairBlockerKind2, CurveOperation2, CurveOutcome, CurvePath2, CurveRegion2,
-    CurveRegionParameter2, CurveSpanRange2, ExactCurveError, ExactCurveResult,
-    RationalBezierIntersectionPointEvidence2, Real, RegionPointLocation, UncertaintyReason,
+    CurveIntersectionPairBlockerKind2, CurveOperation2, CurveOutcome, CurvePath2, CurvePoint2,
+    CurveRegion2, CurveRegionParameter2, CurveSpanRange2, ExactCurveError, ExactCurveResult, Real,
+    RegionPointLocation, UncertaintyReason,
 };
 
 /// Which authored region boundary owns one exact trim contact.
@@ -25,7 +25,7 @@ pub struct CurveRegionBoundaryContact2 {
     contour_index: usize,
     segment_index: usize,
     boundary_parameter: CurveRegionParameter2,
-    point: Option<RationalBezierIntersectionPointEvidence2>,
+    point: Option<CurvePoint2>,
 }
 
 impl CurveRegionBoundaryContact2 {
@@ -53,7 +53,7 @@ impl CurveRegionBoundaryContact2 {
     ///
     /// Some cross-field analytic contacts are represented completely by their
     /// two selected parameters and therefore have no standalone Cartesian point.
-    pub const fn point(&self) -> Option<&RationalBezierIntersectionPointEvidence2> {
+    pub const fn point(&self) -> Option<&CurvePoint2> {
         self.point.as_ref()
     }
 }
@@ -1152,14 +1152,8 @@ mod tests {
                 .iter()
                 .find(|contact| contact.segment_index() == 0)
                 .expect("the overlap end must retain bottom-edge provenance");
-            assert_eq!(
-                start.point(),
-                Some(&RationalBezierIntersectionPointEvidence2::Exact(p(0, 0)))
-            );
-            assert_eq!(
-                end.point(),
-                Some(&RationalBezierIntersectionPointEvidence2::Exact(p(4, 0)))
-            );
+            assert_eq!(start.point(), Some(&CurvePoint2::from(p(0, 0))));
+            assert_eq!(end.point(), Some(&CurvePoint2::from(p(4, 0))));
         }
     }
 
@@ -1208,10 +1202,7 @@ mod tests {
             assert_eq!(contact.kind(), kind);
             assert_eq!(contact.contour_index(), 0);
             assert_eq!(contact.segment_index(), segment_index);
-            assert_eq!(
-                contact.point(),
-                Some(&RationalBezierIntersectionPointEvidence2::Exact(point))
-            );
+            assert_eq!(contact.point(), Some(&CurvePoint2::from(point)));
             assert!(contact.boundary_parameter().as_algebraic_chord().is_some());
         }
     }

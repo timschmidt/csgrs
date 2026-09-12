@@ -3,7 +3,10 @@
 use hyperreal::{Real, ZeroKnowledge};
 use std::{fmt, sync::Arc};
 
-/// A two-dimensional point.
+/// A two-dimensional point with independently represented [`Real`] coordinates.
+///
+/// [`CurvePoint2`](crate::CurvePoint2) also retains selected geometric points
+/// whose exact meaning does not require independent coordinate materialization.
 #[derive(Clone)]
 pub struct Point2(Arc<Point2Data>);
 

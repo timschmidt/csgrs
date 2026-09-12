@@ -1,5 +1,7 @@
 //! Exact rational Bezier curves of arbitrary positive degree.
 
+#[cfg(test)]
+use crate::CurvePointData2;
 use std::cmp::Ordering;
 use std::sync::Arc;
 use std::sync::{Mutex, OnceLock};
@@ -20,8 +22,7 @@ use hypersolve::{
 
 use crate::bezier_algebraic_image::{
     compare_algebraic_representations_with_policy, parameter_representation,
-    rational_derivative_images_from_power_basis,
-    rational_point_image_from_power_basis,
+    rational_derivative_images_from_power_basis, rational_point_image_from_power_basis,
 };
 use crate::bezier_parameter::{
     BezierParameterRefinement2, bernstein_to_power_coefficients, signed_coefficients_at_parameter,
@@ -41,7 +42,7 @@ use crate::{
     BezierLineCrossingDirection, BezierLineImageFitRelation, BezierParameter2,
     BezierParameterPolynomial, BezierParameterRange2, BezierParameterRayDirection2,
     BezierSplitMaterialization2, BezierSubcurve2, CircleCircleRelation, Classification,
-    CurveContext, CurveDerivative2, CurveError, CurveFamily2, CurveOperation2,
+    CurveContext, CurveDerivative2, CurveError, CurveFamily2, CurveOperation2, CurvePoint2,
     CurveRegionParameter2, CurveRegionParameterRange2, CurveResult, ExactCurveError,
     ExactCurveResult, LineSeg2, LineSide, ParamRange, Point2, RationalBezierAlgebraicPointImage2,
     RationalBezierAlgebraicTangentImage2, RationalQuadraticBezier2, UncertaintyReason,
@@ -153,351 +154,12 @@ pub enum RationalBezierIntersectionCandidates2 {
     DegenerateResultant,
 }
 
-/// Exact affine point evidence retained for a curve contact.
-#[derive(Clone, Debug, PartialEq)]
-pub enum RationalBezierIntersectionPointEvidence2 {
-    /// The contact point is represented directly by [`Real`] coordinates.
-    Exact(Point2),
-    /// The contact point is retained as exact algebraic point evidence.
-    ///
-    /// A retained rational-expression status may defer coordinate images
-    /// while preserving the exact source curve and parameter.
-    Algebraic(RationalBezierAlgebraicPointImage2),
-    /// A unique nonparallel intersection of two retained algebraic chords.
-    ///
-    /// The four endpoint fields remain separate and are refined only when a
-    /// coordinate comparison or enclosure is requested.
-    AlgebraicChordPair(crate::BezierAlgebraicChordPairPoint2),
-    /// A selected algebraic-circle contact with a certified axis-aligned
-    /// retained chord.  Both selected fields and the square-root branch remain
-    /// exact until a terminal predicate policy permits approximation.
-    AlgebraicCuspChord(crate::BezierAlgebraicCuspChordPoint2),
-    /// An exact affine derivative of a retained selected-circle/axis-chord
-    /// contact, such as one endpoint of an axis-aligned parallel.
-    AlgebraicCuspChordDerived(crate::BezierAlgebraicCuspChordDerivedPoint2),
-    /// One endpoint displaced along an exact unit normal or tangent of a
-    /// retained algebraic chord whose normalized direction spans selected
-    /// endpoint fields.
-    AlgebraicChordParallel(crate::BezierAlgebraicChordParallelPoint2),
-    /// One exact point on an analytic Bezier parallel at a retained source
-    /// parameter. The normalized direction is evaluated only by predicates.
-    AnalyticParallel(crate::BezierAnalyticParallelPoint2),
-    /// One exact retained point transported by a certified planar similarity.
-    ///
-    /// The source evidence remains correlated and is evaluated lazily rather
-    /// than flattened into independently reconstructed coordinates.
-    Similarity(crate::BezierSimilarityPoint2),
-}
-
-impl RationalBezierIntersectionPointEvidence2 {
-    /// Returns the represented point when this evidence has native coordinates.
-    pub const fn as_exact(&self) -> Option<&Point2> {
-        match self {
-            Self::Exact(point) => Some(point),
-            Self::Algebraic(_) => None,
-            Self::AlgebraicChordPair(_) => None,
-            Self::AlgebraicCuspChord(_) => None,
-            Self::AlgebraicCuspChordDerived(_) => None,
-            Self::AlgebraicChordParallel(_) => None,
-            Self::AnalyticParallel(_) => None,
-            Self::Similarity(_) => None,
-        }
-    }
-
-    /// Returns a constant-time positive identity certificate for retained
-    /// point evidence. Distinct storage may still describe the same point and
-    /// must continue through the exact geometric predicates.
-    pub(crate) fn shares_storage(&self, other: &Self) -> bool {
-        match (self, other) {
-            (Self::Exact(first), Self::Exact(second)) => first.shares_storage(second),
-            (Self::Algebraic(first), Self::Algebraic(second)) => first.shares_storage(second),
-            (Self::AlgebraicChordPair(_), Self::AlgebraicChordPair(_)) => false,
-            (Self::AlgebraicCuspChord(first), Self::AlgebraicCuspChord(second)) => {
-                first.shares_storage(second)
-            }
-            (Self::AlgebraicCuspChordDerived(first), Self::AlgebraicCuspChordDerived(second)) => {
-                first.shares_storage(second)
-            }
-            (Self::AlgebraicChordParallel(first), Self::AlgebraicChordParallel(second)) => {
-                first.shares_storage(second)
-            }
-            (Self::AnalyticParallel(first), Self::AnalyticParallel(second)) => {
-                first.shares_storage(second)
-            }
-            (Self::Similarity(first), Self::Similarity(second)) => first.shares_storage(second),
-            _ => false,
-        }
-    }
-
-    /// Returns the retained algebraic image, when present.
-    pub const fn as_algebraic(&self) -> Option<&RationalBezierAlgebraicPointImage2> {
-        match self {
-            Self::Exact(_) => None,
-            Self::Algebraic(point) => Some(point),
-            Self::AlgebraicChordPair(_) => None,
-            Self::AlgebraicCuspChord(_) => None,
-            Self::AlgebraicCuspChordDerived(_) => None,
-            Self::AlgebraicChordParallel(_) => None,
-            Self::AnalyticParallel(_) => None,
-            Self::Similarity(_) => None,
-        }
-    }
-
-    /// Returns retained correlated chord-pair point evidence, when present.
-    pub const fn as_algebraic_chord_pair(&self) -> Option<&crate::BezierAlgebraicChordPairPoint2> {
-        match self {
-            Self::AlgebraicChordPair(point) => Some(point),
-            Self::Exact(_)
-            | Self::Algebraic(_)
-            | Self::AlgebraicCuspChord(_)
-            | Self::AlgebraicCuspChordDerived(_)
-            | Self::AlgebraicChordParallel(_)
-            | Self::AnalyticParallel(_)
-            | Self::Similarity(_) => None,
-        }
-    }
-
-    /// Returns retained correlated cusp/chord point evidence, when present.
-    pub const fn as_algebraic_cusp_chord(&self) -> Option<&crate::BezierAlgebraicCuspChordPoint2> {
-        match self {
-            Self::AlgebraicCuspChord(point) => Some(point),
-            Self::Exact(_)
-            | Self::Algebraic(_)
-            | Self::AlgebraicChordPair(_)
-            | Self::AlgebraicCuspChordDerived(_)
-            | Self::AlgebraicChordParallel(_)
-            | Self::AnalyticParallel(_)
-            | Self::Similarity(_) => None,
-        }
-    }
-
-    /// Returns a derived correlated cusp/chord point, when present.
-    pub const fn as_algebraic_cusp_chord_derived(
-        &self,
-    ) -> Option<&crate::BezierAlgebraicCuspChordDerivedPoint2> {
-        match self {
-            Self::AlgebraicCuspChordDerived(point) => Some(point),
-            Self::Exact(_)
-            | Self::Algebraic(_)
-            | Self::AlgebraicChordPair(_)
-            | Self::AlgebraicCuspChord(_)
-            | Self::AlgebraicChordParallel(_)
-            | Self::AnalyticParallel(_)
-            | Self::Similarity(_) => None,
-        }
-    }
-
-    /// Returns a retained algebraic-chord parallel endpoint, when present.
-    pub const fn as_algebraic_chord_parallel(
-        &self,
-    ) -> Option<&crate::BezierAlgebraicChordParallelPoint2> {
-        match self {
-            Self::AlgebraicChordParallel(point) => Some(point),
-            Self::Exact(_)
-            | Self::Algebraic(_)
-            | Self::AlgebraicChordPair(_)
-            | Self::AlgebraicCuspChord(_)
-            | Self::AlgebraicCuspChordDerived(_)
-            | Self::AnalyticParallel(_)
-            | Self::Similarity(_) => None,
-        }
-    }
-
-    /// Returns a retained analytic-parallel point, when present.
-    pub const fn as_analytic_parallel(&self) -> Option<&crate::BezierAnalyticParallelPoint2> {
-        match self {
-            Self::AnalyticParallel(point) => Some(point),
-            Self::Exact(_)
-            | Self::Algebraic(_)
-            | Self::AlgebraicChordPair(_)
-            | Self::AlgebraicCuspChord(_)
-            | Self::AlgebraicCuspChordDerived(_)
-            | Self::AlgebraicChordParallel(_)
-            | Self::Similarity(_) => None,
-        }
-    }
-
-    /// Compares two retained affine points without materializing an algebraic
-    /// coordinate or sampling either isolating interval.
-    ///
-    /// Exact points use the canonical [`Point2`] predicate. Algebraic images
-    /// first reuse shared parametric provenance and disjoint source bounds,
-    /// then compare represented coordinate roots. Correlated chord contacts
-    /// retain their defining supports and refine enclosures without composing
-    /// endpoint fields. Any predicate that remains unproved stays explicit
-    /// under `policy`.
-    pub(crate) fn same_point(&self, other: &Self, policy: &CurveContext) -> Classification<bool> {
-        if self.shares_storage(other) {
-            return Classification::Decided(true);
-        }
-        let recursive_composite = |point: &Self| {
-            matches!(
-                point,
-                Self::AlgebraicChordPair(_)
-                    | Self::AlgebraicCuspChord(_)
-                    | Self::AlgebraicCuspChordDerived(_)
-                    | Self::AlgebraicChordParallel(_)
-                    | Self::Similarity(_)
-            )
-        };
-        if (recursive_composite(self) || recursive_composite(other))
-            && !matches!(self, Self::AnalyticParallel(_))
-            && !matches!(other, Self::AnalyticParallel(_))
-            && let Ok(Classification::Decided(Some(equal))) =
-                crate::bezier_offset::recursive_projective_point_evidence_equality(
-                    self, other, policy,
-                )
-        {
-            return Classification::Decided(equal);
-        }
-        match (self, other) {
-            (Self::Exact(first), Self::Exact(second)) => {
-                match is_zero(&first.distance_squared(second), policy) {
-                    Some(equal) => Classification::Decided(equal),
-                    None => Classification::Uncertain(UncertaintyReason::RealSign),
-                }
-            }
-            (Self::Algebraic(first), Self::Algebraic(second)) => {
-                if let Some(classification) =
-                    first.same_injective_parametric_source_point(second, policy)
-                {
-                    return classification;
-                }
-                if let (
-                    Some(Classification::Decided(first_bounds)),
-                    Some(Classification::Decided(second_bounds)),
-                ) = (
-                    first.parametric_source_bounds(policy),
-                    second.parametric_source_bounds(policy),
-                ) && first_bounds.overlaps(&second_bounds, policy)
-                    == Classification::Decided(false)
-                {
-                    #[cfg(feature = "dispatch-trace")]
-                    hyperreal::dispatch_trace::record(
-                        "hypercurve",
-                        "contact-point-equality",
-                        "source-bounds-disjoint",
-                    );
-                    return Classification::Decided(false);
-                }
-                if let Ok(Some(classification)) = first.same_retained_rational_point(second, policy)
-                {
-                    return classification;
-                }
-                let (Some(first), Some(second)) = (first.resolved(policy), second.resolved(policy))
-                else {
-                    return Classification::Uncertain(UncertaintyReason::Unsupported);
-                };
-                let (Some(first_x), Some(first_y), Some(second_x), Some(second_y)) = (
-                    first.x().and_then(|image| image.representation()),
-                    first.y().and_then(|image| image.representation()),
-                    second.x().and_then(|image| image.representation()),
-                    second.y().and_then(|image| image.representation()),
-                ) else {
-                    return if first == second {
-                        Classification::Decided(true)
-                    } else {
-                        Classification::Uncertain(UncertaintyReason::Unsupported)
-                    };
-                };
-                match (
-                    crate::bezier_arrangement::represented_roots_equal(first_x, second_x, policy),
-                    crate::bezier_arrangement::represented_roots_equal(first_y, second_y, policy),
-                ) {
-                    (Some(x_equal), Some(y_equal)) => Classification::Decided(x_equal && y_equal),
-                    _ => Classification::Uncertain(UncertaintyReason::RealSign),
-                }
-            }
-            (Self::Exact(exact), Self::Algebraic(algebraic))
-            | (Self::Algebraic(algebraic), Self::Exact(exact)) => {
-                if let (Ok(x), Ok(y)) = (
-                    algebraic.coordinate_order_to_real(true, exact.x(), policy),
-                    algebraic.coordinate_order_to_real(false, exact.y(), policy),
-                ) {
-                    match (x, y) {
-                        (
-                            Classification::Decided(std::cmp::Ordering::Equal),
-                            Classification::Decided(std::cmp::Ordering::Equal),
-                        ) => return Classification::Decided(true),
-                        (
-                            Classification::Decided(
-                                std::cmp::Ordering::Less | std::cmp::Ordering::Greater,
-                            ),
-                            _,
-                        )
-                        | (
-                            _,
-                            Classification::Decided(
-                                std::cmp::Ordering::Less | std::cmp::Ordering::Greater,
-                            ),
-                        ) => return Classification::Decided(false),
-                        _ => {}
-                    }
-                }
-                let Some(algebraic) = algebraic.resolved(policy) else {
-                    return Classification::Uncertain(UncertaintyReason::Unsupported);
-                };
-                let (Some(x), Some(y)) = (
-                    algebraic.x().and_then(|image| image.representation()),
-                    algebraic.y().and_then(|image| image.representation()),
-                ) else {
-                    return Classification::Uncertain(UncertaintyReason::Unsupported);
-                };
-                let exact_x = AlgebraicRootRepresentation::from_exact_value(exact.x());
-                let exact_y = AlgebraicRootRepresentation::from_exact_value(exact.y());
-                match (
-                    crate::bezier_arrangement::represented_roots_equal(x, &exact_x, policy),
-                    crate::bezier_arrangement::represented_roots_equal(y, &exact_y, policy),
-                ) {
-                    (Some(x_equal), Some(y_equal)) => Classification::Decided(x_equal && y_equal),
-                    _ => Classification::Uncertain(UncertaintyReason::RealSign),
-                }
-            }
-            (Self::AlgebraicChordPair(first), Self::AlgebraicChordPair(second)) => {
-                first.same_point(second, policy)
-            }
-            (Self::AlgebraicChordPair(point), other) | (other, Self::AlgebraicChordPair(point)) => {
-                point.same_point_evidence(other, policy)
-            }
-            (Self::AlgebraicCuspChord(first), Self::AlgebraicCuspChord(second)) => {
-                first.same_point_evidence(&Self::AlgebraicCuspChord(second.clone()), policy)
-            }
-            (Self::AlgebraicCuspChord(point), other) | (other, Self::AlgebraicCuspChord(point)) => {
-                point.same_point_evidence(other, policy)
-            }
-            (Self::AlgebraicCuspChordDerived(first), Self::AlgebraicCuspChordDerived(second)) => {
-                first.same_point(second, policy)
-            }
-            (Self::AlgebraicCuspChordDerived(point), other)
-            | (other, Self::AlgebraicCuspChordDerived(point)) => {
-                point.same_point_evidence(other, policy)
-            }
-            (Self::AlgebraicChordParallel(point), other)
-            | (other, Self::AlgebraicChordParallel(point)) => {
-                point.same_point_evidence(other, policy)
-            }
-            (Self::AnalyticParallel(point), other) | (other, Self::AnalyticParallel(point)) => {
-                point.same_point_evidence(other, policy)
-            }
-            (Self::Similarity(point), other) | (other, Self::Similarity(point)) => {
-                point.same_point_evidence(other, policy)
-            }
-        }
-    }
-}
-
-impl From<Point2> for RationalBezierIntersectionPointEvidence2 {
-    fn from(point: Point2) -> Self {
-        Self::Exact(point)
-    }
-}
-
 /// One exactly replayed parameter pair shared by two rational Bezier images.
 #[derive(Clone, Debug, PartialEq)]
 pub struct RationalBezierIntersectionContact2 {
     first_parameter: BezierParameter2,
     second_parameter: BezierParameter2,
-    point: RationalBezierIntersectionPointEvidence2,
+    point: CurvePoint2,
     certified_transverse: bool,
     tangent_cross_sign: Option<RealSign>,
 }
@@ -1081,7 +743,7 @@ impl RationalBezierIntersectionContact2 {
     }
 
     /// Returns retained affine point evidence from the first curve replay.
-    pub const fn point(&self) -> &RationalBezierIntersectionPointEvidence2 {
+    pub const fn point(&self) -> &CurvePoint2 {
         &self.point
     }
 
@@ -1390,7 +1052,7 @@ impl RationalBezierIntersectionContext {
 
 #[derive(Clone, Debug)]
 struct CandidatePointReplay {
-    evidence: RationalBezierIntersectionPointEvidence2,
+    evidence: CurvePoint2,
     x: AlgebraicRootRepresentation,
     y: AlgebraicRootRepresentation,
 }
@@ -3445,7 +3107,7 @@ impl RationalBezier2 {
                     RationalBezierIntersectionContact2 {
                         first_parameter: BezierParameter2::Exact(a_param),
                         second_parameter: BezierParameter2::Exact(b_param),
-                        point: RationalBezierIntersectionPointEvidence2::Exact(point),
+                        point: CurvePoint2::from(point),
                         certified_transverse: kind == crate::IntersectionKind::Crossing,
                         tangent_cross_sign: None,
                     },
@@ -3501,7 +3163,7 @@ impl RationalBezier2 {
                         RationalBezierIntersectionContact2 {
                             first_parameter,
                             second_parameter,
-                            point: RationalBezierIntersectionPointEvidence2::Exact(point),
+                            point: CurvePoint2::from(point),
                             certified_transverse: kind == crate::IntersectionKind::Crossing,
                             tangent_cross_sign: None,
                         },
@@ -3683,9 +3345,7 @@ impl RationalBezier2 {
         policy: &CurveContext,
         fallback_point_evidence: &mut dyn FnMut(
             &BezierParameter2,
-        ) -> CurveResult<
-            Option<RationalBezierIntersectionPointEvidence2>,
-        >,
+        ) -> CurveResult<Option<CurvePoint2>>,
     ) -> CurveResult<Classification<RationalBezierIntersectionContacts2>> {
         if self.has_certified_injective_axis(policy) {
             return Ok(Classification::Decided(
@@ -3780,9 +3440,7 @@ impl RationalBezier2 {
                 return Ok(None);
             };
             Ok(match self.point_at_affine_classified(parameter, policy) {
-                Classification::Decided(point) => {
-                    Some(RationalBezierIntersectionPointEvidence2::Exact(point))
-                }
+                Classification::Decided(point) => Some(CurvePoint2::from(point)),
                 Classification::Uncertain(_) => None,
             })
         };
@@ -4014,7 +3672,7 @@ impl RationalBezier2 {
                         contacts.push(RationalBezierIntersectionContact2 {
                             first_parameter: BezierParameter2::Exact(first_parameter.clone()),
                             second_parameter: BezierParameter2::Exact(second_parameter.clone()),
-                            point: RationalBezierIntersectionPointEvidence2::Exact(point),
+                            point: CurvePoint2::from(point),
                             certified_transverse: false,
                             tangent_cross_sign: None,
                         });
@@ -4124,15 +3782,13 @@ impl RationalBezier2 {
                                 }
                             }
                         }
-                        BezierParameter2::Algebraic(parameter) => {
-                            RationalBezierIntersectionPointEvidence2::Algebraic(
-                                RationalBezierAlgebraicPointImage2::from_parametric_source(
-                                    other.clone(),
-                                    parameter.clone(),
-                                    policy,
-                                ),
-                            )
-                        }
+                        BezierParameter2::Algebraic(parameter) => CurvePoint2::from(
+                            RationalBezierAlgebraicPointImage2::from_parametric_source(
+                                other.clone(),
+                                parameter.clone(),
+                                policy,
+                            ),
+                        ),
                     };
                     contacts.push(RationalBezierIntersectionContact2 {
                         first_parameter: conic_parameter,
@@ -4330,9 +3986,7 @@ impl RationalBezier2 {
                                 RationalBezierIntersectionContact2 {
                                     first_parameter: curve_parameter.clone(),
                                     second_parameter: BezierParameter2::Exact(line_parameter),
-                                    point: RationalBezierIntersectionPointEvidence2::Exact(
-                                        point.clone(),
-                                    ),
+                                    point: CurvePoint2::from(point.clone()),
                                     certified_transverse: direction_moves_outside,
                                     tangent_cross_sign: None,
                                 },
@@ -4411,7 +4065,7 @@ impl RationalBezier2 {
                         replayed.push(RationalBezierIntersectionContact2 {
                             first_parameter: curve_parameter,
                             second_parameter: BezierParameter2::Exact(line_parameter.clone()),
-                            point: RationalBezierIntersectionPointEvidence2::Exact(point.clone()),
+                            point: CurvePoint2::from(point.clone()),
                             certified_transverse,
                             tangent_cross_sign: None,
                         });
@@ -4538,7 +4192,7 @@ impl RationalBezier2 {
             replayed.push(RationalBezierIntersectionContact2 {
                 first_parameter: parameter,
                 second_parameter: other_parameter,
-                point: RationalBezierIntersectionPointEvidence2::Exact(point),
+                point: CurvePoint2::from(point),
                 certified_transverse: contact.kind() == BezierLineContactKind::Crossing,
                 tangent_cross_sign: None,
             });
@@ -4633,7 +4287,7 @@ impl RationalBezier2 {
                     contacts.push(RationalBezierIntersectionContact2 {
                         first_parameter: first_parameter.clone(),
                         second_parameter: second_parameter.clone(),
-                        point: RationalBezierIntersectionPointEvidence2::Exact(point.clone()),
+                        point: CurvePoint2::from(point.clone()),
                         certified_transverse,
                         tangent_cross_sign: None,
                     });
@@ -4678,7 +4332,7 @@ impl RationalBezier2 {
                             replayed.push(RationalBezierIntersectionContact2 {
                                 first_parameter: BezierParameter2::Exact(first_parameter),
                                 second_parameter: BezierParameter2::Exact(second_parameter),
-                                point: RationalBezierIntersectionPointEvidence2::Exact(point),
+                                point: CurvePoint2::from(point),
                                 certified_transverse: false,
                                 tangent_cross_sign: None,
                             });
@@ -5312,10 +4966,7 @@ impl RationalBezier2 {
         unordered_self_pairs: bool,
         pair_equations: Option<&[BivariatePolynomial; 2]>,
         mut certified_pair_point_evidence: Option<
-            &mut dyn FnMut(
-                &BezierParameter2,
-            )
-                -> CurveResult<Option<RationalBezierIntersectionPointEvidence2>>,
+            &mut dyn FnMut(&BezierParameter2) -> CurveResult<Option<CurvePoint2>>,
         >,
         policy: &CurveContext,
     ) -> CurveResult<Classification<RationalBezierIntersectionContacts2>> {
@@ -5591,7 +5242,7 @@ impl RationalBezier2 {
                 Ok(Some(CandidatePointReplay {
                     x: AlgebraicRootRepresentation::from_exact_value(point.x()),
                     y: AlgebraicRootRepresentation::from_exact_value(point.y()),
-                    evidence: RationalBezierIntersectionPointEvidence2::Exact(point),
+                    evidence: CurvePoint2::from(point),
                 }))
             }
             BezierParameter2::Algebraic(parameter) => {
@@ -5612,7 +5263,7 @@ impl RationalBezier2 {
                     return Ok(Some(CandidatePointReplay {
                         x: x.clone(),
                         y: y.clone(),
-                        evidence: RationalBezierIntersectionPointEvidence2::Algebraic(image),
+                        evidence: CurvePoint2::from(image),
                     }));
                 }
                 Ok(None)
@@ -8663,13 +8314,11 @@ pub(crate) fn exact_contact_point_evidence(
     curve: &RationalBezier2,
     parameter: &BezierParameter2,
     policy: &CurveContext,
-) -> CurveResult<Option<RationalBezierIntersectionPointEvidence2>> {
+) -> CurveResult<Option<CurvePoint2>> {
     match parameter {
         BezierParameter2::Exact(parameter) => {
             Ok(match curve.point_at_classified(parameter, policy) {
-                Classification::Decided(point) => {
-                    Some(RationalBezierIntersectionPointEvidence2::Exact(point))
-                }
+                Classification::Decided(point) => Some(CurvePoint2::from(point)),
                 Classification::Uncertain(_) => None,
             })
         }
@@ -8678,7 +8327,7 @@ pub(crate) fn exact_contact_point_evidence(
             Ok(match image.status() {
                 crate::BezierAlgebraicImageStatus::Transformed
                 | crate::BezierAlgebraicImageStatus::RetainedRationalExpression => {
-                    Some(RationalBezierIntersectionPointEvidence2::Algebraic(image))
+                    Some(CurvePoint2::from(image))
                 }
                 crate::BezierAlgebraicImageStatus::XImageFailed
                 | crate::BezierAlgebraicImageStatus::YImageFailed
@@ -10239,7 +9888,7 @@ mod tests {
         )
         .unwrap()
         .expect("the exact parametric source must survive a bounded image failure");
-        let RationalBezierIntersectionPointEvidence2::Algebraic(retained) = evidence else {
+        let CurvePoint2(CurvePointData2::Algebraic(retained)) = evidence else {
             panic!("the high-degree contact must remain algebraic");
         };
         assert_eq!(
@@ -11397,8 +11046,7 @@ mod tests {
                 .cached_rational_bezier_point_image(&conic)
                 .is_none()
         );
-        let RationalBezierIntersectionPointEvidence2::Algebraic(point_image) = contact.point()
-        else {
+        let CurvePoint2(CurvePointData2::Algebraic(point_image)) = contact.point() else {
             panic!("implicit-conic contact did not retain algebraic point evidence");
         };
         assert_eq!(

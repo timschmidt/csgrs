@@ -2,8 +2,7 @@ mod support;
 
 use hypercurve::{
     BezierAlgebraicChord2, BezierAlgebraicParameter2, BezierParameterInterval,
-    BezierParameterPolynomial, CurveBoundaryInteriorSide2, CurveRegionBoundaryLoop2,
-    RationalBezierIntersectionPointEvidence2,
+    BezierParameterPolynomial, CurveBoundaryInteriorSide2, CurvePoint2, CurveRegionBoundaryLoop2,
 };
 use hypercurve::{
     BezierFlatteningOptions, BezierSplitFragment2, BezierSubcurve2, CircularArc2, Classification,
@@ -363,18 +362,18 @@ fn axis_aligned_algebraic_rectangle(policy: &CurveContext) -> CurveRegion2 {
         )
         .unwrap()
     };
-    let bottom_right = RationalBezierIntersectionPointEvidence2::Algebraic(
+    let bottom_right = CurvePoint2::from(
         horizontal(Real::zero())
             .point_at_algebraic_parameter(&parameter, policy)
             .unwrap(),
     );
-    let top_right = RationalBezierIntersectionPointEvidence2::Algebraic(
+    let top_right = CurvePoint2::from(
         horizontal(Real::one())
             .point_at_algebraic_parameter(&parameter, policy)
             .unwrap(),
     );
-    let bottom_left = RationalBezierIntersectionPointEvidence2::Exact(p(0, 0));
-    let top_left = RationalBezierIntersectionPointEvidence2::Exact(p(0, 1));
+    let bottom_left = CurvePoint2::from(p(0, 0));
+    let top_left = CurvePoint2::from(p(0, 1));
     let chord = |start, end| {
         BezierSplitFragment2::AlgebraicChord(decided(
             BezierAlgebraicChord2::try_new(start, end, policy).unwrap(),
@@ -409,7 +408,7 @@ fn shifted_algebraic_rectangle_boundary(
     policy: &CurveContext,
 ) -> CurveRegionBoundaryLoop2 {
     let point = |x: i64, y: i64| {
-        RationalBezierIntersectionPointEvidence2::Algebraic(
+        CurvePoint2::from(
             RationalBezier2::try_new(vec![p(x, y), p(x + 1, y)], vec![Real::one(); 2])
                 .unwrap()
                 .point_at_algebraic_parameter(parameter, policy)
@@ -515,13 +514,12 @@ fn correlated_chord_pair_endpoints_survive_transform_and_offset() {
                 .value
                 .contacts()
                 .iter()
-                .filter(|contact| matches!(
-                    contact.point(),
-                    Some(RationalBezierIntersectionPointEvidence2::AlgebraicChordPair(_))
-                ))
+                .filter(
+                    |contact| (contact.point()).is_some_and(|point| point.coordinates().is_none())
+                )
                 .count()
                 >= 1,
-            "the strict-interior line crossings must retain their two-support point evidence: {evidence:?}",
+            "the strict-interior line crossings must retain their exact selected points: {evidence:?}",
         );
 
         let batch = first
@@ -529,26 +527,21 @@ fn correlated_chord_pair_endpoints_survive_transform_and_offset() {
             .expect("the two retained chord regions must Boolean exactly");
         assert_eq!(batch.certainty, CurveCertainty::Certified);
         let intersection = batch.value.intersection().clone();
-        let retained_pair_endpoints = |region: &CurveRegion2| {
+        let retained_selected_endpoints = |region: &CurveRegion2| {
             region
                 .boundary_loops()
                 .iter()
                 .flat_map(|boundary| boundary.fragments())
                 .filter_map(|fragment| match fragment {
                     BezierSplitFragment2::AlgebraicChord(chord) => Some(
-                        usize::from(matches!(
-                            chord.start(),
-                            RationalBezierIntersectionPointEvidence2::AlgebraicChordPair(_)
-                        )) + usize::from(matches!(
-                            chord.end(),
-                            RationalBezierIntersectionPointEvidence2::AlgebraicChordPair(_)
-                        )),
+                        usize::from((chord.start()).coordinates().is_none())
+                            + usize::from((chord.end()).coordinates().is_none()),
                     ),
                     _ => None,
                 })
                 .sum::<usize>()
         };
-        assert!(retained_pair_endpoints(&intersection) >= 2);
+        assert!(retained_selected_endpoints(&intersection) >= 2);
 
         let transformed = intersection
             .transform_affine(
@@ -571,7 +564,7 @@ fn correlated_chord_pair_endpoints_survive_transform_and_offset() {
             ),
             Classification::Decided(RegionPointLocation::Inside),
         );
-        assert!(retained_pair_endpoints(&transformed.value) >= 2);
+        assert!(retained_selected_endpoints(&transformed.value) >= 2);
 
         let expanded = transformed
             .value
@@ -579,7 +572,7 @@ fn correlated_chord_pair_endpoints_survive_transform_and_offset() {
             .expect("transformed chord-pair endpoints must survive an exact offset");
         assert_eq!(expanded.certainty, CurveCertainty::Certified);
         assert!(!expanded.value.is_empty());
-        assert!(retained_pair_endpoints(&expanded.value) >= 2);
+        assert!(retained_selected_endpoints(&expanded.value) >= 2);
     }
 }
 
@@ -596,7 +589,7 @@ fn axis_aligned_algebraic_l_region(policy: &CurveContext) -> CurveRegion2 {
     let parameter =
         decided(BezierAlgebraicParameter2::try_isolate(polynomial, interval, policy).unwrap());
     let selected = |height: Real| {
-        RationalBezierIntersectionPointEvidence2::Algebraic(
+        CurvePoint2::from(
             RationalBezier2::try_new(
                 vec![
                     Point2::new(Real::zero(), height.clone()),
@@ -609,7 +602,7 @@ fn axis_aligned_algebraic_l_region(policy: &CurveContext) -> CurveRegion2 {
             .unwrap(),
         )
     };
-    let exact = |x, y| RationalBezierIntersectionPointEvidence2::Exact(Point2::new(x, y));
+    let exact = |x, y| CurvePoint2::from(Point2::new(x, y));
     let points = [
         exact(Real::zero(), Real::zero()),
         selected(Real::zero()),
@@ -657,7 +650,7 @@ fn axis_aligned_algebraic_dumbbell_region(
     let parameter =
         decided(BezierAlgebraicParameter2::try_isolate(polynomial, interval, policy).unwrap());
     let selected = |height: Real| {
-        RationalBezierIntersectionPointEvidence2::Algebraic(
+        CurvePoint2::from(
             RationalBezier2::try_new(
                 vec![
                     Point2::new(Real::from(12), height.clone()),
@@ -670,7 +663,7 @@ fn axis_aligned_algebraic_dumbbell_region(
             .unwrap(),
         )
     };
-    let exact = |x, y| RationalBezierIntersectionPointEvidence2::Exact(p(x, y));
+    let exact = |x, y| CurvePoint2::from(p(x, y));
     let points = [
         exact(0, 0),
         exact(4, 0),
@@ -2456,14 +2449,14 @@ fn selected_algebraic_round_join_retains_a_general_minor_cut() {
             decided(BezierParameterInterval::try_new(Real::zero(), Real::one(), &policy).unwrap());
         let parameter =
             decided(BezierAlgebraicParameter2::try_isolate(polynomial, interval, &policy).unwrap());
-        let selected = RationalBezierIntersectionPointEvidence2::Algebraic(
+        let selected = CurvePoint2::from(
             RationalBezier2::try_new(vec![p(0, 0), p(1, 0)], vec![Real::one(), Real::one()])
                 .unwrap()
                 .point_at_algebraic_parameter(&parameter, &policy)
                 .unwrap(),
         );
-        let origin = RationalBezierIntersectionPointEvidence2::Exact(p(0, 0));
-        let top = RationalBezierIntersectionPointEvidence2::Exact(p(0, 1));
+        let origin = CurvePoint2::from(p(0, 0));
+        let top = CurvePoint2::from(p(0, 1));
         let chord = |start, end| {
             BezierSplitFragment2::AlgebraicChord(decided(
                 BezierAlgebraicChord2::try_new(start, end, &policy).unwrap(),
@@ -2796,11 +2789,8 @@ fn translated_algebraic_round_regions_boolean_through_cusp_chord_contacts() {
         );
         assert!(!evidence.contacts().is_empty(), "{evidence:?}");
         assert!(
-            evidence.contacts().iter().any(|contact| matches!(
-                contact.point(),
-                Some(RationalBezierIntersectionPointEvidence2::AlgebraicCuspChord(_))
-            )),
-            "the translated round regions must exercise retained cusp/chord contacts: {evidence:?}",
+            evidence.contacts().iter().any(|contact| (contact.point()).is_some_and(|point| point.coordinates().is_none())),
+            "the translated round regions must retain exact selected contacts: {evidence:?}",
         );
 
         let batch = first
@@ -3130,12 +3120,7 @@ fn one_chord_orders_contacts_from_two_selected_round_corners() {
         let correlated_contacts = evidence
             .contacts()
             .iter()
-            .filter(|contact| {
-                matches!(
-                    contact.point(),
-                    Some(RationalBezierIntersectionPointEvidence2::AlgebraicCuspChord(_))
-                )
-            })
+            .filter(|contact| (contact.point()).is_some_and(|point| point.coordinates().is_none()))
             .count();
         #[cfg(feature = "dispatch-trace")]
         assert!(
@@ -3164,13 +3149,8 @@ fn one_chord_orders_contacts_from_two_selected_round_corners() {
             .flat_map(|boundary| boundary.fragments())
             .filter_map(|fragment| match fragment {
                 BezierSplitFragment2::AlgebraicChord(chord) => Some(
-                    usize::from(matches!(
-                        chord.start(),
-                        RationalBezierIntersectionPointEvidence2::AlgebraicCuspChord(_)
-                    )) + usize::from(matches!(
-                        chord.end(),
-                        RationalBezierIntersectionPointEvidence2::AlgebraicCuspChord(_)
-                    )),
+                    usize::from((chord.start()).coordinates().is_none())
+                        + usize::from((chord.end()).coordinates().is_none()),
                 ),
                 _ => None,
             })
@@ -3549,8 +3529,8 @@ fn canonical_exact_chord_regions_fillet_without_line_demotion() {
             .windows(2)
             .map(|edge| {
                 let Classification::Decided(chord) = BezierAlgebraicChord2::try_new(
-                    RationalBezierIntersectionPointEvidence2::Exact(edge[0].clone()),
-                    RationalBezierIntersectionPointEvidence2::Exact(edge[1].clone()),
+                    CurvePoint2::from(edge[0].clone()),
+                    CurvePoint2::from(edge[1].clone()),
                     policy,
                 )
                 .unwrap() else {
@@ -3699,14 +3679,14 @@ fn selected_endpoint_chord_pairs_share_the_linear_fillet_kernel() {
         let parameter =
             decided(BezierAlgebraicParameter2::try_isolate(polynomial, interval, policy).unwrap());
         let selected = |start: Point2, end: Point2| {
-            RationalBezierIntersectionPointEvidence2::Algebraic(
+            CurvePoint2::from(
                 RationalBezier2::try_new(vec![start, end], vec![Real::one(); 2])
                     .unwrap()
                     .point_at_algebraic_parameter(&parameter, policy)
                     .unwrap(),
             )
         };
-        let corner = RationalBezierIntersectionPointEvidence2::Exact(p(0, 0));
+        let corner = CurvePoint2::from(p(0, 0));
         let incoming = selected(p(-5, 0), p(-4, 0));
         let outgoing = selected(p(0, 4), p(0, 5));
         let chord = |start, end| {
@@ -3753,8 +3733,8 @@ fn selected_endpoint_chord_pairs_share_the_linear_fillet_kernel() {
                     let BezierSplitFragment2::AlgebraicChord(next) = &fragments[*index] else {
                         return false;
                     };
-                    previous.end().as_exact() == Some(&p(0, 0))
-                        && next.start().as_exact() == Some(&p(0, 0))
+                    previous.end().coordinates() == Some(&p(0, 0))
+                        && next.start().coordinates() == Some(&p(0, 0))
                 })
                 .expect("the selected-endpoint triangle retains its represented corner");
             let result = region
@@ -3813,7 +3793,7 @@ fn selected_endpoint_chords_share_linear_arc_fillet_incidence() {
         let parameter =
             decided(BezierAlgebraicParameter2::try_isolate(polynomial, interval, policy).unwrap());
         let selected = |start: Point2, end: Point2| {
-            RationalBezierIntersectionPointEvidence2::Algebraic(
+            CurvePoint2::from(
                 RationalBezier2::try_new(vec![start, end], vec![Real::one(); 2])
                     .unwrap()
                     .point_at_algebraic_parameter(&parameter, policy)
@@ -3822,8 +3802,8 @@ fn selected_endpoint_chords_share_linear_arc_fillet_incidence() {
         };
         let lower_left = selected(p(-3, 0), p(-2, 0));
         let upper_left = selected(p(-3, 1), p(-2, 1));
-        let corner = RationalBezierIntersectionPointEvidence2::Exact(p(0, 0));
-        let upper_right = RationalBezierIntersectionPointEvidence2::Exact(p(1, 1));
+        let corner = CurvePoint2::from(p(0, 0));
+        let upper_right = CurvePoint2::from(p(1, 1));
         let chord = |start, end| {
             BezierSplitFragment2::AlgebraicChord(decided(
                 BezierAlgebraicChord2::try_new(start, end, policy).unwrap(),
@@ -3903,7 +3883,8 @@ fn selected_endpoint_chords_share_linear_arc_fillet_incidence() {
                                 ..
                             },
                         ) => {
-                            previous.end().as_exact() == Some(&p(0, 0)) && next.start() == &p(0, 0)
+                            previous.end().coordinates() == Some(&p(0, 0))
+                                && next.start() == &p(0, 0)
                         }
                         (
                             BezierSplitFragment2::Materialized {
@@ -3912,7 +3893,8 @@ fn selected_endpoint_chords_share_linear_arc_fillet_incidence() {
                             },
                             BezierSplitFragment2::AlgebraicChord(next),
                         ) => {
-                            previous.end() == &p(0, 0) && next.start().as_exact() == Some(&p(0, 0))
+                            previous.end() == &p(0, 0)
+                                && next.start().coordinates() == Some(&p(0, 0))
                         }
                         _ => false,
                     }
@@ -4317,7 +4299,7 @@ fn selected_endpoint_chords_share_linear_bezier_fillet_incidence() {
         let parameter =
             decided(BezierAlgebraicParameter2::try_isolate(polynomial, interval, policy).unwrap());
         let selected = |start: Point2, end: Point2| {
-            RationalBezierIntersectionPointEvidence2::Algebraic(
+            CurvePoint2::from(
                 RationalBezier2::try_new(vec![start, end], vec![Real::one(); 2])
                     .unwrap()
                     .point_at_algebraic_parameter(&parameter, policy)
@@ -4326,8 +4308,8 @@ fn selected_endpoint_chords_share_linear_bezier_fillet_incidence() {
         };
         let lower_left = selected(p(-5, 0), p(-4, 0));
         let upper_left = selected(p(-5, 2), p(-4, 2));
-        let corner = RationalBezierIntersectionPointEvidence2::Exact(p(0, 0));
-        let upper_right = RationalBezierIntersectionPointEvidence2::Exact(p(1, 2));
+        let corner = CurvePoint2::from(p(0, 0));
+        let upper_right = CurvePoint2::from(p(1, 2));
         let chord = |start, end| {
             BezierSplitFragment2::AlgebraicChord(decided(
                 BezierAlgebraicChord2::try_new(start, end, policy).unwrap(),
@@ -4385,7 +4367,8 @@ fn selected_endpoint_chords_share_linear_bezier_fillet_incidence() {
                                 ..
                             },
                         ) => {
-                            previous.end().as_exact() == Some(&p(0, 0)) && next.start() == &p(0, 0)
+                            previous.end().coordinates() == Some(&p(0, 0))
+                                && next.start() == &p(0, 0)
                         }
                         (
                             BezierSplitFragment2::Materialized {
@@ -4394,7 +4377,8 @@ fn selected_endpoint_chords_share_linear_bezier_fillet_incidence() {
                             },
                             BezierSplitFragment2::AlgebraicChord(next),
                         ) => {
-                            previous.end() == &p(0, 0) && next.start().as_exact() == Some(&p(0, 0))
+                            previous.end() == &p(0, 0)
+                                && next.start().coordinates() == Some(&p(0, 0))
                         }
                         _ => false,
                     }
@@ -5248,17 +5232,15 @@ fn exact_support_cutter_reenters_correlated_chord_collinearly() {
         let fragments = first.boundary_loops()[0].fragments();
         let retained_index = fragments
             .iter()
-            .position(|fragment| {
-                matches!(
-                    fragment,
-                    BezierSplitFragment2::AlgebraicChord(chord)
-                        if matches!(
-                            chord.start(),
-                            RationalBezierIntersectionPointEvidence2::AlgebraicCuspChord(_)
-                        )
-                )
+            .enumerate()
+            .position(|(index, fragment)| {
+                matches!(fragment, BezierSplitFragment2::AlgebraicChord(_))
+                    && matches!(
+                        fragments[(index + fragments.len() - 1) % fragments.len()],
+                        BezierSplitFragment2::AlgebraicCuspSemicircle(_),
+                    )
             })
-            .expect("the exact support must retain its selected-circle contact");
+            .expect("the exact support must follow its incident selected circle");
         let BezierSplitFragment2::AlgebraicChord(retained) = &fragments[retained_index] else {
             unreachable!("the retained fragment was selected as a chord")
         };
@@ -5325,9 +5307,7 @@ fn exact_support_cutter_reenters_correlated_chord_collinearly() {
         let (after_retained, closure_start) = match &fragments[after_retained_index] {
             fragment @ BezierSplitFragment2::Materialized { curve, .. } => (
                 fragment.clone(),
-                RationalBezierIntersectionPointEvidence2::Exact(decided(
-                    curve.point_at(&Real::one(), &policy),
-                )),
+                CurvePoint2::from(decided(curve.point_at(&Real::one(), &policy))),
             ),
             fragment @ BezierSplitFragment2::AlgebraicChord(chord) => {
                 (fragment.clone(), chord.end().clone())
