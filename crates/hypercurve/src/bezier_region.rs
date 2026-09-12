@@ -20847,7 +20847,18 @@ fn classify_point_with_retained_ray_skipping_origin(
                                     }
                                 }
                             } else {
-                                retained_origin_parameter()?
+                                // A sole crossing and the certified source
+                                // incidence identify the origin even when its
+                                // reconstructed scalar equality is undecided.
+                                match policy.strict_predicate_pass(retained_origin_parameter)? {
+                                    decided @ Classification::Decided(_) => decided,
+                                    uncertain @ Classification::Uncertain(_)
+                                        if sole_crossing_contact =>
+                                    {
+                                        uncertain
+                                    }
+                                    Classification::Uncertain(_) => retained_origin_parameter()?,
+                                }
                             };
                         match is_origin {
                             Classification::Decided(true) => {
