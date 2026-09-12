@@ -21,26 +21,37 @@ struct PiAtanTermsForm {
     terms: Vec<(Computable, Rational)>,
 }
 
+// A bounded recognition form for exact rational combinations of positive
+// rational square roots and opaque linear atoms. Independent radicals retain
+// their identities instead of turning their entire sum into one opaque atom.
 #[derive(Clone)]
-struct QuadraticCoefficient {
+struct RadicalCoefficient {
     rational: Rational,
-    radical: Rational,
+    radicals: Vec<(Rational, Rational)>,
     atoms: Vec<(Computable, Rational)>,
 }
 
-impl QuadraticCoefficient {
+impl RadicalCoefficient {
+    // Bounds optional symbolic recognition, never the underlying exact DAG.
+    const MAX_RADICAL_TERMS: usize = 8;
+
     fn rational(value: Rational) -> Self {
         Self {
             rational: value,
-            radical: Rational::zero(),
+            radicals: Vec::new(),
             atoms: Vec::new(),
         }
     }
 
-    fn radical(value: Rational) -> Self {
+    fn radical(value: Rational, radicand: Rational) -> Self {
+        let (scale, radicand) = radicand.extract_square_reduced_retained();
+        let value = value * scale;
+        if radicand.is_one() || value.sign() == Sign::NoSign {
+            return Self::rational(value);
+        }
         Self {
             rational: Rational::zero(),
-            radical: value,
+            radicals: vec![(radicand, value)],
             atoms: Vec::new(),
         }
     }
@@ -48,108 +59,141 @@ impl QuadraticCoefficient {
     fn atom(value: Computable) -> Self {
         Self {
             rational: Rational::zero(),
-            radical: Rational::zero(),
+            radicals: Vec::new(),
             atoms: vec![(value, Rational::one())],
         }
     }
 
     fn is_zero(&self) -> bool {
-        self.rational.sign() == Sign::NoSign
-            && self.radical.sign() == Sign::NoSign
-            && self.atoms.is_empty()
+        self.rational.sign() == Sign::NoSign && self.radicals.is_empty() && self.atoms.is_empty()
     }
 
-    fn add(mut self, other: Self) -> Self {
-        self.rational = self.rational + other.rational;
-        self.radical = self.radical + other.radical;
-        for (atom, coefficient) in other.atoms {
-            if let Some((_, existing)) = self
-                .atoms
-                .iter_mut()
-                .find(|(candidate, _)| Computable::internal_structural_eq(candidate, &atom))
-            {
-                *existing = existing.clone() + coefficient;
-            } else {
-                self.atoms.push((atom, coefficient));
-            }
+    fn insert_radical(&mut self, radicand: Rational, coefficient: Rational) -> Option<()> {
+        if coefficient.sign() == Sign::NoSign {
+            return Some(());
         }
-        self.atoms
-            .retain(|(_, coefficient)| coefficient.sign() != Sign::NoSign);
-        self
+        if radicand.is_one() {
+            self.rational = &self.rational + coefficient;
+            return Some(());
+        }
+        if let Some(index) = self
+            .radicals
+            .iter()
+            .position(|(candidate, _)| *candidate == radicand)
+        {
+            self.radicals[index].1 = &self.radicals[index].1 + coefficient;
+            if self.radicals[index].1.sign() == Sign::NoSign {
+                self.radicals.remove(index);
+            }
+        } else {
+            if self.radicals.len() == Self::MAX_RADICAL_TERMS {
+                return None;
+            }
+            self.radicals.push((radicand, coefficient));
+        }
+        Some(())
+    }
+
+    fn insert_atom(&mut self, atom: Computable, coefficient: Rational) {
+        if coefficient.sign() == Sign::NoSign {
+            return;
+        }
+        if let Some(index) = self
+            .atoms
+            .iter()
+            .position(|(candidate, _)| Computable::internal_structural_eq(candidate, &atom))
+        {
+            self.atoms[index].1 = &self.atoms[index].1 + coefficient;
+            if self.atoms[index].1.sign() == Sign::NoSign {
+                self.atoms.remove(index);
+            }
+        } else {
+            self.atoms.push((atom, coefficient));
+        }
+    }
+
+    fn add(mut self, other: Self) -> Option<Self> {
+        self.rational = self.rational + other.rational;
+        for (radicand, coefficient) in other.radicals {
+            self.insert_radical(radicand, coefficient)?;
+        }
+        for (atom, coefficient) in other.atoms {
+            self.insert_atom(atom, coefficient);
+        }
+        Some(self)
     }
 
     fn scaled(mut self, scale: &Rational) -> Self {
         self.rational *= scale;
-        self.radical *= scale;
+        for (_, coefficient) in &mut self.radicals {
+            *coefficient *= scale;
+        }
         for (_, coefficient) in &mut self.atoms {
             *coefficient *= scale;
         }
+        self.radicals
+            .retain(|(_, coefficient)| coefficient.sign() != Sign::NoSign);
         self.atoms
             .retain(|(_, coefficient)| coefficient.sign() != Sign::NoSign);
         self
     }
 
-    fn multiply(self, other: &Self, radicand: Option<&Rational>) -> Option<Self> {
-        if (!self.atoms.is_empty()
-            && (other.radical.sign() != Sign::NoSign || !other.atoms.is_empty()))
-            || (!other.atoms.is_empty() && self.radical.sign() != Sign::NoSign)
+    fn multiply(self, other: &Self) -> Option<Self> {
+        if (!self.atoms.is_empty() && (!other.radicals.is_empty() || !other.atoms.is_empty()))
+            || (!other.atoms.is_empty() && !self.radicals.is_empty())
         {
             return None;
         }
-        let cross = &self.rational * &other.radical + &self.radical * &other.rational;
-        let mut rational = &self.rational * &other.rational;
-        let radical_product = &self.radical * &other.radical;
-        if radical_product.sign() != Sign::NoSign {
-            rational = rational + radical_product * radicand?;
+        let mut result = Self::rational(&self.rational * &other.rational);
+        for (radicand, coefficient) in &self.radicals {
+            result.insert_radical(radicand.clone(), coefficient * &other.rational)?;
         }
-        let mut atoms = self
-            .atoms
-            .into_iter()
-            .map(|(atom, coefficient)| (atom, coefficient * &other.rational))
-            .collect::<Vec<_>>();
-        for (atom, coefficient) in &other.atoms {
-            let coefficient = coefficient * &self.rational;
-            if let Some((_, existing)) = atoms
-                .iter_mut()
-                .find(|(candidate, _)| Computable::internal_structural_eq(candidate, atom))
-            {
-                *existing = existing.clone() + coefficient;
-            } else {
-                atoms.push((atom.clone(), coefficient));
+        for (radicand, coefficient) in &other.radicals {
+            result.insert_radical(radicand.clone(), coefficient * &self.rational)?;
+        }
+        for (left, left_coefficient) in self.radicals {
+            for (right, right_coefficient) in &other.radicals {
+                let coefficient = &left_coefficient * right_coefficient;
+                if left == *right {
+                    result.rational = result.rational + coefficient * &left;
+                } else {
+                    let (scale, radicand) = (&left * right).extract_square_reduced_retained();
+                    result.insert_radical(radicand, coefficient * scale)?;
+                }
             }
         }
-        atoms.retain(|(_, coefficient)| coefficient.sign() != Sign::NoSign);
-        Some(Self {
-            rational,
-            radical: cross,
-            atoms,
-        })
+        for (atom, coefficient) in self.atoms {
+            result.insert_atom(atom, coefficient * &other.rational);
+        }
+        for (atom, coefficient) in &other.atoms {
+            result.insert_atom(atom.clone(), coefficient * &self.rational);
+        }
+        Some(result)
     }
 
-    fn inverse(self, radicand: Option<&Rational>) -> Option<Self> {
+    fn inverse(self) -> Option<Self> {
         if !self.atoms.is_empty() {
             return None;
         }
-        if self.radical.sign() == Sign::NoSign {
-            return Some(Self::rational(self.rational.inverse().ok()?));
+        match self.radicals.as_slice() {
+            [] => Some(Self::rational(self.rational.inverse().ok()?)),
+            [(radicand, coefficient)] => {
+                let norm = &self.rational * &self.rational - coefficient * coefficient * radicand;
+                let inverse_norm = norm.inverse().ok()?;
+                Some(Self {
+                    rational: self.rational * &inverse_norm,
+                    radicals: vec![(radicand.clone(), -coefficient * inverse_norm)],
+                    atoms: Vec::new(),
+                })
+            }
+            _ => None,
         }
-        let radicand = radicand?;
-        let norm =
-            &self.rational * &self.rational - &self.radical * &self.radical * radicand;
-        let inverse_norm = norm.inverse().ok()?;
-        Some(Self {
-            rational: self.rational * &inverse_norm,
-            radical: -self.radical * inverse_norm,
-            atoms: Vec::new(),
-        })
     }
-
 }
 
 #[derive(Clone)]
-struct PiQuadraticLaurentPolynomial {
-    radicand: Option<Rational>,
-    terms: Vec<(i16, QuadraticCoefficient)>,
+struct PiLaurentPolynomial {
+    terms: Vec<(i16, RadicalCoefficient)>,
 }
 
 // This normal form is a bounded recognition fast path, not an exactness
@@ -159,16 +203,11 @@ struct PiQuadraticLaurentPolynomial {
 // representation when this recognition budget is exhausted.
 const MAX_PI_LAURENT_NORMAL_FORM_NODES: usize = 512;
 
-impl PiQuadraticLaurentPolynomial {
+impl PiLaurentPolynomial {
     const MAX_TERMS: usize = 8;
 
-    fn monomial(
-        power: i16,
-        coefficient: QuadraticCoefficient,
-        radicand: Option<Rational>,
-    ) -> Self {
+    fn monomial(power: i16, coefficient: RadicalCoefficient) -> Self {
         Self {
-            radicand,
             terms: (!coefficient.is_zero())
                 .then_some((power, coefficient))
                 .into_iter()
@@ -176,28 +215,7 @@ impl PiQuadraticLaurentPolynomial {
         }
     }
 
-    fn normalize_radicand(&mut self) {
-        if self
-            .terms
-            .iter()
-            .all(|(_, coefficient)| coefficient.radical.sign() == Sign::NoSign)
-        {
-            self.radicand = None;
-        }
-    }
-
-    fn merge_radicand(&mut self, other: &Self) -> Option<()> {
-        match (&self.radicand, &other.radicand) {
-            (Some(left), Some(right)) if left != right => None,
-            (None, Some(right)) => {
-                self.radicand = Some(right.clone());
-                Some(())
-            }
-            _ => Some(()),
-        }
-    }
-
-    fn insert(&mut self, power: i16, coefficient: QuadraticCoefficient) -> Option<()> {
+    fn insert(&mut self, power: i16, coefficient: RadicalCoefficient) -> Option<()> {
         if coefficient.is_zero() {
             return Some(());
         }
@@ -206,7 +224,7 @@ impl PiQuadraticLaurentPolynomial {
             .binary_search_by_key(&power, |(candidate, _)| *candidate)
         {
             Ok(index) => {
-                let sum = self.terms[index].1.clone().add(coefficient);
+                let sum = self.terms[index].1.clone().add(coefficient)?;
                 if sum.is_zero() {
                     self.terms.remove(index);
                 } else {
@@ -224,18 +242,15 @@ impl PiQuadraticLaurentPolynomial {
     }
 
     fn add(mut self, other: Self) -> Option<Self> {
-        self.merge_radicand(&other)?;
         for (power, coefficient) in other.terms {
             self.insert(power, coefficient)?;
         }
-        self.normalize_radicand();
         Some(self)
     }
 
     fn scaled(mut self, scale: Rational) -> Self {
         if scale.sign() == Sign::NoSign {
             self.terms.clear();
-            self.radicand = None;
             return self;
         }
         for (_, coefficient) in &mut self.terms {
@@ -244,24 +259,16 @@ impl PiQuadraticLaurentPolynomial {
         self
     }
 
-    fn multiply(mut self, other: Self) -> Option<Self> {
-        self.merge_radicand(&other)?;
-        let radicand = self.radicand.clone();
-        let mut product = Self {
-            radicand,
-            terms: Vec::new(),
-        };
+    fn multiply(self, other: Self) -> Option<Self> {
+        let mut product = Self { terms: Vec::new() };
         for (left_power, left_coefficient) in self.terms {
             for (right_power, right_coefficient) in &other.terms {
                 product.insert(
                     left_power.checked_add(*right_power)?,
-                    left_coefficient
-                        .clone()
-                        .multiply(right_coefficient, product.radicand.as_ref())?,
+                    left_coefficient.clone().multiply(right_coefficient)?,
                 )?;
             }
         }
-        product.normalize_radicand();
         Some(product)
     }
 
@@ -271,11 +278,9 @@ impl PiQuadraticLaurentPolynomial {
         };
         Some(Self::monomial(
             power.checked_neg()?,
-            coefficient.clone().inverse(self.radicand.as_ref())?,
-            self.radicand,
+            coefficient.clone().inverse()?,
         ))
     }
-
 }
 
 impl PiAtanTermsForm {
@@ -359,10 +364,7 @@ impl PiAtanLinearForm {
 }
 
 impl Computable {
-    fn pi_laurent_polynomial(
-        &self,
-        budget: usize,
-    ) -> Option<PiQuadraticLaurentPolynomial> {
+    fn pi_laurent_polynomial(&self, budget: usize) -> Option<PiLaurentPolynomial> {
         let mut memo = None;
         let mut remaining_work = MAX_PI_LAURENT_NORMAL_FORM_NODES;
         self.pi_laurent_polynomial_with_memo(budget, &mut remaining_work, &mut memo)
@@ -372,8 +374,8 @@ impl Computable {
         &self,
         budget: usize,
         remaining_work: &mut usize,
-        memo: &mut Option<Vec<(usize, Option<PiQuadraticLaurentPolynomial>)>>,
-    ) -> Option<PiQuadraticLaurentPolynomial> {
+        memo: &mut Option<Vec<(usize, Option<PiLaurentPolynomial>)>>,
+    ) -> Option<PiLaurentPolynomial> {
         let key = Arc::as_ptr(&self.internal) as usize;
         let shared = Arc::strong_count(&self.internal) > 1;
         if shared
@@ -388,37 +390,31 @@ impl Computable {
         }
         *remaining_work -= 1;
         let result = if let Some(rational) = self.exact_rational() {
-            Some(PiQuadraticLaurentPolynomial::monomial(
+            Some(PiLaurentPolynomial::monomial(
                 0,
-                QuadraticCoefficient::rational(rational),
-                None,
+                RadicalCoefficient::rational(rational),
             ))
         } else if let Some(polynomial) = match self.shared_constant_kind() {
-            Some(SharedConstant::Pi) => Some(PiQuadraticLaurentPolynomial::monomial(
-                    1,
-                    QuadraticCoefficient::rational(Rational::one()),
-                    None,
-                )),
-            Some(SharedConstant::InvPi) => Some(PiQuadraticLaurentPolynomial::monomial(
-                    -1,
-                    QuadraticCoefficient::rational(Rational::one()),
-                    None,
-                )),
-            Some(SharedConstant::Tau) => Some(PiQuadraticLaurentPolynomial::monomial(
-                    1,
-                    QuadraticCoefficient::rational(Rational::new(2)),
-                    None,
-                )),
-            Some(SharedConstant::Sqrt2) => Some(PiQuadraticLaurentPolynomial::monomial(
-                    0,
-                    QuadraticCoefficient::radical(Rational::one()),
-                    Some(Rational::new(2)),
-                )),
-            Some(SharedConstant::Sqrt3) => Some(PiQuadraticLaurentPolynomial::monomial(
-                    0,
-                    QuadraticCoefficient::radical(Rational::one()),
-                    Some(Rational::new(3)),
-                )),
+            Some(SharedConstant::Pi) => Some(PiLaurentPolynomial::monomial(
+                1,
+                RadicalCoefficient::rational(Rational::one()),
+            )),
+            Some(SharedConstant::InvPi) => Some(PiLaurentPolynomial::monomial(
+                -1,
+                RadicalCoefficient::rational(Rational::one()),
+            )),
+            Some(SharedConstant::Tau) => Some(PiLaurentPolynomial::monomial(
+                1,
+                RadicalCoefficient::rational(Rational::new(2)),
+            )),
+            Some(SharedConstant::Sqrt2) => Some(PiLaurentPolynomial::monomial(
+                0,
+                RadicalCoefficient::radical(Rational::one(), Rational::new(2)),
+            )),
+            Some(SharedConstant::Sqrt3) => Some(PiLaurentPolynomial::monomial(
+                0,
+                RadicalCoefficient::radical(Rational::one(), Rational::new(3)),
+            )),
             _ => None,
         } {
             Some(polynomial)
@@ -426,10 +422,9 @@ impl Computable {
             || self.asin_argument().is_some()
             || self.acos_argument().is_some()
         {
-            Some(PiQuadraticLaurentPolynomial::monomial(
+            Some(PiLaurentPolynomial::monomial(
                 0,
-                QuadraticCoefficient::atom(self.clone()),
-                None,
+                RadicalCoefficient::atom(self.clone()),
             ))
         } else {
             let expanded = (|| match &self.internal.approximation {
@@ -461,26 +456,24 @@ impl Computable {
                     .pi_laurent_polynomial_with_memo(budget - 1, remaining_work, memo)?
                     .inverse_monomial(),
                 Approximation::Square(child) => {
-                    let child = child.pi_laurent_polynomial_with_memo(
-                        budget - 1,
-                        remaining_work,
-                        memo,
-                    )?;
+                    let child =
+                        child.pi_laurent_polynomial_with_memo(budget - 1, remaining_work, memo)?;
                     child.clone().multiply(child)
                 }
                 Approximation::Sqrt(child) => {
                     let radicand = child.exact_rational()?;
-                    Some(PiQuadraticLaurentPolynomial::monomial(
+                    if radicand.sign() == Sign::Minus {
+                        return None;
+                    }
+                    Some(PiLaurentPolynomial::monomial(
                         0,
-                        QuadraticCoefficient::radical(Rational::one()),
-                        Some(radicand),
+                        RadicalCoefficient::radical(Rational::one(), radicand),
                     ))
                 }
                 Approximation::LinearCombination3(combination) => {
-                    let mut sum = PiQuadraticLaurentPolynomial::monomial(
+                    let mut sum = PiLaurentPolynomial::monomial(
                         0,
-                        QuadraticCoefficient::rational(Rational::zero()),
-                        None,
+                        RadicalCoefficient::rational(Rational::zero()),
                     );
                     for (coefficient, value) in combination
                         .coefficients
@@ -489,11 +482,7 @@ impl Computable {
                     {
                         sum = sum.add(
                             coefficient
-                                .pi_laurent_polynomial_with_memo(
-                                    budget - 1,
-                                    remaining_work,
-                                    memo,
-                                )?
+                                .pi_laurent_polynomial_with_memo(budget - 1, remaining_work, memo)?
                                 .scaled(value.clone()),
                         )?;
                     }
@@ -502,10 +491,9 @@ impl Computable {
                 _ => None,
             })();
             expanded.or_else(|| {
-                Some(PiQuadraticLaurentPolynomial::monomial(
+                Some(PiLaurentPolynomial::monomial(
                     0,
-                    QuadraticCoefficient::atom(self.clone()),
-                    None,
+                    RadicalCoefficient::atom(self.clone()),
                 ))
             })
         };
@@ -521,8 +509,7 @@ impl Computable {
         let rational = match polynomial.terms.as_slice() {
             [] => Some(Rational::zero()),
             [(0, coefficient)]
-                if coefficient.radical.sign() == Sign::NoSign
-                    && coefficient.atoms.is_empty() =>
+                if coefficient.radicals.is_empty() && coefficient.atoms.is_empty() =>
             {
                 Some(coefficient.rational.clone())
             }
@@ -530,7 +517,9 @@ impl Computable {
         }?;
         // A successful symbolic proof remains valid for every clone. Retain
         // its sign so later predicates do not rebuild the same normal form.
-        self.internal.facts.replace_exact_sign(ExactSignCache::Valid(rational.sign()));
+        self.internal
+            .facts
+            .replace_exact_sign(ExactSignCache::Valid(rational.sign()));
         Some(rational)
     }
 
@@ -1019,8 +1008,7 @@ impl Computable {
         match polynomial.terms.as_slice() {
             [] => Some(Rational::zero()),
             [(1, coefficient)]
-                if coefficient.radical.sign() == Sign::NoSign
-                    && coefficient.atoms.is_empty() =>
+                if coefficient.radicals.is_empty() && coefficient.atoms.is_empty() =>
             {
                 Some(coefficient.rational.clone())
             }
