@@ -26515,47 +26515,36 @@ impl BezierAlgebraicCuspSemicircle2 {
                 return Ok(Classification::Uncertain(reason));
             }
         }
-        // If the owning loop has already certified one finite endpoint on the
-        // circle, the quadratic incidence polynomial has that exact root. Its
-        // discriminant is therefore the square of the derivative at that
-        // endpoint: `b^2` at t=0 and `(2a+b)^2` at t=1. Sign the smaller
-        // unsquared value instead of asking the scalar layer to rediscover the
-        // expanded tangency cancellation across this recursive tower.
-        let certified_endpoint_derivative = if clip_to_finite_chord {
-            certified_endpoint_incidence.and_then(|incidence| match incidence {
-                BezierCertifiedFiniteChordEndpointIncidence2::Start => Some(b.clone()),
-                BezierCertifiedFiniteChordEndpointIncidence2::End => a
-                    .scale(&Real::from(2_i8))
-                    .and_then(|derivative| derivative.add(&b)),
+        // A certified finite endpoint is already an exact root. Its
+        // derivative determines the root's branch and multiplicity; factor it
+        // in the parent field instead of adjoining the square root of that
+        // derivative squared and later reconstructing the same endpoint.
+        let certified_endpoint = if clip_to_finite_chord {
+            certified_endpoint_incidence.and_then(|incidence| {
+                let derivative = match incidence {
+                    BezierCertifiedFiniteChordEndpointIncidence2::Start => Some(b.clone()),
+                    BezierCertifiedFiniteChordEndpointIncidence2::End => a
+                        .scale(&Real::from(2_i8))
+                        .and_then(|derivative| derivative.add(&b)),
+                }?;
+                Some((incidence, derivative))
             })
         } else {
             None
         };
-        let discriminant_classification = if let Some(derivative) = certified_endpoint_derivative {
-            let derivative_sign = derivative.sign(&CurveContext::STRICT)?;
-            match derivative_sign {
-                Classification::Decided(RealSign::Zero) => {
-                    #[cfg(feature = "dispatch-trace")]
-                    hyperreal::dispatch_trace::record(
-                        "hypercurve",
-                        "algebraic-circle-chord-kernel",
-                        "recursive-certified-endpoint-tangent",
-                    );
-                    Classification::Decided(RealSign::Zero)
-                }
-                Classification::Decided(RealSign::Negative | RealSign::Positive) => {
-                    #[cfg(feature = "dispatch-trace")]
-                    hyperreal::dispatch_trace::record(
-                        "hypercurve",
-                        "algebraic-circle-chord-kernel",
-                        "recursive-certified-endpoint-transverse",
-                    );
-                    Classification::Decided(RealSign::Positive)
-                }
-                Classification::Uncertain(_) => discriminant.sign(&CurveContext::STRICT)?,
+        let certified_endpoint = match certified_endpoint {
+            Some((endpoint, derivative)) => match derivative.sign(&CurveContext::STRICT)? {
+                Classification::Decided(sign) => Some((endpoint, sign)),
+                Classification::Uncertain(_) => None,
+            },
+            None => None,
+        };
+        let discriminant_classification = match certified_endpoint {
+            Some((_, RealSign::Zero)) => Classification::Decided(RealSign::Zero),
+            Some((_, RealSign::Negative | RealSign::Positive)) => {
+                Classification::Decided(RealSign::Positive)
             }
-        } else {
-            discriminant.sign(&CurveContext::STRICT)?
+            None => discriminant.sign(&CurveContext::STRICT)?,
         };
         let discriminant_sign = match discriminant_classification {
             Classification::Decided(sign) => sign,
@@ -26568,24 +26557,114 @@ impl BezierAlgebraicCuspSemicircle2 {
                 BezierAlgebraicCuspSemicircleChordIntersections2::NoContacts,
             )));
         }
-        let branches: &[i8] = if discriminant_sign == RealSign::Zero {
-            &[0]
+        let roots = if let Some((endpoint, derivative_sign)) = certified_endpoint {
+            let (root, location) = match endpoint {
+                BezierCertifiedFiniteChordEndpointIncidence2::Start => (
+                    Real::zero(),
+                    BezierAlgebraicCuspSemicircleContactLocation2::Start,
+                ),
+                BezierCertifiedFiniteChordEndpointIncidence2::End => (
+                    Real::one(),
+                    BezierAlgebraicCuspSemicircleContactLocation2::End,
+                ),
+            };
+            let endpoint_scalar = BezierRecursiveQuadraticProjectiveScalar2 {
+                numerator: parent_field.constant(root.clone()).ok_or_else(|| {
+                    CurveError::Topology("a certified endpoint lost its coefficient field".into())
+                })?,
+                denominator: parent_field.constant(Real::one()).ok_or_else(|| {
+                    CurveError::Topology("a certified endpoint lost its unit denominator".into())
+                })?,
+            };
+            let endpoint_branch = match derivative_sign {
+                RealSign::Negative => -1,
+                RealSign::Zero => 0,
+                RealSign::Positive => 1,
+            };
+            let mut roots = vec![(endpoint_branch, endpoint_scalar, Some(location))];
+            if derivative_sign != RealSign::Zero {
+                let mut context = BezierRecursiveOrderedFieldContext2 {
+                    field: parent_field.clone(),
+                    policy: policy.strict_counterpart(),
+                };
+                let quotient = match hypersolve::ordered_field_polynomial_linear_quotient(
+                    &[c.clone(), b.clone(), a.clone()],
+                    &root,
+                    &mut context,
+                ) {
+                    Ok(quotient) => quotient,
+                    Err(BezierRecursiveOrderedFieldError2::Curve(error)) => return Err(error),
+                    Err(BezierRecursiveOrderedFieldError2::Uncertain) => {
+                        return Ok(Classification::Uncertain(UncertaintyReason::Predicate));
+                    }
+                };
+                let numerator = quotient[0].scale(&Real::from(-1_i8)).ok_or_else(|| {
+                    CurveError::Topology("a factored circle contact lost its field".into())
+                })?;
+                roots.push((
+                    -endpoint_branch,
+                    BezierRecursiveQuadraticProjectiveScalar2 {
+                        numerator,
+                        // The circle quadratic has a certified positive leading term.
+                        denominator: a.clone(),
+                    },
+                    None,
+                ));
+                roots.sort_by_key(|(branch, _, _)| *branch);
+            }
+            #[cfg(feature = "dispatch-trace")]
+            hyperreal::dispatch_trace::record(
+                "hypercurve",
+                "algebraic-circle-chord-kernel",
+                "recursive-certified-endpoint-factor",
+            );
+            roots
         } else {
-            &[-1, 1]
-        };
-        let extension = if discriminant_sign == RealSign::Positive {
-            Some(
-                parent_field
-                    .extension(discriminant.clone())
-                    .ok_or_else(|| {
-                        CurveError::Topology(
-                            "a recursive projective chord discriminant could not extend its field"
-                                .into(),
-                        )
-                    })?,
-            )
-        } else {
-            None
+            let branches: &[i8] = if discriminant_sign == RealSign::Zero {
+                &[0]
+            } else {
+                &[-1, 1]
+            };
+            let extension = if discriminant_sign == RealSign::Positive {
+                Some(
+                    parent_field
+                        .extension(discriminant.clone())
+                        .ok_or_else(|| {
+                            CurveError::Topology(
+                                "a circle discriminant could not extend its field".into(),
+                            )
+                        })?,
+                )
+            } else {
+                None
+            };
+            let mut roots = Vec::with_capacity(branches.len());
+            for &branch in branches {
+                let Some((numerator, denominator)) = (|| {
+                    let retained = b.scale(&Real::from(-1_i8))?;
+                    let denominator = a.scale(&Real::from(2_i8))?;
+                    if let Some(extension) = extension.as_ref() {
+                        Some((
+                            extension
+                                .element(retained, parent_field.constant(Real::from(branch))?)?,
+                            extension.lift(&denominator)?,
+                        ))
+                    } else {
+                        Some((retained, denominator))
+                    }
+                })() else {
+                    return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+                };
+                roots.push((
+                    branch,
+                    BezierRecursiveQuadraticProjectiveScalar2 {
+                        numerator,
+                        denominator,
+                    },
+                    None,
+                ));
+            }
+            roots
         };
         let radial_scale = self.radial_distance() * &authority.normal_denominator;
         let selected_scale = self.turn_sign() * &radial_scale;
@@ -26649,42 +26728,32 @@ impl BezierAlgebraicCuspSemicircle2 {
         } else {
             None
         };
-        let mut retained_contacts = Vec::with_capacity(branches.len());
-        let mut contacts = Vec::with_capacity(branches.len());
-        for &quadratic_branch in branches {
-            let field = extension.as_ref().unwrap_or(&parent_field);
-            let Some((parameter_numerator, parameter_denominator)) = (|| {
-                let retained = b.scale(&Real::from(-1_i8))?;
-                let denominator = a.scale(&Real::from(2_i8))?;
-                if let Some(extension) = extension.as_ref() {
-                    Some((
-                        extension.element(
-                            retained,
-                            parent_field.constant(Real::from(quadratic_branch))?,
-                        )?,
-                        extension.lift(&denominator)?,
-                    ))
-                } else {
-                    Some((retained, denominator))
-                }
-            })() else {
-                return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
-            };
+        let mut retained_contacts = Vec::with_capacity(roots.len());
+        let mut contacts = Vec::with_capacity(roots.len());
+        for (quadratic_branch, scalar, certified_chord_location) in roots {
+            let field = scalar.numerator.field();
+            let field = &field;
+            let parameter_numerator = scalar.numerator;
+            let parameter_denominator = scalar.denominator;
             let Some((point, center, anchor_x, anchor_y, anchor_denominator, delta_x, delta_y)) =
                 (|| {
                     let line_start_x = field.lift(&line_start_x)?;
                     let line_start_y = field.lift(&line_start_y)?;
                     let delta_x = field.lift(&delta_x)?;
                     let delta_y = field.lift(&delta_y)?;
-                    let point = BezierRecursiveQuadraticProjectivePoint2 {
-                        x: parameter_denominator
-                            .multiply(&line_start_x)?
-                            .add(&parameter_numerator.multiply(&delta_x)?)?,
-                        y: parameter_denominator
-                            .multiply(&line_start_y)?
-                            .add(&parameter_numerator.multiply(&delta_y)?)?,
-                        denominator: parameter_denominator
-                            .multiply(&field.lift(&line_denominator)?)?,
+                    let point = match certified_chord_location {
+                        Some(BezierAlgebraicCuspSemicircleContactLocation2::Start) => start.clone(),
+                        Some(BezierAlgebraicCuspSemicircleContactLocation2::End) => end.clone(),
+                        _ => BezierRecursiveQuadraticProjectivePoint2 {
+                            x: parameter_denominator
+                                .multiply(&line_start_x)?
+                                .add(&parameter_numerator.multiply(&delta_x)?)?,
+                            y: parameter_denominator
+                                .multiply(&line_start_y)?
+                                .add(&parameter_numerator.multiply(&delta_y)?)?,
+                            denominator: parameter_denominator
+                                .multiply(&field.lift(&line_denominator)?)?,
+                        },
                     };
                     Some((
                         point,
@@ -26773,7 +26842,9 @@ impl BezierAlgebraicCuspSemicircle2 {
                     return Ok(Classification::Uncertain(reason));
                 }
             };
-            let chord_location = if clip_to_finite_chord {
+            let chord_location = if let Some(location) = certified_chord_location {
+                location
+            } else if clip_to_finite_chord {
                 let lower_sign = parameter_numerator.sign(&CurveContext::STRICT)?;
                 match lower_sign {
                     Classification::Decided(RealSign::Negative) => continue,
@@ -26812,7 +26883,7 @@ impl BezierAlgebraicCuspSemicircle2 {
             };
             // The contact tangent is the derivative of the positive-leading
             // circle quadratic. Its exact sign is therefore fixed by the
-            // selected `+/- sqrt(discriminant)` branch and circle traversal.
+            // selected root branch and circle traversal.
             let tangent_cross_sign =
                 recursive_circle_contact_tangent_cross_sign(quadratic_branch, turn_sign);
             let branch = quadratic_branch;
@@ -129957,6 +130028,136 @@ mod conversion_tests {
                         root.denominator.exact_real_value_with_retained_witnesses(),
                         Some(Real::one())
                     );
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn certified_circle_chord_endpoint_factor_preserves_roots_and_field() {
+        let q = |n, d| (Real::from(n) / Real::from(d)).unwrap();
+        let one = DenseTensorPolynomial::try_new(vec![], vec![Real::one()]).unwrap();
+        let base = BezierRecursiveQuadraticField2::base(vec![], one.clone(), one).unwrap();
+        let field = base
+            .extension(base.constant(Real::from(2_i8)).unwrap())
+            .unwrap();
+        let projective = |point: &Point2| BezierRecursiveQuadraticProjectivePoint2 {
+            x: field.constant(point.x().clone()).unwrap(),
+            y: field.constant(point.y().clone()).unwrap(),
+            denominator: field.constant(Real::one()).unwrap(),
+        };
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let anchor = match BezierAlgebraicChord2::try_new(
+                RationalBezierIntersectionPointEvidence2::Exact(Point2::from_values(0, -1)),
+                RationalBezierIntersectionPointEvidence2::Exact(Point2::from_values(1, -1)),
+                &policy,
+            )
+            .unwrap()
+            {
+                Classification::Decided(chord) => chord,
+                _ => panic!("the horizontal anchor is exact"),
+            };
+            let circle =
+                match BezierAlgebraicCuspSemicircle2::from_retained_center_and_chord_normal(
+                    RationalBezierIntersectionPointEvidence2::Exact(Point2::from_values(0, 0)),
+                    anchor,
+                    Real::one(),
+                    true,
+                    &policy,
+                )
+                .unwrap()
+                {
+                    Classification::Decided(Some(circle)) => circle,
+                    _ => panic!("the right unit semicircle is exact"),
+                };
+            let authority = BezierRecursiveSelectedRadialFrame2 {
+                field: field.clone(),
+                center: projective(&Point2::from_values(0, 0)),
+                support_center: projective(&Point2::from_values(0, -1)),
+                normal_denominator: Real::one(),
+            };
+            for tangent in [false, true] {
+                for reversed in [false, true] {
+                    let (mut start, mut end) = if tangent {
+                        (Point2::from_values(1, 0), Point2::from_values(1, 1))
+                    } else {
+                        // x=3/5 meets the unit circle at y=+/-4/5.
+                        (
+                            Point2::new(q(3, 5), q(4, 5)),
+                            Point2::new(q(3, 5), q(-6, 5)),
+                        )
+                    };
+                    if reversed {
+                        std::mem::swap(&mut start, &mut end);
+                    }
+                    let chord = match BezierAlgebraicChord2::try_new(
+                        RationalBezierIntersectionPointEvidence2::Exact(start.clone()),
+                        RationalBezierIntersectionPointEvidence2::Exact(end.clone()),
+                        &policy,
+                    )
+                    .unwrap()
+                    {
+                        Classification::Decided(chord) => chord,
+                        _ => panic!("the exact secant or tangent is finite"),
+                    };
+                    let result = crate::policy::resolve_certified_value(&policy, |policy| {
+                        circle.recursive_projective_chord_intersections(
+                            &chord,
+                            authority.clone(),
+                            projective(&start),
+                            projective(&end),
+                            true,
+                            Some(if reversed {
+                                BezierCertifiedFiniteChordEndpointIncidence2::End
+                            } else {
+                                BezierCertifiedFiniteChordEndpointIncidence2::Start
+                            }),
+                            policy,
+                        )
+                    });
+                    assert_eq!(result.certainty, crate::CurveCertainty::Certified);
+                    let Classification::Decided(Some(
+                        BezierAlgebraicCuspSemicircleChordIntersections2::Contacts {
+                            contacts,
+                            parameter_map,
+                        },
+                    )) = result.value.unwrap()
+                    else {
+                        panic!("the certified endpoint and every other finite root must survive");
+                    };
+                    let BezierAlgebraicCuspSemicircleChordParameterMapSystem2::RecursiveQuadraticLine(system) =
+                        &parameter_map.data.system else { panic!("the contacts retain their field"); };
+                    let expected = if tangent {
+                        vec![(Real::from(i8::from(reversed)), RealSign::Zero)]
+                    } else if reversed {
+                        vec![
+                            (q(1, 5), RealSign::Negative),
+                            (Real::one(), RealSign::Positive),
+                        ]
+                    } else {
+                        vec![
+                            (Real::zero(), RealSign::Negative),
+                            (q(4, 5), RealSign::Positive),
+                        ]
+                    };
+                    assert_eq!(contacts.len(), expected.len());
+                    assert_eq!(system.contacts.len(), expected.len());
+                    for ((contact, retained), (parameter, cross)) in
+                        contacts.iter().zip(&system.contacts).zip(expected)
+                    {
+                        assert_eq!(contact.tangent_cross_sign, cross);
+                        assert_eq!(
+                            retained
+                                .parameter
+                                .order_to_real(&parameter, &policy)
+                                .unwrap(),
+                            Classification::Decided(std::cmp::Ordering::Equal)
+                        );
+                        let scalar = retained.parameter.projective_scalar().unwrap();
+                        assert!(field.same_field(&scalar.numerator.field()));
+                        assert!(field.same_field(&scalar.denominator.field()));
+                        assert!(field.same_field(&retained.point.denominator.field()));
+                    }
                 }
             }
         }
