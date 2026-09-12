@@ -165,7 +165,7 @@ struct CurveRegionData2 {
     certified_loop_roles: Option<Arc<[CurveRegionLoopRole]>>,
     certified_loop_fill_rules: Option<Arc<[FillRule]>>,
     signed_loop_composition: bool,
-    certified_regularized_filled_left_topology: bool,
+    regularized_filled_left_policy: Option<CurveContext>,
     strict_materialized_connectivity_certified: bool,
     filled_side_is_left: PolicyClassificationCache<Arc<[bool]>>,
     native_boundary_loops: OnceLock<Option<Arc<[BezierBoundaryLoop2]>>>,
@@ -184,7 +184,7 @@ impl CurveRegionData2 {
             certified_loop_roles: None,
             certified_loop_fill_rules: None,
             signed_loop_composition: false,
-            certified_regularized_filled_left_topology: false,
+            regularized_filled_left_policy: None,
             strict_materialized_connectivity_certified,
             filled_side_is_left: PolicyClassificationCache::new(),
             native_boundary_loops: OnceLock::new(),
@@ -226,7 +226,7 @@ fn shared_empty_curve_region_data() -> Arc<CurveRegionData2> {
     static EMPTY: OnceLock<Arc<CurveRegionData2>> = OnceLock::new();
     Arc::clone(EMPTY.get_or_init(|| {
         let mut data = CurveRegionData2::new(Vec::new());
-        data.certified_regularized_filled_left_topology = true;
+        data.regularized_filled_left_policy = Some(CurveContext::STRICT);
         data.certified_loop_roles = Some(Arc::from(Vec::new()));
         data.certified_loop_fill_rules = Some(Arc::from(Vec::new()));
         data.filled_side_is_left.certify(Arc::from(Vec::new()));
@@ -475,8 +475,8 @@ impl std::fmt::Debug for CurveRegion2 {
                 &self.data.signed_loop_composition,
             )
             .field(
-                "certified_regularized_filled_left_topology",
-                &self.data.certified_regularized_filled_left_topology,
+                "regularized_filled_left_policy",
+                &self.data.regularized_filled_left_policy,
             )
             .finish()
     }
@@ -489,8 +489,8 @@ impl PartialEq for CurveRegion2 {
                 && self.data.certified_loop_roles == other.data.certified_loop_roles
                 && self.data.certified_loop_fill_rules == other.data.certified_loop_fill_rules
                 && self.data.signed_loop_composition == other.data.signed_loop_composition
-                && self.data.certified_regularized_filled_left_topology
-                    == other.data.certified_regularized_filled_left_topology)
+                && self.data.regularized_filled_left_policy
+                    == other.data.regularized_filled_left_policy)
     }
 }
 
@@ -10489,8 +10489,7 @@ impl CurveRegion2 {
             data.certified_loop_roles = self.data.certified_loop_roles.clone();
             data.certified_loop_fill_rules = self.data.certified_loop_fill_rules.clone();
             data.signed_loop_composition = self.data.signed_loop_composition;
-            data.certified_regularized_filled_left_topology =
-                self.data.certified_regularized_filled_left_topology;
+            data.regularized_filled_left_policy = self.data.regularized_filled_left_policy;
             self.data = Arc::new(data);
         }
         Arc::get_mut(&mut self.data).expect("CurveRegion2 construction data is uniquely owned")
@@ -10594,6 +10593,7 @@ impl CurveRegion2 {
     pub(crate) fn from_certified_oriented_line_contours(
         material_contours: Vec<Contour2>,
         hole_contours: Vec<Contour2>,
+        policy: &CurveContext,
     ) -> CurveResult<Self> {
         if material_contours.is_empty() && hole_contours.is_empty() {
             return Ok(Self::default());
@@ -10645,7 +10645,7 @@ impl CurveRegion2 {
         // The caller's arrangement already certified these oriented, merged
         // line contours. Preserve that proof when choosing the compact native
         // representation, so the next operation does not normalize again.
-        data.certified_regularized_filled_left_topology = true;
+        data.regularized_filled_left_policy = Some(policy.retained_object_policy());
         data.filled_side_is_left
             .certify(Arc::from(vec![true; loop_count]));
         data.line_image_region
@@ -11027,8 +11027,8 @@ impl CurveRegion2 {
         // reverse each complete loop afterward so the same filled-left
         // topology certificate remains true instead of becoming stale
         // filled-right metadata.
-        let reverse_canonical_loops =
-            orientation_reversing && self.data.certified_regularized_filled_left_topology;
+        let retained_regularized_topology = self.has_regularized_filled_left_topology(policy);
+        let reverse_canonical_loops = orientation_reversing && retained_regularized_topology;
         let similarity = std::cell::OnceCell::new();
         let mut semicircle_similarity_cache =
             BezierAlgebraicCuspSemicircleSimilarityCache2::default();
@@ -11080,8 +11080,8 @@ impl CurveRegion2 {
             data.certified_loop_roles = self.data.certified_loop_roles.clone();
             data.certified_loop_fill_rules = self.data.certified_loop_fill_rules.clone();
             data.signed_loop_composition = self.data.signed_loop_composition;
-            data.certified_regularized_filled_left_topology =
-                self.data.certified_regularized_filled_left_topology;
+            data.regularized_filled_left_policy =
+                retained_regularized_topology.then(|| policy.retained_object_policy());
         }
         let sides = match self
             .filled_side_is_left_raw(policy)
@@ -11185,15 +11185,20 @@ impl CurveRegion2 {
         Ok(self)
     }
 
-    /// Publishes independently certified regularized filled-left topology.
+    /// Publishes regularized filled-left topology with its decision requirement.
     ///
     /// An authoritative filled-left face walk is the general producer. Narrow
     /// exact geometric proofs, such as the one-turn cardinal convex parallel
     /// certificate, may publish the same fact. Unlike authored boundary
     /// provenance, this marker certifies that every retained chain is a
     /// noncrossing regularized boundary. Expensive exact nesting may therefore
-    /// be deferred until a caller actually needs loop roles.
-    pub(crate) fn with_certified_regularized_filled_left_topology(mut self) -> CurveResult<Self> {
+    /// be deferred until a caller actually needs loop roles. A consumed
+    /// APPROXIMATE_512 terminal remains a dependency of this topology;
+    /// requesting that policy alone does not weaken an exact certificate.
+    pub(crate) fn with_regularized_filled_left_topology(
+        mut self,
+        policy: &CurveContext,
+    ) -> CurveResult<Self> {
         if self.data.boundary_loops.iter().any(|boundary_loop| {
             !boundary_loop.has_arrangement_sources() || boundary_loop.is_empty()
         }) {
@@ -11202,18 +11207,32 @@ impl CurveRegion2 {
             ));
         }
         let loop_count = self.data.boundary_loops.len();
+        let retained = policy
+            .retained_object_policy_with_dependencies(self.data.regularized_filled_left_policy);
         let data = self.data_mut_for_construction();
         data.filled_side_is_left
             .certify(Arc::from(vec![true; loop_count]));
         if loop_count == 1 && data.certified_loop_roles.is_none() {
             data.certified_loop_roles = Some(shared_all_material_curve_region_loop_roles(1));
         }
-        data.certified_regularized_filled_left_topology = true;
+        data.regularized_filled_left_policy = Some(retained);
         Ok(self)
     }
 
-    pub(crate) fn has_certified_regularized_filled_left_topology(&self) -> bool {
-        self.data.certified_regularized_filled_left_topology
+    pub(crate) fn has_regularized_filled_left_topology(&self, policy: &CurveContext) -> bool {
+        let Some(retained) = self.data.regularized_filled_left_policy else {
+            return false;
+        };
+        if !policy.accepts_retained_policy(retained) {
+            return false;
+        }
+        if retained != retained.strict_counterpart() {
+            if !policy.permits_approximate_512() {
+                return false;
+            }
+            policy.observe_approximate_512();
+        }
+        true
     }
 
     pub(crate) fn with_certified_loop_roles(
@@ -11766,7 +11785,7 @@ impl CurveRegion2 {
         // procedural conics can retain the face certificate even when a fresh
         // standalone path-construction predicate is not representable. Use the
         // certificate-aware retained classifier directly.
-        if self.data.certified_regularized_filled_left_topology {
+        if self.has_regularized_filled_left_topology(policy) {
             return self.regularized_retained_loop_roles_raw(policy);
         }
         match self.curved_nesting_role_evidence_raw(policy)? {
@@ -16100,7 +16119,7 @@ impl CurveRegion2 {
         let mut certified_convex_filled_left_dilation = self.data.boundary_loops.len() == 1
             && roles[0] == CurveRegionLoopRole::Material
             && filled_sides[0]
-            && self.has_certified_regularized_filled_left_topology();
+            && self.has_regularized_filled_left_topology(policy);
         let mut offset_loops = Vec::with_capacity(self.data.boundary_loops.len());
         for (loop_index, boundary_loop) in self.data.boundary_loops.iter().enumerate() {
             if certified_convex_filled_left_dilation {
@@ -16236,7 +16255,7 @@ impl CurveRegion2 {
                 "convex-boundary-certificate",
             );
             raw = raw
-                .with_certified_regularized_filled_left_topology()
+                .with_regularized_filled_left_topology(policy)
                 .map_err(|cause| curve_region_edit_error(CurveOperation2::Offset, cause))?;
             let data = raw.data_mut_for_construction();
             data.certified_loop_roles = Some(shared_all_material_curve_region_loop_roles(
@@ -17321,7 +17340,7 @@ impl CurveRegion2 {
                 .certified_loop_fill_rules
                 .as_ref()
                 .map_or(FillRule::EvenOdd, |rules| rules[index]);
-            let magnitude = match if self.has_certified_regularized_filled_left_topology() {
+            let magnitude = match if self.has_regularized_filled_left_topology(policy) {
                 absolute_nonzero_area(area, policy).map(|area| area.map(Some))?
             } else {
                 curve_region_loop_filled_area_magnitude(boundary_loop, area, fill_rule, policy)?
@@ -33837,7 +33856,7 @@ mod tests {
             analytic_loop(2, 0, 4, &policy),
         ])
         .unwrap()
-        .with_certified_regularized_filled_left_topology()
+        .with_regularized_filled_left_topology(&policy)
         .unwrap();
         assert_eq!(
             nested.loop_roles_raw(&policy),
@@ -33852,7 +33871,7 @@ mod tests {
             analytic_loop(2, 10, 4, &policy),
         ])
         .unwrap()
-        .with_certified_regularized_filled_left_topology()
+        .with_regularized_filled_left_topology(&policy)
         .unwrap();
         assert_eq!(
             disjoint.loop_roles_raw(&policy),

@@ -1302,7 +1302,7 @@ impl CurveRegion2 {
         // proof. Rebuilding its arrangement wastes work and, for compact
         // correlated chord cuts, would throw away the topology evidence that
         // deliberately replaces coordinate materialization.
-        if self.has_certified_regularized_filled_left_topology() {
+        if self.has_regularized_filled_left_topology(policy) {
             return Ok(self.clone());
         }
         let context = CurveRegionBooleanContext::try_new_unary(self, policy)?;
@@ -7717,7 +7717,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
                     return Err(self.blocked(0, reason));
                 }
             }
-            .with_certified_regularized_filled_left_topology()
+            .with_regularized_filled_left_topology(&self.data.policy)
             .map_err(|cause| self.invalid(0, cause))?;
         region = region.with_pairwise_disjoint_material_loop_roles(&self.data.policy);
         if affine_line_output || self.strict_line_image_only() {
@@ -11016,7 +11016,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
                 }
             };
         region = region
-            .with_certified_regularized_filled_left_topology()
+            .with_regularized_filled_left_topology(&self.data.policy)
             .map_err(|cause| self.invalid(0, cause))?;
         region = region.with_pairwise_disjoint_material_loop_roles(&self.data.policy);
         region = self.coalesce_certified_boolean_line_runs(region)?;
@@ -11217,7 +11217,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
             return Ok(region);
         }
         CurveRegion2::new(boundaries)
-            .and_then(CurveRegion2::with_certified_regularized_filled_left_topology)
+            .and_then(|region| region.with_regularized_filled_left_topology(&self.data.policy))
             .map_err(|cause| self.invalid(0, cause))
     }
 
@@ -11327,7 +11327,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
             .map(Some)
             .map_err(|cause| self.invalid(0, cause));
         }
-        CurveRegion2::from_certified_oriented_line_contours(material, holes)
+        CurveRegion2::from_certified_oriented_line_contours(material, holes, &self.data.policy)
             .map(Some)
             .map_err(|cause| self.invalid(0, cause))
     }
@@ -12277,7 +12277,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
         let certified_regularized_sides =
             |carrier_index: usize, source_follows_reference_tangent: bool| {
                 let region = self.region_for_carrier(carrier_index);
-                if !region.has_certified_regularized_filled_left_topology() {
+                if !region.has_regularized_filled_left_topology(&self.data.policy) {
                     return None;
                 }
                 let source_left_is_inside = self.data.carriers[carrier_index].filled_side_is_left;

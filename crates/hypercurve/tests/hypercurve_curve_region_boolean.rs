@@ -950,6 +950,155 @@ fn approximate_policy_reports_a_consumed_terminal_instead_of_relabeling_it_exact
 }
 
 #[test]
+fn regularized_topology_does_not_upgrade_terminal_connectivity() {
+    let delta = support::terminally_unresolved_zero() + Real::from(2_i8).powi_i64(-1024).unwrap();
+    let curves = vec![
+        Curve2::from(LineSeg2::try_new(point(0, 0), point(1, 0)).unwrap()),
+        Curve2::from(
+            LineSeg2::try_new(Point2::new(Real::one() + delta, Real::zero()), point(1, 1)).unwrap(),
+        ),
+        Curve2::from(QuadraticBezier2::new(point(1, 1), point(1, 2), point(0, 1))),
+        Curve2::from(LineSeg2::try_new(point(0, 1), point(0, 0)).unwrap()),
+    ];
+    assert!(CurvePath2::try_new_with_policy(curves.clone(), &CurveContext::STRICT).is_err());
+    let path = CurvePath2::try_new_with_policy(curves, &CurveContext::APPROXIMATE_512).unwrap();
+    assert_eq!(path.certainty, CurveCertainty::Approximate512Consumed);
+    let authored = path_region(
+        &path.value,
+        CurveBoundaryInteriorSide2::Left,
+        &CurveContext::APPROXIMATE_512,
+    );
+    let normalized = authored
+        .regularized_region(&CurveContext::APPROXIMATE_512)
+        .unwrap();
+    assert_eq!(normalized.certainty, CurveCertainty::Approximate512Consumed);
+    let has_certified_gap = normalized.value.boundary_loops().iter().any(|boundary| {
+        let fragments = boundary.fragments();
+        fragments
+            .iter()
+            .zip(fragments.iter().cycle().skip(1))
+            .any(|(first, second)| {
+                let endpoint = |fragment: &hypercurve::BezierSplitFragment2, start| match fragment {
+                    hypercurve::BezierSplitFragment2::Materialized { curve, .. } => {
+                        Some(if start {
+                            curve.start().clone()
+                        } else {
+                            curve.end().clone()
+                        })
+                    }
+                    hypercurve::BezierSplitFragment2::AlgebraicChord(chord) => {
+                        let point = if start { chord.start() } else { chord.end() };
+                        point.as_exact().cloned()
+                    }
+                    _ => None,
+                };
+                let (Some(first), Some(second)) = (endpoint(first, false), endpoint(second, true))
+                else {
+                    return false;
+                };
+                let (dx, dy) = first.delta_from(&second);
+                [dx, dy].iter().any(|value| {
+                    matches!(
+                        value.certified_sign_until(-2048).sign(),
+                        Some(hyperreal::RealSign::Positive | hyperreal::RealSign::Negative),
+                    )
+                })
+            })
+    });
+    assert!(
+        has_certified_gap,
+        "the independently checked output must retain an actual gap"
+    );
+    assert_eq!(
+        normalized
+            .value
+            .regularized_region(&CurveContext::APPROXIMATE_512)
+            .unwrap()
+            .certainty,
+        CurveCertainty::Approximate512Consumed,
+        "replaying retained topology must preserve its decision requirement",
+    );
+    assert!(
+        normalized
+            .value
+            .regularized_region(&CurveContext::STRICT)
+            .is_err(),
+        "an approximate topology marker cannot certify an exactly disconnected boundary",
+    );
+    let reflected = normalized
+        .value
+        .transform_affine(
+            &Real::from(-1),
+            &Real::zero(),
+            &Real::zero(),
+            &Real::one(),
+            &Real::zero(),
+            &Real::zero(),
+            &CurveContext::APPROXIMATE_512,
+        )
+        .unwrap();
+    assert_eq!(reflected.certainty, CurveCertainty::Approximate512Consumed);
+    assert_eq!(
+        reflected
+            .value
+            .regularized_region(&CurveContext::APPROXIMATE_512)
+            .unwrap()
+            .certainty,
+        CurveCertainty::Approximate512Consumed,
+    );
+    assert!(
+        reflected
+            .value
+            .regularized_region(&CurveContext::STRICT)
+            .is_err()
+    );
+}
+
+#[test]
+fn regularized_topology_retains_only_the_policy_actually_consumed() {
+    for authored in [
+        square(0, 0, 2, 2),
+        symbolic_quadratic_cap(Real::from(2), &CurveContext::STRICT),
+    ] {
+        let normalized = authored
+            .regularized_region(&CurveContext::APPROXIMATE_512)
+            .unwrap();
+        assert_eq!(normalized.certainty, CurveCertainty::Certified);
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            assert_eq!(
+                normalized
+                    .value
+                    .regularized_region(&policy)
+                    .unwrap()
+                    .certainty,
+                CurveCertainty::Certified
+            );
+        }
+        let reflected = normalized
+            .value
+            .transform_affine(
+                &Real::from(-1),
+                &Real::zero(),
+                &Real::zero(),
+                &Real::one(),
+                &Real::zero(),
+                &Real::zero(),
+                &CurveContext::APPROXIMATE_512,
+            )
+            .unwrap();
+        assert_eq!(reflected.certainty, CurveCertainty::Certified);
+        assert_eq!(
+            reflected
+                .value
+                .regularized_region(&CurveContext::STRICT)
+                .unwrap()
+                .certainty,
+            CurveCertainty::Certified
+        );
+    }
+}
+
+#[test]
 fn curve_path_construction_obeys_the_approximate_512_terminal() {
     let (first_end_x, second_start_x) = support::terminally_equal_pair(Real::pi() + Real::e());
     let first_end = Point2::new(first_end_x, Real::zero());
