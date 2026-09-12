@@ -5162,9 +5162,10 @@ impl BezierAlgebraicSelectedFiberParameter2 {
         }
         let shares_retained_parameter = self.data.authority.data.retained_parameter
             == other.data.authority.data.retained_parameter;
-        let same_root = if !shares_retained_parameter || self.data.authority == other.data.authority
-        {
+        let is_other_root = if !shares_retained_parameter {
             false
+        } else if self.data.authority == other.data.authority {
+            true
         } else {
             match self.predicate_sign(&other.data.authority.data.incidence, policy)? {
                 Classification::Decided(RealSign::Zero) => true,
@@ -5188,9 +5189,29 @@ impl BezierAlgebraicSelectedFiberParameter2 {
                     return Ok(Classification::Uncertain(reason));
                 }
             };
-            if first == second
-                || same_root && selected_fiber_root_intervals_overlap(&first, &second)
-            {
+            // A shared polynomial root is not yet a shared selected root.
+            // Prove containment in the other original singleton isolator;
+            // mere overlap can cover two different roots. Keeping that
+            // original isolator also lets equal roots with independently
+            // refined brackets converge to this certificate.
+            let inside_other = is_other_root
+                && matches!(
+                    compare_reals(
+                        &other.root().lower,
+                        &first.root().lower,
+                        &CurveContext::STRICT
+                    ),
+                    Some(std::cmp::Ordering::Less | std::cmp::Ordering::Equal)
+                )
+                && matches!(
+                    compare_reals(
+                        &first.root().upper,
+                        &other.root().upper,
+                        &CurveContext::STRICT
+                    ),
+                    Some(std::cmp::Ordering::Less | std::cmp::Ordering::Equal)
+                );
+            if first == second || inside_other {
                 return Ok(Classification::Decided(std::cmp::Ordering::Equal));
             }
             if compare_reals(
@@ -5449,22 +5470,6 @@ impl BezierAlgebraicSelectedFiberParameter2 {
                 })?;
         }
     }
-}
-
-fn selected_fiber_root_intervals_overlap(
-    first: &BezierAlgebraicSelectedFiberParameter2,
-    second: &BezierAlgebraicSelectedFiberParameter2,
-) -> bool {
-    compare_reals(
-        &first.root().upper,
-        &second.root().lower,
-        &CurveContext::STRICT,
-    ) != Some(std::cmp::Ordering::Less)
-        && compare_reals(
-            &second.root().upper,
-            &first.root().lower,
-            &CurveContext::STRICT,
-        ) != Some(std::cmp::Ordering::Less)
 }
 
 #[derive(Debug)]
@@ -158344,6 +158349,72 @@ mod conversion_tests {
                 });
                 assert_eq!(outcome.value, Classification::Decided(sign));
                 assert_eq!(outcome.certainty, crate::CurveCertainty::Certified);
+            }
+        }
+    }
+
+    #[test]
+    fn selected_fiber_equality_requires_selected_root_containment() {
+        let half = (Real::one() / Real::from(2_i8)).unwrap();
+        let BezierParameter2::Algebraic(retained) =
+            algebraic_parameter(vec![-half, Real::zero(), Real::one()])
+        else {
+            panic!("the retained root is irrational");
+        };
+        let diagonal = BivariatePolynomial::new(vec![
+            vec![Real::zero(), Real::one()],
+            vec![Real::from(-1_i8)],
+        ]);
+        let both = bivariate_multiply(
+            &diagonal,
+            &BivariatePolynomial::new(vec![
+                vec![Real::from(-1_i8), Real::one()],
+                vec![Real::from(-1_i8)],
+            ]),
+        );
+        let interval = |lower, upper| IsolatedRootInterval {
+            lower: Real::from(lower),
+            upper: Real::from(upper),
+            exact_root: None,
+            distinct_root_count: 1,
+        };
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let first_authority = BezierAlgebraicSelectedFiberAuthority2::new(
+                diagonal.clone(),
+                retained.clone(),
+                &policy,
+            );
+            let second_authority = BezierAlgebraicSelectedFiberAuthority2::new(
+                both.clone(),
+                retained.clone(),
+                &policy,
+            );
+            // alpha in (0,2) also solves the second polynomial, but its
+            // selected root in (1,3) is alpha+1. The isolators overlap.
+            let first = first_authority.parameter(interval(0_i32, 2_i32));
+            let second = second_authority.parameter(interval(1_i32, 3_i32));
+            assert_eq!(
+                first.cmp_by_refinement(&second, &policy).unwrap(),
+                Classification::Decided(std::cmp::Ordering::Less)
+            );
+            assert_eq!(
+                second.cmp_by_refinement(&first, &policy).unwrap(),
+                Classification::Decided(std::cmp::Ordering::Greater)
+            );
+            // The same root, represented by different authorities and by
+            // independently refined intervals, must still compare equal.
+            for equal in [
+                first_authority.parameter(interval(0_i32, 1_i32)),
+                second_authority.parameter(interval(0_i32, 1_i32)),
+            ] {
+                assert_eq!(
+                    first.cmp_by_refinement(&equal, &policy).unwrap(),
+                    Classification::Decided(std::cmp::Ordering::Equal)
+                );
+                assert_eq!(
+                    equal.cmp_by_refinement(&first, &policy).unwrap(),
+                    Classification::Decided(std::cmp::Ordering::Equal)
+                );
             }
         }
     }
