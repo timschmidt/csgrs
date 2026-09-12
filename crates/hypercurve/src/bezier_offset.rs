@@ -4135,10 +4135,17 @@ struct BezierSelectedPolynomialImage2 {
     identically_zero_image_relation: bool,
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug)]
 struct BezierAlgebraicSelectedFiberParameterData2 {
     authority: BezierAlgebraicSelectedFiberAuthority2,
     root: IsolatedRootInterval,
+    represented_parameter: Arc<OnceLock<BezierParameter2>>,
+}
+
+impl PartialEq for BezierAlgebraicSelectedFiberParameterData2 {
+    fn eq(&self, other: &Self) -> bool {
+        self.authority == other.authority && self.root == other.root
+    }
 }
 
 impl PartialEq for BezierAlgebraicSelectedFiberParameter2 {
@@ -4188,6 +4195,7 @@ impl BezierAlgebraicSelectedFiberAuthority2 {
             data: Arc::new(BezierAlgebraicSelectedFiberParameterData2 {
                 authority: self.clone(),
                 root,
+                represented_parameter: Arc::new(OnceLock::new()),
             }),
         }
     }
@@ -4232,12 +4240,14 @@ impl BezierAlgebraicSelectedFiberAuthority2 {
                     exact_root: None,
                     distinct_root_count: 1,
                 };
-                Self::new(
+                let selected = Self::new(
                     bivariate_outer_product(&[Real::one()], parameter.polynomial().coefficients()),
                     retained_parameter,
                     policy,
                 )
-                .parameter(root)
+                .parameter(root);
+                selected.retain_certified_parameter(BezierParameter2::Algebraic(parameter));
+                selected
             }
         }
     }
@@ -4355,6 +4365,12 @@ impl BezierAlgebraicSelectedFiberParameter2 {
 
     fn root(&self) -> &IsolatedRootInterval {
         &self.data.root
+    }
+
+    /// Retains an alternate scalar representation after a strict equality
+    /// proof. The defining fiber and singleton remain the primary authority.
+    fn retain_certified_parameter(&self, parameter: BezierParameter2) {
+        let _ = self.data.represented_parameter.set(parameter);
     }
 
     /// Returns the represented scalar when exact fiber isolation recovered one.
@@ -4633,6 +4649,9 @@ impl BezierAlgebraicSelectedFiberParameter2 {
         policy: &CurveContext,
     ) -> CurveResult<Classification<BezierParameter2>> {
         self.validate_policy(policy)?;
+        if let Some(parameter) = self.data.represented_parameter.get() {
+            return Ok(Classification::Decided(parameter.clone()));
+        }
         if let Some(value) = self.represented_value() {
             return Ok(Classification::Decided(BezierParameter2::Exact(
                 value.clone(),
@@ -5031,7 +5050,13 @@ impl BezierAlgebraicSelectedFiberParameter2 {
             refinement_steps,
             policy,
         )?
-        .map(|root| self.data.authority.parameter(root)))
+        .map(|root| Self {
+            data: Arc::new(BezierAlgebraicSelectedFiberParameterData2 {
+                authority: self.data.authority.clone(),
+                root,
+                represented_parameter: self.data.represented_parameter.clone(),
+            }),
+        }))
     }
 
     pub(crate) fn isolating_bounds(&self) -> (&Real, &Real) {
@@ -5294,6 +5319,29 @@ impl BezierAlgebraicSelectedFiberParameter2 {
         policy: &CurveContext,
     ) -> CurveResult<Classification<std::cmp::Ordering>> {
         self.validate_policy(policy)?;
+        if let Some(parameter) = self.data.represented_parameter.get() {
+            return parameter.cmp_by_refinement(other, policy);
+        }
+        let outcome = crate::policy::resolve_certified_value(policy, |attempt| {
+            self.cmp_bezier_parameter_uncached(other, attempt)
+        });
+        let order = outcome.value?;
+        if order == Classification::Decided(std::cmp::Ordering::Equal)
+            && outcome.certainty == crate::CurveCertainty::Certified
+            && policy
+                .strict_counterpart()
+                .accepts_retained_policy(self.data.authority.data.policy)
+        {
+            self.retain_certified_parameter(other.clone());
+        }
+        Ok(order)
+    }
+
+    fn cmp_bezier_parameter_uncached(
+        &self,
+        other: &BezierParameter2,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<std::cmp::Ordering>> {
         let BezierParameter2::Algebraic(other_algebraic) = other else {
             return self.order_to_real(
                 other
@@ -5338,9 +5386,14 @@ impl BezierAlgebraicSelectedFiberParameter2 {
                 }
             };
             let other = BezierParameter2::Algebraic(other_algebraic.clone())
-                .refined_isolating_interval(refinement_steps, policy);
+                .refined_isolating_interval(refinement_steps, &CurveContext::STRICT);
             let BezierParameter2::Algebraic(other) = other else {
-                unreachable!("refining a nonlinear algebraic parameter preserves its domain")
+                return selected.order_to_real(
+                    other
+                        .as_exact()
+                        .expect("a refined root may become represented"),
+                    policy,
+                );
             };
             let strict = &CurveContext::STRICT;
             if compare_reals(&selected.root().upper, other.interval().start(), strict)
@@ -5354,10 +5407,22 @@ impl BezierAlgebraicSelectedFiberParameter2 {
                 return Ok(Classification::Decided(std::cmp::Ordering::Greater));
             }
             if is_other_root
-                && compare_reals(other.interval().start(), &selected.root().lower, strict)
-                    != Some(std::cmp::Ordering::Greater)
-                && compare_reals(&selected.root().upper, other.interval().end(), strict)
-                    != Some(std::cmp::Ordering::Greater)
+                && matches!(
+                    compare_reals(
+                        other_algebraic.interval().start(),
+                        &selected.root().lower,
+                        strict
+                    ),
+                    Some(std::cmp::Ordering::Less | std::cmp::Ordering::Equal)
+                )
+                && matches!(
+                    compare_reals(
+                        &selected.root().upper,
+                        other_algebraic.interval().end(),
+                        strict
+                    ),
+                    Some(std::cmp::Ordering::Less | std::cmp::Ordering::Equal)
+                )
             {
                 return Ok(Classification::Decided(std::cmp::Ordering::Equal));
             }
@@ -17235,20 +17300,17 @@ impl BezierAlgebraicCuspSemicircle2 {
         tangent_dot_sign: RealSign,
         policy: &CurveContext,
     ) -> CurveResult<Classification<BezierAlgebraicCuspSemicircleParameter2>> {
-        if let Some(frame) = self.data.frame.parallel_normal() {
-            if !policy.accepts_retained_policy(frame.policy) {
-                return Err(CurveError::Topology(
-                    "a selected parallel contact crossed predicate policies".into(),
-                ));
-            }
+        let frame_policy = if let Some(frame) = self.data.frame.parallel_normal() {
+            frame.policy
         } else if let Some(frame) = self.data.frame.chord_normal() {
-            if !policy.accepts_retained_policy(frame.policy) {
-                return Err(CurveError::Topology(
-                    "a selected chord-normal parallel contact crossed predicate policies".into(),
-                ));
-            }
+            frame.policy
         } else {
             return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+        };
+        if !policy.accepts_retained_policy(frame_policy) {
+            return Err(CurveError::Topology(
+                "a selected parallel contact crossed predicate policies".into(),
+            ));
         }
         if other_radial_sign == RealSign::Zero {
             return Err(CurveError::Topology(
@@ -17278,7 +17340,7 @@ impl BezierAlgebraicCuspSemicircle2 {
             }
             None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
         };
-        let parameter = BezierAlgebraicCuspSemicircleParameter2::Mapped(Arc::new(
+        let mut parameter =
             BezierAlgebraicCuspSemicircleMappedParameterData2::SelectedParallelContact {
                 semicircle: self.clone(),
                 parallel: other,
@@ -17288,8 +17350,7 @@ impl BezierAlgebraicCuspSemicircle2 {
                 tangent_cross_sign,
                 tangent_dot_sign,
                 policy: *policy,
-            },
-        ));
+            };
         let expected_orders = match location {
             BezierAlgebraicCuspSemicircleContactLocation2::Interior => [
                 (Real::zero(), std::cmp::Ordering::Greater),
@@ -17305,7 +17366,7 @@ impl BezierAlgebraicCuspSemicircle2 {
             ],
         };
         for (boundary, expected) in expected_orders {
-            match parameter.order_to_real(&boundary, policy)? {
+            match parameter.selected_parallel_contact_order_to_real(&boundary, policy)? {
                 Classification::Decided(order) if order == expected => {}
                 Classification::Decided(_order) => {
                     #[cfg(feature = "dispatch-trace")]
@@ -17337,7 +17398,27 @@ impl BezierAlgebraicCuspSemicircle2 {
                 }
             }
         }
-        Ok(Classification::Decided(parameter))
+        // Publication follows every construction predicate. A requested
+        // approximate policy does not weaken certified contacts, while a
+        // genuinely approximate frame remains an explicit dependency.
+        let BezierAlgebraicCuspSemicircleMappedParameterData2::SelectedParallelContact {
+            policy: retained_policy,
+            ..
+        } = &mut parameter
+        else {
+            unreachable!()
+        };
+        *retained_policy = if policy
+            .strict_counterpart()
+            .accepts_retained_policy(frame_policy)
+        {
+            policy.retained_object_policy()
+        } else {
+            frame_policy
+        };
+        Ok(Classification::Decided(
+            BezierAlgebraicCuspSemicircleParameter2::Mapped(Arc::new(parameter)),
+        ))
     }
 
     /// Retains an authored round-join contact whose radial direction is the
@@ -158421,6 +158502,122 @@ mod conversion_tests {
     }
 
     #[test]
+    fn selected_fiber_comparison_accepts_a_newly_represented_root() {
+        let half = (Real::one() / Real::from(2_i8)).unwrap();
+        let BezierParameter2::Algebraic(retained) =
+            algebraic_parameter(vec![-half.clone(), Real::zero(), Real::one()])
+        else {
+            unreachable!()
+        };
+        let Classification::Decided(polynomial) = BezierParameterPolynomial::try_new_power_basis(
+            vec![Real::one(), -(Real::from(5_i8) * &half), Real::one()],
+            &CurveContext::STRICT,
+        )
+        .unwrap() else {
+            panic!("(u-1/2)(u-2) must construct");
+        };
+        let Classification::Decided(interval) =
+            BezierParameterInterval::try_new(Real::zero(), Real::one(), &CurveContext::STRICT)
+                .unwrap()
+        else {
+            unreachable!()
+        };
+        // Exactly one root is in (0,1). Its first bisection recovers 1/2.
+        let other = BezierParameter2::Algebraic(
+            BezierAlgebraicParameter2::from_certified_singleton(polynomial, interval),
+        );
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            for (denominator, expected) in [
+                (5_i8, std::cmp::Ordering::Less),
+                (3_i8, std::cmp::Ordering::Greater),
+            ] {
+                let selected = BezierAlgebraicSelectedFiberAuthority2::new(
+                    BivariatePolynomial::new(vec![vec![
+                        -(Real::one() / Real::from(denominator)).unwrap(),
+                        Real::zero(),
+                        Real::one(),
+                    ]]),
+                    retained.clone(),
+                    &policy,
+                )
+                .parameter(IsolatedRootInterval {
+                    lower: Real::zero(),
+                    upper: Real::one(),
+                    exact_root: None,
+                    distinct_root_count: 1,
+                });
+                assert_eq!(
+                    selected.cmp_bezier_parameter(&other, &policy).unwrap(),
+                    Classification::Decided(expected),
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn selected_fiber_import_and_refinement_retain_the_known_scalar_representation() {
+        let half = (Real::one() / Real::from(2_i8)).unwrap();
+        let third = (Real::one() / Real::from(3_i8)).unwrap();
+        let BezierParameter2::Algebraic(retained) =
+            algebraic_parameter(vec![-half, Real::zero(), Real::one()])
+        else {
+            unreachable!()
+        };
+        let ordinary = algebraic_parameter(vec![-third, Real::zero(), Real::one()]);
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let selected = BezierAlgebraicSelectedFiberAuthority2::from_bezier_parameter(
+                retained.clone(),
+                ordinary.clone(),
+                &policy,
+            );
+            let uncached = selected.data.authority.parameter(selected.root().clone());
+            assert_eq!(
+                selected, uncached,
+                "representation caches cannot affect root equality"
+            );
+            assert_eq!(
+                selected.promoted_bezier_parameter(&policy).unwrap(),
+                Classification::Decided(ordinary.clone())
+            );
+            let Classification::Decided(refined) = selected.refined(4, &policy).unwrap() else {
+                panic!("the imported singleton must refine");
+            };
+            assert!(Arc::ptr_eq(
+                &selected.data.represented_parameter,
+                &refined.data.represented_parameter,
+            ));
+            assert_eq!(
+                refined.cmp_bezier_parameter(&ordinary, &policy).unwrap(),
+                Classification::Decided(std::cmp::Ordering::Equal)
+            );
+            let difference = BivariatePolynomial::new(vec![
+                vec![Real::zero(), Real::one()],
+                vec![Real::from(-1_i8)],
+            ]);
+            assert_eq!(
+                refined.predicate_sign(&difference, &policy).unwrap(),
+                Classification::Decided(RealSign::Negative)
+            );
+            let Classification::Decided(uncached_refined) = uncached.refined(4, &policy).unwrap()
+            else {
+                panic!("the same singleton must refine before a representation is retained");
+            };
+            // An independently replayed equality learned after refinement
+            // must reach both root handles and avoid later norm promotion.
+            assert_eq!(
+                uncached_refined
+                    .cmp_bezier_parameter(&ordinary, &policy)
+                    .unwrap(),
+                Classification::Decided(std::cmp::Ordering::Equal),
+            );
+            assert_eq!(
+                uncached.promoted_bezier_parameter(&policy).unwrap(),
+                Classification::Decided(ordinary.clone())
+            );
+        }
+    }
+
+    #[test]
     fn selected_fiber_equality_requires_selected_root_containment() {
         let half = (Real::one() / Real::from(2_i8)).unwrap();
         let BezierParameter2::Algebraic(retained) =
@@ -159711,6 +159908,7 @@ mod conversion_tests {
             else {
                 panic!("the quarter-turn contact must retain an angular map");
             };
+            assert!(parameter.validate_policy(&CurveContext::STRICT).is_ok());
             assert_eq!(
                 parameter.order_to_real(&quarter, &policy).unwrap(),
                 Classification::Decided(std::cmp::Ordering::Greater),
