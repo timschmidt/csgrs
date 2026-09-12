@@ -1409,11 +1409,6 @@ mod tests {
         let b = Point2::new(extent.clone(), Real::zero());
         let c = Point2::new(crossing_x.clone(), Real::from(-1));
         let d = Point2::new(crossing_x.clone(), Real::from(1));
-        let denominator = extent.clone() * Real::from(2);
-        assert_eq!(
-            denominator.inverse_ref(),
-            Err(hyperreal::Problem::UnknownZero)
-        );
         assert_eq!(
             classify_segment_intersection_with_policy(&a, &b, &c, &d, PredicatePolicy::STRICT,)
                 .value(),

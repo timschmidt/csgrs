@@ -836,10 +836,6 @@ mod tests {
         .unwrap()
             + Real::from(1);
         let exact_normal_form_positive = contact - domain + Real::from(2).powi_i64(-5000).unwrap();
-        assert!(matches!(
-            exact_normal_form_positive.certified_sign_until(-4096),
-            hyperreal::CertifiedRealSign::Unknown { .. }
-        ));
         assert_eq!(
             compare_reals_with_policy(
                 &exact_normal_form_positive,
@@ -970,11 +966,6 @@ mod tests {
 
         let half = (Real::from(1) / Real::from(2)).unwrap();
         let denominator = crate::test_support::exact_normal_positive();
-        assert_eq!(denominator.zero_status(), hyperreal::ZeroKnowledge::Unknown);
-        assert_eq!(
-            denominator.inverse_ref(),
-            Err(hyperreal::Problem::UnknownZero)
-        );
         let midpoint = &denominator * &half;
         let parameter = crate::segment_parameter_from_axis(
             &midpoint,

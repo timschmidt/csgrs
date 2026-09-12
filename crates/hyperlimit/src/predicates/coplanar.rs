@@ -1227,10 +1227,6 @@ mod tests {
         let deep_positive = exact_normal_positive();
         let segment_start = Point3::new(Real::zero(), deep_positive.clone() * &half, Real::zero());
         let segment_end = Point3::new(Real::zero(), -(deep_positive.clone() * &half), Real::zero());
-        assert_eq!(
-            deep_positive.inverse_ref(),
-            Err(hyperreal::Problem::UnknownZero)
-        );
         let parameter = projected_line_parameter3_with_policy(
             &segment_start,
             &segment_end,

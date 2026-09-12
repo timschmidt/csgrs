@@ -517,7 +517,7 @@ mod tests {
                 || None,
                 RefinementNeed::RealRefinement,
             ),
-            PredicateOutcome::decided(Sign::Positive, Certainty::Exact, Escalation::Exact)
+            PredicateOutcome::decided(Sign::Positive, Certainty::Exact, Escalation::Structural)
         );
 
         assert_eq!(

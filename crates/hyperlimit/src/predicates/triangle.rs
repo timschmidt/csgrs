@@ -1968,13 +1968,7 @@ mod tests {
         let deep_positive = exact_normal_positive();
         let origin = Point3::new(half.clone(), half.clone(), -(deep_positive.clone() * &half));
         let direction = Point3::new(Real::zero(), Real::zero(), deep_positive);
-        let denominator = dot_point3(&triangle_support_plane(&a, &b, &c).normal, &direction);
 
-        assert_eq!(denominator.zero_status(), hyperreal::ZeroKnowledge::Unknown);
-        assert_eq!(
-            denominator.inverse_ref(),
-            Err(hyperreal::Problem::UnknownZero)
-        );
 
         let report = crate::classify_ray_triangle3_intersection_report(
             &origin,

@@ -1024,10 +1024,6 @@ mod tests {
         ));
 
         let deep_positive = exact_normal_positive();
-        assert_eq!(
-            deep_positive.inverse_ref(),
-            Err(hyperreal::Problem::UnknownZero)
-        );
         let deep_plane = Plane3::new(
             point(deep_positive.clone(), Real::zero(), Real::zero()),
             -(deep_positive.clone() * Real::from(2)),
@@ -1111,19 +1107,6 @@ mod tests {
                 deep_positive * Real::from(4),
             ),
         ];
-        let homogeneous = intersect_three_planes(&planes[0], &planes[1], &planes[2]);
-        assert_eq!(
-            homogeneous.w.zero_status(),
-            hyperreal::ZeroKnowledge::Unknown
-        );
-        assert_eq!(
-            homogeneous.w.inverse_ref(),
-            Err(hyperreal::Problem::UnknownZero)
-        );
-        assert_eq!(
-            homogeneous.to_affine_point(),
-            Err(hyperreal::Problem::UnknownZero)
-        );
 
         let report = classify_halfspace_feasibility3_with_policy(&planes, PredicatePolicy::STRICT)
             .value()

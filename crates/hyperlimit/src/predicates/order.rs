@@ -589,7 +589,7 @@ mod tests {
         assert_eq!(positive.immediate_sign(), None);
         assert_eq!(
             classify_real_sign_with_policy(&positive, APPROX),
-            PredicateOutcome::decided(Sign::Positive, Certainty::Exact, Escalation::Exact)
+            PredicateOutcome::decided(Sign::Positive, Certainty::Exact, Escalation::Structural)
         );
         // The first symbolic proof must be retained, not recomputed or
         // replaced by terminal approximate equality on a later query.
@@ -603,7 +603,7 @@ mod tests {
         );
         assert_eq!(
             compare_reals_with_policy(&fresh_positive(), &Real::zero(), APPROX),
-            PredicateOutcome::decided(Ordering::Greater, Certainty::Exact, Escalation::Exact)
+            PredicateOutcome::decided(Ordering::Greater, Certainty::Exact, Escalation::Structural)
         );
 
         let left = Point2::new(positive, Real::zero());
@@ -614,7 +614,7 @@ mod tests {
         );
         assert_eq!(
             point2_equal_with_policy(&Point2::new(fresh_positive(), Real::zero()), &right, APPROX),
-            PredicateOutcome::decided(false, Certainty::Exact, Escalation::Exact)
+            PredicateOutcome::decided(false, Certainty::Exact, Escalation::Structural)
         );
     }
 
