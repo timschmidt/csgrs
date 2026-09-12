@@ -12,6 +12,7 @@ use std::collections::{BTreeMap, BTreeSet};
 use hyperlimit::{Certainty as PredicateCertainty, PredicateOutcome, PredicatePolicy, Sign};
 use hyperreal::{CertifiedRealSign, Rational, Real, RealSign};
 
+use crate::integer_interpolation::primitive_integer_polynomial;
 use crate::residual_replay::{
     DenseResidualReplayReport, SparseResidualReplayError, SparseResidualReplayReport,
     SparseResidualTerm, replay_assembled_sparse_rows, replay_dense_linear_residuals,
@@ -279,6 +280,40 @@ fn bareiss_update(
     bareiss_quotient(numerator, previous_pivot)
 }
 
+/// Clears rational denominators once per row. The positive row scales are
+/// retained separately so integer Bareiss updates can use exact division
+/// without normalizing a rational fraction at every matrix entry.
+fn integer_scaled_rational_matrix(matrix: &[Vec<Real>]) -> Option<(Vec<Vec<Real>>, Vec<Real>)> {
+    if matrix.len() < 3 {
+        return None;
+    }
+    let mut has_fraction = false;
+    for value in matrix.iter().flatten() {
+        has_fraction |= !value.exact_rational_ref()?.is_integer();
+    }
+    if !has_fraction {
+        return None;
+    }
+    let mut work = Vec::with_capacity(matrix.len());
+    let mut scales = Vec::with_capacity(matrix.len());
+    for row in matrix {
+        let integers = primitive_integer_polynomial(row)?;
+        let scale = if let Some(index) = integers.iter().position(|value| {
+            !value
+                .exact_rational_ref()
+                .expect("primitive integer entry")
+                .is_zero()
+        }) {
+            (&row[index] / &integers[index]).ok()?
+        } else {
+            Real::one()
+        };
+        work.push(integers);
+        scales.push(scale);
+    }
+    Some((work, scales))
+}
+
 fn pivot_free_determinant(matrix: &[Vec<Real>]) -> BareissDeterminantReport {
     let n = matrix.len();
     if n == 0 {
@@ -343,6 +378,8 @@ fn pivot_free_determinant(matrix: &[Vec<Real>]) -> BareissDeterminantReport {
 /// or a fraction-free intermediate is unavailable, a pivot-free exact
 /// Faddeev-LeVerrier construction completes the determinant without making a
 /// topology decision.
+/// Rational matrices clear denominators once per row before elimination;
+/// determinant and pivot evidence are restored to the original row scales.
 pub fn determinant_bareiss(
     matrix: &[Vec<Real>],
     min_precision: i32,
@@ -369,7 +406,11 @@ pub fn determinant_bareiss(
         });
     }
 
-    let mut work = matrix.to_vec();
+    let (mut work, mut row_scales) = match integer_scaled_rational_matrix(matrix) {
+        Some((work, scales)) => (work, Some(scales)),
+        None => (matrix.to_vec(), None),
+    };
+    let mut pivot_scale = Real::one();
     let mut swaps = 0;
     let mut pivots = Vec::with_capacity(n - 1);
     let mut previous_pivot = Real::one();
@@ -393,15 +434,27 @@ pub fn determinant_bareiss(
 
         if pivot_row != pivot {
             work.swap(pivot_row, pivot);
+            if let Some(scales) = &mut row_scales {
+                scales.swap(pivot_row, pivot);
+            }
             swaps += 1;
         }
 
         let pivot_value = work[pivot][pivot].clone();
         let pivot_work_row = work[pivot].clone();
+        // A Bareiss pivot is the leading minor of the currently permuted
+        // matrix. Its original scale is the product of selected row scales,
+        // including the row just brought in by this pivot's swap.
+        let reported_pivot = if let Some(scales) = &row_scales {
+            pivot_scale *= &scales[pivot];
+            &pivot_value * &pivot_scale
+        } else {
+            pivot_value.clone()
+        };
         pivots.push(BareissPivot {
             pivot,
             row: pivot_row,
-            value: pivot_value.clone(),
+            value: reported_pivot,
         });
 
         for row in work.iter_mut().take(n).skip(pivot + 1) {
@@ -426,6 +479,9 @@ pub fn determinant_bareiss(
     }
 
     let mut determinant = work[n - 1][n - 1].clone();
+    if let Some(scales) = row_scales {
+        determinant *= pivot_scale * &scales[n - 1];
+    }
     if swaps % 2 == 1 {
         determinant = -determinant;
     }
@@ -1437,6 +1493,28 @@ mod tests {
         Real::from(hyperreal::Rational::fraction(numerator, denominator).unwrap())
     }
 
+    fn laplace_determinant(matrix: &[Vec<Real>]) -> Real {
+        if matrix.is_empty() {
+            return Real::one();
+        }
+        let mut determinant = Real::zero();
+        for (column, value) in matrix[0].iter().enumerate() {
+            let minor = matrix[1..]
+                .iter()
+                .map(|row| {
+                    row.iter()
+                        .enumerate()
+                        .filter(|(index, _)| *index != column)
+                        .map(|(_, entry)| entry.clone())
+                        .collect()
+                })
+                .collect::<Vec<_>>();
+            let term = value * laplace_determinant(&minor);
+            determinant += if column % 2 == 0 { term } else { -term };
+        }
+        determinant
+    }
+
     fn arrowhead_system(order: usize) -> (Vec<SparseResidualTerm>, Vec<Real>) {
         let mut terms = Vec::with_capacity(order.saturating_mul(3));
         terms.push(SparseResidualTerm {
@@ -1479,6 +1557,61 @@ mod tests {
         assert_eq!(report.swaps, 1);
         assert_eq!(report.pivots.len(), 1);
         assert_eq!(report.pivots[0].row, 1);
+    }
+
+    #[test]
+    fn rational_row_scales_preserve_original_pivots_through_swaps() {
+        let matrix = vec![
+            vec![
+                fraction(0, 1),
+                fraction(0, 1),
+                fraction(5, 7),
+                fraction(6, 7),
+            ],
+            vec![
+                fraction(0, 1),
+                fraction(2, 5),
+                fraction(3, 5),
+                fraction(4, 5),
+            ],
+            vec![
+                fraction(7, 3),
+                fraction(8, 3),
+                fraction(9, 3),
+                fraction(10, 3),
+            ],
+            vec![
+                fraction(0, 1),
+                fraction(0, 1),
+                fraction(0, 1),
+                fraction(11, 2),
+            ],
+        ];
+        let report = determinant_bareiss(&matrix, -64).unwrap();
+        assert_eq!(report.swaps, 1);
+        assert_eq!(report.determinant, fraction(-11, 3));
+        assert_eq!(
+            report
+                .pivots
+                .iter()
+                .map(|pivot| pivot.value.clone())
+                .collect::<Vec<_>>(),
+            vec![fraction(7, 3), fraction(14, 15), fraction(2, 3)]
+        );
+    }
+
+    #[test]
+    fn integer_and_arbitrary_real_matrices_keep_their_native_determinant_path() {
+        let integers = vec![vec![real(1), real(2), real(3)]; 3];
+        assert!(integer_scaled_rational_matrix(&integers).is_none());
+        let root = real(2).sqrt().unwrap();
+        let exact = vec![
+            vec![fraction(1, 3), real(1), real(2)],
+            vec![real(0), root.clone(), real(1)],
+            vec![real(0), real(0), real(3)],
+        ];
+        assert!(integer_scaled_rational_matrix(&exact).is_none());
+        assert_eq!(determinant_bareiss(&exact, -64).unwrap().determinant, root);
     }
 
     #[test]
@@ -1967,6 +2100,24 @@ mod tests {
     }
 
     proptest! {
+        #[test]
+        fn rational_determinants_and_pivot_minors_match_independent_laplace_expansion(
+            entries in prop::collection::vec((-12_i64..13, 1_u64..15), 16),
+        ) {
+            let matrix = entries.chunks(4).map(|row|
+                row.iter().map(|&(numerator, denominator)| fraction(numerator, denominator)).collect::<Vec<_>>()
+            ).collect::<Vec<_>>();
+            let report = determinant_bareiss(&matrix, -64).unwrap();
+            prop_assert_eq!(&report.determinant, &laplace_determinant(&matrix));
+            let mut permuted = matrix.clone();
+            for pivot in report.pivots {
+                permuted.swap(pivot.pivot, pivot.row);
+                let order = pivot.pivot + 1;
+                let minor = permuted[..order].iter().map(|row| row[..order].to_vec()).collect::<Vec<_>>();
+                prop_assert_eq!(&pivot.value, &laplace_determinant(&minor));
+            }
+        }
+
         #[test]
         fn generated_triangular_determinants_match_diagonal_product(
             a in 1_i16..=16,
