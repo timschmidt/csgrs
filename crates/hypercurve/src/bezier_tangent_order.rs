@@ -1262,11 +1262,7 @@ fn representation_or_exact(
 ) -> Option<AlgebraicRootRepresentation> {
     representation
         .cloned()
-        .or_else(|| exact.map(exact_value_representation))
-}
-
-fn exact_value_representation(value: &Real) -> AlgebraicRootRepresentation {
-    crate::bezier_algebraic_image::exact_real_algebraic_representation(value)
+        .or_else(|| exact.map(AlgebraicRootRepresentation::from_exact_value))
 }
 
 fn missing_operand_evidence(
@@ -1350,7 +1346,7 @@ fn refined_represented_sign(
     value: &AlgebraicRootRepresentation,
     policy: &CurveContext,
 ) -> Option<Ordering> {
-    let zero = exact_value_representation(&Real::zero());
+    let zero = AlgebraicRootRepresentation::from_exact_value(&Real::zero());
     crate::bezier_algebraic_image::compare_algebraic_representations_with_policy(
         value, &zero, policy,
     )

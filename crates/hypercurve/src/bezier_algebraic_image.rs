@@ -139,10 +139,7 @@ mod policy_tests {
     };
     use num::{BigInt, BigUint};
 
-    use super::{
-        arithmetic_algebraic_representations_with_policy, coordinate_image,
-        exact_real_algebraic_representation,
-    };
+    use super::{arithmetic_algebraic_representations_with_policy, coordinate_image};
     use crate::{
         Classification, CurveCertainty, CurveContext, policy::resolve_certified_operation,
     };
@@ -229,7 +226,7 @@ mod policy_tests {
         ] {
             for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
                 let image = coordinate_image(
-                    &exact_real_algebraic_representation(&parameter),
+                    &AlgebraicRootRepresentation::from_exact_value(&parameter),
                     coefficients.clone(),
                     &policy,
                 )
@@ -245,14 +242,14 @@ mod policy_tests {
 
     #[test]
     fn exact_real_representation_preserves_native_point_payloads() {
-        let irrational = exact_real_algebraic_representation(&Real::pi());
+        let irrational = AlgebraicRootRepresentation::from_exact_value(&Real::pi());
         let exact = irrational
             .exact_point_witness()
             .expect("an exact Real representation retains its point");
         assert_eq!(exact, &Real::pi());
         assert!(exact.exact_rational_ref().is_none());
 
-        let rational = exact_real_algebraic_representation(&Real::from(3_i8));
+        let rational = AlgebraicRootRepresentation::from_exact_value(&Real::from(3_i8));
         assert!(
             rational
                 .exact_point_witness()
@@ -300,7 +297,7 @@ fn compare_algebraic_representation_to_real(
     {
         return crate::Classification::Decided(Ordering::Equal);
     }
-    let exact = exact_real_algebraic_representation(value);
+    let exact = AlgebraicRootRepresentation::from_exact_value(value);
     compare_algebraic_representations_with_policy(representation, &exact, policy)
         .map(crate::Classification::Decided)
         .unwrap_or(crate::Classification::Uncertain(
@@ -826,7 +823,7 @@ impl RationalBezierAlgebraicPointImage2 {
             });
             if proportional {
                 let value = (numerator_pivot / denominator_pivot).ok()?;
-                return Some(exact_real_algebraic_representation(&value));
+                return Some(AlgebraicRootRepresentation::from_exact_value(&value));
             }
         }
         let evidence = transform_algebraic_root_rational_image(
@@ -2147,7 +2144,7 @@ fn coordinate_image(
 ) -> Option<BezierAlgebraicCoordinateImage> {
     if let Some(parameter_value) = parameter.exact_point_witness() {
         let value = Real::eval_poly(&coefficients, parameter_value);
-        let representation = exact_real_algebraic_representation(&value);
+        let representation = AlgebraicRootRepresentation::from_exact_value(&value);
         return Some(BezierAlgebraicCoordinateImage {
             evidence: AlgebraicRootPolynomialImageReport {
                 status: AlgebraicRootPolynomialImageStatus::Transformed,
@@ -2159,7 +2156,7 @@ fn coordinate_image(
         });
     }
     if coefficients.len() == 1 {
-        let representation = exact_real_algebraic_representation(&coefficients[0]);
+        let representation = AlgebraicRootRepresentation::from_exact_value(&coefficients[0]);
         return Some(BezierAlgebraicCoordinateImage {
             evidence: AlgebraicRootPolynomialImageReport {
                 status: AlgebraicRootPolynomialImageStatus::Transformed,
@@ -2266,25 +2263,6 @@ fn coordinate_image_from_replay(
             evidence,
         },
     )
-}
-
-pub(crate) fn exact_real_algebraic_representation(value: &Real) -> AlgebraicRootRepresentation {
-    AlgebraicRootRepresentation {
-        constraint_index: 0,
-        symbol: SymbolId(0),
-        interval_index: 0,
-        polynomial_coefficients: vec![Real::zero() - value, Real::one()],
-        interval: IsolatedRootInterval {
-            lower: value.clone(),
-            upper: value.clone(),
-            exact_root: Some(value.clone()),
-            distinct_root_count: 1,
-        },
-        validation: AlgebraicRootValidationReport {
-            status: AlgebraicRootValidationStatus::Valid,
-            message: None,
-        },
-    }
 }
 
 pub(crate) fn parameter_representation(

@@ -19,8 +19,8 @@ use hypersolve::{
 };
 
 use crate::bezier_algebraic_image::{
-    compare_algebraic_representations_with_policy, exact_real_algebraic_representation,
-    parameter_representation, rational_derivative_images_from_power_basis,
+    compare_algebraic_representations_with_policy, parameter_representation,
+    rational_derivative_images_from_power_basis,
     rational_point_image_from_power_basis,
 };
 use crate::bezier_parameter::{
@@ -443,8 +443,8 @@ impl RationalBezierIntersectionPointEvidence2 {
                 ) else {
                     return Classification::Uncertain(UncertaintyReason::Unsupported);
                 };
-                let exact_x = exact_real_algebraic_representation(exact.x());
-                let exact_y = exact_real_algebraic_representation(exact.y());
+                let exact_x = AlgebraicRootRepresentation::from_exact_value(exact.x());
+                let exact_y = AlgebraicRootRepresentation::from_exact_value(exact.y());
                 match (
                     crate::bezier_arrangement::represented_roots_equal(x, &exact_x, policy),
                     crate::bezier_arrangement::represented_roots_equal(y, &exact_y, policy),
@@ -5589,8 +5589,8 @@ impl RationalBezier2 {
                     Classification::Uncertain(_) => return Ok(None),
                 };
                 Ok(Some(CandidatePointReplay {
-                    x: exact_real_algebraic_representation(point.x()),
-                    y: exact_real_algebraic_representation(point.y()),
+                    x: AlgebraicRootRepresentation::from_exact_value(point.x()),
+                    y: AlgebraicRootRepresentation::from_exact_value(point.y()),
                     evidence: RationalBezierIntersectionPointEvidence2::Exact(point),
                 }))
             }
@@ -7177,7 +7177,9 @@ fn parameter_root_representation(
     policy: &CurveContext,
 ) -> AlgebraicRootRepresentation {
     match parameter {
-        BezierParameter2::Exact(parameter) => exact_real_algebraic_representation(parameter),
+        BezierParameter2::Exact(parameter) => {
+            AlgebraicRootRepresentation::from_exact_value(parameter)
+        }
         BezierParameter2::Algebraic(parameter) => parameter_representation(parameter, policy),
     }
 }

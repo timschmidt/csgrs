@@ -19,7 +19,6 @@ use std::sync::{Arc, Mutex, OnceLock, Weak};
 
 use crate::bezier_algebraic_image::{
     RationalBezierAlgebraicPointPredicate2, compare_algebraic_representations_with_policy,
-    exact_real_algebraic_representation,
 };
 use crate::bezier_algebraic_image::{
     certified_parameter_representation, parameter_representation,
@@ -5930,7 +5929,9 @@ impl BezierRepresentedCircleRationalComponentSystem2 {
         let mut selected = Vec::with_capacity(self.sources.len() + 1);
         selected.extend(self.sources.iter().cloned());
         selected.push(match parameter {
-            BezierParameter2::Exact(parameter) => exact_real_algebraic_representation(parameter),
+            BezierParameter2::Exact(parameter) => {
+                AlgebraicRootRepresentation::from_exact_value(parameter)
+            }
             BezierParameter2::Algebraic(parameter) => parameter_representation(parameter, policy),
         });
         dense_polynomial_tuple_sign(polynomial, &selected, policy)
@@ -7012,7 +7013,7 @@ fn represented_tensor_coordinate(
             &CurveContext::STRICT,
         ) {
             Some(RealSign::Zero) => {
-                Classification::Decided(exact_real_algebraic_representation(root))
+                Classification::Decided(AlgebraicRootRepresentation::from_exact_value(root))
             }
             Some(RealSign::Negative | RealSign::Positive) => {
                 Classification::Uncertain(UncertaintyReason::Unsupported)
@@ -7177,11 +7178,13 @@ fn represented_affine_coordinate(
         })
         .collect::<Vec<_>>();
     if active.is_empty() {
-        return Classification::Decided(exact_real_algebraic_representation(&affine_offset));
+        return Classification::Decided(AlgebraicRootRepresentation::from_exact_value(
+            &affine_offset,
+        ));
     }
     let affine_image = |source: &AlgebraicRootRepresentation, scale: &Real, offset: &Real| {
         if scale.zero_status() == ZeroKnowledge::Zero {
-            return Classification::Decided(exact_real_algebraic_representation(offset));
+            return Classification::Decided(AlgebraicRootRepresentation::from_exact_value(offset));
         }
         if scale == &Real::one() && offset.zero_status() == ZeroKnowledge::Zero {
             return Classification::Decided(source.clone());
@@ -7573,7 +7576,7 @@ fn represented_dense_value_refined(
         return Classification::Uncertain(UncertaintyReason::Unsupported);
     }
     if sources.is_empty() {
-        return Classification::Decided(exact_real_algebraic_representation(
+        return Classification::Decided(AlgebraicRootRepresentation::from_exact_value(
             &polynomial.coefficients()[0],
         ));
     }
@@ -8753,7 +8756,7 @@ fn represented_tensor_ratio(
             && denominator.len() == 1
             && let Ok(value) = &numerator[0] / &denominator[0]
         {
-            return Classification::Decided(exact_real_algebraic_representation(&value));
+            return Classification::Decided(AlgebraicRootRepresentation::from_exact_value(&value));
         }
         if numerator.len() <= 2 && denominator.len() <= 2 {
             let report = transform_algebraic_root_mobius(
@@ -9004,13 +9007,15 @@ fn represented_strict_sign(value: &AlgebraicRootRepresentation) -> Option<RealSi
     {
         return Some(RealSign::Positive);
     }
-    represented_strict_order(value, &exact_real_algebraic_representation(&Real::zero())).map(
-        |order| match order {
-            std::cmp::Ordering::Less => RealSign::Negative,
-            std::cmp::Ordering::Equal => RealSign::Zero,
-            std::cmp::Ordering::Greater => RealSign::Positive,
-        },
+    represented_strict_order(
+        value,
+        &AlgebraicRootRepresentation::from_exact_value(&Real::zero()),
     )
+    .map(|order| match order {
+        std::cmp::Ordering::Less => RealSign::Negative,
+        std::cmp::Ordering::Equal => RealSign::Zero,
+        std::cmp::Ordering::Greater => RealSign::Positive,
+    })
 }
 
 /// Converts a root already proved to lie strictly between zero and one into a
@@ -9058,7 +9063,7 @@ fn represented_policy_sign(
     if !policy.permits_approximate_512() {
         return Classification::Uncertain(UncertaintyReason::Predicate);
     }
-    let zero = exact_real_algebraic_representation(&Real::zero());
+    let zero = AlgebraicRootRepresentation::from_exact_value(&Real::zero());
     let report = compare_algebraic_root_representations_with_refinement(
         value,
         &zero,
@@ -9088,9 +9093,10 @@ fn represented_order_to_real(
     target: &Real,
     policy: &CurveContext,
 ) -> Classification<std::cmp::Ordering> {
-    if let Some(order) =
-        represented_strict_order(value, &exact_real_algebraic_representation(target))
-    {
+    if let Some(order) = represented_strict_order(
+        value,
+        &AlgebraicRootRepresentation::from_exact_value(target),
+    ) {
         return Classification::Decided(order);
     }
     match represented_affine_coordinate(&[(value, &Real::one())], &(-target)) {
@@ -9322,8 +9328,12 @@ fn represented_vector_dot_cross(
             return None;
         };
         Some([
-            exact_real_algebraic_representation(&(first_x * second_x + first_y * second_y)),
-            exact_real_algebraic_representation(&(first_x * second_y - first_y * second_x)),
+            AlgebraicRootRepresentation::from_exact_value(
+                &(first_x * second_x + first_y * second_y),
+            ),
+            AlgebraicRootRepresentation::from_exact_value(
+                &(first_x * second_y - first_y * second_x),
+            ),
         ])
     };
     if let Some(products) = exact_products(first, second) {
@@ -9538,16 +9548,16 @@ fn represented_scaled_unit_radial_dot_cross(
 ) -> Classification<[AlgebraicRootRepresentation; 2]> {
     let direct_x = represented_zero_offset_unit_scales(&first[0], &second[0]);
     let direct_y = represented_zero_offset_unit_scales(&first[1], &second[1]);
-    let zero = || exact_real_algebraic_representation(&Real::zero());
+    let zero = || AlgebraicRootRepresentation::from_exact_value(&Real::zero());
     if direct_x & POSITIVE_UNIT_SCALE != 0 && direct_y & POSITIVE_UNIT_SCALE != 0 {
         return Classification::Decided([
-            exact_real_algebraic_representation(scale_product),
+            AlgebraicRootRepresentation::from_exact_value(scale_product),
             zero(),
         ]);
     }
     if direct_x & NEGATIVE_UNIT_SCALE != 0 && direct_y & NEGATIVE_UNIT_SCALE != 0 {
         return Classification::Decided([
-            exact_real_algebraic_representation(&(-scale_product)),
+            AlgebraicRootRepresentation::from_exact_value(&(-scale_product)),
             zero(),
         ]);
     }
@@ -9559,7 +9569,7 @@ fn represented_scaled_unit_radial_dot_cross(
     {
         return Classification::Decided([
             zero(),
-            exact_real_algebraic_representation(scale_product),
+            AlgebraicRootRepresentation::from_exact_value(scale_product),
         ]);
     }
     if second_x_from_first_y & POSITIVE_UNIT_SCALE != 0
@@ -9567,7 +9577,7 @@ fn represented_scaled_unit_radial_dot_cross(
     {
         return Classification::Decided([
             zero(),
-            exact_real_algebraic_representation(&(-scale_product)),
+            AlgebraicRootRepresentation::from_exact_value(&(-scale_product)),
         ]);
     }
     match represented_vector_dot_cross(first, second) {
@@ -10580,8 +10590,8 @@ impl BezierAlgebraicCuspSemicircleMappedPointSource2 {
                         BezierParameter2::Exact(parameter) => {
                             Ok(curve.point_at_classified(parameter, policy).map(|point| {
                                 [
-                                    exact_real_algebraic_representation(point.x()),
-                                    exact_real_algebraic_representation(point.y()),
+                                    AlgebraicRootRepresentation::from_exact_value(point.x()),
+                                    AlgebraicRootRepresentation::from_exact_value(point.y()),
                                 ]
                             }))
                         }
@@ -18630,7 +18640,7 @@ impl BezierAlgebraicCuspSemicircle2 {
         // for an output. Treat it as one exact zero source so the tuple-sign
         // kernel can reduce every axis uniformly without reallocating the
         // coordinate tensors.
-        sources.push(exact_real_algebraic_representation(&Real::zero()));
+        sources.push(AlgebraicRootRepresentation::from_exact_value(&Real::zero()));
         let reduce = |polynomial| dense_reduce_selected_tuple_relations(polynomial, &sources);
         let constant = |value: &Real| {
             DenseTensorPolynomial::from_axis_polynomial(
@@ -19528,12 +19538,12 @@ impl BezierAlgebraicCuspSemicircle2 {
                 return Ok(Classification::Decided(
                     BezierRepresentedSelectedRadialCircleFrame2 {
                         center: [
-                            exact_real_algebraic_representation(&center_x),
-                            exact_real_algebraic_representation(&center_y),
+                            AlgebraicRootRepresentation::from_exact_value(&center_x),
+                            AlgebraicRootRepresentation::from_exact_value(&center_y),
                         ],
                         unit_radial: [
-                            exact_real_algebraic_representation(&unit_x),
-                            exact_real_algebraic_representation(&unit_y),
+                            AlgebraicRootRepresentation::from_exact_value(&unit_x),
+                            AlgebraicRootRepresentation::from_exact_value(&unit_y),
                         ],
                         signed_radius: self.radial_distance().clone(),
                     },
@@ -19586,12 +19596,12 @@ impl BezierAlgebraicCuspSemicircle2 {
                 return Ok(Classification::Decided(
                     BezierRepresentedSelectedRadialCircleFrame2 {
                         center: [
-                            exact_real_algebraic_representation(&center_x),
-                            exact_real_algebraic_representation(&center_y),
+                            AlgebraicRootRepresentation::from_exact_value(&center_x),
+                            AlgebraicRootRepresentation::from_exact_value(&center_y),
                         ],
                         unit_radial: [
-                            exact_real_algebraic_representation(&unit_x),
-                            exact_real_algebraic_representation(&unit_y),
+                            AlgebraicRootRepresentation::from_exact_value(&unit_x),
+                            AlgebraicRootRepresentation::from_exact_value(&unit_y),
                         ],
                         signed_radius: self.radial_distance().clone(),
                     },
@@ -19733,12 +19743,12 @@ impl BezierAlgebraicCuspSemicircle2 {
         };
         Ok(Some(BezierRepresentedSelectedRadialCircleFrame2 {
             center: [
-                exact_real_algebraic_representation(center.x()),
-                exact_real_algebraic_representation(center.y()),
+                AlgebraicRootRepresentation::from_exact_value(center.x()),
+                AlgebraicRootRepresentation::from_exact_value(center.y()),
             ],
             unit_radial: [
-                exact_real_algebraic_representation(unit_x),
-                exact_real_algebraic_representation(unit_y),
+                AlgebraicRootRepresentation::from_exact_value(unit_x),
+                AlgebraicRootRepresentation::from_exact_value(unit_y),
             ],
             signed_radius: frame.signed_radius,
         }))
@@ -28563,7 +28573,7 @@ impl BezierAlgebraicCuspSemicircle2 {
         let mut direct_candidate = None;
         if clip_to_finite_chord {
             let expression_sign = |parameter: &Real| {
-                let exact_parameter = exact_real_algebraic_representation(parameter);
+                let exact_parameter = AlgebraicRootRepresentation::from_exact_value(parameter);
                 for refinement_steps in [0_usize, 2, 4, 8, 16, 32, 64, 128, 256, 512] {
                     let mut tuple = sources
                         .iter()
@@ -29081,7 +29091,7 @@ impl BezierAlgebraicCuspSemicircle2 {
             return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
         };
         let mut candidate_q_sources = incidence_sources.clone();
-        candidate_q_sources.push(exact_real_algebraic_representation(&Real::zero()));
+        candidate_q_sources.push(AlgebraicRootRepresentation::from_exact_value(&Real::zero()));
         match dense_polynomial_tuple_sign(
             &candidate_q,
             &candidate_q_sources,
@@ -30080,7 +30090,7 @@ impl BezierAlgebraicCuspSemicircle2 {
             // cross(turn*J(R),D) = -turn*dot(R,D), and the selected line
             // root has dot(R,D) = branch*sqrt(discriminant).
             let tangent_cross = if branch == 0 {
-                exact_real_algebraic_representation(&Real::zero())
+                AlgebraicRootRepresentation::from_exact_value(&Real::zero())
             } else {
                 match represented_affine_coordinate(
                     &[(&signed_radical, &(-self.turn_sign()))],
@@ -34290,8 +34300,9 @@ impl BezierAlgebraicCuspSemicircle2 {
                 }
             };
             let tangent_cross =
-                exact_real_algebraic_representation(&(&turn_product * &signed_radical));
-            let tangent_dot = exact_real_algebraic_representation(&(&turn_product * &radial_dot));
+                AlgebraicRootRepresentation::from_exact_value(&(&turn_product * &signed_radical));
+            let tangent_dot =
+                AlgebraicRootRepresentation::from_exact_value(&(&turn_product * &radial_dot));
             let Some(tangent_cross_sign) = represented_strict_sign(&tangent_cross) else {
                 return Ok(Some(Classification::Uncertain(
                     UncertaintyReason::Predicate,
@@ -34791,8 +34802,8 @@ impl BezierAlgebraicCuspSemicircle2 {
             };
             let (tangent_cross, tangent_dot) = if let Some(relation) = authored_relation {
                 (
-                    exact_real_algebraic_representation(&Real::zero()),
-                    exact_real_algebraic_representation(
+                    AlgebraicRootRepresentation::from_exact_value(&Real::zero()),
+                    AlgebraicRootRepresentation::from_exact_value(
                         &(&turn_product
                             * (&first_radius_squared + &second_radius_squared
                                 - &relation.distance_squared)),
@@ -39370,7 +39381,7 @@ impl BezierAlgebraicCuspSemicircle2 {
             let mut selected_tuple = system.sources.clone();
             selected_tuple.push(match &candidate {
                 BezierParameter2::Exact(parameter) => {
-                    exact_real_algebraic_representation(parameter)
+                    AlgebraicRootRepresentation::from_exact_value(parameter)
                 }
                 BezierParameter2::Algebraic(parameter) => {
                     parameter_representation(parameter, policy)
@@ -57326,17 +57337,25 @@ impl BezierRecursiveQuadraticProjectiveScalar2 {
         let exact_denominator = self.denominator.exact_real_value_with_retained_witnesses();
         if let (Some(numerator), Some(denominator)) = (exact_numerator, exact_denominator)
             && let Ok(inverse) = denominator.inverse_ref_assuming_nonzero()
-            && let Some(value) = (numerator * inverse).exact_rational_normal_form()
         {
-            #[cfg(feature = "dispatch-trace")]
-            hyperreal::dispatch_trace::record(
-                "hypercurve",
-                "recursive-projective-scalar-image",
-                "exact-rational-witness",
-            );
-            return Ok(Classification::Decided(
-                exact_real_algebraic_representation(&Real::new(value)),
-            ));
+            let representation =
+                AlgebraicRootRepresentation::from_exact_value(&(numerator * inverse));
+            // A recognized rational or quadratic image keeps a rational
+            // polynomial as reusable equality and ordering evidence. More
+            // general witnesses still use the retained projection below.
+            if representation
+                .polynomial_coefficients
+                .iter()
+                .all(|coefficient| coefficient.exact_rational_ref().is_some())
+            {
+                #[cfg(feature = "dispatch-trace")]
+                hyperreal::dispatch_trace::record(
+                    "hypercurve",
+                    "recursive-projective-scalar-image",
+                    "exact-low-degree-witness",
+                );
+                return Ok(Classification::Decided(representation));
+            }
         }
         let Some((base, mut relation)) = recursive_quadratic_polynomial_projection(vec![
             self.numerator.clone(),
@@ -57348,26 +57367,35 @@ impl BezierRecursiveQuadraticProjectiveScalar2 {
         ]) else {
             return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
         };
-        // When at least one source remains unresolved, publish every proved
-        // compact source so Hypersolve can remove those axes before the
-        // necessary resultant. If the complete tuple is already evaluable,
-        // retain its rational-coefficient algebraic carriers: a non-rational
-        // exact `Real` result is not itself a replacement for their ordering
-        // and equality evidence.
-        let mut sources = if base.source_real_witnesses.iter().any(Option::is_none) {
-            base.sources
-                .iter()
-                .zip(&base.source_real_witnesses)
-                .map(|(source, witness)| {
-                    witness
-                        .as_ref()
-                        .map(exact_real_algebraic_representation)
-                        .unwrap_or_else(|| source.clone())
-                })
-                .collect::<Vec<_>>()
-        } else {
-            base.sources.clone()
-        };
+        // Reuse proved source witnesses before elimination. Rational axes
+        // disappear, and quadratic values keep small rational carriers even
+        // when their original selected roots came from larger eliminants.
+        // General exact coefficient substitution remains available when some
+        // axes are unresolved. The original field still owns source replay.
+        let has_unresolved_source = base.source_real_witnesses.iter().any(Option::is_none);
+        let mut sources = base
+            .sources
+            .iter()
+            .zip(&base.source_real_witnesses)
+            .map(|(source, witness)| {
+                let Some(witness) = witness else {
+                    return source.clone();
+                };
+                let mut compact = AlgebraicRootRepresentation::from_exact_value(witness);
+                if !has_unresolved_source
+                    && !compact
+                        .polynomial_coefficients
+                        .iter()
+                        .all(|coefficient| coefficient.exact_rational_ref().is_some())
+                {
+                    return source.clone();
+                }
+                compact.constraint_index = source.constraint_index;
+                compact.symbol = source.symbol;
+                compact.interval_index = source.interval_index;
+                compact
+            })
+            .collect::<Vec<_>>();
         if sources.is_empty() {
             // The tensor-image authority requires at least one selected axis.
             // A constant exact-zero axis is certified independent and removed
@@ -57380,7 +57408,7 @@ impl BezierRecursiveQuadraticProjectiveScalar2 {
                 return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
             };
             relation = with_dummy_axis;
-            sources.push(exact_real_algebraic_representation(&Real::zero()));
+            sources.push(AlgebraicRootRepresentation::from_exact_value(&Real::zero()));
         }
         Ok(represented_tensor_coordinate_refined(
             &relation,
@@ -66147,7 +66175,9 @@ fn exact_parameter_binary_relation(
     operation: hypersolve::AlgebraicRootArithmeticOp,
 ) -> bool {
     let represent = |parameter: &BezierParameter2| match parameter {
-        BezierParameter2::Exact(parameter) => exact_real_algebraic_representation(parameter),
+        BezierParameter2::Exact(parameter) => {
+            AlgebraicRootRepresentation::from_exact_value(parameter)
+        }
         BezierParameter2::Algebraic(parameter) => {
             certified_parameter_representation(parameter, &CurveContext::STRICT)
         }
@@ -66168,7 +66198,7 @@ fn exact_parameter_binary_relation(
         arithmetic
             .exact_result
             .as_ref()
-            .map(exact_real_algebraic_representation)
+            .map(AlgebraicRootRepresentation::from_exact_value)
     }) else {
         return false;
     };
@@ -68438,7 +68468,9 @@ fn selected_parameter_representations<const N: usize>(
 ) -> [AlgebraicRootRepresentation; N] {
     let strict = CurveContext::STRICT;
     parameters.map(|parameter| match parameter {
-        BezierParameter2::Exact(parameter) => exact_real_algebraic_representation(parameter),
+        BezierParameter2::Exact(parameter) => {
+            AlgebraicRootRepresentation::from_exact_value(parameter)
+        }
         BezierParameter2::Algebraic(parameter) => parameter_representation(parameter, &strict),
     })
 }
@@ -69507,7 +69539,9 @@ fn bezier_parameter_root_representation(
     parameter: &BezierParameter2,
 ) -> AlgebraicRootRepresentation {
     match parameter {
-        BezierParameter2::Exact(parameter) => exact_real_algebraic_representation(parameter),
+        BezierParameter2::Exact(parameter) => {
+            AlgebraicRootRepresentation::from_exact_value(parameter)
+        }
         BezierParameter2::Algebraic(parameter) => {
             certified_parameter_representation(parameter, &CurveContext::STRICT)
         }
@@ -70199,8 +70233,10 @@ fn dense_two_positive_square_root_transverse_root(
         }
         let mut lower_sources = sources.clone();
         let mut upper_sources = sources;
-        *lower_sources.last_mut()? = exact_real_algebraic_representation(&target.interval.lower);
-        *upper_sources.last_mut()? = exact_real_algebraic_representation(&target.interval.upper);
+        *lower_sources.last_mut()? =
+            AlgebraicRootRepresentation::from_exact_value(&target.interval.lower);
+        *upper_sources.last_mut()? =
+            AlgebraicRootRepresentation::from_exact_value(&target.interval.upper);
         let lower = dense_two_positive_square_root_interval(
             expression,
             first_speed_squared,
@@ -70251,8 +70287,10 @@ fn dense_positive_square_root_transverse_root(
         }
         let mut lower_sources = sources.clone();
         let mut upper_sources = sources;
-        *lower_sources.last_mut()? = exact_real_algebraic_representation(&target.interval.lower);
-        *upper_sources.last_mut()? = exact_real_algebraic_representation(&target.interval.upper);
+        *lower_sources.last_mut()? =
+            AlgebraicRootRepresentation::from_exact_value(&target.interval.lower);
+        *upper_sources.last_mut()? =
+            AlgebraicRootRepresentation::from_exact_value(&target.interval.upper);
         let lower =
             dense_positive_square_root_interval(rational, radical, radicand, &lower_sources)
                 .as_ref()
@@ -82812,7 +82850,7 @@ fn algebraic_chord_point_coordinate_representation(
 ) -> Option<hypersolve::AlgebraicRootRepresentation> {
     match point {
         RationalBezierIntersectionPointEvidence2::Exact(point) => {
-            Some(exact_real_algebraic_representation(match axis {
+            Some(AlgebraicRootRepresentation::from_exact_value(match axis {
                 Axis2::X => point.x(),
                 Axis2::Y => point.y(),
             }))
@@ -104089,7 +104127,9 @@ fn selected_fiber_root_intervals_in_interval(
     let refined_retained = retained_parameter.refined_isolating_interval(64, &CurveContext::STRICT);
     let retained_root = match refined_retained {
         BezierParameter2::Algebraic(parameter) => parameter_representation(&parameter, policy),
-        BezierParameter2::Exact(parameter) => exact_real_algebraic_representation(&parameter),
+        BezierParameter2::Exact(parameter) => {
+            AlgebraicRootRepresentation::from_exact_value(&parameter)
+        }
     };
     let report = isolate_bivariate_fiber_roots_at_algebraic_parameter_complete(
         incidence,
@@ -104266,7 +104306,9 @@ fn selected_fiber_parameters_on_incident_ray(
         .refined_isolating_interval(64, &CurveContext::STRICT);
     let retained_root = match refined_retained {
         BezierParameter2::Algebraic(parameter) => parameter_representation(&parameter, policy),
-        BezierParameter2::Exact(parameter) => exact_real_algebraic_representation(&parameter),
+        BezierParameter2::Exact(parameter) => {
+            AlgebraicRootRepresentation::from_exact_value(&parameter)
+        }
     };
     let report = isolate_bivariate_fiber_roots_at_algebraic_parameter_complete(
         &compact_incidence,
@@ -105720,7 +105762,9 @@ fn selected_fiber_rebind_incidence(
             .refined_isolating_interval(steps.max(64), strict);
         let retained_root = match retained_refined {
             BezierParameter2::Algebraic(parameter) => parameter_representation(&parameter, strict),
-            BezierParameter2::Exact(parameter) => exact_real_algebraic_representation(&parameter),
+            BezierParameter2::Exact(parameter) => {
+                AlgebraicRootRepresentation::from_exact_value(&parameter)
+            }
         };
         let report = isolate_bivariate_fiber_roots_at_algebraic_parameter_complete(
             &incidence,
@@ -132691,8 +132735,8 @@ mod conversion_tests {
 
     #[test]
     fn mapped_circle_diameter_cache_preserves_consumed_policy() {
-        let zero = exact_real_algebraic_representation(&Real::zero());
-        let one = exact_real_algebraic_representation(&Real::one());
+        let zero = AlgebraicRootRepresentation::from_exact_value(&Real::zero());
+        let one = AlgebraicRootRepresentation::from_exact_value(&Real::one());
         let frame = BezierRepresentedSelectedRadialCircleFrame2 {
             center: [zero.clone(), zero.clone()],
             unit_radial: [one, zero],
@@ -148170,7 +148214,7 @@ mod conversion_tests {
             Some(dense_test_polynomial(&[-3, 0, 3])),
         );
         // The first coefficient is absent only after source-root reduction.
-        let source = exact_real_algebraic_representation(&Real::one());
+        let source = AlgebraicRootRepresentation::from_exact_value(&Real::one());
         let expression = BezierDenseTwoSquareRootExpression2 {
             rational: dense_test_polynomial(&[1, -4, 4])
                 .insert_independent_axis(0)
@@ -153838,8 +153882,8 @@ mod conversion_tests {
         );
         assert!(represented_roots_strictly_equal(&root, &factored));
 
-        let zero = exact_real_algebraic_representation(&Real::zero());
-        let one = exact_real_algebraic_representation(&Real::one());
+        let zero = AlgebraicRootRepresentation::from_exact_value(&Real::zero());
+        let one = AlgebraicRootRepresentation::from_exact_value(&Real::one());
         let first = BezierRepresentedSelectedRadialCircleFrame2 {
             center: [root.clone(), zero.clone()],
             unit_radial: [one.clone(), zero.clone()],
@@ -160002,7 +160046,7 @@ mod conversion_tests {
         let discriminant =
             DenseTensorPolynomial::from_axis_polynomial(3, 0, &[Real::from(2_i8)]).unwrap();
         let radical = square_root_algebraic_root_representation(
-            &exact_real_algebraic_representation(&Real::from(2_i8)),
+            &AlgebraicRootRepresentation::from_exact_value(&Real::from(2_i8)),
             1,
         );
         let AlgebraicRootSquareRootStatus::Transformed = radical.status else {

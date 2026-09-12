@@ -1622,11 +1622,7 @@ fn negate_algebraic_root(
     }
     evidence
         .exact_result
-        .map(|value| exact_value_representation(&value))
-}
-
-fn exact_value_representation(value: &Real) -> AlgebraicRootRepresentation {
-    crate::bezier_algebraic_image::exact_real_algebraic_representation(value)
+        .map(|value| AlgebraicRootRepresentation::from_exact_value(&value))
 }
 
 type EndpointAdjacency = (Vec<Option<usize>>, Vec<Option<usize>>);
@@ -1812,7 +1808,7 @@ mod endpoint_adjacency_tests {
 
     #[test]
     fn represented_tangent_negation_accepts_an_exact_real_result() {
-        let value = exact_value_representation(&Real::pi());
+        let value = AlgebraicRootRepresentation::from_exact_value(&Real::pi());
         let negated = negate_algebraic_root(&value, &CurveContext::STRICT)
             .expect("exact Real negation remains represented");
 
@@ -2456,8 +2452,8 @@ fn compare_retained_turn_from_base(
 fn retained_tangent_as_algebraic(tangent: &RetainedTangentVector) -> BezierAlgebraicTangentVector2 {
     match tangent {
         RetainedTangentVector::Native(tangent) => BezierAlgebraicTangentVector2::new(
-            exact_value_representation(&tangent.dx),
-            exact_value_representation(&tangent.dy),
+            AlgebraicRootRepresentation::from_exact_value(&tangent.dx),
+            AlgebraicRootRepresentation::from_exact_value(&tangent.dy),
         ),
         RetainedTangentVector::Algebraic(tangent) => tangent.as_ref().clone(),
     }
@@ -2950,8 +2946,15 @@ fn retained_endpoints_equal(
         ),
         (RetainedEndpointKey::Exact(point), RetainedEndpointKey::Algebraic { x, y })
         | (RetainedEndpointKey::Algebraic { x, y }, RetainedEndpointKey::Exact(point)) => Some(
-            represented_roots_equal(x, &exact_value_representation(point.x()), policy)?
-                && represented_roots_equal(y, &exact_value_representation(point.y()), policy)?,
+            represented_roots_equal(
+                x,
+                &AlgebraicRootRepresentation::from_exact_value(point.x()),
+                policy,
+            )? && represented_roots_equal(
+                y,
+                &AlgebraicRootRepresentation::from_exact_value(point.y()),
+                policy,
+            )?,
         ),
     }
 }

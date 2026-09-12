@@ -2854,11 +2854,11 @@ fn parameter_algebraic_representation(
     policy: &CurveContext,
 ) -> Option<AlgebraicRootRepresentation> {
     if let Some(RefinedParameter::Exact(value)) = refined {
-        return Some(crate::bezier_algebraic_image::exact_real_algebraic_representation(value));
+        return Some(AlgebraicRootRepresentation::from_exact_value(value));
     }
     match parameter {
         BezierParameter2::Exact(value) => {
-            Some(crate::bezier_algebraic_image::exact_real_algebraic_representation(value))
+            Some(AlgebraicRootRepresentation::from_exact_value(value))
         }
         BezierParameter2::Algebraic(parameter) => {
             let mut representation =
