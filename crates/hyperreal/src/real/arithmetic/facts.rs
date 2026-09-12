@@ -82,6 +82,26 @@ impl Real {
         Some(self.computable_ref().bounded_laurent_rational(64)? * &self.rational)
     }
 
+    /// Returns `(a, b, d)` when bounded symbolic normalization proves that
+    /// this value equals `a + b * sqrt(d)`, with rational coefficients and
+    /// nonnegative `d`. Rational values use `b = d = 0`.
+    ///
+    /// This shares the scalar normal form used for exact signs and principal
+    /// square roots. It performs no approximation. `None` means only that
+    /// the bounded normal form did not establish a quadratic value; the
+    /// original exact expression remains available unchanged.
+    pub fn exact_quadratic_normal_form(&self) -> Option<(Rational, Rational, Rational)> {
+        if let Some(rational) = self.exact_rational() {
+            return Some((rational, Rational::zero(), Rational::zero()));
+        }
+        let (constant, scale, radicand) = self.computable_ref().exact_quadratic_surd_parts()?;
+        Some((
+            constant * &self.rational,
+            scale * &self.rational,
+            radicand.unwrap_or_else(Rational::zero),
+        ))
+    }
+
     /// Return a borrowed exact rational when that is structurally known.
     ///
     /// Higher-level dense algebra kernels use this to batch exact rational
