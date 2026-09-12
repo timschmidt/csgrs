@@ -19,6 +19,7 @@ use crate::algebraic::{
     evaluate_polynomial_at_algebraic_root, validate_algebraic_root_representation,
 };
 use crate::curve_resultant::{BivariatePolynomial, CurveResultantParameter};
+use crate::integer_interpolation::rational_polynomial_inverse_modulo;
 use crate::ordered_field_roots::{
     OrderedFieldPolynomialContext, OrderedFieldRootIsolationConfig,
     OrderedFieldRootIsolationStatus, isolate_ordered_field_polynomial_roots,
@@ -1243,7 +1244,7 @@ pub fn reduce_bivariate_rational_function_at_algebraic_parameter(
     let numerator_pivot = numerator
         .get(pivot)
         .unwrap_or_else(|| zero.get_or_init(LocalFieldElement::zero));
-    let ratio = match numerator_pivot.divide_after_nonzero(&denominator[pivot], &field) {
+    let ratio = match numerator_pivot.divide_after_nonzero(&denominator[pivot], &mut field) {
         Ok(ratio) => ratio,
         Err(error) => {
             return algebraic_fiber_rational_reduction_error_report(error, field.certainty);
@@ -3183,7 +3184,7 @@ impl LocalFieldElement {
     fn divide_after_nonzero(
         &self,
         other: &Self,
-        field: &LocalAlgebraicField,
+        field: &mut LocalAlgebraicField,
     ) -> Result<Self, LocalFieldError> {
         let numerator = match &other.denominator {
             Some(denominator) => field.multiply_polynomials(&self.numerator, denominator)?,
@@ -3193,6 +3194,12 @@ impl LocalFieldElement {
             Some(denominator) => field.multiply_polynomials(denominator, &other.numerator)?,
             None => other.numerator.clone(),
         };
+        if let Some(inverse) = field.inverse_polynomial(&denominator) {
+            return Ok(Self {
+                numerator: field.multiply_polynomials(&numerator, &inverse)?,
+                denominator: None,
+            });
+        }
         Ok(Self {
             numerator,
             denominator: field.canonical_denominator(denominator),
@@ -3272,6 +3279,7 @@ impl LocalFieldElement {
 struct LocalAlgebraicField {
     root: AlgebraicRootRepresentation,
     signed_polynomials: Vec<(Vec<Real>, Ordering)>,
+    inverse_polynomials: Vec<(Vec<Real>, Vec<Real>)>,
     policy: PredicatePolicy,
     certainty: Certainty,
     refinement_steps: usize,
@@ -3295,6 +3303,7 @@ impl LocalAlgebraicField {
         Ok(Self {
             root: root.clone(),
             signed_polynomials: Vec::new(),
+            inverse_polynomials: Vec::new(),
             policy,
             certainty: Certainty::Exact,
             refinement_steps: 0,
@@ -3346,6 +3355,89 @@ impl LocalAlgebraicField {
         polynomial_div_rem(polynomial, self.modulus(), self.policy)
             .map(|(_, remainder)| remainder)
             .ok_or(LocalFieldError::Undecided)
+    }
+
+    /// Inverts a nonzero coefficient on the retained real sheet. Exact
+    /// Bezout division keeps subsequent arithmetic polynomial in the selected
+    /// generator instead of repeatedly multiplying polynomial denominators.
+    /// Foreign modulus factors may be removed only with a STRICT nonvanishing
+    /// proof at that same selected root. Existing values and sign certificates
+    /// remain valid because this changes the presentation, not the root.
+    fn inverse_polynomial(&mut self, polynomial: &[Real]) -> Option<Vec<Real>> {
+        if let [constant] = polynomial {
+            return Some(vec![(Real::one() / constant).ok()?]);
+        }
+        if let Some((_, inverse)) = self
+            .inverse_polynomials
+            .iter()
+            .find(|(known, _)| known == polynomial)
+        {
+            return self.reduce(inverse.clone()).ok();
+        }
+        let strict = PredicatePolicy::STRICT;
+        let mut modulus = self.modulus().to_vec();
+        loop {
+            if let Some(inverse) = rational_polynomial_inverse_modulo(polynomial, &modulus) {
+                self.root.polynomial_coefficients = modulus;
+                self.inverse_polynomials
+                    .push((polynomial.to_vec(), inverse.clone()));
+                return Some(inverse);
+            }
+            let mut previous = modulus.clone();
+            let mut current = polynomial_div_rem(polynomial.to_vec(), &modulus, strict)?.1;
+            let mut previous_coefficient = vec![Real::zero()];
+            let mut current_coefficient = vec![Real::one()];
+            while !current
+                .iter()
+                .all(|value| strict_exact_zero_for_storage(value))
+            {
+                let (quotient, remainder) = polynomial_div_rem(previous, &current, strict)?;
+                let mut coefficient = vec![
+                    Real::zero();
+                    previous_coefficient
+                        .len()
+                        .max(quotient.len() + current_coefficient.len() - 1)
+                ];
+                for (power, value) in previous_coefficient.iter().enumerate() {
+                    coefficient[power] += value;
+                }
+                for (first_power, first) in quotient.iter().enumerate() {
+                    for (second_power, second) in current_coefficient.iter().enumerate() {
+                        coefficient[first_power + second_power] -= first * second;
+                    }
+                }
+                previous = current;
+                current = remainder;
+                previous_coefficient = current_coefficient;
+                current_coefficient = polynomial_div_rem(coefficient, &modulus, strict)?.1;
+            }
+            if let [constant] = previous.as_slice() {
+                let inverse = (Real::one() / constant).ok()?;
+                let inverse = previous_coefficient
+                    .into_iter()
+                    .map(|value| value * &inverse)
+                    .collect::<Vec<_>>();
+                self.root.polynomial_coefficients = modulus;
+                self.inverse_polynomials
+                    .push((polynomial.to_vec(), inverse.clone()));
+                return Some(inverse);
+            }
+            if polynomial_vanishes_at_owned_root(&modulus, &previous, &self.root.interval, strict)
+                != Some(false)
+            {
+                return None;
+            }
+            let (quotient, remainder) = polynomial_div_rem(modulus.clone(), &previous, strict)?;
+            if quotient.len() <= 1
+                || quotient.len() >= modulus.len()
+                || !remainder
+                    .iter()
+                    .all(|value| strict_exact_zero_for_storage(value))
+            {
+                return None;
+            }
+            modulus = quotient;
+        }
     }
 
     fn canonical_denominator(&self, denominator: Vec<Real>) -> Option<Vec<Real>> {
@@ -3426,6 +3518,11 @@ impl LocalAlgebraicField {
     }
 
     fn sign_polynomial(&mut self, polynomial: &[Real]) -> Result<Ordering, LocalFieldError> {
+        // A prior inverse may have removed a foreign modulus factor.
+        if polynomial.len() >= self.modulus().len() {
+            let reduced = self.reduce(polynomial.to_vec())?;
+            return self.sign_polynomial(&reduced);
+        }
         self.debug_assert_reduced_polynomial(polynomial);
         if let Some(sign) = self.known_polynomial_sign(polynomial) {
             return Ok(sign);
@@ -3439,6 +3536,11 @@ impl LocalAlgebraicField {
         &mut self,
         polynomial: &[Real],
     ) -> Result<Option<Ordering>, LocalFieldError> {
+        // A prior inverse may have removed a foreign modulus factor.
+        if polynomial.len() >= self.modulus().len() {
+            let reduced = self.reduce(polynomial.to_vec())?;
+            return self.sign_polynomial_if_separated(&reduced);
+        }
         self.debug_assert_reduced_polynomial(polynomial);
         if let Some(sign) = self.known_polynomial_sign(polynomial) {
             return Ok(Some(sign));
@@ -3464,6 +3566,11 @@ impl LocalAlgebraicField {
     }
 
     fn is_zero_polynomial(&mut self, polynomial: &[Real]) -> Result<bool, LocalFieldError> {
+        // A prior inverse may have removed a foreign modulus factor.
+        if polynomial.len() >= self.modulus().len() {
+            let reduced = self.reduce(polynomial.to_vec())?;
+            return self.is_zero_polynomial(&reduced);
+        }
         self.debug_assert_reduced_polynomial(polynomial);
         if let Some(sign) = self.known_polynomial_sign(polynomial) {
             return Ok(sign == Ordering::Equal);
@@ -4342,7 +4449,102 @@ mod tests {
     }
 
     #[test]
-    fn local_exact_division_preserves_skipped_degrees_and_denominators() {
+    fn local_division_preserves_arbitrary_exact_base_coefficients() {
+        for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
+            let radical = real(2).sqrt().unwrap();
+            let root = represented_root(
+                vec![-radical, Real::zero(), Real::one()],
+                Real::one(),
+                real(2),
+                policy,
+            );
+            let mut field = LocalAlgebraicField::new(&root, policy).unwrap();
+            let divisor =
+                LocalFieldElement::from_polynomial(vec![Real::one(), Real::one()], &field).unwrap();
+            let one = LocalFieldElement::from_polynomial(vec![Real::one()], &field).unwrap();
+            let inverse = one.divide(&divisor, &mut field).unwrap();
+            assert!(inverse.denominator.is_none());
+            assert!(
+                divisor
+                    .multiply(&inverse, &field)
+                    .unwrap()
+                    .subtract(&one, &field)
+                    .unwrap()
+                    .is_zero(&mut field)
+                    .unwrap()
+            );
+            assert_eq!(field.certainty, Certainty::Exact);
+            assert!(algebraic_root_payload_replays_strictly(&field.root));
+        }
+    }
+
+    #[test]
+    fn local_division_removes_only_foreign_factors_and_reuses_older_values() {
+        for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
+            for modulus in [
+                vec![real(6), real(-2), real(-3), Real::one()],
+                vec![
+                    real(54),
+                    real(-54),
+                    real(-9),
+                    real(25),
+                    real(-9),
+                    Real::one(),
+                ],
+            ] {
+                // (alpha^2-2)*(alpha-3)^k at alpha=sqrt(2), k=1 or 3.
+                let root = represented_root(modulus.clone(), Real::one(), real(2), policy);
+                let mut field = LocalAlgebraicField::new(&root, policy).unwrap();
+                let old_zero = LocalFieldElement::from_polynomial(
+                    vec![real(-2), Real::zero(), Real::one()],
+                    &field,
+                )
+                .unwrap();
+                let denominator =
+                    LocalFieldElement::from_polynomial(vec![real(-3), Real::one()], &field)
+                        .unwrap();
+                let one = LocalFieldElement::from_polynomial(vec![Real::one()], &field).unwrap();
+                let inverse = one.divide(&denominator, &mut field).unwrap();
+                assert!(inverse.denominator.is_none());
+                assert_eq!(field.modulus().len(), 3);
+                assert!(algebraic_root_payload_replays_strictly(&field.root));
+                assert!(old_zero.is_zero(&mut field).unwrap());
+                assert_eq!(
+                    denominator.multiply(&inverse, &field).unwrap().numerator,
+                    vec![Real::one()]
+                );
+                let modulus = field.modulus().to_vec();
+                for _ in 0..8 {
+                    let inverse = one.divide(&denominator, &mut field).unwrap();
+                    assert!(inverse.denominator.is_none());
+                    assert_eq!(field.modulus(), &modulus);
+                    assert!(inverse.numerator.len() < modulus.len());
+                }
+                assert_eq!(field.certainty, Certainty::Exact);
+            }
+
+            // At the other selected root, that same factor is zero and must
+            // remain part of the field's meaning instead of being saturated.
+            let root = represented_root(
+                vec![real(6), real(-2), real(-3), Real::one()],
+                rational(5, 2),
+                rational(7, 2),
+                policy,
+            );
+            let mut field = LocalAlgebraicField::new(&root, policy).unwrap();
+            let one = LocalFieldElement::from_polynomial(vec![Real::one()], &field).unwrap();
+            let zero =
+                LocalFieldElement::from_polynomial(vec![real(-3), Real::one()], &field).unwrap();
+            assert!(matches!(
+                one.divide(&zero, &mut field),
+                Err(LocalFieldError::DivisionByZero)
+            ));
+            assert_eq!(field.modulus().len(), 4);
+        }
+    }
+
+    #[test]
+    fn local_exact_division_preserves_skipped_degrees_and_reduced_coefficients() {
         let policy = PredicatePolicy::STRICT;
         let alpha = represented_root(
             vec![real(-2), Real::zero(), Real::one()],
@@ -4361,7 +4563,7 @@ mod tests {
         let half_root = retained_root
             .divide(&two, &mut field)
             .expect("nonzero rational denominator");
-        assert!(half_root.denominator.is_some());
+        assert!(half_root.denominator.is_none());
 
         let divisor = vec![one.clone(), one.clone()];
         let expected = vec![one, LocalFieldElement::zero(), half_root];
@@ -4373,7 +4575,7 @@ mod tests {
         assert_eq!(quotient.len(), expected.len());
         assert!(quotient[0].denominator.is_none());
         assert!(quotient[1].denominator.is_none());
-        assert!(quotient[2].denominator.is_some());
+        assert!(quotient[2].denominator.is_none());
         for (actual, expected) in quotient.iter().zip(&expected) {
             assert!(
                 actual
@@ -4593,10 +4795,7 @@ mod tests {
                         AlgebraicFiberRationalReductionStatus::ReducedToRetainedField
                     );
                     assert_eq!(reduced_zero.numerator_coefficients, vec![Real::zero()]);
-                    assert_eq!(
-                        reduced_zero.denominator_coefficients,
-                        vec![real(2), Real::one()]
-                    );
+                    assert_eq!(reduced_zero.denominator_coefficients, vec![Real::one()]);
                     assert_eq!(reduced_zero.certainty, Certainty::Exact);
 
                     let fiber_dependent = reduce_bivariate_rational_function_at_algebraic_parameter(

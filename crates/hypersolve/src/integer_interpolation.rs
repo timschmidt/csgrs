@@ -43,6 +43,85 @@ pub(crate) fn primitive_integer_polynomial_gcd(left: &[Real], right: &[Real]) ->
     )
 }
 
+/// Reconstructs an inverse over Q and accepts it only after the exact identity
+/// `polynomial * inverse == 1 (mod modulus)` replays over the integers.
+/// Failure only declines this accelerator; callers retain their exact-field
+/// fallback, including selection of a local factor of a reducible modulus.
+pub(crate) fn rational_polynomial_inverse_modulo(
+    polynomial: &[Real],
+    modulus: &[Real],
+) -> Option<Vec<Real>> {
+    let source = primitive_integer_coefficients(polynomial)?;
+    let modulus = primitive_integer_coefficients(modulus)?;
+    let degree = modulus.len().checked_sub(1)?;
+    if degree == 0 || is_zero_integer_polynomial(&source) {
+        return None;
+    }
+    let pivot = source
+        .iter()
+        .position(|coefficient| !coefficient.is_zero())?;
+    let source_scale =
+        (Real::from(Rational::from_bigint(source[pivot].clone())) / &polynomial[pivot]).ok()?;
+    let mut next_prime = 2_147_483_647_u64;
+    let mut reconstruction = None;
+    let mut images = 0_usize;
+    for _ in 0..256 {
+        let prime = previous_prime(next_prime)?;
+        next_prime = prime.checked_sub(2)?;
+        let reduce = |polynomial: &[BigInt]| {
+            polynomial
+                .iter()
+                .map(|value| bigint_modulo_u64(value, prime))
+                .collect::<Vec<_>>()
+        };
+        let modular_modulus = reduce(&modulus);
+        if modular_modulus.last() == Some(&0) {
+            continue;
+        }
+        let Some(mut inverse) = modular_polynomial_inverse(reduce(&source), modular_modulus, prime)
+        else {
+            // A bad prime is harmless: decline instead of inferring anything
+            // about characteristic-zero invertibility or the selected root.
+            return None;
+        };
+        inverse.resize(degree, 0);
+        extend_modular_reconstruction(&mut reconstruction, &inverse, prime)?;
+        images += 1;
+        if !images.is_multiple_of(4) {
+            continue;
+        }
+        let (reconstruction_modulus, residues) = reconstruction.as_ref()?;
+        let Some((numerator, denominator)) =
+            reconstruct_rational_polynomial(reconstruction_modulus, residues)
+        else {
+            continue;
+        };
+        let mut residual = vec![BigInt::zero(); source.len() + numerator.len() - 1];
+        for (first_power, first) in source.iter().enumerate() {
+            for (second_power, second) in numerator.iter().enumerate() {
+                residual[first_power + second_power] += first * second;
+            }
+        }
+        residual[0] -= &denominator;
+        if !integer_polynomial_divides(&residual, &modulus) {
+            continue;
+        }
+        let mut inverse = numerator
+            .into_iter()
+            .map(|value| {
+                Rational::from_bigint_fraction(value, denominator.magnitude().clone())
+                    .ok()
+                    .map(|value| Real::from(value) * &source_scale)
+            })
+            .collect::<Option<Vec<_>>>()?;
+        while inverse.len() > 1 && inverse.last() == Some(&Real::zero()) {
+            inverse.pop();
+        }
+        return Some(inverse);
+    }
+    None
+}
+
 /// Builds the sign-preserving primitive integer Sturm chain for an exact
 /// rational polynomial. Every member differs from the ordinary field chain by
 /// one positive rational scale.
@@ -135,19 +214,29 @@ fn modular_polynomial_gcd(mut left: Vec<u64>, mut right: Vec<u64>, prime: u64) -
 }
 
 fn modular_polynomial_remainder(
-    mut dividend: Vec<u64>,
+    dividend: Vec<u64>,
     divisor: &[u64],
     prime: u64,
 ) -> Option<Vec<u64>> {
+    Some(modular_polynomial_div_rem(dividend, divisor, prime)?.1)
+}
+
+fn modular_polynomial_div_rem(
+    mut dividend: Vec<u64>,
+    divisor: &[u64],
+    prime: u64,
+) -> Option<(Vec<u64>, Vec<u64>)> {
     if modular_is_zero(divisor) {
         return None;
     }
     modular_trim(&mut dividend);
     let divisor_degree = divisor.len().checked_sub(1)?;
+    let mut quotient = vec![0; dividend.len().saturating_sub(divisor_degree).max(1)];
     let inverse = modular_power(*divisor.last()?, prime.checked_sub(2)?, prime);
     while !modular_is_zero(&dividend) && dividend.len() >= divisor.len() {
         let shift = dividend.len() - divisor.len();
         let scale = modular_multiply(*dividend.last()?, inverse, prime);
+        quotient[shift] = scale;
         for (index, coefficient) in divisor.iter().enumerate().take(divisor_degree + 1) {
             let product = modular_multiply(scale, *coefficient, prime);
             let target = shift + index;
@@ -155,7 +244,47 @@ fn modular_polynomial_remainder(
         }
         modular_trim(&mut dividend);
     }
-    Some(dividend)
+    modular_trim(&mut quotient);
+    Some((quotient, dividend))
+}
+
+fn modular_polynomial_inverse(
+    polynomial: Vec<u64>,
+    modulus: Vec<u64>,
+    prime: u64,
+) -> Option<Vec<u64>> {
+    let mut previous = modulus.clone();
+    let mut current = modular_polynomial_remainder(polynomial, &modulus, prime)?;
+    let mut previous_coefficient = vec![0];
+    let mut current_coefficient = vec![1];
+    while !modular_is_zero(&current) {
+        let (quotient, remainder) = modular_polynomial_div_rem(previous, &current, prime)?;
+        let mut coefficient = previous_coefficient;
+        coefficient.resize(
+            coefficient
+                .len()
+                .max(quotient.len() + current_coefficient.len() - 1),
+            0,
+        );
+        for (first_power, first) in quotient.iter().enumerate() {
+            for (second_power, second) in current_coefficient.iter().enumerate() {
+                let target = &mut coefficient[first_power + second_power];
+                *target = (*target + prime - modular_multiply(*first, *second, prime)) % prime;
+            }
+        }
+        previous = current;
+        current = remainder;
+        previous_coefficient = current_coefficient;
+        current_coefficient = modular_polynomial_remainder(coefficient, &modulus, prime)?;
+    }
+    if previous.len() != 1 || previous[0] == 0 {
+        return None;
+    }
+    let scale = modular_power(previous[0], prime.checked_sub(2)?, prime);
+    for coefficient in &mut previous_coefficient {
+        *coefficient = modular_multiply(*coefficient, scale, prime);
+    }
+    Some(previous_coefficient)
 }
 
 fn modular_power(mut base: u64, mut exponent: u64, modulus: u64) -> u64 {
@@ -300,6 +429,15 @@ fn reconstruct_primitive_rational_polynomial(
     modulus: &BigInt,
     residues: &[BigInt],
 ) -> Option<Vec<BigInt>> {
+    Some(primitive_integer_part(
+        reconstruct_rational_polynomial(modulus, residues)?.0,
+    ))
+}
+
+fn reconstruct_rational_polynomial(
+    modulus: &BigInt,
+    residues: &[BigInt],
+) -> Option<(Vec<BigInt>, BigInt)> {
     let bound = BigInt::from((modulus.magnitude() >> 1_usize).sqrt());
     if bound.is_zero() {
         return None;
@@ -314,11 +452,12 @@ fn reconstruct_primitive_rational_polynomial(
             let gcd = euclidean_bigint_gcd(&common, denominator);
             common / gcd * denominator
         });
-    Some(primitive_integer_part(
+    Some((
         rationals
             .into_iter()
             .map(|(numerator, denominator)| numerator * (&common_denominator / denominator))
             .collect(),
+        common_denominator,
     ))
 }
 
@@ -697,6 +836,39 @@ mod tests {
         assert_eq!(modular_integer_polynomial_gcd(&left, &right), Some(factor));
     }
 
+    #[test]
+    fn modular_inverse_reconstructs_wide_coefficients_and_rejects_nonunits() {
+        let wide = BigInt::one() << 64_usize;
+        let degree = 17_usize;
+        let mut modulus = vec![Real::zero(); degree + 1];
+        modulus[0] = Real::one();
+        modulus[degree] = Real::one();
+        let source = vec![Real::from(Rational::from_bigint(-&wide)), Real::one()];
+        let denominator = wide.pow(degree as u32) + BigInt::one();
+        let expected = (0..degree)
+            .map(|power| {
+                Real::from(
+                    Rational::from_bigint_fraction(
+                        -wide.pow((degree - 1 - power) as u32),
+                        denominator.magnitude().clone(),
+                    )
+                    .unwrap(),
+                )
+            })
+            .collect::<Vec<_>>();
+        assert_eq!(
+            rational_polynomial_inverse_modulo(&source, &modulus),
+            Some(expected)
+        );
+        assert!(
+            rational_polynomial_inverse_modulo(&[real(-2), real(1)], &[real(-4), real(0), real(1)])
+                .is_none()
+        );
+        assert!(rational_polynomial_inverse_modulo(&[Real::zero()], &modulus).is_none());
+        assert!(rational_polynomial_inverse_modulo(&source, &[Real::one()]).is_none());
+        assert!(rational_polynomial_inverse_modulo(&[real(2).sqrt().unwrap()], &modulus).is_none());
+    }
+
     fn multiply_integer_polynomials(left: &[BigInt], right: &[BigInt]) -> Vec<BigInt> {
         let mut product = vec![BigInt::zero(); left.len() + right.len() - 1];
         for (left_index, left_coefficient) in left.iter().enumerate() {
@@ -708,6 +880,26 @@ mod tests {
     }
 
     proptest! {
+        #[test]
+        fn generated_modular_inverse_preserves_rational_scales(
+            constant in -9_i64..=9,
+            linear in -9_i64..=9,
+            denominator in 1_u64..=9,
+            positive in 1_i64..=9,
+            modulus_scale in -9_i64..=9,
+        ) {
+            prop_assume!(constant != 0 || linear != 0);
+            prop_assume!(modulus_scale != 0);
+            // In Q[x]/(x^2+positive), (b+a*x)^-1 is
+            // (b-a*x)/(b^2+positive*a^2), with no real-factor ambiguity.
+            let source = [rational(constant, denominator), rational(linear, denominator)];
+            let modulus = [real(positive * modulus_scale), Real::zero(), real(modulus_scale)];
+            let norm = (constant * constant + positive * linear * linear) as u64;
+            let mut expected = vec![rational(constant * denominator as i64, norm), rational(-linear * denominator as i64, norm)];
+            if linear == 0 { expected.pop(); }
+            prop_assert_eq!(rational_polynomial_inverse_modulo(&source, &modulus), Some(expected));
+        }
+
         #[test]
         fn generated_primitive_integer_gcd_recovers_shared_factor(
             factor in prop::collection::vec(-5_i64..=5, 1..=4),
