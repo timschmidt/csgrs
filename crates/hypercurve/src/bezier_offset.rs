@@ -59048,9 +59048,14 @@ impl BezierRecursiveProjectiveParameter2 {
             };
             let other = other
                 .clone()
-                .refined_isolating_interval(refinement_steps, policy);
+                .refined_isolating_interval(refinement_steps, &CurveContext::STRICT);
             let BezierParameter2::Algebraic(other) = other else {
-                unreachable!("refining a nonlinear algebraic parameter preserves its domain")
+                return selected.order_to_real(
+                    other
+                        .as_exact()
+                        .expect("a refined root may become represented"),
+                    policy,
+                );
             };
             if compare_reals(
                 &selected.data.upper,
@@ -59071,6 +59076,9 @@ impl BezierRecursiveProjectiveParameter2 {
             if refinement_steps >= 512 {
                 break;
             }
+            if policy.has_bounded_exact_predicate_budget() && refinement_steps >= 8 {
+                return Ok(Classification::Uncertain(UncertaintyReason::Ordering));
+            }
             refinement_steps = refinement_steps
                 .checked_mul(2)
                 .and_then(|steps| steps.checked_add(1))
@@ -59078,17 +59086,17 @@ impl BezierRecursiveProjectiveParameter2 {
                     CurveError::Topology("recursive projective/Bezier refinement overflow".into())
                 })?;
         }
-        if policy.permits_approximate_512() {
+        let exact = policy.strict_predicate_pass(|| {
+            match self.promoted_bezier_parameter_complete(policy)? {
+                Classification::Decided(parameter) => parameter.cmp_by_refinement(other, policy),
+                Classification::Uncertain(reason) => Ok(Classification::Uncertain(reason)),
+            }
+        })?;
+        if matches!(exact, Classification::Uncertain(_)) && policy.permits_approximate_512() {
             policy.observe_approximate_512();
             return Ok(Classification::Decided(std::cmp::Ordering::Equal));
         }
-        let represented = match self.promoted_bezier_parameter_complete(policy)? {
-            Classification::Decided(parameter) => parameter,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
-        represented.cmp_by_refinement(other, policy)
+        Ok(exact)
     }
 
     pub(crate) fn promoted_bezier_parameter_complete(
@@ -63251,6 +63259,30 @@ fn recursive_quadratic_polynomial_projective_roots(
                     }
                 }
             };
+            if strict_unit_crossing.is_none()
+                && constant.bounded_or_exact_real_witness_sign() == Some(RealSign::Zero)
+                && constant
+                    .add(linear)
+                    .and_then(|value| value.add(quadratic))
+                    .and_then(|value| value.bounded_or_exact_real_witness_sign())
+                    == Some(RealSign::Zero)
+                && let (Some(zero), Some(one)) =
+                    (field.constant(Real::zero()), field.constant(Real::one()))
+            {
+                // A nonzero quadratic vanishing at both native endpoints is
+                // a*x*(x-1). Keep those exact scalars instead of adjoining
+                // sqrt(a²) and later reconstructing 0 and 1 from that field.
+                return Ok(Some(vec![
+                    BezierRecursiveQuadraticProjectiveScalar2 {
+                        numerator: zero,
+                        denominator: one.clone(),
+                    },
+                    BezierRecursiveQuadraticProjectiveScalar2 {
+                        numerator: one.clone(),
+                        denominator: one,
+                    },
+                ]));
+            }
             let discriminant = linear
                 .square()
                 .and_then(|linear_squared| {
@@ -129781,6 +129813,68 @@ mod conversion_tests {
                             }
                         });
                 assert_eq!(value, &expected);
+            }
+        }
+    }
+
+    #[test]
+    fn recursive_scalar_comparison_replays_exact_equality_before_approximation() {
+        let half = (Real::one() / Real::from(2_i8)).unwrap();
+        let other = algebraic_parameter(vec![-half.clone(), Real::zero(), Real::one()]);
+        assert!(matches!(other, BezierParameter2::Algebraic(_)));
+        let one = DenseTensorPolynomial::try_new(vec![], vec![Real::one()]).unwrap();
+        let field = BezierRecursiveQuadraticField2::base(vec![], one.clone(), one).unwrap();
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let Classification::Decided(parameter) = BezierRecursiveProjectiveParameter2::new(
+                BezierRecursiveQuadraticProjectiveScalar2 {
+                    numerator: field.constant(half.clone().sqrt().unwrap()).unwrap(),
+                    denominator: field.constant(Real::one()).unwrap(),
+                },
+                &policy,
+            )
+            .unwrap() else {
+                panic!("the native radical has an exact finite enclosure");
+            };
+            let result = crate::policy::resolve_certified_value(&policy, |policy| {
+                parameter.cmp_bezier_parameter(&other, policy)
+            });
+            assert_eq!(result.certainty, crate::CurveCertainty::Certified);
+            assert_eq!(
+                result.value.unwrap(),
+                Classification::Decided(std::cmp::Ordering::Equal)
+            );
+        }
+    }
+
+    #[test]
+    fn recursive_quadratic_endpoint_roots_keep_the_original_field() {
+        let one = DenseTensorPolynomial::try_new(vec![], vec![Real::one()]).unwrap();
+        let field = BezierRecursiveQuadraticField2::base(vec![], one.clone(), one).unwrap();
+        for scale in [Real::one(), Real::from(2_i8).sqrt().unwrap(), -Real::pi()] {
+            let coefficients =
+                [Real::zero(), -scale.clone(), scale].map(|value| field.constant(value).unwrap());
+            for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+                let roots = recursive_quadratic_polynomial_projective_roots(
+                    &field,
+                    &coefficients,
+                    None,
+                    &policy,
+                )
+                .unwrap()
+                .expect("the two distinct endpoint roots are complete");
+                assert_eq!(roots.len(), 2);
+                for (index, root) in roots.iter().enumerate() {
+                    assert!(field.same_field(&root.numerator.field()));
+                    assert!(field.same_field(&root.denominator.field()));
+                    assert_eq!(
+                        root.numerator.exact_real_value_with_retained_witnesses(),
+                        Some(Real::from(index as i8))
+                    );
+                    assert_eq!(
+                        root.denominator.exact_real_value_with_retained_witnesses(),
+                        Some(Real::one())
+                    );
+                }
             }
         }
     }
