@@ -4094,6 +4094,8 @@ struct BezierAlgebraicSelectedFiberAuthorityData2 {
     retained_parameter: BezierAlgebraicParameter2,
     policy: CurveContext,
     retained_refinement_64: OnceLock<Arc<BezierParameter2>>,
+    incidence_has_parameter_diagonal: OnceLock<bool>,
+    root_refiner: Mutex<Option<Box<hypersolve::AlgebraicFiberRootRefiner>>>,
 }
 
 impl PartialEq for BezierAlgebraicSelectedFiberAuthorityData2 {
@@ -4157,6 +4159,8 @@ impl BezierAlgebraicSelectedFiberAuthority2 {
                 retained_parameter,
                 policy: policy.retained_object_policy(),
                 retained_refinement_64: OnceLock::new(),
+                incidence_has_parameter_diagonal: OnceLock::new(),
+                root_refiner: Mutex::new(None),
             }),
         }
     }
@@ -104587,18 +104591,30 @@ fn algebraic_selected_fiber_root_interval_refined(
         }));
     };
     let retained = parameter_representation(&retained_parameter, policy);
-    let report = isolate_bivariate_fiber_roots_at_algebraic_parameter_complete(
-        incidence,
-        CurveResultantParameter::First,
-        &retained,
-        &root.lower,
-        &root.upper,
-        AlgebraicFiberRootIsolationConfig {
-            max_subdivision_depth: refinement_steps.saturating_add(256),
-            refinement_steps,
-        },
-        hypersolve::PredicatePolicy::STRICT,
-    );
+    // All roots and point images sharing this incidence reuse the same exact
+    // coefficient field and lazy Sturm authority during refinement.
+    let report = (|| {
+        let mut cache = authority
+            .data
+            .root_refiner
+            .lock()
+            .expect("selected-fiber refinement cache mutex poisoned");
+        if cache.is_none() {
+            *cache = Some(Box::new(hypersolve::AlgebraicFiberRootRefiner::try_new(
+                incidence,
+                CurveResultantParameter::First,
+                &retained,
+                hypersolve::PredicatePolicy::STRICT,
+            )?));
+        }
+        Ok::<_, hypersolve::AlgebraicFiberRootIsolationReport>(
+            cache
+                .as_mut()
+                .expect("an admitted selected-fiber refiner")
+                .refine(root, refinement_steps),
+        )
+    })()
+    .unwrap_or_else(|report| report);
     match report.status {
         AlgebraicFiberRootIsolationStatus::Isolated if report.intervals.len() == 1 => {
             Ok(Classification::Decided(
@@ -104648,6 +104664,9 @@ fn algebraic_selected_fiber_root_predicate_sign(
         return Ok(Classification::Decided(RealSign::Zero));
     }
     let incidence = &authority.data.incidence;
+    if predicate == incidence || divide_bivariate_polynomial_exact(predicate, incidence).is_some() {
+        return Ok(Classification::Decided(RealSign::Zero));
+    }
     let retained_parameter = authority.retained_parameter_refined(64);
     // Any refinement stage may discover a represented retained root. Share
     // its exact univariate dispatch with the initial 64-step fast path.
@@ -104694,6 +104713,47 @@ fn algebraic_selected_fiber_root_predicate_sign(
     let BezierParameter2::Algebraic(refined_retained) = &retained_parameter else {
         unreachable!("a selected-fiber root has an algebraic retained parameter")
     };
+    // A selected fiber may retain the source diagonal u=alpha. If alpha is
+    // strictly inside this singleton's isolator, both scalars are the same root;
+    // replay the predicate on that diagonal instead of refining a zero box.
+    // Cache the coefficient identity on the shared incidence authority.
+    if *authority
+        .data
+        .incidence_has_parameter_diagonal
+        .get_or_init(|| {
+            bivariate_substitute_second_equal_first(incidence)
+                .iter()
+                .all(|coefficient| {
+                    real_sign(coefficient, &CurveContext::STRICT) == Some(RealSign::Zero)
+                })
+        })
+        && matches!(
+            retained_parameter.cmp_by_refinement(
+                &BezierParameter2::Exact(root.lower.clone()),
+                &CurveContext::STRICT,
+            )?,
+            Classification::Decided(std::cmp::Ordering::Greater)
+        )
+        && matches!(
+            retained_parameter.cmp_by_refinement(
+                &BezierParameter2::Exact(root.upper.clone()),
+                &CurveContext::STRICT,
+            )?,
+            Classification::Decided(std::cmp::Ordering::Less)
+        )
+    {
+        #[cfg(feature = "dispatch-trace")]
+        hyperreal::dispatch_trace::record(
+            "hypercurve",
+            "selected-fiber-predicate-sign",
+            "retained-diagonal-identity",
+        );
+        return signed_coefficients_at_parameter(
+            bivariate_substitute_second_equal_first(predicate),
+            &retained_parameter,
+            policy,
+        );
+    }
     let retained_root = parameter_representation(refined_retained, policy);
     let mut latest = root.clone();
     let mut refinement_steps = 0_usize;
@@ -104746,6 +104806,13 @@ fn algebraic_selected_fiber_root_predicate_sign(
             return Ok(Classification::Decided(sign));
         }
 
+        // A speculative geometric pass may use the retained singleton box,
+        // but must yield before constructing or traversing a fiber Sturm
+        // sequence. The complete caller can first try correlated point or
+        // parameter evidence, then replay this predicate without that bound.
+        if policy.has_bounded_exact_predicate_budget() {
+            return Ok(Classification::Uncertain(UncertaintyReason::Predicate));
+        }
         if refinement_steps < 32 {
             refinement_steps = next_refinement_steps(refinement_steps)?;
             continue;
@@ -158420,6 +158487,71 @@ mod conversion_tests {
     }
 
     #[test]
+    fn selected_fiber_diagonal_identity_preserves_distinct_root_ownership() {
+        let half = (Real::one() / Real::from(2_i8)).unwrap();
+        let BezierParameter2::Algebraic(retained) =
+            algebraic_parameter(vec![-half, Real::zero(), Real::one()])
+        else {
+            panic!("the retained root is irrational");
+        };
+        // Two positive irrational roots: alpha/2 and alpha. Only the second
+        // may use the diagonal identity, although both share the authority.
+        let diagonal = BivariatePolynomial::new(vec![
+            vec![Real::zero(), Real::one()],
+            vec![Real::from(-1_i8)],
+        ]);
+        let incidence = bivariate_multiply(
+            &diagonal,
+            &BivariatePolynomial::new(vec![
+                vec![Real::zero(), Real::from(2_i8)],
+                vec![Real::from(-1_i8)],
+            ]),
+        );
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let Classification::Decided(Some(parameters)) = selected_fiber_parameters_in_interval(
+                &incidence,
+                &retained,
+                &Real::zero(),
+                &Real::one(),
+                &policy,
+            )
+            .unwrap() else {
+                panic!("both exact fiber roots must isolate");
+            };
+            let [first, second] = parameters.as_slice() else {
+                panic!("the fiber has exactly two roots");
+            };
+            for (parameter, expected) in [(first, RealSign::Negative), (second, RealSign::Zero)] {
+                let outcome = crate::policy::resolve_certified_value(&policy, |attempt| {
+                    parameter.predicate_sign(&diagonal, attempt).unwrap()
+                });
+                assert_eq!(outcome.value, Classification::Decided(expected));
+                assert_eq!(outcome.certainty, crate::CurveCertainty::Certified);
+                assert_eq!(
+                    parameter
+                        .predicate_sign(&bivariate_multiply(&incidence, &diagonal), &policy)
+                        .unwrap(),
+                    Classification::Decided(RealSign::Zero),
+                );
+            }
+            let epsilon = Real::new(
+                hyperreal::Rational::from_bigint_fraction(
+                    num::BigInt::from(1_u8),
+                    num::BigUint::from(1_u8) << 600,
+                )
+                .unwrap(),
+            );
+            let predicate =
+                BivariatePolynomial::new(vec![vec![epsilon, Real::one()], vec![Real::from(-1_i8)]]);
+            let outcome = crate::policy::resolve_certified_value(&policy, |attempt| {
+                second.predicate_sign(&predicate, attempt).unwrap()
+            });
+            assert_eq!(outcome.value, Classification::Decided(RealSign::Positive));
+            assert_eq!(outcome.certainty, crate::CurveCertainty::Certified);
+        }
+    }
+
+    #[test]
     fn selected_fiber_predicate_sign_refines_past_the_policy_terminal_under_strict() {
         let half = (Real::one() / Real::from(2_i8)).unwrap();
         let epsilon = Real::new(
@@ -158435,7 +158567,7 @@ mod conversion_tests {
             panic!("the irrational retained root must remain algebraic");
         };
         let incidence = BivariatePolynomial::new(vec![
-            vec![Real::zero(), Real::one()],
+            vec![Real::zero(), Real::zero(), Real::one()],
             vec![Real::from(-1_i8)],
         ]);
         let selected = BezierAlgebraicSelectedFiberAuthority2::new(
@@ -158444,17 +158576,36 @@ mod conversion_tests {
             &CurveContext::STRICT,
         )
         .parameter(IsolatedRootInterval {
-            lower: retained.interval().start().clone(),
-            upper: retained.interval().end().clone(),
+            lower: Real::zero(),
+            upper: Real::one(),
             exact_root: None,
             distinct_root_count: 1,
         });
-        // At the selected root u=alpha this is the positive value 2^-600.
+        // At the selected root u^2=alpha this is the positive value 2^-600.
         // A product box cannot expose that sign on the 512-step schedule, but
         // exact common-root counting proves it is nonzero and STRICT must
         // continue until the sign separates.
-        let predicate =
-            BivariatePolynomial::new(vec![vec![epsilon, Real::one()], vec![Real::from(-1_i8)]]);
+        let predicate = BivariatePolynomial::new(vec![
+            vec![epsilon, Real::zero(), Real::one()],
+            vec![Real::from(-1_i8)],
+        ]);
+
+        let bounded = CurveContext::STRICT.bounded_exact_predicate_pass(|| {
+            selected
+                .predicate_sign(&predicate, &CurveContext::STRICT)
+                .unwrap()
+        });
+        assert!(matches!(bounded, Classification::Uncertain(_)));
+        assert!(
+            selected
+                .data
+                .authority
+                .data
+                .root_refiner
+                .lock()
+                .unwrap()
+                .is_none()
+        );
 
         for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
             #[cfg(feature = "dispatch-trace")]
@@ -162408,17 +162559,25 @@ mod conversion_tests {
             hyperreal::dispatch_trace::reset();
             #[cfg(feature = "dispatch-trace")]
             let outcome = hyperreal::dispatch_trace::with_recording(|| {
-                algebraic_selected_fiber_pair_projected_root(&source, &image, &tangent, &policy)
+                algebraic_selected_fiber_pair_projected_root_via_subresultants(
+                    &source, &image, &tangent, &policy,
+                )
             })
             .unwrap();
             #[cfg(not(feature = "dispatch-trace"))]
-            let outcome =
-                algebraic_selected_fiber_pair_projected_root(&source, &image, &tangent, &policy)
-                    .unwrap();
+            let outcome = algebraic_selected_fiber_pair_projected_root_via_subresultants(
+                &source, &image, &tangent, &policy,
+            )
+            .unwrap();
             #[cfg(feature = "dispatch-trace")]
             let trace = hyperreal::dispatch_trace::take_trace();
 
             assert_eq!(outcome, Classification::Decided(true));
+            assert_eq!(
+                algebraic_selected_fiber_pair_projected_root(&source, &image, &tangent, &policy)
+                    .unwrap(),
+                Classification::Decided(true),
+            );
             assert_eq!(
                 algebraic_selected_fiber_pair_predicate_sign(&source, &image, &tangent, &policy,)
                     .unwrap(),

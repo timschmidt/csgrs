@@ -327,12 +327,20 @@ impl CurveContext {
         evaluate()
     }
 
+    /// Whether this pass explicitly limits exact predicate work. A complete
+    /// strict pass may suppress approximation while still requiring exact
+    /// refinement; that alone does not impose this speculative budget.
+    #[inline]
+    pub(crate) fn has_bounded_exact_predicate_budget(&self) -> bool {
+        BOUNDED_EXACT_PREDICATE_PASS.with(Cell::get)
+    }
+
     /// Whether a speculative exact pass must decline field joins, recursive
     /// norms, and represented tensor promotion so the complete caller can
     /// choose its next authority.
     #[inline]
     pub(crate) fn defers_unbounded_exact_promotion(&self) -> bool {
-        BOUNDED_EXACT_PREDICATE_PASS.with(Cell::get)
+        self.has_bounded_exact_predicate_budget()
             || (self.selects_approximate_512() && !self.permits_approximate_512())
     }
 
