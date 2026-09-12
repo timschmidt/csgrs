@@ -298,10 +298,9 @@ impl CurveContext {
     }
 
     /// Returns whether this operation selected APPROXIMATE_512, including
-    /// while its bounded preliminary STRICT pass temporarily suppresses the
-    /// terminal. Kernels use this for retained-policy identity and to avoid
-    /// unbounded cold promotion in that preliminary pass. Consuming
-    /// approximation requires [`Self::permits_approximate_512`].
+    /// while a STRICT pass suppresses the terminal. This retains the object's
+    /// replay policy identity; work budgets are explicit and independent.
+    /// Consuming approximation requires [`Self::permits_approximate_512`].
     #[inline]
     pub(crate) const fn selects_approximate_512(&self) -> bool {
         self.0 & APPROXIMATE_512_CONTEXT != 0
@@ -333,15 +332,6 @@ impl CurveContext {
     #[inline]
     pub(crate) fn has_bounded_exact_predicate_budget(&self) -> bool {
         BOUNDED_EXACT_PREDICATE_PASS.with(Cell::get)
-    }
-
-    /// Whether a speculative exact pass must decline field joins, recursive
-    /// norms, and represented tensor promotion so the complete caller can
-    /// choose its next authority.
-    #[inline]
-    pub(crate) fn defers_unbounded_exact_promotion(&self) -> bool {
-        self.has_bounded_exact_predicate_budget()
-            || (self.selects_approximate_512() && !self.permits_approximate_512())
     }
 
     const fn with_edge_preview(self) -> Self {

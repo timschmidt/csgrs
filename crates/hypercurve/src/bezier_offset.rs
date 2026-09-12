@@ -48805,7 +48805,7 @@ impl BezierAlgebraicCuspChordDerivedPoint2 {
     ) -> Classification<std::cmp::Ordering> {
         let mut terminal_refined = false;
         for refinement_steps in [0, 2, 4, 8, 16, 32, 64, 128, 256, 512] {
-            if policy.defers_unbounded_exact_promotion() && refinement_steps > 8 {
+            if policy.has_bounded_exact_predicate_budget() && refinement_steps > 8 {
                 break;
             }
             let Classification::Decided(bounds) =
@@ -48955,7 +48955,7 @@ impl BezierAlgebraicCuspChordDerivedPoint2 {
         if matches!(order, Classification::Decided(_)) {
             return Ok(order);
         }
-        if !policy.defers_unbounded_exact_promotion()
+        if !policy.has_bounded_exact_predicate_budget()
             && let Classification::Decided(Some(coordinates)) =
                 self.represented_coordinates(policy)?
         {
@@ -56152,7 +56152,7 @@ impl BezierRecursiveQuadraticValue2 {
         radical_sign: Option<RealSign>,
         policy: &CurveContext,
     ) -> CurveResult<Classification<RealSign>> {
-        let bounded_exact_pass = policy.defers_unbounded_exact_promotion();
+        let bounded_exact_pass = policy.has_bounded_exact_predicate_budget();
         let bounded_steps = if bounded_exact_pass { 128 } else { 512 };
         if let (Some(retained), Some(radical), Some(radicand)) = (
             retained.exact_real_value_with_retained_witnesses(),
@@ -56161,7 +56161,7 @@ impl BezierRecursiveQuadraticValue2 {
         ) && let Ok(root) = radicand.sqrt()
         {
             let value = retained + radical * root;
-            let minimum_precision = if policy.defers_unbounded_exact_promotion() {
+            let minimum_precision = if policy.has_bounded_exact_predicate_budget() {
                 -128
             } else {
                 -512
@@ -56320,7 +56320,7 @@ impl BezierRecursiveQuadraticValue2 {
             policy.observe_approximate_512();
             return Ok(Classification::Decided(RealSign::Zero));
         }
-        if policy.defers_unbounded_exact_promotion() {
+        if policy.has_bounded_exact_predicate_budget() {
             #[cfg(test)]
             if std::env::var_os("HYPERCURVE_DEBUG_PARALLEL_ENDPOINT_SIDE").is_some() {
                 eprintln!(
@@ -56437,7 +56437,7 @@ impl BezierRecursiveQuadraticValue2 {
                 );
                 return Ok(Classification::Decided(RealSign::Zero));
             }
-            let minimum_precision = if policy.defers_unbounded_exact_promotion() {
+            let minimum_precision = if policy.has_bounded_exact_predicate_budget() {
                 -128
             } else {
                 -512
@@ -56454,7 +56454,7 @@ impl BezierRecursiveQuadraticValue2 {
                 );
                 return Ok(Classification::Decided(sign));
             }
-            if !policy.defers_unbounded_exact_promotion()
+            if !policy.has_bounded_exact_predicate_budget()
                 && let Some(sign) = real_sign(&value, policy)
             {
                 #[cfg(feature = "dispatch-trace")]
@@ -56653,7 +56653,7 @@ impl BezierRecursiveQuadraticValue2 {
         if self.is_structurally_zero() {
             return Ok(Classification::Decided(RealSign::Zero));
         }
-        let minimum_precision = if policy.defers_unbounded_exact_promotion() {
+        let minimum_precision = if policy.has_bounded_exact_predicate_budget() {
             -128
         } else {
             -512
@@ -56675,7 +56675,7 @@ impl BezierRecursiveQuadraticValue2 {
         // selected curve policy is passed through unchanged: STRICT remains
         // exact, while APPROXIMATE_512 can consume its terminal only here in
         // the complete (non-bounded) pass.
-        if !policy.defers_unbounded_exact_promotion()
+        if !policy.has_bounded_exact_predicate_budget()
             && let Some(value) = self.exact_real_value_with_retained_witnesses()
             && let Some(sign) = real_sign(&value, policy)
         {
@@ -56687,7 +56687,7 @@ impl BezierRecursiveQuadraticValue2 {
             );
             return Ok(Classification::Decided(sign));
         }
-        if policy.defers_unbounded_exact_promotion() {
+        if policy.has_bounded_exact_predicate_budget() {
             return Ok(Classification::Uncertain(UncertaintyReason::Predicate));
         }
         match self.data.as_ref() {
@@ -59636,7 +59636,7 @@ impl BezierRecursiveQuadraticProjectivePoint2 {
             let point_x = Real::diff_of_products(&point[0], &start[2], &start[0], &point[2]);
             let point_y = Real::diff_of_products(&point[1], &start[2], &start[1], &point[2]);
             let cross = Real::diff_of_products(&direction_x, &point_y, &direction_y, &point_x);
-            let minimum_precision = if policy.defers_unbounded_exact_promotion() {
+            let minimum_precision = if policy.has_bounded_exact_predicate_budget() {
                 -128
             } else {
                 -512
@@ -59645,7 +59645,7 @@ impl BezierRecursiveQuadraticProjectivePoint2 {
                 .immediate_sign()
                 .or_else(|| cross.certified_sign_until(minimum_precision).sign())
                 .or_else(|| {
-                    (!policy.defers_unbounded_exact_promotion())
+                    (!policy.has_bounded_exact_predicate_budget())
                         .then(|| real_sign(&cross, policy))
                         .flatten()
                 });
@@ -59764,7 +59764,7 @@ impl BezierRecursiveQuadraticProjectivePoint2 {
         // Equality and overlapping enclosures retain the complete exact path
         // below.
         for refinement_steps in [0, 2, 4, 8, 16, 32, 64, 128, 256, 512] {
-            if policy.defers_unbounded_exact_promotion() && refinement_steps > 8 {
+            if policy.has_bounded_exact_predicate_budget() && refinement_steps > 8 {
                 break;
             }
             let coordinate_interval =
@@ -59804,7 +59804,7 @@ impl BezierRecursiveQuadraticProjectivePoint2 {
                 return Ok(Classification::Decided(std::cmp::Ordering::Greater));
             }
         }
-        if policy.defers_unbounded_exact_promotion() {
+        if policy.has_bounded_exact_predicate_budget() {
             return Ok(Classification::Uncertain(UncertaintyReason::Predicate));
         }
         let numerator = if Arc::ptr_eq(&self.denominator.data, &other.denominator.data) {
@@ -62815,7 +62815,7 @@ fn recursive_projective_evidence_points(
             );
         #[cfg(not(test))]
         let force_field_join = false;
-        if policy.defers_unbounded_exact_promotion() && !force_field_join {
+        if policy.has_bounded_exact_predicate_budget() && !force_field_join {
             #[cfg(test)]
             if std::env::var_os("HYPERCURVE_DEBUG_CHORD_PAIR_SIDES").is_some()
                 && points.len() == 2
@@ -72028,7 +72028,7 @@ impl BezierAlgebraicChord2 {
             Axis2::Y => (bounds.min_y().clone(), bounds.max_y().clone()),
         };
         for steps in [0_usize, 2, 4, 8, 16, 32, 64, 128, 256, 512] {
-            if policy.defers_unbounded_exact_promotion() && steps > 8 {
+            if policy.has_bounded_exact_predicate_budget() && steps > 8 {
                 break;
             }
             let (
@@ -72424,7 +72424,7 @@ impl BezierAlgebraicChord2 {
         policy: &CurveContext,
     ) -> Option<BezierAlgebraicChordAxisDirection2> {
         let certified = self.certified_axis_direction();
-        if certified.is_some() || policy.defers_unbounded_exact_promotion() {
+        if certified.is_some() || policy.has_bounded_exact_predicate_budget() {
             return certified;
         }
         certified.or_else(|| match self.axis_direction(&policy.strict_counterpart()) {
@@ -72648,7 +72648,7 @@ impl BezierAlgebraicChord2 {
         let Some(reversed) = support.source.shared_tangent_orientation(self) else {
             return Ok(Classification::Decided(None));
         };
-        if policy.defers_unbounded_exact_promotion() {
+        if policy.has_bounded_exact_predicate_budget() {
             // Constructing the recursive direction frame can already import
             // every endpoint field. The batched caller has shared local-box
             // predicates to try before this complete affine-radical authority.
@@ -72727,7 +72727,7 @@ impl BezierAlgebraicChord2 {
                 }
             };
             if let Some(value) = value {
-                let minimum_precision = if policy.defers_unbounded_exact_promotion() {
+                let minimum_precision = if policy.has_bounded_exact_predicate_budget() {
                     -128
                 } else {
                     -512
@@ -72737,7 +72737,7 @@ impl BezierAlgebraicChord2 {
                     .or_else(|| value.immediate_sign())
                     .or_else(|| value.certified_sign_until(minimum_precision).sign())
                     .or_else(|| {
-                        (!policy.defers_unbounded_exact_promotion())
+                        (!policy.has_bounded_exact_predicate_budget())
                             .then(|| real_sign(&value, policy))
                             .flatten()
                     });
@@ -72799,7 +72799,7 @@ impl BezierAlgebraicChord2 {
                         .multiply(speed)
                         .and_then(|normal| cross.add(&normal))
                 });
-                let bounded_exact_pass = policy.defers_unbounded_exact_promotion();
+                let bounded_exact_pass = policy.has_bounded_exact_predicate_budget();
                 let bounded_steps = if bounded_exact_pass { 128 } else { 512 };
                 let retained_sign = retained_value.as_ref().and_then(|value| {
                     if value.is_structurally_zero() {
@@ -72811,7 +72811,7 @@ impl BezierAlgebraicChord2 {
                                 value.immediate_sign().or_else(|| {
                                     value
                                         .certified_sign_until(
-                                            if policy.defers_unbounded_exact_promotion() {
+                                            if policy.has_bounded_exact_predicate_budget() {
                                                 -128
                                             } else {
                                                 -512
@@ -72826,7 +72826,7 @@ impl BezierAlgebraicChord2 {
                 if let Some(sign) = retained_sign {
                     Classification::Decided(sign)
                 } else if let Some(value) = retained_value
-                    && !policy.defers_unbounded_exact_promotion()
+                    && !policy.has_bounded_exact_predicate_budget()
                     && !policy.selects_approximate_512()
                 {
                     value.sign(policy)?
@@ -72973,7 +72973,7 @@ impl BezierAlgebraicChord2 {
             // prove that equality by width separation alone.
             return Classification::Decided(side);
         }
-        if policy.defers_unbounded_exact_promotion() {
+        if policy.has_bounded_exact_predicate_budget() {
             // Beyond structural axis incidence, even the first generic point
             // envelope can materialize a correlated chord-pair tower. Leave
             // that complete tangent-side authority to the full predicate.
@@ -76276,7 +76276,7 @@ impl BezierAlgebraicChord2 {
             // topology below must keep the caller's policy identity: those
             // inputs can legitimately have been authored by APPROXIMATE_512.
             let exact_completion_policy = policy.strict_counterpart();
-            let midpoint_sign_policy = if policy.defers_unbounded_exact_promotion()
+            let midpoint_sign_policy = if policy.has_bounded_exact_predicate_budget()
                 && chord_parallel_support_source(self, policy)?.is_none()
                 && self.validate_policy(&exact_completion_policy).is_ok()
             {
@@ -78905,7 +78905,7 @@ impl BezierAlgebraicChord2 {
         // blocker and an APPROXIMATE_512 endpoint-incidence terminal. The
         // bounded speculative pass leaves this cold refinement to its
         // complete caller.
-        if !policy.defers_unbounded_exact_promotion() {
+        if !policy.has_bounded_exact_predicate_budget() {
             for refinement_steps in [0, 2, 4, 8, 16, 32, 64, 128, 256, 512] {
                 let (Classification::Decided(first), Classification::Decided(second)) = (
                     self.conservative_bounds_refined(refinement_steps, policy)?,
@@ -81902,7 +81902,7 @@ pub(crate) fn algebraic_chord_point_coordinate_order(
         // otherwise multiply large tensor expressions merely to rediscover a
         // visibly separated split event.
         for refinement_steps in [0, 2, 4, 8, 16, 32, 64] {
-            if policy.defers_unbounded_exact_promotion() && refinement_steps > 8 {
+            if policy.has_bounded_exact_predicate_budget() && refinement_steps > 8 {
                 break;
             }
             if let Some(Some(order)) = algebraic_chord_point_coordinate_order_from_bounds(
@@ -81921,7 +81921,7 @@ pub(crate) fn algebraic_chord_point_coordinate_order(
                 return Ok(Classification::Decided(order));
             }
         }
-        if policy.defers_unbounded_exact_promotion() {
+        if policy.has_bounded_exact_predicate_budget() {
             return Ok(Classification::Uncertain(UncertaintyReason::Ordering));
         }
         if let Classification::Decided(Some(order)) =
@@ -82293,7 +82293,7 @@ fn algebraic_chord_point_coordinate_order_by_refinement(
     policy: &CurveContext,
 ) -> Classification<std::cmp::Ordering> {
     for refinement_steps in [0, 2, 4, 8, 16] {
-        if policy.defers_unbounded_exact_promotion() && refinement_steps > 8 {
+        if policy.has_bounded_exact_predicate_budget() && refinement_steps > 8 {
             break;
         }
         if let Some(Some(order)) = algebraic_chord_point_coordinate_order_from_bounds(
@@ -82306,7 +82306,7 @@ fn algebraic_chord_point_coordinate_order_by_refinement(
             return Classification::Decided(order);
         }
     }
-    if policy.defers_unbounded_exact_promotion() {
+    if policy.has_bounded_exact_predicate_budget() {
         return Classification::Uncertain(UncertaintyReason::Ordering);
     }
     // Coordinate boxes are best for cheap separation. Before their rational
@@ -84747,7 +84747,7 @@ fn retained_point_evidence_equality_by_refinement(
     if first.shares_storage(second) {
         return Classification::Decided(true);
     }
-    if policy.defers_unbounded_exact_promotion() {
+    if policy.has_bounded_exact_predicate_budget() {
         // Even a zero-step general envelope can require constructing a
         // recursive composite point. Bounded callers already own their
         // representation-local boxes and may safely decline to the complete
@@ -84794,7 +84794,7 @@ fn retained_point_evidence_equality_by_refinement(
     // coordinates already owned by both carriers. Unsupported coordinate
     // forms retain the bounded interval fallback below.
     if !policy.selects_approximate_512()
-        && !policy.defers_unbounded_exact_promotion()
+        && !policy.has_bounded_exact_predicate_budget()
         && let Some(equal) = represented_point_evidence_equality(first, second, policy)
     {
         return Classification::Decided(equal);
@@ -84975,7 +84975,7 @@ pub(crate) fn algebraic_chord_point_linear_order_to_exact(
     // oblique projection is exactly zero. Compare the retained final
     // algebraic image before applying the policy terminal; this is the same
     // exact cold authority used by point equality and axis ordering.
-    if !policy.defers_unbounded_exact_promotion()
+    if !policy.has_bounded_exact_predicate_budget()
         && let Classification::Decided([x, y]) = policy
             .strict_predicate_pass(|| represented_point_evidence_coordinates(point, policy))?
     {
@@ -86800,7 +86800,7 @@ impl BezierAlgebraicChord2 {
                 return Ok(Some(orient(sign)));
             }
         }
-        let schedule: &[usize] = if policy.defers_unbounded_exact_promotion() {
+        let schedule: &[usize] = if policy.has_bounded_exact_predicate_budget() {
             &[0, 8]
         } else {
             &[0, 8, 128, 512]
@@ -86829,7 +86829,7 @@ impl BezierAlgebraicChord2 {
                 }
             }
         }
-        if policy.defers_unbounded_exact_promotion() {
+        if policy.has_bounded_exact_predicate_budget() {
             return Ok(None);
         }
         if terminal_refined && policy.permits_approximate_512() {
@@ -86992,7 +86992,7 @@ impl BezierAlgebraicChord2 {
                     [&line[2], &point[2]],
                 ],
             );
-            let minimum_precision = if policy.defers_unbounded_exact_promotion() {
+            let minimum_precision = if policy.has_bounded_exact_predicate_budget() {
                 -8
             } else {
                 -512
@@ -87007,7 +87007,7 @@ impl BezierAlgebraicChord2 {
                 return Ok(Some(side(sign)));
             }
         }
-        let schedule: &[usize] = if policy.defers_unbounded_exact_promotion() {
+        let schedule: &[usize] = if policy.has_bounded_exact_predicate_budget() {
             &[0, 8]
         } else if policy.permits_approximate_512() {
             &[0, 8, 128, 512]
@@ -87047,7 +87047,7 @@ impl BezierAlgebraicChord2 {
                 return Ok(Some(side(sign)));
             }
         }
-        if !policy.defers_unbounded_exact_promotion()
+        if !policy.has_bounded_exact_predicate_budget()
             && let Classification::Decided(Some((_, line, point))) =
                 line.joined_pair(&point, policy)?
             && let Some(incidence) = line
@@ -87185,7 +87185,7 @@ impl BezierAlgebraicChord2 {
             )
         });
         if recursive_prepass
-            && !policy.defers_unbounded_exact_promotion()
+            && !policy.has_bounded_exact_predicate_budget()
             && procedural_point
             && procedural_support
         {
@@ -87274,7 +87274,7 @@ impl BezierAlgebraicChord2 {
             }
         }
         if recursive_prepass
-            && !policy.defers_unbounded_exact_promotion()
+            && !policy.has_bounded_exact_predicate_budget()
             && maximum_refinement_steps >= 512
         {
             match self.represented_oriented_side(point, policy)? {
@@ -87314,7 +87314,7 @@ impl BezierAlgebraicChord2 {
         point: &RationalBezierIntersectionPointEvidence2,
         policy: &CurveContext,
     ) -> CurveResult<Classification<crate::classify::LineSide>> {
-        if policy.defers_unbounded_exact_promotion() {
+        if policy.has_bounded_exact_predicate_budget() {
             return self.oriented_side_by_refinement_with_limit(point, policy, 8, true, true);
         }
         let bounded = policy.bounded_exact_predicate_pass(|| {
@@ -87361,7 +87361,7 @@ impl BezierAlgebraicChord2 {
     ) -> CurveResult<Classification<BezierAlgebraicChordPairSides2>> {
         self.validate_policy(policy)?;
         other.validate_policy(policy)?;
-        if !policy.defers_unbounded_exact_promotion() {
+        if !policy.has_bounded_exact_predicate_budget() {
             let bounded = policy.bounded_exact_predicate_pass(|| {
                 self.pair_sides_by_refinement(other, retain_structural_incidence, policy)
             })?;
@@ -87676,7 +87676,7 @@ impl BezierAlgebraicChord2 {
             }
             None
         };
-        if !policy.defers_unbounded_exact_promotion() {
+        if !policy.has_bounded_exact_predicate_budget() {
             for (index, point) in first_points.iter().enumerate() {
                 let RationalBezierIntersectionPointEvidence2::AlgebraicChordPair(point) = point
                 else {
@@ -87891,7 +87891,7 @@ impl BezierAlgebraicChord2 {
         // Cartesian loop asks four independently selected endpoint towers to
         // coexist. The bounded preliminary pass deliberately skips this cold
         // exact authority.
-        if !policy.defers_unbounded_exact_promotion() {
+        if !policy.has_bounded_exact_predicate_budget() {
             for index in 0..2 {
                 if first_sides[index].is_none()
                     && let RationalBezierIntersectionPointEvidence2::AlgebraicChordPair(point) =
@@ -87978,7 +87978,7 @@ impl BezierAlgebraicChord2 {
         let mut recursive_support_cross =
             self.recursive_support_tangent_cross_sign(other, false, policy)?;
         if recursive_support_cross.is_none()
-            && !policy.defers_unbounded_exact_promotion()
+            && !policy.has_bounded_exact_predicate_budget()
             && let Some(sign) = self.retained_tangent_cross_sign(other, policy)
         {
             recursive_support_cross = match sign? {
@@ -87986,7 +87986,7 @@ impl BezierAlgebraicChord2 {
                 Classification::Uncertain(_) => None,
             };
         }
-        if recursive_support_cross.is_none() && !policy.defers_unbounded_exact_promotion() {
+        if recursive_support_cross.is_none() && !policy.has_bounded_exact_predicate_budget() {
             #[cfg(test)]
             if std::env::var_os("HYPERCURVE_DEBUG_PAIR_SCALAR").is_some() {
                 eprintln!("pair tangent cross entering recursive norm");
@@ -88075,7 +88075,7 @@ impl BezierAlgebraicChord2 {
             }
         }
 
-        if policy.defers_unbounded_exact_promotion()
+        if policy.has_bounded_exact_predicate_budget()
             && first_points
                 .iter()
                 .zip(first_sides)
@@ -88181,7 +88181,7 @@ impl BezierAlgebraicChord2 {
 
         let mut terminal_refined = false;
         let endpoint_bounds = |point, refinement_steps| {
-            if policy.defers_unbounded_exact_promotion() {
+            if policy.has_bounded_exact_predicate_budget() {
                 // A correlated support intersection may need four divergent
                 // endpoint fields to publish Cartesian coordinates.  The
                 // batched APPROXIMATE_512 pass needs only construction-local
@@ -88194,7 +88194,7 @@ impl BezierAlgebraicChord2 {
             }
         };
         for refinement_steps in [0, 2, 4, 8, 16, 32, 64, 128, 256, 512] {
-            if policy.defers_unbounded_exact_promotion() && refinement_steps > 8 {
+            if policy.has_bounded_exact_predicate_budget() && refinement_steps > 8 {
                 break;
             }
             let (
@@ -88297,7 +88297,7 @@ impl BezierAlgebraicChord2 {
         // an otherwise complete 512-bit scalar refinement for a procedural
         // endpoint. Finish each remaining oriented area independently before
         // considering a multi-field represented compositum.
-        if !policy.defers_unbounded_exact_promotion() {
+        if !policy.has_bounded_exact_predicate_budget() {
             for index in 0..2 {
                 #[cfg(test)]
                 if std::env::var_os("HYPERCURVE_DEBUG_PAIR_SCALAR").is_some()
@@ -88336,7 +88336,7 @@ impl BezierAlgebraicChord2 {
             );
             return Ok(Classification::Decided(sides));
         }
-        if !policy.defers_unbounded_exact_promotion() && !policy.selects_approximate_512() {
+        if !policy.has_bounded_exact_predicate_budget() && !policy.selects_approximate_512() {
             check_endpoint_equalities(&mut first_sides, &mut second_sides, &mut equal)?;
             if complete_shared_endpoint_sides(&mut first_sides, &mut second_sides, &equal)?
                 && let Some(sides) = decided_sides(&first_sides, &second_sides)
@@ -88358,7 +88358,7 @@ impl BezierAlgebraicChord2 {
         // only after the operation-wide strict pass has declined, and may
         // therefore consume its 512-bit equality terminal even when no
         // Cartesian endpoint box could be constructed.
-        if !policy.defers_unbounded_exact_promotion()
+        if !policy.has_bounded_exact_predicate_budget()
             && (!policy.selects_approximate_512() || policy.permits_approximate_512())
         {
             for index in 0..2 {
@@ -88998,7 +88998,7 @@ fn retained_bounds_axis_order_to_real(
 ) -> Classification<std::cmp::Ordering> {
     let mut terminal_refined = false;
     for refinement_steps in [0, 2, 4, 8, 16, 32, 64, 128, 256, 512] {
-        if policy.defers_unbounded_exact_promotion() && refinement_steps > 8 {
+        if policy.has_bounded_exact_predicate_budget() && refinement_steps > 8 {
             break;
         }
         let Classification::Decided(bounds) = bounds_at(refinement_steps) else {
@@ -89849,7 +89849,7 @@ impl BezierAlgebraicChordParallelPoint2 {
                     }
                 }))
             };
-        let bounded_exact_pass = policy.defers_unbounded_exact_promotion();
+        let bounded_exact_pass = policy.has_bounded_exact_predicate_budget();
         let refinement_schedule: &[usize] = if bounded_exact_pass {
             &[0, 2, 4, 8, 16, 32, 64, 128]
         } else {
@@ -91526,7 +91526,7 @@ impl BezierAnalyticParallelPoint2 {
             crate::classify::LineSide::from_real_sign(sign)
         };
         for refinement_steps in [0_usize, 2, 4, 8, 16, 32, 64, 128, 256, 512] {
-            if policy.defers_unbounded_exact_promotion() && refinement_steps > 8 {
+            if policy.has_bounded_exact_predicate_budget() && refinement_steps > 8 {
                 break;
             }
             let Some(parameter) = parameter_interval(&start.data.parameter, refinement_steps)?
@@ -95914,7 +95914,7 @@ impl BezierAlgebraicChordPairPoint2 {
         if std::env::var_os("HYPERCURVE_DEBUG_CHORD_PAIR_SIDES").is_some() {
             eprintln!("pair flat determinant stage=begin");
         }
-        if policy.defers_unbounded_exact_promotion() {
+        if policy.has_bounded_exact_predicate_budget() {
             // Publishing even one local projective line can multiply a
             // descendant endpoint's complete recursive tower. This authority
             // is therefore wholly outside speculative bounded dispatch; the
@@ -96136,7 +96136,7 @@ impl BezierAlgebraicChordPairPoint2 {
             );
             return Ok(Some(crate::classify::LineSide::On));
         }
-        if policy.defers_unbounded_exact_promotion() {
+        if policy.has_bounded_exact_predicate_budget() {
             // The caller continues with independently refinable point/support
             // boxes through the 512-bit equality terminal. Joining all three
             // recursive support fields here would be an unbounded exact
@@ -96447,7 +96447,7 @@ impl BezierAlgebraicChordPairPoint2 {
                 "correlated chord point was replayed under a different predicate policy".into(),
             ));
         }
-        if !policy.defers_unbounded_exact_promotion() {
+        if !policy.has_bounded_exact_predicate_budget() {
             let bounded = policy
                 .bounded_exact_predicate_pass(|| self.oriented_side_to_chord(chord, policy))?;
             if matches!(bounded, Classification::Decided(_)) {
@@ -96594,7 +96594,7 @@ impl BezierAlgebraicChordPairPoint2 {
         }
 
         if chord.certified_axis_direction().is_some()
-            && !policy.defers_unbounded_exact_promotion()
+            && !policy.has_bounded_exact_predicate_budget()
             && let Some(side) = policy.strict_predicate_pass(|| {
                 self.flat_recursive_oriented_side_to_chord(chord, policy)
             })?
@@ -96611,7 +96611,7 @@ impl BezierAlgebraicChordPairPoint2 {
         // The anchor order owns `sign(lambda)`.  When the two exact terms
         // have one sign (or either is zero), their sum has that sign without
         // reconstructing `P` in the compositum of all three support fields.
-        if !policy.defers_unbounded_exact_promotion()
+        if !policy.has_bounded_exact_predicate_budget()
             && let BezierAlgebraicChordPairPointLocation2::AnchorOrders {
                 first_at_end,
                 first,
@@ -96687,7 +96687,7 @@ impl BezierAlgebraicChordPairPoint2 {
         // one compact line coefficient instead of adjoining both endpoint
         // coordinates independently.
         if chord.certified_axis_direction().is_none()
-            && !policy.defers_unbounded_exact_promotion()
+            && !policy.has_bounded_exact_predicate_budget()
             && let Some(side) = policy.strict_predicate_pass(|| {
                 self.flat_recursive_oriented_side_to_chord(chord, policy)
             })?
@@ -96723,7 +96723,7 @@ impl BezierAlgebraicChordPairPoint2 {
         let support = chord.retained_support();
         let mut terminal_refined = false;
         for refinement_steps in [0, 2, 4, 8, 16, 32, 64, 128, 256, 512] {
-            if policy.defers_unbounded_exact_promotion() && refinement_steps > 8 {
+            if policy.has_bounded_exact_predicate_budget() && refinement_steps > 8 {
                 break;
             }
             let Classification::Decided(point) =
@@ -96792,7 +96792,7 @@ impl BezierAlgebraicChordPairPoint2 {
                 ));
             }
         }
-        if policy.defers_unbounded_exact_promotion() {
+        if policy.has_bounded_exact_predicate_budget() {
             return Ok(Classification::Uncertain(UncertaintyReason::Predicate));
         }
         let flat_side = if policy.permits_approximate_512() {
@@ -97010,7 +97010,7 @@ impl BezierAlgebraicChordPairPoint2 {
                 }
             }
         }
-        if policy.defers_unbounded_exact_promotion() {
+        if policy.has_bounded_exact_predicate_budget() {
             // A speculative broad-phase pass may use the point's independently
             // refinable exact boxes, but it must not materialize both defining
             // support fields merely to decide optional endpoint incidence.
@@ -97246,7 +97246,7 @@ impl BezierAlgebraicChordPairPoint2 {
                 order.map(std::cmp::Ordering::reverse)
             })
         };
-        if policy.defers_unbounded_exact_promotion()
+        if policy.has_bounded_exact_predicate_budget()
             && let Some(other) = correlated_other
         {
             // Both points already expose independently refinable exact boxes
@@ -143097,14 +143097,7 @@ mod conversion_tests {
                 },
             )
             .unwrap();
-            assert_eq!(
-                outcome.certainty,
-                if policy == CurveContext::APPROXIMATE_512 {
-                    crate::CurveCertainty::Approximate512Consumed
-                } else {
-                    crate::CurveCertainty::Certified
-                },
-            );
+            assert_eq!(outcome.certainty, crate::CurveCertainty::Certified,);
         }
     }
 
