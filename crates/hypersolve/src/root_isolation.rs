@@ -22,7 +22,7 @@ use crate::certification::{
 use crate::eval::EvaluationContext;
 use crate::integer_interpolation::{
     primitive_integer_polynomial, primitive_integer_polynomial_gcd,
-    primitive_integer_sturm_sequence,
+    primitive_integer_sturm_sequence, rational_polynomial_exact_quotient,
 };
 use crate::interval::rational_interval_product;
 use crate::model::{ConstraintKind, Problem};
@@ -2720,6 +2720,9 @@ pub fn square_free_part(polynomial: Vec<Real>, policy: PredicatePolicy) -> Optio
     };
     if gcd.len() <= 1 {
         return Some(polynomial);
+    }
+    if let Some(quotient) = rational_polynomial_exact_quotient(&polynomial, &gcd) {
+        return Some(quotient);
     }
     let (quotient, remainder) = polynomial_div_rem_trimmed(polynomial, &gcd, policy)?;
     trimmed_polynomial_is_zero(&remainder, policy)?.then_some(quotient)

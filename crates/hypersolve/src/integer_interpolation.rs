@@ -43,6 +43,31 @@ pub(crate) fn primitive_integer_polynomial_gcd(left: &[Real], right: &[Real]) ->
     )
 }
 
+/// Divides exact rational polynomials through their primitive integer parts.
+/// Exact integer division certifies the quotient; one final rational scale
+/// restores the original leading coefficients. A nonzero remainder declines
+/// this path without weakening the caller's general coefficient-field replay.
+pub(crate) fn rational_polynomial_exact_quotient(
+    dividend: &[Real],
+    divisor: &[Real],
+) -> Option<Vec<Real>> {
+    let first = primitive_integer_coefficients(dividend)?;
+    let second = primitive_integer_coefficients(divisor)?;
+    let quotient = integer_polynomial_exact_quotient(&first, &second)?;
+    if is_zero_integer_polynomial(&quotient) {
+        return Some(vec![Real::zero()]);
+    }
+    let scale = dividend[first.len() - 1].exact_rational_ref()?
+        / divisor[second.len() - 1].exact_rational_ref()?
+        / Rational::from_bigint(quotient.last()?.clone());
+    Some(
+        quotient
+            .into_iter()
+            .map(|coefficient| Real::new(Rational::from_bigint(coefficient) * &scale))
+            .collect(),
+    )
+}
+
 /// Multiplies rational polynomials in one quotient ring without reducing a
 /// rational fraction for every coefficient product. Integer pseudo-division
 /// retains its exact scale; only the final reduced coefficients return to Real.
@@ -180,7 +205,7 @@ pub(crate) fn rational_polynomial_inverse_modulo(
             }
         }
         residual[0] -= &denominator;
-        if !integer_polynomial_divides(&residual, &modulus) {
+        if integer_polynomial_exact_quotient(&residual, &modulus).is_none() {
             continue;
         }
         let mut inverse = numerator
@@ -466,8 +491,8 @@ fn modular_integer_polynomial_gcd(left: &[BigInt], right: &[BigInt]) -> Option<V
             continue;
         };
         if candidate.len().saturating_sub(1) == degree
-            && integer_polynomial_divides(left, &candidate)
-            && integer_polynomial_divides(right, &candidate)
+            && integer_polynomial_exact_quotient(left, &candidate).is_some()
+            && integer_polynomial_exact_quotient(right, &candidate).is_some()
         {
             return Some(candidate);
         }
@@ -580,32 +605,40 @@ fn rational_reconstruction(
     Some((remainder, denominator))
 }
 
-fn integer_polynomial_divides(dividend: &[BigInt], divisor: &[BigInt]) -> bool {
+fn integer_polynomial_exact_quotient(
+    dividend: &[BigInt],
+    divisor: &[BigInt],
+) -> Option<Vec<BigInt>> {
     if is_zero_integer_polynomial(divisor) {
-        return false;
+        return None;
     }
     let mut remainder = dividend.to_vec();
     while remainder.len() > 1 && remainder.last().is_some_and(BigInt::is_zero) {
         remainder.pop();
     }
+    let mut quotient = vec![
+        BigInt::zero();
+        remainder
+            .len()
+            .saturating_sub(divisor.len())
+            .saturating_add(1)
+    ];
     while !is_zero_integer_polynomial(&remainder) && remainder.len() >= divisor.len() {
-        let Some(quotient) = remainder.last().and_then(|coefficient| {
-            coefficient
-                .is_multiple_of(divisor.last()?)
-                .then(|| coefficient / divisor.last().expect("a nonzero divisor has a leader"))
-        }) else {
-            return false;
-        };
+        let (scale, residual) = remainder.last()?.div_rem(divisor.last()?);
+        if !residual.is_zero() {
+            return None;
+        }
         let shift = remainder.len() - divisor.len();
         for (index, coefficient) in divisor[..divisor.len() - 1].iter().enumerate() {
-            remainder[shift + index] -= &quotient * coefficient;
+            remainder[shift + index] -= &scale * coefficient;
         }
+        quotient[shift] = scale;
         remainder.pop();
         while remainder.len() > 1 && remainder.last().is_some_and(BigInt::is_zero) {
             remainder.pop();
         }
     }
-    is_zero_integer_polynomial(&remainder)
+    is_zero_integer_polynomial(&remainder).then_some(quotient)
 }
 
 fn previous_prime(mut candidate: u64) -> Option<u64> {
@@ -940,6 +973,21 @@ mod tests {
     }
 
     #[test]
+    fn exact_quotient_declines_nondivisibility_and_nonrational_coefficients() {
+        assert_eq!(
+            rational_polynomial_exact_quotient(&[Real::zero()], &[real(1), real(2)]),
+            Some(vec![Real::zero()]),
+        );
+        assert!(rational_polynomial_exact_quotient(&[Real::one()], &[Real::zero()]).is_none());
+        assert!(
+            rational_polynomial_exact_quotient(&[real(1), real(1)], &[real(1), real(2)]).is_none()
+        );
+        assert!(
+            rational_polynomial_exact_quotient(&[real(2).sqrt().unwrap()], &[real(1)]).is_none()
+        );
+    }
+
+    #[test]
     fn modular_gcd_certifies_coprimality_without_integer_coefficient_growth() {
         let mut left = vec![Real::zero(); 129];
         left[0] = real(1);
@@ -1031,6 +1079,35 @@ mod tests {
     }
 
     proptest! {
+        #[test]
+        fn generated_exact_quotient_preserves_independent_rational_scales(
+            divisor in prop::collection::vec(-9_i64..=9, 1..=8),
+            quotient in prop::collection::vec(-9_i64..=9, 1..=8),
+            dividend_scale in -7_i64..=7,
+            divisor_scale in -7_i64..=7,
+            denominator in 1_u64..=9,
+        ) {
+            prop_assume!(divisor.last().is_some_and(|coefficient| *coefficient != 0));
+            prop_assume!(quotient.last().is_some_and(|coefficient| *coefficient != 0));
+            prop_assume!(dividend_scale != 0 && divisor_scale != 0);
+            let divisor = divisor.into_iter().map(BigInt::from).collect::<Vec<_>>();
+            let quotient = quotient.into_iter().map(BigInt::from).collect::<Vec<_>>();
+            let product = multiply_integer_polynomials(&divisor, &quotient);
+            let numerator_scale = rational(dividend_scale, denominator);
+            let divisor_scale = real(divisor_scale);
+            let scaled = |polynomial: &[BigInt], scale: &Real| polynomial.iter()
+                .map(|coefficient| Real::new(Rational::from_bigint(coefficient.clone())) * scale)
+                .collect::<Vec<_>>();
+            let expected = scaled(&quotient, &(&numerator_scale / &divisor_scale).unwrap());
+            prop_assert_eq!(
+                rational_polynomial_exact_quotient(
+                    &scaled(&product, &numerator_scale),
+                    &scaled(&divisor, &divisor_scale),
+                ),
+                Some(expected),
+            );
+        }
+
         #[test]
         fn generated_modular_inverse_preserves_rational_scales(
             constant in -9_i64..=9,
