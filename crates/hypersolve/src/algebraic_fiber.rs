@@ -22,7 +22,9 @@ use crate::algebraic::{
     evaluate_polynomial_at_algebraic_root, validate_algebraic_root_representation,
 };
 use crate::curve_resultant::{BivariatePolynomial, CurveResultantParameter};
-use crate::integer_interpolation::rational_polynomial_inverse_modulo;
+use crate::integer_interpolation::{
+    rational_polynomial_inverse_modulo, rational_polynomial_product_modulo,
+};
 use crate::ordered_field_roots::{
     OrderedFieldPolynomialContext, OrderedFieldRootIsolationConfig,
     OrderedFieldRootIsolationStatus, isolate_ordered_field_polynomial_roots,
@@ -3519,6 +3521,13 @@ impl LocalAlgebraicField {
         left: &[Real],
         right: &[Real],
     ) -> Result<Vec<Real>, LocalFieldError> {
+        // Keep small native products cheap. Wider rational coefficient fields
+        // share one integer denominator through multiplication and reduction.
+        if left.len().saturating_mul(right.len()) >= 64
+            && let Some(product) = rational_polynomial_product_modulo(left, right, self.modulus())
+        {
+            return Ok(product);
+        }
         let mut result = vec![Real::zero(); left.len() + right.len() - 1];
         for (left_power, left_coefficient) in left.iter().enumerate() {
             for (right_power, right_coefficient) in right.iter().enumerate() {

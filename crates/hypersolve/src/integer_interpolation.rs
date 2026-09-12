@@ -43,6 +43,83 @@ pub(crate) fn primitive_integer_polynomial_gcd(left: &[Real], right: &[Real]) ->
     )
 }
 
+/// Multiplies rational polynomials in one quotient ring without reducing a
+/// rational fraction for every coefficient product. Integer pseudo-division
+/// retains its exact scale; only the final reduced coefficients return to Real.
+pub(crate) fn rational_polynomial_product_modulo(
+    left: &[Real],
+    right: &[Real],
+    modulus: &[Real],
+) -> Option<Vec<Real>> {
+    if left.is_empty() || right.is_empty() || modulus.is_empty() {
+        return None;
+    }
+    let first = primitive_integer_coefficients(left)?;
+    let second = primitive_integer_coefficients(right)?;
+    let modulus = primitive_integer_coefficients(modulus)?;
+    if modulus.len() < 2 {
+        return None;
+    }
+    if is_zero_integer_polynomial(&first) || is_zero_integer_polynomial(&second) {
+        return Some(vec![Real::zero()]);
+    }
+    let source_scale = |source: &[Real], primitive: &[BigInt]| {
+        let pivot = primitive.iter().position(|value| !value.is_zero())?;
+        (&source[pivot] / Real::from(Rational::from_bigint(primitive[pivot].clone()))).ok()
+    };
+    let source_scale = source_scale(left, &first)? * source_scale(right, &second)?;
+    let mut remainder = vec![BigInt::zero(); first.len() + second.len() - 1];
+    for (first_power, first) in first.iter().enumerate() {
+        for (second_power, second) in second.iter().enumerate() {
+            remainder[first_power + second_power] += first * second;
+        }
+    }
+    let degree = modulus.len() - 1;
+    let leading = &modulus[degree];
+    let mut scale = BigInt::one();
+    while remainder.len() > degree && !is_zero_integer_polynomial(&remainder) {
+        let shift = remainder.len() - modulus.len();
+        let top = remainder.last()?;
+        let common = euclidean_bigint_gcd(top, leading);
+        let remainder_scale = leading / &common;
+        let modulus_scale = top / common;
+        for coefficient in &mut remainder {
+            *coefficient *= &remainder_scale;
+        }
+        for (power, coefficient) in modulus.iter().enumerate() {
+            remainder[shift + power] -= &modulus_scale * coefficient;
+        }
+        scale *= remainder_scale;
+        while remainder.len() > 1 && remainder.last().is_some_and(BigInt::is_zero) {
+            remainder.pop();
+        }
+        // Only remove content shared with the accumulated scale: arbitrary
+        // primitive normalization would change the represented field element.
+        if !scale.is_one() {
+            let mut common = scale.clone();
+            for coefficient in &remainder {
+                common = euclidean_bigint_gcd(&common, coefficient);
+                if common.is_one() {
+                    break;
+                }
+            }
+            if !common.is_one() {
+                for coefficient in &mut remainder {
+                    *coefficient /= &common;
+                }
+                scale /= common;
+            }
+        }
+    }
+    let scale = (source_scale / Real::from(Rational::from_bigint(scale))).ok()?;
+    Some(
+        remainder
+            .into_iter()
+            .map(|value| Real::from(Rational::from_bigint(value)) * &scale)
+            .collect(),
+    )
+}
+
 /// Reconstructs an inverse over Q and accepts it only after the exact identity
 /// `polynomial * inverse == 1 (mod modulus)` replays over the integers.
 /// Failure only declines this accelerator; callers retain their exact-field
@@ -768,6 +845,80 @@ mod tests {
 
     fn rational(numerator: i64, denominator: u64) -> Real {
         Real::from(Rational::fraction(numerator, denominator).unwrap())
+    }
+
+    fn ordinary_product_remainder(left: &[Real], right: &[Real], modulus: &[Real]) -> Vec<Real> {
+        let mut product = vec![Real::zero(); left.len() + right.len() - 1];
+        for (i, first) in left.iter().enumerate() {
+            for (j, second) in right.iter().enumerate() {
+                product[i + j] += first * second;
+            }
+        }
+        crate::root_isolation::polynomial_div_rem(product, modulus, crate::PredicatePolicy::STRICT)
+            .unwrap()
+            .1
+    }
+
+    proptest! {
+        #[test]
+        fn rational_product_modulo_preserves_the_exact_scale(
+            left in prop::collection::vec((-20_i64..=20, 1_u64..=17), 1..10),
+            right in prop::collection::vec((-20_i64..=20, 1_u64..=17), 1..10),
+            modulus in prop::collection::vec((-20_i64..=20, 1_u64..=17), 2..10),
+        ) {
+            prop_assume!(modulus.last().unwrap().0 != 0);
+            let values = |coefficients: Vec<(i64, u64)>| coefficients.into_iter()
+                .map(|(numerator, denominator)| rational(numerator, denominator)).collect::<Vec<_>>();
+            let (left, right, modulus) = (values(left), values(right), values(modulus));
+            prop_assert_eq!(
+                rational_polynomial_product_modulo(&left, &right, &modulus),
+                Some(ordinary_product_remainder(&left, &right, &modulus)),
+            );
+        }
+    }
+
+    #[test]
+    fn rational_product_modulo_handles_wide_coefficients_and_guards_its_domain() {
+        let values = |count: usize, shift: usize| {
+            (0..count)
+                .map(|index| {
+                    let numerator = (BigInt::one() << (4096 + 17 * index)) + (index + 1);
+                    let denominator = (BigInt::one() << (shift + index)) + 3_u8;
+                    Real::from(
+                        Rational::from_bigint_fraction(numerator, denominator.magnitude().clone())
+                            .unwrap(),
+                    )
+                })
+                .collect::<Vec<_>>()
+        };
+        let left = values(10_usize, 192_usize);
+        let right = values(9_usize, 256_usize);
+        let mut modulus = vec![Real::zero(); 12];
+        modulus[0] = rational(-2, 7);
+        modulus[3] = rational(3, 11);
+        modulus[11] = rational(-5, 13);
+        assert_eq!(
+            rational_polynomial_product_modulo(&left, &right, &modulus),
+            Some(ordinary_product_remainder(&left, &right, &modulus))
+        );
+        assert_eq!(
+            rational_polynomial_product_modulo(&[Real::zero()], &right, &modulus),
+            Some(vec![Real::zero()])
+        );
+        let irrational = Real::from(2).sqrt().unwrap();
+        assert!(
+            rational_polynomial_product_modulo(&[irrational.clone()], &right, &modulus).is_none()
+        );
+        assert!(
+            rational_polynomial_product_modulo(&left, &[irrational.clone()], &modulus).is_none()
+        );
+        assert!(
+            rational_polynomial_product_modulo(&left, &right, &[irrational, Real::one()]).is_none()
+        );
+        for invalid in [vec![], vec![Real::zero()], vec![Real::one()]] {
+            assert!(rational_polynomial_product_modulo(&left, &right, &invalid).is_none());
+        }
+        assert!(rational_polynomial_product_modulo(&[], &right, &modulus).is_none());
     }
 
     #[test]
