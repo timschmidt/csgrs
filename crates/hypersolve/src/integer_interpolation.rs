@@ -99,8 +99,51 @@ pub(crate) fn rational_polynomial_product_modulo(
             remainder[first_power + second_power] += first * second;
         }
     }
-    let degree = modulus.len() - 1;
-    let leading = &modulus[degree];
+    let (remainder, denominator) = integer_polynomial_remainder_modulo(remainder, &modulus)?;
+    let scale = (source_scale / Real::from(Rational::from_bigint(denominator))).ok()?;
+    Some(
+        remainder
+            .into_iter()
+            .map(|value| Real::from(Rational::from_bigint(value)) * &scale)
+            .collect(),
+    )
+}
+
+/// Reduces a rational polynomial through integer pseudo-division, restoring
+/// its exact coefficient scale only after all leading powers are removed.
+pub(crate) fn rational_polynomial_remainder_modulo(
+    polynomial: &[Real],
+    modulus: &[Real],
+) -> Option<Vec<Real>> {
+    if polynomial.is_empty() {
+        return None;
+    }
+    let primitive = primitive_integer_coefficients(polynomial)?;
+    let modulus = primitive_integer_coefficients(modulus)?;
+    if modulus.len() < 2 {
+        return None;
+    }
+    let Some(pivot) = primitive.iter().position(|value| !value.is_zero()) else {
+        return Some(vec![Real::zero()]);
+    };
+    let source_scale =
+        polynomial[pivot].exact_rational_ref()? / Rational::from_bigint(primitive[pivot].clone());
+    let (remainder, denominator) = integer_polynomial_remainder_modulo(primitive, &modulus)?;
+    let scale = source_scale / Rational::from_bigint(denominator);
+    Some(
+        remainder
+            .into_iter()
+            .map(|value| Real::new(Rational::from_bigint(value) * &scale))
+            .collect(),
+    )
+}
+
+fn integer_polynomial_remainder_modulo(
+    mut remainder: Vec<BigInt>,
+    modulus: &[BigInt],
+) -> Option<(Vec<BigInt>, BigInt)> {
+    let degree = modulus.len().checked_sub(1)?;
+    let leading = modulus.last()?;
     let mut scale = BigInt::one();
     while remainder.len() > degree && !is_zero_integer_polynomial(&remainder) {
         let shift = remainder.len() - modulus.len();
@@ -108,8 +151,10 @@ pub(crate) fn rational_polynomial_product_modulo(
         let common = euclidean_bigint_gcd(top, leading);
         let remainder_scale = leading / &common;
         let modulus_scale = top / common;
-        for coefficient in &mut remainder {
-            *coefficient *= &remainder_scale;
+        if !remainder_scale.is_one() {
+            for coefficient in &mut remainder {
+                *coefficient *= &remainder_scale;
+            }
         }
         for (power, coefficient) in modulus.iter().enumerate() {
             remainder[shift + power] -= &modulus_scale * coefficient;
@@ -136,13 +181,7 @@ pub(crate) fn rational_polynomial_product_modulo(
             }
         }
     }
-    let scale = (source_scale / Real::from(Rational::from_bigint(scale))).ok()?;
-    Some(
-        remainder
-            .into_iter()
-            .map(|value| Real::from(Rational::from_bigint(value)) * &scale)
-            .collect(),
-    )
+    Some((remainder, scale))
 }
 
 /// Reconstructs an inverse over Q and accepts it only after the exact identity

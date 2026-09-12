@@ -2828,6 +2828,14 @@ impl CertifiedPolynomialDivisor {
         if remainder.len() <= divisor_degree {
             return;
         }
+        if let Some(mut reduced) = crate::integer_interpolation::rational_polynomial_remainder_modulo(
+            remainder,
+            &self.coefficients,
+        ) {
+            reduced.resize(divisor_degree, Real::zero());
+            *remainder = reduced;
+            return;
+        }
         for power in (divisor_degree..remainder.len()).rev() {
             if remainder[power].definitely_zero() {
                 continue;
