@@ -35473,6 +35473,28 @@ impl BezierAlgebraicCuspSemicircle2 {
                 "a recursive circle-pair relation crossed retained coefficient fields".into(),
             ));
         }
+        if center_equality == Some(true) {
+            return Ok(Classification::Decided(Some(
+                BezierRecursiveCirclePairSupportRelation2::Concentric,
+            )));
+        }
+        let normalize = |point: &BezierRecursiveQuadraticProjectivePoint2| {
+            BezierRecursiveQuadraticValue2::primitive_projective_ratio([
+                &point.x,
+                &point.y,
+                &point.denominator,
+            ])
+            .map_or_else(
+                || point.clone(),
+                |[x, y, denominator]| BezierRecursiveQuadraticProjectivePoint2 {
+                    x,
+                    y,
+                    denominator,
+                },
+            )
+        };
+        let first = normalize(first);
+        let second = normalize(second);
         let Some((common_denominator, q)) = (|| {
             let common_denominator = first.denominator.multiply(&second.denominator)?;
             let dx = second
@@ -55675,6 +55697,117 @@ impl BezierRecursiveQuadraticField2 {
 }
 
 impl BezierRecursiveQuadraticValue2 {
+    /// Removes a positive common rational coefficient scale from a
+    /// homogeneous tuple. The selected fields and their radical generators
+    /// remain identical; only the tuple's irrelevant projective content changes.
+    fn primitive_projective_ratio<const N: usize>(values: [&Self; N]) -> Option<[Self; N]> {
+        fn collect<'a>(
+            value: &'a BezierRecursiveQuadraticValue2,
+            coefficients: &mut Vec<&'a HyperRational>,
+            visited: &mut std::collections::HashSet<usize>,
+        ) -> Option<()> {
+            if !visited.insert(Arc::as_ptr(&value.data) as usize) {
+                return Some(());
+            }
+            match value.data.as_ref() {
+                BezierRecursiveQuadraticValueData2::Base { expression, .. } => {
+                    for polynomial in [
+                        &expression.rational,
+                        &expression.first,
+                        &expression.second,
+                        &expression.product,
+                    ] {
+                        for coefficient in polynomial.coefficients() {
+                            coefficients.push(coefficient.exact_rational_ref()?);
+                        }
+                    }
+                }
+                BezierRecursiveQuadraticValueData2::Extension {
+                    retained, radical, ..
+                } => {
+                    collect(retained, coefficients, visited)?;
+                    collect(radical, coefficients, visited)?;
+                }
+            }
+            Some(())
+        }
+
+        fn rebuild(
+            value: &BezierRecursiveQuadraticValue2,
+            coefficients: &mut impl Iterator<Item = num::BigInt>,
+            memo: &mut std::collections::HashMap<usize, BezierRecursiveQuadraticValue2>,
+        ) -> Option<BezierRecursiveQuadraticValue2> {
+            let identity = Arc::as_ptr(&value.data) as usize;
+            if let Some(value) = memo.get(&identity) {
+                return Some(value.clone());
+            }
+            let data = match value.data.as_ref() {
+                BezierRecursiveQuadraticValueData2::Base { field, expression } => {
+                    let mut polynomial = |source: &DenseTensorPolynomial| {
+                        DenseTensorPolynomial::try_new(
+                            source.dimensions().to_vec(),
+                            coefficients
+                                .take(source.coefficients().len())
+                                .map(HyperRational::from_bigint)
+                                .map(Real::new)
+                                .collect(),
+                        )
+                    };
+                    // A scalar multiple preserves every existing source-
+                    // quotient reduction; no new polynomial replay is needed.
+                    BezierRecursiveQuadraticValueData2::Base {
+                        field: field.clone(),
+                        expression: BezierDenseTwoSquareRootExpression2 {
+                            rational: polynomial(&expression.rational)?,
+                            first: polynomial(&expression.first)?,
+                            second: polynomial(&expression.second)?,
+                            product: polynomial(&expression.product)?,
+                        },
+                    }
+                }
+                BezierRecursiveQuadraticValueData2::Extension {
+                    field,
+                    retained,
+                    radical,
+                } => BezierRecursiveQuadraticValueData2::Extension {
+                    field: field.clone(),
+                    retained: rebuild(retained, coefficients, memo)?,
+                    radical: rebuild(radical, coefficients, memo)?,
+                },
+            };
+            let result = BezierRecursiveQuadraticValue2 {
+                data: Arc::new(data),
+            };
+            memo.insert(identity, result.clone());
+            Some(result)
+        }
+
+        let mut coefficients = Vec::new();
+        let mut visited = std::collections::HashSet::new();
+        for value in values {
+            collect(value, &mut coefficients, &mut visited)?;
+        }
+        let normalized = HyperRational::primitive_bigint_ratio(&coefficients);
+        // One nonzero coefficient identifies the common scale. If it is
+        // unchanged, retain the original shared nodes without rebuilding.
+        if coefficients
+            .iter()
+            .zip(&normalized)
+            .find(|(source, _)| !source.is_zero())
+            .is_none_or(|(source, target)| **source == HyperRational::from_bigint(target.clone()))
+        {
+            return Some(values.map(Clone::clone));
+        }
+        let mut normalized = normalized.into_iter();
+        let mut memo = std::collections::HashMap::new();
+        let result = values
+            .map(|value| rebuild(value, &mut normalized, &mut memo))
+            .into_iter()
+            .collect::<Option<Vec<_>>>()?;
+        debug_assert!(normalized.next().is_none());
+        result.try_into().ok()
+    }
+
     fn from_base(
         field: Arc<BezierRecursiveQuadraticBaseFieldData2>,
         expression: BezierDenseTwoSquareRootExpression2,
@@ -130611,6 +130744,73 @@ mod conversion_tests {
                 assert!(scalar.exact_real_value().is_none());
             }
         }
+    }
+
+    #[test]
+    fn recursive_projective_content_normalization_preserves_selected_fields() {
+        let source = bezier_parameter_root_representation(&algebraic_parameter(vec![
+            (Real::from(-1_i8) / Real::from(2_i8)).unwrap(),
+            Real::zero(),
+            Real::one(),
+        ]));
+        let constant = |value| DenseTensorPolynomial::try_new(vec![1], vec![value]).unwrap();
+        let field = BezierRecursiveQuadraticField2::base(
+            vec![source],
+            constant(Real::from(2_i8)),
+            constant(Real::from(3_i8)),
+        )
+        .unwrap();
+        let BezierRecursiveQuadraticField2::Base(base) = &field else {
+            unreachable!();
+        };
+        let value = recursive_quadratic_pair_value(
+            base,
+            DenseTensorPolynomial::try_new(vec![2], vec![Real::from(2_i8), Real::one()]).unwrap(),
+            constant(Real::one()),
+            1,
+        )
+        .unwrap();
+        let extension = field.extension(value.clone()).unwrap();
+        let x = extension
+            .element(value, field.constant(Real::one()).unwrap())
+            .unwrap();
+        let y = extension.constant(Real::from(-3_i8)).unwrap();
+        let denominator = extension.constant(Real::one()).unwrap();
+        let large = Real::from(2_i8).powi_i64(1024).unwrap() + Real::from(17_i8);
+        for (scale, orientation) in [
+            (large.clone(), Real::one()),
+            ((Real::one() / &large).unwrap(), Real::one()),
+            (-large.clone(), Real::from(-1_i8)),
+        ] {
+            let values = [&x, &y, &denominator].map(|value| value.scale(&scale).unwrap());
+            let normalized =
+                BezierRecursiveQuadraticValue2::primitive_projective_ratio(values.each_ref())
+                    .unwrap();
+            for (actual, expected) in normalized.iter().zip([&x, &y, &denominator]) {
+                assert!(actual.field().same_field(&extension));
+                assert!(actual.is_stored_equivalent_to(&expected.scale(&orientation).unwrap()));
+            }
+            let repeated =
+                BezierRecursiveQuadraticValue2::primitive_projective_ratio(normalized.each_ref())
+                    .unwrap();
+            for (first, second) in normalized.iter().zip(&repeated) {
+                assert!(Arc::ptr_eq(&first.data, &second.data));
+            }
+        }
+        let wide_x = x.scale(&large).unwrap();
+        let wide_denominator = denominator.scale(&large).unwrap();
+        let shared = BezierRecursiveQuadraticValue2::primitive_projective_ratio([
+            &wide_x,
+            &wide_x,
+            &wide_denominator,
+        ])
+        .unwrap();
+        assert!(Arc::ptr_eq(&shared[0].data, &shared[1].data));
+        let opaque = extension.constant(Real::pi()).unwrap();
+        assert!(
+            BezierRecursiveQuadraticValue2::primitive_projective_ratio([&opaque, &denominator,])
+                .is_none()
+        );
     }
 
     #[test]
