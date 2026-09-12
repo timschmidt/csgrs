@@ -161,9 +161,8 @@ fn polynomial_spline_construction_obeys_terminal_policy_without_replacing_knots(
 
     let top_level = Curve2::from(evaluation_curve);
     let top_level_point = top_level
-        .as_view()
         .point_at(&symbolic_half, &CurveContext::APPROXIMATE_512)
-        .expect("CurveView2 must preserve spline evaluation certainty");
+        .expect("Curve2 must preserve spline evaluation certainty");
     assert_eq!(
         top_level_point.certainty,
         hypercurve::CurveCertainty::Approximate512Consumed
@@ -813,9 +812,8 @@ fn periodic_polynomial_wrapping_obeys_terminal_policy() {
 
     let top_level = Curve2::from(curve);
     let top_level_point = top_level
-        .as_view()
         .point_at_wrapped(&wrapped_seam, &CurveContext::APPROXIMATE_512)
-        .expect("CurveView2 must preserve wrapped terminal certainty");
+        .expect("Curve2 must preserve wrapped terminal certainty");
     assert_eq!(
         top_level_point.certainty,
         hypercurve::CurveCertainty::Approximate512Consumed

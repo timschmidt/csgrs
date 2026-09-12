@@ -25,9 +25,8 @@ fn rational_line_derivatives_exceed_machine_binomial_orders() {
         let unified = Curve2::from(curve.clone());
         assert_eq!(
             unified
-                .as_view()
                 .derivatives_at(&parameter, 128, &CurveContext::STRICT)
-                .expect("the top-level curve view must preserve high derivative completeness")
+                .expect("the top-level curve must preserve high derivative completeness")
                 .into_value(),
             derivatives
         );

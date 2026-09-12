@@ -318,7 +318,6 @@ fn top_level_curve_evaluates_native_and_spline_parameters() {
     );
     assert_eq!(
         quadratic
-            .as_view()
             .point_at(&half, &CurveContext::STRICT)
             .unwrap()
             .into_value(),
@@ -340,7 +339,7 @@ fn top_level_curve_evaluates_native_and_spline_parameters() {
     );
     assert!(std::ptr::eq(
         spline.parameter_domain(),
-        spline.clone().as_view().parameter_domain()
+        spline.clone().parameter_domain()
     ));
 }
 
@@ -397,7 +396,6 @@ fn top_level_curve_derivatives_preserve_parameter_domains_and_share_evaluators()
     let line = Curve2::from(LineSeg2::try_new(p(0, 0), p(2, 0)).unwrap());
     let line_clone = line.clone();
     let line_derivative = line
-        .as_view()
         .derivative_at(&half, &CurveContext::STRICT)
         .unwrap()
         .into_value();
@@ -453,14 +451,13 @@ fn top_level_curve_derivatives_preserve_parameter_domains_and_share_evaluators()
 }
 
 #[test]
-fn top_level_curve_and_view_expose_exact_higher_derivatives() {
+fn top_level_curve_exposes_exact_higher_derivatives() {
     let curve = Curve2::from(
         hypercurve::RationalBezier2::try_new(vec![p(0, 0), p(4, 0)], vec![r(1), r(3)]).unwrap(),
     );
     let half = (r(1) / r(2)).unwrap();
 
     let derivatives = curve
-        .as_view()
         .derivatives_at(&half, 3, &CurveContext::STRICT)
         .unwrap()
         .into_value();

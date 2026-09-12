@@ -200,9 +200,8 @@ fn nurbs_construction_obeys_terminal_policy_without_replacing_knots() {
 
     let evaluation_top_level = Curve2::from(evaluation_curve.clone());
     let top_level_point = evaluation_top_level
-        .as_view()
         .point_at(&symbolic_half, &CurveContext::APPROXIMATE_512)
-        .expect("CurveView2 must preserve NURBS evaluation certainty");
+        .expect("Curve2 must preserve NURBS evaluation certainty");
     assert_eq!(
         top_level_point.certainty,
         hypercurve::CurveCertainty::Approximate512Consumed
@@ -689,7 +688,6 @@ fn discontinuous_nurbs_knot_requires_explicit_point_side() {
     let top_level = Curve2::from(curve);
     assert_eq!(
         top_level
-            .as_view()
             .point_at_side(&r(1), CurveParameterSide2::Right, &CurveContext::STRICT)
             .unwrap()
             .into_value(),
@@ -1759,9 +1757,8 @@ fn periodic_nurbs_wrapping_obeys_terminal_policy() {
 
     let top_level = Curve2::from(curve);
     let top_level_point = top_level
-        .as_view()
         .point_at_wrapped(&wrapped_seam, &CurveContext::APPROXIMATE_512)
-        .expect("CurveView2 must preserve wrapped NURBS certainty");
+        .expect("Curve2 must preserve wrapped NURBS certainty");
     assert_eq!(
         top_level_point.certainty,
         hypercurve::CurveCertainty::Approximate512Consumed

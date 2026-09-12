@@ -1,4 +1,4 @@
-//! Top-level owned and borrowed exact curve carriers.
+//! Top-level exact curve carriers.
 
 use std::sync::Arc;
 use std::sync::OnceLock;
@@ -238,17 +238,11 @@ impl CurveParameterLineage2 {
 
 /// Immutable top-level exact planar curve.
 ///
-/// Clones share the exact carrier and its retained calculations. Use
-/// [`Curve2::as_view`] for borrowed algorithms.
+/// Clones share the exact carrier and its retained calculations. Operations
+/// borrow this value directly, preserving the same caches and certificates.
 #[derive(Clone, Debug)]
 pub struct Curve2 {
     data: Arc<CurveData2>,
-}
-
-/// Borrowed view of one top-level exact curve.
-#[derive(Clone, Copy, Debug)]
-pub struct CurveView2<'a> {
-    curve: &'a Curve2,
 }
 
 /// Ordered connected sequence of exact curves.
@@ -265,12 +259,6 @@ struct CurvePathData2 {
     native_bezier_fragments: PolicyEvaluationCache<Vec<NativeBezierFragment2>>,
     bezier_boundary_loop: PolicyEvaluationCache<NativeBezierBoundaryLoop2>,
     bounds: OnceLock<ExactCurveResult<Aabb2>>,
-}
-
-/// Borrowed view of an ordered exact curve path.
-#[derive(Clone, Copy, Debug)]
-pub struct CurvePathView2<'a> {
-    curves: &'a [Curve2],
 }
 
 /// Exact public parameter interval for one promoted native span.
@@ -397,11 +385,6 @@ impl Curve2 {
     ) -> ExactCurveResult<CurveOutcome<Self>> {
         NurbsCurve2::try_new_periodic(degree, control_points, weights, period_knots, policy)
             .map(|outcome| outcome.map(|curve| Self::new(CurveGeometry2::Nurbs(curve))))
-    }
-
-    /// Returns a borrowed view without cloning geometry.
-    pub const fn as_view(&self) -> CurveView2<'_> {
-        CurveView2 { curve: self }
     }
 
     /// Returns the exact geometry carrier.
@@ -1384,216 +1367,6 @@ impl PartialEq for Curve2 {
     }
 }
 
-impl<'a> CurveView2<'a> {
-    /// Returns the owned curve backing this view.
-    pub const fn curve(self) -> &'a Curve2 {
-        self.curve
-    }
-
-    /// Returns the exact geometry carrier.
-    pub fn geometry(self) -> &'a CurveGeometry2 {
-        self.curve.geometry()
-    }
-
-    /// Returns the curve family.
-    pub fn family(self) -> CurveFamily2 {
-        self.curve.family()
-    }
-
-    /// Returns the exact start point.
-    pub fn start(self) -> &'a Point2 {
-        self.curve.start()
-    }
-
-    /// Returns the exact end point.
-    pub fn end(self) -> &'a Point2 {
-        self.curve.end()
-    }
-
-    /// Returns the clone-shared exact public parameter domain.
-    pub fn parameter_domain(self) -> &'a CurveParameterDomain2 {
-        self.curve.parameter_domain()
-    }
-
-    /// Returns the exact period when this curve is explicitly periodic.
-    pub fn period(self) -> Option<&'a Real> {
-        self.curve.period()
-    }
-
-    /// Returns whether this curve carries explicit periodic semantics.
-    pub fn is_periodic(self) -> bool {
-        self.curve.is_periodic()
-    }
-
-    /// Returns an owned curve with traversal direction reversed.
-    pub fn reversed(self, policy: &CurveContext) -> ExactCurveResult<CurveOutcome<Curve2>> {
-        self.curve.reversed(policy)
-    }
-
-    /// Applies an exact planar similarity without cloning the source carrier first.
-    pub fn transform_similarity(
-        self,
-        transform: &Similarity2,
-        policy: &CurveContext,
-    ) -> ExactCurveResult<CurveOutcome<Curve2>> {
-        self.curve.transform_similarity(transform, policy)
-    }
-
-    /// Splits this curve exactly at a strict interior public parameter.
-    #[inline(always)]
-    pub fn split_at(
-        self,
-        parameter: Real,
-        policy: &CurveContext,
-    ) -> ExactCurveResult<CurveOutcome<(Curve2, Curve2)>> {
-        self.curve.split_at(parameter, policy)
-    }
-
-    /// Returns the exact curve image over a strictly ordered public range.
-    #[inline(always)]
-    pub fn subcurve(
-        self,
-        start: Real,
-        end: Real,
-        policy: &CurveContext,
-    ) -> ExactCurveResult<CurveOutcome<Curve2>> {
-        self.curve.subcurve(start, end, policy)
-    }
-
-    /// Returns a finite exact subcurve in clamped topology-ingestion form.
-    #[inline(always)]
-    pub fn clamped_subcurve(
-        self,
-        start: Real,
-        end: Real,
-        policy: &CurveContext,
-    ) -> ExactCurveResult<CurveOutcome<Curve2>> {
-        self.curve.clamped_subcurve(start, end, policy)
-    }
-
-    /// Evaluates this borrowed curve without cloning its retained carrier.
-    pub fn point_at(
-        self,
-        parameter: &Real,
-        policy: &CurveContext,
-    ) -> ExactCurveResult<CurveOutcome<Point2>> {
-        self.curve.point_at(parameter, policy)
-    }
-
-    /// Evaluates an exact point with explicit spline-knot side policy.
-    pub fn point_at_side(
-        self,
-        parameter: &Real,
-        side: CurveParameterSide2,
-        policy: &CurveContext,
-    ) -> ExactCurveResult<CurveOutcome<Point2>> {
-        self.curve.point_at_side(parameter, side, policy)
-    }
-
-    /// Evaluates an explicitly periodic spline at any wrappable parameter.
-    pub fn point_at_wrapped(
-        self,
-        parameter: &Real,
-        policy: &CurveContext,
-    ) -> ExactCurveResult<CurveOutcome<Point2>> {
-        self.curve.point_at_wrapped(parameter, policy)
-    }
-
-    /// Evaluates a periodic spline with explicit side selection at wrapped seams.
-    pub fn point_at_wrapped_side(
-        self,
-        parameter: &Real,
-        side: CurveParameterSide2,
-        policy: &CurveContext,
-    ) -> ExactCurveResult<CurveOutcome<Point2>> {
-        self.curve.point_at_wrapped_side(parameter, side, policy)
-    }
-
-    /// Evaluates the exact first derivative without cloning the curve.
-    pub fn derivative_at(
-        self,
-        parameter: &Real,
-        policy: &CurveContext,
-    ) -> ExactCurveResult<CurveOutcome<CurveDerivative2>> {
-        self.curve.derivative_at(parameter, policy)
-    }
-
-    /// Evaluates an exact one-sided or certified two-sided first derivative.
-    pub fn derivative_at_side(
-        self,
-        parameter: &Real,
-        side: CurveParameterSide2,
-        policy: &CurveContext,
-    ) -> ExactCurveResult<CurveOutcome<CurveDerivative2>> {
-        self.curve.derivative_at_side(parameter, side, policy)
-    }
-
-    /// Evaluates the first periodic derivative at any wrappable parameter.
-    pub fn derivative_at_wrapped(
-        self,
-        parameter: &Real,
-        policy: &CurveContext,
-    ) -> ExactCurveResult<CurveOutcome<CurveDerivative2>> {
-        self.curve.derivative_at_wrapped(parameter, policy)
-    }
-
-    /// Evaluates the first periodic derivative with explicit seam-side selection.
-    pub fn derivative_at_wrapped_side(
-        self,
-        parameter: &Real,
-        side: CurveParameterSide2,
-        policy: &CurveContext,
-    ) -> ExactCurveResult<CurveOutcome<CurveDerivative2>> {
-        self.curve
-            .derivative_at_wrapped_side(parameter, side, policy)
-    }
-
-    /// Evaluates exact derivatives through `max_order` without cloning the curve.
-    pub fn derivatives_at(
-        self,
-        parameter: &Real,
-        max_order: usize,
-        policy: &CurveContext,
-    ) -> ExactCurveResult<CurveOutcome<Vec<CurveDerivative2>>> {
-        self.curve.derivatives_at(parameter, max_order, policy)
-    }
-
-    /// Evaluates exact derivatives with explicit retained-fragment side policy.
-    pub fn derivatives_at_side(
-        self,
-        parameter: &Real,
-        max_order: usize,
-        side: CurveParameterSide2,
-        policy: &CurveContext,
-    ) -> ExactCurveResult<CurveOutcome<Vec<CurveDerivative2>>> {
-        self.curve
-            .derivatives_at_side(parameter, max_order, side, policy)
-    }
-
-    /// Evaluates periodic derivatives through `max_order` at any wrappable parameter.
-    pub fn derivatives_at_wrapped(
-        self,
-        parameter: &Real,
-        max_order: usize,
-        policy: &CurveContext,
-    ) -> ExactCurveResult<CurveOutcome<Vec<CurveDerivative2>>> {
-        self.curve
-            .derivatives_at_wrapped(parameter, max_order, policy)
-    }
-
-    /// Evaluates periodic derivatives with explicit side selection at wrapped seams.
-    pub fn derivatives_at_wrapped_side(
-        self,
-        parameter: &Real,
-        max_order: usize,
-        side: CurveParameterSide2,
-        policy: &CurveContext,
-    ) -> ExactCurveResult<CurveOutcome<Vec<CurveDerivative2>>> {
-        self.curve
-            .derivatives_at_wrapped_side(parameter, max_order, side, policy)
-    }
-}
-
 impl CurvePath2 {
     fn from_connected_curves(
         curves: Vec<Curve2>,
@@ -1686,13 +1459,6 @@ impl CurvePath2 {
             strict_connectivity_certified,
             strict_closure_certified,
         ))
-    }
-
-    /// Returns a borrowed path view.
-    pub fn as_view(&self) -> CurvePathView2<'_> {
-        CurvePathView2 {
-            curves: &self.data.curves,
-        }
     }
 
     /// Returns curves in traversal order.
@@ -2560,80 +2326,6 @@ fn classify_native_arc_chord_path(
 impl PartialEq for CurvePath2 {
     fn eq(&self, other: &Self) -> bool {
         self.data.curves == other.data.curves
-    }
-}
-
-impl<'a> CurvePathView2<'a> {
-    /// Returns the borrowed owned-curve slice.
-    pub const fn curves(self) -> &'a [Curve2] {
-        self.curves
-    }
-
-    /// Iterates borrowed curve views without allocation.
-    pub fn iter(self) -> impl ExactSizeIterator<Item = CurveView2<'a>> {
-        self.curves.iter().map(Curve2::as_view)
-    }
-
-    /// Returns the exact path start point.
-    pub fn start(self) -> &'a Point2 {
-        self.curves[0].start()
-    }
-
-    /// Returns the exact path end point.
-    pub fn end(self) -> &'a Point2 {
-        self.curves
-            .last()
-            .expect("validated path view is nonempty")
-            .end()
-    }
-
-    /// Returns an owned path with traversal direction reversed.
-    pub fn reversed(self, policy: &CurveContext) -> ExactCurveResult<CurveOutcome<CurvePath2>> {
-        resolve_certified_operation(policy, |attempt| self.reversed_raw(attempt))
-    }
-
-    fn reversed_raw(self, policy: &CurveContext) -> ExactCurveResult<CurvePath2> {
-        let strict_closure_certified = self.end() == self.start();
-        let curves = self
-            .curves
-            .iter()
-            .rev()
-            .map(|curve| curve.reversed_raw(policy))
-            .collect::<ExactCurveResult<Vec<_>>>()?;
-        Ok(CurvePath2::from_connected_curves(
-            curves,
-            false,
-            strict_closure_certified,
-        ))
-    }
-
-    /// Applies an exact planar similarity to the borrowed connected path.
-    pub fn transform_similarity(
-        self,
-        transform: &Similarity2,
-        policy: &CurveContext,
-    ) -> ExactCurveResult<CurveOutcome<CurvePath2>> {
-        resolve_certified_operation(policy, |attempt| {
-            self.transform_similarity_raw(transform, attempt)
-        })
-    }
-
-    fn transform_similarity_raw(
-        self,
-        transform: &Similarity2,
-        policy: &CurveContext,
-    ) -> ExactCurveResult<CurvePath2> {
-        let strict_closure_certified = self.end() == self.start();
-        let curves = self
-            .curves
-            .iter()
-            .map(|curve| curve.transform_similarity_raw(transform, policy))
-            .collect::<ExactCurveResult<Vec<_>>>()?;
-        Ok(CurvePath2::from_connected_curves(
-            curves,
-            false,
-            strict_closure_certified,
-        ))
     }
 }
 

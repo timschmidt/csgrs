@@ -9048,6 +9048,24 @@ uniform performance, broader allocation coverage, finalized lower-stack
 integration and full Hypercurve release readiness remain open. No push or
 publication is performed.
 
+## 2026-09-12: direct borrowing for curves and paths
+
+Removed `CurveView2`, `CurvePathView2`, and their `as_view` constructors.
+Borrow `&Curve2` or `&CurvePath2` directly and iterate with
+`path.curves().iter()`. Earlier entries naming those types describe the APIs
+used for their historical measurements; the measurements remain unchanged.
+
+The curve view only forwarded borrowed operations. Its path counterpart
+duplicated reversal and similarity while discarding the source path's retained
+connectivity certificate. Direct borrowing uses the existing shared carrier,
+caches, and certificate-preserving path operations. All controlled callers
+were updated; no compatibility aliases remain.
+
+Validation: 107 release tests pass across `hypercurve_curve`,
+`hypercurve_nurbs`, `hypercurve_polynomial_spline`, and
+`hypercurve_derivative_completeness`, with `dispatch-trace` enabled. This is
+API and correctness qualification; no new throughput benchmark is claimed.
+
 ## Optimization boundary
 
 The retained x sweep addresses broad-phase pair scheduling only. A full

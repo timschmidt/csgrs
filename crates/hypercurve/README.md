@@ -25,7 +25,7 @@ This README describes crate version `0.3.1`.
 | `LineSeg2`, `CircularArc2`, `Segment2` | Native line/arc primitives and their common enum |
 | `QuadraticBezier2`, `CubicBezier2`, `RationalQuadraticBezier2`, `RationalBezier2` | Polynomial and rational Bézier carriers |
 | `PolynomialSplineCurve2`, `NurbsCurve2` | Validated B-spline and NURBS curves |
-| `Curve2`, `CurveView2` | Unified owned and borrowed curve carriers |
+| `Curve2` | Shared exact curve carrier with borrowed operations |
 | `CurveString2`, `CurvePath2`, `Contour2` | Connected open strings, general paths, and closed line/arc contours |
 | `CurveRegion2` | Native mixed-family filled planar region |
 | `CurveContext`, `CurvePreviewOptions`, `Classification<T>` | One-byte predicate context, explicit lossy preview adapter, and decided/uncertain result |
@@ -189,7 +189,8 @@ exact signatures.
   algebraic/shared-boundary blockers explicit; the parameter-retaining form
   also reports each fragment's promoted span and top-level public parameter
   range.
-  `CurveView2` supplies the borrowed equivalents.
+  These operations borrow `&Curve2` directly and reuse its retained calculations.
+  Borrow paths as `&CurvePath2`; iterate their curves with `path.curves().iter()`.
 
 ### Strings, paths, contours, and regions
 
