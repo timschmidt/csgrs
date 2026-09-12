@@ -41,6 +41,7 @@ mod curve_path_intersection;
 mod curve_region_boolean;
 mod curve_region_trim;
 mod curve_string;
+mod direction;
 mod error;
 mod events;
 mod facts;

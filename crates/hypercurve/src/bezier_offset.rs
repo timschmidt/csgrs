@@ -70529,6 +70529,30 @@ impl BezierAlgebraicChord2 {
         )
     }
 
+    /// Represents an already-certified unit direction in the shared chord
+    /// normal frame. The origin is immaterial: a frame keeps its center
+    /// separately. Retain unit length so metric queries need no new norm.
+    pub(crate) fn from_unit_direction(
+        direction: &crate::direction::UnitDirection2,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<Self>> {
+        let (x, y) = direction.components();
+        let mut chord = match Self::try_new_from_certified_distinct_endpoints(
+            Point2::from_values(0, 0).into(),
+            Point2::new(x.clone(), y.clone()).into(),
+            policy,
+        )? {
+            Classification::Decided(chord) => chord,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        Arc::get_mut(&mut chord.data)
+            .expect("a newly constructed direction chord has unique ownership")
+            .certified_unit_tangent = Some(Arc::new([x.clone(), y.clone()]));
+        Ok(Classification::Decided(chord))
+    }
+
     fn try_new_with_endpoint_equality(
         start: RationalBezierIntersectionPointEvidence2,
         end: RationalBezierIntersectionPointEvidence2,
@@ -89231,35 +89255,6 @@ impl BezierAlgebraicChordParallelPoint2 {
                 Classification::Uncertain(UncertaintyReason::Predicate)
             }
         })
-    }
-
-    /// Returns this source endpoint in one endpoint field of the retained
-    /// chord. An exact endpoint is embedded as a constant in its algebraic
-    /// peer's existing field; no new root or primitive element is allocated.
-    pub(crate) fn algebraic_source_endpoint_evidence(
-        &self,
-        policy: &CurveContext,
-    ) -> CurveResult<Classification<RationalBezierIntersectionPointEvidence2>> {
-        if self.data.source_point.is_some() {
-            return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
-        }
-        let endpoints = match algebraic_chord_endpoint_images(
-            self.data.source.start(),
-            self.data.source.end(),
-            policy,
-        )? {
-            Classification::Decided(endpoints) => endpoints,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
-        Ok(Classification::Decided(
-            RationalBezierIntersectionPointEvidence2::Algebraic(if self.at_end {
-                endpoints[1].clone()
-            } else {
-                endpoints[0].clone()
-            }),
-        ))
     }
 
     pub(crate) fn shares_storage(&self, other: &Self) -> bool {

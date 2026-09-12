@@ -4037,7 +4037,9 @@ struct ExactOffsetSpan2 {
 }
 
 enum ExactOffsetTangent2 {
-    Vector((Real, Real)),
+    /// Represented traversal direction. Its magnitude is arbitrary; metric
+    /// constructions must request a certified unit direction explicitly.
+    RepresentedDirection((Real, Real)),
     /// Traversal tangent of an analytic parallel at an algebraic parameter.
     /// `source_direction` is the nonzero orientation relative to the
     /// parallel source's homogeneous tangent numerator.
@@ -4285,7 +4287,7 @@ fn exact_circular_algebraic_endpoint_tangent(
             .derivative_at_classified(parameter, policy)
             .map(|derivative| {
                 let tangent = (derivative.dx().clone(), derivative.dy().clone());
-                Some(ExactOffsetTangent2::Vector(if reversed {
+                Some(ExactOffsetTangent2::RepresentedDirection(if reversed {
                     (-tangent.0, -tangent.1)
                 } else {
                     tangent
@@ -4620,9 +4622,10 @@ fn exact_offset_spans_from_source_singular_parallel(
                 return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
             };
             let tangent = match parallel.derivative_at(parameter, policy)? {
-                Classification::Decided(derivative) => {
-                    ExactOffsetTangent2::Vector((derivative.dx().clone(), derivative.dy().clone()))
-                }
+                Classification::Decided(derivative) => ExactOffsetTangent2::RepresentedDirection((
+                    derivative.dx().clone(),
+                    derivative.dy().clone(),
+                )),
                 Classification::Uncertain(reason) => {
                     return Ok(Classification::Uncertain(reason));
                 }
@@ -4866,8 +4869,8 @@ fn exact_offset_spans_from_materialized_curve(
         source_end: curve.end().clone().into(),
         offset_start: offset_start.into(),
         offset_end: offset_end.into(),
-        start_tangent: Some(ExactOffsetTangent2::Vector(start_tangent)),
-        end_tangent: Some(ExactOffsetTangent2::Vector(end_tangent)),
+        start_tangent: Some(ExactOffsetTangent2::RepresentedDirection(start_tangent)),
+        end_tangent: Some(ExactOffsetTangent2::RepresentedDirection(end_tangent)),
     }]))
 }
 
@@ -5034,7 +5037,7 @@ fn exact_offset_algebraic_cusp_semicircle_tangent(
                     fragment: offset.clone(),
                     at_start,
                 },
-                ExactOffsetTangent2::Vector,
+                ExactOffsetTangent2::RepresentedDirection,
             ))
         });
     #[cfg(feature = "dispatch-trace")]
@@ -6350,8 +6353,8 @@ fn exact_offset_span_from_native_segment(
         source_end: source.end().clone().into(),
         offset_start: offset.start().clone().into(),
         offset_end: offset.end().clone().into(),
-        start_tangent: Some(ExactOffsetTangent2::Vector(start_tangent)),
-        end_tangent: Some(ExactOffsetTangent2::Vector(end_tangent)),
+        start_tangent: Some(ExactOffsetTangent2::RepresentedDirection(start_tangent)),
+        end_tangent: Some(ExactOffsetTangent2::RepresentedDirection(end_tangent)),
     }))
 }
 
@@ -6647,35 +6650,42 @@ fn append_exact_offset_join(
             "hypercurve",
             "curve-region-exact-offset-inner-join-tangents",
             match (previous_tangent, next_tangent) {
-                (ExactOffsetTangent2::Vector(_), ExactOffsetTangent2::Vector(_)) => "vector-vector",
-                (ExactOffsetTangent2::Vector(_), ExactOffsetTangent2::ChordContact { .. }) => {
-                    "vector-chord-contact"
-                }
-                (ExactOffsetTangent2::ChordContact { .. }, ExactOffsetTangent2::Vector(_)) => {
-                    "chord-contact-vector"
-                }
+                (
+                    ExactOffsetTangent2::RepresentedDirection(_),
+                    ExactOffsetTangent2::RepresentedDirection(_),
+                ) => "vector-vector",
+                (
+                    ExactOffsetTangent2::RepresentedDirection(_),
+                    ExactOffsetTangent2::ChordContact { .. },
+                ) => "vector-chord-contact",
+                (
+                    ExactOffsetTangent2::ChordContact { .. },
+                    ExactOffsetTangent2::RepresentedDirection(_),
+                ) => "chord-contact-vector",
                 (
                     ExactOffsetTangent2::SelectedCircularEndpoint { .. },
                     ExactOffsetTangent2::SelectedCircularEndpoint { .. },
                 ) => "selected-circle-selected-circle",
                 (
                     ExactOffsetTangent2::SelectedCircularEndpoint { .. },
-                    ExactOffsetTangent2::Vector(_),
+                    ExactOffsetTangent2::RepresentedDirection(_),
                 ) => "selected-circle-vector",
                 (
-                    ExactOffsetTangent2::Vector(_),
+                    ExactOffsetTangent2::RepresentedDirection(_),
                     ExactOffsetTangent2::SelectedCircularEndpoint { .. },
                 ) => "vector-selected-circle",
                 (
                     ExactOffsetTangent2::AlgebraicChord(_),
                     ExactOffsetTangent2::AlgebraicChord(_),
                 ) => "algebraic-chord-algebraic-chord",
-                (ExactOffsetTangent2::AlgebraicChord(_), ExactOffsetTangent2::Vector(_)) => {
-                    "algebraic-chord-vector"
-                }
-                (ExactOffsetTangent2::Vector(_), ExactOffsetTangent2::AlgebraicChord(_)) => {
-                    "vector-algebraic-chord"
-                }
+                (
+                    ExactOffsetTangent2::AlgebraicChord(_),
+                    ExactOffsetTangent2::RepresentedDirection(_),
+                ) => "algebraic-chord-vector",
+                (
+                    ExactOffsetTangent2::RepresentedDirection(_),
+                    ExactOffsetTangent2::AlgebraicChord(_),
+                ) => "vector-algebraic-chord",
                 _ => "other-retained-pair",
             },
         );
@@ -7640,48 +7650,50 @@ fn append_exact_round_join(
         }
     }
 
-    if sweep_kind == crate::arc_bezier::ArcSweepKind::Minor {
-        if let (
-            Some(ExactOffsetTangent2::Vector(anchor_tangent)),
-            Some(ExactOffsetTangent2::AlgebraicChord(chord)),
-            RationalBezierIntersectionPointEvidence2::AlgebraicChordParallel(point),
-        ) = (
-            previous.end_tangent.as_ref(),
-            next.start_tangent.as_ref(),
-            &next.offset_start,
-        ) {
-            return append_selected_chord_normal_round_join(
+    if matches!(
+        sweep_kind,
+        crate::arc_bezier::ArcSweepKind::Minor | crate::arc_bezier::ArcSweepKind::Semicircle
+    ) {
+        let normal_join = match (previous.end_tangent.as_ref(), next.start_tangent.as_ref()) {
+            (
+                Some(ExactOffsetTangent2::RepresentedDirection(direction)),
+                Some(ExactOffsetTangent2::AlgebraicChord(chord)),
+            ) => Some((direction, chord, false)),
+            (
+                Some(ExactOffsetTangent2::AlgebraicChord(chord)),
+                Some(ExactOffsetTangent2::RepresentedDirection(direction)),
+            ) => Some((direction, chord, true)),
+            _ => None,
+        };
+        if let Some((direction, chord, reversed)) = normal_join {
+            let unit_direction = match crate::direction::UnitDirection2::from_direction(direction)?
+            {
+                Classification::Decided(direction) => direction,
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            };
+            let represented =
+                match crate::BezierAlgebraicChord2::from_unit_direction(&unit_direction, policy)? {
+                    Classification::Decided(chord) => chord,
+                    Classification::Uncertain(reason) => {
+                        return Ok(Classification::Uncertain(reason));
+                    }
+                };
+            let (previous_direction, next_direction) = if reversed {
+                (chord, &represented)
+            } else {
+                (&represented, chord)
+            };
+            return append_selected_chord_pair_round_join(
                 fragments,
                 previous,
                 next,
                 distance,
                 clockwise,
-                anchor_tangent,
-                chord,
-                point,
-                false,
-                policy,
-            );
-        }
-        if let (
-            Some(ExactOffsetTangent2::AlgebraicChord(chord)),
-            Some(ExactOffsetTangent2::Vector(anchor_tangent)),
-            RationalBezierIntersectionPointEvidence2::AlgebraicChordParallel(point),
-        ) = (
-            previous.end_tangent.as_ref(),
-            next.start_tangent.as_ref(),
-            &previous.offset_end,
-        ) {
-            return append_selected_chord_normal_round_join(
-                fragments,
-                previous,
-                next,
-                distance,
-                clockwise,
-                anchor_tangent,
-                chord,
-                point,
-                true,
+                sweep_kind,
+                previous_direction,
+                next_direction,
                 policy,
             );
         }
@@ -7694,7 +7706,7 @@ fn append_exact_round_join(
     if matches!(
         sweep_kind,
         crate::arc_bezier::ArcSweepKind::Minor | crate::arc_bezier::ArcSweepKind::Semicircle
-    ) && let Some(ExactOffsetTangent2::Vector((tangent_x, tangent_y))) =
+    ) && let Some(ExactOffsetTangent2::RepresentedDirection((tangent_x, tangent_y))) =
         previous.end_tangent.as_ref()
     {
         let unit_residual = tangent_x * tangent_x + tangent_y * tangent_y - Real::one();
@@ -7713,7 +7725,7 @@ fn append_exact_round_join(
                 }
             };
             let quadrant_minor = match next.start_tangent.as_ref() {
-                Some(ExactOffsetTangent2::Vector((next_x, next_y))) => {
+                Some(ExactOffsetTangent2::RepresentedDirection((next_x, next_y))) => {
                     is_zero(
                         &(tangent_x * next_x + tangent_y * next_y),
                         &CurveContext::STRICT,
@@ -8099,85 +8111,6 @@ fn append_selected_chord_pair_round_join(
     Ok(Classification::Decided(()))
 }
 
-#[allow(clippy::too_many_arguments)]
-fn append_selected_chord_normal_round_join(
-    fragments: &mut Vec<BezierSplitFragment2>,
-    previous: &ExactOffsetSpan2,
-    next: &ExactOffsetSpan2,
-    distance: &Real,
-    clockwise: bool,
-    anchor_tangent: &(Real, Real),
-    chord: &crate::BezierAlgebraicChord2,
-    point: &crate::BezierAlgebraicChordParallelPoint2,
-    reversed: bool,
-    policy: &CurveContext,
-) -> CurveResult<Classification<()>> {
-    let unit_residual =
-        &anchor_tangent.0 * &anchor_tangent.0 + &anchor_tangent.1 * &anchor_tangent.1 - Real::one();
-    if unit_residual.zero_status() != hyperreal::ZeroKnowledge::Zero {
-        return Ok(Classification::Uncertain(UncertaintyReason::Predicate));
-    }
-    let retained_center = if previous.source_end.as_exact().is_some() {
-        match point.algebraic_source_endpoint_evidence(policy)? {
-            Classification::Decided(center) => center,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        }
-    } else {
-        previous.source_end.clone()
-    };
-    let semicircle = match crate::bezier_offset::BezierAlgebraicCuspSemicircle2::from_retained_center_and_certified_unit_normal(
-        &retained_center,
-        (-anchor_tangent.1.clone(), anchor_tangent.0.clone()),
-        distance.clone(),
-        clockwise ^ reversed,
-        policy,
-    )? {
-        Classification::Decided(Some(semicircle)) => semicircle,
-        Classification::Decided(None) => return Ok(Classification::Decided(())),
-        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-    };
-    let end = match semicircle.certified_chord_normal_contact_parameter(
-        crate::bezier_offset::BezierSelectedChordNormalAnchor2::Represented(anchor_tangent.clone()),
-        chord.clone(),
-        RationalBezierIntersectionPointEvidence2::AlgebraicChordParallel(point.clone()),
-        distance.clone(),
-        false,
-        policy,
-    )? {
-        Classification::Decided(parameter) => parameter,
-        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-    };
-    let fragment = match crate::BezierAlgebraicCuspSemicircleFragment2::try_new(
-        semicircle,
-        crate::bezier_offset::BezierAlgebraicCuspSemicircleParameter2::Exact(Real::zero()),
-        end,
-        reversed,
-        policy,
-    )? {
-        Classification::Decided(fragment) => fragment,
-        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-    };
-    for (at_start, expected) in [(true, &previous.offset_end), (false, &next.offset_start)] {
-        match fragment.certify_and_cache_authored_endpoint(at_start, expected, policy)? {
-            Classification::Decided(true) => {}
-            Classification::Decided(false) => {
-                return Err(CurveError::Topology(
-                    "retained selected chord-normal join missed its certified endpoint".into(),
-                ));
-            }
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        }
-    }
-    fragments.push(BezierSplitFragment2::AlgebraicCuspSemicircle(
-        fragment.with_certified_tangent_endpoints(),
-    ));
-    Ok(Classification::Decided(()))
-}
-
 fn append_exact_line_join_with_parallel_tangencies(
     fragments: &mut Vec<BezierSplitFragment2>,
     from: &Point2,
@@ -8219,8 +8152,8 @@ fn append_exact_miter_join(
     let represented_vector_frame = matches!(
         (&previous.end_tangent, &next.start_tangent),
         (
-            Some(ExactOffsetTangent2::Vector(_)),
-            Some(ExactOffsetTangent2::Vector(_))
+            Some(ExactOffsetTangent2::RepresentedDirection(_)),
+            Some(ExactOffsetTangent2::RepresentedDirection(_))
         )
     ) && previous.offset_end.as_exact().is_some()
         && next.offset_start.as_exact().is_some()
@@ -8252,8 +8185,8 @@ fn append_exact_miter_join(
         "represented-vector-fallback",
     );
     let (
-        Some(ExactOffsetTangent2::Vector(previous_tangent)),
-        Some(ExactOffsetTangent2::Vector(next_tangent)),
+        Some(ExactOffsetTangent2::RepresentedDirection(previous_tangent)),
+        Some(ExactOffsetTangent2::RepresentedDirection(next_tangent)),
     ) = (&previous.end_tangent, &next.start_tangent)
     else {
         #[cfg(feature = "dispatch-trace")]
@@ -8384,7 +8317,7 @@ fn exact_offset_retained_tangent_support(
     policy: &CurveContext,
 ) -> Option<CurveResult<Classification<crate::BezierAlgebraicChord2>>> {
     match tangent {
-        ExactOffsetTangent2::Vector(vector) => Some((|| {
+        ExactOffsetTangent2::RepresentedDirection(vector) => Some((|| {
             let displaced = match crate::BezierAlgebraicChord2::translated_endpoint(
                 endpoint, &vector.0, &vector.1, policy,
             )? {
@@ -8648,8 +8581,8 @@ fn append_retained_support_miter_join(
                 Classification::Decided(within_limit) => Classification::Decided(within_limit),
                 Classification::Uncertain(_) => {
                     if let (
-                        Some(ExactOffsetTangent2::Vector(previous_tangent)),
-                        Some(ExactOffsetTangent2::Vector(next_tangent)),
+                        Some(ExactOffsetTangent2::RepresentedDirection(previous_tangent)),
+                        Some(ExactOffsetTangent2::RepresentedDirection(next_tangent)),
                     ) = (&previous.end_tangent, &next.start_tangent)
                     {
                         // For unit traversal tangents u and v, the squared distance
@@ -9395,7 +9328,10 @@ fn exact_offset_tangent_cross_sign(
     policy: &CurveContext,
 ) -> Classification<RealSign> {
     match (first, second) {
-        (ExactOffsetTangent2::Vector(first), ExactOffsetTangent2::Vector(second)) => {
+        (
+            ExactOffsetTangent2::RepresentedDirection(first),
+            ExactOffsetTangent2::RepresentedDirection(second),
+        ) => {
             #[cfg(feature = "dispatch-trace")]
             hyperreal::dispatch_trace::record(
                 "hypercurve",
@@ -9414,7 +9350,7 @@ fn exact_offset_tangent_cross_sign(
                 source_direction,
                 ..
             },
-            ExactOffsetTangent2::Vector(vector),
+            ExactOffsetTangent2::RepresentedDirection(vector),
         ) => exact_retained_parallel_tangent_cross_and_dot_vector(
             parallel,
             parameter,
@@ -9424,7 +9360,7 @@ fn exact_offset_tangent_cross_sign(
         )
         .map(|(cross, _)| cross),
         (
-            ExactOffsetTangent2::Vector(vector),
+            ExactOffsetTangent2::RepresentedDirection(vector),
             ExactOffsetTangent2::RetainedParallel {
                 parallel,
                 parameter,
@@ -9516,28 +9452,30 @@ fn exact_offset_tangent_cross_sign(
             policy,
         )
         .map(exact_sign_reverse),
-        (ExactOffsetTangent2::AlgebraicChord(first), ExactOffsetTangent2::Vector(second)) => {
-            match first.tangent_cross_vector_sign(second, policy) {
-                Ok(sign) => sign,
-                Err(_) => Classification::Uncertain(UncertaintyReason::Unsupported),
-            }
-        }
-        (ExactOffsetTangent2::Vector(first), ExactOffsetTangent2::AlgebraicChord(second)) => {
-            match second.tangent_cross_vector_sign(first, policy) {
-                Ok(sign) => sign.map(exact_sign_reverse),
-                Err(_) => Classification::Uncertain(UncertaintyReason::Unsupported),
-            }
-        }
+        (
+            ExactOffsetTangent2::AlgebraicChord(first),
+            ExactOffsetTangent2::RepresentedDirection(second),
+        ) => match first.tangent_cross_vector_sign(second, policy) {
+            Ok(sign) => sign,
+            Err(_) => Classification::Uncertain(UncertaintyReason::Unsupported),
+        },
+        (
+            ExactOffsetTangent2::RepresentedDirection(first),
+            ExactOffsetTangent2::AlgebraicChord(second),
+        ) => match second.tangent_cross_vector_sign(first, policy) {
+            Ok(sign) => sign.map(exact_sign_reverse),
+            Err(_) => Classification::Uncertain(UncertaintyReason::Unsupported),
+        },
         (
             ExactOffsetTangent2::CircularPoint {
                 point,
                 circle,
                 clockwise,
             },
-            ExactOffsetTangent2::Vector(second),
+            ExactOffsetTangent2::RepresentedDirection(second),
         ) => exact_circular_tangent_cross_vector(point, circle, *clockwise, second, policy),
         (
-            ExactOffsetTangent2::Vector(first),
+            ExactOffsetTangent2::RepresentedDirection(first),
             ExactOffsetTangent2::CircularPoint {
                 point,
                 circle,
@@ -9576,7 +9514,7 @@ fn exact_offset_tangent_cross_sign(
             ExactOffsetTangent2::SelectedCircularEndpoint {
                 fragment, at_start, ..
             },
-            ExactOffsetTangent2::Vector(second),
+            ExactOffsetTangent2::RepresentedDirection(second),
         ) => {
             #[cfg(feature = "dispatch-trace")]
             hyperreal::dispatch_trace::record(
@@ -9590,7 +9528,7 @@ fn exact_offset_tangent_cross_sign(
             }
         }
         (
-            ExactOffsetTangent2::Vector(first),
+            ExactOffsetTangent2::RepresentedDirection(first),
             ExactOffsetTangent2::SelectedCircularEndpoint {
                 fragment, at_start, ..
             },
@@ -9680,7 +9618,7 @@ fn exact_offset_tangent_cross_sign(
                 circle_cross_chord,
                 ..
             },
-            ExactOffsetTangent2::Vector(second),
+            ExactOffsetTangent2::RepresentedDirection(second),
         ) => {
             #[cfg(feature = "dispatch-trace")]
             hyperreal::dispatch_trace::record(
@@ -9698,7 +9636,7 @@ fn exact_offset_tangent_cross_sign(
             }
         }
         (
-            ExactOffsetTangent2::Vector(first),
+            ExactOffsetTangent2::RepresentedDirection(first),
             ExactOffsetTangent2::ChordContact {
                 fragment,
                 at_start,
@@ -9961,7 +9899,10 @@ fn exact_offset_tangents_are_opposite(
         Classification::Uncertain(reason) => return Classification::Uncertain(reason),
     }
     match (first, second) {
-        (ExactOffsetTangent2::Vector(first), ExactOffsetTangent2::Vector(second)) => {
+        (
+            ExactOffsetTangent2::RepresentedDirection(first),
+            ExactOffsetTangent2::RepresentedDirection(second),
+        ) => {
             if offset_vectors_are_structurally_opposite(first, second) {
                 return Classification::Decided(true);
             }
@@ -9980,10 +9921,10 @@ fn exact_offset_tangents_are_opposite(
                 source_direction,
                 ..
             },
-            ExactOffsetTangent2::Vector(vector),
+            ExactOffsetTangent2::RepresentedDirection(vector),
         )
         | (
-            ExactOffsetTangent2::Vector(vector),
+            ExactOffsetTangent2::RepresentedDirection(vector),
             ExactOffsetTangent2::RetainedParallel {
                 parallel,
                 parameter,
@@ -10077,18 +10018,22 @@ fn exact_offset_tangents_are_opposite(
             }
             Classification::Uncertain(reason) => Classification::Uncertain(reason),
         },
-        (ExactOffsetTangent2::AlgebraicChord(chord), ExactOffsetTangent2::Vector(vector))
-        | (ExactOffsetTangent2::Vector(vector), ExactOffsetTangent2::AlgebraicChord(chord)) => {
-            match chord.tangent_dot_vector_sign(vector, policy) {
-                Ok(Classification::Decided(RealSign::Negative)) => Classification::Decided(true),
-                Ok(Classification::Decided(RealSign::Positive)) => Classification::Decided(false),
-                Ok(Classification::Decided(RealSign::Zero)) => {
-                    Classification::Uncertain(UncertaintyReason::Boundary)
-                }
-                Ok(Classification::Uncertain(reason)) => Classification::Uncertain(reason),
-                Err(_) => Classification::Uncertain(UncertaintyReason::Unsupported),
+        (
+            ExactOffsetTangent2::AlgebraicChord(chord),
+            ExactOffsetTangent2::RepresentedDirection(vector),
+        )
+        | (
+            ExactOffsetTangent2::RepresentedDirection(vector),
+            ExactOffsetTangent2::AlgebraicChord(chord),
+        ) => match chord.tangent_dot_vector_sign(vector, policy) {
+            Ok(Classification::Decided(RealSign::Negative)) => Classification::Decided(true),
+            Ok(Classification::Decided(RealSign::Positive)) => Classification::Decided(false),
+            Ok(Classification::Decided(RealSign::Zero)) => {
+                Classification::Uncertain(UncertaintyReason::Boundary)
             }
-        }
+            Ok(Classification::Uncertain(reason)) => Classification::Uncertain(reason),
+            Err(_) => Classification::Uncertain(UncertaintyReason::Unsupported),
+        },
         (
             ExactOffsetTangent2::SelectedCircularEndpoint {
                 source_fragment: first_source,
@@ -10187,10 +10132,10 @@ fn exact_offset_tangents_are_opposite(
             ExactOffsetTangent2::SelectedCircularEndpoint {
                 fragment, at_start, ..
             },
-            ExactOffsetTangent2::Vector(vector),
+            ExactOffsetTangent2::RepresentedDirection(vector),
         )
         | (
-            ExactOffsetTangent2::Vector(vector),
+            ExactOffsetTangent2::RepresentedDirection(vector),
             ExactOffsetTangent2::SelectedCircularEndpoint {
                 fragment, at_start, ..
             },
@@ -10274,10 +10219,10 @@ fn exact_offset_tangents_are_opposite(
                 circle_dot_chord: Some(circle_dot_chord),
                 ..
             },
-            ExactOffsetTangent2::Vector(candidate),
+            ExactOffsetTangent2::RepresentedDirection(candidate),
         )
         | (
-            ExactOffsetTangent2::Vector(candidate),
+            ExactOffsetTangent2::RepresentedDirection(candidate),
             ExactOffsetTangent2::ChordContact {
                 chord,
                 circle_dot_chord: Some(circle_dot_chord),
@@ -10338,8 +10283,14 @@ fn exact_offset_tangents_are_opposite(
         | (_, ExactOffsetTangent2::CircularPoint { .. }) => {
             Classification::Uncertain(UncertaintyReason::Unsupported)
         }
-        (ExactOffsetTangent2::ChordContact { .. }, ExactOffsetTangent2::Vector(_))
-        | (ExactOffsetTangent2::Vector(_), ExactOffsetTangent2::ChordContact { .. })
+        (
+            ExactOffsetTangent2::ChordContact { .. },
+            ExactOffsetTangent2::RepresentedDirection(_),
+        )
+        | (
+            ExactOffsetTangent2::RepresentedDirection(_),
+            ExactOffsetTangent2::ChordContact { .. },
+        )
         | (ExactOffsetTangent2::ChordContact { .. }, ExactOffsetTangent2::AlgebraicChord(_))
         | (ExactOffsetTangent2::AlgebraicChord(_), ExactOffsetTangent2::ChordContact { .. })
         | (ExactOffsetTangent2::RetainedParallel { .. }, _)
