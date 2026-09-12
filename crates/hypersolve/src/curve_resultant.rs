@@ -1917,8 +1917,10 @@ pub fn resultant_bivariate_polynomial_system(
     // substantially cheaper to eliminate as one polynomial determinant than
     // as `degree_bound + 1` independent exact determinants followed by dense
     // interpolation. Equal eliminated degrees use the half-size Bezout matrix;
-    // other small systems retain sparse Sylvester rows. Both subset programs
-    // are division-free and have bounded `O(n 2^n)` state. Keep the sampled
+    // other small systems retain sparse Sylvester rows. Fraction-free
+    // polynomial elimination keeps intermediate degrees at minor size and
+    // uses quadratic matrix storage instead of exponential subset state.
+    // Keep the sampled
     // report contract by evaluating the constructed determinant at the same
     // degree-preserving parameter schedule used by the generic path.
     let sylvester_dimension = first_eliminated_degree + second_eliminated_degree;
@@ -2164,70 +2166,55 @@ fn determinant_polynomial_matrix(matrix: &[Vec<Real>], dimension: usize) -> Opti
     if matrix.len() != dimension.checked_mul(dimension)? {
         return None;
     }
-    let state_count = 1_usize.checked_shl(u32::try_from(dimension).ok()?)?;
-    let mut partials = vec![None; state_count];
-    partials[0] = Some(vec![Real::one()]);
-    for mask in 0..state_count {
-        let row = usize::try_from(mask.count_ones()).ok()?;
-        if row == dimension {
-            continue;
-        }
-        let Some(mut partial) = partials[mask].take() else {
-            continue;
-        };
-        trim_exact_polynomial_in_place(&mut partial);
-        if exact_polynomial_is_zero(&partial) {
-            continue;
-        }
-        for column in 0..dimension {
-            let column_bit = 1_usize.checked_shl(u32::try_from(column).ok()?)?;
-            if mask & column_bit != 0 {
-                continue;
-            }
-            let entry = &matrix[row * dimension + column];
-            if entry.is_empty() || exact_polynomial_is_zero(entry) {
-                continue;
-            }
-            let sign_is_negative = (mask >> (column + 1)).count_ones() % 2 != 0;
-            add_signed_polynomial_product(
-                partials[mask | column_bit].get_or_insert_with(Vec::new),
-                &partial,
-                entry,
-                sign_is_negative,
-            );
-        }
+    if dimension == 0 {
+        return Some(vec![Real::one()]);
     }
-    let mut determinant = partials.pop().flatten()?;
+    let mut matrix = matrix.to_vec();
+    matrix.iter_mut().for_each(trim_exact_polynomial_in_place);
+    let mut previous_pivot = vec![Real::one()];
+    let mut negate = false;
+    for pivot in 0..dimension - 1 {
+        let pivot_row = (pivot..dimension)
+            .filter(|row| !exact_polynomial_is_zero(&matrix[row * dimension + pivot]))
+            .min_by_key(|row| matrix[row * dimension + pivot].len());
+        let Some(pivot_row) = pivot_row else {
+            return Some(vec![Real::zero()]);
+        };
+        if pivot_row != pivot {
+            for column in 0..dimension {
+                matrix.swap(pivot * dimension + column, pivot_row * dimension + column);
+            }
+            negate = !negate;
+        }
+        let pivot_value = matrix[pivot * dimension + pivot].clone();
+        for row in pivot + 1..dimension {
+            for column in pivot + 1..dimension {
+                let numerator = subtract_exact_polynomials(
+                    &multiply_exact_polynomials(&pivot_value, &matrix[row * dimension + column]),
+                    &multiply_exact_polynomials(
+                        &matrix[row * dimension + pivot],
+                        &matrix[pivot * dimension + column],
+                    ),
+                );
+                // Sylvester's determinant identity makes this an exact
+                // polynomial quotient, including through row permutations.
+                // Checking its remainder preserves the general fallback if
+                // an arithmetic precondition cannot be certified.
+                matrix[row * dimension + column] =
+                    divide_polynomial_exact(numerator, &previous_pivot)?;
+            }
+            matrix[row * dimension + pivot] = vec![Real::zero()];
+        }
+        previous_pivot = pivot_value;
+    }
+    let mut determinant = matrix.pop()?;
+    if negate {
+        determinant
+            .iter_mut()
+            .for_each(|value| *value = -value.clone());
+    }
     trim_exact_polynomial_in_place(&mut determinant);
     Some(determinant)
-}
-
-fn add_signed_polynomial_product(
-    target: &mut Vec<Real>,
-    first: &[Real],
-    second: &[Real],
-    subtract: bool,
-) {
-    let required = first.len() + second.len() - 1;
-    if target.len() < required {
-        target.resize_with(required, Real::zero);
-    }
-    for (first_power, first_coefficient) in first.iter().enumerate() {
-        if exact_real_is_zero(first_coefficient) {
-            continue;
-        }
-        for (second_power, second_coefficient) in second.iter().enumerate() {
-            if exact_real_is_zero(second_coefficient) {
-                continue;
-            }
-            let term = first_coefficient * second_coefficient;
-            if subtract {
-                target[first_power + second_power] -= term;
-            } else {
-                target[first_power + second_power] += term;
-            }
-        }
-    }
 }
 
 fn trim_exact_polynomial_in_place(polynomial: &mut Vec<Real>) {
@@ -6896,7 +6883,74 @@ mod tests {
         assert_eq!(evaluated, real(34));
     }
 
+    #[test]
+    fn polynomial_determinant_preserves_singular_and_swapped_pivots() {
+        assert_eq!(determinant_polynomial_matrix(&[], 0), Some(vec![real(1)]));
+        assert_eq!(determinant_polynomial_matrix(&[], 1), None);
+        let matrix = vec![
+            vec![real(0)],
+            vec![real(1), real(1)],
+            vec![real(2)],
+            vec![real(0), real(1)],
+            vec![real(3)],
+            vec![real(0)],
+            vec![real(2)],
+            vec![real(0)],
+            vec![real(0), real(1)],
+        ];
+        assert_eq!(
+            determinant_polynomial_matrix(&matrix, 3),
+            Some(vec![real(-12), real(0), real(-1), real(-1)])
+        );
+        let mut singular = matrix;
+        for column in 0..3 {
+            singular[6 + column] = singular[column].clone();
+        }
+        assert_eq!(
+            determinant_polynomial_matrix(&singular, 3),
+            Some(vec![real(0)])
+        );
+    }
+
     proptest! {
+        #[test]
+        fn generated_polynomial_determinant_matches_scalar_permutation_expansion(
+            coefficients in prop::collection::vec(-3_i8..=3, 48),
+        ) {
+            let matrix = coefficients.chunks(3)
+                .map(|entry| entry.iter().map(|value| real(i64::from(*value))).collect())
+                .collect::<Vec<Vec<Real>>>();
+            let determinant = determinant_polynomial_matrix(&matrix, 4)
+                .expect("a rational polynomial matrix admits exact fraction-free elimination");
+            // Both determinants have degree at most eight. Nine independent
+            // scalar evaluations certify equality as polynomials, including
+            // values where the polynomial elimination's pivots vanish.
+            for sample in -4..=4 {
+                let parameter = real(sample);
+                let entries = matrix.iter().map(|entry| Real::eval_poly(entry, &parameter))
+                    .collect::<Vec<_>>();
+                let mut expected = Real::zero();
+                for a in 0..4 {
+                    for b in 0..4 {
+                        for c in 0..4 {
+                            for d in 0..4 {
+                                let columns = [a, b, c, d];
+                                if (0..4).any(|i| (i + 1..4).any(|j| columns[i] == columns[j])) {
+                                    continue;
+                                }
+                                let inversions = (0..4).map(|i| (i + 1..4)
+                                    .filter(|j| columns[i] > columns[*j]).count()).sum::<usize>();
+                                let term = &entries[a] * &entries[4 + b]
+                                    * &entries[8 + c] * &entries[12 + d];
+                                if inversions % 2 == 0 { expected += term; } else { expected -= term; }
+                            }
+                        }
+                    }
+                }
+                prop_assert_eq!(Real::eval_poly(&determinant, &parameter), expected);
+            }
+        }
+
         #[test]
         fn generated_exact_bivariate_division_replays_ragged_products(
             divisor_coefficients in prop::collection::vec(-3_i8..=3, 1..=9),
