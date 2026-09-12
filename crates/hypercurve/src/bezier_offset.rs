@@ -60397,6 +60397,8 @@ impl BezierRecursiveProjectiveChordRationalSystem2 {
     fn parameters(
         &self,
         crossing: Option<BezierRecursiveQuadraticUnitCrossing2>,
+        endpoint_roots: [bool; 2],
+        excluded_contact: Option<&Real>,
         policy: &CurveContext,
     ) -> CurveResult<
         Classification<(
@@ -60404,13 +60406,79 @@ impl BezierRecursiveProjectiveChordRationalSystem2 {
             Option<BezierRecursiveQuadraticUnitCrossing2>,
         )>,
     > {
+        let mut coefficients = self.incidence.clone();
+        let mut field = BezierRecursiveOrderedFieldContext2 {
+            field: self.field.clone(),
+            policy: policy.strict_counterpart(),
+        };
+        let mut known_roots = endpoint_roots
+            .into_iter()
+            .enumerate()
+            .filter_map(|(index, certified)| certified.then(|| Real::from(index as i8)))
+            .collect::<Vec<_>>();
+        if let Some(contact) = excluded_contact
+            && known_roots.iter().all(|root| {
+                matches!(
+                    compare_reals(contact, root, &field.policy),
+                    Some(std::cmp::Ordering::Less | std::cmp::Ordering::Greater)
+                )
+            })
+        {
+            known_roots.push(contact.clone());
+        }
+        let crossing = if known_roots.is_empty() {
+            crossing
+        } else {
+            None
+        };
+        for root in &known_roots {
+            // Endpoint sides and the already-owned adjacent contact prove
+            // these distinct factors. Keep that incidence instead of asking
+            // reconstructed roots to rediscover their scalar equalities.
+            coefficients = match hypersolve::ordered_field_polynomial_linear_quotient(
+                &coefficients,
+                root,
+                &mut field,
+            ) {
+                Ok(coefficients) => coefficients,
+                Err(BezierRecursiveOrderedFieldError2::Curve(error)) => return Err(error),
+                Err(BezierRecursiveOrderedFieldError2::Uncertain) => {
+                    return Ok(Classification::Uncertain(UncertaintyReason::Predicate));
+                }
+            };
+        }
         match recursive_projective_polynomial_unit_parameters_with_crossing(
             &self.field,
-            self.incidence.clone(),
+            coefficients,
             crossing.clone(),
             policy,
         )? {
-            Classification::Decided(parameters) => {
+            Classification::Decided(mut parameters) => {
+                for (index, certified) in endpoint_roots.into_iter().enumerate() {
+                    if !certified {
+                        continue;
+                    }
+                    let endpoint = CurveRegionParameter2::from_bezier(BezierParameter2::Exact(
+                        Real::from(index as i8),
+                    ));
+                    let mut repeated = false;
+                    for parameter in &parameters {
+                        match parameter.same_value(&endpoint, &field.policy)? {
+                            Classification::Decided(true) => repeated = true,
+                            Classification::Decided(false) => {}
+                            Classification::Uncertain(reason) => {
+                                return Ok(Classification::Uncertain(reason));
+                            }
+                        }
+                    }
+                    if !repeated {
+                        if index == 0 {
+                            parameters.insert(0, endpoint);
+                        } else {
+                            parameters.push(endpoint);
+                        }
+                    }
+                }
                 Ok(Classification::Decided((parameters, crossing)))
             }
             Classification::Uncertain(reason) => Ok(Classification::Uncertain(reason)),
@@ -63735,23 +63803,11 @@ fn recursive_projective_polynomial_unit_parameters_with_crossing(
             let scalar = parameter
                 .projective_scalar()
                 .expect("a direct recursive polynomial root owns its scalar");
-            let value =
-                recursive_projective_polynomial_value(&coefficients, scalar).ok_or_else(|| {
-                    CurveError::Topology(
-                        "a retained polynomial root exceeded its recursive field budget".into(),
-                    )
-                })?;
-            match value.sign(policy)? {
-                Classification::Decided(RealSign::Zero) => {}
-                Classification::Decided(RealSign::Positive | RealSign::Negative) => {
-                    return Err(CurveError::Topology(
-                        "a direct recursive polynomial root failed authored replay".into(),
-                    ));
-                }
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            }
+            // The linear/quadratic solver constructs roots in this exact
+            // retained field after certifying its nonzero leading term and
+            // discriminant. That construction is already the root proof.
+            // Evaluating the equation again would discard the formula's
+            // cancellation identity inside reconstructed scalar products.
             retained.push(scalar.exact_real_value().map_or_else(
                 || CurveRegionParameter2::from_recursive_projective(parameter),
                 |value| CurveRegionParameter2::from_bezier(BezierParameter2::Exact(value)),
@@ -78307,6 +78363,7 @@ impl BezierAlgebraicChord2 {
         }
         let strict_unit_crossing =
             recursive_quadratic_polynomial_strict_unit_crossing(&system.field, &system.incidence);
+        let mut certified_endpoint_roots = [false; 2];
         let (strict_unit_crossing, geometric_no_roots) = if strict_unit_crossing.is_some() {
             (strict_unit_crossing, false)
         } else {
@@ -78377,6 +78434,7 @@ impl BezierAlgebraicChord2 {
                 let (Some(start_sign), Some(end_sign)) = (start_sign, end_sign) else {
                     return Ok((None, false));
                 };
+                certified_endpoint_roots = [start_sign == RealSign::Zero, end_sign == RealSign::Zero];
                 // Opposite endpoint signs prove one unit root only when the
                 // incidence has degree at most two. Higher-degree curves can
                 // cross three or more times and need complete root isolation.
@@ -78521,13 +78579,17 @@ impl BezierAlgebraicChord2 {
                 .collinear_rational_intersections(source, excluded_source_parameter, policy)?
                 .map(Some));
         }
-        let (candidates, strict_unit_crossing) =
-            match system.parameters(strict_unit_crossing, policy)? {
-                Classification::Decided(parameters) => parameters,
-                Classification::Uncertain(reason) => {
-                    recursive_rational_uncertain!("parameter-isolation", reason);
-                }
-            };
+        let (candidates, strict_unit_crossing) = match system.parameters(
+            strict_unit_crossing,
+            certified_endpoint_roots,
+            excluded_source_parameter.and_then(BezierParameter2::as_exact),
+            policy,
+        )? {
+            Classification::Decided(parameters) => parameters,
+            Classification::Uncertain(reason) => {
+                recursive_rational_uncertain!("parameter-isolation", reason);
+            }
+        };
         #[cfg(test)]
         if std::env::var_os("HYPERCURVE_DEBUG_RATIONAL_BLOCKER").is_some() {
             eprintln!(
@@ -78777,6 +78839,8 @@ impl BezierAlgebraicChord2 {
         )))
     }
 
+    /// Intersects the source with this chord. An excluded source parameter
+    /// must name an already-certified contact owned by the caller.
     pub(crate) fn rational_intersections(
         &self,
         source: &RationalBezier2,

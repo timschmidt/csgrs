@@ -13848,6 +13848,9 @@ fn adjacent_axis_algebraic_chord_circular_curve_is_endpoint_only(
     chord_precedes_curve: bool,
     policy: &CurveContext,
 ) -> CurveResult<Classification<bool>> {
+    // This optional shortcut may decline to the complete contact kernel.
+    // Its reconstructed scalar probes cannot consume terminal approximation.
+    let policy = &policy.strict_counterpart();
     if !curve_carrier.geometry.has_certified_injective_image(policy) {
         return Ok(Classification::Decided(false));
     }

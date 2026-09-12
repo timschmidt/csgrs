@@ -3154,30 +3154,37 @@ fn retained_corner_fragment_trim(
         ));
     };
     let curve = replacement_curve.unwrap_or(curve);
-    if parameter.as_algebraic_chord().is_some()
-        && let BezierSubcurve2::Quadratic(line) = curve
-        && line.retained_exact_line_image().is_some()
+    if let BezierSubcurve2::Quadratic(line) = curve
+        && let Some(support) = line.retained_exact_line_image()
+        && (parameter.as_algebraic_chord().is_some()
+            || (matches!(
+                parameter.as_bezier_parameter(),
+                Some(BezierParameter2::Algebraic(_))
+            ) && line.retained_parallel_line_tangent_contacts().is_empty()))
     {
-        let start = if keep_before_cut {
-            RationalBezierIntersectionPointEvidence2::Exact(line.start().clone())
+        let (start, end) = if keep_before_cut {
+            (
+                RationalBezierIntersectionPointEvidence2::Exact(line.start().clone()),
+                cut_point.clone(),
+            )
         } else {
-            cut_point.clone()
+            (
+                cut_point.clone(),
+                RationalBezierIntersectionPointEvidence2::Exact(line.end().clone()),
+            )
         };
-        let end = if keep_before_cut {
-            cut_point.clone()
-        } else {
-            RationalBezierIntersectionPointEvidence2::Exact(line.end().clone())
-        };
-        return retained_chord_on_certified_line(
-            line.retained_exact_line_image()
-                .expect("the retained corner source is an exact line"),
-            start,
-            end,
-            operation,
-            policy,
-        );
+        return retained_chord_on_certified_line(support, start, end, operation, policy);
     }
-    if parameter.is_retained_scalar() {
+    // Keep nonrational cuts in their source chart. Rebuilding their control
+    // points hides the selected parameter relation inside new coefficients,
+    // forcing subsequent intersections to reconstruct the same extension.
+    let retain_source = parameter.is_retained_scalar()
+        || parameter.as_bezier_parameter().is_some_and(|parameter| {
+            parameter
+                .as_exact()
+                .is_none_or(|value| value.exact_rational_ref().is_none())
+        });
+    if retain_source {
         let zero = CurveRegionParameter2::from_bezier(BezierParameter2::Exact(Real::zero()));
         let one = CurveRegionParameter2::from_bezier(BezierParameter2::Exact(Real::one()));
         for (boundary, expected) in [
@@ -3231,36 +3238,6 @@ fn retained_corner_fragment_trim(
                 end_point,
             ),
         ));
-    }
-    if let BezierSubcurve2::Quadratic(line_curve) = curve
-        && matches!(
-            parameter.as_bezier_parameter(),
-            Some(BezierParameter2::Algebraic(_))
-        )
-        && line_curve.retained_exact_line_image().is_some()
-        && line_curve
-            .retained_parallel_line_tangent_contacts()
-            .is_empty()
-    {
-        let start = if keep_before_cut {
-            RationalBezierIntersectionPointEvidence2::Exact(line_curve.start().clone())
-        } else {
-            cut_point.clone()
-        };
-        let end = if keep_before_cut {
-            cut_point.clone()
-        } else {
-            RationalBezierIntersectionPointEvidence2::Exact(line_curve.end().clone())
-        };
-        return retained_chord_on_certified_line(
-            line_curve
-                .retained_exact_line_image()
-                .expect("the retained trim source is an exact line"),
-            start,
-            end,
-            operation,
-            policy,
-        );
     }
     let parameter = parameter.as_bezier_parameter().cloned().ok_or_else(|| {
         ExactCurveError::blocked(
@@ -12316,26 +12293,17 @@ impl CurveRegion2 {
                         Classification::Uncertain(_) => None,
                     }
                 };
-            // A recognized rational circle is one geometric carrier regardless
-            // of how its authored chart was weighted or elevated. Rebuild both
-            // trims and extensions from that carrier so every retained piece
-            // keeps the same exact circle certificate. This also avoids making
-            // downstream topology depend on whether an authored major chart
-            // happened to carry cached provenance before it was split.
+            // Interior cuts retain the authored source parameter and circle
+            // certificate. Only extensions need charts beyond that domain.
             let distinct_fragments = previous_cut_index != next_cut_index;
             let previous_replacement = match (
                 distinct_fragments,
                 previous_retained_arc.as_ref(),
                 previous_cut.placement,
             ) {
-                (true, Some(support), CornerPlacement2::Trim | CornerPlacement2::Extension) => {
-                    Some(Self::retained_arc_chamfer_fragments(
-                        support,
-                        &previous_cut,
-                        true,
-                        policy,
-                    )?)
-                }
+                (true, Some(support), CornerPlacement2::Extension) => Some(
+                    Self::retained_arc_chamfer_fragments(support, &previous_cut, true, policy)?,
+                ),
                 _ => None,
             };
             let next_replacement = match (
@@ -12343,11 +12311,9 @@ impl CurveRegion2 {
                 next_retained_arc.as_ref(),
                 next_cut.placement,
             ) {
-                (true, Some(support), CornerPlacement2::Trim | CornerPlacement2::Extension) => {
-                    Some(Self::retained_arc_chamfer_fragments(
-                        support, &next_cut, false, policy,
-                    )?)
-                }
+                (true, Some(support), CornerPlacement2::Extension) => Some(
+                    Self::retained_arc_chamfer_fragments(support, &next_cut, false, policy)?,
+                ),
                 _ => None,
             };
             if fragment_count == 1
@@ -22063,11 +22029,7 @@ mod tests {
         let source = BezierSplitFragment2::Materialized {
             start: BezierParameter2::Exact(Real::zero()),
             end: BezierParameter2::Exact(Real::one()),
-            curve: BezierSubcurve2::Quadratic(QuadraticBezier2::new(
-                p(0, 0),
-                p(0, 0),
-                p(1, 1),
-            )),
+            curve: BezierSubcurve2::Quadratic(QuadraticBezier2::new(p(0, 0), p(0, 0), p(1, 1))),
         };
         for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
             for reversed in [false, true] {
@@ -23621,8 +23583,27 @@ mod tests {
                 chord.start().as_exact() == Some(expected)
                     || chord.end().as_exact() == Some(expected)
             }
+            BezierSplitFragment2::SelectedFiber(fragment) => {
+                fragment.start_point().as_exact() == Some(expected)
+                    || fragment.end_point().as_exact() == Some(expected)
+            }
             _ => false,
         }
+    }
+
+    fn retained_rational_fragment_has_algebraic_endpoint(fragment: &BezierSplitFragment2) -> bool {
+        let BezierSplitFragment2::SelectedFiber(fragment) = fragment else {
+            return false;
+        };
+        fragment.rational_curve().is_some()
+            && [fragment.range().start(), fragment.range().end()]
+                .into_iter()
+                .any(|parameter| {
+                    matches!(
+                        parameter.as_bezier_parameter(),
+                        Some(BezierParameter2::Algebraic(_))
+                    )
+                })
     }
 
     fn for_each_corner_region(
@@ -23839,10 +23820,9 @@ mod tests {
                                     Some(endpoint) => {
                                         retained_fragment_has_exact_endpoint(fragment, endpoint)
                                     }
-                                    None => matches!(
-                                        fragment,
-                                        BezierSplitFragment2::AlgebraicEndpointImages { .. }
-                                    ),
+                                    None => {
+                                        retained_rational_fragment_has_algebraic_endpoint(fragment)
+                                    }
                                 });
                     });
                     assert!(
@@ -23918,10 +23898,9 @@ mod tests {
                                     Some(endpoint) => {
                                         retained_fragment_has_exact_endpoint(fragment, endpoint)
                                     }
-                                    None => matches!(
-                                        fragment,
-                                        BezierSplitFragment2::AlgebraicEndpointImages { .. }
-                                    ),
+                                    None => {
+                                        retained_rational_fragment_has_algebraic_endpoint(fragment)
+                                    }
                                 });
                     });
                     assert!(
@@ -25862,13 +25841,18 @@ mod tests {
                                 }
                                 assert!(
                                     chamfered.boundary_loops()[0].fragments().iter().any(
-                                        |fragment| matches!(
-                                            fragment,
+                                        |fragment| match fragment {
                                             BezierSplitFragment2::Materialized {
                                                 curve: BezierSubcurve2::RationalQuadratic(curve),
                                                 ..
-                                            } if curve.retained_circular_conic().is_some()
-                                        )
+                                            } => curve.retained_circular_conic().is_some(),
+                                            BezierSplitFragment2::SelectedFiber(fragment) => {
+                                                fragment.rational_curve().is_some_and(|curve| {
+                                                    curve.retained_circular_conic().is_some()
+                                                })
+                                            }
+                                            _ => false,
+                                        }
                                     ),
                                     "the canonical chamfer must retain exact circle provenance: policy={policy:?}, scale={homogeneous_scale}, major={major}, elevated={elevated}, reversed={reversed}, candidate={candidate_index}",
                                 );
@@ -29990,12 +29974,7 @@ mod tests {
                     filleted.boundary_loops()[0]
                         .fragments()
                         .iter()
-                        .any(|fragment| matches!(
-                            fragment,
-                            BezierSplitFragment2::AlgebraicEndpointImages { start, end, .. }
-                                if matches!(start, BezierParameter2::Algebraic(_))
-                                    || matches!(end, BezierParameter2::Algebraic(_))
-                        ))
+                        .any(retained_rational_fragment_has_algebraic_endpoint)
                 );
                 if policy == CurveContext::STRICT && !reversed {
                     assert_eq!(
