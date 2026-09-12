@@ -10,6 +10,9 @@
 
 use std::cmp::Ordering;
 
+mod refinement;
+pub use refinement::AlgebraicFiberRootRefiner;
+
 use hyperlimit::{Certainty, PredicateOutcome, PredicatePolicy, compare_reals};
 use hyperreal::{Real, RealSign, ZeroKnowledge};
 
@@ -3989,7 +3992,7 @@ mod tests {
         (real(numerator) / real(denominator)).unwrap()
     }
 
-    fn represented_root(
+    pub(super) fn represented_root(
         polynomial_coefficients: Vec<Real>,
         lower: Real,
         upper: Real,
