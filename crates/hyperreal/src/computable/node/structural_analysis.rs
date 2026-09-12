@@ -1,10 +1,3 @@
-#[derive(Clone)]
-struct QuadraticSurd {
-    rational: Rational,
-    radical_scale: Rational,
-    radicand: Option<Rational>,
-}
-
 #[derive(Clone, Copy)]
 struct Binary64Interval {
     lower: f64,
@@ -348,140 +341,6 @@ impl Binary64Interval {
             return Self::new(0.0, upper);
         }
         self.multiply(self)
-    }
-}
-
-impl QuadraticSurd {
-    fn rational(value: Rational) -> Self {
-        Self {
-            rational: value,
-            radical_scale: Rational::zero(),
-            radicand: None,
-        }
-    }
-
-    fn radical(scale: Rational, radicand: Rational) -> Self {
-        if scale.sign() == Sign::NoSign {
-            return Self::rational(Rational::zero());
-        }
-        Self {
-            rational: Rational::zero(),
-            radical_scale: scale,
-            radicand: Some(radicand),
-        }
-    }
-
-    fn normalize(mut self) -> Self {
-        if self.radical_scale.sign() == Sign::NoSign {
-            self.radicand = None;
-        }
-        self
-    }
-
-    fn add(self, other: Self) -> Option<Self> {
-        let radicand = match (&self.radicand, &other.radicand) {
-            (Some(left), Some(right)) if left != right => return None,
-            (Some(left), _) => Some(left.clone()),
-            (_, Some(right)) => Some(right.clone()),
-            (None, None) => None,
-        };
-        Some(
-            Self {
-                rational: self.rational + other.rational,
-                radical_scale: self.radical_scale + other.radical_scale,
-                radicand,
-            }
-            .normalize(),
-        )
-    }
-
-    fn negate(self) -> Self {
-        Self {
-            rational: self.rational.neg(),
-            radical_scale: self.radical_scale.neg(),
-            radicand: self.radicand,
-        }
-    }
-
-    fn scale(self, scale: Rational) -> Self {
-        Self {
-            rational: self.rational * &scale,
-            radical_scale: self.radical_scale * scale,
-            radicand: self.radicand,
-        }
-        .normalize()
-    }
-
-    fn multiply(self, other: Self) -> Option<Self> {
-        let radicand = match (&self.radicand, &other.radicand) {
-            (Some(left), Some(right)) if left != right => return None,
-            (Some(left), _) => Some(left.clone()),
-            (_, Some(right)) => Some(right.clone()),
-            (None, None) => None,
-        };
-        let radical_product = match &radicand {
-            Some(radicand) => {
-                &self.radical_scale * &other.radical_scale * radicand
-            }
-            None => Rational::zero(),
-        };
-        Some(
-            Self {
-                rational: &self.rational * &other.rational + radical_product,
-                radical_scale: self.rational * other.radical_scale
-                    + self.radical_scale * other.rational,
-                radicand,
-            }
-            .normalize(),
-        )
-    }
-
-    fn inverse(self) -> Option<Self> {
-        let Some(radicand) = &self.radicand else {
-            return self
-                .rational
-                .inverse()
-                .ok()
-                .map(Self::rational);
-        };
-        let denominator = &self.rational * &self.rational
-            - &self.radical_scale * &self.radical_scale * radicand;
-        let inverse_denominator = denominator.inverse().ok()?;
-        Some(
-            Self {
-                rational: self.rational * &inverse_denominator,
-                radical_scale: self.radical_scale.neg() * inverse_denominator,
-                radicand: Some(radicand.clone()),
-            }
-            .normalize(),
-        )
-    }
-
-    fn sign(&self) -> Sign {
-        if self.radical_scale.sign() == Sign::NoSign {
-            return self.rational.sign();
-        }
-        if self.rational.sign() == Sign::NoSign {
-            return self.radical_scale.sign();
-        }
-        if self.rational.sign() == self.radical_scale.sign() {
-            return self.rational.sign();
-        }
-
-        let radicand = self
-            .radicand
-            .as_ref()
-            .expect("nonzero radical coefficient retains its radicand");
-        let rational_square = &self.rational * &self.rational;
-        let radical_square = &self.radical_scale * &self.radical_scale * radicand;
-        match rational_square
-            .partial_cmp(&radical_square)
-            .expect("finite exact rationals are totally ordered")
-        {
-            Ordering::Less => self.radical_scale.sign(),
-            Ordering::Equal => Sign::NoSign,
-            Ordering::Greater => self.rational.sign(),
-        }
     }
 }
 
@@ -1420,124 +1279,57 @@ impl Computable {
     }
 
     fn exact_quadratic_surd_sign(&self) -> Option<Sign> {
-        Some(self.exact_quadratic_surd()?.sign())
-    }
-
-    fn exact_quadratic_surd(&self) -> Option<QuadraticSurd> {
-        const NODE_BUDGET: usize = 256;
-
-        fn parse(
-            node: &Computable,
-            remaining: &mut usize,
-            memo: &mut Option<Vec<(usize, QuadraticSurd)>>,
-        ) -> Option<QuadraticSurd> {
-            let key = Arc::as_ptr(&node.internal) as usize;
-            let shared = Arc::strong_count(&node.internal) > 1;
-            if shared
-                && let Some((_, value)) = memo
-                    .as_ref()
-                    .and_then(|memo| memo.iter().find(|(candidate, _)| *candidate == key))
-            {
-                return Some(value.clone());
-            }
-            *remaining = remaining.checked_sub(1)?;
-            let result = match &node.internal.approximation {
-                Approximation::One => Some(QuadraticSurd::rational(Rational::one())),
-                Approximation::Int(value) => {
-                    Some(QuadraticSurd::rational(Rational::from_bigint(value.clone())))
-                }
-                Approximation::Ratio(value) => {
-                    Some(QuadraticSurd::rational(value.clone()))
-                }
-                Approximation::Constant(SharedConstant::Sqrt2) => Some(
-                    QuadraticSurd::radical(Rational::one(), Rational::new(2)),
-                ),
-                Approximation::Constant(SharedConstant::Sqrt3) => Some(
-                    QuadraticSurd::radical(Rational::one(), Rational::new(3)),
-                ),
-                Approximation::Negate(child) => {
-                    Some(parse(child, remaining, memo)?.negate())
-                }
-                Approximation::Offset(child, shift) => Some(
-                    parse(child, remaining, memo)?
-                        .scale(Computable::power_of_two_rational(*shift)),
-                ),
-                Approximation::Add(left, right) => {
-                    parse(left, remaining, memo)?
-                        .add(parse(right, remaining, memo)?)
-                }
-                Approximation::Multiply(left, right) => {
-                    parse(left, remaining, memo)?
-                        .multiply(parse(right, remaining, memo)?)
-                }
-                Approximation::Inverse(child) => {
-                    parse(child, remaining, memo)?.inverse()
-                }
-                Approximation::Square(child) => {
-                    let child = parse(child, remaining, memo)?;
-                    child.clone().multiply(child)
-                }
-                Approximation::Sqrt(child) => {
-                    let child = parse(child, remaining, memo)?;
-                    if child.radical_scale.sign() != Sign::NoSign
-                        || child.rational.sign() == Sign::Minus
-                    {
-                        return None;
-                    }
-                    if child.rational.sign() == Sign::NoSign {
-                        return Some(QuadraticSurd::rational(Rational::zero()));
-                    }
-                    let (scale, radicand) = child.rational.extract_square_reduced();
-                    if radicand.is_one() {
-                        Some(QuadraticSurd::rational(scale))
-                    } else {
-                        Some(QuadraticSurd::radical(scale, radicand))
-                    }
-                }
-                Approximation::LinearCombination3(combination) => {
-                    let mut sum = QuadraticSurd::rational(Rational::zero());
-                    for (coefficient, value) in combination
-                        .coefficients
-                        .iter()
-                        .zip(combination.values.iter())
-                    {
-                        sum = sum.add(
-                            parse(coefficient, remaining, memo)?.scale(value.clone()),
-                        )?;
-                    }
-                    Some(sum)
-                }
-                _ => None,
-            };
-            if shared && let Some(value) = &result {
-                memo.get_or_insert_with(|| Vec::with_capacity(8))
-                    .push((key, value.clone()));
-            }
-            result
+        let (rational, scale, radicand) = self.exact_quadratic_surd_parts()?;
+        if scale.sign() == Sign::NoSign {
+            return Some(rational.sign());
         }
-
-        let mut remaining = NODE_BUDGET;
-        // These DAGs are small and bounded, so a compact lazy vector avoids the
-        // allocation and hashing overhead of a map while preserving shared nodes.
-        let mut memo = None;
-        let value = parse(self, &mut remaining, &mut memo)?;
-        crate::trace_dispatch!("computable", "structural", "quadratic-surd");
-        Some(value)
+        if rational.sign() == Sign::NoSign || rational.sign() == scale.sign() {
+            return Some(scale.sign());
+        }
+        let rational_square = &rational * &rational;
+        let radical_square = &scale * &scale * radicand?;
+        Some(match rational_square
+            .partial_cmp(&radical_square)
+            .expect("finite exact rationals are totally ordered")
+        {
+            Ordering::Less => scale.sign(),
+            Ordering::Equal => Sign::NoSign,
+            Ordering::Greater => rational.sign(),
+        })
     }
 
     pub(crate) fn exact_pure_quadratic_surd(&self) -> Option<(Rational, Rational)> {
-        let value = self.exact_quadratic_surd()?;
-        if value.rational.sign() != Sign::NoSign {
+        let (rational, scale, radicand) = self.exact_quadratic_surd_parts()?;
+        if rational.sign() != Sign::NoSign {
             return None;
         }
-        Some((value.radical_scale, value.radicand?))
+        Some((scale, radicand?))
     }
 
     pub(crate) fn exact_quadratic_surd_parts(
         &self,
     ) -> Option<(Rational, Rational, Option<Rational>)> {
-        let value = self.exact_quadratic_surd()?;
-        Some((value.rational, value.radical_scale, value.radicand))
+        // Project the shared bounded normal form after cancellation. Requiring
+        // every intermediate expression to use one radical would miss exact
+        // quadratic values assembled from independent geometric directions.
+        let polynomial = self.pi_laurent_polynomial(64)?;
+        let value = match polynomial.terms.as_slice() {
+            [] => (Rational::zero(), Rational::zero(), None),
+            [(0, coefficient)] if coefficient.atoms.is_empty() => {
+                match coefficient.radicals.as_slice() {
+                    [] => (coefficient.rational.clone(), Rational::zero(), None),
+                    [(radicand, scale)] => (
+                        coefficient.rational.clone(),
+                        scale.clone(),
+                        Some(radicand.clone()),
+                    ),
+                    _ => return None,
+                }
+            }
+            _ => return None,
+        };
+        crate::trace_dispatch!("computable", "structural", "quadratic-surd");
+        Some(value)
     }
 
     #[cfg(test)]

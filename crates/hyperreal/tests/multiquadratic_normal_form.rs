@@ -78,3 +78,14 @@ fn radical_cancellation_preserves_laurent_and_opaque_linear_terms() {
     let product = ((&a + &b) * &pi) * ((&a - &b) / pi).unwrap();
     assert_rational(product, -1);
 }
+
+#[test]
+fn cancelled_independent_radicals_do_not_hide_a_quadratic_square() {
+    let a = root(2);
+    let b = root(3);
+    let value = ((&a + &b) + Real::from(3)) * ((&a - &b) + Real::from(3)) + Real::from(3);
+    let principal = value.sqrt().unwrap();
+    let expected = Real::from(3) + a;
+    assert_rational(&principal - &expected, 0);
+    assert_rational((expected / principal).unwrap(), 1);
+}

@@ -461,7 +461,17 @@ impl Computable {
                     child.clone().multiply(child)
                 }
                 Approximation::Sqrt(child) => {
-                    let radicand = child.exact_rational()?;
+                    let child =
+                        child.pi_laurent_polynomial_with_memo(budget - 1, remaining_work, memo)?;
+                    let radicand = match child.terms.as_slice() {
+                        [] => Rational::zero(),
+                        [(0, coefficient)]
+                            if coefficient.radicals.is_empty() && coefficient.atoms.is_empty() =>
+                        {
+                            coefficient.rational.clone()
+                        }
+                        _ => return None,
+                    };
                     if radicand.sign() == Sign::Minus {
                         return None;
                     }
