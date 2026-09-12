@@ -7670,6 +7670,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
             &face_sector_successors,
             &topology,
             &self.data.carriers,
+            &self.data.policy,
         );
         let traversal = match graph.traverse_retained_filled_left_faces_with_certified_successors(
             &certified_successors,
@@ -14137,6 +14138,7 @@ fn certified_regularization_successors(
     face_sector_successors: &[Option<usize>],
     topology: &CurveRegionSplitTopology,
     carriers: &[RegionCarrier],
+    policy: &CurveContext,
 ) -> Vec<Option<usize>> {
     let starts_by_vertex = arrangement_starts_by_vertex(graph, None);
     let transverse_successors = certified_transverse_successors(
@@ -14181,8 +14183,94 @@ fn certified_regularization_successors(
             &transverse_successors,
             &authored_successors,
         );
+        if incoming.iter().any(|&edge| successors[edge].is_none()) && outgoing.len() > 1 {
+            policy.strict_predicate_pass(|| {
+                certify_curve_tangent_successors(
+                    &mut successors,
+                    &incoming,
+                    outgoing,
+                    graph,
+                    policy,
+                )
+            });
+        }
     }
     successors
+}
+
+/// Replays retained curve directions only where incidence and face-sector
+/// certificates leave a branch unresolved. The common tangent authority also
+/// serves offset joins, so selected curves need no Cartesian tangent image.
+fn certify_curve_tangent_successors(
+    successors: &mut [Option<usize>],
+    incoming: &[usize],
+    outgoing: &[usize],
+    graph: &BezierArrangementGraph2,
+    policy: &CurveContext,
+) {
+    use crate::bezier_region::CurveTangent2;
+    if incoming.len() != outgoing.len() {
+        return;
+    }
+    let tangent = |edge: usize, at_start| match CurveTangent2::at_boundary_endpoint(
+        graph.fragments()[edge].fragment(),
+        at_start,
+        policy,
+    ) {
+        Ok(Classification::Decided(tangent)) => Some(tangent),
+        Ok(Classification::Uncertain(_)) | Err(_) => None,
+    };
+    let Some(outgoing_tangents) = outgoing
+        .iter()
+        .map(|&edge| tangent(edge, true))
+        .collect::<Option<Vec<_>>>()
+    else {
+        return;
+    };
+    let proposed = incoming
+        .iter()
+        .copied()
+        .filter_map(|edge| {
+            if successors[edge].is_some() {
+                return None;
+            }
+            let base = tangent(edge, false)?;
+            let mut best = 0;
+            for candidate in 1..outgoing.len() {
+                match base.compare_filled_left_turn(
+                    &outgoing_tangents[candidate],
+                    &outgoing_tangents[best],
+                    policy,
+                ) {
+                    Classification::Decided(Ordering::Less) => best = candidate,
+                    Classification::Decided(Ordering::Greater) => {}
+                    Classification::Decided(Ordering::Equal) | Classification::Uncertain(_) => {
+                        return None;
+                    }
+                }
+            }
+            Some((edge, outgoing[best]))
+        })
+        .collect::<Vec<_>>();
+    for &(edge, target) in &proposed {
+        if proposed
+            .iter()
+            .filter(|(_, candidate)| *candidate == target)
+            .count()
+            == 1
+            && !incoming
+                .iter()
+                .any(|&other| successors[other] == Some(target))
+        {
+            successors[edge] = Some(target);
+            #[cfg(feature = "dispatch-trace")]
+            hyperreal::dispatch_trace::record(
+                "hypercurve",
+                "regularization-successor",
+                "retained-curve-tangent",
+            );
+        }
+    }
 }
 
 /// Combines two exact but independently conservative successor sources.

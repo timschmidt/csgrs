@@ -56635,6 +56635,16 @@ impl BezierRecursiveQuadraticValue2 {
 
     #[track_caller]
     fn sign(&self, policy: &CurveContext) -> CurveResult<Classification<RealSign>> {
+        // Compact scalar evaluation may reach its approximate terminal even
+        // though the retained field still proves equality. Complete that
+        // algebraic replay before permitting approximation of this predicate;
+        // an intermediate compact witness must not preempt its certificate.
+        if policy.permits_approximate_512() {
+            match self.sign(&policy.strict_counterpart())? {
+                decided @ Classification::Decided(_) => return Ok(decided),
+                Classification::Uncertain(_) => {}
+            }
+        }
         if self.is_coefficientwise_stored_zero() {
             return Ok(Classification::Decided(RealSign::Zero));
         }
