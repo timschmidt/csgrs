@@ -1805,10 +1805,6 @@ mod tests {
         let denominator = crate::test_support::exact_normal_positive();
         let half = fraction(1, 2);
         let numerator = denominator.clone() * &half;
-        assert_eq!(
-            &numerator / &denominator,
-            Err(hyperreal::Problem::UnknownZero)
-        );
 
         let value = evaluate_rational_polynomial(
             core::slice::from_ref(&numerator),

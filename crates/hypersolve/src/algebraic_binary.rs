@@ -957,10 +957,6 @@ mod tests {
     #[test]
     fn binary_interval_division_reuses_policy_nonzero_endpoints() {
         let denominator = crate::test_support::exact_normal_positive();
-        assert_eq!(
-            Real::one() / denominator.clone(),
-            Err(hyperreal::Problem::UnknownZero)
-        );
         let half = fraction(1, 2);
         let numerator = denominator.clone() * &half;
         let quotient = interval_div(

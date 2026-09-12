@@ -269,7 +269,6 @@ fn swap_active_rows(active: &mut BTreeSet<(usize, usize)>, left: usize, right: u
 
 #[cfg(test)]
 mod tests {
-    use hyperreal::CertifiedRealSign;
     use proptest::prelude::*;
 
     use super::*;
@@ -356,10 +355,6 @@ mod tests {
     #[test]
     fn sparse_pattern_uses_strict_exact_fallback_without_guessing() {
         let positive = crate::test_support::exact_normal_positive();
-        assert!(matches!(
-            positive.certified_sign_until(-64),
-            CertifiedRealSign::Unknown { .. }
-        ));
         let report = analyze_sparse_bareiss_elimination_pattern(
             1,
             1,

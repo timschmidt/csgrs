@@ -687,11 +687,6 @@ mod tests {
     fn sparse_replay_uses_strict_exact_zero_fallback_without_guessing() {
         let expected = crate::test_support::exact_normal_positive();
         let tiny = Real::from(2).powi_i64(-3000).unwrap();
-        let unresolved_residual = tiny.clone() - expected.clone();
-        assert!(matches!(
-            unresolved_residual.certified_sign_until(-64),
-            CertifiedRealSign::Unknown { .. }
-        ));
 
         let report = replay_sparse_linear_residuals(
             1,

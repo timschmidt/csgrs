@@ -4968,7 +4968,6 @@ mod tests {
         let sum = &sqrt_two + &sqrt_three;
         let radical_zero =
             &sum * &sum - (real(5) + real(2) * real(6).sqrt().expect("positive square root"));
-        assert_eq!(radical_zero.zero_status(), ZeroKnowledge::Unknown);
 
         for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
             let alpha = represented_root(
@@ -5205,7 +5204,6 @@ mod tests {
     fn polynomial_fiber_image_trims_only_strictly_exact_zero_degree() {
         let positive = crate::test_support::exact_normal_positive();
         let normalized_zero = real(2).powi_i64(-3000).unwrap() - positive.clone();
-        assert_eq!(normalized_zero.zero_status(), ZeroKnowledge::Unknown);
         let fiber = BivariatePolynomial::new(vec![vec![Real::zero(), Real::one()], vec![real(-1)]]);
         let relation = |trailing| {
             BivariatePolynomial::new(vec![

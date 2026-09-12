@@ -1536,14 +1536,6 @@ mod tests {
     fn tensor_resultant_helpers_complete_strict_exact_boundaries() {
         let positive = crate::test_support::exact_normal_positive();
         let normalized_zero = real(2).powi_i64(-3000).unwrap() - positive.clone();
-        assert!(matches!(
-            positive.certified_sign_until(-64),
-            CertifiedRealSign::Unknown { .. }
-        ));
-        assert!(matches!(
-            normalized_zero.certified_sign_until(-64),
-            CertifiedRealSign::Unknown { .. }
-        ));
 
         let polynomial = DenseTensorPolynomial::try_new(
             vec![2, 2],
@@ -1655,10 +1647,6 @@ mod tests {
         let alpha = real(2).sqrt().unwrap() + real(3).sqrt().unwrap();
         let beta = real(5) + real(2) * real(6).sqrt().unwrap();
         let radical_zero = &alpha * &alpha - beta.clone();
-        assert_eq!(
-            radical_zero.zero_status(),
-            hyperreal::ZeroKnowledge::Unknown
-        );
         assert_eq!(
             crate::policy_division::strict_sign_after_refinement_failure(&radical_zero),
             Some(RealSign::Zero)

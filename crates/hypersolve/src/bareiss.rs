@@ -2002,7 +2002,6 @@ mod tests {
     #[test]
     fn sparse_bareiss_reuses_strictly_certified_nonzero_pivot() {
         let pivot = crate::test_support::exact_normal_positive();
-        assert!(pivot.inverse_ref().is_err());
         let report = solve_sparse_linear_system_bareiss_pattern_preserving(
             1,
             1,

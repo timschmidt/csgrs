@@ -5960,10 +5960,6 @@ mod tests {
         // Keep the product cold: multiply_bivariate canonicalizes its
         // coefficients and retains the shared scale's exact nonzero proof.
         let deep_dividend = BivariatePolynomial::new(vec![vec![&deep_scale * &half; 2]]);
-        assert_eq!(
-            &deep_dividend.coefficients[0][1] / &deep_divisor.coefficients[0][1],
-            Err(hyperreal::Problem::UnknownZero)
-        );
         assert_bivariate_exactly_equal(
             &divide_bivariate_polynomial_exact(&deep_dividend, &deep_divisor)
                 .expect("the strict nonzero divisor leading term should be reused"),
@@ -6386,14 +6382,6 @@ mod tests {
     fn curve_resultant_degree_helpers_complete_strict_exact_boundaries() {
         let positive = crate::test_support::exact_normal_positive();
         let normalized_zero = real(2).powi_i64(-3000).unwrap() - positive.clone();
-        assert!(matches!(
-            positive.certified_sign_until(-64),
-            CertifiedRealSign::Unknown { .. }
-        ));
-        assert!(matches!(
-            normalized_zero.certified_sign_until(-64),
-            CertifiedRealSign::Unknown { .. }
-        ));
 
         assert_eq!(
             certified_nonzero_degree(&[real(1), positive.clone(), normalized_zero.clone()], -64,),

@@ -1202,7 +1202,6 @@ mod tests {
     #[test]
     fn mobius_interval_reuses_policy_nonzero_denominator() {
         let scale = crate::test_support::exact_normal_positive();
-        assert_eq!(scale.inverse_ref(), Err(hyperreal::Problem::UnknownZero));
         let report = transform_algebraic_root_mobius(
             &sqrt_two(),
             scale.clone(),

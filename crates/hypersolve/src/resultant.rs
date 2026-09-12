@@ -1242,7 +1242,6 @@ fn real_pow(value: &Real, exponent: usize) -> Real {
 
 #[cfg(test)]
 mod tests {
-    use hyperreal::CertifiedRealSign;
     use proptest::prelude::*;
 
     use super::*;
@@ -1430,10 +1429,6 @@ mod tests {
     #[test]
     fn resultant_trimming_uses_strict_exact_signs_without_guessing() {
         let positive = crate::test_support::exact_normal_positive();
-        assert!(matches!(
-            positive.certified_sign_until(-64),
-            CertifiedRealSign::Unknown { .. }
-        ));
         let report =
             resultant_univariate_polynomials(&[real(1), positive], &[real(2)], -64).unwrap();
         assert_eq!(report.left_degree, 1);
@@ -1441,10 +1436,6 @@ mod tests {
 
         let normalized_zero =
             real(2).powi_i64(-3000).unwrap() - crate::test_support::exact_normal_positive();
-        assert!(matches!(
-            normalized_zero.certified_sign_until(-64),
-            CertifiedRealSign::Unknown { .. }
-        ));
         let report = resultant_univariate_polynomials(
             &[real(-1), real(1), normalized_zero],
             &[real(-2), real(1)],
@@ -1494,10 +1485,10 @@ mod tests {
             -64,
         )
         .unwrap();
-        assert!(matches!(
-            resultant.resultant.certified_sign_until(-64),
-            CertifiedRealSign::Unknown { .. }
-        ));
+        assert_eq!(
+            resultant.resultant.exact_rational_normal_form(),
+            (-real(2).powi_i64(-3000).unwrap()).exact_rational(),
+        );
         let report = schedule_univariate_resultant_pairs(&[pair], -64);
         assert_eq!(
             report.pairs[0].status,

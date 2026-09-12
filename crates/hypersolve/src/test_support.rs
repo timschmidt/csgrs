@@ -1,5 +1,9 @@
 use hyperreal::Real;
 
+// Exactly 2^-3000, retained as a symbolic geometric expression. Tests require
+// the intended value and domain behavior, not a particular layer at which its
+// proof becomes available: scalar normal forms may improve independently of
+// the solver's strict predicate fallback.
 pub(crate) fn exact_normal_positive() -> Real {
     let root_two = Real::from(2).sqrt().unwrap();
     let root_two_over_pi = (root_two.clone() / Real::pi()).unwrap();

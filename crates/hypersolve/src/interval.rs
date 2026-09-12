@@ -2118,7 +2118,6 @@ mod tests {
         }
 
         let positive = crate::test_support::exact_normal_positive();
-        assert_eq!(positive.inverse_ref(), Err(hyperreal::Problem::UnknownZero));
         let inverse = invert_exact_matrix(
             vec![
                 vec![Real::zero(), positive],
@@ -2296,15 +2295,7 @@ mod tests {
     fn krawczyk_divisions_reuse_policy_certified_nonzero_evidence() {
         let derivative = crate::test_support::exact_normal_positive();
         let half = (Real::from(1) / Real::from(2)).unwrap();
-        assert_eq!(
-            derivative.inverse_ref(),
-            Err(hyperreal::Problem::UnknownZero)
-        );
         let half_scaled_derivative = derivative.clone() * &half;
-        assert_eq!(
-            &half_scaled_derivative / &derivative,
-            Err(hyperreal::Problem::UnknownZero)
-        );
 
         let row = classify_quadratic_krawczyk_row(
             0,

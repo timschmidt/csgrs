@@ -4960,10 +4960,6 @@ mod tests {
     #[test]
     fn algebraic_root_arithmetic_divides_by_policy_certified_exact_point() {
         let denominator_value = crate::test_support::exact_normal_positive();
-        assert_eq!(
-            denominator_value.inverse_ref(),
-            Err(hyperreal::Problem::UnknownZero)
-        );
         let numerator = exact_point_representation(0, Real::one());
         let denominator = exact_point_representation(1, denominator_value.clone());
 
@@ -5662,10 +5658,6 @@ mod tests {
         let denominator = crate::test_support::exact_normal_positive();
         let half = ratio(1, 2);
         let numerator = denominator.clone() * &half;
-        assert_eq!(
-            &numerator / &denominator,
-            Err(hyperreal::Problem::UnknownZero)
-        );
         let policy_exact = evaluate_rational_expression_at_algebraic_root(
             &rational_root,
             core::slice::from_ref(&numerator),
