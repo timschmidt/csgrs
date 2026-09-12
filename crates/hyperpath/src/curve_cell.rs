@@ -2209,7 +2209,7 @@ fn algebraic_root_interval_contains_real(
     value: &Real,
     policy: PredicatePolicy,
 ) -> Option<bool> {
-    if let Some(witness) = root.exact_rational_witness() {
+    if let Some(witness) = root.exact_point_witness() {
         return Some(compare_reals(witness, value, policy).value()? == Ordering::Equal);
     }
     let lower = compare_reals(&root.interval.lower, value, policy).value()?;
@@ -2222,7 +2222,7 @@ fn algebraic_parameter_in_half_open_unit(
     forward: bool,
     policy: PredicatePolicy,
 ) -> Option<bool> {
-    if let Some(witness) = root.exact_rational_witness() {
+    if let Some(witness) = root.exact_point_witness() {
         match real_in_unit_interval_closed(witness, policy) {
             Some(true) => {}
             other => return other,
@@ -2259,7 +2259,7 @@ fn compare_algebraic_image_to_real(
         return None;
     }
     let representation = image.representation.as_ref()?;
-    if let Some(exact) = representation.exact_rational_witness() {
+    if let Some(exact) = representation.exact_point_witness() {
         return compare_reals(exact, value, policy).value();
     }
     let upper_value = compare_reals(&representation.interval.upper, value, policy).value()?;
@@ -2277,7 +2277,7 @@ fn compare_algebraic_image_to_real(
 ///
 /// Multiple roots are exactly where interval images are least useful: the image
 /// of `Y'` or `Y''` can straddle zero at every practical refinement even though
-/// the represented root is a rational witness. Yap's EGC model permits using
+/// the represented root carries an exact scalar witness. Yap's EGC model permits using
 /// the exact constructed witness directly when available; otherwise this falls
 /// back to `hypersolve`'s algebraic-root polynomial image transform, matching
 /// the Collins-Loos represented-root discipline used for the root itself.
@@ -2287,7 +2287,7 @@ fn compare_algebraic_root_polynomial_to_real(
     value: &Real,
     policy: PredicatePolicy,
 ) -> Option<Ordering> {
-    if let Some(witness) = root.exact_rational_witness() {
+    if let Some(witness) = root.exact_point_witness() {
         let image = eval_power_polynomial(coefficients, witness);
         return compare_reals(&image, value, policy).value();
     }
