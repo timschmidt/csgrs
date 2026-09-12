@@ -378,6 +378,48 @@ pub struct AlgebraicRootRepresentation {
 }
 
 impl AlgebraicRootRepresentation {
+    /// Represents an arbitrary exact `Real` as a selected point root.
+    ///
+    /// A proved rational or quadratic normal form supplies a rational
+    /// polynomial and a compact exact witness. Other exact values retain the
+    /// linear equation `x - value = 0` over their exact coefficient field.
+    /// Recognition is optional; it never restricts representability.
+    pub fn from_exact_value(value: &Real) -> Self {
+        let (polynomial_coefficients, value) = match value.exact_quadratic_normal_form() {
+            Some((constant, scale, _)) if scale == hyperreal::Rational::zero() => {
+                let value = Real::new(constant);
+                (vec![-value.clone(), Real::one()], value)
+            }
+            Some((constant, scale, radicand)) => {
+                let coefficients = vec![
+                    Real::new(&constant * &constant - &scale * &scale * &radicand),
+                    Real::new(-(&constant + &constant)),
+                    Real::one(),
+                ];
+                let value = Real::new(constant)
+                    + Real::new(scale)
+                        * Real::new(radicand)
+                            .sqrt()
+                            .expect("a quadratic normal form has a nonnegative radicand");
+                (coefficients, value)
+            }
+            None => (vec![-value.clone(), Real::one()], value.clone()),
+        };
+        Self {
+            constraint_index: 0,
+            symbol: SymbolId(0),
+            interval_index: 0,
+            polynomial_coefficients,
+            interval: IsolatedRootInterval {
+                lower: value.clone(),
+                upper: value.clone(),
+                exact_root: Some(value),
+                distinct_root_count: 1,
+            },
+            validation: AlgebraicRootValidationReport::valid(),
+        }
+    }
+
     /// Returns the stored exact point witness, when present.
     ///
     /// Point witnesses may be any exact `Real`, not only rationals.
