@@ -29715,8 +29715,7 @@ impl BezierAlgebraicCuspSemicircle2 {
                 AlgebraicRootSquareRootStatus::Transformed => radical
                     .representation
                     .expect("a represented chord contact retains its selected radical"),
-                AlgebraicRootSquareRootStatus::UndecidedSign
-                | AlgebraicRootSquareRootStatus::NonIsolatingImageInterval => {
+                AlgebraicRootSquareRootStatus::UndecidedSign => {
                     return Ok(Classification::Uncertain(UncertaintyReason::Predicate));
                 }
                 AlgebraicRootSquareRootStatus::InvalidEvidence
@@ -34484,8 +34483,7 @@ impl BezierAlgebraicCuspSemicircle2 {
                 AlgebraicRootSquareRootStatus::Transformed => radical
                     .representation
                     .expect("a transformed square root retains its representation"),
-                AlgebraicRootSquareRootStatus::UndecidedSign
-                | AlgebraicRootSquareRootStatus::NonIsolatingImageInterval => {
+                AlgebraicRootSquareRootStatus::UndecidedSign => {
                     return Ok(Classification::Uncertain(UncertaintyReason::Predicate));
                 }
                 AlgebraicRootSquareRootStatus::InvalidEvidence
@@ -44431,8 +44429,7 @@ impl BezierAlgebraicCuspSemicircleChordParameterMap2 {
             AlgebraicRootSquareRootStatus::Transformed => radical
                 .representation
                 .expect("an oblique circle/chord contact retains its selected radical"),
-            AlgebraicRootSquareRootStatus::UndecidedSign
-            | AlgebraicRootSquareRootStatus::NonIsolatingImageInterval => {
+            AlgebraicRootSquareRootStatus::UndecidedSign => {
                 return Ok(Classification::Uncertain(UncertaintyReason::Predicate));
             }
             AlgebraicRootSquareRootStatus::InvalidEvidence
@@ -44634,8 +44631,7 @@ impl BezierAlgebraicCuspSemicircleChordParameterMap2 {
             AlgebraicRootSquareRootStatus::Transformed => radical
                 .representation
                 .expect("an axis circle/chord contact retains its selected radical"),
-            AlgebraicRootSquareRootStatus::UndecidedSign
-            | AlgebraicRootSquareRootStatus::NonIsolatingImageInterval => {
+            AlgebraicRootSquareRootStatus::UndecidedSign => {
                 return Ok(Classification::Uncertain(UncertaintyReason::Predicate));
             }
             AlgebraicRootSquareRootStatus::InvalidEvidence
@@ -82547,8 +82543,7 @@ fn represented_chord_direction_speed(
         AlgebraicRootSquareRootStatus::Transformed => speed
             .representation
             .expect("a transformed chord speed retains its representation"),
-        AlgebraicRootSquareRootStatus::UndecidedSign
-        | AlgebraicRootSquareRootStatus::NonIsolatingImageInterval => {
+        AlgebraicRootSquareRootStatus::UndecidedSign => {
             #[cfg(feature = "dispatch-trace")]
             hyperreal::dispatch_trace::record(
                 "hypercurve",
@@ -93836,8 +93831,7 @@ impl BezierAnalyticParallelPoint2 {
             AlgebraicRootSquareRootStatus::Transformed => speed
                 .representation
                 .expect("a represented analytic-parallel speed retains its positive root"),
-            AlgebraicRootSquareRootStatus::UndecidedSign
-            | AlgebraicRootSquareRootStatus::NonIsolatingImageInterval => {
+            AlgebraicRootSquareRootStatus::UndecidedSign => {
                 return Ok(Classification::Uncertain(UncertaintyReason::Predicate));
             }
             AlgebraicRootSquareRootStatus::InvalidEvidence
