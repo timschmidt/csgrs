@@ -3765,10 +3765,11 @@ pub fn divide_univariate_polynomial_exact(
 ///
 /// The divisor and dividend are canonicalized first. Multivariate long
 /// division proceeds over the exact `Real` field and succeeds only when every
-/// remainder coefficient is certified zero. The ordinary field path remains
-/// the fast path; if its bounded nonzero check cannot invert the leading
-/// coefficient, a `STRICT` retry reuses policy-certified nonzero evidence. A
-/// zero divisor is rejected; a zero dividend has the canonical zero quotient.
+/// remainder coefficient is certified zero. One shared reciprocal uses the
+/// ordinary inverse first, then a `STRICT` nonzero proof when needed. Each
+/// leading coefficient cancels by construction, so long division cannot
+/// repeatedly expand the same exact zero. A zero divisor is rejected; a zero
+/// dividend has the canonical zero quotient.
 pub fn divide_bivariate_polynomial_exact(
     dividend: &BivariatePolynomial,
     divisor: &BivariatePolynomial,
@@ -3776,56 +3777,7 @@ pub fn divide_bivariate_polynomial_exact(
     let divisor = canonical_exact_bivariate(divisor.coefficients.clone());
     let (divisor_first_power, divisor_second_power, divisor_leading) =
         leading_bivariate_term(&divisor.coefficients)?;
-    let mut remainder = canonical_exact_bivariate(dividend.coefficients.clone()).coefficients;
-    let mut quotient = Vec::<Vec<Real>>::new();
-    while let Some((first_power, second_power, leading)) = leading_bivariate_term(&remainder) {
-        if first_power < divisor_first_power || second_power < divisor_second_power {
-            return None;
-        }
-        let quotient_first_power = first_power - divisor_first_power;
-        let quotient_second_power = second_power - divisor_second_power;
-        let scale = match (leading / &divisor_leading).ok() {
-            Some(scale) => scale,
-            None => {
-                return divide_bivariate_polynomial_exact_policy_fallback(dividend, &divisor);
-            }
-        };
-        if quotient.len() <= quotient_first_power {
-            quotient.resize_with(quotient_first_power + 1, Vec::new);
-        }
-        if quotient[quotient_first_power].len() <= quotient_second_power {
-            quotient[quotient_first_power].resize_with(quotient_second_power + 1, Real::zero);
-        }
-        quotient[quotient_first_power][quotient_second_power] += &scale;
-        for (divisor_first, row) in divisor.coefficients.iter().enumerate() {
-            let target_first = quotient_first_power + divisor_first;
-            if remainder.len() <= target_first {
-                remainder.resize_with(target_first + 1, Vec::new);
-            }
-            for (divisor_second, coefficient) in row.iter().enumerate() {
-                if exact_real_is_zero(coefficient) {
-                    continue;
-                }
-                let target_second = quotient_second_power + divisor_second;
-                if remainder[target_first].len() <= target_second {
-                    remainder[target_first].resize_with(target_second + 1, Real::zero);
-                }
-                remainder[target_first][target_second] -= &scale * coefficient;
-            }
-        }
-    }
-    Some(canonical_exact_bivariate(quotient))
-}
-
-#[cold]
-fn divide_bivariate_polynomial_exact_policy_fallback(
-    dividend: &BivariatePolynomial,
-    divisor: &BivariatePolynomial,
-) -> Option<BivariatePolynomial> {
-    let divisor = canonical_exact_bivariate(divisor.coefficients.clone());
-    let (divisor_first_power, divisor_second_power, divisor_leading) =
-        leading_bivariate_term(&divisor.coefficients)?;
-    let divisor_leading_reciprocal = strict_reciprocal_after_inverse_failure(&divisor_leading)?;
+    let divisor_leading_reciprocal = strict_reciprocal(&divisor_leading)?;
     let mut remainder = canonical_exact_bivariate(dividend.coefficients.clone()).coefficients;
     let mut quotient = Vec::<Vec<Real>>::new();
     while let Some((first_power, second_power, leading)) = leading_bivariate_term(&remainder) {
@@ -3848,7 +3800,9 @@ fn divide_bivariate_polynomial_exact_policy_fallback(
                 remainder.resize_with(target_first + 1, Vec::new);
             }
             for (divisor_second, coefficient) in row.iter().enumerate() {
-                if exact_real_is_zero(coefficient) {
+                if (divisor_first, divisor_second) == (divisor_first_power, divisor_second_power)
+                    || exact_real_is_zero(coefficient)
+                {
                     continue;
                 }
                 let target_second = quotient_second_power + divisor_second;
@@ -6034,6 +5988,37 @@ mod tests {
             ]]))
             .is_none()
         );
+    }
+
+    #[test]
+    fn exact_bivariate_monomial_division_retains_nonrational_coefficients() {
+        let atom = Real::e().sin() + Real::from(2);
+        let leading = atom.clone().sqrt().unwrap() + Real::pi();
+        let numerator = atom.clone().sqrt().unwrap() + Real::e().cos();
+        for scale in [leading, -atom, Real::from(2).sqrt().unwrap()] {
+            let divisor = BivariatePolynomial::new(vec![vec![], vec![Real::zero(), scale.clone()]]);
+            let dividend = BivariatePolynomial::new(vec![
+                vec![],
+                vec![],
+                vec![],
+                vec![Real::zero(), Real::zero(), numerator.clone()],
+            ]);
+            let quotient = divide_bivariate_polynomial_exact(&dividend, &divisor)
+                .expect("a nonzero exact Real monomial coefficient can be inverted");
+            let expected = BivariatePolynomial::new(vec![
+                vec![],
+                vec![],
+                vec![Real::zero(), (&numerator / scale).unwrap()],
+            ]);
+            assert_bivariate_exactly_equal(&quotient, &expected);
+        }
+    }
+
+    #[test]
+    fn zero_dividend_still_requires_a_certified_nonzero_divisor() {
+        let zero = BivariatePolynomial::new(vec![vec![Real::zero()]]);
+        let unresolved = BivariatePolynomial::new(vec![vec![crate::test_support::terminal_zero()]]);
+        assert!(divide_bivariate_polynomial_exact(&zero, &unresolved).is_none());
     }
 
     #[test]
