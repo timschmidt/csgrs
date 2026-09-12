@@ -78377,7 +78377,12 @@ impl BezierAlgebraicChord2 {
                 let (Some(start_sign), Some(end_sign)) = (start_sign, end_sign) else {
                     return Ok((None, false));
                 };
-                if strict_signs_are_opposite(Some(start_sign), Some(end_sign)) {
+                // Opposite endpoint signs prove one unit root only when the
+                // incidence has degree at most two. Higher-degree curves can
+                // cross three or more times and need complete root isolation.
+                if system.incidence.len() <= 3
+                    && strict_signs_are_opposite(Some(start_sign), Some(end_sign))
+                {
                     let mut lower = Real::zero();
                     let mut upper = Real::one();
                     let mut lower_sign = start_sign;
@@ -148012,6 +148017,58 @@ mod conversion_tests {
                 1,
                 "the retained-offset chord must stay in the authoritative recursive kernel: {trace:?}",
             );
+        }
+    }
+
+    #[test]
+    fn recursive_chord_kernel_retains_all_cubic_crossings_with_opposite_endpoint_sides() {
+        let q = |n: i8, d: i8| (Real::from(n) / Real::from(d)).unwrap();
+        // P(t)=(t, (t-1/4)(t-1/2)(t-3/4)) crosses y=0 three
+        // times despite its opposite endpoint sides.
+        let source = RationalBezier2::try_new(
+            vec![
+                Point2::new(Real::zero(), q(-3, 32)),
+                Point2::new(q(1, 3), q(13, 96)),
+                Point2::new(q(2, 3), q(-13, 96)),
+                Point2::new(Real::one(), q(3, 32)),
+            ],
+            vec![Real::one(); 4],
+        )
+        .unwrap();
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let Classification::Decided(chord) = BezierAlgebraicChord2::try_new(
+                RationalBezierIntersectionPointEvidence2::Exact(Point2::from_values(-1, 0)),
+                RationalBezierIntersectionPointEvidence2::Exact(Point2::from_values(2, 0)),
+                &policy,
+            )
+            .unwrap() else {
+                panic!("the finite horizontal support is nonzero");
+            };
+            let outcome = crate::policy::resolve_certified_value(&policy, |policy| {
+                chord.recursive_projective_rational_intersections(&source, None, policy)
+            });
+            assert_eq!(outcome.certainty, crate::CurveCertainty::Certified);
+            let Classification::Decided(Some(
+                BezierAlgebraicChordRationalIntersections2::Contacts(contacts),
+            )) = outcome.value.unwrap()
+            else {
+                panic!("the three rational crossings must be decided");
+            };
+            assert_eq!(contacts.len(), 3);
+            for (index, contact) in contacts.iter().enumerate() {
+                assert_eq!(
+                    contact.other_parameter().as_exact(),
+                    Some(&q(index as i8 + 1, 4))
+                );
+                assert_eq!(
+                    contact.tangent_cross_sign(),
+                    if index == 1 {
+                        RealSign::Negative
+                    } else {
+                        RealSign::Positive
+                    }
+                );
+            }
         }
     }
 
