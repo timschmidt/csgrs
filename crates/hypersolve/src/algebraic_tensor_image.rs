@@ -209,7 +209,7 @@ pub fn project_selected_tensor_fiber_via_tagged_norm(
         };
         tagged_relation = reduced;
     }
-    tagged_relation = canonicalize_proven_rational_tensor(tagged_relation);
+    tagged_relation = normalize_tensor_relation(tagged_relation);
 
     for (source_index, constraint) in constraints.iter().enumerate() {
         tagged_relation = if let Some(independent) = tagged_relation
@@ -230,7 +230,7 @@ pub fn project_selected_tensor_fiber_via_tagged_norm(
                 .resultant
                 .expect("a constructed tagged tensor resultant retains its polynomial")
         };
-        tagged_relation = canonicalize_proven_rational_tensor(tagged_relation);
+        tagged_relation = normalize_tensor_relation(tagged_relation);
         for (axis, remaining_constraint) in constraints.iter().skip(source_index + 1).enumerate() {
             let Some(reduced) = tagged_relation.reduce_axis_modulo(
                 axis,
@@ -241,7 +241,7 @@ pub fn project_selected_tensor_fiber_via_tagged_norm(
             };
             tagged_relation = reduced;
         }
-        tagged_relation = canonicalize_proven_rational_tensor(tagged_relation);
+        tagged_relation = normalize_tensor_relation(tagged_relation);
     }
 
     let (dimensions, coefficients) = tagged_relation.into_parts();
@@ -568,7 +568,7 @@ pub fn represent_algebraic_tensor_image(
         };
         relation = reduced;
     }
-    relation = canonicalize_proven_rational_tensor(relation);
+    relation = normalize_tensor_relation(relation);
 
     for (source_index, constraint) in constraints.iter().enumerate() {
         relation = if let Some(independent) =
@@ -603,7 +603,7 @@ pub fn represent_algebraic_tensor_image(
                 .expect("a constructed tensor resultant retains its polynomial")
         };
         eliminated_source_count += 1;
-        relation = canonicalize_proven_rational_tensor(relation);
+        relation = normalize_tensor_relation(relation);
         for (axis, remaining_constraint) in constraints.iter().skip(source_index + 1).enumerate() {
             if relation
                 .dimensions()
@@ -625,7 +625,7 @@ pub fn represent_algebraic_tensor_image(
             };
             relation = reduced;
         }
-        relation = canonicalize_proven_rational_tensor(relation);
+        relation = normalize_tensor_relation(relation);
     }
     if relation.dimensions().len() != 1 {
         debug_assert_eq!(eliminated_source_count, original_source_count);
@@ -895,11 +895,14 @@ fn canonicalize_proven_rational_coefficients(mut coefficients: Vec<Real>) -> Vec
     coefficients
 }
 
-fn canonicalize_proven_rational_tensor(polynomial: DenseTensorPolynomial) -> DenseTensorPolynomial {
+fn normalize_tensor_relation(polynomial: DenseTensorPolynomial) -> DenseTensorPolynomial {
     let (dimensions, coefficients) = polynomial.into_parts();
     let coefficients = canonicalize_proven_rational_coefficients(coefficients);
-    DenseTensorPolynomial::try_new(dimensions, coefficients)
-        .expect("canonicalizing tensor coefficients preserves its validated shape")
+    // These tensors describe zero sets. Clear one common rational scale
+    // before the next norm can raise that irrelevant content to another power.
+    let normalized = crate::integer_interpolation::primitive_integer_polynomial(&coefficients);
+    DenseTensorPolynomial::try_new(dimensions, normalized.unwrap_or(coefficients))
+        .expect("normalizing tensor coefficients preserves its validated shape")
 }
 
 fn report(
@@ -1115,6 +1118,32 @@ mod tests {
             coefficients[flat_index(&dimensions, &exponents)] = coefficient;
         }
         DenseTensorPolynomial::try_new(dimensions, coefficients).unwrap()
+    }
+
+    #[test]
+    fn tensor_images_remove_irrelevant_wide_rational_content() {
+        let sources = [exact_square_root(2), exact_square_root(3)];
+        let interval = IsolatedRootInterval {
+            lower: real(3),
+            upper: real(4),
+            exact_root: None,
+            distinct_root_count: 1,
+        };
+        let large = Real::from(2).powi_i64(4096).unwrap() + real(17);
+        for scale in [large.clone(), -large.inverse_ref().unwrap()] {
+            let relation = sum_relation(2, Real::zero()).scale(&scale).unwrap();
+            let result = represent_algebraic_tensor_image(&relation, &sources, &interval);
+            assert_eq!(result.status, AlgebraicTensorImageStatus::Transformed);
+            let root = result.representation.unwrap();
+            assert_eq!(
+                root.polynomial_coefficients,
+                vec![real(1), real(0), real(-10), real(0), real(1)],
+            );
+            assert_eq!(
+                validate_algebraic_root_representation(&root, PredicatePolicy::STRICT).status,
+                AlgebraicRootValidationStatus::Valid,
+            );
+        }
     }
 
     #[test]
