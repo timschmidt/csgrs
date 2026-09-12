@@ -1305,10 +1305,12 @@ impl CurveRegion2 {
         if self.has_regularized_filled_left_topology(policy) {
             return Ok(self.clone());
         }
-        let context = CurveRegionBooleanContext::try_new_unary(self, policy)?;
-        context
-            .build_regularized_region()
-            .map_err(|error| error.with_operation(CurveOperation2::Arrangement))
+        self.resolve_regularization(policy, || {
+            let context = CurveRegionBooleanContext::try_new_unary(self, policy)?;
+            context
+                .build_regularized_region()
+                .map_err(|error| error.with_operation(CurveOperation2::Arrangement))
+        })
     }
 
     /// Collects exact contacts and overlaps against another region immediately.

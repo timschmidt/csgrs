@@ -1055,6 +1055,37 @@ fn regularized_topology_does_not_upgrade_terminal_connectivity() {
 }
 
 #[test]
+fn empty_output_does_not_certify_an_approximate_normalization() {
+    let height = support::terminally_unresolved_zero() + Real::from(2).powi_i64(-1024).unwrap();
+    let path = CurvePath2::try_new(vec![
+        Curve2::from(QuadraticBezier2::new(
+            point(0, 0),
+            Point2::new(Real::one(), height.clone()),
+            point(2, 0),
+        )),
+        Curve2::from(LineSeg2::try_new(point(2, 0), point(0, 0)).unwrap()),
+    ])
+    .unwrap();
+    let authored = path_region(
+        &path,
+        CurveBoundaryInteriorSide2::Right,
+        &CurveContext::STRICT,
+    );
+    for _ in 0..2 {
+        let normalized = authored
+            .regularized_region(&CurveContext::APPROXIMATE_512)
+            .unwrap();
+        assert_eq!(normalized.certainty, CurveCertainty::Approximate512Consumed);
+        assert!(normalized.value.is_empty());
+    }
+    assert!(authored.regularized_region(&CurveContext::STRICT).is_err());
+    assert_eq!(
+        height.certified_sign_until(-2048).sign(),
+        Some(hyperreal::RealSign::Positive)
+    );
+}
+
+#[test]
 fn regularized_topology_retains_only_the_policy_actually_consumed() {
     for authored in [
         square(0, 0, 2, 2),

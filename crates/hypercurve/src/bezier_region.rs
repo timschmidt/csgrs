@@ -166,6 +166,7 @@ struct CurveRegionData2 {
     certified_loop_fill_rules: Option<Arc<[FillRule]>>,
     signed_loop_composition: bool,
     regularized_filled_left_policy: Option<CurveContext>,
+    certified_regularization: OnceLock<CurveRegion2>,
     strict_materialized_connectivity_certified: bool,
     filled_side_is_left: PolicyClassificationCache<Arc<[bool]>>,
     native_boundary_loops: OnceLock<Option<Arc<[BezierBoundaryLoop2]>>>,
@@ -185,6 +186,7 @@ impl CurveRegionData2 {
             certified_loop_fill_rules: None,
             signed_loop_composition: false,
             regularized_filled_left_policy: None,
+            certified_regularization: OnceLock::new(),
             strict_materialized_connectivity_certified,
             filled_side_is_left: PolicyClassificationCache::new(),
             native_boundary_loops: OnceLock::new(),
@@ -11233,6 +11235,29 @@ impl CurveRegion2 {
             policy.observe_approximate_512();
         }
         true
+    }
+
+    /// Shares a successful, certified normalization of immutable authored loops.
+    /// The certificate belongs to the operation from this input to its output:
+    /// even an exact empty output does not certify approximate input decisions.
+    pub(crate) fn resolve_regularization(
+        &self,
+        policy: &CurveContext,
+        normalize: impl FnOnce() -> ExactCurveResult<Self>,
+    ) -> ExactCurveResult<Self> {
+        if !policy.is_edge_preview()
+            && let Some(region) = self.data.certified_regularization.get()
+        {
+            return Ok(region.clone());
+        }
+        let outcome = resolve_certified_value(policy, |_| normalize());
+        let region = outcome.value?;
+        if outcome.certainty == CurveCertainty::Certified && !policy.is_edge_preview() {
+            debug_assert!(!Arc::ptr_eq(&self.data, &region.data));
+            let _ = self.data.certified_regularization.set(region);
+            return Ok(self.data.certified_regularization.get().unwrap().clone());
+        }
+        Ok(region)
     }
 
     pub(crate) fn with_certified_loop_roles(
@@ -34064,6 +34089,50 @@ mod tests {
         );
         assert!(Arc::ptr_eq(&first.data, &second.data));
         assert!(first.clone().into_boundary_loops().is_empty());
+    }
+
+    #[test]
+    fn authored_region_clones_share_certified_normalization_without_retaining_the_input() {
+        let path = CurvePath2::try_new(vec![
+            Curve2::from(QuadraticBezier2::new(p(0, 0), p(1, 2), p(2, 0))),
+            Curve2::from(LineSeg2::try_new(p(2, 0), p(0, 0)).unwrap()),
+        ])
+        .unwrap();
+        for first_policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let authored = CurveRegion2::try_from_boundary_paths(
+                std::slice::from_ref(&path),
+                &CurveContext::STRICT,
+            )
+            .unwrap()
+            .value;
+            let source = Arc::downgrade(&authored.data);
+            let cloned = authored.clone();
+            let normalized = authored.regularized_region(&first_policy).unwrap();
+            assert_eq!(normalized.certainty, CurveCertainty::Certified);
+            assert!(!Arc::ptr_eq(&normalized.value.data, &authored.data));
+            for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+                let replay = cloned.regularized_region(&policy).unwrap();
+                assert_eq!(replay.certainty, CurveCertainty::Certified);
+                assert!(Arc::ptr_eq(&normalized.value.data, &replay.value.data));
+            }
+            drop(cloned);
+            drop(authored);
+            assert!(
+                source.upgrade().is_none(),
+                "normalization must not retain its input region"
+            );
+            assert_eq!(
+                normalized
+                    .value
+                    .classify_point(
+                        &Point2::new(Real::one(), (Real::one() / Real::from(2)).unwrap()),
+                        &CurveContext::STRICT,
+                    )
+                    .unwrap()
+                    .value,
+                Classification::Decided(RegionPointLocation::Inside),
+            );
+        }
     }
 
     #[test]
