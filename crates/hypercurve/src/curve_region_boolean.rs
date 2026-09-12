@@ -1197,9 +1197,15 @@ impl CurveRegion2 {
         policy: &CurveContext,
     ) -> ExactCurveResult<Self> {
         if let Some(region) = boolean_trivial_region(self, other, operation)? {
+            return region
+                .regularized_region_raw(policy)
+                .map_err(|error| error.with_operation(CurveOperation2::Boolean));
+        }
+        let (first, second) = self.regularized_pair(other, policy)?;
+        if let Some(region) = boolean_trivial_region(&first, &second, operation)? {
             return Ok(region);
         }
-        CurveRegionBooleanContext::try_new(self, other, policy)?
+        CurveRegionBooleanContext::try_new(&first, &second, policy)?
             .build_boolean_region(operation, None)
     }
 
@@ -1218,6 +1224,7 @@ impl CurveRegion2 {
         other: &Self,
         policy: &CurveContext,
     ) -> ExactCurveResult<CurveRegionBooleanResults2> {
+        let (first, second) = self.regularized_pair(other, policy)?;
         let operations = [
             BooleanOp::Union,
             BooleanOp::Intersection,
@@ -1229,12 +1236,12 @@ impl CurveRegion2 {
         // paths inside that topology instead of rebuilding a native region
         // Boolean four times. Empty and structurally identical operands need
         // no arrangement at all.
-        if self.is_empty() || other.is_empty() || self == other {
+        if first.is_empty() || second.is_empty() || first == second {
             let immediate = [
-                boolean_trivial_region(self, other, operations[0])?,
-                boolean_trivial_region(self, other, operations[1])?,
-                boolean_trivial_region(self, other, operations[2])?,
-                boolean_trivial_region(self, other, operations[3])?,
+                boolean_trivial_region(&first, &second, operations[0])?,
+                boolean_trivial_region(&first, &second, operations[1])?,
+                boolean_trivial_region(&first, &second, operations[2])?,
+                boolean_trivial_region(&first, &second, operations[3])?,
             ];
             return Ok(CurveRegionBooleanResults2 {
                 regions: Box::new(
@@ -1248,7 +1255,29 @@ impl CurveRegion2 {
                 topology_point_classification_count: 0,
             });
         }
-        CurveRegionBooleanContext::try_new(self, other, policy)?.build_boolean_regions()
+        CurveRegionBooleanContext::try_new(&first, &second, policy)?.build_boolean_regions()
+    }
+
+    /// Establishes filled-side ownership once per operand. Authored loops
+    /// may intersect each other or have no represented signed area; their
+    /// unary arrangement must precede a cross-operand-only arrangement.
+    /// Completed boundaries and identical operands share their certificates.
+    fn regularized_pair(
+        &self,
+        other: &Self,
+        policy: &CurveContext,
+    ) -> ExactCurveResult<(Self, Self)> {
+        let first = self
+            .regularized_region_raw(policy)
+            .map_err(|error| error.with_operation(CurveOperation2::Boolean))?;
+        let second = if self == other {
+            first.clone()
+        } else {
+            other
+                .regularized_region_raw(policy)
+                .map_err(|error| error.with_operation(CurveOperation2::Boolean))?
+        };
+        Ok((first, second))
     }
 
     /// Regularizes this region's authored loops through the authoritative exact arrangement.

@@ -375,6 +375,24 @@ impl CurveContext {
         }
     }
 
+    /// Retains both the current construction decisions and the replay
+    /// requirements of its already-validated dependencies. A certified local
+    /// computation cannot upgrade an approximate input's evidence.
+    pub(crate) fn retained_object_policy_with_dependencies(
+        &self,
+        dependencies: impl IntoIterator<Item = Self>,
+    ) -> Self {
+        let retained = self.retained_object_policy();
+        if dependencies
+            .into_iter()
+            .any(|dependency| !retained.accepts_retained_policy(dependency))
+        {
+            *self
+        } else {
+            retained
+        }
+    }
+
     #[track_caller]
     pub(crate) fn consume_predicate<T>(
         &self,
@@ -1071,6 +1089,24 @@ mod tests {
         })
         .unwrap();
         assert_eq!(outcome.certainty, CurveCertainty::Approximate512Consumed);
+    }
+
+    #[test]
+    fn a_new_exact_operation_preserves_an_approximate_dependency() {
+        let context = CurveContext::APPROXIMATE_512;
+        let parent = resolve_certified_operation(&context, |policy| {
+            policy.observe_approximate_512();
+            Ok::<_, ()>(policy.retained_object_policy())
+        })
+        .unwrap();
+        let child = resolve_certified_operation(&context, |policy| {
+            Ok::<_, ()>(policy.strict_predicate_pass(|| {
+                policy.retained_object_policy_with_dependencies([parent.value])
+            }))
+        })
+        .unwrap();
+        assert!(!CurveContext::STRICT.accepts_retained_policy(child.value));
+        assert!(context.accepts_retained_policy(child.value));
     }
 
     #[test]

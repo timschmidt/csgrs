@@ -274,8 +274,11 @@ fn native_segment_counts(region: &CurveRegion2, policy: &CurveContext) -> (usize
 #[test]
 fn boolean_batch_short_circuits_empty_and_identical_operands() {
     let empty = CurveRegion2::empty();
-    let region = square(0, 0, 4, 4);
     let policy = CurveContext::STRICT;
+    let region = square(0, 0, 4, 4)
+        .regularized_region(&policy)
+        .unwrap()
+        .into_value();
 
     let empty_first = empty
         .boolean_regions(&region, &policy)

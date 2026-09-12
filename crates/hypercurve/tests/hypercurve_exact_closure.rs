@@ -1,5 +1,5 @@
 use hypercurve::{
-    Classification, Curve2, CurveCertainty, CurveContext, CurvePath2, CurveRegion2,
+    BooleanOp, Classification, Curve2, CurveCertainty, CurveContext, CurvePath2, CurveRegion2,
     CurveRegionLoopRole, FillRule, LineSeg2, OffsetCornerStyle2, Point2, RationalBezier2, Real,
     RegionPointLocation,
 };
@@ -97,8 +97,7 @@ fn assert_cap_round_offset(cap: &CurveRegion2) {
     }
 }
 
-#[test]
-fn zero_offset_regularizes_overlapping_authored_material() {
+fn overlapping_material_rectangles() -> CurveRegion2 {
     let rectangle = |left, right| {
         let points = [
             point(left, 0),
@@ -117,14 +116,19 @@ fn zero_offset_regularizes_overlapping_authored_material() {
         )
         .unwrap()
     };
-    let region = CurveRegion2::try_from_signed_boundary_paths_with_loop_semantics(
+    CurveRegion2::try_from_signed_boundary_paths_with_loop_semantics(
         &[rectangle(0, 3), rectangle(2, 5)],
         &[CurveRegionLoopRole::Material; 2],
         &[FillRule::NonZero; 2],
         &CurveContext::STRICT,
     )
     .unwrap()
-    .into_value();
+    .into_value()
+}
+
+#[test]
+fn zero_offset_regularizes_overlapping_authored_material() {
+    let region = overlapping_material_rectangles();
     let result = region
         .offset(
             Real::zero(),
@@ -157,6 +161,48 @@ fn zero_offset_regularizes_overlapping_authored_material() {
             0,
             "a compact native boundary must retain its normalization certificate",
         );
+    }
+}
+
+#[test]
+fn identical_and_empty_booleans_regularize_authored_winding() {
+    let region = overlapping_material_rectangles();
+    let empty = CurveRegion2::empty();
+    let policy = CurveContext::STRICT;
+    for (first, second, nonempty_results) in [
+        (&region, &region, [true, true, false, false]),
+        (&region, &empty, [true, false, true, true]),
+        (&empty, &region, [true, false, false, true]),
+    ] {
+        let batch = first.boolean_regions(second, &policy).unwrap();
+        assert_eq!(batch.certainty, CurveCertainty::Certified);
+        for ((operation, result), nonempty) in [
+            (BooleanOp::Union, batch.value.union()),
+            (BooleanOp::Intersection, batch.value.intersection()),
+            (BooleanOp::Difference, batch.value.difference()),
+            (BooleanOp::Xor, batch.value.xor()),
+        ]
+        .into_iter()
+        .zip(nonempty_results)
+        {
+            let single = first.boolean_region(second, operation, &policy).unwrap();
+            assert_eq!(single.certainty, CurveCertainty::Certified);
+            for result in [result, &single.value] {
+                assert_eq!(result.boundary_loops().len(), usize::from(nonempty));
+                assert_eq!(
+                    result.filled_area(&policy).unwrap().value,
+                    Classification::Decided(Some(Real::from(if nonempty { 10 } else { 0 }))),
+                );
+                assert_eq!(
+                    result.classify_point(&point(2, 1), &policy).unwrap().value,
+                    Classification::Decided(if nonempty {
+                        RegionPointLocation::Inside
+                    } else {
+                        RegionPointLocation::Outside
+                    }),
+                );
+            }
+        }
     }
 }
 
@@ -244,5 +290,77 @@ fn curved_offset_regularizes_interior_folds_despite_convex_endpoint_turns() {
             Classification::Decided(RegionPointLocation::Inside),
             "the raw fold and both incident faces belong to the regularized dilation",
         );
+    }
+}
+
+#[test]
+fn authored_rational_boolean_operands_do_not_require_signed_area() {
+    let cap = rational_convex_cap();
+    let stripe_vertices = [
+        point(2, -1),
+        point(3, -1),
+        point(3, 3),
+        point(2, 3),
+        point(2, -1),
+    ];
+    let stripe_path = CurvePath2::try_new(
+        stripe_vertices
+            .windows(2)
+            .map(|pair| {
+                LineSeg2::try_new(pair[0].clone(), pair[1].clone())
+                    .unwrap()
+                    .into()
+            })
+            .collect(),
+    )
+    .unwrap();
+    let stripe = CurveRegion2::try_from_boundary_paths_with_loop_semantics(
+        &[stripe_path],
+        &[CurveRegionLoopRole::Material],
+        &[FillRule::NonZero],
+        &CurveContext::STRICT,
+    )
+    .unwrap()
+    .into_value();
+    let samples = [
+        (Point2::new(ratio(5, 2), ratio(1, 2)), true, true),
+        (Point2::new(ratio(5, 2), ratio(-1, 2)), false, true),
+        (Point2::new(Real::one(), ratio(1, 10)), true, false),
+        (point(6, 6), false, false),
+    ];
+    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+        let batch = cap
+            .boolean_regions(&stripe, &policy)
+            .expect("an exact Boolean boundary does not require a Green integral");
+        assert_eq!(batch.certainty, CurveCertainty::Certified);
+        for (operation, result) in [
+            (BooleanOp::Union, batch.value.union()),
+            (BooleanOp::Intersection, batch.value.intersection()),
+            (BooleanOp::Difference, batch.value.difference()),
+            (BooleanOp::Xor, batch.value.xor()),
+        ] {
+            let single = cap.boolean_region(&stripe, operation, &policy).unwrap();
+            assert_eq!(single.certainty, CurveCertainty::Certified);
+            for (sample, in_cap, in_stripe) in &samples {
+                let inside = match operation {
+                    BooleanOp::Union => in_cap | in_stripe,
+                    BooleanOp::Intersection => in_cap & in_stripe,
+                    BooleanOp::Difference => in_cap & !in_stripe,
+                    BooleanOp::Xor => in_cap ^ in_stripe,
+                };
+                let expected = if inside {
+                    RegionPointLocation::Inside
+                } else {
+                    RegionPointLocation::Outside
+                };
+                for result in [result, &single.value] {
+                    assert_eq!(
+                        result.classify_point(sample, &policy).unwrap().value,
+                        Classification::Decided(expected),
+                        "{operation:?}, sample {sample:?}",
+                    );
+                }
+            }
+        }
     }
 }

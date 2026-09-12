@@ -29503,8 +29503,11 @@ mod tests {
                 assert!(result.value.candidate_count() > 0);
                 for_each_corner_region(&result.value, |filleted| {
                     let replay = filleted
-                        .boolean_regions(&selected_fillet_disjoint_square(&policy), &policy)
-                        .expect("the pair-radial/analytic fillet re-enters the Boolean kernel");
+                        .boolean_regions(
+                            &selected_fillet_disjoint_square(&CurveContext::STRICT),
+                            &CurveContext::STRICT,
+                        )
+                        .expect("a certified pair-radial/analytic fillet re-enters the strict Boolean kernel");
                     assert_eq!(replay.certainty, CurveCertainty::Certified);
                     assert_eq!(
                         replay.value.union().boundary_loops().len(),
@@ -29764,8 +29767,11 @@ mod tests {
                 );
                 for_each_corner_region(&result.value, |filleted| {
                     let replay = filleted
-                        .boolean_regions(&selected_fillet_disjoint_square(&policy), &policy)
-                        .expect("the translated pair-radial fillet re-enters the Boolean kernel");
+                        .boolean_regions(
+                            &selected_fillet_disjoint_square(&CurveContext::STRICT),
+                            &CurveContext::STRICT,
+                        )
+                        .expect("a certified translated pair-radial fillet re-enters the strict Boolean kernel");
                     assert_eq!(replay.certainty, CurveCertainty::Certified);
                     assert_eq!(
                         replay.value.union().boundary_loops().len(),

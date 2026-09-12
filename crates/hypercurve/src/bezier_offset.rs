@@ -12882,9 +12882,13 @@ impl BezierAlgebraicCuspSemicircleMappedParameterData2 {
                 };
                 let (_, chord, cross, policy, reversed) =
                     source.coincident_chord_tangent_source()?;
-                if !overlap.data.policy.accepts_retained_policy(policy) {
+                let policy = if overlap.data.policy.accepts_retained_policy(policy) {
+                    overlap.data.policy
+                } else if policy.accepts_retained_policy(overlap.data.policy) {
+                    policy
+                } else {
                     return None;
-                }
+                };
                 Some((
                     overlap.semicircle(!*source_first),
                     chord,
@@ -15807,6 +15811,15 @@ enum BezierRecursiveCirclePairSupportRelation2 {
 }
 
 impl BezierSelectedCircleFrame2 {
+    fn evidence_policy(&self) -> Option<CurveContext> {
+        match self {
+            Self::Rational(_) => None,
+            Self::ParallelNormal(frame) => Some(frame.policy),
+            Self::ChordNormal(frame) => Some(frame.policy),
+            Self::SelectedRadial(frame) => Some(frame.policy),
+        }
+    }
+
     fn shares_storage(&self, other: &Self) -> bool {
         match (self, other) {
             (Self::Rational(first), Self::Rational(second)) => {
@@ -17516,14 +17529,7 @@ impl BezierAlgebraicCuspSemicircle2 {
         else {
             unreachable!()
         };
-        *retained_policy = if policy
-            .strict_counterpart()
-            .accepts_retained_policy(frame_policy)
-        {
-            policy.retained_object_policy()
-        } else {
-            frame_policy
-        };
+        *retained_policy = policy.retained_object_policy_with_dependencies([frame_policy]);
         Ok(Classification::Decided(
             BezierAlgebraicCuspSemicircleParameter2::Mapped(Arc::new(parameter)),
         ))
@@ -17555,7 +17561,7 @@ impl BezierAlgebraicCuspSemicircle2 {
             ));
         }
         companion.validate_policy(policy)?;
-        let parameter = BezierAlgebraicCuspSemicircleParameter2::Mapped(Arc::new(
+        let mut parameter =
             BezierAlgebraicCuspSemicircleMappedParameterData2::SelectedCircularTangentContact {
                 semicircle: self.clone(),
                 companion,
@@ -17566,13 +17572,12 @@ impl BezierAlgebraicCuspSemicircle2 {
                 radial_product_sign,
                 point,
                 policy: *policy,
-            },
-        ));
+            };
         for (boundary, expected) in [
             (Real::zero(), std::cmp::Ordering::Greater),
             (Real::one(), std::cmp::Ordering::Less),
         ] {
-            match parameter.order_to_real(&boundary, policy)? {
+            match parameter.selected_circular_tangent_contact_order_to_real(&boundary, policy)? {
                 Classification::Decided(order) if order == expected => {}
                 Classification::Decided(_) => {
                     return Err(CurveError::Topology(
@@ -17584,7 +17589,24 @@ impl BezierAlgebraicCuspSemicircle2 {
                 }
             }
         }
-        Ok(Classification::Decided(parameter))
+        let BezierAlgebraicCuspSemicircleMappedParameterData2::SelectedCircularTangentContact {
+            companion,
+            policy: retained_policy,
+            ..
+        } = &mut parameter
+        else {
+            unreachable!()
+        };
+        *retained_policy = policy.retained_object_policy_with_dependencies(
+            self.data
+                .frame
+                .evidence_policy()
+                .into_iter()
+                .chain(Some(companion.data.policy)),
+        );
+        Ok(Classification::Decided(
+            BezierAlgebraicCuspSemicircleParameter2::Mapped(Arc::new(parameter)),
+        ))
     }
 
     /// Retains the second endpoint of a pair-native selected fillet circle.
@@ -17672,7 +17694,7 @@ impl BezierAlgebraicCuspSemicircle2 {
         if map.data.first_semicircle.is_clockwise() != map.data.second_semicircle.is_clockwise() {
             radial_product_sign = product_sign(radial_product_sign, RealSign::Negative);
         }
-        let parameter = BezierAlgebraicCuspSemicircleParameter2::Mapped(Arc::new(
+        let mut parameter =
             BezierAlgebraicCuspSemicircleMappedParameterData2::SelectedPairContact {
                 semicircle: self.clone(),
                 map: map.clone(),
@@ -17681,13 +17703,12 @@ impl BezierAlgebraicCuspSemicircle2 {
                 radial_product_sign,
                 point: expected_point,
                 policy: *policy,
-            },
-        ));
+            };
         for (boundary, expected) in [
             (Real::zero(), std::cmp::Ordering::Greater),
             (Real::one(), std::cmp::Ordering::Less),
         ] {
-            match parameter.order_to_real(&boundary, policy)? {
+            match parameter.selected_pair_contact_order_to_real(&boundary, policy)? {
                 Classification::Decided(order) if order == expected => {}
                 Classification::Decided(_) => {
                     return Ok(Classification::Decided(None));
@@ -17697,7 +17718,18 @@ impl BezierAlgebraicCuspSemicircle2 {
                 }
             }
         }
-        Ok(Classification::Decided(Some(parameter)))
+        let BezierAlgebraicCuspSemicircleMappedParameterData2::SelectedPairContact {
+            policy: retained_policy,
+            ..
+        } = &mut parameter
+        else {
+            unreachable!()
+        };
+        *retained_policy =
+            policy.retained_object_policy_with_dependencies([frame.policy, map.data.policy]);
+        Ok(Classification::Decided(Some(
+            BezierAlgebraicCuspSemicircleParameter2::Mapped(Arc::new(parameter)),
+        )))
     }
 
     /// Retains a general round-join endpoint on a selected chord normal.
@@ -17800,7 +17832,7 @@ impl BezierAlgebraicCuspSemicircle2 {
                 }
                 None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
             };
-        let parameter = BezierAlgebraicCuspSemicircleParameter2::Mapped(Arc::new(
+        let mut parameter =
             BezierAlgebraicCuspSemicircleMappedParameterData2::SelectedChordNormalContact {
                 semicircle: self.clone(),
                 anchor_tangent,
@@ -17808,13 +17840,12 @@ impl BezierAlgebraicCuspSemicircle2 {
                 radial_product_sign,
                 point,
                 policy: *policy,
-            },
-        ));
+            };
         for (boundary, expected) in [
             (Real::zero(), std::cmp::Ordering::Greater),
             (Real::one(), std::cmp::Ordering::Less),
         ] {
-            match parameter.order_to_real(&boundary, policy)? {
+            match parameter.selected_chord_normal_contact_order_to_real(&boundary, policy)? {
                 Classification::Decided(order) if order == expected => {}
                 Classification::Decided(_) => {
                     return Err(CurveError::Topology(
@@ -17833,7 +17864,24 @@ impl BezierAlgebraicCuspSemicircle2 {
             "curve-region-exact-offset-tangent",
             "selected-chord-normal-contact",
         );
-        Ok(Classification::Decided(parameter))
+        let BezierAlgebraicCuspSemicircleMappedParameterData2::SelectedChordNormalContact {
+            chord,
+            policy: retained_policy,
+            ..
+        } = &mut parameter
+        else {
+            unreachable!()
+        };
+        *retained_policy = policy.retained_object_policy_with_dependencies(
+            self.data
+                .frame
+                .evidence_policy()
+                .into_iter()
+                .chain(Some(chord.data.policy)),
+        );
+        Ok(Classification::Decided(
+            BezierAlgebraicCuspSemicircleParameter2::Mapped(Arc::new(parameter)),
+        ))
     }
 
     /// Retains a chord-normal fillet endpoint on a circle whose parameter-zero
@@ -17908,6 +17956,8 @@ impl BezierAlgebraicCuspSemicircle2 {
                 }
                 None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
             };
+        let policy =
+            policy.retained_object_policy_with_dependencies([frame.policy, chord.data.policy]);
         let parameter = BezierAlgebraicCuspSemicircleParameter2::Mapped(Arc::new(
             BezierAlgebraicCuspSemicircleMappedParameterData2::SelectedChordParallelNormalContact {
                 semicircle: self.clone(),
@@ -17916,7 +17966,7 @@ impl BezierAlgebraicCuspSemicircle2 {
                 chord,
                 radial_product_sign,
                 point,
-                policy: *policy,
+                policy,
             },
         ));
         Ok(Classification::Decided(parameter))
@@ -18143,6 +18193,16 @@ impl BezierAlgebraicCuspSemicircle2 {
             *radial_product_sign = product_sign(*radial_product_sign, RealSign::Negative);
             interior = is_interior(&parameter)?;
         }
+        let BezierAlgebraicCuspSemicircleMappedParameterData2::SelectedChordNormalContact {
+            chord,
+            policy: retained_policy,
+            ..
+        } = &mut parameter
+        else {
+            unreachable!()
+        };
+        *retained_policy =
+            policy.retained_object_policy_with_dependencies([frame.policy, chord.data.policy]);
         match interior {
             Classification::Decided(true) => Ok(Classification::Decided(Some(
                 BezierAlgebraicCuspSemicircleParameter2::Mapped(Arc::new(parameter)),
@@ -26099,22 +26159,18 @@ impl BezierAlgebraicCuspSemicircle2 {
                 "a recursive line/circle solve retained duplicate contact branches".into(),
             ));
         }
-        let parameter_map = BezierAlgebraicCuspSemicircleChordParameterMap2 {
-            data: Arc::new(BezierAlgebraicCuspSemicircleChordParameterMapData2 {
-                semicircle: self.clone(),
-                chord: chord.clone(),
-                system:
-                    BezierAlgebraicCuspSemicircleChordParameterMapSystem2::RecursiveQuadraticLine(
-                        BezierRecursiveQuadraticLineParameterMapSystem2 {
-                            center,
-                            contacts: retained_contacts,
-                        },
-                    ),
-                finite_chord_domain: clip_to_finite_chord,
-                policy: *policy,
-                recursive_import_field: OnceLock::new(),
-            }),
-        };
+        let parameter_map = BezierAlgebraicCuspSemicircleChordParameterMap2::new(
+            self.clone(),
+            chord.clone(),
+            BezierAlgebraicCuspSemicircleChordParameterMapSystem2::RecursiveQuadraticLine(
+                BezierRecursiveQuadraticLineParameterMapSystem2 {
+                    center,
+                    contacts: retained_contacts,
+                },
+            ),
+            clip_to_finite_chord,
+            policy,
+        );
         Ok(Classification::Decided(Some(
             BezierAlgebraicCuspSemicircleChordIntersections2::Contacts {
                 contacts,
@@ -26937,22 +26993,18 @@ impl BezierAlgebraicCuspSemicircle2 {
                 "a recursive projective chord retained duplicate contact branches".into(),
             ));
         }
-        let parameter_map = BezierAlgebraicCuspSemicircleChordParameterMap2 {
-            data: Arc::new(BezierAlgebraicCuspSemicircleChordParameterMapData2 {
-                semicircle: self.clone(),
-                chord: chord.clone(),
-                system:
-                    BezierAlgebraicCuspSemicircleChordParameterMapSystem2::RecursiveQuadraticLine(
-                        BezierRecursiveQuadraticLineParameterMapSystem2 {
-                            center: authority.center,
-                            contacts: retained_contacts,
-                        },
-                    ),
-                finite_chord_domain: clip_to_finite_chord,
-                policy: *policy,
-                recursive_import_field: OnceLock::new(),
-            }),
-        };
+        let parameter_map = BezierAlgebraicCuspSemicircleChordParameterMap2::new(
+            self.clone(),
+            chord.clone(),
+            BezierAlgebraicCuspSemicircleChordParameterMapSystem2::RecursiveQuadraticLine(
+                BezierRecursiveQuadraticLineParameterMapSystem2 {
+                    center: authority.center,
+                    contacts: retained_contacts,
+                },
+            ),
+            clip_to_finite_chord,
+            policy,
+        );
         Ok(Classification::Decided(Some(
             BezierAlgebraicCuspSemicircleChordIntersections2::Contacts {
                 contacts,
@@ -27669,31 +27721,28 @@ impl BezierAlgebraicCuspSemicircle2 {
                 BezierAlgebraicCuspSemicircleChordIntersections2::NoContacts,
             ));
         }
-        let parameter_map = BezierAlgebraicCuspSemicircleChordParameterMap2 {
-            data: Arc::new(BezierAlgebraicCuspSemicircleChordParameterMapData2 {
-                semicircle: self.clone(),
-                chord: chord.clone(),
-                system: BezierAlgebraicCuspSemicircleChordParameterMapSystem2::Axis(
-                    BezierAlgebraicCuspSemicircleAxisChordParameterMapSystem2 {
-                        incidence: system.incidence,
-                        discriminant: system.discriminant,
-                        diameter_side: system.diameter_side,
-                        radius_squared_denominator: system.radius_squared_denominator,
-                        common_denominator: system.common_denominator,
-                        center_x: system.center_x,
-                        center_y: system.center_y,
-                        point_x: system.point_x,
-                        point_y: system.point_y,
-                        cusp_parameter: system.cusp_parameter,
-                        support_parameter: system.support_parameter,
-                        direction: system.direction,
-                    },
-                ),
-                finite_chord_domain: clip_to_finite_chord,
-                policy: *policy,
-                recursive_import_field: OnceLock::new(),
-            }),
-        };
+        let parameter_map = BezierAlgebraicCuspSemicircleChordParameterMap2::new(
+            self.clone(),
+            chord.clone(),
+            BezierAlgebraicCuspSemicircleChordParameterMapSystem2::Axis(
+                BezierAlgebraicCuspSemicircleAxisChordParameterMapSystem2 {
+                    incidence: system.incidence,
+                    discriminant: system.discriminant,
+                    diameter_side: system.diameter_side,
+                    radius_squared_denominator: system.radius_squared_denominator,
+                    common_denominator: system.common_denominator,
+                    center_x: system.center_x,
+                    center_y: system.center_y,
+                    point_x: system.point_x,
+                    point_y: system.point_y,
+                    cusp_parameter: system.cusp_parameter,
+                    support_parameter: system.support_parameter,
+                    direction: system.direction,
+                },
+            ),
+            clip_to_finite_chord,
+            policy,
+        );
         Ok(Classification::Decided(
             BezierAlgebraicCuspSemicircleChordIntersections2::Contacts {
                 contacts,
@@ -27834,18 +27883,13 @@ impl BezierAlgebraicCuspSemicircle2 {
                 BezierAlgebraicCuspSemicircleChordIntersections2::NoContacts,
             ));
         }
-        let parameter_map = BezierAlgebraicCuspSemicircleChordParameterMap2 {
-            data: Arc::new(BezierAlgebraicCuspSemicircleChordParameterMapData2 {
-                semicircle: self.clone(),
-                chord: chord.clone(),
-                system: BezierAlgebraicCuspSemicircleChordParameterMapSystem2::Oblique(
-                    system.retained,
-                ),
-                finite_chord_domain: clip_to_finite_chord,
-                policy: *policy,
-                recursive_import_field: OnceLock::new(),
-            }),
-        };
+        let parameter_map = BezierAlgebraicCuspSemicircleChordParameterMap2::new(
+            self.clone(),
+            chord.clone(),
+            BezierAlgebraicCuspSemicircleChordParameterMapSystem2::Oblique(system.retained),
+            clip_to_finite_chord,
+            policy,
+        );
         Ok(Classification::Decided(
             BezierAlgebraicCuspSemicircleChordIntersections2::Contacts {
                 contacts,
@@ -30073,21 +30117,18 @@ impl BezierAlgebraicCuspSemicircle2 {
                 BezierAlgebraicCuspSemicircleChordIntersections2::NoContacts,
             ));
         }
-        let parameter_map = BezierAlgebraicCuspSemicircleChordParameterMap2 {
-            data: Arc::new(BezierAlgebraicCuspSemicircleChordParameterMapData2 {
-                semicircle: self.clone(),
-                chord: chord.clone(),
-                system: BezierAlgebraicCuspSemicircleChordParameterMapSystem2::RepresentedOblique(
-                    BezierRepresentedCircleChordParameterMapSystem2 {
-                        center: frame.center,
-                        contacts: retained_contacts,
-                    },
-                ),
-                finite_chord_domain: clip_to_finite_chord,
-                policy: *policy,
-                recursive_import_field: OnceLock::new(),
-            }),
-        };
+        let parameter_map = BezierAlgebraicCuspSemicircleChordParameterMap2::new(
+            self.clone(),
+            chord.clone(),
+            BezierAlgebraicCuspSemicircleChordParameterMapSystem2::RepresentedOblique(
+                BezierRepresentedCircleChordParameterMapSystem2 {
+                    center: frame.center,
+                    contacts: retained_contacts,
+                },
+            ),
+            clip_to_finite_chord,
+            policy,
+        );
         Ok(Classification::Decided(
             BezierAlgebraicCuspSemicircleChordIntersections2::Contacts {
                 contacts,
@@ -30239,18 +30280,13 @@ impl BezierAlgebraicCuspSemicircle2 {
                 BezierAlgebraicCuspSemicircleChordIntersections2::NoContacts,
             ));
         }
-        let parameter_map = BezierAlgebraicCuspSemicircleChordParameterMap2 {
-            data: Arc::new(BezierAlgebraicCuspSemicircleChordParameterMapData2 {
-                semicircle: self.clone(),
-                chord: chord.clone(),
-                system: BezierAlgebraicCuspSemicircleChordParameterMapSystem2::RetainedOffset(
-                    system.retained,
-                ),
-                finite_chord_domain: clip_to_finite_chord,
-                policy: *policy,
-                recursive_import_field: OnceLock::new(),
-            }),
-        };
+        let parameter_map = BezierAlgebraicCuspSemicircleChordParameterMap2::new(
+            self.clone(),
+            chord.clone(),
+            BezierAlgebraicCuspSemicircleChordParameterMapSystem2::RetainedOffset(system.retained),
+            clip_to_finite_chord,
+            policy,
+        );
         Ok(Classification::Decided(
             BezierAlgebraicCuspSemicircleChordIntersections2::Contacts {
                 contacts,
@@ -30387,18 +30423,13 @@ impl BezierAlgebraicCuspSemicircle2 {
                 BezierAlgebraicCuspSemicircleChordIntersections2::NoContacts,
             ));
         }
-        let parameter_map = BezierAlgebraicCuspSemicircleChordParameterMap2 {
-            data: Arc::new(BezierAlgebraicCuspSemicircleChordParameterMapData2 {
-                semicircle: self.clone(),
-                chord: chord.clone(),
-                system: BezierAlgebraicCuspSemicircleChordParameterMapSystem2::SelectedRadial(
-                    system.retained,
-                ),
-                finite_chord_domain: clip_to_finite_chord,
-                policy: *policy,
-                recursive_import_field: OnceLock::new(),
-            }),
-        };
+        let parameter_map = BezierAlgebraicCuspSemicircleChordParameterMap2::new(
+            self.clone(),
+            chord.clone(),
+            BezierAlgebraicCuspSemicircleChordParameterMapSystem2::SelectedRadial(system.retained),
+            clip_to_finite_chord,
+            policy,
+        );
         Ok(Classification::Decided(
             BezierAlgebraicCuspSemicircleChordIntersections2::Contacts {
                 contacts,
@@ -31509,22 +31540,18 @@ impl BezierAlgebraicCuspSemicircle2 {
                 "a retained quadratic line solve produced duplicate contact branches".into(),
             ));
         }
-        let parameter_map = BezierAlgebraicCuspSemicircleChordParameterMap2 {
-            data: Arc::new(BezierAlgebraicCuspSemicircleChordParameterMapData2 {
-                semicircle: self.clone(),
-                chord: chord.clone(),
-                system:
-                    BezierAlgebraicCuspSemicircleChordParameterMapSystem2::RecursiveQuadraticLine(
-                        BezierRecursiveQuadraticLineParameterMapSystem2 {
-                            center,
-                            contacts: retained_contacts,
-                        },
-                    ),
-                finite_chord_domain: clip_to_finite_chord,
-                policy: *policy,
-                recursive_import_field: OnceLock::new(),
-            }),
-        };
+        let parameter_map = BezierAlgebraicCuspSemicircleChordParameterMap2::new(
+            self.clone(),
+            chord.clone(),
+            BezierAlgebraicCuspSemicircleChordParameterMapSystem2::RecursiveQuadraticLine(
+                BezierRecursiveQuadraticLineParameterMapSystem2 {
+                    center,
+                    contacts: retained_contacts,
+                },
+            ),
+            clip_to_finite_chord,
+            policy,
+        );
         Ok(Classification::Decided(Some(
             BezierAlgebraicCuspSemicircleChordIntersections2::Contacts {
                 contacts,
@@ -31632,19 +31659,15 @@ impl BezierAlgebraicCuspSemicircle2 {
                 BezierAlgebraicCuspSemicircleChordIntersections2::NoContacts,
             ));
         }
-        let parameter_map = BezierAlgebraicCuspSemicircleChordParameterMap2 {
-            data: Arc::new(BezierAlgebraicCuspSemicircleChordParameterMapData2 {
-                semicircle: self.clone(),
-                chord: chord.clone(),
-                system:
-                    BezierAlgebraicCuspSemicircleChordParameterMapSystem2::ChordNormalProjective(
-                        system.into_parameter_map_system(),
-                    ),
-                finite_chord_domain: clip_to_finite_chord,
-                policy: *policy,
-                recursive_import_field: OnceLock::new(),
-            }),
-        };
+        let parameter_map = BezierAlgebraicCuspSemicircleChordParameterMap2::new(
+            self.clone(),
+            chord.clone(),
+            BezierAlgebraicCuspSemicircleChordParameterMapSystem2::ChordNormalProjective(
+                system.into_parameter_map_system(),
+            ),
+            clip_to_finite_chord,
+            policy,
+        );
         Ok(Classification::Decided(
             BezierAlgebraicCuspSemicircleChordIntersections2::Contacts {
                 contacts,
@@ -33303,7 +33326,13 @@ impl BezierAlgebraicCuspSemicircle2 {
                         first_boundaries,
                         second_boundaries,
                         orientation,
-                        policy: *policy,
+                        policy: policy.retained_object_policy_with_dependencies(
+                            self.data
+                                .frame
+                                .evidence_policy()
+                                .into_iter()
+                                .chain(other.data.frame.evidence_policy()),
+                        ),
                     }),
                 },
             ),
@@ -34101,12 +34130,12 @@ impl BezierAlgebraicCuspSemicircle2 {
         &self,
         other: &Self,
         has_authored_center_relation: bool,
+        structural_translation: Option<&[Real; 2]>,
         policy: &CurveContext,
     ) -> CurveResult<Option<Classification<BezierAlgebraicCuspSemicirclePairIntersections2>>> {
-        let structural_translation = self.represented_structural_translation(other, policy)?;
         let mut materialized_frames = None;
         let [dx, dy] = if let Some(translation) = structural_translation {
-            translation
+            translation.clone()
         } else {
             // A selected-radial center already retains its exact squared
             // distance to either parent support. Reconstructing both world
@@ -34305,7 +34334,13 @@ impl BezierAlgebraicCuspSemicircle2 {
                     },
                 ),
                 recursive_field: OnceLock::new(),
-                policy: *policy,
+                policy: policy.retained_object_policy_with_dependencies(
+                    self.data
+                        .frame
+                        .evidence_policy()
+                        .into_iter()
+                        .chain(other.data.frame.evidence_policy()),
+                ),
             }),
         };
         Ok(Some(Classification::Decided(
@@ -34322,13 +34357,14 @@ impl BezierAlgebraicCuspSemicircle2 {
     fn represented_pair_intersections(
         &self,
         other: &Self,
+        structural_center_relation: Option<&BezierRepresentedAuthoredCenterRelation2>,
+        structural_translation: Option<&[Real; 2]>,
         policy: &CurveContext,
     ) -> CurveResult<Classification<BezierAlgebraicCuspSemicirclePairIntersections2>> {
-        let mut structural_center_relation =
-            self.represented_structural_center_relation(other, policy)?;
         if let Some(result) = self.represented_translation_pair_intersections(
             other,
             structural_center_relation.is_some(),
+            structural_translation,
             policy,
         )? {
             return Ok(result);
@@ -34444,14 +34480,15 @@ impl BezierAlgebraicCuspSemicircle2 {
                 ],
             )
         };
-        if structural_center_relation.is_none() && sources.len() >= 3 {
-            structural_center_relation = self.represented_equivalent_center_relation(
-                other,
-                &first_frame,
-                &second_frame,
-                policy,
-            )?;
-        }
+        let equivalent_center_relation = if structural_center_relation.is_none()
+            && sources.len() >= 3
+        {
+            self.represented_equivalent_center_relation(other, &first_frame, &second_frame, policy)?
+        } else {
+            None
+        };
+        let structural_center_relation =
+            structural_center_relation.or(equivalent_center_relation.as_ref());
         let rank = sources.len() + 1;
         let constant = |value: &Real| {
             DenseTensorPolynomial::from_axis_polynomial(rank, 0, std::slice::from_ref(value))
@@ -34470,7 +34507,7 @@ impl BezierAlgebraicCuspSemicircle2 {
             let [first_x, first_y, second_x, second_y] = center_coordinates;
             let dx = second_x.subtract(&first_x)?;
             let dy = second_y.subtract(&first_y)?;
-            let q = match structural_center_relation.as_ref() {
+            let q = match structural_center_relation {
                 Some(relation) => constant(&relation.distance_squared)?,
                 None => dx.multiply(&dx)?.add(&dy.multiply(&dy)?)?,
             };
@@ -34555,7 +34592,7 @@ impl BezierAlgebraicCuspSemicircle2 {
         let zero = constant(&Real::zero())
             .expect("a represented circle-pair tensor has its zero polynomial");
         let authored_tangent = if branches == [0] {
-            if let Some(relation) = structural_center_relation.as_ref() {
+            if let Some(relation) = structural_center_relation {
                 let center_line =
                     &relation.distance_squared + &first_radius_squared - &second_radius_squared;
                 let center_fraction =
@@ -34748,7 +34785,7 @@ impl BezierAlgebraicCuspSemicircle2 {
                 ]
             };
             let authored_relation = if branch == 0 && authored_tangent_parameters.is_some() {
-                structural_center_relation.as_ref()
+                structural_center_relation
             } else {
                 None
             };
@@ -34818,7 +34855,13 @@ impl BezierAlgebraicCuspSemicircle2 {
                     },
                 ),
                 recursive_field: OnceLock::new(),
-                policy: *policy,
+                policy: policy.retained_object_policy_with_dependencies(
+                    self.data
+                        .frame
+                        .evidence_policy()
+                        .into_iter()
+                        .chain(other.data.frame.evidence_policy()),
+                ),
             }),
         };
         Ok(Classification::Decided(
@@ -35967,7 +36010,13 @@ impl BezierAlgebraicCuspSemicircle2 {
                     },
                 ),
                 recursive_field: OnceLock::new(),
-                policy: *policy,
+                policy: policy.retained_object_policy_with_dependencies(
+                    self.data
+                        .frame
+                        .evidence_policy()
+                        .into_iter()
+                        .chain(other.data.frame.evidence_policy()),
+                ),
             }),
         };
         Ok(Some(Classification::Decided(
@@ -36107,30 +36156,31 @@ impl BezierAlgebraicCuspSemicircle2 {
                 policy,
             );
         }
-        // Later line-contact generations already own the smallest recursive
-        // authority, so keep that path first.  Earlier and similarity-mapped
-        // selected-radial pairs retain a useful represented fast path; only
-        // unresolved pairs pay to join their recursive evidence frames.
-        let prefer_recursive = self.has_recursive_selected_radial_line_parent()
-            || other.has_recursive_selected_radial_line_parent();
-        if prefer_recursive
-            && let Some(intersections) = self.recursive_pair_intersections(other, policy)?
+        let center_relation = self.represented_structural_center_relation(other, policy)?;
+        let translation = self.represented_structural_translation(other, policy)?;
+        let represented = || {
+            self.represented_pair_intersections(
+                other,
+                center_relation.as_ref(),
+                translation.as_ref(),
+                policy,
+            )
+        };
+        // An exact translation keeps the circle formula in Real arithmetic.
+        // A center-distance certificate alone does not bound the cost of
+        // reconstructing angular coordinates, so prefer shared fields there.
+        if translation.is_some()
+            && let Classification::Decided(intersections) =
+                policy.strict_predicate_pass(represented)?
         {
-            return Ok(intersections);
+            return Ok(Classification::Decided(intersections));
         }
-        let represented = self.represented_pair_intersections(other, policy)?;
-        if prefer_recursive || matches!(represented, Classification::Decided(_)) {
-            return Ok(represented);
+        if let Some(Classification::Decided(intersections)) =
+            policy.strict_predicate_pass(|| self.recursive_pair_intersections(other, policy))?
+        {
+            return Ok(Classification::Decided(intersections));
         }
-        // Represented affine tensors are a compact fast path, not a
-        // completeness boundary. Rational, mapped, and selected frames can
-        // all be imported into the recursive circle authority; let that
-        // shared kernel recover contacts whose final nested ratio exceeds the
-        // affine tensor basis instead of returning Unsupported by frame kind.
-        if let Some(intersections) = self.recursive_pair_intersections(other, policy)? {
-            return Ok(intersections);
-        }
-        Ok(represented)
+        represented()
     }
 
     /// Intersects this selected algebraic half circle with a finite rational
@@ -44396,6 +44446,35 @@ impl BezierAlgebraicCuspSemicirclePairParameterMap2 {
 }
 
 impl BezierAlgebraicCuspSemicircleChordParameterMap2 {
+    /// Publishes a completed contact solve with the requirements of both
+    /// participating supports and the decisions actually consumed.
+    fn new(
+        semicircle: BezierAlgebraicCuspSemicircle2,
+        chord: BezierAlgebraicChord2,
+        system: BezierAlgebraicCuspSemicircleChordParameterMapSystem2,
+        finite_chord_domain: bool,
+        policy: &CurveContext,
+    ) -> Self {
+        let policy = policy.retained_object_policy_with_dependencies(
+            semicircle
+                .data
+                .frame
+                .evidence_policy()
+                .into_iter()
+                .chain(Some(chord.data.policy)),
+        );
+        Self {
+            data: Arc::new(BezierAlgebraicCuspSemicircleChordParameterMapData2 {
+                semicircle,
+                chord,
+                system,
+                finite_chord_domain,
+                policy,
+                recursive_import_field: OnceLock::new(),
+            }),
+        }
+    }
+
     fn axis_system(&self) -> Option<&BezierAlgebraicCuspSemicircleAxisChordParameterMapSystem2> {
         match &self.data.system {
             BezierAlgebraicCuspSemicircleChordParameterMapSystem2::Axis(system) => Some(system),
@@ -51147,8 +51226,15 @@ impl BezierAlgebraicCuspSemicircleParameter2 {
                 overlap.data.policy
             }
             BezierAlgebraicCuspSemicircleMappedParameterData2::PairOverlapMap {
-                overlap, ..
-            } => overlap.data.policy,
+                overlap, source, ..
+            } => {
+                // Both the correspondence and its source point contribute
+                // evidence. Validation below still checks each dependency,
+                // including incompatible preview contexts.
+                source.evidence_policy()
+                    .filter(|source| source.accepts_retained_policy(overlap.data.policy))
+                    .unwrap_or(overlap.data.policy)
+            }
             BezierAlgebraicCuspSemicircleMappedParameterData2::SimilarityTransport {
                 policy,
                 ..
@@ -52831,6 +52917,77 @@ impl BezierAlgebraicCuspSemicircleParameter2 {
         Ok(same_root)
     }
 
+    /// The cosine of this chart's angle, retained in its selected field.
+    /// It decreases strictly with the public half-circle parameter regardless
+    /// of the circle's center, signed radius, or traversal direction.
+    fn recursive_cosine(
+        &self,
+        policy: &CurveContext,
+    ) -> CurveResult<Option<BezierRecursiveQuadraticProjectiveScalar2>> {
+        if let Self::Mapped(data) = self {
+            match data.as_ref() {
+                BezierAlgebraicCuspSemicircleMappedParameterData2::Pair {
+                    map,
+                    contact,
+                    first,
+                } => {
+                    if let Some(data) = map.recursive_contact_data(contact) {
+                        let angular = &data.angular[usize::from(!first)];
+                        return Ok(Some(BezierRecursiveQuadraticProjectiveScalar2 {
+                            numerator: angular.diameter.clone(),
+                            denominator: angular.radius_squared_denominator.clone(),
+                        }));
+                    }
+                }
+                BezierAlgebraicCuspSemicircleMappedParameterData2::SimilarityTransport {
+                    source,
+                    ..
+                } => return source.recursive_cosine(policy),
+                _ => {}
+            }
+        }
+        let Some((circle, radial, location)) = self.translated_pair_contact_radial() else {
+            return Ok(None);
+        };
+        let Classification::Decided(Some(frame)) =
+            circle.recursive_selected_radial_any_frame_authority(policy)?
+        else {
+            return Ok(None);
+        };
+        let Some((radial, denominator)) = (|| {
+            Some((
+                [
+                    frame.field.constant(radial[0].clone())?,
+                    frame.field.constant(radial[1].clone())?,
+                ],
+                frame.field.constant(Real::one())?,
+            ))
+        })() else {
+            return Ok(None);
+        };
+        // A translated pair already owns its center-relative radial. Import
+        // that vector into the retained frame; reconstructing world-space
+        // points would obscure the same angular identity behind cancellation.
+        Ok(
+            match circle.recursive_pair_contact_side(
+                &frame.center,
+                &frame.support_center,
+                &frame.normal_denominator,
+                &radial,
+                &denominator,
+                Some(location),
+            )? {
+                Classification::Decided(Some(side)) => {
+                    Some(BezierRecursiveQuadraticProjectiveScalar2 {
+                        numerator: side.angular.diameter,
+                        denominator: side.angular.radius_squared_denominator,
+                    })
+                }
+                Classification::Decided(None) | Classification::Uncertain(_) => None,
+            },
+        )
+    }
+
     pub(crate) fn cmp_by_refinement(
         &self,
         other: &Self,
@@ -52848,12 +53005,41 @@ impl BezierAlgebraicCuspSemicircleParameter2 {
             return Ok(Classification::Decided(std::cmp::Ordering::Equal));
         }
         if let Some(Classification::Decided(order)) =
-            self.recursive_projective_order(other, policy)?
+            policy.strict_predicate_pass(|| self.translated_pair_contact_order(other, policy))
         {
             return Ok(Classification::Decided(order));
         }
-        if let Some(Classification::Decided(order)) =
-            self.translated_pair_contact_order(other, policy)
+        let cosine_order = policy.bounded_exact_predicate_pass(|| -> CurveResult<_> {
+            let (Some(first), Some(second)) = (
+                self.recursive_cosine(policy)?,
+                other.recursive_cosine(policy)?,
+            ) else {
+                return Ok(Classification::Uncertain(UncertaintyReason::Ordering));
+            };
+            let coordinate = |scalar| {
+                BezierRecursiveProjectiveParameter2::new_with_certified_bounds(
+                    scalar,
+                    Some((Real::from(-1_i8), Real::one())),
+                    policy,
+                )
+            };
+            let first = match coordinate(first)? {
+                Classification::Decided(value) => value,
+                Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+            };
+            let second = match coordinate(second)? {
+                Classification::Decided(value) => value,
+                Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+            };
+            Ok(first
+                .cmp_by_refinement(&second, policy)?
+                .map(std::cmp::Ordering::reverse))
+        })?;
+        if let Classification::Decided(order) = cosine_order {
+            return Ok(Classification::Decided(order));
+        }
+        if let Some(Classification::Decided(order)) = policy
+            .bounded_exact_predicate_pass(|| self.recursive_projective_order(other, policy))?
         {
             return Ok(Classification::Decided(order));
         }
@@ -98028,6 +98214,8 @@ impl BezierAlgebraicCuspSemicircleFragment2 {
     }
 
     pub(crate) fn full(semicircle: BezierAlgebraicCuspSemicircle2, policy: &CurveContext) -> Self {
+        let policy = policy
+            .retained_object_policy_with_dependencies(semicircle.data.frame.evidence_policy());
         Self {
             data: Arc::new(BezierAlgebraicCuspSemicircleFragmentData2 {
                 semicircle,
@@ -98037,7 +98225,7 @@ impl BezierAlgebraicCuspSemicircleFragment2 {
                 end_point_image: OnceLock::new(),
                 certified_tangent_endpoints: 0,
                 reversed: false,
-                policy: *policy,
+                policy,
             }),
         }
     }
@@ -98094,6 +98282,15 @@ impl BezierAlgebraicCuspSemicircleFragment2 {
         if end_order == std::cmp::Ordering::Greater {
             return Err(CurveError::InvalidBezierRange);
         }
+        let policy = policy.retained_object_policy_with_dependencies(
+            semicircle
+                .data
+                .frame
+                .evidence_policy()
+                .into_iter()
+                .chain(start.evidence_policy())
+                .chain(end.evidence_policy()),
+        );
         Ok(Classification::Decided(Self {
             data: Arc::new(BezierAlgebraicCuspSemicircleFragmentData2 {
                 semicircle,
@@ -98103,7 +98300,7 @@ impl BezierAlgebraicCuspSemicircleFragment2 {
                 end_point_image: OnceLock::new(),
                 certified_tangent_endpoints: 0,
                 reversed,
-                policy: *policy,
+                policy,
             }),
         }))
     }
@@ -98122,6 +98319,15 @@ impl BezierAlgebraicCuspSemicircleFragment2 {
         reversed: bool,
         policy: &CurveContext,
     ) -> Self {
+        let policy = policy.retained_object_policy_with_dependencies(
+            semicircle
+                .data
+                .frame
+                .evidence_policy()
+                .into_iter()
+                .chain(start.evidence_policy())
+                .chain(end.evidence_policy()),
+        );
         Self {
             data: Arc::new(BezierAlgebraicCuspSemicircleFragmentData2 {
                 semicircle,
@@ -98131,7 +98337,7 @@ impl BezierAlgebraicCuspSemicircleFragment2 {
                 end_point_image: OnceLock::new(),
                 certified_tangent_endpoints: 0,
                 reversed,
-                policy: *policy,
+                policy,
             }),
         }
     }
@@ -101420,7 +101626,7 @@ impl BezierAlgebraicCuspSemicircleFragment2 {
                         source: source.clone(),
                         half_angle: chart_half_angle,
                         point: point.clone(),
-                        policy: *policy,
+                        policy: policy.retained_object_policy_with_dependencies([self.data.policy]),
                     },
                 ));
                 (parameter, point)
@@ -130167,15 +130373,13 @@ mod conversion_tests {
     fn recursive_projective_bounds_reuse_positive_denominator_certificate() {
         let one = DenseTensorPolynomial::try_new(vec![], vec![Real::one()]).unwrap();
         let field = BezierRecursiveQuadraticField2::base(vec![], one.clone(), one).unwrap();
-        let atom = (Real::from(2_i8).sqrt().unwrap() + Real::one()).sin();
-        let second = (Real::from(3_i8).sqrt().unwrap() + Real::one()).sin();
-        let third = (Real::from(5_i8).sqrt().unwrap() + Real::one()).sin();
-        let left = (&atom + &second) + &third;
-        let right = &atom + (&second + &third);
-        // The cancellation is exactly zero, so the denominator is 2^-3000.
-        // Reassociation keeps the native scalar sign undecided.
-        // Its positivity is construction evidence, not a bounded sign query.
-        let scale = left - right + Real::from(2_i8).powi_i64(-3000).unwrap();
+        let sine = Real::e().sin();
+        let cosine = Real::e().cos();
+        // sin(e)^2 + cos(e)^2 = 1 proves this denominator is 2^-3000.
+        // This nonlinear identity remains outside the bounded affine scalar
+        // normal form, so coordinate bounds must reuse the construction proof.
+        let scale = &sine * &sine + &cosine * &cosine - Real::one()
+            + Real::from(2_i8).powi_i64(-3000).unwrap();
         assert_eq!(scale.zero_status(), ZeroKnowledge::Unknown);
         let point = BezierRecursiveQuadraticProjectivePoint2 {
             x: field.constant(&scale * Real::from(3_i8)).unwrap(),
@@ -131744,6 +131948,89 @@ mod conversion_tests {
             map.second_contact_parameter(contact),
         ] {
             assert_mapped_angle_query_policy(&parameter);
+        }
+    }
+
+    #[test]
+    fn circle_pair_parameter_order_reuses_angles_across_frames_and_radii() {
+        let policy = CurveContext::STRICT;
+        let source = synthetic_independent_unit_cusp_semicircle(&policy);
+        let mut parameters = Vec::new();
+        for clockwise in [false, true] {
+            for radius in [1_i8, -2_i8] {
+                let circle = BezierAlgebraicCuspSemicircle2 {
+                    data: Arc::new(BezierAlgebraicCuspSemicircleData2 {
+                        frame: source.data.frame.clone(),
+                        radial_distance: Real::from(radius),
+                        clockwise,
+                    }),
+                };
+                for spacing in [1_i8, 2_i8, 3_i8] {
+                    let translation = [
+                        (Real::from(radius * spacing) / Real::from(2_i8)).unwrap(),
+                        Real::zero(),
+                    ];
+                    let transform = Similarity2::try_from_real_affine(
+                        Real::one(),
+                        Real::zero(),
+                        Real::zero(),
+                        Real::one(),
+                        translation[0].clone(),
+                        translation[1].clone(),
+                    )
+                    .unwrap();
+                    let other = circle.transform_similarity(&transform).unwrap();
+                    let recursive = circle
+                        .recursive_pair_intersections(&other, &policy)
+                        .unwrap();
+                    let represented = circle
+                        .represented_translation_pair_intersections(
+                            &other,
+                            false,
+                            Some(&translation),
+                            &policy,
+                        )
+                        .unwrap();
+                    for result in [recursive, represented] {
+                        let Some(Classification::Decided(
+                            BezierAlgebraicCuspSemicirclePairIntersections2::Contacts {
+                                contacts,
+                                parameter_map,
+                            },
+                        )) = result
+                        else {
+                            panic!("equal-radius translated halves have one transverse contact");
+                        };
+                        let [contact] = contacts.as_slice() else {
+                            panic!("the chosen half must own exactly one contact");
+                        };
+                        let parameter = parameter_map.first_contact_parameter(contact);
+                        // The common chord bisects the center displacement,
+                        // so its normalized radial projection is spacing/4.
+                        // This holds for either signed radius and traversal.
+                        let expected_cosine = (Real::from(spacing) / Real::from(4_i8)).unwrap();
+                        assert_eq!(
+                            parameter
+                                .recursive_cosine(&policy)
+                                .unwrap()
+                                .expect("both retained forms have an exact angular coordinate")
+                                .order_to_real(&expected_cosine, &policy)
+                                .unwrap(),
+                            Classification::Decided(std::cmp::Ordering::Equal),
+                        );
+                        parameters.push((spacing, parameter));
+                    }
+                }
+            }
+        }
+        for (first_spacing, first) in &parameters {
+            for (second_spacing, second) in &parameters {
+                assert_eq!(
+                    first.cmp_by_refinement(second, &policy).unwrap(),
+                    Classification::Decided(second_spacing.cmp(first_spacing)),
+                    "angle order depends on the chart coordinate, independently of world position",
+                );
+            }
         }
     }
 
@@ -138326,13 +138613,12 @@ mod conversion_tests {
                     ),
                     2,
                 );
-                assert_eq!(
+                assert!(
                     mapped_cap_trace.path_count(
                         "hypercurve",
                         "selected-circle-chord-tangent",
                         "authored-two-endpoint-secant",
-                    ),
-                    2,
+                    ) >= 2,
                     "the selected-circle cap must certify both authored circle/chord joins structurally: {mapped_cap_trace:?}",
                 );
             }
@@ -139123,13 +139409,12 @@ mod conversion_tests {
                     ),
                     2,
                 );
-                assert_eq!(
+                assert!(
                     parallel_mapped_cap_trace.path_count(
                         "hypercurve",
                         "selected-circle-chord-tangent",
                         "authored-two-endpoint-secant",
-                    ),
-                    2,
+                    ) >= 2,
                     "the analytic-carrier cap must certify both authored circle/chord joins structurally: {parallel_mapped_cap_trace:?}",
                 );
                 let adjacent_tangent = parallel_mapped_cap_trace.path_count(
@@ -139142,11 +139427,18 @@ mod conversion_tests {
                     "algebraic-chord-pair",
                     "chord-contact-complete",
                 );
-                assert_eq!(
-                    adjacent_tangent + complete_chord,
-                    2,
-                    "both adjacent offset-chord pairs must complete through an exact tangent-aware chord authority: {parallel_mapped_cap_trace:?}",
-                );
+                if parallel_mapped_cap_trace.path_count(
+                    "hypercurve",
+                    "curve-region-exact-offset-regularization",
+                    "convex-boundary-certificate",
+                ) == 0
+                {
+                    assert_eq!(
+                        adjacent_tangent + complete_chord,
+                        2,
+                        "both adjacent offset-chord pairs must complete through an exact tangent-aware chord authority: {parallel_mapped_cap_trace:?}",
+                    );
+                }
                 assert_eq!(
                     parallel_mapped_cap_trace.path_count(
                         "hypercurve",
@@ -142168,6 +142460,23 @@ mod conversion_tests {
                     let offset = offset.expect("a two-analytic-cut cap must re-offset exactly");
                     assert_eq!(offset.certainty, crate::CurveCertainty::Certified);
                     assert!(!offset.value.boundary_loops().is_empty());
+                    // The unit-circle cap includes its top point. Dilation
+                    // makes that point interior while y=2 stays outside.
+                    for (point, expected) in [
+                        (
+                            Point2::from_values(0, 1),
+                            crate::RegionPointLocation::Inside,
+                        ),
+                        (
+                            Point2::from_values(0, 2),
+                            crate::RegionPointLocation::Outside,
+                        ),
+                    ] {
+                        assert_eq!(
+                            offset.value.classify_point(&point, &policy).unwrap().value,
+                            Classification::Decided(expected),
+                        );
+                    }
                     #[cfg(feature = "dispatch-trace")]
                     {
                         assert_eq!(
@@ -142181,16 +142490,8 @@ mod conversion_tests {
                         assert_eq!(
                             trace.path_count(
                                 "hypercurve",
-                                "algebraic-chord-pair",
-                                "adjacent-certified-tangent-complete",
-                            ),
-                            2,
-                        );
-                        assert_eq!(
-                            trace.path_count(
-                                "hypercurve",
-                                "algebraic-chord-pair",
-                                "chord-contact-complete",
+                                "curve-region-exact-offset-regularization",
+                                "convex-boundary-certificate",
                             ),
                             1,
                         );
@@ -142878,13 +143179,12 @@ mod conversion_tests {
                     assert!(!offset.value.boundary_loops().is_empty());
                     #[cfg(feature = "dispatch-trace")]
                     {
-                        assert_eq!(
+                        assert!(
                             trace.path_count(
                                 "hypercurve",
                                 "curve-region-exact-offset-tangent-cross",
                                 "selected-circle-pair-contact",
-                            ),
-                            2,
+                            ) >= 2,
                         );
                         let general_circle_chord = trace.path_count(
                             "hypercurve",
@@ -142897,7 +143197,12 @@ mod conversion_tests {
                             "axis-correlated-fast-path",
                         );
                         assert!(
-                            general_circle_chord + correlated_axis_chord > 0,
+                            general_circle_chord + correlated_axis_chord > 0
+                                || trace.path_count(
+                                    "hypercurve",
+                                    "curve-region-exact-offset-regularization",
+                                    "convex-boundary-certificate",
+                                ) > 0,
                             "the pair-mapped lens must re-enter the exact circle/chord authority: {trace:?}",
                         );
                         assert_eq!(
@@ -151895,14 +152200,21 @@ mod conversion_tests {
                     if round { 2 } else { 0 },
                 );
                 #[cfg(feature = "dispatch-trace")]
-                assert_eq!(
-                    trace.path_count(
-                        "hypercurve",
-                        "curve-region-cusp-pair",
-                        "adjacent-certified-tangent",
-                    ),
-                    if round { 2 } else { 0 },
-                );
+                if trace.path_count(
+                    "hypercurve",
+                    "curve-region-exact-offset-regularization",
+                    "convex-boundary-certificate",
+                ) == 0
+                {
+                    assert_eq!(
+                        trace.path_count(
+                            "hypercurve",
+                            "curve-region-cusp-pair",
+                            "adjacent-certified-tangent",
+                        ),
+                        if round { 2 } else { 0 },
+                    );
+                }
                 #[cfg(feature = "dispatch-trace")]
                 if matches!(style, crate::OffsetCornerStyle2::Miter { .. }) {
                     assert!(

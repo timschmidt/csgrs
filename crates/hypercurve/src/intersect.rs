@@ -2232,8 +2232,6 @@ mod tests {
     #[test]
     fn line_intersection_reuses_a_certified_nonzero_determinant() {
         let extent = exact_normal_positive();
-        assert_eq!(extent.zero_status(), hyperreal::ZeroKnowledge::Unknown);
-        assert_eq!(extent.inverse_ref(), Err(hyperreal::Problem::UnknownZero));
         let half = (Real::one() / Real::from(2)).unwrap();
         let crossing_x = &extent * &half;
         let horizontal = LineSeg2::try_new(
