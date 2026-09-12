@@ -9,7 +9,7 @@ use hypercurve::{
     Classification, Contour2, ContourPointLocation, Curve2, CurvePath2, CurvePolicy, CurveRegion2,
     CurveRegionBoundaryContact2, CurveRegionBoundaryKind2, CurveRegionLoopRole, CurveString2,
     ExactCurveError, FillRule, LineArcIntersection, LineArcRegion2, LineLineIntersection, LineSeg2,
-    RationalBezier2, RationalBezierIntersectionPointEvidence2, RationalQuadraticBezier2,
+    RationalBezier2, RationalQuadraticBezier2,
     RegionPointLocation, Segment2, UncertaintyReason,
 };
 use hyperlimit::{PredicateOutcome, compare_reals, point3_equal};
@@ -3873,7 +3873,7 @@ fn model_boundary_contacts(
         else {
             return Ok(None);
         };
-        let Some(RationalBezierIntersectionPointEvidence2::Exact(pcurve_point)) = contact.point()
+        let Some(pcurve_point) = contact.point().and_then(|point| point.coordinates())
         else {
             return Ok(None);
         };
