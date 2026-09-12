@@ -4260,13 +4260,8 @@ impl<'a> CurveRegionBooleanContext<'a> {
             let tangent_cross_sign =
                 orient_tangent_cross_sign(contact.tangent_cross_sign, cusp_is_first);
             let tangent_topology = if contact.tangent_cross_sign == RealSign::Zero {
-                match cusp
-                    .semicircle()
-                    .chord_contact_tangent_topology(
-                        &contact.cusp_parameter,
-                        chord,
-                        &self.data.policy,
-                    )
+                match contact
+                    .tangent_topology(cusp.semicircle(), chord, &self.data.policy)
                     .map_err(|cause| self.invalid(chord_index, cause))?
                 {
                     Classification::Decided(Some((dot, circle_side_of_chord))) => {
@@ -4324,10 +4319,9 @@ impl<'a> CurveRegionBooleanContext<'a> {
         })
     }
 
-    /// Replays a certified tangent support when a circle and chord from
-    /// different arrangement components retain the same endpoint. Unlike an
-    /// authored adjacent vertex, this contact remains part of the arrangement
-    /// evidence; only the general circle/line solve is bypassed.
+    /// Replays an isolated endpoint contact shared by different arrangement
+    /// components. Endpoint-only incidence can be transverse or tangent;
+    /// retain the actual tangent cross sign before bypassing the full solve.
     fn certified_cusp_chord_endpoint_contact(
         &self,
         cusp: &crate::BezierAlgebraicCuspSemicircleFragment2,
@@ -4385,6 +4379,20 @@ impl<'a> CurveRegionBooleanContext<'a> {
                         continue;
                     }
                 }
+                let cross = match self.data.policy.strict_predicate_pass(|| {
+                    cusp.endpoint_tangent_cross_algebraic_chord(
+                        cusp_at_start,
+                        chord,
+                        false,
+                        &self.data.policy,
+                    )
+                })? {
+                    Classification::Decided(cross) => cross,
+                    Classification::Uncertain(reason) => {
+                        uncertainty.get_or_insert(reason);
+                        continue;
+                    }
+                };
                 return Ok(Classification::Decided(Some(
                     BezierAlgebraicCuspSemicircleRetainedChordContact2 {
                         cusp_parameter: cusp.endpoint_parameter(cusp_at_start).clone(),
@@ -4394,7 +4402,9 @@ impl<'a> CurveRegionBooleanContext<'a> {
                             chord.end_parameter()
                         },
                         point,
-                        tangent_cross_sign: RealSign::Zero,
+                        // Contacts use the supporting circle's parameter
+                        // orientation, independent of this fragment's traversal.
+                        tangent_cross_sign: orient_tangent_cross_sign(cross, !cusp.is_reversed()),
                     },
                 )));
             }
@@ -4941,7 +4951,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
                         hyperreal::dispatch_trace::record(
                             "hypercurve",
                             "algebraic-circle-chord-pair",
-                            "retained-nonadjacent-endpoint-tangent",
+                            "retained-nonadjacent-endpoint-contact",
                         );
                         return self.retained_cusp_chord_pair_result(
                             cusp,
@@ -10081,9 +10091,12 @@ impl<'a> CurveRegionBooleanContext<'a> {
                 );
             }
         };
-        let [tangent_x, tangent_y] = chord
-            .tangent_coordinate_signs(&self.data.policy)
-            .map_err(|cause| self.invalid(carrier_index, cause))?;
+        let tangent = |axis| {
+            chord
+                .tangent_axis_sign(axis, &self.data.policy)
+                .map_err(|cause| self.invalid(carrier_index, cause))
+        };
+        let [tangent_x, tangent_y] = [tangent(Axis2::X)?, tangent(Axis2::Y)?];
         let classify = |left| {
             self.algebraic_fragment_side_classification(
                 carrier_index,
@@ -12269,9 +12282,12 @@ impl<'a> CurveRegionBooleanContext<'a> {
                 )
             }
             RationalBezierIntersectionPointEvidence2::Algebraic(point) => {
-                let [tangent_x, tangent_y] = first_chord
-                    .tangent_coordinate_signs(&self.data.policy)
-                    .map_err(|cause| self.invalid(overlap.first_carrier_index, cause))?;
+                let tangent = |axis| {
+                    first_chord
+                        .tangent_axis_sign(axis, &self.data.policy)
+                        .map_err(|cause| self.invalid(overlap.first_carrier_index, cause))
+                };
+                let [tangent_x, tangent_y] = [tangent(Axis2::X)?, tangent(Axis2::Y)?];
                 let classify = |carrier_index,
                                 source_follows_reference_tangent|
                  -> ExactCurveResult<[bool; 2]> {
@@ -14943,7 +14959,8 @@ fn locally_decidable_contact_parameter_cmp(
         first.as_recursive_projective(),
         second.as_recursive_projective(),
     ) {
-        return first.cmp_by_native_refinement(second, policy);
+        return policy
+            .bounded_exact_predicate_pass(|| first.cmp_by_native_refinement(second, policy));
     }
     if first.is_retained_scalar() && second.is_retained_scalar() {
         // Two independent retained authorities can require a joined recursive
@@ -14951,7 +14968,10 @@ fn locally_decidable_contact_parameter_cmp(
         // exact Cartesian evidence is the authoritative contact identity.
         return Ok(Classification::Uncertain(UncertaintyReason::Ordering));
     }
-    first.cmp_by_refinement(second, policy)
+    // This is an optional contact lookup. Geometric incidence and endpoint
+    // topology still follow, so it must neither exhaust a global scalar
+    // reconstruction nor consume an approximate equality before those proofs.
+    policy.bounded_exact_predicate_pass(|| first.cmp_by_refinement(second, policy))
 }
 
 fn carrier_has_certified_injective_image(carrier: &RegionCarrier, policy: &CurveContext) -> bool {
@@ -17422,6 +17442,72 @@ mod certified_successor_tests {
     }
 
     #[test]
+    fn isolated_circle_endpoint_contacts_retain_transverse_signs() {
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let parameter = sqrt_half_parameter(&policy);
+            let center = RationalBezierIntersectionPointEvidence2::Algebraic(
+                RationalBezierAlgebraicPointImage2::from_retained_expression(
+                    parameter.clone(),
+                    crate::bezier_algebraic_image::parameter_representation(&parameter, &policy),
+                    vec![Real::zero(), Real::one()],
+                    vec![Real::zero()],
+                    vec![Real::one()],
+                    "endpoint-only radial contact center",
+                ),
+            );
+            let empty = CurveRegion2::empty();
+            let context = CurveRegionBooleanContext::try_new(&empty, &empty, &policy).unwrap();
+            for clockwise in [false, true] {
+                let semicircle = decided(
+                    BezierAlgebraicCuspSemicircle2::from_retained_axis_aligned_center(
+                        &center,
+                        (1, 0),
+                        Real::from(2_i8),
+                        clockwise,
+                        &policy,
+                    )
+                    .unwrap(),
+                )
+                .unwrap();
+                let start = decided(semicircle.start_point_evidence(&policy).unwrap());
+                let chord = decided(
+                    crate::BezierAlgebraicChord2::try_new(start, center.clone(), &policy).unwrap(),
+                );
+                let fragment = BezierAlgebraicCuspSemicircleFragment2::full(semicircle, &policy);
+                for fragment in [fragment.clone(), fragment.reversed()] {
+                    for reversed_chord in [false, true] {
+                        let chord = if reversed_chord {
+                            chord.reversed()
+                        } else {
+                            chord.clone()
+                        };
+                        let contact = decided(
+                            context
+                                .certified_cusp_chord_endpoint_contact(&fragment, &chord)
+                                .unwrap(),
+                        )
+                        .expect("the radial chord has only its circle endpoint in common");
+                        // T=turn*perp(R), D=-R: T×D=turn*|R|². Reversing
+                        // the arc fragment does not reverse its supporting chart.
+                        let expected = if clockwise != reversed_chord {
+                            RealSign::Negative
+                        } else {
+                            RealSign::Positive
+                        };
+                        assert_eq!(contact.tangent_cross_sign, expected);
+                        assert_eq!(
+                            contact
+                                .tangent_topology(fragment.semicircle(), &chord, &policy)
+                                .unwrap(),
+                            Classification::Decided(None)
+                        );
+                    }
+                }
+            }
+        }
+    }
+
+    #[test]
     fn cusp_chord_pair_retains_an_interior_axis_contact() {
         for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
             let parameter = sqrt_half_parameter(&policy);
@@ -18260,9 +18346,11 @@ mod certified_successor_tests {
                 else {
                     panic!("the split chord representative must remain algebraic");
                 };
-                let [tangent_x, tangent_y] = chord
-                    .tangent_coordinate_signs(&policy)
-                    .expect("tangent signs");
+                let [tangent_x, tangent_y] = [Axis2::X, Axis2::Y].map(|axis| {
+                    chord
+                        .tangent_axis_sign(axis, &policy)
+                        .expect("tangent sign")
+                });
                 for left in [true, false] {
                     let side = context
                         .algebraic_fragment_side_classification(

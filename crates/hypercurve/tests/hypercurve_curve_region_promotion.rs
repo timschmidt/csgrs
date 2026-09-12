@@ -2329,7 +2329,7 @@ fn selected_algebraic_round_joins_reenter_exact_region_offsets() {
             contract_trace.path_count(
                 "hypercurve",
                 "algebraic-circle-chord-pair",
-                "retained-nonadjacent-endpoint-tangent",
+                "retained-nonadjacent-endpoint-contact",
             ) > 0,
             "the contraction must retain its cross-component endpoint tangent: {contract_trace:?}",
         );
