@@ -57286,10 +57286,10 @@ impl BezierRecursiveQuadraticProjectiveScalar2 {
 
     /// Publishes this projective scalar as one selected algebraic root.
     ///
-    /// Only the linear image equation `numerator - z * denominator` is
-    /// projected through the retained quadratic tower. This is substantially
-    /// smaller than taking the norm of a later curve-parameter incidence and
-    /// lets every consumer reuse the ordinary one-selected-root fiber kernel.
+    /// Already-proved exact scalar witnesses publish directly over their
+    /// coefficient field. Otherwise the linear image equation
+    /// `numerator - z * denominator` is projected through the retained tower.
+    /// Both paths retain selected-root evidence for ordinary fiber replay.
     fn represented_value(
         &self,
         policy: &CurveContext,
@@ -57315,22 +57315,13 @@ impl BezierRecursiveQuadraticProjectiveScalar2 {
         {
             let representation =
                 AlgebraicRootRepresentation::from_exact_value(&(numerator * inverse));
-            // A recognized rational or quadratic image keeps a rational
-            // polynomial as reusable equality and ordering evidence. More
-            // general witnesses still use the retained projection below.
-            if representation
-                .polynomial_coefficients
-                .iter()
-                .all(|coefficient| coefficient.exact_rational_ref().is_some())
-            {
-                #[cfg(feature = "dispatch-trace")]
-                hyperreal::dispatch_trace::record(
-                    "hypercurve",
-                    "recursive-projective-scalar-image",
-                    "exact-low-degree-witness",
-                );
-                return Ok(Classification::Decided(representation));
-            }
+            #[cfg(feature = "dispatch-trace")]
+            hyperreal::dispatch_trace::record(
+                "hypercurve",
+                "recursive-projective-scalar-image",
+                "exact-scalar-witness",
+            );
+            return Ok(Classification::Decided(representation));
         }
         let Some((base, mut relation)) = recursive_quadratic_polynomial_projection(vec![
             self.numerator.clone(),
@@ -130620,6 +130611,58 @@ mod conversion_tests {
                 assert!(scalar.exact_real_value().is_none());
             }
         }
+    }
+
+    #[test]
+    fn recursive_scalar_publication_accepts_general_exact_witnesses() {
+        let half = (Real::one() / Real::from(2_i8)).unwrap();
+        let source = bezier_parameter_root_representation(&algebraic_parameter(vec![
+            -half.clone(),
+            Real::zero(),
+            Real::one(),
+        ]));
+        let constant = |value| DenseTensorPolynomial::try_new(vec![1], vec![value]).unwrap();
+        let field = BezierRecursiveQuadraticField2::base(
+            vec![source.clone()],
+            constant(Real::from(3_i8)),
+            constant(Real::one()),
+        )
+        .unwrap();
+        let BezierRecursiveQuadraticField2::Base(base) = &field else {
+            unreachable!();
+        };
+        let scalar = BezierRecursiveQuadraticProjectiveScalar2 {
+            numerator: recursive_quadratic_pair_value(
+                base,
+                DenseTensorPolynomial::try_new(vec![2], vec![Real::pi(), Real::one()]).unwrap(),
+                constant(Real::one()),
+                1,
+            )
+            .unwrap(),
+            denominator: field.constant(Real::one()).unwrap(),
+        };
+        assert!(scalar.exact_real_value().is_none());
+        let Classification::Decided(root) = scalar.represented_value(&CurveContext::STRICT).unwrap()
+        else {
+            panic!("proved exact scalar witnesses must publish selected root evidence");
+        };
+        let expected = Real::pi() + half.sqrt().unwrap() + Real::from(3_i8).sqrt().unwrap();
+        let witness = root.exact_point_witness().unwrap();
+        assert_eq!(
+            (witness - &expected).zero_status(),
+            hyperreal::ZeroKnowledge::Zero,
+        );
+        assert_eq!(root.polynomial_coefficients.len(), 2);
+        assert!(root.polynomial_coefficients[0].exact_rational_ref().is_none());
+        assert_eq!(base.sources, vec![source]);
+        assert_eq!(
+            hypersolve::validate_algebraic_root_representation(
+                &root,
+                hypersolve::PredicatePolicy::STRICT,
+            )
+            .status,
+            hypersolve::AlgebraicRootValidationStatus::Valid,
+        );
     }
 
     #[test]
