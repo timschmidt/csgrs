@@ -52778,31 +52778,6 @@ impl BezierAlgebraicCuspSemicircleParameter2 {
         let (Self::Mapped(first), Self::Mapped(second)) = (self, other) else {
             return Ok(None);
         };
-        if !matches!(
-            (first.as_ref(), second.as_ref()),
-            (
-                BezierAlgebraicCuspSemicircleMappedParameterData2::SelectedChordNormalContact {
-                    ..
-                }
-                    | BezierAlgebraicCuspSemicircleMappedParameterData2::SelectedChordParallelNormalContact {
-                        ..
-                    },
-                BezierAlgebraicCuspSemicircleMappedParameterData2::Chord { .. }
-            ) | (
-                BezierAlgebraicCuspSemicircleMappedParameterData2::Chord { .. },
-                BezierAlgebraicCuspSemicircleMappedParameterData2::SelectedChordNormalContact {
-                    ..
-                }
-                    | BezierAlgebraicCuspSemicircleMappedParameterData2::SelectedChordParallelNormalContact {
-                        ..
-                    }
-            ) | (
-                BezierAlgebraicCuspSemicircleMappedParameterData2::Chord { .. },
-                BezierAlgebraicCuspSemicircleMappedParameterData2::Chord { .. }
-            )
-        ) {
-            return Ok(None);
-        }
         let semicircle = first.semicircle_carrier();
         if semicircle != second.semicircle_carrier() {
             return Ok(None);
@@ -53020,40 +52995,6 @@ impl BezierAlgebraicCuspSemicircleParameter2 {
         {
             return Ok(Classification::Decided(order));
         }
-        let cosine_order = policy.bounded_exact_predicate_pass(|| -> CurveResult<_> {
-            let (Some(first), Some(second)) = (
-                self.recursive_cosine(policy)?,
-                other.recursive_cosine(policy)?,
-            ) else {
-                return Ok(Classification::Uncertain(UncertaintyReason::Ordering));
-            };
-            let coordinate = |scalar| {
-                BezierRecursiveProjectiveParameter2::new_with_certified_bounds(
-                    scalar,
-                    Some((Real::from(-1_i8), Real::one())),
-                    policy,
-                )
-            };
-            let first = match coordinate(first)? {
-                Classification::Decided(value) => value,
-                Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-            };
-            let second = match coordinate(second)? {
-                Classification::Decided(value) => value,
-                Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-            };
-            Ok(first
-                .cmp_by_refinement(&second, policy)?
-                .map(std::cmp::Ordering::reverse))
-        })?;
-        if let Classification::Decided(order) = cosine_order {
-            return Ok(Classification::Decided(order));
-        }
-        if let Some(Classification::Decided(order)) = policy
-            .bounded_exact_predicate_pass(|| self.recursive_projective_order(other, policy))?
-        {
-            return Ok(Classification::Decided(order));
-        }
         if let Self::Mapped(data) = self
             && let BezierAlgebraicCuspSemicircleMappedParameterData2::SimilarityTransport {
                 source,
@@ -53207,6 +53148,40 @@ impl BezierAlgebraicCuspSemicircleParameter2 {
             return Ok(other
                 .order_to_real(parameter, policy)?
                 .map(|order| order.reverse()));
+        }
+        let cosine_order = policy.bounded_exact_predicate_pass(|| -> CurveResult<_> {
+            let (Some(first), Some(second)) = (
+                self.recursive_cosine(policy)?,
+                other.recursive_cosine(policy)?,
+            ) else {
+                return Ok(Classification::Uncertain(UncertaintyReason::Ordering));
+            };
+            let coordinate = |scalar| {
+                BezierRecursiveProjectiveParameter2::new_with_certified_bounds(
+                    scalar,
+                    Some((Real::from(-1_i8), Real::one())),
+                    policy,
+                )
+            };
+            let first = match coordinate(first)? {
+                Classification::Decided(value) => value,
+                Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+            };
+            let second = match coordinate(second)? {
+                Classification::Decided(value) => value,
+                Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+            };
+            Ok(first
+                .cmp_by_refinement(&second, policy)?
+                .map(std::cmp::Ordering::reverse))
+        })?;
+        if let Classification::Decided(order) = cosine_order {
+            return Ok(Classification::Decided(order));
+        }
+        if let Some(Classification::Decided(order)) = policy
+            .bounded_exact_predicate_pass(|| self.recursive_projective_order(other, policy))?
+        {
+            return Ok(Classification::Decided(order));
         }
         const MAX_REFINEMENT_STEPS: usize =
             (-hypersolve::PredicatePolicy::MAX_REFINEMENT_PRECISION) as usize;
@@ -97896,17 +97871,9 @@ fn recursive_projective_incident_point_order(
             return Ok(Some(Classification::Uncertain(reason)));
         }
     };
-    let authority = match semicircle.recursive_selected_pair_frame_authority(policy)? {
+    let authority = match semicircle.recursive_selected_radial_any_frame_authority(policy)? {
         Classification::Decided(Some(authority)) => authority,
-        Classification::Decided(None) => {
-            match semicircle.recursive_selected_radial_frame_authority(policy)? {
-                Classification::Decided(Some(authority)) => authority,
-                Classification::Decided(None) => return Ok(None),
-                Classification::Uncertain(reason) => {
-                    return Ok(Some(Classification::Uncertain(reason)));
-                }
-            }
-        }
+        Classification::Decided(None) => return Ok(None),
         Classification::Uncertain(reason) => {
             return Ok(Some(Classification::Uncertain(reason)));
         }
