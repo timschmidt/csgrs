@@ -18,7 +18,10 @@ use crate::integer_interpolation::primitive_integer_polynomial_gcd;
 use crate::resultant::{
     UnivariateResultantError, resultant_univariate_polynomials, sylvester_matrix,
 };
-use crate::root_isolation::{polynomial_div_rem_borrowed_divisor, polynomial_gcd};
+use crate::root_isolation::{
+    UnivariateSturmPoint, UnivariateSturmSequence, polynomial_div_rem_borrowed_divisor,
+    polynomial_gcd,
+};
 
 /// Selects which curve parameter remains after exact elimination.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -363,6 +366,47 @@ pub fn extract_bivariate_polynomial_system_axis_factors(
     }
     retry_bivariate_polynomial_system_axis_factors(first_equation, second_equation)
         .unwrap_or(initial)
+}
+
+/// Removes common axis factors only when none vanishes on a closed rectangle.
+///
+/// Exact division certifies the factorization, and endpoint Sturm variations
+/// certify that every removed factor is nonzero throughout its supplied
+/// interval. No root isolation or approximate terminal decision is needed.
+/// The returned equations have exactly the original zero set in that box.
+/// `None` means no factor was removed or a required proof was unavailable;
+/// callers can continue with the original equations.
+pub fn saturate_rootless_bivariate_axis_factors(
+    equations: &[BivariatePolynomial; 2],
+    bounds: [[&Real; 2]; 2],
+) -> Option<[BivariatePolynomial; 2]> {
+    let report = extract_bivariate_polynomial_system_axis_factors(&equations[0], &equations[1]);
+    if report.status != BivariatePolynomialAxisFactorStatus::Reduced {
+        return None;
+    }
+    let policy = hyperlimit::PredicatePolicy::STRICT;
+    for (factor, [lower, upper]) in [
+        &report.first_parameter_factor,
+        &report.second_parameter_factor,
+    ]
+    .into_iter()
+    .zip(bounds)
+    {
+        if hyperlimit::compare_reals(lower, upper, policy).value()? == std::cmp::Ordering::Greater {
+            return None;
+        }
+        let sequence = UnivariateSturmSequence::new(factor, policy)?;
+        let (UnivariateSturmPoint::NonRoot(first), UnivariateSturmPoint::NonRoot(last)) = (
+            sequence.classify_point(lower, policy)?,
+            sequence.classify_point(upper, policy)?,
+        ) else {
+            return None;
+        };
+        if first != last {
+            return None;
+        }
+    }
+    report.reduced_equations
 }
 
 #[cold]
@@ -6909,6 +6953,89 @@ mod tests {
         assert_eq!(
             determinant_polynomial_matrix(&singular, 3),
             Some(vec![real(0)])
+        );
+    }
+
+    #[test]
+    fn axis_saturation_preserves_rootful_fibers_and_closed_boundaries() {
+        let expected = [
+            BivariatePolynomial::new(vec![vec![real(1), real(1)]]),
+            BivariatePolynomial::new(vec![vec![real(2), real(1)]]),
+        ];
+        let alpha = (real(1) / real(2)).unwrap().sqrt().unwrap();
+        for (constant, slope, rootless) in [
+            (real(2), real(1), true),
+            (alpha.clone(), real(1), true),
+            (-alpha, real(1), false),
+            (real(-1), real(2), false),
+            (real(0), real(1), false),
+            (real(-1), real(1), false),
+        ] {
+            for parameter in [
+                CurveResultantParameter::First,
+                CurveResultantParameter::Second,
+            ] {
+                let factor = match parameter {
+                    CurveResultantParameter::First => {
+                        BivariatePolynomial::new(vec![vec![constant.clone()], vec![slope.clone()]])
+                    }
+                    CurveResultantParameter::Second => {
+                        BivariatePolynomial::new(vec![vec![constant.clone(), slope.clone()]])
+                    }
+                };
+                let equations = [
+                    multiply_bivariate(&factor, &expected[0]),
+                    multiply_bivariate(&factor, &expected[1]),
+                ];
+                let result =
+                    saturate_rootless_bivariate_axis_factors(&equations, [[&real(0), &real(1)]; 2]);
+                if rootless {
+                    let result = result.expect("rootless factors may be removed exactly");
+                    for (actual, expected) in result.iter().zip(&expected) {
+                        assert_bivariate_exactly_equal(actual, expected);
+                    }
+                } else {
+                    assert!(
+                        result.is_none(),
+                        "a factor root belongs to the closed solution set"
+                    );
+                }
+            }
+        }
+        assert_eq!(
+            saturate_rootless_bivariate_axis_factors(&expected, [[&real(0), &real(1)]; 2]),
+            None
+        );
+    }
+
+    #[test]
+    fn axis_saturation_uses_the_requested_exact_rectangle() {
+        let common = BivariatePolynomial::new(vec![vec![real(-2)], vec![real(1)]]);
+        let equations = [
+            multiply_bivariate(
+                &common,
+                &BivariatePolynomial::new(vec![vec![real(1), real(1)]]),
+            ),
+            multiply_bivariate(
+                &common,
+                &BivariatePolynomial::new(vec![vec![real(2), real(1)]]),
+            ),
+        ];
+        assert!(
+            saturate_rootless_bivariate_axis_factors(&equations, [[&real(0), &real(1)]; 2])
+                .is_some()
+        );
+        assert!(
+            saturate_rootless_bivariate_axis_factors(&equations, [[&real(1), &real(3)]; 2])
+                .is_none()
+        );
+        assert!(
+            saturate_rootless_bivariate_axis_factors(&equations, [[&real(1), &real(0)]; 2])
+                .is_none()
+        );
+        assert!(
+            saturate_rootless_bivariate_axis_factors(&equations, [[&real(1), &real(1)]; 2])
+                .is_some()
         );
     }
 

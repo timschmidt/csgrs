@@ -195,6 +195,7 @@ pub use curve_resultant::{
     resultant_quadrivariate_polynomial_fourth_axis_constraint,
     resultant_rational_parametric_curve_intersection,
     resultant_trivariate_polynomial_univariate_constraint,
+    saturate_rootless_bivariate_axis_factors,
     subresultant_quadrivariate_polynomial_fourth_axis_constraint,
     subresultant_trivariate_polynomial_system,
     subresultant_trivariate_polynomial_univariate_constraint,
