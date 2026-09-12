@@ -840,6 +840,16 @@ fn mixed_line_circular_conic_batch_obeys_the_approximate_512_terminal() {
     let undecidable_zero = support::terminally_unresolved_zero();
     let disk = circle_with_policy(undecidable_zero, &CurveContext::APPROXIMATE_512);
     let right_half = square(0, -3, 3, 3);
+    // Completed boundaries must retain endpoint identity when a later
+    // contact reaches the same point through a different scalar expression.
+    let disk = disk
+        .regularized_region(&CurveContext::APPROXIMATE_512)
+        .unwrap()
+        .value;
+    let right_half = right_half
+        .regularized_region(&CurveContext::APPROXIMATE_512)
+        .unwrap()
+        .value;
 
     assert!(matches!(
         disk.boolean_regions(&right_half, &CurveContext::STRICT),

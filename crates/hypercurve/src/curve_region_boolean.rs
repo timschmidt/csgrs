@@ -317,7 +317,7 @@ struct CarrierEvent {
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 enum CarrierParameterLocation {
     Outside,
-    Endpoint,
+    Endpoint(BezierEndpoint),
     Interior,
 }
 
@@ -6717,6 +6717,26 @@ impl<'a> CurveRegionBooleanContext<'a> {
                 {
                     continue;
                 }
+                // Range classification already owns endpoint equality. Reuse
+                // that parameter and its seeded topology vertex instead of
+                // asking an optional bounded lookup to prove the same fact.
+                let canonical_parameter = |parameter, location, carrier_index: usize| {
+                    let carrier = &self.data.carriers[carrier_index];
+                    match location {
+                        CarrierParameterLocation::Endpoint(BezierEndpoint::Start) => &carrier.start,
+                        CarrierParameterLocation::Endpoint(BezierEndpoint::End) => &carrier.end,
+                        CarrierParameterLocation::Interior | CarrierParameterLocation::Outside => {
+                            parameter
+                        }
+                    }
+                };
+                let first_parameter =
+                    canonical_parameter(first_parameter, first_location, pair.first_carrier_index);
+                let second_parameter = canonical_parameter(
+                    second_parameter,
+                    second_location,
+                    pair.second_carrier_index,
+                );
                 let first_existing = existing_contact_event_vertex_if_decided(
                     &events[pair.first_carrier_index],
                     first_parameter,
@@ -15985,8 +16005,11 @@ fn parameter_location_in_carrier(
     carrier: &RegionCarrier,
     policy: &CurveContext,
 ) -> ExactCurveResult<CarrierParameterLocation> {
-    if parameter == &carrier.start || parameter == &carrier.end {
-        return Ok(CarrierParameterLocation::Endpoint);
+    if parameter == &carrier.start {
+        return Ok(CarrierParameterLocation::Endpoint(BezierEndpoint::Start));
+    }
+    if parameter == &carrier.end {
+        return Ok(CarrierParameterLocation::Endpoint(BezierEndpoint::End));
     }
     if let (Some(parameter), RegionCarrierGeometry::AlgebraicChord(chord)) =
         (parameter.as_algebraic_chord(), &carrier.geometry)
@@ -16035,8 +16058,14 @@ fn parameter_location_in_carrier(
                     ExactCurveError::invalid(CurveOperation2::Boolean, carrier.family, cause)
                 })?;
             match location {
-                Classification::Decided(Start | End) => {
-                    return Ok(CarrierParameterLocation::Endpoint);
+                Classification::Decided(endpoint @ (Start | End)) => {
+                    return Ok(CarrierParameterLocation::Endpoint(
+                        if (endpoint == Start) ^ carrier.reversed {
+                            BezierEndpoint::Start
+                        } else {
+                            BezierEndpoint::End
+                        },
+                    ));
                 }
                 Classification::Decided(Interior) => {
                     return Ok(CarrierParameterLocation::Interior);
@@ -16055,7 +16084,13 @@ fn parameter_location_in_carrier(
             .map_err(|cause| {
                 ExactCurveError::invalid(CurveOperation2::Boolean, carrier.family, cause)
             })? {
-            Classification::Decided(Start | End) => Ok(CarrierParameterLocation::Endpoint),
+            Classification::Decided(endpoint @ (Start | End)) => Ok(
+                CarrierParameterLocation::Endpoint(if (endpoint == Start) ^ carrier.reversed {
+                    BezierEndpoint::Start
+                } else {
+                    BezierEndpoint::End
+                }),
+            ),
             Classification::Decided(Interior) => Ok(CarrierParameterLocation::Interior),
             Classification::Decided(Exterior) => Ok(CarrierParameterLocation::Outside),
             Classification::Uncertain(reason) => Err(ExactCurveError::blocked(
@@ -16069,8 +16104,10 @@ fn parameter_location_in_carrier(
     let upper = decided_parameter_cmp(parameter, &carrier.end, policy)?;
     Ok(if lower.is_lt() || upper.is_gt() {
         CarrierParameterLocation::Outside
-    } else if lower == Ordering::Equal || upper == Ordering::Equal {
-        CarrierParameterLocation::Endpoint
+    } else if lower == Ordering::Equal {
+        CarrierParameterLocation::Endpoint(BezierEndpoint::Start)
+    } else if upper == Ordering::Equal {
+        CarrierParameterLocation::Endpoint(BezierEndpoint::End)
     } else {
         CarrierParameterLocation::Interior
     })
