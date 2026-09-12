@@ -1157,7 +1157,7 @@ mod tests {
     }
 
     #[test]
-    fn mobius_transform_does_not_mislabel_exact_real_point_image() {
+    fn mobius_transform_retains_an_arbitrary_exact_point_witness() {
         let source = AlgebraicRootRepresentation {
             constraint_index: 0,
             symbol: crate::SymbolId(0),
@@ -1191,7 +1191,7 @@ mod tests {
             AlgebraicRootMobiusTransformStatus::Transformed
         );
         let transformed = report.representation.expect("exact-Real point image");
-        assert!(transformed.interval.exact_root.is_none());
+        assert_eq!(transformed.exact_point_witness(), Some(&expected));
         assert_eq!(transformed.interval.lower, expected);
         assert_eq!(
             validate_algebraic_root_representation(&transformed, PredicatePolicy::STRICT).status,

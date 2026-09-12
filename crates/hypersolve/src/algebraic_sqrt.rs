@@ -13,15 +13,13 @@ use hyperreal::Real;
 
 use crate::algebraic::{
     AlgebraicRootRepresentation, AlgebraicRootValidationReport, AlgebraicRootValidationStatus,
-    represented_root_sign_admitted, validate_algebraic_root_representation,
+    algebraic_root_interval_endpoints_are_roots, canonical_linear_value_representation,
+    refine_reversed_algebraic_root_ownership, represented_root_sign_admitted,
+    validate_algebraic_root_representation,
 };
-use crate::root_isolation::{
-    IsolatedRootInterval, IsolatedRootRefinementStatus, RootIsolationConfig,
-    refine_isolated_univariate_polynomial_interval,
-};
+use crate::root_isolation::IsolatedRootInterval;
 
-const INITIAL_SQRT_INTERVAL_PRECISION: i32 = -128;
-const MIN_SQRT_INTERVAL_PRECISION: i32 = -4096;
+const SQRT_WITNESS_INTERVAL_PRECISION: i32 = -128;
 
 /// Status for constructing one signed square-root algebraic image.
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -38,8 +36,6 @@ pub enum AlgebraicRootSquareRootStatus {
     NonzeroZeroBranch,
     /// Exact sign classification did not decide.
     UndecidedSign,
-    /// The mapped interval did not certify one distinct image root.
-    NonIsolatingImageInterval,
     /// The constructed representation failed exact validation.
     InvalidTransformedEvidence,
 }
@@ -119,24 +115,47 @@ pub fn square_root_algebraic_root_representation(
         Ordering::Greater => {}
     }
 
-    let mut interval_precision = INITIAL_SQRT_INTERVAL_PRECISION;
-    let Some(mut interval) =
-        signed_sqrt_interval_for_positive_source(&root.interval, branch, interval_precision)
-    else {
+    // Isolators own (lower, upper]. A decreasing map may exchange a selected
+    // upper endpoint root with an excluded lower endpoint root. Resolve that
+    // ownership in the source before transporting its singleton certificate.
+    if branch < 0 && root.exact_point_witness().is_none() {
+        match algebraic_root_interval_endpoints_are_roots(root, PredicatePolicy::STRICT) {
+            Some(false) => {}
+            Some(true) => {
+                if let Some(refined) =
+                    refine_reversed_algebraic_root_ownership(root, PredicatePolicy::STRICT)
+                {
+                    return square_root_algebraic_root_representation(&refined, branch);
+                }
+                return report(
+                    branch,
+                    AlgebraicRootSquareRootStatus::UndecidedSign,
+                    None,
+                    "could not refine source endpoint ownership for the negative square root",
+                );
+            }
+            None => {
+                return report(
+                    branch,
+                    AlgebraicRootSquareRootStatus::UndecidedSign,
+                    None,
+                    "could not decide source endpoint ownership for the negative square root",
+                );
+            }
+        }
+    }
+    let Some(interval) = signed_sqrt_interval_for_positive_source(&root.interval, branch) else {
         return report(
             branch,
             AlgebraicRootSquareRootStatus::UndecidedSign,
             None,
-            "could not construct exact dyadic bounds for the square-root image",
+            "could not construct exact bounds for the square-root image",
         );
     };
     if let Some(image_root) = &interval.exact_root {
         return transformed_exact_root(root, branch, image_root.clone());
     }
-    let exact_rational_source = root
-        .exact_point_witness()
-        .filter(|source_root| source_root.exact_rational_ref().is_some());
-    let polynomial_coefficients = if let Some(source_root) = exact_rational_source {
+    let polynomial_coefficients = if let Some(source_root) = root.exact_point_witness() {
         vec![-source_root.clone(), Real::zero(), Real::one()]
     } else {
         let Some(polynomial) = compose_polynomial_at_square(&root.polynomial_coefficients) else {
@@ -149,66 +168,10 @@ pub fn square_root_algebraic_root_representation(
         };
         polynomial
     };
-    let interval = if exact_rational_source.is_some() {
-        // For r > 0, y^2-r has exactly one root on each signed half-axis.
-        // The mapped bounds are certified outward bounds on that chosen root,
-        // so the source witness supplies the unit-isolation proof directly.
-        interval
-    } else {
-        loop {
-            let refinement = refine_isolated_univariate_polynomial_interval(
-                &polynomial_coefficients,
-                &interval,
-                RootIsolationConfig {
-                    policy: PredicatePolicy::STRICT,
-                    max_interval_width: None,
-                    max_refinement_steps: 2,
-                },
-            );
-            if let Some(refined_interval) = refinement.refined_interval {
-                break refined_interval;
-            }
-            if refinement.status == IsolatedRootRefinementStatus::NonUnitIsolation
-                && interval_precision > MIN_SQRT_INTERVAL_PRECISION
-            {
-                interval_precision *= 2;
-                let Some(tighter_interval) = signed_sqrt_interval_for_positive_source(
-                    &root.interval,
-                    branch,
-                    interval_precision,
-                ) else {
-                    return report(
-                        branch,
-                        AlgebraicRootSquareRootStatus::UndecidedSign,
-                        None,
-                        "could not tighten exact dyadic square-root image bounds",
-                    );
-                };
-                interval = tighter_interval;
-                continue;
-            }
-            let status = match refinement.status {
-                IsolatedRootRefinementStatus::InvalidPolynomial
-                | IsolatedRootRefinementStatus::InvalidInterval => {
-                    AlgebraicRootSquareRootStatus::InvalidTransformedEvidence
-                }
-                IsolatedRootRefinementStatus::NonUnitIsolation => {
-                    AlgebraicRootSquareRootStatus::NonIsolatingImageInterval
-                }
-                IsolatedRootRefinementStatus::Undecided
-                | IsolatedRootRefinementStatus::Refined
-                | IsolatedRootRefinementStatus::ExactRoot => {
-                    AlgebraicRootSquareRootStatus::UndecidedSign
-                }
-            };
-            return AlgebraicRootSquareRootReport {
-                branch,
-                status,
-                representation: None,
-                message: refinement.message,
-            };
-        }
-    };
+    // Square root is injective on the positive half-axis. Exact mapped bounds
+    // preserve the source singleton, so P(y²) needs no new Sturm chain. An
+    // exact source witness instead gives y²-r, which has one root per signed
+    // half-axis for every positive exact Real r.
     let mut representation = AlgebraicRootRepresentation {
         constraint_index: root.constraint_index,
         symbol: root.symbol,
@@ -254,7 +217,6 @@ fn compose_polynomial_at_square(polynomial: &[Real]) -> Option<Vec<Real>> {
 fn signed_sqrt_interval_for_positive_source(
     source: &IsolatedRootInterval,
     branch: i8,
-    precision: i32,
 ) -> Option<IsolatedRootInterval> {
     if let Some(source_root) = &source.exact_root {
         let positive = source_root.clone().sqrt().ok()?;
@@ -268,30 +230,23 @@ fn signed_sqrt_interval_for_positive_source(
                 distinct_root_count: 1,
             });
         }
-        let [lower, upper] = positive.certified_dyadic_interval(precision)?;
+        let [lower, upper] = positive.certified_dyadic_interval(SQRT_WITNESS_INTERVAL_PRECISION)?;
+        // Keep the root strictly inside the dyadic bracket even when a Real
+        // witness has a rational value that its normal form did not expose.
+        let padding = hyperreal::Rational::from(2_i8)
+            .powi(SQRT_WITNESS_INTERVAL_PRECISION.into())
+            .ok()?;
         return Some(signed_sqrt_interval_from_positive_bounds(
-            nonnegative_dyadic_bound(lower),
-            Real::new(upper),
+            nonnegative_dyadic_bound(lower - padding.clone()),
+            Real::new(upper + padding),
             branch,
         ));
     }
     // Without an exact witness, `represented_root_sign == Greater` proves
     // this lower endpoint is nonnegative, including the zero-touching case.
-    let [positive_lower, _] = source
-        .lower
-        .clone()
-        .sqrt()
-        .ok()?
-        .certified_dyadic_interval(precision)?;
-    let [_, positive_upper] = source
-        .upper
-        .clone()
-        .sqrt()
-        .ok()?
-        .certified_dyadic_interval(precision)?;
     Some(signed_sqrt_interval_from_positive_bounds(
-        nonnegative_dyadic_bound(positive_lower),
-        Real::new(positive_upper),
+        source.lower.clone().sqrt().ok()?,
+        source.upper.clone().sqrt().ok()?,
         branch,
     ))
 }
@@ -334,22 +289,7 @@ fn transformed_exact_root(
     branch: i8,
     root: Real,
 ) -> AlgebraicRootSquareRootReport {
-    let representation = AlgebraicRootRepresentation {
-        constraint_index: source.constraint_index,
-        symbol: source.symbol,
-        interval_index: source.interval_index,
-        polynomial_coefficients: vec![-root.clone(), Real::one()],
-        interval: IsolatedRootInterval {
-            lower: root.clone(),
-            upper: root.clone(),
-            exact_root: Some(root),
-            distinct_root_count: 1,
-        },
-        validation: AlgebraicRootValidationReport {
-            status: AlgebraicRootValidationStatus::Valid,
-            message: None,
-        },
-    };
+    let representation = canonical_linear_value_representation(source, root);
     debug_assert_eq!(
         validate_algebraic_root_representation(&representation, PredicatePolicy::STRICT).status,
         AlgebraicRootValidationStatus::Valid,
@@ -386,6 +326,10 @@ mod tests {
 
     use super::*;
     use crate::algebraic::represented_root_sign;
+    use crate::root_isolation::{
+        IsolatedRootRefinementStatus, RootIsolationConfig,
+        refine_isolated_univariate_polynomial_interval,
+    };
     use crate::symbolic::SymbolId;
 
     fn real(value: i64) -> Real {
@@ -528,7 +472,7 @@ mod tests {
     }
 
     #[test]
-    fn square_root_tightens_mapped_bounds_past_a_neighboring_root() {
+    fn square_root_transports_the_selected_source_isolator() {
         let source = source_above_a_close_neighbor(200);
         assert!(
             refine_isolated_univariate_polynomial_interval(
@@ -551,14 +495,105 @@ mod tests {
     }
 
     #[test]
-    fn square_root_bound_tightening_is_bounded_and_fails_closed() {
-        let report =
-            square_root_algebraic_root_representation(&source_above_a_close_neighbor(4200), 1);
+    fn square_root_exact_bounds_do_not_absorb_arbitrarily_close_foreign_roots() {
+        let source = source_above_a_close_neighbor(4200);
+        for branch in [-1, 1] {
+            let report = square_root_algebraic_root_representation(&source, branch);
+            assert_eq!(report.status, AlgebraicRootSquareRootStatus::Transformed);
+            let image = report.representation.unwrap();
+            // Squaring the mapped bounds recovers the original separating
+            // boundary exactly; outward rounding would absorb the root below 2.
+            let (lower, upper) = if branch < 0 {
+                (&image.interval.upper, &image.interval.lower)
+            } else {
+                (&image.interval.lower, &image.interval.upper)
+            };
+            assert_eq!(
+                compare_reals(
+                    &(lower * lower),
+                    &source.interval.lower,
+                    PredicatePolicy::STRICT
+                )
+                .value(),
+                Some(Ordering::Equal),
+            );
+            assert_eq!(
+                compare_reals(
+                    &(upper * upper),
+                    &source.interval.upper,
+                    PredicatePolicy::STRICT
+                )
+                .value(),
+                Some(Ordering::Equal),
+            );
+        }
+    }
+
+    #[test]
+    fn negative_square_root_preserves_excluded_and_selected_endpoint_ownership() {
+        // (x-1)(x-4), selecting the owned upper endpoint 4 and excluding 1.
+        let mut source = positive_sqrt_two();
+        source.polynomial_coefficients = vec![real(4), real(-5), Real::one()];
+        source.interval.upper = real(4);
+        let image = square_root_algebraic_root_representation(&source, -1);
+        assert_eq!(image.status, AlgebraicRootSquareRootStatus::Transformed);
         assert_eq!(
-            report.status,
-            AlgebraicRootSquareRootStatus::NonIsolatingImageInterval,
+            image.representation.unwrap().exact_point_witness(),
+            Some(&real(-2))
         );
-        assert!(report.representation.is_none());
+
+        // (x-1)(x²-2), with an excluded lower root and a nonendpoint root.
+        source.polynomial_coefficients = vec![real(2), real(-2), real(-1), Real::one()];
+        source.interval.upper = real(2);
+        let image = square_root_algebraic_root_representation(&source, -1);
+        assert_eq!(image.status, AlgebraicRootSquareRootStatus::Transformed);
+        let image = image.representation.unwrap();
+        assert_eq!(
+            compare_reals(&image.interval.upper, &real(-1), PredicatePolicy::STRICT).value(),
+            Some(Ordering::Less),
+            "the excluded source root must not become an owned image endpoint",
+        );
+        assert!(
+            refine_isolated_univariate_polynomial_interval(
+                &image.polynomial_coefficients,
+                &image.interval,
+                RootIsolationConfig {
+                    policy: PredicatePolicy::STRICT,
+                    max_interval_width: None,
+                    max_refinement_steps: 0,
+                },
+            )
+            .refined_interval
+            .is_some()
+        );
+    }
+
+    #[test]
+    fn square_root_of_an_arbitrary_exact_witness_keeps_its_quadratic_relation() {
+        let value = real(2).sqrt().unwrap();
+        let source = canonical_linear_value_representation(&positive_sqrt_two(), value.clone());
+        for branch in [-1, 1] {
+            let image = square_root_algebraic_root_representation(&source, branch);
+            assert_eq!(image.status, AlgebraicRootSquareRootStatus::Transformed);
+            let image = image.representation.unwrap();
+            assert_eq!(
+                image.polynomial_coefficients,
+                vec![-value.clone(), Real::zero(), Real::one()]
+            );
+            assert!(
+                refine_isolated_univariate_polynomial_interval(
+                    &image.polynomial_coefficients,
+                    &image.interval,
+                    RootIsolationConfig {
+                        policy: PredicatePolicy::STRICT,
+                        max_interval_width: None,
+                        max_refinement_steps: 0,
+                    },
+                )
+                .refined_interval
+                .is_some()
+            );
+        }
     }
 
     #[test]

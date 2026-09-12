@@ -2283,7 +2283,7 @@ mod tests {
     }
 
     #[test]
-    fn rational_image_does_not_mislabel_an_exact_real_point_value() {
+    fn rational_image_retains_an_arbitrary_exact_point_witness() {
         let sqrt_two_value = real(2).sqrt().unwrap();
         let source = AlgebraicRootRepresentation {
             interval: IsolatedRootInterval {
@@ -2308,7 +2308,7 @@ mod tests {
             AlgebraicRootRationalEvaluationStatus::EvaluatedExactRealWitness
         );
         let root = report.representation.as_ref().unwrap();
-        assert!(root.interval.exact_root.is_none());
+        assert_eq!(root.exact_point_witness(), Some(&sqrt_two_value));
         assert_eq!(root.interval.lower, sqrt_two_value);
         assert_eq!(root.interval.lower, root.interval.upper);
         assert!(root.is_valid());
@@ -2343,7 +2343,7 @@ mod tests {
         assert_eq!(report.status, AlgebraicRootRationalImageStatus::Transformed);
         let image = report.representation.as_ref().unwrap();
         assert!(image.is_valid());
-        assert!(image.interval.exact_root.is_none());
+        assert_eq!(image.exact_point_witness(), Some(&image.interval.lower));
         assert!(report.numerator_image.is_none());
         assert!(report.denominator_image.is_none());
     }
@@ -2362,7 +2362,7 @@ mod tests {
             AlgebraicRootRationalImageStatus::Transformed
         );
         let constant = constant.representation.as_ref().unwrap();
-        assert!(constant.interval.exact_root.is_none());
+        assert_eq!(constant.exact_point_witness(), Some(&sqrt_two_value));
         assert_eq!(constant.interval.lower, sqrt_two_value);
         assert_eq!(constant.interval.lower, constant.interval.upper);
 

@@ -1419,8 +1419,7 @@ pub(crate) fn canonical_linear_value_representation(
     source: &AlgebraicRootRepresentation,
     value: Real,
 ) -> AlgebraicRootRepresentation {
-    let is_rational = value.exact_rational_ref().is_some();
-    let exact_root = is_rational.then(|| value.clone());
+    let exact_root = Some(value.clone());
     let representation = AlgebraicRootRepresentation {
         constraint_index: source.constraint_index,
         symbol: source.symbol,
@@ -3581,9 +3580,9 @@ fn apply_refined_interval(
 /// requested policy is used for the sign decision. Rational witnesses,
 /// endpoints, and constant terms stay in their rational payloads.
 ///
-/// A unit isolator touching zero is resolved from the constant coefficient,
-/// so callers do not need arbitrary refinement merely to prove a strict sign
-/// or the selected zero root.
+/// A unit isolator touching zero is resolved from its `(lower, upper]`
+/// ownership and constant coefficient, so callers do not need arbitrary
+/// refinement merely to prove a strict sign or the selected zero root.
 pub fn represented_root_sign(
     root: &AlgebraicRootRepresentation,
     policy: PredicatePolicy,
@@ -3609,20 +3608,19 @@ pub(crate) fn represented_root_sign_admitted(
     if lower == Ordering::Greater {
         return Some(Ordering::Greater);
     }
-    // A unit isolator that touches zero still certifies a strict sign when
-    // zero is not a root of the defining polynomial. Conversely, if the
-    // constant coefficient is zero, uniqueness makes zero the selected root.
-    // This avoids arbitrarily deep bisection merely to move an endpoint away
-    // from zero while preserving an exact proof in every case.
+    // Positive-width isolators exclude the lower endpoint. A polynomial root
+    // at lower=0 therefore cannot be the selected root of (0, upper].
+    if lower == Ordering::Equal && upper == Ordering::Greater {
+        return Some(Ordering::Greater);
+    }
+    // Zero is now inside the owned interval, if present. The constant term
+    // decides whether it is the unique selected root without refinement.
     let zero_is_root = algebraic_value_sign(root.polynomial_coefficients.first()?, policy)?;
     if zero_is_root == Ordering::Equal {
         return Some(Ordering::Equal);
     }
     if upper == Ordering::Equal && lower == Ordering::Less {
         return Some(Ordering::Less);
-    }
-    if lower == Ordering::Equal && upper == Ordering::Greater {
-        return Some(Ordering::Greater);
     }
     None
 }
@@ -4672,6 +4670,42 @@ mod tests {
             );
             assert_eq!(represented_root_sign(&zero, policy), Some(Ordering::Equal));
             assert_eq!(represented_root_sign(&crossing_nonzero, policy), None);
+        }
+    }
+
+    #[test]
+    fn represented_root_sign_respects_zero_endpoint_ownership() {
+        // x(x-1): the source owns 1 in (0, 2], despite vanishing at 0.
+        let positive = AlgebraicRootRepresentation {
+            constraint_index: 0,
+            symbol: SymbolId(0),
+            interval_index: 0,
+            polynomial_coefficients: vec![Real::zero(), real(-1), Real::one()],
+            interval: IsolatedRootInterval {
+                lower: Real::zero(),
+                upper: real(2),
+                exact_root: None,
+                distinct_root_count: 1,
+            },
+            validation: AlgebraicRootValidationReport::valid(),
+        };
+        // x(x+1): the source owns 0 in (-1, 0], excluding -1.
+        let zero = AlgebraicRootRepresentation {
+            polynomial_coefficients: vec![Real::zero(), Real::one(), Real::one()],
+            interval: IsolatedRootInterval {
+                lower: real(-1),
+                upper: Real::zero(),
+                exact_root: None,
+                distinct_root_count: 1,
+            },
+            ..positive.clone()
+        };
+        for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
+            assert_eq!(
+                represented_root_sign(&positive, policy),
+                Some(Ordering::Greater)
+            );
+            assert_eq!(represented_root_sign(&zero, policy), Some(Ordering::Equal));
         }
     }
 
@@ -6058,7 +6092,7 @@ mod tests {
     }
 
     #[test]
-    fn algebraic_root_affine_transform_does_not_mislabel_exact_real_point_image() {
+    fn algebraic_root_affine_transform_retains_an_arbitrary_exact_point_witness() {
         let source = exact_point_representation(0, real(2));
         let scale = real(2).sqrt().unwrap();
         let offset = Real::pi();
@@ -6071,7 +6105,7 @@ mod tests {
             AlgebraicRootAffineTransformStatus::Transformed
         );
         let transformed = report.representation.expect("exact-Real point image");
-        assert!(transformed.interval.exact_root.is_none());
+        assert_eq!(transformed.exact_point_witness(), Some(&expected));
         assert_eq!(transformed.interval.lower, expected);
         assert_eq!(
             validate_algebraic_root_representation(&transformed, PredicatePolicy::STRICT).status,
