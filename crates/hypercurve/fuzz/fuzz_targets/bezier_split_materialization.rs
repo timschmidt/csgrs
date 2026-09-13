@@ -77,8 +77,8 @@ fuzz_target!(|data: &[u8]| {
         for fragment in materialization.fragments() {
             match fragment {
                 BezierSplitFragment2::Materialized { start, end, .. } => {
-                    assert!(start.is_exact());
-                    assert!(end.is_exact());
+                    assert!(start.scalar().is_some());
+                    assert!(end.scalar().is_some());
                 }
                 BezierSplitFragment2::AlgebraicEndpointImages {
                     start,
@@ -88,10 +88,10 @@ fuzz_target!(|data: &[u8]| {
                     ..
                 } => {
                     assert!(start_image.is_some() || end_image.is_some());
-                    if !start.is_exact() {
+                    if start.scalar().is_none() {
                         assert!(start_image.as_ref().is_some_and(|image| image.is_exact()));
                     }
-                    if !end.is_exact() {
+                    if end.scalar().is_none() {
                         assert!(end_image.as_ref().is_some_and(|image| image.is_exact()));
                     }
                 }

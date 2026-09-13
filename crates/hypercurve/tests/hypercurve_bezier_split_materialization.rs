@@ -494,8 +494,8 @@ fn linear_algebraic_boundary_materializes_native_subcurves() {
     else {
         panic!("first fragment should be native after linear-root promotion");
     };
-    assert_eq!(start.as_exact(), Some(&r(0)));
-    assert_eq!(end.as_exact(), Some(&q(1, 2)));
+    assert_eq!(start.scalar(), Some(&r(0)));
+    assert_eq!(end.scalar(), Some(&q(1, 2)));
     assert_eq!(left.end(), &curve.point_at(q(1, 2)));
 }
 
@@ -695,7 +695,7 @@ fn broad_singleton_isolator_materializes_exact_endpoint_images() {
         else {
             panic!("left fragment must retain exact endpoint images");
         };
-        assert_eq!(start.as_exact(), Some(&Real::zero()));
+        assert_eq!(start.scalar(), Some(&Real::zero()));
         assert!(matches!(end, BezierParameter2::Algebraic(_)));
         assert!(matches!(source_curve, BezierSubcurve2::Quadratic(_)));
         assert!(start_image.is_none());
@@ -713,7 +713,7 @@ fn broad_singleton_isolator_materializes_exact_endpoint_images() {
             panic!("right fragment must retain exact endpoint images");
         };
         assert!(matches!(start, BezierParameter2::Algebraic(_)));
-        assert_eq!(end.as_exact(), Some(&Real::one()));
+        assert_eq!(end.scalar(), Some(&Real::one()));
         assert!(matches!(source_curve, BezierSubcurve2::Quadratic(_)));
         assert_polynomial_endpoint_image(start_image);
         assert!(end_image.is_none());

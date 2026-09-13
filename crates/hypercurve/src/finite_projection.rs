@@ -979,7 +979,7 @@ fn append_analytic_parallel_samples(
     policy: &CurveContext,
 ) -> CurveResult<()> {
     let endpoint = |parameter: &BezierParameter2| -> CurveResult<_> {
-        if let Some(parameter) = parameter.as_exact() {
+        if let Some(parameter) = parameter.scalar() {
             return match fragment.parallel().point_at(parameter, policy)? {
                 Classification::Decided(point) => Ok(CurvePoint2::from(point)),
                 Classification::Uncertain(reason) => Err(CurveError::Topology(format!(
@@ -1432,7 +1432,7 @@ fn finite_parameter_representative(
     parameter: &BezierParameter2,
     policy: &CurveContext,
 ) -> CurveResult<Real> {
-    if let Some(exact) = parameter.as_exact() {
+    if let Some(exact) = parameter.scalar() {
         return Ok(exact.clone());
     }
     let interval = match parameter.known_interval(policy)? {

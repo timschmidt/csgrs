@@ -158,7 +158,7 @@ impl CurveRegionTrimFragment2 {
     /// when both promoted-span boundaries are represented by [`Real`].
     pub fn represented_parameter_range(&self) -> Option<(Real, Real)> {
         let (local_start, local_end) = self.fragment.parameter_range()?;
-        let (local_start, local_end) = (local_start.as_exact()?, local_end.as_exact()?);
+        let (local_start, local_end) = (local_start.scalar()?, local_end.scalar()?);
         let (span_start, span_end) = self.span_range.endpoints();
         let span = span_end - span_start;
         Some((

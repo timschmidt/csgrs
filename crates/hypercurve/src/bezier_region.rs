@@ -1225,7 +1225,7 @@ fn validate_retained_fragment_provenance(
 ) -> CurveResult<()> {
     match fragment {
         BezierSplitFragment2::Materialized { start, end, .. } => {
-            if !start.is_exact() || !end.is_exact() {
+            if start.scalar().is_none() || end.scalar().is_none() {
                 return Err(CurveError::Topology(
                     "retained materialized Bezier fragment must carry exact range boundaries"
                         .into(),
@@ -1660,7 +1660,7 @@ fn retained_fragment_endpoint_evidence(
             } else {
                 fragment.range().end()
             };
-            let point = match parameter.as_exact() {
+            let point = match parameter.scalar() {
                 Some(parameter) => match fragment.parallel().point_at(parameter, policy)? {
                     Classification::Decided(point) => Some(point),
                     Classification::Uncertain(_) => None,
@@ -2769,7 +2769,7 @@ fn retained_corner_fragment_extension(
         } else {
             Real::zero()
         };
-        if parameter.as_exact() == Some(&replacement_cut) {
+        if parameter.scalar() == Some(&replacement_cut) {
             return Ok(vec![replacement]);
         }
         return retained_corner_fragment_trim(
@@ -3261,7 +3261,7 @@ fn retained_corner_fragment_trim(
     let retain_source = parameter.is_retained_scalar()
         || parameter.as_bezier_parameter().is_some_and(|parameter| {
             parameter
-                .as_exact()
+                .scalar()
                 .is_none_or(|value| value.exact_rational_ref().is_none())
         });
     if retain_source {
@@ -3969,7 +3969,7 @@ fn canonicalize_retained_extension_on_finite_envelope(
         // to zero or one, and reconstruction relies on this endpoint invariant.
         let mapped = if parameter
             .as_bezier_parameter()
-            .is_some_and(BezierParameter2::is_exact)
+            .is_some_and(|parameter| parameter.scalar().is_some())
         {
             CurveParameter2::from(BezierParameter2::Exact(exact_endpoint))
         } else {
@@ -4875,7 +4875,7 @@ fn exact_offset_spans_from_source_singular_parallel(
                     return Ok(Classification::Uncertain(reason));
                 }
             };
-            let Some(parameter) = parameter.as_exact() else {
+            let Some(parameter) = parameter.scalar() else {
                 return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
             };
             let tangent = match parallel.derivative_at(parameter, policy)? {
@@ -5715,7 +5715,7 @@ impl<'a> RetainedParallelOffsetFragmentRef2<'a> {
 }
 
 fn retained_parallel_represented_parameter(parameter: &CurveParameter2) -> Option<&Real> {
-    parameter.as_exact().or_else(|| {
+    parameter.scalar().or_else(|| {
         parameter
             .as_selected_fiber()
             .and_then(|parameter| parameter.represented_value())
@@ -6489,7 +6489,7 @@ fn exact_parallel_point_evidence(
     parameter: &BezierParameter2,
     policy: &CurveContext,
 ) -> CurveResult<Classification<CurvePoint2>> {
-    if let Some(parameter) = parameter.as_exact() {
+    if let Some(parameter) = parameter.scalar() {
         return Ok(parallel.point_at(parameter, policy)?.map(Into::into));
     }
     Ok(Classification::Decided(CurvePoint2::from(
@@ -7291,7 +7291,7 @@ fn exact_path_endpoint_unit_tangent(
     } else {
         curve.parameter_domain().end()
     };
-    let Some(parameter) = parameter.as_exact() else {
+    let Some(parameter) = parameter.scalar() else {
         return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
     };
     let max_order = match curve.geometry() {
@@ -7418,7 +7418,7 @@ fn exact_offset_parallel_endpoint(
             } else {
                 analytic_parallel_traversal_end(fragment)
             }
-            .as_exact()?
+            .scalar()?
             .clone();
             Some((fragment.parallel(), parameter, fragment.is_reversed()))
         }
@@ -7430,7 +7430,7 @@ fn exact_offset_parallel_endpoint(
                 fragment.range().end()
             }
             .as_bezier_parameter()?
-            .as_exact()?
+            .scalar()?
             .clone();
             Some((parallel, parameter, fragment.is_reversed()))
         }
@@ -8533,7 +8533,7 @@ fn exact_retained_parallel_represented_tangent(
     source_direction: RealSign,
     policy: &CurveContext,
 ) -> CurveResult<Classification<Option<(Real, Real)>>> {
-    let Some(parameter) = parameter.as_exact() else {
+    let Some(parameter) = parameter.scalar() else {
         return Ok(Classification::Decided(None));
     };
     let tangent = match parallel.source_tangent_at(parameter, policy)? {
@@ -15057,7 +15057,7 @@ fn retained_line_fragment_endpoints(
                     return Ok(Classification::Uncertain(reason));
                 }
             }
-            let Some((start_parameter, end_parameter)) = fragment.range().exact_endpoints() else {
+            let Some((start_parameter, end_parameter)) = fragment.range().scalar_endpoints() else {
                 return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
             };
             let start = match fragment.parallel().point_at(start_parameter, policy)? {
@@ -16085,7 +16085,7 @@ fn retained_fragment_algebraic_ray_curve(
         }
     };
     let (curve, retained_range) = if let Some(range) = retained_range {
-        if let Some((start, end)) = range.exact_endpoints() {
+        if let Some((start, end)) = range.scalar_endpoints() {
             let curve = match curve.subcurve_between_exact(start, end, policy)? {
                 Classification::Decided(curve) => curve,
                 Classification::Uncertain(reason) => {
@@ -17454,7 +17454,7 @@ fn classify_point_with_retained_ray_skipping_origin(
                         return origin
                             .parameter
                             .and_then(CurveParameter2::as_bezier_parameter)
-                            .and_then(BezierParameter2::as_exact);
+                            .and_then(BezierParameter2::scalar);
                     }
                     let source_fragment_index = origin.fragment_index?;
                     let fragment_count = boundary_loop.fragments().len();
@@ -17673,7 +17673,7 @@ fn classify_point_with_retained_ray_skipping_origin(
                     origin
                         .parameter
                         .and_then(CurveParameter2::as_bezier_parameter)
-                        .and_then(BezierParameter2::as_exact)
+                        .and_then(BezierParameter2::scalar)
                         .map(|parameter| (parameter, origin.crossing_direction))
                 })
                 .flatten()
@@ -30398,7 +30398,7 @@ mod tests {
         assert_eq!(consumed, 2);
         assert!(!coalesced.is_reversed());
         assert_eq!(
-            coalesced.range().exact_endpoints(),
+            coalesced.range().scalar_endpoints(),
             Some((&Real::zero(), &Real::one()))
         );
 
@@ -30420,7 +30420,7 @@ mod tests {
         assert_eq!(consumed, 2);
         assert!(coalesced_reversed.is_reversed());
         assert_eq!(
-            coalesced_reversed.range().exact_endpoints(),
+            coalesced_reversed.range().scalar_endpoints(),
             Some((&Real::zero(), &Real::one()))
         );
 
@@ -30436,7 +30436,7 @@ mod tests {
                     assert!(matches!(
                         fragments.first(),
                         Some(BezierSplitFragment2::AnalyticParallel(first))
-                            if !analytic_parallel_traversal_start(first).is_exact()
+                            if analytic_parallel_traversal_start(first).scalar().is_none()
                     ));
                 }
                 CurveRegion2::try_new_with_loop_topology(
@@ -30529,7 +30529,7 @@ mod tests {
         let [cusp, next_cusp] = analysis.parallel_cusps() else {
             panic!("the selected parallel must have two cusps");
         };
-        assert!(!cusp.is_exact());
+        assert!(cusp.scalar().is_none());
         let make_fragment = |start: BezierParameter2, end: BezierParameter2| {
             let range = BezierParameterRange2::try_new(start, end, &construction_policy)
                 .expect("the cusp range is valid");

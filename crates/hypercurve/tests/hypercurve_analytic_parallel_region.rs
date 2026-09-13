@@ -478,7 +478,7 @@ fn check_policy(policy: CurveContext) {
     let fragment = line_parallel_fragment(point(0, 0), point(2, 0), point(4, 0), 1, 1, 0, &policy);
     assert!(fragment.is_reversed());
     assert_eq!(
-        fragment.range().exact_endpoints(),
+        fragment.range().scalar_endpoints(),
         Some((&Real::zero(), &Real::one()))
     );
     let representative = match fragment.representative_point(&policy).unwrap() {
@@ -608,7 +608,8 @@ fn check_policy(policy: CurveContext) {
     assert!(evidence.is_complete(), "{:#?}", evidence.blockers());
     assert!(!evidence.contacts().is_empty());
     assert!(evidence.contacts().iter().any(|contact| {
-        !contact.first_parameter().is_exact() || !contact.second_parameter().is_exact()
+        contact.first_parameter().scalar().is_none()
+            || contact.second_parameter().scalar().is_none()
     }));
     let clipped = curved
         .boolean_region(&cutter, hypercurve::BooleanOp::Intersection, &policy)
@@ -640,7 +641,7 @@ fn radical_cusp_split_parallel_region(policy: &CurveContext) -> CurveRegion2 {
     let [cusp] = analysis.parallel_cusps() else {
         panic!("expected one radical parallel cusp");
     };
-    assert!(cusp.is_exact());
+    assert!(cusp.scalar().is_some());
 
     let zero = exact_parameter(0, policy);
     let one = exact_parameter(1, policy);

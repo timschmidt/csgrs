@@ -217,10 +217,11 @@ impl CurveParameter2 {
         }
     }
 
-    /// Returns a directly represented local scalar when this carrier domain has one.
-    pub const fn as_exact(&self) -> Option<&Real> {
+    /// Returns a stored chart scalar without reconstructing selected evidence.
+    /// Absence of this view does not limit the parameter's exact meaning.
+    pub const fn scalar(&self) -> Option<&Real> {
         match &self.data {
-            CurveParameterData2::Bezier(parameter) => parameter.as_exact(),
+            CurveParameterData2::Bezier(parameter) => parameter.scalar(),
             CurveParameterData2::SelectedFiber(_) | CurveParameterData2::RecursiveProjective(_) => {
                 None
             }
@@ -283,12 +284,6 @@ impl CurveParameter2 {
             CurveParameterData2::RecursiveProjective(parameter) => Some(parameter),
             _ => None,
         }
-    }
-
-    /// Returns true when this carrier parameter is represented directly by a
-    /// [`Real`] rather than retained algebraic evidence.
-    pub const fn is_exact(&self) -> bool {
-        self.as_exact().is_some()
     }
 
     pub(crate) fn as_algebraic_cusp(&self) -> Option<&BezierAlgebraicCuspSemicircleParameter2> {
@@ -687,8 +682,8 @@ impl CurveParameterRange2 {
     }
 
     /// Returns both directly represented endpoints.
-    pub fn exact_endpoints(&self) -> Option<(&Real, &Real)> {
-        Some((self.start.as_exact()?, self.end.as_exact()?))
+    pub fn scalar_endpoints(&self) -> Option<(&Real, &Real)> {
+        Some((self.start.scalar()?, self.end.scalar()?))
     }
 
     pub(crate) fn from_bezier_range(range: BezierParameterRange2) -> Self {
@@ -1905,7 +1900,7 @@ fn validate_bezier_split_fragment(
 
     match fragment {
         BezierSplitFragment2::Materialized { start, end, .. } => {
-            if !start.is_exact() || !end.is_exact() {
+            if start.scalar().is_none() || end.scalar().is_none() {
                 return Err(CurveError::Topology(
                     "materialized Bezier split fragment must have exact range boundaries".into(),
                 ));
@@ -2466,8 +2461,8 @@ where
         } else {
             parameter.clone()
         };
-        let parameter = match promoted.as_exact() {
-            Some(exact) if !parameter.is_exact() && !exact_boundary_is_regular(exact) => {
+        let parameter = match promoted.scalar() {
+            Some(exact) if parameter.scalar().is_none() && !exact_boundary_is_regular(exact) => {
                 parameter.clone()
             }
             _ => promoted,
@@ -2487,7 +2482,7 @@ where
     for (pair, image_pair) in boundaries.windows(2).zip(endpoint_images.windows(2)) {
         let start = pair[0].clone();
         let end = pair[1].clone();
-        match (start.as_exact(), end.as_exact()) {
+        match (start.scalar(), end.scalar()) {
             (Some(start_exact), Some(end_exact)) => {
                 let curve = materialize(start_exact, end_exact)?;
                 fragments.push(BezierSplitFragment2::Materialized { start, end, curve });

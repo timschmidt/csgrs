@@ -607,8 +607,8 @@ fn top_level_arc_dispatch_filters_circle_witnesses_and_retains_exact_parameters(
     assert!(evidence.is_complete());
     assert_eq!(evidence.contacts().len(), 1);
     let contact = &evidence.contacts()[0];
-    assert!(contact.first().local_parameter().is_exact());
-    assert!(contact.second().local_parameter().is_exact());
+    assert!(contact.first().local_parameter().scalar().is_some());
+    assert!(contact.second().local_parameter().scalar().is_some());
     assert!(matches!((contact.point()).coordinates(), Some(point) if point == &p(4, 3)));
     assert_eq!(topology.result().contacts().len(), 1);
 }
@@ -700,7 +700,13 @@ fn native_line_arc_dispatch_preserves_operand_order_and_exact_parameters() {
         evidence.contacts()[0].first().exact_curve_parameter(),
         Some(q(7, 8))
     );
-    assert!(evidence.contacts()[0].second().local_parameter().is_exact());
+    assert!(
+        evidence.contacts()[0]
+            .second()
+            .local_parameter()
+            .scalar()
+            .is_some()
+    );
     assert!(
         matches!((evidence.contacts()[0].point()).coordinates(), Some(point) if point == &p(4, 3))
     );
@@ -714,7 +720,8 @@ fn native_line_arc_dispatch_preserves_operand_order_and_exact_parameters() {
         reversed_evidence.contacts()[0]
             .first()
             .local_parameter()
-            .is_exact()
+            .scalar()
+            .is_some()
     );
     assert_eq!(
         reversed_evidence.contacts()[0]
@@ -1267,8 +1274,18 @@ fn promoted_region_boolean_traverses_overlapping_circles_with_exact_radical_spli
     assert!(evidence.is_complete(), "{:?}", evidence.blockers());
     assert_eq!(evidence.contacts().len(), 2);
     assert!(evidence.contacts().iter().all(|contact| {
-        contact.contact().first().local_parameter().is_exact()
-            && contact.contact().second().local_parameter().is_exact()
+        contact
+            .contact()
+            .first()
+            .local_parameter()
+            .scalar()
+            .is_some()
+            && contact
+                .contact()
+                .second()
+                .local_parameter()
+                .scalar()
+                .is_some()
     }));
 
     for operation in [BooleanOp::Union, BooleanOp::Intersection] {

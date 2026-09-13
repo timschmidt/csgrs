@@ -1998,7 +1998,7 @@ impl CurveIntersectionParameter2 {
 
     /// Returns the exact authored curve parameter when directly represented.
     pub fn exact_curve_parameter(&self) -> Option<Real> {
-        let local = self.local_parameter.as_exact()?;
+        let local = self.local_parameter.scalar()?;
         let (start, end) = self.span_range.endpoints();
         Some(start + (end - start) * local)
     }

@@ -395,7 +395,7 @@ fn edit_all_corners(
         .map(|(curve_index, curve)| {
             let (domain_start, domain_end) = curve
                 .parameter_domain()
-                .exact_endpoints()
+                .scalar_endpoints()
                 .ok_or_else(|| format!("curve {curve_index} needs scalar fixture parameters"))?;
             let start = corner_witnesses[curve_index].as_ref().map_or_else(
                 || domain_start.clone(),
@@ -502,7 +502,7 @@ fn endpoint_tangent(curve: &Curve2, at_start: bool) -> Result<(Real, Real), Stri
 
     let (start, end) = curve
         .parameter_domain()
-        .exact_endpoints()
+        .scalar_endpoints()
         .ok_or("fixture tangents need scalar parameters")?;
     let (parameter, side) = if at_start {
         (start, CurveParameterSide2::Right)
@@ -568,13 +568,13 @@ fn linear_image_corner_witness(
 
     let (previous_start, previous_end) = previous
         .parameter_domain()
-        .exact_endpoints()
+        .scalar_endpoints()
         .ok_or("affine fixtures need scalar parameters")?;
     let previous_span = previous_end - previous_start;
     let previous_parameter = previous_end - &(&previous_span * &previous_fraction);
     let (next_start, next_end) = next
         .parameter_domain()
-        .exact_endpoints()
+        .scalar_endpoints()
         .ok_or("affine fixtures need scalar parameters")?;
     let next_span = next_end - next_start;
     let next_parameter = next_start + &(&next_span * &next_fraction);

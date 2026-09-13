@@ -4317,12 +4317,12 @@ mod tests {
         };
         assert_eq!(contacts.len(), 2);
         let other = (Real::one() / Real::from(4_u8)).unwrap();
-        assert_eq!(contacts[0].parameter().as_exact(), Some(&other));
+        assert_eq!(contacts[0].parameter().scalar(), Some(&other));
         assert_eq!(
             contacts[0].crossing_direction(),
             Some(BezierLineCrossingDirection::PositiveToNegative)
         );
-        assert_eq!(contacts[1].parameter().as_exact(), Some(&known));
+        assert_eq!(contacts[1].parameter().scalar(), Some(&known));
         assert_eq!(
             contacts[1].crossing_direction(),
             Some(BezierLineCrossingDirection::NegativeToPositive)

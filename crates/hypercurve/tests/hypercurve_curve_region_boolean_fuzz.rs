@@ -346,8 +346,8 @@ fn exact_boolean_results(
                     contact.first().family(),
                     contact.second().carrier_index(),
                     contact.second().family(),
-                    contact.first_parameter().as_exact().cloned(),
-                    contact.second_parameter().as_exact().cloned(),
+                    contact.first_parameter().scalar().cloned(),
+                    contact.second_parameter().scalar().cloned(),
                     contact.is_certified_transverse(),
                 )
             })

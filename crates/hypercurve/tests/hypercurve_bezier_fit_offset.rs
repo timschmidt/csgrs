@@ -1401,7 +1401,7 @@ fn parallel_pair_structural_overlap_preserves_relative_orientation() {
             RationalBezierOverlapOrientation2::Same
         );
         assert_eq!(
-            same_overlap.second_range().exact_endpoints(),
+            same_overlap.second_range().scalar_endpoints(),
             Some((&r(0), &r(1)))
         );
 
@@ -1418,7 +1418,7 @@ fn parallel_pair_structural_overlap_preserves_relative_orientation() {
             RationalBezierOverlapOrientation2::Reversed
         );
         assert_eq!(
-            reversed_overlap.second_range().exact_endpoints(),
+            reversed_overlap.second_range().scalar_endpoints(),
             Some((&r(1), &r(0)))
         );
     }
@@ -1466,11 +1466,11 @@ fn parallel_pair_certifies_partial_source_overlap_and_reparameterization() {
             };
             assert_eq!(overlap.orientation(), orientation);
             assert_eq!(
-                overlap.first_range().exact_endpoints(),
+                overlap.first_range().scalar_endpoints(),
                 Some((&q(1, 4), &q(3, 4)))
             );
             assert_eq!(
-                overlap.second_range().exact_endpoints(),
+                overlap.second_range().scalar_endpoints(),
                 Some((&second_start, &second_end))
             );
             assert!(overlap.includes_start());
@@ -2264,11 +2264,11 @@ fn parallel_rational_contacts_resolve_selected_and_opposite_shared_components() 
             decided_parallel_set(parallel.intersections(&coincident, &policy).unwrap());
         let overlap = only_parallel_overlap(&intersections);
         assert_eq!(
-            overlap.first_range().exact_endpoints(),
+            overlap.first_range().scalar_endpoints(),
             Some((&Real::zero(), &Real::one()))
         );
         assert_eq!(
-            overlap.second_range().exact_endpoints(),
+            overlap.second_range().scalar_endpoints(),
             Some((&Real::zero(), &Real::one()))
         );
         assert_eq!(
@@ -2293,11 +2293,11 @@ fn parallel_rational_contacts_retain_partial_and_reversed_overlap_ranges() {
             decided_parallel_set(parallel.intersections(&partial, &policy).unwrap());
         let overlap = only_parallel_overlap(&intersections);
         assert_eq!(
-            overlap.first_range().exact_endpoints(),
+            overlap.first_range().scalar_endpoints(),
             Some((&q(1, 2), &Real::one()))
         );
         assert_eq!(
-            overlap.second_range().exact_endpoints(),
+            overlap.second_range().scalar_endpoints(),
             Some((&Real::zero(), &q(1, 2)))
         );
         assert_eq!(
@@ -2312,7 +2312,7 @@ fn parallel_rational_contacts_retain_partial_and_reversed_overlap_ranges() {
         );
         let reversed = only_parallel_overlap(&reversed_intersections);
         assert_eq!(
-            reversed.first_range().exact_endpoints(),
+            reversed.first_range().scalar_endpoints(),
             Some((&q(1, 2), &Real::one()))
         );
         assert_eq!(
@@ -2348,11 +2348,11 @@ fn parallel_rational_contacts_transport_a_nonlinear_rational_parameter_component
         let intersections = decided_parallel_set(parallel.intersections(&target, &policy).unwrap());
         let overlap = only_parallel_overlap(&intersections);
         assert_eq!(
-            overlap.first_range().exact_endpoints(),
+            overlap.first_range().scalar_endpoints(),
             Some((&Real::zero(), &Real::one()))
         );
         assert_eq!(
-            overlap.second_range().exact_endpoints(),
+            overlap.second_range().scalar_endpoints(),
             Some((&Real::zero(), &Real::one()))
         );
         assert_eq!(
@@ -2370,11 +2370,11 @@ fn parallel_rational_contacts_transport_a_nonlinear_rational_parameter_component
             decided_parallel_set(parallel.intersections(&partial, &policy).unwrap());
         let partial = only_parallel_overlap(&partial_intersections);
         assert_eq!(
-            partial.first_range().exact_endpoints(),
+            partial.first_range().scalar_endpoints(),
             Some((&q(5, 28), &q(13, 20)))
         );
         assert_eq!(
-            partial.second_range().exact_endpoints(),
+            partial.second_range().scalar_endpoints(),
             Some((&Real::zero(), &Real::one()))
         );
         assert_eq!(
@@ -2386,11 +2386,11 @@ fn parallel_rational_contacts_transport_a_nonlinear_rational_parameter_component
             decided_parallel_set(parallel.intersections(&target.reversed(), &policy).unwrap());
         let reversed = only_parallel_overlap(&reversed_intersections);
         assert_eq!(
-            reversed.first_range().exact_endpoints(),
+            reversed.first_range().scalar_endpoints(),
             Some((&Real::zero(), &Real::one()))
         );
         assert_eq!(
-            reversed.second_range().exact_endpoints(),
+            reversed.second_range().scalar_endpoints(),
             Some((&Real::one(), &Real::zero()))
         );
         assert_eq!(
@@ -2421,11 +2421,11 @@ fn parallel_rational_contacts_transport_an_implicit_parameter_component() {
         let intersections = decided_parallel_set(parallel.intersections(&target, &policy).unwrap());
         let overlap = only_parallel_overlap(&intersections);
         assert_eq!(
-            overlap.first_range().exact_endpoints(),
+            overlap.first_range().scalar_endpoints(),
             Some((&Real::zero(), &Real::one()))
         );
         assert_eq!(
-            overlap.second_range().exact_endpoints(),
+            overlap.second_range().scalar_endpoints(),
             Some((&Real::zero(), &Real::one()))
         );
         assert_eq!(
@@ -2474,11 +2474,11 @@ fn parallel_rational_contacts_partition_two_turning_implicit_graphs() {
         };
         for (left, right) in [(lower_left, lower_right), (upper_left, upper_right)] {
             assert_eq!(
-                left.first_range().exact_endpoints(),
+                left.first_range().scalar_endpoints(),
                 Some((&Real::zero(), &half))
             );
             assert_eq!(
-                right.first_range().exact_endpoints(),
+                right.first_range().scalar_endpoints(),
                 Some((&half, &Real::one()))
             );
             assert_eq!(left.second_range().end(), right.second_range().start());
@@ -2543,13 +2543,13 @@ fn parallel_rational_contacts_partition_a_closed_implicit_oval() {
         };
         for overlap in [lower_left, upper_left] {
             assert_eq!(
-                overlap.first_range().exact_endpoints(),
+                overlap.first_range().scalar_endpoints(),
                 Some((&quarter, &half))
             );
         }
         for overlap in [lower_right, upper_right] {
             assert_eq!(
-                overlap.first_range().exact_endpoints(),
+                overlap.first_range().scalar_endpoints(),
                 Some((&half, &three_quarters))
             );
         }
@@ -2618,11 +2618,11 @@ fn parallel_rational_contacts_partition_an_implicit_cusp() {
                 .find(|overlap| overlap.orientation() == orientation)
                 .expect("the cusp must retain both oriented branches");
             assert_eq!(
-                overlap.first_range().exact_endpoints(),
+                overlap.first_range().scalar_endpoints(),
                 Some((&half, &Real::one()))
             );
-            assert_eq!(overlap.second_range().start().as_exact(), Some(&half));
-            assert!(!overlap.second_range().end().is_exact());
+            assert_eq!(overlap.second_range().start().scalar(), Some(&half));
+            assert!(overlap.second_range().end().scalar().is_none());
         }
     }
 }
@@ -2666,19 +2666,19 @@ fn parallel_rational_contacts_partition_a_noninjective_parameter_component() {
             .find(|overlap| overlap.orientation() == RationalBezierOverlapOrientation2::Reversed)
             .expect("reverse noninjective branch was not retained");
         assert_eq!(
-            same.first_range().exact_endpoints(),
+            same.first_range().scalar_endpoints(),
             Some((&Real::zero(), &Real::one()))
         );
         assert_eq!(
-            same.second_range().exact_endpoints(),
+            same.second_range().scalar_endpoints(),
             Some((&Real::zero(), &q(1, 2)))
         );
         assert_eq!(
-            reversed.first_range().exact_endpoints(),
+            reversed.first_range().scalar_endpoints(),
             Some((&Real::zero(), &Real::one()))
         );
         assert_eq!(
-            reversed.second_range().exact_endpoints(),
+            reversed.second_range().scalar_endpoints(),
             Some((&Real::one(), &q(1, 2)))
         );
     }
@@ -2792,7 +2792,7 @@ fn parallel_rational_contacts_clip_a_component_at_both_curve_domains() {
         let overlap = only_parallel_overlap(&intersections);
 
         assert_eq!(
-            overlap.first_range().exact_endpoints(),
+            overlap.first_range().scalar_endpoints(),
             Some((&q(13, 133), &Real::one()))
         );
         assert!(matches!(
@@ -2841,11 +2841,11 @@ fn zero_distance_non_ph_parallel_reuses_the_exact_source_overlap() {
             decided_parallel_set(parallel.intersections(&same_source, &policy).unwrap());
         let overlap = only_parallel_overlap(&intersections);
         assert_eq!(
-            overlap.first_range().exact_endpoints(),
+            overlap.first_range().scalar_endpoints(),
             Some((&Real::zero(), &Real::one()))
         );
         assert_eq!(
-            overlap.second_range().exact_endpoints(),
+            overlap.second_range().scalar_endpoints(),
             Some((&Real::zero(), &Real::one()))
         );
     }
@@ -2880,11 +2880,11 @@ fn independently_constructed_ph_parallel_reuses_rational_overlap_authority() {
         );
         let overlap = only_parallel_overlap(&intersections);
         assert_eq!(
-            overlap.first_range().exact_endpoints(),
+            overlap.first_range().scalar_endpoints(),
             Some((&Real::zero(), &Real::one()))
         );
         assert_eq!(
-            overlap.second_range().exact_endpoints(),
+            overlap.second_range().scalar_endpoints(),
             Some((&Real::zero(), &Real::one()))
         );
     }

@@ -581,8 +581,8 @@ fn implicit_conic_route_replays_degree_elevated_line_contact_in_both_orders() {
     };
     assert_eq!(contacts.len(), 1);
     assert!(contacts[0].is_certified_transverse());
-    assert_eq!(contacts[0].first_parameter().as_exact(), Some(&q(1, 2)));
-    assert_eq!(contacts[0].second_parameter().as_exact(), Some(&q(3, 5)));
+    assert_eq!(contacts[0].first_parameter().scalar(), Some(&q(1, 2)));
+    assert_eq!(contacts[0].second_parameter().scalar(), Some(&q(3, 5)));
     assert!(
         matches!((contacts[0].point()).coordinates(), Some(point) if point == &Point2::new(q(3, 5), q(4, 5)))
     );
@@ -922,8 +922,8 @@ fn rational_resultant_retains_algebraic_parameter_projections() {
         panic!("algebraic resultant candidates did not replay completely");
     };
     assert_eq!(contacts.len(), 1);
-    assert!(contacts[0].first_parameter().as_exact().is_none());
-    assert!(contacts[0].second_parameter().as_exact().is_none());
+    assert!(contacts[0].first_parameter().scalar().is_none());
+    assert!(contacts[0].second_parameter().scalar().is_none());
     assert!((contacts[0].point()).coordinates().is_none());
 
     let topology = parabola
@@ -1074,11 +1074,11 @@ fn projectively_reparameterized_rational_quadratic_certifies_shared_conic() {
         panic!("projectively reparameterized conic remained unresolved: {contacts:?}");
     };
     assert_eq!(
-        overlap.first_range().exact_endpoints(),
+        overlap.first_range().scalar_endpoints(),
         Some((&Real::zero(), &Real::one()))
     );
     assert_eq!(
-        overlap.second_range().exact_endpoints(),
+        overlap.second_range().scalar_endpoints(),
         Some((&Real::zero(), &Real::one()))
     );
     assert_eq!(
@@ -1097,7 +1097,7 @@ fn projectively_reparameterized_rational_quadratic_certifies_shared_conic() {
         RationalBezierOverlapOrientation2::Reversed
     );
     assert_eq!(
-        reversed.second_range().exact_endpoints(),
+        reversed.second_range().scalar_endpoints(),
         Some((&Real::one(), &Real::zero()))
     );
 }
@@ -1126,7 +1126,7 @@ fn independently_trimmed_projective_conics_retain_partial_overlap() {
     else {
         panic!("independently trimmed projective conics did not retain overlap");
     };
-    let (first_start, first_end) = overlap.first_range().exact_endpoints().unwrap();
+    let (first_start, first_end) = overlap.first_range().scalar_endpoints().unwrap();
     assert!(matches!(
         BezierParameter2::Exact(first_start.clone())
             .cmp_by_interval(&BezierParameter2::Exact(Real::zero()), &policy)
@@ -1134,7 +1134,7 @@ fn independently_trimmed_projective_conics_retain_partial_overlap() {
         Classification::Decided(std::cmp::Ordering::Greater)
     ));
     assert_eq!(first_end, &Real::one());
-    let (second_start, second_end) = overlap.second_range().exact_endpoints().unwrap();
+    let (second_start, second_end) = overlap.second_range().scalar_endpoints().unwrap();
     assert_eq!(second_start, &Real::zero());
     assert!(matches!(
         BezierParameter2::Exact(second_end.clone())
@@ -1285,9 +1285,9 @@ fn line_image_overlap_retains_irrational_algebraic_parameter_boundary() {
         overlap.first_range().start(),
         BezierParameter2::Algebraic(_)
     ));
-    assert_eq!(overlap.first_range().end().as_exact(), Some(&Real::one()));
+    assert_eq!(overlap.first_range().end().scalar(), Some(&Real::one()));
     assert_eq!(
-        overlap.second_range().exact_endpoints(),
+        overlap.second_range().scalar_endpoints(),
         Some((&Real::zero(), &Real::one()))
     );
     assert_eq!(
@@ -1312,11 +1312,11 @@ fn line_image_overlap_accepts_monotone_parameterization_with_stationary_point() 
         panic!("stationary monotone line image did not retain its overlap");
     };
     assert_eq!(
-        overlap.first_range().exact_endpoints(),
+        overlap.first_range().scalar_endpoints(),
         Some((&q(1, 2), &Real::one()))
     );
     assert_eq!(
-        overlap.second_range().exact_endpoints(),
+        overlap.second_range().scalar_endpoints(),
         Some((&Real::zero(), &Real::one()))
     );
     assert_eq!(
@@ -1362,14 +1362,14 @@ fn polynomial_graph_overlap_retains_irrational_curved_boundary() {
         panic!("certified polynomial graph did not retain its curved overlap");
     };
     assert_eq!(
-        overlap.first_range().exact_endpoints(),
+        overlap.first_range().scalar_endpoints(),
         Some((&Real::zero(), &Real::one()))
     );
     assert!(matches!(
         overlap.second_range().start(),
         BezierParameter2::Algebraic(_)
     ));
-    assert_eq!(overlap.second_range().end().as_exact(), Some(&Real::one()));
+    assert_eq!(overlap.second_range().end().scalar(), Some(&Real::one()));
     assert_eq!(
         overlap.orientation(),
         RationalBezierOverlapOrientation2::Same

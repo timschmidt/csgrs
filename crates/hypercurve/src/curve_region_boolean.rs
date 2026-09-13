@@ -1818,7 +1818,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
             carrier_traversal_end(&self.data.carriers[parallel_index])
         })
         .as_bezier_parameter()
-        .and_then(BezierParameter2::as_exact)
+        .and_then(BezierParameter2::scalar)
         .cloned() else {
             return Ok(None);
         };
@@ -1960,14 +1960,14 @@ impl<'a> CurveRegionBooleanContext<'a> {
         let mut retained_parameters = Vec::with_capacity(contacts.len());
         let mut retained_certified_tangencies = Vec::new();
         for contact in contacts {
-            if contact.parameter().as_exact().is_some_and(|parameter| {
+            if contact.parameter().scalar().is_some_and(|parameter| {
                 authored_contact
                     .as_ref()
                     .is_some_and(|(authored, _)| parameter == authored)
             }) {
                 continue;
             }
-            if let Some(certified) = contact.parameter().as_exact().and_then(|parameter| {
+            if let Some(certified) = contact.parameter().scalar().and_then(|parameter| {
                 certified_tangent_contacts
                     .iter()
                     .find(|certified| certified.parameter() == parameter)
@@ -2122,7 +2122,10 @@ impl<'a> CurveRegionBooleanContext<'a> {
             }
         };
         let parameters = incidence;
-        if parameters.iter().all(|(parameter, _)| parameter.is_exact()) {
+        if parameters
+            .iter()
+            .all(|(parameter, _)| parameter.scalar().is_some())
+        {
             match self.parallel_exact_parameter_pair_result(
                 parallel,
                 curve,
@@ -2185,13 +2188,13 @@ impl<'a> CurveRegionBooleanContext<'a> {
                 .map_err(|cause| self.invalid(0, cause))?;
             let mut contacts = Vec::with_capacity(parameters.len());
             for (parallel_parameter, radial_crossing_sign) in &parameters {
-                let certified_contact = parallel_parameter.as_exact().and_then(|parameter| {
+                let certified_contact = parallel_parameter.scalar().and_then(|parameter| {
                     certified_tangent_contacts
                         .iter()
                         .find(|contact| contact.parameter == *parameter)
                 });
                 if certified_contact.is_none()
-                    && let Some(exact) = parallel_parameter.as_exact()
+                    && let Some(exact) = parallel_parameter.scalar()
                 {
                     let point = parallel
                         .point_at(exact, &self.data.policy)
@@ -2283,7 +2286,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
         }
         let mut retained_parameters = Vec::with_capacity(parameters.len());
         for (parameter, _) in parameters {
-            if let Some(contact) = parameter.as_exact().and_then(|parameter| {
+            if let Some(contact) = parameter.scalar().and_then(|parameter| {
                 certified_tangent_contacts
                     .iter()
                     .find(|contact| contact.parameter == *parameter)
@@ -2293,7 +2296,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
                 }
                 continue;
             }
-            let Some(exact) = parameter.as_exact() else {
+            let Some(exact) = parameter.scalar() else {
                 return Ok(Classification::Decided(None));
             };
             let point = match parallel
@@ -2332,7 +2335,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
             RationalBezier2::try_from_subcurve(curve).map_err(|cause| self.invalid(0, cause))?;
         let mut result_contacts = Vec::with_capacity(parallel_parameters.len());
         for parallel_parameter in parallel_parameters {
-            let Some(parallel_parameter_exact) = parallel_parameter.as_exact() else {
+            let Some(parallel_parameter_exact) = parallel_parameter.scalar() else {
                 return Ok(Classification::Decided(None));
             };
             let point = match parallel.point_at(parallel_parameter_exact, &self.data.policy) {
@@ -2366,7 +2369,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
                 }
             };
             for other_parameter in other_parameters {
-                let Some(other_parameter_exact) = other_parameter.as_exact() else {
+                let Some(other_parameter_exact) = other_parameter.scalar() else {
                     return Ok(Classification::Decided(None));
                 };
                 let other_derivative = match rational
@@ -4002,14 +4005,14 @@ impl<'a> CurveRegionBooleanContext<'a> {
         let chord_is_first = chord_index == pair.first_carrier_index;
         let mut contacts = Vec::with_capacity(line_contacts.len());
         for contact in line_contacts {
-            if contact.parameter().as_exact().is_some_and(|parameter| {
+            if contact.parameter().scalar().is_some_and(|parameter| {
                 authored_contact
                     .as_ref()
                     .is_some_and(|(authored, _)| parameter == authored)
             }) {
                 continue;
             }
-            let certified = contact.parameter().as_exact().and_then(|parameter| {
+            let certified = contact.parameter().scalar().and_then(|parameter| {
                 certified_tangent_contacts
                     .iter()
                     .find(|certified| certified.parameter() == parameter)
@@ -4032,7 +4035,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
                         Classification::Decided(point) => point,
                         Classification::Uncertain(reason) => return Ok(blocker(reason)),
                     }
-                } else if contact.parameter().as_exact().is_some() {
+                } else if contact.parameter().scalar().is_some() {
                     match parallel
                         .supporting_line_contact_evidence(
                             &directed_line,
@@ -9391,21 +9394,21 @@ impl<'a> CurveRegionBooleanContext<'a> {
         let source_endpoint_witness = if local_circular_curve.is_none()
             && retained_regular_circle
             && carrier.start == *start
-            && start.as_exact().is_some_and(|boundary| {
+            && start.scalar().is_some_and(|boundary| {
                 end.as_bezier_parameter()
                     .is_some_and(|end| isolator_touches(end, boundary, true))
             }) {
-            start.as_exact().cloned()
+            start.scalar().cloned()
         } else if local_circular_curve.is_none()
             && retained_regular_circle
             && carrier.end == *end
-            && end.as_exact().is_some_and(|boundary| {
+            && end.scalar().is_some_and(|boundary| {
                 start
                     .as_bezier_parameter()
                     .is_some_and(|start| isolator_touches(start, boundary, false))
             })
         {
-            end.as_exact().cloned()
+            end.scalar().cloned()
         } else {
             None
         };
@@ -13146,7 +13149,7 @@ fn selected_fiber_event_point(
             })
         }
         BezierSelectedFiberSource2::AnalyticParallel(parallel) => {
-            if let Some(parameter) = parameter.as_exact() {
+            if let Some(parameter) = parameter.scalar() {
                 return match parallel.point_at(parameter, policy)? {
                     Classification::Decided(point) => Ok(CurvePoint2::from(point)),
                     Classification::Uncertain(reason) => Err(CurveError::Topology(format!(
@@ -13921,7 +13924,7 @@ fn exact_split_endpoint_point(
     {
         return Some(point.clone());
     }
-    let parameter = parameter.as_exact()?;
+    let parameter = parameter.scalar()?;
     match carrier.geometry.point_at(parameter, policy).ok()? {
         Classification::Decided(point) => Some(point),
         Classification::Uncertain(_) => None,
@@ -16034,7 +16037,7 @@ fn exact_carrier_point(
     parameter: &CurveParameter2,
     policy: &CurveContext,
 ) -> Option<crate::Point2> {
-    let parameter = parameter.as_exact()?;
+    let parameter = parameter.scalar()?;
     match carrier.geometry.point_at(parameter, policy) {
         Ok(Classification::Decided(point)) => Some(point),
         Ok(Classification::Uncertain(_)) | Err(_) => None,
@@ -17000,9 +17003,9 @@ mod certified_successor_tests {
                 false,
             );
             assert_selected(first.start(), fraction(1, 4));
-            assert_eq!(first.end().as_exact(), Some(&fraction(1, 2)));
+            assert_eq!(first.end().scalar(), Some(&fraction(1, 2)));
             assert_eq!(
-                second.exact_endpoints(),
+                second.scalar_endpoints(),
                 Some((&fraction(1, 16), &fraction(1, 4))),
             );
 
@@ -17013,8 +17016,8 @@ mod certified_successor_tests {
             );
             assert_selected(first.start(), fraction(1, 16));
             assert_selected(first.end(), fraction(1, 4));
-            assert_eq!(second.start().as_exact(), Some(&fraction(1, 4)));
-            assert_eq!(second.end().as_exact(), Some(&fraction(1, 2)));
+            assert_eq!(second.start().scalar(), Some(&fraction(1, 4)));
+            assert_eq!(second.end().scalar(), Some(&fraction(1, 2)));
         }
     }
 
@@ -17224,7 +17227,7 @@ mod certified_successor_tests {
                     .unwrap(),
                 Classification::Decided(Ordering::Equal),
             );
-            assert_eq!(first.end().as_exact(), Some(&fraction(1, 2)));
+            assert_eq!(first.end().scalar(), Some(&fraction(1, 2)));
             for (parameter, expected) in [
                 (second.start(), fraction(1, 16)),
                 (second.end(), fraction(1, 4)),
@@ -19170,7 +19173,7 @@ mod certified_successor_tests {
                 };
                 assert_eq!(overlap.orientation, orientation);
                 assert!(overlap.first_range.start().is_algebraic_chord());
-                assert!(overlap.second_range.start().is_exact());
+                assert!(overlap.second_range.start().scalar().is_some());
             }
 
             let crossing = evaluate(
@@ -19184,7 +19187,7 @@ mod certified_successor_tests {
             assert!(contact.certified_transverse);
             assert_eq!(contact.tangent_cross_sign, Some(RealSign::Positive));
             assert!(contact.first_parameter.is_algebraic_chord());
-            assert!(contact.second_parameter.is_exact());
+            assert!(contact.second_parameter.scalar().is_some());
 
             let disjoint = evaluate(
                 LineSeg2::try_new(Point2::from_values(2, 1), Point2::from_values(5, 1)).unwrap(),
@@ -21190,11 +21193,11 @@ mod certified_successor_tests {
                     panic!("the carrier fragments retain a positive shared span");
                 };
                 assert_eq!(
-                    clipped.0.exact_endpoints(),
+                    clipped.0.scalar_endpoints(),
                     Some((&expected_first.0, &expected_first.1)),
                 );
                 assert_eq!(
-                    clipped.1.exact_endpoints(),
+                    clipped.1.scalar_endpoints(),
                     Some((&expected_second.0, &expected_second.1)),
                 );
             }

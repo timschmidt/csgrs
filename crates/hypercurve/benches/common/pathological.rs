@@ -534,7 +534,7 @@ fn flatten_path(path: &CurvePath2) -> Vec<[f64; 2]> {
     for (curve_index, curve) in path.curves().iter().enumerate() {
         let (domain_start, domain_end) = curve
             .parameter_domain()
-            .exact_endpoints()
+            .scalar_endpoints()
             .expect("native benchmark domain");
         let span = domain_end - domain_start;
         for sample in 0..CURVE_SAMPLES {

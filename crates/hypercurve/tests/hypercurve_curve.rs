@@ -316,11 +316,11 @@ fn top_level_curve_evaluates_native_and_spline_parameters() {
         (
             line.parameter_domain()
                 .start()
-                .as_exact()
+                .scalar()
                 .expect("native parameter"),
             line.parameter_domain()
                 .end()
-                .as_exact()
+                .scalar()
                 .expect("native parameter")
         ),
         (&r(0), &r(1))
@@ -344,12 +344,12 @@ fn top_level_curve_evaluates_native_and_spline_parameters() {
             spline
                 .parameter_domain()
                 .start()
-                .as_exact()
+                .scalar()
                 .expect("native parameter"),
             spline
                 .parameter_domain()
                 .end()
-                .as_exact()
+                .scalar()
                 .expect("native parameter")
         ),
         (&r(0), &r(2))
@@ -2620,7 +2620,7 @@ fn spline_incident_spans_reuse_represented_bezier_corner_incidence() {
                 trimmed
                     .parameter_domain()
                     .start()
-                    .as_exact()
+                    .scalar()
                     .expect("native parameter"),
                 &expected_public_parameter
             );
@@ -2628,7 +2628,7 @@ fn spline_incident_spans_reuse_represented_bezier_corner_incidence() {
                 trimmed
                     .parameter_domain()
                     .end()
-                    .as_exact()
+                    .scalar()
                     .expect("native parameter"),
                 &r(9)
             );
@@ -2686,7 +2686,7 @@ fn spline_incident_spans_reuse_represented_bezier_corner_incidence() {
                 reversed_trimmed
                     .parameter_domain()
                     .start()
-                    .as_exact()
+                    .scalar()
                     .expect("native parameter"),
                 &r(2)
             );
@@ -2694,7 +2694,7 @@ fn spline_incident_spans_reuse_represented_bezier_corner_incidence() {
                 reversed_trimmed
                     .parameter_domain()
                     .end()
-                    .as_exact()
+                    .scalar()
                     .expect("native parameter"),
                 &expected_reversed_parameter
             );
@@ -2770,7 +2770,7 @@ fn spline_incident_span_pairs_reuse_exact_ph_fillet_fast_path() {
                     filleted.curves()[0]
                         .parameter_domain()
                         .end()
-                        .as_exact()
+                        .scalar()
                         .expect("native parameter"),
                     &q(17, 4)
                 );
@@ -2783,7 +2783,7 @@ fn spline_incident_span_pairs_reuse_exact_ph_fillet_fast_path() {
                     filleted.curves()[2]
                         .parameter_domain()
                         .start()
-                        .as_exact()
+                        .scalar()
                         .expect("native parameter"),
                     &r(8)
                 );

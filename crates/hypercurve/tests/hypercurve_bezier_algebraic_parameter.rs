@@ -390,13 +390,13 @@ fn oriented_parameter_range_retains_irrational_boundary() {
     assert_eq!(range.start(), &start);
     assert_eq!(range.end(), &Real::one());
     assert_eq!(range.reversed().start(), &Real::one());
-    assert!(range.exact_endpoints().is_none());
+    assert!(range.scalar_endpoints().is_none());
     let promoted = decided(
         range
             .promote_represented_exact_endpoints(&policy())
             .unwrap(),
     );
-    assert!(promoted.exact_endpoints().is_none());
+    assert!(promoted.scalar_endpoints().is_none());
     assert_eq!(promoted.start(), &start);
 }
 
@@ -417,7 +417,7 @@ fn parameter_range_promotes_represented_rational_boundary() {
             .unwrap(),
     );
 
-    assert_eq!(promoted.exact_endpoints(), Some((&q(1, 2), &r(1))));
+    assert_eq!(promoted.scalar_endpoints(), Some((&q(1, 2), &r(1))));
 }
 
 #[test]
@@ -436,7 +436,7 @@ fn parameter_range_rejects_equal_and_accepts_affine_extension_boundaries() {
         .unwrap(),
     );
     let (start, end) = extension
-        .exact_endpoints()
+        .scalar_endpoints()
         .expect("represented affine extension boundaries stay exact");
     assert_eq!(start, &r(-1));
     assert_eq!(end, &r(1));

@@ -5336,7 +5336,7 @@ impl BezierAlgebraicSelectedFiberParameter2 {
         let BezierParameter2::Algebraic(other_algebraic) = other else {
             return self.order_to_real(
                 other
-                    .as_exact()
+                    .scalar()
                     .expect("an exact Bezier parameter exposes its Real"),
                 policy,
             );
@@ -5381,7 +5381,7 @@ impl BezierAlgebraicSelectedFiberParameter2 {
             let BezierParameter2::Algebraic(other) = other else {
                 return selected.order_to_real(
                     other
-                        .as_exact()
+                        .scalar()
                         .expect("a refined root may become represented"),
                     policy,
                 );
@@ -17150,7 +17150,7 @@ impl BezierAlgebraicCuspSemicircle2 {
         // source unit tangent for the source left normal N.  The analytic
         // point carrier stores displacement along the positive source tangent.
         let tangent_distance = -(&tangent_scale / denominator)?;
-        if let Some(center_parameter) = frame.center_parameter.as_exact() {
+        if let Some(center_parameter) = frame.center_parameter.scalar() {
             let parallel = frame.center_support.with_distance(normal_distance.clone());
             if let Classification::Decided(point) = parallel.point_at(center_parameter, policy)? {
                 let tangent = match parallel.source_tangent_at(center_parameter, policy)? {
@@ -26148,7 +26148,7 @@ impl BezierAlgebraicCuspSemicircle2 {
                 "an exact parallel-normal circle frame crossed predicate policies".into(),
             ));
         }
-        let Some(parameter) = frame.center_parameter.as_exact() else {
+        let Some(parameter) = frame.center_parameter.scalar() else {
             return Ok(Classification::Decided(None));
         };
         let center = match frame.center_support.point_at(parameter, policy)? {
@@ -30582,7 +30582,7 @@ impl BezierAlgebraicCuspSemicircle2 {
                 "a represented parallel-normal circle crossed predicate policies".into(),
             ));
         }
-        let Some(center_parameter) = frame.center_parameter.as_exact() else {
+        let Some(center_parameter) = frame.center_parameter.scalar() else {
             return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
         };
         let center = match frame.center_support.point_at(center_parameter, policy)? {
@@ -32711,7 +32711,7 @@ impl BezierAlgebraicCuspSemicircle2 {
             && self
                 .selected_frame_parameter()
                 .as_ref()
-                .and_then(|parameter| parameter.as_exact())
+                .and_then(|parameter| parameter.scalar())
                 .is_some()
         {
             #[cfg(feature = "dispatch-trace")]
@@ -32883,14 +32883,14 @@ impl BezierAlgebraicCuspSemicircle2 {
                 });
             let point = if line_parameter_is_chord_parameter
                 && clip_to_finite_chord
-                && contact.other_parameter.as_exact().is_some_and(|parameter| {
+                && contact.other_parameter.scalar().is_some_and(|parameter| {
                     compare_reals(parameter, &Real::zero(), policy)
                         == Some(std::cmp::Ordering::Equal)
                 }) {
                 chord.start().clone()
             } else if line_parameter_is_chord_parameter
                 && clip_to_finite_chord
-                && contact.other_parameter.as_exact().is_some_and(|parameter| {
+                && contact.other_parameter.scalar().is_some_and(|parameter| {
                     compare_reals(parameter, &Real::one(), policy)
                         == Some(std::cmp::Ordering::Equal)
                 })
@@ -40529,7 +40529,7 @@ impl BezierAlgebraicCuspSemicircle2 {
                 };
                 if order == std::cmp::Ordering::Equal {
                     previous.selected_relation |= boundary.selected_relation;
-                    if previous.parameter.is_exact() {
+                    if previous.parameter.scalar().is_some() {
                         previous.correlation =
                             BezierAlgebraicCuspSemicircleRationalCorrelation2::Independent;
                     } else if previous.selected_relation {
@@ -59333,7 +59333,7 @@ impl BezierRecursiveProjectiveParameter2 {
         policy: &CurveContext,
     ) -> CurveResult<Classification<std::cmp::Ordering>> {
         self.validate_policy(policy)?;
-        if let Some(value) = other.as_exact() {
+        if let Some(value) = other.scalar() {
             return self.order_to_real(value, policy);
         }
         // A contact can already be one of the coefficient field's selected
@@ -59383,7 +59383,7 @@ impl BezierRecursiveProjectiveParameter2 {
             let BezierParameter2::Algebraic(other) = other else {
                 return selected.order_to_real(
                     other
-                        .as_exact()
+                        .scalar()
                         .expect("a refined root may become represented"),
                     policy,
                 );
@@ -76630,8 +76630,8 @@ impl BezierAlgebraicChord2 {
                     ),
                     std::cmp::Ordering::Equal => unreachable!("validated above"),
                 };
-            let mut lower_real = lower_parameter.as_exact().cloned();
-            let mut upper_real = upper_parameter.as_exact().cloned();
+            let mut lower_real = lower_parameter.scalar().cloned();
+            let mut upper_real = upper_parameter.scalar().cloned();
             // A retained monotone bracket may not be authored from an
             // approximate midpoint sign. When the defining chord is
             // replayable under STRICT, finish that pure polynomial sign with
@@ -78877,7 +78877,7 @@ impl BezierAlgebraicChord2 {
         let (candidates, strict_unit_crossing) = match system.parameters(
             strict_unit_crossing,
             certified_endpoint_roots,
-            excluded_source_parameter.and_then(BezierParameter2::as_exact),
+            excluded_source_parameter.and_then(BezierParameter2::scalar),
             policy,
         )? {
             Classification::Decided(parameters) => parameters,
@@ -80911,7 +80911,7 @@ impl BezierAlgebraicChord2 {
         let mut refinement_steps = 0_usize;
         let (lower_bracket, upper_bracket) = loop {
             if refinement_steps >= 16
-                && let (Some(lower), Some(upper)) = (lower.as_exact(), upper.as_exact())
+                && let (Some(lower), Some(upper)) = (lower.scalar(), upper.scalar())
             {
                 break (lower.clone(), upper.clone());
             }
@@ -98561,7 +98561,7 @@ impl BezierAlgebraicCuspSemicircleFragment2 {
                 }
                 let normal_distance = (&support_normal_scale / &denominator)?;
                 let tangent_distance = -(&support_tangent_scale / denominator)?;
-                if let Some(center_parameter) = frame.center_parameter.as_exact() {
+                if let Some(center_parameter) = frame.center_parameter.scalar() {
                     let parallel = frame.center_support.with_distance(normal_distance.clone());
                     let point = match parallel.point_at(center_parameter, policy)? {
                         Classification::Decided(point) => point,
@@ -101661,7 +101661,7 @@ impl BezierAlgebraicCuspSemicircleFragment2 {
                 ..
             } = parameter.as_ref()
         {
-            let retained_contact = source_parameter.as_exact().is_some_and(|source_parameter| {
+            let retained_contact = source_parameter.scalar().is_some_and(|source_parameter| {
                 chord.parallel_tangent_contacts().iter().any(|contact| {
                     contact.parallel().source() == parallel.source()
                         && compare_reals(
@@ -104859,7 +104859,7 @@ fn algebraic_selected_fiber_contains_parameter(
     other_parameter: &BezierParameter2,
     policy: &CurveContext,
 ) -> CurveResult<Classification<bool>> {
-    if cusp_parameter.is_exact() || other_parameter.is_exact() {
+    if cusp_parameter.scalar().is_some() || other_parameter.scalar().is_some() {
         return Ok(
             match signed_bivariate_at_parameter_pair(
                 incidence,
@@ -112516,7 +112516,7 @@ impl BezierParallel2 {
     ) -> CurveResult<Classification<Vec<BezierParallelFixedDistanceParameter2>>> {
         let BezierParameter2::Algebraic(center_parameter) = center_parameter else {
             let center_parameter = center_parameter
-                .as_exact()
+                .scalar()
                 .expect("represented fixed-distance center has an exact parameter");
             let center = match self.point_at(center_parameter, policy)? {
                 Classification::Decided(center) => center,
@@ -113461,7 +113461,7 @@ impl BezierParallel2 {
         affine_line_parameter: bool,
         policy: &CurveContext,
     ) -> CurveResult<Classification<(CurvePoint2, Option<BezierParameter2>)>> {
-        if let Some(parameter) = parameter.as_exact() {
+        if let Some(parameter) = parameter.scalar() {
             let point = match self.point_at_affine(parameter, policy)? {
                 Classification::Decided(point) => point,
                 Classification::Uncertain(reason) => {
@@ -114228,7 +114228,7 @@ impl BezierParallel2 {
         let mut contacts = Vec::with_capacity(parameters.len());
         for (index, parameter) in parameters.iter().enumerate() {
             if let Some((certified_parameter, direction)) = certified_crossing
-                && parameter.as_exact() == Some(certified_parameter)
+                && parameter.scalar() == Some(certified_parameter)
             {
                 contacts.push(BezierLineContact::with_crossing_direction(
                     parameter.clone(),
@@ -114239,7 +114239,7 @@ impl BezierParallel2 {
                 continue;
             }
             let certified_tangent = parameter
-                .as_exact()
+                .scalar()
                 .is_some_and(|parameter| certified_tangencies.contains(parameter));
             let inferred_tangent =
                 inferred_contact_kinds.get(index) == Some(&Some(BezierLineContactKind::Tangent));
@@ -115745,7 +115745,7 @@ impl BezierParallel2 {
         policy: &CurveContext,
     ) -> bool {
         let (Some(first_parameter), Some(second_parameter)) =
-            (first_parameter.as_exact(), second_parameter.as_exact())
+            (first_parameter.scalar(), second_parameter.scalar())
         else {
             return false;
         };
@@ -115782,7 +115782,7 @@ impl BezierParallel2 {
         {
             return Ok(Classification::Decided(RealSign::Positive));
         }
-        if let Some(parameter) = parameter.as_exact() {
+        if let Some(parameter) = parameter.scalar() {
             return self.parallel_derivative_scale_sign_at_exact(parameter, policy);
         }
         self.parallel_derivative_scale_sign_from_polynomials(parameter, policy)
@@ -117574,7 +117574,7 @@ impl BezierParallel2 {
         policy: &CurveContext,
     ) -> Option<RealSign> {
         let (Some(parallel_parameter), Some(other_parameter)) =
-            (parallel_parameter.as_exact(), other_parameter.as_exact())
+            (parallel_parameter.scalar(), other_parameter.scalar())
         else {
             return None;
         };
@@ -117986,7 +117986,7 @@ impl BezierParallel2 {
             && analysis
                 .parallel_cusps()
                 .iter()
-                .any(|cusp| cusp.as_exact() == Some(parameter))
+                .any(|cusp| cusp.scalar() == Some(parameter))
         {
             // The represented radical was constructed by the exact selected-
             // branch cusp equation. Reuse that certificate instead of asking
@@ -124596,7 +124596,7 @@ fn parameter_component_evidence_from_drafts(
     let mut overlaps = Vec::with_capacity(drafts.len());
     let mut component_overlaps = Vec::with_capacity(drafts.len());
     for draft in drafts {
-        let first_rank = if draft.witness.parallel_parameter.as_exact().is_some() {
+        let first_rank = if draft.witness.parallel_parameter.scalar().is_some() {
             match parameter_component_fiber_root_rank(
                 support.as_ref(),
                 &draft.witness,
@@ -124609,7 +124609,7 @@ fn parameter_component_evidence_from_drafts(
         } else {
             UNKNOWN_PARAMETER_COMPONENT_FIBER_ROOT_RANK
         };
-        let second_rank = if draft.witness.other_parameter.as_exact().is_some() {
+        let second_rank = if draft.witness.other_parameter.scalar().is_some() {
             match parameter_component_fiber_root_rank(
                 support.as_ref(),
                 &draft.witness,
@@ -130971,7 +130971,7 @@ mod conversion_tests {
                     .unwrap(),
                 Classification::Decided(std::cmp::Ordering::Equal),
             );
-            assert_eq!(contact.other_parameter().as_exact(), Some(&Real::one()));
+            assert_eq!(contact.other_parameter().scalar(), Some(&Real::one()));
             assert!(matches!(
                 contact.point(),
                 CurvePoint2(CurvePointData2::Exact(point))
@@ -131103,8 +131103,7 @@ mod conversion_tests {
                     } else {
                         (contact.first_parameter(), contact.second_parameter())
                     };
-                    source.as_exact() == Some(&two_thirds)
-                        && circle.as_exact() == Some(&Real::one())
+                    source.scalar() == Some(&two_thirds) && circle.scalar() == Some(&Real::one())
                 }));
             }
         }
@@ -131202,7 +131201,7 @@ mod conversion_tests {
         };
         let contact = contacts
             .iter()
-            .find(|contact| contact.parameter().as_exact() == Some(&Real::one()))
+            .find(|contact| contact.parameter().scalar() == Some(&Real::one()))
             .expect("the exact endpoint contact must be retained");
         assert_eq!(contact.kind(), BezierLineContactKind::Crossing);
         assert_eq!(
@@ -147244,11 +147243,11 @@ mod conversion_tests {
                     .collect::<Vec<_>>();
                 assert_eq!(
                     represented_ranges.first().map(|range| &range.0),
-                    source.parameter_domain().start().as_exact()
+                    source.parameter_domain().start().scalar()
                 );
                 assert_eq!(
                     represented_ranges.last().map(|range| &range.1),
-                    source.parameter_domain().end().as_exact()
+                    source.parameter_domain().end().scalar()
                 );
                 for adjacent in represented_ranges.windows(2) {
                     assert_eq!(adjacent[0].1, adjacent[1].0);
@@ -148681,7 +148680,7 @@ mod conversion_tests {
             assert_eq!(contacts.len(), 3);
             for (index, contact) in contacts.iter().enumerate() {
                 assert_eq!(
-                    contact.other_parameter().as_exact(),
+                    contact.other_parameter().scalar(),
                     Some(&q(index as i8 + 1, 4))
                 );
                 assert_eq!(
@@ -156813,7 +156812,7 @@ mod conversion_tests {
         let [(parameter, radial_crossing_sign)] = contacts.as_slice() else {
             panic!("the tangent circle must have one retained contact");
         };
-        assert_eq!(parameter.as_exact(), Some(&zero));
+        assert_eq!(parameter.scalar(), Some(&zero));
         assert!(radial_crossing_sign.is_none());
     }
 
@@ -156864,7 +156863,7 @@ mod conversion_tests {
             let [parameter] = parameters.as_slice() else {
                 panic!("the retracing quadratic has one distinct circle contact");
             };
-            assert_eq!(parameter.as_exact(), Some(&half));
+            assert_eq!(parameter.scalar(), Some(&half));
         }
     }
 
@@ -156944,7 +156943,7 @@ mod conversion_tests {
                 let [contact] = contacts.as_slice() else {
                     panic!("the parabola must touch its endpoint chord exactly once")
                 };
-                assert_eq!(contact.parallel_parameter().as_exact(), Some(&Real::zero()));
+                assert_eq!(contact.parallel_parameter().scalar(), Some(&Real::zero()));
                 assert_eq!(contact.tangent_cross_sign(), RealSign::Zero);
             }
         }
@@ -156999,7 +156998,7 @@ mod conversion_tests {
                 let [contact] = contacts.as_slice() else {
                     panic!("the nonzero parabola parallel must cross once: {contacts:?}");
                 };
-                assert_eq!(contact.parallel_parameter().as_exact(), Some(&Real::zero()));
+                assert_eq!(contact.parallel_parameter().scalar(), Some(&Real::zero()));
                 assert_ne!(contact.tangent_cross_sign(), RealSign::Zero);
                 #[cfg(feature = "dispatch-trace")]
                 assert_eq!(
@@ -157287,7 +157286,7 @@ mod conversion_tests {
                 panic!("the selected cubic must own one unit root: {roots:?}");
             };
             assert_eq!(
-                root.as_exact(),
+                root.scalar(),
                 Some(&(Real::one() / Real::from(2_i8)).unwrap())
             );
             #[cfg(feature = "dispatch-trace")]
@@ -157928,7 +157927,7 @@ mod conversion_tests {
                 let [contact] = extended.as_slice() else {
                     panic!("only the finite-target/chord-extension contact must survive");
                 };
-                assert_eq!(contact.parallel_parameter().as_exact(), Some(&half));
+                assert_eq!(contact.parallel_parameter().scalar(), Some(&half));
             }
         }
     }
@@ -157987,7 +157986,7 @@ mod conversion_tests {
                 let [parameter] = parameters.as_slice() else {
                     panic!("only the contact before the first pole belongs to the incident cell");
                 };
-                assert_eq!(parameter.as_exact(), Some(&expected));
+                assert_eq!(parameter.scalar(), Some(&expected));
             }
         }
     }
@@ -158023,7 +158022,7 @@ mod conversion_tests {
             let [parameter] = parameters.as_slice() else {
                 panic!("only one pre-pole contact has the selected distance");
             };
-            assert_eq!(parameter.as_exact(), Some(&expected));
+            assert_eq!(parameter.scalar(), Some(&expected));
         }
     }
 
@@ -158067,7 +158066,7 @@ mod conversion_tests {
             let [parameter] = parameters.as_slice() else {
                 panic!("the increasing incident cell has one selected-branch contact");
             };
-            assert_eq!(parameter.as_exact(), Some(&expected));
+            assert_eq!(parameter.scalar(), Some(&expected));
 
             let half = (Real::one() / Real::from(2_i8)).unwrap();
             let direction_x = (Real::from(5_i8) / Real::from(13_i8)).unwrap();
@@ -158171,7 +158170,7 @@ mod conversion_tests {
             let [(first, None), (second, None)] = contacts.as_slice() else {
                 panic!("the incident cell must retain both selected circle contacts: {contacts:?}");
             };
-            assert_eq!(first.as_exact(), Some(&expected));
+            assert_eq!(first.scalar(), Some(&expected));
             assert!(matches!(second, BezierParameter2::Algebraic(_)));
             assert_eq!(
                 second.cmp_by_refinement(first, &policy).unwrap(),
@@ -158230,7 +158229,7 @@ mod conversion_tests {
                 BezierParameter2::Exact(Real::one()),
             );
             assert_eq!(
-                domain.expanded_range(&range).start().as_exact(),
+                domain.expanded_range(&range).start().scalar(),
                 Some(domain.anchor()),
             );
 
@@ -159065,7 +159064,7 @@ mod conversion_tests {
             let Classification::Decided(center) = center_support
                 .point_at(
                     center_parameter
-                        .as_exact()
+                        .scalar()
                         .expect("the selected center is represented"),
                     &policy,
                 )
@@ -159356,7 +159355,7 @@ mod conversion_tests {
             let [parameter] = parameters.as_slice() else {
                 panic!("only the middle resultant component meets the requested range");
             };
-            assert_eq!(parameter.as_exact(), Some(&half));
+            assert_eq!(parameter.scalar(), Some(&half));
         }
     }
 
@@ -165284,15 +165283,15 @@ mod conversion_tests {
                 panic!("increasing map did not produce one increasing domain");
             };
             assert_eq!(
-                increasing.retained_start.as_exact(),
+                increasing.retained_start.scalar(),
                 Some(&(Real::one() / Real::from(4_i8)).unwrap())
             );
             assert_eq!(
-                increasing.retained_end.as_exact(),
+                increasing.retained_end.scalar(),
                 Some(&(Real::from(3_i8) / Real::from(4_i8)).unwrap())
             );
-            assert_eq!(increasing.lifted_start.as_exact(), Some(&Real::zero()));
-            assert_eq!(increasing.lifted_end.as_exact(), Some(&Real::one()));
+            assert_eq!(increasing.lifted_start.scalar(), Some(&Real::zero()));
+            assert_eq!(increasing.lifted_end.scalar(), Some(&Real::one()));
 
             let decreasing = parameter_lift_map(
                 vec![Real::from(3_i8), Real::from(-4_i8)],
@@ -165318,15 +165317,15 @@ mod conversion_tests {
                 panic!("decreasing map did not produce one decreasing domain");
             };
             assert_eq!(
-                decreasing.retained_start.as_exact(),
+                decreasing.retained_start.scalar(),
                 Some(&(Real::one() / Real::from(4_i8)).unwrap())
             );
             assert_eq!(
-                decreasing.retained_end.as_exact(),
+                decreasing.retained_end.scalar(),
                 Some(&(Real::from(3_i8) / Real::from(4_i8)).unwrap())
             );
-            assert_eq!(decreasing.lifted_start.as_exact(), Some(&Real::one()));
-            assert_eq!(decreasing.lifted_end.as_exact(), Some(&Real::zero()));
+            assert_eq!(decreasing.lifted_start.scalar(), Some(&Real::one()));
+            assert_eq!(decreasing.lifted_end.scalar(), Some(&Real::zero()));
         }
     }
 
@@ -165363,8 +165362,8 @@ mod conversion_tests {
             let [(domain, std::cmp::Ordering::Less)] = domains.domains.as_slice() else {
                 panic!("stationary increasing map was not merged into one domain");
             };
-            assert_eq!(domain.retained_start.as_exact(), Some(&Real::zero()));
-            assert_eq!(domain.retained_end.as_exact(), Some(&Real::one()));
+            assert_eq!(domain.retained_start.scalar(), Some(&Real::zero()));
+            assert_eq!(domain.retained_end.scalar(), Some(&Real::one()));
         }
     }
 
@@ -165398,14 +165397,14 @@ mod conversion_tests {
                 panic!("noninjective map did not produce two oriented domains");
             };
             let half = (Real::one() / Real::from(2_i8)).unwrap();
-            assert_eq!(ascending.retained_start.as_exact(), Some(&Real::zero()));
-            assert_eq!(ascending.retained_end.as_exact(), Some(&half));
-            assert_eq!(ascending.lifted_start.as_exact(), Some(&Real::zero()));
-            assert_eq!(ascending.lifted_end.as_exact(), Some(&Real::one()));
-            assert_eq!(descending.retained_start.as_exact(), Some(&half));
-            assert_eq!(descending.retained_end.as_exact(), Some(&Real::one()));
-            assert_eq!(descending.lifted_start.as_exact(), Some(&Real::one()));
-            assert_eq!(descending.lifted_end.as_exact(), Some(&Real::zero()));
+            assert_eq!(ascending.retained_start.scalar(), Some(&Real::zero()));
+            assert_eq!(ascending.retained_end.scalar(), Some(&half));
+            assert_eq!(ascending.lifted_start.scalar(), Some(&Real::zero()));
+            assert_eq!(ascending.lifted_end.scalar(), Some(&Real::one()));
+            assert_eq!(descending.retained_start.scalar(), Some(&half));
+            assert_eq!(descending.retained_end.scalar(), Some(&Real::one()));
+            assert_eq!(descending.lifted_start.scalar(), Some(&Real::one()));
+            assert_eq!(descending.lifted_end.scalar(), Some(&Real::zero()));
 
             let quarter = (Real::one() / Real::from(4_i8)).unwrap();
             let pole_split = parameter_lift_map(
@@ -165435,14 +165434,14 @@ mod conversion_tests {
                 panic!("pole-separated map did not retain both finite branches");
             };
             let three_quarters = (Real::from(3_i8) / Real::from(4_i8)).unwrap();
-            assert_eq!(first.retained_start.as_exact(), Some(&Real::zero()));
-            assert_eq!(first.retained_end.as_exact(), Some(&quarter));
-            assert_eq!(first.lifted_start.as_exact(), Some(&quarter));
-            assert_eq!(first.lifted_end.as_exact(), Some(&Real::zero()));
-            assert_eq!(second.retained_start.as_exact(), Some(&three_quarters));
-            assert_eq!(second.retained_end.as_exact(), Some(&Real::one()));
-            assert_eq!(second.lifted_start.as_exact(), Some(&Real::one()));
-            assert_eq!(second.lifted_end.as_exact(), Some(&three_quarters));
+            assert_eq!(first.retained_start.scalar(), Some(&Real::zero()));
+            assert_eq!(first.retained_end.scalar(), Some(&quarter));
+            assert_eq!(first.lifted_start.scalar(), Some(&quarter));
+            assert_eq!(first.lifted_end.scalar(), Some(&Real::zero()));
+            assert_eq!(second.retained_start.scalar(), Some(&three_quarters));
+            assert_eq!(second.retained_end.scalar(), Some(&Real::one()));
+            assert_eq!(second.lifted_start.scalar(), Some(&Real::one()));
+            assert_eq!(second.lifted_end.scalar(), Some(&three_quarters));
         }
     }
 
@@ -165473,10 +165472,10 @@ mod conversion_tests {
                 panic!("isolated component touch was not retained exactly once");
             };
             assert_eq!(
-                point.retained_parameter.as_exact(),
+                point.retained_parameter.scalar(),
                 Some(&(Real::one() / Real::from(2_i8)).unwrap())
             );
-            assert_eq!(point.lifted_parameter.as_exact(), Some(&Real::zero()));
+            assert_eq!(point.lifted_parameter.scalar(), Some(&Real::zero()));
         }
     }
 
@@ -165558,11 +165557,11 @@ mod conversion_tests {
                 panic!("identity component did not produce exactly one overlap");
             };
             assert_eq!(
-                overlap.first_range().exact_endpoints(),
+                overlap.first_range().scalar_endpoints(),
                 Some((&Real::zero(), &Real::one()))
             );
             assert_eq!(
-                overlap.second_range().exact_endpoints(),
+                overlap.second_range().scalar_endpoints(),
                 Some((&Real::zero(), &Real::one()))
             );
             assert!(overlap.includes_start());
@@ -165598,11 +165597,11 @@ mod conversion_tests {
             };
             let half = (Real::one() / Real::from(2_i8)).unwrap();
             assert_eq!(
-                overlap.first_range().exact_endpoints(),
+                overlap.first_range().scalar_endpoints(),
                 Some((&half, &Real::one()))
             );
             assert_eq!(
-                overlap.second_range().exact_endpoints(),
+                overlap.second_range().scalar_endpoints(),
                 Some((&half, &Real::one()))
             );
             assert!(!overlap.includes_start());
@@ -165639,11 +165638,11 @@ mod conversion_tests {
                 panic!("pole-split map did not produce one finite overlap");
             };
             assert_eq!(
-                overlap.first_range().exact_endpoints(),
+                overlap.first_range().scalar_endpoints(),
                 Some((&Real::zero(), &(Real::one() / Real::from(3_i8)).unwrap()))
             );
             assert_eq!(
-                overlap.second_range().exact_endpoints(),
+                overlap.second_range().scalar_endpoints(),
                 Some((&Real::zero(), &Real::one()))
             );
         }
@@ -165706,11 +165705,11 @@ mod conversion_tests {
                 assert_eq!(component.overlaps[0].includes_end(), event_is_selected);
                 assert_eq!(component.overlaps[1].includes_start(), event_is_selected);
                 assert_eq!(
-                    component.overlaps[0].first_range().end().as_exact(),
+                    component.overlaps[0].first_range().end().scalar(),
                     Some(&half),
                 );
                 assert_eq!(
-                    component.overlaps[1].first_range().start().as_exact(),
+                    component.overlaps[1].first_range().start().scalar(),
                     Some(&half),
                 );
             }
@@ -165764,11 +165763,11 @@ mod conversion_tests {
                 panic!("one strict half of the self component must remain");
             };
             assert_eq!(
-                overlap.first_range().exact_endpoints(),
+                overlap.first_range().scalar_endpoints(),
                 Some((&Real::zero(), &half)),
             );
             assert_eq!(
-                overlap.second_range().exact_endpoints(),
+                overlap.second_range().scalar_endpoints(),
                 Some((&Real::one(), &half)),
             );
             assert_eq!(
@@ -165846,7 +165845,7 @@ mod conversion_tests {
                     assert_eq!(evidence.component_overlaps.len(), expected_overlaps);
                     assert!(evidence.overlaps.iter().any(|overlap| {
                         overlap.orientation() == RationalBezierOverlapOrientation2::Reversed
-                            && overlap.second_range().exact_endpoints()
+                            && overlap.second_range().scalar_endpoints()
                                 == Some((
                                     &Real::one(),
                                     &(Real::from(3_i8) / Real::from(4_i8)).unwrap(),
@@ -165855,7 +165854,7 @@ mod conversion_tests {
                     if expected_overlaps == 2 {
                         assert!(evidence.overlaps.iter().any(|overlap| {
                             overlap.orientation() == RationalBezierOverlapOrientation2::Same
-                                && overlap.second_range().exact_endpoints()
+                                && overlap.second_range().scalar_endpoints()
                                     == Some((
                                         &Real::zero(),
                                         &(Real::one() / Real::from(4_i8)).unwrap(),
@@ -166457,7 +166456,7 @@ mod conversion_tests {
             else {
                 panic!("the exact nonlinear forward map was not decided");
             };
-            assert_eq!(mapped.as_exact(), Some(&fraction(1, 4)));
+            assert_eq!(mapped.scalar(), Some(&fraction(1, 4)));
             let Classification::Decided(Some(mapped)) = overlap
                 .map_parameter(
                     CurveResultantParameter::Second,
@@ -166468,14 +166467,14 @@ mod conversion_tests {
             else {
                 panic!("the exact nonlinear inverse map was not decided");
             };
-            assert_eq!(mapped.as_exact(), Some(&fraction(1, 2)));
+            assert_eq!(mapped.scalar(), Some(&fraction(1, 2)));
             let Classification::Decided(Some(mapped)) = overlap
                 .map_parameter(CurveResultantParameter::First, &square_root_half, &policy)
                 .unwrap()
             else {
                 panic!("the algebraic nonlinear forward map was not decided");
             };
-            assert_eq!(mapped.as_exact(), Some(&fraction(1, 2)));
+            assert_eq!(mapped.scalar(), Some(&fraction(1, 2)));
 
             let first = BezierParameterRange2::from_exact(fraction(1, 5), fraction(2, 5));
             let disjoint_second =
@@ -166495,11 +166494,11 @@ mod conversion_tests {
                 panic!("the paired nonlinear subrange was not retained");
             };
             assert_eq!(
-                first.exact_endpoints(),
+                first.scalar_endpoints(),
                 Some((&fraction(1, 4), &fraction(1, 2))),
             );
             assert_eq!(
-                second.exact_endpoints(),
+                second.scalar_endpoints(),
                 Some((&fraction(1, 16), &fraction(1, 4))),
             );
 
@@ -166536,9 +166535,9 @@ mod conversion_tests {
                 first_start.order_to_real(&fraction(1, 4), &policy).unwrap(),
                 Classification::Decided(std::cmp::Ordering::Equal),
             );
-            assert_eq!(first.end().as_exact(), Some(&fraction(1, 2)));
+            assert_eq!(first.end().scalar(), Some(&fraction(1, 2)));
             assert_eq!(
-                second.exact_endpoints(),
+                second.scalar_endpoints(),
                 Some((&fraction(1, 16), &fraction(1, 4))),
             );
 
@@ -166556,8 +166555,8 @@ mod conversion_tests {
             else {
                 panic!("the selected second-axis nonlinear subrange was not retained");
             };
-            assert_eq!(first.start().as_exact(), Some(&fraction(1, 4)));
-            assert_eq!(first.end().as_exact(), Some(&fraction(1, 2)));
+            assert_eq!(first.start().scalar(), Some(&fraction(1, 4)));
+            assert_eq!(first.end().scalar(), Some(&fraction(1, 2)));
             for (parameter, expected) in [
                 (second.start(), fraction(1, 16)),
                 (second.end(), fraction(1, 4)),
@@ -166885,11 +166884,11 @@ mod conversion_tests {
                 panic!("the coincident selected lines must publish one overlap");
             };
             assert_eq!(
-                overlap.first_range().exact_endpoints(),
+                overlap.first_range().scalar_endpoints(),
                 Some((&Real::zero(), &Real::one())),
             );
             assert_eq!(
-                overlap.second_range().exact_endpoints(),
+                overlap.second_range().scalar_endpoints(),
                 Some((&Real::zero(), &Real::one())),
             );
             assert!(overlap.includes_start());
@@ -166946,8 +166945,11 @@ mod conversion_tests {
             let [before, after] = punctured.overlaps.as_ref() else {
                 panic!("an interior puncture must produce two open-sided overlaps");
             };
-            assert_eq!(before.first_range().exact_endpoints(), Some((&zero, &half)));
-            assert_eq!(after.first_range().exact_endpoints(), Some((&half, &one)));
+            assert_eq!(
+                before.first_range().scalar_endpoints(),
+                Some((&zero, &half))
+            );
+            assert_eq!(after.first_range().scalar_endpoints(), Some((&half, &one)));
             assert!(before.includes_start());
             assert!(!before.includes_end());
             assert!(!after.includes_start());
@@ -167010,11 +167012,11 @@ mod conversion_tests {
                 panic!("the reversed branch-zero domain must produce one overlap");
             };
             assert_eq!(
-                overlap.first_range().exact_endpoints(),
+                overlap.first_range().scalar_endpoints(),
                 Some((&zero, &half))
             );
             assert_eq!(
-                overlap.second_range().exact_endpoints(),
+                overlap.second_range().scalar_endpoints(),
                 Some((&one, &half))
             );
             assert_eq!(
@@ -167105,11 +167107,11 @@ mod conversion_tests {
                 panic!("the identity component must produce one complete overlap");
             };
             assert_eq!(
-                overlap.first_range().exact_endpoints(),
+                overlap.first_range().scalar_endpoints(),
                 Some((&Real::zero(), &Real::one()))
             );
             assert_eq!(
-                overlap.second_range().exact_endpoints(),
+                overlap.second_range().scalar_endpoints(),
                 Some((&Real::zero(), &Real::one()))
             );
             assert_eq!(
@@ -167169,11 +167171,11 @@ mod conversion_tests {
                 panic!("only the positive shifted component may survive");
             };
             assert_eq!(
-                overlap.first_range().exact_endpoints(),
+                overlap.first_range().scalar_endpoints(),
                 Some((&Real::zero(), &three_quarters))
             );
             assert_eq!(
-                overlap.second_range().exact_endpoints(),
+                overlap.second_range().scalar_endpoints(),
                 Some((&quarter, &Real::one()))
             );
             assert_eq!(
@@ -167340,10 +167342,10 @@ mod conversion_tests {
                 panic!("the non-rational rational component must publish once");
             };
             assert_eq!(
-                overlap.first_range().exact_endpoints(),
+                overlap.first_range().scalar_endpoints(),
                 Some((&Real::zero(), &Real::one()))
             );
-            let Some(second_end) = overlap.second_range().end().as_exact() else {
+            let Some(second_end) = overlap.second_range().end().scalar() else {
                 panic!("the represented non-rational image endpoint was discarded");
             };
             assert_eq!(
@@ -167395,7 +167397,7 @@ mod conversion_tests {
                 panic!("the non-rational implicit graph must publish once");
             };
             assert_eq!(
-                overlap.first_range().exact_endpoints(),
+                overlap.first_range().scalar_endpoints(),
                 Some((&Real::zero(), &Real::one()))
             );
             assert_eq!(
@@ -167660,11 +167662,11 @@ mod conversion_tests {
                 panic!("the quarter-circle correspondence must have one exact cell");
             };
             assert_eq!(
-                overlap.first_range().exact_endpoints(),
+                overlap.first_range().scalar_endpoints(),
                 Some((&Real::zero(), &Real::one()))
             );
             assert_eq!(
-                overlap.second_range().exact_endpoints(),
+                overlap.second_range().scalar_endpoints(),
                 Some((&Real::one(), &Real::zero()))
             );
             assert_eq!(
@@ -167738,25 +167740,16 @@ mod conversion_tests {
                     panic!("one regular implicit graph must produce one overlap");
                 };
                 assert_eq!(overlap.orientation(), *expected_orientation);
-                assert_eq!(
-                    overlap.first_range().start().as_exact(),
-                    Some(&Real::zero())
-                );
-                assert_eq!(overlap.first_range().end().as_exact(), Some(&Real::one()));
+                assert_eq!(overlap.first_range().start().scalar(), Some(&Real::zero()));
+                assert_eq!(overlap.first_range().end().scalar(), Some(&Real::one()));
                 match expected_orientation {
                     RationalBezierOverlapOrientation2::Same => {
-                        assert_eq!(
-                            overlap.second_range().start().as_exact(),
-                            Some(&Real::zero())
-                        );
-                        assert_eq!(overlap.second_range().end().as_exact(), Some(&Real::one()));
+                        assert_eq!(overlap.second_range().start().scalar(), Some(&Real::zero()));
+                        assert_eq!(overlap.second_range().end().scalar(), Some(&Real::one()));
                     }
                     RationalBezierOverlapOrientation2::Reversed => {
-                        assert_eq!(
-                            overlap.second_range().start().as_exact(),
-                            Some(&Real::one())
-                        );
-                        assert_eq!(overlap.second_range().end().as_exact(), Some(&Real::zero()));
+                        assert_eq!(overlap.second_range().start().scalar(), Some(&Real::one()));
+                        assert_eq!(overlap.second_range().end().scalar(), Some(&Real::zero()));
                     }
                 }
             }
@@ -167796,11 +167789,11 @@ mod conversion_tests {
                 panic!("one turning event must produce two overlap cells");
             };
             assert_eq!(
-                descending.first_range().exact_endpoints(),
+                descending.first_range().scalar_endpoints(),
                 Some((&Real::zero(), &half))
             );
             assert_eq!(
-                ascending.first_range().exact_endpoints(),
+                ascending.first_range().scalar_endpoints(),
                 Some((&half, &Real::one()))
             );
             assert_eq!(
@@ -167812,18 +167805,15 @@ mod conversion_tests {
                 RationalBezierOverlapOrientation2::Same
             );
             assert_eq!(
-                descending.second_range().start().as_exact(),
+                descending.second_range().start().scalar(),
                 Some(&Real::one())
             );
-            assert_eq!(
-                ascending.second_range().end().as_exact(),
-                Some(&Real::one())
-            );
+            assert_eq!(ascending.second_range().end().scalar(), Some(&Real::one()));
             assert_eq!(
                 descending.second_range().end(),
                 ascending.second_range().start()
             );
-            assert!(!descending.second_range().end().is_exact());
+            assert!(descending.second_range().end().scalar().is_none());
         }
     }
 
@@ -167864,15 +167854,15 @@ mod conversion_tests {
                 panic!("two turning events must produce three cells");
             };
             assert_eq!(
-                first.first_range().exact_endpoints(),
+                first.first_range().scalar_endpoints(),
                 Some((&Real::zero(), &quarter))
             );
             assert_eq!(
-                middle.first_range().exact_endpoints(),
+                middle.first_range().scalar_endpoints(),
                 Some((&quarter, &three_quarters))
             );
             assert_eq!(
-                last.first_range().exact_endpoints(),
+                last.first_range().scalar_endpoints(),
                 Some((&three_quarters, &Real::one()))
             );
             assert_eq!(
@@ -167928,19 +167918,19 @@ mod conversion_tests {
                 panic!("one lifted-boundary tangency must produce two cells");
             };
             assert_eq!(
-                descending.first_range().exact_endpoints(),
+                descending.first_range().scalar_endpoints(),
                 Some((&Real::zero(), &half))
             );
             assert_eq!(
-                ascending.first_range().exact_endpoints(),
+                ascending.first_range().scalar_endpoints(),
                 Some((&half, &Real::one()))
             );
             assert_eq!(
-                descending.second_range().end().as_exact(),
+                descending.second_range().end().scalar(),
                 Some(&Real::zero())
             );
             assert_eq!(
-                ascending.second_range().start().as_exact(),
+                ascending.second_range().start().scalar(),
                 Some(&Real::zero())
             );
             assert_eq!(
@@ -167989,19 +167979,19 @@ mod conversion_tests {
             };
             for overlap in [lower, upper] {
                 assert_eq!(
-                    overlap.first_range().exact_endpoints(),
+                    overlap.first_range().scalar_endpoints(),
                     Some((&Real::zero(), &Real::one()))
                 );
             }
-            assert_eq!(lower.second_range().start().as_exact(), Some(&Real::zero()));
-            assert_eq!(upper.second_range().start().as_exact(), Some(&Real::one()));
+            assert_eq!(lower.second_range().start().scalar(), Some(&Real::zero()));
+            assert_eq!(upper.second_range().start().scalar(), Some(&Real::one()));
             assert_eq!(lower.orientation(), RationalBezierOverlapOrientation2::Same);
             assert_eq!(
                 upper.orientation(),
                 RationalBezierOverlapOrientation2::Reversed
             );
-            assert!(!lower.second_range().end().is_exact());
-            assert!(!upper.second_range().end().is_exact());
+            assert!(lower.second_range().end().scalar().is_none());
+            assert!(upper.second_range().end().scalar().is_none());
 
             let Classification::Decided(Some(selected)) =
                 parameter_component_system(&equations, &upper_branch, &policy, config).unwrap()
@@ -168016,7 +168006,7 @@ mod conversion_tests {
                 RationalBezierOverlapOrientation2::Reversed
             );
             assert_eq!(
-                selected_upper.second_range().start().as_exact(),
+                selected_upper.second_range().start().scalar(),
                 Some(&Real::one())
             );
         }
@@ -168061,15 +168051,15 @@ mod conversion_tests {
             };
             for (left, right) in [(lower_left, lower_right), (upper_left, upper_right)] {
                 assert_eq!(
-                    left.first_range().exact_endpoints(),
+                    left.first_range().scalar_endpoints(),
                     Some((&Real::zero(), &half))
                 );
                 assert_eq!(
-                    right.first_range().exact_endpoints(),
+                    right.first_range().scalar_endpoints(),
                     Some((&half, &Real::one()))
                 );
                 assert_eq!(left.second_range().end(), right.second_range().start());
-                assert!(!left.second_range().end().is_exact());
+                assert!(left.second_range().end().scalar().is_none());
             }
             assert_eq!(
                 [
@@ -168161,13 +168151,13 @@ mod conversion_tests {
             );
             for overlap in [lower_left, upper_left] {
                 assert_eq!(
-                    overlap.first_range().exact_endpoints(),
+                    overlap.first_range().scalar_endpoints(),
                     Some((&quarter, &half))
                 );
             }
             for overlap in [lower_right, upper_right] {
                 assert_eq!(
-                    overlap.first_range().exact_endpoints(),
+                    overlap.first_range().scalar_endpoints(),
                     Some((&half, &three_quarters))
                 );
             }
@@ -168217,16 +168207,16 @@ mod conversion_tests {
                 lower_left.first_range().start(),
                 upper_left.first_range().start()
             );
-            assert!(!lower_left.first_range().start().is_exact());
-            assert_eq!(lower_left.first_range().end().as_exact(), Some(&half));
-            assert_eq!(upper_left.first_range().end().as_exact(), Some(&half));
-            assert_eq!(lower_right.first_range().start().as_exact(), Some(&half));
-            assert_eq!(upper_right.first_range().start().as_exact(), Some(&half));
+            assert!(lower_left.first_range().start().scalar().is_none());
+            assert_eq!(lower_left.first_range().end().scalar(), Some(&half));
+            assert_eq!(upper_left.first_range().end().scalar(), Some(&half));
+            assert_eq!(lower_right.first_range().start().scalar(), Some(&half));
+            assert_eq!(upper_right.first_range().start().scalar(), Some(&half));
             assert_eq!(
                 lower_right.first_range().end(),
                 upper_right.first_range().end()
             );
-            assert!(!lower_right.first_range().end().is_exact());
+            assert!(lower_right.first_range().end().scalar().is_none());
             assert_eq!(
                 [
                     lower_left.orientation(),
@@ -168243,8 +168233,8 @@ mod conversion_tests {
             );
             for overlap in evidence.overlaps.iter() {
                 assert!(
-                    !overlap.second_range().start().is_exact()
-                        || !overlap.second_range().end().is_exact()
+                    overlap.second_range().start().scalar().is_none()
+                        || overlap.second_range().end().scalar().is_none()
                 );
             }
         }
@@ -168279,11 +168269,15 @@ mod conversion_tests {
                 panic!("the non-rational critical fibers were not isolated");
             };
             assert_eq!(event_roots.len(), 2);
-            assert!(event_roots.iter().all(BezierParameter2::is_exact));
+            assert!(
+                event_roots
+                    .iter()
+                    .all(|parameter| parameter.scalar().is_some())
+            );
             for event_root in &event_roots {
                 let specialized = bivariate_specialize_first(
                     &component,
-                    event_root.as_exact().expect("event root is represented"),
+                    event_root.scalar().expect("event root is represented"),
                 );
                 assert_eq!(
                     real_sign(
@@ -168396,7 +168390,7 @@ mod conversion_tests {
                     .overlaps
                     .iter()
                     .filter(|overlap| {
-                        overlap.first_range().exact_endpoints() == Some((&three_eighths, &half))
+                        overlap.first_range().scalar_endpoints() == Some((&three_eighths, &half))
                     })
                     .count(),
                 4
@@ -168406,7 +168400,7 @@ mod conversion_tests {
                     .overlaps
                     .iter()
                     .filter(|overlap| {
-                        overlap.first_range().exact_endpoints() == Some((&half, &five_eighths))
+                        overlap.first_range().scalar_endpoints() == Some((&half, &five_eighths))
                     })
                     .count(),
                 4
@@ -168566,11 +168560,11 @@ mod conversion_tests {
                 panic!("the clipped line must produce one component cell");
             };
             assert_eq!(
-                overlap.first_range().exact_endpoints(),
+                overlap.first_range().scalar_endpoints(),
                 Some((&quarter, &three_quarters))
             );
             assert_eq!(
-                overlap.second_range().exact_endpoints(),
+                overlap.second_range().scalar_endpoints(),
                 Some((&Real::zero(), &Real::one()))
             );
             assert_eq!(
@@ -168617,8 +168611,8 @@ mod conversion_tests {
             let [pair] = evidence.selected_pairs() else {
                 panic!("the boundary touch must produce one isolated pair");
             };
-            assert_eq!(pair.parallel_parameter.as_exact(), Some(&half));
-            assert_eq!(pair.other_parameter.as_exact(), Some(&Real::zero()));
+            assert_eq!(pair.parallel_parameter.scalar(), Some(&half));
+            assert_eq!(pair.other_parameter.scalar(), Some(&Real::zero()));
         }
     }
 
@@ -168663,7 +168657,7 @@ mod conversion_tests {
             };
             for overlap in [descending, ascending] {
                 assert_eq!(
-                    overlap.first_range().exact_endpoints(),
+                    overlap.first_range().scalar_endpoints(),
                     Some((&half, &Real::one()))
                 );
             }
@@ -168674,10 +168668,10 @@ mod conversion_tests {
                     RationalBezierOverlapOrientation2::Same,
                 ]
             );
-            assert_eq!(descending.second_range().start().as_exact(), Some(&half));
-            assert!(!descending.second_range().end().is_exact());
-            assert_eq!(ascending.second_range().start().as_exact(), Some(&half));
-            assert!(!ascending.second_range().end().is_exact());
+            assert_eq!(descending.second_range().start().scalar(), Some(&half));
+            assert!(descending.second_range().end().scalar().is_none());
+            assert_eq!(ascending.second_range().start().scalar(), Some(&half));
+            assert!(ascending.second_range().end().scalar().is_none());
         }
     }
 
@@ -168735,7 +168729,7 @@ mod conversion_tests {
             };
             for overlap in [descending, ascending] {
                 assert_eq!(
-                    overlap.first_range().exact_endpoints(),
+                    overlap.first_range().scalar_endpoints(),
                     Some((&half, &Real::one()))
                 );
             }
@@ -168777,11 +168771,11 @@ mod conversion_tests {
                 panic!("the clipped corner cusp must have one cell");
             };
             assert_eq!(
-                overlap.first_range().exact_endpoints(),
+                overlap.first_range().scalar_endpoints(),
                 Some((&Real::zero(), &Real::one()))
             );
             assert_eq!(
-                overlap.second_range().exact_endpoints(),
+                overlap.second_range().scalar_endpoints(),
                 Some((&Real::zero(), &Real::one()))
             );
             assert_eq!(
@@ -168831,7 +168825,7 @@ mod conversion_tests {
                 evidence
                     .overlaps
                     .iter()
-                    .filter(|overlap| overlap.first_range().end().as_exact() == Some(&half))
+                    .filter(|overlap| overlap.first_range().end().scalar() == Some(&half))
                     .count(),
                 2
             );
@@ -168839,13 +168833,13 @@ mod conversion_tests {
                 evidence
                     .overlaps
                     .iter()
-                    .filter(|overlap| overlap.first_range().start().as_exact() == Some(&half))
+                    .filter(|overlap| overlap.first_range().start().scalar() == Some(&half))
                     .count(),
                 2
             );
             assert!(evidence.overlaps.iter().all(|overlap| {
-                overlap.second_range().start().as_exact() == Some(&half)
-                    || overlap.second_range().end().as_exact() == Some(&half)
+                overlap.second_range().start().scalar() == Some(&half)
+                    || overlap.second_range().end().scalar() == Some(&half)
             }));
         }
     }
@@ -168887,8 +168881,8 @@ mod conversion_tests {
             let [point] = evidence.selected_pairs() else {
                 panic!("the singular real locus must contain one point");
             };
-            assert_eq!(point.parallel_parameter.as_exact(), Some(&half));
-            assert_eq!(point.other_parameter.as_exact(), Some(&half));
+            assert_eq!(point.parallel_parameter.scalar(), Some(&half));
+            assert_eq!(point.other_parameter.scalar(), Some(&half));
         }
     }
 
@@ -168968,7 +168962,7 @@ mod conversion_tests {
                 lower_left.first_range().end(),
                 upper_left.first_range().end()
             );
-            assert!(!lower_left.first_range().end().is_exact());
+            assert!(lower_left.first_range().end().scalar().is_none());
             assert_eq!(
                 [
                     lower_left.orientation(),
@@ -169030,28 +169024,25 @@ mod conversion_tests {
                 RationalBezierOverlapOrientation2::Same
             );
             assert_eq!(
-                descending.first_range().start().as_exact(),
+                descending.first_range().start().scalar(),
                 Some(&Real::zero())
             );
-            assert_eq!(ascending.first_range().end().as_exact(), Some(&Real::one()));
+            assert_eq!(ascending.first_range().end().scalar(), Some(&Real::one()));
             assert_eq!(
                 descending.first_range().end(),
                 ascending.first_range().start()
             );
-            assert!(!descending.first_range().end().is_exact());
+            assert!(descending.first_range().end().scalar().is_none());
             assert_eq!(
-                descending.second_range().start().as_exact(),
+                descending.second_range().start().scalar(),
                 Some(&Real::one())
             );
-            assert_eq!(
-                ascending.second_range().end().as_exact(),
-                Some(&Real::one())
-            );
+            assert_eq!(ascending.second_range().end().scalar(), Some(&Real::one()));
             assert_eq!(
                 descending.second_range().end(),
                 ascending.second_range().start()
             );
-            assert!(!descending.second_range().end().is_exact());
+            assert!(descending.second_range().end().scalar().is_none());
         }
     }
 
@@ -169086,13 +169077,16 @@ mod conversion_tests {
             let [overlap] = system.overlaps.as_ref() else {
                 panic!("the positive implicit branch did not produce one overlap");
             };
-            assert_eq!(overlap.first_range().end().as_exact(), Some(&Real::one()));
+            assert_eq!(overlap.first_range().end().scalar(), Some(&Real::one()));
             assert_eq!(
-                overlap.second_range().exact_endpoints().map(|(_, end)| end),
+                overlap
+                    .second_range()
+                    .scalar_endpoints()
+                    .map(|(_, end)| end),
                 Some(&Real::one())
             );
             assert_eq!(
-                overlap.second_range().start().as_exact(),
+                overlap.second_range().start().scalar(),
                 Some(&(Real::one() / Real::from(2_i8)).unwrap())
             );
             assert!(!overlap.includes_start());
@@ -169161,10 +169155,10 @@ mod conversion_tests {
                 panic!("an implicit puncture must produce two open-sided overlaps");
             };
             assert_eq!(
-                before.second_range().exact_endpoints(),
+                before.second_range().scalar_endpoints(),
                 Some((&zero, &half))
             );
-            assert_eq!(after.second_range().exact_endpoints(), Some((&half, &one)));
+            assert_eq!(after.second_range().scalar_endpoints(), Some((&half, &one)));
             assert!(before.includes_start());
             assert!(!before.includes_end());
             assert!(!after.includes_start());
@@ -169222,7 +169216,10 @@ mod conversion_tests {
                 panic!("the selected cusp must retain both right half-branches");
             };
             for overlap in [descending, ascending] {
-                assert_eq!(overlap.first_range().exact_endpoints(), Some((&half, &one)));
+                assert_eq!(
+                    overlap.first_range().scalar_endpoints(),
+                    Some((&half, &one))
+                );
                 assert!(!overlap.includes_start());
                 assert!(overlap.includes_end());
             }
@@ -169288,12 +169285,12 @@ mod conversion_tests {
                 panic!("one regular implicit graph must produce one overlap");
             };
             assert_eq!(
-                overlap.first_range().exact_endpoints(),
+                overlap.first_range().scalar_endpoints(),
                 Some((&Real::zero(), &Real::one()))
             );
             let three_quarters = (Real::from(3_i8) / Real::from(4_i8)).unwrap();
             assert_eq!(
-                overlap.second_range().exact_endpoints(),
+                overlap.second_range().scalar_endpoints(),
                 Some((&three_quarters, &Real::one()))
             );
         }
@@ -169339,11 +169336,11 @@ mod conversion_tests {
                 panic!("geometric multiplicity must not duplicate the overlap");
             };
             assert_eq!(
-                overlap.first_range().exact_endpoints(),
+                overlap.first_range().scalar_endpoints(),
                 Some((&Real::zero(), &Real::one()))
             );
             assert_eq!(
-                overlap.second_range().exact_endpoints(),
+                overlap.second_range().scalar_endpoints(),
                 Some((&three_quarters, &Real::one()))
             );
             let Classification::Decided(BezierParallelIntersectionCandidates2::Candidates {
@@ -169523,7 +169520,7 @@ mod conversion_tests {
                 RationalBezierOverlapOrientation2::Reversed
             );
             assert_eq!(
-                overlap.second_range().exact_endpoints(),
+                overlap.second_range().scalar_endpoints(),
                 Some((
                     &Real::one(),
                     &(Real::from(3_i8) / Real::from(4_i8)).unwrap()
@@ -169643,11 +169640,11 @@ mod conversion_tests {
                 panic!("finite component hidden from the fixed probe was not retained");
             };
             assert_eq!(
-                overlap.first_range().exact_endpoints(),
+                overlap.first_range().scalar_endpoints(),
                 Some((&Real::zero(), &Real::one()))
             );
             assert_eq!(
-                overlap.second_range().exact_endpoints(),
+                overlap.second_range().scalar_endpoints(),
                 Some((
                     &(Real::one() / Real::from(30_i8)).unwrap(),
                     &(Real::from(5_i8) / Real::from(8_i8)).unwrap()

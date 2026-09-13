@@ -7925,7 +7925,7 @@ fn selected_boundary_paths_retain_domains_through_repeated_region_roundtrips() {
             paths[0]
                 .curves()
                 .iter()
-                .any(|curve| curve.parameter_domain().exact_endpoints().is_none())
+                .any(|curve| curve.parameter_domain().scalar_endpoints().is_none())
         );
         if let Some(previous) = &prior {
             assert_eq!(paths[0].curves(), previous);

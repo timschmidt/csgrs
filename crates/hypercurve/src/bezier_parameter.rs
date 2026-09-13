@@ -1414,17 +1414,13 @@ impl BezierParameter2 {
         Self::Algebraic(value)
     }
 
-    /// Returns the exact value when represented directly.
-    pub const fn as_exact(&self) -> Option<&Real> {
+    /// Returns a stored `Real` view without reconstructing a selected root.
+    /// A selected parameter remains exact when this view is absent.
+    pub const fn scalar(&self) -> Option<&Real> {
         match self {
             Self::Exact(value) => Some(value),
             Self::Algebraic(_) => None,
         }
-    }
-
-    /// Returns true for a directly represented exact parameter.
-    pub const fn is_exact(&self) -> bool {
-        matches!(self, Self::Exact(_))
     }
 
     pub(crate) fn unit_complement(&self) -> Self {
@@ -2938,8 +2934,8 @@ impl BezierParameterRange2 {
     }
 
     /// Returns both represented values when neither endpoint is algebraic.
-    pub fn exact_endpoints(&self) -> Option<(&Real, &Real)> {
-        Some((self.start.as_exact()?, self.end.as_exact()?))
+    pub fn scalar_endpoints(&self) -> Option<(&Real, &Real)> {
+        Some((self.start.scalar()?, self.end.scalar()?))
     }
 
     /// Promotes endpoints that can be materialized as exact scalar values.
@@ -2985,7 +2981,7 @@ impl PartialEq<BezierParameter2> for Real {
 
 impl PartialEq<crate::ParamRange> for BezierParameterRange2 {
     fn eq(&self, other: &crate::ParamRange) -> bool {
-        self.exact_endpoints()
+        self.scalar_endpoints()
             .is_some_and(|(start, end)| start == other.start() && end == other.end())
     }
 }
@@ -3736,7 +3732,7 @@ fn isolate_roots_in_interval(
         };
         let represented_boundaries = represented
             .iter()
-            .filter_map(BezierParameter2::as_exact)
+            .filter_map(BezierParameter2::scalar)
             .cloned()
             .collect::<Vec<_>>();
         let has_interior_represented_root = represented_boundaries.iter().any(|root| {
@@ -4566,7 +4562,7 @@ mod conversion_tests {
             "interior interval isolation",
         );
         assert_eq!(interior.len(), 1);
-        assert_eq!(interior[0].as_exact(), Some(&rational(1, 2)));
+        assert_eq!(interior[0].scalar(), Some(&rational(1, 2)));
 
         let closed = decided(
             defining
@@ -4579,7 +4575,7 @@ mod conversion_tests {
             .iter()
             .zip([rational(1, 5), rational(1, 2), rational(4, 5)])
         {
-            assert_eq!(root.as_exact(), Some(&expected));
+            assert_eq!(root.scalar(), Some(&expected));
         }
     }
 

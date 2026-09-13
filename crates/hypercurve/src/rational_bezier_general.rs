@@ -369,21 +369,21 @@ impl RationalBezierOverlapParameterCorrespondence2 {
             return fallback;
         }
         let (Some(first_start), Some(first_end)) = (
-            overlap.first_range().start().as_exact(),
-            overlap.first_range().end().as_exact(),
+            overlap.first_range().start().scalar(),
+            overlap.first_range().end().scalar(),
         ) else {
             return fallback;
         };
         let reversed = overlap.orientation() == RationalBezierOverlapOrientation2::Reversed;
         let (second_start, second_end) = if reversed {
             (
-                overlap.second_range().end().as_exact(),
-                overlap.second_range().start().as_exact(),
+                overlap.second_range().end().scalar(),
+                overlap.second_range().start().scalar(),
             )
         } else {
             (
-                overlap.second_range().start().as_exact(),
-                overlap.second_range().end().as_exact(),
+                overlap.second_range().start().scalar(),
+                overlap.second_range().end().scalar(),
             )
         };
         let (Some(second_start), Some(second_end)) = (second_start, second_end) else {
@@ -2352,7 +2352,7 @@ impl RationalBezier2 {
         };
         for root in roots {
             if root
-                .as_exact()
+                .scalar()
                 .is_some_and(|root| root == &Real::zero() || root == &Real::one())
             {
                 continue;
@@ -4115,7 +4115,7 @@ impl RationalBezier2 {
                 Classification::Decided(parameter) => parameter,
                 Classification::Uncertain(_) => source_parameter,
             };
-            let Some(parameter_value) = parameter.as_exact() else {
+            let Some(parameter_value) = parameter.scalar() else {
                 let root = parameter_root_representation(&parameter, policy);
                 let candidate = match conic_parameter_candidate(
                     &root.polynomial_coefficients,
@@ -5274,7 +5274,7 @@ impl RationalBezier2 {
         second: &BezierParameter2,
         policy: &CurveContext,
     ) -> CurveResult<Classification<bool>> {
-        let (point, curve, target) = match (first.as_exact(), second.as_exact()) {
+        let (point, curve, target) = match (first.scalar(), second.scalar()) {
             (Some(parameter), _) => {
                 let point = match self.point_at_classified(parameter, policy) {
                     Classification::Decided(point) => point,
@@ -5777,9 +5777,7 @@ impl RationalBezier2 {
         if self.has_certified_injective_axis(policy) && other.has_certified_injective_axis(policy) {
             let represented = contacts
                 .iter()
-                .map(|(first, second)| {
-                    Some((first.as_exact()?.clone(), second.as_exact()?.clone()))
-                })
+                .map(|(first, second)| Some((first.scalar()?.clone(), second.scalar()?.clone())))
                 .collect::<Option<Vec<_>>>();
             represented.map_or_else(
                 || Classification::Decided(RationalBezierSharedComponentReplay::Unresolved),
@@ -6436,10 +6434,10 @@ impl RationalBezier2 {
             Some(other_first_exact),
             Some(other_second_exact),
         ) = (
-            first_contact.0.as_exact(),
-            second_contact.0.as_exact(),
-            first_contact.1.as_exact(),
-            second_contact.1.as_exact(),
+            first_contact.0.scalar(),
+            second_contact.0.scalar(),
+            first_contact.1.scalar(),
+            second_contact.1.scalar(),
         )
         else {
             return Classification::Decided(None);
@@ -6922,20 +6920,14 @@ fn range_projective_parameter_coefficients(
     first_to_second: bool,
 ) -> Option<([Real; 2], [Real; 2])> {
     let (Some(first_start), Some(first_end)) =
-        (first_range.start().as_exact(), first_range.end().as_exact())
+        (first_range.start().scalar(), first_range.end().scalar())
     else {
         return None;
     };
     let (second_start, second_end) = if reversed {
-        (
-            second_range.end().as_exact(),
-            second_range.start().as_exact(),
-        )
+        (second_range.end().scalar(), second_range.start().scalar())
     } else {
-        (
-            second_range.start().as_exact(),
-            second_range.end().as_exact(),
-        )
+        (second_range.start().scalar(), second_range.end().scalar())
     };
     let (Some(second_start), Some(second_end)) = (second_start, second_end) else {
         return None;
@@ -6969,7 +6961,7 @@ fn projective_parameter_image(
     denominator: &[Real; 2],
     policy: &CurveContext,
 ) -> CurveResult<Classification<Option<BezierParameter2>>> {
-    if let Some(parameter) = parameter.as_exact() {
+    if let Some(parameter) = parameter.scalar() {
         let numerator = &numerator[0] + &numerator[1] * parameter;
         let denominator = &denominator[0] + &denominator[1] * parameter;
         let mapped = match numerator / denominator {
@@ -7083,7 +7075,7 @@ fn overlap_parameter_on_curve(
         return conic_parameter_from_candidates(&[candidate], source_parameter, policy);
     }
 
-    if let Some(parameter) = source_parameter.as_exact() {
+    if let Some(parameter) = source_parameter.scalar() {
         match source.point_at_classified(parameter, policy) {
             Classification::Decided(point) => {
                 return Ok(unique_point_incidence_parameter(target, &point, policy));
@@ -7311,7 +7303,7 @@ fn conic_parameter_from_curve_parameter(
         // parameter, so rebuilding the two fallback charts cannot recover an
         // in-range value. Exact-source evaluation also uses `None` for a
         // chart pole and must retain the fallback search below.
-        Classification::Decided(None) if curve_parameter.as_exact().is_none() => {
+        Classification::Decided(None) if curve_parameter.scalar().is_none() => {
             return Ok(Classification::Decided(None));
         }
         Classification::Decided(None) => true,
@@ -7377,7 +7369,7 @@ fn conic_parameter_from_candidates(
     // exact map and image-root path under STRICT; APPROXIMATE_512 may still
     // resolve later equality predicates, but it cannot select this scalar.
     let strict = policy.strict_counterpart();
-    if curve_parameter.as_exact().is_some() {
+    if curve_parameter.scalar().is_some() {
         // An implicit conic can meet the other curve's projective extension at
         // a parameter where one rational chart has a zero denominator. Try
         // every chart and treat a chart's exact pole as absence, not global
@@ -8053,7 +8045,7 @@ fn real_coefficient_rational_image_parameter(
     policy: &CurveContext,
 ) -> CurveResult<Classification<Option<BezierParameter2>>> {
     let strict = policy.strict_counterpart();
-    if let Some(source) = source_parameter.as_exact() {
+    if let Some(source) = source_parameter.scalar() {
         let numerator = Real::eval_poly(&candidate.numerator, source);
         let denominator = Real::eval_poly(&candidate.denominator, source);
         match is_zero(&denominator, &strict) {
@@ -8423,7 +8415,7 @@ impl RationalParameterImageMap2 {
         source: &BezierParameter2,
     ) -> CurveResult<Classification<Option<BezierParameter2>>> {
         let strict_policy = self.policy.strict_counterpart();
-        if let Some(source) = source.as_exact() {
+        if let Some(source) = source.scalar() {
             let strict = exact_rational_parameter_image(
                 source,
                 &self.coefficients.0,
@@ -8537,7 +8529,7 @@ fn rational_parameter_image_unbounded(
     let BezierParameter2::Algebraic(source) = source else {
         return exact_rational_parameter_image(
             source
-                .as_exact()
+                .scalar()
                 .expect("a non-algebraic Bezier parameter is exact"),
             numerator,
             denominator,
@@ -10270,7 +10262,7 @@ mod tests {
                 else {
                     panic!("projective correspondence did not map the first parameter");
                 };
-                assert_eq!(mapped.as_exact(), Some(expected));
+                assert_eq!(mapped.scalar(), Some(expected));
                 let Classification::Decided(Some(round_trip)) = correspondence
                     .map_second_to_first(&mapped, &unit, &unit, &policy)
                     .unwrap()
@@ -10441,11 +10433,11 @@ mod tests {
         assert_eq!(contacts.len(), 1);
         assert!(contacts[0].is_certified_transverse());
         assert_eq!(
-            contacts[0].first_parameter().as_exact(),
+            contacts[0].first_parameter().scalar(),
             Some(&(Real::one() / Real::from(2_i8)).unwrap())
         );
         assert_eq!(
-            contacts[0].second_parameter().as_exact(),
+            contacts[0].second_parameter().scalar(),
             Some(&(Real::from(17_i8) / Real::from(21_i8)).unwrap())
         );
     }
@@ -11298,7 +11290,7 @@ mod tests {
         };
         assert_eq!(contacts.len(), 1);
         let half = (Real::one() / Real::from(2_u8)).unwrap();
-        assert_eq!(contacts[0].parameter().as_exact(), Some(&half));
+        assert_eq!(contacts[0].parameter().scalar(), Some(&half));
         assert_eq!(
             contacts[0].crossing_direction(),
             Some(BezierLineCrossingDirection::PositiveToNegative)

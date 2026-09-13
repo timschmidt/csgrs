@@ -206,6 +206,8 @@ exact signatures.
   `point_at` and `point_at_side` accept `CurveParameter2` and return `CurvePoint2`,
   retaining selected roots and local fibers without requiring coordinate images.
   A `Real` or `BezierParameter2` converts directly into the common parameter.
+  `parameter.scalar()` and `range.scalar_endpoints()` expose stored `Real`
+  views. Selected parameters remain exact when these views are absent.
   Generated curves keep their source chart when traversal is reversed.
   Reversal, similarity transforms, bounds, and finite projection accept these
   retained carriers. General selected-parameter subdivision and open-path corner

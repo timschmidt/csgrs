@@ -3071,7 +3071,7 @@ impl CornerCut2 {
     }
 
     fn exact_parameter(&self) -> Option<&Real> {
-        self.parameter.as_ref()?.as_exact()
+        self.parameter.as_ref()?.scalar()
     }
 }
 
@@ -3715,7 +3715,7 @@ impl ExactCornerArc2<'_> {
             });
         };
         let domain = retained.source.native_parameter_domain()?;
-        if let Some(parameter) = parameter.as_exact() {
+        if let Some(parameter) = parameter.scalar() {
             // Preserve the established source-domain expression order on the
             // represented hot path. Besides avoiding an algebraic-map setup,
             // this keeps retained circle/circle construction witnesses
@@ -3750,7 +3750,7 @@ impl ExactCornerArc2<'_> {
                         .source
                         .parameter_domain()
                         .end()
-                        .as_exact()
+                        .scalar()
                         .expect("native circular parameter")
                         .clone()
                 } else {
@@ -3758,7 +3758,7 @@ impl ExactCornerArc2<'_> {
                         .source
                         .parameter_domain()
                         .start()
-                        .as_exact()
+                        .scalar()
                         .expect("native circular parameter")
                         .clone()
                 }
@@ -3971,7 +3971,7 @@ impl<'a> ExactCornerBezier2<'a> {
             Self::Direct(source) => {
                 let domain = source.parameter_domain();
                 domain
-                    .exact_endpoints()
+                    .scalar_endpoints()
                     .expect("direct native Bezier domain")
             }
             Self::NativeSpan(fragment) => fragment.parameter_range(),
@@ -6790,7 +6790,7 @@ fn fillet_offset_centers(
                 } else {
                     source.range().start()
                 };
-                corner_parameter.as_exact().and_then(|parameter| {
+                corner_parameter.scalar().and_then(|parameter| {
                     line_source
                         .parallel_tangent_contacts()
                         .iter()
@@ -6881,7 +6881,7 @@ fn fillet_offset_centers(
                     continue;
                 }
                 let procedural_affine_contact =
-                    mode == CurveCornerMode2::TrimOrExtend && parameter.as_exact().is_none();
+                    mode == CurveCornerMode2::TrimOrExtend && parameter.scalar().is_none();
                 let line_parameter = if procedural_affine_contact {
                     None
                 } else {
@@ -9457,7 +9457,7 @@ fn fillet_cut_from_center(
             let Some(placement) = placement else {
                 return Ok(None);
             };
-            let point = if let Some(parameter) = parameter.as_exact() {
+            let point = if let Some(parameter) = parameter.scalar() {
                 source.point_at(parameter.clone()).into()
             } else {
                 {
@@ -10532,7 +10532,7 @@ fn bezier_parallel_source_point_evidence(
     family: CurveFamily2,
     policy: &CurveContext,
 ) -> ExactCurveResult<CurvePoint2> {
-    if let Some(parameter) = parameter.as_exact() {
+    if let Some(parameter) = parameter.scalar() {
         return match parallel.source_point_at_unchecked(parameter, policy) {
             Classification::Decided(point) => Ok(point.into()),
             Classification::Uncertain(reason) => {
@@ -10911,7 +10911,7 @@ fn analytic_parallel_point_evidence(
     family: CurveFamily2,
     policy: &CurveContext,
 ) -> ExactCurveResult<CurvePoint2> {
-    if let Some(parameter) = parameter.as_exact() {
+    if let Some(parameter) = parameter.scalar() {
         return decided_parallel_point(parallel, parameter, false, operation, family, policy)
             .map(Into::into);
     }

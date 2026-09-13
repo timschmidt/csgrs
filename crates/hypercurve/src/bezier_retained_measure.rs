@@ -713,7 +713,7 @@ impl EndpointEnvelopeAccumulator {
                 self.include_endpoint(end, policy)
             }
             BezierSplitFragment2::AnalyticParallel(fragment) => {
-                let Some((start_parameter, end_parameter)) = fragment.range().exact_endpoints()
+                let Some((start_parameter, end_parameter)) = fragment.range().scalar_endpoints()
                 else {
                     return Classification::Uncertain(UncertaintyReason::Boundary);
                 };

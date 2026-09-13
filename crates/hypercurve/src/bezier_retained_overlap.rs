@@ -1946,7 +1946,7 @@ fn rational_overlap_exact_ranges(
         Err(_) => return Classification::Uncertain(UncertaintyReason::Unsupported),
     };
     let (Some((first_start, first_end)), Some((second_start, second_end))) =
-        (first.exact_endpoints(), second.exact_endpoints())
+        (first.scalar_endpoints(), second.scalar_endpoints())
     else {
         return Classification::Decided(None);
     };
@@ -2292,7 +2292,7 @@ fn refine_graph_at_boundaries(
         else {
             return Classification::Uncertain(UncertaintyReason::Boundary);
         };
-        let (Some(source_start), Some(source_end)) = (start.as_exact(), end.as_exact()) else {
+        let (Some(source_start), Some(source_end)) = (start.scalar(), end.scalar()) else {
             return Classification::Uncertain(UncertaintyReason::Unsupported);
         };
 
@@ -2781,7 +2781,7 @@ fn materialized_endpoints(fragment: &BezierSplitFragment2) -> Option<(Point2, Po
     match fragment {
         BezierSplitFragment2::Materialized { curve, .. } => Some(curve.endpoints()),
         BezierSplitFragment2::AnalyticParallel(fragment) => {
-            let (start, end) = fragment.range().exact_endpoints()?;
+            let (start, end) = fragment.range().scalar_endpoints()?;
             let start = match fragment
                 .parallel()
                 .point_at(start, &CurveContext::STRICT)
@@ -3089,7 +3089,7 @@ fn parameter_range_covers_unit_interval(
     range: &BezierParameterRange2,
     policy: &CurveContext,
 ) -> bool {
-    let Some((start, end)) = range.exact_endpoints() else {
+    let Some((start, end)) = range.scalar_endpoints() else {
         return false;
     };
     let start_is_zero = is_zero(start, policy) == Some(true);

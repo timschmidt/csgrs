@@ -1289,7 +1289,7 @@ fn analytic_parallel_endpoint_data(
     fragment: &crate::BezierParallelFragment2,
     policy: &CurveContext,
 ) -> Classification<EndpointData> {
-    let Some((source_start, source_end)) = fragment.range().exact_endpoints() else {
+    let Some((source_start, source_end)) = fragment.range().scalar_endpoints() else {
         return Classification::Uncertain(UncertaintyReason::Boundary);
     };
     let source_start_point = match fragment.parallel().point_at(source_start, policy) {

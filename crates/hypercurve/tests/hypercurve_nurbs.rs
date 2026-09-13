@@ -298,7 +298,7 @@ fn nurbs_subdivision_reconstruction_obeys_terminal_policy() {
             .0
             .parameter_domain()
             .end()
-            .as_exact()
+            .scalar()
             .expect("native parameter")
             .eq(&parameter)
     );
