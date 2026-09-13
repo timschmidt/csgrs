@@ -42,6 +42,7 @@ mod curve_point;
 mod curve_region_boolean;
 mod curve_region_trim;
 mod curve_string;
+mod curve_support;
 mod direction;
 mod error;
 mod events;

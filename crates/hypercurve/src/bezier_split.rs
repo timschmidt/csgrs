@@ -1095,6 +1095,18 @@ impl BezierSplitMaterialization2 {
 }
 
 impl BezierSplitFragment2 {
+    /// Whether traversal opposes this retained support's parameter order.
+    /// Materialized curves and chords embody reversal in their support itself.
+    pub(crate) fn source_is_reversed(&self) -> bool {
+        match self {
+            Self::Materialized { .. } | Self::AlgebraicChord(_) => false,
+            Self::AlgebraicEndpointImages { reversed, .. } => *reversed,
+            Self::AnalyticParallel(fragment) => fragment.is_reversed(),
+            Self::AlgebraicCuspSemicircle(fragment) => fragment.is_reversed(),
+            Self::SelectedFiber(fragment) => fragment.is_reversed(),
+        }
+    }
+
     /// Returns this fragment's boundaries in its promoted native span.
     pub const fn parameter_range(&self) -> Option<(&BezierParameter2, &BezierParameter2)> {
         match self {

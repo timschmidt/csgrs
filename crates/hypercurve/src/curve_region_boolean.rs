@@ -1,6 +1,7 @@
 //! Immediate exact Booleans over curved regions.
 
 use crate::CurvePointData2;
+use crate::curve_support::{CurveSupport2, retained_circular_support};
 use std::cmp::Ordering;
 use std::collections::HashMap;
 use std::sync::{Arc, OnceLock};
@@ -22,7 +23,7 @@ use crate::bezier_offset::{
     BezierAlgebraicCuspSemicircleParallelIntersections2, BezierAlgebraicCuspSemicircleParameter2,
     BezierAlgebraicCuspSemicircleRationalIntersections2, BezierParameterComponentOverlap2,
 };
-use crate::bezier_split::{BezierSelectedFiberFragment2, BezierSelectedFiberSource2};
+use crate::bezier_split::BezierSelectedFiberSource2;
 use crate::bezier_tangent_order::algebraic_endpoint_tangent_cross_sign;
 use crate::classify::{compare_reals, real_sign};
 use crate::curve_intersection::{CurveIntersectionBatchCache, CurveIntersectionContext};
@@ -38,10 +39,10 @@ use crate::{
     BezierLineCrossingDirection, BezierLineImageFitRelation, BezierParallel2,
     BezierParallelPairIntersectionSet2, BezierParameter2, BezierParameterRange2,
     BezierSplitFragment2, BezierSubcurve2, BooleanOp, Classification, ContourPointLocation, Curve2,
-    CurveContext, CurveDerivative2, CurveError, CurveFamily2, CurveIntersectionContact2,
-    CurveIntersectionOverlap2, CurveIntersectionPairBlocker2, CurveOperation2, CurveOutcome,
-    CurveParameter2, CurveParameterRange2, CurvePoint2, CurveRegion2, CurveRegionLoopRole,
-    CurveResult, ExactCurveError, ExactCurveResult, FillRule, LineSeg2, LineSide, QuadraticBezier2,
+    CurveContext, CurveError, CurveFamily2, CurveIntersectionContact2, CurveIntersectionOverlap2,
+    CurveIntersectionPairBlocker2, CurveOperation2, CurveOutcome, CurveParameter2,
+    CurveParameterRange2, CurvePoint2, CurveRegion2, CurveRegionLoopRole, CurveResult,
+    ExactCurveError, ExactCurveResult, FillRule, LineSeg2, LineSide, QuadraticBezier2,
     RationalBezier2, RationalBezierIntersectionContacts2, RationalBezierIntersectionOverlap2,
     RationalBezierOverlapOrientation2, RationalBezierPointIncidence2, Real, RealSign,
     RegionPointLocation, Segment2, UncertaintyReason,
@@ -169,7 +170,7 @@ struct RegionCarrier {
     loop_index: usize,
     fragment_index: usize,
     family: CurveFamily2,
-    geometry: RegionCarrierGeometry,
+    geometry: CurveSupport2,
     start: CurveParameter2,
     end: CurveParameter2,
     reversed: bool,
@@ -184,14 +185,6 @@ struct RegionCarrierPair {
     first_carrier_index: usize,
     second_carrier_index: usize,
     context: RegionCarrierPairContext,
-}
-
-#[derive(Clone, Debug)]
-enum RegionCarrierGeometry {
-    Bezier(BezierSubcurve2),
-    AnalyticParallel(BezierParallel2),
-    AlgebraicChord(crate::BezierAlgebraicChord2),
-    AlgebraicCuspSemicircle(crate::BezierAlgebraicCuspSemicircleFragment2),
 }
 
 #[derive(Debug)]
@@ -1484,7 +1477,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
                 .saturating_add(region_carrier_count(region)),
         );
         for (fragment_index, fragment) in source_fragments.iter().enumerate() {
-            let geometry = RegionCarrierGeometry::Bezier(fragment.curve().clone());
+            let geometry = CurveSupport2::Bezier(fragment.curve().clone());
             carriers.push(RegionCarrier {
                 operand: CurveRegionBooleanOperand2::First,
                 loop_index: 0,
@@ -1549,10 +1542,10 @@ impl<'a> CurveRegionBooleanContext<'a> {
         let curves = carriers
             .iter()
             .map(|carrier| match &carrier.geometry {
-                RegionCarrierGeometry::Bezier(curve) => Some(Curve2::from(curve.clone())),
-                RegionCarrierGeometry::AnalyticParallel(_)
-                | RegionCarrierGeometry::AlgebraicChord(_)
-                | RegionCarrierGeometry::AlgebraicCuspSemicircle(_) => None,
+                CurveSupport2::Bezier(curve) => Some(Curve2::from(curve.clone())),
+                CurveSupport2::Parallel(_) | CurveSupport2::Line(_) | CurveSupport2::Circle(_) => {
+                    None
+                }
             })
             .collect::<Vec<_>>();
         let mut pairs = Vec::with_capacity(carrier_count.saturating_mul(2));
@@ -1577,14 +1570,12 @@ impl<'a> CurveRegionBooleanContext<'a> {
                     first_carrier_index,
                     second_carrier_index: first_carrier_index,
                     context: match &carrier.geometry {
-                        RegionCarrierGeometry::AnalyticParallel(_) => {
-                            RegionCarrierPairContext::ParallelSelf
-                        }
-                        RegionCarrierGeometry::Bezier(_) => RegionCarrierPairContext::BezierSelf,
-                        RegionCarrierGeometry::AlgebraicChord(_) => {
+                        CurveSupport2::Parallel(_) => RegionCarrierPairContext::ParallelSelf,
+                        CurveSupport2::Bezier(_) => RegionCarrierPairContext::BezierSelf,
+                        CurveSupport2::Line(_) => {
                             unreachable!("an algebraic chord is an injective retained carrier")
                         }
-                        RegionCarrierGeometry::AlgebraicCuspSemicircle(_) => unreachable!(
+                        CurveSupport2::Circle(_) => unreachable!(
                             "an algebraic cusp semicircle is an injective retained carrier"
                         ),
                     },
@@ -1631,7 +1622,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
             loop_index: 0,
             fragment_index: 0,
             family: CurveFamily2::Line,
-            geometry: RegionCarrierGeometry::AlgebraicChord(probe),
+            geometry: CurveSupport2::Line(probe),
             start: CurveParameter2::from_algebraic_chord(start),
             end: CurveParameter2::from_algebraic_chord(end),
             reversed: false,
@@ -1648,10 +1639,10 @@ impl<'a> CurveRegionBooleanContext<'a> {
         let curves = carriers
             .iter()
             .map(|carrier| match &carrier.geometry {
-                RegionCarrierGeometry::Bezier(curve) => Some(Curve2::from(curve.clone())),
-                RegionCarrierGeometry::AnalyticParallel(_)
-                | RegionCarrierGeometry::AlgebraicChord(_)
-                | RegionCarrierGeometry::AlgebraicCuspSemicircle(_) => None,
+                CurveSupport2::Bezier(curve) => Some(Curve2::from(curve.clone())),
+                CurveSupport2::Parallel(_) | CurveSupport2::Line(_) | CurveSupport2::Circle(_) => {
+                    None
+                }
             })
             .collect::<Vec<_>>();
         let mut pairs = Vec::with_capacity(boundary_carriers.len());
@@ -2465,15 +2456,13 @@ impl<'a> CurveRegionBooleanContext<'a> {
         chord_index: usize,
     ) -> Option<(usize, bool, bool)> {
         let cusp = match &self.data.carriers.get(cusp_index)?.geometry {
-            RegionCarrierGeometry::AlgebraicCuspSemicircle(cusp) => cusp,
+            CurveSupport2::Circle(cusp) => cusp,
             _ => return None,
         };
         let chord_carrier = self.data.carriers.get(chord_index)?;
         let mut certified = None;
         for (candidate_index, candidate) in self.data.carriers.iter().enumerate() {
-            let RegionCarrierGeometry::AlgebraicCuspSemicircle(candidate_cusp) =
-                &candidate.geometry
-            else {
+            let CurveSupport2::Circle(candidate_cusp) = &candidate.geometry else {
                 continue;
             };
             if candidate.operand != chord_carrier.operand
@@ -2722,7 +2711,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
             let Some((source_index, source_carrier)) = adjacent_carrier(fragment_index) else {
                 continue;
             };
-            let RegionCarrierGeometry::Bezier(source_curve) = &source_carrier.geometry else {
+            let CurveSupport2::Bezier(source_curve) = &source_carrier.geometry else {
                 continue;
             };
             let source_parameter = if source_parameter {
@@ -4793,20 +4782,20 @@ impl<'a> CurveRegionBooleanContext<'a> {
                 {
                     let (cusp, cusp_index, chord, chord_index) = if *cusp_is_first {
                         (
-                            first.geometry.algebraic_cusp(),
+                            first.geometry.circle(),
                             pair.first_carrier_index,
                             match &second.geometry {
-                                RegionCarrierGeometry::AlgebraicChord(chord) => chord,
+                                CurveSupport2::Line(chord) => chord,
                                 _ => unreachable!("cusp/chord dispatch retained its chord"),
                             },
                             pair.second_carrier_index,
                         )
                     } else {
                         (
-                            second.geometry.algebraic_cusp(),
+                            second.geometry.circle(),
                             pair.second_carrier_index,
                             match &first.geometry {
-                                RegionCarrierGeometry::AlgebraicChord(chord) => chord,
+                                CurveSupport2::Line(chord) => chord,
                                 _ => unreachable!("chord/cusp dispatch retained its chord"),
                             },
                             pair.first_carrier_index,
@@ -4881,7 +4870,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
                             "algebraic-circle-chord-pair",
                             "supporting-circle-sibling-endpoint-tangent",
                         );
-                        let sibling = self.data.carriers[sibling_index].geometry.algebraic_cusp();
+                        let sibling = self.data.carriers[sibling_index].geometry.circle();
                         let parameter = sibling.endpoint_parameter(sibling_at_start);
                         let mapped = self.data.policy.strict_predicate_pass(|| {
                             use std::cmp::Ordering::{Equal, Greater, Less};
@@ -5089,13 +5078,13 @@ impl<'a> CurveRegionBooleanContext<'a> {
                 {
                     let (chord, chord_index, other, other_index) =
                         match (&first.geometry, &second.geometry) {
-                            (RegionCarrierGeometry::AlgebraicChord(chord), other) => (
+                            (CurveSupport2::Line(chord), other) => (
                                 chord,
                                 pair.first_carrier_index,
                                 other,
                                 pair.second_carrier_index,
                             ),
-                            (other, RegionCarrierGeometry::AlgebraicChord(chord)) => (
+                            (other, CurveSupport2::Line(chord)) => (
                                 chord,
                                 pair.second_carrier_index,
                                 other,
@@ -5108,7 +5097,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
                     // endpoints into an optional AABB duplicates those exact
                     // predicates and can expand a large shared scalar DAG
                     // before the authoritative carrier relation is consulted.
-                    if let RegionCarrierGeometry::AlgebraicChord(other_chord) = other {
+                    if let CurveSupport2::Line(other_chord) = other {
                         if self.authored_carriers_are_adjacent(pair) {
                             for (support, candidate) in [(chord, other_chord), (other_chord, chord)]
                             {
@@ -5330,7 +5319,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
                             blockers: Vec::new(),
                         });
                     }
-                    if let RegionCarrierGeometry::Bezier(curve) = other {
+                    if let CurveSupport2::Bezier(curve) = other {
                         let other_carrier = &self.data.carriers[other_index];
                         let chord_carrier = &self.data.carriers[chord_index];
                         let authored_adjacent = self.authored_carriers_are_adjacent(pair);
@@ -5532,7 +5521,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
                             return Ok(result);
                         }
                     }
-                    if let RegionCarrierGeometry::AnalyticParallel(parallel) = other {
+                    if let CurveSupport2::Parallel(parallel) = other {
                         return self.algebraic_chord_parallel_pair_result(
                             pair,
                             chord,
@@ -5557,14 +5546,14 @@ impl<'a> CurveRegionBooleanContext<'a> {
             RegionCarrierPairContext::CuspRational { cusp_is_first } => {
                 let (cusp, curve, curve_carrier, curve_index) = if *cusp_is_first {
                     (
-                        first.geometry.algebraic_cusp(),
+                        first.geometry.circle(),
                         second.geometry.bezier(),
                         second,
                         pair.second_carrier_index,
                     )
                 } else {
                     (
-                        second.geometry.algebraic_cusp(),
+                        second.geometry.circle(),
                         first.geometry.bezier(),
                         first,
                         pair.first_carrier_index,
@@ -5611,14 +5600,14 @@ impl<'a> CurveRegionBooleanContext<'a> {
             RegionCarrierPairContext::CuspParallel { cusp_is_first } => {
                 let (cusp, parallel, parallel_carrier, parallel_index) = if *cusp_is_first {
                     (
-                        first.geometry.algebraic_cusp(),
+                        first.geometry.circle(),
                         second.geometry.parallel(),
                         second,
                         pair.second_carrier_index,
                     )
                 } else {
                     (
-                        second.geometry.algebraic_cusp(),
+                        second.geometry.circle(),
                         first.geometry.parallel(),
                         first,
                         pair.first_carrier_index,
@@ -5887,8 +5876,8 @@ impl<'a> CurveRegionBooleanContext<'a> {
                 })
             }
             RegionCarrierPairContext::CuspPair => {
-                let first_cusp = first.geometry.algebraic_cusp();
-                let second_cusp = second.geometry.algebraic_cusp();
+                let first_cusp = first.geometry.circle();
+                let second_cusp = second.geometry.circle();
                 if let Some((first_at_start, second_at_start)) =
                     self.authored_carrier_shared_endpoints(pair)
                     && (first_cusp.certified_tangent_endpoint(first_at_start)
@@ -6031,10 +6020,8 @@ impl<'a> CurveRegionBooleanContext<'a> {
     fn parallel_pair_is_coordinate_disjoint(&self, pair: &RegionCarrierPair) -> bool {
         let first = &self.data.carriers[pair.first_carrier_index];
         let second = &self.data.carriers[pair.second_carrier_index];
-        let (
-            RegionCarrierGeometry::AnalyticParallel(first_parallel),
-            RegionCarrierGeometry::AnalyticParallel(second_parallel),
-        ) = (&first.geometry, &second.geometry)
+        let (CurveSupport2::Parallel(first_parallel), CurveSupport2::Parallel(second_parallel)) =
+            (&first.geometry, &second.geometry)
         else {
             return false;
         };
@@ -6123,10 +6110,8 @@ impl<'a> CurveRegionBooleanContext<'a> {
         if first.operand != second.operand || first.loop_index != second.loop_index {
             return false;
         }
-        let (
-            RegionCarrierGeometry::AnalyticParallel(first_parallel),
-            RegionCarrierGeometry::AnalyticParallel(second_parallel),
-        ) = (&first.geometry, &second.geometry)
+        let (CurveSupport2::Parallel(first_parallel), CurveSupport2::Parallel(second_parallel)) =
+            (&first.geometry, &second.geometry)
         else {
             return false;
         };
@@ -6947,7 +6932,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
                     .into_iter()
                     .enumerate()
                     {
-                        let RegionCarrierGeometry::AlgebraicChord(chord) =
+                        let CurveSupport2::Line(chord) =
                             &self.data.carriers[carrier_index].geometry
                         else {
                             continue;
@@ -8635,9 +8620,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
                                     } else {
                                         Ordering::Greater
                                     })
-                            } else if let RegionCarrierGeometry::AlgebraicChord(chord) =
-                                &carrier.geometry
-                            {
+                            } else if let CurveSupport2::Line(chord) = &carrier.geometry {
                                 let expected = if negative_side {
                                     Ordering::Greater
                                 } else {
@@ -8802,9 +8785,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
                                 } else {
                                     Ordering::Less
                                 };
-                                let after = if let RegionCarrierGeometry::AlgebraicChord(chord) =
-                                    &carrier.geometry
-                                {
+                                let after = if let CurveSupport2::Line(chord) = &carrier.geometry {
                                     let mut after = true;
                                     for endpoint in [chord.start(), chord.end()] {
                                         match crate::BezierAlgebraicChord2::point_axis_order(
@@ -9319,16 +9300,16 @@ impl<'a> CurveRegionBooleanContext<'a> {
         }
         let carrier = &self.data.carriers[carrier_index];
         let max_representatives = match &carrier.geometry {
-            RegionCarrierGeometry::Bezier(
+            CurveSupport2::Bezier(
                 BezierSubcurve2::Quadratic(_) | BezierSubcurve2::RationalQuadratic(_),
             ) => 4,
-            RegionCarrierGeometry::Bezier(BezierSubcurve2::Cubic(_)) => 6,
-            RegionCarrierGeometry::Bezier(BezierSubcurve2::Rational(curve)) => {
+            CurveSupport2::Bezier(BezierSubcurve2::Cubic(_)) => 6,
+            CurveSupport2::Bezier(BezierSubcurve2::Rational(curve)) => {
                 curve.degree().saturating_mul(2).max(2)
             }
-            RegionCarrierGeometry::AnalyticParallel(_) => 4,
-            RegionCarrierGeometry::AlgebraicChord(_) => 2,
-            RegionCarrierGeometry::AlgebraicCuspSemicircle(_) => 4,
+            CurveSupport2::Parallel(_) => 4,
+            CurveSupport2::Line(_) => 2,
+            CurveSupport2::Circle(_) => 4,
         };
         let fragment_parameter_range = fragment.curve_region_parameter_range();
         let (start, end) = (
@@ -9354,7 +9335,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
         // a proper rational parametrization of a nondegenerate minor arc.
         let retained_regular_circle = matches!(
             &carrier.geometry,
-            RegionCarrierGeometry::Bezier(curve) if retained_circular_support(curve).is_some()
+            CurveSupport2::Bezier(curve) if retained_circular_support(curve).is_some()
         );
         // General rational conversion is only a fallback certificate source.
         // Avoid rebuilding a circular quadratic whose native provenance has
@@ -9363,12 +9344,10 @@ impl<'a> CurveRegionBooleanContext<'a> {
             None
         } else {
             match &carrier.geometry {
-                RegionCarrierGeometry::Bezier(curve) => {
-                    RationalBezier2::try_from_subcurve(curve).ok()
+                CurveSupport2::Bezier(curve) => RationalBezier2::try_from_subcurve(curve).ok(),
+                CurveSupport2::Parallel(_) | CurveSupport2::Line(_) | CurveSupport2::Circle(_) => {
+                    None
                 }
-                RegionCarrierGeometry::AnalyticParallel(_)
-                | RegionCarrierGeometry::AlgebraicChord(_)
-                | RegionCarrierGeometry::AlgebraicCuspSemicircle(_) => None,
             }
         };
         let isolator_touches =
@@ -9466,20 +9445,16 @@ impl<'a> CurveRegionBooleanContext<'a> {
                         .as_ref()
                         .filter(|endpoint| *endpoint == &parameter)
                         .and_then(|endpoint| match &carrier.geometry {
-                            RegionCarrierGeometry::Bezier(curve)
-                                if endpoint == &crate::Real::zero() =>
-                            {
+                            CurveSupport2::Bezier(curve) if endpoint == &crate::Real::zero() => {
                                 Some(curve.endpoint_refs().0.clone())
                             }
-                            RegionCarrierGeometry::Bezier(curve)
-                                if endpoint == &crate::Real::one() =>
-                            {
+                            CurveSupport2::Bezier(curve) if endpoint == &crate::Real::one() => {
                                 Some(curve.endpoint_refs().1.clone())
                             }
-                            RegionCarrierGeometry::Bezier(_)
-                            | RegionCarrierGeometry::AnalyticParallel(_)
-                            | RegionCarrierGeometry::AlgebraicChord(_)
-                            | RegionCarrierGeometry::AlgebraicCuspSemicircle(_) => None,
+                            CurveSupport2::Bezier(_)
+                            | CurveSupport2::Parallel(_)
+                            | CurveSupport2::Line(_)
+                            | CurveSupport2::Circle(_) => None,
                         });
                     let representative = match retained_endpoint {
                         Some(point) => point,
@@ -10046,10 +10021,10 @@ impl<'a> CurveRegionBooleanContext<'a> {
                 );
             };
             let source_chord = match &self.data.carriers[carrier_index].geometry {
-                RegionCarrierGeometry::AlgebraicChord(source) => source,
-                RegionCarrierGeometry::Bezier(_)
-                | RegionCarrierGeometry::AnalyticParallel(_)
-                | RegionCarrierGeometry::AlgebraicCuspSemicircle(_) => chord,
+                CurveSupport2::Line(source) => source,
+                CurveSupport2::Bezier(_)
+                | CurveSupport2::Parallel(_)
+                | CurveSupport2::Circle(_) => chord,
             };
             // `chord` is an ordered nonempty split of `source_chord`, and its
             // representative is strictly interior to that split.  This
@@ -10192,7 +10167,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
         let retained_probe = match (&representative, &self.data.carriers[carrier_index].geometry) {
             (
                 CurvePoint2(CurvePointData2::AlgebraicChordPair(point)),
-                RegionCarrierGeometry::AlgebraicChord(boundary),
+                CurveSupport2::Line(boundary),
             ) => point
                 .exterior_axis_probe_avoiding(boundary, &outer_bounds, &self.data.policy)
                 .map_err(|cause| self.invalid(carrier_index, cause))?,
@@ -11005,10 +10980,9 @@ impl<'a> CurveRegionBooleanContext<'a> {
                 .carriers
                 .iter()
                 .all(|carrier| match &carrier.geometry {
-                    RegionCarrierGeometry::Bezier(curve) => subcurve_is_strict_line_image(curve),
-                    RegionCarrierGeometry::AlgebraicChord(chord) => chord.exact_line().is_some(),
-                    RegionCarrierGeometry::AnalyticParallel(_)
-                    | RegionCarrierGeometry::AlgebraicCuspSemicircle(_) => false,
+                    CurveSupport2::Bezier(curve) => subcurve_is_strict_line_image(curve),
+                    CurveSupport2::Line(chord) => chord.exact_line().is_some(),
+                    CurveSupport2::Parallel(_) | CurveSupport2::Circle(_) => false,
                 })
         })
     }
@@ -12199,7 +12173,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
         };
         if !matches!(
             self.data.carriers[overlap.second_carrier_index].geometry,
-            RegionCarrierGeometry::AlgebraicChord(_)
+            CurveSupport2::Line(_)
         ) {
             return Ok(None);
         }
@@ -12209,7 +12183,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
         {
             Classification::Decided(representative) => representative,
             Classification::Uncertain(first_reason) => {
-                let RegionCarrierGeometry::AlgebraicChord(second_chord) =
+                let CurveSupport2::Line(second_chord) =
                     &self.data.carriers[overlap.second_carrier_index].geometry
                 else {
                     unreachable!("shared algebraic chord action validated its second carrier")
@@ -12433,7 +12407,7 @@ fn build_cross_operand_carrier_pairs(
     let curves = carriers
         .iter()
         .map(|carrier| match &carrier.geometry {
-            RegionCarrierGeometry::Bezier(curve) => Some(Curve2::from(curve.clone())),
+            CurveSupport2::Bezier(curve) => Some(Curve2::from(curve.clone())),
             _ => None,
         })
         .collect::<Vec<_>>();
@@ -12509,23 +12483,16 @@ fn build_candidate_carrier_pair(
         return Ok(None);
     }
     let context = match (&first_carrier.geometry, &second_carrier.geometry) {
-        (
-            RegionCarrierGeometry::AlgebraicCuspSemicircle(_),
-            RegionCarrierGeometry::AlgebraicChord(_),
-        ) => RegionCarrierPairContext::CuspChord {
+        (CurveSupport2::Circle(_), CurveSupport2::Line(_)) => RegionCarrierPairContext::CuspChord {
             cusp_is_first: true,
         },
-        (
-            RegionCarrierGeometry::AlgebraicChord(_),
-            RegionCarrierGeometry::AlgebraicCuspSemicircle(_),
-        ) => RegionCarrierPairContext::CuspChord {
+        (CurveSupport2::Line(_), CurveSupport2::Circle(_)) => RegionCarrierPairContext::CuspChord {
             cusp_is_first: false,
         },
-        (RegionCarrierGeometry::AlgebraicChord(_), _)
-        | (_, RegionCarrierGeometry::AlgebraicChord(_)) => {
+        (CurveSupport2::Line(_), _) | (_, CurveSupport2::Line(_)) => {
             RegionCarrierPairContext::AlgebraicChordPair
         }
-        (RegionCarrierGeometry::Bezier(_), RegionCarrierGeometry::Bezier(_)) => {
+        (CurveSupport2::Bezier(_), CurveSupport2::Bezier(_)) => {
             let first = curves[first_carrier_index]
                 .as_ref()
                 .expect("Bezier carrier has a top-level curve");
@@ -12540,52 +12507,44 @@ fn build_candidate_carrier_pair(
             )?;
             RegionCarrierPairContext::Bezier(context)
         }
-        (RegionCarrierGeometry::AnalyticParallel(_), RegionCarrierGeometry::Bezier(_)) => {
+        (CurveSupport2::Parallel(_), CurveSupport2::Bezier(_)) => {
             RegionCarrierPairContext::ParallelRational {
                 parallel_is_first: true,
             }
         }
-        (RegionCarrierGeometry::Bezier(_), RegionCarrierGeometry::AnalyticParallel(_)) => {
+        (CurveSupport2::Bezier(_), CurveSupport2::Parallel(_)) => {
             RegionCarrierPairContext::ParallelRational {
                 parallel_is_first: false,
             }
         }
-        (
-            RegionCarrierGeometry::AnalyticParallel(first),
-            RegionCarrierGeometry::AnalyticParallel(second),
-        ) => {
+        (CurveSupport2::Parallel(first), CurveSupport2::Parallel(second)) => {
             if first == second {
                 RegionCarrierPairContext::ParallelSameImage
             } else {
                 RegionCarrierPairContext::ParallelPair
             }
         }
-        (RegionCarrierGeometry::AlgebraicCuspSemicircle(_), RegionCarrierGeometry::Bezier(_)) => {
+        (CurveSupport2::Circle(_), CurveSupport2::Bezier(_)) => {
             RegionCarrierPairContext::CuspRational {
                 cusp_is_first: true,
             }
         }
-        (RegionCarrierGeometry::Bezier(_), RegionCarrierGeometry::AlgebraicCuspSemicircle(_)) => {
+        (CurveSupport2::Bezier(_), CurveSupport2::Circle(_)) => {
             RegionCarrierPairContext::CuspRational {
                 cusp_is_first: false,
             }
         }
-        (
-            RegionCarrierGeometry::AlgebraicCuspSemicircle(_),
-            RegionCarrierGeometry::AnalyticParallel(_),
-        ) => RegionCarrierPairContext::CuspParallel {
-            cusp_is_first: true,
-        },
-        (
-            RegionCarrierGeometry::AnalyticParallel(_),
-            RegionCarrierGeometry::AlgebraicCuspSemicircle(_),
-        ) => RegionCarrierPairContext::CuspParallel {
-            cusp_is_first: false,
-        },
-        (
-            RegionCarrierGeometry::AlgebraicCuspSemicircle(_),
-            RegionCarrierGeometry::AlgebraicCuspSemicircle(_),
-        ) => RegionCarrierPairContext::CuspPair,
+        (CurveSupport2::Circle(_), CurveSupport2::Parallel(_)) => {
+            RegionCarrierPairContext::CuspParallel {
+                cusp_is_first: true,
+            }
+        }
+        (CurveSupport2::Parallel(_), CurveSupport2::Circle(_)) => {
+            RegionCarrierPairContext::CuspParallel {
+                cusp_is_first: false,
+            }
+        }
+        (CurveSupport2::Circle(_), CurveSupport2::Circle(_)) => RegionCarrierPairContext::CuspPair,
     };
     Ok(Some(RegionCarrierPair {
         first_carrier_index,
@@ -12625,7 +12584,7 @@ fn build_parallel_self_intersection_caches(
 ) -> Vec<ParallelSelfIntersectionCache> {
     let mut caches = Vec::<ParallelSelfIntersectionCache>::new();
     for carrier in carriers {
-        let RegionCarrierGeometry::AnalyticParallel(parallel) = &carrier.geometry else {
+        let CurveSupport2::Parallel(parallel) = &carrier.geometry else {
             continue;
         };
         if caches.iter().any(|cache| cache.parallel == *parallel) {
@@ -12765,7 +12724,7 @@ fn carrier_optional_outer_bounds_refined(
     policy: &CurveContext,
 ) -> Classification<Aabb2> {
     let bounds = match &carrier.geometry {
-        RegionCarrierGeometry::AlgebraicChord(chord) if chord.exact_line().is_none() => chord
+        CurveSupport2::Line(chord) if chord.exact_line().is_none() => chord
             .conservative_local_bounds_refined(refinement_steps, policy)
             .unwrap_or(Classification::Uncertain(UncertaintyReason::Unsupported)),
         _ if refinement_steps == 0 => carrier
@@ -12777,37 +12736,6 @@ fn carrier_optional_outer_bounds_refined(
             .certified_outer_bounds_refined(refinement_steps, policy),
     };
     bounds.map(|bounds| bounds.certified_rational_outer_envelope().unwrap_or(bounds))
-}
-
-fn subcurve_certified_outer_bounds(
-    curve: &BezierSubcurve2,
-    policy: &CurveContext,
-) -> Classification<Aabb2> {
-    let bounds = match curve {
-        BezierSubcurve2::Quadratic(curve) => curve.control_hull_box(policy),
-        BezierSubcurve2::Cubic(curve) => curve.control_hull_box(policy),
-        BezierSubcurve2::RationalQuadratic(curve) => curve.certified_bounds(policy),
-        BezierSubcurve2::Rational(curve) => curve.certified_bounds_classified(policy),
-    };
-    if matches!(bounds, Classification::Decided(_)) {
-        return bounds;
-    }
-    let Some((_, circle)) = retained_circular_support(curve) else {
-        return bounds;
-    };
-    // Mixed-weight major-circle charts are finite even though their rational
-    // control hull is not convex. Retained circular provenance certifies the
-    // complete image lies in this exact full-circle envelope, which is a
-    // conservative broad-phase fallback when quotient-extremum isolation did
-    // not produce a tighter box.
-    let radius = match circle.radius_squared.clone().sqrt() {
-        Ok(radius) => radius,
-        Err(_) => return bounds,
-    };
-    Classification::Decided(Aabb2::new_unchecked(
-        crate::Point2::new(circle.center.x() - &radius, circle.center.y() - &radius),
-        crate::Point2::new(circle.center.x() + &radius, circle.center.y() + &radius),
-    ))
 }
 
 fn build_region_carriers(
@@ -12873,80 +12801,35 @@ fn build_region_carrier(
         }
         _ => None,
     };
-    let (mut geometry, mut start, mut end, mut reversed) = match fragment {
+    let mut geometry = match fragment {
         BezierSplitFragment2::Materialized { curve, .. } => {
-            if let Some(chord) = retained_axis_aligned_line_chord(curve, policy) {
-                let start = chord.start_parameter();
-                let end = chord.end_parameter();
-                (
-                    RegionCarrierGeometry::AlgebraicChord(chord),
-                    CurveParameter2::from_algebraic_chord(start),
-                    CurveParameter2::from_algebraic_chord(end),
-                    false,
-                )
-            } else {
-                (
-                    RegionCarrierGeometry::Bezier(curve.clone()),
-                    CurveParameter2::from(BezierParameter2::Exact(crate::Real::zero())),
-                    CurveParameter2::from(BezierParameter2::Exact(crate::Real::one())),
-                    false,
-                )
-            }
+            retained_axis_aligned_line_chord(curve, policy)
+                .map(CurveSupport2::Line)
+                .unwrap_or_else(|| CurveSupport2::from_fragment(fragment))
         }
-        BezierSplitFragment2::AlgebraicEndpointImages {
-            reversed,
-            start,
-            end,
-            source_curve: curve,
-            ..
-        } => (
-            RegionCarrierGeometry::Bezier(curve.clone()),
-            CurveParameter2::from(start.clone()),
-            CurveParameter2::from(end.clone()),
-            *reversed,
-        ),
-        BezierSplitFragment2::AnalyticParallel(fragment) => (
-            RegionCarrierGeometry::AnalyticParallel(fragment.parallel().clone()),
-            CurveParameter2::from(fragment.range().start().clone()),
-            CurveParameter2::from(fragment.range().end().clone()),
-            fragment.is_reversed(),
-        ),
-        BezierSplitFragment2::AlgebraicChord(chord) => (
-            RegionCarrierGeometry::AlgebraicChord(chord.clone()),
-            CurveParameter2::from_algebraic_chord(chord.start_parameter()),
-            CurveParameter2::from_algebraic_chord(chord.end_parameter()),
-            false,
-        ),
-        BezierSplitFragment2::AlgebraicCuspSemicircle(fragment) => (
-            RegionCarrierGeometry::AlgebraicCuspSemicircle(fragment.clone()),
-            CurveParameter2::from_algebraic_cusp(fragment.start_parameter().clone()),
-            CurveParameter2::from_algebraic_cusp(fragment.end_parameter().clone()),
-            fragment.is_reversed(),
-        ),
-        BezierSplitFragment2::SelectedFiber(fragment) => {
-            let geometry = match fragment.source() {
-                BezierSelectedFiberSource2::Rational(curve) => {
-                    RegionCarrierGeometry::Bezier(BezierSubcurve2::Rational(curve.clone()))
-                }
-                BezierSelectedFiberSource2::AnalyticParallel(parallel) => {
-                    RegionCarrierGeometry::AnalyticParallel(parallel.clone())
-                }
-            };
-            (
-                geometry,
-                fragment.range().start().clone(),
-                fragment.range().end().clone(),
-                fragment.is_reversed(),
-            )
-        }
+        _ => CurveSupport2::from_fragment(fragment),
     };
+    let (mut start, mut end) = if let BezierSplitFragment2::Materialized { .. } = fragment {
+        match &geometry {
+            CurveSupport2::Line(chord) => (
+                CurveParameter2::from_algebraic_chord(chord.start_parameter()),
+                CurveParameter2::from_algebraic_chord(chord.end_parameter()),
+            ),
+            _ => (Real::zero().into(), Real::one().into()),
+        }
+    } else {
+        let range = fragment.curve_region_parameter_range();
+        (range.start().clone(), range.end().clone())
+    };
+    let mut reversed = fragment.source_is_reversed();
+
     if matches!(
         fragment,
         BezierSplitFragment2::AlgebraicEndpointImages { .. }
     ) && let Ok(Classification::Decided(line)) =
         crate::bezier_region::retained_line_fragment_segment(fragment, policy)
     {
-        geometry = RegionCarrierGeometry::Bezier(BezierSubcurve2::Quadratic(
+        geometry = CurveSupport2::Bezier(BezierSubcurve2::Quadratic(
             QuadraticBezier2::from_line_segment(line),
         ));
         start = CurveParameter2::from(BezierParameter2::Exact(crate::Real::zero()));
@@ -12984,10 +12867,10 @@ fn split_carrier(
     {
         return split_selected_fiber_carrier(carrier, events, contact_points, policy);
     }
-    if let RegionCarrierGeometry::AlgebraicChord(chord) = &carrier.geometry {
+    if let CurveSupport2::Line(chord) = &carrier.geometry {
         return split_algebraic_chord_carrier(carrier, chord, events, policy);
     }
-    if let RegionCarrierGeometry::AlgebraicCuspSemicircle(fragment) = &carrier.geometry {
+    if let CurveSupport2::Circle(fragment) = &carrier.geometry {
         return split_algebraic_cusp_carrier(carrier, fragment, events, contact_points, policy);
     }
     // Most retained events need very little isolator separation. Preserve the
@@ -13028,8 +12911,8 @@ fn split_carrier_with_refinement(
     // Their sorted event windows are therefore already within the finite
     // carrier. Only generic whole-curve materialization needs a second range
     // clip below.
-    if let RegionCarrierGeometry::AnalyticParallel(parallel) = &carrier.geometry {
-        return split_analytic_carrier(carrier, parallel, events, max_refinement_steps, policy);
+    if matches!(carrier.geometry, CurveSupport2::Parallel(_)) {
+        return split_analytic_carrier(carrier, events, max_refinement_steps, policy);
     }
     let parameters = events
         .iter()
@@ -13173,17 +13056,24 @@ fn split_selected_fiber_carrier(
     policy: &CurveContext,
 ) -> Result<Vec<SplitCarrierFragment>, CurveError> {
     let source = match &carrier.geometry {
-        RegionCarrierGeometry::Bezier(curve) => {
+        CurveSupport2::Bezier(curve) => {
             BezierSelectedFiberSource2::Rational(RationalBezier2::try_from_subcurve(curve)?)
         }
-        RegionCarrierGeometry::AnalyticParallel(parallel) => {
+        CurveSupport2::Parallel(parallel) => {
             BezierSelectedFiberSource2::AnalyticParallel(parallel.clone())
         }
-        RegionCarrierGeometry::AlgebraicChord(_)
-        | RegionCarrierGeometry::AlgebraicCuspSemicircle(_) => {
+        CurveSupport2::Line(_) | CurveSupport2::Circle(_) => {
             return Err(CurveError::Topology(
                 "a selected-fiber boundary reached an incompatible carrier".into(),
             ));
+        }
+    };
+    let support = match &source {
+        BezierSelectedFiberSource2::Rational(curve) => {
+            CurveSupport2::Bezier(BezierSubcurve2::Rational(curve.clone()))
+        }
+        BezierSelectedFiberSource2::AnalyticParallel(parallel) => {
+            CurveSupport2::Parallel(parallel.clone())
         }
     };
     let mut boundaries = events.to_vec();
@@ -13233,15 +13123,15 @@ fn split_selected_fiber_carrier(
         let end_point =
             selected_fiber_event_point(&pair[1], carrier, &source, contact_points, policy)?;
         output.push(SplitCarrierFragment {
-            fragment: BezierSplitFragment2::SelectedFiber(BezierSelectedFiberFragment2::new(
-                source.clone(),
+            fragment: support.restrict_certified(
                 CurveParameterRange2::new_validated(
                     pair[0].parameter.clone(),
                     pair[1].parameter.clone(),
                 ),
-                start_point,
-                end_point,
-            )),
+                Some([start_point, end_point]),
+                false,
+                policy,
+            )?,
             start_topology_vertex: pair[0].topology_vertex,
             end_topology_vertex: pair[1].topology_vertex,
         });
@@ -13357,11 +13247,16 @@ fn split_algebraic_chord_carrier(
                 "non-chord cut reached an algebraic chord carrier".into(),
             ));
         };
-        let retained = crate::BezierAlgebraicChord2::from_certified_ordered_parameter_range(
-            chord, start, end, policy,
-        )?;
         output.push(SplitCarrierFragment {
-            fragment: BezierSplitFragment2::AlgebraicChord(retained),
+            fragment: carrier.geometry.restrict_certified(
+                CurveParameterRange2::new_validated(
+                    CurveParameter2::from_algebraic_chord(start.clone()),
+                    CurveParameter2::from_algebraic_chord(end.clone()),
+                ),
+                None,
+                false,
+                policy,
+            )?,
             start_topology_vertex: events[pair[0]].topology_vertex,
             end_topology_vertex: events[pair[1]].topology_vertex,
         });
@@ -13624,16 +13519,16 @@ fn split_algebraic_cusp_carrier(
                 "Bezier cut reached an algebraic cusp carrier".into(),
             ));
         };
-        let retained = crate::BezierAlgebraicCuspSemicircleFragment2::from_certified_range(
-            fragment.semicircle().clone(),
-            start.clone(),
-            end.clone(),
-            false,
-            policy,
-        )
-        .inherit_certified_tangent_endpoints(fragment);
         output.push(SplitCarrierFragment {
-            fragment: BezierSplitFragment2::AlgebraicCuspSemicircle(retained),
+            fragment: carrier.geometry.restrict_certified(
+                CurveParameterRange2::new_validated(
+                    CurveParameter2::from_algebraic_cusp(start.clone()),
+                    CurveParameter2::from_algebraic_cusp(end.clone()),
+                ),
+                None,
+                false,
+                policy,
+            )?,
             start_topology_vertex: pair[0].topology_vertex,
             end_topology_vertex: pair[1].topology_vertex,
         });
@@ -13653,7 +13548,6 @@ fn split_algebraic_cusp_carrier(
 
 fn split_analytic_carrier(
     carrier: &RegionCarrier,
-    parallel: &BezierParallel2,
     events: &[CarrierEvent],
     max_refinement_steps: usize,
     policy: &CurveContext,
@@ -13723,13 +13617,12 @@ fn split_analytic_carrier(
             }
         }
         output.push(SplitCarrierFragment {
-            fragment: BezierSplitFragment2::AnalyticParallel(
-                crate::BezierParallelFragment2::from_certified_range(
-                    parallel.clone(),
-                    BezierParameterRange2::new_validated(start, end),
-                    false,
-                ),
-            ),
+            fragment: carrier.geometry.restrict_certified(
+                CurveParameterRange2::new_validated(start.into(), end.into()),
+                None,
+                false,
+                policy,
+            )?,
             start_topology_vertex: pair[0].topology_vertex,
             end_topology_vertex: pair[1].topology_vertex,
         });
@@ -13773,7 +13666,7 @@ fn compact_retained_circular_fragment(
     let BezierSplitFragment2::AlgebraicEndpointImages { start, end, .. } = fragment else {
         return fragment.clone();
     };
-    let RegionCarrierGeometry::Bezier(carrier_curve) = &carrier.geometry else {
+    let CurveSupport2::Bezier(carrier_curve) = &carrier.geometry else {
         return fragment.clone();
     };
     let Some((implicit_conic, circular_conic)) = retained_circular_support(carrier_curve) else {
@@ -13823,26 +13716,6 @@ fn retained_circular_quadratic(
     (curve.retained_implicit_quadratic_conic().is_some()
         && curve.retained_circular_conic().is_some())
     .then_some(curve)
-}
-
-fn retained_circular_support(
-    curve: &BezierSubcurve2,
-) -> Option<(
-    &Arc<[crate::Real; 6]>,
-    &Arc<crate::rational_bezier::RationalQuadraticCircle2>,
-)> {
-    let (implicit, circular) = match curve {
-        BezierSubcurve2::RationalQuadratic(curve) => (
-            curve.retained_implicit_quadratic_conic(),
-            curve.retained_circular_conic(),
-        ),
-        BezierSubcurve2::Rational(curve) => (
-            curve.retained_implicit_quadratic_conic(),
-            curve.retained_circular_conic(),
-        ),
-        BezierSubcurve2::Quadratic(_) | BezierSubcurve2::Cubic(_) => return None,
-    };
-    Some((implicit?, circular?))
 }
 
 fn adjacent_axis_algebraic_chord_circular_curve_is_endpoint_only(
@@ -15188,14 +15061,10 @@ fn contacts_decided_distinct_from_carriers(
             let current_chord_slot = 1 - current_shared_slot;
             let existing_chord_index = existing.carrier_indices[existing_chord_slot];
             let current_chord_index = carrier_indices[current_chord_slot];
-            let (
-                RegionCarrierGeometry::AlgebraicChord(existing_chord),
-                RegionCarrierGeometry::AlgebraicChord(current_chord),
-            ) = (
+            let (CurveSupport2::Line(existing_chord), CurveSupport2::Line(current_chord)) = (
                 &carriers[existing_chord_index].geometry,
                 &carriers[current_chord_index].geometry,
-            )
-            else {
+            ) else {
                 continue;
             };
             let (Some(existing_parameter), Some(current_parameter)) = (
@@ -15284,8 +15153,8 @@ fn contacts_decided_distinct_from_carriers(
     for (existing_slot, existing_carrier) in existing.carrier_indices.iter().copied().enumerate() {
         for (current_slot, current_carrier) in carrier_indices.iter().copied().enumerate() {
             let (
-                RegionCarrierGeometry::AnalyticParallel(existing_parallel),
-                RegionCarrierGeometry::AnalyticParallel(current_parallel),
+                CurveSupport2::Parallel(existing_parallel),
+                CurveSupport2::Parallel(current_parallel),
             ) = (
                 &carriers[existing_carrier].geometry,
                 &carriers[current_carrier].geometry,
@@ -15386,7 +15255,7 @@ fn contact_decided_distinct_from_carrier_endpoint_vertex(
         .enumerate()
         .any(|(slot, carrier_index)| {
             let carrier = &carriers[carrier_index];
-            let RegionCarrierGeometry::AlgebraicChord(chord) = &carrier.geometry else {
+            let CurveSupport2::Line(chord) = &carrier.geometry else {
                 return false;
             };
             let Some(parameter) = existing.parameters[slot].as_algebraic_chord() else {
@@ -15411,8 +15280,8 @@ fn contacts_decided_same_from_shared_parallel(
     for (existing_slot, existing_carrier) in existing.carrier_indices.iter().copied().enumerate() {
         for (current_slot, current_carrier) in carrier_indices.iter().copied().enumerate() {
             let (
-                RegionCarrierGeometry::AnalyticParallel(existing_parallel),
-                RegionCarrierGeometry::AnalyticParallel(current_parallel),
+                CurveSupport2::Parallel(existing_parallel),
+                CurveSupport2::Parallel(current_parallel),
             ) = (
                 &carriers[existing_carrier].geometry,
                 &carriers[current_carrier].geometry,
@@ -15426,8 +15295,8 @@ fn contacts_decided_same_from_shared_parallel(
                 let existing_chord_index = existing.carrier_indices[existing_chord_slot];
                 let current_chord_index = carrier_indices[current_chord_slot];
                 if let (
-                    RegionCarrierGeometry::AlgebraicChord(existing_chord),
-                    RegionCarrierGeometry::AlgebraicChord(current_chord),
+                    CurveSupport2::Line(existing_chord),
+                    CurveSupport2::Line(current_chord),
                     Some(existing_parallel_parameter),
                     Some(current_parallel_parameter),
                     Some(existing_chord_parameter),
@@ -15625,8 +15494,7 @@ fn contacts_decided_same_from_circular_carriers(
 ) -> Classification<bool> {
     let mut uncertainty = None;
     for (existing_slot, existing_carrier) in existing.carrier_indices.iter().copied().enumerate() {
-        let RegionCarrierGeometry::Bezier(existing_subcurve) = &carriers[existing_carrier].geometry
-        else {
+        let CurveSupport2::Bezier(existing_subcurve) = &carriers[existing_carrier].geometry else {
             continue;
         };
         let Ok(existing_curve) = RationalBezier2::try_from_subcurve(existing_subcurve) else {
@@ -15641,8 +15509,7 @@ fn contacts_decided_same_from_circular_carriers(
             continue;
         };
         for (current_slot, current_carrier) in carrier_indices.iter().copied().enumerate() {
-            let RegionCarrierGeometry::Bezier(current_subcurve) =
-                &carriers[current_carrier].geometry
+            let CurveSupport2::Bezier(current_subcurve) = &carriers[current_carrier].geometry
             else {
                 continue;
             };
@@ -15741,7 +15608,7 @@ fn exact_point_decided_outside_carrier(
     carrier: &RegionCarrier,
     policy: &CurveContext,
 ) -> bool {
-    let RegionCarrierGeometry::Bezier(curve) = &carrier.geometry else {
+    let CurveSupport2::Bezier(curve) = &carrier.geometry else {
         return false;
     };
     let Ok(Classification::Decided(segment)) =
@@ -15768,7 +15635,7 @@ fn exact_point_matches_existing_contact_parameter(
 ) -> Classification<bool> {
     let mut uncertainty = None;
     for (slot, carrier_index) in existing.carrier_indices.iter().copied().enumerate() {
-        let RegionCarrierGeometry::Bezier(curve) = &carriers[carrier_index].geometry else {
+        let CurveSupport2::Bezier(curve) = &carriers[carrier_index].geometry else {
             continue;
         };
         let Ok(curve) = RationalBezier2::try_from_subcurve(curve) else {
@@ -16105,7 +15972,7 @@ fn parameter_location_in_carrier(
     if parameter == &carrier.end {
         return Ok(CarrierParameterLocation::Endpoint(BezierEndpoint::End));
     }
-    if let (Some(parameter), RegionCarrierGeometry::AlgebraicChord(chord)) =
+    if let (Some(parameter), CurveSupport2::Line(chord)) =
         (parameter.as_algebraic_chord(), &carrier.geometry)
         && parameter.is_certified_strict_interior_of(chord)
     {
@@ -16117,7 +15984,7 @@ fn parameter_location_in_carrier(
         );
         return Ok(CarrierParameterLocation::Interior);
     }
-    if let (Some(parameter), RegionCarrierGeometry::AlgebraicCuspSemicircle(fragment)) =
+    if let (Some(parameter), CurveSupport2::Circle(fragment)) =
         (parameter.as_algebraic_cusp(), &carrier.geometry)
         && let Some(Classification::Decided(true)) = fragment
             .translated_pair_parameter_is_strict_interior(parameter, policy)
@@ -16134,7 +16001,7 @@ fn parameter_location_in_carrier(
     // side proves membership, its opposite side proves exclusion, and only a
     // chord contact needs the endpoint parameter comparison already provided
     // by `certified_incident_point_evidence_location`.
-    if let (Some(parameter), RegionCarrierGeometry::AlgebraicCuspSemicircle(fragment)) =
+    if let (Some(parameter), CurveSupport2::Circle(fragment)) =
         (parameter.as_algebraic_cusp(), &carrier.geometry)
     {
         let point = parameter
@@ -16324,7 +16191,7 @@ fn clip_projectively_aligned_parameter_overlap(
 ) -> ExactCurveResult<CarrierOverlapClip> {
     let invalid = |family, cause| ExactCurveError::invalid(CurveOperation2::Boolean, family, cause);
     let reversed = orientation == RationalBezierOverlapOrientation2::Reversed;
-    let (RegionCarrierGeometry::Bezier(first_curve), RegionCarrierGeometry::Bezier(second_curve)) =
+    let (CurveSupport2::Bezier(first_curve), CurveSupport2::Bezier(second_curve)) =
         (&first_carrier.geometry, &second_carrier.geometry)
     else {
         return clip_aligned_parameter_overlap(
@@ -16465,7 +16332,7 @@ pub(crate) fn clip_aligned_parameter_overlap_for_test(
         loop_index: 0,
         fragment_index: 0,
         family: CurveFamily2::RationalBezier,
-        geometry: RegionCarrierGeometry::Bezier(BezierSubcurve2::Quadratic(
+        geometry: CurveSupport2::Bezier(BezierSubcurve2::Quadratic(
             QuadraticBezier2::from_line_segment(
                 LineSeg2::try_new(
                     crate::Point2::from_values(0, 0),
@@ -16610,190 +16477,6 @@ fn fragment_range(
     }
 }
 
-const fn subcurve_family(curve: &BezierSubcurve2) -> CurveFamily2 {
-    match curve {
-        BezierSubcurve2::Quadratic(_) => CurveFamily2::QuadraticBezier,
-        BezierSubcurve2::Cubic(_) => CurveFamily2::CubicBezier,
-        BezierSubcurve2::RationalQuadratic(_) => CurveFamily2::RationalQuadraticBezier,
-        BezierSubcurve2::Rational(_) => CurveFamily2::RationalBezier,
-    }
-}
-
-impl RegionCarrierGeometry {
-    const fn family(&self) -> CurveFamily2 {
-        match self {
-            Self::Bezier(curve) => subcurve_family(curve),
-            Self::AlgebraicChord(_) => CurveFamily2::Line,
-            Self::AnalyticParallel(_) | Self::AlgebraicCuspSemicircle(_) => {
-                CurveFamily2::RationalBezier
-            }
-        }
-    }
-
-    fn bezier(&self) -> &BezierSubcurve2 {
-        match self {
-            Self::Bezier(curve) => curve,
-            Self::AnalyticParallel(_) => {
-                unreachable!("parallel/rational dispatch requires a Bezier carrier")
-            }
-            Self::AlgebraicChord(_) | Self::AlgebraicCuspSemicircle(_) => {
-                unreachable!("cusp/rational dispatch requires a Bezier carrier")
-            }
-        }
-    }
-
-    fn parallel(&self) -> &BezierParallel2 {
-        match self {
-            Self::AnalyticParallel(parallel) => parallel,
-            Self::Bezier(_) => {
-                unreachable!("analytic pair dispatch requires a parallel carrier")
-            }
-            Self::AlgebraicChord(_) | Self::AlgebraicCuspSemicircle(_) => {
-                unreachable!("cusp/parallel dispatch requires a parallel carrier")
-            }
-        }
-    }
-
-    fn algebraic_cusp(&self) -> &crate::BezierAlgebraicCuspSemicircleFragment2 {
-        match self {
-            Self::AlgebraicCuspSemicircle(fragment) => fragment,
-            Self::Bezier(_) | Self::AnalyticParallel(_) | Self::AlgebraicChord(_) => {
-                unreachable!("algebraic-cusp dispatch requires a cusp carrier")
-            }
-        }
-    }
-
-    fn point_at(
-        &self,
-        parameter: &crate::Real,
-        policy: &CurveContext,
-    ) -> CurveResult<Classification<crate::Point2>> {
-        match self {
-            Self::Bezier(curve) => Ok(curve.point_at(parameter, policy)),
-            Self::AnalyticParallel(parallel) => parallel.point_at(parameter, policy),
-            Self::AlgebraicChord(chord) => match chord.exact_line() {
-                Some(line) => Ok(Classification::Decided(line.point_at(parameter.clone()))),
-                None => Ok(Classification::Uncertain(UncertaintyReason::Unsupported)),
-            },
-            Self::AlgebraicCuspSemicircle(fragment) => {
-                Ok(match fragment.semicircle().point_at(parameter, policy)? {
-                    Classification::Decided(point) => point.exact_point(policy).map_or(
-                        Classification::Uncertain(UncertaintyReason::Unsupported),
-                        Classification::Decided,
-                    ),
-                    Classification::Uncertain(reason) => Classification::Uncertain(reason),
-                })
-            }
-        }
-    }
-
-    fn derivative_at(
-        &self,
-        parameter: &crate::Real,
-        policy: &CurveContext,
-    ) -> CurveResult<Classification<CurveDerivative2>> {
-        match self {
-            Self::Bezier(curve) => RationalBezier2::try_from_subcurve(curve)
-                .map(|curve| curve.derivative_at_classified(parameter, policy)),
-            Self::AnalyticParallel(parallel) => parallel.derivative_at(parameter, policy),
-            Self::AlgebraicChord(chord) => match chord.exact_line() {
-                Some(line) => Ok(Classification::Decided(CurveDerivative2::new(
-                    line.end().x() - line.start().x(),
-                    line.end().y() - line.start().y(),
-                ))),
-                None => Ok(Classification::Uncertain(UncertaintyReason::Unsupported)),
-            },
-            Self::AlgebraicCuspSemicircle(_) => {
-                Ok(Classification::Uncertain(UncertaintyReason::Unsupported))
-            }
-        }
-    }
-
-    fn certified_outer_bounds(&self, policy: &CurveContext) -> Classification<Aabb2> {
-        match self {
-            Self::Bezier(curve) => subcurve_certified_outer_bounds(curve, policy),
-            Self::AnalyticParallel(parallel) => match parallel.conservative_bounds(policy) {
-                Ok(bounds) => bounds,
-                Err(_) => Classification::Uncertain(UncertaintyReason::Unsupported),
-            },
-            Self::AlgebraicChord(chord) => match chord.conservative_bounds(policy) {
-                Ok(bounds) => bounds,
-                Err(_) => Classification::Uncertain(UncertaintyReason::Unsupported),
-            },
-            Self::AlgebraicCuspSemicircle(fragment) => match fragment.conservative_bounds() {
-                Ok(bounds) => bounds,
-                Err(_) => Classification::Uncertain(UncertaintyReason::Unsupported),
-            },
-        }
-    }
-
-    fn certified_outer_bounds_refined(
-        &self,
-        refinement_steps: usize,
-        policy: &CurveContext,
-    ) -> Classification<Aabb2> {
-        match self {
-            Self::Bezier(curve) => subcurve_certified_outer_bounds(curve, policy),
-            Self::AnalyticParallel(parallel) => match parallel.conservative_bounds(policy) {
-                Ok(bounds) => bounds,
-                Err(_) => Classification::Uncertain(UncertaintyReason::Unsupported),
-            },
-            Self::AlgebraicChord(chord) => {
-                match chord.conservative_bounds_refined(refinement_steps, policy) {
-                    Ok(bounds) => bounds,
-                    Err(_) => Classification::Uncertain(UncertaintyReason::Unsupported),
-                }
-            }
-            Self::AlgebraicCuspSemicircle(fragment) => match fragment
-                .semicircle()
-                .conservative_bounds_refined(refinement_steps, policy)
-            {
-                Ok(bounds) => bounds,
-                Err(_) => Classification::Uncertain(UncertaintyReason::Unsupported),
-            },
-        }
-    }
-
-    fn has_certified_injective_axis(&self, policy: &CurveContext) -> bool {
-        match self {
-            Self::Bezier(curve) => curve.has_certified_injective_axis(policy),
-            Self::AnalyticParallel(parallel) => {
-                parallel.regular_fragment_has_certified_injective_axis(policy)
-                    || matches!(
-                        parallel.exact_rational_parallel_component(policy),
-                        Ok(Classification::Decided(Some(curve)))
-                            if curve.has_certified_injective_axis(policy)
-                    )
-            }
-            Self::AlgebraicChord(_) => false,
-            Self::AlgebraicCuspSemicircle(_) => false,
-        }
-    }
-
-    fn has_certified_injective_image(&self, policy: &CurveContext) -> bool {
-        match self {
-            Self::Bezier(curve) => curve.has_certified_injective_image(policy),
-            Self::AnalyticParallel(_) => self.has_certified_injective_axis(policy),
-            Self::AlgebraicChord(_) => true,
-            Self::AlgebraicCuspSemicircle(_) => true,
-        }
-    }
-
-    fn exact_rational_component(
-        &self,
-        policy: &CurveContext,
-    ) -> CurveResult<Classification<Option<RationalBezier2>>> {
-        match self {
-            Self::Bezier(curve) => RationalBezier2::try_from_subcurve(curve)
-                .map(Some)
-                .map(Classification::Decided),
-            Self::AnalyticParallel(parallel) => parallel.exact_rational_parallel_component(policy),
-            Self::AlgebraicChord(_) => Ok(Classification::Decided(None)),
-            Self::AlgebraicCuspSemicircle(_) => Ok(Classification::Decided(None)),
-        }
-    }
-}
-
 fn empty_operand_result(
     first: &CurveRegion2,
     second: &CurveRegion2,
@@ -16926,7 +16609,7 @@ mod certified_successor_tests {
                         second_range: CurveParameterRange2,
                         swapped: bool| {
                 let carrier = |operand, range: &CurveParameterRange2| {
-                    let geometry = RegionCarrierGeometry::Bezier(line.clone());
+                    let geometry = CurveSupport2::Bezier(line.clone());
                     RegionCarrier {
                         operand,
                         loop_index: 0,
@@ -17072,7 +16755,7 @@ mod certified_successor_tests {
                     &first, &second, &overlap, &policy,
                 );
             let carrier = |operand, curve: RationalBezier2, range: &CurveParameterRange2| {
-                let geometry = RegionCarrierGeometry::Bezier(BezierSubcurve2::Rational(curve));
+                let geometry = CurveSupport2::Bezier(BezierSubcurve2::Rational(curve));
                 RegionCarrier {
                     operand,
                     loop_index: 0,
@@ -17180,7 +16863,7 @@ mod certified_successor_tests {
                 unresolved: None,
             };
             let carrier = |operand, curve: RationalBezier2, range: &CurveParameterRange2| {
-                let geometry = RegionCarrierGeometry::Bezier(BezierSubcurve2::Rational(curve));
+                let geometry = CurveSupport2::Bezier(BezierSubcurve2::Rational(curve));
                 RegionCarrier {
                     operand,
                     loop_index: 0,
@@ -17313,7 +16996,7 @@ mod certified_successor_tests {
             family: CurveFamily2::Line,
             start: CurveParameter2::from_algebraic_chord(chord.start_parameter()),
             end: CurveParameter2::from_algebraic_chord(chord.end_parameter()),
-            geometry: RegionCarrierGeometry::AlgebraicChord(chord),
+            geometry: CurveSupport2::Line(chord),
             reversed: false,
             filled_side_is_left: true,
             selected_fiber_endpoint_points: None,
@@ -17472,8 +17155,7 @@ mod certified_successor_tests {
                                 CurveRegionBooleanOperand2::First,
                                 &policy,
                             );
-                            sibling.geometry =
-                                RegionCarrierGeometry::AlgebraicCuspSemicircle(fragment.clone());
+                            sibling.geometry = CurveSupport2::Circle(fragment.clone());
                             sibling.reversed = reversed;
                             let mut chord_carrier = algebraic_chord_carrier(
                                 CurveRegionBooleanOperand2::First,
@@ -17500,9 +17182,8 @@ mod certified_successor_tests {
                                 &policy,
                             );
                             if target_reversed {
-                                target.geometry = RegionCarrierGeometry::AlgebraicCuspSemicircle(
-                                    target.geometry.algebraic_cusp().reversed(),
-                                );
+                                target.geometry =
+                                    CurveSupport2::Circle(target.geometry.circle().reversed());
                                 target.reversed = true;
                             }
                             let empty = CurveRegion2::empty();
@@ -17843,7 +17524,7 @@ mod certified_successor_tests {
             assert_eq!(
                 context.data.carriers[0]
                     .geometry
-                    .algebraic_cusp()
+                    .circle()
                     .contains_point_evidence(point, &policy)
                     .unwrap(),
                 Classification::Decided(true),
@@ -18098,7 +17779,7 @@ mod certified_successor_tests {
             )
             .expect("valid retained chord"),
         );
-        let geometry = RegionCarrierGeometry::AlgebraicChord(chord.clone());
+        let geometry = CurveSupport2::Line(chord.clone());
         let carrier = RegionCarrier {
             operand: CurveRegionBooleanOperand2::First,
             loop_index: 0,
@@ -18186,7 +17867,7 @@ mod certified_successor_tests {
                 .expect("valid unary exact-chord context");
             assert!(matches!(
                 context.data.carriers[0].geometry,
-                RegionCarrierGeometry::AlgebraicChord(_)
+                CurveSupport2::Line(_)
             ));
             let regularized = context.build_regularized_region();
             assert!(
@@ -18202,8 +17883,7 @@ mod certified_successor_tests {
             let region = selected_field_algebraic_chord_rectangle(&policy);
             let context = CurveRegionBooleanContext::try_new_unary(&region, &policy)
                 .expect("valid unary algebraic-chord context");
-            let RegionCarrierGeometry::AlgebraicChord(source) = &context.data.carriers[0].geometry
-            else {
+            let CurveSupport2::Line(source) = &context.data.carriers[0].geometry else {
                 panic!("the selected-field bottom edge must stay algebraic");
             };
             let cut = |x: Real| {
@@ -18415,10 +18095,10 @@ mod certified_successor_tests {
                 .find(|pair| {
                     matches!(
                         context.data.carriers[pair.first_carrier_index].geometry,
-                        RegionCarrierGeometry::AlgebraicChord(_)
+                        CurveSupport2::Line(_)
                     ) || matches!(
                         context.data.carriers[pair.second_carrier_index].geometry,
-                        RegionCarrierGeometry::AlgebraicChord(_)
+                        CurveSupport2::Line(_)
                     )
                 })
                 .expect("the source/chord pair must be scheduled");
@@ -18444,9 +18124,7 @@ mod certified_successor_tests {
                 .data
                 .carriers
                 .iter()
-                .position(|carrier| {
-                    matches!(carrier.geometry, RegionCarrierGeometry::AlgebraicChord(_))
-                })
+                .position(|carrier| matches!(carrier.geometry, CurveSupport2::Line(_)))
                 .expect("retained chord carrier");
             assert_eq!(topology.split_fragments[chord_index].len(), 2);
             assert_eq!(
@@ -18584,8 +18262,7 @@ mod certified_successor_tests {
                 .carriers
                 .iter()
                 .position(|carrier| {
-                    carrier.loop_index == 0
-                        && matches!(carrier.geometry, RegionCarrierGeometry::AlgebraicChord(_))
+                    carrier.loop_index == 0 && matches!(carrier.geometry, CurveSupport2::Line(_))
                 })
                 .expect("retained chord carrier");
             let source_index = context
@@ -18732,7 +18409,7 @@ mod certified_successor_tests {
                 .iter()
                 .position(|carrier| {
                     carrier.operand == CurveRegionBooleanOperand2::First
-                        && matches!(carrier.geometry, RegionCarrierGeometry::AlgebraicChord(_))
+                        && matches!(carrier.geometry, CurveSupport2::Line(_))
                 })
                 .expect("retained independent-field chord carrier");
             let source_index = context
@@ -18816,9 +18493,9 @@ mod certified_successor_tests {
                 .expect("valid independent-field horizontal chord"),
             );
             let horizontal_source = rational_line(0, 1);
-            let chord_geometry = RegionCarrierGeometry::AlgebraicChord(chord.clone());
+            let chord_geometry = CurveSupport2::Line(chord.clone());
             let source_geometry =
-                RegionCarrierGeometry::Bezier(BezierSubcurve2::Rational(horizontal_source.clone()));
+                CurveSupport2::Bezier(BezierSubcurve2::Rational(horizontal_source.clone()));
             let source_low =
                 (Real::from(3_i8) / Real::from(5_i8)).expect("nonzero source-range denominator");
             let source_high =
@@ -19028,7 +18705,7 @@ mod certified_successor_tests {
                 family: CurveFamily2::Line,
                 start: CurveParameter2::from_algebraic_chord(chord.start_parameter()),
                 end: CurveParameter2::from_algebraic_chord(chord.end_parameter()),
-                geometry: RegionCarrierGeometry::AlgebraicChord(chord),
+                geometry: CurveSupport2::Line(chord),
                 reversed: false,
                 filled_side_is_left: true,
                 selected_fiber_endpoint_points: None,
@@ -19094,8 +18771,8 @@ mod certified_successor_tests {
             let empty_first = CurveRegion2::empty();
             let empty_second = CurveRegion2::empty();
             let evaluate = |line: LineSeg2| {
-                let chord_geometry = RegionCarrierGeometry::AlgebraicChord(chord.clone());
-                let curve_geometry = RegionCarrierGeometry::Bezier(BezierSubcurve2::Quadratic(
+                let chord_geometry = CurveSupport2::Line(chord.clone());
+                let curve_geometry = CurveSupport2::Bezier(BezierSubcurve2::Quadratic(
                     QuadraticBezier2::from_line_segment(line),
                 ));
                 let context = CurveRegionBooleanContext {
@@ -19250,9 +18927,7 @@ mod certified_successor_tests {
                 .data
                 .carriers
                 .iter()
-                .position(|carrier| {
-                    matches!(carrier.geometry, RegionCarrierGeometry::AnalyticParallel(_))
-                })
+                .position(|carrier| matches!(carrier.geometry, CurveSupport2::Parallel(_)))
                 .expect("the analytic carrier must be retained");
             let line_index = context
                 .data
@@ -19305,8 +18980,8 @@ mod certified_successor_tests {
             let evaluate = |chord: crate::BezierAlgebraicChord2,
                             parallel: BezierParallel2,
                             range: BezierParameterRange2| {
-                let chord_geometry = RegionCarrierGeometry::AlgebraicChord(chord.clone());
-                let parallel_geometry = RegionCarrierGeometry::AnalyticParallel(parallel);
+                let chord_geometry = CurveSupport2::Line(chord.clone());
+                let parallel_geometry = CurveSupport2::Parallel(parallel);
                 let context = CurveRegionBooleanContext {
                     data: CurveRegionBooleanContextData {
                         first: &empty_first,
@@ -20402,8 +20077,8 @@ mod certified_successor_tests {
                 cubic_point(-7, 9),
                 Point2::from_values(1, 0),
             ));
-            let chord_geometry = RegionCarrierGeometry::AlgebraicChord(chord.clone());
-            let source_geometry = RegionCarrierGeometry::Bezier(source);
+            let chord_geometry = CurveSupport2::Line(chord.clone());
+            let source_geometry = CurveSupport2::Bezier(source);
             let empty_first = CurveRegion2::empty();
             let empty_second = CurveRegion2::empty();
             let context = CurveRegionBooleanContext {
@@ -20637,7 +20312,7 @@ mod certified_successor_tests {
             loop_index: 0,
             fragment_index: 0,
             family: CurveFamily2::RationalBezier,
-            geometry: RegionCarrierGeometry::Bezier(BezierSubcurve2::Rational(rational_line(0, 1))),
+            geometry: CurveSupport2::Bezier(BezierSubcurve2::Rational(rational_line(0, 1))),
             start: carrier_parameter(BezierParameter2::Exact(Real::zero())),
             end: carrier_parameter(BezierParameter2::Exact(Real::one())),
             reversed: false,
@@ -20654,13 +20329,11 @@ mod certified_successor_tests {
             loop_index: 0,
             fragment_index: 0,
             family: CurveFamily2::QuadraticBezier,
-            geometry: RegionCarrierGeometry::Bezier(BezierSubcurve2::Quadratic(
-                QuadraticBezier2::new(
-                    Point2::from_values(0, 0),
-                    Point2::from_values(1, 0),
-                    Point2::from_values(0, 0),
-                ),
-            )),
+            geometry: CurveSupport2::Bezier(BezierSubcurve2::Quadratic(QuadraticBezier2::new(
+                Point2::from_values(0, 0),
+                Point2::from_values(1, 0),
+                Point2::from_values(0, 0),
+            ))),
             start: carrier_parameter(BezierParameter2::Exact(Real::zero())),
             end: carrier_parameter(BezierParameter2::Exact(Real::one())),
             reversed: false,
@@ -20714,7 +20387,7 @@ mod certified_successor_tests {
             )
             .expect("valid cusp fragment"),
         );
-        let geometry = RegionCarrierGeometry::AlgebraicCuspSemicircle(fragment.clone());
+        let geometry = CurveSupport2::Circle(fragment.clone());
         RegionCarrier {
             operand,
             loop_index: 0,
@@ -20773,7 +20446,7 @@ mod certified_successor_tests {
                 let context = CurveRegionBooleanContext::try_new_unary(&region, &policy).unwrap();
                 assert_eq!(context.data.carriers.len(), 2);
                 for carrier_index in 0..2 {
-                    let RegionCarrierGeometry::AlgebraicCuspSemicircle(fragment) =
+                    let CurveSupport2::Circle(fragment) =
                         &context.data.carriers[carrier_index].geometry
                     else {
                         panic!("the selected-field disk must retain both cusp carriers");
@@ -21770,7 +21443,7 @@ mod certified_successor_tests {
             let curves = carriers
                 .iter()
                 .map(|carrier| match &carrier.geometry {
-                    RegionCarrierGeometry::Bezier(curve) => Some(Curve2::from(curve.clone())),
+                    CurveSupport2::Bezier(curve) => Some(Curve2::from(curve.clone())),
                     _ => None,
                 })
                 .collect::<Vec<_>>();
