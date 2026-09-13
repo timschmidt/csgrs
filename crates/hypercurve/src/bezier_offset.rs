@@ -114665,7 +114665,7 @@ impl BezierParallel2 {
         other: &Self,
         policy: &CurveContext,
     ) -> CurveResult<Classification<BezierParallelPairIntersectionSet2>> {
-        match self.parallel_intersections_fast_path(other, policy)? {
+        match self.rational_parallel_pair_intersections(other, None, policy)? {
             Classification::Decided(Some(intersections)) => {
                 return Ok(Classification::Decided(intersections));
             }
@@ -114674,6 +114674,14 @@ impl BezierParallel2 {
                 return Ok(Classification::Uncertain(reason));
             }
         }
+        self.parallel_intersections_without_regular_frame(other, policy)
+    }
+
+    fn parallel_intersections_without_regular_frame(
+        &self,
+        other: &Self,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<BezierParallelPairIntersectionSet2>> {
         let Some(system) = (match parallel_pair_equation_system(self, other, true, policy)? {
             Classification::Decided(system) => system,
             Classification::Uncertain(reason) => {
@@ -114713,6 +114721,21 @@ impl BezierParallel2 {
         second_range: &BezierParameterRange2,
         policy: &CurveContext,
     ) -> CurveResult<Classification<BezierParallelPairIntersectionSet2>> {
+        // A rational image keeps its exact source chart even when a retained
+        // range supplies a branch-oriented tangent frame for the other operand.
+        match self.rational_parallel_pair_intersections(
+            other,
+            Some([first_range, second_range]),
+            policy,
+        )? {
+            Classification::Decided(Some(intersections)) => {
+                return Ok(Classification::Decided(intersections));
+            }
+            Classification::Decided(None) => {}
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        }
         let first_frame =
             match self.source_oriented_regularized_tangent_field(first_range, policy)? {
                 Classification::Decided(frame) => frame,
@@ -114728,7 +114751,7 @@ impl BezierParallel2 {
                 }
             };
         if first_frame.is_none() && second_frame.is_none() {
-            return self.parallel_intersections(other, policy);
+            return self.parallel_intersections_without_regular_frame(other, policy);
         }
         let branch_scale = |parallel: &BezierParallel2,
                             range: &BezierParameterRange2|
@@ -115138,20 +115161,26 @@ impl BezierParallel2 {
 
     /// Tries the exact-rational parallel-pair routes.
     ///
-    /// This is the cheap prefix of [`Self::parallel_intersections`]. Corner
-    /// editing uses it while a non-rational algebraic center cannot yet be
-    /// materialized as a public circular carrier; arrangements continue into
-    /// the complete general projection and Hypersolve replay when this returns
-    /// `None`.
-    pub(crate) fn parallel_intersections_fast_path(
+    /// Full-domain and retained-branch queries share this prefix. The rational
+    /// carrier keeps its source chart; the other operand retains its oriented
+    /// branch frame. The caller clips contacts and overlaps to the input ranges.
+    /// General projection and Hypersolve replay follow when neither operand has
+    /// a rational component.
+    fn rational_parallel_pair_intersections(
         &self,
         other: &Self,
+        ranges: Option<[&BezierParameterRange2; 2]>,
         policy: &CurveContext,
     ) -> CurveResult<Classification<Option<BezierParallelPairIntersectionSet2>>> {
         match other.exact_rational_parallel_component(policy)? {
             Classification::Decided(Some(other)) => {
-                return Ok(self
-                    .intersections(&other, policy)?
+                let intersections = match ranges {
+                    Some([first_range, _]) => {
+                        self.intersections_on_regular_range(&other, first_range, policy)
+                    }
+                    None => self.intersections(&other, policy),
+                }?;
+                return Ok(intersections
                     .map(|result| Some(parallel_pair_set_from_parallel_rational(result, false))));
             }
             Classification::Decided(None) => {}
@@ -115161,8 +115190,13 @@ impl BezierParallel2 {
         }
         match self.exact_rational_parallel_component(policy)? {
             Classification::Decided(Some(first)) => {
-                return Ok(other
-                    .intersections(&first, policy)?
+                let intersections = match ranges {
+                    Some([_, second_range]) => {
+                        other.intersections_on_regular_range(&first, second_range, policy)
+                    }
+                    None => other.intersections(&first, policy),
+                }?;
+                return Ok(intersections
                     .map(|result| Some(parallel_pair_set_from_parallel_rational(result, true))));
             }
             Classification::Decided(None) => {}
@@ -131064,6 +131098,43 @@ mod conversion_tests {
                 result.incomplete_candidates()
             );
             assert!(!result.contacts().is_empty());
+
+            // The same rational circle can arrive as a zero-distance parallel
+            // after a retained cut. It must keep the exact rational route,
+            // while the nonuniform source keeps its one-sided cusp frame.
+            let rational_parallel = BezierParallel2::from_source(
+                BezierParallelSource2::Rational(curve.clone()),
+                Real::zero(),
+            );
+            let unit = BezierParameterRange2::from_exact(Real::zero(), Real::one());
+            for swapped in [false, true] {
+                let pair = if swapped {
+                    rational_parallel
+                        .parallel_intersections_on_regular_ranges(&parallel, &unit, &range, &policy)
+                } else {
+                    parallel.parallel_intersections_on_regular_ranges(
+                        &rational_parallel,
+                        &range,
+                        &unit,
+                        &policy,
+                    )
+                }
+                .unwrap();
+                let Classification::Decided(pair) = pair else {
+                    panic!("zero-distance rational authority must retain the cusp branch")
+                };
+                assert!(pair.is_complete());
+                assert_eq!(pair.contacts().len(), result.contacts().len());
+                assert!(pair.contacts().iter().any(|contact| {
+                    let (source, circle) = if swapped {
+                        (contact.second_parameter(), contact.first_parameter())
+                    } else {
+                        (contact.first_parameter(), contact.second_parameter())
+                    };
+                    source.as_exact() == Some(&two_thirds)
+                        && circle.as_exact() == Some(&Real::one())
+                }));
+            }
         }
     }
 
