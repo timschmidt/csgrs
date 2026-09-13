@@ -3966,7 +3966,13 @@ impl<'a> ExactCornerBezier2<'a> {
         }
     }
 
-    fn public_parameter(self, parameter: &Real) -> Real {
+    fn curve_parameter(
+        self,
+        parameter: &CurveParameter2,
+        operation: CurveOperation2,
+        family: CurveFamily2,
+        policy: &CurveContext,
+    ) -> ExactCurveResult<CurveParameter2> {
         let (start, end) = match self {
             Self::Direct(source) => {
                 let domain = source.parameter_domain();
@@ -3976,7 +3982,22 @@ impl<'a> ExactCornerBezier2<'a> {
             }
             Self::NativeSpan(fragment) => fragment.parameter_range(),
         };
-        start + (end - start) * parameter
+        let scale = end - start;
+        if let Some(parameter) = parameter.scalar() {
+            return Ok((start + scale * parameter).into());
+        }
+        // Selected cuts name the same authored chart as stored scalar cuts.
+        // Keep their local field while transporting the span's affine map;
+        // a spline's knot interval is not generally the unit interval.
+        match parameter
+            .affine_image_unbounded(&scale, start, policy)
+            .map_err(|cause| ExactCurveError::invalid(operation, family, cause))?
+        {
+            Classification::Decided(parameter) => Ok(parameter),
+            Classification::Uncertain(reason) => {
+                Err(ExactCurveError::blocked(operation, family, reason))
+            }
+        }
     }
 }
 
@@ -9597,12 +9618,12 @@ fn fillet_cut_from_center(
                     family,
                     policy,
                 )?;
-                let parameter = match parameter.as_bezier_parameter() {
-                    Some(BezierParameter2::Exact(parameter)) => {
-                        exact_corner_parameter(source.public_parameter(parameter))
-                    }
-                    Some(BezierParameter2::Algebraic(_)) | None => Some(parameter),
-                };
+                let parameter = Some(source.curve_parameter(
+                    &parameter,
+                    CurveOperation2::Fillet,
+                    family,
+                    policy,
+                )?);
                 Ok(Some(CornerCut2 {
                     point,
                     parameter,
@@ -11329,11 +11350,12 @@ fn bezier_chamfer_cuts(
     if setback_sign == RealSign::Zero {
         return Ok(CornerCuts2 {
             first: Some(CornerCut2 {
-                parameter: exact_corner_parameter(if previous {
-                    source.public_parameter(&Real::one())
-                } else {
-                    source.public_parameter(&Real::zero())
-                }),
+                parameter: Some(source.curve_parameter(
+                    &if previous { Real::one() } else { Real::zero() }.into(),
+                    operation,
+                    family,
+                    policy,
+                )?),
                 point: corner.clone().into(),
                 placement: CornerPlacement2::Corner,
             }),
@@ -11390,12 +11412,8 @@ fn bezier_chamfer_cuts(
         let point = bezier_parallel_source_point_evidence(
             &parallel, &parameter, operation, family, policy,
         )?;
-        let parameter = match parameter {
-            BezierParameter2::Exact(parameter) => {
-                exact_corner_parameter(source.public_parameter(&parameter))
-            }
-            parameter @ BezierParameter2::Algebraic(_) => Some(CurveParameter2::from(parameter)),
-        };
+        let parameter =
+            Some(source.curve_parameter(&parameter.into(), operation, family, policy)?);
         cuts.push(CornerCut2 {
             parameter,
             point,
@@ -12342,6 +12360,119 @@ fn validate_subcurve_range(
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    fn corner_splines_in_shifted_knot_domain(policy: &CurveContext) -> [Curve2; 2] {
+        let controls = vec![
+            Point2::from_values(0, 0),
+            Point2::from_values(0, 1),
+            Point2::from_values(1, 2),
+        ];
+        let knots = vec![3, 3, 3, 7, 7, 7]
+            .into_iter()
+            .map(Real::from)
+            .collect::<Vec<_>>();
+        [
+            Curve2::try_polynomial_bspline(2, controls.clone(), knots.clone(), policy)
+                .unwrap()
+                .value,
+            Curve2::try_nurbs(2, controls, vec![Real::one(); 3], knots, policy)
+                .unwrap()
+                .value,
+        ]
+    }
+
+    fn assert_spline_cut_replays_in_authored_chart(
+        curve: &Curve2,
+        cut: &CornerCut2,
+        policy: &CurveContext,
+    ) {
+        let parameter = cut
+            .parameter
+            .as_ref()
+            .expect("a spline cut retains its parameter");
+        assert!(
+            parameter.scalar().is_none(),
+            "the fixture must exercise selected transport"
+        );
+        let point = curve
+            .point_at(parameter, policy)
+            .expect("selected cut lies in the authored knot domain");
+        assert_eq!(point.certainty, crate::CurveCertainty::Certified);
+        let equal = point.value.coincides_with(&cut.point, policy);
+        assert_eq!(equal.certainty, crate::CurveCertainty::Certified);
+        assert_eq!(equal.value, Classification::Decided(true));
+    }
+
+    #[test]
+    fn selected_spline_chamfer_cuts_reenter_the_authored_parameter_domain() {
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            for curve in corner_splines_in_shifted_knot_domain(&policy) {
+                for previous in [false, true] {
+                    let carrier =
+                        exact_corner_carrier(&curve, previous, CurveOperation2::Chamfer, &policy)
+                            .unwrap()
+                            .unwrap();
+                    let cuts = corner_chamfer_cuts(
+                        carrier,
+                        &Real::one(),
+                        RealSign::Positive,
+                        previous,
+                        CurveCornerMode2::TrimOnly,
+                        false,
+                        CurveOperation2::Chamfer,
+                        curve.family(),
+                        &policy,
+                    )
+                    .unwrap();
+                    assert!(!cuts.is_empty());
+                    for cut in cuts.iter() {
+                        assert_spline_cut_replays_in_authored_chart(&curve, cut, &policy);
+                    }
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn selected_spline_fillet_cuts_reenter_the_authored_parameter_domain() {
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            for curve in corner_splines_in_shifted_knot_domain(&policy) {
+                let line = Curve2::from(
+                    LineSeg2::try_new(Point2::from_values(-4, 0), Point2::from_values(0, 0))
+                        .unwrap(),
+                );
+                let solutions = solve_exact_fillet_corner(
+                    exact_corner_carrier(&line, true, CurveOperation2::Fillet, &policy)
+                        .unwrap()
+                        .unwrap(),
+                    exact_corner_carrier(&curve, false, CurveOperation2::Fillet, &policy)
+                        .unwrap()
+                        .unwrap(),
+                    &Real::one(),
+                    RealSign::Positive,
+                    CurveCornerMode2::TrimOnly,
+                    false,
+                    line.family(),
+                    curve.family(),
+                    &policy,
+                )
+                .unwrap();
+                let cuts = match solutions {
+                    CurveCornerSolutions2::Unique(solution) => vec![solution.next],
+                    CurveCornerSolutions2::Multiple(solutions) => solutions
+                        .into_iter()
+                        .map(|solution| solution.next)
+                        .collect(),
+                    CurveCornerSolutions2::NoSolution(reason) => {
+                        panic!("the spline corner has a fillet: {reason:?}")
+                    }
+                };
+                for cut in &cuts {
+                    assert_spline_cut_replays_in_authored_chart(&curve, cut, &policy);
+                }
+            }
+        }
+    }
 
     #[test]
     fn retained_endpoints_share_projections_without_retaining_the_curve_owner() {
