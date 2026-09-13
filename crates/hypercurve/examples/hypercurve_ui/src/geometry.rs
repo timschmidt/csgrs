@@ -406,9 +406,9 @@ impl CurvePrimitive {
                     end_weight: real_to_f64(curve.end_weight()),
                 })
             }
-            geometry => Err(format!(
-                "the demo cannot yet display a native {:?} boolean fragment",
-                geometry.family()
+            _ => Err(format!(
+                "the demo cannot yet edit a {:?} boolean fragment",
+                curve.family()
             )),
         }
     }

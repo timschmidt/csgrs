@@ -2,15 +2,15 @@ use egui::{CentralPanel, ScrollArea, SidePanel, Slider};
 use egui_plot::{Plot, PlotPoint, Text};
 use hypercurve::{
     CircularArc2, CubicBezier2, Curve2, CurveContext, CurveFamily2, CurveGeometry2,
-    CurveParameterSide2, CurvePath2, CurveRegion2, LineSeg2, Point2, QuadraticBezier2,
-    RationalBezier2, RationalQuadraticBezier2, Real, RealSign,
+    CurveParameterSide2, CurvePath2, CurveRegion2, FiniteProjectionOptions, LineSeg2, Point2,
+    QuadraticBezier2, RationalBezier2, RationalQuadraticBezier2, Real, RealSign,
 };
 
 use crate::geometry::{Polyline, Shape};
 use crate::plotting::draw_shape;
 use crate::theme::Theme;
 
-const DISPLAY_STEPS: usize = 48;
+const DISPLAY_CHORD_ERROR: f64 = 0.02;
 const FAMILY_COUNT: usize = 8;
 const HOLE_COUNT: usize = 4;
 const HOLE_SCALE: i32 = 3;
@@ -393,14 +393,17 @@ fn edit_all_corners(
         .iter()
         .enumerate()
         .map(|(curve_index, curve)| {
-            let domain = curve.parameter_domain();
+            let (domain_start, domain_end) = curve
+                .parameter_domain()
+                .exact_endpoints()
+                .ok_or_else(|| format!("curve {curve_index} needs scalar fixture parameters"))?;
             let start = corner_witnesses[curve_index].as_ref().map_or_else(
-                || domain.start().clone(),
+                || domain_start.clone(),
                 |witness| witness.next_parameter.clone(),
             );
             let next_vertex = (curve_index + 1) % curve_count;
             let end = corner_witnesses[next_vertex].as_ref().map_or_else(
-                || domain.end().clone(),
+                || domain_end.clone(),
                 |witness| witness.previous_parameter.clone(),
             );
             curve
@@ -421,8 +424,16 @@ fn edit_all_corners(
         } else {
             vertex_index - 1
         };
-        let start = trimmed[previous_index].end().clone();
-        let end = trimmed[vertex_index].start().clone();
+        let start = trimmed[previous_index]
+            .end()
+            .coordinates()
+            .cloned()
+            .ok_or_else(|| format!("vertex {vertex_index} needs scalar fixture coordinates"))?;
+        let end = trimmed[vertex_index]
+            .start()
+            .coordinates()
+            .cloned()
+            .ok_or_else(|| format!("vertex {vertex_index} needs scalar fixture coordinates"))?;
         let connector = match operation {
             CornerOperation::Fillet => {
                 CircularArc2::try_from_center(start, end, witness.center.clone(), witness.clockwise)
@@ -489,11 +500,14 @@ fn endpoint_tangent(curve: &Curve2, at_start: bool) -> Result<(Real, Real), Stri
         });
     }
 
-    let domain = curve.parameter_domain();
+    let (start, end) = curve
+        .parameter_domain()
+        .exact_endpoints()
+        .ok_or("fixture tangents need scalar parameters")?;
     let (parameter, side) = if at_start {
-        (domain.start(), CurveParameterSide2::Right)
+        (start, CurveParameterSide2::Right)
     } else {
-        (domain.end(), CurveParameterSide2::Left)
+        (end, CurveParameterSide2::Left)
     };
     let tangent = curve
         .derivative_at_side(parameter, side, &CurveContext::STRICT)
@@ -524,10 +538,14 @@ fn linear_image_corner_witness(
     };
     let previous = &source.curves()[previous_index];
     let next = &source.curves()[vertex_index];
-    let previous_length = chord_length(previous)?;
-    let next_length = chord_length(next)?;
-    let (previous_dx, previous_dy) = previous.end().delta_from(previous.start());
-    let (next_dx, next_dy) = next.end().delta_from(next.start());
+    let (previous_dx, previous_dy) = chord_vector(previous)?;
+    let (next_dx, next_dy) = chord_vector(next)?;
+    let previous_length = (&previous_dx * &previous_dx + &previous_dy * &previous_dy)
+        .sqrt()
+        .map_err(string_error)?;
+    let next_length = (&next_dx * &next_dx + &next_dy * &next_dy)
+        .sqrt()
+        .map_err(string_error)?;
     let previous_unit_x = (&previous_dx / &previous_length).map_err(string_error)?;
     let previous_unit_y = (&previous_dy / &previous_length).map_err(string_error)?;
     let next_unit_x = (&next_dx / &next_length).map_err(string_error)?;
@@ -548,16 +566,25 @@ fn linear_image_corner_witness(
     let previous_fraction = (&setback / &previous_length).map_err(string_error)?;
     let next_fraction = (&setback / &next_length).map_err(string_error)?;
 
-    let previous_domain = previous.parameter_domain();
-    let previous_span = previous_domain.end() - previous_domain.start();
-    let previous_parameter = previous_domain.end() - &(&previous_span * &previous_fraction);
-    let next_domain = next.parameter_domain();
-    let next_span = next_domain.end() - next_domain.start();
-    let next_parameter = next_domain.start() + &(&next_span * &next_fraction);
+    let (previous_start, previous_end) = previous
+        .parameter_domain()
+        .exact_endpoints()
+        .ok_or("affine fixtures need scalar parameters")?;
+    let previous_span = previous_end - previous_start;
+    let previous_parameter = previous_end - &(&previous_span * &previous_fraction);
+    let (next_start, next_end) = next
+        .parameter_domain()
+        .exact_endpoints()
+        .ok_or("affine fixtures need scalar parameters")?;
+    let next_span = next_end - next_start;
+    let next_parameter = next_start + &(&next_span * &next_fraction);
 
     let previous_offset_x = &previous_dx * &previous_fraction;
     let previous_offset_y = &previous_dy * &previous_fraction;
     let vertex = next.start();
+    let vertex = vertex
+        .coordinates()
+        .ok_or("affine fixtures need scalar coordinates")?;
     let previous_tangent = Point2::new(
         vertex.x() - previous_offset_x,
         vertex.y() - previous_offset_y,
@@ -580,9 +607,16 @@ fn linear_image_corner_witness(
     })
 }
 
-fn chord_length(curve: &Curve2) -> Result<Real, String> {
-    let (dx, dy) = curve.end().delta_from(curve.start());
-    (&dx * &dx + &dy * &dy).sqrt().map_err(string_error)
+fn chord_vector(curve: &Curve2) -> Result<(Real, Real), String> {
+    let start = curve.start();
+    let end = curve.end();
+    let start = start
+        .coordinates()
+        .ok_or("affine fixtures need scalar coordinates")?;
+    let end = end
+        .coordinates()
+        .ok_or("affine fixtures need scalar coordinates")?;
+    Ok(end.delta_from(start))
 }
 
 fn curve_region_paths() -> Result<Vec<CurvePath2>, String> {
@@ -724,6 +758,9 @@ fn affine_family_curve(family: CurveFamily2, start: Point2, end: Point2) -> Resu
         CurveFamily2::CircularArc => {
             return Err("a circular arc cannot carry an affine line image".into());
         }
+        CurveFamily2::AnalyticParallel => {
+            return Err("analytic parallels are generated by offsetting a source curve".into());
+        }
     })
 }
 
@@ -738,10 +775,10 @@ fn linear_spline_knots() -> Vec<Real> {
 }
 
 fn display_region(paths: &[CurvePath2]) -> Result<Shape, String> {
-    let material = sample_path(&paths[0], DISPLAY_STEPS)?;
+    let material = sample_path(&paths[0])?;
     let holes = paths[1..]
         .iter()
-        .map(|path| sample_path(path, DISPLAY_STEPS).map(Polyline::marked_hole))
+        .map(|path| sample_path(path).map(Polyline::marked_hole))
         .collect::<Result<Vec<_>, _>>()?;
     Ok(Shape {
         materials: vec![material],
@@ -749,27 +786,17 @@ fn display_region(paths: &[CurvePath2]) -> Result<Shape, String> {
     })
 }
 
-fn sample_path(path: &CurvePath2, steps: usize) -> Result<Polyline, String> {
+fn sample_path(path: &CurvePath2) -> Result<Polyline, String> {
+    let options = FiniteProjectionOptions::try_new(DISPLAY_CHORD_ERROR).map_err(string_error)?;
+    let projection = path
+        .project_to_finite_polyline(&options, &CurveContext::STRICT)
+        .map_err(string_error)?
+        .into_value();
     let mut display = Polyline::new();
-    let step_count = Real::from(i32::try_from(steps).map_err(string_error)?);
-    for (curve_index, curve) in path.curves().iter().enumerate() {
-        let domain = curve.parameter_domain();
-        let span = domain.end() - domain.start();
-        for index in 0..=steps {
-            if curve_index > 0 && index == 0 {
-                continue;
-            }
-            let fraction = (Real::from(i32::try_from(index).map_err(string_error)?) / &step_count)
-                .map_err(string_error)?;
-            let parameter = domain.start() + &(&span * fraction);
-            let point = curve
-                .point_at(&parameter, &CurveContext::STRICT)
-                .map_err(string_error)?
-                .into_value();
-            display.add(real_to_f64(point.x()), real_to_f64(point.y()), 0.0);
-        }
+    for &[x, y] in projection.points() {
+        display.add(x, y, 0.0);
     }
-    display.is_closed = path.start() == path.end();
+    display.is_closed = projection.is_closed();
     Ok(display)
 }
 
@@ -789,12 +816,6 @@ fn local_point(origin: (i32, i32), x: i32, y: i32) -> Point2 {
 
 fn rational(numerator: i32, denominator: i32) -> Real {
     (Real::from(numerator) / Real::from(denominator)).expect("nonzero exact denominator")
-}
-
-fn real_to_f64(value: &Real) -> f64 {
-    value
-        .to_f64_lossy()
-        .unwrap_or_else(|| f64::from(value.clone()))
 }
 
 fn translucent(color: egui::Color32, alpha: u8) -> egui::Color32 {
