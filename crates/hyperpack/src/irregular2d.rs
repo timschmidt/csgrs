@@ -9,7 +9,7 @@
 use std::{cmp::Ordering, collections::BTreeMap, fmt};
 
 use hypercurve::{
-    Classification, Contour2, ContourPointLocation, CurveError, CurvePolicy, Point2, Segment2,
+    Classification, Contour2, ContourPointLocation, CurveContext, CurveError, Point2, Segment2,
     TranslationObstacle2, TranslationObstacleBlocker2, translation_obstacle_convex,
 };
 use hyperreal::{Real, RealSign};
@@ -208,7 +208,7 @@ impl IrregularPacking2 {
             return Err(PackError::DuplicateItem.into());
         }
 
-        let policy = CurvePolicy::STRICT;
+        let policy = CurveContext::STRICT;
         let ids = item_map.keys().cloned().collect::<Vec<_>>();
         let mut pairs = BTreeMap::new();
         let mut ready_pair_count = 0;
@@ -343,7 +343,7 @@ impl IrregularPacking2 {
         bin: &SheetBin2,
         placements: &[IrregularSheetPlacement2],
     ) -> IrregularPackResult2<IrregularSheetVerification2> {
-        let policy = CurvePolicy::STRICT;
+        let policy = CurveContext::STRICT;
         let mut status = FeasibilityStatus::Feasible;
         let mut containment_checks = 0;
         let mut no_overlap_checks = 0;
@@ -491,7 +491,7 @@ fn classify_pair(
     packing: &IrregularPacking2,
     left: &IrregularSheetPlacement2,
     right: &IrregularSheetPlacement2,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> IrregularPackResult2<PairStatus> {
     let (fixed, moving) = if left.item < right.item {
         (left, right)
