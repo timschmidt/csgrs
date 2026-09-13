@@ -3,8 +3,8 @@
 use std::fmt;
 
 use hypercurve::{
-    CircularArc2, Curve2, CurveFamily2, CurveGeometry2, LineSeg2, Point2 as CurvePoint2,
-    RationalBezier2,
+    CircularArc2, Curve2, CurveContext, CurveFamily2, CurveGeometry2, LineSeg2,
+    Point2 as CurvePoint2, RationalBezier2, RationalQuadraticBezier2,
 };
 use hyperlattice::{Point3, Real, Vector3};
 use serde::{Deserialize, Serialize};
@@ -153,6 +153,24 @@ impl RawModel {
                     .map_err(BuildError::from)?;
                     builder.pcurve(Pcurve::new(Curve2::from(curve)))?;
                 }
+                RawPcurve::RationalQuadraticBezier {
+                    control_points,
+                    weights,
+                } => {
+                    let [start, control, end] = control_points.map(curve_point2);
+                    let [start_weight, control_weight, end_weight] = weights;
+                    let curve = RationalQuadraticBezier2::try_new(
+                        start,
+                        control,
+                        end,
+                        start_weight,
+                        control_weight,
+                        end_weight,
+                    )
+                    .map_err(GeometryError::from)
+                    .map_err(BuildError::from)?;
+                    builder.pcurve(Pcurve::new(Curve2::from(curve)))?;
+                }
                 RawPcurve::Nurbs {
                     degree,
                     control_points,
@@ -164,9 +182,11 @@ impl RawModel {
                         control_points.into_iter().map(curve_point2).collect(),
                         weights,
                         knots,
+                        &CurveContext::STRICT,
                     )
                     .map_err(GeometryError::from)
-                    .map_err(BuildError::from)?;
+                    .map_err(BuildError::from)?
+                    .into_value();
                     builder.pcurve(Pcurve::new(curve))?;
                 }
             }
@@ -175,11 +195,12 @@ impl RawModel {
             builder.surface(surface3(surface)?)?;
         }
         for edge in self.data.edges {
+            let domain = ParameterDomain::new(edge.domain[0].clone(), edge.domain[1].clone())?;
             builder.edge(
                 vertex_id(edge.start),
                 vertex_id(edge.end),
                 curve_id(edge.curve),
-                ParameterDomain::new(edge.domain[0].clone(), edge.domain[1].clone())?,
+                domain,
             )?;
         }
         for edge_use in self.data.edge_uses {
@@ -235,19 +256,34 @@ impl Model {
     /// Converts this trusted model into an untrusted persistence carrier.
     ///
     /// Every current `Curve3` and `Surface` family is retained exactly.
-    /// Pcurves retain native lines, circular arcs, and general rational
-    /// Béziers; other Hypercurve families return an explicit
-    /// unsupported-family error.
+    /// Pcurves retain native lines, circular arcs, rational quadratics,
+    /// general rational Béziers, and NURBS; other Hypercurve families return
+    /// an explicit unsupported-family error.
     pub fn to_raw(&self) -> Result<RawModel, PersistenceError> {
-        let vertices = self
+        let mut vertices = self
             .vertices()
             .map(|(_, vertex)| point_array(vertex.point()))
-            .collect();
-        let curves = self
+            .collect::<Vec<_>>();
+        let mut curves = self
             .curves()
             .map(|(_, curve)| raw_curve3(curve.exact_data()))
-            .collect();
-        let pcurves = self
+            .collect::<Vec<_>>();
+        // Split analytic arcs may retain an exact endpoint-incidence proof
+        // whose two independently serialized expressions do not replay as a
+        // scalar equality. Publish the trusted curve evaluation as the
+        // canonical vertex representation; raw import still reconstructs the
+        // curve independently and verifies every endpoint.
+        for (_, edge) in self.edges() {
+            let curve = self
+                .curve(edge.curve())
+                .expect("trusted edge references a validated curve");
+            if !matches!(curve.kind(), Curve3Kind::CircleArc | Curve3Kind::EllipseArc) {
+                continue;
+            }
+            vertices[edge.start().index()] = point_array(&curve.point_at(edge.domain().start())?);
+            vertices[edge.end().index()] = point_array(&curve.point_at(edge.domain().end())?);
+        }
+        let mut pcurves = self
             .pcurves()
             .map(|(_, pcurve)| match pcurve.curve().geometry() {
                 Some(CurveGeometry2::Line(_)) => {
@@ -271,6 +307,12 @@ impl Model {
                         .collect(),
                     weights: curve.weights().to_vec(),
                 }),
+                Some(CurveGeometry2::RationalQuadraticBezier(curve)) => {
+                    Ok(RawPcurve::RationalQuadraticBezier {
+                        control_points: curve.control_points().map(curve_point_array),
+                        weights: curve.weights().map(Clone::clone),
+                    })
+                }
                 Some(CurveGeometry2::Nurbs(curve)) => Ok(RawPcurve::Nurbs {
                     degree: curve.degree(),
                     control_points: curve
@@ -284,10 +326,59 @@ impl Model {
                 _ => Err(PersistenceError::UnsupportedPcurve(pcurve.kind())),
             })
             .collect::<Result<Vec<_>, PersistenceError>>()?;
-        let surfaces = self
+        let mut pcurve_use_counts = vec![0_usize; pcurves.len()];
+        for (_, edge_use) in self.edge_uses() {
+            pcurve_use_counts[edge_use.pcurve().index()] += 1;
+        }
+        for (edge_use_id, edge_use) in self.edge_uses() {
+            let pcurve_index = edge_use.pcurve().index();
+            if pcurve_use_counts[pcurve_index] != 1 {
+                continue;
+            }
+            let wire = self
+                .wire_of_edge_use(edge_use_id)
+                .expect("trusted edge use belongs to a validated wire");
+            let face = self
+                .face_of_wire(wire)
+                .and_then(|face| self.face(face))
+                .expect("trusted wire belongs to a validated face");
+            let surface = self
+                .surface(face.surface())
+                .expect("trusted face references a validated surface");
+            let (Some(origin), Some((u, v))) = (surface.plane_origin(), surface.plane_directions())
+            else {
+                continue;
+            };
+            let edge = self
+                .edge(edge_use.edge())
+                .expect("trusted edge use references a validated edge");
+            let (start, end) = match edge_use.direction() {
+                Direction::Forward => (edge.start(), edge.end()),
+                Direction::Reversed => (edge.end(), edge.start()),
+            };
+            let start = project_raw_plane_point(
+                self.vertex(start)
+                    .expect("trusted edge references a validated start vertex")
+                    .point(),
+                origin,
+                u,
+                v,
+            )?;
+            let end = project_raw_plane_point(
+                self.vertex(end)
+                    .expect("trusted edge references a validated end vertex")
+                    .point(),
+                origin,
+                u,
+                v,
+            )?;
+            set_raw_pcurve_start(&mut pcurves[pcurve_index], start);
+            set_raw_pcurve_end(&mut pcurves[pcurve_index], end);
+        }
+        let mut surfaces = self
             .surfaces()
             .map(|(_, surface)| raw_surface(surface.exact_data()))
-            .collect();
+            .collect::<Vec<_>>();
         let edges = self
             .edges()
             .map(|(_, edge)| RawEdge {
@@ -296,7 +387,113 @@ impl Model {
                 curve: edge.curve().index(),
                 domain: [edge.domain().start().clone(), edge.domain().end().clone()],
             })
-            .collect();
+            .collect::<Vec<_>>();
+        // A trusted model may retain a stronger endpoint-connectivity proof
+        // than two independently represented algebraic coordinates can replay
+        // after JSON decoding. Canonicalize full-domain rational endpoints to
+        // their already-certified topological vertices before crossing the
+        // untrusted persistence boundary. Raw validation still checks those
+        // explicit coordinates normally; no certificate is accepted from JSON.
+        for (_, edge) in self.edges() {
+            let curve = self
+                .curve(edge.curve())
+                .expect("trusted edge references a validated curve");
+            if edge.domain().start() != curve.domain().start()
+                || edge.domain().end() != curve.domain().end()
+            {
+                continue;
+            }
+            let RawCurve3::RationalBezier { control_points, .. } =
+                &mut curves[edge.curve().index()]
+            else {
+                continue;
+            };
+            let start = self
+                .vertex(edge.start())
+                .expect("trusted edge references a validated start vertex");
+            let end = self
+                .vertex(edge.end())
+                .expect("trusted edge references a validated end vertex");
+            control_points[0] = point_array(start.point());
+            *control_points
+                .last_mut()
+                .expect("validated rational Bezier has controls") = point_array(end.point());
+        }
+        // Extrusion surfaces clone their profile curve rather than referring
+        // to the edge arena. Canonicalize a full-profile rational carrier to
+        // the same already-certified bottom vertices as its matching edge so
+        // independent JSON expression trees replay endpoint incidence.
+        for (surface_id, surface) in self.surfaces() {
+            let Some((profile, _)) = surface.extrusion_profile_and_direction() else {
+                continue;
+            };
+            let RawSurface::Extrusion {
+                profile: raw_profile,
+                ..
+            } = &mut surfaces[surface_id.index()]
+            else {
+                unreachable!("extrusion surface maps to extrusion persistence data");
+            };
+            let RawCurve3::RationalBezier { control_points, .. } = raw_profile.as_mut() else {
+                continue;
+            };
+            let Some((edge_use, line)) = self
+                .faces()
+                .filter(|(_, face)| face.surface() == surface_id)
+                .filter_map(|(_, face)| face.outer())
+                .filter_map(|wire| self.wire(wire))
+                .flat_map(|wire| wire.edge_uses())
+                .filter_map(|edge_use| {
+                    let edge_use_record = self.edge_use(*edge_use)?;
+                    let pcurve = self.pcurve(edge_use_record.pcurve())?;
+                    let line = pcurve.line_segment()?;
+                    ((line.start().y() - Real::zero()).zero_status()
+                        == hyperreal::ZeroKnowledge::Zero
+                        && (line.end().y() - Real::zero()).zero_status()
+                            == hyperreal::ZeroKnowledge::Zero)
+                        .then_some((edge_use_record, line))
+                })
+                .find(|(_, line)| {
+                    ((line.start().x() - profile.domain().start()).zero_status()
+                        == hyperreal::ZeroKnowledge::Zero
+                        && (line.end().x() - profile.domain().end()).zero_status()
+                            == hyperreal::ZeroKnowledge::Zero)
+                        || ((line.start().x() - profile.domain().end()).zero_status()
+                            == hyperreal::ZeroKnowledge::Zero
+                            && (line.end().x() - profile.domain().start()).zero_status()
+                                == hyperreal::ZeroKnowledge::Zero)
+                })
+            else {
+                continue;
+            };
+            let edge = self
+                .edge(edge_use.edge())
+                .expect("trusted edge use references a validated edge");
+            let (directed_start, directed_end) = match edge_use.direction() {
+                Direction::Forward => (edge.start(), edge.end()),
+                Direction::Reversed => (edge.end(), edge.start()),
+            };
+            let starts_at_profile_start = (line.start().x() - profile.domain().start())
+                .zero_status()
+                == hyperreal::ZeroKnowledge::Zero;
+            let (profile_start, profile_end) = if starts_at_profile_start {
+                (directed_start, directed_end)
+            } else {
+                (directed_end, directed_start)
+            };
+            control_points[0] = point_array(
+                self.vertex(profile_start)
+                    .expect("trusted edge references a validated start vertex")
+                    .point(),
+            );
+            *control_points
+                .last_mut()
+                .expect("validated rational Bezier profile has controls") = point_array(
+                self.vertex(profile_end)
+                    .expect("trusted edge references a validated end vertex")
+                    .point(),
+            );
+        }
         let edge_uses = self
             .edge_uses()
             .map(|(_, edge_use)| RawEdgeUse {
@@ -431,12 +628,71 @@ enum RawPcurve {
         control_points: Vec<[Real; 2]>,
         weights: Vec<Real>,
     },
+    RationalQuadraticBezier {
+        control_points: [[Real; 2]; 3],
+        weights: [Real; 3],
+    },
     Nurbs {
         degree: usize,
         control_points: Vec<[Real; 2]>,
         weights: Vec<Real>,
         knots: Vec<Real>,
     },
+}
+
+fn set_raw_pcurve_start(curve: &mut RawPcurve, start: [Real; 2]) {
+    match curve {
+        RawPcurve::Line {
+            start: curve_start, ..
+        }
+        | RawPcurve::CircularArc {
+            start: curve_start, ..
+        } => *curve_start = start,
+        RawPcurve::RationalBezier { control_points, .. } => {
+            control_points[0] = start;
+        }
+        RawPcurve::RationalQuadraticBezier { control_points, .. } => {
+            control_points[0] = start;
+        }
+        RawPcurve::Nurbs { .. } => {}
+    }
+}
+
+fn set_raw_pcurve_end(curve: &mut RawPcurve, end: [Real; 2]) {
+    match curve {
+        RawPcurve::Line { end: curve_end, .. } | RawPcurve::CircularArc { end: curve_end, .. } => {
+            *curve_end = end
+        }
+        RawPcurve::RationalBezier { control_points, .. } => {
+            *control_points
+                .last_mut()
+                .expect("validated rational Bezier pcurve has controls") = end;
+        }
+        RawPcurve::RationalQuadraticBezier { control_points, .. } => {
+            control_points[2] = end;
+        }
+        RawPcurve::Nurbs { .. } => {}
+    }
+}
+
+fn project_raw_plane_point(
+    point: &Point3,
+    origin: &Point3,
+    u: &Vector3,
+    v: &Vector3,
+) -> Result<[Real; 2], PersistenceError> {
+    let displacement = point - origin;
+    let uu = u.dot(u);
+    let uv = u.dot(v);
+    let vv = v.dot(v);
+    let du = displacement.dot(u);
+    let dv = displacement.dot(v);
+    let determinant = &uu * &vv - &uv * &uv;
+    let first =
+        ((&du * &vv - &dv * &uv) / &determinant).map_err(|_| GeometryError::ProjectiveDivision)?;
+    let second =
+        ((dv * uu - du * uv) / determinant).map_err(|_| GeometryError::ProjectiveDivision)?;
+    Ok([first, second])
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]

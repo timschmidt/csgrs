@@ -6,16 +6,15 @@ use std::fmt;
 
 use hypercurve::{
     Aabb2, BezierLineImageFitRelation, BezierSplitFragment2, BezierSubcurve2, BooleanOp,
-    Classification, Contour2, ContourPointLocation, Curve2, CurvePath2, CurvePolicy, CurveRegion2,
+    Classification, Contour2, ContourPointLocation, Curve2, CurveContext, CurvePath2, CurveRegion2,
     CurveRegionBoundaryContact2, CurveRegionBoundaryKind2, CurveRegionLoopRole, CurveString2,
-    ExactCurveError, FillRule, LineArcIntersection, LineArcRegion2, LineLineIntersection, LineSeg2,
-    RationalBezier2, RationalQuadraticBezier2,
-    RegionPointLocation, Segment2, UncertaintyReason,
+    ExactCurveError, FillRule, LineArcIntersection, LineLineIntersection, LineSeg2,
+    RationalBezier2, RationalQuadraticBezier2, RegionPointLocation, Segment2, UncertaintyReason,
 };
 use hyperlimit::{PredicateOutcome, compare_reals, point3_equal};
 
 use crate::builder::{
-    ConstructionError, SphereVoid, extrude_contour_regions, sphere_pair_boolean, sphere_with_voids,
+    ConstructionError, SphereVoid, extrude_curve_region, sphere_pair_boolean, sphere_with_voids,
 };
 use crate::geometry::{
     Curve3ExactData, EllipseArcExactData, SurfaceExactData, SurfaceIntersectionBoundaryContact,
@@ -1204,7 +1203,10 @@ fn planar_trace_crosses_face_interior(
     let point = trace.point_at(&middle)?;
     let surface = face_surface(model, face);
     let parameter = project_to_plane(surface, &point)?;
-    match planar_face_region(model, face)?.classify_point(&parameter, &CurvePolicy::STRICT) {
+    match planar_face_region(model, face)?
+        .classify_point(&parameter, &CurveContext::STRICT)?
+        .into_value()
+    {
         Classification::Decided(RegionPointLocation::Inside) => Ok(true),
         Classification::Decided(RegionPointLocation::Outside | RegionPointLocation::Boundary) => {
             Ok(false)
@@ -1646,7 +1648,10 @@ fn append_curved_boundary_witness_candidates(
     let half = (Real::one() / Real::from(2)).map_err(|_| GeometryError::ProjectiveDivision)?;
     let mut outer_boundary_probes = vertices.to_vec();
     for curve in outer.curves() {
-        let midpoint = curve.point_at(&half).map_err(GeometryError::from)?;
+        let midpoint = curve
+            .point_at(&half, &CurveContext::STRICT)
+            .map_err(GeometryError::from)?
+            .into_value();
         outer_boundary_probes.push(midpoint.clone());
         candidates.push(
             average_planar_points(&[
@@ -1691,7 +1696,12 @@ fn append_curved_boundary_witness_candidates(
             .map(|curve| curve.start().clone())
             .collect::<Vec<_>>();
         for curve in inner.curves() {
-            inner_boundary_probes.push(hypercurve::CurvePoint2::from(curve.point_at(&half).map_err(GeometryError::from)?));
+            inner_boundary_probes.push(hypercurve::CurvePoint2::from(
+                curve
+                    .point_at(&half, &CurveContext::STRICT)
+                    .map_err(GeometryError::from)?
+                    .into_value(),
+            ));
         }
         for outer_probe in &outer_boundary_probes {
             for inner_probe in &inner_boundary_probes {
@@ -2379,7 +2389,10 @@ fn copy_selected_wire(
         };
         let (pcurve, correspondence) = if let Some(mut curve) = projected_curve {
             if direction == crate::Direction::Reversed {
-                curve = curve.reversed().map_err(GeometryError::from)?;
+                curve = curve
+                    .reversed(&CurveContext::STRICT)
+                    .map_err(GeometryError::from)?
+                    .into_value();
             }
             let pcurve = crate::Pcurve::new(curve);
             let pcurve_start = pcurve.domain_start()?;
@@ -3093,19 +3106,20 @@ fn trim_contained_surface_region(
     let (region, covers_contained_face) = if face_is_boundaryless(plane_model, plane_face) {
         (contained_region, true)
     } else {
-        let plane_region = CurveRegion2::try_from_line_arc_region(
-            &planar_face_region(plane_model, plane_face)?,
-            &CurvePolicy::STRICT,
-        )?;
+        let plane_region = planar_face_region(plane_model, plane_face)?;
         let remainder = contained_region
-            .boolean_region(&plane_region, BooleanOp::Difference, &CurvePolicy::STRICT)?
+            .boolean_region(&plane_region, BooleanOp::Difference, &CurveContext::STRICT)?
             .into_value();
         if remainder.is_empty() {
             (contained_region, true)
         } else {
             (
                 contained_region
-                    .boolean_region(&plane_region, BooleanOp::Intersection, &CurvePolicy::STRICT)?
+                    .boolean_region(
+                        &plane_region,
+                        BooleanOp::Intersection,
+                        &CurveContext::STRICT,
+                    )?
                     .into_value(),
                 false,
             )
@@ -3143,8 +3157,9 @@ fn project_face_region_to_plane(
             &paths,
             &roles,
             &fill_rules,
-            &CurvePolicy::STRICT,
-        )?,
+            &CurveContext::STRICT,
+        )?
+        .into_value(),
     ))
 }
 
@@ -3215,8 +3230,9 @@ pub(crate) fn contained_face_boundary_traces_on_plane(
     for curve in paths.iter().flat_map(|path| path.curves()) {
         if let Some(region) = &plane_region {
             for fragment in curve
-                .trim_inside_region(region, &CurvePolicy::STRICT)
+                .trim_inside_region(region, &CurveContext::STRICT)
                 .map_err(GeometryError::from)?
+                .into_value()
             {
                 let BezierSplitFragment2::Materialized { curve, .. } = fragment else {
                     return Ok(None);
@@ -3228,8 +3244,9 @@ pub(crate) fn contained_face_boundary_traces_on_plane(
             }
         } else {
             for fragment in curve
-                .native_bezier_fragments()
+                .native_bezier_fragments(&CurveContext::STRICT)
                 .map_err(GeometryError::from)?
+                .into_value()
             {
                 let Some(line) = lift_planar_line_image(plane, fragment.curve())? else {
                     return Ok(None);
@@ -3464,8 +3481,9 @@ fn concatenate_closed_contained_spline_trace(
         }
         for fragment in pcurve
             .curve()
-            .native_bezier_fragments()
+            .native_bezier_fragments(&CurveContext::STRICT)
             .map_err(GeometryError::from)?
+            .into_value()
         {
             let rational = match fragment.curve() {
                 BezierSubcurve2::Quadratic(curve) => RationalBezier2::try_new(
@@ -3598,12 +3616,12 @@ fn lift_planar_line_image(
     curve: &BezierSubcurve2,
 ) -> Result<Option<Curve3>, GeometryError> {
     let relation = match curve {
-        BezierSubcurve2::Quadratic(curve) => curve.fit_exact_line_image(&CurvePolicy::STRICT)?,
-        BezierSubcurve2::Cubic(curve) => curve.fit_exact_line_image(&CurvePolicy::STRICT)?,
+        BezierSubcurve2::Quadratic(curve) => curve.fit_exact_line_image(&CurveContext::STRICT)?,
+        BezierSubcurve2::Cubic(curve) => curve.fit_exact_line_image(&CurveContext::STRICT)?,
         BezierSubcurve2::RationalQuadratic(curve) => {
-            curve.fit_exact_line_image(&CurvePolicy::STRICT)?
+            curve.fit_exact_line_image(&CurveContext::STRICT)?
         }
-        BezierSubcurve2::Rational(curve) => curve.fit_exact_line_image(&CurvePolicy::STRICT)?,
+        BezierSubcurve2::Rational(curve) => curve.fit_exact_line_image(&CurveContext::STRICT)?,
     };
     let Classification::Decided(BezierLineImageFitRelation::Fit(fit)) = relation else {
         return Ok(None);
@@ -3809,15 +3827,38 @@ fn retained_curve_face_intervals(
     for carrier in carriers {
         let trimmed = match carrier
             .curve
-            .trim_inside_region_with_parameters(&region, &CurvePolicy::STRICT)
+            .trim_inside_region_with_parameters(&region, &CurveContext::STRICT)
         {
-            Ok(fragments) => fragments,
+            Ok(fragments) => fragments.into_value(),
             Err(ExactCurveError::Blocked(blocker)) => {
                 return Ok(Classification::Uncertain(blocker.reason()));
             }
             Err(error) => return Err(GeometryError::from(error)),
         };
         for fragment in trimmed {
+            let representative = match fragment
+                .fragment()
+                .representative_point(&CurveContext::STRICT)
+                .map_err(GeometryError::from)?
+            {
+                Classification::Decided(point) => point,
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            };
+            match region
+                .classify_point(&representative, &CurveContext::STRICT)
+                .map_err(GeometryError::from)?
+                .into_value()
+            {
+                Classification::Decided(RegionPointLocation::Inside) => {}
+                Classification::Decided(
+                    RegionPointLocation::Outside | RegionPointLocation::Boundary,
+                ) => continue,
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            }
             let Some((pcurve_start, pcurve_end)) = fragment.represented_parameter_range() else {
                 return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
             };
@@ -3888,16 +3929,7 @@ fn model_boundary_contacts(
             .edge_uses()
             .get(contact.segment_index())
             .ok_or(GeometryError::UnsupportedIntersection)?;
-        let Some(pcurve_parameter) = contact
-            .boundary_parameter()
-            .as_bezier_parameter()
-            .and_then(hypercurve::BezierParameter2::as_exact)
-            .cloned()
-        else {
-            return Ok(None);
-        };
-        let Some(pcurve_point) = contact.point().and_then(|point| point.coordinates())
-        else {
+        let Some(pcurve_point) = contact.point().and_then(|point| point.coordinates()) else {
             return Ok(None);
         };
         let canonical_coordinate = |coordinate: &Real| {
@@ -3910,6 +3942,16 @@ fn model_boundary_contacts(
             canonical_coordinate(pcurve_point.x()),
             canonical_coordinate(pcurve_point.y()),
         );
+        let edge_use = model
+            .edge_use(edge_use_id)
+            .expect("validated boundary edge use");
+        let pcurve = model
+            .pcurve(edge_use.pcurve())
+            .expect("validated boundary pcurve");
+        let pcurve_parameter = pcurve.parameter_at_point(&crate::Point2::new(
+            pcurve_point.x().clone(),
+            pcurve_point.y().clone(),
+        ))?;
         let surface = model
             .surface(face.surface())
             .expect("validated trim face surface");
@@ -3928,9 +3970,6 @@ fn model_boundary_contacts(
                 QueryError::Geometry(error) => error,
                 QueryError::InvalidReference { .. } => GeometryError::UnsupportedIntersection,
             })?;
-        let edge_use = model
-            .edge_use(edge_use_id)
-            .expect("validated boundary edge use");
         let edge = model
             .edge(edge_use.edge())
             .expect("validated boundary edge");
@@ -4249,8 +4288,8 @@ fn parameter_lines_face_trim_intervals(
         return Ok(Classification::Decided(SupportedLineFaceTrim::Unbounded));
     }
     let region = planar_face_region(model, face)?;
-    let policy = CurvePolicy::STRICT;
-    let bounds = match Aabb2::from_region(&region, &policy)? {
+    let policy = CurveContext::STRICT;
+    let bounds = match region.bounds(&policy)?.into_value() {
         Classification::Decided(bounds) => bounds,
         Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
     };
@@ -4263,20 +4302,26 @@ fn parameter_lines_face_trim_intervals(
         };
         let start = point_on_parameter_line(&origin, &direction, &span_start);
         let end = point_on_parameter_line(&origin, &direction, &span_end);
-        let source = CurveString2::try_new(vec![Segment2::Line(LineSeg2::try_new(start, end)?)])?;
-        let trimmed = match source.trim_inside_region(&region, &policy)? {
-            Classification::Decided(fragments) => fragments,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
+        let source_line = LineSeg2::try_new(start, end)?;
+        let source = CurveString2::try_new(vec![Segment2::Line(source_line.clone())])?;
+        let trimmed = match source.trim_inside_region(&region, &policy) {
+            Ok(paths) => paths.into_value(),
+            Err(ExactCurveError::Blocked(blocker)) => {
+                return Ok(Classification::Uncertain(blocker.reason()));
             }
+            Err(error) => return Err(GeometryError::from(error)),
         };
-        for fragment in trimmed {
-            for segment in fragment.segments() {
-                let Segment2::Line(segment) = segment else {
+        for retained_path in trimmed {
+            for fragment in retained_path.fragments() {
+                let Some((start_parameter, end_parameter)) =
+                    fragment.trim_fragment().represented_parameter_range()
+                else {
                     return Ok(Classification::Decided(SupportedLineFaceTrim::Unsupported));
                 };
-                let mut start = parameter_on_parameter_line(&origin, &direction, segment.start())?;
-                let mut end = parameter_on_parameter_line(&origin, &direction, segment.end())?;
+                let start_point = source_line.point_at(start_parameter);
+                let end_point = source_line.point_at(end_parameter);
+                let mut start = parameter_on_parameter_line(&origin, &direction, &start_point)?;
+                let mut end = parameter_on_parameter_line(&origin, &direction, &end_point)?;
                 if exact_order(&start, &end)? == Ordering::Greater {
                     std::mem::swap(&mut start, &mut end);
                 }
@@ -4589,9 +4634,10 @@ fn coplanar_boundary_split_traces(
                 let middle = fragment.point_at(&middle_parameter)?;
                 let classify = |point: &Point3| {
                     let parameter = project_to_plane(target_surface, point)?;
-                    Ok::<_, GeometryError>(
-                        target_region.classify_point(&parameter, &CurvePolicy::STRICT),
-                    )
+                    target_region
+                        .classify_point(&parameter, &CurveContext::STRICT)
+                        .map(|outcome| outcome.into_value())
+                        .map_err(GeometryError::from)
                 };
                 let start_location = classify(&start)?;
                 let middle_location = classify(&middle)?;
@@ -4667,7 +4713,10 @@ fn point_in_supported_face_trim(
     let region = planar_face_region(model, face)?;
     let mut unresolved = None;
     for parameter in parameters {
-        match region.classify_point(&parameter, &CurvePolicy::STRICT) {
+        match region
+            .classify_point(&parameter, &CurveContext::STRICT)?
+            .into_value()
+        {
             Classification::Decided(RegionPointLocation::Inside)
             | Classification::Decided(RegionPointLocation::Boundary) => {
                 return Ok(Some(Classification::Decided(true)));
@@ -4820,8 +4869,8 @@ fn spanning_segment_on_planar_face(
 ) -> Result<Classification<Option<(Point3, Point3)>>, GeometryError> {
     let surface = face_surface(model, face);
     let region = planar_face_region(model, face)?;
-    let policy = CurvePolicy::STRICT;
-    let bounds = match Aabb2::from_region(&region, &policy)? {
+    let policy = CurveContext::STRICT;
+    let bounds = match region.bounds(&policy)?.into_value() {
         Classification::Decided(bounds) => bounds,
         Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
     };
@@ -4894,12 +4943,11 @@ fn trim_segment_to_planar_face(
     let start = project_to_plane(surface, start)?;
     let end = project_to_plane(surface, end)?;
     let source = LineSeg2::try_new(start, end)?;
-    let policy = CurvePolicy::STRICT;
+    let policy = CurveContext::STRICT;
     let mut cuts = vec![Real::zero(), Real::one()];
-    for segment in region
-        .material_contours()
+    for segment in model
+        .face_contours(face)?
         .iter()
-        .chain(region.hole_contours())
         .flat_map(|contour| contour.segments())
     {
         match segment {
@@ -4938,7 +4986,10 @@ fn trim_segment_to_planar_face(
         }
         let midpoint = ((&interval[0] + &interval[1]) / Real::from(2))
             .map_err(|_| GeometryError::ProjectiveDivision)?;
-        match region.classify_point(&source.point_at(midpoint), &policy) {
+        match region
+            .classify_point(&source.point_at(midpoint), &policy)?
+            .into_value()
+        {
             Classification::Decided(RegionPointLocation::Inside) => {
                 let start = source.point_at(interval[0].clone());
                 let end = source.point_at(interval[1].clone());
@@ -4977,12 +5028,102 @@ fn insert_sorted_parameter(
     Ok(())
 }
 
-fn planar_face_region(model: &Model, face: FaceId) -> Result<LineArcRegion2, GeometryError> {
+fn planar_face_region(model: &Model, face: FaceId) -> Result<CurveRegion2, GeometryError> {
     let contours = model.face_contours(face)?;
-    Ok(LineArcRegion2::new(
+    Ok(CurveRegion2::try_from_native_contours(
         vec![contours[0].clone()],
         contours[1..].to_vec(),
-    ))
+        &CurveContext::STRICT,
+    )?
+    .into_value())
+}
+
+struct NativeContourProfile {
+    material: Contour2,
+    holes: Vec<Contour2>,
+}
+
+fn native_contour_profiles(
+    region: &CurveRegion2,
+    policy: &CurveContext,
+) -> Result<Classification<Vec<NativeContourProfile>>, GeometryError> {
+    let roles = match region
+        .loop_roles(policy)
+        .map_err(GeometryError::from)?
+        .into_value()
+    {
+        Classification::Decided(roles) => roles,
+        Classification::Uncertain(reason) => {
+            return Ok(Classification::Uncertain(reason));
+        }
+    };
+    let native = match region
+        .native_contours_fast_path(policy)
+        .map_err(GeometryError::from)?
+        .into_value()
+    {
+        Classification::Decided(native) => native,
+        Classification::Uncertain(reason) => {
+            return Ok(Classification::Uncertain(reason));
+        }
+    };
+    let mut material_index = 0;
+    let mut hole_index = 0;
+    let mut contours_by_loop = Vec::with_capacity(roles.len());
+    for role in roles {
+        let contour = match role {
+            CurveRegionLoopRole::Material => {
+                let contour = native.material_contours().get(material_index);
+                material_index += 1;
+                contour
+            }
+            CurveRegionLoopRole::Hole => {
+                let contour = native.hole_contours().get(hole_index);
+                hole_index += 1;
+                contour
+            }
+        }
+        .ok_or(GeometryError::UnsupportedPcurveContour)?;
+        contours_by_loop.push(contour);
+    }
+    if material_index != native.material_contours().len()
+        || hole_index != native.hole_contours().len()
+    {
+        return Err(GeometryError::UnsupportedPcurveContour);
+    }
+    let profiles = match region
+        .boundary_profiles(policy)
+        .map_err(GeometryError::from)?
+        .into_value()
+    {
+        Classification::Decided(profiles) => profiles,
+        Classification::Uncertain(reason) => {
+            return Ok(Classification::Uncertain(reason));
+        }
+    };
+    profiles
+        .into_iter()
+        .map(|profile| {
+            let material = contours_by_loop
+                .get(profile.material_loop_index())
+                .ok_or(GeometryError::UnsupportedPcurveContour)?;
+            let holes = profile
+                .hole_loop_indices()
+                .iter()
+                .map(|index| {
+                    contours_by_loop
+                        .get(*index)
+                        .map(|contour| (*contour).clone())
+                        .ok_or(GeometryError::UnsupportedPcurveContour)
+                })
+                .collect::<Result<Vec<_>, _>>()?;
+            Ok(NativeContourProfile {
+                material: (*material).clone(),
+                holes,
+            })
+        })
+        .collect::<Result<Vec<_>, _>>()
+        .map(Classification::Decided)
 }
 
 fn project_to_plane(
@@ -5435,32 +5576,38 @@ fn coaxial_revolution_boolean(
         .iter()
         .map(|hole| remap_revolution_profile(hole, &axial_offset, opposite))
         .collect::<Result<Vec<_>, _>>()?;
-    let first_region = LineArcRegion2::new(vec![first.profile.clone()], first.holes);
-    let second_region = LineArcRegion2::new(vec![second_profile], second_holes);
-    let result = match first_region.boolean_region(
-        &second_region,
-        operation,
-        FillRule::NonZero,
-        &CurvePolicy::STRICT,
-    ) {
-        Ok(Classification::Decided(region)) => region,
-        Ok(Classification::Uncertain(reason)) => return Err(BooleanError::Unresolved(reason)),
-        Err(error) => return Err(GeometryError::PlanarCurveConstruction(error).into()),
-    };
+    let first_region = CurveRegion2::try_from_native_contours(
+        vec![first.profile.clone()],
+        first.holes,
+        &CurveContext::STRICT,
+    )
+    .map_err(GeometryError::from)?
+    .into_value();
+    let second_region = CurveRegion2::try_from_native_contours(
+        vec![second_profile],
+        second_holes,
+        &CurveContext::STRICT,
+    )
+    .map_err(GeometryError::from)?
+    .into_value();
+    let result = first_region
+        .boolean_region(&second_region, operation, &CurveContext::STRICT)
+        .map_err(GeometryError::from)?
+        .into_value();
     if result.is_empty() {
         return Ok(Some(BooleanResult::Empty));
     }
-    let profiles = match result.contour_profiles(&CurvePolicy::STRICT) {
+    let profiles = match native_contour_profiles(&result, &CurveContext::STRICT)? {
         Classification::Decided(profiles) => profiles,
         Classification::Uncertain(reason) => return Err(BooleanError::Unresolved(reason)),
     };
     let mut solids = Vec::with_capacity(profiles.len());
     for profile in profiles {
-        let outer = line_profile_points(profile.material)?;
+        let outer = line_profile_points(&profile.material)?;
         let holes = profile
             .holes
             .iter()
-            .map(|hole| line_profile_points(hole))
+            .map(line_profile_points)
             .collect::<Result<Vec<_>, _>>()?;
         solids.push(oriented_revolution_region(
             &outer,
@@ -5554,16 +5701,14 @@ fn z_prism_boolean(
     operation: BooleanOp,
 ) -> Result<BooleanResult, BooleanError> {
     let CertifiedZPrismProfile {
-        outer: first_profile,
-        holes: first_holes,
+        region: first,
         z_min: first_min,
         z_max: first_max,
     } = first_model
         .certified_z_prism_profile(first_solid)?
         .ok_or(BooleanError::UnsupportedOperand)?;
     let CertifiedZPrismProfile {
-        outer: second_profile,
-        holes: second_holes,
+        region: second,
         z_min: second_min,
         z_max: second_max,
     } = second_model
@@ -5589,35 +5734,14 @@ fn z_prism_boolean(
         BooleanOp::Xor => unreachable!("not exposed by HyperBREP"),
     };
 
-    let first = LineArcRegion2::new(vec![first_profile], first_holes);
-    let second = LineArcRegion2::new(vec![second_profile], second_holes);
-    let result =
-        match first.boolean_region(&second, operation, FillRule::NonZero, &CurvePolicy::STRICT) {
-            Ok(Classification::Decided(region)) => region,
-            Ok(Classification::Uncertain(reason)) => return Err(BooleanError::Unresolved(reason)),
-            Err(error) => {
-                return Err(BooleanError::Geometry(
-                    GeometryError::PlanarCurveConstruction(error),
-                ));
-            }
-        };
+    let result = first
+        .boolean_region(&second, operation, &CurveContext::STRICT)
+        .map_err(GeometryError::from)?
+        .into_value();
     if result.is_empty() {
         return Ok(BooleanResult::Empty);
     }
-    let profiles = match result.contour_profiles(&CurvePolicy::STRICT) {
-        Classification::Decided(profiles) => profiles,
-        Classification::Uncertain(reason) => return Err(BooleanError::Unresolved(reason)),
-    };
-    let regions = profiles
-        .iter()
-        .map(|profile| {
-            (
-                profile.material.clone(),
-                profile.holes.iter().map(|hole| (*hole).clone()).collect(),
-            )
-        })
-        .collect::<Vec<_>>();
-    let (model, solids) = extrude_contour_regions(&regions, z_min, z_max)?;
+    let (model, solids) = extrude_curve_region(&result, z_min, z_max, &CurveContext::STRICT)?;
     if solids.len() == 1 {
         Ok(BooleanResult::Solid {
             model,
@@ -6321,8 +6445,8 @@ fn trim_conic_to_planar_face(
             Real::one(),
         )?);
         let fragments =
-            match planar.trim_inside_region_with_parameters(&region, &CurvePolicy::STRICT) {
-                Ok(fragments) => fragments,
+            match planar.trim_inside_region_with_parameters(&region, &CurveContext::STRICT) {
+                Ok(fragments) => fragments.into_value(),
                 Err(ExactCurveError::Blocked(blocker)) => {
                     return Ok(FacePairTrim::Unresolved(blocker.reason()));
                 }
@@ -6595,7 +6719,11 @@ mod tests {
             .unwrap();
             let spatial_parameter = materialized.spatial_parameter_at(&curve_parameter).unwrap();
             let retained_point = pcurve.point_at(&spatial_parameter).unwrap();
-            let materialized_point = materialized.curve().point_at(&curve_parameter).unwrap();
+            let materialized_point = materialized
+                .curve()
+                .point_at(&curve_parameter, &CurveContext::STRICT)
+                .unwrap()
+                .into_value();
             assert_eq!(
                 compare_reals(
                     &retained_point.x,
@@ -7295,8 +7423,10 @@ mod tests {
                 Real::one(),
                 Real::one(),
             ],
+            &CurveContext::STRICT,
         )
-        .unwrap();
+        .unwrap()
+        .into_value();
         let outer = CurvePath2::try_new(vec![
             curved,
             Curve2::from(
@@ -7468,8 +7598,10 @@ mod tests {
                 Real::one(),
                 Real::one(),
             ],
+            &CurveContext::STRICT,
         )
-        .unwrap();
+        .unwrap()
+        .into_value();
         let outer = CurvePath2::try_new(vec![upper, lower]).unwrap();
         let (plane, plane_face) = crate::builder::planar_face(
             &outer,
@@ -11339,8 +11471,10 @@ mod tests {
                     Real::one(),
                     Real::one(),
                 ],
+                &CurveContext::STRICT,
             )
-            .unwrap(),
+            .unwrap()
+            .into_value(),
             hypercurve::Curve2::from(hypercurve::LineSeg2::try_new(cp(4, 2), cp(2, 2)).unwrap()),
             hypercurve::Curve2::from(hypercurve::LineSeg2::try_new(cp(2, 2), cp(2, 0)).unwrap()),
         ])
@@ -11427,8 +11561,10 @@ mod tests {
                     Real::from(2),
                     Real::from(2),
                 ],
+                &CurveContext::STRICT,
             )
-            .unwrap(),
+            .unwrap()
+            .into_value(),
             hypercurve::Curve2::from(hypercurve::LineSeg2::try_new(cp(4, 2), cp(2, 2)).unwrap()),
             hypercurve::Curve2::from(hypercurve::LineSeg2::try_new(cp(2, 2), cp(2, 0)).unwrap()),
         ])

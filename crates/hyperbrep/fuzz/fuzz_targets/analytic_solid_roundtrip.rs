@@ -4,7 +4,7 @@ use hyperbrep::{
     Matrix4, RawModel, Real, Surface, SurfaceIntersectionOperand, SurfaceSurfaceIntersection,
     Vector3, boolean, builder,
 };
-use hypercurve::{Curve2, CurvePath2, LineSeg2, Point2 as CurvePoint2};
+use hypercurve::{Curve2, CurveContext, CurvePath2, LineSeg2, Point2 as CurvePoint2};
 use libfuzzer_sys::fuzz_target;
 
 fuzz_target!(|bytes: &[u8]| {
@@ -921,7 +921,7 @@ fuzz_target!(|bytes: &[u8]| {
                 },
             ) => {
                 let _ = region.is_empty();
-                let _ = region.filled_area(&hypercurve::CurvePolicy::STRICT);
+                let _ = region.filled_area(&hypercurve::CurveContext::STRICT);
             }
             (2, boolean::FacePairTrim::NoContact) => {}
             _ => {
@@ -1237,9 +1237,11 @@ fuzz_target!(|bytes: &[u8]| {
             Real::from(5),
             Real::from(5),
         ],
+        &CurveContext::STRICT,
     ) else {
         return;
     };
+    let planar_bottom = planar_bottom.into_value();
     let Ok(planar_outer) = CurvePath2::try_new(vec![
         planar_bottom,
         planar_line(planar_10, planar_11.clone()),
@@ -1251,10 +1253,10 @@ fuzz_target!(|bytes: &[u8]| {
     let planar_outer = if bytes[3] & 1 == 0 {
         planar_outer
     } else {
-        let Ok(reversed) = planar_outer.reversed() else {
+        let Ok(reversed) = planar_outer.reversed(&CurveContext::STRICT) else {
             return;
         };
-        reversed
+        reversed.into_value()
     };
     let planar_u_scale = positive(3);
     let planar_v_scale = positive(1);

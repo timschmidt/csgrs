@@ -6,9 +6,9 @@ use std::sync::{Arc, OnceLock};
 
 use hypercurve::{
     BooleanOp, CircularArc2, Classification, Contour2, ContourPointLocation, CubicBezier2, Curve2,
-    CurveFamily2, CurveGeometry2, CurvePath2, CurvePolicy, FillRule, LineArcRegion2,
-    LineLineIntersection, LineSeg2, Point2 as CurvePoint2, QuadraticBezier2, RationalBezier2,
-    RationalQuadraticBezier2, RegionPointLocation, Segment2,
+    CurveContext, CurveFamily2, CurveGeometry2, CurvePath2, CurveRegion2, LineLineIntersection,
+    LineSeg2, Point2 as CurvePoint2, QuadraticBezier2, RationalBezier2, RationalQuadraticBezier2,
+    RegionPointLocation, Segment2,
 };
 use hyperlattice::{Aabb, Matrix4, Point2, Point3, Real, Vector3};
 use hyperlimit::{PredicateOutcome, compare_point3_lexicographic, compare_reals, point3_equal};
@@ -204,7 +204,7 @@ impl ParameterCorrespondence {
                     .ok_or(GeometryError::UnsupportedPcurveContour)?;
                 let point = pcurve.point_at(pcurve_parameter)?;
                 let point = CurvePoint2::new(point.x, point.y);
-                let fraction = match arc.sweep_fraction(&point, &CurvePolicy::STRICT)? {
+                let fraction = match arc.sweep_fraction(&point, &CurveContext::STRICT)? {
                     Classification::Decided(fraction) => fraction,
                     Classification::Uncertain(reason) => {
                         return Err(GeometryError::PlanarClassificationUnresolved(reason));
@@ -259,7 +259,7 @@ impl ParameterCorrespondence {
                 let fraction = ((edge_parameter - directed_start)
                     / (directed_end - directed_start))
                     .map_err(|_| GeometryError::ProjectiveDivision)?;
-                match arc.parameter_at_sweep_fraction(&fraction, &CurvePolicy::STRICT)? {
+                match arc.parameter_at_sweep_fraction(&fraction, &CurveContext::STRICT)? {
                     Classification::Decided(parameter) => Ok(parameter),
                     Classification::Uncertain(reason) => {
                         Err(GeometryError::PlanarClassificationUnresolved(reason))
@@ -1279,14 +1279,25 @@ struct CertifiedZPrismShell {
 
 #[derive(Clone, Debug)]
 struct CertifiedPrismShell {
-    outer: CurvePath2,
-    holes: Vec<CurvePath2>,
+    profile: CertifiedPrismProfile,
     origin: Point3,
     u: Vector3,
     v: Vector3,
     extrusion: Vector3,
     parameter_min: Real,
     parameter_max: Real,
+}
+
+#[derive(Clone, Debug)]
+enum CertifiedPrismProfile {
+    Paths {
+        outer: CurvePath2,
+        holes: Vec<CurvePath2>,
+    },
+    CurveRegion {
+        region: CurveRegion2,
+        area: Real,
+    },
 }
 
 #[derive(Clone, Debug)]
@@ -1463,24 +1474,27 @@ impl CertifiedRevolutionBoundary {
         match self {
             Self::Native(contour) => contour.signed_x_first_moment().map_err(GeometryError::from),
             Self::Curved(path) => path
-                .bezier_boundary_loop()
+                .bezier_boundary_loop(&CurveContext::STRICT)
                 .map_err(GeometryError::from)?
+                .into_value()
                 .boundary_loop()
-                .area_moments()
-                .map(|moments| moments.map(|moments| moments.x_moment().clone()))
-                .map_err(GeometryError::from),
+                .area_moments(&CurveContext::STRICT)
+                .map_err(GeometryError::from)
+                .and_then(|outcome| resolve_optional_planar_measurement(outcome.into_value()))
+                .map(|moments| moments.map(|moments| moments.x_moment().clone())),
         }
     }
 
     fn classify_point(
         &self,
         point: &CurvePoint2,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> Result<Classification<ContourPointLocation>, GeometryError> {
         match self {
             Self::Native(contour) => Ok(contour.classify_point(point, policy)),
             Self::Curved(path) => path
                 .classify_point(point, policy)
+                .map(|outcome| outcome.into_value())
                 .map_err(GeometryError::from),
         }
     }
@@ -1511,7 +1525,7 @@ impl CertifiedRevolutionBoundary {
         }
     }
 
-    fn intersects(&self, other: &Self, policy: &CurvePolicy) -> Result<bool, GeometryError> {
+    fn intersects(&self, other: &Self, policy: &CurveContext) -> Result<bool, GeometryError> {
         if let (Self::Native(first), Self::Native(second)) = (self, other) {
             return first
                 .intersect_contour(second, policy)
@@ -1521,7 +1535,8 @@ impl CertifiedRevolutionBoundary {
         let result = self
             .as_curve_path()?
             .intersect_path(&other.as_curve_path()?, policy)
-            .map_err(GeometryError::from)?;
+            .map_err(GeometryError::from)?
+            .into_value();
         if !result.blockers().is_empty() {
             return Err(GeometryError::UnsupportedIntersection);
         }
@@ -1585,8 +1600,7 @@ struct TensorPathChain {
 }
 
 pub(crate) struct CertifiedZPrismProfile {
-    pub(crate) outer: Contour2,
-    pub(crate) holes: Vec<Contour2>,
+    pub(crate) region: CurveRegion2,
     pub(crate) z_min: Real,
     pub(crate) z_max: Real,
 }
@@ -1816,7 +1830,7 @@ impl Model {
                             .split_at_retained_sweep_point(
                                 &fraction,
                                 retained_point.clone(),
-                                &CurvePolicy::STRICT,
+                                &CurveContext::STRICT,
                             )
                             .map_err(GeometryError::from)?
                         {
@@ -1842,7 +1856,7 @@ impl Model {
                         let fraction = ((&parameter - start) / (end - start))
                             .map_err(|_| GeometryError::ProjectiveDivision)?;
                         let (first, second) = match arc
-                            .split_at_sweep_fraction(&fraction, &CurvePolicy::STRICT)
+                            .split_at_sweep_fraction(&fraction, &CurveContext::STRICT)
                             .map_err(GeometryError::from)?
                         {
                             Classification::Decided(fragments) => fragments,
@@ -2678,12 +2692,15 @@ impl Model {
         let loop_path = CurvePath2::try_new(vec![materialized_loop.curve().clone()])
             .map_err(GeometryError::from)?;
         let loop_area = loop_path
-            .bezier_boundary_loop()
+            .bezier_boundary_loop(&CurveContext::STRICT)
             .map_err(GeometryError::from)?
+            .into_value()
             .boundary_loop()
-            .signed_area()
-            .map_err(GeometryError::from)?;
-        let loop_area = loop_area.ok_or(GeometryError::UnsupportedPcurveContour)?;
+            .signed_area(&CurveContext::STRICT)
+            .map_err(GeometryError::from)?
+            .into_value();
+        let loop_area = resolve_optional_planar_measurement(loop_area)?
+            .ok_or(GeometryError::UnsupportedPcurveContour)?;
         let area_order = decided_model_order(compare_reals(
             &loop_area,
             &Real::zero(),
@@ -2698,7 +2715,7 @@ impl Model {
         };
         let interior_forward = area_order == expected_outer_order;
 
-        let policy = CurvePolicy::STRICT;
+        let policy = CurveContext::STRICT;
         let loop_start = materialized_loop.curve().start();
         let classify = |path: &CurvePath2,
                         point: &CurvePoint2|
@@ -2706,6 +2723,7 @@ impl Model {
             match path
                 .classify_point(point, &policy)
                 .map_err(GeometryError::from)?
+                .into_value()
             {
                 Classification::Decided(location) => Ok(location),
                 Classification::Uncertain(reason) => {
@@ -3019,8 +3037,9 @@ impl Model {
             for second_index in (first_index + 1)..ordered.len() {
                 let relation = materialized[first_index]
                     .curve()
-                    .intersect_curve(materialized[second_index].curve(), &CurvePolicy::STRICT)
-                    .map_err(GeometryError::from)?;
+                    .intersect_curve(materialized[second_index].curve(), &CurveContext::STRICT)
+                    .map_err(GeometryError::from)?
+                    .into_value();
                 if !relation.is_complete() {
                     return Err(GeometryError::UnsupportedIntersection.into());
                 }
@@ -3630,7 +3649,7 @@ impl Model {
             .collect::<Vec<_>>();
         let first_region = staged.build_model_wire_curve_path(*outer)?;
         let second_region = staged.build_model_wire_curve_path(target_inner)?;
-        let policy = CurvePolicy::STRICT;
+        let policy = CurveContext::STRICT;
         let mut first_inner = Vec::new();
         let mut second_inner = Vec::new();
         for wire in remaining_inner {
@@ -3640,6 +3659,7 @@ impl Model {
                 match path
                     .classify_point(representative, &policy)
                     .map_err(GeometryError::from)?
+                    .into_value()
                 {
                     Classification::Decided(ContourPointLocation::Inside) => Ok(true),
                     Classification::Decided(ContourPointLocation::Outside) => Ok(false),
@@ -4513,7 +4533,7 @@ impl Model {
         });
 
         reset_model_caches(data);
-        let policy = CurvePolicy::STRICT;
+        let policy = CurveContext::STRICT;
         let mut first_inner = Vec::new();
         let mut second_inner = Vec::new();
         if !inner.is_empty() {
@@ -4526,6 +4546,7 @@ impl Model {
                     match path
                         .classify_point(representative, &policy)
                         .map_err(GeometryError::from)?
+                        .into_value()
                     {
                         Classification::Decided(ContourPointLocation::Inside) => Ok(true),
                         Classification::Decided(ContourPointLocation::Outside) => Ok(false),
@@ -5218,8 +5239,7 @@ impl Model {
                     .as_ref()
                     .map(|certificate| {
                         Ok(CertifiedPrismShell {
-                            outer: certificate.outer.clone(),
-                            holes: certificate.holes.clone(),
+                            profile: certificate.profile.clone(),
                             origin: transform
                                 .transform_point3(&certificate.origin)
                                 .map_err(|_| GeometryError::TransformFailure)?,
@@ -5652,11 +5672,14 @@ impl Model {
             Err(GeometryError::UnsupportedPcurveContour) => {
                 let area = self
                     .build_model_wire_curve_path(wire)?
-                    .bezier_boundary_loop()
+                    .bezier_boundary_loop(&CurveContext::STRICT)
                     .map_err(GeometryError::from)?
+                    .into_value()
                     .boundary_loop()
-                    .signed_area()
+                    .signed_area(&CurveContext::STRICT)
                     .map_err(GeometryError::from)?
+                    .into_value();
+                let area = resolve_optional_planar_measurement(area)?
                     .ok_or(GeometryError::UnsupportedMeasurement)?;
                 Ok(Real::from(2) * area)
             }
@@ -5857,10 +5880,16 @@ impl Model {
             return Ok(area * progress * &sweep.area_scale_integral);
         }
         if let Some(prism) = &self.data.certified_prisms[id.index()] {
-            let mut area = curve_path_signed_area(&prism.outer)?.abs();
-            for hole in &prism.holes {
-                area -= curve_path_signed_area(hole)?.abs();
-            }
+            let area = match &prism.profile {
+                CertifiedPrismProfile::Paths { outer, holes } => {
+                    let mut area = curve_path_signed_area(outer)?.abs();
+                    for hole in holes {
+                        area -= curve_path_signed_area(hole)?.abs();
+                    }
+                    area
+                }
+                CertifiedPrismProfile::CurveRegion { area, .. } => area.clone(),
+            };
             let jacobian = prism.u.dot(&prism.v.cross(&prism.extrusion)).abs();
             return Ok(area * jacobian * (&prism.parameter_max - &prism.parameter_min));
         }
@@ -6033,7 +6062,7 @@ impl Model {
         let profile_point = CurvePoint2::new(radius, axial);
         let location = match revolution
             .profile
-            .classify_point(&profile_point, &CurvePolicy::STRICT)?
+            .classify_point(&profile_point, &CurveContext::STRICT)?
         {
             Classification::Decided(location) => location,
             Classification::Uncertain(reason) => {
@@ -6046,7 +6075,7 @@ impl Model {
             ContourPointLocation::Inside => {}
         }
         for void in &revolution.voids {
-            match void.classify_point(&profile_point, &CurvePolicy::STRICT)? {
+            match void.classify_point(&profile_point, &CurveContext::STRICT)? {
                 Classification::Decided(ContourPointLocation::Inside) => {
                     return Ok(SolidPointLocation::Outside);
                 }
@@ -6123,7 +6152,7 @@ impl Model {
                     ((profile_point.y() - &local_parameter * translation.y()) / factor)
                         .map_err(|_| GeometryError::ProjectiveDivision)?,
                 );
-                match profile.classify_point(&normalized, &CurvePolicy::STRICT) {
+                match profile.classify_point(&normalized, &CurveContext::STRICT) {
                     Classification::Decided(location) => location,
                     Classification::Uncertain(reason) => {
                         return Err(GeometryError::PlanarClassificationUnresolved(reason).into());
@@ -6180,7 +6209,7 @@ impl Model {
             .map_err(build_error_geometry)?;
         let location = match sweep
             .profile
-            .classify_point(&profile_point, &CurvePolicy::STRICT)
+            .classify_point(&profile_point, &CurveContext::STRICT)
         {
             Classification::Decided(location) => location,
             Classification::Uncertain(reason) => {
@@ -6193,7 +6222,7 @@ impl Model {
             ContourPointLocation::Inside => {}
         }
         for hole in &sweep.holes {
-            match hole.classify_point(&profile_point, &CurvePolicy::STRICT) {
+            match hole.classify_point(&profile_point, &CurveContext::STRICT) {
                 Classification::Decided(ContourPointLocation::Inside) => {
                     return Ok(SolidPointLocation::Outside);
                 }
@@ -6556,39 +6585,67 @@ impl Model {
             return Ok(SolidPointLocation::Outside);
         }
         let planar = CurvePoint2::new(planar_u, planar_v);
-        let policy = CurvePolicy::STRICT;
-        match prism
-            .outer
-            .classify_point(&planar, &policy)
-            .map_err(GeometryError::from)?
-        {
-            Classification::Decided(ContourPointLocation::Outside) => {
-                return Ok(SolidPointLocation::Outside);
+        let policy = CurveContext::STRICT;
+        let planar_location = match &prism.profile {
+            CertifiedPrismProfile::Paths { outer, holes } => {
+                match outer
+                    .classify_point(&planar, &policy)
+                    .map_err(GeometryError::from)?
+                    .into_value()
+                {
+                    Classification::Decided(ContourPointLocation::Outside) => {
+                        RegionPointLocation::Outside
+                    }
+                    Classification::Decided(ContourPointLocation::Boundary) => {
+                        RegionPointLocation::Boundary
+                    }
+                    Classification::Decided(ContourPointLocation::Inside) => {
+                        let mut location = RegionPointLocation::Inside;
+                        for hole in holes {
+                            match hole
+                                .classify_point(&planar, &policy)
+                                .map_err(GeometryError::from)?
+                                .into_value()
+                            {
+                                Classification::Decided(ContourPointLocation::Inside) => {
+                                    location = RegionPointLocation::Outside;
+                                    break;
+                                }
+                                Classification::Decided(ContourPointLocation::Boundary) => {
+                                    location = RegionPointLocation::Boundary;
+                                    break;
+                                }
+                                Classification::Decided(ContourPointLocation::Outside) => {}
+                                Classification::Uncertain(reason) => {
+                                    return Err(GeometryError::PlanarClassificationUnresolved(
+                                        reason,
+                                    )
+                                    .into());
+                                }
+                            }
+                        }
+                        location
+                    }
+                    Classification::Uncertain(reason) => {
+                        return Err(GeometryError::PlanarClassificationUnresolved(reason).into());
+                    }
+                }
             }
-            Classification::Decided(ContourPointLocation::Boundary) => {
-                return Ok(SolidPointLocation::Boundary);
-            }
-            Classification::Decided(ContourPointLocation::Inside) => {}
-            Classification::Uncertain(reason) => {
-                return Err(GeometryError::PlanarClassificationUnresolved(reason).into());
-            }
-        }
-        for hole in &prism.holes {
-            match hole
+            CertifiedPrismProfile::CurveRegion { region, .. } => match region
                 .classify_point(&planar, &policy)
                 .map_err(GeometryError::from)?
+                .into_value()
             {
-                Classification::Decided(ContourPointLocation::Inside) => {
-                    return Ok(SolidPointLocation::Outside);
-                }
-                Classification::Decided(ContourPointLocation::Boundary) => {
-                    return Ok(SolidPointLocation::Boundary);
-                }
-                Classification::Decided(ContourPointLocation::Outside) => {}
+                Classification::Decided(location) => location,
                 Classification::Uncertain(reason) => {
                     return Err(GeometryError::PlanarClassificationUnresolved(reason).into());
                 }
-            }
+            },
+        };
+        match planar_location {
+            RegionPointLocation::Outside => return Ok(SolidPointLocation::Outside),
+            RegionPointLocation::Boundary => return Ok(SolidPointLocation::Boundary),
+            RegionPointLocation::Inside => {}
         }
         if min_order == std::cmp::Ordering::Equal || max_order == std::cmp::Ordering::Equal {
             Ok(SolidPointLocation::Boundary)
@@ -7081,11 +7138,12 @@ impl Model {
         let FaceBoundary::Trimmed { outer, inner } = &face.boundary else {
             return Ok(Classification::Decided(ContourPointLocation::Inside));
         };
-        let policy = CurvePolicy::STRICT;
+        let policy = CurveContext::STRICT;
         match self
             .build_model_wire_curve_path(*outer)?
             .classify_point(point, &policy)
             .map_err(GeometryError::from)?
+            .into_value()
         {
             Classification::Decided(ContourPointLocation::Outside) => {
                 return Ok(Classification::Decided(ContourPointLocation::Outside));
@@ -7103,6 +7161,7 @@ impl Model {
                 .build_model_wire_curve_path(*wire)?
                 .classify_point(point, &policy)
                 .map_err(GeometryError::from)?
+                .into_value()
             {
                 Classification::Decided(ContourPointLocation::Inside) => {
                     return Ok(Classification::Decided(ContourPointLocation::Outside));
@@ -7213,6 +7272,59 @@ impl Model {
             }
         }
 
+        if let Some(CertifiedPrismShell {
+            profile: CertifiedPrismProfile::CurveRegion { region, .. },
+            origin,
+            u,
+            v,
+            extrusion,
+            ..
+        }) = self
+            .data
+            .certified_prisms
+            .get(solid_id.index())
+            .and_then(Option::as_ref)
+        {
+            let zero = Real::zero();
+            let horizontal_profile =
+                decided_model_order(compare_reals(&u.0[2], &zero, crate::STRICT_PREDICATES))?
+                    == std::cmp::Ordering::Equal
+                    && decided_model_order(compare_reals(
+                        &v.0[2],
+                        &zero,
+                        crate::STRICT_PREDICATES,
+                    ))? == std::cmp::Ordering::Equal;
+            let vertical_extrusion = decided_model_order(compare_reals(
+                &extrusion.0[0],
+                &zero,
+                crate::STRICT_PREDICATES,
+            ))? == std::cmp::Ordering::Equal
+                && decided_model_order(compare_reals(
+                    &extrusion.0[1],
+                    &zero,
+                    crate::STRICT_PREDICATES,
+                ))? == std::cmp::Ordering::Equal;
+            if horizontal_profile && vertical_extrusion {
+                let region = region
+                    .transform_affine(
+                        &u.0[0],
+                        &v.0[0],
+                        &u.0[1],
+                        &v.0[1],
+                        &origin.x,
+                        &origin.y,
+                        &CurveContext::STRICT,
+                    )
+                    .map_err(GeometryError::from)?
+                    .into_value();
+                return Ok(Some(CertifiedZPrismProfile {
+                    region,
+                    z_min,
+                    z_max,
+                }));
+            }
+        }
+
         for face_id in &shell.faces {
             let face = self.face(*face_id).expect("validated shell face");
             let mut profiles = Vec::with_capacity(face.inner().len() + 1);
@@ -7245,9 +7357,15 @@ impl Model {
             }
             if is_top && !profiles.is_empty() {
                 let outer = profiles.remove(0);
+                let region = CurveRegion2::try_from_native_contours(
+                    vec![outer],
+                    profiles,
+                    &CurveContext::STRICT,
+                )
+                .map_err(GeometryError::from)?
+                .into_value();
                 return Ok(Some(CertifiedZPrismProfile {
-                    outer,
-                    holes: profiles,
+                    region,
                     z_min,
                     z_max,
                 }));
@@ -8285,6 +8403,42 @@ impl ModelBuilder {
         Ok(id)
     }
 
+    /// Adds a solid whose topology was already certified by an authoritative
+    /// curve-region construction, without asking shape recognizers to rebuild
+    /// that boundary as an independent path during commit.
+    pub(crate) fn solid_with_curve_region_prism_certificate(
+        &mut self,
+        outer: ShellId,
+        region: CurveRegion2,
+        area: Real,
+        z_min: Real,
+        z_max: Real,
+    ) -> Result<SolidId, BuildError> {
+        self.solid_with_retained_certificate(
+            outer,
+            Vec::new(),
+            CertifiedSolid {
+                cylinder: None,
+                sphere: None,
+                sphere_pair: None,
+                cone_frustum: None,
+                torus: None,
+                revolution: None,
+                loft: None,
+                curve_sweep: None,
+                prism: Some(CertifiedPrismShell {
+                    profile: CertifiedPrismProfile::CurveRegion { region, area },
+                    origin: Point3::new(Real::zero(), Real::zero(), z_min.clone()),
+                    u: Vector3::x(),
+                    v: Vector3::y(),
+                    extrusion: Vector3::from_xyz(Real::zero(), Real::zero(), z_max - z_min),
+                    parameter_min: Real::zero(),
+                    parameter_max: Real::one(),
+                }),
+            },
+        )
+    }
+
     /// Validates global ownership and commits an immutable model.
     pub fn finish(mut self) -> Result<Model, ValidationReport> {
         let mut errors = Vec::new();
@@ -8687,7 +8841,7 @@ impl ModelBuilder {
                 }
                 (
                     Curve3Kind::RationalBezier,
-                    CurveFamily2::RationalBezier,
+                    CurveFamily2::RationalQuadraticBezier | CurveFamily2::RationalBezier,
                     SurfaceKind::Plane,
                     ParameterCorrespondence::Affine { .. },
                 )
@@ -8907,6 +9061,14 @@ impl ModelBuilder {
                     .map(lift)
                     .collect::<Result<Vec<_>, _>>()?,
                 planar.weights().to_vec(),
+            )?,
+            Some(CurveGeometry2::RationalQuadraticBezier(planar)) => Curve3::rational_bezier(
+                planar
+                    .control_points()
+                    .into_iter()
+                    .map(lift)
+                    .collect::<Result<Vec<_>, _>>()?,
+                planar.weights().into_iter().cloned().collect(),
             )?,
             Some(CurveGeometry2::Nurbs(planar)) => Curve3::nurbs(
                 planar.degree(),
@@ -9858,7 +10020,8 @@ impl ModelBuilder {
             &surface_tangent,
             &edge_tangent,
             BuildError::EdgeUseSupportMismatch,
-        )
+        )?;
+        Ok(())
     }
 
     fn validate_torus_circle_image(
@@ -10339,11 +10502,14 @@ impl ModelBuilder {
             Err(BuildError::Geometry(GeometryError::UnsupportedPcurveContour)) => {
                 let path = self.build_wire_curve_path(wire)?;
                 let area = path
-                    .bezier_boundary_loop()
+                    .bezier_boundary_loop(&CurveContext::STRICT)
                     .map_err(GeometryError::from)?
+                    .into_value()
                     .boundary_loop()
-                    .signed_area()
-                    .map_err(GeometryError::from)?;
+                    .signed_area(&CurveContext::STRICT)
+                    .map_err(GeometryError::from)?
+                    .into_value();
+                let area = resolve_optional_planar_measurement(area)?;
                 match area {
                     Some(area) => decided_model_order(compare_reals(
                         &area,
@@ -10668,13 +10834,14 @@ impl ModelBuilder {
         if inner.is_empty() {
             return Ok(());
         }
-        let policy = CurvePolicy::STRICT;
+        let policy = CurveContext::STRICT;
         let outer_path = self.build_wire_curve_path(outer)?;
         for wire in inner {
             let path = self.build_wire_curve_path(*wire)?;
             let intersection = outer_path
                 .intersect_path(&path, &policy)
-                .map_err(GeometryError::from)?;
+                .map_err(GeometryError::from)?
+                .into_value();
             if !intersection.is_disjoint() {
                 return Err(BuildError::IntersectingFaceWires {
                     first: outer,
@@ -10689,6 +10856,7 @@ impl ModelBuilder {
                     &policy,
                 )
                 .map_err(GeometryError::from)?
+                .into_value()
             {
                 Classification::Decided(ContourPointLocation::Inside) => {}
                 Classification::Decided(_) => return Err(BuildError::InnerWireOutside(*wire)),
@@ -10705,7 +10873,8 @@ impl ModelBuilder {
                 let second_path = self.build_wire_curve_path(*second)?;
                 let intersection = first_path
                     .intersect_path(&second_path, &policy)
-                    .map_err(GeometryError::from)?;
+                    .map_err(GeometryError::from)?
+                    .into_value();
                 if !intersection.is_disjoint() {
                     return Err(BuildError::IntersectingFaceWires {
                         first: *first,
@@ -10715,17 +10884,23 @@ impl ModelBuilder {
                 let nested = classification_is_inside(
                     first_path
                         .classify_point(
-                            second_path.start().coordinates().ok_or(GeometryError::UnsupportedPcurveContour)?,
+                            (second_path.start())
+                                .coordinates()
+                                .ok_or(GeometryError::UnsupportedPcurveContour)?,
                             &policy,
                         )
-                        .map_err(GeometryError::from)?,
+                        .map_err(GeometryError::from)?
+                        .into_value(),
                 )? || classification_is_inside(
                     second_path
                         .classify_point(
-                            first_path.start().coordinates().ok_or(GeometryError::UnsupportedPcurveContour)?,
+                            (first_path.start())
+                                .coordinates()
+                                .ok_or(GeometryError::UnsupportedPcurveContour)?,
                             &policy,
                         )
-                        .map_err(GeometryError::from)?,
+                        .map_err(GeometryError::from)?
+                        .into_value(),
                 )?;
                 if nested {
                     return Err(BuildError::NestedInnerWires {
@@ -10753,7 +10928,220 @@ impl ModelBuilder {
                 Err(BuildError::SelfIntersectingWire(wire))
             };
         }
+        if self.rational_quadratic_control_hull_wire_is_simple(wire)? == Some(true) {
+            return Ok(());
+        }
         self.validate_curve_path_simplicity(wire)
+    }
+
+    fn rational_quadratic_control_hull_wire_is_simple(
+        &self,
+        wire: WireId,
+    ) -> Result<Option<bool>, BuildError> {
+        let path = self.build_wire_curve_path(wire)?;
+        if path.curves().len() < 2
+            || path.curves().iter().any(|curve| {
+                !matches!(
+                    curve.geometry(),
+                    Some(CurveGeometry2::RationalQuadraticBezier(_))
+                )
+            })
+        {
+            return Ok(None);
+        }
+
+        let policy = CurveContext::STRICT;
+        for curve in path.curves() {
+            let fragments = curve
+                .native_bezier_fragments(&policy)
+                .map_err(GeometryError::from)?
+                .into_value();
+            if fragments.len() != 1
+                || !fragments[0]
+                    .has_certified_injective_axis(&policy)
+                    .map_err(GeometryError::from)?
+            {
+                return Ok(None);
+            }
+            let Some(CurveGeometry2::RationalQuadraticBezier(curve)) = curve.geometry() else {
+                unreachable!("family checked above");
+            };
+            let mut sign = None;
+            for weight in curve.weights() {
+                let order = decided_model_order(compare_reals(
+                    weight,
+                    &Real::zero(),
+                    crate::STRICT_PREDICATES,
+                ))?;
+                if order == std::cmp::Ordering::Equal {
+                    return Ok(None);
+                }
+                if sign.replace(order).is_some_and(|prior| prior != order) {
+                    return Ok(None);
+                }
+            }
+        }
+
+        let controls = path
+            .curves()
+            .iter()
+            .map(|curve| {
+                let Some(CurveGeometry2::RationalQuadraticBezier(curve)) = curve.geometry() else {
+                    unreachable!("family checked above");
+                };
+                curve.control_points()
+            })
+            .collect::<Vec<_>>();
+        let exact_order = |left: &Real, right: &Real| match compare_reals(
+            left,
+            right,
+            crate::STRICT_PREDICATES,
+        ) {
+            PredicateOutcome::Decided { value, .. } => Some(value),
+            PredicateOutcome::Unknown { .. } => None,
+        };
+        let strictly_separated =
+            |left: &[&CurvePoint2; 3], right: &[&CurvePoint2; 3], axis: usize| {
+                left.iter().all(|left| {
+                    right.iter().all(|right| {
+                        exact_order(
+                            curve_point_coordinate(left, axis),
+                            curve_point_coordinate(right, axis),
+                        ) == Some(std::cmp::Ordering::Less)
+                    })
+                })
+            };
+        let separated_at_shared_endpoint =
+            |left: &[&CurvePoint2; 3],
+             left_endpoint: usize,
+             right: &[&CurvePoint2; 3],
+             right_endpoint: usize,
+             axis: usize,
+             left_side: std::cmp::Ordering| {
+                let boundary = curve_point_coordinate(left[left_endpoint], axis);
+                if exact_order(
+                    boundary,
+                    curve_point_coordinate(right[right_endpoint], axis),
+                ) != Some(std::cmp::Ordering::Equal)
+                {
+                    return false;
+                }
+                left.iter().enumerate().all(|(index, point)| {
+                    exact_order(curve_point_coordinate(point, axis), boundary)
+                        == Some(if index == left_endpoint {
+                            std::cmp::Ordering::Equal
+                        } else {
+                            left_side
+                        })
+                }) && right.iter().enumerate().all(|(index, point)| {
+                    exact_order(curve_point_coordinate(point, axis), boundary)
+                        == Some(if index == right_endpoint {
+                            std::cmp::Ordering::Equal
+                        } else {
+                            left_side.reverse()
+                        })
+                })
+            };
+        let separated_at_distinct_extremes =
+            |left: &[&CurvePoint2; 3],
+             right: &[&CurvePoint2; 3],
+             axis: usize,
+             left_side: std::cmp::Ordering| {
+                let other_axis = 1 - axis;
+                for left_extreme in 0..left.len() {
+                    let boundary = curve_point_coordinate(left[left_extreme], axis);
+                    for right_extreme in 0..right.len() {
+                        if exact_order(boundary, curve_point_coordinate(right[right_extreme], axis))
+                            != Some(std::cmp::Ordering::Equal)
+                        {
+                            continue;
+                        }
+                        let left_touches_once = left.iter().enumerate().all(|(index, point)| {
+                            exact_order(curve_point_coordinate(point, axis), boundary)
+                                == Some(if index == left_extreme {
+                                    std::cmp::Ordering::Equal
+                                } else {
+                                    left_side
+                                })
+                        });
+                        let right_touches_once = right.iter().enumerate().all(|(index, point)| {
+                            exact_order(curve_point_coordinate(point, axis), boundary)
+                                == Some(if index == right_extreme {
+                                    std::cmp::Ordering::Equal
+                                } else {
+                                    left_side.reverse()
+                                })
+                        });
+                        if left_touches_once
+                            && right_touches_once
+                            && exact_order(
+                                curve_point_coordinate(left[left_extreme], other_axis),
+                                curve_point_coordinate(right[right_extreme], other_axis),
+                            )
+                            .is_some_and(|order| order != std::cmp::Ordering::Equal)
+                        {
+                            return true;
+                        }
+                    }
+                }
+                false
+            };
+
+        for first in 0..controls.len() {
+            for second in (first + 1)..controls.len() {
+                let adjacent = second == first + 1 || (first == 0 && second + 1 == controls.len());
+                let expected_controls = if second == first + 1 {
+                    Some((2_usize, 0_usize))
+                } else if adjacent {
+                    Some((0_usize, 2_usize))
+                } else {
+                    None
+                };
+                let mut certified = false;
+                for axis in 0..2 {
+                    if !adjacent
+                        && (strictly_separated(&controls[first], &controls[second], axis)
+                            || strictly_separated(&controls[second], &controls[first], axis)
+                            || [std::cmp::Ordering::Less, std::cmp::Ordering::Greater]
+                                .into_iter()
+                                .any(|side| {
+                                    separated_at_distinct_extremes(
+                                        &controls[first],
+                                        &controls[second],
+                                        axis,
+                                        side,
+                                    )
+                                }))
+                    {
+                        certified = true;
+                        break;
+                    }
+                    let Some((first_endpoint, second_endpoint)) = expected_controls else {
+                        continue;
+                    };
+                    for first_side in [std::cmp::Ordering::Less, std::cmp::Ordering::Greater] {
+                        if separated_at_shared_endpoint(
+                            &controls[first],
+                            first_endpoint,
+                            &controls[second],
+                            second_endpoint,
+                            axis,
+                            first_side,
+                        ) {
+                            certified = true;
+                            break;
+                        }
+                    }
+                    if certified {
+                        break;
+                    }
+                }
+                if !certified {
+                    return Ok(None);
+                }
+            }
+        }
+        Ok(Some(true))
     }
 
     fn circular_arc_chord_wire_is_simple(&self, wire: WireId) -> Result<Option<bool>, BuildError> {
@@ -10800,7 +11188,11 @@ impl ModelBuilder {
             {
                 return Ok(Some(false));
             }
-            let sweep = match arc.directed_sweep_angle().map_err(GeometryError::from)? {
+            let sweep = match arc
+                .directed_sweep_angle(&CurveContext::STRICT)
+                .map_err(GeometryError::from)?
+                .into_value()
+            {
                 Classification::Decided(sweep) => sweep,
                 Classification::Uncertain(_) => return Ok(None),
             };
@@ -10840,7 +11232,7 @@ impl ModelBuilder {
                     continue;
                 }
                 for point in [start, end] {
-                    let on_sweep = match arc.contains_point(point, &CurvePolicy::STRICT) {
+                    let on_sweep = match arc.contains_point(point, &CurveContext::STRICT) {
                         Classification::Decided(value) => value,
                         Classification::Uncertain(_) => return Ok(None),
                     };
@@ -10876,7 +11268,7 @@ impl ModelBuilder {
                 let (first_index, first_chord) = chords[first];
                 let (second_index, second_chord) = chords[second];
                 match first_chord
-                    .intersect_line(second_chord, &CurvePolicy::STRICT)
+                    .intersect_line(second_chord, &CurveContext::STRICT)
                     .map_err(GeometryError::from)?
                 {
                     LineLineIntersection::None => {}
@@ -11024,11 +11416,12 @@ impl ModelBuilder {
     fn validate_curve_path_simplicity(&self, wire: WireId) -> Result<(), BuildError> {
         let path = self.build_wire_curve_path(wire)?;
         let curves = path.curves();
-        let policy = CurvePolicy::STRICT;
+        let policy = CurveContext::STRICT;
         if curves.len() == 2 {
             let relation = curves[0]
                 .intersect_curve(&curves[1], &policy)
-                .map_err(GeometryError::from)?;
+                .map_err(GeometryError::from)?
+                .into_value();
             if !relation.is_complete()
                 || !relation.overlaps().is_empty()
                 || relation.contacts().len() != 2
@@ -11088,7 +11481,8 @@ impl ModelBuilder {
             for second_index in (first_index + 1)..curves.len() {
                 let relation = curves[first_index]
                     .intersect_curve(&curves[second_index], &policy)
-                    .map_err(GeometryError::from)?;
+                    .map_err(GeometryError::from)?
+                    .into_value();
                 if !relation.is_complete() {
                     return Err(GeometryError::UnsupportedIntersection.into());
                 }
@@ -11382,7 +11776,7 @@ impl ModelBuilder {
         if let Some(outer_revolution) =
             self.certified_oriented_revolution_shell(outer, Orientation::Forward)?
         {
-            let policy = CurvePolicy::STRICT;
+            let policy = CurveContext::STRICT;
             let mut revolution_voids = Vec::with_capacity(voids.len());
             for void_shell in voids {
                 let Some(void) =
@@ -11455,13 +11849,13 @@ impl ModelBuilder {
                 ))? != std::cmp::Ordering::Less
                 || !outer_prism
                     .contour
-                    .intersect_contour(&prism.contour, &CurvePolicy::STRICT)
+                    .intersect_contour(&prism.contour, &CurveContext::STRICT)
                     .map_err(GeometryError::from)?
                     .is_empty()
                 || !classification_is_inside(
                     outer_prism
                         .contour
-                        .classify_point(prism.contour.segments()[0].start(), &CurvePolicy::STRICT),
+                        .classify_point(prism.contour.segments()[0].start(), &CurveContext::STRICT),
                 )?
             {
                 return Err(BuildError::VoidShellOutside(*void_shell));
@@ -11486,7 +11880,7 @@ impl ModelBuilder {
                 if separated_in_z {
                     continue;
                 }
-                let policy = CurvePolicy::STRICT;
+                let policy = CurveContext::STRICT;
                 let boundaries_intersect = !first
                     .contour
                     .intersect_contour(&second.contour, &policy)
@@ -11835,20 +12229,16 @@ impl ModelBuilder {
     ) -> Result<bool, BuildError> {
         let first_region = self.face_region_in_plane_frame(first, common_surface)?;
         let second_region = self.face_region_in_plane_frame(second, common_surface)?;
-        match first_region
+        let intersection = first_region
             .boolean_region(
                 &second_region,
                 BooleanOp::Intersection,
-                FillRule::NonZero,
-                &CurvePolicy::STRICT,
+                &CurveContext::STRICT,
             )
             .map_err(GeometryError::from)?
-        {
-            Classification::Decided(region) if !region.is_empty() => return Ok(true),
-            Classification::Decided(_) => {}
-            Classification::Uncertain(reason) => {
-                return Err(GeometryError::PlanarClassificationUnresolved(reason).into());
-            }
+            .into_value();
+        if !intersection.is_empty() {
+            return Ok(true);
         }
 
         let first_edges = self.face_edge_set(first)?;
@@ -11876,7 +12266,7 @@ impl ModelBuilder {
                 )
                 .map_err(GeometryError::from)?;
                 match first_segment
-                    .intersect_line(&second_segment, &CurvePolicy::STRICT)
+                    .intersect_line(&second_segment, &CurveContext::STRICT)
                     .map_err(GeometryError::from)?
                 {
                     LineLineIntersection::None => {}
@@ -12037,7 +12427,7 @@ impl ModelBuilder {
                     });
                 };
                 match source
-                    .intersect_line(boundary, &CurvePolicy::STRICT)
+                    .intersect_line(boundary, &CurveContext::STRICT)
                     .map_err(GeometryError::from)?
                 {
                     LineLineIntersection::None => {}
@@ -12062,7 +12452,11 @@ impl ModelBuilder {
         for cut in &cuts {
             let contact = point.clone() + direction.clone() * cut;
             let contact = project_point_to_surface_plane(&contact, surface)?;
-            match region.classify_point(&contact, &CurvePolicy::STRICT) {
+            match region
+                .classify_point(&contact, &CurveContext::STRICT)
+                .map_err(GeometryError::from)?
+                .into_value()
+            {
                 Classification::Decided(RegionPointLocation::Boundary) => {
                     insert_sorted_real(&mut contacts, cut)?;
                 }
@@ -12088,7 +12482,11 @@ impl ModelBuilder {
                 .map_err(|_| GeometryError::ProjectiveDivision)?;
             let midpoint = point.clone() + direction.clone() * midpoint;
             let midpoint = project_point_to_surface_plane(&midpoint, surface)?;
-            match region.classify_point(&midpoint, &CurvePolicy::STRICT) {
+            match region
+                .classify_point(&midpoint, &CurveContext::STRICT)
+                .map_err(GeometryError::from)?
+                .into_value()
+            {
                 Classification::Decided(
                     RegionPointLocation::Inside | RegionPointLocation::Boundary,
                 ) => intervals.push((interval[0].clone(), interval[1].clone())),
@@ -12138,8 +12536,11 @@ impl ModelBuilder {
                     .face_region_in_plane_frame(*face_id, surface)?
                     .classify_point(
                         &project_point_to_surface_plane(point, surface)?,
-                        &CurvePolicy::STRICT,
-                    ) {
+                        &CurveContext::STRICT,
+                    )
+                    .map_err(GeometryError::from)?
+                    .into_value()
+                {
                     Classification::Decided(
                         RegionPointLocation::Inside | RegionPointLocation::Boundary,
                     ) => return Ok(SolidPointLocation::Boundary),
@@ -12206,8 +12607,11 @@ impl ModelBuilder {
                 .face_region_in_plane_frame(*face_id, surface)?
                 .classify_point(
                     &project_point_to_surface_plane(&intersection, surface)?,
-                    &CurvePolicy::STRICT,
-                ) {
+                    &CurveContext::STRICT,
+                )
+                .map_err(GeometryError::from)?
+                .into_value()
+            {
                 Classification::Decided(RegionPointLocation::Inside) => crossings += 1,
                 Classification::Decided(RegionPointLocation::Outside) => {}
                 Classification::Decided(RegionPointLocation::Boundary)
@@ -12230,7 +12634,7 @@ impl ModelBuilder {
         &self,
         face_id: FaceId,
         frame: &Surface,
-    ) -> Result<LineArcRegion2, BuildError> {
+    ) -> Result<CurveRegion2, BuildError> {
         let face = self.face_ref(face_id)?;
         let mut contours = Vec::with_capacity(face.inner().len() + 1);
         for wire_id in face.boundary_wires() {
@@ -12252,7 +12656,11 @@ impl ModelBuilder {
             contours.push(Contour2::try_new(segments).map_err(GeometryError::from)?);
         }
         let outer = contours.remove(0);
-        Ok(LineArcRegion2::new(vec![outer], contours))
+        Ok(
+            CurveRegion2::try_from_native_contours(vec![outer], contours, &CurveContext::STRICT)
+                .map_err(GeometryError::from)?
+                .into_value(),
+        )
     }
 
     fn face_edge_set(&self, face: FaceId) -> Result<HashSet<EdgeId>, BuildError> {
@@ -12431,8 +12839,7 @@ impl ModelBuilder {
                     return Ok(None);
                 };
                 return Ok(Some(CertifiedPrismShell {
-                    outer,
-                    holes,
+                    profile: CertifiedPrismProfile::Paths { outer, holes },
                     origin,
                     u,
                     v,
@@ -16669,11 +17076,24 @@ impl ModelBuilder {
                         return Ok(None);
                     };
                     if weights.iter().all(|weight| weight == &weights[0]) {
-                        Curve2::try_polynomial_bspline(degree, controls, knots.clone())
-                            .map_err(GeometryError::from)?
+                        Curve2::try_polynomial_bspline(
+                            degree,
+                            controls,
+                            knots.clone(),
+                            &CurveContext::STRICT,
+                        )
+                        .map_err(GeometryError::from)?
+                        .into_value()
                     } else {
-                        Curve2::try_nurbs(degree, controls, weights.clone(), knots.clone())
-                            .map_err(GeometryError::from)?
+                        Curve2::try_nurbs(
+                            degree,
+                            controls,
+                            weights.clone(),
+                            knots.clone(),
+                            &CurveContext::STRICT,
+                        )
+                        .map_err(GeometryError::from)?
+                        .into_value()
                     }
                 }
                 Curve3ExactData::EllipseArc(data) if data.circle => {
@@ -16716,7 +17136,11 @@ impl ModelBuilder {
                     };
                     let arc = CircularArc2::try_from_center(start, end, center, clockwise)
                         .map_err(GeometryError::from)?;
-                    let sweep = match arc.directed_sweep_angle().map_err(GeometryError::from)? {
+                    let sweep = match arc
+                        .directed_sweep_angle(&CurveContext::STRICT)
+                        .map_err(GeometryError::from)?
+                        .into_value()
+                    {
                         Classification::Decided(sweep) => sweep,
                         Classification::Uncertain(reason) => {
                             return Err(BuildError::Geometry(
@@ -16725,7 +17149,7 @@ impl ModelBuilder {
                         }
                     };
                     if !real_values_equal(
-                        &sweep,
+                        sweep,
                         &(represented_profile.domain().end()
                             - represented_profile.domain().start()),
                     )? {
@@ -16805,7 +17229,7 @@ impl ModelBuilder {
             let contour = Contour2::try_new(segments).map_err(GeometryError::from)?;
             let revolution_profile_area = contour.signed_area().map_err(GeometryError::from)?;
             if !contour
-                .intersect_self(&CurvePolicy::STRICT)
+                .intersect_self(&CurveContext::STRICT)
                 .map_err(GeometryError::from)?
                 .is_empty()
                 || decided_model_order(compare_reals(
@@ -16820,11 +17244,14 @@ impl ModelBuilder {
         } else {
             let path = CurvePath2::try_new(ordered).map_err(GeometryError::from)?;
             let area = path
-                .bezier_boundary_loop()
+                .bezier_boundary_loop(&CurveContext::STRICT)
                 .map_err(GeometryError::from)?
+                .into_value()
                 .boundary_loop()
-                .signed_area()
+                .signed_area(&CurveContext::STRICT)
                 .map_err(GeometryError::from)?
+                .into_value();
+            let area = resolve_optional_planar_measurement(area)?
                 .ok_or(BuildError::DegenerateShellVolume(shell))?;
             if decided_model_order(compare_reals(
                 &area,
@@ -19897,6 +20324,10 @@ fn require_real_equal(left: &Real, right: &Real, mismatch: BuildError) -> Result
     }
 }
 
+fn curve_point_coordinate(point: &CurvePoint2, axis: usize) -> &Real {
+    if axis == 0 { point.x() } else { point.y() }
+}
+
 fn require_vector_equal(
     left: &Vector3,
     right: &Vector3,
@@ -19938,7 +20369,8 @@ fn require_curve_point_at_parameter(
     point: &Point3,
     mismatch: BuildError,
 ) -> Result<(), BuildError> {
-    match point3_equal(&curve.point_at(parameter)?, point, crate::STRICT_PREDICATES) {
+    let evaluated = curve.point_at(parameter)?;
+    match point3_equal(&evaluated, point, crate::STRICT_PREDICATES) {
         PredicateOutcome::Decided { value: true, .. } => return Ok(()),
         PredicateOutcome::Decided { value: false, .. } => return Err(mismatch),
         PredicateOutcome::Unknown { .. } => {}
@@ -20144,10 +20576,24 @@ fn update_max(current: &mut Real, candidate: &Real) -> Result<(), GeometryError>
 }
 
 fn curve_path_signed_area(path: &CurvePath2) -> Result<Real, GeometryError> {
-    path.bezier_boundary_loop()?
+    let area = path
+        .bezier_boundary_loop(&CurveContext::STRICT)?
+        .into_value()
         .boundary_loop()
-        .signed_area()?
-        .ok_or(GeometryError::UnsupportedMeasurement)
+        .signed_area(&CurveContext::STRICT)?
+        .into_value();
+    resolve_optional_planar_measurement(area)?.ok_or(GeometryError::UnsupportedMeasurement)
+}
+
+fn resolve_optional_planar_measurement<T>(
+    classification: Classification<Option<T>>,
+) -> Result<Option<T>, GeometryError> {
+    match classification {
+        Classification::Decided(value) => Ok(value),
+        Classification::Uncertain(reason) => {
+            Err(GeometryError::PlanarClassificationUnresolved(reason))
+        }
+    }
 }
 
 fn decided_model_order(
@@ -20381,7 +20827,7 @@ fn arranged_face_split_segments(
     planar: &LineSeg2,
     prior_lines: &[(usize, LineSeg2)],
 ) -> Result<Vec<Curve3>, TopologyEditError> {
-    let policy = CurvePolicy::STRICT;
+    let policy = CurveContext::STRICT;
     let mut cuts = Vec::new();
     for (prior_source, prior) in prior_lines {
         match planar

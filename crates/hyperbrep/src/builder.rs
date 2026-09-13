@@ -4,9 +4,10 @@ use std::collections::HashMap;
 use std::fmt;
 
 use hypercurve::{
-    Aabb2, BezierSubcurve2, CircularArc2, Classification, Contour2, ContourPointLocation, Curve2,
-    CurveGeometry2, CurvePath2, CurvePolicy, LineSeg2, Point2 as CurvePoint2, RationalBezier2,
-    Segment2,
+    Aabb2, BezierSplitFragment2, BezierSubcurve2, CircularArc2, Classification, Contour2,
+    ContourPointLocation, Curve2, CurveBoundaryInteriorSide2, CurveContext, CurveGeometry2,
+    CurvePath2, CurveRegion2, CurveRegionLoopRole, FillRule, LineSeg2, Point2 as CurvePoint2,
+    RationalBezier2, Segment2,
 };
 use hyperlattice::{Point2, Point3, Real, Vector2, Vector3};
 use hyperlimit::{PredicateOutcome, compare_reals, point3_equal};
@@ -1869,6 +1870,147 @@ pub fn extrude_path_regions(
     Ok((builder.finish()?, solids))
 }
 
+/// Extrudes the exact material profiles retained by a certified curve region.
+///
+/// The region remains the topology authority: material/hole ownership and the
+/// filled side of every loop are consumed directly instead of reconstructing
+/// and re-certifying independent paths. Fully materialized boundary fragments
+/// are reversed only when needed to put material on the left before B-rep
+/// topology is authored; retained algebraic-only fragments remain unsupported.
+pub(crate) fn extrude_curve_region(
+    region: &CurveRegion2,
+    z_min: Real,
+    z_max: Real,
+    context: &CurveContext,
+) -> Result<(Model, Vec<SolidId>), ConstructionError> {
+    require_increasing(&z_min, &z_max, Axis::Z)?;
+    let filled_sides = match region
+        .filled_side_is_left(context)
+        .map_err(GeometryError::from)?
+        .into_value()
+    {
+        Classification::Decided(filled_sides) => filled_sides.to_vec(),
+        Classification::Uncertain(reason) => {
+            return Err(
+                BuildError::Geometry(GeometryError::PlanarClassificationUnresolved(reason)).into(),
+            );
+        }
+    };
+    if region.boundary_loops().len() != filled_sides.len() {
+        return Err(GeometryError::UnsupportedPcurveContour.into());
+    }
+    let loop_curves = region
+        .boundary_loops()
+        .iter()
+        .zip(filled_sides.iter().copied())
+        .map(|(boundary, filled_side_is_left)| {
+            persistent_region_boundary_curves(boundary.fragments(), !filled_side_is_left)
+        })
+        .collect::<Result<Vec<_>, _>>()?;
+    let profiles = match region
+        .boundary_profiles(context)
+        .map_err(GeometryError::from)?
+        .into_value()
+    {
+        Classification::Decided(profiles) => profiles,
+        Classification::Uncertain(reason) => {
+            return Err(
+                BuildError::Geometry(GeometryError::PlanarClassificationUnresolved(reason)).into(),
+            );
+        }
+    };
+
+    let mut builder = ModelBuilder::new();
+    let mut solids = Vec::with_capacity(profiles.len());
+    for profile in profiles {
+        let loop_indices = std::iter::once(profile.material_loop_index())
+            .chain(profile.hole_loop_indices().iter().copied())
+            .collect::<Vec<_>>();
+        let mut loops = Vec::with_capacity(loop_indices.len());
+        loops.push(
+            loop_curves
+                .get(profile.material_loop_index())
+                .cloned()
+                .ok_or(GeometryError::UnsupportedPcurveContour)?,
+        );
+        loops.extend(
+            profile
+                .hole_loop_indices()
+                .iter()
+                .map(|index| {
+                    loop_curves
+                        .get(*index)
+                        .cloned()
+                        .ok_or(GeometryError::UnsupportedPcurveContour)
+                })
+                .collect::<Result<Vec<_>, _>>()?,
+        );
+        let mut area = Real::zero();
+        for index in &loop_indices {
+            let signed_area = match region.boundary_loops()[*index]
+                .signed_area(context)
+                .map_err(GeometryError::from)?
+                .into_value()
+            {
+                Classification::Decided(Some(area)) => area,
+                Classification::Decided(None) => {
+                    return Err(GeometryError::UnsupportedMeasurement.into());
+                }
+                Classification::Uncertain(reason) => {
+                    return Err(BuildError::Geometry(
+                        GeometryError::PlanarClassificationUnresolved(reason),
+                    )
+                    .into());
+                }
+            };
+            if filled_sides[*index] {
+                area += signed_area;
+            } else {
+                area -= signed_area;
+            }
+        }
+        let profile_region = CurveRegion2::try_new_with_loop_topology(
+            loop_indices
+                .iter()
+                .map(|index| region.boundary_loops()[*index].clone())
+                .collect(),
+            std::iter::once(CurveRegionLoopRole::Material)
+                .chain(std::iter::repeat_n(
+                    CurveRegionLoopRole::Hole,
+                    profile.hole_loop_indices().len(),
+                ))
+                .collect(),
+            loop_indices
+                .iter()
+                .map(|index| {
+                    region
+                        .loop_fill_rules()
+                        .map_or(FillRule::EvenOdd, |rules| rules[*index])
+                })
+                .collect(),
+            loop_indices
+                .iter()
+                .map(|index| {
+                    if filled_sides[*index] {
+                        CurveBoundaryInteriorSide2::Left
+                    } else {
+                        CurveBoundaryInteriorSide2::Right
+                    }
+                })
+                .collect(),
+        )
+        .map_err(GeometryError::from)?;
+        solids.push(add_persistent_curve_region(
+            &mut builder,
+            &loops,
+            z_min.clone(),
+            z_max.clone(),
+            Some((profile_region, area)),
+        )?);
+    }
+    Ok((builder.finish()?, solids))
+}
+
 fn curve_path_from_contour(contour: &Contour2) -> Result<CurvePath2, ConstructionError> {
     CurvePath2::try_new(contour.segments().iter().map(curve2_from_segment).collect())
         .map_err(GeometryError::from)
@@ -1883,7 +2025,7 @@ fn normalize_contour(
         return Err(ConstructionError::ProfileTooSmall);
     }
     if !contour
-        .intersect_self(&CurvePolicy::STRICT)
+        .intersect_self(&CurveContext::STRICT)
         .map_err(GeometryError::from)?
         .is_empty()
     {
@@ -1926,7 +2068,7 @@ fn normalize_contour(
 }
 
 fn validate_contour_nesting(outer: &Contour2, holes: &[Contour2]) -> Result<(), ConstructionError> {
-    let policy = CurvePolicy::STRICT;
+    let policy = CurveContext::STRICT;
     for hole in holes {
         if !outer
             .intersect_contour(hole, &policy)
@@ -1987,6 +2129,16 @@ fn add_curve_path_region(
         .iter()
         .map(persistent_extrusion_path_curves)
         .collect::<Result<Vec<_>, _>>()?;
+    add_persistent_curve_region(builder, &loop_curves, z_min, z_max, None)
+}
+
+fn add_persistent_curve_region(
+    builder: &mut ModelBuilder,
+    loop_curves: &[Vec<Curve2>],
+    z_min: Real,
+    z_max: Real,
+    curve_region: Option<(CurveRegion2, Real)>,
+) -> Result<SolidId, ConstructionError> {
     let loop_offsets = loop_curves
         .iter()
         .scan(0_usize, |offset, curves| {
@@ -2038,20 +2190,22 @@ fn add_curve_path_region(
         let bottom_curve = spatial_extrusion_curve(pcurve, &z_min)?;
         let domain = bottom_curve.domain().clone();
         let bottom_curve_id = builder.curve(bottom_curve.clone())?;
-        bottom_edges.push(builder.edge(
+        bottom_edges.push(builder.edge_with_endpoint_certificate(
             vertices[index],
             vertices[next],
             bottom_curve_id,
             domain.clone(),
+            true,
         )?);
         let top_curve = spatial_extrusion_curve(pcurve, &z_max)?;
         let top_domain = top_curve.domain().clone();
         let top_curve_id = builder.curve(top_curve)?;
-        top_edges.push(builder.edge(
+        top_edges.push(builder.edge_with_endpoint_certificate(
             vertices[index + count],
             vertices[next + count],
             top_curve_id,
             top_domain,
+            true,
         )?);
         bottom_curves.push(bottom_curve);
         domains.push(domain);
@@ -2075,23 +2229,29 @@ fn add_curve_path_region(
         Vector3::x(),
         Vector3::y(),
     )?)?;
-    let mut bottom_wires = Vec::with_capacity(loops.len());
+    let mut bottom_wires = Vec::with_capacity(loop_curves.len());
     for (loop_curves, offset) in loop_curves.iter().zip(&loop_offsets) {
         let mut uses = Vec::with_capacity(loop_curves.len());
         for local in (0..loop_curves.len()).rev() {
             let index = offset + local;
             let pcurve = builder.pcurve(Pcurve::new(
-                curves[index].reversed().map_err(GeometryError::from)?,
+                curves[index]
+                    .reversed(&CurveContext::STRICT)
+                    .map_err(GeometryError::from)?
+                    .into_value(),
             ))?;
             let correspondence = planar_curve_correspondence(&curves[index], Direction::Reversed)?;
-            uses.push(builder.edge_use(
+            uses.push(builder.edge_use_with_image_certificate(
                 bottom_edges[index],
                 Direction::Reversed,
                 pcurve,
                 correspondence,
+                true,
             )?);
         }
-        bottom_wires.push(builder.wire(uses)?);
+        // Every caller has already certified these profile loops, either by
+        // the explicit path validators or by an authoritative CurveRegion2.
+        bottom_wires.push(builder.wire_with_simplicity_certificate(uses, true)?);
     }
     let bottom_face = builder.face(
         bottom_surface,
@@ -2105,20 +2265,21 @@ fn add_curve_path_region(
         Vector3::x(),
         Vector3::y(),
     )?)?;
-    let mut top_wires = Vec::with_capacity(loops.len());
+    let mut top_wires = Vec::with_capacity(loop_curves.len());
     for (loop_curves, offset) in loop_curves.iter().zip(&loop_offsets) {
         let mut uses = Vec::with_capacity(loop_curves.len());
         for local in 0..loop_curves.len() {
             let index = offset + local;
             let pcurve = builder.pcurve(Pcurve::new(curves[index].clone()))?;
-            uses.push(builder.edge_use(
+            uses.push(builder.edge_use_with_image_certificate(
                 top_edges[index],
                 Direction::Forward,
                 pcurve,
                 planar_curve_correspondence(&curves[index], Direction::Forward)?,
+                true,
             )?);
         }
-        top_wires.push(builder.wire(uses)?);
+        top_wires.push(builder.wire_with_simplicity_certificate(uses, true)?);
     }
     let top_face = builder.face(
         top_surface,
@@ -2177,15 +2338,26 @@ fn add_curve_path_region(
             let pcurve = builder.pcurve(Pcurve::new(Curve2::from(
                 LineSeg2::try_new(start, end).map_err(GeometryError::from)?,
             )))?;
-            uses.push(builder.edge_use(edge, direction, pcurve, correspondence)?);
+            uses.push(builder.edge_use_with_image_certificate(
+                edge,
+                direction,
+                pcurve,
+                correspondence,
+                true,
+            )?);
         }
-        let wire = builder.wire(uses)?;
+        let wire = builder.wire_with_simplicity_certificate(uses, true)?;
         side_faces.push(builder.face(surface, Orientation::Forward, wire, Vec::new())?);
     }
     let mut faces = vec![bottom_face, top_face];
     faces.extend(side_faces);
     let shell = builder.shell(faces)?;
-    Ok(builder.solid(shell, Vec::new())?)
+    let solid = if let Some((region, area)) = curve_region {
+        builder.solid_with_curve_region_prism_certificate(shell, region, area, z_min, z_max)?
+    } else {
+        builder.solid(shell, Vec::new())?
+    };
+    Ok(solid)
 }
 
 fn spatial_segment_curve(
@@ -2226,8 +2398,12 @@ fn spatial_segment_curve(
                 (tangent_y / &radius).map_err(|_| GeometryError::ProjectiveDivision)?,
                 Real::zero(),
             );
-            let sweep = match arc.directed_sweep_angle().map_err(GeometryError::from)? {
-                Classification::Decided(sweep) => sweep,
+            let sweep = match arc
+                .directed_sweep_angle(&CurveContext::STRICT)
+                .map_err(GeometryError::from)?
+                .into_value()
+            {
+                Classification::Decided(sweep) => (*sweep).clone(),
                 Classification::Uncertain(reason) => {
                     return Err(BuildError::Geometry(
                         GeometryError::PlanarClassificationUnresolved(reason),
@@ -3357,7 +3533,7 @@ fn validate_revolution_profile_radius(profile: &[Point2]) -> Result<(), Construc
 
 fn normalize_revolution_contour(contour: &Contour2) -> Result<Contour2, ConstructionError> {
     let contour = normalize_contour(contour, true)?;
-    let bounds = match Aabb2::from_contour(&contour, &CurvePolicy::STRICT)
+    let bounds = match Aabb2::from_contour(&contour, &CurveContext::STRICT)
         .map_err(GeometryError::from)?
     {
         Classification::Decided(bounds) => bounds,
@@ -3395,19 +3571,35 @@ fn exact_parameter_is(parameter: Option<Real>, expected: &Real) -> Result<bool, 
         .map(Option::unwrap_or_default)
 }
 
+fn required_curve_path_signed_area(
+    path: &CurvePath2,
+    unsupported: ConstructionError,
+) -> Result<Real, ConstructionError> {
+    match path
+        .bezier_boundary_loop(&CurveContext::STRICT)
+        .map_err(GeometryError::from)?
+        .into_value()
+        .boundary_loop()
+        .signed_area(&CurveContext::STRICT)
+        .map_err(GeometryError::from)?
+        .into_value()
+    {
+        Classification::Decided(Some(area)) => Ok(area),
+        Classification::Decided(None) => Err(unsupported),
+        Classification::Uncertain(reason) => {
+            Err(BuildError::Geometry(GeometryError::PlanarClassificationUnresolved(reason)).into())
+        }
+    }
+}
+
 fn normalize_planar_path(
     path: &CurvePath2,
     counterclockwise: bool,
 ) -> Result<CurvePath2, ConstructionError> {
     let path = partition_periodic_curve_path(path, ConstructionError::UnsupportedPlanarProfile)?;
     validate_simple_curve_path(&path, ConstructionError::UnsupportedPlanarProfile)?;
-    let signed_area = path
-        .bezier_boundary_loop()
-        .map_err(GeometryError::from)?
-        .boundary_loop()
-        .signed_area()
-        .map_err(GeometryError::from)?
-        .ok_or(ConstructionError::UnsupportedPlanarProfile)?;
+    let signed_area =
+        required_curve_path_signed_area(&path, ConstructionError::UnsupportedPlanarProfile)?;
     match compare_reals(&signed_area, &Real::zero(), crate::STRICT_PREDICATES) {
         PredicateOutcome::Decided {
             value: std::cmp::Ordering::Greater,
@@ -3421,7 +3613,8 @@ fn normalize_planar_path(
             value: std::cmp::Ordering::Greater | std::cmp::Ordering::Less,
             ..
         } => path
-            .reversed()
+            .reversed(&CurveContext::STRICT)
+            .map(|outcome| outcome.into_value())
             .map_err(GeometryError::from)
             .map_err(Into::into),
         PredicateOutcome::Decided { .. } => Err(ConstructionError::DegenerateProfile),
@@ -3435,12 +3628,13 @@ fn validate_planar_path_nesting(
     outer: &CurvePath2,
     holes: &[CurvePath2],
 ) -> Result<(), ConstructionError> {
-    let policy = CurvePolicy::STRICT;
+    let policy = CurveContext::STRICT;
     let paths_are_disjoint =
         |first: &CurvePath2, second: &CurvePath2| -> Result<bool, ConstructionError> {
             let result = first
                 .intersect_path(second, &policy)
-                .map_err(GeometryError::from)?;
+                .map_err(GeometryError::from)?
+                .into_value();
             if !result.is_complete() {
                 return Err(ConstructionError::UnsupportedPlanarProfile);
             }
@@ -3452,6 +3646,7 @@ fn validate_planar_path_nesting(
         match container
             .classify_point(point, &policy)
             .map_err(GeometryError::from)?
+            .into_value()
         {
             Classification::Decided(location) => Ok(location),
             Classification::Uncertain(reason) => Err(BuildError::Geometry(
@@ -3510,18 +3705,48 @@ fn persistent_rational_bezier(curve: &BezierSubcurve2) -> Result<Curve2, Constru
             curve.control_points().into_iter().cloned().collect(),
             vec![Real::one(); 4],
         ),
-        BezierSubcurve2::RationalQuadratic(curve) => (
-            curve.control_points().into_iter().cloned().collect(),
-            curve.weights().into_iter().cloned().collect(),
-        ),
-        BezierSubcurve2::Rational(curve) => {
-            (curve.control_points().to_vec(), curve.weights().to_vec())
+        // Preserve the native conic family and its lineage certificate.
+        // Promoting this to a general rational Bezier discards the family
+        // distinction that strict downstream topology predicates consume.
+        BezierSubcurve2::RationalQuadratic(curve) => {
+            return Ok(Curve2::from(curve.clone()));
         }
+        BezierSubcurve2::Rational(curve) => return Ok(Curve2::from(curve.clone())),
     };
     RationalBezier2::try_new(control_points, weights)
         .map(Curve2::from)
         .map_err(GeometryError::from)
         .map_err(Into::into)
+}
+
+fn persistent_materialized_fragment_curve(
+    fragment: &BezierSplitFragment2,
+) -> Result<Curve2, ConstructionError> {
+    let BezierSplitFragment2::Materialized { curve, .. } = fragment else {
+        return Err(GeometryError::UnsupportedPcurveContour.into());
+    };
+    persistent_rational_bezier(curve)
+}
+
+fn persistent_region_boundary_curves(
+    fragments: &[BezierSplitFragment2],
+    reverse: bool,
+) -> Result<Vec<Curve2>, ConstructionError> {
+    if reverse {
+        fragments
+            .iter()
+            .rev()
+            .map(|fragment| {
+                let reversed = fragment.reversed().map_err(GeometryError::from)?;
+                persistent_materialized_fragment_curve(&reversed)
+            })
+            .collect()
+    } else {
+        fragments
+            .iter()
+            .map(persistent_materialized_fragment_curve)
+            .collect()
+    }
 }
 
 fn persistent_planar_path_curves(path: &CurvePath2) -> Result<Vec<Curve2>, ConstructionError> {
@@ -3539,21 +3764,30 @@ fn persistent_planar_path_curves(path: &CurvePath2) -> Result<Vec<Curve2>, Const
                         curve.control_points().to_vec(),
                         vec![Real::one(); curve.control_points().len()],
                         curve.knots().to_vec(),
+                        &CurveContext::STRICT,
                     )
-                    .map_err(GeometryError::from)?,
+                    .map_err(GeometryError::from)?
+                    .into_value(),
                 );
             }
-            Some(CurveGeometry2::CircularArc(_))
-            | Some(CurveGeometry2::QuadraticBezier(_))
-            | Some(CurveGeometry2::CubicBezier(_))
-            | Some(CurveGeometry2::RationalQuadraticBezier(_)) => {
+            Some(CurveGeometry2::CircularArc(_)) => {
                 for fragment in curve
-                    .native_bezier_fragments()
+                    .native_bezier_fragments(&CurveContext::STRICT)
                     .map_err(GeometryError::from)?
+                    .into_value()
                 {
                     persistent.push(persistent_rational_bezier(fragment.curve())?);
                 }
             }
+            Some(CurveGeometry2::QuadraticBezier(curve)) => persistent.push(
+                persistent_rational_bezier(&BezierSubcurve2::Quadratic(curve.clone()))?,
+            ),
+            Some(CurveGeometry2::CubicBezier(curve)) => persistent.push(
+                persistent_rational_bezier(&BezierSubcurve2::Cubic(curve.clone()))?,
+            ),
+            Some(CurveGeometry2::RationalQuadraticBezier(curve)) => persistent.push(
+                persistent_rational_bezier(&BezierSubcurve2::RationalQuadratic(curve.clone()))?,
+            ),
         }
     }
     Ok(persistent)
@@ -3575,20 +3809,21 @@ fn persistent_extrusion_path_curves(path: &CurvePath2) -> Result<Vec<Curve2>, Co
                         curve.control_points().to_vec(),
                         vec![Real::one(); curve.control_points().len()],
                         curve.knots().to_vec(),
+                        &CurveContext::STRICT,
                     )
-                    .map_err(GeometryError::from)?,
+                    .map_err(GeometryError::from)?
+                    .into_value(),
                 );
             }
-            Some(CurveGeometry2::QuadraticBezier(_))
-            | Some(CurveGeometry2::CubicBezier(_))
-            | Some(CurveGeometry2::RationalQuadraticBezier(_)) => {
-                for fragment in curve
-                    .native_bezier_fragments()
-                    .map_err(GeometryError::from)?
-                {
-                    persistent.push(persistent_rational_bezier(fragment.curve())?);
-                }
-            }
+            Some(CurveGeometry2::QuadraticBezier(curve)) => persistent.push(
+                persistent_rational_bezier(&BezierSubcurve2::Quadratic(curve.clone()))?,
+            ),
+            Some(CurveGeometry2::CubicBezier(curve)) => persistent.push(
+                persistent_rational_bezier(&BezierSubcurve2::Cubic(curve.clone()))?,
+            ),
+            Some(CurveGeometry2::RationalQuadraticBezier(curve)) => persistent.push(
+                persistent_rational_bezier(&BezierSubcurve2::RationalQuadratic(curve.clone()))?,
+            ),
         }
     }
     Ok(persistent)
@@ -3606,6 +3841,10 @@ fn spatial_extrusion_curve(curve: &Curve2, z: &Real) -> Result<Curve3, Construct
             curve.control_points().iter().map(lift).collect(),
             curve.weights().to_vec(),
         )?),
+        Some(CurveGeometry2::RationalQuadraticBezier(curve)) => Ok(Curve3::rational_bezier(
+            curve.control_points().into_iter().map(lift).collect(),
+            curve.weights().into_iter().cloned().collect(),
+        )?),
         Some(CurveGeometry2::Nurbs(curve)) => Ok(Curve3::nurbs(
             curve.degree(),
             curve.control_points().iter().map(lift).collect(),
@@ -3614,8 +3853,9 @@ fn spatial_extrusion_curve(curve: &Curve2, z: &Real) -> Result<Curve3, Construct
         )?),
         Some(CurveGeometry2::QuadraticBezier(_))
         | Some(CurveGeometry2::CubicBezier(_))
-        | Some(CurveGeometry2::RationalQuadraticBezier(_))
-        | Some(CurveGeometry2::PolynomialBSpline(_)) => Err(ConstructionError::UnsupportedPlanarProfile),
+        | Some(CurveGeometry2::PolynomialBSpline(_)) => {
+            Err(ConstructionError::UnsupportedPlanarProfile)
+        }
     }
 }
 
@@ -3660,6 +3900,14 @@ fn lift_planar_pcurve(curve: &Curve2, surface: &Surface) -> Result<Curve3, Const
                 .collect::<Result<Vec<_>, _>>()?,
             curve.weights().to_vec(),
         )?),
+        Some(CurveGeometry2::RationalQuadraticBezier(curve)) => Ok(Curve3::rational_bezier(
+            curve
+                .control_points()
+                .into_iter()
+                .map(&lift)
+                .collect::<Result<Vec<_>, _>>()?,
+            curve.weights().into_iter().cloned().collect(),
+        )?),
         Some(CurveGeometry2::Nurbs(curve)) => Ok(Curve3::nurbs(
             curve.degree(),
             curve
@@ -3673,8 +3921,9 @@ fn lift_planar_pcurve(curve: &Curve2, surface: &Surface) -> Result<Curve3, Const
         Some(CurveGeometry2::CircularArc(_))
         | Some(CurveGeometry2::QuadraticBezier(_))
         | Some(CurveGeometry2::CubicBezier(_))
-        | Some(CurveGeometry2::RationalQuadraticBezier(_))
-        | Some(CurveGeometry2::PolynomialBSpline(_)) => Err(ConstructionError::UnsupportedPlanarProfile),
+        | Some(CurveGeometry2::PolynomialBSpline(_)) => {
+            Err(ConstructionError::UnsupportedPlanarProfile)
+        }
     }
 }
 
@@ -3731,10 +3980,11 @@ fn validate_simple_curve_path(
     profile: &CurvePath2,
     unsupported: ConstructionError,
 ) -> Result<(), ConstructionError> {
-    let policy = CurvePolicy::STRICT;
+    let policy = CurveContext::STRICT;
     let fragments = profile
-        .native_bezier_fragments()
-        .map_err(GeometryError::from)?;
+        .native_bezier_fragments(&policy)
+        .map_err(GeometryError::from)?
+        .into_value();
     if fragments.len() < 2 {
         return Err(ConstructionError::ProfileTooSmall);
     }
@@ -3754,7 +4004,8 @@ fn validate_simple_curve_path(
         for second_index in first_index + 1..curves.len() {
             let result = curves[first_index]
                 .intersect_curve(&curves[second_index], &policy)
-                .map_err(GeometryError::from)?;
+                .map_err(GeometryError::from)?
+                .into_value();
             if !result.blockers().is_empty() {
                 return Err(unsupported.clone());
             }
@@ -3817,8 +4068,9 @@ fn partition_periodic_curve_path(
         return Err(unsupported.clone());
     }
     let fragments = curve
-        .native_bezier_fragments()
-        .map_err(GeometryError::from)?;
+        .native_bezier_fragments(&CurveContext::STRICT)
+        .map_err(GeometryError::from)?
+        .into_value();
     if fragments.len() < 2 {
         return Err(ConstructionError::ProfileTooSmall);
     }
@@ -3827,7 +4079,8 @@ fn partition_periodic_curve_path(
         .map(|fragment| {
             let (start, end) = fragment.parameter_range();
             curve
-                .clamped_subcurve(start.clone(), end.clone())
+                .clamped_subcurve(start.clone(), end.clone(), &CurveContext::STRICT)
+                .map(|outcome| outcome.into_value())
                 .map_err(GeometryError::from)
                 .map_err(Into::into)
         })
@@ -3859,13 +4112,8 @@ fn normalize_revolution_path(profile: &CurvePath2) -> Result<CurvePath2, Constru
             );
         }
     }
-    let signed_area = profile
-        .bezier_boundary_loop()
-        .map_err(GeometryError::from)?
-        .boundary_loop()
-        .signed_area()
-        .map_err(GeometryError::from)?
-        .ok_or(ConstructionError::UnsupportedRevolutionProfile)?;
+    let signed_area =
+        required_curve_path_signed_area(&profile, ConstructionError::UnsupportedRevolutionProfile)?;
     match compare_reals(&signed_area, &Real::zero(), crate::STRICT_PREDICATES) {
         PredicateOutcome::Decided {
             value: std::cmp::Ordering::Greater,
@@ -3875,7 +4123,8 @@ fn normalize_revolution_path(profile: &CurvePath2) -> Result<CurvePath2, Constru
             value: std::cmp::Ordering::Less,
             ..
         } => profile
-            .reversed()
+            .reversed(&CurveContext::STRICT)
+            .map(|outcome| outcome.into_value())
             .map_err(GeometryError::from)
             .map_err(Into::into),
         PredicateOutcome::Decided { .. } => Err(ConstructionError::DegenerateProfile),
@@ -4019,8 +4268,12 @@ fn spatial_revolution_segment(
                 * ((tangent_radial / &radius).map_err(|_| GeometryError::ProjectiveDivision)?)
                 + Vector3::z()
                     * ((tangent_axial / &radius).map_err(|_| GeometryError::ProjectiveDivision)?);
-            let sweep = match arc.directed_sweep_angle().map_err(GeometryError::from)? {
-                Classification::Decided(sweep) => sweep,
+            let sweep = match arc
+                .directed_sweep_angle(&CurveContext::STRICT)
+                .map_err(GeometryError::from)?
+                .into_value()
+            {
+                Classification::Decided(sweep) => (*sweep).clone(),
                 Classification::Uncertain(reason) => {
                     return Err(BuildError::Geometry(
                         GeometryError::PlanarClassificationUnresolved(reason),
@@ -4656,7 +4909,7 @@ fn normalize_profile(
     }
     let contour = Contour2::try_new(contour_segments).map_err(GeometryError::from)?;
     if !contour
-        .intersect_self(&CurvePolicy::STRICT)
+        .intersect_self(&CurveContext::STRICT)
         .map_err(GeometryError::from)?
         .is_empty()
     {
@@ -4693,7 +4946,7 @@ fn validate_profile_nesting(
     outer: &[Point2],
     holes: &[Vec<Point2>],
 ) -> Result<(), ConstructionError> {
-    let policy = CurvePolicy::STRICT;
+    let policy = CurveContext::STRICT;
     let outer_contour = contour_from_profile(outer)?;
     let hole_contours = holes
         .iter()
@@ -5170,15 +5423,18 @@ mod tests {
                 vec![cp(0, 0), cp(2, 0), cp(4, 0)],
                 vec![Real::one(), r(2), r(3)],
                 vec![r(2), r(2), r(2), r(5), r(5), r(5)],
+                &CurveContext::STRICT,
             )
-            .unwrap(),
+            .unwrap()
+            .into_value(),
             line(4, 0, 4, 4),
             line(4, 4, 0, 4),
             line(0, 4, 0, 0),
         ])
         .unwrap()
-        .reversed()
-        .unwrap();
+        .reversed(&CurveContext::STRICT)
+        .unwrap()
+        .into_value();
         let hole_center = cp(2, 2);
         let hole = CurvePath2::try_new(vec![
             Curve2::from(
@@ -5230,7 +5486,9 @@ mod tests {
         assert_eq!(
             model
                 .pcurves()
-                .filter(|(_, pcurve)| pcurve.kind() == hypercurve::CurveFamily2::RationalBezier)
+                .filter(|(_, pcurve)| {
+                    pcurve.kind() == hypercurve::CurveFamily2::RationalQuadraticBezier
+                })
                 .count(),
             4
         );
@@ -5309,15 +5567,18 @@ mod tests {
                 vec![cp(0, 0), cp(2, 0), cp(4, 0)],
                 vec![Real::one(), r(2), r(3)],
                 vec![r(2), r(2), r(2), r(5), r(5), r(5)],
+                &CurveContext::STRICT,
             )
-            .unwrap(),
+            .unwrap()
+            .into_value(),
             line(4, 0, 4, 4),
             line(4, 4, 0, 4),
             line(0, 4, 0, 0),
         ])
         .unwrap()
-        .reversed()
-        .unwrap();
+        .reversed(&CurveContext::STRICT)
+        .unwrap()
+        .into_value();
         let hole_center = cp(2, 2);
         let hole = CurvePath2::try_new(vec![
             Curve2::from(
@@ -7464,8 +7725,10 @@ mod tests {
                 vec![cp(4, 0), cp(5, 1), cp(4, 2)],
                 vec![Real::one(); 3],
                 vec![r(0), r(0), r(0), r(1), r(1), r(1)],
+                &CurveContext::STRICT,
             )
-            .unwrap(),
+            .unwrap()
+            .into_value(),
             Curve2::from(LineSeg2::try_new(cp(4, 2), cp(2, 2)).unwrap()),
             Curve2::from(LineSeg2::try_new(cp(2, 2), cp(2, 0)).unwrap()),
         ])
@@ -7541,8 +7804,10 @@ mod tests {
                 vec![cp(2, 2), cp(2, 0)],
                 vec![r(2), r(5)],
                 vec![r(0), r(0), r(1), r(1)],
+                &CurveContext::STRICT,
             )
-            .unwrap(),
+            .unwrap()
+            .into_value(),
         ])
         .unwrap();
         let (model, solid) = revolve_path(&profile).unwrap();
@@ -7610,8 +7875,14 @@ mod tests {
         let controls = vec![cp(3, 0), cp(5, 0), cp(5, 2), cp(3, 2)];
         let period_knots = (0..=4).map(r).collect::<Vec<_>>();
         let polynomial_profile = CurvePath2::try_new(vec![
-            Curve2::try_periodic_polynomial_bspline(2, controls.clone(), period_knots.clone())
-                .unwrap(),
+            Curve2::try_periodic_polynomial_bspline(
+                2,
+                controls.clone(),
+                period_knots.clone(),
+                &CurveContext::STRICT,
+            )
+            .unwrap()
+            .into_value(),
         ])
         .unwrap();
         let (model, solid) = revolve_path(&polynomial_profile).unwrap();
@@ -7645,8 +7916,15 @@ mod tests {
         );
 
         let rational_profile = CurvePath2::try_new(vec![
-            Curve2::try_periodic_nurbs(2, controls, vec![r(1), r(2), r(3), r(4)], period_knots)
-                .unwrap(),
+            Curve2::try_periodic_nurbs(
+                2,
+                controls,
+                vec![r(1), r(2), r(3), r(4)],
+                period_knots,
+                &CurveContext::STRICT,
+            )
+            .unwrap()
+            .into_value(),
         ])
         .unwrap();
         let (rational_model, rational_solid) = revolve_path(&rational_profile).unwrap();
@@ -7683,8 +7961,10 @@ mod tests {
                 vec![cp(4, 0), cp(5, 1), cp(4, 2)],
                 vec![Real::one(); 3],
                 vec![r(0), r(0), r(0), r(1), r(1), r(1)],
+                &CurveContext::STRICT,
             )
-            .unwrap(),
+            .unwrap()
+            .into_value(),
             Curve2::from(LineSeg2::try_new(cp(4, 2), cp(2, 2)).unwrap()),
             Curve2::from(LineSeg2::try_new(cp(2, 2), cp(2, 0)).unwrap()),
         ])
