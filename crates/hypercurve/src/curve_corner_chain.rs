@@ -5,14 +5,14 @@
 
 use super::*;
 
-pub(super) struct CurveCornerChain2<'a> {
+pub(crate) struct CurveCornerChain2<'a> {
     fragments: &'a [BezierSplitFragment2],
     closed: bool,
 }
 
 impl<'a> CurveCornerChain2<'a> {
     /// Borrows a nonempty chain whose joins the caller has already certified.
-    pub(super) fn new(fragments: &'a [BezierSplitFragment2], closed: bool) -> Self {
+    pub(crate) fn new(fragments: &'a [BezierSplitFragment2], closed: bool) -> Self {
         debug_assert!(!fragments.is_empty());
         Self { fragments, closed }
     }
@@ -90,16 +90,11 @@ impl<'a> CurveCornerChain2<'a> {
                 policy,
             )?
             .is_some();
-        previous_source.prepare(previous_fragment, CurveOperation2::Chamfer, policy)?;
-        next_source.prepare(next_fragment, CurveOperation2::Chamfer, policy)?;
-        let previous_carrier = previous_source.exact_carrier(
-            previous_fragment,
-            true,
-            CurveOperation2::Chamfer,
-            policy,
-        )?;
-        let next_carrier =
-            next_source.exact_carrier(next_fragment, false, CurveOperation2::Chamfer, policy)?;
+        previous_source.prepare(CurveOperation2::Chamfer, policy)?;
+        next_source.prepare(CurveOperation2::Chamfer, policy)?;
+        let previous_carrier =
+            previous_source.exact_carrier(true, CurveOperation2::Chamfer, policy)?;
+        let next_carrier = next_source.exact_carrier(false, CurveOperation2::Chamfer, policy)?;
         let previous_retained_arc = previous_carrier.retained_rational_arc_support().cloned();
         let next_retained_arc = next_carrier.retained_rational_arc_support().cloned();
         let solutions = solve_exact_chamfer_corner(
@@ -166,128 +161,149 @@ impl<'a> CurveCornerChain2<'a> {
             {
                 return Ok(None);
             }
-            // The corner solver has already certified these two point
-            // witnesses distinct. Capture the chord's exact monotone axis
-            // before extension canonicalization reparameterizes either point
-            // onto a finite local envelope. The carrier switch preserves the
-            // points but can otherwise turn a cheap one-field direction proof
-            // into an unnecessary Cartesian compositum.
-            let chord_authority = if previous_cut.point.coordinates().is_some()
-                && next_cut.point.coordinates().is_some()
-            {
-                None
-            } else {
-                match policy
-                    .strict_predicate_pass(|| {
-                        crate::BezierAlgebraicChord2::try_new_from_certified_distinct_endpoints(
-                            previous_cut.point.clone(),
-                            next_cut.point.clone(),
-                            policy,
-                        )
-                    })
-                    .map_err(|cause| curve_region_edit_error(CurveOperation2::Chamfer, cause))?
-                {
-                    Classification::Decided(chord) => Some(chord),
-                    Classification::Uncertain(_) => None,
-                }
-            };
-            // Interior cuts retain the authored source parameter and circle
-            // certificate. Only extensions need charts beyond that domain.
-            let distinct_fragments = previous_cut_index != next_cut_index;
-            let previous_replacement = match (
-                distinct_fragments,
-                previous_retained_arc.as_ref(),
-                previous_cut.placement,
-            ) {
-                (true, Some(support), CornerPlacement2::Extension) => {
-                    Some(Self::retained_arc_chamfer_fragments(
-                        &self.fragments()[previous_cut_index],
-                        support,
-                        &previous_cut,
-                        true,
-                        policy,
-                    )?)
-                }
-                _ => None,
-            };
-            let next_replacement = match (
-                distinct_fragments,
-                next_retained_arc.as_ref(),
-                next_cut.placement,
-            ) {
-                (true, Some(support), CornerPlacement2::Extension) => {
-                    Some(Self::retained_arc_chamfer_fragments(
-                        &self.fragments()[next_cut_index],
-                        support,
-                        &next_cut,
-                        false,
-                        policy,
-                    )?)
-                }
-                _ => None,
-            };
-            if fragment_count == 1
-                && (previous_cut.placement == CornerPlacement2::Extension
-                    || next_cut.placement == CornerPlacement2::Extension)
-            {
-                if previous_replacement.is_some() || next_replacement.is_some() {
-                    return Err(ExactCurveError::blocked(
-                        CurveOperation2::Chamfer,
-                        CurveFamily2::CircularArc,
-                        UncertaintyReason::Unsupported,
-                    ));
-                }
-                Self::canonicalize_retained_single_fragment_extension_cuts(
-                    previous_fragment,
-                    &mut previous_cut,
-                    &mut next_cut,
-                    CurveOperation2::Chamfer,
-                    policy,
-                )?;
-            } else {
-                if previous_replacement.is_none() {
-                    Self::canonicalize_retained_corner_cut(
-                        &self.fragments()[previous_cut_index],
-                        &mut previous_cut,
-                        true,
-                        CurveOperation2::Chamfer,
-                        policy,
-                    )?;
-                }
-                if next_replacement.is_none() {
-                    Self::canonicalize_retained_corner_cut(
-                        &self.fragments()[next_cut_index],
-                        &mut next_cut,
-                        false,
-                        CurveOperation2::Chamfer,
-                        policy,
-                    )?;
-                }
-            }
-            if fragment_count == 1
-                && !retained_single_fragment_corner_cuts_are_separated(
-                    previous_fragment,
-                    &previous_cut,
-                    &next_cut,
-                    CurveOperation2::Chamfer,
-                    policy,
-                )?
-            {
-                return Ok(None);
-            }
-            let rebuilt = self.rebuild_retained_chamfer(
+            self.reconstruct_chamfer(
                 previous_cut_index,
                 next_cut_index,
                 previous_cut,
                 next_cut,
-                chord_authority,
-                previous_replacement,
-                next_replacement,
+                previous_retained_arc.as_ref(),
+                next_retained_arc.as_ref(),
                 policy,
-            )?;
-            Ok(Some(rebuilt))
+            )
         })?;
         Ok(compact_optional_corner_solutions(solutions))
+    }
+
+    /// Replays already selected cuts; contact solving remains with the source
+    /// domains, which may contain more than one rational chart.
+    pub(crate) fn reconstruct_chamfer(
+        &self,
+        previous_index: usize,
+        next_index: usize,
+        mut previous_cut: CornerTrimCut2,
+        mut next_cut: CornerTrimCut2,
+        previous_retained_arc: Option<&CircularArc2>,
+        next_retained_arc: Option<&CircularArc2>,
+        policy: &CurveContext,
+    ) -> ExactCurveResult<Option<Vec<BezierSplitFragment2>>> {
+        let fragment_count = self.fragments().len();
+        let previous_fragment = &self.fragments()[previous_index];
+        // The corner solver has already certified these two point
+        // witnesses distinct. Capture the chord's exact monotone axis
+        // before extension canonicalization reparameterizes either point
+        // onto a finite local envelope. The carrier switch preserves the
+        // points but can otherwise turn a cheap one-field direction proof
+        // into an unnecessary Cartesian compositum.
+        let chord_authority = if previous_cut.point.coordinates().is_some()
+            && next_cut.point.coordinates().is_some()
+        {
+            None
+        } else {
+            match policy
+                .strict_predicate_pass(|| {
+                    crate::BezierAlgebraicChord2::try_new_from_certified_distinct_endpoints(
+                        previous_cut.point.clone(),
+                        next_cut.point.clone(),
+                        policy,
+                    )
+                })
+                .map_err(|cause| curve_region_edit_error(CurveOperation2::Chamfer, cause))?
+            {
+                Classification::Decided(chord) => Some(chord),
+                Classification::Uncertain(_) => None,
+            }
+        };
+        // Interior cuts retain the authored source parameter and circle
+        // certificate. Only extensions need charts beyond that domain.
+        let distinct_fragments = previous_index != next_index;
+        let previous_replacement = match (
+            distinct_fragments,
+            previous_retained_arc,
+            previous_cut.placement,
+        ) {
+            (true, Some(support), CornerPlacement2::Extension) => {
+                Some(Self::retained_arc_chamfer_fragments(
+                    &self.fragments()[previous_index],
+                    support,
+                    &previous_cut,
+                    true,
+                    policy,
+                )?)
+            }
+            _ => None,
+        };
+        let next_replacement = match (distinct_fragments, next_retained_arc, next_cut.placement) {
+            (true, Some(support), CornerPlacement2::Extension) => {
+                Some(Self::retained_arc_chamfer_fragments(
+                    &self.fragments()[next_index],
+                    support,
+                    &next_cut,
+                    false,
+                    policy,
+                )?)
+            }
+            _ => None,
+        };
+        if fragment_count == 1
+            && (previous_cut.placement == CornerPlacement2::Extension
+                || next_cut.placement == CornerPlacement2::Extension)
+        {
+            if previous_replacement.is_some() || next_replacement.is_some() {
+                return Err(ExactCurveError::blocked(
+                    CurveOperation2::Chamfer,
+                    CurveFamily2::CircularArc,
+                    UncertaintyReason::Unsupported,
+                ));
+            }
+            Self::canonicalize_retained_single_fragment_extension_cuts(
+                previous_fragment,
+                &mut previous_cut,
+                &mut next_cut,
+                CurveOperation2::Chamfer,
+                policy,
+            )?;
+        } else {
+            if previous_replacement.is_none() {
+                Self::canonicalize_retained_corner_cut(
+                    &self.fragments()[previous_index],
+                    &mut previous_cut,
+                    true,
+                    CurveOperation2::Chamfer,
+                    policy,
+                )?;
+            }
+            if next_replacement.is_none() {
+                Self::canonicalize_retained_corner_cut(
+                    &self.fragments()[next_index],
+                    &mut next_cut,
+                    false,
+                    CurveOperation2::Chamfer,
+                    policy,
+                )?;
+            }
+        }
+        if fragment_count == 1
+            && !retained_single_fragment_corner_cuts_are_separated(
+                previous_fragment,
+                &previous_cut,
+                &next_cut,
+                CurveOperation2::Chamfer,
+                policy,
+            )?
+        {
+            return Ok(None);
+        }
+        let rebuilt = self.rebuild_retained_chamfer(
+            previous_index,
+            next_index,
+            previous_cut,
+            next_cut,
+            chord_authority,
+            previous_replacement,
+            next_replacement,
+            policy,
+        )?;
+        Ok(Some(rebuilt))
     }
 
     fn rebuild_retained_chamfer(
@@ -725,20 +741,11 @@ impl<'a> CurveCornerChain2<'a> {
                 crate::CurveCornerNoSolution2::ZeroDesignValue,
             ));
         }
-        previous_source.prepare(previous_solve_fragment, CurveOperation2::Fillet, policy)?;
-        next_source.prepare(next_solve_fragment, CurveOperation2::Fillet, policy)?;
-        let previous_carrier = previous_source.exact_carrier(
-            previous_solve_fragment,
-            true,
-            CurveOperation2::Fillet,
-            policy,
-        )?;
-        let next_carrier = next_source.exact_carrier(
-            next_solve_fragment,
-            false,
-            CurveOperation2::Fillet,
-            policy,
-        )?;
+        previous_source.prepare(CurveOperation2::Fillet, policy)?;
+        next_source.prepare(CurveOperation2::Fillet, policy)?;
+        let previous_carrier =
+            previous_source.exact_carrier(true, CurveOperation2::Fillet, policy)?;
+        let next_carrier = next_source.exact_carrier(false, CurveOperation2::Fillet, policy)?;
         let solve_mode = if has_smooth_run {
             CurveCornerMode2::TrimOrExtend
         } else {

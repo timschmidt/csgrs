@@ -2389,19 +2389,30 @@ fn automatic_corner_solver_keeps_unsupported_pairs_explicit() {
     ])
     .unwrap();
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
-        assert!(matches!(
-            algebraic_cut.chamfer_vertex_by_setbacks(
+        let result = algebraic_cut
+            .chamfer_vertex_by_setbacks(
                 1,
                 Real::one(),
                 Real::one(),
                 CurveCornerMode2::TrimOnly,
                 &policy,
-            ),
-            Err(ExactCurveError::Blocked(blocker))
-                if blocker.operation() == CurveOperation2::Chamfer
-                    && blocker.family() == CurveFamily2::QuadraticBezier
-                    && blocker.reason() == UncertaintyReason::Unsupported
-        ));
+            )
+            .unwrap();
+        assert_eq!(result.certainty, CurveCertainty::Certified);
+        let CurveCornerSolutions2::Unique(result) = result.value else {
+            panic!("the selected chamfer must remain a public exact path");
+        };
+        assert!(
+            result
+                .curves()
+                .iter()
+                .any(|curve| curve.geometry().is_none())
+        );
+        for pair in result.curves().windows(2) {
+            let equality = pair[0].end().coincides_with(&pair[1].start(), &policy);
+            assert_eq!(equality.certainty, CurveCertainty::Certified);
+            assert_eq!(equality.value, Classification::Decided(true));
+        }
     }
 }
 

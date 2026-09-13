@@ -3,6 +3,10 @@
 #[path = "curve_evaluation.rs"]
 mod curve_evaluation;
 
+#[path = "curve_corner_reconstruction.rs"]
+mod curve_corner_reconstruction;
+use curve_corner_reconstruction::corner_has_native_reconstruction;
+
 use crate::CurvePointData2;
 use std::sync::Arc;
 use std::sync::OnceLock;
@@ -1715,27 +1719,17 @@ impl CurvePath2 {
     /// Solves and applies an exact chord-setback chamfer at one path vertex.
     ///
     /// Each nonnegative setback is the Euclidean chord distance from the
-    /// original corner along its incident curve image. The shared exact carrier
-    /// kernel handles native lines and circular arcs, retained degree-elevated
-    /// line images, exact circular rational carriers, and direct polynomial or
-    /// rational Bezier carriers through complete circle incidence. Polynomial
-    /// spline and NURBS endpoints reuse only their incident retained native
-    /// span, then map every represented contact back to the authored knot
-    /// interval before subdivision. An exterior contact preserves the authored
-    /// spline and appends or prepends only that span's exact continuation. A
-    /// nonendpoint algebraic trim remains an
-    /// explicit `Unsupported` blocker until public curve subdivision can retain
-    /// that parameter exactly.
-    /// [`CurveCornerMode2::TrimOrExtend`] returns every exact native-support
-    /// candidate in deterministic order. Direct polynomial Beziers use their
-    /// complete affine incident ray; represented exterior roots materialize as
-    /// polynomial subcurves, while a public path explicitly blocks an
-    /// algebraic endpoint that only retained-region topology can store. The
-    /// retained-region caller also uses this kernel for affine algebraic
-    /// chords. General rational Beziers extend only through the finite incident
-    /// projective cell before their first pole; exact homogeneous subdivision
-    /// materializes that cell without weakening any predicate. A one-curve
-    /// closed path materializes its shared retained body exactly once.
+    /// original corner along its incident curve. All selected cuts and their
+    /// point witnesses remain exact in the returned path and can be reused by
+    /// later operations. Solving retains a native arc's complete sweep and a
+    /// spline's incident span in its authored knot domain. Rational chart
+    /// partitioning is deferred until reconstruction.
+    ///
+    /// [`CurveCornerMode2::TrimOrExtend`] includes incident support extensions,
+    /// with rational extensions stopping at the first pole. Candidates are
+    /// returned in deterministic order. Reconstruction shares the exact chain
+    /// machinery used by regions, with a native scalar specialization where
+    /// its coordinates and parameters are already available.
     pub fn chamfer_vertex_by_setbacks(
         &self,
         vertex_index: usize,
@@ -1784,24 +1778,16 @@ impl CurvePath2 {
                 CurveCornerNoSolution2::ZeroDesignValue,
             ));
         }
+        let mut previous_source =
+            crate::bezier_region::CornerCarrierPreparation2::from_curve(previous);
+        let mut next_source = crate::bezier_region::CornerCarrierPreparation2::from_curve(next);
+        previous_source.prepare(CurveOperation2::Chamfer, policy)?;
+        next_source.prepare(CurveOperation2::Chamfer, policy)?;
         let previous_carrier =
-            exact_corner_carrier(previous, true, CurveOperation2::Chamfer, policy)?.ok_or_else(
-                || {
-                    ExactCurveError::blocked(
-                        CurveOperation2::Chamfer,
-                        previous.family(),
-                        crate::UncertaintyReason::Unsupported,
-                    )
-                },
-            )?;
-        let next_carrier = exact_corner_carrier(next, false, CurveOperation2::Chamfer, policy)?
-            .ok_or_else(|| {
-                ExactCurveError::blocked(
-                    CurveOperation2::Chamfer,
-                    next.family(),
-                    crate::UncertaintyReason::Unsupported,
-                )
-            })?;
+            previous_source.exact_carrier(true, CurveOperation2::Chamfer, policy)?;
+        let next_carrier = next_source.exact_carrier(false, CurveOperation2::Chamfer, policy)?;
+        let previous_retained_arc = previous_carrier.retained_rational_arc_support().cloned();
+        let next_retained_arc = next_carrier.retained_rational_arc_support().cloned();
         let solutions = solve_exact_chamfer_corner(
             previous_carrier,
             next_carrier,
@@ -1816,7 +1802,19 @@ impl CurvePath2 {
             next.family(),
             policy,
         )?;
-        try_map_corner_solutions(solutions, |solution| {
+        let solutions = try_map_corner_solutions(solutions, |solution| {
+            if !corner_has_native_reconstruction(previous, &solution.previous)
+                || !corner_has_native_reconstruction(next, &solution.next)
+            {
+                return self.reconstruct_selected_chamfer(
+                    previous_index,
+                    next_index,
+                    solution,
+                    previous_retained_arc.as_ref(),
+                    next_retained_arc.as_ref(),
+                    policy,
+                );
+            }
             let previous_point = solution.previous.exact_point().cloned().ok_or_else(|| {
                 ExactCurveError::blocked(
                     CurveOperation2::Chamfer,
@@ -1837,14 +1835,16 @@ impl CurvePath2 {
                 },
             )?);
             if previous_index == next_index {
-                return self.with_single_curve_corner_replaced(
-                    previous_index,
-                    &solution.previous,
-                    &solution.next,
-                    chamfer,
-                    CurveOperation2::Chamfer,
-                    policy,
-                );
+                return self
+                    .with_single_curve_corner_replaced(
+                        previous_index,
+                        &solution.previous,
+                        &solution.next,
+                        chamfer,
+                        CurveOperation2::Chamfer,
+                        policy,
+                    )
+                    .map(Some);
             }
             let previous_trim = materialize_corner_side(
                 previous,
@@ -1870,7 +1870,9 @@ impl CurvePath2 {
                 CurveOperation2::Chamfer,
                 policy,
             )
-        })
+            .map(Some)
+        })?;
+        Ok(compact_optional_corner_solutions(solutions))
     }
 
     /// Solves and applies an exact circular fillet of the requested radius.
@@ -3998,6 +4000,36 @@ impl<'a> ExactCornerBezier2<'a> {
                 Err(ExactCurveError::blocked(operation, family, reason))
             }
         }
+    }
+}
+
+pub(crate) fn compact_optional_corner_solutions<T>(
+    solutions: CurveCornerSolutions2<Option<T>>,
+) -> CurveCornerSolutions2<T> {
+    let mut candidates = match solutions {
+        CurveCornerSolutions2::NoSolution(reason) => {
+            return CurveCornerSolutions2::NoSolution(reason);
+        }
+        CurveCornerSolutions2::Unique(Some(candidate)) => {
+            return CurveCornerSolutions2::Unique(candidate);
+        }
+        CurveCornerSolutions2::Unique(None) => {
+            return CurveCornerSolutions2::NoSolution(
+                crate::CurveCornerNoSolution2::OutsideTrimDomain,
+            );
+        }
+        CurveCornerSolutions2::Multiple(candidates) => {
+            candidates.into_iter().flatten().collect::<Vec<_>>()
+        }
+    };
+    match candidates.len() {
+        0 => CurveCornerSolutions2::NoSolution(crate::CurveCornerNoSolution2::OutsideTrimDomain),
+        1 => CurveCornerSolutions2::Unique(
+            candidates
+                .pop()
+                .expect("one retained corner candidate remains"),
+        ),
+        _ => CurveCornerSolutions2::Multiple(candidates),
     }
 }
 

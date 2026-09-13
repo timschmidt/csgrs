@@ -15,7 +15,7 @@
 //! rather than silently sampling.
 
 #[path = "curve_corner_chain.rs"]
-mod curve_corner_chain;
+pub(crate) mod curve_corner_chain;
 use curve_corner_chain::CurveCornerChain2;
 
 use crate::CurvePointData2;
@@ -49,8 +49,8 @@ use crate::classify::{compare_reals, is_zero, real_sign};
 use crate::curve::RetainedFilletRadialFrame2;
 use crate::curve::{
     CornerPlacement2, CornerReplacement2, CornerTrimCut2, RetainedFilletFrame2,
-    exact_corner_carrier, solve_exact_chamfer_corner, solve_exact_fillet_corner,
-    try_map_corner_solutions, validate_corner_design_value,
+    compact_optional_corner_solutions, exact_corner_carrier, solve_exact_chamfer_corner,
+    solve_exact_fillet_corner, try_map_corner_solutions, validate_corner_design_value,
 };
 use crate::policy::{
     PolicyClassificationCache, PolicyEvaluationCache, resolve_cached_classification,
@@ -2145,36 +2145,6 @@ fn retained_single_fragment_corner_cuts_are_separated(
     } else {
         ordering == std::cmp::Ordering::Less
     })
-}
-
-fn compact_optional_corner_solutions<T>(
-    solutions: CurveCornerSolutions2<Option<T>>,
-) -> CurveCornerSolutions2<T> {
-    let mut candidates = match solutions {
-        CurveCornerSolutions2::NoSolution(reason) => {
-            return CurveCornerSolutions2::NoSolution(reason);
-        }
-        CurveCornerSolutions2::Unique(Some(candidate)) => {
-            return CurveCornerSolutions2::Unique(candidate);
-        }
-        CurveCornerSolutions2::Unique(None) => {
-            return CurveCornerSolutions2::NoSolution(
-                crate::CurveCornerNoSolution2::OutsideTrimDomain,
-            );
-        }
-        CurveCornerSolutions2::Multiple(candidates) => {
-            candidates.into_iter().flatten().collect::<Vec<_>>()
-        }
-    };
-    match candidates.len() {
-        0 => CurveCornerSolutions2::NoSolution(crate::CurveCornerNoSolution2::OutsideTrimDomain),
-        1 => CurveCornerSolutions2::Unique(
-            candidates
-                .pop()
-                .expect("one retained corner candidate remains"),
-        ),
-        _ => CurveCornerSolutions2::Multiple(candidates),
-    }
 }
 
 enum RetainedCuspHalfRelation2 {
@@ -6175,16 +6145,19 @@ fn promoted_endpoint_image_corner_chord(
 /// validation keeps its public ordering (most notably a zero-radius fillet).
 /// `prepare` then promotes at most once and owns that evidence through solving
 /// and retained publication.
-struct CornerCarrierPreparation2 {
-    top_level: Option<Curve2>,
+pub(crate) struct CornerCarrierPreparation2<'a> {
+    top_level: Option<std::borrow::Cow<'a, Curve2>>,
+    fragment: Option<&'a BezierSplitFragment2>,
     endpoint_chord: Option<crate::BezierAlgebraicChord2>,
     promoted_parallel: Option<crate::BezierParallelFragment2>,
 }
 
-impl CornerCarrierPreparation2 {
-    fn admit(fragment: &BezierSplitFragment2) -> Self {
+impl<'a> CornerCarrierPreparation2<'a> {
+    fn admit(fragment: &'a BezierSplitFragment2) -> Self {
         let top_level = match fragment {
-            BezierSplitFragment2::Materialized { curve, .. } => Some(Curve2::from(curve.clone())),
+            BezierSplitFragment2::Materialized { curve, .. } => {
+                Some(std::borrow::Cow::Owned(Curve2::from(curve.clone())))
+            }
             BezierSplitFragment2::AlgebraicEndpointImages { .. }
             | BezierSplitFragment2::AlgebraicChord(_)
             | BezierSplitFragment2::AnalyticParallel(_)
@@ -6193,6 +6166,19 @@ impl CornerCarrierPreparation2 {
         };
         Self {
             top_level,
+            fragment: Some(fragment),
+            endpoint_chord: None,
+            promoted_parallel: None,
+        }
+    }
+
+    pub(crate) fn from_curve(curve: &'a Curve2) -> Self {
+        if let Some(fragment) = curve.retained_fragment() {
+            return Self::admit(fragment);
+        }
+        Self {
+            top_level: Some(std::borrow::Cow::Borrowed(curve)),
+            fragment: None,
             endpoint_chord: None,
             promoted_parallel: None,
         }
@@ -6201,18 +6187,20 @@ impl CornerCarrierPreparation2 {
     fn family(&self) -> CurveFamily2 {
         self.top_level
             .as_ref()
-            .map_or(CurveFamily2::RationalBezier, Curve2::family)
+            .map_or(CurveFamily2::RationalBezier, |curve| curve.family())
     }
 
-    fn prepare(
+    pub(crate) fn prepare(
         &mut self,
-        fragment: &BezierSplitFragment2,
         operation: CurveOperation2,
         policy: &CurveContext,
     ) -> ExactCurveResult<()> {
         if self.top_level.is_some() {
             return Ok(());
         }
+        let fragment = self
+            .fragment
+            .expect("a nonnative corner retains its fragment");
         match fragment {
             BezierSplitFragment2::AlgebraicEndpointImages { .. } => {
                 self.endpoint_chord =
@@ -6249,18 +6237,20 @@ impl CornerCarrierPreparation2 {
         Ok(())
     }
 
-    fn exact_carrier<'a>(
-        &'a self,
-        fragment: &'a BezierSplitFragment2,
+    pub(crate) fn exact_carrier(
+        &self,
         previous: bool,
         operation: CurveOperation2,
         policy: &CurveContext,
-    ) -> ExactCurveResult<crate::curve::ExactCornerCarrier2<'a>> {
+    ) -> ExactCurveResult<crate::curve::ExactCornerCarrier2<'_>> {
         if let Some(curve) = self.top_level.as_ref() {
             return exact_corner_carrier(curve, previous, operation, policy)?.ok_or_else(|| {
                 ExactCurveError::blocked(operation, self.family(), UncertaintyReason::Unsupported)
             });
         }
+        let fragment = self
+            .fragment
+            .expect("a nonnative corner retains its fragment");
         match fragment {
             BezierSplitFragment2::AlgebraicChord(chord) => {
                 Ok(crate::curve::ExactCornerCarrier2::AlgebraicChord(chord))
@@ -19138,12 +19128,12 @@ mod tests {
             );
             let mut admitted = CornerCarrierPreparation2::admit(&fragment);
             admitted
-                .prepare(&fragment, CurveOperation2::Fillet, &policy)
+                .prepare(CurveOperation2::Fillet, &policy)
                 .expect("selected carrier admission must not require global projection");
             assert!(admitted.promoted_parallel().is_none());
             assert!(matches!(
                 admitted
-                    .exact_carrier(&fragment, true, CurveOperation2::Fillet, &policy)
+                    .exact_carrier(true, CurveOperation2::Fillet, &policy)
                     .unwrap(),
                 crate::curve::ExactCornerCarrier2::SelectedFiber(_)
             ));
@@ -19151,7 +19141,7 @@ mod tests {
             let solve = |mode| {
                 crate::curve::solve_exact_fillet_corner(
                     admitted
-                        .exact_carrier(&fragment, true, CurveOperation2::Fillet, &policy)
+                        .exact_carrier(true, CurveOperation2::Fillet, &policy)
                         .unwrap(),
                     crate::curve::ExactCornerCarrier2::Line(&vertical),
                     &Real::one(),
