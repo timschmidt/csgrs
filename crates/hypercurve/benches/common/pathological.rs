@@ -416,6 +416,9 @@ fn family_curve(
     let linear_control1 = affine_control(&start, &end, 1, 3, 0);
     let linear_control2 = affine_control(&start, &end, 2, 3, 0);
     match family {
+        CurveFamily2::AnalyticParallel => {
+            panic!("the authored benchmark factory requires a native family")
+        }
         CurveFamily2::Line => line(start, end),
         CurveFamily2::CircularArc => {
             let center = Point2::new(midpoint(start.x(), end.x()), midpoint(start.y(), end.y()));
@@ -529,14 +532,17 @@ fn fraction(numerator: i64, denominator: i64) -> Real {
 fn flatten_path(path: &CurvePath2) -> Vec<[f64; 2]> {
     let mut points = Vec::with_capacity(path.curves().len() * CURVE_SAMPLES);
     for (curve_index, curve) in path.curves().iter().enumerate() {
-        let domain = curve.parameter_domain();
-        let span = domain.end() - domain.start();
+        let (domain_start, domain_end) = curve
+            .parameter_domain()
+            .exact_endpoints()
+            .expect("native benchmark domain");
+        let span = domain_end - domain_start;
         for sample in 0..CURVE_SAMPLES {
             if curve_index > 0 && sample == 0 {
                 continue;
             }
             let t = fraction(sample as i64, (CURVE_SAMPLES - 1) as i64);
-            let parameter = domain.start() + &(&span * t);
+            let parameter = domain_start + &(&span * t);
             let point = curve
                 .point_at(&parameter, &CurveContext::STRICT)
                 .expect("benchmark curve evaluates at a rational parameter")

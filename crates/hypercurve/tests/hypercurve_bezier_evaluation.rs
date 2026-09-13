@@ -119,8 +119,8 @@ fn certified_exact_scalar_segmentation_covers_rational_bezier_and_nurbs() {
         else {
             panic!("same-sign rational carrier should segment with a control-hull certificate");
         };
-        assert_eq!(segmented.points().first(), Some(curve.start()));
-        assert_eq!(segmented.points().last(), Some(curve.end()));
+        assert_eq!(segmented.points().first(), curve.start().coordinates());
+        assert_eq!(segmented.points().last(), curve.end().coordinates());
         assert!(segmented.certificate().segment_count() > 1);
         assert!(
             segmented

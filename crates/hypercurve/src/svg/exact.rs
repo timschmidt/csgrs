@@ -159,12 +159,15 @@ impl ExactWriter {
 
     fn write_curve(&mut self, curve: &Curve2) -> SvgResult<()> {
         match curve.geometry() {
-            CurveGeometry2::Line(line) => {
+            None => Err(SvgError::Geometry(
+                "exact SVG metadata does not encode selected curve carriers".into(),
+            )),
+            Some(CurveGeometry2::Line(line)) => {
                 self.write_u8(0)?;
                 self.write_point(line.start())?;
                 self.write_point(line.end())
             }
-            CurveGeometry2::CircularArc(arc) => {
+            Some(CurveGeometry2::CircularArc(arc)) => {
                 self.write_u8(1)?;
                 self.write_point(arc.start())?;
                 self.write_point(arc.end())?;
@@ -176,20 +179,20 @@ impl ExactWriter {
                 }
                 Ok(())
             }
-            CurveGeometry2::QuadraticBezier(curve) => {
+            Some(CurveGeometry2::QuadraticBezier(curve)) => {
                 self.write_u8(2)?;
                 self.write_point(curve.start())?;
                 self.write_point(curve.control())?;
                 self.write_point(curve.end())
             }
-            CurveGeometry2::CubicBezier(curve) => {
+            Some(CurveGeometry2::CubicBezier(curve)) => {
                 self.write_u8(3)?;
                 self.write_point(curve.start())?;
                 self.write_point(curve.control1())?;
                 self.write_point(curve.control2())?;
                 self.write_point(curve.end())
             }
-            CurveGeometry2::RationalQuadraticBezier(curve) => {
+            Some(CurveGeometry2::RationalQuadraticBezier(curve)) => {
                 self.write_u8(4)?;
                 for point in curve.control_points() {
                     self.write_point(point)?;
@@ -199,19 +202,19 @@ impl ExactWriter {
                 }
                 Ok(())
             }
-            CurveGeometry2::RationalBezier(curve) => {
+            Some(CurveGeometry2::RationalBezier(curve)) => {
                 self.write_u8(5)?;
                 self.write_points(curve.control_points())?;
                 self.write_reals(curve.weights())
             }
-            CurveGeometry2::PolynomialBSpline(curve) => {
+            Some(CurveGeometry2::PolynomialBSpline(curve)) => {
                 self.write_u8(6)?;
                 self.write_len(curve.degree())?;
                 self.write_points(curve.control_points())?;
                 self.write_reals(curve.knots())?;
                 self.write_periodicity(curve.periodicity())
             }
-            CurveGeometry2::Nurbs(curve) => {
+            Some(CurveGeometry2::Nurbs(curve)) => {
                 self.write_u8(7)?;
                 self.write_len(curve.degree())?;
                 self.write_points(curve.control_points())?;

@@ -14,7 +14,77 @@ use hypersolve::AlgebraicRootRepresentation;
 #[derive(Clone, Debug, PartialEq)]
 pub struct CurvePoint2(pub(crate) CurvePointData2);
 
+/// Lazy endpoint projection sharing its carrier definition. The carrier owns
+/// no reverse reference, so cached points cannot create allocation cycles.
+#[derive(Debug)]
+pub(crate) struct CurveEndpoint2 {
+    pub(crate) fragment: std::sync::Arc<crate::BezierSplitFragment2>,
+    pub(crate) start: bool,
+    resolved: std::sync::OnceLock<CurvePoint2>,
+}
+
+impl PartialEq for CurveEndpoint2 {
+    fn eq(&self, other: &Self) -> bool {
+        self.start == other.start
+            && (std::sync::Arc::ptr_eq(&self.fragment, &other.fragment)
+                || self.fragment == other.fragment)
+    }
+}
+
+impl CurveEndpoint2 {
+    pub(crate) fn resolve(
+        &self,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<Option<CurvePoint2>>> {
+        if let Some(point) = self.resolved.get() {
+            return Ok(Classification::Decided(Some(point.clone())));
+        }
+        let strict = policy.strict_counterpart();
+        let result = crate::bezier_region::curve_fragment_endpoint_point(
+            &self.fragment,
+            self.start,
+            &strict,
+        );
+        if let Ok(Classification::Decided(Some(point))) = &result {
+            let _ = self.resolved.set(point.clone());
+            return result;
+        }
+        if *policy == strict {
+            return result;
+        }
+        crate::bezier_region::curve_fragment_endpoint_point(&self.fragment, self.start, policy)
+    }
+
+    pub(crate) fn bounds(
+        &self,
+        refinement_steps: usize,
+        policy: &CurveContext,
+    ) -> Classification<Aabb2> {
+        if let Ok(Classification::Decided(Some(point))) = self.resolve(policy) {
+            return crate::bezier_offset::algebraic_chord_endpoint_bounds_refined(
+                &point,
+                refinement_steps,
+                policy,
+            );
+        }
+        crate::bezier_region::retained_fragment_query_bounds(&self.fragment, policy)
+    }
+}
+
 impl CurvePoint2 {
+    pub(crate) fn from_endpoint(
+        fragment: std::sync::Arc<crate::BezierSplitFragment2>,
+        start: bool,
+    ) -> Self {
+        Self(CurvePointData2::Endpoint(std::sync::Arc::new(
+            CurveEndpoint2 {
+                fragment,
+                start,
+                resolved: std::sync::OnceLock::new(),
+            },
+        )))
+    }
+
     /// Returns stored `Real` coordinates when they are available.
     ///
     /// This view does not reconstruct selected coordinate images. Absence of
@@ -117,6 +187,8 @@ pub(crate) enum CurvePointData2 {
     /// The source evidence remains correlated and is evaluated lazily rather
     /// than flattened into independently reconstructed coordinates.
     Similarity(crate::BezierSimilarityPoint2),
+    /// A curve endpoint whose selected chart remains the point authority.
+    Endpoint(std::sync::Arc<CurveEndpoint2>),
 }
 
 impl CurvePoint2 {
@@ -125,6 +197,11 @@ impl CurvePoint2 {
     /// must continue through the exact geometric predicates.
     pub(crate) fn shares_storage(&self, other: &Self) -> bool {
         match (self, other) {
+            (Self(CurvePointData2::Endpoint(first)), Self(CurvePointData2::Endpoint(second))) => {
+                std::sync::Arc::ptr_eq(first, second)
+                    || (first.start == second.start
+                        && std::sync::Arc::ptr_eq(&first.fragment, &second.fragment))
+            }
             (Self(CurvePointData2::Exact(first)), Self(CurvePointData2::Exact(second))) => {
                 first.shares_storage(second)
             }
@@ -190,6 +267,26 @@ impl CurvePoint2 {
         if self.shares_storage(other) {
             return Classification::Decided(true);
         }
+        match (&self.0, &other.0) {
+            (CurvePointData2::Endpoint(first), CurvePointData2::Endpoint(second)) => {
+                return crate::bezier_region::curve_fragment_endpoints_equal(
+                    &first.fragment,
+                    first.start,
+                    &second.fragment,
+                    second.start,
+                    policy,
+                );
+            }
+            (CurvePointData2::Endpoint(endpoint), _) => {
+                return match endpoint.resolve(policy) {
+                    Ok(Classification::Decided(Some(point))) => point.same_point(other, policy),
+                    Ok(Classification::Uncertain(reason)) => Classification::Uncertain(reason),
+                    _ => Classification::Uncertain(UncertaintyReason::RealSign),
+                };
+            }
+            (_, CurvePointData2::Endpoint(_)) => return other.same_point(self, policy),
+            _ => {}
+        }
         let recursive_composite = |point: &Self| {
             matches!(
                 point,
@@ -211,6 +308,9 @@ impl CurvePoint2 {
             return Classification::Decided(equal);
         }
         match (self, other) {
+            (Self(CurvePointData2::Endpoint(_)), _) | (_, Self(CurvePointData2::Endpoint(_))) => {
+                unreachable!("endpoint projections handled above")
+            }
             (Self(CurvePointData2::Exact(first)), Self(CurvePointData2::Exact(second))) => {
                 match is_zero(&first.distance_squared(second), policy) {
                     Some(equal) => Classification::Decided(equal),

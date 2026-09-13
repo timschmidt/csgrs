@@ -6834,14 +6834,14 @@ was not modified.
 The remaining old zero-argument native/sweep calls are confined to Hyperbrep,
 whose accumulated Phase 1 migration remains deferred until the last public
 policy surfaces stabilize. The next cut is
-`CurveRegion2::materialized_boundary_paths`, followed by spline subcurve and
+`CurveRegion2::boundary_paths`, followed by spline subcurve and
 reconstruction propagation. Machine-readable samples, competitive medians,
 binary size, caller status, and the 22,564-node/38,642-edge call graph are in
 [`2026-07-31-native-curve-topology-policy.json`](benchmarks/checkpoints/2026-07-31-native-curve-topology-policy.json).
 
 ## Materialized boundary policy checkpoint
 
-`CurveRegion2::materialized_boundary_paths` now accepts the caller's
+`CurveRegion2::boundary_paths` now accepts the caller's
 `CurveContext` and returns
 `CurveOutcome<Classification<Vec<CurvePath2>>>`. Its private edit/materialize
 kernel remains beneath one outer observation frame. Every representable

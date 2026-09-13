@@ -1068,3 +1068,63 @@ fn cusp_split_analytic_self_crossing_regularizes_under_both_policies() {
         assert_eq!(regularized.boundary_loops().len(), 3);
     }
 }
+
+#[test]
+fn general_boundary_paths_preserve_analytic_carriers_and_boolean_reentry() {
+    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+        let source = curved_parallel_cap(&policy);
+        let exported = source.boundary_paths(&policy).unwrap();
+        assert_eq!(exported.certainty, CurveCertainty::Certified);
+        let Classification::Decided(paths) = exported.value else {
+            panic!("exact boundary paths")
+        };
+        assert_eq!(paths.len(), 1);
+        let analytic = &paths[0].curves()[0];
+        assert_eq!(
+            analytic.family(),
+            hypercurve::CurveFamily2::AnalyticParallel
+        );
+        assert!(analytic.geometry().is_none());
+        assert!(analytic.start().coordinates().is_none());
+        let reversed = analytic.reversed(&policy).unwrap();
+        assert_eq!(reversed.certainty, CurveCertainty::Certified);
+        assert_eq!(
+            analytic
+                .start()
+                .coincides_with(&reversed.value.end(), &policy)
+                .value,
+            Classification::Decided(true),
+        );
+        assert_eq!(
+            analytic
+                .end()
+                .coincides_with(&reversed.value.start(), &policy)
+                .value,
+            Classification::Decided(true),
+        );
+        assert!(analytic.bounds().is_ok());
+        let reversed_path = paths[0].reversed(&policy).unwrap();
+        assert_eq!(reversed_path.certainty, CurveCertainty::Certified);
+        let restored =
+            CurveRegion2::try_from_boundary_paths(&[reversed_path.value], &policy).unwrap();
+        assert_eq!(restored.certainty, CurveCertainty::Certified);
+        let clipped = restored
+            .value
+            .boolean_region(
+                &analytic_square(1, 3, &policy),
+                hypercurve::BooleanOp::Intersection,
+                &policy,
+            )
+            .unwrap();
+        assert_eq!(clipped.certainty, CurveCertainty::Certified);
+        for (query, expected) in [
+            (point(2, 1), RegionPointLocation::Inside),
+            (point(2, 3), RegionPointLocation::Outside),
+            (point(-2, 0), RegionPointLocation::Outside),
+        ] {
+            let located = clipped.value.classify_point(&query, &policy).unwrap();
+            assert_eq!(located.certainty, CurveCertainty::Certified);
+            assert_eq!(located.value, Classification::Decided(expected));
+        }
+    }
+}

@@ -17,7 +17,7 @@ use crate::rational_bezier_general::RationalBezierOverlapParameterCorrespondence
 use crate::{
     Aabb2, BezierBoundaryLoop2, BezierParallel2, BezierParameter2, BezierSubcurve2, CircularArc2,
     Classification, ContourPointLocation, CubicBezier2, CurveContext, CurveError, CurveOperation2,
-    CurveOutcome, CurvePoint2, CurveRegionParameter2, ExactCurveError, ExactCurveResult, LineSeg2,
+    CurveOutcome, CurveParameter2, CurvePoint2, ExactCurveError, ExactCurveResult, LineSeg2,
     LineSide, NurbsCurve2, ParamRange, Point2, PolynomialSplineCurve2, QuadraticBezier2,
     RationalBezier2, RationalQuadraticBezier2, Real, Similarity2,
 };
@@ -42,6 +42,8 @@ pub enum CurveFamily2 {
     PolynomialBSpline,
     /// Rational B-spline/NURBS curve.
     Nurbs,
+    /// Exact analytic parallel of a supported source curve.
+    AnalyticParallel,
 }
 
 /// Exact derivative vector of a planar curve with respect to its public parameter.
@@ -50,13 +52,6 @@ pub struct CurveDerivative2 {
     dx: Real,
     dy: Real,
     zero_status: hyperreal::ZeroKnowledge,
-}
-
-/// Exact closed public parameter domain of one top-level curve.
-#[derive(Clone, Debug, PartialEq)]
-pub struct CurveParameterDomain2 {
-    start: Real,
-    end: Real,
 }
 
 /// Side policy for differential evaluation at a retained span boundary.
@@ -162,18 +157,6 @@ impl CurveDerivative2 {
     }
 }
 
-impl CurveParameterDomain2 {
-    /// Returns the inclusive domain start.
-    pub const fn start(&self) -> &Real {
-        &self.start
-    }
-
-    /// Returns the inclusive domain end.
-    pub const fn end(&self) -> &Real {
-        &self.end
-    }
-}
-
 /// Geometry carried by a top-level exact planar curve.
 #[allow(clippy::large_enum_variant)]
 #[derive(Clone, Debug, PartialEq)]
@@ -198,12 +181,30 @@ pub enum CurveGeometry2 {
 
 #[derive(Debug)]
 struct CurveData2 {
-    geometry: CurveGeometry2,
-    lineage: CurveParameterLineage2,
-    parameter_domain: OnceLock<CurveParameterDomain2>,
+    carrier: CurveCarrier2,
+    lineage: Option<CurveParameterLineage2>,
+    parameter_domain: OnceLock<crate::CurveParameterRange2>,
     native_bezier_fragments: PolicyEvaluationCache<Vec<NativeBezierFragment2>>,
     rational_evaluators: PolicyEvaluationCache<Vec<RationalBezier2>>,
     bounds: OnceLock<ExactCurveResult<Aabb2>>,
+}
+
+#[derive(Debug, PartialEq)]
+enum CurveCarrier2 {
+    Native(CurveGeometry2),
+    Restricted(Box<CurveRestrictedCarrier2>),
+}
+
+#[derive(Debug)]
+struct CurveRestrictedCarrier2 {
+    fragment: Arc<crate::BezierSplitFragment2>,
+    endpoints: [OnceLock<CurvePoint2>; 2],
+}
+
+impl PartialEq for CurveRestrictedCarrier2 {
+    fn eq(&self, other: &Self) -> bool {
+        Arc::ptr_eq(&self.fragment, &other.fragment) || self.fragment == other.fragment
+    }
 }
 
 #[derive(Clone, Debug)]
@@ -255,8 +256,8 @@ pub struct CurvePath2 {
 #[derive(Debug)]
 struct CurvePathData2 {
     curves: Vec<Curve2>,
-    strict_connectivity_certified: bool,
-    strict_closure_certified: bool,
+    connectivity_policy: Option<CurveContext>,
+    closure_policy: Option<CurveContext>,
     native_bezier_fragments: PolicyEvaluationCache<Vec<NativeBezierFragment2>>,
     bezier_boundary_loop: PolicyEvaluationCache<NativeBezierBoundaryLoop2>,
     bounds: OnceLock<ExactCurveResult<Aabb2>>,
@@ -332,8 +333,8 @@ impl Curve2 {
         let lineage = CurveParameterLineage2::new(geometry_parameter_range(&geometry));
         Self {
             data: Arc::new(CurveData2 {
-                geometry,
-                lineage,
+                carrier: CurveCarrier2::Native(geometry),
+                lineage: Some(lineage),
                 parameter_domain: OnceLock::new(),
                 native_bezier_fragments: PolicyEvaluationCache::new(),
                 rational_evaluators: PolicyEvaluationCache::new(),
@@ -388,51 +389,147 @@ impl Curve2 {
             .map(|outcome| outcome.map(|curve| Self::new(CurveGeometry2::Nurbs(curve))))
     }
 
-    /// Returns the exact geometry carrier.
-    pub fn geometry(&self) -> &CurveGeometry2 {
-        &self.data.geometry
+    /// Returns a directly stored native representation of this curve image.
+    ///
+    /// Selected domains and analytic images remain exact when this view is
+    /// absent. General operations use the retained carrier and domain directly.
+    pub fn geometry(&self) -> Option<&CurveGeometry2> {
+        match &self.data.carrier {
+            CurveCarrier2::Native(geometry) => Some(geometry),
+            CurveCarrier2::Restricted(_) => None,
+        }
     }
 
-    /// Returns the curve family.
+    /// Returns the curve family, including generated analytic parallels.
     pub fn family(&self) -> CurveFamily2 {
-        self.data.geometry.family()
-    }
-
-    /// Returns the exact start point.
-    pub fn start(&self) -> &Point2 {
-        self.data.geometry.start()
-    }
-
-    /// Returns the exact end point.
-    pub fn end(&self) -> &Point2 {
-        self.data.geometry.end()
-    }
-
-    /// Returns the clone-shared exact public parameter domain.
-    pub fn parameter_domain(&self) -> &CurveParameterDomain2 {
-        self.data.parameter_domain.get_or_init(|| {
-            let (start, end) = match self.geometry() {
-                CurveGeometry2::PolynomialBSpline(curve) => curve.parameter_domain(),
-                CurveGeometry2::Nurbs(curve) => curve.parameter_domain(),
-                _ => {
-                    return CurveParameterDomain2 {
-                        start: Real::zero(),
-                        end: Real::one(),
-                    };
+        if let Some(geometry) = self.geometry() {
+            return geometry.family();
+        }
+        match self.retained_fragment().expect("every curve has a carrier") {
+            crate::BezierSplitFragment2::Materialized { curve, .. }
+            | crate::BezierSplitFragment2::AlgebraicEndpointImages {
+                source_curve: curve,
+                ..
+            } => match curve {
+                BezierSubcurve2::Quadratic(_) => CurveFamily2::QuadraticBezier,
+                BezierSubcurve2::Cubic(_) => CurveFamily2::CubicBezier,
+                BezierSubcurve2::RationalQuadratic(_) => CurveFamily2::RationalQuadraticBezier,
+                BezierSubcurve2::Rational(_) => CurveFamily2::RationalBezier,
+            },
+            crate::BezierSplitFragment2::AnalyticParallel(_) => CurveFamily2::AnalyticParallel,
+            crate::BezierSplitFragment2::AlgebraicChord(_) => CurveFamily2::Line,
+            crate::BezierSplitFragment2::AlgebraicCuspSemicircle(_) => CurveFamily2::CircularArc,
+            crate::BezierSplitFragment2::SelectedFiber(fragment) => {
+                if fragment.rational_curve().is_some() {
+                    CurveFamily2::RationalBezier
+                } else {
+                    CurveFamily2::AnalyticParallel
                 }
-            };
-            CurveParameterDomain2 {
-                start: start.clone(),
-                end: end.clone(),
             }
+        }
+    }
+
+    /// Returns the exact start point without reconstructing selected coordinates.
+    pub fn start(&self) -> CurvePoint2 {
+        self.endpoint(true)
+    }
+
+    /// Returns the exact end point without reconstructing selected coordinates.
+    pub fn end(&self) -> CurvePoint2 {
+        self.endpoint(false)
+    }
+
+    fn endpoint(&self, start: bool) -> CurvePoint2 {
+        if let Some(geometry) = self.geometry() {
+            return CurvePoint2::from(
+                if start {
+                    geometry.start()
+                } else {
+                    geometry.end()
+                }
+                .clone(),
+            );
+        }
+        match self.retained_fragment().expect("every curve has a carrier") {
+            crate::BezierSplitFragment2::AlgebraicChord(chord) => {
+                if start { chord.start() } else { chord.end() }.clone()
+            }
+            crate::BezierSplitFragment2::SelectedFiber(fragment) => if start {
+                fragment.start_point()
+            } else {
+                fragment.end_point()
+            }
+            .clone(),
+            _ => {
+                let CurveCarrier2::Restricted(carrier) = &self.data.carrier else {
+                    unreachable!("native endpoints handled above")
+                };
+                carrier.endpoints[usize::from(!start)]
+                    .get_or_init(|| {
+                        CurvePoint2::from_endpoint(Arc::clone(&carrier.fragment), start)
+                    })
+                    .clone()
+            }
+        }
+    }
+
+    pub(crate) fn retained_fragment(&self) -> Option<&crate::BezierSplitFragment2> {
+        match &self.data.carrier {
+            CurveCarrier2::Native(_) => None,
+            CurveCarrier2::Restricted(carrier) => Some(&carrier.fragment),
+        }
+    }
+
+    pub(crate) fn from_retained_fragment(fragment: crate::BezierSplitFragment2) -> Self {
+        if let crate::BezierSplitFragment2::Materialized { curve, .. } = fragment {
+            return Self::from(curve);
+        }
+        Self {
+            data: Arc::new(CurveData2 {
+                carrier: CurveCarrier2::Restricted(Box::new(CurveRestrictedCarrier2 {
+                    fragment: Arc::new(fragment),
+                    endpoints: [OnceLock::new(), OnceLock::new()],
+                })),
+                lineage: None,
+                parameter_domain: OnceLock::new(),
+                native_bezier_fragments: PolicyEvaluationCache::new(),
+                rational_evaluators: PolicyEvaluationCache::new(),
+                bounds: OnceLock::new(),
+            }),
+        }
+    }
+
+    /// Returns the shared exact domain in the retained carrier's parameter chart.
+    pub fn parameter_domain(&self) -> &crate::CurveParameterRange2 {
+        self.data.parameter_domain.get_or_init(|| {
+            if let Some(fragment) = self.retained_fragment() {
+                return fragment.curve_region_parameter_range();
+            }
+            let range = geometry_parameter_range(self.geometry().expect("native curve"));
+            crate::CurveParameterRange2::new_validated(
+                CurveParameter2::from(range.start().clone()),
+                CurveParameter2::from(range.end().clone()),
+            )
         })
+    }
+
+    pub(crate) fn native_parameter_domain(&self) -> ExactCurveResult<ParamRange> {
+        self.geometry()
+            .map(geometry_parameter_range)
+            .ok_or_else(|| {
+                ExactCurveError::blocked(
+                    CurveOperation2::Evaluation,
+                    self.family(),
+                    crate::UncertaintyReason::Unsupported,
+                )
+            })
     }
 
     /// Returns the exact period when this top-level curve is periodic.
     pub fn period(&self) -> Option<&Real> {
         match self.geometry() {
-            CurveGeometry2::PolynomialBSpline(curve) => curve.period(),
-            CurveGeometry2::Nurbs(curve) => curve.period(),
+            Some(CurveGeometry2::PolynomialBSpline(curve)) => curve.period(),
+            Some(CurveGeometry2::Nurbs(curve)) => curve.period(),
             _ => None,
         }
     }
@@ -451,10 +548,20 @@ impl Curve2 {
     }
 
     pub(crate) fn reversed_raw(&self, policy: &CurveContext) -> ExactCurveResult<Self> {
+        if let Some(fragment) = self.retained_fragment() {
+            return fragment
+                .reversed()
+                .map(Self::from_retained_fragment)
+                .map_err(|cause| {
+                    ExactCurveError::invalid(CurveOperation2::Reversal, self.family(), cause)
+                });
+        }
         let geometry = match self.geometry() {
-            CurveGeometry2::Line(curve) => CurveGeometry2::Line(curve.reversed()),
-            CurveGeometry2::CircularArc(curve) => CurveGeometry2::CircularArc(curve.reversed()),
-            CurveGeometry2::QuadraticBezier(curve) => CurveGeometry2::QuadraticBezier(
+            Some(CurveGeometry2::Line(curve)) => CurveGeometry2::Line(curve.reversed()),
+            Some(CurveGeometry2::CircularArc(curve)) => {
+                CurveGeometry2::CircularArc(curve.reversed())
+            }
+            Some(CurveGeometry2::QuadraticBezier(curve)) => CurveGeometry2::QuadraticBezier(
                 curve.reversed_with_retained_provenance().map_err(|cause| {
                     ExactCurveError::invalid(
                         CurveOperation2::Reversal,
@@ -463,13 +570,15 @@ impl Curve2 {
                     )
                 })?,
             ),
-            CurveGeometry2::CubicBezier(curve) => CurveGeometry2::CubicBezier(CubicBezier2::new(
-                curve.end().clone(),
-                curve.control2().clone(),
-                curve.control1().clone(),
-                curve.start().clone(),
-            )),
-            CurveGeometry2::RationalQuadraticBezier(curve) => {
+            Some(CurveGeometry2::CubicBezier(curve)) => {
+                CurveGeometry2::CubicBezier(CubicBezier2::new(
+                    curve.end().clone(),
+                    curve.control2().clone(),
+                    curve.control1().clone(),
+                    curve.start().clone(),
+                ))
+            }
+            Some(CurveGeometry2::RationalQuadraticBezier(curve)) => {
                 CurveGeometry2::RationalQuadraticBezier(
                     RationalQuadraticBezier2::try_new_with_common_weight_sign_and_implicit_conic(
                         curve.end().clone(),
@@ -491,15 +600,25 @@ impl Curve2 {
                     })?,
                 )
             }
-            CurveGeometry2::RationalBezier(curve) => {
+            Some(CurveGeometry2::RationalBezier(curve)) => {
                 CurveGeometry2::RationalBezier(curve.reversed())
             }
-            CurveGeometry2::PolynomialBSpline(curve) => {
+            Some(CurveGeometry2::PolynomialBSpline(curve)) => {
                 CurveGeometry2::PolynomialBSpline(curve.reversed_raw(policy)?)
             }
-            CurveGeometry2::Nurbs(curve) => CurveGeometry2::Nurbs(curve.reversed_raw(policy)?),
+            Some(CurveGeometry2::Nurbs(curve)) => {
+                CurveGeometry2::Nurbs(curve.reversed_raw(policy)?)
+            }
+            None => unreachable!("retained reversal handled above"),
         };
-        self.with_lineage(geometry, self.data.lineage.reversed())
+        self.with_lineage(
+            geometry,
+            self.data
+                .lineage
+                .as_ref()
+                .expect("native lineage")
+                .reversed(),
+        )
     }
 
     /// Applies an exact planar similarity while preserving curve family and source.
@@ -518,6 +637,12 @@ impl Curve2 {
         transform: &Similarity2,
         policy: &CurveContext,
     ) -> ExactCurveResult<Self> {
+        if let Some(fragment) = self.retained_fragment() {
+            return crate::bezier_region::transform_curve_fragment_similarity(
+                fragment, transform, policy,
+            )
+            .map(Self::from_retained_fragment);
+        }
         let transform_points = |points: &[Point2]| {
             points
                 .iter()
@@ -525,22 +650,22 @@ impl Curve2 {
                 .collect::<Vec<_>>()
         };
         let geometry = match self.geometry() {
-            CurveGeometry2::Line(curve) => CurveGeometry2::Line(
+            Some(CurveGeometry2::Line(curve)) => CurveGeometry2::Line(
                 curve
                     .transform_similarity(transform)
                     .map_err(|cause| self.transform_error(cause))?,
             ),
-            CurveGeometry2::CircularArc(curve) => CurveGeometry2::CircularArc(
+            Some(CurveGeometry2::CircularArc(curve)) => CurveGeometry2::CircularArc(
                 curve
                     .transform_similarity(transform)
                     .map_err(|cause| self.transform_error(cause))?,
             ),
-            CurveGeometry2::QuadraticBezier(curve) => CurveGeometry2::QuadraticBezier(
+            Some(CurveGeometry2::QuadraticBezier(curve)) => CurveGeometry2::QuadraticBezier(
                 curve
                     .transform_similarity_with_retained_provenance(transform)
                     .map_err(|cause| self.transform_error(cause))?,
             ),
-            CurveGeometry2::CubicBezier(curve) => {
+            Some(CurveGeometry2::CubicBezier(curve)) => {
                 let points = curve
                     .control_points()
                     .map(|point| transform.transform_point(point));
@@ -551,7 +676,7 @@ impl Curve2 {
                     points[3].clone(),
                 ))
             }
-            CurveGeometry2::RationalQuadraticBezier(curve) => {
+            Some(CurveGeometry2::RationalQuadraticBezier(curve)) => {
                 let points = curve
                     .control_points()
                     .map(|point| transform.transform_point(point));
@@ -567,21 +692,25 @@ impl Curve2 {
                     .map_err(|cause| self.transform_error(cause))?,
                 )
             }
-            CurveGeometry2::RationalBezier(curve) => CurveGeometry2::RationalBezier(
+            Some(CurveGeometry2::RationalBezier(curve)) => CurveGeometry2::RationalBezier(
                 RationalBezier2::try_new(
                     transform_points(curve.control_points()),
                     curve.weights().to_vec(),
                 )
                 .map_err(|cause| self.transform_error(cause))?,
             ),
-            CurveGeometry2::PolynomialBSpline(curve) => CurveGeometry2::PolynomialBSpline(
+            Some(CurveGeometry2::PolynomialBSpline(curve)) => CurveGeometry2::PolynomialBSpline(
                 curve.transform_similarity_raw(transform, policy)?,
             ),
-            CurveGeometry2::Nurbs(curve) => {
+            Some(CurveGeometry2::Nurbs(curve)) => {
                 CurveGeometry2::Nurbs(curve.transform_similarity_raw(transform, policy)?)
             }
+            None => unreachable!("retained transformation handled above"),
         };
-        self.with_lineage(geometry, self.data.lineage.clone())
+        self.with_lineage(
+            geometry,
+            self.data.lineage.as_ref().expect("native lineage").clone(),
+        )
     }
 
     /// Splits this curve exactly at a strict interior public parameter.
@@ -604,7 +733,7 @@ impl Curve2 {
         parameter: Real,
         policy: &CurveContext,
     ) -> ExactCurveResult<(Self, Self)> {
-        let domain = self.parameter_domain();
+        let domain = self.native_parameter_domain()?;
         validate_strict_split_parameter(
             domain.start(),
             &parameter,
@@ -613,7 +742,7 @@ impl Curve2 {
             policy,
         )?;
         match self.geometry() {
-            CurveGeometry2::PolynomialBSpline(curve) => {
+            Some(CurveGeometry2::PolynomialBSpline(curve)) => {
                 let (left, right) = curve.split_at_raw(parameter.clone(), policy)?;
                 let left_lineage = self.lineage_subrange(domain.start(), &parameter)?;
                 let right_lineage = self.lineage_subrange(&parameter, domain.end())?;
@@ -622,7 +751,7 @@ impl Curve2 {
                     self.with_lineage(CurveGeometry2::PolynomialBSpline(right), right_lineage)?,
                 ))
             }
-            CurveGeometry2::Nurbs(curve) => {
+            Some(CurveGeometry2::Nurbs(curve)) => {
                 let (left, right) = curve.split_at_raw(parameter.clone(), policy)?;
                 let left_lineage = self.lineage_subrange(domain.start(), &parameter)?;
                 let right_lineage = self.lineage_subrange(&parameter, domain.end())?;
@@ -652,7 +781,7 @@ impl Curve2 {
         end: Real,
         policy: &CurveContext,
     ) -> ExactCurveResult<CurveOutcome<Self>> {
-        let domain = self.parameter_domain();
+        let domain = self.native_parameter_domain()?;
         if &start == domain.start() && &end == domain.end() {
             return Ok(CurveOutcome::new(
                 self.clone(),
@@ -670,7 +799,7 @@ impl Curve2 {
         end: Real,
         policy: &CurveContext,
     ) -> ExactCurveResult<Self> {
-        let domain = self.parameter_domain();
+        let domain = self.native_parameter_domain()?;
         if &start == domain.start() && &end == domain.end() {
             return Ok(self.clone());
         }
@@ -692,11 +821,18 @@ impl Curve2 {
         self.retain_root_image_injectivity(policy);
         let lineage = self.lineage_subrange(&start, &end)?;
         let geometry = match self.geometry() {
-            CurveGeometry2::Line(curve) => CurveGeometry2::Line(
+            None => {
+                return Err(ExactCurveError::blocked(
+                    CurveOperation2::Subdivision,
+                    self.family(),
+                    crate::UncertaintyReason::Unsupported,
+                ));
+            }
+            Some(CurveGeometry2::Line(curve)) => CurveGeometry2::Line(
                 LineSeg2::try_new(curve.point_at(start), curve.point_at(end))
                     .map_err(|cause| self.subdivision_error(cause))?,
             ),
-            CurveGeometry2::CircularArc(curve) => {
+            Some(CurveGeometry2::CircularArc(curve)) => {
                 let sub_start = self
                     .point_at_side_with_policy(&start, CurveParameterSide2::Automatic, policy)
                     .map_err(|error| remap_operation(error, CurveOperation2::Subdivision))?;
@@ -717,24 +853,24 @@ impl Curve2 {
                     None,
                 ))
             }
-            CurveGeometry2::QuadraticBezier(curve) => CurveGeometry2::QuadraticBezier(
+            Some(CurveGeometry2::QuadraticBezier(curve)) => CurveGeometry2::QuadraticBezier(
                 curve
                     .subcurve_between_exact(&start, &end, policy)
                     .map_err(|cause| self.subdivision_error(cause))?,
             ),
-            CurveGeometry2::CubicBezier(curve) => CurveGeometry2::CubicBezier(
+            Some(CurveGeometry2::CubicBezier(curve)) => CurveGeometry2::CubicBezier(
                 curve
                     .subcurve_between_exact(&start, &end, policy)
                     .map_err(|cause| self.subdivision_error(cause))?,
             ),
-            CurveGeometry2::RationalQuadraticBezier(curve) => {
+            Some(CurveGeometry2::RationalQuadraticBezier(curve)) => {
                 CurveGeometry2::RationalQuadraticBezier(
                     curve
                         .subcurve_between_exact(&start, &end, policy)
                         .map_err(|cause| self.subdivision_error(cause))?,
                 )
             }
-            CurveGeometry2::RationalBezier(curve) => CurveGeometry2::RationalBezier(
+            Some(CurveGeometry2::RationalBezier(curve)) => CurveGeometry2::RationalBezier(
                 match curve
                     .subcurve_between_exact(&start, &end, policy)
                     .map_err(|cause| self.subdivision_error(cause))?
@@ -749,12 +885,12 @@ impl Curve2 {
                     }
                 },
             ),
-            CurveGeometry2::PolynomialBSpline(curve) => CurveGeometry2::PolynomialBSpline(
+            Some(CurveGeometry2::PolynomialBSpline(curve)) => CurveGeometry2::PolynomialBSpline(
                 curve
                     .subcurve_raw(start, end, policy)
                     .map_err(|error| remap_operation(error, CurveOperation2::Subdivision))?,
             ),
-            CurveGeometry2::Nurbs(curve) => CurveGeometry2::Nurbs(
+            Some(CurveGeometry2::Nurbs(curve)) => CurveGeometry2::Nurbs(
                 curve
                     .subcurve_raw(start, end, policy)
                     .map_err(|error| remap_operation(error, CurveOperation2::Subdivision))?,
@@ -786,7 +922,7 @@ impl Curve2 {
         end: Real,
         policy: &CurveContext,
     ) -> ExactCurveResult<Self> {
-        let domain = self.parameter_domain();
+        let domain = self.native_parameter_domain()?;
         validate_subcurve_range(
             domain.start(),
             &start,
@@ -797,11 +933,11 @@ impl Curve2 {
         )?;
         let lineage = self.lineage_subrange(&start, &end)?;
         match self.geometry() {
-            CurveGeometry2::PolynomialBSpline(curve) => self.with_lineage(
+            Some(CurveGeometry2::PolynomialBSpline(curve)) => self.with_lineage(
                 CurveGeometry2::PolynomialBSpline(curve.clamped_subcurve_raw(start, end, policy)?),
                 lineage,
             ),
-            CurveGeometry2::Nurbs(curve) => self.with_lineage(
+            Some(CurveGeometry2::Nurbs(curve)) => self.with_lineage(
                 CurveGeometry2::Nurbs(curve.clamped_subcurve_raw(start, end, policy)?),
                 lineage,
             ),
@@ -816,8 +952,8 @@ impl Curve2 {
     ) -> ExactCurveResult<Self> {
         Ok(Self {
             data: Arc::new(CurveData2 {
-                geometry,
-                lineage,
+                carrier: CurveCarrier2::Native(geometry),
+                lineage: Some(lineage),
                 parameter_domain: OnceLock::new(),
                 native_bezier_fragments: PolicyEvaluationCache::new(),
                 rational_evaluators: PolicyEvaluationCache::new(),
@@ -832,7 +968,7 @@ impl Curve2 {
         end: &Real,
     ) -> ExactCurveResult<CurveParameterLineage2> {
         Ok(CurveParameterLineage2 {
-            root: Arc::clone(&self.data.lineage.root),
+            root: Arc::clone(&self.data.lineage.as_ref().expect("native lineage").root),
             range: ParamRange::new(
                 self.lineage_parameter_at(start)?,
                 self.lineage_parameter_at(end)?,
@@ -841,17 +977,37 @@ impl Curve2 {
     }
 
     pub(crate) fn lineage_parameter_at(&self, parameter: &Real) -> ExactCurveResult<Real> {
-        let domain = self.parameter_domain();
+        let domain = self.native_parameter_domain()?;
         let local =
             ((parameter - domain.start()) / (domain.end() - domain.start())).map_err(|cause| {
                 ExactCurveError::invalid(CurveOperation2::Subdivision, self.family(), cause.into())
             })?;
-        Ok(self.data.lineage.range.start()
-            + &local * (self.data.lineage.range.end() - self.data.lineage.range.start()))
+        Ok(self
+            .data
+            .lineage
+            .as_ref()
+            .expect("native lineage")
+            .range
+            .start()
+            + &local
+                * (self
+                    .data
+                    .lineage
+                    .as_ref()
+                    .expect("native lineage")
+                    .range
+                    .end()
+                    - self
+                        .data
+                        .lineage
+                        .as_ref()
+                        .expect("native lineage")
+                        .range
+                        .start()))
     }
 
     fn retain_root_image_injectivity(&self, policy: &CurveContext) {
-        let root = &self.data.lineage.root;
+        let root = &self.data.lineage.as_ref().expect("native lineage").root;
         if root.image_is_injective.get().is_some()
             || !matches!(
                 self.family(),
@@ -860,7 +1016,7 @@ impl Curve2 {
         {
             return;
         }
-        let range = &self.data.lineage.range;
+        let range = &self.data.lineage.as_ref().expect("native lineage").range;
         let covers_root_domain =
             (crate::classify::compare_reals(range.start(), root.domain.start(), policy)
                 == Some(std::cmp::Ordering::Equal)
@@ -883,8 +1039,13 @@ impl Curve2 {
     }
 
     pub(crate) fn shares_certified_parameter_lineage(&self, other: &Self) -> bool {
-        Arc::ptr_eq(&self.data.lineage.root, &other.data.lineage.root)
-            && self.data.lineage.root.image_is_injective.get() == Some(&true)
+        match (&self.data.lineage, &other.data.lineage) {
+            (Some(first), Some(second)) => {
+                Arc::ptr_eq(&first.root, &second.root)
+                    && first.root.image_is_injective.get() == Some(&true)
+            }
+            _ => false,
+        }
     }
 
     fn subdivision_error(&self, cause: CurveError) -> ExactCurveError {
@@ -927,13 +1088,13 @@ impl Curve2 {
         policy: &CurveContext,
     ) -> ExactCurveResult<Point2> {
         match self.geometry() {
-            CurveGeometry2::PolynomialBSpline(curve) => {
+            Some(CurveGeometry2::PolynomialBSpline(curve)) => {
                 curve.point_at_side_with_policy(parameter, side, policy)
             }
-            CurveGeometry2::Nurbs(curve) => {
+            Some(CurveGeometry2::Nurbs(curve)) => {
                 curve.point_at_side_with_policy(parameter, side, policy)
             }
-            geometry => {
+            Some(geometry) => {
                 let location = validate_unit_parameter(parameter, geometry.family(), policy)?;
                 if let Some(endpoint) = retained_native_endpoint(geometry, location, policy) {
                     return Ok(endpoint);
@@ -980,6 +1141,11 @@ impl Curve2 {
                     }
                 }
             }
+            None => Err(ExactCurveError::blocked(
+                CurveOperation2::Evaluation,
+                self.family(),
+                crate::UncertaintyReason::Unsupported,
+            )),
         }
     }
 
@@ -1011,10 +1177,10 @@ impl Curve2 {
         policy: &CurveContext,
     ) -> ExactCurveResult<Point2> {
         match self.geometry() {
-            CurveGeometry2::PolynomialBSpline(curve) => {
+            Some(CurveGeometry2::PolynomialBSpline(curve)) => {
                 curve.point_at_wrapped_side_with_policy(parameter, side, policy)
             }
-            CurveGeometry2::Nurbs(curve) => {
+            Some(CurveGeometry2::Nurbs(curve)) => {
                 curve.point_at_wrapped_side_with_policy(parameter, side, policy)
             }
             _ => Err(ExactCurveError::invalid(
@@ -1117,10 +1283,10 @@ impl Curve2 {
         policy: &CurveContext,
     ) -> ExactCurveResult<Vec<CurveDerivative2>> {
         match self.geometry() {
-            CurveGeometry2::PolynomialBSpline(curve) => {
+            Some(CurveGeometry2::PolynomialBSpline(curve)) => {
                 return curve.derivatives_at_side_with_policy(parameter, max_order, side, policy);
             }
-            CurveGeometry2::Nurbs(curve) => {
+            Some(CurveGeometry2::Nurbs(curve)) => {
                 return curve.derivatives_at_side_with_policy(parameter, max_order, side, policy);
             }
             _ => {}
@@ -1185,10 +1351,10 @@ impl Curve2 {
         policy: &CurveContext,
     ) -> ExactCurveResult<Vec<CurveDerivative2>> {
         match self.geometry() {
-            CurveGeometry2::PolynomialBSpline(curve) => {
+            Some(CurveGeometry2::PolynomialBSpline(curve)) => {
                 curve.derivatives_at_wrapped_side_with_policy(parameter, max_order, side, policy)
             }
-            CurveGeometry2::Nurbs(curve) => {
+            Some(CurveGeometry2::Nurbs(curve)) => {
                 curve.derivatives_at_wrapped_side_with_policy(parameter, max_order, side, policy)
             }
             _ => Err(ExactCurveError::invalid(
@@ -1364,26 +1530,31 @@ impl Curve2 {
 
 impl PartialEq for Curve2 {
     fn eq(&self, other: &Self) -> bool {
-        self.data.geometry == other.data.geometry
+        Arc::ptr_eq(&self.data, &other.data) || self.data.carrier == other.data.carrier
     }
 }
 
 impl CurvePath2 {
     fn from_connected_curves(
         curves: Vec<Curve2>,
-        strict_connectivity_certified: bool,
-        strict_closure_certified: bool,
+        connectivity_policy: Option<CurveContext>,
+        closure_policy: Option<CurveContext>,
     ) -> Self {
         Self {
             data: Arc::new(CurvePathData2 {
                 curves,
-                strict_connectivity_certified,
-                strict_closure_certified,
+                connectivity_policy,
+                closure_policy,
                 native_bezier_fragments: PolicyEvaluationCache::new(),
                 bezier_boundary_loop: PolicyEvaluationCache::new(),
                 bounds: OnceLock::new(),
             }),
         }
+    }
+
+    pub(crate) fn from_certified_closed_curves(curves: Vec<Curve2>, policy: CurveContext) -> Self {
+        debug_assert!(!curves.is_empty());
+        Self::from_connected_curves(curves, Some(policy), Some(policy))
     }
 
     pub(crate) fn from_structurally_closed_curves(curves: Vec<Curve2>) -> Self {
@@ -1395,7 +1566,11 @@ impl CurvePath2 {
                 .take(curves.len())
                 .all(|(left, right)| left.end() == right.start())
         );
-        Self::from_connected_curves(curves, true, true)
+        Self::from_connected_curves(
+            curves,
+            Some(CurveContext::STRICT),
+            Some(CurveContext::STRICT),
+        )
     }
 
     /// Constructs a nonempty ordered path with exactly connected endpoints.
@@ -1432,33 +1607,36 @@ impl CurvePath2 {
             if adjacent[0].end() == adjacent[1].start() {
                 continue;
             }
-            match crate::classify::is_zero(
-                &adjacent[0].end().distance_squared(adjacent[1].start()),
-                policy,
-            ) {
-                Some(true) => {
-                    strict_connectivity_certified &= !policy.permits_approximate_512();
-                }
-                Some(false) => {
+            let equality = adjacent[0]
+                .end()
+                .coincides_with(&adjacent[1].start(), policy);
+            strict_connectivity_certified &= equality.certainty == crate::CurveCertainty::Certified;
+            match equality.into_value() {
+                Classification::Decided(true) => {}
+                Classification::Decided(false) => {
                     return Err(ExactCurveError::invalid(
                         CurveOperation2::Construction,
                         adjacent[1].family(),
                         CurveError::DisconnectedCurvePath,
                     ));
                 }
-                None => {
+                Classification::Uncertain(reason) => {
                     return Err(ExactCurveError::blocked(
                         CurveOperation2::Construction,
                         adjacent[1].family(),
-                        crate::UncertaintyReason::RealSign,
+                        reason,
                     ));
                 }
             }
         }
         Ok(Self::from_connected_curves(
             curves,
-            strict_connectivity_certified,
-            strict_closure_certified,
+            Some(if strict_connectivity_certified {
+                policy.strict_counterpart()
+            } else {
+                policy.retained_object_policy()
+            }),
+            strict_closure_certified.then_some(CurveContext::STRICT),
         ))
     }
 
@@ -1468,12 +1646,12 @@ impl CurvePath2 {
     }
 
     /// Returns the exact path start point.
-    pub fn start(&self) -> &Point2 {
+    pub fn start(&self) -> CurvePoint2 {
         self.data.curves[0].start()
     }
 
     /// Returns the exact path end point.
-    pub fn end(&self) -> &Point2 {
+    pub fn end(&self) -> CurvePoint2 {
         self.data
             .curves
             .last()
@@ -1495,8 +1673,8 @@ impl CurvePath2 {
             .collect::<ExactCurveResult<Vec<_>>>()?;
         Ok(Self::from_connected_curves(
             curves,
-            self.data.strict_connectivity_certified,
-            self.data.strict_closure_certified,
+            self.data.connectivity_policy,
+            self.data.closure_policy,
         ))
     }
 
@@ -1523,8 +1701,8 @@ impl CurvePath2 {
             .collect::<ExactCurveResult<Vec<_>>>()?;
         Ok(Self::from_connected_curves(
             curves,
-            self.data.strict_connectivity_certified,
-            self.data.strict_closure_certified,
+            self.data.connectivity_policy,
+            self.data.closure_policy,
         ))
     }
 
@@ -1960,7 +2138,7 @@ impl CurvePath2 {
         policy: &CurveContext,
     ) -> ExactCurveResult<Classification<ContourPointLocation>> {
         if let [curve] = self.curves()
-            && let CurveGeometry2::CircularArc(arc) = curve.geometry()
+            && let Some(CurveGeometry2::CircularArc(arc)) = curve.geometry()
             && crate::classify::is_zero(&arc.start().distance_squared(arc.end()), policy)
                 == Some(true)
         {
@@ -2133,6 +2311,17 @@ impl CurvePath2 {
     }
 }
 
+fn replay_path_certificate(retained: Option<CurveContext>, policy: &CurveContext) -> bool {
+    let Some(retained) = retained.filter(|retained| policy.accepts_retained_policy(*retained))
+    else {
+        return false;
+    };
+    if retained.permits_approximate_512() {
+        policy.observe_approximate_512();
+    }
+    true
+}
+
 pub(crate) fn validate_closed_curve_path_connectivity(
     path: &CurvePath2,
     policy: &CurveContext,
@@ -2158,7 +2347,7 @@ pub(crate) fn validate_curve_path_connectivity(
     path: &CurvePath2,
     policy: &CurveContext,
 ) -> ExactCurveResult<Classification<()>> {
-    if !path.data.strict_connectivity_certified {
+    if !replay_path_certificate(path.data.connectivity_policy, policy) {
         for adjacent in path.curves().windows(2) {
             match curve_path_points_equal(adjacent[0].end(), adjacent[1].start(), policy) {
                 Some(true) => {}
@@ -2184,7 +2373,7 @@ pub(crate) fn curve_path_is_closed(
     path: &CurvePath2,
     policy: &CurveContext,
 ) -> Classification<bool> {
-    if path.data.strict_closure_certified {
+    if replay_path_certificate(path.data.closure_policy, policy) {
         return Classification::Decided(true);
     }
     match curve_path_points_equal(path.end(), path.start(), policy) {
@@ -2212,7 +2401,11 @@ fn validate_native_fragment_cycle(
     {
         let (_, left_end) = left.curve().endpoint_refs();
         let (right_start, _) = right.curve().endpoint_refs();
-        match curve_path_points_equal(left_end, right_start, policy) {
+        match curve_path_points_equal(
+            CurvePoint2::from(left_end.clone()),
+            CurvePoint2::from(right_start.clone()),
+            policy,
+        ) {
             Some(true) => {}
             Some(false) => {
                 return Err(ExactCurveError::invalid(
@@ -2234,11 +2427,14 @@ fn validate_native_fragment_cycle(
     Ok(Classification::Decided(()))
 }
 
-fn curve_path_points_equal(left: &Point2, right: &Point2, policy: &CurveContext) -> Option<bool> {
-    if left == right {
-        Some(true)
-    } else {
-        crate::classify::is_zero(&left.distance_squared(right), policy)
+fn curve_path_points_equal(
+    left: CurvePoint2,
+    right: CurvePoint2,
+    policy: &CurveContext,
+) -> Option<bool> {
+    match left.same_point(&right, policy) {
+        Classification::Decided(equal) => Some(equal),
+        Classification::Uncertain(_) => None,
     }
 }
 
@@ -2248,10 +2444,10 @@ fn native_arc_chord_path(path: &CurvePath2) -> Option<(&Curve2, &CircularArc2, &
     }
     match path.curves() {
         [first, second] => match (first.geometry(), second.geometry()) {
-            (CurveGeometry2::CircularArc(arc), CurveGeometry2::Line(chord)) => {
+            (Some(CurveGeometry2::CircularArc(arc)), Some(CurveGeometry2::Line(chord))) => {
                 Some((first, arc, chord))
             }
-            (CurveGeometry2::Line(chord), CurveGeometry2::CircularArc(arc)) => {
+            (Some(CurveGeometry2::Line(chord)), Some(CurveGeometry2::CircularArc(arc))) => {
                 Some((second, arc, chord))
             }
             _ => None,
@@ -2455,11 +2651,17 @@ impl NativeBezierBoundaryLoop2 {
 
 fn compute_curve_bounds(curve: &Curve2) -> ExactCurveResult<Aabb2> {
     let policy = crate::CurveContext::STRICT;
+    if let Some(fragment) = curve.retained_fragment() {
+        return decided_bounds(
+            crate::bezier_region::retained_fragment_query_bounds(fragment, &policy),
+            curve.family(),
+        );
+    }
     match curve.geometry() {
-        CurveGeometry2::Line(line) => {
+        Some(CurveGeometry2::Line(line)) => {
             decided_bounds(Aabb2::from_line(line, &policy), curve.family())
         }
-        CurveGeometry2::CircularArc(arc) => decided_bounds(
+        Some(CurveGeometry2::CircularArc(arc)) => decided_bounds(
             Aabb2::from_arc(arc, &policy).map_err(|cause| {
                 ExactCurveError::invalid(CurveOperation2::NativeTopology, curve.family(), cause)
             })?,
@@ -2611,7 +2813,10 @@ fn promote_native_bezier_fragments(
     };
     let unit = || (Real::zero(), Real::one());
     match curve.geometry() {
-        CurveGeometry2::Line(line) => {
+        None => Ok(Classification::Uncertain(
+            crate::UncertaintyReason::Unsupported,
+        )),
+        Some(CurveGeometry2::Line(line)) => {
             let (start, end) = unit();
             Ok(Classification::Decided(vec![native(
                 BezierSubcurve2::Quadratic(QuadraticBezier2::from_line_segment(line.clone())),
@@ -2619,7 +2824,7 @@ fn promote_native_bezier_fragments(
                 end,
             )]))
         }
-        CurveGeometry2::CircularArc(value) => {
+        Some(CurveGeometry2::CircularArc(value)) => {
             Ok(decompose_circular_arc(value, policy)?.map(|decomposition| {
                 decomposition
                     .spans()
@@ -2635,7 +2840,7 @@ fn promote_native_bezier_fragments(
                     .collect()
             }))
         }
-        CurveGeometry2::QuadraticBezier(value) => {
+        Some(CurveGeometry2::QuadraticBezier(value)) => {
             let (start, end) = unit();
             Ok(Classification::Decided(vec![native(
                 BezierSubcurve2::Quadratic(value.clone()),
@@ -2643,7 +2848,7 @@ fn promote_native_bezier_fragments(
                 end,
             )]))
         }
-        CurveGeometry2::CubicBezier(value) => {
+        Some(CurveGeometry2::CubicBezier(value)) => {
             let (start, end) = unit();
             Ok(Classification::Decided(vec![native(
                 BezierSubcurve2::Cubic(value.clone()),
@@ -2651,7 +2856,7 @@ fn promote_native_bezier_fragments(
                 end,
             )]))
         }
-        CurveGeometry2::RationalQuadraticBezier(value) => {
+        Some(CurveGeometry2::RationalQuadraticBezier(value)) => {
             let (start, end) = unit();
             Ok(Classification::Decided(vec![native(
                 BezierSubcurve2::RationalQuadratic(value.clone()),
@@ -2659,7 +2864,7 @@ fn promote_native_bezier_fragments(
                 end,
             )]))
         }
-        CurveGeometry2::RationalBezier(value) => {
+        Some(CurveGeometry2::RationalBezier(value)) => {
             let (start, end) = unit();
             Ok(Classification::Decided(vec![native(
                 BezierSubcurve2::Rational(value.clone()),
@@ -2667,7 +2872,7 @@ fn promote_native_bezier_fragments(
                 end,
             )]))
         }
-        CurveGeometry2::PolynomialBSpline(value) => {
+        Some(CurveGeometry2::PolynomialBSpline(value)) => {
             let decomposition = match value.bezier_decomposition_with_policy(policy)? {
                 Classification::Decided(decomposition) => decomposition,
                 Classification::Uncertain(reason) => {
@@ -2683,7 +2888,7 @@ fn promote_native_bezier_fragments(
                     .collect(),
             ))
         }
-        CurveGeometry2::Nurbs(value) => {
+        Some(CurveGeometry2::Nurbs(value)) => {
             let decomposition = match value.bezier_decomposition_with_policy(policy)? {
                 Classification::Decided(decomposition) => decomposition,
                 Classification::Uncertain(reason) => {
@@ -2830,8 +3035,8 @@ pub(crate) enum CornerPlacement2 {
     Extension,
 }
 
-fn exact_corner_parameter(parameter: Real) -> Option<CurveRegionParameter2> {
-    Some(CurveRegionParameter2::from_bezier(BezierParameter2::Exact(
+fn exact_corner_parameter(parameter: Real) -> Option<CurveParameter2> {
+    Some(CurveParameter2::from_bezier(BezierParameter2::Exact(
         parameter,
     )))
 }
@@ -2841,7 +3046,7 @@ struct CornerCut2 {
     /// Canonical carrier-local parameter when the consuming representation
     /// needs it. Native fillet arcs may defer their sweep parameter because
     /// exact Cartesian incidence is sufficient for reconstruction.
-    parameter: Option<CurveRegionParameter2>,
+    parameter: Option<CurveParameter2>,
     point: CurvePoint2,
     placement: CornerPlacement2,
 }
@@ -2923,7 +3128,7 @@ impl CornerReplacement2 {
 
 #[derive(Clone, Debug)]
 pub(crate) struct CornerTrimCut2 {
-    pub(crate) parameter: CurveRegionParameter2,
+    pub(crate) parameter: CurveParameter2,
     pub(crate) point: CurvePoint2,
     pub(crate) placement: CornerPlacement2,
     pub(crate) replacement: Option<CornerReplacement2>,
@@ -3022,7 +3227,7 @@ pub(crate) struct RetainedFilletCenterParallel2 {
     /// Selected fibers remain local here; reconstruction must never require
     /// their degree-multiplied global projection merely to recover a tangent
     /// frame that the center solve already certified.
-    pub(crate) parameter: Option<CurveRegionParameter2>,
+    pub(crate) parameter: Option<CurveParameter2>,
 }
 
 #[derive(Clone, Debug)]
@@ -3062,7 +3267,7 @@ pub(crate) struct RetainedDeferredArcFilletContact2 {
 #[derive(Clone, Debug)]
 pub(crate) struct RetainedArcFilletContactSeed2 {
     pub(crate) cell: RetainedArcFilletContactCell2,
-    pub(crate) parameter: CurveRegionParameter2,
+    pub(crate) parameter: CurveParameter2,
 }
 
 #[derive(Clone, Copy, Debug)]
@@ -3152,14 +3357,15 @@ impl CornerCuts2 {
 
 fn exact_linear_corner_line(curve: &Curve2) -> Option<&LineSeg2> {
     match curve.geometry() {
-        CurveGeometry2::Line(line) => Some(line),
-        CurveGeometry2::QuadraticBezier(curve) => curve.retained_exact_line_image(),
-        CurveGeometry2::CircularArc(_)
-        | CurveGeometry2::CubicBezier(_)
-        | CurveGeometry2::RationalQuadraticBezier(_)
-        | CurveGeometry2::RationalBezier(_)
-        | CurveGeometry2::PolynomialBSpline(_)
-        | CurveGeometry2::Nurbs(_) => None,
+        None => None,
+        Some(CurveGeometry2::Line(line)) => Some(line),
+        Some(CurveGeometry2::QuadraticBezier(curve)) => curve.retained_exact_line_image(),
+        Some(CurveGeometry2::CircularArc(_))
+        | Some(CurveGeometry2::CubicBezier(_))
+        | Some(CurveGeometry2::RationalQuadraticBezier(_))
+        | Some(CurveGeometry2::RationalBezier(_))
+        | Some(CurveGeometry2::PolynomialBSpline(_))
+        | Some(CurveGeometry2::Nurbs(_)) => None,
     }
 }
 
@@ -3360,7 +3566,7 @@ fn retained_arc_fillet_contact_seed(
         let boundary_order = |boundary: Real| {
             parameter
                 .cmp_by_refinement(
-                    &CurveRegionParameter2::from_bezier(BezierParameter2::Exact(boundary)),
+                    &CurveParameter2::from_bezier(BezierParameter2::Exact(boundary)),
                     policy,
                 )
                 .map_err(|cause| ExactCurveError::invalid(CurveOperation2::Fillet, family, cause))
@@ -3504,7 +3710,7 @@ impl ExactCornerArc2<'_> {
                 ExactCurveError::blocked(operation, family, crate::UncertaintyReason::Boundary)
             });
         };
-        let domain = retained.source.parameter_domain();
+        let domain = retained.source.native_parameter_domain()?;
         if let Some(parameter) = parameter.as_exact() {
             // Preserve the established source-domain expression order on the
             // represented hot path. Besides avoiding an algebraic-map setup,
@@ -3536,9 +3742,21 @@ impl ExactCornerArc2<'_> {
             }
             Self::RetainedRational(retained) => {
                 if previous {
-                    retained.source.parameter_domain().end().clone()
+                    retained
+                        .source
+                        .parameter_domain()
+                        .end()
+                        .as_exact()
+                        .expect("native circular parameter")
+                        .clone()
                 } else {
-                    retained.source.parameter_domain().start().clone()
+                    retained
+                        .source
+                        .parameter_domain()
+                        .start()
+                        .as_exact()
+                        .expect("native circular parameter")
+                        .clone()
                 }
             }
         }
@@ -3598,10 +3816,12 @@ fn retained_rational_arc_support(
     policy: &CurveContext,
 ) -> ExactCurveResult<Option<CircularArc2>> {
     let support = match curve.geometry() {
-        CurveGeometry2::RationalQuadraticBezier(conic) => {
+        Some(CurveGeometry2::RationalQuadraticBezier(conic)) => {
             rational_quadratic_circular_arc(conic, policy)
         }
-        CurveGeometry2::RationalBezier(rational) => rational_bezier_circular_arc(rational, policy),
+        Some(CurveGeometry2::RationalBezier(rational)) => {
+            rational_bezier_circular_arc(rational, policy)
+        }
         _ => return Ok(None),
     }
     .map_err(|cause| ExactCurveError::invalid(operation, curve.family(), cause))?;
@@ -3618,8 +3838,10 @@ pub(crate) fn exact_corner_carrier<'a>(
     policy: &CurveContext,
 ) -> ExactCurveResult<Option<ExactCornerCarrier2<'a>>> {
     match curve.geometry() {
-        CurveGeometry2::Line(line) => return Ok(Some(ExactCornerCarrier2::Line(line))),
-        CurveGeometry2::QuadraticBezier(source) if source.retained_exact_line_image().is_some() => {
+        Some(CurveGeometry2::Line(line)) => return Ok(Some(ExactCornerCarrier2::Line(line))),
+        Some(CurveGeometry2::QuadraticBezier(source))
+            if source.retained_exact_line_image().is_some() =>
+        {
             return Ok(Some(ExactCornerCarrier2::PromotedLine(source)));
         }
         _ => {}
@@ -3632,15 +3854,34 @@ pub(crate) fn exact_corner_carrier<'a>(
     };
     let bezier = || ExactCornerCarrier2::Bezier(curve);
     Ok(match curve.geometry() {
-        CurveGeometry2::CircularArc(arc) => Some(ExactCornerCarrier2::Arc(arc)),
-        CurveGeometry2::RationalQuadraticBezier(_) | CurveGeometry2::RationalBezier(_) => Some(
+        None => match curve.retained_fragment().expect("restricted carrier") {
+            crate::BezierSplitFragment2::AlgebraicChord(chord) => {
+                Some(ExactCornerCarrier2::AlgebraicChord(chord))
+            }
+            crate::BezierSplitFragment2::AnalyticParallel(fragment) => {
+                Some(ExactCornerCarrier2::AnalyticParallel(fragment))
+            }
+            crate::BezierSplitFragment2::AlgebraicCuspSemicircle(fragment) => {
+                Some(ExactCornerCarrier2::AlgebraicCusp(fragment))
+            }
+            crate::BezierSplitFragment2::SelectedFiber(fragment) => {
+                Some(ExactCornerCarrier2::SelectedFiber(fragment))
+            }
+            crate::BezierSplitFragment2::AlgebraicEndpointImages { .. }
+            | crate::BezierSplitFragment2::Materialized { .. } => None,
+        },
+        Some(CurveGeometry2::CircularArc(arc)) => Some(ExactCornerCarrier2::Arc(arc)),
+        Some(CurveGeometry2::RationalQuadraticBezier(_))
+        | Some(CurveGeometry2::RationalBezier(_)) => Some(
             match retained_rational_arc_support(curve, operation, policy)? {
                 Some(support) => retained(support),
                 None => bezier(),
             },
         ),
-        CurveGeometry2::QuadraticBezier(_) | CurveGeometry2::CubicBezier(_) => Some(bezier()),
-        CurveGeometry2::PolynomialBSpline(_) | CurveGeometry2::Nurbs(_) => {
+        Some(CurveGeometry2::QuadraticBezier(_)) | Some(CurveGeometry2::CubicBezier(_)) => {
+            Some(bezier())
+        }
+        Some(CurveGeometry2::PolynomialBSpline(_)) | Some(CurveGeometry2::Nurbs(_)) => {
             let fragments = match curve
                 .native_bezier_fragments_with_policy(policy)
                 .map_err(|error| error.with_operation(operation))?
@@ -3666,7 +3907,7 @@ pub(crate) fn exact_corner_carrier<'a>(
             })?;
             Some(ExactCornerCarrier2::NativeBezierSpan(fragment))
         }
-        CurveGeometry2::Line(_) => None,
+        Some(CurveGeometry2::Line(_)) => None,
     })
 }
 
@@ -3678,14 +3919,15 @@ fn exact_corner_bezier_parallel(
 ) -> ExactCurveResult<BezierParallel2> {
     let parallel = match source {
         ExactCornerBezier2::Direct(source) => match source.geometry() {
-            CurveGeometry2::QuadraticBezier(source) => source.parallel_left(distance),
-            CurveGeometry2::CubicBezier(source) => source.parallel_left(distance),
-            CurveGeometry2::RationalQuadraticBezier(source) => source.parallel_left(distance),
-            CurveGeometry2::RationalBezier(source) => source.parallel_left(distance),
-            CurveGeometry2::Line(_)
-            | CurveGeometry2::CircularArc(_)
-            | CurveGeometry2::PolynomialBSpline(_)
-            | CurveGeometry2::Nurbs(_) => {
+            None => unreachable!("direct Bezier corner requires its native definition"),
+            Some(CurveGeometry2::QuadraticBezier(source)) => source.parallel_left(distance),
+            Some(CurveGeometry2::CubicBezier(source)) => source.parallel_left(distance),
+            Some(CurveGeometry2::RationalQuadraticBezier(source)) => source.parallel_left(distance),
+            Some(CurveGeometry2::RationalBezier(source)) => source.parallel_left(distance),
+            Some(CurveGeometry2::Line(_))
+            | Some(CurveGeometry2::CircularArc(_))
+            | Some(CurveGeometry2::PolynomialBSpline(_))
+            | Some(CurveGeometry2::Nurbs(_)) => {
                 unreachable!("only direct Bezier corner carriers request an analytic parallel")
             }
         },
@@ -3703,10 +3945,11 @@ impl<'a> ExactCornerBezier2<'a> {
     fn corner(self, previous: bool) -> &'a Point2 {
         match self {
             Self::Direct(source) => {
+                let geometry = source.geometry().expect("direct native Bezier corner");
                 if previous {
-                    source.end()
+                    geometry.end()
                 } else {
-                    source.start()
+                    geometry.start()
                 }
             }
             Self::NativeSpan(fragment) => {
@@ -3723,7 +3966,9 @@ impl<'a> ExactCornerBezier2<'a> {
         let (start, end) = match self {
             Self::Direct(source) => {
                 let domain = source.parameter_domain();
-                (domain.start(), domain.end())
+                domain
+                    .exact_endpoints()
+                    .expect("direct native Bezier domain")
             }
             Self::NativeSpan(fragment) => fragment.parameter_range(),
         };
@@ -3951,16 +4196,16 @@ impl FilletParallelSource2<'_> {
         }
     }
 
-    fn curve_parameter_range(&self) -> crate::CurveRegionParameterRange2 {
+    fn curve_parameter_range(&self) -> crate::CurveParameterRange2 {
         match self {
-            Self::Direct(_) => crate::CurveRegionParameterRange2::from_bezier_range(
+            Self::Direct(_) => crate::CurveParameterRange2::from_bezier_range(
                 BezierParameterRange2::new_validated(
                     BezierParameter2::Exact(Real::zero()),
                     BezierParameter2::Exact(Real::one()),
                 ),
             ),
             Self::Retained(source) => {
-                crate::CurveRegionParameterRange2::from_bezier_range(source.range().clone())
+                crate::CurveParameterRange2::from_bezier_range(source.range().clone())
             }
             Self::Selected(source) => source.range().clone(),
         }
@@ -4086,7 +4331,7 @@ impl FilletParallelSource2<'_> {
 
     fn parameter_is_admissible(
         &self,
-        parameter: &CurveRegionParameter2,
+        parameter: &CurveParameter2,
         previous: bool,
         mode: CurveCornerMode2,
         incident_domain: Option<&crate::bezier_offset::BezierParallelIncidentDomain2>,
@@ -4159,7 +4404,7 @@ impl FilletParallelSource2<'_> {
         policy: &CurveContext,
     ) -> ExactCurveResult<bool> {
         self.parameter_is_admissible(
-            &CurveRegionParameter2::from_bezier(parameter.clone()),
+            &CurveParameter2::from_bezier(parameter.clone()),
             previous,
             mode,
             incident_domain,
@@ -4586,7 +4831,7 @@ impl FilletOffsetCarrier2<'_, '_> {
     fn retained_fillet_frame(
         &self,
         anchor_is_previous: bool,
-        anchor_parameter: Option<&CurveRegionParameter2>,
+        anchor_parameter: Option<&CurveParameter2>,
         mut anchor_evidence: Option<RetainedFilletAnchorEvidence2>,
         force_chord_normal: bool,
         family: CurveFamily2,
@@ -4637,11 +4882,11 @@ impl FilletOffsetCarrier2<'_, '_> {
                     let Some(center_parameter) = center_frame
                         .parameter
                         .as_ref()
-                        .and_then(CurveRegionParameter2::as_bezier_parameter)
+                        .and_then(CurveParameter2::as_bezier_parameter)
                         .cloned()
                         .or_else(|| {
                             anchor_parameter
-                                .and_then(CurveRegionParameter2::as_bezier_parameter)
+                                .and_then(CurveParameter2::as_bezier_parameter)
                                 .cloned()
                         })
                     else {
@@ -4748,7 +4993,7 @@ impl FilletOffsetCarrier2<'_, '_> {
                             .and_then(|evidence| evidence.center_parallel.as_ref())
                             .map(|frame| frame.support.clone()),
                         anchor_parameter
-                            .and_then(CurveRegionParameter2::as_bezier_parameter)
+                            .and_then(CurveParameter2::as_bezier_parameter)
                             .cloned(),
                     ) {
                         (Some(center_support), Some(center_parameter)) => {
@@ -4776,8 +5021,8 @@ impl FilletOffsetCarrier2<'_, '_> {
                 (radial_frame, radial_distance)
             }
             Self::AlgebraicCusp { source, support } => {
-                let complementary = anchor_parameter
-                    .is_some_and(CurveRegionParameter2::is_algebraic_cusp_complement);
+                let complementary =
+                    anchor_parameter.is_some_and(CurveParameter2::is_algebraic_cusp_complement);
                 let support_circle = if complementary {
                     support.semicircle().complementary_half()
                 } else {
@@ -4821,10 +5066,12 @@ impl FilletOffsetCarrier2<'_, '_> {
                     | CurvePoint2(CurvePointData2::AlgebraicCuspChordDerived(_))
                     | CurvePoint2(CurvePointData2::AlgebraicChordParallel(_))
                     | CurvePoint2(CurvePointData2::AnalyticParallel(_))
-                    | CurvePoint2(CurvePointData2::Similarity(_)) => None,
+                    | CurvePoint2(CurvePointData2::Similarity(_) | CurvePointData2::Endpoint(_)) => {
+                        None
+                    }
                 };
                 let selected_center_parameter = anchor_parameter
-                    .and_then(CurveRegionParameter2::as_algebraic_cusp)
+                    .and_then(CurveParameter2::as_algebraic_cusp)
                     .cloned();
                 let retain_pair_frame = selected_center_parameter
                     .as_ref()
@@ -4849,7 +5096,7 @@ impl FilletOffsetCarrier2<'_, '_> {
             }
             Self::Parallel { source, support } => {
                 let radial_frame = if let Some(center_parameter) = anchor_parameter
-                    .and_then(CurveRegionParameter2::as_bezier_parameter)
+                    .and_then(CurveParameter2::as_bezier_parameter)
                     .cloned()
                 {
                     RetainedFilletRadialFrame2::ParallelNormal {
@@ -4913,8 +5160,8 @@ impl FilletOffsetCarrier2<'_, '_> {
 
 struct FilletCenterWitness2 {
     point: CurvePoint2,
-    previous_parameter: Option<CurveRegionParameter2>,
-    next_parameter: Option<CurveRegionParameter2>,
+    previous_parameter: Option<CurveParameter2>,
+    next_parameter: Option<CurveParameter2>,
     retained_anchor_evidence: Option<RetainedFilletAnchorEvidence2>,
 }
 
@@ -4953,7 +5200,7 @@ fn retained_fillet_cusp_support_reverses_source(
 }
 
 impl FilletCenterWitness2 {
-    fn parameter(&self, previous: bool) -> Option<&CurveRegionParameter2> {
+    fn parameter(&self, previous: bool) -> Option<&CurveParameter2> {
         if previous {
             self.previous_parameter.as_ref()
         } else {
@@ -5265,7 +5512,7 @@ fn solve_carrier_fillet_corner(
                                     .as_ref()
                                     .and_then(|evidence| evidence.center_parallel.as_ref())
                                     .and_then(|center| center.parameter.as_ref())
-                                    .is_some_and(CurveRegionParameter2::is_retained_scalar);
+                                    .is_some_and(CurveParameter2::is_retained_scalar);
                         }
                         matches!(
                             &frame.radial_frame,
@@ -5344,10 +5591,10 @@ fn solve_carrier_fillet_corner(
 
 fn retained_fillet_cusp_fragment_range(
     fragment: &crate::BezierAlgebraicCuspSemicircleFragment2,
-) -> crate::CurveRegionParameterRange2 {
-    crate::CurveRegionParameterRange2::new_validated(
-        CurveRegionParameter2::from_algebraic_cusp(fragment.start_parameter().clone()),
-        CurveRegionParameter2::from_algebraic_cusp(fragment.end_parameter().clone()),
+) -> crate::CurveParameterRange2 {
+    crate::CurveParameterRange2::new_validated(
+        CurveParameter2::from_algebraic_cusp(fragment.start_parameter().clone()),
+        CurveParameter2::from_algebraic_cusp(fragment.end_parameter().clone()),
     )
 }
 
@@ -5370,7 +5617,7 @@ fn retained_fillet_positive_overlap(
 fn retained_fillet_cusp_mapped_overlap_is_positive(
     cusp: &crate::BezierAlgebraicCuspSemicircleFragment2,
     overlap: &crate::bezier_offset::BezierAlgebraicCuspSemicircleMappedOverlap2,
-    other_range: &crate::CurveRegionParameterRange2,
+    other_range: &crate::CurveParameterRange2,
     family: CurveFamily2,
     policy: &CurveContext,
 ) -> ExactCurveResult<bool> {
@@ -5492,15 +5739,15 @@ fn retained_fillet_pair_contact_rational_point_on_arc(
 }
 
 fn retained_fillet_incident_overlap_range(
-    overlap: &crate::CurveRegionParameterRange2,
+    overlap: &crate::CurveParameterRange2,
     domain: &crate::bezier_offset::BezierParallelIncidentDomain2,
     family: CurveFamily2,
     policy: &CurveContext,
-) -> ExactCurveResult<Option<crate::CurveRegionParameterRange2>> {
+) -> ExactCurveResult<Option<crate::CurveParameterRange2>> {
     let barrier = || {
         domain
             .barrier()
-            .map(|parameter| CurveRegionParameter2::from_bezier(parameter.clone()))
+            .map(|parameter| CurveParameter2::from_bezier(parameter.clone()))
     };
     let (start, end) = match domain.direction() {
         crate::BezierParameterRayDirection2::Decreasing => (
@@ -5516,15 +5763,15 @@ fn retained_fillet_incident_overlap_range(
         match retained_fillet_curve_region_parameter_order(&start, &end, family, policy)? {
             std::cmp::Ordering::Equal => None,
             std::cmp::Ordering::Less | std::cmp::Ordering::Greater => {
-                Some(crate::CurveRegionParameterRange2::new_validated(start, end))
+                Some(crate::CurveParameterRange2::new_validated(start, end))
             }
         },
     )
 }
 
 fn retained_fillet_curve_region_parameter_order(
-    first: &CurveRegionParameter2,
-    second: &CurveRegionParameter2,
+    first: &CurveParameter2,
+    second: &CurveParameter2,
     family: CurveFamily2,
     policy: &CurveContext,
 ) -> ExactCurveResult<std::cmp::Ordering> {
@@ -5545,8 +5792,8 @@ fn retained_fillet_corresponding_overlap_is_positive(
     first_curve: &RationalBezier2,
     second_curve: &RationalBezier2,
     overlap: &crate::RationalBezierIntersectionOverlap2,
-    first_fragment: &crate::CurveRegionParameterRange2,
-    second_fragment: &crate::CurveRegionParameterRange2,
+    first_fragment: &crate::CurveParameterRange2,
+    second_fragment: &crate::CurveParameterRange2,
     family: CurveFamily2,
     policy: &CurveContext,
 ) -> ExactCurveResult<bool> {
@@ -5577,8 +5824,8 @@ fn retained_fillet_corresponding_overlap_is_positive(
 
 fn retained_fillet_parameter_component_overlap_is_positive(
     overlap: &crate::bezier_offset::BezierParameterComponentOverlap2,
-    first_fragment: &crate::CurveRegionParameterRange2,
-    second_fragment: &crate::CurveRegionParameterRange2,
+    first_fragment: &crate::CurveParameterRange2,
+    second_fragment: &crate::CurveParameterRange2,
     family: CurveFamily2,
     policy: &CurveContext,
 ) -> ExactCurveResult<bool> {
@@ -5607,7 +5854,7 @@ fn retained_fillet_arc_cusp_overlap_is_positive(
     policy: &CurveContext,
 ) -> ExactCurveResult<bool> {
     let range =
-        crate::CurveRegionParameterRange2::from_bezier_range(BezierParameterRange2::new_validated(
+        crate::CurveParameterRange2::from_bezier_range(BezierParameterRange2::new_validated(
             BezierParameter2::Exact(Real::zero()),
             BezierParameter2::Exact(Real::one()),
         ));
@@ -5650,7 +5897,7 @@ fn retained_fillet_arc_cusp_overlap_is_positive(
             }
             crate::bezier_offset::BezierAlgebraicCuspSemicircleRationalIntersections2::Overlaps(overlaps) => {
                 for overlap in overlaps {
-                    let cell_overlap = crate::CurveRegionParameterRange2::from_bezier_range(
+                    let cell_overlap = crate::CurveParameterRange2::from_bezier_range(
                         overlap.other_range().clone(),
                     );
                     if retained_fillet_cusp_mapped_overlap_is_positive(
@@ -5768,12 +6015,12 @@ fn retained_fillet_parameter_is_in_open_range(
 
 fn retained_selected_fillet_parameter_is_in_open_range(
     parameter: &BezierParameter2,
-    range: &crate::bezier_split::CurveRegionParameterRange2,
+    range: &crate::bezier_split::CurveParameterRange2,
     family: CurveFamily2,
     policy: &CurveContext,
 ) -> ExactCurveResult<bool> {
-    let parameter = CurveRegionParameter2::from_bezier(parameter.clone());
-    let order = |boundary: &CurveRegionParameter2| match parameter
+    let parameter = CurveParameter2::from_bezier(parameter.clone());
+    let order = |boundary: &CurveParameter2| match parameter
         .cmp_by_refinement(boundary, policy)
         .map_err(|cause| ExactCurveError::invalid(CurveOperation2::Fillet, family, cause))?
     {
@@ -5789,7 +6036,7 @@ fn retained_selected_fillet_parameter_is_in_open_range(
 
 fn retained_selected_fillet_overlap_is_positive(
     overlap: &crate::bezier_offset::BezierAlgebraicCuspSemicircleSelectedFiberRationalOverlap2,
-    analytic_range: &crate::CurveRegionParameterRange2,
+    analytic_range: &crate::CurveParameterRange2,
     incident_domain: Option<&crate::bezier_offset::BezierParallelIncidentDomain2>,
     cusp_source: &crate::BezierAlgebraicCuspSemicircleFragment2,
     analytic_family: CurveFamily2,
@@ -5807,9 +6054,9 @@ fn retained_selected_fillet_overlap_is_positive(
     let Some(domain) = incident_domain else {
         return Ok(false);
     };
-    let other_overlap = crate::CurveRegionParameterRange2::new_validated(
-        CurveRegionParameter2::from_selected_fiber(overlap.other_start_parameter()),
-        CurveRegionParameter2::from_selected_fiber(overlap.other_end_parameter()),
+    let other_overlap = crate::CurveParameterRange2::new_validated(
+        CurveParameter2::from_selected_fiber(overlap.other_start_parameter()),
+        CurveParameter2::from_selected_fiber(overlap.other_end_parameter()),
     );
     let Some(incident_range) =
         retained_fillet_incident_overlap_range(&other_overlap, domain, analytic_family, policy)?
@@ -5829,7 +6076,7 @@ fn retain_cusp_parallel_fillet_contact(
     parallel_source: FilletParallelSource2<'_>,
     analytic_support: &BezierParallel2,
     cusp_parameter: crate::bezier_offset::BezierAlgebraicCuspSemicircleParameter2,
-    analytic_parameter: CurveRegionParameter2,
+    analytic_parameter: CurveParameter2,
     point: CurvePoint2,
     location: crate::bezier_offset::BezierAlgebraicCuspSemicircleContactLocation2,
     mut cross: RealSign,
@@ -5885,9 +6132,9 @@ fn retain_cusp_parallel_fillet_contact(
         dot = reverse_fillet_sign(dot);
     }
     let cusp_parameter = if complementary {
-        CurveRegionParameter2::from_algebraic_cusp_complement(cusp_parameter)
+        CurveParameter2::from_algebraic_cusp_complement(cusp_parameter)
     } else {
-        CurveRegionParameter2::from_algebraic_cusp(cusp_parameter)
+        CurveParameter2::from_algebraic_cusp(cusp_parameter)
     };
     let (previous_parameter, next_parameter) = if cusp_is_previous {
         (Some(cusp_parameter), Some(analytic_parameter.clone()))
@@ -5928,7 +6175,7 @@ fn fillet_offset_centers(
     policy: &CurveContext,
 ) -> ExactCurveResult<FilletCenters2> {
     let exact_parameter =
-        |parameter| CurveRegionParameter2::from_bezier(BezierParameter2::Exact(parameter));
+        |parameter| CurveParameter2::from_bezier(BezierParameter2::Exact(parameter));
     let mut centers = FilletCenters2::default();
     match (previous, next) {
         (FilletOffsetCarrier2::Point { .. }, _) | (_, FilletOffsetCarrier2::Point { .. }) => {
@@ -6210,7 +6457,7 @@ fn fillet_offset_centers(
                         contact_seed: None,
                     }),
                 });
-                let bezier_parameter = CurveRegionParameter2::from_bezier(parameter);
+                let bezier_parameter = CurveParameter2::from_bezier(parameter);
                 centers.push(FilletCenterWitness2 {
                     point,
                     previous_parameter: bezier_is_previous.then(|| bezier_parameter.clone()),
@@ -6475,12 +6722,10 @@ fn fillet_offset_centers(
                     };
                     centers.push(FilletCenterWitness2 {
                         point: point.clone(),
-                        previous_parameter: Some(CurveRegionParameter2::from_bezier(
+                        previous_parameter: Some(CurveParameter2::from_bezier(
                             previous_parameter.clone(),
                         )),
-                        next_parameter: Some(CurveRegionParameter2::from_bezier(
-                            next_parameter.clone(),
-                        )),
+                        next_parameter: Some(CurveParameter2::from_bezier(next_parameter.clone())),
                         retained_anchor_evidence: Some(RetainedFilletAnchorEvidence2 {
                             cross: contact.tangent_cross_sign().map(orient),
                             dot: contact.tangent_dot_sign().map(|sign| {
@@ -6678,7 +6923,7 @@ fn fillet_offset_centers(
                         let Some(parameter) = line_parameter else {
                             continue;
                         };
-                        Some(CurveRegionParameter2::from_bezier(parameter))
+                        Some(CurveParameter2::from_bezier(parameter))
                     };
                 let retained_anchor_evidence = {
                     let (mut cross, mut dot) = match support
@@ -6725,7 +6970,7 @@ fn fillet_offset_centers(
                         deferred_arc_contact: None,
                     })
                 };
-                let parallel_parameter = Some(CurveRegionParameter2::from_bezier(parameter));
+                let parallel_parameter = Some(CurveParameter2::from_bezier(parameter));
                 let (previous_parameter, next_parameter) = if line_is_previous {
                     (line_parameter, parallel_parameter)
                 } else {
@@ -6859,7 +7104,7 @@ fn fillet_offset_centers(
                                 *parallel_source,
                                 analytic_support,
                                 contact.cusp_parameter(),
-                                CurveRegionParameter2::from_selected_fiber(
+                                CurveParameter2::from_selected_fiber(
                                     contact.other_parameter().clone(),
                                 ),
                                 contact.point_evidence(),
@@ -7037,13 +7282,13 @@ fn fillet_offset_centers(
                                 }
                             };
                             let cusp_parameter = if complementary {
-                                CurveRegionParameter2::from_algebraic_cusp_complement(
+                                CurveParameter2::from_algebraic_cusp_complement(
                                     cusp_parameter,
                                 )
                             } else {
-                                CurveRegionParameter2::from_algebraic_cusp(cusp_parameter)
+                                CurveParameter2::from_algebraic_cusp(cusp_parameter)
                             };
-                            let analytic_parameter = CurveRegionParameter2::from_bezier(
+                            let analytic_parameter = CurveParameter2::from_bezier(
                                 contact.parallel_parameter,
                             );
                             let (previous_parameter, next_parameter) = if cusp_is_previous {
@@ -7087,7 +7332,7 @@ fn fillet_offset_centers(
                                 policy,
                             )?;
                             let overlaps_incident = if let Some(domain) = incident_domain.as_ref() {
-                                let other_overlap = crate::CurveRegionParameterRange2::from_bezier_range(
+                                let other_overlap = crate::CurveParameterRange2::from_bezier_range(
                                     overlap.other_range().clone(),
                                 );
                                 let incident_range = retained_fillet_incident_overlap_range(
@@ -7568,9 +7813,9 @@ fn fillet_offset_centers(
                             tangent_dot = tangent_dot.map(reverse_fillet_sign);
                         }
                         let cusp_parameter = if cusp_complementary {
-                            CurveRegionParameter2::from_algebraic_cusp_complement(cusp_parameter)
+                            CurveParameter2::from_algebraic_cusp_complement(cusp_parameter)
                         } else {
-                            CurveRegionParameter2::from_algebraic_cusp(cusp_parameter)
+                            CurveParameter2::from_algebraic_cusp(cusp_parameter)
                         };
                         let (previous_parameter, next_parameter) = if arc_is_previous {
                             (None, Some(cusp_parameter))
@@ -7726,10 +7971,10 @@ fn fillet_offset_centers(
                     center.next_parameter.as_ref()
                 };
                 let recursive_line_parameter = line_parameter
-                    .and_then(CurveRegionParameter2::as_algebraic_chord)
+                    .and_then(CurveParameter2::as_algebraic_chord)
                     .and_then(|parameter| parameter.point().as_algebraic_cusp_chord())
                     .and_then(|point| point.recursive_quadratic_line_parameter())
-                    .map(CurveRegionParameter2::from_recursive_projective);
+                    .map(CurveParameter2::from_recursive_projective);
                 let retained_line_parameter = finite_source_domain
                     .then(|| {
                         recursive_line_parameter.or_else(|| {
@@ -7799,14 +8044,14 @@ fn fillet_offset_centers(
                     }
                 }
                 let previous_parameter = if previous_complementary {
-                    CurveRegionParameter2::from_algebraic_cusp_complement(previous_parameter)
+                    CurveParameter2::from_algebraic_cusp_complement(previous_parameter)
                 } else {
-                    CurveRegionParameter2::from_algebraic_cusp(previous_parameter)
+                    CurveParameter2::from_algebraic_cusp(previous_parameter)
                 };
                 let next_parameter = if next_complementary {
-                    CurveRegionParameter2::from_algebraic_cusp_complement(next_parameter)
+                    CurveParameter2::from_algebraic_cusp_complement(next_parameter)
                 } else {
-                    CurveRegionParameter2::from_algebraic_cusp(next_parameter)
+                    CurveParameter2::from_algebraic_cusp(next_parameter)
                 };
                 Ok(Some(FilletCenterWitness2 {
                     point,
@@ -8383,12 +8628,12 @@ fn fillet_offset_centers(
                     contact.tangent_cross_sign
                 };
                 let cusp_parameter = if complementary {
-                    CurveRegionParameter2::from_algebraic_cusp_complement(contact.cusp_parameter)
+                    CurveParameter2::from_algebraic_cusp_complement(contact.cusp_parameter)
                 } else {
-                    CurveRegionParameter2::from_algebraic_cusp(contact.cusp_parameter)
+                    CurveParameter2::from_algebraic_cusp(contact.cusp_parameter)
                 };
                 let chord_parameter =
-                    CurveRegionParameter2::from_algebraic_chord(contact.chord_parameter);
+                    CurveParameter2::from_algebraic_chord(contact.chord_parameter);
                 let (previous_parameter, next_parameter) = if chord_is_previous {
                     (Some(chord_parameter), Some(cusp_parameter))
                 } else {
@@ -8716,7 +8961,7 @@ fn fillet_offset_centers(
                     cross = reverse_fillet_sign(cross);
                 }
                 let chord_parameter =
-                    CurveRegionParameter2::from_algebraic_chord(contact.chord_parameter);
+                    CurveParameter2::from_algebraic_chord(contact.chord_parameter);
                 let (previous_parameter, next_parameter) = if chord_is_previous {
                     (Some(chord_parameter), None)
                 } else {
@@ -8846,7 +9091,7 @@ fn fillet_offset_centers(
                     dot = reverse_fillet_sign(dot);
                 }
                 let analytic_parameter =
-                    CurveRegionParameter2::from_bezier(contact.parallel_parameter().clone());
+                    CurveParameter2::from_bezier(contact.parallel_parameter().clone());
                 let (previous_parameter, next_parameter) = if chord_is_previous {
                     (None, Some(analytic_parameter))
                 } else {
@@ -9010,24 +9255,18 @@ fn fillet_offset_centers(
                     ));
                 }
             };
-            let retained_parameter =
-                |source: &FilletLinearSource2<'_>,
-                 support: &LineSeg2,
-                 family: CurveFamily2|
-                 -> ExactCurveResult<Option<CurveRegionParameter2>> {
-                    source
-                        .native_line()
-                        .map(|_| {
-                            line_parameter_at_point(
-                                support,
-                                &point,
-                                CurveOperation2::Fillet,
-                                family,
-                            )
+            let retained_parameter = |source: &FilletLinearSource2<'_>,
+                                      support: &LineSeg2,
+                                      family: CurveFamily2|
+             -> ExactCurveResult<Option<CurveParameter2>> {
+                source
+                    .native_line()
+                    .map(|_| {
+                        line_parameter_at_point(support, &point, CurveOperation2::Fillet, family)
                             .map(exact_parameter)
-                        })
-                        .transpose()
-                };
+                    })
+                    .transpose()
+            };
             centers.push(FilletCenterWitness2 {
                 previous_parameter: retained_parameter(
                     previous_source,
@@ -9146,7 +9385,7 @@ fn point_on_fillet_offset(
 fn fillet_cut_from_center(
     offset: &FilletOffsetCarrier2<'_, '_>,
     center: &CurvePoint2,
-    retained_parameter: Option<&CurveRegionParameter2>,
+    retained_parameter: Option<&CurveParameter2>,
     deferred_arc_contact: bool,
     previous: bool,
     mode: CurveCornerMode2,
@@ -9705,9 +9944,9 @@ fn fillet_cut_from_center(
             Ok(Some(CornerCut2 {
                 point,
                 parameter: Some(if complementary {
-                    CurveRegionParameter2::from_algebraic_cusp_complement(parameter)
+                    CurveParameter2::from_algebraic_cusp_complement(parameter)
                 } else {
-                    CurveRegionParameter2::from_algebraic_cusp(parameter)
+                    CurveParameter2::from_algebraic_cusp(parameter)
                 }),
                 placement,
             }))
@@ -9719,7 +9958,7 @@ fn fillet_cut_from_center(
 fn algebraic_chord_fillet_cut_from_center(
     source: &crate::BezierAlgebraicChord2,
     center: &CurvePoint2,
-    retained_parameter: Option<&CurveRegionParameter2>,
+    retained_parameter: Option<&CurveParameter2>,
     signed_distance: &Real,
     previous: bool,
     mode: CurveCornerMode2,
@@ -9759,7 +9998,7 @@ fn algebraic_chord_fillet_cut_from_center(
                 })?;
             return Ok(Some(CornerCut2 {
                 point,
-                parameter: Some(CurveRegionParameter2::from_algebraic_chord(parameter)),
+                parameter: Some(CurveParameter2::from_algebraic_chord(parameter)),
                 placement,
             }));
         }
@@ -9865,7 +10104,7 @@ fn algebraic_chord_corner_cut_from_support_point(
     };
     Ok(Some(CornerCut2 {
         point,
-        parameter: Some(CurveRegionParameter2::from_algebraic_chord(parameter)),
+        parameter: Some(CurveParameter2::from_algebraic_chord(parameter)),
         placement,
     }))
 }
@@ -10229,16 +10468,16 @@ fn bezier_corner_parameter_placement(
 }
 
 fn curve_region_corner_parameter_placement(
-    parameter: &CurveRegionParameter2,
+    parameter: &CurveParameter2,
     previous: bool,
     mode: CurveCornerMode2,
     operation: CurveOperation2,
     family: CurveFamily2,
     policy: &CurveContext,
 ) -> ExactCurveResult<Option<CornerPlacement2>> {
-    let zero = CurveRegionParameter2::from_bezier(BezierParameter2::Exact(Real::zero()));
-    let one = CurveRegionParameter2::from_bezier(BezierParameter2::Exact(Real::one()));
-    let compare = |boundary: &CurveRegionParameter2| {
+    let zero = CurveParameter2::from_bezier(BezierParameter2::Exact(Real::zero()));
+    let one = CurveParameter2::from_bezier(BezierParameter2::Exact(Real::one()));
+    let compare = |boundary: &CurveParameter2| {
         parameter
             .cmp_by_refinement(boundary, policy)
             .map_err(|cause| ExactCurveError::invalid(operation, family, cause))
@@ -10326,7 +10565,7 @@ fn bezier_parallel_source_point_evidence(
 
 fn curve_region_parallel_point_evidence(
     parallel: &BezierParallel2,
-    parameter: &CurveRegionParameter2,
+    parameter: &CurveParameter2,
     source_point: bool,
     operation: CurveOperation2,
     family: CurveFamily2,
@@ -10546,7 +10785,7 @@ fn algebraic_cusp_chamfer_cuts(
     if setback_sign == RealSign::Zero {
         return Ok(CornerCuts2 {
             first: Some(CornerCut2 {
-                parameter: Some(CurveRegionParameter2::from_algebraic_cusp(corner_parameter)),
+                parameter: Some(CurveParameter2::from_algebraic_cusp(corner_parameter)),
                 point: corner,
                 placement: CornerPlacement2::Corner,
             }),
@@ -10587,9 +10826,9 @@ fn algebraic_cusp_chamfer_cuts(
             continue;
         };
         let parameter = if complementary {
-            CurveRegionParameter2::from_algebraic_cusp_complement(parameter)
+            CurveParameter2::from_algebraic_cusp_complement(parameter)
         } else {
-            CurveRegionParameter2::from_algebraic_cusp(parameter)
+            CurveParameter2::from_algebraic_cusp(parameter)
         };
         cuts.push(CornerCut2 {
             parameter: Some(parameter),
@@ -10623,9 +10862,7 @@ fn algebraic_chord_chamfer_cuts(
     if setback_sign == RealSign::Zero {
         return Ok(CornerCuts2 {
             first: Some(CornerCut2 {
-                parameter: Some(CurveRegionParameter2::from_algebraic_chord(
-                    corner_parameter,
-                )),
+                parameter: Some(CurveParameter2::from_algebraic_chord(corner_parameter)),
                 point: corner.clone(),
                 placement: CornerPlacement2::Corner,
             }),
@@ -10685,7 +10922,7 @@ fn analytic_parallel_point_evidence(
 }
 
 fn retained_parallel_corner_parameter_placement(
-    parameter: &CurveRegionParameter2,
+    parameter: &CurveParameter2,
     fragment: &crate::BezierParallelFragment2,
     previous: bool,
     mode: CurveCornerMode2,
@@ -10695,10 +10932,7 @@ fn retained_parallel_corner_parameter_placement(
 ) -> ExactCurveResult<Option<CornerPlacement2>> {
     let compare = |boundary: &BezierParameter2| {
         parameter
-            .cmp_by_refinement(
-                &CurveRegionParameter2::from_bezier(boundary.clone()),
-                policy,
-            )
+            .cmp_by_refinement(&CurveParameter2::from_bezier(boundary.clone()), policy)
             .map_err(|cause| ExactCurveError::invalid(operation, family, cause))
             .and_then(|ordering| match ordering {
                 Classification::Decided(ordering) => Ok(ordering),
@@ -10739,7 +10973,7 @@ fn retained_parallel_corner_orders_placement(
 
 #[allow(clippy::too_many_arguments)]
 fn selected_fiber_corner_parameter_placement(
-    parameter: &CurveRegionParameter2,
+    parameter: &CurveParameter2,
     fragment: &crate::bezier_split::BezierSelectedFiberFragment2,
     previous: bool,
     mode: CurveCornerMode2,
@@ -10747,7 +10981,7 @@ fn selected_fiber_corner_parameter_placement(
     family: CurveFamily2,
     policy: &CurveContext,
 ) -> ExactCurveResult<Option<CornerPlacement2>> {
-    let compare = |boundary: &CurveRegionParameter2| {
+    let compare = |boundary: &CurveParameter2| {
         parameter
             .cmp_by_refinement(boundary, policy)
             .map_err(|cause| ExactCurveError::invalid(operation, family, cause))
@@ -10887,7 +11121,7 @@ fn selected_fiber_chamfer_cuts(
                 let point = analytic_parallel_point_evidence(
                     &parallel, &parameter, operation, family, policy,
                 )?;
-                (CurveRegionParameter2::from_bezier(parameter), point)
+                (CurveParameter2::from_bezier(parameter), point)
             }
             crate::bezier_offset::BezierParallelFixedDistanceParameter2::SelectedFiber(
                 parameter,
@@ -10898,7 +11132,7 @@ fn selected_fiber_chamfer_cuts(
                         parameter.clone(),
                         policy,
                     ));
-                (CurveRegionParameter2::from_selected_fiber(parameter), point)
+                (CurveParameter2::from_selected_fiber(parameter), point)
             }
             crate::bezier_offset::BezierParallelFixedDistanceParameter2::RecursiveProjective(
                 parameter,
@@ -10910,10 +11144,7 @@ fn selected_fiber_chamfer_cuts(
                         policy,
                     ),
                 );
-                (
-                    CurveRegionParameter2::from_recursive_projective(parameter),
-                    point,
-                )
+                (CurveParameter2::from_recursive_projective(parameter), point)
             }
         };
         let Some(placement) = selected_fiber_corner_parameter_placement(
@@ -10956,7 +11187,7 @@ fn analytic_parallel_chamfer_cuts(
     if setback_sign == RealSign::Zero {
         return Ok(CornerCuts2 {
             first: Some(CornerCut2 {
-                parameter: Some(CurveRegionParameter2::from_bezier(corner_parameter.clone())),
+                parameter: Some(CurveParameter2::from_bezier(corner_parameter.clone())),
                 point: corner,
                 placement: CornerPlacement2::Corner,
             }),
@@ -11000,7 +11231,7 @@ fn analytic_parallel_chamfer_cuts(
         let (parameter, point, placement) = match parameter {
             crate::bezier_offset::BezierParallelFixedDistanceParameter2::Bezier(parameter) => {
                 let Some(placement) = retained_parallel_corner_parameter_placement(
-                    &CurveRegionParameter2::from_bezier(parameter.clone()),
+                    &CurveParameter2::from_bezier(parameter.clone()),
                     fragment,
                     previous,
                     mode,
@@ -11018,17 +11249,13 @@ fn analytic_parallel_chamfer_cuts(
                     family,
                     policy,
                 )?;
-                (
-                    CurveRegionParameter2::from_bezier(parameter),
-                    point,
-                    placement,
-                )
+                (CurveParameter2::from_bezier(parameter), point, placement)
             }
             crate::bezier_offset::BezierParallelFixedDistanceParameter2::SelectedFiber(
                 parameter,
             ) => {
                 let Some(placement) = retained_parallel_corner_parameter_placement(
-                    &CurveRegionParameter2::from_selected_fiber(parameter.clone()),
+                    &CurveParameter2::from_selected_fiber(parameter.clone()),
                     fragment,
                     previous,
                     mode,
@@ -11046,7 +11273,7 @@ fn analytic_parallel_chamfer_cuts(
                         policy,
                     ));
                 (
-                    CurveRegionParameter2::from_selected_fiber(parameter),
+                    CurveParameter2::from_selected_fiber(parameter),
                     point,
                     placement,
                 )
@@ -11054,8 +11281,7 @@ fn analytic_parallel_chamfer_cuts(
             crate::bezier_offset::BezierParallelFixedDistanceParameter2::RecursiveProjective(
                 parameter,
             ) => {
-                let curve_parameter =
-                    CurveRegionParameter2::from_recursive_projective(parameter.clone());
+                let curve_parameter = CurveParameter2::from_recursive_projective(parameter.clone());
                 let Some(placement) = retained_parallel_corner_parameter_placement(
                     &curve_parameter,
                     fragment,
@@ -11168,7 +11394,7 @@ fn bezier_chamfer_cuts(
                 exact_corner_parameter(source.public_parameter(&parameter))
             }
             parameter @ BezierParameter2::Algebraic(_) => {
-                Some(CurveRegionParameter2::from_bezier(parameter))
+                Some(CurveParameter2::from_bezier(parameter))
             }
         };
         cuts.push(CornerCut2 {
@@ -11323,7 +11549,7 @@ fn arc_corner_cut_from_incident_point(
                     parameter: match arc
                         .source_parameter_at_point(&point, operation, family, policy)?
                     {
-                        Some(parameter) => Some(CurveRegionParameter2::from_bezier(parameter)),
+                        Some(parameter) => Some(CurveParameter2::from_bezier(parameter)),
                         None => exact_corner_parameter(sweep_fraction),
                     },
                     point: point.into(),
@@ -11367,7 +11593,7 @@ fn arc_fillet_cut_from_incident_point(
                 exact_corner_parameter(arc.corner_parameter(previous))
             } else {
                 arc.source_parameter_at_point(&point, CurveOperation2::Fillet, family, policy)?
-                    .map(CurveRegionParameter2::from_bezier)
+                    .map(CurveParameter2::from_bezier)
             };
             Ok(Some(CornerCut2 {
                 parameter,
@@ -11689,7 +11915,7 @@ fn materialize_single_curve_corner_body(
     {
         if matches!(
             curve.geometry(),
-            CurveGeometry2::PolynomialBSpline(_) | CurveGeometry2::Nurbs(_)
+            Some(CurveGeometry2::PolynomialBSpline(_)) | Some(CurveGeometry2::Nurbs(_))
         ) {
             return Ok(MaterializedCornerBody2::from_spline_sides(
                 materialize_corner_side(curve, next, false, operation, policy)?,
@@ -11723,7 +11949,7 @@ fn materialize_single_curve_corner_body(
             )
         })
     };
-    let (start, end) = if let CurveGeometry2::CircularArc(arc) = curve.geometry() {
+    let (start, end) = if let Some(CurveGeometry2::CircularArc(arc)) = curve.geometry() {
         (
             materialized_arc_cut_parameter(curve, arc, next, operation, policy)?,
             materialized_arc_cut_parameter(curve, arc, previous, operation, policy)?,
@@ -11785,7 +12011,7 @@ fn materialize_corner_side(
     if cut.placement != CornerPlacement2::Extension
         || !matches!(
             curve.geometry(),
-            CurveGeometry2::PolynomialBSpline(_) | CurveGeometry2::Nurbs(_)
+            Some(CurveGeometry2::PolynomialBSpline(_)) | Some(CurveGeometry2::Nurbs(_))
         )
     {
         return materialize_corner_cut(curve, cut, previous, operation, policy)
@@ -11854,12 +12080,12 @@ fn materialize_affine_corner_subcurve(
     policy: &CurveContext,
 ) -> ExactCurveResult<Curve2> {
     let source = match curve.geometry() {
-        CurveGeometry2::QuadraticBezier(source) => BezierSubcurve2::Quadratic(source.clone()),
-        CurveGeometry2::CubicBezier(source) => BezierSubcurve2::Cubic(source.clone()),
-        CurveGeometry2::RationalQuadraticBezier(source) => {
+        Some(CurveGeometry2::QuadraticBezier(source)) => BezierSubcurve2::Quadratic(source.clone()),
+        Some(CurveGeometry2::CubicBezier(source)) => BezierSubcurve2::Cubic(source.clone()),
+        Some(CurveGeometry2::RationalQuadraticBezier(source)) => {
             BezierSubcurve2::RationalQuadratic(source.clone())
         }
-        CurveGeometry2::RationalBezier(source) => BezierSubcurve2::Rational(source.clone()),
+        Some(CurveGeometry2::RationalBezier(source)) => BezierSubcurve2::Rational(source.clone()),
         _ => {
             return Err(ExactCurveError::blocked(
                 operation,
@@ -11888,7 +12114,7 @@ fn materialize_corner_cut(
 ) -> ExactCurveResult<Curve2> {
     match cut.placement {
         CornerPlacement2::Trim => {
-            if let CurveGeometry2::CircularArc(arc) = curve.geometry() {
+            if let Some(CurveGeometry2::CircularArc(arc)) = curve.geometry() {
                 let point = cut.exact_point().ok_or_else(|| {
                     ExactCurveError::blocked(
                         operation,
@@ -11903,7 +12129,7 @@ fn materialize_corner_cut(
                 // rational parameter and then asking path connectivity to
                 // rediscover the equality.
                 let parameter = materialized_arc_cut_parameter(curve, arc, cut, operation, policy)?;
-                let domain = curve.parameter_domain();
+                let domain = curve.native_parameter_domain()?;
                 let (start, end) = if previous {
                     (domain.start().clone(), parameter)
                 } else {
@@ -11947,7 +12173,7 @@ fn materialize_corner_cut(
                         crate::UncertaintyReason::Unsupported,
                     )
                 })?;
-                let domain = curve.parameter_domain();
+                let domain = curve.native_parameter_domain()?;
                 let (start, end) = if previous {
                     (domain.start().clone(), parameter.clone())
                 } else {
@@ -11975,14 +12201,14 @@ fn materialize_corner_cut(
                 }
                 .map_err(|cause| ExactCurveError::invalid(operation, curve.family(), cause))?;
                 Ok(match curve.geometry() {
-                    CurveGeometry2::QuadraticBezier(source)
+                    Some(CurveGeometry2::QuadraticBezier(source))
                         if source.retained_exact_line_image().is_some() =>
                     {
                         Curve2::from(QuadraticBezier2::from_line_segment(extended))
                     }
                     _ => Curve2::from(extended),
                 })
-            } else if let CurveGeometry2::CircularArc(arc) = curve.geometry() {
+            } else if let Some(CurveGeometry2::CircularArc(arc)) = curve.geometry() {
                 Ok(Curve2::from(if previous {
                     CircularArc2::new_with_certified_radius(
                         arc.start().clone(),
@@ -12023,7 +12249,7 @@ fn materialize_corner_cut(
                     )
                 }))
             } else if let Some(parameter) = cut.exact_parameter() {
-                let domain = curve.parameter_domain();
+                let domain = curve.native_parameter_domain()?;
                 let (start, end) = if previous {
                     (domain.start(), parameter)
                 } else {
@@ -12119,6 +12345,44 @@ mod tests {
     use super::*;
 
     #[test]
+    fn retained_endpoints_share_projections_without_retaining_the_curve_owner() {
+        let parallel = QuadraticBezier2::new(
+            Point2::from_values(0, 0),
+            Point2::from_values(2, 2),
+            Point2::from_values(4, 0),
+        )
+        .parallel_left(Real::one())
+        .unwrap();
+        let range = BezierParameterRange2::new_validated(
+            BezierParameter2::Exact(Real::zero()),
+            BezierParameter2::Exact(Real::one()),
+        );
+        let Classification::Decided(fragment) =
+            crate::BezierParallelFragment2::try_new(parallel, range, &CurveContext::STRICT)
+                .unwrap()
+        else {
+            panic!("regular analytic parallel")
+        };
+        let curve =
+            Curve2::from_retained_fragment(crate::BezierSplitFragment2::AnalyticParallel(fragment));
+        let owner = Arc::downgrade(&curve.data);
+        let start = curve.start();
+        let end = curve.end();
+        for _ in 0..16 {
+            assert!(start.shares_storage(&curve.start()));
+            assert!(end.shares_storage(&curve.end()));
+        }
+        assert!(!start.shares_storage(&end));
+        drop(curve);
+        assert!(owner.upgrade().is_none());
+        for point in [start, end] {
+            let bounds = point.bounds(&CurveContext::STRICT);
+            assert_eq!(bounds.certainty, crate::CurveCertainty::Certified);
+            assert!(matches!(bounds.value, Classification::Decided(_)));
+        }
+    }
+
+    #[test]
     fn polynomial_exterior_subcurve_can_end_at_parameter_zero() {
         let source = CubicBezier2::new(
             Point2::from_values(0, 0),
@@ -12176,9 +12440,9 @@ mod tests {
                 panic!("one direct Bezier seam must remain one exact interval");
             };
             assert_eq!(body.family(), CurveFamily2::CubicBezier);
-            assert_eq!(body.start(), &next_point);
-            assert_eq!(body.end(), &previous_point);
-            let CurveGeometry2::CubicBezier(body) = body.geometry() else {
+            assert_eq!(body.start(), crate::CurvePoint2::from(next_point.clone()));
+            assert_eq!(body.end(), crate::CurvePoint2::from(previous_point.clone()));
+            let Some(CurveGeometry2::CubicBezier(body)) = body.geometry() else {
                 unreachable!();
             };
             assert_eq!(
@@ -12212,9 +12476,9 @@ mod tests {
             .expect("one direct Bezier exterior seam interval must materialize") else {
                 panic!("one direct Bezier exterior seam must remain one exact interval");
             };
-            assert_eq!(body.start(), &next_point);
-            assert_eq!(body.end(), &previous_point);
-            let CurveGeometry2::CubicBezier(body) = body.geometry() else {
+            assert_eq!(body.start(), crate::CurvePoint2::from(next_point.clone()));
+            assert_eq!(body.end(), crate::CurvePoint2::from(previous_point.clone()));
+            let Some(CurveGeometry2::CubicBezier(body)) = body.geometry() else {
                 unreachable!();
             };
             assert_eq!(
@@ -12408,8 +12672,14 @@ mod tests {
                 &policy,
             )
             .expect("the represented pre-pole interval must materialize");
-            assert_eq!(extended.start(), &Point2::from_values(0, 0));
-            assert_eq!(extended.end(), &Point2::from_values(3, 9));
+            assert_eq!(
+                extended.start(),
+                crate::CurvePoint2::from(Point2::from_values(0, 0).clone())
+            );
+            assert_eq!(
+                extended.end(),
+                crate::CurvePoint2::from(Point2::from_values(3, 9).clone())
+            );
         }
     }
 
@@ -12483,7 +12753,7 @@ mod tests {
         let center_parameter = BezierParameter2::Exact(
             (Real::one() / Real::from(2_i8)).expect("one half is represented"),
         );
-        let parameter = CurveRegionParameter2::from_bezier(center_parameter.clone());
+        let parameter = CurveParameter2::from_bezier(center_parameter.clone());
         let carrier = FilletOffsetCarrier2::Parallel {
             source: FilletParallelSource2::Direct(ExactCornerBezier2::Direct(&authored)),
             support: support.clone(),
@@ -12559,7 +12829,7 @@ mod tests {
                 source: FilletParallelSource2::Direct(ExactCornerBezier2::Direct(&authored)),
                 support: parallel.clone(),
             };
-            let parameter = CurveRegionParameter2::from_selected_fiber(selected);
+            let parameter = CurveParameter2::from_selected_fiber(selected);
             let frame = analytic
                 .retained_fillet_frame(
                     true,
@@ -12590,7 +12860,7 @@ mod tests {
                 .as_ref()
                 .and_then(|evidence| evidence.center_parallel.as_ref())
                 .and_then(|center| center.parameter.as_ref())
-                .and_then(CurveRegionParameter2::as_selected_fiber)
+                .and_then(CurveParameter2::as_selected_fiber)
                 .expect("the fillet frame retains its local selected parameter");
             assert!(matches!(
                 retained.promoted_bezier_parameter(&policy).unwrap(),
@@ -12621,9 +12891,9 @@ mod tests {
                 selected.promoted_bezier_parameter(&policy).unwrap(),
                 Classification::Uncertain(_)
             ));
-            let range = crate::CurveRegionParameterRange2::new_validated(
-                CurveRegionParameter2::from_bezier(BezierParameter2::Exact(Real::zero())),
-                CurveRegionParameter2::from_selected_fiber(selected.clone()),
+            let range = crate::CurveParameterRange2::new_validated(
+                CurveParameter2::from_bezier(BezierParameter2::Exact(Real::zero())),
+                CurveParameter2::from_selected_fiber(selected.clone()),
             );
             let source_fragment = |height: i8| {
                 let source = line(height).parallel_left(Real::zero()).unwrap();
@@ -13038,7 +13308,7 @@ mod tests {
             end,
         ));
         let reversed_direct = Curve2::from(match direct.geometry() {
-            CurveGeometry2::QuadraticBezier(source) => {
+            Some(CurveGeometry2::QuadraticBezier(source)) => {
                 source.reversed_with_retained_provenance().unwrap()
             }
             _ => unreachable!(),

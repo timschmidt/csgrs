@@ -197,6 +197,16 @@ exact signatures.
   range.
   These operations borrow `&Curve2` directly and reuse its retained calculations.
   Borrow paths as `&CurvePath2`; iterate their curves with `path.curves().iter()`.
+  `Curve2` also retains generated analytic parallels, selected circles, chords,
+  and algebraic cuts. `start` and `end` return `CurvePoint2`; `parameter_domain`
+  returns `CurveParameterRange2`, preserving selected endpoint evidence.
+  `geometry()` is an optional native definition, and `coordinates()` is an
+  optional scalar view of a point. Neither view is required for lossless
+  `CurveRegion2::boundary_paths` export or subsequent region construction.
+  Reversal, similarity transforms, bounds, and finite projection accept these
+  retained carriers. General selected-parameter evaluation, subdivision, and
+  open-path corner reconstruction are still being unified; the native-only
+  operations report an explicit blocker for carriers they cannot yet consume.
 
 ### Strings, paths, contours, and regions
 
@@ -219,7 +229,7 @@ exact signatures.
   try_from_native_contours,
   try_from_native_material_contours, try_from_native_boundary_contours,
   try_from_boundary_paths, classify_point, signed_depth, signed_area,
-  filled_area, boundary_profiles, materialized_boundary_paths,
+  filled_area, boundary_profiles, boundary_paths,
   segment_certified, offset}` is the mixed-family region API. `offset` is the
   sole region offset operation and takes an explicit `OffsetCornerStyle2`;
   unsupported exact carriers remain explicit blockers. `segment_certified`

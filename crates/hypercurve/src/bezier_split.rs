@@ -38,19 +38,19 @@ use crate::{
     RationalQuadraticBezier2, Similarity2, UncertaintyReason,
 };
 
-/// Exact local parameter on any retained [`CurveRegion2`](crate::CurveRegion2) carrier.
+/// Exact local parameter on any supported curve carrier.
 ///
 /// Ordinary Bezier and analytic-parallel carriers expose their canonical
 /// [`BezierParameter2`]. Algebraic chords and cusp joins keep compact local
 /// point/order evidence instead of forcing unrelated selected roots into one
 /// primitive-element tower.
 #[derive(Clone, Debug)]
-pub struct CurveRegionParameter2 {
-    data: CurveRegionParameterData2,
+pub struct CurveParameter2 {
+    data: CurveParameterData2,
 }
 
 #[derive(Clone, Debug)]
-enum CurveRegionParameterData2 {
+enum CurveParameterData2 {
     Bezier(BezierParameter2),
     SelectedFiber(BezierAlgebraicSelectedFiberParameter2),
     RecursiveProjective(BezierRecursiveProjectiveParameter2),
@@ -62,48 +62,53 @@ enum CurveRegionParameterData2 {
     AlgebraicCuspComplement(BezierAlgebraicCuspSemicircleParameter2),
 }
 
-impl PartialEq for CurveRegionParameter2 {
+impl PartialEq for CurveParameter2 {
     fn eq(&self, other: &Self) -> bool {
         match (&self.data, &other.data) {
+            (CurveParameterData2::Bezier(first), CurveParameterData2::Bezier(second)) => {
+                first == second
+            }
             (
-                CurveRegionParameterData2::Bezier(first),
-                CurveRegionParameterData2::Bezier(second),
+                CurveParameterData2::AlgebraicChord(first),
+                CurveParameterData2::AlgebraicChord(second),
             ) => first == second,
             (
-                CurveRegionParameterData2::AlgebraicChord(first),
-                CurveRegionParameterData2::AlgebraicChord(second),
-            ) => first == second,
-            (
-                CurveRegionParameterData2::AlgebraicCusp(first),
-                CurveRegionParameterData2::AlgebraicCusp(second),
+                CurveParameterData2::AlgebraicCusp(first),
+                CurveParameterData2::AlgebraicCusp(second),
             ) => first.shares_exact_evidence(second),
             (
-                CurveRegionParameterData2::AlgebraicCuspComplement(first),
-                CurveRegionParameterData2::AlgebraicCuspComplement(second),
+                CurveParameterData2::AlgebraicCuspComplement(first),
+                CurveParameterData2::AlgebraicCuspComplement(second),
             ) => first.shares_exact_evidence(second),
             (
-                CurveRegionParameterData2::SelectedFiber(first),
-                CurveRegionParameterData2::SelectedFiber(second),
+                CurveParameterData2::SelectedFiber(first),
+                CurveParameterData2::SelectedFiber(second),
             ) => first == second,
             (
-                CurveRegionParameterData2::RecursiveProjective(first),
-                CurveRegionParameterData2::RecursiveProjective(second),
+                CurveParameterData2::RecursiveProjective(first),
+                CurveParameterData2::RecursiveProjective(second),
             ) => first == second,
             _ => false,
         }
     }
 }
 
-impl CurveRegionParameter2 {
+impl From<Real> for CurveParameter2 {
+    fn from(value: Real) -> Self {
+        Self::from_bezier(BezierParameter2::Exact(value))
+    }
+}
+
+impl CurveParameter2 {
     pub(crate) fn from_bezier(parameter: BezierParameter2) -> Self {
         Self {
-            data: CurveRegionParameterData2::Bezier(parameter),
+            data: CurveParameterData2::Bezier(parameter),
         }
     }
 
     pub(crate) fn from_algebraic_cusp(parameter: BezierAlgebraicCuspSemicircleParameter2) -> Self {
         Self {
-            data: CurveRegionParameterData2::AlgebraicCusp(parameter),
+            data: CurveParameterData2::AlgebraicCusp(parameter),
         }
     }
 
@@ -111,13 +116,13 @@ impl CurveRegionParameter2 {
         parameter: BezierAlgebraicCuspSemicircleParameter2,
     ) -> Self {
         Self {
-            data: CurveRegionParameterData2::AlgebraicCuspComplement(parameter),
+            data: CurveParameterData2::AlgebraicCuspComplement(parameter),
         }
     }
 
     pub(crate) fn from_selected_fiber(parameter: BezierAlgebraicSelectedFiberParameter2) -> Self {
         Self {
-            data: CurveRegionParameterData2::SelectedFiber(parameter),
+            data: CurveParameterData2::SelectedFiber(parameter),
         }
     }
 
@@ -125,7 +130,7 @@ impl CurveRegionParameter2 {
         parameter: BezierRecursiveProjectiveParameter2,
     ) -> Self {
         Self {
-            data: CurveRegionParameterData2::RecursiveProjective(parameter),
+            data: CurveParameterData2::RecursiveProjective(parameter),
         }
     }
 
@@ -135,8 +140,8 @@ impl CurveRegionParameter2 {
         transform: &Similarity2,
     ) -> Self {
         match self.data {
-            CurveRegionParameterData2::RecursiveProjective(parameter) => Self {
-                data: CurveRegionParameterData2::RecursiveProjective(
+            CurveParameterData2::RecursiveProjective(parameter) => Self {
+                data: CurveParameterData2::RecursiveProjective(
                     parameter.transported_line_identity(line, transform),
                 ),
             },
@@ -152,7 +157,7 @@ impl CurveRegionParameter2 {
         chord_location: BezierRecursiveChordContactLocation2,
     ) -> Self {
         match self.data {
-            CurveRegionParameterData2::RecursiveProjective(parameter) => {
+            CurveParameterData2::RecursiveProjective(parameter) => {
                 Self::from_recursive_projective(parameter.with_chord_rational_tangent_identity(
                     chord,
                     source,
@@ -166,7 +171,7 @@ impl CurveRegionParameter2 {
 
     pub(crate) fn from_algebraic_chord(parameter: BezierAlgebraicChordParameter2) -> Self {
         Self {
-            data: CurveRegionParameterData2::AlgebraicChord(parameter),
+            data: CurveParameterData2::AlgebraicChord(parameter),
         }
     }
 
@@ -174,32 +179,34 @@ impl CurveRegionParameter2 {
     /// algebraic-chord or cusp cut.
     pub const fn as_bezier_parameter(&self) -> Option<&BezierParameter2> {
         match &self.data {
-            CurveRegionParameterData2::Bezier(parameter) => Some(parameter),
-            CurveRegionParameterData2::SelectedFiber(_)
-            | CurveRegionParameterData2::RecursiveProjective(_) => None,
-            CurveRegionParameterData2::AlgebraicChord(_)
-            | CurveRegionParameterData2::AlgebraicCusp(_)
-            | CurveRegionParameterData2::AlgebraicCuspComplement(_) => None,
+            CurveParameterData2::Bezier(parameter) => Some(parameter),
+            CurveParameterData2::SelectedFiber(_) | CurveParameterData2::RecursiveProjective(_) => {
+                None
+            }
+            CurveParameterData2::AlgebraicChord(_)
+            | CurveParameterData2::AlgebraicCusp(_)
+            | CurveParameterData2::AlgebraicCuspComplement(_) => None,
         }
     }
 
     /// Returns a directly represented local scalar when this carrier domain has one.
     pub const fn as_exact(&self) -> Option<&Real> {
         match &self.data {
-            CurveRegionParameterData2::Bezier(parameter) => parameter.as_exact(),
-            CurveRegionParameterData2::SelectedFiber(_)
-            | CurveRegionParameterData2::RecursiveProjective(_) => None,
-            CurveRegionParameterData2::AlgebraicChord(_) => None,
-            CurveRegionParameterData2::AlgebraicCusp(
-                BezierAlgebraicCuspSemicircleParameter2::Exact(parameter),
-            ) => Some(parameter),
-            CurveRegionParameterData2::AlgebraicCusp(
+            CurveParameterData2::Bezier(parameter) => parameter.as_exact(),
+            CurveParameterData2::SelectedFiber(_) | CurveParameterData2::RecursiveProjective(_) => {
+                None
+            }
+            CurveParameterData2::AlgebraicChord(_) => None,
+            CurveParameterData2::AlgebraicCusp(BezierAlgebraicCuspSemicircleParameter2::Exact(
+                parameter,
+            )) => Some(parameter),
+            CurveParameterData2::AlgebraicCusp(
                 BezierAlgebraicCuspSemicircleParameter2::Mapped(_),
             ) => None,
-            CurveRegionParameterData2::AlgebraicCuspComplement(
+            CurveParameterData2::AlgebraicCuspComplement(
                 BezierAlgebraicCuspSemicircleParameter2::Exact(parameter),
             ) => Some(parameter),
-            CurveRegionParameterData2::AlgebraicCuspComplement(
+            CurveParameterData2::AlgebraicCuspComplement(
                 BezierAlgebraicCuspSemicircleParameter2::Mapped(_),
             ) => None,
         }
@@ -209,31 +216,26 @@ impl CurveRegionParameter2 {
     pub const fn is_algebraic_cusp(&self) -> bool {
         matches!(
             self.data,
-            CurveRegionParameterData2::AlgebraicCusp(_)
-                | CurveRegionParameterData2::AlgebraicCuspComplement(_)
+            CurveParameterData2::AlgebraicCusp(_) | CurveParameterData2::AlgebraicCuspComplement(_)
         )
     }
 
     /// Returns true when this transient corner cut lies on the other half of
     /// an algebraic cusp circle's authored parameter chart.
     pub(crate) const fn is_algebraic_cusp_complement(&self) -> bool {
-        matches!(
-            self.data,
-            CurveRegionParameterData2::AlgebraicCuspComplement(_)
-        )
+        matches!(self.data, CurveParameterData2::AlgebraicCuspComplement(_))
     }
 
     /// Returns true for a correlated exact point parameter on an algebraic chord.
     pub const fn is_algebraic_chord(&self) -> bool {
-        matches!(self.data, CurveRegionParameterData2::AlgebraicChord(_))
+        matches!(self.data, CurveParameterData2::AlgebraicChord(_))
     }
 
     /// Returns true for either compact retained scalar authority.
     pub(crate) const fn is_retained_scalar(&self) -> bool {
         matches!(
             self.data,
-            CurveRegionParameterData2::SelectedFiber(_)
-                | CurveRegionParameterData2::RecursiveProjective(_)
+            CurveParameterData2::SelectedFiber(_) | CurveParameterData2::RecursiveProjective(_)
         )
     }
 
@@ -241,7 +243,7 @@ impl CurveRegionParameter2 {
         &self,
     ) -> Option<&BezierAlgebraicSelectedFiberParameter2> {
         match &self.data {
-            CurveRegionParameterData2::SelectedFiber(parameter) => Some(parameter),
+            CurveParameterData2::SelectedFiber(parameter) => Some(parameter),
             _ => None,
         }
     }
@@ -250,7 +252,7 @@ impl CurveRegionParameter2 {
         &self,
     ) -> Option<&BezierRecursiveProjectiveParameter2> {
         match &self.data {
-            CurveRegionParameterData2::RecursiveProjective(parameter) => Some(parameter),
+            CurveParameterData2::RecursiveProjective(parameter) => Some(parameter),
             _ => None,
         }
     }
@@ -263,24 +265,24 @@ impl CurveRegionParameter2 {
 
     pub(crate) fn as_algebraic_cusp(&self) -> Option<&BezierAlgebraicCuspSemicircleParameter2> {
         match &self.data {
-            CurveRegionParameterData2::AlgebraicCusp(parameter)
-            | CurveRegionParameterData2::AlgebraicCuspComplement(parameter) => Some(parameter),
-            CurveRegionParameterData2::Bezier(_) | CurveRegionParameterData2::AlgebraicChord(_) => {
+            CurveParameterData2::AlgebraicCusp(parameter)
+            | CurveParameterData2::AlgebraicCuspComplement(parameter) => Some(parameter),
+            CurveParameterData2::Bezier(_) | CurveParameterData2::AlgebraicChord(_) => None,
+            CurveParameterData2::SelectedFiber(_) | CurveParameterData2::RecursiveProjective(_) => {
                 None
             }
-            CurveRegionParameterData2::SelectedFiber(_)
-            | CurveRegionParameterData2::RecursiveProjective(_) => None,
         }
     }
 
     pub(crate) fn as_algebraic_chord(&self) -> Option<&BezierAlgebraicChordParameter2> {
         match &self.data {
-            CurveRegionParameterData2::AlgebraicChord(parameter) => Some(parameter),
-            CurveRegionParameterData2::Bezier(_)
-            | CurveRegionParameterData2::AlgebraicCusp(_)
-            | CurveRegionParameterData2::AlgebraicCuspComplement(_) => None,
-            CurveRegionParameterData2::SelectedFiber(_)
-            | CurveRegionParameterData2::RecursiveProjective(_) => None,
+            CurveParameterData2::AlgebraicChord(parameter) => Some(parameter),
+            CurveParameterData2::Bezier(_)
+            | CurveParameterData2::AlgebraicCusp(_)
+            | CurveParameterData2::AlgebraicCuspComplement(_) => None,
+            CurveParameterData2::SelectedFiber(_) | CurveParameterData2::RecursiveProjective(_) => {
+                None
+            }
         }
     }
 
@@ -290,53 +292,50 @@ impl CurveRegionParameter2 {
         policy: &CurveContext,
     ) -> CurveResult<Classification<Ordering>> {
         match (&self.data, &other.data) {
+            (CurveParameterData2::Bezier(first), CurveParameterData2::Bezier(second)) => {
+                first.cmp_by_refinement(second, policy)
+            }
             (
-                CurveRegionParameterData2::Bezier(first),
-                CurveRegionParameterData2::Bezier(second),
+                CurveParameterData2::AlgebraicChord(first),
+                CurveParameterData2::AlgebraicChord(second),
             ) => first.cmp_by_refinement(second, policy),
             (
-                CurveRegionParameterData2::AlgebraicChord(first),
-                CurveRegionParameterData2::AlgebraicChord(second),
+                CurveParameterData2::AlgebraicCusp(first),
+                CurveParameterData2::AlgebraicCusp(second),
             ) => first.cmp_by_refinement(second, policy),
             (
-                CurveRegionParameterData2::AlgebraicCusp(first),
-                CurveRegionParameterData2::AlgebraicCusp(second),
+                CurveParameterData2::AlgebraicCuspComplement(first),
+                CurveParameterData2::AlgebraicCuspComplement(second),
             ) => first.cmp_by_refinement(second, policy),
             (
-                CurveRegionParameterData2::AlgebraicCuspComplement(first),
-                CurveRegionParameterData2::AlgebraicCuspComplement(second),
+                CurveParameterData2::SelectedFiber(first),
+                CurveParameterData2::SelectedFiber(second),
             ) => first.cmp_by_refinement(second, policy),
             (
-                CurveRegionParameterData2::SelectedFiber(first),
-                CurveRegionParameterData2::SelectedFiber(second),
+                CurveParameterData2::RecursiveProjective(first),
+                CurveParameterData2::RecursiveProjective(second),
             ) => first.cmp_by_refinement(second, policy),
+            (CurveParameterData2::SelectedFiber(first), CurveParameterData2::Bezier(second)) => {
+                first.cmp_bezier_parameter(second, policy)
+            }
+            (CurveParameterData2::Bezier(first), CurveParameterData2::SelectedFiber(second)) => {
+                Ok(second
+                    .cmp_bezier_parameter(first, policy)?
+                    .map(Ordering::reverse))
+            }
             (
-                CurveRegionParameterData2::RecursiveProjective(first),
-                CurveRegionParameterData2::RecursiveProjective(second),
-            ) => first.cmp_by_refinement(second, policy),
-            (
-                CurveRegionParameterData2::SelectedFiber(first),
-                CurveRegionParameterData2::Bezier(second),
+                CurveParameterData2::RecursiveProjective(first),
+                CurveParameterData2::Bezier(second),
             ) => first.cmp_bezier_parameter(second, policy),
             (
-                CurveRegionParameterData2::Bezier(first),
-                CurveRegionParameterData2::SelectedFiber(second),
+                CurveParameterData2::Bezier(first),
+                CurveParameterData2::RecursiveProjective(second),
             ) => Ok(second
                 .cmp_bezier_parameter(first, policy)?
                 .map(Ordering::reverse)),
             (
-                CurveRegionParameterData2::RecursiveProjective(first),
-                CurveRegionParameterData2::Bezier(second),
-            ) => first.cmp_bezier_parameter(second, policy),
-            (
-                CurveRegionParameterData2::Bezier(first),
-                CurveRegionParameterData2::RecursiveProjective(second),
-            ) => Ok(second
-                .cmp_bezier_parameter(first, policy)?
-                .map(Ordering::reverse)),
-            (
-                CurveRegionParameterData2::SelectedFiber(first),
-                CurveRegionParameterData2::RecursiveProjective(second),
+                CurveParameterData2::SelectedFiber(first),
+                CurveParameterData2::RecursiveProjective(second),
             ) => {
                 let first = policy
                     .strict_predicate_pass(|| first.promoted_bezier_parameter_complete(policy))?;
@@ -353,8 +352,8 @@ impl CurveRegionParameter2 {
                 }
             }
             (
-                CurveRegionParameterData2::RecursiveProjective(first),
-                CurveRegionParameterData2::SelectedFiber(second),
+                CurveParameterData2::RecursiveProjective(first),
+                CurveParameterData2::SelectedFiber(second),
             ) => {
                 let first = policy
                     .strict_predicate_pass(|| first.promoted_bezier_parameter_complete(policy))?;
@@ -388,18 +387,18 @@ impl CurveRegionParameter2 {
 
     pub(crate) fn unit_complement(&self) -> Option<Self> {
         match &self.data {
-            CurveRegionParameterData2::Bezier(parameter) => {
+            CurveParameterData2::Bezier(parameter) => {
                 Some(Self::from_bezier(parameter.unit_complement()))
             }
-            CurveRegionParameterData2::SelectedFiber(parameter) => {
+            CurveParameterData2::SelectedFiber(parameter) => {
                 Some(Self::from_selected_fiber(parameter.unit_complement()))
             }
-            CurveRegionParameterData2::RecursiveProjective(parameter) => {
+            CurveParameterData2::RecursiveProjective(parameter) => {
                 Some(Self::from_recursive_projective(parameter.unit_complement()))
             }
-            CurveRegionParameterData2::AlgebraicChord(_)
-            | CurveRegionParameterData2::AlgebraicCusp(_)
-            | CurveRegionParameterData2::AlgebraicCuspComplement(_) => None,
+            CurveParameterData2::AlgebraicChord(_)
+            | CurveParameterData2::AlgebraicCusp(_)
+            | CurveParameterData2::AlgebraicCuspComplement(_) => None,
         }
     }
 
@@ -408,21 +407,19 @@ impl CurveRegionParameter2 {
     /// representative values.
     pub(crate) fn finite_envelope_bounds(&self) -> Option<(&Real, &Real)> {
         match &self.data {
-            CurveRegionParameterData2::Bezier(BezierParameter2::Exact(parameter)) => {
+            CurveParameterData2::Bezier(BezierParameter2::Exact(parameter)) => {
                 Some((parameter, parameter))
             }
-            CurveRegionParameterData2::Bezier(BezierParameter2::Algebraic(parameter)) => {
+            CurveParameterData2::Bezier(BezierParameter2::Algebraic(parameter)) => {
                 Some((parameter.interval().start(), parameter.interval().end()))
             }
-            CurveRegionParameterData2::SelectedFiber(parameter) => {
+            CurveParameterData2::SelectedFiber(parameter) => Some(parameter.isolating_bounds()),
+            CurveParameterData2::RecursiveProjective(parameter) => {
                 Some(parameter.isolating_bounds())
             }
-            CurveRegionParameterData2::RecursiveProjective(parameter) => {
-                Some(parameter.isolating_bounds())
-            }
-            CurveRegionParameterData2::AlgebraicChord(_)
-            | CurveRegionParameterData2::AlgebraicCusp(_)
-            | CurveRegionParameterData2::AlgebraicCuspComplement(_) => None,
+            CurveParameterData2::AlgebraicChord(_)
+            | CurveParameterData2::AlgebraicCusp(_)
+            | CurveParameterData2::AlgebraicCuspComplement(_) => None,
         }
     }
 
@@ -433,22 +430,22 @@ impl CurveRegionParameter2 {
         policy: &CurveContext,
     ) -> CurveResult<Classification<Self>> {
         match &self.data {
-            CurveRegionParameterData2::Bezier(parameter) => {
+            CurveParameterData2::Bezier(parameter) => {
                 Ok(Classification::Decided(Self::from_bezier(
                     parameter
                         .clone()
                         .refined_isolating_interval(refinement_steps, policy),
                 )))
             }
-            CurveRegionParameterData2::SelectedFiber(parameter) => Ok(parameter
+            CurveParameterData2::SelectedFiber(parameter) => Ok(parameter
                 .refined(refinement_steps, policy)?
                 .map(Self::from_selected_fiber)),
-            CurveRegionParameterData2::RecursiveProjective(parameter) => Ok(parameter
+            CurveParameterData2::RecursiveProjective(parameter) => Ok(parameter
                 .refined(refinement_steps, policy)?
                 .map(Self::from_recursive_projective)),
-            CurveRegionParameterData2::AlgebraicChord(_)
-            | CurveRegionParameterData2::AlgebraicCusp(_)
-            | CurveRegionParameterData2::AlgebraicCuspComplement(_) => {
+            CurveParameterData2::AlgebraicChord(_)
+            | CurveParameterData2::AlgebraicCusp(_)
+            | CurveParameterData2::AlgebraicCuspComplement(_) => {
                 Ok(Classification::Uncertain(UncertaintyReason::Unsupported))
             }
         }
@@ -463,18 +460,18 @@ impl CurveRegionParameter2 {
         policy: &CurveContext,
     ) -> CurveResult<Classification<Self>> {
         match &self.data {
-            CurveRegionParameterData2::Bezier(parameter) => Ok(parameter
+            CurveParameterData2::Bezier(parameter) => Ok(parameter
                 .affine_image_unbounded(scale, offset, policy)?
                 .map(Self::from_bezier)),
-            CurveRegionParameterData2::SelectedFiber(parameter) => Ok(parameter
+            CurveParameterData2::SelectedFiber(parameter) => Ok(parameter
                 .affine_image_unbounded(scale, offset, policy)?
                 .map(Self::from_selected_fiber)),
-            CurveRegionParameterData2::RecursiveProjective(parameter) => Ok(parameter
+            CurveParameterData2::RecursiveProjective(parameter) => Ok(parameter
                 .affine_image_unbounded(scale, offset, policy)?
                 .map(Self::from_recursive_projective)),
-            CurveRegionParameterData2::AlgebraicChord(_)
-            | CurveRegionParameterData2::AlgebraicCusp(_)
-            | CurveRegionParameterData2::AlgebraicCuspComplement(_) => {
+            CurveParameterData2::AlgebraicChord(_)
+            | CurveParameterData2::AlgebraicCusp(_)
+            | CurveParameterData2::AlgebraicCuspComplement(_) => {
                 Ok(Classification::Uncertain(UncertaintyReason::Unsupported))
             }
         }
@@ -490,16 +487,16 @@ impl CurveRegionParameter2 {
         policy: &CurveContext,
     ) -> CurveResult<Classification<Self>> {
         match &self.data {
-            CurveRegionParameterData2::SelectedFiber(parameter) => Ok(parameter
+            CurveParameterData2::SelectedFiber(parameter) => Ok(parameter
                 .projective_image_unbounded(numerator, denominator, policy)?
                 .map(Self::from_selected_fiber)),
-            CurveRegionParameterData2::RecursiveProjective(parameter) => Ok(parameter
+            CurveParameterData2::RecursiveProjective(parameter) => Ok(parameter
                 .projective_image_unbounded(numerator, denominator, policy)?
                 .map(Self::from_recursive_projective)),
-            CurveRegionParameterData2::Bezier(_)
-            | CurveRegionParameterData2::AlgebraicChord(_)
-            | CurveRegionParameterData2::AlgebraicCusp(_)
-            | CurveRegionParameterData2::AlgebraicCuspComplement(_) => {
+            CurveParameterData2::Bezier(_)
+            | CurveParameterData2::AlgebraicChord(_)
+            | CurveParameterData2::AlgebraicCusp(_)
+            | CurveParameterData2::AlgebraicCuspComplement(_) => {
                 Ok(Classification::Uncertain(UncertaintyReason::Unsupported))
             }
         }
@@ -513,18 +510,18 @@ impl CurveRegionParameter2 {
         policy: &CurveContext,
     ) -> CurveResult<Classification<BezierParameter2>> {
         match &self.data {
-            CurveRegionParameterData2::Bezier(parameter) => {
+            CurveParameterData2::Bezier(parameter) => {
                 Ok(Classification::Decided(parameter.clone()))
             }
-            CurveRegionParameterData2::SelectedFiber(parameter) => {
+            CurveParameterData2::SelectedFiber(parameter) => {
                 parameter.promoted_bezier_parameter_complete(policy)
             }
-            CurveRegionParameterData2::RecursiveProjective(parameter) => {
+            CurveParameterData2::RecursiveProjective(parameter) => {
                 parameter.promoted_bezier_parameter_complete(policy)
             }
-            CurveRegionParameterData2::AlgebraicChord(_)
-            | CurveRegionParameterData2::AlgebraicCusp(_)
-            | CurveRegionParameterData2::AlgebraicCuspComplement(_) => {
+            CurveParameterData2::AlgebraicChord(_)
+            | CurveParameterData2::AlgebraicCusp(_)
+            | CurveParameterData2::AlgebraicCuspComplement(_) => {
                 Ok(Classification::Uncertain(UncertaintyReason::Unsupported))
             }
         }
@@ -557,85 +554,76 @@ impl CurveRegionParameter2 {
             ));
         }
         match (&self.data, &other.data) {
+            (CurveParameterData2::Bezier(first), CurveParameterData2::Bezier(second)) => {
+                first.strict_rational_between_ordered(second, policy)
+            }
             (
-                CurveRegionParameterData2::Bezier(first),
-                CurveRegionParameterData2::Bezier(second),
-            ) => first.strict_rational_between_ordered(second, policy),
-            (
-                CurveRegionParameterData2::AlgebraicCusp(first),
-                CurveRegionParameterData2::AlgebraicCusp(second),
+                CurveParameterData2::AlgebraicCusp(first),
+                CurveParameterData2::AlgebraicCusp(second),
             ) => first.strict_rational_between(second, policy),
             (
-                CurveRegionParameterData2::AlgebraicCuspComplement(first),
-                CurveRegionParameterData2::AlgebraicCuspComplement(second),
+                CurveParameterData2::AlgebraicCuspComplement(first),
+                CurveParameterData2::AlgebraicCuspComplement(second),
             ) => first.strict_rational_between(second, policy),
             (
-                CurveRegionParameterData2::SelectedFiber(first),
-                CurveRegionParameterData2::SelectedFiber(second),
+                CurveParameterData2::SelectedFiber(first),
+                CurveParameterData2::SelectedFiber(second),
             ) => first.strict_rational_between_ordered(second, policy),
             (
-                CurveRegionParameterData2::RecursiveProjective(first),
-                CurveRegionParameterData2::RecursiveProjective(second),
+                CurveParameterData2::RecursiveProjective(first),
+                CurveParameterData2::RecursiveProjective(second),
             ) => first.strict_rational_between_ordered(second, policy),
+            (CurveParameterData2::SelectedFiber(first), CurveParameterData2::Bezier(second)) => {
+                first.strict_rational_between_bezier_ordered(second, true, policy)
+            }
+            (CurveParameterData2::Bezier(first), CurveParameterData2::SelectedFiber(second)) => {
+                second.strict_rational_between_bezier_ordered(first, false, policy)
+            }
             (
-                CurveRegionParameterData2::SelectedFiber(first),
-                CurveRegionParameterData2::Bezier(second),
+                CurveParameterData2::RecursiveProjective(first),
+                CurveParameterData2::Bezier(second),
             ) => first.strict_rational_between_bezier_ordered(second, true, policy),
             (
-                CurveRegionParameterData2::Bezier(first),
-                CurveRegionParameterData2::SelectedFiber(second),
+                CurveParameterData2::Bezier(first),
+                CurveParameterData2::RecursiveProjective(second),
             ) => second.strict_rational_between_bezier_ordered(first, false, policy),
-            (
-                CurveRegionParameterData2::RecursiveProjective(first),
-                CurveRegionParameterData2::Bezier(second),
-            ) => first.strict_rational_between_bezier_ordered(second, true, policy),
-            (
-                CurveRegionParameterData2::Bezier(first),
-                CurveRegionParameterData2::RecursiveProjective(second),
-            ) => second.strict_rational_between_bezier_ordered(first, false, policy),
-            (CurveRegionParameterData2::AlgebraicChord(_), _)
-            | (_, CurveRegionParameterData2::AlgebraicChord(_)) => Err(CurveError::Topology(
+            (CurveParameterData2::AlgebraicChord(_), _)
+            | (_, CurveParameterData2::AlgebraicChord(_)) => Err(CurveError::Topology(
                 "an algebraic chord cut has no represented scalar midpoint".into(),
             )),
-            (CurveRegionParameterData2::Bezier(_), CurveRegionParameterData2::AlgebraicCusp(_))
+            (CurveParameterData2::Bezier(_), CurveParameterData2::AlgebraicCusp(_))
+            | (CurveParameterData2::Bezier(_), CurveParameterData2::AlgebraicCuspComplement(_))
+            | (CurveParameterData2::AlgebraicCusp(_), CurveParameterData2::Bezier(_))
+            | (CurveParameterData2::AlgebraicCuspComplement(_), CurveParameterData2::Bezier(_))
             | (
-                CurveRegionParameterData2::Bezier(_),
-                CurveRegionParameterData2::AlgebraicCuspComplement(_),
-            )
-            | (CurveRegionParameterData2::AlgebraicCusp(_), CurveRegionParameterData2::Bezier(_))
-            | (
-                CurveRegionParameterData2::AlgebraicCuspComplement(_),
-                CurveRegionParameterData2::Bezier(_),
+                CurveParameterData2::AlgebraicCusp(_),
+                CurveParameterData2::AlgebraicCuspComplement(_),
             )
             | (
-                CurveRegionParameterData2::AlgebraicCusp(_),
-                CurveRegionParameterData2::AlgebraicCuspComplement(_),
-            )
-            | (
-                CurveRegionParameterData2::AlgebraicCuspComplement(_),
-                CurveRegionParameterData2::AlgebraicCusp(_),
+                CurveParameterData2::AlgebraicCuspComplement(_),
+                CurveParameterData2::AlgebraicCusp(_),
             ) => Err(CurveError::Topology(
                 "cannot separate parameters from distinct carrier domains".into(),
             )),
-            (CurveRegionParameterData2::SelectedFiber(_), _)
-            | (_, CurveRegionParameterData2::SelectedFiber(_))
-            | (CurveRegionParameterData2::RecursiveProjective(_), _)
-            | (_, CurveRegionParameterData2::RecursiveProjective(_)) => Err(CurveError::Topology(
+            (CurveParameterData2::SelectedFiber(_), _)
+            | (_, CurveParameterData2::SelectedFiber(_))
+            | (CurveParameterData2::RecursiveProjective(_), _)
+            | (_, CurveParameterData2::RecursiveProjective(_)) => Err(CurveError::Topology(
                 "retained-scalar separation requires a shared local authority".into(),
             )),
         }
     }
 }
 
-/// Oriented exact parameter range on one retained curved-region carrier.
+/// Oriented exact parameter range on one curve carrier.
 #[derive(Clone, Debug, PartialEq)]
-pub struct CurveRegionParameterRange2 {
-    start: CurveRegionParameter2,
-    end: CurveRegionParameter2,
+pub struct CurveParameterRange2 {
+    start: CurveParameter2,
+    end: CurveParameter2,
 }
 
-impl CurveRegionParameterRange2 {
-    pub(crate) fn new_validated(start: CurveRegionParameter2, end: CurveRegionParameter2) -> Self {
+impl CurveParameterRange2 {
+    pub(crate) fn new_validated(start: CurveParameter2, end: CurveParameter2) -> Self {
         Self { start, end }
     }
 
@@ -657,12 +645,12 @@ impl CurveRegionParameterRange2 {
     }
 
     /// Returns the oriented range start.
-    pub const fn start(&self) -> &CurveRegionParameter2 {
+    pub const fn start(&self) -> &CurveParameter2 {
         &self.start
     }
 
     /// Returns the oriented range end.
-    pub const fn end(&self) -> &CurveRegionParameter2 {
+    pub const fn end(&self) -> &CurveParameter2 {
         &self.end
     }
 
@@ -681,31 +669,30 @@ impl CurveRegionParameterRange2 {
 
     pub(crate) fn from_bezier_range(range: BezierParameterRange2) -> Self {
         Self::new_validated(
-            CurveRegionParameter2::from_bezier(range.start().clone()),
-            CurveRegionParameter2::from_bezier(range.end().clone()),
+            CurveParameter2::from_bezier(range.start().clone()),
+            CurveParameter2::from_bezier(range.end().clone()),
         )
     }
 }
 
 struct ForwardCorrespondingCurveRegionClip2 {
-    first_start: CurveRegionParameter2,
-    first_end: CurveRegionParameter2,
-    mapped_start: CurveRegionParameter2,
-    mapped_end: CurveRegionParameter2,
-    second_start: CurveRegionParameter2,
-    second_end: CurveRegionParameter2,
+    first_start: CurveParameter2,
+    first_end: CurveParameter2,
+    mapped_start: CurveParameter2,
+    mapped_end: CurveParameter2,
+    second_start: CurveParameter2,
+    second_end: CurveParameter2,
 }
 
 fn forward_corresponding_curve_region_parameter_ranges(
-    first_overlap: &CurveRegionParameterRange2,
-    second_overlap: &CurveRegionParameterRange2,
-    first_fragment: &CurveRegionParameterRange2,
-    second_fragment: &CurveRegionParameterRange2,
+    first_overlap: &CurveParameterRange2,
+    second_overlap: &CurveParameterRange2,
+    first_fragment: &CurveParameterRange2,
+    second_fragment: &CurveParameterRange2,
     policy: &CurveContext,
     mut map_first_to_second: impl FnMut(
-        &CurveRegionParameter2,
-    )
-        -> CurveResult<Classification<Option<CurveRegionParameter2>>>,
+        &CurveParameter2,
+    ) -> CurveResult<Classification<Option<CurveParameter2>>>,
 ) -> CurveResult<Classification<Option<ForwardCorrespondingCurveRegionClip2>>> {
     let [first_start, first_end] =
         match intersect_curve_region_parameter_ranges(first_fragment, first_overlap, policy)? {
@@ -737,14 +724,14 @@ fn forward_corresponding_curve_region_parameter_ranges(
         Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
     };
     let mapped_range =
-        CurveRegionParameterRange2::new_validated(mapped_start.clone(), mapped_end.clone());
+        CurveParameterRange2::new_validated(mapped_start.clone(), mapped_end.clone());
     let [second_low, second_high] =
         match intersect_curve_region_parameter_ranges(&mapped_range, second_overlap, policy)? {
             Classification::Decided(Some(bounds)) => bounds,
             Classification::Decided(None) => return Ok(Classification::Decided(None)),
             Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
         };
-    let second_candidate = CurveRegionParameterRange2::new_validated(second_low, second_high);
+    let second_candidate = CurveParameterRange2::new_validated(second_low, second_high);
     let [second_low, second_high] = match intersect_curve_region_parameter_ranges(
         second_fragment,
         &second_candidate,
@@ -774,14 +761,14 @@ fn forward_corresponding_curve_region_parameter_ranges(
 /// Decides whether one exact correspondence retains a positive span without
 /// constructing inverse cuts that no caller will publish.
 pub(crate) fn corresponding_curve_region_parameter_ranges_are_positive(
-    first_overlap: &CurveRegionParameterRange2,
-    second_overlap: &CurveRegionParameterRange2,
-    first_fragment: &CurveRegionParameterRange2,
-    second_fragment: &CurveRegionParameterRange2,
+    first_overlap: &CurveParameterRange2,
+    second_overlap: &CurveParameterRange2,
+    first_fragment: &CurveParameterRange2,
+    second_fragment: &CurveParameterRange2,
     policy: &CurveContext,
     map_first_to_second: impl FnMut(
-        &CurveRegionParameter2,
-    ) -> CurveResult<Classification<Option<CurveRegionParameter2>>>,
+        &CurveParameter2,
+    ) -> CurveResult<Classification<Option<CurveParameter2>>>,
 ) -> CurveResult<Classification<bool>> {
     Ok(forward_corresponding_curve_region_parameter_ranges(
         first_overlap,
@@ -801,19 +788,18 @@ pub(crate) fn corresponding_curve_region_parameter_ranges_are_positive(
 /// selected-fiber boundaries live here so Boolean and corner editing cannot
 /// disagree about the same retained overlap.
 pub(crate) fn clip_corresponding_curve_region_parameter_ranges(
-    first_overlap: &CurveRegionParameterRange2,
-    second_overlap: &CurveRegionParameterRange2,
-    first_fragment: &CurveRegionParameterRange2,
-    second_fragment: &CurveRegionParameterRange2,
+    first_overlap: &CurveParameterRange2,
+    second_overlap: &CurveParameterRange2,
+    first_fragment: &CurveParameterRange2,
+    second_fragment: &CurveParameterRange2,
     policy: &CurveContext,
     map_first_to_second: impl FnMut(
-        &CurveRegionParameter2,
-    ) -> CurveResult<Classification<Option<CurveRegionParameter2>>>,
+        &CurveParameter2,
+    ) -> CurveResult<Classification<Option<CurveParameter2>>>,
     mut map_second_to_first: impl FnMut(
-        &CurveRegionParameter2,
-    )
-        -> CurveResult<Classification<Option<CurveRegionParameter2>>>,
-) -> CurveResult<Classification<Option<(CurveRegionParameterRange2, CurveRegionParameterRange2)>>> {
+        &CurveParameter2,
+    ) -> CurveResult<Classification<Option<CurveParameter2>>>,
+) -> CurveResult<Classification<Option<(CurveParameterRange2, CurveParameterRange2)>>> {
     let ForwardCorrespondingCurveRegionClip2 {
         first_start,
         first_end,
@@ -833,10 +819,10 @@ pub(crate) fn clip_corresponding_curve_region_parameter_ranges(
         Classification::Decided(None) => return Ok(Classification::Decided(None)),
         Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
     };
-    let mut lift = |second: &CurveRegionParameter2,
-                    mapped: &CurveRegionParameter2,
-                    original: &CurveRegionParameter2|
-     -> CurveResult<Classification<Option<CurveRegionParameter2>>> {
+    let mut lift = |second: &CurveParameter2,
+                    mapped: &CurveParameter2,
+                    original: &CurveParameter2|
+     -> CurveResult<Classification<Option<CurveParameter2>>> {
         Ok(match second.cmp_by_refinement(mapped, policy)? {
             Classification::Decided(Ordering::Equal) => {
                 Classification::Decided(Some(original.clone()))
@@ -871,17 +857,17 @@ pub(crate) fn clip_corresponding_curve_region_parameter_ranges(
         Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
     }
     Ok(Classification::Decided(Some((
-        CurveRegionParameterRange2::new_validated(first_start, first_end),
-        CurveRegionParameterRange2::new_validated(second_start, second_end),
+        CurveParameterRange2::new_validated(first_start, first_end),
+        CurveParameterRange2::new_validated(second_start, second_end),
     ))))
 }
 
 fn intersect_curve_region_parameter_ranges(
-    first: &CurveRegionParameterRange2,
-    second: &CurveRegionParameterRange2,
+    first: &CurveParameterRange2,
+    second: &CurveParameterRange2,
     policy: &CurveContext,
-) -> CurveResult<Classification<Option<[CurveRegionParameter2; 2]>>> {
-    let ascending = |range: &CurveRegionParameterRange2| {
+) -> CurveResult<Classification<Option<[CurveParameter2; 2]>>> {
+    let ascending = |range: &CurveParameterRange2| {
         Ok(
             match range.start().cmp_by_refinement(range.end(), policy)? {
                 Classification::Decided(Ordering::Less) => {
@@ -987,7 +973,7 @@ pub(crate) enum BezierSelectedFiberSource2 {
 #[derive(Clone, Debug, PartialEq)]
 pub struct BezierSelectedFiberFragment2 {
     source: BezierSelectedFiberSource2,
-    range: CurveRegionParameterRange2,
+    range: CurveParameterRange2,
     reversed: bool,
     start_point: CurvePoint2,
     end_point: CurvePoint2,
@@ -1103,26 +1089,26 @@ impl BezierSplitFragment2 {
         }
     }
 
-    pub(crate) fn curve_region_parameter_range(&self) -> CurveRegionParameterRange2 {
+    pub(crate) fn curve_region_parameter_range(&self) -> CurveParameterRange2 {
         match self {
             Self::Materialized { start, end, .. }
             | Self::AlgebraicEndpointImages { start, end, .. } => {
-                CurveRegionParameterRange2::new_validated(
-                    CurveRegionParameter2::from_bezier(start.clone()),
-                    CurveRegionParameter2::from_bezier(end.clone()),
+                CurveParameterRange2::new_validated(
+                    CurveParameter2::from_bezier(start.clone()),
+                    CurveParameter2::from_bezier(end.clone()),
                 )
             }
-            Self::AnalyticParallel(fragment) => CurveRegionParameterRange2::new_validated(
-                CurveRegionParameter2::from_bezier(fragment.range.start().clone()),
-                CurveRegionParameter2::from_bezier(fragment.range.end().clone()),
+            Self::AnalyticParallel(fragment) => CurveParameterRange2::new_validated(
+                CurveParameter2::from_bezier(fragment.range.start().clone()),
+                CurveParameter2::from_bezier(fragment.range.end().clone()),
             ),
-            Self::AlgebraicChord(chord) => CurveRegionParameterRange2::new_validated(
-                CurveRegionParameter2::from_algebraic_chord(chord.start_parameter()),
-                CurveRegionParameter2::from_algebraic_chord(chord.end_parameter()),
+            Self::AlgebraicChord(chord) => CurveParameterRange2::new_validated(
+                CurveParameter2::from_algebraic_chord(chord.start_parameter()),
+                CurveParameter2::from_algebraic_chord(chord.end_parameter()),
             ),
-            Self::AlgebraicCuspSemicircle(fragment) => CurveRegionParameterRange2::new_validated(
-                CurveRegionParameter2::from_algebraic_cusp(fragment.start_parameter().clone()),
-                CurveRegionParameter2::from_algebraic_cusp(fragment.end_parameter().clone()),
+            Self::AlgebraicCuspSemicircle(fragment) => CurveParameterRange2::new_validated(
+                CurveParameter2::from_algebraic_cusp(fragment.start_parameter().clone()),
+                CurveParameter2::from_algebraic_cusp(fragment.end_parameter().clone()),
             ),
             Self::SelectedFiber(fragment) => fragment.range.clone(),
         }
@@ -1132,7 +1118,7 @@ impl BezierSplitFragment2 {
 impl BezierSelectedFiberFragment2 {
     pub(crate) fn new(
         source: BezierSelectedFiberSource2,
-        range: CurveRegionParameterRange2,
+        range: CurveParameterRange2,
         start_point: CurvePoint2,
         end_point: CurvePoint2,
     ) -> Self {
@@ -1179,7 +1165,7 @@ impl BezierSelectedFiberFragment2 {
         }
     }
 
-    pub(crate) const fn range(&self) -> &CurveRegionParameterRange2 {
+    pub(crate) const fn range(&self) -> &CurveParameterRange2 {
         &self.range
     }
 

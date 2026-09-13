@@ -30,6 +30,9 @@ fn linear_family_curve(family: CurveFamily2, vertical: bool) -> Curve2 {
         (p(-2, 0), p(-1, 0), p(0, 0))
     };
     match family {
+        CurveFamily2::AnalyticParallel => {
+            panic!("this fixture enumerates authored native families")
+        }
         CurveFamily2::Line => Curve2::from(LineSeg2::try_new(start, end).unwrap()),
         CurveFamily2::QuadraticBezier => Curve2::from(QuadraticBezier2::new(start, middle, end)),
         CurveFamily2::CubicBezier => {
@@ -311,8 +314,14 @@ fn top_level_curve_evaluates_native_and_spline_parameters() {
     );
     assert_eq!(
         (
-            line.parameter_domain().start(),
-            line.parameter_domain().end()
+            line.parameter_domain()
+                .start()
+                .as_exact()
+                .expect("native parameter"),
+            line.parameter_domain()
+                .end()
+                .as_exact()
+                .expect("native parameter")
         ),
         (&r(0), &r(1))
     );
@@ -332,8 +341,16 @@ fn top_level_curve_evaluates_native_and_spline_parameters() {
     );
     assert_eq!(
         (
-            spline.parameter_domain().start(),
-            spline.parameter_domain().end()
+            spline
+                .parameter_domain()
+                .start()
+                .as_exact()
+                .expect("native parameter"),
+            spline
+                .parameter_domain()
+                .end()
+                .as_exact()
+                .expect("native parameter")
         ),
         (&r(0), &r(2))
     );
@@ -348,17 +365,37 @@ fn top_level_curve_reuses_retained_native_endpoints() {
     for curve in every_family_open_chain() {
         assert_eq!(
             curve
-                .point_at(curve.parameter_domain().start(), &CurveContext::STRICT)
+                .point_at(
+                    curve
+                        .parameter_domain()
+                        .start()
+                        .as_exact()
+                        .expect("native parameter"),
+                    &CurveContext::STRICT
+                )
                 .unwrap()
                 .into_value(),
-            curve.start().clone()
+            (curve.start().clone())
+                .coordinates()
+                .expect("native endpoint")
+                .clone()
         );
         assert_eq!(
             curve
-                .point_at(curve.parameter_domain().end(), &CurveContext::STRICT)
+                .point_at(
+                    curve
+                        .parameter_domain()
+                        .end()
+                        .as_exact()
+                        .expect("native parameter"),
+                    &CurveContext::STRICT
+                )
                 .unwrap()
                 .into_value(),
-            curve.end().clone()
+            (curve.end().clone())
+                .coordinates()
+                .expect("native endpoint")
+                .clone()
         );
     }
 
@@ -425,7 +462,7 @@ fn top_level_curve_derivatives_preserve_parameter_domains_and_share_evaluators()
     )
     .unwrap()
     .into_value();
-    let CurveGeometry2::PolynomialBSpline(retained_spline) = spline.geometry() else {
+    let Some(CurveGeometry2::PolynomialBSpline(retained_spline)) = spline.geometry() else {
         panic!("top-level polynomial constructor returned another family");
     };
     let spline_derivative = spline
@@ -505,10 +542,22 @@ fn mixed_curve_path_fillet_accepts_every_non_arc_family_pair() {
             assert_eq!(filleted.curves()[0].family(), previous_family);
             assert_eq!(filleted.curves()[1].family(), CurveFamily2::CircularArc);
             assert_eq!(filleted.curves()[2].family(), next_family);
-            assert_eq!(filleted.curves()[0].end(), &p(-1, 0));
-            assert_eq!(filleted.curves()[1].start(), &p(-1, 0));
-            assert_eq!(filleted.curves()[1].end(), &p(0, 1));
-            assert_eq!(filleted.curves()[2].start(), &p(0, 1));
+            assert_eq!(
+                filleted.curves()[0].end(),
+                hypercurve::CurvePoint2::from(p(-1, 0).clone())
+            );
+            assert_eq!(
+                filleted.curves()[1].start(),
+                hypercurve::CurvePoint2::from(p(-1, 0).clone())
+            );
+            assert_eq!(
+                filleted.curves()[1].end(),
+                hypercurve::CurvePoint2::from(p(0, 1).clone())
+            );
+            assert_eq!(
+                filleted.curves()[2].start(),
+                hypercurve::CurvePoint2::from(p(0, 1).clone())
+            );
         }
     }
 }
@@ -547,9 +596,18 @@ fn mixed_curve_path_fillet_preserves_arc_family_and_exact_tangency() {
             CurveFamily2::CircularArc,
         ]
     );
-    assert_eq!(filleted.curves()[0].end(), &p(3, 0));
-    assert_eq!(filleted.curves()[1].end(), &p(4, 1));
-    assert_eq!(filleted.curves()[2].start(), &p(4, 1));
+    assert_eq!(
+        filleted.curves()[0].end(),
+        hypercurve::CurvePoint2::from(p(3, 0).clone())
+    );
+    assert_eq!(
+        filleted.curves()[1].end(),
+        hypercurve::CurvePoint2::from(p(4, 1).clone())
+    );
+    assert_eq!(
+        filleted.curves()[2].start(),
+        hypercurve::CurvePoint2::from(p(4, 1).clone())
+    );
 
     let previous_arc = CircularArc2::try_from_center(p(5, 2), p(5, 0), p(5, 1), false).unwrap();
     let reversed_pair = CurvePath2::try_new(vec![
@@ -574,8 +632,14 @@ fn mixed_curve_path_fillet_preserves_arc_family_and_exact_tangency() {
         reversed_fillet.curves()[0].family(),
         CurveFamily2::CircularArc
     );
-    assert_eq!(reversed_fillet.curves()[0].end(), &p(4, 1));
-    assert_eq!(reversed_fillet.curves()[1].end(), &p(3, 0));
+    assert_eq!(
+        reversed_fillet.curves()[0].end(),
+        hypercurve::CurvePoint2::from(p(4, 1).clone())
+    );
+    assert_eq!(
+        reversed_fillet.curves()[1].end(),
+        hypercurve::CurvePoint2::from(p(3, 0).clone())
+    );
     assert_eq!(reversed_fillet.curves()[2].family(), CurveFamily2::Line);
 }
 
@@ -602,7 +666,10 @@ fn closed_curve_path_corner_edits_support_the_start_end_seam() {
     else {
         panic!("the closed seam must have one setback chamfer");
     };
-    assert_eq!(solved_chamfer.start(), &p(0, 1));
+    assert_eq!(
+        solved_chamfer.start(),
+        hypercurve::CurvePoint2::from(p(0, 1).clone())
+    );
     assert_eq!(solved_chamfer.end(), solved_chamfer.start());
 
     let CurveCornerSolutions2::Unique(solved_fillet) = path
@@ -612,9 +679,12 @@ fn closed_curve_path_corner_edits_support_the_start_end_seam() {
     else {
         panic!("the closed seam must have one radius fillet");
     };
-    assert_eq!(solved_fillet.start(), &p(0, 1));
+    assert_eq!(
+        solved_fillet.start(),
+        hypercurve::CurvePoint2::from(p(0, 1).clone())
+    );
     assert_eq!(solved_fillet.end(), solved_fillet.start());
-    let CurveGeometry2::CircularArc(arc) = solved_fillet.curves()[0].geometry() else {
+    let Some(CurveGeometry2::CircularArc(arc)) = solved_fillet.curves()[0].geometry() else {
         panic!("the seam fillet must lead with its circular carrier");
     };
     assert_eq!(arc.center(), &p(1, 1));
@@ -674,11 +744,23 @@ fn one_curve_closed_spline_corner_edits_retain_one_middle_interval() {
                         panic!("the one-curve spline seam must have one chamfer");
                     };
                     assert_eq!(edited.curves().len(), 2);
-                    assert_eq!(edited.curves()[0].start(), &previous_point);
-                    assert_eq!(edited.curves()[0].end(), &next_point);
+                    assert_eq!(
+                        edited.curves()[0].start(),
+                        hypercurve::CurvePoint2::from(previous_point.clone())
+                    );
+                    assert_eq!(
+                        edited.curves()[0].end(),
+                        hypercurve::CurvePoint2::from(next_point.clone())
+                    );
                     assert_eq!(edited.curves()[1].family(), family);
-                    assert_eq!(edited.curves()[1].start(), &next_point);
-                    assert_eq!(edited.curves()[1].end(), &previous_point);
+                    assert_eq!(
+                        edited.curves()[1].start(),
+                        hypercurve::CurvePoint2::from(next_point.clone())
+                    );
+                    assert_eq!(
+                        edited.curves()[1].end(),
+                        hypercurve::CurvePoint2::from(previous_point.clone())
+                    );
                 }
 
                 let fillet = path
@@ -689,15 +771,21 @@ fn one_curve_closed_spline_corner_edits_retain_one_middle_interval() {
                     panic!("the one-curve spline seam must have one fillet");
                 };
                 assert_eq!(fillet.curves().len(), 2);
-                let CurveGeometry2::CircularArc(arc) = fillet.curves()[0].geometry() else {
+                let Some(CurveGeometry2::CircularArc(arc)) = fillet.curves()[0].geometry() else {
                     panic!("the one-curve spline seam must publish one circular fillet");
                 };
                 assert_eq!(arc.center(), &p(1, 1));
                 assert_eq!(arc.start(), &trimmed_previous_point);
                 assert_eq!(arc.end(), &trimmed_next_point);
                 assert_eq!(fillet.curves()[1].family(), family);
-                assert_eq!(fillet.curves()[1].start(), &trimmed_next_point);
-                assert_eq!(fillet.curves()[1].end(), &trimmed_previous_point);
+                assert_eq!(
+                    fillet.curves()[1].start(),
+                    hypercurve::CurvePoint2::from(trimmed_next_point.clone())
+                );
+                assert_eq!(
+                    fillet.curves()[1].end(),
+                    hypercurve::CurvePoint2::from(trimmed_previous_point.clone())
+                );
             }
         }
     }
@@ -791,10 +879,22 @@ fn line_corner_solvers_derive_unique_trimmed_fillet_and_chamfer() {
         panic!("equal line setbacks must have one trimmed solution");
     };
     assert_eq!(chamfer.curves().len(), 3);
-    assert_eq!(chamfer.curves()[0].end(), &p(-1, 0));
-    assert_eq!(chamfer.curves()[1].start(), &p(-1, 0));
-    assert_eq!(chamfer.curves()[1].end(), &p(0, 1));
-    assert_eq!(chamfer.curves()[2].start(), &p(0, 1));
+    assert_eq!(
+        chamfer.curves()[0].end(),
+        hypercurve::CurvePoint2::from(p(-1, 0).clone())
+    );
+    assert_eq!(
+        chamfer.curves()[1].start(),
+        hypercurve::CurvePoint2::from(p(-1, 0).clone())
+    );
+    assert_eq!(
+        chamfer.curves()[1].end(),
+        hypercurve::CurvePoint2::from(p(0, 1).clone())
+    );
+    assert_eq!(
+        chamfer.curves()[2].start(),
+        hypercurve::CurvePoint2::from(p(0, 1).clone())
+    );
 
     let fillet = path
         .fillet_vertex_by_radius(1, r(1), CurveCornerMode2::TrimOnly, &CurveContext::STRICT)
@@ -803,8 +903,11 @@ fn line_corner_solvers_derive_unique_trimmed_fillet_and_chamfer() {
         panic!("a convex right-angle line corner must have one trimmed fillet");
     };
     assert_eq!(fillet.curves().len(), 3);
-    assert_eq!(fillet.curves()[0].end(), &p(-1, 0));
-    let CurveGeometry2::CircularArc(arc) = fillet.curves()[1].geometry() else {
+    assert_eq!(
+        fillet.curves()[0].end(),
+        hypercurve::CurvePoint2::from(p(-1, 0).clone())
+    );
+    let Some(CurveGeometry2::CircularArc(arc)) = fillet.curves()[1].geometry() else {
         panic!("the solved fillet must be an exact circular carrier");
     };
     assert_eq!(arc.start(), &p(-1, 0));
@@ -837,10 +940,13 @@ fn oblique_line_corner_solvers_preserve_exact_orientation() {
         else {
             panic!("a 3-4-5 line corner must have one exact chamfer");
         };
-        assert_eq!(chamfer.curves()[0].end(), &p(-1, 0));
+        assert_eq!(
+            chamfer.curves()[0].end(),
+            hypercurve::CurvePoint2::from(p(-1, 0).clone())
+        );
         assert_eq!(
             chamfer.curves()[2].start(),
-            &Point2::new(q(3, 5), next_cut_y)
+            hypercurve::CurvePoint2::from(Point2::new(q(3, 5), next_cut_y).clone())
         );
 
         let CurveCornerSolutions2::Unique(fillet) = path
@@ -855,7 +961,7 @@ fn oblique_line_corner_solvers_preserve_exact_orientation() {
         else {
             panic!("a 3-4-5 line corner must have one exact fillet");
         };
-        let CurveGeometry2::CircularArc(arc) = fillet.curves()[1].geometry() else {
+        let Some(CurveGeometry2::CircularArc(arc)) = fillet.curves()[1].geometry() else {
             panic!("the oblique fillet must remain circular");
         };
         assert_eq!(arc.start(), &Point2::new(q(-1, 2), Real::zero()));
@@ -902,11 +1008,19 @@ fn exact_chamfer_solver_handles_native_line_arc_and_arc_arc_carriers() {
         );
         let line_cut = Point2::new(q(1, 2), Real::zero());
         let next_cut = chamfered.curves()[2].start();
-        assert_eq!(chamfered.curves()[0].end(), &line_cut);
-        assert_eq!(chamfered.curves()[1].start(), &line_cut);
+        assert_eq!(
+            chamfered.curves()[0].end(),
+            hypercurve::CurvePoint2::from(line_cut.clone())
+        );
+        assert_eq!(
+            chamfered.curves()[1].start(),
+            hypercurve::CurvePoint2::from(line_cut.clone())
+        );
         assert_eq!(chamfered.curves()[1].end(), next_cut);
         assert!(matches!(
             next_cut
+                .coordinates()
+                .expect("native arc endpoint")
                 .distance_squared(&p(1, 0))
                 .certified_eq_until(&Real::one(), -4096),
             CertifiedRealEquality::Equal { .. }
@@ -928,12 +1042,12 @@ fn exact_chamfer_solver_handles_native_line_arc_and_arc_arc_carriers() {
         assert_eq!(extended.len(), 4);
         assert_eq!(
             extended[0].curves()[0].end(),
-            &Point2::new(q(1, 2), Real::zero())
+            hypercurve::CurvePoint2::from(Point2::new(q(1, 2), Real::zero()).clone())
         );
         assert_eq!(extended[0].curves()[0].end(), extended[1].curves()[0].end());
         assert_eq!(
             extended[2].curves()[0].end(),
-            &Point2::new(q(3, 2), Real::zero())
+            hypercurve::CurvePoint2::from(Point2::new(q(3, 2), Real::zero()).clone())
         );
         assert_eq!(extended[2].curves()[0].end(), extended[3].curves()[0].end());
         assert_eq!(
@@ -951,7 +1065,8 @@ fn exact_chamfer_solver_handles_native_line_arc_and_arc_arc_carriers() {
         let mut retained_corner_membership = extended[..2]
             .iter()
             .map(|candidate| {
-                let CurveGeometry2::CircularArc(arc) = candidate.curves()[2].geometry() else {
+                let Some(CurveGeometry2::CircularArc(arc)) = candidate.curves()[2].geometry()
+                else {
                     panic!("every line-arc candidate must retain a circular carrier");
                 };
                 assert_eq!(arc.center(), &p(1, 1));
@@ -1018,7 +1133,9 @@ fn exact_chamfer_solver_handles_native_line_arc_and_arc_arc_carriers() {
         assert_eq!(chamfered.curves()[1].end(), next_cut);
         for cut in [previous_cut, next_cut] {
             assert!(matches!(
-                cut.distance_squared(&p(1, 0))
+                cut.coordinates()
+                    .expect("native arc endpoint")
+                    .distance_squared(&p(1, 0))
                     .certified_eq_until(&Real::one(), -4096),
                 CertifiedRealEquality::Equal { .. }
             ));
@@ -1074,9 +1191,18 @@ fn exact_arc_chamfer_solver_preserves_both_major_sweep_cuts() {
     else {
         panic!("the diametric major-arc setback must retain its tangent cut");
     };
-    assert_eq!(tangent.curves()[0].end(), &p(1, -1));
-    assert_eq!(tangent.curves()[1].end(), &p(-1, 0));
-    assert_eq!(tangent.curves()[2].start(), &p(-1, 0));
+    assert_eq!(
+        tangent.curves()[0].end(),
+        hypercurve::CurvePoint2::from(p(1, -1).clone())
+    );
+    assert_eq!(
+        tangent.curves()[1].end(),
+        hypercurve::CurvePoint2::from(p(-1, 0).clone())
+    );
+    assert_eq!(
+        tangent.curves()[2].start(),
+        hypercurve::CurvePoint2::from(p(-1, 0).clone())
+    );
     assert_eq!(
         path.chamfer_vertex_by_setbacks(
             1,
@@ -1107,8 +1233,14 @@ fn exact_arc_chamfer_solver_preserves_both_major_sweep_cuts() {
     let next_starts = chamfers
         .iter()
         .map(|chamfer| {
-            assert_eq!(chamfer.curves()[0].end(), &p(1, -1));
-            assert_eq!(chamfer.curves()[1].start(), &p(1, -1));
+            assert_eq!(
+                chamfer.curves()[0].end(),
+                hypercurve::CurvePoint2::from(p(1, -1).clone())
+            );
+            assert_eq!(
+                chamfer.curves()[1].start(),
+                hypercurve::CurvePoint2::from(p(1, -1).clone())
+            );
             assert_eq!(chamfer.curves()[2].family(), CurveFamily2::CircularArc);
             chamfer.curves()[2].start().clone()
         })
@@ -1116,7 +1248,9 @@ fn exact_arc_chamfer_solver_preserves_both_major_sweep_cuts() {
     assert_ne!(next_starts[0], next_starts[1]);
     for cut in next_starts {
         assert!(matches!(
-            cut.distance_squared(&p(1, 0))
+            cut.coordinates()
+                .expect("native arc endpoint")
+                .distance_squared(&p(1, 0))
                 .certified_eq_until(&Real::one(), -4096),
             CertifiedRealEquality::Equal { .. }
         ));
@@ -1150,7 +1284,7 @@ fn exact_native_arc_fillet_solver_handles_every_native_pair_order() {
                 CurveFamily2::CircularArc,
             ]
         );
-        let CurveGeometry2::CircularArc(inserted) = fillet.curves()[1].geometry() else {
+        let Some(CurveGeometry2::CircularArc(inserted)) = fillet.curves()[1].geometry() else {
             panic!("the solved fillet must remain a certified circular arc");
         };
         let expected_center = Point2::new(Real::one() - r(2).sqrt().unwrap(), q(1, 2));
@@ -1167,9 +1301,15 @@ fn exact_native_arc_fillet_solver_handles_every_native_pair_order() {
                 .certified_eq_until(&q(1, 4), -4096),
             CertifiedRealEquality::Equal { .. }
         ));
-        assert_eq!(fillet.curves()[0].end(), inserted.start());
-        assert_eq!(fillet.curves()[2].start(), inserted.end());
-        let CurveGeometry2::CircularArc(retained_next) = fillet.curves()[2].geometry() else {
+        assert_eq!(
+            fillet.curves()[0].end(),
+            hypercurve::CurvePoint2::from((*(inserted.start())).clone())
+        );
+        assert_eq!(
+            fillet.curves()[2].start(),
+            hypercurve::CurvePoint2::from((*(inserted.end())).clone())
+        );
+        let Some(CurveGeometry2::CircularArc(retained_next)) = fillet.curves()[2].geometry() else {
             panic!("the source circular carrier must be retained");
         };
         assert_eq!(retained_next.center(), &p(1, 0));
@@ -1222,7 +1362,7 @@ fn exact_native_arc_fillet_solver_handles_every_native_pair_order() {
                 .iter()
                 .all(|curve| curve.family() == CurveFamily2::CircularArc)
         );
-        let CurveGeometry2::CircularArc(inserted) = fillet.curves()[1].geometry() else {
+        let Some(CurveGeometry2::CircularArc(inserted)) = fillet.curves()[1].geometry() else {
             unreachable!();
         };
         for source_center in [p(0, -1), p(1, 0)] {
@@ -1240,8 +1380,14 @@ fn exact_native_arc_fillet_solver_handles_every_native_pair_order() {
                 .certified_eq_until(&q(1, 4), -4096),
             CertifiedRealEquality::Equal { .. }
         ));
-        assert_eq!(fillet.curves()[0].end(), inserted.start());
-        assert_eq!(fillet.curves()[2].start(), inserted.end());
+        assert_eq!(
+            fillet.curves()[0].end(),
+            hypercurve::CurvePoint2::from((*(inserted.start())).clone())
+        );
+        assert_eq!(
+            fillet.curves()[2].start(),
+            hypercurve::CurvePoint2::from((*(inserted.end())).clone())
+        );
 
         let extended = arc_arc
             .fillet_vertex_by_radius(1, q(1, 2), CurveCornerMode2::TrimOrExtend, &policy)
@@ -1257,7 +1403,7 @@ fn exact_native_arc_fillet_solver_handles_every_native_pair_order() {
             panic!("a radius larger than both source radii must retain all exact branches");
         };
         assert!(cross_center.iter().any(|candidate| {
-            let CurveGeometry2::CircularArc(fillet) = candidate.curves()[1].geometry() else {
+            let Some(CurveGeometry2::CircularArc(fillet)) = candidate.curves()[1].geometry() else {
                 return false;
             };
             fillet.is_clockwise()
@@ -1323,7 +1469,7 @@ fn retained_circular_conics_share_the_native_corner_kernel() {
             assert_eq!(fillet.curves()[2].family(), *family);
             assert_eq!(fillet.curves()[0].end(), fillet.curves()[1].start());
             assert_eq!(fillet.curves()[1].end(), fillet.curves()[2].start());
-            let CurveGeometry2::CircularArc(inserted) = fillet.curves()[1].geometry() else {
+            let Some(CurveGeometry2::CircularArc(inserted)) = fillet.curves()[1].geometry() else {
                 panic!("the inserted fillet must remain circular");
             };
             assert!(matches!(
@@ -1358,16 +1504,17 @@ fn retained_circular_conics_share_the_native_corner_kernel() {
                     assert!(candidate.curves().iter().all(|curve| {
                         [curve.start(), curve.end()].iter().all(|point| {
                             point
+                                .coordinates()
+                                .expect("native corner endpoint")
                                 .distance_squared(&p(0, 0))
                                 .certified_eq_until(&Real::zero(), -4096)
                                 .as_bool()
                                 != Some(true)
                         })
                     }));
-                    candidate
-                        .curves()
-                        .iter()
-                        .any(|curve| matches!(curve.geometry(), CurveGeometry2::CircularArc(_)))
+                    candidate.curves().iter().any(|curve| {
+                        matches!(curve.geometry(), Some(CurveGeometry2::CircularArc(_)))
+                    })
                 };
                 let mut retained_native_extension = false;
                 match &extended.value {
@@ -1718,15 +1865,23 @@ fn radical_line_image_fillets_preserve_retained_families() {
     assert_eq!(fillet.curves()[0].family(), CurveFamily2::QuadraticBezier);
     assert_eq!(fillet.curves()[2].family(), CurveFamily2::QuadraticBezier);
     for distance_squared in [
-        fillet.curves()[0].end().distance_squared(&p(0, 0)),
-        fillet.curves()[2].start().distance_squared(&p(0, 0)),
+        fillet.curves()[0]
+            .end()
+            .coordinates()
+            .expect("native endpoint")
+            .distance_squared(&p(0, 0)),
+        fillet.curves()[2]
+            .start()
+            .coordinates()
+            .expect("native endpoint")
+            .distance_squared(&p(0, 0)),
     ] {
         assert!(matches!(
             distance_squared.certified_eq_until(&q(1, 4), -4096),
             CertifiedRealEquality::Equal { .. }
         ));
     }
-    let CurveGeometry2::CircularArc(arc) = fillet.curves()[1].geometry() else {
+    let Some(CurveGeometry2::CircularArc(arc)) = fillet.curves()[1].geometry() else {
         panic!("the radical line-image fillet must remain circular");
     };
     assert!(matches!(
@@ -1752,14 +1907,38 @@ fn line_corner_solvers_enumerate_extensions_deterministically() {
         panic!("trim-or-extend setbacks must expose all four line-support choices");
     };
     assert_eq!(chamfers.len(), 4);
-    assert_eq!(chamfers[0].curves()[0].end(), &p(-1, 0));
-    assert_eq!(chamfers[0].curves()[2].start(), &p(0, 1));
-    assert_eq!(chamfers[1].curves()[0].end(), &p(-1, 0));
-    assert_eq!(chamfers[1].curves()[2].start(), &p(0, -1));
-    assert_eq!(chamfers[2].curves()[0].end(), &p(1, 0));
-    assert_eq!(chamfers[2].curves()[2].start(), &p(0, 1));
-    assert_eq!(chamfers[3].curves()[0].end(), &p(1, 0));
-    assert_eq!(chamfers[3].curves()[2].start(), &p(0, -1));
+    assert_eq!(
+        chamfers[0].curves()[0].end(),
+        hypercurve::CurvePoint2::from(p(-1, 0).clone())
+    );
+    assert_eq!(
+        chamfers[0].curves()[2].start(),
+        hypercurve::CurvePoint2::from(p(0, 1).clone())
+    );
+    assert_eq!(
+        chamfers[1].curves()[0].end(),
+        hypercurve::CurvePoint2::from(p(-1, 0).clone())
+    );
+    assert_eq!(
+        chamfers[1].curves()[2].start(),
+        hypercurve::CurvePoint2::from(p(0, -1).clone())
+    );
+    assert_eq!(
+        chamfers[2].curves()[0].end(),
+        hypercurve::CurvePoint2::from(p(1, 0).clone())
+    );
+    assert_eq!(
+        chamfers[2].curves()[2].start(),
+        hypercurve::CurvePoint2::from(p(0, 1).clone())
+    );
+    assert_eq!(
+        chamfers[3].curves()[0].end(),
+        hypercurve::CurvePoint2::from(p(1, 0).clone())
+    );
+    assert_eq!(
+        chamfers[3].curves()[2].start(),
+        hypercurve::CurvePoint2::from(p(0, -1).clone())
+    );
 
     let CurveCornerSolutions2::Multiple(fillets) = path
         .fillet_vertex_by_radius(
@@ -1777,7 +1956,7 @@ fn line_corner_solvers_enumerate_extensions_deterministically() {
     let centers_and_orientations = fillets
         .iter()
         .map(|fillet| {
-            let CurveGeometry2::CircularArc(arc) = fillet.curves()[1].geometry() else {
+            let Some(CurveGeometry2::CircularArc(arc)) = fillet.curves()[1].geometry() else {
                 panic!("every line fillet candidate must contain one circular arc");
             };
             (arc.center().clone(), arc.is_clockwise())
@@ -1831,7 +2010,10 @@ fn polynomial_chamfer_materializes_represented_incident_extension() {
                 .iter()
                 .find(|curve| curve.family() == CurveFamily2::QuadraticBezier)
                 .expect("the extended source family must be retained");
-            assert!(quadratic.start() == &p(1, 1) || quadratic.end() == &p(1, 1));
+            assert!(
+                quadratic.start() == hypercurve::CurvePoint2::from(p(1, 1).clone())
+                    || quadratic.end() == hypercurve::CurvePoint2::from(p(1, 1).clone())
+            );
         }
     }
 }
@@ -1882,7 +2064,10 @@ fn rational_chamfer_materializes_the_incident_projective_cell() {
                 .iter()
                 .find(|curve| curve.family() == CurveFamily2::RationalBezier)
                 .expect("the exact rational carrier must be retained");
-            assert!(rational.start() == &p(3, 9) || rational.end() == &p(3, 9));
+            assert!(
+                rational.start() == hypercurve::CurvePoint2::from(p(3, 9).clone())
+                    || rational.end() == hypercurve::CurvePoint2::from(p(3, 9).clone())
+            );
         }
     }
 }
@@ -1926,7 +2111,13 @@ fn spline_chamfer_materializes_only_the_incident_extension_cell() {
             let corner = source.end().clone();
             let path = CurvePath2::try_new(vec![
                 source,
-                Curve2::from(LineSeg2::try_new(corner, line_end).unwrap()),
+                Curve2::from(
+                    LineSeg2::try_new(
+                        (corner).coordinates().expect("native endpoint").clone(),
+                        line_end,
+                    )
+                    .unwrap(),
+                ),
             ])
             .unwrap();
             for reversed in [false, true] {
@@ -1966,12 +2157,10 @@ fn spline_chamfer_materializes_only_the_incident_extension_cell() {
                         .count(),
                     1,
                 );
-                assert!(
-                    edited
-                        .curves()
-                        .iter()
-                        .any(|curve| { curve.start() == &expected || curve.end() == &expected })
-                );
+                assert!(edited.curves().iter().any(|curve| {
+                    curve.start() == hypercurve::CurvePoint2::from(expected.clone())
+                        || curve.end() == hypercurve::CurvePoint2::from(expected.clone())
+                }));
             }
         }
     }
@@ -2283,7 +2472,8 @@ fn represented_line_bezier_corners_use_the_general_incidence_kernel() {
                 .unwrap()
                 .into_value();
             let has_expected = |candidate: &CurvePath2| {
-                let CurveGeometry2::CircularArc(fillet) = candidate.curves()[1].geometry() else {
+                let Some(CurveGeometry2::CircularArc(fillet)) = candidate.curves()[1].geometry()
+                else {
                     return false;
                 };
                 candidate.curves()[2].family() == family
@@ -2317,10 +2507,13 @@ fn represented_line_bezier_corners_use_the_general_incidence_kernel() {
             else {
                 panic!("the represented quadratic circle contact must define one chamfer");
             };
-            assert_eq!(chamfered.curves()[0].end(), &p(-1, 0));
+            assert_eq!(
+                chamfered.curves()[0].end(),
+                hypercurve::CurvePoint2::from(p(-1, 0).clone())
+            );
             assert_eq!(
                 chamfered.curves()[2].start(),
-                &Point2::new(q(9, 16), q(3, 2))
+                hypercurve::CurvePoint2::from(Point2::new(q(9, 16), q(3, 2)).clone())
             );
             assert_eq!(chamfered.curves()[2].family(), family);
 
@@ -2330,7 +2523,8 @@ fn represented_line_bezier_corners_use_the_general_incidence_kernel() {
                 .unwrap()
                 .into_value();
             let reversed_has_expected = |candidate: &CurvePath2| {
-                let CurveGeometry2::CircularArc(fillet) = candidate.curves()[1].geometry() else {
+                let Some(CurveGeometry2::CircularArc(fillet)) = candidate.curves()[1].geometry()
+                else {
                     return false;
                 };
                 candidate.curves()[0].family() == family
@@ -2370,9 +2564,12 @@ fn represented_line_bezier_corners_use_the_general_incidence_kernel() {
             assert_eq!(reversed_chamfered.curves()[0].family(), family);
             assert_eq!(
                 reversed_chamfered.curves()[0].end(),
-                &Point2::new(q(9, 16), q(3, 2))
+                hypercurve::CurvePoint2::from(Point2::new(q(9, 16), q(3, 2)).clone())
             );
-            assert_eq!(reversed_chamfered.curves()[2].start(), &p(-1, 0));
+            assert_eq!(
+                reversed_chamfered.curves()[2].start(),
+                hypercurve::CurvePoint2::from(p(-1, 0).clone())
+            );
         }
     }
 }
@@ -2434,23 +2631,39 @@ fn spline_incident_spans_reuse_represented_bezier_corner_incidence() {
             };
             let trimmed = &chamfered.curves()[2];
             assert_eq!(trimmed.family(), family);
-            assert_eq!(trimmed.start(), &expected_cut);
             assert_eq!(
-                trimmed.parameter_domain().start(),
+                trimmed.start(),
+                hypercurve::CurvePoint2::from(expected_cut.clone())
+            );
+            assert_eq!(
+                trimmed
+                    .parameter_domain()
+                    .start()
+                    .as_exact()
+                    .expect("native parameter"),
                 &expected_public_parameter
             );
-            assert_eq!(trimmed.parameter_domain().end(), &r(9));
+            assert_eq!(
+                trimmed
+                    .parameter_domain()
+                    .end()
+                    .as_exact()
+                    .expect("native parameter"),
+                &r(9)
+            );
 
             let fillets = path
                 .fillet_vertex_by_radius(1, q(15, 4), CurveCornerMode2::TrimOnly, &policy)
                 .unwrap()
                 .into_value();
             let has_expected = |candidate: &CurvePath2| {
-                let CurveGeometry2::CircularArc(fillet) = candidate.curves()[1].geometry() else {
+                let Some(CurveGeometry2::CircularArc(fillet)) = candidate.curves()[1].geometry()
+                else {
                     return false;
                 };
                 candidate.curves()[2].family() == family
-                    && candidate.curves()[2].start() == &expected_cut
+                    && candidate.curves()[2].start()
+                        == hypercurve::CurvePoint2::from(expected_cut.clone())
                     && fillet
                         .center()
                         .distance_squared(&expected_center)
@@ -2484,10 +2697,24 @@ fn spline_incident_spans_reuse_represented_bezier_corner_incidence() {
             };
             let reversed_trimmed = &reversed_chamfered.curves()[0];
             assert_eq!(reversed_trimmed.family(), family);
-            assert_eq!(reversed_trimmed.end(), &expected_cut);
-            assert_eq!(reversed_trimmed.parameter_domain().start(), &r(2));
             assert_eq!(
-                reversed_trimmed.parameter_domain().end(),
+                reversed_trimmed.end(),
+                hypercurve::CurvePoint2::from(expected_cut.clone())
+            );
+            assert_eq!(
+                reversed_trimmed
+                    .parameter_domain()
+                    .start()
+                    .as_exact()
+                    .expect("native parameter"),
+                &r(2)
+            );
+            assert_eq!(
+                reversed_trimmed
+                    .parameter_domain()
+                    .end()
+                    .as_exact()
+                    .expect("native parameter"),
                 &expected_reversed_parameter
             );
         }
@@ -2554,12 +2781,33 @@ fn spline_incident_span_pairs_reuse_exact_ph_fillet_fast_path() {
                     );
                 };
                 assert_eq!(filleted.curves()[0].family(), previous_family);
-                assert_eq!(filleted.curves()[0].end(), &p(-1, 0));
-                assert_eq!(filleted.curves()[0].parameter_domain().end(), &q(17, 4));
+                assert_eq!(
+                    filleted.curves()[0].end(),
+                    hypercurve::CurvePoint2::from(p(-1, 0).clone())
+                );
+                assert_eq!(
+                    filleted.curves()[0]
+                        .parameter_domain()
+                        .end()
+                        .as_exact()
+                        .expect("native parameter"),
+                    &q(17, 4)
+                );
                 assert_eq!(filleted.curves()[2].family(), next_family);
-                assert_eq!(filleted.curves()[2].start(), &p(0, 1));
-                assert_eq!(filleted.curves()[2].parameter_domain().start(), &r(8));
-                let CurveGeometry2::CircularArc(fillet) = filleted.curves()[1].geometry() else {
+                assert_eq!(
+                    filleted.curves()[2].start(),
+                    hypercurve::CurvePoint2::from(p(0, 1).clone())
+                );
+                assert_eq!(
+                    filleted.curves()[2]
+                        .parameter_domain()
+                        .start()
+                        .as_exact()
+                        .expect("native parameter"),
+                    &r(8)
+                );
+                let Some(CurveGeometry2::CircularArc(fillet)) = filleted.curves()[1].geometry()
+                else {
                     panic!("the exact PH-span fillet must remain circular");
                 };
                 assert_eq!(fillet.center(), &p(-1, 1));
@@ -2608,11 +2856,11 @@ fn represented_bezier_pairs_use_independent_chamfer_and_exact_ph_fillet_routes()
         };
         assert_eq!(
             chamfered.curves()[0].end(),
-            &Point2::new(-q(9, 16), q(3, 2))
+            hypercurve::CurvePoint2::from(Point2::new(-q(9, 16), q(3, 2)).clone())
         );
         assert_eq!(
             chamfered.curves()[2].start(),
-            &Point2::new(q(9, 16), q(3, 2))
+            hypercurve::CurvePoint2::from(Point2::new(q(9, 16), q(3, 2)).clone())
         );
         assert_eq!(
             chamfered.curves()[0].family(),
@@ -2630,11 +2878,17 @@ fn represented_bezier_pairs_use_independent_chamfer_and_exact_ph_fillet_routes()
         else {
             panic!("the exact PH cubic pair must define one fillet");
         };
-        assert_eq!(filleted.curves()[0].end(), &p(-1, 0));
-        assert_eq!(filleted.curves()[2].start(), &p(0, 1));
+        assert_eq!(
+            filleted.curves()[0].end(),
+            hypercurve::CurvePoint2::from(p(-1, 0).clone())
+        );
+        assert_eq!(
+            filleted.curves()[2].start(),
+            hypercurve::CurvePoint2::from(p(0, 1).clone())
+        );
         assert_eq!(filleted.curves()[0].family(), CurveFamily2::CubicBezier);
         assert_eq!(filleted.curves()[2].family(), CurveFamily2::CubicBezier);
-        let CurveGeometry2::CircularArc(fillet) = filleted.curves()[1].geometry() else {
+        let Some(CurveGeometry2::CircularArc(fillet)) = filleted.curves()[1].geometry() else {
             panic!("the exact PH pair must insert a circular fillet");
         };
         assert_eq!(fillet.center(), &p(-1, 1));
@@ -2677,7 +2931,8 @@ fn direct_bezier_pair_fillet_materializes_both_incident_extensions() {
                 .expect("both regular Bezier incident extensions must be solved exactly");
             assert_eq!(result.certainty, CurveCertainty::Certified);
             let has_expected = |candidate: &CurvePath2| {
-                let CurveGeometry2::CircularArc(fillet) = candidate.curves()[1].geometry() else {
+                let Some(CurveGeometry2::CircularArc(fillet)) = candidate.curves()[1].geometry()
+                else {
                     return false;
                 };
                 let (expected_previous, expected_next) = if reversed {
@@ -2685,8 +2940,10 @@ fn direct_bezier_pair_fillet_materializes_both_incident_extensions() {
                 } else {
                     (&previous_cut, &next_cut)
                 };
-                candidate.curves()[0].end() == expected_previous
-                    && candidate.curves()[2].start() == expected_next
+                candidate.curves()[0].end()
+                    == hypercurve::CurvePoint2::from((*(expected_previous)).clone())
+                    && candidate.curves()[2].start()
+                        == hypercurve::CurvePoint2::from((*(expected_next)).clone())
                     && fillet.center() == &expected_center
                     && candidate.curves()[0].family() == CurveFamily2::QuadraticBezier
                     && candidate.curves()[2].family() == CurveFamily2::QuadraticBezier
@@ -2762,17 +3019,17 @@ fn spline_line_fillet_preserves_the_authored_spline_and_adds_its_incident_cell()
                         && candidate.curves().iter().any(|curve| {
                             matches!(
                                 curve.geometry(),
-                                CurveGeometry2::CircularArc(arc) if arc.center() == &p(1, -1)
+                                Some(CurveGeometry2::CircularArc(arc)) if arc.center() == &p(1, -1)
                             )
                         })
-                        && candidate
-                            .curves()
-                            .iter()
-                            .any(|curve| curve.start() == &p(1, 0) || curve.end() == &p(1, 0))
-                        && candidate
-                            .curves()
-                            .iter()
-                            .any(|curve| curve.start() == &p(0, -1) || curve.end() == &p(0, -1))
+                        && candidate.curves().iter().any(|curve| {
+                            curve.start() == hypercurve::CurvePoint2::from(p(1, 0).clone())
+                                || curve.end() == hypercurve::CurvePoint2::from(p(1, 0).clone())
+                        })
+                        && candidate.curves().iter().any(|curve| {
+                            curve.start() == hypercurve::CurvePoint2::from(p(0, -1).clone())
+                                || curve.end() == hypercurve::CurvePoint2::from(p(0, -1).clone())
+                        })
                 };
                 match result.into_value() {
                     CurveCornerSolutions2::Unique(candidate) => assert!(has_expected(&candidate)),
@@ -2860,7 +3117,8 @@ fn same_bezier_support_fillet_removes_the_projective_parameter_diagonal() {
                 .expect("the structural diagonal must leave complete off-diagonal contacts");
             assert_eq!(result.certainty, CurveCertainty::Certified);
             let has_expected = |candidate: &CurvePath2| {
-                let CurveGeometry2::CircularArc(fillet) = candidate.curves()[1].geometry() else {
+                let Some(CurveGeometry2::CircularArc(fillet)) = candidate.curves()[1].geometry()
+                else {
                     return false;
                 };
                 let (expected_previous, expected_next) = if reversed {
@@ -2868,8 +3126,10 @@ fn same_bezier_support_fillet_removes_the_projective_parameter_diagonal() {
                 } else {
                     (&previous_cut, &next_cut)
                 };
-                candidate.curves()[0].end() == expected_previous
-                    && candidate.curves()[2].start() == expected_next
+                candidate.curves()[0].end()
+                    == hypercurve::CurvePoint2::from((*(expected_previous)).clone())
+                    && candidate.curves()[2].start()
+                        == hypercurve::CurvePoint2::from((*(expected_next)).clone())
                     && fillet.center() == &expected_center
             };
             match result.into_value() {
@@ -2928,7 +3188,8 @@ fn same_ph_bezier_support_fillet_reuses_rational_projective_self_contact() {
                 .expect("the exact PH parallel must retain its exterior self-contact");
             assert_eq!(result.certainty, CurveCertainty::Certified);
             let has_expected = |candidate: &CurvePath2| {
-                let CurveGeometry2::CircularArc(fillet) = candidate.curves()[1].geometry() else {
+                let Some(CurveGeometry2::CircularArc(fillet)) = candidate.curves()[1].geometry()
+                else {
                     return false;
                 };
                 let (expected_previous, expected_next) = if reversed {
@@ -2936,8 +3197,10 @@ fn same_ph_bezier_support_fillet_reuses_rational_projective_self_contact() {
                 } else {
                     (&previous_cut, &next_cut)
                 };
-                candidate.curves()[0].end() == expected_previous
-                    && candidate.curves()[2].start() == expected_next
+                candidate.curves()[0].end()
+                    == hypercurve::CurvePoint2::from((*(expected_previous)).clone())
+                    && candidate.curves()[2].start()
+                        == hypercurve::CurvePoint2::from((*(expected_next)).clone())
                     && fillet.center() == &expected_center
             };
             match result.into_value() {
@@ -3001,7 +3264,8 @@ fn represented_arc_bezier_fillets_use_circle_incidence() {
                 .unwrap()
                 .into_value();
             let has_expected = |candidate: &CurvePath2| {
-                let CurveGeometry2::CircularArc(fillet) = candidate.curves()[1].geometry() else {
+                let Some(CurveGeometry2::CircularArc(fillet)) = candidate.curves()[1].geometry()
+                else {
                     return false;
                 };
                 fillet
@@ -3029,7 +3293,8 @@ fn represented_arc_bezier_fillets_use_circle_incidence() {
                 .unwrap()
                 .into_value();
             let reversed_has_expected = |candidate: &CurvePath2| {
-                let CurveGeometry2::CircularArc(fillet) = candidate.curves()[1].geometry() else {
+                let Some(CurveGeometry2::CircularArc(fillet)) = candidate.curves()[1].geometry()
+                else {
                     return false;
                 };
                 candidate.curves()[0].family() == family
@@ -3095,7 +3360,10 @@ fn represented_bezier_chamfer_retains_more_than_two_exact_cuts() {
         assert_eq!(candidates.len(), expected.len());
         for (candidate, expected) in candidates.iter().zip(&expected) {
             assert_eq!(candidate.curves()[2].family(), CurveFamily2::CubicBezier);
-            assert_eq!(candidate.curves()[2].start(), expected);
+            assert_eq!(
+                candidate.curves()[2].start(),
+                hypercurve::CurvePoint2::from((*(expected)).clone())
+            );
         }
     }
 }
@@ -3296,8 +3564,8 @@ proptest! {
         else {
             return Err(TestCaseError::fail("line setbacks must solve uniquely"));
         };
-        prop_assert_eq!(chamfered.curves()[0].end(), &p(-radius, 0));
-        prop_assert_eq!(chamfered.curves()[1].end(), &p(0, radius));
+        prop_assert_eq!(chamfered.curves()[0].end().coordinates().expect("native endpoint").clone(), p(-radius, 0));
+        prop_assert_eq!(chamfered.curves()[1].end().coordinates().expect("native endpoint").clone(), p(0, radius));
 
         let CurveCornerSolutions2::Unique(filleted) = path
             .fillet_vertex_by_radius(
@@ -3311,10 +3579,10 @@ proptest! {
         else {
             return Err(TestCaseError::fail("line radius must solve uniquely"));
         };
-        prop_assert_eq!(filleted.curves()[0].end(), &p(-radius, 0));
+        prop_assert_eq!(filleted.curves()[0].end().coordinates().expect("native endpoint").clone(), p(-radius, 0));
         prop_assert_eq!(filleted.curves()[1].family(), CurveFamily2::CircularArc);
-        prop_assert_eq!(filleted.curves()[1].end(), &p(0, radius));
-        prop_assert_eq!(filleted.curves()[2].start(), &p(0, radius));
+        prop_assert_eq!(filleted.curves()[1].end().coordinates().expect("native endpoint").clone(), p(0, radius));
+        prop_assert_eq!(filleted.curves()[2].start().coordinates().expect("native endpoint").clone(), p(0, radius));
     }
 
     #[test]
@@ -3352,11 +3620,11 @@ proptest! {
         else {
             return Err(TestCaseError::fail("line/arc radius must solve uniquely"));
         };
-        let CurveGeometry2::CircularArc(inserted) = filleted.curves()[1].geometry() else {
+        let Some(CurveGeometry2::CircularArc(inserted)) = filleted.curves()[1].geometry() else {
             return Err(TestCaseError::fail("the solved fillet must remain circular"));
         };
-        prop_assert_eq!(filleted.curves()[0].end(), inserted.start());
-        prop_assert_eq!(filleted.curves()[2].start(), inserted.end());
+        prop_assert_eq!(filleted.curves()[0].end().coordinates().expect("native endpoint").clone(), inserted.start().clone());
+        prop_assert_eq!(filleted.curves()[2].start().coordinates().expect("native endpoint").clone(), inserted.end().clone());
         prop_assert_eq!(
             inserted
                 .radius_squared()
@@ -3364,7 +3632,7 @@ proptest! {
                 .as_bool(),
             Some(true)
         );
-        let CurveGeometry2::CircularArc(retained) = filleted.curves()[2].geometry() else {
+        let Some(CurveGeometry2::CircularArc(retained)) = filleted.curves()[2].geometry() else {
             return Err(TestCaseError::fail("the source arc must be retained"));
         };
         prop_assert_eq!(retained.center(), &p(source_radius, 0));

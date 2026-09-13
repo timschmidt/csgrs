@@ -250,21 +250,21 @@ impl CurveIntersectionBatchCache {
 
 fn retained_curve_circular_support(curve: &Curve2) -> Option<CircularSupportRef<'_>> {
     match curve.geometry() {
-        CurveGeometry2::CircularArc(curve) if curve.endpoints_on_stored_circle_are_certified() => {
+        Some(CurveGeometry2::CircularArc(curve))
+            if curve.endpoints_on_stored_circle_are_certified() =>
+        {
             Some(CircularSupportRef {
                 center: curve.center(),
                 radius_squared: curve.radius_squared_ref(),
             })
         }
-        CurveGeometry2::RationalQuadraticBezier(curve) => {
-            curve
-                .retained_circular_conic()
-                .map(|support| CircularSupportRef {
-                    center: &support.center,
-                    radius_squared: &support.radius_squared,
-                })
-        }
-        CurveGeometry2::RationalBezier(curve) => {
+        Some(CurveGeometry2::RationalQuadraticBezier(curve)) => curve
+            .retained_circular_conic()
+            .map(|support| CircularSupportRef {
+                center: &support.center,
+                radius_squared: &support.radius_squared,
+            }),
+        Some(CurveGeometry2::RationalBezier(curve)) => {
             curve
                 .retained_circular_conic()
                 .map(|support| CircularSupportRef {
@@ -487,16 +487,21 @@ fn endpoint_parameter(
 ) -> ExactCurveResult<Option<CurveIntersectionParameter2>> {
     let fragments =
         curve.native_bezier_fragments_for_operation(policy, CurveOperation2::Intersection)?;
-    let (promoted_span_index, local_parameter) =
-        if crate::classify::is_zero(&curve.start().distance_squared(point), policy) == Some(true) {
-            (0, Real::zero())
-        } else if crate::classify::is_zero(&curve.end().distance_squared(point), policy)
-            == Some(true)
-        {
-            (fragments.len() - 1, Real::one())
-        } else {
-            return Ok(None);
-        };
+    let (promoted_span_index, local_parameter) = if curve
+        .start()
+        .same_point(&CurvePoint2::from(point.clone()), policy)
+        == Classification::Decided(true)
+    {
+        (0, Real::zero())
+    } else if curve
+        .end()
+        .same_point(&CurvePoint2::from(point.clone()), policy)
+        == Classification::Decided(true)
+    {
+        (fragments.len() - 1, Real::one())
+    } else {
+        return Ok(None);
+    };
     Ok(Some(CurveIntersectionParameter2 {
         promoted_span_index,
         span_range: fragments[promoted_span_index].span_range().clone(),
@@ -510,8 +515,8 @@ fn native_line_intersection(
     policy: &CurveContext,
 ) -> ExactCurveResult<Option<LineLineIntersection>> {
     let (Some(first_line), Some(second_line)) = (
-        affine_line_image(first.geometry()),
-        affine_line_image(second.geometry()),
+        first.geometry().and_then(affine_line_image),
+        second.geometry().and_then(affine_line_image),
     ) else {
         return Ok(None);
     };
@@ -541,13 +546,13 @@ fn native_line_arc_intersection(
     policy: &CurveContext,
 ) -> ExactCurveResult<Option<(LineArcOrder, CircularArc2, LineArcIntersection)>> {
     let (order, line, arc) = if let (Some(line), Some(arc)) = (
-        affine_line_image(first.geometry()),
+        first.geometry().and_then(affine_line_image),
         materialized_circular_arc(second, policy)?,
     ) {
         (LineArcOrder::LineThenArc, line, arc)
     } else if let (Some(arc), Some(line)) = (
         materialized_circular_arc(first, policy)?,
-        affine_line_image(second.geometry()),
+        second.geometry().and_then(affine_line_image),
     ) {
         (LineArcOrder::ArcThenLine, line, arc)
     } else {
@@ -573,8 +578,8 @@ fn retained_tangent_line_arc_contact(
     arc: &CircularArc2,
 ) -> Option<LineArcIntersection> {
     let circle = match arc_curve.geometry() {
-        CurveGeometry2::RationalQuadraticBezier(curve) => curve.retained_circular_conic(),
-        CurveGeometry2::RationalBezier(curve) => curve.retained_circular_conic(),
+        Some(CurveGeometry2::RationalQuadraticBezier(curve)) => curve.retained_circular_conic(),
+        Some(CurveGeometry2::RationalBezier(curve)) => curve.retained_circular_conic(),
         _ => None,
     }?;
     let contacts = circle.tangent_contacts.as_deref()?;
@@ -953,13 +958,15 @@ fn materialized_circular_arc(
     policy: &CurveContext,
 ) -> ExactCurveResult<Option<CircularArc2>> {
     let arc = match curve.geometry() {
-        CurveGeometry2::CircularArc(arc) => return Ok(Some(arc.clone())),
-        CurveGeometry2::RationalQuadraticBezier(conic)
+        Some(CurveGeometry2::CircularArc(arc)) => return Ok(Some(arc.clone())),
+        Some(CurveGeometry2::RationalQuadraticBezier(conic))
             if conic.retained_circular_conic().is_some() =>
         {
             crate::arc_bezier::rational_quadratic_circular_arc(conic, policy)
         }
-        CurveGeometry2::RationalBezier(conic) if conic.retained_circular_conic().is_some() => {
+        Some(CurveGeometry2::RationalBezier(conic))
+            if conic.retained_circular_conic().is_some() =>
+        {
             crate::arc_bezier::rational_bezier_circular_arc(conic, policy)
         }
         _ => return Ok(None),

@@ -996,10 +996,16 @@ fn unified_region_reuses_design_parameter_corner_solvers() {
         decided(chamfer.loop_roles(&policy).unwrap()),
         vec![CurveRegionLoopRole::Material]
     );
-    let chamfer_paths = decided(chamfer.materialized_boundary_paths(&policy).unwrap());
+    let chamfer_paths = decided(chamfer.boundary_paths(&policy).unwrap());
     assert_eq!(chamfer_paths[0].curves().len(), 5);
-    assert_eq!(chamfer_paths[0].curves()[0].end(), &p(3, 0));
-    assert_eq!(chamfer_paths[0].curves()[1].end(), &p(4, 1));
+    assert_eq!(
+        chamfer_paths[0].curves()[0].end(),
+        hypercurve::CurvePoint2::from(p(3, 0).clone())
+    );
+    assert_eq!(
+        chamfer_paths[0].curves()[1].end(),
+        hypercurve::CurvePoint2::from(p(4, 1).clone())
+    );
 
     let CurveCornerSolutions2::Unique(fillet) = source
         .fillet_loop_vertex_by_radius(0, 1, Real::one(), CurveCornerMode2::TrimOnly, &policy)
@@ -1231,7 +1237,7 @@ fn unified_region_corners_use_rational_circular_carriers() {
             else {
                 panic!("the retained circular region corner must have one chamfer");
             };
-            let chamfer_paths = decided(chamfered.materialized_boundary_paths(&policy).unwrap());
+            let chamfer_paths = decided(chamfered.boundary_paths(&policy).unwrap());
             assert!(
                 chamfer_paths[0]
                     .curves()
@@ -1246,7 +1252,7 @@ fn unified_region_corners_use_rational_circular_carriers() {
             else {
                 panic!("the retained circular region corner must have one fillet");
             };
-            let fillet_paths = decided(filleted.materialized_boundary_paths(&policy).unwrap());
+            let fillet_paths = decided(filleted.boundary_paths(&policy).unwrap());
             assert_eq!(fillet_paths[0].curves().len(), 5);
             assert!(
                 fillet_paths[0]
@@ -1405,7 +1411,7 @@ fn unified_region_corners_use_represented_bezier_incidence() {
         else {
             panic!("the represented line/Bezier region corner must have one fillet");
         };
-        let fillet_paths = decided(filleted.materialized_boundary_paths(&policy).unwrap());
+        let fillet_paths = decided(filleted.boundary_paths(&policy).unwrap());
         assert_eq!(fillet_paths[0].curves().len(), 5);
         assert_eq!(
             fillet_paths[0].curves()[2].family(),
@@ -1427,7 +1433,7 @@ fn unified_region_corners_use_represented_bezier_incidence() {
         else {
             panic!("the represented line/Bezier region corner must have one chamfer");
         };
-        let chamfer_paths = decided(chamfered.materialized_boundary_paths(&policy).unwrap());
+        let chamfer_paths = decided(chamfered.boundary_paths(&policy).unwrap());
         assert_eq!(chamfer_paths[0].curves().len(), 5);
         assert_eq!(
             chamfer_paths[0].curves()[2].family(),
@@ -1911,7 +1917,7 @@ fn unified_region_corners_use_canonical_spline_bezier_spans() {
                 CurveRegion2::try_from_boundary_paths(std::slice::from_ref(&path), &policy)
                     .unwrap()
                     .into_value();
-            let source_paths = decided(source.materialized_boundary_paths(&policy).unwrap());
+            let source_paths = decided(source.boundary_paths(&policy).unwrap());
             let canonical_family = source_paths[0].curves()[1].family();
             assert_eq!(
                 canonical_family,
@@ -1935,30 +1941,37 @@ fn unified_region_corners_use_canonical_spline_bezier_spans() {
             else {
                 panic!("the {family:?} region span must define one exact chamfer");
             };
-            let chamfer_paths = decided(chamfered.materialized_boundary_paths(&policy).unwrap());
+            let chamfer_paths = decided(chamfered.boundary_paths(&policy).unwrap());
             assert_eq!(chamfer_paths[0].curves()[2].family(), canonical_family);
-            assert_eq!(chamfer_paths[0].curves()[2].start(), &expected_cut);
+            assert_eq!(
+                chamfer_paths[0].curves()[2].start(),
+                hypercurve::CurvePoint2::from(expected_cut.clone())
+            );
 
             let fillets = source
                 .fillet_loop_vertex_by_radius(0, 1, q(15, 4), CurveCornerMode2::TrimOnly, &policy)
                 .unwrap()
                 .into_value();
             let has_expected = |candidate: &CurveRegion2| {
-                let paths = decided(candidate.materialized_boundary_paths(&policy).unwrap());
+                let paths = decided(candidate.boundary_paths(&policy).unwrap());
                 paths[0].curves()[2].family() == canonical_family
                     && paths[0].curves()[1].family() == CurveFamily2::RationalQuadraticBezier
                     && paths[0].curves()[0]
                         .end()
-                        .distance_squared(&expected_line_cut)
-                        .certified_eq_until(&Real::zero(), -4096)
-                        .as_bool()
-                        == Some(true)
+                        .coincides_with(
+                            &hypercurve::CurvePoint2::from(expected_line_cut.clone()),
+                            &policy,
+                        )
+                        .into_value()
+                        == Classification::Decided(true)
                     && paths[0].curves()[2]
                         .start()
-                        .distance_squared(&expected_cut)
-                        .certified_eq_until(&Real::zero(), -4096)
-                        .as_bool()
-                        == Some(true)
+                        .coincides_with(
+                            &hypercurve::CurvePoint2::from(expected_cut.clone()),
+                            &policy,
+                        )
+                        .into_value()
+                        == Classification::Decided(true)
             };
             match &fillets {
                 CurveCornerSolutions2::Unique(candidate) => assert!(has_expected(candidate)),
@@ -7722,7 +7735,7 @@ fn unified_region_chamfer_and_fillet_edit_higher_order_loops() {
 }
 
 #[test]
-fn materialized_boundary_paths_obey_terminal_policy_once() {
+fn boundary_paths_obey_terminal_policy_once() {
     let (start_x, end_x) = support::terminally_equal_pair(Real::pi() + Real::e());
     let start = Point2::new(start_x, Real::zero());
     let end = Point2::new(end_x, Real::zero());
@@ -7742,7 +7755,7 @@ fn materialized_boundary_paths_obey_terminal_policy_once() {
     let region = constructed.into_value();
 
     let strict = region
-        .materialized_boundary_paths(&CurveContext::STRICT)
+        .boundary_paths(&CurveContext::STRICT)
         .expect("strict materialization must preserve the symbolic closing seam uncertainty");
     assert_eq!(strict.certainty, CurveCertainty::Certified);
     assert_eq!(
@@ -7751,7 +7764,7 @@ fn materialized_boundary_paths_obey_terminal_policy_once() {
     );
 
     let approximate = region
-        .materialized_boundary_paths(&CurveContext::APPROXIMATE_512)
+        .boundary_paths(&CurveContext::APPROXIMATE_512)
         .expect("the authorized terminal must materialize the exact boundary");
     assert_eq!(
         approximate.certainty,
@@ -7764,19 +7777,19 @@ fn materialized_boundary_paths_obey_terminal_policy_once() {
     assert_eq!(paths[0].curves().len(), 1);
     assert!(matches!(
         paths[0].curves()[0].geometry(),
-        hypercurve::CurveGeometry2::QuadraticBezier(_)
+        Some(hypercurve::CurveGeometry2::QuadraticBezier(_))
     ));
 
     assert_eq!(
         region
-            .materialized_boundary_paths(&CurveContext::APPROXIMATE_512)
+            .boundary_paths(&CurveContext::APPROXIMATE_512)
             .expect("terminal replay remains authorized")
             .certainty,
         CurveCertainty::Approximate512Consumed
     );
     assert_eq!(
         region
-            .materialized_boundary_paths(&CurveContext::STRICT)
+            .boundary_paths(&CurveContext::STRICT)
             .expect("strict replay remains an explicit classification")
             .value,
         Classification::Uncertain(hypercurve::UncertaintyReason::RealSign)
@@ -7871,4 +7884,74 @@ fn empty_region_promotion_is_decided_and_reusable() {
             .is_empty()
     );
     assert_eq!(CurveRegion2::empty(), CurveRegion2::default());
+}
+
+#[test]
+fn selected_boundary_paths_retain_domains_through_repeated_region_roundtrips() {
+    let path = CurvePath2::try_new(vec![
+        Curve2::from(LineSeg2::try_new(p(-4, 0), p(0, 0)).unwrap()),
+        Curve2::from(QuadraticBezier2::new(p(0, 0), p(0, 1), p(1, 2))),
+        Curve2::from(LineSeg2::try_new(p(1, 2), p(-4, 2)).unwrap()),
+        Curve2::from(LineSeg2::try_new(p(-4, 2), p(-4, 0)).unwrap()),
+    ])
+    .unwrap();
+    let policy = CurveContext::STRICT;
+    let source = certified(CurveRegion2::try_from_boundary_paths(&[path], &policy).unwrap());
+    let CurveCornerSolutions2::Unique(mut region) = certified(
+        source
+            .chamfer_loop_vertex_by_setbacks(
+                0,
+                1,
+                Real::one(),
+                Real::one(),
+                CurveCornerMode2::TrimOnly,
+                &policy,
+            )
+            .unwrap(),
+    ) else {
+        panic!("unique selected chamfer")
+    };
+    let mut prior = None;
+    for _ in 0..8 {
+        let paths = decided(region.boundary_paths(&policy).unwrap());
+        assert_eq!(paths.len(), 1);
+        assert!(
+            paths[0]
+                .curves()
+                .iter()
+                .any(|curve| curve.geometry().is_none())
+        );
+        assert!(
+            paths[0]
+                .curves()
+                .iter()
+                .any(|curve| curve.parameter_domain().exact_endpoints().is_none())
+        );
+        if let Some(previous) = &prior {
+            assert_eq!(paths[0].curves(), previous);
+        }
+        prior = Some(paths[0].curves().to_vec());
+        region = certified(CurveRegion2::try_from_boundary_paths(&paths, &policy).unwrap());
+    }
+    for (query, expected) in [
+        (p(-2, 1), RegionPointLocation::Inside),
+        (p(0, 0), RegionPointLocation::Outside),
+        (p(-1, 0), RegionPointLocation::Boundary),
+    ] {
+        assert_eq!(
+            certified(region.classify_point(&query, &policy).unwrap()),
+            Classification::Decided(expected)
+        );
+    }
+    let paths = decided(region.boundary_paths(&policy).unwrap());
+    let reversed = certified(paths[0].reversed(&policy).unwrap());
+    let restored = certified(CurveRegion2::try_from_boundary_paths(&[reversed], &policy).unwrap());
+    assert!(
+        certified(
+            region
+                .boolean_region(&restored, hypercurve::BooleanOp::Xor, &policy)
+                .unwrap()
+        )
+        .is_empty()
+    );
 }

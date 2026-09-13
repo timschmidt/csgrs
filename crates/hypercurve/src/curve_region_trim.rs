@@ -4,8 +4,8 @@ use crate::curve_intersection::split_curve_spans;
 use crate::policy::resolve_certified_operation;
 use crate::{
     BezierParameter2, BezierSplitFragment2, Classification, Curve2, CurveContext,
-    CurveIntersectionPairBlockerKind2, CurveOperation2, CurveOutcome, CurvePath2, CurvePoint2,
-    CurveRegion2, CurveRegionParameter2, CurveSpanRange2, ExactCurveError, ExactCurveResult, Real,
+    CurveIntersectionPairBlockerKind2, CurveOperation2, CurveOutcome, CurveParameter2, CurvePath2,
+    CurvePoint2, CurveRegion2, CurveSpanRange2, ExactCurveError, ExactCurveResult, Real,
     RegionPointLocation, UncertaintyReason,
 };
 
@@ -24,7 +24,7 @@ pub struct CurveRegionBoundaryContact2 {
     kind: CurveRegionBoundaryKind2,
     contour_index: usize,
     segment_index: usize,
-    boundary_parameter: CurveRegionParameter2,
+    boundary_parameter: CurveParameter2,
     point: Option<CurvePoint2>,
 }
 
@@ -45,7 +45,7 @@ impl CurveRegionBoundaryContact2 {
     }
 
     /// Returns the exact parameter evidence on the contacted boundary segment.
-    pub const fn boundary_parameter(&self) -> &CurveRegionParameter2 {
+    pub const fn boundary_parameter(&self) -> &CurveParameter2 {
         &self.boundary_parameter
     }
 
@@ -633,17 +633,17 @@ fn merge_closed_trim_path_seam(
 }
 
 fn trim_path_points_equal(
-    left: &crate::Point2,
-    right: &crate::Point2,
+    left: CurvePoint2,
+    right: CurvePoint2,
     family: crate::CurveFamily2,
     policy: &CurveContext,
 ) -> ExactCurveResult<bool> {
     if left == right {
         return Ok(true);
     }
-    match crate::classify::is_zero(&left.distance_squared(right), policy) {
-        Some(equal) => Ok(equal),
-        None => Err(ExactCurveError::blocked(
+    match left.same_point(&right, policy) {
+        Classification::Decided(equal) => Ok(equal),
+        Classification::Uncertain(_) => Err(ExactCurveError::blocked(
             CurveOperation2::Subdivision,
             family,
             UncertaintyReason::RealSign,
@@ -762,7 +762,13 @@ fn trim_fragment_reaches_curve_boundary(
     };
     Ok(
         compared_parameters_are_equal(local, &BezierParameter2::Exact(unit), source_curve, policy)?
-            && compared_reals_are_equal(span, domain, source_curve, policy)?,
+            && compared_parameter_order(
+                &BezierParameter2::Exact(span.clone()),
+                &trim_source_bezier_parameter(domain, source_curve, policy)?,
+                source_curve,
+                policy,
+            )?
+            .is_eq(),
     )
 }
 
@@ -780,7 +786,7 @@ fn compared_parameters_are_equal(
 /// curve's ordinary parameter domain. Boolean topology and carrier clipping
 /// keep the compact retained scalar until this cold consumer requests it.
 fn trim_source_bezier_parameter(
-    parameter: &CurveRegionParameter2,
+    parameter: &CurveParameter2,
     source_curve: &Curve2,
     policy: &CurveContext,
 ) -> ExactCurveResult<BezierParameter2> {

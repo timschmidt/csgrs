@@ -42,9 +42,9 @@ use crate::{
     BezierLineCrossingDirection, BezierLineImageFitRelation, BezierParameter2,
     BezierParameterPolynomial, BezierParameterRange2, BezierParameterRayDirection2,
     BezierSplitMaterialization2, BezierSubcurve2, CircleCircleRelation, Classification,
-    CurveContext, CurveDerivative2, CurveError, CurveFamily2, CurveOperation2, CurvePoint2,
-    CurveRegionParameter2, CurveRegionParameterRange2, CurveResult, ExactCurveError,
-    ExactCurveResult, LineSeg2, LineSide, ParamRange, Point2, RationalBezierAlgebraicPointImage2,
+    CurveContext, CurveDerivative2, CurveError, CurveFamily2, CurveOperation2, CurveParameter2,
+    CurveParameterRange2, CurvePoint2, CurveResult, ExactCurveError, ExactCurveResult, LineSeg2,
+    LineSide, ParamRange, Point2, RationalBezierAlgebraicPointImage2,
     RationalBezierAlgebraicTangentImage2, RationalQuadraticBezier2, UncertaintyReason,
 };
 use crate::{BezierAlgebraicParameter2, BezierParameterInterval};
@@ -506,21 +506,21 @@ impl RationalBezierOverlapParameterCorrespondence2 {
 
     pub(crate) fn map_first_to_second_region_parameter(
         &self,
-        parameter: &CurveRegionParameter2,
+        parameter: &CurveParameter2,
         first_range: &BezierParameterRange2,
         second_range: &BezierParameterRange2,
         policy: &CurveContext,
-    ) -> CurveResult<Classification<Option<CurveRegionParameter2>>> {
+    ) -> CurveResult<Classification<Option<CurveParameter2>>> {
         self.map_region_parameter(parameter, first_range, second_range, true, policy)
     }
 
     pub(crate) fn map_second_to_first_region_parameter(
         &self,
-        parameter: &CurveRegionParameter2,
+        parameter: &CurveParameter2,
         first_range: &BezierParameterRange2,
         second_range: &BezierParameterRange2,
         policy: &CurveContext,
-    ) -> CurveResult<Classification<Option<CurveRegionParameter2>>> {
+    ) -> CurveResult<Classification<Option<CurveParameter2>>> {
         self.map_region_parameter(parameter, first_range, second_range, false, policy)
     }
 
@@ -530,15 +530,12 @@ impl RationalBezierOverlapParameterCorrespondence2 {
         &self,
         first_overlap: &BezierParameterRange2,
         second_overlap: &BezierParameterRange2,
-        first_fragment: &CurveRegionParameterRange2,
-        second_fragment: &CurveRegionParameterRange2,
+        first_fragment: &CurveParameterRange2,
+        second_fragment: &CurveParameterRange2,
         policy: &CurveContext,
-    ) -> CurveResult<Classification<Option<(CurveRegionParameterRange2, CurveRegionParameterRange2)>>>
-    {
-        let first_overlap_region =
-            CurveRegionParameterRange2::from_bezier_range(first_overlap.clone());
-        let second_overlap_region =
-            CurveRegionParameterRange2::from_bezier_range(second_overlap.clone());
+    ) -> CurveResult<Classification<Option<(CurveParameterRange2, CurveParameterRange2)>>> {
+        let first_overlap_region = CurveParameterRange2::from_bezier_range(first_overlap.clone());
+        let second_overlap_region = CurveParameterRange2::from_bezier_range(second_overlap.clone());
         crate::bezier_split::clip_corresponding_curve_region_parameter_ranges(
             &first_overlap_region,
             &second_overlap_region,
@@ -566,19 +563,19 @@ impl RationalBezierOverlapParameterCorrespondence2 {
 
     fn map_region_parameter(
         &self,
-        parameter: &CurveRegionParameter2,
+        parameter: &CurveParameter2,
         first_range: &BezierParameterRange2,
         second_range: &BezierParameterRange2,
         first_to_second: bool,
         policy: &CurveContext,
-    ) -> CurveResult<Classification<Option<CurveRegionParameter2>>> {
+    ) -> CurveResult<Classification<Option<CurveParameter2>>> {
         if let Some(parameter) = parameter.as_bezier_parameter() {
             let mapped = if first_to_second {
                 self.map_first_to_second(parameter, first_range, second_range, policy)
             } else {
                 self.map_second_to_first(parameter, first_range, second_range, policy)
             }?;
-            return Ok(mapped.map(|parameter| parameter.map(CurveRegionParameter2::from_bezier)));
+            return Ok(mapped.map(|parameter| parameter.map(CurveParameter2::from_bezier)));
         }
         if !parameter.is_retained_scalar() {
             return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
@@ -593,13 +590,13 @@ impl RationalBezierOverlapParameterCorrespondence2 {
             (source_range.end(), target_range.end()),
         ] {
             match parameter.cmp_by_refinement(
-                &CurveRegionParameter2::from_bezier(source_endpoint.clone()),
+                &CurveParameter2::from_bezier(source_endpoint.clone()),
                 policy,
             )? {
                 Classification::Decided(Ordering::Equal) => {
-                    return Ok(Classification::Decided(Some(
-                        CurveRegionParameter2::from_bezier(target_endpoint.clone()),
-                    )));
+                    return Ok(Classification::Decided(Some(CurveParameter2::from_bezier(
+                        target_endpoint.clone(),
+                    ))));
                 }
                 Classification::Decided(_) => {}
                 Classification::Uncertain(reason) => {
@@ -686,7 +683,7 @@ impl RationalBezierOverlapParameterCorrespondence2 {
             }
         };
         let lower = match mapped.cmp_by_refinement(
-            &CurveRegionParameter2::from_bezier(BezierParameter2::Exact(Real::zero())),
+            &CurveParameter2::from_bezier(BezierParameter2::Exact(Real::zero())),
             policy,
         )? {
             Classification::Decided(order) => order,
@@ -695,7 +692,7 @@ impl RationalBezierOverlapParameterCorrespondence2 {
             }
         };
         let upper = match mapped.cmp_by_refinement(
-            &CurveRegionParameter2::from_bezier(BezierParameter2::Exact(Real::one())),
+            &CurveParameter2::from_bezier(BezierParameter2::Exact(Real::one())),
             policy,
         )? {
             Classification::Decided(order) => order,
@@ -710,12 +707,12 @@ impl RationalBezierOverlapParameterCorrespondence2 {
 
     fn map_promoted_region_parameter(
         &self,
-        parameter: &CurveRegionParameter2,
+        parameter: &CurveParameter2,
         first_range: &BezierParameterRange2,
         second_range: &BezierParameterRange2,
         first_to_second: bool,
         policy: &CurveContext,
-    ) -> CurveResult<Classification<Option<CurveRegionParameter2>>> {
+    ) -> CurveResult<Classification<Option<CurveParameter2>>> {
         let parameter = match parameter.promoted_bezier_parameter_complete(policy)? {
             Classification::Decided(parameter) => parameter,
             Classification::Uncertain(reason) => {
@@ -727,7 +724,7 @@ impl RationalBezierOverlapParameterCorrespondence2 {
         } else {
             self.map_second_to_first(&parameter, first_range, second_range, policy)
         }?;
-        Ok(mapped.map(|parameter| parameter.map(CurveRegionParameter2::from_bezier)))
+        Ok(mapped.map(|parameter| parameter.map(CurveParameter2::from_bezier)))
     }
 }
 

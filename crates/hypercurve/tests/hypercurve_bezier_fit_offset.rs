@@ -3268,7 +3268,7 @@ fn certified_curve_path_promotes_rational_ph_span_without_chords() {
     assert_eq!(parallel.output_curve_count(), 1);
     assert!(matches!(
         parallel.path().curves()[0].geometry(),
-        hypercurve::CurveGeometry2::RationalBezier(_)
+        Some(hypercurve::CurveGeometry2::RationalBezier(_))
     ));
 }
 

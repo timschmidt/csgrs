@@ -295,6 +295,8 @@ fn nurbs_subdivision_reconstruction_obeys_terminal_policy() {
             .0
             .parameter_domain()
             .end()
+            .as_exact()
+            .expect("native parameter")
             .eq(&parameter)
     );
 
@@ -1763,7 +1765,13 @@ fn periodic_nurbs_wrapping_obeys_terminal_policy() {
         top_level_point.certainty,
         hypercurve::CurveCertainty::Approximate512Consumed
     );
-    assert_eq!(top_level_point.value, top_level.start().clone());
+    assert_eq!(
+        top_level_point.value,
+        (top_level.start().clone())
+            .coordinates()
+            .expect("native endpoint")
+            .clone()
+    );
 }
 
 #[test]

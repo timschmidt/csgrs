@@ -52,6 +52,7 @@ impl CurveFamily2 {
                 StraightSkeletonCurveFamilySupport2::CertifiedLineOrCircularArc
             }
             Self::PolynomialBSpline => StraightSkeletonCurveFamilySupport2::CertifiedLineImage,
+            Self::AnalyticParallel => StraightSkeletonCurveFamilySupport2::Unsupported,
         }
     }
 }
@@ -2489,9 +2490,16 @@ impl CurvePath2 {
         let mut segments = Vec::with_capacity(source_edge_count);
         for (curve_index, curve) in self.curves().iter().enumerate() {
             match curve.geometry() {
-                CurveGeometry2::Line(line) => segments.push(Segment2::Line(line.clone())),
-                CurveGeometry2::CircularArc(arc) => segments.push(Segment2::Arc(arc.clone())),
-                CurveGeometry2::QuadraticBezier(curve) => {
+                None => {
+                    return Ok(unsupported_curve_family_evidence(
+                        source_edge_count,
+                        curve_index,
+                        curve.family(),
+                    ));
+                }
+                Some(CurveGeometry2::Line(line)) => segments.push(Segment2::Line(line.clone())),
+                Some(CurveGeometry2::CircularArc(arc)) => segments.push(Segment2::Arc(arc.clone())),
+                Some(CurveGeometry2::QuadraticBezier(curve)) => {
                     match curve.fit_exact_line_image(policy)? {
                         Classification::Decided(BezierLineImageFitRelation::Fit(fit)) => {
                             segments.push(Segment2::Line(fit.line().clone()));
@@ -2512,26 +2520,28 @@ impl CurvePath2 {
                         }
                     }
                 }
-                CurveGeometry2::CubicBezier(curve) => match curve.fit_exact_line_image(policy)? {
-                    Classification::Decided(BezierLineImageFitRelation::Fit(fit)) => {
-                        segments.push(Segment2::Line(fit.line().clone()));
+                Some(CurveGeometry2::CubicBezier(curve)) => {
+                    match curve.fit_exact_line_image(policy)? {
+                        Classification::Decided(BezierLineImageFitRelation::Fit(fit)) => {
+                            segments.push(Segment2::Line(fit.line().clone()));
+                        }
+                        Classification::Decided(BezierLineImageFitRelation::NotLine) => {
+                            return Ok(unsupported_curve_family_evidence(
+                                source_edge_count,
+                                curve_index,
+                                CurveFamily2::CubicBezier,
+                            ));
+                        }
+                        Classification::Uncertain(_) => {
+                            return Ok(uncertain_curve_family_evidence(
+                                source_edge_count,
+                                curve_index,
+                                CurveFamily2::CubicBezier,
+                            ));
+                        }
                     }
-                    Classification::Decided(BezierLineImageFitRelation::NotLine) => {
-                        return Ok(unsupported_curve_family_evidence(
-                            source_edge_count,
-                            curve_index,
-                            CurveFamily2::CubicBezier,
-                        ));
-                    }
-                    Classification::Uncertain(_) => {
-                        return Ok(uncertain_curve_family_evidence(
-                            source_edge_count,
-                            curve_index,
-                            CurveFamily2::CubicBezier,
-                        ));
-                    }
-                },
-                CurveGeometry2::RationalQuadraticBezier(curve) => {
+                }
+                Some(CurveGeometry2::RationalQuadraticBezier(curve)) => {
                     match curve.fit_exact_line_image(policy)? {
                         Classification::Decided(BezierLineImageFitRelation::Fit(fit)) => {
                             segments.push(Segment2::Line(fit.line().clone()));
@@ -2573,7 +2583,7 @@ impl CurvePath2 {
                         }
                     }
                 }
-                CurveGeometry2::RationalBezier(curve) => {
+                Some(CurveGeometry2::RationalBezier(curve)) => {
                     match curve.fit_exact_line_image(policy)? {
                         Classification::Decided(BezierLineImageFitRelation::Fit(fit)) => {
                             segments.push(Segment2::Line(fit.line().clone()));
@@ -2615,10 +2625,10 @@ impl CurvePath2 {
                         }
                     }
                 }
-                CurveGeometry2::PolynomialBSpline(spline) => {
+                Some(CurveGeometry2::PolynomialBSpline(spline)) => {
                     match control_net_line_image(
-                        curve.start(),
-                        curve.end(),
+                        spline.start(),
+                        spline.end(),
                         spline.control_points(),
                         None,
                         policy,
@@ -2642,10 +2652,10 @@ impl CurvePath2 {
                         }
                     }
                 }
-                CurveGeometry2::Nurbs(spline) => {
+                Some(CurveGeometry2::Nurbs(spline)) => {
                     match control_net_line_image(
-                        curve.start(),
-                        curve.end(),
+                        spline.start(),
+                        spline.end(),
                         spline.control_points(),
                         Some(spline.weights()),
                         policy,
@@ -9911,9 +9921,9 @@ mod tests {
         ] {
             let family = curve.family();
             let degree = match curve.geometry() {
-                CurveGeometry2::RationalQuadraticBezier(_) => 2,
-                CurveGeometry2::RationalBezier(curve) => curve.degree(),
-                CurveGeometry2::Nurbs(curve) => curve.degree(),
+                Some(CurveGeometry2::RationalQuadraticBezier(_)) => 2,
+                Some(CurveGeometry2::RationalBezier(curve)) => curve.degree(),
+                Some(CurveGeometry2::Nurbs(curve)) => curve.degree(),
                 _ => unreachable!(),
             };
             let rational_sector = CurvePath2::try_new(vec![

@@ -40,12 +40,11 @@ use crate::{
     BezierSplitFragment2, BezierSubcurve2, BooleanOp, Classification, ContourPointLocation, Curve2,
     CurveContext, CurveDerivative2, CurveError, CurveFamily2, CurveIntersectionContact2,
     CurveIntersectionOverlap2, CurveIntersectionPairBlocker2, CurveOperation2, CurveOutcome,
-    CurvePoint2, CurveRegion2, CurveRegionLoopRole, CurveRegionParameter2,
-    CurveRegionParameterRange2, CurveResult, ExactCurveError, ExactCurveResult, FillRule, LineSeg2,
-    LineSide, QuadraticBezier2, RationalBezier2, RationalBezierIntersectionContacts2,
-    RationalBezierIntersectionOverlap2, RationalBezierOverlapOrientation2,
-    RationalBezierPointIncidence2, Real, RealSign, RegionPointLocation, Segment2,
-    UncertaintyReason,
+    CurveParameter2, CurveParameterRange2, CurvePoint2, CurveRegion2, CurveRegionLoopRole,
+    CurveResult, ExactCurveError, ExactCurveResult, FillRule, LineSeg2, LineSide, QuadraticBezier2,
+    RationalBezier2, RationalBezierIntersectionContacts2, RationalBezierIntersectionOverlap2,
+    RationalBezierOverlapOrientation2, RationalBezierPointIncidence2, Real, RealSign,
+    RegionPointLocation, Segment2, UncertaintyReason,
 };
 
 /// Region operand that owns one retained Boolean carrier.
@@ -81,8 +80,8 @@ pub struct CurveRegionIntersectionOverlap2 {
     first: CurveRegionCarrierRef2,
     second: CurveRegionCarrierRef2,
     source: Option<CurveIntersectionOverlap2>,
-    first_range: CurveRegionParameterRange2,
-    second_range: CurveRegionParameterRange2,
+    first_range: CurveParameterRange2,
+    second_range: CurveParameterRange2,
     orientation: RationalBezierOverlapOrientation2,
 }
 
@@ -171,8 +170,8 @@ struct RegionCarrier {
     fragment_index: usize,
     family: CurveFamily2,
     geometry: RegionCarrierGeometry,
-    start: CurveRegionParameter2,
-    end: CurveRegionParameter2,
+    start: CurveParameter2,
+    end: CurveParameter2,
     reversed: bool,
     filled_side_is_left: bool,
     selected_fiber_endpoint_points: Option<Arc<[CurvePoint2; 2]>>,
@@ -212,8 +211,8 @@ enum RegionCarrierPairContext {
 
 #[derive(Clone, Debug, PartialEq)]
 struct RegionPairContactEvidence {
-    first_parameter: CurveRegionParameter2,
-    second_parameter: CurveRegionParameter2,
+    first_parameter: CurveParameter2,
+    second_parameter: CurveParameter2,
     point: Option<CurvePoint2>,
     certified_transverse: bool,
     tangent_cross_sign: Option<RealSign>,
@@ -224,8 +223,8 @@ struct RegionPairContactEvidence {
 #[derive(Clone, Debug)]
 struct RegionPairOverlap {
     source: Option<RegionPairOverlapSource>,
-    first_range: CurveRegionParameterRange2,
-    second_range: CurveRegionParameterRange2,
+    first_range: CurveParameterRange2,
+    second_range: CurveParameterRange2,
     orientation: RationalBezierOverlapOrientation2,
 }
 
@@ -268,11 +267,10 @@ enum RegionCuspMappedOverlapRef<'a> {
 impl RegionCuspMappedOverlapRef<'_> {
     fn clipped_curve_region_ranges(
         self,
-        cusp_fragment: &CurveRegionParameterRange2,
-        other_fragment: &CurveRegionParameterRange2,
+        cusp_fragment: &CurveParameterRange2,
+        other_fragment: &CurveParameterRange2,
         policy: &CurveContext,
-    ) -> CurveResult<Classification<Option<(CurveRegionParameterRange2, CurveRegionParameterRange2)>>>
-    {
+    ) -> CurveResult<Classification<Option<(CurveParameterRange2, CurveParameterRange2)>>> {
         match self {
             Self::Bezier(source) => {
                 source.clipped_curve_region_ranges(cusp_fragment, other_fragment, policy)
@@ -311,7 +309,7 @@ impl RegionPairResult {
 
 #[derive(Clone, Debug)]
 struct CarrierEvent {
-    parameter: CurveRegionParameter2,
+    parameter: CurveParameter2,
     topology_vertex: Option<usize>,
 }
 
@@ -327,15 +325,15 @@ struct ContactVertex {
     point: Option<CurvePoint2>,
     topology_vertex: usize,
     carrier_indices: [usize; 2],
-    parameters: [CurveRegionParameter2; 2],
+    parameters: [CurveParameter2; 2],
 }
 
 #[derive(Clone, Debug)]
 struct CarrierOverlap {
     first_carrier_index: usize,
     second_carrier_index: usize,
-    first_range: CurveRegionParameterRange2,
-    second_range: CurveRegionParameterRange2,
+    first_range: CurveParameterRange2,
+    second_range: CurveParameterRange2,
     first_endpoint_vertices: [usize; 2],
     second_endpoint_vertices: [usize; 2],
     orientation: RationalBezierOverlapOrientation2,
@@ -402,7 +400,7 @@ fn carrier_overlap_split_interval(
 #[derive(Debug)]
 enum CarrierOverlapClip {
     Unmatched,
-    Matched(Option<(CurveRegionParameterRange2, CurveRegionParameterRange2)>),
+    Matched(Option<(CurveParameterRange2, CurveParameterRange2)>),
 }
 
 #[derive(Clone, Debug)]
@@ -418,7 +416,7 @@ struct TransitionContactCandidate {
     cross_is_positive: Option<bool>,
     tangent_dot_is_positive: Option<bool>,
     second_side_of_first: Option<LineSide>,
-    self_parameters: Option<[CurveRegionParameter2; 2]>,
+    self_parameters: Option<[CurveParameter2; 2]>,
 }
 
 #[derive(Clone, Debug)]
@@ -902,12 +900,12 @@ impl CurveRegionIntersectionContact2 {
     }
 
     /// Returns the exact parameter on the first retained carrier.
-    pub const fn first_parameter(&self) -> &CurveRegionParameter2 {
+    pub const fn first_parameter(&self) -> &CurveParameter2 {
         self.evidence.first_parameter()
     }
 
     /// Returns the exact parameter on the second retained carrier.
-    pub const fn second_parameter(&self) -> &CurveRegionParameter2 {
+    pub const fn second_parameter(&self) -> &CurveParameter2 {
         self.evidence.second_parameter()
     }
 
@@ -946,12 +944,12 @@ impl CurveRegionIntersectionOverlap2 {
     }
 
     /// Returns the exact overlap range clipped to the first retained carrier.
-    pub const fn first_range(&self) -> &CurveRegionParameterRange2 {
+    pub const fn first_range(&self) -> &CurveParameterRange2 {
         &self.first_range
     }
 
     /// Returns the exact overlap range clipped to the second retained carrier.
-    pub const fn second_range(&self) -> &CurveRegionParameterRange2 {
+    pub const fn second_range(&self) -> &CurveParameterRange2 {
         &self.second_range
     }
 
@@ -1009,10 +1007,10 @@ impl CurveRegionIntersectionBlocker2 {
 impl RegionPairContactEvidence {
     fn from_bezier(contact: &CurveIntersectionContact2) -> Self {
         Self {
-            first_parameter: CurveRegionParameter2::from_bezier(
+            first_parameter: CurveParameter2::from_bezier(
                 contact.first().local_parameter().clone(),
             ),
-            second_parameter: CurveRegionParameter2::from_bezier(
+            second_parameter: CurveParameter2::from_bezier(
                 contact.second().local_parameter().clone(),
             ),
             point: Some(contact.point().clone()),
@@ -1031,8 +1029,8 @@ impl RegionPairContactEvidence {
         tangent_cross_sign: Option<RealSign>,
     ) -> Self {
         Self::direct(
-            CurveRegionParameter2::from_bezier(first_parameter),
-            CurveRegionParameter2::from_bezier(second_parameter),
+            CurveParameter2::from_bezier(first_parameter),
+            CurveParameter2::from_bezier(second_parameter),
             point,
             certified_transverse,
             tangent_cross_sign,
@@ -1040,8 +1038,8 @@ impl RegionPairContactEvidence {
     }
 
     fn direct(
-        first_parameter: CurveRegionParameter2,
-        second_parameter: CurveRegionParameter2,
+        first_parameter: CurveParameter2,
+        second_parameter: CurveParameter2,
         point: Option<CurvePoint2>,
         certified_transverse: bool,
         tangent_cross_sign: Option<RealSign>,
@@ -1067,11 +1065,11 @@ impl RegionPairContactEvidence {
         self
     }
 
-    const fn first_parameter(&self) -> &CurveRegionParameter2 {
+    const fn first_parameter(&self) -> &CurveParameter2 {
         &self.first_parameter
     }
 
-    const fn second_parameter(&self) -> &CurveRegionParameter2 {
+    const fn second_parameter(&self) -> &CurveParameter2 {
         &self.second_parameter
     }
 
@@ -1497,8 +1495,8 @@ impl<'a> CurveRegionBooleanContext<'a> {
                 fragment_index,
                 family: geometry.family(),
                 geometry,
-                start: CurveRegionParameter2::from_bezier(BezierParameter2::Exact(Real::zero())),
-                end: CurveRegionParameter2::from_bezier(BezierParameter2::Exact(Real::one())),
+                start: CurveParameter2::from_bezier(BezierParameter2::Exact(Real::zero())),
+                end: CurveParameter2::from_bezier(BezierParameter2::Exact(Real::one())),
                 reversed: false,
                 filled_side_is_left: false,
                 selected_fiber_endpoint_points: None,
@@ -1638,8 +1636,8 @@ impl<'a> CurveRegionBooleanContext<'a> {
             fragment_index: 0,
             family: CurveFamily2::Line,
             geometry: RegionCarrierGeometry::AlgebraicChord(probe),
-            start: CurveRegionParameter2::from_algebraic_chord(start),
-            end: CurveRegionParameter2::from_algebraic_chord(end),
+            start: CurveParameter2::from_algebraic_chord(start),
+            end: CurveParameter2::from_algebraic_chord(end),
             reversed: false,
             filled_side_is_left: false,
             selected_fiber_endpoint_points: None,
@@ -1807,7 +1805,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
         parallel_index: usize,
         direction_x: &Real,
         direction_y: &Real,
-        regular_range: Option<&CurveRegionParameterRange2>,
+        regular_range: Option<&CurveParameterRange2>,
     ) -> ExactCurveResult<Option<(Real, RealSign)>> {
         let Some((first_at_start, second_at_start)) = self.authored_carrier_shared_endpoints(pair)
         else {
@@ -1857,7 +1855,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
         parallel_index: usize,
         curve: &BezierSubcurve2,
         parallel_is_first: bool,
-        regular_range: Option<&CurveRegionParameterRange2>,
+        regular_range: Option<&CurveParameterRange2>,
     ) -> ExactCurveResult<Classification<Option<RegionPairResult>>> {
         let retained = BezierSplitFragment2::Materialized {
             start: BezierParameter2::Exact(Real::zero()),
@@ -2542,7 +2540,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
             .map_err(|cause| self.invalid(chord_index, cause))?
         {
             Classification::Decided(Some(parameter)) => Ok(Classification::Decided(
-                CurveRegionParameter2::from_algebraic_chord(parameter),
+                CurveParameter2::from_algebraic_chord(parameter),
             )),
             Classification::Decided(None) => Err(self.invalid(
                 chord_index,
@@ -2565,7 +2563,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
                         Classification::Uncertain(reason) => return Ok(Some(blocker(reason))),
                     };
                     let curve_parameter =
-                        CurveRegionParameter2::from_bezier(BezierParameter2::Exact(b_param));
+                        CurveParameter2::from_bezier(BezierParameter2::Exact(b_param));
                     let (chord_dx, chord_dy) = chord_line.delta();
                     let (curve_dx, curve_dy) = curve_line.delta();
                     let cross = Real::diff_of_products(&chord_dx, &curve_dy, &chord_dy, &curve_dx);
@@ -2602,7 +2600,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
                     Classification::Decided(parameter) => parameter,
                     Classification::Uncertain(reason) => return Ok(Some(blocker(reason))),
                 };
-                let chord_range = CurveRegionParameterRange2::new_validated(chord_start, chord_end);
+                let chord_range = CurveParameterRange2::new_validated(chord_start, chord_end);
                 let (curve_start, curve_end, orientation) =
                     match compare_reals(b_range.start(), b_range.end(), &self.data.policy) {
                         Some(Ordering::Less) => (
@@ -2626,9 +2624,9 @@ impl<'a> CurveRegionBooleanContext<'a> {
                         }
                         None => return Ok(Some(blocker(UncertaintyReason::Ordering))),
                     };
-                let curve_range = CurveRegionParameterRange2::new_validated(
-                    CurveRegionParameter2::from_bezier(BezierParameter2::Exact(curve_start)),
-                    CurveRegionParameter2::from_bezier(BezierParameter2::Exact(curve_end)),
+                let curve_range = CurveParameterRange2::new_validated(
+                    CurveParameter2::from_bezier(BezierParameter2::Exact(curve_start)),
+                    CurveParameter2::from_bezier(BezierParameter2::Exact(curve_end)),
                 );
                 let (first_range, second_range) = if chord_is_first {
                     (chord_range, curve_range)
@@ -2751,8 +2749,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
                     Classification::Decided(Some(parameter)) => parameter,
                     Classification::Decided(None) | Classification::Uncertain(_) => continue,
                 };
-            let target_region_parameter =
-                CurveRegionParameter2::from_bezier(target_parameter.clone());
+            let target_region_parameter = CurveParameter2::from_bezier(target_parameter.clone());
             match parameter_in_carrier(&target_region_parameter, target_carrier, &self.data.policy)
             {
                 Ok(true) => mapped_endpoints.push((
@@ -2787,7 +2784,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
         };
         let mut finite_contacts = Vec::with_capacity(line_contacts.len());
         for contact in line_contacts {
-            let parameter = CurveRegionParameter2::from_bezier(contact.parameter().clone());
+            let parameter = CurveParameter2::from_bezier(contact.parameter().clone());
             match parameter_in_carrier(&parameter, target_carrier, &self.data.policy) {
                 Ok(true) => finite_contacts.push(contact),
                 Ok(false) => {}
@@ -2832,7 +2829,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
                 None => RealSign::Zero,
             };
             let tangent_cross_sign = orient_tangent_cross_sign(chord_cross_target, chord_is_first);
-            let target_parameter = CurveRegionParameter2::from_bezier(contact.parameter().clone());
+            let target_parameter = CurveParameter2::from_bezier(contact.parameter().clone());
             let (first_parameter, second_parameter) = if chord_is_first {
                 (chord_parameter.clone(), target_parameter)
             } else {
@@ -3027,7 +3024,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
                     }
                 };
                 let chord_parameter =
-                    CurveRegionParameter2::from_algebraic_chord(contact.chord_parameter().clone());
+                    CurveParameter2::from_algebraic_chord(contact.chord_parameter().clone());
                 let other_parameter = contact.other_parameter().clone();
                 let (first_parameter, second_parameter) = if chord_is_first {
                     (chord_parameter, other_parameter)
@@ -3047,9 +3044,9 @@ impl<'a> CurveRegionBooleanContext<'a> {
             .into_iter()
             .map(|overlap| {
                 let [chord_start, chord_end] = overlap.chord_range();
-                let chord_range = CurveRegionParameterRange2::new_validated(
-                    CurveRegionParameter2::from_algebraic_chord(chord_start.clone()),
-                    CurveRegionParameter2::from_algebraic_chord(chord_end.clone()),
+                let chord_range = CurveParameterRange2::new_validated(
+                    CurveParameter2::from_algebraic_chord(chord_start.clone()),
+                    CurveParameter2::from_algebraic_chord(chord_end.clone()),
                 );
                 let source_range = overlap.source_range().clone();
                 let orientation = overlap.orientation();
@@ -3138,7 +3135,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
                 Classification::Uncertain(_) => return Ok(None),
             };
             let chord_parameter =
-                CurveRegionParameter2::from_algebraic_chord(contact.first_parameter().clone());
+                CurveParameter2::from_algebraic_chord(contact.first_parameter().clone());
             let tangent_cross_sign =
                 orient_tangent_cross_sign(contact.tangent_cross_sign(), chord_is_first);
             let (first_parameter, second_parameter) = if chord_is_first {
@@ -3179,7 +3176,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
         parallel_index: usize,
     ) -> ExactCurveResult<RegionPairResult> {
         let parallel_carrier = &self.data.carriers[parallel_index];
-        let retained_range = CurveRegionParameterRange2::new_validated(
+        let retained_range = CurveParameterRange2::new_validated(
             parallel_carrier.start.clone(),
             parallel_carrier.end.clone(),
         );
@@ -3202,11 +3199,10 @@ impl<'a> CurveRegionBooleanContext<'a> {
                 .map(|contact| {
                     let tangent_cross_sign =
                         orient_tangent_cross_sign(contact.tangent_cross_sign(), chord_is_first);
-                    let chord_parameter = CurveRegionParameter2::from_algebraic_chord(
-                        contact.chord_parameter().clone(),
-                    );
+                    let chord_parameter =
+                        CurveParameter2::from_algebraic_chord(contact.chord_parameter().clone());
                     let parallel_parameter =
-                        CurveRegionParameter2::from_bezier(contact.parallel_parameter().clone());
+                        CurveParameter2::from_bezier(contact.parallel_parameter().clone());
                     let (first_parameter, second_parameter) = if chord_is_first {
                         (chord_parameter, parallel_parameter)
                     } else {
@@ -3233,7 +3229,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
                 let tangent_cross_sign =
                     orient_tangent_cross_sign(contact.tangent_cross_sign(), chord_is_first);
                 let chord_parameter =
-                    CurveRegionParameter2::from_algebraic_chord(contact.chord_parameter().clone());
+                    CurveParameter2::from_algebraic_chord(contact.chord_parameter().clone());
                 let parallel_parameter = contact.parallel_parameter().clone();
                 let (first_parameter, second_parameter) = if chord_is_first {
                     (chord_parameter, parallel_parameter)
@@ -3300,7 +3296,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
                     );
                     return Ok(RegionPairResult::empty());
                 }
-                let endpoint_side = |parameter: &CurveRegionParameter2| {
+                let endpoint_side = |parameter: &CurveParameter2| {
                     self.data.policy.strict_predicate_pass(|| {
                         let point = match parallel.point_evidence_on_region_range(
                             parameter,
@@ -3334,7 +3330,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
                                 CurvePoint2(CurvePointData2::AnalyticParallel(_)) => {
                                     "analytic"
                                 }
-                                CurvePoint2(CurvePointData2::Similarity(_)) => {
+                                CurvePoint2(CurvePointData2::Similarity(_) | CurvePointData2::Endpoint(_)) => {
                                     "similarity"
                                 }
                             }
@@ -3629,7 +3625,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
             .map_err(|cause| self.invalid(chord_index, cause))?
         {
             Classification::Decided(Some(parameter)) => Ok(Classification::Decided(
-                CurveRegionParameter2::from_algebraic_chord(parameter),
+                CurveParameter2::from_algebraic_chord(parameter),
             )),
             Classification::Decided(None) => Err(self.invalid(
                 chord_index,
@@ -3647,7 +3643,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
             .as_bezier_parameter()
             .zip(parallel_carrier.end.as_bezier_parameter())
             .map(|_| {
-                CurveRegionParameterRange2::new_validated(
+                CurveParameterRange2::new_validated(
                     parallel_carrier.start.clone(),
                     parallel_carrier.end.clone(),
                 )
@@ -3708,7 +3704,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
                 Classification::Uncertain(reason) => return Ok(blocker(reason)),
             };
             let parallel_parameter =
-                CurveRegionParameter2::from_bezier(contact.parallel_parameter().clone());
+                CurveParameter2::from_bezier(contact.parallel_parameter().clone());
             let tangent_cross_sign = contact
                 .tangent_cross_sign()
                 .map(|sign| orient_tangent_cross_sign(sign, parallel_is_first));
@@ -3750,9 +3746,9 @@ impl<'a> CurveRegionBooleanContext<'a> {
                 Classification::Decided(parameter) => parameter,
                 Classification::Uncertain(reason) => return Ok(blocker(reason)),
             };
-            let chord_range = CurveRegionParameterRange2::new_validated(chord_start, chord_end);
+            let chord_range = CurveParameterRange2::new_validated(chord_start, chord_end);
             let parallel_range =
-                CurveRegionParameterRange2::from_bezier_range(overlap.first_range().clone());
+                CurveParameterRange2::from_bezier_range(overlap.first_range().clone());
             let (first_range, second_range) = if chord_is_first {
                 (chord_range, parallel_range)
             } else {
@@ -3804,7 +3800,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
             .as_bezier_parameter()
             .zip(parallel_carrier.end.as_bezier_parameter())
             .map(|_| {
-                CurveRegionParameterRange2::new_validated(
+                CurveParameterRange2::new_validated(
                     parallel_carrier.start.clone(),
                     parallel_carrier.end.clone(),
                 )
@@ -4125,9 +4121,8 @@ impl<'a> CurveRegionBooleanContext<'a> {
             } else {
                 None
             };
-            let chord_parameter = CurveRegionParameter2::from_algebraic_chord(chord_parameter);
-            let parallel_parameter =
-                CurveRegionParameter2::from_bezier(contact.parameter().clone());
+            let chord_parameter = CurveParameter2::from_algebraic_chord(chord_parameter);
+            let parallel_parameter = CurveParameter2::from_bezier(contact.parameter().clone());
             let (first_parameter, second_parameter) = if chord_is_first {
                 (chord_parameter, parallel_parameter)
             } else {
@@ -4196,13 +4191,13 @@ impl<'a> CurveRegionBooleanContext<'a> {
                         orient_tangent_cross_sign(contact.tangent_cross_sign, cusp_is_first);
                     let (first_parameter, second_parameter) = if cusp_is_first {
                         (
-                            CurveRegionParameter2::from_algebraic_cusp(cusp_parameter),
+                            CurveParameter2::from_algebraic_cusp(cusp_parameter),
                             contact.other_parameter,
                         )
                     } else {
                         (
                             contact.other_parameter,
-                            CurveRegionParameter2::from_algebraic_cusp(cusp_parameter),
+                            CurveParameter2::from_algebraic_cusp(cusp_parameter),
                         )
                     };
                     retained.push(RegionPairContactEvidence::direct(
@@ -4228,15 +4223,13 @@ impl<'a> CurveRegionBooleanContext<'a> {
                     overlaps: overlaps
                         .into_iter()
                         .map(|overlap| {
-                            let cusp_range = CurveRegionParameterRange2::new_validated(
-                                CurveRegionParameter2::from_algebraic_cusp(
+                            let cusp_range = CurveParameterRange2::new_validated(
+                                CurveParameter2::from_algebraic_cusp(
                                     overlap.cusp_start_parameter(),
                                 ),
-                                CurveRegionParameter2::from_algebraic_cusp(
-                                    overlap.cusp_end_parameter(),
-                                ),
+                                CurveParameter2::from_algebraic_cusp(overlap.cusp_end_parameter()),
                             );
-                            let other_range = CurveRegionParameterRange2::from_bezier_range(
+                            let other_range = CurveParameterRange2::from_bezier_range(
                                 overlap.other_range().clone(),
                             );
                             let (first_range, second_range) = if cusp_is_first {
@@ -4310,17 +4303,16 @@ impl<'a> CurveRegionBooleanContext<'a> {
             } else {
                 None
             };
-            let chord_parameter =
-                CurveRegionParameter2::from_algebraic_chord(contact.chord_parameter);
+            let chord_parameter = CurveParameter2::from_algebraic_chord(contact.chord_parameter);
             let (first_parameter, second_parameter) = if cusp_is_first {
                 (
-                    CurveRegionParameter2::from_algebraic_cusp(contact.cusp_parameter),
+                    CurveParameter2::from_algebraic_cusp(contact.cusp_parameter),
                     chord_parameter,
                 )
             } else {
                 (
                     chord_parameter,
-                    CurveRegionParameter2::from_algebraic_cusp(contact.cusp_parameter),
+                    CurveParameter2::from_algebraic_cusp(contact.cusp_parameter),
                 )
             };
             let evidence = RegionPairContactEvidence::direct(
@@ -4452,10 +4444,10 @@ impl<'a> CurveRegionBooleanContext<'a> {
                         .iter()
                         .cloned()
                         .map(|source| RegionPairOverlap {
-                            first_range: CurveRegionParameterRange2::from_bezier_range(
+                            first_range: CurveParameterRange2::from_bezier_range(
                                 source.first_range().clone(),
                             ),
-                            second_range: CurveRegionParameterRange2::from_bezier_range(
+                            second_range: CurveParameterRange2::from_bezier_range(
                                 source.second_range().clone(),
                             ),
                             orientation: source.orientation(),
@@ -4561,7 +4553,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
                         Classification::Decided(None) | Classification::Uncertain(_) => {}
                     }
                 }
-                let regular_range = CurveRegionParameterRange2::new_validated(
+                let regular_range = CurveParameterRange2::new_validated(
                     parallel_carrier.start.clone(),
                     parallel_carrier.end.clone(),
                 );
@@ -4651,10 +4643,10 @@ impl<'a> CurveRegionBooleanContext<'a> {
                         .into_iter()
                         .map(move |source| RegionPairOverlap {
                             source,
-                            first_range: CurveRegionParameterRange2::from_bezier_range(
+                            first_range: CurveParameterRange2::from_bezier_range(
                                 first_range.clone(),
                             ),
-                            second_range: CurveRegionParameterRange2::from_bezier_range(
+                            second_range: CurveParameterRange2::from_bezier_range(
                                 second_range.clone(),
                             ),
                             orientation: overlap.orientation(),
@@ -4777,10 +4769,10 @@ impl<'a> CurveRegionBooleanContext<'a> {
                         .into_iter()
                         .map(move |source| RegionPairOverlap {
                             source,
-                            first_range: CurveRegionParameterRange2::from_bezier_range(
+                            first_range: CurveParameterRange2::from_bezier_range(
                                 overlap.first_range().clone(),
                             ),
-                            second_range: CurveRegionParameterRange2::from_bezier_range(
+                            second_range: CurveParameterRange2::from_bezier_range(
                                 overlap.second_range().clone(),
                             ),
                             orientation: overlap.orientation(),
@@ -5273,10 +5265,10 @@ impl<'a> CurveRegionBooleanContext<'a> {
                                     .into_iter()
                                     .map(|contact| {
                                         RegionPairContactEvidence::direct(
-                                            CurveRegionParameter2::from_algebraic_chord(
+                                            CurveParameter2::from_algebraic_chord(
                                                 contact.first_parameter().clone(),
                                             ),
-                                            CurveRegionParameter2::from_algebraic_chord(
+                                            CurveParameter2::from_algebraic_chord(
                                                 contact.second_parameter().clone(),
                                             ),
                                             Some(contact.point().clone()),
@@ -5296,19 +5288,19 @@ impl<'a> CurveRegionBooleanContext<'a> {
                                         let [second_start, second_end] = overlap.second_range();
                                         RegionPairOverlap {
                                             source: None,
-                                            first_range: CurveRegionParameterRange2::new_validated(
-                                                CurveRegionParameter2::from_algebraic_chord(
+                                            first_range: CurveParameterRange2::new_validated(
+                                                CurveParameter2::from_algebraic_chord(
                                                     first_start.clone(),
                                                 ),
-                                                CurveRegionParameter2::from_algebraic_chord(
+                                                CurveParameter2::from_algebraic_chord(
                                                     first_end.clone(),
                                                 ),
                                             ),
-                                            second_range: CurveRegionParameterRange2::new_validated(
-                                                CurveRegionParameter2::from_algebraic_chord(
+                                            second_range: CurveParameterRange2::new_validated(
+                                                CurveParameter2::from_algebraic_chord(
                                                     second_start.clone(),
                                                 ),
-                                                CurveRegionParameter2::from_algebraic_chord(
+                                                CurveParameter2::from_algebraic_chord(
                                                     second_end.clone(),
                                                 ),
                                             ),
@@ -5737,15 +5729,15 @@ impl<'a> CurveRegionBooleanContext<'a> {
                         let overlaps = overlaps
                             .into_iter()
                             .map(|overlap| {
-                                let cusp_range = CurveRegionParameterRange2::new_validated(
-                                    CurveRegionParameter2::from_algebraic_cusp(
+                                let cusp_range = CurveParameterRange2::new_validated(
+                                    CurveParameter2::from_algebraic_cusp(
                                         overlap.cusp_start_parameter(),
                                     ),
-                                    CurveRegionParameter2::from_algebraic_cusp(
+                                    CurveParameter2::from_algebraic_cusp(
                                         overlap.cusp_end_parameter(),
                                     ),
                                 );
-                                let parallel_range = CurveRegionParameterRange2::from_bezier_range(
+                                let parallel_range = CurveParameterRange2::from_bezier_range(
                                     overlap.other_range().clone(),
                                 );
                                 let (first_range, second_range) = if *cusp_is_first {
@@ -5867,13 +5859,13 @@ impl<'a> CurveRegionBooleanContext<'a> {
                     };
                     let (first_parameter, second_parameter) = if *cusp_is_first {
                         (
-                            CurveRegionParameter2::from_algebraic_cusp(cusp_parameter),
-                            CurveRegionParameter2::from_bezier(contact.parallel_parameter),
+                            CurveParameter2::from_algebraic_cusp(cusp_parameter),
+                            CurveParameter2::from_bezier(contact.parallel_parameter),
                         )
                     } else {
                         (
-                            CurveRegionParameter2::from_bezier(contact.parallel_parameter),
-                            CurveRegionParameter2::from_algebraic_cusp(cusp_parameter),
+                            CurveParameter2::from_bezier(contact.parallel_parameter),
+                            CurveParameter2::from_algebraic_cusp(cusp_parameter),
                         )
                     };
                     let evidence = RegionPairContactEvidence::direct(
@@ -5945,8 +5937,8 @@ impl<'a> CurveRegionBooleanContext<'a> {
                     );
                     return Ok(RegionPairResult {
                         contacts: vec![RegionPairContactEvidence::direct(
-                            CurveRegionParameter2::from_algebraic_cusp(first_parameter),
-                            CurveRegionParameter2::from_algebraic_cusp(second_parameter),
+                            CurveParameter2::from_algebraic_cusp(first_parameter),
+                            CurveParameter2::from_algebraic_cusp(second_parameter),
                             None,
                             false,
                             Some(RealSign::Zero),
@@ -5981,10 +5973,10 @@ impl<'a> CurveRegionBooleanContext<'a> {
                         for contact in contacts {
                             let tangent_cross_sign = contact.tangent_cross_sign;
                             retained.push(RegionPairContactEvidence::direct(
-                                CurveRegionParameter2::from_algebraic_cusp(
+                                CurveParameter2::from_algebraic_cusp(
                                     parameter_map.first_contact_parameter(&contact),
                                 ),
-                                CurveRegionParameter2::from_algebraic_cusp(
+                                CurveParameter2::from_algebraic_cusp(
                                     parameter_map.second_contact_parameter(&contact),
                                 ),
                                 None,
@@ -6001,8 +5993,8 @@ impl<'a> CurveRegionBooleanContext<'a> {
                             let second_parameter = cusp_contact_parameter(contact.second_location)
                                 .expect("an endpoint contact names a second cusp endpoint");
                             retained.push(RegionPairContactEvidence::direct(
-                                CurveRegionParameter2::from_algebraic_cusp(first_parameter),
-                                CurveRegionParameter2::from_algebraic_cusp(second_parameter),
+                                CurveParameter2::from_algebraic_cusp(first_parameter),
+                                CurveParameter2::from_algebraic_cusp(second_parameter),
                                 None,
                                 false,
                                 Some(RealSign::Zero),
@@ -6012,19 +6004,17 @@ impl<'a> CurveRegionBooleanContext<'a> {
                     BezierAlgebraicCuspSemicirclePairIntersections2::Overlap(overlap) => {
                         overlaps.push(RegionPairOverlap {
                             source: Some(RegionPairOverlapSource::AlgebraicCusp(overlap.clone())),
-                            first_range: CurveRegionParameterRange2::new_validated(
-                                CurveRegionParameter2::from_algebraic_cusp(
+                            first_range: CurveParameterRange2::new_validated(
+                                CurveParameter2::from_algebraic_cusp(
                                     overlap.first_start_parameter(),
                                 ),
-                                CurveRegionParameter2::from_algebraic_cusp(
-                                    overlap.first_end_parameter(),
-                                ),
+                                CurveParameter2::from_algebraic_cusp(overlap.first_end_parameter()),
                             ),
-                            second_range: CurveRegionParameterRange2::new_validated(
-                                CurveRegionParameter2::from_algebraic_cusp(
+                            second_range: CurveParameterRange2::new_validated(
+                                CurveParameter2::from_algebraic_cusp(
                                     overlap.second_start_parameter(),
                                 ),
-                                CurveRegionParameter2::from_algebraic_cusp(
+                                CurveParameter2::from_algebraic_cusp(
                                     overlap.second_end_parameter(),
                                 ),
                             ),
@@ -6221,7 +6211,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
         &self,
         pair: &RegionCarrierPair,
         overlap: &RegionPairOverlap,
-    ) -> ExactCurveResult<Option<(CurveRegionParameterRange2, CurveRegionParameterRange2)>> {
+    ) -> ExactCurveResult<Option<(CurveParameterRange2, CurveParameterRange2)>> {
         let first_carrier = &self.data.carriers[pair.first_carrier_index];
         let second_carrier = &self.data.carriers[pair.second_carrier_index];
         let first_intersects =
@@ -6231,20 +6221,18 @@ impl<'a> CurveRegionBooleanContext<'a> {
         if !first_intersects || !second_intersects {
             return Ok(None);
         }
-        let same_parameter_domain =
-            |first: &CurveRegionParameter2, second: &CurveRegionParameter2| {
-                (first.as_bezier_parameter().is_some() && second.as_bezier_parameter().is_some())
-                    || (first.as_selected_fiber().is_some() && second.as_selected_fiber().is_some())
-                    || (first.as_recursive_projective().is_some()
-                        && second.as_recursive_projective().is_some())
-                    || (first.is_algebraic_chord() && second.is_algebraic_chord())
-                    || (first.is_algebraic_cusp() && second.is_algebraic_cusp())
-            };
-        let range_uses_carrier_domain =
-            |range: &CurveRegionParameterRange2, carrier: &RegionCarrier| {
-                same_parameter_domain(range.start(), &carrier.start)
-                    && same_parameter_domain(range.end(), &carrier.end)
-            };
+        let same_parameter_domain = |first: &CurveParameter2, second: &CurveParameter2| {
+            (first.as_bezier_parameter().is_some() && second.as_bezier_parameter().is_some())
+                || (first.as_selected_fiber().is_some() && second.as_selected_fiber().is_some())
+                || (first.as_recursive_projective().is_some()
+                    && second.as_recursive_projective().is_some())
+                || (first.is_algebraic_chord() && second.is_algebraic_chord())
+                || (first.is_algebraic_cusp() && second.is_algebraic_cusp())
+        };
+        let range_uses_carrier_domain = |range: &CurveParameterRange2, carrier: &RegionCarrier| {
+            same_parameter_domain(range.start(), &carrier.start)
+                && same_parameter_domain(range.end(), &carrier.end)
+        };
         if range_inside_carrier(&overlap.first_range, first_carrier, &self.data.policy)?
             && range_inside_carrier(&overlap.second_range, second_carrier, &self.data.policy)?
             && range_uses_carrier_domain(&overlap.first_range, first_carrier)
@@ -6258,11 +6246,11 @@ impl<'a> CurveRegionBooleanContext<'a> {
         if let Some(RegionPairOverlapSource::ParameterComponent { source, swapped }) =
             overlap.source.as_ref()
         {
-            let first_range = CurveRegionParameterRange2::new_validated(
+            let first_range = CurveParameterRange2::new_validated(
                 first_carrier.start.clone(),
                 first_carrier.end.clone(),
             );
-            let second_range = CurveRegionParameterRange2::new_validated(
+            let second_range = CurveParameterRange2::new_validated(
                 second_carrier.start.clone(),
                 second_carrier.end.clone(),
             );
@@ -6283,11 +6271,11 @@ impl<'a> CurveRegionBooleanContext<'a> {
             };
         }
         if let Some(RegionPairOverlapSource::AlgebraicCusp(source)) = overlap.source.as_ref() {
-            let first_range = CurveRegionParameterRange2::new_validated(
+            let first_range = CurveParameterRange2::new_validated(
                 first_carrier.start.clone(),
                 first_carrier.end.clone(),
             );
-            let second_range = CurveRegionParameterRange2::new_validated(
+            let second_range = CurveParameterRange2::new_validated(
                 second_carrier.start.clone(),
                 second_carrier.end.clone(),
             );
@@ -6443,7 +6431,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
         pair: &RegionCarrierPair,
         overlap: &RegionPairOverlap,
         source: &BezierAlgebraicChordRationalOverlap2,
-    ) -> ExactCurveResult<Option<(CurveRegionParameterRange2, CurveRegionParameterRange2)>> {
+    ) -> ExactCurveResult<Option<(CurveParameterRange2, CurveParameterRange2)>> {
         let chord_is_first = overlap.first_range.start().is_algebraic_chord();
         if chord_is_first == overlap.second_range.start().is_algebraic_chord() {
             return Err(self.invalid(
@@ -6491,12 +6479,12 @@ impl<'a> CurveRegionBooleanContext<'a> {
             Ordering::Equal | Ordering::Greater => return Ok(None),
         }
 
-        let map_source_parameter = |parameter: &CurveRegionParameter2| match source
+        let map_source_parameter = |parameter: &CurveParameter2| match source
             .chord_parameter_at_source_parameter(parameter, &self.data.policy)
             .map_err(|cause| self.invalid(chord_carrier_index, cause))?
         {
             Classification::Decided(Some(parameter)) => {
-                Ok(CurveRegionParameter2::from_algebraic_chord(parameter))
+                Ok(CurveParameter2::from_algebraic_chord(parameter))
             }
             Classification::Decided(None) => {
                 Err(self.blocked(chord_carrier_index, UncertaintyReason::Boundary))
@@ -6512,14 +6500,14 @@ impl<'a> CurveRegionBooleanContext<'a> {
         // carrier's own Bezier parameter domain. Promote only the two
         // surviving boundaries after their correlated chord endpoints have
         // been recovered from the original retained identities.
-        let promote_source_boundary = |parameter: CurveRegionParameter2| {
+        let promote_source_boundary = |parameter: CurveParameter2| {
             self.data.policy.strict_predicate_pass(|| {
                 match parameter
                     .promoted_bezier_parameter_complete(&self.data.policy)
                     .map_err(|cause| self.invalid(source_carrier_index, cause))?
                 {
                     Classification::Decided(parameter) => {
-                        Ok(CurveRegionParameter2::from_bezier(parameter))
+                        Ok(CurveParameter2::from_bezier(parameter))
                     }
                     Classification::Uncertain(reason) => {
                         Err(self.blocked(source_carrier_index, reason))
@@ -6536,19 +6524,13 @@ impl<'a> CurveRegionBooleanContext<'a> {
         )?;
         let (chord_range, source_range, orientation) = match chord_order {
             Ordering::Less => (
-                CurveRegionParameterRange2::new_validated(
-                    chord_at_source_low,
-                    chord_at_source_high,
-                ),
-                CurveRegionParameterRange2::new_validated(source_low, source_high),
+                CurveParameterRange2::new_validated(chord_at_source_low, chord_at_source_high),
+                CurveParameterRange2::new_validated(source_low, source_high),
                 RationalBezierOverlapOrientation2::Same,
             ),
             Ordering::Greater => (
-                CurveRegionParameterRange2::new_validated(
-                    chord_at_source_high,
-                    chord_at_source_low,
-                ),
-                CurveRegionParameterRange2::new_validated(source_high, source_low),
+                CurveParameterRange2::new_validated(chord_at_source_high, chord_at_source_low),
+                CurveParameterRange2::new_validated(source_high, source_low),
                 RationalBezierOverlapOrientation2::Reversed,
             ),
             Ordering::Equal => {
@@ -6575,7 +6557,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
         pair: &RegionCarrierPair,
         overlap: &RegionPairOverlap,
         source: RegionCuspMappedOverlapRef<'_>,
-    ) -> ExactCurveResult<Option<(CurveRegionParameterRange2, CurveRegionParameterRange2)>> {
+    ) -> ExactCurveResult<Option<(CurveParameterRange2, CurveParameterRange2)>> {
         let first_is_cusp = overlap.first_range.start().is_algebraic_cusp();
         let second_is_cusp = overlap.second_range.start().is_algebraic_cusp();
         if first_is_cusp == second_is_cusp {
@@ -6600,7 +6582,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
             )
         };
         let range = |carrier: &RegionCarrier| {
-            CurveRegionParameterRange2::new_validated(carrier.start.clone(), carrier.end.clone())
+            CurveParameterRange2::new_validated(carrier.start.clone(), carrier.end.clone())
         };
         let clipped = source
             .clipped_curve_region_ranges(
@@ -6980,7 +6962,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
                                 |parameter| parameter.is_certified_strict_interior_of(chord),
                             )
                         {
-                            retained_parameters[slot] = CurveRegionParameter2::from_algebraic_chord(
+                            retained_parameters[slot] = CurveParameter2::from_algebraic_chord(
                                 chord.parameter_at_certified_interior_point(representative.clone()),
                             );
                         }
@@ -7179,11 +7161,11 @@ impl<'a> CurveRegionBooleanContext<'a> {
                         }
                     }
                 }
-                first_range = CurveRegionParameterRange2::new_validated(
+                first_range = CurveParameterRange2::new_validated(
                     first_parameters[0].clone(),
                     first_parameters[1].clone(),
                 );
-                second_range = CurveRegionParameterRange2::new_validated(
+                second_range = CurveParameterRange2::new_validated(
                     second_parameters[0].clone(),
                     second_parameters[1].clone(),
                 );
@@ -7554,7 +7536,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
         topology: &CurveRegionSplitTopology,
         carrier_index: usize,
         vertex: Option<usize>,
-        parameter: &CurveRegionParameter2,
+        parameter: &CurveParameter2,
     ) -> ExactCurveResult<Option<TransitionContactBranch>> {
         let Some(contact) = vertex.and_then(|vertex| topology.transverse_contacts.get(&vertex))
         else {
@@ -7701,15 +7683,18 @@ impl<'a> CurveRegionBooleanContext<'a> {
                 return Err(self.blocked(0, reason));
             }
         };
-        let mut region =
-            match CurveRegion2::from_certified_retained_arrangement_traversal(&graph, &traversal) {
-                Classification::Decided(region) => region,
-                Classification::Uncertain(reason) => {
-                    return Err(self.blocked(0, reason));
-                }
+        let mut region = match CurveRegion2::from_certified_retained_arrangement_traversal(
+            &graph,
+            &traversal,
+            &self.data.policy,
+        ) {
+            Classification::Decided(region) => region,
+            Classification::Uncertain(reason) => {
+                return Err(self.blocked(0, reason));
             }
-            .with_regularized_filled_left_topology(&self.data.policy)
-            .map_err(|cause| self.invalid(0, cause))?;
+        }
+        .with_regularized_filled_left_topology(&self.data.policy)
+        .map_err(|cause| self.invalid(0, cause))?;
         region = region.with_pairwise_disjoint_material_loop_roles(&self.data.policy);
         if affine_line_output || self.strict_line_image_only() {
             return self.compact_line_image_result_or_retain(region);
@@ -8197,7 +8182,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
         let mut overlap_links = vec![Vec::<(usize, bool)>::new(); edge_count];
         for overlap in &topology.overlaps {
             let collect_edges = |carrier_index: usize,
-                                 overlap_range: &CurveRegionParameterRange2|
+                                 overlap_range: &CurveParameterRange2|
              -> ExactCurveResult<Vec<usize>> {
                 let mut edges = Vec::new();
                 for (split_index, split) in
@@ -9477,7 +9462,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
                                     break;
                                 }
                             };
-                            upper = CurveRegionParameter2::from_bezier(BezierParameter2::Exact(
+                            upper = CurveParameter2::from_bezier(BezierParameter2::Exact(
                                 parameter.clone(),
                             ));
                             parameter
@@ -9566,9 +9551,8 @@ impl<'a> CurveRegionBooleanContext<'a> {
                 tangent_y = -tangent_y;
             }
             boundary_probe_representative = Some(representative.clone());
-            let source_parameter = parameter.map(|parameter| {
-                CurveRegionParameter2::from_bezier(BezierParameter2::Exact(parameter))
-            });
+            let source_parameter = parameter
+                .map(|parameter| CurveParameter2::from_bezier(BezierParameter2::Exact(parameter)));
             let left = match self.fragment_side_classification(
                 carrier_index,
                 &representative,
@@ -9619,8 +9603,8 @@ impl<'a> CurveRegionBooleanContext<'a> {
         carrier_index: usize,
         fragment: &crate::BezierAlgebraicCuspSemicircleFragment2,
     ) -> ExactCurveResult<RegularizedFragmentDecision> {
-        let start = CurveRegionParameter2::from_algebraic_cusp(fragment.start_parameter().clone());
-        let end = CurveRegionParameter2::from_algebraic_cusp(fragment.end_parameter().clone());
+        let start = CurveParameter2::from_algebraic_cusp(fragment.start_parameter().clone());
+        let end = CurveParameter2::from_algebraic_cusp(fragment.end_parameter().clone());
         let parameter = match start
             .strict_rational_between_ordered(&end, &self.data.policy)
             .map_err(|cause| self.invalid(carrier_index, cause))?
@@ -9676,7 +9660,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
             tangent_x = -tangent_x;
             tangent_y = -tangent_y;
         }
-        let source_parameter = CurveRegionParameter2::from_algebraic_cusp(
+        let source_parameter = CurveParameter2::from_algebraic_cusp(
             crate::bezier_offset::BezierAlgebraicCuspSemicircleParameter2::Exact(parameter),
         );
         let left = self.fragment_side_classification(
@@ -9833,7 +9817,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
                     continue;
                 }
             };
-            let probe_end = CurveRegionParameter2::from_algebraic_chord(probe.end_parameter());
+            let probe_end = CurveParameter2::from_algebraic_chord(probe.end_parameter());
             let evidence = match self.intersect_algebraic_probe_boundary(probe) {
                 Ok(evidence) => evidence,
                 Err(ExactCurveError::Blocked(blocker)) => {
@@ -9853,7 +9837,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
                 continue;
             }
 
-            let mut crossings = Vec::<(CurveRegionParameter2, usize, bool)>::new();
+            let mut crossings = Vec::<(CurveParameter2, usize, bool)>::new();
             let mut target_cross = None;
             let mut ambiguous = false;
             for contact in evidence.contacts() {
@@ -10077,7 +10061,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
             // representative is strictly interior to that split.  This
             // construction is a stronger finite-domain certificate than
             // independently reordering the transformed endpoint fields.
-            let parameter = CurveRegionParameter2::from_algebraic_chord(
+            let parameter = CurveParameter2::from_algebraic_chord(
                 source_chord.parameter_at_certified_interior_point(CurvePoint2::from(
                     representative.clone(),
                 )),
@@ -10275,7 +10259,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
                     }
                 }
             };
-            let probe_end = CurveRegionParameter2::from_algebraic_chord(probe.end_parameter());
+            let probe_end = CurveParameter2::from_algebraic_chord(probe.end_parameter());
             let evidence = match self.intersect_algebraic_probe_boundary(probe) {
                 Ok(evidence) => evidence,
                 Err(ExactCurveError::Blocked(blocker)) => {
@@ -10323,7 +10307,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
             }
 
             let mut crossings =
-                Vec::<(&CurveRegionParameter2, &CurveRegionParameter2, usize, bool)>::with_capacity(
+                Vec::<(&CurveParameter2, &CurveParameter2, usize, bool)>::with_capacity(
                     evidence.contacts().len(),
                 );
             for contact in evidence
@@ -10734,7 +10718,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
         &self,
         carrier_index: usize,
         representative: &crate::Point2,
-        source_parameter: Option<&CurveRegionParameter2>,
+        source_parameter: Option<&CurveParameter2>,
         tangent_x: &crate::Real,
         tangent_y: &crate::Real,
         left: bool,
@@ -10754,7 +10738,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
         &self,
         carrier_index: usize,
         representative: &crate::Point2,
-        source_parameter: Option<&CurveRegionParameter2>,
+        source_parameter: Option<&CurveParameter2>,
         tangent_x: &crate::Real,
         tangent_y: &crate::Real,
         left: bool,
@@ -10999,13 +10983,16 @@ impl<'a> CurveRegionBooleanContext<'a> {
                 }
             }
         };
-        let mut region =
-            match CurveRegion2::from_certified_retained_arrangement_traversal(&graph, &traversal) {
-                Classification::Decided(region) => region,
-                Classification::Uncertain(reason) => {
-                    return Err(self.blocked(0, reason));
-                }
-            };
+        let mut region = match CurveRegion2::from_certified_retained_arrangement_traversal(
+            &graph,
+            &traversal,
+            &self.data.policy,
+        ) {
+            Classification::Decided(region) => region,
+            Classification::Uncertain(reason) => {
+                return Err(self.blocked(0, reason));
+            }
+        };
         region = region
             .with_regularized_filled_left_topology(&self.data.policy)
             .map_err(|cause| self.invalid(0, cause))?;
@@ -11533,7 +11520,9 @@ impl<'a> CurveRegionBooleanContext<'a> {
                 | CurvePoint2(CurvePointData2::AlgebraicCuspChordDerived(_))
                 | CurvePoint2(CurvePointData2::AlgebraicChordParallel(_))
                 | CurvePoint2(CurvePointData2::AnalyticParallel(_))
-                | CurvePoint2(CurvePointData2::Similarity(_)) => None,
+                | CurvePoint2(CurvePointData2::Similarity(_) | CurvePointData2::Endpoint(_)) => {
+                    None
+                }
             };
             if let Some(classification) = direct {
                 match classification {
@@ -11549,6 +11538,9 @@ impl<'a> CurveRegionBooleanContext<'a> {
             }
             for refinement_steps in [0, 2, 4, 8, 16, 32, 64, 128, 256, 512] {
                 let bounds = match endpoint {
+                    CurvePoint2(CurvePointData2::Endpoint(point)) => {
+                        point.bounds(refinement_steps, &self.data.policy)
+                    }
                     CurvePoint2(CurvePointData2::AlgebraicChordPair(point)) => {
                         point.conservative_bounds_refined(refinement_steps, &self.data.policy)
                     }
@@ -11644,7 +11636,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
             | CurvePoint2(CurvePointData2::AlgebraicCuspChordDerived(_))
             | CurvePoint2(CurvePointData2::AlgebraicChordParallel(_))
             | CurvePoint2(CurvePointData2::AnalyticParallel(_))
-            | CurvePoint2(CurvePointData2::Similarity(_)) => None,
+            | CurvePoint2(CurvePointData2::Similarity(_) | CurvePointData2::Endpoint(_)) => None,
         };
         match direct {
             Some(decided @ Classification::Decided(_)) => Ok(decided),
@@ -11751,7 +11743,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
                     continue;
                 }
             };
-            let probe_end = CurveRegionParameter2::from_algebraic_chord(probe.end_parameter());
+            let probe_end = CurveParameter2::from_algebraic_chord(probe.end_parameter());
             let evidence = match self.intersect_algebraic_probe_carriers(
                 probe,
                 boundary_region,
@@ -11819,9 +11811,8 @@ impl<'a> CurveRegionBooleanContext<'a> {
                 continue;
             }
 
-            let mut crossings = Vec::<(&CurveRegionParameter2, bool, bool)>::with_capacity(
-                evidence.contacts().len(),
-            );
+            let mut crossings =
+                Vec::<(&CurveParameter2, bool, bool)>::with_capacity(evidence.contacts().len());
             let mut ambiguous = false;
             for contact in evidence
                 .contacts()
@@ -11863,7 +11854,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
             }
             match classification_kind {
                 RetainedPointProbeClassification::FilledRegion => {
-                    let mut last_contact = None::<(&CurveRegionParameter2, RegionPointLocation)>;
+                    let mut last_contact = None::<(&CurveParameter2, RegionPointLocation)>;
                     for (parameter, cross_is_positive, filled_side_is_left) in crossings {
                         let target_is_left_of_boundary = !cross_is_positive;
                         let location = if target_is_left_of_boundary == filled_side_is_left {
@@ -12366,7 +12357,9 @@ impl<'a> CurveRegionBooleanContext<'a> {
             | CurvePoint2(CurvePointData2::AlgebraicCuspChord(_))
             | CurvePoint2(CurvePointData2::AlgebraicCuspChordDerived(_))
             | CurvePoint2(CurvePointData2::AnalyticParallel(_))
-            | CurvePoint2(CurvePointData2::Similarity(_)) => return Ok(None),
+            | CurvePoint2(CurvePointData2::Similarity(_) | CurvePointData2::Endpoint(_)) => {
+                return Ok(None);
+            }
         };
         Ok(Some(action_from_result_sides(
             operation.apply(first_sides[0], second_sides[0]),
@@ -12893,17 +12886,15 @@ fn build_region_carrier(
                 let end = chord.end_parameter();
                 (
                     RegionCarrierGeometry::AlgebraicChord(chord),
-                    CurveRegionParameter2::from_algebraic_chord(start),
-                    CurveRegionParameter2::from_algebraic_chord(end),
+                    CurveParameter2::from_algebraic_chord(start),
+                    CurveParameter2::from_algebraic_chord(end),
                     false,
                 )
             } else {
                 (
                     RegionCarrierGeometry::Bezier(curve.clone()),
-                    CurveRegionParameter2::from_bezier(
-                        BezierParameter2::Exact(crate::Real::zero()),
-                    ),
-                    CurveRegionParameter2::from_bezier(BezierParameter2::Exact(crate::Real::one())),
+                    CurveParameter2::from_bezier(BezierParameter2::Exact(crate::Real::zero())),
+                    CurveParameter2::from_bezier(BezierParameter2::Exact(crate::Real::one())),
                     false,
                 )
             }
@@ -12916,26 +12907,26 @@ fn build_region_carrier(
             ..
         } => (
             RegionCarrierGeometry::Bezier(curve.clone()),
-            CurveRegionParameter2::from_bezier(start.clone()),
-            CurveRegionParameter2::from_bezier(end.clone()),
+            CurveParameter2::from_bezier(start.clone()),
+            CurveParameter2::from_bezier(end.clone()),
             *reversed,
         ),
         BezierSplitFragment2::AnalyticParallel(fragment) => (
             RegionCarrierGeometry::AnalyticParallel(fragment.parallel().clone()),
-            CurveRegionParameter2::from_bezier(fragment.range().start().clone()),
-            CurveRegionParameter2::from_bezier(fragment.range().end().clone()),
+            CurveParameter2::from_bezier(fragment.range().start().clone()),
+            CurveParameter2::from_bezier(fragment.range().end().clone()),
             fragment.is_reversed(),
         ),
         BezierSplitFragment2::AlgebraicChord(chord) => (
             RegionCarrierGeometry::AlgebraicChord(chord.clone()),
-            CurveRegionParameter2::from_algebraic_chord(chord.start_parameter()),
-            CurveRegionParameter2::from_algebraic_chord(chord.end_parameter()),
+            CurveParameter2::from_algebraic_chord(chord.start_parameter()),
+            CurveParameter2::from_algebraic_chord(chord.end_parameter()),
             false,
         ),
         BezierSplitFragment2::AlgebraicCuspSemicircle(fragment) => (
             RegionCarrierGeometry::AlgebraicCuspSemicircle(fragment.clone()),
-            CurveRegionParameter2::from_algebraic_cusp(fragment.start_parameter().clone()),
-            CurveRegionParameter2::from_algebraic_cusp(fragment.end_parameter().clone()),
+            CurveParameter2::from_algebraic_cusp(fragment.start_parameter().clone()),
+            CurveParameter2::from_algebraic_cusp(fragment.end_parameter().clone()),
             fragment.is_reversed(),
         ),
         BezierSplitFragment2::SelectedFiber(fragment) => {
@@ -12964,8 +12955,8 @@ fn build_region_carrier(
         geometry = RegionCarrierGeometry::Bezier(BezierSubcurve2::Quadratic(
             QuadraticBezier2::from_line_segment(line),
         ));
-        start = CurveRegionParameter2::from_bezier(BezierParameter2::Exact(crate::Real::zero()));
-        end = CurveRegionParameter2::from_bezier(BezierParameter2::Exact(crate::Real::one()));
+        start = CurveParameter2::from_bezier(BezierParameter2::Exact(crate::Real::zero()));
+        end = CurveParameter2::from_bezier(BezierParameter2::Exact(crate::Real::one()));
         reversed = false;
     }
     let family = geometry.family();
@@ -13080,8 +13071,8 @@ fn split_carrier_with_refinement(
                 "algebraic cusp carrier reached the Bezier split path".into(),
             ));
         };
-        let start_parameter = CurveRegionParameter2::from_bezier(start.clone());
-        let end_parameter = CurveRegionParameter2::from_bezier(end.clone());
+        let start_parameter = CurveParameter2::from_bezier(start.clone());
+        let end_parameter = CurveParameter2::from_bezier(end.clone());
         if !parameter_range_inside_carrier(&start_parameter, &end_parameter, carrier, policy)? {
             continue;
         }
@@ -13250,7 +13241,7 @@ fn split_selected_fiber_carrier(
         output.push(SplitCarrierFragment {
             fragment: BezierSplitFragment2::SelectedFiber(BezierSelectedFiberFragment2::new(
                 source.clone(),
-                CurveRegionParameterRange2::new_validated(
+                CurveParameterRange2::new_validated(
                     pair[0].parameter.clone(),
                     pair[1].parameter.clone(),
                 ),
@@ -13400,8 +13391,8 @@ fn split_algebraic_chord_carrier(
 /// a valid total order even when all represented points share this support.
 fn algebraic_chord_carrier_parameter_cmp(
     chord: &crate::BezierAlgebraicChord2,
-    first_parameter: &CurveRegionParameter2,
-    second_parameter: &CurveRegionParameter2,
+    first_parameter: &CurveParameter2,
+    second_parameter: &CurveParameter2,
     policy: &CurveContext,
 ) -> CurveResult<Classification<Ordering>> {
     let (Some(first), Some(second)) = (
@@ -13680,7 +13671,7 @@ fn split_analytic_carrier(
                 CurveError::Topology("algebraic cusp cut reached an analytic carrier".into())
             })?;
             Ok(CarrierEvent {
-                parameter: CurveRegionParameter2::from_bezier(
+                parameter: CurveParameter2::from_bezier(
                     parameter
                         .clone()
                         .refined_isolating_interval(max_refinement_steps, policy),
@@ -14908,7 +14899,7 @@ fn algebraic_endpoint_tangent_at_vertex(
 #[cfg(test)]
 fn push_carrier_event(
     events: &mut Vec<CarrierEvent>,
-    parameter: CurveRegionParameter2,
+    parameter: CurveParameter2,
     topology_vertex: Option<usize>,
     carrier: &RegionCarrier,
     policy: &CurveContext,
@@ -14919,11 +14910,11 @@ fn push_carrier_event(
 
 fn push_canonical_carrier_event(
     events: &mut Vec<CarrierEvent>,
-    parameter: CurveRegionParameter2,
+    parameter: CurveParameter2,
     topology_vertex: Option<usize>,
     carrier: &RegionCarrier,
     policy: &CurveContext,
-) -> ExactCurveResult<CurveRegionParameter2> {
+) -> ExactCurveResult<CurveParameter2> {
     let (_, event_index) =
         push_carrier_event_internal(events, parameter, topology_vertex, carrier, false, policy)?;
     Ok(events[event_index].parameter.clone())
@@ -14931,7 +14922,7 @@ fn push_canonical_carrier_event(
 
 fn push_contact_carrier_event(
     events: &mut Vec<CarrierEvent>,
-    parameter: CurveRegionParameter2,
+    parameter: CurveParameter2,
     topology_vertex: Option<usize>,
     carrier: &RegionCarrier,
     policy: &CurveContext,
@@ -14942,7 +14933,7 @@ fn push_contact_carrier_event(
 
 fn push_carrier_event_internal(
     events: &mut Vec<CarrierEvent>,
-    parameter: CurveRegionParameter2,
+    parameter: CurveParameter2,
     topology_vertex: Option<usize>,
     carrier: &RegionCarrier,
     defer_unordered: bool,
@@ -15032,7 +15023,7 @@ fn seed_loop_topology_vertices(
     }
 }
 
-fn carrier_traversal_start(carrier: &RegionCarrier) -> &CurveRegionParameter2 {
+fn carrier_traversal_start(carrier: &RegionCarrier) -> &CurveParameter2 {
     if carrier.reversed {
         &carrier.end
     } else {
@@ -15040,7 +15031,7 @@ fn carrier_traversal_start(carrier: &RegionCarrier) -> &CurveRegionParameter2 {
     }
 }
 
-fn carrier_traversal_end(carrier: &RegionCarrier) -> &CurveRegionParameter2 {
+fn carrier_traversal_end(carrier: &RegionCarrier) -> &CurveParameter2 {
     if carrier.reversed {
         &carrier.start
     } else {
@@ -15050,7 +15041,7 @@ fn carrier_traversal_end(carrier: &RegionCarrier) -> &CurveRegionParameter2 {
 
 fn existing_event_vertex_if_decided(
     events: &[CarrierEvent],
-    parameter: &CurveRegionParameter2,
+    parameter: &CurveParameter2,
     policy: &CurveContext,
 ) -> CurveResult<Option<usize>> {
     for event in events {
@@ -15065,7 +15056,7 @@ fn existing_event_vertex_if_decided(
 
 fn existing_contact_event_vertex_if_decided(
     events: &[CarrierEvent],
-    parameter: &CurveRegionParameter2,
+    parameter: &CurveParameter2,
     policy: &CurveContext,
 ) -> CurveResult<Option<usize>> {
     for event in events {
@@ -15079,8 +15070,8 @@ fn existing_contact_event_vertex_if_decided(
 }
 
 fn locally_decidable_contact_parameter_cmp(
-    first: &CurveRegionParameter2,
-    second: &CurveRegionParameter2,
+    first: &CurveParameter2,
+    second: &CurveParameter2,
     policy: &CurveContext,
 ) -> CurveResult<Classification<Ordering>> {
     if first == second {
@@ -15186,7 +15177,7 @@ fn replace_topology_vertex(
 fn contacts_decided_distinct_from_carriers(
     existing: &ContactVertex,
     carrier_indices: [usize; 2],
-    parameters: [&CurveRegionParameter2; 2],
+    parameters: [&CurveParameter2; 2],
     carriers: &[RegionCarrier],
     policy: &CurveContext,
 ) -> ExactCurveResult<bool> {
@@ -15419,7 +15410,7 @@ fn contact_decided_distinct_from_carrier_endpoint_vertex(
 fn contacts_decided_same_from_shared_parallel(
     existing: &ContactVertex,
     carrier_indices: [usize; 2],
-    parameters: [&CurveRegionParameter2; 2],
+    parameters: [&CurveParameter2; 2],
     carriers: &[RegionCarrier],
     policy: &CurveContext,
 ) -> ExactCurveResult<bool> {
@@ -15591,7 +15582,7 @@ fn contacts_decided_same_from_shared_parallel(
 
 fn selected_fiber_endpoint_point_at_parameter<'a>(
     carrier: &'a RegionCarrier,
-    parameter: &CurveRegionParameter2,
+    parameter: &CurveParameter2,
     policy: &CurveContext,
 ) -> CurveResult<Option<&'a CurvePoint2>> {
     let Some(points) = carrier.selected_fiber_endpoint_points.as_deref() else {
@@ -15608,7 +15599,7 @@ fn selected_fiber_endpoint_point_at_parameter<'a>(
 }
 
 fn parameter_matches_any(
-    parameter: &CurveRegionParameter2,
+    parameter: &CurveParameter2,
     candidates: &[BezierParameter2],
     policy: &CurveContext,
 ) -> Classification<bool> {
@@ -15634,7 +15625,7 @@ fn parameter_matches_any(
 fn contacts_decided_same_from_circular_carriers(
     existing: &ContactVertex,
     carrier_indices: [usize; 2],
-    parameters: [&CurveRegionParameter2; 2],
+    parameters: [&CurveParameter2; 2],
     carriers: &[RegionCarrier],
     policy: &CurveContext,
 ) -> Classification<bool> {
@@ -15833,7 +15824,7 @@ fn exact_point_matches_existing_contact_parameter(
 
 fn event_vertex(
     events: &[CarrierEvent],
-    parameter: &CurveRegionParameter2,
+    parameter: &CurveParameter2,
     policy: &CurveContext,
 ) -> Result<Option<usize>, CurveError> {
     for event in events {
@@ -15902,10 +15893,9 @@ fn selected_fiber_cusp_contacts_result(
     let contacts = contacts
         .into_iter()
         .map(|contact| {
-            let cusp_parameter =
-                CurveRegionParameter2::from_algebraic_cusp(contact.cusp_parameter());
+            let cusp_parameter = CurveParameter2::from_algebraic_cusp(contact.cusp_parameter());
             let other_parameter =
-                CurveRegionParameter2::from_selected_fiber(contact.other_parameter().clone());
+                CurveParameter2::from_selected_fiber(contact.other_parameter().clone());
             let tangent_cross_sign =
                 orient_tangent_cross_sign(contact.tangent_cross_sign(), cusp_is_first);
             let (first_parameter, second_parameter) = if cusp_is_first {
@@ -15936,8 +15926,7 @@ fn retained_cusp_parallel_contacts_result(
     let contacts = contacts
         .into_iter()
         .map(|contact| {
-            let cusp_parameter =
-                CurveRegionParameter2::from_algebraic_cusp(contact.cusp_parameter());
+            let cusp_parameter = CurveParameter2::from_algebraic_cusp(contact.cusp_parameter());
             let other_parameter = contact.other_parameter().clone();
             let tangent_cross_sign =
                 orient_tangent_cross_sign(contact.tangent_cross_sign(), cusp_is_first);
@@ -15995,13 +15984,13 @@ fn selected_fiber_cusp_overlaps_result(
         .into_iter()
         .map(|overlap| {
             let orientation = overlap.orientation();
-            let cusp_range = CurveRegionParameterRange2::new_validated(
-                CurveRegionParameter2::from_algebraic_cusp(overlap.cusp_start_parameter()),
-                CurveRegionParameter2::from_algebraic_cusp(overlap.cusp_end_parameter()),
+            let cusp_range = CurveParameterRange2::new_validated(
+                CurveParameter2::from_algebraic_cusp(overlap.cusp_start_parameter()),
+                CurveParameter2::from_algebraic_cusp(overlap.cusp_end_parameter()),
             );
-            let other_range = CurveRegionParameterRange2::new_validated(
-                CurveRegionParameter2::from_selected_fiber(overlap.other_start_parameter()),
-                CurveRegionParameter2::from_selected_fiber(overlap.other_end_parameter()),
+            let other_range = CurveParameterRange2::new_validated(
+                CurveParameter2::from_selected_fiber(overlap.other_start_parameter()),
+                CurveParameter2::from_selected_fiber(overlap.other_end_parameter()),
             );
             let (first_range, second_range) = if cusp_is_first {
                 (cusp_range, other_range)
@@ -16033,7 +16022,7 @@ const fn action_from_result_sides(left: bool, right: bool) -> RegionFragmentActi
     }
 }
 
-const fn carrier_traversal_start_parameter(carrier: &RegionCarrier) -> &CurveRegionParameter2 {
+const fn carrier_traversal_start_parameter(carrier: &RegionCarrier) -> &CurveParameter2 {
     if carrier.reversed {
         &carrier.end
     } else {
@@ -16041,7 +16030,7 @@ const fn carrier_traversal_start_parameter(carrier: &RegionCarrier) -> &CurveReg
     }
 }
 
-const fn carrier_traversal_end_parameter(carrier: &RegionCarrier) -> &CurveRegionParameter2 {
+const fn carrier_traversal_end_parameter(carrier: &RegionCarrier) -> &CurveParameter2 {
     if carrier.reversed {
         &carrier.start
     } else {
@@ -16051,7 +16040,7 @@ const fn carrier_traversal_end_parameter(carrier: &RegionCarrier) -> &CurveRegio
 
 fn exact_carrier_point(
     carrier: &RegionCarrier,
-    parameter: &CurveRegionParameter2,
+    parameter: &CurveParameter2,
     policy: &CurveContext,
 ) -> Option<crate::Point2> {
     let parameter = parameter.as_exact()?;
@@ -16103,7 +16092,7 @@ fn points_are_decided_distinct(
 }
 
 fn parameter_in_carrier(
-    parameter: &CurveRegionParameter2,
+    parameter: &CurveParameter2,
     carrier: &RegionCarrier,
     policy: &CurveContext,
 ) -> ExactCurveResult<bool> {
@@ -16112,7 +16101,7 @@ fn parameter_in_carrier(
 }
 
 fn parameter_location_in_carrier(
-    parameter: &CurveRegionParameter2,
+    parameter: &CurveParameter2,
     carrier: &RegionCarrier,
     policy: &CurveContext,
 ) -> ExactCurveResult<CarrierParameterLocation> {
@@ -16225,8 +16214,8 @@ fn parameter_location_in_carrier(
 }
 
 fn parameter_range_inside_carrier(
-    start: &CurveRegionParameter2,
-    end: &CurveRegionParameter2,
+    start: &CurveParameter2,
+    end: &CurveParameter2,
     carrier: &RegionCarrier,
     policy: &CurveContext,
 ) -> Result<bool, CurveError> {
@@ -16245,7 +16234,7 @@ fn parameter_range_inside_carrier(
 }
 
 fn ranges_intersect(
-    range: &CurveRegionParameterRange2,
+    range: &CurveParameterRange2,
     carrier: &RegionCarrier,
     policy: &CurveContext,
 ) -> ExactCurveResult<bool> {
@@ -16255,7 +16244,7 @@ fn ranges_intersect(
 }
 
 fn range_inside_carrier(
-    range: &CurveRegionParameterRange2,
+    range: &CurveParameterRange2,
     carrier: &RegionCarrier,
     policy: &CurveContext,
 ) -> ExactCurveResult<bool> {
@@ -16267,11 +16256,11 @@ fn range_inside_carrier(
 }
 
 fn extreme_region_parameter<const N: usize>(
-    parameters: [&CurveRegionParameter2; N],
+    parameters: [&CurveParameter2; N],
     replace_when: Ordering,
     family: CurveFamily2,
     policy: &CurveContext,
-) -> ExactCurveResult<CurveRegionParameter2> {
+) -> ExactCurveResult<CurveParameter2> {
     let mut selected = parameters[0];
     for parameter in &parameters[1..] {
         selected = match selected.cmp_by_refinement(parameter, policy) {
@@ -16303,12 +16292,10 @@ fn clip_corresponding_parameter_overlap(
     first_carrier: &RegionCarrier,
     second_carrier: &RegionCarrier,
     policy: &CurveContext,
-) -> ExactCurveResult<Option<(CurveRegionParameterRange2, CurveRegionParameterRange2)>> {
-    let first_fragment = CurveRegionParameterRange2::new_validated(
-        first_carrier.start.clone(),
-        first_carrier.end.clone(),
-    );
-    let second_fragment = CurveRegionParameterRange2::new_validated(
+) -> ExactCurveResult<Option<(CurveParameterRange2, CurveParameterRange2)>> {
+    let first_fragment =
+        CurveParameterRange2::new_validated(first_carrier.start.clone(), first_carrier.end.clone());
+    let second_fragment = CurveParameterRange2::new_validated(
         second_carrier.start.clone(),
         second_carrier.end.clone(),
     );
@@ -16409,8 +16396,8 @@ fn clip_aligned_parameter_overlap(
     }
 
     let (overlap_start, overlap_end) = ascending_bezier_range(first_range, policy)?;
-    let overlap_start = CurveRegionParameter2::from_bezier(overlap_start.clone());
-    let overlap_end = CurveRegionParameter2::from_bezier(overlap_end.clone());
+    let overlap_start = CurveParameter2::from_bezier(overlap_start.clone());
+    let overlap_end = CurveParameter2::from_bezier(overlap_end.clone());
     let (second_start_in_first, second_end_in_first) = if reversed {
         (
             second_carrier.end.unit_complement().ok_or_else(|| {
@@ -16449,7 +16436,7 @@ fn clip_aligned_parameter_overlap(
             return Ok(CarrierOverlapClip::Matched(None));
         }
     }
-    let map_region_to_second = |parameter: &CurveRegionParameter2| {
+    let map_region_to_second = |parameter: &CurveParameter2| {
         if reversed {
             parameter.unit_complement().ok_or_else(|| {
                 ExactCurveError::blocked(
@@ -16465,8 +16452,8 @@ fn clip_aligned_parameter_overlap(
     let second_start = map_region_to_second(&start)?;
     let second_end = map_region_to_second(&end)?;
     Ok(CarrierOverlapClip::Matched(Some((
-        CurveRegionParameterRange2::new_validated(start, end),
-        CurveRegionParameterRange2::new_validated(second_start, second_end),
+        CurveParameterRange2::new_validated(start, end),
+        CurveParameterRange2::new_validated(second_start, second_end),
     ))))
 }
 
@@ -16475,11 +16462,11 @@ pub(crate) fn clip_aligned_parameter_overlap_for_test(
     first_range: &BezierParameterRange2,
     second_range: &BezierParameterRange2,
     reversed: bool,
-    first_carrier_range: &CurveRegionParameterRange2,
-    second_carrier_range: &CurveRegionParameterRange2,
+    first_carrier_range: &CurveParameterRange2,
+    second_carrier_range: &CurveParameterRange2,
     policy: &CurveContext,
-) -> ExactCurveResult<Option<(CurveRegionParameterRange2, CurveRegionParameterRange2)>> {
-    let carrier = |operand, range: &CurveRegionParameterRange2| RegionCarrier {
+) -> ExactCurveResult<Option<(CurveParameterRange2, CurveParameterRange2)>> {
+    let carrier = |operand, range: &CurveParameterRange2| RegionCarrier {
         operand,
         loop_index: 0,
         fragment_index: 0,
@@ -16521,9 +16508,9 @@ pub(crate) fn clip_aligned_parameter_overlap_for_test(
 }
 
 fn range_contains_fragment(
-    range: &CurveRegionParameterRange2,
-    fragment_start: &CurveRegionParameter2,
-    fragment_end: &CurveRegionParameter2,
+    range: &CurveParameterRange2,
+    fragment_start: &CurveParameter2,
+    fragment_end: &CurveParameter2,
     policy: &CurveContext,
 ) -> ExactCurveResult<bool> {
     let (range_start, range_end) = ascending_range(range, policy)?;
@@ -16534,9 +16521,9 @@ fn range_contains_fragment(
 }
 
 fn ascending_range<'a>(
-    range: &'a CurveRegionParameterRange2,
+    range: &'a CurveParameterRange2,
     policy: &CurveContext,
-) -> ExactCurveResult<(&'a CurveRegionParameter2, &'a CurveRegionParameter2)> {
+) -> ExactCurveResult<(&'a CurveParameter2, &'a CurveParameter2)> {
     match decided_parameter_cmp(range.start(), range.end(), policy)? {
         Ordering::Less => Ok((range.start(), range.end())),
         Ordering::Greater => Ok((range.end(), range.start())),
@@ -16581,7 +16568,7 @@ impl BooleanParameterOrder for BezierParameter2 {
     }
 }
 
-impl BooleanParameterOrder for CurveRegionParameter2 {
+impl BooleanParameterOrder for CurveParameter2 {
     fn boolean_cmp_by_refinement(
         &self,
         other: &Self,
@@ -16880,12 +16867,12 @@ mod certified_successor_tests {
         }
     }
 
-    fn carrier_parameter(parameter: BezierParameter2) -> CurveRegionParameter2 {
-        CurveRegionParameter2::from_bezier(parameter)
+    fn carrier_parameter(parameter: BezierParameter2) -> CurveParameter2 {
+        CurveParameter2::from_bezier(parameter)
     }
 
-    fn carrier_range(range: &BezierParameterRange2) -> CurveRegionParameterRange2 {
-        CurveRegionParameterRange2::from_bezier_range(range.clone())
+    fn carrier_range(range: &BezierParameterRange2) -> CurveParameterRange2 {
+        CurveParameterRange2::from_bezier_range(range.clone())
     }
 
     fn sqrt_half_parameter(policy: &CurveContext) -> BezierAlgebraicParameter2 {
@@ -16917,35 +16904,34 @@ mod certified_successor_tests {
         };
         for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
             let retained = sqrt_half_parameter(&policy);
-            let selected =
-                |value: Real| {
-                    CurveRegionParameter2::from_selected_fiber(
-                        exact_selected_fiber_parameter_for_test(retained.clone(), value, &policy),
-                    )
-                };
+            let selected = |value: Real| {
+                CurveParameter2::from_selected_fiber(exact_selected_fiber_parameter_for_test(
+                    retained.clone(),
+                    value,
+                    &policy,
+                ))
+            };
             let selected_range = |start: Real, end: Real| {
-                CurveRegionParameterRange2::new_validated(selected(start), selected(end))
+                CurveParameterRange2::new_validated(selected(start), selected(end))
             };
             let ordinary_range = |start: Real, end: Real| {
-                CurveRegionParameterRange2::from_bezier_range(BezierParameterRange2::from_exact(
+                CurveParameterRange2::from_bezier_range(BezierParameterRange2::from_exact(
                     start, end,
                 ))
             };
             let source = nonlinear_parameter_component_overlap_for_test(&policy);
-            let first_overlap = CurveRegionParameterRange2::from_bezier_range(
-                source.overlap().first_range().clone(),
-            );
-            let second_overlap = CurveRegionParameterRange2::from_bezier_range(
-                source.overlap().second_range().clone(),
-            );
+            let first_overlap =
+                CurveParameterRange2::from_bezier_range(source.overlap().first_range().clone());
+            let second_overlap =
+                CurveParameterRange2::from_bezier_range(source.overlap().second_range().clone());
             let line = BezierSubcurve2::Quadratic(QuadraticBezier2::from_line_segment(
                 LineSeg2::try_new(Point2::from_values(0, 0), Point2::from_values(1, 0))
                     .expect("the test carrier is nondegenerate"),
             ));
-            let clip = |first_range: CurveRegionParameterRange2,
-                        second_range: CurveRegionParameterRange2,
+            let clip = |first_range: CurveParameterRange2,
+                        second_range: CurveParameterRange2,
                         swapped: bool| {
-                let carrier = |operand, range: &CurveRegionParameterRange2| {
+                let carrier = |operand, range: &CurveParameterRange2| {
                     let geometry = RegionCarrierGeometry::Bezier(line.clone());
                     RegionCarrier {
                         operand,
@@ -17006,7 +16992,7 @@ mod certified_successor_tests {
                     .expect("selected component clipping must decide")
                     .expect("the selected carrier ranges overlap")
             };
-            let assert_selected = |parameter: &CurveRegionParameter2, expected: Real| {
+            let assert_selected = |parameter: &CurveParameter2, expected: Real| {
                 assert_eq!(
                     parameter
                         .as_selected_fiber()
@@ -17048,17 +17034,18 @@ mod certified_successor_tests {
         };
         for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
             let retained = sqrt_half_parameter(&policy);
-            let selected =
-                |value: Real| {
-                    CurveRegionParameter2::from_selected_fiber(
-                        exact_selected_fiber_parameter_for_test(retained.clone(), value, &policy),
-                    )
-                };
-            let first_carrier_range = CurveRegionParameterRange2::new_validated(
+            let selected = |value: Real| {
+                CurveParameter2::from_selected_fiber(exact_selected_fiber_parameter_for_test(
+                    retained.clone(),
+                    value,
+                    &policy,
+                ))
+            };
+            let first_carrier_range = CurveParameterRange2::new_validated(
                 selected(fraction(1, 2)),
                 selected(fraction(3, 4)),
             );
-            let second_carrier_range = CurveRegionParameterRange2::new_validated(
+            let second_carrier_range = CurveParameterRange2::new_validated(
                 selected(fraction(1, 3)),
                 selected(fraction(1, 2)),
             );
@@ -17090,7 +17077,7 @@ mod certified_successor_tests {
                 RationalBezierOverlapParameterCorrespondence2::for_overlap(
                     &first, &second, &overlap, &policy,
                 );
-            let carrier = |operand, curve: RationalBezier2, range: &CurveRegionParameterRange2| {
+            let carrier = |operand, curve: RationalBezier2, range: &CurveParameterRange2| {
                 let geometry = RegionCarrierGeometry::Bezier(BezierSubcurve2::Rational(curve));
                 RegionCarrier {
                     operand,
@@ -17161,17 +17148,18 @@ mod certified_successor_tests {
         };
         for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
             let retained = sqrt_half_parameter(&policy);
-            let selected =
-                |value: Real| {
-                    CurveRegionParameter2::from_selected_fiber(
-                        exact_selected_fiber_parameter_for_test(retained.clone(), value, &policy),
-                    )
-                };
-            let first_carrier_range = CurveRegionParameterRange2::new_validated(
+            let selected = |value: Real| {
+                CurveParameter2::from_selected_fiber(exact_selected_fiber_parameter_for_test(
+                    retained.clone(),
+                    value,
+                    &policy,
+                ))
+            };
+            let first_carrier_range = CurveParameterRange2::new_validated(
                 selected(fraction(1, 4)),
                 selected(fraction(3, 4)),
             );
-            let second_carrier_range = CurveRegionParameterRange2::new_validated(
+            let second_carrier_range = CurveParameterRange2::new_validated(
                 selected(fraction(1, 16)),
                 selected(fraction(1, 4)),
             );
@@ -17197,7 +17185,7 @@ mod certified_successor_tests {
                 second: second.clone(),
                 unresolved: None,
             };
-            let carrier = |operand, curve: RationalBezier2, range: &CurveRegionParameterRange2| {
+            let carrier = |operand, curve: RationalBezier2, range: &CurveParameterRange2| {
                 let geometry = RegionCarrierGeometry::Bezier(BezierSubcurve2::Rational(curve));
                 RegionCarrier {
                     operand,
@@ -17329,8 +17317,8 @@ mod certified_successor_tests {
             loop_index: 0,
             fragment_index: 0,
             family: CurveFamily2::Line,
-            start: CurveRegionParameter2::from_algebraic_chord(chord.start_parameter()),
-            end: CurveRegionParameter2::from_algebraic_chord(chord.end_parameter()),
+            start: CurveParameter2::from_algebraic_chord(chord.start_parameter()),
+            end: CurveParameter2::from_algebraic_chord(chord.end_parameter()),
             geometry: RegionCarrierGeometry::AlgebraicChord(chord),
             reversed: false,
             filled_side_is_left: true,
@@ -18052,7 +18040,7 @@ mod certified_successor_tests {
                 BezierAlgebraicChordAxisDirection2::PositiveX,
                 &policy,
             );
-            let contacts = |circle: &BezierAlgebraicCuspSemicircle2| -> [CurveRegionParameter2; 2] {
+            let contacts = |circle: &BezierAlgebraicCuspSemicircle2| -> [CurveParameter2; 2] {
                 let Classification::Decided(
                     BezierAlgebraicCuspSemicircleRetainedChordIntersections2::Contacts(contacts),
                 ) = circle.chord_intersections(&chord, &policy).unwrap()
@@ -18061,9 +18049,7 @@ mod certified_successor_tests {
                 };
                 assert_eq!(contacts.len(), 2);
                 std::array::from_fn(|index| {
-                    CurveRegionParameter2::from_algebraic_chord(
-                        contacts[index].chord_parameter.clone(),
-                    )
+                    CurveParameter2::from_algebraic_chord(contacts[index].chord_parameter.clone())
                 })
             };
             let first = contacts(&circle(
@@ -18125,8 +18111,8 @@ mod certified_successor_tests {
             fragment_index: 0,
             family: geometry.family(),
             geometry,
-            start: CurveRegionParameter2::from_algebraic_chord(chord.start_parameter()),
-            end: CurveRegionParameter2::from_algebraic_chord(chord.end_parameter()),
+            start: CurveParameter2::from_algebraic_chord(chord.start_parameter()),
+            end: CurveParameter2::from_algebraic_chord(chord.end_parameter()),
             reversed: false,
             filled_side_is_left: true,
             selected_fiber_endpoint_points: None,
@@ -18134,7 +18120,7 @@ mod certified_successor_tests {
             bounds: OnceLock::new(),
         };
         let cut = |x, vertex| CarrierEvent {
-            parameter: CurveRegionParameter2::from_algebraic_chord(
+            parameter: CurveParameter2::from_algebraic_chord(
                 decided(
                     chord
                         .parameter_at_certified_point(
@@ -18850,8 +18836,8 @@ mod certified_successor_tests {
                     fragment_index: 0,
                     family: chord_geometry.family(),
                     geometry: chord_geometry,
-                    start: CurveRegionParameter2::from_algebraic_chord(chord.start_parameter()),
-                    end: CurveRegionParameter2::from_algebraic_chord(chord.end_parameter()),
+                    start: CurveParameter2::from_algebraic_chord(chord.start_parameter()),
+                    end: CurveParameter2::from_algebraic_chord(chord.end_parameter()),
                     reversed: false,
                     filled_side_is_left: true,
                     selected_fiber_endpoint_points: None,
@@ -18864,12 +18850,10 @@ mod certified_successor_tests {
                     fragment_index: 0,
                     family: source_geometry.family(),
                     geometry: source_geometry,
-                    start: CurveRegionParameter2::from_bezier(BezierParameter2::Exact(
+                    start: CurveParameter2::from_bezier(BezierParameter2::Exact(
                         source_low.clone(),
                     )),
-                    end: CurveRegionParameter2::from_bezier(BezierParameter2::Exact(
-                        source_high.clone(),
-                    )),
+                    end: CurveParameter2::from_bezier(BezierParameter2::Exact(source_high.clone())),
                     reversed: false,
                     filled_side_is_left: true,
                     selected_fiber_endpoint_points: None,
@@ -19050,8 +19034,8 @@ mod certified_successor_tests {
                 loop_index: 0,
                 fragment_index: 0,
                 family: CurveFamily2::Line,
-                start: CurveRegionParameter2::from_algebraic_chord(chord.start_parameter()),
-                end: CurveRegionParameter2::from_algebraic_chord(chord.end_parameter()),
+                start: CurveParameter2::from_algebraic_chord(chord.start_parameter()),
+                end: CurveParameter2::from_algebraic_chord(chord.end_parameter()),
                 geometry: RegionCarrierGeometry::AlgebraicChord(chord),
                 reversed: false,
                 filled_side_is_left: true,
@@ -19134,12 +19118,10 @@ mod certified_successor_tests {
                                 fragment_index: 0,
                                 family: chord_geometry.family(),
                                 geometry: chord_geometry,
-                                start: CurveRegionParameter2::from_algebraic_chord(
+                                start: CurveParameter2::from_algebraic_chord(
                                     chord.start_parameter(),
                                 ),
-                                end: CurveRegionParameter2::from_algebraic_chord(
-                                    chord.end_parameter(),
-                                ),
+                                end: CurveParameter2::from_algebraic_chord(chord.end_parameter()),
                                 reversed: false,
                                 filled_side_is_left: true,
                                 selected_fiber_endpoint_points: None,
@@ -19152,10 +19134,10 @@ mod certified_successor_tests {
                                 fragment_index: 0,
                                 family: curve_geometry.family(),
                                 geometry: curve_geometry,
-                                start: CurveRegionParameter2::from_bezier(BezierParameter2::Exact(
+                                start: CurveParameter2::from_bezier(BezierParameter2::Exact(
                                     Real::zero(),
                                 )),
-                                end: CurveRegionParameter2::from_bezier(BezierParameter2::Exact(
+                                end: CurveParameter2::from_bezier(BezierParameter2::Exact(
                                     Real::one(),
                                 )),
                                 reversed: false,
@@ -19296,7 +19278,7 @@ mod certified_successor_tests {
                 context: RegionCarrierPairContext::ParallelPair,
             };
             let parallel_carrier = &context.data.carriers[parallel_index];
-            let range = CurveRegionParameterRange2::new_validated(
+            let range = CurveParameterRange2::new_validated(
                 parallel_carrier.start.clone(),
                 parallel_carrier.end.clone(),
             );
@@ -19349,12 +19331,10 @@ mod certified_successor_tests {
                                 fragment_index: 0,
                                 family: chord_geometry.family(),
                                 geometry: chord_geometry,
-                                start: CurveRegionParameter2::from_algebraic_chord(
+                                start: CurveParameter2::from_algebraic_chord(
                                     chord.start_parameter(),
                                 ),
-                                end: CurveRegionParameter2::from_algebraic_chord(
-                                    chord.end_parameter(),
-                                ),
+                                end: CurveParameter2::from_algebraic_chord(chord.end_parameter()),
                                 reversed: false,
                                 filled_side_is_left: true,
                                 selected_fiber_endpoint_points: None,
@@ -19367,8 +19347,8 @@ mod certified_successor_tests {
                                 fragment_index: 0,
                                 family: parallel_geometry.family(),
                                 geometry: parallel_geometry,
-                                start: CurveRegionParameter2::from_bezier(range.start().clone()),
-                                end: CurveRegionParameter2::from_bezier(range.end().clone()),
+                                start: CurveParameter2::from_bezier(range.start().clone()),
+                                end: CurveParameter2::from_bezier(range.end().clone()),
                                 reversed: false,
                                 filled_side_is_left: true,
                                 selected_fiber_endpoint_points: None,
@@ -20450,10 +20430,8 @@ mod certified_successor_tests {
                             fragment_index: 0,
                             family: chord_geometry.family(),
                             geometry: chord_geometry,
-                            start: CurveRegionParameter2::from_algebraic_chord(
-                                chord.start_parameter(),
-                            ),
-                            end: CurveRegionParameter2::from_algebraic_chord(chord.end_parameter()),
+                            start: CurveParameter2::from_algebraic_chord(chord.start_parameter()),
+                            end: CurveParameter2::from_algebraic_chord(chord.end_parameter()),
                             reversed: false,
                             filled_side_is_left: true,
                             selected_fiber_endpoint_points: None,
@@ -20755,8 +20733,8 @@ mod certified_successor_tests {
             fragment_index: 0,
             family: geometry.family(),
             geometry,
-            start: CurveRegionParameter2::from_algebraic_cusp(fragment.start_parameter().clone()),
-            end: CurveRegionParameter2::from_algebraic_cusp(fragment.end_parameter().clone()),
+            start: CurveParameter2::from_algebraic_cusp(fragment.start_parameter().clone()),
+            end: CurveParameter2::from_algebraic_cusp(fragment.end_parameter().clone()),
             reversed: false,
             filled_side_is_left: true,
             selected_fiber_endpoint_points: None,
@@ -21212,11 +21190,11 @@ mod certified_successor_tests {
                 );
                 let Classification::Decided(Some(clipped)) = overlap
                     .clipped_curve_region_ranges(
-                        &CurveRegionParameterRange2::new_validated(
+                        &CurveParameterRange2::new_validated(
                             first_carrier.start.clone(),
                             first_carrier.end.clone(),
                         ),
-                        &CurveRegionParameterRange2::new_validated(
+                        &CurveParameterRange2::new_validated(
                             second_carrier.start.clone(),
                             second_carrier.end.clone(),
                         ),

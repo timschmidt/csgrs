@@ -1257,7 +1257,9 @@ fn retained_endpoint_data(
                 | crate::CurvePoint2(CurvePointData2::AlgebraicCuspChordDerived(_))
                 | crate::CurvePoint2(CurvePointData2::AlgebraicChordParallel(_))
                 | crate::CurvePoint2(CurvePointData2::AnalyticParallel(_))
-                | crate::CurvePoint2(CurvePointData2::Similarity(_)) => None,
+                | crate::CurvePoint2(
+                    CurvePointData2::Similarity(_) | CurvePointData2::Endpoint(_),
+                ) => None,
             };
             let mut data = retained_topology_endpoint_data(arrangement_fragment);
             data.start = endpoint_key(chord.start());

@@ -17,8 +17,8 @@ use crate::bezier_split::BezierSelectedFiberSource2;
 use crate::{
     BezierParallel2, BezierParallelSource2, BezierParameter2, BezierSplitFragment2,
     BezierSubcurve2, CircularArc2, Classification, Contour2, Curve2, CurveContext, CurveError,
-    CurveOutcome, CurvePath2, CurvePoint2, CurveRegion2, CurveRegionBoundaryLoop2,
-    CurveRegionLoopRole, CurveRegionParameter2, CurveResult, CurveString2, Point2, Segment2,
+    CurveOutcome, CurveParameter2, CurvePath2, CurvePoint2, CurveRegion2, CurveRegionBoundaryLoop2,
+    CurveRegionLoopRole, CurveResult, CurveString2, Point2, Segment2,
 };
 use hyperreal::{Real, RealSign};
 
@@ -335,30 +335,35 @@ impl CurvePath2 {
         options: &FiniteProjectionOptions,
         policy: &CurveContext,
     ) -> CurveResult<FinitePolyline2> {
-        let closed = if self.start() == self.end() {
-            true
-        } else {
-            crate::classify::is_zero(&self.start().distance_squared(self.end()), policy)
-                .ok_or_else(|| {
-                    CurveError::Topology(
-                        "finite path projection could not decide endpoint closure".into(),
-                    )
-                })?
-        };
-        let fragments = match self
-            .native_bezier_fragments_with_policy(policy)
-            .map_err(|error| CurveError::Topology(error.to_string()))?
-        {
-            Classification::Decided(fragments) => fragments,
+        let closed = match crate::curve::curve_path_is_closed(self, policy) {
+            Classification::Decided(closed) => closed,
             Classification::Uncertain(reason) => {
                 return Err(CurveError::Topology(format!(
-                    "finite path projection was blocked by {reason:?}"
+                    "finite path projection could not decide closure: {reason:?}"
                 )));
             }
         };
-        let mut points = Vec::with_capacity(fragments.len() + 1);
-        for fragment in fragments {
-            append_bezier_subcurve_samples(&mut points, fragment.curve(), options, policy, 0)?;
+        let mut points = Vec::with_capacity(self.curves().len() + 1);
+        for curve in self.curves() {
+            if let Some(fragment) = curve.retained_fragment() {
+                append_curve_fragment_samples(&mut points, fragment, options, policy)?;
+            } else {
+                let fragments = curve
+                    .native_bezier_fragments_for_operation(
+                        policy,
+                        crate::CurveOperation2::Evaluation,
+                    )
+                    .map_err(|error| CurveError::Topology(error.to_string()))?;
+                for fragment in fragments {
+                    append_bezier_subcurve_samples(
+                        &mut points,
+                        fragment.curve(),
+                        options,
+                        policy,
+                        0,
+                    )?;
+                }
+            }
         }
         if closed {
             close_ring(&mut points);
@@ -808,57 +813,67 @@ fn project_curve_region_loop(
 ) -> CurveResult<FinitePolyline2> {
     let mut points = Vec::with_capacity(boundary.fragments().len() + 1);
     for fragment in boundary.fragments() {
-        match fragment {
-            BezierSplitFragment2::Materialized { curve, .. } => {
-                append_bezier_subcurve_samples(&mut points, curve, options, policy, 0)?;
-            }
-            BezierSplitFragment2::AlgebraicEndpointImages {
-                reversed,
-                start,
-                end,
-                source_curve: source,
-                ..
-            } => {
-                let start = finite_parameter_representative(start, policy)?;
-                let end = finite_parameter_representative(end, policy)?;
-                let subcurve = match source.subcurve_between_exact(&start, &end, policy)? {
-                    Classification::Decided(curve) => curve,
-                    Classification::Uncertain(reason) => {
-                        return Err(CurveError::Topology(format!(
-                            "finite projection could not materialize retained algebraic fragment: {reason:?}"
-                        )));
-                    }
-                };
-                let subcurve = if *reversed {
-                    subcurve.reversed()
-                } else {
-                    subcurve
-                };
-                append_bezier_subcurve_samples(&mut points, &subcurve, options, policy, 0)?;
-            }
-            BezierSplitFragment2::AnalyticParallel(fragment) => {
-                append_analytic_parallel_samples(&mut points, fragment, options, policy)?;
-            }
-            BezierSplitFragment2::AlgebraicChord(chord) => {
-                push_if_new(
-                    &mut points,
-                    finite_retained_point(chord.start(), options.chord_error, policy)?,
-                );
-                push_if_new(
-                    &mut points,
-                    finite_retained_point(chord.end(), options.chord_error, policy)?,
-                );
-            }
-            BezierSplitFragment2::AlgebraicCuspSemicircle(fragment) => {
-                append_algebraic_cusp_semicircle_samples(&mut points, fragment, options, policy)?;
-            }
-            BezierSplitFragment2::SelectedFiber(fragment) => {
-                append_selected_fiber_samples(&mut points, fragment, options, policy)?;
-            }
-        }
+        append_curve_fragment_samples(&mut points, fragment, options, policy)?;
     }
     close_ring(&mut points);
     Ok(FinitePolyline2::new(points, options.chord_error, true))
+}
+
+fn append_curve_fragment_samples(
+    points: &mut Vec<[f64; 2]>,
+    fragment: &BezierSplitFragment2,
+    options: &FiniteProjectionOptions,
+    policy: &CurveContext,
+) -> CurveResult<()> {
+    match fragment {
+        BezierSplitFragment2::Materialized { curve, .. } => {
+            append_bezier_subcurve_samples(points, curve, options, policy, 0)?;
+        }
+        BezierSplitFragment2::AlgebraicEndpointImages {
+            reversed,
+            start,
+            end,
+            source_curve: source,
+            ..
+        } => {
+            let start = finite_parameter_representative(start, policy)?;
+            let end = finite_parameter_representative(end, policy)?;
+            let subcurve = match source.subcurve_between_exact(&start, &end, policy)? {
+                Classification::Decided(curve) => curve,
+                Classification::Uncertain(reason) => {
+                    return Err(CurveError::Topology(format!(
+                        "finite projection could not materialize retained algebraic fragment: {reason:?}"
+                    )));
+                }
+            };
+            let subcurve = if *reversed {
+                subcurve.reversed()
+            } else {
+                subcurve
+            };
+            append_bezier_subcurve_samples(points, &subcurve, options, policy, 0)?;
+        }
+        BezierSplitFragment2::AnalyticParallel(fragment) => {
+            append_analytic_parallel_samples(points, fragment, options, policy)?;
+        }
+        BezierSplitFragment2::AlgebraicChord(chord) => {
+            push_if_new(
+                points,
+                finite_retained_point(chord.start(), options.chord_error, policy)?,
+            );
+            push_if_new(
+                points,
+                finite_retained_point(chord.end(), options.chord_error, policy)?,
+            );
+        }
+        BezierSplitFragment2::AlgebraicCuspSemicircle(fragment) => {
+            append_algebraic_cusp_semicircle_samples(points, fragment, options, policy)?;
+        }
+        BezierSplitFragment2::SelectedFiber(fragment) => {
+            append_selected_fiber_samples(points, fragment, options, policy)?;
+        }
+    }
+    Ok(())
 }
 
 struct FiniteParameterProjection2 {
@@ -868,7 +883,7 @@ struct FiniteParameterProjection2 {
 }
 
 fn finite_region_parameter_projection(
-    parameter: &CurveRegionParameter2,
+    parameter: &CurveParameter2,
     refinement_steps: usize,
     policy: &CurveContext,
 ) -> CurveResult<FiniteParameterProjection2> {
@@ -987,8 +1002,8 @@ fn append_analytic_parallel_samples(
     };
     let start = finite_retained_point(start, options.chord_error, policy)?;
     let end = finite_retained_point(end, options.chord_error, policy)?;
-    let range_start = CurveRegionParameter2::from_bezier(fragment.range().start().clone());
-    let range_end = CurveRegionParameter2::from_bezier(fragment.range().end().clone());
+    let range_start = CurveParameter2::from_bezier(fragment.range().start().clone());
+    let range_end = CurveParameter2::from_bezier(fragment.range().end().clone());
     append_retained_parallel_range_samples(
         points,
         fragment.parallel(),
@@ -1241,8 +1256,8 @@ fn append_selected_fiber_samples(
 fn append_retained_parallel_range_samples(
     points: &mut Vec<[f64; 2]>,
     parallel: &BezierParallel2,
-    range_start_parameter: &CurveRegionParameter2,
-    range_end_parameter: &CurveRegionParameter2,
+    range_start_parameter: &CurveParameter2,
+    range_end_parameter: &CurveParameter2,
     reversed: bool,
     start_point: [f64; 2],
     end_point: [f64; 2],
@@ -1677,7 +1692,7 @@ mod tests {
         assert!(projection.points().len() > path.curves().len() + 1);
         assert!(matches!(
             path.curves()[2].geometry(),
-            crate::CurveGeometry2::CubicBezier(_)
+            Some(crate::CurveGeometry2::CubicBezier(_))
         ));
     }
 
@@ -1697,7 +1712,7 @@ mod tests {
         assert!(matches!(
             path.project_to_finite_polyline(&options, &CurveContext::STRICT),
             Err(CurveError::Topology(message))
-                if message == "finite path projection could not decide endpoint closure"
+                if message.starts_with("finite path projection could not decide")
         ));
         let approximate = path
             .project_to_finite_polyline(&options, &CurveContext::APPROXIMATE_512)
@@ -1801,7 +1816,7 @@ mod tests {
         assert!(paths[0].curves().iter().all(|curve| {
             matches!(
                 curve.geometry(),
-                crate::CurveGeometry2::RationalQuadraticBezier(conic)
+                Some(crate::CurveGeometry2::RationalQuadraticBezier(conic))
                     if conic.retained_circular_conic().is_some()
             )
         }));

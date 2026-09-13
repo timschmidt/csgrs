@@ -88,7 +88,7 @@ fn rationally_trimmed_semicircle_redecomposes_exactly() {
         .subcurve(quarter, three_quarters, &CurveContext::STRICT)
         .unwrap()
         .into_value();
-    let CurveGeometry2::CircularArc(arc) = trimmed.geometry() else {
+    let Some(CurveGeometry2::CircularArc(arc)) = trimmed.geometry() else {
         panic!("trimmed arc changed family");
     };
 

@@ -479,7 +479,7 @@ fn corner_orientation(source: &CurvePath2, vertex_index: usize) -> Result<Option
 }
 
 fn endpoint_tangent(curve: &Curve2, at_start: bool) -> Result<(Real, Real), String> {
-    if let CurveGeometry2::CircularArc(arc) = curve.geometry() {
+    if let Some(CurveGeometry2::CircularArc(arc)) = curve.geometry() {
         let endpoint = if at_start { arc.start() } else { arc.end() };
         let (radius_x, radius_y) = endpoint.delta_from(arc.center());
         return Ok(if arc.is_clockwise() {
@@ -704,16 +704,14 @@ fn affine_family_curve(family: CurveFamily2, start: Point2, end: Point2) -> Resu
             )
             .map_err(string_error)?,
         ),
-        CurveFamily2::PolynomialBSpline => {
-            Curve2::try_polynomial_bspline(
-                1,
-                vec![start, end],
-                linear_spline_knots(),
-                &CurveContext::STRICT,
-            )
-            .map_err(string_error)?
-            .into_value()
-        }
+        CurveFamily2::PolynomialBSpline => Curve2::try_polynomial_bspline(
+            1,
+            vec![start, end],
+            linear_spline_knots(),
+            &CurveContext::STRICT,
+        )
+        .map_err(string_error)?
+        .into_value(),
         CurveFamily2::Nurbs => Curve2::try_nurbs(
             1,
             vec![start, end],
@@ -942,7 +940,7 @@ mod tests {
                                 .filter(|curve| {
                                     matches!(
                                         curve.geometry(),
-                                        CurveGeometry2::CircularArc(arc)
+                                        Some(CurveGeometry2::CircularArc(arc))
                                             if arc.radius_squared_ref() == &radius_squared
                                     )
                                 })

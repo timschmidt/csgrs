@@ -818,7 +818,10 @@ fn periodic_polynomial_wrapping_obeys_terminal_policy() {
         top_level_point.certainty,
         hypercurve::CurveCertainty::Approximate512Consumed
     );
-    assert_eq!(top_level_point.value, top_level.start().clone());
+    assert_eq!(
+        Some(&top_level_point.value),
+        top_level.start().coordinates()
+    );
 }
 
 #[test]

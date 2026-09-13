@@ -149,7 +149,7 @@ pub use bezier_retained_overlap::{
 };
 pub use bezier_split::{
     BezierParallelFragment2, BezierSplitFragment2, BezierSplitMaterialization2, BezierSubcurve2,
-    CurveRegionParameter2, CurveRegionParameterRange2,
+    CurveParameter2, CurveParameterRange2,
 };
 pub use bezier_split_endpoint::{
     BezierAlgebraicEndpointImage2, BezierEndpointPointImage2, BezierEndpointTangentImage2,
@@ -183,8 +183,8 @@ pub use classify::{Classification, LineSide, UncertaintyReason};
 pub use contour::{Contour2, ContourPointLocation, FillRule};
 pub use curve::{
     Curve2, CurveCornerMode2, CurveCornerNoSolution2, CurveCornerSolutions2, CurveDerivative2,
-    CurveFamily2, CurveGeometry2, CurveParameterDomain2, CurveParameterSide2, CurvePath2,
-    CurveSpanRange2, NativeBezierBoundaryLoop2, NativeBezierFragment2,
+    CurveFamily2, CurveGeometry2, CurveParameterSide2, CurvePath2, CurveSpanRange2,
+    NativeBezierBoundaryLoop2, NativeBezierFragment2,
 };
 pub use curve_intersection::{
     CurveIntersectionContact2, CurveIntersectionOverlap2, CurveIntersectionPairBlocker2,

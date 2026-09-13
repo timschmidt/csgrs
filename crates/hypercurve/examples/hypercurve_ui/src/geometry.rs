@@ -369,16 +369,16 @@ impl CurvePrimitive {
 
     fn from_curve(curve: &Curve2) -> Result<Self, String> {
         match curve.geometry() {
-            CurveGeometry2::Line(line) => Ok(Self::Line {
+            Some(CurveGeometry2::Line(line)) => Ok(Self::Line {
                 start: vertex_from_point(line.start().clone()),
                 end: vertex_from_point(line.end().clone()),
             }),
-            CurveGeometry2::CircularArc(arc) => Ok(Self::CircularArc {
+            Some(CurveGeometry2::CircularArc(arc)) => Ok(Self::CircularArc {
                 start: vertex_from_point(arc.start().clone()),
                 end: vertex_from_point(arc.end().clone()),
                 bulge: bulge_for_arc(arc),
             }),
-            CurveGeometry2::QuadraticBezier(curve) => {
+            Some(CurveGeometry2::QuadraticBezier(curve)) => {
                 let [start, control, end] = curve.control_points();
                 Ok(Self::QuadraticBezier {
                     start: vertex_from_point(start.clone()),
@@ -386,7 +386,7 @@ impl CurvePrimitive {
                     end: vertex_from_point(end.clone()),
                 })
             }
-            CurveGeometry2::CubicBezier(curve) => {
+            Some(CurveGeometry2::CubicBezier(curve)) => {
                 let [start, control1, control2, end] = curve.control_points();
                 Ok(Self::CubicBezier {
                     start: vertex_from_point(start.clone()),
@@ -395,7 +395,7 @@ impl CurvePrimitive {
                     end: vertex_from_point(end.clone()),
                 })
             }
-            CurveGeometry2::RationalQuadraticBezier(curve) => {
+            Some(CurveGeometry2::RationalQuadraticBezier(curve)) => {
                 let [start, control, end] = curve.control_points();
                 Ok(Self::RationalQuadratic {
                     start: vertex_from_point(start.clone()),
@@ -705,8 +705,7 @@ impl Polyline {
                 .map(Shape::into_polylines)
                 .unwrap_or_default())
         } else {
-            Err("filled-region offset requires a closed shape; use Outline for an open path"
-                .into())
+            Err("filled-region offset requires a closed shape; use Outline for an open path".into())
         }
     }
 
@@ -1032,7 +1031,7 @@ impl Shape {
 
     pub fn from_curve_region(region: &CurveRegion2) -> Result<Option<Self>, String> {
         let paths = match region
-            .materialized_boundary_paths(&CurveContext::STRICT)
+            .boundary_paths(&CurveContext::STRICT)
             .map_err(|error| error.to_string())?
             .into_value()
         {
@@ -1222,8 +1221,8 @@ pub fn contour_intersections(
 ) -> Result<(Vec<[f64; 2]>, Vec<Polyline>), String> {
     let first = first.to_contour()?;
     let second = second.to_contour()?;
-    let events = preview(|context| first.intersect_contour(&second, context))
-        .map_err(|e| e.to_string())?;
+    let events =
+        preview(|context| first.intersect_contour(&second, context)).map_err(|e| e.to_string())?;
     let mut points = Vec::new();
     let mut overlaps = Vec::new();
     for event in events.events() {
@@ -2263,15 +2262,17 @@ mod tests {
     fn contour_has_slice_events(first: &Polyline, second: &Polyline) -> Result<bool, String> {
         let first = first.to_contour()?;
         let second = second.to_contour()?;
-        Ok(!preview(|context| first.intersect_contour(&second, context))
-            .map_err(|error| error.to_string())?
-            .is_empty()
-            || !preview(|context| first.intersect_self(context))
+        Ok(
+            !preview(|context| first.intersect_contour(&second, context))
                 .map_err(|error| error.to_string())?
                 .is_empty()
-            || !preview(|context| second.intersect_self(context))
-                .map_err(|error| error.to_string())?
-                .is_empty())
+                || !preview(|context| first.intersect_self(context))
+                    .map_err(|error| error.to_string())?
+                    .is_empty()
+                || !preview(|context| second.intersect_self(context))
+                    .map_err(|error| error.to_string())?
+                    .is_empty(),
+        )
     }
 
     fn alternating_band_polyline(

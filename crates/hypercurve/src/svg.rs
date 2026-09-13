@@ -879,7 +879,18 @@ fn transform_curve(curve: &Curve2, transform: &ExactAffine2) -> SvgResult<Vec<Cu
         cause,
     };
     let transformed = match curve.geometry() {
-        CurveGeometry2::Line(line) => vec![Curve2::from(
+        None => {
+            let Some(similarity) = transform.similarity() else {
+                return Err(SvgError::Geometry(
+                    "this retained curve requires a similarity transform".into(),
+                ));
+            };
+            return curve
+                .transform_similarity(&similarity, &CurveContext::STRICT)
+                .map(|curve| vec![curve.into_value()])
+                .map_err(svg_geometry_error);
+        }
+        Some(CurveGeometry2::Line(line)) => vec![Curve2::from(
             LineSeg2::try_new(
                 transform.transform_point(line.start()),
                 transform.transform_point(line.end()),
@@ -887,7 +898,7 @@ fn transform_curve(curve: &Curve2, transform: &ExactAffine2) -> SvgResult<Vec<Cu
             .map_err(invalid)
             .map_err(svg_geometry_error)?,
         )],
-        CurveGeometry2::CircularArc(_) => {
+        Some(CurveGeometry2::CircularArc(_)) => {
             if let Some(similarity) = transform.similarity() {
                 return curve
                     .transform_similarity(&similarity, &CurveContext::STRICT)
@@ -904,18 +915,18 @@ fn transform_curve(curve: &Curve2, transform: &ExactAffine2) -> SvgResult<Vec<Cu
                 })
                 .collect::<SvgResult<Vec<_>>>()?
         }
-        CurveGeometry2::QuadraticBezier(curve) => vec![Curve2::from(QuadraticBezier2::new(
+        Some(CurveGeometry2::QuadraticBezier(curve)) => vec![Curve2::from(QuadraticBezier2::new(
             transform.transform_point(curve.start()),
             transform.transform_point(curve.control()),
             transform.transform_point(curve.end()),
         ))],
-        CurveGeometry2::CubicBezier(curve) => vec![Curve2::from(CubicBezier2::new(
+        Some(CurveGeometry2::CubicBezier(curve)) => vec![Curve2::from(CubicBezier2::new(
             transform.transform_point(curve.start()),
             transform.transform_point(curve.control1()),
             transform.transform_point(curve.control2()),
             transform.transform_point(curve.end()),
         ))],
-        CurveGeometry2::RationalQuadraticBezier(curve) => vec![Curve2::from(
+        Some(CurveGeometry2::RationalQuadraticBezier(curve)) => vec![Curve2::from(
             RationalQuadraticBezier2::try_new(
                 transform.transform_point(curve.start()),
                 transform.transform_point(curve.control()),
@@ -927,7 +938,7 @@ fn transform_curve(curve: &Curve2, transform: &ExactAffine2) -> SvgResult<Vec<Cu
             .map_err(invalid)
             .map_err(svg_geometry_error)?,
         )],
-        CurveGeometry2::RationalBezier(curve) => vec![Curve2::from(
+        Some(CurveGeometry2::RationalBezier(curve)) => vec![Curve2::from(
             RationalBezier2::try_new(
                 curve
                     .control_points()
@@ -939,7 +950,7 @@ fn transform_curve(curve: &Curve2, transform: &ExactAffine2) -> SvgResult<Vec<Cu
             .map_err(invalid)
             .map_err(svg_geometry_error)?,
         )],
-        CurveGeometry2::PolynomialBSpline(curve) => {
+        Some(CurveGeometry2::PolynomialBSpline(curve)) => {
             vec![Curve2::from(
                 PolynomialSplineCurve2::try_new_raw(
                     curve.degree(),
@@ -954,7 +965,7 @@ fn transform_curve(curve: &Curve2, transform: &ExactAffine2) -> SvgResult<Vec<Cu
                 .map_err(svg_geometry_error)?,
             )]
         }
-        CurveGeometry2::Nurbs(curve) => vec![Curve2::from(
+        Some(CurveGeometry2::Nurbs(curve)) => vec![Curve2::from(
             NurbsCurve2::try_new_raw(
                 curve.degree(),
                 curve
@@ -1160,8 +1171,8 @@ fn path_as_native_wire(path: &CurvePath2) -> Option<CurveString2> {
         .curves()
         .iter()
         .map(|curve| match curve.geometry() {
-            CurveGeometry2::Line(line) => Some(Segment2::Line(line.clone())),
-            CurveGeometry2::CircularArc(arc) => Some(Segment2::Arc(arc.clone())),
+            Some(CurveGeometry2::Line(line)) => Some(Segment2::Line(line.clone())),
+            Some(CurveGeometry2::CircularArc(arc)) => Some(Segment2::Arc(arc.clone())),
             _ => None,
         })
         .collect::<Option<Vec<_>>>()?;
@@ -1543,18 +1554,36 @@ fn append_native_path(
     projection: &FiniteProjectionOptions,
     options: SvgOptions,
 ) -> SvgResult<()> {
-    let start = finite_point(path.start())?;
+    if path.curves().iter().any(|curve| curve.geometry().is_none()) {
+        let projected = path
+            .project_to_finite_polyline(projection, &CurveContext::STRICT)
+            .map_err(svg_geometry_error)?
+            .into_value();
+        for (index, point) in projected.points().iter().enumerate() {
+            write!(
+                output,
+                "{} {:.17} {:.17}",
+                if index == 0 { "M" } else { " L" },
+                point[0],
+                point[1]
+            )
+            .expect("writing SVG path data to String cannot fail");
+        }
+        return Ok(());
+    }
+    let start = finite_point(path.curves()[0].geometry().expect("native path").start())?;
     write!(output, "M {:.17} {:.17}", start[0], start[1])
         .expect("writing SVG path data to String cannot fail");
     let mut emitted_segments = 0_usize;
 
     for curve in path.curves() {
         match curve.geometry() {
-            CurveGeometry2::Line(line) => {
+            None => unreachable!("retained paths projected above"),
+            Some(CurveGeometry2::Line(line)) => {
                 append_line_command(output, line.end())?;
                 emitted_segments += 1;
             }
-            CurveGeometry2::CircularArc(arc) => {
+            Some(CurveGeometry2::CircularArc(arc)) => {
                 let radius = arc
                     .radius_squared_ref()
                     .clone()
@@ -1597,7 +1626,7 @@ fn append_native_path(
                     }
                 }
             }
-            CurveGeometry2::QuadraticBezier(curve) => {
+            Some(CurveGeometry2::QuadraticBezier(curve)) => {
                 let control = finite_point(curve.control())?;
                 let end = finite_point(curve.end())?;
                 write!(
@@ -1608,7 +1637,7 @@ fn append_native_path(
                 .expect("writing SVG quadratic command to String cannot fail");
                 emitted_segments += 1;
             }
-            CurveGeometry2::CubicBezier(curve) => {
+            Some(CurveGeometry2::CubicBezier(curve)) => {
                 let control1 = finite_point(curve.control1())?;
                 let control2 = finite_point(curve.control2())?;
                 let end = finite_point(curve.end())?;
@@ -1620,10 +1649,10 @@ fn append_native_path(
                 .expect("writing SVG cubic command to String cannot fail");
                 emitted_segments += 1;
             }
-            CurveGeometry2::RationalQuadraticBezier(_)
-            | CurveGeometry2::RationalBezier(_)
-            | CurveGeometry2::PolynomialBSpline(_)
-            | CurveGeometry2::Nurbs(_) => {
+            Some(CurveGeometry2::RationalQuadraticBezier(_))
+            | Some(CurveGeometry2::RationalBezier(_))
+            | Some(CurveGeometry2::PolynomialBSpline(_))
+            | Some(CurveGeometry2::Nurbs(_)) => {
                 let one_curve =
                     CurvePath2::try_new(vec![curve.clone()]).map_err(svg_geometry_error)?;
                 let polyline = one_curve

@@ -480,13 +480,17 @@ fn promoted_region_boolean_consumes_irrational_polynomial_graph_overlap() {
         CurveBoundaryInteriorSide2::Left,
         &CurveContext::STRICT,
     );
-    assert!(matches!(
-        region
-            .materialized_boundary_paths(&CurveContext::STRICT)
-            .unwrap()
-            .into_value(),
-        Classification::Uncertain(_)
-    ));
+    let exported = region.boundary_paths(&CurveContext::STRICT).unwrap();
+    assert_eq!(exported.certainty, hypercurve::CurveCertainty::Certified);
+    let Classification::Decided(paths) = exported.value else {
+        panic!("lossless exact boundaries")
+    };
+    assert!(
+        paths
+            .iter()
+            .flat_map(|path| path.curves())
+            .any(|curve| curve.geometry().is_none())
+    );
 }
 
 #[test]
@@ -852,13 +856,31 @@ fn rectangle(x0: i32, y0: i32, x1: i32, y1: i32) -> CurvePath2 {
 fn closed_under_curve(curve: Curve2, lower_y: i32) -> CurvePath2 {
     let start = curve.start().clone();
     let end = curve.end().clone();
-    let lower_end = Point2::new(end.x().clone(), r(lower_y));
-    let lower_start = Point2::new(start.x().clone(), r(lower_y));
+    let lower_end = Point2::new(
+        end.coordinates().expect("native endpoint").x().clone(),
+        r(lower_y),
+    );
+    let lower_start = Point2::new(
+        start.coordinates().expect("native endpoint").x().clone(),
+        r(lower_y),
+    );
     CurvePath2::try_new(vec![
         curve,
-        Curve2::from(LineSeg2::try_new(end, lower_end.clone()).unwrap()),
+        Curve2::from(
+            LineSeg2::try_new(
+                (end).coordinates().expect("native endpoint").clone(),
+                lower_end.clone(),
+            )
+            .unwrap(),
+        ),
         Curve2::from(LineSeg2::try_new(lower_end, lower_start.clone()).unwrap()),
-        Curve2::from(LineSeg2::try_new(lower_start, start).unwrap()),
+        Curve2::from(
+            LineSeg2::try_new(
+                lower_start,
+                (start).coordinates().expect("native endpoint").clone(),
+            )
+            .unwrap(),
+        ),
     ])
     .unwrap()
 }
