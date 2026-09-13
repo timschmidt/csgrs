@@ -2946,12 +2946,16 @@ fn gcd_monic_normalize(polynomial: Vec<Real>, policy: PredicatePolicy) -> Option
     }
     let leading = polynomial.last()?.clone();
     let inverse = reciprocal_real(&leading, policy).ok()?.value()?;
-    Some(
-        polynomial
-            .into_iter()
-            .map(|coefficient| coefficient * &inverse)
-            .collect(),
-    )
+    let degree = polynomial.len() - 1;
+    let mut normalized = polynomial
+        .into_iter()
+        .take(degree)
+        .map(|coefficient| coefficient * &inverse)
+        .collect::<Vec<_>>();
+    // The leading coefficient is certified nonzero above. Its normalization
+    // is exactly one; retain that fact without rebuilding a * (1 / a).
+    normalized.push(Real::one());
+    Some(normalized)
 }
 
 fn leading_zero_multiplicity(polynomial: &[Real], policy: PredicatePolicy) -> Option<usize> {
@@ -3372,6 +3376,10 @@ fn descartes_report(
         message,
     }
 }
+
+#[cfg(test)]
+#[path = "root_isolation_monic_tests.rs"]
+mod monic_tests;
 
 #[cfg(test)]
 mod tests {

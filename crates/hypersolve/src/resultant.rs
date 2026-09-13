@@ -1193,15 +1193,34 @@ fn is_zero_polynomial_strict_fallback(
     start: usize,
     min_precision: i32,
 ) -> Result<bool, (ResultantInputSide, usize)> {
+    // A nonzero structural fact anywhere already disproves polynomial zero.
+    // Check from the leading end, where normalized polynomial callers retain
+    // their degree witness, before spending effort on unresolved lower terms.
+    // This is only a sufficient test; the full three-valued scan remains below.
+    if polynomial[start..]
+        .iter()
+        .rev()
+        .any(|coefficient| coefficient.zero_status() == ZeroKnowledge::NonZero)
+    {
+        return Ok(false);
+    }
+    let mut first_undecided = None;
     for (offset, coefficient) in polynomial[start..].iter().enumerate() {
         let index = start + offset;
         match crate::policy_division::strict_sign_after_refinement(coefficient, min_precision) {
             Some(RealSign::Zero) => {}
             Some(RealSign::Negative | RealSign::Positive) => return Ok(false),
-            None => return Err((ResultantInputSide::Left, index)),
+            None => {
+                first_undecided.get_or_insert(index);
+            }
         }
     }
-    Ok(true)
+    // One known nonzero coefficient disproves polynomial zero even if an
+    // earlier coefficient is unresolved. Otherwise retain the first blocker.
+    match first_undecided {
+        Some(index) => Err((ResultantInputSide::Left, index)),
+        None => Ok(true),
+    }
 }
 
 pub(crate) fn sylvester_matrix(left: &[Real], right: &[Real]) -> Vec<Vec<Real>> {
@@ -1248,6 +1267,88 @@ mod tests {
 
     fn real(value: i64) -> Real {
         Real::from(value)
+    }
+
+    fn unresolved_zero_coefficient() -> Real {
+        let value = (real(1) + real(2).sqrt().unwrap()).ln().unwrap() * real(2)
+            - (real(3) + real(2) * real(2).sqrt().unwrap()).ln().unwrap();
+        assert_eq!(
+            crate::policy_division::strict_sign_after_refinement(&value, -64),
+            None
+        );
+        value
+    }
+
+    #[test]
+    fn polynomial_zero_truth_lets_nonzero_dominate_unknown() {
+        let unknown = unresolved_zero_coefficient();
+        for code in 0..256 {
+            let mut digits = code;
+            let mut polynomial = Vec::new();
+            let mut first_unknown = None;
+            let mut any_nonzero = false;
+            for index in 0..4 {
+                let digit = digits % 4;
+                digits /= 4;
+                polynomial.push(match digit {
+                    0 => Real::zero(),
+                    1 => {
+                        any_nonzero = true;
+                        Real::one()
+                    }
+                    2 => {
+                        any_nonzero = true;
+                        -Real::one()
+                    }
+                    _ => {
+                        first_unknown.get_or_insert(index);
+                        unknown.clone()
+                    }
+                });
+            }
+            let expected = if any_nonzero {
+                Ok(false)
+            } else if let Some(index) = first_unknown {
+                Err((ResultantInputSide::Left, index))
+            } else {
+                Ok(true)
+            };
+            assert_eq!(
+                is_zero_polynomial(&polynomial, -64),
+                expected,
+                "code {code}"
+            );
+        }
+        assert_eq!(is_zero_polynomial(&[], -64), Ok(true));
+    }
+
+    #[test]
+    fn subresultant_chain_keeps_unknown_lower_coefficients() {
+        let unknown = unresolved_zero_coefficient();
+        let polynomial = [unknown, Real::one()];
+        let self_chain = subresultant_chain_univariate_polynomials(&polynomial, &polynomial, -64)
+            .expect("a known leading one makes the polynomial nonzero");
+        assert_eq!(self_chain.last_nonzero_degree, 1);
+        assert!(self_chain.has_nonconstant_common_factor);
+        assert_eq!(self_chain.steps.len(), 1);
+        assert!(self_chain.steps[0].zero_remainder);
+        let shifted = [polynomial[0].clone() + Real::one(), Real::one()];
+        let coprime = subresultant_chain_univariate_polynomials(&polynomial, &shifted, -64)
+            .expect("a constant-one difference certifies coprimality");
+        assert_eq!(coprime.last_nonzero_degree, 0);
+        assert!(!coprime.has_nonconstant_common_factor);
+    }
+
+    #[test]
+    fn subresultant_chain_still_rejects_unknown_leading_degree() {
+        let polynomial = [Real::one(), unresolved_zero_coefficient()];
+        assert_eq!(
+            subresultant_chain_univariate_polynomials(&polynomial, &polynomial, -64).unwrap_err(),
+            UnivariateSubresultantChainError::UndecidedCoefficient {
+                side: ResultantInputSide::Left,
+                index: 1,
+            }
+        );
     }
 
     #[test]

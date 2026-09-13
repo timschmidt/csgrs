@@ -93,6 +93,11 @@ pub struct AlgebraicRootBinaryTransformReport {
 /// preserving a replayable elimination certificate.  Quotient construction is
 /// still not a total field API: it refuses divisors whose isolating interval
 /// may contain zero.
+/// After the existing oversized-carrier square-free reduction, division may
+/// remove an exact factor `x^k` from `Q` when the divisor interval excludes zero
+/// under STRICT. This preserves the selected divisor and avoids an identically
+/// zero resultant caused by an unused zero root in both carriers. For an
+/// already nonzero resultant its signed primitive orientation is preserved.
 pub fn transform_algebraic_roots_binary(
     left: &AlgebraicRootRepresentation,
     right: &AlgebraicRootRepresentation,
@@ -181,6 +186,11 @@ pub fn transform_algebraic_roots_binary(
         left_polynomial = Cow::Owned(square_free_left);
         right_polynomial = Cow::Owned(square_free_right);
     }
+    let removed_zero_factors = if operation == AlgebraicRootArithmeticOp::Divide {
+        remove_certified_divisor_zero_factors(&mut right_polynomial, &right.interval)
+    } else {
+        0
+    };
     let Some(resultant_degree) =
         (left_polynomial.len() - 1).checked_mul(right_polynomial.len() - 1)
     else {
@@ -200,7 +210,7 @@ pub fn transform_algebraic_roots_binary(
         );
     }
 
-    let Some(polynomial_coefficients) = resultant_polynomial_for_binary_image(
+    let Some(mut polynomial_coefficients) = resultant_polynomial_for_binary_image(
         &left_polynomial,
         &right_polynomial,
         operation,
@@ -213,7 +223,19 @@ pub fn transform_algebraic_roots_binary(
             Some("could not construct binary resultant polynomial exactly".to_owned()),
         );
     };
-    let Some(image_interval) =
+    // Res(P, x^k S) = ((-1)^deg(P) P(0))^k Res(P, S). Positive content
+    // normalization removes the magnitude, not this sign. If P(0) = 0 the
+    // old resultant vanished identically and had no orientation to preserve.
+    if removed_zero_factors % 2 == 1
+        && let Some(constant) = left_polynomial[0].exact_rational_ref()
+        && !constant.is_zero()
+        && (constant.is_negative() != ((left_polynomial.len() - 1) % 2 == 1))
+    {
+        for coefficient in &mut polynomial_coefficients {
+            *coefficient = -coefficient.clone();
+        }
+    }
+    let Some(mut image_interval) =
         binary_image_interval(&left.interval, &right.interval, operation, policy)
     else {
         return binary_report(
@@ -223,15 +245,37 @@ pub fn transform_algebraic_roots_binary(
             Some("could not construct exact binary image interval".to_owned()),
         );
     };
-    let refinement = refine_isolated_univariate_polynomial_interval(
-        &polynomial_coefficients,
-        &image_interval,
-        RootIsolationConfig {
+    let refine = |interval: &IsolatedRootInterval| {
+        refine_isolated_univariate_polynomial_interval(
+            &polynomial_coefficients,
+            interval,
+            RootIsolationConfig {
+                policy,
+                max_interval_width: None,
+                max_refinement_steps: 2,
+            },
+        )
+    };
+    let refinement = refine(&image_interval);
+    // Ordinary/nonpoint refinement needs no extra strict endpoint probe. A
+    // collapsed image is rejected as InvalidInterval when its witness is
+    // missing; recover only after that typed gate, without matching a message.
+    let refinement = if refinement.status == IsolatedRootRefinementStatus::InvalidInterval
+        && let Some(witness) = certified_binary_point_witness(
+            &left.interval,
+            &right.interval,
+            &image_interval,
+            operation,
             policy,
-            max_interval_width: None,
-            max_refinement_steps: 2,
-        },
-    );
+        ) {
+        image_interval.exact_root = Some(witness);
+        // Do not retain the rejected report while replaying all the original
+        // containment, polynomial-vanishing and uniqueness obligations.
+        drop(refinement);
+        refine(&image_interval)
+    } else {
+        refinement
+    };
     let Some(interval) = refinement.refined_interval else {
         return binary_report(
             operation,
@@ -367,6 +411,36 @@ fn binary_image_interval(
     })
 }
 
+fn certified_binary_point_witness(
+    left: &IsolatedRootInterval,
+    right: &IsolatedRootInterval,
+    image: &IsolatedRootInterval,
+    operation: AlgebraicRootArithmeticOp,
+    policy: PredicatePolicy,
+) -> Option<Real> {
+    // An approximate endpoint equality is never sufficient for a witness.
+    if compare_reals(&image.lower, &image.upper, PredicatePolicy::STRICT).value()
+        != Some(Ordering::Equal)
+    {
+        return None;
+    }
+    // Approximate multiplication/division may have selected extrema without
+    // certifying the entire image. Replay their construction under STRICT.
+    if policy != PredicatePolicy::STRICT
+        && matches!(
+            operation,
+            AlgebraicRootArithmeticOp::Multiply | AlgebraicRootArithmeticOp::Divide
+        )
+    {
+        let strict = binary_image_interval(left, right, operation, PredicatePolicy::STRICT)?;
+        (compare_reals(&strict.lower, &strict.upper, PredicatePolicy::STRICT).value()
+            == Some(Ordering::Equal))
+        .then_some(strict.lower)
+    } else {
+        Some(image.lower.clone())
+    }
+}
+
 fn reciprocal_product_polynomial(right_polynomial: &[Real], y: &Real) -> Vec<Real> {
     reversed_ascending_power_products(right_polynomial.iter(), y)
 }
@@ -481,6 +555,35 @@ fn interval_div(
     )
 }
 
+fn remove_certified_divisor_zero_factors(
+    polynomial: &mut Cow<'_, [Real]>,
+    interval: &IsolatedRootInterval,
+) -> usize {
+    let count = polynomial
+        .iter()
+        .take_while(|coefficient| {
+            coefficient
+                .exact_rational_ref()
+                .is_some_and(|q| q.is_zero())
+        })
+        .count();
+    if count == 0
+        || count + 1 >= polynomial.len()
+        || interval_contains_zero(interval, PredicatePolicy::STRICT) != Some(false)
+    {
+        return 0;
+    }
+    // Borrow a suffix for the ordinary path; reuse square-free storage on the
+    // oversized path. Original source evidence and interval stay untouched.
+    match polynomial {
+        Cow::Borrowed(coefficients) => *coefficients = &coefficients[count..],
+        Cow::Owned(coefficients) => {
+            coefficients.drain(..count);
+        }
+    }
+    count
+}
+
 fn interval_contains_zero(
     interval: &IsolatedRootInterval,
     policy: PredicatePolicy,
@@ -544,6 +647,10 @@ fn binary_report(
 }
 
 #[cfg(test)]
+#[path = "algebraic_binary/zero_factor_tests.rs"]
+mod zero_factor_tests;
+
+#[cfg(test)]
 mod tests {
     use proptest::prelude::*;
 
@@ -556,6 +663,380 @@ mod tests {
 
     fn fraction(numerator: i64, denominator: u64) -> Real {
         Real::from(hyperreal::Rational::fraction(numerator, denominator).unwrap())
+    }
+
+    fn point_root(value: Real, polynomial: Vec<Real>) -> AlgebraicRootRepresentation {
+        AlgebraicRootRepresentation {
+            constraint_index: 7,
+            symbol: SymbolId(11),
+            interval_index: 3,
+            polynomial_coefficients: polynomial,
+            interval: IsolatedRootInterval {
+                lower: value.clone(),
+                upper: value.clone(),
+                exact_root: Some(value),
+                distinct_root_count: 1,
+            },
+            validation: AlgebraicRootValidationReport {
+                status: AlgebraicRootValidationStatus::Valid,
+                message: None,
+            },
+        }
+    }
+
+    #[test]
+    fn binary_point_images_preserve_rational_witnesses() {
+        for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
+            for a in -4..=4 {
+                for b in -4..=4 {
+                    let left = point_root(fraction(a, 3), vec![real(-a), real(3)]);
+                    let right = point_root(fraction(b, 5), vec![real(-b), real(5)]);
+                    for operation in [
+                        AlgebraicRootArithmeticOp::Add,
+                        AlgebraicRootArithmeticOp::Subtract,
+                        AlgebraicRootArithmeticOp::Multiply,
+                        AlgebraicRootArithmeticOp::Divide,
+                    ] {
+                        let report =
+                            transform_algebraic_roots_binary(&left, &right, operation, policy);
+                        if operation == AlgebraicRootArithmeticOp::Divide && b == 0 {
+                            assert_eq!(
+                                report.status,
+                                AlgebraicRootBinaryTransformStatus::DenominatorMayContainZero
+                            );
+                            assert!(report.representation.is_none());
+                            continue;
+                        }
+                        let expected = match operation {
+                            AlgebraicRootArithmeticOp::Add => fraction(5 * a + 3 * b, 15),
+                            AlgebraicRootArithmeticOp::Subtract => fraction(5 * a - 3 * b, 15),
+                            AlgebraicRootArithmeticOp::Multiply => fraction(a * b, 15),
+                            AlgebraicRootArithmeticOp::Divide => {
+                                fraction(5 * a * b.signum(), 3 * b.unsigned_abs())
+                            }
+                            AlgebraicRootArithmeticOp::Negate => unreachable!(),
+                        };
+                        assert_eq!(
+                            report.status,
+                            AlgebraicRootBinaryTransformStatus::Transformed,
+                            "{a}, {b}, {operation:?}"
+                        );
+                        let root = report.representation.unwrap();
+                        assert_eq!(root.interval.lower, expected);
+                        assert_eq!(root.interval.upper, expected);
+                        assert_eq!(root.interval.exact_root, Some(expected));
+                        assert_eq!(
+                            (root.constraint_index, root.symbol, root.interval_index),
+                            (7, SymbolId(11), 3)
+                        );
+                        assert_eq!(
+                            validate_algebraic_root_representation(&root, PredicatePolicy::STRICT)
+                                .status,
+                            AlgebraicRootValidationStatus::Valid
+                        );
+                    }
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn binary_point_images_preserve_nonrational_witnesses() {
+        let value = real(2).sqrt().unwrap();
+        let left = point_root(value.clone(), vec![real(-2), Real::zero(), Real::one()]);
+        let cases = [
+            (AlgebraicRootArithmeticOp::Add, &value * real(2)),
+            (AlgebraicRootArithmeticOp::Subtract, Real::zero()),
+            (AlgebraicRootArithmeticOp::Multiply, real(2)),
+            (AlgebraicRootArithmeticOp::Divide, Real::one()),
+        ];
+        for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
+            for (operation, expected) in &cases {
+                let report = transform_algebraic_roots_binary(&left, &left, *operation, policy);
+                assert_eq!(
+                    report.status,
+                    AlgebraicRootBinaryTransformStatus::Transformed,
+                    "{operation:?}"
+                );
+                let root = report.representation.unwrap();
+                assert_eq!(
+                    compare_reals(
+                        root.interval.exact_root.as_ref().unwrap(),
+                        expected,
+                        PredicatePolicy::STRICT
+                    )
+                    .value(),
+                    Some(Ordering::Equal)
+                );
+                assert_eq!(
+                    validate_algebraic_root_representation(&root, PredicatePolicy::STRICT).status,
+                    AlgebraicRootValidationStatus::Valid
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn binary_point_images_preserve_zero_products_with_wide_inputs() {
+        let zero = point_root(Real::zero(), vec![Real::zero(), Real::one()]);
+        let wide = sqrt_root(2, 1, 2);
+        for (left, right) in [(&zero, &wide), (&wide, &zero)] {
+            let report = transform_algebraic_roots_binary(
+                left,
+                right,
+                AlgebraicRootArithmeticOp::Multiply,
+                PredicatePolicy::STRICT,
+            );
+            assert_eq!(
+                report.status,
+                AlgebraicRootBinaryTransformStatus::Transformed
+            );
+            assert_eq!(
+                report.representation.unwrap().interval.exact_root,
+                Some(Real::zero())
+            );
+        }
+    }
+
+    #[test]
+    fn binary_point_images_require_strict_equality_even_under_approximate_policy() {
+        let zero = point_root(Real::zero(), vec![Real::zero(), Real::one()]);
+        let upper = crate::test_support::terminal_zero() + real(2).powi_i64(-3000).unwrap();
+        assert_eq!(
+            compare_reals(&Real::zero(), &upper, PredicatePolicy::STRICT).value(),
+            None
+        );
+        assert_eq!(
+            compare_reals(&Real::zero(), &upper, PredicatePolicy::APPROXIMATE_512).value(),
+            Some(Ordering::Equal)
+        );
+        let unresolved = IsolatedRootInterval {
+            lower: Real::zero(),
+            upper,
+            exact_root: None,
+            distinct_root_count: 1,
+        };
+        for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
+            let image = binary_image_interval(
+                &unresolved,
+                &zero.interval,
+                AlgebraicRootArithmeticOp::Add,
+                policy,
+            )
+            .unwrap();
+            assert!(image.exact_root.is_none());
+            assert!(
+                certified_binary_point_witness(
+                    &unresolved,
+                    &zero.interval,
+                    &image,
+                    AlgebraicRootArithmeticOp::Add,
+                    policy,
+                )
+                .is_none()
+            );
+        }
+    }
+
+    #[test]
+    fn binary_point_images_do_not_change_half_open_ownership() {
+        let zero = point_root(Real::zero(), vec![Real::zero(), Real::one()]);
+        let interval = IsolatedRootInterval {
+            lower: Real::zero(),
+            upper: Real::one(),
+            exact_root: None,
+            distinct_root_count: 1,
+        };
+        let image = binary_image_interval(
+            &interval,
+            &zero.interval,
+            AlgebraicRootArithmeticOp::Add,
+            PredicatePolicy::STRICT,
+        )
+        .unwrap();
+        assert!(image.exact_root.is_none());
+        assert!(
+            certified_binary_point_witness(
+                &interval,
+                &zero.interval,
+                &image,
+                AlgebraicRootArithmeticOp::Add,
+                PredicatePolicy::STRICT,
+            )
+            .is_none()
+        );
+        // (0, 1] owns only the root 1, even though the closed interval has two roots.
+        let report = refine_isolated_univariate_polynomial_interval(
+            &[Real::zero(), real(-1), Real::one()],
+            &image,
+            RootIsolationConfig {
+                policy: PredicatePolicy::STRICT,
+                max_interval_width: None,
+                max_refinement_steps: 2,
+            },
+        );
+        assert_eq!(report.status, IsolatedRootRefinementStatus::ExactRoot);
+        assert_eq!(
+            report.refined_interval.unwrap().exact_root,
+            Some(Real::one())
+        );
+    }
+
+    #[test]
+    fn binary_point_images_do_not_promote_approximately_chosen_extrema() {
+        let offset = crate::test_support::terminal_zero();
+        let width = real(2).powi_i64(-3000).unwrap();
+        let left = IsolatedRootInterval {
+            lower: offset.clone(),
+            upper: &offset + &width,
+            exact_root: None,
+            distinct_root_count: 1,
+        };
+        let right = IsolatedRootInterval {
+            lower: -left.upper.clone(),
+            upper: -offset,
+            exact_root: None,
+            distinct_root_count: 1,
+        };
+        for interval in [&left, &right] {
+            assert_eq!(
+                compare_reals(&interval.lower, &interval.upper, PredicatePolicy::STRICT).value(),
+                Some(Ordering::Less)
+            );
+        }
+        assert!(
+            binary_image_interval(
+                &left,
+                &right,
+                AlgebraicRootArithmeticOp::Multiply,
+                PredicatePolicy::STRICT
+            )
+            .is_none()
+        );
+        let image = binary_image_interval(
+            &left,
+            &right,
+            AlgebraicRootArithmeticOp::Multiply,
+            PredicatePolicy::APPROXIMATE_512,
+        )
+        .unwrap();
+        // Positive-width inputs do not supply a singleton image. This example
+        // leaves even the selected endpoint equality uncertified under STRICT.
+        assert!(image.exact_root.is_none());
+        assert!(
+            certified_binary_point_witness(
+                &left,
+                &right,
+                &image,
+                AlgebraicRootArithmeticOp::Multiply,
+                PredicatePolicy::APPROXIMATE_512,
+            )
+            .is_none()
+        );
+    }
+
+    #[test]
+    fn binary_point_images_require_certified_extrema_for_a_symmetric_product() {
+        let radius = crate::test_support::exact_normal_positive();
+        let interval = IsolatedRootInterval {
+            lower: -radius.clone(),
+            upper: radius,
+            exact_root: None,
+            distinct_root_count: 1,
+        };
+        assert_eq!(
+            compare_reals(&interval.lower, &interval.upper, PredicatePolicy::STRICT).value(),
+            Some(Ordering::Less)
+        );
+        let strict = binary_image_interval(
+            &interval,
+            &interval,
+            AlgebraicRootArithmeticOp::Multiply,
+            PredicatePolicy::STRICT,
+        );
+        let approximate = binary_image_interval(
+            &interval,
+            &interval,
+            AlgebraicRootArithmeticOp::Multiply,
+            PredicatePolicy::APPROXIMATE_512,
+        )
+        .unwrap();
+        let strict_witness = strict.as_ref().and_then(|image| {
+            certified_binary_point_witness(
+                &interval,
+                &interval,
+                image,
+                AlgebraicRootArithmeticOp::Multiply,
+                PredicatePolicy::STRICT,
+            )
+        });
+        let approximate_witness = certified_binary_point_witness(
+            &interval,
+            &interval,
+            &approximate,
+            AlgebraicRootArithmeticOp::Multiply,
+            PredicatePolicy::APPROXIMATE_512,
+        );
+        println!(
+            "symmetric product: strict_interval={}, strict_witness={}, approximate_witness={}",
+            strict.is_some(),
+            strict_witness.is_some(),
+            approximate_witness.is_some()
+        );
+        assert!(approximate.exact_root.is_none());
+        assert!(approximate_witness.is_none());
+    }
+
+    #[test]
+    fn binary_point_images_still_replay_the_polynomial() {
+        let one = point_root(Real::one(), vec![real(-1), Real::one()]);
+        let zero = point_root(Real::zero(), vec![Real::zero(), Real::one()]);
+        let mut image = binary_image_interval(
+            &one.interval,
+            &zero.interval,
+            AlgebraicRootArithmeticOp::Add,
+            PredicatePolicy::STRICT,
+        )
+        .unwrap();
+        assert!(image.exact_root.is_none());
+        let rejected = refine_isolated_univariate_polynomial_interval(
+            &[real(-1), Real::one()],
+            &image,
+            RootIsolationConfig {
+                policy: PredicatePolicy::STRICT,
+                max_interval_width: None,
+                max_refinement_steps: 2,
+            },
+        );
+        // The public refiner's contract is unchanged: callers still need an
+        // exact witness even when a point is a root of this polynomial.
+        assert_eq!(
+            rejected.status,
+            IsolatedRootRefinementStatus::InvalidInterval
+        );
+        assert!(rejected.refined_interval.is_none());
+        image.exact_root = certified_binary_point_witness(
+            &one.interval,
+            &zero.interval,
+            &image,
+            AlgebraicRootArithmeticOp::Add,
+            PredicatePolicy::STRICT,
+        );
+        assert_eq!(image.exact_root, Some(Real::one()));
+        let report = refine_isolated_univariate_polynomial_interval(
+            &[real(-2), Real::one()],
+            &image,
+            RootIsolationConfig {
+                policy: PredicatePolicy::STRICT,
+                max_interval_width: None,
+                max_refinement_steps: 2,
+            },
+        );
+        assert_eq!(
+            report.status,
+            IsolatedRootRefinementStatus::NonUnitIsolation
+        );
+        assert!(report.refined_interval.is_none());
     }
 
     fn sqrt_root(square: i64, lower: i64, upper: i64) -> AlgebraicRootRepresentation {
