@@ -2054,7 +2054,11 @@ fn distinct_bezier_break_knots(
     Ok(Classification::Decided(result))
 }
 
-fn knot_multiplicity(knots: &[Real], knot: &Real, policy: &CurveContext) -> Classification<usize> {
+pub(crate) fn knot_multiplicity(
+    knots: &[Real],
+    knot: &Real,
+    policy: &CurveContext,
+) -> Classification<usize> {
     let lower = match knot_partition_point(knots, knot, false, policy) {
         Classification::Decided(lower) => lower,
         Classification::Uncertain(reason) => return Classification::Uncertain(reason),

@@ -23,6 +23,82 @@ fn p(x: i32, y: i32) -> Point2 {
     Point2::new(r(x), r(y))
 }
 
+#[test]
+fn clamped_splines_preserve_discontinuous_knot_sides_and_span_images() {
+    use hypercurve::{CurveParameterSide2, NurbsCurve2, PolynomialSplineCurve2};
+
+    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+        let controls = vec![p(0, 0), p(1, 1), p(2, 0), p(10, 0), p(11, 1), p(12, 0)];
+        let knots = [-2, -1, 0, 1, 1, 1, 2, 3, 4]
+            .into_iter()
+            .map(r)
+            .collect::<Vec<_>>();
+        let polynomial =
+            PolynomialSplineCurve2::try_new(2, controls.clone(), knots.clone(), &policy)
+                .unwrap()
+                .value;
+        let rational = NurbsCurve2::try_new(
+            2,
+            controls,
+            vec![r(1), r(2), r(3), r(5), r(7), r(11)],
+            knots,
+            &policy,
+        )
+        .unwrap()
+        .value;
+        for curve in [Curve2::from(polynomial), Curve2::from(rational)] {
+            for reversed in [false, true] {
+                let source = if reversed {
+                    curve.reversed(&policy).unwrap().value
+                } else {
+                    curve.clone()
+                };
+                let clamped = source.clamped_subcurve(r(0), r(2), &policy).unwrap();
+                assert_eq!(clamped.certainty, CurveCertainty::Certified);
+                let clamped = clamped.value;
+                assert_eq!(clamped.family(), source.family());
+                assert_eq!(clamped.parameter_domain(), source.parameter_domain());
+                assert!(matches!(
+                    clamped.point_at(&r(1).into(), &policy),
+                    Err(ExactCurveError::Blocked(blocker))
+                        if blocker.reason() == UncertaintyReason::Boundary
+                ));
+                for (parameter, side) in [
+                    (r(0), CurveParameterSide2::Automatic),
+                    (q(1, 4), CurveParameterSide2::Automatic),
+                    (q(3, 4), CurveParameterSide2::Automatic),
+                    (r(1), CurveParameterSide2::Left),
+                    (r(1), CurveParameterSide2::Right),
+                    (q(5, 4), CurveParameterSide2::Automatic),
+                    (q(7, 4), CurveParameterSide2::Automatic),
+                    (r(2), CurveParameterSide2::Automatic),
+                ] {
+                    let parameter = parameter.into();
+                    let expected = source.point_at_side(&parameter, side, &policy).unwrap();
+                    let actual = clamped.point_at_side(&parameter, side, &policy).unwrap();
+                    let equality = actual.value.coincides_with(&expected.value, &policy);
+                    assert_eq!(actual.certainty, CurveCertainty::Certified);
+                    assert_eq!(equality.certainty, CurveCertainty::Certified);
+                    assert_eq!(equality.value, Classification::Decided(true));
+                }
+                let closing_line = LineSeg2::try_new(
+                    clamped.end().coordinates().unwrap().clone(),
+                    clamped.start().coordinates().unwrap().clone(),
+                )
+                .unwrap();
+                let path = CurvePath2::try_new(vec![clamped, Curve2::from(closing_line)]).unwrap();
+                assert!(matches!(
+                    CurveRegion2::try_from_boundary_paths(&[path], &policy),
+                    Err(ExactCurveError::Invalid {
+                        cause: CurveError::DisconnectedCurvePath,
+                        ..
+                    })
+                ));
+            }
+        }
+    }
+}
+
 fn assert_fillet_candidates(
     solutions: CurveCornerSolutions2<CurvePath2>,
     source: &CurvePath2,

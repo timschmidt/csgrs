@@ -612,11 +612,9 @@ impl NurbsCurve2 {
         let mut multiplicities = Vec::with_capacity(spans.len().saturating_sub(1));
         for span_index in 1..spans.len() {
             let knot = spans[span_index].parameter_start.clone();
-            let multiplicity = exact_nurbs_knot_multiplicity(
-                self.knots(),
-                &knot,
+            let multiplicity = require_classification(
+                crate::bspline::knot_multiplicity(self.knots(), &knot, policy),
                 CurveOperation2::DegreeElevation,
-                policy,
             )?;
             if multiplicity <= self.degree() {
                 exact_points_equal(
@@ -859,8 +857,9 @@ impl NurbsCurve2 {
     /// This is the topology-ingestion form for a range cut from an unclamped or
     /// periodic carrier. It preserves the source parameter interval and exact
     /// rational image while replacing irrelevant exterior knots with clamped
-    /// endpoints. Internal spans use full Bézier multiplicity; no fitting,
-    /// sampling, or endpoint-only reconstruction is involved.
+    /// endpoints. Continuous spans share one endpoint control; fully repeated
+    /// discontinuous knots preserve both one-sided controls and weights.
+    /// No fitting, sampling, or endpoint-only reconstruction is involved.
     /// The returned [`CurveOutcome`] covers the complete exact materialization.
     #[inline(always)]
     pub fn clamped_subcurve(
@@ -916,18 +915,33 @@ impl NurbsCurve2 {
             degree + 1,
         ));
         for span in &spans[1..] {
-            let scale = (weights.last().expect("first exact NURBS span has weights")
-                / &span.weights()[0])
-                .map_err(|cause| {
-                    ExactCurveError::invalid(
-                        CurveOperation2::Subdivision,
-                        CurveFamily2::Nurbs,
-                        cause.into(),
-                    )
-                })?;
-            control_points.extend(span.control_points().iter().skip(1).cloned());
-            weights.extend(span.weights().iter().skip(1).map(|weight| weight * &scale));
-            knots.extend(std::iter::repeat_n(span.knot_interval().0.clone(), degree));
+            let multiplicity = require_classification(
+                crate::bspline::knot_multiplicity(self.knots(), span.knot_interval().0, policy),
+                CurveOperation2::Subdivision,
+            )?;
+            let discontinuous = multiplicity == degree + 1;
+            let first_control = usize::from(!discontinuous);
+            control_points.extend_from_slice(&span.control_points()[first_control..]);
+            if discontinuous {
+                // Independent one-sided limits have independent homogeneous
+                // scales. Merging their endpoint controls changes the image.
+                weights.extend_from_slice(span.weights());
+            } else {
+                let scale = (weights.last().expect("first exact NURBS span has weights")
+                    / &span.weights()[0])
+                    .map_err(|cause| {
+                        ExactCurveError::invalid(
+                            CurveOperation2::Subdivision,
+                            CurveFamily2::Nurbs,
+                            cause.into(),
+                        )
+                    })?;
+                weights.extend(span.weights().iter().skip(1).map(|weight| weight * &scale));
+            }
+            knots.extend(std::iter::repeat_n(
+                span.knot_interval().0.clone(),
+                degree + usize::from(discontinuous),
+            ));
         }
         knots.extend(std::iter::repeat_n(
             spans
@@ -1858,29 +1872,6 @@ fn validate_subcurve_range(
             UncertaintyReason::Ordering,
         )),
     }
-}
-
-fn exact_nurbs_knot_multiplicity(
-    knots: &[Real],
-    knot: &Real,
-    operation: CurveOperation2,
-    policy: &CurveContext,
-) -> ExactCurveResult<usize> {
-    let mut multiplicity = 0;
-    for candidate in knots {
-        match crate::classify::compare_reals(candidate, knot, policy) {
-            Some(std::cmp::Ordering::Equal) => multiplicity += 1,
-            Some(_) => {}
-            None => {
-                return Err(ExactCurveError::blocked(
-                    operation,
-                    CurveFamily2::Nurbs,
-                    UncertaintyReason::Ordering,
-                ));
-            }
-        }
-    }
-    Ok(multiplicity)
 }
 
 fn exact_points_equal(
