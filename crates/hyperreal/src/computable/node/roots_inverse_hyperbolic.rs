@@ -268,7 +268,8 @@ impl Computable {
         if self.exact_rational().is_some() {
             return self.atan();
         }
-        let (known_sign, planning_msd) = self.planning_sign_and_msd();
+        let bound = self.cheap_bound();
+        let known_sign = bound.known_sign();
         if known_sign == Some(Sign::Minus) {
             crate::trace_dispatch!("computable", "atan", "known-negative-symmetry");
             return self.negate().atan().negate();
@@ -277,7 +278,9 @@ impl Computable {
             crate::trace_dispatch!("computable", "atan", "known-negative-symmetry-fallback");
             return self.negate().atan().negate();
         }
-        if let Some(msd) = planning_msd.flatten() {
+        // An estimated magnitude is a scheduling hint, not a series-domain
+        // certificate: repeated additions can outgrow the retained estimate.
+        if let Some(msd) = bound.known_msd().flatten() {
             if msd < -1 {
                 crate::trace_dispatch!("computable", "atan", "structural-small-prescaled");
                 return Self {
@@ -285,7 +288,7 @@ impl Computable {
                     signal: None,
                 };
             }
-            if msd >= 5 {
+            if msd >= 5 && known_sign == Some(Sign::Plus) {
                 crate::trace_dispatch!("computable", "atan", "large-reciprocal-structural");
                 return Self::pi()
                     .shift_right(1)
@@ -294,13 +297,20 @@ impl Computable {
         }
 
         let rough_appr = self.approx(-4);
-        if rough_appr <= *signed::EIGHT {
-            // Small atan arguments use the prescaled series directly.
+        if rough_appr.magnitude() < signed::EIGHT.magnitude() {
+            // |approx(-4)| <= 7 and its one-unit error prove |self| <= 1/2.
             crate::trace_dispatch!("computable", "atan", "rough-small-prescaled");
             return Self {
                 internal: Arc::new(Node::new(Approximation::PrescaledAtan(self), BoundCache::Invalid, ExactSignCache::Invalid)),
                 signal: None,
             };
+        }
+        if rough_appr.sign() == Sign::Minus {
+            // The small branch handled the possible-zero interval. Here the
+            // rough sample certifies negativity, so odd symmetry reaches the
+            // positive range reductions without asking for an exact comparison.
+            crate::trace_dispatch!("computable", "atan", "rough-negative-symmetry");
+            return self.negate().atan().negate();
         }
 
         let one = Self::one();
@@ -462,6 +472,8 @@ impl Computable {
             crate::trace_dispatch!("computable", "asin", "known-negative-symmetry");
             return self.negate().asin().negate();
         }
+        // The estimate only schedules a lazy candidate: the approximation
+        // kernel independently proves the series domain before evaluating it.
         let (_, planned_msd) = self.planning_sign_and_msd();
         if planned_msd.flatten().is_some_and(|msd| msd <= -4) {
             crate::trace_dispatch!("computable", "asin", "structural-tiny-prescaled");
@@ -725,6 +737,7 @@ impl Computable {
             crate::trace_dispatch!("computable", "atanh", "known-negative-symmetry");
             return self.negate().atanh().negate();
         }
+        // Planning chooses a lazy schedule, never a series-domain certificate.
         let (_, planned_msd) = self.planning_sign_and_msd();
         if planned_msd.flatten().is_some_and(|msd| msd <= -4) {
             crate::trace_dispatch!("computable", "atanh", "structural-tiny-prescaled");
@@ -741,6 +754,18 @@ impl Computable {
             .multiply(denominator.inverse())
             .ln()
             .multiply(Self::half())
+    }
+
+    pub(crate) fn inverse_series_argument_is_small(&self, signal: &Option<Signal>) -> bool {
+        // Some inputs retain an exact magnitude. Deserialization drops caches,
+        // and a constructor may schedule this series from an estimate alone.
+        // Avoid a graph walk on the certified path; otherwise |256*x - a| <= 1
+        // and |a| <= 31 prove |x| <= 1/8 independently of structural hints.
+        self.cached_bound()
+            .and_then(|bound| bound.known_msd())
+            .flatten()
+            .is_some_and(|msd| msd <= -4)
+            || self.approx_signal(signal, -8).magnitude() <= &BigUint::from(31_u8)
     }
 
 }

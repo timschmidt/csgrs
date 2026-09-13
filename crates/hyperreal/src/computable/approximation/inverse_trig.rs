@@ -50,7 +50,7 @@ fn atan(signal: &Option<Signal>, i: &BigInt, p: Precision) -> BigInt {
     scale(sum, calc_precision - p)
 }
 
-// Approximate atan(c) for |c| < 1/2.
+// Approximate atan(c) for |c| <= 1/2.
 fn atan_computable(signal: &Option<Signal>, c: &Computable, p: Precision) -> BigInt {
     // Kernel precondition: |c| is small. Larger atan inputs are reduced by
     // subtraction of atan(1/2) or the reciprocal identity before reaching here.
@@ -279,6 +279,26 @@ fn atan_rational(signal: &Option<Signal>, r: &Rational, p: Precision) -> BigInt 
     scale(anchor + reduced, -extra)
 }
 
+#[inline]
+fn inverse_sine_series_coefficients(n: i32) -> (u64, u64) {
+    // Widen before multiplication: (2*n-1)^2 already exceeds i32 at n=23171.
+    // For every positive i32 index, 2*n <= u32::MAX-1, so both products fit
+    // u64. asinh applies the alternating sign to the BigInt term separately.
+    debug_assert!(n > 0);
+    let even = (n as u64) * 2;
+    ((even - 1) * (even - 1), even * (even + 1))
+}
+
+#[test]
+fn inverse_sine_series_coefficients_cover_the_index_range() {
+    for n in [1, 2, 23_170, 23_171, 65_535, 65_536, 1 << 30, i32::MAX] {
+        let even = (n as u128) * 2;
+        let (numerator, denominator) = inverse_sine_series_coefficients(n);
+        assert_eq!(u128::from(numerator), (even - 1) * (even - 1));
+        assert_eq!(u128::from(denominator), even * (even + 1));
+    }
+}
+
 fn asin_rational(signal: &Option<Signal>, r: &Rational, p: Precision) -> BigInt {
     // Tiny exact rational inputs use the direct odd series. Larger magnitudes
     // retain the cancellation-safe pi/2 - acos(|x|) schedule, but build that
@@ -349,8 +369,7 @@ fn asin_rational(signal: &Option<Signal>, r: &Rational, p: Precision) -> BigInt 
         }
         n += 1;
         current_term = scale(current_term * &op_squared, op_prec);
-        let numerator = (2 * n - 1) * (2 * n - 1);
-        let denominator = (2 * n) * (2 * n + 1);
+        let (numerator, denominator) = inverse_sine_series_coefficients(n);
         current_term *= numerator;
         current_term /= denominator;
         sum += &current_term;
@@ -363,6 +382,11 @@ fn asin_rational(signal: &Option<Signal>, r: &Rational, p: Precision) -> BigInt 
 fn asin_computable(signal: &Option<Signal>, c: &Computable, p: Precision) -> BigInt {
     // Dedicated tiny-argument asin series. It avoids the generic atan/sqrt
     // transform, which is overkill and slower when |x| is already very small.
+    if should_stop(signal) {
+        return Zero::zero();
+    }
+    // |asin(x)| <= pi/2 throughout the valid domain, independently of whether
+    // the tiny series applies. This coarse shortcut needs no operand sample.
     if p >= 1 {
         return Zero::zero();
     }
@@ -371,6 +395,15 @@ fn asin_computable(signal: &Option<Signal>, c: &Computable, p: Precision) -> Big
     let calc_precision = p - bound_log2(2 * iterations_needed) - 5;
     let op_prec = calc_precision - 3;
     let op_appr = c.approx_signal(signal, op_prec);
+    // Reuse the series' own operand sample as its domain proof. With
+    // k = -op_prec-3, bits(|a|) <= k implies |a| <= 2^k-1; including the
+    // one-unit sample error gives |c| <= 1/8. No preliminary sample is needed.
+    if op_appr.magnitude().bits() > u64::try_from(-op_prec - 3).expect("tiny-series scale is positive") {
+        if should_stop(signal) {
+            return Zero::zero();
+        }
+        return asin_deferred(signal, c, p);
+    }
     let op_squared = scale(&op_appr * &op_appr, op_prec);
 
     // Borrowed magnitude checks matter here because tiny inverse-trig benches
@@ -387,8 +420,7 @@ fn asin_computable(signal: &Option<Signal>, c: &Computable, p: Precision) -> Big
         }
         n += 1;
         current_term = scale(current_term * &op_squared, op_prec);
-        let numerator = (2 * n - 1) * (2 * n - 1);
-        let denominator = (2 * n) * (2 * n + 1);
+        let (numerator, denominator) = inverse_sine_series_coefficients(n);
         current_term *= numerator;
         current_term /= denominator;
         sum += &current_term;

@@ -168,7 +168,12 @@ fn digits(
 
 impl fmt::Display for Computable {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let msd = self.iter_msd();
+        // Fixed decimal places need an absolute error bound, not a proof that
+        // the value is nonzero. Stop the leading-bit search below the guarded
+        // output precision so cancellation and arbitrarily tiny values remain
+        // productive. Zero is also a safe scale when no leading bit is found.
+        let stop = -enough_bits(0, f.precision());
+        let msd = self.iter_msd_stop(stop).unwrap_or(0);
         let bits = enough_bits(msd, f.precision());
         let appr = self.approx(msd - bits);
         if self.sign_until(msd - bits) == Some(RealSign::Negative) {
@@ -423,6 +428,43 @@ mod tests {
         assert_eq!(format!("{zero:.10}"), "0.0000000000");
         assert_eq!(format!("{zero:.5E}"), "0.00000E0");
         assert_eq!(format!("{zero:.0e}"), "0e0");
+    }
+
+    #[test]
+    fn disp_cancellation_zero_has_bounded_demand() {
+        for places in [0, 1, 8, 32, 128] {
+            let radical = Computable::rational(Rational::new(2)).sqrt();
+            let zero = radical
+                .clone()
+                .multiply(radical)
+                .add(Computable::rational(Rational::new(-2)));
+            let expected = if places == 0 {
+                "0".to_owned()
+            } else {
+                format!("0.{}", "0".repeat(places))
+            };
+            assert_eq!(format!("{zero:.places$}"), expected);
+            assert_eq!(format!("{zero:+.places$}"), format!("+{expected}"));
+            let (precision, _) = zero.internal.cache_snapshot().unwrap();
+            assert!(precision >= -enough_bits(0, Some(places)) - 2);
+        }
+    }
+
+    #[test]
+    fn disp_tiny_computable_has_bounded_demand() {
+        for negative in [false, true] {
+            let tiny = Computable::rational(Rational::new(2))
+                .sqrt()
+                .shift_left(-4096);
+            let tiny = if negative { tiny.negate() } else { tiny };
+            let expected = if negative { "-0.00" } else { "0.00" };
+            assert_eq!(format!("{tiny:.2}"), expected);
+            let (precision, _) = tiny.internal.cache_snapshot().unwrap();
+            assert!(precision >= -enough_bits(0, Some(2)) - 2);
+            let _ = tiny.approx(-4200);
+            assert_eq!(format!("{tiny:.2}"), expected);
+            assert_eq!(format!("{tiny}"), if negative { "-0" } else { "0" });
+        }
     }
 
     #[test]

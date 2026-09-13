@@ -5,6 +5,589 @@ mod tests {
     use num::bigint::BigUint;
     use std::mem::size_of;
 
+    fn check_inverse_series_wide_coefficients(asin: bool, generic: bool) {
+        use rug::{Float, Integer, Rational as Q, float::Round};
+        // At this precision, x=1/16 needs more than 23,170 recurrence steps.
+        // The next squared coefficient exceeds i32::MAX. Check both signs
+        // and both representations against a precision-matched, directed oracle.
+        let bits = 192_000;
+        for sign in [-1, 1] {
+            let q = Q::from((sign, 16));
+            let mut lo = Float::with_val(bits + 256, &q);
+            assert_eq!(lo.to_rational().unwrap(), q);
+            let mut hi = lo.clone();
+            if asin {
+                lo.asin_round(Round::Down);
+                hi.asin_round(Round::Up);
+            } else {
+                lo.asinh_round(Round::Down);
+                hi.asinh_round(Round::Up);
+            }
+            let input = Computable::rational(Rational::fraction(sign, 16).unwrap());
+            let value = if generic {
+                let kind = if asin {
+                    Approximation::PrescaledAsin(input)
+                } else {
+                    Approximation::PrescaledAsinh(input)
+                };
+                Computable {
+                    internal: Arc::new(Node::new(kind, BoundCache::Invalid, ExactSignCache::Invalid)),
+                    signal: None,
+                }
+            } else if asin {
+                input.asin()
+            } else {
+                input.asinh()
+            };
+            let actual = value.approx(-(bits as i32));
+            let unit = Q::from((1, Integer::from(1) << bits));
+            let center = Q::from(Integer::from_str_radix(&actual.to_string(), 10).unwrap()) * &unit;
+            assert!(
+                Q::from(&center - &unit) <= lo.to_rational().unwrap()
+                    && Q::from(&center + &unit) >= hi.to_rational().unwrap(),
+                "asin={asin}, generic={generic}, sign={sign} at {bits} bits"
+            );
+        }
+    }
+
+    #[test]
+    fn asin_rational_series_wide_coefficients() {
+        check_inverse_series_wide_coefficients(true, false);
+    }
+
+    #[test]
+    fn asin_computable_series_wide_coefficients() {
+        check_inverse_series_wide_coefficients(true, true);
+    }
+
+    #[test]
+    fn asinh_rational_series_wide_coefficients() {
+        check_inverse_series_wide_coefficients(false, false);
+    }
+
+    #[test]
+    fn asinh_computable_series_wide_coefficients() {
+        check_inverse_series_wide_coefficients(false, true);
+    }
+
+    #[test]
+    fn log1p_domain_guard_covers_public_residuals_outside_the_series_range() {
+        use rug::{Float, Integer, Rational as Q, float::Round};
+        for q in [Q::from((-255,256)), Q::from((-3,4)), Q::from((1,2)), Q::from((3,4)), Q::from(1), Q::from(2), Q::from(10), Q::from(1000)] {
+            let mut lo = Float::with_val(512, &q);
+            assert_eq!(lo.to_rational().unwrap(), q);
+            let mut hi = lo.clone();
+            lo.ln_1p_round(Round::Down);
+            hi.ln_1p_round(Round::Up);
+            let lo = lo.to_rational().unwrap();
+            let hi = hi.to_rational().unwrap();
+            let value = crate::Real::from(q.to_string().parse::<Rational>().unwrap()).ln_1p().unwrap().fold();
+            for p in [0_i32, 1, -1, -32, -128, -8] {
+                let a = Integer::from_str_radix(&value.approx(p).to_string(),10).unwrap();
+                let unit = if p>0 {Q::from(Integer::from(1)<<p)} else {Q::from((1,Integer::from(1)<<-p))};
+                let center = Q::from(a)*&unit;
+                assert!(Q::from(&center-&unit)<=lo && Q::from(&center+&unit)>=hi,"ln1p({q}) at {p}");
+            }
+        }
+    }
+
+    #[test]
+    fn log1p_domain_guard_rechecks_every_working_sample_boundary_rounding() {
+        use rug::{Float, Integer, Rational as Q, float::Round};
+        let mut checks = 0;
+        for (p, s) in [(0_i32,-12_i32),(-1,-12),(-32,-45),(-128,-143)] {
+            let threshold = Integer::from(1)<<(-s-1);
+            for delta in -8_i32..=8 {
+                for negative in [false,true] {
+                    let q = Q::from((threshold.clone()*4+delta,Integer::from(1)<<(-s+2)));
+                    let q = if negative {-q} else {q};
+                    let base = threshold.clone()+delta.div_euclid(4);
+                    let base = if negative {-base} else {base};
+                    for rounding in -1..=1 {
+                        let sample: Integer = base.clone()+rounding;
+                        let sample_unit = Q::from((1,Integer::from(1)<<-s));
+                        if (Q::from(sample.clone())*&sample_unit-&q).abs()>sample_unit {continue;}
+                        let input = Computable {
+                            internal: Arc::new(Node::new(
+                                Approximation::Add(Computable::rational(q.to_string().parse().unwrap()),Computable::zero()),
+                                BoundCache::Valid(BoundInfo::Unknown),ExactSignCache::Unknown,
+                            )), signal: None,
+                        };
+                        input.internal.store_cache_value(s,sample.to_string().parse().unwrap());
+                        let value = input.ln_1p();
+                        let mut lo = Float::with_val(1024,&q);
+                        assert_eq!(lo.to_rational().unwrap(),q);
+                        let mut hi = lo.clone();
+                        lo.ln_1p_round(Round::Down);
+                        hi.ln_1p_round(Round::Up);
+                        let lo = lo.to_rational().unwrap();
+                        let hi = hi.to_rational().unwrap();
+                        for precision in [p,-256] {
+                            let unit = Q::from((1,Integer::from(1)<<-precision));
+                            let a = Integer::from_str_radix(&value.approx(precision).to_string(),10).unwrap();
+                            let center = Q::from(a)*&unit;
+                            assert!(Q::from(&center-&unit)<=lo && Q::from(&center+&unit)>=hi,"q={q}, p={precision}, sample={sample}");
+                            checks += 1;
+                        }
+                    }
+                }
+            }
+        }
+        assert_eq!(checks,624);
+    }
+
+    #[test]
+    fn log1p_domain_guard_covers_extreme_scales_and_cache_histories() {
+        use rug::{Float, Integer, Rational as Q, float::Round};
+        let mut checks = 0;
+        for bits in [8_i32,64,256,1024] {
+            let tiny = Q::from((1,Integer::from(1)<<bits));
+            for q in [tiny.clone(),-tiny.clone(),tiny-Q::from(1),Q::from(Integer::from(1)<<bits)] {
+                let mut lo = Float::with_val(4096,&q);
+                assert_eq!(lo.to_rational().unwrap(),q);
+                let mut hi = lo.clone();
+                lo.ln_1p_round(Round::Down);
+                hi.ln_1p_round(Round::Up);
+                let lo = lo.to_rational().unwrap();
+                let hi = hi.to_rational().unwrap();
+                for warm in [false,true] {
+                    let input = Computable::rational(q.to_string().parse().unwrap());
+                    if warm {let _ = input.approx(-256);}
+                    let value = input.ln_1p();
+                    for p in [0_i32,1,-1,-32,-128,-512,-8] {
+                        let unit = if p>0 {Q::from(Integer::from(1)<<p)} else {Q::from((1,Integer::from(1)<<-p))};
+                        let a = Integer::from_str_radix(&value.approx(p).to_string(),10).unwrap();
+                        let center = Q::from(a)*&unit;
+                        assert!(Q::from(&center-&unit)<=lo && Q::from(&center+&unit)>=hi,"q={q}, p={p}, warm={warm}");
+                        checks += 1;
+                    }
+                }
+            }
+        }
+        assert_eq!(checks,224);
+    }
+
+    #[test]
+    fn log1p_domain_guard_preserves_abort_and_lazy_construction() {
+        use std::sync::atomic::{AtomicBool,Ordering};
+        let input = Computable::rational(Rational::from(1000)).sqrt();
+        assert!(input.cached().is_none());
+        let value = input.clone().ln_1p();
+        assert!(input.cached().is_none());
+        assert!(value.cached().is_none());
+        let signal = Arc::new(AtomicBool::new(true));
+        let _ = value.approx_signal(&Some(signal.clone()),-128);
+        assert!(value.cached().is_none());
+        assert!(input.cached().is_none());
+        signal.store(false,Ordering::Relaxed);
+        assert!(value.approx_signal(&Some(signal),-128)>BigInt::zero());
+    }
+
+    #[test]
+    fn log1p_domain_guard_matches_a_public_and_opaque_residual_grid() {
+        use rug::{Float,Integer,Rational as Q,float::Round};
+        let mut checks = 0;
+        for numerator in -63_i32..=256 {
+            let q = Q::from((numerator,64));
+            let mut lo = Float::with_val(512,&q);
+            let mut hi = lo.clone();
+            lo.ln_1p_round(Round::Down);
+            hi.ln_1p_round(Round::Up);
+            let lo = lo.to_rational().unwrap();
+            let hi = hi.to_rational().unwrap();
+            for opaque in [false,true] {
+                let r: Rational = q.to_string().parse().unwrap();
+                let value = if opaque {
+                    Computable { internal: Arc::new(Node::new(
+                        Approximation::Add(Computable::rational(r),Computable::zero()),
+                        BoundCache::Valid(BoundInfo::Unknown),ExactSignCache::Unknown,
+                    )),signal:None }.ln_1p()
+                } else {crate::Real::from(r).ln_1p().unwrap().fold()};
+                for p in [0_i32,-8,-32,-128,-8] {
+                    let unit = Q::from((1,Integer::from(1)<<-p));
+                    let a = Integer::from_str_radix(&value.approx(p).to_string(),10).unwrap();
+                    let center = Q::from(a)*&unit;
+                    assert!(Q::from(&center-&unit)<=lo && Q::from(&center+&unit)>=hi,"q={q}, p={p}, opaque={opaque}");
+                    checks += 1;
+                }
+            }
+        }
+        assert_eq!(checks,3200);
+    }
+
+    #[test]
+    fn log1p_domain_guard_does_not_trust_estimated_sum_magnitudes() {
+        use rug::{Float,Integer,Rational as Q,float::Round};
+        let root = |n| {
+            let mut lo = Float::with_val(2048,n);
+            let mut hi = lo.clone();
+            lo.sqrt_round(Round::Down);
+            hi.sqrt_round(Round::Up);
+            (lo.to_rational().unwrap(),hi.to_rational().unwrap())
+        };
+        let (a,b) = root(5);
+        let (c,d) = root(7);
+        let mut checks = 0;
+        for count in [0,64,256,740,4096] {
+            for negative in [false,true] {
+                if negative && count>740 {continue;}
+                let lo: Q = a.clone()/64+c.clone()*count/2048;
+                let hi: Q = b.clone()/64+d.clone()*count/2048;
+                let (lo,hi) = if negative {(-hi,-lo)} else {(lo,hi)};
+                assert!(lo>-1);
+                let mut lo = Float::with_val_round(2048,lo,Round::Down).0;
+                let mut hi = Float::with_val_round(2048,hi,Round::Up).0;
+                lo.ln_1p_round(Round::Down);
+                hi.ln_1p_round(Round::Up);
+                let lo = lo.to_rational().unwrap();
+                let hi = hi.to_rational().unwrap();
+                for warm in [false,true] {
+                    let mut input = Computable::rational(Rational::from(5)).sqrt().shift_right(6);
+                    let term = Computable::rational(Rational::from(7)).sqrt().shift_right(11);
+                    for _ in 0..count {input=input.add(term.clone());}
+                    if negative {input=input.negate();}
+                    if warm {let _=input.approx(-256);}
+                    let value=input.ln_1p();
+                    for p in [0_i32,-32,-128,-256,-8] {
+                        let unit=Q::from((1,Integer::from(1)<<-p));
+                        let a=Integer::from_str_radix(&value.approx(p).to_string(),10).unwrap();
+                        let center=Q::from(a)*&unit;
+                        assert!(Q::from(&center-&unit)<=lo && Q::from(&center+&unit)>=hi,"terms={count}, negative={negative}, warm={warm}, p={p}");
+                        checks+=1;
+                    }
+                }
+            }
+        }
+        assert_eq!(checks,90);
+    }
+
+    #[test]
+    #[cfg(feature = "serde")]
+    fn log1p_domain_guard_survives_serialization() {
+        for q in [Rational::fraction(-255,256).unwrap(),Rational::fraction(-1,2).unwrap(),Rational::fraction(1,2).unwrap(),Rational::from(1000)] {
+            let value = Computable::rational(q.clone()).ln_1p();
+            let encoded = serde_json::to_string(&value).unwrap();
+            let decoded: Computable = serde_json::from_str(&encoded).unwrap();
+            let reference = Computable::rational(q+Rational::one()).ln();
+            for p in [0,1,-32,-128,-8] {assert_close(decoded.clone(),reference.clone(),p,2);}
+        }
+    }
+
+    #[test]
+    fn atan_reduction_rejects_large_negative_rough_inputs() {
+        let input = Computable::rational(Rational::from(100))
+            .sin()
+            .multiply(Computable::rational(Rational::from(4)));
+        assert_eq!(input.exact_sign(), None);
+        let reduced = input.atan_reduced();
+        // Fail promptly on the old dispatch instead of running its divergent series.
+        assert!(!matches!(reduced.internal.approximation, Approximation::PrescaledAtan(_)));
+        let value = reduced.approx(-64);
+        assert!(value.sign() == Sign::Minus);
+    }
+
+    #[test]
+    fn atan_reduction_does_not_certify_domain_from_an_estimated_magnitude() {
+        let mut input = Computable::rational(Rational::from(5)).sqrt().shift_right(3);
+        let term = Computable::rational(Rational::from(7)).sqrt().shift_right(6);
+        for _ in 0..32 {
+            input = input.add(term.clone());
+        }
+        let bound = input.cheap_bound();
+        assert!(bound.planning_msd().flatten().unwrap() < -1);
+        assert_eq!(bound.known_msd(), None);
+        let reduced = input.atan_reduced();
+        assert!(!matches!(reduced.internal.approximation, Approximation::PrescaledAtan(_)));
+        assert!(reduced.approx(-64).sign() == Sign::Plus);
+    }
+
+    #[test]
+    fn atan_reduction_requires_a_positive_sign_for_large_reciprocal_shortcut() {
+        use rug::{Float, float::Round};
+        let mut lower = Float::with_val(256, 100);
+        let mut upper = lower.clone();
+        lower.sin_round(Round::Down);
+        upper.sin_round(Round::Up);
+        lower *= 128;
+        upper *= 128;
+        assert!(lower > -65 && upper < -64);
+        let input = Computable::rational(Rational::from(100))
+            .sin()
+            .multiply(Computable::rational(Rational::from(128)));
+        // This valid magnitude certificate intentionally leaves the sign unknown.
+        // -65 < 128*sin(100) < -64, hence its exact binary magnitude is six.
+        input.internal.facts.set_bound(BoundCache::Valid(BoundInfo::NonZero {
+            sign: None,
+            msd: Some(6),
+            exact_msd: true,
+        }));
+        input.internal.facts.replace_exact_sign(ExactSignCache::Unknown);
+        assert!(input.atan_reduced().approx(-32).sign() == Sign::Minus);
+    }
+
+    #[test]
+    fn atan_reduction_boundary_accepts_every_valid_coarse_cache_rounding() {
+        use rug::{Float, Integer, Rational as Q, float::Round};
+        for numerator in -145_i32..=145 {
+            let q = Q::from((numerator, 256));
+            let mut lower = Float::with_val(512, &q);
+            let mut upper = lower.clone();
+            lower.atan_round(Round::Down);
+            upper.atan_round(Round::Up);
+            let lower = lower.to_rational().unwrap();
+            let upper = upper.to_rational().unwrap();
+            for rounding in -1..=1 {
+                let coarse = numerator.div_euclid(16) + rounding;
+                if (Q::from(coarse) - q.clone() * 16_i32).abs() > 1 {
+                    continue;
+                }
+                let input = Computable {
+                    internal: Arc::new(Node::new(
+                        Approximation::Add(
+                            Computable::rational(Rational::fraction(i64::from(numerator), 256).unwrap()),
+                            Computable::zero(),
+                        ),
+                        BoundCache::Valid(BoundInfo::Unknown),
+                        ExactSignCache::Unknown,
+                    )),
+                    signal: None,
+                };
+                assert!((Q::from(coarse) - q.clone() * 16_i32).abs() <= 1);
+                input.internal.store_cache_value(-4, BigInt::from(coarse));
+                let reduced = input.atan_reduced();
+                if matches!(reduced.internal.approximation, Approximation::PrescaledAtan(_)) {
+                    assert!(q.clone().abs() <= Q::from((1, 2)));
+                }
+                for precision in [0_i32, -32, -128, -8] {
+                    let scale = Integer::from(1) << -precision;
+                    let a = Integer::from_str_radix(&reduced.approx(precision).to_string(), 10).unwrap();
+                    let center = Q::from((a, scale.clone()));
+                    let radius = Q::from((1, scale));
+                    assert!(Q::from(&center - &radius) <= lower);
+                    assert!(Q::from(&center + &radius) >= upper);
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn atan_reduction_aborted_evaluation_does_not_poison_the_cache() {
+        use std::sync::atomic::{AtomicBool, Ordering};
+        let input = Computable::rational(Rational::from(100))
+            .sin()
+            .multiply(Computable::rational(Rational::from(4)));
+        let value = input.atan();
+        let signal = Arc::new(AtomicBool::new(true));
+        let _ = value.approx_signal(&Some(signal.clone()), -128);
+        assert!(value.cached().is_none());
+        signal.store(false, Ordering::Relaxed);
+        assert!(value.approx_signal(&Some(signal), -128).sign() == Sign::Minus);
+    }
+
+    fn check_inverse_series_domain(asin: bool, raw_prescaled: bool) {
+        use rug::{Float, Integer, Rational as Q, float::Round};
+        let root = |n| {
+            let mut lo = Float::with_val(512, n);
+            let mut hi = lo.clone();
+            lo.sqrt_round(Round::Down);
+            hi.sqrt_round(Round::Up);
+            (lo.to_rational().unwrap(), hi.to_rational().unwrap())
+        };
+        let (a, b) = root(5);
+        let (c, d) = root(7);
+        let lower: Q = a / 64 + c * 740 / 2048;
+        let upper: Q = b / 64 + d * 740 / 2048;
+        assert!(lower > 0 && upper < 1);
+        for negative in [false, true] {
+            let (lo, hi) = if negative { (-upper.clone(), -lower.clone()) } else { (lower.clone(), upper.clone()) };
+            let mut lo = Float::with_val_round(512, lo, Round::Down).0;
+            let mut hi = Float::with_val_round(512, hi, Round::Up).0;
+            if asin {
+                lo.asin_round(Round::Down);
+                hi.asin_round(Round::Up);
+            } else {
+                lo.atanh_round(Round::Down);
+                hi.atanh_round(Round::Up);
+            }
+            let lo = lo.to_rational().unwrap();
+            let hi = hi.to_rational().unwrap();
+            let mut input = Computable::rational(Rational::from(5)).sqrt().shift_right(6);
+            let term = Computable::rational(Rational::from(7)).sqrt().shift_right(11);
+            for _ in 0..740 { input = input.add(term.clone()); }
+            assert!(input.cheap_bound().planning_msd().flatten().unwrap() <= -4);
+            assert_eq!(input.cheap_bound().known_msd(), None);
+            if negative { input = input.negate(); }
+            let result = if raw_prescaled {
+                // Older public construction could serialize this invalid series
+                // choice. The approximation boundary must recheck its domain.
+                let kind = if asin { Approximation::PrescaledAsin(input) } else { Approximation::PrescaledAtanh(input) };
+                Computable { internal: Arc::new(Node::new(kind, BoundCache::Invalid, ExactSignCache::Invalid)), signal: None }
+            } else if asin { input.asin() } else { input.atanh() };
+            // A prescaled node is allowed as a lazy schedule, but its kernel
+            // must not consume this inexact planning hint as a certificate.
+            for precision in [-32_i32, 1, 0, -160, -8] {
+                let value = Integer::from_str_radix(&result.approx(precision).to_string(), 10).unwrap();
+                let unit = if precision > 0 { Q::from(Integer::from(1) << precision) } else { Q::from((1, Integer::from(1) << -precision)) };
+                let center = Q::from(value) * &unit;
+                assert!(Q::from(&center - &unit) <= lo && Q::from(&center + &unit) >= hi, "asin={asin}, raw={raw_prescaled}, negative={negative}, precision={precision}");
+            }
+        }
+    }
+
+    #[test]
+    fn asin_series_domain_rejects_estimated_magnitudes() {
+        check_inverse_series_domain(true, false);
+    }
+
+    #[test]
+    fn atanh_series_domain_rejects_estimated_magnitudes() {
+        check_inverse_series_domain(false, false);
+    }
+
+    #[test]
+    fn asin_series_domain_rechecks_prescaled_nodes() {
+        check_inverse_series_domain(true, true);
+    }
+
+    #[test]
+    fn atanh_series_domain_rechecks_prescaled_nodes() {
+        check_inverse_series_domain(false, true);
+    }
+
+    #[test]
+    fn inverse_series_domain_boundary_accepts_valid_cache_roundings() {
+        use rug::{Float, Integer, Rational as Q, float::Round};
+        let mut checks = 0;
+        for numerator in -1023_i32..=1023 {
+            let q = Q::from((numerator, 1024));
+            for asin in [false, true] {
+                let mut lo = Float::with_val(512, &q);
+                let mut hi = lo.clone();
+                if asin {
+                    lo.asin_round(Round::Down);
+                    hi.asin_round(Round::Up);
+                } else {
+                    lo.atanh_round(Round::Down);
+                    hi.atanh_round(Round::Up);
+                }
+                let lo = lo.to_rational().unwrap();
+                let hi = hi.to_rational().unwrap();
+                for rounding in -1..=1 {
+                    let coarse = numerator.div_euclid(4) + rounding;
+                    if (Q::from(coarse) - q.clone() * 256_i32).abs() > 1 { continue; }
+                    // Opaque exact input with every legal rounding at the
+                    // domain probe, including both one-unit endpoint errors.
+                    let input = Computable {
+                        internal: Arc::new(Node::new(
+                            Approximation::Add(Computable::rational(Rational::fraction(i64::from(numerator), 1024).unwrap()), Computable::zero()),
+                            BoundCache::Valid(BoundInfo::Unknown), ExactSignCache::Unknown,
+                        )), signal: None,
+                    };
+                    input.internal.store_cache_value(-8, BigInt::from(coarse));
+                    if input.inverse_series_argument_is_small(&None) {
+                        assert!(q.clone().abs() <= Q::from((1, 8)));
+                    }
+                    let kind = if asin { Approximation::PrescaledAsin(input) } else { Approximation::PrescaledAtanh(input) };
+                    let result = Computable { internal: Arc::new(Node::new(kind, BoundCache::Invalid, ExactSignCache::Invalid)), signal: None };
+                    // Cold coarse request, then refinement and cache reuse.
+                    for precision in [1_i32, 0, -32, -128, -8] {
+                        let value = Integer::from_str_radix(&result.approx(precision).to_string(), 10).unwrap();
+                        let unit = if precision > 0 { Q::from(Integer::from(1) << precision) } else { Q::from((1, Integer::from(1) << -precision)) };
+                        let center = Q::from(value) * &unit;
+                        assert!(Q::from(&center - &unit) <= lo && Q::from(&center + &unit) >= hi, "asin={asin}, n={numerator}, coarse={coarse}, p={precision}");
+                        checks += 1;
+                    }
+                }
+            }
+        }
+        assert_eq!(checks, 46050);
+    }
+
+    #[test]
+    fn inverse_series_domain_abort_does_not_publish_an_approximation() {
+        use std::sync::atomic::{AtomicBool, Ordering};
+        for asin in [false, true] {
+            let input = Computable::rational(Rational::fraction(255, 256).unwrap());
+            let kind = if asin { Approximation::PrescaledAsin(input) } else { Approximation::PrescaledAtanh(input) };
+            let result = Computable { internal: Arc::new(Node::new(kind, BoundCache::Invalid, ExactSignCache::Invalid)), signal: None };
+            let signal = Arc::new(AtomicBool::new(true));
+            let _ = result.approx_signal(&Some(signal.clone()), -128);
+            assert!(result.cached().is_none());
+            signal.store(false, Ordering::Relaxed);
+            assert!(result.approx_signal(&Some(signal), -128) > BigInt::zero());
+            assert!(result.cached().is_some());
+        }
+    }
+
+    #[test]
+    fn inverse_series_domain_checks_every_working_sample_boundary_rounding() {
+        use rug::{Float, Integer, Rational as Q, float::Round};
+        let mut checks = 0;
+        // These pairs include the kernels' iteration/rounding guard bits.
+        for (precision, operand_precision) in [(0_i32, -12_i32), (-1, -13), (-32, -46), (-128, -144)] {
+            let threshold = Integer::from(1) << (-operand_precision - 3);
+            for delta in -8_i32..=8 {
+                for negative in [false, true] {
+                    let q = Q::from((threshold.clone() * 4 + delta, Integer::from(1) << (-operand_precision + 2)));
+                    let q = if negative { -q } else { q };
+                    let base = threshold.clone() + delta.div_euclid(4);
+                    let base = if negative { -base } else { base };
+                    for rounding in -1..=1 {
+                        let sample: Integer = base.clone() + rounding;
+                        let sample_unit = Q::from((1, Integer::from(1) << -operand_precision));
+                        if (Q::from(sample.clone()) * &sample_unit - &q).abs() > sample_unit { continue; }
+                        for asin in [false, true] {
+                            let input = Computable {
+                                internal: Arc::new(Node::new(
+                                    Approximation::Add(Computable::rational(q.to_string().parse().unwrap()), Computable::zero()),
+                                    BoundCache::Valid(BoundInfo::Unknown), ExactSignCache::Unknown,
+                                )), signal: None,
+                            };
+                            input.internal.store_cache_value(operand_precision, sample.to_string().parse().unwrap());
+                            let kind = if asin { Approximation::PrescaledAsin(input) } else { Approximation::PrescaledAtanh(input) };
+                            let result = Computable { internal: Arc::new(Node::new(kind, BoundCache::Invalid, ExactSignCache::Invalid)), signal: None };
+                            let mut lo = Float::with_val(1024, &q);
+                            assert_eq!(lo.to_rational().unwrap(), q);
+                            let mut hi = lo.clone();
+                            if asin {
+                                lo.asin_round(Round::Down);
+                                hi.asin_round(Round::Up);
+                            } else {
+                                lo.atanh_round(Round::Down);
+                                hi.atanh_round(Round::Up);
+                            }
+                            let unit = Q::from((1, Integer::from(1) << -precision));
+                            let value = Integer::from_str_radix(&result.approx(precision).to_string(), 10).unwrap();
+                            let center = Q::from(value) * &unit;
+                            assert!(Q::from(&center - &unit) <= lo.to_rational().unwrap());
+                            assert!(Q::from(&center + &unit) >= hi.to_rational().unwrap());
+                            checks += 1;
+                        }
+                    }
+                }
+            }
+        }
+        assert_eq!(checks, 624);
+    }
+
+    #[test]
+    #[cfg(feature = "serde")]
+    fn inverse_series_domain_survives_legacy_serialization() {
+        for asin in [false, true] {
+            for numerator in [-255, -31, 31, 255] {
+                let input = Computable::rational(Rational::fraction(numerator, 256).unwrap());
+                let expected = if asin { input.clone().asin() } else { input.clone().atanh() };
+                let kind = if asin { Approximation::PrescaledAsin(input) } else { Approximation::PrescaledAtanh(input) };
+                let result = Computable { internal: Arc::new(Node::new(kind, BoundCache::Invalid, ExactSignCache::Invalid)), signal: None };
+                let encoded = serde_json::to_string(&result).unwrap();
+                let decoded: Computable = serde_json::from_str(&encoded).unwrap();
+                for p in [1, 0, -32, -128, -8] {
+                    assert_close(decoded.clone(), expected.clone(), p, 2);
+                }
+            }
+        }
+    }
+
     #[test]
     fn sqrt_square_raw_nodes_preserve_exact_prefix_bounds_and_history() {
         use rug::{Integer, Rational as RugRational};

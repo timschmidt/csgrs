@@ -10,10 +10,10 @@ struct AlgebraicGenerator {
     degree: u32,
 }
 
-/// A bounded zero-separation certificate for `alpha = beta / q`.
+/// A bounded zero-separation certificate for `alpha = beta / gamma`.
 ///
-/// `beta` is an algebraic integer, `q` is a positive integer, and the two
-/// logarithms bound `q` and every conjugate of `beta`. If `D` is the product
+/// `beta` and nonzero `gamma` are algebraic integers, and the two logarithms
+/// bound the magnitudes of every conjugate of each. If `D` is the product
 /// of the retained generator degrees and `alpha != 0`, the algebraic norm is a
 /// nonzero integer, so
 ///
@@ -24,9 +24,9 @@ struct AlgebraicGenerator {
 /// generator when membership in the existing field is proved.
 #[derive(Clone)]
 struct AlgebraicSeparation {
-    // The represented value is beta / q for an algebraic integer beta.
-    // These are certified upper bounds for log2(q) and for the magnitude of
-    // every conjugate of beta.
+    // Keeping an algebraic-integer denominator avoids taking its integer norm
+    // at each inverse. Both logarithms bound all conjugate magnitudes; gamma
+    // need not be positive, but must be nonzero in the selected embedding.
     denominator_log2: u64,
     conjugate_log2: u64,
     generators: Vec<AlgebraicGenerator>,
@@ -197,21 +197,17 @@ impl AlgebraicSeparation {
     }
 
     fn inverse(mut self) -> Option<Self> {
-        // For nonzero beta in a degree-d field, 1 / beta is its algebraic
-        // adjugate divided by the nonzero integer norm. Bounding the norm by
-        // 2^(dH) and each adjugate conjugate by 2^((d-1)H) yields these logs.
-        let degree = self.field_degree()?;
-        let denominator_log2 = self.conjugate_log2.checked_mul(degree)?;
-        let conjugate_log2 = self.denominator_log2.checked_add(
-            self.conjugate_log2
-                .checked_mul(degree.checked_sub(1)?)?,
-        )?;
-        self.denominator_log2 = denominator_log2;
-        self.conjugate_log2 = conjugate_log2;
+        // The parser admits an inverse only after proving its input nonzero,
+        // so beta is a valid denominator for gamma / beta.
+        std::mem::swap(&mut self.denominator_log2, &mut self.conjugate_log2);
         self.within_limits().then_some(self)
     }
 
     fn root(mut self, root: Computable, degree: u32) -> Option<Self> {
+        // If alpha = beta/gamma, then gamma * root_n(alpha) is integral:
+        // its nth power is beta * gamma^(n-1). This holds even when the
+        // selected gamma is negative; no principal-root choice for this
+        // integral numerator is needed by the conjugate-magnitude bound.
         let degree_u64 = u64::from(degree);
         let numerator = self
             .denominator_log2
@@ -1247,7 +1243,7 @@ impl Computable {
                         (Some(Sign::Plus), Some(Sign::Plus)) => Some(Sign::Plus),
                         (Some(Sign::Minus), Some(Sign::Minus)) => Some(Sign::Minus),
                         _ => None,
-                    };
+                    }.or_else(|| node.exact_positive_exp_difference_sign());
                     store_exact_sign(node, result);
                     values.push(result);
                 }
