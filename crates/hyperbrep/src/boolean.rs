@@ -1537,8 +1537,14 @@ fn face_interior_witnesses(model: &Model, face: FaceId) -> Result<Vec<Point3>, B
     let vertices = outer
         .curves()
         .iter()
-        .map(|curve| curve.start().clone())
-        .collect::<Vec<_>>();
+        .map(|curve| {
+            curve
+                .start()
+                .coordinates()
+                .cloned()
+                .ok_or(GeometryError::UnsupportedPcurveContour)
+        })
+        .collect::<Result<Vec<_>, _>>()?;
     let mut candidates = Vec::with_capacity(vertices.len() + 60);
     let vertex_average = average_planar_points(&vertices)?;
     if let Some(average) = &vertex_average {
@@ -1643,8 +1649,19 @@ fn append_curved_boundary_witness_candidates(
         let midpoint = curve.point_at(&half).map_err(GeometryError::from)?;
         outer_boundary_probes.push(midpoint.clone());
         candidates.push(
-            average_planar_points(&[curve.start().clone(), midpoint.clone(), curve.end().clone()])?
-                .expect("three curve points are nonempty"),
+            average_planar_points(&[
+                (curve.start().clone())
+                    .coordinates()
+                    .ok_or(GeometryError::UnsupportedPcurveContour)?
+                    .clone(),
+                midpoint.clone(),
+                curve
+                    .end()
+                    .coordinates()
+                    .cloned()
+                    .ok_or(GeometryError::UnsupportedPcurveContour)?,
+            ])?
+            .expect("three curve points are nonempty"),
         );
         if let Some(average) = vertex_average {
             candidates.push(
@@ -1674,13 +1691,19 @@ fn append_curved_boundary_witness_candidates(
             .map(|curve| curve.start().clone())
             .collect::<Vec<_>>();
         for curve in inner.curves() {
-            inner_boundary_probes.push(curve.point_at(&half).map_err(GeometryError::from)?);
+            inner_boundary_probes.push(hypercurve::CurvePoint2::from(curve.point_at(&half).map_err(GeometryError::from)?));
         }
         for outer_probe in &outer_boundary_probes {
             for inner_probe in &inner_boundary_probes {
                 candidates.push(
-                    average_planar_points(&[outer_probe.clone(), inner_probe.clone()])?
-                        .expect("two boundary probes are nonempty"),
+                    average_planar_points(&[
+                        outer_probe.clone(),
+                        (inner_probe.clone())
+                            .coordinates()
+                            .ok_or(GeometryError::UnsupportedPcurveContour)?
+                            .clone(),
+                    ])?
+                    .expect("two boundary probes are nonempty"),
                 );
             }
         }
@@ -2359,8 +2382,8 @@ fn copy_selected_wire(
                 curve = curve.reversed().map_err(GeometryError::from)?;
             }
             let pcurve = crate::Pcurve::new(curve);
-            let pcurve_start = pcurve.domain_start();
-            let pcurve_end = pcurve.domain_end();
+            let pcurve_start = pcurve.domain_start()?;
+            let pcurve_end = pcurve.domain_end()?;
             let (edge_start, edge_end) = match direction {
                 crate::Direction::Forward => (mapped_domain.start(), mapped_domain.end()),
                 crate::Direction::Reversed => (mapped_domain.end(), mapped_domain.start()),
@@ -2382,7 +2405,7 @@ fn copy_selected_wire(
             let correspondence = if reversed {
                 edge_use
                     .parameter_correspondence()
-                    .reversed_pcurve(source_pcurve)
+                    .reversed_pcurve(source_pcurve)?
             } else {
                 edge_use.parameter_correspondence().clone()
             }
@@ -6566,8 +6589,10 @@ mod tests {
             );
             let materialized = pcurve.materialize().unwrap();
             let curve_domain = materialized.curve().parameter_domain();
-            let curve_parameter =
-                ((curve_domain.start() + curve_domain.end()) / Real::from(2)).unwrap();
+            let curve_parameter = ((curve_domain.start().as_exact().unwrap()
+                + curve_domain.end().as_exact().unwrap())
+                / Real::from(2))
+            .unwrap();
             let spatial_parameter = materialized.spatial_parameter_at(&curve_parameter).unwrap();
             let retained_point = pcurve.point_at(&spatial_parameter).unwrap();
             let materialized_point = materialized.curve().point_at(&curve_parameter).unwrap();
@@ -6717,8 +6742,20 @@ mod tests {
             (
                 scale.to_string(),
                 offset.to_string(),
-                materialized.curve().parameter_domain().start().to_string(),
-                materialized.curve().parameter_domain().end().to_string(),
+                materialized
+                    .curve()
+                    .parameter_domain()
+                    .start()
+                    .as_exact()
+                    .unwrap()
+                    .to_string(),
+                materialized
+                    .curve()
+                    .parameter_domain()
+                    .end()
+                    .as_exact()
+                    .unwrap()
+                    .to_string(),
             ),
             (
                 "1".to_owned(),
@@ -7075,7 +7112,8 @@ mod tests {
         assert_eq!(traces.len(), 1);
         assert_eq!(traces[0].curve().kind(), crate::Curve3Kind::RationalBezier);
         let materialized = traces[0].first_pcurve().materialize().unwrap();
-        let hypercurve::CurveGeometry2::RationalBezier(inverse) = materialized.curve().geometry()
+        let Some(hypercurve::CurveGeometry2::RationalBezier(inverse)) =
+            materialized.curve().geometry()
         else {
             panic!("Möbius inverse retains a rational Bézier pcurve");
         };
@@ -7151,7 +7189,8 @@ mod tests {
                 .expect("degree-one projective NURBS inverse is Möbius-rational");
         assert_eq!(nurbs_traces.len(), 1);
         let native = nurbs_traces[0].first_pcurve().materialize().unwrap();
-        let hypercurve::CurveGeometry2::RationalBezier(native_inverse) = native.curve().geometry()
+        let Some(hypercurve::CurveGeometry2::RationalBezier(native_inverse)) =
+            native.curve().geometry()
         else {
             panic!("native-domain Möbius inverse retains a rational Bézier pcurve");
         };
@@ -7455,7 +7494,8 @@ mod tests {
             materialized.curve().family(),
             hypercurve::CurveFamily2::Nurbs
         );
-        let hypercurve::CurveGeometry2::Nurbs(closed) = materialized.curve().geometry() else {
+        let Some(hypercurve::CurveGeometry2::Nurbs(closed)) = materialized.curve().geometry()
+        else {
             unreachable!("closed mixed spline trace was just proved to be NURBS");
         };
         assert_eq!(closed.degree(), 3);
@@ -7938,8 +7978,24 @@ mod tests {
             panic!("mirrored axial spheres must retain one exact curve");
         };
         let second_pcurve = mirrored_curve.second_pcurve().materialize().unwrap();
-        assert_eq!(second_pcurve.curve().start().x(), &Real::tau());
-        assert_eq!(second_pcurve.curve().end().x(), &Real::zero());
+        assert_eq!(
+            second_pcurve
+                .curve()
+                .start()
+                .coordinates()
+                .expect("native fixture endpoint")
+                .x(),
+            &Real::tau()
+        );
+        assert_eq!(
+            second_pcurve
+                .curve()
+                .end()
+                .coordinates()
+                .expect("native fixture endpoint")
+                .x(),
+            &Real::zero()
+        );
         let (partitioned_mirrored, mirrored_partitions) =
             mirrored_graph.partition_second_faces().unwrap();
         assert_eq!(mirrored_partitions.len(), 1);
@@ -11974,14 +12030,24 @@ mod tests {
             curves.iter().all(|curve| {
                 let pcurve = curve.second_pcurve().materialize().unwrap();
                 compare_reals(
-                    pcurve.curve().start().x(),
+                    pcurve
+                        .curve()
+                        .start()
+                        .coordinates()
+                        .expect("native fixture endpoint")
+                        .x(),
                     &Real::tau(),
                     crate::STRICT_PREDICATES,
                 )
                 .value()
                     == Some(Ordering::Equal)
                     && compare_reals(
-                        pcurve.curve().end().x(),
+                        pcurve
+                            .curve()
+                            .end()
+                            .coordinates()
+                            .expect("native fixture endpoint")
+                            .x(),
                         &Real::zero(),
                         crate::STRICT_PREDICATES,
                     )
@@ -12094,14 +12160,24 @@ mod tests {
             curves.iter().all(|curve| {
                 let pcurve = curve.second_pcurve().materialize().unwrap();
                 compare_reals(
-                    pcurve.curve().start().x(),
+                    pcurve
+                        .curve()
+                        .start()
+                        .coordinates()
+                        .expect("native fixture endpoint")
+                        .x(),
                     &Real::tau(),
                     crate::STRICT_PREDICATES,
                 )
                 .value()
                     == Some(Ordering::Equal)
                     && compare_reals(
-                        pcurve.curve().end().x(),
+                        pcurve
+                            .curve()
+                            .end()
+                            .coordinates()
+                            .expect("native fixture endpoint")
+                            .x(),
                         &Real::zero(),
                         crate::STRICT_PREDICATES,
                     )
@@ -12235,14 +12311,24 @@ mod tests {
             curves.iter().all(|curve| {
                 let pcurve = curve.second_pcurve().materialize().unwrap();
                 compare_reals(
-                    pcurve.curve().start().x(),
+                    pcurve
+                        .curve()
+                        .start()
+                        .coordinates()
+                        .expect("native fixture endpoint")
+                        .x(),
                     &Real::tau(),
                     crate::STRICT_PREDICATES,
                 )
                 .value()
                     == Some(Ordering::Equal)
                     && compare_reals(
-                        pcurve.curve().end().x(),
+                        pcurve
+                            .curve()
+                            .end()
+                            .coordinates()
+                            .expect("native fixture endpoint")
+                            .x(),
                         &Real::zero(),
                         crate::STRICT_PREDICATES,
                     )
@@ -12300,14 +12386,24 @@ mod tests {
             assert!(curves.iter().all(|curve| {
                 let pcurve = curve.second_pcurve().materialize().unwrap();
                 compare_reals(
-                    pcurve.curve().start().x(),
+                    pcurve
+                        .curve()
+                        .start()
+                        .coordinates()
+                        .expect("native fixture endpoint")
+                        .x(),
                     &Real::tau(),
                     crate::STRICT_PREDICATES,
                 )
                 .value()
                     == Some(Ordering::Equal)
                     && compare_reals(
-                        pcurve.curve().end().x(),
+                        pcurve
+                            .curve()
+                            .end()
+                            .coordinates()
+                            .expect("native fixture endpoint")
+                            .x(),
                         &Real::zero(),
                         crate::STRICT_PREDICATES,
                     )
@@ -12393,14 +12489,24 @@ mod tests {
             curves.iter().all(|curve| {
                 let pcurve = curve.second_pcurve().materialize().unwrap();
                 compare_reals(
-                    pcurve.curve().start().x(),
+                    pcurve
+                        .curve()
+                        .start()
+                        .coordinates()
+                        .expect("native fixture endpoint")
+                        .x(),
                     &Real::zero(),
                     crate::STRICT_PREDICATES,
                 )
                 .value()
                     == Some(Ordering::Equal)
                     && compare_reals(
-                        pcurve.curve().end().x(),
+                        pcurve
+                            .curve()
+                            .end()
+                            .coordinates()
+                            .expect("native fixture endpoint")
+                            .x(),
                         &Real::tau(),
                         crate::STRICT_PREDICATES,
                     )
@@ -13915,8 +14021,24 @@ mod tests {
         assert_eq!(sphere_relations.len(), 4);
         for (curve, fragments) in sphere_relations {
             let sphere_pcurve = curve.first_pcurve().materialize().unwrap();
-            assert_eq!(sphere_pcurve.curve().start().x(), &Real::tau());
-            assert_eq!(sphere_pcurve.curve().end().x(), &Real::zero());
+            assert_eq!(
+                sphere_pcurve
+                    .curve()
+                    .start()
+                    .coordinates()
+                    .expect("native fixture endpoint")
+                    .x(),
+                &Real::tau()
+            );
+            assert_eq!(
+                sphere_pcurve
+                    .curve()
+                    .end()
+                    .coordinates()
+                    .expect("native fixture endpoint")
+                    .x(),
+                &Real::zero()
+            );
             assert_eq!(fragments.len(), 1);
             assert!(fragments[0].first_pcurve().materialize().is_ok());
             assert!(fragments[0].second_pcurve().materialize().is_ok());
@@ -13941,8 +14063,24 @@ mod tests {
         assert_eq!(cylinder_relations.len(), 4);
         for (curve, fragments) in cylinder_relations {
             let cylinder_pcurve = curve.first_pcurve().materialize().unwrap();
-            assert_eq!(cylinder_pcurve.curve().start().x(), &Real::tau());
-            assert_eq!(cylinder_pcurve.curve().end().x(), &Real::zero());
+            assert_eq!(
+                cylinder_pcurve
+                    .curve()
+                    .start()
+                    .coordinates()
+                    .expect("native fixture endpoint")
+                    .x(),
+                &Real::tau()
+            );
+            assert_eq!(
+                cylinder_pcurve
+                    .curve()
+                    .end()
+                    .coordinates()
+                    .expect("native fixture endpoint")
+                    .x(),
+                &Real::zero()
+            );
             assert_eq!(fragments.len(), 1);
         }
     }
@@ -14073,8 +14211,24 @@ mod tests {
         for (curve, fragments) in retained {
             assert_eq!(fragments.len(), 1);
             let second_pcurve = curve.second_pcurve().materialize().unwrap();
-            assert_eq!(second_pcurve.curve().start().x(), &Real::tau());
-            assert_eq!(second_pcurve.curve().end().x(), &Real::zero());
+            assert_eq!(
+                second_pcurve
+                    .curve()
+                    .start()
+                    .coordinates()
+                    .expect("native fixture endpoint")
+                    .x(),
+                &Real::tau()
+            );
+            assert_eq!(
+                second_pcurve
+                    .curve()
+                    .end()
+                    .coordinates()
+                    .expect("native fixture endpoint")
+                    .x(),
+                &Real::zero()
+            );
             assert!(fragments[0].first_pcurve().materialize().is_ok());
             assert!(fragments[0].second_pcurve().materialize().is_ok());
         }

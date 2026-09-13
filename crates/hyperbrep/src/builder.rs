@@ -2005,8 +2005,14 @@ fn add_curve_path_region(
     let curves = loop_curves.iter().flatten().cloned().collect::<Vec<_>>();
     let points_2d = curves
         .iter()
-        .map(|curve| curve.start().clone())
-        .collect::<Vec<_>>();
+        .map(|curve| {
+            curve
+                .start()
+                .coordinates()
+                .cloned()
+                .ok_or(GeometryError::UnsupportedPcurveContour)
+        })
+        .collect::<Result<Vec<_>, _>>()?;
     let mut points = Vec::with_capacity(points_2d.len() * 2);
     points.extend(
         points_2d
@@ -3459,7 +3465,13 @@ fn validate_planar_path_nesting(
         if !paths_are_disjoint(outer, hole)? {
             return Err(ConstructionError::IntersectingProfiles);
         }
-        if classify(outer, hole.start())? != ContourPointLocation::Inside {
+        if classify(
+            outer,
+            (hole.start())
+                .coordinates()
+                .ok_or(GeometryError::UnsupportedPcurveContour)?,
+        )? != ContourPointLocation::Inside
+        {
             return Err(ConstructionError::HoleOutside);
         }
     }
@@ -3468,8 +3480,18 @@ fn validate_planar_path_nesting(
             if !paths_are_disjoint(&holes[first], &holes[second])? {
                 return Err(ConstructionError::IntersectingProfiles);
             }
-            if classify(&holes[first], holes[second].start())? == ContourPointLocation::Inside
-                || classify(&holes[second], holes[first].start())? == ContourPointLocation::Inside
+            if classify(
+                &holes[first],
+                (holes[second].start())
+                    .coordinates()
+                    .ok_or(GeometryError::UnsupportedPcurveContour)?,
+            )? == ContourPointLocation::Inside
+                || classify(
+                    &holes[second],
+                    (holes[first].start())
+                        .coordinates()
+                        .ok_or(GeometryError::UnsupportedPcurveContour)?,
+                )? == ContourPointLocation::Inside
             {
                 return Err(ConstructionError::NestedHoles);
             }
@@ -3506,10 +3528,11 @@ fn persistent_planar_path_curves(path: &CurvePath2) -> Result<Vec<Curve2>, Const
     let mut persistent = Vec::new();
     for curve in path.curves() {
         match curve.geometry() {
-            CurveGeometry2::Line(_)
-            | CurveGeometry2::RationalBezier(_)
-            | CurveGeometry2::Nurbs(_) => persistent.push(curve.clone()),
-            CurveGeometry2::PolynomialBSpline(curve) => {
+            None => return Err(ConstructionError::UnsupportedPlanarProfile),
+            Some(CurveGeometry2::Line(_))
+            | Some(CurveGeometry2::RationalBezier(_))
+            | Some(CurveGeometry2::Nurbs(_)) => persistent.push(curve.clone()),
+            Some(CurveGeometry2::PolynomialBSpline(curve)) => {
                 persistent.push(
                     Curve2::try_nurbs(
                         curve.degree(),
@@ -3520,10 +3543,10 @@ fn persistent_planar_path_curves(path: &CurvePath2) -> Result<Vec<Curve2>, Const
                     .map_err(GeometryError::from)?,
                 );
             }
-            CurveGeometry2::CircularArc(_)
-            | CurveGeometry2::QuadraticBezier(_)
-            | CurveGeometry2::CubicBezier(_)
-            | CurveGeometry2::RationalQuadraticBezier(_) => {
+            Some(CurveGeometry2::CircularArc(_))
+            | Some(CurveGeometry2::QuadraticBezier(_))
+            | Some(CurveGeometry2::CubicBezier(_))
+            | Some(CurveGeometry2::RationalQuadraticBezier(_)) => {
                 for fragment in curve
                     .native_bezier_fragments()
                     .map_err(GeometryError::from)?
@@ -3540,11 +3563,12 @@ fn persistent_extrusion_path_curves(path: &CurvePath2) -> Result<Vec<Curve2>, Co
     let mut persistent = Vec::new();
     for curve in path.curves() {
         match curve.geometry() {
-            CurveGeometry2::Line(_)
-            | CurveGeometry2::CircularArc(_)
-            | CurveGeometry2::RationalBezier(_)
-            | CurveGeometry2::Nurbs(_) => persistent.push(curve.clone()),
-            CurveGeometry2::PolynomialBSpline(curve) => {
+            None => return Err(ConstructionError::UnsupportedPlanarProfile),
+            Some(CurveGeometry2::Line(_))
+            | Some(CurveGeometry2::CircularArc(_))
+            | Some(CurveGeometry2::RationalBezier(_))
+            | Some(CurveGeometry2::Nurbs(_)) => persistent.push(curve.clone()),
+            Some(CurveGeometry2::PolynomialBSpline(curve)) => {
                 persistent.push(
                     Curve2::try_nurbs(
                         curve.degree(),
@@ -3555,9 +3579,9 @@ fn persistent_extrusion_path_curves(path: &CurvePath2) -> Result<Vec<Curve2>, Co
                     .map_err(GeometryError::from)?,
                 );
             }
-            CurveGeometry2::QuadraticBezier(_)
-            | CurveGeometry2::CubicBezier(_)
-            | CurveGeometry2::RationalQuadraticBezier(_) => {
+            Some(CurveGeometry2::QuadraticBezier(_))
+            | Some(CurveGeometry2::CubicBezier(_))
+            | Some(CurveGeometry2::RationalQuadraticBezier(_)) => {
                 for fragment in curve
                     .native_bezier_fragments()
                     .map_err(GeometryError::from)?
@@ -3573,24 +3597,25 @@ fn persistent_extrusion_path_curves(path: &CurvePath2) -> Result<Vec<Curve2>, Co
 fn spatial_extrusion_curve(curve: &Curve2, z: &Real) -> Result<Curve3, ConstructionError> {
     let lift = |point: &CurvePoint2| Point3::new(point.x().clone(), point.y().clone(), z.clone());
     match curve.geometry() {
-        CurveGeometry2::Line(line) => Ok(Curve3::line(lift(line.start()), lift(line.end()))?),
-        CurveGeometry2::CircularArc(arc) => {
+        None => return Err(ConstructionError::UnsupportedPlanarProfile),
+        Some(CurveGeometry2::Line(line)) => Ok(Curve3::line(lift(line.start()), lift(line.end()))?),
+        Some(CurveGeometry2::CircularArc(arc)) => {
             spatial_segment_curve(&Segment2::Arc(arc.clone()), z).map(|(curve, _)| curve)
         }
-        CurveGeometry2::RationalBezier(curve) => Ok(Curve3::rational_bezier(
+        Some(CurveGeometry2::RationalBezier(curve)) => Ok(Curve3::rational_bezier(
             curve.control_points().iter().map(lift).collect(),
             curve.weights().to_vec(),
         )?),
-        CurveGeometry2::Nurbs(curve) => Ok(Curve3::nurbs(
+        Some(CurveGeometry2::Nurbs(curve)) => Ok(Curve3::nurbs(
             curve.degree(),
             curve.control_points().iter().map(lift).collect(),
             curve.weights().to_vec(),
             curve.knots().to_vec(),
         )?),
-        CurveGeometry2::QuadraticBezier(_)
-        | CurveGeometry2::CubicBezier(_)
-        | CurveGeometry2::RationalQuadraticBezier(_)
-        | CurveGeometry2::PolynomialBSpline(_) => Err(ConstructionError::UnsupportedPlanarProfile),
+        Some(CurveGeometry2::QuadraticBezier(_))
+        | Some(CurveGeometry2::CubicBezier(_))
+        | Some(CurveGeometry2::RationalQuadraticBezier(_))
+        | Some(CurveGeometry2::PolynomialBSpline(_)) => Err(ConstructionError::UnsupportedPlanarProfile),
     }
 }
 
@@ -3598,14 +3623,23 @@ fn planar_curve_correspondence(
     curve: &Curve2,
     direction: Direction,
 ) -> Result<ParameterCorrespondence, ConstructionError> {
-    if matches!(curve.geometry(), CurveGeometry2::CircularArc(_)) {
+    if matches!(curve.geometry(), Some(CurveGeometry2::CircularArc(_))) {
         return Ok(ParameterCorrespondence::angular_sweep());
     }
     Ok(match direction {
         Direction::Forward => ParameterCorrespondence::identity(),
         Direction::Reversed => ParameterCorrespondence::affine(
             -Real::one(),
-            curve.parameter_domain().start() + curve.parameter_domain().end(),
+            curve
+                .parameter_domain()
+                .start()
+                .as_exact()
+                .ok_or(GeometryError::UnsupportedPcurveContour)?
+                + curve
+                    .parameter_domain()
+                    .end()
+                    .as_exact()
+                    .ok_or(GeometryError::UnsupportedPcurveContour)?,
         )?,
     })
 }
@@ -3614,8 +3648,11 @@ fn lift_planar_pcurve(curve: &Curve2, surface: &Surface) -> Result<Curve3, Const
     let lift =
         |point: &CurvePoint2| surface.point_at(&Point2::new(point.x().clone(), point.y().clone()));
     match curve.geometry() {
-        CurveGeometry2::Line(line) => Ok(Curve3::line(lift(line.start())?, lift(line.end())?)?),
-        CurveGeometry2::RationalBezier(curve) => Ok(Curve3::rational_bezier(
+        None => return Err(ConstructionError::UnsupportedPlanarProfile),
+        Some(CurveGeometry2::Line(line)) => {
+            Ok(Curve3::line(lift(line.start())?, lift(line.end())?)?)
+        }
+        Some(CurveGeometry2::RationalBezier(curve)) => Ok(Curve3::rational_bezier(
             curve
                 .control_points()
                 .iter()
@@ -3623,7 +3660,7 @@ fn lift_planar_pcurve(curve: &Curve2, surface: &Surface) -> Result<Curve3, Const
                 .collect::<Result<Vec<_>, _>>()?,
             curve.weights().to_vec(),
         )?),
-        CurveGeometry2::Nurbs(curve) => Ok(Curve3::nurbs(
+        Some(CurveGeometry2::Nurbs(curve)) => Ok(Curve3::nurbs(
             curve.degree(),
             curve
                 .control_points()
@@ -3633,11 +3670,11 @@ fn lift_planar_pcurve(curve: &Curve2, surface: &Surface) -> Result<Curve3, Const
             curve.weights().to_vec(),
             curve.knots().to_vec(),
         )?),
-        CurveGeometry2::CircularArc(_)
-        | CurveGeometry2::QuadraticBezier(_)
-        | CurveGeometry2::CubicBezier(_)
-        | CurveGeometry2::RationalQuadraticBezier(_)
-        | CurveGeometry2::PolynomialBSpline(_) => Err(ConstructionError::UnsupportedPlanarProfile),
+        Some(CurveGeometry2::CircularArc(_))
+        | Some(CurveGeometry2::QuadraticBezier(_))
+        | Some(CurveGeometry2::CubicBezier(_))
+        | Some(CurveGeometry2::RationalQuadraticBezier(_))
+        | Some(CurveGeometry2::PolynomialBSpline(_)) => Err(ConstructionError::UnsupportedPlanarProfile),
     }
 }
 
@@ -3651,8 +3688,16 @@ fn add_planar_path_wire(
         .iter()
         .map(|curve| {
             surface.point_at(&Point2::new(
-                curve.start().x().clone(),
-                curve.start().y().clone(),
+                (curve.start())
+                    .coordinates()
+                    .ok_or(GeometryError::UnsupportedPcurveContour)?
+                    .x()
+                    .clone(),
+                (curve.start())
+                    .coordinates()
+                    .ok_or(GeometryError::UnsupportedPcurveContour)?
+                    .y()
+                    .clone(),
             ))
         })
         .collect::<Result<Vec<_>, _>>()?;
@@ -3720,21 +3765,29 @@ fn validate_simple_curve_path(
                 let forward_seam = second_index == first_index + 1
                     && exact_parameter_is(
                         contact.first().exact_curve_parameter(),
-                        curves[first_index].parameter_domain().end(),
+                        (curves[first_index].parameter_domain().end())
+                            .as_exact()
+                            .ok_or(GeometryError::UnsupportedPcurveContour)?,
                     )?
                     && exact_parameter_is(
                         contact.second().exact_curve_parameter(),
-                        curves[second_index].parameter_domain().start(),
+                        (curves[second_index].parameter_domain().start())
+                            .as_exact()
+                            .ok_or(GeometryError::UnsupportedPcurveContour)?,
                     )?;
                 let closing_seam = first_index == 0
                     && second_index + 1 == curves.len()
                     && exact_parameter_is(
                         contact.first().exact_curve_parameter(),
-                        curves[first_index].parameter_domain().start(),
+                        (curves[first_index].parameter_domain().start())
+                            .as_exact()
+                            .ok_or(GeometryError::UnsupportedPcurveContour)?,
                     )?
                     && exact_parameter_is(
                         contact.second().exact_curve_parameter(),
-                        curves[second_index].parameter_domain().end(),
+                        (curves[second_index].parameter_domain().end())
+                            .as_exact()
+                            .ok_or(GeometryError::UnsupportedPcurveContour)?,
                     )?;
                 if !forward_seam && !closing_seam {
                     return Err(ConstructionError::SelfIntersectingProfile);
@@ -3885,33 +3938,34 @@ fn spatial_revolution_curve(
         )
     };
     let spatial = match curve.geometry() {
-        CurveGeometry2::Line(line) => Curve3::line(lift(line.start()), lift(line.end()))?,
-        CurveGeometry2::CircularArc(arc) => {
+        None => return Err(ConstructionError::UnsupportedPlanarProfile),
+        Some(CurveGeometry2::Line(line)) => Curve3::line(lift(line.start()), lift(line.end()))?,
+        Some(CurveGeometry2::CircularArc(arc)) => {
             return spatial_revolution_segment(&Segment2::Arc(arc.clone()), angle);
         }
-        CurveGeometry2::QuadraticBezier(curve) => Curve3::rational_bezier(
+        Some(CurveGeometry2::QuadraticBezier(curve)) => Curve3::rational_bezier(
             curve.control_points().into_iter().map(lift).collect(),
             vec![Real::one(); 3],
         )?,
-        CurveGeometry2::CubicBezier(curve) => Curve3::rational_bezier(
+        Some(CurveGeometry2::CubicBezier(curve)) => Curve3::rational_bezier(
             curve.control_points().into_iter().map(lift).collect(),
             vec![Real::one(); 4],
         )?,
-        CurveGeometry2::RationalQuadraticBezier(curve) => Curve3::rational_bezier(
+        Some(CurveGeometry2::RationalQuadraticBezier(curve)) => Curve3::rational_bezier(
             curve.control_points().into_iter().map(lift).collect(),
             positive_projective_weights(&curve.weights().into_iter().cloned().collect::<Vec<_>>())?,
         )?,
-        CurveGeometry2::RationalBezier(curve) => Curve3::rational_bezier(
+        Some(CurveGeometry2::RationalBezier(curve)) => Curve3::rational_bezier(
             curve.control_points().iter().map(lift).collect(),
             positive_projective_weights(curve.weights())?,
         )?,
-        CurveGeometry2::PolynomialBSpline(curve) => Curve3::nurbs(
+        Some(CurveGeometry2::PolynomialBSpline(curve)) => Curve3::nurbs(
             curve.degree(),
             curve.control_points().iter().map(lift).collect(),
             vec![Real::one(); curve.control_points().len()],
             curve.knots().to_vec(),
         )?,
-        CurveGeometry2::Nurbs(curve) => Curve3::nurbs(
+        Some(CurveGeometry2::Nurbs(curve)) => Curve3::nurbs(
             curve.degree(),
             curve.control_points().iter().map(lift).collect(),
             positive_projective_weights(curve.weights())?,
@@ -4008,9 +4062,21 @@ fn add_normalized_curve_path_revolution_shell(
     for curve in curves {
         for angle in &angles {
             points.push(Point3::new(
-                curve.start().x() * angle.clone().cos(),
-                curve.start().x() * angle.clone().sin(),
-                curve.start().y().clone(),
+                (curve.start())
+                    .coordinates()
+                    .ok_or(GeometryError::UnsupportedPcurveContour)?
+                    .x()
+                    * angle.clone().cos(),
+                (curve.start())
+                    .coordinates()
+                    .ok_or(GeometryError::UnsupportedPcurveContour)?
+                    .x()
+                    * angle.clone().sin(),
+                (curve.start())
+                    .coordinates()
+                    .ok_or(GeometryError::UnsupportedPcurveContour)?
+                    .y()
+                    .clone(),
             ));
         }
     }
@@ -4029,10 +4095,22 @@ fn add_normalized_curve_path_revolution_shell(
             let start = &quarter * Real::from(angle_index as i32);
             let end = &quarter * Real::from(angle_index as i32 + 1);
             let circle = builder.curve(Curve3::circle_arc(
-                Point3::new(Real::zero(), Real::zero(), curve.start().y().clone()),
+                Point3::new(
+                    Real::zero(),
+                    Real::zero(),
+                    (curve.start())
+                        .coordinates()
+                        .ok_or(GeometryError::UnsupportedPcurveContour)?
+                        .y()
+                        .clone(),
+                ),
                 Vector3::x(),
                 Vector3::y(),
-                curve.start().x().clone(),
+                (curve.start())
+                    .coordinates()
+                    .ok_or(GeometryError::UnsupportedPcurveContour)?
+                    .x()
+                    .clone(),
                 start.clone(),
                 end.clone(),
             )?)?;

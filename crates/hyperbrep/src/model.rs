@@ -165,12 +165,12 @@ impl ParameterCorrespondence {
             Direction::Forward => (edge_domain.start(), edge_domain.end()),
             Direction::Reversed => (edge_domain.end(), edge_domain.start()),
         };
-        if (pcurve_parameter - pcurve.domain_start()).zero_status()
+        if (pcurve_parameter - pcurve.domain_start()?).zero_status()
             == hyperreal::ZeroKnowledge::Zero
             || matches!(
                 compare_reals(
                     pcurve_parameter,
-                    pcurve.domain_start(),
+                    pcurve.domain_start()?,
                     crate::STRICT_PREDICATES
                 ),
                 PredicateOutcome::Decided {
@@ -181,11 +181,11 @@ impl ParameterCorrespondence {
         {
             return Ok(directed_start.clone());
         }
-        if (pcurve_parameter - pcurve.domain_end()).zero_status() == hyperreal::ZeroKnowledge::Zero
+        if (pcurve_parameter - pcurve.domain_end()?).zero_status() == hyperreal::ZeroKnowledge::Zero
             || matches!(
                 compare_reals(
                     pcurve_parameter,
-                    pcurve.domain_end(),
+                    pcurve.domain_end()?,
                     crate::STRICT_PREDICATES
                 ),
                 PredicateOutcome::Decided {
@@ -235,7 +235,7 @@ impl ParameterCorrespondence {
                 }
             )
         {
-            return Ok(pcurve.domain_start().clone());
+            return Ok(pcurve.domain_start()?.clone());
         }
         if (edge_parameter - directed_end).zero_status() == hyperreal::ZeroKnowledge::Zero
             || matches!(
@@ -246,7 +246,7 @@ impl ParameterCorrespondence {
                 }
             )
         {
-            return Ok(pcurve.domain_end().clone());
+            return Ok(pcurve.domain_end()?.clone());
         }
         match self {
             Self::Affine { scale, offset, .. } => {
@@ -269,14 +269,14 @@ impl ParameterCorrespondence {
         }
     }
 
-    pub(crate) fn reversed_pcurve(&self, pcurve: &Pcurve) -> Self {
-        match self {
+    pub(crate) fn reversed_pcurve(&self, pcurve: &Pcurve) -> Result<Self, GeometryError> {
+        Ok(match self {
             Self::Affine { scale, offset } => Self::Affine {
                 scale: -scale.clone(),
-                offset: scale * (pcurve.domain_start() + pcurve.domain_end()) + offset,
+                offset: scale * (pcurve.domain_start()? + pcurve.domain_end()?) + offset,
             },
             Self::AngularSweep => Self::AngularSweep,
-        }
+        })
     }
 
     pub(crate) fn remapped_edge(
@@ -1485,10 +1485,14 @@ impl CertifiedRevolutionBoundary {
         }
     }
 
-    fn start(&self) -> &CurvePoint2 {
+    fn start(&self) -> Result<CurvePoint2, GeometryError> {
         match self {
-            Self::Native(contour) => contour.segments()[0].start(),
-            Self::Curved(path) => path.start(),
+            Self::Native(contour) => Ok(contour.segments()[0].start().clone()),
+            Self::Curved(path) => path
+                .start()
+                .coordinates()
+                .cloned()
+                .ok_or(GeometryError::UnsupportedPcurveContour),
         }
     }
 
@@ -2205,7 +2209,7 @@ impl Model {
                         ParameterCorrespondence::affine(
                             -edge_scale.clone(),
                             edge_scale
-                                * (forward_pcurve.domain_start() + forward_pcurve.domain_end())
+                                * (forward_pcurve.domain_start()? + forward_pcurve.domain_end()?)
                                 + edge_offset,
                         )?,
                     )
@@ -2424,10 +2428,23 @@ impl Model {
         }
         let new_start = materialized.curve().start();
         let new_end = materialized.curve().end();
-        if !real_values_equal(new_start.y(), new_end.y())? {
+        if !real_values_equal(
+            (new_start)
+                .coordinates()
+                .ok_or(GeometryError::UnsupportedPcurveContour)?
+                .y(),
+            (new_end)
+                .coordinates()
+                .ok_or(GeometryError::UnsupportedPcurveContour)?
+                .y(),
+        )? {
             return Err(TopologyEditError::UnsupportedFaceSplitCurve(curve.kind()));
         }
-        let new_latitude = new_start.y().clone();
+        let new_latitude = (new_start)
+            .coordinates()
+            .ok_or(GeometryError::UnsupportedPcurveContour)?
+            .y()
+            .clone();
         let relation = decided_model_order(compare_reals(
             &new_latitude,
             &old_latitude,
@@ -2470,7 +2487,7 @@ impl Model {
                         ParameterCorrespondence::affine(
                             -edge_scale.clone(),
                             edge_scale
-                                * (forward_pcurve.domain_start() + forward_pcurve.domain_end())
+                                * (forward_pcurve.domain_start()? + forward_pcurve.domain_end()?)
                                 + edge_offset,
                         )?,
                     )
@@ -2697,12 +2714,24 @@ impl Model {
             }
         };
         let outer_path = self.build_model_wire_curve_path(*outer)?;
-        if classify(&outer_path, loop_start)? != ContourPointLocation::Inside {
+        if classify(
+            &outer_path,
+            (loop_start)
+                .coordinates()
+                .ok_or(GeometryError::UnsupportedPcurveContour)?,
+        )? != ContourPointLocation::Inside
+        {
             return Err(TopologyEditError::ClosedFaceSplitNotInMaterial { face: face_id });
         }
         for hole in inner {
             let hole_path = self.build_model_wire_curve_path(*hole)?;
-            if classify(&hole_path, loop_start)? != ContourPointLocation::Outside {
+            if classify(
+                &hole_path,
+                (loop_start)
+                    .coordinates()
+                    .ok_or(GeometryError::UnsupportedPcurveContour)?,
+            )? != ContourPointLocation::Outside
+            {
                 return Err(TopologyEditError::ClosedFaceSplitNotInMaterial { face: face_id });
             }
         }
@@ -2734,7 +2763,7 @@ impl Model {
                         ParameterCorrespondence::affine(
                             -edge_scale.clone(),
                             edge_scale
-                                * (forward_pcurve.domain_start() + forward_pcurve.domain_end())
+                                * (forward_pcurve.domain_start()? + forward_pcurve.domain_end()?)
                                 + edge_offset,
                         )?,
                     )
@@ -2758,7 +2787,12 @@ impl Model {
         for hole in inner {
             let hole_path = self.build_model_wire_curve_path(*hole)?;
             let representative = hole_path.start();
-            match classify(&loop_path, representative)? {
+            match classify(
+                &loop_path,
+                (representative)
+                    .coordinates()
+                    .ok_or(GeometryError::UnsupportedPcurveContour)?,
+            )? {
                 ContourPointLocation::Inside => enclosed_inner.push(*hole),
                 ContourPointLocation::Outside => exterior_inner.push(*hole),
                 ContourPointLocation::Boundary => {
@@ -3446,7 +3480,7 @@ impl Model {
                 .expect("boundary bridge requires affine correspondence");
             let reverse_correspondence = ParameterCorrespondence::affine(
                 -scale.clone(),
-                scale * (bridge.pcurve.domain_start() + bridge.pcurve.domain_end()) + offset,
+                scale * (bridge.pcurve.domain_start()? + bridge.pcurve.domain_end()?) + offset,
             )?;
             let forward_use = EdgeUseId::from_index(data.edge_uses.len())
                 .ok_or(BuildError::CapacityExceeded(EntityKind::EdgeUse))?;
@@ -4372,7 +4406,10 @@ impl Model {
                             let pcurve = self
                                 .pcurve(edge_use.pcurve)
                                 .expect("validated edge-use pcurve ID");
-                            Ok(pcurve.curve().start().clone())
+                            Ok((pcurve.curve().start().clone())
+                                .coordinates()
+                                .ok_or(GeometryError::UnsupportedPcurveContour)?
+                                .clone())
                         };
                     let start_uv = pcurve_start(outer_uses[start_index])?;
                     let end_uv = pcurve_start(outer_uses[end_index])?;
@@ -4403,7 +4440,7 @@ impl Model {
             };
         let edge_domain = curve_geometry.domain().clone();
         let reverse_pcurve = forward_pcurve.reversed()?;
-        let reverse_correspondence = forward_correspondence.reversed_pcurve(&forward_pcurve);
+        let reverse_correspondence = forward_correspondence.reversed_pcurve(&forward_pcurve)?;
 
         let mut staged = self.clone();
         let data = Arc::make_mut(&mut staged.data);
@@ -4876,17 +4913,17 @@ impl Model {
                 .iter()
                 .map(|edge_use| {
                     let pcurve = &self.data.pcurves[edge_use.pcurve.index()];
-                    EdgeUse {
+                    Ok::<_, GeometryError>(EdgeUse {
                         edge: edge_use.edge,
                         direction: edge_use.direction.reversed(),
                         pcurve: edge_use.pcurve,
                         parameter_correspondence: edge_use
                             .parameter_correspondence
-                            .reversed_pcurve(pcurve),
+                            .reversed_pcurve(pcurve)?,
                         image_certificate: edge_use.image_certificate,
-                    }
+                    })
                 })
-                .collect()
+                .collect::<Result<Vec<_>, _>>()?
         } else {
             self.data.edge_uses.clone()
         };
@@ -8581,7 +8618,7 @@ impl ModelBuilder {
                 )
             );
 
-            let pcurve_parameters = [pcurve.domain_start(), pcurve.domain_end()];
+            let pcurve_parameters = [pcurve.domain_start()?, pcurve.domain_end()?];
             let expected_edge_parameters = match edge_use.direction {
                 Direction::Forward => [edge.domain.start(), edge.domain.end()],
                 Direction::Reversed => [edge.domain.end(), edge.domain.start()],
@@ -8863,7 +8900,7 @@ impl ModelBuilder {
             surface.point_at(&Point2::new(point.x().clone(), point.y().clone()))
         };
         let expected = match pcurve.curve().geometry() {
-            CurveGeometry2::RationalBezier(planar) => Curve3::rational_bezier(
+            Some(CurveGeometry2::RationalBezier(planar)) => Curve3::rational_bezier(
                 planar
                     .control_points()
                     .iter()
@@ -8871,7 +8908,7 @@ impl ModelBuilder {
                     .collect::<Result<Vec<_>, _>>()?,
                 planar.weights().to_vec(),
             )?,
-            CurveGeometry2::Nurbs(planar) => Curve3::nurbs(
+            Some(CurveGeometry2::Nurbs(planar)) => Curve3::nurbs(
                 planar.degree(),
                 planar
                     .control_points()
@@ -9206,8 +9243,26 @@ impl ModelBuilder {
         let start = oriented.curve().start();
         let end = oriented.curve().end();
         let (start, end) = match profile_axis {
-            SurfaceIsoAxis::U => (start.x(), end.x()),
-            SurfaceIsoAxis::V => (start.y(), end.y()),
+            SurfaceIsoAxis::U => (
+                (start)
+                    .coordinates()
+                    .ok_or(GeometryError::UnsupportedPcurveContour)?
+                    .x(),
+                (end)
+                    .coordinates()
+                    .ok_or(GeometryError::UnsupportedPcurveContour)?
+                    .x(),
+            ),
+            SurfaceIsoAxis::V => (
+                (start)
+                    .coordinates()
+                    .ok_or(GeometryError::UnsupportedPcurveContour)?
+                    .y(),
+                (end)
+                    .coordinates()
+                    .ok_or(GeometryError::UnsupportedPcurveContour)?
+                    .y(),
+            ),
         };
         if decided_model_order(compare_reals(start, end, crate::STRICT_PREDICATES))?
             != std::cmp::Ordering::Less
@@ -9350,7 +9405,7 @@ impl ModelBuilder {
             Direction::Forward => pcurve.clone(),
             Direction::Reversed => pcurve.reversed()?,
         };
-        let CurveGeometry2::RationalBezier(graph) = oriented_pcurve.curve().geometry() else {
+        let Some(CurveGeometry2::RationalBezier(graph)) = oriented_pcurve.curve().geometry() else {
             return Err(BuildError::EdgeUseSupportMismatch);
         };
         let graph_coefficients = coefficients
@@ -9625,7 +9680,7 @@ impl ModelBuilder {
                 BuildError::EdgeUseSupportMismatch,
             )?;
         }
-        for parameter in [pcurve.domain_start(), pcurve.domain_end()] {
+        for parameter in [pcurve.domain_start()?, pcurve.domain_end()?] {
             let edge_parameter = edge_use.parameter_correspondence.edge_parameter(
                 pcurve,
                 &edge.domain,
@@ -9673,7 +9728,7 @@ impl ModelBuilder {
             BuildError::EdgeUseSupportMismatch,
         )?;
 
-        let pcurve_span = pcurve.domain_end() - pcurve.domain_start();
+        let pcurve_span = pcurve.domain_end()? - pcurve.domain_start()?;
         let du = line.end().x() - line.start().x();
         let du_dt = (du / pcurve_span).map_err(|_| GeometryError::ProjectiveDivision)?;
         let surface_parameter = Point2::new(line.start().x().clone(), line.start().y().clone());
@@ -9682,7 +9737,7 @@ impl ModelBuilder {
             pcurve,
             &edge.domain,
             edge_use.direction,
-            pcurve.domain_start(),
+            pcurve.domain_start()?,
         )?;
         let edge_rate = match &edge_use.parameter_correspondence {
             ParameterCorrespondence::Affine { scale, .. } => scale,
@@ -9774,7 +9829,7 @@ impl ModelBuilder {
             BuildError::EdgeUseSupportMismatch,
         )?;
 
-        let pcurve_span = pcurve.domain_end() - pcurve.domain_start();
+        let pcurve_span = pcurve.domain_end()? - pcurve.domain_start()?;
         let parameter_delta = if varying_u {
             line.end().x() - line.start().x()
         } else {
@@ -9792,7 +9847,7 @@ impl ModelBuilder {
             pcurve,
             &edge.domain,
             edge_use.direction,
-            pcurve.domain_start(),
+            pcurve.domain_start()?,
         )?;
         let edge_rate = match &edge_use.parameter_correspondence {
             ParameterCorrespondence::Affine { scale, .. } => scale,
@@ -10008,7 +10063,7 @@ impl ModelBuilder {
             BuildError::EdgeUseSupportMismatch,
         )?;
 
-        let pcurve_span = pcurve.domain_end() - pcurve.domain_start();
+        let pcurve_span = pcurve.domain_end()? - pcurve.domain_start()?;
         let du_dt = ((line.end().x() - line.start().x()) / &pcurve_span)
             .map_err(|_| GeometryError::ProjectiveDivision)?;
         let surface_parameter = Point2::new(line.start().x().clone(), line.start().y().clone());
@@ -10017,7 +10072,7 @@ impl ModelBuilder {
             pcurve,
             &edge.domain,
             edge_use.direction,
-            pcurve.domain_start(),
+            pcurve.domain_start()?,
         )?;
         let edge_rate = match &edge_use.parameter_correspondence {
             ParameterCorrespondence::Affine { scale, .. } => scale,
@@ -10098,8 +10153,8 @@ impl ModelBuilder {
         let profile_span = profile_end - profile_start;
         let expected_span = expected.domain().end() - expected.domain().start();
         for (pcurve_parameter, surface_parameter) in [
-            (pcurve.domain_start(), line.start().x()),
-            (pcurve.domain_end(), line.end().x()),
+            (pcurve.domain_start()?, line.start().x()),
+            (pcurve.domain_end()?, line.end().x()),
         ] {
             let edge_parameter = edge_use.parameter_correspondence.edge_parameter(
                 pcurve,
@@ -10163,8 +10218,8 @@ impl ModelBuilder {
         let profile_span = profile_end - profile_start;
         let expected_span = expected.domain().end() - expected.domain().start();
         for (pcurve_parameter, surface_parameter) in [
-            (pcurve.domain_start(), line.start().y()),
-            (pcurve.domain_end(), line.end().y()),
+            (pcurve.domain_start()?, line.start().y()),
+            (pcurve.domain_end()?, line.end().y()),
         ] {
             let edge_parameter = edge_use.parameter_correspondence.edge_parameter(
                 pcurve,
@@ -10212,13 +10267,13 @@ impl ModelBuilder {
             pcurve,
             &edge.domain,
             edge_use.direction,
-            pcurve.domain_start(),
+            pcurve.domain_start()?,
         )?;
         let second_edge_parameter = edge_use.parameter_correspondence.edge_parameter(
             pcurve,
             &edge.domain,
             edge_use.direction,
-            pcurve.domain_end(),
+            pcurve.domain_end()?,
         )?;
         let (angle_at_start, angle_at_end) =
             if real_values_equal(&first_edge_parameter, actual.domain().start())? {
@@ -10347,7 +10402,7 @@ impl ModelBuilder {
         for edge_use in &wire.edge_uses {
             let pcurve = self.pcurve_ref(self.edge_use_ref(*edge_use)?.pcurve)?;
             match pcurve.curve().geometry() {
-                CurveGeometry2::RationalBezier(_) | CurveGeometry2::Nurbs(_) => {
+                Some(CurveGeometry2::RationalBezier(_)) | Some(CurveGeometry2::Nurbs(_)) => {
                     if graph_endpoints.is_some() {
                         return Err(GeometryError::UnsupportedPcurveContour.into());
                     }
@@ -10357,30 +10412,42 @@ impl ModelBuilder {
                         start.clone(),
                         end.clone(),
                         decided_model_order(compare_reals(
-                            end.x(),
-                            start.x(),
+                            (end)
+                                .coordinates()
+                                .ok_or(GeometryError::UnsupportedPcurveContour)?
+                                .x(),
+                            (start)
+                                .coordinates()
+                                .ok_or(GeometryError::UnsupportedPcurveContour)?
+                                .x(),
                             crate::STRICT_PREDICATES,
                         ))?,
                         decided_model_order(compare_reals(
-                            end.y(),
-                            start.y(),
+                            (end)
+                                .coordinates()
+                                .ok_or(GeometryError::UnsupportedPcurveContour)?
+                                .y(),
+                            (start)
+                                .coordinates()
+                                .ok_or(GeometryError::UnsupportedPcurveContour)?
+                                .y(),
                             crate::STRICT_PREDICATES,
                         ))?,
                     ));
                 }
-                CurveGeometry2::Line(line)
+                Some(CurveGeometry2::Line(line))
                     if real_values_equal(line.start().x(), line.end().x())? =>
                 {
                     has_left_boundary |= real_values_equal(line.start().x(), u_domain.start())?;
                     has_right_boundary |= real_values_equal(line.start().x(), u_domain.end())?;
                 }
-                CurveGeometry2::Line(line)
+                Some(CurveGeometry2::Line(line))
                     if real_values_equal(line.start().y(), line.end().y())? =>
                 {
                     has_bottom_boundary |= real_values_equal(line.start().y(), v_domain.start())?;
                     has_top_boundary |= real_values_equal(line.start().y(), v_domain.end())?;
                 }
-                CurveGeometry2::Line(_) => {
+                Some(CurveGeometry2::Line(_)) => {
                     return Err(GeometryError::UnsupportedPcurveContour.into());
                 }
                 _ => return Err(GeometryError::UnsupportedPcurveContour.into()),
@@ -10389,10 +10456,32 @@ impl ModelBuilder {
         let (graph_start, graph_end, graph_u_direction, graph_v_direction) =
             graph_endpoints.ok_or(GeometryError::UnsupportedPcurveContour)?;
         let mut candidates = Vec::with_capacity(2);
-        let graph_on_left = real_values_equal(graph_start.x(), u_domain.start())?
-            && real_values_equal(graph_end.x(), u_domain.start())?;
-        let graph_on_right = real_values_equal(graph_start.x(), u_domain.end())?
-            && real_values_equal(graph_end.x(), u_domain.end())?;
+        let graph_on_left = real_values_equal(
+            (graph_start)
+                .coordinates()
+                .ok_or(GeometryError::UnsupportedPcurveContour)?
+                .x(),
+            u_domain.start(),
+        )? && real_values_equal(
+            (graph_end)
+                .coordinates()
+                .ok_or(GeometryError::UnsupportedPcurveContour)?
+                .x(),
+            u_domain.start(),
+        )?;
+        let graph_on_right = real_values_equal(
+            (graph_start)
+                .coordinates()
+                .ok_or(GeometryError::UnsupportedPcurveContour)?
+                .x(),
+            u_domain.end(),
+        )? && real_values_equal(
+            (graph_end)
+                .coordinates()
+                .ok_or(GeometryError::UnsupportedPcurveContour)?
+                .x(),
+            u_domain.end(),
+        )?;
         let effective_left = if graph_on_left != graph_on_right {
             Some(if graph_on_left {
                 !has_right_boundary
@@ -10417,10 +10506,32 @@ impl ModelBuilder {
                 (std::cmp::Ordering::Equal, _) => unreachable!("equal graph span rejected"),
             });
         }
-        let graph_on_bottom = real_values_equal(graph_start.y(), v_domain.start())?
-            && real_values_equal(graph_end.y(), v_domain.start())?;
-        let graph_on_top = real_values_equal(graph_start.y(), v_domain.end())?
-            && real_values_equal(graph_end.y(), v_domain.end())?;
+        let graph_on_bottom = real_values_equal(
+            (graph_start)
+                .coordinates()
+                .ok_or(GeometryError::UnsupportedPcurveContour)?
+                .y(),
+            v_domain.start(),
+        )? && real_values_equal(
+            (graph_end)
+                .coordinates()
+                .ok_or(GeometryError::UnsupportedPcurveContour)?
+                .y(),
+            v_domain.start(),
+        )?;
+        let graph_on_top = real_values_equal(
+            (graph_start)
+                .coordinates()
+                .ok_or(GeometryError::UnsupportedPcurveContour)?
+                .y(),
+            v_domain.end(),
+        )? && real_values_equal(
+            (graph_end)
+                .coordinates()
+                .ok_or(GeometryError::UnsupportedPcurveContour)?
+                .y(),
+            v_domain.end(),
+        )?;
         let effective_bottom = if graph_on_bottom != graph_on_top {
             Some(if graph_on_bottom {
                 !has_top_boundary
@@ -10571,7 +10682,12 @@ impl ModelBuilder {
                 });
             }
             match outer_path
-                .classify_point(path.start(), &policy)
+                .classify_point(
+                    (path.start())
+                        .coordinates()
+                        .ok_or(GeometryError::UnsupportedPcurveContour)?,
+                    &policy,
+                )
                 .map_err(GeometryError::from)?
             {
                 Classification::Decided(ContourPointLocation::Inside) => {}
@@ -10598,11 +10714,17 @@ impl ModelBuilder {
                 }
                 let nested = classification_is_inside(
                     first_path
-                        .classify_point(second_path.start(), &policy)
+                        .classify_point(
+                            second_path.start().coordinates().ok_or(GeometryError::UnsupportedPcurveContour)?,
+                            &policy,
+                        )
                         .map_err(GeometryError::from)?,
                 )? || classification_is_inside(
                     second_path
-                        .classify_point(first_path.start(), &policy)
+                        .classify_point(
+                            first_path.start().coordinates().ok_or(GeometryError::UnsupportedPcurveContour)?,
+                            &policy,
+                        )
                         .map_err(GeometryError::from)?,
                 )?;
                 if nested {
@@ -10934,8 +11056,18 @@ impl ModelBuilder {
                 let mut found = None;
                 for (index, (expected_first, expected_second)) in expected.iter().enumerate() {
                     if !matched[index]
-                        && real_values_equal(&first_parameter, expected_first)?
-                        && real_values_equal(&second_parameter, expected_second)?
+                        && real_values_equal(
+                            &first_parameter,
+                            (expected_first)
+                                .as_exact()
+                                .ok_or(GeometryError::UnsupportedPcurveContour)?,
+                        )?
+                        && real_values_equal(
+                            &second_parameter,
+                            (expected_second)
+                                .as_exact()
+                                .ok_or(GeometryError::UnsupportedPcurveContour)?,
+                        )?
                     {
                         found = Some(index);
                         break;
@@ -10992,9 +11124,17 @@ impl ModelBuilder {
                 let Some(second_parameter) = contact.second().exact_curve_parameter() else {
                     return Err(GeometryError::UnsupportedIntersection.into());
                 };
-                if !real_values_equal(&first_parameter, expected_first)?
-                    || !real_values_equal(&second_parameter, expected_second)?
-                {
+                if !real_values_equal(
+                    &first_parameter,
+                    (expected_first)
+                        .as_exact()
+                        .ok_or(GeometryError::UnsupportedPcurveContour)?,
+                )? || !real_values_equal(
+                    &second_parameter,
+                    (expected_second)
+                        .as_exact()
+                        .ok_or(GeometryError::UnsupportedPcurveContour)?,
+                )? {
                     return Err(BuildError::SelfIntersectingWire(wire));
                 }
             }
@@ -11258,7 +11398,7 @@ impl ModelBuilder {
                     || !classification_is_inside(
                         outer_revolution
                             .profile
-                            .classify_point(void.profile.start(), &policy)?,
+                            .classify_point(&void.profile.start()?, &policy)?,
                     )?
                 {
                     return Err(BuildError::VoidShellOutside(*void_shell));
@@ -11271,9 +11411,9 @@ impl ModelBuilder {
                     let (second_shell, second) = &revolution_voids[second_index];
                     let boundaries_intersect = first.intersects(second, &policy)?;
                     let nested =
-                        classification_is_inside(first.classify_point(second.start(), &policy)?)?
+                        classification_is_inside(first.classify_point(&second.start()?, &policy)?)?
                             || classification_is_inside(
-                                second.classify_point(first.start(), &policy)?,
+                                second.classify_point(&first.start()?, &policy)?,
                             )?;
                     if boundaries_intersect || nested {
                         return Err(BuildError::IntersectingVoidShells {
@@ -16621,7 +16761,15 @@ impl ModelBuilder {
             let end = ordered.last().expect("seeded profile").end();
             let mut matching = None;
             for (index, curve) in profile_curves.iter().enumerate() {
-                if curve_points_equal(curve.start(), end)? && matching.replace(index).is_some() {
+                if curve_points_equal(
+                    (curve.start())
+                        .coordinates()
+                        .ok_or(GeometryError::UnsupportedPcurveContour)?,
+                    (end)
+                        .coordinates()
+                        .ok_or(GeometryError::UnsupportedPcurveContour)?,
+                )? && matching.replace(index).is_some()
+                {
                     return Ok(None);
                 }
             }
@@ -16631,22 +16779,26 @@ impl ModelBuilder {
             ordered.push(profile_curves.remove(index));
         }
         if !curve_points_equal(
-            ordered.last().expect("nonempty profile").end(),
-            ordered[0].start(),
+            (ordered.last().expect("nonempty profile").end())
+                .coordinates()
+                .ok_or(GeometryError::UnsupportedPcurveContour)?,
+            (ordered[0].start())
+                .coordinates()
+                .ok_or(GeometryError::UnsupportedPcurveContour)?,
         )? {
             return Ok(None);
         }
         let profile = if ordered.iter().all(|curve| {
             matches!(
                 curve.geometry(),
-                CurveGeometry2::Line(_) | CurveGeometry2::CircularArc(_)
+                Some(CurveGeometry2::Line(_)) | Some(CurveGeometry2::CircularArc(_))
             )
         }) {
             let segments = ordered
                 .into_iter()
                 .map(|curve| match curve.geometry() {
-                    CurveGeometry2::Line(line) => Segment2::Line(line.clone()),
-                    CurveGeometry2::CircularArc(arc) => Segment2::Arc(arc.clone()),
+                    Some(CurveGeometry2::Line(line)) => Segment2::Line(line.clone()),
+                    Some(CurveGeometry2::CircularArc(arc)) => Segment2::Arc(arc.clone()),
                     _ => unreachable!("native revolution profile was prefiltered"),
                 })
                 .collect();
@@ -19120,7 +19272,7 @@ fn normalize_single_span_nurbs_pcurve(
     v_start: &Real,
     v_end: &Real,
 ) -> Result<Curve2, BuildError> {
-    let CurveGeometry2::RationalBezier(curve) = curve.geometry() else {
+    let Some(CurveGeometry2::RationalBezier(curve)) = curve.geometry() else {
         return Err(BuildError::EdgeUseSupportMismatch);
     };
     let u_span = u_end - u_start;
@@ -19143,15 +19295,16 @@ fn normalize_single_span_nurbs_pcurve(
 
 fn validate_projective_pcurve_equal(actual: &Curve2, expected: &Curve2) -> Result<(), BuildError> {
     match (actual.geometry(), expected.geometry()) {
-        (CurveGeometry2::RationalBezier(actual), CurveGeometry2::RationalBezier(expected)) => {
-            validate_weighted_pcurve_controls(
-                actual.control_points(),
-                actual.weights(),
-                expected.control_points(),
-                expected.weights(),
-            )
-        }
-        (CurveGeometry2::Nurbs(actual), CurveGeometry2::Nurbs(expected)) => {
+        (
+            Some(CurveGeometry2::RationalBezier(actual)),
+            Some(CurveGeometry2::RationalBezier(expected)),
+        ) => validate_weighted_pcurve_controls(
+            actual.control_points(),
+            actual.weights(),
+            expected.control_points(),
+            expected.weights(),
+        ),
+        (Some(CurveGeometry2::Nurbs(actual)), Some(CurveGeometry2::Nurbs(expected))) => {
             if actual.degree() != expected.degree()
                 || !real_slices_equal(actual.knots(), expected.knots())?
             {
@@ -19502,10 +19655,10 @@ fn split_parameter_correspondence(
                 Direction::Forward => (edge_domain.start(), edge_domain.end()),
                 Direction::Reversed => (edge_domain.end(), edge_domain.start()),
             };
-            let pcurve_width = pcurve.domain_end() - pcurve.domain_start();
+            let pcurve_width = pcurve.domain_end()? - pcurve.domain_start()?;
             let scale = ((edge_end - edge_start) / pcurve_width)
                 .map_err(|_| GeometryError::ProjectiveDivision)?;
-            let offset = edge_start - &scale * pcurve.domain_start();
+            let offset = edge_start - &scale * pcurve.domain_start()?;
             Ok(ParameterCorrespondence::affine(scale, offset)?)
         }
     }

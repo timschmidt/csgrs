@@ -250,20 +250,20 @@ impl Model {
         let pcurves = self
             .pcurves()
             .map(|(_, pcurve)| match pcurve.curve().geometry() {
-                CurveGeometry2::Line(_) => {
+                Some(CurveGeometry2::Line(_)) => {
                     let (start, end) = pcurve.endpoints().map_err(BuildError::from)?;
                     Ok(RawPcurve::Line {
                         start: [start.x, start.y],
                         end: [end.x, end.y],
                     })
                 }
-                CurveGeometry2::CircularArc(arc) => Ok(RawPcurve::CircularArc {
+                Some(CurveGeometry2::CircularArc(arc)) => Ok(RawPcurve::CircularArc {
                     start: curve_point_array(arc.start()),
                     end: curve_point_array(arc.end()),
                     center: curve_point_array(arc.center()),
                     clockwise: arc.is_clockwise(),
                 }),
-                CurveGeometry2::RationalBezier(curve) => Ok(RawPcurve::RationalBezier {
+                Some(CurveGeometry2::RationalBezier(curve)) => Ok(RawPcurve::RationalBezier {
                     control_points: curve
                         .control_points()
                         .iter()
@@ -271,7 +271,7 @@ impl Model {
                         .collect(),
                     weights: curve.weights().to_vec(),
                 }),
-                CurveGeometry2::Nurbs(curve) => Ok(RawPcurve::Nurbs {
+                Some(CurveGeometry2::Nurbs(curve)) => Ok(RawPcurve::Nurbs {
                     degree: curve.degree(),
                     control_points: curve
                         .control_points()

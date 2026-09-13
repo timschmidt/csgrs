@@ -138,13 +138,21 @@ impl Pcurve {
     }
 
     /// Returns the inclusive exact parameter-domain start.
-    pub fn domain_start(&self) -> &Real {
-        self.curve.parameter_domain().start()
+    pub fn domain_start(&self) -> GeometryResult<&Real> {
+        self.curve
+            .parameter_domain()
+            .start()
+            .as_exact()
+            .ok_or(GeometryError::UnsupportedPcurveContour)
     }
 
     /// Returns the inclusive exact parameter-domain end.
-    pub fn domain_end(&self) -> &Real {
-        self.curve.parameter_domain().end()
+    pub fn domain_end(&self) -> GeometryResult<&Real> {
+        self.curve
+            .parameter_domain()
+            .end()
+            .as_exact()
+            .ok_or(GeometryError::UnsupportedPcurveContour)
     }
 
     /// Evaluates an exact point in surface parameter space.
@@ -166,29 +174,29 @@ impl Pcurve {
 
     pub(crate) fn endpoints(&self) -> GeometryResult<(Point2, Point2)> {
         Ok((
-            self.point_at(self.domain_start())?,
-            self.point_at(self.domain_end())?,
+            self.point_at(self.domain_start()?)?,
+            self.point_at(self.domain_end()?)?,
         ))
     }
 
     pub(crate) fn segment(&self) -> GeometryResult<Segment2> {
         match self.curve.geometry() {
-            CurveGeometry2::Line(line) => Ok(Segment2::Line(line.clone())),
-            CurveGeometry2::CircularArc(arc) => Ok(Segment2::Arc(arc.clone())),
+            Some(CurveGeometry2::Line(line)) => Ok(Segment2::Line(line.clone())),
+            Some(CurveGeometry2::CircularArc(arc)) => Ok(Segment2::Arc(arc.clone())),
             _ => Err(GeometryError::UnsupportedPcurveContour),
         }
     }
 
     pub(crate) fn circular_arc(&self) -> Option<&hypercurve::CircularArc2> {
         match self.curve.geometry() {
-            CurveGeometry2::CircularArc(arc) => Some(arc),
+            Some(CurveGeometry2::CircularArc(arc)) => Some(arc),
             _ => None,
         }
     }
 
     pub(crate) fn line_segment(&self) -> Option<&hypercurve::LineSeg2> {
         match self.curve.geometry() {
-            CurveGeometry2::Line(line) => Some(line),
+            Some(CurveGeometry2::Line(line)) => Some(line),
             _ => None,
         }
     }
@@ -198,10 +206,10 @@ impl Pcurve {
             hypercurve::Point2::new(&reflection_sum - point.x(), point.y().clone())
         };
         match self.curve.geometry() {
-            CurveGeometry2::Line(line) => Ok(Self::new(Curve2::from(
+            Some(CurveGeometry2::Line(line)) => Ok(Self::new(Curve2::from(
                 hypercurve::LineSeg2::try_new(reflect(line.end()), reflect(line.start()))?,
             ))),
-            CurveGeometry2::CircularArc(arc) => Ok(Self::new(Curve2::from(
+            Some(CurveGeometry2::CircularArc(arc)) => Ok(Self::new(Curve2::from(
                 hypercurve::CircularArc2::try_from_center(
                     reflect(arc.end()),
                     reflect(arc.start()),
@@ -1929,8 +1937,14 @@ impl SurfaceIntersectionPcurve {
 
     fn retained_curve(curve: Curve2) -> GeometryResult<Self> {
         let curve_domain = curve.parameter_domain();
+        let (curve_domain_start, curve_domain_end) = curve_domain
+            .exact_endpoints()
+            .ok_or(GeometryError::UnsupportedPcurveContour)?;
         Ok(Self {
-            domain: ParameterDomain::new(curve_domain.start().clone(), curve_domain.end().clone())?,
+            domain: ParameterDomain::new(
+                curve_domain_start.clone(),
+                curve_domain_end.clone(),
+            )?,
             source_scale: Real::one(),
             source_offset: Real::zero(),
             mapping: SurfaceIntersectionPcurveMapping::RetainedCurve { curve },
@@ -2125,12 +2139,16 @@ impl SurfaceIntersectionPcurve {
                 let domain = curve.parameter_domain();
                 let restricted = if decided_order(compare_reals(
                     ordered_source_start,
-                    domain.start(),
+                    (domain.start())
+                        .as_exact()
+                        .ok_or(GeometryError::UnsupportedPcurveContour)?,
                     crate::STRICT_PREDICATES,
                 ))? == Ordering::Equal
                     && decided_order(compare_reals(
                         ordered_source_end,
-                        domain.end(),
+                        (domain.end())
+                            .as_exact()
+                            .ok_or(GeometryError::UnsupportedPcurveContour)?,
                         crate::STRICT_PREDICATES,
                     ))? == Ordering::Equal
                 {
@@ -2226,12 +2244,16 @@ impl SurfaceIntersectionPcurve {
                     let domain = carrier.curve.parameter_domain();
                     let curve = if decided_order(compare_reals(
                         &start,
-                        domain.start(),
+                        (domain.start())
+                            .as_exact()
+                            .ok_or(GeometryError::UnsupportedPcurveContour)?,
                         crate::STRICT_PREDICATES,
                     ))? == Ordering::Equal
                         && decided_order(compare_reals(
                             &end,
-                            domain.end(),
+                            (domain.end())
+                                .as_exact()
+                                .ok_or(GeometryError::UnsupportedPcurveContour)?,
                             crate::STRICT_PREDICATES,
                         ))? == Ordering::Equal
                     {
@@ -2339,11 +2361,14 @@ impl SurfaceIntersectionPcurve {
                     curve = curve.reversed()?;
                 }
                 let curve_domain = curve.parameter_domain();
-                let curve_span = curve_domain.end() - curve_domain.start();
+                let (curve_domain_start, curve_domain_end) = curve_domain
+                    .exact_endpoints()
+                    .ok_or(GeometryError::UnsupportedPcurveContour)?;
+                let curve_span = curve_domain_end - curve_domain_start;
                 let spatial_span = self.domain.end() - self.domain.start();
                 let spatial_scale =
                     (&spatial_span / &curve_span).map_err(|_| GeometryError::ProjectiveDivision)?;
-                let spatial_offset = self.domain.start() - &spatial_scale * curve_domain.start();
+                let spatial_offset = self.domain.start() - &spatial_scale * curve_domain_start;
                 Ok(Some(vec![SurfacePcurveClipCarrier {
                     curve,
                     spatial_scale,
@@ -2416,7 +2441,7 @@ impl MaterializedSurfacePcurve {
                 spatial_start,
                 spatial_end,
             } => {
-                let CurveGeometry2::CircularArc(arc) = self.curve.geometry() else {
+                let Some(CurveGeometry2::CircularArc(arc)) = self.curve.geometry() else {
                     return Err(GeometryError::UnsupportedPcurveContour);
                 };
                 let point = self.curve.point_at(parameter)?;
@@ -2438,8 +2463,11 @@ fn materialized_surface_pcurve_from_matching_domains(
     target_domain: &ParameterDomain,
 ) -> GeometryResult<MaterializedSurfacePcurve> {
     let curve_domain = curve.parameter_domain();
-    let curve_start = curve_domain.start().clone();
-    let curve_span = curve_domain.end() - &curve_start;
+    let (curve_domain_start, curve_domain_end) = curve_domain
+        .exact_endpoints()
+        .ok_or(GeometryError::UnsupportedPcurveContour)?;
+    let curve_start = curve_domain_start.clone();
+    let curve_span = curve_domain_end - &curve_start;
     let target_span = target_domain.end() - target_domain.start();
     let spatial_scale =
         (target_span / curve_span).map_err(|_| GeometryError::ProjectiveDivision)?;
@@ -3219,7 +3247,7 @@ impl Surface {
         let Some(projected) = project_curve_to_plane_frame(curve, origin, &u, &v)? else {
             return Ok(None);
         };
-        let CurveGeometry2::RationalBezier(projected) = projected.geometry() else {
+        let Some(CurveGeometry2::RationalBezier(projected)) = projected.geometry() else {
             return Ok(None);
         };
         let x = projected
@@ -4982,22 +5010,25 @@ pub(crate) fn lift_curve_from_plane_frame(
 ) -> GeometryResult<Option<Curve3>> {
     let lift = |point: &CurvePoint2| origin.clone() + u.clone() * point.x() + v.clone() * point.y();
     match curve.geometry() {
-        CurveGeometry2::Line(line) => Ok(Some(Curve3::line(lift(line.start()), lift(line.end()))?)),
-        CurveGeometry2::RationalBezier(curve) => Ok(Some(Curve3::rational_bezier(
+        None => Ok(None),
+        Some(CurveGeometry2::Line(line)) => {
+            Ok(Some(Curve3::line(lift(line.start()), lift(line.end()))?))
+        }
+        Some(CurveGeometry2::RationalBezier(curve)) => Ok(Some(Curve3::rational_bezier(
             curve.control_points().iter().map(lift).collect(),
             curve.weights().to_vec(),
         )?)),
-        CurveGeometry2::Nurbs(curve) => Ok(Some(Curve3::nurbs(
+        Some(CurveGeometry2::Nurbs(curve)) => Ok(Some(Curve3::nurbs(
             curve.degree(),
             curve.control_points().iter().map(lift).collect(),
             curve.weights().to_vec(),
             curve.knots().to_vec(),
         )?)),
-        CurveGeometry2::CircularArc(_)
-        | CurveGeometry2::QuadraticBezier(_)
-        | CurveGeometry2::CubicBezier(_)
-        | CurveGeometry2::RationalQuadraticBezier(_)
-        | CurveGeometry2::PolynomialBSpline(_) => Ok(None),
+        Some(CurveGeometry2::CircularArc(_))
+        | Some(CurveGeometry2::QuadraticBezier(_))
+        | Some(CurveGeometry2::CubicBezier(_))
+        | Some(CurveGeometry2::RationalQuadraticBezier(_))
+        | Some(CurveGeometry2::PolynomialBSpline(_)) => Ok(None),
     }
 }
 
@@ -5020,7 +5051,8 @@ pub(crate) fn lift_curve_from_plane_frame_with_affine_parameter(
     let reversed = order == Ordering::Less;
     let lift = |point: &CurvePoint2| origin.clone() + u.clone() * point.x() + v.clone() * point.y();
     match curve.geometry() {
-        CurveGeometry2::Line(line) => {
+        None => Ok(None),
+        Some(CurveGeometry2::Line(line)) => {
             let (start, end) = if reversed {
                 (line.end(), line.start())
             } else {
@@ -5028,7 +5060,7 @@ pub(crate) fn lift_curve_from_plane_frame_with_affine_parameter(
             };
             Ok(Some(Curve3::line(lift(start), lift(end))?))
         }
-        CurveGeometry2::RationalBezier(curve) => {
+        Some(CurveGeometry2::RationalBezier(curve)) => {
             let mut control_points = curve.control_points().to_vec();
             let mut weights = curve.weights().to_vec();
             if reversed {
@@ -5040,7 +5072,7 @@ pub(crate) fn lift_curve_from_plane_frame_with_affine_parameter(
                 weights,
             )?))
         }
-        CurveGeometry2::Nurbs(curve) => {
+        Some(CurveGeometry2::Nurbs(curve)) => {
             let mut control_points = curve.control_points().to_vec();
             let mut weights = curve.weights().to_vec();
             let mut knots = curve.knots().to_vec();
@@ -5059,11 +5091,11 @@ pub(crate) fn lift_curve_from_plane_frame_with_affine_parameter(
                 knots,
             )?))
         }
-        CurveGeometry2::CircularArc(_)
-        | CurveGeometry2::QuadraticBezier(_)
-        | CurveGeometry2::CubicBezier(_)
-        | CurveGeometry2::RationalQuadraticBezier(_)
-        | CurveGeometry2::PolynomialBSpline(_) => Ok(None),
+        Some(CurveGeometry2::CircularArc(_))
+        | Some(CurveGeometry2::QuadraticBezier(_))
+        | Some(CurveGeometry2::CubicBezier(_))
+        | Some(CurveGeometry2::RationalQuadraticBezier(_))
+        | Some(CurveGeometry2::PolynomialBSpline(_)) => Ok(None),
     }
 }
 
@@ -5133,7 +5165,7 @@ pub(crate) fn concatenate_rational_bezier_spans_as_nurbs(
     if curves.len() < 2 || boundaries.len() != curves.len() + 1 {
         return Err(GeometryError::UnsupportedIntersection);
     }
-    let CurveGeometry2::RationalBezier(first) = curves[0].geometry() else {
+    let Some(CurveGeometry2::RationalBezier(first)) = curves[0].geometry() else {
         return Err(GeometryError::UnsupportedIntersection);
     };
     let degree = first.degree();
@@ -5143,7 +5175,7 @@ pub(crate) fn concatenate_rational_bezier_spans_as_nurbs(
     let mut control_points = first.control_points().to_vec();
     let mut weights = first.weights().to_vec();
     for curve in &curves[1..] {
-        let CurveGeometry2::RationalBezier(curve) = curve.geometry() else {
+        let Some(CurveGeometry2::RationalBezier(curve)) = curve.geometry() else {
             return Err(GeometryError::UnsupportedIntersection);
         };
         if curve.degree() != degree
@@ -5993,7 +6025,7 @@ fn insert_sorted_real_unique(values: &mut Vec<Real>, value: Real) -> GeometryRes
 }
 
 fn rational_curve_controls_inside_unit_square(curve: &Curve2) -> GeometryResult<bool> {
-    let CurveGeometry2::RationalBezier(curve) = curve.geometry() else {
+    let Some(CurveGeometry2::RationalBezier(curve)) = curve.geometry() else {
         return Ok(false);
     };
     for point in curve.control_points() {
@@ -6030,7 +6062,7 @@ pub(crate) fn rational_bilinear_parameter_curve(
     {
         return Ok(None);
     }
-    let CurveGeometry2::RationalBezier(graph) = pcurve.geometry() else {
+    let Some(CurveGeometry2::RationalBezier(graph)) = pcurve.geometry() else {
         return Ok(None);
     };
     if graph.control_points().len() != 3 || graph.weights().len() != 3 {
@@ -6633,10 +6665,10 @@ fn remap_unit_tensor_pcurve(
         CurvePoint2::new(u_start + u_span * point.x(), v_start + v_span * point.y())
     };
     let curve = match curve.geometry() {
-        CurveGeometry2::Line(line) => {
+        Some(CurveGeometry2::Line(line)) => {
             Curve2::from(LineSeg2::try_new(map(line.start()), map(line.end()))?)
         }
-        CurveGeometry2::RationalBezier(curve) => Curve2::from(RationalBezier2::try_new(
+        Some(CurveGeometry2::RationalBezier(curve)) => Curve2::from(RationalBezier2::try_new(
             curve.control_points().iter().map(map).collect(),
             curve.weights().to_vec(),
         )?),
@@ -11651,7 +11683,7 @@ mod tests {
             .affine_bilinear_inverse_pcurve(&curve)
             .unwrap()
             .expect("rank-one bilinear weights have a rational Möbius inverse");
-        let CurveGeometry2::RationalBezier(inverse) = pcurve.geometry() else {
+        let Some(CurveGeometry2::RationalBezier(inverse)) = pcurve.geometry() else {
             panic!("Möbius inverse retains a rational Bézier carrier");
         };
         assert_eq!(inverse.degree(), 4);
@@ -11678,7 +11710,7 @@ mod tests {
             .affine_bilinear_inverse_pcurve(&curve)
             .unwrap()
             .expect("degree-one NURBS uses the same exact Möbius inverse");
-        let CurveGeometry2::RationalBezier(native_inverse) = native.geometry() else {
+        let Some(CurveGeometry2::RationalBezier(native_inverse)) = native.geometry() else {
             panic!("native-domain Möbius inverse remains rational Bézier");
         };
         assert_eq!(native_inverse.degree(), 4);
@@ -11692,8 +11724,16 @@ mod tests {
                 Some(Ordering::Equal)
             );
         };
-        assert_curve_point(native.start(), CurvePoint2::new(r(2), r(-2)));
-        assert_curve_point(native.end(), CurvePoint2::new(r(5), r(2)));
+        assert_curve_point(
+            (native.start())
+                .coordinates()
+                .expect("native fixture value"),
+            CurvePoint2::new(r(2), r(-2)),
+        );
+        assert_curve_point(
+            (native.end()).coordinates().expect("native fixture value"),
+            CurvePoint2::new(r(5), r(2)),
+        );
         for parameter in [Real::zero(), q(1, 2), Real::one()] {
             let uv = native.point_at(&parameter).unwrap();
             assert_points_equal(
@@ -11984,7 +12024,7 @@ mod tests {
             .edge_use(record.open().unwrap().face.edge_uses[0])
             .unwrap();
         let graph_pcurve = split.pcurve(graph_use.pcurve()).unwrap();
-        let CurveGeometry2::Nurbs(graph) = graph_pcurve.curve().geometry() else {
+        let Some(CurveGeometry2::Nurbs(graph)) = graph_pcurve.curve().geometry() else {
             panic!("cross-span partial graph must retain one NURBS pcurve");
         };
         let mut forged_controls = graph.control_points().to_vec();
@@ -12569,7 +12609,7 @@ mod tests {
             .edge_use(record.open().unwrap().face.edge_uses[0])
             .unwrap();
         let graph_pcurve = split.pcurve(graph_use.pcurve()).unwrap();
-        let CurveGeometry2::RationalBezier(graph) = graph_pcurve.curve().geometry() else {
+        let Some(CurveGeometry2::RationalBezier(graph)) = graph_pcurve.curve().geometry() else {
             panic!("split tensor section must retain one rational graph pcurve");
         };
         let mut forged_controls = graph.control_points().to_vec();
@@ -12800,7 +12840,7 @@ mod tests {
             .edge_use(record.open().unwrap().face.edge_uses[0])
             .unwrap();
         let graph_pcurve = split.pcurve(graph_use.pcurve()).unwrap();
-        let CurveGeometry2::RationalBezier(graph) = graph_pcurve.curve().geometry() else {
+        let Some(CurveGeometry2::RationalBezier(graph)) = graph_pcurve.curve().geometry() else {
             panic!("bilinear split must retain its exact rational graph pcurve");
         };
         let mut forged_controls = graph.control_points().to_vec();
@@ -13097,7 +13137,7 @@ mod tests {
             .edge_use(record.open().unwrap().face.edge_uses[0])
             .unwrap();
         let graph_pcurve = split.pcurve(graph_use.pcurve()).unwrap();
-        let CurveGeometry2::RationalBezier(graph) = graph_pcurve.curve().geometry() else {
+        let Some(CurveGeometry2::RationalBezier(graph)) = graph_pcurve.curve().geometry() else {
             panic!("weighted bilinear split must retain its rational graph pcurve");
         };
         let mut forged_controls = graph.control_points().to_vec();
@@ -13178,7 +13218,8 @@ mod tests {
             .pcurve(native_graph_use.pcurve())
             .unwrap()
             .clone();
-        let CurveGeometry2::RationalBezier(native_graph_curve) = native_graph.curve().geometry()
+        let Some(CurveGeometry2::RationalBezier(native_graph_curve)) =
+            native_graph.curve().geometry()
         else {
             panic!("native NURBS split must retain its rational graph pcurve");
         };
@@ -13814,7 +13855,7 @@ mod tests {
             .edge_use(record.open().unwrap().face.edge_uses[0])
             .unwrap();
         let graph_pcurve = split.pcurve(graph_use.pcurve()).unwrap();
-        let CurveGeometry2::Nurbs(graph) = graph_pcurve.curve().geometry() else {
+        let Some(CurveGeometry2::Nurbs(graph)) = graph_pcurve.curve().geometry() else {
             panic!("multi-span tensor split must retain one NURBS graph pcurve");
         };
         let mut forged_controls = graph.control_points().to_vec();
@@ -15236,8 +15277,24 @@ mod tests {
                 &spatial,
             );
             let cylinder_pcurve = mirrored_circle.second_pcurve().materialize().unwrap();
-            assert_eq!(cylinder_pcurve.curve().start().x(), &Real::tau());
-            assert_eq!(cylinder_pcurve.curve().end().x(), &Real::zero());
+            assert_eq!(
+                cylinder_pcurve
+                    .curve()
+                    .start()
+                    .coordinates()
+                    .expect("native fixture endpoint")
+                    .x(),
+                &Real::tau()
+            );
+            assert_eq!(
+                cylinder_pcurve
+                    .curve()
+                    .end()
+                    .coordinates()
+                    .expect("native fixture endpoint")
+                    .x(),
+                &Real::zero()
+            );
         }
 
         let tangent = Surface::sphere(
@@ -15461,8 +15518,24 @@ mod tests {
             panic!("mirrored sphere/cone frames must retain both exact pcurves");
         };
         let sphere_pcurve = mirrored_circle.first_pcurve().materialize().unwrap();
-        assert_eq!(sphere_pcurve.curve().start().x(), &Real::tau());
-        assert_eq!(sphere_pcurve.curve().end().x(), &Real::zero());
+        assert_eq!(
+            sphere_pcurve
+                .curve()
+                .start()
+                .coordinates()
+                .expect("native fixture endpoint")
+                .x(),
+            &Real::tau()
+        );
+        assert_eq!(
+            sphere_pcurve
+                .curve()
+                .end()
+                .coordinates()
+                .expect("native fixture endpoint")
+                .x(),
+            &Real::zero()
+        );
         let parameter = q(2, 3);
         let spatial = mirrored_circle.curve().point_at(&parameter).unwrap();
         assert_points_equal(
@@ -15536,8 +15609,24 @@ mod tests {
             panic!("mirrored cylinder/cone frames must retain both exact pcurves");
         };
         let cylinder_pcurve = mirrored_circle.first_pcurve().materialize().unwrap();
-        assert_eq!(cylinder_pcurve.curve().start().x(), &Real::tau());
-        assert_eq!(cylinder_pcurve.curve().end().x(), &Real::zero());
+        assert_eq!(
+            cylinder_pcurve
+                .curve()
+                .start()
+                .coordinates()
+                .expect("native fixture endpoint")
+                .x(),
+            &Real::tau()
+        );
+        assert_eq!(
+            cylinder_pcurve
+                .curve()
+                .end()
+                .coordinates()
+                .expect("native fixture endpoint")
+                .x(),
+            &Real::zero()
+        );
         let parameter = q(1, 4);
         let spatial = mirrored_circle.curve().point_at(&parameter).unwrap();
         assert_points_equal(
@@ -15724,8 +15813,24 @@ mod tests {
             );
         }
         let second_materialized = counteroriented.second_pcurve().materialize().unwrap();
-        assert_eq!(second_materialized.curve().start().x(), &Real::tau());
-        assert_eq!(second_materialized.curve().end().x(), &Real::zero());
+        assert_eq!(
+            second_materialized
+                .curve()
+                .start()
+                .coordinates()
+                .expect("native fixture endpoint")
+                .x(),
+            &Real::tau()
+        );
+        assert_eq!(
+            second_materialized
+                .curve()
+                .end()
+                .coordinates()
+                .expect("native fixture endpoint")
+                .x(),
+            &Real::zero()
+        );
 
         let opposite_shared_apex = Surface::cone(
             Point3::origin(),
@@ -15921,8 +16026,24 @@ mod tests {
         };
         for circle in &mirrored_circles {
             let second_pcurve = circle.second_pcurve().materialize().unwrap();
-            assert_eq!(second_pcurve.curve().start().x(), &Real::tau());
-            assert_eq!(second_pcurve.curve().end().x(), &Real::zero());
+            assert_eq!(
+                second_pcurve
+                    .curve()
+                    .start()
+                    .coordinates()
+                    .expect("native fixture endpoint")
+                    .x(),
+                &Real::tau()
+            );
+            assert_eq!(
+                second_pcurve
+                    .curve()
+                    .end()
+                    .coordinates()
+                    .expect("native fixture endpoint")
+                    .x(),
+                &Real::zero()
+            );
             let parameter = q(2, 3);
             assert_points_equal(
                 &mirrored
@@ -16074,8 +16195,24 @@ mod tests {
         };
         for circle in mirrored_circles {
             let torus_pcurve = circle.second_pcurve().materialize().unwrap();
-            assert_eq!(torus_pcurve.curve().start().x(), &Real::tau());
-            assert_eq!(torus_pcurve.curve().end().x(), &Real::zero());
+            assert_eq!(
+                torus_pcurve
+                    .curve()
+                    .start()
+                    .coordinates()
+                    .expect("native fixture endpoint")
+                    .x(),
+                &Real::tau()
+            );
+            assert_eq!(
+                torus_pcurve
+                    .curve()
+                    .end()
+                    .coordinates()
+                    .expect("native fixture endpoint")
+                    .x(),
+                &Real::zero()
+            );
             let parameter = q(5, 7);
             assert_points_equal(
                 &mirrored
@@ -16242,8 +16379,24 @@ mod tests {
         };
         for circle in mirrored_circles {
             let torus_pcurve = circle.second_pcurve().materialize().unwrap();
-            assert_eq!(torus_pcurve.curve().start().x(), &Real::tau());
-            assert_eq!(torus_pcurve.curve().end().x(), &Real::zero());
+            assert_eq!(
+                torus_pcurve
+                    .curve()
+                    .start()
+                    .coordinates()
+                    .expect("native fixture endpoint")
+                    .x(),
+                &Real::tau()
+            );
+            assert_eq!(
+                torus_pcurve
+                    .curve()
+                    .end()
+                    .coordinates()
+                    .expect("native fixture endpoint")
+                    .x(),
+                &Real::zero()
+            );
             let parameter = q(6, 7);
             assert_points_equal(
                 &mirrored
@@ -16414,8 +16567,24 @@ mod tests {
         };
         for circle in mirrored_circles {
             let torus_pcurve = circle.second_pcurve().materialize().unwrap();
-            assert_eq!(torus_pcurve.curve().start().x(), &Real::tau());
-            assert_eq!(torus_pcurve.curve().end().x(), &Real::zero());
+            assert_eq!(
+                torus_pcurve
+                    .curve()
+                    .start()
+                    .coordinates()
+                    .expect("native fixture endpoint")
+                    .x(),
+                &Real::tau()
+            );
+            assert_eq!(
+                torus_pcurve
+                    .curve()
+                    .end()
+                    .coordinates()
+                    .expect("native fixture endpoint")
+                    .x(),
+                &Real::zero()
+            );
             let parameter = q(6, 7);
             assert_points_equal(
                 &mirrored
@@ -16595,8 +16764,24 @@ mod tests {
             panic!("mirrored sphere frames must retain reversed longitude");
         };
         let second_pcurve = mirrored_circle.second_pcurve().materialize().unwrap();
-        assert_eq!(second_pcurve.curve().start().x(), &Real::tau());
-        assert_eq!(second_pcurve.curve().end().x(), &Real::zero());
+        assert_eq!(
+            second_pcurve
+                .curve()
+                .start()
+                .coordinates()
+                .expect("native fixture endpoint")
+                .x(),
+            &Real::tau()
+        );
+        assert_eq!(
+            second_pcurve
+                .curve()
+                .end()
+                .coordinates()
+                .expect("native fixture endpoint")
+                .x(),
+            &Real::zero()
+        );
         for parameter in [Real::zero(), Real::pi()] {
             let spatial = mirrored_circle.curve().point_at(&parameter).unwrap();
             assert_points_equal(
