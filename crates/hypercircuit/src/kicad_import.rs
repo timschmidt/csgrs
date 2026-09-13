@@ -1598,10 +1598,12 @@ impl Importer {
     }
 
     fn number_token(&mut self, token: &str, field: &str) -> Result<Real, KiCadImportError> {
-        let value = parse_decimal(token).ok_or_else(|| KiCadImportError::InvalidNumber {
-            field: field.into(),
-            token: token.into(),
-        })?;
+        let value = token
+            .parse::<Real>()
+            .map_err(|_| KiCadImportError::InvalidNumber {
+                field: field.into(),
+                token: token.into(),
+            })?;
         self.numeric_imports.push(KiCadNumericImport {
             field: field.into(),
             source: token.into(),
@@ -1852,35 +1854,6 @@ fn contour_anchor_twice_area_magnitude(contour: &BoardContour) -> Result<Real, K
     }
 }
 
-fn parse_decimal(token: &str) -> Option<Real> {
-    let (mantissa, exponent) = if let Some((mantissa, exponent)) = token.split_once(['e', 'E']) {
-        (mantissa, exponent.parse::<i32>().ok()?)
-    } else {
-        (token, 0_i32)
-    };
-    let negative = mantissa.starts_with('-');
-    let mantissa = mantissa.strip_prefix(['-', '+']).unwrap_or(mantissa);
-    let (whole, fraction) = mantissa.split_once('.').unwrap_or((mantissa, ""));
-    if whole.is_empty() && fraction.is_empty() {
-        return None;
-    }
-    let digits = format!("{whole}{fraction}");
-    if !digits.chars().all(|character| character.is_ascii_digit()) {
-        return None;
-    }
-    let mut numerator = digits.parse::<i64>().ok()?;
-    if negative {
-        numerator = -numerator;
-    }
-    let scale = i32::try_from(fraction.len()).ok()? - exponent;
-    if scale <= 0 {
-        let multiplier = 10_i64.checked_pow(scale.unsigned_abs())?;
-        return Some(Real::from(numerator.checked_mul(multiplier)?));
-    }
-    let denominator = 10_i64.checked_pow(u32::try_from(scale).ok()?)?;
-    (Real::from(numerator) / Real::from(denominator)).ok()
-}
-
 fn exact_arc_through(start: Point2, mid: Point2, end: Point2) -> Option<ExplicitCircularArc> {
     let two = Real::from(2);
     let denominator = two
@@ -1924,4 +1897,27 @@ fn exact_arc_through(start: Point2, mid: Point2, end: Point2) -> Option<Explicit
         crate::PREDICATE_POLICY,
     )
     .ok()
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn kicad_number_tokens_use_hyperreal_scientific_parsing() {
+        let root = sexp::parse("(kicad_pcb)").unwrap();
+        let options = KiCadImportOptions::new(
+            CircuitId::new("scientific-import").unwrap(),
+            BoardId::new("scientific-import").unwrap(),
+            Real::one(),
+        );
+        let mut importer = Importer::new(root, None, None, options);
+
+        let value = importer
+            .number_token("7.78437e-005", "test.coordinate")
+            .unwrap();
+        assert_eq!(value, "0.0000778437".parse::<Real>().unwrap());
+        assert_eq!(importer.numeric_imports[0].source, "7.78437e-005");
+        assert_eq!(importer.numeric_imports[0].exact, "778437/10000000000");
+    }
 }

@@ -215,7 +215,7 @@ impl RoutingProblemReport {
 
         let boundary = layout
             .outline
-            .boundary_geometry(&hypercurve::CurvePolicy::STRICT)
+            .boundary_geometry(&hypercurve::CurveContext::STRICT)
             .map_err(|error| TscircuitRoutingError::InvalidGeometry(error.to_string()))?;
         let (bounds_min, bounds_max) = boundary.exterior_bounds();
         if !is_axis_aligned_rectangle(&layout.outline.exterior) {

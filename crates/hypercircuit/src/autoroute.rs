@@ -9,7 +9,7 @@ use std::cmp::{Ordering, Reverse};
 use std::collections::{BTreeMap, BTreeSet, BinaryHeap};
 use std::fmt::{Display, Formatter};
 
-use hypercurve::{Classification, CurvePolicy};
+use hypercurve::{Classification, CurveContext};
 use hyperlattice::Point2;
 use hyperlimit::{
     RingPointLocation, SegmentIntersection, classify_point_ring_even_odd,
@@ -608,7 +608,7 @@ impl PcbLayout {
             .map_err(NegotiatedRouterError::InvalidProblem)?;
         let boundary = self
             .outline
-            .boundary_geometry(&hypercurve::CurvePolicy::STRICT)
+            .boundary_geometry(&hypercurve::CurveContext::STRICT)
             .map_err(|error| NegotiatedRouterError::InvalidBoardBoundary(error.to_string()))?;
         let (board_min, board_max) = boundary.exterior_bounds();
         let coarse_pitch = policy.route_policy.grid_pitch.clone()
@@ -949,7 +949,7 @@ pub(crate) fn placement_pin_access_report(
     };
     let boundary = match layout
         .outline
-        .boundary_geometry(&hypercurve::CurvePolicy::STRICT)
+        .boundary_geometry(&hypercurve::CurveContext::STRICT)
     {
         Ok(boundary) => boundary,
         Err(error) => {
@@ -1304,7 +1304,7 @@ impl Grid {
     ) -> Result<Self, NegotiatedRouterError> {
         let boundary = layout
             .outline
-            .boundary_geometry(&hypercurve::CurvePolicy::STRICT)
+            .boundary_geometry(&hypercurve::CurveContext::STRICT)
             .map_err(|error| NegotiatedRouterError::InvalidBoardBoundary(error.to_string()))?;
         let (min, max) = boundary.exterior_bounds();
         let (
@@ -4770,7 +4770,7 @@ fn point_is_legal(
     layer: Option<TraceLayer>,
 ) -> Option<bool> {
     match boundary
-        .contains_disc(point, radius.clone(), &CurvePolicy::STRICT)
+        .contains_disc(point, radius.clone(), &CurveContext::STRICT)
         .ok()?
     {
         Classification::Decided(true) => {}
@@ -4800,7 +4800,7 @@ fn segment_is_legal(
     layer: TraceLayer,
 ) -> Option<bool> {
     match boundary
-        .contains_segment(start, end, radius.clone(), &CurvePolicy::STRICT)
+        .contains_segment(start, end, radius.clone(), &CurveContext::STRICT)
         .ok()?
     {
         Classification::Decided(true) => {}

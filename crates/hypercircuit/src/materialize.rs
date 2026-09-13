@@ -14,8 +14,8 @@ use csgrs::curve::{self, CurveRegionExt};
 use csgrs::solid::{self, SolidExt};
 use csgrs::{AttributedMesh, GeometryCertainty, GeometryContext, GeometryOutcome};
 use hypercurve::{
-    BooleanOp, CircularArc2, Classification, Contour2, Curve2, CurveCertainty, CurveOutcome,
-    CurvePath2, CurvePolicy, CurveRegion2, CurveRegionLoopRole, ExactCurveError, ExactCurveResult,
+    BooleanOp, CircularArc2, Classification, Contour2, Curve2, CurveCertainty, CurveContext,
+    CurveOutcome, CurvePath2, CurveRegion2, CurveRegionLoopRole, ExactCurveError, ExactCurveResult,
     FillRule, LineSeg2, OffsetCap, OffsetCornerStyle2, Point2 as CurvePoint2,
 };
 use hyperlattice::Point2;
@@ -67,7 +67,7 @@ impl MaterializationContext {
 
 struct MaterializationDecisions {
     predicates: PredicatePolicy,
-    curves: CurvePolicy,
+    curves: CurveContext,
     certainty: Cell<GeometryCertainty>,
 }
 
@@ -77,15 +77,15 @@ impl MaterializationDecisions {
         Self {
             predicates,
             curves: if predicates == PredicatePolicy::APPROXIMATE_512 {
-                CurvePolicy::APPROXIMATE_512
+                CurveContext::APPROXIMATE_512
             } else {
-                CurvePolicy::STRICT
+                CurveContext::STRICT
             },
             certainty: Cell::new(GeometryCertainty::Certified),
         }
     }
 
-    fn curve_policy(&self) -> &CurvePolicy {
+    fn curve_policy(&self) -> &CurveContext {
         &self.curves
     }
 
@@ -126,28 +126,19 @@ impl MaterializationDecisions {
 
     fn curve_operation<T>(
         &self,
-        mut evaluate: impl FnMut(&CurvePolicy) -> ExactCurveResult<T>,
+        evaluate: impl FnOnce(&CurveContext) -> ExactCurveResult<CurveOutcome<T>>,
     ) -> ExactCurveResult<T> {
-        if self.curves != CurvePolicy::APPROXIMATE_512 {
-            return evaluate(&self.curves);
-        }
-        match evaluate(&CurvePolicy::STRICT) {
-            Ok(value) => Ok(value),
-            Err(ExactCurveError::Blocked(_)) => evaluate(&self.curves).inspect(|_| {
-                self.observe(GeometryCertainty::Approximate512Consumed);
-            }),
-            Err(error) => Err(error),
-        }
+        self.consume(evaluate(&self.curves))
     }
 
     fn boundary_operation<T>(
         &self,
-        mut evaluate: impl FnMut(&CurvePolicy) -> Result<T, BoardBoundaryGeometryError>,
+        mut evaluate: impl FnMut(&CurveContext) -> Result<T, BoardBoundaryGeometryError>,
     ) -> Result<T, BoardBoundaryGeometryError> {
-        if self.curves != CurvePolicy::APPROXIMATE_512 {
+        if self.curves != CurveContext::APPROXIMATE_512 {
             return evaluate(&self.curves);
         }
-        match evaluate(&CurvePolicy::STRICT) {
+        match evaluate(&CurveContext::STRICT) {
             Ok(value) => Ok(value),
             Err(error) if error.is_policy_blocked() => evaluate(&self.curves).inspect(|_| {
                 self.observe(GeometryCertainty::Approximate512Consumed);
@@ -158,29 +149,19 @@ impl MaterializationDecisions {
 
     fn classify<T, E>(
         &self,
-        mut evaluate: impl FnMut(&CurvePolicy) -> Result<Classification<T>, E>,
+        evaluate: impl FnOnce(&CurveContext) -> Result<CurveOutcome<Classification<T>>, E>,
     ) -> Result<Classification<T>, E> {
-        if self.curves != CurvePolicy::APPROXIMATE_512 {
-            return evaluate(&self.curves);
-        }
-        match evaluate(&CurvePolicy::STRICT)? {
-            decided @ Classification::Decided(_) => Ok(decided),
-            Classification::Uncertain(_) => evaluate(&self.curves).inspect(|classification| {
-                if classification.is_decided() {
-                    self.observe(GeometryCertainty::Approximate512Consumed);
-                }
-            }),
-        }
+        self.consume(evaluate(&self.curves))
     }
 
     fn classify_value<T>(
         &self,
-        mut evaluate: impl FnMut(&CurvePolicy) -> Classification<T>,
+        mut evaluate: impl FnMut(&CurveContext) -> Classification<T>,
     ) -> Classification<T> {
-        if self.curves != CurvePolicy::APPROXIMATE_512 {
+        if self.curves != CurveContext::APPROXIMATE_512 {
             return evaluate(&self.curves);
         }
-        match evaluate(&CurvePolicy::STRICT) {
+        match evaluate(&CurveContext::STRICT) {
             decided @ Classification::Decided(_) => decided,
             Classification::Uncertain(_) => {
                 let classification = evaluate(&self.curves);
@@ -998,24 +979,25 @@ impl PcbLayout {
         let mut vias_with_unknown_mask_intent = 0;
         for via in self.vias.iter().chain(&stitching.vias) {
             let radius = half(&via.land_diameter)?;
+            let source = format!("via:{}", via.id.as_str());
+            let profile = curve::translated(
+                &exact_circle_profile(&radius, &source, &decisions)?,
+                via.center.x.clone(),
+                via.center.y.clone(),
+            );
             for layer in via.start_layer.0..=via.end_layer.0 {
-                let profile = curve::translated(
-                    &curve::circle(radius.clone(), options.circular_segments),
-                    via.center.x.clone(),
-                    via.center.y.clone(),
-                );
                 copper_features.push(MaterializedCopperFeature {
-                    source: format!("via:{}", via.id.as_str()),
+                    source: source.clone(),
                     net: Some(via.net.clone()),
                     layer: TraceLayer(layer),
                     kind: CopperFeatureKind::Via,
                     identity: MaterializedCopperIdentity::Via(via.id.clone()),
                     anchor: via.center.clone(),
-                    profile,
+                    profile: profile.clone(),
                 });
             }
             drills.push(DrillHit {
-                source: format!("via:{}", via.id.as_str()),
+                source,
                 center: via.center.clone(),
                 shape: DrillShape::Round {
                     diameter: via.drill_diameter.clone(),
@@ -1038,7 +1020,11 @@ impl PcbLayout {
                     ViaMaskDisposition::Open { margin } => {
                         let opening_radius = radius.clone() + margin;
                         let profile = curve::translated(
-                            &curve::circle(opening_radius, options.circular_segments),
+                            &exact_circle_profile(
+                                &opening_radius,
+                                &format!("mask:via:{}", via.id.as_str()),
+                                &decisions,
+                            )?,
                             via.center.x.clone(),
                             via.center.y.clone(),
                         );
@@ -1416,11 +1402,13 @@ fn apply_zone_island_policy(
             )));
         }
     };
-    let paths = match region.boundary_paths().map_err(|error| {
-        GeometryMaterializationError::ZoneIsland(format!(
-            "{source} boundary materialization: {error}"
-        ))
-    })? {
+    let paths = match decisions
+        .consume(region.boundary_paths(decisions.curve_policy()))
+        .map_err(|error| {
+            GeometryMaterializationError::ZoneIsland(format!(
+                "{source} boundary materialization: {error}"
+            ))
+        })? {
         Classification::Decided(paths) => paths,
         Classification::Uncertain(reason) => {
             return Err(GeometryMaterializationError::ZoneIsland(format!(
@@ -2531,7 +2519,7 @@ fn subtract_drill_exact(
     match decisions.consume(profile.try_difference(cutter, decisions.curve_policy())) {
         Ok(realized) => Ok(realized),
         Err(whole_error) if matches!(drill.shape, DrillShape::Round { .. }) => {
-            let sectors = exact_round_drill_sectors(drill).map_err(|sector_error| {
+            let sectors = exact_round_drill_sectors(drill, decisions).map_err(|sector_error| {
                 format!("whole cutter: {whole_error:?}; exact sector construction: {sector_error}")
             })?;
             let mut realized = profile.clone();
@@ -2552,6 +2540,7 @@ fn subtract_drill_exact(
 
 fn exact_round_drill_sectors(
     drill: &DrillHit,
+    decisions: &MaterializationDecisions,
 ) -> Result<Vec<CurveRegion2>, GeometryMaterializationError> {
     let DrillShape::Round { diameter } = &drill.shape else {
         return Err(GeometryMaterializationError::InvalidPolygon(
@@ -2605,12 +2594,14 @@ fn exact_round_drill_sectors(
                     drill.source
                 ))
             })?;
-            CurveRegion2::try_from_boundary_paths(&[path]).map_err(|error| {
-                GeometryMaterializationError::InvalidRoute(format!(
-                    "{} drill sector: {error}",
-                    drill.source
-                ))
-            })
+            decisions
+                .curve_operation(|policy| CurveRegion2::try_from_boundary_paths(&[path], policy))
+                .map_err(|error| {
+                    GeometryMaterializationError::InvalidRoute(format!(
+                        "{} drill sector: {error}",
+                        drill.source
+                    ))
+                })
         })
         .collect()
 }
@@ -2936,15 +2927,13 @@ fn graphic_profile(
                 return Ok(None);
             };
             let half_width = half(width)?;
-            let outer = curve::circle(
-                radius.clone() + half_width.clone(),
-                options.circular_segments,
-            );
+            let outer =
+                exact_circle_profile(&(radius.clone() + half_width.clone()), source, decisions)?;
             let inner_radius = radius.clone() - half_width;
             let ring = match decisions.compare_reals(&inner_radius, &Real::zero()) {
                 Some(Ordering::Less | Ordering::Equal) => outer,
                 Some(Ordering::Greater) => {
-                    let inner = curve::circle(inner_radius, options.circular_segments);
+                    let inner = exact_circle_profile(&inner_radius, source, decisions)?;
                     decisions
                         .consume(outer.try_difference(&inner, decisions.curve_policy()))
                         .map_err(|error| {
@@ -3067,8 +3056,30 @@ fn stroked_path_profile(
         GeometryMaterializationError::InvalidRoute(format!("{source}: {error}"))
     })?;
     let half_width = half(width)?;
+    if !closed && let [start, end] = points {
+        match CurveRegion2::stroke_path(
+            &centerline,
+            half_width.clone(),
+            &OffsetCornerStyle2::Round,
+            OffsetCap::Round,
+            &CurveContext::STRICT,
+        ) {
+            Ok(outcome) => {
+                decisions.observe_curve(outcome.certainty);
+                return Ok(outcome.value);
+            }
+            Err(ExactCurveError::Blocked(_)) => {
+                return exact_line_stroke_profile(start, end, width, source, decisions);
+            }
+            Err(error) => {
+                return Err(GeometryMaterializationError::RouteOutline(format!(
+                    "{source}: {error}"
+                )));
+            }
+        }
+    }
     decisions
-        .consume(decisions.curve_operation(|policy| {
+        .curve_operation(|policy| {
             CurveRegion2::stroke_path(
                 &centerline,
                 half_width.clone(),
@@ -3076,7 +3087,50 @@ fn stroked_path_profile(
                 OffsetCap::Round,
                 policy,
             )
-        }))
+        })
+        .map_err(|error| GeometryMaterializationError::RouteOutline(format!("{source}: {error}")))
+}
+
+fn exact_line_stroke_profile(
+    start: &Point2,
+    end: &Point2,
+    width: &Real,
+    source: &str,
+    decisions: &MaterializationDecisions,
+) -> Result<CurveRegion2, GeometryMaterializationError> {
+    let dx = &end.x - &start.x;
+    let dy = &end.y - &start.y;
+    let length_squared = &dx * &dx + &dy * &dy;
+    if decisions.compare_reals(&length_squared, &Real::zero()) != Some(Ordering::Greater) {
+        return Err(GeometryMaterializationError::InvalidRoute(
+            source.to_owned(),
+        ));
+    }
+    let length = length_squared
+        .sqrt()
+        .map_err(|_| GeometryMaterializationError::Arithmetic)?;
+    let half_width = half(width)?;
+    let capsule_width = &length + width;
+    let capsule =
+        exact_rounded_rectangle_profile(&capsule_width, width, &half_width, source, decisions)?;
+    let direction_x = (dx / &length).map_err(|_| GeometryMaterializationError::Arithmetic)?;
+    let direction_y = (dy / &length).map_err(|_| GeometryMaterializationError::Arithmetic)?;
+    let midpoint_x = ((&start.x + &end.x) / Real::from(2_u8))
+        .map_err(|_| GeometryMaterializationError::Arithmetic)?;
+    let midpoint_y = ((&start.y + &end.y) / Real::from(2_u8))
+        .map_err(|_| GeometryMaterializationError::Arithmetic)?;
+    decisions
+        .curve_operation(|policy| {
+            capsule.transform_affine(
+                &direction_x,
+                &(-direction_y.clone()),
+                &direction_y,
+                &direction_x,
+                &midpoint_x,
+                &midpoint_y,
+                policy,
+            )
+        })
         .map_err(|error| GeometryMaterializationError::RouteOutline(format!("{source}: {error}")))
 }
 
@@ -3232,9 +3286,19 @@ fn exact_rounded_rectangle_profile(
     ));
     let path = CurvePath2::try_new(curves)
         .map_err(|_| GeometryMaterializationError::InvalidPolygon(source.to_owned()))?;
-    let region = CurveRegion2::try_from_boundary_paths(&[path])
+    let region = decisions
+        .curve_operation(|policy| CurveRegion2::try_from_boundary_paths(&[path], policy))
         .map_err(|_| GeometryMaterializationError::InvalidPolygon(source.to_owned()))?;
     center_pad_profile(region, width, height)
+}
+
+fn exact_circle_profile(
+    radius: &Real,
+    source: &str,
+    decisions: &MaterializationDecisions,
+) -> Result<CurveRegion2, GeometryMaterializationError> {
+    let diameter = Real::from(2_u8) * radius;
+    exact_rounded_rectangle_profile(&diameter, &diameter, radius, source, decisions)
 }
 
 fn push_exact_line(
@@ -3981,7 +4045,15 @@ fn exact_compound_union(
                 .map_err(|error| format!("{error:?}"))
         })?);
     }
-    exact_compound_composition(&unions, &[], decisions)
+    let mut unions = unions.into_iter();
+    let first = unions
+        .next()
+        .expect("at least one nonempty aggregate component exists");
+    unions.try_fold(first, |aggregate, profile| {
+        decisions
+            .consume(aggregate.boolean_region(&profile, BooleanOp::Union, decisions.curve_policy()))
+            .map_err(|error| format!("{error:?}"))
+    })
 }
 
 fn exact_compound_composition(
@@ -3998,8 +4070,8 @@ fn exact_compound_composition(
         .chain(negative.iter().map(|profile| (profile, true)))
     {
         let region = profile;
-        let Classification::Decided(mut profile_paths) = region
-            .boundary_paths()
+        let Classification::Decided(mut profile_paths) = decisions
+            .consume(region.boundary_paths(decisions.curve_policy()))
             .map_err(|error| error.to_string())?
         else {
             return Err("exact aggregate boundary materialization was uncertain".to_owned());
@@ -4049,8 +4121,8 @@ fn half(value: &Real) -> Result<Real, GeometryMaterializationError> {
 mod tests {
     use super::{
         MaterializationContext, MaterializationDecisions, MaterializationOptions,
-        exact_compound_composition, exact_compound_union, pad_profile, project_cubic_bezier,
-        transform_drill, transform_pad_profile,
+        exact_circle_profile, exact_compound_composition, exact_compound_union, half, pad_profile,
+        project_cubic_bezier, stroked_path_profile, transform_drill, transform_pad_profile,
     };
     use crate::{
         BoardSide, CircuitInstanceId, DrillShape, LandPatternId, LandPatternPad, PadId, PadShape,
@@ -4058,7 +4130,10 @@ mod tests {
     };
     use csgrs::GeometryCertainty;
     use csgrs::curve::{self, CurveRegionExt};
-    use hypercurve::{Classification, CurveFamily2, CurveRegion2};
+    use hypercurve::{
+        BooleanOp, Classification, Curve2, CurveContext, CurveFamily2, CurvePath2, CurveRegion2,
+        LineSeg2, OffsetCap, OffsetCornerStyle2, Point2 as CurvePoint2,
+    };
     use hyperlattice::Point2;
     use hyperpath::{CubicBezier, TraceLayer};
     use hyperreal::Real;
@@ -4113,7 +4188,11 @@ mod tests {
         )
         .unwrap();
         let second = curve::translated(&second_local, Real::one(), Real::zero());
-        let Classification::Decided(paths) = first.boundary_paths().unwrap() else {
+        let Classification::Decided(paths) = first
+            .boundary_paths(decisions.curve_policy())
+            .unwrap()
+            .into_value()
+        else {
             panic!("exact rounded pad boundary should materialize");
         };
         assert!(paths.iter().flat_map(|path| path.curves()).any(|curve| {
@@ -4127,6 +4206,52 @@ mod tests {
             .expect("overlapping exact rounded pads must union")
             .into_value();
         assert!(!union.is_empty());
+    }
+
+    #[test]
+    fn short_translated_line_stroke_remains_strictly_certified() {
+        let decisions = MaterializationDecisions::new(&MaterializationContext::STRICT);
+        let start_x = (Real::from(2509) / Real::from(20)).unwrap();
+        let end_x = (Real::from(2511) / Real::from(20)).unwrap();
+        let y = (Real::from(1957) / Real::from(20)).unwrap();
+        let width = (Real::one() / Real::from(2)).unwrap();
+        let profile = stroked_path_profile(
+            &[
+                Point2::new(start_x.clone(), y.clone()),
+                Point2::new(end_x.clone(), y.clone()),
+            ],
+            false,
+            &width,
+            8,
+            "short-rational-route",
+            &decisions,
+        )
+        .expect("an exact capsule fast path should not require a terminal ordering decision");
+        assert!(!profile.is_empty());
+        assert_eq!(decisions.certainty(), GeometryCertainty::Certified);
+
+        let path = CurvePath2::try_new(vec![Curve2::from(
+            LineSeg2::try_new(
+                CurvePoint2::new(start_x, y.clone()),
+                CurvePoint2::new(end_x, y),
+            )
+            .unwrap(),
+        )])
+        .unwrap();
+        let generic = CurveRegion2::stroke_path(
+            &path,
+            half(&width).unwrap(),
+            &OffsetCornerStyle2::Round,
+            OffsetCap::Round,
+            &CurveContext::APPROXIMATE_512,
+        )
+        .unwrap()
+        .into_value();
+        let difference = profile
+            .boolean_region(&generic, BooleanOp::Xor, &CurveContext::APPROXIMATE_512)
+            .unwrap()
+            .into_value();
+        assert!(difference.is_empty());
     }
 
     #[test]
@@ -4207,7 +4332,7 @@ mod tests {
     fn disjoint_additive_compound_does_not_invent_coincident_holes() {
         let decisions = MaterializationDecisions::new(&MaterializationContext::STRICT);
         let circle = curve::translated(
-            &curve::circle(Real::from(3), 64),
+            &exact_circle_profile(&Real::from(3), "disjoint-circle", &decisions).unwrap(),
             Real::from(15),
             Real::from(3),
         );
@@ -4232,8 +4357,9 @@ mod tests {
             Real::from(15),
             Real::from(3),
         );
+        let radius = (Real::from(3) / Real::from(2)).unwrap();
         let via_land = curve::translated(
-            &curve::circle((Real::from(3) / Real::from(2)).unwrap(), 64),
+            &exact_circle_profile(&radius, "via-land", &decisions).unwrap(),
             Real::from(15),
             Real::from(3),
         );

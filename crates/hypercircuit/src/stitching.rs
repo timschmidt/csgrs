@@ -3,7 +3,7 @@
 use crate::predicate::RealPredicateExt as _;
 use std::cmp::Ordering;
 
-use hypercurve::{Classification, CurvePolicy};
+use hypercurve::{Classification, CurveContext};
 use hyperlattice::Point2;
 use hyperlimit::{RingPointLocation, classify_point_ring_even_odd};
 use hyperreal::Real;
@@ -73,7 +73,7 @@ impl PcbLayout {
         let mut occupied = self.vias.clone();
         let board_boundary = self
             .outline
-            .boundary_geometry(&hypercurve::CurvePolicy::STRICT)
+            .boundary_geometry(&hypercurve::CurveContext::STRICT)
             .ok();
         for zone in &self.zones {
             let Some(policy) = &zone.stitching else {
@@ -213,7 +213,7 @@ fn candidate_status(
         return CandidateStatus::Indeterminate;
     };
     match board_boundary
-        .contains_disc(center, boundary_radius.clone(), &CurvePolicy::STRICT)
+        .contains_disc(center, boundary_radius.clone(), &CurveContext::STRICT)
         .ok()
     {
         Some(Classification::Decided(true)) => {}

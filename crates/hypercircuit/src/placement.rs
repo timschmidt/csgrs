@@ -16,7 +16,7 @@ use crate::{
     LandPatternGraphicPrimitive, LayerRole, NetId, PadId, PadShape, PcbLayout, PcbPlacement,
     PinRef, PlacementConstraintKind, PlacementResolutionIssue, Real, RouteId,
 };
-use hypercurve::{Classification, CurvePolicy};
+use hypercurve::{Classification, CurveContext};
 use hyperlattice::Point2;
 use hyperpath::TraceLayer;
 
@@ -536,7 +536,7 @@ impl PcbLayout {
 
         let board_boundary = match self
             .outline
-            .boundary_geometry(&hypercurve::CurvePolicy::STRICT)
+            .boundary_geometry(&hypercurve::CurveContext::STRICT)
         {
             Ok(boundary) => boundary,
             Err(error) => {
@@ -1425,7 +1425,7 @@ fn envelope_inside_board(bounds: &Bounds, boundary: &BoardBoundaryGeometry) -> O
         .contains_axis_aligned_box(
             &Point2::new(bounds.min_x.clone(), bounds.min_y.clone()),
             &Point2::new(bounds.max_x.clone(), bounds.max_y.clone()),
-            &CurvePolicy::STRICT,
+            &CurveContext::STRICT,
         )
         .ok()?
     {

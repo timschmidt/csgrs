@@ -9,7 +9,7 @@ use crate::predicate::RealPredicateExt as _;
 use std::cmp::Ordering;
 use std::collections::BTreeSet;
 
-use hypercurve::{Classification, CurvePolicy};
+use hypercurve::{Classification, CurveContext};
 #[cfg(feature = "geometry")]
 use hypercurve::{CurveRegion2, RegionPointLocation};
 use hyperlattice::Point2;
@@ -1214,7 +1214,11 @@ fn realized_zone_intrusion_probe(
             };
             for probe in probes {
                 let probe = hypercurve::Point2::new(probe.x, probe.y);
-                match zone.classify_point(&probe, &CurvePolicy::STRICT).ok()? {
+                match zone
+                    .classify_point(&probe, &CurveContext::STRICT)
+                    .ok()?
+                    .into_value()
+                {
                     Classification::Decided(
                         RegionPointLocation::Inside | RegionPointLocation::Boundary,
                     ) => return Some(true),
@@ -1760,7 +1764,7 @@ fn tuning_synthesis_candidates(
     let mut candidates = Vec::new();
     let boundary = layout
         .outline
-        .boundary_geometry(&hypercurve::CurvePolicy::STRICT)
+        .boundary_geometry(&hypercurve::CurveContext::STRICT)
         .map_err(|_| PhaseTuningSynthesisIssue::IndeterminateBoardBoundary(net.clone()))?;
     let mut indeterminate_boundary = false;
     for route in layout.routes.iter().filter(|route| &route.net == net) {
@@ -1807,7 +1811,7 @@ fn tuning_synthesis_candidates(
                             &pair[0],
                             &pair[1],
                             route_radius.clone(),
-                            &CurvePolicy::STRICT,
+                            &CurveContext::STRICT,
                         )
                         .ok()?
                     {

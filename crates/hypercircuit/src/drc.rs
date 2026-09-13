@@ -1472,7 +1472,7 @@ fn union_component_profiles(profiles: Vec<CurveRegion2>) -> Result<Option<CurveR
     };
     for profile in profiles {
         combined = combined
-            .try_union(&profile, &hypercurve::CurvePolicy::STRICT)
+            .try_union(&profile, &hypercurve::CurveContext::STRICT)
             .map(hypercurve::CurveOutcome::into_value)
             .map_err(|error| format!("{error:?}"))?;
     }

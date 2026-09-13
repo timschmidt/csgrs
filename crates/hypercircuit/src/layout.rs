@@ -13,9 +13,9 @@ use std::{
 };
 
 use hypercurve::{
-    Aabb2 as CurveAabb2, CircularArc2, Classification, CubicBezier2, Curve2, CurveGeometry2,
-    CurvePath2, CurvePolicy, CurveRegion2, CurveRegionLoopRole, ExactCurveError, FillRule,
-    LineSeg2, Point2 as CurvePoint2, RegionPointLocation, UncertaintyReason,
+    Aabb2 as CurveAabb2, CircularArc2, Classification, CubicBezier2, Curve2, CurveContext,
+    CurveGeometry2, CurvePath2, CurveRegion2, CurveRegionLoopRole, ExactCurveError, FillRule,
+    LineSeg2, OffsetCornerStyle2, Point2 as CurvePoint2, RegionPointLocation, UncertaintyReason,
 };
 use hyperlattice::Point2;
 use hyperpath::{
@@ -423,10 +423,11 @@ impl BoardBoundaryGeometry {
     pub fn classify_point(
         &self,
         point: &Point2,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> Result<Classification<RegionPointLocation>, BoardBoundaryGeometryError> {
         self.region
             .classify_point(&curve_point(point), policy)
+            .map(|outcome| outcome.into_value())
             .map_err(|error| {
                 BoardBoundaryGeometryError::new(format!(
                     "board point classification failed: {error:?}"
@@ -441,24 +442,32 @@ impl BoardBoundaryGeometry {
     pub fn inset(
         &self,
         clearance: Real,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> Result<Classification<Self>, BoardBoundaryGeometryError> {
-        let region = match self.region.offset(-clearance.clone(), policy) {
-            Ok(outcome) => outcome.into_value(),
-            Err(ExactCurveError::Blocked(blocker)) => {
-                return Ok(Classification::Uncertain(blocker.reason()));
-            }
-            Err(error) => {
-                return Err(BoardBoundaryGeometryError::new(format!(
-                    "board inset failed: {error:?}"
-                )));
-            }
-        };
-        let contour_paths = match region.boundary_paths().map_err(|error| {
-            BoardBoundaryGeometryError::new(format!(
-                "board inset boundary extraction failed: {error:?}"
-            ))
-        })? {
+        let region =
+            match self
+                .region
+                .offset(-clearance.clone(), &OffsetCornerStyle2::Round, policy)
+            {
+                Ok(outcome) => outcome.into_value(),
+                Err(ExactCurveError::Blocked(blocker)) => {
+                    return Ok(Classification::Uncertain(blocker.reason()));
+                }
+                Err(error) => {
+                    return Err(BoardBoundaryGeometryError::new(format!(
+                        "board inset failed: {error:?}"
+                    )));
+                }
+            };
+        let contour_paths = match region
+            .boundary_paths(policy)
+            .map_err(|error| {
+                BoardBoundaryGeometryError::new(format!(
+                    "board inset boundary extraction failed: {error:?}"
+                ))
+            })?
+            .into_value()
+        {
             Classification::Decided(paths) => paths,
             Classification::Uncertain(reason) => {
                 return Ok(Classification::Uncertain(reason));
@@ -486,7 +495,7 @@ impl BoardBoundaryGeometry {
         &self,
         point: &Point2,
         clearance: Real,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> Result<Classification<bool>, BoardBoundaryGeometryError> {
         if let Some(decision) =
             self.contains_disc_against_native_primitives(point, &clearance, policy)?
@@ -508,7 +517,7 @@ impl BoardBoundaryGeometry {
         &self,
         point: &Point2,
         clearance: &Real,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> Result<Option<Classification<bool>>, BoardBoundaryGeometryError> {
         match self.classify_point(point, policy)? {
             Classification::Decided(RegionPointLocation::Inside) => {}
@@ -559,7 +568,7 @@ impl BoardBoundaryGeometry {
         start: &Point2,
         end: &Point2,
         clearance: Real,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> Result<Classification<bool>, BoardBoundaryGeometryError> {
         if let Some(decision) =
             self.contains_segment_against_native_primitives(start, end, &clearance, policy)?
@@ -606,7 +615,8 @@ impl BoardBoundaryGeometry {
                     BoardBoundaryGeometryError::new(format!(
                         "board segment intersection failed: {error:?}"
                     ))
-                })?;
+                })?
+                .into_value();
             if !result.is_complete() {
                 return Ok(Classification::Uncertain(UncertaintyReason::Predicate));
             }
@@ -622,7 +632,7 @@ impl BoardBoundaryGeometry {
         start: &Point2,
         end: &Point2,
         clearance: &Real,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> Result<Option<Classification<bool>>, BoardBoundaryGeometryError> {
         if self.contour_paths.iter().any(|contour| {
             contour.curves().iter().any(|curve| {
@@ -663,7 +673,8 @@ impl BoardBoundaryGeometry {
                     BoardBoundaryGeometryError::new(format!(
                         "board segment intersection failed: {error:?}"
                     ))
-                })?;
+                })?
+                .into_value();
             if !result.is_complete() {
                 return Ok(Some(Classification::Uncertain(
                     UncertaintyReason::Predicate,
@@ -708,7 +719,7 @@ impl BoardBoundaryGeometry {
         &self,
         min: &Point2,
         max: &Point2,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> Result<Classification<bool>, BoardBoundaryGeometryError> {
         let corners = [
             Point2::new(min.x.clone(), min.y.clone()),
@@ -749,11 +760,14 @@ impl BoardBoundaryGeometry {
             ))
         })?;
         for contour in &self.contour_paths {
-            let result = rectangle.intersect_path(contour, policy).map_err(|error| {
-                BoardBoundaryGeometryError::new(format!(
-                    "placement envelope intersection failed: {error:?}"
-                ))
-            })?;
+            let result = rectangle
+                .intersect_path(contour, policy)
+                .map_err(|error| {
+                    BoardBoundaryGeometryError::new(format!(
+                        "placement envelope intersection failed: {error:?}"
+                    ))
+                })?
+                .into_value();
             if !result.is_complete() {
                 return Ok(Classification::Uncertain(UncertaintyReason::Predicate));
             }
@@ -784,7 +798,7 @@ fn curve_point_in_closed_box(point: &CurvePoint2, min: &Point2, max: &Point2) ->
 fn point_line_segment_distance_squared(
     point: &CurvePoint2,
     line: &LineSeg2,
-    _policy: &CurvePolicy,
+    _policy: &CurveContext,
 ) -> Result<Classification<Real>, BoardBoundaryGeometryError> {
     let dx = line.end().x() - line.start().x();
     let dy = line.end().y() - line.start().y();
@@ -815,7 +829,7 @@ fn point_line_segment_distance_squared(
 fn point_arc_distance_squared(
     point: &CurvePoint2,
     arc: &CircularArc2,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> Result<Classification<Real>, BoardBoundaryGeometryError> {
     let radial = point.distance_squared(arc.center());
     match radial.predicate_cmp(&Real::zero()) {
@@ -856,7 +870,7 @@ fn point_arc_distance_squared(
 fn line_line_segment_distance_squared(
     first: &LineSeg2,
     second: &LineSeg2,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> Result<Classification<Real>, BoardBoundaryGeometryError> {
     let distances = [
         point_line_segment_distance_squared(first.start(), second, policy)?,
@@ -870,7 +884,7 @@ fn line_line_segment_distance_squared(
 fn line_arc_distance_squared(
     line: &LineSeg2,
     arc: &CircularArc2,
-    policy: &CurvePolicy,
+    policy: &CurveContext,
 ) -> Result<Classification<Real>, BoardBoundaryGeometryError> {
     let center_projection = closest_point_on_line_segment(arc.center(), line)?;
     match center_projection {
@@ -1025,7 +1039,7 @@ impl BoardOutline {
     /// Builds the canonical exact exterior-minus-cutouts query carrier.
     pub fn boundary_geometry(
         &self,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> Result<BoardBoundaryGeometry, BoardBoundaryGeometryError> {
         let mut contour_paths = Vec::with_capacity(1 + self.cutouts.len());
         contour_paths.push(board_contour_curve_path(&self.exterior, "board exterior")?);
@@ -1048,7 +1062,8 @@ impl BoardOutline {
             &fill_rules,
             policy,
         )
-        .map_err(|error| BoardBoundaryGeometryError::from_curve("board outline", error))?;
+        .map_err(|error| BoardBoundaryGeometryError::from_curve("board outline", error))?
+        .into_value();
         let exterior_bounds = contour_paths[0]
             .bounds()
             .map_err(|error| {

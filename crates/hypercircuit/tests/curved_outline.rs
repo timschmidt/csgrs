@@ -8,7 +8,7 @@ use hypercircuit::{
     PcbLayout, PcbStackup, PlacementSolvePolicy, Real, SemanticDocument, StackupLayer,
     StackupLayerKind, TransientPolicy,
 };
-use hypercurve::{Classification, CurvePolicy, RegionPointLocation, UncertaintyReason};
+use hypercurve::{Classification, CurveContext, RegionPointLocation, UncertaintyReason};
 use hyperlattice::Point2;
 use hyperpath::{ArcDirection, CubicBezier, ExplicitCircularArc, LinePathSegment, TraceLayer};
 
@@ -161,23 +161,23 @@ fn mixed_curve_board_contours_round_trip_and_render_without_chord_loss() {
     assert!(placement.issues.is_empty(), "{:?}", placement.issues);
     let boundary = layout
         .outline
-        .boundary_geometry(&hypercurve::CurvePolicy::STRICT)
+        .boundary_geometry(&hypercurve::CurveContext::STRICT)
         .unwrap();
     assert_eq!(
         boundary
-            .classify_point(&p(3, 3), &CurvePolicy::STRICT)
+            .classify_point(&p(3, 3), &CurveContext::STRICT)
             .unwrap(),
         Classification::Decided(RegionPointLocation::Outside)
     );
     assert_eq!(
         boundary
-            .contains_axis_aligned_box(&p(5, 5), &p(7, 7), &CurvePolicy::STRICT)
+            .contains_axis_aligned_box(&p(5, 5), &p(7, 7), &CurveContext::STRICT)
             .unwrap(),
         Classification::Decided(true)
     );
     assert_eq!(
         boundary
-            .contains_axis_aligned_box(&p(1, 1), &p(3, 3), &CurvePolicy::STRICT)
+            .contains_axis_aligned_box(&p(1, 1), &p(3, 3), &CurveContext::STRICT)
             .unwrap(),
         Classification::Decided(false)
     );
@@ -185,27 +185,27 @@ fn mixed_curve_board_contours_round_trip_and_render_without_chord_loss() {
     arc_layout.outline.cutouts.clear();
     let arc_boundary = arc_layout
         .outline
-        .boundary_geometry(&hypercurve::CurvePolicy::STRICT)
+        .boundary_geometry(&hypercurve::CurveContext::STRICT)
         .unwrap();
     let disc = arc_boundary
-        .contains_disc(&p(5, 5), Real::one(), &CurvePolicy::STRICT)
+        .contains_disc(&p(5, 5), Real::one(), &CurveContext::STRICT)
         .unwrap();
     assert_eq!(disc, Classification::Decided(true), "{disc:?}");
     assert_eq!(
         arc_boundary
-            .contains_disc(&p(5, 14), Real::from(2), &CurvePolicy::STRICT)
+            .contains_disc(&p(5, 14), Real::from(2), &CurveContext::STRICT)
             .unwrap(),
         Classification::Decided(false)
     );
     assert_eq!(
         arc_boundary
-            .contains_segment(&p(2, 2), &p(8, 2), Real::one(), &CurvePolicy::STRICT)
+            .contains_segment(&p(2, 2), &p(8, 2), Real::one(), &CurveContext::STRICT)
             .unwrap(),
         Classification::Decided(true)
     );
     assert_eq!(
         boundary
-            .contains_disc(&p(6, 6), Real::one(), &CurvePolicy::STRICT)
+            .contains_disc(&p(6, 6), Real::one(), &CurveContext::STRICT)
             .unwrap(),
         Classification::Uncertain(UncertaintyReason::Unsupported)
     );
