@@ -2222,18 +2222,6 @@ fn curve_region_edit_error(operation: CurveOperation2, cause: CurveError) -> Exa
     ExactCurveError::invalid(operation, CurveFamily2::Line, cause)
 }
 
-fn retained_fragment_reverses_parameter(fragment: &BezierSplitFragment2) -> bool {
-    match fragment {
-        BezierSplitFragment2::AnalyticParallel(fragment) => fragment.is_reversed(),
-        BezierSplitFragment2::AlgebraicCuspSemicircle(fragment) => fragment.is_reversed(),
-        BezierSplitFragment2::SelectedFiber(fragment) => fragment.is_reversed(),
-        BezierSplitFragment2::AlgebraicEndpointImages { reversed, .. } => *reversed,
-        BezierSplitFragment2::Materialized { .. } | BezierSplitFragment2::AlgebraicChord(_) => {
-            false
-        }
-    }
-}
-
 /// Proves that two cuts on one closed retained carrier bound a nonempty source
 /// interval complementary to the edited seam neighborhood. The comparison is
 /// made in the carrier's native parameter field and then reversed only when
@@ -2259,7 +2247,7 @@ fn retained_single_fragment_corner_cuts_are_separated(
             ));
         }
     };
-    Ok(if retained_fragment_reverses_parameter(fragment) {
+    Ok(if fragment.source_is_reversed() {
         ordering == std::cmp::Ordering::Greater
     } else {
         ordering == std::cmp::Ordering::Less
@@ -2802,6 +2790,18 @@ fn retained_selected_corner_parameter_is_in_native_chart(
     )
 }
 
+/// Rational cuts can use native control-net subdivision. Other scalar cuts
+/// retain their source relation instead of embedding selected fields in a new
+/// control net, whether the operation keeps one endpoint or cuts both ends.
+fn corner_parameter_needs_retained_source(parameter: &CurveParameter2) -> bool {
+    parameter.is_retained_scalar()
+        || parameter.as_bezier_parameter().is_some_and(|parameter| {
+            parameter
+                .scalar()
+                .is_none_or(|value| value.exact_rational_ref().is_none())
+        })
+}
+
 fn retained_corner_fragment_extension(
     fragment: &BezierSplitFragment2,
     parameter: CurveParameter2,
@@ -3273,13 +3273,7 @@ fn retained_corner_fragment_trim(
     // Keep nonrational cuts in their source chart. Rebuilding their control
     // points hides the selected parameter relation inside new coefficients,
     // forcing subsequent intersections to reconstruct the same extension.
-    let retain_source = parameter.is_retained_scalar()
-        || parameter.as_bezier_parameter().is_some_and(|parameter| {
-            parameter
-                .scalar()
-                .is_none_or(|value| value.exact_rational_ref().is_none())
-        });
-    if retain_source {
+    if corner_parameter_needs_retained_source(&parameter) {
         let zero = CurveParameter2::from(BezierParameter2::Exact(Real::zero()));
         let one = CurveParameter2::from(BezierParameter2::Exact(Real::one()));
         for (boundary, expected) in [
@@ -3648,6 +3642,37 @@ fn retained_corner_fragment_between_cuts(
             (None, None) => None,
         };
         let curve = replacement.as_ref().unwrap_or(curve);
+        if [&next_cut.parameter, &previous_cut.parameter]
+            .into_iter()
+            .any(corner_parameter_needs_retained_source)
+        {
+            for parameter in [&next_cut.parameter, &previous_cut.parameter] {
+                if !retained_selected_corner_parameter_is_in_native_chart(
+                    parameter, operation, policy,
+                )? {
+                    return Err(curve_region_edit_error(
+                        operation,
+                        CurveError::Topology(
+                            "a selected corner interval left its materialized source chart".into(),
+                        ),
+                    ));
+                }
+            }
+            // The corner chain already certified separation in this chart.
+            // Keep both selected point witnesses on the original support,
+            // just as the one-sided cut publisher does.
+            return CurveSupport2::Bezier(curve.clone())
+                .restrict_certified(
+                    CurveParameterRange2::new_validated(
+                        next_cut.parameter.clone(),
+                        previous_cut.parameter.clone(),
+                    ),
+                    Some([next_cut.point.clone(), previous_cut.point.clone()]),
+                    false,
+                    policy,
+                )
+                .map_err(|cause| curve_region_edit_error(operation, cause));
+        }
         let previous_parameter = previous_cut
             .parameter
             .as_bezier_parameter()
@@ -19039,9 +19064,9 @@ mod tests {
                 panic!("the source parallel is regular");
             };
             let parameters =
-                [(q(1, 3), 64), (q(1, 4), 1_024), (q(1, 2), 32_768)].map(|(constant, degree)| {
+                [(q(1, 3), 64), (q(1, 4), 1_024), (q(1, 2), 32_768)].map(|(constant, scale)| {
                     crate::bezier_offset::degree_nine_selected_fiber_parameter_for_test(
-                        constant, degree, &policy,
+                        constant, scale, &policy,
                     )
                 });
             for reversed in [false, true] {
@@ -19095,6 +19120,148 @@ mod tests {
                     let equality = replay.value.coincides_with(&point.value, &policy);
                     assert_eq!(equality.certainty, CurveCertainty::Certified);
                     assert_eq!(equality.value, Classification::Decided(true));
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn native_corner_intervals_retain_general_cuts_and_replay_after_trimming() {
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let selected =
+                [(q(1, 2), 32_768), (q(1, 4), 1_024), (q(1, 3), 64)].map(|(constant, scale)| {
+                    let root = crate::bezier_offset::degree_nine_selected_fiber_parameter_for_test(
+                        constant, scale, &policy,
+                    );
+                    assert!(matches!(
+                        root.promoted_bezier_parameter(&policy).unwrap(),
+                        Classification::Uncertain(_)
+                    ));
+                    CurveParameter2::from_selected_fiber(root)
+                });
+            let sources = [
+                BezierSubcurve2::Quadratic(QuadraticBezier2::new(p(0, 0), p(1, 0), p(2, 2))),
+                BezierSubcurve2::Cubic(CubicBezier2::new(p(0, 0), p(1, 0), p(2, 1), p(3, 3))),
+                BezierSubcurve2::RationalQuadratic(
+                    RationalQuadraticBezier2::try_new(
+                        p(0, 0),
+                        p(1, 0),
+                        p(2, 2),
+                        Real::one(),
+                        Real::from(2),
+                        Real::one(),
+                    )
+                    .unwrap(),
+                ),
+                BezierSubcurve2::Rational(
+                    RationalBezier2::try_new(
+                        vec![p(0, 0), p(1, 0), p(2, 1), p(3, 3), p(4, 4)],
+                        vec![
+                            Real::one(),
+                            Real::from(2),
+                            Real::from(3),
+                            Real::from(2),
+                            Real::one(),
+                        ],
+                    )
+                    .unwrap(),
+                ),
+            ];
+            let sqrt_half = (Real::from(2).sqrt().unwrap() / Real::from(2)).unwrap();
+            for source in sources {
+                for reversed in [false, true] {
+                    let original = BezierSplitFragment2::Materialized {
+                        start: BezierParameter2::Exact(Real::zero()),
+                        end: BezierParameter2::Exact(Real::one()),
+                        curve: source.clone(),
+                    };
+                    let original = if reversed {
+                        original.reversed().unwrap()
+                    } else {
+                        original
+                    };
+                    let source_curve = Curve2::from_retained_fragment(original.clone());
+                    let BezierSplitFragment2::Materialized { curve, .. } = &original else {
+                        unreachable!();
+                    };
+                    let rational = RationalBezier2::try_from_subcurve(curve).unwrap();
+                    for [start, probe, end] in [
+                        selected.clone(),
+                        [
+                            Real::zero().into(),
+                            selected[1].clone(),
+                            selected[2].clone(),
+                        ],
+                        [selected[0].clone(), selected[1].clone(), Real::one().into()],
+                        [q(1, 4).into(), q(1, 2).into(), sqrt_half.clone().into()],
+                    ] {
+                        let cut = |parameter: CurveParameter2| {
+                            let point = source_curve.point_at(&parameter, &policy).unwrap();
+                            assert_eq!(point.certainty, CurveCertainty::Certified);
+                            CornerTrimCut2 {
+                                parameter,
+                                point: point.value,
+                                placement: CornerPlacement2::Trim,
+                                replacement: None,
+                            }
+                        };
+                        let next = cut(start);
+                        let previous = cut(end);
+                        assert!(
+                            retained_single_fragment_corner_cuts_are_separated(
+                                &original,
+                                &previous,
+                                &next,
+                                CurveOperation2::Chamfer,
+                                &policy,
+                            )
+                            .unwrap()
+                        );
+                        let retained = retained_corner_fragment_between_cuts(
+                            &original,
+                            &previous,
+                            &next,
+                            CurveOperation2::Chamfer,
+                            &policy,
+                        )
+                        .expect("both native cuts retain their common parameter authority");
+                        let BezierSplitFragment2::SelectedFiber(selected) = &retained else {
+                            panic!("nonrational cuts keep the original source chart");
+                        };
+                        assert_eq!(selected.rational_curve(), Some(&rational));
+                        assert_eq!(selected.range().start(), &next.parameter);
+                        assert_eq!(selected.range().end(), &previous.parameter);
+                        assert!(selected.start_point().shares_storage(&next.point));
+                        assert!(selected.end_point().shares_storage(&previous.point));
+                        let expected = source_curve.point_at(&probe, &policy).unwrap();
+                        let actual = Curve2::from_retained_fragment(retained.clone())
+                            .point_at(&probe, &policy)
+                            .unwrap();
+                        let equality = actual.value.coincides_with(&expected.value, &policy);
+                        assert_eq!(actual.certainty, CurveCertainty::Certified);
+                        assert_eq!(equality.certainty, CurveCertainty::Certified);
+                        assert_eq!(equality.value, Classification::Decided(true));
+                        let trimmed = retained_corner_fragment_trim(
+                            &retained,
+                            probe.clone(),
+                            &expected.value,
+                            None,
+                            true,
+                            CurveOperation2::Chamfer,
+                            &policy,
+                        )
+                        .expect("the selected interval accepts another exact cut");
+                        let BezierSplitFragment2::SelectedFiber(trimmed_source) = &trimmed else {
+                            panic!("repeated trimming preserves its selected source");
+                        };
+                        assert_eq!(trimmed_source.source(), selected.source());
+                        assert_eq!(trimmed_source.range().end(), &probe);
+                        assert!(trimmed_source.start_point().shares_storage(&next.point));
+                        let reversed_trim =
+                            Curve2::from_retained_fragment(trimmed.reversed().unwrap());
+                        assert!(reversed_trim.start().shares_storage(&expected.value));
+                        assert!(reversed_trim.end().shares_storage(&next.point));
+                    }
                 }
             }
         }
@@ -21028,15 +21195,31 @@ mod tests {
                 );
                 let mut retained_algebraic_interval = false;
                 for_each_corner_region(&extended.value, |edited| {
-                    retained_algebraic_interval |= edited.boundary_loops()[0]
-                        .fragments()
-                        .iter()
-                        .any(|fragment| {
-                            matches!(
-                                fragment,
-                                BezierSplitFragment2::AlgebraicEndpointImages { .. }
-                            )
-                        });
+                    for fragment in edited.boundary_loops()[0].fragments() {
+                        let BezierSplitFragment2::SelectedFiber(selected) = fragment else {
+                            continue;
+                        };
+                        retained_algebraic_interval |=
+                            [selected.range().start(), selected.range().end()]
+                                .into_iter()
+                                .all(corner_parameter_needs_retained_source);
+                        let source = Curve2::from(
+                            selected
+                                .rational_curve()
+                                .expect("the exact cubic envelope")
+                                .clone(),
+                        );
+                        for (parameter, point) in [
+                            (selected.range().start(), selected.start_point()),
+                            (selected.range().end(), selected.end_point()),
+                        ] {
+                            let replay = source.point_at(parameter, &policy).unwrap();
+                            let equality = replay.value.coincides_with(point, &policy);
+                            assert_eq!(replay.certainty, CurveCertainty::Certified);
+                            assert_eq!(equality.certainty, CurveCertainty::Certified);
+                            assert_eq!(equality.value, Classification::Decided(true));
+                        }
+                    }
                 });
                 assert!(
                     retained_algebraic_interval,
