@@ -3873,12 +3873,12 @@ fn planar_curve_correspondence(
             curve
                 .parameter_domain()
                 .start()
-                .as_exact()
+                .scalar()
                 .ok_or(GeometryError::UnsupportedPcurveContour)?
                 + curve
                     .parameter_domain()
                     .end()
-                    .as_exact()
+                    .scalar()
                     .ok_or(GeometryError::UnsupportedPcurveContour)?,
         )?,
     })
@@ -4017,13 +4017,13 @@ fn validate_simple_curve_path(
                     && exact_parameter_is(
                         contact.first().exact_curve_parameter(),
                         (curves[first_index].parameter_domain().end())
-                            .as_exact()
+                            .scalar()
                             .ok_or(GeometryError::UnsupportedPcurveContour)?,
                     )?
                     && exact_parameter_is(
                         contact.second().exact_curve_parameter(),
                         (curves[second_index].parameter_domain().start())
-                            .as_exact()
+                            .scalar()
                             .ok_or(GeometryError::UnsupportedPcurveContour)?,
                     )?;
                 let closing_seam = first_index == 0
@@ -4031,13 +4031,13 @@ fn validate_simple_curve_path(
                     && exact_parameter_is(
                         contact.first().exact_curve_parameter(),
                         (curves[first_index].parameter_domain().start())
-                            .as_exact()
+                            .scalar()
                             .ok_or(GeometryError::UnsupportedPcurveContour)?,
                     )?
                     && exact_parameter_is(
                         contact.second().exact_curve_parameter(),
                         (curves[second_index].parameter_domain().end())
-                            .as_exact()
+                            .scalar()
                             .ok_or(GeometryError::UnsupportedPcurveContour)?,
                     )?;
                 if !forward_seam && !closing_seam {

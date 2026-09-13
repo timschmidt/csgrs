@@ -142,7 +142,7 @@ impl Pcurve {
         self.curve
             .parameter_domain()
             .start()
-            .as_exact()
+            .scalar()
             .ok_or(GeometryError::UnsupportedPcurveContour)
     }
 
@@ -151,7 +151,7 @@ impl Pcurve {
         self.curve
             .parameter_domain()
             .end()
-            .as_exact()
+            .scalar()
             .ok_or(GeometryError::UnsupportedPcurveContour)
     }
 
@@ -1982,7 +1982,7 @@ impl SurfaceIntersectionPcurve {
     fn retained_curve(curve: Curve2) -> GeometryResult<Self> {
         let curve_domain = curve.parameter_domain();
         let (curve_domain_start, curve_domain_end) = curve_domain
-            .exact_endpoints()
+            .scalar_endpoints()
             .ok_or(GeometryError::UnsupportedPcurveContour)?;
         Ok(Self {
             domain: ParameterDomain::new(curve_domain_start.clone(), curve_domain_end.clone())?,
@@ -2189,14 +2189,14 @@ impl SurfaceIntersectionPcurve {
                 let restricted = if decided_order(compare_reals(
                     ordered_source_start,
                     (domain.start())
-                        .as_exact()
+                        .scalar()
                         .ok_or(GeometryError::UnsupportedPcurveContour)?,
                     crate::STRICT_PREDICATES,
                 ))? == Ordering::Equal
                     && decided_order(compare_reals(
                         ordered_source_end,
                         (domain.end())
-                            .as_exact()
+                            .scalar()
                             .ok_or(GeometryError::UnsupportedPcurveContour)?,
                         crate::STRICT_PREDICATES,
                     ))? == Ordering::Equal
@@ -2300,14 +2300,14 @@ impl SurfaceIntersectionPcurve {
                     let curve = if decided_order(compare_reals(
                         &start,
                         (domain.start())
-                            .as_exact()
+                            .scalar()
                             .ok_or(GeometryError::UnsupportedPcurveContour)?,
                         crate::STRICT_PREDICATES,
                     ))? == Ordering::Equal
                         && decided_order(compare_reals(
                             &end,
                             (domain.end())
-                                .as_exact()
+                                .scalar()
                                 .ok_or(GeometryError::UnsupportedPcurveContour)?,
                             crate::STRICT_PREDICATES,
                         ))? == Ordering::Equal
@@ -2420,7 +2420,7 @@ impl SurfaceIntersectionPcurve {
                 }
                 let curve_domain = curve.parameter_domain();
                 let (curve_domain_start, curve_domain_end) = curve_domain
-                    .exact_endpoints()
+                    .scalar_endpoints()
                     .ok_or(GeometryError::UnsupportedPcurveContour)?;
                 let curve_span = curve_domain_end - curve_domain_start;
                 let spatial_span = self.domain.end() - self.domain.start();
@@ -2527,7 +2527,7 @@ fn materialized_surface_pcurve_from_matching_domains(
 ) -> GeometryResult<MaterializedSurfacePcurve> {
     let curve_domain = curve.parameter_domain();
     let (curve_domain_start, curve_domain_end) = curve_domain
-        .exact_endpoints()
+        .scalar_endpoints()
         .ok_or(GeometryError::UnsupportedPcurveContour)?;
     let curve_start = curve_domain_start.clone();
     let curve_span = curve_domain_end - &curve_start;

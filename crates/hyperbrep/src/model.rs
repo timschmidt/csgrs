@@ -11452,13 +11452,13 @@ impl ModelBuilder {
                         && real_values_equal(
                             &first_parameter,
                             (expected_first)
-                                .as_exact()
+                                .scalar()
                                 .ok_or(GeometryError::UnsupportedPcurveContour)?,
                         )?
                         && real_values_equal(
                             &second_parameter,
                             (expected_second)
-                                .as_exact()
+                                .scalar()
                                 .ok_or(GeometryError::UnsupportedPcurveContour)?,
                         )?
                     {
@@ -11521,12 +11521,12 @@ impl ModelBuilder {
                 if !real_values_equal(
                     &first_parameter,
                     (expected_first)
-                        .as_exact()
+                        .scalar()
                         .ok_or(GeometryError::UnsupportedPcurveContour)?,
                 )? || !real_values_equal(
                     &second_parameter,
                     (expected_second)
-                        .as_exact()
+                        .scalar()
                         .ok_or(GeometryError::UnsupportedPcurveContour)?,
                 )? {
                     return Err(BuildError::SelfIntersectingWire(wire));

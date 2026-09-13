@@ -6717,8 +6717,8 @@ mod tests {
             );
             let materialized = pcurve.materialize().unwrap();
             let curve_domain = materialized.curve().parameter_domain();
-            let curve_parameter = ((curve_domain.start().as_exact().unwrap()
-                + curve_domain.end().as_exact().unwrap())
+            let curve_parameter = ((curve_domain.start().scalar().unwrap()
+                + curve_domain.end().scalar().unwrap())
                 / Real::from(2))
             .unwrap();
             let spatial_parameter = materialized.spatial_parameter_at(&curve_parameter).unwrap();
@@ -6881,14 +6881,14 @@ mod tests {
                     .curve()
                     .parameter_domain()
                     .start()
-                    .as_exact()
+                    .scalar()
                     .unwrap()
                     .to_string(),
                 materialized
                     .curve()
                     .parameter_domain()
                     .end()
-                    .as_exact()
+                    .scalar()
                     .unwrap()
                     .to_string(),
             ),
