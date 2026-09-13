@@ -3576,10 +3576,9 @@ fn required_curve_path_signed_area(
     unsupported: ConstructionError,
 ) -> Result<Real, ConstructionError> {
     match path
-        .bezier_boundary_loop(&CurveContext::STRICT)
+        .boundary_loop(&CurveContext::STRICT)
         .map_err(GeometryError::from)?
         .into_value()
-        .boundary_loop()
         .signed_area(&CurveContext::STRICT)
         .map_err(GeometryError::from)?
         .into_value()

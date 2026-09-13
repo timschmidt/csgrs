@@ -1474,10 +1474,9 @@ impl CertifiedRevolutionBoundary {
         match self {
             Self::Native(contour) => contour.signed_x_first_moment().map_err(GeometryError::from),
             Self::Curved(path) => path
-                .bezier_boundary_loop(&CurveContext::STRICT)
+                .boundary_loop(&CurveContext::STRICT)
                 .map_err(GeometryError::from)?
                 .into_value()
-                .boundary_loop()
                 .area_moments(&CurveContext::STRICT)
                 .map_err(GeometryError::from)
                 .and_then(|outcome| resolve_optional_planar_measurement(outcome.into_value()))
@@ -2692,10 +2691,9 @@ impl Model {
         let loop_path = CurvePath2::try_new(vec![materialized_loop.curve().clone()])
             .map_err(GeometryError::from)?;
         let loop_area = loop_path
-            .bezier_boundary_loop(&CurveContext::STRICT)
+            .boundary_loop(&CurveContext::STRICT)
             .map_err(GeometryError::from)?
             .into_value()
-            .boundary_loop()
             .signed_area(&CurveContext::STRICT)
             .map_err(GeometryError::from)?
             .into_value();
@@ -5672,10 +5670,9 @@ impl Model {
             Err(GeometryError::UnsupportedPcurveContour) => {
                 let area = self
                     .build_model_wire_curve_path(wire)?
-                    .bezier_boundary_loop(&CurveContext::STRICT)
+                    .boundary_loop(&CurveContext::STRICT)
                     .map_err(GeometryError::from)?
                     .into_value()
-                    .boundary_loop()
                     .signed_area(&CurveContext::STRICT)
                     .map_err(GeometryError::from)?
                     .into_value();
@@ -10502,10 +10499,9 @@ impl ModelBuilder {
             Err(BuildError::Geometry(GeometryError::UnsupportedPcurveContour)) => {
                 let path = self.build_wire_curve_path(wire)?;
                 let area = path
-                    .bezier_boundary_loop(&CurveContext::STRICT)
+                    .boundary_loop(&CurveContext::STRICT)
                     .map_err(GeometryError::from)?
                     .into_value()
-                    .boundary_loop()
                     .signed_area(&CurveContext::STRICT)
                     .map_err(GeometryError::from)?
                     .into_value();
@@ -17244,10 +17240,9 @@ impl ModelBuilder {
         } else {
             let path = CurvePath2::try_new(ordered).map_err(GeometryError::from)?;
             let area = path
-                .bezier_boundary_loop(&CurveContext::STRICT)
+                .boundary_loop(&CurveContext::STRICT)
                 .map_err(GeometryError::from)?
                 .into_value()
-                .boundary_loop()
                 .signed_area(&CurveContext::STRICT)
                 .map_err(GeometryError::from)?
                 .into_value();
@@ -20577,9 +20572,8 @@ fn update_max(current: &mut Real, candidate: &Real) -> Result<(), GeometryError>
 
 fn curve_path_signed_area(path: &CurvePath2) -> Result<Real, GeometryError> {
     let area = path
-        .bezier_boundary_loop(&CurveContext::STRICT)?
+        .boundary_loop(&CurveContext::STRICT)?
         .into_value()
-        .boundary_loop()
         .signed_area(&CurveContext::STRICT)?
         .into_value();
     resolve_optional_planar_measurement(area)?.ok_or(GeometryError::UnsupportedMeasurement)
