@@ -1649,9 +1649,13 @@ fn append_curved_boundary_witness_candidates(
     let mut outer_boundary_probes = vertices.to_vec();
     for curve in outer.curves() {
         let midpoint = curve
-            .point_at(&half, &CurveContext::STRICT)
+            .point_at(&half.clone().into(), &CurveContext::STRICT)
             .map_err(GeometryError::from)?
             .into_value();
+        let midpoint = midpoint
+            .coordinates()
+            .cloned()
+            .ok_or(GeometryError::UnsupportedPcurveContour)?;
         outer_boundary_probes.push(midpoint.clone());
         candidates.push(
             average_planar_points(&[
@@ -1696,12 +1700,12 @@ fn append_curved_boundary_witness_candidates(
             .map(|curve| curve.start().clone())
             .collect::<Vec<_>>();
         for curve in inner.curves() {
-            inner_boundary_probes.push(hypercurve::CurvePoint2::from(
+            inner_boundary_probes.push(
                 curve
-                    .point_at(&half, &CurveContext::STRICT)
+                    .point_at(&half.clone().into(), &CurveContext::STRICT)
                     .map_err(GeometryError::from)?
                     .into_value(),
-            ));
+            );
         }
         for outer_probe in &outer_boundary_probes {
             for inner_probe in &inner_boundary_probes {
@@ -6721,9 +6725,12 @@ mod tests {
             let retained_point = pcurve.point_at(&spatial_parameter).unwrap();
             let materialized_point = materialized
                 .curve()
-                .point_at(&curve_parameter, &CurveContext::STRICT)
+                .point_at(&curve_parameter.clone().into(), &CurveContext::STRICT)
                 .unwrap()
-                .into_value();
+                .into_value()
+                .coordinates()
+                .expect("native pcurve coordinates")
+                .clone();
             assert_eq!(
                 compare_reals(
                     &retained_point.x,

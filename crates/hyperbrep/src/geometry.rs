@@ -159,8 +159,11 @@ impl Pcurve {
     pub fn point_at(&self, parameter: &Real) -> GeometryResult<Point2> {
         let point = self
             .curve
-            .point_at(parameter, &CurveContext::STRICT)?
+            .point_at(&parameter.clone().into(), &CurveContext::STRICT)?
             .into_value();
+        let point = point
+            .coordinates()
+            .ok_or(GeometryError::UnsupportedPcurveContour)?;
         Ok(Point2::new(point.x().clone(), point.y().clone()))
     }
 
@@ -1982,10 +1985,7 @@ impl SurfaceIntersectionPcurve {
             .exact_endpoints()
             .ok_or(GeometryError::UnsupportedPcurveContour)?;
         Ok(Self {
-            domain: ParameterDomain::new(
-                curve_domain_start.clone(),
-                curve_domain_end.clone(),
-            )?,
+            domain: ParameterDomain::new(curve_domain_start.clone(), curve_domain_end.clone())?,
             source_scale: Real::one(),
             source_offset: Real::zero(),
             mapping: SurfaceIntersectionPcurveMapping::RetainedCurve { curve },
@@ -2080,8 +2080,11 @@ impl SurfaceIntersectionPcurve {
             }
             SurfaceIntersectionPcurveMapping::RetainedCurve { curve } => {
                 let point = curve
-                    .point_at(&source_parameter, &CurveContext::STRICT)?
+                    .point_at(&source_parameter.clone().into(), &CurveContext::STRICT)?
                     .into_value();
+                let point = point
+                    .coordinates()
+                    .ok_or(GeometryError::UnsupportedPcurveContour)?;
                 Ok(Point2::new(point.x().clone(), point.y().clone()))
             }
             SurfaceIntersectionPcurveMapping::PlaneProjection {
@@ -2501,10 +2504,12 @@ impl MaterializedSurfacePcurve {
                 };
                 let point = self
                     .curve
-                    .point_at(parameter, &CurveContext::STRICT)?
+                    .point_at(&parameter.clone().into(), &CurveContext::STRICT)?
                     .into_value();
-                let point = CurvePoint2::new(point.x().clone(), point.y().clone());
-                let fraction = match arc.sweep_fraction(&point, &CurveContext::STRICT)? {
+                let point = point
+                    .coordinates()
+                    .ok_or(GeometryError::UnsupportedPcurveContour)?;
+                let fraction = match arc.sweep_fraction(point, &CurveContext::STRICT)? {
                     Classification::Decided(fraction) => fraction,
                     Classification::Uncertain(reason) => {
                         return Err(GeometryError::PlanarClassificationUnresolved(reason));
@@ -6552,12 +6557,18 @@ fn intersect_coaxial_revolutions(
             .ok_or(GeometryError::UnrepresentableParameter)?;
         let first_point = first_meridian
             .curve
-            .point_at(&first_parameter, &CurveContext::STRICT)?
+            .point_at(&first_parameter.clone().into(), &CurveContext::STRICT)?
             .into_value();
         let second_point = second_meridian
             .curve
-            .point_at(&second_parameter, &CurveContext::STRICT)?
+            .point_at(&second_parameter.clone().into(), &CurveContext::STRICT)?
             .into_value();
+        let first_point = first_point
+            .coordinates()
+            .ok_or(GeometryError::UnrepresentableParameter)?;
+        let second_point = second_point
+            .coordinates()
+            .ok_or(GeometryError::UnrepresentableParameter)?;
         if decided_order(compare_reals(
             first_point.x(),
             second_point.x(),
@@ -11783,9 +11794,12 @@ mod tests {
         assert_eq!(inverse.degree(), 4);
         for parameter in [Real::zero(), q(1, 2), Real::one()] {
             let uv = pcurve
-                .point_at(&parameter, &CurveContext::STRICT)
+                .point_at(&parameter.clone().into(), &CurveContext::STRICT)
                 .unwrap()
-                .into_value();
+                .into_value()
+                .coordinates()
+                .expect("native pcurve coordinates")
+                .clone();
             assert_points_equal(
                 &surface
                     .point_at(&Point2::new(uv.x().clone(), uv.y().clone()))
@@ -11833,9 +11847,12 @@ mod tests {
         );
         for parameter in [Real::zero(), q(1, 2), Real::one()] {
             let uv = native
-                .point_at(&parameter, &CurveContext::STRICT)
+                .point_at(&parameter.clone().into(), &CurveContext::STRICT)
                 .unwrap()
-                .into_value();
+                .into_value()
+                .coordinates()
+                .expect("native pcurve coordinates")
+                .clone();
             assert_points_equal(
                 &nurbs
                     .point_at(&Point2::new(uv.x().clone(), uv.y().clone()))
@@ -11983,9 +12000,12 @@ mod tests {
         assert_eq!(
             materialized
                 .curve()
-                .point_at(&parameter, &CurveContext::STRICT)
+                .point_at(&parameter.clone().into(), &CurveContext::STRICT)
                 .unwrap()
-                .into_value(),
+                .into_value()
+                .coordinates()
+                .expect("native pcurve coordinates")
+                .clone(),
             CurvePoint2::new(q(3, 8), q(1, 2))
         );
 
@@ -12620,9 +12640,12 @@ mod tests {
         assert_eq!(
             materialized
                 .curve()
-                .point_at(&q(1, 2), &CurveContext::STRICT)
+                .point_at(&q(1, 2).clone().into(), &CurveContext::STRICT)
                 .unwrap()
-                .into_value(),
+                .into_value()
+                .coordinates()
+                .expect("native pcurve coordinates")
+                .clone(),
             CurvePoint2::new(q(7, 2), q(17, 2))
         );
 
@@ -13894,9 +13917,12 @@ mod tests {
         assert_eq!(
             materialized
                 .curve()
-                .point_at(&q(1, 2), &CurveContext::STRICT)
+                .point_at(&q(1, 2).clone().into(), &CurveContext::STRICT)
                 .unwrap()
-                .into_value(),
+                .into_value()
+                .coordinates()
+                .expect("native pcurve coordinates")
+                .clone(),
             CurvePoint2::new(q(17, 2), q(7, 2))
         );
         let (split, _) = patch
@@ -13960,9 +13986,12 @@ mod tests {
         for parameter in [r(2), r(3), r(4), r(5)] {
             let surface_parameter = materialized
                 .curve()
-                .point_at(&parameter, &CurveContext::STRICT)
+                .point_at(&parameter.clone().into(), &CurveContext::STRICT)
                 .unwrap()
-                .into_value();
+                .into_value()
+                .coordinates()
+                .expect("native pcurve coordinates")
+                .clone();
             assert_points_equal(
                 &section.curve().point_at(&parameter).unwrap(),
                 &surface
@@ -14096,9 +14125,12 @@ mod tests {
             .expect("one rational extrusion span");
         let extrusion_parameter = extrusion_clip
             .curve
-            .point_at(&parameter, &CurveContext::STRICT)
+            .point_at(&parameter.clone().into(), &CurveContext::STRICT)
             .unwrap()
-            .into_value();
+            .into_value()
+            .coordinates()
+            .expect("native pcurve coordinates")
+            .clone();
         assert_eq!(
             compare_reals(
                 extrusion_parameter.x(),
@@ -14126,9 +14158,12 @@ mod tests {
             .expect("one projected rational span");
         let plane_parameter = plane_clip
             .curve
-            .point_at(&parameter, &CurveContext::STRICT)
+            .point_at(&parameter.clone().into(), &CurveContext::STRICT)
             .unwrap()
-            .into_value();
+            .into_value()
+            .coordinates()
+            .expect("native pcurve coordinates")
+            .clone();
         let retained_plane_parameter = section.second_pcurve().point_at(&parameter).unwrap();
         assert_eq!(
             compare_reals(
@@ -14173,9 +14208,12 @@ mod tests {
                 let spatial_parameter = &carrier.spatial_scale * &local + &carrier.spatial_offset;
                 let materialized = carrier
                     .curve
-                    .point_at(&local, &CurveContext::STRICT)
+                    .point_at(&local.clone().into(), &CurveContext::STRICT)
                     .unwrap()
-                    .into_value();
+                    .into_value()
+                    .coordinates()
+                    .expect("native pcurve coordinates")
+                    .clone();
                 let retained = nurbs_section
                     .first_pcurve()
                     .point_at(&spatial_parameter)
