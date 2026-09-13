@@ -1416,7 +1416,7 @@ fn apply_zone_island_policy(
             )));
         }
     };
-    let paths = match region.materialized_boundary_paths().map_err(|error| {
+    let paths = match region.boundary_paths().map_err(|error| {
         GeometryMaterializationError::ZoneIsland(format!(
             "{source} boundary materialization: {error}"
         ))
@@ -3999,7 +3999,7 @@ fn exact_compound_composition(
     {
         let region = profile;
         let Classification::Decided(mut profile_paths) = region
-            .materialized_boundary_paths()
+            .boundary_paths()
             .map_err(|error| error.to_string())?
         else {
             return Err("exact aggregate boundary materialization was uncertain".to_owned());
@@ -4113,7 +4113,7 @@ mod tests {
         )
         .unwrap();
         let second = curve::translated(&second_local, Real::one(), Real::zero());
-        let Classification::Decided(paths) = first.materialized_boundary_paths().unwrap() else {
+        let Classification::Decided(paths) = first.boundary_paths().unwrap() else {
             panic!("exact rounded pad boundary should materialize");
         };
         assert!(paths.iter().flat_map(|path| path.curves()).any(|curve| {

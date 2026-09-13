@@ -454,7 +454,7 @@ impl BoardBoundaryGeometry {
                 )));
             }
         };
-        let contour_paths = match region.materialized_boundary_paths().map_err(|error| {
+        let contour_paths = match region.boundary_paths().map_err(|error| {
             BoardBoundaryGeometryError::new(format!(
                 "board inset boundary extraction failed: {error:?}"
             ))
@@ -524,10 +524,10 @@ impl BoardBoundaryGeometry {
         for contour in &self.contour_paths {
             for curve in contour.curves() {
                 let distance_squared = match curve.geometry() {
-                    CurveGeometry2::Line(line) => {
+                    Some(CurveGeometry2::Line(line)) => {
                         point_line_segment_distance_squared(&point, line, policy)?
                     }
-                    CurveGeometry2::CircularArc(arc) => {
+                    Some(CurveGeometry2::CircularArc(arc)) => {
                         point_arc_distance_squared(&point, arc, policy)?
                     }
                     _ => return Ok(None),
@@ -628,7 +628,7 @@ impl BoardBoundaryGeometry {
             contour.curves().iter().any(|curve| {
                 !matches!(
                     curve.geometry(),
-                    CurveGeometry2::Line(_) | CurveGeometry2::CircularArc(_)
+                    Some(CurveGeometry2::Line(_)) | Some(CurveGeometry2::CircularArc(_))
                 )
             })
         }) {
@@ -674,10 +674,10 @@ impl BoardBoundaryGeometry {
             }
             for curve in contour.curves() {
                 let distance_squared = match curve.geometry() {
-                    CurveGeometry2::Line(boundary) => {
+                    Some(CurveGeometry2::Line(boundary)) => {
                         line_line_segment_distance_squared(&line, boundary, policy)?
                     }
-                    CurveGeometry2::CircularArc(boundary) => {
+                    Some(CurveGeometry2::CircularArc(boundary)) => {
                         line_arc_distance_squared(&line, boundary, policy)?
                     }
                     _ => unreachable!("native primitive inventory was checked"),
