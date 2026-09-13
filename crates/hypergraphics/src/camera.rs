@@ -4,7 +4,7 @@
 use core::cmp::Ordering;
 
 #[cfg(feature = "exact")]
-use hyperlattice::{Point3, Real, pi};
+use hyperlattice::{Point3, Real};
 #[cfg(feature = "exact")]
 use hyperlimit::{PredicateOutcome, PredicatePolicy, compare_reals};
 #[cfg(feature = "exact")]
@@ -478,7 +478,7 @@ fn ray_intersection_with_z0(near: [f64; 3], far: [f64; 3]) -> Result<Option<Appr
 
 #[cfg(feature = "exact")]
 fn degrees(value: i32) -> Real {
-    (Real::from(value) * pi() / Real::from(180)).expect("180 is a known nonzero divisor")
+    (Real::from(value) * Real::pi() / Real::from(180)).expect("180 is a known nonzero divisor")
 }
 
 #[cfg(feature = "exact")]
@@ -501,7 +501,7 @@ fn validate_camera_domain(camera: &ExactCamera, policy: PredicatePolicy) -> Resu
             return Err(Error::InvalidCameraParameter { value: name });
         }
     }
-    if decide_ordering(&camera.fov_y, &pi(), "fov_y", policy)? != Ordering::Less {
+    if decide_ordering(&camera.fov_y, &Real::pi(), "fov_y", policy)? != Ordering::Less {
         return Err(Error::InvalidCameraParameter { value: "fov_y" });
     }
     if decide_ordering(&camera.far, &camera.near, "far", policy)? != Ordering::Greater {
@@ -612,7 +612,7 @@ mod tests {
         ));
 
         let camera = ExactCamera {
-            fov_y: pi(),
+            fov_y: Real::pi(),
             ..ExactCamera::default()
         };
         assert!(matches!(

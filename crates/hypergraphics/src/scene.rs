@@ -197,7 +197,7 @@ pub fn curve_region_line_mesh(
     material_color: Color3,
     hole_color: Color3,
 ) -> Result<CertifiedCurveRegionLineMesh> {
-    let path_outcome = region.materialized_boundary_paths(policy)?;
+    let path_outcome = region.boundary_paths(policy)?;
     let path_materialization_certainty = path_outcome.certainty;
     let paths = match path_outcome.value {
         Classification::Decided(paths) => paths,
