@@ -25,6 +25,7 @@ impl CornerSourceFragments2 {
         curve: &Curve2,
         cut: CornerCut2,
         previous: bool,
+        defer_arc: bool,
         operation: CurveOperation2,
         policy: &CurveContext,
     ) -> ExactCurveResult<Self> {
@@ -48,14 +49,15 @@ impl CornerSourceFragments2 {
         // discard valid contacts on a major sweep or its extension.
         let arc_side;
         let mut cut = cut;
-        let source = if matches!(curve.geometry(), Some(CurveGeometry2::CircularArc(_))) {
-            arc_side = materialize_corner_cut(curve, &cut, previous, operation, policy)?;
-            cut.placement = CornerPlacement2::Corner;
-            cut.parameter = Some(if previous { Real::one() } else { Real::zero() }.into());
-            &arc_side
-        } else {
-            curve
-        };
+        let source =
+            if !defer_arc && matches!(curve.geometry(), Some(CurveGeometry2::CircularArc(_))) {
+                arc_side = materialize_corner_cut(curve, &cut, previous, operation, policy)?;
+                cut.placement = CornerPlacement2::Corner;
+                cut.parameter = Some(if previous { Real::one() } else { Real::zero() }.into());
+                &arc_side
+            } else {
+                curve
+            };
         let native = source.native_bezier_fragments_for_operation(policy, operation)?;
         let cut_index = if previous {
             native.len().checked_sub(1)
@@ -119,18 +121,102 @@ impl CurvePath2 {
         next_retained_arc: Option<&CircularArc2>,
         policy: &CurveContext,
     ) -> ExactCurveResult<Option<Self>> {
-        let operation = CurveOperation2::Chamfer;
+        self.reconstruct_corner(
+            previous_index,
+            next_index,
+            solution.previous,
+            solution.next,
+            CurveOperation2::Chamfer,
+            None,
+            policy,
+            |chain, [previous_index, next_index], [previous_cut, next_cut], _| {
+                chain.reconstruct_chamfer(
+                    previous_index,
+                    next_index,
+                    previous_cut,
+                    next_cut,
+                    previous_retained_arc,
+                    next_retained_arc,
+                    policy,
+                )
+            },
+        )
+    }
+
+    pub(super) fn reconstruct_selected_fillet(
+        &self,
+        previous_index: usize,
+        next_index: usize,
+        solution: FilletCorner2,
+        radius: &Real,
+        mode: CurveCornerMode2,
+        retained_arcs: [Option<&CircularArc2>; 2],
+        promoted_parallels: [Option<&crate::BezierParallelFragment2>; 2],
+        policy: &CurveContext,
+    ) -> ExactCurveResult<Option<Self>> {
+        let deferred_arc = solution
+            .retained_frame
+            .as_ref()
+            .and_then(|frame| frame.anchor_evidence.as_ref())
+            .and_then(|evidence| evidence.deferred_arc_contact.as_ref())
+            .map(|contact| contact.arc_is_previous);
+        self.reconstruct_corner(
+            previous_index,
+            next_index,
+            solution.previous,
+            solution.next,
+            CurveOperation2::Fillet,
+            deferred_arc,
+            policy,
+            |chain, [previous_index, next_index], [previous_cut, next_cut], domains| {
+                chain.reconstruct_fillet(
+                    previous_index,
+                    next_index,
+                    previous_cut,
+                    next_cut,
+                    solution.center,
+                    solution.clockwise,
+                    solution.retained_frame,
+                    radius,
+                    mode,
+                    retained_arcs,
+                    promoted_parallels,
+                    domains,
+                    policy,
+                )
+            },
+        )
+    }
+
+    fn reconstruct_corner(
+        &self,
+        previous_index: usize,
+        next_index: usize,
+        previous_cut: CornerCut2,
+        next_cut: CornerCut2,
+        operation: CurveOperation2,
+        deferred_arc: Option<bool>,
+        policy: &CurveContext,
+        rebuild: impl FnOnce(
+            &CurveCornerChain2<'_>,
+            [usize; 2],
+            [CornerTrimCut2; 2],
+            [std::ops::Range<usize>; 2],
+        ) -> ExactCurveResult<Option<Vec<BezierSplitFragment2>>>,
+    ) -> ExactCurveResult<Option<Self>> {
         let previous = CornerSourceFragments2::new(
             &self.data.curves[previous_index],
-            solution.previous,
+            previous_cut,
             true,
+            deferred_arc == Some(true),
             operation,
             policy,
         )?;
         let next = CornerSourceFragments2::new(
             &self.data.curves[next_index],
-            solution.next,
+            next_cut,
             false,
+            deferred_arc == Some(false),
             operation,
             policy,
         )?;
@@ -140,18 +226,23 @@ impl CurvePath2 {
         } else {
             previous.fragments.len() + next.cut_index
         };
+        let domains = [
+            0..previous.fragments.len(),
+            if same_curve {
+                0..previous.fragments.len()
+            } else {
+                previous.fragments.len()..previous.fragments.len() + next.fragments.len()
+            },
+        ];
         let mut fragments = previous.fragments;
         if !same_curve {
             fragments.extend(next.fragments);
         }
-        let Some(rebuilt) = CurveCornerChain2::new(&fragments, same_curve).reconstruct_chamfer(
-            previous.cut_index,
-            next_cut_index,
-            previous.cut,
-            next.cut,
-            previous_retained_arc,
-            next_retained_arc,
-            policy,
+        let Some(rebuilt) = rebuild(
+            &CurveCornerChain2::new(&fragments, same_curve),
+            [previous.cut_index, next_cut_index],
+            [previous.cut, next.cut],
+            domains,
         )?
         else {
             return Ok(None);

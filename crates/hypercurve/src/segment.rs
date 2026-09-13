@@ -1045,6 +1045,29 @@ impl CircularArc2 {
                 ));
             }
         }
+        let point = match self.point_at_sweep_fraction(fraction, policy)? {
+            Classification::Decided(point) => point,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        self.parameter_at_incident_point(&point, policy)
+    }
+
+    /// Projects a point already certified on this sweep into its rational
+    /// chart. Reuses Cartesian incidence without an angle/evaluation round trip.
+    /// A full circle's shared endpoint belongs to the start of the traversal.
+    pub(crate) fn parameter_at_incident_point(
+        &self,
+        point: &Point2,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<Real>> {
+        if point == self.start() {
+            return Ok(Classification::Decided(Real::zero()));
+        }
+        if point == self.end() {
+            return Ok(Classification::Decided(Real::one()));
+        }
         let decomposition = match self.rational_bezier_decomposition_with_policy(policy) {
             Ok(Classification::Decided(decomposition)) => decomposition,
             Ok(Classification::Uncertain(reason)) => {
@@ -1055,39 +1078,42 @@ impl CircularArc2 {
                 return Ok(Classification::Uncertain(blocker.reason()));
             }
         };
-        let point = match self.point_at_sweep_fraction(fraction, policy)? {
-            Classification::Decided(point) => point,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
         for span in decomposition.spans() {
             let (start, end) = span.parameter_range();
+            let width = end - start;
+            let start_radial = span.curve().start().delta_from(self.center());
+            let end_radial = span.curve().end().delta_from(self.center());
+            let point_radial = point.delta_from(self.center());
+            let radius_squared =
+                &start_radial.0 * &start_radial.0 + &start_radial.1 * &start_radial.1;
+            let start_point_dot =
+                &start_radial.0 * &point_radial.0 + &start_radial.1 * &point_radial.1;
+            let start_point_cross =
+                &start_radial.0 * &point_radial.1 - &start_radial.1 * &point_radial.0;
+            let start_end_dot = &start_radial.0 * &end_radial.0 + &start_radial.1 * &end_radial.1;
+            let start_end_cross = &start_radial.0 * &end_radial.1 - &start_radial.1 * &end_radial.0;
+            let denominator = (&radius_squared + start_point_dot) * start_end_cross;
+            match crate::classify::is_zero(&denominator, policy) {
+                Some(true) => continue, // The point is at this chart's projective pole.
+                Some(false) => {}
+                None => {
+                    return Ok(Classification::Uncertain(
+                        crate::UncertaintyReason::RealSign,
+                    ));
+                }
+            }
+            let local = (start_point_cross * (&radius_squared + start_end_dot) / denominator)?;
+            // Chart parameters are rational coordinates, not angular fractions.
+            // Test the projected point in each chart's own finite domain.
             match (
-                compare_reals(start, fraction, policy),
-                compare_reals(fraction, end, policy),
+                compare_reals(&Real::zero(), &local, policy),
+                compare_reals(&local, &Real::one(), policy),
             ) {
                 (
                     Some(Ordering::Less | Ordering::Equal),
                     Some(Ordering::Less | Ordering::Equal),
                 ) => {
-                    let width = end - start;
-                    let start_radial = span.curve().start().delta_from(self.center());
-                    let end_radial = span.curve().end().delta_from(self.center());
-                    let point_radial = point.delta_from(self.center());
-                    let radius_squared =
-                        &start_radial.0 * &start_radial.0 + &start_radial.1 * &start_radial.1;
-                    let start_point_dot =
-                        &start_radial.0 * &point_radial.0 + &start_radial.1 * &point_radial.1;
-                    let start_point_cross =
-                        &start_radial.0 * &point_radial.1 - &start_radial.1 * &point_radial.0;
-                    let start_end_dot =
-                        &start_radial.0 * &end_radial.0 + &start_radial.1 * &end_radial.1;
-                    let start_end_cross =
-                        &start_radial.0 * &end_radial.1 - &start_radial.1 * &end_radial.0;
-                    let local_rational = (start_point_cross * (&radius_squared + start_end_dot)
-                        / ((&radius_squared + start_point_dot) * start_end_cross))?;
-                    return Ok(Classification::Decided(start + &(width * local_rational)));
+                    return Ok(Classification::Decided(start + &(width * local)));
                 }
                 (Some(_), Some(_)) => {}
                 _ => {

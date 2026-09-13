@@ -114,16 +114,33 @@ fn rationally_trimmed_semicircle_redecomposes_exactly() {
 }
 
 #[test]
-fn major_arc_uses_requested_orientation_and_major_midpoint() {
+fn major_arc_preserves_rational_charts_and_requested_orientation() {
     let arc = CircularArc2::try_from_center(p(1, 0), p(0, 1), p(0, 0), true).unwrap();
     let decomposition = arc
         .rational_bezier_decomposition(&CurveContext::STRICT)
         .unwrap()
         .into_value();
-    let root_half = half().sqrt().unwrap();
-    let expected_midpoint = Point2::new(-root_half.clone(), -root_half);
+    let expected_midpoint = Point2::new(-q(4, 5), -q(3, 5));
 
-    assert_eq!(decomposition.spans().len(), 2);
+    assert_eq!(decomposition.spans().len(), 3);
+    for (span, (start, end)) in decomposition.spans().iter().zip([
+        (p(1, 0), p(0, -1)),
+        (p(0, -1), p(-1, 0)),
+        (p(-1, 0), p(0, 1)),
+    ]) {
+        assert_eq!(span.curve().start(), &start);
+        assert_eq!(span.curve().end(), &end);
+        for point in span.curve().control_points() {
+            assert!(point.x().exact_rational_ref().is_some());
+            assert!(point.y().exact_rational_ref().is_some());
+        }
+        assert!(
+            span.curve()
+                .weights()
+                .iter()
+                .all(|weight| weight.exact_rational_ref().is_some())
+        );
+    }
     assert_eq!(
         decomposition
             .point_at(&half(), &CurveContext::STRICT)
@@ -150,6 +167,37 @@ fn major_arc_uses_requested_orientation_and_major_midpoint() {
         arc.contains_sweep_point(&p(-1, 0), &CurveContext::STRICT),
         Classification::Decided(true)
     );
+}
+
+#[test]
+fn angular_inverse_selects_unequal_major_arc_charts() {
+    for clockwise in [false, true] {
+        let direction = if clockwise { r(-1) } else { r(1) };
+        let arc = CircularArc2::try_from_center(
+            p(1, 0),
+            Point2::new(q(3, 5), -&direction * q(4, 5)),
+            p(0, 0),
+            clockwise,
+        )
+        .unwrap();
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            for (point, expected) in [
+                (Point2::new(r(0), direction.clone()), q(1, 3)),
+                (p(-1, 0), q(2, 3)),
+                (Point2::new(r(0), -direction.clone()), q(5, 6)),
+            ] {
+                let Classification::Decided(fraction) =
+                    arc.sweep_fraction(&point, &policy).unwrap()
+                else {
+                    panic!("the exact point has an angular parameter");
+                };
+                assert_eq!(
+                    arc.parameter_at_sweep_fraction(&fraction, &policy).unwrap(),
+                    Classification::Decided(expected)
+                );
+            }
+        }
+    }
 }
 
 #[test]
@@ -408,11 +456,11 @@ fn top_level_arc_reuses_promotion_and_builds_mixed_boundary() {
     let closing = Curve2::from(LineSeg2::try_new(p(1, 0), p(-1, 0)).unwrap());
     let path = CurvePath2::try_new(vec![arc, closing]).unwrap();
     let boundary = path
-        .bezier_boundary_loop(&CurveContext::STRICT)
+        .boundary_loop(&CurveContext::STRICT)
         .unwrap()
         .into_value();
     assert_eq!(boundary.len(), 3);
-    assert_eq!(boundary.boundary_loop().fragments().len(), 3);
+    assert_eq!(boundary.fragments().len(), 3);
 }
 
 #[test]

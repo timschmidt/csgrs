@@ -93,6 +93,7 @@ pub struct BezierBoundaryLoop2 {
 pub struct CurveRegionBoundaryLoop2 {
     fragments: Vec<BezierSplitFragment2>,
     connectivity_policy: Option<CurveContext>,
+    rational_evaluators: OnceLock<CurveResult<Vec<Option<RationalBezier2>>>>,
     arrangement_sources: Option<Vec<CurveRegionFragmentSource2>>,
 }
 
@@ -177,7 +178,6 @@ struct CurveRegionData2 {
     native_boundary_loops: OnceLock<Option<Arc<[BezierBoundaryLoop2]>>>,
     native_boundary_bounds: PolicyClassificationCache<Arc<[Aabb2]>>,
     line_image_region: PolicyClassificationCache<Option<LineArcRegion2>>,
-    retained_rational_evaluators: OnceLock<CurveResult<Vec<Vec<Option<RationalBezier2>>>>>,
     signed_area_cache: PolicyEvaluationCache<Option<Real>>,
 }
 
@@ -197,7 +197,6 @@ impl CurveRegionData2 {
             native_boundary_loops: OnceLock::new(),
             native_boundary_bounds: PolicyClassificationCache::new(),
             line_image_region: PolicyClassificationCache::new(),
-            retained_rational_evaluators: OnceLock::new(),
             signed_area_cache: PolicyEvaluationCache::new(),
         }
     }
@@ -701,11 +700,6 @@ impl BezierBoundaryLoop2 {
         Ok(Self { fragments })
     }
 
-    pub(crate) fn from_policy_validated_fragments(fragments: Vec<BezierSubcurve2>) -> Self {
-        debug_assert!(!fragments.is_empty());
-        Self { fragments }
-    }
-
     /// Returns native curve fragments in loop order.
     pub fn fragments(&self) -> &[BezierSubcurve2] {
         &self.fragments
@@ -774,21 +768,7 @@ impl BezierBoundaryLoop2 {
                 "Bezier boundary loop moments require nonempty fragments".to_owned(),
             ));
         }
-        let mut total = BezierAreaMoments2::zero();
-        for fragment in &self.fragments {
-            match fragment.area_moments_contribution_raw(policy)? {
-                Classification::Decided(Some(contribution)) => {
-                    total = total.plus(&contribution);
-                }
-                Classification::Decided(None) => {
-                    return Ok(Classification::Decided(None));
-                }
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            };
-        }
-        Ok(Classification::Decided(Some(total)))
+        boundary_area_moments(self.fragments.iter().map(Some), policy)
     }
 
     fn signed_area_with_cache(
@@ -832,6 +812,30 @@ impl BezierBoundaryLoop2 {
     }
 }
 
+fn boundary_area_moments<'a>(
+    fragments: impl Iterator<Item = Option<&'a BezierSubcurve2>>,
+    policy: &CurveContext,
+) -> CurveResult<Classification<Option<BezierAreaMoments2>>> {
+    let mut total = BezierAreaMoments2::zero();
+    for fragment in fragments {
+        let Some(fragment) = fragment else {
+            return Ok(Classification::Decided(None));
+        };
+        match fragment.area_moments_contribution_raw(policy)? {
+            Classification::Decided(Some(contribution)) => {
+                total = total.plus(&contribution);
+            }
+            Classification::Decided(None) => {
+                return Ok(Classification::Decided(None));
+            }
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+    }
+    Ok(Classification::Decided(Some(total)))
+}
+
 impl From<BezierBoundaryLoop2> for CurveRegionBoundaryLoop2 {
     fn from(boundary_loop: BezierBoundaryLoop2) -> Self {
         Self {
@@ -846,6 +850,7 @@ impl From<BezierBoundaryLoop2> for CurveRegionBoundaryLoop2 {
                 .collect(),
             arrangement_sources: None,
             connectivity_policy: None,
+            rational_evaluators: OnceLock::new(),
         }
     }
 }
@@ -991,6 +996,115 @@ fn canonicalize_retained_rational_fragment(
 }
 
 impl CurveRegionBoundaryLoop2 {
+    pub(crate) fn from_path(
+        path: &CurvePath2,
+        policy: &CurveContext,
+    ) -> ExactCurveResult<Classification<Self>> {
+        match crate::curve::validate_closed_curve_path_connectivity(path, policy)? {
+            Classification::Decided(()) => {}
+            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+        }
+        let mut fragments = Vec::with_capacity(path.curves().len());
+        for curve in path.curves() {
+            if let Some(fragment) = curve.retained_fragment() {
+                fragments.push(fragment.clone());
+            } else {
+                let native = match curve.native_bezier_fragments_with_policy(policy)? {
+                    Classification::Decided(native) => native,
+                    Classification::Uncertain(reason) => {
+                        return Ok(Classification::Uncertain(reason));
+                    }
+                };
+                // Path joins certify the authored curves' outer endpoints.
+                // A spline can still have a discontinuous interior knot, so
+                // certify its promoted span joins before retaining a cycle.
+                for adjacent in native.windows(2) {
+                    let (_, left_end) = adjacent[0].curve().endpoint_refs();
+                    let (right_start, _) = adjacent[1].curve().endpoint_refs();
+                    match CurvePoint2::from(left_end.clone())
+                        .same_point(&CurvePoint2::from(right_start.clone()), policy)
+                    {
+                        Classification::Decided(true) => {}
+                        Classification::Decided(false) => {
+                            return Err(ExactCurveError::invalid(
+                                CurveOperation2::Arrangement,
+                                curve.family(),
+                                CurveError::DisconnectedCurvePath,
+                            ));
+                        }
+                        Classification::Uncertain(reason) => {
+                            return Ok(Classification::Uncertain(reason));
+                        }
+                    }
+                }
+                fragments.extend(
+                    native
+                        .iter()
+                        .map(|native| BezierSplitFragment2::Materialized {
+                            start: BezierParameter2::Exact(Real::zero()),
+                            end: BezierParameter2::Exact(Real::one()),
+                            curve: native.curve().clone(),
+                        }),
+                );
+            }
+        }
+        let fragments = fragments
+            .into_iter()
+            .map(|fragment| canonicalize_retained_rational_fragment(fragment, policy))
+            .collect();
+        Self::try_new_from_certified_connected_chain(fragments, None, policy)
+            .map(Classification::Decided)
+            .map_err(|cause| {
+                ExactCurveError::invalid(
+                    CurveOperation2::Arrangement,
+                    path.curves()[0].family(),
+                    cause,
+                )
+            })
+    }
+
+    fn rational_evaluators(&self) -> CurveResult<&[Option<RationalBezier2>]> {
+        match self.rational_evaluators.get_or_init(|| {
+            self.fragments
+                .iter()
+                .map(|fragment| match fragment {
+                    BezierSplitFragment2::AlgebraicEndpointImages { source_curve, .. } => {
+                        rationalize_retained_subcurve(source_curve).map(Some)
+                    }
+                    _ => Ok(None),
+                })
+                .collect()
+        }) {
+            Ok(evaluators) => Ok(evaluators),
+            Err(error) => Err(error.clone()),
+        }
+    }
+
+    pub(crate) fn classify_point_raw(
+        &self,
+        point: &Point2,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<ContourPointLocation>> {
+        classify_point_against_retained_loop(self, point, policy)
+    }
+
+    /// Returns exact area and first moments when every fragment has an
+    /// implemented native symbolic integral; otherwise returns `Decided(None)`.
+    pub fn area_moments(
+        &self,
+        policy: &CurveContext,
+    ) -> CurveResult<CurveOutcome<Classification<Option<BezierAreaMoments2>>>> {
+        resolve_certified_operation(policy, |attempt| {
+            boundary_area_moments(
+                self.fragments.iter().map(|fragment| match fragment {
+                    BezierSplitFragment2::Materialized { curve, .. } => Some(curve),
+                    _ => None,
+                }),
+                attempt,
+            )
+        })
+    }
+
     /// Constructs a retained boundary loop from accepted split fragments.
     pub fn new(fragments: Vec<BezierSplitFragment2>, policy: &CurveContext) -> CurveResult<Self> {
         let fragments = fragments
@@ -1002,6 +1116,7 @@ impl CurveRegionBoundaryLoop2 {
             fragments,
             arrangement_sources: None,
             connectivity_policy: Some(policy.retained_object_policy()),
+            rational_evaluators: OnceLock::new(),
         })
     }
 
@@ -1026,6 +1141,7 @@ impl CurveRegionBoundaryLoop2 {
             fragments,
             arrangement_sources: Some(arrangement_sources),
             connectivity_policy: Some(policy.retained_object_policy()),
+            rational_evaluators: OnceLock::new(),
         })
     }
 
@@ -1061,6 +1177,7 @@ impl CurveRegionBoundaryLoop2 {
             fragments,
             arrangement_sources: Some(arrangement_sources),
             connectivity_policy: Some(policy.retained_object_policy()),
+            rational_evaluators: OnceLock::new(),
         }
     }
 
@@ -1098,6 +1215,7 @@ impl CurveRegionBoundaryLoop2 {
             fragments,
             arrangement_sources,
             connectivity_policy: Some(policy.retained_object_policy()),
+            rational_evaluators: OnceLock::new(),
         })
     }
 
@@ -3343,7 +3461,7 @@ fn retained_corner_fragment_trim(
 /// point, and optional cell endpoint are already certified by the caller.
 /// Complementary cells extend the retained source; authored cells stand alone.
 fn retained_circular_cut_fragments(
-    extension_source: Option<&BezierSplitFragment2>,
+    extension_source: Option<&[BezierSplitFragment2]>,
     spans: &[RationalQuadraticBezier2],
     span_index: usize,
     parameter: &CurveParameter2,
@@ -3388,15 +3506,15 @@ fn retained_circular_cut_fragments(
             ))
         }
     };
-    let mut fragments = Vec::with_capacity(spans.len() + usize::from(extension_source.is_some()));
+    let mut fragments = Vec::with_capacity(spans.len() + extension_source.map_or(0, <[_]>::len));
     if keep_before_cut {
-        fragments.extend(extension_source.cloned());
+        fragments.extend(extension_source.into_iter().flatten().cloned());
         fragments.extend((0..span_index).map(materialized_span));
         fragments.extend(partial);
     } else {
         fragments.extend(partial);
         fragments.extend((span_index + 1..spans.len()).map(materialized_span));
-        fragments.extend(extension_source.cloned());
+        fragments.extend(extension_source.into_iter().flatten().cloned());
     }
     fragments
 }
@@ -6291,7 +6409,7 @@ impl<'a> CornerCarrierPreparation2<'a> {
         }
     }
 
-    fn promoted_parallel(&self) -> Option<&crate::BezierParallelFragment2> {
+    pub(crate) fn promoted_parallel(&self) -> Option<&crate::BezierParallelFragment2> {
         self.promoted_parallel.as_ref()
     }
 }
@@ -10689,6 +10807,7 @@ impl CurveRegion2 {
                 fragments,
                 arrangement_sources: None,
                 connectivity_policy: Some(policy.retained_object_policy()),
+                rational_evaluators: OnceLock::new(),
             });
         }
 
@@ -10947,8 +11066,8 @@ impl CurveRegion2 {
 
     /// Constructs a top-level exact curved region from closed boundary paths.
     ///
-    /// Every authored family is promoted through its clone-shared native
-    /// topology once.
+    /// Reuses each path's cached exact boundary, including generated selected
+    /// curves, without requiring native materialization.
     pub fn try_from_boundary_paths(
         paths: &[CurvePath2],
         policy: &CurveContext,
@@ -10965,10 +11084,11 @@ impl CurveRegion2 {
         let mut boundary_loops = Vec::with_capacity(paths.len());
         let mut next_arrangement_fragment_index = 0;
         for path in paths {
-            match crate::curve::validate_closed_curve_path_connectivity(path, policy)
+            let mut boundary_loop = match path
+                .boundary_loop_with_policy(policy)
                 .map_err(|error| error.with_operation(CurveOperation2::Construction))?
             {
-                Classification::Decided(()) => {}
+                Classification::Decided(boundary) => boundary.clone(),
                 Classification::Uncertain(reason) => {
                     return Err(ExactCurveError::blocked(
                         CurveOperation2::Construction,
@@ -10976,59 +11096,16 @@ impl CurveRegion2 {
                         reason,
                     ));
                 }
-            }
-            let fragment_capacity = path.curves().len();
-            let mut fragments = Vec::with_capacity(fragment_capacity);
-            let mut arrangement_sources = Vec::with_capacity(fragment_capacity);
-            for curve in path.curves() {
-                if let Some(fragment) = curve.retained_fragment() {
-                    let index = next_arrangement_fragment_index;
-                    next_arrangement_fragment_index += 1;
-                    fragments.push(fragment.clone());
-                    arrangement_sources.push(CurveRegionFragmentSource2::new(index, index, 0));
-                    continue;
-                }
-                let native_fragments = match curve.native_bezier_fragments_with_policy(policy)? {
-                    Classification::Decided(fragments) => fragments,
-                    Classification::Uncertain(reason) => {
-                        return Err(ExactCurveError::blocked(
-                            CurveOperation2::Construction,
-                            curve.family(),
-                            reason,
-                        ));
-                    }
-                };
-                for native in native_fragments {
-                    let arrangement_fragment_index = next_arrangement_fragment_index;
-                    next_arrangement_fragment_index += 1;
-                    fragments.push(BezierSplitFragment2::Materialized {
-                        start: BezierParameter2::Exact(Real::zero()),
-                        end: BezierParameter2::Exact(Real::one()),
-                        curve: native.curve().clone(),
-                    });
-                    arrangement_sources.push(CurveRegionFragmentSource2::new(
-                        arrangement_fragment_index,
-                        arrangement_fragment_index,
-                        0,
-                    ));
-                }
-            }
-            let fragments = fragments
-                .into_iter()
-                .map(|fragment| canonicalize_retained_rational_fragment(fragment, policy))
-                .collect();
-            let boundary_loop = CurveRegionBoundaryLoop2::try_new_from_certified_connected_chain(
-                fragments,
-                Some(arrangement_sources),
-                policy,
-            )
-            .map_err(|cause| {
-                ExactCurveError::invalid(
-                    CurveOperation2::Construction,
-                    path.curves()[0].family(),
-                    cause,
-                )
-            })?;
+            };
+            boundary_loop.arrangement_sources = Some(
+                (0..boundary_loop.len())
+                    .map(|_| {
+                        let index = next_arrangement_fragment_index;
+                        next_arrangement_fragment_index += 1;
+                        CurveRegionFragmentSource2::new(index, index, 0)
+                    })
+                    .collect(),
+            );
             boundary_loops.push(boundary_loop);
         }
         Self::new(boundary_loops).map_err(|cause| {
@@ -11917,7 +11994,6 @@ impl CurveRegion2 {
             }
             _ => {}
         }
-        let evaluators = self.retained_rational_evaluators()?;
         let mut samples = Vec::with_capacity(self.data.boundary_loops.len());
         let mut bounds = Vec::with_capacity(self.data.boundary_loops.len());
         for boundary_loop in &self.data.boundary_loops {
@@ -11936,7 +12012,7 @@ impl CurveRegion2 {
         let mut roles = Vec::with_capacity(self.data.boundary_loops.len());
         for (candidate_index, sample) in samples.iter().enumerate() {
             let mut depth = 0_usize;
-            for (container_index, evaluators) in evaluators.iter().enumerate() {
+            for container_index in 0..self.data.boundary_loops.len() {
                 if candidate_index == container_index {
                     continue;
                 }
@@ -11953,7 +12029,6 @@ impl CurveRegion2 {
                 match classify_point_evidence_against_retained_loop(
                     self,
                     container_index,
-                    evaluators,
                     sample,
                     policy,
                 )? {
@@ -12060,7 +12135,6 @@ impl CurveRegion2 {
             };
         }
 
-        let evaluators = self.retained_rational_evaluators()?;
         for (hole_index, role) in roles.iter().enumerate() {
             if *role != CurveRegionLoopRole::Hole {
                 continue;
@@ -12081,7 +12155,6 @@ impl CurveRegion2 {
                 let containment = classify_point_evidence_against_retained_loop(
                     self,
                     material_index,
-                    &evaluators[material_index],
                     &point,
                     policy,
                 )?;
@@ -12106,7 +12179,6 @@ impl CurveRegion2 {
                                 classify_point_evidence_against_retained_loop(
                                     self,
                                     current_material_index,
-                                    &evaluators[current_material_index],
                                     &candidate_point,
                                     policy,
                                 )?;
@@ -12128,7 +12200,6 @@ impl CurveRegion2 {
                                         classify_point_evidence_against_retained_loop(
                                             self,
                                             material_index,
-                                            &evaluators[material_index],
                                             &owner_point,
                                             policy,
                                         )?;
@@ -13564,7 +13635,6 @@ impl CurveRegion2 {
                     // a direct exact polynomial winding certificate.
                     return classify_point_against_retained_loops(
                         &self.data.boundary_loops,
-                        self.retained_rational_evaluators()?,
                         point,
                         policy,
                         self.data.certified_loop_roles.as_deref(),
@@ -13581,7 +13651,6 @@ impl CurveRegion2 {
         let Some(native_loops) = self.native_boundary_loops() else {
             return classify_point_against_retained_loops(
                 &self.data.boundary_loops,
-                self.retained_rational_evaluators()?,
                 point,
                 policy,
                 self.data.certified_loop_roles.as_deref(),
@@ -13994,20 +14063,8 @@ impl CurveRegion2 {
             return Ok(Classification::Decided(depth));
         }
 
-        let evaluators = self.retained_rational_evaluators()?;
-        if evaluators.len() != self.data.boundary_loops.len() {
-            return Err(CurveError::Topology(
-                "curve-region signed-depth evaluator cache is inconsistent with boundary loops"
-                    .into(),
-            ));
-        }
-        for (index, ((boundary_loop, evaluators), role)) in self
-            .data
-            .boundary_loops
-            .iter()
-            .zip(evaluators)
-            .zip(&roles)
-            .enumerate()
+        for (index, (boundary_loop, role)) in
+            self.data.boundary_loops.iter().zip(&roles).enumerate()
         {
             let fill_rule = self
                 .data
@@ -14016,7 +14073,6 @@ impl CurveRegion2 {
                 .map_or(FillRule::EvenOdd, |rules| rules[index]);
             match classify_point_against_retained_loop_with_fill_rule(
                 boundary_loop,
-                evaluators,
                 point,
                 fill_rule,
                 policy,
@@ -14206,30 +14262,6 @@ impl CurveRegion2 {
                     .map(Arc::from)
             })
             .as_deref()
-    }
-
-    fn retained_rational_evaluators(&self) -> CurveResult<&[Vec<Option<RationalBezier2>>]> {
-        match self.data.retained_rational_evaluators.get_or_init(|| {
-            self.data
-                .boundary_loops
-                .iter()
-                .map(|boundary_loop| {
-                    boundary_loop
-                        .fragments()
-                        .iter()
-                        .map(|fragment| match fragment {
-                            BezierSplitFragment2::AlgebraicEndpointImages {
-                                source_curve, ..
-                            } => rationalize_retained_subcurve(source_curve).map(Some),
-                            _ => Ok(None),
-                        })
-                        .collect()
-                })
-                .collect()
-        }) {
-            Ok(evaluators) => Ok(evaluators),
-            Err(error) => Err(error.clone()),
-        }
     }
 
     fn native_boundary_bounds(&self, policy: &CurveContext) -> Option<&[Aabb2]> {
@@ -15333,7 +15365,6 @@ fn retained_loop_sample_point_evidence(
 fn classify_point_evidence_against_retained_loop(
     region: &CurveRegion2,
     loop_index: usize,
-    evaluators: &[Option<RationalBezier2>],
     point: &CurvePoint2,
     policy: &CurveContext,
 ) -> CurveResult<Classification<ContourPointLocation>> {
@@ -15343,7 +15374,6 @@ fn classify_point_evidence_against_retained_loop(
     let direct = match point {
         CurvePoint2(CurvePointData2::Exact(point)) => Some(classify_point_against_retained_loop(
             boundary_loop,
-            evaluators,
             point,
             policy,
         )?),
@@ -16909,17 +16939,11 @@ fn classify_point_against_native_loop_after_bounds_with_fill_rule(
 
 fn classify_point_against_retained_loops(
     boundary_loops: &[CurveRegionBoundaryLoop2],
-    evaluators: &[Vec<Option<RationalBezier2>>],
     point: &Point2,
     policy: &CurveContext,
     roles: Option<&[CurveRegionLoopRole]>,
     fill_rules: Option<&[FillRule]>,
 ) -> CurveResult<Classification<RegionPointLocation>> {
-    if boundary_loops.len() != evaluators.len() {
-        return Err(CurveError::Topology(
-            "retained region evaluator cache loop count is inconsistent".into(),
-        ));
-    }
     if roles.is_some_and(|roles| roles.len() != boundary_loops.len())
         || fill_rules.is_some_and(|rules| rules.len() != boundary_loops.len())
     {
@@ -16929,11 +16953,10 @@ fn classify_point_against_retained_loops(
     }
     let mut inside = false;
     let mut signed_depth = 0_i32;
-    for (index, (boundary_loop, evaluators)) in boundary_loops.iter().zip(evaluators).enumerate() {
+    for (index, boundary_loop) in boundary_loops.iter().enumerate() {
         let fill_rule = fill_rules.map_or(FillRule::EvenOdd, |rules| rules[index]);
         match classify_point_against_retained_loop_with_fill_rule(
             boundary_loop,
-            evaluators,
             point,
             fill_rule,
             policy,
@@ -16967,13 +16990,11 @@ fn classify_point_against_retained_loops(
 
 fn classify_point_against_retained_loop(
     boundary_loop: &CurveRegionBoundaryLoop2,
-    evaluators: &[Option<RationalBezier2>],
     point: &Point2,
     policy: &CurveContext,
 ) -> CurveResult<Classification<ContourPointLocation>> {
     classify_point_against_retained_loop_with_fill_rule(
         boundary_loop,
-        evaluators,
         point,
         FillRule::EvenOdd,
         policy,
@@ -16982,16 +17003,10 @@ fn classify_point_against_retained_loop(
 
 fn classify_point_against_retained_loop_with_fill_rule(
     boundary_loop: &CurveRegionBoundaryLoop2,
-    evaluators: &[Option<RationalBezier2>],
     point: &Point2,
     fill_rule: FillRule,
     policy: &CurveContext,
 ) -> CurveResult<Classification<ContourPointLocation>> {
-    if boundary_loop.fragments().len() != evaluators.len() {
-        return Err(CurveError::Topology(
-            "retained region evaluator cache fragment count is inconsistent".into(),
-        ));
-    }
     if policy.strict_predicate_pass(|| {
         matches!(
             retained_loop_query_bounds(boundary_loop, policy),
@@ -17002,7 +17017,11 @@ fn classify_point_against_retained_loop_with_fill_rule(
     }) {
         return Ok(Classification::Decided(ContourPointLocation::Outside));
     }
-    for (fragment, evaluator) in boundary_loop.fragments().iter().zip(evaluators) {
+    for (fragment, evaluator) in boundary_loop
+        .fragments()
+        .iter()
+        .zip(boundary_loop.rational_evaluators()?)
+    {
         if let BezierSplitFragment2::Materialized { curve, .. } = fragment
             && matches!(
                 subcurve_control_hull_contains_point(curve, point, policy),
@@ -28796,7 +28815,7 @@ mod tests {
                     .into_value()
                     .spans()
                     .len(),
-                2,
+                3,
             );
         }
         let Classification::Decided(closing) = crate::BezierAlgebraicChord2::try_new(
@@ -29512,6 +29531,27 @@ mod tests {
                                     continue;
                                 }
                                 fillet_spans += 1;
+                                // Check the actual curve, independently of the
+                                // retained circle provenance and radius tag.
+                                for parameter in [
+                                    Real::zero(),
+                                    (Real::one() / Real::from(2_i8)).unwrap(),
+                                    Real::one(),
+                                ] {
+                                    let Classification::Decided(point) =
+                                        curve.point_at(parameter, &policy)
+                                    else {
+                                        panic!("the exact fillet chart evaluates");
+                                    };
+                                    assert_eq!(
+                                        crate::classify::real_sign(
+                                            &(point.distance_squared(arc.center())
+                                                - &radius_squared),
+                                            &CurveContext::STRICT
+                                        ),
+                                        Some(RealSign::Zero)
+                                    );
+                                }
                                 for (adjacent_index, contact, chord_at_end) in [
                                     (
                                         (index + fragments.len() - 1) % fragments.len(),

@@ -6723,11 +6723,17 @@ certified outer outcome. A separately approximately joined internal path is
 also rejected by later strict `CurveRegion2` construction and accepted only
 when Approximate-512 is explicitly selected.
 
-The native boundary carrier no longer duplicates the path's promoted fragment
-vector. `NativeBezierBoundaryLoop2` is 24 bytes instead of 48 and retains only
+At this checkpoint, the native boundary carrier no longer duplicated the path's promoted fragment
+vector. `NativeBezierBoundaryLoop2` was 24 bytes instead of 48 and retained only
 the validated `BezierBoundaryLoop2`; `CurvePathData2` is 160 bytes instead of
 168. This removes one retained vector buffer per materialized boundary. The
 obsolete fragment-copy accessors were deleted without a compatibility shim.
+
+The September 2026 general-path migration subsequently removed
+`NativeBezierBoundaryLoop2`. `CurvePath2::boundary_loop` now caches the lossless
+`CurveRegionBoundaryLoop2` used by path classification and region admission;
+these historical size and timing measurements describe the earlier native-only
+implementation.
 
 Eleven interleaved release parent/candidate pairs measured:
 

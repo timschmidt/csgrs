@@ -264,7 +264,10 @@ impl CurvePoint2 {
     /// endpoint fields. Any predicate that remains unproved stays explicit
     /// under `policy`.
     pub(crate) fn same_point(&self, other: &Self, policy: &CurveContext) -> Classification<bool> {
-        if self.shares_storage(other) {
+        // Separate projections of one retained contact can allocate distinct
+        // point handles while sharing the same source and exact transform.
+        // Consume that positive identity before reconstructing either field.
+        if self.shares_storage(other) || self == other {
             return Classification::Decided(true);
         }
         match (&self.0, &other.0) {

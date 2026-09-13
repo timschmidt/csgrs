@@ -425,6 +425,14 @@ mod tests {
                     basis.weight.as_slice()
                 ))
             );
+            // Rational chart partitioning also permits exact replay against
+            // independently expanded scalar coordinates. The previous
+            // square-root chart partition returned Unsupported here.
+            let expanded = arc.point_at(&represented.clone().into(), &policy).unwrap();
+            assert_eq!(expanded.certainty, CurveCertainty::Certified);
+            let equality = point.value.coincides_with(&expanded.value, &policy);
+            assert_eq!(equality.certainty, CurveCertainty::Certified);
+            assert_eq!(equality.value, Classification::Decided(true));
         }
     }
 

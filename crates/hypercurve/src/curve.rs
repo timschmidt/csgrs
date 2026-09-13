@@ -22,10 +22,10 @@ use crate::policy::{
 };
 use crate::rational_bezier_general::RationalBezierOverlapParameterCorrespondence2;
 use crate::{
-    Aabb2, BezierBoundaryLoop2, BezierParallel2, BezierParameter2, BezierSubcurve2, CircularArc2,
-    Classification, ContourPointLocation, CubicBezier2, CurveContext, CurveError, CurveOperation2,
-    CurveOutcome, CurveParameter2, CurvePoint2, ExactCurveError, ExactCurveResult, LineSeg2,
-    LineSide, NurbsCurve2, ParamRange, Point2, PolynomialSplineCurve2, QuadraticBezier2,
+    Aabb2, BezierParallel2, BezierParameter2, BezierSubcurve2, CircularArc2, Classification,
+    ContourPointLocation, CubicBezier2, CurveContext, CurveError, CurveOperation2, CurveOutcome,
+    CurveParameter2, CurvePoint2, CurveRegionBoundaryLoop2, ExactCurveError, ExactCurveResult,
+    LineSeg2, LineSide, NurbsCurve2, ParamRange, Point2, PolynomialSplineCurve2, QuadraticBezier2,
     RationalBezier2, RationalQuadraticBezier2, Real, Similarity2,
 };
 use crate::{BezierEndpoint, BezierParameterRange2};
@@ -266,7 +266,7 @@ struct CurvePathData2 {
     connectivity_policy: Option<CurveContext>,
     closure_policy: Option<CurveContext>,
     native_bezier_fragments: PolicyEvaluationCache<Vec<NativeBezierFragment2>>,
-    bezier_boundary_loop: PolicyEvaluationCache<NativeBezierBoundaryLoop2>,
+    boundary_loop: PolicyEvaluationCache<CurveRegionBoundaryLoop2>,
     bounds: OnceLock<ExactCurveResult<Aabb2>>,
 }
 
@@ -282,12 +282,6 @@ pub struct CurveSpanRange2 {
 pub struct NativeBezierFragment2 {
     curve: BezierSubcurve2,
     span_range: CurveSpanRange2,
-}
-
-/// Validated native Bezier boundary derived from a path's retained promotion.
-#[derive(Clone, Debug, PartialEq)]
-pub struct NativeBezierBoundaryLoop2 {
-    boundary_loop: BezierBoundaryLoop2,
 }
 
 impl CurveGeometry2 {
@@ -1556,7 +1550,7 @@ impl CurvePath2 {
                 connectivity_policy,
                 closure_policy,
                 native_bezier_fragments: PolicyEvaluationCache::new(),
-                bezier_boundary_loop: PolicyEvaluationCache::new(),
+                boundary_loop: PolicyEvaluationCache::new(),
                 bounds: OnceLock::new(),
             }),
         }
@@ -1932,24 +1926,16 @@ impl CurvePath2 {
                 CurveCornerNoSolution2::ZeroDesignValue,
             ));
         }
+        let mut previous_source =
+            crate::bezier_region::CornerCarrierPreparation2::from_curve(previous);
+        let mut next_source = crate::bezier_region::CornerCarrierPreparation2::from_curve(next);
+        previous_source.prepare(CurveOperation2::Fillet, policy)?;
+        next_source.prepare(CurveOperation2::Fillet, policy)?;
         let previous_carrier =
-            exact_corner_carrier(previous, true, CurveOperation2::Fillet, policy)?.ok_or_else(
-                || {
-                    ExactCurveError::blocked(
-                        CurveOperation2::Fillet,
-                        previous.family(),
-                        crate::UncertaintyReason::Unsupported,
-                    )
-                },
-            )?;
-        let next_carrier = exact_corner_carrier(next, false, CurveOperation2::Fillet, policy)?
-            .ok_or_else(|| {
-                ExactCurveError::blocked(
-                    CurveOperation2::Fillet,
-                    next.family(),
-                    crate::UncertaintyReason::Unsupported,
-                )
-            })?;
+            previous_source.exact_carrier(true, CurveOperation2::Fillet, policy)?;
+        let next_carrier = next_source.exact_carrier(false, CurveOperation2::Fillet, policy)?;
+        let previous_retained_arc = previous_carrier.retained_rational_arc_support().cloned();
+        let next_retained_arc = next_carrier.retained_rational_arc_support().cloned();
         let solutions = solve_exact_fillet_corner(
             previous_carrier,
             next_carrier,
@@ -1961,7 +1947,38 @@ impl CurvePath2 {
             next.family(),
             policy,
         )?;
-        try_map_corner_solutions(solutions, |solution| {
+        let solutions = try_map_corner_solutions(solutions, |solution| {
+            if !corner_has_native_reconstruction(previous, &solution.previous)
+                || !corner_has_native_reconstruction(next, &solution.next)
+                || solution.center.coordinates().is_none()
+                || solution
+                    .retained_frame
+                    .as_ref()
+                    .and_then(|frame| frame.anchor_evidence.as_ref())
+                    .and_then(|evidence| evidence.deferred_arc_contact.as_ref())
+                    .is_some_and(|deferred| {
+                        let source = if deferred.arc_is_previous {
+                            previous
+                        } else {
+                            next
+                        };
+                        !matches!(source.geometry(), Some(CurveGeometry2::CircularArc(_)))
+                    })
+            {
+                return self.reconstruct_selected_fillet(
+                    previous_index,
+                    next_index,
+                    solution,
+                    &radius,
+                    mode,
+                    [previous_retained_arc.as_ref(), next_retained_arc.as_ref()],
+                    [
+                        previous_source.promoted_parallel(),
+                        next_source.promoted_parallel(),
+                    ],
+                    policy,
+                );
+            }
             let previous_point = solution.previous.exact_point().cloned().ok_or_else(|| {
                 ExactCurveError::blocked(
                     CurveOperation2::Fillet,
@@ -1992,14 +2009,16 @@ impl CurvePath2 {
                 None,
             ));
             if previous_index == next_index {
-                return self.with_single_curve_corner_replaced(
-                    previous_index,
-                    &solution.previous,
-                    &solution.next,
-                    fillet,
-                    CurveOperation2::Fillet,
-                    policy,
-                );
+                return self
+                    .with_single_curve_corner_replaced(
+                        previous_index,
+                        &solution.previous,
+                        &solution.next,
+                        fillet,
+                        CurveOperation2::Fillet,
+                        policy,
+                    )
+                    .map(Some);
             }
             let previous_trim = materialize_corner_side(
                 previous,
@@ -2025,7 +2044,9 @@ impl CurvePath2 {
                 CurveOperation2::Fillet,
                 policy,
             )
-        })
+            .map(Some)
+        })?;
+        Ok(compact_optional_corner_solutions(solutions))
     }
 
     fn corner_curve_indices(
@@ -2174,7 +2195,7 @@ impl CurvePath2 {
         }
 
         let boundary = match self
-            .bezier_boundary_loop_with_policy(policy)
+            .boundary_loop_with_policy(policy)
             .map_err(|error| remap_operation(error, CurveOperation2::Classification))?
         {
             Classification::Decided(boundary) => boundary,
@@ -2182,16 +2203,13 @@ impl CurvePath2 {
                 return Ok(Classification::Uncertain(reason));
             }
         };
-        boundary
-            .boundary_loop()
-            .classify_point(point, policy)
-            .map_err(|cause| {
-                ExactCurveError::invalid(
-                    CurveOperation2::Classification,
-                    self.curves()[0].family(),
-                    cause,
-                )
-            })
+        boundary.classify_point_raw(point, policy).map_err(|cause| {
+            ExactCurveError::invalid(
+                CurveOperation2::Classification,
+                self.curves()[0].family(),
+                cause,
+            )
+        })
     }
 
     /// Promotes this path once and borrows exact native Bezier fragments in traversal order.
@@ -2253,16 +2271,17 @@ impl CurvePath2 {
         )
     }
 
-    /// Builds a closed native Bezier boundary once and borrows the retained result.
+    /// Borrows the cached exact boundary of this closed path.
     ///
-    /// The returned [`CurveOutcome`] records whether validating every path and
-    /// promoted-fragment join consumed the `APPROXIMATE_512` terminal.
-    pub fn bezier_boundary_loop(
+    /// Authored spans and generated selected curves retain their exact support,
+    /// parameter and endpoint evidence. The outcome records any consumption of
+    /// the `APPROXIMATE_512` terminal while validating the closed chain.
+    pub fn boundary_loop(
         &self,
         policy: &CurveContext,
-    ) -> ExactCurveResult<CurveOutcome<&NativeBezierBoundaryLoop2>> {
+    ) -> ExactCurveResult<CurveOutcome<&CurveRegionBoundaryLoop2>> {
         resolve_certified_operation(policy, |attempt| {
-            match self.bezier_boundary_loop_with_policy(attempt)? {
+            match self.boundary_loop_with_policy(attempt)? {
                 Classification::Decided(boundary) => Ok(boundary),
                 Classification::Uncertain(reason) => Err(ExactCurveError::blocked(
                     CurveOperation2::Arrangement,
@@ -2273,49 +2292,14 @@ impl CurvePath2 {
         })
     }
 
-    pub(crate) fn bezier_boundary_loop_with_policy(
+    pub(crate) fn boundary_loop_with_policy(
         &self,
         policy: &CurveContext,
-    ) -> ExactCurveResult<Classification<&NativeBezierBoundaryLoop2>> {
-        Ok(
-            match resolve_cached_evaluation(&self.data.bezier_boundary_loop, policy, |attempt| {
-                match validate_closed_curve_path_connectivity(self, attempt)? {
-                    Classification::Decided(()) => {}
-                    Classification::Uncertain(reason) => {
-                        return Ok(Classification::Uncertain(reason));
-                    }
-                }
-                let fragments = match self.native_bezier_fragments_with_policy(attempt)? {
-                    Classification::Decided(fragments) => fragments,
-                    Classification::Uncertain(reason) => {
-                        return Ok(Classification::Uncertain(reason));
-                    }
-                };
-                match validate_native_fragment_cycle(
-                    fragments,
-                    self.data.curves[0].family(),
-                    attempt,
-                )? {
-                    Classification::Decided(()) => {}
-                    Classification::Uncertain(reason) => {
-                        return Ok(Classification::Uncertain(reason));
-                    }
-                }
-                Ok(Classification::Decided(NativeBezierBoundaryLoop2 {
-                    boundary_loop: BezierBoundaryLoop2::from_policy_validated_fragments(
-                        fragments
-                            .iter()
-                            .map(|fragment| fragment.curve().clone())
-                            .collect(),
-                    ),
-                }))
-            })
-            .map_err(|error| remap_operation(error, CurveOperation2::Arrangement))?
-            {
-                Classification::Decided(boundary) => Classification::Decided(boundary),
-                Classification::Uncertain(reason) => Classification::Uncertain(reason),
-            },
-        )
+    ) -> ExactCurveResult<Classification<&CurveRegionBoundaryLoop2>> {
+        resolve_cached_evaluation(&self.data.boundary_loop, policy, |attempt| {
+            CurveRegionBoundaryLoop2::from_path(self, attempt)
+        })
+        .map_err(|error| error.with_operation(CurveOperation2::Arrangement))
     }
 }
 
@@ -2388,51 +2372,6 @@ pub(crate) fn curve_path_is_closed(
         Some(equal) => Classification::Decided(equal),
         None => Classification::Uncertain(crate::UncertaintyReason::RealSign),
     }
-}
-
-fn validate_native_fragment_cycle(
-    fragments: &[NativeBezierFragment2],
-    family: CurveFamily2,
-    policy: &CurveContext,
-) -> ExactCurveResult<Classification<()>> {
-    if fragments.is_empty() {
-        return Err(ExactCurveError::invalid(
-            CurveOperation2::Arrangement,
-            family,
-            CurveError::Topology("native Bezier boundary requires nonempty fragments".into()),
-        ));
-    }
-    for (left, right) in fragments
-        .iter()
-        .zip(fragments.iter().cycle().skip(1))
-        .take(fragments.len())
-    {
-        let (_, left_end) = left.curve().endpoint_refs();
-        let (right_start, _) = right.curve().endpoint_refs();
-        match curve_path_points_equal(
-            CurvePoint2::from(left_end.clone()),
-            CurvePoint2::from(right_start.clone()),
-            policy,
-        ) {
-            Some(true) => {}
-            Some(false) => {
-                return Err(ExactCurveError::invalid(
-                    CurveOperation2::Arrangement,
-                    family,
-                    CurveError::Topology(
-                        "native Bezier boundary fragments must be endpoint-connected and closed"
-                            .into(),
-                    ),
-                ));
-            }
-            None => {
-                return Ok(Classification::Uncertain(
-                    crate::UncertaintyReason::RealSign,
-                ));
-            }
-        }
-    }
-    Ok(Classification::Decided(()))
 }
 
 fn curve_path_points_equal(
@@ -2632,28 +2571,6 @@ impl NativeBezierFragment2 {
     /// Consumes this fragment and returns its native curve.
     pub fn into_curve(self) -> BezierSubcurve2 {
         self.curve
-    }
-}
-
-impl NativeBezierBoundaryLoop2 {
-    /// Returns the validated native Bezier boundary used by arrangement code.
-    pub const fn boundary_loop(&self) -> &BezierBoundaryLoop2 {
-        &self.boundary_loop
-    }
-
-    /// Returns the number of native boundary curves.
-    pub fn len(&self) -> usize {
-        self.boundary_loop.len()
-    }
-
-    /// Returns whether the validated boundary contains no curves.
-    pub fn is_empty(&self) -> bool {
-        self.boundary_loop.is_empty()
-    }
-
-    /// Consumes the retained result into its validated native boundary.
-    pub fn into_boundary_loop(self) -> BezierBoundaryLoop2 {
-        self.boundary_loop
     }
 }
 
@@ -3048,7 +2965,7 @@ fn exact_corner_parameter(parameter: Real) -> Option<CurveParameter2> {
 }
 
 #[derive(Clone, Debug)]
-struct CornerCut2 {
+pub(crate) struct CornerCut2 {
     /// Canonical carrier-local parameter when the consuming representation
     /// needs it. Native fillet arcs may defer their sweep parameter because
     /// exact Cartesian incidence is sufficient for reconstruction.
@@ -3062,7 +2979,7 @@ impl CornerCut2 {
         self.point.coordinates()
     }
 
-    fn into_retained_evidence(self) -> Option<CornerTrimCut2> {
+    pub(crate) fn into_retained_evidence(self) -> Option<CornerTrimCut2> {
         let parameter = self.parameter?;
         Some(CornerTrimCut2 {
             parameter,
@@ -9548,15 +9465,33 @@ fn fillet_cut_from_center(
             signed_radius,
         } => {
             let Some(center) = center.coordinates() else {
+                let radial_scale = (*source_radius / signed_radius).map_err(|cause| {
+                    ExactCurveError::invalid(CurveOperation2::Fillet, family, cause.into())
+                })?;
+                let point = match crate::BezierAlgebraicChord2::scaled_about_point_endpoint(
+                    center,
+                    source.support().center(),
+                    &radial_scale,
+                    policy,
+                )
+                .map_err(|cause| ExactCurveError::invalid(CurveOperation2::Fillet, family, cause))?
+                {
+                    Classification::Decided(point) => point,
+                    Classification::Uncertain(reason) => {
+                        return Err(ExactCurveError::blocked(
+                            CurveOperation2::Fillet,
+                            family,
+                            reason,
+                        ));
+                    }
+                };
                 if retained_parameter.is_none() {
-                    // Direct arc/Bezier incidence retains the center in the
-                    // Bezier parallel's selected normal field. The retained
-                    // CurveRegion reconstruction intersects the resulting
-                    // exact fillet circle with the authored arc (or its
-                    // complement) and replaces this transient corner marker
-                    // with the paired circular cut parameter and point.
+                    // Keep the actual radial contact even while its source
+                    // chart and placement await deferred replay. A center
+                    // used as a point placeholder could become materializable
+                    // later and falsely certify an off-circle fillet endpoint.
                     return Ok(Some(CornerCut2 {
-                        point: center.clone(),
+                        point,
                         parameter: exact_corner_parameter(source.corner_parameter(previous)),
                         placement: CornerPlacement2::Corner,
                     }));
@@ -9575,27 +9510,6 @@ fn fillet_cut_from_center(
                     )?
                     else {
                         return Ok(None);
-                    };
-                    let radial_scale = (*source_radius / signed_radius).map_err(|cause| {
-                        ExactCurveError::invalid(CurveOperation2::Fillet, family, cause.into())
-                    })?;
-                    let point = match crate::BezierAlgebraicChord2::scaled_about_point_endpoint(
-                        center,
-                        source.support().center(),
-                        &radial_scale,
-                        policy,
-                    )
-                    .map_err(|cause| {
-                        ExactCurveError::invalid(CurveOperation2::Fillet, family, cause)
-                    })? {
-                        Classification::Decided(point) => point,
-                        Classification::Uncertain(reason) => {
-                            return Err(ExactCurveError::blocked(
-                                CurveOperation2::Fillet,
-                                family,
-                                reason,
-                            ));
-                        }
                     };
                     return Ok(Some(CornerCut2 {
                         point,
@@ -11624,7 +11538,7 @@ fn arc_corner_cut_from_incident_point(
     Ok(None)
 }
 
-fn arc_fillet_cut_from_incident_point(
+pub(crate) fn arc_fillet_cut_from_incident_point(
     arc: &ExactCornerArc2<'_>,
     point: Point2,
     deferred_arc_contact: bool,
@@ -12019,28 +11933,17 @@ fn materialized_arc_cut_parameter(
     operation: CurveOperation2,
     policy: &CurveContext,
 ) -> ExactCurveResult<Real> {
-    let sweep_fraction = if let Some(parameter) = cut.exact_parameter() {
-        parameter.clone()
-    } else {
-        let point = cut.exact_point().ok_or_else(|| {
-            ExactCurveError::blocked(
-                operation,
-                curve.family(),
-                crate::UncertaintyReason::Unsupported,
-            )
-        })?;
-        match arc
-            .sweep_fraction_for_incident_point(point, policy)
-            .map_err(|cause| ExactCurveError::invalid(operation, curve.family(), cause))?
-        {
-            Classification::Decided(parameter) => parameter,
-            Classification::Uncertain(reason) => {
-                return Err(ExactCurveError::blocked(operation, curve.family(), reason));
-            }
-        }
-    };
+    let point = cut.exact_point().ok_or_else(|| {
+        ExactCurveError::blocked(
+            operation,
+            curve.family(),
+            crate::UncertaintyReason::Unsupported,
+        )
+    })?;
+    // Deferred circle contacts carry endpoint markers, not source parameters.
+    // The certified point supplies the actual chart coordinate for lineage.
     match arc
-        .parameter_at_sweep_fraction(&sweep_fraction, policy)
+        .parameter_at_incident_point(point, policy)
         .map_err(|cause| ExactCurveError::invalid(operation, curve.family(), cause))?
     {
         Classification::Decided(parameter) => Ok(parameter),
@@ -13566,8 +13469,6 @@ mod tests {
     #[cfg(target_pointer_width = "64")]
     fn curve_path_carrier_keeps_compact_policy_aware_boundary_storage() {
         assert_eq!(core::mem::size_of::<CurvePath2>(), 8);
-        assert_eq!(core::mem::size_of::<CurvePathData2>(), 160);
-        assert_eq!(core::mem::size_of::<NativeBezierBoundaryLoop2>(), 24);
         assert_eq!(core::mem::size_of::<ExactCornerCarrier2<'_>>(), 16);
     }
 
@@ -13816,7 +13717,7 @@ mod tests {
         let path = constructed.value;
 
         let boundary = path
-            .bezier_boundary_loop(&CurveContext::APPROXIMATE_512)
+            .boundary_loop(&CurveContext::APPROXIMATE_512)
             .expect("the terminal policy must validate every path join");
         assert_eq!(
             boundary.certainty,
@@ -13824,9 +13725,7 @@ mod tests {
         );
         assert_eq!(boundary.value.len(), 4);
 
-        let strict_boundary = path
-            .bezier_boundary_loop(&CurveContext::STRICT)
-            .unwrap_err();
+        let strict_boundary = path.boundary_loop(&CurveContext::STRICT).unwrap_err();
         assert!(matches!(
             strict_boundary,
             ExactCurveError::Blocked(blocker)

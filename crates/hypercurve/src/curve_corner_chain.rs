@@ -222,11 +222,12 @@ impl<'a> CurveCornerChain2<'a> {
             previous_cut.placement,
         ) {
             (true, Some(support), CornerPlacement2::Extension) => {
-                Some(Self::retained_arc_chamfer_fragments(
-                    &self.fragments()[previous_index],
+                Some(Self::retained_arc_extension_fragments(
+                    std::slice::from_ref(&self.fragments()[previous_index]),
                     support,
                     &previous_cut,
                     true,
+                    CurveOperation2::Chamfer,
                     policy,
                 )?)
             }
@@ -234,11 +235,12 @@ impl<'a> CurveCornerChain2<'a> {
         };
         let next_replacement = match (distinct_fragments, next_retained_arc, next_cut.placement) {
             (true, Some(support), CornerPlacement2::Extension) => {
-                Some(Self::retained_arc_chamfer_fragments(
-                    &self.fragments()[next_index],
+                Some(Self::retained_arc_extension_fragments(
+                    std::slice::from_ref(&self.fragments()[next_index]),
                     support,
                     &next_cut,
                     false,
+                    CurveOperation2::Chamfer,
                     policy,
                 )?)
             }
@@ -411,14 +413,14 @@ impl<'a> CurveCornerChain2<'a> {
         )
     }
 
-    fn retained_arc_chamfer_fragments(
-        source_fragment: &BezierSplitFragment2,
+    fn retained_arc_extension_fragments(
+        source_fragments: &[BezierSplitFragment2],
         support: &CircularArc2,
         cut: &CornerTrimCut2,
         previous: bool,
+        operation: CurveOperation2,
         policy: &CurveContext,
     ) -> ExactCurveResult<Vec<BezierSplitFragment2>> {
-        let operation = CurveOperation2::Chamfer;
         let family = CurveFamily2::CircularArc;
         let point = cut.point.coordinates().ok_or_else(|| {
             ExactCurveError::blocked(operation, family, UncertaintyReason::Unsupported)
@@ -478,7 +480,7 @@ impl<'a> CurveCornerChain2<'a> {
             ExactCurveError::blocked(operation, family, UncertaintyReason::Predicate)
         })?;
         Ok(retained_circular_cut_fragments(
-            Some(source_fragment),
+            Some(source_fragments),
             &spans,
             span_index,
             &parameter,
@@ -698,7 +700,6 @@ impl<'a> CurveCornerChain2<'a> {
             vertex_index - 1
         };
         let next_index = vertex_index;
-        let previous_fragment = &self.fragments()[previous_index];
         let previous_run_authority = if mode == CurveCornerMode2::TrimOnly {
             retained_cusp_smooth_run_authority(
                 self,
@@ -746,6 +747,8 @@ impl<'a> CurveCornerChain2<'a> {
         let previous_carrier =
             previous_source.exact_carrier(true, CurveOperation2::Fillet, policy)?;
         let next_carrier = next_source.exact_carrier(false, CurveOperation2::Fillet, policy)?;
+        let previous_retained_arc = previous_carrier.retained_rational_arc_support().cloned();
+        let next_retained_arc = next_carrier.retained_rational_arc_support().cloned();
         let solve_mode = if has_smooth_run {
             CurveCornerMode2::TrimOrExtend
         } else {
@@ -806,96 +809,167 @@ impl<'a> CurveCornerChain2<'a> {
                     return Ok(None);
                 }
             }
-            let deferred_arc_is_previous = retained_frame
-                .as_ref()
-                .and_then(|frame| frame.anchor_evidence.as_ref())
-                .and_then(|evidence| evidence.deferred_arc_contact.as_ref())
-                .map(|deferred| deferred.arc_is_previous);
-            if fragment_count == 1
-                && deferred_arc_is_previous.is_none()
-                && (previous_cut.placement == CornerPlacement2::Extension
-                    || next_cut.placement == CornerPlacement2::Extension)
-            {
-                Self::canonicalize_retained_single_fragment_extension_cuts(
-                    previous_fragment,
-                    &mut previous_cut,
-                    &mut next_cut,
-                    CurveOperation2::Fillet,
-                    policy,
-                )?;
-            } else {
-                if deferred_arc_is_previous != Some(true) {
-                    Self::canonicalize_retained_corner_cut(
-                        &self.fragments()[previous_cut_index],
-                        &mut previous_cut,
-                        true,
-                        CurveOperation2::Fillet,
-                        policy,
-                    )?;
-                }
-                if deferred_arc_is_previous != Some(false) {
-                    Self::canonicalize_retained_corner_cut(
-                        &self.fragments()[next_cut_index],
-                        &mut next_cut,
-                        false,
-                        CurveOperation2::Fillet,
-                        policy,
-                    )?;
-                }
-            }
-            if fragment_count == 1
-                && !retained_single_fragment_corner_cuts_are_separated(
-                    previous_fragment,
-                    &previous_cut,
-                    &next_cut,
-                    CurveOperation2::Fillet,
-                    policy,
-                )?
-            {
-                return Ok(None);
-            }
-            let mut previous_replacement = None;
-            let mut next_replacement = None;
-            let mut candidate_valid = true;
-            let inserted = Self::retained_fillet_fragments(
-                &self.fragments()[previous_cut_index],
-                &self.fragments()[next_cut_index],
-                &mut previous_cut,
-                &mut next_cut,
+            self.reconstruct_fillet(
+                previous_cut_index,
+                next_cut_index,
+                previous_cut,
+                next_cut,
                 center,
                 clockwise,
                 retained_frame,
                 &radius,
                 mode,
-                false,
-                (previous_cut_index == previous_index)
-                    .then(|| previous_source.promoted_parallel())
-                    .flatten(),
-                (next_cut_index == next_index)
-                    .then(|| next_source.promoted_parallel())
-                    .flatten(),
-                &mut previous_replacement,
-                &mut next_replacement,
-                &mut candidate_valid,
+                [previous_retained_arc.as_ref(), next_retained_arc.as_ref()],
+                [
+                    (previous_cut_index == previous_index)
+                        .then(|| previous_source.promoted_parallel())
+                        .flatten(),
+                    (next_cut_index == next_index)
+                        .then(|| next_source.promoted_parallel())
+                        .flatten(),
+                ],
+                [
+                    previous_cut_index..previous_cut_index + 1,
+                    next_cut_index..next_cut_index + 1,
+                ],
                 policy,
-            )?;
-            if !candidate_valid {
-                return Ok(None);
+            )
+        })?;
+        Ok(compact_optional_corner_solutions(solutions))
+    }
+
+    /// Reconstructs already solved cuts over their complete source domains.
+    pub(crate) fn reconstruct_fillet(
+        &self,
+        previous_index: usize,
+        next_index: usize,
+        mut previous_cut: CornerTrimCut2,
+        mut next_cut: CornerTrimCut2,
+        center: CurvePoint2,
+        clockwise: bool,
+        retained_frame: Option<RetainedFilletFrame2>,
+        radius: &Real,
+        mode: CurveCornerMode2,
+        retained_arcs: [Option<&CircularArc2>; 2],
+        promoted_parallels: [Option<&crate::BezierParallelFragment2>; 2],
+        source_domains: [std::ops::Range<usize>; 2],
+        policy: &CurveContext,
+    ) -> ExactCurveResult<Option<Vec<BezierSplitFragment2>>> {
+        let fragment_count = self.fragments().len();
+        let previous_fragment = &self.fragments()[previous_index];
+        debug_assert!(source_domains[0].contains(&previous_index));
+        debug_assert!(source_domains[1].contains(&next_index));
+        let deferred_arc_is_previous = retained_frame
+            .as_ref()
+            .and_then(|frame| frame.anchor_evidence.as_ref())
+            .and_then(|evidence| evidence.deferred_arc_contact.as_ref())
+            .map(|deferred| deferred.arc_is_previous);
+        let mut replacements = [None, None];
+        for (index, cut) in [&previous_cut, &next_cut].into_iter().enumerate() {
+            if let Some(support) = retained_arcs[index]
+                && deferred_arc_is_previous != Some(index == 0)
+                && cut.placement == CornerPlacement2::Extension
+            {
+                replacements[index] = Some(Self::retained_arc_extension_fragments(
+                    &self.fragments()[source_domains[index].clone()],
+                    support,
+                    cut,
+                    index == 0,
+                    CurveOperation2::Fillet,
+                    policy,
+                )?);
             }
-            let rebuilt = self.rebuild_retained_corner(
-                previous_cut_index,
-                next_cut_index,
-                previous_cut,
-                next_cut,
-                inserted,
-                previous_replacement,
-                next_replacement,
+        }
+        let [mut previous_replacement, mut next_replacement] = replacements;
+        if fragment_count == 1
+            && deferred_arc_is_previous.is_none()
+            && (previous_cut.placement == CornerPlacement2::Extension
+                || next_cut.placement == CornerPlacement2::Extension)
+        {
+            Self::canonicalize_retained_single_fragment_extension_cuts(
+                previous_fragment,
+                &mut previous_cut,
+                &mut next_cut,
                 CurveOperation2::Fillet,
                 policy,
             )?;
-            Ok(Some(rebuilt))
-        })?;
-        Ok(compact_optional_corner_solutions(solutions))
+        } else {
+            if deferred_arc_is_previous != Some(true) && previous_replacement.is_none() {
+                Self::canonicalize_retained_corner_cut(
+                    &self.fragments()[previous_index],
+                    &mut previous_cut,
+                    true,
+                    CurveOperation2::Fillet,
+                    policy,
+                )?;
+            }
+            if deferred_arc_is_previous != Some(false) && next_replacement.is_none() {
+                Self::canonicalize_retained_corner_cut(
+                    &self.fragments()[next_index],
+                    &mut next_cut,
+                    false,
+                    CurveOperation2::Fillet,
+                    policy,
+                )?;
+            }
+        }
+        if fragment_count == 1
+            && !retained_single_fragment_corner_cuts_are_separated(
+                previous_fragment,
+                &previous_cut,
+                &next_cut,
+                CurveOperation2::Fillet,
+                policy,
+            )?
+        {
+            return Ok(None);
+        }
+        let mut candidate_valid = true;
+        let inserted = Self::retained_fillet_fragments(
+            &self.fragments()[source_domains[0].clone()],
+            &self.fragments()[source_domains[1].clone()],
+            &mut previous_cut,
+            &mut next_cut,
+            center,
+            clockwise,
+            retained_frame,
+            &radius,
+            mode,
+            false,
+            promoted_parallels[0],
+            promoted_parallels[1],
+            &mut previous_replacement,
+            &mut next_replacement,
+            &mut candidate_valid,
+            policy,
+        )?;
+        if !candidate_valid {
+            return Ok(None);
+        }
+        // A deferred native arc may span several charts. Its replacement
+        // owns the complete authored side, including any complement cells.
+        let previous_index = if previous_replacement.is_some() {
+            source_domains[0].start
+        } else {
+            previous_index
+        };
+        let next_index = if next_replacement.is_some() {
+            source_domains[1].end - 1
+        } else {
+            next_index
+        };
+        let rebuilt = self.rebuild_retained_corner(
+            previous_index,
+            next_index,
+            previous_cut,
+            next_cut,
+            inserted,
+            previous_replacement,
+            next_replacement,
+            CurveOperation2::Fillet,
+            policy,
+        )?;
+        Ok(Some(rebuilt))
     }
 
     fn retained_deferred_arc_contact_on_rational(
@@ -1076,7 +1150,7 @@ impl<'a> CurveCornerChain2<'a> {
     /// offset chart, so the same projective parameter names the source-circle
     /// tangency without asking a resultant solver to rediscover a double root.
     fn retained_preselected_arc_fillet_contact(
-        source_fragment: &BezierSplitFragment2,
+        source_fragments: &[BezierSplitFragment2],
         deferred: &crate::curve::RetainedDeferredArcFilletContact2,
         seed: &crate::curve::RetainedArcFilletContactSeed2,
         arc_cut: &mut CornerTrimCut2,
@@ -1195,7 +1269,7 @@ impl<'a> CurveCornerChain2<'a> {
             None
         };
         let replacement = retained_circular_cut_fragments(
-            (!authored).then_some(source_fragment),
+            (!authored).then_some(source_fragments),
             &source_spans,
             span_index,
             &seed.parameter,
@@ -1215,20 +1289,25 @@ impl<'a> CurveCornerChain2<'a> {
     fn retained_deferred_arc_fillet_fragments(
         frame: &RetainedFilletFrame2,
         fillet: crate::bezier_offset::BezierAlgebraicCuspSemicircle2,
-        source_fragment: &BezierSplitFragment2,
+        center: &CurvePoint2,
+        source_fragments: &[BezierSplitFragment2],
         deferred: &crate::curve::RetainedDeferredArcFilletContact2,
         mode: CurveCornerMode2,
         anchor_cut: &mut CornerTrimCut2,
         arc_cut: &mut CornerTrimCut2,
         policy: &CurveContext,
     ) -> ExactCurveResult<Option<RetainedDeferredArcFilletResult2>> {
-        let BezierSplitFragment2::Materialized { .. } = source_fragment else {
+        if source_fragments.is_empty()
+            || !source_fragments
+                .iter()
+                .all(|fragment| matches!(fragment, BezierSplitFragment2::Materialized { .. }))
+        {
             return Err(ExactCurveError::blocked(
                 CurveOperation2::Fillet,
                 CurveFamily2::CircularArc,
                 UncertaintyReason::Unsupported,
             ));
-        };
+        }
         let decomposition = match deferred
             .support
             .rational_bezier_decomposition_with_policy(policy)
@@ -1243,68 +1322,105 @@ impl<'a> CurveCornerChain2<'a> {
                 ));
             }
         };
-        let [span] = decomposition.spans() else {
-            return Err(curve_region_edit_error(
-                CurveOperation2::Fillet,
-                CurveError::Topology(
-                    "a retained authored arc did not have one canonical projective cell".into(),
-                ),
-            ));
+        // The retained center lies on the signed concentric offset circle.
+        // Its radial direction locates the source contact without adjoining a
+        // second selected parameter just to reject another circular chart.
+        // Each canonical chart is shorter than a semicircle. Unknown sides
+        // leave the contact to the full certified intersection replay below.
+        let radial_sign =
+            policy.strict_predicate_pass(|| real_sign(&deferred.signed_center_radius, policy));
+        let inside_side = match radial_sign {
+            Some(sign @ (RealSign::Positive | RealSign::Negative)) => Some(
+                if deferred.support.is_clockwise() ^ (sign == RealSign::Negative) {
+                    crate::LineSide::Right
+                } else {
+                    crate::LineSide::Left
+                },
+            ),
+            _ => None,
         };
-        // Corner edits canonicalize a certified circular source before
-        // splitting it. This makes contact recovery independent of the
-        // authored rational weights (including algebraic unit-end weights)
-        // and lets one compact selected-fiber kernel serve every equivalent
-        // projective parameterization.
-        let rational = RationalBezier2::from(span.curve().clone());
-
-        let mut arc_replacement = None;
-        let (contact, placement) = if let Some(contact) =
-            Self::retained_deferred_arc_contact_on_rational(
-                &fillet, &rational, deferred, false, false, policy,
-            )? {
-            (contact, CornerPlacement2::Trim)
-        } else {
+        let center_side = |endpoint: &Point2| -> CurveResult<Option<crate::LineSide>> {
+            policy.strict_predicate_pass(|| {
+                let chord = match crate::bezier_offset::BezierAlgebraicChord2::try_new(
+                    deferred.support.center().clone().into(),
+                    endpoint.clone().into(),
+                    policy,
+                )? {
+                    Classification::Decided(chord) => chord,
+                    Classification::Uncertain(_) => return Ok(None),
+                };
+                chord
+                    .oriented_support_side(center, policy)
+                    .map(|side| match side {
+                        Classification::Decided(side) => Some(side),
+                        Classification::Uncertain(_) => None,
+                    })
+            })
+        };
+        // Canonical circular charts retain the full authored sweep. An internal
+        // chart boundary belongs to its following chart; both outer source
+        // endpoints remain excluded from a strict corner contact.
+        let select_contact = |spans: &[RationalQuadraticBezier2]| -> ExactCurveResult<Option<(usize, RetainedDeferredArcContact2)>> {
+            for (index, span) in spans.iter().enumerate() {
+                if let Some(inside_side) = inside_side {
+                    let outside_side = if inside_side == crate::LineSide::Left {
+                        crate::LineSide::Right
+                    } else {
+                        crate::LineSide::Left
+                    };
+                    if center_side(span.start())
+                        .map_err(|cause| curve_region_edit_error(CurveOperation2::Fillet, cause))?
+                        .is_some_and(|side| side != inside_side && !(index != 0 && side == crate::LineSide::On))
+                        || center_side(span.end())
+                            .map_err(|cause| curve_region_edit_error(CurveOperation2::Fillet, cause))?
+                            .is_some_and(|side| side != outside_side)
+                    {
+                        continue;
+                    }
+                }
+                let rational = RationalBezier2::from(span.clone());
+                let Some(contact) = Self::retained_deferred_arc_contact_on_rational(
+                    &fillet, &rational, deferred, index != 0, false, policy,
+                )? else {
+                    continue;
+                };
+                // The signed-radius tangency certificate has one contact on
+                // the source circle; replaying other charts cannot add one.
+                return Ok(Some((index, contact)));
+            }
+            Ok(None)
+        };
+        let mut spans = decomposition
+            .spans()
+            .iter()
+            .map(|span| span.curve().clone())
+            .collect::<Vec<_>>();
+        let mut selected = select_contact(&spans)?;
+        let mut placement = CornerPlacement2::Trim;
+        if selected.is_none() {
             if mode != CurveCornerMode2::TrimOrExtend
                 || deferred.support.start() == deferred.support.end()
             {
                 return Ok(None);
             }
-            let spans = crate::curve::retained_arc_complement_projective_spans(
+            spans = crate::curve::retained_arc_complement_projective_spans(
                 &deferred.support,
                 CurveOperation2::Fillet,
                 CurveFamily2::CircularArc,
                 policy,
             )?;
-            let mut selected = None;
-            for (span_index, span) in spans.iter().enumerate() {
-                let span_rational = RationalBezier2::from(span.clone());
-                let Some(contact) = Self::retained_deferred_arc_contact_on_rational(
-                    &fillet,
-                    &span_rational,
-                    deferred,
-                    span_index != 0,
-                    false,
-                    policy,
-                )?
-                else {
-                    continue;
-                };
-                if selected.is_some() {
-                    return Err(curve_region_edit_error(
-                        CurveOperation2::Fillet,
-                        CurveError::Topology(
-                            "one tangent arc/Bezier fillet entered multiple arc-extension spans"
-                                .into(),
-                        ),
-                    ));
-                }
-                selected = Some((span_index, contact));
-            }
-            let Some((span_index, contact)) = selected else {
-                return Ok(None);
-            };
-
+            selected = select_contact(&spans)?;
+            placement = CornerPlacement2::Extension;
+        }
+        let Some((span_index, contact)) = selected else {
+            return Ok(None);
+        };
+        let arc_replacement = if placement == CornerPlacement2::Trim && spans.len() == 1 {
+            arc_cut.replacement = Some(CornerReplacement2::Curve(BezierSubcurve2::Rational(
+                RationalBezier2::from(spans[0].clone()),
+            )));
+            None
+        } else {
             let endpoint = if contact.source_at_start {
                 Some(BezierEndpoint::Start)
             } else if contact.source_at_end {
@@ -1312,26 +1428,19 @@ impl<'a> CurveCornerChain2<'a> {
             } else {
                 None
             };
-            let replacement = retained_circular_cut_fragments(
-                Some(source_fragment),
+            arc_cut.replacement = None;
+            Some(retained_circular_cut_fragments(
+                (placement == CornerPlacement2::Extension).then_some(source_fragments),
                 &spans,
                 span_index,
                 &contact.source_parameter,
                 &contact.point,
                 endpoint,
                 deferred.arc_is_previous,
-            );
-            arc_replacement = Some(replacement);
-            (contact, CornerPlacement2::Extension)
+            ))
         };
-
         arc_cut.parameter = contact.source_parameter;
         arc_cut.placement = placement;
-        if placement == CornerPlacement2::Trim {
-            arc_cut.replacement = Some(CornerReplacement2::Curve(BezierSubcurve2::Rational(
-                rational,
-            )));
-        }
         let crosses_complementary_half = contact.fillet_half != 0;
         let terminal_circle = if crosses_complementary_half {
             fillet.complementary_half()
@@ -2433,8 +2542,8 @@ impl<'a> CurveCornerChain2<'a> {
 
     #[allow(clippy::too_many_arguments)]
     fn retained_fillet_fragments(
-        previous_fragment: &BezierSplitFragment2,
-        next_fragment: &BezierSplitFragment2,
+        previous_fragments: &[BezierSplitFragment2],
+        next_fragments: &[BezierSplitFragment2],
         previous_cut: &mut CornerTrimCut2,
         next_cut: &mut CornerTrimCut2,
         center: CurvePoint2,
@@ -2450,6 +2559,10 @@ impl<'a> CurveCornerChain2<'a> {
         candidate_valid: &mut bool,
         policy: &CurveContext,
     ) -> ExactCurveResult<Vec<BezierSplitFragment2>> {
+        let previous_fragment = previous_fragments
+            .last()
+            .expect("a nonempty previous source");
+        let next_fragment = next_fragments.first().expect("a nonempty next source");
         // Prefer the ordinary exact-Real arc authority whenever every retained
         // point already has a STRICT standalone witness.  This is not an
         // approximation or a field flattening: algebraic images enter only
@@ -2481,6 +2594,34 @@ impl<'a> CurveCornerChain2<'a> {
             represented_next.as_ref(),
             represented_center.as_ref(),
         ) {
+            let arc_contact = if deferred.arc_is_previous {
+                previous_point
+            } else {
+                next_point
+            };
+            let Some(cut) = crate::curve::arc_fillet_cut_from_incident_point(
+                &crate::curve::ExactCornerArc2::Native(&deferred.support),
+                arc_contact.clone(),
+                true,
+                deferred.arc_is_previous,
+                mode,
+                CurveFamily2::CircularArc,
+                policy,
+            )?
+            else {
+                *candidate_valid = false;
+                return Ok(Vec::new());
+            };
+            let cut = cut
+                .into_retained_evidence()
+                .expect("a native deferred arc cut retains its endpoint parameter marker");
+            let arc_cut = if deferred.arc_is_previous {
+                &mut *previous_cut
+            } else {
+                &mut *next_cut
+            };
+            arc_cut.point = cut.point;
+            arc_cut.placement = cut.placement;
             let fillet = CircularArc2::new_with_certified_radius(
                 previous_point.clone(),
                 next_point.clone(),
@@ -2489,11 +2630,6 @@ impl<'a> CurveCornerChain2<'a> {
                 clockwise,
                 None,
             );
-            let arc_contact = if deferred.arc_is_previous {
-                previous_point
-            } else {
-                next_point
-            };
             let retained_arc = CircularArc2::new_with_certified_radius(
                 if deferred.arc_is_previous {
                     deferred.support.start().clone()
@@ -2553,12 +2689,11 @@ impl<'a> CurveCornerChain2<'a> {
                     UncertaintyReason::Unsupported,
                 )
             })?;
-            let (anchor_cut, other_cut, anchor_fragment, other_fragment, other_promoted_parallel) =
+            let (anchor_cut, other_cut, other_fragment, other_promoted_parallel) =
                 if frame.anchor_is_previous {
                     (
                         &mut *previous_cut,
                         &mut *next_cut,
-                        previous_fragment,
                         next_fragment,
                         next_promoted_parallel,
                     )
@@ -2566,7 +2701,6 @@ impl<'a> CurveCornerChain2<'a> {
                     (
                         &mut *next_cut,
                         &mut *previous_cut,
-                        next_fragment,
                         previous_fragment,
                         previous_promoted_parallel,
                     )
@@ -2743,7 +2877,11 @@ impl<'a> CurveCornerChain2<'a> {
                         ));
                     }
                     let replay = Self::retained_preselected_arc_fillet_contact(
-                        anchor_fragment,
+                        if frame.anchor_is_previous {
+                            previous_fragments
+                        } else {
+                            next_fragments
+                        },
                         deferred,
                         seed,
                         anchor_cut,
@@ -2775,7 +2913,12 @@ impl<'a> CurveCornerChain2<'a> {
                     let Some(result) = Self::retained_deferred_arc_fillet_fragments(
                         &frame,
                         fillet,
-                        other_fragment,
+                        &center,
+                        if frame.anchor_is_previous {
+                            next_fragments
+                        } else {
+                            previous_fragments
+                        },
                         deferred,
                         mode,
                         anchor_cut,

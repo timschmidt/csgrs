@@ -38,8 +38,11 @@ pub(crate) enum ArcSweepKind {
 impl CircularArc2 {
     /// Decomposes this arc into exact rational quadratic Bezier spans.
     ///
-    /// Minor sweeps use one span, semicircles and major sweeps use two, and a
-    /// full circle uses four quarter-circle spans. The returned parameter
+    /// Minor sweeps use one span, semicircles use two, major sweeps use three,
+    /// and a full circle uses four quarter-circle spans. Major sweeps start
+    /// with two exact quarter turns; their last span covers the remainder.
+    /// This avoids introducing a square root merely to partition the circle.
+    /// The returned parameter
     /// intervals partition `[0, 1]`; each interval uses the native rational
     /// Bezier parameter locally. The returned [`CurveOutcome`] records whether
     /// classifying the exact sweep consumed the `APPROXIMATE_512` terminal.
@@ -144,7 +147,15 @@ fn compute_circular_arc_decomposition(
             perpendicular_midpoint(arc),
             arc.end().clone(),
         ],
-        ArcSweepKind::Major => vec![arc.start().clone(), major_midpoint(arc)?, arc.end().clone()],
+        ArcSweepKind::Major => {
+            let radius = arc.start().delta_from(arc.center());
+            vec![
+                arc.start().clone(),
+                perpendicular_midpoint(arc),
+                Point2::new(arc.center().x() - radius.0, arc.center().y() - radius.1),
+                arc.end().clone(),
+            ]
+        }
         ArcSweepKind::FullCircle => full_circle_quarter_points(arc),
     };
     let span_count = points.len() - 1;
@@ -313,22 +324,6 @@ fn perpendicular_midpoint(arc: &CircularArc2) -> Point2 {
         (-radius.1, radius.0)
     };
     Point2::new(arc.center().x() + x, arc.center().y() + y)
-}
-
-fn major_midpoint(arc: &CircularArc2) -> ExactCurveResult<Point2> {
-    let start = arc.start().delta_from(arc.center());
-    let end = arc.end().delta_from(arc.center());
-    let sum_x = &start.0 + &end.0;
-    let sum_y = &start.1 + &end.1;
-    let sum_length_squared = (&sum_x * &sum_x) + (&sum_y * &sum_y);
-    let scale = (arc.radius_squared() / sum_length_squared)
-        .map_err(|cause| arc_error(CurveOperation2::BezierDecomposition, cause.into()))?
-        .sqrt()
-        .map_err(|cause| arc_error(CurveOperation2::BezierDecomposition, cause.into()))?;
-    Ok(Point2::new(
-        arc.center().x() - (&sum_x * &scale),
-        arc.center().y() - (&sum_y * &scale),
-    ))
 }
 
 fn full_circle_quarter_points(arc: &CircularArc2) -> Vec<Point2> {
@@ -724,7 +719,7 @@ mod tests {
                     .into_value()
                     .spans()
                     .len(),
-                2,
+                3,
             );
         }
     }

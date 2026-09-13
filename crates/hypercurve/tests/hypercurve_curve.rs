@@ -23,6 +23,45 @@ fn p(x: i32, y: i32) -> Point2 {
     Point2::new(r(x), r(y))
 }
 
+fn assert_fillet_candidates(
+    solutions: CurveCornerSolutions2<CurvePath2>,
+    source: &CurvePath2,
+    policy: &CurveContext,
+) -> Vec<CurvePath2> {
+    let candidates = match solutions {
+        CurveCornerSolutions2::Unique(candidate) => vec![candidate],
+        CurveCornerSolutions2::Multiple(candidates) => candidates,
+        CurveCornerSolutions2::NoSolution(reason) => {
+            panic!("the exact fillet was lost: {reason:?}")
+        }
+    };
+    assert!(!candidates.is_empty());
+    for candidate in &candidates {
+        assert!(
+            candidate
+                .curves()
+                .iter()
+                .any(|curve| curve.family() == CurveFamily2::CircularArc)
+        );
+        for (first, second) in [
+            (candidate.start(), source.start()),
+            (candidate.end(), source.end()),
+        ]
+        .into_iter()
+        .chain(
+            candidate
+                .curves()
+                .windows(2)
+                .map(|pair| (pair[0].end(), pair[1].start())),
+        ) {
+            let equality = first.coincides_with(&second, policy);
+            assert_eq!(equality.certainty, CurveCertainty::Certified);
+            assert_eq!(equality.value, Classification::Decided(true));
+        }
+    }
+    candidates
+}
+
 fn linear_family_curve(family: CurveFamily2, vertical: bool) -> Curve2 {
     let (start, middle, end) = if vertical {
         (p(0, 0), p(0, 1), p(0, 2))
@@ -230,14 +269,12 @@ fn curve_path_boundary_and_classification_report_terminal_closure() {
     .unwrap();
 
     let boundary = path
-        .bezier_boundary_loop(&CurveContext::APPROXIMATE_512)
+        .boundary_loop(&CurveContext::APPROXIMATE_512)
         .expect("the terminal policy must validate the symbolic closing seam");
     assert_eq!(boundary.certainty, CurveCertainty::Approximate512Consumed);
     assert_eq!(boundary.value.len(), 3);
 
-    let strict_boundary = path
-        .bezier_boundary_loop(&CurveContext::STRICT)
-        .unwrap_err();
+    let strict_boundary = path.boundary_loop(&CurveContext::STRICT).unwrap_err();
     assert!(matches!(
         strict_boundary,
         ExactCurveError::Blocked(blocker)
@@ -2148,7 +2185,7 @@ fn spline_chamfer_materializes_only_the_incident_extension_cell() {
 }
 
 #[test]
-fn line_parabola_mixed_exact_algebraic_fillet_requires_retained_region() {
+fn line_parabola_mixed_exact_algebraic_fillet_is_an_exact_open_path() {
     let half = q(1, 2);
     let radius = q(299, 125);
     let line_direction = Point2::new(q(38280, 91901), q(83549, 91901));
@@ -2173,25 +2210,17 @@ fn line_parabola_mixed_exact_algebraic_fillet_requires_retained_region() {
             } else {
                 path.clone()
             };
-            let result = path.fillet_vertex_by_radius(
-                1,
-                radius.clone(),
-                CurveCornerMode2::TrimOrExtend,
-                &policy,
-            );
-            assert!(
-                matches!(
-                    &result,
-                    Err(ExactCurveError::Blocked(blocker))
-                        if blocker.operation() == CurveOperation2::Fillet
-                            && matches!(
-                                blocker.family(),
-                                CurveFamily2::QuadraticBezier | CurveFamily2::Line
-                            )
-                            && blocker.reason() == UncertaintyReason::Unsupported
-                ),
-                "policy={policy:?}, reversed={reversed}, result={result:?}"
-            );
+            let result = path
+                .fillet_vertex_by_radius(1, radius.clone(), CurveCornerMode2::TrimOrExtend, &policy)
+                .expect("selected fillets remain representable as open paths");
+            assert_eq!(result.certainty, CurveCertainty::Certified);
+            let candidates = assert_fillet_candidates(result.value, &path, &policy);
+            assert!(candidates.iter().any(|candidate| {
+                candidate
+                    .curves()
+                    .iter()
+                    .any(|curve| curve.geometry().is_none())
+            }));
         }
     }
 }
@@ -2310,7 +2339,7 @@ fn line_corner_solvers_report_exact_no_solution_and_invalid_options() {
 }
 
 #[test]
-fn automatic_corner_solver_keeps_unsupported_pairs_explicit() {
+fn automatic_corner_solver_reconstructs_selected_pairs() {
     let path = CurvePath2::try_new(vec![
         Curve2::from(QuadraticBezier2::new(
             Point2::new(-q(4, 5), q(3, 5)),
@@ -2320,18 +2349,16 @@ fn automatic_corner_solver_keeps_unsupported_pairs_explicit() {
         Curve2::from(QuadraticBezier2::new(p(0, 0), p(2, 1), p(0, 2))),
     ])
     .unwrap();
-    assert!(matches!(
-        path.fillet_vertex_by_radius(
+    let result = path
+        .fillet_vertex_by_radius(
             1,
             Real::one(),
             CurveCornerMode2::TrimOnly,
             &CurveContext::STRICT,
-        ),
-        Err(ExactCurveError::Blocked(blocker))
-            if blocker.operation() == CurveOperation2::Fillet
-                && blocker.family() == CurveFamily2::QuadraticBezier
-                && blocker.reason() == UncertaintyReason::Unsupported
-    ));
+        )
+        .expect("the selected Bezier pair fillet remains an exact path");
+    assert_eq!(result.certainty, CurveCertainty::Certified);
+    assert_fillet_candidates(result.value, &path, &CurveContext::STRICT);
 
     let spline = CurvePath2::try_new(vec![
         Curve2::try_polynomial_bspline(
@@ -2345,18 +2372,16 @@ fn automatic_corner_solver_keeps_unsupported_pairs_explicit() {
         Curve2::from(LineSeg2::try_new(p(0, 0), p(0, 4)).unwrap()),
     ])
     .unwrap();
-    assert!(matches!(
-        spline.fillet_vertex_by_radius(
+    let result = spline
+        .fillet_vertex_by_radius(
             1,
             Real::one(),
             CurveCornerMode2::TrimOnly,
             &CurveContext::STRICT,
-        ),
-        Err(ExactCurveError::Blocked(blocker))
-            if blocker.operation() == CurveOperation2::Fillet
-                && blocker.family() == CurveFamily2::PolynomialBSpline
-                && blocker.reason() == UncertaintyReason::Unsupported
-    ));
+        )
+        .expect("the selected spline fillet remains an exact path");
+    assert_eq!(result.certainty, CurveCertainty::Certified);
+    assert_fillet_candidates(result.value, &spline, &CurveContext::STRICT);
     assert_eq!(
         spline
             .fillet_vertex_by_radius(

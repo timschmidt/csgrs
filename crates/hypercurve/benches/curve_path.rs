@@ -106,7 +106,7 @@ fn main() {
     );
 
     first
-        .bezier_boundary_loop(&policy)
+        .boundary_loop(&policy)
         .expect("benchmark boundary materialization is exact");
     let boundary_cache_iterations = 2_000_000_u32;
     let started = Instant::now();
@@ -114,7 +114,7 @@ fn main() {
     for _ in 0..boundary_cache_iterations {
         boundary_checksum ^= black_box(
             first
-                .bezier_boundary_loop(&policy)
+                .boundary_loop(&policy)
                 .expect("cached path boundary remains exact")
                 .into_value()
                 .len(),
@@ -134,7 +134,7 @@ fn main() {
         let path = CurvePath2::try_new(rectangle_curves.clone())
             .expect("fresh benchmark path is connected");
         boundary_build_checksum ^= black_box(
-            path.bezier_boundary_loop(&policy)
+            path.boundary_loop(&policy)
                 .expect("fresh benchmark boundary is exact")
                 .into_value()
                 .len(),
