@@ -9132,6 +9132,10 @@ pub(crate) fn resultant_parameter_projection_with_incident_ray(
     }))
 }
 
+#[cfg(test)]
+#[path = "derivative_demand_tests.rs"]
+mod derivative_demand_tests;
+
 fn evaluate_power_polynomial_derivatives(
     coefficients: &[Real],
     parameter: &Real,
@@ -9141,8 +9145,9 @@ fn evaluate_power_polynomial_derivatives(
     let mut derivatives = Vec::new();
     derivatives.try_reserve_exact(value_count).ok()?;
     derivatives.resize(value_count, Real::zero());
-    for coefficient in coefficients.iter().rev() {
-        for order in (1..=max_order).rev() {
+    for (processed, coefficient) in coefficients.iter().rev().enumerate() {
+        // This Horner prefix has degree at most processed; higher orders stay zero.
+        for order in (1..=max_order.min(processed)).rev() {
             let scale = Real::from(u64::try_from(order).ok()?);
             derivatives[order] = &derivatives[order] * parameter + &scale * &derivatives[order - 1];
         }
@@ -9195,8 +9200,9 @@ fn evaluate_power_polynomial_endpoint_derivatives(
         return Some(derivatives);
     }
 
-    for coefficient in coefficients.iter().rev() {
-        for order in (1..=max_order).rev() {
+    for (processed, coefficient) in coefficients.iter().rev().enumerate() {
+        // Preserve every requested output while skipping the still-zero tail.
+        for order in (1..=max_order.min(processed)).rev() {
             let scale = Real::from(u64::try_from(order).ok()?);
             derivatives[order] = &derivatives[order] + &scale * &derivatives[order - 1];
         }
