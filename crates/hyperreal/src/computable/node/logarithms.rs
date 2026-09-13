@@ -311,8 +311,8 @@ impl Computable {
     }
 
     fn prescaled_ln(self) -> Self {
-        // Private constructor for ln(1+x). Public ln range reduction must run
-        // first so this node never sees an arbitrary positive value.
+        // Lazy ln(1+x) node. Normal ln construction reduces x first, but ln_1p
+        // may pass any in-domain residual; the kernel checks its own range.
         Self {
             internal: Arc::new(Node::new(Approximation::PrescaledLn(self), BoundCache::Invalid, ExactSignCache::Invalid)),
             signal: None,
@@ -342,8 +342,9 @@ impl Computable {
     }
 
     pub(crate) fn ln_1p(self) -> Self {
-        // Exposed internally for inverse-hyperbolic endpoint transforms that
-        // have already constructed the small x in ln(1+x).
+        // Preserve a small residual without eagerly forming 1+x. Real's public
+        // ln_1p and inverse-hyperbolic identities also pass larger residuals,
+        // which the approximation kernel reduces only when digits are needed.
         self.prescaled_ln()
     }
 

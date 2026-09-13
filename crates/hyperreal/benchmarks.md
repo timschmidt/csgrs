@@ -40,12 +40,12 @@ Cold versus cached approximation of basic `Computable` expressions.
 
 | Benchmark output | Mean | 95% CI | What it measures |
 | --- | ---: | ---: | --- |
-| `computable_cache/ratio_approx_cold_p128` | not run | not run | Approximates a rational value at p=-128 from a fresh clone. |
-| `computable_cache/ratio_approx_cached_p128` | not run | not run | Repeats an already cached rational approximation at p=-128. |
-| `computable_cache/pi_approx_cold_p128` | not run | not run | Approximates pi at p=-128 from a fresh clone. |
-| `computable_cache/pi_approx_cached_p128` | not run | not run | Repeats an already cached pi approximation at p=-128. |
-| `computable_cache/pi_plus_tiny_cold_p128` | not run | not run | Approximates pi plus a tiny exact rational perturbation. |
-| `computable_cache/pi_minus_tiny_cold_p128` | not run | not run | Approximates pi minus a tiny exact rational perturbation. |
+| `computable_cache/ratio_approx_cold_p128` | 29.43 ns | 29.22 ns - 29.67 ns | Approximates a rational value at p=-128 from a fresh clone. |
+| `computable_cache/ratio_approx_cached_p128` | 19.20 ns | 19.15 ns - 19.27 ns | Repeats an already cached rational approximation at p=-128. |
+| `computable_cache/pi_approx_cold_p128` | 31.01 ns | 30.78 ns - 31.31 ns | Approximates pi at p=-128 from a fresh clone. |
+| `computable_cache/pi_approx_cached_p128` | 20.69 ns | 20.63 ns - 20.77 ns | Repeats an already cached pi approximation at p=-128. |
+| `computable_cache/pi_plus_tiny_cold_p128` | 30.20 ns | 29.94 ns - 30.58 ns | Approximates pi plus a tiny exact rational perturbation. |
+| `computable_cache/pi_minus_tiny_cold_p128` | 30.13 ns | 29.97 ns - 30.29 ns | Approximates pi minus a tiny exact rational perturbation. |
 
 ### `computable_bounds`
 
@@ -113,7 +113,13 @@ Low-level approximation kernels and deep expression-tree stress cases.
 | `computable_transcendentals/e_constant_cached_p128` | not run | not run | Repeats a cached approximation of e. |
 | `computable_transcendentals/exp_cold_p128` | 3.826 us | 3.789 us - 3.875 us | Approximates exp(7/5) from a fresh clone. |
 | `computable_transcendentals/exp_cached_p128` | not run | not run | Repeats a cached exp(7/5) approximation. |
+| `computable_transcendentals/exp_deferred_constructor` | not run | not run | Constructs exp(7/2) without requesting an approximation. |
+| `computable_transcendentals/exp_coarse_cold_p1` | not run | not run | Approximates exp(3/2) at coarse precision, requiring certified range reduction. |
+| `computable_transcendentals/exp_deferred_negative_cold_p128` | not run | not run | Approximates exp(-10000), exercising deferred binary-scaling fallback. |
 | `computable_transcendentals/exp_large_cold_p128` | not run | not run | Approximates exp(128), exercising the bounded exact-integer power path. |
+| `computable_transcendentals/expm1_tiny_cold_p128` | not run | not run | Approximates expm1(1/1000000) directly without subtractive cancellation. |
+| `computable_transcendentals/expm1_coarse_cold_p1` | not run | not run | Approximates expm1(3/2) at coarse precision after checking the argument range. |
+| `computable_transcendentals/expm1_coarse_negative_cold_p1` | not run | not run | Approximates expm1(-32) at coarse precision, where zero is a valid result. |
 | `computable_transcendentals/exp_negative_integer_cold_p128` | not run | not run | Approximates exp(-32), retaining signed ln(2) range reduction. |
 | `computable_transcendentals/exp_integer_limit_cold_p128` | not run | not run | Approximates exp(256), guarding the binary e-power limit. |
 | `computable_transcendentals/exp_integer_above_limit_cold_p128` | not run | not run | Approximates exp(257), retaining the ln(2) range-reduction fallback. |
@@ -1196,6 +1202,12 @@ Rows sharing a Criterion group and input are compared when they expose distinct 
 | `computable_bounds/sqrt_scaled_square_sign_until_p2000` | 65.59 ns | 59.39 ns - 71.04 ns | 72.13 ns | - | - |
 | `computable_bounds/unsupported_sin_difference_sign_until_p0_cold` | 866.92 ns | 857.32 ns - 876.66 ns | 867.27 ns | +0.73% | - |
 | `computable_bounds/unsupported_sin_difference_sign_until_p64_cold` | 4.36 us | 4.33 us - 4.39 us | 4.32 us | -44.02% | - |
+| `computable_cache/pi_approx_cached_p128` | 20.69 ns | 20.63 ns - 20.77 ns | 20.59 ns | +5.28% | - |
+| `computable_cache/pi_approx_cold_p128` | 31.01 ns | 30.78 ns - 31.31 ns | 30.69 ns | -0.14% | - |
+| `computable_cache/pi_minus_tiny_cold_p128` | 30.13 ns | 29.97 ns - 30.29 ns | 29.81 ns | -0.72% | - |
+| `computable_cache/pi_plus_tiny_cold_p128` | 30.20 ns | 29.94 ns - 30.58 ns | 29.80 ns | -0.73% | - |
+| `computable_cache/ratio_approx_cached_p128` | 19.20 ns | 19.15 ns - 19.27 ns | 19.09 ns | -2.84% | - |
+| `computable_cache/ratio_approx_cold_p128` | 29.43 ns | 29.22 ns - 29.67 ns | 29.15 ns | +4.40% | - |
 | `computable_transcendentals/acos_cold_p96` | 5.83 us | 5.81 us - 5.85 us | 5.82 us | - | - |
 | `computable_transcendentals/asin_cold_p96` | 6.45 us | 6.40 us - 6.50 us | 6.46 us | - | - |
 | `computable_transcendentals/asinh_cold_p128` | 6.66 us | 6.60 us - 6.74 us | 6.59 us | - | - |
@@ -1341,6 +1353,12 @@ Rows sharing a Criterion group and input are compared when they expose distinct 
 | `rational_algorithm_dispatch_speed/radix_parse_short_scientific` | 75.16 ns | 74.64 ns - 75.80 ns | 74.84 ns | -0.72% | - |
 | `rational_algorithm_dispatch_speed/radix_parse_wide_scientific` | 42.51 us | 42.36 us - 42.68 us | 42.32 us | -1.79% | - |
 | `rational_algorithm_dispatch_speed/radix_parse_wide_scientific_expanded` | 39.33 us | 39.18 us - 39.52 us | 39.13 us | -0.64% | - |
+| `raw_cache_hit_cost/e` | 68.14 ns | 68.06 ns - 68.23 ns | 68.03 ns | - | - |
+| `raw_cache_hit_cost/one` | 50.09 ns | 46.82 ns - 53.76 ns | 41.43 ns | - | - |
+| `raw_cache_hit_cost/pi` | 68.26 ns | 68.14 ns - 68.39 ns | 68.06 ns | - | - |
+| `raw_cache_hit_cost/tau` | 67.55 ns | 67.48 ns - 67.63 ns | 67.48 ns | - | - |
+| `raw_cache_hit_cost/two` | 37.23 ns | 37.19 ns - 37.26 ns | 37.19 ns | - | - |
+| `raw_cache_hit_cost/zero` | 9.30 ns | 9.24 ns - 9.38 ns | 9.15 ns | - | - |
 | `real_cotangent/atan_two_direct_construct` | 41.15 ns | 40.91 ns - 41.42 ns | 40.80 ns | - | - |
 | `real_cotangent/atan_two_inverse_tan_construct` | 4.26 us | 4.22 us - 4.30 us | 4.20 us | - | - |
 | `real_cotangent/atan_two_quotient_construct` | 1.35 us | 1.35 us - 1.36 us | 1.35 us | - | - |
@@ -1400,7 +1418,7 @@ Rows sharing a Criterion group and input are compared when they expose distinct 
 | `real_representation_construction_export/mpfr192/sin_pi` | 1.42 us | 1.30 us - 1.59 us | 1.33 us | - | 1 elements |
 | `real_representation_construction_export/mpfr192/sqrt` | 135.58 ns | 124.92 ns - 147.59 ns | 130.10 ns | - | 1 elements |
 | `real_representation_construction_export/mpfr192/tan_pi` | 1.84 us | 1.68 us - 2.02 us | 1.85 us | - | 1 elements |
-| `real_stable_scalar_substrate/certified_compare_nested_radical_identity` | 226.20 ns | 224.22 ns - 228.38 ns | 222.37 ns | +4.69% | - |
+| `real_stable_scalar_substrate/certified_compare_nested_radical_identity` | 251.62 ns | 249.90 ns - 253.68 ns | 249.52 ns | -8.45% | - |
 | `real_stable_scalar_substrate/floor_certified_rational` | 78.35 ns | 77.76 ns - 79.08 ns | 77.69 ns | - | - |
 | `real_stable_scalar_substrate/floor_certified_sqrt2` | 4.00 us | 3.99 us - 4.01 us | 3.98 us | -1.79% | - |
 | `real_stable_scalar_substrate/near_integer_rational` | 78.31 ns | 77.69 ns - 79.18 ns | 77.56 ns | - | - |

@@ -67,10 +67,10 @@ fn asinh_computable(signal: &Option<Signal>, c: &Computable, p: Precision) -> Bi
         }
         n += 1;
         current_term = scale(current_term * &op_squared, op_prec);
-        let numerator = -((2 * n - 1) * (2 * n - 1));
-        let denominator = (2 * n) * (2 * n + 1);
+        let (numerator, denominator) = inverse_sine_series_coefficients(n);
         current_term *= numerator;
         current_term /= denominator;
+        current_term = -current_term;
         sum += &current_term;
     }
 
@@ -104,10 +104,10 @@ fn asinh_rational(signal: &Option<Signal>, r: &Rational, p: Precision) -> BigInt
         }
         n += 1;
         current_term = scale(current_term * &op_squared, op_prec);
-        let numerator = -((2 * n - 1) * (2 * n - 1));
-        let denominator = (2 * n) * (2 * n + 1);
+        let (numerator, denominator) = inverse_sine_series_coefficients(n);
         current_term *= numerator;
         current_term /= denominator;
+        current_term = -current_term;
         sum += &current_term;
     }
 
@@ -130,16 +130,30 @@ fn atanh_direct(signal: &Option<Signal>, c: &Computable, p: Precision) -> BigInt
 
 // Approximate atanh(c) for small |c|.
 fn atanh_computable(signal: &Option<Signal>, c: &Computable, p: Precision) -> BigInt {
-    // Dedicated tiny-argument atanh series, also reused by the ln1p kernel after
-    // it transforms ln(1+x) into 2*atanh(x/(2+x)).
-    if p >= 1 {
+    // Dedicated tiny-argument atanh series. Prove its domain before both the
+    // fixed error budget and the coarse-zero shortcut, including stored nodes.
+    if should_stop(signal) {
         return Zero::zero();
+    }
+    if p >= 1 {
+        if c.inverse_series_argument_is_small(signal) || should_stop(signal) {
+            return Zero::zero();
+        }
+        return atanh_direct(signal, c, p);
     }
 
     let iterations_needed: i32 = -p / 2 + 4;
     let calc_precision = p - bound_log2(2 * iterations_needed) - 5;
     let op_prec = calc_precision - 3;
     let op_appr = c.approx_signal(signal, op_prec);
+    // The sample is already required by the series. bits(|a|) <= -op_prec-3
+    // leaves one integer unit for its error and proves |c| <= 1/8.
+    if op_appr.magnitude().bits() > u64::try_from(-op_prec - 3).expect("tiny-series scale is positive") {
+        if should_stop(signal) {
+            return Zero::zero();
+        }
+        return atanh_direct(signal, c, p);
+    }
     let op_squared = scale(&op_appr * &op_appr, op_prec);
 
     // Borrowed magnitude checks matter here because tiny inverse-hyperbolic

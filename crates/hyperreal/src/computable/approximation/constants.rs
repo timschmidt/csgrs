@@ -168,14 +168,22 @@ fn e_terms_for_precision(p: Precision) -> u32 {
     // Choose enough 1/k! terms so the binary-split tail is below the requested
     // bit precision. Positive precisions need only a tiny constant amount.
     let needed_bits = if p < 0 { (-p) as u64 + 4 } else { 4 };
-    let mut factorial = BigUint::one();
+    // Keep mantissa * 2^shift <= n!, with at most 64 mantissa bits.
+    // Exact word multiplication followed by downward truncation preserves
+    // this lower bound. Crossing the threshold therefore cannot omit a term.
+    let mut mantissa = 1_u64;
+    let mut shift = 0_u64;
     let mut n = 0_u32;
     loop {
-        let next = &factorial * BigUint::from(n + 1);
-        if next.bits() > needed_bits {
+        // A 64-bit mantissa times a 32-bit factor fits in 128 bits.
+        let next = u128::from(mantissa) * u128::from(n + 1);
+        let bits = u64::from(u128::BITS - next.leading_zeros());
+        if bits + shift > needed_bits {
             return n;
         }
-        factorial = next;
+        let discarded = bits.saturating_sub(u64::BITS.into());
+        mantissa = (next >> discarded) as u64;
+        shift += discarded;
         n += 1;
     }
 }

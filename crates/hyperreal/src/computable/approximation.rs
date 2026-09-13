@@ -21,6 +21,10 @@ include!("approximation/inverse_hyperbolic.rs");
 include!("approximation/statistics.rs");
 
 #[cfg(test)]
+#[path = "approximation/e_plan_tests.rs"]
+mod e_plan_tests;
+
+#[cfg(test)]
 mod chudnovsky_pi_tests {
     use super::*;
     use rug::{Float, float::Constant, float::Round};

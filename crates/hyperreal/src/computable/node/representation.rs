@@ -130,8 +130,8 @@ struct CachedApproximation {
 
 /// Lazily allocated synchronized single-value cache. Keeping the value directly
 /// inside the lock avoids a second allocation and atomic reference-count update
-/// for every published approximation. The short read-side critical section only
-/// clones the integer before releasing the lock.
+/// for every published approximation. Readers clone or coarsen the integer
+/// under the read lock; only the owned result escapes the guard.
 struct ApproximationCache(
     std::sync::atomic::AtomicPtr<std::sync::RwLock<Option<CachedApproximation>>>,
 );
@@ -194,7 +194,18 @@ impl ApproximationCache {
         } else if p == cached.precision {
             Some(cached.value.clone())
         } else {
-            Some(scale(cached.value.clone(), cached.precision - p))
+            // The positive gap can exceed i32::MAX even for valid precisions.
+            let gap = p.abs_diff(cached.precision);
+            let value = if gap == 1 {
+                // Preserve scale's direct-clone path for a zero initial shift.
+                cached.value.clone()
+            } else if u64::from(gap) > cached.value.bits() {
+                return Some(BigInt::zero());
+            } else {
+                &cached.value >> (gap - 1)
+            };
+            // Nearest integer, with halfway values rounded toward +infinity.
+            Some((value + signed::ONE.deref()) >> 1)
         }
     }
 

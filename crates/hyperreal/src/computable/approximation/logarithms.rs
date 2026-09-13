@@ -1,16 +1,32 @@
 fn ln(signal: &Option<Signal>, c: &Computable, p: Precision) -> BigInt {
-    // Kernel precondition: this computes ln(1+x), not arbitrary ln(x). Public
-    // construction keeps |x| < 1/2 by inversion, sqrt scaling, and powers of two.
-    // The atanh transform is a standard log argument reduction for faster odd
-    // power-series convergence.
-    if p >= 0 {
+    // This computes ln(1+x). ln_1p and stored expressions can reach it without
+    // prior reduction, so certify the local series domain at demand time.
+    if should_stop(signal) {
         return Zero::zero();
     }
 
-    let iterations_needed = -p / 2 + 4;
-    let calc_precision = p - bound_log2(2 * iterations_needed) - 4;
+    let series_precision = p.min(-1);
+    let iterations_needed = -series_precision / 2 + 4;
+    let calc_precision = series_precision - bound_log2(2 * iterations_needed) - 4;
     let op_prec = calc_precision - 3;
     let op_appr = c.approx_signal(signal, op_prec);
+    // Reuse the series sample: bits(|a|) <= -op_prec-1 leaves one integer
+    // unit for its error and proves |x| <= 1/2. No separate probe is needed.
+    if op_appr.magnitude().bits() > u64::try_from(-op_prec - 1).expect("ln1p series scale is positive") {
+        if should_stop(signal) {
+            return Zero::zero();
+        }
+        // ln(1+x) = 2 ln(sqrt(1+x)). The extra sqrt contracts even a residual
+        // at +/-1/2, so an uncertain boundary cannot reconstruct itself in a
+        // loop through ln's normal reduction. Its usual binary scaling still
+        // handles very large and near-minus-one inputs.
+        return c.clone().add(Computable::one()).sqrt().ln().shift_left(1).approx_signal(signal, p);
+    }
+    // On the certified interval |ln(1+x)| <= ln(2) < 1. This shortcut is not
+    // valid for an arbitrary caller-supplied residual.
+    if p >= 0 {
+        return Zero::zero();
+    }
     let scaled_x = scale(op_appr, op_prec - calc_precision);
     let scaled_one = signed::ONE.deref() << -calc_precision;
     let denominator = (&scaled_one << 1) + &scaled_x;
