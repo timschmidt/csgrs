@@ -4,7 +4,9 @@
 //! use [`Scalar`]. Primitive floats are reserved for named input/output
 //! adapters that must interoperate with finite external formats.
 
-use hyperreal::{Rational, Real};
+#[cfg(test)]
+use hyperreal::Rational;
+use hyperreal::Real;
 use serde::{Deserialize, Deserializer};
 use std::cmp::Ordering;
 
@@ -75,38 +77,11 @@ pub(crate) fn ge(left: &Scalar, right: &Scalar) -> bool {
 
 /// Parse a source decimal directly into the exact scalar domain.
 ///
-/// Parsing through [`Rational`] retains the source value rather than first
-/// rounding it to an IEEE-754 dyadic. Callers should use this at textual I/O
-/// boundaries and carry the returned [`Scalar`] through all internal work.
+/// Hyperreal's text parser retains the source value rather than first rounding
+/// it to an IEEE-754 dyadic. Callers should use this at textual I/O boundaries
+/// and carry the returned [`Scalar`] through all internal work.
 pub(crate) fn parse_source_scalar(token: &str) -> Option<Scalar> {
-    let token = token.trim();
-    let (mantissa, exponent) = match token.split_once(['e', 'E']) {
-        Some((mantissa, exponent)) => (mantissa, exponent.parse::<i32>().ok()?),
-        None => (token, 0_i32),
-    };
-    let mantissa = mantissa.parse::<Rational>().ok()?;
-    let scale = rational_power_of_ten(exponent.unsigned_abs());
-    let value = if exponent < 0 {
-        mantissa / scale
-    } else {
-        mantissa * scale
-    };
-    Some(Scalar::from(value))
-}
-
-fn rational_power_of_ten(mut exponent: u32) -> Rational {
-    let mut result = Rational::new(1);
-    let mut factor = Rational::new(10);
-    while exponent != 0 {
-        if exponent & 1 == 1 {
-            result *= &factor;
-        }
-        exponent >>= 1;
-        if exponent != 0 {
-            factor = &factor * &factor;
-        }
-    }
-    result
+    token.trim().parse().ok()
 }
 
 /// Construct an exact scalar from a trusted decimal literal.
@@ -127,8 +102,9 @@ pub(crate) fn half(value: &Scalar) -> Scalar {
 /// Deserialize an optional JSON number directly into the exact scalar domain.
 ///
 /// `serde_json::Number` preserves the source decimal spelling. Converting its
-/// display form through `Rational` avoids the intermediate IEEE-754 rounding
-/// that `deserialize_f64` would introduce at the configuration edge.
+/// display form through Hyperreal's exact text parser avoids the intermediate
+/// IEEE-754 rounding that `deserialize_f64` would introduce at the
+/// configuration edge.
 pub(crate) fn deserialize_optional<'de, D>(deserializer: D) -> Result<Option<Scalar>, D::Error>
 where
     D: Deserializer<'de>,
@@ -170,6 +146,9 @@ mod tests {
 
         let input: Input = serde_json::from_str(r#"{"value": 0.1}"#).unwrap();
         assert_eq!(input.value, Some(scalar("0.1")));
+
+        let input: Input = serde_json::from_str(r#"{"value": 7.78437e-005}"#).unwrap();
+        assert_eq!(input.value, Some(scalar("0.0000778437")));
     }
 
     #[test]
