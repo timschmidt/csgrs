@@ -1002,8 +1002,8 @@ fn append_analytic_parallel_samples(
     };
     let start = finite_retained_point(start, options.chord_error, policy)?;
     let end = finite_retained_point(end, options.chord_error, policy)?;
-    let range_start = CurveParameter2::from_bezier(fragment.range().start().clone());
-    let range_end = CurveParameter2::from_bezier(fragment.range().end().clone());
+    let range_start = CurveParameter2::from(fragment.range().start().clone());
+    let range_end = CurveParameter2::from(fragment.range().end().clone());
     append_retained_parallel_range_samples(
         points,
         fragment.parallel(),

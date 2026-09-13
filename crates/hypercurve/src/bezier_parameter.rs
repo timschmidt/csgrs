@@ -1470,6 +1470,9 @@ impl BezierParameter2 {
             Some(RealSign::Zero) => return Err(CurveError::InvalidBezierRange),
             None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
         };
+        if scale == &Real::one() && offset.zero_status() == hyperreal::ZeroKnowledge::Zero {
+            return Ok(Classification::Decided(self.clone()));
+        }
         let parameter = match self {
             Self::Exact(parameter) => {
                 return Ok(Classification::Decided(Self::Exact(

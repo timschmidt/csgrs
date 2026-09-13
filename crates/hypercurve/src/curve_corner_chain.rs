@@ -419,12 +419,12 @@ impl<'a> CurveCornerChain2<'a> {
                 operation,
             )?;
             for parameter in parameters {
-                let parameter = CurveParameter2::from_bezier(parameter);
+                let parameter = CurveParameter2::from(parameter);
                 let boundary_order = |boundary| {
                     retained_corner_decision(
                         parameter
                             .cmp_by_refinement(
-                                &CurveParameter2::from_bezier(BezierParameter2::Exact(boundary)),
+                                &CurveParameter2::from(BezierParameter2::Exact(boundary)),
                                 policy,
                             )
                             .map_err(|cause| curve_region_edit_error(operation, cause))?,
@@ -899,8 +899,8 @@ impl<'a> CurveCornerChain2<'a> {
         allow_source_end: bool,
         policy: &CurveContext,
     ) -> ExactCurveResult<Option<RetainedDeferredArcContact2>> {
-        let zero = CurveParameter2::from_bezier(BezierParameter2::Exact(Real::zero()));
-        let one = CurveParameter2::from_bezier(BezierParameter2::Exact(Real::one()));
+        let zero = CurveParameter2::from(BezierParameter2::Exact(Real::zero()));
+        let one = CurveParameter2::from(BezierParameter2::Exact(Real::one()));
         let circles = [fillet.clone(), fillet.complementary_half()];
         for (fillet_half, circle) in circles.iter().enumerate() {
             let intersections = circle.certified_tangent_rational_intersections(
@@ -1167,7 +1167,7 @@ impl<'a> CurveCornerChain2<'a> {
         let boundary_order = |boundary: Real| {
             seed.parameter
                 .cmp_by_refinement(
-                    &CurveParameter2::from_bezier(BezierParameter2::Exact(boundary)),
+                    &CurveParameter2::from(BezierParameter2::Exact(boundary)),
                     policy,
                 )
                 .map_err(|cause| curve_region_edit_error(CurveOperation2::Fillet, cause))
@@ -1605,7 +1605,7 @@ impl<'a> CurveCornerChain2<'a> {
     ) -> ExactCurveResult<Vec<BezierSplitFragment2>> {
         #[cfg(feature = "dispatch-trace")]
         hyperreal::dispatch_trace::record("hypercurve", "curve-region-fillet-parallel", "entered");
-        other_cut.parameter = CurveParameter2::from_bezier(other_parameter.clone());
+        other_cut.parameter = CurveParameter2::from(other_parameter.clone());
         let (sweep_halves, tangent_cross, tangent_dot) = Self::retained_fillet_sweep(
             frame,
             other_parallel,
@@ -2857,7 +2857,7 @@ impl<'a> CurveCornerChain2<'a> {
                     ..
                 } => Some((
                     center_support.clone(),
-                    CurveParameter2::from_bezier(center_parameter.clone()),
+                    CurveParameter2::from(center_parameter.clone()),
                 )),
                 RetainedFilletRadialFrame2::ChordNormal { .. } => frame
                     .anchor_evidence
@@ -2961,7 +2961,7 @@ impl<'a> CurveCornerChain2<'a> {
             if let BezierSplitFragment2::SelectedFiber(other_fragment) = other_fragment
                 && let Some(expected_parameter) = other_cut.parameter.as_bezier_parameter().cloned()
             {
-                let expected = CurveParameter2::from_bezier(expected_parameter.clone());
+                let expected = CurveParameter2::from(expected_parameter.clone());
                 let compare = |boundary: &CurveParameter2| {
                     retained_corner_decision(
                         policy

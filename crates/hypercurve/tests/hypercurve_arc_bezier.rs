@@ -195,10 +195,17 @@ fn directed_sweep_evaluation_round_trips_minor_major_and_full_arcs() {
         panic!("minor-arc rational parameter was not certified");
     };
     let minor_replayed = Curve2::from(minor.clone())
-        .point_at(&minor_parameter, &policy)
+        .point_at(&minor_parameter.clone().into(), &policy)
         .unwrap()
         .into_value();
-    assert_replayed_containment(minor.contains_point(&minor_replayed, &policy));
+    assert_replayed_containment(
+        minor.contains_point(
+            minor_replayed
+                .coordinates()
+                .expect("native curve evaluation coordinates"),
+            &policy,
+        ),
+    );
 
     let major = CircularArc2::try_from_center(p(1, 0), p(0, 1), p(0, 0), true).unwrap();
     let Classification::Decided(strict_major_parameter) = major
@@ -209,10 +216,10 @@ fn directed_sweep_evaluation_round_trips_minor_major_and_full_arcs() {
     };
     assert_eq!(
         Curve2::from(major.clone())
-            .point_at(&strict_major_parameter, &policy)
+            .point_at(&strict_major_parameter.clone().into(), &policy)
             .unwrap()
             .into_value(),
-        p(0, -1)
+        p(0, -1).into()
     );
     for (fraction, expected) in [(q(1, 3), p(0, -1)), (q(2, 3), p(-1, 0))] {
         assert_eq!(
@@ -230,10 +237,17 @@ fn directed_sweep_evaluation_round_trips_minor_major_and_full_arcs() {
             panic!("major-arc rational parameter was not certified");
         };
         let replayed = Curve2::from(major.clone())
-            .point_at(&parameter, &policy)
+            .point_at(&parameter.clone().into(), &policy)
             .unwrap()
             .into_value();
-        assert_replayed_containment(major.contains_point(&replayed, &policy));
+        assert_replayed_containment(
+            major.contains_point(
+                replayed
+                    .coordinates()
+                    .expect("native curve evaluation coordinates"),
+                &policy,
+            ),
+        );
     }
 
     let full = CircularArc2::try_from_center(p(1, 0), p(1, 0), p(0, 0), false).unwrap();
@@ -385,10 +399,10 @@ fn top_level_arc_reuses_promotion_and_builds_mixed_boundary() {
             .all(|fragment| matches!(fragment.curve(), BezierSubcurve2::RationalQuadratic(_)))
     );
     assert_eq!(
-        arc.point_at(&half(), &CurveContext::STRICT)
+        arc.point_at(&half().into(), &CurveContext::STRICT)
             .unwrap()
             .into_value(),
-        p(0, -1)
+        p(0, -1).into()
     );
 
     let closing = Curve2::from(LineSeg2::try_new(p(1, 0), p(-1, 0)).unwrap());

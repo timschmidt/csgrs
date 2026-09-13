@@ -1007,12 +1007,8 @@ impl CurveRegionIntersectionBlocker2 {
 impl RegionPairContactEvidence {
     fn from_bezier(contact: &CurveIntersectionContact2) -> Self {
         Self {
-            first_parameter: CurveParameter2::from_bezier(
-                contact.first().local_parameter().clone(),
-            ),
-            second_parameter: CurveParameter2::from_bezier(
-                contact.second().local_parameter().clone(),
-            ),
+            first_parameter: CurveParameter2::from(contact.first().local_parameter().clone()),
+            second_parameter: CurveParameter2::from(contact.second().local_parameter().clone()),
             point: Some(contact.point().clone()),
             certified_transverse: contact.is_certified_transverse(),
             tangent_cross_sign: contact.tangent_cross_sign(),
@@ -1029,8 +1025,8 @@ impl RegionPairContactEvidence {
         tangent_cross_sign: Option<RealSign>,
     ) -> Self {
         Self::direct(
-            CurveParameter2::from_bezier(first_parameter),
-            CurveParameter2::from_bezier(second_parameter),
+            CurveParameter2::from(first_parameter),
+            CurveParameter2::from(second_parameter),
             point,
             certified_transverse,
             tangent_cross_sign,
@@ -1495,8 +1491,8 @@ impl<'a> CurveRegionBooleanContext<'a> {
                 fragment_index,
                 family: geometry.family(),
                 geometry,
-                start: CurveParameter2::from_bezier(BezierParameter2::Exact(Real::zero())),
-                end: CurveParameter2::from_bezier(BezierParameter2::Exact(Real::one())),
+                start: CurveParameter2::from(BezierParameter2::Exact(Real::zero())),
+                end: CurveParameter2::from(BezierParameter2::Exact(Real::one())),
                 reversed: false,
                 filled_side_is_left: false,
                 selected_fiber_endpoint_points: None,
@@ -2562,8 +2558,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
                         Classification::Decided(parameter) => parameter,
                         Classification::Uncertain(reason) => return Ok(Some(blocker(reason))),
                     };
-                    let curve_parameter =
-                        CurveParameter2::from_bezier(BezierParameter2::Exact(b_param));
+                    let curve_parameter = CurveParameter2::from(BezierParameter2::Exact(b_param));
                     let (chord_dx, chord_dy) = chord_line.delta();
                     let (curve_dx, curve_dy) = curve_line.delta();
                     let cross = Real::diff_of_products(&chord_dx, &curve_dy, &chord_dy, &curve_dx);
@@ -2625,8 +2620,8 @@ impl<'a> CurveRegionBooleanContext<'a> {
                         None => return Ok(Some(blocker(UncertaintyReason::Ordering))),
                     };
                 let curve_range = CurveParameterRange2::new_validated(
-                    CurveParameter2::from_bezier(BezierParameter2::Exact(curve_start)),
-                    CurveParameter2::from_bezier(BezierParameter2::Exact(curve_end)),
+                    CurveParameter2::from(BezierParameter2::Exact(curve_start)),
+                    CurveParameter2::from(BezierParameter2::Exact(curve_end)),
                 );
                 let (first_range, second_range) = if chord_is_first {
                     (chord_range, curve_range)
@@ -2749,7 +2744,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
                     Classification::Decided(Some(parameter)) => parameter,
                     Classification::Decided(None) | Classification::Uncertain(_) => continue,
                 };
-            let target_region_parameter = CurveParameter2::from_bezier(target_parameter.clone());
+            let target_region_parameter = CurveParameter2::from(target_parameter.clone());
             match parameter_in_carrier(&target_region_parameter, target_carrier, &self.data.policy)
             {
                 Ok(true) => mapped_endpoints.push((
@@ -2784,7 +2779,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
         };
         let mut finite_contacts = Vec::with_capacity(line_contacts.len());
         for contact in line_contacts {
-            let parameter = CurveParameter2::from_bezier(contact.parameter().clone());
+            let parameter = CurveParameter2::from(contact.parameter().clone());
             match parameter_in_carrier(&parameter, target_carrier, &self.data.policy) {
                 Ok(true) => finite_contacts.push(contact),
                 Ok(false) => {}
@@ -2829,7 +2824,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
                 None => RealSign::Zero,
             };
             let tangent_cross_sign = orient_tangent_cross_sign(chord_cross_target, chord_is_first);
-            let target_parameter = CurveParameter2::from_bezier(contact.parameter().clone());
+            let target_parameter = CurveParameter2::from(contact.parameter().clone());
             let (first_parameter, second_parameter) = if chord_is_first {
                 (chord_parameter.clone(), target_parameter)
             } else {
@@ -3202,7 +3197,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
                     let chord_parameter =
                         CurveParameter2::from_algebraic_chord(contact.chord_parameter().clone());
                     let parallel_parameter =
-                        CurveParameter2::from_bezier(contact.parallel_parameter().clone());
+                        CurveParameter2::from(contact.parallel_parameter().clone());
                     let (first_parameter, second_parameter) = if chord_is_first {
                         (chord_parameter, parallel_parameter)
                     } else {
@@ -3703,8 +3698,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
                 Classification::Decided(parameter) => parameter,
                 Classification::Uncertain(reason) => return Ok(blocker(reason)),
             };
-            let parallel_parameter =
-                CurveParameter2::from_bezier(contact.parallel_parameter().clone());
+            let parallel_parameter = CurveParameter2::from(contact.parallel_parameter().clone());
             let tangent_cross_sign = contact
                 .tangent_cross_sign()
                 .map(|sign| orient_tangent_cross_sign(sign, parallel_is_first));
@@ -4122,7 +4116,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
                 None
             };
             let chord_parameter = CurveParameter2::from_algebraic_chord(chord_parameter);
-            let parallel_parameter = CurveParameter2::from_bezier(contact.parameter().clone());
+            let parallel_parameter = CurveParameter2::from(contact.parameter().clone());
             let (first_parameter, second_parameter) = if chord_is_first {
                 (chord_parameter, parallel_parameter)
             } else {
@@ -5860,11 +5854,11 @@ impl<'a> CurveRegionBooleanContext<'a> {
                     let (first_parameter, second_parameter) = if *cusp_is_first {
                         (
                             CurveParameter2::from_algebraic_cusp(cusp_parameter),
-                            CurveParameter2::from_bezier(contact.parallel_parameter),
+                            CurveParameter2::from(contact.parallel_parameter),
                         )
                     } else {
                         (
-                            CurveParameter2::from_bezier(contact.parallel_parameter),
+                            CurveParameter2::from(contact.parallel_parameter),
                             CurveParameter2::from_algebraic_cusp(cusp_parameter),
                         )
                     };
@@ -6506,9 +6500,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
                     .promoted_bezier_parameter_complete(&self.data.policy)
                     .map_err(|cause| self.invalid(source_carrier_index, cause))?
                 {
-                    Classification::Decided(parameter) => {
-                        Ok(CurveParameter2::from_bezier(parameter))
-                    }
+                    Classification::Decided(parameter) => Ok(CurveParameter2::from(parameter)),
                     Classification::Uncertain(reason) => {
                         Err(self.blocked(source_carrier_index, reason))
                     }
@@ -9462,9 +9454,8 @@ impl<'a> CurveRegionBooleanContext<'a> {
                                     break;
                                 }
                             };
-                            upper = CurveParameter2::from_bezier(BezierParameter2::Exact(
-                                parameter.clone(),
-                            ));
+                            upper =
+                                CurveParameter2::from(BezierParameter2::Exact(parameter.clone()));
                             parameter
                         }
                     };
@@ -9552,7 +9543,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
             }
             boundary_probe_representative = Some(representative.clone());
             let source_parameter = parameter
-                .map(|parameter| CurveParameter2::from_bezier(BezierParameter2::Exact(parameter)));
+                .map(|parameter| CurveParameter2::from(BezierParameter2::Exact(parameter)));
             let left = match self.fragment_side_classification(
                 carrier_index,
                 &representative,
@@ -12893,8 +12884,8 @@ fn build_region_carrier(
             } else {
                 (
                     RegionCarrierGeometry::Bezier(curve.clone()),
-                    CurveParameter2::from_bezier(BezierParameter2::Exact(crate::Real::zero())),
-                    CurveParameter2::from_bezier(BezierParameter2::Exact(crate::Real::one())),
+                    CurveParameter2::from(BezierParameter2::Exact(crate::Real::zero())),
+                    CurveParameter2::from(BezierParameter2::Exact(crate::Real::one())),
                     false,
                 )
             }
@@ -12907,14 +12898,14 @@ fn build_region_carrier(
             ..
         } => (
             RegionCarrierGeometry::Bezier(curve.clone()),
-            CurveParameter2::from_bezier(start.clone()),
-            CurveParameter2::from_bezier(end.clone()),
+            CurveParameter2::from(start.clone()),
+            CurveParameter2::from(end.clone()),
             *reversed,
         ),
         BezierSplitFragment2::AnalyticParallel(fragment) => (
             RegionCarrierGeometry::AnalyticParallel(fragment.parallel().clone()),
-            CurveParameter2::from_bezier(fragment.range().start().clone()),
-            CurveParameter2::from_bezier(fragment.range().end().clone()),
+            CurveParameter2::from(fragment.range().start().clone()),
+            CurveParameter2::from(fragment.range().end().clone()),
             fragment.is_reversed(),
         ),
         BezierSplitFragment2::AlgebraicChord(chord) => (
@@ -12955,8 +12946,8 @@ fn build_region_carrier(
         geometry = RegionCarrierGeometry::Bezier(BezierSubcurve2::Quadratic(
             QuadraticBezier2::from_line_segment(line),
         ));
-        start = CurveParameter2::from_bezier(BezierParameter2::Exact(crate::Real::zero()));
-        end = CurveParameter2::from_bezier(BezierParameter2::Exact(crate::Real::one()));
+        start = CurveParameter2::from(BezierParameter2::Exact(crate::Real::zero()));
+        end = CurveParameter2::from(BezierParameter2::Exact(crate::Real::one()));
         reversed = false;
     }
     let family = geometry.family();
@@ -13071,8 +13062,8 @@ fn split_carrier_with_refinement(
                 "algebraic cusp carrier reached the Bezier split path".into(),
             ));
         };
-        let start_parameter = CurveParameter2::from_bezier(start.clone());
-        let end_parameter = CurveParameter2::from_bezier(end.clone());
+        let start_parameter = CurveParameter2::from(start.clone());
+        let end_parameter = CurveParameter2::from(end.clone());
         if !parameter_range_inside_carrier(&start_parameter, &end_parameter, carrier, policy)? {
             continue;
         }
@@ -13671,7 +13662,7 @@ fn split_analytic_carrier(
                 CurveError::Topology("algebraic cusp cut reached an analytic carrier".into())
             })?;
             Ok(CarrierEvent {
-                parameter: CurveParameter2::from_bezier(
+                parameter: CurveParameter2::from(
                     parameter
                         .clone()
                         .refined_isolating_interval(max_refinement_steps, policy),
@@ -16396,8 +16387,8 @@ fn clip_aligned_parameter_overlap(
     }
 
     let (overlap_start, overlap_end) = ascending_bezier_range(first_range, policy)?;
-    let overlap_start = CurveParameter2::from_bezier(overlap_start.clone());
-    let overlap_end = CurveParameter2::from_bezier(overlap_end.clone());
+    let overlap_start = CurveParameter2::from(overlap_start.clone());
+    let overlap_end = CurveParameter2::from(overlap_end.clone());
     let (second_start_in_first, second_end_in_first) = if reversed {
         (
             second_carrier.end.unit_complement().ok_or_else(|| {
@@ -16868,7 +16859,7 @@ mod certified_successor_tests {
     }
 
     fn carrier_parameter(parameter: BezierParameter2) -> CurveParameter2 {
-        CurveParameter2::from_bezier(parameter)
+        CurveParameter2::from(parameter)
     }
 
     fn carrier_range(range: &BezierParameterRange2) -> CurveParameterRange2 {
@@ -18850,10 +18841,8 @@ mod certified_successor_tests {
                     fragment_index: 0,
                     family: source_geometry.family(),
                     geometry: source_geometry,
-                    start: CurveParameter2::from_bezier(BezierParameter2::Exact(
-                        source_low.clone(),
-                    )),
-                    end: CurveParameter2::from_bezier(BezierParameter2::Exact(source_high.clone())),
+                    start: CurveParameter2::from(BezierParameter2::Exact(source_low.clone())),
+                    end: CurveParameter2::from(BezierParameter2::Exact(source_high.clone())),
                     reversed: false,
                     filled_side_is_left: true,
                     selected_fiber_endpoint_points: None,
@@ -19134,12 +19123,8 @@ mod certified_successor_tests {
                                 fragment_index: 0,
                                 family: curve_geometry.family(),
                                 geometry: curve_geometry,
-                                start: CurveParameter2::from_bezier(BezierParameter2::Exact(
-                                    Real::zero(),
-                                )),
-                                end: CurveParameter2::from_bezier(BezierParameter2::Exact(
-                                    Real::one(),
-                                )),
+                                start: CurveParameter2::from(BezierParameter2::Exact(Real::zero())),
+                                end: CurveParameter2::from(BezierParameter2::Exact(Real::one())),
                                 reversed: false,
                                 filled_side_is_left: true,
                                 selected_fiber_endpoint_points: None,
@@ -19347,8 +19332,8 @@ mod certified_successor_tests {
                                 fragment_index: 0,
                                 family: parallel_geometry.family(),
                                 geometry: parallel_geometry,
-                                start: CurveParameter2::from_bezier(range.start().clone()),
-                                end: CurveParameter2::from_bezier(range.end().clone()),
+                                start: CurveParameter2::from(range.start().clone()),
+                                end: CurveParameter2::from(range.end().clone()),
                                 reversed: false,
                                 filled_side_is_left: true,
                                 selected_fiber_endpoint_points: None,

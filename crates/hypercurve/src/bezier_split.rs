@@ -95,14 +95,42 @@ impl PartialEq for CurveParameter2 {
 
 impl From<Real> for CurveParameter2 {
     fn from(value: Real) -> Self {
-        Self::from_bezier(BezierParameter2::Exact(value))
+        Self::from(BezierParameter2::Exact(value))
+    }
+}
+
+impl From<BezierParameter2> for CurveParameter2 {
+    fn from(parameter: BezierParameter2) -> Self {
+        Self {
+            data: CurveParameterData2::Bezier(parameter),
+        }
     }
 }
 
 impl CurveParameter2 {
-    pub(crate) fn from_bezier(parameter: BezierParameter2) -> Self {
-        Self {
-            data: CurveParameterData2::Bezier(parameter),
+    /// Replays a scalar polynomial in this parameter's existing exact field.
+    /// Point-ordered chord and circle charts require their geometric authority.
+    pub(crate) fn polynomial_sign(
+        &self,
+        coefficients: &[Real],
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<hyperreal::RealSign>> {
+        match &self.data {
+            CurveParameterData2::Bezier(parameter) => {
+                crate::bezier_parameter::signed_coefficients_at_parameter(
+                    coefficients.to_vec(),
+                    parameter,
+                    policy,
+                )
+            }
+            CurveParameterData2::SelectedFiber(parameter) => parameter.predicate_sign(
+                &hypersolve::BivariatePolynomial::new(vec![coefficients.to_vec()]),
+                policy,
+            ),
+            CurveParameterData2::RecursiveProjective(parameter) => {
+                parameter.polynomial_sign(coefficients, policy)
+            }
+            _ => Ok(Classification::Uncertain(UncertaintyReason::Unsupported)),
         }
     }
 
@@ -387,9 +415,7 @@ impl CurveParameter2 {
 
     pub(crate) fn unit_complement(&self) -> Option<Self> {
         match &self.data {
-            CurveParameterData2::Bezier(parameter) => {
-                Some(Self::from_bezier(parameter.unit_complement()))
-            }
+            CurveParameterData2::Bezier(parameter) => Some(Self::from(parameter.unit_complement())),
             CurveParameterData2::SelectedFiber(parameter) => {
                 Some(Self::from_selected_fiber(parameter.unit_complement()))
             }
@@ -430,13 +456,11 @@ impl CurveParameter2 {
         policy: &CurveContext,
     ) -> CurveResult<Classification<Self>> {
         match &self.data {
-            CurveParameterData2::Bezier(parameter) => {
-                Ok(Classification::Decided(Self::from_bezier(
-                    parameter
-                        .clone()
-                        .refined_isolating_interval(refinement_steps, policy),
-                )))
-            }
+            CurveParameterData2::Bezier(parameter) => Ok(Classification::Decided(Self::from(
+                parameter
+                    .clone()
+                    .refined_isolating_interval(refinement_steps, policy),
+            ))),
             CurveParameterData2::SelectedFiber(parameter) => Ok(parameter
                 .refined(refinement_steps, policy)?
                 .map(Self::from_selected_fiber)),
@@ -462,7 +486,7 @@ impl CurveParameter2 {
         match &self.data {
             CurveParameterData2::Bezier(parameter) => Ok(parameter
                 .affine_image_unbounded(scale, offset, policy)?
-                .map(Self::from_bezier)),
+                .map(Self::from)),
             CurveParameterData2::SelectedFiber(parameter) => Ok(parameter
                 .affine_image_unbounded(scale, offset, policy)?
                 .map(Self::from_selected_fiber)),
@@ -669,8 +693,8 @@ impl CurveParameterRange2 {
 
     pub(crate) fn from_bezier_range(range: BezierParameterRange2) -> Self {
         Self::new_validated(
-            CurveParameter2::from_bezier(range.start().clone()),
-            CurveParameter2::from_bezier(range.end().clone()),
+            CurveParameter2::from(range.start().clone()),
+            CurveParameter2::from(range.end().clone()),
         )
     }
 }
@@ -1094,13 +1118,13 @@ impl BezierSplitFragment2 {
             Self::Materialized { start, end, .. }
             | Self::AlgebraicEndpointImages { start, end, .. } => {
                 CurveParameterRange2::new_validated(
-                    CurveParameter2::from_bezier(start.clone()),
-                    CurveParameter2::from_bezier(end.clone()),
+                    CurveParameter2::from(start.clone()),
+                    CurveParameter2::from(end.clone()),
                 )
             }
             Self::AnalyticParallel(fragment) => CurveParameterRange2::new_validated(
-                CurveParameter2::from_bezier(fragment.range.start().clone()),
-                CurveParameter2::from_bezier(fragment.range.end().clone()),
+                CurveParameter2::from(fragment.range.start().clone()),
+                CurveParameter2::from(fragment.range.end().clone()),
             ),
             Self::AlgebraicChord(chord) => CurveParameterRange2::new_validated(
                 CurveParameter2::from_algebraic_chord(chord.start_parameter()),

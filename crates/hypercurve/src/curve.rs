@@ -1,5 +1,8 @@
 //! Top-level exact curve carriers.
 
+#[path = "curve_evaluation.rs"]
+mod curve_evaluation;
+
 use crate::CurvePointData2;
 use std::sync::Arc;
 use std::sync::OnceLock;
@@ -1060,24 +1063,27 @@ impl Curve2 {
     ///
     /// Native line, arc, and Bezier parameters use `[0, 1]`. Arc parameters
     /// traverse exact rational quadratic spans in sweep order. Spline
-    /// parameters use their authored knot domain.
+    /// parameters use their authored knot domain. Generated curves use their
+    /// retained source chart, including selected parameters; reversing such a
+    /// curve changes traversal without changing that chart. The returned point
+    /// retains its exact evidence even when it has no scalar coordinate view.
     pub fn point_at(
         &self,
-        parameter: &Real,
+        parameter: &CurveParameter2,
         policy: &CurveContext,
-    ) -> ExactCurveResult<CurveOutcome<Point2>> {
+    ) -> ExactCurveResult<CurveOutcome<CurvePoint2>> {
         self.point_at_side(parameter, CurveParameterSide2::Automatic, policy)
     }
 
     /// Evaluates an exact point with explicit spline-knot side policy.
     pub fn point_at_side(
         &self,
-        parameter: &Real,
+        parameter: &CurveParameter2,
         side: CurveParameterSide2,
         policy: &CurveContext,
-    ) -> ExactCurveResult<CurveOutcome<Point2>> {
+    ) -> ExactCurveResult<CurveOutcome<CurvePoint2>> {
         resolve_certified_operation(policy, |attempt| {
-            self.point_at_side_with_policy(parameter, side, attempt)
+            self.point_at_parameter_with_policy(parameter, side, attempt)
         })
     }
 
@@ -3036,9 +3042,7 @@ pub(crate) enum CornerPlacement2 {
 }
 
 fn exact_corner_parameter(parameter: Real) -> Option<CurveParameter2> {
-    Some(CurveParameter2::from_bezier(BezierParameter2::Exact(
-        parameter,
-    )))
+    Some(CurveParameter2::from(BezierParameter2::Exact(parameter)))
 }
 
 #[derive(Clone, Debug)]
@@ -3566,7 +3570,7 @@ fn retained_arc_fillet_contact_seed(
         let boundary_order = |boundary: Real| {
             parameter
                 .cmp_by_refinement(
-                    &CurveParameter2::from_bezier(BezierParameter2::Exact(boundary)),
+                    &CurveParameter2::from(BezierParameter2::Exact(boundary)),
                     policy,
                 )
                 .map_err(|cause| ExactCurveError::invalid(CurveOperation2::Fillet, family, cause))
@@ -4404,7 +4408,7 @@ impl FilletParallelSource2<'_> {
         policy: &CurveContext,
     ) -> ExactCurveResult<bool> {
         self.parameter_is_admissible(
-            &CurveParameter2::from_bezier(parameter.clone()),
+            &CurveParameter2::from(parameter.clone()),
             previous,
             mode,
             incident_domain,
@@ -5747,7 +5751,7 @@ fn retained_fillet_incident_overlap_range(
     let barrier = || {
         domain
             .barrier()
-            .map(|parameter| CurveParameter2::from_bezier(parameter.clone()))
+            .map(|parameter| CurveParameter2::from(parameter.clone()))
     };
     let (start, end) = match domain.direction() {
         crate::BezierParameterRayDirection2::Decreasing => (
@@ -6019,7 +6023,7 @@ fn retained_selected_fillet_parameter_is_in_open_range(
     family: CurveFamily2,
     policy: &CurveContext,
 ) -> ExactCurveResult<bool> {
-    let parameter = CurveParameter2::from_bezier(parameter.clone());
+    let parameter = CurveParameter2::from(parameter.clone());
     let order = |boundary: &CurveParameter2| match parameter
         .cmp_by_refinement(boundary, policy)
         .map_err(|cause| ExactCurveError::invalid(CurveOperation2::Fillet, family, cause))?
@@ -6174,8 +6178,7 @@ fn fillet_offset_centers(
     next_family: CurveFamily2,
     policy: &CurveContext,
 ) -> ExactCurveResult<FilletCenters2> {
-    let exact_parameter =
-        |parameter| CurveParameter2::from_bezier(BezierParameter2::Exact(parameter));
+    let exact_parameter = |parameter| CurveParameter2::from(BezierParameter2::Exact(parameter));
     let mut centers = FilletCenters2::default();
     match (previous, next) {
         (FilletOffsetCarrier2::Point { .. }, _) | (_, FilletOffsetCarrier2::Point { .. }) => {
@@ -6457,7 +6460,7 @@ fn fillet_offset_centers(
                         contact_seed: None,
                     }),
                 });
-                let bezier_parameter = CurveParameter2::from_bezier(parameter);
+                let bezier_parameter = CurveParameter2::from(parameter);
                 centers.push(FilletCenterWitness2 {
                     point,
                     previous_parameter: bezier_is_previous.then(|| bezier_parameter.clone()),
@@ -6722,10 +6725,8 @@ fn fillet_offset_centers(
                     };
                     centers.push(FilletCenterWitness2 {
                         point: point.clone(),
-                        previous_parameter: Some(CurveParameter2::from_bezier(
-                            previous_parameter.clone(),
-                        )),
-                        next_parameter: Some(CurveParameter2::from_bezier(next_parameter.clone())),
+                        previous_parameter: Some(CurveParameter2::from(previous_parameter.clone())),
+                        next_parameter: Some(CurveParameter2::from(next_parameter.clone())),
                         retained_anchor_evidence: Some(RetainedFilletAnchorEvidence2 {
                             cross: contact.tangent_cross_sign().map(orient),
                             dot: contact.tangent_dot_sign().map(|sign| {
@@ -6923,7 +6924,7 @@ fn fillet_offset_centers(
                         let Some(parameter) = line_parameter else {
                             continue;
                         };
-                        Some(CurveParameter2::from_bezier(parameter))
+                        Some(CurveParameter2::from(parameter))
                     };
                 let retained_anchor_evidence = {
                     let (mut cross, mut dot) = match support
@@ -6970,7 +6971,7 @@ fn fillet_offset_centers(
                         deferred_arc_contact: None,
                     })
                 };
-                let parallel_parameter = Some(CurveParameter2::from_bezier(parameter));
+                let parallel_parameter = Some(CurveParameter2::from(parameter));
                 let (previous_parameter, next_parameter) = if line_is_previous {
                     (line_parameter, parallel_parameter)
                 } else {
@@ -7288,7 +7289,7 @@ fn fillet_offset_centers(
                             } else {
                                 CurveParameter2::from_algebraic_cusp(cusp_parameter)
                             };
-                            let analytic_parameter = CurveParameter2::from_bezier(
+                            let analytic_parameter = CurveParameter2::from(
                                 contact.parallel_parameter,
                             );
                             let (previous_parameter, next_parameter) = if cusp_is_previous {
@@ -9091,7 +9092,7 @@ fn fillet_offset_centers(
                     dot = reverse_fillet_sign(dot);
                 }
                 let analytic_parameter =
-                    CurveParameter2::from_bezier(contact.parallel_parameter().clone());
+                    CurveParameter2::from(contact.parallel_parameter().clone());
                 let (previous_parameter, next_parameter) = if chord_is_previous {
                     (None, Some(analytic_parameter))
                 } else {
@@ -10475,8 +10476,8 @@ fn curve_region_corner_parameter_placement(
     family: CurveFamily2,
     policy: &CurveContext,
 ) -> ExactCurveResult<Option<CornerPlacement2>> {
-    let zero = CurveParameter2::from_bezier(BezierParameter2::Exact(Real::zero()));
-    let one = CurveParameter2::from_bezier(BezierParameter2::Exact(Real::one()));
+    let zero = CurveParameter2::from(BezierParameter2::Exact(Real::zero()));
+    let one = CurveParameter2::from(BezierParameter2::Exact(Real::one()));
     let compare = |boundary: &CurveParameter2| {
         parameter
             .cmp_by_refinement(boundary, policy)
@@ -10932,7 +10933,7 @@ fn retained_parallel_corner_parameter_placement(
 ) -> ExactCurveResult<Option<CornerPlacement2>> {
     let compare = |boundary: &BezierParameter2| {
         parameter
-            .cmp_by_refinement(&CurveParameter2::from_bezier(boundary.clone()), policy)
+            .cmp_by_refinement(&CurveParameter2::from(boundary.clone()), policy)
             .map_err(|cause| ExactCurveError::invalid(operation, family, cause))
             .and_then(|ordering| match ordering {
                 Classification::Decided(ordering) => Ok(ordering),
@@ -11121,7 +11122,7 @@ fn selected_fiber_chamfer_cuts(
                 let point = analytic_parallel_point_evidence(
                     &parallel, &parameter, operation, family, policy,
                 )?;
-                (CurveParameter2::from_bezier(parameter), point)
+                (CurveParameter2::from(parameter), point)
             }
             crate::bezier_offset::BezierParallelFixedDistanceParameter2::SelectedFiber(
                 parameter,
@@ -11187,7 +11188,7 @@ fn analytic_parallel_chamfer_cuts(
     if setback_sign == RealSign::Zero {
         return Ok(CornerCuts2 {
             first: Some(CornerCut2 {
-                parameter: Some(CurveParameter2::from_bezier(corner_parameter.clone())),
+                parameter: Some(CurveParameter2::from(corner_parameter.clone())),
                 point: corner,
                 placement: CornerPlacement2::Corner,
             }),
@@ -11231,7 +11232,7 @@ fn analytic_parallel_chamfer_cuts(
         let (parameter, point, placement) = match parameter {
             crate::bezier_offset::BezierParallelFixedDistanceParameter2::Bezier(parameter) => {
                 let Some(placement) = retained_parallel_corner_parameter_placement(
-                    &CurveParameter2::from_bezier(parameter.clone()),
+                    &CurveParameter2::from(parameter.clone()),
                     fragment,
                     previous,
                     mode,
@@ -11249,7 +11250,7 @@ fn analytic_parallel_chamfer_cuts(
                     family,
                     policy,
                 )?;
-                (CurveParameter2::from_bezier(parameter), point, placement)
+                (CurveParameter2::from(parameter), point, placement)
             }
             crate::bezier_offset::BezierParallelFixedDistanceParameter2::SelectedFiber(
                 parameter,
@@ -11393,9 +11394,7 @@ fn bezier_chamfer_cuts(
             BezierParameter2::Exact(parameter) => {
                 exact_corner_parameter(source.public_parameter(&parameter))
             }
-            parameter @ BezierParameter2::Algebraic(_) => {
-                Some(CurveParameter2::from_bezier(parameter))
-            }
+            parameter @ BezierParameter2::Algebraic(_) => Some(CurveParameter2::from(parameter)),
         };
         cuts.push(CornerCut2 {
             parameter,
@@ -11549,7 +11548,7 @@ fn arc_corner_cut_from_incident_point(
                     parameter: match arc
                         .source_parameter_at_point(&point, operation, family, policy)?
                     {
-                        Some(parameter) => Some(CurveParameter2::from_bezier(parameter)),
+                        Some(parameter) => Some(CurveParameter2::from(parameter)),
                         None => exact_corner_parameter(sweep_fraction),
                     },
                     point: point.into(),
@@ -11593,7 +11592,7 @@ fn arc_fillet_cut_from_incident_point(
                 exact_corner_parameter(arc.corner_parameter(previous))
             } else {
                 arc.source_parameter_at_point(&point, CurveOperation2::Fillet, family, policy)?
-                    .map(CurveParameter2::from_bezier)
+                    .map(CurveParameter2::from)
             };
             Ok(Some(CornerCut2 {
                 parameter,
@@ -12753,7 +12752,7 @@ mod tests {
         let center_parameter = BezierParameter2::Exact(
             (Real::one() / Real::from(2_i8)).expect("one half is represented"),
         );
-        let parameter = CurveParameter2::from_bezier(center_parameter.clone());
+        let parameter = CurveParameter2::from(center_parameter.clone());
         let carrier = FilletOffsetCarrier2::Parallel {
             source: FilletParallelSource2::Direct(ExactCornerBezier2::Direct(&authored)),
             support: support.clone(),
@@ -12892,7 +12891,7 @@ mod tests {
                 Classification::Uncertain(_)
             ));
             let range = crate::CurveParameterRange2::new_validated(
-                CurveParameter2::from_bezier(BezierParameter2::Exact(Real::zero())),
+                CurveParameter2::from(BezierParameter2::Exact(Real::zero())),
                 CurveParameter2::from_selected_fiber(selected.clone()),
             );
             let source_fragment = |height: i8| {

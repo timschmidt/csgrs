@@ -161,15 +161,18 @@ fn polynomial_spline_construction_obeys_terminal_policy_without_replacing_knots(
 
     let top_level = Curve2::from(evaluation_curve);
     let top_level_point = top_level
-        .point_at(&symbolic_half, &CurveContext::APPROXIMATE_512)
+        .point_at(
+            &symbolic_half.clone().into(),
+            &CurveContext::APPROXIMATE_512,
+        )
         .expect("Curve2 must preserve spline evaluation certainty");
     assert_eq!(
         top_level_point.certainty,
         hypercurve::CurveCertainty::Approximate512Consumed
     );
-    assert_eq!(top_level_point.value, p(2, 0));
+    assert_eq!(top_level_point.value, p(2, 0).into());
     assert!(matches!(
-        top_level.point_at(&symbolic_half, &CurveContext::STRICT),
+        top_level.point_at(&symbolic_half.clone().into(), &CurveContext::STRICT),
         Err(ExactCurveError::Blocked(blocker))
             if blocker.operation() == CurveOperation2::Evaluation
                 && blocker.reason() == hypercurve::UncertaintyReason::Ordering

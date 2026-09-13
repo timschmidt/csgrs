@@ -307,10 +307,10 @@ fn top_level_curve_evaluates_native_and_spline_parameters() {
     .into_value();
 
     assert_eq!(
-        line.point_at(&half, &CurveContext::STRICT)
+        line.point_at(&half.clone().into(), &CurveContext::STRICT)
             .unwrap()
             .into_value(),
-        p(1, 0)
+        p(1, 0).into()
     );
     assert_eq!(
         (
@@ -327,17 +327,17 @@ fn top_level_curve_evaluates_native_and_spline_parameters() {
     );
     assert_eq!(
         quadratic
-            .point_at(&half, &CurveContext::STRICT)
+            .point_at(&half.clone().into(), &CurveContext::STRICT)
             .unwrap()
             .into_value(),
-        p(1, 1)
+        p(1, 1).into()
     );
     assert_eq!(
         spline
-            .point_at(&r(1), &CurveContext::STRICT)
+            .point_at(&r(1).into(), &CurveContext::STRICT)
             .unwrap()
             .into_value(),
-        p(1, 1)
+        p(1, 1).into()
     );
     assert_eq!(
         (
@@ -365,37 +365,17 @@ fn top_level_curve_reuses_retained_native_endpoints() {
     for curve in every_family_open_chain() {
         assert_eq!(
             curve
-                .point_at(
-                    curve
-                        .parameter_domain()
-                        .start()
-                        .as_exact()
-                        .expect("native parameter"),
-                    &CurveContext::STRICT
-                )
+                .point_at(curve.parameter_domain().start(), &CurveContext::STRICT)
                 .unwrap()
                 .into_value(),
-            (curve.start().clone())
-                .coordinates()
-                .expect("native endpoint")
-                .clone()
+            curve.start()
         );
         assert_eq!(
             curve
-                .point_at(
-                    curve
-                        .parameter_domain()
-                        .end()
-                        .as_exact()
-                        .expect("native parameter"),
-                    &CurveContext::STRICT
-                )
+                .point_at(curve.parameter_domain().end(), &CurveContext::STRICT)
                 .unwrap()
                 .into_value(),
-            (curve.end().clone())
-                .coordinates()
-                .expect("native endpoint")
-                .clone()
+            curve.end()
         );
     }
 
@@ -404,26 +384,27 @@ fn top_level_curve_reuses_retained_native_endpoints() {
     let top_level = Curve2::from(rational.clone());
     assert_eq!(
         top_level
-            .point_at(&r(0), &CurveContext::STRICT)
+            .point_at(&r(0).into(), &CurveContext::STRICT)
             .unwrap()
             .into_value(),
-        p(0, 0)
+        p(0, 0).into()
     );
     assert_eq!(
         top_level
-            .point_at(&r(1), &CurveContext::STRICT)
+            .point_at(&r(1).into(), &CurveContext::STRICT)
             .unwrap()
             .into_value(),
-        p(2, 0)
+        p(2, 0).into()
     );
     assert_eq!(
         top_level
-            .point_at(&(r(1) / r(2)).unwrap(), &CurveContext::STRICT)
+            .point_at(&(r(1) / r(2)).unwrap().into(), &CurveContext::STRICT)
             .unwrap()
             .into_value(),
-        rational
+        (rational
             .point_at(&(r(1) / r(2)).unwrap(), &CurveContext::STRICT)
-            .unwrap()
+            .unwrap())
+        .into()
     );
 }
 

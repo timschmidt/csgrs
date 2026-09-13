@@ -203,9 +203,13 @@ exact signatures.
   `geometry()` is an optional native definition, and `coordinates()` is an
   optional scalar view of a point. Neither view is required for lossless
   `CurveRegion2::boundary_paths` export or subsequent region construction.
+  `point_at` and `point_at_side` accept `CurveParameter2` and return `CurvePoint2`,
+  retaining selected roots and local fibers without requiring coordinate images.
+  A `Real` or `BezierParameter2` converts directly into the common parameter.
+  Generated curves keep their source chart when traversal is reversed.
   Reversal, similarity transforms, bounds, and finite projection accept these
-  retained carriers. General selected-parameter evaluation, subdivision, and
-  open-path corner reconstruction are still being unified; the native-only
+  retained carriers. General selected-parameter subdivision and open-path corner
+  reconstruction are still being unified; the native-only
   operations report an explicit blocker for carriers they cannot yet consume.
 
 ### Strings, paths, contours, and regions

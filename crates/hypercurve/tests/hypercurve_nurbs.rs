@@ -200,15 +200,18 @@ fn nurbs_construction_obeys_terminal_policy_without_replacing_knots() {
 
     let evaluation_top_level = Curve2::from(evaluation_curve.clone());
     let top_level_point = evaluation_top_level
-        .point_at(&symbolic_half, &CurveContext::APPROXIMATE_512)
+        .point_at(
+            &symbolic_half.clone().into(),
+            &CurveContext::APPROXIMATE_512,
+        )
         .expect("Curve2 must preserve NURBS evaluation certainty");
     assert_eq!(
         top_level_point.certainty,
         hypercurve::CurveCertainty::Approximate512Consumed
     );
-    assert_eq!(top_level_point.value, p(2, 0));
+    assert_eq!(top_level_point.value, p(2, 0).into());
     assert!(matches!(
-        evaluation_top_level.point_at(&symbolic_half, &CurveContext::STRICT),
+        evaluation_top_level.point_at(&symbolic_half.clone().into(), &CurveContext::STRICT),
         Err(ExactCurveError::Blocked(blocker))
             if blocker.operation() == CurveOperation2::Evaluation
                 && blocker.reason() == hypercurve::UncertaintyReason::Ordering
@@ -690,10 +693,14 @@ fn discontinuous_nurbs_knot_requires_explicit_point_side() {
     let top_level = Curve2::from(curve);
     assert_eq!(
         top_level
-            .point_at_side(&r(1), CurveParameterSide2::Right, &CurveContext::STRICT)
+            .point_at_side(
+                &r(1).into(),
+                CurveParameterSide2::Right,
+                &CurveContext::STRICT
+            )
             .unwrap()
             .into_value(),
-        p(10, 0)
+        p(10, 0).into()
     );
 }
 

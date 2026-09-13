@@ -575,7 +575,7 @@ impl RationalBezierOverlapParameterCorrespondence2 {
             } else {
                 self.map_second_to_first(parameter, first_range, second_range, policy)
             }?;
-            return Ok(mapped.map(|parameter| parameter.map(CurveParameter2::from_bezier)));
+            return Ok(mapped.map(|parameter| parameter.map(CurveParameter2::from)));
         }
         if !parameter.is_retained_scalar() {
             return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
@@ -589,12 +589,11 @@ impl RationalBezierOverlapParameterCorrespondence2 {
             (source_range.start(), target_range.start()),
             (source_range.end(), target_range.end()),
         ] {
-            match parameter.cmp_by_refinement(
-                &CurveParameter2::from_bezier(source_endpoint.clone()),
-                policy,
-            )? {
+            match parameter
+                .cmp_by_refinement(&CurveParameter2::from(source_endpoint.clone()), policy)?
+            {
                 Classification::Decided(Ordering::Equal) => {
-                    return Ok(Classification::Decided(Some(CurveParameter2::from_bezier(
+                    return Ok(Classification::Decided(Some(CurveParameter2::from(
                         target_endpoint.clone(),
                     ))));
                 }
@@ -683,7 +682,7 @@ impl RationalBezierOverlapParameterCorrespondence2 {
             }
         };
         let lower = match mapped.cmp_by_refinement(
-            &CurveParameter2::from_bezier(BezierParameter2::Exact(Real::zero())),
+            &CurveParameter2::from(BezierParameter2::Exact(Real::zero())),
             policy,
         )? {
             Classification::Decided(order) => order,
@@ -692,7 +691,7 @@ impl RationalBezierOverlapParameterCorrespondence2 {
             }
         };
         let upper = match mapped.cmp_by_refinement(
-            &CurveParameter2::from_bezier(BezierParameter2::Exact(Real::one())),
+            &CurveParameter2::from(BezierParameter2::Exact(Real::one())),
             policy,
         )? {
             Classification::Decided(order) => order,
@@ -724,7 +723,7 @@ impl RationalBezierOverlapParameterCorrespondence2 {
         } else {
             self.map_second_to_first(&parameter, first_range, second_range, policy)
         }?;
-        Ok(mapped.map(|parameter| parameter.map(CurveParameter2::from_bezier)))
+        Ok(mapped.map(|parameter| parameter.map(CurveParameter2::from)))
     }
 }
 

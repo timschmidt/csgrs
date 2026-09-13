@@ -287,7 +287,7 @@ fn main() {
     let mut evaluation_count = 0_u32;
     for _ in 0..iterations {
         let point = retained
-            .point_at(&parameter, &CurveContext::STRICT)
+            .point_at(&parameter.clone().into(), &CurveContext::STRICT)
             .expect("retained arc evaluation remains exact")
             .into_value();
         black_box(point);

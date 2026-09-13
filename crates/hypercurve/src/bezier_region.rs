@@ -1544,11 +1544,14 @@ pub(crate) fn curve_fragment_endpoint_point(
             } else {
                 fragment.range().end()
             };
-            crate::CurvePoint2::from(crate::BezierAnalyticParallelPoint2::new(
-                fragment.parallel().clone(),
-                parameter.clone(),
-                policy,
-            ))
+            return fragment
+                .parallel()
+                .point_evidence_on_regular_range(
+                    parameter,
+                    &CurveParameterRange2::from_bezier_range(fragment.range().clone()),
+                    policy,
+                )
+                .map(|point| point.map(Some));
         }
         BezierSplitFragment2::AlgebraicChord(chord) => if start_endpoint {
             chord.start()
@@ -2705,14 +2708,8 @@ fn retained_selected_corner_parameter_is_in_native_chart(
         )
     };
     Ok(
-        !compare(CurveParameter2::from_bezier(BezierParameter2::Exact(
-            Real::zero(),
-        )))?
-        .is_lt()
-            && !compare(CurveParameter2::from_bezier(BezierParameter2::Exact(
-                Real::one(),
-            )))?
-            .is_gt(),
+        !compare(CurveParameter2::from(BezierParameter2::Exact(Real::zero())))?.is_lt()
+            && !compare(CurveParameter2::from(BezierParameter2::Exact(Real::one())))?.is_gt(),
     )
 }
 
@@ -2777,7 +2774,7 @@ fn retained_corner_fragment_extension(
         }
         return retained_corner_fragment_trim(
             &replacement,
-            CurveParameter2::from_bezier(parameter),
+            CurveParameter2::from(parameter),
             cut_point,
             None,
             keep_before_cut,
@@ -3268,8 +3265,8 @@ fn retained_corner_fragment_trim(
                 .is_none_or(|value| value.exact_rational_ref().is_none())
         });
     if retain_source {
-        let zero = CurveParameter2::from_bezier(BezierParameter2::Exact(Real::zero()));
-        let one = CurveParameter2::from_bezier(BezierParameter2::Exact(Real::one()));
+        let zero = CurveParameter2::from(BezierParameter2::Exact(Real::zero()));
+        let one = CurveParameter2::from(BezierParameter2::Exact(Real::one()));
         for (boundary, expected) in [
             (&zero, std::cmp::Ordering::Greater),
             (&one, std::cmp::Ordering::Less),
@@ -3398,7 +3395,7 @@ fn retained_circular_cut_fragments(
         (_, None) => {
             let (start, end, start_point, end_point) = if keep_before_cut {
                 (
-                    CurveParameter2::from_bezier(BezierParameter2::Exact(Real::zero())),
+                    CurveParameter2::from(BezierParameter2::Exact(Real::zero())),
                     parameter.clone(),
                     CurvePoint2::from(span.start().clone()),
                     point.clone(),
@@ -3406,7 +3403,7 @@ fn retained_circular_cut_fragments(
             } else {
                 (
                     parameter.clone(),
-                    CurveParameter2::from_bezier(BezierParameter2::Exact(Real::one())),
+                    CurveParameter2::from(BezierParameter2::Exact(Real::one())),
                     point.clone(),
                     CurvePoint2::from(span.end().clone()),
                 )
@@ -3812,14 +3809,14 @@ impl RetainedCornerExtensionCarrier2<'_> {
 
     fn retained_endpoint(self, previous: bool) -> CurveParameter2 {
         match self {
-            Self::Curve(_) => CurveParameter2::from_bezier(BezierParameter2::Exact(if previous {
+            Self::Curve(_) => CurveParameter2::from(BezierParameter2::Exact(if previous {
                 Real::zero()
             } else {
                 Real::one()
             })),
             Self::AnalyticParallel(fragment) => {
                 let range = fragment.range();
-                CurveParameter2::from_bezier(if previous != fragment.is_reversed() {
+                CurveParameter2::from(if previous != fragment.is_reversed() {
                     range.start().clone()
                 } else {
                     range.end().clone()
@@ -3974,7 +3971,7 @@ fn canonicalize_retained_extension_on_finite_envelope(
             .as_bezier_parameter()
             .is_some_and(BezierParameter2::is_exact)
         {
-            CurveParameter2::from_bezier(BezierParameter2::Exact(exact_endpoint))
+            CurveParameter2::from(BezierParameter2::Exact(exact_endpoint))
         } else {
             retained_corner_decision(
                 policy
@@ -4935,8 +4932,8 @@ fn exact_offset_spans_from_source_singular_parallel(
                         crate::bezier_split::BezierSelectedFiberFragment2::new(
                             BezierSelectedFiberSource2::AnalyticParallel(parallel.clone()),
                             CurveParameterRange2::new_validated(
-                                CurveParameter2::from_bezier(parameters[0].0.clone()),
-                                CurveParameter2::from_bezier(parameters[1].0.clone()),
+                                CurveParameter2::from(parameters[0].0.clone()),
+                                CurveParameter2::from(parameters[1].0.clone()),
                             ),
                             points[0].clone(),
                             points[1].clone(),
@@ -5903,7 +5900,7 @@ fn exact_offset_span_from_selected_parallel_fragment(
             }
         };
         for singularity in analysis.source_singularities() {
-            let singularity = CurveParameter2::from_bezier(singularity.clone());
+            let singularity = CurveParameter2::from(singularity.clone());
             let after_start = match singularity.cmp_by_refinement(range.start(), policy)? {
                 Classification::Decided(order) => !order.is_lt(),
                 Classification::Uncertain(reason) => {
@@ -5921,7 +5918,7 @@ fn exact_offset_span_from_selected_parallel_fragment(
             }
         }
         for cusp in analysis.parallel_cusps() {
-            let cusp = CurveParameter2::from_bezier(cusp.clone());
+            let cusp = CurveParameter2::from(cusp.clone());
             let after_start = match cusp.cmp_by_refinement(range.start(), policy)? {
                 Classification::Decided(order) => order.is_gt(),
                 Classification::Uncertain(reason) => {
@@ -7693,7 +7690,7 @@ fn append_retained_parallel_round_join(
                 companion_at_start,
                 parallel.clone(),
                 selected_source_parameter.map_or_else(
-                    || CurveParameter2::from_bezier(parameter.clone()),
+                    || CurveParameter2::from(parameter.clone()),
                     |parameter| CurveParameter2::from_selected_fiber(parameter.clone()),
                 ),
                 source_direction,
@@ -16046,8 +16043,8 @@ fn retained_fragment_algebraic_ray_curve(
         } => (
             RationalBezier2::try_from_subcurve(curve)?,
             Some(CurveParameterRange2::new_validated(
-                CurveParameter2::from_bezier(start.clone()),
-                CurveParameter2::from_bezier(end.clone()),
+                CurveParameter2::from(start.clone()),
+                CurveParameter2::from(end.clone()),
             )),
             *reversed,
         ),
@@ -17639,8 +17636,8 @@ fn classify_point_with_retained_ray_skipping_origin(
             } => (
                 curve,
                 Some(CurveParameterRange2::new_validated(
-                    CurveParameter2::from_bezier(start.clone()),
-                    CurveParameter2::from_bezier(end.clone()),
+                    CurveParameter2::from(start.clone()),
+                    CurveParameter2::from(end.clone()),
                 )),
                 *reversed,
             ),
@@ -17998,7 +17995,7 @@ fn retained_curve_region_parameter_contains(
     reversed: bool,
     policy: &CurveContext,
 ) -> CurveResult<Classification<bool>> {
-    let parameter = CurveParameter2::from_bezier(parameter.clone());
+    let parameter = CurveParameter2::from(parameter.clone());
     let start_order = match parameter.cmp_by_refinement(range.start(), policy)? {
         Classification::Decided(order) => order,
         Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
@@ -18987,8 +18984,8 @@ mod tests {
         )
         .expect("the closed cubic selected source is finite");
         let range = CurveParameterRange2::new_validated(
-            CurveParameter2::from_bezier(BezierParameter2::Exact(Real::zero())),
-            CurveParameter2::from_bezier(BezierParameter2::Exact(Real::one())),
+            CurveParameter2::from(BezierParameter2::Exact(Real::zero())),
+            CurveParameter2::from(BezierParameter2::Exact(Real::one())),
         );
         let mut fragment = BezierSplitFragment2::SelectedFiber(
             crate::bezier_split::BezierSelectedFiberFragment2::new(
@@ -19206,7 +19203,7 @@ mod tests {
                 BezierSelectedFiberSource2::AnalyticParallel(parallel.clone()),
                 CurveParameterRange2::new_validated(
                     CurveParameter2::from_selected_fiber(start.clone()),
-                    CurveParameter2::from_bezier(BezierParameter2::Exact(end.clone())),
+                    CurveParameter2::from(BezierParameter2::Exact(end.clone())),
                 ),
                 start_point,
                 CurvePoint2::from(Point2::new(Real::from(10_i8) * &end, Real::zero())),
@@ -19415,7 +19412,7 @@ mod tests {
                 crate::bezier_split::BezierSelectedFiberFragment2::new(
                     BezierSelectedFiberSource2::AnalyticParallel(parallel),
                     CurveParameterRange2::new_validated(
-                        CurveParameter2::from_bezier(BezierParameter2::Exact(start.clone())),
+                        CurveParameter2::from(BezierParameter2::Exact(start.clone())),
                         CurveParameter2::from_selected_fiber(center.clone()),
                     ),
                     start_point.clone(),
@@ -19896,7 +19893,7 @@ mod tests {
                     BezierSelectedFiberSource2::AnalyticParallel(horizontal),
                     CurveParameterRange2::new_validated(
                         CurveParameter2::from_selected_fiber(horizontal_start),
-                        CurveParameter2::from_bezier(BezierParameter2::Exact(Real::one())),
+                        CurveParameter2::from(BezierParameter2::Exact(Real::one())),
                     ),
                     horizontal_start_point.clone(),
                     CurvePoint2::from(corner.clone()),
@@ -19906,7 +19903,7 @@ mod tests {
                 crate::bezier_split::BezierSelectedFiberFragment2::new(
                     BezierSelectedFiberSource2::AnalyticParallel(curved),
                     CurveParameterRange2::new_validated(
-                        CurveParameter2::from_bezier(BezierParameter2::Exact(Real::zero())),
+                        CurveParameter2::from(BezierParameter2::Exact(Real::zero())),
                         CurveParameter2::from_selected_fiber(curved_end),
                     ),
                     CurvePoint2::from(corner),
@@ -20006,7 +20003,7 @@ mod tests {
                     BezierSelectedFiberSource2::AnalyticParallel(parallel),
                     CurveParameterRange2::new_validated(
                         CurveParameter2::from_selected_fiber(start),
-                        CurveParameter2::from_bezier(BezierParameter2::Exact(end)),
+                        CurveParameter2::from(BezierParameter2::Exact(end)),
                     ),
                     start_point.clone(),
                     end_point.clone(),
@@ -20350,8 +20347,8 @@ mod tests {
                 crate::bezier_split::BezierSelectedFiberFragment2::new(
                     BezierSelectedFiberSource2::Rational(rational),
                     CurveParameterRange2::new_validated(
-                        CurveParameter2::from_bezier(BezierParameter2::Exact(Real::zero())),
-                        CurveParameter2::from_bezier(BezierParameter2::Exact(Real::one())),
+                        CurveParameter2::from(BezierParameter2::Exact(Real::zero())),
+                        CurveParameter2::from(BezierParameter2::Exact(Real::one())),
                     ),
                     CurvePoint2::from(start.clone()),
                     CurvePoint2::from(corner.clone()),
@@ -21212,8 +21209,8 @@ mod tests {
         for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
             for reversed in [false, true] {
                 let range = CurveParameterRange2::new_validated(
-                    CurveParameter2::from_bezier(BezierParameter2::Exact(Real::zero())),
-                    CurveParameter2::from_bezier(BezierParameter2::Exact(Real::one())),
+                    CurveParameter2::from(BezierParameter2::Exact(Real::zero())),
+                    CurveParameter2::from(BezierParameter2::Exact(Real::one())),
                 );
                 let mut fragment = BezierSplitFragment2::SelectedFiber(
                     crate::bezier_split::BezierSelectedFiberFragment2::new(
@@ -21396,12 +21393,8 @@ mod tests {
                             crate::bezier_split::BezierSelectedFiberFragment2::new(
                                 BezierSelectedFiberSource2::Rational(selected_source.clone()),
                                 CurveParameterRange2::new_validated(
-                                    CurveParameter2::from_bezier(BezierParameter2::Exact(
-                                        Real::zero(),
-                                    )),
-                                    CurveParameter2::from_bezier(BezierParameter2::Exact(
-                                        Real::one(),
-                                    )),
+                                    CurveParameter2::from(BezierParameter2::Exact(Real::zero())),
+                                    CurveParameter2::from(BezierParameter2::Exact(Real::one())),
                                 ),
                                 CurvePoint2::from(seam.clone()),
                                 CurvePoint2::from(seam),
