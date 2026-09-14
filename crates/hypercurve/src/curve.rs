@@ -1045,23 +1045,30 @@ impl Curve2 {
             return;
         }
         let range = &self.data.lineage.as_ref().expect("native lineage").range;
-        let covers_root_domain =
-            (crate::classify::compare_reals(range.start(), root.domain.start(), policy)
-                == Some(std::cmp::Ordering::Equal)
-                && crate::classify::compare_reals(range.end(), root.domain.end(), policy)
-                    == Some(std::cmp::Ordering::Equal))
-                || (crate::classify::compare_reals(range.start(), root.domain.end(), policy)
+        let certified = policy.strict_predicate_pass(|| {
+            let covers_root_domain =
+                (crate::classify::compare_reals(range.start(), root.domain.start(), policy)
                     == Some(std::cmp::Ordering::Equal)
-                    && crate::classify::compare_reals(range.end(), root.domain.start(), policy)
-                        == Some(std::cmp::Ordering::Equal));
-        if !covers_root_domain {
-            return;
-        }
-        let Ok(Classification::Decided(evaluators)) = self.rational_evaluators_with_policy(policy)
-        else {
-            return;
-        };
-        if evaluators.len() == 1 && evaluators[0].has_certified_injective_axis(policy) {
+                    && crate::classify::compare_reals(range.end(), root.domain.end(), policy)
+                        == Some(std::cmp::Ordering::Equal))
+                    || (crate::classify::compare_reals(range.start(), root.domain.end(), policy)
+                        == Some(std::cmp::Ordering::Equal)
+                        && crate::classify::compare_reals(
+                            range.end(),
+                            root.domain.start(),
+                            policy,
+                        ) == Some(std::cmp::Ordering::Equal));
+            if !covers_root_domain {
+                return false;
+            }
+            let Ok(Classification::Decided(evaluators)) =
+                self.rational_evaluators_with_policy(policy)
+            else {
+                return false;
+            };
+            evaluators.len() == 1 && evaluators[0].has_certified_injective_axis(policy)
+        });
+        if certified {
             let _ = root.image_is_injective.set(true);
         }
     }

@@ -37,6 +37,7 @@ use crate::classify::{
     real_sign,
 };
 use crate::intersect::{circle_relation_from_supports, oriented_param_range_overlap};
+use crate::policy::{PolicyClassificationCache, resolve_cached_classification};
 use crate::{
     Aabb2, Axis2, BezierArrangementGraph2, BezierLineContactKind, BezierLineContactRelation,
     BezierLineCrossingDirection, BezierLineImageFitRelation, BezierParameter2,
@@ -69,8 +70,8 @@ struct RationalBezierData {
     homogeneous_power_basis: OnceLock<RationalParametricCurve2>,
     x_derivative_numerator_bernstein: OnceLock<Option<Vec<Real>>>,
     y_derivative_numerator_bernstein: OnceLock<Option<Vec<Real>>>,
-    x_axis_monotonicity: OnceLock<bool>,
-    y_axis_monotonicity: OnceLock<bool>,
+    x_axis_monotonicity: PolicyClassificationCache<bool>,
+    y_axis_monotonicity: PolicyClassificationCache<bool>,
     degree_elevations: OnceLock<Mutex<Vec<ExactCurveResult<RationalBezier2>>>>,
 }
 
@@ -82,7 +83,7 @@ struct RationalBezierLineage {
 
 #[derive(Debug, Default)]
 struct RationalBezierLineageRoot {
-    image_is_injective: OnceLock<bool>,
+    unit_image_is_injective: OnceLock<bool>,
     implicit_quadratic_conic: OnceLock<Arc<[Real; 6]>>,
     circular_conic: OnceLock<Arc<crate::rational_bezier::RationalQuadraticCircle2>>,
     quadratic_conic_parameter_frame: OnceLock<Arc<[HomogeneousPoint2; 3]>>,
@@ -1759,8 +1760,8 @@ impl RationalBezier2 {
                 homogeneous_power_basis: OnceLock::new(),
                 x_derivative_numerator_bernstein: OnceLock::new(),
                 y_derivative_numerator_bernstein: OnceLock::new(),
-                x_axis_monotonicity: OnceLock::new(),
-                y_axis_monotonicity: OnceLock::new(),
+                x_axis_monotonicity: PolicyClassificationCache::new(),
+                y_axis_monotonicity: PolicyClassificationCache::new(),
                 degree_elevations: OnceLock::new(),
             }),
         })
@@ -2290,14 +2291,10 @@ impl RationalBezier2 {
             Axis2::X => &self.data.x_axis_monotonicity,
             Axis2::Y => &self.data.y_axis_monotonicity,
         };
-        if let Some(monotone) = cache.get() {
-            return Ok(Classification::Decided(*monotone));
-        }
-        let result = self.compute_axis_is_monotone(axis, policy)?;
-        if let Classification::Decided(monotone) = result {
-            let _ = cache.set(monotone);
-        }
-        Ok(result)
+        resolve_cached_classification(cache, policy, |attempt| {
+            self.compute_axis_is_monotone(axis, attempt)
+        })
+        .map(|classification| classification.map(|monotone| *monotone))
     }
 
     fn compute_axis_is_monotone(
@@ -3490,7 +3487,7 @@ impl RationalBezier2 {
         }
         self.retain_root_image_injectivity(policy);
         other.retain_root_image_injectivity(policy);
-        if self.data.lineage.root.image_is_injective.get() == Some(&true) {
+        if self.has_injective_root_chart(policy) && other.has_injective_root_chart(policy) {
             return Ok(None);
         }
 
@@ -5540,7 +5537,7 @@ impl RationalBezier2 {
         }
         self.retain_root_image_injectivity(policy);
         other.retain_root_image_injectivity(policy);
-        if self.data.lineage.root.image_is_injective.get() != Some(&true) {
+        if !self.has_injective_root_chart(policy) || !other.has_injective_root_chart(policy) {
             return Classification::Decided(None);
         }
 
@@ -5577,20 +5574,44 @@ impl RationalBezier2 {
     }
 
     fn retain_root_image_injectivity(&self, policy: &CurveContext) {
-        if self.data.lineage.root.image_is_injective.get().is_some() {
+        if self
+            .data
+            .lineage
+            .root
+            .unit_image_is_injective
+            .get()
+            .is_some()
+        {
             return;
         }
         let range = &self.data.lineage.range;
-        let covers_root_domain = (compare_reals(range.start(), &Real::zero(), policy)
-            == Some(std::cmp::Ordering::Equal)
-            && compare_reals(range.end(), &Real::one(), policy) == Some(std::cmp::Ordering::Equal))
-            || (compare_reals(range.start(), &Real::one(), policy)
-                == Some(std::cmp::Ordering::Equal)
-                && compare_reals(range.end(), &Real::zero(), policy)
-                    == Some(std::cmp::Ordering::Equal));
-        if covers_root_domain && self.has_certified_injective_axis(policy) {
-            let _ = self.data.lineage.root.image_is_injective.set(true);
+        let certified = policy.strict_predicate_pass(|| {
+            let covers_root_domain = (compare_reals(range.start(), &Real::zero(), policy)
+                == Some(Ordering::Equal)
+                && compare_reals(range.end(), &Real::one(), policy) == Some(Ordering::Equal))
+                || (compare_reals(range.start(), &Real::one(), policy) == Some(Ordering::Equal)
+                    && compare_reals(range.end(), &Real::zero(), policy) == Some(Ordering::Equal));
+            covers_root_domain && self.has_certified_injective_axis(policy)
+        });
+        if certified {
+            let _ = self.data.lineage.root.unit_image_is_injective.set(true);
         }
+    }
+
+    /// The root theorem covers its original unit domain. A restricted
+    /// parameter chart must stay inside it and have nonzero affine scale.
+    fn has_injective_root_chart(&self, policy: &CurveContext) -> bool {
+        if self.data.lineage.root.unit_image_is_injective.get() != Some(&true) {
+            return false;
+        }
+        let range = &self.data.lineage.range;
+        policy.strict_predicate_pass(|| {
+            matches!(
+                compare_reals(range.start(), range.end(), policy),
+                Some(Ordering::Less | Ordering::Greater)
+            ) && in_closed_unit_interval(range.start(), policy) == Some(true)
+                && in_closed_unit_interval(range.end(), policy) == Some(true)
+        })
     }
 
     fn partial_image_overlap(
@@ -5888,16 +5909,14 @@ impl RationalBezier2 {
     }
 
     pub(crate) fn has_certified_injective_axis(&self, policy: &CurveContext) -> bool {
-        if self.data.lineage.root.image_is_injective.get() == Some(&true) {
+        if self.has_injective_root_chart(policy) {
             return true;
         }
-        let injective = [Axis2::X, Axis2::Y]
+        // Local axis facts belong to this curve. Only the complete-domain
+        // check in retain_root_image_injectivity may certify the root.
+        [Axis2::X, Axis2::Y]
             .into_iter()
-            .any(|axis| self.has_certified_injective_axis_on(axis, policy));
-        if injective {
-            let _ = self.data.lineage.root.image_is_injective.set(true);
-        }
-        injective
+            .any(|axis| self.has_certified_injective_axis_on(axis, policy))
     }
 
     pub(crate) fn derivative_is_certified_nonzero_at(
@@ -6004,11 +6023,6 @@ impl RationalBezier2 {
             Axis2::X => (self.start().x(), self.end().x()),
             Axis2::Y => (self.start().y(), self.end().y()),
         };
-        if self.control_polygon_certifies_axis_monotone(axis, policy)
-            && compare_reals(start, end, policy).is_some_and(|ordering| !ordering.is_eq())
-        {
-            return true;
-        }
         if !matches!(
             self.axis_monotonicity_classified(axis, policy),
             Ok(Classification::Decided(true))
@@ -10024,6 +10038,162 @@ mod tests {
     }
 
     #[test]
+    fn injectivity_scope_preserves_the_original_self_contact_after_subrange_queries() {
+        let ratio = |n: i8, d: i8| (Real::from(n) / Real::from(d)).unwrap();
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            for reverse_branch in [false, true] {
+                for query_native_span in [false, true] {
+                    // This loop crosses (0, 0) at t=1/4 and t=3/4. Its
+                    // initial eighth is strictly monotone in x.
+                    let source = RationalBezier2::try_new(
+                        [(9_i8, 0_i8), (-7, 3), (-7, -10), (9, 9)]
+                            .into_iter()
+                            .map(|(x, y)| Point2::new(Real::from(x), Real::from(y)))
+                            .collect(),
+                        vec![Real::one(); 4],
+                    )
+                    .unwrap();
+                    let Classification::Decided(branch) = source
+                        .subcurve_between_exact(&Real::zero(), &ratio(1, 8), &policy)
+                        .unwrap()
+                    else {
+                        panic!("exact branch restriction");
+                    };
+                    let branch = if reverse_branch {
+                        branch.reversed()
+                    } else {
+                        branch
+                    };
+                    if query_native_span {
+                        let curve = crate::Curve2::from(branch.clone());
+                        let spans = curve.native_bezier_fragments(&policy).unwrap();
+                        assert!(
+                            spans.value[0]
+                                .has_certified_injective_axis(&policy)
+                                .unwrap()
+                        );
+                    } else {
+                        assert!(matches!(
+                            branch.point_incidence(branch.start(), &policy).unwrap(),
+                            RationalBezierPointIncidence2::Parameters(_)
+                        ));
+                    }
+                    assert_eq!(branch.data.x_axis_monotonicity.certified(), Some(&true));
+                    assert!(
+                        source
+                            .data
+                            .lineage
+                            .root
+                            .unit_image_is_injective
+                            .get()
+                            .is_none()
+                    );
+                    let RationalBezierIntersectionContacts2::Contacts(contacts) =
+                        source.self_intersection_contacts(&policy).unwrap()
+                    else {
+                        panic!("an injective subrange erased the original loop's self-contact");
+                    };
+                    assert_eq!(contacts.len(), 1);
+                    assert_eq!(
+                        contacts[0]
+                            .first_parameter()
+                            .same_value(&BezierParameter2::Exact(ratio(1, 4)), &policy)
+                            .unwrap(),
+                        Classification::Decided(true)
+                    );
+                    assert_eq!(
+                        contacts[0]
+                            .second_parameter()
+                            .same_value(&BezierParameter2::Exact(ratio(3, 4)), &policy)
+                            .unwrap(),
+                        Classification::Decided(true)
+                    );
+                    assert!(contacts[0].is_certified_transverse());
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn injectivity_scope_preserves_every_parameter_of_a_collapsed_chart() {
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let source = RationalBezier2::try_new(
+                vec![Point2::from_values(0, 0), Point2::from_values(1, 1)],
+                vec![Real::one(); 2],
+            )
+            .unwrap();
+            let half = (Real::one() / Real::from(2)).unwrap();
+            let Classification::Decided(point) = source
+                .subcurve_between_exact(&half, &half, &policy)
+                .unwrap()
+            else {
+                panic!("exact collapsed chart");
+            };
+            for point in [point.clone(), point.reversed()] {
+                assert!(
+                    matches!(
+                        point.point_incidence(point.start(), &policy).unwrap(),
+                        RationalBezierPointIncidence2::EntireCurve
+                    ),
+                    "a constant chart has an entire parameter fiber"
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn injectivity_scope_retains_the_policy_of_axis_monotonicity() {
+        for axis in [Axis2::X, Axis2::Y] {
+            let sine = Real::e().sin();
+            let cosine = Real::e().cos();
+            let unresolved_zero = &sine * &sine + &cosine * &cosine - Real::one();
+            let curve = RationalBezier2::try_new(
+                [Real::zero(), unresolved_zero, Real::one()]
+                    .into_iter()
+                    .map(|value| match axis {
+                        Axis2::X => Point2::new(value, Real::zero()),
+                        Axis2::Y => Point2::new(Real::zero(), value),
+                    })
+                    .collect(),
+                vec![Real::one(); 3],
+            )
+            .unwrap();
+            assert!(matches!(
+                curve.axis_is_monotone(axis, &CurveContext::STRICT),
+                Err(ExactCurveError::Blocked(_))
+            ));
+            let approximate = crate::policy::resolve_certified_operation(
+                &CurveContext::APPROXIMATE_512,
+                |attempt| curve.axis_is_monotone(axis, attempt),
+            )
+            .unwrap();
+            assert!(approximate.value);
+            assert_eq!(
+                approximate.certainty,
+                crate::CurveCertainty::Approximate512Consumed
+            );
+            let clone = curve.clone();
+            assert!(
+                matches!(
+                    clone.axis_is_monotone(axis, &CurveContext::STRICT),
+                    Err(ExactCurveError::Blocked(_))
+                ),
+                "a cached terminal result cannot certify a strict query"
+            );
+            let repeated = crate::policy::resolve_certified_operation(
+                &CurveContext::APPROXIMATE_512,
+                |attempt| clone.axis_is_monotone(axis, attempt),
+            )
+            .unwrap();
+            assert!(repeated.value);
+            assert_eq!(
+                repeated.certainty,
+                crate::CurveCertainty::Approximate512Consumed
+            );
+        }
+    }
+
+    #[test]
     fn retained_noninjective_subranges_replay_cross_branch_contacts() {
         let controls = vec![
             Point2::new(Real::from(9_i8), Real::zero()),
@@ -10487,17 +10657,17 @@ mod tests {
         let clone = curve.clone();
 
         assert!(curve.data.x_derivative_numerator_bernstein.get().is_none());
-        assert!(curve.data.x_axis_monotonicity.get().is_none());
+        assert!(curve.data.x_axis_monotonicity.is_empty());
         assert!(matches!(
             clone.axis_is_monotone(Axis2::X, &CurveContext::STRICT),
             Ok(true)
         ));
         assert!(curve.data.x_derivative_numerator_bernstein.get().is_some());
         assert!(clone.data.x_derivative_numerator_bernstein.get().is_some());
-        assert_eq!(curve.data.x_axis_monotonicity.get(), Some(&true));
-        assert_eq!(clone.data.x_axis_monotonicity.get(), Some(&true));
+        assert_eq!(curve.data.x_axis_monotonicity.certified(), Some(&true));
+        assert_eq!(clone.data.x_axis_monotonicity.certified(), Some(&true));
         assert!(curve.data.y_derivative_numerator_bernstein.get().is_none());
-        assert!(curve.data.y_axis_monotonicity.get().is_none());
+        assert!(curve.data.y_axis_monotonicity.is_empty());
     }
 
     #[test]
