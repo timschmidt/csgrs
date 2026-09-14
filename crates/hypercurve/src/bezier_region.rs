@@ -6425,7 +6425,7 @@ fn retained_parallel_range_scale_sign(
 ) -> CurveResult<Classification<RealSign>> {
     let parameter = match range
         .start()
-        .strict_rational_between_ordered(range.end(), policy)?
+        .strict_scalar_between_ordered(range.end(), policy)?
     {
         Classification::Decided(parameter) => parameter,
         Classification::Uncertain(reason) => {
@@ -15337,7 +15337,7 @@ fn retained_loop_sample_point_evidence(
                 end,
                 source_curve,
                 ..
-            } => match start.strict_rational_between(end, policy)? {
+            } => match start.strict_scalar_between(end, policy)? {
                 Classification::Decided(parameter) => {
                     subcurve_point_at(source_curve, parameter, policy).map(CurvePoint2::from)
                 }

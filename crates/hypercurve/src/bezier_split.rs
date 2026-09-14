@@ -423,7 +423,7 @@ impl CurveParameter2 {
         }
     }
 
-    /// Returns the exact finite isolating bounds used to construct a rational
+    /// Returns the exact finite isolating bounds used to construct a scalar
     /// envelope around this parameter. These are outward certificates, not
     /// representative values.
     pub(crate) fn finite_envelope_bounds(&self) -> Option<(&Real, &Real)> {
@@ -546,7 +546,9 @@ impl CurveParameter2 {
         }
     }
 
-    pub(crate) fn strict_rational_between_ordered(
+    /// Constructs an exact scalar between parameters already known to be
+    /// strictly ordered. An interior witness need not be rational.
+    pub(crate) fn strict_scalar_between_ordered(
         &self,
         other: &Self,
         policy: &CurveContext,
@@ -574,38 +576,38 @@ impl CurveParameter2 {
         }
         match (&self.data, &other.data) {
             (CurveParameterData2::Bezier(first), CurveParameterData2::Bezier(second)) => {
-                first.strict_rational_between_ordered(second, policy)
+                first.strict_scalar_between_ordered(second, policy)
             }
             (
                 CurveParameterData2::AlgebraicCusp(first),
                 CurveParameterData2::AlgebraicCusp(second),
-            ) => first.strict_rational_between(second, policy),
+            ) => first.strict_scalar_between(second, policy),
             (
                 CurveParameterData2::AlgebraicCuspComplement(first),
                 CurveParameterData2::AlgebraicCuspComplement(second),
-            ) => first.strict_rational_between(second, policy),
+            ) => first.strict_scalar_between(second, policy),
             (
                 CurveParameterData2::SelectedFiber(first),
                 CurveParameterData2::SelectedFiber(second),
-            ) => first.strict_rational_between_ordered(second, policy),
+            ) => first.strict_scalar_between_ordered(second, policy),
             (
                 CurveParameterData2::RecursiveProjective(first),
                 CurveParameterData2::RecursiveProjective(second),
-            ) => first.strict_rational_between_ordered(second, policy),
+            ) => first.strict_scalar_between_ordered(second, policy),
             (CurveParameterData2::SelectedFiber(first), CurveParameterData2::Bezier(second)) => {
-                first.strict_rational_between_bezier_ordered(second, true, policy)
+                first.strict_scalar_between_bezier_ordered(second, true, policy)
             }
             (CurveParameterData2::Bezier(first), CurveParameterData2::SelectedFiber(second)) => {
-                second.strict_rational_between_bezier_ordered(first, false, policy)
+                second.strict_scalar_between_bezier_ordered(first, false, policy)
             }
             (
                 CurveParameterData2::RecursiveProjective(first),
                 CurveParameterData2::Bezier(second),
-            ) => first.strict_rational_between_bezier_ordered(second, true, policy),
+            ) => first.strict_scalar_between_bezier_ordered(second, true, policy),
             (
                 CurveParameterData2::Bezier(first),
                 CurveParameterData2::RecursiveProjective(second),
-            ) => second.strict_rational_between_bezier_ordered(first, false, policy),
+            ) => second.strict_scalar_between_bezier_ordered(first, false, policy),
             (CurveParameterData2::AlgebraicChord(_), _)
             | (_, CurveParameterData2::AlgebraicChord(_)) => Err(CurveError::Topology(
                 "an algebraic chord cut has no represented scalar midpoint".into(),
@@ -647,17 +649,17 @@ impl CurveParameterRange2 {
     }
 
     /// Constructs one represented scalar strictly inside this oriented range.
-    pub(crate) fn strict_rational_interior(
+    pub(crate) fn strict_interior_scalar(
         &self,
         policy: &CurveContext,
     ) -> CurveResult<Classification<Real>> {
         match self.start.cmp_by_refinement(&self.end, policy)? {
-            Classification::Decided(Ordering::Less) => self
-                .start
-                .strict_rational_between_ordered(&self.end, policy),
-            Classification::Decided(Ordering::Greater) => self
-                .end
-                .strict_rational_between_ordered(&self.start, policy),
+            Classification::Decided(Ordering::Less) => {
+                self.start.strict_scalar_between_ordered(&self.end, policy)
+            }
+            Classification::Decided(Ordering::Greater) => {
+                self.end.strict_scalar_between_ordered(&self.start, policy)
+            }
             Classification::Decided(Ordering::Equal) => Err(CurveError::InvalidBezierRange),
             Classification::Uncertain(reason) => Ok(Classification::Uncertain(reason)),
         }
@@ -1224,7 +1226,7 @@ impl BezierSelectedFiberFragment2 {
         let parameter = match self
             .range
             .start()
-            .strict_rational_between_ordered(self.range.end(), policy)?
+            .strict_scalar_between_ordered(self.range.end(), policy)?
         {
             Classification::Decided(parameter) => parameter,
             Classification::Uncertain(reason) => {
@@ -1390,7 +1392,7 @@ impl BezierParallelFragment2 {
         let parameter = match self
             .range
             .start()
-            .strict_rational_between_ordered(self.range.end(), policy)?
+            .strict_scalar_between_ordered(self.range.end(), policy)?
         {
             Classification::Decided(parameter) => parameter,
             Classification::Uncertain(reason) => {
@@ -1773,7 +1775,7 @@ impl BezierSplitFragment2 {
 
     /// Constructs an exact represented point certified inside this fragment.
     ///
-    /// Algebraic boundaries use the rational gap between their disjoint
+    /// Algebraic boundaries use the exact scalar gap between their disjoint
     /// isolating intervals. This samples neither root: interval ordering proves
     /// the represented parameter lies strictly between the exact boundaries.
     pub fn representative_point(
@@ -1796,7 +1798,7 @@ impl BezierSplitFragment2 {
                 source_curve,
                 ..
             } => {
-                let parameter = match start.strict_rational_between(end, policy)? {
+                let parameter = match start.strict_scalar_between(end, policy)? {
                     Classification::Decided(parameter) => parameter,
                     Classification::Uncertain(reason) => {
                         return Ok(Classification::Uncertain(reason));

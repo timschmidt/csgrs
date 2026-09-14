@@ -790,7 +790,7 @@ mod tests {
                             curve
                                 .parameter_domain()
                                 .start()
-                                .strict_rational_between_ordered(
+                                .strict_scalar_between_ordered(
                                     curve.parameter_domain().end(),
                                     &policy,
                                 )

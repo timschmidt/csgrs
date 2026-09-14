@@ -6103,7 +6103,7 @@ fn selected_fiber_parallel_derivative_scale_sign(
     let parameter = match source
         .range()
         .start()
-        .strict_rational_between_ordered(source.range().end(), policy)
+        .strict_scalar_between_ordered(source.range().end(), policy)
         .map_err(|cause| ExactCurveError::invalid(CurveOperation2::Fillet, family, cause))?
     {
         Classification::Decided(parameter) => BezierParameter2::Exact(parameter),

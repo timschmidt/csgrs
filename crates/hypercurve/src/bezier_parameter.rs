@@ -1695,7 +1695,9 @@ impl BezierParameter2 {
         }
     }
 
-    pub(crate) fn strict_rational_between(
+    /// Constructs an exact scalar strictly between these parameters.
+    /// The scalar need not have a rational payload.
+    pub(crate) fn strict_scalar_between(
         &self,
         other: &Self,
         policy: &CurveContext,
@@ -1721,10 +1723,12 @@ impl BezierParameter2 {
             }
             Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
         }
-        strict_rational_between_known_order(self, other, policy)
+        strict_scalar_between_known_order(self, other, policy)
     }
 
-    pub(crate) fn strict_rational_between_ordered(
+    /// Constructs an exact scalar between parameters already known to be
+    /// strictly ordered, retaining their root owners during refinement.
+    pub(crate) fn strict_scalar_between_ordered(
         &self,
         other: &Self,
         policy: &CurveContext,
@@ -1761,7 +1765,7 @@ impl BezierParameter2 {
                 )));
             }
         }
-        strict_rational_between_known_order(
+        strict_scalar_between_known_order(
             &left_refinement.parameter,
             &right_refinement.parameter,
             policy,
@@ -1787,7 +1791,7 @@ fn unit_complement_power_coefficients(coefficients: &[Real]) -> Vec<Real> {
     transformed
 }
 
-fn strict_rational_between_known_order(
+fn strict_scalar_between_known_order(
     left_parameter: &BezierParameter2,
     right_parameter: &BezierParameter2,
     policy: &CurveContext,
@@ -2935,17 +2939,17 @@ impl BezierParameterRange2 {
     /// The retained endpoints follow curve traversal and may therefore be
     /// descending. The underlying separation routine expects ascending
     /// arguments, so select that order exactly without changing the range.
-    pub(crate) fn strict_rational_interior(
+    pub(crate) fn strict_interior_scalar(
         &self,
         policy: &CurveContext,
     ) -> CurveResult<Classification<Real>> {
         match self.start.cmp_by_refinement(&self.end, policy)? {
-            Classification::Decided(Ordering::Less) => self
-                .start
-                .strict_rational_between_ordered(&self.end, policy),
-            Classification::Decided(Ordering::Greater) => self
-                .end
-                .strict_rational_between_ordered(&self.start, policy),
+            Classification::Decided(Ordering::Less) => {
+                self.start.strict_scalar_between_ordered(&self.end, policy)
+            }
+            Classification::Decided(Ordering::Greater) => {
+                self.end.strict_scalar_between_ordered(&self.start, policy)
+            }
             Classification::Decided(Ordering::Equal) => Err(CurveError::InvalidBezierRange),
             Classification::Uncertain(reason) => Ok(Classification::Uncertain(reason)),
         }
@@ -5268,9 +5272,9 @@ mod conversion_tests {
                 for ordered in [false, true] {
                     let gap = decided(
                         if ordered {
-                            left.strict_rational_between_ordered(&right, &policy)
+                            left.strict_scalar_between_ordered(&right, &policy)
                         } else {
-                            left.strict_rational_between(&right, &policy)
+                            left.strict_scalar_between(&right, &policy)
                         }
                         .unwrap(),
                         "strict interior of overlapping algebraic isolators",
@@ -5318,9 +5322,9 @@ mod conversion_tests {
                     for ordered in [false, true] {
                         let gap = decided(
                             if ordered {
-                                left.strict_rational_between_ordered(&right, &policy)
+                                left.strict_scalar_between_ordered(&right, &policy)
                             } else {
-                                left.strict_rational_between(&right, &policy)
+                                left.strict_scalar_between(&right, &policy)
                             }
                             .unwrap(),
                             "strict interior of irrational isolators",
@@ -5355,18 +5359,48 @@ mod conversion_tests {
                     rational(1, 2).sqrt().unwrap(),
                 ),
                 (
-                    root,
+                    root.clone(),
                     BezierParameter2::Exact(rational(4, 5)),
                     rational(1, 2).sqrt().unwrap(),
                     rational(4, 5),
                 ),
+                (
+                    BezierParameter2::Exact((Real::pi() / Real::from(8_i8)).unwrap()),
+                    root.clone(),
+                    (Real::pi() / Real::from(8_i8)).unwrap(),
+                    rational(1, 2).sqrt().unwrap(),
+                ),
+                (
+                    root,
+                    BezierParameter2::Exact((Real::pi() / Real::from(4_i8)).unwrap()),
+                    rational(1, 2).sqrt().unwrap(),
+                    (Real::pi() / Real::from(4_i8)).unwrap(),
+                ),
+                (
+                    BezierParameter2::Exact(rational(1, 2).sqrt().unwrap()),
+                    BezierParameter2::Exact(rational(3, 4).sqrt().unwrap()),
+                    rational(1, 2).sqrt().unwrap(),
+                    rational(3, 4).sqrt().unwrap(),
+                ),
             ] {
-                let gap = decided(
-                    left.strict_rational_between(&right, &policy).unwrap(),
-                    "mixed exact/algebraic interior",
-                );
-                assert_eq!(compare_reals(&lower, &gap, &policy), Some(Ordering::Less));
-                assert_eq!(compare_reals(&gap, &upper, &policy), Some(Ordering::Less));
+                for sample in [
+                    left.strict_scalar_between(&right, &policy),
+                    left.strict_scalar_between_ordered(&right, &policy),
+                    crate::CurveParameterRange2::new_validated(
+                        left.clone().into(),
+                        right.clone().into(),
+                    )
+                    .strict_interior_scalar(&policy),
+                    crate::CurveParameterRange2::new_validated(
+                        right.clone().into(),
+                        left.clone().into(),
+                    )
+                    .strict_interior_scalar(&policy),
+                ] {
+                    let gap = decided(sample.unwrap(), "mixed exact/algebraic interior");
+                    assert_eq!(compare_reals(&lower, &gap, &policy), Some(Ordering::Less));
+                    assert_eq!(compare_reals(&gap, &upper, &policy), Some(Ordering::Less));
+                }
             }
         }
     }

@@ -9425,7 +9425,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
                         Some(parameter) => parameter,
                         None => {
                             let parameter = match start
-                                .strict_rational_between_ordered(&upper, &self.data.policy)
+                                .strict_scalar_between_ordered(&upper, &self.data.policy)
                                 .map_err(|cause| self.invalid(carrier_index, cause))?
                             {
                                 Classification::Decided(parameter) => parameter,
@@ -9573,7 +9573,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
         let start = CurveParameter2::from_algebraic_cusp(fragment.start_parameter().clone());
         let end = CurveParameter2::from_algebraic_cusp(fragment.end_parameter().clone());
         let parameter = match start
-            .strict_rational_between_ordered(&end, &self.data.policy)
+            .strict_scalar_between_ordered(&end, &self.data.policy)
             .map_err(|cause| self.invalid(carrier_index, cause))?
         {
             Classification::Decided(parameter) => parameter,
@@ -11403,11 +11403,11 @@ impl<'a> CurveRegionBooleanContext<'a> {
             ) {
                 classification
             } else {
-                // A symmetric rational witness can land on a tangent or
+                // A symmetric interior witness can land on a tangent or
                 // shared-boundary event even though the open arrangement
                 // fragment lies in one face. Complete pair replay guarantees
                 // that its face cannot change between split events, so probe
-                // exact rational witnesses on both sides before propagating a
+                // exact scalar witnesses on both sides before propagating a
                 // boundary ambiguity.
                 let Some((start, end)) = fragment_range(fragment) else {
                     return Err(self.blocked(carrier_index, UncertaintyReason::Unsupported));
@@ -11416,7 +11416,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
                 let mut decided = None;
                 for (left, right) in [(start, &middle), (&middle, end)] {
                     let witness = match left
-                        .strict_rational_between_ordered(right, &self.data.policy)
+                        .strict_scalar_between_ordered(right, &self.data.policy)
                         .map_err(|cause| self.invalid(carrier_index, cause))?
                     {
                         Classification::Decided(witness) => witness,
@@ -12054,7 +12054,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
             return Err(self.blocked(carrier_index, UncertaintyReason::Unsupported));
         };
         let parameter = match start
-            .strict_rational_between_ordered(end, &self.data.policy)
+            .strict_scalar_between_ordered(end, &self.data.policy)
             .map_err(|cause| self.invalid(carrier_index, cause))?
         {
             Classification::Decided(parameter) => parameter,

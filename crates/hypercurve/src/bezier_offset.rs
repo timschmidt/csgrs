@@ -5426,7 +5426,7 @@ impl BezierAlgebraicSelectedFiberParameter2 {
         }
     }
 
-    pub(crate) fn strict_rational_between_ordered(
+    pub(crate) fn strict_scalar_between_ordered(
         &self,
         other: &Self,
         policy: &CurveContext,
@@ -5483,10 +5483,10 @@ impl BezierAlgebraicSelectedFiberParameter2 {
                     return Ok(Classification::Uncertain(reason));
                 }
             };
-        policy.strict_predicate_pass(|| first.strict_rational_between_ordered(&second, policy))
+        policy.strict_predicate_pass(|| first.strict_scalar_between_ordered(&second, policy))
     }
 
-    pub(crate) fn strict_rational_between_bezier_ordered(
+    pub(crate) fn strict_scalar_between_bezier_ordered(
         &self,
         other: &BezierParameter2,
         selected_is_first: bool,
@@ -21936,8 +21936,7 @@ impl BezierAlgebraicCuspSemicircle2 {
                         false,
                     ),
                     Classification::Decided(BezierAlgebraicFiberProjection2::IdenticallyZero) => {
-                        let sample =
-                            strict_rational_sample_for_parallel_domain(range, incident, policy)?;
+                        let sample = strict_sample_for_parallel_domain(range, incident, policy)?;
                         let sample = match sample {
                             Classification::Decided(sample) => BezierParameter2::Exact(sample),
                             Classification::Uncertain(reason) => {
@@ -22263,7 +22262,7 @@ impl BezierAlgebraicCuspSemicircle2 {
                     "represented-circle-parallel-projection",
                     "identically-zero",
                 );
-                let sample = strict_rational_sample_for_parallel_domain(range, incident, policy)?;
+                let sample = strict_sample_for_parallel_domain(range, incident, policy)?;
                 let sample = match sample {
                     Classification::Decided(sample) => BezierParameter2::Exact(sample),
                     Classification::Uncertain(reason) => {
@@ -23518,8 +23517,7 @@ impl BezierAlgebraicCuspSemicircle2 {
                     // sheet only common zeros of the two radical terms are
                     // geometric contacts; isolate all such finite and
                     // incident roots through the same quotient authority.
-                    let sample =
-                        strict_rational_sample_for_parallel_domain(range, Some(incident), policy)?;
+                    let sample = strict_sample_for_parallel_domain(range, Some(incident), policy)?;
                     let sample = match sample {
                         Classification::Decided(sample) => BezierParameter2::Exact(sample),
                         Classification::Uncertain(reason) => {
@@ -23858,7 +23856,7 @@ impl BezierAlgebraicCuspSemicircle2 {
         let sample = if circle_is_rootless {
             match range
                 .start()
-                .strict_rational_between_ordered(range.end(), policy)?
+                .strict_scalar_between_ordered(range.end(), policy)?
             {
                 Classification::Decided(sample) => Some(BezierParameter2::Exact(sample)),
                 Classification::Uncertain(reason) => {
@@ -23871,13 +23869,12 @@ impl BezierAlgebraicCuspSemicircle2 {
             for zero in &circle_zeros {
                 match left.cmp_by_refinement(zero, policy)? {
                     Classification::Decided(std::cmp::Ordering::Less) => {
-                        sample =
-                            Some(match left.strict_rational_between_ordered(zero, policy)? {
-                                Classification::Decided(sample) => BezierParameter2::Exact(sample),
-                                Classification::Uncertain(reason) => {
-                                    return Ok(Classification::Uncertain(reason));
-                                }
-                            });
+                        sample = Some(match left.strict_scalar_between_ordered(zero, policy)? {
+                            Classification::Decided(sample) => BezierParameter2::Exact(sample),
+                            Classification::Uncertain(reason) => {
+                                return Ok(Classification::Uncertain(reason));
+                            }
+                        });
                         break;
                     }
                     Classification::Decided(std::cmp::Ordering::Equal) => left = zero,
@@ -23894,7 +23891,7 @@ impl BezierAlgebraicCuspSemicircle2 {
             if sample.is_none() {
                 sample = match left.cmp_by_refinement(range.end(), policy)? {
                     Classification::Decided(std::cmp::Ordering::Less) => Some(
-                        match left.strict_rational_between_ordered(range.end(), policy)? {
+                        match left.strict_scalar_between_ordered(range.end(), policy)? {
                             Classification::Decided(sample) => BezierParameter2::Exact(sample),
                             Classification::Uncertain(reason) => {
                                 return Ok(Classification::Uncertain(reason));
@@ -24164,7 +24161,7 @@ impl BezierAlgebraicCuspSemicircle2 {
         for pair in boundaries.windows(2) {
             let cell_sample = match pair[0]
                 .parameter
-                .strict_rational_between_ordered(&pair[1].parameter, policy)?
+                .strict_scalar_between_ordered(&pair[1].parameter, policy)?
             {
                 Classification::Decided(sample) => BezierParameter2::Exact(sample),
                 Classification::Uncertain(reason) => {
@@ -36827,7 +36824,7 @@ impl BezierAlgebraicCuspSemicircle2 {
         for pair in boundaries.windows(2) {
             let sample = match pair[0]
                 .parameter
-                .strict_rational_between_ordered(&pair[1].parameter, policy)?
+                .strict_scalar_between_ordered(&pair[1].parameter, policy)?
             {
                 Classification::Decided(sample) => BezierParameter2::Exact(sample),
                 Classification::Uncertain(reason) => {
@@ -40595,7 +40592,7 @@ impl BezierAlgebraicCuspSemicircle2 {
         for pair in boundaries.windows(2) {
             let sample = match pair[0]
                 .parameter
-                .strict_rational_between_ordered(&pair[1].parameter, policy)?
+                .strict_scalar_between_ordered(&pair[1].parameter, policy)?
             {
                 Classification::Decided(sample) => BezierParameter2::Exact(sample),
                 Classification::Uncertain(reason) => {
@@ -53109,7 +53106,7 @@ impl BezierAlgebraicCuspSemicircleParameter2 {
         Ok(Classification::Uncertain(UncertaintyReason::Ordering))
     }
 
-    pub(crate) fn strict_rational_between(
+    pub(crate) fn strict_scalar_between(
         &self,
         other: &Self,
         policy: &CurveContext,
@@ -59679,7 +59676,7 @@ impl BezierRecursiveProjectiveParameter2 {
         Ok(Classification::Decided((lower, representative, upper)))
     }
 
-    pub(crate) fn strict_rational_between_ordered(
+    pub(crate) fn strict_scalar_between_ordered(
         &self,
         other: &Self,
         policy: &CurveContext,
@@ -59718,7 +59715,7 @@ impl BezierRecursiveProjectiveParameter2 {
         }
     }
 
-    pub(crate) fn strict_rational_between_bezier_ordered(
+    pub(crate) fn strict_scalar_between_bezier_ordered(
         &self,
         other: &BezierParameter2,
         recursive_is_first: bool,
@@ -64681,7 +64678,7 @@ enum SelectedThirdAxisDomain2<'a> {
 }
 
 impl SelectedThirdAxisDomain2<'_> {
-    fn strict_rational_sample(self, policy: &CurveContext) -> CurveResult<Classification<Real>> {
+    fn strict_sample(self, policy: &CurveContext) -> CurveResult<Classification<Real>> {
         let strict = policy.strict_counterpart();
         match self {
             Self::UnitInterval => Ok(Classification::Decided((Real::one() / Real::from(2_i8))?)),
@@ -64694,10 +64691,10 @@ impl SelectedThirdAxisDomain2<'_> {
                 let anchor_parameter = BezierParameter2::Exact(anchor.clone());
                 match (direction, barrier) {
                     (BezierParameterRayDirection2::Increasing, Some(barrier)) => {
-                        anchor_parameter.strict_rational_between_ordered(barrier, &strict)
+                        anchor_parameter.strict_scalar_between_ordered(barrier, &strict)
                     }
                     (BezierParameterRayDirection2::Decreasing, Some(barrier)) => {
-                        barrier.strict_rational_between_ordered(&anchor_parameter, &strict)
+                        barrier.strict_scalar_between_ordered(&anchor_parameter, &strict)
                     }
                     (BezierParameterRayDirection2::Increasing, None) => {
                         Ok(Classification::Decided(anchor + Real::one()))
@@ -64770,7 +64767,7 @@ impl SelectedThirdAxisDomain2<'_> {
     }
 }
 
-fn strict_rational_sample_for_parallel_domain(
+fn strict_sample_for_parallel_domain(
     range: Option<&BezierParameterRange2>,
     incident: Option<&BezierParallelIncidentDomain2>,
     policy: &CurveContext,
@@ -64781,11 +64778,11 @@ fn strict_rational_sample_for_parallel_domain(
             direction: incident.direction(),
             barrier: incident.barrier(),
         })
-        .strict_rational_sample(policy);
+        .strict_sample(policy);
     }
     match range {
-        Some(range) => range.strict_rational_interior(&policy.strict_counterpart()),
-        None => SelectedThirdAxisDomain2::UnitInterval.strict_rational_sample(policy),
+        Some(range) => range.strict_interior_scalar(&policy.strict_counterpart()),
+        None => SelectedThirdAxisDomain2::UnitInterval.strict_sample(policy),
     }
 }
 
@@ -72559,7 +72556,7 @@ impl BezierAlgebraicChord2 {
                 line.point_at(half),
             )));
         }
-        let coordinate = match algebraic_chord_strict_rational_coordinate_between(
+        let coordinate = match algebraic_chord_strict_coordinate_between(
             self.start(),
             self.end(),
             self.data.parameter_axis,
@@ -75960,7 +75957,7 @@ impl BezierAlgebraicChord2 {
                     return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
                 }
             }
-            let interior = match range.strict_rational_interior(strict)? {
+            let interior = match range.strict_interior_scalar(strict)? {
                 Classification::Decided(interior) => interior,
                 Classification::Uncertain(reason) => {
                     return Ok(Classification::Uncertain(reason));
@@ -76518,7 +76515,7 @@ impl BezierAlgebraicChord2 {
     /// Publishes the unique contact proved by a strictly monotone support
     /// incidence without forming the recursive coefficient tower's global
     /// norm.  Opposite endpoint sides provide existence, the supplied
-    /// nonzero tangent-cross sign provides uniqueness, and exact rational
+    /// nonzero tangent-cross sign provides uniqueness, and exact scalar
     /// bisection retains an authored-sheet bracket for every later predicate.
     pub(crate) fn retained_monotone_parallel_contact_on_region_range(
         &self,
@@ -76547,7 +76544,7 @@ impl BezierAlgebraicChord2 {
                     return Ok(Classification::Uncertain(reason));
                 }
             };
-            let interior = match range.strict_rational_interior(strict)? {
+            let interior = match range.strict_interior_scalar(strict)? {
                 Classification::Decided(interior) => interior,
                 Classification::Uncertain(reason) => {
                     return Ok(Classification::Uncertain(reason));
@@ -76685,7 +76682,7 @@ impl BezierAlgebraicChord2 {
                     lower_parameter.clone(),
                     upper_parameter.clone(),
                 )
-                .strict_rational_interior(strict)?
+                .strict_interior_scalar(strict)?
                 {
                     Classification::Decided(midpoint) => midpoint,
                     Classification::Uncertain(reason) => {
@@ -77264,7 +77261,7 @@ impl BezierAlgebraicChord2 {
             Classification::Decided(BezierAlgebraicFiberProjection2::IdenticallyZero) => {
                 let sample = match component_sample.cloned().map(Classification::Decided) {
                     Some(sample) => sample,
-                    None => domain.strict_rational_sample(policy)?,
+                    None => domain.strict_sample(policy)?,
                 };
                 let sample = match sample {
                     Classification::Decided(sample) => BezierParameter2::Exact(sample),
@@ -77721,7 +77718,7 @@ impl BezierAlgebraicChord2 {
                     return Ok(Classification::Uncertain(reason));
                 }
             };
-        let component_sample = match range.strict_rational_interior(&policy.strict_counterpart())? {
+        let component_sample = match range.strict_interior_scalar(&policy.strict_counterpart())? {
             Classification::Decided(sample) => sample,
             Classification::Uncertain(reason) => {
                 return Ok(Classification::Uncertain(reason));
@@ -80566,7 +80563,7 @@ impl BezierAlgebraicChord2 {
         for (index, pair) in boundaries.windows(2).enumerate() {
             let sample = match pair[0]
                 .source_parameter
-                .strict_rational_between_ordered(&pair[1].source_parameter, policy)?
+                .strict_scalar_between_ordered(&pair[1].source_parameter, policy)?
             {
                 Classification::Decided(sample) => sample,
                 Classification::Uncertain(reason) => {
@@ -80929,7 +80926,7 @@ impl BezierAlgebraicChord2 {
             {
                 break (lower.clone(), upper.clone());
             }
-            let midpoint = match lower.strict_rational_between_ordered(&upper, &strict)? {
+            let midpoint = match lower.strict_scalar_between_ordered(&upper, &strict)? {
                 Classification::Decided(midpoint) => midpoint,
                 Classification::Uncertain(reason) => {
                     return Ok(Classification::Uncertain(reason));
@@ -83977,7 +83974,7 @@ fn represented_projective_line_intersection(
     }
 }
 
-fn algebraic_chord_strict_rational_coordinate_between(
+fn algebraic_chord_strict_coordinate_between(
     first: &CurvePoint2,
     second: &CurvePoint2,
     parameter_axis: BezierAlgebraicChordParameterAxis2,
@@ -83990,7 +83987,7 @@ fn algebraic_chord_strict_rational_coordinate_between(
         // Correlated multi-carrier endpoints intentionally have no independent
         // algebraic-root representation.  Their chord already certifies a
         // strict coordinate order, so disjoint conservative coordinate
-        // intervals are an exact constructive witness of a rational interior
+        // intervals are an exact constructive witness of a scalar interior
         // coordinate.  A finite refinement budget may decline to construct a
         // witness, but it never turns unresolved equality into inequality.
         let (lower, upper) = if parameter_axis.coordinate_increases {
@@ -84918,9 +84915,9 @@ impl BezierParallelAlgebraicRay2 {
             }
         }
         if after {
-            root.strict_rational_between_ordered(&boundary, policy)
+            root.strict_scalar_between_ordered(&boundary, policy)
         } else {
-            boundary.strict_rational_between_ordered(&root, policy)
+            boundary.strict_scalar_between_ordered(&root, policy)
         }
     }
 
@@ -101027,7 +101024,7 @@ impl BezierAlgebraicCuspSemicircleFragment2 {
     pub(crate) fn representative_parameter(&self) -> CurveResult<Classification<Real>> {
         self.data
             .start
-            .strict_rational_between(&self.data.end, &self.data.policy)
+            .strict_scalar_between(&self.data.end, &self.data.policy)
     }
 
     pub(crate) fn representative_point(
@@ -103610,7 +103607,7 @@ fn parallel_normal_positive_dimensional_projection(
                     return Ok(Classification::Uncertain(reason));
                 }
             };
-            let sample = match sample_start.strict_rational_between_ordered(sample_end, &strict)? {
+            let sample = match sample_start.strict_scalar_between_ordered(sample_end, &strict)? {
                 Classification::Decided(sample) => sample,
                 Classification::Uncertain(reason) => {
                     return Ok(Classification::Uncertain(reason));
@@ -109439,7 +109436,7 @@ impl BezierParallel2 {
         range: &BezierParameterRange2,
         policy: &CurveContext,
     ) -> CurveResult<Classification<RealSign>> {
-        let parameter = match range.strict_rational_interior(policy)? {
+        let parameter = match range.strict_interior_scalar(policy)? {
             Classification::Decided(parameter) => parameter,
             Classification::Uncertain(reason) => {
                 return Ok(Classification::Uncertain(reason));
@@ -109487,7 +109484,7 @@ impl BezierParallel2 {
         policy: &CurveContext,
     ) -> CurveResult<Classification<Option<Arc<BezierAnalyticParallelTangentField2>>>> {
         let strict = policy.strict_counterpart();
-        let interior = match range.strict_rational_interior(&strict)? {
+        let interior = match range.strict_interior_scalar(&strict)? {
             Classification::Decided(parameter) => parameter,
             Classification::Uncertain(reason) => {
                 return Ok(Classification::Uncertain(reason));
@@ -109778,7 +109775,7 @@ impl BezierParallel2 {
         policy: &CurveContext,
     ) -> CurveResult<Classification<CurvePoint2>> {
         let strict = policy.strict_counterpart();
-        let interior = match range.strict_rational_interior(&strict)? {
+        let interior = match range.strict_interior_scalar(&strict)? {
             Classification::Decided(interior) => interior,
             Classification::Uncertain(reason) => {
                 return Ok(Classification::Uncertain(reason));
@@ -109815,7 +109812,7 @@ impl BezierParallel2 {
     ) -> CurveResult<Classification<CurvePoint2>> {
         policy.strict_predicate_pass(|| {
             let strict = policy;
-            let interior = match range.strict_rational_interior(strict)? {
+            let interior = match range.strict_interior_scalar(strict)? {
                 Classification::Decided(interior) => interior,
                 Classification::Uncertain(reason) => {
                     return Ok(Classification::Uncertain(reason));
@@ -109880,7 +109877,7 @@ impl BezierParallel2 {
         policy: &CurveContext,
     ) -> CurveResult<Classification<(RealSign, RealSign)>> {
         let strict = policy.strict_counterpart();
-        let interior = match range.strict_rational_interior(&strict)? {
+        let interior = match range.strict_interior_scalar(&strict)? {
             Classification::Decided(interior) => interior,
             Classification::Uncertain(reason) => {
                 return Ok(Classification::Uncertain(reason));
@@ -114263,7 +114260,7 @@ impl BezierParallel2 {
         policy: &CurveContext,
     ) -> CurveResult<Classification<BezierLineContactRelation>> {
         let strict = policy.strict_counterpart();
-        let interior = match range.strict_rational_interior(&strict)? {
+        let interior = match range.strict_interior_scalar(&strict)? {
             Classification::Decided(interior) => interior,
             Classification::Uncertain(reason) => {
                 return Ok(Classification::Uncertain(reason));
@@ -114565,7 +114562,7 @@ impl BezierParallel2 {
         policy: &CurveContext,
     ) -> CurveResult<Classification<std::cmp::Ordering>> {
         let strict = policy.strict_counterpart();
-        let interior = match range.strict_rational_interior(&strict)? {
+        let interior = match range.strict_interior_scalar(&strict)? {
             Classification::Decided(interior) => interior,
             Classification::Uncertain(reason) => {
                 return Ok(Classification::Uncertain(reason));
@@ -117594,7 +117591,7 @@ impl BezierParallel2 {
             Classification::Uncertain(reason) => Classification::Uncertain(reason),
             Classification::Decided(Some(_)) => unreachable!("the exact component returned"),
         };
-        let interior = match range.strict_rational_interior(&strict)? {
+        let interior = match range.strict_interior_scalar(&strict)? {
             Classification::Decided(interior) => interior,
             Classification::Uncertain(reason) => {
                 return Ok(Classification::Uncertain(reason));
@@ -122517,7 +122514,7 @@ fn certify_regular_implicit_parameter_graph_with_selector(
             };
             let retained_sample = match start
                 .retained_parameter
-                .strict_rational_between_ordered(&end.retained_parameter, policy)?
+                .strict_scalar_between_ordered(&end.retained_parameter, policy)?
             {
                 Classification::Decided(sample) => sample,
                 Classification::Uncertain(reason) => {
@@ -123285,7 +123282,7 @@ fn implicit_parameter_fiber_incidence(
     } else {
         match fibers[fiber_index - 1]
             .retained_parameter
-            .strict_rational_between_ordered(&fiber.retained_parameter, policy)?
+            .strict_scalar_between_ordered(&fiber.retained_parameter, policy)?
         {
             Classification::Decided(sample) => Some(sample),
             Classification::Uncertain(reason) => {
@@ -123298,7 +123295,7 @@ fn implicit_parameter_fiber_incidence(
     } else {
         match fiber
             .retained_parameter
-            .strict_rational_between_ordered(&fibers[fiber_index + 1].retained_parameter, policy)?
+            .strict_scalar_between_ordered(&fibers[fiber_index + 1].retained_parameter, policy)?
         {
             Classification::Decided(sample) => Some(sample),
             Classification::Uncertain(reason) => {
@@ -123370,7 +123367,7 @@ fn implicit_parameter_fiber_incidence(
             .clone();
         if let Some(sample) = left_sample.take() {
             left_sample = match BezierParameter2::Exact(sample)
-                .strict_rational_between_ordered(&refined_retained, policy)?
+                .strict_scalar_between_ordered(&refined_retained, policy)?
             {
                 Classification::Decided(sample) => Some(sample),
                 Classification::Uncertain(reason) => {
@@ -123380,7 +123377,7 @@ fn implicit_parameter_fiber_incidence(
         }
         if let Some(sample) = right_sample.take() {
             right_sample = match refined_retained
-                .strict_rational_between_ordered(&BezierParameter2::Exact(sample), policy)?
+                .strict_scalar_between_ordered(&BezierParameter2::Exact(sample), policy)?
             {
                 Classification::Decided(sample) => Some(sample),
                 Classification::Uncertain(reason) => {
@@ -124425,7 +124422,7 @@ fn append_selected_rational_parameter_component_domain(
 ) -> CurveResult<Classification<Option<()>>> {
     let retained_sample = match start
         .retained_parameter
-        .strict_rational_between_ordered(&end.retained_parameter, policy)?
+        .strict_scalar_between_ordered(&end.retained_parameter, policy)?
     {
         Classification::Decided(sample) => sample,
         Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
@@ -124826,7 +124823,7 @@ fn rational_parameter_component_domains(
     for index in 0..boundaries.len().saturating_sub(1) {
         let sample = match boundaries[index]
             .parameter
-            .strict_rational_between_ordered(&boundaries[index + 1].parameter, policy)?
+            .strict_scalar_between_ordered(&boundaries[index + 1].parameter, policy)?
         {
             Classification::Decided(sample) => sample,
             Classification::Uncertain(reason) => {
@@ -126574,7 +126571,7 @@ fn select_axis_parameter_components_on_chart(
                 }
             }
             let sample =
-                match boundaries[0].strict_rational_between_ordered(&boundaries[1], policy)? {
+                match boundaries[0].strict_scalar_between_ordered(&boundaries[1], policy)? {
                     Classification::Decided(sample) => sample,
                     Classification::Uncertain(reason) => {
                         return Ok(Classification::Uncertain(reason));
@@ -129587,9 +129584,9 @@ fn parallel_line_neighbor_sign(
             &roots[root_index - 1]
         };
         let sample = if after {
-            root.strict_rational_between_ordered(neighbor, policy)?
+            root.strict_scalar_between_ordered(neighbor, policy)?
         } else {
-            neighbor.strict_rational_between_ordered(root, policy)?
+            neighbor.strict_scalar_between_ordered(root, policy)?
         };
         match sample {
             Classification::Decided(sample) => sample,
@@ -152736,16 +152733,14 @@ mod conversion_tests {
         for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
             let chord = recursive_exact_line_contact_chord(&policy);
             assert_eq!(chord.data.parameter_axis.axis, Axis2::X);
-            let Classification::Decided(midpoint_x) =
-                algebraic_chord_strict_rational_coordinate_between(
-                    chord.start(),
-                    chord.end(),
-                    chord.data.parameter_axis,
-                    &policy,
-                )
-                .unwrap()
-            else {
-                panic!("the recursive chord must expose a strict rational interior coordinate");
+            let Classification::Decided(midpoint_x) = algebraic_chord_strict_coordinate_between(
+                chord.start(),
+                chord.end(),
+                chord.data.parameter_axis,
+                &policy,
+            )
+            .unwrap() else {
+                panic!("the recursive chord must expose a strict interior coordinate");
             };
             let rational = |curve| {
                 RationalBezier2::try_from_subcurve(&BezierSubcurve2::Quadratic(curve))
@@ -152878,16 +152873,14 @@ mod conversion_tests {
             .unwrap() else {
                 panic!("the transformed recursive contacts must define an oblique chord");
             };
-            let Classification::Decided(midpoint_x) =
-                algebraic_chord_strict_rational_coordinate_between(
-                    source_chord.start(),
-                    source_chord.end(),
-                    source_chord.data.parameter_axis,
-                    &policy,
-                )
-                .unwrap()
-            else {
-                panic!("the source chord must expose a strict rational interior coordinate");
+            let Classification::Decided(midpoint_x) = algebraic_chord_strict_coordinate_between(
+                source_chord.start(),
+                source_chord.end(),
+                source_chord.data.parameter_axis,
+                &policy,
+            )
+            .unwrap() else {
+                panic!("the source chord must expose a strict interior coordinate");
             };
             let original = QuadraticBezier2::new(
                 Point2::new(midpoint_x.clone() - Real::one(), Real::zero()),
@@ -153104,7 +153097,7 @@ mod conversion_tests {
                 let midpoint = match overlap
                     .other_range()
                     .start()
-                    .strict_rational_between_ordered(overlap.other_range().end(), &policy)
+                    .strict_scalar_between_ordered(overlap.other_range().end(), &policy)
                     .unwrap()
                 {
                     Classification::Decided(midpoint) => BezierParameter2::Exact(midpoint),
@@ -161099,7 +161092,7 @@ mod conversion_tests {
                 Classification::Decided(std::cmp::Ordering::Less),
             );
             let Classification::Decided(separator) = first
-                .strict_rational_between_ordered(&second, &policy)
+                .strict_scalar_between_ordered(&second, &policy)
                 .unwrap()
             else {
                 panic!("disjoint local isolators must expose an exact rational separator");
@@ -163128,14 +163121,14 @@ mod conversion_tests {
             let cusp_overlap_start = overlap.cusp_start_parameter();
             let cusp_overlap_end = overlap.cusp_end_parameter();
             let Classification::Decided(first_cut) = cusp_overlap_start
-                .strict_rational_between(&cusp_overlap_end, &policy)
+                .strict_scalar_between(&cusp_overlap_end, &policy)
                 .unwrap()
             else {
                 panic!("the cusp overlap must expose a represented interior cut");
             };
             let first_cut = BezierAlgebraicCuspSemicircleParameter2::Exact(first_cut);
             let Classification::Decided(second_cut) = first_cut
-                .strict_rational_between(&cusp_overlap_end, &policy)
+                .strict_scalar_between(&cusp_overlap_end, &policy)
                 .unwrap()
             else {
                 panic!("the cusp overlap must expose a second represented interior cut");
@@ -163399,14 +163392,14 @@ mod conversion_tests {
             }
 
             let Classification::Decided(wide_start_cut) = cusp_overlap_start
-                .strict_rational_between(&first_cut, &policy)
+                .strict_scalar_between(&first_cut, &policy)
                 .unwrap()
             else {
                 panic!("the analytic overlap must expose a wider first cut");
             };
             let wide_start_cut = BezierAlgebraicCuspSemicircleParameter2::Exact(wide_start_cut);
             let Classification::Decided(wide_end_cut) = second_cut
-                .strict_rational_between(&cusp_overlap_end, &policy)
+                .strict_scalar_between(&cusp_overlap_end, &policy)
                 .unwrap()
             else {
                 panic!("the analytic overlap must expose a wider second cut");
