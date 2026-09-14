@@ -2139,6 +2139,8 @@ impl<'a> CurveRegionBooleanContext<'a> {
                     arc.center(),
                     arc.radius_squared_ref(),
                     conic,
+                    parameters.iter().map(|(parameter, _)| parameter),
+                    &self.data.policy,
                 )
                 .map_err(|cause| self.invalid(0, cause))?
         {

@@ -113067,26 +113067,34 @@ impl BezierParallel2 {
     /// power-basis polynomials let `rational_parameter_image` carry an isolated
     /// parallel root directly into the conic parameter tower. Start- and
     /// end-anchored charts cover one another's projective denominator pole.
-    pub(crate) fn circle_rational_quadratic_parameter_maps(
+    /// The radical-elimination divisor must remain nonzero at every queried
+    /// root, independently of any subsequent rational-map cancellation.
+    pub(crate) fn circle_rational_quadratic_parameter_maps<'a>(
         &self,
         center: &Point2,
         radius_squared: &Real,
         conic: &RationalQuadraticBezier2,
+        parameters: impl IntoIterator<Item = &'a BezierParameter2>,
+        policy: &CurveContext,
     ) -> CurveResult<Option<[(Vec<Real>, Vec<Real>); 2]>> {
         self.circle_rational_quadratic_parameter_maps_with_tangent_field(
             center,
             radius_squared,
             conic,
             None,
+            parameters,
+            policy,
         )
     }
 
-    fn circle_rational_quadratic_parameter_maps_with_tangent_field(
+    fn circle_rational_quadratic_parameter_maps_with_tangent_field<'a>(
         &self,
         center: &Point2,
         radius_squared: &Real,
         conic: &RationalQuadraticBezier2,
         tangent_field: Option<&BezierAnalyticParallelTangentField2>,
+        parameters: impl IntoIterator<Item = &'a BezierParameter2>,
+        policy: &CurveContext,
     ) -> CurveResult<Option<[(Vec<Real>, Vec<Real>); 2]>> {
         let source = self.source_power_basis()?;
         let differential = self.differential()?;
@@ -113114,6 +113122,24 @@ impl BezierParallel2 {
             &polynomial_multiply(weight, &normal_projection),
             &(Real::from(2_u8) * self.distance()),
         );
+        let strict = policy.strict_counterpart();
+        let normal_polynomial = match polynomial_from_coefficients(normal.clone(), &strict)? {
+            Classification::Decided(Some(polynomial)) => polynomial,
+            Classification::Decided(None) | Classification::Uncertain(_) => return Ok(None),
+        };
+        for parameter in parameters {
+            if !matches!(
+                signed_polynomial_at_root(Some(&normal_polynomial), parameter, &strict)?,
+                Classification::Decided(RealSign::Positive | RealSign::Negative)
+            ) {
+                // At radial = normal = 0 the incidence equation cannot
+                // eliminate the speed radical. Cancelling their common
+                // factor would invent an inverse at this exceptional fiber,
+                // allowing an actual finite contact to be rejected. Both
+                // callers must use their general contact authority instead.
+                return Ok(None);
+            }
+        }
         let lifted_line = |anchor: &Point2, point: &Point2| {
             let (line_x, line_y) = point.delta_from(anchor);
             let source_from_start_x =
@@ -116708,20 +116734,6 @@ impl BezierParallel2 {
             return Ok(no_fast_path());
         };
         let canonical_conic = canonical_span.curve().clone();
-        let Some(parameter_map_coefficients) = self
-            .circle_rational_quadratic_parameter_maps_with_tangent_field(
-                support.center(),
-                support.radius_squared_ref(),
-                &canonical_conic,
-                tangent_field,
-            )?
-        else {
-            return Ok(no_fast_path());
-        };
-        let parameter_map_coefficients =
-            parameter_map_coefficients.map(|(numerator, denominator)| {
-                reduce_exact_rational_parameter_map(numerator, denominator)
-            });
         let certified_tangent_parameters = other
             .retained_circular_conic()
             .and_then(|circle| circle.tangent_contacts.as_deref())
@@ -116754,6 +116766,22 @@ impl BezierParallel2 {
                 return Ok(no_fast_path());
             }
         };
+        let Some(parameter_map_coefficients) = self
+            .circle_rational_quadratic_parameter_maps_with_tangent_field(
+                support.center(),
+                support.radius_squared_ref(),
+                &canonical_conic,
+                tangent_field,
+                parameters.iter().map(|(parameter, _)| parameter),
+                policy,
+            )?
+        else {
+            return Ok(no_fast_path());
+        };
+        let parameter_map_coefficients =
+            parameter_map_coefficients.map(|(numerator, denominator)| {
+                reduce_exact_rational_parameter_map(numerator, denominator)
+            });
 
         let authored_conic: RationalBezier2 = conic.into();
         let rational_conic: RationalBezier2 = canonical_conic.into();
@@ -158266,6 +158294,74 @@ mod conversion_tests {
                     .unwrap(),
                 Classification::Decided(std::cmp::Ordering::Less),
             );
+        }
+    }
+
+    #[test]
+    fn parallel_circle_intersections_retain_exceptional_inverse_fibers() {
+        let quarter = (Real::one() / Real::from(4_i8)).unwrap();
+        let half = &quarter + &quarter;
+        let three_quarters = &half + &quarter;
+        let parallel = QuadraticBezier2::new(
+            Point2::from_values(-1, 1),
+            Point2::from_values(0, -1),
+            Point2::from_values(1, 1),
+        )
+        .parallel_left(quarter.clone())
+        .unwrap();
+        let arc = CircularArc2::try_from_center(
+            Point2::new(three_quarters.clone(), -&quarter),
+            Point2::new(Real::zero(), half.clone()),
+            Point2::new(Real::zero(), -&quarter),
+            false,
+        )
+        .unwrap();
+        let diagonal = &quarter * half.clone().sqrt().unwrap();
+        let expected = Point2::new(half - &diagonal, &quarter + &diagonal);
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let Classification::Decided(decomposition) = arc
+                .rational_bezier_decomposition_with_policy(&policy)
+                .unwrap()
+            else {
+                panic!("the exact quarter circle must decompose")
+            };
+            let [span] = decomposition.spans() else {
+                panic!("one finite circular chart")
+            };
+            let conic: RationalBezier2 = span.curve().clone().into();
+            // The source normal projection is nonconstant, but vanishes at
+            // t=1/4 and t=3/4. Both are genuine supporting-circle contacts;
+            // only the latter belongs to this finite first-quadrant chart.
+            let Classification::Decided(incidence) = parallel
+                .circle_incidence(arc.center(), arc.radius_squared_ref(), &[], &policy)
+                .unwrap()
+            else {
+                panic!("the supporting circle contacts must be certified")
+            };
+            assert_eq!(incidence.len(), 2);
+            let Classification::Decided(intersections) =
+                parallel.intersections(&conic, &policy).unwrap()
+            else {
+                panic!("the finite circle contacts must be certified")
+            };
+            assert!(intersections.is_complete());
+            let [contact] = intersections.contacts() else {
+                panic!("one exact finite contact: {intersections:?}")
+            };
+            assert_eq!(
+                contact
+                    .parallel_parameter()
+                    .cmp_by_refinement(&BezierParameter2::Exact(three_quarters.clone()), &policy,)
+                    .unwrap(),
+                Classification::Decided(std::cmp::Ordering::Equal),
+            );
+            assert_eq!(
+                contact
+                    .point()
+                    .same_point(&expected.clone().into(), &policy),
+                Classification::Decided(true),
+            );
+            assert!(contact.is_certified_transverse());
         }
     }
 

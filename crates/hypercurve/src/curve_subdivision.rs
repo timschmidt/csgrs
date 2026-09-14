@@ -1434,6 +1434,64 @@ mod tests {
     }
 
     #[test]
+    fn source_domain_fillets_preserve_unmarked_affine_bezier_contacts() {
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let arc = Curve2::from(
+                CircularArc2::try_from_center(
+                    p(1, 0),
+                    Point2::new(q(3, 5), q(4, 5)),
+                    p(0, 0),
+                    true,
+                )
+                .unwrap(),
+            );
+            let end = decided(
+                selected_parameters(&policy)[0]
+                    .affine_image_unbounded(&q(1, 64), &q(63, 64), &policy)
+                    .unwrap(),
+                arc.family(),
+            )
+            .unwrap();
+            let arc = arc
+                .subcurve(Real::zero().into(), end, &policy)
+                .unwrap()
+                .value;
+            // No line-construction witness: these ordinary Bezier controls
+            // must describe the same exact path as the native line above.
+            let path = CurvePath2::try_new(vec![
+                Curve2::from(QuadraticBezier2::new(p(-3, 0), p(-1, 0), p(1, 0))),
+                arc,
+            ])
+            .unwrap();
+            for reversed in [false, true] {
+                let path = if reversed {
+                    path.reversed(&policy).unwrap().value
+                } else {
+                    path.clone()
+                };
+                let outcome = path
+                    .fillet_vertex_by_radius(1, q(1, 4), CurveCornerMode2::TrimOnly, &policy)
+                    .unwrap();
+                assert_eq!(outcome.certainty, CurveCertainty::Certified);
+                let CurveCornerSolutions2::Multiple(candidates) = outcome.value else {
+                    panic!(
+                        "lost affine-Bezier fillets, reversed={reversed}, policy={policy:?}: {:?}",
+                        outcome.value
+                    )
+                };
+                assert_eq!(candidates.len(), 3);
+                for candidate in candidates {
+                    assert_same(&candidate.start(), &path.start(), &policy);
+                    assert_same(&candidate.end(), &path.end(), &policy);
+                    for pair in candidate.curves().windows(2) {
+                        assert_same(&pair[0].end(), &pair[1].start(), &policy);
+                    }
+                }
+            }
+        }
+    }
+
+    #[test]
     fn source_domain_fillets_map_selected_line_contacts_into_spline_charts() {
         for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
             let arc = Curve2::from(
