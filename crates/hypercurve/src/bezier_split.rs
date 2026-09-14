@@ -357,31 +357,57 @@ impl CurveParameter2 {
                 .cmp_bezier_parameter(first, policy)?
                 .map(Ordering::reverse)),
             (
-                CurveParameterData2::SelectedFiber(first),
-                CurveParameterData2::RecursiveProjective(second),
+                CurveParameterData2::SelectedFiber(_),
+                CurveParameterData2::RecursiveProjective(_),
+            )
+            | (
+                CurveParameterData2::RecursiveProjective(_),
+                CurveParameterData2::SelectedFiber(_),
             ) => {
-                let first = policy
-                    .strict_predicate_pass(|| first.promoted_bezier_parameter_complete(policy))?;
-                let second = policy
-                    .strict_predicate_pass(|| second.promoted_bezier_parameter_complete(policy))?;
-                match (first, second) {
-                    (Classification::Decided(first), Classification::Decided(second)) => {
-                        policy.strict_predicate_pass(|| first.cmp_by_refinement(&second, policy))
+                // Most mixed cuts only need strict separation. Their native
+                // isolators prove that without reconstructing either scalar.
+                // Overlapping bounds do not prove equality: retain complete
+                // algebraic replay after this bounded scheduling pass.
+                for refinement_steps in [0, 2, 4, 8, 16, 32] {
+                    let Classification::Decided(first) =
+                        self.refined_for_finite_envelope(refinement_steps, policy)?
+                    else {
+                        break;
+                    };
+                    let Classification::Decided(second) =
+                        other.refined_for_finite_envelope(refinement_steps, policy)?
+                    else {
+                        break;
+                    };
+                    let (first_lower, first_upper) = first
+                        .finite_envelope_bounds()
+                        .expect("native scalar refinement retains finite bounds");
+                    let (second_lower, second_upper) = second
+                        .finite_envelope_bounds()
+                        .expect("native scalar refinement retains finite bounds");
+                    if compare_reals(first_upper, second_lower, &CurveContext::STRICT)
+                        == Some(Ordering::Less)
+                    {
+                        return Ok(Classification::Decided(Ordering::Less));
                     }
-                    (Classification::Uncertain(reason), _)
-                    | (_, Classification::Uncertain(reason)) => {
-                        Ok(Classification::Uncertain(reason))
+                    if compare_reals(second_upper, first_lower, &CurveContext::STRICT)
+                        == Some(Ordering::Less)
+                    {
+                        return Ok(Classification::Decided(Ordering::Greater));
+                    }
+                    if first_lower == first_upper && second_lower == second_upper {
+                        if let Some(ordering) =
+                            compare_reals(first_lower, second_lower, &CurveContext::STRICT)
+                        {
+                            return Ok(Classification::Decided(ordering));
+                        }
+                        break;
                     }
                 }
-            }
-            (
-                CurveParameterData2::RecursiveProjective(first),
-                CurveParameterData2::SelectedFiber(second),
-            ) => {
                 let first = policy
-                    .strict_predicate_pass(|| first.promoted_bezier_parameter_complete(policy))?;
+                    .strict_predicate_pass(|| self.promoted_bezier_parameter_complete(policy))?;
                 let second = policy
-                    .strict_predicate_pass(|| second.promoted_bezier_parameter_complete(policy))?;
+                    .strict_predicate_pass(|| other.promoted_bezier_parameter_complete(policy))?;
                 match (first, second) {
                     (Classification::Decided(first), Classification::Decided(second)) => {
                         policy.strict_predicate_pass(|| first.cmp_by_refinement(&second, policy))

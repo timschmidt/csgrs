@@ -4736,6 +4736,12 @@ impl BezierAlgebraicSelectedFiberParameter2 {
             decided @ Classification::Decided(_) => return Ok(decided),
             Classification::Uncertain(_) => {}
         }
+        #[cfg(feature = "dispatch-trace")]
+        hyperreal::dispatch_trace::record(
+            "hypercurve",
+            "selected-scalar-promotion",
+            "complete-projection",
+        );
         self.validate_policy(policy)?;
         let zero = Real::zero();
         let one = Real::one();
@@ -129949,6 +129955,32 @@ mod conversion_tests {
                 result.value.unwrap(),
                 Classification::Decided(std::cmp::Ordering::Equal)
             );
+            let BezierParameter2::Algebraic(owner) = &other else {
+                unreachable!("the fixture retains an algebraic owner")
+            };
+            let selected = CurveParameter2::from_selected_fiber(
+                BezierAlgebraicSelectedFiberAuthority2::from_bezier_parameter(
+                    owner.clone(),
+                    other.clone(),
+                    &policy,
+                ),
+            );
+            let recursive = CurveParameter2::from_recursive_projective(parameter);
+            for (first, second) in [(&selected, &recursive), (&recursive, &selected)] {
+                let result = crate::policy::resolve_certified_value(&policy, |attempt| {
+                    first.cmp_by_refinement(second, attempt)
+                });
+                assert_eq!(result.certainty, CurveCertainty::Certified);
+                assert_eq!(
+                    result.value.unwrap(),
+                    Classification::Decided(std::cmp::Ordering::Equal)
+                );
+                assert!(matches!(
+                    CurveParameterRange2::new_validated(first.clone(), second.clone())
+                        .strict_interior_scalar(&policy),
+                    Err(CurveError::InvalidBezierRange)
+                ));
+            }
         }
     }
 
@@ -161016,23 +161048,56 @@ mod conversion_tests {
                     Some(std::cmp::Ordering::Less),
                     "case {index}: the retained enclosures must require native refinement"
                 );
-                let outcome = crate::policy::resolve_certified_operation(&policy, |attempt| {
-                    first.strict_scalar_between_ordered(&second, attempt)
-                })
-                .unwrap();
-                assert_eq!(outcome.certainty, CurveCertainty::Certified);
-                let Classification::Decided(sample) = outcome.value else {
-                    panic!("finite native parameters must expose their strict interior");
-                };
-                let sample = CurveParameter2::from(BezierParameter2::Exact(sample));
-                assert_eq!(
-                    first.cmp_by_refinement(&sample, &policy).unwrap(),
-                    Classification::Decided(std::cmp::Ordering::Less)
-                );
-                assert_eq!(
-                    second.cmp_by_refinement(&sample, &policy).unwrap(),
-                    Classification::Decided(std::cmp::Ordering::Greater)
-                );
+                for range in [
+                    None,
+                    Some(CurveParameterRange2::new_validated(
+                        first.clone(),
+                        second.clone(),
+                    )),
+                    Some(CurveParameterRange2::new_validated(
+                        second.clone(),
+                        first.clone(),
+                    )),
+                ] {
+                    let work = || {
+                        crate::policy::resolve_certified_operation(
+                            &policy,
+                            |attempt| match &range {
+                                Some(range) => range.strict_interior_scalar(attempt),
+                                None => first.strict_scalar_between_ordered(&second, attempt),
+                            },
+                        )
+                    };
+                    #[cfg(feature = "dispatch-trace")]
+                    hyperreal::dispatch_trace::reset();
+                    #[cfg(feature = "dispatch-trace")]
+                    let outcome = hyperreal::dispatch_trace::with_recording(work).unwrap();
+                    #[cfg(not(feature = "dispatch-trace"))]
+                    let outcome = work().unwrap();
+                    #[cfg(feature = "dispatch-trace")]
+                    assert_eq!(
+                        hyperreal::dispatch_trace::take_trace().path_count(
+                            "hypercurve",
+                            "selected-scalar-promotion",
+                            "complete-projection",
+                        ),
+                        0,
+                        "case {index}: native scalar separation must avoid global projection"
+                    );
+                    assert_eq!(outcome.certainty, CurveCertainty::Certified);
+                    let Classification::Decided(sample) = outcome.value else {
+                        panic!("finite native parameters must expose their strict interior");
+                    };
+                    let sample = CurveParameter2::from(BezierParameter2::Exact(sample));
+                    assert_eq!(
+                        first.cmp_by_refinement(&sample, &policy).unwrap(),
+                        Classification::Decided(std::cmp::Ordering::Less)
+                    );
+                    assert_eq!(
+                        second.cmp_by_refinement(&sample, &policy).unwrap(),
+                        Classification::Decided(std::cmp::Ordering::Greater)
+                    );
+                }
             }
             assert!(
                 selected.data.represented_parameter.get().is_none(),
