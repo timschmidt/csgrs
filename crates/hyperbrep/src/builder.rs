@@ -3555,15 +3555,6 @@ fn normalize_revolution_contour(contour: &Contour2) -> Result<Contour2, Construc
     }
 }
 
-fn curve2_from_bezier_subcurve(curve: &BezierSubcurve2) -> Curve2 {
-    match curve {
-        BezierSubcurve2::Quadratic(curve) => Curve2::from(curve.clone()),
-        BezierSubcurve2::Cubic(curve) => Curve2::from(curve.clone()),
-        BezierSubcurve2::RationalQuadratic(curve) => Curve2::from(curve.clone()),
-        BezierSubcurve2::Rational(curve) => Curve2::from(curve.clone()),
-    }
-}
-
 fn exact_parameter_is(parameter: Option<Real>, expected: &Real) -> Result<bool, ConstructionError> {
     parameter
         .map(|parameter| exact_real_equal(&parameter, expected))
@@ -3997,7 +3988,8 @@ fn validate_simple_curve_path(
     }
     let curves = fragments
         .iter()
-        .map(|fragment| curve2_from_bezier_subcurve(fragment.curve()))
+        .cloned()
+        .map(|fragment| fragment.into_curve())
         .collect::<Vec<_>>();
     for first_index in 0..curves.len() {
         for second_index in first_index + 1..curves.len() {
@@ -4075,19 +4067,9 @@ fn partition_periodic_curve_path(
     }
     let curves = fragments
         .iter()
-        .map(|fragment| {
-            let (start, end) = fragment.parameter_range();
-            curve
-                .clamped_subcurve(
-                    start.clone().into(),
-                    end.clone().into(),
-                    &CurveContext::STRICT,
-                )
-                .map(|outcome| outcome.into_value())
-                .map_err(GeometryError::from)
-                .map_err(Into::into)
-        })
-        .collect::<Result<Vec<_>, ConstructionError>>()?;
+        .cloned()
+        .map(|fragment| fragment.into_curve())
+        .collect::<Vec<_>>();
     if curves.iter().any(Curve2::is_periodic) {
         return Err(unsupported);
     }
@@ -7952,6 +7934,47 @@ mod tests {
             .value(),
             Some(std::cmp::Ordering::Equal)
         );
+
+        // The same periodic partition also feeds planar extrusion. This
+        // polynomial loop has exact area 10/3, hence volume 10 at height 3.
+        for reversed in [false, true] {
+            let profile = if reversed {
+                polynomial_profile
+                    .reversed(&CurveContext::STRICT)
+                    .unwrap()
+                    .value
+            } else {
+                polynomial_profile.clone()
+            };
+            let (extruded, solid) = extrude_path(&profile, r(0), r(3)).unwrap();
+            assert_eq!(extruded.faces().count(), 6);
+            assert_eq!(
+                compare_reals(
+                    &extruded.solid_volume(solid).unwrap(),
+                    &r(10),
+                    crate::STRICT_PREDICATES
+                )
+                .value(),
+                Some(std::cmp::Ordering::Equal)
+            );
+            for (point, expected) in [
+                (p(4, 1, 1), SolidPointLocation::Inside),
+                (p(5, 1, 1), SolidPointLocation::Boundary),
+                (p(2, 1, 1), SolidPointLocation::Outside),
+            ] {
+                assert_eq!(extruded.classify_point(solid, &point).unwrap(), expected);
+            }
+            let json = extruded.to_json().unwrap();
+            assert_eq!(
+                crate::RawModel::from_json(&json)
+                    .unwrap()
+                    .validate()
+                    .unwrap()
+                    .to_json()
+                    .unwrap(),
+                json
+            );
+        }
     }
 
     #[test]
