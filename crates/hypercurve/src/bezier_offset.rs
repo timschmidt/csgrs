@@ -27,7 +27,7 @@ use crate::bezier_algebraic_image::{
 };
 use crate::bezier_moment::exact_rational_polynomial_root;
 use crate::bezier_parameter::{
-    BezierParameterRefinement2, bernstein_to_power_coefficients,
+    BezierParameterRay2, BezierParameterRefinement2, bernstein_to_power_coefficients,
     coefficients_value_interval_on_parameter_interval,
     coefficients_value_interval_on_real_interval, deep_exact_coefficients_sign_at_parameter,
     divide_by_linear_root, power_to_bernstein_coefficients, signed_coefficients_at_parameter,
@@ -39,7 +39,7 @@ use crate::rational_bezier_general::{
     RationalBezierOverlapParameterCorrespondence2, RationalParameterImageMap2,
     ResultantParameterProjection, exact_contact_point_evidence,
     resultant_bivariate_polynomial_system_complete, resultant_parameter_polynomial,
-    resultant_parameter_projection, resultant_parameter_projection_with_incident_ray,
+    resultant_parameter_projection,
 };
 use crate::{
     Aabb2, Axis2, BezierAlgebraicImageStatus, BezierAlgebraicParameter2, BezierLineContact,
@@ -104349,7 +104349,7 @@ fn algebraic_selected_fiber_parameters_with_resultant_limit(
             }
         }
     } else {
-        match resultant_parameter_projection(report, policy)? {
+        match resultant_parameter_projection(report, None, policy)? {
             Classification::Decided(projection) => projection,
             Classification::Uncertain(reason) => {
                 return Ok(Classification::Uncertain(reason));
@@ -114678,6 +114678,7 @@ impl BezierParallel2 {
         Ok(project_parallel_intersection_system(
             &system.first_equation,
             &system.second_equation,
+            [None; 2],
             policy,
         )?
         .map(|candidates| parallel_pair_candidates_from_parallel_rational(candidates, false)))
@@ -114959,15 +114960,21 @@ impl BezierParallel2 {
                 ),
             ));
         };
-        let candidates = match project_parallel_intersection_equations_with_incident_rays(
+        let candidates = match project_parallel_intersection_system(
             &system.first_equation,
             &system.second_equation,
-            first_anchor,
-            first_direction,
-            first_barrier.as_ref(),
-            second_anchor,
-            second_direction,
-            second_barrier.as_ref(),
+            [
+                Some(BezierParameterRay2 {
+                    anchor: first_anchor,
+                    direction: first_direction,
+                    barrier: first_barrier.as_ref(),
+                }),
+                Some(BezierParameterRay2 {
+                    anchor: second_anchor,
+                    direction: second_direction,
+                    barrier: second_barrier.as_ref(),
+                }),
+            ],
             policy,
         )? {
             Classification::Decided(candidates) => candidates,
@@ -116612,11 +116619,15 @@ impl BezierParallel2 {
                 }
             }
         }
-        let candidates =
-            match project_parallel_intersection_system(&equations[0], &equations[1], policy)? {
-                Classification::Decided(candidates) => candidates,
-                Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-            };
+        let candidates = match project_parallel_intersection_system(
+            &equations[0],
+            &equations[1],
+            [None; 2],
+            policy,
+        )? {
+            Classification::Decided(candidates) => candidates,
+            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+        };
         if matches!(
             candidates,
             BezierParallelIntersectionCandidates2::DegenerateResultant
@@ -120218,11 +120229,15 @@ fn parallel_intersection_candidate_system(
         &equations,
         [[&Real::zero(), &Real::one()]; 2],
     ) {
-        let candidates =
-            match project_parallel_intersection_system(&reduced[0], &reduced[1], policy)? {
-                Classification::Decided(candidates) => candidates,
-                Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-            };
+        let candidates = match project_parallel_intersection_system(
+            &reduced[0],
+            &reduced[1],
+            [None; 2],
+            policy,
+        )? {
+            Classification::Decided(candidates) => candidates,
+            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+        };
         return Ok(Classification::Decided(parallel_candidate_system(
             candidates, reduced,
         )));
@@ -120247,6 +120262,7 @@ fn parallel_candidate_system(
 fn project_parallel_intersection_system(
     first_equation: &BivariatePolynomial,
     second_equation: &BivariatePolynomial,
+    extensions: [Option<BezierParameterRay2<'_>>; 2],
     policy: &CurveContext,
 ) -> CurveResult<Classification<BezierParallelIntersectionCandidates2>> {
     let config = CurveIntersectionResultantConfig {
@@ -120259,14 +120275,25 @@ fn project_parallel_intersection_system(
         CurveResultantParameter::First,
         config,
     );
-    let parallel = match resultant_parameter_projection(parallel_report, policy)? {
+    let parallel = match resultant_parameter_projection(parallel_report, extensions[0], policy)? {
         Classification::Decided(projection) => projection,
         Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
     };
-    if matches!(parallel, ResultantParameterProjection::Degenerate) {
-        return Ok(Classification::Decided(
-            BezierParallelIntersectionCandidates2::DegenerateResultant,
-        ));
+    match parallel {
+        ResultantParameterProjection::Empty => {
+            // One empty projection proves the complete pair domain empty.
+            // Avoid constructing or refining the other resultant.
+            return Ok(Classification::Decided(
+                BezierParallelIntersectionCandidates2::NoIntersection,
+            ));
+        }
+        ResultantParameterProjection::Degenerate => {
+            return Ok(Classification::Decided(
+                BezierParallelIntersectionCandidates2::DegenerateResultant,
+            ));
+        }
+        ResultantParameterProjection::Parameters(_)
+        | ResultantParameterProjection::SelectedParameters(_) => {}
     }
     let other_report = resultant_bivariate_polynomial_system_complete(
         first_equation,
@@ -120274,7 +120301,7 @@ fn project_parallel_intersection_system(
         CurveResultantParameter::Second,
         config,
     );
-    let other = match resultant_parameter_projection(other_report, policy)? {
+    let other = match resultant_parameter_projection(other_report, extensions[1], policy)? {
         Classification::Decided(projection) => projection,
         Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
     };
@@ -120296,84 +120323,6 @@ fn project_parallel_intersection_system(
             other_parameters,
         },
     }))
-}
-
-#[allow(clippy::too_many_arguments)]
-fn project_parallel_intersection_equations_with_incident_rays(
-    first_equation: &BivariatePolynomial,
-    second_equation: &BivariatePolynomial,
-    first_anchor: &Real,
-    first_direction: BezierParameterRayDirection2,
-    first_barrier: Option<&BezierParameter2>,
-    second_anchor: &Real,
-    second_direction: BezierParameterRayDirection2,
-    second_barrier: Option<&BezierParameter2>,
-    policy: &CurveContext,
-) -> CurveResult<Classification<BezierParallelIntersectionCandidates2>> {
-    let config = CurveIntersectionResultantConfig {
-        min_precision: PARALLEL_INTERSECTION_RESULTANT_PRECISION,
-        max_resultant_degree: MAX_PARALLEL_INTERSECTION_RESULTANT_DEGREE,
-    };
-    let first_report = resultant_bivariate_polynomial_system_complete(
-        first_equation,
-        second_equation,
-        CurveResultantParameter::First,
-        config,
-    );
-    let first = match resultant_parameter_projection_with_incident_ray(
-        first_report,
-        first_anchor,
-        first_direction,
-        first_barrier,
-        policy,
-    )? {
-        Classification::Decided(projection) => projection,
-        Classification::Uncertain(reason) => {
-            return Ok(Classification::Uncertain(reason));
-        }
-    };
-    if matches!(first, ResultantParameterProjection::Degenerate) {
-        return Ok(Classification::Decided(
-            BezierParallelIntersectionCandidates2::DegenerateResultant,
-        ));
-    }
-    let second_report = resultant_bivariate_polynomial_system_complete(
-        first_equation,
-        second_equation,
-        CurveResultantParameter::Second,
-        config,
-    );
-    let second = match resultant_parameter_projection_with_incident_ray(
-        second_report,
-        second_anchor,
-        second_direction,
-        second_barrier,
-        policy,
-    )? {
-        Classification::Decided(projection) => projection,
-        Classification::Uncertain(reason) => {
-            return Ok(Classification::Uncertain(reason));
-        }
-    };
-    let candidates = match (first, second) {
-        (ResultantParameterProjection::Empty, _) | (_, ResultantParameterProjection::Empty) => {
-            BezierParallelIntersectionCandidates2::NoIntersection
-        }
-        (ResultantParameterProjection::Degenerate, _)
-        | (_, ResultantParameterProjection::Degenerate) => {
-            BezierParallelIntersectionCandidates2::DegenerateResultant
-        }
-        (
-            ResultantParameterProjection::Parameters(first_parameters)
-            | ResultantParameterProjection::SelectedParameters(first_parameters),
-            ResultantParameterProjection::Parameters(second_parameters)
-            | ResultantParameterProjection::SelectedParameters(second_parameters),
-        ) => BezierParallelIntersectionCandidates2::Candidates {
-            parallel_parameters: first_parameters,
-            other_parameters: second_parameters,
-        },
-    };
-    Ok(Classification::Decided(candidates))
 }
 
 fn bivariate_system_may_have_component(equations: &[BivariatePolynomial; 2]) -> bool {
@@ -121167,6 +121116,7 @@ fn parallel_candidate_system_from_parameter_components(
     let candidates = match project_parallel_intersection_system(
         &component.residual_equations[0],
         &component.residual_equations[1],
+        [None; 2],
         policy,
     )? {
         Classification::Decided(candidates) => candidates,
@@ -124162,7 +124112,7 @@ fn bivariate_system_has_unit_square_solution(
     {
         return Ok(Classification::Decided(false));
     }
-    let candidates = match project_parallel_intersection_system(first, second, policy)? {
+    let candidates = match project_parallel_intersection_system(first, second, [None; 2], policy)? {
         Classification::Decided(candidates) => candidates,
         Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
     };
@@ -124217,7 +124167,7 @@ fn bivariate_system_has_positive_dimensional_relation(
         return Ok(Classification::Decided(false));
     }
     Ok(
-        match project_parallel_intersection_system(first, second, policy)? {
+        match project_parallel_intersection_system(first, second, [None; 2], policy)? {
             Classification::Decided(BezierParallelIntersectionCandidates2::DegenerateResultant) => {
                 Classification::Decided(true)
             }
@@ -124238,7 +124188,7 @@ fn bivariate_system_unit_square_solution_pairs(
     {
         return Ok(Classification::Decided(Vec::new()));
     }
-    let candidates = match project_parallel_intersection_system(first, second, policy)? {
+    let candidates = match project_parallel_intersection_system(first, second, [None; 2], policy)? {
         Classification::Decided(candidates) => candidates,
         Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
     };
@@ -125978,15 +125928,21 @@ fn incident_parameter_constraint(
     let mut residual_equations = [support, constraint.clone()];
     let mut component_support = None;
     let project = |equations: &[BivariatePolynomial; 2]| {
-        project_parallel_intersection_equations_with_incident_rays(
+        project_parallel_intersection_system(
             &equations[0],
             &equations[1],
-            first_anchor,
-            first_direction,
-            first_barrier,
-            second_anchor,
-            second_direction,
-            second_barrier,
+            [
+                Some(BezierParameterRay2 {
+                    anchor: first_anchor,
+                    direction: first_direction,
+                    barrier: first_barrier,
+                }),
+                Some(BezierParameterRay2 {
+                    anchor: second_anchor,
+                    direction: second_direction,
+                    barrier: second_barrier,
+                }),
+            ],
             policy,
         )
     };
@@ -126184,6 +126140,7 @@ fn project_parallel_pair_without_components(
     let initial_candidates = match project_parallel_intersection_system(
         &residual_equations[0],
         &residual_equations[1],
+        [None; 2],
         policy,
     )? {
         Classification::Decided(candidates) => candidates,
@@ -126209,6 +126166,7 @@ fn project_parallel_pair_without_components(
         let residual_candidates = match project_parallel_intersection_system(
             &residual_equations[0],
             &residual_equations[1],
+            [None; 2],
             policy,
         )? {
             Classification::Decided(candidates)
@@ -126230,6 +126188,7 @@ fn project_parallel_pair_without_components(
                 let radical_candidates = match project_parallel_intersection_system(
                     &radical_equations[0],
                     &radical_equations[1],
+                    [None; 2],
                     policy,
                 )? {
                     Classification::Decided(candidates) => candidates,
@@ -126278,6 +126237,7 @@ fn project_parallel_pair_without_components(
                         match project_parallel_intersection_system(
                             &replay_equations[0],
                             &replay_equations[1],
+                            [None; 2],
                             policy,
                         )? {
                             Classification::Decided(candidates)
@@ -126960,15 +126920,21 @@ fn project_parallel_pair_without_components_with_incident_rays(
     let source_component_removed = source_residual.is_some();
     let mut residual_equations = source_residual.unwrap_or(original_equations);
     let project = |equations: &[BivariatePolynomial; 2]| {
-        project_parallel_intersection_equations_with_incident_rays(
+        project_parallel_intersection_system(
             &equations[0],
             &equations[1],
-            first_anchor,
-            first_direction,
-            first_barrier,
-            second_anchor,
-            second_direction,
-            second_barrier,
+            [
+                Some(BezierParameterRay2 {
+                    anchor: first_anchor,
+                    direction: first_direction,
+                    barrier: first_barrier,
+                }),
+                Some(BezierParameterRay2 {
+                    anchor: second_anchor,
+                    direction: second_direction,
+                    barrier: second_barrier,
+                }),
+            ],
             policy,
         )
     };
@@ -127175,6 +127141,7 @@ fn project_parallel_pair_intersection_system(
     let projected = match project_parallel_intersection_system(
         &system.first_equation,
         &system.second_equation,
+        [None; 2],
         policy,
     )? {
         Classification::Decided(projected) => projected,
@@ -127228,6 +127195,7 @@ fn project_parallel_pair_intersection_system(
     let fallback = match project_parallel_intersection_system(
         &system.first_equation,
         &system.norm_equation,
+        [None; 2],
         policy,
     )? {
         Classification::Decided(projected) => projected,
@@ -158298,6 +158266,112 @@ mod conversion_tests {
     }
 
     #[test]
+    fn parallel_projection_keeps_independent_finite_and_extension_domains() {
+        let zero = Real::zero();
+        let one = Real::one();
+        let half = (Real::one() / Real::from(2_i8)).unwrap();
+        let quarter = &half * &half;
+        let alpha = Real::from(2_i8).sqrt().unwrap();
+        // Independent factors give exact Cartesian products:
+        // (t-1/2)(t^2-2)=0 and (u-1/4)(u^2-2)=0.
+        let first = BivariatePolynomial::new(vec![
+            vec![one.clone()],
+            vec![Real::from(-2_i8)],
+            vec![-&half],
+            vec![one.clone()],
+        ]);
+        let second = BivariatePolynomial::new(vec![vec![
+            half.clone(),
+            Real::from(-2_i8),
+            -&quarter,
+            one.clone(),
+        ]]);
+        let first_ray = BezierParameterRay2 {
+            anchor: &one,
+            direction: BezierParameterRayDirection2::Increasing,
+            barrier: None,
+        };
+        let second_ray = BezierParameterRay2 {
+            anchor: &zero,
+            direction: BezierParameterRayDirection2::Decreasing,
+            barrier: None,
+        };
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let assert_parameter = |parameter: &BezierParameter2, value: &Real| {
+                assert_eq!(
+                    parameter
+                        .cmp_by_refinement(&BezierParameter2::Exact(value.clone()), &policy)
+                        .unwrap(),
+                    Classification::Decided(std::cmp::Ordering::Equal),
+                );
+            };
+            let project = |first_ray, second_ray| {
+                let Classification::Decided(BezierParallelIntersectionCandidates2::Candidates {
+                    parallel_parameters,
+                    other_parameters,
+                }) = project_parallel_intersection_system(
+                    &first,
+                    &second,
+                    [first_ray, second_ray],
+                    &policy,
+                )
+                .unwrap()
+                else {
+                    panic!("the independent exact projections must be complete")
+                };
+                (parallel_parameters, other_parameters)
+            };
+            for extend_first in [false, true] {
+                for extend_second in [false, true] {
+                    let (first, second) = project(
+                        extend_first.then_some(first_ray),
+                        extend_second.then_some(second_ray),
+                    );
+                    assert_eq!(first.len(), 1 + usize::from(extend_first));
+                    assert_eq!(second.len(), 1 + usize::from(extend_second));
+                    assert_parameter(&first[0], &half);
+                    assert_parameter(&second[0], &quarter);
+                    if extend_first {
+                        assert_parameter(&first[1], &alpha);
+                    }
+                    if extend_second {
+                        assert_parameter(&second[1], &(-&alpha));
+                    }
+                }
+            }
+            let (first_roots, second_roots) = project(Some(first_ray), Some(second_ray));
+            // Reuse the selected roots themselves as excluded barriers.
+            let (clipped_first, clipped_second) = project(
+                Some(BezierParameterRay2 {
+                    barrier: Some(&first_roots[1]),
+                    ..first_ray
+                }),
+                Some(BezierParameterRay2 {
+                    barrier: Some(&second_roots[1]),
+                    ..second_ray
+                }),
+            );
+            assert_eq!(clipped_first.len(), 1);
+            assert_eq!(clipped_second.len(), 1);
+            assert_parameter(&clipped_first[0], &half);
+            assert_parameter(&clipped_second[0], &quarter);
+
+            let exterior_only =
+                BivariatePolynomial::new(vec![vec![Real::from(-2_i8)], vec![one.clone()]]);
+            assert!(matches!(
+                project_parallel_intersection_system(
+                    &exterior_only,
+                    &second,
+                    [None, Some(second_ray)],
+                    &policy
+                )
+                .unwrap(),
+                Classification::Decided(BezierParallelIntersectionCandidates2::NoIntersection),
+            ));
+        }
+    }
+
+    #[test]
     fn parallel_circle_intersections_retain_exceptional_inverse_fibers() {
         let quarter = (Real::one() / Real::from(4_i8)).unwrap();
         let half = &quarter + &quarter;
@@ -167514,6 +167588,7 @@ mod conversion_tests {
             }) = project_parallel_intersection_system(
                 &system.residual_equations[0],
                 &system.residual_equations[1],
+                [None; 2],
                 &policy,
             )
             .unwrap()
@@ -169643,6 +169718,7 @@ mod conversion_tests {
             }) = project_parallel_intersection_system(
                 &system.residual_equations[0],
                 &system.residual_equations[1],
+                [None; 2],
                 &policy,
             )
             .unwrap()
@@ -169754,6 +169830,7 @@ mod conversion_tests {
             }) = project_parallel_intersection_system(
                 &system.residual_equations[0],
                 &system.residual_equations[1],
+                [None; 2],
                 &policy,
             )
             .unwrap()

@@ -25,7 +25,8 @@ use crate::bezier_algebraic_image::{
     rational_derivative_images_from_power_basis, rational_point_image_from_power_basis,
 };
 use crate::bezier_parameter::{
-    BezierParameterRefinement2, bernstein_to_power_coefficients, signed_coefficients_at_parameter,
+    BezierParameterRay2, BezierParameterRefinement2, bernstein_to_power_coefficients,
+    signed_coefficients_at_parameter,
 };
 use crate::bezier_topology::{
     exact_line_contact_relation_from_bernstein_distances,
@@ -1240,6 +1241,7 @@ fn project_retained_lineage_residual_system(
                     max_resultant_degree: MAX_RATIONAL_INTERSECTION_RESULTANT_DEGREE,
                 },
             ),
+            None,
             policy,
         )
     };
@@ -1294,7 +1296,7 @@ fn project_symmetric_self_intersection_system(
             max_resultant_degree: MAX_RATIONAL_INTERSECTION_RESULTANT_DEGREE,
         },
     );
-    let projection = match resultant_parameter_projection(report, policy)? {
+    let projection = match resultant_parameter_projection(report, None, policy)? {
         Classification::Decided(projection) => projection,
         Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
     };
@@ -1327,7 +1329,7 @@ fn project_symmetric_self_intersection_system_with_incident_rays(
     policy: &CurveContext,
 ) -> CurveResult<Classification<RationalBezierIntersectionCandidates2>> {
     let project = |parameter, anchor, direction, barrier| {
-        resultant_parameter_projection_with_incident_ray(
+        resultant_parameter_projection(
             resultant_bivariate_polynomial_system_complete(
                 &equations[0],
                 &equations[1],
@@ -1337,9 +1339,11 @@ fn project_symmetric_self_intersection_system_with_incident_rays(
                     max_resultant_degree: MAX_RATIONAL_INTERSECTION_RESULTANT_DEGREE,
                 },
             ),
-            anchor,
-            direction,
-            barrier,
+            Some(BezierParameterRay2 {
+                anchor,
+                direction,
+                barrier,
+            }),
             policy,
         )
     };
@@ -4426,13 +4430,13 @@ impl RationalBezier2 {
             CurveResultantParameter::Second,
             config,
         );
-        let first = match resultant_parameter_projection(first, policy)? {
+        let first = match resultant_parameter_projection(first, None, policy)? {
             Classification::Decided(projection) => projection,
             Classification::Uncertain(reason) => {
                 return Ok(Classification::Uncertain(reason));
             }
         };
-        let second = match resultant_parameter_projection(second, policy)? {
+        let second = match resultant_parameter_projection(second, None, policy)? {
             Classification::Decided(projection) => projection,
             Classification::Uncertain(reason) => {
                 return Ok(Classification::Uncertain(reason));
@@ -9053,40 +9057,12 @@ pub(crate) fn resultant_parameter_polynomial(
     )
 }
 
+/// Projects one resultant onto the authored unit span and an optional open
+/// extension. The caller retains any exact pole or speed-zero barrier; the
+/// polynomial and its root certificates share one authority in both domains.
 pub(crate) fn resultant_parameter_projection(
     evidence: CurveIntersectionResultantReport,
-    policy: &CurveContext,
-) -> CurveResult<Classification<ResultantParameterProjection>> {
-    let polynomial = match resultant_parameter_polynomial(evidence, policy)? {
-        Classification::Decided(Some(polynomial)) => polynomial,
-        Classification::Decided(None) => {
-            return Ok(Classification::Decided(
-                ResultantParameterProjection::Degenerate,
-            ));
-        }
-        Classification::Uncertain(reason) => {
-            return Ok(Classification::Uncertain(reason));
-        }
-    };
-    match polynomial.isolate_unit_interval_roots(policy)? {
-        Classification::Decided(parameters) if parameters.is_empty() => {
-            Ok(Classification::Decided(ResultantParameterProjection::Empty))
-        }
-        Classification::Decided(parameters) => Ok(Classification::Decided(
-            ResultantParameterProjection::Parameters(parameters),
-        )),
-        Classification::Uncertain(reason) => Ok(Classification::Uncertain(reason)),
-    }
-}
-
-/// Projects one resultant onto the authored unit span plus its open regular
-/// endpoint ray. The caller supplies the first source pole or speed-zero
-/// barrier, so every retained exterior root stays in the same analytic cell.
-pub(crate) fn resultant_parameter_projection_with_incident_ray(
-    evidence: CurveIntersectionResultantReport,
-    anchor: &Real,
-    direction: BezierParameterRayDirection2,
-    barrier: Option<&BezierParameter2>,
+    extension: Option<BezierParameterRay2<'_>>,
     policy: &CurveContext,
 ) -> CurveResult<Classification<ResultantParameterProjection>> {
     let polynomial = match resultant_parameter_polynomial(evidence, policy)? {
@@ -9106,29 +9082,35 @@ pub(crate) fn resultant_parameter_projection_with_incident_ray(
             return Ok(Classification::Uncertain(reason));
         }
     };
-    let exterior = match polynomial.isolate_incident_ray_roots(anchor, direction, policy)? {
-        Classification::Decided(parameters) => parameters,
-        Classification::Uncertain(reason) => {
-            return Ok(Classification::Uncertain(reason));
-        }
-    };
-    for parameter in exterior {
-        if let Some(barrier) = barrier {
-            let ordering = match parameter.cmp_by_refinement(barrier, policy)? {
-                Classification::Decided(ordering) => ordering,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            };
-            let before_barrier = match direction {
-                BezierParameterRayDirection2::Decreasing => ordering == Ordering::Greater,
-                BezierParameterRayDirection2::Increasing => ordering == Ordering::Less,
-            };
-            if !before_barrier {
-                continue;
+    if let Some(extension) = extension {
+        let exterior = match polynomial.isolate_incident_ray_roots(
+            extension.anchor,
+            extension.direction,
+            policy,
+        )? {
+            Classification::Decided(parameters) => parameters,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
             }
+        };
+        for parameter in exterior {
+            if let Some(barrier) = extension.barrier {
+                let ordering = match parameter.cmp_by_refinement(barrier, policy)? {
+                    Classification::Decided(ordering) => ordering,
+                    Classification::Uncertain(reason) => {
+                        return Ok(Classification::Uncertain(reason));
+                    }
+                };
+                let before_barrier = match extension.direction {
+                    BezierParameterRayDirection2::Decreasing => ordering == Ordering::Greater,
+                    BezierParameterRayDirection2::Increasing => ordering == Ordering::Less,
+                };
+                if !before_barrier {
+                    continue;
+                }
+            }
+            parameters.push(parameter);
         }
-        parameters.push(parameter);
     }
     Ok(Classification::Decided(if parameters.is_empty() {
         ResultantParameterProjection::Empty
@@ -9661,8 +9643,9 @@ mod tests {
                         CurveResultantParameter::First,
                         bounded,
                     );
-                    let projections = [polynomial, rational]
-                        .map(|report| resultant_parameter_projection(report, attempt).unwrap());
+                    let projections = [polynomial, rational].map(|report| {
+                        resultant_parameter_projection(report, None, attempt).unwrap()
+                    });
                     let mut parameters = Vec::with_capacity(2);
                     for projection in projections {
                         let Classification::Decided(ResultantParameterProjection::Parameters(

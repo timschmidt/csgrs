@@ -180,6 +180,15 @@ pub enum BezierParameterRayDirection2 {
     Increasing,
 }
 
+/// One open parameter ray, optionally stopped at an exact excluded boundary.
+/// This borrowed domain view retains the caller's barrier/root authority.
+#[derive(Clone, Copy, Debug)]
+pub(crate) struct BezierParameterRay2<'a> {
+    pub(crate) anchor: &'a Real,
+    pub(crate) direction: BezierParameterRayDirection2,
+    pub(crate) barrier: Option<&'a BezierParameter2>,
+}
+
 impl BezierParameterPolynomial {
     /// Constructs a nonzero power-basis polynomial.
     pub fn try_new_power_basis(
