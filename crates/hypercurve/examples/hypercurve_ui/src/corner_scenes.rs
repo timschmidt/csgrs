@@ -407,7 +407,7 @@ fn edit_all_corners(
                 |witness| witness.previous_parameter.clone(),
             );
             curve
-                .subcurve(start, end, &CurveContext::STRICT)
+                .subcurve(start.into(), end.into(), &CurveContext::STRICT)
                 .map(|outcome| outcome.into_value())
                 .map_err(|error| format!("curve {curve_index}: {error}"))
         })

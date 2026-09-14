@@ -286,7 +286,7 @@ fn nurbs_subdivision_reconstruction_obeys_terminal_policy() {
 
     let top_level = Curve2::from(curve.clone());
     let top_level_split = top_level
-        .split_at(parameter.clone(), &CurveContext::APPROXIMATE_512)
+        .split_at(parameter.clone().into(), &CurveContext::APPROXIMATE_512)
         .expect("Curve2 must propagate the selected policy into its NURBS carrier");
     assert_eq!(
         top_level_split.certainty,

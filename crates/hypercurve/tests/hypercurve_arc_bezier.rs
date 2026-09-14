@@ -85,7 +85,7 @@ fn rationally_trimmed_semicircle_redecomposes_exactly() {
     let quarter = (r(1) / r(4)).unwrap();
     let three_quarters = (r(3) / r(4)).unwrap();
     let trimmed = source
-        .subcurve(quarter, three_quarters, &CurveContext::STRICT)
+        .subcurve(quarter.into(), three_quarters.into(), &CurveContext::STRICT)
         .unwrap()
         .into_value();
     let Some(CurveGeometry2::CircularArc(arc)) = trimmed.geometry() else {

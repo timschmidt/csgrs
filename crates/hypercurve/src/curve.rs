@@ -3,6 +3,10 @@
 #[path = "curve_evaluation.rs"]
 mod curve_evaluation;
 
+#[path = "curve_subdivision.rs"]
+mod curve_subdivision;
+use curve_subdivision::CurveSourceRange2;
+
 #[path = "curve_corner_reconstruction.rs"]
 mod curve_corner_reconstruction;
 use curve_corner_reconstruction::corner_has_native_reconstruction;
@@ -200,6 +204,7 @@ struct CurveData2 {
 enum CurveCarrier2 {
     Native(CurveGeometry2),
     Restricted(Box<CurveRestrictedCarrier2>),
+    SourceRange(Box<CurveSourceRange2>),
 }
 
 #[derive(Debug)]
@@ -397,12 +402,15 @@ impl Curve2 {
     pub fn geometry(&self) -> Option<&CurveGeometry2> {
         match &self.data.carrier {
             CurveCarrier2::Native(geometry) => Some(geometry),
-            CurveCarrier2::Restricted(_) => None,
+            CurveCarrier2::Restricted(_) | CurveCarrier2::SourceRange(_) => None,
         }
     }
 
     /// Returns the curve family, including generated analytic parallels.
     pub fn family(&self) -> CurveFamily2 {
+        if let Some(range) = self.source_range() {
+            return range.source.family();
+        }
         if let Some(geometry) = self.geometry() {
             return geometry.family();
         }
@@ -441,6 +449,9 @@ impl Curve2 {
     }
 
     fn endpoint(&self, start: bool) -> CurvePoint2 {
+        if let Some(range) = self.source_range() {
+            return range.endpoints[usize::from(start == range.reversed)].clone();
+        }
         if let Some(geometry) = self.geometry() {
             return CurvePoint2::from(
                 if start {
@@ -476,7 +487,7 @@ impl Curve2 {
 
     pub(crate) fn retained_fragment(&self) -> Option<&crate::BezierSplitFragment2> {
         match &self.data.carrier {
-            CurveCarrier2::Native(_) => None,
+            CurveCarrier2::Native(_) | CurveCarrier2::SourceRange(_) => None,
             CurveCarrier2::Restricted(carrier) => Some(&carrier.fragment),
         }
     }
@@ -502,6 +513,9 @@ impl Curve2 {
 
     /// Returns the shared exact domain in the retained carrier's parameter chart.
     pub fn parameter_domain(&self) -> &crate::CurveParameterRange2 {
+        if let Some(range) = self.source_range() {
+            return &range.range;
+        }
         self.data.parameter_domain.get_or_init(|| {
             if let Some(fragment) = self.retained_fragment() {
                 return fragment.curve_region_parameter_range();
@@ -542,13 +556,19 @@ impl Curve2 {
 
     /// Returns the same exact curve image with traversal direction reversed.
     ///
-    /// The public parameter mapping is retained.
-    /// Parameters map as `u -> start + end - u`.
+    /// Authored native curves reflect their public parameter mapping as
+    /// `u -> start + end - u`. Retained source restrictions keep their source
+    /// chart and reverse traversal independently of parameter order.
     pub fn reversed(&self, policy: &CurveContext) -> ExactCurveResult<CurveOutcome<Self>> {
         resolve_certified_operation(policy, |attempt| self.reversed_raw(attempt))
     }
 
     pub(crate) fn reversed_raw(&self, policy: &CurveContext) -> ExactCurveResult<Self> {
+        if self.source_range().is_some() {
+            return self
+                .reverse_source_range(policy)
+                .map_err(|error| error.with_operation(CurveOperation2::Reversal));
+        }
         if let Some(fragment) = self.retained_fragment() {
             return fragment
                 .reversed()
@@ -638,6 +658,11 @@ impl Curve2 {
         transform: &Similarity2,
         policy: &CurveContext,
     ) -> ExactCurveResult<Self> {
+        if self.source_range().is_some() {
+            return self
+                .transform_source_range(transform, policy)
+                .map_err(|error| error.with_operation(CurveOperation2::Transformation));
+        }
         if let Some(fragment) = self.retained_fragment() {
             return crate::bezier_region::transform_curve_fragment_similarity(
                 fragment, transform, policy,
@@ -716,17 +741,23 @@ impl Curve2 {
 
     /// Splits this curve exactly at a strict interior public parameter.
     ///
-    /// Native result curves use their usual `[0, 1]` parameter domain. Spline
-    /// results retain the two corresponding authored knot-domain intervals.
-    /// Curve family and public parameter mapping are preserved. The returned
-    /// [`CurveOutcome`] covers the complete split and carrier reconstruction.
+    /// The two pieces are returned in traversal order. Selected parameters
+    /// retain the source chart and endpoint evidence; repeated cuts share the
+    /// original source. Native scalar subdivision uses `[0, 1]` domains except
+    /// for splines, which retain the authored knot intervals. Inspect each
+    /// result's [`Self::parameter_domain`] before evaluating it.
+    ///
+    /// At a discontinuous spline knot, each piece keeps its own one-sided
+    /// endpoint. The returned [`CurveOutcome`] covers the complete split.
     #[inline(always)]
     pub fn split_at(
         &self,
-        parameter: Real,
+        parameter: CurveParameter2,
         policy: &CurveContext,
     ) -> ExactCurveResult<CurveOutcome<(Self, Self)>> {
-        resolve_certified_operation(policy, |attempt| self.split_at_raw(parameter, attempt))
+        resolve_certified_operation(policy, |attempt| {
+            self.split_at_parameter(parameter, attempt)
+        })
     }
 
     pub(crate) fn split_at_raw(
@@ -770,19 +801,21 @@ impl Curve2 {
 
     /// Returns the exact curve image over a strictly ordered public range.
     ///
-    /// A full-domain request returns a clone sharing retained facts. Native
-    /// result curves are reparameterized to `[0, 1]`; spline results retain the
-    /// requested authored knot range. Curve family and source are preserved.
-    /// The returned [`CurveOutcome`] records any terminal decision consumed by
-    /// the complete exact range extraction.
+    /// A full-domain request returns a clone sharing retained facts. Selected
+    /// ranges preserve the original source chart, curve family and endpoint
+    /// evidence across all covered arc or spline spans. Traversal direction
+    /// is unchanged. Native scalar ranges use `[0, 1]` result domains except
+    /// for splines, which retain the authored knot interval.
+    ///
+    /// The returned [`CurveOutcome`] covers the complete exact extraction.
     #[inline(always)]
     pub fn subcurve(
         &self,
-        start: Real,
-        end: Real,
+        start: CurveParameter2,
+        end: CurveParameter2,
         policy: &CurveContext,
     ) -> ExactCurveResult<CurveOutcome<Self>> {
-        let domain = self.native_parameter_domain()?;
+        let domain = self.parameter_domain();
         if &start == domain.start() && &end == domain.end() {
             return Ok(CurveOutcome::new(
                 self.clone(),
@@ -790,7 +823,7 @@ impl Curve2 {
             ));
         }
         resolve_certified_operation(policy, |attempt| {
-            self.subcurve_with_policy(start, end, attempt)
+            self.subcurve_at_parameters(start, end, attempt)
         })
     }
 
@@ -902,18 +935,26 @@ impl Curve2 {
 
     /// Returns an exact finite subcurve suitable for clamped topology carriers.
     ///
-    /// Spline families preserve their authored parameter interval and exact
-    /// image in clamped piecewise-Bézier form. Other families use their native
-    /// exact subdivision. One [`CurveOutcome`] covers the complete operation.
+    /// Scalar spline ranges preserve their authored parameter interval and
+    /// exact image in clamped piecewise-Bézier form. Selected ranges retain
+    /// their exact source and lower to restricted spans when topology needs
+    /// them. One [`CurveOutcome`] covers the complete operation.
     #[inline(always)]
     pub fn clamped_subcurve(
         &self,
-        start: Real,
-        end: Real,
+        start: CurveParameter2,
+        end: CurveParameter2,
         policy: &CurveContext,
     ) -> ExactCurveResult<CurveOutcome<Self>> {
         resolve_certified_operation(policy, |attempt| {
-            self.clamped_subcurve_raw(start, end, attempt)
+            if self.geometry().is_some()
+                && let (Some(BezierParameter2::Exact(start)), Some(BezierParameter2::Exact(end))) =
+                    (start.as_bezier_parameter(), end.as_bezier_parameter())
+            {
+                self.clamped_subcurve_raw(start.clone(), end.clone(), attempt)
+            } else {
+                self.subcurve_at_parameters(start, end, attempt)
+            }
         })
     }
 
@@ -1773,8 +1814,9 @@ impl CurvePath2 {
             ));
         }
         let mut previous_source =
-            crate::bezier_region::CornerCarrierPreparation2::from_curve(previous);
-        let mut next_source = crate::bezier_region::CornerCarrierPreparation2::from_curve(next);
+            crate::bezier_region::CornerCarrierPreparation2::from_curve(previous, true);
+        let mut next_source =
+            crate::bezier_region::CornerCarrierPreparation2::from_curve(next, false);
         previous_source.prepare(CurveOperation2::Chamfer, policy)?;
         next_source.prepare(CurveOperation2::Chamfer, policy)?;
         let previous_carrier =
@@ -1796,7 +1838,19 @@ impl CurvePath2 {
             next.family(),
             policy,
         )?;
-        let solutions = try_map_corner_solutions(solutions, |solution| {
+        let solutions = try_map_corner_solutions(solutions, |mut solution| {
+            solution.previous.map_source_parameter(
+                previous_source.source_chart(),
+                CurveOperation2::Chamfer,
+                previous.family(),
+                policy,
+            )?;
+            solution.next.map_source_parameter(
+                next_source.source_chart(),
+                CurveOperation2::Chamfer,
+                next.family(),
+                policy,
+            )?;
             if !corner_has_native_reconstruction(previous, &solution.previous)
                 || !corner_has_native_reconstruction(next, &solution.next)
             {
@@ -1927,8 +1981,9 @@ impl CurvePath2 {
             ));
         }
         let mut previous_source =
-            crate::bezier_region::CornerCarrierPreparation2::from_curve(previous);
-        let mut next_source = crate::bezier_region::CornerCarrierPreparation2::from_curve(next);
+            crate::bezier_region::CornerCarrierPreparation2::from_curve(previous, true);
+        let mut next_source =
+            crate::bezier_region::CornerCarrierPreparation2::from_curve(next, false);
         previous_source.prepare(CurveOperation2::Fillet, policy)?;
         next_source.prepare(CurveOperation2::Fillet, policy)?;
         let previous_carrier =
@@ -1947,7 +2002,19 @@ impl CurvePath2 {
             next.family(),
             policy,
         )?;
-        let solutions = try_map_corner_solutions(solutions, |solution| {
+        let solutions = try_map_corner_solutions(solutions, |mut solution| {
+            solution.previous.map_source_parameter(
+                previous_source.source_chart(),
+                CurveOperation2::Fillet,
+                previous.family(),
+                policy,
+            )?;
+            solution.next.map_source_parameter(
+                next_source.source_chart(),
+                CurveOperation2::Fillet,
+                next.family(),
+                policy,
+            )?;
             if !corner_has_native_reconstruction(previous, &solution.previous)
                 || !corner_has_native_reconstruction(next, &solution.next)
                 || solution.center.coordinates().is_none()
@@ -2576,6 +2643,20 @@ impl NativeBezierFragment2 {
 
 fn compute_curve_bounds(curve: &Curve2) -> ExactCurveResult<Aabb2> {
     let policy = crate::CurveContext::STRICT;
+    if let Some(spans) = curve.restricted_source_spans(&policy, CurveOperation2::NativeTopology)? {
+        let mut bounds = decided_bounds(
+            crate::bezier_region::retained_fragment_query_bounds(&spans[0].fragment, &policy),
+            curve.family(),
+        )?;
+        for span in &spans[1..] {
+            let next = decided_bounds(
+                crate::bezier_region::retained_fragment_query_bounds(&span.fragment, &policy),
+                curve.family(),
+            )?;
+            bounds = decided_bounds(bounds.union(&next, &policy), curve.family())?;
+        }
+        return Ok(bounds);
+    }
     if let Some(fragment) = curve.retained_fragment() {
         return decided_bounds(
             crate::bezier_region::retained_fragment_query_bounds(fragment, &policy),
@@ -2975,6 +3056,29 @@ pub(crate) struct CornerCut2 {
 }
 
 impl CornerCut2 {
+    fn map_source_parameter(
+        &mut self,
+        chart: Option<(&Real, &Real)>,
+        operation: CurveOperation2,
+        family: CurveFamily2,
+        policy: &CurveContext,
+    ) -> ExactCurveResult<()> {
+        if let (Some((scale, offset)), Some(parameter)) = (chart, &self.parameter) {
+            self.parameter = Some(
+                match parameter
+                    .affine_image_unbounded(scale, offset, policy)
+                    .map_err(|cause| ExactCurveError::invalid(operation, family, cause))?
+                {
+                    Classification::Decided(parameter) => parameter,
+                    Classification::Uncertain(reason) => {
+                        return Err(ExactCurveError::blocked(operation, family, reason));
+                    }
+                },
+            );
+        }
+        Ok(())
+    }
+
     fn exact_point(&self) -> Option<&Point2> {
         self.point.coordinates()
     }

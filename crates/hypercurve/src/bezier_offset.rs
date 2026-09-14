@@ -72345,29 +72345,46 @@ impl BezierAlgebraicChord2 {
             })?;
             retained_endpoint(if at_end { end.clone() } else { start.clone() })
         };
-        let orders = if let Some(direction) = self.certified_axis_direction() {
-            let axis = direction.axis();
-            let order = |endpoint: &CurvePoint2| {
-                if let CurvePoint2(CurvePointData2::AlgebraicChordPair(pair)) = endpoint {
-                    return pair
-                        .cmp_on_chord_to_evidence(self, &point, policy)
-                        .map(|classification| classification.map(std::cmp::Ordering::reverse));
-                }
-                Self::point_axis_order(&point, endpoint, axis, policy).map(|classification| {
-                    if self.data.parameter_axis.coordinate_increases {
-                        classification
-                    } else {
-                        classification.map(std::cmp::Ordering::reverse)
+        let compare_orders = || -> CurveResult<_> {
+            Ok(if let Some(direction) = self.certified_axis_direction() {
+                let axis = direction.axis();
+                let order = |endpoint: &CurvePoint2| {
+                    if let CurvePoint2(CurvePointData2::AlgebraicChordPair(pair)) = endpoint {
+                        return pair
+                            .cmp_on_chord_to_evidence(self, &point, policy)
+                            .map(|classification| classification.map(std::cmp::Ordering::reverse));
                     }
-                })
-            };
-            (order(self.start())?, order(self.end())?)
-        } else {
-            (
-                parameter.cmp_by_refinement(&start, policy)?,
-                parameter.cmp_by_refinement(&end, policy)?,
-            )
+                    Self::point_axis_order(&point, endpoint, axis, policy).map(|classification| {
+                        if self.data.parameter_axis.coordinate_increases {
+                            classification
+                        } else {
+                            classification.map(std::cmp::Ordering::reverse)
+                        }
+                    })
+                };
+                (order(self.start())?, order(self.end())?)
+            } else {
+                (
+                    parameter.cmp_by_refinement(&start, policy)?,
+                    parameter.cmp_by_refinement(&end, policy)?,
+                )
+            })
         };
+        // Endpoint identity can prove what independent coordinate boxes
+        // cannot. Exhaust that certificate before permitting a terminal
+        // equality decision to bind this exact contact to a weaker policy.
+        let mut orders = policy.strict_predicate_pass(compare_orders)?;
+        if matches!(
+            orders,
+            (Classification::Uncertain(_), _) | (_, Classification::Uncertain(_))
+        ) {
+            if let Some(parameter) = retained_endpoint_parameter() {
+                return Ok(Classification::Decided(Some(parameter)));
+            }
+            if policy.permits_approximate_512() {
+                orders = compare_orders()?;
+            }
+        }
         #[cfg(test)]
         if std::env::var_os("HYPERCURVE_DEBUG_CHORD_PAIR_SIDES").is_some() {
             let kind = |point: &CurvePoint2| match point {
@@ -72392,9 +72409,6 @@ impl BezierAlgebraicChord2 {
         let (lower, upper) = match orders {
             (Classification::Decided(lower), Classification::Decided(upper)) => (lower, upper),
             (Classification::Uncertain(reason), _) | (_, Classification::Uncertain(reason)) => {
-                if let Some(parameter) = retained_endpoint_parameter() {
-                    return Ok(Classification::Decided(Some(parameter)));
-                }
                 return Ok(Classification::Uncertain(reason));
             }
         };
@@ -85115,9 +85129,8 @@ fn retained_point_evidence_equality_by_refinement(
     // through hundreds of bisections, compare the exact represented
     // coordinates already owned by both carriers. Unsupported coordinate
     // forms retain the bounded interval fallback below.
-    if !policy.selects_approximate_512()
-        && !policy.has_bounded_exact_predicate_budget()
-        && let Some(equal) = represented_point_evidence_equality(first, second, policy)
+    if let Some(equal) =
+        policy.strict_predicate_pass(|| represented_point_evidence_equality(first, second, policy))
     {
         return Classification::Decided(equal);
     }
@@ -94712,6 +94725,33 @@ impl BezierAnalyticParallelPoint2 {
         {
             return Classification::Decided(true);
         }
+        // Transporting a source and then evaluating its retained parameter
+        // has the same meaning as transporting the selected point. Reuse
+        // that relation before reconstructing the parameter's global field.
+        if let CurvePoint2(CurvePointData2::Similarity(image)) = other
+            && let CurvePoint2(CurvePointData2::AnalyticParallel(source)) = &image.data.source
+            && policy.accepts_retained_policy(image.data.policy)
+            && policy.accepts_retained_policy(source.data.policy)
+            && policy.accepts_retained_policy(self.data.policy)
+            && self.data.parameter == source.data.parameter
+            && self.data.frame_tangent.is_none()
+            && source.data.frame_tangent.is_none()
+            && self.data.tangent_distance
+                == &source.data.tangent_distance * image.data.transform.scale()
+            && let Ok(parallel) = source
+                .data
+                .parallel
+                .transform_similarity(&image.data.transform)
+            && self.data.parallel == parallel
+        {
+            let (x, y) = image.data.transform.transform_vector_coordinates(
+                &source.data.translation_x,
+                &source.data.translation_y,
+            );
+            if self.data.translation_x == x && self.data.translation_y == y {
+                return Classification::Decided(true);
+            }
+        }
         let retains_recursive_parameter = matches!(
             &self.data.parameter,
             BezierAnalyticParallelPointParameter2::RecursiveProjective(_)
@@ -101440,8 +101480,8 @@ impl BezierAlgebraicCuspSemicircleFragment2 {
                             return Ok(Classification::Uncertain(reason));
                         }
                     };
-                let point = match target_semicircle.point_at(&parameter, policy)? {
-                    Classification::Decided(point) => CurvePoint2::from(point),
+                let point = match target_semicircle.point_evidence_at(&parameter, policy)? {
+                    Classification::Decided(point) => point,
                     Classification::Uncertain(reason) => {
                         return Ok(Classification::Uncertain(reason));
                     }

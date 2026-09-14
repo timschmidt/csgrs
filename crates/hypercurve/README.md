@@ -209,10 +209,14 @@ exact signatures.
   `parameter.scalar()` and `range.scalar_endpoints()` expose stored `Real`
   views. Selected parameters remain exact when these views are absent.
   Generated curves keep their source chart when traversal is reversed.
-  Reversal, similarity transforms, bounds, and finite projection accept these
-  retained carriers. General selected-parameter subdivision and open-path corner
-  reconstruction are still being unified; the native-only
-  operations report an explicit blocker for carriers they cannot yet consume.
+  Subdivision accepts the same common parameters. Selected ranges retain their
+  source chart and endpoint evidence, share one authored source through repeated
+  cuts, and cover every intersected arc or spline span. Splitting returns pieces
+  in traversal order and preserves both one-sided endpoints at spline jumps.
+  Reversal, similarity transforms, bounds, and path corner edits consume these
+  retained carriers. General differential and pair-intersection APIs are still
+  being unified; operations report an explicit blocker for carriers they cannot
+  yet consume.
 
 ### Strings, paths, contours, and regions
 

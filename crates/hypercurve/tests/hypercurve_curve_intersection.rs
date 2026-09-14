@@ -537,11 +537,11 @@ fn top_level_polynomial_trims_reuse_certified_source_lineage() {
         p(4, 0),
     )));
     let first = source
-        .subcurve(Real::zero(), q(3, 4), &CurveContext::STRICT)
+        .subcurve(Real::zero().into(), q(3, 4).into(), &CurveContext::STRICT)
         .unwrap()
         .into_value();
     let second = source
-        .subcurve(q(1, 4), Real::one(), &CurveContext::STRICT)
+        .subcurve(q(1, 4).into(), Real::one().into(), &CurveContext::STRICT)
         .unwrap()
         .into_value();
 
@@ -900,11 +900,11 @@ fn promoted_region_boolean_consumes_partial_nonlinear_shared_boundary() {
         p(4, 0),
     )));
     let first_curve = source
-        .subcurve(Real::zero(), q(3, 4), &CurveContext::STRICT)
+        .subcurve(Real::zero().into(), q(3, 4).into(), &CurveContext::STRICT)
         .unwrap()
         .into_value();
     let second_curve = source
-        .subcurve(q(1, 4), Real::one(), &CurveContext::STRICT)
+        .subcurve(q(1, 4).into(), Real::one().into(), &CurveContext::STRICT)
         .unwrap()
         .into_value();
     let first = closed_under_curve(first_curve, -5);

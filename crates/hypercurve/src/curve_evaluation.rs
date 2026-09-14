@@ -27,6 +27,11 @@ impl Curve2 {
         side: CurveParameterSide2,
         policy: &CurveContext,
     ) -> ExactCurveResult<CurvePoint2> {
+        if self.source_range().is_some() {
+            return self
+                .source_range_point_at(parameter, side, policy)
+                .map_err(|error| error.with_operation(CurveOperation2::Evaluation));
+        }
         if self.geometry().is_some() {
             if let Some(BezierParameter2::Exact(parameter)) = parameter.as_bezier_parameter() {
                 return self

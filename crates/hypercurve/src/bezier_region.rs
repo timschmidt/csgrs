@@ -1009,6 +1009,31 @@ impl CurveRegionBoundaryLoop2 {
         for curve in path.curves() {
             if let Some(fragment) = curve.retained_fragment() {
                 fragments.push(fragment.clone());
+            } else if let Some(spans) =
+                curve.restricted_source_spans(policy, CurveOperation2::Arrangement)?
+            {
+                for adjacent in spans.windows(2) {
+                    match curve_fragment_endpoints_equal(
+                        &adjacent[0].fragment,
+                        false,
+                        &adjacent[1].fragment,
+                        true,
+                        policy,
+                    ) {
+                        Classification::Decided(true) => {}
+                        Classification::Decided(false) => {
+                            return Err(ExactCurveError::invalid(
+                                CurveOperation2::Arrangement,
+                                curve.family(),
+                                CurveError::DisconnectedCurvePath,
+                            ));
+                        }
+                        Classification::Uncertain(reason) => {
+                            return Ok(Classification::Uncertain(reason));
+                        }
+                    }
+                }
+                fragments.extend(spans.iter().map(|span| span.fragment.clone()));
             } else {
                 let native = match curve.native_bezier_fragments_with_policy(policy)? {
                     Classification::Decided(native) => native,
@@ -6213,6 +6238,8 @@ pub(crate) struct CornerCarrierPreparation2<'a> {
     fragment: Option<&'a BezierSplitFragment2>,
     endpoint_chord: Option<crate::BezierAlgebraicChord2>,
     promoted_parallel: Option<crate::BezierParallelFragment2>,
+    source_endpoint_is_end: bool,
+    source_chart: Option<(&'a Real, &'a Real)>,
 }
 
 impl<'a> CornerCarrierPreparation2<'a> {
@@ -6232,10 +6259,12 @@ impl<'a> CornerCarrierPreparation2<'a> {
             fragment: Some(fragment),
             endpoint_chord: None,
             promoted_parallel: None,
+            source_endpoint_is_end: false,
+            source_chart: None,
         }
     }
 
-    pub(crate) fn from_curve(curve: &'a Curve2) -> Self {
+    pub(crate) fn from_curve(curve: &'a Curve2, previous: bool) -> Self {
         if let Some(fragment) = curve.retained_fragment() {
             return Self::admit(fragment);
         }
@@ -6244,6 +6273,8 @@ impl<'a> CornerCarrierPreparation2<'a> {
             fragment: None,
             endpoint_chord: None,
             promoted_parallel: None,
+            source_endpoint_is_end: previous,
+            source_chart: None,
         }
     }
 
@@ -6258,6 +6289,22 @@ impl<'a> CornerCarrierPreparation2<'a> {
         operation: CurveOperation2,
         policy: &CurveContext,
     ) -> ExactCurveResult<()> {
+        let source = match &self.top_level {
+            Some(std::borrow::Cow::Borrowed(curve)) => Some(*curve),
+            _ => None,
+        };
+        if let Some(source) = source
+            && let Some(spans) = source.restricted_source_spans(policy, operation)?
+        {
+            let span = if self.source_endpoint_is_end {
+                spans.last()
+            } else {
+                spans.first()
+            }
+            .expect("a source restriction contains a span");
+            *self = Self::admit(&span.fragment);
+            self.source_chart = Some((&span.source_scale, &span.source_offset));
+        }
         if self.top_level.is_some() {
             return Ok(());
         }
@@ -6356,6 +6403,10 @@ impl<'a> CornerCarrierPreparation2<'a> {
 
     pub(crate) fn promoted_parallel(&self) -> Option<&crate::BezierParallelFragment2> {
         self.promoted_parallel.as_ref()
+    }
+
+    pub(crate) fn source_chart(&self) -> Option<(&Real, &Real)> {
+        self.source_chart
     }
 }
 
@@ -7554,9 +7605,9 @@ fn exact_offset_line_tangent_contact(
 ///
 /// The anchor's original carrier locates the source vertex, while the exact
 /// difference between its composed and original parallel distances is the
-/// authored round radius. The companion selected circle is intersected by the
-/// same circle-circle authority used by fillets, so this adds no second arc
-/// topology or parameter engine.
+/// authored round radius. Selected circular and chord companions reuse the
+/// certified normal-contact parameters used by fillets. Tangent relations
+/// select the chart before the common retained circle publication.
 fn append_retained_parallel_round_join(
     fragments: &mut Vec<BezierSplitFragment2>,
     previous: &ExactOffsetSpan2,
@@ -7592,7 +7643,8 @@ fn append_retained_parallel_round_join(
             }),
             BezierSplitFragment2::AnalyticParallel(_) | BezierSplitFragment2::SelectedFiber(_),
             _,
-            BezierSplitFragment2::AlgebraicCuspSemicircle(companion),
+            companion @ (BezierSplitFragment2::AlgebraicCuspSemicircle(_)
+            | BezierSplitFragment2::AlgebraicChord(_)),
         ) => (
             true,
             parallel,
@@ -7605,7 +7657,8 @@ fn append_retained_parallel_round_join(
         ),
         (
             _,
-            BezierSplitFragment2::AlgebraicCuspSemicircle(companion),
+            companion @ (BezierSplitFragment2::AlgebraicCuspSemicircle(_)
+            | BezierSplitFragment2::AlgebraicChord(_)),
             Some(CurveTangent2::RetainedParallel {
                 parallel,
                 source_parallel,
@@ -7626,6 +7679,16 @@ fn append_retained_parallel_round_join(
         ),
         _ => return None,
     };
+    let (anchor_tangent, companion_tangent) = if anchor_is_previous {
+        (previous.end_tangent.as_ref()?, next.start_tangent.as_ref()?)
+    } else {
+        (next.start_tangent.as_ref()?, previous.end_tangent.as_ref()?)
+    };
+    if matches!(companion, BezierSplitFragment2::AlgebraicChord(_))
+        && !matches!(companion_tangent, CurveTangent2::AlgebraicChord(_))
+    {
+        return None;
+    }
     Some((|| {
         let radial_distance = parallel.distance() - source_parallel.distance();
         match is_zero(
@@ -7662,49 +7725,29 @@ fn append_retained_parallel_round_join(
                 return Ok(Classification::Uncertain(reason));
             }
         };
-        let relation_sign = |cross_scale: Real, dot_scale: Real| {
-            companion.endpoint_tangent_cross_dot_linear_combination_retained_parallel(
-                companion_at_start,
-                parallel,
-                parameter,
-                source_direction,
-                &cross_scale,
-                &dot_scale,
-                policy,
-            )
-        };
-        let companion_cross_anchor = match relation_sign(Real::one(), Real::zero())? {
-            Classification::Decided(Some(sign)) => sign,
-            Classification::Decided(None) => {
-                return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
-            }
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
-        let companion_dot_anchor = match relation_sign(Real::zero(), Real::one())? {
-            Classification::Decided(Some(sign)) => sign,
-            Classification::Decided(None) => {
-                return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
-            }
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
-        let anchor_cross_companion = exact_sign_reverse(companion_cross_anchor);
+        let anchor_cross_companion =
+            match curve_tangent_cross_sign(anchor_tangent, companion_tangent, policy) {
+                Classification::Decided(sign) => sign,
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            };
         let sweep_halves = match (fillet_clockwise, anchor_cross_companion) {
             (false, RealSign::Positive) | (true, RealSign::Negative) => 1_u8,
             (false, RealSign::Negative) | (true, RealSign::Positive) => 2_u8,
-            (_, RealSign::Zero) if companion_dot_anchor == RealSign::Negative => 1_u8,
-            (_, RealSign::Zero) if companion_dot_anchor == RealSign::Positive => {
-                return Err(CurveError::Topology(
-                    "distinct round-join endpoints retained the same oriented tangent".into(),
-                ));
-            }
             (_, RealSign::Zero) => {
-                return Err(CurveError::Topology(
-                    "regular round-join tangents had zero cross and dot products".into(),
-                ));
+                match curve_tangents_are_opposite(anchor_tangent, companion_tangent, policy) {
+                    Classification::Decided(true) => 1_u8,
+                    Classification::Decided(false) => {
+                        return Err(CurveError::Topology(
+                            "distinct round-join endpoints retained the same oriented tangent"
+                                .into(),
+                        ));
+                    }
+                    Classification::Uncertain(reason) => {
+                        return Ok(Classification::Uncertain(reason));
+                    }
+                }
             }
         };
         let terminal_circle = if sweep_halves == 2 {
@@ -7738,19 +7781,36 @@ fn append_retained_parallel_round_join(
                 exact_sign_product(terminal_radial_sign, source_direction),
                 distance_sign,
             );
-            match terminal_circle.certified_selected_circular_tangent_contact_parameter(
-                companion.clone(),
-                companion_at_start,
-                parallel.clone(),
-                selected_source_parameter.map_or_else(
-                    || CurveParameter2::from(parameter.clone()),
-                    |parameter| CurveParameter2::from_selected_fiber(parameter.clone()),
-                ),
-                source_direction,
-                radial_product_sign,
-                other_point,
-                policy,
-            )? {
+            let contact = match companion {
+                BezierSplitFragment2::AlgebraicCuspSemicircle(companion) => terminal_circle
+                    .certified_selected_circular_tangent_contact_parameter(
+                        companion.clone(),
+                        companion_at_start,
+                        parallel.clone(),
+                        selected_source_parameter.map_or_else(
+                            || CurveParameter2::from(parameter.clone()),
+                            |parameter| CurveParameter2::from_selected_fiber(parameter.clone()),
+                        ),
+                        source_direction,
+                        radial_product_sign,
+                        other_point,
+                        policy,
+                    )?,
+                BezierSplitFragment2::AlgebraicChord(_) => {
+                    let CurveTangent2::AlgebraicChord(chord) = companion_tangent else {
+                        unreachable!("retained chord tangent checked above")
+                    };
+                    terminal_circle.certified_selected_chord_parallel_normal_contact_parameter(
+                        chord.clone(),
+                        other_point,
+                        distance.clone(),
+                        anchor_cross_companion,
+                        policy,
+                    )?
+                }
+                _ => unreachable!("retained round-join companion checked above"),
+            };
+            match contact {
                 Classification::Decided(parameter) => parameter,
                 Classification::Uncertain(reason) => {
                     return Ok(Classification::Uncertain(reason));

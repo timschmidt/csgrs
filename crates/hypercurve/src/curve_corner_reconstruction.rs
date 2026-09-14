@@ -43,6 +43,36 @@ impl CornerSourceFragments2 {
             });
         }
 
+        if let Some(spans) = curve.restricted_source_spans(policy, operation)? {
+            let cut_index = if previous { spans.len() - 1 } else { 0 };
+            let span = &spans[cut_index];
+            let mut cut = cut.into_retained_evidence().ok_or_else(|| {
+                ExactCurveError::blocked(
+                    operation,
+                    curve.family(),
+                    crate::UncertaintyReason::Unsupported,
+                )
+            })?;
+            let inverse = (Real::one() / &span.source_scale).map_err(|cause| {
+                ExactCurveError::invalid(operation, curve.family(), cause.into())
+            })?;
+            cut.parameter = match cut
+                .parameter
+                .affine_image_unbounded(&inverse, &(-&span.source_offset * &inverse), policy)
+                .map_err(|cause| ExactCurveError::invalid(operation, curve.family(), cause))?
+            {
+                Classification::Decided(parameter) => parameter,
+                Classification::Uncertain(reason) => {
+                    return Err(ExactCurveError::blocked(operation, curve.family(), reason));
+                }
+            };
+            return Ok(Self {
+                fragments: spans.iter().map(|span| span.fragment.clone()).collect(),
+                cut_index,
+                cut,
+            });
+        }
+
         // Native circle contacts already carry exact Cartesian incidence and
         // full-sweep placement. Keep that authority when the other side needs
         // selected reconstruction; choosing an endpoint chart first would

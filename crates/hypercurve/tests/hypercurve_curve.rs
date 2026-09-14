@@ -53,7 +53,9 @@ fn clamped_splines_preserve_discontinuous_knot_sides_and_span_images() {
                 } else {
                     curve.clone()
                 };
-                let clamped = source.clamped_subcurve(r(0), r(2), &policy).unwrap();
+                let clamped = source
+                    .clamped_subcurve(r(0).into(), r(2).into(), &policy)
+                    .unwrap();
                 assert_eq!(clamped.certainty, CurveCertainty::Certified);
                 let clamped = clamped.value;
                 assert_eq!(clamped.family(), source.family());
