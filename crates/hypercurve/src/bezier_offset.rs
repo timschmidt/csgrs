@@ -158256,6 +158256,104 @@ mod conversion_tests {
     }
 
     #[test]
+    fn parallel_projection_owns_overlapping_domain_roots_once() {
+        let one = Real::one();
+        let half = (&one / Real::from(2_i8)).unwrap();
+        let quarter = &half * &half;
+        let three_halves = &one + &half;
+        let alpha = half.clone().sqrt().unwrap();
+        // (t^2-1/2)(t-3/2) and its reversal have an algebraic unit
+        // root as well as a root beyond each end of the unit span.
+        let first = BivariatePolynomial::new(vec![
+            vec![&half + &quarter],
+            vec![-&half],
+            vec![-&three_halves],
+            vec![one.clone()],
+        ]);
+        let second = BivariatePolynomial::new(vec![vec![
+            -&quarter,
+            half.clone(),
+            three_halves.clone(),
+            -&one,
+        ]]);
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let project = |extensions| {
+                let Classification::Decided(BezierParallelIntersectionCandidates2::Candidates {
+                    parallel_parameters,
+                    other_parameters,
+                }) = project_parallel_intersection_system(&first, &second, extensions, &policy)
+                    .unwrap()
+                else {
+                    panic!("overlapping exact projection domains must be complete")
+                };
+                [parallel_parameters, other_parameters]
+            };
+            let assert_roots = |roots: &[BezierParameter2], expected: &[Real]| {
+                assert_eq!(roots.len(), expected.len());
+                for value in expected {
+                    assert_eq!(
+                        roots
+                            .iter()
+                            .filter(|root| {
+                                root.cmp_by_refinement(
+                                    &BezierParameter2::Exact(value.clone()),
+                                    &policy,
+                                )
+                                .unwrap()
+                                    == Classification::Decided(std::cmp::Ordering::Equal)
+                            })
+                            .count(),
+                        1,
+                    );
+                }
+            };
+            let rays = [
+                BezierParameterRay2 {
+                    anchor: &half,
+                    direction: BezierParameterRayDirection2::Increasing,
+                    barrier: None,
+                },
+                BezierParameterRay2 {
+                    anchor: &half,
+                    direction: BezierParameterRayDirection2::Decreasing,
+                    barrier: None,
+                },
+            ];
+            let roots = project(rays.map(Some));
+            assert_roots(&roots[0], &[alpha.clone(), three_halves.clone()]);
+            assert_roots(&roots[1], &[&one - &alpha, -&half]);
+            // A ray barrier cannot revoke the authored unit span's ownership,
+            // whether the excluded barrier lies inside or outside that span.
+            for barrier_index in [0, 1] {
+                let clipped = project([0, 1].map(|axis| {
+                    Some(BezierParameterRay2 {
+                        barrier: Some(&roots[axis][barrier_index]),
+                        ..rays[axis]
+                    })
+                }));
+                assert_roots(&clipped[0], std::slice::from_ref(&alpha));
+                assert_roots(&clipped[1], &[&one - &alpha]);
+            }
+            // An anchor beyond the opposite endpoint must still retain both
+            // exterior pieces of its ray after removing the unit overlap.
+            let before_zero = -&one;
+            let after_one = &one + &one;
+            let roots = project([
+                Some(BezierParameterRay2 {
+                    anchor: &before_zero,
+                    ..rays[0]
+                }),
+                Some(BezierParameterRay2 {
+                    anchor: &after_one,
+                    ..rays[1]
+                }),
+            ]);
+            assert_roots(&roots[0], &[-&alpha, alpha.clone(), three_halves.clone()]);
+            assert_roots(&roots[1], &[-&half, &one - &alpha, &one + &alpha]);
+        }
+    }
+
+    #[test]
     fn parallel_circle_intersections_retain_exceptional_inverse_fibers() {
         let quarter = (Real::one() / Real::from(4_i8)).unwrap();
         let half = &quarter + &quarter;

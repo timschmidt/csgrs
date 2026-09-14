@@ -9093,7 +9093,29 @@ pub(crate) fn resultant_parameter_projection(
                 return Ok(Classification::Uncertain(reason));
             }
         };
+        let zero = BezierParameter2::Exact(Real::zero());
+        let one = BezierParameter2::Exact(Real::one());
         for parameter in exterior {
+            // A selected trim can anchor its extension inside the original
+            // unit span. That closed span already owns every root it contains;
+            // retain its original certificate and avoid replaying a duplicate
+            // from the compact ray chart. Ray barriers affect only extension
+            // ownership, so check this before refining against the barrier.
+            let after_zero = match parameter.cmp_by_refinement(&zero, policy)? {
+                Classification::Decided(ordering) => ordering,
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            };
+            if after_zero != Ordering::Less {
+                match parameter.cmp_by_refinement(&one, policy)? {
+                    Classification::Decided(Ordering::Less | Ordering::Equal) => continue,
+                    Classification::Decided(Ordering::Greater) => {}
+                    Classification::Uncertain(reason) => {
+                        return Ok(Classification::Uncertain(reason));
+                    }
+                }
+            }
             if let Some(barrier) = extension.barrier {
                 let ordering = match parameter.cmp_by_refinement(barrier, policy)? {
                     Classification::Decided(ordering) => ordering,
