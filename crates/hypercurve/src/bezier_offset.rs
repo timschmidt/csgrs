@@ -126296,17 +126296,27 @@ impl ParameterComponentChart2<'_> {
         })
     }
 
-    fn original_parameter(
+    /// Assigns publication to the authored chart for every unit-span root.
+    /// Keep this separate from event containment: overlapping chart events
+    /// still partition selector signs even when another chart publishes them.
+    fn owned_original_parameter(
         self,
         parameter: &BezierParameter2,
         policy: &CurveContext,
-    ) -> CurveResult<Classification<BezierParameter2>> {
-        match self {
-            Self::Authored => Ok(Classification::Decided(parameter.clone())),
-            Self::Incident(BezierParameterRay2 {
-                anchor, direction, ..
-            }) => parameter.incident_ray_parameter(anchor, direction, policy),
-        }
+    ) -> CurveResult<Classification<Option<BezierParameter2>>> {
+        let Self::Incident(BezierParameterRay2 {
+            anchor, direction, ..
+        }) = self
+        else {
+            return Ok(Classification::Decided(Some(parameter.clone())));
+        };
+        let mapped = match parameter.incident_ray_parameter(anchor, direction, policy)? {
+            Classification::Decided(parameter) => parameter,
+            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+        };
+        Ok(mapped
+            .is_in_closed_unit_span(policy)?
+            .map(|inside| (!inside).then_some(mapped)))
     }
 }
 
@@ -126526,13 +126536,14 @@ fn select_axis_parameter_components_on_chart(
                 }
             };
             if selected {
-                let mapped = match map_parameter_component_pair_from_chart(
+                let mapped = match owned_parameter_component_pair_from_chart(
                     &event_pair,
                     first_chart,
                     second_chart,
                     policy,
                 )? {
-                    Classification::Decided(pair) => pair,
+                    Classification::Decided(Some(pair)) => pair,
+                    Classification::Decided(None) => continue,
                     Classification::Uncertain(reason) => {
                         return Ok(Classification::Uncertain(reason));
                     }
@@ -126583,26 +126594,28 @@ fn select_axis_parameter_components_on_chart(
     Ok(Classification::Decided(false))
 }
 
-fn map_parameter_component_pair_from_chart(
+fn owned_parameter_component_pair_from_chart(
     pair: &BezierParallelIntersectionParameterPair2,
     first_chart: ParameterComponentChart2<'_>,
     second_chart: ParameterComponentChart2<'_>,
     policy: &CurveContext,
-) -> CurveResult<Classification<BezierParallelIntersectionParameterPair2>> {
-    let first = match first_chart.original_parameter(&pair.parallel_parameter, policy)? {
-        Classification::Decided(parameter) => parameter,
+) -> CurveResult<Classification<Option<BezierParallelIntersectionParameterPair2>>> {
+    let first = match first_chart.owned_original_parameter(&pair.parallel_parameter, policy)? {
+        Classification::Decided(Some(parameter)) => parameter,
+        Classification::Decided(None) => return Ok(Classification::Decided(None)),
         Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
     };
-    let second = match second_chart.original_parameter(&pair.other_parameter, policy)? {
-        Classification::Decided(parameter) => parameter,
+    let second = match second_chart.owned_original_parameter(&pair.other_parameter, policy)? {
+        Classification::Decided(Some(parameter)) => parameter,
+        Classification::Decided(None) => return Ok(Classification::Decided(None)),
         Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
     };
-    Ok(Classification::Decided(
+    Ok(Classification::Decided(Some(
         BezierParallelIntersectionParameterPair2 {
             parallel_parameter: first,
             other_parameter: second,
         },
-    ))
+    )))
 }
 
 fn select_parameter_component_in_domain(
@@ -126754,22 +126767,17 @@ fn select_parameter_component_in_domain(
                 if !first_inside || !second_inside {
                     continue;
                 }
-                let first =
-                    match first_chart.original_parameter(&pair.parallel_parameter, policy)? {
-                        Classification::Decided(parameter) => parameter,
-                        Classification::Uncertain(reason) => {
-                            return Ok(Classification::Uncertain(reason));
-                        }
-                    };
-                let second = match second_chart.original_parameter(&pair.other_parameter, policy)? {
-                    Classification::Decided(parameter) => parameter,
+                let pair = match owned_parameter_component_pair_from_chart(
+                    pair,
+                    first_chart,
+                    second_chart,
+                    policy,
+                )? {
+                    Classification::Decided(Some(pair)) => pair,
+                    Classification::Decided(None) => continue,
                     Classification::Uncertain(reason) => {
                         return Ok(Classification::Uncertain(reason));
                     }
-                };
-                let pair = BezierParallelIntersectionParameterPair2 {
-                    parallel_parameter: first,
-                    other_parameter: second,
                 };
                 if !selected_pairs.contains(&pair) {
                     selected_pairs.push(pair);
@@ -166813,6 +166821,129 @@ mod conversion_tests {
                 };
                 assert!(axis_constraint.component_support.is_some());
                 assert!(axis_constraint.isolated_projection.is_none());
+            }
+        }
+    }
+
+    #[test]
+    fn parameter_component_domains_own_selected_events_once() {
+        let one = Real::one();
+        let half = (&one / Real::from(2_i8)).unwrap();
+        let quarter = &half * &half;
+        let fixed = &half + &quarter;
+        let exterior = &one + &half;
+        let alpha = half.clone().sqrt().unwrap();
+        let barrier = BezierParameter2::Exact(alpha.clone());
+        // Opposite tangent/projection signs exclude every open component
+        // cell. Only the isolated zeros of (v^2-1/2)(v-3/2) are selected.
+        let event_coefficients = vec![fixed.clone(), -&half, -&exterior, one.clone()];
+        let event_on_first = BivariatePolynomial::new(
+            event_coefficients
+                .iter()
+                .cloned()
+                .map(|coefficient| vec![coefficient])
+                .collect(),
+        );
+        let event_on_second = BivariatePolynomial::new(vec![event_coefficients]);
+        let config = CurveIntersectionResultantConfig {
+            min_precision: PARALLEL_INTERSECTION_RESULTANT_PRECISION,
+            max_resultant_degree: MAX_PARALLEL_INTERSECTION_RESULTANT_DEGREE,
+        };
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            for (case, support) in [
+                BivariatePolynomial::new(vec![vec![Real::zero(), one.clone()], vec![-&one]]),
+                BivariatePolynomial::new(vec![vec![-&fixed], vec![one.clone()]]),
+                BivariatePolynomial::new(vec![vec![-&fixed, one.clone()]]),
+            ]
+            .into_iter()
+            .enumerate()
+            {
+                let event = if case == 1 {
+                    &event_on_second
+                } else {
+                    &event_on_first
+                };
+                let opposite = bivariate_scale(event.clone(), &-&one);
+                let system = BezierParallelPairEquationSystem2 {
+                    first_projection: opposite.clone(),
+                    second_projection: opposite,
+                    tangent_cross: event.clone(),
+                    norm_residual: BivariatePolynomial::new(vec![vec![-&one]]),
+                    ..positive_component_selector_system(&support)
+                };
+                for clip in [false, true] {
+                    let ray = BezierParameterRay2 {
+                        anchor: &half,
+                        direction: BezierParameterRayDirection2::Increasing,
+                        barrier: clip.then_some(&barrier),
+                    };
+                    for extend_first in [false, true] {
+                        for extend_second in [false, true] {
+                            let Classification::Decided(selection) =
+                                select_parameter_component_in_domain(
+                                    &support,
+                                    &system,
+                                    [extend_first.then_some(ray), extend_second.then_some(ray)],
+                                    &policy,
+                                    config,
+                                )
+                                .unwrap()
+                            else {
+                                panic!(
+                                    "overlapping component charts must retain exact selected events"
+                                )
+                            };
+                            assert!(!selection.positive_dimensional);
+                            let has_exterior = !clip
+                                && match case {
+                                    0 => extend_first && extend_second,
+                                    1 => extend_second,
+                                    2 => extend_first,
+                                    _ => unreachable!(),
+                                };
+                            assert_eq!(
+                                selection.selected_pairs.len(),
+                                1 + usize::from(has_exterior),
+                                "case {case}, extensions {extend_first}, {extend_second}, clip {clip}"
+                            );
+                            for parameter in
+                                std::iter::once(&alpha).chain(has_exterior.then_some(&exterior))
+                            {
+                                let expected = match case {
+                                    0 => [parameter, parameter],
+                                    1 => [&fixed, parameter],
+                                    2 => [parameter, &fixed],
+                                    _ => unreachable!(),
+                                };
+                                assert_eq!(
+                                    selection
+                                        .selected_pairs
+                                        .iter()
+                                        .filter(|pair| {
+                                            [&pair.parallel_parameter, &pair.other_parameter]
+                                                .into_iter()
+                                                .zip(expected)
+                                                .all(|(actual, expected)| {
+                                                    actual
+                                                        .cmp_by_refinement(
+                                                            &BezierParameter2::Exact(
+                                                                expected.clone(),
+                                                            ),
+                                                            &policy,
+                                                        )
+                                                        .unwrap()
+                                                        == Classification::Decided(
+                                                            std::cmp::Ordering::Equal,
+                                                        )
+                                                })
+                                        })
+                                        .count(),
+                                    1
+                                );
+                            }
+                        }
+                    }
+                }
             }
         }
     }
