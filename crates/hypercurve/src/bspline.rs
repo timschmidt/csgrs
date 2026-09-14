@@ -2157,17 +2157,29 @@ fn extract_refined_bezier_spans(
         let start = knot_index - refined.degree;
         let controls = &refined.control_points[start..=knot_index];
         let span = match refined.degree {
-            1 => BezierSubcurve2::Quadratic(QuadraticBezier2::new(
-                controls[0].clone(),
-                controls[0].lerp(
-                    &controls[1],
-                    linear_half
-                        .as_ref()
-                        .expect("linear span extraction retained its elevation parameter")
-                        .clone(),
-                ),
-                controls[1].clone(),
-            )),
+            1 => {
+                // Degree elevation preserves the affine source parameter.
+                // Keep that construction proof so incidence and corner work
+                // can use the line carrier without reconstructing its image.
+                // A collapsed span remains a valid constant Bezier.
+                let curve = match crate::LineSeg2::try_new(controls[0].clone(), controls[1].clone())
+                {
+                    Ok(line) => QuadraticBezier2::from_line_segment(line),
+                    Err(CurveError::ZeroLengthLine) => QuadraticBezier2::new(
+                        controls[0].clone(),
+                        controls[0].lerp(
+                            &controls[1],
+                            linear_half
+                                .as_ref()
+                                .expect("linear elevation parameter")
+                                .clone(),
+                        ),
+                        controls[1].clone(),
+                    ),
+                    Err(cause) => return Err(cause),
+                };
+                BezierSubcurve2::Quadratic(curve)
+            }
             2 => BezierSubcurve2::Quadratic(QuadraticBezier2::new(
                 controls[0].clone(),
                 controls[1].clone(),
