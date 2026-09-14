@@ -694,7 +694,7 @@ impl CurveParameterRange2 {
     }
 }
 
-struct ForwardCorrespondingCurveRegionClip2 {
+struct ForwardCorrespondingParameterClip2 {
     first_start: CurveParameter2,
     first_end: CurveParameter2,
     mapped_start: CurveParameter2,
@@ -703,7 +703,7 @@ struct ForwardCorrespondingCurveRegionClip2 {
     second_end: CurveParameter2,
 }
 
-fn forward_corresponding_curve_region_parameter_ranges(
+fn forward_corresponding_parameter_ranges(
     first_overlap: &CurveParameterRange2,
     second_overlap: &CurveParameterRange2,
     first_fragment: &CurveParameterRange2,
@@ -712,9 +712,9 @@ fn forward_corresponding_curve_region_parameter_ranges(
     mut map_first_to_second: impl FnMut(
         &CurveParameter2,
     ) -> CurveResult<Classification<Option<CurveParameter2>>>,
-) -> CurveResult<Classification<Option<ForwardCorrespondingCurveRegionClip2>>> {
+) -> CurveResult<Classification<Option<ForwardCorrespondingParameterClip2>>> {
     let [first_start, first_end] =
-        match intersect_curve_region_parameter_ranges(first_fragment, first_overlap, policy)? {
+        match intersect_parameter_ranges(first_fragment, first_overlap, policy)? {
             Classification::Decided(Some(bounds)) => bounds,
             Classification::Decided(None) => return Ok(Classification::Decided(None)),
             Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
@@ -745,28 +745,25 @@ fn forward_corresponding_curve_region_parameter_ranges(
     let mapped_range =
         CurveParameterRange2::new_validated(mapped_start.clone(), mapped_end.clone());
     let [second_low, second_high] =
-        match intersect_curve_region_parameter_ranges(&mapped_range, second_overlap, policy)? {
+        match intersect_parameter_ranges(&mapped_range, second_overlap, policy)? {
             Classification::Decided(Some(bounds)) => bounds,
             Classification::Decided(None) => return Ok(Classification::Decided(None)),
             Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
         };
     let second_candidate = CurveParameterRange2::new_validated(second_low, second_high);
-    let [second_low, second_high] = match intersect_curve_region_parameter_ranges(
-        second_fragment,
-        &second_candidate,
-        policy,
-    )? {
-        Classification::Decided(Some(bounds)) => bounds,
-        Classification::Decided(None) => return Ok(Classification::Decided(None)),
-        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-    };
+    let [second_low, second_high] =
+        match intersect_parameter_ranges(second_fragment, &second_candidate, policy)? {
+            Classification::Decided(Some(bounds)) => bounds,
+            Classification::Decided(None) => return Ok(Classification::Decided(None)),
+            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+        };
     let (second_start, second_end) = if mapped_order == Ordering::Less {
         (second_low, second_high)
     } else {
         (second_high, second_low)
     };
     Ok(Classification::Decided(Some(
-        ForwardCorrespondingCurveRegionClip2 {
+        ForwardCorrespondingParameterClip2 {
             first_start,
             first_end,
             mapped_start,
@@ -779,7 +776,7 @@ fn forward_corresponding_curve_region_parameter_ranges(
 
 /// Decides whether one exact correspondence retains a positive span without
 /// constructing inverse cuts that no caller will publish.
-pub(crate) fn corresponding_curve_region_parameter_ranges_are_positive(
+pub(crate) fn corresponding_parameter_ranges_are_positive(
     first_overlap: &CurveParameterRange2,
     second_overlap: &CurveParameterRange2,
     first_fragment: &CurveParameterRange2,
@@ -789,7 +786,7 @@ pub(crate) fn corresponding_curve_region_parameter_ranges_are_positive(
         &CurveParameter2,
     ) -> CurveResult<Classification<Option<CurveParameter2>>>,
 ) -> CurveResult<Classification<bool>> {
-    Ok(forward_corresponding_curve_region_parameter_ranges(
+    Ok(forward_corresponding_parameter_ranges(
         first_overlap,
         second_overlap,
         first_fragment,
@@ -806,7 +803,7 @@ pub(crate) fn corresponding_curve_region_parameter_ranges_are_positive(
 /// intersection, orientation, inverse clipping, and preservation of unchanged
 /// selected-fiber boundaries live here so Boolean and corner editing cannot
 /// disagree about the same retained overlap.
-pub(crate) fn clip_corresponding_curve_region_parameter_ranges(
+pub(crate) fn clip_corresponding_parameter_ranges(
     first_overlap: &CurveParameterRange2,
     second_overlap: &CurveParameterRange2,
     first_fragment: &CurveParameterRange2,
@@ -819,14 +816,14 @@ pub(crate) fn clip_corresponding_curve_region_parameter_ranges(
         &CurveParameter2,
     ) -> CurveResult<Classification<Option<CurveParameter2>>>,
 ) -> CurveResult<Classification<Option<(CurveParameterRange2, CurveParameterRange2)>>> {
-    let ForwardCorrespondingCurveRegionClip2 {
+    let ForwardCorrespondingParameterClip2 {
         first_start,
         first_end,
         mapped_start,
         mapped_end,
         second_start,
         second_end,
-    } = match forward_corresponding_curve_region_parameter_ranges(
+    } = match forward_corresponding_parameter_ranges(
         first_overlap,
         second_overlap,
         first_fragment,
@@ -881,7 +878,7 @@ pub(crate) fn clip_corresponding_curve_region_parameter_ranges(
     ))))
 }
 
-fn intersect_curve_region_parameter_ranges(
+fn intersect_parameter_ranges(
     first: &CurveParameterRange2,
     second: &CurveParameterRange2,
     policy: &CurveContext,

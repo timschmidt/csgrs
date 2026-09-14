@@ -1293,14 +1293,14 @@ impl BezierAlgebraicCuspSemicircleMappedOverlap2 {
             .map(|parameter| Some(CurveParameter2::from_algebraic_cusp(parameter))))
     }
 
-    pub(crate) fn has_positive_curve_region_overlap(
+    pub(crate) fn has_positive_overlap(
         &self,
         cusp_fragment: &CurveParameterRange2,
         other_fragment: &CurveParameterRange2,
         policy: &CurveContext,
     ) -> CurveResult<Classification<bool>> {
         let (cusp_overlap, other_overlap) = self.curve_region_ranges();
-        crate::bezier_split::corresponding_curve_region_parameter_ranges_are_positive(
+        crate::bezier_split::corresponding_parameter_ranges_are_positive(
             &cusp_overlap,
             &other_overlap,
             cusp_fragment,
@@ -1310,14 +1310,14 @@ impl BezierAlgebraicCuspSemicircleMappedOverlap2 {
         )
     }
 
-    pub(crate) fn clipped_curve_region_ranges(
+    pub(crate) fn clipped_ranges(
         &self,
         cusp_fragment: &CurveParameterRange2,
         other_fragment: &CurveParameterRange2,
         policy: &CurveContext,
     ) -> CurveResult<Classification<Option<(CurveParameterRange2, CurveParameterRange2)>>> {
         let (cusp_overlap, other_overlap) = self.curve_region_ranges();
-        let clipped = crate::bezier_split::clip_corresponding_curve_region_parameter_ranges(
+        let clipped = crate::bezier_split::clip_corresponding_parameter_ranges(
             &cusp_overlap,
             &other_overlap,
             cusp_fragment,
@@ -41196,14 +41196,14 @@ impl BezierAlgebraicCuspSemicircleSelectedFiberRationalOverlap2 {
             .map(|parameter| Some(CurveParameter2::from_algebraic_cusp(parameter))))
     }
 
-    pub(crate) fn has_positive_curve_region_overlap(
+    pub(crate) fn has_positive_overlap(
         &self,
         cusp_fragment: &CurveParameterRange2,
         other_fragment: &CurveParameterRange2,
         policy: &CurveContext,
     ) -> CurveResult<Classification<bool>> {
         let (cusp_overlap, other_overlap) = self.curve_region_ranges();
-        crate::bezier_split::corresponding_curve_region_parameter_ranges_are_positive(
+        crate::bezier_split::corresponding_parameter_ranges_are_positive(
             &cusp_overlap,
             &other_overlap,
             cusp_fragment,
@@ -41213,14 +41213,14 @@ impl BezierAlgebraicCuspSemicircleSelectedFiberRationalOverlap2 {
         )
     }
 
-    pub(crate) fn clipped_curve_region_ranges(
+    pub(crate) fn clipped_ranges(
         &self,
         cusp_fragment: &CurveParameterRange2,
         other_fragment: &CurveParameterRange2,
         policy: &CurveContext,
     ) -> CurveResult<Classification<Option<(CurveParameterRange2, CurveParameterRange2)>>> {
         let (cusp_overlap, other_overlap) = self.curve_region_ranges();
-        let clipped = crate::bezier_split::clip_corresponding_curve_region_parameter_ranges(
+        let clipped = crate::bezier_split::clip_corresponding_parameter_ranges(
             &cusp_overlap,
             &other_overlap,
             cusp_fragment,
@@ -50434,14 +50434,14 @@ impl BezierAlgebraicCuspSemicirclePairOverlap2 {
 
     /// Decides positive retained overlap without constructing unused inverse
     /// cuts for fillet coincidence classification.
-    pub(crate) fn has_positive_curve_region_overlap(
+    pub(crate) fn has_positive_overlap(
         &self,
         first_fragment: &CurveParameterRange2,
         second_fragment: &CurveParameterRange2,
         policy: &CurveContext,
     ) -> CurveResult<Classification<bool>> {
         let (first_overlap, second_overlap) = self.curve_region_ranges();
-        crate::bezier_split::corresponding_curve_region_parameter_ranges_are_positive(
+        crate::bezier_split::corresponding_parameter_ranges_are_positive(
             &first_overlap,
             &second_overlap,
             first_fragment,
@@ -50461,7 +50461,7 @@ impl BezierAlgebraicCuspSemicirclePairOverlap2 {
     /// Clips this certified coincident-circle correspondence to two retained
     /// cusp fragments. The shared region clipper owns orientation, inverse
     /// clipping, and exact boundary preservation for Boolean publication.
-    pub(crate) fn clipped_curve_region_ranges(
+    pub(crate) fn clipped_ranges(
         &self,
         first_fragment: &CurveParameterRange2,
         second_fragment: &CurveParameterRange2,
@@ -50476,7 +50476,7 @@ impl BezierAlgebraicCuspSemicirclePairOverlap2 {
                 CurveParameter2::from_algebraic_cusp(self.map_parameter(parameter, source_first)),
             )))
         };
-        crate::bezier_split::clip_corresponding_curve_region_parameter_ranges(
+        crate::bezier_split::clip_corresponding_parameter_ranges(
             &first_overlap,
             &second_overlap,
             first_fragment,
@@ -120877,7 +120877,7 @@ impl BezierParameterComponentOverlap2 {
         Ok(Classification::Uncertain(UncertaintyReason::Boundary))
     }
 
-    pub(crate) fn clipped_curve_region_ranges(
+    pub(crate) fn clipped_ranges(
         &self,
         first_fragment: &CurveParameterRange2,
         second_fragment: &CurveParameterRange2,
@@ -120887,7 +120887,7 @@ impl BezierParameterComponentOverlap2 {
             CurveParameterRange2::from_bezier_range(self.overlap.first_range().clone());
         let second_overlap =
             CurveParameterRange2::from_bezier_range(self.overlap.second_range().clone());
-        crate::bezier_split::clip_corresponding_curve_region_parameter_ranges(
+        crate::bezier_split::clip_corresponding_parameter_ranges(
             &first_overlap,
             &second_overlap,
             first_fragment,
@@ -120900,38 +120900,24 @@ impl BezierParameterComponentOverlap2 {
         )
     }
 
-    pub(crate) fn clipped_ranges(
+    /// Decides component existence without constructing inverse cuts.
+    pub(crate) fn has_positive_overlap(
         &self,
-        first_fragment: &BezierParameterRange2,
-        second_fragment: &BezierParameterRange2,
+        first_fragment: &CurveParameterRange2,
+        second_fragment: &CurveParameterRange2,
         policy: &CurveContext,
-    ) -> CurveResult<Classification<Option<(BezierParameterRange2, BezierParameterRange2)>>> {
-        let first = CurveParameterRange2::from_bezier_range(first_fragment.clone());
-        let second = CurveParameterRange2::from_bezier_range(second_fragment.clone());
-        Ok(
-            match self.clipped_curve_region_ranges(&first, &second, policy)? {
-                Classification::Decided(Some((first, second))) => {
-                    let (Some((first_start, first_end)), Some((second_start, second_end))) =
-                        (first.as_bezier_parameters(), second.as_bezier_parameters())
-                    else {
-                        return Err(CurveError::Topology(
-                            "ordinary component clipping produced a local parameter".into(),
-                        ));
-                    };
-                    Classification::Decided(Some((
-                        BezierParameterRange2::new_validated(
-                            first_start.clone(),
-                            first_end.clone(),
-                        ),
-                        BezierParameterRange2::new_validated(
-                            second_start.clone(),
-                            second_end.clone(),
-                        ),
-                    )))
-                }
-                Classification::Decided(None) => Classification::Decided(None),
-                Classification::Uncertain(reason) => Classification::Uncertain(reason),
-            },
+    ) -> CurveResult<Classification<bool>> {
+        let first_overlap =
+            CurveParameterRange2::from_bezier_range(self.overlap.first_range().clone());
+        let second_overlap =
+            CurveParameterRange2::from_bezier_range(self.overlap.second_range().clone());
+        crate::bezier_split::corresponding_parameter_ranges_are_positive(
+            &first_overlap,
+            &second_overlap,
+            first_fragment,
+            second_fragment,
+            policy,
+            |parameter| self.map_curve_parameter(CurveResultantParameter::First, parameter, policy),
         )
     }
 }
@@ -126735,15 +126721,17 @@ fn select_parameter_component_in_domain(
                     return Ok(Classification::Uncertain(reason));
                 }
             };
+            let first_range = CurveParameterRange2::from_bezier_range(first_range);
+            let second_range = CurveParameterRange2::from_bezier_range(second_range);
             for overlap in component.component_overlaps.iter() {
-                match overlap.clipped_ranges(&first_range, &second_range, policy)? {
-                    Classification::Decided(Some(_)) => {
+                match overlap.has_positive_overlap(&first_range, &second_range, policy)? {
+                    Classification::Decided(true) => {
                         return Ok(Classification::Decided(ParameterComponentSelection2 {
                             positive_dimensional: true,
                             selected_pairs,
                         }));
                     }
-                    Classification::Decided(None) => {}
+                    Classification::Decided(false) => {}
                     Classification::Uncertain(reason) => {
                         return Ok(Classification::Uncertain(reason));
                     }
@@ -144822,11 +144810,7 @@ mod conversion_tests {
                 )
             };
             let Classification::Decided(Some((first_clipped, second_clipped))) = overlap
-                .clipped_curve_region_ranges(
-                    &range(&first_fragment),
-                    &range(&second_fragment),
-                    &policy,
-                )
+                .clipped_ranges(&range(&first_fragment), &range(&second_fragment), &policy)
                 .unwrap()
             else {
                 panic!("the partial cusp carriers must retain their shared subarc");
@@ -163164,7 +163148,7 @@ mod conversion_tests {
             };
             assert_eq!(
                 overlap
-                    .has_positive_curve_region_overlap(
+                    .has_positive_overlap(
                         &cusp_range(
                             BezierAlgebraicCuspSemicircleParameter2::Exact(Real::zero()),
                             first_cut.clone(),
@@ -163178,7 +163162,7 @@ mod conversion_tests {
             );
             assert_eq!(
                 overlap
-                    .has_positive_curve_region_overlap(
+                    .has_positive_overlap(
                         &cusp_range(first_cut.clone(), second_cut.clone()),
                         &selected_carrier_range,
                         &policy,
@@ -167477,9 +167461,19 @@ mod conversion_tests {
             };
             assert_eq!(mapped.scalar(), Some(&fraction(1, 2)));
 
-            let first = BezierParameterRange2::from_exact(fraction(1, 5), fraction(2, 5));
-            let disjoint_second =
-                BezierParameterRange2::from_exact(fraction(1, 2), fraction(7, 10));
+            let first = CurveParameterRange2::from_bezier_range(BezierParameterRange2::from_exact(
+                fraction(1, 5),
+                fraction(2, 5),
+            ));
+            let disjoint_second = CurveParameterRange2::from_bezier_range(
+                BezierParameterRange2::from_exact(fraction(1, 2), fraction(7, 10)),
+            );
+            assert_eq!(
+                overlap
+                    .has_positive_overlap(&first, &disjoint_second, &policy)
+                    .unwrap(),
+                Classification::Decided(false),
+            );
             assert_eq!(
                 overlap
                     .clipped_ranges(&first, &disjoint_second, &policy)
@@ -167487,8 +167481,19 @@ mod conversion_tests {
                 Classification::Decided(None),
             );
 
-            let first = BezierParameterRange2::from_exact(fraction(1, 4), fraction(3, 4));
-            let second = BezierParameterRange2::from_exact(fraction(1, 16), fraction(1, 4));
+            let first = CurveParameterRange2::from_bezier_range(BezierParameterRange2::from_exact(
+                fraction(1, 4),
+                fraction(3, 4),
+            ));
+            let second = CurveParameterRange2::from_bezier_range(
+                BezierParameterRange2::from_exact(fraction(1, 16), fraction(1, 4)),
+            );
+            assert_eq!(
+                overlap
+                    .has_positive_overlap(&first, &second, &policy)
+                    .unwrap(),
+                Classification::Decided(true),
+            );
             let Classification::Decided(Some((first, second))) =
                 overlap.clipped_ranges(&first, &second, &policy).unwrap()
             else {
@@ -167522,9 +167527,14 @@ mod conversion_tests {
             let second = CurveParameterRange2::from_bezier_range(
                 BezierParameterRange2::from_exact(fraction(1, 16), fraction(1, 4)),
             );
-            let Classification::Decided(Some((first, second))) = overlap
-                .clipped_curve_region_ranges(&first, &second, &policy)
-                .unwrap()
+            assert_eq!(
+                overlap
+                    .has_positive_overlap(&first, &second, &policy)
+                    .unwrap(),
+                Classification::Decided(true),
+            );
+            let Classification::Decided(Some((first, second))) =
+                overlap.clipped_ranges(&first, &second, &policy).unwrap()
             else {
                 panic!("the selected first-axis nonlinear subrange was not retained");
             };
@@ -167550,9 +167560,14 @@ mod conversion_tests {
                 selected_parameter(fraction(1, 16)),
                 selected_parameter(fraction(1, 4)),
             );
-            let Classification::Decided(Some((first, second))) = overlap
-                .clipped_curve_region_ranges(&first, &second, &policy)
-                .unwrap()
+            assert_eq!(
+                overlap
+                    .has_positive_overlap(&first, &second, &policy)
+                    .unwrap(),
+                Classification::Decided(true),
+            );
+            let Classification::Decided(Some((first, second))) =
+                overlap.clipped_ranges(&first, &second, &policy).unwrap()
             else {
                 panic!("the selected second-axis nonlinear subrange was not retained");
             };

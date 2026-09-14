@@ -5760,7 +5760,7 @@ fn retained_fillet_cusp_mapped_overlap_is_positive(
     policy: &CurveContext,
 ) -> ExactCurveResult<bool> {
     retained_fillet_positive_overlap(
-        overlap.has_positive_curve_region_overlap(
+        overlap.has_positive_overlap(
             &retained_fillet_cusp_fragment_range(cusp),
             other_range,
             policy,
@@ -5777,7 +5777,7 @@ fn retained_fillet_cusp_pair_overlap_is_positive(
     policy: &CurveContext,
 ) -> ExactCurveResult<bool> {
     retained_fillet_positive_overlap(
-        overlap.has_positive_curve_region_overlap(
+        overlap.has_positive_overlap(
             &retained_fillet_cusp_fragment_range(first),
             &retained_fillet_cusp_fragment_range(second),
             policy,
@@ -5942,7 +5942,7 @@ fn retained_fillet_corresponding_overlap_is_positive(
         policy,
     );
     match correspondence
-        .clipped_curve_region_ranges(
+        .clipped_ranges(
             overlap.first_range(),
             overlap.second_range(),
             first_fragment,
@@ -5968,7 +5968,7 @@ fn retained_fillet_parameter_component_overlap_is_positive(
     policy: &CurveContext,
 ) -> ExactCurveResult<bool> {
     match overlap
-        .clipped_curve_region_ranges(first_fragment, second_fragment, policy)
+        .clipped_ranges(first_fragment, second_fragment, policy)
         .map_err(|cause| ExactCurveError::invalid(CurveOperation2::Fillet, family, cause))?
     {
         Classification::Decided(ranges) => Ok(ranges.is_some()),
@@ -6183,7 +6183,7 @@ fn retained_selected_fillet_overlap_is_positive(
 ) -> ExactCurveResult<bool> {
     let cusp_range = retained_fillet_cusp_fragment_range(cusp_source);
     let overlaps_authored = retained_fillet_positive_overlap(
-        overlap.has_positive_curve_region_overlap(&cusp_range, analytic_range, policy),
+        overlap.has_positive_overlap(&cusp_range, analytic_range, policy),
         cusp_family,
     )?;
     if overlaps_authored {
@@ -6202,7 +6202,7 @@ fn retained_selected_fillet_overlap_is_positive(
         return Ok(false);
     };
     retained_fillet_positive_overlap(
-        overlap.has_positive_curve_region_overlap(&cusp_range, &incident_range, policy),
+        overlap.has_positive_overlap(&cusp_range, &incident_range, policy),
         cusp_family,
     )
 }

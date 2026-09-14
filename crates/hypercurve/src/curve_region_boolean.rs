@@ -258,19 +258,15 @@ enum RegionCuspMappedOverlapRef<'a> {
 }
 
 impl RegionCuspMappedOverlapRef<'_> {
-    fn clipped_curve_region_ranges(
+    fn clipped_ranges(
         self,
         cusp_fragment: &CurveParameterRange2,
         other_fragment: &CurveParameterRange2,
         policy: &CurveContext,
     ) -> CurveResult<Classification<Option<(CurveParameterRange2, CurveParameterRange2)>>> {
         match self {
-            Self::Bezier(source) => {
-                source.clipped_curve_region_ranges(cusp_fragment, other_fragment, policy)
-            }
-            Self::Selected(source) => {
-                source.clipped_curve_region_ranges(cusp_fragment, other_fragment, policy)
-            }
+            Self::Bezier(source) => source.clipped_ranges(cusp_fragment, other_fragment, policy),
+            Self::Selected(source) => source.clipped_ranges(cusp_fragment, other_fragment, policy),
         }
     }
 }
@@ -6240,10 +6236,10 @@ impl<'a> CurveRegionBooleanContext<'a> {
             );
             let clipped = if *swapped {
                 source
-                    .clipped_curve_region_ranges(&second_range, &first_range, &self.data.policy)
+                    .clipped_ranges(&second_range, &first_range, &self.data.policy)
                     .map(|classification| classification.map(|ranges| ranges.map(|(a, b)| (b, a))))
             } else {
-                source.clipped_curve_region_ranges(&first_range, &second_range, &self.data.policy)
+                source.clipped_ranges(&first_range, &second_range, &self.data.policy)
             }
             .map_err(|cause| self.invalid(pair.first_carrier_index, cause))?;
             return match clipped {
@@ -6264,7 +6260,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
                 second_carrier.end.clone(),
             );
             return match source
-                .clipped_curve_region_ranges(&first_range, &second_range, &self.data.policy)
+                .clipped_ranges(&first_range, &second_range, &self.data.policy)
                 .map_err(|cause| self.invalid(pair.first_carrier_index, cause))?
             {
                 Classification::Decided(ranges) => Ok(ranges),
@@ -6567,7 +6563,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
             CurveParameterRange2::new_validated(carrier.start.clone(), carrier.end.clone())
         };
         let clipped = source
-            .clipped_curve_region_ranges(
+            .clipped_ranges(
                 &range(cusp_carrier),
                 &range(other_carrier),
                 &self.data.policy,
@@ -16162,7 +16158,7 @@ fn clip_corresponding_parameter_overlap(
         second_carrier.start.clone(),
         second_carrier.end.clone(),
     );
-    match correspondence.clipped_curve_region_ranges(
+    match correspondence.clipped_ranges(
         first_range,
         second_range,
         &first_fragment,
@@ -20852,7 +20848,7 @@ mod certified_successor_tests {
                     &policy,
                 );
                 let Classification::Decided(Some(clipped)) = overlap
-                    .clipped_curve_region_ranges(
+                    .clipped_ranges(
                         &CurveParameterRange2::new_validated(
                             first_carrier.start.clone(),
                             first_carrier.end.clone(),

@@ -528,7 +528,7 @@ impl RationalBezierOverlapParameterCorrespondence2 {
 
     /// Clips one certified shared-image correspondence to two retained local
     /// parameter ranges without globalizing selected-fiber boundaries.
-    pub(crate) fn clipped_curve_region_ranges(
+    pub(crate) fn clipped_ranges(
         &self,
         first_overlap: &BezierParameterRange2,
         second_overlap: &BezierParameterRange2,
@@ -538,7 +538,7 @@ impl RationalBezierOverlapParameterCorrespondence2 {
     ) -> CurveResult<Classification<Option<(CurveParameterRange2, CurveParameterRange2)>>> {
         let first_overlap_region = CurveParameterRange2::from_bezier_range(first_overlap.clone());
         let second_overlap_region = CurveParameterRange2::from_bezier_range(second_overlap.clone());
-        crate::bezier_split::clip_corresponding_curve_region_parameter_ranges(
+        crate::bezier_split::clip_corresponding_parameter_ranges(
             &first_overlap_region,
             &second_overlap_region,
             first_fragment,
