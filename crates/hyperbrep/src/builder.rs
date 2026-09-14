@@ -4078,7 +4078,11 @@ fn partition_periodic_curve_path(
         .map(|fragment| {
             let (start, end) = fragment.parameter_range();
             curve
-                .clamped_subcurve(start.clone(), end.clone(), &CurveContext::STRICT)
+                .clamped_subcurve(
+                    start.clone().into(),
+                    end.clone().into(),
+                    &CurveContext::STRICT,
+                )
                 .map(|outcome| outcome.into_value())
                 .map_err(GeometryError::from)
                 .map_err(Into::into)

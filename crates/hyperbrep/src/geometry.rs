@@ -171,7 +171,7 @@ impl Pcurve {
     pub fn split_at(&self, parameter: &Real) -> GeometryResult<(Self, Self)> {
         let (first, second) = self
             .curve
-            .split_at(parameter.clone(), &CurveContext::STRICT)?
+            .split_at(parameter.clone().into(), &CurveContext::STRICT)?
             .into_value();
         Ok((Self::new(first), Self::new(second)))
     }
@@ -2205,8 +2205,8 @@ impl SurfaceIntersectionPcurve {
                 } else {
                     curve
                         .subcurve(
-                            ordered_source_start.clone(),
-                            ordered_source_end.clone(),
+                            ordered_source_start.clone().into(),
+                            ordered_source_end.clone().into(),
                             &CurveContext::STRICT,
                         )?
                         .into_value()
@@ -2316,7 +2316,7 @@ impl SurfaceIntersectionPcurve {
                     } else {
                         carrier
                             .curve
-                            .subcurve(start, end, &CurveContext::STRICT)?
+                            .subcurve(start.into(), end.into(), &CurveContext::STRICT)?
                             .into_value()
                     };
                     if boundaries.is_empty() {
@@ -5726,7 +5726,7 @@ fn clip_rational_bilinear_parameter_graph(
                 surface,
                 pcurve
                     .clone()
-                    .subcurve(start, end, &CurveContext::STRICT)?
+                    .subcurve(start.into(), end.into(), &CurveContext::STRICT)?
                     .into_value(),
             )
         })
