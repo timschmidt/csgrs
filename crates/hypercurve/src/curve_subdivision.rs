@@ -1184,6 +1184,316 @@ mod tests {
     }
 
     #[test]
+    fn source_domain_fillets_preserve_all_selected_major_arc_contacts() {
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let source = Curve2::from(
+                CircularArc2::try_from_center(
+                    p(1, 0),
+                    Point2::new(q(3, 5), q(4, 5)),
+                    p(0, 0),
+                    true,
+                )
+                .unwrap(),
+            );
+            let end = decided(
+                selected_parameters(&policy)[0]
+                    .affine_image_unbounded(&q(1, 64), &q(63, 64), &policy)
+                    .unwrap(),
+                source.family(),
+            )
+            .unwrap();
+            let selected_source = source
+                .subcurve(Real::zero().into(), end, &policy)
+                .unwrap()
+                .value;
+            for selected in [false, true] {
+                let arc = if selected {
+                    selected_source.clone()
+                } else {
+                    source.clone()
+                };
+                let path = CurvePath2::try_new(vec![
+                    Curve2::from(LineSeg2::try_new(p(-3, 0), p(1, 0)).unwrap()),
+                    arc,
+                ])
+                .unwrap();
+                for reversed in [false, true] {
+                    let path = if reversed {
+                        path.reversed(&policy).unwrap().value
+                    } else {
+                        path.clone()
+                    };
+                    let result = path.fillet_vertex_by_radius(1, q(1, 4), CurveCornerMode2::TrimOnly, &policy)
+                        .unwrap_or_else(|error| panic!("selected={selected}, reversed={reversed}, policy={policy:?}: {error:?}"));
+                    assert_eq!(result.certainty, CurveCertainty::Certified);
+                    let candidates = match result.value {
+                        CurveCornerSolutions2::Unique(candidate) => vec![candidate],
+                        CurveCornerSolutions2::Multiple(candidates) => candidates,
+                        CurveCornerSolutions2::NoSolution(reason) => {
+                            panic!("major-arc fillets were lost: {reason:?}")
+                        }
+                    };
+                    assert_eq!(
+                        candidates.len(),
+                        3,
+                        "selected={selected}, reversed={reversed}, policy={policy:?}"
+                    );
+                    let inward = q(1, 2).sqrt().unwrap();
+                    let outward = q(3, 2).sqrt().unwrap();
+                    for expected in [
+                        Point2::new(q(4, 3) * &inward, -q(1, 3)),
+                        Point2::new(-q(4, 3) * &inward, -q(1, 3)),
+                        Point2::new(-q(4, 5) * outward, q(1, 5)),
+                    ] {
+                        assert!(
+                            candidates
+                                .iter()
+                                .any(|candidate| candidate.curves().windows(2).any(|pair| {
+                                    pair[0].end().same_point(&expected.clone().into(), &policy)
+                                        == Classification::Decided(true)
+                                })),
+                            "missing exact arc contact {expected:?}"
+                        );
+                    }
+                    for candidate in candidates {
+                        assert_same(&candidate.start(), &path.start(), &policy);
+                        assert_same(&candidate.end(), &path.end(), &policy);
+                        for pair in candidate.curves().windows(2) {
+                            assert_same(&pair[0].end(), &pair[1].start(), &policy);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn source_domain_fillets_own_surviving_spline_tangents_and_reenter_chamfers() {
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            for rational in [false, true] {
+                for sharp_knot in [false, true] {
+                    // The unit fillet touches (0,1) exactly at a knot. A
+                    // smooth partition owns it once. Turning right at that
+                    // knot discards the vertical tangent, so that circle is
+                    // inadmissible. The later contact (-3,1) always survives.
+                    let controls = if sharp_knot {
+                        vec![p(0, 0), p(0, 1), p(2, 1), p(2, 3), p(-3, 3), p(-3, 0)]
+                    } else {
+                        vec![p(0, 0), p(0, 1), p(0, 3), p(-3, 3), p(-3, 0)]
+                    };
+                    let last = controls.len() as i32 + 2;
+                    let knots = std::iter::once(3)
+                        .chain(3..=last)
+                        .chain(std::iter::once(last))
+                        .map(Real::from)
+                        .collect();
+                    let weights = (0..controls.len())
+                        .map(|index| Real::from(1 + (index % 3) as i32))
+                        .collect();
+                    let source = if rational {
+                        Curve2::try_nurbs(1, controls, weights, knots, &policy)
+                    } else {
+                        Curve2::try_polynomial_bspline(1, controls, knots, &policy)
+                    }
+                    .unwrap()
+                    .value;
+                    for selected in [false, true] {
+                        let source = if selected {
+                            let end = decided(
+                                selected_parameters(&policy)[0]
+                                    .affine_image_unbounded(
+                                        &q(1, 64),
+                                        &(Real::from(last) - q(1, 16)),
+                                        &policy,
+                                    )
+                                    .unwrap(),
+                                source.family(),
+                            )
+                            .unwrap();
+                            source
+                                .subcurve(Real::from(3).into(), end, &policy)
+                                .unwrap()
+                                .value
+                        } else {
+                            source.clone()
+                        };
+                        let path = CurvePath2::try_new(vec![
+                            Curve2::from(LineSeg2::try_new(p(-4, 0), p(0, 0)).unwrap()),
+                            source,
+                        ])
+                        .unwrap();
+                        for reversed in [false, true] {
+                            let path = if reversed {
+                                path.reversed(&policy).unwrap().value
+                            } else {
+                                path.clone()
+                            };
+                            let outcome = path.fillet_vertex_by_radius(1, Real::one(), CurveCornerMode2::TrimOnly, &policy)
+                                .unwrap_or_else(|error| panic!("rational={rational}, selected={selected}, sharp={sharp_knot}, reversed={reversed}, policy={policy:?}: {error:?}"));
+                            assert_eq!(outcome.certainty, CurveCertainty::Certified);
+                            let candidates = match outcome.value {
+                                CurveCornerSolutions2::Unique(candidate) => vec![candidate],
+                                CurveCornerSolutions2::Multiple(candidates) => candidates,
+                                CurveCornerSolutions2::NoSolution(reason) => {
+                                    panic!("lost spline fillets: {reason:?}")
+                                }
+                            };
+                            assert_eq!(candidates.len(), if sharp_knot { 1 } else { 2 });
+                            let expected = if sharp_knot {
+                                vec![p(-3, 1)]
+                            } else {
+                                vec![p(0, 1), p(-3, 1)]
+                            };
+                            for point in expected {
+                                assert!(
+                                    candidates.iter().any(|candidate| candidate
+                                        .curves()
+                                        .windows(2)
+                                        .any(|pair| pair[0]
+                                            .end()
+                                            .same_point(&point.clone().into(), &policy)
+                                            == Classification::Decided(true))),
+                                    "missing {point:?}"
+                                );
+                            }
+                            for candidate in candidates {
+                                assert_same(&candidate.start(), &path.start(), &policy);
+                                assert_same(&candidate.end(), &path.end(), &policy);
+                                for pair in candidate.curves().windows(2) {
+                                    assert_same(&pair[0].end(), &pair[1].start(), &policy);
+                                }
+                                let edited = candidate
+                                    .chamfer_vertex_by_setbacks(
+                                        1,
+                                        q(1, 64),
+                                        q(1, 64),
+                                        CurveCornerMode2::TrimOnly,
+                                        &policy,
+                                    )
+                                    .unwrap();
+                                assert_eq!(edited.certainty, CurveCertainty::Certified);
+                                let CurveCornerSolutions2::Unique(edited) = edited.value else {
+                                    panic!("a spline fillet must reenter chamfering")
+                                };
+                                assert_same(&edited.start(), &path.start(), &policy);
+                                assert_same(&edited.end(), &path.end(), &policy);
+                                for pair in edited.curves().windows(2) {
+                                    assert_same(&pair[0].end(), &pair[1].start(), &policy);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn source_domain_fillets_preserve_one_closed_authored_interval() {
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            for rational in [false, true] {
+                let controls = vec![p(0, 0), p(4, 0), p(4, 4), p(0, 4), p(0, 0)];
+                let knots = [3, 3, 4, 5, 6, 7, 7].into_iter().map(Real::from).collect();
+                let source = if rational {
+                    Curve2::try_nurbs(1, controls, vec![Real::one(); 5], knots, &policy)
+                } else {
+                    Curve2::try_polynomial_bspline(1, controls, knots, &policy)
+                }
+                .unwrap()
+                .value;
+                let path = CurvePath2::try_new(vec![source]).unwrap();
+                for reversed in [false, true] {
+                    let path = if reversed {
+                        path.reversed(&policy).unwrap().value
+                    } else {
+                        path.clone()
+                    };
+                    let result = path
+                        .fillet_vertex_by_radius(
+                            0,
+                            Real::one(),
+                            CurveCornerMode2::TrimOnly,
+                            &policy,
+                        )
+                        .unwrap();
+                    assert_eq!(result.certainty, CurveCertainty::Certified);
+                    let CurveCornerSolutions2::Multiple(candidates) = result.value else {
+                        panic!("four exact closed-interval fillets")
+                    };
+                    assert_eq!(candidates.len(), 4);
+                    for candidate in candidates {
+                        assert_same(&candidate.start(), &candidate.end(), &policy);
+                        for pair in candidate.curves().windows(2) {
+                            assert_same(&pair[0].end(), &pair[1].start(), &policy);
+                        }
+                        assert_eq!(candidate.curves().len(), 2);
+                    }
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn source_domain_fillets_map_selected_line_contacts_into_spline_charts() {
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let arc = Curve2::from(
+                CircularArc2::try_from_center(
+                    p(1, 0),
+                    Point2::new(q(3, 5), q(4, 5)),
+                    p(0, 0),
+                    true,
+                )
+                .unwrap(),
+            );
+            let end = decided(
+                selected_parameters(&policy)[0]
+                    .affine_image_unbounded(&q(1, 64), &q(63, 64), &policy)
+                    .unwrap(),
+                arc.family(),
+            )
+            .unwrap();
+            let arc = arc
+                .subcurve(Real::zero().into(), end, &policy)
+                .unwrap()
+                .value;
+            let line = Curve2::try_polynomial_bspline(
+                1,
+                vec![p(-4, 0), p(-3, 0), p(1, 0)],
+                [3, 3, 4, 5, 5].into_iter().map(Real::from).collect(),
+                &policy,
+            )
+            .unwrap()
+            .value;
+            let path = CurvePath2::try_new(vec![line, arc]).unwrap();
+            for reversed in [false, true] {
+                let path = if reversed {
+                    path.reversed(&policy).unwrap().value
+                } else {
+                    path.clone()
+                };
+                let outcome = path
+                    .fillet_vertex_by_radius(1, q(1, 4), CurveCornerMode2::TrimOnly, &policy)
+                    .unwrap();
+                assert_eq!(outcome.certainty, CurveCertainty::Certified);
+                let CurveCornerSolutions2::Multiple(candidates) = outcome.value else {
+                    panic!(
+                        "all three contacts must retain authored parameters, reversed={reversed}, policy={policy:?}: {:?}",
+                        outcome.value
+                    )
+                };
+                assert_eq!(candidates.len(), 3);
+                for candidate in candidates {
+                    assert_same(&candidate.start(), &path.start(), &policy);
+                    assert_same(&candidate.end(), &path.end(), &policy);
+                    for pair in candidate.curves().windows(2) {
+                        assert_same(&pair[0].end(), &pair[1].start(), &policy);
+                    }
+                }
+            }
+        }
+    }
+
+    #[test]
     fn source_domain_chamfers_cover_spline_knots_and_distinct_source_locations() {
         for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
             for rational in [false, true] {

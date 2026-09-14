@@ -2605,6 +2605,7 @@ impl<'a> CurveCornerChain2<'a> {
                 true,
                 deferred.arc_is_previous,
                 mode,
+                crate::curve::FilletContactDomain2::OpenCurve,
                 CurveFamily2::CircularArc,
                 policy,
             )?

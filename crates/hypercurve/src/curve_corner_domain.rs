@@ -2,7 +2,7 @@
 
 use super::*;
 use crate::CurveParameterRange2;
-use std::cmp::Ordering;
+use std::borrow::Cow;
 
 fn decided<T>(value: Classification<T>, family: CurveFamily2) -> ExactCurveResult<T> {
     match value {
@@ -15,18 +15,22 @@ fn decided<T>(value: Classification<T>, family: CurveFamily2) -> ExactCurveResul
     }
 }
 
-fn order(
+pub(super) fn parameter_order(
     first: &CurveParameter2,
     second: &CurveParameter2,
+    operation: CurveOperation2,
     family: CurveFamily2,
     policy: &CurveContext,
-) -> ExactCurveResult<Ordering> {
-    decided(
-        first
-            .cmp_by_refinement(second, policy)
-            .map_err(|cause| ExactCurveError::invalid(CurveOperation2::Chamfer, family, cause))?,
-        family,
-    )
+) -> ExactCurveResult<std::cmp::Ordering> {
+    match first
+        .cmp_by_refinement(second, policy)
+        .map_err(|cause| ExactCurveError::invalid(operation, family, cause))?
+    {
+        Classification::Decided(order) => Ok(order),
+        Classification::Uncertain(reason) => {
+            Err(ExactCurveError::blocked(operation, family, reason))
+        }
+    }
 }
 
 pub(super) fn fixed_distance_point(
@@ -68,10 +72,11 @@ impl Curve2 {
     /// Two cuts on one closed authored curve must leave a nonempty interval
     /// between them. Enumeration over several charts can also produce the
     /// opposite pairing, whose trims have already passed each other.
-    pub(super) fn chamfer_cuts_leave_authored_interval(
+    pub(super) fn corner_cuts_leave_authored_interval(
         &self,
         previous: &CornerCut2,
         next: &CornerCut2,
+        operation: CurveOperation2,
         policy: &CurveContext,
     ) -> ExactCurveResult<bool> {
         if (self.source_range().is_none()
@@ -86,7 +91,7 @@ impl Curve2 {
         }
         let previous = previous.parameter.as_ref().expect("authored cut parameter");
         let next = next.parameter.as_ref().expect("authored cut parameter");
-        let ordering = order(next, previous, self.family(), policy)?;
+        let ordering = parameter_order(next, previous, operation, self.family(), policy)?;
         Ok(if self.source_range().is_some_and(|range| range.reversed) {
             ordering.is_gt()
         } else {
@@ -151,8 +156,20 @@ impl Curve2 {
         let mut center_chart = None;
         for (index, chart) in charts.iter().enumerate() {
             let (start, end) = chart.parameter_range();
-            let lower = order(corner_parameter, &start.clone().into(), family, policy)?;
-            let upper = order(corner_parameter, &end.clone().into(), family, policy)?;
+            let lower = parameter_order(
+                corner_parameter,
+                &start.clone().into(),
+                operation,
+                family,
+                policy,
+            )?;
+            let upper = parameter_order(
+                corner_parameter,
+                &end.clone().into(),
+                operation,
+                family,
+                policy,
+            )?;
             if lower.is_lt()
                 || upper.is_gt()
                 || (lower.is_eq() && corner_is_upper && index > 0)
@@ -189,8 +206,22 @@ impl Curve2 {
         for chart in charts {
             let previous_seam = seam.take();
             let (start, end) = chart.parameter_range();
-            if !order(range.end(), &start.clone().into(), family, policy)?.is_gt()
-                || !order(range.start(), &end.clone().into(), family, policy)?.is_lt()
+            if !parameter_order(
+                range.end(),
+                &start.clone().into(),
+                operation,
+                family,
+                policy,
+            )?
+            .is_gt()
+                || !parameter_order(
+                    range.start(),
+                    &end.clone().into(),
+                    operation,
+                    family,
+                    policy,
+                )?
+                .is_lt()
             {
                 continue;
             }
@@ -222,8 +253,8 @@ impl Curve2 {
                         .map_err(|cause| ExactCurveError::invalid(operation, family, cause))?,
                     family,
                 )?;
-                if !order(&parameter, range.start(), family, policy)?.is_gt()
-                    || !order(&parameter, range.end(), family, policy)?.is_lt()
+                if !parameter_order(&parameter, range.start(), operation, family, policy)?.is_gt()
+                    || !parameter_order(&parameter, range.end(), operation, family, policy)?.is_lt()
                 {
                     continue;
                 }
@@ -232,12 +263,15 @@ impl Curve2 {
                 // root with every previously published cut. Distinct source
                 // parameters at a self-contact remain distinct solutions.
                 if let Some((previous_parameter, previous_point)) = &previous_seam
-                    && order(&parameter, previous_parameter, family, policy)?.is_eq()
+                    && parameter_order(&parameter, previous_parameter, operation, family, policy)?
+                        .is_eq()
                     && decided(point.same_point(previous_point, policy), family)?
                 {
                     continue;
                 }
-                if order(&parameter, &end.clone().into(), family, policy)?.is_eq() {
+                if parameter_order(&parameter, &end.clone().into(), operation, family, policy)?
+                    .is_eq()
+                {
                     seam = Some((parameter.clone(), point.clone()));
                 }
                 cuts.push(CornerCut2 {
@@ -255,5 +289,219 @@ impl Curve2 {
             }
         }
         Ok(cuts)
+    }
+}
+
+/// One finite source chart. The optional map names its location in the authored
+/// curve; an unpartitioned carrier keeps its established support machinery.
+struct FilletSourceChart2<'a> {
+    curve: Cow<'a, Curve2>,
+    source_map: Option<(Real, Real)>,
+}
+
+impl FilletSourceChart2<'_> {
+    fn prepare(
+        &self,
+        previous: bool,
+        policy: &CurveContext,
+    ) -> ExactCurveResult<crate::bezier_region::CornerCarrierPreparation2<'_>> {
+        let mut preparation =
+            crate::bezier_region::CornerCarrierPreparation2::from_curve(&self.curve, previous);
+        preparation.prepare(CurveOperation2::Fillet, policy)?;
+        Ok(preparation)
+    }
+
+    fn domain(&self) -> FilletContactDomain2 {
+        if self.source_map.is_some() {
+            FilletContactDomain2::TrimChart
+        } else {
+            FilletContactDomain2::OpenCurve
+        }
+    }
+
+    fn place_cut(
+        &self,
+        authored: &Curve2,
+        preparation: &crate::bezier_region::CornerCarrierPreparation2<'_>,
+        cut: &mut CornerCut2,
+        policy: &CurveContext,
+    ) -> ExactCurveResult<bool> {
+        let operation = CurveOperation2::Fillet;
+        cut.map_source_parameter(
+            preparation.source_chart(),
+            operation,
+            authored.family(),
+            policy,
+        )?;
+        let Some((scale, offset)) = &self.source_map else {
+            return Ok(true);
+        };
+        cut.map_source_parameter(Some((scale, offset)), operation, authored.family(), policy)?;
+        let parameter = cut
+            .parameter
+            .as_ref()
+            .expect("a finite chart retains its source parameter");
+        let range = authored.parameter_domain();
+        Ok(parameter_order(
+            parameter,
+            range.start(),
+            operation,
+            authored.family(),
+            policy,
+        )?
+        .is_gt()
+            && parameter_order(parameter, range.end(), operation, authored.family(), policy)?
+                .is_lt())
+    }
+}
+
+impl Curve2 {
+    fn finite_fillet_charts(
+        &self,
+        policy: &CurveContext,
+    ) -> ExactCurveResult<Vec<FilletSourceChart2<'_>>> {
+        let operation = CurveOperation2::Fillet;
+        if let Some(spans) = self.restricted_source_spans(policy, operation)? {
+            if spans.len() > 1 {
+                return Ok(spans
+                    .iter()
+                    .map(|span| FilletSourceChart2 {
+                        curve: Cow::Owned(Curve2::from_retained_fragment(span.fragment.clone())),
+                        source_map: Some((span.source_scale.clone(), span.source_offset.clone())),
+                    })
+                    .collect());
+            }
+        } else if matches!(
+            self.geometry(),
+            Some(CurveGeometry2::PolynomialBSpline(_) | CurveGeometry2::Nurbs(_))
+        ) {
+            let spans = self.native_bezier_fragments_for_operation(policy, operation)?;
+            if spans.len() > 1 {
+                return Ok(spans
+                    .iter()
+                    .map(|span| {
+                        let (start, end) = span.parameter_range();
+                        FilletSourceChart2 {
+                            curve: Cow::Owned(span.clone().into_curve()),
+                            source_map: Some((end - start, start.clone())),
+                        }
+                    })
+                    .collect());
+            }
+        }
+        Ok(vec![FilletSourceChart2 {
+            curve: Cow::Borrowed(self),
+            source_map: None,
+        }])
+    }
+}
+
+impl CurvePath2 {
+    /// Enumerates all finite chart pairs while keeping the outer trim domain
+    /// authoritative. Each preparation is reused across the opposite charts.
+    /// Internal endpoint contacts belong to the chart that survives the cut,
+    /// so a seam needs neither duplicate publication nor all-pairs deduplication.
+    pub(super) fn fillets_in_authored_domain(
+        &self,
+        vertex_index: usize,
+        previous_index: usize,
+        next_index: usize,
+        radius: &Real,
+        policy: &CurveContext,
+    ) -> ExactCurveResult<Option<CurveCornerSolutions2<Self>>> {
+        let operation = CurveOperation2::Fillet;
+        let previous = &self.data.curves[previous_index];
+        let next = &self.data.curves[next_index];
+        let can_partition = |curve: &Curve2| {
+            curve.source_range().is_some()
+                || matches!(
+                    curve.geometry(),
+                    Some(CurveGeometry2::PolynomialBSpline(_) | CurveGeometry2::Nurbs(_))
+                )
+        };
+        if !can_partition(previous) && !can_partition(next) {
+            return Ok(None);
+        }
+        let previous_charts = previous.finite_fillet_charts(policy)?;
+        let next_charts = next.finite_fillet_charts(policy)?;
+        if previous_charts.len() == 1 && next_charts.len() == 1 {
+            return Ok(None);
+        }
+        let previous_sources = previous_charts
+            .iter()
+            .map(|chart| chart.prepare(true, policy))
+            .collect::<ExactCurveResult<Vec<_>>>()?;
+        let next_sources = next_charts
+            .iter()
+            .map(|chart| chart.prepare(false, policy))
+            .collect::<ExactCurveResult<Vec<_>>>()?;
+        let mut candidates = [Vec::new(), Vec::new()];
+        for (previous_chart_index, (previous_chart, previous_source)) in
+            previous_charts.iter().zip(&previous_sources).enumerate()
+        {
+            for (next_chart_index, (next_chart, next_source)) in
+                next_charts.iter().zip(&next_sources).enumerate()
+            {
+                if previous_index == next_index && previous_chart_index < next_chart_index {
+                    // The surviving interval runs from the next cut to the
+                    // previous cut. These disjoint charts have already crossed
+                    // before any contact equation needs to be constructed.
+                    continue;
+                }
+                let previous_carrier = previous_source.exact_carrier(true, operation, policy)?;
+                let next_carrier = next_source.exact_carrier(false, operation, policy)?;
+                let previous_arc = previous_carrier.retained_rational_arc_support().cloned();
+                let next_arc = next_carrier.retained_rational_arc_support().cloned();
+                // These charts need not meet at the authored vertex. The
+                // connected-line shortcut therefore does not apply here.
+                let solutions = solve_carrier_fillet_corner(
+                    previous_carrier,
+                    next_carrier,
+                    radius,
+                    CurveCornerMode2::TrimOnly,
+                    false,
+                    [previous_chart.domain(), next_chart.domain()],
+                    previous.family(),
+                    next.family(),
+                    policy,
+                )?;
+                try_map_corner_solutions(solutions, |mut solution| {
+                    if !previous_chart.place_cut(
+                        previous,
+                        previous_source,
+                        &mut solution.previous,
+                        policy,
+                    )? || !next_chart.place_cut(next, next_source, &mut solution.next, policy)?
+                    {
+                        return Ok(());
+                    }
+                    let clockwise = solution.clockwise;
+                    if let Some(path) = self.publish_fillet_corner(
+                        vertex_index,
+                        previous_index,
+                        next_index,
+                        solution,
+                        radius,
+                        CurveCornerMode2::TrimOnly,
+                        [previous_arc.as_ref(), next_arc.as_ref()],
+                        [
+                            previous_source.promoted_parallel(),
+                            next_source.promoted_parallel(),
+                        ],
+                        policy,
+                    )? {
+                        candidates[usize::from(clockwise)].push(path);
+                    }
+                    Ok(())
+                })?;
+            }
+        }
+        let mut solutions = CornerSolutionAccumulator::Empty;
+        for candidate in candidates.into_iter().flatten() {
+            solutions.push(candidate);
+        }
+        Ok(Some(
+            solutions.finish(CurveCornerNoSolution2::OutsideTrimDomain),
+        ))
     }
 }

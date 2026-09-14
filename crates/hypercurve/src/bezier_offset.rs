@@ -115256,6 +115256,25 @@ impl BezierParallel2 {
     ) -> CurveResult<Classification<Option<BezierParallelPairIntersectionSet2>>> {
         match other.exact_rational_parallel_component(policy)? {
             Classification::Decided(Some(other)) => {
+                // Certified finite line images can decide disjointness with
+                // one support predicate. Restrict this prefix to line fits:
+                // a second general intersection solve would duplicate algebra
+                // and refinement for positive or nonlinear pairs.
+                if let Classification::Decided(Some(first)) =
+                    self.exact_rational_parallel_component(policy)?
+                    && let Classification::Decided(BezierLineImageFitRelation::Fit(first)) =
+                        first.fit_exact_line_image(policy)?
+                    && let Classification::Decided(BezierLineImageFitRelation::Fit(second)) =
+                        other.fit_exact_line_image(policy)?
+                    && matches!(
+                        first.line().intersect_line(second.line(), policy)?,
+                        crate::LineLineIntersection::None
+                    )
+                {
+                    return Ok(Classification::Decided(Some(
+                        BezierParallelPairIntersectionSet2::complete(Arc::from([]), Arc::from([])),
+                    )));
+                }
                 let intersections = match ranges {
                     Some([first_range, _]) => {
                         self.intersections_on_regular_range(&other, first_range, policy)
