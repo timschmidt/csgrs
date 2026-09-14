@@ -126210,21 +126210,24 @@ enum BezierParallelPairDomainProjection2 {
 }
 
 #[derive(Clone, Copy)]
-enum ParameterComponentChart2<'a> {
-    Authored,
-    Incident(BezierParameterRay2<'a>),
+struct ParameterComponentChart2<'a> {
+    extension: Option<BezierParameterRay2<'a>>,
+    range: &'a std::cell::OnceCell<BezierParameterRange2>,
 }
 
-impl ParameterComponentChart2<'_> {
+impl<'a> ParameterComponentChart2<'a> {
     fn compact_range(
         self,
         policy: &CurveContext,
-    ) -> CurveResult<Classification<BezierParameterRange2>> {
-        let end = match self {
-            Self::Authored | Self::Incident(BezierParameterRay2 { barrier: None, .. }) => {
+    ) -> CurveResult<Classification<&'a BezierParameterRange2>> {
+        if let Some(range) = self.range.get() {
+            return Ok(Classification::Decided(range));
+        }
+        let end = match self.extension {
+            None | Some(BezierParameterRay2 { barrier: None, .. }) => {
                 BezierParameter2::Exact(Real::one())
             }
-            Self::Incident(BezierParameterRay2 {
+            Some(BezierParameterRay2 {
                 anchor,
                 direction,
                 barrier: Some(barrier),
@@ -126235,20 +126238,15 @@ impl ParameterComponentChart2<'_> {
                 }
             },
         };
-        BezierParameterRange2::try_new(BezierParameter2::Exact(Real::zero()), end, policy)
-    }
-
-    fn transform(
-        self,
-        polynomial: &BivariatePolynomial,
-        axis: CurveResultantParameter,
-    ) -> Option<BivariatePolynomial> {
-        match self {
-            Self::Authored => Some(polynomial.clone()),
-            Self::Incident(BezierParameterRay2 {
-                anchor, direction, ..
-            }) => bivariate_compose_incident_parameter(polynomial, axis, anchor, direction),
-        }
+        let range = match BezierParameterRange2::try_new(
+            BezierParameter2::Exact(Real::zero()),
+            end,
+            policy,
+        )? {
+            Classification::Decided(range) => range,
+            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+        };
+        Ok(Classification::Decided(self.range.get_or_init(|| range)))
     }
 
     fn contains_component_event(
@@ -126256,9 +126254,9 @@ impl ParameterComponentChart2<'_> {
         parameter: &BezierParameter2,
         policy: &CurveContext,
     ) -> CurveResult<Classification<bool>> {
-        let Self::Incident(_) = self else {
+        if self.extension.is_none() {
             return Ok(Classification::Decided(true));
-        };
+        }
         let range = match self.compact_range(policy)? {
             Classification::Decided(range) => range,
             Classification::Uncertain(reason) => {
@@ -126290,9 +126288,9 @@ impl ParameterComponentChart2<'_> {
         parameter: &BezierParameter2,
         policy: &CurveContext,
     ) -> CurveResult<Classification<Option<BezierParameter2>>> {
-        let Self::Incident(BezierParameterRay2 {
+        let Some(BezierParameterRay2 {
             anchor, direction, ..
-        }) = self
+        }) = self.extension
         else {
             return Ok(Classification::Decided(Some(parameter.clone())));
         };
@@ -126376,24 +126374,41 @@ fn bivariate_compose_incident_parameter(
     bivariate_trim_exact(transformed)
 }
 
-fn transform_parameter_component_chart_polynomial(
-    polynomial: &BivariatePolynomial,
+fn transform_parameter_component_chart_polynomial<'a>(
+    polynomial: &'a BivariatePolynomial,
     first_chart: ParameterComponentChart2<'_>,
     second_chart: ParameterComponentChart2<'_>,
-) -> Option<BivariatePolynomial> {
-    let first = first_chart.transform(polynomial, CurveResultantParameter::First)?;
-    second_chart.transform(&first, CurveResultantParameter::Second)
+) -> Option<Cow<'a, BivariatePolynomial>> {
+    let mut transformed = Cow::Borrowed(polynomial);
+    for (axis, chart) in [
+        (CurveResultantParameter::First, first_chart),
+        (CurveResultantParameter::Second, second_chart),
+    ] {
+        if let Some(extension) = chart.extension {
+            transformed = Cow::Owned(bivariate_compose_incident_parameter(
+                &transformed,
+                axis,
+                extension.anchor,
+                extension.direction,
+            )?);
+        }
+    }
+    Some(transformed)
 }
 
-fn transform_parallel_pair_system_for_component_chart(
-    system: &BezierParallelPairEquationSystem2,
+fn transform_parallel_pair_system_for_component_chart<'a>(
+    system: &'a BezierParallelPairEquationSystem2,
     first_chart: ParameterComponentChart2<'_>,
     second_chart: ParameterComponentChart2<'_>,
-) -> Option<BezierParallelPairEquationSystem2> {
+) -> Option<Cow<'a, BezierParallelPairEquationSystem2>> {
+    if first_chart.extension.is_none() && second_chart.extension.is_none() {
+        return Some(Cow::Borrowed(system));
+    }
     let transform = |polynomial: &BivariatePolynomial| {
         transform_parameter_component_chart_polynomial(polynomial, first_chart, second_chart)
+            .map(Cow::into_owned)
     };
-    Some(BezierParallelPairEquationSystem2 {
+    Some(Cow::Owned(BezierParallelPairEquationSystem2 {
         first_equation: transform(&system.first_equation)?,
         second_equation: transform(&system.second_equation)?,
         norm_equation: transform(&system.norm_equation)?,
@@ -126408,7 +126423,7 @@ fn transform_parallel_pair_system_for_component_chart(
         first_distance_sign: system.first_distance_sign,
         second_distance_sign: system.second_distance_sign,
         weight_sign: system.weight_sign,
-    })
+    }))
 }
 
 struct ParameterComponentSelection2 {
@@ -126612,20 +126627,22 @@ fn select_parameter_component_in_domain(
     config: CurveIntersectionResultantConfig,
 ) -> CurveResult<Classification<ParameterComponentSelection2>> {
     let mut selected_pairs = Vec::new();
-    for second_chart in [
-        Some(ParameterComponentChart2::Authored),
-        extensions[1].map(ParameterComponentChart2::Incident),
-    ]
-    .into_iter()
-    .flatten()
-    {
-        for first_chart in [
-            Some(ParameterComponentChart2::Authored),
-            extensions[0].map(ParameterComponentChart2::Incident),
-        ]
-        .into_iter()
-        .flatten()
-        {
+    // Each query has one policy and at most three chart domains. Retain only
+    // decided ranges, on demand: a finite selected component must not force
+    // an unused extension's barrier conversion or refinement.
+    let ranges: [_; 3] = std::array::from_fn(|_| std::cell::OnceCell::new());
+    let authored = ParameterComponentChart2 {
+        extension: None,
+        range: &ranges[0],
+    };
+    let extended = [0, 1].map(|axis| {
+        extensions[axis].map(|extension| ParameterComponentChart2 {
+            extension: Some(extension),
+            range: &ranges[axis + 1],
+        })
+    });
+    for second_chart in [Some(authored), extended[1]].into_iter().flatten() {
+        for first_chart in [Some(authored), extended[0]].into_iter().flatten() {
             let Some(chart_support) =
                 transform_parameter_component_chart_polynomial(support, first_chart, second_chart)
             else {
@@ -126680,13 +126697,14 @@ fn select_parameter_component_in_domain(
                     let Some([reduced, _]) = axis_report.reduced_equations else {
                         return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
                     };
-                    reduced
+                    Cow::Owned(reduced)
                 } else {
                     chart_support
                 };
             if bivariate_unit_square_has_strict_bernstein_sign(&chart_support, policy)? {
                 continue;
             }
+            let chart_support = chart_support.into_owned();
             let component = match parameter_component_system_with_selector(
                 &[chart_support.clone(), chart_support],
                 &selector,
@@ -126721,8 +126739,8 @@ fn select_parameter_component_in_domain(
                     return Ok(Classification::Uncertain(reason));
                 }
             };
-            let first_range = CurveParameterRange2::from_bezier_range(first_range);
-            let second_range = CurveParameterRange2::from_bezier_range(second_range);
+            let first_range = CurveParameterRange2::from_bezier_range(first_range.clone());
+            let second_range = CurveParameterRange2::from_bezier_range(second_range.clone());
             for overlap in component.component_overlaps.iter() {
                 match overlap.has_positive_overlap(&first_range, &second_range, policy)? {
                     Classification::Decided(true) => {
