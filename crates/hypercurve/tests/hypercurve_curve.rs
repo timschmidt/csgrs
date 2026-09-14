@@ -834,6 +834,11 @@ fn one_curve_closed_spline_corner_edits_retain_one_middle_interval() {
                         trimmed_next_point.clone(),
                     ),
                 ] {
+                    let expected_count = if previous == Real::zero() || next == Real::zero() {
+                        2
+                    } else {
+                        1
+                    };
                     let result = path
                         .chamfer_vertex_by_setbacks(
                             0,
@@ -844,19 +849,28 @@ fn one_curve_closed_spline_corner_edits_retain_one_middle_interval() {
                         )
                         .unwrap();
                     assert_eq!(result.certainty, CurveCertainty::Certified);
-                    let CurveCornerSolutions2::Unique(edited) = result.into_value() else {
-                        panic!("the one-curve spline seam must have one chamfer");
+                    let candidates = match result.into_value() {
+                        CurveCornerSolutions2::Unique(candidate) => vec![candidate],
+                        CurveCornerSolutions2::Multiple(candidates) => candidates,
+                        CurveCornerSolutions2::NoSolution(reason) => {
+                            panic!("the closed spline seam lost its cuts: {reason:?}")
+                        }
                     };
-                    assert_eq!(edited.curves().len(), 2);
-                    assert_eq!(
-                        edited.curves()[0].start(),
-                        hypercurve::CurvePoint2::from(previous_point.clone())
-                    );
-                    assert_eq!(
-                        edited.curves()[0].end(),
-                        hypercurve::CurvePoint2::from(next_point.clone())
-                    );
-                    assert_eq!(edited.curves()[1].family(), family);
+                    // With one zero setback either positive-distance contact
+                    // leaves a valid closed path interval. The short interval
+                    // retraces the inserted chord; it is still a valid path.
+                    // With two positive setbacks the crossed pairing must be
+                    // rejected before publication, leaving one middle interval.
+                    assert_eq!(candidates.len(), expected_count);
+                    let edited = candidates
+                        .iter()
+                        .find(|candidate| {
+                            candidate.curves()[0].start()
+                                == hypercurve::CurvePoint2::from(previous_point.clone())
+                                && candidate.curves()[0].end()
+                                    == hypercurve::CurvePoint2::from(next_point.clone())
+                        })
+                        .expect("the full middle interval must remain among the candidates");
                     assert_eq!(
                         edited.curves()[1].start(),
                         hypercurve::CurvePoint2::from(next_point.clone())
@@ -865,6 +879,12 @@ fn one_curve_closed_spline_corner_edits_retain_one_middle_interval() {
                         edited.curves()[1].end(),
                         hypercurve::CurvePoint2::from(previous_point.clone())
                     );
+                    for edited in &candidates {
+                        assert_eq!(edited.curves().len(), 2);
+                        assert_eq!(edited.curves()[1].family(), family);
+                        assert_eq!(edited.curves()[0].end(), edited.curves()[1].start());
+                        assert_eq!(edited.curves()[1].end(), edited.curves()[0].start());
+                    }
                 }
 
                 let fillet = path

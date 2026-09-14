@@ -111321,6 +111321,67 @@ impl BezierParallel2 {
         )
     }
 
+    /// Enumerates exact fixed-distance contacts on this support from a point
+    /// in another support's parameter chart. Finite chart enumeration is
+    /// independent of the chart that owns the corner. An incident extension
+    /// ray is meaningful only when the center uses this same support chart.
+    pub(crate) fn fixed_distance_incidence(
+        &self,
+        center_parallel: &Self,
+        center: &CurveParameter2,
+        setback: &Real,
+        isolation_range: &CurveParameterRange2,
+        direction: Option<BezierParameterRayDirection2>,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<Vec<BezierParallelFixedDistanceParameter2>>> {
+        if direction.is_some() && self != center_parallel {
+            return Err(CurveError::Topology(
+                "a fixed-distance extension needs an anchor in its support chart".into(),
+            ));
+        }
+        if let Some(parameter) = center.as_bezier_parameter() {
+            let range = match (
+                isolation_range.start().as_bezier_parameter(),
+                isolation_range.end().as_bezier_parameter(),
+            ) {
+                (Some(start), Some(end)) => {
+                    BezierParameterRange2::new_validated(start.clone(), end.clone())
+                }
+                _ => BezierParameterRange2::new_validated(
+                    BezierParameter2::Exact(Real::zero()),
+                    BezierParameter2::Exact(Real::one()),
+                ),
+            };
+            self.fixed_distance_incidence_from_parameter_with_domain(
+                center_parallel,
+                parameter,
+                &(setback * setback),
+                &range,
+                direction,
+                policy,
+            )
+        } else if let Some(parameter) = center.as_selected_fiber() {
+            self.fixed_distance_incidence_from_selected_parameter(
+                center_parallel,
+                parameter,
+                setback,
+                isolation_range,
+                direction,
+                policy,
+            )
+        } else if center.as_recursive_projective().is_some() {
+            self.fixed_distance_incidence_from_recursive_parameter(
+                center_parallel,
+                center,
+                setback,
+                direction,
+                policy,
+            )
+        } else {
+            Ok(Classification::Uncertain(UncertaintyReason::Unsupported))
+        }
+    }
+
     /// Solves fixed-distance cuts from one compact selected-fiber center.
     ///
     /// Affine charts translate the local root directly. General charts retain
@@ -111330,8 +111391,9 @@ impl BezierParallel2 {
     /// its candidates are correlated with the authored center and replayed on
     /// the unsquared radical sheet. When both positive speeds are polynomial,
     /// the authored equation is projected directly instead.
-    pub(crate) fn fixed_distance_incidence_from_selected_parameter(
+    fn fixed_distance_incidence_from_selected_parameter(
         &self,
+        center_parallel: &Self,
         center: &BezierAlgebraicSelectedFiberParameter2,
         setback: &Real,
         isolation_range: &CurveParameterRange2,
@@ -111339,7 +111401,11 @@ impl BezierParallel2 {
         policy: &CurveContext,
     ) -> CurveResult<Classification<Vec<BezierParallelFixedDistanceParameter2>>> {
         center.validate_policy(policy)?;
-        match self.affine_fixed_distance_parameter_delta(setback, policy)? {
+        match if self == center_parallel {
+            self.affine_fixed_distance_parameter_delta(setback, policy)?
+        } else {
+            Classification::Decided(None)
+        } {
             Classification::Decided(Some(delta)) => {
                 return Ok(Classification::Decided(vec![
                     BezierParallelFixedDistanceParameter2::SelectedFiber(
@@ -111401,27 +111467,23 @@ impl BezierParallel2 {
                 "bounded-ordinary-center-promotion",
             );
             if let Some(promoted_range) = promoted_range {
-                return if let Some(direction) = direction {
-                    self.fixed_distance_incidence_from_parameter_with_incident_ray(
-                        &parameter,
-                        &radius_squared,
-                        &promoted_range,
-                        direction,
-                        policy,
-                    )
-                } else {
-                    self.fixed_distance_incidence_from_parameter(
-                        &parameter,
-                        &radius_squared,
-                        &promoted_range,
-                        policy,
-                    )
-                };
+                return self.fixed_distance_incidence_from_parameter_with_domain(
+                    center_parallel,
+                    &parameter,
+                    &radius_squared,
+                    &promoted_range,
+                    direction,
+                    policy,
+                );
             }
         }
         let (projected_incidence, radical_system) =
-            if real_sign(self.distance(), &CurveContext::STRICT) == Some(RealSign::Zero) {
+            if real_sign(self.distance(), &CurveContext::STRICT) == Some(RealSign::Zero)
+                && real_sign(center_parallel.distance(), &CurveContext::STRICT)
+                    == Some(RealSign::Zero)
+            {
                 let incidence = match parallel_source_fixed_distance_incidence(
+                    center_parallel,
                     self,
                     &radius_squared,
                     policy,
@@ -111434,7 +111496,7 @@ impl BezierParallel2 {
                 (incidence, None)
             } else {
                 let system = match parallel_fixed_distance_system(
-                    self,
+                    center_parallel,
                     self,
                     &radius_squared,
                     None,
@@ -111656,6 +111718,7 @@ impl BezierParallel2 {
     /// squaring remains enumeration-only and is replayed for every root.
     fn recursive_fixed_distance_system(
         &self,
+        center_parallel: &Self,
         center: &BezierRecursiveProjectiveParameter2,
         radius_squared: &Real,
         policy: &CurveContext,
@@ -111666,14 +111729,20 @@ impl BezierParallel2 {
         // speed participates, stationary candidate parameters remain valid,
         // and the projected degree is far smaller than the generic two-normal
         // formulation.
-        if real_sign(self.distance(), &CurveContext::STRICT) == Some(RealSign::Zero) {
-            let incidence =
-                match parallel_source_fixed_distance_incidence(self, radius_squared, policy)? {
-                    Classification::Decided(incidence) => incidence,
-                    Classification::Uncertain(reason) => {
-                        return Ok(Classification::Uncertain(reason));
-                    }
-                };
+        if real_sign(self.distance(), &CurveContext::STRICT) == Some(RealSign::Zero)
+            && real_sign(center_parallel.distance(), &CurveContext::STRICT) == Some(RealSign::Zero)
+        {
+            let incidence = match parallel_source_fixed_distance_incidence(
+                center_parallel,
+                self,
+                radius_squared,
+                policy,
+            )? {
+                Classification::Decided(incidence) => incidence,
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            };
             let first_degree = bivariate_first_active_degree(&incidence);
             let Some(rational) = recursive_projective_bivariate_first_parameter_polynomial(
                 &incidence,
@@ -111722,13 +111791,19 @@ impl BezierParallel2 {
             ));
         }
         let BezierParallelFixedDistanceSystem2 { circle, .. } =
-            match parallel_fixed_distance_system(self, self, radius_squared, None, policy)? {
+            match parallel_fixed_distance_system(
+                center_parallel,
+                self,
+                radius_squared,
+                None,
+                policy,
+            )? {
                 Classification::Decided(system) => system,
                 Classification::Uncertain(reason) => {
                     return Ok(Classification::Uncertain(reason));
                 }
             };
-        let differential = self.differential()?;
+        let differential = center_parallel.differential()?;
         let tangent_degree = differential
             .tangent_x
             .len()
@@ -111819,7 +111894,7 @@ impl BezierParallel2 {
         let source = self.source_power_basis()?;
         let unit = [Real::one()];
         let source_weight = source.weight.unwrap_or(&unit);
-        let candidate_speed_squared = parallel_speed_squared_polynomial(differential);
+        let candidate_speed_squared = parallel_speed_squared_polynomial(self.differential()?);
         let Some((source_weight, candidate_speed_squared)) = (|| {
             Some((
                 recursive_quadratic_real_polynomial(&field, source_weight)?,
@@ -111867,8 +111942,9 @@ impl BezierParallel2 {
     /// finite source domain and, when requested, its single regular incident
     /// extension cell. The affine-line projection is filtered back through
     /// that exact domain so no root beyond a pole or speed barrier is admitted.
-    pub(crate) fn fixed_distance_incidence_from_recursive_parameter(
+    fn fixed_distance_incidence_from_recursive_parameter(
         &self,
+        center_parallel: &Self,
         center: &CurveParameter2,
         setback: &Real,
         direction: Option<BezierParameterRayDirection2>,
@@ -111879,7 +111955,11 @@ impl BezierParallel2 {
                 "recursive fixed-distance incidence requires a recursive center".into(),
             ));
         };
-        match self.affine_fixed_distance_parameter_delta(setback, policy)? {
+        match if self == center_parallel {
+            self.affine_fixed_distance_parameter_delta(setback, policy)?
+        } else {
+            Classification::Decided(None)
+        } {
             Classification::Decided(Some(delta)) => {
                 let first = match parameter.translated(&(-delta.clone()), policy)? {
                     Classification::Decided(parameter) => parameter,
@@ -111951,13 +112031,17 @@ impl BezierParallel2 {
             }
         }
         let radius_squared = setback * setback;
-        let system =
-            match self.recursive_fixed_distance_system(parameter, &radius_squared, policy)? {
-                Classification::Decided(system) => system,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            };
+        let system = match self.recursive_fixed_distance_system(
+            center_parallel,
+            parameter,
+            &radius_squared,
+            policy,
+        )? {
+            Classification::Decided(system) => system,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
         let domain = if direction.is_some() {
             SelectedThirdAxisDomain2::AffineLine
         } else {
@@ -112497,57 +112581,11 @@ impl BezierParallel2 {
         Ok(Classification::Decided(retained))
     }
 
-    /// Solves fixed-distance incidence from one retained point on this parallel.
-    ///
-    /// A represented center delegates to [`Self::circle_incidence`]. An
-    /// algebraic center remains a selected parameter field: the two-normal
-    /// distance relation is squared only for candidate projection, then both
-    /// lost radical signs are replayed exactly at every correlated parameter
-    /// pair. This avoids materializing the center coordinates or adjoining the
-    /// two speed square roots to [`Real`].
-    pub(crate) fn fixed_distance_incidence_from_parameter(
-        &self,
-        center_parameter: &BezierParameter2,
-        radius_squared: &Real,
-        isolation_range: &BezierParameterRange2,
-        policy: &CurveContext,
-    ) -> CurveResult<Classification<Vec<BezierParallelFixedDistanceParameter2>>> {
-        self.fixed_distance_incidence_from_parameter_with_domain(
-            center_parameter,
-            radius_squared,
-            isolation_range,
-            None,
-            policy,
-        )
-    }
-
-    /// Solves the authored range and the complete regular affine ray incident
-    /// to one retained algebraic or represented endpoint.
-    ///
-    /// An algebraic endpoint retains its selected center field. A certified
-    /// rootless isolator supplies a represented chart anchor, while a bounded
-    /// selected-fiber solve covers the exact gap between that anchor and the
-    /// endpoint. The remaining open ray reuses the ordinary compact incident
-    /// chart and terminates at the first source pole or tangent-speed zero.
-    pub(crate) fn fixed_distance_incidence_from_parameter_with_incident_ray(
-        &self,
-        center_parameter: &BezierParameter2,
-        radius_squared: &Real,
-        isolation_range: &BezierParameterRange2,
-        direction: BezierParameterRayDirection2,
-        policy: &CurveContext,
-    ) -> CurveResult<Classification<Vec<BezierParallelFixedDistanceParameter2>>> {
-        self.fixed_distance_incidence_from_parameter_with_domain(
-            center_parameter,
-            radius_squared,
-            isolation_range,
-            Some(direction),
-            policy,
-        )
-    }
-
+    /// Replays an ordinary center parameter over a finite candidate range
+    /// and, when requested, the regular ray incident to that same chart.
     fn fixed_distance_incidence_from_parameter_with_domain(
         &self,
+        center_parallel: &Self,
         center_parameter: &BezierParameter2,
         radius_squared: &Real,
         isolation_range: &BezierParameterRange2,
@@ -112558,19 +112596,32 @@ impl BezierParallel2 {
             let center_parameter = center_parameter
                 .scalar()
                 .expect("represented fixed-distance center has an exact parameter");
-            let center = match self.point_at(center_parameter, policy)? {
+            let center = match center_parallel.point_at(center_parameter, policy)? {
                 Classification::Decided(center) => center,
                 Classification::Uncertain(reason) => {
                     return Ok(Classification::Uncertain(reason));
                 }
             };
-            let mut parameters =
-                match self.circle_incidence(&center, radius_squared, &[], policy)? {
-                    Classification::Decided(parameters) => parameters,
-                    Classification::Uncertain(reason) => {
-                        return Ok(Classification::Uncertain(reason));
-                    }
-                };
+            let mut parameters = match if real_sign(self.distance(), &CurveContext::STRICT)
+                == Some(RealSign::Zero)
+            {
+                self.source_circle_incidence(&center, radius_squared, policy)
+                    .map(|result| {
+                        result.map(|parameters| {
+                            parameters
+                                .into_iter()
+                                .map(|parameter| (parameter, None))
+                                .collect()
+                        })
+                    })
+            } else {
+                self.circle_incidence(&center, radius_squared, &[], policy)
+            }? {
+                Classification::Decided(parameters) => parameters,
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            };
             let mut finite = Vec::with_capacity(parameters.len());
             for parameter in parameters {
                 match overlap_parameter_is_in_range(&parameter.0, isolation_range, true, policy)? {
@@ -112612,14 +112663,20 @@ impl BezierParallel2 {
             ));
         };
 
-        if real_sign(self.distance(), &CurveContext::STRICT) == Some(RealSign::Zero) {
-            let incidence =
-                match parallel_source_fixed_distance_incidence(self, radius_squared, policy)? {
-                    Classification::Decided(incidence) => incidence,
-                    Classification::Uncertain(reason) => {
-                        return Ok(Classification::Uncertain(reason));
-                    }
-                };
+        if real_sign(self.distance(), &CurveContext::STRICT) == Some(RealSign::Zero)
+            && real_sign(center_parallel.distance(), &CurveContext::STRICT) == Some(RealSign::Zero)
+        {
+            let incidence = match parallel_source_fixed_distance_incidence(
+                center_parallel,
+                self,
+                radius_squared,
+                policy,
+            )? {
+                Classification::Decided(incidence) => incidence,
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            };
             let incidence =
                 match reduce_algebraic_cusp_bivariate(incidence, center_parameter, policy)? {
                     Classification::Decided(incidence) => incidence,
@@ -112642,7 +112699,13 @@ impl BezierParallel2 {
             candidate_speed_squared,
             squared_branch,
             circle,
-        } = match parallel_fixed_distance_system(self, self, radius_squared, None, policy)? {
+        } = match parallel_fixed_distance_system(
+            center_parallel,
+            self,
+            radius_squared,
+            None,
+            policy,
+        )? {
             Classification::Decided(system) => system,
             Classification::Uncertain(reason) => {
                 return Ok(Classification::Uncertain(reason));
@@ -127164,23 +127227,36 @@ fn project_parallel_pair_intersection_system(
 /// more gives the projected incidence `F0^2-Su F1^2=0`. The returned radical
 /// expressions retain both unsquared relations for selected-branch replay.
 fn parallel_source_fixed_distance_incidence(
-    parallel: &BezierParallel2,
+    center: &BezierParallel2,
+    candidate: &BezierParallel2,
     radius_squared: &Real,
     policy: &CurveContext,
 ) -> CurveResult<Classification<BivariatePolynomial>> {
-    let source = parallel.source_power_basis()?;
-    if let Classification::Uncertain(reason) =
-        BezierParallel2::certify_finite_source(&source, policy)?
-    {
-        return Ok(Classification::Uncertain(reason));
+    let center_source = center.source_power_basis()?;
+    let candidate_source = candidate.source_power_basis()?;
+    for source in [&center_source, &candidate_source] {
+        if let Classification::Uncertain(reason) =
+            BezierParallel2::certify_finite_source(source, policy)?
+        {
+            return Ok(Classification::Uncertain(reason));
+        }
     }
     let unit = [Real::one()];
-    let weight = source.weight.unwrap_or(&unit);
-    let delta_x =
-        bivariate_parameter_difference(weight, source.x_numerator, source.x_numerator, weight);
-    let delta_y =
-        bivariate_parameter_difference(weight, source.y_numerator, source.y_numerator, weight);
-    let weight_product = bivariate_outer_product(weight, weight);
+    let center_weight = center_source.weight.unwrap_or(&unit);
+    let candidate_weight = candidate_source.weight.unwrap_or(&unit);
+    let delta_x = bivariate_parameter_difference(
+        center_weight,
+        candidate_source.x_numerator,
+        center_source.x_numerator,
+        candidate_weight,
+    );
+    let delta_y = bivariate_parameter_difference(
+        center_weight,
+        candidate_source.y_numerator,
+        center_source.y_numerator,
+        candidate_weight,
+    );
+    let weight_product = bivariate_outer_product(center_weight, candidate_weight);
     Ok(Classification::Decided(bivariate_subtract(
         &bivariate_add(
             &bivariate_multiply(&delta_x, &delta_x),
@@ -161611,7 +161687,9 @@ mod conversion_tests {
             // Its source is P(t)=(2t,0), so a half-unit setback translates
             // the parameter by exactly one quarter in each direction.
             let Classification::Decided(affine_cuts) = support
-                .fixed_distance_incidence_from_recursive_parameter(&endpoint, &half, None, &policy)
+                .fixed_distance_incidence_from_recursive_parameter(
+                    &support, &endpoint, &half, None, &policy,
+                )
                 .unwrap()
             else {
                 panic!("the affine recursive setback must decide");
@@ -161641,7 +161719,7 @@ mod conversion_tests {
             assert!(matches!(
                 support
                     .fixed_distance_incidence_from_recursive_parameter(
-                        &endpoint,
+                        &support, &endpoint,
                         &wide_setback,
                         None,
                         &policy,
@@ -161661,6 +161739,7 @@ mod conversion_tests {
             ] {
                 let Classification::Decided(cuts) = support
                     .fixed_distance_incidence_from_recursive_parameter(
+                        &support,
                         &endpoint,
                         &wide_setback,
                         Some(direction),
@@ -161976,7 +162055,7 @@ mod conversion_tests {
                 let endpoint = CurveParameter2::from_recursive_projective(center_parameter.clone());
                 let Classification::Decided(cuts) = parallel
                     .fixed_distance_incidence_from_recursive_parameter(
-                        &endpoint, &setback, None, &policy,
+                        &parallel, &endpoint, &setback, None, &policy,
                     )
                     .unwrap()
                 else {
@@ -161989,6 +162068,56 @@ mod conversion_tests {
                     !cuts.is_empty(),
                     "the interior recursive center must retain a nearby nonlinear cut",
                 );
+                // Search a different chart Q(v)=P(2v) from the same exact
+                // center P(alpha). This exercises independent center and
+                // candidate speeds, including a nonzero normal offset.
+                let Classification::Decided(candidate_support) = parallel
+                    .subcurve_between_affine_exact(&Real::zero(), &Real::from(2), &policy)
+                    .unwrap()
+                else {
+                    panic!("the enlarged polynomial support chart must construct")
+                };
+                let retained = |parameter: &BezierParallelFixedDistanceParameter2| match parameter {
+                    BezierParallelFixedDistanceParameter2::Bezier(parameter) => {
+                        CurveParameter2::from(parameter.clone())
+                    }
+                    BezierParallelFixedDistanceParameter2::SelectedFiber(parameter) => {
+                        CurveParameter2::from_selected_fiber(parameter.clone())
+                    }
+                    BezierParallelFixedDistanceParameter2::RecursiveProjective(parameter) => {
+                        CurveParameter2::from_recursive_projective(parameter.clone())
+                    }
+                };
+                for center_parameter in [endpoint.clone(), CurveParameter2::from(center.clone())] {
+                    let Classification::Decided(reparameterized) = candidate_support
+                        .fixed_distance_incidence(
+                            &parallel,
+                            &center_parameter,
+                            &setback,
+                            &unit_region_parameter_range(),
+                            None,
+                            &policy,
+                        )
+                        .unwrap()
+                    else {
+                        panic!("the center must remain in its own support chart")
+                    };
+                    assert_eq!(reparameterized.len(), cuts.len());
+                    for parameter in &reparameterized {
+                        let Classification::Decided(parameter) = retained(parameter)
+                            .affine_image_unbounded(&Real::from(2), &Real::zero(), &policy)
+                            .unwrap()
+                        else {
+                            panic!("the candidate chart map must preserve the selected scalar")
+                        };
+                        assert!(cuts.iter().any(|original| {
+                            parameter
+                                .cmp_by_refinement(&retained(original), &policy)
+                                .unwrap()
+                                == Classification::Decided(std::cmp::Ordering::Equal)
+                        }));
+                    }
+                }
                 if parallel.distance().zero_status() != ZeroKnowledge::Zero {
                     assert_eq!(cuts.len(), 2);
                     for expected in [std::cmp::Ordering::Less, std::cmp::Ordering::Greater] {
@@ -163545,13 +163674,15 @@ mod conversion_tests {
         let radius_squared = &setback * &setback;
         for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
             let incidence = target
-                .fixed_distance_incidence_from_parameter(
+                .fixed_distance_incidence_from_parameter_with_domain(
+                    &target,
                     &center,
                     &radius_squared,
                     &BezierParameterRange2::new_validated(
                         BezierParameter2::Exact(Real::zero()),
                         BezierParameter2::Exact(Real::one()),
                     ),
+                    None,
                     &policy,
                 )
                 .unwrap();
@@ -163583,21 +163714,24 @@ mod conversion_tests {
 
         for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
             let finite = parallel
-                .fixed_distance_incidence_from_parameter(
+                .fixed_distance_incidence_from_parameter_with_domain(
+                    &parallel,
                     &center,
                     &Real::from(2_i8),
                     &range,
+                    None,
                     &policy,
                 )
                 .unwrap();
             assert!(matches!(finite, Classification::Decided(ref roots) if roots.is_empty()));
 
             let extended = parallel
-                .fixed_distance_incidence_from_parameter_with_incident_ray(
+                .fixed_distance_incidence_from_parameter_with_domain(
+                    &parallel,
                     &center,
                     &Real::from(2_i8),
                     &range,
-                    BezierParameterRayDirection2::Decreasing,
+                    Some(BezierParameterRayDirection2::Decreasing),
                     &policy,
                 )
                 .unwrap();
@@ -163647,11 +163781,11 @@ mod conversion_tests {
         for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
             assert!(matches!(
                 parallel
-                    .fixed_distance_incidence_from_parameter_with_incident_ray(
-                        &center,
+                    .fixed_distance_incidence_from_parameter_with_domain(
+                        &parallel, &center,
                         &Real::one(),
                         &range,
-                        BezierParameterRayDirection2::Decreasing,
+                        Some(BezierParameterRayDirection2::Decreasing),
                         &policy,
                     )
                     .unwrap(),
@@ -163700,6 +163834,7 @@ mod conversion_tests {
             };
             let outcome = parallel
                 .fixed_distance_incidence_from_selected_parameter(
+                    &parallel,
                     &center,
                     &setback,
                     &unit_region_parameter_range(),
@@ -163746,6 +163881,7 @@ mod conversion_tests {
             ));
             let Classification::Decided(candidates) = parallel
                 .fixed_distance_incidence_from_selected_parameter(
+                    &parallel,
                     &center,
                     &setback,
                     &unit_region_parameter_range(),
@@ -164034,6 +164170,7 @@ mod conversion_tests {
             });
             let Classification::Decided(candidates) = parallel
                 .fixed_distance_incidence_from_selected_parameter(
+                    &parallel,
                     &center,
                     &setback,
                     &unit_region_parameter_range(),
@@ -164114,6 +164251,7 @@ mod conversion_tests {
             #[cfg(feature = "dispatch-trace")]
             let outcome = hyperreal::dispatch_trace::with_recording(|| {
                 parallel.fixed_distance_incidence_from_selected_parameter(
+                    &parallel,
                     &center,
                     &Real::from(2_i8),
                     &unit_region_parameter_range(),
@@ -164125,6 +164263,7 @@ mod conversion_tests {
             #[cfg(not(feature = "dispatch-trace"))]
             let outcome = parallel
                 .fixed_distance_incidence_from_selected_parameter(
+                    &parallel,
                     &center,
                     &Real::from(2_i8),
                     &unit_region_parameter_range(),

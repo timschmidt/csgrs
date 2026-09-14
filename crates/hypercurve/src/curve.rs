@@ -11,6 +11,9 @@ use curve_subdivision::CurveSourceRange2;
 mod curve_corner_reconstruction;
 use curve_corner_reconstruction::corner_has_native_reconstruction;
 
+#[path = "curve_corner_domain.rs"]
+mod curve_corner_domain;
+
 use crate::CurvePointData2;
 use std::sync::Arc;
 use std::sync::OnceLock;
@@ -1750,9 +1753,10 @@ impl CurvePath2 {
     /// Each nonnegative setback is the Euclidean chord distance from the
     /// original corner along its incident curve. All selected cuts and their
     /// point witnesses remain exact in the returned path and can be reused by
-    /// later operations. Solving retains a native arc's complete sweep and a
-    /// spline's incident span in its authored knot domain. Rational chart
-    /// partitioning is deferred until reconstruction.
+    /// later operations. Finite trimming searches the complete authored
+    /// domain, including selected major arcs and every spline span. Internal
+    /// chart boundaries do not become trim limits or duplicate contacts;
+    /// reconstruction retains the chart on the surviving side of each cut.
     ///
     /// [`CurveCornerMode2::TrimOrExtend`] includes incident support extensions,
     /// with rational extensions stopping at the first pole. Candidates are
@@ -1818,33 +1822,40 @@ impl CurvePath2 {
         let next_carrier = next_source.exact_carrier(false, CurveOperation2::Chamfer, policy)?;
         let previous_retained_arc = previous_carrier.retained_rational_arc_support().cloned();
         let next_retained_arc = next_carrier.retained_rational_arc_support().cloned();
-        let solutions = solve_exact_chamfer_corner(
+        let previous_cuts = previous.chamfer_cuts_in_authored_domain(
             previous_carrier,
-            next_carrier,
+            previous_source.source_chart(),
             &previous_setback,
-            &next_setback,
             previous_sign,
-            next_sign,
+            true,
             mode,
-            false,
-            false,
-            previous.family(),
-            next.family(),
             policy,
-        )?;
-        let solutions = try_map_corner_solutions(solutions, |mut solution| {
-            solution.previous.map_source_parameter(
-                previous_source.source_chart(),
-                CurveOperation2::Chamfer,
-                previous.family(),
-                policy,
-            )?;
-            solution.next.map_source_parameter(
-                next_source.source_chart(),
-                CurveOperation2::Chamfer,
-                next.family(),
-                policy,
-            )?;
+        );
+        if matches!(&previous_cuts, Ok(cuts) if cuts.is_empty()) {
+            return Ok(CurveCornerSolutions2::NoSolution(
+                CurveCornerNoSolution2::OutsideTrimDomain,
+            ));
+        }
+        let next_cuts = next.chamfer_cuts_in_authored_domain(
+            next_carrier,
+            next_source.source_chart(),
+            &next_setback,
+            next_sign,
+            false,
+            mode,
+            policy,
+        );
+        let solutions = combine_chamfer_cuts(previous_cuts, next_cuts, previous.family(), policy)?;
+        let solutions = try_map_corner_solutions(solutions, |solution| {
+            if previous_index == next_index
+                && !previous.chamfer_cuts_leave_authored_interval(
+                    &solution.previous,
+                    &solution.next,
+                    policy,
+                )?
+            {
+                return Ok(None);
+            }
             if !corner_has_native_reconstruction(previous, &solution.previous)
                 || !corner_has_native_reconstruction(next, &solution.next)
             {
@@ -3381,6 +3392,13 @@ impl CornerCuts2 {
             .chain(self.overflow.iter())
     }
 
+    fn iter_mut(&mut self) -> impl Iterator<Item = &mut CornerCut2> {
+        self.first
+            .iter_mut()
+            .chain(self.second.iter_mut())
+            .chain(self.overflow.iter_mut())
+    }
+
     fn is_empty(&self) -> bool {
         self.first.is_none() && self.second.is_none() && self.overflow.is_empty()
     }
@@ -4143,6 +4161,20 @@ pub(crate) fn solve_exact_chamfer_corner(
         next_family,
         policy,
     );
+    combine_chamfer_cuts(previous_cuts, next_cuts, previous_family, policy)
+}
+
+fn combine_chamfer_cuts(
+    previous_cuts: ExactCurveResult<CornerCuts2>,
+    next_cuts: ExactCurveResult<CornerCuts2>,
+    previous_family: CurveFamily2,
+    policy: &CurveContext,
+) -> ExactCurveResult<CurveCornerSolutions2<ChamferCorner2>> {
+    if matches!(&previous_cuts, Ok(cuts) if cuts.is_empty()) {
+        return Ok(CurveCornerSolutions2::NoSolution(
+            CurveCornerNoSolution2::OutsideTrimDomain,
+        ));
+    }
     if matches!(&next_cuts, Ok(cuts) if cuts.is_empty()) {
         return Ok(CurveCornerSolutions2::NoSolution(
             CurveCornerNoSolution2::OutsideTrimDomain,
@@ -11120,109 +11152,27 @@ fn selected_fiber_chamfer_cuts(
     } else {
         crate::BezierParameterRayDirection2::Decreasing
     };
-    let ordinary_parameters = |center_parameter: &BezierParameter2| {
-        let unit_range = BezierParameterRange2::new_validated(
-            BezierParameter2::Exact(Real::zero()),
-            BezierParameter2::Exact(Real::one()),
-        );
-        let radius_squared = setback * setback;
-        let parameters = (if mode == CurveCornerMode2::TrimOrExtend {
-            parallel.fixed_distance_incidence_from_parameter_with_incident_ray(
-                center_parameter,
-                &radius_squared,
-                &unit_range,
-                direction,
-                policy,
-            )
-        } else {
-            parallel.fixed_distance_incidence_from_parameter(
-                center_parameter,
-                &radius_squared,
-                &unit_range,
-                policy,
-            )
-        })
-        .map_err(|cause| ExactCurveError::invalid(operation, family, cause))?;
-        match parameters {
-            Classification::Decided(parameters) => Ok(parameters),
-            Classification::Uncertain(reason) => {
-                Err(ExactCurveError::blocked(operation, family, reason))
-            }
+    let parameters = match parallel
+        .fixed_distance_incidence(
+            &parallel,
+            corner_parameter,
+            setback,
+            fragment.range(),
+            (mode == CurveCornerMode2::TrimOrExtend).then_some(direction),
+            policy,
+        )
+        .map_err(|cause| ExactCurveError::invalid(operation, family, cause))?
+    {
+        Classification::Decided(parameters) => parameters,
+        Classification::Uncertain(reason) => {
+            return Err(ExactCurveError::blocked(operation, family, reason));
         }
-    };
-    let parameters = if let Some(center_parameter) = corner_parameter.as_bezier_parameter() {
-        ordinary_parameters(center_parameter)?
-    } else if let Some(center_parameter) = corner_parameter.as_selected_fiber() {
-        match parallel
-            .fixed_distance_incidence_from_selected_parameter(
-                center_parameter,
-                setback,
-                fragment.range(),
-                (mode == CurveCornerMode2::TrimOrExtend).then_some(direction),
-                policy,
-            )
-            .map_err(|cause| ExactCurveError::invalid(operation, family, cause))?
-        {
-            Classification::Decided(parameters) => parameters,
-            Classification::Uncertain(reason) => {
-                return Err(ExactCurveError::blocked(operation, family, reason));
-            }
-        }
-    } else if corner_parameter.as_recursive_projective().is_some() {
-        match parallel
-            .fixed_distance_incidence_from_recursive_parameter(
-                corner_parameter,
-                setback,
-                (mode == CurveCornerMode2::TrimOrExtend).then_some(direction),
-                policy,
-            )
-            .map_err(|cause| ExactCurveError::invalid(operation, family, cause))?
-        {
-            Classification::Decided(parameters) => parameters,
-            Classification::Uncertain(reason) => {
-                return Err(ExactCurveError::blocked(operation, family, reason));
-            }
-        }
-    } else {
-        return Err(ExactCurveError::blocked(
-            operation,
-            family,
-            crate::UncertaintyReason::Unsupported,
-        ));
     };
     let mut cuts = CornerCuts2::default();
     for parameter in parameters {
-        let (parameter, point) = match parameter {
-            crate::bezier_offset::BezierParallelFixedDistanceParameter2::Bezier(parameter) => {
-                let point = analytic_parallel_point_evidence(
-                    &parallel, &parameter, operation, family, policy,
-                )?;
-                (CurveParameter2::from(parameter), point)
-            }
-            crate::bezier_offset::BezierParallelFixedDistanceParameter2::SelectedFiber(
-                parameter,
-            ) => {
-                let point =
-                    CurvePoint2::from(crate::BezierAnalyticParallelPoint2::new_selected_fiber(
-                        parallel.clone(),
-                        parameter.clone(),
-                        policy,
-                    ));
-                (CurveParameter2::from_selected_fiber(parameter), point)
-            }
-            crate::bezier_offset::BezierParallelFixedDistanceParameter2::RecursiveProjective(
-                parameter,
-            ) => {
-                let point = CurvePoint2::from(
-                    crate::BezierAnalyticParallelPoint2::new_recursive_projective(
-                        parallel.clone(),
-                        parameter.clone(),
-                        policy,
-                    ),
-                );
-                (CurveParameter2::from_recursive_projective(parameter), point)
-            }
-        };
+        let (parameter, point) = curve_corner_domain::fixed_distance_point(
+            &parallel, parameter, operation, family, policy,
+        )?;
         let Some(placement) = selected_fiber_corner_parameter_placement(
             &parameter, fragment, previous, mode, operation, family, policy,
         )?
@@ -11271,31 +11221,25 @@ fn analytic_parallel_chamfer_cuts(
             overflow: Vec::new(),
         });
     }
-    let radius_squared = setback * setback;
     let direction = if previous != fragment.is_reversed() {
         crate::BezierParameterRayDirection2::Increasing
     } else {
         crate::BezierParameterRayDirection2::Decreasing
     };
-    let parameters = match (if mode == CurveCornerMode2::TrimOrExtend {
-        fragment
-            .parallel()
-            .fixed_distance_incidence_from_parameter_with_incident_ray(
-                corner_parameter,
-                &radius_squared,
-                fragment.range(),
-                direction,
-                policy,
-            )
-    } else {
-        fragment.parallel().fixed_distance_incidence_from_parameter(
-            corner_parameter,
-            &radius_squared,
-            fragment.range(),
+    let parameters = match fragment
+        .parallel()
+        .fixed_distance_incidence(
+            fragment.parallel(),
+            &CurveParameter2::from(corner_parameter.clone()),
+            setback,
+            &crate::CurveParameterRange2::new_validated(
+                fragment.range().start().clone().into(),
+                fragment.range().end().clone().into(),
+            ),
+            (mode == CurveCornerMode2::TrimOrExtend).then_some(direction),
             policy,
         )
-    })
-    .map_err(|cause| ExactCurveError::invalid(operation, family, cause))?
+        .map_err(|cause| ExactCurveError::invalid(operation, family, cause))?
     {
         Classification::Decided(parameters) => parameters,
         Classification::Uncertain(reason) => {

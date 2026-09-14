@@ -1102,6 +1102,379 @@ mod tests {
     }
 
     #[test]
+    fn source_domain_chamfers_preserve_all_selected_major_arc_contacts() {
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let end = decided(
+                selected_parameters(&policy)[0]
+                    .affine_image_unbounded(&q(1, 64), &q(63, 64), &policy)
+                    .unwrap(),
+                CurveFamily2::CircularArc,
+            )
+            .unwrap();
+            let arc = Curve2::from(
+                CircularArc2::try_from_center(
+                    p(1, 0),
+                    Point2::new(q(3, 5), q(4, 5)),
+                    p(0, 0),
+                    true,
+                )
+                .unwrap(),
+            )
+            .subcurve(Real::zero().into(), end, &policy)
+            .unwrap()
+            .value;
+            let path = CurvePath2::try_new(vec![
+                Curve2::from(LineSeg2::try_new(p(1, -2), p(1, 0)).unwrap()),
+                arc,
+            ])
+            .unwrap();
+            for reversed in [false, true] {
+                let path = if reversed {
+                    path.reversed(&policy).unwrap().value
+                } else {
+                    path.clone()
+                };
+                for setback in [1, 2] {
+                    let setbacks = if reversed { [setback, 1] } else { [1, setback] };
+                    let outcome = path
+                        .chamfer_vertex_by_setbacks(
+                            1,
+                            Real::from(setbacks[0]),
+                            Real::from(setbacks[1]),
+                            CurveCornerMode2::TrimOnly,
+                            &policy,
+                        )
+                        .unwrap();
+                    assert_eq!(outcome.certainty, CurveCertainty::Certified);
+                    let candidates = match outcome.value {
+                        CurveCornerSolutions2::Unique(candidate) => vec![candidate],
+                        CurveCornerSolutions2::Multiple(candidates) => candidates,
+                        CurveCornerSolutions2::NoSolution(reason) => {
+                            panic!("lost selected major-arc contacts: {reason:?}")
+                        }
+                    };
+                    assert_eq!(candidates.len(), if setback == 1 { 2 } else { 1 });
+                    let expected = if setback == 2 {
+                        vec![p(-1, 0)]
+                    } else {
+                        let y = (Real::from(3).sqrt().unwrap() / Real::from(2)).unwrap();
+                        vec![Point2::new(q(1, 2), y.clone()), Point2::new(q(1, 2), -y)]
+                    };
+                    for candidate in &candidates {
+                        assert_same(&candidate.start(), &path.start(), &policy);
+                        assert_same(&candidate.end(), &path.end(), &policy);
+                        for pair in candidate.curves().windows(2) {
+                            assert_same(&pair[0].end(), &pair[1].start(), &policy);
+                        }
+                    }
+                    for point in expected {
+                        assert!(
+                            candidates.iter().any(|candidate| {
+                                candidate.curves().windows(2).any(|pair| {
+                                    pair[0].end().same_point(&point.clone().into(), &policy)
+                                        == Classification::Decided(true)
+                                })
+                            }),
+                            "missing {point:?}, reversed={reversed}, policy={policy:?}"
+                        );
+                    }
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn source_domain_chamfers_cover_spline_knots_and_distinct_source_locations() {
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            for rational in [false, true] {
+                // The setback circle meets both the first and last spans.
+                // At distance two its contacts are internal knots; each knot
+                // must be published once, on the side retained by the trim.
+                let controls = vec![p(0, 0), p(2, 0), p(2, 2), p(0, 2), p(0, 0)];
+                let knots = [3, 3, 4, 5, 6, 7, 7].into_iter().map(Real::from).collect();
+                let source = if rational {
+                    Curve2::try_nurbs(
+                        1,
+                        controls,
+                        vec![
+                            Real::one(),
+                            Real::from(2),
+                            Real::from(3),
+                            Real::from(2),
+                            Real::one(),
+                        ],
+                        knots,
+                        &policy,
+                    )
+                } else {
+                    Curve2::try_polynomial_bspline(1, controls, knots, &policy)
+                }
+                .unwrap()
+                .value;
+                for selected in [false, true] {
+                    let source = if selected {
+                        let end = decided(
+                            selected_parameters(&policy)[0]
+                                .affine_image_unbounded(&q(1, 16), &q(111, 16), &policy)
+                                .unwrap(),
+                            source.family(),
+                        )
+                        .unwrap();
+                        source
+                            .subcurve(Real::from(3).into(), end, &policy)
+                            .unwrap()
+                            .value
+                    } else {
+                        source.clone()
+                    };
+                    let path = CurvePath2::try_new(vec![
+                        Curve2::from(LineSeg2::try_new(p(0, -3), p(0, 0)).unwrap()),
+                        source,
+                    ])
+                    .unwrap();
+                    for reversed in [false, true] {
+                        let path = if reversed {
+                            path.reversed(&policy).unwrap().value
+                        } else {
+                            path.clone()
+                        };
+                        for setback in [1, 2] {
+                            let setbacks = if reversed { [setback, 1] } else { [1, setback] };
+                            let result = path
+                                .chamfer_vertex_by_setbacks(
+                                    1,
+                                    Real::from(setbacks[0]),
+                                    Real::from(setbacks[1]),
+                                    CurveCornerMode2::TrimOnly,
+                                    &policy,
+                                )
+                                .unwrap();
+                            assert_eq!(result.certainty, CurveCertainty::Certified);
+                            let CurveCornerSolutions2::Multiple(candidates) = result.value else {
+                                panic!(
+                                    "both spline contacts must survive, rational={rational}, selected={selected}, reversed={reversed}, setback={setback}"
+                                )
+                            };
+                            assert_eq!(candidates.len(), 2);
+                            for expected in [p(setback, 0), p(0, setback)] {
+                                assert!(candidates.iter().any(|candidate| {
+                                    candidate.curves().windows(2).any(|pair| {
+                                        pair[0].end().same_point(&expected.clone().into(), &policy)
+                                            == Classification::Decided(true)
+                                    })
+                                }));
+                            }
+                            for candidate in candidates {
+                                assert_same(&candidate.start(), &path.start(), &policy);
+                                assert_same(&candidate.end(), &path.end(), &policy);
+                                for pair in candidate.curves().windows(2) {
+                                    assert_same(&pair[0].end(), &pair[1].start(), &policy);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            // The same Cartesian contact at three distinct source locations
+            // represents three different surviving path suffixes.
+            let source = Curve2::try_polynomial_bspline(
+                1,
+                vec![p(0, 0), p(2, 0), p(0, 0), p(2, 0)],
+                [0, 0, 1, 2, 3, 3].into_iter().map(Real::from).collect(),
+                &policy,
+            )
+            .unwrap()
+            .value;
+            let path = CurvePath2::try_new(vec![
+                Curve2::from(LineSeg2::try_new(p(0, -2), p(0, 0)).unwrap()),
+                source,
+            ])
+            .unwrap();
+            let result = path
+                .chamfer_vertex_by_setbacks(
+                    1,
+                    Real::one(),
+                    Real::one(),
+                    CurveCornerMode2::TrimOnly,
+                    &policy,
+                )
+                .unwrap();
+            assert_eq!(result.certainty, CurveCertainty::Certified);
+            let CurveCornerSolutions2::Multiple(candidates) = result.value else {
+                panic!("three distinct source locations")
+            };
+            assert_eq!(candidates.len(), 3);
+            for start in [q(1, 2), q(3, 2), q(5, 2)] {
+                assert!(candidates.iter().any(|candidate| {
+                    let range = candidate.curves().last().unwrap().parameter_domain();
+                    range
+                        .start()
+                        .cmp_by_refinement(&start.clone().into(), &policy)
+                        .unwrap()
+                        == Classification::Decided(Ordering::Equal)
+                }));
+            }
+        }
+    }
+
+    #[test]
+    fn source_domain_chamfers_retain_selected_centers_across_different_charts() {
+        use crate::bezier_offset::BezierParallelFixedDistanceParameter2;
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let center =
+                QuadraticBezier2::from_line_segment(LineSeg2::try_new(p(0, 0), p(2, 0)).unwrap())
+                    .parallel_left(Real::zero())
+                    .unwrap();
+            let candidate =
+                QuadraticBezier2::from_line_segment(LineSeg2::try_new(p(0, 1), p(4, 1)).unwrap())
+                    .parallel_left(Real::zero())
+                    .unwrap();
+            let parameter = selected_parameters(&policy)[0].clone();
+            // P(alpha)=(2 alpha,0), Q(v)=(4v,1). Unit distance
+            // is tangent at v=alpha/2. Applying a same-chart translation
+            // shortcut would return alpha +/- 1/4 and lose this contact.
+            let expected = decided(
+                parameter
+                    .affine_image_unbounded(&q(1, 2), &Real::zero(), &policy)
+                    .unwrap(),
+                CurveFamily2::RationalBezier,
+            )
+            .unwrap();
+            let result = resolve_certified_operation(&policy, |attempt| {
+                decided(
+                    candidate
+                        .fixed_distance_incidence(
+                            &center,
+                            &parameter,
+                            &Real::one(),
+                            &CurveParameterRange2::new_validated(
+                                Real::zero().into(),
+                                Real::one().into(),
+                            ),
+                            None,
+                            attempt,
+                        )
+                        .unwrap(),
+                    CurveFamily2::RationalBezier,
+                )
+            })
+            .unwrap();
+            assert_eq!(result.certainty, CurveCertainty::Certified);
+            assert_eq!(result.value.len(), 1);
+            let actual = match result.value.into_iter().next().unwrap() {
+                BezierParallelFixedDistanceParameter2::Bezier(parameter) => parameter.into(),
+                BezierParallelFixedDistanceParameter2::SelectedFiber(parameter) => {
+                    CurveParameter2::from_selected_fiber(parameter)
+                }
+                BezierParallelFixedDistanceParameter2::RecursiveProjective(parameter) => {
+                    CurveParameter2::from_recursive_projective(parameter)
+                }
+            };
+            assert_eq!(
+                actual.cmp_by_refinement(&expected, &policy).unwrap(),
+                Classification::Decided(Ordering::Equal)
+            );
+            // A smaller radius misses the other support entirely.
+            let result = resolve_certified_operation(&policy, |attempt| {
+                decided(
+                    candidate
+                        .fixed_distance_incidence(
+                            &center,
+                            &parameter,
+                            &q(1, 2),
+                            &CurveParameterRange2::new_validated(
+                                Real::zero().into(),
+                                Real::one().into(),
+                            ),
+                            None,
+                            attempt,
+                        )
+                        .unwrap(),
+                    CurveFamily2::RationalBezier,
+                )
+            })
+            .unwrap();
+            assert_eq!(result.certainty, CurveCertainty::Certified);
+            assert!(result.value.is_empty());
+        }
+    }
+
+    #[test]
+    fn source_domain_chamfers_reenter_paths_with_a_selected_spline_corner() {
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let source = Curve2::try_polynomial_bspline(
+                1,
+                vec![p(0, 0), p(2, 0), p(2, 2), p(0, 2), p(0, 0)],
+                [3, 3, 4, 5, 6, 7, 7].into_iter().map(Real::from).collect(),
+                &policy,
+            )
+            .unwrap()
+            .value;
+            let start = decided(
+                selected_parameters(&policy)[0]
+                    .affine_image_unbounded(&Real::one(), &Real::from(3), &policy)
+                    .unwrap(),
+                source.family(),
+            )
+            .unwrap();
+            let source = source
+                .subcurve(start, Real::from(7).into(), &policy)
+                .unwrap()
+                .value;
+            let chord = decided(
+                crate::BezierAlgebraicChord2::try_new(p(-2, 0).into(), source.start(), &policy)
+                    .unwrap(),
+                CurveFamily2::Line,
+            )
+            .unwrap();
+            let path = CurvePath2::try_new(vec![
+                Curve2::from_retained_fragment(BezierSplitFragment2::AlgebraicChord(chord)),
+                source,
+            ])
+            .unwrap();
+            for reversed in [false, true] {
+                let path = if reversed {
+                    path.reversed(&policy).unwrap().value
+                } else {
+                    path.clone()
+                };
+                for (setback, expected_count) in [(Real::one(), 2), (q(1, 4), 1)] {
+                    let setbacks = if reversed {
+                        [setback, Real::zero()]
+                    } else {
+                        [Real::zero(), setback]
+                    };
+                    let result = path
+                        .chamfer_vertex_by_setbacks(
+                            1,
+                            setbacks[0].clone(),
+                            setbacks[1].clone(),
+                            CurveCornerMode2::TrimOnly,
+                            &policy,
+                        )
+                        .unwrap();
+                    assert_eq!(result.certainty, CurveCertainty::Certified);
+                    let candidates = match result.value {
+                        CurveCornerSolutions2::Unique(candidate) => vec![candidate],
+                        CurveCornerSolutions2::Multiple(candidates) => candidates,
+                        CurveCornerSolutions2::NoSolution(reason) => {
+                            panic!("selected spline corner lost its contacts: {reason:?}")
+                        }
+                    };
+                    assert_eq!(candidates.len(), expected_count);
+                    for candidate in candidates {
+                        assert_same(&candidate.start(), &path.start(), &policy);
+                        assert_same(&candidate.end(), &path.end(), &policy);
+                        for pair in candidate.curves().windows(2) {
+                            assert_same(&pair[0].end(), &pair[1].start(), &policy);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    #[test]
     fn selected_circle_subdivision_preserves_frame_and_outer_tangency() {
         use crate::bezier_offset::{
             BezierAlgebraicCuspSemicircle2, BezierAlgebraicCuspSemicircleFragment2,

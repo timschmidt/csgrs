@@ -44,8 +44,6 @@ impl CornerSourceFragments2 {
         }
 
         if let Some(spans) = curve.restricted_source_spans(policy, operation)? {
-            let cut_index = if previous { spans.len() - 1 } else { 0 };
-            let span = &spans[cut_index];
             let mut cut = cut.into_retained_evidence().ok_or_else(|| {
                 ExactCurveError::blocked(
                     operation,
@@ -53,19 +51,77 @@ impl CornerSourceFragments2 {
                     crate::UncertaintyReason::Unsupported,
                 )
             })?;
-            let inverse = (Real::one() / &span.source_scale).map_err(|cause| {
-                ExactCurveError::invalid(operation, curve.family(), cause.into())
-            })?;
-            cut.parameter = match cut
-                .parameter
-                .affine_image_unbounded(&inverse, &(-&span.source_offset * &inverse), policy)
-                .map_err(|cause| ExactCurveError::invalid(operation, curve.family(), cause))?
-            {
-                Classification::Decided(parameter) => parameter,
-                Classification::Uncertain(reason) => {
-                    return Err(ExactCurveError::blocked(operation, curve.family(), reason));
+            let cut_index = if cut.placement == CornerPlacement2::Extension {
+                if previous { spans.len() - 1 } else { 0 }
+            } else {
+                let mut selected = None;
+                for (index, span) in spans.iter().enumerate() {
+                    let local = local_parameter(
+                        &cut.parameter,
+                        &span.source_scale,
+                        &span.source_offset,
+                        operation,
+                        curve.family(),
+                        policy,
+                    )?;
+                    let range = span.fragment.curve_region_parameter_range();
+                    let lower =
+                        parameter_order(&local, range.start(), operation, curve.family(), policy)?;
+                    let upper =
+                        parameter_order(&local, range.end(), operation, curve.family(), policy)?;
+                    let reversed = span.fragment.source_is_reversed();
+                    let at_start = if reversed {
+                        upper.is_eq()
+                    } else {
+                        lower.is_eq()
+                    };
+                    let at_end = if reversed {
+                        lower.is_eq()
+                    } else {
+                        upper.is_eq()
+                    };
+                    if lower.is_lt()
+                        || upper.is_gt()
+                        || (previous && at_start && index > 0)
+                        || (!previous && at_end && index + 1 < spans.len())
+                    {
+                        continue;
+                    }
+                    selected = Some(index);
+                    break;
                 }
+                selected.ok_or_else(|| {
+                    ExactCurveError::invalid(
+                        operation,
+                        curve.family(),
+                        CurveError::InvalidCurveParameter,
+                    )
+                })?
             };
+            let span = &spans[cut_index];
+            cut.parameter = local_parameter(
+                &cut.parameter,
+                &span.source_scale,
+                &span.source_offset,
+                operation,
+                curve.family(),
+                policy,
+            )?;
+            // A logical interior cut may lie exactly at an internal chart
+            // seam. In the surviving chart it retains the complete span;
+            // there is no zero-width piece to split off.
+            let range = span.fragment.curve_region_parameter_range();
+            let endpoint = if previous != span.fragment.source_is_reversed() {
+                range.end()
+            } else {
+                range.start()
+            };
+            if cut.placement == CornerPlacement2::Trim
+                && parameter_order(&cut.parameter, endpoint, operation, curve.family(), policy)?
+                    .is_eq()
+            {
+                cut.placement = CornerPlacement2::Corner;
+            }
             return Ok(Self {
                 fragments: spans.iter().map(|span| span.fragment.clone()).collect(),
                 cut_index,
@@ -89,7 +145,7 @@ impl CornerSourceFragments2 {
                 curve
             };
         let native = source.native_bezier_fragments_for_operation(policy, operation)?;
-        let cut_index = if previous {
+        let mut cut_index = if previous {
             native.len().checked_sub(1)
         } else {
             (!native.is_empty()).then_some(0)
@@ -108,22 +164,64 @@ impl CornerSourceFragments2 {
                 crate::UncertaintyReason::Unsupported,
             )
         })?;
+        if native.len() > 1
+            && cut.placement == CornerPlacement2::Trim
+            && !matches!(curve.geometry(), Some(CurveGeometry2::CircularArc(_)))
+        {
+            let mut selected = None;
+            for (index, fragment) in native.iter().enumerate() {
+                let (start, end) = fragment.parameter_range();
+                let lower = parameter_order(
+                    &cut.parameter,
+                    &start.clone().into(),
+                    operation,
+                    curve.family(),
+                    policy,
+                )?;
+                let upper = parameter_order(
+                    &cut.parameter,
+                    &end.clone().into(),
+                    operation,
+                    curve.family(),
+                    policy,
+                )?;
+                if lower.is_lt()
+                    || upper.is_gt()
+                    || (previous && lower.is_eq() && index > 0)
+                    || (!previous && upper.is_eq() && index + 1 < native.len())
+                {
+                    continue;
+                }
+                selected = Some(index);
+                break;
+            }
+            cut_index = selected.ok_or_else(|| {
+                ExactCurveError::invalid(
+                    operation,
+                    curve.family(),
+                    CurveError::InvalidCurveParameter,
+                )
+            })?;
+        }
         if !matches!(curve.geometry(), Some(CurveGeometry2::CircularArc(_))) {
             let (start, end) = native[cut_index].parameter_range();
             if start != &Real::zero() || end != &Real::one() {
-                let scale = (Real::one() / (end - start)).map_err(|cause| {
-                    ExactCurveError::invalid(operation, curve.family(), cause.into())
-                })?;
-                cut.parameter = match cut
-                    .parameter
-                    .affine_image_unbounded(&scale, &(-start * &scale), policy)
-                    .map_err(|cause| ExactCurveError::invalid(operation, curve.family(), cause))?
-                {
-                    Classification::Decided(parameter) => parameter,
-                    Classification::Uncertain(reason) => {
-                        return Err(ExactCurveError::blocked(operation, curve.family(), reason));
-                    }
-                };
+                cut.parameter = local_parameter(
+                    &cut.parameter,
+                    &(end - start),
+                    start,
+                    operation,
+                    curve.family(),
+                    policy,
+                )?;
+            }
+            let endpoint = CurveParameter2::from(if previous { Real::one() } else { Real::zero() });
+            if native.len() > 1
+                && cut.placement == CornerPlacement2::Trim
+                && parameter_order(&cut.parameter, &endpoint, operation, curve.family(), policy)?
+                    .is_eq()
+            {
+                cut.placement = CornerPlacement2::Corner;
             }
         }
         Ok(Self {
@@ -138,6 +236,45 @@ impl CornerSourceFragments2 {
             cut_index,
             cut,
         })
+    }
+}
+
+fn parameter_order(
+    first: &CurveParameter2,
+    second: &CurveParameter2,
+    operation: CurveOperation2,
+    family: CurveFamily2,
+    policy: &CurveContext,
+) -> ExactCurveResult<std::cmp::Ordering> {
+    match first
+        .cmp_by_refinement(second, policy)
+        .map_err(|cause| ExactCurveError::invalid(operation, family, cause))?
+    {
+        Classification::Decided(order) => Ok(order),
+        Classification::Uncertain(reason) => {
+            Err(ExactCurveError::blocked(operation, family, reason))
+        }
+    }
+}
+
+fn local_parameter(
+    parameter: &CurveParameter2,
+    scale: &Real,
+    offset: &Real,
+    operation: CurveOperation2,
+    family: CurveFamily2,
+    policy: &CurveContext,
+) -> ExactCurveResult<CurveParameter2> {
+    let inverse = (Real::one() / scale)
+        .map_err(|cause| ExactCurveError::invalid(operation, family, cause.into()))?;
+    match parameter
+        .affine_image_unbounded(&inverse, &(-offset * &inverse), policy)
+        .map_err(|cause| ExactCurveError::invalid(operation, family, cause))?
+    {
+        Classification::Decided(parameter) => Ok(parameter),
+        Classification::Uncertain(reason) => {
+            Err(ExactCurveError::blocked(operation, family, reason))
+        }
     }
 }
 
