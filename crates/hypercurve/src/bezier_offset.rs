@@ -126212,14 +126212,14 @@ enum BezierParallelPairDomainProjection2 {
 #[derive(Clone, Copy)]
 struct ParameterComponentChart2<'a> {
     extension: Option<BezierParameterRay2<'a>>,
-    range: &'a std::cell::OnceCell<BezierParameterRange2>,
+    range: &'a std::cell::OnceCell<CurveParameterRange2>,
 }
 
 impl<'a> ParameterComponentChart2<'a> {
     fn compact_range(
         self,
         policy: &CurveContext,
-    ) -> CurveResult<Classification<&'a BezierParameterRange2>> {
+    ) -> CurveResult<Classification<&'a CurveParameterRange2>> {
         if let Some(range) = self.range.get() {
             return Ok(Classification::Decided(range));
         }
@@ -126246,7 +126246,9 @@ impl<'a> ParameterComponentChart2<'a> {
             Classification::Decided(range) => range,
             Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
         };
-        Ok(Classification::Decided(self.range.get_or_init(|| range)))
+        Ok(Classification::Decided(self.range.get_or_init(|| {
+            CurveParameterRange2::from_bezier_range(range)
+        })))
     }
 
     fn contains_component_event(
@@ -126263,6 +126265,7 @@ impl<'a> ParameterComponentChart2<'a> {
                 return Ok(Classification::Uncertain(reason));
             }
         };
+        let parameter = CurveParameter2::from(parameter.clone());
         let after_start = match parameter.cmp_by_refinement(range.start(), policy)? {
             Classification::Decided(ordering) => ordering == std::cmp::Ordering::Greater,
             Classification::Uncertain(reason) => {
@@ -126557,7 +126560,7 @@ fn select_axis_parameter_components_on_chart(
 
         let mut boundaries = Vec::with_capacity(events.len() + 2);
         boundaries.push(free_range.start().clone());
-        boundaries.extend(events);
+        boundaries.extend(events.into_iter().map(CurveParameter2::from));
         boundaries.push(free_range.end().clone());
         for boundaries in boundaries.windows(2) {
             match boundaries[0].cmp_by_refinement(&boundaries[1], policy)? {
@@ -126739,10 +126742,8 @@ fn select_parameter_component_in_domain(
                     return Ok(Classification::Uncertain(reason));
                 }
             };
-            let first_range = CurveParameterRange2::from_bezier_range(first_range.clone());
-            let second_range = CurveParameterRange2::from_bezier_range(second_range.clone());
             for overlap in component.component_overlaps.iter() {
-                match overlap.has_positive_overlap(&first_range, &second_range, policy)? {
+                match overlap.has_positive_overlap(first_range, second_range, policy)? {
                     Classification::Decided(true) => {
                         return Ok(Classification::Decided(ParameterComponentSelection2 {
                             positive_dimensional: true,
