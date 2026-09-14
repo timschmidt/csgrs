@@ -570,9 +570,10 @@ impl CurveParameter2 {
                 "curve-region-parameter-interior",
                 "stored-envelope-separated",
             );
-            return Ok(Classification::Decided(
-                ((first_upper + second_lower) / Real::from(2_i8))?,
-            ));
+            return Ok(Classification::Decided(Real::average_pair(
+                first_upper,
+                second_lower,
+            )));
         }
         match (&self.data, &other.data) {
             (CurveParameterData2::Bezier(first), CurveParameterData2::Bezier(second)) => {
@@ -591,23 +592,53 @@ impl CurveParameter2 {
                 CurveParameterData2::SelectedFiber(second),
             ) => first.strict_scalar_between_ordered(second, policy),
             (
-                CurveParameterData2::RecursiveProjective(first),
-                CurveParameterData2::RecursiveProjective(second),
-            ) => first.strict_scalar_between_ordered(second, policy),
-            (CurveParameterData2::SelectedFiber(first), CurveParameterData2::Bezier(second)) => {
-                first.strict_scalar_between_bezier_ordered(second, true, policy)
+                CurveParameterData2::Bezier(_)
+                | CurveParameterData2::SelectedFiber(_)
+                | CurveParameterData2::RecursiveProjective(_),
+                CurveParameterData2::Bezier(_)
+                | CurveParameterData2::SelectedFiber(_)
+                | CurveParameterData2::RecursiveProjective(_),
+            ) => {
+                // A scalar gap needs separated enclosures, not a common
+                // coefficient field or a global polynomial for either cut.
+                // Keep each endpoint under its native refinement authority.
+                let mut refinement_steps = 0_usize;
+                loop {
+                    let first = match self.refined_for_finite_envelope(refinement_steps, policy)? {
+                        Classification::Decided(parameter) => parameter,
+                        Classification::Uncertain(reason) => {
+                            return Ok(Classification::Uncertain(reason));
+                        }
+                    };
+                    let second =
+                        match other.refined_for_finite_envelope(refinement_steps, policy)? {
+                            Classification::Decided(parameter) => parameter,
+                            Classification::Uncertain(reason) => {
+                                return Ok(Classification::Uncertain(reason));
+                            }
+                        };
+                    let (_, first_upper) = first
+                        .finite_envelope_bounds()
+                        .expect("native scalar refinement retains finite bounds");
+                    let (second_lower, _) = second
+                        .finite_envelope_bounds()
+                        .expect("native scalar refinement retains finite bounds");
+                    if compare_reals(first_upper, second_lower, &CurveContext::STRICT)
+                        == Some(Ordering::Less)
+                    {
+                        return Ok(Classification::Decided(Real::average_pair(
+                            first_upper,
+                            second_lower,
+                        )));
+                    }
+                    refinement_steps = refinement_steps
+                        .checked_mul(2)
+                        .and_then(|steps| steps.checked_add(1))
+                        .ok_or_else(|| {
+                            CurveError::Topology("finite scalar separation overflow".into())
+                        })?;
+                }
             }
-            (CurveParameterData2::Bezier(first), CurveParameterData2::SelectedFiber(second)) => {
-                second.strict_scalar_between_bezier_ordered(first, false, policy)
-            }
-            (
-                CurveParameterData2::RecursiveProjective(first),
-                CurveParameterData2::Bezier(second),
-            ) => first.strict_scalar_between_bezier_ordered(second, true, policy),
-            (
-                CurveParameterData2::Bezier(first),
-                CurveParameterData2::RecursiveProjective(second),
-            ) => second.strict_scalar_between_bezier_ordered(first, false, policy),
             (CurveParameterData2::AlgebraicChord(_), _)
             | (_, CurveParameterData2::AlgebraicChord(_)) => Err(CurveError::Topology(
                 "an algebraic chord cut has no represented scalar midpoint".into(),

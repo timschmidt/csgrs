@@ -5485,51 +5485,6 @@ impl BezierAlgebraicSelectedFiberParameter2 {
             };
         policy.strict_predicate_pass(|| first.strict_scalar_between_ordered(&second, policy))
     }
-
-    pub(crate) fn strict_scalar_between_bezier_ordered(
-        &self,
-        other: &BezierParameter2,
-        selected_is_first: bool,
-        policy: &CurveContext,
-    ) -> CurveResult<Classification<Real>> {
-        self.validate_policy(policy)?;
-        let mut refinement_steps = 0_usize;
-        loop {
-            let selected = match self.refined(refinement_steps, policy)? {
-                Classification::Decided(parameter) => parameter,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            };
-            let other = other
-                .clone()
-                .refined_isolating_interval(refinement_steps, policy);
-            let (other_lower, other_upper) = match &other {
-                BezierParameter2::Exact(value) => (value, value),
-                BezierParameter2::Algebraic(value) => {
-                    (value.interval().start(), value.interval().end())
-                }
-            };
-            let (left_upper, right_lower) = if selected_is_first {
-                (&selected.root().upper, other_lower)
-            } else {
-                (other_upper, &selected.root().lower)
-            };
-            if compare_reals(left_upper, right_lower, &CurveContext::STRICT)
-                == Some(std::cmp::Ordering::Less)
-            {
-                return Ok(Classification::Decided(
-                    ((left_upper + right_lower) / Real::from(2_i8))?,
-                ));
-            }
-            refinement_steps = refinement_steps
-                .checked_mul(2)
-                .and_then(|steps| steps.checked_add(1))
-                .ok_or_else(|| {
-                    CurveError::Topology("selected-fiber/Bezier separation overflow".into())
-                })?;
-        }
-    }
 }
 
 #[derive(Debug)]
@@ -59674,90 +59629,6 @@ impl BezierRecursiveProjectiveParameter2 {
         let upper = refined.data.upper.clone();
         let representative = ((&lower + &upper) / Real::from(2_u8))?;
         Ok(Classification::Decided((lower, representative, upper)))
-    }
-
-    pub(crate) fn strict_scalar_between_ordered(
-        &self,
-        other: &Self,
-        policy: &CurveContext,
-    ) -> CurveResult<Classification<Real>> {
-        self.validate_policy(policy)?;
-        other.validate_policy(policy)?;
-        let mut refinement_steps = 0_usize;
-        loop {
-            let first = match self.refined(refinement_steps, policy)? {
-                Classification::Decided(parameter) => parameter,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            };
-            let second = match other.refined(refinement_steps, policy)? {
-                Classification::Decided(parameter) => parameter,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            };
-            if compare_reals(&first.data.upper, &second.data.lower, &CurveContext::STRICT)
-                == Some(std::cmp::Ordering::Less)
-            {
-                return Ok(Classification::Decided(
-                    ((&first.data.upper + &second.data.lower) / Real::from(2_i8))?,
-                ));
-            }
-            refinement_steps = refinement_steps
-                .checked_mul(2)
-                .and_then(|steps| steps.checked_add(1))
-                .ok_or_else(|| {
-                    CurveError::Topology(
-                        "recursive projective separation refinement overflow".into(),
-                    )
-                })?;
-        }
-    }
-
-    pub(crate) fn strict_scalar_between_bezier_ordered(
-        &self,
-        other: &BezierParameter2,
-        recursive_is_first: bool,
-        policy: &CurveContext,
-    ) -> CurveResult<Classification<Real>> {
-        self.validate_policy(policy)?;
-        let mut refinement_steps = 0_usize;
-        loop {
-            let selected = match self.refined(refinement_steps, policy)? {
-                Classification::Decided(parameter) => parameter,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            };
-            let other = other
-                .clone()
-                .refined_isolating_interval(refinement_steps, policy);
-            let (other_lower, other_upper) = match &other {
-                BezierParameter2::Exact(value) => (value, value),
-                BezierParameter2::Algebraic(value) => {
-                    (value.interval().start(), value.interval().end())
-                }
-            };
-            let (left_upper, right_lower) = if recursive_is_first {
-                (&selected.data.upper, other_lower)
-            } else {
-                (other_upper, &selected.data.lower)
-            };
-            if compare_reals(left_upper, right_lower, &CurveContext::STRICT)
-                == Some(std::cmp::Ordering::Less)
-            {
-                return Ok(Classification::Decided(
-                    ((left_upper + right_lower) / Real::from(2_i8))?,
-                ));
-            }
-            refinement_steps = refinement_steps
-                .checked_mul(2)
-                .and_then(|steps| steps.checked_add(1))
-                .ok_or_else(|| {
-                    CurveError::Topology("recursive projective/Bezier separation overflow".into())
-                })?;
-        }
     }
 }
 
@@ -161066,6 +160937,106 @@ mod conversion_tests {
             assert_eq!(
                 restored.cmp_by_refinement(&parameter, &policy).unwrap(),
                 Classification::Decided(std::cmp::Ordering::Equal),
+            );
+        }
+    }
+
+    #[test]
+    fn common_scalar_gap_refines_mixed_native_parameters_without_projection() {
+        let half = (Real::one() / Real::from(2_i8)).unwrap();
+        let radical = half.clone().sqrt().unwrap();
+        let one = DenseTensorPolynomial::try_new(vec![], vec![Real::one()]).unwrap();
+        let field = BezierRecursiveQuadraticField2::base(vec![], one.clone(), one).unwrap();
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let selected =
+                degree_nine_selected_fiber_parameter_for_test(half.clone(), 32_768, &policy);
+            assert!(matches!(
+                selected.promoted_bezier_parameter(&policy).unwrap(),
+                Classification::Uncertain(_)
+            ));
+            let recursive = |value| {
+                let Classification::Decided(parameter) =
+                    BezierRecursiveProjectiveParameter2::new_with_certified_bounds(
+                        BezierRecursiveQuadraticProjectiveScalar2 {
+                            numerator: field.constant(value).unwrap(),
+                            denominator: field.constant(Real::one()).unwrap(),
+                        },
+                        Some((Real::zero(), Real::one())),
+                        &policy,
+                    )
+                    .unwrap()
+                else {
+                    panic!("both complementary radicals have certified unit enclosures");
+                };
+                CurveParameter2::from_recursive_projective(parameter)
+            };
+            let selected_parameter = CurveParameter2::from_selected_fiber(selected.clone());
+            let recursive_parameter = recursive(radical.clone());
+            let recursive_complement = recursive(Real::one() - &radical);
+            let Classification::Decided(polynomial) =
+                BezierParameterPolynomial::try_new_power_basis(
+                    vec![-half.clone(), Real::zero(), Real::one()],
+                    &policy,
+                )
+                .unwrap()
+            else {
+                panic!("the ordinary quadratic must construct");
+            };
+            let Classification::Decided(interval) =
+                BezierParameterInterval::try_new(Real::zero(), Real::one(), &policy).unwrap()
+            else {
+                panic!("the unit isolator must construct");
+            };
+            let Classification::Decided(ordinary) =
+                BezierAlgebraicParameter2::try_isolate(polynomial, interval, &policy).unwrap()
+            else {
+                panic!("the positive quadratic root must isolate");
+            };
+            let ordinary = CurveParameter2::from(BezierParameter2::Algebraic(ordinary));
+            for (index, (first, second)) in [
+                (selected_parameter.clone(), recursive_parameter.clone()),
+                (
+                    recursive_complement.clone(),
+                    selected_parameter.unit_complement().unwrap(),
+                ),
+                (selected_parameter.clone(), ordinary.clone()),
+                (
+                    ordinary.unit_complement().unwrap(),
+                    selected_parameter.unit_complement().unwrap(),
+                ),
+                (recursive_complement, recursive_parameter),
+            ]
+            .into_iter()
+            .enumerate()
+            {
+                let (_, first_upper) = first.finite_envelope_bounds().unwrap();
+                let (second_lower, _) = second.finite_envelope_bounds().unwrap();
+                assert_ne!(
+                    compare_reals(first_upper, second_lower, &CurveContext::STRICT),
+                    Some(std::cmp::Ordering::Less),
+                    "case {index}: the retained enclosures must require native refinement"
+                );
+                let outcome = crate::policy::resolve_certified_operation(&policy, |attempt| {
+                    first.strict_scalar_between_ordered(&second, attempt)
+                })
+                .unwrap();
+                assert_eq!(outcome.certainty, CurveCertainty::Certified);
+                let Classification::Decided(sample) = outcome.value else {
+                    panic!("finite native parameters must expose their strict interior");
+                };
+                let sample = CurveParameter2::from(BezierParameter2::Exact(sample));
+                assert_eq!(
+                    first.cmp_by_refinement(&sample, &policy).unwrap(),
+                    Classification::Decided(std::cmp::Ordering::Less)
+                );
+                assert_eq!(
+                    second.cmp_by_refinement(&sample, &policy).unwrap(),
+                    Classification::Decided(std::cmp::Ordering::Greater)
+                );
+            }
+            assert!(
+                selected.data.represented_parameter.get().is_none(),
+                "an interior sample must leave the degree-135 endpoint in its selected fiber"
             );
         }
     }
