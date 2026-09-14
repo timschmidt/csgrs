@@ -53,9 +53,17 @@ fn clamped_splines_preserve_discontinuous_knot_sides_and_span_images() {
                 } else {
                     curve.clone()
                 };
-                let clamped = source
-                    .clamped_subcurve(r(0).into(), r(2).into(), &policy)
-                    .unwrap();
+                let clamped = match source.geometry().unwrap() {
+                    CurveGeometry2::PolynomialBSpline(curve) => curve
+                        .clamped_subcurve(r(0), r(2), &policy)
+                        .unwrap()
+                        .map(Curve2::from),
+                    CurveGeometry2::Nurbs(curve) => curve
+                        .clamped_subcurve(r(0), r(2), &policy)
+                        .unwrap()
+                        .map(Curve2::from),
+                    _ => unreachable!("authored spline fixture"),
+                };
                 assert_eq!(clamped.certainty, CurveCertainty::Certified);
                 let clamped = clamped.value;
                 assert_eq!(clamped.family(), source.family());

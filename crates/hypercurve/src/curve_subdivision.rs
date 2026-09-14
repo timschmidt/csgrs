@@ -487,62 +487,226 @@ mod tests {
     }
 
     #[test]
+    fn native_span_publication_preserves_geometry_and_parameter_lineage() {
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            for original in authored_sources(&policy) {
+                for reversed in [false, true] {
+                    let domain = original.native_parameter_domain().unwrap();
+                    let parameter =
+                        |unit: Real| domain.start() + (domain.end() - domain.start()) * unit;
+                    let source = original
+                        .subcurve(
+                            parameter(q(1, 8)).into(),
+                            parameter(q(7, 8)).into(),
+                            &policy,
+                        )
+                        .unwrap()
+                        .value;
+                    let source = if reversed {
+                        source.reversed(&policy).unwrap().value
+                    } else {
+                        source
+                    };
+                    let owner = Arc::downgrade(&source.data);
+                    let source_lineage = source.data.lineage.as_ref().unwrap();
+                    let spans = source.native_bezier_fragments(&policy).unwrap();
+                    assert_eq!(spans.certainty, CurveCertainty::Certified);
+                    let mut published = Vec::new();
+                    for span in spans.value.iter().cloned() {
+                        let (start, end) = span.parameter_range();
+                        let (start, end) = (start.clone(), end.clone());
+                        let curve = span.into_curve();
+                        assert!(Arc::ptr_eq(
+                            &curve.data.lineage.as_ref().unwrap().root,
+                            &source_lineage.root
+                        ));
+                        assert_eq!(
+                            curve.parameter_domain().scalar_endpoints(),
+                            Some((&Real::zero(), &Real::one()))
+                        );
+                        for unit in [Real::zero(), q(1, 4), q(1, 2), q(3, 4), Real::one()] {
+                            let parameter = &start + (&end - &start) * &unit;
+                            assert_eq!(
+                                curve.lineage_parameter_at(&unit).unwrap(),
+                                source.lineage_parameter_at(&parameter).unwrap()
+                            );
+                            assert_same(
+                                &curve.point_at(&unit.into(), &policy).unwrap().value,
+                                &source.point_at(&parameter.into(), &policy).unwrap().value,
+                                &policy,
+                            );
+                        }
+                        let middle = curve
+                            .subcurve(q(1, 4).into(), q(3, 4).into(), &policy)
+                            .unwrap()
+                            .value;
+                        assert!(Arc::ptr_eq(
+                            &middle.data.lineage.as_ref().unwrap().root,
+                            &source_lineage.root
+                        ));
+                        assert_same(
+                            &middle.point_at(&q(1, 2).into(), &policy).unwrap().value,
+                            &curve.point_at(&q(1, 2).into(), &policy).unwrap().value,
+                            &policy,
+                        );
+                        published.push(curve);
+                    }
+                    drop(source);
+                    assert!(
+                        owner.upgrade().is_none(),
+                        "span publication must not retain its former curve owner"
+                    );
+                    assert!(!published.is_empty());
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn transformed_parameter_lineage_does_not_certify_unrelated_curve_overlap() {
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let source = Curve2::from(QuadraticBezier2::new(p(0, 0), p(1, 1), p(2, 0)));
+            let restricted = source
+                .subcurve(q(1, 8).into(), q(7, 8).into(), &policy)
+                .unwrap()
+                .value;
+            let translation = Similarity2::try_from_real_affine(
+                Real::one(),
+                Real::zero(),
+                Real::zero(),
+                Real::one(),
+                Real::zero(),
+                q(1, 10),
+            )
+            .unwrap();
+            let translated = restricted
+                .transform_similarity(&translation, &policy)
+                .unwrap()
+                .value;
+            // Both are graphs over the same x interval, separated everywhere
+            // by exactly 1/10. Their bounding boxes overlap.
+            let intersections = restricted.intersect_curve(&translated, &policy).unwrap();
+            assert_eq!(intersections.certainty, CurveCertainty::Certified);
+            assert!(intersections.value.blockers().is_empty());
+            assert!(intersections.value.contacts().is_empty());
+            assert!(
+                intersections.value.overlaps().is_empty(),
+                "a shared parameter source is not a shared geometric image"
+            );
+
+            let half_translation = Similarity2::try_from_real_affine(
+                Real::one(),
+                Real::zero(),
+                Real::zero(),
+                Real::one(),
+                Real::zero(),
+                q(1, 20),
+            )
+            .unwrap();
+            let composed = restricted
+                .transform_similarity(&half_translation, &policy)
+                .unwrap()
+                .value
+                .transform_similarity(&half_translation, &policy)
+                .unwrap()
+                .value;
+            let rotation = Similarity2::try_from_real_affine(
+                Real::zero(),
+                -Real::one(),
+                Real::one(),
+                Real::zero(),
+                Real::zero(),
+                Real::zero(),
+            )
+            .unwrap();
+            let rotated = translated
+                .transform_similarity(&rotation, &policy)
+                .unwrap()
+                .value;
+            let direct = restricted
+                .transform_similarity(&translation.then(&rotation), &policy)
+                .unwrap()
+                .value;
+            for (first, second) in [(&translated, &composed), (&rotated, &direct)] {
+                assert!(first.shares_certified_parameter_lineage(second));
+                let span = first.native_bezier_fragments(&policy).unwrap().value[0]
+                    .clone()
+                    .into_curve();
+                assert!(span.shares_certified_parameter_lineage(second));
+                for reversed in [false, true] {
+                    let other = if reversed {
+                        second.reversed(&policy).unwrap().value
+                    } else {
+                        second.clone()
+                    };
+                    let overlap = span.intersect_curve(&other, &policy).unwrap();
+                    assert_eq!(overlap.certainty, CurveCertainty::Certified);
+                    assert!(overlap.value.blockers().is_empty());
+                    assert_eq!(overlap.value.overlaps().len(), 1);
+                }
+            }
+        }
+    }
+
+    fn authored_sources(policy: &CurveContext) -> [Curve2; 8] {
+        let controls = vec![p(0, 0), p(0, 1), p(1, 2), p(3, 3)];
+        let knots = [3, 3, 3, 5, 7, 7, 7]
+            .into_iter()
+            .map(Real::from)
+            .collect::<Vec<_>>();
+        [
+            Curve2::from(LineSeg2::try_new(p(0, 0), p(4, 0)).unwrap()),
+            Curve2::from(CircularArc2::try_from_center(p(1, 0), p(0, 1), p(0, 0), true).unwrap()),
+            Curve2::from(QuadraticBezier2::new(p(0, 0), p(1, 1), p(2, 0))),
+            Curve2::from(CubicBezier2::new(p(0, 0), p(1, 1), p(2, -1), p(3, 0))),
+            Curve2::from(
+                RationalQuadraticBezier2::try_new(
+                    p(0, 0),
+                    p(1, 1),
+                    p(2, 0),
+                    Real::one(),
+                    Real::from(2),
+                    Real::one(),
+                )
+                .unwrap(),
+            ),
+            Curve2::from(
+                RationalBezier2::try_new(
+                    vec![p(0, 0), p(1, 1), p(2, 2), p(3, 1), p(4, 0)],
+                    vec![
+                        Real::one(),
+                        Real::from(2),
+                        Real::from(3),
+                        Real::from(2),
+                        Real::one(),
+                    ],
+                )
+                .unwrap(),
+            ),
+            Curve2::from(
+                PolynomialSplineCurve2::try_new(2, controls.clone(), knots.clone(), policy)
+                    .unwrap()
+                    .value,
+            ),
+            Curve2::from(
+                NurbsCurve2::try_new(
+                    2,
+                    controls,
+                    vec![Real::one(), Real::from(2), Real::from(3), Real::one()],
+                    knots,
+                    policy,
+                )
+                .unwrap()
+                .value,
+            ),
+        ]
+    }
+
+    #[test]
     fn selected_subdivision_keeps_all_authored_families_and_flat_source_charts() {
         for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
             let unit_parameters = selected_parameters(&policy);
-            let controls = vec![p(0, 0), p(0, 1), p(1, 2), p(3, 3)];
-            let knots = [3, 3, 3, 5, 7, 7, 7]
-                .into_iter()
-                .map(Real::from)
-                .collect::<Vec<_>>();
-            let sources = [
-                Curve2::from(LineSeg2::try_new(p(0, 0), p(4, 0)).unwrap()),
-                Curve2::from(
-                    CircularArc2::try_from_center(p(1, 0), p(0, 1), p(0, 0), true).unwrap(),
-                ),
-                Curve2::from(QuadraticBezier2::new(p(0, 0), p(1, 1), p(2, 0))),
-                Curve2::from(CubicBezier2::new(p(0, 0), p(1, 1), p(2, -1), p(3, 0))),
-                Curve2::from(
-                    RationalQuadraticBezier2::try_new(
-                        p(0, 0),
-                        p(1, 1),
-                        p(2, 0),
-                        Real::one(),
-                        Real::from(2),
-                        Real::one(),
-                    )
-                    .unwrap(),
-                ),
-                Curve2::from(
-                    RationalBezier2::try_new(
-                        vec![p(0, 0), p(1, 1), p(2, 2), p(3, 1), p(4, 0)],
-                        vec![
-                            Real::one(),
-                            Real::from(2),
-                            Real::from(3),
-                            Real::from(2),
-                            Real::one(),
-                        ],
-                    )
-                    .unwrap(),
-                ),
-                Curve2::from(
-                    PolynomialSplineCurve2::try_new(2, controls.clone(), knots.clone(), &policy)
-                        .unwrap()
-                        .value,
-                ),
-                Curve2::from(
-                    NurbsCurve2::try_new(
-                        2,
-                        controls,
-                        vec![Real::one(), Real::from(2), Real::from(3), Real::one()],
-                        knots,
-                        &policy,
-                    )
-                    .unwrap()
-                    .value,
-                ),
-            ];
+            let sources = authored_sources(&policy);
             for source in sources {
                 let domain = source.native_parameter_domain().unwrap();
                 let [start, probe, end] = unit_parameters.clone().map(|parameter| {

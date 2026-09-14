@@ -188,7 +188,7 @@ exact signatures.
   carriers through the `*_wrapped` and `*_side` method families.
 - `Curve2::{new, try_polynomial_bspline, try_nurbs,
   try_periodic_polynomial_bspline, try_periodic_nurbs, family, point_at,
-  derivative_at, bounds, split_at, subcurve, clamped_subcurve, reversed,
+  derivative_at, bounds, split_at, subcurve, reversed,
   transform_similarity, native_bezier_fragments, trim_inside_region,
   trim_inside_region_with_parameters}` is the common owned carrier. Exact
   region trimming returns retained promoted Bézier fragments and keeps

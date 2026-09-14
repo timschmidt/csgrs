@@ -223,6 +223,9 @@ impl PartialEq for CurveRestrictedCarrier2 {
 struct CurveParameterLineage2 {
     root: Arc<CurveParameterLineageRoot2>,
     range: ParamRange,
+    /// One composed image map; sharing a parameter source alone does not
+    /// certify coincidence after transporting its geometry.
+    image_transform: Option<Arc<Similarity2>>,
 }
 
 #[derive(Debug)]
@@ -239,6 +242,7 @@ impl CurveParameterLineage2 {
                 image_is_injective: OnceLock::new(),
             }),
             range,
+            image_transform: None,
         }
     }
 
@@ -246,6 +250,19 @@ impl CurveParameterLineage2 {
         Self {
             root: Arc::clone(&self.root),
             range: ParamRange::new(self.range.end().clone(), self.range.start().clone()),
+            image_transform: self.image_transform.clone(),
+        }
+    }
+
+    fn transformed(&self, transform: &Similarity2) -> Self {
+        Self {
+            root: Arc::clone(&self.root),
+            range: self.range.clone(),
+            image_transform: Some(Arc::new(
+                self.image_transform
+                    .as_ref()
+                    .map_or_else(|| transform.clone(), |previous| previous.then(transform)),
+            )),
         }
     }
 }
@@ -283,13 +300,29 @@ pub struct CurveSpanRange2 {
 }
 
 /// Exact native Bezier/conic fragment and its public parameter interval.
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug)]
 pub struct NativeBezierFragment2 {
     curve: BezierSubcurve2,
     span_range: CurveSpanRange2,
+    lineage: CurveParameterLineage2,
+}
+
+impl PartialEq for NativeBezierFragment2 {
+    fn eq(&self, other: &Self) -> bool {
+        self.curve == other.curve && self.span_range == other.span_range
+    }
 }
 
 impl CurveGeometry2 {
+    fn from_bezier(curve: BezierSubcurve2) -> Self {
+        match curve {
+            BezierSubcurve2::Quadratic(curve) => Self::QuadraticBezier(curve),
+            BezierSubcurve2::Cubic(curve) => Self::CubicBezier(curve),
+            BezierSubcurve2::RationalQuadratic(curve) => Self::RationalQuadraticBezier(curve),
+            BezierSubcurve2::Rational(curve) => Self::RationalBezier(curve),
+        }
+    }
+
     /// Returns this geometry's curve family.
     pub const fn family(&self) -> CurveFamily2 {
         match self {
@@ -337,16 +370,7 @@ impl Curve2 {
     /// Wraps exact geometry in a clone-shared carrier.
     pub fn new(geometry: CurveGeometry2) -> Self {
         let lineage = CurveParameterLineage2::new(geometry_parameter_range(&geometry));
-        Self {
-            data: Arc::new(CurveData2 {
-                carrier: CurveCarrier2::Native(geometry),
-                lineage: Some(lineage),
-                parameter_domain: OnceLock::new(),
-                native_bezier_fragments: PolicyEvaluationCache::new(),
-                rational_evaluators: PolicyEvaluationCache::new(),
-                bounds: OnceLock::new(),
-            }),
-        }
+        Self::from_geometry_with_lineage(geometry, lineage)
     }
 
     /// Constructs an exact polynomial B-spline carrier under `policy`.
@@ -632,14 +656,14 @@ impl Curve2 {
             }
             None => unreachable!("retained reversal handled above"),
         };
-        self.with_lineage(
+        Ok(Self::from_geometry_with_lineage(
             geometry,
             self.data
                 .lineage
                 .as_ref()
                 .expect("native lineage")
                 .reversed(),
-        )
+        ))
     }
 
     /// Applies an exact planar similarity while preserving curve family and source.
@@ -733,10 +757,14 @@ impl Curve2 {
             }
             None => unreachable!("retained transformation handled above"),
         };
-        self.with_lineage(
+        Ok(Self::from_geometry_with_lineage(
             geometry,
-            self.data.lineage.as_ref().expect("native lineage").clone(),
-        )
+            self.data
+                .lineage
+                .as_ref()
+                .expect("native lineage")
+                .transformed(transform),
+        ))
     }
 
     /// Splits this curve exactly at a strict interior public parameter.
@@ -779,8 +807,14 @@ impl Curve2 {
                 let left_lineage = self.lineage_subrange(domain.start(), &parameter)?;
                 let right_lineage = self.lineage_subrange(&parameter, domain.end())?;
                 Ok((
-                    self.with_lineage(CurveGeometry2::PolynomialBSpline(left), left_lineage)?,
-                    self.with_lineage(CurveGeometry2::PolynomialBSpline(right), right_lineage)?,
+                    Self::from_geometry_with_lineage(
+                        CurveGeometry2::PolynomialBSpline(left),
+                        left_lineage,
+                    ),
+                    Self::from_geometry_with_lineage(
+                        CurveGeometry2::PolynomialBSpline(right),
+                        right_lineage,
+                    ),
                 ))
             }
             Some(CurveGeometry2::Nurbs(curve)) => {
@@ -788,8 +822,8 @@ impl Curve2 {
                 let left_lineage = self.lineage_subrange(domain.start(), &parameter)?;
                 let right_lineage = self.lineage_subrange(&parameter, domain.end())?;
                 Ok((
-                    self.with_lineage(CurveGeometry2::Nurbs(left), left_lineage)?,
-                    self.with_lineage(CurveGeometry2::Nurbs(right), right_lineage)?,
+                    Self::from_geometry_with_lineage(CurveGeometry2::Nurbs(left), left_lineage),
+                    Self::from_geometry_with_lineage(CurveGeometry2::Nurbs(right), right_lineage),
                 ))
             }
             _ => Ok((
@@ -930,69 +964,14 @@ impl Curve2 {
                     .map_err(|error| remap_operation(error, CurveOperation2::Subdivision))?,
             ),
         };
-        self.with_lineage(geometry, lineage)
+        Ok(Self::from_geometry_with_lineage(geometry, lineage))
     }
 
-    /// Returns an exact finite subcurve suitable for clamped topology carriers.
-    ///
-    /// Scalar spline ranges preserve their authored parameter interval and
-    /// exact image in clamped piecewise-Bézier form. Selected ranges retain
-    /// their exact source and lower to restricted spans when topology needs
-    /// them. One [`CurveOutcome`] covers the complete operation.
-    #[inline(always)]
-    pub fn clamped_subcurve(
-        &self,
-        start: CurveParameter2,
-        end: CurveParameter2,
-        policy: &CurveContext,
-    ) -> ExactCurveResult<CurveOutcome<Self>> {
-        resolve_certified_operation(policy, |attempt| {
-            if self.geometry().is_some()
-                && let (Some(BezierParameter2::Exact(start)), Some(BezierParameter2::Exact(end))) =
-                    (start.as_bezier_parameter(), end.as_bezier_parameter())
-            {
-                self.clamped_subcurve_raw(start.clone(), end.clone(), attempt)
-            } else {
-                self.subcurve_at_parameters(start, end, attempt)
-            }
-        })
-    }
-
-    pub(crate) fn clamped_subcurve_raw(
-        &self,
-        start: Real,
-        end: Real,
-        policy: &CurveContext,
-    ) -> ExactCurveResult<Self> {
-        let domain = self.native_parameter_domain()?;
-        validate_subcurve_range(
-            domain.start(),
-            &start,
-            &end,
-            domain.end(),
-            self.family(),
-            policy,
-        )?;
-        let lineage = self.lineage_subrange(&start, &end)?;
-        match self.geometry() {
-            Some(CurveGeometry2::PolynomialBSpline(curve)) => self.with_lineage(
-                CurveGeometry2::PolynomialBSpline(curve.clamped_subcurve_raw(start, end, policy)?),
-                lineage,
-            ),
-            Some(CurveGeometry2::Nurbs(curve)) => self.with_lineage(
-                CurveGeometry2::Nurbs(curve.clamped_subcurve_raw(start, end, policy)?),
-                lineage,
-            ),
-            _ => self.subcurve_with_policy(start, end, policy),
-        }
-    }
-
-    fn with_lineage(
-        &self,
+    fn from_geometry_with_lineage(
         geometry: CurveGeometry2,
         lineage: CurveParameterLineage2,
-    ) -> ExactCurveResult<Self> {
-        Ok(Self {
+    ) -> Self {
+        Self {
             data: Arc::new(CurveData2 {
                 carrier: CurveCarrier2::Native(geometry),
                 lineage: Some(lineage),
@@ -1001,7 +980,7 @@ impl Curve2 {
                 rational_evaluators: PolicyEvaluationCache::new(),
                 bounds: OnceLock::new(),
             }),
-        })
+        }
     }
 
     fn lineage_subrange(
@@ -1015,6 +994,13 @@ impl Curve2 {
                 self.lineage_parameter_at(start)?,
                 self.lineage_parameter_at(end)?,
             ),
+            image_transform: self
+                .data
+                .lineage
+                .as_ref()
+                .expect("native lineage")
+                .image_transform
+                .clone(),
         })
     }
 
@@ -1084,6 +1070,7 @@ impl Curve2 {
         match (&self.data.lineage, &other.data.lineage) {
             (Some(first), Some(second)) => {
                 Arc::ptr_eq(&first.root, &second.root)
+                    && first.image_transform == second.image_transform
                     && first.root.image_is_injective.get() == Some(&true)
             }
             _ => false,
@@ -2572,12 +2559,7 @@ impl From<RationalQuadraticBezier2> for Curve2 {
 
 impl From<BezierSubcurve2> for Curve2 {
     fn from(value: BezierSubcurve2) -> Self {
-        match value {
-            BezierSubcurve2::Quadratic(curve) => curve.into(),
-            BezierSubcurve2::Cubic(curve) => curve.into(),
-            BezierSubcurve2::RationalQuadratic(curve) => curve.into(),
-            BezierSubcurve2::Rational(curve) => curve.into(),
-        }
+        Self::new(CurveGeometry2::from_bezier(value))
     }
 }
 
@@ -2635,9 +2617,13 @@ impl NativeBezierFragment2 {
         )
     }
 
-    /// Consumes this fragment and returns its native curve.
-    pub fn into_curve(self) -> BezierSubcurve2 {
-        self.curve
+    /// Publishes the prepared span as an exact curve over `[0, 1]`.
+    ///
+    /// The result preserves the span's native geometry and original parameter
+    /// lineage. It shares the control net and root certificates, without
+    /// reconstructing a spline or retaining its former owner.
+    pub fn into_curve(self) -> Curve2 {
+        Curve2::from_geometry_with_lineage(CurveGeometry2::from_bezier(self.curve), self.lineage)
     }
 }
 
@@ -2810,12 +2796,17 @@ fn promote_native_bezier_fragments(
     curve: &Curve2,
     policy: &CurveContext,
 ) -> ExactCurveResult<Classification<Vec<NativeBezierFragment2>>> {
-    let native = |native_curve, parameter_start: Real, parameter_end: Real| NativeBezierFragment2 {
-        curve: native_curve,
-        span_range: CurveSpanRange2 {
-            start: parameter_start,
-            end: parameter_end,
-        },
+    let native = |native_curve, parameter_start: Real, parameter_end: Real| {
+        Ok(NativeBezierFragment2 {
+            lineage: curve
+                .lineage_subrange(&parameter_start, &parameter_end)
+                .map_err(|error| error.with_operation(CurveOperation2::NativeTopology))?,
+            curve: native_curve,
+            span_range: CurveSpanRange2 {
+                start: parameter_start,
+                end: parameter_end,
+            },
+        })
     };
     let unit = || (Real::zero(), Real::one());
     match curve.geometry() {
@@ -2828,10 +2819,16 @@ fn promote_native_bezier_fragments(
                 BezierSubcurve2::Quadratic(QuadraticBezier2::from_line_segment(line.clone())),
                 start,
                 end,
-            )]))
+            )?]))
         }
         Some(CurveGeometry2::CircularArc(value)) => {
-            Ok(decompose_circular_arc(value, policy)?.map(|decomposition| {
+            let decomposition = match decompose_circular_arc(value, policy)? {
+                Classification::Decided(decomposition) => decomposition,
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            };
+            Ok(Classification::Decided(
                 decomposition
                     .spans()
                     .iter()
@@ -2843,8 +2840,8 @@ fn promote_native_bezier_fragments(
                             end.clone(),
                         )
                     })
-                    .collect()
-            }))
+                    .collect::<ExactCurveResult<_>>()?,
+            ))
         }
         Some(CurveGeometry2::QuadraticBezier(value)) => {
             let (start, end) = unit();
@@ -2852,7 +2849,7 @@ fn promote_native_bezier_fragments(
                 BezierSubcurve2::Quadratic(value.clone()),
                 start,
                 end,
-            )]))
+            )?]))
         }
         Some(CurveGeometry2::CubicBezier(value)) => {
             let (start, end) = unit();
@@ -2860,7 +2857,7 @@ fn promote_native_bezier_fragments(
                 BezierSubcurve2::Cubic(value.clone()),
                 start,
                 end,
-            )]))
+            )?]))
         }
         Some(CurveGeometry2::RationalQuadraticBezier(value)) => {
             let (start, end) = unit();
@@ -2868,7 +2865,7 @@ fn promote_native_bezier_fragments(
                 BezierSubcurve2::RationalQuadratic(value.clone()),
                 start,
                 end,
-            )]))
+            )?]))
         }
         Some(CurveGeometry2::RationalBezier(value)) => {
             let (start, end) = unit();
@@ -2876,7 +2873,7 @@ fn promote_native_bezier_fragments(
                 BezierSubcurve2::Rational(value.clone()),
                 start,
                 end,
-            )]))
+            )?]))
         }
         Some(CurveGeometry2::PolynomialBSpline(value)) => {
             let decomposition = match value.bezier_decomposition_with_policy(policy)? {
@@ -2891,7 +2888,7 @@ fn promote_native_bezier_fragments(
                     .iter()
                     .zip(decomposition.intervals())
                     .map(|(curve, (start, end))| native(curve.clone(), start.clone(), end.clone()))
-                    .collect(),
+                    .collect::<ExactCurveResult<_>>()?,
             ))
         }
         Some(CurveGeometry2::Nurbs(value)) => {
@@ -2917,7 +2914,7 @@ fn promote_native_bezier_fragments(
                         let (start, end) = span.knot_interval();
                         native(curve.clone(), start.clone(), end.clone())
                     })
-                    .collect(),
+                    .collect::<ExactCurveResult<_>>()?,
             ))
         }
     }
@@ -12218,9 +12215,10 @@ fn materialize_corner_cut(
                         None,
                     )
                 };
-                curve
-                    .with_lineage(CurveGeometry2::CircularArc(trimmed), lineage)
-                    .map_err(|error| remap_operation(error, operation))
+                Ok(Curve2::from_geometry_with_lineage(
+                    CurveGeometry2::CircularArc(trimmed),
+                    lineage,
+                ))
             } else {
                 let parameter = cut.exact_parameter().ok_or_else(|| {
                     ExactCurveError::blocked(
