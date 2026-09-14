@@ -107737,14 +107737,14 @@ pub struct BezierParallelPairIntersectionSet2 {
 /// their incident regular rays is kept separate from ordinary finite overlap
 /// ranges. Its maximal exterior endpoints can be algebraic pole/speed
 /// barriers, while the corner solver only needs the stronger fact that
-/// infinitely many admissible centers exist. Keeping that bit out of
-/// [`BezierParallelPairIntersectionSet2`] preserves the common public layout.
-pub(crate) struct BezierParallelPairIncidentIntersectionSet2 {
+/// infinitely many admissible centers exist. It consumes this existence
+/// certificate without constructing maximal exterior overlap ranges.
+pub(crate) struct BezierParallelPairDomainIntersectionSet2 {
     intersections: BezierParallelPairIntersectionSet2,
     positive_dimensional: bool,
 }
 
-impl BezierParallelPairIncidentIntersectionSet2 {
+impl BezierParallelPairDomainIntersectionSet2 {
     fn isolated(intersections: BezierParallelPairIntersectionSet2) -> Self {
         Self {
             intersections,
@@ -114927,25 +114927,20 @@ impl BezierParallel2 {
     }
 
     /// Returns selected-branch intersections on both authored unit spans plus
-    /// one regular incident ray for each source.
+    /// an independently optional regular extension for each source.
     ///
     /// This is the projective corner domain used by TrimOrExtend. The ordinary
     /// parallel-pair equations and exact replay remain authoritative; only the
     /// two univariate resultant projections are enlarged. Each exterior axis
     /// stops before its first source pole or source-speed zero. Exact source
-    /// and radical components reuse the finite topology through four compact
-    /// charts, with correlated clipping against exact regularity barriers.
-    pub(crate) fn parallel_intersections_with_incident_rays(
+    /// and radical components reuse the finite topology through the requested
+    /// compact charts, with correlated clipping against exact regularity barriers.
+    pub(crate) fn parallel_intersections_in_domain(
         &self,
         other: &Self,
-        first_incident: &BezierParallelIncidentDomain2,
-        second_incident: &BezierParallelIncidentDomain2,
+        extensions: [Option<BezierParameterRay2<'_>>; 2],
         policy: &CurveContext,
-    ) -> CurveResult<Classification<BezierParallelPairIncidentIntersectionSet2>> {
-        let extensions = [
-            Some(first_incident.parameter_ray()),
-            Some(second_incident.parameter_ray()),
-        ];
+    ) -> CurveResult<Classification<BezierParallelPairDomainIntersectionSet2>> {
         let Some(system) = (match parallel_pair_equation_system(self, other, false, policy)? {
             Classification::Decided(system) => system,
             Classification::Uncertain(reason) => {
@@ -114953,7 +114948,7 @@ impl BezierParallel2 {
             }
         }) else {
             return Ok(Classification::Decided(
-                BezierParallelPairIncidentIntersectionSet2::isolated(
+                BezierParallelPairDomainIntersectionSet2::isolated(
                     BezierParallelPairIntersectionSet2::complete(Arc::from([]), Arc::from([])),
                 ),
             ));
@@ -115031,12 +115026,12 @@ impl BezierParallel2 {
                     };
                     if selection.positive_dimensional {
                         return Ok(Classification::Decided(
-                            BezierParallelPairIncidentIntersectionSet2::positive_dimensional(),
+                            BezierParallelPairDomainIntersectionSet2::positive_dimensional(),
                         ));
                     }
                     selected_pairs = selection.selected_pairs;
                 }
-                source_isolated_projection = retain_incident_component_pairs(
+                source_isolated_projection = retain_parameter_component_pairs(
                     source_constraint.isolated_projection,
                     selected_pairs,
                 );
@@ -115049,12 +115044,12 @@ impl BezierParallel2 {
                 &system, self, other, &excluded, extensions, policy,
             )? {
                 match residual_projection {
-                    BezierParallelPairIncidentProjection2::Isolated(residual_projection) => {
+                    BezierParallelPairDomainProjection2::Isolated(residual_projection) => {
                         projection = residual_projection;
                     }
-                    BezierParallelPairIncidentProjection2::PositiveDimensional => {
+                    BezierParallelPairDomainProjection2::PositiveDimensional => {
                         return Ok(Classification::Decided(
-                            BezierParallelPairIncidentIntersectionSet2::positive_dimensional(),
+                            BezierParallelPairDomainIntersectionSet2::positive_dimensional(),
                         ));
                     }
                 }
@@ -115065,51 +115060,33 @@ impl BezierParallel2 {
         }
         Ok(self
             .replay_parallel_pair_projection(other, &system, projection, false, policy)?
-            .map(BezierParallelPairIncidentIntersectionSet2::isolated))
+            .map(BezierParallelPairDomainIntersectionSet2::isolated))
     }
 
-    /// Returns off-diagonal self-contacts on two independently oriented
-    /// authored-span-plus-incident-ray domains.
+    /// Returns ordered off-diagonal self-contacts on two authored unit spans
+    /// with independently optional, oriented extensions.
     ///
     /// An exactly rational PH parallel first reuses rational coordinate
     /// equality; a general non-PH parallel divides the structural parameter
     /// diagonal from both radical equations. The remaining axes keep their
     /// corner roles, so replay is ordered rather than using the finite self-
     /// contact kernel's unordered-pair filter.
-    pub(crate) fn self_intersections_with_incident_rays(
+    pub(crate) fn ordered_self_intersections_in_domain(
         &self,
-        first_incident: &BezierParallelIncidentDomain2,
-        second_incident: &BezierParallelIncidentDomain2,
+        extensions: [Option<BezierParameterRay2<'_>>; 2],
         policy: &CurveContext,
-    ) -> CurveResult<Classification<BezierParallelPairIncidentIntersectionSet2>> {
-        let first_anchor = first_incident.anchor();
-        let first_direction = first_incident.direction();
-        let first_barrier = &first_incident.barrier;
-        let second_anchor = second_incident.anchor();
-        let second_direction = second_incident.direction();
-        let second_barrier = &second_incident.barrier;
-        let extensions = [
-            Some(first_incident.parameter_ray()),
-            Some(second_incident.parameter_ray()),
-        ];
+    ) -> CurveResult<Classification<BezierParallelPairDomainIntersectionSet2>> {
         match self.exact_rational_parallel_component(policy)? {
             Classification::Decided(Some(curve)) => {
-                let result = match curve.self_intersection_contacts_with_incident_rays_classified(
-                    first_anchor,
-                    first_direction,
-                    first_barrier.as_ref(),
-                    second_anchor,
-                    second_direction,
-                    second_barrier.as_ref(),
-                    policy,
-                )? {
-                    Classification::Decided(result) => result,
-                    Classification::Uncertain(reason) => {
-                        return Ok(Classification::Uncertain(reason));
-                    }
-                };
+                let result =
+                    match curve.ordered_self_intersection_contacts_in_domain(extensions, policy)? {
+                        Classification::Decided(result) => result,
+                        Classification::Uncertain(reason) => {
+                            return Ok(Classification::Uncertain(reason));
+                        }
+                    };
                 return Ok(Classification::Decided(
-                    BezierParallelPairIncidentIntersectionSet2::isolated(
+                    BezierParallelPairDomainIntersectionSet2::isolated(
                         parallel_pair_set_from_rational_self_contacts(self, result, policy)?,
                     ),
                 ));
@@ -115126,7 +115103,7 @@ impl BezierParallel2 {
             }
         }) else {
             return Ok(Classification::Decided(
-                BezierParallelPairIncidentIntersectionSet2::isolated(
+                BezierParallelPairDomainIntersectionSet2::isolated(
                     BezierParallelPairIntersectionSet2::complete(Arc::from([]), Arc::from([])),
                 ),
             ));
@@ -115175,12 +115152,12 @@ impl BezierParallel2 {
                 };
                 if selection.positive_dimensional {
                     return Ok(Classification::Decided(
-                        BezierParallelPairIncidentIntersectionSet2::positive_dimensional(),
+                        BezierParallelPairDomainIntersectionSet2::positive_dimensional(),
                     ));
                 }
                 selected_pairs = selection.selected_pairs;
             }
-            source_isolated_projection = retain_incident_component_pairs(
+            source_isolated_projection = retain_parameter_component_pairs(
                 source_constraint.isolated_projection,
                 selected_pairs,
             );
@@ -115195,7 +115172,7 @@ impl BezierParallel2 {
         )?
         else {
             return Ok(Classification::Decided(
-                BezierParallelPairIncidentIntersectionSet2::isolated(
+                BezierParallelPairDomainIntersectionSet2::isolated(
                     BezierParallelPairIntersectionSet2::incomplete(
                         Arc::from([]),
                         Arc::from([]),
@@ -115205,10 +115182,10 @@ impl BezierParallel2 {
             ));
         };
         let mut projection = match projection {
-            BezierParallelPairIncidentProjection2::Isolated(projection) => projection,
-            BezierParallelPairIncidentProjection2::PositiveDimensional => {
+            BezierParallelPairDomainProjection2::Isolated(projection) => projection,
+            BezierParallelPairDomainProjection2::PositiveDimensional => {
                 return Ok(Classification::Decided(
-                    BezierParallelPairIncidentIntersectionSet2::positive_dimensional(),
+                    BezierParallelPairDomainIntersectionSet2::positive_dimensional(),
                 ));
             }
         };
@@ -115217,7 +115194,7 @@ impl BezierParallel2 {
         }
         Ok(self
             .replay_parallel_pair_projection(self, &system, projection, false, policy)?
-            .map(BezierParallelPairIncidentIntersectionSet2::isolated))
+            .map(BezierParallelPairDomainIntersectionSet2::isolated))
     }
 
     /// Tries the exact-rational parallel-pair routes.
@@ -125948,7 +125925,7 @@ fn prepend_parallel_pair_projection(
     projection.radical_component_projection = Some(Box::new(preceding));
 }
 
-fn retain_incident_component_pairs(
+fn retain_parameter_component_pairs(
     projection: Option<BezierParallelPairProjection2>,
     pairs: Vec<BezierParallelIntersectionParameterPair2>,
 ) -> Option<BezierParallelPairProjection2> {
@@ -126241,7 +126218,7 @@ fn project_parallel_pair_without_components(
     }))
 }
 
-enum BezierParallelPairIncidentProjection2 {
+enum BezierParallelPairDomainProjection2 {
     Isolated(BezierParallelPairProjection2),
     PositiveDimensional,
 }
@@ -126549,7 +126526,7 @@ fn select_axis_parameter_components_on_chart(
                 }
             };
             if selected {
-                let mapped = match map_incident_component_pair_from_chart(
+                let mapped = match map_parameter_component_pair_from_chart(
                     &event_pair,
                     first_chart,
                     second_chart,
@@ -126606,7 +126583,7 @@ fn select_axis_parameter_components_on_chart(
     Ok(Classification::Decided(false))
 }
 
-fn map_incident_component_pair_from_chart(
+fn map_parameter_component_pair_from_chart(
     pair: &BezierParallelIntersectionParameterPair2,
     first_chart: ParameterComponentChart2<'_>,
     second_chart: ParameterComponentChart2<'_>,
@@ -126813,7 +126790,7 @@ fn project_parallel_pair_without_components_in_domain(
     source_overlap: &Classification<CertifiedParallelSourceOverlap2>,
     extensions: [Option<BezierParameterRay2<'_>>; 2],
     policy: &CurveContext,
-) -> CurveResult<Option<BezierParallelPairIncidentProjection2>> {
+) -> CurveResult<Option<BezierParallelPairDomainProjection2>> {
     if !matches!(source_overlap, Classification::Decided(_)) {
         return Ok(None);
     }
@@ -126905,19 +126882,19 @@ fn project_parallel_pair_without_components_in_domain(
             };
             if selection.positive_dimensional {
                 return Ok(Some(
-                    BezierParallelPairIncidentProjection2::PositiveDimensional,
+                    BezierParallelPairDomainProjection2::PositiveDimensional,
                 ));
             }
             selected_pairs = selection.selected_pairs;
         }
-        retain_incident_component_pairs(constraint.isolated_projection, selected_pairs)
+        retain_parameter_component_pairs(constraint.isolated_projection, selected_pairs)
             .map(Box::new)
     } else {
         None
     };
     let residual_equations =
         (source_component_removed || residual_was_saturated).then(|| Box::new(residual_equations));
-    Ok(Some(BezierParallelPairIncidentProjection2::Isolated(
+    Ok(Some(BezierParallelPairDomainProjection2::Isolated(
         BezierParallelPairProjection2 {
             candidates,
             basis: BezierParallelPairProjectionBasis2::ProjectionEquations,
@@ -158944,6 +158921,277 @@ mod conversion_tests {
     }
 
     #[test]
+    fn parallel_contact_domains_keep_independent_extensions_and_components() {
+        let line_parallel = |start, end, distance| {
+            QuadraticBezier2::from_line_segment(LineSeg2::try_new(start, end).unwrap())
+                .parallel_left(distance)
+                .unwrap()
+        };
+        let half = (Real::one() / Real::from(2_i8)).unwrap();
+        let first = line_parallel(
+            Point2::from_values(0, -1),
+            Point2::from_values(1, -1),
+            Real::one(),
+        );
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let first_domain = incident_domain(
+                &first,
+                Real::one(),
+                BezierParameterRayDirection2::Increasing,
+                &policy,
+            );
+            for first_exterior in [false, true] {
+                for second_exterior in [false, true] {
+                    let t = if first_exterior {
+                        &half + Real::one()
+                    } else {
+                        half.clone()
+                    };
+                    let u = if second_exterior {
+                        -&half
+                    } else {
+                        half.clone()
+                    };
+                    // The selected parallels are y=0 and x=t. Their single
+                    // transverse contact has these exact ordered parameters.
+                    let second = line_parallel(
+                        Point2::new(&t + Real::one(), -&u),
+                        Point2::new(&t + Real::one(), Real::one() - &u),
+                        Real::one(),
+                    );
+                    let second_domain = incident_domain(
+                        &second,
+                        Real::zero(),
+                        BezierParameterRayDirection2::Decreasing,
+                        &policy,
+                    );
+                    for extend_first in [false, true] {
+                        for extend_second in [false, true] {
+                            let Classification::Decided(result) = first
+                                .parallel_intersections_in_domain(
+                                    &second,
+                                    [
+                                        extend_first.then(|| first_domain.parameter_ray()),
+                                        extend_second.then(|| second_domain.parameter_ray()),
+                                    ],
+                                    &policy,
+                                )
+                                .unwrap()
+                            else {
+                                panic!("independent exact contact domains must be decided")
+                            };
+                            let (intersections, component) = result.into_parts();
+                            assert!(intersections.is_complete(), "{intersections:?}");
+                            assert!(!component);
+                            let expected = (!first_exterior || extend_first)
+                                && (!second_exterior || extend_second);
+                            assert_eq!(intersections.contacts().len(), usize::from(expected));
+                            for contact in intersections.contacts() {
+                                for (parameter, expected) in [
+                                    (contact.first_parameter(), &t),
+                                    (contact.second_parameter(), &u),
+                                ] {
+                                    assert_eq!(
+                                        parameter
+                                            .cmp_by_refinement(
+                                                &BezierParameter2::Exact(expected.clone()),
+                                                &policy,
+                                            )
+                                            .unwrap(),
+                                        Classification::Decided(std::cmp::Ordering::Equal)
+                                    );
+                                }
+                                assert!(contact.is_certified_transverse());
+                            }
+                        }
+                    }
+                }
+            }
+            // Disjoint source lines have coincident selected parallels with
+            // t=u+2. Either single extension admits an interval of centers;
+            // the two finite spans admit none.
+            let second = line_parallel(
+                Point2::from_values(2, 1),
+                Point2::from_values(3, 1),
+                -Real::one(),
+            );
+            let second_domain = incident_domain(
+                &second,
+                Real::zero(),
+                BezierParameterRayDirection2::Decreasing,
+                &policy,
+            );
+            for extend_first in [false, true] {
+                for extend_second in [false, true] {
+                    let Classification::Decided(result) = first
+                        .parallel_intersections_in_domain(
+                            &second,
+                            [
+                                extend_first.then(|| first_domain.parameter_ray()),
+                                extend_second.then(|| second_domain.parameter_ray()),
+                            ],
+                            &policy,
+                        )
+                        .unwrap()
+                    else {
+                        panic!("the selected component domain must be decided")
+                    };
+                    let (intersections, component) = result.into_parts();
+                    assert!(intersections.is_complete(), "{intersections:?}");
+                    assert_eq!(component, extend_first || extend_second);
+                    assert!(intersections.contacts().is_empty());
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn ordered_self_contact_domains_retain_axis_roles_after_restriction() {
+        let ratio = |n: i8, d: i8| (Real::from(n) / Real::from(d)).unwrap();
+        let source = RationalBezier2::try_new(
+            [(9, 0), (-7, 3), (-7, -10), (9, 9)]
+                .map(|(x, y)| Point2::from_values(x, y))
+                .to_vec(),
+            vec![Real::one(); 4],
+        )
+        .unwrap();
+        use BezierParameterRayDirection2::{Decreasing, Increasing};
+        // The original loop meets (0,0) at 1/4 and 3/4. Restrictions move
+        // either or both parameters outside the authored unit span.
+        let fixtures = [
+            (
+                Real::zero(),
+                Real::one(),
+                [ratio(1, 4), ratio(3, 4)],
+                [Increasing, Decreasing],
+            ),
+            (
+                Real::zero(),
+                ratio(1, 2),
+                [ratio(1, 2), ratio(3, 2)],
+                [Increasing; 2],
+            ),
+            (
+                Real::zero(),
+                ratio(1, 2),
+                [ratio(1, 2), ratio(-1, 2)],
+                [Decreasing; 2],
+            ),
+            (
+                ratio(3, 8),
+                ratio(5, 8),
+                [ratio(-1, 2), ratio(3, 2)],
+                [Decreasing, Increasing],
+            ),
+        ];
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            for (case, (start, end, roots, directions)) in fixtures.iter().enumerate() {
+                let Classification::Decided(curve) =
+                    source.subcurve_between_exact(start, end, &policy).unwrap()
+                else {
+                    panic!("the exact loop restriction in case {case} must be representable")
+                };
+                let curve = if case == 2 { curve.reversed() } else { curve };
+                let parallel = curve.parallel_left(Real::zero()).unwrap();
+                // Populate finite-domain evidence first. It cannot authorize
+                // an unordered or injective exclusion on the extended axes.
+                let Classification::Decided(finite) = parallel.self_intersections(&policy).unwrap()
+                else {
+                    panic!("the finite self-contact query must be decided")
+                };
+                assert!(finite.is_complete());
+                assert_eq!(finite.contacts().len(), usize::from(case == 0));
+                let domains = directions.map(|direction| {
+                    incident_domain(
+                        &parallel,
+                        match direction {
+                            Increasing => Real::one(),
+                            Decreasing => Real::zero(),
+                        },
+                        direction,
+                        &policy,
+                    )
+                });
+                for extend_first in [false, true] {
+                    for extend_second in [false, true] {
+                        let Classification::Decided(result) = parallel
+                            .ordered_self_intersections_in_domain(
+                                [
+                                    extend_first.then(|| domains[0].parameter_ray()),
+                                    extend_second.then(|| domains[1].parameter_ray()),
+                                ],
+                                &policy,
+                            )
+                            .unwrap()
+                        else {
+                            panic!("ordered self-contact domains must be decided")
+                        };
+                        let (intersections, component) = result.into_parts();
+                        assert!(intersections.is_complete(), "{intersections:?}");
+                        assert!(!component);
+                        let expected = match case {
+                            0 => vec![[0, 1], [1, 0]],
+                            1 | 2 => [
+                                extend_first.then_some([1, 0]),
+                                extend_second.then_some([0, 1]),
+                            ]
+                            .into_iter()
+                            .flatten()
+                            .collect(),
+                            3 => {
+                                if extend_first && extend_second {
+                                    vec![[0, 1]]
+                                } else {
+                                    vec![]
+                                }
+                            }
+                            _ => unreachable!(),
+                        };
+                        assert_eq!(
+                            intersections.contacts().len(),
+                            expected.len(),
+                            "case {case}, extensions {extend_first}, {extend_second}"
+                        );
+                        for [first, second] in expected {
+                            assert_eq!(
+                                intersections
+                                    .contacts()
+                                    .iter()
+                                    .filter(|contact| {
+                                        [contact.first_parameter(), contact.second_parameter()]
+                                            .into_iter()
+                                            .zip([first, second])
+                                            .all(|(parameter, index)| {
+                                                parameter
+                                                    .cmp_by_refinement(
+                                                        &BezierParameter2::Exact(
+                                                            roots[index].clone(),
+                                                        ),
+                                                        &policy,
+                                                    )
+                                                    .unwrap()
+                                                    == Classification::Decided(
+                                                        std::cmp::Ordering::Equal,
+                                                    )
+                                            })
+                                    })
+                                    .count(),
+                                1
+                            );
+                        }
+                        assert!(
+                            intersections
+                                .contacts()
+                                .iter()
+                                .all(|contact| contact.is_certified_transverse())
+                        );
+                    }
+                }
+            }
+        }
+    }
+
+    #[test]
     fn incident_source_component_with_unequal_distances_retains_its_residual_system() {
         let first = QuadraticBezier2::new(
             Point2::from_values(0, 0),
@@ -158965,20 +159213,28 @@ mod conversion_tests {
 
         for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
             let incident = match first
-                .parallel_intersections_with_incident_rays(
+                .parallel_intersections_in_domain(
                     &second,
-                    &incident_domain(
-                        &first,
-                        Real::one(),
-                        BezierParameterRayDirection2::Increasing,
-                        &policy,
-                    ),
-                    &incident_domain(
-                        &second,
-                        Real::zero(),
-                        BezierParameterRayDirection2::Decreasing,
-                        &policy,
-                    ),
+                    [
+                        Some(
+                            incident_domain(
+                                &first,
+                                Real::one(),
+                                BezierParameterRayDirection2::Increasing,
+                                &policy,
+                            )
+                            .parameter_ray(),
+                        ),
+                        Some(
+                            incident_domain(
+                                &second,
+                                Real::zero(),
+                                BezierParameterRayDirection2::Decreasing,
+                                &policy,
+                            )
+                            .parameter_ray(),
+                        ),
+                    ],
                     &policy,
                 )
                 .unwrap()
@@ -166775,7 +167031,7 @@ mod conversion_tests {
             .unwrap();
             assert!(matches!(
                 projection,
-                Some(BezierParallelPairIncidentProjection2::PositiveDimensional),
+                Some(BezierParallelPairDomainProjection2::PositiveDimensional),
             ));
 
             let fixed_first = BivariatePolynomial::new(vec![
@@ -166810,7 +167066,7 @@ mod conversion_tests {
             .unwrap();
             assert!(matches!(
                 axis_projection,
-                Some(BezierParallelPairIncidentProjection2::PositiveDimensional),
+                Some(BezierParallelPairDomainProjection2::PositiveDimensional),
             ));
 
             let tangent_cross = BivariatePolynomial::new(vec![
@@ -166828,7 +167084,7 @@ mod conversion_tests {
             };
             let first_barrier =
                 BezierParameter2::Exact((Real::from(3_i8) / Real::from(2_i8)).unwrap());
-            let Some(BezierParallelPairIncidentProjection2::Isolated(projection)) =
+            let Some(BezierParallelPairDomainProjection2::Isolated(projection)) =
                 project_parallel_pair_without_components_in_domain(
                     &isolated_system,
                     &first,
@@ -166920,23 +167176,31 @@ mod conversion_tests {
             .unwrap();
             assert!(matches!(
                 projection,
-                Some(BezierParallelPairIncidentProjection2::PositiveDimensional),
+                Some(BezierParallelPairDomainProjection2::PositiveDimensional),
             ));
             let Classification::Decided(incident) = first
-                .parallel_intersections_with_incident_rays(
+                .parallel_intersections_in_domain(
                     &second,
-                    &incident_domain(
-                        &first,
-                        Real::one(),
-                        BezierParameterRayDirection2::Increasing,
-                        &policy,
-                    ),
-                    &incident_domain(
-                        &second,
-                        Real::zero(),
-                        BezierParameterRayDirection2::Decreasing,
-                        &policy,
-                    ),
+                    [
+                        Some(
+                            incident_domain(
+                                &first,
+                                Real::one(),
+                                BezierParameterRayDirection2::Increasing,
+                                &policy,
+                            )
+                            .parameter_ray(),
+                        ),
+                        Some(
+                            incident_domain(
+                                &second,
+                                Real::zero(),
+                                BezierParameterRayDirection2::Decreasing,
+                                &policy,
+                            )
+                            .parameter_ray(),
+                        ),
+                    ],
                     &policy,
                 )
                 .unwrap()

@@ -6630,25 +6630,15 @@ fn fillet_offset_centers(
                 None
             };
             let (intersections, positive_dimensional_incident_seam) = if use_incident_rays {
-                let first_domain = previous_incident_domain
-                    .as_ref()
-                    .expect("previous incident domain was built");
-                let second_domain = next_incident_domain
-                    .as_ref()
-                    .expect("next incident domain was built");
+                let extensions = [
+                    previous_incident_domain.as_ref(),
+                    next_incident_domain.as_ref(),
+                ]
+                .map(|domain| domain.map(|domain| domain.parameter_ray()));
                 let incident = match (if identical_supports {
-                    previous.self_intersections_with_incident_rays(
-                        first_domain,
-                        second_domain,
-                        policy,
-                    )
+                    previous.ordered_self_intersections_in_domain(extensions, policy)
                 } else {
-                    previous.parallel_intersections_with_incident_rays(
-                        next,
-                        first_domain,
-                        second_domain,
-                        policy,
-                    )
+                    previous.parallel_intersections_in_domain(next, extensions, policy)
                 })
                 .map_err(|cause| {
                     ExactCurveError::invalid(CurveOperation2::Fillet, previous_family, cause)

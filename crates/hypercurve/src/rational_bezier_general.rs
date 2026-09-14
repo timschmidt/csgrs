@@ -1275,6 +1275,7 @@ fn project_retained_lineage_residual_system(
 
 fn project_symmetric_self_intersection_system(
     equations: &[BivariatePolynomial; 2],
+    extensions: [Option<BezierParameterRay2<'_>>; 2],
     policy: &CurveContext,
 ) -> CurveResult<Classification<RationalBezierIntersectionCandidates2>> {
     // Degree elevation and projective parameter changes can leave common
@@ -1282,10 +1283,16 @@ fn project_symmetric_self_intersection_system(
     // removed. Their rootless fibers do not describe self-contacts. Saturate
     // only with the shared algebraic domain certificate, preserving every
     // genuine component and the original parameter chart for replay.
-    let primitive = hypersolve::saturate_rootless_bivariate_axis_factors(
-        equations,
-        [[&Real::zero(), &Real::one()]; 2],
-    );
+    // A factor rootless on the unit square may have a real exterior fiber.
+    // That finite certificate can only authorize saturation without rays.
+    let primitive = if extensions.iter().all(Option::is_none) {
+        hypersolve::saturate_rootless_bivariate_axis_factors(
+            equations,
+            [[&Real::zero(), &Real::one()]; 2],
+        )
+    } else {
+        None
+    };
     let equations = primitive.as_ref().unwrap_or(equations);
     let report = resultant_bivariate_polynomial_system_complete(
         &equations[0],
@@ -1296,71 +1303,41 @@ fn project_symmetric_self_intersection_system(
             max_resultant_degree: MAX_RATIONAL_INTERSECTION_RESULTANT_DEGREE,
         },
     );
-    let projection = match resultant_parameter_projection(report, None, policy)? {
-        Classification::Decided(projection) => projection,
+    // The residual coordinate equations are symmetric in the two source
+    // parameters. Construct one resultant and isolate its unit roots once;
+    // each ordered axis then appends only its own requested exterior roots.
+    let polynomial = match resultant_parameter_polynomial(report, policy)? {
+        Classification::Decided(Some(polynomial)) => polynomial,
+        Classification::Decided(None) => {
+            return Ok(Classification::Decided(
+                RationalBezierIntersectionCandidates2::DegenerateResultant,
+            ));
+        }
         Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
     };
-    Ok(Classification::Decided(match projection {
-        ResultantParameterProjection::Empty => {
-            RationalBezierIntersectionCandidates2::NoIntersection
-        }
-        ResultantParameterProjection::Degenerate => {
-            RationalBezierIntersectionCandidates2::DegenerateResultant
-        }
-        ResultantParameterProjection::Parameters(parameters)
-        | ResultantParameterProjection::SelectedParameters(parameters) => {
-            RationalBezierIntersectionCandidates2::Candidates {
-                first_parameters: parameters.clone(),
-                second_parameters: parameters,
-            }
-        }
-    }))
-}
-
-#[allow(clippy::too_many_arguments)]
-fn project_symmetric_self_intersection_system_with_incident_rays(
-    equations: &[BivariatePolynomial; 2],
-    first_anchor: &Real,
-    first_direction: BezierParameterRayDirection2,
-    first_barrier: Option<&BezierParameter2>,
-    second_anchor: &Real,
-    second_direction: BezierParameterRayDirection2,
-    second_barrier: Option<&BezierParameter2>,
-    policy: &CurveContext,
-) -> CurveResult<Classification<RationalBezierIntersectionCandidates2>> {
-    let project = |parameter, anchor, direction, barrier| {
-        resultant_parameter_projection(
-            resultant_bivariate_polynomial_system_complete(
-                &equations[0],
-                &equations[1],
-                parameter,
-                CurveIntersectionResultantConfig {
-                    min_precision: RATIONAL_INTERSECTION_RESULTANT_PRECISION,
-                    max_resultant_degree: MAX_RATIONAL_INTERSECTION_RESULTANT_DEGREE,
-                },
-            ),
-            Some(BezierParameterRay2 {
-                anchor,
-                direction,
-                barrier,
-            }),
-            policy,
-        )
+    let parameters = match polynomial.isolate_unit_interval_roots(policy)? {
+        Classification::Decided(parameters) => parameters,
+        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
     };
-    let first = match project(
-        CurveResultantParameter::First,
-        first_anchor,
-        first_direction,
-        first_barrier,
+    let first = match extend_resultant_parameter_projection(
+        &polynomial,
+        parameters.clone(),
+        extensions[0],
+        policy,
     )? {
+        Classification::Decided(ResultantParameterProjection::Empty) => {
+            return Ok(Classification::Decided(
+                RationalBezierIntersectionCandidates2::NoIntersection,
+            ));
+        }
         Classification::Decided(projection) => projection,
         Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
     };
-    let second = match project(
-        CurveResultantParameter::Second,
-        second_anchor,
-        second_direction,
-        second_barrier,
+    let second = match extend_resultant_parameter_projection(
+        &polynomial,
+        parameters,
+        extensions[1],
+        policy,
     )? {
         Classification::Decided(projection) => projection,
         Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
@@ -3356,12 +3333,13 @@ impl RationalBezier2 {
         let Some(equations) = rational_self_intersection_residual_system(basis) else {
             return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
         };
-        let candidates = match project_symmetric_self_intersection_system(&equations, policy)? {
-            Classification::Decided(candidates) => candidates,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
+        let candidates =
+            match project_symmetric_self_intersection_system(&equations, [None; 2], policy)? {
+                Classification::Decided(candidates) => candidates,
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            };
         let replayed = match &candidates {
             RationalBezierIntersectionCandidates2::NoIntersection => {
                 RationalBezierIntersectionContacts2::NoIntersection
@@ -3390,8 +3368,8 @@ impl RationalBezier2 {
         retain_unordered_rational_self_contacts(replayed, basis, policy)
     }
 
-    /// Returns ordered off-diagonal self-contacts over two authored-span-plus-
-    /// incident-ray domains.
+    /// Returns ordered off-diagonal self-contacts over the authored unit span
+    /// plus an independently optional extension on each parameter axis.
     ///
     /// This is the exact-rational specialization used by projective PH-corner
     /// solving. Unlike the finite unordered authority, injectivity on the
@@ -3399,15 +3377,9 @@ impl RationalBezier2 {
     /// may revisit the other incident cell. The structural parameter diagonal
     /// is removed once, both residual projections are isolated on their own
     /// ordered domains, and the unchanged bivariate replay proves every pair.
-    #[allow(clippy::too_many_arguments)]
-    pub(crate) fn self_intersection_contacts_with_incident_rays_classified(
+    pub(crate) fn ordered_self_intersection_contacts_in_domain(
         &self,
-        first_anchor: &Real,
-        first_direction: BezierParameterRayDirection2,
-        first_barrier: Option<&BezierParameter2>,
-        second_anchor: &Real,
-        second_direction: BezierParameterRayDirection2,
-        second_barrier: Option<&BezierParameter2>,
+        extensions: [Option<BezierParameterRay2<'_>>; 2],
         policy: &CurveContext,
     ) -> CurveResult<Classification<RationalBezierIntersectionContacts2>> {
         if let Classification::Uncertain(reason) = self.common_weight_sign(policy) {
@@ -3417,21 +3389,13 @@ impl RationalBezier2 {
         let Some(equations) = rational_self_intersection_residual_system(basis) else {
             return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
         };
-        let candidates = match project_symmetric_self_intersection_system_with_incident_rays(
-            &equations,
-            first_anchor,
-            first_direction,
-            first_barrier,
-            second_anchor,
-            second_direction,
-            second_barrier,
-            policy,
-        )? {
-            Classification::Decided(candidates) => candidates,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
+        let candidates =
+            match project_symmetric_self_intersection_system(&equations, extensions, policy)? {
+                Classification::Decided(candidates) => candidates,
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            };
         let mut exterior_point_evidence = |parameter: &BezierParameter2| {
             let BezierParameter2::Exact(parameter) = parameter else {
                 return Ok(None);
@@ -9076,12 +9040,24 @@ pub(crate) fn resultant_parameter_projection(
             return Ok(Classification::Uncertain(reason));
         }
     };
-    let mut parameters = match polynomial.isolate_unit_interval_roots(policy)? {
+    let parameters = match polynomial.isolate_unit_interval_roots(policy)? {
         Classification::Decided(parameters) => parameters,
         Classification::Uncertain(reason) => {
             return Ok(Classification::Uncertain(reason));
         }
     };
+    extend_resultant_parameter_projection(&polynomial, parameters, extension, policy)
+}
+
+/// Extends an already certified unit projection while retaining its root
+/// ownership. Symmetric systems reuse the polynomial and unit certificates
+/// across their independently ordered axes.
+fn extend_resultant_parameter_projection(
+    polynomial: &BezierParameterPolynomial,
+    mut parameters: Vec<BezierParameter2>,
+    extension: Option<BezierParameterRay2<'_>>,
+    policy: &CurveContext,
+) -> CurveResult<Classification<ResultantParameterProjection>> {
     if let Some(extension) = extension {
         let exterior = match polynomial.isolate_incident_ray_roots(
             extension.anchor,
