@@ -991,6 +991,11 @@ fn isolate_local_polynomial_roots_bernstein(
             value.scale(scale, self.field)
         }
 
+        fn normalize_positive_scale(&mut self, _coefficients: &mut [LocalFieldElement]) {
+            // This Bernstein adapter retains the existing reduced local
+            // fractions; it does not construct a signed remainder chain.
+        }
+
         fn sign(&mut self, value: &LocalFieldElement) -> Result<Ordering, Self::Error> {
             value.sign(self.field)
         }

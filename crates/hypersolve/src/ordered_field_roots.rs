@@ -32,6 +32,15 @@ pub trait OrderedFieldPolynomialContext<C> {
     /// Exact multiplication by a represented real scalar.
     fn scale(&mut self, value: &C, scale: &Real) -> Result<C, Self::Error>;
 
+    /// Removes an available common positive scale from a coefficient tuple.
+    ///
+    /// Every coefficient must receive the same strictly positive field factor;
+    /// length, signs, zero sets and coefficient-field identity are preserved.
+    /// Actual polynomial values may change, so callers use this only for
+    /// projective, root or sign semantics. If normalization is unavailable,
+    /// leave the entire tuple unchanged. No approximate decision is permitted.
+    fn normalize_positive_scale(&mut self, coefficients: &mut [C]);
+
     /// Authoritative exact sign.
     fn sign(&mut self, value: &C) -> Result<Ordering, Self::Error>;
 
@@ -667,6 +676,14 @@ mod tests {
             Ok(value * scale)
         }
 
+        fn normalize_positive_scale(&mut self, coefficients: &mut [Real]) {
+            if let Some(normalized) =
+                crate::integer_interpolation::primitive_integer_polynomial(coefficients)
+            {
+                coefficients.clone_from_slice(&normalized);
+            }
+        }
+
         fn sign(&mut self, value: &Real) -> Result<Ordering, Self::Error> {
             value.partial_cmp(&Real::zero()).ok_or(())
         }
@@ -781,6 +798,9 @@ mod tests {
             }
             fn scale(&mut self, value: &Real, scale: &Real) -> Result<Real, ()> {
                 Ok(value * scale)
+            }
+            fn normalize_positive_scale(&mut self, _: &mut [Real]) {
+                panic!("linear division must preserve actual coefficient values")
             }
             fn sign(&mut self, _: &Real) -> Result<Ordering, ()> {
                 panic!("the caller already owns the incidence proof")
@@ -925,6 +945,17 @@ mod tests {
 
         fn sign(&mut self, value: &DepthTracked) -> Result<Ordering, Self::Error> {
             value.value.partial_cmp(&Real::zero()).ok_or(())
+        }
+
+        fn normalize_positive_scale(&mut self, coefficients: &mut [DepthTracked]) {
+            let mut values: Vec<_> = coefficients
+                .iter()
+                .map(|value| value.value.clone())
+                .collect();
+            RealContext.normalize_positive_scale(&mut values);
+            for (coefficient, value) in coefficients.iter_mut().zip(values) {
+                coefficient.value = value;
+            }
         }
 
         fn sign_if_separated(

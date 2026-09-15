@@ -25,6 +25,8 @@ use crate::root_isolation::{IsolatedRootInterval, polynomial_div_rem};
 /// The division-free Sturm-Tarski chain uses only the existing field
 /// arithmetic and exact signs. Positive pseudo-remainder scales preserve the
 /// query's sign, including for nonmonic and negative leading coefficients.
+/// The field removes available common positive content before it compounds
+/// through later remainders, preserving the caller's original root authority.
 /// Only two successive polynomials are retained; no root refinement, field
 /// projection or independent root isolation is required. Unavailable field
 /// decisions propagate through the context's error type.
@@ -40,6 +42,7 @@ pub fn ordered_field_sign_at_selected_root<C: Clone, F: OrderedFieldPolynomialCo
         return Ok(None);
     }
     let mut first = defining.to_vec();
+    field.normalize_positive_scale(&mut first);
     trim_polynomial(&mut first, field)?;
     if first.len() < 2 {
         return Ok(None);
@@ -50,6 +53,7 @@ pub fn ordered_field_sign_at_selected_root<C: Clone, F: OrderedFieldPolynomialCo
         return Ok(None);
     }
     let mut predicate = predicate.to_vec();
+    field.normalize_positive_scale(&mut predicate);
     trim_polynomial(&mut predicate, field)?;
     if predicate.is_empty() {
         return Ok(Some(Ordering::Equal));
@@ -73,6 +77,7 @@ pub fn ordered_field_sign_at_selected_root<C: Clone, F: OrderedFieldPolynomialCo
     let mut previous = [lower_sign, upper_sign];
     let mut variations = [0_usize; 2];
     loop {
+        field.normalize_positive_scale(&mut second);
         trim_polynomial(&mut second, field)?;
         if second.is_empty() {
             return Ok(query_sign_from_variations(variations[0], variations[1]));
@@ -234,6 +239,14 @@ mod tests {
             Ok(value * scale)
         }
 
+        fn normalize_positive_scale(&mut self, coefficients: &mut [Real]) {
+            if let Some(normalized) =
+                crate::integer_interpolation::primitive_integer_polynomial(coefficients)
+            {
+                coefficients.clone_from_slice(&normalized);
+            }
+        }
+
         fn sign(&mut self, value: &Real) -> Result<Ordering, Self::Error> {
             sign(value).ok_or(())
         }
@@ -279,6 +292,87 @@ mod tests {
                 ).unwrap(),
                 sign(&Real::eval_poly(&predicate, &selected)),
             );
+        }
+    }
+
+    #[test]
+    fn ordered_field_replay_bounds_irrelevant_polynomial_scale() {
+        #[derive(Default)]
+        struct BoundedField {
+            maximum_bits: u64,
+        }
+        impl BoundedField {
+            fn retain(&mut self, value: Real) -> Result<Real, &'static str> {
+                let rational = value.exact_rational_ref().ok_or("rational fixture")?;
+                self.maximum_bits = self
+                    .maximum_bits
+                    .max(rational.numerator().bits())
+                    .max(rational.denominator().bits());
+                if self.maximum_bits > 256 {
+                    return Err("coefficient budget exceeded");
+                }
+                Ok(value)
+            }
+        }
+        impl OrderedFieldPolynomialContext<Real> for BoundedField {
+            type Error = &'static str;
+
+            fn zero(&mut self) -> Result<Real, Self::Error> {
+                Ok(Real::zero())
+            }
+            fn add(&mut self, left: &Real, right: &Real) -> Result<Real, Self::Error> {
+                self.retain(left + right)
+            }
+            fn multiply(&mut self, left: &Real, right: &Real) -> Result<Real, Self::Error> {
+                self.retain(left * right)
+            }
+            fn scale(&mut self, value: &Real, scale: &Real) -> Result<Real, Self::Error> {
+                self.retain(value * scale)
+            }
+            fn normalize_positive_scale(&mut self, coefficients: &mut [Real]) {
+                RealContext.normalize_positive_scale(coefficients);
+            }
+            fn sign(&mut self, value: &Real) -> Result<Ordering, Self::Error> {
+                sign(value).ok_or("exact rational sign")
+            }
+            fn sign_if_separated(&mut self, value: &Real) -> Result<Option<Ordering>, Self::Error> {
+                self.sign(value).map(Some)
+            }
+        }
+
+        // P=(t-1)(t^2+1)(t^2+2)(t^2+3) has exactly one real root, t=1.
+        // Every defining gauge and every independently scaled predicate must
+        // reuse that selection without carrying their content through the PRS.
+        let defining = [-6, 6, -11, 11, -6, 6, -1, 1].map(Real::from);
+        let predicate = [2, -3, 4, -2, 5, -6, 1].map(Real::from);
+        let interval = IsolatedRootInterval {
+            lower: Real::zero(),
+            upper: Real::from(2),
+            exact_root: None,
+            distinct_root_count: 1,
+        };
+        let wide = Real::from(65536);
+        for scale in [
+            Real::one(),
+            -Real::one(),
+            wide.clone(),
+            -&wide,
+            (Real::one() / &wide).unwrap(),
+            (-Real::one() / &wide).unwrap(),
+        ] {
+            let polynomial: Vec<_> = defining.iter().map(|value| value * &scale).collect();
+            for (shift, query_scale) in [(0, 3), (0, -7), (-1, 5)] {
+                let mut query = predicate.to_vec();
+                query[0] += Real::from(shift);
+                for coefficient in &mut query {
+                    *coefficient *= Real::from(query_scale);
+                }
+                let expected = sign(&Real::eval_poly(&query, &Real::one()));
+                let mut field = BoundedField::default();
+                let actual =
+                    ordered_field_sign_at_selected_root(&polynomial, &query, &interval, &mut field);
+                assert_eq!(actual, Ok(expected), "peak bits: {}", field.maximum_bits);
+            }
         }
     }
 
