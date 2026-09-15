@@ -2608,11 +2608,9 @@ fn compute_curve_bounds(curve: &Curve2) -> ExactCurveResult<Aabb2> {
         _ => {
             let fragments = curve
                 .native_bezier_fragments_for_operation(&policy, CurveOperation2::NativeTopology)?;
-            let mut bounds =
-                decided_subcurve_bounds(fragments[0].curve(), curve.family(), &policy)?;
+            let mut bounds = decided_subcurve_bounds(fragments[0].curve(), curve.family())?;
             for fragment in &fragments[1..] {
-                let fragment_bounds =
-                    decided_subcurve_bounds(fragment.curve(), curve.family(), &policy)?;
+                let fragment_bounds = decided_subcurve_bounds(fragment.curve(), curve.family())?;
                 bounds = decided_bounds(bounds.union(&fragment_bounds), curve.family())?;
             }
             Ok(bounds)
@@ -2623,13 +2621,12 @@ fn compute_curve_bounds(curve: &Curve2) -> ExactCurveResult<Aabb2> {
 fn decided_subcurve_bounds(
     curve: &BezierSubcurve2,
     family: CurveFamily2,
-    policy: &crate::CurveContext,
 ) -> ExactCurveResult<Aabb2> {
     let bounds = match curve {
         BezierSubcurve2::Quadratic(curve) => curve.control_hull_box(),
         BezierSubcurve2::Cubic(curve) => curve.control_hull_box(),
-        BezierSubcurve2::RationalQuadratic(curve) => curve.certified_bounds(policy),
-        BezierSubcurve2::Rational(curve) => curve.certified_bounds_classified(policy),
+        BezierSubcurve2::RationalQuadratic(curve) => curve.certified_bounds(),
+        BezierSubcurve2::Rational(curve) => curve.certified_bounds_classified(),
     };
     decided_bounds(bounds, family)
 }
@@ -3394,7 +3391,7 @@ impl RetainedRationalCornerArc2 {
     ) -> ExactCurveResult<RationalBezier2> {
         let evaluator = if evaluator.retained_circular_conic().is_some()
             || matches!(
-                evaluator.control_weight_sign(policy),
+                evaluator.control_weight_sign(),
                 Classification::Decided(RealSign::Positive | RealSign::Negative)
             ) {
             evaluator

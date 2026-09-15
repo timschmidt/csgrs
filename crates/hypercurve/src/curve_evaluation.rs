@@ -223,7 +223,7 @@ fn validate_rational_point(
     // parameters, which must continue through the original polynomial proof.
     let strict = policy.strict_counterpart();
     if matches!(
-        source.control_weight_sign(&strict),
+        source.control_weight_sign(),
         Classification::Decided(RealSign::Positive | RealSign::Negative)
     ) && matches!(
         CurveParameterDomain2::new(&CurveParameterRange2::unit(), None)

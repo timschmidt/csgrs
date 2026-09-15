@@ -260,7 +260,7 @@ impl CurveEnvelopeAccumulator {
     ) -> Classification<()> {
         let (curve_box, kind) = match fragment {
             BezierSplitFragment2::Materialized { curve, .. } => {
-                match retained_curve_bounds(curve, policy) {
+                match retained_curve_bounds(curve) {
                     Classification::Decided(curve_box) => {
                         (curve_box, BezierRetainedEnvelopeSourceKind::Native)
                     }
@@ -290,7 +290,7 @@ impl CurveEnvelopeAccumulator {
                 }
             }
             BezierSplitFragment2::AnalyticParallel(fragment) => {
-                match fragment.parallel().conservative_bounds(policy) {
+                match fragment.parallel().conservative_bounds() {
                     Ok(Classification::Decided(curve_box)) => {
                         (curve_box, BezierRetainedEnvelopeSourceKind::Algebraic)
                     }
@@ -328,19 +328,17 @@ impl CurveEnvelopeAccumulator {
                     }
                 }
             }
-            BezierSplitFragment2::SelectedFiber(fragment) => {
-                match fragment.conservative_bounds(policy) {
-                    Ok(Classification::Decided(curve_box)) => {
-                        (curve_box, BezierRetainedEnvelopeSourceKind::Algebraic)
-                    }
-                    Ok(Classification::Uncertain(reason)) => {
-                        return Classification::Uncertain(reason);
-                    }
-                    Err(_) => {
-                        return Classification::Uncertain(UncertaintyReason::Unsupported);
-                    }
+            BezierSplitFragment2::SelectedFiber(fragment) => match fragment.conservative_bounds() {
+                Ok(Classification::Decided(curve_box)) => {
+                    (curve_box, BezierRetainedEnvelopeSourceKind::Algebraic)
                 }
-            }
+                Ok(Classification::Uncertain(reason)) => {
+                    return Classification::Uncertain(reason);
+                }
+                Err(_) => {
+                    return Classification::Uncertain(UncertaintyReason::Unsupported);
+                }
+            },
         };
         self.envelope = match self.envelope.take() {
             Some(envelope) => match envelope.union(&curve_box) {
@@ -386,7 +384,7 @@ fn retained_algebraic_source_interval_bounds(
         Classification::Decided(subcurve) => subcurve,
         Classification::Uncertain(reason) => return Classification::Uncertain(reason),
     };
-    retained_curve_bounds(&subcurve, policy)
+    retained_curve_bounds(&subcurve)
 }
 
 fn retained_algebraic_source_bounds(
@@ -651,12 +649,12 @@ fn subcurve_between_exact(
     }
 }
 
-fn retained_curve_bounds(curve: &BezierSubcurve2, policy: &CurveContext) -> Classification<Aabb2> {
+fn retained_curve_bounds(curve: &BezierSubcurve2) -> Classification<Aabb2> {
     match curve {
-        BezierSubcurve2::Quadratic(curve) => curve.certified_bounds(policy),
-        BezierSubcurve2::Cubic(curve) => curve.certified_bounds(policy),
-        BezierSubcurve2::RationalQuadratic(curve) => curve.certified_bounds(policy),
-        BezierSubcurve2::Rational(curve) => curve.certified_bounds_classified(policy),
+        BezierSubcurve2::Quadratic(curve) => curve.certified_bounds(),
+        BezierSubcurve2::Cubic(curve) => curve.certified_bounds(),
+        BezierSubcurve2::RationalQuadratic(curve) => curve.certified_bounds(),
+        BezierSubcurve2::Rational(curve) => curve.certified_bounds_classified(),
     }
 }
 

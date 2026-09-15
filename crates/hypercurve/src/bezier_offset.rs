@@ -254,11 +254,11 @@ impl BezierParallelSource2 {
         }
     }
 
-    fn certified_bounds(&self, policy: &CurveContext) -> Classification<Aabb2> {
+    fn certified_bounds(&self) -> Classification<Aabb2> {
         match self {
-            Self::Quadratic(source) => source.certified_bounds(policy),
-            Self::Cubic(source) => source.certified_bounds(policy),
-            Self::Rational(source) => source.certified_bounds_classified(policy),
+            Self::Quadratic(source) => source.certified_bounds(),
+            Self::Cubic(source) => source.certified_bounds(),
+            Self::Rational(source) => source.certified_bounds_classified(),
         }
     }
 
@@ -18330,7 +18330,7 @@ impl BezierAlgebraicCuspSemicircle2 {
         policy: &CurveContext,
     ) -> CurveResult<Classification<Aabb2>> {
         let (source, expansion) = if let Some(parallel) = self.source_parallel() {
-            let source = match parallel.source().certified_bounds(policy) {
+            let source = match parallel.source().certified_bounds() {
                 Classification::Decided(source) => source,
                 Classification::Uncertain(reason) => {
                     return Ok(Classification::Uncertain(reason));
@@ -19657,7 +19657,7 @@ impl BezierAlgebraicCuspSemicircle2 {
                 return Ok(Classification::Uncertain(reason));
             }
         };
-        let target_weight_sign = match other.unit_weight_sign(policy) {
+        let target_weight_sign = match other.unit_weight_sign() {
             Classification::Decided(sign @ (RealSign::Positive | RealSign::Negative)) => sign,
             Classification::Decided(RealSign::Zero) => {
                 return Err(CurveError::Topology(
@@ -20184,7 +20184,7 @@ impl BezierAlgebraicCuspSemicircle2 {
         {
             return Ok(Classification::Uncertain(reason));
         }
-        match other.unit_weight_sign(policy) {
+        match other.unit_weight_sign() {
             Classification::Decided(RealSign::Positive | RealSign::Negative) => {}
             Classification::Decided(RealSign::Zero) => {
                 return Err(CurveError::Topology(
@@ -23209,7 +23209,7 @@ impl BezierAlgebraicCuspSemicircle2 {
         if incident.is_none()
             && let (Classification::Decided(first_bounds), Classification::Decided(second_bounds)) = (
                 self.conservative_bounds(policy)?,
-                other.conservative_bounds(policy)?,
+                other.conservative_bounds()?,
             )
             && first_bounds.overlaps(&second_bounds, policy) == Classification::Decided(false)
         {
@@ -37810,7 +37810,7 @@ impl BezierAlgebraicCuspSemicircle2 {
                 return Ok(Classification::Uncertain(reason));
             }
         };
-        let target_weight_sign = match other.unit_weight_sign(policy) {
+        let target_weight_sign = match other.unit_weight_sign() {
             Classification::Decided(sign @ (RealSign::Positive | RealSign::Negative)) => sign,
             Classification::Decided(RealSign::Zero) => {
                 return Err(CurveError::Topology(
@@ -38157,7 +38157,7 @@ impl BezierAlgebraicCuspSemicircle2 {
         let [center_x, center_y]: [DenseTensorPolynomial; 2] = center
             .try_into()
             .expect("a represented circle frame retains both center coordinates");
-        let target_weight_sign = match other.unit_weight_sign(policy) {
+        let target_weight_sign = match other.unit_weight_sign() {
             Classification::Decided(sign @ (RealSign::Positive | RealSign::Negative)) => sign,
             Classification::Decided(RealSign::Zero) => {
                 return Err(CurveError::Topology(
@@ -38240,7 +38240,7 @@ impl BezierAlgebraicCuspSemicircle2 {
         let [center_x, center_y, unit_x, unit_y]: [DenseTensorPolynomial; 4] = coordinates
             .try_into()
             .expect("a represented rational-circle component retains its full frame");
-        let target_weight_sign = match other.unit_weight_sign(policy) {
+        let target_weight_sign = match other.unit_weight_sign() {
             Classification::Decided(sign @ (RealSign::Positive | RealSign::Negative)) => sign,
             Classification::Decided(RealSign::Zero) => {
                 return Err(CurveError::Topology(
@@ -39777,7 +39777,7 @@ impl BezierAlgebraicCuspSemicircle2 {
         )>,
     > {
         if (self.uses_selected_chord_normal_frame() || self.uses_selected_radial_frame())
-            && let Classification::Decided(other_bounds) = other.certified_bounds_classified(policy)
+            && let Classification::Decided(other_bounds) = other.certified_bounds_classified()
         {
             for refinement_steps in [0, 2, 4, 8, 16, 32, 64, 128, 256, 512] {
                 if let Classification::Decided(circle_bounds) =
@@ -40801,7 +40801,7 @@ impl BezierAlgebraicCuspSemicircle2 {
         angular_tangent: BivariatePolynomial,
         policy: &CurveContext,
     ) -> CurveResult<Classification<BezierAlgebraicCuspSemicircleRationalIntersections2>> {
-        match other.unit_weight_sign(policy) {
+        match other.unit_weight_sign() {
             Classification::Decided(RealSign::Positive | RealSign::Negative) => {}
             Classification::Decided(RealSign::Zero) => {
                 return Err(CurveError::Topology(
@@ -60848,7 +60848,7 @@ impl BezierRecursiveProjectiveChordRationalSystem2 {
             Classification::Decided(source) => source,
             Classification::Uncertain(_) => return Ok(None),
         };
-        let source_bounds = match source.certified_bounds_classified(strict) {
+        let source_bounds = match source.certified_bounds_classified() {
             Classification::Decided(bounds) => bounds,
             Classification::Uncertain(_) => return Ok(None),
         };
@@ -78654,7 +78654,7 @@ impl BezierAlgebraicChord2 {
             );
         }
         let source_power = source.homogeneous_power_basis()?;
-        let source_weight_sign = match source.unit_weight_sign(policy) {
+        let source_weight_sign = match source.unit_weight_sign() {
             Classification::Decided(sign) => Some(sign),
             Classification::Uncertain(_) => None,
         };
@@ -80374,7 +80374,7 @@ impl BezierAlgebraicChord2 {
     ) -> CurveResult<Classification<BezierAlgebraicChordRationalIntersections2>> {
         self.validate_policy(policy)?;
         let axis = self.data.parameter_axis.axis;
-        match source.unit_weight_sign(policy) {
+        match source.unit_weight_sign() {
             Classification::Decided(RealSign::Positive | RealSign::Negative) => {}
             Classification::Decided(RealSign::Zero) => {
                 return Ok(Classification::Decided(
@@ -110681,8 +110681,8 @@ impl BezierParallel2 {
     /// A unit normal changes either source coordinate by at most `|distance|`,
     /// so expanding a certified source box by that amount is exact broad-phase
     /// evidence without sampling the parallel or materializing a finite curve.
-    pub fn conservative_bounds(&self, policy: &CurveContext) -> CurveResult<Classification<Aabb2>> {
-        let source = match self.source().certified_bounds(policy) {
+    pub fn conservative_bounds(&self) -> CurveResult<Classification<Aabb2>> {
+        let source = match self.source().certified_bounds() {
             Classification::Decided(source) => source,
             Classification::Uncertain(reason) => {
                 return Ok(Classification::Uncertain(reason));
@@ -116946,9 +116946,9 @@ impl BezierParallel2 {
             return Ok(Classification::Uncertain(reason));
         }
 
-        let other_bounds = other.certified_bounds_classified(policy);
+        let other_bounds = other.certified_bounds_classified();
         if let (Classification::Decided(parallel_bounds), Classification::Decided(other_bounds)) =
-            (self.conservative_bounds(policy)?, other_bounds)
+            (self.conservative_bounds()?, other_bounds)
             && matches!(
                 parallel_bounds.overlaps(&other_bounds, policy),
                 Classification::Decided(false)
@@ -128328,10 +128328,8 @@ fn parallel_pair_equation_system_with_tangent_fields(
     // domains. Exact replay excludes zero weights and undefined normals at
     // each candidate; component cells partition those same predicates.
     if unit_domain
-        && let (Classification::Decided(first_bounds), Classification::Decided(second_bounds)) = (
-            first.conservative_bounds(policy)?,
-            second.conservative_bounds(policy)?,
-        )
+        && let (Classification::Decided(first_bounds), Classification::Decided(second_bounds)) =
+            (first.conservative_bounds()?, second.conservative_bounds()?)
         && matches!(
             first_bounds.overlaps(&second_bounds, policy),
             Classification::Decided(false)

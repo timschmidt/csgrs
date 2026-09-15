@@ -194,7 +194,7 @@ trait FlattenableBezier: Clone {
     fn end(&self) -> &Point2;
     fn controls(&self, policy: &CurveContext) -> Option<Vec<&Point2>>;
     fn split_half(&self, policy: &CurveContext) -> Result<(Self, Self), UncertaintyReason>;
-    fn certify_finite_domain(&self, _policy: &CurveContext) -> Result<(), UncertaintyReason> {
+    fn certify_finite_domain(&self) -> Result<(), UncertaintyReason> {
         Ok(())
     }
 }
@@ -261,10 +261,7 @@ impl FlattenableBezier for BezierSubcurve2 {
                 curve.control_points().into_iter().collect()
             }
             Self::Rational(curve) => {
-                if !matches!(
-                    curve.control_weight_sign(policy),
-                    Classification::Decided(_)
-                ) {
+                if !matches!(curve.control_weight_sign(), Classification::Decided(_)) {
                     return None;
                 }
                 curve.affine_control_points()?.iter().collect()
@@ -287,13 +284,13 @@ impl FlattenableBezier for BezierSubcurve2 {
         Ok((left, right))
     }
 
-    fn certify_finite_domain(&self, policy: &CurveContext) -> Result<(), UncertaintyReason> {
+    fn certify_finite_domain(&self) -> Result<(), UncertaintyReason> {
         let sign = match self {
             Self::Quadratic(_) | Self::Cubic(_) => return Ok(()),
             Self::RationalQuadratic(curve) => {
-                crate::RationalBezier2::from(curve.clone()).unit_weight_sign(policy)
+                crate::RationalBezier2::from(curve.clone()).unit_weight_sign()
             }
-            Self::Rational(curve) => curve.unit_weight_sign(policy),
+            Self::Rational(curve) => curve.unit_weight_sign(),
         };
         match sign {
             Classification::Decided(RealSign::Positive | RealSign::Negative) => Ok(()),
@@ -311,7 +308,7 @@ fn flatten_curve<C>(
 where
     C: FlattenableBezier,
 {
-    if let Err(reason) = curve.certify_finite_domain(policy) {
+    if let Err(reason) = curve.certify_finite_domain() {
         return Classification::Uncertain(reason);
     }
     let mut points = vec![curve.start().clone()];

@@ -485,8 +485,16 @@ impl QuadraticBezier2 {
     }
 
     /// Returns a certified Bezier bounding box from endpoints and coordinate extrema.
-    pub fn certified_bounds(&self, policy: &CurveContext) -> Classification<Aabb2> {
-        certified_bounds(self, policy)
+    /// Extrema are certified independently on each axis, without topology policy.
+    pub fn certified_bounds(&self) -> Classification<Aabb2> {
+        bounds_from_axis_extrema(
+            [self.start(), self.end()],
+            [
+                self.axis_monotone_parameters(Axis2::X, &CurveContext::STRICT),
+                self.axis_monotone_parameters(Axis2::Y, &CurveContext::STRICT),
+            ],
+            |parameter| self.point_at(parameter),
+        )
     }
 
     /// Classifies the relation between this quadratic and a supporting line.
@@ -752,8 +760,16 @@ impl CubicBezier2 {
     }
 
     /// Returns a certified Bezier bounding box from endpoints and coordinate extrema.
-    pub fn certified_bounds(&self, policy: &CurveContext) -> Classification<Aabb2> {
-        certified_bounds(self, policy)
+    /// Extrema are certified independently on each axis, without topology policy.
+    pub fn certified_bounds(&self) -> Classification<Aabb2> {
+        bounds_from_axis_extrema(
+            [self.start(), self.end()],
+            [
+                self.axis_monotone_parameters(Axis2::X, &CurveContext::STRICT),
+                self.axis_monotone_parameters(Axis2::Y, &CurveContext::STRICT),
+            ],
+            |parameter| self.point_at(parameter),
+        )
     }
 
     /// Classifies the relation between this cubic and a supporting line.
@@ -908,55 +924,19 @@ impl CubicBezier2 {
     }
 }
 
-trait BezierBounds {
-    fn point_at(&self, t: Real) -> Point2;
-    fn endpoints(&self) -> [&Point2; 2];
-    fn monotone_spans(&self, policy: &CurveContext) -> Classification<Vec<BezierMonotoneSpan>>;
-}
-
-impl BezierBounds for QuadraticBezier2 {
-    fn point_at(&self, t: Real) -> Point2 {
-        Self::point_at(self, t)
-    }
-
-    fn endpoints(&self) -> [&Point2; 2] {
-        [self.start(), self.end()]
-    }
-
-    fn monotone_spans(&self, policy: &CurveContext) -> Classification<Vec<BezierMonotoneSpan>> {
-        Self::monotone_spans(self, policy)
-    }
-}
-
-impl BezierBounds for CubicBezier2 {
-    fn point_at(&self, t: Real) -> Point2 {
-        Self::point_at(self, t)
-    }
-
-    fn endpoints(&self) -> [&Point2; 2] {
-        [self.start(), self.end()]
-    }
-
-    fn monotone_spans(&self, policy: &CurveContext) -> Classification<Vec<BezierMonotoneSpan>> {
-        Self::monotone_spans(self, policy)
-    }
-}
-
-fn certified_bounds<C>(curve: &C, policy: &CurveContext) -> Classification<Aabb2>
-where
-    C: BezierBounds,
-{
-    let mut samples: Vec<Point2> = curve.endpoints().into_iter().cloned().collect();
-    let spans = match curve.monotone_spans(policy) {
-        Classification::Decided(spans) => spans,
-        Classification::Uncertain(reason) => return Classification::Uncertain(reason),
-    };
-    for span in spans {
-        if !is_unit_endpoint(span.start(), policy) {
-            samples.push(curve.point_at(span.start().clone()));
-        }
-        if !is_unit_endpoint(span.end(), policy) {
-            samples.push(curve.point_at(span.end().clone()));
+fn bounds_from_axis_extrema(
+    endpoints: [&Point2; 2],
+    axis_roots: [Classification<Vec<Real>>; 2],
+    point_at: impl Fn(Real) -> Point2,
+) -> Classification<Aabb2> {
+    let mut samples: Vec<Point2> = endpoints.into_iter().cloned().collect();
+    // A box needs each coordinate's extrema, not their joint parameter order.
+    // In particular, distinct near-endpoint roots must never be merged through
+    // a topology tolerance. Each axis root is evaluated just once.
+    for roots in axis_roots {
+        match roots {
+            Classification::Decided(roots) => samples.extend(roots.into_iter().map(&point_at)),
+            Classification::Uncertain(reason) => return Classification::Uncertain(reason),
         }
     }
     Aabb2::from_points(samples.iter())
@@ -964,7 +944,7 @@ where
 
 trait BezierCurveLike {
     fn control_points_vec(&self) -> Vec<&Point2>;
-    fn certified_bounds(&self, policy: &CurveContext) -> Classification<Aabb2>;
+    fn certified_bounds(&self) -> Classification<Aabb2>;
     fn subdivision_node(&self) -> Result<BezierSubdivisionNode, UncertaintyReason>;
     fn point_at(&self, t: Real) -> Point2;
     fn exact_point_query_is_complete(&self) -> bool;
@@ -980,8 +960,8 @@ impl BezierCurveLike for QuadraticBezier2 {
         self.control_points().into_iter().collect()
     }
 
-    fn certified_bounds(&self, policy: &CurveContext) -> Classification<Aabb2> {
-        Self::certified_bounds(self, policy)
+    fn certified_bounds(&self) -> Classification<Aabb2> {
+        Self::certified_bounds(self)
     }
 
     fn subdivision_node(&self) -> Result<BezierSubdivisionNode, UncertaintyReason> {
@@ -1014,8 +994,8 @@ impl BezierCurveLike for CubicBezier2 {
         self.control_points().into_iter().collect()
     }
 
-    fn certified_bounds(&self, policy: &CurveContext) -> Classification<Aabb2> {
-        Self::certified_bounds(self, policy)
+    fn certified_bounds(&self) -> Classification<Aabb2> {
+        Self::certified_bounds(self)
     }
 
     fn subdivision_node(&self) -> Result<BezierSubdivisionNode, UncertaintyReason> {
@@ -1357,11 +1337,11 @@ where
         };
     }
 
-    let first_box = match first.certified_bounds(policy) {
+    let first_box = match first.certified_bounds() {
         Classification::Decided(bbox) => bbox,
         Classification::Uncertain(reason) => return Classification::Uncertain(reason),
     };
-    let second_box = match second.certified_bounds(policy) {
+    let second_box = match second.certified_bounds() {
         Classification::Decided(bbox) => bbox,
         Classification::Uncertain(reason) => return Classification::Uncertain(reason),
     };
@@ -4144,11 +4124,6 @@ fn common_root_set_parameters(
     }
 }
 
-fn is_unit_endpoint(value: &Real, policy: &CurveContext) -> bool {
-    compare_reals(value, &Real::zero(), policy) == Some(Ordering::Equal)
-        || compare_reals(value, &Real::one(), policy) == Some(Ordering::Equal)
-}
-
 fn all_points_coincident3(x: &[Real; 3], y: &[Real; 3], policy: &CurveContext) -> Option<bool> {
     Some(all_same(&[&x[0], &x[1], &x[2]], policy)? && all_same(&[&y[0], &y[1], &y[2]], policy)?)
 }
@@ -4176,6 +4151,154 @@ fn cross(ax: &Real, ay: &Real, bx: &Real, by: &Real) -> Real {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    fn bounds_keep_close_extrema(family: usize) {
+        use crate::{CurveCertainty, RationalBezier2, RationalQuadraticBezier2};
+
+        let mut case = family as i64 * 64;
+        for policy in [CurveContext::APPROXIMATE_512, CurveContext::STRICT] {
+            for rational_gap in [false, true] {
+                for axis in [Axis2::X, Axis2::Y] {
+                    for near_end in [false, true] {
+                        for reverse in [false, true] {
+                            for maximum in [false, true] {
+                                case += 1;
+                                let gap = if rational_gap {
+                                    Real::from(2_i8).powi_i64(-600).unwrap()
+                                } else {
+                                    Real::one()
+                                        - Real::from(2_i8).powi_i64(-301 - case).unwrap().cos()
+                                };
+                                let parameter = if near_end { Real::one() - gap } else { gap };
+                                let square = &parameter * &parameter;
+                                let point = |x: Real, y: Real| {
+                                    let y = if maximum { -y } else { y };
+                                    match axis {
+                                        Axis2::X => Point2::new(y, x),
+                                        Axis2::Y => Point2::new(x, y),
+                                    }
+                                };
+                                // Q(t)=(t,+/-(t-a)^2), with the axes optionally
+                                // exchanged. Its exact extremum is (a,0).
+                                let mut controls = [
+                                    point(Real::zero(), square.clone()),
+                                    point(
+                                        (Real::one() / Real::from(2_i8)).unwrap(),
+                                        &square - &parameter,
+                                    ),
+                                    point(
+                                        Real::one(),
+                                        Real::one() - Real::from(2_i8) * &parameter + &square,
+                                    ),
+                                ];
+                                let witnesses = [
+                                    controls[0].clone(),
+                                    point(parameter, Real::zero()),
+                                    controls[2].clone(),
+                                ];
+                                if reverse {
+                                    controls.reverse();
+                                }
+                                let outcome = crate::policy::resolve_certified_value(
+                                    &policy,
+                                    |_| match family {
+                                        0 => QuadraticBezier2::new(
+                                            controls[0].clone(),
+                                            controls[1].clone(),
+                                            controls[2].clone(),
+                                        )
+                                        .certified_bounds(),
+                                        1 => {
+                                            let blend = |a: &Point2, b: &Point2| {
+                                                Point2::new(
+                                                    ((a.x() + Real::from(2_i8) * b.x())
+                                                        / Real::from(3_i8))
+                                                    .unwrap(),
+                                                    ((a.y() + Real::from(2_i8) * b.y())
+                                                        / Real::from(3_i8))
+                                                    .unwrap(),
+                                                )
+                                            };
+                                            CubicBezier2::new(
+                                                controls[0].clone(),
+                                                blend(&controls[0], &controls[1]),
+                                                blend(&controls[2], &controls[1]),
+                                                controls[2].clone(),
+                                            )
+                                            .certified_bounds()
+                                        }
+                                        2 | 3 => {
+                                            let weight =
+                                                if reverse { -Real::pi() } else { Real::pi() };
+                                            let conic = RationalQuadraticBezier2::try_new(
+                                                controls[0].clone(),
+                                                controls[1].clone(),
+                                                controls[2].clone(),
+                                                weight.clone(),
+                                                weight.clone(),
+                                                weight,
+                                            )
+                                            .unwrap();
+                                            if family == 2 {
+                                                conic.certified_bounds()
+                                            } else {
+                                                RationalBezier2::from(conic)
+                                                    .certified_bounds_classified()
+                                            }
+                                        }
+                                        _ => unreachable!(),
+                                    },
+                                );
+                                assert_eq!(outcome.certainty, CurveCertainty::Certified);
+                                let bounds = match outcome.value {
+                                    Classification::Decided(bounds) => bounds,
+                                    Classification::Uncertain(_) if !rational_gap => continue,
+                                    Classification::Uncertain(reason) => {
+                                        panic!("rational extrema must be bounded: {reason:?}");
+                                    }
+                                };
+                                for witness in witnesses {
+                                    for (lower, upper, value) in [
+                                        (bounds.min_x(), bounds.max_x(), witness.x()),
+                                        (bounds.min_y(), bounds.max_y(), witness.y()),
+                                    ] {
+                                        assert!(matches!(
+                                            lower.certified_cmp_until(value, -3600).ordering(),
+                                            Some(Ordering::Less | Ordering::Equal),
+                                        ));
+                                        assert!(matches!(
+                                            upper.certified_cmp_until(value, -3600).ordering(),
+                                            Some(Ordering::Greater | Ordering::Equal),
+                                        ));
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn quadratic_bounds_keep_close_extrema() {
+        bounds_keep_close_extrema(0);
+    }
+
+    #[test]
+    fn cubic_bounds_keep_close_extrema() {
+        bounds_keep_close_extrema(1);
+    }
+
+    #[test]
+    fn conic_bounds_keep_close_extrema() {
+        bounds_keep_close_extrema(2);
+    }
+
+    #[test]
+    fn homogeneous_bounds_keep_close_extrema() {
+        bounds_keep_close_extrema(3);
+    }
 
     fn p(x: i32, y: i32) -> Point2 {
         Point2::new(Real::from(x), Real::from(y))

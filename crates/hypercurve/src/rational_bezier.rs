@@ -641,36 +641,24 @@ impl RationalQuadraticBezier2 {
         )
     }
 
-    /// Returns a certified rational-conic bounding box from endpoints and extrema.
+    /// Returns a conservative exact bound for this rational conic.
     ///
-    /// Non-equal same-sign weights also include the Euclidean control point as
-    /// a conservative hull witness. A uniformly negative homogeneous lift is
-    /// sign-normalized to the positive case, preserving the rational Bezier
-    /// convex-hull guarantee when algebraic extrema are present while still
-    /// avoiding topology decisions from approximate samples.
-    pub fn certified_bounds(&self, policy: &CurveContext) -> Classification<Aabb2> {
-        let mut samples = vec![self.start.clone(), self.end.clone()];
-        if self.weights_known_same_nonzero_sign(policy) == Some(true)
-            && self.weights_equal(policy) == Some(false)
-        {
-            samples.push(self.control.clone());
-        }
-        let spans = match self.monotone_spans(policy) {
-            Classification::Decided(spans) => spans,
-            Classification::Uncertain(reason) => return Classification::Uncertain(reason),
-        };
-        // The spans are consecutive windows of one sorted split-parameter
-        // sequence, so every interior extremum is the end of exactly one span.
-        // Evaluating starts as well would materialize each exact point twice.
-        for span in spans {
-            if !is_unit_endpoint(span.end(), policy) {
-                match self.point_at(span.end().clone(), policy) {
-                    Classification::Decided(point) => samples.push(point),
-                    Classification::Uncertain(reason) => return Classification::Uncertain(reason),
-                }
+    /// Equal nonzero weights use polynomial extrema. Other common-sign weights
+    /// use the affine control hull; mixed weights share the general homogeneous
+    /// subdivision bound after certifying that the denominator never vanishes.
+    pub fn certified_bounds(&self) -> Classification<Aabb2> {
+        if self.weights_known_same_nonzero_sign(&CurveContext::STRICT) == Some(true) {
+            if self.weights_equal(&CurveContext::STRICT) == Some(true) {
+                return QuadraticBezier2::new(
+                    self.start.clone(),
+                    self.control.clone(),
+                    self.end.clone(),
+                )
+                .certified_bounds();
             }
+            return Aabb2::from_points(self.control_points());
         }
-        Aabb2::from_points(samples.iter())
+        RationalBezier2::from(self.clone()).certified_bounds_classified()
     }
 
     /// Classifies a coarse relation between two rational quadratic conics.
@@ -1312,10 +1300,6 @@ fn rational_point_parameters_from_root_sets(
         }
     }
     Classification::Decided(parameters)
-}
-
-fn is_unit_endpoint(value: &Real, policy: &CurveContext) -> bool {
-    is_zero(value, policy) == Some(true) || is_zero(&(value - &Real::one()), policy) == Some(true)
 }
 
 fn equal_weight_polynomial_quadratic_image(
@@ -3814,6 +3798,63 @@ mod tests {
 
     fn point(x: i32, y: i32) -> Point2 {
         Point2::new(Real::from(x), Real::from(y))
+    }
+
+    #[test]
+    fn conic_bounds_certify_mixed_weight_charts_and_reject_poles() {
+        let ratio = |numerator: i8, denominator: i8| {
+            (Real::from(numerator) / Real::from(denominator)).unwrap()
+        };
+        // W(t)=1-3t+3t^2 >= 1/4. These independent points also lie outside
+        // the original affine control hull, so a mixed-weight hull is invalid.
+        let witnesses = [
+            point(0, 0),
+            Point2::new(ratio(-1, 7), ratio(-3, 7)),
+            point(1, -1),
+            Point2::new(ratio(15, 7), ratio(-3, 7)),
+            point(2, 0),
+        ];
+        for scale in [Real::one(), -Real::one()] {
+            let finite = RationalQuadraticBezier2::try_new(
+                point(0, 0),
+                point(1, 1),
+                point(2, 0),
+                scale.clone(),
+                &scale * ratio(-1, 2),
+                scale.clone(),
+            )
+            .unwrap();
+            // Replacing the middle weight with -1 gives W(t)=(1-2t)^2,
+            // with a genuine pole at 1/2 for this numerator.
+            let singular = RationalQuadraticBezier2::try_new(
+                point(0, 0),
+                point(1, 1),
+                point(2, 0),
+                scale.clone(),
+                -&scale,
+                scale,
+            )
+            .unwrap();
+            for policy in [CurveContext::APPROXIMATE_512, CurveContext::STRICT] {
+                let outcome = crate::policy::resolve_certified_value(&policy, |_| {
+                    (finite.certified_bounds(), singular.certified_bounds())
+                });
+                assert_eq!(outcome.certainty, crate::CurveCertainty::Certified);
+                let (
+                    Classification::Decided(bounds),
+                    Classification::Uncertain(UncertaintyReason::Boundary),
+                ) = outcome.value
+                else {
+                    panic!("only the pole-free chart has a finite bound");
+                };
+                for witness in &witnesses {
+                    assert_eq!(
+                        bounds.contains_point(witness, &CurveContext::STRICT),
+                        Classification::Decided(true)
+                    );
+                }
+            }
+        }
     }
 
     #[test]

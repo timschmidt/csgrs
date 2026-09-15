@@ -671,7 +671,7 @@ fn rational_bezier_supported_weight_power_coordinates(
     curve: &RationalBezier2,
     policy: &CurveContext,
 ) -> CurveResult<Option<(Vec<Real>, Vec<Real>, Vec<Real>)>> {
-    if !matches!(curve.unit_weight_sign(policy), Classification::Decided(_)) {
+    if !matches!(curve.unit_weight_sign(), Classification::Decided(_)) {
         return Ok(None);
     }
     let nx = bernstein_to_power(

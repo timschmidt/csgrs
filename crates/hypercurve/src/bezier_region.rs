@@ -18033,7 +18033,7 @@ pub(crate) fn retained_fragment_query_bounds(
         } => subcurve_query_bounds(curve, policy),
         BezierSplitFragment2::AnalyticParallel(fragment) => fragment
             .parallel()
-            .conservative_bounds(policy)
+            .conservative_bounds()
             .unwrap_or_else(|_| Classification::Uncertain(UncertaintyReason::Unsupported)),
         BezierSplitFragment2::AlgebraicChord(chord) => chord
             .conservative_local_bounds_refined(0, policy)
@@ -18042,7 +18042,7 @@ pub(crate) fn retained_fragment_query_bounds(
             .conservative_bounds()
             .unwrap_or_else(|_| Classification::Uncertain(UncertaintyReason::Unsupported)),
         BezierSplitFragment2::SelectedFiber(fragment) => fragment
-            .conservative_bounds(policy)
+            .conservative_bounds()
             .unwrap_or_else(|_| Classification::Uncertain(UncertaintyReason::Unsupported)),
     }
 }
@@ -18464,8 +18464,8 @@ fn subcurve_query_bounds(curve: &BezierSubcurve2, policy: &CurveContext) -> Clas
         {
             Aabb2::from_points(curve.control_points())
         }
-        BezierSubcurve2::RationalQuadratic(curve) => curve.certified_bounds(policy),
-        BezierSubcurve2::Rational(curve) => curve.certified_bounds_classified(policy),
+        BezierSubcurve2::RationalQuadratic(curve) => curve.certified_bounds(),
+        BezierSubcurve2::Rational(curve) => curve.certified_bounds_classified(),
     }
 }
 
@@ -31626,7 +31626,7 @@ mod tests {
                 panic!("polynomial control hull unexpectedly uncertain: {reason:?}")
             }
         };
-        let tight_bounds = match cubic.certified_bounds(&policy) {
+        let tight_bounds = match cubic.certified_bounds() {
             Classification::Decided(bounds) => bounds,
             Classification::Uncertain(reason) => {
                 panic!("cubic tight bounds unexpectedly uncertain: {reason:?}")

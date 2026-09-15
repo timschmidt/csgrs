@@ -21,15 +21,12 @@ pub(crate) enum CurveSupport2 {
     Circle(crate::BezierAlgebraicCuspSemicircleFragment2),
 }
 
-fn subcurve_certified_outer_bounds(
-    curve: &BezierSubcurve2,
-    policy: &CurveContext,
-) -> Classification<Aabb2> {
+fn subcurve_certified_outer_bounds(curve: &BezierSubcurve2) -> Classification<Aabb2> {
     let bounds = match curve {
         BezierSubcurve2::Quadratic(curve) => curve.control_hull_box(),
         BezierSubcurve2::Cubic(curve) => curve.control_hull_box(),
-        BezierSubcurve2::RationalQuadratic(curve) => curve.certified_bounds(policy),
-        BezierSubcurve2::Rational(curve) => curve.certified_bounds_classified(policy),
+        BezierSubcurve2::RationalQuadratic(curve) => curve.certified_bounds(),
+        BezierSubcurve2::Rational(curve) => curve.certified_bounds_classified(),
     };
     if matches!(bounds, Classification::Decided(_)) {
         return bounds;
@@ -290,8 +287,8 @@ impl CurveSupport2 {
 
     pub(crate) fn certified_outer_bounds(&self, policy: &CurveContext) -> Classification<Aabb2> {
         match self {
-            Self::Bezier(curve) => subcurve_certified_outer_bounds(curve, policy),
-            Self::Parallel(parallel) => match parallel.conservative_bounds(policy) {
+            Self::Bezier(curve) => subcurve_certified_outer_bounds(curve),
+            Self::Parallel(parallel) => match parallel.conservative_bounds() {
                 Ok(bounds) => bounds,
                 Err(_) => Classification::Uncertain(UncertaintyReason::Unsupported),
             },
@@ -312,8 +309,8 @@ impl CurveSupport2 {
         policy: &CurveContext,
     ) -> Classification<Aabb2> {
         match self {
-            Self::Bezier(curve) => subcurve_certified_outer_bounds(curve, policy),
-            Self::Parallel(parallel) => match parallel.conservative_bounds(policy) {
+            Self::Bezier(curve) => subcurve_certified_outer_bounds(curve),
+            Self::Parallel(parallel) => match parallel.conservative_bounds() {
                 Ok(bounds) => bounds,
                 Err(_) => Classification::Uncertain(UncertaintyReason::Unsupported),
             },

@@ -381,7 +381,7 @@ pub(crate) fn rational_bezier_circular_arc(
     // orientation even when an intermediate control is infinite.
     if let Some(circle) = curve.retained_circular_conic()
         && matches!(
-            curve.unit_weight_sign(policy),
+            curve.unit_weight_sign(),
             Classification::Decided(RealSign::Positive | RealSign::Negative)
         )
     {

@@ -1428,16 +1428,11 @@ impl BezierSelectedFiberFragment2 {
         }
     }
 
-    pub(crate) fn conservative_bounds(
-        &self,
-        policy: &CurveContext,
-    ) -> CurveResult<Classification<Aabb2>> {
+    pub(crate) fn conservative_bounds(&self) -> CurveResult<Classification<Aabb2>> {
         match &self.source {
-            BezierSelectedFiberSource2::Rational(curve) => {
-                Ok(curve.certified_bounds_classified(policy))
-            }
+            BezierSelectedFiberSource2::Rational(curve) => Ok(curve.certified_bounds_classified()),
             BezierSelectedFiberSource2::AnalyticParallel(parallel) => {
-                parallel.conservative_bounds(policy)
+                parallel.conservative_bounds()
             }
         }
     }

@@ -1172,7 +1172,7 @@ fn nurbs_degree_elevation_retains_homogeneous_spans_and_actual_poles() {
     assert!(span.affine_control_points().is_none());
     assert_eq!(span.weights(), &[r(1), r(0), r(-1)]);
     assert!(span.point_at(&q(1, 2), &CurveContext::STRICT).is_err());
-    assert!(span.certified_bounds(&CurveContext::STRICT).is_err());
+    assert!(span.certified_bounds().is_err());
 }
 
 #[test]

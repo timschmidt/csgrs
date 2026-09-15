@@ -681,7 +681,7 @@ impl RationalBSplineBezierExtraction2 {
         let mut facts = Vec::with_capacity(self.spans.len());
         for (span_index, span) in self.spans.iter().enumerate() {
             let native = span.native_subcurve(policy);
-            let bounds = match subcurve_certified_bounds(&native, policy) {
+            let bounds = match subcurve_certified_bounds(&native) {
                 Classification::Decided(bounds) => bounds,
                 Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
             };
@@ -1221,7 +1221,7 @@ fn native_span_fact_evidence(
         let Some(span) = spans.get(span_index) else {
             return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
         };
-        let bounds = match subcurve_certified_bounds(span, policy) {
+        let bounds = match subcurve_certified_bounds(span) {
             Classification::Decided(bounds) => bounds,
             Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
         };
@@ -1254,15 +1254,12 @@ fn native_span_fact_evidence(
     RetainedBSplineSpanFactEvidence2::new(facts, policy)
 }
 
-fn subcurve_certified_bounds(
-    curve: &BezierSubcurve2,
-    policy: &CurveContext,
-) -> Classification<Aabb2> {
+fn subcurve_certified_bounds(curve: &BezierSubcurve2) -> Classification<Aabb2> {
     match curve {
-        BezierSubcurve2::Quadratic(curve) => curve.certified_bounds(policy),
-        BezierSubcurve2::Cubic(curve) => curve.certified_bounds(policy),
-        BezierSubcurve2::RationalQuadratic(curve) => curve.certified_bounds(policy),
-        BezierSubcurve2::Rational(curve) => curve.certified_bounds_classified(policy),
+        BezierSubcurve2::Quadratic(curve) => curve.certified_bounds(),
+        BezierSubcurve2::Cubic(curve) => curve.certified_bounds(),
+        BezierSubcurve2::RationalQuadratic(curve) => curve.certified_bounds(),
+        BezierSubcurve2::Rational(curve) => curve.certified_bounds_classified(),
     }
 }
 

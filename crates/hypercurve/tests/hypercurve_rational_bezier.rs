@@ -259,7 +259,7 @@ fn shared_cancellation_resolves_rational_evaluation_and_bounds_blockers() {
     assert_eq!(curve.point_at(&r(0), &policy).unwrap(), p(0, 0));
     assert!(curve.derivative_at(&r(0), &policy).is_ok());
     assert!(curve.derivatives_at(&r(0), 3, &policy).is_ok());
-    assert!(curve.certified_bounds(&policy).is_ok());
+    assert!(curve.certified_bounds().is_ok());
 }
 
 #[test]
@@ -1419,5 +1419,5 @@ fn rational_bezier_degree_elevation_preserves_projective_controls_and_poles() {
     assert_eq!(singular.elevated_to_degree(2).unwrap(), first);
     // Representing a zero intermediate weight does not certify a finite curve.
     assert!(first.point_at(&q(1, 2), &CurveContext::STRICT).is_err());
-    assert!(first.certified_bounds(&CurveContext::STRICT).is_err());
+    assert!(first.certified_bounds().is_err());
 }

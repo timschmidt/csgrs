@@ -1045,8 +1045,7 @@ fn exact_parallel_conservative_bounds_cover_both_offset_sides() {
     for distance in [r(-2), r(2)] {
         let parallel = source.parallel_left(distance).unwrap();
         for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
-            let Classification::Decided(bounds) = parallel.conservative_bounds(&policy).unwrap()
-            else {
+            let Classification::Decided(bounds) = parallel.conservative_bounds().unwrap() else {
                 panic!("parallel bounds were uncertain");
             };
             assert_eq!(bounds.min(), &p(-2, -2));

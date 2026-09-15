@@ -2866,7 +2866,7 @@ fn materialized_control_hull(
             curve.common_nonzero_weight_sign(policy)?;
             Aabb2::from_points(curve.control_points())
         }
-        BezierSubcurve2::Rational(curve) => curve.certified_bounds_classified(policy),
+        BezierSubcurve2::Rational(curve) => curve.certified_bounds_classified(),
     };
     match hull {
         Classification::Decided(hull) => Some(hull),
