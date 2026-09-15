@@ -1979,25 +1979,6 @@ impl BezierParameter2 {
         Ok(Classification::Uncertain(UncertaintyReason::Ordering))
     }
 
-    /// Classifies membership in the closed authored unit span without
-    /// reconstructing the parameter. Internal affine parameters may lie on
-    /// either side of that span, including after an incident-chart map.
-    pub(crate) fn is_in_closed_unit_span(
-        &self,
-        policy: &CurveContext,
-    ) -> CurveResult<Classification<bool>> {
-        match self.cmp_by_refinement(&Self::Exact(Real::zero()), policy)? {
-            Classification::Decided(Ordering::Less) => {
-                return Ok(Classification::Decided(false));
-            }
-            Classification::Decided(Ordering::Equal | Ordering::Greater) => {}
-            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-        }
-        Ok(self
-            .cmp_by_refinement(&Self::Exact(Real::one()), policy)?
-            .map(|order| order != Ordering::Greater))
-    }
-
     /// Compares parameters by refining overlapping algebraic isolators as needed.
     ///
     /// This first uses the retained intervals and exact equality evidence. When

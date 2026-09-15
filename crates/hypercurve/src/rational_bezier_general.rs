@@ -25,9 +25,9 @@ use crate::bezier_algebraic_image::{
     rational_derivative_images_from_power_basis, rational_point_image_from_power_basis,
 };
 use crate::bezier_parameter::{
-    BezierParameterRay2, BezierParameterRefinement2, bernstein_to_power_coefficients,
-    signed_coefficients_at_parameter,
+    BezierParameterRefinement2, bernstein_to_power_coefficients, signed_coefficients_at_parameter,
 };
+use crate::bezier_split::CurveParameterDomain2;
 use crate::bezier_topology::{
     exact_line_contact_relation_from_bernstein_distances,
     exact_quadratic_line_contact_relation_with_certified_crossing,
@@ -1241,7 +1241,7 @@ fn project_retained_lineage_residual_system(
                     max_resultant_degree: MAX_RATIONAL_INTERSECTION_RESULTANT_DEGREE,
                 },
             ),
-            None,
+            CurveParameterDomain2::new(&CurveParameterRange2::unit(), None),
             policy,
         )
     };
@@ -1275,7 +1275,7 @@ fn project_retained_lineage_residual_system(
 
 fn project_symmetric_self_intersection_system(
     equations: &[BivariatePolynomial; 2],
-    extensions: [Option<BezierParameterRay2<'_>>; 2],
+    domains: [CurveParameterDomain2<'_>; 2],
     policy: &CurveContext,
 ) -> CurveResult<Classification<RationalBezierIntersectionCandidates2>> {
     // Degree elevation and projective parameter changes can leave common
@@ -1283,12 +1283,21 @@ fn project_symmetric_self_intersection_system(
     // removed. Their rootless fibers do not describe self-contacts. Saturate
     // only with the shared algebraic domain certificate, preserving every
     // genuine component and the original parameter chart for replay.
-    // A factor rootless on the unit square may have a real exterior fiber.
-    // That finite certificate can only authorize saturation without rays.
-    let primitive = if extensions.iter().all(Option::is_none) {
+    // A finite rootless certificate cannot authorize saturation on a ray.
+    // Use outward bounds of the actual finite domains, including exterior
+    // intervals; a unit-square certificate says nothing about those intervals.
+    let primitive = if domains.iter().all(|domain| domain.extension.is_none()) {
+        let first_bounds = match domains[0].finite_envelope(policy)? {
+            Classification::Decided((_, bounds)) => bounds,
+            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+        };
+        let second_bounds = match domains[1].finite_envelope(policy)? {
+            Classification::Decided((_, bounds)) => bounds,
+            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+        };
         hypersolve::saturate_rootless_bivariate_axis_factors(
             equations,
-            [[&Real::zero(), &Real::one()]; 2],
+            [first_bounds, second_bounds],
         )
     } else {
         None
@@ -1304,8 +1313,8 @@ fn project_symmetric_self_intersection_system(
         },
     );
     // The residual coordinate equations are symmetric in the two source
-    // parameters. Construct one resultant and isolate its unit roots once;
-    // each ordered axis then appends only its own requested exterior roots.
+    // parameters. Construct one resultant and share finite roots when both
+    // axes have the same retained range. Distinct ranges isolate independently.
     let polynomial = match resultant_parameter_polynomial(report, policy)? {
         Classification::Decided(Some(polynomial)) => polynomial,
         Classification::Decided(None) => {
@@ -1315,33 +1324,33 @@ fn project_symmetric_self_intersection_system(
         }
         Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
     };
-    let parameters = match polynomial.isolate_unit_interval_roots(policy)? {
+    let parameters = match domains[0].finite_roots(&polynomial, policy)? {
         Classification::Decided(parameters) => parameters,
         Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
     };
-    let first = match extend_resultant_parameter_projection(
-        &polynomial,
-        parameters.clone(),
-        extensions[0],
-        policy,
-    )? {
-        Classification::Decided(ResultantParameterProjection::Empty) => {
-            return Ok(Classification::Decided(
-                RationalBezierIntersectionCandidates2::NoIntersection,
-            ));
-        }
-        Classification::Decided(projection) => projection,
-        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+    let shared_parameters = (domains[0].finite == domains[1].finite).then(|| parameters.clone());
+    let first =
+        match extend_resultant_parameter_projection(&polynomial, parameters, domains[0], policy)? {
+            Classification::Decided(ResultantParameterProjection::Empty) => {
+                return Ok(Classification::Decided(
+                    RationalBezierIntersectionCandidates2::NoIntersection,
+                ));
+            }
+            Classification::Decided(projection) => projection,
+            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+        };
+    let parameters = match shared_parameters {
+        Some(parameters) => parameters,
+        None => match domains[1].finite_roots(&polynomial, policy)? {
+            Classification::Decided(parameters) => parameters,
+            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+        },
     };
-    let second = match extend_resultant_parameter_projection(
-        &polynomial,
-        parameters,
-        extensions[1],
-        policy,
-    )? {
-        Classification::Decided(projection) => projection,
-        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-    };
+    let second =
+        match extend_resultant_parameter_projection(&polynomial, parameters, domains[1], policy)? {
+            Classification::Decided(projection) => projection,
+            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+        };
     Ok(Classification::Decided(match (first, second) {
         (ResultantParameterProjection::Empty, _) | (_, ResultantParameterProjection::Empty) => {
             RationalBezierIntersectionCandidates2::NoIntersection
@@ -3333,13 +3342,16 @@ impl RationalBezier2 {
         let Some(equations) = rational_self_intersection_residual_system(basis) else {
             return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
         };
-        let candidates =
-            match project_symmetric_self_intersection_system(&equations, [None; 2], policy)? {
-                Classification::Decided(candidates) => candidates,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            };
+        let candidates = match project_symmetric_self_intersection_system(
+            &equations,
+            [CurveParameterDomain2::new(&CurveParameterRange2::unit(), None); 2],
+            policy,
+        )? {
+            Classification::Decided(candidates) => candidates,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
         let replayed = match &candidates {
             RationalBezierIntersectionCandidates2::NoIntersection => {
                 RationalBezierIntersectionContacts2::NoIntersection
@@ -3368,8 +3380,8 @@ impl RationalBezier2 {
         retain_unordered_rational_self_contacts(replayed, basis, policy)
     }
 
-    /// Returns ordered off-diagonal self-contacts over the authored unit span
-    /// plus an independently optional extension on each parameter axis.
+    /// Returns ordered off-diagonal self-contacts over each retained finite
+    /// range plus its independently optional incident extension.
     ///
     /// This is the exact-rational specialization used by projective PH-corner
     /// solving. Unlike the finite unordered authority, injectivity on the
@@ -3379,7 +3391,7 @@ impl RationalBezier2 {
     /// ordered domains, and the unchanged bivariate replay proves every pair.
     pub(crate) fn ordered_self_intersection_contacts_in_domain(
         &self,
-        extensions: [Option<BezierParameterRay2<'_>>; 2],
+        domains: [CurveParameterDomain2<'_>; 2],
         policy: &CurveContext,
     ) -> CurveResult<Classification<RationalBezierIntersectionContacts2>> {
         if let Classification::Uncertain(reason) = self.common_weight_sign(policy) {
@@ -3390,7 +3402,7 @@ impl RationalBezier2 {
             return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
         };
         let candidates =
-            match project_symmetric_self_intersection_system(&equations, extensions, policy)? {
+            match project_symmetric_self_intersection_system(&equations, domains, policy)? {
                 Classification::Decided(candidates) => candidates,
                 Classification::Uncertain(reason) => {
                     return Ok(Classification::Uncertain(reason));
@@ -4394,13 +4406,21 @@ impl RationalBezier2 {
             CurveResultantParameter::Second,
             config,
         );
-        let first = match resultant_parameter_projection(first, None, policy)? {
+        let first = match resultant_parameter_projection(
+            first,
+            CurveParameterDomain2::new(&CurveParameterRange2::unit(), None),
+            policy,
+        )? {
             Classification::Decided(projection) => projection,
             Classification::Uncertain(reason) => {
                 return Ok(Classification::Uncertain(reason));
             }
         };
-        let second = match resultant_parameter_projection(second, None, policy)? {
+        let second = match resultant_parameter_projection(
+            second,
+            CurveParameterDomain2::new(&CurveParameterRange2::unit(), None),
+            policy,
+        )? {
             Classification::Decided(projection) => projection,
             Classification::Uncertain(reason) => {
                 return Ok(Classification::Uncertain(reason));
@@ -9021,12 +9041,12 @@ pub(crate) fn resultant_parameter_polynomial(
     )
 }
 
-/// Projects one resultant onto the authored unit span and an optional open
+/// Projects one resultant onto an exact finite range and an optional open
 /// extension. The caller retains any exact pole or speed-zero barrier; the
 /// polynomial and its root certificates share one authority in both domains.
 pub(crate) fn resultant_parameter_projection(
     evidence: CurveIntersectionResultantReport,
-    extension: Option<BezierParameterRay2<'_>>,
+    domain: CurveParameterDomain2<'_>,
     policy: &CurveContext,
 ) -> CurveResult<Classification<ResultantParameterProjection>> {
     let polynomial = match resultant_parameter_polynomial(evidence, policy)? {
@@ -9040,25 +9060,25 @@ pub(crate) fn resultant_parameter_projection(
             return Ok(Classification::Uncertain(reason));
         }
     };
-    let parameters = match polynomial.isolate_unit_interval_roots(policy)? {
+    let parameters = match domain.finite_roots(&polynomial, policy)? {
         Classification::Decided(parameters) => parameters,
         Classification::Uncertain(reason) => {
             return Ok(Classification::Uncertain(reason));
         }
     };
-    extend_resultant_parameter_projection(&polynomial, parameters, extension, policy)
+    extend_resultant_parameter_projection(&polynomial, parameters, domain, policy)
 }
 
-/// Extends an already certified unit projection while retaining its root
-/// ownership. Symmetric systems reuse the polynomial and unit certificates
+/// Extends an already certified finite projection while retaining its root
+/// ownership. Symmetric systems reuse the polynomial and finite certificates
 /// across their independently ordered axes.
 fn extend_resultant_parameter_projection(
     polynomial: &BezierParameterPolynomial,
     mut parameters: Vec<BezierParameter2>,
-    extension: Option<BezierParameterRay2<'_>>,
+    domain: CurveParameterDomain2<'_>,
     policy: &CurveContext,
 ) -> CurveResult<Classification<ResultantParameterProjection>> {
-    if let Some(extension) = extension {
+    if let Some(extension) = domain.extension {
         let exterior = match polynomial.isolate_incident_ray_roots(
             extension.anchor,
             extension.direction,
@@ -9070,12 +9090,10 @@ fn extend_resultant_parameter_projection(
             }
         };
         for parameter in exterior {
-            // A selected trim can anchor its extension inside the original
-            // unit span. That closed span already owns every root it contains;
-            // retain its original certificate and avoid replaying a duplicate
-            // from the compact ray chart. Ray barriers affect only extension
-            // ownership, so check this before refining against the barrier.
-            match parameter.is_in_closed_unit_span(policy)? {
+            // The actual finite span owns shared roots, even beyond a ray's
+            // barrier. Roots inside the original unit interval belong to this
+            // ray when they are outside that finite span.
+            match domain.contains_finite_parameter(&parameter.clone().into(), policy)? {
                 Classification::Decided(true) => continue,
                 Classification::Decided(false) => {}
                 Classification::Uncertain(reason) => {
@@ -9552,9 +9570,146 @@ fn from_homogeneous(
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::bezier_parameter::BezierParameterRay2;
 
     fn exact_f64(value: f64) -> Real {
         Real::try_from(value).expect("finite binary rational")
+    }
+
+    #[test]
+    fn resultant_domains_own_finite_and_incident_roots_in_the_original_chart() {
+        let ratio = |n: i32, d: i32| (Real::from(n) / Real::from(d)).unwrap();
+        // (t-1/4)(t^2-1/2)(t-3/2), paired with u=0. Both unit
+        // and exterior roots belong to the same original resultant carrier.
+        let equation = BivariatePolynomial::new(
+            [(-3, 16), (7, 8), (-1, 8), (-7, 4), (1, 1)]
+                .into_iter()
+                .map(|(n, d)| vec![ratio(n, d)])
+                .collect(),
+        );
+        let other = BivariatePolynomial::new(vec![vec![Real::zero(), Real::one()]]);
+        let report = resultant_bivariate_polynomial_system_complete(
+            &equation,
+            &other,
+            CurveResultantParameter::First,
+            CurveIntersectionResultantConfig {
+                min_precision: RATIONAL_INTERSECTION_RESULTANT_PRECISION,
+                max_resultant_degree: MAX_RATIONAL_INTERSECTION_RESULTANT_DEGREE,
+            },
+        );
+        let quarter = ratio(1, 4);
+        let root = ratio(1, 2).sqrt().unwrap();
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let project = |range: &CurveParameterRange2, ray| {
+                let Classification::Decided(projected) = resultant_parameter_projection(
+                    report.clone(),
+                    CurveParameterDomain2::new(range, ray),
+                    &policy,
+                )
+                .unwrap() else {
+                    panic!("the exact finite-plus-ray projection must decide")
+                };
+                match projected {
+                    ResultantParameterProjection::Empty => Vec::new(),
+                    ResultantParameterProjection::Parameters(parameters) => parameters,
+                    _ => panic!("the isolated resultant must retain ordinary root certificates"),
+                }
+            };
+            let check = |parameters: Vec<BezierParameter2>, expected: &[Real]| {
+                assert_eq!(parameters.len(), expected.len());
+                for expected in expected {
+                    assert!(parameters.iter().any(|parameter| {
+                        parameter
+                            .cmp_by_refinement(&BezierParameter2::Exact(expected.clone()), &policy)
+                            .unwrap()
+                            == Classification::Decided(Ordering::Equal)
+                    }));
+                }
+            };
+            for (start, end, expected) in [
+                (ratio(1, 8), ratio(3, 8), quarter.clone()),
+                (ratio(5, 8), ratio(7, 8), root.clone()),
+                (ratio(5, 4), ratio(7, 4), ratio(3, 2)),
+                (-Real::one(), -ratio(1, 2), -&root),
+                (
+                    Real::from(2).sqrt().unwrap(),
+                    Real::from(3).sqrt().unwrap(),
+                    ratio(3, 2),
+                ),
+            ] {
+                for [start, end] in [[start.clone(), end.clone()], [end, start]] {
+                    check(
+                        project(
+                            &CurveParameterRange2::new_validated(start.into(), end.into()),
+                            None,
+                        ),
+                        std::slice::from_ref(&expected),
+                    );
+                }
+            }
+            let narrow =
+                CurveParameterRange2::new_validated(ratio(1, 8).into(), ratio(3, 8).into());
+            let one_barrier = BezierParameter2::Exact(Real::one());
+            let ray = BezierParameterRay2 {
+                anchor: &quarter,
+                direction: BezierParameterRayDirection2::Increasing,
+                barrier: Some(&one_barrier),
+            };
+            // The unit root beyond the actual finite range belongs to the ray.
+            check(
+                project(&narrow, Some(ray)),
+                &[quarter.clone(), root.clone()],
+            );
+            let root_barrier = BezierParameter2::Exact(root.clone());
+            check(
+                project(
+                    &narrow,
+                    Some(BezierParameterRay2 {
+                        barrier: Some(&root_barrier),
+                        ..ray
+                    }),
+                ),
+                std::slice::from_ref(&quarter),
+            );
+            // A barrier limits ray ownership, never an authored finite root.
+            let half_barrier = BezierParameter2::Exact(ratio(1, 2));
+            check(
+                project(
+                    &CurveParameterRange2::unit(),
+                    Some(BezierParameterRay2 {
+                        barrier: Some(&half_barrier),
+                        ..ray
+                    }),
+                ),
+                &[quarter.clone(), root.clone()],
+            );
+
+            let selected = crate::bezier_offset::degree_nine_selected_fiber_parameter_for_test(
+                ratio(1, 2),
+                32_768,
+                &policy,
+            );
+            assert!(matches!(
+                selected.promoted_bezier_parameter(&policy).unwrap(),
+                Classification::Uncertain(_)
+            ));
+            let selected = CurveParameter2::from_selected_fiber(selected);
+            let [lower, upper] = [ratio(3, 4), ratio(5, 4)].map(|offset| {
+                let Classification::Decided(parameter) = selected
+                    .affine_image_unbounded(&Real::one(), &offset, &policy)
+                    .unwrap()
+                else {
+                    panic!("the selected boundary must translate in its native field")
+                };
+                parameter
+            });
+            for [lower, upper] in [[lower.clone(), upper.clone()], [upper, lower]] {
+                check(
+                    project(&CurveParameterRange2::new_validated(lower, upper), None),
+                    &[ratio(3, 2)],
+                );
+            }
+        }
     }
 
     #[test]
@@ -9632,7 +9787,12 @@ mod tests {
                         bounded,
                     );
                     let projections = [polynomial, rational].map(|report| {
-                        resultant_parameter_projection(report, None, attempt).unwrap()
+                        resultant_parameter_projection(
+                            report,
+                            CurveParameterDomain2::new(&CurveParameterRange2::unit(), None),
+                            attempt,
+                        )
+                        .unwrap()
                     });
                     let mut parameters = Vec::with_capacity(2);
                     for projection in projections {

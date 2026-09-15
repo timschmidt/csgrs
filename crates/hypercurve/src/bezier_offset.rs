@@ -34,6 +34,7 @@ use crate::bezier_parameter::{
     signed_polynomial_at_root, strict_coefficients_sign_on_parameter_interval,
     univariate_unit_interval_strict_bernstein_sign,
 };
+use crate::bezier_split::CurveParameterDomain2;
 use crate::classify::{classify_oriented_line, compare_reals, in_closed_unit_interval, real_sign};
 use crate::rational_bezier_general::{
     RationalBezierOverlapParameterCorrespondence2, RationalParameterImageMap2,
@@ -104223,7 +104224,11 @@ fn algebraic_selected_fiber_parameters_with_resultant_limit(
             }
         }
     } else {
-        match resultant_parameter_projection(report, None, policy)? {
+        match resultant_parameter_projection(
+            report,
+            CurveParameterDomain2::new(&CurveParameterRange2::unit(), None),
+            policy,
+        )? {
             Classification::Decided(projection) => projection,
             Classification::Uncertain(reason) => {
                 return Ok(Classification::Uncertain(reason));
@@ -114358,7 +114363,7 @@ impl BezierParallel2 {
         Ok(project_parallel_intersection_system(
             &system.first_equation,
             &system.second_equation,
-            [None; 2],
+            [CurveParameterDomain2::new(&CurveParameterRange2::unit(), None); 2],
             policy,
         )?
         .map(|candidates| parallel_pair_candidates_from_parallel_rational(candidates, false)))
@@ -114606,19 +114611,19 @@ impl BezierParallel2 {
         )
     }
 
-    /// Returns selected-branch intersections on both authored unit spans plus
-    /// an independently optional regular extension for each source.
+    /// Returns selected-branch intersections on both retained finite ranges
+    /// plus an independently optional regular extension for each source.
     ///
     /// This is the projective corner domain used by TrimOrExtend. The ordinary
     /// parallel-pair equations and exact replay remain authoritative; only the
-    /// two univariate resultant projections are enlarged. Each exterior axis
+    /// two univariate resultant projections use their requested domains. Each ray
     /// stops before its first source pole or source-speed zero. Exact source
     /// and radical components reuse the finite topology through the requested
     /// compact charts, with correlated clipping against exact regularity barriers.
     pub(crate) fn parallel_intersections_in_domain(
         &self,
         other: &Self,
-        extensions: [Option<BezierParameterRay2<'_>>; 2],
+        domains: [CurveParameterDomain2<'_>; 2],
         policy: &CurveContext,
     ) -> CurveResult<Classification<BezierParallelPairDomainIntersectionSet2>> {
         let Some(system) = (match parallel_pair_equation_system(self, other, false, policy)? {
@@ -114636,7 +114641,7 @@ impl BezierParallel2 {
         let candidates = match project_parallel_intersection_system(
             &system.first_equation,
             &system.second_equation,
-            extensions,
+            domains,
             policy,
         )? {
             Classification::Decided(candidates) => candidates,
@@ -114682,7 +114687,7 @@ impl BezierParallel2 {
                 Some(support) => match parameter_domain_constraint(
                     support,
                     &system.norm_equation,
-                    extensions,
+                    domains,
                     policy,
                     config,
                 )? {
@@ -114697,7 +114702,7 @@ impl BezierParallel2 {
                 let mut selected_pairs = Vec::new();
                 if let Some(support) = source_constraint.component_support {
                     let selection = match select_parameter_component_in_domain(
-                        &support, &system, extensions, policy, config,
+                        &support, &system, domains, policy, config,
                     )? {
                         Classification::Decided(selection) => selection,
                         Classification::Uncertain(reason) => {
@@ -114721,7 +114726,7 @@ impl BezierParallel2 {
                     CertifiedParallelSourceOverlapKind2::Excluded,
                 ));
             if let Some(residual_projection) = project_parallel_pair_without_components_in_domain(
-                &system, self, other, &excluded, extensions, policy,
+                &system, self, other, &excluded, domains, policy,
             )? {
                 match residual_projection {
                     BezierParallelPairDomainProjection2::Isolated(residual_projection) => {
@@ -114743,7 +114748,7 @@ impl BezierParallel2 {
             .map(BezierParallelPairDomainIntersectionSet2::isolated))
     }
 
-    /// Returns ordered off-diagonal self-contacts on two authored unit spans
+    /// Returns ordered off-diagonal self-contacts on two retained finite ranges
     /// with independently optional, oriented extensions.
     ///
     /// An exactly rational PH parallel first reuses rational coordinate
@@ -114753,13 +114758,13 @@ impl BezierParallel2 {
     /// contact kernel's unordered-pair filter.
     pub(crate) fn ordered_self_intersections_in_domain(
         &self,
-        extensions: [Option<BezierParameterRay2<'_>>; 2],
+        domains: [CurveParameterDomain2<'_>; 2],
         policy: &CurveContext,
     ) -> CurveResult<Classification<BezierParallelPairDomainIntersectionSet2>> {
         match self.exact_rational_parallel_component(policy)? {
             Classification::Decided(Some(curve)) => {
                 let result =
-                    match curve.ordered_self_intersection_contacts_in_domain(extensions, policy)? {
+                    match curve.ordered_self_intersection_contacts_in_domain(domains, policy)? {
                         Classification::Decided(result) => result,
                         Classification::Uncertain(reason) => {
                             return Ok(Classification::Uncertain(reason));
@@ -114807,7 +114812,7 @@ impl BezierParallel2 {
             Some(support) => match parameter_domain_constraint(
                 support,
                 &system.norm_equation,
-                extensions,
+                domains,
                 policy,
                 config,
             )? {
@@ -114823,7 +114828,7 @@ impl BezierParallel2 {
             let mut selected_pairs = Vec::new();
             if let Some(support) = source_constraint.component_support {
                 let selection = match select_parameter_component_in_domain(
-                    &support, &system, extensions, policy, config,
+                    &support, &system, domains, policy, config,
                 )? {
                     Classification::Decided(selection) => selection,
                     Classification::Uncertain(reason) => {
@@ -114847,7 +114852,7 @@ impl BezierParallel2 {
             self,
             self,
             &source_diagonal_excluded,
-            extensions,
+            domains,
             policy,
         )?
         else {
@@ -116225,7 +116230,7 @@ impl BezierParallel2 {
         let candidates = match project_parallel_intersection_system(
             &equations[0],
             &equations[1],
-            [None; 2],
+            [CurveParameterDomain2::new(&CurveParameterRange2::unit(), None); 2],
             policy,
         )? {
             Classification::Decided(candidates) => candidates,
@@ -119835,7 +119840,7 @@ fn parallel_intersection_candidate_system(
         let candidates = match project_parallel_intersection_system(
             &reduced[0],
             &reduced[1],
-            [None; 2],
+            [CurveParameterDomain2::new(&CurveParameterRange2::unit(), None); 2],
             policy,
         )? {
             Classification::Decided(candidates) => candidates,
@@ -119865,7 +119870,7 @@ fn parallel_candidate_system(
 fn project_parallel_intersection_system(
     first_equation: &BivariatePolynomial,
     second_equation: &BivariatePolynomial,
-    extensions: [Option<BezierParameterRay2<'_>>; 2],
+    domains: [CurveParameterDomain2<'_>; 2],
     policy: &CurveContext,
 ) -> CurveResult<Classification<BezierParallelIntersectionCandidates2>> {
     let config = CurveIntersectionResultantConfig {
@@ -119878,7 +119883,7 @@ fn project_parallel_intersection_system(
         CurveResultantParameter::First,
         config,
     );
-    let parallel = match resultant_parameter_projection(parallel_report, extensions[0], policy)? {
+    let parallel = match resultant_parameter_projection(parallel_report, domains[0], policy)? {
         Classification::Decided(projection) => projection,
         Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
     };
@@ -119904,7 +119909,7 @@ fn project_parallel_intersection_system(
         CurveResultantParameter::Second,
         config,
     );
-    let other = match resultant_parameter_projection(other_report, extensions[1], policy)? {
+    let other = match resultant_parameter_projection(other_report, domains[1], policy)? {
         Classification::Decided(projection) => projection,
         Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
     };
@@ -120705,7 +120710,7 @@ fn parallel_candidate_system_from_parameter_components(
     let candidates = match project_parallel_intersection_system(
         &component.residual_equations[0],
         &component.residual_equations[1],
-        [None; 2],
+        [CurveParameterDomain2::new(&CurveParameterRange2::unit(), None); 2],
         policy,
     )? {
         Classification::Decided(candidates) => candidates,
@@ -123701,7 +123706,12 @@ fn bivariate_system_has_unit_square_solution(
     {
         return Ok(Classification::Decided(false));
     }
-    let candidates = match project_parallel_intersection_system(first, second, [None; 2], policy)? {
+    let candidates = match project_parallel_intersection_system(
+        first,
+        second,
+        [CurveParameterDomain2::new(&CurveParameterRange2::unit(), None); 2],
+        policy,
+    )? {
         Classification::Decided(candidates) => candidates,
         Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
     };
@@ -123756,7 +123766,12 @@ fn bivariate_system_has_positive_dimensional_relation(
         return Ok(Classification::Decided(false));
     }
     Ok(
-        match project_parallel_intersection_system(first, second, [None; 2], policy)? {
+        match project_parallel_intersection_system(
+            first,
+            second,
+            [CurveParameterDomain2::new(&CurveParameterRange2::unit(), None); 2],
+            policy,
+        )? {
             Classification::Decided(BezierParallelIntersectionCandidates2::DegenerateResultant) => {
                 Classification::Decided(true)
             }
@@ -123777,7 +123792,12 @@ fn bivariate_system_unit_square_solution_pairs(
     {
         return Ok(Classification::Decided(Vec::new()));
     }
-    let candidates = match project_parallel_intersection_system(first, second, [None; 2], policy)? {
+    let candidates = match project_parallel_intersection_system(
+        first,
+        second,
+        [CurveParameterDomain2::new(&CurveParameterRange2::unit(), None); 2],
+        policy,
+    )? {
         Classification::Decided(candidates) => candidates,
         Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
     };
@@ -124925,17 +124945,40 @@ impl BezierParallelIncidentDomain2 {
 
     /// Enlarges an authored retained range only through the certified
     /// rootless bridge between an algebraic endpoint and the ray chart.
-    pub(crate) fn expanded_range(&self, range: &BezierParameterRange2) -> BezierParameterRange2 {
-        match self.direction {
-            BezierParameterRayDirection2::Decreasing => BezierParameterRange2::new_validated(
-                BezierParameter2::Exact(self.anchor.clone()),
-                range.end().clone(),
-            ),
-            BezierParameterRayDirection2::Increasing => BezierParameterRange2::new_validated(
-                range.start().clone(),
-                BezierParameter2::Exact(self.anchor.clone()),
-            ),
+    pub(crate) fn expanded_range(
+        &self,
+        range: &CurveParameterRange2,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<CurveParameterRange2>> {
+        match CurveParameterDomain2::new(range, None)
+            .contains_finite_parameter(&self.endpoint, policy)?
+        {
+            Classification::Decided(true) => {}
+            Classification::Decided(false) => {
+                return Err(CurveError::Topology(
+                    "an incident bridge must meet the finite parameter domain".into(),
+                ));
+            }
+            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
         }
+        let [lower, upper] = match range.ordered_endpoints(policy)? {
+            Classification::Decided(endpoints) => endpoints,
+            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+        };
+        let anchor = CurveParameter2::from(self.anchor.clone());
+        let lower = match anchor.cmp_by_refinement(lower, policy)? {
+            Classification::Decided(std::cmp::Ordering::Less) => anchor.clone(),
+            Classification::Decided(_) => lower.clone(),
+            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+        };
+        let upper = match anchor.cmp_by_refinement(upper, policy)? {
+            Classification::Decided(std::cmp::Ordering::Greater) => anchor,
+            Classification::Decided(_) => upper.clone(),
+            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+        };
+        Ok(Classification::Decided(
+            CurveParameterRange2::new_validated(lower, upper),
+        ))
     }
 
     pub(crate) fn contains_extension_parameter(
@@ -125496,14 +125539,14 @@ struct ParameterDomainConstraint2 {
 fn parameter_domain_constraint(
     support: BivariatePolynomial,
     constraint: &BivariatePolynomial,
-    extensions: [Option<BezierParameterRay2<'_>>; 2],
+    domains: [CurveParameterDomain2<'_>; 2],
     policy: &CurveContext,
     config: CurveIntersectionResultantConfig,
 ) -> CurveResult<Classification<ParameterDomainConstraint2>> {
     let mut residual_equations = [support, constraint.clone()];
     let mut component_support = None;
     let project = |equations: &[BivariatePolynomial; 2]| {
-        project_parallel_intersection_system(&equations[0], &equations[1], extensions, policy)
+        project_parallel_intersection_system(&equations[0], &equations[1], domains, policy)
     };
     match extract_bivariate_axis_components(&residual_equations) {
         Classification::Decided(Some(axis)) => {
@@ -125699,7 +125742,7 @@ fn project_parallel_pair_without_components(
     let initial_candidates = match project_parallel_intersection_system(
         &residual_equations[0],
         &residual_equations[1],
-        [None; 2],
+        [CurveParameterDomain2::new(&CurveParameterRange2::unit(), None); 2],
         policy,
     )? {
         Classification::Decided(candidates) => candidates,
@@ -125725,7 +125768,7 @@ fn project_parallel_pair_without_components(
         let residual_candidates = match project_parallel_intersection_system(
             &residual_equations[0],
             &residual_equations[1],
-            [None; 2],
+            [CurveParameterDomain2::new(&CurveParameterRange2::unit(), None); 2],
             policy,
         )? {
             Classification::Decided(candidates)
@@ -125747,7 +125790,7 @@ fn project_parallel_pair_without_components(
                 let radical_candidates = match project_parallel_intersection_system(
                     &radical_equations[0],
                     &radical_equations[1],
-                    [None; 2],
+                    [CurveParameterDomain2::new(&CurveParameterRange2::unit(), None); 2],
                     policy,
                 )? {
                     Classification::Decided(candidates) => candidates,
@@ -125796,7 +125839,7 @@ fn project_parallel_pair_without_components(
                         match project_parallel_intersection_system(
                             &replay_equations[0],
                             &replay_equations[1],
-                            [None; 2],
+                            [CurveParameterDomain2::new(&CurveParameterRange2::unit(), None); 2],
                             policy,
                         )? {
                             Classification::Decided(candidates)
@@ -125873,13 +125916,63 @@ enum BezierParallelPairDomainProjection2 {
     PositiveDimensional,
 }
 
+struct ParameterComponentAffineMap2 {
+    scale: Real,
+    offset: Real,
+}
+
+#[derive(Clone, Copy)]
+enum ParameterComponentMap2<'a> {
+    Identity,
+    Affine(&'a ParameterComponentAffineMap2),
+    Incident(BezierParameterRay2<'a>),
+}
+
 #[derive(Clone, Copy)]
 struct ParameterComponentChart2<'a> {
-    extension: Option<BezierParameterRay2<'a>>,
+    domain: CurveParameterDomain2<'a>,
+    mapping: ParameterComponentMap2<'a>,
     range: &'a std::cell::OnceCell<CurveParameterRange2>,
 }
 
 impl<'a> ParameterComponentChart2<'a> {
+    fn authored(
+        domain: CurveParameterDomain2<'a>,
+        map: &'a std::cell::OnceCell<Option<ParameterComponentAffineMap2>>,
+        range: &'a std::cell::OnceCell<CurveParameterRange2>,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<Self>> {
+        if map.get().is_none() {
+            let (_, [lower, upper]) = match domain.finite_envelope(policy)? {
+                Classification::Decided(envelope) => envelope,
+                Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+            };
+            // The unit topology is authoritative only for a contained domain.
+            // Exterior finite intervals use an invertible affine chart, while
+            // the original selected boundaries remain the clipping authority.
+            let contained = matches!(
+                compare_reals(lower, &Real::zero(), &CurveContext::STRICT),
+                Some(std::cmp::Ordering::Equal | std::cmp::Ordering::Greater)
+            ) && matches!(
+                compare_reals(upper, &Real::one(), &CurveContext::STRICT),
+                Some(std::cmp::Ordering::Equal | std::cmp::Ordering::Less)
+            );
+            let mapping = (!contained).then(|| ParameterComponentAffineMap2 {
+                scale: upper - lower,
+                offset: lower.clone(),
+            });
+            let _ = map.set(mapping);
+        }
+        Ok(Classification::Decided(Self {
+            domain,
+            mapping: match map.get().expect("the finite chart map was prepared") {
+                Some(mapping) => ParameterComponentMap2::Affine(mapping),
+                None => ParameterComponentMap2::Identity,
+            },
+            range,
+        }))
+    }
+
     fn compact_range(
         self,
         policy: &CurveContext,
@@ -125887,32 +125980,66 @@ impl<'a> ParameterComponentChart2<'a> {
         if let Some(range) = self.range.get() {
             return Ok(Classification::Decided(range));
         }
-        let end = match self.extension {
-            None | Some(BezierParameterRay2 { barrier: None, .. }) => {
-                BezierParameter2::Exact(Real::one())
-            }
-            Some(BezierParameterRay2 {
-                anchor,
-                direction,
-                barrier: Some(barrier),
-            }) => match barrier.incident_ray_compact_parameter(anchor, direction, policy)? {
-                Classification::Decided(parameter) => parameter,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
+        let range = match self.mapping {
+            ParameterComponentMap2::Identity | ParameterComponentMap2::Affine(_) => {
+                let [lower, upper] = match self.domain.finite.ordered_endpoints(policy)? {
+                    Classification::Decided(endpoints) => endpoints,
+                    Classification::Uncertain(reason) => {
+                        return Ok(Classification::Uncertain(reason));
+                    }
+                };
+                match self.mapping {
+                    ParameterComponentMap2::Identity => {
+                        CurveParameterRange2::new_validated(lower.clone(), upper.clone())
+                    }
+                    ParameterComponentMap2::Affine(mapping) => {
+                        let scale = (Real::one() / &mapping.scale)?;
+                        let offset = -(&mapping.offset * &scale);
+                        let lower = match lower.affine_image_unbounded(&scale, &offset, policy)? {
+                            Classification::Decided(parameter) => parameter,
+                            Classification::Uncertain(reason) => {
+                                return Ok(Classification::Uncertain(reason));
+                            }
+                        };
+                        let upper = match upper.affine_image_unbounded(&scale, &offset, policy)? {
+                            Classification::Decided(parameter) => parameter,
+                            Classification::Uncertain(reason) => {
+                                return Ok(Classification::Uncertain(reason));
+                            }
+                        };
+                        CurveParameterRange2::new_validated(lower, upper)
+                    }
+                    ParameterComponentMap2::Incident(_) => unreachable!(),
                 }
-            },
+            }
+            ParameterComponentMap2::Incident(extension) => {
+                let end = match extension.barrier {
+                    None => BezierParameter2::Exact(Real::one()),
+                    Some(barrier) => match barrier.incident_ray_compact_parameter(
+                        extension.anchor,
+                        extension.direction,
+                        policy,
+                    )? {
+                        Classification::Decided(parameter) => parameter,
+                        Classification::Uncertain(reason) => {
+                            return Ok(Classification::Uncertain(reason));
+                        }
+                    },
+                };
+                let range = match BezierParameterRange2::try_new(
+                    BezierParameter2::Exact(Real::zero()),
+                    end,
+                    policy,
+                )? {
+                    Classification::Decided(range) => range,
+                    Classification::Uncertain(reason) => {
+                        return Ok(Classification::Uncertain(reason));
+                    }
+                };
+                CurveParameterRange2::from_bezier_range(range)
+            }
         };
-        let range = match BezierParameterRange2::try_new(
-            BezierParameter2::Exact(Real::zero()),
-            end,
-            policy,
-        )? {
-            Classification::Decided(range) => range,
-            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-        };
-        Ok(Classification::Decided(self.range.get_or_init(|| {
-            CurveParameterRange2::from_bezier_range(range)
-        })))
+        Ok(Classification::Decided(self.range.get_or_init(|| range)))
     }
 
     fn contains_component_event(
@@ -125920,53 +126047,57 @@ impl<'a> ParameterComponentChart2<'a> {
         parameter: &BezierParameter2,
         policy: &CurveContext,
     ) -> CurveResult<Classification<bool>> {
-        if self.extension.is_none() {
-            return Ok(Classification::Decided(true));
-        }
         let range = match self.compact_range(policy)? {
             Classification::Decided(range) => range,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
+            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
         };
+        let closed = !matches!(self.mapping, ParameterComponentMap2::Incident(_));
         let parameter = CurveParameter2::from(parameter.clone());
         let after_start = match parameter.cmp_by_refinement(range.start(), policy)? {
-            Classification::Decided(ordering) => ordering == std::cmp::Ordering::Greater,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
+            Classification::Decided(ordering) => ordering.is_gt() || (closed && ordering.is_eq()),
+            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
         };
         if !after_start {
             return Ok(Classification::Decided(false));
         }
-        Ok(match parameter.cmp_by_refinement(range.end(), policy)? {
-            Classification::Decided(ordering) => {
-                Classification::Decided(ordering == std::cmp::Ordering::Less)
-            }
-            Classification::Uncertain(reason) => Classification::Uncertain(reason),
-        })
+        Ok(parameter
+            .cmp_by_refinement(range.end(), policy)?
+            .map(|ordering| ordering.is_lt() || (closed && ordering.is_eq())))
     }
 
-    /// Assigns publication to the authored chart for every unit-span root.
-    /// Keep this separate from event containment: overlapping chart events
-    /// still partition selector signs even when another chart publishes them.
+    /// Finite roots keep their original ownership. Overlapping ray events
+    /// still partition selector signs, but only the finite chart publishes
+    /// those contacts. This rule follows the actual domain, not the unit span.
     fn owned_original_parameter(
         self,
         parameter: &BezierParameter2,
         policy: &CurveContext,
     ) -> CurveResult<Classification<Option<BezierParameter2>>> {
-        let Some(BezierParameterRay2 {
-            anchor, direction, ..
-        }) = self.extension
-        else {
-            return Ok(Classification::Decided(Some(parameter.clone())));
+        let mapped = match self.mapping {
+            ParameterComponentMap2::Identity => {
+                return Ok(Classification::Decided(Some(parameter.clone())));
+            }
+            ParameterComponentMap2::Affine(mapping) => {
+                return Ok(parameter
+                    .affine_image_unbounded(&mapping.scale, &mapping.offset, policy)?
+                    .map(Some));
+            }
+            ParameterComponentMap2::Incident(extension) => {
+                match parameter.incident_ray_parameter(
+                    extension.anchor,
+                    extension.direction,
+                    policy,
+                )? {
+                    Classification::Decided(parameter) => parameter,
+                    Classification::Uncertain(reason) => {
+                        return Ok(Classification::Uncertain(reason));
+                    }
+                }
+            }
         };
-        let mapped = match parameter.incident_ray_parameter(anchor, direction, policy)? {
-            Classification::Decided(parameter) => parameter,
-            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-        };
-        Ok(mapped
-            .is_in_closed_unit_span(policy)?
+        Ok(self
+            .domain
+            .contains_finite_parameter(&mapped.clone().into(), policy)?
             .map(|inside| (!inside).then_some(mapped)))
     }
 }
@@ -126051,13 +126182,33 @@ fn transform_parameter_component_chart_polynomial<'a>(
         (CurveResultantParameter::First, first_chart),
         (CurveResultantParameter::Second, second_chart),
     ] {
-        if let Some(extension) = chart.extension {
-            transformed = Cow::Owned(bivariate_compose_incident_parameter(
-                &transformed,
-                axis,
-                extension.anchor,
-                extension.direction,
-            )?);
+        match chart.mapping {
+            ParameterComponentMap2::Identity => {}
+            ParameterComponentMap2::Affine(mapping) => {
+                let polynomial = match axis {
+                    CurveResultantParameter::First => {
+                        bivariate_swap_parameters(&bivariate_affine_second_parameter(
+                            &bivariate_swap_parameters(&transformed),
+                            &mapping.scale,
+                            &mapping.offset,
+                        ))
+                    }
+                    CurveResultantParameter::Second => bivariate_affine_second_parameter(
+                        &transformed,
+                        &mapping.scale,
+                        &mapping.offset,
+                    ),
+                };
+                transformed = Cow::Owned(bivariate_trim_exact(polynomial)?);
+            }
+            ParameterComponentMap2::Incident(extension) => {
+                transformed = Cow::Owned(bivariate_compose_incident_parameter(
+                    &transformed,
+                    axis,
+                    extension.anchor,
+                    extension.direction,
+                )?);
+            }
         }
     }
     Some(transformed)
@@ -126068,7 +126219,9 @@ fn transform_parallel_pair_system_for_component_chart<'a>(
     first_chart: ParameterComponentChart2<'_>,
     second_chart: ParameterComponentChart2<'_>,
 ) -> Option<Cow<'a, BezierParallelPairEquationSystem2>> {
-    if first_chart.extension.is_none() && second_chart.extension.is_none() {
+    if matches!(first_chart.mapping, ParameterComponentMap2::Identity)
+        && matches!(second_chart.mapping, ParameterComponentMap2::Identity)
+    {
         return Some(Cow::Borrowed(system));
     }
     let transform = |polynomial: &BivariatePolynomial| {
@@ -126289,27 +126442,50 @@ fn owned_parameter_component_pair_from_chart(
 fn select_parameter_component_in_domain(
     support: &BivariatePolynomial,
     system: &BezierParallelPairEquationSystem2,
-    extensions: [Option<BezierParameterRay2<'_>>; 2],
+    domains: [CurveParameterDomain2<'_>; 2],
     policy: &CurveContext,
     config: CurveIntersectionResultantConfig,
 ) -> CurveResult<Classification<ParameterComponentSelection2>> {
     let mut selected_pairs = Vec::new();
-    // Each query has one policy and at most three chart domains. Retain only
+    // Each query has one policy and at most four chart domains. Retain only
     // decided ranges, on demand: a finite selected component must not force
     // an unused extension's barrier conversion or refinement.
-    let ranges: [_; 3] = std::array::from_fn(|_| std::cell::OnceCell::new());
-    let authored = ParameterComponentChart2 {
-        extension: None,
-        range: &ranges[0],
+    let ranges: [[_; 2]; 2] =
+        std::array::from_fn(|_| std::array::from_fn(|_| std::cell::OnceCell::new()));
+    let finite_maps: [_; 2] = std::array::from_fn(|_| std::cell::OnceCell::new());
+    let chart = |axis: usize,
+                 extended: bool|
+     -> CurveResult<Classification<Option<ParameterComponentChart2<'_>>>> {
+        if extended {
+            Ok(Classification::Decided(domains[axis].extension.map(
+                |extension| ParameterComponentChart2 {
+                    domain: domains[axis],
+                    mapping: ParameterComponentMap2::Incident(extension),
+                    range: &ranges[axis][1],
+                },
+            )))
+        } else {
+            Ok(ParameterComponentChart2::authored(
+                domains[axis],
+                &finite_maps[axis],
+                &ranges[axis][0],
+                policy,
+            )?
+            .map(Some))
+        }
     };
-    let extended = [0, 1].map(|axis| {
-        extensions[axis].map(|extension| ParameterComponentChart2 {
-            extension: Some(extension),
-            range: &ranges[axis + 1],
-        })
-    });
-    for second_chart in [Some(authored), extended[1]].into_iter().flatten() {
-        for first_chart in [Some(authored), extended[0]].into_iter().flatten() {
+    for second_extended in [false, true] {
+        let second_chart = match chart(1, second_extended)? {
+            Classification::Decided(Some(chart)) => chart,
+            Classification::Decided(None) => continue,
+            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+        };
+        for first_extended in [false, true] {
+            let first_chart = match chart(0, first_extended)? {
+                Classification::Decided(Some(chart)) => chart,
+                Classification::Decided(None) => continue,
+                Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+            };
             let Some(chart_support) =
                 transform_parameter_component_chart_polynomial(support, first_chart, second_chart)
             else {
@@ -126467,7 +126643,7 @@ fn project_parallel_pair_without_components_in_domain(
     first: &BezierParallel2,
     second: &BezierParallel2,
     source_overlap: &Classification<CertifiedParallelSourceOverlap2>,
-    extensions: [Option<BezierParameterRay2<'_>>; 2],
+    domains: [CurveParameterDomain2<'_>; 2],
     policy: &CurveContext,
 ) -> CurveResult<Option<BezierParallelPairDomainProjection2>> {
     if !matches!(source_overlap, Classification::Decided(_)) {
@@ -126486,7 +126662,7 @@ fn project_parallel_pair_without_components_in_domain(
     let source_component_removed = source_residual.is_some();
     let mut residual_equations = source_residual.unwrap_or(original_equations);
     let project = |equations: &[BivariatePolynomial; 2]| {
-        project_parallel_intersection_system(&equations[0], &equations[1], extensions, policy)
+        project_parallel_intersection_system(&equations[0], &equations[1], domains, policy)
     };
     let config = CurveIntersectionResultantConfig {
         min_precision: PARALLEL_INTERSECTION_RESULTANT_PRECISION,
@@ -126540,7 +126716,7 @@ fn project_parallel_pair_without_components_in_domain(
         let constraint = match parameter_domain_constraint(
             support,
             &system.norm_equation,
-            extensions,
+            domains,
             policy,
             config,
         )? {
@@ -126552,7 +126728,7 @@ fn project_parallel_pair_without_components_in_domain(
             let selection = match select_parameter_component_in_domain(
                 &component_support,
                 system,
-                extensions,
+                domains,
                 policy,
                 config,
             )? {
@@ -126681,7 +126857,7 @@ fn project_parallel_pair_intersection_system(
     let projected = match project_parallel_intersection_system(
         &system.first_equation,
         &system.second_equation,
-        [None; 2],
+        [CurveParameterDomain2::new(&CurveParameterRange2::unit(), None); 2],
         policy,
     )? {
         Classification::Decided(projected) => projected,
@@ -126735,7 +126911,7 @@ fn project_parallel_pair_intersection_system(
     let fallback = match project_parallel_intersection_system(
         &system.first_equation,
         &system.norm_equation,
-        [None; 2],
+        [CurveParameterDomain2::new(&CurveParameterRange2::unit(), None); 2],
         policy,
     )? {
         Classification::Decided(projected) => projected,
@@ -129747,13 +129923,6 @@ mod conversion_tests {
 
     fn region_parameter(parameter: BezierParameter2) -> CurveParameter2 {
         CurveParameter2::from(parameter)
-    }
-
-    fn unit_region_parameter_range() -> CurveParameterRange2 {
-        CurveParameterRange2::from_bezier_range(BezierParameterRange2::from_exact(
-            Real::zero(),
-            Real::one(),
-        ))
     }
 
     #[test]
@@ -157988,7 +158157,10 @@ mod conversion_tests {
                 }) = project_parallel_intersection_system(
                     &first,
                     &second,
-                    [first_ray, second_ray],
+                    [
+                        CurveParameterDomain2::new(&CurveParameterRange2::unit(), first_ray),
+                        CurveParameterDomain2::new(&CurveParameterRange2::unit(), second_ray),
+                    ],
                     &policy,
                 )
                 .unwrap()
@@ -158038,7 +158210,10 @@ mod conversion_tests {
                 project_parallel_intersection_system(
                     &exterior_only,
                     &second,
-                    [None, Some(second_ray)],
+                    [
+                        CurveParameterDomain2::new(&CurveParameterRange2::unit(), None),
+                        CurveParameterDomain2::new(&CurveParameterRange2::unit(), Some(second_ray))
+                    ],
                     &policy
                 )
                 .unwrap(),
@@ -158069,12 +158244,20 @@ mod conversion_tests {
             -&one,
         ]]);
         for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
-            let project = |extensions| {
+            let project = |extensions: [Option<BezierParameterRay2<'_>>; 2]| {
                 let Classification::Decided(BezierParallelIntersectionCandidates2::Candidates {
                     parallel_parameters,
                     other_parameters,
-                }) = project_parallel_intersection_system(&first, &second, extensions, &policy)
-                    .unwrap()
+                }) = project_parallel_intersection_system(
+                    &first,
+                    &second,
+                    [
+                        CurveParameterDomain2::new(&CurveParameterRange2::unit(), extensions[0]),
+                        CurveParameterDomain2::new(&CurveParameterRange2::unit(), extensions[1]),
+                    ],
+                    &policy,
+                )
+                .unwrap()
                 else {
                     panic!("overlapping exact projection domains must be complete")
                 };
@@ -158313,10 +158496,20 @@ mod conversion_tests {
                 endpoint.clone(),
                 BezierParameter2::Exact(Real::one()),
             );
-            assert_eq!(
-                domain.expanded_range(&range).start().scalar(),
-                Some(domain.anchor()),
-            );
+            let Classification::Decided(expanded) = domain
+                .expanded_range(&CurveParameterRange2::from_bezier_range(range), &policy)
+                .unwrap()
+            else {
+                panic!("the finite range must retain the endpoint-to-anchor bridge")
+            };
+            assert_eq!(expanded.start().scalar(), Some(domain.anchor()));
+            let Classification::Decided(expanded_unit) = domain
+                .expanded_range(&CurveParameterRange2::unit(), &policy)
+                .unwrap()
+            else {
+                panic!("an interior anchor must preserve the complete authored span")
+            };
+            assert_eq!(expanded_unit, CurveParameterRange2::unit());
 
             let reversed = domain.reversed();
             assert_eq!(
@@ -158795,8 +158988,14 @@ mod conversion_tests {
                                 .parallel_intersections_in_domain(
                                     &second,
                                     [
-                                        extend_first.then(|| first_domain.parameter_ray()),
-                                        extend_second.then(|| second_domain.parameter_ray()),
+                                        CurveParameterDomain2::new(
+                                            &CurveParameterRange2::unit(),
+                                            extend_first.then(|| first_domain.parameter_ray()),
+                                        ),
+                                        CurveParameterDomain2::new(
+                                            &CurveParameterRange2::unit(),
+                                            extend_second.then(|| second_domain.parameter_ray()),
+                                        ),
                                     ],
                                     &policy,
                                 )
@@ -158851,8 +159050,14 @@ mod conversion_tests {
                         .parallel_intersections_in_domain(
                             &second,
                             [
-                                extend_first.then(|| first_domain.parameter_ray()),
-                                extend_second.then(|| second_domain.parameter_ray()),
+                                CurveParameterDomain2::new(
+                                    &CurveParameterRange2::unit(),
+                                    extend_first.then(|| first_domain.parameter_ray()),
+                                ),
+                                CurveParameterDomain2::new(
+                                    &CurveParameterRange2::unit(),
+                                    extend_second.then(|| second_domain.parameter_ray()),
+                                ),
                             ],
                             &policy,
                         )
@@ -158925,6 +159130,48 @@ mod conversion_tests {
                 };
                 assert!(finite.is_complete());
                 assert_eq!(finite.contacts().len(), usize::from(case == 0));
+                // Finite trims retain only their ordered parameter roles,
+                // including both exterior roots in the original source chart.
+                for [first, second] in [[0, 1], [1, 0], [0, 0]] {
+                    let ranges = [first, second].map(|index| {
+                        CurveParameterRange2::new_validated(
+                            (&roots[index] - ratio(1, 16)).into(),
+                            (&roots[index] + ratio(1, 16)).into(),
+                        )
+                    });
+                    let Classification::Decided(result) = parallel
+                        .ordered_self_intersections_in_domain(
+                            ranges
+                                .each_ref()
+                                .map(|range| CurveParameterDomain2::new(range, None)),
+                            &policy,
+                        )
+                        .unwrap()
+                    else {
+                        panic!("actual finite self-contact domains must be decided")
+                    };
+                    let (intersections, component) = result.into_parts();
+                    assert!(intersections.is_complete(), "{intersections:?}");
+                    assert!(!component);
+                    assert_eq!(intersections.contacts().len(), usize::from(first != second));
+                    for contact in intersections.contacts() {
+                        for (parameter, index) in [
+                            (contact.first_parameter(), first),
+                            (contact.second_parameter(), second),
+                        ] {
+                            assert_eq!(
+                                parameter
+                                    .cmp_by_refinement(
+                                        &BezierParameter2::Exact(roots[index].clone()),
+                                        &policy,
+                                    )
+                                    .unwrap(),
+                                Classification::Decided(std::cmp::Ordering::Equal),
+                            );
+                        }
+                        assert!(contact.is_certified_transverse());
+                    }
+                }
                 let domains = directions.map(|direction| {
                     incident_domain(
                         &parallel,
@@ -158941,8 +159188,14 @@ mod conversion_tests {
                         let Classification::Decided(result) = parallel
                             .ordered_self_intersections_in_domain(
                                 [
-                                    extend_first.then(|| domains[0].parameter_ray()),
-                                    extend_second.then(|| domains[1].parameter_ray()),
+                                    CurveParameterDomain2::new(
+                                        &CurveParameterRange2::unit(),
+                                        extend_first.then(|| domains[0].parameter_ray()),
+                                    ),
+                                    CurveParameterDomain2::new(
+                                        &CurveParameterRange2::unit(),
+                                        extend_second.then(|| domains[1].parameter_ray()),
+                                    ),
                                 ],
                                 &policy,
                             )
@@ -159040,23 +159293,29 @@ mod conversion_tests {
                 .parallel_intersections_in_domain(
                     &second,
                     [
-                        Some(
-                            incident_domain(
-                                &first,
-                                Real::one(),
-                                BezierParameterRayDirection2::Increasing,
-                                &policy,
-                            )
-                            .parameter_ray(),
+                        CurveParameterDomain2::new(
+                            &CurveParameterRange2::unit(),
+                            Some(
+                                incident_domain(
+                                    &first,
+                                    Real::one(),
+                                    BezierParameterRayDirection2::Increasing,
+                                    &policy,
+                                )
+                                .parameter_ray(),
+                            ),
                         ),
-                        Some(
-                            incident_domain(
-                                &second,
-                                Real::zero(),
-                                BezierParameterRayDirection2::Decreasing,
-                                &policy,
-                            )
-                            .parameter_ray(),
+                        CurveParameterDomain2::new(
+                            &CurveParameterRange2::unit(),
+                            Some(
+                                incident_domain(
+                                    &second,
+                                    Real::zero(),
+                                    BezierParameterRayDirection2::Decreasing,
+                                    &policy,
+                                )
+                                .parameter_ray(),
+                            ),
                         ),
                     ],
                     &policy,
@@ -162458,7 +162717,7 @@ mod conversion_tests {
                             &parallel,
                             &center_parameter,
                             &setback,
-                            &unit_region_parameter_range(),
+                            &CurveParameterRange2::unit(),
                             None,
                             &policy,
                         )
@@ -164241,7 +164500,7 @@ mod conversion_tests {
                     &parallel,
                     &center,
                     &setback,
-                    &unit_region_parameter_range(),
+                    &CurveParameterRange2::unit(),
                     Some(BezierParameterRayDirection2::Decreasing),
                     &policy,
                 )
@@ -164288,7 +164547,7 @@ mod conversion_tests {
                     &parallel,
                     &center,
                     &setback,
-                    &unit_region_parameter_range(),
+                    &CurveParameterRange2::unit(),
                     None,
                     &policy,
                 )
@@ -164578,7 +164837,7 @@ mod conversion_tests {
                     &parallel,
                     &center,
                     &setback,
-                    &unit_region_parameter_range(),
+                    &CurveParameterRange2::unit(),
                     None,
                     &policy,
                 )
@@ -164658,7 +164917,7 @@ mod conversion_tests {
                     &parallel,
                     &center,
                     &Real::from(2_i8),
-                    &unit_region_parameter_range(),
+                    &CurveParameterRange2::unit(),
                     None,
                     &policy,
                 )
@@ -164670,7 +164929,7 @@ mod conversion_tests {
                     &parallel,
                     &center,
                     &Real::from(2_i8),
-                    &unit_region_parameter_range(),
+                    &CurveParameterRange2::unit(),
                     None,
                     &policy,
                 )
@@ -166524,7 +166783,20 @@ mod conversion_tests {
                         let system = positive_component_selector_system(&support);
                         let Classification::Decided(selection) =
                             select_parameter_component_in_domain(
-                                &support, &system, extensions, &policy, config,
+                                &support,
+                                &system,
+                                [
+                                    CurveParameterDomain2::new(
+                                        &CurveParameterRange2::unit(),
+                                        extensions[0],
+                                    ),
+                                    CurveParameterDomain2::new(
+                                        &CurveParameterRange2::unit(),
+                                        extensions[1],
+                                    ),
+                                ],
+                                &policy,
+                                config,
                             )
                             .unwrap()
                         else {
@@ -166613,7 +166885,16 @@ mod conversion_tests {
                     let Classification::Decided(result) = parameter_domain_constraint(
                         support.clone(),
                         &constraint,
-                        extensions,
+                        [
+                            CurveParameterDomain2::new(
+                                &CurveParameterRange2::unit(),
+                                extensions[0],
+                            ),
+                            CurveParameterDomain2::new(
+                                &CurveParameterRange2::unit(),
+                                extensions[1],
+                            ),
+                        ],
                         &policy,
                         config,
                     )
@@ -166624,7 +166905,20 @@ mod conversion_tests {
                         .component_support
                         .expect("the common polynomial factor survives");
                     let Classification::Decided(selection) = select_parameter_component_in_domain(
-                        &component, &system, extensions, &policy, config,
+                        &component,
+                        &system,
+                        [
+                            CurveParameterDomain2::new(
+                                &CurveParameterRange2::unit(),
+                                extensions[0],
+                            ),
+                            CurveParameterDomain2::new(
+                                &CurveParameterRange2::unit(),
+                                extensions[1],
+                            ),
+                        ],
+                        &policy,
+                        config,
                     )
                     .unwrap() else {
                         panic!("the shared component must retain its requested domain")
@@ -166665,6 +166959,316 @@ mod conversion_tests {
     }
 
     #[test]
+    fn parameter_domains_retain_finite_residuals_without_unowned_components() {
+        let ratio = |n: i32, d: i32| (Real::from(n) / Real::from(d)).unwrap();
+        let one = Real::one();
+        let component =
+            BivariatePolynomial::new(vec![vec![Real::zero(), -&one], vec![one.clone()]]);
+        let system = positive_component_selector_system(&component);
+        let config = CurveIntersectionResultantConfig {
+            min_precision: PARALLEL_INTERSECTION_RESULTANT_PRECISION,
+            max_resultant_degree: MAX_PARALLEL_INTERSECTION_RESULTANT_DEGREE,
+        };
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let selected =
+                degree_nine_selected_fiber_parameter_for_test(ratio(1, 2), 32_768, &policy);
+            assert!(matches!(
+                selected.promoted_bezier_parameter(&policy).unwrap(),
+                Classification::Uncertain(_)
+            ));
+            for origin in [
+                CurveParameter2::from(ratio(1, 2)),
+                CurveParameter2::from_selected_fiber(selected),
+            ] {
+                for shift in [-2_i32, 0, 2].map(Real::from) {
+                    let first_parameter = &shift + ratio(1, 4);
+                    let second_parameter = &shift + ratio(3, 4);
+                    // The component t=u misses these disjoint domains, but
+                    // the isolated residual pair belongs to both finite spans.
+                    let support = bivariate_multiply(
+                        &component,
+                        &BivariatePolynomial::new(vec![vec![-&first_parameter], vec![one.clone()]]),
+                    );
+                    let constraint = bivariate_multiply(
+                        &component,
+                        &BivariatePolynomial::new(vec![vec![-&second_parameter, one.clone()]]),
+                    );
+                    let boundaries = [-3, -1, 1, 3].map(|numerator| {
+                        let Classification::Decided(parameter) = origin
+                            .affine_image_unbounded(&one, &(&shift + ratio(numerator, 8)), &policy)
+                            .unwrap()
+                        else {
+                            panic!("finite boundaries must retain their native authority")
+                        };
+                        parameter
+                    });
+                    for reverse_first in [false, true] {
+                        for reverse_second in [false, true] {
+                            let range = |axis: usize, reverse| {
+                                let mut pair = [
+                                    boundaries[2 * axis].clone(),
+                                    boundaries[2 * axis + 1].clone(),
+                                ];
+                                if reverse {
+                                    pair.swap(0, 1);
+                                }
+                                let [start, end] = pair;
+                                CurveParameterRange2::new_validated(start, end)
+                            };
+                            let first_range = range(0, reverse_first);
+                            let second_range = range(1, reverse_second);
+                            let domains = [
+                                CurveParameterDomain2::new(&first_range, None),
+                                CurveParameterDomain2::new(&second_range, None),
+                            ];
+                            let Classification::Decided(result) = parameter_domain_constraint(
+                                support.clone(),
+                                &constraint,
+                                domains,
+                                &policy,
+                                config,
+                            )
+                            .unwrap() else {
+                                panic!("finite residual projection must decide")
+                            };
+                            let component = result.component_support.unwrap();
+                            let Classification::Decided(selection) =
+                                select_parameter_component_in_domain(
+                                    &component, &system, domains, &policy, config,
+                                )
+                                .unwrap()
+                            else {
+                                panic!("finite component clipping must decide")
+                            };
+                            assert!(!selection.positive_dimensional);
+                            assert!(selection.selected_pairs.is_empty());
+                            let BezierParallelIntersectionCandidates2::Candidates {
+                                parallel_parameters,
+                                other_parameters,
+                            } = result.isolated_projection.unwrap().candidates
+                            else {
+                                panic!("the exact residual pair must survive saturation")
+                            };
+                            for (parameters, expected) in [
+                                (parallel_parameters, &first_parameter),
+                                (other_parameters, &second_parameter),
+                            ] {
+                                assert_eq!(parameters.len(), 1);
+                                assert_eq!(
+                                    parameters[0]
+                                        .cmp_by_refinement(
+                                            &BezierParameter2::Exact(expected.clone()),
+                                            &policy,
+                                        )
+                                        .unwrap(),
+                                    Classification::Decided(std::cmp::Ordering::Equal),
+                                );
+                            }
+                            // Translating the same diagonal by half a unit
+                            // gives a true overlap on these exact domains.
+                            let overlapping = BivariatePolynomial::new(vec![
+                                vec![ratio(1, 2), -&one],
+                                vec![one.clone()],
+                            ]);
+                            let Classification::Decided(selection) =
+                                select_parameter_component_in_domain(
+                                    &overlapping,
+                                    &positive_component_selector_system(&overlapping),
+                                    domains,
+                                    &policy,
+                                    config,
+                                )
+                                .unwrap()
+                            else {
+                                panic!("an owned finite overlap must remain representable")
+                            };
+                            assert!(selection.positive_dimensional);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn parameter_domains_retain_chart_events_and_closed_finite_boundaries() {
+        let ratio = |n: i32, d: i32| (Real::from(n) / Real::from(d)).unwrap();
+        let one = Real::one();
+        let half = ratio(1, 2);
+        let quarter = ratio(1, 4);
+        let alpha = half.clone().sqrt().unwrap();
+        let barrier = BezierParameter2::Exact(one.clone());
+        let config = CurveIntersectionResultantConfig {
+            min_precision: PARALLEL_INTERSECTION_RESULTANT_PRECISION,
+            max_resultant_degree: MAX_PARALLEL_INTERSECTION_RESULTANT_DEGREE,
+        };
+        let support = BivariatePolynomial::new(vec![vec![Real::zero(), -&one], vec![one.clone()]]);
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            for shift in [-2_i32, 0, 2].map(Real::from) {
+                // Select only (t-shift)^2=1/2 on the diagonal. Its positive
+                // root survives chart transport; every open cell is excluded.
+                let event = BivariatePolynomial::new(vec![
+                    vec![&shift * &shift - &half],
+                    vec![-(Real::from(2_i8) * &shift)],
+                    vec![one.clone()],
+                ]);
+                let opposite = bivariate_scale(event.clone(), &-&one);
+                let system = BezierParallelPairEquationSystem2 {
+                    first_projection: opposite.clone(),
+                    second_projection: opposite,
+                    tangent_cross: event,
+                    norm_residual: BivariatePolynomial::new(vec![vec![-&one]]),
+                    ..positive_component_selector_system(&support)
+                };
+                let finite = CurveParameterRange2::new_validated(
+                    (&shift + ratio(5, 8)).into(),
+                    (&shift + ratio(7, 8)).into(),
+                );
+                let Classification::Decided(selection) = select_parameter_component_in_domain(
+                    &support,
+                    &system,
+                    [CurveParameterDomain2::new(&finite, None); 2],
+                    &policy,
+                    config,
+                )
+                .unwrap() else {
+                    panic!("an isolated selected event must survive its finite chart")
+                };
+                assert!(!selection.positive_dimensional);
+                assert_eq!(selection.selected_pairs.len(), 1);
+                let pair = &selection.selected_pairs[0];
+                for parameter in [&pair.parallel_parameter, &pair.other_parameter] {
+                    assert_eq!(
+                        parameter
+                            .cmp_by_refinement(&BezierParameter2::Exact(&shift + &alpha), &policy,)
+                            .unwrap(),
+                        Classification::Decided(std::cmp::Ordering::Equal),
+                    );
+                }
+                for boundary in [ratio(5, 8), ratio(7, 8)] {
+                    let axis = BivariatePolynomial::new(vec![
+                        vec![-(&shift + boundary)],
+                        vec![one.clone()],
+                    ]);
+                    let Classification::Decided(selection) = select_parameter_component_in_domain(
+                        &axis,
+                        &positive_component_selector_system(&axis),
+                        [CurveParameterDomain2::new(&finite, None); 2],
+                        &policy,
+                        config,
+                    )
+                    .unwrap() else {
+                        panic!("finite component boundaries are closed")
+                    };
+                    assert!(selection.positive_dimensional);
+                }
+                if shift != Real::zero() {
+                    continue;
+                }
+                let short = CurveParameterRange2::new_validated(
+                    Real::zero().into(),
+                    quarter.clone().into(),
+                );
+                // The event is inside the original unit span but outside the
+                // first finite span. Only its optional incident ray owns it.
+                for extend in [false, true] {
+                    let Classification::Decided(selection) = select_parameter_component_in_domain(
+                        &support,
+                        &system,
+                        [
+                            CurveParameterDomain2::new(
+                                &short,
+                                extend.then_some(BezierParameterRay2 {
+                                    anchor: &quarter,
+                                    direction: BezierParameterRayDirection2::Increasing,
+                                    barrier: Some(&barrier),
+                                }),
+                            ),
+                            CurveParameterDomain2::new(&finite, None),
+                        ],
+                        &policy,
+                        config,
+                    )
+                    .unwrap() else {
+                        panic!("ray ownership must follow the actual finite range")
+                    };
+                    assert!(!selection.positive_dimensional);
+                    assert_eq!(selection.selected_pairs.len(), usize::from(extend));
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn finite_component_charts_accept_nonrational_exact_scalar_bounds() {
+        let one = Real::one();
+        let half = (&one / Real::from(2_i8)).unwrap();
+        let lower = Real::from(2_i8).sqrt().unwrap();
+        let upper = Real::from(3_i8).sqrt().unwrap();
+        let root = (Real::from(2_i8) + &half).sqrt().unwrap();
+        let support = BivariatePolynomial::new(vec![vec![Real::zero(), -&one], vec![one.clone()]]);
+        let event = BivariatePolynomial::new(vec![
+            vec![-(Real::from(2_i8) + &half)],
+            vec![Real::zero()],
+            vec![one.clone()],
+        ]);
+        let opposite = bivariate_scale(event.clone(), &-&one);
+        let isolated = BezierParallelPairEquationSystem2 {
+            first_projection: opposite.clone(),
+            second_projection: opposite,
+            tangent_cross: event,
+            norm_residual: BivariatePolynomial::new(vec![vec![-&one]]),
+            ..positive_component_selector_system(&support)
+        };
+        let config = CurveIntersectionResultantConfig {
+            min_precision: PARALLEL_INTERSECTION_RESULTANT_PRECISION,
+            max_resultant_degree: MAX_PARALLEL_INTERSECTION_RESULTANT_DEGREE,
+        };
+        // These endpoints make the finite chart's coefficients irrational.
+        // A represented Real is not a rational-payload precondition for the
+        // shared component or selected-event authority.
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            for [start, end] in [
+                [lower.clone(), upper.clone()],
+                [upper.clone(), lower.clone()],
+            ] {
+                let range = CurveParameterRange2::new_validated(start.into(), end.into());
+                for (system, positive) in [
+                    (&positive_component_selector_system(&support), true),
+                    (&isolated, false),
+                ] {
+                    let Classification::Decided(selection) = select_parameter_component_in_domain(
+                        &support,
+                        system,
+                        [CurveParameterDomain2::new(&range, None); 2],
+                        &policy,
+                        config,
+                    )
+                    .unwrap() else {
+                        panic!("irrational finite bounds must preserve the exact component")
+                    };
+                    assert_eq!(selection.positive_dimensional, positive);
+                    if !positive {
+                        assert_eq!(selection.selected_pairs.len(), 1);
+                        let pair = &selection.selected_pairs[0];
+                        for parameter in [&pair.parallel_parameter, &pair.other_parameter] {
+                            assert_eq!(
+                                parameter
+                                    .cmp_by_refinement(
+                                        &BezierParameter2::Exact(root.clone()),
+                                        &policy,
+                                    )
+                                    .unwrap(),
+                                Classification::Decided(std::cmp::Ordering::Equal),
+                            );
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    #[test]
     fn incident_component_charts_clip_exact_regular_barriers() {
         let support_before_barriers = BivariatePolynomial::new(vec![
             vec![Real::one(), Real::one()],
@@ -166688,16 +167292,22 @@ mod conversion_tests {
                 &support_before_barriers,
                 &system,
                 [
-                    Some(BezierParameterRay2 {
-                        anchor: &Real::one(),
-                        direction: BezierParameterRayDirection2::Increasing,
-                        barrier: Some(&first_barrier),
-                    }),
-                    Some(BezierParameterRay2 {
-                        anchor: &Real::zero(),
-                        direction: BezierParameterRayDirection2::Decreasing,
-                        barrier: Some(&second_barrier),
-                    }),
+                    CurveParameterDomain2::new(
+                        &CurveParameterRange2::unit(),
+                        Some(BezierParameterRay2 {
+                            anchor: &Real::one(),
+                            direction: BezierParameterRayDirection2::Increasing,
+                            barrier: Some(&first_barrier),
+                        }),
+                    ),
+                    CurveParameterDomain2::new(
+                        &CurveParameterRange2::unit(),
+                        Some(BezierParameterRay2 {
+                            anchor: &Real::zero(),
+                            direction: BezierParameterRayDirection2::Decreasing,
+                            barrier: Some(&second_barrier),
+                        }),
+                    ),
                 ],
                 &policy,
                 config,
@@ -166711,16 +167321,22 @@ mod conversion_tests {
                 &support_beyond_barriers,
                 &system,
                 [
-                    Some(BezierParameterRay2 {
-                        anchor: &Real::one(),
-                        direction: BezierParameterRayDirection2::Increasing,
-                        barrier: Some(&first_barrier),
-                    }),
-                    Some(BezierParameterRay2 {
-                        anchor: &Real::zero(),
-                        direction: BezierParameterRayDirection2::Decreasing,
-                        barrier: Some(&second_barrier),
-                    }),
+                    CurveParameterDomain2::new(
+                        &CurveParameterRange2::unit(),
+                        Some(BezierParameterRay2 {
+                            anchor: &Real::one(),
+                            direction: BezierParameterRayDirection2::Increasing,
+                            barrier: Some(&first_barrier),
+                        }),
+                    ),
+                    CurveParameterDomain2::new(
+                        &CurveParameterRange2::unit(),
+                        Some(BezierParameterRay2 {
+                            anchor: &Real::zero(),
+                            direction: BezierParameterRayDirection2::Decreasing,
+                            barrier: Some(&second_barrier),
+                        }),
+                    ),
                 ],
                 &policy,
                 config,
@@ -166747,16 +167363,22 @@ mod conversion_tests {
                     &axis_support,
                     &axis_system,
                     [
-                        Some(BezierParameterRay2 {
-                            anchor: &Real::one(),
-                            direction: BezierParameterRayDirection2::Increasing,
-                            barrier: Some(&first_barrier),
-                        }),
-                        Some(BezierParameterRay2 {
-                            anchor: &Real::zero(),
-                            direction: BezierParameterRayDirection2::Decreasing,
-                            barrier: Some(&second_barrier),
-                        }),
+                        CurveParameterDomain2::new(
+                            &CurveParameterRange2::unit(),
+                            Some(BezierParameterRay2 {
+                                anchor: &Real::one(),
+                                direction: BezierParameterRayDirection2::Increasing,
+                                barrier: Some(&first_barrier),
+                            }),
+                        ),
+                        CurveParameterDomain2::new(
+                            &CurveParameterRange2::unit(),
+                            Some(BezierParameterRay2 {
+                                anchor: &Real::zero(),
+                                direction: BezierParameterRayDirection2::Decreasing,
+                                barrier: Some(&second_barrier),
+                            }),
+                        ),
                     ],
                     &policy,
                     config,
@@ -166771,16 +167393,22 @@ mod conversion_tests {
                     axis_support.clone(),
                     &axis_support,
                     [
-                        Some(BezierParameterRay2 {
-                            anchor: &Real::one(),
-                            direction: BezierParameterRayDirection2::Increasing,
-                            barrier: Some(&first_barrier),
-                        }),
-                        Some(BezierParameterRay2 {
-                            anchor: &Real::zero(),
-                            direction: BezierParameterRayDirection2::Decreasing,
-                            barrier: Some(&second_barrier),
-                        }),
+                        CurveParameterDomain2::new(
+                            &CurveParameterRange2::unit(),
+                            Some(BezierParameterRay2 {
+                                anchor: &Real::one(),
+                                direction: BezierParameterRayDirection2::Increasing,
+                                barrier: Some(&first_barrier),
+                            }),
+                        ),
+                        CurveParameterDomain2::new(
+                            &CurveParameterRange2::unit(),
+                            Some(BezierParameterRay2 {
+                                anchor: &Real::zero(),
+                                direction: BezierParameterRayDirection2::Decreasing,
+                                barrier: Some(&second_barrier),
+                            }),
+                        ),
                     ],
                     &policy,
                     config,
@@ -166853,7 +167481,16 @@ mod conversion_tests {
                                 select_parameter_component_in_domain(
                                     &support,
                                     &system,
-                                    [extend_first.then_some(ray), extend_second.then_some(ray)],
+                                    [
+                                        CurveParameterDomain2::new(
+                                            &CurveParameterRange2::unit(),
+                                            extend_first.then_some(ray),
+                                        ),
+                                        CurveParameterDomain2::new(
+                                            &CurveParameterRange2::unit(),
+                                            extend_second.then_some(ray),
+                                        ),
+                                    ],
                                     &policy,
                                     config,
                                 )
@@ -166958,16 +167595,22 @@ mod conversion_tests {
                 &support,
                 &system,
                 [
-                    Some(BezierParameterRay2 {
-                        anchor: &Real::one(),
-                        direction: BezierParameterRayDirection2::Increasing,
-                        barrier: Some(&first_barrier),
-                    }),
-                    Some(BezierParameterRay2 {
-                        anchor: &Real::zero(),
-                        direction: BezierParameterRayDirection2::Decreasing,
-                        barrier: None,
-                    }),
+                    CurveParameterDomain2::new(
+                        &CurveParameterRange2::unit(),
+                        Some(BezierParameterRay2 {
+                            anchor: &Real::one(),
+                            direction: BezierParameterRayDirection2::Increasing,
+                            barrier: Some(&first_barrier),
+                        }),
+                    ),
+                    CurveParameterDomain2::new(
+                        &CurveParameterRange2::unit(),
+                        Some(BezierParameterRay2 {
+                            anchor: &Real::zero(),
+                            direction: BezierParameterRayDirection2::Decreasing,
+                            barrier: None,
+                        }),
+                    ),
                 ],
                 &policy,
                 config,
@@ -167028,16 +167671,22 @@ mod conversion_tests {
                 support.clone(),
                 &constraint,
                 [
-                    Some(BezierParameterRay2 {
-                        anchor: &Real::one(),
-                        direction: BezierParameterRayDirection2::Increasing,
-                        barrier: Some(&first_barrier),
-                    }),
-                    Some(BezierParameterRay2 {
-                        anchor: &Real::zero(),
-                        direction: BezierParameterRayDirection2::Decreasing,
-                        barrier: None,
-                    }),
+                    CurveParameterDomain2::new(
+                        &CurveParameterRange2::unit(),
+                        Some(BezierParameterRay2 {
+                            anchor: &Real::one(),
+                            direction: BezierParameterRayDirection2::Increasing,
+                            barrier: Some(&first_barrier),
+                        }),
+                    ),
+                    CurveParameterDomain2::new(
+                        &CurveParameterRange2::unit(),
+                        Some(BezierParameterRay2 {
+                            anchor: &Real::zero(),
+                            direction: BezierParameterRayDirection2::Decreasing,
+                            barrier: None,
+                        }),
+                    ),
                 ],
                 &policy,
                 config,
@@ -167116,16 +167765,22 @@ mod conversion_tests {
                 &second,
                 &excluded,
                 [
-                    Some(BezierParameterRay2 {
-                        anchor: &Real::one(),
-                        direction: BezierParameterRayDirection2::Increasing,
-                        barrier: None,
-                    }),
-                    Some(BezierParameterRay2 {
-                        anchor: &Real::zero(),
-                        direction: BezierParameterRayDirection2::Decreasing,
-                        barrier: None,
-                    }),
+                    CurveParameterDomain2::new(
+                        &CurveParameterRange2::unit(),
+                        Some(BezierParameterRay2 {
+                            anchor: &Real::one(),
+                            direction: BezierParameterRayDirection2::Increasing,
+                            barrier: None,
+                        }),
+                    ),
+                    CurveParameterDomain2::new(
+                        &CurveParameterRange2::unit(),
+                        Some(BezierParameterRay2 {
+                            anchor: &Real::zero(),
+                            direction: BezierParameterRayDirection2::Decreasing,
+                            barrier: None,
+                        }),
+                    ),
                 ],
                 &policy,
             )
@@ -167151,16 +167806,22 @@ mod conversion_tests {
                 &second,
                 &excluded,
                 [
-                    Some(BezierParameterRay2 {
-                        anchor: &Real::one(),
-                        direction: BezierParameterRayDirection2::Increasing,
-                        barrier: None,
-                    }),
-                    Some(BezierParameterRay2 {
-                        anchor: &Real::zero(),
-                        direction: BezierParameterRayDirection2::Decreasing,
-                        barrier: None,
-                    }),
+                    CurveParameterDomain2::new(
+                        &CurveParameterRange2::unit(),
+                        Some(BezierParameterRay2 {
+                            anchor: &Real::one(),
+                            direction: BezierParameterRayDirection2::Increasing,
+                            barrier: None,
+                        }),
+                    ),
+                    CurveParameterDomain2::new(
+                        &CurveParameterRange2::unit(),
+                        Some(BezierParameterRay2 {
+                            anchor: &Real::zero(),
+                            direction: BezierParameterRayDirection2::Decreasing,
+                            barrier: None,
+                        }),
+                    ),
                 ],
                 &policy,
             )
@@ -167192,16 +167853,22 @@ mod conversion_tests {
                     &second,
                     &excluded,
                     [
-                        Some(BezierParameterRay2 {
-                            anchor: &Real::one(),
-                            direction: BezierParameterRayDirection2::Increasing,
-                            barrier: Some(&first_barrier),
-                        }),
-                        Some(BezierParameterRay2 {
-                            anchor: &Real::zero(),
-                            direction: BezierParameterRayDirection2::Decreasing,
-                            barrier: None,
-                        }),
+                        CurveParameterDomain2::new(
+                            &CurveParameterRange2::unit(),
+                            Some(BezierParameterRay2 {
+                                anchor: &Real::one(),
+                                direction: BezierParameterRayDirection2::Increasing,
+                                barrier: Some(&first_barrier),
+                            }),
+                        ),
+                        CurveParameterDomain2::new(
+                            &CurveParameterRange2::unit(),
+                            Some(BezierParameterRay2 {
+                                anchor: &Real::zero(),
+                                direction: BezierParameterRayDirection2::Decreasing,
+                                barrier: None,
+                            }),
+                        ),
                     ],
                     &policy,
                 )
@@ -167261,16 +167928,22 @@ mod conversion_tests {
                 &second,
                 &excluded,
                 [
-                    Some(BezierParameterRay2 {
-                        anchor: &Real::one(),
-                        direction: BezierParameterRayDirection2::Increasing,
-                        barrier: None,
-                    }),
-                    Some(BezierParameterRay2 {
-                        anchor: &Real::zero(),
-                        direction: BezierParameterRayDirection2::Decreasing,
-                        barrier: None,
-                    }),
+                    CurveParameterDomain2::new(
+                        &CurveParameterRange2::unit(),
+                        Some(BezierParameterRay2 {
+                            anchor: &Real::one(),
+                            direction: BezierParameterRayDirection2::Increasing,
+                            barrier: None,
+                        }),
+                    ),
+                    CurveParameterDomain2::new(
+                        &CurveParameterRange2::unit(),
+                        Some(BezierParameterRay2 {
+                            anchor: &Real::zero(),
+                            direction: BezierParameterRayDirection2::Decreasing,
+                            barrier: None,
+                        }),
+                    ),
                 ],
                 &policy,
             )
@@ -167283,23 +167956,29 @@ mod conversion_tests {
                 .parallel_intersections_in_domain(
                     &second,
                     [
-                        Some(
-                            incident_domain(
-                                &first,
-                                Real::one(),
-                                BezierParameterRayDirection2::Increasing,
-                                &policy,
-                            )
-                            .parameter_ray(),
+                        CurveParameterDomain2::new(
+                            &CurveParameterRange2::unit(),
+                            Some(
+                                incident_domain(
+                                    &first,
+                                    Real::one(),
+                                    BezierParameterRayDirection2::Increasing,
+                                    &policy,
+                                )
+                                .parameter_ray(),
+                            ),
                         ),
-                        Some(
-                            incident_domain(
-                                &second,
-                                Real::zero(),
-                                BezierParameterRayDirection2::Decreasing,
-                                &policy,
-                            )
-                            .parameter_ray(),
+                        CurveParameterDomain2::new(
+                            &CurveParameterRange2::unit(),
+                            Some(
+                                incident_domain(
+                                    &second,
+                                    Real::zero(),
+                                    BezierParameterRayDirection2::Decreasing,
+                                    &policy,
+                                )
+                                .parameter_ray(),
+                            ),
                         ),
                     ],
                     &policy,
@@ -168222,7 +168901,7 @@ mod conversion_tests {
             }) = project_parallel_intersection_system(
                 &system.residual_equations[0],
                 &system.residual_equations[1],
-                [None; 2],
+                [CurveParameterDomain2::new(&CurveParameterRange2::unit(), None); 2],
                 &policy,
             )
             .unwrap()
@@ -170352,7 +171031,7 @@ mod conversion_tests {
             }) = project_parallel_intersection_system(
                 &system.residual_equations[0],
                 &system.residual_equations[1],
-                [None; 2],
+                [CurveParameterDomain2::new(&CurveParameterRange2::unit(), None); 2],
                 &policy,
             )
             .unwrap()
@@ -170464,7 +171143,7 @@ mod conversion_tests {
             }) = project_parallel_intersection_system(
                 &system.residual_equations[0],
                 &system.residual_equations[1],
-                [None; 2],
+                [CurveParameterDomain2::new(&CurveParameterRange2::unit(), None); 2],
                 &policy,
             )
             .unwrap()

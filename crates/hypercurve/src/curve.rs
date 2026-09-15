@@ -5,6 +5,7 @@ mod curve_evaluation;
 
 #[path = "curve_subdivision.rs"]
 mod curve_subdivision;
+use crate::bezier_split::{CurveParameterDomain2, CurveParameterRange2};
 use curve_subdivision::CurveSourceRange2;
 
 #[path = "curve_corner_reconstruction.rs"]
@@ -6583,16 +6584,43 @@ fn fillet_offset_centers(
             } else {
                 None
             };
+            let previous_curve_range = previous_source.curve_parameter_range();
+            let next_curve_range = next_source.curve_parameter_range();
             let (intersections, positive_dimensional_incident_seam) = if use_incident_rays {
-                let extensions = [
-                    previous_incident_domain.as_ref(),
-                    next_incident_domain.as_ref(),
-                ]
-                .map(|domain| domain.map(|domain| domain.parameter_ray()));
+                let expand = |range: &CurveParameterRange2,
+                              incident: &crate::bezier_offset::BezierParallelIncidentDomain2,
+                              family| {
+                    match incident.expanded_range(range, policy).map_err(|cause| {
+                        ExactCurveError::invalid(CurveOperation2::Fillet, family, cause)
+                    })? {
+                        Classification::Decided(range) => Ok(range),
+                        Classification::Uncertain(reason) => Err(ExactCurveError::blocked(
+                            CurveOperation2::Fillet,
+                            family,
+                            reason,
+                        )),
+                    }
+                };
+                let previous_domain = previous_incident_domain
+                    .as_ref()
+                    .expect("an extending parallel retains its incident domain");
+                let next_domain = next_incident_domain
+                    .as_ref()
+                    .expect("an extending parallel retains its incident domain");
+                let previous_range =
+                    expand(&previous_curve_range, previous_domain, previous_family)?;
+                let next_range = expand(&next_curve_range, next_domain, next_family)?;
+                let parameter_domains = [
+                    CurveParameterDomain2::new(
+                        &previous_range,
+                        Some(previous_domain.parameter_ray()),
+                    ),
+                    CurveParameterDomain2::new(&next_range, Some(next_domain.parameter_ray())),
+                ];
                 let incident = match (if identical_supports {
-                    previous.ordered_self_intersections_in_domain(extensions, policy)
+                    previous.ordered_self_intersections_in_domain(parameter_domains, policy)
                 } else {
-                    previous.parallel_intersections_in_domain(next, extensions, policy)
+                    previous.parallel_intersections_in_domain(next, parameter_domains, policy)
                 })
                 .map_err(|cause| {
                     ExactCurveError::invalid(CurveOperation2::Fillet, previous_family, cause)
@@ -6635,8 +6663,6 @@ fn fillet_offset_centers(
                 ));
             }
             centers.coincident |= positive_dimensional_incident_seam;
-            let previous_curve_range = previous_source.curve_parameter_range();
-            let next_curve_range = next_source.curve_parameter_range();
             let has_selected_range = previous_source.parameter_range().is_none()
                 || next_source.parameter_range().is_none();
             if !intersections.overlaps().is_empty() {
@@ -7126,10 +7152,33 @@ fn fillet_offset_centers(
             } else {
                 None
             };
-            let projected_range = incident_domain.as_ref().map_or_else(
-                || analytic_range.clone(),
-                |domain| domain.expanded_range(&analytic_range),
-            );
+            let projected_range = if let Some(domain) = incident_domain.as_ref() {
+                let expanded = match domain
+                    .expanded_range(
+                        &CurveParameterRange2::from_bezier_range(analytic_range.clone()),
+                        policy,
+                    )
+                    .map_err(|cause| {
+                        ExactCurveError::invalid(CurveOperation2::Fillet, analytic_family, cause)
+                    })? {
+                    Classification::Decided(range) => range,
+                    Classification::Uncertain(reason) => {
+                        return Err(ExactCurveError::blocked(
+                            CurveOperation2::Fillet,
+                            analytic_family,
+                            reason,
+                        ));
+                    }
+                };
+                // This search envelope and the ray anchor are represented
+                // scalars. The authored selected range above still owns cuts.
+                let (start, end) = expanded
+                    .as_bezier_parameters()
+                    .expect("expanding a represented search envelope keeps ordinary endpoints");
+                BezierParameterRange2::new_validated(start.clone(), end.clone())
+            } else {
+                analytic_range.clone()
+            };
             let complementary_support = (mode == CurveCornerMode2::TrimOrExtend)
                 .then(|| cusp_support.semicircle().complementary_half());
             // Every selected-circle frame enters the same complete

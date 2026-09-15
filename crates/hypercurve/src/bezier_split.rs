@@ -700,9 +700,151 @@ pub struct CurveParameterRange2 {
     end: CurveParameter2,
 }
 
+/// A closed finite scalar range and an optional open, barrier-limited ray.
+/// The finite range owns every root in their overlap. A geometric caller
+/// includes any certified endpoint-to-anchor bridge in that finite range.
+#[derive(Clone, Copy, Debug)]
+pub(crate) struct CurveParameterDomain2<'a> {
+    pub(crate) finite: &'a CurveParameterRange2,
+    pub(crate) extension: Option<crate::bezier_parameter::BezierParameterRay2<'a>>,
+}
+
+impl<'a> CurveParameterDomain2<'a> {
+    pub(crate) const fn new(
+        finite: &'a CurveParameterRange2,
+        extension: Option<crate::bezier_parameter::BezierParameterRay2<'a>>,
+    ) -> Self {
+        Self { finite, extension }
+    }
+
+    /// Returns increasing exact boundaries and their outward scalar bounds.
+    /// Bounds schedule algebra; the original parameters decide membership.
+    pub(crate) fn finite_envelope(
+        self,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<([&'a CurveParameter2; 2], [&'a Real; 2])>> {
+        policy.strict_predicate_pass(|| {
+            let endpoints = match self.finite.ordered_endpoints(policy)? {
+                Classification::Decided(endpoints) => endpoints,
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            };
+            let (Some((lower, _)), Some((_, upper))) = (
+                endpoints[0].finite_envelope_bounds(),
+                endpoints[1].finite_envelope_bounds(),
+            ) else {
+                return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+            };
+            Ok(Classification::Decided((endpoints, [lower, upper])))
+        })
+    }
+
+    pub(crate) fn contains_finite_parameter(
+        self,
+        parameter: &CurveParameter2,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<bool>> {
+        policy.strict_predicate_pass(|| {
+            let [lower, upper] = match self.finite_envelope(policy)? {
+                Classification::Decided((endpoints, _)) => endpoints,
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            };
+            parameter_is_in_ordered_closed_range(parameter, lower, upper, policy)
+        })
+    }
+
+    /// Isolates in an outward envelope, then clips against the original
+    /// endpoint authorities. The polynomial and every retained root stay in
+    /// the original chart, including finite intervals outside the unit span.
+    pub(crate) fn finite_roots(
+        self,
+        polynomial: &crate::BezierParameterPolynomial,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<Vec<BezierParameter2>>> {
+        if let Some((start, end)) = self.finite.as_bezier_parameters()
+            && start.scalar() == Some(&Real::zero())
+            && end.scalar() == Some(&Real::one())
+        {
+            return polynomial.isolate_unit_interval_roots(policy);
+        }
+        policy.strict_predicate_pass(|| {
+            let ([lower, upper], [outer_lower, outer_upper]) = match self.finite_envelope(policy)? {
+                Classification::Decided(envelope) => envelope,
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            };
+            let roots = match polynomial.isolate_interval_roots(outer_lower, outer_upper, policy)? {
+                Classification::Decided(roots) => roots,
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            };
+            let mut retained = Vec::with_capacity(roots.len());
+            for root in roots {
+                match parameter_is_in_ordered_closed_range(
+                    &root.clone().into(),
+                    lower,
+                    upper,
+                    policy,
+                )? {
+                    Classification::Decided(true) => retained.push(root),
+                    Classification::Decided(false) => {}
+                    Classification::Uncertain(reason) => {
+                        return Ok(Classification::Uncertain(reason));
+                    }
+                }
+            }
+            Ok(Classification::Decided(retained))
+        })
+    }
+}
+
+fn parameter_is_in_ordered_closed_range(
+    parameter: &CurveParameter2,
+    lower: &CurveParameter2,
+    upper: &CurveParameter2,
+    policy: &CurveContext,
+) -> CurveResult<Classification<bool>> {
+    match parameter.cmp_by_refinement(lower, policy)? {
+        Classification::Decided(Ordering::Less) => return Ok(Classification::Decided(false)),
+        Classification::Decided(_) => {}
+        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+    }
+    Ok(parameter
+        .cmp_by_refinement(upper, policy)?
+        .map(|order| !order.is_gt()))
+}
+
 impl CurveParameterRange2 {
+    pub(crate) fn unit() -> Self {
+        Self::new_validated(Real::zero().into(), Real::one().into())
+    }
+
     pub(crate) fn new_validated(start: CurveParameter2, end: CurveParameter2) -> Self {
         Self { start, end }
+    }
+
+    /// Borrows the increasing endpoints without replacing their exact authority.
+    pub(crate) fn ordered_endpoints(
+        &self,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<[&CurveParameter2; 2]>> {
+        Ok(match self.start.cmp_by_refinement(&self.end, policy)? {
+            Classification::Decided(Ordering::Less) => {
+                Classification::Decided([&self.start, &self.end])
+            }
+            Classification::Decided(Ordering::Greater) => {
+                Classification::Decided([&self.end, &self.start])
+            }
+            Classification::Decided(Ordering::Equal) => {
+                return Err(CurveError::DegenerateOverlapRange);
+            }
+            Classification::Uncertain(reason) => Classification::Uncertain(reason),
+        })
     }
 
     /// Constructs one represented scalar strictly inside this oriented range.
@@ -942,31 +1084,15 @@ fn intersect_parameter_ranges(
     second: &CurveParameterRange2,
     policy: &CurveContext,
 ) -> CurveResult<Classification<Option<[CurveParameter2; 2]>>> {
-    let ascending = |range: &CurveParameterRange2| {
-        Ok(
-            match range.start().cmp_by_refinement(range.end(), policy)? {
-                Classification::Decided(Ordering::Less) => {
-                    Classification::Decided([range.start().clone(), range.end().clone()])
-                }
-                Classification::Decided(Ordering::Greater) => {
-                    Classification::Decided([range.end().clone(), range.start().clone()])
-                }
-                Classification::Decided(Ordering::Equal) => {
-                    return Err(CurveError::DegenerateOverlapRange);
-                }
-                Classification::Uncertain(reason) => Classification::Uncertain(reason),
-            },
-        )
-    };
-    let [first_low, first_high] = match ascending(first)? {
+    let [first_low, first_high] = match first.ordered_endpoints(policy)? {
         Classification::Decided(bounds) => bounds,
         Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
     };
-    let [second_low, second_high] = match ascending(second)? {
+    let [second_low, second_high] = match second.ordered_endpoints(policy)? {
         Classification::Decided(bounds) => bounds,
         Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
     };
-    let low = match first_low.cmp_by_refinement(&second_low, policy)? {
+    let low = match first_low.cmp_by_refinement(second_low, policy)? {
         Classification::Decided(Ordering::Less) => second_low,
         Classification::Decided(Ordering::Equal) => {
             if !first_low.is_retained_scalar() && second_low.is_retained_scalar() {
@@ -978,7 +1104,7 @@ fn intersect_parameter_ranges(
         Classification::Decided(Ordering::Greater) => first_low,
         Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
     };
-    let high = match first_high.cmp_by_refinement(&second_high, policy)? {
+    let high = match first_high.cmp_by_refinement(second_high, policy)? {
         Classification::Decided(Ordering::Greater) => second_high,
         Classification::Decided(Ordering::Equal) => {
             if !first_high.is_retained_scalar() && second_high.is_retained_scalar() {
@@ -990,8 +1116,10 @@ fn intersect_parameter_ranges(
         Classification::Decided(Ordering::Less) => first_high,
         Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
     };
-    Ok(match low.cmp_by_refinement(&high, policy)? {
-        Classification::Decided(Ordering::Less) => Classification::Decided(Some([low, high])),
+    Ok(match low.cmp_by_refinement(high, policy)? {
+        Classification::Decided(Ordering::Less) => {
+            Classification::Decided(Some([low.clone(), high.clone()]))
+        }
         Classification::Decided(Ordering::Equal | Ordering::Greater) => {
             Classification::Decided(None)
         }
