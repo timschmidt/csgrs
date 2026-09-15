@@ -239,10 +239,20 @@ fn rational_point_image_transforms_exact_real_linear_root() {
     };
     let x = point.x().unwrap().representation().unwrap();
     let y = point.y().unwrap().representation().unwrap();
-    assert!(x.exact_point_witness().is_none());
-    assert!(y.exact_point_witness().is_none());
+    assert!(x.exact_point_witness().is_some());
+    assert!(y.exact_point_witness().is_some());
     assert_eq!(x.interval.lower, x.interval.upper);
     assert_eq!(y.interval.lower, y.interval.upper);
+    for coordinate in [point.x().unwrap(), point.y().unwrap()] {
+        let representation = coordinate.representation().unwrap();
+        assert_eq!(
+            coordinate.compare_to_real(
+                representation.exact_point_witness().unwrap(),
+                &CurveContext::STRICT,
+            ),
+            Classification::Decided(std::cmp::Ordering::Equal),
+        );
+    }
     assert_eq!(
         point
             .x()
