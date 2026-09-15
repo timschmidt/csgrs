@@ -528,14 +528,15 @@ fn check_major_arc_fillet(clockwise: bool) {
 fn homogeneous_boundary_closes_through_boolean_corners_and_offset() {
     use hypercurve::{FillRule, HomogeneousControl2, OffsetCornerStyle2, RationalBezier2};
     let admit = |path, policy: &CurveContext| {
-        CurveRegion2::try_from_boundary_paths_with_loop_semantics(
+        let admitted = CurveRegion2::try_from_boundary_paths_with_loop_semantics(
             &[path],
             &[hypercurve::CurveRegionLoopRole::Material],
             &[FillRule::NonZero],
             policy,
         )
-        .unwrap()
-        .into_value()
+        .unwrap();
+        assert_eq!(admitted.certainty, CurveCertainty::Certified);
+        admitted.into_value()
     };
     let check = |region: &CurveRegion2, policy: &CurveContext| {
         assert_eq!(region.boundary_loops().len(), 1);
@@ -563,6 +564,19 @@ fn homogeneous_boundary_closes_through_boolean_corners_and_offset() {
             panic!("the homogeneous semicircle must construct");
         };
         assert!(curve.affine_control_points().is_none());
+        // Independently authored elevated controls must recover their small
+        // exact source even though that source has no affine control net.
+        let Classification::Decided(elevated) = RationalBezier2::from_homogeneous_controls(
+            curve
+                .elevated_to_degree(12)
+                .unwrap()
+                .homogeneous_controls()
+                .to_vec(),
+            &policy,
+        )
+        .unwrap() else {
+            panic!("the elevated homogeneous semicircle must construct");
+        };
         let nurbs = hypercurve::NurbsCurve2::from_homogeneous_controls(
             2,
             curve.homogeneous_controls().to_vec(),
@@ -579,7 +593,12 @@ fn homogeneous_boundary_closes_through_boolean_corners_and_offset() {
         )
         .unwrap()
         .into_value();
-        for curve in [Curve2::from(curve), Curve2::from(nurbs)] {
+        for curve in [
+            Curve2::from(curve),
+            Curve2::from(elevated),
+            Curve2::from(nurbs.elevated_to_degree(12, &policy).unwrap().into_value()),
+            Curve2::from(nurbs),
+        ] {
             let material = admit(
                 CurvePath2::try_new(vec![
                     curve,

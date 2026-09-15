@@ -6352,23 +6352,15 @@ impl RationalBezier2 {
                 return Ok(Classification::Uncertain(reason));
             }
         };
-        let mut control_points = Vec::with_capacity(reduced.len());
-        let mut weights = Vec::with_capacity(reduced.len());
-        for point in reduced {
-            match project_homogeneous(&point, &strict) {
-                Classification::Decided(control) => control_points.push(control),
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            }
-            weights.push(point.weight);
-        }
-        let representative = Self::try_new_with_lineage_and_exact_line_image(
-            control_points,
-            weights,
+        // Inverse elevation certifies the complete homogeneous polynomial,
+        // including its endpoint values and denominator. Interior controls
+        // need no affine projection, and authored poles remain unchanged.
+        let representative = Self::from_validated_homogeneous(
+            reduced,
+            self.data.endpoints.clone(),
             self.data.lineage.clone(),
             self.data.exact_line_image.clone(),
-        )?;
+        );
         Ok(Classification::Decided(Some(representative)))
     }
 
@@ -10708,6 +10700,104 @@ mod tests {
                         .point_at(&parameter, &CurveContext::STRICT)
                         .unwrap(),
                 );
+            }
+        }
+    }
+
+    #[test]
+    fn minimal_degree_reduction_preserves_infinite_controls_and_authored_poles() {
+        let half = (Real::one() / Real::from(2_i8)).unwrap();
+        let controls = [
+            // A finite semicircle with an infinite middle control.
+            vec![
+                HomogeneousControl2::new(Real::one(), Real::zero(), Real::one()),
+                HomogeneousControl2::new(Real::zero(), Real::one(), Real::zero()),
+                HomogeneousControl2::new(-Real::one(), Real::zero(), Real::one()),
+            ],
+            // A zero coefficient also has no affine control point.
+            vec![
+                HomogeneousControl2::new(Real::zero(), Real::zero(), Real::one()),
+                HomogeneousControl2::new(Real::zero(), Real::zero(), Real::zero()),
+                HomogeneousControl2::new(Real::one(), Real::one(), Real::one()),
+            ],
+            // (X,Y,W)=(t(2t-1),2t-1,2t-1). Inverse elevation must
+            // preserve the authored pole at 1/2, including its common factor.
+            vec![
+                HomogeneousControl2::new(Real::zero(), -Real::one(), -Real::one()),
+                HomogeneousControl2::new(-half.clone(), Real::zero(), Real::zero()),
+                HomogeneousControl2::new(Real::one(), Real::one(), Real::one()),
+            ],
+        ];
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            for (case, controls) in controls.iter().enumerate() {
+                for gauge in [Real::one(), -Real::from(2_i8).sqrt().unwrap(), Real::pi()] {
+                    let Classification::Decided(source) =
+                        RationalBezier2::from_homogeneous_controls(
+                            controls
+                                .iter()
+                                .map(|control| control.scaled(&gauge))
+                                .collect(),
+                            &policy,
+                        )
+                        .unwrap()
+                    else {
+                        panic!("the projective source has finite endpoints")
+                    };
+                    if case == 2 {
+                        assert!(source.point_at(&half, &policy).is_err());
+                    }
+                    let elevated = source.elevated_to_degree(12).unwrap();
+                    let Classification::Decided(authored) =
+                        RationalBezier2::from_homogeneous_controls(
+                            elevated.homogeneous_controls().to_vec(),
+                            &policy,
+                        )
+                        .unwrap()
+                    else {
+                        panic!("elevation preserves the finite endpoints")
+                    };
+                    for reversed in [false, true] {
+                        let (candidate, expected) = if reversed {
+                            (authored.reversed(), source.reversed())
+                        } else {
+                            (authored.clone(), source.clone())
+                        };
+                        let Classification::Decided(Some(reduced)) = candidate
+                            .retained_minimal_degree_representative(&policy)
+                            .unwrap()
+                        else {
+                            panic!(
+                                "an exact homogeneous reduction must not require affine controls"
+                            )
+                        };
+                        assert_eq!(reduced.degree(), 2);
+                        assert_eq!(
+                            reduced.homogeneous_controls(),
+                            expected.homogeneous_controls()
+                        );
+                        assert!(reduced.affine_control_points().is_none());
+                        assert!(Arc::ptr_eq(
+                            &reduced.data.lineage.root,
+                            &candidate.data.lineage.root
+                        ));
+                        assert_eq!(
+                            reduced.source_parameter_range(),
+                            candidate.source_parameter_range()
+                        );
+                        for parameter in [Real::zero(), half.clone(), Real::one()] {
+                            assert_eq!(
+                                reduced.point_at(&parameter, &policy),
+                                expected.point_at(&parameter, &policy),
+                            );
+                        }
+                        assert!(matches!(
+                            reduced
+                                .retained_minimal_degree_representative(&policy)
+                                .unwrap(),
+                            Classification::Decided(None)
+                        ));
+                    }
+                }
             }
         }
     }
