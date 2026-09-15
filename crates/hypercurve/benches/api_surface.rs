@@ -83,7 +83,7 @@ fn main() -> CurveResult<()> {
         )
         .unwrap()
         .into_value();
-        curve.control_points().len()
+        curve.homogeneous_controls().len()
     });
 
     let material = [[0.0, 0.0], [8.0, 0.0], [8.0, 6.0], [0.0, 6.0]];

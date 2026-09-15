@@ -154,7 +154,7 @@ fn fixed_weight_rational_nurbs_interpolation_recovers_exact_control_net() {
     .unwrap()
     .into_value();
 
-    assert_eq!(interpolation.control_points(), controls);
+    assert_eq!(interpolation.affine_control_points().unwrap(), controls);
     assert_eq!(interpolation.weights(), weights);
     for (parameter, point) in parameters.iter().zip(data_points) {
         assert_eq!(
@@ -226,7 +226,7 @@ proptest! {
         .unwrap()
         .into_value();
 
-        prop_assert_eq!(interpolation.control_points(), controls.as_slice());
+        prop_assert_eq!(interpolation.affine_control_points().unwrap(), controls.as_slice());
         prop_assert_eq!(interpolation.weights(), &[r(1), r(1), r(1), r(1)]);
     }
 }

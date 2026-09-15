@@ -1,8 +1,8 @@
 #![no_main]
 
 use hypercurve::{
-    Classification, CurveContext, Point2, PolynomialBSplineCurve2, RationalBSplineCurve2,
-    RationalQuadraticBSplineCurve2, Real, RetainedBSplineSpanFactEvidence2,
+    Classification, CurveContext, HomogeneousControl2, Point2, PolynomialBSplineCurve2,
+    RationalBSplineCurve2, Real, RetainedBSplineSpanFactEvidence2,
 };
 use libfuzzer_sys::fuzz_target;
 
@@ -21,12 +21,6 @@ fn touch_span_fact_evidence(evidence: &RetainedBSplineSpanFactEvidence2) {
         let _ = span.bounds();
         let _ = span.x_monotonicity();
         let _ = span.y_monotonicity();
-        let _ = span.topology_status();
-        if let Some(weights) = span.weight_domain() {
-            let _ = weights.weight_count();
-            let _ = weights.certified_nonzero_count();
-            let _ = weights.all_weights_certified_nonzero();
-        }
     }
 }
 
@@ -36,7 +30,7 @@ fuzz_target!(|data: &[u8]| {
     }
     let policy = CurveContext::STRICT;
     let degree = if data[0] & 1 == 0 { 2 } else { 3 };
-    let control_count = degree + 3;
+    let control_count = degree + 2;
     let mut controls = Vec::new();
     for chunk in data[1..].chunks(2).take(control_count) {
         if chunk.len() < 2 {
@@ -70,56 +64,52 @@ fuzz_target!(|data: &[u8]| {
         .enumerate()
         .map(|(index, _)| Real::from(((data[index % data.len()] % 7) as i32) + 1))
         .collect::<Vec<_>>();
-    if let Ok(Classification::Decided(spline)) = RationalBSplineCurve2::try_new(
+    let authored =
+        RationalBSplineCurve2::try_new(degree, controls.clone(), weights, knots.clone(), &policy);
+    let homogeneous = RationalBSplineCurve2::from_homogeneous_controls(
         degree,
-        controls.clone(),
-        weights.clone(),
-        knots.clone(),
+        controls
+            .iter()
+            .enumerate()
+            .map(|(index, point)| {
+                let weight = if index == 0 || index + 1 == controls.len() {
+                    Real::one()
+                } else {
+                    r(i32::from(data[index] % 7) - 3)
+                };
+                HomogeneousControl2::new(point.x().clone(), point.y().clone(), weight)
+            })
+            .collect(),
+        knots,
         &policy,
-    ) {
+    );
+    for construction in [authored, homogeneous] {
+        let Ok(Classification::Decided(spline)) = construction else {
+            continue;
+        };
         if let Ok(Classification::Decided(extraction)) = spline.extract_bezier_spans(&policy) {
-            let _ = extraction
-                .span_fact_evidence(&policy)
-                .map(|classification| {
-                    let Classification::Decided(evidence) = classification else {
-                        return;
-                    };
-                    touch_span_fact_evidence(&evidence);
-                });
-            let _ = extraction
-                .native_topology_evidence(&policy)
-                .map(|classification| {
-                    let Classification::Decided(evidence) = classification else {
-                        return;
-                    };
-                    for span in evidence.span_evidence() {
-                        let _ = span.span_index();
-                        let _ = span.degree();
-                        let _ = span.knot_interval();
-                        let _ = span.status();
-                        let _ = span.native_subcurve();
-                    }
-                    let _ = evidence.is_fully_native_exact();
-                });
+            if let Ok(Classification::Decided(facts)) = extraction.span_fact_evidence(&policy) {
+                touch_span_fact_evidence(&facts);
+            }
+            for span in extraction.spans() {
+                let _ = span.knot_interval();
+                let _ = span.curve().homogeneous_controls();
+                let _ = span
+                    .curve()
+                    .point_at(&((Real::one() / r(2)).unwrap()), &policy);
+            }
             let _ = extraction.native_subcurves(&policy);
         }
-    }
-    if degree == 2
-        && let Ok(Classification::Decided(spline)) =
-            RationalQuadraticBSplineCurve2::try_new(controls, weights, knots, &policy)
-    {
-        let _ = spline.extract_bezier_spans(&policy).map(|classification| {
-            let Classification::Decided(extraction) = classification else {
-                return;
-            };
-            let _ = extraction
-                .span_fact_evidence(&policy)
-                .map(|classification| {
-                    let Classification::Decided(evidence) = classification else {
-                        return;
-                    };
-                    touch_span_fact_evidence(&evidence);
-                });
-        });
+        if let Ok(curve) = hypercurve::NurbsCurve2::from_homogeneous_controls(
+            degree,
+            spline.homogeneous_controls().to_vec(),
+            spline.knots().to_vec(),
+            hypercurve::SplinePeriodicity2::NonPeriodic,
+            &policy,
+        ) {
+            if let Ok(refined) = curve.into_value().insert_knot(Real::one(), &policy) {
+                let _ = refined.into_value().remove_knot(Real::one(), &policy);
+            }
+        }
     }
 });

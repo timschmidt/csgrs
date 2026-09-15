@@ -3,8 +3,7 @@ use std::time::Instant;
 
 use hypercurve::{
     Classification, Curve2, CurveCertainty, CurveContext, CurveResult, NurbsCurve2, Point2,
-    PolynomialBSplineCurve2, PolynomialSplineCurve2, RationalBSplineCurve2,
-    RationalQuadraticBSplineCurve2, Real,
+    PolynomialBSplineCurve2, PolynomialSplineCurve2, RationalBSplineCurve2, Real,
 };
 
 fn r(value: i32) -> Real {
@@ -193,7 +192,8 @@ fn main() -> CurveResult<()> {
         elapsed / iterations
     );
 
-    let rational = decided(RationalQuadraticBSplineCurve2::try_new(
+    let rational = decided(RationalBSplineCurve2::try_new(
+        2,
         vec![p(0, 0), p(2, 4), p(4, 4), p(6, 0)],
         vec![r(1), r(2), r(4), r(1)],
         vec![r(0), r(0), r(0), r(1), r(2), r(2), r(2)],
@@ -205,13 +205,7 @@ fn main() -> CurveResult<()> {
         let extraction = decided(rational.extract_bezier_spans(&policy)?);
         let facts = decided(extraction.span_fact_evidence(&policy)?);
         rational_checksum ^= black_box(
-            extraction.spans().len()
-                + extraction.inserted_knot_count()
-                + facts
-                    .span_facts()
-                    .iter()
-                    .filter(|span| span.weight_domain().is_some())
-                    .count(),
+            extraction.spans().len() + extraction.inserted_knot_count() + facts.span_facts().len(),
         );
     }
     let elapsed = started.elapsed();
@@ -235,7 +229,7 @@ fn main() -> CurveResult<()> {
         rational_cubic_checksum ^= black_box(
             extraction.spans().len()
                 + extraction.inserted_knot_count()
-                + extraction.refined_weights().len()
+                + extraction.refined_homogeneous_controls().len()
                 + facts.span_facts().len(),
         );
     }
@@ -256,14 +250,8 @@ fn main() -> CurveResult<()> {
     let mut native_checksum = 0_usize;
     for _ in 0..iterations {
         let extraction = decided(equal_weight_rational_cubic.extract_bezier_spans(&policy)?);
-        let evidence = decided(extraction.native_topology_evidence(&policy)?);
-        let native = decided(extraction.native_subcurves(&policy)?);
-        native_checksum ^= black_box(
-            native.len()
-                + evidence.span_evidence().len()
-                + usize::from(evidence.is_fully_native_exact())
-                + extraction.inserted_knot_count(),
-        );
+        let native = extraction.native_subcurves(&policy);
+        native_checksum ^= black_box(native.len() + extraction.inserted_knot_count());
     }
     let elapsed = started.elapsed();
     println!(
@@ -272,22 +260,14 @@ fn main() -> CurveResult<()> {
     );
 
     let started = Instant::now();
-    let mut topology_status_checksum = 0_usize;
+    let mut general_native_checksum = 0_usize;
     for _ in 0..iterations {
         let extraction = decided(rational_cubic.extract_bezier_spans(&policy)?);
-        let evidence = decided(extraction.native_topology_evidence(&policy)?);
-        topology_status_checksum ^= black_box(
-            evidence.span_evidence().len()
-                + evidence
-                    .span_evidence()
-                    .iter()
-                    .filter(|span| span.status().is_retained_evidence())
-                    .count(),
-        );
+        general_native_checksum ^= black_box(extraction.native_subcurves(&policy).len());
     }
     let elapsed = started.elapsed();
     println!(
-        "rational_cubic_bspline_topology_status_evidence: {iterations} iterations in {elapsed:?} ({:?}/iter), checksum={topology_status_checksum}",
+        "rational_cubic_bspline_general_native_evidence: {iterations} iterations in {elapsed:?} ({:?}/iter), checksum={general_native_checksum}",
         elapsed / iterations
     );
 
@@ -394,7 +374,7 @@ fn main() -> CurveResult<()> {
         .expect("periodic benchmark NURBS is valid")
         .into_value();
         periodic_construction_checksum ^=
-            black_box(curve.control_points().len() + curve.knots().len());
+            black_box(curve.homogeneous_controls().len() + curve.knots().len());
     }
     let elapsed = started.elapsed();
     println!(
@@ -454,7 +434,7 @@ fn main() -> CurveResult<()> {
                 .insert_knots(vec![r(1), r(1)], &policy)
                 .unwrap()
                 .into_value()
-                .control_points()
+                .homogeneous_controls()
                 .len(),
         );
     }
@@ -478,7 +458,7 @@ fn main() -> CurveResult<()> {
                 .insert_knot(r(1), &policy)
                 .unwrap()
                 .into_value()
-                .control_points()
+                .homogeneous_controls()
                 .len(),
         );
     }
@@ -500,7 +480,7 @@ fn main() -> CurveResult<()> {
                 .insert_knots(vec![r(1), r(1)], &policy)
                 .unwrap()
                 .into_value()
-                .control_points()
+                .homogeneous_controls()
                 .len(),
         );
     }
@@ -529,7 +509,7 @@ fn main() -> CurveResult<()> {
                 .unwrap()
                 .into_value()
                 .expect("inserted benchmark knot is removable")
-                .control_points()
+                .homogeneous_controls()
                 .len(),
         );
     }
@@ -554,7 +534,7 @@ fn main() -> CurveResult<()> {
                 .unwrap()
                 .into_value()
                 .expect("retained benchmark knot is removable")
-                .control_points()
+                .homogeneous_controls()
                 .len(),
         );
     }
@@ -611,8 +591,9 @@ fn main() -> CurveResult<()> {
     let mut elevated_curve_checksum = 0_usize;
     for curve in &elevated_curve_inputs {
         let elevated = curve.elevated_to_degree(6, &policy).unwrap().into_value();
-        elevated_curve_checksum ^=
-            black_box(elevated.control_points().len() + elevated.knots().len() + elevated.degree());
+        elevated_curve_checksum ^= black_box(
+            elevated.homogeneous_controls().len() + elevated.knots().len() + elevated.degree(),
+        );
     }
     let elapsed = started.elapsed();
     println!(
@@ -632,7 +613,7 @@ fn main() -> CurveResult<()> {
             .elevated_to_degree(6, &policy)
             .unwrap()
             .into_value();
-        retained_elevated_curve_checksum ^= black_box(elevated.control_points().len());
+        retained_elevated_curve_checksum ^= black_box(elevated.homogeneous_controls().len());
     }
     let elapsed = started.elapsed();
     println!(
@@ -650,7 +631,7 @@ fn main() -> CurveResult<()> {
         let curve = NurbsCurve2::interpolate_uniform(3, points, &policy)
             .unwrap()
             .into_value();
-        interpolation_checksum ^= black_box(curve.control_points().len());
+        interpolation_checksum ^= black_box(curve.homogeneous_controls().len());
     }
     let elapsed = started.elapsed();
     println!(
@@ -681,7 +662,7 @@ fn main() -> CurveResult<()> {
         )
         .unwrap()
         .into_value();
-        symbolic_interpolation_checksum ^= black_box(curve.control_points().len());
+        symbolic_interpolation_checksum ^= black_box(curve.homogeneous_controls().len());
     }
     let elapsed = started.elapsed();
     println!(
@@ -696,7 +677,7 @@ fn main() -> CurveResult<()> {
     let mut retained_interpolation_checksum = 0_usize;
     for _ in 0..iterations {
         let replay = retained_interpolation.clone();
-        retained_interpolation_checksum ^= black_box(replay.control_points().len());
+        retained_interpolation_checksum ^= black_box(replay.homogeneous_controls().len());
     }
     let elapsed = started.elapsed();
     println!(

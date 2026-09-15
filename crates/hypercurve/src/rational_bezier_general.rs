@@ -97,9 +97,9 @@ struct RationalBezierLineageRoot {
 /// points. The zero vector is also a valid polynomial coefficient control.
 #[derive(Clone, Debug, PartialEq)]
 pub struct HomogeneousControl2 {
-    x: Real,
-    y: Real,
-    weight: Real,
+    pub(crate) x: Real,
+    pub(crate) y: Real,
+    pub(crate) weight: Real,
 }
 
 #[derive(Clone, Debug)]
@@ -9441,7 +9441,7 @@ impl HomogeneousControl2 {
         &self.weight
     }
 
-    fn scaled(&self, scale: &Real) -> Self {
+    pub(crate) fn scaled(&self, scale: &Real) -> Self {
         Self {
             x: &self.x * scale,
             y: &self.y * scale,
@@ -9463,7 +9463,7 @@ impl HomogeneousControl2 {
         }
     }
 
-    fn lerp(&self, other: &Self, parameter: &Real) -> Self {
+    pub(crate) fn lerp(&self, other: &Self, parameter: &Real) -> Self {
         let one_minus = Real::one() - parameter;
         self.lerp_with_complement(other, parameter, &one_minus)
     }
@@ -9594,7 +9594,7 @@ fn real_nonnegative_integer_power(base: &Real, mut exponent: usize) -> Real {
     result
 }
 
-fn project_homogeneous(
+pub(crate) fn project_homogeneous(
     point: &HomogeneousControl2,
     policy: &CurveContext,
 ) -> Classification<Point2> {

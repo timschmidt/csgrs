@@ -331,7 +331,7 @@ fn nurbs_exact_edits_isolate_terminal_policy_and_replay_retained_proofs() {
         inserted.certainty,
         hypercurve::CurveCertainty::Approximate512Consumed
     );
-    assert_eq!(inserted.value.control_points().len(), 6);
+    assert_eq!(inserted.value.homogeneous_controls().len(), 6);
     assert!(
         inserted
             .value
@@ -347,8 +347,8 @@ fn nurbs_exact_edits_isolate_terminal_policy_and_replay_retained_proofs() {
         hypercurve::CurveCertainty::Approximate512Consumed
     );
     assert!(std::ptr::eq(
-        inserted.value.control_points(),
-        inserted_replay.value.control_points()
+        inserted.value.homogeneous_controls(),
+        inserted_replay.value.homogeneous_controls()
     ));
     assert_eq!(
         curve
@@ -440,8 +440,8 @@ fn nurbs_exact_edits_isolate_terminal_policy_and_replay_retained_proofs() {
         .elevated_to_degree(3, &CurveContext::APPROXIMATE_512)
         .expect("the retained elevated carrier must replay");
     assert!(std::ptr::eq(
-        elevated.value.control_points(),
-        elevated_replay.value.control_points()
+        elevated.value.homogeneous_controls(),
+        elevated_replay.value.homogeneous_controls()
     ));
     assert_eq!(
         curve
@@ -528,10 +528,10 @@ fn linear_nurbs_evaluates_and_promotes_with_source_provenance() {
         .collect::<Vec<_>>();
     assert_eq!(spans.len(), 1);
     assert_eq!(spans[0].source_span().knot_interval(), (&r(0), &r(1)));
-    assert!(matches!(
-        spans[0].curve(),
-        BezierSubcurve2::RationalQuadratic(_)
-    ));
+    let BezierSubcurve2::Rational(span) = spans[0].curve() else {
+        panic!("linear NURBS must keep its original rational degree");
+    };
+    assert_eq!(span.degree(), 1);
 
     let top_level = Curve2::from(curve);
     let fragments = top_level
@@ -735,12 +735,12 @@ fn nurbs_knot_insertion_preserves_exact_image_source_and_full_multiplicity_cache
         .unwrap()
         .into_value();
     assert_eq!(
-        once.control_points().len(),
-        curve.control_points().len() + 1
+        once.homogeneous_controls().len(),
+        curve.homogeneous_controls().len() + 1
     );
     assert_eq!(
-        twice.control_points().len(),
-        curve.control_points().len() + 2
+        twice.homogeneous_controls().len(),
+        curve.homogeneous_controls().len() + 2
     );
     assert_eq!(
         twice.knots().iter().filter(|knot| **knot == r(1)).count(),
@@ -828,7 +828,7 @@ fn nurbs_batch_knot_refinement_projects_once_and_reuses_clone_shared_result() {
 #[test]
 fn nurbs_batch_knot_refinement_retains_contextual_failure_without_mutating_source() {
     let curve = quadratic_nurbs();
-    let source_control_count = curve.control_points().len();
+    let source_control_count = curve.homogeneous_controls().len();
     let request = vec![r(1), r(3)];
 
     let first = curve
@@ -842,7 +842,7 @@ fn nurbs_batch_knot_refinement_retains_contextual_failure_without_mutating_sourc
             .unwrap_err(),
         first
     );
-    assert_eq!(curve.control_points().len(), source_control_count);
+    assert_eq!(curve.homogeneous_controls().len(), source_control_count);
 }
 
 #[test]
@@ -870,7 +870,7 @@ fn nurbs_knot_removal_exactly_inverts_insertion_and_reuses_clone_shared_proof() 
         .unwrap();
     assert_eq!(removed.degree(), curve.degree());
     assert_eq!(removed.knots(), curve.knots());
-    assert_eq!(removed.control_points(), curve.control_points());
+    assert_eq!(removed.homogeneous_controls(), curve.homogeneous_controls());
     assert_eq!(removed.weights(), curve.weights());
     for parameter in [r(0), q(1, 4), q(3, 4), q(3, 2), r(2)] {
         assert_eq!(
@@ -1322,7 +1322,7 @@ fn top_level_nurbs_retains_source_and_exact_geometry_under_explicit_policy() {
     assert_eq!(curve.degree(), 2);
     assert_eq!(curve.start(), &p(0, 0));
     assert_eq!(curve.end(), &p(6, 0));
-    assert_eq!(curve.control_points().len(), 4);
+    assert_eq!(curve.homogeneous_controls().len(), 4);
     assert_eq!(curve.weights(), &[r(1), r(2), r(4), r(1)]);
 }
 
@@ -1509,7 +1509,7 @@ fn higher_degree_nurbs_promotes_evaluates_and_splits_exactly() {
         .into_value()
         .collect::<Vec<_>>();
     assert_eq!(spans.len(), 1);
-    assert_eq!(spans[0].source_span().degree(), 4);
+    assert_eq!(spans[0].source_span().curve().degree(), 4);
     assert!(matches!(spans[0].curve(), BezierSubcurve2::Rational(_)));
 
     let (left, right) = curve
@@ -1616,9 +1616,9 @@ fn unclamped_weighted_nurbs_projects_homogeneous_endpoint_evidence() {
             .bezier_decomposition(&CurveContext::STRICT)
             .unwrap()
             .into_value()
-            .refined_weights()
+            .refined_homogeneous_controls()
             .iter()
-            .all(|weight| weight.zero_status() == hyperreal::ZeroKnowledge::NonZero)
+            .all(|control| control.weight().zero_status() == hyperreal::ZeroKnowledge::NonZero)
     );
 }
 
@@ -1662,7 +1662,7 @@ fn periodic_nurbs_wraps_exact_points_derivatives_and_retains_source() {
         SplinePeriodicity2::Periodic { .. }
     ));
     assert_eq!(curve.parameter_domain(), (&r(0), &r(4)));
-    assert_eq!(curve.control_points().len(), 6);
+    assert_eq!(curve.homogeneous_controls().len(), 6);
     assert_eq!(curve.knots().len(), 9);
     assert_eq!(curve.start(), curve.end());
     assert_eq!(
@@ -1966,4 +1966,149 @@ fn periodic_nurbs_rejects_invalid_layout_and_nonperiodic_wrapping() {
             ..
         }
     ));
+}
+
+fn finite_mixed_weight_nurbs(policy: &CurveContext) -> NurbsCurve2 {
+    NurbsCurve2::try_new(
+        2,
+        vec![p(0, 0), p(1, 1), p(2, 0)],
+        vec![r(1), q(-1, 2), r(1)],
+        vec![r(0), r(0), r(0), r(1), r(1), r(1)],
+        policy,
+    )
+    .unwrap()
+    .into_value()
+}
+
+#[test]
+fn homogeneous_nurbs_elevation_remains_recomposable_and_refinable() {
+    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+        let source = finite_mixed_weight_nurbs(&policy);
+        let elevated = source.elevated_to_degree(3, &policy).unwrap();
+        assert_eq!(elevated.certainty, hypercurve::CurveCertainty::Certified);
+        let elevated = elevated.into_value();
+        assert_eq!(elevated.degree(), 3);
+        assert_eq!(elevated.weights(), &[r(1), r(0), r(0), r(1)]);
+        let inserted = elevated.insert_knot(q(2, 3), &policy).unwrap().into_value();
+        let removed = inserted
+            .remove_knot(q(2, 3), &policy)
+            .unwrap()
+            .into_value()
+            .expect("an inserted exact knot must remain removable");
+        for curve in [&elevated, &inserted, &removed] {
+            assert_eq!(curve.parameter_domain(), source.parameter_domain());
+            for parameter in [r(0), q(1, 4), q(1, 2), q(2, 3), r(1)] {
+                assert_eq!(
+                    curve.point_at(&parameter, &policy).unwrap().into_value(),
+                    source.point_at(&parameter, &policy).unwrap().into_value()
+                );
+            }
+        }
+    }
+}
+
+#[test]
+fn homogeneous_nurbs_knot_insertion_retains_infinite_controls() {
+    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+        let source = finite_mixed_weight_nurbs(&policy);
+        // Boehm insertion creates a zero intermediate weight while the
+        // denominator 1-3t+3t^2 remains strictly positive on the whole span.
+        let inserted = source.insert_knot(q(2, 3), &policy).unwrap().into_value();
+        assert!(inserted.weights().contains(&r(0)));
+        let (left, right) = inserted.split_at(q(2, 3), &policy).unwrap().into_value();
+        assert_eq!(left.end(), right.start());
+        for (curve, parameters) in [
+            (&left, [r(0), q(1, 3), q(2, 3)]),
+            (&right, [q(2, 3), q(5, 6), r(1)]),
+        ] {
+            for parameter in parameters {
+                assert_eq!(
+                    curve.point_at(&parameter, &policy).unwrap().into_value(),
+                    source.point_at(&parameter, &policy).unwrap().into_value()
+                );
+            }
+        }
+    }
+}
+
+#[test]
+fn homogeneous_nurbs_unclamped_and_discontinuous_edits_preserve_parameterization() {
+    use hypercurve::HomogeneousControl2;
+    let h = |x, y, w| HomogeneousControl2::new(r(x), r(y), r(w));
+    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+        let unclamped = NurbsCurve2::from_homogeneous_controls(
+            2,
+            vec![h(0, 1, 0), h(0, 0, 1), h(2, 0, 1)],
+            (0..=5).map(r).collect(),
+            SplinePeriodicity2::NonPeriodic,
+            &policy,
+        )
+        .unwrap()
+        .into_value();
+        assert_eq!(unclamped.start(), &p(0, 1));
+        assert_eq!(unclamped.end(), &p(1, 0));
+        let discontinuous = NurbsCurve2::from_homogeneous_controls(
+            2,
+            vec![
+                h(1, 0, 1),
+                h(0, 1, 0),
+                h(-1, 0, 1),
+                h(-15, 0, -3),
+                h(0, -3, 0),
+                h(-9, 0, -3),
+            ],
+            vec![r(0), r(0), r(0), r(1), r(1), r(1), r(2), r(2), r(2)],
+            SplinePeriodicity2::NonPeriodic,
+            &policy,
+        )
+        .unwrap()
+        .into_value();
+        let transform =
+            Similarity2::try_from_real_affine(r(0), r(-2), r(2), r(0), r(3), r(4)).unwrap();
+        for source in [unclamped, discontinuous] {
+            assert!(source.affine_control_points().is_none());
+            let elevated = source.elevated_to_degree(4, &policy).unwrap().into_value();
+            let reversed = source.reversed(&policy).unwrap().into_value();
+            let transformed = source
+                .transform_similarity(&transform, &policy)
+                .unwrap()
+                .into_value();
+            let (start, end) = source.parameter_domain();
+            let sum = start + end;
+            for i in 0..=8 {
+                let parameter = start + (end - start) * q(i, 8);
+                for side in [CurveParameterSide2::Left, CurveParameterSide2::Right] {
+                    let opposite = match side {
+                        CurveParameterSide2::Left => CurveParameterSide2::Right,
+                        _ => CurveParameterSide2::Left,
+                    };
+                    let point = source
+                        .point_at_side(&parameter, side, &policy)
+                        .unwrap()
+                        .into_value();
+                    assert_eq!(
+                        elevated
+                            .point_at_side(&parameter, side, &policy)
+                            .unwrap()
+                            .into_value(),
+                        point
+                    );
+                    assert_eq!(
+                        reversed
+                            .point_at_side(&(&sum - &parameter), opposite, &policy)
+                            .unwrap()
+                            .into_value(),
+                        point
+                    );
+                    assert_eq!(
+                        transformed
+                            .point_at_side(&parameter, side, &policy)
+                            .unwrap()
+                            .into_value(),
+                        Point2::new(r(3) - r(2) * point.y(), r(4) + r(2) * point.x())
+                    );
+                }
+            }
+        }
+    }
 }

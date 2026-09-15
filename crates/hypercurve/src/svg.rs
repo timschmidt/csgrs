@@ -964,15 +964,25 @@ fn transform_curve(curve: &Curve2, transform: &ExactAffine2) -> SvgResult<Vec<Cu
             )]
         }
         Some(CurveGeometry2::Nurbs(curve)) => vec![Curve2::from(
-            NurbsCurve2::try_new_raw(
+            NurbsCurve2::from_homogeneous_raw(
                 curve.degree(),
                 curve
-                    .control_points()
+                    .homogeneous_controls()
                     .iter()
-                    .map(|point| transform.transform_point(point))
+                    .map(|control| {
+                        crate::HomogeneousControl2::new(
+                            &transform.m00 * control.x()
+                                + &transform.m01 * control.y()
+                                + &transform.tx * control.weight(),
+                            &transform.m10 * control.x()
+                                + &transform.m11 * control.y()
+                                + &transform.ty * control.weight(),
+                            control.weight().clone(),
+                        )
+                    })
                     .collect(),
-                curve.weights().to_vec(),
                 curve.knots().to_vec(),
+                curve.periodicity().clone(),
                 &CurveContext::STRICT,
             )
             .map_err(svg_geometry_error)?,

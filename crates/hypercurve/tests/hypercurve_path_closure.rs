@@ -563,73 +563,91 @@ fn homogeneous_boundary_closes_through_boolean_corners_and_offset() {
             panic!("the homogeneous semicircle must construct");
         };
         assert!(curve.affine_control_points().is_none());
-        let material = admit(
-            CurvePath2::try_new(vec![
-                Curve2::from(curve),
-                Curve2::from(LineSeg2::try_new(p(-1, 0), p(1, 0)).unwrap()),
-            ])
-            .unwrap(),
+        let nurbs = hypercurve::NurbsCurve2::from_homogeneous_controls(
+            2,
+            curve.homogeneous_controls().to_vec(),
+            vec![
+                Real::zero(),
+                Real::zero(),
+                Real::zero(),
+                Real::one(),
+                Real::one(),
+                Real::one(),
+            ],
+            hypercurve::SplinePeriodicity2::NonPeriodic,
             &policy,
-        );
-        let rectangle = admit(
-            CurvePath2::try_new(
-                [p(0, -1), p(2, -1), p(2, 2), p(0, 2), p(0, -1)]
-                    .windows(2)
-                    .map(|points| {
-                        Curve2::from(
-                            LineSeg2::try_new(points[0].clone(), points[1].clone()).unwrap(),
-                        )
-                    })
-                    .collect(),
-            )
-            .unwrap(),
-            &policy,
-        );
-        let results = material.boolean_regions(&rectangle, &policy).unwrap();
-        assert_eq!(results.certainty, CurveCertainty::Certified);
-        let clipped = results.value.intersection();
-        check(clipped, &policy);
-        for fillet in [false, true] {
-            let solutions = if fillet {
-                clipped.fillet_loop_vertex_by_radius(
-                    0,
-                    1,
-                    q(1, 8),
-                    CurveCornerMode2::TrimOnly,
-                    &policy,
+        )
+        .unwrap()
+        .into_value();
+        for curve in [Curve2::from(curve), Curve2::from(nurbs)] {
+            let material = admit(
+                CurvePath2::try_new(vec![
+                    curve,
+                    Curve2::from(LineSeg2::try_new(p(-1, 0), p(1, 0)).unwrap()),
+                ])
+                .unwrap(),
+                &policy,
+            );
+            let rectangle = admit(
+                CurvePath2::try_new(
+                    [p(0, -1), p(2, -1), p(2, 2), p(0, 2), p(0, -1)]
+                        .windows(2)
+                        .map(|points| {
+                            Curve2::from(
+                                LineSeg2::try_new(points[0].clone(), points[1].clone()).unwrap(),
+                            )
+                        })
+                        .collect(),
                 )
-            } else {
-                clipped.chamfer_loop_vertex_by_setbacks(
-                    0,
-                    1,
-                    q(1, 8),
-                    q(1, 8),
-                    CurveCornerMode2::TrimOnly,
-                    &policy,
-                )
-            }
-            .unwrap();
-            assert_eq!(solutions.certainty, CurveCertainty::Certified);
-            let regions = match solutions.value {
-                CurveCornerSolutions2::Unique(region) => vec![region],
-                CurveCornerSolutions2::Multiple(regions) => regions,
-                CurveCornerSolutions2::NoSolution(reason) => {
-                    panic!("the clipped corner must admit an edit: {reason:?}")
+                .unwrap(),
+                &policy,
+            );
+            let results = material.boolean_regions(&rectangle, &policy).unwrap();
+            assert_eq!(results.certainty, CurveCertainty::Certified);
+            let clipped = results.value.intersection();
+            check(clipped, &policy);
+            for fillet in [false, true] {
+                let solutions = if fillet {
+                    clipped.fillet_loop_vertex_by_radius(
+                        0,
+                        1,
+                        q(1, 8),
+                        CurveCornerMode2::TrimOnly,
+                        &policy,
+                    )
+                } else {
+                    clipped.chamfer_loop_vertex_by_setbacks(
+                        0,
+                        1,
+                        q(1, 8),
+                        q(1, 8),
+                        CurveCornerMode2::TrimOnly,
+                        &policy,
+                    )
                 }
-            };
-            assert!(!regions.is_empty());
-            for edited in regions {
-                check(&edited, &policy);
-                let displaced = edited
-                    .offset(q(1, 32), &OffsetCornerStyle2::Round, &policy)
-                    .unwrap();
-                assert_eq!(displaced.certainty, CurveCertainty::Certified);
-                let replay = displaced
-                    .value
-                    .boolean_regions(&rectangle, &policy)
-                    .unwrap();
-                assert_eq!(replay.certainty, CurveCertainty::Certified);
-                check(replay.value.intersection(), &policy);
+                .unwrap();
+                assert_eq!(solutions.certainty, CurveCertainty::Certified);
+                let regions = match solutions.value {
+                    CurveCornerSolutions2::Unique(region) => vec![region],
+                    CurveCornerSolutions2::Multiple(regions) => regions,
+                    CurveCornerSolutions2::NoSolution(reason) => {
+                        panic!("the clipped corner must admit an edit: {reason:?}")
+                    }
+                };
+                assert!(!regions.is_empty());
+                for edited in regions {
+                    check(&edited, &policy);
+                    let displaced = edited
+                        .offset(q(1, 32), &OffsetCornerStyle2::Round, &policy)
+                        .unwrap();
+                    assert_eq!(displaced.certainty, CurveCertainty::Certified);
+                    let replay = displaced
+                        .value
+                        .boolean_regions(&rectangle, &policy)
+                        .unwrap();
+                    assert_eq!(replay.certainty, CurveCertainty::Certified);
+                    check(replay.value.intersection(), &policy);
+                }
             }
         }
     }

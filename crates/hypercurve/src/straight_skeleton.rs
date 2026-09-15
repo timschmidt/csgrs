@@ -2653,13 +2653,18 @@ impl CurvePath2 {
                     }
                 }
                 Some(CurveGeometry2::Nurbs(spline)) => {
-                    match control_net_line_image(
-                        spline.start(),
-                        spline.end(),
-                        spline.control_points(),
-                        Some(spline.weights()),
-                        policy,
-                    )? {
+                    let line_image = if let Some(controls) = spline.affine_control_points() {
+                        control_net_line_image(
+                            spline.start(),
+                            spline.end(),
+                            controls,
+                            Some(spline.weights()),
+                            policy,
+                        )?
+                    } else {
+                        Classification::Decided(None)
+                    };
+                    match line_image {
                         Classification::Decided(Some(line)) => {
                             segments.push(Segment2::Line(line));
                         }
@@ -2723,9 +2728,7 @@ fn nurbs_single_span_circular_arc(
     let [span] = decomposition.spans() else {
         return Ok(Classification::Decided(None));
     };
-    let rational =
-        crate::RationalBezier2::try_new(span.control_points().to_vec(), span.weights().to_vec())?;
-    rational_bezier_circular_arc(&rational, policy)
+    rational_bezier_circular_arc(span.curve(), policy)
 }
 
 fn control_net_line_image(

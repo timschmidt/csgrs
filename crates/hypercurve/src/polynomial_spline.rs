@@ -302,7 +302,7 @@ impl PolynomialSplineCurve2 {
             .map_err(|error| {
                 remap_spline_family_operation(error, CurveOperation2::KnotInsertion)
             })?;
-        if refined.control_points().len() == self.control_points().len() {
+        if refined.homogeneous_controls().len() == self.control_points().len() {
             return Ok(self.clone());
         }
         Self::from_unit_weight_nurbs(refined, CurveOperation2::KnotInsertion, policy)
@@ -903,7 +903,7 @@ impl PolynomialSplineCurve2 {
 
     fn as_unit_weight_nurbs(&self, policy: &CurveContext) -> ExactCurveResult<NurbsCurve2> {
         let weights = vec![Real::one(); self.control_points().len()];
-        let result = NurbsCurve2::try_new_expanded_with_periodicity_and_policy(
+        let result = NurbsCurve2::try_new_expanded_with_policy(
             self.degree(),
             self.control_points().to_vec(),
             weights,
@@ -920,9 +920,32 @@ impl PolynomialSplineCurve2 {
         operation: CurveOperation2,
         policy: &CurveContext,
     ) -> ExactCurveResult<Self> {
+        for control in curve.homogeneous_controls() {
+            match crate::classify::is_zero(&(control.weight() - Real::one()), policy) {
+                Some(true) => {}
+                Some(false) => {
+                    return Err(ExactCurveError::invalid(
+                        operation,
+                        CurveFamily2::PolynomialBSpline,
+                        CurveError::InvalidBSpline,
+                    ));
+                }
+                None => {
+                    return Err(ExactCurveError::blocked(
+                        operation,
+                        CurveFamily2::PolynomialBSpline,
+                        UncertaintyReason::RealSign,
+                    ));
+                }
+            }
+        }
         let result = Self::try_new_expanded_with_policy(
             curve.degree(),
-            curve.control_points().to_vec(),
+            curve
+                .homogeneous_controls()
+                .iter()
+                .map(|control| Point2::new(control.x().clone(), control.y().clone()))
+                .collect(),
             curve.knots().to_vec(),
             curve.periodicity().clone(),
             policy,

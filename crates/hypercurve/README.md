@@ -185,11 +185,20 @@ exact signatures.
 - `PolynomialSplineCurve2::{try_new, try_new_periodic, point_at,
   derivative_at, insert_knot, split_at, subcurve, clamped_subcurve, reversed,
   transform_similarity, bezier_decomposition, bezier_spans}`.
-- `NurbsCurve2::{try_new, try_new_periodic, point_at, derivative_at,
+- `NurbsCurve2::{try_new, try_new_periodic, from_homogeneous_controls,
+  point_at, derivative_at,
   insert_knot, insert_knots, remove_knot, degree_elevation,
   elevated_to_degree, split_at, subcurve, clamped_subcurve, reversed,
   transform_similarity, bezier_decomposition, bezier_spans,
   native_subcurves}`.
+- NURBS and rational Bézier spans share `HomogeneousControl2` coefficients.
+  Extraction, knot insertion/removal, and degree recomposition preserve zero
+  and mixed control weights without affine projection. `homogeneous_controls`
+  is authoritative; `affine_control_points` is an optional finite view.
+  Homogeneous NURBS construction takes an expanded knot vector and explicit
+  `SplinePeriodicity2`; span evaluators retain their exact source knot intervals.
+  Conic and polynomial specializations are optional, and linear rational spans
+  retain degree one. Bounds and monotonicity use the actual curve denominator.
 - Wrapped evaluation and one-sided evaluation are available on periodic spline
   carriers through the `*_wrapped` and `*_side` method families.
 - `Curve2::{new, try_polynomial_bspline, try_nurbs,

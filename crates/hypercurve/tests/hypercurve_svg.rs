@@ -57,10 +57,48 @@ fn exact_extension_round_trips_infinite_homogeneous_controls() {
         panic!("the homogeneous semicircle must have finite endpoints");
     };
     assert!(curve.affine_control_points().is_none());
-    let source = Curve2::from(curve);
-    let document = export_svg_document(&single_curve_geometry(source.clone())).unwrap();
-    let imported = single_imported_curve(&import_svg_document(&document).unwrap());
-    assert_eq!(imported, source);
+    let nurbs = NurbsCurve2::from_homogeneous_controls(
+        2,
+        controls,
+        vec![
+            Real::zero(),
+            Real::zero(),
+            Real::zero(),
+            Real::one(),
+            Real::one(),
+            Real::one(),
+        ],
+        hypercurve::SplinePeriodicity2::NonPeriodic,
+        &CurveContext::STRICT,
+    )
+    .unwrap()
+    .into_value();
+    for source in [Curve2::from(curve), Curve2::from(nurbs)] {
+        let document = export_svg_document(&single_curve_geometry(source.clone())).unwrap();
+        let imported = single_imported_curve(&import_svg_document(&document).unwrap());
+        assert_eq!(imported, source);
+        let transformed_document =
+            document.replace("<path ", "<path transform=\"matrix(2 1 0 3 4 5)\" ");
+        let transformed =
+            single_imported_curve(&import_svg_document(&transformed_document).unwrap());
+        for parameter in [Real::zero(), rational(1, 2), Real::one()] {
+            let original = source
+                .point_at(&parameter.clone().into(), &CurveContext::STRICT)
+                .unwrap()
+                .into_value();
+            let point = transformed
+                .point_at(&parameter.clone().into(), &CurveContext::STRICT)
+                .unwrap()
+                .into_value();
+            let original = original.coordinates().unwrap();
+            let point = point.coordinates().unwrap();
+            assert_eq!(point.x(), &(Real::from(2) * original.x() + Real::from(4)));
+            assert_eq!(
+                point.y(),
+                &(original.x() + Real::from(3) * original.y() + Real::from(5))
+            );
+        }
+    }
 }
 
 fn remove_exact_path_attribute(mut document: String) -> String {
@@ -332,7 +370,7 @@ fn exact_extension_round_trips_every_curve_family() {
 
     for source in curves {
         let document = export_svg_document(&single_curve_geometry(source.clone())).unwrap();
-        assert!(document.contains("data-hypercurve-path=\"2:"));
+        assert!(document.contains("data-hypercurve-path=\"3:"));
         let imported = import_svg_document(&document).unwrap();
         assert_eq!(
             single_imported_curve(&imported),
@@ -519,7 +557,7 @@ fn exact_extension_is_bounded_and_strictly_validated() {
         Err(SvgError::SizeOverflow { .. })
     ));
 
-    for extension in ["2:00", "1:0", "1:not-hexadecimal", "1:00000000"] {
+    for extension in ["3:00", "2:00", "1:0", "1:not-hexadecimal", "1:00000000"] {
         let document = format!(
             r#"<svg xmlns="http://www.w3.org/2000/svg"><path fill="none" stroke="black" data-hypercurve-path="{extension}" d="M0 0 L1 1"/></svg>"#
         );
@@ -527,7 +565,7 @@ fn exact_extension_is_bounded_and_strictly_validated() {
     }
 
     let oversized = format!(
-        r#"<svg xmlns="http://www.w3.org/2000/svg"><path fill="none" stroke="black" data-hypercurve-path="2:{}" d="M0 0 L1 1"/></svg>"#,
+        r#"<svg xmlns="http://www.w3.org/2000/svg"><path fill="none" stroke="black" data-hypercurve-path="3:{}" d="M0 0 L1 1"/></svg>"#,
         "00".repeat(65)
     );
     assert!(matches!(

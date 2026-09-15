@@ -2022,7 +2022,10 @@ fn benchmark_nurbs_interpolation(runner: &Runner) {
             .into_value();
     let numeric = CurvoNurbsCurve2D::<f64>::interpolate(&curvo_points, 2)
         .expect("finite chord-length interpolation completes");
-    assert_eq!(exact.control_points().len(), numeric.control_points().len());
+    assert_eq!(
+        exact.homogeneous_controls().len(),
+        numeric.control_points().len()
+    );
 
     runner.measure(name, "hypercurve_exact_strict_certified", || {
         black_box(
@@ -2034,7 +2037,7 @@ fn benchmark_nurbs_interpolation(runner: &Runner) {
             .expect("exact chord-length interpolation remains certified")
             .into_value(),
         )
-        .control_points()
+        .homogeneous_controls()
         .len()
     });
     runner.measure(name, "curvo_f64_numeric", || {
@@ -2085,7 +2088,7 @@ fn benchmark_nurbs_editing(runner: &Runner) {
             .insert_knots(vec![real(0.5), real(1.5)], &CurveContext::STRICT)
             .expect("exact retained refinement fixture is valid")
             .into_value();
-        assert_eq!(refined.control_points().len(), 7);
+        assert_eq!(refined.homogeneous_controls().len(), 7);
         runner.measure(refinement_name, "hypercurve_exact_retained", || {
             black_box(
                 hypercurve_curve
@@ -2093,7 +2096,7 @@ fn benchmark_nurbs_editing(runner: &Runner) {
                     .expect("exact retained refinement replays")
                     .into_value(),
             )
-            .control_points()
+            .homogeneous_controls()
             .len()
         });
         runner.measure(refinement_name, "curvo_f64_recomputed", || {

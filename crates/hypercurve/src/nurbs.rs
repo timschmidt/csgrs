@@ -1,5 +1,6 @@
 //! Retained NURBS carrier with policy-isolated exact decomposition caches.
 
+use crate::HomogeneousControl2;
 use std::sync::{Arc, OnceLock};
 
 use crate::policy::{
@@ -21,20 +22,13 @@ const MAX_RETAINED_DEGREE_ELEVATIONS: usize = 8;
 #[derive(Debug)]
 struct NurbsData2 {
     retained: RationalBSplineCurve2,
-    endpoints: NurbsEndpoints2,
+    endpoints: [Point2; 2],
     decomposition: PolicyEvaluationCache<NurbsBezierDecomposition2>,
     native_subcurves: PolicyEvaluationCache<Vec<BezierSubcurve2>>,
-    rational_spans: PolicyEvaluationCache<Vec<RationalBezier2>>,
     knot_refinements: BoundedPolicyResultCache<Vec<Real>, NurbsCurve2>,
     knot_removals: BoundedPolicyResultCache<Real, Option<NurbsCurve2>>,
     degree_elevations: BoundedPolicyResultCache<usize, NurbsDegreeElevation2>,
     elevated_curves: BoundedPolicyResultCache<usize, NurbsCurve2>,
-}
-
-#[derive(Debug)]
-enum NurbsEndpoints2 {
-    AuthoredControls,
-    Extracted { start: Point2, end: Point2 },
 }
 
 /// Exact rational B-spline/NURBS curve with shared lazy caches.
@@ -109,11 +103,12 @@ impl NurbsCurve2 {
         knots: Vec<Real>,
         policy: &CurveContext,
     ) -> ExactCurveResult<Self> {
-        Self::try_new_with_optional_source_and_policy(
+        Self::try_new_expanded_with_policy(
             degree,
             control_points,
             weights,
             knots,
+            SplinePeriodicity2::NonPeriodic,
             policy,
         )
     }
@@ -170,24 +165,7 @@ impl NurbsCurve2 {
         )
     }
 
-    fn try_new_with_optional_source_and_policy(
-        degree: usize,
-        control_points: Vec<Point2>,
-        weights: Vec<Real>,
-        knots: Vec<Real>,
-        policy: &CurveContext,
-    ) -> ExactCurveResult<Self> {
-        Self::try_new_expanded_with_policy(
-            degree,
-            control_points,
-            weights,
-            knots,
-            SplinePeriodicity2::NonPeriodic,
-            policy,
-        )
-    }
-
-    fn try_new_expanded_with_policy(
+    pub(crate) fn try_new_expanded_with_policy(
         degree: usize,
         control_points: Vec<Point2>,
         weights: Vec<Real>,
@@ -195,27 +173,6 @@ impl NurbsCurve2 {
         periodicity: SplinePeriodicity2,
         policy: &CurveContext,
     ) -> ExactCurveResult<Self> {
-        let valid_layout = degree
-            .checked_add(1)
-            .and_then(|order| {
-                control_points
-                    .len()
-                    .checked_add(order)
-                    .map(|knots| (order, knots))
-            })
-            .is_some_and(|(order, expected_knots)| {
-                degree >= 1
-                    && control_points.len() == weights.len()
-                    && control_points.len() >= order
-                    && knots.len() == expected_knots
-            });
-        if !valid_layout {
-            return Err(ExactCurveError::invalid(
-                CurveOperation2::Construction,
-                CurveFamily2::Nurbs,
-                CurveError::InvalidBSpline,
-            ));
-        }
         let retained = exact_value(
             RationalBSplineCurve2::try_new_with_periodicity(
                 degree,
@@ -230,40 +187,41 @@ impl NurbsCurve2 {
         Self::from_retained(retained, None, policy)
     }
 
-    #[cfg(feature = "svg")]
-    pub(crate) fn try_new_expanded_with_periodicity(
+    /// Constructs a NURBS with finite endpoints from homogeneous controls and knots.
+    ///
+    /// The knot vector is already expanded. Periodic inputs retain their exact
+    /// period and must close at the active-domain seam. Interior zero weights
+    /// remain valid coefficients; evaluation certifies the actual denominator.
+    pub fn from_homogeneous_controls(
         degree: usize,
-        control_points: Vec<Point2>,
-        weights: Vec<Real>,
+        controls: Vec<HomogeneousControl2>,
         knots: Vec<Real>,
         periodicity: SplinePeriodicity2,
-    ) -> ExactCurveResult<Self> {
-        Self::try_new_expanded_with_policy(
-            degree,
-            control_points,
-            weights,
-            knots,
-            periodicity,
-            &CurveContext::STRICT,
-        )
+        policy: &CurveContext,
+    ) -> ExactCurveResult<CurveOutcome<Self>> {
+        resolve_certified_operation(policy, |attempt| {
+            Self::from_homogeneous_raw(degree, controls, knots, periodicity, attempt)
+        })
     }
 
-    pub(crate) fn try_new_expanded_with_periodicity_and_policy(
+    pub(crate) fn from_homogeneous_raw(
         degree: usize,
-        control_points: Vec<Point2>,
-        weights: Vec<Real>,
+        controls: Vec<HomogeneousControl2>,
         knots: Vec<Real>,
         periodicity: SplinePeriodicity2,
         policy: &CurveContext,
     ) -> ExactCurveResult<Self> {
-        Self::try_new_expanded_with_policy(
-            degree,
-            control_points,
-            weights,
-            knots,
-            periodicity,
-            policy,
-        )
+        let retained = exact_value(
+            RationalBSplineCurve2::from_homogeneous_with_periodicity(
+                degree,
+                controls,
+                knots,
+                periodicity,
+                policy,
+            ),
+            CurveOperation2::Construction,
+        )?;
+        Self::from_retained(retained, None, policy)
     }
 
     fn from_retained(
@@ -273,15 +231,18 @@ impl NurbsCurve2 {
     ) -> ExactCurveResult<Self> {
         let decomposition = PolicyEvaluationCache::new();
         let endpoints = if let Some((start, end)) = preserved_endpoints {
-            NurbsEndpoints2::Extracted { start, end }
+            [start, end]
         } else if has_clamped_endpoints(
             retained.knots(),
             retained.degree(),
-            retained.control_points().len(),
+            retained.homogeneous_controls().len(),
             policy,
             CurveOperation2::Construction,
         )? {
-            NurbsEndpoints2::AuthoredControls
+            exact_classification(
+                retained.project_endpoint_controls(policy),
+                CurveOperation2::Construction,
+            )?
         } else {
             let extraction = exact_value(
                 retained.extract_bezier_spans(policy),
@@ -290,19 +251,19 @@ impl NurbsCurve2 {
             let start = extraction
                 .spans()
                 .first()
-                .and_then(|span| span.control_points().first())
+                .map(|span| span.curve().start())
                 .expect("validated NURBS has a positive span")
                 .clone();
             let end = extraction
                 .spans()
                 .last()
-                .and_then(|span| span.control_points().last())
+                .map(|span| span.curve().end())
                 .expect("validated NURBS has a positive span")
                 .clone();
             if !policy.permits_approximate_512() {
                 decomposition.seed_certified(NurbsBezierDecomposition2 { extraction });
             }
-            NurbsEndpoints2::Extracted { start, end }
+            [start, end]
         };
         let curve = Self {
             data: Arc::new(NurbsData2 {
@@ -310,7 +271,6 @@ impl NurbsCurve2 {
                 endpoints,
                 decomposition,
                 native_subcurves: PolicyEvaluationCache::new(),
-                rational_spans: PolicyEvaluationCache::new(),
                 knot_refinements: OnceLock::new(),
                 knot_removals: OnceLock::new(),
                 degree_elevations: OnceLock::new(),
@@ -326,9 +286,14 @@ impl NurbsCurve2 {
         self.data.retained.degree()
     }
 
-    /// Returns the exact affine control net.
-    pub fn control_points(&self) -> &[Point2] {
-        self.data.retained.control_points()
+    /// Returns the affine control net when every control projects to a finite point.
+    pub fn affine_control_points(&self) -> Option<&[Point2]> {
+        self.data.retained.affine_control_points()
+    }
+
+    /// Returns the exact homogeneous de Boor control net.
+    pub fn homogeneous_controls(&self) -> &[HomogeneousControl2] {
+        self.data.retained.homogeneous_controls()
     }
 
     /// Returns exact homogeneous weights.
@@ -544,15 +509,13 @@ impl NurbsCurve2 {
     ) -> ExactCurveResult<NurbsDegreeElevation2> {
         let decomposition =
             self.bezier_decomposition_for_operation(policy, CurveOperation2::DegreeElevation)?;
-        let rational_spans =
-            self.rational_spans_for_operation(policy, CurveOperation2::DegreeElevation)?;
         let spans = decomposition
             .spans()
             .iter()
-            .zip(rational_spans)
             .enumerate()
-            .map(|(span_index, (source_span, rational_span))| {
-                let curve = rational_span
+            .map(|(span_index, source_span)| {
+                let curve = source_span
+                    .curve()
                     .elevated_to_degree(target_degree)
                     .map_err(remap_degree_elevation_error)?;
                 let (parameter_start, parameter_end) = source_span.knot_interval();
@@ -605,30 +568,31 @@ impl NurbsCurve2 {
         policy: &CurveContext,
     ) -> ExactCurveResult<(Self, Vec<(Real, usize)>)> {
         let spans = elevation.spans();
-        let mut span_weights = spans
-            .iter()
-            .map(|span| span.curve().weights().to_vec())
-            .collect::<Vec<_>>();
-        let mut multiplicities = Vec::with_capacity(spans.len().saturating_sub(1));
-        for span_index in 1..spans.len() {
-            let knot = spans[span_index].parameter_start.clone();
+        let mut controls = spans[0].curve().homogeneous_controls().to_vec();
+        let mut knots = vec![spans[0].parameter_start.clone(); target_degree + 1];
+        let mut removable_knots = Vec::new();
+        for (index, span) in spans.iter().enumerate().skip(1) {
+            let knot = span.parameter_start.clone();
             let multiplicity = require_classification(
                 crate::bspline::knot_multiplicity(self.knots(), &knot, policy),
                 CurveOperation2::DegreeElevation,
             )?;
-            if multiplicity <= self.degree() {
+            let discontinuous = multiplicity == self.degree() + 1;
+            let next = span.curve().homogeneous_controls();
+            if discontinuous {
+                controls.extend_from_slice(next);
+            } else {
                 exact_points_equal(
-                    spans[span_index - 1].curve().end(),
-                    spans[span_index].curve().start(),
+                    spans[index - 1].curve().end(),
+                    span.curve().start(),
                     CurveOperation2::DegreeElevation,
                     policy,
                 )?;
-                let scale = (span_weights[span_index - 1]
+                let scale = (controls
                     .last()
-                    .expect("elevated span has weights")
-                    / span_weights[span_index]
-                        .first()
-                        .expect("elevated span has weights"))
+                    .expect("elevated span has controls")
+                    .weight()
+                    / next[0].weight())
                 .map_err(|cause| {
                     ExactCurveError::invalid(
                         CurveOperation2::DegreeElevation,
@@ -636,70 +600,25 @@ impl NurbsCurve2 {
                         cause.into(),
                     )
                 })?;
-                for weight in &mut span_weights[span_index] {
-                    *weight *= &scale;
-                }
+                controls.extend(next.iter().skip(1).map(|control| control.scaled(&scale)));
             }
-            multiplicities.push((knot, multiplicity));
-        }
-
-        let mut control_points = Vec::new();
-        let mut weights = Vec::new();
-        let mut knots = Vec::new();
-        let domain_start = spans
-            .first()
-            .expect("validated NURBS has a positive span")
-            .parameter_start
-            .clone();
-        knots.extend(std::iter::repeat_n(domain_start, target_degree + 1));
-        control_points.extend_from_slice(spans[0].curve().affine_control_points().ok_or_else(
-            || {
-                ExactCurveError::blocked(
-                    CurveOperation2::DegreeElevation,
-                    CurveFamily2::Nurbs,
-                    UncertaintyReason::Unsupported,
-                )
-            },
-        )?);
-        weights.extend_from_slice(&span_weights[0]);
-        let mut removable_knots = Vec::new();
-        for (span_index, (knot, source_multiplicity)) in multiplicities.iter().enumerate() {
-            let discontinuous = *source_multiplicity == self.degree() + 1;
             knots.extend(std::iter::repeat_n(
                 knot.clone(),
-                if discontinuous {
-                    target_degree + 1
-                } else {
-                    target_degree
-                },
+                target_degree + usize::from(discontinuous),
             ));
-            let next_span = &spans[span_index + 1];
-            let first_control = usize::from(!discontinuous);
-            control_points.extend_from_slice(
-                &next_span.curve().affine_control_points().ok_or_else(|| {
-                    ExactCurveError::blocked(
-                        CurveOperation2::DegreeElevation,
-                        CurveFamily2::Nurbs,
-                        UncertaintyReason::Unsupported,
-                    )
-                })?[first_control..],
-            );
-            weights.extend_from_slice(&span_weights[span_index + 1][first_control..]);
-            removable_knots.push((
-                knot.clone(),
-                self.degree().saturating_sub(*source_multiplicity),
-            ));
+            removable_knots.push((knot, self.degree().saturating_sub(multiplicity)));
         }
-        let domain_end = spans
-            .last()
-            .expect("validated NURBS has a positive span")
-            .parameter_end
-            .clone();
-        knots.extend(std::iter::repeat_n(domain_end, target_degree + 1));
-        let curve = Self::try_new_expanded_with_policy(
+        knots.extend(std::iter::repeat_n(
+            spans
+                .last()
+                .expect("validated NURBS has a span")
+                .parameter_end
+                .clone(),
+            target_degree + 1,
+        ));
+        let curve = Self::from_homogeneous_raw(
             target_degree,
-            control_points,
-            weights,
+            controls,
             knots,
             self.periodicity().clone(),
             policy,
@@ -801,19 +720,19 @@ impl NurbsCurve2 {
         left_knots.extend(std::iter::repeat_n(parameter.clone(), self.degree() + 1));
         let mut right_knots = vec![parameter; self.degree() + 1];
         right_knots.extend_from_slice(&refined.knots()[last_knot + 1..]);
-        let left = Self::try_new_with_optional_source_and_policy(
+        let left = Self::from_homogeneous_raw(
             self.degree(),
-            refined.control_points()[..=left_end].to_vec(),
-            refined.weights()[..=left_end].to_vec(),
+            refined.homogeneous_controls()[..=left_end].to_vec(),
             left_knots,
+            SplinePeriodicity2::NonPeriodic,
             policy,
         )
         .map_err(|error| remap_nurbs_operation(error, CurveOperation2::Subdivision))?;
-        let right = Self::try_new_with_optional_source_and_policy(
+        let right = Self::from_homogeneous_raw(
             self.degree(),
-            refined.control_points()[right_start..].to_vec(),
-            refined.weights()[right_start..].to_vec(),
+            refined.homogeneous_controls()[right_start..].to_vec(),
             right_knots,
+            SplinePeriodicity2::NonPeriodic,
             policy,
         )
         .map_err(|error| remap_nurbs_operation(error, CurveOperation2::Subdivision))?;
@@ -901,7 +820,7 @@ impl NurbsCurve2 {
             && has_clamped_endpoints(
                 subcurve.knots(),
                 subcurve.degree(),
-                subcurve.control_points().len(),
+                subcurve.homogeneous_controls().len(),
                 policy,
                 CurveOperation2::Subdivision,
             )?
@@ -923,9 +842,8 @@ impl NurbsCurve2 {
             )
         })?;
         let degree = self.degree();
-        let mut control_points = first.control_points().to_vec();
-        let mut weights = first.weights().to_vec();
-        let mut knots = Vec::with_capacity(control_points.len() + degree + 1);
+        let mut controls = first.curve().homogeneous_controls().to_vec();
+        let mut knots = Vec::with_capacity(controls.len() + degree + 1);
         knots.extend(std::iter::repeat_n(
             first.knot_interval().0.clone(),
             degree + 1,
@@ -936,23 +854,23 @@ impl NurbsCurve2 {
                 CurveOperation2::Subdivision,
             )?;
             let discontinuous = multiplicity == degree + 1;
-            let first_control = usize::from(!discontinuous);
-            control_points.extend_from_slice(&span.control_points()[first_control..]);
+            let next = span.curve().homogeneous_controls();
             if discontinuous {
-                // Independent one-sided limits have independent homogeneous
-                // scales. Merging their endpoint controls changes the image.
-                weights.extend_from_slice(span.weights());
+                controls.extend_from_slice(next);
             } else {
-                let scale = (weights.last().expect("first exact NURBS span has weights")
-                    / &span.weights()[0])
-                    .map_err(|cause| {
-                        ExactCurveError::invalid(
-                            CurveOperation2::Subdivision,
-                            CurveFamily2::Nurbs,
-                            cause.into(),
-                        )
-                    })?;
-                weights.extend(span.weights().iter().skip(1).map(|weight| weight * &scale));
+                let scale = (controls
+                    .last()
+                    .expect("first exact NURBS span has controls")
+                    .weight()
+                    / next[0].weight())
+                .map_err(|cause| {
+                    ExactCurveError::invalid(
+                        CurveOperation2::Subdivision,
+                        CurveFamily2::Nurbs,
+                        cause.into(),
+                    )
+                })?;
+                controls.extend(next.iter().skip(1).map(|control| control.scaled(&scale)));
             }
             knots.extend(std::iter::repeat_n(
                 span.knot_interval().0.clone(),
@@ -968,11 +886,11 @@ impl NurbsCurve2 {
                 .clone(),
             degree + 1,
         ));
-        Self::try_new_with_optional_source_and_policy(
+        Self::from_homogeneous_raw(
             degree,
-            control_points,
-            weights,
+            controls,
             knots,
+            SplinePeriodicity2::NonPeriodic,
             policy,
         )
         .map_err(|error| remap_nurbs_operation(error, CurveOperation2::Subdivision))
@@ -989,20 +907,16 @@ impl NurbsCurve2 {
     pub(crate) fn reversed_raw(&self, policy: &CurveContext) -> ExactCurveResult<Self> {
         let (start, end) = self.parameter_domain();
         let knot_sum = start + end;
-        let mut control_points = self.control_points().to_vec();
-        let mut weights = self.weights().to_vec();
-        control_points.reverse();
-        weights.reverse();
+        let controls = self.homogeneous_controls().iter().rev().cloned().collect();
         let knots = self
             .knots()
             .iter()
             .rev()
             .map(|knot| &knot_sum - knot)
             .collect();
-        Self::try_new_expanded_with_policy(
+        Self::from_homogeneous_raw(
             self.degree(),
-            control_points,
-            weights,
+            controls,
             knots,
             self.periodicity().clone(),
             policy,
@@ -1026,13 +940,21 @@ impl NurbsCurve2 {
         transform: &Similarity2,
         policy: &CurveContext,
     ) -> ExactCurveResult<Self> {
-        Self::try_new_expanded_with_policy(
+        let (a, b, d, e, xoff, yoff) = transform.affine_components();
+        let controls = self
+            .homogeneous_controls()
+            .iter()
+            .map(|control| {
+                HomogeneousControl2::new(
+                    a * control.x() + b * control.y() + xoff * control.weight(),
+                    d * control.x() + e * control.y() + yoff * control.weight(),
+                    control.weight().clone(),
+                )
+            })
+            .collect();
+        Self::from_homogeneous_raw(
             self.degree(),
-            self.control_points()
-                .iter()
-                .map(|point| transform.transform_point(point))
-                .collect(),
-            self.weights().to_vec(),
+            controls,
             self.knots().to_vec(),
             self.periodicity().clone(),
             policy,
@@ -1042,23 +964,12 @@ impl NurbsCurve2 {
 
     /// Returns the exact active-domain start point.
     pub fn start(&self) -> &Point2 {
-        match &self.data.endpoints {
-            NurbsEndpoints2::AuthoredControls => &self.data.retained.control_points()[0],
-            NurbsEndpoints2::Extracted { start, .. } => start,
-        }
+        &self.data.endpoints[0]
     }
 
     /// Returns the exact active-domain end point.
     pub fn end(&self) -> &Point2 {
-        match &self.data.endpoints {
-            NurbsEndpoints2::AuthoredControls => self
-                .data
-                .retained
-                .control_points()
-                .last()
-                .expect("validated NURBS has controls"),
-            NurbsEndpoints2::Extracted { end, .. } => end,
-        }
+        &self.data.endpoints[1]
     }
 
     /// Returns the shared exact homogeneous Bezier decomposition.
@@ -1140,10 +1051,9 @@ impl NurbsCurve2 {
                         return Ok(Classification::Uncertain(reason));
                     }
                 };
-                map_classified_curve_result(
+                Ok(Classification::Decided(
                     decomposition.extraction.native_subcurves(attempt),
-                    CurveOperation2::NativeTopology,
-                )
+                ))
             })? {
                 Classification::Decided(subcurves) => Classification::Decided(subcurves.as_slice()),
                 Classification::Uncertain(reason) => Classification::Uncertain(reason),
@@ -1299,8 +1209,10 @@ impl NurbsCurve2 {
         location: NurbsSpanParameterLocation,
         policy: &CurveContext,
     ) -> ExactCurveResult<Point2> {
-        let curve =
-            &self.rational_spans_for_operation(policy, CurveOperation2::Evaluation)?[span_index];
+        let curve = self
+            .bezier_decomposition_for_operation(policy, CurveOperation2::Evaluation)?
+            .spans()[span_index]
+            .curve();
         match location {
             NurbsSpanParameterLocation::Start => return Ok(curve.start().clone()),
             NurbsSpanParameterLocation::End => return Ok(curve.end().clone()),
@@ -1507,8 +1419,10 @@ impl NurbsCurve2 {
             NurbsSpanParameterLocation::End => Real::one(),
             NurbsSpanParameterLocation::Interior => local_span_parameter(span, parameter)?,
         };
-        let rational_span =
-            &self.rational_spans_for_operation(policy, CurveOperation2::Evaluation)?[span_index];
+        let rational_span = self
+            .bezier_decomposition_for_operation(policy, CurveOperation2::Evaluation)?
+            .spans()[span_index]
+            .curve();
         let local_derivatives = if max_order == 1 {
             vec![exact_classification(
                 rational_span.derivative_at_classified(&local, policy),
@@ -1536,55 +1450,6 @@ impl NurbsCurve2 {
                 derivative.scaled(&scale)
             })
             .collect())
-    }
-
-    fn rational_spans_with_policy(
-        &self,
-        policy: &CurveContext,
-    ) -> ExactCurveResult<Classification<&[RationalBezier2]>> {
-        Ok(
-            match resolve_cached_evaluation(&self.data.rational_spans, policy, |attempt| {
-                let decomposition = match self.bezier_decomposition_with_policy(attempt)? {
-                    Classification::Decided(decomposition) => decomposition,
-                    Classification::Uncertain(reason) => {
-                        return Ok(Classification::Uncertain(reason));
-                    }
-                };
-                decomposition
-                    .spans()
-                    .iter()
-                    .map(|span| {
-                        RationalBezier2::try_new(
-                            span.control_points().to_vec(),
-                            span.weights().to_vec(),
-                        )
-                        .map_err(|cause| {
-                            ExactCurveError::invalid(
-                                CurveOperation2::NativeTopology,
-                                CurveFamily2::Nurbs,
-                                cause,
-                            )
-                        })
-                    })
-                    .collect::<ExactCurveResult<Vec<_>>>()
-                    .map(Classification::Decided)
-            })? {
-                Classification::Decided(spans) => Classification::Decided(spans.as_slice()),
-                Classification::Uncertain(reason) => Classification::Uncertain(reason),
-            },
-        )
-    }
-
-    fn rational_spans_for_operation(
-        &self,
-        policy: &CurveContext,
-        operation: CurveOperation2,
-    ) -> ExactCurveResult<&[RationalBezier2]> {
-        require_classification(
-            self.rational_spans_with_policy(policy)
-                .map_err(|error| remap_nurbs_operation(error, operation))?,
-            operation,
-        )
     }
 
     fn validate_periodic_seam(&self, policy: &CurveContext) -> ExactCurveResult<()> {
@@ -1645,14 +1510,9 @@ impl NurbsBezierDecomposition2 {
         self.extraction.degree()
     }
 
-    /// Returns the exact refined affine control net after knot insertion.
-    pub fn refined_control_points(&self) -> &[Point2] {
-        self.extraction.refined_control_points()
-    }
-
-    /// Returns the exact refined weights after knot insertion.
-    pub fn refined_weights(&self) -> &[Real] {
-        self.extraction.refined_weights()
+    /// Returns the exact refined homogeneous control net after knot insertion.
+    pub fn refined_homogeneous_controls(&self) -> &[HomogeneousControl2] {
+        self.extraction.refined_homogeneous_controls()
     }
 
     /// Returns the exact refined knot vector after knot insertion.
@@ -1677,19 +1537,9 @@ impl<'a> NurbsBezierSpanView2<'a> {
         self.span_index
     }
 
-    /// Returns the retained rational Bezier degree.
-    pub const fn degree(self) -> usize {
-        self.span.degree()
-    }
-
-    /// Returns exact affine controls for this rational span.
-    pub fn control_points(self) -> &'a [Point2] {
-        self.span.control_points()
-    }
-
-    /// Returns exact homogeneous weights for this rational span.
-    pub fn weights(self) -> &'a [Real] {
-        self.span.weights()
+    /// Returns this span's shared exact rational Bezier evaluator.
+    pub const fn curve(self) -> &'a RationalBezier2 {
+        self.span.curve()
     }
 
     /// Returns the exact source knot interval.
@@ -2073,6 +1923,6 @@ mod layout_tests {
     #[test]
     fn nurbs_carrier_keeps_compact_policy_aware_storage() {
         assert_eq!(core::mem::size_of::<NurbsCurve2>(), 8);
-        assert_eq!(core::mem::size_of::<NurbsData2>(), 512);
+        assert_eq!(core::mem::size_of::<NurbsData2>(), 488);
     }
 }
