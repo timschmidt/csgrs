@@ -58131,6 +58131,17 @@ impl BezierRecursivePolynomialParameterAuthority2 {
             // caller to join fields or use its global exact fallback.
             return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
         }
+        // Construction already certifies this defining relation. Replaying
+        // the same equation requires no leading-coefficient decision: its
+        // exact degree may remain unknown while a crossing owns one root.
+        if coefficients.len() == self.coefficients.len()
+            && coefficients
+                .iter()
+                .zip(&self.coefficients)
+                .all(|(query, defining)| query.is_stored_equivalent_to(defining))
+        {
+            return Ok(Classification::Decided(RealSign::Zero));
+        }
         // At this selected root the defining polynomial is zero. Reuse that
         // relation before interval evaluation loses its coefficient/root
         // correlation. The shared division-free remainder preserves signs,
@@ -63771,11 +63782,17 @@ fn recursive_quadratic_polynomial_strict_unit_crossing(
         // later recursive norm for ordinary separated offset supports.
         for _refinement_index in 0..12 {
             let midpoint = ((&lower + &upper) / Real::from(2_i8)).ok()?;
-            let midpoint_value = value_at(&midpoint)?;
-            let midpoint_sign = if midpoint_value.is_structurally_zero() {
-                RealSign::Zero
+            let Some(midpoint_value) = value_at(&midpoint) else {
+                break;
+            };
+            let Some(midpoint_sign) = (if midpoint_value.is_structurally_zero() {
+                Some(RealSign::Zero)
             } else {
-                midpoint_value.bounded_or_exact_real_witness_sign()?
+                midpoint_value.bounded_or_exact_real_witness_sign()
+            }) else {
+                // This refinement is optional. The existing opposite-sign
+                // bracket still certifies the unique root of degree at most two.
+                break;
             };
             match midpoint_sign {
                 RealSign::Zero => {
@@ -64091,8 +64108,11 @@ impl OrderedFieldPolynomialContext<BezierRecursiveQuadraticValue2>
         &mut self,
         value: &BezierRecursiveQuadraticValue2,
     ) -> Result<std::cmp::Ordering, Self::Error> {
-        match value
-            .sign(&self.policy)
+        // The shared isolator and remainder engine consume these signs as
+        // exact algebraic evidence, including polynomial degree decisions.
+        match self
+            .policy
+            .strict_predicate_pass(|| value.sign(&self.policy))
             .map_err(BezierRecursiveOrderedFieldError2::Curve)?
         {
             Classification::Decided(RealSign::Negative) => Ok(std::cmp::Ordering::Less),
@@ -150708,6 +150728,88 @@ mod conversion_tests {
                     assert_eq!(outcome.certainty, CurveCertainty::Certified);
                 }
             }
+        }
+    }
+
+    #[test]
+    fn recursive_ordered_field_isolation_does_not_guess_polynomial_degree() {
+        let one = DenseTensorPolynomial::try_new(vec![], vec![Real::one()]).unwrap();
+        let field = BezierRecursiveQuadraticField2::base(vec![], one.clone(), one).unwrap();
+        let epsilon = Real::one() - Real::from(2_i8).powi_i64(-600).unwrap().cos();
+        assert_eq!(real_sign(&epsilon, &CurveContext::STRICT), None);
+        let half = (Real::one() / Real::from(2_i8)).unwrap();
+        let coefficients = [-half, Real::one(), epsilon]
+            .into_iter()
+            .map(|value| field.constant(value).unwrap())
+            .collect::<Vec<_>>();
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let isolated = recursive_quadratic_polynomial_local_unit_parameters(
+                &field,
+                &coefficients,
+                &policy,
+            )
+            .unwrap();
+            assert!(
+                isolated.is_none(),
+                "{policy:?}: an unresolved leading coefficient cannot be deleted to publish an exact half: {isolated:?}"
+            );
+            let mut context = BezierRecursiveOrderedFieldContext2 {
+                field: field.clone(),
+                policy,
+            };
+            assert!(matches!(
+                context.sign(&coefficients[2]),
+                Err(BezierRecursiveOrderedFieldError2::Uncertain)
+            ));
+        }
+    }
+
+    #[test]
+    fn quadratic_crossing_retains_its_root_when_optional_refinement_is_uncertain() {
+        let one = DenseTensorPolynomial::try_new(vec![], vec![Real::one()]).unwrap();
+        let field = BezierRecursiveQuadraticField2::base(vec![], one.clone(), one).unwrap();
+        let epsilon = Real::one() - Real::from(2_i8).powi_i64(-600).unwrap().cos();
+        assert_eq!(real_sign(&epsilon, &CurveContext::STRICT), None);
+        let half = (Real::one() / Real::from(2_i8)).unwrap();
+        let coefficients = [-half.clone(), Real::one(), epsilon]
+            .into_iter()
+            .map(|value| field.constant(value).unwrap())
+            .collect::<Vec<_>>();
+        let crossing = recursive_quadratic_polynomial_strict_unit_crossing(&field, &coefficients)
+            .expect("opposite endpoint signs already certify one unit root");
+        assert_eq!(crossing.start_sign, RealSign::Negative);
+        assert_eq!(crossing.end_sign, RealSign::Positive);
+        assert_eq!(crossing.leading_sign, None);
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let outcome = crate::policy::resolve_certified_operation(&policy, |attempt| {
+                recursive_projective_polynomial_unit_parameters(
+                    &field,
+                    coefficients.clone(),
+                    attempt,
+                )
+            })
+            .unwrap();
+            assert_eq!(outcome.certainty, CurveCertainty::Certified);
+            let Classification::Decided(parameters) = outcome.value else {
+                panic!("the exact root must keep its original polynomial")
+            };
+            assert_eq!(parameters.len(), 1);
+            let root = parameters[0].as_recursive_projective().unwrap();
+            let authority = root.polynomial_authority().unwrap();
+            assert_eq!(authority.coefficients.len(), coefficients.len());
+            assert!(authority.coefficients[2].is_stored_equivalent_to(&coefficients[2]));
+            assert_eq!(
+                root.recursive_polynomial_sign(&coefficients, &policy)
+                    .unwrap(),
+                Classification::Decided(RealSign::Zero),
+                "the selected root's own equation is already certified"
+            );
+            assert!(matches!(
+                policy
+                    .bounded_exact_predicate_pass(|| root.order_to_real(&half, &policy))
+                    .unwrap(),
+                Classification::Uncertain(_)
+            ));
         }
     }
 
