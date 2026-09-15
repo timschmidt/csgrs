@@ -625,8 +625,8 @@ impl CurvePath2 {
                 }
                 let previous_carrier = previous_source.exact_carrier(true, operation, policy)?;
                 let next_carrier = next_source.exact_carrier(false, operation, policy)?;
-                let previous_arc = previous_carrier.retained_rational_arc_support().cloned();
-                let next_arc = next_carrier.retained_rational_arc_support().cloned();
+                let previous_arc = previous_carrier.retained_rational_arc().cloned();
+                let next_arc = next_carrier.retained_rational_arc().cloned();
                 let domains = [
                     previous_chart.domain(if previous_chart_index + 1 == previous_charts.len() {
                         mode
@@ -666,14 +666,14 @@ impl CurvePath2 {
                             previous_chart,
                             previous,
                             &solution.previous,
-                            previous_arc.as_ref(),
+                            previous_arc.as_deref(),
                             &mut previous_circle_domain,
                         ),
                         (
                             next_chart,
                             next,
                             &solution.next,
-                            next_arc.as_ref(),
+                            next_arc.as_deref(),
                             &mut next_circle_domain,
                         ),
                     ] {
@@ -683,7 +683,10 @@ impl CurvePath2 {
                         {
                             if cached.is_none() {
                                 *cached = Some(AuthoredCircularDomain2::new(
-                                    authored, circle, operation, policy,
+                                    authored,
+                                    circle.support(),
+                                    operation,
+                                    policy,
                                 )?);
                             }
                             if cached
@@ -707,7 +710,7 @@ impl CurvePath2 {
                         next_index,
                         solution,
                         radius,
-                        [previous_arc.as_ref(), next_arc.as_ref()],
+                        [previous_arc.as_deref(), next_arc.as_deref()],
                         [
                             previous_source.promoted_parallel(),
                             next_source.promoted_parallel(),

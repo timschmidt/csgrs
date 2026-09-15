@@ -95,8 +95,8 @@ impl<'a> CurveCornerChain2<'a> {
         let previous_carrier =
             previous_source.exact_carrier(true, CurveOperation2::Chamfer, policy)?;
         let next_carrier = next_source.exact_carrier(false, CurveOperation2::Chamfer, policy)?;
-        let previous_retained_arc = previous_carrier.retained_rational_arc_support().cloned();
-        let next_retained_arc = next_carrier.retained_rational_arc_support().cloned();
+        let previous_retained_arc = previous_carrier.retained_rational_arc().cloned();
+        let next_retained_arc = next_carrier.retained_rational_arc().cloned();
         let solutions = solve_exact_chamfer_corner(
             previous_carrier,
             next_carrier,
@@ -166,8 +166,8 @@ impl<'a> CurveCornerChain2<'a> {
                 next_cut_index,
                 previous_cut,
                 next_cut,
-                previous_retained_arc.as_ref(),
-                next_retained_arc.as_ref(),
+                previous_retained_arc.as_deref(),
+                next_retained_arc.as_deref(),
                 policy,
             )
         })?;
@@ -182,8 +182,8 @@ impl<'a> CurveCornerChain2<'a> {
         next_index: usize,
         mut previous_cut: CornerTrimCut2,
         mut next_cut: CornerTrimCut2,
-        previous_retained_arc: Option<&CircularArc2>,
-        next_retained_arc: Option<&CircularArc2>,
+        previous_retained_arc: Option<&crate::curve::RetainedRationalCornerArc2>,
+        next_retained_arc: Option<&crate::curve::RetainedRationalCornerArc2>,
         policy: &CurveContext,
     ) -> ExactCurveResult<Option<Vec<BezierSplitFragment2>>> {
         let fragment_count = self.fragments().len();
@@ -226,6 +226,7 @@ impl<'a> CurveCornerChain2<'a> {
                     std::slice::from_ref(&self.fragments()[previous_index]),
                     support,
                     &previous_cut,
+                    None,
                     true,
                     CurveOperation2::Chamfer,
                     policy,
@@ -239,6 +240,7 @@ impl<'a> CurveCornerChain2<'a> {
                     std::slice::from_ref(&self.fragments()[next_index]),
                     support,
                     &next_cut,
+                    None,
                     false,
                     CurveOperation2::Chamfer,
                     policy,
@@ -415,79 +417,200 @@ impl<'a> CurveCornerChain2<'a> {
 
     fn retained_arc_extension_fragments(
         source_fragments: &[BezierSplitFragment2],
-        support: &CircularArc2,
+        arc: &crate::curve::RetainedRationalCornerArc2,
         cut: &CornerTrimCut2,
+        contact: Option<&crate::curve::RetainedArcFilletContactSeed2>,
         previous: bool,
         operation: CurveOperation2,
         policy: &CurveContext,
     ) -> ExactCurveResult<Vec<BezierSplitFragment2>> {
+        use crate::bezier_split::BezierSelectedFiberFragment2;
         let family = CurveFamily2::CircularArc;
-        let point = cut.point.coordinates().ok_or_else(|| {
-            ExactCurveError::blocked(operation, family, UncertaintyReason::Unsupported)
-        })?;
-        let spans = crate::curve::retained_arc_complement_projective_spans(
-            support, operation, family, policy,
-        )?;
-        let mut selected = None;
-        for (span_index, span) in spans.iter().enumerate() {
-            let parameters = retained_corner_decision(
-                RationalBezier2::from(span.clone())
-                    .retained_circle_point_parameters(point, policy)
+        let source = &arc.fragment;
+        let rational = source.rational_curve().expect("a rational circle chart");
+        let compare = |left: &CurveParameter2, right: &CurveParameter2| {
+            retained_corner_decision(
+                left.cmp_by_refinement(right, policy)
                     .map_err(|cause| curve_region_edit_error(operation, cause))?,
                 operation,
-            )?;
-            for parameter in parameters {
-                let parameter = CurveParameter2::from(parameter);
-                let boundary_order = |boundary| {
-                    retained_corner_decision(
-                        parameter
-                            .cmp_by_refinement(
-                                &CurveParameter2::from(BezierParameter2::Exact(boundary)),
-                                policy,
-                            )
-                            .map_err(|cause| curve_region_edit_error(operation, cause))?,
-                        operation,
+            )
+        };
+        // The complement of a selected interval consists of its remaining
+        // parent suffix, the parent's circular complement, and its prefix.
+        // Each cell keeps its own parameter chart and exact endpoint identity.
+        let cell = |curve: &RationalBezier2,
+                    start: CurveParameter2,
+                    end: CurveParameter2,
+                    start_point: CurvePoint2,
+                    end_point: CurvePoint2|
+         -> ExactCurveResult<Option<BezierSelectedFiberFragment2>> {
+            Ok(match compare(&start, &end)? {
+                std::cmp::Ordering::Equal => None,
+                std::cmp::Ordering::Less => Some(BezierSelectedFiberFragment2::new(
+                    BezierSelectedFiberSource2::Rational(curve.clone()),
+                    CurveParameterRange2::new_validated(start, end),
+                    start_point,
+                    end_point,
+                )),
+                std::cmp::Ordering::Greater => Some(
+                    BezierSelectedFiberFragment2::new(
+                        BezierSelectedFiberSource2::Rational(curve.clone()),
+                        CurveParameterRange2::new_validated(end, start),
+                        end_point,
+                        start_point,
                     )
-                };
-                let endpoint = if boundary_order(Real::zero())? == std::cmp::Ordering::Equal {
-                    Some(BezierEndpoint::Start)
-                } else if boundary_order(Real::one())? == std::cmp::Ordering::Equal {
-                    Some(BezierEndpoint::End)
-                } else {
-                    None
-                };
-                // Shared cell boundaries belong to the earlier cell. The
-                // authored source owns both outer complement endpoints.
-                if endpoint == Some(BezierEndpoint::Start)
-                    || (endpoint == Some(BezierEndpoint::End) && span_index + 1 == spans.len())
-                {
+                    .reversed(),
+                ),
+            })
+        };
+        let (source_start, source_end, parent_start, parent_end) = if source.is_reversed() {
+            (
+                source.range().end(),
+                source.range().start(),
+                Real::one(),
+                Real::zero(),
+            )
+        } else {
+            (
+                source.range().start(),
+                source.range().end(),
+                Real::zero(),
+                Real::one(),
+            )
+        };
+        let support = arc.support();
+        let mut cells = Vec::with_capacity(6);
+        cells.extend(cell(
+            rational,
+            source_end.clone(),
+            parent_end.into(),
+            source.end_point().clone(),
+            support.end().clone().into(),
+        )?);
+        let complement_start = cells.len();
+        for span in crate::curve::retained_arc_complement_projective_spans(
+            support, operation, family, policy,
+        )? {
+            let start = span.start().clone().into();
+            let end = span.end().clone().into();
+            cells.push(BezierSelectedFiberFragment2::new(
+                BezierSelectedFiberSource2::Rational(span.into()),
+                CurveParameterRange2::new_validated(Real::zero().into(), Real::one().into()),
+                start,
+                end,
+            ));
+        }
+        cells.extend(cell(
+            rational,
+            parent_start.into(),
+            source_start.clone(),
+            support.start().clone().into(),
+            source.start_point().clone(),
+        )?);
+        let mut selected = None;
+        for (index, candidate) in cells.iter().enumerate() {
+            let parameter = if let Some(crate::curve::RetainedArcFilletContactSeed2 {
+                cell: crate::curve::RetainedArcFilletContactCell2::Complement(cell_index),
+                parameter,
+            }) = contact
+            {
+                if index != complement_start + cell_index {
                     continue;
                 }
-                if selected
-                    .replace((span_index, parameter, endpoint))
-                    .is_some()
-                {
-                    return Err(curve_region_edit_error(
+                parameter.clone()
+            } else {
+                let Some(parameter) =
+                    crate::curve::RetainedRationalCornerArc2::parameter_at_incident_point(
+                        candidate.rational_curve().expect("a circular cell"),
+                        &cut.point,
                         operation,
-                        CurveError::Topology(
-                            "one circular extension contact belongs to multiple cells".into(),
-                        ),
-                    ));
-                }
+                        family,
+                        policy,
+                    )?
+                else {
+                    continue;
+                };
+                parameter
+            };
+            let start_order = compare(&parameter, candidate.range().start())?;
+            let end_order = compare(&parameter, candidate.range().end())?;
+            if start_order.is_lt() || end_order.is_gt() {
+                continue;
+            }
+            let (at_start, at_end) = if candidate.is_reversed() {
+                (end_order.is_eq(), start_order.is_eq())
+            } else {
+                (start_order.is_eq(), end_order.is_eq())
+            };
+            // Earlier cells own shared endpoints; the retained finite source
+            // owns the two outer endpoints of this complementary interval.
+            if at_start || (at_end && index + 1 == cells.len()) {
+                continue;
+            }
+            if selected.replace((index, parameter)).is_some() {
+                return Err(curve_region_edit_error(
+                    operation,
+                    CurveError::Topology(
+                        "one circular extension contact belongs to multiple cells".into(),
+                    ),
+                ));
             }
         }
-        let (span_index, parameter, endpoint) = selected.ok_or_else(|| {
+        let (index, parameter) = selected.ok_or_else(|| {
             ExactCurveError::blocked(operation, family, UncertaintyReason::Predicate)
         })?;
-        Ok(retained_circular_cut_fragments(
-            Some(source_fragments),
-            &spans,
-            span_index,
-            &parameter,
-            &cut.point,
-            endpoint,
-            previous,
-        ))
+        let selected = &cells[index];
+        let (start, end) = if selected.is_reversed() {
+            (selected.range().end(), selected.range().start())
+        } else {
+            (selected.range().start(), selected.range().end())
+        };
+        let partial = if previous {
+            cell(
+                selected.rational_curve().unwrap(),
+                start.clone(),
+                parameter,
+                selected.start_point().clone(),
+                cut.point.clone(),
+            )?
+        } else {
+            cell(
+                selected.rational_curve().unwrap(),
+                parameter,
+                end.clone(),
+                cut.point.clone(),
+                selected.end_point().clone(),
+            )?
+        };
+        let publish = |fragment: BezierSelectedFiberFragment2| {
+            if fragment.range().start().scalar() == Some(&Real::zero())
+                && fragment.range().end().scalar() == Some(&Real::one())
+            {
+                let curve = fragment.rational_curve().unwrap();
+                BezierSplitFragment2::Materialized {
+                    start: BezierParameter2::Exact(Real::zero()),
+                    end: BezierParameter2::Exact(Real::one()),
+                    curve: BezierSubcurve2::Rational(if fragment.is_reversed() {
+                        curve.reversed()
+                    } else {
+                        curve.clone()
+                    }),
+                }
+            } else {
+                BezierSplitFragment2::SelectedFiber(fragment)
+            }
+        };
+        let mut fragments = Vec::with_capacity(source_fragments.len() + cells.len());
+        if previous {
+            fragments.extend_from_slice(source_fragments);
+            fragments.extend(cells[..index].iter().cloned().map(publish));
+            fragments.extend(partial.map(publish));
+        } else {
+            fragments.extend(partial.map(publish));
+            fragments.extend(cells[index + 1..].iter().cloned().map(publish));
+            fragments.extend_from_slice(source_fragments);
+        }
+        Ok(fragments)
     }
 
     fn materialized_corner_arc_fragments(
@@ -747,8 +870,8 @@ impl<'a> CurveCornerChain2<'a> {
         let previous_carrier =
             previous_source.exact_carrier(true, CurveOperation2::Fillet, policy)?;
         let next_carrier = next_source.exact_carrier(false, CurveOperation2::Fillet, policy)?;
-        let previous_retained_arc = previous_carrier.retained_rational_arc_support().cloned();
-        let next_retained_arc = next_carrier.retained_rational_arc_support().cloned();
+        let previous_retained_arc = previous_carrier.retained_rational_arc().cloned();
+        let next_retained_arc = next_carrier.retained_rational_arc().cloned();
         let solve_mode = if has_smooth_run {
             CurveCornerMode2::TrimOrExtend
         } else {
@@ -818,7 +941,10 @@ impl<'a> CurveCornerChain2<'a> {
                 clockwise,
                 retained_frame,
                 &radius,
-                [previous_retained_arc.as_ref(), next_retained_arc.as_ref()],
+                [
+                    previous_retained_arc.as_deref(),
+                    next_retained_arc.as_deref(),
+                ],
                 [
                     (previous_cut_index == previous_index)
                         .then(|| previous_source.promoted_parallel())
@@ -848,7 +974,7 @@ impl<'a> CurveCornerChain2<'a> {
         clockwise: bool,
         retained_frame: Option<RetainedFilletFrame2>,
         radius: &Real,
-        retained_arcs: [Option<&CircularArc2>; 2],
+        retained_arcs: [Option<&crate::curve::RetainedRationalCornerArc2>; 2],
         promoted_parallels: [Option<&crate::BezierParallelFragment2>; 2],
         source_domains: [std::ops::Range<usize>; 2],
         policy: &CurveContext,
@@ -872,6 +998,7 @@ impl<'a> CurveCornerChain2<'a> {
                     &self.fragments()[source_domains[index].clone()],
                     support,
                     cut,
+                    None,
                     index == 0,
                     CurveOperation2::Fillet,
                     policy,
@@ -983,7 +1110,7 @@ impl<'a> CurveCornerChain2<'a> {
         for (fillet_half, circle) in circles.iter().enumerate() {
             let intersections = circle.certified_tangent_rational_intersections(
                 source,
-                &deferred.support,
+                &deferred.source.support(),
                 &deferred.source_radius,
                 &deferred.signed_center_radius,
                 policy,
@@ -1156,7 +1283,8 @@ impl<'a> CurveCornerChain2<'a> {
         let (source_spans, span_index, authored) = match seed.cell {
             crate::curve::RetainedArcFilletContactCell2::Authored(index) => {
                 let decomposition = match deferred
-                    .support
+                    .source
+                    .support()
                     .rational_bezier_decomposition_with_policy(policy)
                     .map_err(|error| error.with_operation(CurveOperation2::Fillet))?
                 {
@@ -1181,7 +1309,7 @@ impl<'a> CurveCornerChain2<'a> {
             }
             crate::curve::RetainedArcFilletContactCell2::Complement(index) => (
                 crate::curve::retained_arc_complement_projective_spans(
-                    &deferred.support,
+                    &deferred.source.support(),
                     CurveOperation2::Fillet,
                     CurveFamily2::CircularArc,
                     policy,
@@ -1224,17 +1352,22 @@ impl<'a> CurveCornerChain2<'a> {
         // compact selected-fiber parameter, rather than solving the same
         // incidence again in a larger field.
         let point = arc_cut.point.clone();
-        if authored
-            && matches!(
-                deferred.domain,
-                crate::curve::FilletContactDomain2::SourceChart(_)
-            )
-        {
-            // This contact was already bound to the authored rational chart
-            // before global source placement. The canonical circle cell only
-            // supplies its tangent frame; it does not replace that location.
+        if let Some(arc) = deferred.source.retained_rational_arc() {
+            let replacement = if arc_cut.placement == CornerPlacement2::Extension {
+                Some(Self::retained_arc_extension_fragments(
+                    source_fragments,
+                    arc,
+                    arc_cut,
+                    Some(seed),
+                    deferred.arc_is_previous,
+                    CurveOperation2::Fillet,
+                    policy,
+                )?)
+            } else {
+                None
+            };
             return Ok(RetainedPreselectedArcFilletContact2 {
-                replacement: None,
+                replacement,
                 source_parallel,
                 source_parameter: seed.parameter.clone(),
                 source_direction,
@@ -1316,12 +1449,14 @@ impl<'a> CurveCornerChain2<'a> {
                 UncertaintyReason::Unsupported,
             ));
         }
+        let rational_arc = deferred.source.retained_rational_arc();
         let source_chart = matches!(
             deferred.domain,
             crate::curve::FilletContactDomain2::SourceChart(_)
         );
         let decomposition = match deferred
-            .support
+            .source
+            .support()
             .rational_bezier_decomposition_with_policy(policy)
             .map_err(|error| error.with_operation(CurveOperation2::Fillet))?
         {
@@ -1343,7 +1478,7 @@ impl<'a> CurveCornerChain2<'a> {
             policy.strict_predicate_pass(|| real_sign(&deferred.signed_center_radius, policy));
         let inside_side = match radial_sign {
             Some(sign @ (RealSign::Positive | RealSign::Negative)) => Some(
-                if deferred.support.is_clockwise() ^ (sign == RealSign::Negative) {
+                if deferred.source.support().is_clockwise() ^ (sign == RealSign::Negative) {
                     crate::LineSide::Right
                 } else {
                     crate::LineSide::Left
@@ -1354,7 +1489,7 @@ impl<'a> CurveCornerChain2<'a> {
         let center_side = |endpoint: &Point2| -> CurveResult<Option<crate::LineSide>> {
             policy.strict_predicate_pass(|| {
                 let chord = match crate::bezier_offset::BezierAlgebraicChord2::try_new(
-                    deferred.support.center().clone().into(),
+                    deferred.source.support().center().clone().into(),
                     endpoint.clone().into(),
                     policy,
                 )? {
@@ -1377,12 +1512,14 @@ impl<'a> CurveCornerChain2<'a> {
              authored: bool|
              -> ExactCurveResult<Option<(usize, RetainedDeferredArcContact2)>> {
                 for (index, span) in spans.iter().enumerate() {
-                    let include_start =
-                        index != 0 || (authored && source_chart && !deferred.arc_is_previous);
-                    let include_end = authored
-                        && source_chart
-                        && deferred.arc_is_previous
-                        && index + 1 == spans.len();
+                    let include_start = rational_arc.is_some()
+                        || index != 0
+                        || (authored && source_chart && !deferred.arc_is_previous);
+                    let include_end = rational_arc.is_some()
+                        || (authored
+                            && source_chart
+                            && deferred.arc_is_previous
+                            && index + 1 == spans.len());
                     if let Some(inside_side) = inside_side {
                         let outside_side = if inside_side == crate::LineSide::Left {
                             crate::LineSide::Right
@@ -1432,7 +1569,10 @@ impl<'a> CurveCornerChain2<'a> {
             .iter()
             .map(|span| span.curve().clone())
             .collect::<Vec<_>>();
-        let mut selected = if source_chart && arc_cut.placement == CornerPlacement2::Extension {
+        let mut selected = if rational_arc.is_none()
+            && source_chart
+            && arc_cut.placement == CornerPlacement2::Extension
+        {
             None
         } else {
             select_contact(&spans, true)?
@@ -1445,12 +1585,12 @@ impl<'a> CurveCornerChain2<'a> {
                 return Ok(None);
             }
             if deferred.domain.mode() != CurveCornerMode2::TrimOrExtend
-                || deferred.support.start() == deferred.support.end()
+                || deferred.source.support().start() == deferred.source.support().end()
             {
                 return Ok(None);
             }
             spans = crate::curve::retained_arc_complement_projective_spans(
-                &deferred.support,
+                &deferred.source.support(),
                 CurveOperation2::Fillet,
                 CurveFamily2::CircularArc,
                 policy,
@@ -1461,8 +1601,36 @@ impl<'a> CurveCornerChain2<'a> {
         let Some((span_index, contact)) = selected else {
             return Ok(None);
         };
-        let retains_source_parameter = source_chart && placement == CornerPlacement2::Trim;
-        let arc_replacement = if retains_source_parameter {
+        // This is the terminal fillet parameter's own point witness. Bind the
+        // source cut to it before assembling any circular extension, so path
+        // admission reuses the certified tangency instead of comparing two
+        // separately evaluated images of the same selected center.
+        arc_cut.point = contact.point.clone();
+        let retains_source_parameter =
+            rational_arc.is_some() || (source_chart && placement == CornerPlacement2::Trim);
+        let contact_seed = crate::curve::RetainedArcFilletContactSeed2 {
+            cell: if placement == CornerPlacement2::Extension {
+                crate::curve::RetainedArcFilletContactCell2::Complement(span_index)
+            } else {
+                crate::curve::RetainedArcFilletContactCell2::Authored(span_index)
+            },
+            parameter: contact.source_parameter.clone(),
+        };
+        let arc_replacement = if let Some(arc) = rational_arc {
+            if arc_cut.placement == CornerPlacement2::Extension {
+                Some(Self::retained_arc_extension_fragments(
+                    source_fragments,
+                    arc,
+                    arc_cut,
+                    Some(&contact_seed),
+                    deferred.arc_is_previous,
+                    CurveOperation2::Fillet,
+                    policy,
+                )?)
+            } else {
+                None
+            }
+        } else if retains_source_parameter {
             None
         } else if placement == CornerPlacement2::Trim && spans.len() == 1 {
             arc_cut.replacement = Some(CornerReplacement2::Curve(BezierSubcurve2::Rational(
@@ -2657,10 +2825,7 @@ impl<'a> CurveCornerChain2<'a> {
                 clockwise,
                 None,
             );
-            if matches!(
-                deferred.domain,
-                crate::curve::FilletContactDomain2::SourceChart(_)
-            ) {
+            if let Some(arc) = deferred.source.retained_rational_arc() {
                 let (cut, source, replacement) = if deferred.arc_is_previous {
                     (
                         &*previous_cut,
@@ -2673,8 +2838,9 @@ impl<'a> CurveCornerChain2<'a> {
                 if cut.placement == CornerPlacement2::Extension {
                     *replacement = Some(Self::retained_arc_extension_fragments(
                         source,
-                        &deferred.support,
+                        arc,
                         cut,
+                        None,
                         deferred.arc_is_previous,
                         CurveOperation2::Fillet,
                         policy,
@@ -2687,7 +2853,7 @@ impl<'a> CurveCornerChain2<'a> {
                 );
             }
             let Some(cut) = crate::curve::arc_fillet_cut_from_incident_point(
-                &crate::curve::ExactCornerArc2::Native(&deferred.support),
+                &deferred.source,
                 arc_contact.clone(),
                 true,
                 deferred.arc_is_previous,
@@ -2711,18 +2877,18 @@ impl<'a> CurveCornerChain2<'a> {
             arc_cut.placement = cut.placement;
             let retained_arc = CircularArc2::new_with_certified_radius(
                 if deferred.arc_is_previous {
-                    deferred.support.start().clone()
+                    deferred.source.support().start().clone()
                 } else {
                     arc_contact.clone()
                 },
                 if deferred.arc_is_previous {
                     arc_contact.clone()
                 } else {
-                    deferred.support.end().clone()
+                    deferred.source.support().end().clone()
                 },
-                deferred.support.center().clone(),
-                deferred.support.radius_squared(),
-                deferred.support.is_clockwise(),
+                deferred.source.support().center().clone(),
+                deferred.source.support().radius_squared(),
+                deferred.source.support().is_clockwise(),
                 None,
             );
             let replacement = Some(Self::materialized_corner_arc_fragments(

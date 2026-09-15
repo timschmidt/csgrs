@@ -8,7 +8,7 @@ use crate::bezier_region::curve_corner_chain::CurveCornerChain2;
 pub(super) fn corner_has_native_reconstruction(
     curve: &Curve2,
     cut: &CornerCut2,
-    retained_arc: Option<&CircularArc2>,
+    retained_arc: Option<&crate::curve::RetainedRationalCornerArc2>,
 ) -> bool {
     // Rational circle inverses certify a source parameter for an existing
     // contact point. Re-evaluating that parameter during native subdivision
@@ -276,8 +276,8 @@ impl CurvePath2 {
         previous_index: usize,
         next_index: usize,
         solution: ChamferCorner2,
-        previous_retained_arc: Option<&CircularArc2>,
-        next_retained_arc: Option<&CircularArc2>,
+        previous_retained_arc: Option<&crate::curve::RetainedRationalCornerArc2>,
+        next_retained_arc: Option<&crate::curve::RetainedRationalCornerArc2>,
         policy: &CurveContext,
     ) -> ExactCurveResult<Option<Self>> {
         self.reconstruct_corner(
@@ -308,7 +308,7 @@ impl CurvePath2 {
         next_index: usize,
         solution: FilletCorner2,
         radius: &Real,
-        retained_arcs: [Option<&CircularArc2>; 2],
+        retained_arcs: [Option<&crate::curve::RetainedRationalCornerArc2>; 2],
         promoted_parallels: [Option<&crate::BezierParallelFragment2>; 2],
         policy: &CurveContext,
     ) -> ExactCurveResult<Option<Self>> {
@@ -435,7 +435,7 @@ impl CurvePath2 {
         next_index: usize,
         solution: FilletCorner2,
         radius: &Real,
-        retained_arcs: [Option<&CircularArc2>; 2],
+        retained_arcs: [Option<&crate::curve::RetainedRationalCornerArc2>; 2],
         promoted_parallels: [Option<&crate::BezierParallelFragment2>; 2],
         policy: &CurveContext,
     ) -> ExactCurveResult<Option<Self>> {

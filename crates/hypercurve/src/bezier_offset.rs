@@ -37230,6 +37230,75 @@ impl BezierAlgebraicCuspSemicircle2 {
         )
     }
 
+    /// On a certified target circle, subtracting its circle equation from
+    /// this circle's equation leaves their radical axis. Dividing out the
+    /// already-certified positive absolute source weight halves the parameter
+    /// degree and preserves the sign of the original circle residual.
+    /// In particular, an irrational-weight conic retains a quadratic tangent
+    /// equation instead of a quartic whose repeated root needs another
+    /// coefficient-field projection.
+    fn recursive_rational_circle_incidence_polynomial(
+        &self,
+        other: &RationalBezier2,
+        frame: &BezierRecursiveSelectedRadialFrame2,
+        policy: &CurveContext,
+    ) -> CurveResult<Option<Vec<BezierRecursiveQuadraticValue2>>> {
+        let support = match policy.strict_predicate_pass(|| {
+            crate::arc_bezier::rational_bezier_circular_arc(other, policy)
+        })? {
+            Classification::Decided(Some(support)) => support,
+            Classification::Decided(None) | Classification::Uncertain(_) => return Ok(None),
+        };
+        let field = &frame.field;
+        let source = other.homogeneous_power_basis()?;
+        let weight_sign = match policy
+            .strict_predicate_pass(|| crate::classify::real_sign(&source.weight[0], policy))
+        {
+            Some(RealSign::Positive) => Real::one(),
+            Some(RealSign::Negative) => Real::from(-1_i8),
+            Some(RealSign::Zero) | None => return Ok(None),
+        };
+        Ok((|| {
+            let two = field.constant(Real::from(2))?;
+            let denominator = &frame.center.denominator;
+            let denominator_squared = denominator.multiply(denominator)?;
+            let x_factor = denominator
+                .multiply(&field.constant(support.center().x().clone())?)?
+                .subtract(&frame.center.x)?
+                .multiply(denominator)?
+                .multiply(&two)?;
+            let y_factor = denominator
+                .multiply(&field.constant(support.center().y().clone())?)?
+                .subtract(&frame.center.y)?
+                .multiply(denominator)?
+                .multiply(&two)?;
+            let constant = frame
+                .center
+                .x
+                .multiply(&frame.center.x)?
+                .add(&frame.center.y.multiply(&frame.center.y)?)?
+                .add(&denominator_squared.multiply(&field.constant(
+                    support.radius_squared()
+                        - support.center().x() * support.center().x()
+                        - support.center().y() * support.center().y()
+                        - self.radial_distance() * self.radial_distance(),
+                )?)?)?;
+            let x = recursive_quadratic_real_polynomial(field, &source.x_numerator)?;
+            let y = recursive_quadratic_real_polynomial(field, &source.y_numerator)?;
+            let weight = recursive_quadratic_real_polynomial(field, &source.weight)?;
+            let incidence = recursive_quadratic_polynomial_combine(
+                &recursive_quadratic_polynomial_combine(
+                    &recursive_quadratic_polynomial_scale(&x, &x_factor)?,
+                    &recursive_quadratic_polynomial_scale(&y, &y_factor)?,
+                    false,
+                )?,
+                &recursive_quadratic_polynomial_scale(&weight, &constant)?,
+                false,
+            )?;
+            recursive_quadratic_polynomial_scale_real(&incidence, &weight_sign)
+        })())
+    }
+
     fn recursive_selected_radial_rational_intersections_internal(
         &self,
         other: &RationalBezier2,
@@ -38402,6 +38471,20 @@ impl BezierAlgebraicCuspSemicircle2 {
         let unit_weight = [Real::one()];
         let source_weight = source.weight.unwrap_or(&unit_weight);
         let field = frame.field.clone();
+        let circular_incidence =
+            if unit_target_speed && let BezierParallelSource2::Rational(curve) = other.source() {
+                self.recursive_rational_circle_incidence_polynomial(curve, &frame, policy)?
+            } else {
+                None
+            };
+        #[cfg(feature = "dispatch-trace")]
+        if circular_incidence.is_some() {
+            hyperreal::dispatch_trace::record(
+                "hypercurve",
+                "algebraic-circle-rational-kernel",
+                "circular-radical-axis",
+            );
+        }
         let Some((
             base,
             projection,
@@ -38469,16 +38552,21 @@ impl BezierAlgebraicCuspSemicircle2 {
                 &scale_value(&weight, &frame.center.y)?,
             )?;
             let weight_denominator = scale_value(&weight, &frame.center.denominator)?;
-            let weight_denominator_squared = multiply(&weight_denominator, &weight_denominator)?;
             let radius_squared = self.radial_distance() * self.radial_distance();
             let distance_radius = other.distance() * other.distance() - &radius_squared;
-            let circle_radical = add(
-                &add(
-                    &multiply(&radial_x, &radial_x)?,
-                    &multiply(&radial_y, &radial_y)?,
+            let circle_radical = match circular_incidence {
+                Some(incidence) => incidence,
+                None => add(
+                    &add(
+                        &multiply(&radial_x, &radial_x)?,
+                        &multiply(&radial_y, &radial_y)?,
+                    )?,
+                    &scale(
+                        &multiply(&weight_denominator, &weight_denominator)?,
+                        &distance_radius,
+                    )?,
                 )?,
-                &scale(&weight_denominator_squared, &distance_radius)?,
-            )?;
+            };
             let radial_dot_normal = add(
                 &multiply(&radial_x, &normal_x)?,
                 &multiply(&radial_y, &normal_y)?,

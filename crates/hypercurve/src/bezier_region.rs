@@ -6236,10 +6236,16 @@ fn promoted_endpoint_image_corner_chord(
 pub(crate) struct CornerCarrierPreparation2<'a> {
     top_level: Option<std::borrow::Cow<'a, Curve2>>,
     fragment: Option<&'a BezierSplitFragment2>,
-    endpoint_chord: Option<crate::BezierAlgebraicChord2>,
-    promoted_parallel: Option<crate::BezierParallelFragment2>,
+    evidence: CornerCarrierEvidence2,
     source_endpoint_is_end: bool,
     source_chart: Option<(&'a Real, &'a Real)>,
+}
+
+enum CornerCarrierEvidence2 {
+    Source,
+    Chord(crate::BezierAlgebraicChord2),
+    Parallel(crate::BezierParallelFragment2),
+    Circular(std::sync::Arc<crate::curve::RetainedRationalCornerArc2>),
 }
 
 impl<'a> CornerCarrierPreparation2<'a> {
@@ -6257,8 +6263,7 @@ impl<'a> CornerCarrierPreparation2<'a> {
         Self {
             top_level,
             fragment: Some(fragment),
-            endpoint_chord: None,
-            promoted_parallel: None,
+            evidence: CornerCarrierEvidence2::Source,
             source_endpoint_is_end: false,
             source_chart: None,
         }
@@ -6271,8 +6276,7 @@ impl<'a> CornerCarrierPreparation2<'a> {
         Self {
             top_level: Some(std::borrow::Cow::Borrowed(curve)),
             fragment: None,
-            endpoint_chord: None,
-            promoted_parallel: None,
+            evidence: CornerCarrierEvidence2::Source,
             source_endpoint_is_end: previous,
             source_chart: None,
         }
@@ -6305,7 +6309,12 @@ impl<'a> CornerCarrierPreparation2<'a> {
             *self = Self::admit(&span.fragment);
             self.source_chart = Some((&span.source_scale, &span.source_offset));
         }
-        if self.top_level.is_some() {
+        if let Some(curve) = self.top_level.as_ref() {
+            if let Some(crate::curve::ExactCornerCarrier2::RetainedRationalArc(arc)) =
+                exact_corner_carrier(curve, self.source_endpoint_is_end, operation, policy)?
+            {
+                self.evidence = CornerCarrierEvidence2::Circular(arc);
+            }
             return Ok(());
         }
         let fragment = self
@@ -6313,25 +6322,30 @@ impl<'a> CornerCarrierPreparation2<'a> {
             .expect("a nonnative corner retains its fragment");
         match fragment {
             BezierSplitFragment2::AlgebraicEndpointImages { .. } => {
-                self.endpoint_chord =
-                    promoted_endpoint_image_corner_chord(fragment, operation, policy)?;
-                if self.endpoint_chord.is_none() {
-                    self.promoted_parallel = Some(promoted_endpoint_image_corner_fragment(
+                self.evidence = if let Some(chord) =
+                    promoted_endpoint_image_corner_chord(fragment, operation, policy)?
+                {
+                    CornerCarrierEvidence2::Chord(chord)
+                } else {
+                    CornerCarrierEvidence2::Parallel(promoted_endpoint_image_corner_fragment(
                         fragment, operation,
-                    )?);
-                }
+                    )?)
+                };
             }
             BezierSplitFragment2::SelectedFiber(fragment) => {
-                // A directly represented selected range is the existing
-                // analytic-parallel fast path. Genuinely selected boundaries
-                // remain local and enter the shared corner kernel without a
-                // global resultant projection.
-                self.promoted_parallel = exact_retained_parallel_fragment(
+                if let Some(arc) = crate::curve::RetainedRationalCornerArc2::from_selected(
+                    fragment, operation, policy,
+                )? {
+                    self.evidence = CornerCarrierEvidence2::Circular(arc);
+                } else if let Some(parallel) = exact_retained_parallel_fragment(
                     RetainedParallelOffsetFragmentRef2::Selected(fragment),
                     RetainedParallelOffsetFragmentRef2::Selected(fragment).parallel(),
                     policy,
                 )
-                .map_err(|cause| curve_region_edit_error(operation, cause))?;
+                .map_err(|cause| curve_region_edit_error(operation, cause))?
+                {
+                    self.evidence = CornerCarrierEvidence2::Parallel(parallel);
+                }
             }
             BezierSplitFragment2::AlgebraicChord(_)
             | BezierSplitFragment2::AnalyticParallel(_)
@@ -6353,6 +6367,22 @@ impl<'a> CornerCarrierPreparation2<'a> {
         operation: CurveOperation2,
         policy: &CurveContext,
     ) -> ExactCurveResult<crate::curve::ExactCornerCarrier2<'_>> {
+        match &self.evidence {
+            CornerCarrierEvidence2::Circular(arc) => {
+                return Ok(crate::curve::ExactCornerCarrier2::RetainedRationalArc(
+                    std::sync::Arc::clone(arc),
+                ));
+            }
+            CornerCarrierEvidence2::Chord(chord) => {
+                return Ok(crate::curve::ExactCornerCarrier2::AlgebraicChord(chord));
+            }
+            CornerCarrierEvidence2::Parallel(parallel) => {
+                return Ok(crate::curve::ExactCornerCarrier2::AnalyticParallel(
+                    parallel,
+                ));
+            }
+            CornerCarrierEvidence2::Source => {}
+        }
         if let Some(curve) = self.top_level.as_ref() {
             return exact_corner_carrier(curve, previous, operation, policy)?.ok_or_else(|| {
                 ExactCurveError::blocked(operation, self.family(), UncertaintyReason::Unsupported)
@@ -6371,29 +6401,11 @@ impl<'a> CornerCarrierPreparation2<'a> {
             BezierSplitFragment2::AlgebraicCuspSemicircle(fragment) => {
                 Ok(crate::curve::ExactCornerCarrier2::AlgebraicCusp(fragment))
             }
-            BezierSplitFragment2::AlgebraicEndpointImages { .. } => {
-                if let Some(chord) = self.endpoint_chord.as_ref() {
-                    Ok(crate::curve::ExactCornerCarrier2::AlgebraicChord(chord))
-                } else {
-                    self.promoted_parallel
-                        .as_ref()
-                        .map(crate::curve::ExactCornerCarrier2::AnalyticParallel)
-                        .ok_or_else(|| {
-                            ExactCurveError::blocked(
-                                operation,
-                                self.family(),
-                                UncertaintyReason::Unsupported,
-                            )
-                        })
-                }
-            }
             BezierSplitFragment2::SelectedFiber(fragment) => {
-                Ok(self.promoted_parallel.as_ref().map_or(
-                    crate::curve::ExactCornerCarrier2::SelectedFiber(fragment),
-                    crate::curve::ExactCornerCarrier2::AnalyticParallel,
-                ))
+                Ok(crate::curve::ExactCornerCarrier2::SelectedFiber(fragment))
             }
-            BezierSplitFragment2::Materialized { .. } => Err(ExactCurveError::blocked(
+            BezierSplitFragment2::AlgebraicEndpointImages { .. }
+            | BezierSplitFragment2::Materialized { .. } => Err(ExactCurveError::blocked(
                 operation,
                 self.family(),
                 UncertaintyReason::Unsupported,
@@ -6402,7 +6414,10 @@ impl<'a> CornerCarrierPreparation2<'a> {
     }
 
     pub(crate) fn promoted_parallel(&self) -> Option<&crate::BezierParallelFragment2> {
-        self.promoted_parallel.as_ref()
+        match &self.evidence {
+            CornerCarrierEvidence2::Parallel(parallel) => Some(parallel),
+            _ => None,
+        }
     }
 
     pub(crate) fn source_chart(&self) -> Option<(&Real, &Real)> {
@@ -22819,7 +22834,7 @@ mod tests {
     #[test]
     fn selected_circle_and_retained_rational_arc_fillet_exactly() {
         for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
-            for homogeneous_scale in [1_i8, 2_i8] {
+            for homogeneous_scale in [-2_i8, -1_i8, 1_i8, 2_i8] {
                 for reversed in [false, true] {
                     let region = selected_circle_neighbor_region(
                         &policy,
@@ -22864,15 +22879,13 @@ mod tests {
                             .into_value(),
                         Classification::Decided(RegionPointLocation::Inside),
                     );
-                    if homogeneous_scale == 1 && !reversed {
-                        let disjoint = selected_fillet_disjoint_square(&policy);
-                        let replay = filleted
-                            .boolean_regions(&disjoint, &policy)
-                            .expect("the mixed retained fillet re-enters the Boolean kernel");
-                        assert_eq!(replay.certainty, CurveCertainty::Certified);
-                        assert_eq!(replay.value.union().boundary_loops().len(), 2);
-                        assert!(replay.value.intersection().is_empty());
-                    }
+                    let disjoint = selected_fillet_disjoint_square(&policy);
+                    let replay = filleted
+                        .boolean_regions(&disjoint, &policy)
+                        .expect("the mixed retained fillet re-enters the Boolean kernel");
+                    assert_eq!(replay.certainty, CurveCertainty::Certified);
+                    assert_eq!(replay.value.union().boundary_loops().len(), 2);
+                    assert!(replay.value.intersection().is_empty());
                 }
             }
         }
