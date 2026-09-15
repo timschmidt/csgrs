@@ -321,6 +321,7 @@ pub use root_isolation::{
     subdivide_bernstein_univariate_polynomial_interval_expr,
     subdivide_bernstein_univariate_polynomial_interval_roots,
 };
+pub use root_sign::sign_at_selected_root;
 pub use simplex_projection::{
     SimplexProjectionConfig, SimplexProjectionError, SimplexProjectionReport,
     SimplexProjectionStatus, project_origin_onto_simplex, project_origin_onto_simplex_with_config,

@@ -12,11 +12,16 @@ use hyperreal::Real;
 use crate::integer_interpolation::primitive_integer_signed_remainder_sequence;
 use crate::root_isolation::{IsolatedRootInterval, polynomial_div_rem};
 
-/// The caller owns the singleton proof for `defining` on `interval`.
-/// Endpoint roots decline so half-open ownership is never silently changed.
+/// Signs `predicate` at the unique selected root of `defining` in `interval`.
+///
+/// Both polynomials use ascending power coefficients. The caller owns the
+/// singleton proof for `defining` on `interval`; no roots of the predicate
+/// need to be isolated. `None` means this exact sign query did not decide.
+/// Endpoint roots and exact point intervals decline so endpoint ownership
+/// remains explicit; callers can evaluate an exact point directly.
 /// Every coefficient decision here is STRICT, including the general-Real
 /// fallback when the primitive integer chain does not apply.
-pub(crate) fn sign_at_selected_root(
+pub fn sign_at_selected_root(
     defining: &[Real],
     predicate: &[Real],
     interval: &IsolatedRootInterval,
