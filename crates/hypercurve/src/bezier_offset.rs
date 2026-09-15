@@ -58045,8 +58045,75 @@ impl BezierRecursivePolynomialParameterAuthority2 {
             // caller to join fields or use its global exact fallback.
             return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
         }
+        // At this selected root the defining polynomial is zero. Reuse that
+        // relation before interval evaluation loses its coefficient/root
+        // correlation. The shared division-free remainder preserves signs,
+        // including with a negative or nonrational leading coefficient.
+        let reduced = if coefficients.len() >= self.coefficients.len() {
+            // Preserve the existing separation fast path. Pseudo-division
+            // bounds degree, but nonmonic leading coefficients can grow; a
+            // predicate already separated on its retained bracket needs none.
+            if let Some(sign) = recursive_quadratic_polynomial_interval(
+                coefficients,
+                &BezierAlgebraicChordRealInterval2 {
+                    lower: parameter.data.lower.clone(),
+                    upper: parameter.data.upper.clone(),
+                },
+                64,
+                -64,
+            )
+            .as_ref()
+            .and_then(dense_strict_interval_sign)
+            {
+                return Ok(Classification::Decided(sign));
+            }
+            let mut context = BezierRecursiveOrderedFieldContext2 {
+                field: self.field.clone(),
+                policy: *policy,
+            };
+            match policy.bounded_exact_predicate_pass(|| {
+                hypersolve::ordered_field_polynomial_sign_remainder(
+                    coefficients,
+                    &self.coefficients,
+                    &mut context,
+                )
+            }) {
+                Ok(Some(remainder)) => {
+                    #[cfg(feature = "dispatch-trace")]
+                    hyperreal::dispatch_trace::record(
+                        "hypercurve",
+                        "recursive-polynomial-sign",
+                        "retained-field-remainder",
+                    );
+                    Some(remainder)
+                }
+                Ok(None) => {
+                    return Err(CurveError::Topology(
+                        "a retained polynomial root lost its defining relation".into(),
+                    ));
+                }
+                Err(BezierRecursiveOrderedFieldError2::Uncertain) => None,
+                Err(BezierRecursiveOrderedFieldError2::Curve(error)) => return Err(error),
+            }
+        } else {
+            None
+        };
+        let coefficients = reduced.as_deref().unwrap_or(coefficients);
+        let Some(degree) = coefficients
+            .iter()
+            .rposition(|coefficient| !coefficient.is_structurally_zero())
+        else {
+            return Ok(Classification::Decided(RealSign::Zero));
+        };
+        let coefficients = &coefficients[..=degree];
+        if degree == 0 {
+            return coefficients[0].sign(policy);
+        }
         let mut refined = parameter.clone();
         for refinement_steps in [0_usize, 2, 4, 8, 16, 32, 64, 128, 256, 512] {
+            if policy.has_bounded_exact_predicate_budget() && refinement_steps > 8 {
+                break;
+            }
             refined = match self.refined_parameter(
                 &refined,
                 refinement_steps,
@@ -58074,6 +58141,9 @@ impl BezierRecursivePolynomialParameterAuthority2 {
             {
                 return Ok(Classification::Decided(sign));
             }
+        }
+        if policy.has_bounded_exact_predicate_budget() {
+            return Ok(Classification::Uncertain(UncertaintyReason::Predicate));
         }
         if policy.permits_approximate_512() {
             policy.observe_approximate_512();
@@ -63809,6 +63879,18 @@ impl OrderedFieldPolynomialContext<BezierRecursiveQuadraticValue2>
         left.add(right).ok_or_else(|| {
             BezierRecursiveOrderedFieldError2::Curve(CurveError::Topology(
                 "a recursive polynomial isolator crossed coefficient fields".into(),
+            ))
+        })
+    }
+
+    fn multiply(
+        &mut self,
+        left: &BezierRecursiveQuadraticValue2,
+        right: &BezierRecursiveQuadraticValue2,
+    ) -> Result<BezierRecursiveQuadraticValue2, Self::Error> {
+        left.multiply(right).ok_or_else(|| {
+            BezierRecursiveOrderedFieldError2::Curve(CurveError::Topology(
+                "a recursive polynomial product exceeded its coefficient field".into(),
             ))
         })
     }
@@ -149399,6 +149481,69 @@ mod conversion_tests {
             &value.data
         ));
         assert!(Arc::ptr_eq(&one.square().unwrap().data, &one.data));
+    }
+
+    #[test]
+    fn recursive_polynomial_predicates_reuse_the_retained_field_relation() {
+        let scalar =
+            |value| DenseTensorPolynomial::try_new(Vec::new(), vec![Real::from(value)]).unwrap();
+        let base = BezierRecursiveQuadraticField2::base(Vec::new(), scalar(2), scalar(3)).unwrap();
+        let field = base
+            .extension(base.constant(Real::from(5_i8)).unwrap())
+            .unwrap();
+        let radical = field
+            .element(
+                base.constant(Real::zero()).unwrap(),
+                base.constant(Real::one()).unwrap(),
+            )
+            .unwrap();
+        let relation = vec![
+            radical
+                .scale(&((Real::from(-1_i8) / Real::from(3_i8)).unwrap()))
+                .unwrap(),
+            field.constant(Real::zero()).unwrap(),
+            field.constant(Real::zero()).unwrap(),
+            field.constant(Real::one()).unwrap(),
+        ];
+        let multiplier = recursive_quadratic_real_polynomial(
+            &field,
+            &[Real::one(), Real::from(2_i8), Real::one()],
+        )
+        .unwrap();
+        let multiple = recursive_quadratic_polynomial_multiply(&relation, &multiplier).unwrap();
+        let tiny = Real::from(2_i8).powi_i64(-600).unwrap();
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            for gauge in [Real::one(), -Real::pi()] {
+                let defining =
+                    recursive_quadratic_polynomial_scale_real(&relation, &gauge).unwrap();
+                let Classification::Decided(parameters) =
+                    recursive_projective_polynomial_unit_parameters(&field, defining, &policy)
+                        .unwrap()
+                else {
+                    panic!("the cubic must retain its selected coefficient field")
+                };
+                let [parameter] = parameters.as_slice() else {
+                    panic!("the cubic has one unit root")
+                };
+                let root = parameter.as_recursive_projective().unwrap();
+                assert!(root.polynomial_authority().is_some());
+                for (offset, expected) in [
+                    (Real::zero(), RealSign::Zero),
+                    (tiny.clone(), RealSign::Positive),
+                    (-tiny.clone(), RealSign::Negative),
+                ] {
+                    let mut query = multiple.clone();
+                    query[0] = query[0].add(&field.constant(offset).unwrap()).unwrap();
+                    let outcome = crate::policy::resolve_certified_value(&policy, |attempt| {
+                        attempt.bounded_exact_predicate_pass(|| {
+                            root.recursive_polynomial_sign(&query, attempt).unwrap()
+                        })
+                    });
+                    assert_eq!(outcome.value, Classification::Decided(expected));
+                    assert_eq!(outcome.certainty, CurveCertainty::Certified);
+                }
+            }
+        }
     }
 
     #[test]
