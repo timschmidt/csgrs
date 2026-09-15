@@ -13409,7 +13409,7 @@ impl CurveRegion2 {
         resolve_certified_operation(policy, |attempt| {
             Ok(match self.native_line_arc_region(attempt)? {
                 Classification::Decided(native) => {
-                    Classification::Decided(native.structural_facts(attempt))
+                    Classification::Decided(native.structural_facts())
                 }
                 Classification::Uncertain(reason) => Classification::Uncertain(reason),
             })
@@ -15322,13 +15322,13 @@ fn subcurve_control_hull_contains_point(
     policy: &CurveContext,
 ) -> Classification<bool> {
     let bounds = match curve {
-        BezierSubcurve2::Quadratic(curve) => Aabb2::from_points(curve.control_points(), policy),
-        BezierSubcurve2::Cubic(curve) => Aabb2::from_points(curve.control_points(), policy),
+        BezierSubcurve2::Quadratic(curve) => Aabb2::from_points(curve.control_points()),
+        BezierSubcurve2::Cubic(curve) => Aabb2::from_points(curve.control_points()),
         BezierSubcurve2::RationalQuadratic(curve) => {
             if curve.common_nonzero_weight_sign(policy).is_none() {
                 return Classification::Uncertain(UncertaintyReason::RealSign);
             }
-            Aabb2::from_points(curve.control_points(), policy)
+            Aabb2::from_points(curve.control_points())
         }
         BezierSubcurve2::Rational(_) => {
             return Classification::Uncertain(UncertaintyReason::Unsupported);
@@ -17936,7 +17936,7 @@ fn native_loop_bounds(
             Classification::Decided(bounds) => bounds,
             Classification::Uncertain(reason) => return Classification::Uncertain(reason),
         };
-        bounds = match bounds.union(&fragment_bounds, policy) {
+        bounds = match bounds.union(&fragment_bounds) {
             Classification::Decided(bounds) => bounds,
             Classification::Uncertain(reason) => return Classification::Uncertain(reason),
         };
@@ -17961,7 +17961,7 @@ fn retained_loop_query_bounds(
             Classification::Decided(bounds) => bounds,
             Classification::Uncertain(reason) => return Classification::Uncertain(reason),
         };
-        bounds = match bounds.union(&fragment_bounds, policy) {
+        bounds = match bounds.union(&fragment_bounds) {
             Classification::Decided(bounds) => bounds,
             Classification::Uncertain(reason) => return Classification::Uncertain(reason),
         };
@@ -18457,12 +18457,12 @@ fn ray_candidates(point: &Point2) -> Vec<BezierRay2> {
 /// sign is certified.
 fn subcurve_query_bounds(curve: &BezierSubcurve2, policy: &CurveContext) -> Classification<Aabb2> {
     match curve {
-        BezierSubcurve2::Quadratic(curve) => Aabb2::from_points(curve.control_points(), policy),
-        BezierSubcurve2::Cubic(curve) => Aabb2::from_points(curve.control_points(), policy),
+        BezierSubcurve2::Quadratic(curve) => Aabb2::from_points(curve.control_points()),
+        BezierSubcurve2::Cubic(curve) => Aabb2::from_points(curve.control_points()),
         BezierSubcurve2::RationalQuadratic(curve)
             if curve.common_nonzero_weight_sign(policy).is_some() =>
         {
-            Aabb2::from_points(curve.control_points(), policy)
+            Aabb2::from_points(curve.control_points())
         }
         BezierSubcurve2::RationalQuadratic(curve) => curve.certified_bounds(policy),
         BezierSubcurve2::Rational(curve) => curve.certified_bounds_classified(policy),
@@ -31620,7 +31620,7 @@ mod tests {
                 panic!("polynomial control hull unexpectedly uncertain: {reason:?}")
             }
         };
-        let control_hull = match Aabb2::from_points(cubic.control_points(), &policy) {
+        let control_hull = match Aabb2::from_points(cubic.control_points()) {
             Classification::Decided(bounds) => bounds,
             Classification::Uncertain(reason) => {
                 panic!("polynomial control hull unexpectedly uncertain: {reason:?}")

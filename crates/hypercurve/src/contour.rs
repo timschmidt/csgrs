@@ -347,8 +347,8 @@ impl Contour2 {
     /// zero before boundary and winding scans; otherwise this follows
     /// boundary-first winding classification, extended to native circular arcs.
     pub fn winding_number(&self, point: &Point2, policy: &CurveContext) -> Classification<i32> {
-        let contour_box = decided_contour_aabb(self, policy);
-        let segment_boxes = decided_segment_boxes(self.segments(), policy);
+        let contour_box = decided_contour_aabb(self);
+        let segment_boxes = decided_segment_boxes(self.segments());
         contour_winding_number_with_cached_aabbs(
             self,
             point,
@@ -369,8 +369,8 @@ impl Contour2 {
         point: &Point2,
         policy: &CurveContext,
     ) -> Classification<ContourPointLocation> {
-        let contour_box = decided_contour_aabb(self, policy);
-        let segment_boxes = decided_segment_boxes(self.segments(), policy);
+        let contour_box = decided_contour_aabb(self);
+        let segment_boxes = decided_segment_boxes(self.segments());
         classify_contour_point_with_cached_aabbs(
             self,
             point,
@@ -397,8 +397,8 @@ impl Contour2 {
     }
 
     /// Returns conservative structural facts for this contour immediately.
-    pub fn structural_facts(&self, policy: &CurveContext) -> crate::CurveStringFacts {
-        crate::prepared::contour_facts(self, policy)
+    pub fn structural_facts(&self) -> crate::CurveStringFacts {
+        crate::prepared::contour_facts(self)
     }
 
     /// Returns true when the point lies on any segment of the contour.
@@ -407,8 +407,8 @@ impl Contour2 {
     /// uncertain ordering still falls back to exact segment containment so edge
     /// and vertex boundary cases remain explicit.
     pub fn point_on_boundary(&self, point: &Point2, policy: &CurveContext) -> Classification<bool> {
-        let contour_box = decided_contour_aabb(self, policy);
-        let segment_boxes = decided_segment_boxes(self.segments(), policy);
+        let contour_box = decided_contour_aabb(self);
+        let segment_boxes = decided_segment_boxes(self.segments());
         point_on_contour_boundary_with_cached_aabbs(
             self,
             point,
@@ -633,10 +633,10 @@ fn contour_box_misses_point(
     contour_box.is_some_and(|bbox| aabb_decided_misses_point(bbox, point, policy))
 }
 
-fn decided_segment_boxes(segments: &[Segment2], policy: &CurveContext) -> Vec<Option<Aabb2>> {
+fn decided_segment_boxes(segments: &[Segment2]) -> Vec<Option<Aabb2>> {
     segments
         .iter()
-        .map(|segment| decided_segment_aabb(segment, policy))
+        .map(|segment| decided_segment_aabb(segment))
         .collect()
 }
 

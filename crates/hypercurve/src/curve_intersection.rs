@@ -461,7 +461,7 @@ fn certified_singleton_aabb_endpoint_contact(
     let (Ok(first_bounds), Ok(second_bounds)) = (first.bounds(), second.bounds()) else {
         return Ok(None);
     };
-    let point = match first_bounds.singleton_intersection(second_bounds, policy) {
+    let point = match first_bounds.singleton_intersection(second_bounds) {
         Classification::Decided(Some(point)) => point,
         Classification::Decided(None) | Classification::Uncertain(_) => return Ok(None),
     };

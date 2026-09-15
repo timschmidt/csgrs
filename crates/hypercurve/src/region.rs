@@ -80,8 +80,8 @@ impl LineArcRegion2 {
     }
 
     /// Returns conservative structural facts for this region immediately.
-    pub fn structural_facts(&self, policy: &CurveContext) -> crate::RegionFacts {
-        self.as_view().structural_facts(policy)
+    pub fn structural_facts(&self) -> crate::RegionFacts {
+        self.as_view().structural_facts()
     }
 
     /// Returns signed containment depth for non-boundary points.
@@ -163,8 +163,8 @@ impl<'a> RegionView2<'a> {
     }
 
     /// Returns conservative structural facts for this borrowed region immediately.
-    pub fn structural_facts(&self, policy: &CurveContext) -> crate::RegionFacts {
-        crate::prepared::region_view_facts(self, policy)
+    pub fn structural_facts(&self) -> crate::RegionFacts {
+        crate::prepared::region_view_facts(self)
     }
 
     /// Returns signed containment depth for non-boundary points.
@@ -176,7 +176,7 @@ impl<'a> RegionView2<'a> {
     /// boundary-first winding structure from boundary-first winding classification, while avoiding work for
     /// sparse material/hole bins.
     pub fn signed_depth(&self, point: &Point2, policy: &CurveContext) -> Classification<i32> {
-        if let Ok(Classification::Decided(region_bbox)) = Aabb2::from_region_view(self, policy)
+        if let Ok(Classification::Decided(region_bbox)) = Aabb2::from_region_view(self)
             && aabb_decided_misses_point(&region_bbox, point, policy)
         {
             return Classification::Decided(0);
@@ -219,7 +219,7 @@ impl<'a> RegionView2<'a> {
 }
 
 fn contour_aabb_misses_point(contour: &Contour2, point: &Point2, policy: &CurveContext) -> bool {
-    decided_contour_aabb(contour, policy)
+    decided_contour_aabb(contour)
         .as_ref()
         .is_some_and(|bbox| aabb_decided_misses_point(bbox, point, policy))
 }

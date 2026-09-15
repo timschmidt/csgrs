@@ -497,7 +497,7 @@ impl CertifiedBezierPolyline2 {
             return Err(CurveError::ZeroLengthLine);
         }
         let line = LineSeg2::try_new(start.clone(), end.clone())?;
-        let envelope = match Aabb2::from_points([start, end], policy) {
+        let envelope = match Aabb2::from_points([start, end]) {
             Classification::Decided(envelope) => envelope,
             Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
         };
@@ -605,7 +605,7 @@ fn fit_control_polygon_line_image(
         None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
     }
     let line = LineSeg2::try_new(start.clone(), end.clone())?;
-    let envelope = match Aabb2::from_points([start, end], policy) {
+    let envelope = match Aabb2::from_points([start, end]) {
         Classification::Decided(envelope) => envelope,
         Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
     };

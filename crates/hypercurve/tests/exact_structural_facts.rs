@@ -88,22 +88,17 @@ fn curve_query_facts_summarize_segment_families_and_dependencies() {
     .unwrap();
     let curve = CurveString2::try_new(vec![line, arc]).unwrap();
 
-    let facts = hypercurve::CurveString2::structural_facts(&curve, &policy());
+    let facts = hypercurve::CurveString2::structural_facts(&curve);
 
     assert_eq!(curve.segments().len(), 2);
     assert_eq!(facts.segment_kinds.lines, 1);
     assert_eq!(facts.segment_kinds.arcs, 1);
     assert_eq!(facts.segment_kinds.total(), 2);
     // Hyperreal canonicalizes the arc-cardinal `pi +/- atan` forms before an
-    // optional predicate backend is needed, so both policy builds certify the
-    // complete curve box.
+    // optional predicate backend is needed, certifying the complete curve box.
     assert_eq!(facts.decided_segment_box_count, 2);
     assert!(facts.has_decided_curve_box);
 
-    let approximate_facts =
-        hypercurve::CurveString2::structural_facts(&curve, &CurveContext::APPROXIMATE_512);
-    assert_eq!(approximate_facts.decided_segment_box_count, 2);
-    assert!(approximate_facts.has_decided_curve_box);
     assert!(!facts.all_exact_rational());
     assert!(
         facts

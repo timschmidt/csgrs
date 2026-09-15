@@ -26,8 +26,8 @@ fn subcurve_certified_outer_bounds(
     policy: &CurveContext,
 ) -> Classification<Aabb2> {
     let bounds = match curve {
-        BezierSubcurve2::Quadratic(curve) => curve.control_hull_box(policy),
-        BezierSubcurve2::Cubic(curve) => curve.control_hull_box(policy),
+        BezierSubcurve2::Quadratic(curve) => curve.control_hull_box(),
+        BezierSubcurve2::Cubic(curve) => curve.control_hull_box(),
         BezierSubcurve2::RationalQuadratic(curve) => curve.certified_bounds(policy),
         BezierSubcurve2::Rational(curve) => curve.certified_bounds_classified(policy),
     };

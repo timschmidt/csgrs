@@ -815,7 +815,7 @@ fn retained_probe_outer_bounds(
                 .unwrap_or(bounds);
             accumulated = Some(match accumulated {
                 None => bounds,
-                Some(ref accumulated) => match accumulated.union(&bounds, &CurveContext::STRICT) {
+                Some(ref accumulated) => match accumulated.union(&bounds) {
                     Classification::Decided(bounds) => bounds,
                     Classification::Uncertain(reason) => {
                         last_reason = reason;
@@ -9697,16 +9697,14 @@ impl<'a> CurveRegionBooleanContext<'a> {
                     .unwrap_or(bounds);
                 accumulated = Some(match accumulated {
                     None => bounds,
-                    Some(ref accumulated) => {
-                        match accumulated.union(&bounds, &CurveContext::STRICT) {
-                            Classification::Decided(bounds) => bounds,
-                            Classification::Uncertain(reason) => {
-                                last_reason = reason;
-                                complete = false;
-                                break;
-                            }
+                    Some(ref accumulated) => match accumulated.union(&bounds) {
+                        Classification::Decided(bounds) => bounds,
+                        Classification::Uncertain(reason) => {
+                            last_reason = reason;
+                            complete = false;
+                            break;
                         }
-                    }
+                    },
                 });
             }
             if complete {
@@ -11978,14 +11976,12 @@ impl<'a> CurveRegionBooleanContext<'a> {
                             };
                             accumulated = Some(match accumulated {
                                 None => bounds,
-                                Some(previous) => {
-                                    match previous.union(&bounds, &self.data.policy) {
-                                        Classification::Decided(bounds) => bounds,
-                                        Classification::Uncertain(_) => {
-                                            return false;
-                                        }
+                                Some(previous) => match previous.union(&bounds) {
+                                    Classification::Decided(bounds) => bounds,
+                                    Classification::Uncertain(_) => {
+                                        return false;
                                     }
-                                }
+                                },
                             });
                         }
                         let _ = cell.set(accumulated);

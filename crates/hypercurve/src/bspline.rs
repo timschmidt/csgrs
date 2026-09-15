@@ -792,7 +792,7 @@ fn validate_span_fact_evidence(
         Classification::Decided(()) => {}
         Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
     }
-    match bounds.has_valid_ordering(policy) {
+    match bounds.has_valid_ordering() {
         Classification::Decided(true) => Ok(Classification::Decided(())),
         Classification::Decided(false) => Err(CurveError::Topology(
             "spline span bounds must be ordered".into(),

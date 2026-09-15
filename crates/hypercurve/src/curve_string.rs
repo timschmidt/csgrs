@@ -466,17 +466,17 @@ impl CurveString2 {
         let source_boxes = self
             .segments
             .iter()
-            .map(|segment| decided_segment_aabb(segment, policy))
+            .map(|segment| decided_segment_aabb(segment))
             .collect::<Vec<_>>();
         let start_boxes = start_cutter
             .segments
             .iter()
-            .map(|segment| decided_segment_aabb(segment, policy))
+            .map(|segment| decided_segment_aabb(segment))
             .collect::<Vec<_>>();
         let end_boxes = end_cutter
             .segments
             .iter()
-            .map(|segment| decided_segment_aabb(segment, policy))
+            .map(|segment| decided_segment_aabb(segment))
             .collect::<Vec<_>>();
         let start_events = intersect_curve_strings_with_cached_aabbs(
             self,
@@ -763,12 +763,12 @@ impl CurveString2 {
         let self_boxes = self
             .segments
             .iter()
-            .map(|segment| decided_segment_aabb(segment, policy))
+            .map(|segment| decided_segment_aabb(segment))
             .collect::<Vec<_>>();
         let other_boxes = other
             .segments
             .iter()
-            .map(|segment| decided_segment_aabb(segment, policy))
+            .map(|segment| decided_segment_aabb(segment))
             .collect::<Vec<_>>();
         intersect_curve_strings_with_cached_aabbs(self, other, &self_boxes, &other_boxes, policy)
     }
@@ -778,8 +778,8 @@ impl CurveString2 {
     /// The fact pass visits the segments once and does not expose its temporary
     /// broad-phase storage. Exact predicates remain authoritative for later
     /// topology operations.
-    pub fn structural_facts(&self, policy: &CurveContext) -> crate::CurveStringFacts {
-        crate::prepared::curve_string_facts(self, policy)
+    pub fn structural_facts(&self) -> crate::CurveStringFacts {
+        crate::prepared::curve_string_facts(self)
     }
 
     fn endpoint(&self, endpoint: CurveStringEndpoint2) -> CurveResult<&Point2> {

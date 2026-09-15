@@ -75016,7 +75016,7 @@ impl BezierAlgebraicChord2 {
         let end = end
             .certified_rational_outer_envelope(refinement_steps)
             .unwrap_or(end);
-        Ok(start.union(&end, &CurveContext::STRICT))
+        Ok(start.union(&end))
     }
 
     /// Prepares exact independent-field endpoint predicates for this chord.
@@ -88674,8 +88674,8 @@ impl BezierAlgebraicChord2 {
             };
             terminal_refined |= refinement_steps == 512;
             if let (Classification::Decided(first_bounds), Classification::Decided(second_bounds)) = (
-                first_start.union(&first_end, &CurveContext::STRICT),
-                second_start.union(&second_end, &CurveContext::STRICT),
+                first_start.union(&first_end),
+                second_start.union(&second_end),
             ) && first_bounds.overlaps(&second_bounds, &CurveContext::STRICT)
                 == Classification::Decided(false)
             {
@@ -95325,7 +95325,7 @@ impl BezierSimilarityPoint2 {
             Point2::new(source.max().x().clone(), source.max().y().clone()),
         ]
         .map(|point| self.data.transform.transform_point(&point));
-        Aabb2::from_points(corners.iter(), &CurveContext::STRICT)
+        Aabb2::from_points(corners.iter())
     }
 
     pub(crate) fn same_point_evidence(

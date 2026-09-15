@@ -259,9 +259,9 @@ impl<'a> PreparedSegment2<'a> {
     }
 }
 
-pub(crate) fn curve_string_facts(curve: &CurveString2, policy: &CurveContext) -> CurveStringFacts {
-    let segment_boxes = decided_segment_boxes(curve.segments(), policy);
-    let curve_box = union_all_decided_boxes(segment_boxes.iter().map(Option::as_ref), policy);
+pub(crate) fn curve_string_facts(curve: &CurveString2) -> CurveStringFacts {
+    let segment_boxes = decided_segment_boxes(curve.segments());
+    let curve_box = union_all_decided_boxes(segment_boxes.iter().map(Option::as_ref));
     crate::facts::curve_string_facts(
         curve,
         segment_boxes.iter().filter(|bbox| bbox.is_some()).count(),
@@ -269,9 +269,9 @@ pub(crate) fn curve_string_facts(curve: &CurveString2, policy: &CurveContext) ->
     )
 }
 
-pub(crate) fn contour_facts(contour: &Contour2, policy: &CurveContext) -> CurveStringFacts {
-    let segment_boxes = decided_segment_boxes(contour.segments(), policy);
-    let contour_box = union_all_decided_boxes(segment_boxes.iter().map(Option::as_ref), policy);
+pub(crate) fn contour_facts(contour: &Contour2) -> CurveStringFacts {
+    let segment_boxes = decided_segment_boxes(contour.segments());
+    let contour_box = union_all_decided_boxes(segment_boxes.iter().map(Option::as_ref));
     crate::facts::contour_facts(
         contour,
         segment_boxes.iter().filter(|bbox| bbox.is_some()).count(),
@@ -279,18 +279,18 @@ pub(crate) fn contour_facts(contour: &Contour2, policy: &CurveContext) -> CurveS
     )
 }
 
-pub(crate) fn region_view_facts(region: &RegionView2<'_>, policy: &CurveContext) -> RegionFacts {
+pub(crate) fn region_view_facts(region: &RegionView2<'_>) -> RegionFacts {
     let contour_boxes = region
         .material_contours()
         .iter()
         .chain(region.hole_contours().iter())
         .map(|contour| {
-            let segment_boxes = decided_segment_boxes(contour.segments(), policy);
-            union_all_decided_boxes(segment_boxes.iter().map(Option::as_ref), policy)
+            let segment_boxes = decided_segment_boxes(contour.segments());
+            union_all_decided_boxes(segment_boxes.iter().map(Option::as_ref))
         })
         .collect::<Vec<_>>();
     let has_decided_region_box =
-        union_all_decided_boxes(contour_boxes.iter().map(Option::as_ref), policy).is_some();
+        union_all_decided_boxes(contour_boxes.iter().map(Option::as_ref)).is_some();
     crate::facts::region_view_facts(region, has_decided_region_box)
 }
 
@@ -331,7 +331,7 @@ impl<'a> ContourQuery2<'a> {
         // facts such as convexity, orientation certainty, y-monotonicity, and
         // hole/material provenance for future triangulation and Boolean-region
         // dispatch without weakening the exact boundary classifiers.
-        let segment_boxes = decided_segment_boxes(contour.segments(), policy);
+        let segment_boxes = decided_segment_boxes(contour.segments());
         let segment_x_index = (segment_boxes.len() >= 128)
             .then(|| {
                 let mut index =
@@ -349,7 +349,7 @@ impl<'a> ContourQuery2<'a> {
             winding_segment_indices_by_max_x.as_deref(),
             policy,
         );
-        let contour_box = union_all_decided_boxes(segment_boxes.iter().map(Option::as_ref), policy);
+        let contour_box = union_all_decided_boxes(segment_boxes.iter().map(Option::as_ref));
         let prepared_segments = prepared_segments(contour.segments());
 
         Self {
@@ -439,7 +439,6 @@ impl<'a> RegionQuery2<'a> {
                 .iter()
                 .chain(hole_prepared_contours.iter())
                 .map(ContourQuery2::contour_box),
-            policy,
         );
         Self {
             material_prepared_contours,
@@ -502,13 +501,10 @@ impl<'a> RegionQuery2<'a> {
     }
 }
 
-fn decided_segment_boxes(
-    segments: &[crate::Segment2],
-    policy: &CurveContext,
-) -> Vec<Option<Aabb2>> {
+fn decided_segment_boxes(segments: &[crate::Segment2]) -> Vec<Option<Aabb2>> {
     segments
         .iter()
-        .map(|segment| decided_segment_aabb(segment, policy))
+        .map(|segment| decided_segment_aabb(segment))
         .collect()
 }
 
@@ -983,7 +979,7 @@ const fn line_side_from_hyperlimit(side: hyperlimit::LineSide) -> LineSide {
     }
 }
 
-fn union_all_decided_boxes<'a, I>(boxes: I, policy: &CurveContext) -> Option<Aabb2>
+fn union_all_decided_boxes<'a, I>(boxes: I) -> Option<Aabb2>
 where
     I: IntoIterator<Item = Option<&'a Aabb2>>,
 {
@@ -993,7 +989,7 @@ where
 
     for bbox in boxes {
         let bbox = bbox?;
-        let Classification::Decided(next) = merged.union(bbox, policy) else {
+        let Classification::Decided(next) = merged.union(bbox) else {
             return None;
         };
         merged = next;

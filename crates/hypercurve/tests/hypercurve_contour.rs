@@ -171,7 +171,7 @@ fn batched_contour_classification_matches_scalar_classification() {
     let contour = rectangle();
     let policy = policy();
     let points = [p(1, 1), p(-1, 1), p(4, 2), p(0, 0), p(9, 2)];
-    let facts = hypercurve::Contour2::structural_facts(&contour, &policy);
+    let facts = hypercurve::Contour2::structural_facts(&contour);
     assert_eq!(facts.segment_kinds, SegmentKindCounts { lines: 4, arcs: 0 });
     let batched = hypercurve::Contour2::classify_points(&contour, &points, &policy);
     assert_eq!(

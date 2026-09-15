@@ -20,9 +20,10 @@ use crate::{
 /// An axis-aligned bounding box for two-dimensional curve geometry.
 ///
 /// The box is closed: points on `min`/`max` edges are considered contained and
-/// two boxes whose edges touch are considered overlapping. Constructors return
-/// uncertainty when the active policy cannot order a needed coordinate unless
-/// the source primitive provides a certified conservative envelope.
+/// two boxes whose edges touch are considered overlapping. Construction and
+/// enclosure evidence use only certified decisions, independently of topology
+/// or preview policy. Unresolved ordering returns uncertainty unless the source
+/// primitive provides a certified conservative envelope.
 #[derive(Clone, Debug, PartialEq)]
 pub struct Aabb2 {
     min: Point2,
@@ -50,7 +51,7 @@ impl Aabb2 {
     ///
     /// Empty input is reported as unsupported because there is no neutral finite
     /// bounding box for an empty point set in this crate's Real model.
-    pub fn from_points<'a, I>(points: I, policy: &CurveContext) -> Classification<Self>
+    pub fn from_points<'a, I>(points: I) -> Classification<Self>
     where
         I: IntoIterator<Item = &'a Point2>,
     {
@@ -65,8 +66,8 @@ impl Aabb2 {
         let mut max_y = first.y().clone();
 
         for point in points {
-            if include_coordinate(&mut min_x, &mut max_x, point.x(), policy).is_none()
-                || include_coordinate(&mut min_y, &mut max_y, point.y(), policy).is_none()
+            if include_coordinate(&mut min_x, &mut max_x, point.x()).is_none()
+                || include_coordinate(&mut min_y, &mut max_y, point.y()).is_none()
             {
                 return Classification::Uncertain(UncertaintyReason::Ordering);
             }
@@ -79,8 +80,8 @@ impl Aabb2 {
     }
 
     /// Constructs the bounding box of a finite line segment.
-    pub fn from_line(line: &LineSeg2, policy: &CurveContext) -> Classification<Self> {
-        Self::from_points([line.start(), line.end()], policy)
+    pub fn from_line(line: &LineSeg2) -> Classification<Self> {
+        Self::from_points([line.start(), line.end()])
     }
 
     /// Constructs the bounding box of a finite circular arc.
@@ -91,11 +92,8 @@ impl Aabb2 {
     /// cardinal point is uncertain, that point is included conservatively. A
     /// looser box is safe for broad-phase filtering while omitting an uncertain
     /// extremum could hide a true intersection.
-    pub fn from_arc(
-        arc: &CircularArc2,
-        policy: &CurveContext,
-    ) -> CurveResult<Classification<Self>> {
-        let mut bbox = match Self::from_points([arc.start(), arc.end()], policy) {
+    pub fn from_arc(arc: &CircularArc2) -> CurveResult<Classification<Self>> {
+        let mut bbox = match Self::from_points([arc.start(), arc.end()]) {
             Classification::Decided(bbox) => bbox,
             Classification::Uncertain(reason) => {
                 if reason != UncertaintyReason::Ordering {
@@ -108,37 +106,6 @@ impl Aabb2 {
             }
         };
 
-        if policy.is_edge_preview() {
-            // Preview topology prefers conservative candidate retention over a
-            // tight arc box. Cardinal sweep tests contain radicals after
-            // rotation; keeping the full circle envelope prevents broad-phase
-            // pruning from hiding true line/arc slice events.
-            if let (Some(center_x), Some(center_y), Some(radius_squared)) = (
-                arc.center().x().to_f64_lossy(),
-                arc.center().y().to_f64_lossy(),
-                arc.radius_squared().to_f64_lossy(),
-            ) && center_x.is_finite()
-                && center_y.is_finite()
-                && radius_squared.is_finite()
-                && radius_squared >= 0.0
-            {
-                let radius = radius_squared.sqrt();
-                let candidates = [
-                    Point2::new(Real::try_from(center_x + radius)?, arc.center().y().clone()),
-                    Point2::new(Real::try_from(center_x - radius)?, arc.center().y().clone()),
-                    Point2::new(arc.center().x().clone(), Real::try_from(center_y + radius)?),
-                    Point2::new(arc.center().x().clone(), Real::try_from(center_y - radius)?),
-                ];
-
-                return Ok(Self::from_points(
-                    [arc.start(), arc.end()]
-                        .into_iter()
-                        .chain(candidates.iter()),
-                    policy,
-                ));
-            }
-        }
-
         let radius = arc.radius_squared().sqrt()?;
         let candidates = [
             Point2::new(arc.center().x() + &radius, arc.center().y().clone()),
@@ -148,8 +115,8 @@ impl Aabb2 {
         ];
 
         for candidate in &candidates {
-            match arc.contains_sweep_point(candidate, policy) {
-                Classification::Decided(true) => match bbox.include_point(candidate, policy) {
+            match arc.contains_sweep_point(candidate, &CurveContext::STRICT) {
+                Classification::Decided(true) => match bbox.include_point(candidate) {
                     Classification::Decided(()) => {}
                     Classification::Uncertain(_) => {
                         return Ok(Classification::Decided(Self::arc_circle_envelope(
@@ -177,21 +144,15 @@ impl Aabb2 {
     }
 
     /// Constructs the bounding box of a native line or circular-arc segment.
-    pub fn from_segment(
-        segment: &Segment2,
-        policy: &CurveContext,
-    ) -> CurveResult<Classification<Self>> {
+    pub fn from_segment(segment: &Segment2) -> CurveResult<Classification<Self>> {
         match segment {
-            Segment2::Line(line) => Ok(Self::from_line(line, policy)),
-            Segment2::Arc(arc) => Self::from_arc(arc, policy),
+            Segment2::Line(line) => Ok(Self::from_line(line)),
+            Segment2::Arc(arc) => Self::from_arc(arc),
         }
     }
 
     /// Constructs the bounding box of an open curve string.
-    pub fn from_curve_string(
-        curve: &CurveString2,
-        policy: &CurveContext,
-    ) -> CurveResult<Classification<Self>> {
+    pub fn from_curve_string(curve: &CurveString2) -> CurveResult<Classification<Self>> {
         if curve
             .segments()
             .iter()
@@ -207,7 +168,6 @@ impl Aabb2 {
                     .iter()
                     .map(Segment2::start)
                     .chain(curve.segments().last().map(Segment2::end)),
-                policy,
             ));
         }
 
@@ -216,17 +176,17 @@ impl Aabb2 {
             return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
         };
 
-        let mut bbox = match Self::from_segment(first, policy)? {
+        let mut bbox = match Self::from_segment(first)? {
             Classification::Decided(bbox) => bbox,
             Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
         };
 
         for segment in segments {
-            let segment_bbox = match Self::from_segment(segment, policy)? {
+            let segment_bbox = match Self::from_segment(segment)? {
                 Classification::Decided(bbox) => bbox,
                 Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
             };
-            bbox = match bbox.union(&segment_bbox, policy) {
+            bbox = match bbox.union(&segment_bbox) {
                 Classification::Decided(bbox) => bbox,
                 Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
             };
@@ -236,10 +196,7 @@ impl Aabb2 {
     }
 
     /// Constructs the bounding box of a closed contour.
-    pub fn from_contour(
-        contour: &Contour2,
-        policy: &CurveContext,
-    ) -> CurveResult<Classification<Self>> {
+    pub fn from_contour(contour: &Contour2) -> CurveResult<Classification<Self>> {
         if contour
             .segments()
             .iter()
@@ -250,10 +207,9 @@ impl Aabb2 {
             // the first start and need not be compared again.
             return Ok(Self::from_points(
                 contour.segments().iter().map(Segment2::start),
-                policy,
             ));
         }
-        Self::from_curve_string(contour.curve_string(), policy)
+        Self::from_curve_string(contour.curve_string())
     }
 
     /// Constructs the bounding box of an owned region.
@@ -261,11 +217,8 @@ impl Aabb2 {
     /// Material and hole contours both contribute because a region-level box is
     /// a broad-phase envelope for boundary topology, not a filled-area
     /// containment proof.
-    pub(crate) fn from_region(
-        region: &LineArcRegion2,
-        policy: &CurveContext,
-    ) -> CurveResult<Classification<Self>> {
-        Self::from_region_view(&region.as_view(), policy)
+    pub(crate) fn from_region(region: &LineArcRegion2) -> CurveResult<Classification<Self>> {
+        Self::from_region_view(&region.as_view())
     }
 
     /// Constructs the bounding box of a borrowed region view.
@@ -273,10 +226,7 @@ impl Aabb2 {
     /// Empty regions evidence unsupported because there is no finite closed box
     /// that represents the absence of geometry. Callers that need empty-region
     /// fast paths should handle emptiness before asking for a box.
-    pub(crate) fn from_region_view(
-        region: &RegionView2<'_>,
-        policy: &CurveContext,
-    ) -> CurveResult<Classification<Self>> {
+    pub(crate) fn from_region_view(region: &RegionView2<'_>) -> CurveResult<Classification<Self>> {
         let mut contours = region
             .material_contours()
             .iter()
@@ -286,17 +236,17 @@ impl Aabb2 {
             return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
         };
 
-        let mut bbox = match Self::from_contour(first, policy)? {
+        let mut bbox = match Self::from_contour(first)? {
             Classification::Decided(bbox) => bbox,
             Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
         };
 
         for contour in contours {
-            let contour_bbox = match Self::from_contour(contour, policy)? {
+            let contour_bbox = match Self::from_contour(contour)? {
                 Classification::Decided(bbox) => bbox,
                 Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
             };
-            bbox = match bbox.union(&contour_bbox, policy) {
+            bbox = match bbox.union(&contour_bbox) {
                 Classification::Decided(bbox) => bbox,
                 Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
             };
@@ -339,11 +289,11 @@ impl Aabb2 {
     ///
     /// This certifies boxes that entered through [`Self::new_unchecked`] before
     /// they are retained as provenance-bearing evidence.
-    pub fn has_valid_ordering(&self, policy: &CurveContext) -> Classification<bool> {
-        let Some(x_order) = compare_reals(self.min_x(), self.max_x(), policy) else {
+    pub fn has_valid_ordering(&self) -> Classification<bool> {
+        let Some(x_order) = compare_reals(self.min_x(), self.max_x(), &CurveContext::STRICT) else {
             return Classification::Uncertain(UncertaintyReason::Ordering);
         };
-        let Some(y_order) = compare_reals(self.min_y(), self.max_y(), policy) else {
+        let Some(y_order) = compare_reals(self.min_y(), self.max_y(), &CurveContext::STRICT) else {
             return Classification::Uncertain(UncertaintyReason::Ordering);
         };
         Classification::Decided(
@@ -352,14 +302,14 @@ impl Aabb2 {
     }
 
     /// Expands this box so it contains `point`.
-    pub fn include_point(&mut self, point: &Point2, policy: &CurveContext) -> Classification<()> {
+    pub fn include_point(&mut self, point: &Point2) -> Classification<()> {
         let mut min_x = self.min.x().clone();
         let mut min_y = self.min.y().clone();
         let mut max_x = self.max.x().clone();
         let mut max_y = self.max.y().clone();
 
-        if include_coordinate(&mut min_x, &mut max_x, point.x(), policy).is_none()
-            || include_coordinate(&mut min_y, &mut max_y, point.y(), policy).is_none()
+        if include_coordinate(&mut min_x, &mut max_x, point.x()).is_none()
+            || include_coordinate(&mut min_y, &mut max_y, point.y()).is_none()
         {
             return Classification::Uncertain(UncertaintyReason::Ordering);
         }
@@ -370,13 +320,13 @@ impl Aabb2 {
     }
 
     /// Returns the smallest box containing both inputs.
-    pub fn union(&self, other: &Self, policy: &CurveContext) -> Classification<Self> {
+    pub fn union(&self, other: &Self) -> Classification<Self> {
         let mut merged = self.clone();
-        match merged.include_point(other.min(), policy) {
+        match merged.include_point(other.min()) {
             Classification::Decided(()) => {}
             Classification::Uncertain(reason) => return Classification::Uncertain(reason),
         }
-        match merged.include_point(other.max(), policy) {
+        match merged.include_point(other.max()) {
             Classification::Decided(()) => Classification::Decided(merged),
             Classification::Uncertain(reason) => Classification::Uncertain(reason),
         }
@@ -499,17 +449,12 @@ impl Aabb2 {
     ///
     /// `None` means the boxes are disjoint or their intersection has positive
     /// extent in at least one axis. Uncertain coordinate order remains explicit.
-    pub fn singleton_intersection(
-        &self,
-        other: &Self,
-        policy: &CurveContext,
-    ) -> Classification<Option<Point2>> {
+    pub fn singleton_intersection(&self, other: &Self) -> Classification<Option<Point2>> {
         let x = match singleton_interval_intersection(
             self.min_x(),
             self.max_x(),
             other.min_x(),
             other.max_x(),
-            policy,
         ) {
             Classification::Decided(value) => value,
             Classification::Uncertain(reason) => return Classification::Uncertain(reason),
@@ -519,7 +464,6 @@ impl Aabb2 {
             self.max_y(),
             other.min_y(),
             other.max_y(),
-            policy,
         ) {
             Classification::Decided(value) => value,
             Classification::Uncertain(reason) => return Classification::Uncertain(reason),
@@ -533,34 +477,33 @@ fn singleton_interval_intersection(
     first_max: &Real,
     second_min: &Real,
     second_max: &Real,
-    policy: &CurveContext,
 ) -> Classification<Option<Real>> {
-    let lower = match compare_reals(first_min, second_min, policy) {
+    let lower = match compare_reals(first_min, second_min, &CurveContext::STRICT) {
         Some(Ordering::Less) => second_min,
         Some(Ordering::Equal | Ordering::Greater) => first_min,
         None => return Classification::Uncertain(UncertaintyReason::Ordering),
     };
-    let upper = match compare_reals(first_max, second_max, policy) {
+    let upper = match compare_reals(first_max, second_max, &CurveContext::STRICT) {
         Some(Ordering::Less | Ordering::Equal) => first_max,
         Some(Ordering::Greater) => second_max,
         None => return Classification::Uncertain(UncertaintyReason::Ordering),
     };
-    match compare_reals(lower, upper, policy) {
+    match compare_reals(lower, upper, &CurveContext::STRICT) {
         Some(Ordering::Equal) => Classification::Decided(Some(lower.clone())),
         Some(Ordering::Less | Ordering::Greater) => Classification::Decided(None),
         None => Classification::Uncertain(UncertaintyReason::Ordering),
     }
 }
 
-pub(crate) fn decided_segment_aabb(segment: &Segment2, policy: &CurveContext) -> Option<Aabb2> {
-    match Aabb2::from_segment(segment, policy) {
+pub(crate) fn decided_segment_aabb(segment: &Segment2) -> Option<Aabb2> {
+    match Aabb2::from_segment(segment) {
         Ok(Classification::Decided(bbox)) => Some(bbox),
         Ok(Classification::Uncertain(_)) | Err(_) => None,
     }
 }
 
-pub(crate) fn decided_contour_aabb(contour: &Contour2, policy: &CurveContext) -> Option<Aabb2> {
-    match Aabb2::from_contour(contour, policy) {
+pub(crate) fn decided_contour_aabb(contour: &Contour2) -> Option<Aabb2> {
+    match Aabb2::from_contour(contour) {
         Ok(Classification::Decided(bbox)) => Some(bbox),
         Ok(Classification::Uncertain(_)) | Err(_) => None,
     }
@@ -595,32 +538,17 @@ pub(crate) fn aabb_decided_strictly_right_of_point(
     )
 }
 
-fn include_coordinate(
-    min: &mut Real,
-    max: &mut Real,
-    value: &Real,
-    policy: &CurveContext,
-) -> Option<()> {
-    if policy.is_edge_preview()
-        && let (Some(value_approx), Some(min_approx), Some(max_approx)) =
-            (value.to_f64_lossy(), min.to_f64_lossy(), max.to_f64_lossy())
-        && value_approx.is_finite()
-        && min_approx.is_finite()
-        && max_approx.is_finite()
-    {
-        if value_approx < min_approx {
-            *min = value.clone();
-        }
-        if value_approx > max_approx {
-            *max = value.clone();
-        }
-        return Some(());
-    }
-
-    if matches!(compare_reals(value, min, policy)?, Ordering::Less) {
+fn include_coordinate(min: &mut Real, max: &mut Real, value: &Real) -> Option<()> {
+    if matches!(
+        compare_reals(value, min, &CurveContext::STRICT)?,
+        Ordering::Less
+    ) {
         *min = value.clone();
     }
-    if matches!(compare_reals(value, max, policy)?, Ordering::Greater) {
+    if matches!(
+        compare_reals(value, max, &CurveContext::STRICT)?,
+        Ordering::Greater
+    ) {
         *max = value.clone();
     }
     Some(())
@@ -686,4 +614,146 @@ fn edge_preview_tolerance() -> f64 {
     crate::policy::preview_tolerance()
         .map(|tolerance| tolerance.absolute.max(tolerance.relative))
         .unwrap_or(1e-12)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::policy::resolve_certified_value;
+    use crate::{CurveCertainty, CurvePreviewOptions};
+
+    #[test]
+    fn aabb_construction_keeps_exact_input_points() {
+        for policy in [CurveContext::APPROXIMATE_512, CurveContext::STRICT] {
+            for operation in 0..4 {
+                for axis in 0..2 {
+                    for reverse in [false, true] {
+                        // Fresh positive values whose signs need more than 512
+                        // bits prevent earlier proofs from warming this query.
+                        let exponent = 607
+                            + operation * 4
+                            + axis * 2
+                            + i64::from(reverse)
+                            + i64::from(policy == CurveContext::STRICT) * 16;
+                        let epsilon =
+                            Real::one() - Real::from(2_i8).powi_i64(-exponent).unwrap().cos();
+                        let mut points = [
+                            Point2::from_values(0, 0),
+                            if axis == 0 {
+                                Point2::new(epsilon, Real::one())
+                            } else {
+                                Point2::new(Real::one(), epsilon)
+                            },
+                        ];
+                        if reverse {
+                            points.reverse();
+                        }
+                        let outcome = resolve_certified_value(&policy, |_| match operation {
+                            0 => Aabb2::from_points(&points),
+                            1 => Aabb2::from_line(
+                                &LineSeg2::try_new(points[0].clone(), points[1].clone()).unwrap(),
+                            ),
+                            2 => {
+                                let mut bounds = Aabb2::from_point(points[0].clone());
+                                bounds.include_point(&points[1]).map(|()| bounds)
+                            }
+                            3 => Aabb2::from_point(points[0].clone())
+                                .union(&Aabb2::from_point(points[1].clone())),
+                            _ => unreachable!(),
+                        });
+                        assert_eq!(
+                            outcome.certainty,
+                            CurveCertainty::Certified,
+                            "operation={operation}, axis={axis}, reverse={reverse}, policy={policy:?}",
+                        );
+                        // An optional bound may decline unresolved order. A
+                        // returned bound must contain every source coordinate.
+                        let Classification::Decided(bounds) = outcome.value else {
+                            continue;
+                        };
+                        for point in &points {
+                            for (lower, upper, value) in [
+                                (bounds.min_x(), bounds.max_x(), point.x()),
+                                (bounds.min_y(), bounds.max_y(), point.y()),
+                            ] {
+                                assert!(matches!(
+                                    lower.certified_cmp_until(value, -3200).ordering(),
+                                    Some(Ordering::Less | Ordering::Equal),
+                                ));
+                                assert!(matches!(
+                                    upper.certified_cmp_until(value, -3200).ordering(),
+                                    Some(Ordering::Greater | Ordering::Equal),
+                                ));
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn aabb_ordering_evidence_rejects_near_zero_reversed_corners() {
+        for policy in [CurveContext::APPROXIMATE_512, CurveContext::STRICT] {
+            for axis in 0..2 {
+                let exponent = 653 + axis + i64::from(policy == CurveContext::STRICT) * 2;
+                let epsilon = Real::one() - Real::from(2_i8).powi_i64(-exponent).unwrap().cos();
+                let bounds = if axis == 0 {
+                    Aabb2::new_unchecked(
+                        Point2::new(epsilon, Real::zero()),
+                        Point2::from_values(0, 1),
+                    )
+                } else {
+                    Aabb2::new_unchecked(
+                        Point2::new(Real::zero(), epsilon),
+                        Point2::from_values(1, 0),
+                    )
+                };
+                let outcome = resolve_certified_value(&policy, |_| bounds.has_valid_ordering());
+                assert_ne!(outcome.value, Classification::Decided(true));
+                assert_eq!(outcome.certainty, CurveCertainty::Certified);
+            }
+        }
+    }
+
+    #[test]
+    fn aabb_singleton_evidence_keeps_distinct_point_boxes_disjoint() {
+        for policy in [CurveContext::APPROXIMATE_512, CurveContext::STRICT] {
+            let exponent = 677 + i64::from(policy == CurveContext::STRICT);
+            let epsilon = Real::one() - Real::from(2_i8).powi_i64(-exponent).unwrap().cos();
+            let first = Aabb2::from_point(Point2::from_values(0, 0));
+            let second = Aabb2::from_point(Point2::new(epsilon, Real::zero()));
+            let outcome =
+                resolve_certified_value(&policy, |_| first.singleton_intersection(&second));
+            assert!(!matches!(outcome.value, Classification::Decided(Some(_))));
+            assert_eq!(outcome.certainty, CurveCertainty::Certified);
+        }
+    }
+
+    #[test]
+    fn preview_arc_bounds_keep_exact_cardinal_extrema() {
+        for policy in [CurveContext::APPROXIMATE_512, CurveContext::STRICT] {
+            let x = Real::from(2_i8).sqrt().unwrap();
+            let arc = CircularArc2::try_from_center(
+                Point2::new(x.clone(), Real::one()),
+                Point2::new(-x, Real::one()),
+                Point2::from_values(0, 0),
+                false,
+            )
+            .unwrap();
+            let preview = CurvePreviewOptions::try_new(policy, 1e-12, 1e-12).unwrap();
+            let Classification::Decided(bounds) =
+                preview.evaluate(|_| Aabb2::from_arc(&arc).unwrap())
+            else {
+                panic!("the radius-squared-3 arc has certified bounds");
+            };
+            // The native circle and its CCW sweep contain this exact point.
+            // Rounding sqrt(3) to f64 moves the previous upper bound inward.
+            let radius = Real::from(3_i8).sqrt().unwrap();
+            assert_eq!(
+                bounds.contains_point(&Point2::new(Real::zero(), radius), &CurveContext::STRICT,),
+                Classification::Decided(true),
+            );
+        }
+    }
 }

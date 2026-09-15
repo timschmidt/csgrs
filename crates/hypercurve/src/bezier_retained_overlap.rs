@@ -2860,11 +2860,11 @@ fn materialized_control_hull(
         return None;
     };
     let hull = match curve {
-        BezierSubcurve2::Quadratic(curve) => Aabb2::from_points(curve.control_points(), policy),
-        BezierSubcurve2::Cubic(curve) => Aabb2::from_points(curve.control_points(), policy),
+        BezierSubcurve2::Quadratic(curve) => Aabb2::from_points(curve.control_points()),
+        BezierSubcurve2::Cubic(curve) => Aabb2::from_points(curve.control_points()),
         BezierSubcurve2::RationalQuadratic(curve) => {
             curve.common_nonzero_weight_sign(policy)?;
-            Aabb2::from_points(curve.control_points(), policy)
+            Aabb2::from_points(curve.control_points())
         }
         BezierSubcurve2::Rational(curve) => curve.certified_bounds_classified(policy),
     };

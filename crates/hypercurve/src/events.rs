@@ -385,17 +385,17 @@ pub(crate) fn intersect_contours(
     }
     // The bounding-box broad phase is only a candidate filter. This crate keeps
     // the simple pair scan but skips pairs whose boxes are decidably disjoint.
-    let a_box = decided_contour_aabb(a, policy);
-    let b_box = decided_contour_aabb(b, policy);
+    let a_box = decided_contour_aabb(a);
+    let b_box = decided_contour_aabb(b);
     let a_boxes: Vec<_> = a
         .segments()
         .iter()
-        .map(|segment| decided_segment_aabb(segment, policy))
+        .map(|segment| decided_segment_aabb(segment))
         .collect();
     let b_boxes: Vec<_> = b
         .segments()
         .iter()
-        .map(|segment| decided_segment_aabb(segment, policy))
+        .map(|segment| decided_segment_aabb(segment))
         .collect();
 
     intersect_contours_with_cached_aabbs(
@@ -608,7 +608,7 @@ pub(crate) fn intersect_contour_self(
     let segment_boxes: Vec<_> = contour
         .segments()
         .iter()
-        .map(|segment| decided_segment_aabb(segment, policy))
+        .map(|segment| decided_segment_aabb(segment))
         .collect();
 
     intersect_contour_self_with_cached_aabbs(contour, &segment_boxes, policy)
@@ -1721,17 +1721,17 @@ mod tests {
         let policy = CurveContext::STRICT;
         let first = rectangle(0, 0, 8, 6);
         let second = rectangle(3, -2, 11, 4);
-        let first_box = decided_contour_aabb(&first, &policy);
-        let second_box = decided_contour_aabb(&second, &policy);
+        let first_box = decided_contour_aabb(&first);
+        let second_box = decided_contour_aabb(&second);
         let first_boxes = first
             .segments()
             .iter()
-            .map(|segment| decided_segment_aabb(segment, &policy))
+            .map(|segment| decided_segment_aabb(segment))
             .collect::<Vec<_>>();
         let second_boxes = second
             .segments()
             .iter()
-            .map(|segment| decided_segment_aabb(segment, &policy))
+            .map(|segment| decided_segment_aabb(segment))
             .collect::<Vec<_>>();
         let exact_box_events = intersect_contours_with_cached_aabbs(
             &first,

@@ -14,7 +14,7 @@ impl CurveString2 {
         let boxes = self
             .segments()
             .iter()
-            .map(|segment| decided_segment_aabb(segment, policy))
+            .map(|segment| decided_segment_aabb(segment))
             .collect::<Vec<_>>();
         segments_have_self_contacts_with_cached_aabbs(self.segments(), &boxes, false, policy)
     }
@@ -26,7 +26,7 @@ impl Contour2 {
         let boxes = self
             .segments()
             .iter()
-            .map(|segment| decided_segment_aabb(segment, policy))
+            .map(|segment| decided_segment_aabb(segment))
             .collect::<Vec<_>>();
         segments_have_self_contacts_with_cached_aabbs(self.segments(), &boxes, true, policy)
     }

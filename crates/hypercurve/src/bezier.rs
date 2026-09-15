@@ -462,8 +462,8 @@ impl QuadraticBezier2 {
     /// A Bezier segment lies inside the convex hull of its control polygon.
     /// The box is therefore a broad-phase envelope, not a topology decision.
     /// Predicate code must still certify actual intersections or containment.
-    pub fn control_hull_box(&self, policy: &CurveContext) -> Classification<Aabb2> {
-        Aabb2::from_points(self.control_points(), policy)
+    pub fn control_hull_box(&self) -> Classification<Aabb2> {
+        Aabb2::from_points(self.control_points())
     }
 
     /// Returns whether the endpoints are structurally known to coincide.
@@ -645,8 +645,8 @@ impl CubicBezier2 {
     }
 
     /// Returns a conservative convex-hull box for the control polygon.
-    pub fn control_hull_box(&self, policy: &CurveContext) -> Classification<Aabb2> {
-        Aabb2::from_points(self.control_points(), policy)
+    pub fn control_hull_box(&self) -> Classification<Aabb2> {
+        Aabb2::from_points(self.control_points())
     }
 
     /// Returns whether the endpoints are structurally known to coincide.

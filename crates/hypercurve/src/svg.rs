@@ -1753,7 +1753,7 @@ fn exact_finite_bounds(geometry: &SvgGeometry2) -> SvgResult<[f64; 4]> {
         }
     };
     for wire in &geometry.wires {
-        let next = match Aabb2::from_curve_string(wire, &policy).map_err(svg_geometry_error)? {
+        let next = match Aabb2::from_curve_string(wire).map_err(svg_geometry_error)? {
             Classification::Decided(bounds) => bounds,
             Classification::Uncertain(reason) => {
                 return Err(SvgError::Geometry(format!(
@@ -1761,13 +1761,12 @@ fn exact_finite_bounds(geometry: &SvgGeometry2) -> SvgResult<[f64; 4]> {
                 )));
             }
         };
-        merge_bounds(&mut bounds, next, &policy)?;
+        merge_bounds(&mut bounds, next)?;
     }
     for path in &geometry.paths {
         merge_bounds(
             &mut bounds,
             path.bounds().map_err(svg_geometry_error)?.clone(),
-            &policy,
         )?;
     }
     let bounds = bounds
@@ -1791,9 +1790,9 @@ fn exact_finite_bounds(geometry: &SvgGeometry2) -> SvgResult<[f64; 4]> {
     .map(|bounds| [bounds[0], bounds[1], bounds[2], bounds[3]])
 }
 
-fn merge_bounds(bounds: &mut Option<Aabb2>, next: Aabb2, policy: &CurveContext) -> SvgResult<()> {
+fn merge_bounds(bounds: &mut Option<Aabb2>, next: Aabb2) -> SvgResult<()> {
     *bounds = Some(match bounds.take() {
-        Some(current) => match current.union(&next, policy) {
+        Some(current) => match current.union(&next) {
             Classification::Decided(bounds) => bounds,
             Classification::Uncertain(reason) => {
                 return Err(SvgError::Geometry(format!(

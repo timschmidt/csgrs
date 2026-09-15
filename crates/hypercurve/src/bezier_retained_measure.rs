@@ -47,7 +47,7 @@ impl CurveRegion2 {
 
     pub(crate) fn bounds_raw(&self, policy: &CurveContext) -> CurveResult<Classification<Aabb2>> {
         match self.native_line_arc_region(policy)? {
-            Classification::Decided(native) => Aabb2::from_region(native, policy),
+            Classification::Decided(native) => Aabb2::from_region(native),
             Classification::Uncertain(_) => {
                 Ok(BezierRetainedCurveEnvelope2::from_region(self, policy)
                     .map(|envelope| envelope.envelope().clone()))
@@ -343,7 +343,7 @@ impl CurveEnvelopeAccumulator {
             }
         };
         self.envelope = match self.envelope.take() {
-            Some(envelope) => match envelope.union(&curve_box, policy) {
+            Some(envelope) => match envelope.union(&curve_box) {
                 Classification::Decided(merged) => Some(merged),
                 Classification::Uncertain(reason) => return Classification::Uncertain(reason),
             },
@@ -441,11 +441,11 @@ fn retained_algebraic_source_extrema_bounds(
     };
 
     let mut accumulator = EndpointEnvelopeAccumulator::default();
-    match accumulator.include_endpoint(start_endpoint, policy) {
+    match accumulator.include_endpoint(start_endpoint) {
         Classification::Decided(()) => {}
         Classification::Uncertain(reason) => return Classification::Uncertain(reason),
     }
-    match accumulator.include_endpoint(end_endpoint, policy) {
+    match accumulator.include_endpoint(end_endpoint) {
         Classification::Decided(()) => {}
         Classification::Uncertain(reason) => return Classification::Uncertain(reason),
     }
@@ -461,7 +461,7 @@ fn retained_algebraic_source_extrema_bounds(
                     Classification::Decided(point) => point,
                     Classification::Uncertain(reason) => return Classification::Uncertain(reason),
                 };
-                match accumulator.include_endpoint(native_endpoint_interval(&point), policy) {
+                match accumulator.include_endpoint(native_endpoint_interval(&point)) {
                     Classification::Decided(()) => {}
                     Classification::Uncertain(reason) => return Classification::Uncertain(reason),
                 }
@@ -683,11 +683,11 @@ impl EndpointEnvelopeAccumulator {
         match fragment {
             BezierSplitFragment2::Materialized { curve, .. } => {
                 let (start, end) = curve.endpoints();
-                match self.include_endpoint(native_endpoint_interval(&start), policy) {
+                match self.include_endpoint(native_endpoint_interval(&start)) {
                     Classification::Decided(()) => {}
                     Classification::Uncertain(reason) => return Classification::Uncertain(reason),
                 }
-                self.include_endpoint(native_endpoint_interval(&end), policy)
+                self.include_endpoint(native_endpoint_interval(&end))
             }
             BezierSplitFragment2::AlgebraicEndpointImages {
                 start_image,
@@ -706,11 +706,11 @@ impl EndpointEnvelopeAccumulator {
                 let Some(end) = algebraic_endpoint_interval(end_image.point()) else {
                     return Classification::Uncertain(UncertaintyReason::Boundary);
                 };
-                match self.include_endpoint(start, policy) {
+                match self.include_endpoint(start) {
                     Classification::Decided(()) => {}
                     Classification::Uncertain(reason) => return Classification::Uncertain(reason),
                 }
-                self.include_endpoint(end, policy)
+                self.include_endpoint(end)
             }
             BezierSplitFragment2::AnalyticParallel(fragment) => {
                 let Some((start_parameter, end_parameter)) = fragment.range().scalar_endpoints()
@@ -735,13 +735,13 @@ impl EndpointEnvelopeAccumulator {
                         return Classification::Uncertain(UncertaintyReason::Unsupported);
                     }
                 };
-                match self.include_endpoint(native_endpoint_interval(&start), policy) {
+                match self.include_endpoint(native_endpoint_interval(&start)) {
                     Classification::Decided(()) => {}
                     Classification::Uncertain(reason) => {
                         return Classification::Uncertain(reason);
                     }
                 }
-                self.include_endpoint(native_endpoint_interval(&end), policy)
+                self.include_endpoint(native_endpoint_interval(&end))
             }
             BezierSplitFragment2::AlgebraicChord(chord) => {
                 let bounds = match chord.conservative_bounds(policy) {
@@ -753,13 +753,13 @@ impl EndpointEnvelopeAccumulator {
                         return Classification::Uncertain(UncertaintyReason::Unsupported);
                     }
                 };
-                match self.include_endpoint(native_endpoint_interval(bounds.min()), policy) {
+                match self.include_endpoint(native_endpoint_interval(bounds.min())) {
                     Classification::Decided(()) => {}
                     Classification::Uncertain(reason) => {
                         return Classification::Uncertain(reason);
                     }
                 }
-                self.include_endpoint(native_endpoint_interval(bounds.max()), policy)
+                self.include_endpoint(native_endpoint_interval(bounds.max()))
             }
             BezierSplitFragment2::AlgebraicCuspSemicircle(_) => {
                 Classification::Uncertain(UncertaintyReason::Boundary)
@@ -770,19 +770,15 @@ impl EndpointEnvelopeAccumulator {
         }
     }
 
-    fn include_endpoint(
-        &mut self,
-        endpoint: EndpointInterval,
-        policy: &CurveContext,
-    ) -> Classification<()> {
+    fn include_endpoint(&mut self, endpoint: EndpointInterval) -> Classification<()> {
         let min = Point2::new(endpoint.x.lower, endpoint.y.lower);
         let max = Point2::new(endpoint.x.upper, endpoint.y.upper);
-        let endpoint_envelope = match Aabb2::from_points([&min, &max], policy) {
+        let endpoint_envelope = match Aabb2::from_points([&min, &max]) {
             Classification::Decided(envelope) => envelope,
             Classification::Uncertain(reason) => return Classification::Uncertain(reason),
         };
         self.envelope = match self.envelope.take() {
-            Some(envelope) => match envelope.union(&endpoint_envelope, policy) {
+            Some(envelope) => match envelope.union(&endpoint_envelope) {
                 Classification::Decided(envelope) => Some(envelope),
                 Classification::Uncertain(reason) => {
                     return Classification::Uncertain(reason);

@@ -2139,9 +2139,8 @@ impl CurvePath2 {
     pub fn bounds(&self) -> ExactCurveResult<&Aabb2> {
         match self.data.bounds.get_or_init(|| {
             let mut bounds = self.data.curves[0].bounds()?.clone();
-            let policy = crate::CurveContext::STRICT;
             for curve in &self.data.curves[1..] {
-                bounds = decided_bounds(bounds.union(curve.bounds()?, &policy), curve.family())?;
+                bounds = decided_bounds(bounds.union(curve.bounds()?), curve.family())?;
             }
             Ok(bounds)
         }) {
@@ -2588,7 +2587,7 @@ fn compute_curve_bounds(curve: &Curve2) -> ExactCurveResult<Aabb2> {
                 crate::bezier_region::retained_fragment_query_bounds(&span.fragment, &policy),
                 curve.family(),
             )?;
-            bounds = decided_bounds(bounds.union(&next, &policy), curve.family())?;
+            bounds = decided_bounds(bounds.union(&next), curve.family())?;
         }
         return Ok(bounds);
     }
@@ -2599,11 +2598,9 @@ fn compute_curve_bounds(curve: &Curve2) -> ExactCurveResult<Aabb2> {
         );
     }
     match curve.geometry() {
-        Some(CurveGeometry2::Line(line)) => {
-            decided_bounds(Aabb2::from_line(line, &policy), curve.family())
-        }
+        Some(CurveGeometry2::Line(line)) => decided_bounds(Aabb2::from_line(line), curve.family()),
         Some(CurveGeometry2::CircularArc(arc)) => decided_bounds(
-            Aabb2::from_arc(arc, &policy).map_err(|cause| {
+            Aabb2::from_arc(arc).map_err(|cause| {
                 ExactCurveError::invalid(CurveOperation2::NativeTopology, curve.family(), cause)
             })?,
             curve.family(),
@@ -2616,7 +2613,7 @@ fn compute_curve_bounds(curve: &Curve2) -> ExactCurveResult<Aabb2> {
             for fragment in &fragments[1..] {
                 let fragment_bounds =
                     decided_subcurve_bounds(fragment.curve(), curve.family(), &policy)?;
-                bounds = decided_bounds(bounds.union(&fragment_bounds, &policy), curve.family())?;
+                bounds = decided_bounds(bounds.union(&fragment_bounds), curve.family())?;
             }
             Ok(bounds)
         }
@@ -2629,8 +2626,8 @@ fn decided_subcurve_bounds(
     policy: &crate::CurveContext,
 ) -> ExactCurveResult<Aabb2> {
     let bounds = match curve {
-        BezierSubcurve2::Quadratic(curve) => curve.control_hull_box(policy),
-        BezierSubcurve2::Cubic(curve) => curve.control_hull_box(policy),
+        BezierSubcurve2::Quadratic(curve) => curve.control_hull_box(),
+        BezierSubcurve2::Cubic(curve) => curve.control_hull_box(),
         BezierSubcurve2::RationalQuadratic(curve) => curve.certified_bounds(policy),
         BezierSubcurve2::Rational(curve) => curve.certified_bounds_classified(policy),
     };

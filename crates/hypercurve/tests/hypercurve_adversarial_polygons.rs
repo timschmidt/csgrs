@@ -79,7 +79,7 @@ fn assert_contour_finite(contour: &Contour2) {
     for segment in contour.segments() {
         assert_segment_finite(segment);
     }
-    if let Classification::Decided(bounds) = Aabb2::from_contour(contour, &policy()).unwrap() {
+    if let Classification::Decided(bounds) = Aabb2::from_contour(contour).unwrap() {
         assert_point_finite(bounds.min());
         assert_point_finite(bounds.max());
     }

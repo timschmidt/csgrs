@@ -2208,7 +2208,7 @@ impl RationalBezier2 {
         if matches!(self.control_weight_sign(policy), Classification::Decided(_))
             && let Some(points) = self.affine_control_points()
         {
-            return Aabb2::from_points(points, policy);
+            return Aabb2::from_points(points);
         }
         if let Classification::Uncertain(reason) = self.unit_weight_sign(policy) {
             return Classification::Uncertain(reason);
@@ -2237,13 +2237,13 @@ impl RationalBezier2 {
                     Classification::Uncertain(reason) => return Classification::Uncertain(reason),
                 }
             }
-            let next = match Aabb2::from_points(&points, policy) {
+            let next = match Aabb2::from_points(&points) {
                 Classification::Decided(bounds) => bounds,
                 Classification::Uncertain(reason) => return Classification::Uncertain(reason),
             };
             bounds = Some(match bounds {
                 None => next,
-                Some(bounds) => match bounds.union(&next, policy) {
+                Some(bounds) => match bounds.union(&next) {
                     Classification::Decided(bounds) => bounds,
                     Classification::Uncertain(reason) => return Classification::Uncertain(reason),
                 },

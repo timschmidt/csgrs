@@ -670,7 +670,7 @@ impl RationalQuadraticBezier2 {
                 }
             }
         }
-        Aabb2::from_points(samples.iter(), policy)
+        Aabb2::from_points(samples.iter())
     }
 
     /// Classifies a coarse relation between two rational quadratic conics.
@@ -712,11 +712,11 @@ impl RationalQuadraticBezier2 {
         if self.weights_known_same_nonzero_sign(policy) == Some(true)
             && other.weights_known_same_nonzero_sign(policy) == Some(true)
         {
-            let first_box = match Aabb2::from_points(self.control_points(), policy) {
+            let first_box = match Aabb2::from_points(self.control_points()) {
                 Classification::Decided(bbox) => bbox,
                 Classification::Uncertain(reason) => return Classification::Uncertain(reason),
             };
-            let second_box = match Aabb2::from_points(other.control_points(), policy) {
+            let second_box = match Aabb2::from_points(other.control_points()) {
                 Classification::Decided(bbox) => bbox,
                 Classification::Uncertain(reason) => return Classification::Uncertain(reason),
             };
@@ -2016,8 +2016,8 @@ fn relation_to_polynomial_bezier(
     let mut deferred_uncertainty = None;
     if rational.weights_known_same_nonzero_sign(policy) == Some(true) {
         let boxes = match (
-            Aabb2::from_points(rational.control_points(), policy),
-            Aabb2::from_points(polynomial_controls.iter().copied(), policy),
+            Aabb2::from_points(rational.control_points()),
+            Aabb2::from_points(polynomial_controls.iter().copied()),
         ) {
             (Classification::Decided(rational_box), Classification::Decided(polynomial_box)) => {
                 Some((rational_box, polynomial_box))
@@ -2447,7 +2447,7 @@ fn line_segment_image_from_controls(
         Err(CurveError::ZeroLengthLine) => return Classification::Decided(None),
         Err(_) => return Classification::Uncertain(UncertaintyReason::Unsupported),
     };
-    let envelope = match Aabb2::from_points([start, end], policy) {
+    let envelope = match Aabb2::from_points([start, end]) {
         Classification::Decided(envelope) => envelope,
         Classification::Uncertain(reason) => return Classification::Uncertain(reason),
     };
@@ -3577,8 +3577,8 @@ impl RationalSubdivisionNode {
         })
     }
 
-    fn control_box(&self, policy: &CurveContext) -> Classification<Aabb2> {
-        Aabb2::from_points(self.controls.iter(), policy)
+    fn control_box(&self) -> Classification<Aabb2> {
+        Aabb2::from_points(self.controls.iter())
     }
 
     fn split_half(&self, policy: &CurveContext) -> Result<(Self, Self), UncertaintyReason> {
@@ -3633,11 +3633,11 @@ fn isolate_curve_regions_recursive(
     // used by Bezier clipping; see Bezier clipping. The exactness model's EGC
     // boundary is kept by returning parameter regions instead of toleranced
     // intersection points.
-    let first_box = match first.control_box(policy) {
+    let first_box = match first.control_box() {
         Classification::Decided(bbox) => bbox,
         Classification::Uncertain(reason) => return Err(reason),
     };
-    let second_box = match second.control_box(policy) {
+    let second_box = match second.control_box() {
         Classification::Decided(bbox) => bbox,
         Classification::Uncertain(reason) => return Err(reason),
     };

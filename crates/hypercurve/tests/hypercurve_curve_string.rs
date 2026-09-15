@@ -107,7 +107,7 @@ fn curve_string_structural_facts_include_segment_box_counts() {
         line_segment(2, 3, 5, 3),
     ])
     .unwrap();
-    let facts = hypercurve::CurveString2::structural_facts(&curve, &policy());
+    let facts = hypercurve::CurveString2::structural_facts(&curve);
 
     assert_eq!(facts.segment_kinds, SegmentKindCounts { lines: 3, arcs: 0 });
     assert_eq!(facts.decided_segment_box_count, 3);
@@ -123,7 +123,7 @@ fn contour_structural_facts_include_segment_box_counts() {
         BulgeVertex2::new(p(0, 3), s(0)),
     ])
     .unwrap();
-    let facts = hypercurve::Contour2::structural_facts(&contour, &policy());
+    let facts = hypercurve::Contour2::structural_facts(&contour);
 
     assert_eq!(facts.segment_kinds, SegmentKindCounts { lines: 4, arcs: 0 });
     assert_eq!(facts.decided_segment_box_count, 4);

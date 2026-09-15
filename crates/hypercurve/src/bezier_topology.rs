@@ -959,7 +959,7 @@ where
             samples.push(curve.point_at(span.end().clone()));
         }
     }
-    Aabb2::from_points(samples.iter(), policy)
+    Aabb2::from_points(samples.iter())
 }
 
 trait BezierCurveLike {
@@ -1139,8 +1139,8 @@ where
     }
 
     let hull_relation = match (
-        Aabb2::from_points(first_controls.iter().copied(), policy),
-        Aabb2::from_points(second_controls.iter().copied(), policy),
+        Aabb2::from_points(first_controls.iter().copied()),
+        Aabb2::from_points(second_controls.iter().copied()),
     ) {
         (Classification::Decided(first), Classification::Decided(second)) => {
             first.overlaps(&second, policy)
@@ -2765,8 +2765,8 @@ impl BezierSubdivisionNode {
         })
     }
 
-    fn control_box(&self, policy: &CurveContext) -> Classification<Aabb2> {
-        Aabb2::from_points(self.controls.iter(), policy)
+    fn control_box(&self) -> Classification<Aabb2> {
+        Aabb2::from_points(self.controls.iter())
     }
 
     fn split_half(&self) -> Result<(Self, Self), UncertaintyReason> {
@@ -2807,11 +2807,11 @@ fn isolate_curve_intersection_regions_recursive(
     // as dyadic parameter regions. Bezier clipping, use this convex-hull exclusion principle;
     // per the exactness model, this implementation returns bounded regions rather than
     // choosing topology from floating tolerances.
-    let first_box = match first.control_box(policy) {
+    let first_box = match first.control_box() {
         Classification::Decided(bbox) => bbox,
         Classification::Uncertain(reason) => return Err(reason),
     };
-    let second_box = match second.control_box(policy) {
+    let second_box = match second.control_box() {
         Classification::Decided(bbox) => bbox,
         Classification::Uncertain(reason) => return Err(reason),
     };
@@ -3511,7 +3511,7 @@ fn line_segment_image_from_controls(
         Err(CurveError::ZeroLengthLine) => return Classification::Decided(None),
         Err(_) => return Classification::Uncertain(UncertaintyReason::Unsupported),
     };
-    let envelope = match Aabb2::from_points([start, end], policy) {
+    let envelope = match Aabb2::from_points([start, end]) {
         Classification::Decided(envelope) => envelope,
         Classification::Uncertain(reason) => return Classification::Uncertain(reason),
     };
