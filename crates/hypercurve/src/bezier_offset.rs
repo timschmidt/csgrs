@@ -111207,7 +111207,7 @@ impl BezierParallel2 {
         isolation_range: &CurveParameterRange2,
         direction: Option<BezierParameterRayDirection2>,
         policy: &CurveContext,
-    ) -> CurveResult<Classification<Vec<BezierParallelFixedDistanceParameter2>>> {
+    ) -> CurveResult<Classification<Vec<CurveParameter2>>> {
         if direction.is_some() && self != center_parallel {
             return Err(CurveError::Topology(
                 "a fixed-distance extension needs an anchor in its support chart".into(),
@@ -111273,7 +111273,7 @@ impl BezierParallel2 {
         isolation_range: &CurveParameterRange2,
         direction: Option<BezierParameterRayDirection2>,
         policy: &CurveContext,
-    ) -> CurveResult<Classification<Vec<BezierParallelFixedDistanceParameter2>>> {
+    ) -> CurveResult<Classification<Vec<CurveParameter2>>> {
         center.validate_policy(policy)?;
         match if self == center_parallel {
             self.affine_fixed_distance_parameter_delta(setback, policy)?
@@ -111282,10 +111282,8 @@ impl BezierParallel2 {
         } {
             Classification::Decided(Some(delta)) => {
                 return Ok(Classification::Decided(vec![
-                    BezierParallelFixedDistanceParameter2::SelectedFiber(
-                        center.translated(&(-delta.clone())),
-                    ),
-                    BezierParallelFixedDistanceParameter2::SelectedFiber(center.translated(&delta)),
+                    CurveParameter2::from_selected_fiber(center.translated(&(-delta.clone()))),
+                    CurveParameter2::from_selected_fiber(center.translated(&delta)),
                 ]));
             }
             Classification::Decided(None) => {}
@@ -111579,9 +111577,7 @@ impl BezierParallel2 {
                     }
                 }
             }
-            retained_candidates.push(BezierParallelFixedDistanceParameter2::SelectedFiber(
-                candidate,
-            ));
+            retained_candidates.push(CurveParameter2::from_selected_fiber(candidate));
         }
         Ok(Classification::Decided(retained_candidates))
     }
@@ -111823,7 +111819,7 @@ impl BezierParallel2 {
         setback: &Real,
         direction: Option<BezierParameterRayDirection2>,
         policy: &CurveContext,
-    ) -> CurveResult<Classification<Vec<BezierParallelFixedDistanceParameter2>>> {
+    ) -> CurveResult<Classification<Vec<CurveParameter2>>> {
         let Some(parameter) = center.as_recursive_projective() else {
             return Err(CurveError::Topology(
                 "recursive fixed-distance incidence requires a recursive center".into(),
@@ -111893,9 +111889,7 @@ impl BezierParallel2 {
                             }
                         }
                     }
-                    retained.push(BezierParallelFixedDistanceParameter2::RecursiveProjective(
-                        candidate,
-                    ));
+                    retained.push(CurveParameter2::from_recursive_projective(candidate));
                 }
                 return Ok(Classification::Decided(retained));
             }
@@ -112024,7 +112018,7 @@ impl BezierParallel2 {
                 && let Some(is_root) = system.expression_transverse_root(&candidate)
             {
                 if is_root {
-                    retained.push(BezierParallelFixedDistanceParameter2::Bezier(candidate));
+                    retained.push(CurveParameter2::from(candidate));
                 }
                 continue;
             }
@@ -112037,7 +112031,7 @@ impl BezierParallel2 {
             };
             match policy.strict_predicate_pass(|| system.expression_sign(&evaluation, policy))? {
                 Classification::Decided(RealSign::Zero) => {
-                    retained.push(BezierParallelFixedDistanceParameter2::Bezier(candidate))
+                    retained.push(CurveParameter2::from(candidate))
                 }
                 Classification::Decided(RealSign::Positive | RealSign::Negative) => {}
                 Classification::Uncertain(reason) => {
@@ -112465,7 +112459,7 @@ impl BezierParallel2 {
         isolation_range: &BezierParameterRange2,
         incident_direction: Option<BezierParameterRayDirection2>,
         policy: &CurveContext,
-    ) -> CurveResult<Classification<Vec<BezierParallelFixedDistanceParameter2>>> {
+    ) -> CurveResult<Classification<Vec<CurveParameter2>>> {
         let BezierParameter2::Algebraic(center_parameter) = center_parameter else {
             let center_parameter = center_parameter
                 .scalar()
@@ -112532,7 +112526,7 @@ impl BezierParallel2 {
             return Ok(Classification::Decided(
                 parameters
                     .into_iter()
-                    .map(|(parameter, _)| BezierParallelFixedDistanceParameter2::Bezier(parameter))
+                    .map(|(parameter, _)| CurveParameter2::from(parameter))
                     .collect(),
             ));
         };
@@ -112649,31 +112643,26 @@ impl BezierParallel2 {
         };
 
         let center_parameter = BezierParameter2::Algebraic(center_parameter.clone());
-        let radical_sign =
-            |expression: &BezierAlgebraicCuspTwoTermExpression2,
-             candidate: &BezierParallelFixedDistanceParameter2| {
-                match candidate {
-                    BezierParallelFixedDistanceParameter2::Bezier(candidate) => {
-                        algebraic_cusp_selected_square_root_sum_sign(
-                            &incidence,
-                            expression,
-                            &center_speed_squared,
-                            &center_parameter,
-                            candidate,
-                            policy,
-                        )
-                    }
-                    BezierParallelFixedDistanceParameter2::SelectedFiber(candidate) => {
-                        candidate.square_root_sum_sign(expression, &center_speed_squared, policy)
-                    }
-                    BezierParallelFixedDistanceParameter2::RecursiveProjective(_) => {
-                        Ok(Classification::Uncertain(UncertaintyReason::Unsupported))
-                    }
-                }
-            };
+        let radical_sign = |expression: &BezierAlgebraicCuspTwoTermExpression2,
+                            candidate: &CurveParameter2| {
+            if let Some(candidate) = candidate.as_bezier_parameter() {
+                algebraic_cusp_selected_square_root_sum_sign(
+                    &incidence,
+                    expression,
+                    &center_speed_squared,
+                    &center_parameter,
+                    candidate,
+                    policy,
+                )
+            } else if let Some(candidate) = candidate.as_selected_fiber() {
+                candidate.square_root_sum_sign(expression, &center_speed_squared, policy)
+            } else {
+                Ok(Classification::Uncertain(UncertaintyReason::Unsupported))
+            }
+        };
         let mut retained = Vec::with_capacity(candidates.len());
         for candidate in candidates {
-            if let BezierParallelFixedDistanceParameter2::SelectedFiber(parameter) = &candidate {
+            if let Some(parameter) = candidate.as_selected_fiber() {
                 let sign = parameter.two_normal_sum_sign(
                     &circle,
                     &center_speed_squared,
@@ -112732,8 +112721,8 @@ impl BezierParallel2 {
         isolation_range: &BezierParameterRange2,
         incident_direction: Option<BezierParameterRayDirection2>,
         policy: &CurveContext,
-    ) -> CurveResult<Classification<Vec<BezierParallelFixedDistanceParameter2>>> {
-        let candidates: Vec<BezierParallelFixedDistanceParameter2> =
+    ) -> CurveResult<Classification<Vec<CurveParameter2>>> {
+        let candidates: Vec<CurveParameter2> =
             if center_parameter.polynomial().degree() > MAX_FIXED_DISTANCE_QUOTIENT_DEGREE {
                 // A global norm multiplies the candidate degree by the selected
                 // center field degree. Retain high-degree contacts directly in
@@ -112762,7 +112751,7 @@ impl BezierParallel2 {
                 };
                 roots
                     .into_iter()
-                    .map(BezierParallelFixedDistanceParameter2::SelectedFiber)
+                    .map(CurveParameter2::from_selected_fiber)
                     .collect()
             } else {
                 match algebraic_selected_reduced_fiber_parameters_with_resultant_limit(
@@ -112775,10 +112764,7 @@ impl BezierParallel2 {
                 )? {
                     Classification::Decided(BezierAlgebraicFiberProjection2::Parameters(
                         candidates,
-                    )) => candidates
-                        .into_iter()
-                        .map(BezierParallelFixedDistanceParameter2::Bezier)
-                        .collect(),
+                    )) => candidates.into_iter().map(CurveParameter2::from).collect(),
                     Classification::Decided(
                         BezierAlgebraicFiberProjection2::IdenticallyZero
                         | BezierAlgebraicFiberProjection2::Degenerate,
@@ -112790,59 +112776,12 @@ impl BezierParallel2 {
             };
         let mut finite = Vec::with_capacity(candidates.len());
         for candidate in candidates {
-            let inside = match &candidate {
-                BezierParallelFixedDistanceParameter2::Bezier(parameter) => {
-                    overlap_parameter_is_in_range(parameter, isolation_range, true, policy)?
-                }
-                BezierParallelFixedDistanceParameter2::SelectedFiber(parameter) => {
-                    let after_start =
-                        parameter.cmp_bezier_parameter(isolation_range.start(), policy)?;
-                    let before_end =
-                        parameter.cmp_bezier_parameter(isolation_range.end(), policy)?;
-                    match (after_start, before_end) {
-                        (
-                            Classification::Decided(
-                                std::cmp::Ordering::Equal | std::cmp::Ordering::Greater,
-                            ),
-                            Classification::Decided(
-                                std::cmp::Ordering::Equal | std::cmp::Ordering::Less,
-                            ),
-                        ) => Classification::Decided(true),
-                        (Classification::Decided(_), Classification::Decided(_)) => {
-                            Classification::Decided(false)
-                        }
-                        (Classification::Uncertain(reason), _)
-                        | (_, Classification::Uncertain(reason)) => {
-                            Classification::Uncertain(reason)
-                        }
-                    }
-                }
-                BezierParallelFixedDistanceParameter2::RecursiveProjective(parameter) => {
-                    let parameter = CurveParameter2::from_recursive_projective(parameter.clone());
-                    let start = CurveParameter2::from(isolation_range.start().clone());
-                    let end = CurveParameter2::from(isolation_range.end().clone());
-                    match (
-                        parameter.cmp_by_refinement(&start, policy)?,
-                        parameter.cmp_by_refinement(&end, policy)?,
-                    ) {
-                        (
-                            Classification::Decided(
-                                std::cmp::Ordering::Equal | std::cmp::Ordering::Greater,
-                            ),
-                            Classification::Decided(
-                                std::cmp::Ordering::Equal | std::cmp::Ordering::Less,
-                            ),
-                        ) => Classification::Decided(true),
-                        (Classification::Decided(_), Classification::Decided(_)) => {
-                            Classification::Decided(false)
-                        }
-                        (Classification::Uncertain(reason), _)
-                        | (_, Classification::Uncertain(reason)) => {
-                            Classification::Uncertain(reason)
-                        }
-                    }
-                }
-            };
+            let inside = curve_region_parameter_is_in_bezier_range(
+                &candidate,
+                isolation_range,
+                true,
+                policy,
+            )?;
             match inside {
                 Classification::Decided(true) => finite.push(candidate),
                 Classification::Decided(false) => {}
@@ -112904,7 +112843,7 @@ impl BezierParallel2 {
             candidates.extend(
                 retained_adjacent
                     .into_iter()
-                    .map(BezierParallelFixedDistanceParameter2::SelectedFiber),
+                    .map(CurveParameter2::from_selected_fiber),
             );
         }
         let exterior = match selected_fiber_parameters_on_incident_ray(
@@ -112926,7 +112865,7 @@ impl BezierParallel2 {
         candidates.extend(
             exterior
                 .into_iter()
-                .map(BezierParallelFixedDistanceParameter2::SelectedFiber),
+                .map(CurveParameter2::from_selected_fiber),
         );
         Ok(Classification::Decided(candidates))
     }
@@ -125047,13 +124986,6 @@ struct BezierParallelFixedDistanceSystem2 {
     candidate_speed_squared: BivariatePolynomial,
     squared_branch: BezierAlgebraicCuspTwoTermExpression2,
     circle: BezierParallelTwoNormalExpression2,
-}
-
-#[derive(Clone, Debug)]
-pub(crate) enum BezierParallelFixedDistanceParameter2 {
-    Bezier(BezierParameter2),
-    SelectedFiber(BezierAlgebraicSelectedFiberParameter2),
-    RecursiveProjective(BezierRecursiveProjectiveParameter2),
 }
 
 /// One regular affine endpoint-extension domain for an analytic parallel.
@@ -162164,22 +162096,14 @@ mod conversion_tests {
             let [first, second] = affine_cuts.as_slice() else {
                 panic!("the affine recursive setback must retain both cuts");
             };
-            let BezierParallelFixedDistanceParameter2::RecursiveProjective(first) = first else {
-                panic!("the first affine cut must retain the recursive scalar");
-            };
-            let BezierParallelFixedDistanceParameter2::RecursiveProjective(second) = second else {
-                panic!("the second affine cut must retain the recursive scalar");
-            };
+            assert!(first.as_recursive_projective().is_some());
+            assert!(second.as_recursive_projective().is_some());
             assert_eq!(
-                CurveParameter2::from_recursive_projective(first.clone())
-                    .cmp_by_refinement(&endpoint, &policy)
-                    .unwrap(),
+                first.cmp_by_refinement(&endpoint, &policy).unwrap(),
                 Classification::Decided(std::cmp::Ordering::Less),
             );
             assert_eq!(
-                CurveParameter2::from_recursive_projective(second.clone())
-                    .cmp_by_refinement(&endpoint, &policy)
-                    .unwrap(),
+                second.cmp_by_refinement(&endpoint, &policy).unwrap(),
                 Classification::Decided(std::cmp::Ordering::Greater),
             );
             let wide_setback = Real::from(2_i8);
@@ -162216,17 +162140,16 @@ mod conversion_tests {
                 else {
                     panic!("the affine recursive incident setback must decide");
                 };
-                let [BezierParallelFixedDistanceParameter2::RecursiveProjective(cut)] =
-                    cuts.as_slice()
-                else {
+                let [cut] = cuts.as_slice() else {
                     panic!("the affine incident cell must retain exactly its directed cut");
                 };
+                assert!(cut.as_recursive_projective().is_some());
                 let boundary = match direction {
                     BezierParameterRayDirection2::Decreasing => Real::zero(),
                     BezierParameterRayDirection2::Increasing => Real::one(),
                 };
                 assert_eq!(
-                    cut.order_to_real(&boundary, &policy).unwrap(),
+                    cut.cmp_by_refinement(&boundary.into(), &policy).unwrap(),
                     Classification::Decided(expected),
                 );
             }
@@ -162544,17 +162467,6 @@ mod conversion_tests {
                 else {
                     panic!("the enlarged polynomial support chart must construct")
                 };
-                let retained = |parameter: &BezierParallelFixedDistanceParameter2| match parameter {
-                    BezierParallelFixedDistanceParameter2::Bezier(parameter) => {
-                        CurveParameter2::from(parameter.clone())
-                    }
-                    BezierParallelFixedDistanceParameter2::SelectedFiber(parameter) => {
-                        CurveParameter2::from_selected_fiber(parameter.clone())
-                    }
-                    BezierParallelFixedDistanceParameter2::RecursiveProjective(parameter) => {
-                        CurveParameter2::from_recursive_projective(parameter.clone())
-                    }
-                };
                 for center_parameter in [endpoint.clone(), CurveParameter2::from(center.clone())] {
                     let Classification::Decided(reparameterized) = candidate_support
                         .fixed_distance_incidence(
@@ -162571,16 +162483,14 @@ mod conversion_tests {
                     };
                     assert_eq!(reparameterized.len(), cuts.len());
                     for parameter in &reparameterized {
-                        let Classification::Decided(parameter) = retained(parameter)
+                        let Classification::Decided(parameter) = parameter
                             .affine_image_unbounded(&Real::from(2), &Real::zero(), &policy)
                             .unwrap()
                         else {
                             panic!("the candidate chart map must preserve the selected scalar")
                         };
                         assert!(cuts.iter().any(|original| {
-                            parameter
-                                .cmp_by_refinement(&retained(original), &policy)
-                                .unwrap()
+                            parameter.cmp_by_refinement(original, &policy).unwrap()
                                 == Classification::Decided(std::cmp::Ordering::Equal)
                         }));
                     }
@@ -162589,9 +162499,7 @@ mod conversion_tests {
                     assert_eq!(cuts.len(), 2);
                     for expected in [std::cmp::Ordering::Less, std::cmp::Ordering::Greater] {
                         assert!(cuts.iter().any(|candidate| {
-                            let BezierParallelFixedDistanceParameter2::Bezier(candidate) =
-                                candidate
-                            else {
+                            let Some(candidate) = candidate.as_bezier_parameter() else {
                                 return false;
                             };
                             candidate.cmp_by_refinement(&center, &policy).unwrap()
@@ -162607,12 +162515,12 @@ mod conversion_tests {
                         &policy,
                     ));
                 for candidate in cuts {
-                    let BezierParallelFixedDistanceParameter2::Bezier(candidate) = candidate else {
+                    let Some(candidate) = candidate.as_bezier_parameter() else {
                         panic!("the nonlinear recursive solve must project only its candidate");
                     };
                     let candidate_evidence = CurvePoint2::from(BezierAnalyticParallelPoint2::new(
                         parallel.clone(),
-                        candidate,
+                        candidate.clone(),
                         &policy,
                     ));
                     let Classification::Decided(Some(points)) =
@@ -164161,6 +164069,62 @@ mod conversion_tests {
     }
 
     #[test]
+    fn fixed_distance_retains_selected_candidates_in_both_range_orientations() {
+        let half = (Real::one() / Real::from(2_i8)).unwrap();
+        let quarter = &half * &half;
+        let parallel = QuadraticBezier2::new(
+            Point2::from_values(0, 0),
+            Point2::new(Real::zero(), half),
+            Point2::from_values(1, 1),
+        )
+        .parallel_left(Real::zero())
+        .unwrap();
+        // P(t)=(t^2,t), with alpha^11=1/4096. The quarter-unit
+        // setback has two contacts inside [1/4,3/4]. Degree eleven keeps
+        // their selected fibers local, so reversing the search interval
+        // must not discard them through an ascending-only scalar filter.
+        let mut coefficients = vec![Real::zero(); 12];
+        coefficients[0] = -(Real::one() / Real::from(4096_i32)).unwrap();
+        coefficients[11] = Real::one();
+        let center = CurveParameter2::from(algebraic_parameter(coefficients));
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let mut forward = None;
+            for reversed in [false, true] {
+                let mut bounds = [quarter.clone().into(), (&quarter * Real::from(3)).into()];
+                if reversed {
+                    bounds.reverse();
+                }
+                let [start, end] = bounds;
+                let range = CurveParameterRange2::new_validated(start, end);
+                let Classification::Decided(cuts) = parallel
+                    .fixed_distance_incidence(&parallel, &center, &quarter, &range, None, &policy)
+                    .unwrap()
+                else {
+                    panic!("the selected setback must decide in either range orientation")
+                };
+                assert_eq!(cuts.len(), 2);
+                assert!(cuts.iter().all(|cut| cut.as_selected_fiber().is_some()));
+                for expected in [std::cmp::Ordering::Less, std::cmp::Ordering::Greater] {
+                    assert!(cuts.iter().any(|cut| {
+                        cut.cmp_by_refinement(&center, &policy).unwrap()
+                            == Classification::Decided(expected)
+                    }));
+                }
+                if let Some(forward) = &forward {
+                    for original in forward {
+                        assert!(cuts.iter().any(|cut| {
+                            cut.cmp_by_refinement(original, &policy).unwrap()
+                                == Classification::Decided(std::cmp::Ordering::Equal)
+                        }));
+                    }
+                } else {
+                    forward = Some(cuts);
+                }
+            }
+        }
+    }
+
+    #[test]
     fn algebraic_center_fixed_distance_covers_adjacent_and_incident_ray() {
         let half = (Real::one() / Real::from(2_i8)).unwrap();
         // P(t)=(t^2,t) is regular everywhere. For alpha^2=1/2, the
@@ -164206,22 +164170,10 @@ mod conversion_tests {
                 panic!("the algebraic endpoint incident ray must decide under {policy:?}");
             };
             assert!(extended.iter().any(|parameter| {
-                match parameter {
-                    BezierParallelFixedDistanceParameter2::Bezier(parameter) => {
-                        parameter
-                            .cmp_by_refinement(&BezierParameter2::Exact(Real::zero()), &policy)
-                            .unwrap()
-                            == Classification::Decided(std::cmp::Ordering::Less)
-                    }
-                    BezierParallelFixedDistanceParameter2::SelectedFiber(parameter) => {
-                        parameter.order_to_real(&Real::zero(), &policy).unwrap()
-                            == Classification::Decided(std::cmp::Ordering::Less)
-                    }
-                    BezierParallelFixedDistanceParameter2::RecursiveProjective(parameter) => {
-                        parameter.order_to_real(&Real::zero(), &policy).unwrap()
-                            == Classification::Decided(std::cmp::Ordering::Less)
-                    }
-                }
+                parameter
+                    .cmp_by_refinement(&Real::zero().into(), &policy)
+                    .unwrap()
+                    == Classification::Decided(std::cmp::Ordering::Less)
             }));
         }
     }
@@ -164312,13 +164264,13 @@ mod conversion_tests {
             let Classification::Decided(candidates) = outcome else {
                 panic!("the selected nonlinear fixed-distance fiber must decide: {outcome:?}")
             };
-            assert!(candidates.iter().all(|candidate| matches!(
-                candidate,
-                BezierParallelFixedDistanceParameter2::SelectedFiber(_)
-            )));
+            assert!(
+                candidates
+                    .iter()
+                    .all(|candidate| candidate.as_selected_fiber().is_some())
+            );
             assert!(candidates.iter().any(|candidate| {
-                let BezierParallelFixedDistanceParameter2::SelectedFiber(candidate) = candidate
-                else {
+                let Some(candidate) = candidate.as_selected_fiber() else {
                     return false;
                 };
                 candidate.cmp_by_refinement(&expected, &policy).unwrap()
@@ -164360,10 +164312,11 @@ mod conversion_tests {
                 panic!("the high-degree selected fixed-distance image must decide")
             };
             assert!(candidates.len() >= 2);
-            assert!(candidates.iter().all(|candidate| matches!(
-                candidate,
-                BezierParallelFixedDistanceParameter2::SelectedFiber(_)
-            )));
+            assert!(
+                candidates
+                    .iter()
+                    .all(|candidate| candidate.as_selected_fiber().is_some())
+            );
         }
     }
 
@@ -164649,8 +164602,7 @@ mod conversion_tests {
                 panic!("the selected two-normal fixed-distance system must decide")
             };
             assert!(candidates.iter().any(|candidate| {
-                let BezierParallelFixedDistanceParameter2::SelectedFiber(candidate) = candidate
-                else {
+                let Some(candidate) = candidate.as_selected_fiber() else {
                     return false;
                 };
                 candidate.order_to_real(&Real::zero(), &policy).unwrap()
@@ -164743,11 +164695,12 @@ mod conversion_tests {
             let Classification::Decided(candidates) = outcome else {
                 panic!("the selected conjugate circle component must descend exactly: {outcome:?}")
             };
-            let [BezierParallelFixedDistanceParameter2::SelectedFiber(candidate)] =
-                candidates.as_slice()
-            else {
+            let [candidate] = candidates.as_slice() else {
                 panic!("the authored circle sheet must retain its one 60-degree cut")
             };
+            let candidate = candidate
+                .as_selected_fiber()
+                .expect("the authored circle cut must retain its selected fiber");
             assert_eq!(
                 candidate.cmp_bezier_parameter(expected, &policy).unwrap(),
                 Classification::Decided(std::cmp::Ordering::Equal),

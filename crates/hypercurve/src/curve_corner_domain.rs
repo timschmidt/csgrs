@@ -33,41 +33,6 @@ pub(super) fn parameter_order(
     }
 }
 
-pub(super) fn fixed_distance_point(
-    parallel: &BezierParallel2,
-    parameter: crate::bezier_offset::BezierParallelFixedDistanceParameter2,
-    operation: CurveOperation2,
-    family: CurveFamily2,
-    policy: &CurveContext,
-) -> ExactCurveResult<(CurveParameter2, CurvePoint2)> {
-    use crate::bezier_offset::BezierParallelFixedDistanceParameter2;
-    Ok(match parameter {
-        BezierParallelFixedDistanceParameter2::Bezier(parameter) => {
-            let point =
-                analytic_parallel_point_evidence(parallel, &parameter, operation, family, policy)?;
-            (parameter.into(), point)
-        }
-        BezierParallelFixedDistanceParameter2::SelectedFiber(parameter) => {
-            let point = CurvePoint2::from(crate::BezierAnalyticParallelPoint2::new_selected_fiber(
-                parallel.clone(),
-                parameter.clone(),
-                policy,
-            ));
-            (CurveParameter2::from_selected_fiber(parameter), point)
-        }
-        BezierParallelFixedDistanceParameter2::RecursiveProjective(parameter) => {
-            let point = CurvePoint2::from(
-                crate::BezierAnalyticParallelPoint2::new_recursive_projective(
-                    parallel.clone(),
-                    parameter.clone(),
-                    policy,
-                ),
-            );
-            (CurveParameter2::from_recursive_projective(parameter), point)
-        }
-    })
-}
-
 impl Curve2 {
     /// Two cuts on one closed authored curve must leave a nonempty interval
     /// between them. Enumeration over several charts can also produce the
@@ -244,11 +209,9 @@ impl Curve2 {
                     .map_err(|cause| ExactCurveError::invalid(operation, family, cause))?,
                 family,
             )?;
-            for parameter in parameters {
-                let (parameter, point) =
-                    fixed_distance_point(&parallel, parameter, operation, family, policy)?;
+            for chart_parameter in parameters {
                 let parameter = decided(
-                    parameter
+                    chart_parameter
                         .affine_image_unbounded(&(end - start), start, policy)
                         .map_err(|cause| ExactCurveError::invalid(operation, family, cause))?,
                     family,
@@ -258,6 +221,13 @@ impl Curve2 {
                 {
                     continue;
                 }
+                let point = analytic_parallel_point_evidence(
+                    &parallel,
+                    &chart_parameter,
+                    operation,
+                    family,
+                    policy,
+                )?;
                 // Only adjacent closed cells can duplicate a source location.
                 // Retain that seam witness instead of comparing every new
                 // root with every previously published cut. Distinct source

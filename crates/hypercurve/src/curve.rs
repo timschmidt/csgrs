@@ -6578,7 +6578,7 @@ fn fillet_offset_centers(
                 }
                 let point = analytic_parallel_point_evidence(
                     bezier,
-                    &parameter,
+                    &parameter.clone().into(),
                     CurveOperation2::Fillet,
                     bezier_family,
                     policy,
@@ -6811,7 +6811,7 @@ fn fillet_offset_centers(
             for contact in intersections.contacts() {
                 let point = analytic_parallel_point_evidence(
                     previous,
-                    contact.first_parameter(),
+                    &contact.first_parameter().clone().into(),
                     CurveOperation2::Fillet,
                     previous_family,
                     policy,
@@ -7046,7 +7046,7 @@ fn fillet_offset_centers(
                 // avoidable coordinate constructions.
                 let point = analytic_parallel_point_evidence(
                     support,
-                    &parameter,
+                    &parameter.clone().into(),
                     CurveOperation2::Fillet,
                     parallel_family,
                     policy,
@@ -10716,46 +10716,21 @@ fn curve_region_parallel_point_evidence(
     family: CurveFamily2,
     policy: &CurveContext,
 ) -> ExactCurveResult<CurvePoint2> {
-    if let Some(parameter) = parameter.as_bezier_parameter() {
-        return if source_point {
-            bezier_parallel_source_point_evidence(parallel, parameter, operation, family, policy)
-        } else {
-            analytic_parallel_point_evidence(parallel, parameter, operation, family, policy)
-        };
+    if source_point {
+        if let Some(parameter) = parameter.as_bezier_parameter() {
+            return bezier_parallel_source_point_evidence(
+                parallel, parameter, operation, family, policy,
+            );
+        }
+        return analytic_parallel_point_evidence(
+            &parallel.with_distance(Real::zero()),
+            parameter,
+            operation,
+            family,
+            policy,
+        );
     }
-    if let Some(parameter) = parameter.as_selected_fiber() {
-        let parallel = if source_point {
-            parallel.with_distance(Real::zero())
-        } else {
-            parallel.clone()
-        };
-        return Ok(CurvePoint2::from(
-            crate::BezierAnalyticParallelPoint2::new_selected_fiber(
-                parallel,
-                parameter.clone(),
-                policy,
-            ),
-        ));
-    }
-    if let Some(parameter) = parameter.as_recursive_projective() {
-        let parallel = if source_point {
-            parallel.with_distance(Real::zero())
-        } else {
-            parallel.clone()
-        };
-        return Ok(CurvePoint2::from(
-            crate::BezierAnalyticParallelPoint2::new_recursive_projective(
-                parallel,
-                parameter.clone(),
-                policy,
-            ),
-        ));
-    }
-    Err(ExactCurveError::blocked(
-        operation,
-        family,
-        crate::UncertaintyReason::Unsupported,
-    ))
+    analytic_parallel_point_evidence(parallel, parameter, operation, family, policy)
 }
 
 fn bezier_parallel_rational_source(
@@ -11050,20 +11025,28 @@ fn algebraic_chord_chamfer_cuts(
 
 fn analytic_parallel_point_evidence(
     parallel: &BezierParallel2,
-    parameter: &BezierParameter2,
+    parameter: &CurveParameter2,
     operation: CurveOperation2,
     family: CurveFamily2,
     policy: &CurveContext,
 ) -> ExactCurveResult<CurvePoint2> {
-    if let Some(parameter) = parameter.scalar() {
+    if let Some(parameter) = parameter
+        .as_bezier_parameter()
+        .and_then(BezierParameter2::scalar)
+    {
         return decided_parallel_point(parallel, parameter, false, operation, family, policy)
             .map(Into::into);
     }
-    Ok(CurvePoint2::from(crate::BezierAnalyticParallelPoint2::new(
+    crate::BezierAnalyticParallelPoint2::new_with_region_parameter_and_tangent_distance(
         parallel.clone(),
-        parameter.clone(),
+        parameter,
+        Real::zero(),
         policy,
-    )))
+    )
+    .map(CurvePoint2::from)
+    .ok_or_else(|| {
+        ExactCurveError::blocked(operation, family, crate::UncertaintyReason::Unsupported)
+    })
 }
 
 fn retained_parallel_corner_parameter_placement(
@@ -11207,15 +11190,14 @@ fn selected_fiber_chamfer_cuts(
     };
     let mut cuts = CornerCuts2::default();
     for parameter in parameters {
-        let (parameter, point) = curve_corner_domain::fixed_distance_point(
-            &parallel, parameter, operation, family, policy,
-        )?;
         let Some(placement) = selected_fiber_corner_parameter_placement(
             &parameter, fragment, previous, mode, operation, family, policy,
         )?
         else {
             continue;
         };
+        let point =
+            analytic_parallel_point_evidence(&parallel, &parameter, operation, family, policy)?;
         cuts.push(CornerCut2 {
             parameter: Some(parameter),
             point,
@@ -11242,7 +11224,7 @@ fn analytic_parallel_chamfer_cuts(
     };
     let corner = analytic_parallel_point_evidence(
         fragment.parallel(),
-        corner_parameter,
+        &corner_parameter.clone().into(),
         operation,
         family,
         policy,
@@ -11285,82 +11267,19 @@ fn analytic_parallel_chamfer_cuts(
     };
     let mut cuts = CornerCuts2::default();
     for parameter in parameters {
-        let (parameter, point, placement) = match parameter {
-            crate::bezier_offset::BezierParallelFixedDistanceParameter2::Bezier(parameter) => {
-                let Some(placement) = retained_parallel_corner_parameter_placement(
-                    &CurveParameter2::from(parameter.clone()),
-                    fragment,
-                    previous,
-                    mode,
-                    operation,
-                    family,
-                    policy,
-                )?
-                else {
-                    continue;
-                };
-                let point = analytic_parallel_point_evidence(
-                    fragment.parallel(),
-                    &parameter,
-                    operation,
-                    family,
-                    policy,
-                )?;
-                (CurveParameter2::from(parameter), point, placement)
-            }
-            crate::bezier_offset::BezierParallelFixedDistanceParameter2::SelectedFiber(
-                parameter,
-            ) => {
-                let Some(placement) = retained_parallel_corner_parameter_placement(
-                    &CurveParameter2::from_selected_fiber(parameter.clone()),
-                    fragment,
-                    previous,
-                    mode,
-                    operation,
-                    family,
-                    policy,
-                )?
-                else {
-                    continue;
-                };
-                let point =
-                    CurvePoint2::from(crate::BezierAnalyticParallelPoint2::new_selected_fiber(
-                        fragment.parallel().clone(),
-                        parameter.clone(),
-                        policy,
-                    ));
-                (
-                    CurveParameter2::from_selected_fiber(parameter),
-                    point,
-                    placement,
-                )
-            }
-            crate::bezier_offset::BezierParallelFixedDistanceParameter2::RecursiveProjective(
-                parameter,
-            ) => {
-                let curve_parameter = CurveParameter2::from_recursive_projective(parameter.clone());
-                let Some(placement) = retained_parallel_corner_parameter_placement(
-                    &curve_parameter,
-                    fragment,
-                    previous,
-                    mode,
-                    operation,
-                    family,
-                    policy,
-                )?
-                else {
-                    continue;
-                };
-                let point = CurvePoint2::from(
-                    crate::BezierAnalyticParallelPoint2::new_recursive_projective(
-                        fragment.parallel().clone(),
-                        parameter,
-                        policy,
-                    ),
-                );
-                (curve_parameter, point, placement)
-            }
+        let Some(placement) = retained_parallel_corner_parameter_placement(
+            &parameter, fragment, previous, mode, operation, family, policy,
+        )?
+        else {
+            continue;
         };
+        let point = analytic_parallel_point_evidence(
+            fragment.parallel(),
+            &parameter,
+            operation,
+            family,
+            policy,
+        )?;
         cuts.push(CornerCut2 {
             parameter: Some(parameter),
             point,

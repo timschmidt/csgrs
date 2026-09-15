@@ -1687,7 +1687,6 @@ mod tests {
 
     #[test]
     fn source_domain_chamfers_retain_selected_centers_across_different_charts() {
-        use crate::bezier_offset::BezierParallelFixedDistanceParameter2;
         for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
             let center =
                 QuadraticBezier2::from_line_segment(LineSeg2::try_new(p(0, 0), p(2, 0)).unwrap())
@@ -1729,15 +1728,7 @@ mod tests {
             .unwrap();
             assert_eq!(result.certainty, CurveCertainty::Certified);
             assert_eq!(result.value.len(), 1);
-            let actual = match result.value.into_iter().next().unwrap() {
-                BezierParallelFixedDistanceParameter2::Bezier(parameter) => parameter.into(),
-                BezierParallelFixedDistanceParameter2::SelectedFiber(parameter) => {
-                    CurveParameter2::from_selected_fiber(parameter)
-                }
-                BezierParallelFixedDistanceParameter2::RecursiveProjective(parameter) => {
-                    CurveParameter2::from_recursive_projective(parameter)
-                }
-            };
+            let actual = result.value.into_iter().next().unwrap();
             assert_eq!(
                 actual.cmp_by_refinement(&expected, &policy).unwrap(),
                 Classification::Decided(Ordering::Equal)
