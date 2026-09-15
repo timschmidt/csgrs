@@ -57,8 +57,8 @@ fn pair_has_exact_parameters(
     second: Real,
 ) -> bool {
     contacts.iter().any(|contact| {
-        contact.first_parameter() == &BezierParameter2::Exact(first.clone())
-            && contact.second_parameter() == &BezierParameter2::Exact(second.clone())
+        contact.first_parameter().scalar() == Some(&first)
+            && contact.second_parameter().scalar() == Some(&second)
     })
 }
 
@@ -1348,8 +1348,8 @@ fn parallel_pair_replays_a_general_non_ph_contact_under_both_policies() {
             .contacts()
             .iter()
             .find(|contact| {
-                contact.first_parameter() == &BezierParameter2::Exact(r(0))
-                    && contact.second_parameter() == &BezierParameter2::Exact(r(0))
+                contact.first_parameter().scalar() == Some(&r(0))
+                    && contact.second_parameter().scalar() == Some(&r(0))
             })
             .unwrap();
         assert!(contact.is_certified_transverse());
@@ -1571,14 +1571,18 @@ fn parallel_pair_component_saturation_retains_residual_isolated_contact() {
         assert!(intersections.is_complete(), "{intersections:?}");
         assert!(intersections.overlaps().is_empty());
         assert_eq!(intersections.contacts().len(), 1, "{intersections:?}");
-        assert!(matches!(
-            intersections.contacts()[0].first_parameter(),
-            BezierParameter2::Algebraic(_)
-        ));
-        assert!(matches!(
-            intersections.contacts()[0].second_parameter(),
-            BezierParameter2::Algebraic(_)
-        ));
+        assert!(
+            intersections.contacts()[0]
+                .first_parameter()
+                .scalar()
+                .is_none()
+        );
+        assert!(
+            intersections.contacts()[0]
+                .second_parameter()
+                .scalar()
+                .is_none()
+        );
     }
 }
 
@@ -1647,8 +1651,8 @@ fn parallel_pair_rational_delegate_preserves_operand_parameter_order() {
             .contacts()
             .iter()
             .find(|contact| {
-                contact.first_parameter() == &BezierParameter2::Exact(r(0))
-                    && contact.second_parameter() == &BezierParameter2::Exact(r(0))
+                contact.first_parameter().scalar() == Some(&r(0))
+                    && contact.second_parameter().scalar() == Some(&r(0))
             })
             .unwrap();
         assert_eq!(
@@ -1668,8 +1672,8 @@ fn parallel_pair_rational_delegate_preserves_operand_parameter_order() {
             .contacts()
             .iter()
             .find(|contact| {
-                contact.first_parameter() == &BezierParameter2::Exact(r(0))
-                    && contact.second_parameter() == &BezierParameter2::Exact(r(0))
+                contact.first_parameter().scalar() == Some(&r(0))
+                    && contact.second_parameter().scalar() == Some(&r(0))
             })
             .unwrap();
         assert_eq!(

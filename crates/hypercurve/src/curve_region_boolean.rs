@@ -4732,7 +4732,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
                     .contacts()
                     .iter()
                     .map(|contact| {
-                        RegionPairContactEvidence::direct_bezier(
+                        RegionPairContactEvidence::direct(
                             contact.first_parameter().clone(),
                             contact.second_parameter().clone(),
                             None,
@@ -21173,14 +21173,10 @@ mod certified_successor_tests {
                     .contacts()
                     .iter()
                     .filter(|contact| {
-                        parameter_in_carrier(
-                            &carrier_parameter(contact.first_parameter().clone()),
-                            first,
-                            &replay_policy,
-                        )
-                        .expect("the first contact range comparison is decided")
+                        parameter_in_carrier(contact.first_parameter(), first, &replay_policy)
+                            .expect("the first contact range comparison is decided")
                             && parameter_in_carrier(
-                                &carrier_parameter(contact.second_parameter().clone()),
+                                contact.second_parameter(),
                                 second,
                                 &replay_policy,
                             )
@@ -21211,8 +21207,8 @@ mod certified_successor_tests {
                 };
                 assert!(retained_contacts.len() <= 1, "{retained_contacts:?}");
                 assert!(retained_contacts.iter().all(|contact| {
-                    Some(contact.first_parameter()) == expected.0.as_bezier_parameter()
-                        && Some(contact.second_parameter()) == expected.1.as_bezier_parameter()
+                    contact.first_parameter() == expected.0
+                        && contact.second_parameter() == expected.1
                 }));
             }
         }

@@ -1867,6 +1867,78 @@ mod tests {
     }
 
     #[test]
+    fn finite_parallel_pair_fillets_keep_exterior_source_domains() {
+        // P(x)=(x,x^2). At radius 5/8 the two left normals at x=+-3/8
+        // meet at (0,41/64). Both contacts are interior to the retained
+        // halves, independently of where their source chart was authored.
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            for shift in [0, 2, -3] {
+                let shift = Real::from(shift);
+                let end_x = Real::one() - &shift;
+                let source = RationalBezier2::try_new(
+                    vec![
+                        Point2::new(-&shift, &shift * &shift),
+                        Point2::new(q(1, 2) - &shift, &shift * &shift - &shift),
+                        Point2::new(end_x.clone(), &end_x * &end_x),
+                    ],
+                    vec![Real::one(); 3],
+                )
+                .unwrap();
+                let fragment = |lower: i32, upper: i32| {
+                    Curve2::from_retained_fragment(BezierSplitFragment2::SelectedFiber(
+                        crate::bezier_split::BezierSelectedFiberFragment2::new(
+                            crate::bezier_split::BezierSelectedFiberSource2::Rational(
+                                source.clone(),
+                            ),
+                            CurveParameterRange2::new_validated(
+                                (Real::from(lower) + &shift).into(),
+                                (Real::from(upper) + &shift).into(),
+                            ),
+                            p(lower, lower * lower).into(),
+                            p(upper, upper * upper).into(),
+                        ),
+                    ))
+                };
+                let path = CurvePath2::try_new(vec![fragment(-1, 0), fragment(0, 1)]).unwrap();
+                for reversed in [false, true] {
+                    let path = if reversed {
+                        path.reversed(&policy).unwrap().value
+                    } else {
+                        path.clone()
+                    };
+                    let result = path
+                        .fillet_vertex_by_radius(1, q(5, 8), CurveCornerMode2::TrimOnly, &policy)
+                        .unwrap_or_else(|error| {
+                            panic!(
+                                "shift={shift:?}, reversed={reversed}, policy={policy:?}: {error:?}"
+                            )
+                        });
+                    assert_eq!(result.certainty, CurveCertainty::Certified);
+                    let CurveCornerSolutions2::Unique(candidate) = result.value else {
+                        panic!("the finite parabola halves must retain their unique exact fillet");
+                    };
+                    let sign = if reversed { 1 } else { -1 };
+                    assert_same(
+                        &candidate.curves()[0].end(),
+                        &Point2::new(q(sign * 3, 8), q(9, 64)).into(),
+                        &policy,
+                    );
+                    assert_same(
+                        &candidate.curves().last().unwrap().start(),
+                        &Point2::new(q(-sign * 3, 8), q(9, 64)).into(),
+                        &policy,
+                    );
+                    assert_same(&candidate.start(), &path.start(), &policy);
+                    assert_same(&candidate.end(), &path.end(), &policy);
+                    for adjacent in candidate.curves().windows(2) {
+                        assert_same(&adjacent[0].end(), &adjacent[1].start(), &policy);
+                    }
+                }
+            }
+        }
+    }
+
+    #[test]
     fn exterior_circular_intervals_retain_complete_corner_contacts() {
         for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
             for shift in [2, -3] {
