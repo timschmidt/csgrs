@@ -4453,7 +4453,7 @@ impl FilletParallelSource2<'_> {
                     )
                 })?;
                 match domain
-                    .contains_extension_curve_parameter(parameter, policy)
+                    .contains_extension_parameter(parameter, policy)
                     .map_err(|cause| {
                         ExactCurveError::invalid(CurveOperation2::Fillet, family, cause)
                     })? {

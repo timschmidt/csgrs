@@ -22849,7 +22849,7 @@ impl BezierAlgebraicCuspSemicircle2 {
             };
             let in_incident = match incident {
                 Some(incident) => {
-                    incident.contains_extension_curve_parameter(&other_parameter, policy)?
+                    incident.contains_extension_parameter(&other_parameter, policy)?
                 }
                 None => Classification::Decided(false),
             };
@@ -111882,7 +111882,7 @@ impl BezierParallel2 {
                         let Some(incident) = incident.as_ref() else {
                             continue;
                         };
-                        match incident.contains_extension_curve_parameter(
+                        match incident.contains_extension_parameter(
                             &CurveParameter2::from_recursive_projective(candidate.clone()),
                             policy,
                         )? {
@@ -112009,7 +112009,7 @@ impl BezierParallel2 {
                 let Some(incident) = incident.as_ref() else {
                     continue;
                 };
-                match incident.contains_extension_curve_parameter(
+                match incident.contains_extension_parameter(
                     &CurveParameter2::from(candidate.clone()),
                     policy,
                 )? {
@@ -125139,16 +125139,7 @@ impl BezierParallelIncidentDomain2 {
         }
     }
 
-    #[cfg(test)]
     pub(crate) fn contains_extension_parameter(
-        &self,
-        parameter: &BezierParameter2,
-        policy: &CurveContext,
-    ) -> CurveResult<Classification<bool>> {
-        self.contains_extension_curve_parameter(&CurveParameter2::from(parameter.clone()), policy)
-    }
-
-    pub(crate) fn contains_extension_curve_parameter(
         &self,
         parameter: &CurveParameter2,
         policy: &CurveContext,
@@ -158385,13 +158376,19 @@ mod conversion_tests {
             );
             assert_eq!(
                 domain
-                    .contains_extension_parameter(&BezierParameter2::Exact(half.clone()), &policy,)
+                    .contains_extension_parameter(
+                        &CurveParameter2::from(BezierParameter2::Exact(half.clone())),
+                        &policy,
+                    )
                     .unwrap(),
                 Classification::Decided(true),
             );
             assert_eq!(
                 domain
-                    .contains_extension_parameter(&BezierParameter2::Exact(-Real::one()), &policy,)
+                    .contains_extension_parameter(
+                        &CurveParameter2::from(BezierParameter2::Exact(-Real::one())),
+                        &policy,
+                    )
                     .unwrap(),
                 Classification::Decided(false),
             );
@@ -158407,14 +158404,17 @@ mod conversion_tests {
             let reversed = domain.reversed();
             assert_eq!(
                 reversed
-                    .contains_extension_parameter(&BezierParameter2::Exact(half.clone()), &policy,)
+                    .contains_extension_parameter(
+                        &CurveParameter2::from(BezierParameter2::Exact(half.clone())),
+                        &policy,
+                    )
                     .unwrap(),
                 Classification::Decided(true),
             );
             assert_eq!(
                 reversed
                     .contains_extension_parameter(
-                        &BezierParameter2::Exact(Real::from(2_i8)),
+                        &CurveParameter2::from(BezierParameter2::Exact(Real::from(2_i8))),
                         &policy,
                     )
                     .unwrap(),
@@ -162094,7 +162094,7 @@ mod conversion_tests {
             assert!(incident.barrier().is_none());
             assert_eq!(
                 incident
-                    .contains_extension_curve_parameter(
+                    .contains_extension_parameter(
                         &CurveParameter2::from(BezierParameter2::Exact(Real::from(2_i8),)),
                         &policy,
                     )
