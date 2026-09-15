@@ -6492,7 +6492,12 @@ struct BezierRecursiveMonotoneRefinementCache2 {
 enum BezierRecursiveProjectiveParameterAuthority2 {
     Projective(BezierRecursiveQuadraticProjectiveScalar2),
     Monotone(BezierRecursiveMonotoneParameter2),
-    Polynomial(Arc<BezierRecursivePolynomialParameterAuthority2>),
+    Polynomial {
+        authority: Arc<BezierRecursivePolynomialParameterAuthority2>,
+        // These signs belong to the parameter's immutable bounds, not to
+        // the shared polynomial. Ordering may need only the lower sign.
+        endpoint_signs: [OnceLock<RealSign>; 2],
+    },
 }
 
 /// Shared exact authority for roots selected directly over one recursive
@@ -58037,6 +58042,12 @@ impl BezierRecursivePolynomialParameterAuthority2 {
         parameter: &Real,
         policy: &CurveContext,
     ) -> CurveResult<Classification<RealSign>> {
+        #[cfg(feature = "dispatch-trace")]
+        hyperreal::dispatch_trace::record(
+            "hypercurve",
+            "recursive-polynomial-sign",
+            "defining-at-real",
+        );
         self.sign_at_real(&self.coefficients, parameter, policy)
     }
 
@@ -58055,13 +58066,13 @@ impl BezierRecursivePolynomialParameterAuthority2 {
         let strict = policy.strict_counterpart();
         let mut lower = parameter.data.lower.clone();
         let mut upper = parameter.data.upper.clone();
-        let lower_sign = match self.defining_sign_at_real(&lower, &strict)? {
+        let lower_sign = match parameter.polynomial_endpoint_sign(0, &strict)? {
             Classification::Decided(sign) => sign,
             Classification::Uncertain(reason) => {
                 return Ok(Classification::Uncertain(reason));
             }
         };
-        let upper_sign = match self.defining_sign_at_real(&upper, &strict)? {
+        let upper_sign = match parameter.polynomial_endpoint_sign(1, &strict)? {
             Classification::Decided(sign) => sign,
             Classification::Uncertain(reason) => {
                 return Ok(Classification::Uncertain(reason));
@@ -58098,10 +58109,21 @@ impl BezierRecursivePolynomialParameterAuthority2 {
                 upper = midpoint;
             }
         }
+        let signs = if lower == upper {
+            [RealSign::Zero; 2]
+        } else {
+            [lower_sign, upper_sign]
+        };
         Ok(Classification::Decided(
             BezierRecursiveProjectiveParameter2 {
                 data: Arc::new(BezierRecursiveProjectiveParameterData2 {
-                    authority: parameter.data.authority.clone(),
+                    authority: BezierRecursiveProjectiveParameterAuthority2::Polynomial {
+                        authority: parameter
+                            .polynomial_authority()
+                            .expect("a local root retains its defining polynomial")
+                            .clone(),
+                        endpoint_signs: signs.map(OnceLock::from),
+                    },
                     lower,
                     upper,
                     refinement_steps: target_steps,
@@ -58378,24 +58400,50 @@ impl BezierRecursiveProjectiveParameter2 {
         match &self.data.authority {
             BezierRecursiveProjectiveParameterAuthority2::Projective(scalar) => Some(scalar),
             BezierRecursiveProjectiveParameterAuthority2::Monotone(_)
-            | BezierRecursiveProjectiveParameterAuthority2::Polynomial(_) => None,
+            | BezierRecursiveProjectiveParameterAuthority2::Polynomial { .. } => None,
         }
     }
 
     fn monotone_authority(&self) -> Option<&BezierRecursiveMonotoneParameter2> {
         match &self.data.authority {
             BezierRecursiveProjectiveParameterAuthority2::Projective(_)
-            | BezierRecursiveProjectiveParameterAuthority2::Polynomial(_) => None,
+            | BezierRecursiveProjectiveParameterAuthority2::Polynomial { .. } => None,
             BezierRecursiveProjectiveParameterAuthority2::Monotone(authority) => Some(authority),
         }
     }
 
     fn polynomial_authority(&self) -> Option<&Arc<BezierRecursivePolynomialParameterAuthority2>> {
         match &self.data.authority {
-            BezierRecursiveProjectiveParameterAuthority2::Polynomial(authority) => Some(authority),
+            BezierRecursiveProjectiveParameterAuthority2::Polynomial { authority, .. } => {
+                Some(authority)
+            }
             BezierRecursiveProjectiveParameterAuthority2::Projective(_)
             | BezierRecursiveProjectiveParameterAuthority2::Monotone(_) => None,
         }
+    }
+
+    fn polynomial_endpoint_sign(
+        &self,
+        endpoint: usize,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<RealSign>> {
+        let BezierRecursiveProjectiveParameterAuthority2::Polynomial {
+            authority,
+            endpoint_signs,
+        } = &self.data.authority
+        else {
+            unreachable!("a local polynomial endpoint retains its defining authority")
+        };
+        if let Some(sign) = endpoint_signs[endpoint].get() {
+            return Ok(Classification::Decided(*sign));
+        }
+        let value = [&self.data.lower, &self.data.upper][endpoint];
+        let result =
+            policy.strict_predicate_pass(|| authority.defining_sign_at_real(value, policy))?;
+        if let Classification::Decided(sign) = result {
+            let _ = endpoint_signs[endpoint].set(sign);
+        }
+        Ok(result)
     }
 
     fn shares_polynomial_root(&self, other: &Self) -> bool {
@@ -58806,7 +58854,7 @@ impl BezierRecursiveProjectiveParameter2 {
             return Ok(Classification::Decided(RealSign::Zero));
         };
         match &self.data.authority {
-            BezierRecursiveProjectiveParameterAuthority2::Polynomial(authority) => {
+            BezierRecursiveProjectiveParameterAuthority2::Polynomial { authority, .. } => {
                 authority.polynomial_sign_at_parameter(self, &coefficients[..=degree], policy)
             }
             BezierRecursiveProjectiveParameterAuthority2::Projective(scalar) => {
@@ -58894,9 +58942,18 @@ impl BezierRecursiveProjectiveParameter2 {
             });
             let parameter = Self {
                 data: Arc::new(BezierRecursiveProjectiveParameterData2 {
-                    authority: BezierRecursiveProjectiveParameterAuthority2::Polynomial(
-                        authority.clone(),
-                    ),
+                    authority: BezierRecursiveProjectiveParameterAuthority2::Polynomial {
+                        authority: authority.clone(),
+                        // Exact field embedding preserves the polynomial's
+                        // values at these unchanged endpoints.
+                        endpoint_signs: match &self.data.authority {
+                            BezierRecursiveProjectiveParameterAuthority2::Polynomial {
+                                endpoint_signs,
+                                ..
+                            } => endpoint_signs.clone(),
+                            _ => unreachable!("field replay retains a local polynomial root"),
+                        },
+                    },
                     lower: self.data.lower.clone(),
                     upper: self.data.upper.clone(),
                     refinement_steps: self.data.refinement_steps,
@@ -59084,14 +59141,12 @@ impl BezierRecursiveProjectiveParameter2 {
         policy: &CurveContext,
     ) -> CurveResult<Classification<std::cmp::Ordering>> {
         self.validate_policy(policy)?;
-        if compare_reals(&self.data.upper, value, &CurveContext::STRICT)
-            == Some(std::cmp::Ordering::Less)
-        {
+        let upper_order = compare_reals(&self.data.upper, value, &CurveContext::STRICT);
+        if upper_order == Some(std::cmp::Ordering::Less) {
             return Ok(Classification::Decided(std::cmp::Ordering::Less));
         }
-        if compare_reals(value, &self.data.lower, &CurveContext::STRICT)
-            == Some(std::cmp::Ordering::Less)
-        {
+        let lower_order = compare_reals(value, &self.data.lower, &CurveContext::STRICT);
+        if lower_order == Some(std::cmp::Ordering::Less) {
             return Ok(Classification::Decided(std::cmp::Ordering::Greater));
         }
         match &self.data.authority {
@@ -59101,20 +59156,23 @@ impl BezierRecursiveProjectiveParameter2 {
             BezierRecursiveProjectiveParameterAuthority2::Monotone(authority) => {
                 authority.order_to_real(value, policy)
             }
-            BezierRecursiveProjectiveParameterAuthority2::Polynomial(authority) => {
-                let sign =
-                    match authority.defining_sign_at_real(value, &policy.strict_counterpart())? {
-                        Classification::Decided(sign) => sign,
-                        Classification::Uncertain(reason) => {
-                            return Ok(Classification::Uncertain(reason));
-                        }
-                    };
+            BezierRecursiveProjectiveParameterAuthority2::Polynomial { authority, .. } => {
+                let sign = match if lower_order == Some(std::cmp::Ordering::Equal) {
+                    self.polynomial_endpoint_sign(0, policy)
+                } else if upper_order == Some(std::cmp::Ordering::Equal) {
+                    self.polynomial_endpoint_sign(1, policy)
+                } else {
+                    authority.defining_sign_at_real(value, &policy.strict_counterpart())
+                }? {
+                    Classification::Decided(sign) => sign,
+                    Classification::Uncertain(reason) => {
+                        return Ok(Classification::Uncertain(reason));
+                    }
+                };
                 if sign == RealSign::Zero {
                     return Ok(Classification::Decided(std::cmp::Ordering::Equal));
                 }
-                let lower_sign = match authority
-                    .defining_sign_at_real(&self.data.lower, &policy.strict_counterpart())?
-                {
+                let lower_sign = match self.polynomial_endpoint_sign(0, policy)? {
                     Classification::Decided(sign) => sign,
                     Classification::Uncertain(reason) => {
                         return Ok(Classification::Uncertain(reason));
@@ -59694,14 +59752,22 @@ impl BezierRecursiveProjectiveParameter2 {
             else {
                 return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
             };
+            // The transformed polynomial can have a different orientation.
+            // Only an exact point bracket preserves its zero endpoint signs.
+            let endpoint_signs = if lower == upper {
+                [RealSign::Zero; 2].map(OnceLock::from)
+            } else {
+                std::array::from_fn(|_| OnceLock::new())
+            };
             return Ok(Classification::Decided(Self {
                 data: Arc::new(BezierRecursiveProjectiveParameterData2 {
-                    authority: BezierRecursiveProjectiveParameterAuthority2::Polynomial(Arc::new(
-                        BezierRecursivePolynomialParameterAuthority2 {
+                    authority: BezierRecursiveProjectiveParameterAuthority2::Polynomial {
+                        authority: Arc::new(BezierRecursivePolynomialParameterAuthority2 {
                             field: authority.field.clone(),
                             coefficients,
-                        },
-                    )),
+                        }),
+                        endpoint_signs,
+                    },
                     lower,
                     upper,
                     refinement_steps: refined.data.refinement_steps,
@@ -64198,9 +64264,10 @@ fn recursive_quadratic_polynomial_local_unit_parameters(
             } else {
                 CurveParameter2::from_recursive_projective(BezierRecursiveProjectiveParameter2 {
                     data: Arc::new(BezierRecursiveProjectiveParameterData2 {
-                        authority: BezierRecursiveProjectiveParameterAuthority2::Polynomial(
-                            authority.clone(),
-                        ),
+                        authority: BezierRecursiveProjectiveParameterAuthority2::Polynomial {
+                            authority: authority.clone(),
+                            endpoint_signs: std::array::from_fn(|_| OnceLock::new()),
+                        },
                         lower: root.lower,
                         upper: root.upper,
                         refinement_steps: 0,
@@ -64281,7 +64348,15 @@ fn recursive_projective_polynomial_unit_parameters_with_crossing(
         });
         let parameter = BezierRecursiveProjectiveParameter2 {
             data: Arc::new(BezierRecursiveProjectiveParameterData2 {
-                authority: BezierRecursiveProjectiveParameterAuthority2::Polynomial(authority),
+                authority: BezierRecursiveProjectiveParameterAuthority2::Polynomial {
+                    authority,
+                    endpoint_signs: if crossing.lower == crossing.upper {
+                        [RealSign::Zero; 2]
+                    } else {
+                        [crossing.start_sign, crossing.end_sign]
+                    }
+                    .map(OnceLock::from),
+                },
                 lower: crossing.lower.clone(),
                 upper: crossing.upper.clone(),
                 refinement_steps: 0,
@@ -91062,7 +91137,7 @@ impl BezierAlgebraicChordParallelPoint2 {
                                 "projective"
                             }
                             BezierRecursiveProjectiveParameterAuthority2::Monotone(_) => "monotone",
-                            BezierRecursiveProjectiveParameterAuthority2::Polynomial(_) => {
+                            BezierRecursiveProjectiveParameterAuthority2::Polynomial { .. } => {
                                 "polynomial"
                             }
                         };
@@ -150899,10 +150974,27 @@ mod conversion_tests {
             for depth in [0, 2, 8, 16] {
                 let previous_width = &current.data.upper - &current.data.lower;
                 let previous_depth = current.data.refinement_steps;
-                let Classification::Decided(refined) = current.refined(depth, &policy).unwrap()
-                else {
+                #[cfg(feature = "dispatch-trace")]
+                hyperreal::dispatch_trace::reset();
+                let work = || current.refined(depth, &policy);
+                #[cfg(feature = "dispatch-trace")]
+                let result = hyperreal::dispatch_trace::with_recording(work).unwrap();
+                #[cfg(not(feature = "dispatch-trace"))]
+                let result = work().unwrap();
+                let Classification::Decided(refined) = result else {
                     panic!("the retained cubic root must refine exactly")
                 };
+                #[cfg(feature = "dispatch-trace")]
+                if previous_depth > 0 || depth == 0 {
+                    assert!(
+                        hyperreal::dispatch_trace::take_trace().path_count(
+                            "hypercurve",
+                            "recursive-polynomial-sign",
+                            "defining-at-real",
+                        ) <= (depth - previous_depth) as u64,
+                        "deeper requests must reuse the certified endpoint signs"
+                    );
+                }
                 assert!(root.shares_polynomial_root(&refined));
                 assert_eq!(
                     &refined.data.upper - &refined.data.lower,
@@ -150921,6 +151013,70 @@ mod conversion_tests {
                 }
                 current = refined;
             }
+            // Both endpoints are reusable across clones. A comparison at a
+            // certified endpoint needs no polynomial reconstruction either.
+            #[cfg(feature = "dispatch-trace")]
+            hyperreal::dispatch_trace::reset();
+            let endpoint_orders = || {
+                for (value, expected) in [
+                    (&current.data.lower, std::cmp::Ordering::Greater),
+                    (&current.data.upper, std::cmp::Ordering::Less),
+                ] {
+                    assert_eq!(
+                        current.clone().order_to_real(value, &policy).unwrap(),
+                        Classification::Decided(expected)
+                    );
+                }
+            };
+            #[cfg(feature = "dispatch-trace")]
+            {
+                hyperreal::dispatch_trace::with_recording(endpoint_orders);
+                assert_eq!(
+                    hyperreal::dispatch_trace::take_trace().path_count(
+                        "hypercurve",
+                        "recursive-polynomial-sign",
+                        "defining-at-real",
+                    ),
+                    0
+                );
+            }
+            #[cfg(not(feature = "dispatch-trace"))]
+            endpoint_orders();
+            // A query in a larger coefficient field embeds this same root.
+            // Its first deeper request must retain the endpoint proof too.
+            let extended = field
+                .extension(field.constant(Real::from(5_i8)).unwrap())
+                .unwrap();
+            let midpoint =
+                ((&current.data.lower + &current.data.upper) / Real::from(2_i8)).unwrap();
+            let midpoint_sign = real_sign(
+                &(midpoint.clone().powi_i64(3).unwrap() - &half),
+                &CurveContext::STRICT,
+            )
+            .unwrap();
+            let query =
+                recursive_quadratic_real_polynomial(&extended, &[-midpoint, Real::one()]).unwrap();
+            #[cfg(feature = "dispatch-trace")]
+            hyperreal::dispatch_trace::reset();
+            let embedded_query = || current.recursive_polynomial_sign_joined(&query, &policy);
+            #[cfg(feature = "dispatch-trace")]
+            let embedded_result =
+                hyperreal::dispatch_trace::with_recording(embedded_query).unwrap();
+            #[cfg(not(feature = "dispatch-trace"))]
+            let embedded_result = embedded_query().unwrap();
+            assert_eq!(
+                embedded_result,
+                Classification::Decided(product_sign(midpoint_sign, RealSign::Negative))
+            );
+            #[cfg(feature = "dispatch-trace")]
+            assert!(
+                hyperreal::dispatch_trace::take_trace().path_count(
+                    "hypercurve",
+                    "recursive-polynomial-sign",
+                    "defining-at-real",
+                ) <= 16,
+                "exact field embedding must reuse the original endpoint signs"
+            );
             assert_eq!(
                 current.order_to_real(&half, &policy).unwrap(),
                 Classification::Decided(std::cmp::Ordering::Greater),
@@ -150935,6 +151091,26 @@ mod conversion_tests {
             else {
                 panic!("a certified nonzero root has an exact reciprocal chart")
             };
+            let Classification::Decided(reciprocal) = reciprocal
+                .refined(current.data.refinement_steps + 2, &policy)
+                .unwrap()
+            else {
+                panic!("the reciprocal chart must retain the selected root")
+            };
+            // 1-v^3/2 decreases through the reciprocal root, reversing the
+            // defining polynomial's original endpoint signs.
+            for (value, expected) in [
+                (&reciprocal.data.lower, RealSign::Positive),
+                (&reciprocal.data.upper, RealSign::Negative),
+            ] {
+                assert_eq!(
+                    real_sign(
+                        &(Real::one() - &half * value.clone().powi_i64(3).unwrap()),
+                        &CurveContext::STRICT,
+                    ),
+                    Some(expected)
+                );
+            }
             for (value, expected) in [
                 (Real::one(), std::cmp::Ordering::Greater),
                 (Real::from(2_i8), std::cmp::Ordering::Less),
@@ -150943,6 +151119,111 @@ mod conversion_tests {
                     reciprocal.order_to_real(&value, &policy).unwrap(),
                     Classification::Decided(expected)
                 );
+            }
+        }
+    }
+
+    #[test]
+    fn recursive_polynomial_crossing_signs_survive_exact_midpoint_collapse() {
+        let one = DenseTensorPolynomial::try_new(vec![], vec![Real::one()]).unwrap();
+        let field = BezierRecursiveQuadraticField2::base(vec![], one.clone(), one).unwrap();
+        let half = (Real::one() / Real::from(2_i8)).unwrap();
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            for gauge in [Real::one(), Real::from(-1_i8)] {
+                for already_collapsed in [false, true] {
+                    let coefficients = recursive_quadratic_real_polynomial(
+                        &field,
+                        &[-&half * &gauge, gauge.clone()],
+                    )
+                    .unwrap();
+                    let (start_sign, end_sign) = if gauge == Real::one() {
+                        (RealSign::Negative, RealSign::Positive)
+                    } else {
+                        (RealSign::Positive, RealSign::Negative)
+                    };
+                    let crossing = BezierRecursiveQuadraticUnitCrossing2 {
+                        start_sign,
+                        end_sign,
+                        leading_sign: None,
+                        lower: if already_collapsed {
+                            half.clone()
+                        } else {
+                            Real::zero()
+                        },
+                        upper: if already_collapsed {
+                            half.clone()
+                        } else {
+                            Real::one()
+                        },
+                    };
+                    let Classification::Decided(parameters) =
+                        recursive_projective_polynomial_unit_parameters_with_crossing(
+                            &field,
+                            coefficients,
+                            Some(crossing),
+                            &policy,
+                        )
+                        .unwrap()
+                    else {
+                        panic!("the geometric crossing certifies its local root")
+                    };
+                    let root = parameters[0].as_recursive_projective().unwrap();
+                    #[cfg(feature = "dispatch-trace")]
+                    hyperreal::dispatch_trace::reset();
+                    let collapse = || root.refined(1, &policy);
+                    #[cfg(feature = "dispatch-trace")]
+                    let result = hyperreal::dispatch_trace::with_recording(collapse).unwrap();
+                    #[cfg(not(feature = "dispatch-trace"))]
+                    let result = collapse().unwrap();
+                    let Classification::Decided(refined) = result else {
+                        panic!("a linear crossing collapses at its exact midpoint")
+                    };
+                    #[cfg(feature = "dispatch-trace")]
+                    assert_eq!(
+                        hyperreal::dispatch_trace::take_trace().path_count(
+                            "hypercurve",
+                            "recursive-polynomial-sign",
+                            "defining-at-real",
+                        ),
+                        u64::from(!already_collapsed),
+                        "construction already supplied the exact endpoint signs"
+                    );
+                    assert_eq!(refined.data.lower, half);
+                    assert_eq!(refined.data.upper, half);
+                    assert!(root.shares_polynomial_root(&refined));
+                    #[cfg(feature = "dispatch-trace")]
+                    hyperreal::dispatch_trace::reset();
+                    let replay = || {
+                        let Classification::Decided(refined) = refined.refined(8, &policy).unwrap()
+                        else {
+                            panic!("the exact point bracket remains reusable")
+                        };
+                        for (value, expected) in [
+                            (Real::zero(), std::cmp::Ordering::Greater),
+                            (half.clone(), std::cmp::Ordering::Equal),
+                            (Real::one(), std::cmp::Ordering::Less),
+                        ] {
+                            assert_eq!(
+                                refined.order_to_real(&value, &policy).unwrap(),
+                                Classification::Decided(expected)
+                            );
+                        }
+                    };
+                    #[cfg(feature = "dispatch-trace")]
+                    {
+                        hyperreal::dispatch_trace::with_recording(replay);
+                        assert_eq!(
+                            hyperreal::dispatch_trace::take_trace().path_count(
+                                "hypercurve",
+                                "recursive-polynomial-sign",
+                                "defining-at-real",
+                            ),
+                            0
+                        );
+                    }
+                    #[cfg(not(feature = "dispatch-trace"))]
+                    replay();
+                }
             }
         }
     }
