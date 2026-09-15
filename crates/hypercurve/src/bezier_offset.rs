@@ -55476,8 +55476,9 @@ impl BezierRecursiveQuadraticField2 {
 impl BezierRecursiveQuadraticValue2 {
     /// Removes a positive common rational coefficient scale from a tuple
     /// used projectively or for signs. Selected fields and radical generators
-    /// remain identical. If normalization is unavailable, every value stays
-    /// unchanged, including its shared identity and cached scalar witness.
+    /// remain identical; existing scalar witnesses receive the same scale.
+    /// If normalization is unavailable, every value stays unchanged,
+    /// including its shared identity and cached scalar witness.
     fn normalize_positive_scale(values: &mut [Self]) {
         fn collect<'a>(
             value: &'a BezierRecursiveQuadraticValue2,
@@ -55513,12 +55514,21 @@ impl BezierRecursiveQuadraticValue2 {
         fn rebuild(
             value: &BezierRecursiveQuadraticValue2,
             coefficients: &mut impl Iterator<Item = num::BigInt>,
+            scale: &Real,
             memo: &mut std::collections::HashMap<usize, BezierRecursiveQuadraticValue2>,
         ) -> Option<BezierRecursiveQuadraticValue2> {
             let identity = Arc::as_ptr(&value.data) as usize;
             if let Some(value) = memo.get(&identity) {
                 return Some(value.clone());
             }
+            // Reuse only an already known scalar projection. Its positive
+            // rescaling preserves selected-root identity and refinements;
+            // absent witnesses remain demand-driven.
+            let real_witness = value
+                .real_witness()
+                .get()
+                .map(|witness| witness * scale)
+                .map_or_else(OnceLock::new, OnceLock::from);
             let data = match value.data.as_ref() {
                 BezierRecursiveQuadraticValueData2::Base {
                     field, expression, ..
@@ -55543,7 +55553,7 @@ impl BezierRecursiveQuadraticValue2 {
                             second: polynomial(&expression.second)?,
                             product: polynomial(&expression.product)?,
                         },
-                        real_witness: std::sync::OnceLock::new(),
+                        real_witness,
                     }
                 }
                 BezierRecursiveQuadraticValueData2::Extension {
@@ -55553,9 +55563,9 @@ impl BezierRecursiveQuadraticValue2 {
                     ..
                 } => BezierRecursiveQuadraticValueData2::Extension {
                     field: field.clone(),
-                    retained: rebuild(retained, coefficients, memo)?,
-                    radical: rebuild(radical, coefficients, memo)?,
-                    real_witness: std::sync::OnceLock::new(),
+                    retained: rebuild(retained, coefficients, scale, memo)?,
+                    radical: rebuild(radical, coefficients, scale, memo)?,
+                    real_witness,
                 },
             };
             let result = BezierRecursiveQuadraticValue2 {
@@ -55574,21 +55584,20 @@ impl BezierRecursiveQuadraticValue2 {
             let normalized = HyperRational::primitive_bigint_ratio(&coefficients);
             // A nonzero coefficient identifies the common scale. An unchanged
             // tuple keeps every shared value and its retained scalar witness.
-            if coefficients
+            let (source, target) = coefficients
                 .iter()
                 .zip(&normalized)
-                .find(|(source, _)| !source.is_zero())
-                .is_none_or(|(source, target)| {
-                    **source == HyperRational::from_bigint(target.clone())
-                })
-            {
+                .find(|(source, _)| !source.is_zero())?;
+            let target = HyperRational::from_bigint(target.clone());
+            if **source == target {
                 return None;
             }
+            let scale = Real::new(target / *source);
             let mut normalized = normalized.into_iter();
             let mut memo = std::collections::HashMap::new();
             let result = values
                 .iter()
-                .map(|value| rebuild(value, &mut normalized, &mut memo))
+                .map(|value| rebuild(value, &mut normalized, &scale, &mut memo))
                 .collect::<Option<Vec<_>>>()?;
             debug_assert!(normalized.next().is_none());
             Some(result)
@@ -56031,15 +56040,19 @@ impl BezierRecursiveQuadraticValue2 {
         }
     }
 
+    fn real_witness(&self) -> &OnceLock<Real> {
+        match self.data.as_ref() {
+            BezierRecursiveQuadraticValueData2::Base { real_witness, .. }
+            | BezierRecursiveQuadraticValueData2::Extension { real_witness, .. } => real_witness,
+        }
+    }
+
     /// Retains a canonical `Real` when every generator used by this value has
     /// an exact witness. Shared values reuse the same scalar construction and
     /// its refinements; unused generators impose no reconstruction requirement.
     /// The complete selected field remains available for algebraic replay.
     fn exact_real_value_with_retained_witnesses(&self) -> Option<Real> {
-        let cache = match self.data.as_ref() {
-            BezierRecursiveQuadraticValueData2::Base { real_witness, .. }
-            | BezierRecursiveQuadraticValueData2::Extension { real_witness, .. } => real_witness,
-        };
+        let cache = self.real_witness();
         if let Some(value) = cache.get() {
             return Some(value.clone());
         }
@@ -131873,6 +131886,47 @@ mod conversion_tests {
 
     #[test]
     fn recursive_projective_content_normalization_preserves_selected_fields() {
+        fn assert_witnesses_scaled(
+            source: &BezierRecursiveQuadraticValue2,
+            normalized: &BezierRecursiveQuadraticValue2,
+            scale: &Real,
+        ) {
+            let cached = |value: &BezierRecursiveQuadraticValue2| match value.data.as_ref() {
+                BezierRecursiveQuadraticValueData2::Base { real_witness, .. }
+                | BezierRecursiveQuadraticValueData2::Extension { real_witness, .. } => {
+                    real_witness.get().cloned()
+                }
+            };
+            match (cached(source), cached(normalized)) {
+                (Some(source), Some(normalized)) => {
+                    assert_eq!(
+                        (normalized - source * scale).zero_status(),
+                        ZeroKnowledge::Zero
+                    );
+                }
+                (None, None) => {}
+                (source, normalized) => {
+                    panic!(
+                        "normalization must retain witness availability: {source:?} -> {normalized:?}"
+                    );
+                }
+            }
+            if let (
+                BezierRecursiveQuadraticValueData2::Extension {
+                    retained, radical, ..
+                },
+                BezierRecursiveQuadraticValueData2::Extension {
+                    retained: normalized_retained,
+                    radical: normalized_radical,
+                    ..
+                },
+            ) = (source.data.as_ref(), normalized.data.as_ref())
+            {
+                assert_witnesses_scaled(retained, normalized_retained, scale);
+                assert_witnesses_scaled(radical, normalized_radical, scale);
+            }
+        }
+
         let source = bezier_parameter_root_representation(&algebraic_parameter(vec![
             (Real::from(-1_i8) / Real::from(2_i8)).unwrap(),
             Real::zero(),
@@ -131907,13 +131961,28 @@ mod conversion_tests {
             ((Real::one() / &large).unwrap(), Real::one()),
             (-large.clone(), Real::from(-1_i8)),
         ] {
-            for count in [1, 3, 8, 17] {
+            for (count, warm) in [1, 3, 8, 17]
+                .into_iter()
+                .flat_map(|count| [(count, false), (count, true)])
+            {
                 let expected = [&x, &y, &denominator].into_iter().cycle().take(count);
                 let mut normalized: Vec<_> = expected
                     .clone()
                     .map(|value| value.scale(&scale).unwrap())
                     .collect();
+                if warm {
+                    // A mixed tuple retains known witnesses without forcing
+                    // unused projections for its other values or descendants.
+                    for value in normalized.iter().step_by(2) {
+                        assert!(value.exact_real_value_with_retained_witnesses().is_some());
+                    }
+                }
+                let original = normalized.clone();
                 BezierRecursiveQuadraticValue2::normalize_positive_scale(&mut normalized);
+                let positive_scale = (&orientation / &scale).unwrap();
+                for (source, normalized) in original.iter().zip(&normalized) {
+                    assert_witnesses_scaled(source, normalized, &positive_scale);
+                }
                 for (actual, expected) in normalized.iter().zip(expected) {
                     assert!(actual.field().same_field(&extension));
                     assert!(actual.is_stored_equivalent_to(&expected.scale(&orientation).unwrap()));
