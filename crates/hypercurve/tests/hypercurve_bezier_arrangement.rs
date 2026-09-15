@@ -245,15 +245,17 @@ fn monotone_span_rejects_reversed_parameter_evidence() {
 }
 
 #[test]
-fn contact_constructors_reject_out_of_domain_parameter_evidence() {
+fn contact_parameters_follow_their_carrier_domains() {
     assert_topology_error(BezierGraphContact::new(
         r(-1),
         BezierLineContactKind::Crossing,
     ));
-    assert_topology_error(BezierLineContact::new(
-        BezierParameter2::Exact(r(2)),
-        BezierLineContactKind::Tangent,
-    ));
+    for value in [r(-1), r(2)] {
+        let parameter = BezierParameter2::Exact(value);
+        let contact = BezierLineContact::new(parameter.clone(), BezierLineContactKind::Tangent);
+        assert_eq!(contact.parameter(), &parameter);
+        assert_eq!(contact.kind(), BezierLineContactKind::Tangent);
+    }
 }
 
 fn exact(value: Real) -> BezierParameter2 {

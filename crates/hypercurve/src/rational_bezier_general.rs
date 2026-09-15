@@ -2464,7 +2464,6 @@ impl RationalBezier2 {
                             kind,
                             crossing_direction,
                             line_parameter.clone(),
-                            policy,
                         )
                     else {
                         return Classification::Uncertain(UncertaintyReason::Ordering);
@@ -8227,7 +8226,7 @@ pub(crate) fn exact_contact_point_evidence(
 ) -> CurveResult<Option<CurvePoint2>> {
     match parameter {
         BezierParameter2::Exact(parameter) => {
-            Ok(match curve.point_at_classified(parameter, policy) {
+            Ok(match curve.point_at_affine_classified(parameter, policy) {
                 Classification::Decided(point) => Some(CurvePoint2::from(point)),
                 Classification::Uncertain(_) => None,
             })
