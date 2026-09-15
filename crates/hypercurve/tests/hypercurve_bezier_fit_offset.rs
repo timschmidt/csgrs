@@ -346,6 +346,82 @@ fn zero_distance_parallel_is_exact_source_even_at_source_cusp() {
 }
 
 #[test]
+fn parallel_cusp_sign_excludes_shared_algebraic_source_singularities() {
+    // P'(t)=(2t^2-1)(1-t^2,2t). The source singularity at sqrt(1/2)
+    // also solves every squared cusp polynomial. A positive left distance
+    // 1/20 has exactly one true cusp on either side; a negative one has none.
+    // Reversal changes the sign of the distance that creates those cusps.
+    for gauge in [r(1), -r(2).sqrt().unwrap()] {
+        let source = RationalBezier2::try_new(
+            vec![
+                p(0, 0),
+                Point2::new(q(-1, 5), r(0)),
+                Point2::new(q(-2, 5), q(-1, 10)),
+                Point2::new(q(-1, 2), q(-3, 10)),
+                Point2::new(q(-2, 5), q(-2, 5)),
+                Point2::new(q(-2, 5), r(0)),
+            ],
+            vec![gauge; 6],
+        )
+        .unwrap();
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            for reversed in [false, true] {
+                let source = if reversed {
+                    source.reversed()
+                } else {
+                    source.clone()
+                };
+                for distance in [-1, 0, 1] {
+                    let analysis = source
+                        .parallel_left(q(distance, 20))
+                        .unwrap()
+                        .singularity_analysis(&policy)
+                        .unwrap();
+                    let Classification::Decided(analysis) = analysis else {
+                        panic!("shared algebraic roots must retain exact cusp classification")
+                    };
+                    assert_eq!(analysis.source_singularities().len(), 1);
+                    let singularity = &analysis.source_singularities()[0];
+                    let (lower, upper) = if reversed {
+                        (q(1, 4), q(3, 10))
+                    } else {
+                        (q(7, 10), q(3, 4))
+                    };
+                    for (bound, order) in [
+                        (lower, std::cmp::Ordering::Greater),
+                        (upper, std::cmp::Ordering::Less),
+                    ] {
+                        assert_eq!(
+                            singularity
+                                .cmp_by_refinement(&BezierParameter2::Exact(bound), &policy)
+                                .unwrap(),
+                            Classification::Decided(order)
+                        );
+                    }
+                    if (distance > 0 && !reversed) || (distance < 0 && reversed) {
+                        let [left, right] = analysis.parallel_cusps() else {
+                            panic!(
+                                "the two regular cusp branches must survive the shared source root"
+                            )
+                        };
+                        assert_eq!(
+                            left.cmp_by_refinement(singularity, &policy).unwrap(),
+                            Classification::Decided(std::cmp::Ordering::Less)
+                        );
+                        assert_eq!(
+                            right.cmp_by_refinement(singularity, &policy).unwrap(),
+                            Classification::Decided(std::cmp::Ordering::Greater)
+                        );
+                    } else {
+                        assert!(analysis.parallel_cusps().is_empty());
+                    }
+                }
+            }
+        }
+    }
+}
+
+#[test]
 fn quadratic_parallel_isolates_distance_dependent_interior_cusp() {
     // P(t) = (t, t^2). At t=1/2, |P'|^3 = 2*sqrt(2) and
     // P'' x P' = -2, so a left distance sqrt(2) creates a parallel cusp.

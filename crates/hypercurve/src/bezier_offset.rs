@@ -118501,9 +118501,11 @@ impl BezierParallel2 {
             };
         let mut parallel_cusps = Vec::new();
         for candidate in candidates {
-            if parameter_matches_any(&candidate, &source_singularities, policy)? {
-                continue;
-            }
+            // On the squared cusp equation, a negative curvature term proves
+            // both the intended unsquared sign and nonzero source speed. At
+            // a source singularity the hodograph and curvature term vanish.
+            // One sign certificate therefore excludes those roots too; no
+            // comparison with a separately isolated source root is needed.
             let sign = match signed_polynomial_at_root(
                 curvature_term_polynomial.as_ref(),
                 &candidate,
@@ -130736,25 +130738,6 @@ const fn quadratic_affine_root_signs(
             _ => None,
         },
     }
-}
-
-fn parameter_matches_any(
-    candidate: &BezierParameter2,
-    parameters: &[BezierParameter2],
-    policy: &CurveContext,
-) -> CurveResult<bool> {
-    for parameter in parameters {
-        match candidate.cmp_by_interval(parameter, policy)? {
-            Classification::Decided(std::cmp::Ordering::Equal) => return Ok(true),
-            Classification::Decided(_) => {}
-            Classification::Uncertain(reason) => {
-                return Err(CurveError::Topology(format!(
-                    "parallel cusp/source singularity equality remained uncertain: {reason:?}"
-                )));
-            }
-        }
-    }
-    Ok(false)
 }
 
 #[cfg(test)]
