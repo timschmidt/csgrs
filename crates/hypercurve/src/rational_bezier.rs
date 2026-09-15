@@ -2835,6 +2835,7 @@ fn common_weight_sign_for_values(weights: [&Real; 3], policy: &CurveContext) -> 
 /// Equal-sign endpoints and an opposite-sign middle coefficient are regular
 /// exactly when `w0*w2-w1^2 > 0`. Keeping this certificate here gives circle
 /// recognition and general rational predicates one projective-pole authority.
+/// A zero middle coefficient is also pole-free; only its control is infinite.
 pub(crate) fn pole_free_quadratic_weight_signs(
     weights: [&Real; 3],
     policy: &CurveContext,
@@ -2850,11 +2851,10 @@ pub(crate) fn pole_free_quadratic_weight_signs(
         None => return Classification::Uncertain(UncertaintyReason::RealSign),
     }
     let control_sign = match real_sign(weights[1], policy) {
-        Some(sign @ (RealSign::Negative | RealSign::Positive)) => sign,
-        Some(RealSign::Zero) => return Classification::Decided(None),
+        Some(sign) => sign,
         None => return Classification::Uncertain(UncertaintyReason::RealSign),
     };
-    if control_sign == endpoint_sign {
+    if control_sign == endpoint_sign || control_sign == RealSign::Zero {
         return Classification::Decided(Some((endpoint_sign, control_sign)));
     }
     match real_sign(&(weights[0] * weights[2] - weights[1] * weights[1]), policy) {

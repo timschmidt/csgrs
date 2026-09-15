@@ -1682,19 +1682,27 @@ mod tests {
     fn assert_selected_circular_chart_fillets(
         circle: Curve2,
         clockwise: bool,
+        finite_contacts: usize,
         policy: &CurveContext,
     ) {
         for selected in [true, false] {
+            let domain = circle.parameter_domain();
+            let start = domain.start().scalar().unwrap();
+            let span = domain.end().scalar().unwrap() - start;
             let end = decided(
                 selected_parameters(policy)[0]
-                    .affine_image_unbounded(&q(1, 64), &q(63, 64), policy)
+                    .affine_image_unbounded(
+                        &(&span * q(1, 64)),
+                        &(start + &span * q(63, 64)),
+                        policy,
+                    )
                     .unwrap(),
                 circle.family(),
             )
             .unwrap();
             let circle = if selected {
                 circle
-                    .subcurve(Real::zero().into(), end, policy)
+                    .subcurve(domain.start().clone(), end, policy)
                     .unwrap()
                     .value
             } else {
@@ -1743,7 +1751,7 @@ mod tests {
                         ]
                     };
                     let count = if mode == CurveCornerMode2::TrimOnly {
-                        if clockwise { 3 } else { 1 }
+                        finite_contacts
                     } else {
                         4
                     };
@@ -1794,7 +1802,12 @@ mod tests {
                     )
                     .unwrap(),
                 );
-                assert_selected_circular_chart_fillets(circle, clockwise, &policy);
+                assert_selected_circular_chart_fillets(
+                    circle,
+                    clockwise,
+                    if clockwise { 3 } else { 1 },
+                    &policy,
+                );
             }
         }
     }
@@ -1842,7 +1855,78 @@ mod tests {
                         source_scale,
                         if clockwise { -distance } else { distance },
                     );
-                    assert_selected_circular_chart_fillets(circle, clockwise, &policy);
+                    assert_selected_circular_chart_fillets(
+                        circle,
+                        clockwise,
+                        if clockwise { 3 } else { 1 },
+                        &policy,
+                    );
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn exterior_circular_intervals_retain_complete_corner_contacts() {
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            for shift in [2, -3] {
+                for span in [1, 2] {
+                    for (source_scale, distance) in
+                        [(1, None), (1, Some(0)), (2, Some(1)), (-1, Some(2))]
+                    {
+                        let base = RationalBezier2::from(
+                            RationalQuadraticBezier2::try_new(
+                                p(source_scale, 0),
+                                p(source_scale, source_scale),
+                                p(0, source_scale),
+                                Real::from(2),
+                                Real::one(),
+                                Real::one(),
+                            )
+                            .unwrap(),
+                        );
+                        let source = decided(
+                            base.subcurve_between_affine_exact(
+                                &Real::from(-shift),
+                                &Real::from(1 - shift),
+                                &policy,
+                            )
+                            .unwrap(),
+                            CurveFamily2::RationalBezier,
+                        )
+                        .unwrap();
+                        let source = if let Some(distance) = distance {
+                            crate::bezier_split::BezierSelectedFiberSource2::AnalyticParallel(
+                                crate::BezierParallel2::from_source(
+                                    crate::BezierParallelSource2::Rational(source),
+                                    Real::from(distance),
+                                ),
+                            )
+                        } else {
+                            crate::bezier_split::BezierSelectedFiberSource2::Rational(source)
+                        };
+                        // The affine source is P(t-shift); this retained range
+                        // and its two exact endpoint witnesses describe the same
+                        // quarter or semicircle as the unshifted fixture.
+                        let circle =
+                            Curve2::from_retained_fragment(BezierSplitFragment2::SelectedFiber(
+                                crate::bezier_split::BezierSelectedFiberFragment2::new(
+                                    source,
+                                    CurveParameterRange2::new_validated(
+                                        Real::from(shift).into(),
+                                        Real::from(shift + span).into(),
+                                    ),
+                                    p(1, 0).into(),
+                                    if span == 1 { p(0, 1) } else { p(-1, 0) }.into(),
+                                ),
+                            ));
+                        assert_selected_circular_chart_fillets(
+                            circle,
+                            false,
+                            span as usize,
+                            &policy,
+                        );
+                    }
                 }
             }
         }

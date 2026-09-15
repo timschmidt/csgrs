@@ -3425,7 +3425,7 @@ impl RetainedRationalCornerArc2 {
         // Collapse degree elevation once, before either contact enumeration
         // or publication asks for the inverse of this parameterized circle.
         match evaluator
-            .retained_quadratic_representative(policy)
+            .materialized_quadratic_representative(policy)
             .map_err(|cause| ExactCurveError::invalid(operation, family, cause))?
         {
             Classification::Decided(Some(quadratic)) => Ok(quadratic.into()),
@@ -3557,14 +3557,13 @@ impl RetainedRationalCornerArc2 {
             }
         };
         let family = CurveFamily2::RationalBezier;
-        let support = match rational_bezier_circular_arc(&source, policy)
+        let mut support = match rational_bezier_circular_arc(&source, policy)
             .map_err(|cause| ExactCurveError::invalid(operation, family, cause))?
         {
             Classification::Decided(Some(support)) => support,
             Classification::Decided(None) | Classification::Uncertain(_) => return Ok(None),
         };
-        // This parent sweep certifies its unit chart. Exterior finite ranges
-        // continue through their existing general rational-domain authority.
+        let mut contained = true;
         for (parameter, boundary, outside) in [
             (
                 fragment.range().start(),
@@ -3577,19 +3576,69 @@ impl RetainedRationalCornerArc2 {
                 std::cmp::Ordering::Greater,
             ),
         ] {
-            match parameter
-                .cmp_by_refinement(&boundary.into(), policy)
+            match policy
+                .strict_predicate_pass(|| parameter.cmp_by_refinement(&boundary.into(), policy))
                 .map_err(|cause| ExactCurveError::invalid(operation, family, cause))?
             {
                 Classification::Decided(order) if order != outside => {}
-                Classification::Decided(_) | Classification::Uncertain(_) => return Ok(None),
+                Classification::Decided(_) => {
+                    contained = false;
+                    break;
+                }
+                Classification::Uncertain(_) => return Ok(None),
             }
         }
-        let evaluator =
+        let mut evaluator =
             Self::prepare_evaluator(source.into_owned(), &support, operation, family, policy)?;
+        let mut range = fragment.range().clone();
+        let mut parameter_map = (Real::one(), Real::zero());
+        if !contained {
+            // A finite outer interval schedules one pole-free parent chart;
+            // its exact selected endpoints still decide every cut. Mapping
+            // the result back preserves the authored source parameter even
+            // when the surviving range lies beyond either original endpoint.
+            let (lower, upper) = match crate::bezier_split::CurveParameterDomain2::new(&range, None)
+                .finite_envelope(policy)
+                .map_err(|cause| ExactCurveError::invalid(operation, family, cause))?
+            {
+                Classification::Decided((_, [lower, upper])) => (lower.clone(), upper.clone()),
+                Classification::Uncertain(_) => return Ok(None),
+            };
+            let scale = &upper - &lower;
+            evaluator = match policy
+                .strict_predicate_pass(|| {
+                    evaluator.subcurve_between_affine_exact(&lower, &upper, policy)
+                })
+                .map_err(|cause| ExactCurveError::invalid(operation, family, cause))?
+            {
+                Classification::Decided(evaluator) => evaluator,
+                Classification::Uncertain(_) => return Ok(None),
+            };
+            support = match rational_bezier_circular_arc(&evaluator, policy)
+                .map_err(|cause| ExactCurveError::invalid(operation, family, cause))?
+            {
+                Classification::Decided(Some(support)) => support,
+                Classification::Decided(None) | Classification::Uncertain(_) => return Ok(None),
+            };
+            evaluator = Self::prepare_evaluator(evaluator, &support, operation, family, policy)?;
+            let inverse_scale = (Real::one() / &scale)
+                .map_err(|cause| ExactCurveError::invalid(operation, family, cause.into()))?;
+            let inverse_offset = -(&lower * &inverse_scale);
+            let map = |parameter: &CurveParameter2| match parameter
+                .affine_image_unbounded(&inverse_scale, &inverse_offset, policy)
+                .map_err(|cause| ExactCurveError::invalid(operation, family, cause))?
+            {
+                Classification::Decided(parameter) => Ok(parameter),
+                Classification::Uncertain(reason) => {
+                    Err(ExactCurveError::blocked(operation, family, reason))
+                }
+            };
+            range = CurveParameterRange2::new_validated(map(range.start())?, map(range.end())?);
+            parameter_map = (scale, lower);
+        }
         let mut retained = crate::bezier_split::BezierSelectedFiberFragment2::new(
             crate::bezier_split::BezierSelectedFiberSource2::Rational(evaluator),
-            fragment.range().clone(),
+            range,
             if fragment.is_reversed() {
                 fragment.end_point()
             } else {
@@ -3612,7 +3661,7 @@ impl RetainedRationalCornerArc2 {
         Ok(Some(Arc::new(Self {
             fragment: retained,
             support,
-            parameter_map: (Real::one(), Real::zero()),
+            parameter_map,
         })))
     }
 

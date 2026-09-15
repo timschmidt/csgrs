@@ -6229,12 +6229,16 @@ impl RationalBezier2 {
         let _ = root.quadratic_conic_parameter_frame.set(Arc::new(frame));
     }
 
-    pub(crate) fn retained_quadratic_representative(
+    /// Returns the exact quadratic Bernstein frame in homogeneous coordinates.
+    /// Degree elevation and source ranges preserve this frame even when its
+    /// middle control lies at infinity and has no Cartesian point payload.
+    pub(crate) fn quadratic_homogeneous_controls(
         &self,
         policy: &CurveContext,
-    ) -> CurveResult<Classification<Option<RationalQuadraticBezier2>>> {
+    ) -> CurveResult<Classification<Option<[[Real; 3]; 3]>>> {
+        let strict = policy.strict_counterpart();
         if self.degree() == 2 {
-            self.retain_quadratic_conic_parameter_frame(policy);
+            self.retain_quadratic_conic_parameter_frame(&strict);
         }
         let range = self.source_parameter_range();
         let forward = range.start() == &Real::zero() && range.end() == &Real::one();
@@ -6265,7 +6269,7 @@ impl RationalBezier2 {
             ]
         } else {
             structural_frame =
-                match exact_quadratic_homogeneous_reduction(self.homogeneous_controls(), policy) {
+                match exact_quadratic_homogeneous_reduction(self.homogeneous_controls(), &strict) {
                     Classification::Decided(Some(frame)) => frame,
                     Classification::Decided(None) => {
                         return Ok(Classification::Decided(None));
@@ -6280,9 +6284,34 @@ impl RationalBezier2 {
                 &structural_frame[2],
             ]
         };
+        Ok(Classification::Decided(Some(
+            ordered.map(homogeneous_control_vector),
+        )))
+    }
+
+    /// Materializes a quadratic representative only when all three controls
+    /// are finite. A projective quadratic remains available through its
+    /// homogeneous frame when this narrower representation does not exist.
+    pub(crate) fn materialized_quadratic_representative(
+        &self,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<Option<RationalQuadraticBezier2>>> {
+        let ordered = match self.quadratic_homogeneous_controls(policy)? {
+            Classification::Decided(Some(controls)) => controls,
+            Classification::Decided(None) => return Ok(Classification::Decided(None)),
+            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+        };
         let mut controls = Vec::with_capacity(3);
-        for point in ordered {
-            match project_homogeneous(point, policy) {
+        for [x, y, weight] in &ordered {
+            if real_sign(weight, policy) == Some(RealSign::Zero) {
+                return Ok(Classification::Decided(None));
+            }
+            let point = HomogeneousPoint2 {
+                x: x.clone(),
+                y: y.clone(),
+                weight: weight.clone(),
+            };
+            match project_homogeneous(&point, policy) {
                 Classification::Decided(point) => controls.push(point),
                 Classification::Uncertain(reason) => {
                     return Ok(Classification::Uncertain(reason));
@@ -6293,9 +6322,9 @@ impl RationalBezier2 {
             controls[0].clone(),
             controls[1].clone(),
             controls[2].clone(),
-            ordered[0].weight.clone(),
-            ordered[1].weight.clone(),
-            ordered[2].weight.clone(),
+            ordered[0][2].clone(),
+            ordered[1][2].clone(),
+            ordered[2][2].clone(),
         )?
         .with_retained_conic_provenance(
             self.data

@@ -906,7 +906,7 @@ impl BezierSubcurve2 {
     ) -> CurveResult<Classification<Option<RationalQuadraticBezier2>>> {
         let quadratic = match self {
             Self::RationalQuadratic(curve) => curve.clone(),
-            Self::Rational(curve) => match curve.retained_quadratic_representative(policy)? {
+            Self::Rational(curve) => match curve.materialized_quadratic_representative(policy)? {
                 Classification::Decided(Some(curve)) => curve,
                 Classification::Decided(None) => {
                     return Ok(Classification::Decided(None));
@@ -975,7 +975,7 @@ fn canonicalize_exact_rational_subcurve(
         && let BezierSubcurve2::Rational(source) = &curve
         && source.degree() == 2
         && let Ok(Classification::Decided(Some(quadratic))) =
-            source.retained_quadratic_representative(&strict)
+            source.materialized_quadratic_representative(&strict)
     {
         return BezierSubcurve2::RationalQuadratic(quadratic);
     }
@@ -18676,7 +18676,7 @@ fn subcurve_relation_to_line_with_contacts(
         }
         BezierSubcurve2::Rational(curve) => {
             if curve.retained_circular_conic().is_some() {
-                match curve.retained_quadratic_representative(policy) {
+                match curve.materialized_quadratic_representative(policy) {
                     Ok(Classification::Decided(Some(quadratic))) => {
                         return quadratic.relation_to_line_with_contacts(line, policy);
                     }

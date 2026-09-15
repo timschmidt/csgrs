@@ -5956,17 +5956,8 @@ impl BezierRepresentedCircleRationalComponentSystem2 {
 /// target endpoints are handled before this construction is needed.
 fn represented_quadratic_conic_inverse(
     frame: &BezierRepresentedSelectedRadialCircleFrame2,
-    target: &RationalQuadraticBezier2,
+    controls: &[[Real; 3]; 3],
 ) -> BezierRepresentedQuadraticConicInverse2 {
-    let points = target.control_points();
-    let weights = target.weights();
-    let controls: [[Real; 3]; 3] = std::array::from_fn(|index| {
-        [
-            points[index].x() * weights[index],
-            points[index].y() * weights[index],
-            weights[index].clone(),
-        ]
-    });
     let cross = |first: &[Real; 3], second: &[Real; 3]| {
         [
             &first[1] * &second[2] - &first[2] * &second[1],
@@ -38348,7 +38339,7 @@ impl BezierAlgebraicCuspSemicircle2 {
         })() else {
             return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
         };
-        let quadratic_parameterization = match other.retained_quadratic_representative(policy)? {
+        let quadratic_parameterization = match other.quadratic_homogeneous_controls(policy)? {
             Classification::Decided(quadratic) => quadratic,
             Classification::Uncertain(reason) => {
                 return Ok(Classification::Uncertain(reason));
@@ -62924,9 +62915,13 @@ pub(crate) fn quadratic_conic_parameter_at_incident_point(
     target: &RationalBezier2,
     policy: &CurveContext,
 ) -> CurveResult<Classification<Option<CurveParameter2>>> {
-    if target.degree() != 2 {
-        return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
-    }
+    let controls = match target.quadratic_homogeneous_controls(policy)? {
+        Classification::Decided(Some(controls)) => controls,
+        Classification::Decided(None) => {
+            return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+        }
+        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+    };
     let point = match recursive_projective_evidence_points(&[point], policy)? {
         Classification::Decided(Some(mut points)) => points
             .pop()
@@ -62945,14 +62940,6 @@ pub(crate) fn quadratic_conic_parameter_at_incident_point(
         }
     };
 
-    let controls: [[Real; 3]; 3] = target
-        .control_points()
-        .iter()
-        .zip(target.weights())
-        .map(|(control, weight)| [control.x() * weight, control.y() * weight, weight.clone()])
-        .collect::<Vec<_>>()
-        .try_into()
-        .expect("a quadratic conic has three homogeneous controls");
     let cross = |first: &[Real; 3], second: &[Real; 3]| {
         [
             &first[1] * &second[2] - &first[2] * &second[1],
@@ -116542,7 +116529,7 @@ impl BezierParallel2 {
         if real_sign(self.distance(), policy) == Some(RealSign::Zero) {
             return Ok(no_fast_path());
         }
-        let conic = match other.retained_quadratic_representative(policy)? {
+        let conic = match other.materialized_quadratic_representative(policy)? {
             Classification::Decided(Some(conic)) => conic,
             Classification::Decided(None) | Classification::Uncertain(_) => {
                 return Ok(no_fast_path());
@@ -149292,7 +149279,7 @@ mod conversion_tests {
         for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
             assert!(matches!(
                 folded_quarter
-                    .retained_quadratic_representative(&policy)
+                    .materialized_quadratic_representative(&policy)
                     .unwrap(),
                 Classification::Decided(None)
             ));
@@ -149354,7 +149341,7 @@ mod conversion_tests {
             };
             assert!(matches!(
                 partial_arc
-                    .retained_quadratic_representative(&policy)
+                    .materialized_quadratic_representative(&policy)
                     .unwrap(),
                 Classification::Decided(None)
             ));
@@ -159734,6 +159721,88 @@ mod conversion_tests {
         let expected = Point2::from_values(5, 3);
         assert_eq!(bounds.min(), &expected);
         assert_eq!(bounds.max(), &expected);
+    }
+
+    #[test]
+    fn projective_quadratic_conic_inverse_survives_elevation_and_reversal() {
+        let selected = algebraic_parameter(vec![
+            -(Real::one() / Real::from(2)).unwrap(),
+            Real::one(),
+            Real::zero(),
+            Real::zero(),
+            Real::zero(),
+            Real::one(),
+        ]);
+        let shift = Real::from(2).sqrt().unwrap();
+        let transform =
+            |x: i8, y: i8| Point2::new(Real::from(2 * x) + &shift, Real::from(3 * y - 1));
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            for gauge in [Real::one(), Real::pi(), -Real::pi()] {
+                // The upper half-ellipse has quadratic homogeneous controls
+                // (3,0,3), (0,3,0), (-3,0,3) before the affine transform.
+                // Elevation supplies finite controls without changing its map.
+                let source = RationalBezier2::try_new(
+                    vec![
+                        transform(1, 0),
+                        transform(1, 2),
+                        transform(-1, 2),
+                        transform(-1, 0),
+                    ],
+                    [3, 1, 1, 3]
+                        .into_iter()
+                        .map(|weight| Real::from(weight) * &gauge)
+                        .collect(),
+                )
+                .unwrap();
+                for degree in [3, 5] {
+                    let elevated = source.elevated_to_degree(degree).unwrap();
+                    for source in [elevated.clone(), elevated.reversed()] {
+                        assert!(matches!(
+                            source
+                                .materialized_quadratic_representative(&policy)
+                                .unwrap(),
+                            Classification::Decided(None)
+                        ));
+                        let parallel = source.parallel_left(Real::zero()).unwrap();
+                        for parameter in [
+                            BezierParameter2::Exact(Real::zero()),
+                            BezierParameter2::Exact((Real::one() / Real::from(3)).unwrap()),
+                            selected.clone(),
+                            BezierParameter2::Exact(Real::one()),
+                        ] {
+                            let point = CurvePoint2::from(BezierAnalyticParallelPoint2::new(
+                                parallel.clone(),
+                                parameter.clone(),
+                                &policy,
+                            ));
+                            let Classification::Decided(Some(inverse)) =
+                                quadratic_conic_parameter_at_incident_point(
+                                    &point, &source, &policy,
+                                )
+                                .unwrap()
+                            else {
+                                panic!("a projective conic point lost its source parameter");
+                            };
+                            assert_eq!(
+                                inverse
+                                    .cmp_by_refinement(&parameter.into(), &policy)
+                                    .unwrap(),
+                                Classification::Decided(std::cmp::Ordering::Equal)
+                            );
+                        }
+                        assert!(matches!(
+                            quadratic_conic_parameter_at_incident_point(
+                                &transform(0, -1).into(),
+                                &source,
+                                &policy,
+                            )
+                            .unwrap(),
+                            Classification::Decided(None)
+                        ));
+                    }
+                }
+            }
+        }
     }
 
     #[test]

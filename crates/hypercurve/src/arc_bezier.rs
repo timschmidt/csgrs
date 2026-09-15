@@ -443,44 +443,49 @@ pub(crate) fn rational_bezier_circular_arc(
             ),
         )));
     }
-    // A pole-free major circle can have mixed Bernstein weights. Its first
-    // control edge then has the opposite tangent orientation, so retain the
-    // quadratic weight-sign proof instead of rejecting the circular support.
-    let conic = match curve.retained_quadratic_representative(policy)? {
-        Classification::Decided(Some(conic)) => conic,
+    let controls = match curve.quadratic_homogeneous_controls(policy)? {
+        Classification::Decided(Some(controls)) => controls,
         Classification::Decided(None) => return Ok(Classification::Decided(None)),
         Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
     };
-    rational_quadratic_circular_arc(&conic, policy)
+    homogeneous_quadratic_circular_arc(curve, controls, policy)
 }
 
 pub(crate) fn rational_quadratic_circular_arc(
     curve: &RationalQuadraticBezier2,
     policy: &CurveContext,
 ) -> CurveResult<Classification<Option<CircularArc2>>> {
-    let (start_weight_sign, control_weight_sign) =
-        match crate::rational_bezier::pole_free_quadratic_weight_signs(
-            [
-                curve.start_weight(),
-                curve.control_weight(),
-                curve.end_weight(),
-            ],
-            policy,
-        ) {
-            Classification::Decided(Some(signs)) => signs,
-            Classification::Decided(None) => return Ok(Classification::Decided(None)),
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
+    rational_bezier_circular_arc(&RationalBezier2::from(curve.clone()), policy)
+}
+
+fn homogeneous_quadratic_circular_arc(
+    curve: &RationalBezier2,
+    [first, control, last]: [[Real; 3]; 3],
+    policy: &CurveContext,
+) -> CurveResult<Classification<Option<CircularArc2>>> {
+    match crate::rational_bezier::pole_free_quadratic_weight_signs(
+        [&first[2], &control[2], &last[2]],
+        policy,
+    ) {
+        Classification::Decided(Some(_)) => {}
+        Classification::Decided(None) => return Ok(Classification::Decided(None)),
+        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+    }
+    let start_tangent = (
+        &control[0] * &first[2] - &first[0] * &control[2],
+        &control[1] * &first[2] - &first[1] * &control[2],
+    );
+    let end_tangent = (
+        &last[0] * &control[2] - &control[0] * &last[2],
+        &last[1] * &control[2] - &control[1] * &last[2],
+    );
     if let Some(circle) = curve.retained_circular_conic() {
         let (radial_x, radial_y) = curve.start().delta_from(&circle.center);
-        let (tangent_x, tangent_y) = curve.control().delta_from(curve.start());
+        let (tangent_x, tangent_y) = &start_tangent;
         let tangent_cross = &radial_x * tangent_y - &radial_y * tangent_x;
-        let tangent_reversed = control_weight_sign != start_weight_sign;
         let clockwise = match crate::classify::real_sign(&tangent_cross, policy) {
-            Some(RealSign::Positive) => tangent_reversed,
-            Some(RealSign::Negative) => !tangent_reversed,
+            Some(RealSign::Positive) => false,
+            Some(RealSign::Negative) => true,
             Some(RealSign::Zero) => return Ok(Classification::Decided(None)),
             None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
         };
@@ -496,11 +501,6 @@ pub(crate) fn rational_quadratic_circular_arc(
         )));
     }
 
-    let homogeneous =
-        |point: &Point2, weight: &Real| [weight * point.x(), weight * point.y(), weight.clone()];
-    let first = homogeneous(curve.start(), curve.start_weight());
-    let control = homogeneous(curve.control(), curve.control_weight());
-    let last = homogeneous(curve.end(), curve.end_weight());
     let cross = |left: &[Real; 3], right: &[Real; 3]| {
         [
             &left[1] * &right[2] - &left[2] * &right[1],
@@ -535,10 +535,8 @@ pub(crate) fn rational_quadratic_circular_arc(
         (Some(_), Some(_), Some(_)) => return Ok(Classification::Decided(None)),
         _ => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
     }
-    let start_tangent = curve.control().delta_from(curve.start());
-    let end_tangent = curve.end().delta_from(curve.control());
-    let start_normal = (-start_tangent.1, start_tangent.0);
-    let end_normal = (-end_tangent.1, end_tangent.0);
+    let start_normal = (-&start_tangent.1, start_tangent.0.clone());
+    let end_normal = (-&end_tangent.1, end_tangent.0.clone());
     let normal_cross = &start_normal.0 * &end_normal.1 - &start_normal.1 * &end_normal.0;
     let center = if matches!(
         crate::classify::real_sign(&normal_cross, policy),
@@ -565,15 +563,13 @@ pub(crate) fn rational_quadratic_circular_arc(
         None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
     }
     let (radial_x, radial_y) = curve.start().delta_from(&center);
-    let (tangent_x, tangent_y) = curve.control().delta_from(curve.start());
-    // The endpoint derivative is `2*w1/w0*(P1-P0)`. Common-sign weights made
-    // the old control-edge shortcut sufficient; a regular major arc reverses
-    // that edge because its middle weight has the opposite sign.
+    let (tangent_x, tangent_y) = &start_tangent;
+    // The homogeneous endpoint derivative has denominator w0 squared.
+    // Its numerator fixes traversal even when the middle control is infinite.
     let tangent_cross = &radial_x * tangent_y - &radial_y * tangent_x;
-    let tangent_reversed = control_weight_sign != start_weight_sign;
     let clockwise = match crate::classify::real_sign(&tangent_cross, policy) {
-        Some(RealSign::Positive) => tangent_reversed,
-        Some(RealSign::Negative) => !tangent_reversed,
+        Some(RealSign::Positive) => false,
+        Some(RealSign::Negative) => true,
         Some(RealSign::Zero) => return Ok(Classification::Decided(None)),
         None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
     };

@@ -573,7 +573,7 @@ impl RationalBezier2 {
 fn rational_quadratic_specialization(
     curve: &RationalBezier2,
 ) -> CurveResult<Option<RationalQuadraticBezier2>> {
-    match curve.retained_quadratic_representative(&CurveContext::STRICT)? {
+    match curve.materialized_quadratic_representative(&CurveContext::STRICT)? {
         Classification::Decided(representative) => Ok(representative),
         Classification::Uncertain(_) => Ok(None),
     }

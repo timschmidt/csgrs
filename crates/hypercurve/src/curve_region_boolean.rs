@@ -13707,7 +13707,7 @@ fn retained_circular_quadratic(
     curve: &RationalBezier2,
     policy: &CurveContext,
 ) -> Option<crate::RationalQuadraticBezier2> {
-    let curve = match curve.retained_quadratic_representative(policy).ok()? {
+    let curve = match curve.materialized_quadratic_representative(policy).ok()? {
         Classification::Decided(Some(curve)) => curve,
         Classification::Decided(None) | Classification::Uncertain(_) => return None,
     };
