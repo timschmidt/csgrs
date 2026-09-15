@@ -4301,37 +4301,13 @@ impl FilletParallelSource2<'_> {
         } else {
             crate::BezierParameterRayDirection2::Decreasing
         };
-        let domain = match self {
-            Self::Direct(_) | Self::Retained(_) => {
-                let range = self
-                    .parameter_range()
-                    .expect("an ordinary parallel source has a Bezier range");
-                let endpoint = if extends_toward_higher_parameter {
-                    range.end()
-                } else {
-                    range.start()
-                };
-                support.incident_domain_from_parameter(endpoint, direction, policy)
-            }
-            Self::Selected(source) => {
-                let endpoint = if extends_toward_higher_parameter {
-                    source.range().end()
-                } else {
-                    source.range().start()
-                };
-                if let Some(endpoint) = endpoint.as_bezier_parameter() {
-                    support.incident_domain_from_parameter(endpoint, direction, policy)
-                } else if endpoint.is_retained_scalar() {
-                    support.incident_domain_from_retained_parameter(endpoint, direction, policy)
-                } else {
-                    return Err(ExactCurveError::blocked(
-                        CurveOperation2::Fillet,
-                        family,
-                        crate::UncertaintyReason::Unsupported,
-                    ));
-                }
-            }
+        let range = self.curve_parameter_range();
+        let endpoint = if extends_toward_higher_parameter {
+            range.end()
+        } else {
+            range.start()
         };
+        let domain = support.incident_domain_from_parameter(endpoint, direction, policy);
         match domain
             .map_err(|cause| ExactCurveError::invalid(CurveOperation2::Fillet, family, cause))?
         {
@@ -4467,28 +4443,6 @@ impl FilletParallelSource2<'_> {
             }
             None => Ok(false),
         }
-    }
-
-    #[allow(clippy::too_many_arguments)]
-    fn bezier_parameter_is_admissible(
-        &self,
-        parameter: &BezierParameter2,
-        previous: bool,
-        mode: CurveCornerMode2,
-        domain: FilletContactDomain2,
-        incident_domain: Option<&crate::bezier_offset::BezierParallelIncidentDomain2>,
-        family: CurveFamily2,
-        policy: &CurveContext,
-    ) -> ExactCurveResult<bool> {
-        self.parameter_is_admissible(
-            &CurveParameter2::from(parameter.clone()),
-            previous,
-            mode,
-            domain,
-            incident_domain,
-            family,
-            policy,
-        )
     }
 
     fn support_reverses_source(
@@ -6565,8 +6519,8 @@ fn fillet_offset_centers(
                 }
             }
             for (parameter, _) in parameters {
-                if !parallel_source.bezier_parameter_is_admissible(
-                    &parameter,
+                if !parallel_source.parameter_is_admissible(
+                    &parameter.clone().into(),
                     bezier_is_previous,
                     mode,
                     domains[usize::from(!bezier_is_previous)],
@@ -6827,16 +6781,16 @@ fn fillet_offset_centers(
                     } else {
                         (contact.first_parameter(), contact.second_parameter())
                     };
-                    if !previous_source.bezier_parameter_is_admissible(
-                        previous_parameter,
+                    if !previous_source.parameter_is_admissible(
+                        &previous_parameter.clone().into(),
                         true,
                         mode,
                         domains[0],
                         previous_incident_domain.as_ref(),
                         previous_family,
                         policy,
-                    )? || !next_source.bezier_parameter_is_admissible(
-                        next_parameter,
+                    )? || !next_source.parameter_is_admissible(
+                        &next_parameter.clone().into(),
                         false,
                         mode,
                         domains[1],
@@ -7000,8 +6954,8 @@ fn fillet_offset_centers(
                 }
             }
             for parameter in parameters {
-                if !source.bezier_parameter_is_admissible(
-                    &parameter,
+                if !source.parameter_is_admissible(
+                    &parameter.clone().into(),
                     parallel_is_previous,
                     mode,
                     domains[usize::from(!parallel_is_previous)],
@@ -7324,8 +7278,8 @@ fn fillet_offset_centers(
                             if (complementary
                                 && contact.location
                                     != crate::bezier_offset::BezierAlgebraicCuspSemicircleContactLocation2::Interior)
-                                || !parallel_source.bezier_parameter_is_admissible(
-                                &contact.parallel_parameter,
+                                || !parallel_source.parameter_is_admissible(
+                                &contact.parallel_parameter.clone().into(),
                                 !cusp_is_previous,
                                 mode,
                                 domains[usize::from(cusp_is_previous)],
@@ -9221,8 +9175,8 @@ fn fillet_offset_centers(
                 policy,
             )?;
             for contact in intersections {
-                if !parallel_source.bezier_parameter_is_admissible(
-                    contact.parallel_parameter(),
+                if !parallel_source.parameter_is_admissible(
+                    &contact.parallel_parameter().clone().into(),
                     analytic_is_previous,
                     mode,
                     domains[usize::from(!analytic_is_previous)],

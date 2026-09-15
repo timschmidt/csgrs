@@ -110588,199 +110588,65 @@ impl BezierParallel2 {
         )
     }
 
-    /// Builds the single authoritative regular extension domain for an exact
-    /// or algebraic retained endpoint.
+    /// Builds one regular extension domain from a finite scalar endpoint.
+    /// Ordinary algebraic roots and retained selected/recursive scalars keep
+    /// their native regularity proofs. Any endpoint-to-anchor bridge remains
+    /// part of the domain; no approximate value selects the incident chart.
     pub(crate) fn incident_domain_from_parameter(
-        &self,
-        endpoint: &BezierParameter2,
-        direction: BezierParameterRayDirection2,
-        policy: &CurveContext,
-    ) -> CurveResult<Classification<BezierParallelIncidentDomain2>> {
-        let (anchor, bridge) = match endpoint {
-            BezierParameter2::Exact(endpoint) => (endpoint.clone(), None),
-            BezierParameter2::Algebraic(endpoint) => {
-                let source = self.source_power_basis()?;
-                let differential = self.differential()?;
-                let speed_squared = parallel_speed_squared_polynomial(differential);
-                match algebraic_incident_ray_regular_anchor_from_polynomials(
-                    source.weight,
-                    &speed_squared,
-                    endpoint,
-                    direction,
-                )? {
-                    Classification::Decided(anchor) => {
-                        (anchor.represented_anchor, anchor.adjacent_interval)
-                    }
-                    Classification::Uncertain(reason) => {
-                        return Ok(Classification::Uncertain(reason));
-                    }
-                }
-            }
-        };
-        let barrier = match self.incident_ray_regular_barrier(&anchor, direction, policy)? {
-            Classification::Decided(barrier) => barrier,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
-        Ok(Classification::Decided(BezierParallelIncidentDomain2 {
-            endpoint: CurveParameter2::from(endpoint.clone()),
-            bridge,
-            anchor,
-            direction,
-            barrier,
-        }))
-    }
-
-    /// Builds the same regular incident ray from a compact retained endpoint
-    /// without constructing its degree-multiplied global norm.
-    ///
-    /// The selected isolator is refined under STRICT until its complete
-    /// rational box has one nonzero source-weight sign and positive tangent
-    /// speed. The outward box boundary is then a certified represented ray
-    /// anchor; the root-to-anchor bridge stays regular by the same interval
-    /// proof. No approximate value selects the chart.
-    pub(crate) fn incident_domain_from_retained_parameter(
         &self,
         endpoint: &CurveParameter2,
         direction: BezierParameterRayDirection2,
         policy: &CurveContext,
     ) -> CurveResult<Classification<BezierParallelIncidentDomain2>> {
-        if !endpoint.is_retained_scalar() {
-            return Err(CurveError::Topology(
-                "a retained parallel incident domain requires a retained scalar endpoint".into(),
-            ));
-        }
-        let source = self.source_power_basis()?;
-        let differential = self.differential()?;
-        let weight = source
-            .weight
-            .map_or_else(|| vec![Real::one()], ToOwned::to_owned);
-        let speed_squared = parallel_speed_squared_polynomial(differential);
-        let retained_sign = |coefficients: &[Real]| {
-            policy.strict_predicate_pass(|| {
-                if let Some(endpoint) = endpoint.as_selected_fiber() {
-                    endpoint.predicate_sign(
-                        &bivariate_outer_product(&[Real::one()], coefficients),
-                        policy,
-                    )
-                } else if let Some(endpoint) = endpoint.as_recursive_projective() {
-                    endpoint.polynomial_sign(coefficients, policy)
-                } else {
-                    unreachable!("a retained scalar has one compact parameter authority")
-                }
-            })
-        };
-        match retained_sign(&weight)? {
-            Classification::Decided(RealSign::Positive | RealSign::Negative) => {}
-            Classification::Decided(RealSign::Zero) => {
-                return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
+        let anchor = if let Some(BezierParameter2::Exact(value)) = endpoint.as_bezier_parameter() {
+            BezierIncidentRayAnchor2 {
+                adjacent_interval: None,
+                represented_anchor: value.clone(),
             }
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        }
-        match retained_sign(&speed_squared)? {
-            Classification::Decided(RealSign::Positive) => {}
-            Classification::Decided(RealSign::Zero) => {
-                return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
-            }
-            Classification::Decided(RealSign::Negative) => {
+        } else {
+            if endpoint.as_bezier_parameter().is_none() && !endpoint.is_retained_scalar() {
                 return Err(CurveError::Topology(
-                    "parallel source speed squared was certified negative".into(),
+                    "a parallel incident domain requires a finite scalar endpoint".into(),
                 ));
             }
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        }
-
-        let strict_interval_sign = |coefficients: &[Real],
-                                    lower: &Real,
-                                    upper: &Real,
-                                    precision|
-         -> CurveResult<Option<RealSign>> {
-            let Some([lower, upper]) = coefficients_value_interval_on_real_interval(
-                coefficients,
-                lower,
-                upper,
-                precision,
-            )?
-            else {
-                return Ok(None);
-            };
-            let lower = Real::new(lower);
-            let upper = Real::new(upper);
-            Ok(
-                if compare_reals(&lower, &Real::zero(), &CurveContext::STRICT)
-                    == Some(std::cmp::Ordering::Greater)
-                {
-                    Some(RealSign::Positive)
-                } else if compare_reals(&upper, &Real::zero(), &CurveContext::STRICT)
-                    == Some(std::cmp::Ordering::Less)
-                {
-                    Some(RealSign::Negative)
-                } else {
-                    None
-                },
-            )
-        };
-        let mut retained_bridge = None;
-        for (steps, precision) in [
-            (0, -32),
-            (2, -64),
-            (4, -96),
-            (8, -128),
-            (16, -192),
-            (32, -256),
-            (64, -384),
-            (128, -512),
-            (256, -768),
-            (512, -1024),
-        ] {
-            let refined = match policy
-                .strict_predicate_pass(|| endpoint.refined_for_finite_envelope(steps, policy))?
+            let source = self.source_power_basis()?;
+            let differential = self.differential()?;
+            let speed_squared = parallel_speed_squared_polynomial(differential);
+            let anchor = if let Some(BezierParameter2::Algebraic(endpoint)) =
+                endpoint.as_bezier_parameter()
             {
-                Classification::Decided(refined) => refined,
-                Classification::Uncertain(_) => continue,
+                algebraic_incident_ray_regular_anchor_from_polynomials(
+                    source.weight,
+                    &speed_squared,
+                    endpoint,
+                    direction,
+                )
+            } else {
+                retained_incident_ray_regular_anchor_from_polynomials(
+                    source.weight,
+                    &speed_squared,
+                    endpoint,
+                    direction,
+                    policy,
+                )
             };
-            let Some((lower, upper)) = refined.finite_envelope_bounds() else {
-                return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
-            };
-            if strict_interval_sign(&weight, lower, upper, precision)?.is_none()
-                || strict_interval_sign(&speed_squared, lower, upper, precision)?
-                    != Some(RealSign::Positive)
-            {
-                continue;
+            match anchor? {
+                Classification::Decided(anchor) => anchor,
+                Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
             }
-            let interval = match BezierParameterInterval::try_new(
-                lower.clone(),
-                upper.clone(),
-                &CurveContext::STRICT,
-            )? {
-                Classification::Decided(interval) => interval,
-                Classification::Uncertain(_) => continue,
-            };
-            let anchor = match direction {
-                BezierParameterRayDirection2::Decreasing => lower.clone(),
-                BezierParameterRayDirection2::Increasing => upper.clone(),
-            };
-            retained_bridge = Some((anchor, interval));
-            break;
-        }
-        let Some((anchor, bridge)) = retained_bridge else {
-            return Ok(Classification::Uncertain(UncertaintyReason::Predicate));
         };
-        let barrier = match self.incident_ray_regular_barrier(&anchor, direction, policy)? {
+        let barrier = match self.incident_ray_regular_barrier(
+            &anchor.represented_anchor,
+            direction,
+            policy,
+        )? {
             Classification::Decided(barrier) => barrier,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
+            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
         };
         Ok(Classification::Decided(BezierParallelIncidentDomain2 {
             endpoint: endpoint.clone(),
-            bridge: Some(bridge),
-            anchor,
+            bridge: anchor.adjacent_interval,
+            anchor: anchor.represented_anchor,
             direction,
             barrier,
         }))
@@ -110985,7 +110851,7 @@ impl BezierParallel2 {
         if let Some(direction) = direction {
             let endpoint = CurveParameter2::from_selected_fiber(center.clone());
             let incident =
-                match self.incident_domain_from_retained_parameter(&endpoint, direction, policy)? {
+                match self.incident_domain_from_parameter(&endpoint, direction, policy)? {
                     Classification::Decided(incident) => incident,
                     Classification::Uncertain(reason) => {
                         return Ok(Classification::Uncertain(reason));
@@ -111844,7 +111710,7 @@ impl BezierParallel2 {
                     }
                 };
                 let incident = if let Some(direction) = direction {
-                    match self.incident_domain_from_retained_parameter(center, direction, policy)? {
+                    match self.incident_domain_from_parameter(center, direction, policy)? {
                         Classification::Decided(incident) => Some(incident),
                         Classification::Uncertain(reason) => {
                             return Ok(Classification::Uncertain(reason));
@@ -111977,7 +111843,7 @@ impl BezierParallel2 {
             }
         };
         let incident = if let Some(direction) = direction {
-            match self.incident_domain_from_retained_parameter(center, direction, policy)? {
+            match self.incident_domain_from_parameter(center, direction, policy)? {
                 Classification::Decided(incident) => Some(incident),
                 Classification::Uncertain(reason) => {
                     return Ok(Classification::Uncertain(reason));
@@ -112502,7 +112368,7 @@ impl BezierParallel2 {
             }
             parameters = finite;
             if let Some(direction) = incident_direction {
-                let endpoint = BezierParameter2::Exact(center_parameter.clone());
+                let endpoint = CurveParameter2::from(center_parameter.clone());
                 let incident =
                     match self.incident_domain_from_parameter(&endpoint, direction, policy)? {
                         Classification::Decided(incident) => incident,
@@ -112795,12 +112661,13 @@ impl BezierParallel2 {
             return Ok(Classification::Decided(candidates));
         };
         let center = BezierParameter2::Algebraic(center_parameter.clone());
-        let incident = match self.incident_domain_from_parameter(&center, direction, policy)? {
-            Classification::Decided(incident) => incident,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
+        let incident =
+            match self.incident_domain_from_parameter(&center.clone().into(), direction, policy)? {
+                Classification::Decided(incident) => incident,
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            };
         if let Some(interval) = incident.bridge() {
             let adjacent = match selected_fiber_parameters_in_interval(
                 incidence,
@@ -129110,9 +128977,127 @@ fn regular_barrier_polynomials(
     Ok(Classification::Decided((weight, speed)))
 }
 
-struct BezierAlgebraicIncidentRayAnchor2 {
+struct BezierIncidentRayAnchor2 {
     adjacent_interval: Option<BezierParameterInterval>,
     represented_anchor: Real,
+}
+
+/// Certifies a regular enclosure beyond a retained scalar endpoint without
+/// projecting its selected fiber or recursive field into a global scalar.
+/// The directional enclosure boundary is a scheduling anchor; its complete
+/// interval retains the bridge back to the exact authored endpoint.
+fn retained_incident_ray_regular_anchor_from_polynomials(
+    weight_coefficients: Option<&[Real]>,
+    speed_squared: &[Real],
+    endpoint: &CurveParameter2,
+    direction: BezierParameterRayDirection2,
+    policy: &CurveContext,
+) -> CurveResult<Classification<BezierIncidentRayAnchor2>> {
+    let unit_weight = [Real::one()];
+    let weight = weight_coefficients.unwrap_or(&unit_weight);
+    let retained_sign = |coefficients: &[Real]| {
+        policy.strict_predicate_pass(|| endpoint.polynomial_sign(coefficients, policy))
+    };
+    match retained_sign(weight)? {
+        Classification::Decided(RealSign::Positive | RealSign::Negative) => {}
+        Classification::Decided(RealSign::Zero) => {
+            return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
+        }
+        Classification::Uncertain(reason) => {
+            return Ok(Classification::Uncertain(reason));
+        }
+    }
+    match retained_sign(speed_squared)? {
+        Classification::Decided(RealSign::Positive) => {}
+        Classification::Decided(RealSign::Zero) => {
+            return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
+        }
+        Classification::Decided(RealSign::Negative) => {
+            return Err(CurveError::Topology(
+                "parallel source speed squared was certified negative".into(),
+            ));
+        }
+        Classification::Uncertain(reason) => {
+            return Ok(Classification::Uncertain(reason));
+        }
+    }
+
+    let strict_interval_sign = |coefficients: &[Real],
+                                lower: &Real,
+                                upper: &Real,
+                                precision|
+     -> CurveResult<Option<RealSign>> {
+        let Some([lower, upper]) =
+            coefficients_value_interval_on_real_interval(coefficients, lower, upper, precision)?
+        else {
+            return Ok(None);
+        };
+        let lower = Real::new(lower);
+        let upper = Real::new(upper);
+        Ok(
+            if compare_reals(&lower, &Real::zero(), &CurveContext::STRICT)
+                == Some(std::cmp::Ordering::Greater)
+            {
+                Some(RealSign::Positive)
+            } else if compare_reals(&upper, &Real::zero(), &CurveContext::STRICT)
+                == Some(std::cmp::Ordering::Less)
+            {
+                Some(RealSign::Negative)
+            } else {
+                None
+            },
+        )
+    };
+    let mut retained_bridge = None;
+    for (steps, precision) in [
+        (0, -32),
+        (2, -64),
+        (4, -96),
+        (8, -128),
+        (16, -192),
+        (32, -256),
+        (64, -384),
+        (128, -512),
+        (256, -768),
+        (512, -1024),
+    ] {
+        let refined = match policy
+            .strict_predicate_pass(|| endpoint.refined_for_finite_envelope(steps, policy))?
+        {
+            Classification::Decided(refined) => refined,
+            Classification::Uncertain(_) => continue,
+        };
+        let Some((lower, upper)) = refined.finite_envelope_bounds() else {
+            return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+        };
+        if strict_interval_sign(weight, lower, upper, precision)?.is_none()
+            || strict_interval_sign(speed_squared, lower, upper, precision)?
+                != Some(RealSign::Positive)
+        {
+            continue;
+        }
+        let interval = match BezierParameterInterval::try_new(
+            lower.clone(),
+            upper.clone(),
+            &CurveContext::STRICT,
+        )? {
+            Classification::Decided(interval) => interval,
+            Classification::Uncertain(_) => continue,
+        };
+        let anchor = match direction {
+            BezierParameterRayDirection2::Decreasing => lower.clone(),
+            BezierParameterRayDirection2::Increasing => upper.clone(),
+        };
+        retained_bridge = Some((anchor, interval));
+        break;
+    }
+    let Some((anchor, bridge)) = retained_bridge else {
+        return Ok(Classification::Uncertain(UncertaintyReason::Predicate));
+    };
+    Ok(Classification::Decided(BezierIncidentRayAnchor2 {
+        adjacent_interval: Some(bridge),
+        represented_anchor: anchor,
+    }))
 }
 
 /// Finds a represented point in the same regular affine cell immediately
@@ -129129,7 +129114,7 @@ fn algebraic_incident_ray_regular_anchor_from_polynomials(
     speed_squared: &[Real],
     endpoint: &BezierAlgebraicParameter2,
     direction: BezierParameterRayDirection2,
-) -> CurveResult<Classification<BezierAlgebraicIncidentRayAnchor2>> {
+) -> CurveResult<Classification<BezierIncidentRayAnchor2>> {
     let strict = &CurveContext::STRICT;
     let (weight, speed) =
         match regular_barrier_polynomials(weight_coefficients, speed_squared, strict)? {
@@ -129169,7 +129154,7 @@ fn algebraic_incident_ray_regular_anchor_from_polynomials(
     loop {
         let interval = match &refined {
             BezierParameter2::Exact(anchor) => {
-                return Ok(Classification::Decided(BezierAlgebraicIncidentRayAnchor2 {
+                return Ok(Classification::Decided(BezierIncidentRayAnchor2 {
                     adjacent_interval: None,
                     represented_anchor: anchor.clone(),
                 }));
@@ -129191,7 +129176,7 @@ fn algebraic_incident_ray_regular_anchor_from_polynomials(
                 BezierParameterRayDirection2::Decreasing => interval.start().clone(),
                 BezierParameterRayDirection2::Increasing => interval.end().clone(),
             };
-            return Ok(Classification::Decided(BezierAlgebraicIncidentRayAnchor2 {
+            return Ok(Classification::Decided(BezierIncidentRayAnchor2 {
                 adjacent_interval: Some(interval),
                 represented_anchor,
             }));
@@ -132687,7 +132672,7 @@ mod conversion_tests {
         policy: &CurveContext,
     ) -> BezierParallelIncidentDomain2 {
         match parallel
-            .incident_domain_from_parameter(&BezierParameter2::Exact(anchor), direction, policy)
+            .incident_domain_from_parameter(&anchor.into(), direction, policy)
             .unwrap()
         {
             Classification::Decided(domain) => domain,
@@ -158286,7 +158271,7 @@ mod conversion_tests {
             let parallel = stationary_source.parallel_left(Real::one()).unwrap();
             let domain = match parallel
                 .incident_domain_from_parameter(
-                    &endpoint,
+                    &endpoint.clone().into(),
                     BezierParameterRayDirection2::Decreasing,
                     &policy,
                 )
@@ -162013,7 +161998,7 @@ mod conversion_tests {
                 ));
             }
             let Classification::Decided(incident) = incident_parallel
-                .incident_domain_from_retained_parameter(
+                .incident_domain_from_parameter(
                     &endpoint,
                     BezierParameterRayDirection2::Increasing,
                     &policy,
