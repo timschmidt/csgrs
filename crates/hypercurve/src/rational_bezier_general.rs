@@ -8167,7 +8167,7 @@ fn real_coefficient_rational_image_parameter(
         if next > 64 {
             if denominator_sign.is_none() {
                 denominator_sign = Some(signed_coefficients_at_parameter(
-                    candidate.denominator.clone(),
+                    &candidate.denominator,
                     source_parameter,
                     &strict,
                 )?);
@@ -9865,9 +9865,7 @@ mod tests {
                             return Classification::Uncertain(UncertaintyReason::Boundary);
                         };
                         if crate::bezier_parameter::signed_coefficients_at_parameter(
-                            defining.clone(),
-                            parameter,
-                            attempt,
+                            &defining, parameter, attempt,
                         )
                         .unwrap()
                             != Classification::Decided(RealSign::Zero)

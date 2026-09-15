@@ -30,7 +30,6 @@ use hypersolve::{
 };
 
 use crate::bezier_parameter::signed_coefficients_at_parameter;
-use crate::bezier_parameter::strict_coefficients_sign_on_parameter_interval;
 use crate::classify::{compare_reals, real_sign};
 use crate::{
     Aabb2, BezierAlgebraicParameter2, BezierParameter2, Classification, CubicBezier2, CurveContext,
@@ -990,7 +989,7 @@ impl RationalBezierAlgebraicPointImage2 {
                     cross_difference[index] = &cross_difference[index] - coefficient * denominator;
                 }
             }
-            match signed_coefficients_at_parameter(cross_difference, &parameter, policy)? {
+            match signed_coefficients_at_parameter(&cross_difference, &parameter, policy)? {
                 Classification::Decided(RealSign::Zero) => {}
                 Classification::Decided(RealSign::Positive | RealSign::Negative) => {
                     return Ok(Some(Classification::Decided(false)));
@@ -1026,7 +1025,7 @@ impl RationalBezierAlgebraicPointImage2 {
         ) {
             let parameter = BezierParameter2::Algebraic(parameter.clone());
             let denominator_sign =
-                match signed_coefficients_at_parameter(denominator.to_vec(), &parameter, policy)? {
+                match signed_coefficients_at_parameter(denominator, &parameter, policy)? {
                     Classification::Decided(RealSign::Zero) => {
                         return Err(CurveError::InvalidBezierAlgebraicParameter);
                     }
@@ -1037,14 +1036,14 @@ impl RationalBezierAlgebraicPointImage2 {
                 };
             let numerator = if use_x { x_numerator } else { y_numerator };
             let difference_length = numerator.len().max(denominator.len());
-            let difference = (0..difference_length)
+            let difference: Vec<_> = (0..difference_length)
                 .map(|index| {
                     numerator.get(index).cloned().unwrap_or_else(Real::zero)
                         - value * denominator.get(index).cloned().unwrap_or_else(Real::zero)
                 })
                 .collect();
             return Ok(
-                match signed_coefficients_at_parameter(difference, &parameter, policy)? {
+                match signed_coefficients_at_parameter(&difference, &parameter, policy)? {
                     Classification::Decided(RealSign::Zero) => {
                         Classification::Decided(Ordering::Equal)
                     }
@@ -1164,7 +1163,7 @@ impl RationalBezierAlgebraicPointImage2 {
             }
         };
         let denominator_sign =
-            match signed_coefficients_at_parameter(denominator.to_vec(), &parameter, policy)? {
+            match signed_coefficients_at_parameter(denominator, &parameter, policy)? {
                 Classification::Decided(RealSign::Zero) => {
                     return Err(CurveError::InvalidBezierAlgebraicParameter);
                 }
@@ -1198,15 +1197,7 @@ impl RationalBezierAlgebraicPointPredicate2<'_> {
         coefficients: Vec<Real>,
         policy: &CurveContext,
     ) -> CurveResult<Classification<RealSign>> {
-        let fast = strict_coefficients_sign_on_parameter_interval(
-            &coefficients,
-            &self.parameter,
-            &CurveContext::STRICT,
-        )?;
-        let sign = match fast {
-            Some(sign) => Classification::Decided(sign),
-            None => signed_coefficients_at_parameter(coefficients, &self.parameter, policy)?,
-        };
+        let sign = signed_coefficients_at_parameter(&coefficients, &self.parameter, policy)?;
         Ok(sign.map(|sign| match sign {
             RealSign::Zero => RealSign::Zero,
             sign if sign == self.denominator_sign => RealSign::Positive,
@@ -1486,7 +1477,7 @@ impl RationalBezierAlgebraicTangentImage2 {
         if let Some(expression) = self.data.retained_expression.as_ref() {
             let parameter = BezierParameter2::Algebraic(expression.parameter.clone());
             let denominator = match signed_coefficients_at_parameter(
-                expression.denominator.clone(),
+                &expression.denominator,
                 &parameter,
                 policy,
             )? {
@@ -1499,9 +1490,9 @@ impl RationalBezierAlgebraicTangentImage2 {
                 }
             };
             let numerator = if use_x {
-                expression.dx_numerator.clone()
+                &expression.dx_numerator
             } else {
-                expression.dy_numerator.clone()
+                &expression.dy_numerator
             };
             return Ok(
                 signed_coefficients_at_parameter(numerator, &parameter, policy)?.map(
@@ -2228,11 +2219,8 @@ fn rational_coordinate_image_pair(
     };
 
     let selected_parameter = BezierParameter2::Algebraic(parameter.clone());
-    match signed_coefficients_at_parameter(
-        denominator_coefficients.clone(),
-        &selected_parameter,
-        &strict,
-    )? {
+    match signed_coefficients_at_parameter(&denominator_coefficients, &selected_parameter, &strict)?
+    {
         Classification::Decided(RealSign::Positive | RealSign::Negative) => {
             Ok(RationalCoordinateImagePair::Retained {
                 first_numerator: first_numerator_coefficients,

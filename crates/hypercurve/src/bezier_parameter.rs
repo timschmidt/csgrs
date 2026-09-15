@@ -2206,38 +2206,46 @@ impl<'a> BezierParameterRefinement2<'a> {
 
 /// Signs a Real-coefficient power-basis polynomial at one retained parameter.
 ///
-/// The direct algebraic-field path proves equality through a polynomial GCD.
-/// When radical coefficients prevent that package from deciding a nonzero
-/// sign, strict Bernstein bounds over progressively refined isolators provide
-/// an independent exact certificate. Both exact paths run before an
-/// `APPROXIMATE_512` terminal is permitted, so selecting the weaker policy
-/// cannot bypass an available exact proof.
+/// A strict sign on the retained interval precedes algebraic normalization
+/// and selected-root replay. Difficult signs and equality retain their exact
+/// algebraic authority; progressive interval refinement is a fallback. All
+/// exact paths run before an `APPROXIMATE_512` terminal is permitted. An empty
+/// slice denotes the zero polynomial, without a separate optional carrier.
 pub(crate) fn signed_coefficients_at_parameter(
-    coefficients: Vec<Real>,
+    coefficients: &[Real],
     parameter: &BezierParameter2,
     policy: &CurveContext,
 ) -> CurveResult<Classification<RealSign>> {
     let strict_policy = policy.strict_counterpart();
-    let direct =
-        direct_signed_coefficients_at_parameter(coefficients.clone(), parameter, &strict_policy)?;
+    if let Some(sign) =
+        strict_coefficients_sign_on_parameter_interval(coefficients, parameter, &strict_policy)?
+    {
+        #[cfg(feature = "dispatch-trace")]
+        hyperreal::dispatch_trace::record(
+            "hypercurve",
+            "algebraic-parameter-sign",
+            "retained-interval-sign",
+        );
+        return Ok(Classification::Decided(sign));
+    }
+    let direct = polynomial_sign_by_algebraic_replay(coefficients, parameter, &strict_policy)?;
     if direct.is_decided() {
         return Ok(direct);
     }
     if let Some(sign) = strict_polynomial_sign_on_refined_parameter_interval(
-        &coefficients,
+        coefficients,
         parameter,
         &strict_policy,
     )? {
         return Ok(Classification::Decided(sign));
     }
     if policy.permits_approximate_512() {
-        let approximate =
-            direct_signed_coefficients_at_parameter(coefficients.clone(), parameter, policy)?;
+        let approximate = polynomial_sign_by_algebraic_replay(coefficients, parameter, policy)?;
         if approximate.is_decided() {
             return Ok(approximate);
         }
         if let Some(sign) =
-            strict_polynomial_sign_on_refined_parameter_interval(&coefficients, parameter, policy)?
+            strict_polynomial_sign_on_refined_parameter_interval(coefficients, parameter, policy)?
         {
             return Ok(Classification::Decided(sign));
         }
@@ -2246,32 +2254,21 @@ pub(crate) fn signed_coefficients_at_parameter(
     Ok(direct)
 }
 
-fn direct_signed_coefficients_at_parameter(
-    coefficients: Vec<Real>,
+fn polynomial_sign_by_algebraic_replay(
+    coefficients: &[Real],
     parameter: &BezierParameter2,
     policy: &CurveContext,
 ) -> CurveResult<Classification<RealSign>> {
-    Ok(
-        match BezierParameterPolynomial::try_new_power_basis(coefficients, policy) {
-            Ok(Classification::Decided(polynomial)) => {
-                signed_polynomial_at_root(Some(&polynomial), parameter, policy)?
-            }
-            Err(CurveError::InvalidBezierPolynomial) => Classification::Decided(RealSign::Zero),
-            Ok(Classification::Uncertain(reason)) => Classification::Uncertain(reason),
-            Err(error) => return Err(error),
-        },
-    )
-}
-
-/// Signs an optional nonzero parameter polynomial at a retained parameter.
-/// `None` is the structurally zero polynomial.
-pub(crate) fn signed_polynomial_at_root(
-    polynomial: Option<&BezierParameterPolynomial>,
-    parameter: &BezierParameter2,
-    policy: &CurveContext,
-) -> CurveResult<Classification<RealSign>> {
-    let Some(filter) = polynomial else {
-        return Ok(Classification::Decided(RealSign::Zero));
+    let filter = match BezierParameterPolynomial::try_new_power_basis(coefficients.to_vec(), policy)
+    {
+        Ok(Classification::Decided(polynomial)) => polynomial,
+        Err(CurveError::InvalidBezierPolynomial) => {
+            return Ok(Classification::Decided(RealSign::Zero));
+        }
+        Ok(Classification::Uncertain(reason)) => {
+            return Ok(Classification::Uncertain(reason));
+        }
+        Err(error) => return Err(error),
     };
     let algebraic = match parameter {
         BezierParameter2::Exact(parameter) => {
@@ -2310,7 +2307,7 @@ pub(crate) fn signed_polynomial_at_root(
     }
     match algebraic
         .polynomial()
-        .greatest_common_divisor(filter, policy)?
+        .greatest_common_divisor(&filter, policy)?
     {
         Classification::Decided(Some(common)) => {
             match common.root_count_in_interval(algebraic.interval(), policy)? {
@@ -5182,9 +5179,110 @@ mod conversion_tests {
             "filter polynomial",
         );
         assert_eq!(
-            signed_polynomial_at_root(Some(&filter), &parameter, &policy).unwrap(),
+            signed_coefficients_at_parameter(filter.coefficients(), &parameter, &policy).unwrap(),
             Classification::Decided(RealSign::Positive)
         );
+    }
+
+    #[test]
+    fn polynomial_signs_use_the_retained_interval_before_algebraic_replay() {
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            for defining in [&[-1, 0, 0, 2][..], &[1, 0, 0, -4, 0, 0, 4]] {
+                let root = algebraic_parameter(&polynomial(defining));
+                let BezierParameter2::Algebraic(owner) = &root else {
+                    unreachable!()
+                };
+                for scale in [Real::one(), Real::pi()] {
+                    for direction in [1_i8, -1_i8] {
+                        // The power coefficients have mixed signs, but the
+                        // retained bracket certifies 1-t+t^2 > 0 throughout.
+                        let coefficients = [1_i8, -1_i8, 1_i8]
+                            .map(|value| Real::from(value * direction) * &scale)
+                            .to_vec();
+                        #[cfg(feature = "dispatch-trace")]
+                        hyperreal::dispatch_trace::reset();
+                        let work =
+                            || signed_coefficients_at_parameter(&coefficients, &root, &policy);
+                        #[cfg(feature = "dispatch-trace")]
+                        let result = hyperreal::dispatch_trace::with_recording(work).unwrap();
+                        #[cfg(not(feature = "dispatch-trace"))]
+                        let result = work().unwrap();
+                        assert_eq!(
+                            result,
+                            Classification::Decided(if direction > 0 {
+                                RealSign::Positive
+                            } else {
+                                RealSign::Negative
+                            })
+                        );
+                        assert!(owner.data.shared.sturm_sequence.get().is_none());
+                        #[cfg(feature = "dispatch-trace")]
+                        assert_eq!(
+                            hyperreal::dispatch_trace::take_trace().path_count(
+                                "hypercurve",
+                                "algebraic-parameter-sign",
+                                "retained-singleton-query",
+                            ),
+                            0,
+                            "a strict sign on the retained bracket needs no remainder chain"
+                        );
+                    }
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn polynomial_sign_queries_do_not_require_a_known_degree() {
+        let epsilon = Real::one() - Real::from(2_i8).powi_i64(-600).unwrap().cos();
+        assert_eq!(real_sign(&epsilon, &CurveContext::STRICT), None);
+        let algebraic = algebraic_parameter(&polynomial(&[-1, 0, 0, 2]));
+        let exact = BezierParameter2::Exact(Real::zero());
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            for parameter in [&exact, &algebraic] {
+                for direction in [1_i8, -1_i8] {
+                    let coefficients = [
+                        Real::from(direction),
+                        Real::zero(),
+                        Real::from(direction) * &epsilon,
+                    ];
+                    assert!(matches!(
+                        BezierParameterPolynomial::try_new_power_basis(
+                            coefficients.to_vec(),
+                            &CurveContext::STRICT,
+                        )
+                        .unwrap(),
+                        Classification::Uncertain(_)
+                    ));
+                    let outcome = crate::policy::resolve_certified_operation(&policy, |attempt| {
+                        signed_coefficients_at_parameter(&coefficients, parameter, attempt)
+                    })
+                    .unwrap();
+                    assert_eq!(outcome.certainty, crate::CurveCertainty::Certified);
+                    assert_eq!(
+                        outcome.value,
+                        Classification::Decided(if direction > 0 {
+                            RealSign::Positive
+                        } else {
+                            RealSign::Negative
+                        })
+                    );
+                }
+                assert_eq!(
+                    signed_coefficients_at_parameter(&[], parameter, &policy).unwrap(),
+                    Classification::Decided(RealSign::Zero)
+                );
+            }
+            assert_eq!(
+                signed_coefficients_at_parameter(
+                    &[Real::zero(), Real::zero(), epsilon.clone()],
+                    &exact,
+                    &policy,
+                )
+                .unwrap(),
+                Classification::Decided(RealSign::Zero)
+            );
+        }
     }
 
     #[test]
@@ -5231,7 +5329,8 @@ mod conversion_tests {
                             (_, sign) => sign,
                         };
                         assert_eq!(
-                            signed_polynomial_at_root(Some(&filter), &root, &policy).unwrap(),
+                            signed_coefficients_at_parameter(filter.coefficients(), &root, &policy)
+                                .unwrap(),
                             Classification::Decided(expected),
                         );
                         assert!(
@@ -5276,7 +5375,7 @@ mod conversion_tests {
                 };
                 assert!(owner.data.shared.sturm_sequence.get().is_none());
                 assert_eq!(
-                    signed_polynomial_at_root(None, &root, &policy).unwrap(),
+                    signed_coefficients_at_parameter(&[], &root, &policy).unwrap(),
                     Classification::Decided(RealSign::Zero)
                 );
                 for scale in [Real::one(), Real::pi()] {
@@ -5293,7 +5392,8 @@ mod conversion_tests {
                             "scaled sign filter",
                         );
                         assert_eq!(
-                            signed_polynomial_at_root(Some(&filter), &root, &policy).unwrap(),
+                            signed_coefficients_at_parameter(filter.coefficients(), &root, &policy)
+                                .unwrap(),
                             Classification::Decided(expected),
                             "defining={defining:?}, filter={coefficients:?}, scale={scale:?}, policy={policy:?}"
                         );
@@ -5306,8 +5406,12 @@ mod conversion_tests {
                 BezierParameter2::Exact(rational(3, 4)),
             ] {
                 assert_eq!(
-                    signed_polynomial_at_root(Some(&polynomial(&[-13, 16])), &root, &policy)
-                        .unwrap(),
+                    signed_coefficients_at_parameter(
+                        polynomial(&[-13, 16]).coefficients(),
+                        &root,
+                        &policy
+                    )
+                    .unwrap(),
                     Classification::Decided(RealSign::Negative)
                 );
             }

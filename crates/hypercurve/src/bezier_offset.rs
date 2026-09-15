@@ -31,8 +31,7 @@ use crate::bezier_parameter::{
     coefficients_value_interval_on_parameter_interval,
     coefficients_value_interval_on_real_interval, deep_exact_coefficients_sign_at_parameter,
     divide_by_linear_root, power_to_bernstein_coefficients, signed_coefficients_at_parameter,
-    signed_polynomial_at_root, strict_coefficients_sign_on_parameter_interval,
-    univariate_unit_interval_strict_bernstein_sign,
+    strict_coefficients_sign_on_parameter_interval, univariate_unit_interval_strict_bernstein_sign,
 };
 use crate::bezier_split::CurveParameterDomain2;
 use crate::classify::{classify_oriented_line, compare_reals, in_closed_unit_interval, real_sign};
@@ -15935,9 +15934,9 @@ impl BezierParallelAlgebraicCuspFrame2 {
                 &self.data.normal_y_numerator,
                 &polynomial_scale(&self.data.denominator, &Real::from(y)),
             );
-            if signed_coefficients_at_parameter(residual_x, &parameter, &CurveContext::STRICT)?
+            if signed_coefficients_at_parameter(&residual_x, &parameter, &CurveContext::STRICT)?
                 == Classification::Decided(RealSign::Zero)
-                && signed_coefficients_at_parameter(residual_y, &parameter, &CurveContext::STRICT)?
+                && signed_coefficients_at_parameter(&residual_y, &parameter, &CurveContext::STRICT)?
                     == Classification::Decided(RealSign::Zero)
             {
                 return Ok(Some(candidate));
@@ -16150,7 +16149,7 @@ impl BezierParallelAlgebraicCuspFrame2 {
             &polynomial_scale(&self.data.normal_x_numerator, &vector.0),
             &polynomial_scale(&self.data.normal_y_numerator, &vector.1),
         );
-        let numerator = match signed_coefficients_at_parameter(numerator, &parameter, policy)? {
+        let numerator = match signed_coefficients_at_parameter(&numerator, &parameter, policy)? {
             Classification::Decided(RealSign::Zero) => {
                 return Ok(Classification::Decided(RealSign::Zero));
             }
@@ -16159,21 +16158,18 @@ impl BezierParallelAlgebraicCuspFrame2 {
                 return Ok(Classification::Uncertain(reason));
             }
         };
-        let denominator = match signed_coefficients_at_parameter(
-            self.data.denominator.clone(),
-            &parameter,
-            policy,
-        )? {
-            Classification::Decided(sign @ (RealSign::Positive | RealSign::Negative)) => sign,
-            Classification::Decided(RealSign::Zero) => {
-                return Err(CurveError::Topology(
-                    "a selected-circle frame retained a zero homogeneous denominator".into(),
-                ));
-            }
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
+        let denominator =
+            match signed_coefficients_at_parameter(&self.data.denominator, &parameter, policy)? {
+                Classification::Decided(sign @ (RealSign::Positive | RealSign::Negative)) => sign,
+                Classification::Decided(RealSign::Zero) => {
+                    return Err(CurveError::Topology(
+                        "a selected-circle frame retained a zero homogeneous denominator".into(),
+                    ));
+                }
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            };
         Ok(Classification::Decided(product_sign(
             numerator,
             denominator,
@@ -18333,7 +18329,7 @@ impl BezierAlgebraicCuspSemicircle2 {
         );
         Ok(
             match signed_coefficients_at_parameter(
-                discriminant,
+                &discriminant,
                 &BezierParameter2::Algebraic(self.cusp_parameter().clone()),
                 policy,
             )? {
@@ -24411,7 +24407,7 @@ impl BezierAlgebraicCuspSemicircle2 {
         let mut normal_y = frame.normal_y_numerator.clone();
         let mut denominator = frame.denominator.clone();
         let denominator_sign =
-            match signed_coefficients_at_parameter(denominator.clone(), &cusp_parameter, policy)? {
+            match signed_coefficients_at_parameter(&denominator, &cusp_parameter, policy)? {
                 Classification::Decided(sign) => sign,
                 Classification::Uncertain(reason) => {
                     return Ok(Classification::Uncertain(reason));
@@ -39718,7 +39714,7 @@ impl BezierAlgebraicCuspSemicircle2 {
             for other_parameter in source_parameters {
                 let source_tangent_sign =
                     if let Some(parameter) = other_parameter.as_bezier_parameter() {
-                        signed_coefficients_at_parameter(tangent.clone(), parameter, policy)?
+                        signed_coefficients_at_parameter(&tangent, parameter, policy)?
                     } else if let Some(parameter) = other_parameter.as_recursive_projective() {
                         parameter.polynomial_sign(tangent, policy)?
                     } else {
@@ -53378,7 +53374,7 @@ fn selected_bivariate_parameter_pair_sign(
     // zero-resultant proof for supporting-circle incidence.
     if first.retained_parameter() == second.retained_parameter() {
         return signed_coefficients_at_parameter(
-            bivariate_substitute_second_equal_first(polynomial),
+            &bivariate_substitute_second_equal_first(polynomial),
             first.retained_parameter(),
             policy,
         );
@@ -57875,7 +57871,7 @@ impl BezierRecursiveMonotoneParameter2 {
                 return Ok(Classification::Uncertain(reason));
             }
         };
-        signed_coefficients_at_parameter(coefficients.to_vec(), &parameter, policy)
+        signed_coefficients_at_parameter(coefficients, &parameter, policy)
     }
 
     fn mapped_polynomial_sign(
@@ -57947,7 +57943,7 @@ impl BezierRecursiveMonotoneParameter2 {
                 return Ok(Classification::Uncertain(reason));
             }
         };
-        signed_coefficients_at_parameter(coefficients.to_vec(), &parameter, policy)
+        signed_coefficients_at_parameter(coefficients, &parameter, policy)
     }
 
     fn promoted_source_parameter(
@@ -65627,7 +65623,7 @@ fn projected_selected_trivariate_candidate_has_box_root(
             };
             return Ok(matches!(
                 signed_coefficients_at_parameter(
-                    bivariate_specialize_first(&incidence, second),
+                    &bivariate_specialize_first(&incidence, second),
                     third,
                     strict,
                 )?,
@@ -65642,7 +65638,7 @@ fn projected_selected_trivariate_candidate_has_box_root(
             };
             return Ok(matches!(
                 signed_coefficients_at_parameter(
-                    bivariate_specialize_second(&incidence, third),
+                    &bivariate_specialize_second(&incidence, third),
                     first,
                     strict,
                 )?,
@@ -65657,7 +65653,7 @@ fn projected_selected_trivariate_candidate_has_box_root(
             };
             return Ok(matches!(
                 signed_coefficients_at_parameter(
-                    bivariate_specialize_second(&incidence, third),
+                    &bivariate_specialize_second(&incidence, third),
                     second,
                     strict,
                 )?,
@@ -65783,7 +65779,7 @@ fn selected_parameter_simple_constraint(
             return Err(CurveError::InvalidBezierAlgebraicParameter);
         }
         let derivative = polynomial_derivative(&constraint);
-        match signed_coefficients_at_parameter(derivative.clone(), &selected, &strict)? {
+        match signed_coefficients_at_parameter(&derivative, &selected, &strict)? {
             Classification::Decided(RealSign::Positive | RealSign::Negative) => {
                 return Ok(Classification::Decided(constraint));
             }
@@ -66441,7 +66437,7 @@ fn trivariate_strip_axis_contents(
             continue;
         };
         changed = true;
-        match signed_coefficients_at_parameter(content.clone(), parameter, &CurveContext::STRICT)? {
+        match signed_coefficients_at_parameter(&content, parameter, &CurveContext::STRICT)? {
             Classification::Decided(RealSign::Zero) => {
                 return Ok(Some((reduced, Some(RealSign::Zero))));
             }
@@ -69375,11 +69371,9 @@ fn dense_polynomial_tuple_sign_owned(
     if let [source] = sources.as_slice() {
         let result =
             match BezierParameter2::from_algebraic_root_representation_unbounded(source, policy)? {
-                Classification::Decided(parameter) => signed_coefficients_at_parameter(
-                    polynomial.coefficients().to_vec(),
-                    &parameter,
-                    policy,
-                )?,
+                Classification::Decided(parameter) => {
+                    signed_coefficients_at_parameter(polynomial.coefficients(), &parameter, policy)?
+                }
                 Classification::Uncertain(reason) => Classification::Uncertain(reason),
             };
         if result.is_decided() || policy.has_bounded_exact_predicate_budget() {
@@ -70073,11 +70067,7 @@ impl BezierDirectPairRadialParallelFastPath2 {
         target_parameter: &BezierParameter2,
         policy: &CurveContext,
     ) -> CurveResult<Classification<bool>> {
-        match signed_coefficients_at_parameter(
-            self.target_weight.clone(),
-            target_parameter,
-            policy,
-        )? {
+        match signed_coefficients_at_parameter(&self.target_weight, target_parameter, policy)? {
             Classification::Decided(RealSign::Positive | RealSign::Negative) => {}
             Classification::Decided(RealSign::Zero) => {
                 return Ok(Classification::Decided(false));
@@ -70088,7 +70078,7 @@ impl BezierDirectPairRadialParallelFastPath2 {
         }
         Ok(
             match signed_coefficients_at_parameter(
-                self.target_speed_squared.clone(),
+                &self.target_speed_squared,
                 target_parameter,
                 policy,
             )? {
@@ -83109,13 +83099,13 @@ fn algebraic_axis_point_coordinates(
             return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
         }
     };
-    let denominator_sign =
-        match signed_coefficients_at_parameter(denominator.clone(), &parameter, policy)? {
-            Classification::Decided(sign) => sign,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
+    let denominator_sign = match signed_coefficients_at_parameter(&denominator, &parameter, policy)?
+    {
+        Classification::Decided(sign) => sign,
+        Classification::Uncertain(reason) => {
+            return Ok(Classification::Uncertain(reason));
+        }
+    };
     match denominator_sign {
         RealSign::Positive => {}
         RealSign::Negative => {
@@ -84751,7 +84741,7 @@ pub(crate) fn retained_point_circle_incidence_sign(
                     radius_squared,
                 ),
             );
-            return signed_coefficients_at_parameter(residual, point.retained_parameter(), policy);
+            return signed_coefficients_at_parameter(&residual, point.retained_parameter(), policy);
         }
         CurvePoint2(CurvePointData2::AnalyticParallel(point)) => {
             return point.circle_residual_sign_to_exact(center, radius_squared, policy);
@@ -85070,7 +85060,7 @@ impl BezierParallelAlgebraicRay2 {
         let weight = source
             .weight
             .map_or_else(|| vec![Real::one()], <[Real]>::to_vec);
-        let weight_sign = match signed_coefficients_at_parameter(weight, parameter, policy)? {
+        let weight_sign = match signed_coefficients_at_parameter(&weight, parameter, policy)? {
             Classification::Decided(sign @ (RealSign::Positive | RealSign::Negative)) => sign,
             Classification::Decided(RealSign::Zero) => {
                 return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
@@ -93724,7 +93714,7 @@ impl BezierAnalyticParallelPoint2 {
             }
         };
         match policy.strict_predicate_pass(|| {
-            signed_coefficients_at_parameter(speed_squared.clone(), &parameter, policy)
+            signed_coefficients_at_parameter(&speed_squared, &parameter, policy)
         })? {
             Classification::Decided(RealSign::Positive) => {}
             Classification::Decided(RealSign::Zero) => {
@@ -94146,7 +94136,7 @@ impl BezierAnalyticParallelPoint2 {
                 &polynomial_multiply(frame_tangent_y, frame_tangent_y),
             );
             match policy.strict_predicate_pass(|| {
-                signed_coefficients_at_parameter(speed_squared.clone(), &parameter, policy)
+                signed_coefficients_at_parameter(&speed_squared, &parameter, policy)
             })? {
                 Classification::Decided(RealSign::Positive) => {}
                 Classification::Decided(RealSign::Zero) => {
@@ -95107,7 +95097,7 @@ impl BezierAnalyticParallelPoint2 {
     ) -> CurveResult<Classification<RealSign>> {
         match &self.data.parameter {
             BezierAnalyticParallelPointParameter2::Bezier(parameter) => {
-                signed_coefficients_at_parameter(polynomial.to_vec(), parameter, policy)
+                signed_coefficients_at_parameter(polynomial, parameter, policy)
             }
             BezierAnalyticParallelPointParameter2::SelectedFiber(parameter) => parameter
                 .predicate_sign(&bivariate_outer_product(&[Real::one()], polynomial), policy),
@@ -104010,7 +104000,7 @@ fn algebraic_selected_square_root_polynomial_is_identically_zero(
         ));
     }
     let retained = BezierParameter2::Algebraic(retained.clone());
-    match signed_coefficients_at_parameter(speed.clone(), &retained, policy)? {
+    match signed_coefficients_at_parameter(&speed, &retained, policy)? {
         Classification::Decided(RealSign::Positive) => {}
         Classification::Decided(RealSign::Zero) => {
             return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
@@ -104034,20 +104024,18 @@ fn algebraic_selected_square_root_polynomial_is_identically_zero(
     for power in 0..coefficient_count {
         let rational = bivariate_second_parameter_coefficient(rational, power);
         let radical = bivariate_second_parameter_coefficient(radical, power);
-        let rational_sign =
-            match signed_coefficients_at_parameter(rational.clone(), &retained, policy)? {
-                Classification::Decided(sign) => sign,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            };
-        let radical_sign =
-            match signed_coefficients_at_parameter(radical.clone(), &retained, policy)? {
-                Classification::Decided(sign) => sign,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            };
+        let rational_sign = match signed_coefficients_at_parameter(&rational, &retained, policy)? {
+            Classification::Decided(sign) => sign,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        let radical_sign = match signed_coefficients_at_parameter(&radical, &retained, policy)? {
+            Classification::Decided(sign) => sign,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
         let coefficient_sign = match (rational_sign, radical_sign) {
             (RealSign::Zero, sign) | (sign, RealSign::Zero) => sign,
             (first, second) if first == second => first,
@@ -104056,7 +104044,7 @@ fn algebraic_selected_square_root_polynomial_is_identically_zero(
                     &polynomial_multiply(&rational, &rational),
                     &polynomial_multiply(&polynomial_multiply(&radical, &radical), &speed),
                 );
-                match signed_coefficients_at_parameter(magnitude, &retained, policy)? {
+                match signed_coefficients_at_parameter(&magnitude, &retained, policy)? {
                     Classification::Decided(RealSign::Positive) => rational_sign,
                     Classification::Decided(RealSign::Negative) => radical_sign,
                     Classification::Decided(RealSign::Zero) => RealSign::Zero,
@@ -105683,7 +105671,7 @@ pub(crate) fn algebraic_selected_correlated_predicate_sign(
                 )
             }
             BezierParameter2::Algebraic(_) => {
-                signed_coefficients_at_parameter(diagonal, cusp_parameter, policy)
+                signed_coefficients_at_parameter(&diagonal, cusp_parameter, policy)
             }
         };
     }
@@ -105957,7 +105945,7 @@ fn algebraic_selected_fiber_root_predicate_sign(
             }
         };
         signed_coefficients_at_parameter(
-            bivariate_specialize_first(predicate, retained_value),
+            &bivariate_specialize_first(predicate, retained_value),
             &parameter,
             policy,
         )
@@ -105967,7 +105955,7 @@ fn algebraic_selected_fiber_root_predicate_sign(
     }
     if let Some(exact_root) = &root.exact_root
         && let Classification::Decided(sign) = signed_coefficients_at_parameter(
-            bivariate_specialize_second(predicate, exact_root),
+            &bivariate_specialize_second(predicate, exact_root),
             &retained_parameter,
             &CurveContext::STRICT,
         )?
@@ -106014,7 +106002,7 @@ fn algebraic_selected_fiber_root_predicate_sign(
             "retained-diagonal-identity",
         );
         return signed_coefficients_at_parameter(
-            bivariate_substitute_second_equal_first(predicate),
+            &bivariate_substitute_second_equal_first(predicate),
             &retained_parameter,
             policy,
         );
@@ -106047,7 +106035,7 @@ fn algebraic_selected_fiber_root_predicate_sign(
         }
         if let Some(exact_root) = &latest.exact_root {
             return signed_coefficients_at_parameter(
-                bivariate_specialize_second(predicate, exact_root),
+                &bivariate_specialize_second(predicate, exact_root),
                 &retained_parameter,
                 policy,
             );
@@ -110467,7 +110455,7 @@ impl BezierParallel2 {
             &polynomial_multiply(&frame.y, &frame.y),
         );
         let strict = policy.strict_counterpart();
-        match signed_coefficients_at_parameter(speed_squared, parameter, &strict)? {
+        match signed_coefficients_at_parameter(&speed_squared, parameter, &strict)? {
             Classification::Decided(RealSign::Positive) => {}
             Classification::Decided(RealSign::Zero) => {
                 return Err(CurveError::Topology(
@@ -110722,13 +110710,13 @@ impl BezierParallel2 {
             &polynomial_scale(tangent_x, vector_x),
             &polynomial_scale(tangent_y, vector_y),
         );
-        let source_cross = match signed_coefficients_at_parameter(cross, parameter, policy)? {
+        let source_cross = match signed_coefficients_at_parameter(&cross, parameter, policy)? {
             Classification::Decided(sign) => sign,
             Classification::Uncertain(reason) => {
                 return Ok(Classification::Uncertain(reason));
             }
         };
-        let source_dot = match signed_coefficients_at_parameter(dot, parameter, policy)? {
+        let source_dot = match signed_coefficients_at_parameter(&dot, parameter, policy)? {
             Classification::Decided(sign) => sign,
             Classification::Uncertain(reason) => {
                 return Ok(Classification::Uncertain(reason));
@@ -110775,7 +110763,7 @@ impl BezierParallel2 {
         let coefficient_x = dot_scale * vector_x - cross_scale * vector_y;
         let coefficient_y = cross_scale * vector_x + dot_scale * vector_y;
         signed_coefficients_at_parameter(
-            polynomial_add(
+            &polynomial_add(
                 &polynomial_scale(&differential.tangent_x, &coefficient_x),
                 &polynomial_scale(&differential.tangent_y, &coefficient_y),
             ),
@@ -110815,7 +110803,7 @@ impl BezierParallel2 {
             return Ok(None);
         }
         let speed_squared = parallel_speed_squared_polynomial(self.differential()?);
-        signed_coefficients_at_parameter(speed_squared, parameter, policy).map(Some)
+        signed_coefficients_at_parameter(&speed_squared, parameter, policy).map(Some)
     }
 
     /// Signs the two retained source-tangent bilinear forms without
@@ -111205,7 +111193,11 @@ impl BezierParallel2 {
             BezierParallelIncidence2::Parameters(candidates) => {
                 let mut retained = Vec::with_capacity(candidates.len());
                 for candidate in candidates {
-                    match signed_polynomial_at_root(Some(&branch), &candidate, policy)? {
+                    match signed_coefficients_at_parameter(
+                        branch.coefficients(),
+                        &candidate,
+                        policy,
+                    )? {
                         Classification::Decided(RealSign::Positive) => retained.push(candidate),
                         Classification::Decided(RealSign::Negative) => {}
                         Classification::Decided(RealSign::Zero) => {
@@ -111465,7 +111457,7 @@ impl BezierParallel2 {
                 }
             }
             if let Some(weight) = weight.as_ref() {
-                match signed_polynomial_at_root(Some(weight), &candidate, policy)? {
+                match signed_coefficients_at_parameter(weight.coefficients(), &candidate, policy)? {
                     Classification::Decided(RealSign::Positive | RealSign::Negative) => {}
                     Classification::Decided(RealSign::Zero) => continue,
                     Classification::Uncertain(reason) => {
@@ -111704,7 +111696,7 @@ impl BezierParallel2 {
                 match candidate {
                     BezierParameter2::Exact(candidate) => {
                         match signed_coefficients_at_parameter(
-                            bivariate_specialize_second(incidence, &candidate),
+                            &bivariate_specialize_second(incidence, &candidate),
                             &retained_parameter,
                             &strict,
                         )? {
@@ -112903,34 +112895,20 @@ impl BezierParallel2 {
                 return Ok(Classification::Uncertain(reason));
             }
         };
-        let radial_polynomial = match polynomial_from_coefficients(radial, policy)? {
-            Classification::Decided(polynomial) => polynomial,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
-        let normal_polynomial = match polynomial_from_coefficients(normal, policy)? {
-            Classification::Decided(polynomial) => polynomial,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
         let mut retained = Vec::with_capacity(candidates.len());
         for candidate in candidates {
-            let radial_sign =
-                match signed_polynomial_at_root(radial_polynomial.as_ref(), &candidate, policy)? {
-                    Classification::Decided(sign) => sign,
-                    Classification::Uncertain(reason) => {
-                        return Ok(Classification::Uncertain(reason));
-                    }
-                };
-            let normal_sign =
-                match signed_polynomial_at_root(normal_polynomial.as_ref(), &candidate, policy)? {
-                    Classification::Decided(sign) => sign,
-                    Classification::Uncertain(reason) => {
-                        return Ok(Classification::Uncertain(reason));
-                    }
-                };
+            let radial_sign = match signed_coefficients_at_parameter(&radial, &candidate, policy)? {
+                Classification::Decided(sign) => sign,
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            };
+            let normal_sign = match signed_coefficients_at_parameter(&normal, &candidate, policy)? {
+                Classification::Decided(sign) => sign,
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            };
             match (radial_sign, normal_sign) {
                 (RealSign::Zero, RealSign::Zero)
                 | (RealSign::Positive, RealSign::Negative)
@@ -113080,43 +113058,21 @@ impl BezierParallel2 {
             }
         };
         let simple_roots = candidate_polynomial.simple_root_classifications(&candidates, policy)?;
-        let candidate_derivative = match polynomial_from_coefficients(
-            polynomial_derivative(candidate_polynomial.coefficients()),
-            policy,
-        )? {
-            Classification::Decided(polynomial) => polynomial,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
-        let radial_polynomial = match polynomial_from_coefficients(radial, policy)? {
-            Classification::Decided(polynomial) => polynomial,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
-        let normal_polynomial = match polynomial_from_coefficients(normal, policy)? {
-            Classification::Decided(polynomial) => polynomial,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
+        let candidate_derivative = polynomial_derivative(candidate_polynomial.coefficients());
         let mut retained = Vec::with_capacity(candidates.len() + certified_parameters.len());
         for (candidate, simple_root) in candidates.into_iter().zip(simple_roots) {
-            let radial_sign =
-                match signed_polynomial_at_root(radial_polynomial.as_ref(), &candidate, policy)? {
-                    Classification::Decided(sign) => sign,
-                    Classification::Uncertain(reason) => {
-                        return Ok(Classification::Uncertain(reason));
-                    }
-                };
-            let normal_sign =
-                match signed_polynomial_at_root(normal_polynomial.as_ref(), &candidate, policy)? {
-                    Classification::Decided(sign) => sign,
-                    Classification::Uncertain(reason) => {
-                        return Ok(Classification::Uncertain(reason));
-                    }
-                };
+            let radial_sign = match signed_coefficients_at_parameter(&radial, &candidate, policy)? {
+                Classification::Decided(sign) => sign,
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            };
+            let normal_sign = match signed_coefficients_at_parameter(&normal, &candidate, policy)? {
+                Classification::Decided(sign) => sign,
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            };
             match (radial_sign, normal_sign) {
                 (RealSign::Zero, RealSign::Zero)
                 | (RealSign::Positive, RealSign::Negative)
@@ -113126,8 +113082,8 @@ impl BezierParallel2 {
                         Classification::Decided(true)
                     ) && radial_sign != RealSign::Zero
                     {
-                        let derivative_sign = match signed_polynomial_at_root(
-                            candidate_derivative.as_ref(),
+                        let derivative_sign = match signed_coefficients_at_parameter(
+                            &candidate_derivative,
                             &candidate,
                             policy,
                         )? {
@@ -113687,6 +113643,10 @@ impl BezierParallel2 {
         parameters: impl IntoIterator<Item = &'a BezierParameter2>,
         policy: &CurveContext,
     ) -> CurveResult<Option<[(Vec<Real>, Vec<Real>); 2]>> {
+        let mut parameters = parameters.into_iter().peekable();
+        if parameters.peek().is_none() {
+            return Ok(None);
+        }
         let source = self.source_power_basis()?;
         let differential = self.differential()?;
         let (tangent_x, tangent_y) = tangent_field
@@ -113714,13 +113674,9 @@ impl BezierParallel2 {
             &(Real::from(2_u8) * self.distance()),
         );
         let strict = policy.strict_counterpart();
-        let normal_polynomial = match polynomial_from_coefficients(normal.clone(), &strict)? {
-            Classification::Decided(Some(polynomial)) => polynomial,
-            Classification::Decided(None) | Classification::Uncertain(_) => return Ok(None),
-        };
         for parameter in parameters {
             if !matches!(
-                signed_polynomial_at_root(Some(&normal_polynomial), parameter, &strict)?,
+                signed_coefficients_at_parameter(&normal, parameter, &strict)?,
                 Classification::Decided(RealSign::Positive | RealSign::Negative)
             ) {
                 // At radial = normal = 0 the incidence equation cannot
@@ -113992,25 +113948,20 @@ impl BezierParallel2 {
                 return Ok(Classification::Uncertain(reason));
             }
         };
-        let branch_product = match polynomial_from_coefficients(
-            polynomial_multiply(&line_numerator, &signed_normal_term),
-            policy,
-        )? {
-            Classification::Decided(polynomial) => polynomial,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
+        let branch_product = polynomial_multiply(&line_numerator, &signed_normal_term);
         let mut retained = Vec::with_capacity(parameters.len());
         for parameter in parameters {
             let branch_sign =
-                match signed_polynomial_at_root(branch_product.as_ref(), &parameter, policy)? {
+                match signed_coefficients_at_parameter(&branch_product, &parameter, policy)? {
                     Classification::Decided(sign) => sign,
                     Classification::Uncertain(_) => {
-                        let line_sign =
-                            signed_polynomial_at_root(Some(&line_polynomial), &parameter, policy)?;
-                        let normal_sign = signed_polynomial_at_root(
-                            Some(&normal_polynomial),
+                        let line_sign = signed_coefficients_at_parameter(
+                            line_polynomial.coefficients(),
+                            &parameter,
+                            policy,
+                        )?;
+                        let normal_sign = signed_coefficients_at_parameter(
+                            normal_polynomial.coefficients(),
                             &parameter,
                             policy,
                         )?;
@@ -114029,8 +113980,8 @@ impl BezierParallel2 {
                 RealSign::Negative => retained.push(parameter),
                 RealSign::Positive => {}
                 RealSign::Zero => {
-                    let line_sign = match signed_polynomial_at_root(
-                        Some(&line_polynomial),
+                    let line_sign = match signed_coefficients_at_parameter(
+                        line_polynomial.coefficients(),
                         &parameter,
                         policy,
                     )? {
@@ -114039,8 +113990,8 @@ impl BezierParallel2 {
                             return Ok(Classification::Uncertain(reason));
                         }
                     };
-                    let normal_sign = match signed_polynomial_at_root(
-                        Some(&normal_polynomial),
+                    let normal_sign = match signed_coefficients_at_parameter(
+                        normal_polynomial.coefficients(),
                         &parameter,
                         policy,
                     )? {
@@ -114242,16 +114193,13 @@ impl BezierParallel2 {
             &polynomial_scale(&differential.tangent_y, &line_y),
         );
         let strict = &CurveContext::STRICT;
-        let tangent_projection_sign = match signed_coefficients_at_parameter(
-            tangent_projection.clone(),
-            parameter,
-            strict,
-        )? {
-            Classification::Decided(sign) => sign,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
+        let tangent_projection_sign =
+            match signed_coefficients_at_parameter(&tangent_projection, parameter, strict)? {
+                Classification::Decided(sign) => sign,
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            };
 
         let (x_numerator, y_numerator, denominator) = if tangent_projection_sign != RealSign::Zero {
             (
@@ -114266,7 +114214,7 @@ impl BezierParallel2 {
                 polynomial_multiply(&weight, &tangent_projection),
             )
         } else {
-            match signed_coefficients_at_parameter(line_numerator.clone(), parameter, strict)? {
+            match signed_coefficients_at_parameter(&line_numerator, parameter, strict)? {
                 Classification::Decided(RealSign::Zero) => {}
                 Classification::Decided(RealSign::Positive | RealSign::Negative) => {
                     return Err(CurveError::Topology(
@@ -114283,7 +114231,7 @@ impl BezierParallel2 {
                 &polynomial_scale(&differential.tangent_y, &line_x),
             );
             let orientation =
-                match signed_coefficients_at_parameter(tangent_cross, parameter, strict)? {
+                match signed_coefficients_at_parameter(&tangent_cross, parameter, strict)? {
                     Classification::Decided(RealSign::Positive) => Real::one(),
                     Classification::Decided(RealSign::Negative) => -Real::one(),
                     Classification::Decided(RealSign::Zero) => {
@@ -114480,13 +114428,6 @@ impl BezierParallel2 {
             }
         };
         let branch_product = polynomial_multiply(&line_numerator, &signed_normal_term);
-        let branch_polynomial = match polynomial_from_coefficients(branch_product.clone(), policy)?
-        {
-            Classification::Decided(polynomial) => polynomial,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
         let mut squared_relation = polynomial_subtract(
             &polynomial_multiply(
                 &polynomial_multiply(&line_numerator, &line_numerator),
@@ -114599,21 +114540,21 @@ impl BezierParallel2 {
                     // retained branch factors below before permitting a
                     // terminal approximation.
                     let branch_sign = match policy.strict_predicate_pass(|| {
-                        signed_polynomial_at_root(branch_polynomial.as_ref(), &candidate, policy)
+                        signed_coefficients_at_parameter(&branch_product, &candidate, policy)
                     })? {
                         Classification::Decided(sign) => sign,
                         Classification::Uncertain(reason) => {
                             let separated_branch_sign = match (
                                 policy.strict_predicate_pass(|| {
-                                    signed_polynomial_at_root(
-                                        Some(&line_polynomial),
+                                    signed_coefficients_at_parameter(
+                                        line_polynomial.coefficients(),
                                         &candidate,
                                         policy,
                                     )
                                 })?,
                                 policy.strict_predicate_pass(|| {
-                                    signed_polynomial_at_root(
-                                        Some(&normal_polynomial),
+                                    signed_coefficients_at_parameter(
+                                        normal_polynomial.coefficients(),
                                         &candidate,
                                         policy,
                                     )
@@ -114700,8 +114641,8 @@ impl BezierParallel2 {
                         RealSign::Positive => continue,
                         RealSign::Zero => {}
                     }
-                    let line_sign = match signed_polynomial_at_root(
-                        Some(&line_polynomial),
+                    let line_sign = match signed_coefficients_at_parameter(
+                        line_polynomial.coefficients(),
                         &candidate,
                         policy,
                     )? {
@@ -114710,8 +114651,8 @@ impl BezierParallel2 {
                             return Ok(Classification::Uncertain(reason));
                         }
                     };
-                    let normal_sign = match signed_polynomial_at_root(
-                        Some(&normal_polynomial),
+                    let normal_sign = match signed_coefficients_at_parameter(
+                        normal_polynomial.coefficients(),
                         &candidate,
                         policy,
                     )? {
@@ -116833,7 +116774,7 @@ impl BezierParallel2 {
             &polynomial_multiply(&differential.tangent_y, &differential.tangent_derivative_x),
         );
         Ok(
-            match signed_coefficients_at_parameter(signed_curvature, parameter, policy)? {
+            match signed_coefficients_at_parameter(&signed_curvature, parameter, policy)? {
                 Classification::Decided(RealSign::Positive) => {
                     Classification::Decided(crate::classify::LineSide::Left)
                 }
@@ -116917,7 +116858,7 @@ impl BezierParallel2 {
         let speed_squared = parallel_speed_squared_polynomial(differential);
         let signed_curvature =
             parallel_signed_curvature_polynomial(differential, source.weight, self.distance());
-        match signed_coefficients_at_parameter(speed_squared.clone(), parameter, policy)? {
+        match signed_coefficients_at_parameter(&speed_squared, parameter, policy)? {
             Classification::Decided(RealSign::Positive) => {}
             Classification::Decided(RealSign::Zero) => {
                 return Ok(Classification::Decided(RealSign::Zero));
@@ -116931,7 +116872,7 @@ impl BezierParallel2 {
                 return Ok(Classification::Uncertain(reason));
             }
         }
-        match signed_coefficients_at_parameter(signed_curvature.clone(), parameter, policy)? {
+        match signed_coefficients_at_parameter(&signed_curvature, parameter, policy)? {
             Classification::Decided(RealSign::Positive | RealSign::Zero) => {
                 Ok(Classification::Decided(RealSign::Positive))
             }
@@ -116941,7 +116882,8 @@ impl BezierParallel2 {
                     &polynomial_power(&speed_squared, 3),
                 );
                 Ok(
-                    match signed_coefficients_at_parameter(squared_difference, parameter, policy)? {
+                    match signed_coefficients_at_parameter(&squared_difference, parameter, policy)?
+                    {
                         Classification::Decided(RealSign::Positive) => {
                             Classification::Decided(RealSign::Negative)
                         }
@@ -116969,8 +116911,7 @@ impl BezierParallel2 {
         let source = self.source_power_basis()?;
         let differential = self.differential()?;
         let speed_squared = parallel_speed_squared_polynomial(differential);
-        match signed_coefficients_at_parameter(speed_squared.clone(), &retained_parameter, policy)?
-        {
+        match signed_coefficients_at_parameter(&speed_squared, &retained_parameter, policy)? {
             Classification::Decided(RealSign::Positive) => {}
             Classification::Decided(RealSign::Zero) => {
                 return Ok(Classification::Decided(None));
@@ -116987,11 +116928,7 @@ impl BezierParallel2 {
 
         let signed_curvature =
             parallel_signed_curvature_polynomial(differential, source.weight, self.distance());
-        match signed_coefficients_at_parameter(
-            signed_curvature.clone(),
-            &retained_parameter,
-            policy,
-        )? {
+        match signed_coefficients_at_parameter(&signed_curvature, &retained_parameter, policy)? {
             Classification::Decided(RealSign::Negative) => {}
             Classification::Decided(RealSign::Positive | RealSign::Zero) => {
                 return Ok(Classification::Decided(None));
@@ -117005,7 +116942,7 @@ impl BezierParallel2 {
             &polynomial_multiply(&signed_curvature, &signed_curvature),
             &polynomial_power(&speed_squared, 3),
         );
-        match signed_coefficients_at_parameter(cusp_residual, &retained_parameter, policy)? {
+        match signed_coefficients_at_parameter(&cusp_residual, &retained_parameter, policy)? {
             Classification::Decided(RealSign::Zero) => {}
             Classification::Decided(RealSign::Positive | RealSign::Negative) => {
                 return Ok(Classification::Decided(None));
@@ -119165,11 +119102,6 @@ impl BezierParallel2 {
                     }
                 }
             };
-        let curvature_term_polynomial =
-            match polynomial_from_coefficients(signed_curvature_term, policy)? {
-                Classification::Decided(polynomial) => polynomial,
-                Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-            };
         let mut parallel_cusps = Vec::new();
         for candidate in candidates {
             // On the squared cusp equation, a negative curvature term proves
@@ -119177,16 +119109,14 @@ impl BezierParallel2 {
             // a source singularity the hodograph and curvature term vanish.
             // One sign certificate therefore excludes those roots too; no
             // comparison with a separately isolated source root is needed.
-            let sign = match signed_polynomial_at_root(
-                curvature_term_polynomial.as_ref(),
-                &candidate,
-                policy,
-            )? {
-                Classification::Decided(sign) => sign,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            };
+            let sign =
+                match signed_coefficients_at_parameter(&signed_curvature_term, &candidate, policy)?
+                {
+                    Classification::Decided(sign) => sign,
+                    Classification::Uncertain(reason) => {
+                        return Ok(Classification::Uncertain(reason));
+                    }
+                };
             if sign == RealSign::Negative {
                 parallel_cusps.push(candidate);
             }
@@ -122493,11 +122423,7 @@ pub(crate) fn bivariate_fiber_strict_sign_on_parameter_range(
             )? {
                 sign
             } else {
-                let polynomial = match polynomial_from_coefficients(control.clone(), policy)? {
-                    Classification::Decided(polynomial) => polynomial,
-                    Classification::Uncertain(_) => return Ok(None),
-                };
-                match signed_polynomial_at_root(polynomial.as_ref(), &retained_parameter, policy)? {
+                match signed_coefficients_at_parameter(control, &retained_parameter, policy)? {
                     Classification::Decided(sign) => sign,
                     Classification::Uncertain(_) => return Ok(None),
                 }
@@ -129634,7 +129560,7 @@ fn signed_bivariate_on_parameter_lift(
 ) -> CurveResult<Classification<RealSign>> {
     let (cleared, lifted_degree) =
         bivariate_on_parameter_lift_cleared(polynomial, retained_axis, map);
-    let cleared_sign = match signed_coefficients_at_parameter(cleared, retained_parameter, policy)?
+    let cleared_sign = match signed_coefficients_at_parameter(&cleared, retained_parameter, policy)?
     {
         Classification::Decided(sign) => sign,
         Classification::Uncertain(reason) => {
@@ -129645,7 +129571,7 @@ fn signed_bivariate_on_parameter_lift(
         return Ok(Classification::Decided(cleared_sign));
     }
     let denominator_sign = match signed_coefficients_at_parameter(
-        map.denominator_coefficients.clone(),
+        &map.denominator_coefficients,
         retained_parameter,
         policy,
     )? {
@@ -129815,12 +129741,12 @@ pub(crate) fn signed_bivariate_at_parameter_pair(
             }
         }
         (BezierParameter2::Exact(first), second) => signed_coefficients_at_parameter(
-            bivariate_specialize_first(polynomial, first),
+            &bivariate_specialize_first(polynomial, first),
             second,
             policy,
         ),
         (first, BezierParameter2::Exact(second)) => signed_coefficients_at_parameter(
-            bivariate_specialize_second(polynomial, second),
+            &bivariate_specialize_second(polynomial, second),
             first,
             policy,
         ),
@@ -129847,7 +129773,7 @@ pub(crate) fn signed_bivariate_at_parameter_pair(
                 policy,
             )? {
                 Classification::Decided(Some(coefficients)) => {
-                    return signed_coefficients_at_parameter(coefficients, first, policy);
+                    return signed_coefficients_at_parameter(&coefficients, first, policy);
                 }
                 Classification::Decided(None) => {}
                 Classification::Uncertain(reason) => blocker = reason,
@@ -129858,7 +129784,7 @@ pub(crate) fn signed_bivariate_at_parameter_pair(
                 policy,
             )? {
                 Classification::Decided(Some(coefficients)) => {
-                    return signed_coefficients_at_parameter(coefficients, second, policy);
+                    return signed_coefficients_at_parameter(&coefficients, second, policy);
                 }
                 Classification::Decided(None) => {}
                 Classification::Uncertain(reason) => blocker = reason,
@@ -129875,7 +129801,7 @@ pub(crate) fn signed_bivariate_at_parameter_pair(
                 Classification::Decided(true)
             ) {
                 return signed_coefficients_at_parameter(
-                    bivariate_substitute_second_equal_first(polynomial),
+                    &bivariate_substitute_second_equal_first(polynomial),
                     first,
                     policy,
                 );
@@ -129886,7 +129812,7 @@ pub(crate) fn signed_bivariate_at_parameter_pair(
                 Classification::Decided(true)
             ) {
                 return signed_coefficients_at_parameter(
-                    bivariate_substitute_second_equal_one_minus_first(polynomial),
+                    &bivariate_substitute_second_equal_one_minus_first(polynomial),
                     first,
                     policy,
                 );
@@ -129910,7 +129836,7 @@ pub(crate) fn signed_bivariate_at_parameter_pair(
                     policy,
                 )? {
                     Classification::Decided(Some(coefficients)) => {
-                        return signed_coefficients_at_parameter(coefficients, first, policy);
+                        return signed_coefficients_at_parameter(&coefficients, first, policy);
                     }
                     Classification::Decided(None) => {}
                     Classification::Uncertain(reason) => blocker = reason,
@@ -129921,7 +129847,7 @@ pub(crate) fn signed_bivariate_at_parameter_pair(
                     policy,
                 )? {
                     Classification::Decided(Some(coefficients)) => {
-                        return signed_coefficients_at_parameter(coefficients, second, policy);
+                        return signed_coefficients_at_parameter(&coefficients, second, policy);
                     }
                     Classification::Decided(None) => {}
                     Classification::Uncertain(reason) => blocker = reason,
@@ -129929,7 +129855,7 @@ pub(crate) fn signed_bivariate_at_parameter_pair(
             }
             if let Some((scale, offset)) = exact_parameter_affine_relation(first, second) {
                 return signed_coefficients_at_parameter(
-                    bivariate_substitute_second_equal_affine_first(polynomial, &scale, &offset),
+                    &bivariate_substitute_second_equal_affine_first(polynomial, &scale, &offset),
                     first,
                     policy,
                 );
@@ -130002,7 +129928,7 @@ fn signed_rank_one_bivariate_at_parameter_pair(
     }
 
     let first_sign = signed_coefficients_at_parameter(
-        polynomial
+        &polynomial
             .coefficients
             .iter()
             .map(|row| {
@@ -130010,19 +129936,19 @@ fn signed_rank_one_bivariate_at_parameter_pair(
                     .cloned()
                     .unwrap_or_else(Real::zero)
             })
-            .collect(),
+            .collect::<Vec<_>>(),
         first_parameter,
         policy,
     )?;
     let second_sign = signed_coefficients_at_parameter(
-        (0..column_count)
+        &(0..column_count)
             .map(|column_index| {
                 pivot_row
                     .get(column_index)
                     .cloned()
                     .unwrap_or_else(Real::zero)
             })
-            .collect(),
+            .collect::<Vec<_>>(),
         second_parameter,
         policy,
     )?;
@@ -130839,7 +130765,8 @@ fn algebraic_incident_ray_regular_anchor_from_polynomials(
         };
     let endpoint_parameter = BezierParameter2::Algebraic(endpoint.clone());
     if let Some(weight) = weight.as_ref() {
-        match signed_polynomial_at_root(Some(weight), &endpoint_parameter, strict)? {
+        match signed_coefficients_at_parameter(weight.coefficients(), &endpoint_parameter, strict)?
+        {
             Classification::Decided(RealSign::Positive | RealSign::Negative) => {}
             Classification::Decided(RealSign::Zero) => {
                 return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
@@ -130849,7 +130776,7 @@ fn algebraic_incident_ray_regular_anchor_from_polynomials(
             }
         }
     }
-    match signed_polynomial_at_root(Some(&speed), &endpoint_parameter, strict)? {
+    match signed_coefficients_at_parameter(speed.coefficients(), &endpoint_parameter, strict)? {
         Classification::Decided(RealSign::Positive) => {}
         Classification::Decided(RealSign::Zero) => {
             return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
@@ -131158,7 +131085,7 @@ fn signed_parallel_linear_projection_at_parameter(
             &polynomial_scale(&delta_y, &direction_y),
         )
     };
-    let weight_sign = match signed_coefficients_at_parameter(weight.clone(), parameter, policy)? {
+    let weight_sign = match signed_coefficients_at_parameter(&weight, parameter, policy)? {
         Classification::Decided(sign @ (RealSign::Positive | RealSign::Negative)) => sign,
         Classification::Decided(RealSign::Zero) => {
             return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
@@ -131167,13 +131094,13 @@ fn signed_parallel_linear_projection_at_parameter(
             return Ok(Classification::Uncertain(reason));
         }
     };
-    let source_sign =
-        match signed_coefficients_at_parameter(source_projection.clone(), parameter, policy)? {
-            Classification::Decided(sign) => sign,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
+    let source_sign = match signed_coefficients_at_parameter(&source_projection, parameter, policy)?
+    {
+        Classification::Decided(sign) => sign,
+        Classification::Uncertain(reason) => {
+            return Ok(Classification::Uncertain(reason));
+        }
+    };
     if real_sign(parallel.distance(), policy) == Some(RealSign::Zero) {
         return Ok(Classification::Decided(product_sign(
             source_sign,
@@ -131196,18 +131123,18 @@ fn signed_parallel_linear_projection_at_parameter(
         &polynomial_scale(&normal_projection, parallel.distance()),
         &weight,
     );
-    let normal_sign =
-        match signed_coefficients_at_parameter(normal_projection.clone(), parameter, policy)? {
-            Classification::Decided(sign) => sign,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
+    let normal_sign = match signed_coefficients_at_parameter(&normal_projection, parameter, policy)?
+    {
+        Classification::Decided(sign) => sign,
+        Classification::Uncertain(reason) => {
+            return Ok(Classification::Uncertain(reason));
+        }
+    };
     let speed_squared = polynomial_add(
         &polynomial_multiply(tangent_x, tangent_x),
         &polynomial_multiply(tangent_y, tangent_y),
     );
-    match signed_coefficients_at_parameter(speed_squared.clone(), parameter, policy)? {
+    match signed_coefficients_at_parameter(&speed_squared, parameter, policy)? {
         Classification::Decided(RealSign::Positive) => {}
         Classification::Decided(RealSign::Zero) => {
             return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
@@ -131233,7 +131160,7 @@ fn signed_parallel_linear_projection_at_parameter(
                 ),
                 &polynomial_multiply(&normal_projection, &normal_projection),
             );
-            match signed_coefficients_at_parameter(squared_difference, parameter, policy)? {
+            match signed_coefficients_at_parameter(&squared_difference, parameter, policy)? {
                 Classification::Decided(RealSign::Positive) => source_sign,
                 Classification::Decided(RealSign::Negative) => normal_sign,
                 Classification::Decided(RealSign::Zero) => RealSign::Zero,
@@ -137113,7 +137040,7 @@ mod conversion_tests {
         policy: &CurveContext,
     ) {
         assert_eq!(
-            signed_coefficients_at_parameter(coefficients, parameter, policy).unwrap(),
+            signed_coefficients_at_parameter(&coefficients, parameter, policy).unwrap(),
             Classification::Decided(expected),
         );
     }
@@ -173064,7 +172991,7 @@ mod conversion_tests {
                     }
                 };
                 assert_eq!(
-                    signed_coefficients_at_parameter(compact_polynomial, &compact, &policy)
+                    signed_coefficients_at_parameter(&compact_polynomial, &compact, &policy)
                         .unwrap(),
                     Classification::Decided(RealSign::Zero),
                     "incident compact case {case_index} under {policy:?}",

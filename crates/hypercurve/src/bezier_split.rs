@@ -118,7 +118,7 @@ impl CurveParameter2 {
         match &self.data {
             CurveParameterData2::Bezier(parameter) => {
                 crate::bezier_parameter::signed_coefficients_at_parameter(
-                    coefficients.to_vec(),
+                    coefficients,
                     parameter,
                     policy,
                 )
