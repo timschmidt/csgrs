@@ -99,7 +99,7 @@ fn midpoint(lower: &Real, upper: &Real) -> Option<Real> {
     ((lower + upper) / Real::from(2_u8)).ok()
 }
 
-fn trim_polynomial<C: Clone, F: OrderedFieldPolynomialContext<C>>(
+pub(crate) fn trim_polynomial<C: Clone, F: OrderedFieldPolynomialContext<C>>(
     polynomial: &mut Vec<C>,
     field: &mut F,
 ) -> Result<(), F::Error> {
