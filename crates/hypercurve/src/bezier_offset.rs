@@ -54773,6 +54773,18 @@ impl BezierRecursiveQuadraticForeignBaseEmbedding2 {
             BezierRecursiveQuadraticValueData2::Base { .. } => None,
         }
     }
+
+    fn projective_point(
+        &self,
+        point: &BezierRecursiveQuadraticProjectivePoint2,
+        field: &BezierRecursiveQuadraticField2,
+    ) -> Option<BezierRecursiveQuadraticProjectivePoint2> {
+        Some(BezierRecursiveQuadraticProjectivePoint2 {
+            x: self.value(&point.x, field)?,
+            y: self.value(&point.y, field)?,
+            denominator: self.value(&point.denominator, field)?,
+        })
+    }
 }
 
 fn recursive_foreign_base_root(
@@ -54897,8 +54909,8 @@ fn recursive_foreign_base_root(
     }
 }
 
-fn recursive_embed_foreign_projective_point(
-    point: &BezierRecursiveQuadraticProjectivePoint2,
+fn recursive_embed_foreign_field(
+    source: &BezierRecursiveQuadraticField2,
     target_base: Arc<BezierRecursiveQuadraticBaseFieldData2>,
     axes: Vec<usize>,
     mut field: BezierRecursiveQuadraticField2,
@@ -54907,11 +54919,11 @@ fn recursive_embed_foreign_projective_point(
     Classification<
         Option<(
             BezierRecursiveQuadraticField2,
-            BezierRecursiveQuadraticProjectivePoint2,
+            BezierRecursiveQuadraticForeignBaseEmbedding2,
         )>,
     >,
 > {
-    let (source_base, source_path) = point.denominator.field().base_and_extension_path();
+    let (source_base, source_path) = source.base_and_extension_path();
     let embed_polynomial = |polynomial: &DenseTensorPolynomial| {
         dense_tensor_embed_axes(polynomial, target_base.sources.len(), &axes)
     };
@@ -55013,16 +55025,7 @@ fn recursive_embed_foreign_projective_point(
             });
         field = target_field;
     }
-    let Some(point) = (|| {
-        Some(BezierRecursiveQuadraticProjectivePoint2 {
-            x: embedding.value(&point.x, &field)?,
-            y: embedding.value(&point.y, &field)?,
-            denominator: embedding.value(&point.denominator, &field)?,
-        })
-    })() else {
-        return Ok(Classification::Decided(None));
-    };
-    Ok(Classification::Decided(Some((field, point))))
+    Ok(Classification::Decided(Some((field, embedding))))
 }
 
 fn recursive_merge_projective_point_fields(
@@ -55081,8 +55084,8 @@ fn recursive_merge_projective_point_fields(
     else {
         return Ok(Classification::Decided(None));
     };
-    let (joined, point) = match recursive_embed_foreign_projective_point(
-        point,
+    let (joined, embedding) = match recursive_embed_foreign_field(
+        &point.denominator.field(),
         target_base.clone(),
         second_axes,
         rebased_field,
@@ -55093,6 +55096,9 @@ fn recursive_merge_projective_point_fields(
         Classification::Uncertain(reason) => {
             return Ok(Classification::Uncertain(reason));
         }
+    };
+    let Some(point) = embedding.projective_point(point, &joined) else {
+        return Ok(Classification::Decided(None));
     };
     let Some(lifted) = rebased
         .drain(..)
@@ -58897,26 +58903,82 @@ impl BezierRecursiveProjectiveParameter2 {
         {
             return sign_in_field(coefficient_field, defining, coefficients.to_vec());
         }
-        let (joined, embeddings) = match authority.field.joined_with(&coefficient_field, policy)? {
-            Classification::Decided(Some(joined)) => joined,
+        if let Some((target_base, embeddings)) =
+            coefficient_field.extension_embeddings_to_equivalent_tower(&authority.field)
+            && let Some(query) = coefficients
+                .iter()
+                .map(|coefficient| {
+                    coefficient
+                        .rebased_to_equivalent_base(target_base.clone(), &embeddings)
+                        .and_then(|coefficient| authority.field.lift(&coefficient))
+                })
+                .collect::<Option<Vec<_>>>()
+        {
+            return authority.polynomial_sign_at_parameter(self, &query, policy);
+        }
+        let (joined, query) = match authority.field.joined_with(&coefficient_field, policy)? {
+            Classification::Decided(Some((joined, embeddings))) => {
+                let Some(query) = coefficients
+                    .iter()
+                    .map(|coefficient| joined.embed_value(coefficient, &embeddings))
+                    .collect::<Option<Vec<_>>>()
+                else {
+                    return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+                };
+                (joined, query)
+            }
             Classification::Decided(None) => {
-                return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+                // Different base allocations or polynomial-valued speed
+                // generators do not make the selected coefficient roots
+                // independent. Replay them over the existing source tuple.
+                let (source_base, _) = coefficient_field.base_and_extension_path();
+                let (target_base, _) = authority.field.base_and_extension_path();
+                let Some(axes) = source_base
+                    .sources
+                    .iter()
+                    .map(|source| {
+                        target_base
+                            .sources
+                            .iter()
+                            .position(|target| target == source)
+                    })
+                    .collect::<Option<Vec<_>>>()
+                else {
+                    return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+                };
+                let (joined, embedding) = match recursive_embed_foreign_field(
+                    &coefficient_field,
+                    target_base,
+                    axes,
+                    authority.field.clone(),
+                    policy,
+                )? {
+                    Classification::Decided(Some(joined)) => joined,
+                    Classification::Decided(None) => {
+                        return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+                    }
+                    Classification::Uncertain(reason) => {
+                        return Ok(Classification::Uncertain(reason));
+                    }
+                };
+                let Some(query) = coefficients
+                    .iter()
+                    .map(|coefficient| embedding.value(coefficient, &joined))
+                    .collect::<Option<Vec<_>>>()
+                else {
+                    return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+                };
+                (joined, query)
             }
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
+            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
         };
+        if joined.same_field(&authority.field) {
+            return authority.polynomial_sign_at_parameter(self, &query, policy);
+        }
         let Some(defining) = authority
             .coefficients
             .iter()
             .map(|coefficient| joined.lift(coefficient))
-            .collect::<Option<Vec<_>>>()
-        else {
-            return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
-        };
-        let Some(query) = coefficients
-            .iter()
-            .map(|coefficient| joined.embed_value(coefficient, &embeddings))
             .collect::<Option<Vec<_>>>()
         else {
             return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
@@ -61453,7 +61515,7 @@ impl BezierRecursiveProjectiveChordParallelSystem2 {
         policy: &CurveContext,
     ) -> CurveResult<Classification<RealSign>> {
         let sign = |polynomial: &[BezierRecursiveQuadraticValue2]| {
-            parameter.recursive_polynomial_sign(polynomial, policy)
+            parameter.recursive_polynomial_sign_joined(polynomial, policy)
         };
         let rational_sign = match sign(&self.incidence.rational)? {
             Classification::Decided(sign) => sign,
@@ -63070,8 +63132,8 @@ fn recursive_projective_point_source_in_field(
                 let strict = CurveContext::STRICT;
                 match strict
                     .bounded_exact_predicate_pass(|| {
-                        recursive_embed_foreign_projective_point(
-                            point,
+                        recursive_embed_foreign_field(
+                            &point.denominator.field(),
                             target_base,
                             axes,
                             field.clone(),
@@ -63080,8 +63142,10 @@ fn recursive_projective_point_source_in_field(
                     })
                     .ok()?
                 {
-                    Classification::Decided(Some((target, point))) if target.same_field(field) => {
-                        Some(point)
+                    Classification::Decided(Some((target, embedding)))
+                        if target.same_field(field) =>
+                    {
+                        embedding.projective_point(point, &target)
                     }
                     _ => None,
                 }
@@ -73458,7 +73522,7 @@ impl BezierAlgebraicChord2 {
                 );
                 return Ok(Some(crate::classify::LineSide::On));
             }
-            if let Some(side) = point.monotone_oriented_side_to_chord(self, policy)? {
+            if let Some(side) = point.retained_parameter_oriented_side_to_chord(self, policy)? {
                 return Ok(Some(side));
             }
         }
@@ -92454,11 +92518,10 @@ impl BezierAnalyticParallelPoint2 {
         Ok(false)
     }
 
-    /// Classifies this retained monotone contact against another chord by
-    /// evaluating that chord's unsquared analytic incidence over the native
-    /// monotone-root bracket.  Neither Cartesian point coordinates nor a
-    /// projected global parameter are constructed.
-    fn monotone_oriented_side_to_chord(
+    /// Classifies this retained parameter's point against another chord using
+    /// its unsquared incidence equation and local parameter evidence. Native
+    /// field replay precedes deep independent interval refinement.
+    fn retained_parameter_oriented_side_to_chord(
         &self,
         chord: &BezierAlgebraicChord2,
         policy: &CurveContext,
@@ -92624,6 +92687,14 @@ impl BezierAnalyticParallelPoint2 {
             Classification::Decided(Some(system)) => system,
             Classification::Decided(None) | Classification::Uncertain(_) => return Ok(None),
         };
+        let to_side = |mut sign, _lane: &'static str| {
+            if chord.retained_support_orientation_is_reversed() {
+                sign = product_sign(sign, RealSign::Negative);
+            }
+            #[cfg(feature = "dispatch-trace")]
+            hyperreal::dispatch_trace::record("hypercurve", "algebraic-chord-side-kernel", _lane);
+            crate::classify::LineSide::from_real_sign(sign)
+        };
         if let BezierAnalyticParallelPointParameter2::Bezier(parameter) = &self.data.parameter {
             let evaluation = match policy
                 .strict_predicate_pass(|| system.candidate_evaluation(parameter, policy))?
@@ -92631,73 +92702,64 @@ impl BezierAnalyticParallelPoint2 {
                 Classification::Decided(Some(evaluation)) => evaluation,
                 Classification::Decided(None) | Classification::Uncertain(_) => return Ok(None),
             };
-            let mut sign = match policy.strict_predicate_pass(|| {
+            let sign = match policy.strict_predicate_pass(|| {
                 system.expression_replay_sign(&system.incidence, &evaluation, policy)
             })? {
                 Classification::Decided(sign) => sign,
                 Classification::Uncertain(_) => return Ok(None),
             };
-            if chord.retained_support_orientation_is_reversed() {
-                sign = product_sign(sign, RealSign::Negative);
-            }
-            #[cfg(feature = "dispatch-trace")]
-            hyperreal::dispatch_trace::record(
-                "hypercurve",
-                "algebraic-chord-side-kernel",
-                "retained-bezier-incidence-sign",
-            );
-            return Ok(Some(crate::classify::LineSide::from_real_sign(sign)));
+            return Ok(Some(to_side(sign, "retained-bezier-incidence-sign")));
         }
         let BezierAnalyticParallelPointParameter2::RecursiveProjective(parameter) =
             &self.data.parameter
         else {
             return Ok(None);
         };
+        let native_side = || -> CurveResult<Option<crate::classify::LineSide>> {
+            Ok(
+                match policy.strict_predicate_pass(|| {
+                    system.incidence_sign_at_recursive_parameter(parameter, policy)
+                })? {
+                    Classification::Decided(sign) => {
+                        Some(to_side(sign, "retained-recursive-incidence-sign"))
+                    }
+                    Classification::Uncertain(_) => None,
+                },
+            )
+        };
         let mut terminal_refined = false;
+        let mut refined = parameter.clone();
         for refinement_steps in [0_usize, 2, 4, 8, 16, 32, 64, 128, 256, 512] {
-            let refined = match policy
-                .strict_predicate_pass(|| parameter.refined(refinement_steps, policy))?
-            {
-                Classification::Decided(parameter) => parameter,
-                Classification::Uncertain(_) => continue,
-            };
+            if refinement_steps == 16 {
+                if let Some(side) = policy.bounded_exact_predicate_pass(&native_side)? {
+                    return Ok(Some(side));
+                }
+                if policy.has_bounded_exact_predicate_budget() {
+                    return Ok(None);
+                }
+            }
+            refined =
+                match policy.strict_predicate_pass(|| refined.refined(refinement_steps, policy))? {
+                    Classification::Decided(parameter) => parameter,
+                    Classification::Uncertain(_) => continue,
+                };
             terminal_refined |= refinement_steps == 512;
             let parameter_interval = BezierAlgebraicChordRealInterval2 {
                 lower: refined.data.lower.clone(),
                 upper: refined.data.upper.clone(),
             };
             let coefficient_bits = refinement_steps.max(64).min(i32::MAX as usize) as i32;
-            let Some(mut sign) = system.oriented_incidence_interval_sign(
+            let Some(sign) = system.oriented_incidence_interval_sign(
                 &parameter_interval,
                 refinement_steps,
                 -coefficient_bits,
             ) else {
                 continue;
             };
-            if chord.retained_support_orientation_is_reversed() {
-                sign = product_sign(sign, RealSign::Negative);
-            }
-            #[cfg(feature = "dispatch-trace")]
-            hyperreal::dispatch_trace::record(
-                "hypercurve",
-                "algebraic-chord-side-kernel",
-                "retained-monotone-incidence-interval",
-            );
-            return Ok(Some(crate::classify::LineSide::from_real_sign(sign)));
+            return Ok(Some(to_side(sign, "retained-monotone-incidence-interval")));
         }
-        if let Classification::Decided(mut sign) = policy.strict_predicate_pass(|| {
-            system.incidence_sign_at_recursive_parameter(parameter, policy)
-        })? {
-            if chord.retained_support_orientation_is_reversed() {
-                sign = product_sign(sign, RealSign::Negative);
-            }
-            #[cfg(feature = "dispatch-trace")]
-            hyperreal::dispatch_trace::record(
-                "hypercurve",
-                "algebraic-chord-side-kernel",
-                "retained-recursive-incidence-sign",
-            );
-            return Ok(Some(crate::classify::LineSide::from_real_sign(sign)));
+        if let Some(side) = native_side()? {
+            return Ok(Some(side));
         }
         if terminal_refined && policy.permits_approximate_512() {
             policy.observe_approximate_512();
@@ -149846,6 +149908,136 @@ mod conversion_tests {
     }
 
     #[test]
+    fn retained_chord_incidence_replays_independently_allocated_coefficient_fields() {
+        let half = (Real::one() / Real::from(2_i8)).unwrap();
+        let tiny = Real::from(2_i8).powi_i64(-600).unwrap();
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let alpha =
+                algebraic_parameter(vec![-half.clone(), Real::zero(), Real::zero(), Real::one()]);
+            let anchor = BezierAnalyticParallelPoint2::new(
+                QuadraticBezier2::new(
+                    Point2::new(Real::zero(), Real::zero()),
+                    Point2::new(half.clone(), Real::zero()),
+                    Point2::new(Real::one(), Real::zero()),
+                )
+                .parallel_left(Real::zero())
+                .unwrap(),
+                alpha.clone(),
+                &policy,
+            );
+            let end = anchor
+                .translated(&Real::one(), &Real::one(), &policy)
+                .unwrap();
+            let Classification::Decided(chord) = BezierAlgebraicChord2::try_new(
+                CurvePoint2::from(anchor),
+                CurvePoint2::from(end),
+                &policy,
+            )
+            .unwrap() else {
+                panic!("the translated endpoints define an exact diagonal chord")
+            };
+            let one = DenseTensorPolynomial::try_new(vec![1], vec![Real::one()]).unwrap();
+            let field = BezierRecursiveQuadraticField2::base(
+                vec![bezier_parameter_root_representation(&alpha)],
+                one.clone(),
+                one,
+            )
+            .unwrap();
+            let base = field.base_and_extension_path().0;
+            let alpha_value = recursive_quadratic_rational_value(
+                &base,
+                DenseTensorPolynomial::from_axis_polynomial(1, 0, &[Real::zero(), Real::one()])
+                    .unwrap(),
+            )
+            .unwrap();
+            let Classification::Decided(parameters) =
+                recursive_projective_polynomial_unit_parameters(
+                    &field,
+                    vec![
+                        alpha_value.scale(&Real::from(-1_i8)).unwrap(),
+                        field.constant(Real::zero()).unwrap(),
+                        field.constant(Real::zero()).unwrap(),
+                        field.constant(Real::one()).unwrap(),
+                    ],
+                    &policy,
+                )
+                .unwrap()
+            else {
+                panic!("beta^3=alpha must retain its exact local field")
+            };
+            let beta = parameters[0].as_recursive_projective().unwrap();
+            for (shift, sign, side) in [
+                (Real::zero(), RealSign::Zero, crate::classify::LineSide::On),
+                (
+                    tiny.clone(),
+                    RealSign::Negative,
+                    crate::classify::LineSide::Right,
+                ),
+                (
+                    -tiny.clone(),
+                    RealSign::Positive,
+                    crate::classify::LineSide::Left,
+                ),
+            ] {
+                for gauge in [Real::one(), -Real::from(2_i8).sqrt().unwrap()] {
+                    let source = RationalBezier2::try_new(
+                        vec![
+                            Point2::new(shift.clone(), Real::zero()),
+                            Point2::new(shift.clone(), Real::zero()),
+                            Point2::new(shift.clone(), Real::zero()),
+                            Point2::new(Real::one() + &shift, Real::zero()),
+                        ],
+                        vec![gauge; 4],
+                    )
+                    .unwrap();
+                    let parallel = source.parallel_left(Real::zero()).unwrap();
+                    let Classification::Decided(Some(system)) = chord
+                        .recursive_projective_parallel_system_with_frame(
+                            &parallel, None, false, false, &policy,
+                        )
+                        .unwrap()
+                    else {
+                        panic!("the query chord retains its coefficient field")
+                    };
+                    assert!(!system.field.same_field(&field));
+                    assert_eq!(
+                        policy
+                            .bounded_exact_predicate_pass(|| {
+                                system.incidence_sign_at_recursive_parameter(beta, &policy)
+                            })
+                            .unwrap(),
+                        Classification::Decided(sign)
+                    );
+                    let point = BezierAnalyticParallelPoint2::new_recursive_projective(
+                        parallel,
+                        beta.clone(),
+                        &policy,
+                    );
+                    let reversed_side = match side {
+                        crate::classify::LineSide::Left => crate::classify::LineSide::Right,
+                        crate::classify::LineSide::Right => crate::classify::LineSide::Left,
+                        crate::classify::LineSide::On => crate::classify::LineSide::On,
+                    };
+                    for (chord, expected) in
+                        [(chord.clone(), side), (chord.reversed(), reversed_side)]
+                    {
+                        let outcome = crate::policy::resolve_certified_value(&policy, |attempt| {
+                            attempt
+                                .bounded_exact_predicate_pass(|| {
+                                    point.retained_parameter_oriented_side_to_chord(&chord, attempt)
+                                })
+                                .unwrap()
+                        });
+                        assert_eq!(outcome.value, Some(expected));
+                        assert_eq!(outcome.certainty, CurveCertainty::Certified);
+                    }
+                    assert!(point.data.recursive_projective_point.get().is_none());
+                }
+            }
+        }
+    }
+
+    #[test]
     fn retained_polynomial_base_roots_select_the_nonnegative_sheet_on_any_axis() {
         let half = (Real::one() / Real::from(2_i8)).unwrap();
         for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
@@ -149984,7 +150176,7 @@ mod conversion_tests {
             ));
             let embedded = recursive_projective_point_source_in_field(
                 &field,
-                &BezierRecursiveProjectivePointSource2::Recursive(reduced_coordinates),
+                &BezierRecursiveProjectivePointSource2::Recursive(reduced_coordinates.clone()),
             )
             .expect(
                 "removing the t^2 tangent factor must preserve an embedding in the original field",
@@ -150032,6 +150224,31 @@ mod conversion_tests {
                 assert_eq!(outcome.value, Classification::Decided(Some(expected)));
                 assert_eq!(outcome.certainty, CurveCertainty::Certified);
                 assert!(query.data.recursive_projective_point.get().is_none());
+                let foreign_field = reduced_coordinates.denominator.field();
+                let foreign_incidence = vec![
+                    reduced_coordinates
+                        .x
+                        .scale(&Real::from(-1_i8))
+                        .unwrap()
+                        .add(&foreign_field.constant(shift.clone()).unwrap())
+                        .unwrap(),
+                    foreign_field.constant(Real::zero()).unwrap(),
+                    foreign_field.constant(Real::zero()).unwrap(),
+                    reduced_coordinates.denominator.clone(),
+                ];
+                let expected_sign = match expected {
+                    std::cmp::Ordering::Less => RealSign::Negative,
+                    std::cmp::Ordering::Equal => RealSign::Zero,
+                    std::cmp::Ordering::Greater => RealSign::Positive,
+                };
+                assert_eq!(
+                    policy
+                        .bounded_exact_predicate_pass(
+                            || beta.recursive_polynomial_sign_joined(&foreign_incidence, &policy)
+                        )
+                        .unwrap(),
+                    Classification::Decided(expected_sign)
+                );
             }
         }
     }
