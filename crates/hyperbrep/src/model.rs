@@ -9071,7 +9071,8 @@ impl ModelBuilder {
             Some(CurveGeometry2::Nurbs(planar)) => Curve3::nurbs(
                 planar.degree(),
                 planar
-                    .control_points()
+                    .affine_control_points()
+                    .ok_or(BuildError::EdgeUseSupportMismatch)?
                     .iter()
                     .map(lift)
                     .collect::<Result<Vec<_>, _>>()?,
@@ -19621,46 +19622,26 @@ fn validate_homogeneous_pcurve_controls(
     if actual.len() != expected.len() || actual.is_empty() {
         return Err(BuildError::EdgeUseSupportMismatch);
     }
-    let actual_weight = actual[0].weight();
-    let expected_weight = expected[0].weight();
-    if real_values_equal(actual_weight, &Real::zero())?
-        || real_values_equal(expected_weight, &Real::zero())?
-    {
-        return Err(BuildError::EdgeUseSupportMismatch);
+    // Unclamped NURBS may begin with an infinite or zero control. Choose a
+    // nonzero coefficient of the full net, without requiring affine projection.
+    let mut gauge = None;
+    'controls: for (a, b) in actual.iter().zip(expected) {
+        for (a, b) in [(a.weight(), b.weight()), (a.x(), b.x()), (a.y(), b.y())] {
+            if !real_values_equal(a, &Real::zero())? {
+                if real_values_equal(b, &Real::zero())? {
+                    return Err(BuildError::EdgeUseSupportMismatch);
+                }
+                gauge = Some((a, b));
+                break 'controls;
+            }
+        }
     }
+    let (actual_weight, expected_weight) = gauge.ok_or(BuildError::EdgeUseSupportMismatch)?;
     for (a, b) in actual.iter().zip(expected) {
         for (a, b) in [(a.x(), b.x()), (a.y(), b.y()), (a.weight(), b.weight())] {
             if !real_values_equal(&(a * expected_weight), &(b * actual_weight))? {
                 return Err(BuildError::EdgeUseSupportMismatch);
             }
-        }
-    }
-    Ok(())
-}
-
-fn validate_weighted_pcurve_controls(
-    actual_points: &[CurvePoint2],
-    actual_weights: &[Real],
-    expected_points: &[CurvePoint2],
-    expected_weights: &[Real],
-) -> Result<(), BuildError> {
-    if actual_points.len() != expected_points.len()
-        || actual_weights.len() != expected_weights.len()
-        || actual_weights.is_empty()
-    {
-        return Err(BuildError::EdgeUseSupportMismatch);
-    }
-    let weight_scale = (&actual_weights[0] / &expected_weights[0])
-        .map_err(|_| GeometryError::ProjectiveDivision)?;
-    for ((actual_point, actual_weight), (expected_point, expected_weight)) in actual_points
-        .iter()
-        .zip(actual_weights)
-        .zip(expected_points.iter().zip(expected_weights))
-    {
-        if !curve_points_equal(actual_point, expected_point)?
-            || !real_values_equal(actual_weight, &(expected_weight * &weight_scale))?
-        {
-            return Err(BuildError::EdgeUseSupportMismatch);
         }
     }
     Ok(())
@@ -19764,11 +19745,9 @@ fn validate_projective_pcurve_equal(actual: &Curve2, expected: &Curve2) -> Resul
             {
                 return Err(BuildError::EdgeUseSupportMismatch);
             }
-            validate_weighted_pcurve_controls(
-                actual.control_points(),
-                actual.weights(),
-                expected.control_points(),
-                expected.weights(),
+            validate_homogeneous_pcurve_controls(
+                actual.homogeneous_controls(),
+                expected.homogeneous_controls(),
             )
         }
         _ => Err(BuildError::EdgeUseSupportMismatch),
@@ -21712,20 +21691,38 @@ fn homogeneous_pcurve_validation_requires_a_nonzero_projective_scale() {
         HomogeneousControl2::new(Real::zero(), Real::one(), Real::zero()),
         HomogeneousControl2::new(-Real::one(), Real::zero(), Real::one()),
     ];
-    for scale in [Real::pi(), -Real::pi()] {
-        let scaled: Vec<_> = expected
-            .iter()
-            .map(|control| {
-                HomogeneousControl2::new(
-                    control.x() * &scale,
-                    control.y() * &scale,
-                    control.weight() * &scale,
-                )
-            })
-            .collect();
-        validate_homogeneous_pcurve_controls(&scaled, &expected).unwrap();
+    for prefix in [
+        Vec::new(),
+        vec![HomogeneousControl2::new(
+            Real::zero(),
+            Real::zero(),
+            Real::zero(),
+        )],
+        vec![HomogeneousControl2::new(
+            Real::one(),
+            Real::one(),
+            Real::zero(),
+        )],
+    ] {
+        let expected: Vec<_> = prefix.into_iter().chain(expected.iter().cloned()).collect();
+        for scale in [Real::pi(), -Real::pi()] {
+            let scaled: Vec<_> = expected
+                .iter()
+                .map(|control| {
+                    HomogeneousControl2::new(
+                        control.x() * &scale,
+                        control.y() * &scale,
+                        control.weight() * &scale,
+                    )
+                })
+                .collect();
+            validate_homogeneous_pcurve_controls(&scaled, &expected).unwrap();
+        }
+        let zero = vec![
+            HomogeneousControl2::new(Real::zero(), Real::zero(), Real::zero());
+            expected.len()
+        ];
+        assert!(validate_homogeneous_pcurve_controls(&zero, &expected).is_err());
+        assert!(validate_homogeneous_pcurve_controls(&expected, &zero).is_err());
     }
-    let zero = vec![HomogeneousControl2::new(Real::zero(), Real::zero(), Real::zero()); 3];
-    assert!(validate_homogeneous_pcurve_controls(&zero, &expected).is_err());
-    assert!(validate_homogeneous_pcurve_controls(&expected, &zero).is_err());
 }

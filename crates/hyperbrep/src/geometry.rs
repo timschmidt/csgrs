@@ -5090,7 +5090,12 @@ pub(crate) fn lift_curve_from_plane_frame(
         )?)),
         Some(CurveGeometry2::Nurbs(curve)) => Ok(Some(Curve3::nurbs(
             curve.degree(),
-            curve.control_points().iter().map(lift).collect(),
+            curve
+                .affine_control_points()
+                .ok_or(GeometryError::UnsupportedIntersection)?
+                .iter()
+                .map(lift)
+                .collect(),
             curve.weights().to_vec(),
             curve.knots().to_vec(),
         )?)),
@@ -5146,7 +5151,10 @@ pub(crate) fn lift_curve_from_plane_frame_with_affine_parameter(
             )?))
         }
         Some(CurveGeometry2::Nurbs(curve)) => {
-            let mut control_points = curve.control_points().to_vec();
+            let mut control_points = curve
+                .affine_control_points()
+                .ok_or(GeometryError::UnsupportedIntersection)?
+                .to_vec();
             let mut weights = curve.weights().to_vec();
             let mut knots = curve.knots().to_vec();
             if reversed {
@@ -12175,7 +12183,7 @@ mod tests {
         let Some(CurveGeometry2::Nurbs(graph)) = graph_pcurve.curve().geometry() else {
             panic!("cross-span partial graph must retain one NURBS pcurve");
         };
-        let mut forged_controls = graph.control_points().to_vec();
+        let mut forged_controls = graph.affine_control_points().unwrap().to_vec();
         forged_controls[1] = CurvePoint2::new(
             forged_controls[1].x().clone() + Real::one(),
             forged_controls[1].y().clone(),
@@ -14036,7 +14044,7 @@ mod tests {
         let Some(CurveGeometry2::Nurbs(graph)) = graph_pcurve.curve().geometry() else {
             panic!("multi-span tensor split must retain one NURBS graph pcurve");
         };
-        let mut forged_controls = graph.control_points().to_vec();
+        let mut forged_controls = graph.affine_control_points().unwrap().to_vec();
         forged_controls[1] = CurvePoint2::new(
             forged_controls[1].x().clone() + Real::one(),
             forged_controls[1].y().clone(),

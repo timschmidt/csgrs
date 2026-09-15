@@ -16,7 +16,7 @@ use crate::{
     ShellId, Surface, SurfaceId, SurfaceKind, ValidationReport, VertexId, WireId,
 };
 
-const FORMAT_VERSION: u32 = 7;
+const FORMAT_VERSION: u32 = 8;
 
 /// Failure while encoding, decoding, or validating an exact model.
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -177,21 +177,29 @@ impl RawModel {
                 }
                 RawPcurve::Nurbs {
                     degree,
-                    control_points,
-                    weights,
+                    homogeneous_controls,
                     knots,
+                    period,
                 } => {
-                    let curve = Curve2::try_nurbs(
+                    let curve = hypercurve::NurbsCurve2::from_homogeneous_controls(
                         degree,
-                        control_points.into_iter().map(curve_point2).collect(),
-                        weights,
+                        homogeneous_controls
+                            .into_iter()
+                            .map(|[x, y, weight]| {
+                                hypercurve::HomogeneousControl2::new(x, y, weight)
+                            })
+                            .collect(),
                         knots,
+                        match period {
+                            Some(period) => hypercurve::SplinePeriodicity2::Periodic { period },
+                            None => hypercurve::SplinePeriodicity2::NonPeriodic,
+                        },
                         &CurveContext::STRICT,
                     )
                     .map_err(GeometryError::from)
                     .map_err(BuildError::from)?
                     .into_value();
-                    builder.pcurve(Pcurve::new(curve))?;
+                    builder.pcurve(Pcurve::new(Curve2::from(curve)))?;
                 }
             }
         }
@@ -324,13 +332,19 @@ impl Model {
                 }
                 Some(CurveGeometry2::Nurbs(curve)) => Ok(RawPcurve::Nurbs {
                     degree: curve.degree(),
-                    control_points: curve
-                        .control_points()
+                    homogeneous_controls: curve
+                        .homogeneous_controls()
                         .iter()
-                        .map(curve_point_array)
+                        .map(|control| {
+                            [
+                                control.x().clone(),
+                                control.y().clone(),
+                                control.weight().clone(),
+                            ]
+                        })
                         .collect(),
-                    weights: curve.weights().to_vec(),
                     knots: curve.knots().to_vec(),
+                    period: curve.periodicity().period().cloned(),
                 }),
                 _ => Err(PersistenceError::UnsupportedPcurve(pcurve.kind())),
             })
@@ -642,9 +656,9 @@ enum RawPcurve {
     },
     Nurbs {
         degree: usize,
-        control_points: Vec<[Real; 2]>,
-        weights: Vec<Real>,
+        homogeneous_controls: Vec<[Real; 3]>,
         knots: Vec<Real>,
+        period: Option<Real>,
     },
 }
 
@@ -1303,6 +1317,81 @@ mod tests {
         );
         assert!(restored.affine_control_points().is_none());
         assert_eq!(rebuilt.to_json().unwrap(), json);
+    }
+
+    #[test]
+    fn homogeneous_nurbs_pcurve_persistence_retains_controls_and_periodicity() {
+        use hypercurve::{HomogeneousControl2, NurbsCurve2, SplinePeriodicity2};
+        let r = Real::from;
+        let finite = NurbsCurve2::from_homogeneous_controls(
+            2,
+            vec![
+                HomogeneousControl2::new(Real::one(), Real::zero(), Real::one()),
+                HomogeneousControl2::new(Real::zero(), Real::one(), Real::zero()),
+                HomogeneousControl2::new(-Real::one(), Real::zero(), Real::one()),
+            ],
+            vec![
+                Real::zero(),
+                Real::zero(),
+                Real::zero(),
+                Real::one(),
+                Real::one(),
+                Real::one(),
+            ],
+            SplinePeriodicity2::NonPeriodic,
+            &CurveContext::STRICT,
+        )
+        .unwrap()
+        .into_value();
+        let periodic = NurbsCurve2::try_new_periodic(
+            2,
+            vec![
+                curve_point2([r(0), r(0)]),
+                curve_point2([r(4), r(0)]),
+                curve_point2([r(4), r(4)]),
+                curve_point2([r(0), r(4)]),
+            ],
+            vec![r(1), r(2), r(3), r(4)],
+            (0..=4).map(r).collect(),
+            &CurveContext::STRICT,
+        )
+        .unwrap()
+        .into_value();
+        assert!(finite.affine_control_points().is_none());
+        for source in [finite, periodic] {
+            let mut builder = ModelBuilder::new();
+            let id = builder
+                .pcurve(Pcurve::new(Curve2::from(source.clone())))
+                .unwrap();
+            let model = builder.finish().unwrap();
+            let json = model.to_json().unwrap();
+            let rebuilt = RawModel::from_json(&json).unwrap().validate().unwrap();
+            let Some(CurveGeometry2::Nurbs(restored)) =
+                rebuilt.pcurve(id).unwrap().curve().geometry()
+            else {
+                panic!("persistence must retain the NURBS carrier");
+            };
+            assert_eq!(
+                restored.homogeneous_controls(),
+                source.homogeneous_controls()
+            );
+            assert_eq!(restored.knots(), source.knots());
+            assert_eq!(restored.periodicity(), source.periodicity());
+            assert_eq!(restored.parameter_domain(), source.parameter_domain());
+            if source.periodicity().is_periodic() {
+                assert_eq!(
+                    restored
+                        .point_at_wrapped(&r(5), &CurveContext::STRICT)
+                        .unwrap()
+                        .into_value(),
+                    source
+                        .point_at(&r(1), &CurveContext::STRICT)
+                        .unwrap()
+                        .into_value()
+                );
+            }
+            assert_eq!(rebuilt.to_json().unwrap(), json);
+        }
     }
 
     #[test]

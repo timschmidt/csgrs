@@ -3842,7 +3842,12 @@ fn spatial_extrusion_curve(curve: &Curve2, z: &Real) -> Result<Curve3, Construct
         )?),
         Some(CurveGeometry2::Nurbs(curve)) => Ok(Curve3::nurbs(
             curve.degree(),
-            curve.control_points().iter().map(lift).collect(),
+            curve
+                .affine_control_points()
+                .ok_or(ConstructionError::UnsupportedPlanarProfile)?
+                .iter()
+                .map(lift)
+                .collect(),
             curve.weights().to_vec(),
             curve.knots().to_vec(),
         )?),
@@ -3907,7 +3912,8 @@ fn lift_planar_pcurve(curve: &Curve2, surface: &Surface) -> Result<Curve3, Const
         Some(CurveGeometry2::Nurbs(curve)) => Ok(Curve3::nurbs(
             curve.degree(),
             curve
-                .control_points()
+                .affine_control_points()
+                .ok_or(ConstructionError::UnsupportedPlanarProfile)?
                 .iter()
                 .map(lift)
                 .collect::<Result<Vec<_>, _>>()?,
@@ -4212,7 +4218,12 @@ fn spatial_revolution_curve(
         )?,
         Some(CurveGeometry2::Nurbs(curve)) => Curve3::nurbs(
             curve.degree(),
-            curve.control_points().iter().map(lift).collect(),
+            curve
+                .affine_control_points()
+                .ok_or(ConstructionError::UnsupportedPlanarProfile)?
+                .iter()
+                .map(lift)
+                .collect(),
             positive_projective_weights(curve.weights())?,
             curve.knots().to_vec(),
         )?,
