@@ -818,7 +818,6 @@ impl<'a> CurveCornerChain2<'a> {
                 clockwise,
                 retained_frame,
                 &radius,
-                mode,
                 [previous_retained_arc.as_ref(), next_retained_arc.as_ref()],
                 [
                     (previous_cut_index == previous_index)
@@ -849,7 +848,6 @@ impl<'a> CurveCornerChain2<'a> {
         clockwise: bool,
         retained_frame: Option<RetainedFilletFrame2>,
         radius: &Real,
-        mode: CurveCornerMode2,
         retained_arcs: [Option<&CircularArc2>; 2],
         promoted_parallels: [Option<&crate::BezierParallelFragment2>; 2],
         source_domains: [std::ops::Range<usize>; 2],
@@ -934,7 +932,6 @@ impl<'a> CurveCornerChain2<'a> {
             clockwise,
             retained_frame,
             &radius,
-            mode,
             false,
             promoted_parallels[0],
             promoted_parallels[1],
@@ -1227,6 +1224,22 @@ impl<'a> CurveCornerChain2<'a> {
         // compact selected-fiber parameter, rather than solving the same
         // incidence again in a larger field.
         let point = arc_cut.point.clone();
+        if authored
+            && matches!(
+                deferred.domain,
+                crate::curve::FilletContactDomain2::SourceChart(_)
+            )
+        {
+            // This contact was already bound to the authored rational chart
+            // before global source placement. The canonical circle cell only
+            // supplies its tangent frame; it does not replace that location.
+            return Ok(RetainedPreselectedArcFilletContact2 {
+                replacement: None,
+                source_parallel,
+                source_parameter: seed.parameter.clone(),
+                source_direction,
+            });
+        }
         arc_cut.parameter = seed.parameter.clone();
         arc_cut.placement = if authored {
             CornerPlacement2::Trim
@@ -1292,22 +1305,21 @@ impl<'a> CurveCornerChain2<'a> {
         center: &CurvePoint2,
         source_fragments: &[BezierSplitFragment2],
         deferred: &crate::curve::RetainedDeferredArcFilletContact2,
-        mode: CurveCornerMode2,
         anchor_cut: &mut CornerTrimCut2,
         arc_cut: &mut CornerTrimCut2,
         policy: &CurveContext,
     ) -> ExactCurveResult<Option<RetainedDeferredArcFilletResult2>> {
-        if source_fragments.is_empty()
-            || !source_fragments
-                .iter()
-                .all(|fragment| matches!(fragment, BezierSplitFragment2::Materialized { .. }))
-        {
+        if source_fragments.is_empty() {
             return Err(ExactCurveError::blocked(
                 CurveOperation2::Fillet,
                 CurveFamily2::CircularArc,
                 UncertaintyReason::Unsupported,
             ));
         }
+        let source_chart = matches!(
+            deferred.domain,
+            crate::curve::FilletContactDomain2::SourceChart(_)
+        );
         let decomposition = match deferred
             .support
             .rational_bezier_decomposition_with_policy(policy)
@@ -1360,45 +1372,79 @@ impl<'a> CurveCornerChain2<'a> {
         // Canonical circular charts retain the full authored sweep. An internal
         // chart boundary belongs to its following chart; both outer source
         // endpoints remain excluded from a strict corner contact.
-        let select_contact = |spans: &[RationalQuadraticBezier2]| -> ExactCurveResult<Option<(usize, RetainedDeferredArcContact2)>> {
-            for (index, span) in spans.iter().enumerate() {
-                if let Some(inside_side) = inside_side {
-                    let outside_side = if inside_side == crate::LineSide::Left {
-                        crate::LineSide::Right
-                    } else {
-                        crate::LineSide::Left
-                    };
-                    if center_side(span.start())
-                        .map_err(|cause| curve_region_edit_error(CurveOperation2::Fillet, cause))?
-                        .is_some_and(|side| side != inside_side && !(index != 0 && side == crate::LineSide::On))
-                        || center_side(span.end())
-                            .map_err(|cause| curve_region_edit_error(CurveOperation2::Fillet, cause))?
-                            .is_some_and(|side| side != outside_side)
-                    {
-                        continue;
+        let select_contact =
+            |spans: &[RationalQuadraticBezier2],
+             authored: bool|
+             -> ExactCurveResult<Option<(usize, RetainedDeferredArcContact2)>> {
+                for (index, span) in spans.iter().enumerate() {
+                    let include_start =
+                        index != 0 || (authored && source_chart && !deferred.arc_is_previous);
+                    let include_end = authored
+                        && source_chart
+                        && deferred.arc_is_previous
+                        && index + 1 == spans.len();
+                    if let Some(inside_side) = inside_side {
+                        let outside_side = if inside_side == crate::LineSide::Left {
+                            crate::LineSide::Right
+                        } else {
+                            crate::LineSide::Left
+                        };
+                        if center_side(span.start())
+                            .map_err(|cause| {
+                                curve_region_edit_error(CurveOperation2::Fillet, cause)
+                            })?
+                            .is_some_and(|side| {
+                                side != inside_side
+                                    && !(include_start && side == crate::LineSide::On)
+                            })
+                            || center_side(span.end())
+                                .map_err(|cause| {
+                                    curve_region_edit_error(CurveOperation2::Fillet, cause)
+                                })?
+                                .is_some_and(|side| {
+                                    side != outside_side
+                                        && !(include_end && side == crate::LineSide::On)
+                                })
+                        {
+                            continue;
+                        }
                     }
+                    let rational = RationalBezier2::from(span.clone());
+                    let Some(contact) = Self::retained_deferred_arc_contact_on_rational(
+                        &fillet,
+                        &rational,
+                        deferred,
+                        include_start,
+                        include_end,
+                        policy,
+                    )?
+                    else {
+                        continue;
+                    };
+                    // The signed-radius tangency certificate has one contact on
+                    // the source circle; replaying other charts cannot add one.
+                    return Ok(Some((index, contact)));
                 }
-                let rational = RationalBezier2::from(span.clone());
-                let Some(contact) = Self::retained_deferred_arc_contact_on_rational(
-                    &fillet, &rational, deferred, index != 0, false, policy,
-                )? else {
-                    continue;
-                };
-                // The signed-radius tangency certificate has one contact on
-                // the source circle; replaying other charts cannot add one.
-                return Ok(Some((index, contact)));
-            }
-            Ok(None)
-        };
+                Ok(None)
+            };
         let mut spans = decomposition
             .spans()
             .iter()
             .map(|span| span.curve().clone())
             .collect::<Vec<_>>();
-        let mut selected = select_contact(&spans)?;
+        let mut selected = if source_chart && arc_cut.placement == CornerPlacement2::Extension {
+            None
+        } else {
+            select_contact(&spans, true)?
+        };
         let mut placement = CornerPlacement2::Trim;
         if selected.is_none() {
-            if mode != CurveCornerMode2::TrimOrExtend
+            if source_chart && arc_cut.placement != CornerPlacement2::Extension {
+                // The source inverse already certified this finite location.
+                // A coincident fillet endpoint cannot become an extension.
+                return Ok(None);
+            }
+            if deferred.domain.mode() != CurveCornerMode2::TrimOrExtend
                 || deferred.support.start() == deferred.support.end()
             {
                 return Ok(None);
@@ -1409,13 +1455,16 @@ impl<'a> CurveCornerChain2<'a> {
                 CurveFamily2::CircularArc,
                 policy,
             )?;
-            selected = select_contact(&spans)?;
+            selected = select_contact(&spans, false)?;
             placement = CornerPlacement2::Extension;
         }
         let Some((span_index, contact)) = selected else {
             return Ok(None);
         };
-        let arc_replacement = if placement == CornerPlacement2::Trim && spans.len() == 1 {
+        let retains_source_parameter = source_chart && placement == CornerPlacement2::Trim;
+        let arc_replacement = if retains_source_parameter {
+            None
+        } else if placement == CornerPlacement2::Trim && spans.len() == 1 {
             arc_cut.replacement = Some(CornerReplacement2::Curve(BezierSubcurve2::Rational(
                 RationalBezier2::from(spans[0].clone()),
             )));
@@ -1439,8 +1488,10 @@ impl<'a> CurveCornerChain2<'a> {
                 deferred.arc_is_previous,
             ))
         };
-        arc_cut.parameter = contact.source_parameter;
-        arc_cut.placement = placement;
+        if !retains_source_parameter {
+            arc_cut.parameter = contact.source_parameter;
+            arc_cut.placement = placement;
+        }
         let crosses_complementary_half = contact.fillet_half != 0;
         let terminal_circle = if crosses_complementary_half {
             fillet.complementary_half()
@@ -2550,7 +2601,6 @@ impl<'a> CurveCornerChain2<'a> {
         clockwise: bool,
         retained_frame: Option<RetainedFilletFrame2>,
         radius: &Real,
-        mode: CurveCornerMode2,
         allow_boundary_contact: bool,
         previous_promoted_parallel: Option<&crate::BezierParallelFragment2>,
         next_promoted_parallel: Option<&crate::BezierParallelFragment2>,
@@ -2599,12 +2649,49 @@ impl<'a> CurveCornerChain2<'a> {
             } else {
                 next_point
             };
+            let fillet = CircularArc2::new_with_certified_radius(
+                previous_point.clone(),
+                next_point.clone(),
+                center.clone(),
+                radius * radius,
+                clockwise,
+                None,
+            );
+            if matches!(
+                deferred.domain,
+                crate::curve::FilletContactDomain2::SourceChart(_)
+            ) {
+                let (cut, source, replacement) = if deferred.arc_is_previous {
+                    (
+                        &*previous_cut,
+                        previous_fragments,
+                        &mut *previous_replacement,
+                    )
+                } else {
+                    (&*next_cut, next_fragments, &mut *next_replacement)
+                };
+                if cut.placement == CornerPlacement2::Extension {
+                    *replacement = Some(Self::retained_arc_extension_fragments(
+                        source,
+                        &deferred.support,
+                        cut,
+                        deferred.arc_is_previous,
+                        CurveOperation2::Fillet,
+                        policy,
+                    )?);
+                }
+                return Self::materialized_corner_arc_fragments(
+                    &fillet,
+                    CurveOperation2::Fillet,
+                    policy,
+                );
+            }
             let Some(cut) = crate::curve::arc_fillet_cut_from_incident_point(
                 &crate::curve::ExactCornerArc2::Native(&deferred.support),
                 arc_contact.clone(),
                 true,
                 deferred.arc_is_previous,
-                crate::curve::FilletContactDomain2::AuthoredCurve(mode),
+                deferred.domain,
                 CurveFamily2::CircularArc,
                 policy,
             )?
@@ -2622,14 +2709,6 @@ impl<'a> CurveCornerChain2<'a> {
             };
             arc_cut.point = cut.point;
             arc_cut.placement = cut.placement;
-            let fillet = CircularArc2::new_with_certified_radius(
-                previous_point.clone(),
-                next_point.clone(),
-                center.clone(),
-                radius * radius,
-                clockwise,
-                None,
-            );
             let retained_arc = CircularArc2::new_with_certified_radius(
                 if deferred.arc_is_previous {
                     deferred.support.start().clone()
@@ -2920,7 +2999,6 @@ impl<'a> CurveCornerChain2<'a> {
                             previous_fragments
                         },
                         deferred,
-                        mode,
                         anchor_cut,
                         other_cut,
                         policy,

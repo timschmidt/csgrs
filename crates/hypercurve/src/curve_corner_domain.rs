@@ -707,7 +707,6 @@ impl CurvePath2 {
                         next_index,
                         solution,
                         radius,
-                        mode,
                         [previous_arc.as_ref(), next_arc.as_ref()],
                         [
                             previous_source.promoted_parallel(),

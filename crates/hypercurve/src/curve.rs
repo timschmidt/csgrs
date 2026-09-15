@@ -1960,9 +1960,10 @@ impl CurvePath2 {
     /// other charts keep their finite domains. Bezier extensions search the
     /// endpoint-adjacent regular cells, stopping at poles or source-speed
     /// zeros. A circular contact already owned by the closed authored sweep
-    /// cannot be republished as an extension. Mixed circular/noncircular
-    /// chart pairs currently use the rational chart's affine continuation;
-    /// continuation across its projective infinity remains a limitation.
+    /// cannot be republished as an extension. Certified circular charts use
+    /// their full projective continuation even with a noncircular partner.
+    /// A selected incident restriction whose carrier does not retain that
+    /// circular support still uses its analytic incident domain.
     pub fn fillet_vertex_by_radius(
         &self,
         vertex_index: usize,
@@ -2048,7 +2049,6 @@ impl CurvePath2 {
                 next_index,
                 solution,
                 &radius,
-                mode,
                 [previous_retained_arc.as_ref(), next_retained_arc.as_ref()],
                 [
                     previous_source.promoted_parallel(),
@@ -3233,6 +3233,9 @@ pub(crate) struct RetainedDeferredArcFilletContact2 {
     pub(crate) source_radius: Real,
     pub(crate) signed_center_radius: Real,
     pub(crate) arc_is_previous: bool,
+    /// Owns extension permission and whether the cut already names an
+    /// authored source chart rather than a deferred canonical circle cell.
+    pub(crate) domain: FilletContactDomain2,
     /// The exact full-circle center parameter selected by the common
     /// circle-pair authority. When present, retained fillet construction
     /// reuses this pair field as its radial frame instead of reconstructing
@@ -3536,13 +3539,56 @@ fn retained_arc_fillet_contact_seed(
 ) -> ExactCurveResult<Option<RetainedArcFilletContactSeed2>> {
     let radial_scale = (source_radius / signed_center_radius)
         .map_err(|cause| ExactCurveError::invalid(CurveOperation2::Fillet, family, cause.into()))?;
+    let target_circle = match offset_half
+        .scaled_radial_distance(&radial_scale, policy)
+        .map_err(|cause| ExactCurveError::invalid(CurveOperation2::Fillet, family, cause))?
+    {
+        Classification::Decided(Some(circle)) => circle,
+        Classification::Decided(None) => {
+            return Err(ExactCurveError::invalid(
+                CurveOperation2::Fillet,
+                family,
+                CurveError::Topology(
+                    "a nonzero concentric conic transport collapsed its circle".into(),
+                ),
+            ));
+        }
+        Classification::Uncertain(reason) => {
+            return Err(ExactCurveError::blocked(
+                CurveOperation2::Fillet,
+                family,
+                reason,
+            ));
+        }
+    };
+    let point = match offset_parameter
+        .concentric_offset_point_evidence(offset_half, &target_circle, policy)
+        .map_err(|cause| ExactCurveError::invalid(CurveOperation2::Fillet, family, cause))?
+    {
+        Classification::Decided(Some(point)) => point,
+        Classification::Decided(None) => {
+            return Err(ExactCurveError::blocked(
+                CurveOperation2::Fillet,
+                family,
+                crate::UncertaintyReason::Unsupported,
+            ));
+        }
+        Classification::Uncertain(reason) => {
+            return Err(ExactCurveError::blocked(
+                CurveOperation2::Fillet,
+                family,
+                reason,
+            ));
+        }
+    };
     let cells = retained_arc_fillet_projective_cells(support, mode, family, policy)?;
     let mut retained = None;
     let mut unresolved = None;
     for (curve, include_start, include_end, cell) in cells {
-        let parameter = match offset_parameter
-            .concentric_quadratic_conic_parameter(offset_half, &radial_scale, &curve, policy)
-            .map_err(|cause| ExactCurveError::invalid(CurveOperation2::Fillet, family, cause))?
+        let parameter = match crate::bezier_offset::quadratic_conic_parameter_at_incident_point(
+            &point, &curve, policy,
+        )
+        .map_err(|cause| ExactCurveError::invalid(CurveOperation2::Fillet, family, cause))?
         {
             Classification::Decided(Some(parameter)) => parameter,
             Classification::Decided(None) => continue,
@@ -4546,7 +4592,7 @@ pub(crate) enum FilletContactDomain2 {
 }
 
 impl FilletContactDomain2 {
-    const fn mode(self) -> CurveCornerMode2 {
+    pub(crate) const fn mode(self) -> CurveCornerMode2 {
         match self {
             Self::AuthoredCurve(mode) | Self::SourceChart(mode) => mode,
         }
@@ -5361,36 +5407,8 @@ fn solve_carrier_fillet_corner(
     next_family: CurveFamily2,
     policy: &CurveContext,
 ) -> ExactCurveResult<CurveCornerSolutions2<FilletCorner2>> {
-    // Primitive line/circle pairs retain represented Cartesian centers and
-    // recover the original rational parameter directly. Other pairs keep the
-    // authored rational evaluator: a deferred circle decomposition would name
-    // a different projective chart and discard the source location.
-    let represented_centers = |carrier: &ExactCornerCarrier2<'_>| {
-        matches!(
-            carrier,
-            ExactCornerCarrier2::Line(_)
-                | ExactCornerCarrier2::PromotedLine(_)
-                | ExactCornerCarrier2::Arc(_)
-                | ExactCornerCarrier2::RetainedRationalArc(_)
-        )
-    };
-    let primitive_pair = represented_centers(&previous) && represented_centers(&next);
-    let chart_carrier = |carrier, domain| match (carrier, domain, primitive_pair) {
-        (
-            ExactCornerCarrier2::RetainedRationalArc(arc),
-            FilletContactDomain2::SourceChart(_),
-            false,
-        ) => match arc.source {
-            ExactCornerBezier2::Direct(source) => ExactCornerCarrier2::Bezier(source),
-            ExactCornerBezier2::NativeSpan(fragment) => {
-                ExactCornerCarrier2::NativeBezierSpan(fragment)
-            }
-        },
-        (carrier, _, _) => carrier,
-    };
-    let previous =
-        PreparedFilletCarrier2::new(chart_carrier(previous, domains[0]), previous_family, policy)?;
-    let next = PreparedFilletCarrier2::new(chart_carrier(next, domains[1]), next_family, policy)?;
+    let previous = PreparedFilletCarrier2::new(previous, previous_family, policy)?;
+    let next = PreparedFilletCarrier2::new(next, next_family, policy)?;
     let mut candidates = CornerSolutionAccumulator::Empty;
     let mut saw_outside_domain = false;
     let mut saw_degenerate = false;
@@ -6579,21 +6597,26 @@ fn fillet_offset_centers(
                     bezier_family,
                     policy,
                 )?;
-                let retained_anchor_evidence = Some(RetainedFilletAnchorEvidence2 {
-                    cross: None,
-                    dot: None,
-                    center_parallel: None,
-                    source_direction: None,
-                    canonical_anchor_curve: None,
-                    deferred_arc_contact: Some(RetainedDeferredArcFilletContact2 {
-                        support: arc.support().clone(),
-                        source_radius: (*source_radius).clone(),
-                        signed_center_radius: signed_radius.clone(),
-                        arc_is_previous: !bezier_is_previous,
-                        selected_center: None,
-                        contact_seed: None,
-                    }),
-                });
+                let retained_anchor_evidence =
+                    point
+                        .coordinates()
+                        .is_none()
+                        .then(|| RetainedFilletAnchorEvidence2 {
+                            cross: None,
+                            dot: None,
+                            center_parallel: None,
+                            source_direction: None,
+                            canonical_anchor_curve: None,
+                            deferred_arc_contact: Some(RetainedDeferredArcFilletContact2 {
+                                support: arc.support().clone(),
+                                source_radius: (*source_radius).clone(),
+                                signed_center_radius: signed_radius.clone(),
+                                arc_is_previous: !bezier_is_previous,
+                                domain: domains[usize::from(bezier_is_previous)],
+                                selected_center: None,
+                                contact_seed: None,
+                            }),
+                        });
                 let bezier_parameter = CurveParameter2::from(parameter);
                 centers.push(FilletCenterWitness2 {
                     point,
@@ -8030,6 +8053,7 @@ fn fillet_offset_centers(
                                     source_radius: source_radius.clone(),
                                     signed_center_radius: signed_radius.clone(),
                                     arc_is_previous,
+                                    domain: domains[usize::from(!arc_is_previous)],
                                     selected_center: matches!(
                                         &arc_parameter,
                                         crate::bezier_offset::BezierAlgebraicCuspSemicircleParameter2::Mapped(_)
@@ -9187,6 +9211,7 @@ fn fillet_offset_centers(
                             source_radius: source_radius.clone(),
                             signed_center_radius: signed_radius.clone(),
                             arc_is_previous,
+                            domain: domains[usize::from(!arc_is_previous)],
                             selected_center: None,
                             contact_seed: Some(contact_seed),
                         }),
@@ -9764,6 +9789,66 @@ fn fillet_cut_from_center(
                         ));
                     }
                 };
+                if matches!(domain, FilletContactDomain2::SourceChart(_))
+                    && let ExactCornerArc2::RetainedRational(retained) = source
+                {
+                    let evaluator = source
+                        .retained_rational_evaluator(CurveOperation2::Fillet, family, policy)?
+                        .expect("a retained circular chart has its rational evaluator");
+                    let parameter =
+                        match crate::bezier_offset::quadratic_conic_parameter_at_incident_point(
+                            &point, &evaluator, policy,
+                        )
+                        .map_err(|cause| {
+                            ExactCurveError::invalid(CurveOperation2::Fillet, family, cause)
+                        })? {
+                            Classification::Decided(parameter) => parameter,
+                            Classification::Uncertain(reason) => {
+                                return Err(ExactCurveError::blocked(
+                                    CurveOperation2::Fillet,
+                                    family,
+                                    reason,
+                                ));
+                            }
+                        };
+                    let Some(parameter) = parameter else {
+                        return Ok(
+                            (mode == CurveCornerMode2::TrimOrExtend).then(|| CornerCut2 {
+                                point,
+                                parameter: exact_corner_parameter(
+                                    source.corner_parameter(previous),
+                                ),
+                                placement: CornerPlacement2::Extension,
+                            }),
+                        );
+                    };
+                    let placement = curve_region_corner_parameter_placement(
+                        &parameter,
+                        previous,
+                        CurveCornerMode2::TrimOnly,
+                        CurveOperation2::Fillet,
+                        family,
+                        policy,
+                    )?;
+                    let parameter = retained.source.curve_parameter(
+                        &parameter,
+                        CurveOperation2::Fillet,
+                        family,
+                        policy,
+                    )?;
+                    let placement = domain.with_boundary_contact(
+                        placement,
+                        &parameter,
+                        || source.corner_parameter(previous).into(),
+                        family,
+                        policy,
+                    )?;
+                    return Ok(placement.map(|placement| CornerCut2 {
+                        point,
+                        parameter: Some(parameter),
+                        placement,
+                    }));
+                }
                 if retained_parameter.is_none() {
                     // Keep the actual radial contact even while its source
                     // chart and placement await deferred replay. A center
@@ -11595,7 +11680,9 @@ pub(crate) fn arc_fillet_cut_from_incident_point(
     let support = arc.support();
     match support.strict_sweep_point_location(&point, policy) {
         Classification::Decided(ArcSweepPointLocation2::Interior) => {
-            let parameter = if deferred_arc_contact {
+            let parameter = if deferred_arc_contact
+                && !matches!(domain, FilletContactDomain2::SourceChart(_))
+            {
                 exact_corner_parameter(arc.corner_parameter(previous))
             } else {
                 arc.source_parameter_at_point(&point, CurveOperation2::Fillet, family, policy)?

@@ -288,6 +288,16 @@ impl CurvePoint2 {
                 };
             }
             (_, CurvePointData2::Endpoint(_)) => return other.same_point(self, policy),
+            (CurvePointData2::AlgebraicCuspChordDerived(point), _)
+                if let Some(source) = point.identity_source_point(policy) =>
+            {
+                return source.same_point(other, policy);
+            }
+            (_, CurvePointData2::AlgebraicCuspChordDerived(point))
+                if let Some(source) = point.identity_source_point(policy) =>
+            {
+                return self.same_point(source, policy);
+            }
             _ => {}
         }
         let recursive_composite = |point: &Self| {

@@ -1580,6 +1580,201 @@ mod tests {
     }
 
     #[test]
+    fn source_domain_fillets_continue_circular_splines_across_projective_infinity() {
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let native = Curve2::from(
+                CircularArc2::try_from_center(p(1, 0), p(-1, 0), p(0, 0), false).unwrap(),
+            );
+            let weight = q(1, 2).sqrt().unwrap();
+            let splines = [
+                [2, 1, 1, 1, 2].into_iter().map(Real::from).collect(),
+                vec![
+                    Real::one(),
+                    weight.clone(),
+                    Real::one(),
+                    weight,
+                    Real::one(),
+                ],
+            ]
+            .map(|weights| {
+                Curve2::try_nurbs(
+                    2,
+                    vec![p(1, 0), p(1, 1), p(0, 1), p(-1, 1), p(-1, 0)],
+                    weights,
+                    [0, 0, 0, 1, 1, 2, 2, 2]
+                        .into_iter()
+                        .map(Real::from)
+                        .collect(),
+                    &policy,
+                )
+                .unwrap()
+                .value
+            });
+            // The unmarked affine Bezier enters the common parallel solver.
+            // The southwest extension contact is beyond the incident circle
+            // chart's affine infinity, but lies on its regular circular support.
+            for circle in std::iter::once(native).chain(splines) {
+                let family = circle.family();
+                let path = CurvePath2::try_new(vec![
+                    Curve2::from(QuadraticBezier2::new(p(-3, 0), p(-1, 0), p(1, 0))),
+                    circle,
+                ])
+                .unwrap();
+                for reversed in [false, true] {
+                    let path = if reversed {
+                        path.reversed(&policy).unwrap().value
+                    } else {
+                        path.clone()
+                    };
+                    for mode in [CurveCornerMode2::TrimOnly, CurveCornerMode2::TrimOrExtend] {
+                        let result = path
+                            .fillet_vertex_by_radius(1, q(12, 25), mode, &policy)
+                            .unwrap_or_else(|error| panic!("family={family:?}, reversed={reversed}, mode={mode:?}, policy={policy:?}: {error:?}"));
+                        assert_eq!(result.certainty, CurveCertainty::Certified);
+                        let candidates = match result.value {
+                            CurveCornerSolutions2::Unique(candidate) => vec![candidate],
+                            CurveCornerSolutions2::Multiple(candidates) => candidates,
+                            CurveCornerSolutions2::NoSolution(reason) => {
+                                panic!("circular fillets were lost: {reason:?}")
+                            }
+                        };
+                        let expected = [
+                            Point2::new(q(5, 13), q(12, 13)),
+                            Point2::new(-q(5, 13), q(12, 13)),
+                            Point2::new(q(35, 37), -q(12, 37)),
+                            Point2::new(-q(35, 37), -q(12, 37)),
+                        ];
+                        let count = if mode == CurveCornerMode2::TrimOnly {
+                            2
+                        } else {
+                            4
+                        };
+                        assert_eq!(
+                            candidates.len(),
+                            count,
+                            "family={family:?}, reversed={reversed}, mode={mode:?}, policy={policy:?}"
+                        );
+                        for point in &expected[..count] {
+                            assert!(
+                                candidates.iter().any(|candidate| candidate
+                                    .curves()
+                                    .windows(2)
+                                    .any(|pair| {
+                                        pair[0].end().same_point(&point.clone().into(), &policy)
+                                            == Classification::Decided(true)
+                                    })),
+                                "missing circular contact: family={family:?}, reversed={reversed}, mode={mode:?}, policy={policy:?}"
+                            );
+                        }
+                        for candidate in candidates {
+                            assert_same(&candidate.start(), &path.start(), &policy);
+                            assert_same(&candidate.end(), &path.end(), &policy);
+                            for pair in candidate.curves().windows(2) {
+                                assert_same(&pair[0].end(), &pair[1].start(), &policy);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn source_domain_nonlinear_fillet_crosses_circular_chart_infinity() {
+        let expected = Point2::new(-q(35, 37), -q(12, 37));
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let spline = Curve2::try_nurbs(
+                2,
+                vec![p(1, 0), p(1, 1), p(0, 1), p(-1, 1), p(-1, 0)],
+                [2, 1, 1, 1, 2].into_iter().map(Real::from).collect(),
+                [0, 0, 0, 1, 1, 2, 2, 2]
+                    .into_iter()
+                    .map(Real::from)
+                    .collect(),
+                &policy,
+            )
+            .unwrap()
+            .value;
+            // At t=1/2 this parabola has contact (-139/125,-12/125)
+            // and tangent (4,-3). Its right offset of radius 12/25 is
+            // (-7/5,-12/25), tangent to the circle at the expected point.
+            let path = CurvePath2::try_new(vec![
+                Curve2::from(QuadraticBezier2::new(
+                    p(-3, 3),
+                    Point2::new(-q(153, 125), -q(423, 250)),
+                    p(1, 0),
+                )),
+                spline,
+            ])
+            .unwrap();
+            for reversed in [false, true] {
+                let path = if reversed {
+                    path.reversed(&policy).unwrap().value
+                } else {
+                    path.clone()
+                };
+                let result = path
+                    .fillet_vertex_by_radius(1, q(12, 25), CurveCornerMode2::TrimOrExtend, &policy)
+                    .unwrap_or_else(|error| {
+                        panic!("reversed={reversed}, policy={policy:?}: {error:?}")
+                    });
+                assert_eq!(result.certainty, CurveCertainty::Certified);
+                let candidates = match result.value {
+                    CurveCornerSolutions2::Unique(candidate) => vec![candidate],
+                    CurveCornerSolutions2::Multiple(candidates) => candidates,
+                    CurveCornerSolutions2::NoSolution(reason) => {
+                        panic!("nonlinear circular fillets were lost: {reason:?}")
+                    }
+                };
+                let (selected, vertex) = candidates
+                    .iter()
+                    .find_map(|candidate| {
+                        candidate
+                            .curves()
+                            .windows(2)
+                            .position(|pair| {
+                                pair[0].end().same_point(&expected.clone().into(), &policy)
+                                    == Classification::Decided(true)
+                            })
+                            .map(|index| (candidate, index + 1))
+                    })
+                    .unwrap_or_else(|| panic!("reversed={reversed}, policy={policy:?}"));
+                let chamfer = selected
+                    .chamfer_vertex_by_setbacks(
+                        vertex,
+                        q(1, 256),
+                        q(1, 256),
+                        CurveCornerMode2::TrimOnly,
+                        &policy,
+                    )
+                    .unwrap();
+                assert_eq!(chamfer.certainty, CurveCertainty::Certified);
+                let chamfers = match chamfer.value {
+                    CurveCornerSolutions2::Unique(candidate) => vec![candidate],
+                    CurveCornerSolutions2::Multiple(candidates) => candidates,
+                    CurveCornerSolutions2::NoSolution(reason) => {
+                        panic!("the circular extension lost its next chamfer: {reason:?}")
+                    }
+                };
+                for candidate in &chamfers {
+                    assert_same(&candidate.start(), &path.start(), &policy);
+                    assert_same(&candidate.end(), &path.end(), &policy);
+                    for pair in candidate.curves().windows(2) {
+                        assert_same(&pair[0].end(), &pair[1].start(), &policy);
+                    }
+                }
+                for candidate in candidates {
+                    assert_same(&candidate.start(), &path.start(), &policy);
+                    assert_same(&candidate.end(), &path.end(), &policy);
+                    for pair in candidate.curves().windows(2) {
+                        assert_same(&pair[0].end(), &pair[1].start(), &policy);
+                    }
+                }
+            }
+        }
+    }
+
+    #[test]
     fn source_domain_fillets_own_surviving_spline_tangents_and_reenter_chamfers() {
         for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
             for rational in [false, true] {

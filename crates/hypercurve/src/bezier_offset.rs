@@ -16923,7 +16923,7 @@ impl BezierAlgebraicCuspSemicircle2 {
     /// but is an authored endpoint of another. Scaling both coincident radial
     /// vectors by the same exact factor preserves the shared geometric point
     /// without adjoining either selected center field to the other.
-    fn scaled_radial_distance(
+    pub(crate) fn scaled_radial_distance(
         &self,
         scale: &Real,
         policy: &CurveContext,
@@ -48054,7 +48054,7 @@ impl BezierAlgebraicCuspChordDerivedPoint2 {
     /// identity. Keeping that provenance visible lets coordinate predicates
     /// reuse the source carrier's exact constant-coordinate and shared-field
     /// proofs instead of comparing two reconstructed interval boxes.
-    fn identity_source_point(&self, policy: &CurveContext) -> Option<&CurvePoint2> {
+    pub(crate) fn identity_source_point(&self, policy: &CurveContext) -> Option<&CurvePoint2> {
         self.data.source.validate_policy(policy).ok()?;
         if self.data.radial_scale != Real::one()
             || self.data.perpendicular_scale.zero_status() != ZeroKnowledge::Zero
@@ -50871,201 +50871,6 @@ impl BezierAlgebraicCuspSemicirclePairOverlap2 {
 }
 
 impl BezierAlgebraicCuspSemicircleParameter2 {
-    /// Maps this selected contact radially onto one certified quadratic conic
-    /// and returns the conic's exact local projective parameter.
-    ///
-    /// A quadratic conic's three homogeneous controls form a projective
-    /// frame. Dotting the retained point with their opposite cross products
-    /// yields coordinates proportional to `(1-t)^2`, `2t(1-t)`, and `t^2`;
-    /// either adjacent pair therefore recovers `t` by one linear-fractional
-    /// expression. Evaluating those linear forms in the contact's existing
-    /// recursive quadratic tower preserves the already-selected line/circle
-    /// root and avoids a second tangent intersection or global Cartesian
-    /// primitive element.
-    pub(crate) fn concentric_quadratic_conic_parameter(
-        &self,
-        source: &BezierAlgebraicCuspSemicircle2,
-        radial_scale: &Real,
-        target: &RationalBezier2,
-        policy: &CurveContext,
-    ) -> CurveResult<Classification<Option<CurveParameter2>>> {
-        self.validate_policy(policy)?;
-        if target.degree() != 2 {
-            return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
-        }
-        let target_circle = match source.scaled_radial_distance(radial_scale, policy)? {
-            Classification::Decided(Some(circle)) => circle,
-            Classification::Decided(None) => {
-                return Err(CurveError::Topology(
-                    "a nonzero concentric conic transport collapsed its circle".into(),
-                ));
-            }
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
-        let point = match self.concentric_offset_point_evidence(source, &target_circle, policy)? {
-            Classification::Decided(Some(point)) => point,
-            Classification::Decided(None) => {
-                return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
-            }
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
-        let point = match recursive_projective_evidence_points(&[&point], policy)? {
-            Classification::Decided(Some(mut points)) => points
-                .pop()
-                .expect("one conic inverse request retains one projective point"),
-            Classification::Decided(None) => {
-                return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
-            }
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
-        let point = match positive_recursive_projective_point(point)? {
-            Classification::Decided(point) => point,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
-
-        let controls: [[Real; 3]; 3] = target
-            .control_points()
-            .iter()
-            .zip(target.weights())
-            .map(|(control, weight)| [control.x() * weight, control.y() * weight, weight.clone()])
-            .collect::<Vec<_>>()
-            .try_into()
-            .expect("a quadratic conic has three homogeneous controls");
-        let cross = |first: &[Real; 3], second: &[Real; 3]| {
-            [
-                &first[1] * &second[2] - &first[2] * &second[1],
-                &first[2] * &second[0] - &first[0] * &second[2],
-                &first[0] * &second[1] - &first[1] * &second[0],
-            ]
-        };
-        let dual = [
-            cross(&controls[1], &controls[2]),
-            cross(&controls[2], &controls[0]),
-            cross(&controls[0], &controls[1]),
-        ];
-        let coordinate = |linear: &[Real; 3]| {
-            point
-                .x
-                .scale(&linear[0])?
-                .add(&point.y.scale(&linear[1])?)?
-                .add(&point.denominator.scale(&linear[2])?)
-        };
-        let (Some(first), Some(middle), Some(last)) = (
-            coordinate(&dual[0]),
-            coordinate(&dual[1]),
-            coordinate(&dual[2]),
-        ) else {
-            return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
-        };
-        let two = Real::from(2_i8);
-        let first_denominator = first
-            .scale(&two)
-            .and_then(|value| value.add(&middle))
-            .ok_or_else(|| {
-                CurveError::Topology(
-                    "a retained conic inverse exceeded its coefficient-field budget".into(),
-                )
-            })?;
-        let strict = policy.strict_counterpart();
-        let (numerator, denominator) = match first_denominator.sign(&strict)? {
-            Classification::Decided(RealSign::Positive) => (middle, first_denominator),
-            Classification::Decided(RealSign::Negative) => (
-                middle.scale(&Real::from(-1_i8)).ok_or_else(|| {
-                    CurveError::Topology(
-                        "a retained conic inverse exceeded its coefficient-field budget".into(),
-                    )
-                })?,
-                first_denominator.scale(&Real::from(-1_i8)).ok_or_else(|| {
-                    CurveError::Topology(
-                        "a retained conic inverse exceeded its coefficient-field budget".into(),
-                    )
-                })?,
-            ),
-            Classification::Decided(RealSign::Zero) => {
-                let numerator = last.scale(&two).ok_or_else(|| {
-                    CurveError::Topology(
-                        "a retained conic inverse exceeded its coefficient-field budget".into(),
-                    )
-                })?;
-                let denominator = middle.add(&numerator).ok_or_else(|| {
-                    CurveError::Topology(
-                        "a retained conic inverse exceeded its coefficient-field budget".into(),
-                    )
-                })?;
-                match denominator.sign(&strict)? {
-                    Classification::Decided(RealSign::Positive) => (numerator, denominator),
-                    Classification::Decided(RealSign::Negative) => (
-                        numerator.scale(&Real::from(-1_i8)).ok_or_else(|| {
-                            CurveError::Topology(
-                                "a retained conic inverse exceeded its coefficient-field budget"
-                                    .into(),
-                            )
-                        })?,
-                        denominator.scale(&Real::from(-1_i8)).ok_or_else(|| {
-                            CurveError::Topology(
-                                "a retained conic inverse exceeded its coefficient-field budget"
-                                    .into(),
-                            )
-                        })?,
-                    ),
-                    Classification::Decided(RealSign::Zero) => {
-                        return Ok(Classification::Decided(None));
-                    }
-                    Classification::Uncertain(reason) => {
-                        return Ok(Classification::Uncertain(reason));
-                    }
-                }
-            }
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
-        let parameter = BezierRecursiveQuadraticProjectiveScalar2 {
-            numerator,
-            denominator,
-        };
-        let zero_order = match parameter.order_to_real(&Real::zero(), &strict)? {
-            Classification::Decided(order) => order,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
-        let one_order = match parameter.order_to_real(&Real::one(), &strict)? {
-            Classification::Decided(order) => order,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
-        if zero_order == std::cmp::Ordering::Less || one_order == std::cmp::Ordering::Greater {
-            return Ok(Classification::Decided(None));
-        }
-        if zero_order == std::cmp::Ordering::Equal {
-            return Ok(Classification::Decided(Some(CurveParameter2::from(
-                BezierParameter2::Exact(Real::zero()),
-            ))));
-        }
-        if one_order == std::cmp::Ordering::Equal {
-            return Ok(Classification::Decided(Some(CurveParameter2::from(
-                BezierParameter2::Exact(Real::one()),
-            ))));
-        }
-        if let Some(exact) = parameter.exact_real_value() {
-            return Ok(Classification::Decided(Some(CurveParameter2::from(
-                BezierParameter2::Exact(exact),
-            ))));
-        }
-        Ok(BezierRecursiveProjectiveParameter2::new(parameter, policy)?
-            .map(|parameter| Some(CurveParameter2::from_recursive_projective(parameter))))
-    }
-
     /// Returns the selected-circle carrier retained by a mapped parameter.
     /// Exact endpoint parameters intentionally have no implicit carrier.
     pub(crate) fn mapped_semicircle_carrier(&self) -> Option<&BezierAlgebraicCuspSemicircle2> {
@@ -63018,6 +62823,170 @@ fn recursive_projective_point_source_in_field(
             .lifted_to(field)
             .or_else(|| point.embedded_to_equivalent_field(field)),
     }
+}
+
+/// Recovers a finite parameter on a certified nonsingular quadratic conic.
+/// The caller owns incidence on the target support. Homogeneous dual linear
+/// forms stay in the point's existing recursive field; no new construction
+/// root or global Cartesian projection is required. `None` excludes the
+/// target's closed unit chart, including its affine infinity.
+pub(crate) fn quadratic_conic_parameter_at_incident_point(
+    point: &CurvePoint2,
+    target: &RationalBezier2,
+    policy: &CurveContext,
+) -> CurveResult<Classification<Option<CurveParameter2>>> {
+    if target.degree() != 2 {
+        return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+    }
+    let point = match recursive_projective_evidence_points(&[point], policy)? {
+        Classification::Decided(Some(mut points)) => points
+            .pop()
+            .expect("one conic inverse request retains one projective point"),
+        Classification::Decided(None) => {
+            return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+        }
+        Classification::Uncertain(reason) => {
+            return Ok(Classification::Uncertain(reason));
+        }
+    };
+    let point = match positive_recursive_projective_point(point)? {
+        Classification::Decided(point) => point,
+        Classification::Uncertain(reason) => {
+            return Ok(Classification::Uncertain(reason));
+        }
+    };
+
+    let controls: [[Real; 3]; 3] = target
+        .control_points()
+        .iter()
+        .zip(target.weights())
+        .map(|(control, weight)| [control.x() * weight, control.y() * weight, weight.clone()])
+        .collect::<Vec<_>>()
+        .try_into()
+        .expect("a quadratic conic has three homogeneous controls");
+    let cross = |first: &[Real; 3], second: &[Real; 3]| {
+        [
+            &first[1] * &second[2] - &first[2] * &second[1],
+            &first[2] * &second[0] - &first[0] * &second[2],
+            &first[0] * &second[1] - &first[1] * &second[0],
+        ]
+    };
+    let dual = [
+        cross(&controls[1], &controls[2]),
+        cross(&controls[2], &controls[0]),
+        cross(&controls[0], &controls[1]),
+    ];
+    let coordinate = |linear: &[Real; 3]| {
+        point
+            .x
+            .scale(&linear[0])?
+            .add(&point.y.scale(&linear[1])?)?
+            .add(&point.denominator.scale(&linear[2])?)
+    };
+    let (Some(first), Some(middle), Some(last)) = (
+        coordinate(&dual[0]),
+        coordinate(&dual[1]),
+        coordinate(&dual[2]),
+    ) else {
+        return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+    };
+    let two = Real::from(2_i8);
+    let first_denominator = first
+        .scale(&two)
+        .and_then(|value| value.add(&middle))
+        .ok_or_else(|| {
+            CurveError::Topology(
+                "a retained conic inverse exceeded its coefficient-field budget".into(),
+            )
+        })?;
+    let strict = policy.strict_counterpart();
+    let (numerator, denominator) = match first_denominator.sign(&strict)? {
+        Classification::Decided(RealSign::Positive) => (middle, first_denominator),
+        Classification::Decided(RealSign::Negative) => (
+            middle.scale(&Real::from(-1_i8)).ok_or_else(|| {
+                CurveError::Topology(
+                    "a retained conic inverse exceeded its coefficient-field budget".into(),
+                )
+            })?,
+            first_denominator.scale(&Real::from(-1_i8)).ok_or_else(|| {
+                CurveError::Topology(
+                    "a retained conic inverse exceeded its coefficient-field budget".into(),
+                )
+            })?,
+        ),
+        Classification::Decided(RealSign::Zero) => {
+            let numerator = last.scale(&two).ok_or_else(|| {
+                CurveError::Topology(
+                    "a retained conic inverse exceeded its coefficient-field budget".into(),
+                )
+            })?;
+            let denominator = middle.add(&numerator).ok_or_else(|| {
+                CurveError::Topology(
+                    "a retained conic inverse exceeded its coefficient-field budget".into(),
+                )
+            })?;
+            match denominator.sign(&strict)? {
+                Classification::Decided(RealSign::Positive) => (numerator, denominator),
+                Classification::Decided(RealSign::Negative) => (
+                    numerator.scale(&Real::from(-1_i8)).ok_or_else(|| {
+                        CurveError::Topology(
+                            "a retained conic inverse exceeded its coefficient-field budget".into(),
+                        )
+                    })?,
+                    denominator.scale(&Real::from(-1_i8)).ok_or_else(|| {
+                        CurveError::Topology(
+                            "a retained conic inverse exceeded its coefficient-field budget".into(),
+                        )
+                    })?,
+                ),
+                Classification::Decided(RealSign::Zero) => {
+                    return Ok(Classification::Decided(None));
+                }
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            }
+        }
+        Classification::Uncertain(reason) => {
+            return Ok(Classification::Uncertain(reason));
+        }
+    };
+    let parameter = BezierRecursiveQuadraticProjectiveScalar2 {
+        numerator,
+        denominator,
+    };
+    let zero_order = match parameter.order_to_real(&Real::zero(), &strict)? {
+        Classification::Decided(order) => order,
+        Classification::Uncertain(reason) => {
+            return Ok(Classification::Uncertain(reason));
+        }
+    };
+    let one_order = match parameter.order_to_real(&Real::one(), &strict)? {
+        Classification::Decided(order) => order,
+        Classification::Uncertain(reason) => {
+            return Ok(Classification::Uncertain(reason));
+        }
+    };
+    if zero_order == std::cmp::Ordering::Less || one_order == std::cmp::Ordering::Greater {
+        return Ok(Classification::Decided(None));
+    }
+    if zero_order == std::cmp::Ordering::Equal {
+        return Ok(Classification::Decided(Some(CurveParameter2::from(
+            BezierParameter2::Exact(Real::zero()),
+        ))));
+    }
+    if one_order == std::cmp::Ordering::Equal {
+        return Ok(Classification::Decided(Some(CurveParameter2::from(
+            BezierParameter2::Exact(Real::one()),
+        ))));
+    }
+    if let Some(exact) = parameter.exact_real_value() {
+        return Ok(Classification::Decided(Some(CurveParameter2::from(
+            BezierParameter2::Exact(exact),
+        ))));
+    }
+    Ok(BezierRecursiveProjectiveParameter2::new(parameter, policy)?
+        .map(|parameter| Some(CurveParameter2::from_recursive_projective(parameter))))
 }
 
 /// Imports a fixed set of retained point evidences into their least shared
@@ -98002,6 +97971,19 @@ pub(crate) fn recursive_projective_point_evidence_equality(
     second: &CurvePoint2,
     policy: &CurveContext,
 ) -> CurveResult<Classification<Option<bool>>> {
+    // These carrier-local boxes retain the construction's point evidence.
+    // Consume certified separation before importing a recursive field merely
+    // to compare unrelated contacts and re-prove their denominator signs.
+    let strict = policy.strict_counterpart();
+    for steps in [0, 2, 4, 8] {
+        if let (Classification::Decided(first), Classification::Decided(second)) = (
+            algebraic_chord_endpoint_local_bounds_refined(first, steps, &strict),
+            algebraic_chord_endpoint_local_bounds_refined(second, steps, &strict),
+        ) && first.overlaps(&second, &strict) == Classification::Decided(false)
+        {
+            return Ok(Classification::Decided(Some(false)));
+        }
+    }
     let points = match recursive_projective_evidence_points(&[first, second], policy)? {
         Classification::Decided(Some(points)) => points,
         Classification::Decided(None) => return Ok(Classification::Decided(None)),
@@ -159590,6 +159572,79 @@ mod conversion_tests {
         let expected = Point2::from_values(5, 3);
         assert_eq!(bounds.min(), &expected);
         assert_eq!(bounds.max(), &expected);
+    }
+
+    #[test]
+    fn quadratic_conic_inverse_reuses_retained_point_field() {
+        let half = (Real::one() / Real::from(2)).unwrap();
+        let selected = algebraic_parameter(vec![
+            -half,
+            Real::one(),
+            Real::zero(),
+            Real::zero(),
+            Real::zero(),
+            Real::one(),
+        ]);
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            for negative_weights in [false, true] {
+                let shift = Real::from(2).sqrt().unwrap();
+                let transform =
+                    |x: i8, y: i8| Point2::new(Real::from(2 * x) + &shift, Real::from(3 * y - 1));
+                let source = RationalBezier2::try_new(
+                    vec![transform(1, 0), transform(1, 1), transform(0, 1)],
+                    [2, 1, 1]
+                        .into_iter()
+                        .map(|value| Real::from(if negative_weights { -value } else { value }))
+                        .collect(),
+                )
+                .unwrap();
+                let parallel = source.parallel_left(Real::zero()).unwrap();
+                for parameter in [
+                    BezierParameter2::Exact(Real::zero()),
+                    selected.clone(),
+                    BezierParameter2::Exact(Real::one()),
+                ] {
+                    let point = CurvePoint2::from(BezierAnalyticParallelPoint2::new(
+                        parallel.clone(),
+                        parameter.clone(),
+                        &policy,
+                    ));
+                    let Classification::Decided(Some(inverse)) =
+                        quadratic_conic_parameter_at_incident_point(&point, &source, &policy)
+                            .unwrap()
+                    else {
+                        panic!("a selected conic point lost its source parameter");
+                    };
+                    assert_eq!(
+                        inverse
+                            .cmp_by_refinement(&parameter.into(), &policy)
+                            .unwrap(),
+                        Classification::Decided(std::cmp::Ordering::Equal)
+                    );
+                }
+                for parameter in [Real::from(-1), Real::from(2)] {
+                    let point = CurvePoint2::from(BezierAnalyticParallelPoint2::new(
+                        parallel.clone(),
+                        BezierParameter2::Exact(parameter),
+                        &policy,
+                    ));
+                    assert!(matches!(
+                        quadratic_conic_parameter_at_incident_point(&point, &source, &policy)
+                            .unwrap(),
+                        Classification::Decided(None)
+                    ));
+                }
+                assert!(matches!(
+                    quadratic_conic_parameter_at_incident_point(
+                        &transform(0, -1).into(),
+                        &source,
+                        &policy,
+                    )
+                    .unwrap(),
+                    Classification::Decided(None)
+                ));
+            }
+        }
     }
 
     #[test]
