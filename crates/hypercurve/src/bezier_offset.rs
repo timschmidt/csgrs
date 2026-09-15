@@ -25832,7 +25832,7 @@ impl BezierAlgebraicCuspSemicircle2 {
             RealSign::Positive
         };
         let tangent_dot_sign = line_center_cross
-            .bounded_interval_sign()
+            .bounded_interval_sign(0..=512)
             .map(|sign| product_sign(sign, turn_sign));
         let selected_root_signs = if let Some((constant, slope)) = selected_linear.as_ref() {
             recursive_quadratic_affine_predicate_root_signs(
@@ -26687,7 +26687,7 @@ impl BezierAlgebraicCuspSemicircle2 {
             RealSign::Positive
         };
         let tangent_dot_sign = line_center_cross
-            .bounded_interval_sign()
+            .bounded_interval_sign(0..=512)
             .map(|sign| product_sign(sign, turn_sign));
         let selected_root_signs = if let Some((constant, slope)) = selected_linear.as_ref() {
             recursive_quadratic_affine_predicate_root_signs(
@@ -56268,20 +56268,19 @@ impl BezierRecursiveQuadraticValue2 {
     /// Returns only a strict interval-separated sign. This never forms an
     /// exact norm and is therefore suitable for optional construction-time
     /// certificates whose complete predicate remains available later.
-    fn bounded_interval_sign_through(&self, maximum_steps: usize) -> Option<RealSign> {
+    fn bounded_interval_sign(
+        &self,
+        refinement_range: std::ops::RangeInclusive<usize>,
+    ) -> Option<RealSign> {
         [0_usize, 2, 4, 8, 16, 32, 64, 128, 256, 512]
             .into_iter()
-            .take_while(|refinement_steps| *refinement_steps <= maximum_steps)
+            .filter(|refinement_steps| refinement_range.contains(refinement_steps))
             .find_map(|refinement_steps| {
                 let coefficient_bits = refinement_steps.max(64).min(i32::MAX as usize) as i32;
                 self.interval_with_coefficient_precision(refinement_steps, Some(-coefficient_bits))
                     .as_ref()
                     .and_then(dense_strict_interval_sign)
             })
-    }
-
-    fn bounded_interval_sign(&self) -> Option<RealSign> {
-        self.bounded_interval_sign_through(512)
     }
 
     /// Replays Hypersolve-certified selected-axis witnesses in canonical
@@ -56305,22 +56304,9 @@ impl BezierRecursiveQuadraticValue2 {
         if self.is_structurally_zero() {
             return Some(RealSign::Zero);
         }
-        self.bounded_interval_sign()
+        self.bounded_interval_sign(0..=16)
             .or_else(|| self.exact_real_witness_sign_through(-512))
-    }
-
-    /// Signs a compact retained-field value by exact interval separation
-    /// before invoking its complete recursive norm. Structural zero remains
-    /// the only shortcut to equality.
-    #[track_caller]
-    fn compact_sign(&self, policy: &CurveContext) -> CurveResult<Classification<RealSign>> {
-        if self.is_structurally_zero() {
-            return Ok(Classification::Decided(RealSign::Zero));
-        }
-        if let Some(sign) = self.bounded_interval_sign() {
-            return Ok(Classification::Decided(sign));
-        }
-        self.sign(policy)
+            .or_else(|| self.bounded_interval_sign(32..=512))
     }
 
     /// Signs `retained + radical * sqrt(radicand)` without adjoining the
@@ -56425,14 +56411,14 @@ impl BezierRecursiveQuadraticValue2 {
             if retained.is_structurally_zero() {
                 Some(RealSign::Zero)
             } else {
-                retained.bounded_interval_sign_through(bounded_steps)
+                retained.bounded_interval_sign(0..=bounded_steps)
             }
         });
         let mut radical_sign = radical_sign.or_else(|| {
             if radical.is_structurally_zero() {
                 Some(RealSign::Zero)
             } else {
-                radical.bounded_interval_sign_through(bounded_steps)
+                radical.bounded_interval_sign(0..=bounded_steps)
             }
         });
         let mut magnitude = None;
@@ -56453,7 +56439,7 @@ impl BezierRecursiveQuadraticValue2 {
                     });
                     if let Some(sign) = magnitude
                         .as_ref()
-                        .and_then(|value| value.bounded_interval_sign_through(bounded_steps))
+                        .and_then(|value| value.bounded_interval_sign(0..=bounded_steps))
                     {
                         return Ok(Classification::Decided(match sign {
                             RealSign::Positive => first,
@@ -56474,7 +56460,7 @@ impl BezierRecursiveQuadraticValue2 {
         }
         if let Some(magnitude_sign) = magnitude
             .as_ref()
-            .and_then(|value| value.bounded_interval_sign_through(bounded_steps))
+            .and_then(|value| value.bounded_interval_sign(0..=bounded_steps))
         {
             match magnitude_sign {
                 RealSign::Positive => {
@@ -56509,14 +56495,14 @@ impl BezierRecursiveQuadraticValue2 {
                     "recursive affine terminal retained={retained_sign:?} radical={radical_sign:?} magnitude={:?}",
                     magnitude
                         .as_ref()
-                        .and_then(|value| value.bounded_interval_sign_through(bounded_steps)),
+                        .and_then(|value| value.bounded_interval_sign(0..=bounded_steps)),
                 );
             }
             return Ok(Classification::Uncertain(UncertaintyReason::Predicate));
         }
         retained_sign = Some(match retained_sign {
             Some(sign) => sign,
-            None => match retained.compact_sign(policy)? {
+            None => match retained.sign(policy)? {
                 Classification::Decided(sign) => sign,
                 Classification::Uncertain(reason) => {
                     return Ok(Classification::Uncertain(reason));
@@ -56525,7 +56511,7 @@ impl BezierRecursiveQuadraticValue2 {
         });
         radical_sign = Some(match radical_sign {
             Some(sign) => sign,
-            None => match radical.compact_sign(policy)? {
+            None => match radical.sign(policy)? {
                 Classification::Decided(sign) => sign,
                 Classification::Uncertain(reason) => {
                     return Ok(Classification::Uncertain(reason));
@@ -56553,7 +56539,7 @@ impl BezierRecursiveQuadraticValue2 {
         }) else {
             return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
         };
-        Ok(match magnitude.compact_sign(policy)? {
+        Ok(match magnitude.sign(policy)? {
             Classification::Decided(RealSign::Positive) => Classification::Decided(retained_sign),
             Classification::Decided(RealSign::Negative) => Classification::Decided(radical_sign),
             Classification::Decided(RealSign::Zero) => Classification::Decided(RealSign::Zero),
@@ -56663,7 +56649,7 @@ impl BezierRecursiveQuadraticValue2 {
         };
         let constant_sign = match constant_sign {
             Some(sign) => sign,
-            None => match constant.compact_sign(policy)? {
+            None => match constant.sign(policy)? {
                 Classification::Decided(sign) => sign,
                 Classification::Uncertain(reason) => {
                     return Ok(Classification::Uncertain(reason));
@@ -56830,11 +56816,10 @@ impl BezierRecursiveQuadraticValue2 {
         if self.is_coefficientwise_stored_zero() {
             return Ok(Classification::Decided(RealSign::Zero));
         }
-        // Most geometric predicates are transverse and separate after only a
-        // few source-root refinements. Consume that locality before forming a
-        // recursive norm; the latter is reserved for genuine or near
-        // equality, where interval separation cannot be authoritative.
-        if let Some(sign) = self.bounded_interval_sign() {
+        // Most transverse predicates separate with a short interval pass.
+        // Try retained scalar witnesses before deeper tensor refinement: they
+        // preserve correlations that independent coordinate boxes discard.
+        if let Some(sign) = self.bounded_interval_sign(0..=16) {
             return Ok(Classification::Decided(sign));
         }
         // The stored-zero probe above is deliberately cheap, but it is not
@@ -56881,6 +56866,9 @@ impl BezierRecursiveQuadraticValue2 {
         }
         if policy.has_bounded_exact_predicate_budget() {
             return Ok(Classification::Uncertain(UncertaintyReason::Predicate));
+        }
+        if let Some(sign) = self.bounded_interval_sign(32..=512) {
+            return Ok(Classification::Decided(sign));
         }
         match self.data.as_ref() {
             BezierRecursiveQuadraticValueData2::Base {
@@ -60709,7 +60697,7 @@ impl BezierRecursiveProjectiveChordRationalSystem2 {
             if value.is_structurally_zero() {
                 Some(RealSign::Zero)
             } else {
-                value.bounded_interval_sign()
+                value.bounded_interval_sign(0..=512)
             }
         };
         let coordinate_sign = match difference.as_slice() {
@@ -63517,7 +63505,7 @@ fn recursive_quadratic_polynomial_strict_unit_crossing(
         // but never let this optional representation choice dominate the
         // exact opposite-sign bracket authority.
         let leading_sign = quadratic
-            .bounded_interval_sign_through(16)
+            .bounded_interval_sign(0..=16)
             .filter(|sign| *sign != RealSign::Zero);
         #[cfg(test)]
         if std::env::var_os("HYPERCURVE_DEBUG_RATIONAL_BLOCKER").is_some() {
@@ -63859,7 +63847,7 @@ impl OrderedFieldPolynomialContext<BezierRecursiveQuadraticValue2>
         if value.is_coefficientwise_stored_zero() || value.is_structurally_zero() {
             return Ok(Some(std::cmp::Ordering::Equal));
         }
-        Ok(value.bounded_interval_sign().map(|sign| match sign {
+        Ok(value.bounded_interval_sign(0..=512).map(|sign| match sign {
             RealSign::Negative => std::cmp::Ordering::Less,
             RealSign::Zero => std::cmp::Ordering::Equal,
             RealSign::Positive => std::cmp::Ordering::Greater,
@@ -73140,7 +73128,7 @@ impl BezierAlgebraicChord2 {
             return Ok(Classification::Decided(None));
         };
         let sign = match support.direction {
-            BezierAlgebraicChordUnitDisplacement2::Tangent => cross.compact_sign(policy)?,
+            BezierAlgebraicChordUnitDisplacement2::Tangent => cross.sign(policy)?,
             BezierAlgebraicChordUnitDisplacement2::LeftNormal => {
                 let Some(speed_squared) = direction_x
                     .square()
@@ -73179,7 +73167,7 @@ impl BezierAlgebraicChord2 {
                                         .sign()
                                 })
                             })
-                            .or_else(|| value.bounded_interval_sign_through(bounded_steps))
+                            .or_else(|| value.bounded_interval_sign(0..=bounded_steps))
                     }
                 });
                 if let Some(sign) = retained_sign {
@@ -76449,7 +76437,7 @@ impl BezierAlgebraicChord2 {
                                 )
                             })?;
                     }
-                    source_sign = match sample.compact_sign(strict)? {
+                    source_sign = match sample.sign(strict)? {
                         Classification::Decided(
                             sign @ (RealSign::Positive | RealSign::Negative),
                         ) => Some(sign),
@@ -87223,7 +87211,7 @@ impl BezierAlgebraicChord2 {
         if !permit_recursive_norm {
             return Ok(None);
         }
-        let sign = cross.compact_sign(policy)?;
+        let sign = cross.sign(policy)?;
         #[cfg(test)]
         if std::env::var_os("HYPERCURVE_DEBUG_PAIR_SCALAR").is_some() {
             eprintln!("support tangent cross compact-sign={sign:?}");
@@ -92720,7 +92708,7 @@ impl BezierAnalyticParallelPoint2 {
                     .and_then(|x| line.x.multiply(&tangent.y).and_then(|y| x.subtract(&y)))
             };
             let value = value?;
-            let sign = match value.compact_sign(policy) {
+            let sign = match value.sign(policy) {
                 Ok(classification) => classification.map(orient),
                 Err(error) => return Some(Err(error)),
             };
@@ -96636,7 +96624,7 @@ impl BezierAlgebraicChordPairPoint2 {
             &strict
         };
         let sign = |value: &BezierRecursiveQuadraticValue2| {
-            value.compact_sign(sign_policy).map(|sign| match sign {
+            value.sign(sign_policy).map(|sign| match sign {
                 Classification::Decided(sign) => Some(sign),
                 Classification::Uncertain(_) => None,
             })
@@ -97949,7 +97937,7 @@ fn recursive_projective_incident_point_order(
                 .and_then(|other| value.add(&other))
         })
     };
-    let cross = if let Some(sign) = cross.bounded_interval_sign() {
+    let cross = if let Some(sign) = cross.bounded_interval_sign(0..=512) {
         #[cfg(feature = "dispatch-trace")]
         hyperreal::dispatch_trace::record(
             "hypercurve",
@@ -97968,7 +97956,7 @@ fn recursive_projective_incident_point_order(
         // terminal approximate zero must therefore not be promoted into
         // construction evidence.
         if matches!(
-            dot.bounded_interval_sign(),
+            dot.bounded_interval_sign(0..=512),
             Some(RealSign::Positive | RealSign::Zero)
         ) {
             #[cfg(feature = "dispatch-trace")]
@@ -131493,6 +131481,72 @@ mod conversion_tests {
             .status,
             hypersolve::AlgebraicRootValidationStatus::Valid,
         );
+    }
+
+    #[test]
+    fn recursive_sign_replays_correlated_real_witness_before_deep_intervals() {
+        let half = (Real::one() / Real::from(2_i8)).unwrap();
+        let tiny = Real::from(2_i8).powi_i64(-256).unwrap();
+        let source = bezier_parameter_root_representation(&algebraic_parameter(vec![
+            -half.clone(),
+            Real::zero(),
+            Real::one(),
+        ]));
+        let constant = |value| DenseTensorPolynomial::try_new(vec![1], vec![value]).unwrap();
+        let field = BezierRecursiveQuadraticField2::base(
+            vec![source],
+            constant(half),
+            constant(Real::one()),
+        )
+        .unwrap();
+        let BezierRecursiveQuadraticField2::Base(base) = &field else {
+            unreachable!()
+        };
+        assert!(base.source_real_witnesses[0].is_some());
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            for bounded in [false, true] {
+                for (offset, expected) in [
+                    (tiny.clone(), RealSign::Positive),
+                    (-tiny.clone(), RealSign::Negative),
+                ] {
+                    // alpha - sqrt(1/2) +/- 2^-256 has a compact exact sign.
+                    // Independent interval images lose that cancellation.
+                    let value = recursive_quadratic_pair_value(
+                        base,
+                        DenseTensorPolynomial::try_new(vec![2], vec![offset, Real::one()]).unwrap(),
+                        constant(Real::one()),
+                        -1,
+                    )
+                    .unwrap();
+                    assert!(value.bounded_interval_sign(0..=16).is_none());
+                    #[cfg(feature = "dispatch-trace")]
+                    hyperreal::dispatch_trace::reset();
+                    let evaluate = || {
+                        crate::policy::resolve_certified_value(&policy, |attempt| {
+                            if bounded {
+                                attempt.bounded_exact_predicate_pass(|| value.sign(attempt))
+                            } else {
+                                value.sign(attempt)
+                            }
+                        })
+                    };
+                    #[cfg(feature = "dispatch-trace")]
+                    let result = hyperreal::dispatch_trace::with_recording(evaluate);
+                    #[cfg(not(feature = "dispatch-trace"))]
+                    let result = evaluate();
+                    assert_eq!(result.certainty, CurveCertainty::Certified);
+                    assert_eq!(result.value.unwrap(), Classification::Decided(expected));
+                    #[cfg(feature = "dispatch-trace")]
+                    assert!(
+                        hyperreal::dispatch_trace::take_trace().path_count(
+                            "hypercurve",
+                            "recursive-quadratic-sign",
+                            "compact-real-witness",
+                        ) > 0
+                    );
+                }
+            }
+        }
     }
 
     #[test]
