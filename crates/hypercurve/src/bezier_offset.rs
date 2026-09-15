@@ -35366,19 +35366,10 @@ impl BezierAlgebraicCuspSemicircle2 {
             )));
         }
         let normalize = |point: &BezierRecursiveQuadraticProjectivePoint2| {
-            BezierRecursiveQuadraticValue2::primitive_projective_ratio([
-                &point.x,
-                &point.y,
-                &point.denominator,
-            ])
-            .map_or_else(
-                || point.clone(),
-                |[x, y, denominator]| BezierRecursiveQuadraticProjectivePoint2 {
-                    x,
-                    y,
-                    denominator,
-                },
-            )
+            let mut coordinates = [point.x.clone(), point.y.clone(), point.denominator.clone()];
+            BezierRecursiveQuadraticValue2::normalize_positive_scale(&mut coordinates);
+            let [x, y, denominator] = coordinates;
+            BezierRecursiveQuadraticProjectivePoint2 { x, y, denominator }
         };
         let first = normalize(first);
         let second = normalize(second);
@@ -55483,10 +55474,11 @@ impl BezierRecursiveQuadraticField2 {
 }
 
 impl BezierRecursiveQuadraticValue2 {
-    /// Removes a positive common rational coefficient scale from a
-    /// homogeneous tuple. The selected fields and their radical generators
-    /// remain identical; only the tuple's irrelevant projective content changes.
-    fn primitive_projective_ratio<const N: usize>(values: [&Self; N]) -> Option<[Self; N]> {
+    /// Removes a positive common rational coefficient scale from a tuple
+    /// used projectively or for signs. Selected fields and radical generators
+    /// remain identical. If normalization is unavailable, every value stays
+    /// unchanged, including its shared identity and cached scalar witness.
+    fn normalize_positive_scale(values: &mut [Self]) {
         fn collect<'a>(
             value: &'a BezierRecursiveQuadraticValue2,
             coefficients: &mut Vec<&'a HyperRational>,
@@ -55573,30 +55565,39 @@ impl BezierRecursiveQuadraticValue2 {
             Some(result)
         }
 
-        let mut coefficients = Vec::new();
-        let mut visited = std::collections::HashSet::new();
-        for value in values {
-            collect(value, &mut coefficients, &mut visited)?;
+        let normalized = (|| {
+            let mut coefficients = Vec::new();
+            let mut visited = std::collections::HashSet::new();
+            for value in values.iter() {
+                collect(value, &mut coefficients, &mut visited)?;
+            }
+            let normalized = HyperRational::primitive_bigint_ratio(&coefficients);
+            // A nonzero coefficient identifies the common scale. An unchanged
+            // tuple keeps every shared value and its retained scalar witness.
+            if coefficients
+                .iter()
+                .zip(&normalized)
+                .find(|(source, _)| !source.is_zero())
+                .is_none_or(|(source, target)| {
+                    **source == HyperRational::from_bigint(target.clone())
+                })
+            {
+                return None;
+            }
+            let mut normalized = normalized.into_iter();
+            let mut memo = std::collections::HashMap::new();
+            let result = values
+                .iter()
+                .map(|value| rebuild(value, &mut normalized, &mut memo))
+                .collect::<Option<Vec<_>>>()?;
+            debug_assert!(normalized.next().is_none());
+            Some(result)
+        })();
+        // Optional normalization is atomic: unavailable coefficient payloads
+        // or a declined rebuild leave the original exact tuple untouched.
+        if let Some(normalized) = normalized {
+            values.clone_from_slice(&normalized);
         }
-        let normalized = HyperRational::primitive_bigint_ratio(&coefficients);
-        // One nonzero coefficient identifies the common scale. If it is
-        // unchanged, retain the original shared nodes without rebuilding.
-        if coefficients
-            .iter()
-            .zip(&normalized)
-            .find(|(source, _)| !source.is_zero())
-            .is_none_or(|(source, target)| **source == HyperRational::from_bigint(target.clone()))
-        {
-            return Some(values.map(Clone::clone));
-        }
-        let mut normalized = normalized.into_iter();
-        let mut memo = std::collections::HashMap::new();
-        let result = values
-            .map(|value| rebuild(value, &mut normalized, &mut memo))
-            .into_iter()
-            .collect::<Option<Vec<_>>>()?;
-        debug_assert!(normalized.next().is_none());
-        result.try_into().ok()
     }
 
     fn from_base(
@@ -64167,6 +64168,10 @@ impl OrderedFieldPolynomialContext<BezierRecursiveQuadraticValue2>
                 "a recursive polynomial isolator exceeded its coefficient field".into(),
             ))
         })
+    }
+
+    fn normalize_positive_scale(&mut self, coefficients: &mut [BezierRecursiveQuadraticValue2]) {
+        BezierRecursiveQuadraticValue2::normalize_positive_scale(coefficients);
     }
 
     fn sign(
@@ -131902,35 +131907,36 @@ mod conversion_tests {
             ((Real::one() / &large).unwrap(), Real::one()),
             (-large.clone(), Real::from(-1_i8)),
         ] {
-            let values = [&x, &y, &denominator].map(|value| value.scale(&scale).unwrap());
-            let normalized =
-                BezierRecursiveQuadraticValue2::primitive_projective_ratio(values.each_ref())
-                    .unwrap();
-            for (actual, expected) in normalized.iter().zip([&x, &y, &denominator]) {
-                assert!(actual.field().same_field(&extension));
-                assert!(actual.is_stored_equivalent_to(&expected.scale(&orientation).unwrap()));
-            }
-            let repeated =
-                BezierRecursiveQuadraticValue2::primitive_projective_ratio(normalized.each_ref())
-                    .unwrap();
-            for (first, second) in normalized.iter().zip(&repeated) {
-                assert!(Arc::ptr_eq(&first.data, &second.data));
+            for count in [1, 3, 8, 17] {
+                let expected = [&x, &y, &denominator].into_iter().cycle().take(count);
+                let mut normalized: Vec<_> = expected
+                    .clone()
+                    .map(|value| value.scale(&scale).unwrap())
+                    .collect();
+                BezierRecursiveQuadraticValue2::normalize_positive_scale(&mut normalized);
+                for (actual, expected) in normalized.iter().zip(expected) {
+                    assert!(actual.field().same_field(&extension));
+                    assert!(actual.is_stored_equivalent_to(&expected.scale(&orientation).unwrap()));
+                }
+                let mut repeated = normalized.clone();
+                BezierRecursiveQuadraticValue2::normalize_positive_scale(&mut repeated);
+                for (first, second) in normalized.iter().zip(&repeated) {
+                    assert!(Arc::ptr_eq(&first.data, &second.data));
+                }
             }
         }
+
         let wide_x = x.scale(&large).unwrap();
         let wide_denominator = denominator.scale(&large).unwrap();
-        let shared = BezierRecursiveQuadraticValue2::primitive_projective_ratio([
-            &wide_x,
-            &wide_x,
-            &wide_denominator,
-        ])
-        .unwrap();
+        let mut shared = [wide_x.clone(), wide_x.clone(), wide_denominator];
+        BezierRecursiveQuadraticValue2::normalize_positive_scale(&mut shared);
         assert!(Arc::ptr_eq(&shared[0].data, &shared[1].data));
         let opaque = extension.constant(Real::pi()).unwrap();
-        assert!(
-            BezierRecursiveQuadraticValue2::primitive_projective_ratio([&opaque, &denominator,])
-                .is_none()
-        );
+        let mut unnormalized = [wide_x.clone(), denominator.clone(), opaque.clone()];
+        BezierRecursiveQuadraticValue2::normalize_positive_scale(&mut unnormalized);
+        for (actual, expected) in unnormalized.iter().zip([&wide_x, &denominator, &opaque]) {
+            assert!(Arc::ptr_eq(&actual.data, &expected.data));
+        }
     }
 
     #[test]
