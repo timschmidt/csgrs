@@ -114827,6 +114827,47 @@ impl BezierParallel2 {
                 return Ok(Classification::Uncertain(reason));
             }
         }
+        // A stationary source may have a rational PH image on each regular
+        // side even though no global speed sheet exists. Use those images in
+        // the ordinary rational domain solver, retaining the original source
+        // parameters and one-sided endpoints. Only isolated domain results
+        // return here; positive-dimensional overlaps still need the full
+        // overlap evidence constructed below.
+        let ranges = [
+            CurveParameterRange2::from_bezier_range(first_range.clone()),
+            CurveParameterRange2::from_bezier_range(second_range.clone()),
+        ];
+        let strict = policy.strict_counterpart();
+        if let Ok(Classification::Decided(Some(first))) =
+            self.exact_rational_parallel_component_on_regular_range(&ranges[0], &strict)
+            && let Ok(Classification::Decided(Some(second))) =
+                other.exact_rational_parallel_component_on_regular_range(&ranges[1], &strict)
+        {
+            let first = first.curve().parallel_left(Real::zero())?;
+            let second = second.curve().parallel_left(Real::zero())?;
+            if let Ok(Classification::Decided(result)) = first
+                .zero_distance_pair_intersections_in_domain(
+                    &second,
+                    ranges
+                        .each_ref()
+                        .map(|range| CurveParameterDomain2::new(range, None)),
+                    false,
+                    false,
+                    policy,
+                )
+            {
+                let (intersections, positive_dimensional) = result.into_parts();
+                if !positive_dimensional && intersections.is_complete() {
+                    #[cfg(feature = "dispatch-trace")]
+                    hyperreal::dispatch_trace::record(
+                        "hypercurve",
+                        "parallel-pair-regular-ranges",
+                        "rational-domains",
+                    );
+                    return Ok(Classification::Decided(intersections));
+                }
+            }
+        }
         let first_frame =
             match self.source_oriented_regularized_tangent_field(first_range, policy)? {
                 Classification::Decided(frame) => frame,
@@ -158787,6 +158828,85 @@ mod conversion_tests {
                             );
                         }
                     }
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn regular_ph_branch_pairs_retain_exact_cusp_incidence() {
+        // P'(t)=t^2(1-t^2,2t). At distance 25/128 the regularized
+        // parallel has a cusp exactly at t=1/2. Its two otherwise disjoint
+        // regular branches share that point, although no global PH speed
+        // certificate can include the stationary source endpoint t=0.
+        let q = |n: i32, d: i32| (Real::from(n) / Real::from(d)).unwrap();
+        let source = RationalBezier2::try_new(
+            vec![
+                Point2::from_values(0, 0),
+                Point2::from_values(0, 0),
+                Point2::from_values(0, 0),
+                Point2::new(q(1, 30), Real::zero()),
+                Point2::new(q(2, 15), q(1, 10)),
+                Point2::new(q(2, 15), q(1, 2)),
+            ],
+            vec![Real::one(); 6],
+        )
+        .unwrap();
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            for reversed in [false, true] {
+                let parallel = if reversed {
+                    source.reversed().parallel_left(q(-25, 128)).unwrap()
+                } else {
+                    source.parallel_left(q(25, 128)).unwrap()
+                };
+                assert!(matches!(
+                    parallel
+                        .exact_pythagorean_hodograph_offset(&policy)
+                        .unwrap(),
+                    Classification::Decided(None)
+                ));
+                for (left_end, right_start, touching) in
+                    [(q(1, 2), q(1, 2), true), (q(1, 4), q(3, 4), false)]
+                {
+                    let left = BezierParameterRange2::from_exact(Real::zero(), left_end);
+                    let right = BezierParameterRange2::from_exact(right_start, Real::one());
+                    let work = || {
+                        parallel.parallel_intersections_on_regular_ranges(
+                            &parallel, &left, &right, &policy,
+                        )
+                    };
+                    #[cfg(feature = "dispatch-trace")]
+                    hyperreal::dispatch_trace::reset();
+                    #[cfg(feature = "dispatch-trace")]
+                    let result = hyperreal::dispatch_trace::with_recording(work).unwrap();
+                    #[cfg(not(feature = "dispatch-trace"))]
+                    let result = work().unwrap();
+                    let Classification::Decided(result) = result else {
+                        panic!("regular rational branches must intersect exactly")
+                    };
+                    assert!(result.is_complete());
+                    assert!(result.overlaps().is_empty());
+                    assert_eq!(result.contacts().len(), usize::from(touching));
+                    if touching {
+                        let contact = &result.contacts()[0];
+                        for parameter in [contact.first_parameter(), contact.second_parameter()] {
+                            assert_eq!(
+                                parameter
+                                    .cmp_by_refinement(&CurveParameter2::from(q(1, 2)), &policy)
+                                    .unwrap(),
+                                Classification::Decided(std::cmp::Ordering::Equal)
+                            );
+                        }
+                    }
+                    #[cfg(feature = "dispatch-trace")]
+                    assert_eq!(
+                        hyperreal::dispatch_trace::take_trace().path_count(
+                            "hypercurve",
+                            "parallel-pair-regular-ranges",
+                            "rational-domains"
+                        ),
+                        1
+                    );
                 }
             }
         }
