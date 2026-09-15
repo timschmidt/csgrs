@@ -150712,6 +150712,63 @@ mod conversion_tests {
     }
 
     #[test]
+    fn recursive_polynomial_isolators_keep_the_selected_root_after_endpoint_deflation() {
+        let scalar =
+            |value| DenseTensorPolynomial::try_new(Vec::new(), vec![Real::from(value)]).unwrap();
+        let field = BezierRecursiveQuadraticField2::base(Vec::new(), scalar(2), scalar(3)).unwrap();
+        let delta = Real::from(2_i8).powi_i64(-29).unwrap();
+        let below = Real::from(2_i8).powi_i64(-10).unwrap();
+        let above = Real::from(2_i8).powi_i64(-9).unwrap();
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            // t * (t^3-delta) has an exact endpoint root and an irrational
+            // root whose initial local isolator still starts at zero.
+            let Classification::Decided(parameters) =
+                recursive_projective_polynomial_unit_parameters(
+                    &field,
+                    [
+                        Real::zero(),
+                        -delta.clone(),
+                        Real::zero(),
+                        Real::zero(),
+                        Real::one(),
+                    ]
+                    .into_iter()
+                    .map(|value| field.constant(value).unwrap())
+                    .collect(),
+                    &policy,
+                )
+                .unwrap()
+            else {
+                panic!("both authored roots must remain represented")
+            };
+            assert_eq!(parameters.len(), 2);
+            let selected = parameters
+                .iter()
+                .find_map(CurveParameter2::as_recursive_projective)
+                .expect("the non-dyadic root must retain its local isolator");
+            for (value, expected) in [
+                (Real::zero(), std::cmp::Ordering::Greater),
+                (below.clone(), std::cmp::Ordering::Greater),
+                (above.clone(), std::cmp::Ordering::Less),
+            ] {
+                assert_eq!(
+                    selected.order_to_real(&value, &policy).unwrap(),
+                    Classification::Decided(expected),
+                    "the local root must not become the deflated endpoint"
+                );
+            }
+            let Classification::Decided(refined) = selected.refined(16, &policy).unwrap() else {
+                panic!("the selected irrational root must refine exactly")
+            };
+            assert_eq!(
+                refined.order_to_real(&below, &policy).unwrap(),
+                Classification::Decided(std::cmp::Ordering::Greater)
+            );
+            assert!(selected.shares_polynomial_root(&refined));
+        }
+    }
+
+    #[test]
     fn recursive_polynomial_refinement_reuses_certified_bounds_and_identity() {
         let scalar =
             |value| DenseTensorPolynomial::try_new(Vec::new(), vec![Real::from(value)]).unwrap();
