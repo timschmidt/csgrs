@@ -97742,7 +97742,11 @@ impl BezierAlgebraicChordPairPoint2 {
         if !self.accepts_policy(policy) {
             return Classification::Uncertain(UncertaintyReason::Unsupported);
         }
-        self.intersection_bounds_refined(refinement_steps, policy)
+        // A conservative enclosure is construction evidence even when the
+        // caller permits a terminal approximate topology decision. Preserve
+        // its retained policy identity while requiring exact interval signs.
+        policy
+            .strict_predicate_pass(|| self.intersection_bounds_refined(refinement_steps, policy))
             .map_or(
                 Classification::Uncertain(UncertaintyReason::Ordering),
                 Classification::Decided,
@@ -97756,20 +97760,28 @@ impl BezierAlgebraicChordPairPoint2 {
     ) -> Option<Aabb2> {
         let first = self.data.first.retained_support();
         let second = self.data.second.retained_support();
+        let endpoint_bounds = |point: &CurvePoint2| {
+            let Classification::Decided(bounds) =
+                algebraic_chord_endpoint_local_bounds_refined(point, refinement_steps, policy)
+            else {
+                return None;
+            };
+            // Only an outer enclosure is needed by the support determinant.
+            // Rational endpoints avoid replaying unrelated scalar expressions
+            // during interval arithmetic and continue tightening on demand.
+            Some(
+                bounds
+                    .certified_rational_outer_envelope(refinement_steps)
+                    .unwrap_or(bounds),
+            )
+        };
         if let (Some(first_direction), Some(second_direction)) = (
             first.certified_axis_direction(),
             second.certified_axis_direction(),
         ) && first_direction.axis() != second_direction.axis()
         {
             let constant_coordinate = |chord: &BezierAlgebraicChord2, axis: Axis2| {
-                let bounds = match algebraic_chord_endpoint_local_bounds_refined(
-                    chord.start(),
-                    refinement_steps,
-                    policy,
-                ) {
-                    Classification::Decided(bounds) => bounds,
-                    Classification::Uncertain(_) => return None,
-                };
+                let bounds = endpoint_bounds(chord.start())?;
                 Some(BezierAlgebraicChordRealInterval2::from_axis(&bounds, axis))
             };
             let vertical = if first_direction.axis() == Axis2::Y {
@@ -97789,38 +97801,10 @@ impl BezierAlgebraicChordPairPoint2 {
                 Point2::new(x.upper, y.upper),
             ));
         }
-        let first_start = match algebraic_chord_endpoint_local_bounds_refined(
-            first.start(),
-            refinement_steps,
-            policy,
-        ) {
-            Classification::Decided(bounds) => bounds,
-            Classification::Uncertain(_) => return None,
-        };
-        let first_end = match algebraic_chord_endpoint_local_bounds_refined(
-            first.end(),
-            refinement_steps,
-            policy,
-        ) {
-            Classification::Decided(bounds) => bounds,
-            Classification::Uncertain(_) => return None,
-        };
-        let second_start = match algebraic_chord_endpoint_local_bounds_refined(
-            second.start(),
-            refinement_steps,
-            policy,
-        ) {
-            Classification::Decided(bounds) => bounds,
-            Classification::Uncertain(_) => return None,
-        };
-        let second_end = match algebraic_chord_endpoint_local_bounds_refined(
-            second.end(),
-            refinement_steps,
-            policy,
-        ) {
-            Classification::Decided(bounds) => bounds,
-            Classification::Uncertain(_) => return None,
-        };
+        let first_start = endpoint_bounds(first.start())?;
+        let first_end = endpoint_bounds(first.end())?;
+        let second_start = endpoint_bounds(second.start())?;
+        let second_end = endpoint_bounds(second.end())?;
         let coordinate =
             |bounds: &Aabb2, axis| BezierAlgebraicChordRealInterval2::from_axis(bounds, axis);
         let first_start_x = coordinate(&first_start, Axis2::X);

@@ -3371,8 +3371,7 @@ fn certified_curve_path_parallel_leaves_corner_join_to_higher_layer() {
     ));
 }
 
-#[test]
-fn stationary_ph_region_reoffsets_through_paths_booleans_and_cancellation() {
+fn stationary_ph_boundary_path() -> CurvePath2 {
     // P'(t)=t^2(1-t^2,2t). The exact normal has a finite one-sided
     // endpoint, and repeated offsets must retain that branch and its source.
     let source = RationalBezier2::try_new(
@@ -3387,17 +3386,20 @@ fn stationary_ph_region_reoffsets_through_paths_booleans_and_cancellation() {
         vec![r(1); 6],
     )
     .unwrap();
+    CurvePath2::try_new(vec![
+        Curve2::from(source.clone()),
+        Curve2::from(LineSeg2::try_new(source.end().clone(), Point2::new(r(-1), q(1, 2))).unwrap()),
+        Curve2::from(LineSeg2::try_new(Point2::new(r(-1), q(1, 2)), p(-1, 0)).unwrap()),
+        Curve2::from(LineSeg2::try_new(p(-1, 0), p(0, 0)).unwrap()),
+    ])
+    .unwrap()
+}
+
+#[test]
+fn stationary_ph_region_reoffsets_through_paths_booleans_and_cancellation() {
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         for reversed in [false, true] {
-            let mut path = CurvePath2::try_new(vec![
-                Curve2::from(source.clone()),
-                Curve2::from(
-                    LineSeg2::try_new(source.end().clone(), Point2::new(r(-1), q(1, 2))).unwrap(),
-                ),
-                Curve2::from(LineSeg2::try_new(Point2::new(r(-1), q(1, 2)), p(-1, 0)).unwrap()),
-                Curve2::from(LineSeg2::try_new(p(-1, 0), p(0, 0)).unwrap()),
-            ])
-            .unwrap();
+            let mut path = stationary_ph_boundary_path();
             if reversed {
                 path = path.reversed(&policy).unwrap().into_value();
             }
@@ -3476,6 +3478,89 @@ fn stationary_ph_region_reoffsets_through_paths_booleans_and_cancellation() {
                 .unwrap();
             assert_eq!(difference.certainty, hypercurve::CurveCertainty::Certified);
             assert!(difference.value.is_empty());
+        }
+    }
+}
+
+#[test]
+fn stationary_ph_inward_offsets_preserve_sets_through_boundary_paths() {
+    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+        for reversed in [false, true] {
+            let mut path = stationary_ph_boundary_path();
+            if reversed {
+                path = path.reversed(&policy).unwrap().into_value();
+            }
+            let original = CurveRegion2::try_from_boundary_paths_with_loop_semantics(
+                &[path],
+                &[CurveRegionLoopRole::Material],
+                &[FillRule::NonZero],
+                &policy,
+            )
+            .unwrap();
+            assert_eq!(original.certainty, hypercurve::CurveCertainty::Certified);
+            let first = original
+                .value
+                .offset(q(-1, 20), &OffsetCornerStyle2::Round, &policy)
+                .unwrap();
+            assert_eq!(first.certainty, hypercurve::CurveCertainty::Certified);
+            let second = first
+                .value
+                .offset(q(-1, 40), &OffsetCornerStyle2::Round, &policy)
+                .unwrap();
+            assert_eq!(second.certainty, hypercurve::CurveCertainty::Certified);
+            assert_eq!(second.value.boundary_loops().len(), 1);
+            let paths = second.value.boundary_paths(&policy).unwrap();
+            assert_eq!(paths.certainty, hypercurve::CurveCertainty::Certified);
+            let Classification::Decided(paths) = paths.into_value() else {
+                panic!("the inward result must retain an exact boundary path")
+            };
+            assert_eq!(paths.len(), 1);
+            let restored = CurveRegion2::try_from_boundary_paths_with_loop_semantics(
+                &paths,
+                &[CurveRegionLoopRole::Material],
+                &[FillRule::NonZero],
+                &policy,
+            )
+            .unwrap();
+            assert_eq!(restored.certainty, hypercurve::CurveCertainty::Certified);
+
+            // The source set contains [-1,0] x [0,1/2] and is contained in
+            // [-1,2/15] x [0,1/2]. Inward round offsets are monotone in set
+            // inclusion; the two distances sum to 3/40. These rectangles
+            // independently certify the interior/exterior probes and their
+            // shared left boundary, without comparing two offset solvers.
+            for region in [&second.value, &restored.value] {
+                for (point, expected) in [
+                    (
+                        Point2::new(q(-1, 2), q(1, 4)),
+                        hypercurve::RegionPointLocation::Inside,
+                    ),
+                    (
+                        Point2::new(q(-23, 25), q(1, 4)),
+                        hypercurve::RegionPointLocation::Inside,
+                    ),
+                    (
+                        Point2::new(q(-1, 2), q(21, 50)),
+                        hypercurve::RegionPointLocation::Inside,
+                    ),
+                    (
+                        Point2::new(q(-93, 100), q(1, 4)),
+                        hypercurve::RegionPointLocation::Outside,
+                    ),
+                    (
+                        Point2::new(q(-1, 2), q(43, 100)),
+                        hypercurve::RegionPointLocation::Outside,
+                    ),
+                    (
+                        Point2::new(q(-37, 40), q(1, 4)),
+                        hypercurve::RegionPointLocation::Boundary,
+                    ),
+                ] {
+                    let location = region.classify_point(&point, &policy).unwrap();
+                    assert_eq!(location.certainty, hypercurve::CurveCertainty::Certified);
+                    assert_eq!(location.value, Classification::Decided(expected));
+                }
+            }
         }
     }
 }
