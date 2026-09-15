@@ -1559,6 +1559,14 @@ fn retained_circular_conics_share_the_native_corner_kernel() {
     ];
 
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+        let same_point = |actual: &hypercurve::CurvePoint2, expected: &hypercurve::CurvePoint2| {
+            let equality = actual.coincides_with(expected, &policy);
+            assert_eq!(equality.certainty, CurveCertainty::Certified);
+            assert_eq!(equality.value, Classification::Decided(true));
+        };
+        let chamfer_y = (r(15).sqrt().unwrap() / r(8)).unwrap();
+        let upper_contact = hypercurve::CurvePoint2::from(Point2::new(q(1, 8), chamfer_y.clone()));
+        let lower_contact = hypercurve::CurvePoint2::from(Point2::new(q(1, 8), -chamfer_y));
         for (family, carrier) in &carriers {
             let path = CurvePath2::try_new(vec![
                 Curve2::from(LineSeg2::try_new(p(-2, 0), p(0, 0)).unwrap()),
@@ -1579,7 +1587,13 @@ fn retained_circular_conics_share_the_native_corner_kernel() {
             else {
                 panic!("the retained circular conic must have one exact chamfer");
             };
-            assert_eq!(chamfer.curves()[2].family(), *family);
+            same_point(&chamfer.start(), &path.start());
+            same_point(&chamfer.end(), &path.end());
+            same_point(
+                &chamfer.curves()[1].start(),
+                &Point2::new(-q(1, 2), r(0)).into(),
+            );
+            same_point(&chamfer.curves()[1].end(), &upper_contact);
             assert_eq!(chamfer.curves()[0].end(), chamfer.curves()[1].start());
             assert_eq!(chamfer.curves()[1].end(), chamfer.curves()[2].start());
 
@@ -1590,18 +1604,39 @@ fn retained_circular_conics_share_the_native_corner_kernel() {
             else {
                 panic!("the retained circular conic must have one exact fillet");
             };
-            assert_eq!(fillet.curves()[2].family(), *family);
-            assert_eq!(fillet.curves()[0].end(), fillet.curves()[1].start());
-            assert_eq!(fillet.curves()[1].end(), fillet.curves()[2].start());
-            let Some(CurveGeometry2::CircularArc(inserted)) = fillet.curves()[1].geometry() else {
-                panic!("the inserted fillet must remain circular");
-            };
-            assert!(matches!(
-                inserted
-                    .radius_squared()
-                    .certified_eq_until(&q(1, 4), -4096),
-                CertifiedRealEquality::Equal { .. }
-            ));
+            same_point(&fillet.start(), &path.start());
+            same_point(&fillet.end(), &path.end());
+            for pair in fillet.curves().windows(2) {
+                same_point(&pair[0].end(), &pair[1].start());
+            }
+            let root_two = r(2).sqrt().unwrap();
+            let center = Point2::new(r(1) - &root_two, q(1, 2));
+            same_point(
+                &fillet.curves()[0].end(),
+                &Point2::new(r(1) - &root_two, r(0)).into(),
+            );
+            same_point(
+                &fillet.curves().last().unwrap().start(),
+                &Point2::new(r(1) - q(2, 3) * root_two, q(1, 3)).into(),
+            );
+            for inserted in &fillet.curves()[1..fillet.curves().len() - 1] {
+                let domain = inserted.parameter_domain();
+                let (start, end) = domain
+                    .scalar_endpoints()
+                    .expect("represented circle fixture");
+                let midpoint = ((start + end) / r(2)).unwrap();
+                let point = inserted.point_at(&midpoint.into(), &policy).unwrap();
+                assert_eq!(point.certainty, CurveCertainty::Certified);
+                assert!(matches!(
+                    point
+                        .value
+                        .coordinates()
+                        .expect("represented circular midpoint")
+                        .distance_squared(&center)
+                        .certified_eq_until(&q(1, 4), -4096),
+                    CertifiedRealEquality::Equal { .. }
+                ));
+            }
 
             for reversed in [false, true] {
                 let extension_source = if reversed {
@@ -1623,38 +1658,38 @@ fn retained_circular_conics_share_the_native_corner_kernel() {
                         )
                     });
                 assert_eq!(extended.certainty, CurveCertainty::Certified);
-                assert!(extended.value.candidate_count() > 1);
-                let validates_candidate = |candidate: &CurvePath2| {
-                    assert!(candidate.curves().iter().all(|curve| {
-                        [curve.start(), curve.end()].iter().all(|point| {
-                            point
-                                .coordinates()
-                                .expect("native corner endpoint")
-                                .distance_squared(&p(0, 0))
-                                .certified_eq_until(&Real::zero(), -4096)
-                                .as_bool()
-                                != Some(true)
-                        })
-                    }));
-                    candidate.curves().iter().any(|curve| {
-                        matches!(curve.geometry(), Some(CurveGeometry2::CircularArc(_)))
-                    })
+                let CurveCornerSolutions2::Multiple(candidates) = extended.value else {
+                    panic!("the circular and linear cuts must retain all four pairings");
                 };
-                let mut retained_native_extension = false;
-                match &extended.value {
-                    CurveCornerSolutions2::Unique(candidate) => {
-                        retained_native_extension |= validates_candidate(candidate);
+                assert_eq!(candidates.len(), 4);
+                let mut extensions = 0;
+                for candidate in candidates {
+                    same_point(&candidate.start(), &extension_source.start());
+                    same_point(&candidate.end(), &extension_source.end());
+                    for pair in candidate.curves().windows(2) {
+                        same_point(&pair[0].end(), &pair[1].start());
                     }
-                    CurveCornerSolutions2::Multiple(candidates) => {
-                        for candidate in candidates {
-                            retained_native_extension |= validates_candidate(candidate);
+                    let chamfer_index = if reversed {
+                        candidate.curves().len() - 2
+                    } else {
+                        1
+                    };
+                    let contact = if reversed {
+                        candidate.curves()[chamfer_index].start()
+                    } else {
+                        candidate.curves()[chamfer_index].end()
+                    };
+                    let extension = contact.coincides_with(&lower_contact, &policy);
+                    assert_eq!(extension.certainty, CurveCertainty::Certified);
+                    match extension.value {
+                        Classification::Decided(true) => extensions += 1,
+                        Classification::Decided(false) => same_point(&contact, &upper_contact),
+                        Classification::Uncertain(reason) => {
+                            panic!("circle contact evidence was lost: {reason:?}")
                         }
                     }
-                    CurveCornerSolutions2::NoSolution(reason) => {
-                        panic!("the retained circular chamfer must have candidates: {reason:?}")
-                    }
                 }
-                assert!(retained_native_extension);
+                assert_eq!(extensions, 2);
             }
 
             let extended = path

@@ -1079,7 +1079,7 @@ pub(crate) fn clip_corresponding_parameter_ranges(
     ))))
 }
 
-fn intersect_parameter_ranges(
+pub(crate) fn intersect_parameter_ranges(
     first: &CurveParameterRange2,
     second: &CurveParameterRange2,
     policy: &CurveContext,

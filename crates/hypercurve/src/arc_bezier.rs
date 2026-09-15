@@ -124,7 +124,6 @@ pub(crate) fn decompose_circular_arc(
 ) -> ExactCurveResult<Classification<CircularArcBezierDecomposition2>> {
     arc.rational_bezier_decomposition_with_policy(policy)
         .map(|classification| classification.map(Clone::clone))
-        .map_err(contextualize_arc_error)
 }
 
 fn compute_circular_arc_decomposition(
@@ -271,7 +270,6 @@ pub(crate) fn classify_sweep_with_policy(
         classify_sweep_uncached(arc, attempt)
     })
     .map(|classification| classification.map(|kind| *kind))
-    .map_err(contextualize_arc_error)
 }
 
 fn classify_sweep_uncached(
@@ -616,10 +614,6 @@ pub(crate) fn rational_minor_arc_span(
 
 fn arc_error(operation: CurveOperation2, cause: CurveError) -> ExactCurveError {
     ExactCurveError::invalid(operation, CurveFamily2::CircularArc, cause)
-}
-
-fn contextualize_arc_error(error: ExactCurveError) -> ExactCurveError {
-    error
 }
 
 #[cfg(test)]

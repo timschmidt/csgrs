@@ -5,8 +5,17 @@ use super::*;
 use crate::BezierSplitFragment2;
 use crate::bezier_region::curve_corner_chain::CurveCornerChain2;
 
-pub(super) fn corner_has_native_reconstruction(curve: &Curve2, cut: &CornerCut2) -> bool {
+pub(super) fn corner_has_native_reconstruction(
+    curve: &Curve2,
+    cut: &CornerCut2,
+    retained_arc: Option<&CircularArc2>,
+) -> bool {
+    // Rational circle inverses certify a source parameter for an existing
+    // contact point. Re-evaluating that parameter during native subdivision
+    // loses its endpoint authority; the shared chain retains both witnesses.
+    // Circular extensions also carry endpoint markers, not affine parameters.
     curve.geometry().is_some()
+        && retained_arc.is_none()
         && cut.point.coordinates().is_some()
         && (cut.placement == CornerPlacement2::Corner
             || matches!(curve.geometry(), Some(CurveGeometry2::CircularArc(_)))
@@ -445,8 +454,8 @@ impl CurvePath2 {
         {
             return Ok(None);
         }
-        if !corner_has_native_reconstruction(previous, &solution.previous)
-            || !corner_has_native_reconstruction(next, &solution.next)
+        if !corner_has_native_reconstruction(previous, &solution.previous, retained_arcs[0])
+            || !corner_has_native_reconstruction(next, &solution.next, retained_arcs[1])
             || solution.center.coordinates().is_none()
             || solution
                 .retained_frame

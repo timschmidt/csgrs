@@ -4,14 +4,16 @@ use super::*;
 use crate::CurveParameterRange2;
 use std::borrow::Cow;
 
-fn decided<T>(value: Classification<T>, family: CurveFamily2) -> ExactCurveResult<T> {
+fn decided<T>(
+    value: Classification<T>,
+    operation: CurveOperation2,
+    family: CurveFamily2,
+) -> ExactCurveResult<T> {
     match value {
         Classification::Decided(value) => Ok(value),
-        Classification::Uncertain(reason) => Err(ExactCurveError::blocked(
-            CurveOperation2::Chamfer,
-            family,
-            reason,
-        )),
+        Classification::Uncertain(reason) => {
+            Err(ExactCurveError::blocked(operation, family, reason))
+        }
     }
 }
 
@@ -31,6 +33,134 @@ pub(super) fn parameter_order(
             Err(ExactCurveError::blocked(operation, family, reason))
         }
     }
+}
+
+/// Closed authored sweeps on one incident circular support. A chord's side
+/// selects either the minor or major directed sweep without inverse parameter
+/// reconstruction. The original selected endpoints remain its exact authority.
+struct AuthoredCircularDomain2 {
+    sweeps: Vec<(crate::BezierAlgebraicChord2, LineSide)>,
+}
+
+impl AuthoredCircularDomain2 {
+    fn from_source_charts(
+        authored: &Curve2,
+        charts: &[NativeBezierFragment2],
+        incident_index: usize,
+        incident: &CircularArc2,
+        operation: CurveOperation2,
+        policy: &CurveContext,
+    ) -> ExactCurveResult<Self> {
+        let family = authored.family();
+        let mut sweeps = Vec::new();
+        for (index, chart) in charts.iter().enumerate() {
+            let (start, end) = chart.parameter_range();
+            let range =
+                CurveParameterRange2::new_validated(start.clone().into(), end.clone().into());
+            let Some([start, end]) = decided(
+                crate::bezier_split::intersect_parameter_ranges(
+                    authored.parameter_domain(),
+                    &range,
+                    policy,
+                )
+                .map_err(|cause| ExactCurveError::invalid(operation, family, cause))?,
+                operation,
+                family,
+            )?
+            else {
+                continue;
+            };
+            let other;
+            let support = if index == incident_index {
+                incident
+            } else {
+                let Some(support) = native_span_circular_arc(chart, operation, family, policy)?
+                else {
+                    continue;
+                };
+                other = support;
+                &other
+            };
+            // A crossing on a different support has a distinct source
+            // preimage. Only another chart of this same circle owns a ray cut.
+            if !same_circular_support(incident, support, operation, family, policy)? {
+                continue;
+            }
+            let start = authored
+                .point_at_parameter_with_policy(&start, CurveParameterSide2::Right, policy)
+                .map_err(|error| error.with_operation(operation))?;
+            let end = authored
+                .point_at_parameter_with_policy(&end, CurveParameterSide2::Left, policy)
+                .map_err(|error| error.with_operation(operation))?;
+            let chord = decided(
+                crate::BezierAlgebraicChord2::try_new(start, end, policy)
+                    .map_err(|cause| ExactCurveError::invalid(operation, family, cause))?,
+                operation,
+                family,
+            )?;
+            sweeps.push((
+                chord,
+                if support.is_clockwise() {
+                    LineSide::Left
+                } else {
+                    LineSide::Right
+                },
+            ));
+        }
+        Ok(Self { sweeps })
+    }
+
+    /// The corner solve has already certified incidence on this circle.
+    /// Closed finite ownership also excludes extensions at authored endpoints,
+    /// even though those endpoints are not themselves admissible trim cuts.
+    fn contains_incident_point(
+        &self,
+        point: &CurvePoint2,
+        operation: CurveOperation2,
+        family: CurveFamily2,
+        policy: &CurveContext,
+    ) -> ExactCurveResult<bool> {
+        for (chord, interior) in &self.sweeps {
+            let side = decided(
+                chord
+                    .oriented_support_side(point, policy)
+                    .map_err(|cause| ExactCurveError::invalid(operation, family, cause))?,
+                operation,
+                family,
+            )?;
+            if side == LineSide::On || side == *interior {
+                return Ok(true);
+            }
+        }
+        Ok(false)
+    }
+}
+
+fn same_circular_support(
+    first: &CircularArc2,
+    second: &CircularArc2,
+    operation: CurveOperation2,
+    family: CurveFamily2,
+    policy: &CurveContext,
+) -> ExactCurveResult<bool> {
+    for (first, second) in [
+        (first.center().x(), second.center().x()),
+        (first.center().y(), second.center().y()),
+        (first.radius_squared_ref(), second.radius_squared_ref()),
+    ] {
+        match crate::classify::compare_reals(first, second, policy) {
+            Some(std::cmp::Ordering::Equal) => {}
+            Some(_) => return Ok(false),
+            None => {
+                return Err(ExactCurveError::blocked(
+                    operation,
+                    family,
+                    crate::UncertaintyReason::Ordering,
+                ));
+            }
+        }
+    }
+    Ok(true)
 }
 
 impl Curve2 {
@@ -148,6 +278,7 @@ impl Curve2 {
                 corner_parameter
                     .affine_image_unbounded(&inverse, &(-start * &inverse), policy)
                     .map_err(|cause| ExactCurveError::invalid(operation, family, cause))?,
+                operation,
                 family,
             )?;
             center_chart = Some((
@@ -158,14 +289,23 @@ impl Curve2 {
                     family,
                 )?,
                 local,
+                index,
             ));
             break;
         }
-        let (center, center_parameter) = center_chart.ok_or_else(|| {
+        let (center, center_parameter, center_index) = center_chart.ok_or_else(|| {
             ExactCurveError::invalid(operation, family, CurveError::InvalidCurveParameter)
         })?;
-        let unit_range =
-            CurveParameterRange2::new_validated(Real::zero().into(), Real::one().into());
+        let incident_circle =
+            native_span_circular_arc(&charts[center_index], operation, family, policy)?;
+        let corner = self.endpoint(!previous);
+        let circular_contacts = match (&incident_circle, corner.coordinates()) {
+            (Some(circle), Some(corner)) => Some(circular_setback_points(
+                circle, corner, setback, operation, family, policy,
+            )?),
+            _ => None,
+        };
+        let unit_range = CurveParameterRange2::unit();
         let mut cuts = CornerCuts2::default();
         let mut seam: Option<(CurveParameter2, CurvePoint2)> = None;
         for chart in charts {
@@ -190,30 +330,75 @@ impl Curve2 {
             {
                 continue;
             }
-            let parallel = exact_corner_bezier_parallel(
-                ExactCornerBezier2::NativeSpan(chart),
-                Real::zero(),
-                operation,
-                family,
-            )?;
-            let parameters = decided(
-                parallel
-                    .fixed_distance_incidence(
-                        &center,
-                        &center_parameter,
-                        setback,
-                        &unit_range,
-                        None,
+            let circular = if circular_contacts.is_some() {
+                match native_span_circular_arc(chart, operation, family, policy)? {
+                    Some(circle) => same_circular_support(
+                        incident_circle.as_ref().expect("circular contacts"),
+                        &circle,
+                        operation,
+                        family,
                         policy,
-                    )
-                    .map_err(|cause| ExactCurveError::invalid(operation, family, cause))?,
-                family,
-            )?;
-            for chart_parameter in parameters {
+                    )?,
+                    None => false,
+                }
+            } else {
+                false
+            };
+            let mut contact_points = Vec::new();
+            let parallel;
+            let parameters = if circular {
+                parallel = None;
+                let evaluator = RationalBezier2::try_from_subcurve(chart.curve())
+                    .map_err(|cause| ExactCurveError::invalid(operation, family, cause))?;
+                let mut parameters = Vec::new();
+                for point in circular_contacts
+                    .as_ref()
+                    .expect("circular contacts")
+                    .iter()
+                    .flatten()
+                {
+                    for parameter in decided(
+                        evaluator
+                            .retained_circle_point_parameters(point, policy)
+                            .map_err(|cause| ExactCurveError::invalid(operation, family, cause))?,
+                        operation,
+                        family,
+                    )? {
+                        parameters.push(CurveParameter2::from(parameter));
+                        contact_points.push(point);
+                    }
+                }
+                parameters
+            } else {
+                parallel = Some(exact_corner_bezier_parallel(
+                    ExactCornerBezier2::NativeSpan(chart),
+                    Real::zero(),
+                    operation,
+                    family,
+                )?);
+                decided(
+                    parallel
+                        .as_ref()
+                        .expect("generic contact carrier")
+                        .fixed_distance_incidence(
+                            &center,
+                            &center_parameter,
+                            setback,
+                            &unit_range,
+                            None,
+                            policy,
+                        )
+                        .map_err(|cause| ExactCurveError::invalid(operation, family, cause))?,
+                    operation,
+                    family,
+                )?
+            };
+            for (index, chart_parameter) in parameters.into_iter().enumerate() {
                 let parameter = decided(
                     chart_parameter
                         .affine_image_unbounded(&(end - start), start, policy)
                         .map_err(|cause| ExactCurveError::invalid(operation, family, cause))?,
+                    operation,
                     family,
                 )?;
                 if !parameter_order(&parameter, range.start(), operation, family, policy)?.is_gt()
@@ -221,13 +406,17 @@ impl Curve2 {
                 {
                     continue;
                 }
-                let point = analytic_parallel_point_evidence(
-                    &parallel,
-                    &chart_parameter,
-                    operation,
-                    family,
-                    policy,
-                )?;
+                let point = if let Some(point) = contact_points.get(index) {
+                    (*point).clone().into()
+                } else {
+                    analytic_parallel_point_evidence(
+                        parallel.as_ref().expect("generic contact carrier"),
+                        &chart_parameter,
+                        operation,
+                        family,
+                        policy,
+                    )?
+                };
                 // Only adjacent closed cells can duplicate a source location.
                 // Retain that seam witness instead of comparing every new
                 // root with every previously published cut. Distinct source
@@ -235,7 +424,7 @@ impl Curve2 {
                 if let Some((previous_parameter, previous_point)) = &previous_seam
                     && parameter_order(&parameter, previous_parameter, operation, family, policy)?
                         .is_eq()
-                    && decided(point.same_point(previous_point, policy), family)?
+                    && decided(point.same_point(previous_point, policy), operation, family)?
                 {
                     continue;
                 }
@@ -252,8 +441,33 @@ impl Curve2 {
             }
         }
         if mode == CurveCornerMode2::TrimOrExtend {
-            for cut in incident_cuts()?.iter() {
-                if cut.placement == CornerPlacement2::Extension {
+            let incident = incident_cuts()?;
+            if incident
+                .iter()
+                .any(|cut| cut.placement == CornerPlacement2::Extension)
+            {
+                let circle_domain = incident_circle
+                    .as_ref()
+                    .map(|circle| {
+                        AuthoredCircularDomain2::from_source_charts(
+                            self,
+                            charts,
+                            center_index,
+                            circle,
+                            operation,
+                            policy,
+                        )
+                    })
+                    .transpose()?;
+                for cut in incident.iter() {
+                    if cut.placement != CornerPlacement2::Extension {
+                        continue;
+                    }
+                    if let Some(domain) = &circle_domain
+                        && domain.contains_incident_point(&cut.point, operation, family, policy)?
+                    {
+                        continue;
+                    }
                     cuts.push(cut.clone());
                 }
             }

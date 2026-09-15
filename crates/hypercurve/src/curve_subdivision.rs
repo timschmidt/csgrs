@@ -1184,6 +1184,243 @@ mod tests {
     }
 
     #[test]
+    fn source_domain_circle_extensions_do_not_republish_authored_chamfer_contacts() {
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let source = Curve2::from(
+                CircularArc2::try_from_center(
+                    p(1, 0),
+                    Point2::new(q(3, 5), q(4, 5)),
+                    p(0, 0),
+                    true,
+                )
+                .unwrap(),
+            );
+            let end = decided(
+                selected_parameters(&policy)[0]
+                    .affine_image_unbounded(&q(1, 64), &q(63, 64), &policy)
+                    .unwrap(),
+                source.family(),
+            )
+            .unwrap();
+            let selected = source
+                .subcurve(Real::zero().into(), end, &policy)
+                .unwrap()
+                .value;
+            for reversed in [false, true] {
+                let solve = |arc: Curve2| {
+                    let path = CurvePath2::try_new(vec![
+                        Curve2::from(LineSeg2::try_new(p(1, -2), p(1, 0)).unwrap()),
+                        arc,
+                    ])
+                    .unwrap();
+                    let path = if reversed {
+                        path.reversed(&policy).unwrap().value
+                    } else {
+                        path
+                    };
+                    let outcome = path
+                        .chamfer_vertex_by_setbacks(
+                            1,
+                            Real::one(),
+                            Real::one(),
+                            CurveCornerMode2::TrimOrExtend,
+                            &policy,
+                        )
+                        .unwrap();
+                    assert_eq!(outcome.certainty, CurveCertainty::Certified);
+                    let candidates = match outcome.value {
+                        CurveCornerSolutions2::Unique(candidate) => vec![candidate],
+                        CurveCornerSolutions2::Multiple(candidates) => candidates,
+                        CurveCornerSolutions2::NoSolution(reason) => {
+                            panic!("the authored circular contacts were lost: {reason:?}")
+                        }
+                    };
+                    candidates
+                        .into_iter()
+                        .map(|candidate| {
+                            assert_same(&candidate.start(), &path.start(), &policy);
+                            assert_same(&candidate.end(), &path.end(), &policy);
+                            for pair in candidate.curves().windows(2) {
+                                assert_same(&pair[0].end(), &pair[1].start(), &policy);
+                            }
+                            let index = if reversed {
+                                candidate.curves().len() - 2
+                            } else {
+                                1
+                            };
+                            let chamfer = &candidate.curves()[index];
+                            [chamfer.start(), chamfer.end()]
+                        })
+                        .collect::<Vec<_>>()
+                };
+                let direct = solve(source.clone());
+                let retained = solve(selected.clone());
+                assert_eq!(
+                    retained.len(),
+                    direct.len(),
+                    "reversed={reversed}, policy={policy:?}"
+                );
+                for expected in &direct {
+                    assert_eq!(
+                        retained
+                            .iter()
+                            .filter(|actual| {
+                                actual.iter().zip(expected).all(|(actual, expected)| {
+                                    actual.same_point(expected, &policy)
+                                        == Classification::Decided(true)
+                                })
+                            })
+                            .count(),
+                        1,
+                        "each authored circle contact must have one owner",
+                    );
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn circular_spline_extensions_preserve_complements_and_closed_endpoint_ownership() {
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let weight = q(1, 2).sqrt().unwrap();
+            let source = Curve2::from(
+                NurbsCurve2::try_new(
+                    2,
+                    vec![
+                        p(1, 0),
+                        p(1, -1),
+                        p(0, -1),
+                        p(-1, -1),
+                        p(-1, 0),
+                        p(-1, 1),
+                        p(0, 1),
+                    ],
+                    vec![
+                        Real::one(),
+                        weight.clone(),
+                        Real::one(),
+                        weight.clone(),
+                        Real::one(),
+                        weight,
+                        Real::one(),
+                    ],
+                    [0, 0, 0, 1, 1, 2, 2, 3, 3, 3]
+                        .into_iter()
+                        .map(Real::from)
+                        .collect(),
+                    &policy,
+                )
+                .unwrap()
+                .value,
+            );
+            let end = decided(
+                selected_parameters(&policy)[0]
+                    .affine_image_unbounded(&q(3, 64), &q(189, 64), &policy)
+                    .unwrap(),
+                source.family(),
+            )
+            .unwrap();
+            let selected_source = source
+                .subcurve(Real::zero().into(), end, &policy)
+                .unwrap()
+                .value;
+            for selected in [false, true] {
+                for reversed in [false, true] {
+                    let path = CurvePath2::try_new(vec![
+                        Curve2::from(LineSeg2::try_new(p(1, -2), p(1, 0)).unwrap()),
+                        if selected {
+                            selected_source.clone()
+                        } else {
+                            source.clone()
+                        },
+                    ])
+                    .unwrap();
+                    let path = if reversed {
+                        path.reversed(&policy).unwrap().value
+                    } else {
+                        path
+                    };
+                    for endpoint_contact in [false, true] {
+                        let arc_setback = if endpoint_contact {
+                            Real::from(2).sqrt().unwrap()
+                        } else {
+                            Real::one()
+                        };
+                        let setbacks = if reversed {
+                            [arc_setback, Real::one()]
+                        } else {
+                            [Real::one(), arc_setback]
+                        };
+                        let [first_setback, second_setback] = setbacks;
+                        let outcome = path.chamfer_vertex_by_setbacks(
+                            1, first_setback, second_setback, CurveCornerMode2::TrimOrExtend, &policy,
+                        ).unwrap_or_else(|error| panic!("selected={selected}, reversed={reversed}, endpoint_contact={endpoint_contact}: {error:?}"));
+                        assert_eq!(outcome.certainty, CurveCertainty::Certified);
+                        let candidates = match outcome.value {
+                            CurveCornerSolutions2::Unique(candidate) => vec![candidate],
+                            CurveCornerSolutions2::Multiple(candidates) => candidates,
+                            CurveCornerSolutions2::NoSolution(reason) => {
+                                panic!("circular spline contacts were lost: {reason:?}")
+                            }
+                        };
+                        // North is the untrimmed spline's far endpoint. It
+                        // becomes a valid complementary extension only after
+                        // the selected trim removes it from the authored set.
+                        assert_eq!(
+                            candidates.len(),
+                            if endpoint_contact && !selected { 2 } else { 4 }
+                        );
+                        let y = (Real::from(3).sqrt().unwrap() / Real::from(2)).unwrap();
+                        let expected = if endpoint_contact {
+                            [p(0, -1), p(0, 1)]
+                        } else {
+                            [Point2::new(q(1, 2), -&y), Point2::new(q(1, 2), y)]
+                        };
+                        let contacts = candidates
+                            .into_iter()
+                            .map(|candidate| {
+                                assert_same(&candidate.start(), &path.start(), &policy);
+                                assert_same(&candidate.end(), &path.end(), &policy);
+                                for pair in candidate.curves().windows(2) {
+                                    assert_same(&pair[0].end(), &pair[1].start(), &policy);
+                                }
+                                let index = if reversed {
+                                    candidate.curves().len() - 2
+                                } else {
+                                    1
+                                };
+                                if reversed {
+                                    candidate.curves()[index].start()
+                                } else {
+                                    candidate.curves()[index].end()
+                                }
+                            })
+                            .collect::<Vec<_>>();
+                        for (index, point) in expected.into_iter().enumerate() {
+                            let comparisons = contacts
+                                .iter()
+                                .map(|contact| contact.same_point(&point.clone().into(), &policy))
+                                .collect::<Vec<_>>();
+                            assert_eq!(
+                                comparisons
+                                    .iter()
+                                    .filter(|result| **result == Classification::Decided(true))
+                                    .count(),
+                                if index == 1 && endpoint_contact && !selected {
+                                    0
+                                } else {
+                                    2
+                                },
+                                "selected={selected}, reversed={reversed}, endpoint_contact={endpoint_contact}, expected_index={index}, comparisons={comparisons:?}",
+                            );
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    #[test]
     fn source_domain_fillets_preserve_all_selected_major_arc_contacts() {
         for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
             let source = Curve2::from(
