@@ -975,6 +975,14 @@ fn isolate_local_polynomial_roots_bernstein(
             left.add(right, self.field)
         }
 
+        fn multiply(
+            &mut self,
+            left: &LocalFieldElement,
+            right: &LocalFieldElement,
+        ) -> Result<LocalFieldElement, Self::Error> {
+            left.multiply(right, self.field)
+        }
+
         fn scale(
             &mut self,
             value: &LocalFieldElement,

@@ -1,9 +1,9 @@
-//! Division-free root isolation over an exact ordered coefficient field.
+//! Division-free polynomial replay over an exact ordered coefficient field.
 //!
-//! The coefficient field remains owned by the caller.  This module only uses
-//! addition, exact rational scaling, and sign predicates, so an already
-//! selected algebraic or radical tower need not be collapsed into a primitive
-//! element merely to isolate simple roots of a univariate polynomial.
+//! The coefficient field remains owned by the caller. Root isolation uses
+//! addition, exact real scaling, and sign predicates; reduction also uses
+//! field multiplication. An already selected algebraic or radical tower need
+//! not be collapsed into a primitive element to replay a polynomial relation.
 
 use std::cmp::Ordering;
 
@@ -25,6 +25,9 @@ pub trait OrderedFieldPolynomialContext<C> {
 
     /// Exact field addition.
     fn add(&mut self, left: &C, right: &C) -> Result<C, Self::Error>;
+
+    /// Exact field multiplication.
+    fn multiply(&mut self, left: &C, right: &C) -> Result<C, Self::Error>;
 
     /// Exact multiplication by a represented real scalar.
     fn scale(&mut self, value: &C, scale: &Real) -> Result<C, Self::Error>;
@@ -153,6 +156,63 @@ pub fn ordered_field_polynomial_linear_quotient<C: Clone, F: OrderedFieldPolynom
     }
     quotient.reverse();
     Ok(quotient)
+}
+
+/// Reduces a polynomial while preserving its sign at every root of `modulus`.
+///
+/// Coefficients are in ascending power order. The result has degree less than
+/// the exact degree of `modulus`. Each elimination multiplies the current
+/// value by the strictly positive absolute leading coefficient, so signs at
+/// the selected root are preserved even for a negative or nonmonic modulus.
+/// No field division or independent representation of that root is needed.
+///
+/// Only the modulus degree and leading sign require predicates. Leading
+/// cancellation is algebraic; intermediate coefficients need no zero tests.
+/// An empty result represents zero. `None` means the modulus is identically
+/// zero and supplies no relation. The caller retains root selection and domain
+/// evidence; this reduction does not select or isolate a root.
+pub fn ordered_field_polynomial_sign_remainder<C: Clone, F: OrderedFieldPolynomialContext<C>>(
+    polynomial: &[C],
+    modulus: &[C],
+    field: &mut F,
+) -> Result<Option<Vec<C>>, F::Error> {
+    let mut degree = modulus.len();
+    let leading_sign = loop {
+        let Some(index) = degree.checked_sub(1) else {
+            return Ok(None);
+        };
+        degree = index;
+        let sign = field.sign(&modulus[index])?;
+        if sign != Ordering::Equal {
+            break sign;
+        }
+    };
+    let negative_one = Real::from(-1_i8);
+    let positive_leading = if leading_sign == Ordering::Less {
+        field.scale(&modulus[degree], &negative_one)?
+    } else {
+        modulus[degree].clone()
+    };
+    let mut remainder = polynomial.to_vec();
+    while remainder.len() > degree {
+        let leading = remainder.pop().expect("an elimination has a leading term");
+        let shift = remainder.len() - degree;
+        let subtract_leading = if leading_sign == Ordering::Greater {
+            field.scale(&leading, &negative_one)?
+        } else {
+            leading
+        };
+        for (power, coefficient) in remainder.iter_mut().enumerate() {
+            let scaled = field.multiply(coefficient, &positive_leading)?;
+            *coefficient = if power >= shift {
+                let term = field.multiply(&subtract_leading, &modulus[power - shift])?;
+                field.add(&scaled, &term)?
+            } else {
+                scaled
+            };
+        }
+    }
+    Ok(Some(remainder))
 }
 
 fn deflate_at_represented_root<C: Clone, F: OrderedFieldPolynomialContext<C>>(
@@ -563,9 +623,9 @@ where
 mod tests {
     use super::*;
 
-    struct RationalRealContext;
+    struct RealContext;
 
-    impl OrderedFieldPolynomialContext<Real> for RationalRealContext {
+    impl OrderedFieldPolynomialContext<Real> for RealContext {
         type Error = ();
 
         fn zero(&mut self) -> Result<Real, Self::Error> {
@@ -574,6 +634,10 @@ mod tests {
 
         fn add(&mut self, left: &Real, right: &Real) -> Result<Real, Self::Error> {
             Ok(left + right)
+        }
+
+        fn multiply(&mut self, left: &Real, right: &Real) -> Result<Real, Self::Error> {
+            Ok(left * right)
         }
 
         fn scale(&mut self, value: &Real, scale: &Real) -> Result<Real, Self::Error> {
@@ -594,6 +658,91 @@ mod tests {
     }
 
     #[test]
+    fn sign_remainder_preserves_nonmonic_relations_without_division() {
+        let radical = Real::from(2_i8).sqrt().unwrap();
+        let tiny = Real::from(2_i8).powi_i64(-600).unwrap();
+        for gauge in [Real::from(3_i8), Real::from(-3_i8), Real::pi(), -Real::pi()] {
+            // The retained relation is gauge*(x^3-sqrt(2)). Independently
+            // author (x^3-sqrt(2))*(x^2+2x+1) plus a signed small residual.
+            let modulus = [
+                -&gauge * &radical,
+                Real::zero(),
+                Real::zero(),
+                gauge.clone(),
+            ];
+            for residual in [Real::zero(), tiny.clone(), -tiny.clone()] {
+                let polynomial = [
+                    &residual - &radical,
+                    Real::from(-2_i8) * &radical,
+                    -&radical,
+                    Real::one(),
+                    Real::from(2_i8),
+                    Real::one(),
+                ];
+                let remainder = ordered_field_polynomial_sign_remainder(
+                    &polynomial,
+                    &modulus,
+                    &mut RealContext,
+                )
+                .unwrap()
+                .unwrap();
+                assert_eq!(remainder.len(), 3);
+                assert_eq!(
+                    remainder[0].partial_cmp(&Real::zero()),
+                    residual.partial_cmp(&Real::zero()),
+                );
+                assert!(
+                    remainder[1..]
+                        .iter()
+                        .all(|value| value.zero_status() == hyperreal::ZeroKnowledge::Zero)
+                );
+                // A trailing zero does not falsely raise the modulus degree.
+                let mut padded = modulus.to_vec();
+                padded.push(Real::zero());
+                assert_eq!(
+                    ordered_field_polynomial_sign_remainder(&polynomial, &padded, &mut RealContext)
+                        .unwrap(),
+                    Some(remainder),
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn sign_remainder_keeps_distinct_roots_and_degenerate_relations_separate() {
+        // A remainder of x has different signs at the three selected roots
+        // of x^3-x. Reduction preserves the query; it does not pick a root.
+        let query = [Real::zero(), Real::one()];
+        let modulus = [Real::zero(), Real::from(-1_i8), Real::zero(), Real::one()];
+        assert_eq!(
+            ordered_field_polynomial_sign_remainder(&query, &modulus, &mut RealContext).unwrap(),
+            Some(query.to_vec()),
+        );
+        for zero in [vec![], vec![Real::zero()], vec![Real::zero(); 4]] {
+            assert!(
+                ordered_field_polynomial_sign_remainder(&query, &zero, &mut RealContext)
+                    .unwrap()
+                    .is_none()
+            );
+        }
+        for polynomial in [vec![], query.to_vec(), modulus.to_vec()] {
+            assert_eq!(
+                ordered_field_polynomial_sign_remainder(
+                    &polynomial,
+                    &[Real::from(-2_i8)],
+                    &mut RealContext
+                )
+                .unwrap(),
+                Some(Vec::new()),
+            );
+        }
+        assert_eq!(
+            ordered_field_polynomial_sign_remainder(&[], &modulus, &mut RealContext).unwrap(),
+            Some(Vec::new()),
+        );
+    }
+
+    #[test]
     fn linear_quotient_reuses_certified_nonrational_roots_without_predicates() {
         struct ArithmeticOnly;
         impl OrderedFieldPolynomialContext<Real> for ArithmeticOnly {
@@ -603,6 +752,9 @@ mod tests {
             }
             fn add(&mut self, left: &Real, right: &Real) -> Result<Real, ()> {
                 Ok(left + right)
+            }
+            fn multiply(&mut self, _: &Real, _: &Real) -> Result<Real, ()> {
+                panic!("linear deflation only needs scaling by the retained root")
             }
             fn scale(&mut self, value: &Real, scale: &Real) -> Result<Real, ()> {
                 Ok(value * scale)
@@ -668,27 +820,19 @@ mod tests {
                 (Real::zero(), Real::one()),
                 (fraction(7, 9), fraction(11, 6)),
             ] {
-                let controls = power_to_bernstein_on_interval(
-                    &polynomial,
-                    &lower,
-                    &upper,
-                    &mut RationalRealContext,
-                )
-                .unwrap()
-                .unwrap();
-                let (left, right) = midpoint_subdivide(controls, &mut RationalRealContext).unwrap();
+                let controls =
+                    power_to_bernstein_on_interval(&polynomial, &lower, &upper, &mut RealContext)
+                        .unwrap()
+                        .unwrap();
+                let (left, right) = midpoint_subdivide(controls, &mut RealContext).unwrap();
                 let midpoint = midpoint(&lower, &upper).unwrap();
                 for (actual, lower, upper) in
                     [(&left, &lower, &midpoint), (&right, &midpoint, &upper)]
                 {
-                    let expected = power_to_bernstein_on_interval(
-                        &polynomial,
-                        lower,
-                        upper,
-                        &mut RationalRealContext,
-                    )
-                    .unwrap()
-                    .unwrap();
+                    let expected =
+                        power_to_bernstein_on_interval(&polynomial, lower, upper, &mut RealContext)
+                            .unwrap()
+                            .unwrap();
                     assert_eq!(actual, &expected, "degree {degree} on [{lower}, {upper}]");
                 }
                 assert_eq!(left.last(), right.first());
@@ -726,6 +870,19 @@ mod tests {
             self.max_depth = self.max_depth.max(depth);
             Ok(DepthTracked {
                 value: &left.value + &right.value,
+                depth,
+            })
+        }
+
+        fn multiply(
+            &mut self,
+            left: &DepthTracked,
+            right: &DepthTracked,
+        ) -> Result<DepthTracked, Self::Error> {
+            let depth = left.depth.max(right.depth) + 1;
+            self.max_depth = self.max_depth.max(depth);
+            Ok(DepthTracked {
+                value: &left.value * &right.value,
                 depth,
             })
         }
@@ -804,7 +961,7 @@ mod tests {
                 max_subdivision_depth: 64,
                 refinement_steps: 8,
             },
-            &mut RationalRealContext,
+            &mut RealContext,
         )
         .unwrap();
         assert_eq!(report.status, OrderedFieldRootIsolationStatus::Isolated);
@@ -842,7 +999,7 @@ mod tests {
                 max_subdivision_depth: 16,
                 refinement_steps: 2,
             },
-            &mut RationalRealContext,
+            &mut RealContext,
         )
         .expect("rational field operations are total");
 
@@ -877,7 +1034,7 @@ mod tests {
                 max_subdivision_depth: 4,
                 refinement_steps: 0,
             },
-            &mut RationalRealContext,
+            &mut RealContext,
         )
         .expect("rational field operations are total");
 
