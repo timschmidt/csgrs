@@ -216,6 +216,23 @@ fn validate_rational_point(
     family: CurveFamily2,
     policy: &CurveContext,
 ) -> ExactCurveResult<()> {
+    // Common-sign Bernstein weights already prove a nonzero denominator on
+    // the closed unit span. Replaying its power polynomial in an unrelated
+    // selected field can multiply refinement and coefficient costs even for
+    // a quadratic NURBS span. The certificate says nothing about exterior
+    // parameters, which must continue through the original polynomial proof.
+    let strict = policy.strict_counterpart();
+    if matches!(
+        source.common_weight_sign(&strict),
+        Classification::Decided(RealSign::Positive | RealSign::Negative)
+    ) && matches!(
+        CurveParameterDomain2::new(&CurveParameterRange2::unit(), None)
+            .contains_finite_parameter(parameter, &strict)
+            .map_err(|cause| evaluation_error(family, cause))?,
+        Classification::Decided(true)
+    ) {
+        return Ok(());
+    }
     let basis = source
         .homogeneous_power_basis()
         .map_err(|cause| evaluation_error(family, cause))?;
@@ -240,7 +257,10 @@ fn rational_point(
     if let Some(parameter) = parameter.as_bezier_parameter() {
         return match parameter {
             BezierParameter2::Exact(parameter) => {
-                decided(source.point_at_classified(parameter, policy), family)
+                // The caller checked the retained range, which can extend
+                // beyond the source's original unit chart. The denominator
+                // proof above is the remaining affine evaluation condition.
+                decided(source.point_at_affine_classified(parameter, policy), family)
                     .map(CurvePoint2::from)
             }
             BezierParameter2::Algebraic(parameter) => Ok(CurvePoint2::from(
@@ -332,6 +352,80 @@ mod tests {
         let equality = point.coincides_with(&CurvePoint2::from(expected), policy);
         assert_eq!(equality.certainty, CurveCertainty::Certified);
         assert_eq!(equality.value, Classification::Decided(true));
+    }
+
+    #[test]
+    fn positive_weights_do_not_authorize_an_exterior_rational_pole() {
+        let source = RationalBezier2::try_new(
+            vec![Point2::from_values(0, 0), Point2::from_values(1, 1)],
+            vec![Real::one(), Real::from(2)],
+        )
+        .unwrap();
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            // W(t)=1+t is strictly positive on [0,1], with a pole at -1.
+            assert!(matches!(
+                rational_point(
+                    &source,
+                    &Real::from(-1).into(),
+                    CurveFamily2::RationalBezier,
+                    &policy
+                ),
+                Err(ExactCurveError::Invalid {
+                    cause: CurveError::InvalidCurveParameter,
+                    ..
+                })
+            ));
+            let regular = rational_point(
+                &source,
+                &Real::from(-2).into(),
+                CurveFamily2::RationalBezier,
+                &policy,
+            )
+            .unwrap();
+            assert_point(&regular, Point2::from_values(4, 4), &policy);
+
+            // A retained chart can be regular entirely outside [0,1]. Public
+            // evaluation must use that finite range, including after reversal.
+            let end = decided(
+                selected_half_root_two()
+                    .affine_image_unbounded(
+                        &(Real::one() / Real::from(2)).unwrap(),
+                        &Real::from(-2),
+                        &policy,
+                    )
+                    .unwrap(),
+                CurveFamily2::RationalBezier,
+            )
+            .unwrap();
+            let end_point =
+                rational_point(&source, &end, CurveFamily2::RationalBezier, &policy).unwrap();
+            let curve = Curve2::from_retained_fragment(BezierSplitFragment2::SelectedFiber(
+                crate::bezier_split::BezierSelectedFiberFragment2::new(
+                    crate::bezier_split::BezierSelectedFiberSource2::Rational(source.clone()),
+                    CurveParameterRange2::new_validated(Real::from(-2).into(), end),
+                    regular,
+                    end_point,
+                ),
+            ));
+            for curve in [curve.clone(), curve.reversed(&policy).unwrap().value] {
+                let point = curve
+                    .point_at(&(Real::from(-7) / Real::from(4)).unwrap().into(), &policy)
+                    .unwrap();
+                let coordinate = (Real::from(14) / Real::from(3)).unwrap();
+                assert_point(
+                    &point.value,
+                    Point2::new(coordinate.clone(), coordinate),
+                    &policy,
+                );
+                assert!(matches!(
+                    curve.point_at(&Real::from(-3).into(), &policy),
+                    Err(ExactCurveError::Invalid {
+                        cause: CurveError::InvalidCurveParameter,
+                        ..
+                    })
+                ));
+            }
+        }
     }
 
     #[test]
