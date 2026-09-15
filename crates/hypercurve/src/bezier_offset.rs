@@ -72787,32 +72787,35 @@ impl BezierAlgebraicChord2 {
         Ok(Classification::Uncertain(UncertaintyReason::Predicate))
     }
 
-    pub(crate) fn exact_axis_support_coordinate(
+    /// Returns a represented constant coordinate on the requested axis.
+    /// The certified monotone parameter axis is never constant; all other
+    /// candidates retain their axis through nested contact-support queries.
+    pub(crate) fn constant_axis_coordinate(
         &self,
+        axis: Axis2,
         policy: &CurveContext,
     ) -> CurveResult<Option<Real>> {
-        let constant_axis = match self.data.parameter_axis.axis {
-            Axis2::X => Axis2::Y,
-            Axis2::Y => Axis2::X,
-        };
+        if axis == self.data.parameter_axis.axis {
+            return Ok(None);
+        }
         let support = self.retained_support();
         let candidate = |endpoint: &CurvePoint2| {
             Ok::<_, CurveError>(match endpoint {
-                CurvePoint2(CurvePointData2::Exact(point)) => Some(match constant_axis {
+                CurvePoint2(CurvePointData2::Exact(point)) => Some(match axis {
                     Axis2::X => point.x().clone(),
                     Axis2::Y => point.y().clone(),
                 }),
                 CurvePoint2(CurvePointData2::Algebraic(point)) => {
-                    point.exact_coordinate(constant_axis == Axis2::X, policy)
+                    point.exact_coordinate(axis == Axis2::X, policy)
                 }
                 CurvePoint2(CurvePointData2::AlgebraicChordPair(point)) => {
-                    match point.exact_axis_coordinate(constant_axis, policy)? {
+                    match point.exact_axis_coordinate(axis, policy)? {
                         Classification::Decided(candidate) => candidate,
                         Classification::Uncertain(_) => None,
                     }
                 }
                 CurvePoint2(CurvePointData2::AlgebraicChordParallel(point)) => {
-                    match point.exact_axis_coordinate(constant_axis, policy)? {
+                    match point.exact_axis_coordinate(axis, policy)? {
                         Classification::Decided(candidate) => candidate,
                         Classification::Uncertain(_) => None,
                     }
@@ -72822,7 +72825,7 @@ impl BezierAlgebraicChord2 {
                     .0
                     .data
                     .chord
-                    .exact_axis_support_coordinate(policy)?,
+                    .constant_axis_coordinate(axis, policy)?,
                 CurvePoint2(CurvePointData2::AlgebraicCuspChordDerived(_))
                 | CurvePoint2(CurvePointData2::AnalyticParallel(_))
                 | CurvePoint2(CurvePointData2::Similarity(_) | CurvePointData2::Endpoint(_)) => {
@@ -72892,7 +72895,13 @@ impl BezierAlgebraicChord2 {
             return Ok(Classification::Decided(CurvePoint2::from(point)));
         }
         if strict_axis_direction.is_some()
-            && let Some(constant_coordinate) = self.exact_axis_support_coordinate(policy)?
+            && let Some(constant_coordinate) = self.constant_axis_coordinate(
+                match self.data.parameter_axis.axis {
+                    Axis2::X => Axis2::Y,
+                    Axis2::Y => Axis2::X,
+                },
+                policy,
+            )?
         {
             let point = match self.data.parameter_axis.axis {
                 Axis2::X => Point2::new(coordinate, constant_coordinate),
@@ -73202,10 +73211,10 @@ impl BezierAlgebraicChord2 {
         let order = match retained_order {
             Ok(decided @ Classification::Decided(_)) => decided,
             Ok(Classification::Uncertain(_)) | Err(_) => {
-                if let Ok(Some(coordinate)) = policy
-                    .bounded_exact_predicate_pass(|| self.exact_axis_support_coordinate(policy))
-                    && let Ok(Classification::Decided(order)) =
-                        Self::point_axis_order_to_real(point, constant_axis, &coordinate, policy)
+                if let Ok(Some(coordinate)) = policy.bounded_exact_predicate_pass(|| {
+                    self.constant_axis_coordinate(constant_axis, policy)
+                }) && let Ok(Classification::Decided(order)) =
+                    Self::point_axis_order_to_real(point, constant_axis, &coordinate, policy)
                 {
                     return Some(Classification::Decided(
                         direction.line_side_from_perpendicular_order(order),
@@ -74820,7 +74829,15 @@ impl BezierAlgebraicChord2 {
     fn strict_canonical_axis_support_line(&self, policy: &CurveContext) -> Option<LineSeg2> {
         self.validate_policy(policy).ok()?;
         let direction = self.certified_axis_direction()?;
-        let constant = self.exact_axis_support_coordinate(policy).ok()??;
+        let constant = self
+            .constant_axis_coordinate(
+                match direction.axis() {
+                    Axis2::X => Axis2::Y,
+                    Axis2::Y => Axis2::X,
+                },
+                policy,
+            )
+            .ok()??;
         let (tangent_x, tangent_y) = direction.unit_tangent();
         let anchor = match direction.axis() {
             Axis2::X => Point2::new(Real::zero(), constant),
@@ -74981,7 +74998,15 @@ impl BezierAlgebraicChord2 {
             );
             return LineSeg2::try_new(anchor.clone(), anchor.translated(tangent_x, tangent_y)).ok();
         } else if self.data.certified_axis_aligned {
-            let constant = self.exact_axis_support_coordinate(policy).ok()??;
+            let constant = self
+                .constant_axis_coordinate(
+                    match self.data.parameter_axis.axis {
+                        Axis2::X => Axis2::Y,
+                        Axis2::Y => Axis2::X,
+                    },
+                    policy,
+                )
+                .ok()??;
             let Classification::Decided(bounds) =
                 self.conservative_bounds_refined(0, policy).ok()?
             else {
@@ -78739,7 +78764,13 @@ impl BezierAlgebraicChord2 {
         };
         let [tangent_power_x, tangent_power_y] =
             rational_parametric_tangent_numerator(source_power);
-        let exact_axis_support_coordinate = self.exact_axis_support_coordinate(policy)?;
+        let constant_coordinate = self.constant_axis_coordinate(
+            match self.data.parameter_axis.axis {
+                Axis2::X => Axis2::Y,
+                Axis2::Y => Axis2::X,
+            },
+            policy,
+        )?;
         let exact_support_line = self.strict_provenance_support_line(policy);
         let chord_axis_direction_sign = if self.data.parameter_axis.coordinate_increases {
             RealSign::Positive
@@ -78768,7 +78799,7 @@ impl BezierAlgebraicChord2 {
                 Axis2::Y => product_sign(sign, RealSign::Negative),
             });
         let uses_direct_axis_incidence =
-            exact_support_line.is_none() && exact_axis_support_coordinate.is_some();
+            exact_support_line.is_none() && constant_coordinate.is_some();
         let affine_preimage_incidence_factor_sign = if exact_support_line.is_some() {
             exact_line_cross_perpendicular_factor_sign
         } else if uses_direct_axis_incidence {
@@ -78869,10 +78900,7 @@ impl BezierAlgebraicChord2 {
                     &scale(&source_y, &support_start.denominator)?,
                     &scale(&source_weight, &support_start.y)?,
                 )?;
-                match (
-                    self.data.parameter_axis.axis,
-                    exact_axis_support_coordinate.as_ref(),
-                ) {
+                match (self.data.parameter_axis.axis, constant_coordinate.as_ref()) {
                     (Axis2::X, Some(constant_y)) => subtract(
                         &source_y,
                         &recursive_quadratic_polynomial_scale_real(&source_weight, constant_y)?,
@@ -95965,7 +95993,14 @@ impl BezierAlgebraicChordPairPoint2 {
             let Some(direction) = support.certified_axis_direction() else {
                 continue;
             };
-            let Some(constant) = support.exact_axis_support_coordinate(policy)? else {
+            let Some(constant) = support.constant_axis_coordinate(
+                match direction.axis() {
+                    Axis2::X => Axis2::Y,
+                    Axis2::Y => Axis2::X,
+                },
+                policy,
+            )?
+            else {
                 continue;
             };
             let one = Real::one();
@@ -138012,6 +138047,48 @@ mod conversion_tests {
         );
         let half = (Real::one() / Real::from(2_i8)).unwrap();
         for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let check_orthogonal_support = |point: &CurvePoint2, axis: Axis2, lower: Real| {
+                let (dx, dy, direction) = match axis {
+                    Axis2::X => (
+                        Real::zero(),
+                        Real::one(),
+                        BezierAlgebraicChordAxisDirection2::PositiveY,
+                    ),
+                    Axis2::Y => (
+                        Real::one(),
+                        Real::zero(),
+                        BezierAlgebraicChordAxisDirection2::PositiveX,
+                    ),
+                };
+                let Classification::Decided(translated) =
+                    BezierAlgebraicChord2::translated_endpoint(point, &dx, &dy, &policy).unwrap()
+                else {
+                    panic!("the exact contact translation must remain represented")
+                };
+                let chord = BezierAlgebraicChord2::from_certified_axis_aligned_endpoints(
+                    point.clone(),
+                    translated,
+                    direction,
+                    &policy,
+                );
+                for support in [chord.clone(), chord.reversed()] {
+                    assert_eq!(
+                        support
+                            .constant_axis_coordinate(direction.axis(), &policy)
+                            .unwrap(),
+                        None
+                    );
+                    if let Some(coordinate) =
+                        support.constant_axis_coordinate(axis, &policy).unwrap()
+                    {
+                        assert_eq!(
+                            real_sign(&(coordinate - &lower), &CurveContext::STRICT),
+                            Some(RealSign::Positive),
+                            "the support lookup must preserve the requested axis"
+                        );
+                    }
+                }
+            };
             let BezierParameter2::Algebraic(parameter) =
                 algebraic_parameter(vec![-half.clone(), Real::zero(), Real::one()])
             else {
@@ -138088,6 +138165,9 @@ mod conversion_tests {
                     .unwrap(),
                 Classification::Decided(std::cmp::Ordering::Equal),
             );
+            // The contact is (sqrt(1/2), 2). A horizontal support through it
+            // owns y=2, never the x coordinate of the contact's vertical line.
+            check_orthogonal_support(&contact_point, Axis2::Y, Real::one());
             let Classification::Decided(Some(chord_parameter)) = vertical
                 .parameter_at_certified_point(contact_point, &policy)
                 .unwrap()
@@ -138129,6 +138209,40 @@ mod conversion_tests {
             assert_eq!(contacts[1].branch, 1);
             let (left_cusp, left_point) = parameter_map.contact_evidence(&contacts[0]);
             let (right_cusp, right_point) = parameter_map.contact_evidence(&contacts[1]);
+            // This contact is (sqrt(1/2)+sqrt(3), 1), with x>2. Its new
+            // vertical support must not report the original horizontal y=1.
+            check_orthogonal_support(&right_point, Axis2::X, Real::from(2_i8));
+            // Keep the same selected circle, but make the contact support's
+            // y coordinate directly available as an exact scalar.
+            let exact_horizontal = BezierAlgebraicChord2::from_certified_axis_aligned_endpoints(
+                CurvePoint2::from(Point2::from_values(-3, 1)),
+                CurvePoint2::from(Point2::from_values(3, 1)),
+                BezierAlgebraicChordAxisDirection2::PositiveX,
+                &policy,
+            );
+            assert_eq!(
+                exact_horizontal
+                    .constant_axis_coordinate(Axis2::Y, &policy)
+                    .unwrap(),
+                Some(Real::one())
+            );
+            let Classification::Decided(
+                BezierAlgebraicCuspSemicircleChordIntersections2::Contacts {
+                    contacts: exact_contacts,
+                    parameter_map: exact_map,
+                },
+            ) = semicircle
+                .axis_chord_intersections_in_domain(&exact_horizontal, true, &policy)
+                .unwrap()
+            else {
+                panic!("the represented secant must retain both selected contacts")
+            };
+            let right_contact = exact_contacts
+                .iter()
+                .find(|contact| contact.branch == 1)
+                .unwrap();
+            let (_, exact_support_point) = exact_map.contact_evidence(right_contact);
+            check_orthogonal_support(&exact_support_point, Axis2::X, Real::from(2_i8));
             assert_eq!(
                 left_cusp.order_to_real(&half, &policy).unwrap(),
                 Classification::Decided(std::cmp::Ordering::Greater),

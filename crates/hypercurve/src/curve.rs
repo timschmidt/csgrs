@@ -4987,26 +4987,30 @@ impl<'a> PreparedFilletCarrier2<'a> {
             }),
             ExactCornerCarrier2::AlgebraicCusp(source) => Ok(Self::AlgebraicCusp { source }),
             ExactCornerCarrier2::AlgebraicChord(source) => {
-                let canonical_axis_support = match (
-                    source.certified_axis_direction(),
-                    source
-                        .exact_axis_support_coordinate(policy)
+                let canonical_axis_support = if let Some(direction) =
+                    source.certified_axis_direction()
+                    && let Some(coordinate) = source
+                        .constant_axis_coordinate(
+                            match direction.axis() {
+                                crate::Axis2::X => crate::Axis2::Y,
+                                crate::Axis2::Y => crate::Axis2::X,
+                            },
+                            policy,
+                        )
                         .map_err(|cause| {
                             ExactCurveError::invalid(CurveOperation2::Fillet, family, cause)
-                        })?,
-                ) {
-                    (Some(direction), Some(coordinate)) => {
-                        let (unit_x, unit_y) = direction.unit_tangent();
-                        let start = match direction.axis() {
-                            crate::Axis2::X => Point2::new(Real::zero(), coordinate),
-                            crate::Axis2::Y => Point2::new(coordinate, Real::zero()),
-                        };
-                        Some(LineSeg2::new_unchecked(
-                            start.clone(),
-                            start.translated(unit_x, unit_y),
-                        ))
-                    }
-                    _ => None,
+                        })? {
+                    let (unit_x, unit_y) = direction.unit_tangent();
+                    let start = match direction.axis() {
+                        crate::Axis2::X => Point2::new(Real::zero(), coordinate),
+                        crate::Axis2::Y => Point2::new(coordinate, Real::zero()),
+                    };
+                    Some(LineSeg2::new_unchecked(
+                        start.clone(),
+                        start.translated(unit_x, unit_y),
+                    ))
+                } else {
+                    None
                 };
                 let Some(support) = canonical_axis_support
                     .or_else(|| source.exact_line())
