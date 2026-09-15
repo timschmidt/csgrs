@@ -2547,6 +2547,8 @@ pub fn linear_parameter_lifts_bivariate_polynomial_system(
 /// can apply the function again to the exact residual pair. A geometry caller
 /// must still replay and decompose the finite real branches as documented by
 /// [`BivariatePolynomialComponentReport`].
+/// An identically zero equation adds no constraint: its companion supplies
+/// the generic component, while the authored zero residual remains explicit.
 pub fn parameter_component_bivariate_polynomial_system(
     first_equation: &BivariatePolynomial,
     second_equation: &BivariatePolynomial,
@@ -2583,6 +2585,27 @@ pub fn parameter_component_bivariate_polynomial_system(
             None,
         );
     };
+    if first_degree.is_none() != second_degree.is_none() {
+        // gcd(F,0)=gcd(F,F). Reuse the same primitive factor discovery and
+        // exact division proof, then restore the authored zero residual.
+        // Certification above distinguishes an identically zero equation
+        // from a coefficient or specialized fiber whose sign is undecided.
+        let (equation, zero, zero_index) = if first_degree.is_none() {
+            (second_equation, first_equation, 0)
+        } else {
+            (first_equation, second_equation, 1)
+        };
+        let mut report = parameter_component_bivariate_polynomial_system(
+            equation,
+            equation,
+            retained_parameter,
+            config,
+        );
+        if let Some(residual) = report.reduced_equations.as_mut() {
+            residual[zero_index] = zero.clone();
+        }
+        return report;
+    }
     let (Some(first_degree), Some(second_degree)) = (first_degree, second_degree) else {
         return component_report(
             BivariatePolynomialComponentStatus::NoSupportedComponent,
@@ -5282,6 +5305,62 @@ mod tests {
                 BivariatePolynomial::new(vec![vec![real(0)]])
             ])
         );
+    }
+
+    #[test]
+    fn bivariate_component_retains_an_identically_zero_equation() {
+        let zero = BivariatePolynomial::new(vec![vec![real(0)]]);
+        let line = BivariatePolynomial::new(vec![vec![real(0), real(1)], vec![real(-1)]]);
+        let nonlinear = BivariatePolynomial::new(vec![
+            vec![real(-1), real(0), real(1)],
+            vec![],
+            vec![],
+            vec![real(-1)],
+        ]);
+        let with_content = multiply_bivariate(
+            &nonlinear,
+            &BivariatePolynomial::new(vec![vec![real(2)], vec![real(1)]]),
+        );
+        for equation in [line, nonlinear, with_content] {
+            for zero_index in 0..2 {
+                let equations = if zero_index == 0 {
+                    [&zero, &equation]
+                } else {
+                    [&equation, &zero]
+                };
+                for axis in [
+                    CurveResultantParameter::First,
+                    CurveResultantParameter::Second,
+                ] {
+                    let report = parameter_component_bivariate_polynomial_system(
+                        equations[0],
+                        equations[1],
+                        axis,
+                        CurveIntersectionResultantConfig {
+                            min_precision: -64,
+                            max_resultant_degree: 64,
+                        },
+                    );
+                    let component = match report.status {
+                        BivariatePolynomialComponentStatus::Rational => {
+                            reported_rational_component(&report)
+                        }
+                        BivariatePolynomialComponentStatus::Implicit => {
+                            report.implicit_component.clone().unwrap()
+                        }
+                        status => panic!("gcd(F,0) must retain F's common component: {status:?}"),
+                    };
+                    let residual = report.reduced_equations.unwrap();
+                    assert_eq!(residual[zero_index], zero);
+                    for index in 0..2 {
+                        assert_eq!(
+                            multiply_bivariate(&component, &residual[index]),
+                            *equations[index]
+                        );
+                    }
+                }
+            }
+        }
     }
 
     #[test]
