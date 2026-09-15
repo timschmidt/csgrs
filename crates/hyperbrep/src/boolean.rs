@@ -6651,9 +6651,13 @@ fn lift_planar_bezier(surface: &Surface, curve: &BezierSubcurve2) -> Result<Curv
             curve.control_points().into_iter().cloned().collect(),
             curve.weights().into_iter().cloned().collect(),
         ),
-        BezierSubcurve2::Rational(curve) => {
-            (curve.control_points().to_vec(), curve.weights().to_vec())
-        }
+        BezierSubcurve2::Rational(curve) => (
+            curve
+                .affine_control_points()
+                .ok_or(GeometryError::UnsupportedIntersection)?
+                .to_vec(),
+            curve.weights().to_vec(),
+        ),
     };
     let points = points
         .into_iter()
@@ -7253,7 +7257,7 @@ mod tests {
             panic!("Möbius inverse retains a rational Bézier pcurve");
         };
         assert_eq!(inverse.degree(), 4);
-        let mut forged_controls = inverse.control_points().to_vec();
+        let mut forged_controls = inverse.affine_control_points().unwrap().to_vec();
         forged_controls[2] = hypercurve::Point2::new(
             forged_controls[2].x() + (Real::one() / Real::from(100)).unwrap(),
             forged_controls[2].y().clone(),
@@ -7330,7 +7334,7 @@ mod tests {
             panic!("native-domain Möbius inverse retains a rational Bézier pcurve");
         };
         assert_eq!(native_inverse.degree(), 4);
-        let mut forged_controls = native_inverse.control_points().to_vec();
+        let mut forged_controls = native_inverse.affine_control_points().unwrap().to_vec();
         forged_controls[2] = hypercurve::Point2::new(
             forged_controls[2].x() + (Real::one() / Real::from(100)).unwrap(),
             forged_controls[2].y().clone(),

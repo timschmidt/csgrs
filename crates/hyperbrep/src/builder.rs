@@ -3828,7 +3828,12 @@ fn spatial_extrusion_curve(curve: &Curve2, z: &Real) -> Result<Curve3, Construct
             spatial_segment_curve(&Segment2::Arc(arc.clone()), z).map(|(curve, _)| curve)
         }
         Some(CurveGeometry2::RationalBezier(curve)) => Ok(Curve3::rational_bezier(
-            curve.control_points().iter().map(lift).collect(),
+            curve
+                .affine_control_points()
+                .ok_or(ConstructionError::UnsupportedPlanarProfile)?
+                .iter()
+                .map(lift)
+                .collect(),
             curve.weights().to_vec(),
         )?),
         Some(CurveGeometry2::RationalQuadraticBezier(curve)) => Ok(Curve3::rational_bezier(
@@ -3884,7 +3889,8 @@ fn lift_planar_pcurve(curve: &Curve2, surface: &Surface) -> Result<Curve3, Const
         }
         Some(CurveGeometry2::RationalBezier(curve)) => Ok(Curve3::rational_bezier(
             curve
-                .control_points()
+                .affine_control_points()
+                .ok_or(ConstructionError::UnsupportedPlanarProfile)?
                 .iter()
                 .map(&lift)
                 .collect::<Result<Vec<_>, _>>()?,
@@ -4190,7 +4196,12 @@ fn spatial_revolution_curve(
             positive_projective_weights(&curve.weights().into_iter().cloned().collect::<Vec<_>>())?,
         )?,
         Some(CurveGeometry2::RationalBezier(curve)) => Curve3::rational_bezier(
-            curve.control_points().iter().map(lift).collect(),
+            curve
+                .affine_control_points()
+                .ok_or(ConstructionError::UnsupportedPlanarProfile)?
+                .iter()
+                .map(lift)
+                .collect(),
             positive_projective_weights(curve.weights())?,
         )?,
         Some(CurveGeometry2::PolynomialBSpline(curve)) => Curve3::nurbs(

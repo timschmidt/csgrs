@@ -16,7 +16,7 @@ use crate::{
     ShellId, Surface, SurfaceId, SurfaceKind, ValidationReport, VertexId, WireId,
 };
 
-const FORMAT_VERSION: u32 = 6;
+const FORMAT_VERSION: u32 = 7;
 
 /// Failure while encoding, decoding, or validating an exact model.
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -142,15 +142,19 @@ impl RawModel {
                     builder.pcurve(Pcurve::new(Curve2::from(arc)))?;
                 }
                 RawPcurve::RationalBezier {
-                    control_points,
-                    weights,
+                    homogeneous_controls,
                 } => {
-                    let curve = RationalBezier2::try_new(
-                        control_points.into_iter().map(curve_point2).collect(),
-                        weights,
+                    let curve = RationalBezier2::from_homogeneous_controls(
+                        homogeneous_controls
+                            .into_iter()
+                            .map(|[x, y, w]| hypercurve::HomogeneousControl2::new(x, y, w))
+                            .collect(),
+                        &hypercurve::CurveContext::STRICT,
                     )
-                    .map_err(GeometryError::from)
-                    .map_err(BuildError::from)?;
+                    .map_err(GeometryError::from)?;
+                    let hypercurve::Classification::Decided(curve) = curve else {
+                        return Err(GeometryError::UnsupportedPcurveContour.into());
+                    };
                     builder.pcurve(Pcurve::new(Curve2::from(curve)))?;
                 }
                 RawPcurve::RationalQuadraticBezier {
@@ -300,12 +304,17 @@ impl Model {
                     clockwise: arc.is_clockwise(),
                 }),
                 Some(CurveGeometry2::RationalBezier(curve)) => Ok(RawPcurve::RationalBezier {
-                    control_points: curve
-                        .control_points()
+                    homogeneous_controls: curve
+                        .homogeneous_controls()
                         .iter()
-                        .map(curve_point_array)
+                        .map(|control| {
+                            [
+                                control.x().clone(),
+                                control.y().clone(),
+                                control.weight().clone(),
+                            ]
+                        })
                         .collect(),
-                    weights: curve.weights().to_vec(),
                 }),
                 Some(CurveGeometry2::RationalQuadraticBezier(curve)) => {
                     Ok(RawPcurve::RationalQuadraticBezier {
@@ -625,8 +634,7 @@ enum RawPcurve {
         clockwise: bool,
     },
     RationalBezier {
-        control_points: Vec<[Real; 2]>,
-        weights: Vec<Real>,
+        homogeneous_controls: Vec<[Real; 3]>,
     },
     RationalQuadraticBezier {
         control_points: [[Real; 2]; 3],
@@ -648,8 +656,11 @@ fn set_raw_pcurve_start(curve: &mut RawPcurve, start: [Real; 2]) {
         | RawPcurve::CircularArc {
             start: curve_start, ..
         } => *curve_start = start,
-        RawPcurve::RationalBezier { control_points, .. } => {
-            control_points[0] = start;
+        RawPcurve::RationalBezier {
+            homogeneous_controls,
+        } => {
+            let weight = homogeneous_controls[0][2].clone();
+            homogeneous_controls[0] = [&start[0] * &weight, &start[1] * &weight, weight];
         }
         RawPcurve::RationalQuadraticBezier { control_points, .. } => {
             control_points[0] = start;
@@ -663,10 +674,14 @@ fn set_raw_pcurve_end(curve: &mut RawPcurve, end: [Real; 2]) {
         RawPcurve::Line { end: curve_end, .. } | RawPcurve::CircularArc { end: curve_end, .. } => {
             *curve_end = end
         }
-        RawPcurve::RationalBezier { control_points, .. } => {
-            *control_points
+        RawPcurve::RationalBezier {
+            homogeneous_controls,
+        } => {
+            let control = homogeneous_controls
                 .last_mut()
-                .expect("validated rational Bezier pcurve has controls") = end;
+                .expect("validated rational Bezier pcurve has controls");
+            let weight = control[2].clone();
+            *control = [&end[0] * &weight, &end[1] * &weight, weight];
         }
         RawPcurve::RationalQuadraticBezier { control_points, .. } => {
             control_points[2] = end;
@@ -1254,6 +1269,39 @@ mod tests {
             .value(),
             Some(std::cmp::Ordering::Equal)
         );
+        assert_eq!(rebuilt.to_json().unwrap(), json);
+    }
+
+    #[test]
+    fn rational_pcurve_persistence_retains_infinite_homogeneous_controls() {
+        let controls = vec![
+            hypercurve::HomogeneousControl2::new(Real::one(), Real::zero(), Real::one()),
+            hypercurve::HomogeneousControl2::new(Real::zero(), Real::one(), Real::zero()),
+            hypercurve::HomogeneousControl2::new(-Real::one(), Real::zero(), Real::one()),
+        ];
+        let hypercurve::Classification::Decided(curve) =
+            RationalBezier2::from_homogeneous_controls(controls, &hypercurve::CurveContext::STRICT)
+                .unwrap()
+        else {
+            panic!("the semicircle endpoints must be finite");
+        };
+        let mut builder = ModelBuilder::new();
+        let id = builder
+            .pcurve(Pcurve::new(Curve2::from(curve.clone())))
+            .unwrap();
+        let model = builder.finish().unwrap();
+        let json = model.to_json().unwrap();
+        let rebuilt = RawModel::from_json(&json).unwrap().validate().unwrap();
+        let Some(CurveGeometry2::RationalBezier(restored)) =
+            rebuilt.pcurve(id).unwrap().curve().geometry()
+        else {
+            panic!("persistence must retain the rational carrier");
+        };
+        assert_eq!(
+            restored.homogeneous_controls(),
+            curve.homogeneous_controls()
+        );
+        assert!(restored.affine_control_points().is_none());
         assert_eq!(rebuilt.to_json().unwrap(), json);
     }
 

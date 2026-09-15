@@ -9053,7 +9053,8 @@ impl ModelBuilder {
         let expected = match pcurve.curve().geometry() {
             Some(CurveGeometry2::RationalBezier(planar)) => Curve3::rational_bezier(
                 planar
-                    .control_points()
+                    .affine_control_points()
+                    .ok_or(GeometryError::UnsupportedIntersection)?
                     .iter()
                     .map(lift)
                     .collect::<Result<Vec<_>, _>>()?,
@@ -19602,12 +19603,39 @@ fn validate_rational_pcurve_controls(
     expected_points: &[CurvePoint2],
     expected_weights: &[Real],
 ) -> Result<(), BuildError> {
-    validate_weighted_pcurve_controls(
-        actual.control_points(),
-        actual.weights(),
-        expected_points,
-        expected_weights,
-    )
+    if expected_points.len() != expected_weights.len() {
+        return Err(BuildError::EdgeUseSupportMismatch);
+    }
+    let expected: Vec<_> = expected_points
+        .iter()
+        .zip(expected_weights)
+        .map(|(point, weight)| hypercurve::HomogeneousControl2::from_affine(point, weight.clone()))
+        .collect();
+    validate_homogeneous_pcurve_controls(actual.homogeneous_controls(), &expected)
+}
+
+fn validate_homogeneous_pcurve_controls(
+    actual: &[hypercurve::HomogeneousControl2],
+    expected: &[hypercurve::HomogeneousControl2],
+) -> Result<(), BuildError> {
+    if actual.len() != expected.len() || actual.is_empty() {
+        return Err(BuildError::EdgeUseSupportMismatch);
+    }
+    let actual_weight = actual[0].weight();
+    let expected_weight = expected[0].weight();
+    if real_values_equal(actual_weight, &Real::zero())?
+        || real_values_equal(expected_weight, &Real::zero())?
+    {
+        return Err(BuildError::EdgeUseSupportMismatch);
+    }
+    for (a, b) in actual.iter().zip(expected) {
+        for (a, b) in [(a.x(), b.x()), (a.y(), b.y()), (a.weight(), b.weight())] {
+            if !real_values_equal(&(a * expected_weight), &(b * actual_weight))? {
+                return Err(BuildError::EdgeUseSupportMismatch);
+            }
+        }
+    }
+    Ok(())
 }
 
 fn validate_weighted_pcurve_controls(
@@ -19700,19 +19728,25 @@ fn normalize_single_span_nurbs_pcurve(
     let u_span = u_end - u_start;
     let v_span = v_end - v_start;
     let controls = curve
-        .control_points()
+        .homogeneous_controls()
         .iter()
         .map(|point| {
-            Ok(CurvePoint2::new(
-                ((point.x() - u_start) / &u_span).map_err(|_| GeometryError::ProjectiveDivision)?,
-                ((point.y() - v_start) / &v_span).map_err(|_| GeometryError::ProjectiveDivision)?,
+            Ok(hypercurve::HomogeneousControl2::new(
+                ((point.x() - u_start * point.weight()) / &u_span)
+                    .map_err(|_| GeometryError::ProjectiveDivision)?,
+                ((point.y() - v_start * point.weight()) / &v_span)
+                    .map_err(|_| GeometryError::ProjectiveDivision)?,
+                point.weight().clone(),
             ))
         })
         .collect::<Result<Vec<_>, BuildError>>()?;
-    Ok(Curve2::from(
-        RationalBezier2::try_new(controls, curve.weights().to_vec())
-            .map_err(GeometryError::from)?,
-    ))
+    let Classification::Decided(curve) =
+        RationalBezier2::from_homogeneous_controls(controls, &CurveContext::STRICT)
+            .map_err(GeometryError::from)?
+    else {
+        return Err(BuildError::EdgeUseSupportMismatch);
+    };
+    Ok(Curve2::from(curve))
 }
 
 fn validate_projective_pcurve_equal(actual: &Curve2, expected: &Curve2) -> Result<(), BuildError> {
@@ -19720,11 +19754,9 @@ fn validate_projective_pcurve_equal(actual: &Curve2, expected: &Curve2) -> Resul
         (
             Some(CurveGeometry2::RationalBezier(actual)),
             Some(CurveGeometry2::RationalBezier(expected)),
-        ) => validate_weighted_pcurve_controls(
-            actual.control_points(),
-            actual.weights(),
-            expected.control_points(),
-            expected.weights(),
+        ) => validate_homogeneous_pcurve_controls(
+            actual.homogeneous_controls(),
+            expected.homogeneous_controls(),
         ),
         (Some(CurveGeometry2::Nurbs(actual)), Some(CurveGeometry2::Nurbs(expected))) => {
             if actual.degree() != expected.degree()
@@ -21669,4 +21701,31 @@ mod tests {
             Err(BuildError::InnerWireOutside(inner))
         );
     }
+}
+
+#[cfg(test)]
+#[test]
+fn homogeneous_pcurve_validation_requires_a_nonzero_projective_scale() {
+    use hypercurve::HomogeneousControl2;
+    let expected = vec![
+        HomogeneousControl2::new(Real::one(), Real::zero(), Real::one()),
+        HomogeneousControl2::new(Real::zero(), Real::one(), Real::zero()),
+        HomogeneousControl2::new(-Real::one(), Real::zero(), Real::one()),
+    ];
+    for scale in [Real::pi(), -Real::pi()] {
+        let scaled: Vec<_> = expected
+            .iter()
+            .map(|control| {
+                HomogeneousControl2::new(
+                    control.x() * &scale,
+                    control.y() * &scale,
+                    control.weight() * &scale,
+                )
+            })
+            .collect();
+        validate_homogeneous_pcurve_controls(&scaled, &expected).unwrap();
+    }
+    let zero = vec![HomogeneousControl2::new(Real::zero(), Real::zero(), Real::zero()); 3];
+    assert!(validate_homogeneous_pcurve_controls(&zero, &expected).is_err());
+    assert!(validate_homogeneous_pcurve_controls(&expected, &zero).is_err());
 }

@@ -3314,16 +3314,14 @@ impl Surface {
             return Ok(None);
         };
         let x = projected
-            .control_points()
+            .homogeneous_controls()
             .iter()
-            .zip(projected.weights())
-            .map(|(point, weight)| point.x() * weight)
+            .map(|control| control.x().clone())
             .collect::<Vec<_>>();
         let y = projected
-            .control_points()
+            .homogeneous_controls()
             .iter()
-            .zip(projected.weights())
-            .map(|(point, weight)| point.y() * weight)
+            .map(|control| control.y().clone())
             .collect::<Vec<_>>();
         let weights = projected.weights();
         let u_numerator = x
@@ -5082,7 +5080,12 @@ pub(crate) fn lift_curve_from_plane_frame(
             Ok(Some(Curve3::line(lift(line.start()), lift(line.end()))?))
         }
         Some(CurveGeometry2::RationalBezier(curve)) => Ok(Some(Curve3::rational_bezier(
-            curve.control_points().iter().map(lift).collect(),
+            curve
+                .affine_control_points()
+                .ok_or(GeometryError::UnsupportedIntersection)?
+                .iter()
+                .map(lift)
+                .collect(),
             curve.weights().to_vec(),
         )?)),
         Some(CurveGeometry2::Nurbs(curve)) => Ok(Some(Curve3::nurbs(
@@ -5128,7 +5131,10 @@ pub(crate) fn lift_curve_from_plane_frame_with_affine_parameter(
             Ok(Some(Curve3::line(lift(start), lift(end))?))
         }
         Some(CurveGeometry2::RationalBezier(curve)) => {
-            let mut control_points = curve.control_points().to_vec();
+            let mut control_points = curve
+                .affine_control_points()
+                .ok_or(GeometryError::UnsupportedIntersection)?
+                .to_vec();
             let mut weights = curve.weights().to_vec();
             if reversed {
                 control_points.reverse();
@@ -5239,7 +5245,10 @@ pub(crate) fn concatenate_rational_bezier_spans_as_nurbs(
     if degree == 0 {
         return Err(GeometryError::InvalidDegree);
     }
-    let mut control_points = first.control_points().to_vec();
+    let mut control_points = first
+        .affine_control_points()
+        .ok_or(GeometryError::UnsupportedIntersection)?
+        .to_vec();
     let mut weights = first.weights().to_vec();
     for curve in &curves[1..] {
         let Some(CurveGeometry2::RationalBezier(curve)) = curve.geometry() else {
@@ -5251,11 +5260,7 @@ pub(crate) fn concatenate_rational_bezier_spans_as_nurbs(
                     .last()
                     .expect("first rational span has controls")
                     .x(),
-                curve
-                    .control_points()
-                    .first()
-                    .expect("rational span has controls")
-                    .x(),
+                curve.start().x(),
                 crate::STRICT_PREDICATES,
             ))? != Ordering::Equal
             || decided_order(compare_reals(
@@ -5263,11 +5268,7 @@ pub(crate) fn concatenate_rational_bezier_spans_as_nurbs(
                     .last()
                     .expect("first rational span has controls")
                     .y(),
-                curve
-                    .control_points()
-                    .first()
-                    .expect("rational span has controls")
-                    .y(),
+                curve.start().y(),
                 crate::STRICT_PREDICATES,
             ))? != Ordering::Equal
         {
@@ -5279,7 +5280,14 @@ pub(crate) fn concatenate_rational_bezier_spans_as_nurbs(
             .clone()
             / &curve.weights()[0])
             .map_err(|_| GeometryError::ProjectiveDivision)?;
-        control_points.extend(curve.control_points().iter().skip(1).cloned());
+        control_points.extend(
+            curve
+                .affine_control_points()
+                .ok_or(GeometryError::UnsupportedIntersection)?
+                .iter()
+                .skip(1)
+                .cloned(),
+        );
         weights.extend(curve.weights().iter().skip(1).map(|weight| weight * &scale));
     }
     let mut knots = Vec::with_capacity(control_points.len() + degree + 1);
@@ -5581,7 +5589,7 @@ fn intersect_plane_rational_bilinear(
         let Some(pcurve) = bilinear_plane_parameter_graph(&values, parameter_axis)? else {
             continue;
         };
-        if rational_curve_controls_inside_unit_square(&pcurve)? {
+        if rational_curve_bounds_inside_unit_square(&pcurve)? {
             return Ok(SurfaceSurfaceIntersection::Curve(Box::new(
                 rational_bilinear_section(plane, surface, pcurve)?,
             )));
@@ -6108,11 +6116,14 @@ fn insert_sorted_real_unique(values: &mut Vec<Real>, value: Real) -> GeometryRes
     Ok(())
 }
 
-fn rational_curve_controls_inside_unit_square(curve: &Curve2) -> GeometryResult<bool> {
+fn rational_curve_bounds_inside_unit_square(curve: &Curve2) -> GeometryResult<bool> {
     let Some(CurveGeometry2::RationalBezier(curve)) = curve.geometry() else {
         return Ok(false);
     };
-    for point in curve.control_points() {
+    let Ok(bounds) = curve.certified_bounds(&CurveContext::STRICT) else {
+        return Ok(false);
+    };
+    for point in [bounds.min(), bounds.max()] {
         for coordinate in [point.x(), point.y()] {
             if decided_order(compare_reals(
                 coordinate,
@@ -6149,13 +6160,11 @@ pub(crate) fn rational_bilinear_parameter_curve(
     let Some(CurveGeometry2::RationalBezier(graph)) = pcurve.geometry() else {
         return Ok(None);
     };
-    if graph.control_points().len() != 3 || graph.weights().len() != 3 {
+    if graph.degree() != 2 {
         return Ok(None);
     }
-    let u: [Real; 3] =
-        std::array::from_fn(|index| graph.control_points()[index].x() * &graph.weights()[index]);
-    let v: [Real; 3] =
-        std::array::from_fn(|index| graph.control_points()[index].y() * &graph.weights()[index]);
+    let u: [Real; 3] = std::array::from_fn(|index| graph.homogeneous_controls()[index].x().clone());
+    let v: [Real; 3] = std::array::from_fn(|index| graph.homogeneous_controls()[index].y().clone());
     let w: [Real; 3] = std::array::from_fn(|index| graph.weights()[index].clone());
     let w_minus_u = std::array::from_fn(|index| &w[index] - &u[index]);
     let w_minus_v = std::array::from_fn(|index| &w[index] - &v[index]);
@@ -6769,10 +6778,25 @@ fn remap_unit_tensor_pcurve(
         Some(CurveGeometry2::Line(line)) => {
             Curve2::from(LineSeg2::try_new(map(line.start()), map(line.end()))?)
         }
-        Some(CurveGeometry2::RationalBezier(curve)) => Curve2::from(RationalBezier2::try_new(
-            curve.control_points().iter().map(map).collect(),
-            curve.weights().to_vec(),
-        )?),
+        Some(CurveGeometry2::RationalBezier(curve)) => {
+            let controls = curve
+                .homogeneous_controls()
+                .iter()
+                .map(|control| {
+                    hypercurve::HomogeneousControl2::new(
+                        u_start * control.weight() + u_span * control.x(),
+                        v_start * control.weight() + v_span * control.y(),
+                        control.weight().clone(),
+                    )
+                })
+                .collect();
+            let Classification::Decided(curve) =
+                RationalBezier2::from_homogeneous_controls(controls, &CurveContext::STRICT)?
+            else {
+                return Err(GeometryError::UnsupportedIntersection);
+            };
+            Curve2::from(curve)
+        }
         _ => return Err(GeometryError::UnsupportedIntersection),
     };
     Ok(SurfaceIntersectionPcurve {
@@ -12746,7 +12770,7 @@ mod tests {
         let Some(CurveGeometry2::RationalBezier(graph)) = graph_pcurve.curve().geometry() else {
             panic!("split tensor section must retain one rational graph pcurve");
         };
-        let mut forged_controls = graph.control_points().to_vec();
+        let mut forged_controls = graph.affine_control_points().unwrap().to_vec();
         forged_controls[1] = CurvePoint2::new(
             forged_controls[1].x().clone() + Real::one(),
             forged_controls[1].y().clone(),
@@ -12977,7 +13001,7 @@ mod tests {
         let Some(CurveGeometry2::RationalBezier(graph)) = graph_pcurve.curve().geometry() else {
             panic!("bilinear split must retain its exact rational graph pcurve");
         };
-        let mut forged_controls = graph.control_points().to_vec();
+        let mut forged_controls = graph.affine_control_points().unwrap().to_vec();
         forged_controls[1] = CurvePoint2::new(
             forged_controls[1].x().clone() + Real::one(),
             forged_controls[1].y().clone(),
@@ -13274,7 +13298,7 @@ mod tests {
         let Some(CurveGeometry2::RationalBezier(graph)) = graph_pcurve.curve().geometry() else {
             panic!("weighted bilinear split must retain its rational graph pcurve");
         };
-        let mut forged_controls = graph.control_points().to_vec();
+        let mut forged_controls = graph.affine_control_points().unwrap().to_vec();
         forged_controls[1] = CurvePoint2::new(
             forged_controls[1].x().clone() + Real::one(),
             forged_controls[1].y().clone(),
@@ -13357,7 +13381,7 @@ mod tests {
         else {
             panic!("native NURBS split must retain its rational graph pcurve");
         };
-        let mut forged_controls = native_graph_curve.control_points().to_vec();
+        let mut forged_controls = native_graph_curve.affine_control_points().unwrap().to_vec();
         forged_controls[1] = CurvePoint2::new(
             forged_controls[1].x().clone() + Real::one(),
             forged_controls[1].y().clone(),
