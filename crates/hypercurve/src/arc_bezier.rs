@@ -380,10 +380,12 @@ pub(crate) fn rational_bezier_circular_arc(
     // projective work. Common-sign weights make the first control edge a
     // positive multiple of the endpoint tangent, which is sufficient to
     // recover traversal orientation without changing parameterization.
-    if let Some(circle) = curve.retained_circular_conic() {
-        if let Classification::Uncertain(reason) = curve.common_weight_sign(policy) {
-            return Ok(Classification::Uncertain(reason));
-        }
+    if let Some(circle) = curve.retained_circular_conic()
+        && matches!(
+            curve.common_weight_sign(policy),
+            Classification::Decided(RealSign::Positive | RealSign::Negative)
+        )
+    {
         let Some(control) = curve.control_points().get(1) else {
             return Ok(Classification::Decided(None));
         };
@@ -441,6 +443,9 @@ pub(crate) fn rational_bezier_circular_arc(
             ),
         )));
     }
+    // A pole-free major circle can have mixed Bernstein weights. Its first
+    // control edge then has the opposite tangent orientation, so retain the
+    // quadratic weight-sign proof instead of rejecting the circular support.
     let conic = match curve.retained_quadratic_representative(policy)? {
         Classification::Decided(Some(conic)) => conic,
         Classification::Decided(None) => return Ok(Classification::Decided(None)),

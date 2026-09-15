@@ -3477,16 +3477,87 @@ impl RetainedRationalCornerArc2 {
         })
     }
 
-    pub(crate) fn from_selected(
+    pub(crate) fn from_fragment(
+        fragment: &crate::BezierSplitFragment2,
+        operation: CurveOperation2,
+        policy: &CurveContext,
+    ) -> ExactCurveResult<Option<Arc<Self>>> {
+        match fragment {
+            crate::BezierSplitFragment2::SelectedFiber(fragment) => {
+                Self::from_selected(fragment, operation, policy)
+            }
+            crate::BezierSplitFragment2::AnalyticParallel(fragment) => {
+                let family = CurveFamily2::AnalyticParallel;
+                let curve = match policy
+                    .strict_predicate_pass(|| {
+                        fragment
+                            .parallel()
+                            .exact_circular_parallel_component(policy)
+                    })
+                    .map_err(|cause| ExactCurveError::invalid(operation, family, cause))?
+                {
+                    Classification::Decided(Some(curve)) => curve,
+                    Classification::Decided(None) | Classification::Uncertain(_) => {
+                        return Ok(None);
+                    }
+                };
+                let range = CurveParameterRange2::from_bezier_range(fragment.range().clone());
+                let point = |parameter| match fragment
+                    .parallel()
+                    .point_evidence_on_regular_range(parameter, &range, policy)
+                    .map_err(|cause| ExactCurveError::invalid(operation, family, cause))?
+                {
+                    Classification::Decided(point) => Ok(point),
+                    Classification::Uncertain(reason) => {
+                        Err(ExactCurveError::blocked(operation, family, reason))
+                    }
+                };
+                let start = point(fragment.range().start())?;
+                let end = point(fragment.range().end())?;
+                let selected = crate::bezier_split::BezierSelectedFiberFragment2::new(
+                    crate::bezier_split::BezierSelectedFiberSource2::Rational(curve),
+                    range,
+                    start,
+                    end,
+                );
+                Self::from_selected(
+                    &if fragment.is_reversed() {
+                        selected.reversed()
+                    } else {
+                        selected
+                    },
+                    operation,
+                    policy,
+                )
+            }
+            _ => Ok(None),
+        }
+    }
+
+    fn from_selected(
         fragment: &crate::bezier_split::BezierSelectedFiberFragment2,
         operation: CurveOperation2,
         policy: &CurveContext,
     ) -> ExactCurveResult<Option<Arc<Self>>> {
-        let Some(source) = fragment.rational_curve() else {
-            return Ok(None);
+        let source = match fragment.source() {
+            crate::bezier_split::BezierSelectedFiberSource2::Rational(source) => {
+                std::borrow::Cow::Borrowed(source)
+            }
+            crate::bezier_split::BezierSelectedFiberSource2::AnalyticParallel(parallel) => {
+                match policy
+                    .strict_predicate_pass(|| parallel.exact_circular_parallel_component(policy))
+                    .map_err(|cause| {
+                        ExactCurveError::invalid(operation, CurveFamily2::AnalyticParallel, cause)
+                    })? {
+                    Classification::Decided(Some(source)) => std::borrow::Cow::Owned(source),
+                    Classification::Decided(None) | Classification::Uncertain(_) => {
+                        return Ok(None);
+                    }
+                }
+            }
         };
         let family = CurveFamily2::RationalBezier;
-        let support = match rational_bezier_circular_arc(source, policy)
+        let support = match rational_bezier_circular_arc(&source, policy)
             .map_err(|cause| ExactCurveError::invalid(operation, family, cause))?
         {
             Classification::Decided(Some(support)) => support,
@@ -3515,7 +3586,7 @@ impl RetainedRationalCornerArc2 {
             }
         }
         let evaluator =
-            Self::prepare_evaluator(source.clone(), &support, operation, family, policy)?;
+            Self::prepare_evaluator(source.into_owned(), &support, operation, family, policy)?;
         let mut retained = crate::bezier_split::BezierSelectedFiberFragment2::new(
             crate::bezier_split::BezierSelectedFiberSource2::Rational(evaluator),
             fragment.range().clone(),
@@ -4084,22 +4155,30 @@ pub(crate) fn exact_corner_carrier<'a>(
     };
     let bezier = || ExactCornerCarrier2::Bezier(curve);
     Ok(match curve.geometry() {
-        None => match curve.retained_fragment().expect("restricted carrier") {
-            crate::BezierSplitFragment2::AlgebraicChord(chord) => {
-                Some(ExactCornerCarrier2::AlgebraicChord(chord))
+        None => {
+            let fragment = curve.retained_fragment().expect("restricted carrier");
+            if let Some(arc) =
+                RetainedRationalCornerArc2::from_fragment(fragment, operation, policy)?
+            {
+                return Ok(Some(ExactCornerCarrier2::RetainedRationalArc(arc)));
             }
-            crate::BezierSplitFragment2::AnalyticParallel(fragment) => {
-                Some(ExactCornerCarrier2::AnalyticParallel(fragment))
+            match fragment {
+                crate::BezierSplitFragment2::AlgebraicChord(chord) => {
+                    Some(ExactCornerCarrier2::AlgebraicChord(chord))
+                }
+                crate::BezierSplitFragment2::AnalyticParallel(fragment) => {
+                    Some(ExactCornerCarrier2::AnalyticParallel(fragment))
+                }
+                crate::BezierSplitFragment2::AlgebraicCuspSemicircle(fragment) => {
+                    Some(ExactCornerCarrier2::AlgebraicCusp(fragment))
+                }
+                crate::BezierSplitFragment2::SelectedFiber(fragment) => {
+                    Some(ExactCornerCarrier2::SelectedFiber(fragment))
+                }
+                crate::BezierSplitFragment2::AlgebraicEndpointImages { .. }
+                | crate::BezierSplitFragment2::Materialized { .. } => None,
             }
-            crate::BezierSplitFragment2::AlgebraicCuspSemicircle(fragment) => {
-                Some(ExactCornerCarrier2::AlgebraicCusp(fragment))
-            }
-            crate::BezierSplitFragment2::SelectedFiber(fragment) => {
-                Some(ExactCornerCarrier2::SelectedFiber(fragment))
-            }
-            crate::BezierSplitFragment2::AlgebraicEndpointImages { .. }
-            | crate::BezierSplitFragment2::Materialized { .. } => None,
-        },
+        }
         Some(CurveGeometry2::CircularArc(arc)) => Some(ExactCornerCarrier2::Arc(arc)),
         Some(CurveGeometry2::RationalQuadraticBezier(_))
         | Some(CurveGeometry2::RationalBezier(_)) => Some(

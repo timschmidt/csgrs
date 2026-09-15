@@ -6320,6 +6320,12 @@ impl<'a> CornerCarrierPreparation2<'a> {
         let fragment = self
             .fragment
             .expect("a nonnative corner retains its fragment");
+        if let Some(arc) =
+            crate::curve::RetainedRationalCornerArc2::from_fragment(fragment, operation, policy)?
+        {
+            self.evidence = CornerCarrierEvidence2::Circular(arc);
+            return Ok(());
+        }
         match fragment {
             BezierSplitFragment2::AlgebraicEndpointImages { .. } => {
                 self.evidence = if let Some(chord) =
@@ -6333,11 +6339,7 @@ impl<'a> CornerCarrierPreparation2<'a> {
                 };
             }
             BezierSplitFragment2::SelectedFiber(fragment) => {
-                if let Some(arc) = crate::curve::RetainedRationalCornerArc2::from_selected(
-                    fragment, operation, policy,
-                )? {
-                    self.evidence = CornerCarrierEvidence2::Circular(arc);
-                } else if let Some(parallel) = exact_retained_parallel_fragment(
+                if let Some(parallel) = exact_retained_parallel_fragment(
                     RetainedParallelOffsetFragmentRef2::Selected(fragment),
                     RetainedParallelOffsetFragmentRef2::Selected(fragment).parallel(),
                     policy,

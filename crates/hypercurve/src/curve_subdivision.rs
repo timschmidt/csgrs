@@ -1679,6 +1679,99 @@ mod tests {
         }
     }
 
+    fn assert_selected_circular_chart_fillets(
+        circle: Curve2,
+        clockwise: bool,
+        policy: &CurveContext,
+    ) {
+        for selected in [true, false] {
+            let end = decided(
+                selected_parameters(policy)[0]
+                    .affine_image_unbounded(&q(1, 64), &q(63, 64), policy)
+                    .unwrap(),
+                circle.family(),
+            )
+            .unwrap();
+            let circle = if selected {
+                circle
+                    .subcurve(Real::zero().into(), end, policy)
+                    .unwrap()
+                    .value
+            } else {
+                circle.clone()
+            };
+            let path = CurvePath2::try_new(vec![
+                Curve2::from(QuadraticBezier2::new(p(-3, 0), p(-1, 0), p(1, 0))),
+                circle,
+            ])
+            .unwrap();
+            for reversed in [false, true] {
+                let path = if reversed {
+                    path.reversed(policy).unwrap().value
+                } else {
+                    path.clone()
+                };
+                for mode in [CurveCornerMode2::TrimOnly, CurveCornerMode2::TrimOrExtend] {
+                    let result = path
+                    .fillet_vertex_by_radius(1, q(12, 25), mode, policy)
+                    .unwrap_or_else(|error| {
+                        panic!(
+                            "clockwise={clockwise}, reversed={reversed}, mode={mode:?}, policy={policy:?}: {error:?}"
+                        )
+                    });
+                    assert_eq!(result.certainty, CurveCertainty::Certified);
+                    let candidates = match result.value {
+                        CurveCornerSolutions2::Unique(candidate) => vec![candidate],
+                        CurveCornerSolutions2::Multiple(candidates) => candidates,
+                        CurveCornerSolutions2::NoSolution(reason) => {
+                            panic!("lost selected circular fillets: {reason:?}")
+                        }
+                    };
+                    let expected = if clockwise {
+                        [
+                            Point2::new(q(5, 13), -q(12, 13)),
+                            Point2::new(-q(5, 13), -q(12, 13)),
+                            Point2::new(-q(35, 37), q(12, 37)),
+                            Point2::new(q(35, 37), q(12, 37)),
+                        ]
+                    } else {
+                        [
+                            Point2::new(q(5, 13), q(12, 13)),
+                            Point2::new(-q(5, 13), q(12, 13)),
+                            Point2::new(q(35, 37), -q(12, 37)),
+                            Point2::new(-q(35, 37), -q(12, 37)),
+                        ]
+                    };
+                    let count = if mode == CurveCornerMode2::TrimOnly {
+                        if clockwise { 3 } else { 1 }
+                    } else {
+                        4
+                    };
+                    assert_eq!(
+                        candidates.len(),
+                        count,
+                        "clockwise={clockwise}, reversed={reversed}, mode={mode:?}, policy={policy:?}"
+                    );
+                    for point in &expected[..count] {
+                        assert!(candidates.iter().any(|candidate| {
+                            candidate.curves().windows(2).any(|pair| {
+                                pair[0].end().same_point(&point.clone().into(), policy)
+                                    == Classification::Decided(true)
+                            })
+                        }));
+                    }
+                    for candidate in candidates {
+                        assert_same(&candidate.start(), &path.start(), policy);
+                        assert_same(&candidate.end(), &path.end(), policy);
+                        for pair in candidate.curves().windows(2) {
+                            assert_same(&pair[0].end(), &pair[1].start(), policy);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     #[test]
     fn selected_circular_chart_fillets_continue_across_projective_infinity() {
         for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
@@ -1701,85 +1794,55 @@ mod tests {
                     )
                     .unwrap(),
                 );
-                let end = decided(
-                    selected_parameters(&policy)[0]
-                        .affine_image_unbounded(&q(1, 64), &q(63, 64), &policy)
-                        .unwrap(),
-                    circle.family(),
-                )
-                .unwrap();
-                let circle = circle
-                    .subcurve(Real::zero().into(), end, &policy)
-                    .unwrap()
-                    .value;
-                let path = CurvePath2::try_new(vec![
-                    Curve2::from(QuadraticBezier2::new(p(-3, 0), p(-1, 0), p(1, 0))),
-                    circle,
-                ])
-                .unwrap();
-                for reversed in [false, true] {
-                    let path = if reversed {
-                        path.reversed(&policy).unwrap().value
-                    } else {
-                        path.clone()
-                    };
-                    for mode in [CurveCornerMode2::TrimOnly, CurveCornerMode2::TrimOrExtend] {
-                        let result = path
-                        .fillet_vertex_by_radius(1, q(12, 25), mode, &policy)
-                        .unwrap_or_else(|error| {
-                            panic!(
-                                "clockwise={clockwise}, reversed={reversed}, mode={mode:?}, policy={policy:?}: {error:?}"
-                            )
-                        });
-                        assert_eq!(result.certainty, CurveCertainty::Certified);
-                        let candidates = match result.value {
-                            CurveCornerSolutions2::Unique(candidate) => vec![candidate],
-                            CurveCornerSolutions2::Multiple(candidates) => candidates,
-                            CurveCornerSolutions2::NoSolution(reason) => {
-                                panic!("lost selected circular fillets: {reason:?}")
-                            }
-                        };
-                        let expected = if clockwise {
-                            [
-                                Point2::new(q(5, 13), -q(12, 13)),
-                                Point2::new(-q(5, 13), -q(12, 13)),
-                                Point2::new(-q(35, 37), q(12, 37)),
-                                Point2::new(q(35, 37), q(12, 37)),
-                            ]
-                        } else {
-                            [
-                                Point2::new(q(5, 13), q(12, 13)),
-                                Point2::new(-q(5, 13), q(12, 13)),
-                                Point2::new(q(35, 37), -q(12, 37)),
-                                Point2::new(-q(35, 37), -q(12, 37)),
-                            ]
-                        };
-                        let count = if mode == CurveCornerMode2::TrimOnly {
-                            if clockwise { 3 } else { 1 }
-                        } else {
-                            4
-                        };
-                        assert_eq!(
-                            candidates.len(),
-                            count,
-                            "clockwise={clockwise}, reversed={reversed}, mode={mode:?}, policy={policy:?}"
-                        );
-                        for point in &expected[..count] {
-                            assert!(candidates.iter().any(|candidate| {
-                                candidate.curves().windows(2).any(|pair| {
-                                    pair[0].end().same_point(&point.clone().into(), &policy)
-                                        == Classification::Decided(true)
-                                })
-                            }));
-                        }
-                        for candidate in candidates {
-                            assert_same(&candidate.start(), &path.start(), &policy);
-                            assert_same(&candidate.end(), &path.end(), &policy);
-                            for pair in candidate.curves().windows(2) {
-                                assert_same(&pair[0].end(), &pair[1].start(), &policy);
-                            }
-                        }
-                    }
+                assert_selected_circular_chart_fillets(circle, clockwise, &policy);
+            }
+        }
+    }
+
+    fn circular_parallel_chart(weights: [Real; 3], source_scale: i32, distance: i32) -> Curve2 {
+        let [first_weight, middle_weight, last_weight] = weights;
+        let source = RationalQuadraticBezier2::try_new(
+            p(source_scale, 0),
+            p(source_scale, source_scale),
+            p(0, source_scale),
+            first_weight,
+            middle_weight,
+            last_weight,
+        )
+        .unwrap();
+        let parallel = crate::BezierParallel2::from_source(
+            crate::BezierParallelSource2::Rational(source.into()),
+            Real::from(distance),
+        );
+        Curve2::from_retained_fragment(BezierSplitFragment2::AnalyticParallel(
+            crate::BezierParallelFragment2::from_certified_range(
+                parallel,
+                BezierParameterRange2::from_exact(Real::zero(), Real::one()),
+                false,
+            ),
+        ))
+    }
+
+    #[test]
+    fn selected_circular_parallel_charts_continue_across_projective_infinity() {
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let weight = q(1, 2).sqrt().unwrap();
+            for (weights, clockwise) in [
+                ([Real::from(2), Real::one(), Real::one()], false),
+                ([Real::one(), weight, Real::one()], false),
+                ([Real::from(-2), Real::from(-1), Real::from(-1)], false),
+                ([Real::from(2), Real::from(-1), Real::one()], true),
+            ] {
+                // Each analytic construction has the same final unit circle
+                // and parameterization as the direct fixture. The last case
+                // crosses zero radius and preserves the resulting exact sheet.
+                for (source_scale, distance) in [(1, 0), (2, 1), (-1, 2)] {
+                    let circle = circular_parallel_chart(
+                        weights.clone(),
+                        source_scale,
+                        if clockwise { -distance } else { distance },
+                    );
+                    assert_selected_circular_chart_fillets(circle, clockwise, &policy);
                 }
             }
         }
@@ -1863,103 +1926,110 @@ mod tests {
                 )
                 .unwrap(),
             );
-            let source = source
-                .subcurve(
-                    selected_parameters(&policy)[0].clone(),
-                    Real::one().into(),
-                    &policy,
-                )
-                .unwrap()
-                .value;
-            let antipode = decided(
-                crate::BezierAlgebraicChord2::scaled_about_point_endpoint(
-                    &source.start(),
-                    &p(0, 0),
-                    &Real::from(-1),
-                    &policy,
-                )
-                .unwrap(),
-                source.family(),
-            )
-            .unwrap();
-            let chord = decided(
-                crate::BezierAlgebraicChord2::try_new(p(-2, 0).into(), source.start(), &policy)
-                    .unwrap(),
-                CurveFamily2::Line,
-            )
-            .unwrap();
-            let path = CurvePath2::try_new(vec![
-                Curve2::from_retained_fragment(BezierSplitFragment2::AlgebraicChord(chord)),
+            let weights = [Real::from(2), Real::one(), Real::one()];
+            for source in [
                 source,
-            ])
-            .unwrap();
-            for reversed in [false, true] {
-                let path = if reversed {
-                    path.reversed(&policy).unwrap().value
-                } else {
-                    path.clone()
-                };
-                for mode in [CurveCornerMode2::TrimOnly, CurveCornerMode2::TrimOrExtend] {
-                    for (setback, expected_count) in [
-                        (
-                            q(1, 64),
-                            if mode == CurveCornerMode2::TrimOnly {
-                                1
+                circular_parallel_chart(weights.clone(), 1, 0),
+                circular_parallel_chart(weights.clone(), 2, 1),
+                circular_parallel_chart(weights, -1, 2),
+            ] {
+                let source = source
+                    .subcurve(
+                        selected_parameters(&policy)[0].clone(),
+                        Real::one().into(),
+                        &policy,
+                    )
+                    .unwrap()
+                    .value;
+                let antipode = decided(
+                    crate::BezierAlgebraicChord2::scaled_about_point_endpoint(
+                        &source.start(),
+                        &p(0, 0),
+                        &Real::from(-1),
+                        &policy,
+                    )
+                    .unwrap(),
+                    source.family(),
+                )
+                .unwrap();
+                let chord = decided(
+                    crate::BezierAlgebraicChord2::try_new(p(-2, 0).into(), source.start(), &policy)
+                        .unwrap(),
+                    CurveFamily2::Line,
+                )
+                .unwrap();
+                let path = CurvePath2::try_new(vec![
+                    Curve2::from_retained_fragment(BezierSplitFragment2::AlgebraicChord(chord)),
+                    source,
+                ])
+                .unwrap();
+                for reversed in [false, true] {
+                    let path = if reversed {
+                        path.reversed(&policy).unwrap().value
+                    } else {
+                        path.clone()
+                    };
+                    for mode in [CurveCornerMode2::TrimOnly, CurveCornerMode2::TrimOrExtend] {
+                        for (setback, expected_count) in [
+                            (
+                                q(1, 64),
+                                if mode == CurveCornerMode2::TrimOnly {
+                                    1
+                                } else {
+                                    2
+                                },
+                            ),
+                            (
+                                Real::from(2),
+                                if mode == CurveCornerMode2::TrimOnly {
+                                    0
+                                } else {
+                                    1
+                                },
+                            ),
+                            (Real::from(3), 0),
+                        ] {
+                            let setbacks = if reversed {
+                                [setback.clone(), Real::zero()]
                             } else {
-                                2
-                            },
-                        ),
-                        (
-                            Real::from(2),
-                            if mode == CurveCornerMode2::TrimOnly {
-                                0
-                            } else {
-                                1
-                            },
-                        ),
-                        (Real::from(3), 0),
-                    ] {
-                        let setbacks = if reversed {
-                            [setback.clone(), Real::zero()]
-                        } else {
-                            [Real::zero(), setback.clone()]
-                        };
-                        let result = path
-                            .chamfer_vertex_by_setbacks(
-                                1,
-                                setbacks[0].clone(),
-                                setbacks[1].clone(),
-                                mode,
-                                &policy,
-                            )
-                            .unwrap();
-                        assert_eq!(result.certainty, CurveCertainty::Certified);
-                        let candidates = match result.value {
-                            CurveCornerSolutions2::Unique(candidate) => vec![candidate],
-                            CurveCornerSolutions2::Multiple(candidates) => candidates,
-                            CurveCornerSolutions2::NoSolution(reason) => {
-                                assert_eq!(
-                                    expected_count, 0,
-                                    "selected circular setback lost: {reason:?}"
-                                );
-                                Vec::new()
-                            }
-                        };
-                        assert_eq!(candidates.len(), expected_count);
-                        for candidate in candidates {
-                            if setback == Real::from(2) {
-                                assert!(
-                                    candidate
-                                        .curves()
-                                        .windows(2)
-                                        .any(|pair| pair[0].end().same_point(&antipode, &policy)
+                                [Real::zero(), setback.clone()]
+                            };
+                            let result = path
+                                .chamfer_vertex_by_setbacks(
+                                    1,
+                                    setbacks[0].clone(),
+                                    setbacks[1].clone(),
+                                    mode,
+                                    &policy,
+                                )
+                                .unwrap();
+                            assert_eq!(result.certainty, CurveCertainty::Certified);
+                            let candidates = match result.value {
+                                CurveCornerSolutions2::Unique(candidate) => vec![candidate],
+                                CurveCornerSolutions2::Multiple(candidates) => candidates,
+                                CurveCornerSolutions2::NoSolution(reason) => {
+                                    assert_eq!(
+                                        expected_count, 0,
+                                        "selected circular setback lost: {reason:?}"
+                                    );
+                                    Vec::new()
+                                }
+                            };
+                            assert_eq!(candidates.len(), expected_count);
+                            for candidate in candidates {
+                                if setback == Real::from(2) {
+                                    assert!(
+                                        candidate.curves().windows(2).any(|pair| pair[0]
+                                            .end()
+                                            .same_point(&antipode, &policy)
                                             == Classification::Decided(true))
-                                );
-                            }
-                            assert_same(&candidate.start(), &path.start(), &policy);
-                            assert_same(&candidate.end(), &path.end(), &policy);
-                            for pair in candidate.curves().windows(2) {
-                                assert_same(&pair[0].end(), &pair[1].start(), &policy)
+                                    );
+                                }
+                                assert_same(&candidate.start(), &path.start(), &policy);
+                                assert_same(&candidate.end(), &path.end(), &policy);
+                                for pair in candidate.curves().windows(2) {
+                                    assert_same(&pair[0].end(), &pair[1].start(), &policy)
+                                }
                             }
                         }
                     }

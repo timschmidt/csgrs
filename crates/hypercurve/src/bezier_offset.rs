@@ -14329,6 +14329,7 @@ struct BezierAnalyticParallelPointData2 {
     translation_y: Real,
     policy: CurveContext,
     bounds_cache: Mutex<Option<(CurveContext, usize, Aabb2)>>,
+    recursive_projective_point: OnceLock<BezierRecursiveQuadraticProjectivePoint2>,
 }
 
 #[derive(Debug, PartialEq)]
@@ -92984,6 +92985,7 @@ impl BezierAnalyticParallelPoint2 {
                 translation_y: Real::zero(),
                 policy: policy.retained_object_policy(),
                 bounds_cache: Mutex::new(None),
+                recursive_projective_point: OnceLock::new(),
             }),
         })
     }
@@ -93101,6 +93103,7 @@ impl BezierAnalyticParallelPoint2 {
                 translation_y: Real::zero(),
                 policy: policy.retained_object_policy(),
                 bounds_cache: Mutex::new(None),
+                recursive_projective_point: OnceLock::new(),
             }),
         }
     }
@@ -93121,6 +93124,7 @@ impl BezierAnalyticParallelPoint2 {
                 translation_y: Real::zero(),
                 policy: policy.retained_object_policy(),
                 bounds_cache: Mutex::new(None),
+                recursive_projective_point: OnceLock::new(),
             }),
         }
     }
@@ -93655,6 +93659,28 @@ impl BezierAnalyticParallelPoint2 {
                     .into(),
             ));
         }
+        if let Some(point) = self.data.recursive_projective_point.get() {
+            return Ok(Classification::Decided(Some(point.clone())));
+        }
+        let result =
+            policy.strict_predicate_pass(|| self.compute_recursive_projective_point(policy))?;
+        if let Classification::Decided(Some(point)) = result {
+            // Clones and concurrent queries must reuse the same selected
+            // field, not merely reconstruct equivalent coefficient towers.
+            // Only a strictly certified point is retained; uncertainty can
+            // still be resolved by a later query with additional evidence.
+            let _ = self.data.recursive_projective_point.set(point);
+            return Ok(Classification::Decided(
+                self.data.recursive_projective_point.get().cloned(),
+            ));
+        }
+        Ok(result)
+    }
+
+    fn compute_recursive_projective_point(
+        &self,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<Option<BezierRecursiveQuadraticProjectivePoint2>>> {
         let parameter = match &self.data.parameter {
             BezierAnalyticParallelPointParameter2::Bezier(parameter) => parameter.clone(),
             BezierAnalyticParallelPointParameter2::SelectedFiber(parameter) => {
@@ -94451,6 +94477,7 @@ impl BezierAnalyticParallelPoint2 {
                 translation_y: &self.data.translation_y + delta_y,
                 policy: policy.retained_object_policy(),
                 bounds_cache: Mutex::new(None),
+                recursive_projective_point: OnceLock::new(),
             }),
         })
     }
@@ -118094,7 +118121,7 @@ impl BezierParallel2 {
     /// and traversal certificate used by rational intersection and decomposition.
     /// Scaling the original homogeneous controls about that center preserves
     /// its parameter exactly, including negative-radius continuation.
-    fn exact_circular_parallel_component(
+    pub(crate) fn exact_circular_parallel_component(
         &self,
         policy: &CurveContext,
     ) -> CurveResult<Classification<Option<RationalBezier2>>> {
@@ -118109,6 +118136,9 @@ impl BezierParallel2 {
             }
         };
         let radius_scale = arc.left_offset_radius_scale(self.distance())?;
+        if radius_scale == Real::one() {
+            return Ok(Classification::Decided(Some(source.clone())));
+        }
         let controls = source
             .control_points()
             .iter()
@@ -153321,6 +153351,50 @@ mod conversion_tests {
                     .cmp_by_refinement(&exact_cusp, &policy)
                     .unwrap(),
                 Classification::Decided(std::cmp::Ordering::Equal),
+            );
+        }
+    }
+
+    #[test]
+    fn analytic_point_clones_reuse_the_certified_recursive_field() {
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let source = QuadraticBezier2::new(
+                Point2::from_values(-1, 0),
+                Point2::from_values(0, 1),
+                Point2::from_values(1, 0),
+            );
+            let point = BezierAnalyticParallelPoint2::new_with_tangent_distance(
+                source
+                    .parallel_left((Real::one() / Real::from(3)).unwrap())
+                    .unwrap(),
+                BezierParameter2::Exact((Real::one() / Real::from(2)).unwrap()),
+                (Real::one() / Real::from(4)).unwrap(),
+                &policy,
+            );
+            let Classification::Decided(Some(first)) =
+                point.recursive_projective_point(&policy).unwrap()
+            else {
+                panic!("the analytic point has one certified recursive field");
+            };
+            let Classification::Decided(Some(replayed)) =
+                point.clone().recursive_projective_point(&policy).unwrap()
+            else {
+                panic!("a clone must replay its certified point");
+            };
+            assert!(
+                first
+                    .denominator
+                    .field()
+                    .same_field(&replayed.denominator.field())
+            );
+            let (x, y, _) = first.difference_numerators(&replayed).unwrap();
+            assert_eq!(
+                x.sign(&policy).unwrap(),
+                Classification::Decided(RealSign::Zero)
+            );
+            assert_eq!(
+                y.sign(&policy).unwrap(),
+                Classification::Decided(RealSign::Zero)
             );
         }
     }
