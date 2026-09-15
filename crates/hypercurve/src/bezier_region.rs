@@ -25931,7 +25931,7 @@ mod tests {
                         || nested_chamfer_trace.path_count(
                             "hypercurve",
                             "algebraic-chord-point-axis-order",
-                            "recursive-composite-interval-separated",
+                            "interval-separated",
                         ) > 0,
                     "the nested chamfer must order its transported endpoint in a retained recursive chart: {nested_chamfer_trace:?}",
                 );

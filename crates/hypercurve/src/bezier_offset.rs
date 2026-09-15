@@ -82595,51 +82595,6 @@ pub(crate) fn algebraic_chord_point_coordinate_order(
     {
         return algebraic_chord_point_coordinate_order(first, source, axis, policy);
     }
-    let recursive_composite = |point: &CurvePoint2| {
-        matches!(
-            point,
-            CurvePoint2(CurvePointData2::AlgebraicChordPair(_))
-                | CurvePoint2(CurvePointData2::AlgebraicCuspChord(_))
-                | CurvePoint2(CurvePointData2::AlgebraicCuspChordDerived(_))
-                | CurvePoint2(CurvePointData2::AlgebraicChordParallel(_))
-                | CurvePoint2(CurvePointData2::Similarity(_) | CurvePointData2::Endpoint(_))
-        )
-    };
-    if recursive_composite(first) && recursive_composite(second) {
-        // Strictly separated point boxes are already a complete exact order
-        // certificate.  Check them before constructing the least common
-        // recursive quadratic tower: correlated chord-pair intersections can
-        // otherwise multiply large tensor expressions merely to rediscover a
-        // visibly separated split event.
-        for refinement_steps in [0, 2, 4, 8, 16, 32, 64] {
-            if policy.has_bounded_exact_predicate_budget() && refinement_steps > 8 {
-                break;
-            }
-            if let Some(Some(order)) = algebraic_chord_point_coordinate_order_from_bounds(
-                first,
-                second,
-                axis,
-                refinement_steps,
-                policy,
-            ) {
-                #[cfg(feature = "dispatch-trace")]
-                hyperreal::dispatch_trace::record(
-                    "hypercurve",
-                    "algebraic-chord-point-axis-order",
-                    "recursive-composite-interval-separated",
-                );
-                return Ok(Classification::Decided(order));
-            }
-        }
-        if policy.has_bounded_exact_predicate_budget() {
-            return Ok(Classification::Uncertain(UncertaintyReason::Ordering));
-        }
-        if let Classification::Decided(Some(order)) =
-            recursive_projective_point_evidence_axis_order(first, second, axis, policy)?
-        {
-            return Ok(Classification::Decided(order));
-        }
-    }
     let use_x = axis == Axis2::X;
     match (first, second) {
         (
@@ -82774,7 +82729,7 @@ pub(crate) fn algebraic_chord_point_coordinate_order(
             {
                 return Ok(order);
             }
-            Ok(algebraic_chord_point_coordinate_order_by_refinement(
+            Ok(algebraic_chord_point_coordinate_order_fallback(
                 &CurvePoint2::from(first.clone()),
                 &CurvePoint2::from(second.clone()),
                 axis,
@@ -82790,7 +82745,7 @@ pub(crate) fn algebraic_chord_point_coordinate_order(
             {
                 return Ok(order.map(std::cmp::Ordering::reverse));
             }
-            Ok(algebraic_chord_point_coordinate_order_by_refinement(
+            Ok(algebraic_chord_point_coordinate_order_fallback(
                 &CurvePoint2::from(first.clone()),
                 &CurvePoint2::from(second.clone()),
                 axis,
@@ -82822,7 +82777,7 @@ pub(crate) fn algebraic_chord_point_coordinate_order(
             }
             let first = CurvePoint2::from(first.clone());
             let second = CurvePoint2::from(second.clone());
-            Ok(algebraic_chord_point_coordinate_order_by_refinement(
+            Ok(algebraic_chord_point_coordinate_order_fallback(
                 &first, &second, axis, policy,
             ))
         }
@@ -82898,7 +82853,7 @@ pub(crate) fn algebraic_chord_point_coordinate_order(
         | (_, CurvePoint2(CurvePointData2::AnalyticParallel(_)))
         | (CurvePoint2(CurvePointData2::Similarity(_) | CurvePointData2::Endpoint(_)), _)
         | (_, CurvePoint2(CurvePointData2::Similarity(_) | CurvePointData2::Endpoint(_))) => Ok(
-            algebraic_chord_point_coordinate_order_by_refinement(first, second, axis, policy),
+            algebraic_chord_point_coordinate_order_fallback(first, second, axis, policy),
         ),
     }
 }
@@ -82954,7 +82909,7 @@ fn algebraic_chord_point_coordinate_order_from_bounds(
     Some(algebraic_chord_bounds_axis_order(&first, &second, axis))
 }
 
-fn algebraic_chord_point_coordinate_order_by_refinement(
+fn algebraic_chord_point_coordinate_order_fallback(
     first: &CurvePoint2,
     second: &CurvePoint2,
     axis: Axis2,
@@ -82971,6 +82926,12 @@ fn algebraic_chord_point_coordinate_order_by_refinement(
             refinement_steps,
             policy,
         ) {
+            #[cfg(feature = "dispatch-trace")]
+            hyperreal::dispatch_trace::record(
+                "hypercurve",
+                "algebraic-chord-point-axis-order",
+                "interval-separated",
+            );
             return Classification::Decided(order);
         }
     }
@@ -82986,9 +82947,21 @@ fn algebraic_chord_point_coordinate_order_by_refinement(
     if policy.has_bounded_exact_predicate_budget() {
         return Classification::Uncertain(UncertaintyReason::Ordering);
     }
-    // Coordinate boxes are best for cheap separation. Before their rational
-    // endpoints grow through hundreds of bisections, compare the exact final
-    // algebraic coordinates already retained by both point carriers.
+    // Every point family can carry reusable homogeneous evidence. Compare
+    // only the requested coordinate in its least shared retained field before
+    // publishing independent Cartesian roots. The source authority preserves
+    // denominator signs, selected generators and the positive speed sheet.
+    if let Ok(Classification::Decided(Some(order))) =
+        recursive_projective_point_evidence_axis_order(first, second, axis, policy)
+    {
+        #[cfg(feature = "dispatch-trace")]
+        hyperreal::dispatch_trace::record(
+            "hypercurve",
+            "algebraic-chord-point-axis-order",
+            "retained-field",
+        );
+        return Classification::Decided(order);
+    }
     if let (
         Ok(Classification::Decided(first_coordinates)),
         Ok(Classification::Decided(second_coordinates)),
@@ -134602,9 +134575,7 @@ mod conversion_tests {
         for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
             for axis in [Axis2::X, Axis2::Y] {
                 let outcome = crate::policy::resolve_certified_value(&policy, |policy| {
-                    algebraic_chord_point_coordinate_order_by_refinement(
-                        &escaped, &query, axis, policy,
-                    )
+                    algebraic_chord_point_coordinate_order_fallback(&escaped, &query, axis, policy)
                 });
                 assert!(matches!(outcome.value, Classification::Uncertain(_)));
                 assert_eq!(outcome.certainty, crate::CurveCertainty::Certified);
@@ -136418,6 +136389,112 @@ mod conversion_tests {
                             assert_eq!(outcome.value, Classification::Decided(expected));
                             assert_eq!(outcome.certainty, CurveCertainty::Certified);
                             assert!(pair.data.recursive_point.get().is_none());
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn mixed_chord_pair_axis_order_keeps_oblique_supports_in_the_retained_field() {
+        let half = (Real::one() / Real::from(2_i8)).unwrap();
+        let tiny = Real::from(2_i8).powi_i64(-600).unwrap();
+        let source = RationalBezier2::try_new(
+            vec![
+                Point2::from_values(0, 0),
+                Point2::new(half.clone(), Real::zero()),
+                Point2::from_values(1, 1),
+            ],
+            vec![Real::one(); 3],
+        )
+        .unwrap();
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            for normal in [-1_i8, 1] {
+                let analytic = BezierAnalyticParallelPoint2::new_with_tangent_distance(
+                    source
+                        .parallel_left((Real::from(normal) / Real::from(20_i8)).unwrap())
+                        .unwrap(),
+                    algebraic_parameter(vec![-half.clone(), Real::zero(), Real::one()]),
+                    (Real::one() / Real::from(30_i8)).unwrap(),
+                    &policy,
+                );
+                let translated = |dx: i8, dy: i8| {
+                    CurvePoint2::from(
+                        analytic
+                            .translated(&Real::from(dx), &Real::from(dy), &policy)
+                            .unwrap(),
+                    )
+                };
+                // The two oblique chords P+(-1,-1)..P+(1,1) and
+                // P+(-1,1)..P+(1,-1) intersect at P, strictly inside both.
+                // Both X components increase; their tangent cross is -8.
+                let pair = BezierAlgebraicChordPairPoint2::new_with_anchor_orders(
+                    BezierAlgebraicChord2::from_certified_monotone_axis_endpoints(
+                        translated(-1, -1),
+                        translated(1, 1),
+                        Axis2::X,
+                        true,
+                        &policy,
+                    ),
+                    BezierAlgebraicChord2::from_certified_monotone_axis_endpoints(
+                        translated(-1, 1),
+                        translated(1, -1),
+                        Axis2::X,
+                        true,
+                        &policy,
+                    ),
+                    false,
+                    std::cmp::Ordering::Greater,
+                    false,
+                    std::cmp::Ordering::Greater,
+                    RealSign::Negative,
+                    &policy,
+                );
+                let point = CurvePoint2::from(pair.clone());
+                for axis in [Axis2::X, Axis2::Y] {
+                    for (shift, expected) in [
+                        (Real::zero(), std::cmp::Ordering::Equal),
+                        (-tiny.clone(), std::cmp::Ordering::Less),
+                        (tiny.clone(), std::cmp::Ordering::Greater),
+                    ] {
+                        let (dx, dy) = match axis {
+                            Axis2::X => (shift, Real::zero()),
+                            Axis2::Y => (Real::zero(), shift),
+                        };
+                        let query =
+                            CurvePoint2::from(analytic.translated(&dx, &dy, &policy).unwrap());
+                        for (first, second, expected) in [
+                            (&query, &point, expected),
+                            (&point, &query, expected.reverse()),
+                        ] {
+                            #[cfg(feature = "dispatch-trace")]
+                            hyperreal::dispatch_trace::reset();
+                            let compare = || {
+                                crate::policy::resolve_certified_value(&policy, |attempt| {
+                                    algebraic_chord_point_coordinate_order(
+                                        first, second, axis, attempt,
+                                    )
+                                    .unwrap()
+                                })
+                            };
+                            #[cfg(feature = "dispatch-trace")]
+                            let outcome = hyperreal::dispatch_trace::with_recording(compare);
+                            #[cfg(not(feature = "dispatch-trace"))]
+                            let outcome = compare();
+                            assert_eq!(outcome.value, Classification::Decided(expected));
+                            assert_eq!(outcome.certainty, CurveCertainty::Certified);
+                            #[cfg(feature = "dispatch-trace")]
+                            assert_eq!(
+                                hyperreal::dispatch_trace::take_trace().path_count(
+                                    "hypercurve",
+                                    "algebraic-chord-point-axis-order",
+                                    "represented-cold-fallback",
+                                ),
+                                0,
+                                "the order must preserve the shared field, including exact equality",
+                            );
+                            assert!(pair.data.recursive_point.get().is_some());
                         }
                     }
                 }
