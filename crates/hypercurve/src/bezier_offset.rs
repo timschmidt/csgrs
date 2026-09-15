@@ -57969,11 +57969,16 @@ impl BezierRecursivePolynomialParameterAuthority2 {
     fn refined_parameter(
         &self,
         parameter: &BezierRecursiveProjectiveParameter2,
-        refinement_steps: usize,
+        target_steps: usize,
         policy: &CurveContext,
     ) -> CurveResult<Classification<BezierRecursiveProjectiveParameter2>> {
+        // The retained isolator already certifies these bounds. Replaying its
+        // endpoint signs cannot improve a satisfied request and can expand a
+        // deep coefficient field merely to republish the same root.
+        if target_steps <= parameter.data.refinement_steps {
+            return Ok(Classification::Decided(parameter.clone()));
+        }
         let strict = policy.strict_counterpart();
-        let target_steps = refinement_steps.max(parameter.data.refinement_steps);
         let mut lower = parameter.data.lower.clone();
         let mut upper = parameter.data.upper.clone();
         let lower_sign = match self.defining_sign_at_real(&lower, &strict)? {
@@ -58052,9 +58057,10 @@ impl BezierRecursivePolynomialParameterAuthority2 {
             // caller to join fields or use its global exact fallback.
             return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
         }
+        let mut refined = parameter.clone();
         for refinement_steps in [0_usize, 2, 4, 8, 16, 32, 64, 128, 256, 512] {
-            let refined = match self.refined_parameter(
-                parameter,
+            refined = match self.refined_parameter(
+                &refined,
                 refinement_steps,
                 &policy.strict_counterpart(),
             )? {
@@ -58085,6 +58091,9 @@ impl BezierRecursivePolynomialParameterAuthority2 {
             policy.observe_approximate_512();
             return Ok(Classification::Decided(RealSign::Zero));
         }
+        // The original isolator already selects this root. Query-driven
+        // tighter bounds add close-order predicates to global replay without
+        // strengthening that identity, so retain its original selection domain.
         let promoted = match self.promoted_parameter(parameter, policy)? {
             Classification::Decided(parameter) => parameter,
             Classification::Uncertain(reason) => {
@@ -149336,6 +149345,83 @@ mod conversion_tests {
             &value.data
         ));
         assert!(Arc::ptr_eq(&one.square().unwrap().data, &one.data));
+    }
+
+    #[test]
+    fn recursive_polynomial_refinement_reuses_certified_bounds_and_identity() {
+        let scalar =
+            |value| DenseTensorPolynomial::try_new(Vec::new(), vec![Real::from(value)]).unwrap();
+        let field = BezierRecursiveQuadraticField2::base(Vec::new(), scalar(2), scalar(3)).unwrap();
+        let half = (Real::one() / Real::from(2_i8)).unwrap();
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            // The unique unit root of t^3-1/2 is not dyadic. Its ordered-field
+            // isolator remains the authority through every refinement request.
+            let Classification::Decided(parameters) =
+                recursive_projective_polynomial_unit_parameters(
+                    &field,
+                    [-half.clone(), Real::zero(), Real::zero(), Real::one()]
+                        .into_iter()
+                        .map(|value| field.constant(value).unwrap())
+                        .collect(),
+                    &policy,
+                )
+                .unwrap()
+            else {
+                panic!("the cubic root must retain its exact local isolator")
+            };
+            assert_eq!(parameters.len(), 1);
+            let root = parameters[0].as_recursive_projective().unwrap();
+            assert!(root.polynomial_authority().is_some());
+            let mut current = root.clone();
+            for depth in [0, 2, 8, 16] {
+                let previous_width = &current.data.upper - &current.data.lower;
+                let previous_depth = current.data.refinement_steps;
+                let Classification::Decided(refined) = current.refined(depth, &policy).unwrap()
+                else {
+                    panic!("the retained cubic root must refine exactly")
+                };
+                assert!(root.shares_polynomial_root(&refined));
+                assert_eq!(
+                    &refined.data.upper - &refined.data.lower,
+                    previous_width
+                        * Real::from(2_i8)
+                            .powi_i64(-((depth - previous_depth) as i64))
+                            .unwrap(),
+                );
+                for repeated_depth in [0, depth] {
+                    let Classification::Decided(reused) =
+                        refined.refined(repeated_depth, &policy).unwrap()
+                    else {
+                        panic!("an already available exact refinement must remain reusable")
+                    };
+                    assert!(Arc::ptr_eq(&reused.data, &refined.data));
+                }
+                current = refined;
+            }
+            assert_eq!(
+                current.order_to_real(&half, &policy).unwrap(),
+                Classification::Decided(std::cmp::Ordering::Greater),
+            );
+            let Classification::Decided(reciprocal) = current
+                .projective_image_unbounded(
+                    &[Real::one(), Real::zero()],
+                    &[Real::zero(), Real::one()],
+                    &policy,
+                )
+                .unwrap()
+            else {
+                panic!("a certified nonzero root has an exact reciprocal chart")
+            };
+            for (value, expected) in [
+                (Real::one(), std::cmp::Ordering::Greater),
+                (Real::from(2_i8), std::cmp::Ordering::Less),
+            ] {
+                assert_eq!(
+                    reciprocal.order_to_real(&value, &policy).unwrap(),
+                    Classification::Decided(expected)
+                );
+            }
+        }
     }
 
     #[test]
