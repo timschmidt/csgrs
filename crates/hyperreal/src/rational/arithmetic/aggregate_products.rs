@@ -1722,11 +1722,12 @@ impl Rational {
         })
     }
 
-    /// Exact magnitude GCD used by rational cross-cancellation.
+    /// Exact nonnegative magnitude GCD shared by rational cross-cancellation
+    /// and algebraic coefficient normalization.
     ///
-    /// This is public only so the benchmark harness can compare the selected
-    /// implementation with an otherwise identical full-width Euclidean loop.
-    #[doc(hidden)]
+    /// Inputs are borrowed; zero is the identity. Algorithm selection stays
+    /// with scalar arithmetic so consuming layers can share the same wide-
+    /// integer machinery without maintaining their own backend loops.
     pub fn gcd_magnitudes(left: &BigUint, right: &BigUint) -> BigUint {
         let (divisor, algorithm) = if left.is_zero() {
             (right.clone(), "binary-word")
