@@ -2604,8 +2604,7 @@ impl<'a> CurveCornerChain2<'a> {
                 arc_contact.clone(),
                 true,
                 deferred.arc_is_previous,
-                mode,
-                crate::curve::FilletContactDomain2::OpenCurve,
+                crate::curve::FilletContactDomain2::AuthoredCurve(mode),
                 CurveFamily2::CircularArc,
                 policy,
             )?

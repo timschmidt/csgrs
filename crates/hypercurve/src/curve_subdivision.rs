@@ -1423,7 +1423,7 @@ mod tests {
     #[test]
     fn source_domain_fillets_preserve_all_selected_major_arc_contacts() {
         for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
-            let source = Curve2::from(
+            let native = Curve2::from(
                 CircularArc2::try_from_center(
                     p(1, 0),
                     Point2::new(q(3, 5), q(4, 5)),
@@ -1432,71 +1432,146 @@ mod tests {
                 )
                 .unwrap(),
             );
-            let end = decided(
-                selected_parameters(&policy)[0]
-                    .affine_image_unbounded(&q(1, 64), &q(63, 64), &policy)
-                    .unwrap(),
-                source.family(),
+            let weight = q(1, 2).sqrt().unwrap();
+            let spline = Curve2::try_nurbs(
+                2,
+                vec![
+                    p(1, 0),
+                    p(1, -1),
+                    p(0, -1),
+                    p(-1, -1),
+                    p(-1, 0),
+                    p(-1, 1),
+                    p(0, 1),
+                ],
+                vec![
+                    Real::one(),
+                    weight.clone(),
+                    Real::one(),
+                    weight.clone(),
+                    Real::one(),
+                    weight,
+                    Real::one(),
+                ],
+                [0, 0, 0, 1, 1, 2, 2, 3, 3, 3]
+                    .into_iter()
+                    .map(Real::from)
+                    .collect(),
+                &policy,
             )
-            .unwrap();
-            let selected_source = source
-                .subcurve(Real::zero().into(), end, &policy)
-                .unwrap()
-                .value;
-            for selected in [false, true] {
-                let arc = if selected {
-                    selected_source.clone()
-                } else {
-                    source.clone()
-                };
-                let path = CurvePath2::try_new(vec![
-                    Curve2::from(LineSeg2::try_new(p(-3, 0), p(1, 0)).unwrap()),
-                    arc,
-                ])
+            .unwrap()
+            .value;
+            for source in [native, spline] {
+                let source_end = source.parameter_domain().end().scalar().unwrap();
+                let end = decided(
+                    selected_parameters(&policy)[0]
+                        .affine_image_unbounded(
+                            &(source_end * q(1, 64)),
+                            &(source_end * q(63, 64)),
+                            &policy,
+                        )
+                        .unwrap(),
+                    source.family(),
+                )
                 .unwrap();
-                for reversed in [false, true] {
-                    let path = if reversed {
-                        path.reversed(&policy).unwrap().value
+                let selected_source = source
+                    .subcurve(Real::zero().into(), end, &policy)
+                    .unwrap()
+                    .value;
+                for selected in [false, true] {
+                    let arc = if selected {
+                        selected_source.clone()
                     } else {
-                        path.clone()
+                        source.clone()
                     };
-                    let result = path.fillet_vertex_by_radius(1, q(1, 4), CurveCornerMode2::TrimOnly, &policy)
-                        .unwrap_or_else(|error| panic!("selected={selected}, reversed={reversed}, policy={policy:?}: {error:?}"));
-                    assert_eq!(result.certainty, CurveCertainty::Certified);
-                    let candidates = match result.value {
-                        CurveCornerSolutions2::Unique(candidate) => vec![candidate],
-                        CurveCornerSolutions2::Multiple(candidates) => candidates,
-                        CurveCornerSolutions2::NoSolution(reason) => {
-                            panic!("major-arc fillets were lost: {reason:?}")
-                        }
-                    };
-                    assert_eq!(
-                        candidates.len(),
-                        3,
-                        "selected={selected}, reversed={reversed}, policy={policy:?}"
-                    );
-                    let inward = q(1, 2).sqrt().unwrap();
-                    let outward = q(3, 2).sqrt().unwrap();
-                    for expected in [
-                        Point2::new(q(4, 3) * &inward, -q(1, 3)),
-                        Point2::new(-q(4, 3) * &inward, -q(1, 3)),
-                        Point2::new(-q(4, 5) * outward, q(1, 5)),
-                    ] {
-                        assert!(
-                            candidates
-                                .iter()
-                                .any(|candidate| candidate.curves().windows(2).any(|pair| {
-                                    pair[0].end().same_point(&expected.clone().into(), &policy)
-                                        == Classification::Decided(true)
-                                })),
-                            "missing exact arc contact {expected:?}"
-                        );
-                    }
-                    for candidate in candidates {
-                        assert_same(&candidate.start(), &path.start(), &policy);
-                        assert_same(&candidate.end(), &path.end(), &policy);
-                        for pair in candidate.curves().windows(2) {
-                            assert_same(&pair[0].end(), &pair[1].start(), &policy);
+                    let path = CurvePath2::try_new(vec![
+                        Curve2::from(LineSeg2::try_new(p(-3, 0), p(1, 0)).unwrap()),
+                        arc,
+                    ])
+                    .unwrap();
+                    for reversed in [false, true] {
+                        let path = if reversed {
+                            path.reversed(&policy).unwrap().value
+                        } else {
+                            path.clone()
+                        };
+                        for mode in [CurveCornerMode2::TrimOnly, CurveCornerMode2::TrimOrExtend] {
+                            let result = path.fillet_vertex_by_radius(1, q(1, 4), mode, &policy)
+                        .unwrap_or_else(|error| panic!("selected={selected}, reversed={reversed}, mode={mode:?}, policy={policy:?}: {error:?}"));
+                            assert_eq!(result.certainty, CurveCertainty::Certified);
+                            let candidates = match result.value {
+                                CurveCornerSolutions2::Unique(candidate) => vec![candidate],
+                                CurveCornerSolutions2::Multiple(candidates) => candidates,
+                                CurveCornerSolutions2::NoSolution(reason) => {
+                                    panic!("major-arc fillets were lost: {reason:?}")
+                                }
+                            };
+                            assert_eq!(
+                                candidates.len(),
+                                if mode == CurveCornerMode2::TrimOnly {
+                                    3
+                                } else {
+                                    4
+                                },
+                                "selected={selected}, reversed={reversed}, mode={mode:?}, policy={policy:?}"
+                            );
+                            let inward = q(1, 2).sqrt().unwrap();
+                            let outward = q(3, 2).sqrt().unwrap();
+                            let finite_contacts = [
+                                Point2::new(q(4, 3) * &inward, -q(1, 3)),
+                                Point2::new(-q(4, 3) * &inward, -q(1, 3)),
+                                Point2::new(-q(4, 5) * &outward, q(1, 5)),
+                            ];
+                            for expected in &finite_contacts {
+                                assert!(
+                                    candidates.iter().any(|candidate| candidate
+                                        .curves()
+                                        .windows(2)
+                                        .any(|pair| {
+                                            pair[0]
+                                                .end()
+                                                .same_point(&expected.clone().into(), &policy)
+                                                == Classification::Decided(true)
+                                        })),
+                                    "missing exact arc contact {expected:?}: family={:?}, selected={selected}, reversed={reversed}, mode={mode:?}, policy={policy:?}",
+                                    source.family(),
+                                );
+                            }
+                            for candidate in candidates {
+                                assert_same(&candidate.start(), &path.start(), &policy);
+                                assert_same(&candidate.end(), &path.end(), &policy);
+                                for pair in candidate.curves().windows(2) {
+                                    assert_same(&pair[0].end(), &pair[1].start(), &policy);
+                                }
+                                let has_finite_contact = finite_contacts.iter().any(|expected| {
+                                    candidate.curves().windows(2).any(|pair| {
+                                        pair[0].end().same_point(&expected.clone().into(), &policy)
+                                            == Classification::Decided(true)
+                                    })
+                                });
+                                if has_finite_contact {
+                                    // A finite trim removes the authored corner. An
+                                    // incident-chart extension would retain it and
+                                    // traverse an extra circular sweep before the
+                                    // original source, despite finding the right point.
+                                    for curve in candidate.curves() {
+                                        for endpoint in [curve.start(), curve.end()] {
+                                            assert_eq!(
+                                                endpoint.same_point(&p(1, 0).into(), &policy),
+                                                Classification::Decided(false),
+                                                "finite contact was extended: selected={selected}, reversed={reversed}, mode={mode:?}, policy={policy:?}"
+                                            );
+                                        }
+                                    }
+                                } else {
+                                    assert_eq!(mode, CurveCornerMode2::TrimOrExtend);
+                                    let expected = Point2::new(q(4, 5) * &outward, q(1, 5));
+                                    assert!(candidate.curves().windows(2).any(|pair| {
+                                        pair[0].end().same_point(&expected.clone().into(), &policy)
+                                            == Classification::Decided(true)
+                                    }));
+                                }
+                            }
                         }
                     }
                 }

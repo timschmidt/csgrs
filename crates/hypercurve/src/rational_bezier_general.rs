@@ -1278,6 +1278,20 @@ fn project_symmetric_self_intersection_system(
     domains: [CurveParameterDomain2<'_>; 2],
     policy: &CurveContext,
 ) -> CurveResult<Classification<RationalBezierIntersectionCandidates2>> {
+    // A projective line's off-diagonal coordinate difference is a nonzero
+    // constant. It excludes contacts on every finite/ray domain, including
+    // when the other coordinate equation vanishes identically. A degenerate
+    // resultant for that pair must not erase this simpler exact proof.
+    for equation in equations {
+        if let [row] = equation.coefficients.as_slice()
+            && let [constant] = row.as_slice()
+            && is_zero(constant, &policy.strict_counterpart()) == Some(false)
+        {
+            return Ok(Classification::Decided(
+                RationalBezierIntersectionCandidates2::NoIntersection,
+            ));
+        }
+    }
     // Degree elevation and projective parameter changes can leave common
     // homogeneous factors in both residual equations after the diagonal is
     // removed. Their rootless fibers do not describe self-contacts. Saturate

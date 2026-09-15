@@ -1943,7 +1943,7 @@ impl CurvePath2 {
     /// Solves and applies an exact circular fillet of the requested radius.
     ///
     /// Fillet centers are intersections of equal signed-radius offsets of the
-    /// two incident curves. `TrimOnly` searches every finite rational chart of
+    /// two incident curves. Both modes search every finite rational chart of
     /// selected source restrictions, polynomial B-splines and NURBS. Authored
     /// endpoints remain open; an internal seam belongs to the side surviving
     /// the trim, including its one-sided tangent. Distinct source locations
@@ -1956,12 +1956,13 @@ impl CurvePath2 {
     /// subsequent operations. Positive-dimensional center/contact families
     /// do not produce an arbitrary isolated fillet.
     ///
-    /// `TrimOrExtend` currently prepares the incident native span of spline
-    /// and selected source restrictions. Direct Bezier extensions search the
+    /// `TrimOrExtend` additionally extends each incident boundary chart;
+    /// other charts keep their finite domains. Bezier extensions search the
     /// endpoint-adjacent regular cells, stopping at poles or source-speed
-    /// zeros. Complete authored-domain enumeration in this mode remains an
-    /// implementation limitation. Extended rational circles preserve their
-    /// certified support and materialize the extended fragment as an arc.
+    /// zeros. A circular contact already owned by the closed authored sweep
+    /// cannot be republished as an extension. Mixed circular/noncircular
+    /// chart pairs currently use the rational chart's affine continuation;
+    /// continuation across its projective infinity remains a limitation.
     pub fn fillet_vertex_by_radius(
         &self,
         vertex_index: usize,
@@ -1996,15 +1997,14 @@ impl CurvePath2 {
                 CurveCornerNoSolution2::ZeroDesignValue,
             ));
         }
-        if mode == CurveCornerMode2::TrimOnly
-            && let Some(solutions) = self.fillets_in_authored_domain(
-                vertex_index,
-                previous_index,
-                next_index,
-                &radius,
-                policy,
-            )?
-        {
+        if let Some(solutions) = self.fillets_in_authored_domain(
+            vertex_index,
+            previous_index,
+            next_index,
+            &radius,
+            mode,
+            policy,
+        )? {
             return Ok(solutions);
         }
         let mut previous_source =
@@ -4204,9 +4204,8 @@ pub(crate) fn solve_exact_fillet_corner(
         previous,
         next,
         radius,
-        mode,
         retain_selected_circle_endpoints,
-        [FilletContactDomain2::OpenCurve; 2],
+        [FilletContactDomain2::AuthoredCurve(mode); 2],
         previous_family,
         next_family,
         policy,
@@ -4388,11 +4387,11 @@ impl FilletParallelSource2<'_> {
         &self,
         parameter: &CurveParameter2,
         previous: bool,
-        mode: CurveCornerMode2,
         domain: FilletContactDomain2,
         family: CurveFamily2,
         policy: &CurveContext,
     ) -> ExactCurveResult<Option<CornerPlacement2>> {
+        let mode = domain.mode();
         let placement = match self {
             Self::Direct(_) => curve_region_corner_parameter_placement(
                 parameter,
@@ -4446,14 +4445,12 @@ impl FilletParallelSource2<'_> {
         &self,
         parameter: &CurveParameter2,
         previous: bool,
-        mode: CurveCornerMode2,
         domain: FilletContactDomain2,
         incident_domain: Option<&crate::bezier_offset::BezierParallelIncidentDomain2>,
         family: CurveFamily2,
         policy: &CurveContext,
     ) -> ExactCurveResult<bool> {
-        let placement =
-            self.parameter_placement(parameter, previous, mode, domain, family, policy)?;
+        let placement = self.parameter_placement(parameter, previous, domain, family, policy)?;
         match placement {
             Some(CornerPlacement2::Trim | CornerPlacement2::Corner) => Ok(true),
             Some(CornerPlacement2::Extension) => {
@@ -4544,11 +4541,17 @@ impl FilletParallelSource2<'_> {
 /// authored domain places that contact after transport to the source chart.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub(crate) enum FilletContactDomain2 {
-    OpenCurve,
-    TrimChart,
+    AuthoredCurve(CurveCornerMode2),
+    SourceChart(CurveCornerMode2),
 }
 
 impl FilletContactDomain2 {
+    const fn mode(self) -> CurveCornerMode2 {
+        match self {
+            Self::AuthoredCurve(mode) | Self::SourceChart(mode) => mode,
+        }
+    }
+
     fn with_boundary_contact(
         self,
         placement: Option<CornerPlacement2>,
@@ -4557,7 +4560,7 @@ impl FilletContactDomain2 {
         family: CurveFamily2,
         policy: &CurveContext,
     ) -> ExactCurveResult<Option<CornerPlacement2>> {
-        if self == Self::OpenCurve || placement.is_some() {
+        if matches!(self, Self::AuthoredCurve(_)) || placement.is_some() {
             return Ok(placement);
         }
         match parameter
@@ -5352,7 +5355,6 @@ fn solve_carrier_fillet_corner(
     previous: ExactCornerCarrier2<'_>,
     next: ExactCornerCarrier2<'_>,
     radius: &Real,
-    mode: CurveCornerMode2,
     retain_selected_circle_endpoints: bool,
     domains: [FilletContactDomain2; 2],
     previous_family: CurveFamily2,
@@ -5374,14 +5376,16 @@ fn solve_carrier_fillet_corner(
     };
     let primitive_pair = represented_centers(&previous) && represented_centers(&next);
     let chart_carrier = |carrier, domain| match (carrier, domain, primitive_pair) {
-        (ExactCornerCarrier2::RetainedRationalArc(arc), FilletContactDomain2::TrimChart, false) => {
-            match arc.source {
-                ExactCornerBezier2::Direct(source) => ExactCornerCarrier2::Bezier(source),
-                ExactCornerBezier2::NativeSpan(fragment) => {
-                    ExactCornerCarrier2::NativeBezierSpan(fragment)
-                }
+        (
+            ExactCornerCarrier2::RetainedRationalArc(arc),
+            FilletContactDomain2::SourceChart(_),
+            false,
+        ) => match arc.source {
+            ExactCornerBezier2::Direct(source) => ExactCornerCarrier2::Bezier(source),
+            ExactCornerBezier2::NativeSpan(fragment) => {
+                ExactCornerCarrier2::NativeBezierSpan(fragment)
             }
-        }
+        },
         (carrier, _, _) => carrier,
     };
     let previous =
@@ -5404,7 +5408,6 @@ fn solve_carrier_fillet_corner(
         let centers = fillet_offset_centers(
             &previous_offset,
             &next_offset,
-            mode,
             domains,
             previous_family,
             next_family,
@@ -5427,7 +5430,6 @@ fn solve_carrier_fillet_corner(
                 center.parameter(true),
                 deferred_arc_is_previous == Some(true),
                 true,
-                mode,
                 retain_selected_circle_endpoints,
                 domains[0],
                 previous_family,
@@ -5443,7 +5445,6 @@ fn solve_carrier_fillet_corner(
                 center.parameter(false),
                 deferred_arc_is_previous == Some(false),
                 false,
-                mode,
                 retain_selected_circle_endpoints,
                 domains[1],
                 next_family,
@@ -6218,19 +6219,20 @@ fn retain_cusp_parallel_fillet_contact(
     cusp_support_reverses_source: bool,
     analytic_support_reverses_source: bool,
     cusp_is_previous: bool,
-    mode: CurveCornerMode2,
-    analytic_domain: FilletContactDomain2,
+    domains: [FilletContactDomain2; 2],
     incident_domain: Option<&crate::bezier_offset::BezierParallelIncidentDomain2>,
     cusp_family: CurveFamily2,
     analytic_family: CurveFamily2,
     policy: &CurveContext,
 ) -> ExactCurveResult<()> {
+    let cusp_mode = domains[usize::from(!cusp_is_previous)].mode();
+    let analytic_domain = domains[usize::from(cusp_is_previous)];
     if complementary
         && location != crate::bezier_offset::BezierAlgebraicCuspSemicircleContactLocation2::Interior
     {
         return Ok(());
     }
-    if mode != CurveCornerMode2::TrimOrExtend {
+    if cusp_mode != CurveCornerMode2::TrimOrExtend {
         match cusp_source
             .contains_parameter(&cusp_parameter, false, false, policy)
             .map_err(|cause| {
@@ -6250,7 +6252,6 @@ fn retain_cusp_parallel_fillet_contact(
     if !parallel_source.parameter_is_admissible(
         &analytic_parameter,
         !cusp_is_previous,
-        mode,
         analytic_domain,
         incident_domain,
         analytic_family,
@@ -6304,12 +6305,12 @@ fn retain_cusp_parallel_fillet_contact(
 fn fillet_offset_centers(
     previous: &FilletOffsetCarrier2<'_, '_>,
     next: &FilletOffsetCarrier2<'_, '_>,
-    mode: CurveCornerMode2,
     domains: [FilletContactDomain2; 2],
     previous_family: CurveFamily2,
     next_family: CurveFamily2,
     policy: &CurveContext,
 ) -> ExactCurveResult<FilletCenters2> {
+    let [previous_mode, next_mode] = domains.map(FilletContactDomain2::mode);
     let exact_parameter = |parameter| CurveParameter2::from(BezierParameter2::Exact(parameter));
     let mut centers = FilletCenters2::default();
     match (previous, next) {
@@ -6509,6 +6510,7 @@ fn fillet_offset_centers(
             } else {
                 next_family
             };
+            let mode = domains[usize::from(!bezier_is_previous)].mode();
             let incident_domain = if mode == CurveCornerMode2::TrimOrExtend {
                 Some(parallel_source.incident_domain(
                     bezier,
@@ -6563,7 +6565,6 @@ fn fillet_offset_centers(
                 if !parallel_source.parameter_is_admissible(
                     &parameter.clone().into(),
                     bezier_is_previous,
-                    mode,
                     domains[usize::from(!bezier_is_previous)],
                     incident_domain.as_ref(),
                     bezier_family,
@@ -6613,19 +6614,20 @@ fn fillet_offset_centers(
             },
         ) => {
             let identical_supports = previous == next;
-            let use_incident_rays = mode == CurveCornerMode2::TrimOrExtend;
-            let previous_incident_domain = if use_incident_rays {
+            let previous_incident_domain = if previous_mode == CurveCornerMode2::TrimOrExtend {
                 Some(previous_source.incident_domain(previous, true, previous_family, policy)?)
             } else {
                 None
             };
-            let next_incident_domain = if use_incident_rays {
+            let next_incident_domain = if next_mode == CurveCornerMode2::TrimOrExtend {
                 Some(next_source.incident_domain(next, false, next_family, policy)?)
             } else {
                 None
             };
             let previous_curve_range = previous_source.curve_parameter_range();
             let next_curve_range = next_source.curve_parameter_range();
+            let use_incident_rays =
+                previous_incident_domain.is_some() || next_incident_domain.is_some();
             let (intersections, positive_dimensional_incident_seam) = if use_incident_rays {
                 let expand = |range: &CurveParameterRange2,
                               incident: &crate::bezier_offset::BezierParallelIncidentDomain2,
@@ -6641,21 +6643,27 @@ fn fillet_offset_centers(
                         )),
                     }
                 };
-                let previous_domain = previous_incident_domain
+                let previous_range = previous_incident_domain
                     .as_ref()
-                    .expect("an extending parallel retains its incident domain");
-                let next_domain = next_incident_domain
+                    .map(|domain| expand(&previous_curve_range, domain, previous_family))
+                    .transpose()?;
+                let next_range = next_incident_domain
                     .as_ref()
-                    .expect("an extending parallel retains its incident domain");
-                let previous_range =
-                    expand(&previous_curve_range, previous_domain, previous_family)?;
-                let next_range = expand(&next_curve_range, next_domain, next_family)?;
+                    .map(|domain| expand(&next_curve_range, domain, next_family))
+                    .transpose()?;
                 let parameter_domains = [
                     CurveParameterDomain2::new(
-                        &previous_range,
-                        Some(previous_domain.parameter_ray()),
+                        previous_range.as_ref().unwrap_or(&previous_curve_range),
+                        previous_incident_domain
+                            .as_ref()
+                            .map(|domain| domain.parameter_ray()),
                     ),
-                    CurveParameterDomain2::new(&next_range, Some(next_domain.parameter_ray())),
+                    CurveParameterDomain2::new(
+                        next_range.as_ref().unwrap_or(&next_curve_range),
+                        next_incident_domain
+                            .as_ref()
+                            .map(|domain| domain.parameter_ray()),
+                    ),
                 ];
                 let incident = match (if identical_supports {
                     previous.ordered_self_intersections_in_domain(parameter_domains, policy)
@@ -6850,7 +6858,6 @@ fn fillet_offset_centers(
                     if !previous_source.parameter_is_admissible(
                         &previous_parameter.clone().into(),
                         true,
-                        mode,
                         domains[0],
                         previous_incident_domain.as_ref(),
                         previous_family,
@@ -6858,7 +6865,6 @@ fn fillet_offset_centers(
                     )? || !next_source.parameter_is_admissible(
                         &next_parameter.clone().into(),
                         false,
-                        mode,
                         domains[1],
                         next_incident_domain.as_ref(),
                         next_family,
@@ -6956,6 +6962,7 @@ fn fillet_offset_centers(
                 .map(|contact| std::slice::from_ref(contact.parameter()))
                 .unwrap_or_default();
             let parallel_is_previous = !line_is_previous;
+            let mode = domains[usize::from(!parallel_is_previous)].mode();
             let incident_domain = if mode == CurveCornerMode2::TrimOrExtend {
                 Some(source.incident_domain(
                     support,
@@ -7023,7 +7030,6 @@ fn fillet_offset_centers(
                 if !source.parameter_is_admissible(
                     &parameter.clone().into(),
                     parallel_is_previous,
-                    mode,
                     domains[usize::from(!parallel_is_previous)],
                     incident_domain.as_ref(),
                     parallel_family,
@@ -7170,6 +7176,8 @@ fn fillet_offset_centers(
                 previous_family
             };
             let analytic_authored_range = parallel_source.curve_parameter_range();
+            let mode = domains[usize::from(cusp_is_previous)].mode();
+            let cusp_mode = domains[usize::from(!cusp_is_previous)].mode();
             let analytic_range = parallel_source.intersection_parameter_range(analytic_family)?;
             let cusp_support_reverses_source = retained_fillet_cusp_support_reverses_source(
                 cusp_source,
@@ -7219,7 +7227,7 @@ fn fillet_offset_centers(
             } else {
                 analytic_range.clone()
             };
-            let complementary_support = (mode == CurveCornerMode2::TrimOrExtend)
+            let complementary_support = (cusp_mode == CurveCornerMode2::TrimOrExtend)
                 .then(|| cusp_support.semicircle().complementary_half());
             // Every selected-circle frame enters the same complete
             // circle/parallel authority. Extension changes only the chart
@@ -7293,8 +7301,7 @@ fn fillet_offset_centers(
                                 cusp_support_reverses_source,
                                 analytic_support_reverses_source,
                                 cusp_is_previous,
-                                mode,
-                                domains[usize::from(cusp_is_previous)],
+                                domains,
                                 incident_domain.as_ref(),
                                 cusp_family,
                                 analytic_family,
@@ -7319,8 +7326,7 @@ fn fillet_offset_centers(
                                 cusp_support_reverses_source,
                                 analytic_support_reverses_source,
                                 cusp_is_previous,
-                                mode,
-                                domains[usize::from(cusp_is_previous)],
+                                domains,
                                 incident_domain.as_ref(),
                                 cusp_family,
                                 analytic_family,
@@ -7370,7 +7376,6 @@ fn fillet_offset_centers(
                                 || !parallel_source.parameter_is_admissible(
                                 &contact.parallel_parameter.clone().into(),
                                 !cusp_is_previous,
-                                mode,
                                 domains[usize::from(cusp_is_previous)],
                                 incident_domain.as_ref(),
                                 analytic_family,
@@ -7379,7 +7384,7 @@ fn fillet_offset_centers(
                                 continue;
                             }
                             let cusp_parameter = parameter_map.contact_parameter(&contact);
-                            if mode != CurveCornerMode2::TrimOrExtend {
+                            if cusp_mode != CurveCornerMode2::TrimOrExtend {
                                 match cusp_source
                                     .contains_parameter(&cusp_parameter, false, false, policy)
                                     .map_err(|cause| {
@@ -7675,7 +7680,9 @@ fn fillet_offset_centers(
             );
 
             let offset_complement = offset_circle.complementary_half();
-            let cusp_complement = (mode == CurveCornerMode2::TrimOrExtend)
+            let arc_mode = domains[usize::from(!arc_is_previous)].mode();
+            let cusp_mode = domains[usize::from(arc_is_previous)].mode();
+            let cusp_complement = (cusp_mode == CurveCornerMode2::TrimOrExtend)
                 .then(|| cusp.semicircle().complementary_half());
             let cusp_charts = [
                 Some((cusp.semicircle(), false)),
@@ -7932,7 +7939,8 @@ fn fillet_offset_centers(
                             }
                         }
                         crate::bezier_offset::BezierAlgebraicCuspSemicirclePairIntersections2::Overlap(_) => {
-                            centers.coincident = mode == CurveCornerMode2::TrimOrExtend
+                            centers.coincident = previous_mode == CurveCornerMode2::TrimOrExtend
+                                || next_mode == CurveCornerMode2::TrimOrExtend
                                 || retained_fillet_arc_cusp_overlap_is_positive(
                                     &offset_support,
                                     cusp,
@@ -7951,7 +7959,7 @@ fn fillet_offset_centers(
                         point,
                     ) in chart_contacts
                     {
-                        if mode == CurveCornerMode2::TrimOnly {
+                        if cusp_mode == CurveCornerMode2::TrimOnly {
                             match cusp
                                 .contains_parameter(&cusp_parameter, false, false, policy)
                                 .map_err(|cause| {
@@ -7981,7 +7989,7 @@ fn fillet_offset_centers(
                             &arc_parameter,
                             source_radius,
                             signed_radius,
-                            mode,
+                            arc_mode,
                             arc_family,
                             policy,
                         )?
@@ -8099,6 +8107,7 @@ fn fillet_offset_centers(
                     line_family,
                     policy,
                 )?;
+            let mode = domains[usize::from(!line_is_previous)].mode();
             // Keep canonical-Real line endpoints as the intersection hot
             // path while retaining the procedural normal-offset support as
             // ancestry. The former selects the compact selected-fiber line
@@ -8133,7 +8142,6 @@ fn fillet_offset_centers(
                 fillet_offset_centers(
                     &promoted,
                     next,
-                    mode,
                     domains,
                     previous_family,
                     next_family,
@@ -8143,7 +8151,6 @@ fn fillet_offset_centers(
                 fillet_offset_centers(
                     previous,
                     &promoted,
-                    mode,
                     domains,
                     previous_family,
                     next_family,
@@ -8213,24 +8220,25 @@ fn fillet_offset_centers(
                            point: CurvePoint2,
                            retained_anchor_evidence: Option<RetainedFilletAnchorEvidence2>|
              -> ExactCurveResult<Option<FilletCenterWitness2>> {
-                if mode == CurveCornerMode2::TrimOnly {
-                    for (source, parameter, family) in [
-                        (previous_source, &previous_parameter, previous_family),
-                        (next_source, &next_parameter, next_family),
-                    ] {
-                        match source
-                            .contains_parameter(parameter, false, false, policy)
-                            .map_err(|cause| {
-                                ExactCurveError::invalid(CurveOperation2::Fillet, family, cause)
-                            })? {
-                            Classification::Decided(true) => {}
-                            Classification::Decided(false) => return Ok(None),
-                            // This is only a conservative fast rejection. The
-                            // authoritative cut classifier below owns every
-                            // case this cheaper parameter predicate cannot
-                            // decide exactly.
-                            Classification::Uncertain(_) => {}
-                        }
+                for (source, parameter, family, mode) in [
+                    (previous_source, &previous_parameter, previous_family, previous_mode),
+                    (next_source, &next_parameter, next_family, next_mode),
+                ] {
+                    if mode == CurveCornerMode2::TrimOrExtend {
+                        continue;
+                    }
+                    match source
+                        .contains_parameter(parameter, false, false, policy)
+                        .map_err(|cause| {
+                            ExactCurveError::invalid(CurveOperation2::Fillet, family, cause)
+                        })? {
+                        Classification::Decided(true) => {}
+                        Classification::Decided(false) => return Ok(None),
+                        // This is only a conservative fast rejection. The
+                        // authoritative cut classifier below owns every
+                        // case this cheaper parameter predicate cannot
+                        // decide exactly.
+                        Classification::Uncertain(_) => {}
                     }
                 }
                 let previous_parameter = if previous_complementary {
@@ -8250,9 +8258,9 @@ fn fillet_offset_centers(
                     retained_anchor_evidence,
                 }))
             };
-            let previous_complement = (mode == CurveCornerMode2::TrimOrExtend)
+            let previous_complement = (previous_mode == CurveCornerMode2::TrimOrExtend)
                 .then(|| previous_support.semicircle().complementary_half());
-            let next_complement = (mode == CurveCornerMode2::TrimOrExtend)
+            let next_complement = (next_mode == CurveCornerMode2::TrimOrExtend)
                 .then(|| next_support.semicircle().complementary_half());
             let previous_charts = [
                 Some((previous_support.semicircle(), false)),
@@ -8456,7 +8464,7 @@ fn fillet_offset_centers(
                             }
                         }
                         crate::bezier_offset::BezierAlgebraicCuspSemicirclePairIntersections2::Overlap(overlap) => {
-                            if mode == CurveCornerMode2::TrimOrExtend {
+                            if previous_mode == CurveCornerMode2::TrimOrExtend || next_mode == CurveCornerMode2::TrimOrExtend {
                                 centers.coincident = true;
                                 return Ok(centers);
                             }
@@ -8699,11 +8707,13 @@ fn fillet_offset_centers(
             } else {
                 previous_family
             };
+            let chord_mode = domains[usize::from(!chord_is_previous)].mode();
+            let cusp_mode = domains[usize::from(chord_is_previous)].mode();
             let intersections = cusp_support
                 .semicircle()
                 .chord_intersections_prefer_exact_line(
                     chord_support,
-                    finite_source_domain && mode != CurveCornerMode2::TrimOrExtend,
+                    finite_source_domain && chord_mode != CurveCornerMode2::TrimOrExtend,
                     policy,
                 );
             let base_contacts = match intersections
@@ -8728,7 +8738,7 @@ fn fillet_offset_centers(
                 .into_iter()
                 .map(|contact| (contact, false))
                 .collect::<Vec<_>>();
-            if mode == CurveCornerMode2::TrimOrExtend {
+            if cusp_mode == CurveCornerMode2::TrimOrExtend {
                 let complementary = cusp_support.semicircle().complementary_half();
                 let complementary_contacts = match complementary
                     .chord_support_intersections(chord_support, policy)
@@ -9045,11 +9055,13 @@ fn fillet_offset_centers(
                 "selected-circle-authority",
             );
             let mut contacts = Vec::new();
+            let chord_mode = domains[usize::from(!chord_is_previous)].mode();
+            let arc_mode = domains[usize::from(chord_is_previous)].mode();
             for (circle, complementary) in [
                 (offset_circle.clone(), false),
                 (offset_circle.complementary_half(), true),
             ] {
-                let intersections = if mode == CurveCornerMode2::TrimOrExtend {
+                let intersections = if chord_mode == CurveCornerMode2::TrimOrExtend {
                     circle.chord_support_intersections(intersection_chord, policy)
                 } else {
                     circle.chord_intersections(intersection_chord, policy)
@@ -9136,7 +9148,7 @@ fn fillet_offset_centers(
                     &contact.cusp_parameter,
                     source_radius,
                     signed_radius,
-                    mode,
+                    arc_mode,
                     arc_family,
                     policy,
                 )?
@@ -9213,6 +9225,7 @@ fn fillet_offset_centers(
                 previous_family
             };
             let analytic_is_previous = !chord_is_previous;
+            let mode = domains[usize::from(!analytic_is_previous)].mode();
             let incident_domain = if mode == CurveCornerMode2::TrimOrExtend {
                 Some(parallel_source.incident_domain(
                     analytic_support,
@@ -9267,7 +9280,6 @@ fn fillet_offset_centers(
                 if !parallel_source.parameter_is_admissible(
                     &contact.parallel_parameter().clone().into(),
                     analytic_is_previous,
-                    mode,
                     domains[usize::from(!analytic_is_previous)],
                     incident_domain.as_ref(),
                     analytic_family,
@@ -9577,12 +9589,12 @@ fn fillet_cut_from_center(
     retained_parameter: Option<&CurveParameter2>,
     deferred_arc_contact: bool,
     previous: bool,
-    mode: CurveCornerMode2,
     retain_selected_circle_endpoints: bool,
     domain: FilletContactDomain2,
     family: CurveFamily2,
     policy: &CurveContext,
 ) -> ExactCurveResult<Option<CornerCut2>> {
+    let mode = domain.mode();
     match offset {
         FilletOffsetCarrier2::Line {
             source,
@@ -9622,7 +9634,7 @@ fn fillet_cut_from_center(
                     .map_err(|cause| {
                         ExactCurveError::invalid(CurveOperation2::Fillet, family, cause)
                     })?;
-                if domain == FilletContactDomain2::OpenCurve {
+                if matches!(domain, FilletContactDomain2::AuthoredCurve(_)) {
                     // An unpartitioned line can retain its geometric chord
                     // coordinate. Only transport into an authored multi-chart
                     // source needs the normalized affine scalar below.
@@ -9799,7 +9811,6 @@ fn fillet_cut_from_center(
                 point,
                 deferred_arc_contact,
                 previous,
-                mode,
                 domain,
                 family,
                 policy,
@@ -9813,7 +9824,7 @@ fn fillet_cut_from_center(
                 .expect("a parallel offset intersection retains its parameter")
                 .clone();
             let Some(placement) =
-                source.parameter_placement(&parameter, previous, mode, domain, family, policy)?
+                source.parameter_placement(&parameter, previous, domain, family, policy)?
             else {
                 return Ok(None);
             };
@@ -11574,13 +11585,13 @@ pub(crate) fn arc_fillet_cut_from_incident_point(
     point: Point2,
     deferred_arc_contact: bool,
     previous: bool,
-    mode: CurveCornerMode2,
     domain: FilletContactDomain2,
     family: CurveFamily2,
     policy: &CurveContext,
 ) -> ExactCurveResult<Option<CornerCut2>> {
     use crate::segment::ArcSweepPointLocation2;
 
+    let mode = domain.mode();
     let support = arc.support();
     match support.strict_sweep_point_location(&point, policy) {
         Classification::Decided(ArcSweepPointLocation2::Interior) => {
@@ -11597,7 +11608,7 @@ pub(crate) fn arc_fillet_cut_from_incident_point(
             }))
         }
         Classification::Decided(ArcSweepPointLocation2::Endpoint) => {
-            if domain == FilletContactDomain2::OpenCurve {
+            if matches!(domain, FilletContactDomain2::AuthoredCurve(_)) {
                 return Ok(None);
             }
             let parameter = arc
@@ -12349,6 +12360,150 @@ fn validate_subcurve_range(
 mod tests {
     use super::*;
 
+    #[test]
+    fn fillet_domains_control_each_circular_contact_independently() {
+        let line =
+            LineSeg2::try_new(Point2::from_values(-3, 0), Point2::from_values(0, 0)).unwrap();
+        let arc = CircularArc2::try_from_center(
+            Point2::from_values(1, 0),
+            Point2::from_values(0, -1),
+            Point2::from_values(0, 0),
+            true,
+        )
+        .unwrap();
+        let radius = (Real::one() / Real::from(4)).unwrap();
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            // These finite charts need not meet at the authored vertex. Each
+            // extension permission belongs to its own source and is applied
+            // both to center enumeration and to contact publication.
+            for (previous_mode, next_mode, count) in [
+                (CurveCornerMode2::TrimOnly, CurveCornerMode2::TrimOnly, 0),
+                (
+                    CurveCornerMode2::TrimOrExtend,
+                    CurveCornerMode2::TrimOnly,
+                    1,
+                ),
+                (
+                    CurveCornerMode2::TrimOnly,
+                    CurveCornerMode2::TrimOrExtend,
+                    2,
+                ),
+                (
+                    CurveCornerMode2::TrimOrExtend,
+                    CurveCornerMode2::TrimOrExtend,
+                    4,
+                ),
+            ] {
+                let solutions = solve_carrier_fillet_corner(
+                    ExactCornerCarrier2::Line(&line),
+                    ExactCornerCarrier2::Arc(&arc),
+                    &radius,
+                    false,
+                    [
+                        FilletContactDomain2::AuthoredCurve(previous_mode),
+                        FilletContactDomain2::AuthoredCurve(next_mode),
+                    ],
+                    CurveFamily2::Line,
+                    CurveFamily2::CircularArc,
+                    &policy,
+                )
+                .unwrap();
+                assert_eq!(
+                    solutions.candidate_count(),
+                    count,
+                    "previous={previous_mode:?}, next={next_mode:?}, policy={policy:?}"
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn fillet_parallel_domains_expand_only_the_authorized_source() {
+        let half = (Real::one() / Real::from(2)).unwrap();
+        let first = QuadraticBezier2::new(
+            Point2::from_values(0, 0),
+            Point2::new(half.clone(), Real::zero()),
+            Point2::from_values(1, 0),
+        );
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            for exterior_is_previous in [false, true] {
+                let x = if exterior_is_previous {
+                    Real::from(2) + &half
+                } else {
+                    Real::one() + &half
+                };
+                let y = if exterior_is_previous {
+                    Real::zero()
+                } else {
+                    Real::from(2)
+                };
+                let second = QuadraticBezier2::new(
+                    Point2::new(x.clone(), y.clone()),
+                    Point2::new(x.clone(), &y + Real::one()),
+                    Point2::new(x, &y + Real::from(2)),
+                );
+                let first_curve = Curve2::from(first.clone());
+                let second_curve = Curve2::from(second.clone());
+                let previous = FilletOffsetCarrier2::Parallel {
+                    source: FilletParallelSource2::Direct(ExactCornerBezier2::Direct(&first_curve)),
+                    support: first.parallel_left(Real::one()).unwrap(),
+                };
+                let next = FilletOffsetCarrier2::Parallel {
+                    source: FilletParallelSource2::Direct(ExactCornerBezier2::Direct(
+                        &second_curve,
+                    )),
+                    support: second.parallel_left(Real::one()).unwrap(),
+                };
+                for previous_mode in [CurveCornerMode2::TrimOnly, CurveCornerMode2::TrimOrExtend] {
+                    for next_mode in [CurveCornerMode2::TrimOnly, CurveCornerMode2::TrimOrExtend] {
+                        let centers = fillet_offset_centers(
+                            &previous,
+                            &next,
+                            [
+                                FilletContactDomain2::AuthoredCurve(previous_mode),
+                                FilletContactDomain2::AuthoredCurve(next_mode),
+                            ],
+                            CurveFamily2::QuadraticBezier,
+                            CurveFamily2::QuadraticBezier,
+                            &policy,
+                        )
+                        .unwrap();
+                        let expected = if exterior_is_previous {
+                            previous_mode
+                        } else {
+                            next_mode
+                        } == CurveCornerMode2::TrimOrExtend;
+                        assert!(!centers.coincident);
+                        assert_eq!(
+                            centers.iter().count(),
+                            usize::from(expected),
+                            "exterior_previous={exterior_is_previous}, previous={previous_mode:?}, next={next_mode:?}, policy={policy:?}"
+                        );
+                        if let Some(center) = centers.iter().next() {
+                            let expected_parameters = if exterior_is_previous {
+                                [Real::one() + &half, half.clone()]
+                            } else {
+                                [half.clone(), -&half]
+                            };
+                            for (previous, expected) in
+                                [true, false].into_iter().zip(expected_parameters)
+                            {
+                                assert_eq!(
+                                    center
+                                        .parameter(previous)
+                                        .unwrap()
+                                        .cmp_by_refinement(&expected.into(), &policy)
+                                        .unwrap(),
+                                    Classification::Decided(std::cmp::Ordering::Equal)
+                                );
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     fn corner_splines_in_shifted_knot_domain(policy: &CurveContext) -> [Curve2; 2] {
         let controls = vec![
             Point2::from_values(0, 0),
@@ -13049,8 +13204,7 @@ mod tests {
             let centers = fillet_offset_centers(
                 &previous,
                 &next,
-                CurveCornerMode2::TrimOnly,
-                [FilletContactDomain2::OpenCurve; 2],
+                [FilletContactDomain2::AuthoredCurve(CurveCornerMode2::TrimOnly); 2],
                 CurveFamily2::QuadraticBezier,
                 CurveFamily2::QuadraticBezier,
                 &policy,
@@ -13694,8 +13848,7 @@ mod tests {
             let centers = fillet_offset_centers(
                 &arc_carrier,
                 &cusp_carrier,
-                CurveCornerMode2::TrimOrExtend,
-                [FilletContactDomain2::OpenCurve; 2],
+                [FilletContactDomain2::AuthoredCurve(CurveCornerMode2::TrimOrExtend); 2],
                 CurveFamily2::CircularArc,
                 CurveFamily2::RationalBezier,
                 &policy,

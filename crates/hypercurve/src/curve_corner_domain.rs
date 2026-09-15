@@ -43,17 +43,19 @@ struct AuthoredCircularDomain2 {
 }
 
 impl AuthoredCircularDomain2 {
-    fn from_source_charts(
+    fn new(
         authored: &Curve2,
-        charts: &[NativeBezierFragment2],
-        incident_index: usize,
         incident: &CircularArc2,
         operation: CurveOperation2,
         policy: &CurveContext,
     ) -> ExactCurveResult<Self> {
         let family = authored.family();
+        let source = authored
+            .source_range()
+            .map_or(authored, |range| &range.source);
+        let charts = source.native_bezier_fragments_for_operation(policy, operation)?;
         let mut sweeps = Vec::new();
-        for (index, chart) in charts.iter().enumerate() {
+        for chart in charts {
             let (start, end) = chart.parameter_range();
             let range =
                 CurveParameterRange2::new_validated(start.clone().into(), end.clone().into());
@@ -70,20 +72,12 @@ impl AuthoredCircularDomain2 {
             else {
                 continue;
             };
-            let other;
-            let support = if index == incident_index {
-                incident
-            } else {
-                let Some(support) = native_span_circular_arc(chart, operation, family, policy)?
-                else {
-                    continue;
-                };
-                other = support;
-                &other
+            let Some(support) = native_span_circular_arc(chart, operation, family, policy)? else {
+                continue;
             };
             // A crossing on a different support has a distinct source
             // preimage. Only another chart of this same circle owns a ray cut.
-            if !same_circular_support(incident, support, operation, family, policy)? {
+            if !same_circular_support(incident, &support, operation, family, policy)? {
                 continue;
             }
             let start = authored
@@ -448,16 +442,7 @@ impl Curve2 {
             {
                 let circle_domain = incident_circle
                     .as_ref()
-                    .map(|circle| {
-                        AuthoredCircularDomain2::from_source_charts(
-                            self,
-                            charts,
-                            center_index,
-                            circle,
-                            operation,
-                            policy,
-                        )
-                    })
+                    .map(|circle| AuthoredCircularDomain2::new(self, circle, operation, policy))
                     .transpose()?;
                 for cut in incident.iter() {
                     if cut.placement != CornerPlacement2::Extension {
@@ -495,11 +480,11 @@ impl FilletSourceChart2<'_> {
         Ok(preparation)
     }
 
-    fn domain(&self) -> FilletContactDomain2 {
+    fn domain(&self, mode: CurveCornerMode2) -> FilletContactDomain2 {
         if self.source_map.is_some() {
-            FilletContactDomain2::TrimChart
+            FilletContactDomain2::SourceChart(mode)
         } else {
-            FilletContactDomain2::OpenCurve
+            FilletContactDomain2::AuthoredCurve(mode)
         }
     }
 
@@ -521,6 +506,9 @@ impl FilletSourceChart2<'_> {
             return Ok(true);
         };
         cut.map_source_parameter(Some((scale, offset)), operation, authored.family(), policy)?;
+        if cut.placement == CornerPlacement2::Extension {
+            return Ok(true);
+        }
         let parameter = cut
             .parameter
             .as_ref()
@@ -591,6 +579,7 @@ impl CurvePath2 {
         previous_index: usize,
         next_index: usize,
         radius: &Real,
+        mode: CurveCornerMode2,
         policy: &CurveContext,
     ) -> ExactCurveResult<Option<CurveCornerSolutions2<Self>>> {
         let operation = CurveOperation2::Fillet;
@@ -620,6 +609,8 @@ impl CurvePath2 {
             .map(|chart| chart.prepare(false, policy))
             .collect::<ExactCurveResult<Vec<_>>>()?;
         let mut candidates = [Vec::new(), Vec::new()];
+        let mut previous_circle_domain = None;
+        let mut next_circle_domain = None;
         for (previous_chart_index, (previous_chart, previous_source)) in
             previous_charts.iter().zip(&previous_sources).enumerate()
         {
@@ -636,15 +627,26 @@ impl CurvePath2 {
                 let next_carrier = next_source.exact_carrier(false, operation, policy)?;
                 let previous_arc = previous_carrier.retained_rational_arc_support().cloned();
                 let next_arc = next_carrier.retained_rational_arc_support().cloned();
+                let domains = [
+                    previous_chart.domain(if previous_chart_index + 1 == previous_charts.len() {
+                        mode
+                    } else {
+                        CurveCornerMode2::TrimOnly
+                    }),
+                    next_chart.domain(if next_chart_index == 0 {
+                        mode
+                    } else {
+                        CurveCornerMode2::TrimOnly
+                    }),
+                ];
                 // These charts need not meet at the authored vertex. The
                 // connected-line shortcut therefore does not apply here.
                 let solutions = solve_carrier_fillet_corner(
                     previous_carrier,
                     next_carrier,
                     radius,
-                    CurveCornerMode2::TrimOnly,
                     false,
-                    [previous_chart.domain(), next_chart.domain()],
+                    domains,
                     previous.family(),
                     next.family(),
                     policy,
@@ -659,6 +661,45 @@ impl CurvePath2 {
                     {
                         return Ok(());
                     }
+                    for (chart, authored, cut, circle, cached) in [
+                        (
+                            previous_chart,
+                            previous,
+                            &solution.previous,
+                            previous_arc.as_ref(),
+                            &mut previous_circle_domain,
+                        ),
+                        (
+                            next_chart,
+                            next,
+                            &solution.next,
+                            next_arc.as_ref(),
+                            &mut next_circle_domain,
+                        ),
+                    ] {
+                        if chart.source_map.is_some()
+                            && cut.placement == CornerPlacement2::Extension
+                            && let Some(circle) = circle
+                        {
+                            if cached.is_none() {
+                                *cached = Some(AuthoredCircularDomain2::new(
+                                    authored, circle, operation, policy,
+                                )?);
+                            }
+                            if cached
+                                .as_ref()
+                                .expect("authored circle domain")
+                                .contains_incident_point(
+                                    &cut.point,
+                                    operation,
+                                    authored.family(),
+                                    policy,
+                                )?
+                            {
+                                return Ok(());
+                            }
+                        }
+                    }
                     let clockwise = solution.clockwise;
                     if let Some(path) = self.publish_fillet_corner(
                         vertex_index,
@@ -666,7 +707,7 @@ impl CurvePath2 {
                         next_index,
                         solution,
                         radius,
-                        CurveCornerMode2::TrimOnly,
+                        mode,
                         [previous_arc.as_ref(), next_arc.as_ref()],
                         [
                             previous_source.promoted_parallel(),
