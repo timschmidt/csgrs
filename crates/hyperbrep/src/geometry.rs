@@ -6128,7 +6128,7 @@ fn rational_curve_bounds_inside_unit_square(curve: &Curve2) -> GeometryResult<bo
     let Some(CurveGeometry2::RationalBezier(curve)) = curve.geometry() else {
         return Ok(false);
     };
-    let Ok(bounds) = curve.certified_bounds(&CurveContext::STRICT) else {
+    let Ok(bounds) = curve.certified_bounds() else {
         return Ok(false);
     };
     for point in [bounds.min(), bounds.max()] {
