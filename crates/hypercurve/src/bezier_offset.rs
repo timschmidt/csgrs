@@ -109263,6 +109263,87 @@ impl Blend2dCubicQuadraticReduction2 {
 }
 
 impl CertifiedPythagoreanHodographOffset2 {
+    /// Reuses the certified root-free unit speed sheet on its original chart.
+    /// Other finite ranges first try Bernstein bounds, then exact root
+    /// isolation. An incident extension keeps its own open barrier and sign.
+    fn speed_sign_on_domain(
+        &self,
+        domain: CurveParameterDomain2<'_>,
+        policy: &CurveContext,
+    ) -> CurveResult<Option<RealSign>> {
+        let strict = policy.strict_counterpart();
+        let coefficients = self.speed_polynomial();
+        let mut polynomial = None;
+        let sign = if domain.finite == &CurveParameterRange2::unit() {
+            // Every PH constructor proves that this polynomial has no unit
+            // root. Read its sheet sign without repeating that isolation.
+            real_sign(&coefficients[0], &strict)
+        } else if let Some(sign) =
+            strict_polynomial_sign_on_curve_region_range(coefficients, domain.finite, &strict)?
+        {
+            Some(sign)
+        } else {
+            let prepared = match polynomial_from_coefficients(coefficients.to_vec(), &strict)? {
+                Classification::Decided(Some(polynomial)) => polynomial,
+                Classification::Decided(None) | Classification::Uncertain(_) => return Ok(None),
+            };
+            match domain.finite_roots(&prepared, &strict)? {
+                Classification::Decided(roots) if roots.is_empty() => {}
+                Classification::Decided(_) | Classification::Uncertain(_) => return Ok(None),
+            }
+            let interior = match domain.finite.strict_interior_scalar(&strict)? {
+                Classification::Decided(interior) => interior,
+                Classification::Uncertain(_) => return Ok(None),
+            };
+            polynomial = Some(prepared);
+            real_sign(&Real::eval_poly(coefficients, &interior), &strict)
+        };
+        let Some(sign @ (RealSign::Positive | RealSign::Negative)) = sign else {
+            return Ok(None);
+        };
+        let Some(extension) = domain.extension else {
+            return Ok(Some(sign));
+        };
+        if real_sign(&Real::eval_poly(coefficients, extension.anchor), &strict) != Some(sign) {
+            return Ok(None);
+        }
+        if coefficients.len() == 1 {
+            return Ok(Some(sign));
+        }
+        let polynomial = match polynomial {
+            Some(polynomial) => polynomial,
+            None => match polynomial_from_coefficients(coefficients.to_vec(), &strict)? {
+                Classification::Decided(Some(polynomial)) => polynomial,
+                Classification::Decided(None) | Classification::Uncertain(_) => return Ok(None),
+            },
+        };
+        let roots = match polynomial.isolate_incident_ray_roots(
+            extension.anchor,
+            extension.direction,
+            &strict,
+        )? {
+            Classification::Decided(roots) => roots,
+            Classification::Uncertain(_) => return Ok(None),
+        };
+        for root in roots {
+            let Some(barrier) = extension.barrier else {
+                return Ok(None);
+            };
+            let order = match root.cmp_by_refinement(barrier, &strict)? {
+                Classification::Decided(order) => order,
+                Classification::Uncertain(_) => return Ok(None),
+            };
+            let before_barrier = match extension.direction {
+                BezierParameterRayDirection2::Increasing => order == std::cmp::Ordering::Less,
+                BezierParameterRayDirection2::Decreasing => order == std::cmp::Ordering::Greater,
+            };
+            if before_barrier {
+                return Ok(None);
+            }
+        }
+        Ok(Some(sign))
+    }
+
     /// Returns the exact rational Bezier carrying the parallel image.
     pub const fn curve(&self) -> &RationalBezier2 {
         &self.curve
@@ -114865,8 +114946,9 @@ impl BezierParallel2 {
                 (self, other, domains)
             };
             if real_sign(zero.distance(), &policy.strict_counterpart()) == Some(RealSign::Zero) {
-                return parallel
-                    .zero_distance_pair_intersections_in_domain(zero, domains, swapped, policy);
+                return parallel.zero_distance_pair_intersections_in_domain(
+                    zero, domains, swapped, false, policy,
+                );
             }
         }
         let Some(system) = (match parallel_pair_equation_system(self, other, false, policy)? {
@@ -115025,6 +115107,7 @@ impl BezierParallel2 {
         zero: &Self,
         domains: [CurveParameterDomain2<'_>; 2],
         swapped: bool,
+        off_diagonal: bool,
         policy: &CurveContext,
     ) -> CurveResult<Classification<BezierParallelPairDomainIntersectionSet2>> {
         let other = zero.source().to_rational_bezier()?;
@@ -115035,7 +115118,7 @@ impl BezierParallel2 {
             Some(sign) => sign,
             None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
         };
-        let equations = if distance_sign == RealSign::Zero {
+        let mut equations = if distance_sign == RealSign::Zero {
             // Coordinate equality is lower degree and retains stationary
             // source contacts without introducing a zero-speed component.
             parallel_source_equality_equations(self, zero)?
@@ -115048,13 +115131,27 @@ impl BezierParallel2 {
             );
             [orthogonality, distance]
         };
-        let branch = parallel_rational_component_branch(
+        let mut branch = parallel_rational_component_branch(
             &source,
             differential,
             self.distance(),
             other_power,
             distance_sign,
         );
+        if off_diagonal {
+            debug_assert_eq!(self, zero);
+            debug_assert_eq!(distance_sign, RealSign::Zero);
+            let diagonal = structural_parallel_source_parameter_component(self, zero)
+                .expect("a self query has its source parameter diagonal");
+            equations = match divide_bivariate_system_component(&equations, &diagonal) {
+                Some(equations) => equations,
+                None => return Ok(Classification::Uncertain(UncertaintyReason::Boundary)),
+            };
+            // Removing the identity factor does not exclude diagonal points
+            // where another component meets it, such as a stationary fold.
+            // Keep that exclusion in the component cell predicate itself.
+            branch = bivariate_multiply(&branch, &bivariate_multiply(&diagonal, &diagonal));
+        }
         let config = CurveIntersectionResultantConfig {
             min_precision: PARALLEL_INTERSECTION_RESULTANT_PRECISION,
             max_resultant_degree: MAX_PARALLEL_INTERSECTION_RESULTANT_DEGREE,
@@ -115106,6 +115203,7 @@ impl BezierParallel2 {
         let intersections = match self.replay_parallel_rational_candidate_system(
             &other,
             candidate_system,
+            off_diagonal,
             None,
             None,
             None,
@@ -115146,34 +115244,61 @@ impl BezierParallel2 {
     /// Returns ordered off-diagonal self-contacts on two retained finite ranges
     /// with independently optional, oriented extensions.
     ///
-    /// An exactly rational PH parallel first reuses rational coordinate
-    /// equality; a general non-PH parallel divides the structural parameter
-    /// diagonal from both radical equations. The remaining axes keep their
-    /// corner roles, so replay is ordered rather than using the finite self-
-    /// contact kernel's unordered-pair filter.
+    /// Zero and PH offsets share the rational pair domain authority. Each PH
+    /// axis first certifies its own polynomial speed sign, so a unit-chart
+    /// rational image cannot select an exterior normal. General parallels
+    /// divide the structural diagonal from both radical equations. All routes
+    /// retain the ordered corner roles.
     pub(crate) fn ordered_self_intersections_in_domain(
         &self,
         domains: [CurveParameterDomain2<'_>; 2],
         policy: &CurveContext,
     ) -> CurveResult<Classification<BezierParallelPairDomainIntersectionSet2>> {
-        match self.exact_rational_parallel_component(policy)? {
-            Classification::Decided(Some(curve)) => {
-                let result =
-                    match curve.ordered_self_intersection_contacts_in_domain(domains, policy)? {
-                        Classification::Decided(result) => result,
-                        Classification::Uncertain(reason) => {
-                            return Ok(Classification::Uncertain(reason));
-                        }
-                    };
-                return Ok(Classification::Decided(
-                    BezierParallelPairDomainIntersectionSet2::isolated(
-                        parallel_pair_set_from_rational_self_contacts(self, result, policy)?,
-                    ),
-                ));
-            }
-            Classification::Decided(None) => {}
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
+        let strict = policy.strict_counterpart();
+        let distance_sign = match real_sign(self.distance(), &strict) {
+            Some(sign) => sign,
+            None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
+        };
+        if distance_sign == RealSign::Zero {
+            return self
+                .zero_distance_pair_intersections_in_domain(self, domains, false, true, policy);
+        }
+        if let Classification::Decided(Some(offset)) =
+            self.exact_pythagorean_hodograph_offset(&strict)?
+            && let Some(first_sign) = offset.speed_sign_on_domain(domains[0], &strict)?
+            && let Some(second_sign) = offset.speed_sign_on_domain(domains[1], &strict)?
+        {
+            let opposite = if [first_sign, second_sign].contains(&RealSign::Negative) {
+                match self
+                    .with_distance(-self.distance())
+                    .exact_rational_parallel_component(&strict)?
+                {
+                    Classification::Decided(Some(curve)) => Some(curve),
+                    Classification::Decided(None) | Classification::Uncertain(_) => None,
+                }
+            } else {
+                None
+            };
+            let selected_curve = |sign| match sign {
+                RealSign::Positive => Some(offset.curve()),
+                RealSign::Negative => opposite.as_ref(),
+                RealSign::Zero => unreachable!("a strict domain sign is nonzero"),
+            };
+            if let (Some(first), Some(second)) =
+                (selected_curve(first_sign), selected_curve(second_sign))
+            {
+                let first = first.parallel_left(Real::zero())?;
+                if first_sign == second_sign {
+                    return first.zero_distance_pair_intersections_in_domain(
+                        &first, domains, false, true, policy,
+                    );
+                }
+                let second = second.parallel_left(Real::zero())?;
+                // Opposite nonzero normal sheets cannot meet at the same
+                // regular source parameter. No identity factor is removed.
+                return first.zero_distance_pair_intersections_in_domain(
+                    &second, domains, false, false, policy,
+                );
             }
         }
         let Some(system) = (match parallel_pair_equation_system(self, self, false, policy)? {
@@ -117189,6 +117314,7 @@ impl BezierParallel2 {
         self.replay_parallel_rational_candidate_system(
             other,
             candidate_system,
+            false,
             tangent_field,
             derivative_scale_sign,
             retained_parallel_range,
@@ -117206,6 +117332,7 @@ impl BezierParallel2 {
         &self,
         other: &RationalBezier2,
         candidate_system: BezierParallelIntersectionCandidateSystem2,
+        off_diagonal: bool,
         tangent_field: Option<&BezierAnalyticParallelTangentField2>,
         derivative_scale_sign: Option<RealSign>,
         retained_parallel_range: Option<&BezierParameterRange2>,
@@ -117390,6 +117517,15 @@ impl BezierParallel2 {
                         Classification::Uncertain(_) => {
                             incomplete = true;
                             continue;
+                        }
+                    }
+                }
+                if off_diagonal {
+                    match parallel_parameter.same_value(other_parameter, policy)? {
+                        Classification::Decided(false) => {}
+                        Classification::Decided(true) => continue,
+                        Classification::Uncertain(reason) => {
+                            return Ok(Classification::Uncertain(reason));
                         }
                     }
                 }
@@ -120313,6 +120449,21 @@ fn project_parallel_intersection_system(
     domains: [CurveParameterDomain2<'_>; 2],
     policy: &CurveContext,
 ) -> CurveResult<Classification<BezierParallelIntersectionCandidates2>> {
+    // Exact saturation can leave (c,0). Its nonzero constant equation
+    // proves the whole domain empty even though its resultant is zero.
+    for equation in [first_equation, second_equation] {
+        if let [row] = equation.coefficients.as_slice()
+            && let [constant] = row.as_slice()
+            && matches!(
+                real_sign(constant, &policy.strict_counterpart()),
+                Some(RealSign::Positive | RealSign::Negative)
+            )
+        {
+            return Ok(Classification::Decided(
+                BezierParallelIntersectionCandidates2::NoIntersection,
+            ));
+        }
+    }
     let config = CurveIntersectionResultantConfig {
         min_precision: PARALLEL_INTERSECTION_RESULTANT_PRECISION,
         max_resultant_degree: MAX_PARALLEL_INTERSECTION_RESULTANT_DEGREE,
@@ -160456,6 +160607,473 @@ mod conversion_tests {
                                 RealSign::Negative
                             })
                         );
+                    }
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn ordered_zero_parallel_domains_retain_exterior_loop_contacts() {
+        let fraction = |a, b| (Real::from(a) / Real::from(b)).unwrap();
+        // The polynomial loop meets at s=1/4 and s=3/4. The projective
+        // chart s=t/(2t-1) moves those contacts to -1/2 and 3/2, with a
+        // pole at t=1/2 between the two finite regular domains.
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            for gauge in [1, -1] {
+                let source = RationalBezier2::try_new(
+                    [(9, 0), (-7, 3), (-7, -10), (9, 9)]
+                        .map(|(x, y)| Point2::from_values(x, y))
+                        .to_vec(),
+                    [gauge, -gauge, gauge, -gauge].map(Real::from).to_vec(),
+                )
+                .unwrap()
+                .parallel_left(Real::zero())
+                .unwrap();
+                for reversed in [false, true] {
+                    let parallel = if reversed {
+                        source.reversed()
+                    } else {
+                        source.clone()
+                    };
+                    let chart = |t: Real| if reversed { Real::one() - t } else { t };
+                    let roots = [chart(fraction(-1, 2)), chart(fraction(3, 2))];
+                    for [first, second] in [[0, 1], [1, 0], [0, 0]] {
+                        let ranges = [first, second].map(|index| {
+                            CurveParameterRange2::new_validated(
+                                (&roots[index] - fraction(1, 8)).into(),
+                                (&roots[index] + fraction(1, 8)).into(),
+                            )
+                        });
+                        let result = match policy
+                            .strict_predicate_pass(|| {
+                                parallel.ordered_self_intersections_in_domain(
+                                    ranges
+                                        .each_ref()
+                                        .map(|range| CurveParameterDomain2::new(range, None)),
+                                    &policy,
+                                )
+                            })
+                            .unwrap()
+                        {
+                            Classification::Decided(result) => result,
+                            Classification::Uncertain(reason) => {
+                                panic!("finite exterior loop domains: {reason:?}")
+                            }
+                        };
+                        let (intersections, positive) = result.into_parts();
+                        assert!(!positive);
+                        assert!(intersections.is_complete());
+                        assert_eq!(intersections.contacts().len(), usize::from(first != second));
+                        for contact in intersections.contacts() {
+                            for (actual, index) in [
+                                (contact.first_parameter(), first),
+                                (contact.second_parameter(), second),
+                            ] {
+                                assert_eq!(
+                                    actual
+                                        .same_value(&roots[index].clone().into(), &policy)
+                                        .unwrap(),
+                                    Classification::Decided(true)
+                                );
+                            }
+                            assert!(contact.is_certified_transverse());
+                            assert_eq!(
+                                contact.tangent_cross_sign(),
+                                Some(if first == 0 {
+                                    RealSign::Negative
+                                } else {
+                                    RealSign::Positive
+                                })
+                            );
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn ordered_zero_parallel_domains_select_folded_components_and_exclude_poles() {
+        let fraction = |a, b| (Real::from(a) / Real::from(b)).unwrap();
+        let quarter = fraction(1, 4);
+        let folded = QuadraticBezier2::new(
+            Point2::new(quarter.clone(), Real::zero()),
+            Point2::new(-quarter.clone(), Real::zero()),
+            Point2::new(quarter, Real::zero()),
+        )
+        .parallel_left(Real::zero())
+        .unwrap();
+        let punctured = RationalBezier2::try_new(
+            vec![
+                Point2::from_values(0, 0),
+                Point2::new(fraction(2, 3), Real::zero()),
+                Point2::from_values(1, 0),
+            ],
+            vec![Real::from(-2), fraction(-3, 2), -Real::one()],
+        )
+        .unwrap()
+        .parallel_left(Real::zero())
+        .unwrap();
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            for (source, bounds, positive, contact) in [
+                (
+                    &folded,
+                    [
+                        [Real::from(2), Real::from(3)],
+                        [Real::from(-2), Real::from(-1)],
+                    ],
+                    true,
+                    None,
+                ),
+                (
+                    &folded,
+                    [
+                        [Real::from(2), Real::from(3)],
+                        [Real::from(-1), Real::zero()],
+                    ],
+                    false,
+                    Some([Real::from(2), Real::from(-1)]),
+                ),
+                (
+                    &folded,
+                    [
+                        [fraction(1, 4), fraction(1, 2)],
+                        [fraction(1, 2), fraction(3, 4)],
+                    ],
+                    true,
+                    None,
+                ),
+                // The only residual solution in this rectangle is the
+                // stationary diagonal t=u=1/2, not an off-diagonal contact.
+                (
+                    &folded,
+                    [
+                        [fraction(1, 4), fraction(1, 2)],
+                        [fraction(1, 4), fraction(1, 2)],
+                    ],
+                    false,
+                    None,
+                ),
+                // x=t(t-2)/(t-2) is injective away from its base point.
+                // Homogeneous equality at t=2 or u=2 adds no affine contact.
+                (
+                    &punctured,
+                    [[Real::one(), Real::from(3)], [Real::from(3), Real::from(4)]],
+                    false,
+                    None,
+                ),
+            ] {
+                let ranges =
+                    bounds.map(|[a, b]| CurveParameterRange2::new_validated(a.into(), b.into()));
+                let result = match policy
+                    .strict_predicate_pass(|| {
+                        source.ordered_self_intersections_in_domain(
+                            ranges
+                                .each_ref()
+                                .map(|range| CurveParameterDomain2::new(range, None)),
+                            &policy,
+                        )
+                    })
+                    .unwrap()
+                {
+                    Classification::Decided(result) => result,
+                    Classification::Uncertain(reason) => {
+                        panic!("folded and punctured domains {ranges:?}: {reason:?}")
+                    }
+                };
+                let (intersections, actual_positive) = result.into_parts();
+                assert_eq!(actual_positive, positive);
+                assert!(intersections.is_complete());
+                assert_eq!(
+                    intersections.contacts().len(),
+                    usize::from(contact.is_some())
+                );
+                if let Some(expected) = contact {
+                    for (actual, expected) in [
+                        intersections.contacts()[0].first_parameter(),
+                        intersections.contacts()[0].second_parameter(),
+                    ]
+                    .into_iter()
+                    .zip(expected)
+                    {
+                        assert_eq!(
+                            actual.same_value(&expected.into(), &policy).unwrap(),
+                            Classification::Decided(true)
+                        );
+                    }
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn ordered_ph_parallel_domains_retain_same_sheet_exterior_contacts() {
+        let fraction = |a, b| (Real::from(a) / Real::from(b)).unwrap();
+        // P(t)=(3t-t^3,3t^2), speed 3(1+t^2). Its left offset of -5/2
+        // meets (0,27/2) at t=-2 and t=2 on the same global normal sheet.
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            for cached in [false, true] {
+                for reversed in [false, true] {
+                    let source = CubicBezier2::new(
+                        Point2::from_values(0, 0),
+                        Point2::from_values(1, 0),
+                        Point2::from_values(2, 1),
+                        Point2::from_values(2, 3),
+                    )
+                    .parallel_left(fraction(-5, 2))
+                    .unwrap();
+                    let parallel = if reversed { source.reversed() } else { source };
+                    if cached {
+                        assert!(matches!(
+                            parallel
+                                .exact_pythagorean_hodograph_offset(&policy)
+                                .unwrap(),
+                            Classification::Decided(Some(_))
+                        ));
+                    }
+                    let chart = |t: Real| if reversed { Real::one() - t } else { t };
+                    let roots = [chart(Real::from(-2)), chart(Real::from(2))];
+                    let anchors = [chart(-Real::one()), chart(Real::one())];
+                    for rays in 0..4 {
+                        let ranges: [_; 2] = std::array::from_fn(|axis| {
+                            if rays & (1 << axis) == 0 {
+                                CurveParameterRange2::new_validated(
+                                    (&roots[axis] - fraction(1, 8)).into(),
+                                    (&roots[axis] + fraction(1, 8)).into(),
+                                )
+                            } else {
+                                CurveParameterRange2::new_validated(
+                                    anchors[axis].clone().into(),
+                                    chart(if axis == 0 {
+                                        fraction(-1, 2)
+                                    } else {
+                                        fraction(1, 2)
+                                    })
+                                    .into(),
+                                )
+                            }
+                        });
+                        let domains: [_; 2] = std::array::from_fn(|axis| {
+                            CurveParameterDomain2::new(
+                                &ranges[axis],
+                                (rays & (1 << axis) != 0).then_some(BezierParameterRay2 {
+                                    anchor: &anchors[axis],
+                                    direction: if (axis == 0) != reversed {
+                                        BezierParameterRayDirection2::Decreasing
+                                    } else {
+                                        BezierParameterRayDirection2::Increasing
+                                    },
+                                    barrier: None,
+                                }),
+                            )
+                        });
+                        for swapped in [false, true] {
+                            let axes = if swapped { [1, 0] } else { [0, 1] };
+                            let result = match policy
+                                .strict_predicate_pass(|| {
+                                    parallel.ordered_self_intersections_in_domain(
+                                        axes.map(|axis| domains[axis]),
+                                        &policy,
+                                    )
+                                })
+                                .unwrap()
+                            {
+                                Classification::Decided(result) => result,
+                                Classification::Uncertain(reason) => panic!(
+                                    "PH exterior contact, rays={rays}, reversed={reversed}, cached={cached}, swapped={swapped}: {reason:?}"
+                                ),
+                            };
+                            let (intersections, positive) = result.into_parts();
+                            assert!(!positive);
+                            assert!(intersections.is_complete());
+                            let [contact] = intersections.contacts() else {
+                                panic!("one PH exterior self-contact: {intersections:?}");
+                            };
+                            for (actual, axis) in
+                                [contact.first_parameter(), contact.second_parameter()]
+                                    .into_iter()
+                                    .zip(axes)
+                            {
+                                assert_eq!(
+                                    actual
+                                        .same_value(&roots[axis].clone().into(), &policy)
+                                        .unwrap(),
+                                    Classification::Decided(true)
+                                );
+                            }
+                            assert!(contact.is_certified_transverse());
+                            assert_eq!(
+                                contact.tangent_cross_sign(),
+                                Some(if swapped {
+                                    RealSign::Positive
+                                } else {
+                                    RealSign::Negative
+                                })
+                            );
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn ordered_ph_parallel_domains_reject_a_cached_opposite_normal_contact() {
+        let fraction = |a, b| (Real::from(a) / Real::from(b)).unwrap();
+        // P'(t)=(t-29/12)(1-t^2,2t). The unit speed sheet is
+        // (29/12-t)(1+t^2). Its rational left offset of 25/12 has a
+        // transverse self-contact at (t,u)=(0,3), but t=3 selects the
+        // opposite normal: the actual offset points there are distinct.
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let parallel = RationalBezier2::try_new(
+                vec![
+                    Point2::from_values(0, 0),
+                    Point2::new(fraction(-29, 48), Real::zero()),
+                    Point2::new(fraction(-9, 8), fraction(-29, 72)),
+                    Point2::new(fraction(-49, 36), fraction(-25, 24)),
+                    Point2::new(fraction(-49, 36), fraction(-7, 4)),
+                ],
+                vec![Real::one(); 5],
+            )
+            .unwrap()
+            .parallel_left(fraction(25, 12))
+            .unwrap();
+            assert!(matches!(
+                parallel
+                    .exact_pythagorean_hodograph_offset(&policy)
+                    .unwrap(),
+                Classification::Decided(Some(_))
+            ));
+            let ranges = [
+                [fraction(-1, 16), fraction(1, 16)],
+                [fraction(47, 16), fraction(49, 16)],
+            ]
+            .map(|[a, b]| CurveParameterRange2::new_validated(a.into(), b.into()));
+            let result = match policy
+                .strict_predicate_pass(|| {
+                    parallel.ordered_self_intersections_in_domain(
+                        ranges
+                            .each_ref()
+                            .map(|range| CurveParameterDomain2::new(range, None)),
+                        &policy,
+                    )
+                })
+                .unwrap()
+            {
+                Classification::Decided(result) => result,
+                Classification::Uncertain(reason) => panic!("opposite PH speed sheets: {reason:?}"),
+            };
+            let (intersections, positive) = result.into_parts();
+            assert!(!positive);
+            assert!(intersections.is_complete());
+            assert!(
+                intersections.contacts().is_empty(),
+                "a unit-chart rational contact is not a contact of the selected exterior normal: {intersections:?}"
+            );
+        }
+    }
+
+    #[test]
+    fn ordered_ph_parallel_domains_do_not_reuse_the_wrong_speed_sheet() {
+        let quarter = (Real::one() / Real::from(4)).unwrap();
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            for cached in [false, true] {
+                // P(t)=((t-2)^2,0) has unit-chart speed 4-2t. Its left
+                // offset is y=-1/4 for t<2 and y=1/4 for t>2. The cached
+                // rational image of the first branch is not the second one.
+                let parallel = QuadraticBezier2::new(
+                    Point2::from_values(4, 0),
+                    Point2::from_values(2, 0),
+                    Point2::from_values(1, 0),
+                )
+                .parallel_left(quarter.clone())
+                .unwrap();
+                if cached {
+                    assert!(matches!(
+                        parallel
+                            .exact_pythagorean_hodograph_offset(&policy)
+                            .unwrap(),
+                        Classification::Decided(Some(_))
+                    ));
+                }
+                for bounds in [
+                    [[0, 1], [0, 1]],
+                    [[3, 4], [3, 4]],
+                    [[0, 1], [3, 4]],
+                    [[3, 4], [0, 1]],
+                    [[1, 2], [2, 3]],
+                ] {
+                    let ranges = bounds.map(|[a, b]| {
+                        CurveParameterRange2::new_validated(
+                            Real::from(a).into(),
+                            Real::from(b).into(),
+                        )
+                    });
+                    let result = match policy
+                        .strict_predicate_pass(|| {
+                            parallel.ordered_self_intersections_in_domain(
+                                ranges
+                                    .each_ref()
+                                    .map(|range| CurveParameterDomain2::new(range, None)),
+                                &policy,
+                            )
+                        })
+                        .unwrap()
+                    {
+                        Classification::Decided(result) => result,
+                        Classification::Uncertain(reason) => {
+                            panic!("PH domain {bounds:?}, cached={cached}: {reason:?}")
+                        }
+                    };
+                    let (intersections, positive) = result.into_parts();
+                    assert!(
+                        intersections.is_complete(),
+                        "PH domain {bounds:?}, cached={cached}: {intersections:?}"
+                    );
+                    assert!(!positive);
+                    assert!(intersections.contacts().is_empty());
+                }
+                let ranges = [
+                    CurveParameterRange2::unit(),
+                    CurveParameterRange2::new_validated(Real::from(3).into(), Real::from(4).into()),
+                ];
+                let anchors = [Real::one(), Real::from(3)];
+                let cusp = BezierParameter2::Exact(Real::from(2));
+                // A barrier at the speed zero excludes that endpoint. An
+                // unbounded ray crosses it and needs the general normal
+                // selector instead of either single rational speed sheet.
+                for barrier in [Some(&cusp), None] {
+                    for rays in 1..4 {
+                        let domains = std::array::from_fn(|axis| {
+                            CurveParameterDomain2::new(
+                                &ranges[axis],
+                                (rays & (1 << axis) != 0).then_some(BezierParameterRay2 {
+                                    anchor: &anchors[axis],
+                                    direction: if axis == 0 {
+                                        BezierParameterRayDirection2::Increasing
+                                    } else {
+                                        BezierParameterRayDirection2::Decreasing
+                                    },
+                                    barrier,
+                                }),
+                            )
+                        });
+                        let result = match policy
+                            .strict_predicate_pass(|| {
+                                parallel.ordered_self_intersections_in_domain(domains, &policy)
+                            })
+                            .unwrap()
+                        {
+                            Classification::Decided(result) => result,
+                            Classification::Uncertain(reason) => {
+                                panic!("PH ray barrier={barrier:?}, rays={rays}: {reason:?}")
+                            }
+                        };
+                        let (intersections, positive) = result.into_parts();
+                        assert!(intersections.is_complete(), "PH rays: {intersections:?}");
+                        assert!(!positive);
+                        assert!(intersections.contacts().is_empty());
                     }
                 }
             }

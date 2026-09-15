@@ -1275,11 +1275,10 @@ fn project_retained_lineage_residual_system(
 
 fn project_symmetric_self_intersection_system(
     equations: &[BivariatePolynomial; 2],
-    domains: [CurveParameterDomain2<'_>; 2],
     policy: &CurveContext,
 ) -> CurveResult<Classification<RationalBezierIntersectionCandidates2>> {
     // A projective line's off-diagonal coordinate difference is a nonzero
-    // constant. It excludes contacts on every finite/ray domain, including
+    // constant. It excludes every contact, including
     // when the other coordinate equation vanishes identically. A degenerate
     // resultant for that pair must not erase this simpler exact proof.
     for equation in equations {
@@ -1297,25 +1296,10 @@ fn project_symmetric_self_intersection_system(
     // removed. Their rootless fibers do not describe self-contacts. Saturate
     // only with the shared algebraic domain certificate, preserving every
     // genuine component and the original parameter chart for replay.
-    // A finite rootless certificate cannot authorize saturation on a ray.
-    // Use outward bounds of the actual finite domains, including exterior
-    // intervals; a unit-square certificate says nothing about those intervals.
-    let primitive = if domains.iter().all(|domain| domain.extension.is_none()) {
-        let first_bounds = match domains[0].finite_envelope(policy)? {
-            Classification::Decided((_, bounds)) => bounds,
-            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-        };
-        let second_bounds = match domains[1].finite_envelope(policy)? {
-            Classification::Decided((_, bounds)) => bounds,
-            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-        };
-        hypersolve::saturate_rootless_bivariate_axis_factors(
-            equations,
-            [first_bounds, second_bounds],
-        )
-    } else {
-        None
-    };
+    let primitive = hypersolve::saturate_rootless_bivariate_axis_factors(
+        equations,
+        [[&Real::zero(), &Real::one()]; 2],
+    );
     let equations = primitive.as_ref().unwrap_or(equations);
     let report = resultant_bivariate_polynomial_system_complete(
         &equations[0],
@@ -1326,9 +1310,8 @@ fn project_symmetric_self_intersection_system(
             max_resultant_degree: MAX_RATIONAL_INTERSECTION_RESULTANT_DEGREE,
         },
     );
-    // The residual coordinate equations are symmetric in the two source
-    // parameters. Construct one resultant and share finite roots when both
-    // axes have the same retained range. Distinct ranges isolate independently.
+    // Both axes have the same unit domain. The symmetric residual system
+    // shares one resultant and one set of exact parameter-root certificates.
     let polynomial = match resultant_parameter_polynomial(report, policy)? {
         Classification::Decided(Some(polynomial)) => polynomial,
         Classification::Decided(None) => {
@@ -1338,51 +1321,18 @@ fn project_symmetric_self_intersection_system(
         }
         Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
     };
-    let parameters = match domains[0].finite_roots(&polynomial, policy)? {
-        Classification::Decided(parameters) => parameters,
-        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-    };
-    let shared_parameters = (domains[0].finite == domains[1].finite).then(|| parameters.clone());
-    let first =
-        match extend_resultant_parameter_projection(&polynomial, parameters, domains[0], policy)? {
-            Classification::Decided(ResultantParameterProjection::Empty) => {
-                return Ok(Classification::Decided(
-                    RationalBezierIntersectionCandidates2::NoIntersection,
-                ));
+    Ok(polynomial
+        .isolate_unit_interval_roots(policy)?
+        .map(|parameters| {
+            if parameters.is_empty() {
+                RationalBezierIntersectionCandidates2::NoIntersection
+            } else {
+                RationalBezierIntersectionCandidates2::Candidates {
+                    first_parameters: parameters.clone(),
+                    second_parameters: parameters,
+                }
             }
-            Classification::Decided(projection) => projection,
-            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-        };
-    let parameters = match shared_parameters {
-        Some(parameters) => parameters,
-        None => match domains[1].finite_roots(&polynomial, policy)? {
-            Classification::Decided(parameters) => parameters,
-            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-        },
-    };
-    let second =
-        match extend_resultant_parameter_projection(&polynomial, parameters, domains[1], policy)? {
-            Classification::Decided(projection) => projection,
-            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-        };
-    Ok(Classification::Decided(match (first, second) {
-        (ResultantParameterProjection::Empty, _) | (_, ResultantParameterProjection::Empty) => {
-            RationalBezierIntersectionCandidates2::NoIntersection
-        }
-        (ResultantParameterProjection::Degenerate, _)
-        | (_, ResultantParameterProjection::Degenerate) => {
-            RationalBezierIntersectionCandidates2::DegenerateResultant
-        }
-        (
-            ResultantParameterProjection::Parameters(first_parameters)
-            | ResultantParameterProjection::SelectedParameters(first_parameters),
-            ResultantParameterProjection::Parameters(second_parameters)
-            | ResultantParameterProjection::SelectedParameters(second_parameters),
-        ) => RationalBezierIntersectionCandidates2::Candidates {
-            first_parameters,
-            second_parameters,
-        },
-    }))
+        }))
 }
 
 fn rational_tangent_cross_polynomial(
@@ -3356,11 +3306,7 @@ impl RationalBezier2 {
         let Some(equations) = rational_self_intersection_residual_system(basis) else {
             return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
         };
-        let candidates = match project_symmetric_self_intersection_system(
-            &equations,
-            [CurveParameterDomain2::new(&CurveParameterRange2::unit(), None); 2],
-            policy,
-        )? {
+        let candidates = match project_symmetric_self_intersection_system(&equations, policy)? {
             Classification::Decided(candidates) => candidates,
             Classification::Uncertain(reason) => {
                 return Ok(Classification::Uncertain(reason));
@@ -3392,75 +3338,6 @@ impl RationalBezier2 {
             },
         };
         retain_unordered_rational_self_contacts(replayed, basis, policy)
-    }
-
-    /// Returns ordered off-diagonal self-contacts over each retained finite
-    /// range plus its independently optional incident extension.
-    ///
-    /// This is the exact-rational specialization used by projective PH-corner
-    /// solving. Unlike the finite unordered authority, injectivity on the
-    /// authored unit span is not an exclusion certificate: either exterior ray
-    /// may revisit the other incident cell. The structural parameter diagonal
-    /// is removed once, both residual projections are isolated on their own
-    /// ordered domains, and the unchanged bivariate replay proves every pair.
-    pub(crate) fn ordered_self_intersection_contacts_in_domain(
-        &self,
-        domains: [CurveParameterDomain2<'_>; 2],
-        policy: &CurveContext,
-    ) -> CurveResult<Classification<RationalBezierIntersectionContacts2>> {
-        if let Classification::Uncertain(reason) = self.common_weight_sign(policy) {
-            return Ok(Classification::Uncertain(reason));
-        }
-        let basis = self.homogeneous_power_basis()?;
-        let Some(equations) = rational_self_intersection_residual_system(basis) else {
-            return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
-        };
-        let candidates =
-            match project_symmetric_self_intersection_system(&equations, domains, policy)? {
-                Classification::Decided(candidates) => candidates,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            };
-        let mut exterior_point_evidence = |parameter: &BezierParameter2| {
-            let BezierParameter2::Exact(parameter) = parameter else {
-                return Ok(None);
-            };
-            Ok(match self.point_at_affine_classified(parameter, policy) {
-                Classification::Decided(point) => Some(CurvePoint2::from(point)),
-                Classification::Uncertain(_) => None,
-            })
-        };
-        let replayed = match &candidates {
-            RationalBezierIntersectionCandidates2::NoIntersection => {
-                RationalBezierIntersectionContacts2::NoIntersection
-            }
-            RationalBezierIntersectionCandidates2::DegenerateResultant => {
-                RationalBezierIntersectionContacts2::DegenerateResultant
-            }
-            RationalBezierIntersectionCandidates2::Candidates {
-                first_parameters,
-                second_parameters,
-            } => match self.replay_intersection_candidates_with_pair_filter(
-                self,
-                first_parameters,
-                second_parameters,
-                false,
-                Some(&equations),
-                Some(&mut exterior_point_evidence),
-                policy,
-            )? {
-                Classification::Decided(replayed) => replayed,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            },
-        };
-        retain_rational_contact_tangent_cross_signs(
-            replayed,
-            rational_tangent_cross_polynomial(basis).as_ref(),
-            policy,
-        )
     }
 
     fn retained_lineage_intersection_contacts(
