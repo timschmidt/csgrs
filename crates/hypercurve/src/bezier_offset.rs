@@ -72917,19 +72917,26 @@ impl BezierAlgebraicChord2 {
             Axis2::X => Axis2::Y,
             Axis2::Y => Axis2::X,
         };
-        // Keep correlated construction evidence intact before extracting the
-        // support coordinate into an independent `Real`. In particular, an
-        // offset chord endpoint and a selected-circle-derived endpoint can
-        // compare their common signed-normal displacement exactly, while the
-        // two separately materialized coordinates needlessly form a larger
-        // equality predicate.
-        let retained_order = Self::point_axis_order(point, self.start(), constant_axis, policy);
+        // Keep cheap correlated construction proofs first. If they decline,
+        // a retained constant support coordinate needs only one scalar query;
+        // complete point-to-point replay can otherwise promote both Cartesian
+        // coordinates and the point's local root into independent fields.
+        let retained_order = policy.bounded_exact_predicate_pass(|| {
+            Self::point_axis_order(point, self.start(), constant_axis, policy)
+        });
         let order = match retained_order {
             Ok(decided @ Classification::Decided(_)) => decided,
             Ok(Classification::Uncertain(_)) | Err(_) => {
-                let support_coordinate = self.exact_axis_support_coordinate(policy).ok()??;
-                Self::point_axis_order_to_real(point, constant_axis, &support_coordinate, policy)
-                    .ok()?
+                if let Ok(Some(coordinate)) = policy
+                    .bounded_exact_predicate_pass(|| self.exact_axis_support_coordinate(policy))
+                    && let Ok(Classification::Decided(order)) =
+                        Self::point_axis_order_to_real(point, constant_axis, &coordinate, policy)
+                {
+                    return Some(Classification::Decided(
+                        direction.line_side_from_perpendicular_order(order),
+                    ));
+                }
+                Self::point_axis_order(point, self.start(), constant_axis, policy).ok()?
             }
         };
         Some(order.map(|order| direction.line_side_from_perpendicular_order(order)))
@@ -92601,19 +92608,7 @@ impl BezierAnalyticParallelPoint2 {
             &polynomial_scale(tangent_x, coefficient_x),
             &polynomial_scale(tangent_y, coefficient_y),
         );
-        let sign = match &self.data.parameter {
-            BezierAnalyticParallelPointParameter2::Bezier(parameter) => {
-                signed_coefficients_at_parameter(polynomial, parameter, policy)
-            }
-            BezierAnalyticParallelPointParameter2::SelectedFiber(parameter) => parameter
-                .predicate_sign(
-                    &bivariate_outer_product(&[Real::one()], &polynomial),
-                    policy,
-                ),
-            BezierAnalyticParallelPointParameter2::RecursiveProjective(parameter) => {
-                parameter.polynomial_sign(&polynomial, policy)
-            }
-        };
+        let sign = self.parameter_polynomial_sign(&polynomial, policy);
         Some(
             sign.map(|classification| {
                 classification.map(|sign| product_sign(displacement_sign, sign))
@@ -93252,7 +93247,7 @@ impl BezierAnalyticParallelPoint2 {
             }
             BezierParallelSource2::Rational(source) => {
                 match self.parameter_polynomial_sign(
-                    source.homogeneous_power_basis()?.weight.clone(),
+                    &source.homogeneous_power_basis()?.weight,
                     &policy.strict_counterpart(),
                 )? {
                     Classification::Decided(sign @ (RealSign::Positive | RealSign::Negative)) => {
@@ -94652,6 +94647,32 @@ impl BezierAnalyticParallelPoint2 {
         value: &Real,
         policy: &CurveContext,
     ) -> Classification<std::cmp::Ordering> {
+        let bounded = policy.bounded_exact_predicate_pass(|| {
+            retained_bounds_axis_order_to_real(
+                |steps| self.conservative_bounds_refined(steps, policy),
+                axis,
+                value,
+                policy,
+            )
+        });
+        if matches!(bounded, Classification::Decided(_)) {
+            return bounded;
+        }
+        if let Ok(Classification::Decided(sign)) =
+            policy.strict_predicate_pass(|| self.axis_residual_sign(axis, value, policy))
+        {
+            #[cfg(feature = "dispatch-trace")]
+            hyperreal::dispatch_trace::record(
+                "hypercurve",
+                "analytic-parallel-axis-order",
+                "retained-parameter-sign",
+            );
+            return Classification::Decided(match sign {
+                RealSign::Negative => std::cmp::Ordering::Less,
+                RealSign::Zero => std::cmp::Ordering::Equal,
+                RealSign::Positive => std::cmp::Ordering::Greater,
+            });
+        }
         retained_bounds_axis_order_to_real(
             |refinement_steps| self.conservative_bounds_refined(refinement_steps, policy),
             axis,
@@ -94662,22 +94683,83 @@ impl BezierAnalyticParallelPoint2 {
 
     fn parameter_polynomial_sign(
         &self,
-        polynomial: Vec<Real>,
+        polynomial: &[Real],
         policy: &CurveContext,
     ) -> CurveResult<Classification<RealSign>> {
         match &self.data.parameter {
             BezierAnalyticParallelPointParameter2::Bezier(parameter) => {
-                signed_coefficients_at_parameter(polynomial, parameter, policy)
+                signed_coefficients_at_parameter(polynomial.to_vec(), parameter, policy)
             }
             BezierAnalyticParallelPointParameter2::SelectedFiber(parameter) => parameter
-                .predicate_sign(
-                    &bivariate_outer_product(&[Real::one()], &polynomial),
-                    policy,
-                ),
+                .predicate_sign(&bivariate_outer_product(&[Real::one()], polynomial), policy),
             BezierAnalyticParallelPointParameter2::RecursiveProjective(parameter) => {
-                parameter.polynomial_sign(&polynomial, policy)
+                parameter.polynomial_sign(polynomial, policy)
             }
         }
+    }
+
+    /// Signs one coordinate minus `value` in the source parameter field.
+    /// For A/W + B/sqrt(S), the numerator is A*sqrt(S) + B*W and the
+    /// denominator has the sign of W. Neither coordinate needs publication.
+    fn axis_residual_sign(
+        &self,
+        axis: Axis2,
+        value: &Real,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<RealSign>> {
+        if !policy.accepts_retained_policy(self.data.policy) {
+            return Err(CurveError::Topology(
+                "analytic-parallel axis predicate crossed retained policies".into(),
+            ));
+        }
+        let source = self.data.parallel.source_power_basis()?;
+        let unit_weight = [Real::one()];
+        let weight = source.weight.unwrap_or(&unit_weight);
+        let weight_sign = match self.parameter_polynomial_sign(weight, policy)? {
+            Classification::Decided(RealSign::Zero) => {
+                return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
+            }
+            Classification::Decided(sign) => sign,
+            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+        };
+        let (coordinate, translation) = match axis {
+            Axis2::X => (source.x_numerator, &self.data.translation_x),
+            Axis2::Y => (source.y_numerator, &self.data.translation_y),
+        };
+        let rational = polynomial_add(
+            coordinate,
+            &polynomial_scale(weight, &(translation - value)),
+        );
+        if self.data.parallel.distance().zero_status() == ZeroKnowledge::Zero
+            && self.data.tangent_distance.zero_status() == ZeroKnowledge::Zero
+        {
+            return Ok(self
+                .parameter_polynomial_sign(&rational, policy)?
+                .map(|sign| product_sign(sign, weight_sign)));
+        }
+        let (tangent_x, tangent_y) = self.frame_tangent_power_basis()?;
+        let frame_coordinate = match axis {
+            Axis2::X => polynomial_subtract(
+                &polynomial_scale(tangent_x, &self.data.tangent_distance),
+                &polynomial_scale(tangent_y, self.data.parallel.distance()),
+            ),
+            Axis2::Y => polynomial_add(
+                &polynomial_scale(tangent_x, self.data.parallel.distance()),
+                &polynomial_scale(tangent_y, &self.data.tangent_distance),
+            ),
+        };
+        let speed_squared = polynomial_add(
+            &polynomial_multiply(tangent_x, tangent_x),
+            &polynomial_multiply(tangent_y, tangent_y),
+        );
+        Ok(self
+            .parameter_radical_sum_sign(
+                &rational,
+                &polynomial_multiply(weight, &frame_coordinate),
+                &speed_squared,
+                policy,
+            )?
+            .map(|sign| product_sign(sign, weight_sign)))
     }
 
     /// Signs `|point - self|^2 - radius_squared` in the retained source
@@ -94697,7 +94779,6 @@ impl BezierAnalyticParallelPoint2 {
         let source = self.data.parallel.source_power_basis()?;
         let unit_weight = [Real::one()];
         let weight = source.weight.unwrap_or(&unit_weight);
-        let (frame_tangent_x, frame_tangent_y) = self.frame_tangent_power_basis()?;
         let translated_x = point.x() - &self.data.translation_x;
         let translated_y = point.y() - &self.data.translation_y;
         let delta_x =
@@ -94706,14 +94787,6 @@ impl BezierAnalyticParallelPoint2 {
             polynomial_subtract(&polynomial_scale(weight, &translated_y), source.y_numerator);
         let normal_distance = self.data.parallel.distance();
         let tangent_distance = &self.data.tangent_distance;
-        let frame_x = polynomial_subtract(
-            &polynomial_scale(frame_tangent_x, tangent_distance),
-            &polynomial_scale(frame_tangent_y, normal_distance),
-        );
-        let frame_y = polynomial_add(
-            &polynomial_scale(frame_tangent_x, normal_distance),
-            &polynomial_scale(frame_tangent_y, tangent_distance),
-        );
         let constant = normal_distance * normal_distance + tangent_distance * tangent_distance
             - radius_squared;
         let rational = polynomial_add(
@@ -94722,6 +94795,29 @@ impl BezierAnalyticParallelPoint2 {
                 &polynomial_multiply(&delta_y, &delta_y),
             ),
             &polynomial_scale(&polynomial_multiply(weight, weight), &constant),
+        );
+        match self.parameter_polynomial_sign(weight, policy)? {
+            Classification::Decided(RealSign::Positive | RealSign::Negative) => {}
+            Classification::Decided(RealSign::Zero) => {
+                return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
+            }
+            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+        }
+        if normal_distance.zero_status() == ZeroKnowledge::Zero
+            && tangent_distance.zero_status() == ZeroKnowledge::Zero
+        {
+            // A finite source point remains valid at a stationary parameter;
+            // a zero displacement does not require a unit tangent there.
+            return self.parameter_polynomial_sign(&rational, policy);
+        }
+        let (frame_tangent_x, frame_tangent_y) = self.frame_tangent_power_basis()?;
+        let frame_x = polynomial_subtract(
+            &polynomial_scale(frame_tangent_x, tangent_distance),
+            &polynomial_scale(frame_tangent_y, normal_distance),
+        );
+        let frame_y = polynomial_add(
+            &polynomial_scale(frame_tangent_x, normal_distance),
+            &polynomial_scale(frame_tangent_y, tangent_distance),
         );
         let radical = polynomial_scale(
             &polynomial_multiply(
@@ -94737,8 +94833,21 @@ impl BezierAnalyticParallelPoint2 {
             &polynomial_multiply(frame_tangent_x, frame_tangent_x),
             &polynomial_multiply(frame_tangent_y, frame_tangent_y),
         );
-        let sign = |polynomial| self.parameter_polynomial_sign(polynomial, policy);
-        let speed_sign = match sign(speed_squared.clone())? {
+        self.parameter_radical_sum_sign(&rational, &radical, &speed_squared, policy)
+    }
+
+    /// Signs A*sqrt(S) + B in the retained parameter field, selecting S > 0
+    /// before squaring. Axis and circle predicates share this replay; equal
+    /// magnitudes with equal signs never become a false conjugate-sheet zero.
+    fn parameter_radical_sum_sign(
+        &self,
+        rational: &[Real],
+        radical: &[Real],
+        speed_squared: &[Real],
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<RealSign>> {
+        let sign = |polynomial: &[Real]| self.parameter_polynomial_sign(polynomial, policy);
+        let speed_sign = match sign(speed_squared)? {
             Classification::Decided(sign) => sign,
             Classification::Uncertain(reason) => {
                 return Ok(Classification::Uncertain(reason));
@@ -94756,13 +94865,13 @@ impl BezierAnalyticParallelPoint2 {
             }
         }
 
-        let rational_sign = match sign(rational.clone())? {
+        let rational_sign = match sign(rational)? {
             Classification::Decided(sign) => sign,
             Classification::Uncertain(reason) => {
                 return Ok(Classification::Uncertain(reason));
             }
         };
-        let radical_sign = match sign(radical.clone())? {
+        let radical_sign = match sign(radical)? {
             Classification::Decided(sign) => sign,
             Classification::Uncertain(reason) => {
                 return Ok(Classification::Uncertain(reason));
@@ -94778,10 +94887,10 @@ impl BezierAnalyticParallelPoint2 {
             _ => {}
         }
         let magnitude = polynomial_subtract(
-            &polynomial_multiply(&polynomial_multiply(&rational, &rational), &speed_squared),
-            &polynomial_multiply(&radical, &radical),
+            &polynomial_multiply(&polynomial_multiply(rational, rational), speed_squared),
+            &polynomial_multiply(radical, radical),
         );
-        Ok(match sign(magnitude)? {
+        Ok(match sign(&magnitude)? {
             Classification::Decided(RealSign::Positive) => Classification::Decided(rational_sign),
             Classification::Decided(RealSign::Negative) => Classification::Decided(radical_sign),
             Classification::Decided(RealSign::Zero) => Classification::Decided(RealSign::Zero),
@@ -94822,9 +94931,9 @@ impl BezierAnalyticParallelPoint2 {
             None => return Ok(None),
         }
         let basis = source.homogeneous_power_basis()?;
-        let sign = |polynomial| self.parameter_polynomial_sign(polynomial, policy);
+        let sign = |polynomial: &[Real]| self.parameter_polynomial_sign(polynomial, policy);
         let Classification::Decided(weight_sign @ (RealSign::Positive | RealSign::Negative)) =
-            sign(basis.weight.clone())?
+            sign(&basis.weight)?
         else {
             return Ok(None);
         };
@@ -94844,7 +94953,7 @@ impl BezierAnalyticParallelPoint2 {
                 circle.center().x(),
             ),
         ] {
-            if sign(polynomial_subtract(
+            if sign(&polynomial_subtract(
                 coordinate,
                 &polynomial_scale(&basis.weight, value),
             ))? != Classification::Decided(RealSign::Zero)
@@ -94854,7 +94963,7 @@ impl BezierAnalyticParallelPoint2 {
             let Some(expected) = real_sign(&(other_value - center), policy) else {
                 continue;
             };
-            if let Classification::Decided(actual) = sign(polynomial_subtract(
+            if let Classification::Decided(actual) = sign(&polynomial_subtract(
                 other,
                 &polynomial_scale(&basis.weight, center),
             ))? {
@@ -149481,6 +149590,190 @@ mod conversion_tests {
             &value.data
         ));
         assert!(Arc::ptr_eq(&one.square().unwrap().data, &one.data));
+    }
+
+    #[test]
+    fn analytic_axis_and_circle_predicates_keep_positive_frame_sheet_and_weight_sign() {
+        let half = (Real::one() / Real::from(2_i8)).unwrap();
+        let parameter = algebraic_parameter(vec![-half, Real::zero(), Real::one()]);
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            for gauge in [Real::one(), -Real::from(2_i8).sqrt().unwrap(), Real::pi()] {
+                let source = RationalBezier2::try_new(
+                    vec![
+                        Point2::new(Real::zero(), Real::zero()),
+                        Point2::new(Real::one(), Real::one()),
+                    ],
+                    vec![gauge; 2],
+                )
+                .unwrap();
+                for (normal, tangent) in [(1_i32, 0_i32), (-1, 0), (1, 2), (-2, -1), (2, -1)] {
+                    // At t=1/sqrt(2), the point is
+                    // ((1+tangent-normal)*t, (1+tangent+normal)*t).
+                    // Zero coordinates require the positive speed sheet;
+                    // its conjugate can have the same squared equation.
+                    let point = BezierAnalyticParallelPoint2::new_with_tangent_distance(
+                        source.parallel_left(Real::from(normal)).unwrap(),
+                        parameter.clone(),
+                        Real::from(tangent),
+                        &policy,
+                    );
+                    for (axis, coefficient) in [
+                        (Axis2::X, 1 + tangent - normal),
+                        (Axis2::Y, 1 + tangent + normal),
+                    ] {
+                        let expected = match coefficient.cmp(&0) {
+                            std::cmp::Ordering::Less => RealSign::Negative,
+                            std::cmp::Ordering::Equal => RealSign::Zero,
+                            std::cmp::Ordering::Greater => RealSign::Positive,
+                        };
+                        let outcome = crate::policy::resolve_certified_value(&policy, |attempt| {
+                            attempt.bounded_exact_predicate_pass(|| {
+                                point
+                                    .axis_residual_sign(axis, &Real::zero(), attempt)
+                                    .unwrap()
+                            })
+                        });
+                        assert_eq!(outcome.value, Classification::Decided(expected));
+                        assert_eq!(outcome.certainty, CurveCertainty::Certified);
+                    }
+                    let radius_squared =
+                        Real::from((1 + tangent) * (1 + tangent) + normal * normal);
+                    let outcome = crate::policy::resolve_certified_value(&policy, |attempt| {
+                        point
+                            .circle_residual_sign_to_exact(
+                                &Point2::new(Real::zero(), Real::zero()),
+                                &radius_squared,
+                                attempt,
+                            )
+                            .unwrap()
+                    });
+                    assert_eq!(outcome.value, Classification::Decided(RealSign::Zero));
+                    assert_eq!(outcome.certainty, CurveCertainty::Certified);
+                    assert!(point.data.recursive_projective_point.get().is_none());
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn analytic_scalar_predicates_distinguish_stationary_points_from_source_poles() {
+        let origin = Point2::new(Real::zero(), Real::zero());
+        let one = Point2::new(Real::one(), Real::zero());
+        let stationary =
+            CubicBezier2::new(origin.clone(), origin.clone(), origin.clone(), one.clone());
+        let pole = RationalBezier2::try_new(
+            vec![one.clone(), one.clone()],
+            vec![Real::from(-1_i8), Real::one()],
+        )
+        .unwrap();
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            for distance in [Real::zero(), Real::one()] {
+                let point = BezierAnalyticParallelPoint2::new(
+                    stationary.parallel_left(distance.clone()).unwrap(),
+                    BezierParameter2::Exact(Real::zero()),
+                    &policy,
+                );
+                let expected = if distance.zero_status() == ZeroKnowledge::Zero {
+                    Classification::Decided(RealSign::Zero)
+                } else {
+                    Classification::Uncertain(UncertaintyReason::Boundary)
+                };
+                assert_eq!(
+                    point
+                        .axis_residual_sign(Axis2::X, &Real::zero(), &policy)
+                        .unwrap(),
+                    expected
+                );
+                assert_eq!(
+                    point
+                        .circle_residual_sign_to_exact(&one, &Real::one(), &policy)
+                        .unwrap(),
+                    expected
+                );
+            }
+            let point = BezierAnalyticParallelPoint2::new(
+                pole.parallel_left(Real::zero()).unwrap(),
+                BezierParameter2::Exact((Real::one() / Real::from(2_i8)).unwrap()),
+                &policy,
+            );
+            assert_eq!(
+                point
+                    .axis_residual_sign(Axis2::X, &Real::one(), &policy)
+                    .unwrap(),
+                Classification::Uncertain(UncertaintyReason::Boundary)
+            );
+            assert_eq!(
+                point
+                    .circle_residual_sign_to_exact(&one, &Real::zero(), &policy)
+                    .unwrap(),
+                Classification::Uncertain(UncertaintyReason::Boundary)
+            );
+        }
+    }
+
+    #[test]
+    fn analytic_axis_predicates_replay_local_polynomial_roots() {
+        let scalar =
+            |value| DenseTensorPolynomial::try_new(Vec::new(), vec![Real::from(value)]).unwrap();
+        let field = BezierRecursiveQuadraticField2::base(Vec::new(), scalar(2), scalar(3)).unwrap();
+        let half = (Real::one() / Real::from(2_i8)).unwrap();
+        let third = (Real::one() / Real::from(3_i8)).unwrap();
+        let tiny = Real::from(2_i8).powi_i64(-600).unwrap();
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let Classification::Decided(parameters) =
+                recursive_projective_polynomial_unit_parameters(
+                    &field,
+                    recursive_quadratic_real_polynomial(
+                        &field,
+                        &[-half.clone(), Real::zero(), Real::zero(), Real::one()],
+                    )
+                    .unwrap(),
+                    &policy,
+                )
+                .unwrap()
+            else {
+                panic!("the source parameter must retain its unique cubic root")
+            };
+            let root = parameters[0].as_recursive_projective().unwrap();
+            assert!(root.polynomial_authority().is_some());
+            for gauge in [Real::one(), -Real::from(2_i8).sqrt().unwrap(), Real::pi()] {
+                // P(t)=(t^3,t). The selected point's x coordinate is 1/2,
+                // although no root endpoint is exact and its boxes cannot
+                // certify equality. Negative homogeneous gauges are valid.
+                let source = RationalBezier2::try_new(
+                    vec![
+                        Point2::new(Real::zero(), Real::zero()),
+                        Point2::new(Real::zero(), third.clone()),
+                        Point2::new(Real::zero(), &third * Real::from(2_i8)),
+                        Point2::new(Real::one(), Real::one()),
+                    ],
+                    vec![gauge; 4],
+                )
+                .unwrap();
+                let point = BezierAnalyticParallelPoint2::new_recursive_projective(
+                    source.parallel_left(Real::zero()).unwrap(),
+                    root.clone(),
+                    &policy,
+                )
+                .translated(&Real::pi(), &Real::e(), &policy)
+                .unwrap();
+                for (offset, expected) in [
+                    (Real::zero(), std::cmp::Ordering::Equal),
+                    (tiny.clone(), std::cmp::Ordering::Less),
+                    (-tiny.clone(), std::cmp::Ordering::Greater),
+                ] {
+                    let value = &half + Real::pi() + offset;
+                    let outcome = crate::policy::resolve_certified_value(&policy, |attempt| {
+                        attempt.bounded_exact_predicate_pass(|| {
+                            point.axis_coordinate_order_to_real(Axis2::X, &value, attempt)
+                        })
+                    });
+                    assert_eq!(outcome.value, Classification::Decided(expected));
+                    assert_eq!(outcome.certainty, CurveCertainty::Certified);
+                    assert!(point.data.recursive_projective_point.get().is_none());
+                }
+            }
+        }
     }
 
     #[test]
