@@ -54789,11 +54789,16 @@ fn recursive_foreign_base_root(
         )>,
     >,
 > {
+    let Some(reduced) =
+        dense_reduce_selected_tuple_relations(polynomial.clone(), &target_base.sources)
+    else {
+        return Ok(Classification::Decided(None));
+    };
     for (reference, first) in [
         (&target_base.first_speed_squared, true),
         (&target_base.second_speed_squared, false),
     ] {
-        if let Some(scale) = dense_positive_square_root_scale(&polynomial, reference) {
+        if let Some(scale) = dense_positive_square_root_scale(&reduced, reference) {
             return Ok(Classification::Decided(
                 recursive_quadratic_base_generator(target_base, first)
                     .and_then(|root| root.scale(&scale))
@@ -54802,13 +54807,64 @@ fn recursive_foreign_base_root(
         }
     }
     if let Some((prior_polynomial, prior_root)) = prior
-        && let Some(scale) = dense_positive_square_root_scale(&polynomial, prior_polynomial)
+        && let Some(prior_polynomial) =
+            dense_reduce_selected_tuple_relations(prior_polynomial.clone(), &target_base.sources)
+        && let Some(scale) = dense_positive_square_root_scale(&reduced, &prior_polynomial)
     {
         return Ok(Classification::Decided(
             prior_root.scale(&scale).map(|root| (field, root)),
         ));
     }
-    let Some(radicand) = recursive_quadratic_rational_value(target_base, polynomial) else {
+    // A positive generator can already be a polynomial in one retained
+    // source axis. Raw and regularized PH tangents often differ by such a
+    // factor. Replay its square and select its sign at the existing tuple;
+    // the polynomial's authored sign is not the positive radical sheet.
+    // Preserve the polynomial square before reduction by the selected source
+    // relations: a reduced square need not be a square in the polynomial ring.
+    let rank = polynomial.dimensions().len();
+    if rank > 0
+        && polynomial
+            .dimensions()
+            .iter()
+            .filter(|degree| **degree > 1)
+            .count()
+            <= 1
+    {
+        let root = policy.bounded_exact_predicate_pass(|| -> CurveResult<Option<_>> {
+            let strict = policy.strict_counterpart();
+            let Classification::Decided(Some(root)) =
+                polynomial_square_root(polynomial.coefficients(), &strict)?
+            else {
+                return Ok(None);
+            };
+            let axis = polynomial
+                .dimensions()
+                .iter()
+                .position(|degree| *degree > 1)
+                .unwrap_or(0);
+            let Some(root) = DenseTensorPolynomial::from_axis_polynomial(rank, axis, &root)
+                .and_then(|root| recursive_quadratic_rational_value(target_base, root))
+                .and_then(|root| field.lift(&root))
+            else {
+                return Ok(None);
+            };
+            Ok(match root.sign(&strict)? {
+                Classification::Decided(RealSign::Positive | RealSign::Zero) => Some(root),
+                Classification::Decided(RealSign::Negative) => root.scale(&Real::from(-1_i8)),
+                Classification::Uncertain(_) => None,
+            })
+        })?;
+        if let Some(root) = root {
+            #[cfg(feature = "dispatch-trace")]
+            hyperreal::dispatch_trace::record(
+                "hypercurve",
+                "recursive-field-generator",
+                "retained-polynomial-square-root",
+            );
+            return Ok(Classification::Decided(Some((field, root))));
+        }
+    }
+    let Some(radicand) = recursive_quadratic_rational_value(target_base, reduced) else {
         return Ok(Classification::Decided(None));
     };
     let Some(radicand) = field.lift(&radicand) else {
@@ -54857,9 +54913,7 @@ fn recursive_embed_foreign_projective_point(
 > {
     let (source_base, source_path) = point.denominator.field().base_and_extension_path();
     let embed_polynomial = |polynomial: &DenseTensorPolynomial| {
-        dense_tensor_embed_axes(polynomial, target_base.sources.len(), &axes).and_then(
-            |polynomial| dense_reduce_selected_tuple_relations(polynomial, &target_base.sources),
-        )
+        dense_tensor_embed_axes(polynomial, target_base.sources.len(), &axes)
     };
     let Some(first_polynomial) = embed_polynomial(&source_base.first_speed_squared) else {
         return Ok(Classification::Decided(None));
@@ -56863,6 +56917,23 @@ impl BezierRecursiveQuadraticValue2 {
                 "complete-compact-real-witness",
             );
             return Ok(Classification::Decided(sign));
+        }
+        // One selected source already owns a univariate sign authority.
+        // Its two positive radicals can replay through that authority before
+        // a bounded pass declines or a complete pass refines independent boxes.
+        if let BezierRecursiveQuadraticValueData2::Base {
+            field, expression, ..
+        } = self.data.as_ref()
+            && field.sources.len() == 1
+            && let decided @ Classification::Decided(_) = dense_two_positive_square_root_sum_sign(
+                expression,
+                &field.first_speed_squared,
+                &field.second_speed_squared,
+                &field.sources,
+                policy,
+            )?
+        {
+            return Ok(decided);
         }
         if policy.has_bounded_exact_predicate_budget() {
             return Ok(Classification::Uncertain(UncertaintyReason::Predicate));
@@ -62978,7 +63049,43 @@ fn recursive_projective_point_source_in_field(
         }
         BezierRecursiveProjectivePointSource2::Recursive(point) => point
             .lifted_to(field)
-            .or_else(|| point.embedded_to_equivalent_field(field)),
+            .or_else(|| point.embedded_to_equivalent_field(field))
+            .or_else(|| {
+                // The selected axes may agree even when one frame stores a
+                // polynomial speed as a radical. Reuse the existing foreign
+                // base replay, accepting only an embedding in this very field.
+                // New axes or generators belong to the explicit join path.
+                let (source_base, _) = point.denominator.field().base_and_extension_path();
+                let (target_base, _) = field.base_and_extension_path();
+                let axes = source_base
+                    .sources
+                    .iter()
+                    .map(|source| {
+                        target_base
+                            .sources
+                            .iter()
+                            .position(|target| target == source)
+                    })
+                    .collect::<Option<Vec<_>>>()?;
+                let strict = CurveContext::STRICT;
+                match strict
+                    .bounded_exact_predicate_pass(|| {
+                        recursive_embed_foreign_projective_point(
+                            point,
+                            target_base,
+                            axes,
+                            field.clone(),
+                            &strict,
+                        )
+                    })
+                    .ok()?
+                {
+                    Classification::Decided(Some((target, point))) if target.same_field(field) => {
+                        Some(point)
+                    }
+                    _ => None,
+                }
+            }),
     }
 }
 
@@ -69095,6 +69202,28 @@ fn dense_polynomial_tuple_sign_owned(
         Classification::Decided(false) => {}
         Classification::Uncertain(reason) => {
             return Ok(Classification::Uncertain(reason));
+        }
+    }
+    if let [source] = sources.as_slice() {
+        let result =
+            match BezierParameter2::from_algebraic_root_representation_unbounded(source, policy)? {
+                Classification::Decided(parameter) => signed_coefficients_at_parameter(
+                    polynomial.coefficients().to_vec(),
+                    &parameter,
+                    policy,
+                )?,
+                Classification::Uncertain(reason) => Classification::Uncertain(reason),
+            };
+        if result.is_decided() || policy.has_bounded_exact_predicate_budget() {
+            #[cfg(feature = "dispatch-trace")]
+            if result.is_decided() {
+                hyperreal::dispatch_trace::record(
+                    "hypercurve",
+                    "dense-polynomial-tuple-sign",
+                    "retained-univariate-parameter",
+                );
+            }
+            return Ok(result);
         }
     }
     let Some(value) = dense_tensor_with_output_axis(&polynomial) else {
@@ -149714,6 +149843,197 @@ mod conversion_tests {
             &value.data
         ));
         assert!(Arc::ptr_eq(&one.square().unwrap().data, &one.data));
+    }
+
+    #[test]
+    fn retained_polynomial_base_roots_select_the_nonnegative_sheet_on_any_axis() {
+        let half = (Real::one() / Real::from(2_i8)).unwrap();
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            for parameter in [
+                BezierParameter2::Exact((Real::one() / Real::from(4_i8)).unwrap()),
+                BezierParameter2::Exact(half.clone()),
+                algebraic_parameter(vec![-half.clone(), Real::zero(), Real::one()]),
+            ] {
+                let sources = vec![
+                    bezier_parameter_root_representation(&BezierParameter2::Exact(Real::pi())),
+                    bezier_parameter_root_representation(&parameter),
+                ];
+                let one = DenseTensorPolynomial::try_new(vec![1, 1], vec![Real::one()]).unwrap();
+                let target =
+                    BezierRecursiveQuadraticField2::base(sources.clone(), one.clone(), one.clone())
+                        .unwrap();
+                let square = DenseTensorPolynomial::from_axis_polynomial(
+                    2,
+                    1,
+                    &[Real::one(), Real::from(-4_i8), Real::from(4_i8)],
+                )
+                .unwrap();
+                let source = BezierRecursiveQuadraticField2::base(sources, square, one).unwrap();
+                let source_base = source.base_and_extension_path().0;
+                let point = BezierRecursiveQuadraticProjectivePoint2 {
+                    x: recursive_quadratic_base_generator(&source_base, true).unwrap(),
+                    y: source.constant(Real::zero()).unwrap(),
+                    denominator: source.constant(Real::one()).unwrap(),
+                };
+                let embedded = recursive_projective_point_source_in_field(
+                    &target,
+                    &BezierRecursiveProjectivePointSource2::Recursive(point),
+                )
+                .expect("a polynomial square root needs no additional field generator");
+                assert!(embedded.denominator.field().same_field(&target));
+                let base = target.base_and_extension_path().0;
+                let signed_root = recursive_quadratic_rational_value(
+                    &base,
+                    DenseTensorPolynomial::from_axis_polynomial(
+                        2,
+                        1,
+                        &[Real::one(), Real::from(-2_i8)],
+                    )
+                    .unwrap(),
+                )
+                .unwrap();
+                let sign = policy
+                    .strict_predicate_pass(|| signed_root.sign(&policy))
+                    .unwrap();
+                let expected = match sign {
+                    Classification::Decided(RealSign::Negative) => {
+                        signed_root.scale(&Real::from(-1_i8)).unwrap()
+                    }
+                    Classification::Decided(RealSign::Zero | RealSign::Positive) => signed_root,
+                    Classification::Uncertain(_) => {
+                        panic!("the selected polynomial sign is separated or exactly zero")
+                    }
+                };
+                assert_eq!(
+                    policy
+                        .strict_predicate_pass(|| embedded
+                            .x
+                            .subtract(&expected)
+                            .unwrap()
+                            .sign(&policy))
+                        .unwrap(),
+                    Classification::Decided(RealSign::Zero)
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn analytic_axis_order_reuses_polynomial_speed_across_reduced_tangent_fields() {
+        let fraction = |n: i8, d: i8| (Real::from(n) / Real::from(d)).unwrap();
+        let source = RationalBezier2::try_new(
+            vec![
+                Point2::new(Real::zero(), Real::zero()),
+                Point2::new(Real::zero(), Real::zero()),
+                Point2::new(Real::zero(), Real::zero()),
+                Point2::new(fraction(1, 30), Real::zero()),
+                Point2::new(fraction(2, 15), fraction(1, 10)),
+                Point2::new(fraction(2, 15), fraction(1, 2)),
+            ],
+            vec![Real::one(); 6],
+        )
+        .unwrap();
+        let image = RationalBezier2::try_new(
+            vec![
+                Point2::new(Real::zero(), Real::zero()),
+                Point2::new(Real::zero(), fraction(1, 3)),
+                Point2::new(Real::zero(), fraction(2, 3)),
+                Point2::new(Real::one(), Real::one()),
+            ],
+            vec![Real::one(); 4],
+        )
+        .unwrap();
+        let tiny = Real::from(2_i8).powi_i64(-600).unwrap();
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let alpha = algebraic_parameter(vec![
+                -fraction(1, 2),
+                Real::zero(),
+                Real::zero(),
+                Real::one(),
+            ]);
+            let parallel = source.parallel_left(fraction(1, 20)).unwrap();
+            let raw = BezierAnalyticParallelPoint2::new(parallel.clone(), alpha.clone(), &policy);
+            let reduced = BezierAnalyticParallelPoint2::new_with_regularized_tangent_distance(
+                parallel,
+                alpha,
+                Arc::new(BezierAnalyticParallelTangentField2 {
+                    x: vec![Real::one(), Real::zero(), -Real::one()],
+                    y: vec![Real::zero(), Real::from(2_i8)],
+                }),
+                Real::zero(),
+                &policy,
+            );
+            let Classification::Decided(Some(raw_coordinates)) =
+                raw.recursive_projective_point(&policy).unwrap()
+            else {
+                panic!("the raw hodograph retains its selected positive speed")
+            };
+            let Classification::Decided(Some(reduced_coordinates)) =
+                reduced.recursive_projective_point(&policy).unwrap()
+            else {
+                panic!("the regularized frame retains the same selected source")
+            };
+            let field = raw_coordinates.denominator.field();
+            assert!(!recursive_quadratic_bases_equivalent(
+                &field.base_and_extension_path().0,
+                &reduced_coordinates
+                    .denominator
+                    .field()
+                    .base_and_extension_path()
+                    .0,
+            ));
+            let embedded = recursive_projective_point_source_in_field(
+                &field,
+                &BezierRecursiveProjectivePointSource2::Recursive(reduced_coordinates),
+            )
+            .expect(
+                "removing the t^2 tangent factor must preserve an embedding in the original field",
+            );
+            assert!(embedded.denominator.field().same_field(&field));
+            let Classification::Decided(parameters) =
+                recursive_projective_polynomial_unit_parameters(
+                    &field,
+                    vec![
+                        raw_coordinates.x.scale(&Real::from(-1_i8)).unwrap(),
+                        field.constant(Real::zero()).unwrap(),
+                        field.constant(Real::zero()).unwrap(),
+                        raw_coordinates.denominator.clone(),
+                    ],
+                    &policy,
+                )
+                .unwrap()
+            else {
+                panic!("the later contact retains its native coefficient field")
+            };
+            let beta = parameters[0].as_recursive_projective().unwrap();
+            for (shift, expected) in [
+                (Real::zero(), std::cmp::Ordering::Equal),
+                (tiny.clone(), std::cmp::Ordering::Greater),
+                (-tiny.clone(), std::cmp::Ordering::Less),
+            ] {
+                let query = BezierAnalyticParallelPoint2::new_recursive_projective(
+                    image.parallel_left(Real::zero()).unwrap(),
+                    beta.clone(),
+                    &policy,
+                )
+                .translated(&shift, &Real::zero(), &policy)
+                .unwrap();
+                let outcome = crate::policy::resolve_certified_value(&policy, |attempt| {
+                    attempt
+                        .bounded_exact_predicate_pass(|| {
+                            query.retained_parameter_axis_order_to_point(
+                                &CurvePoint2::from(reduced.clone()),
+                                Axis2::X,
+                                attempt,
+                            )
+                        })
+                        .unwrap()
+                });
+                assert_eq!(outcome.value, Classification::Decided(Some(expected)));
+                assert_eq!(outcome.certainty, CurveCertainty::Certified);
+                assert!(query.data.recursive_projective_point.get().is_none());
+            }
+        }
     }
 
     #[test]
