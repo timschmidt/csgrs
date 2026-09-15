@@ -810,7 +810,9 @@ fn retained_probe_outer_bounds(
                     break;
                 }
             };
-            let bounds = bounds.certified_rational_outer_envelope().unwrap_or(bounds);
+            let bounds = bounds
+                .certified_rational_outer_envelope(refinement_steps)
+                .unwrap_or(bounds);
             accumulated = Some(match accumulated {
                 None => bounds,
                 Some(ref accumulated) => match accumulated.union(&bounds, &CurveContext::STRICT) {
@@ -9690,7 +9692,9 @@ impl<'a> CurveRegionBooleanContext<'a> {
                         break;
                     }
                 };
-                let bounds = bounds.certified_rational_outer_envelope().unwrap_or(bounds);
+                let bounds = bounds
+                    .certified_rational_outer_envelope(refinement_steps)
+                    .unwrap_or(bounds);
                 accumulated = Some(match accumulated {
                     None => bounds,
                     Some(ref accumulated) => {
@@ -12684,7 +12688,11 @@ fn carrier_optional_outer_bounds_refined(
             .geometry
             .certified_outer_bounds_refined(refinement_steps, policy),
     };
-    bounds.map(|bounds| bounds.certified_rational_outer_envelope().unwrap_or(bounds))
+    bounds.map(|bounds| {
+        bounds
+            .certified_rational_outer_envelope(refinement_steps)
+            .unwrap_or(bounds)
+    })
 }
 
 fn build_region_carriers(
@@ -13293,8 +13301,8 @@ fn algebraic_chord_carrier_parameter_cmp(
             continue;
         };
         let (Some(first_bounds), Some(second_bounds)) = (
-            first_bounds.certified_rational_outer_envelope(),
-            second_bounds.certified_rational_outer_envelope(),
+            first_bounds.certified_rational_outer_envelope(refinement_steps),
+            second_bounds.certified_rational_outer_envelope(refinement_steps),
         ) else {
             continue;
         };

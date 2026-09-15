@@ -389,16 +389,20 @@ impl Aabb2 {
     /// `hyperreal`; choosing the lower enclosure for `min` and the upper
     /// enclosure for `max` can only widen this box.  This is therefore safe in
     /// STRICT as well as APPROXIMATE_512 and does not consume an approximate
-    /// equality decision.  The modest fixed precision keeps broad-phase boxes
-    /// useful without importing large dyadic denominators into later exact
-    /// predicates.
-    pub(crate) fn certified_rational_outer_envelope(&self) -> Option<Self> {
-        const PRECISION: i32 = -32;
+    /// equality decision. Initial queries use 32-bit computable precision;
+    /// further refinement increases it without imposing a fixed ceiling on
+    /// separation. Exact rational coordinates retain their original values.
+    /// Unrepresentable precision requests decline this optional conversion.
+    pub(crate) fn certified_rational_outer_envelope(
+        &self,
+        refinement_steps: usize,
+    ) -> Option<Self> {
+        let precision = -i32::try_from(refinement_steps.max(32)).ok()?;
 
-        let [min_x, _] = self.min_x().certified_dyadic_interval(PRECISION)?;
-        let [min_y, _] = self.min_y().certified_dyadic_interval(PRECISION)?;
-        let [_, max_x] = self.max_x().certified_dyadic_interval(PRECISION)?;
-        let [_, max_y] = self.max_y().certified_dyadic_interval(PRECISION)?;
+        let [min_x, _] = self.min_x().certified_dyadic_interval(precision)?;
+        let [min_y, _] = self.min_y().certified_dyadic_interval(precision)?;
+        let [_, max_x] = self.max_x().certified_dyadic_interval(precision)?;
+        let [_, max_y] = self.max_y().certified_dyadic_interval(precision)?;
         Some(Self::new_unchecked(
             Point2::new(Real::new(min_x), Real::new(min_y)),
             Point2::new(Real::new(max_x), Real::new(max_y)),

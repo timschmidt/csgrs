@@ -75117,24 +75117,15 @@ impl BezierAlgebraicChord2 {
                 return Ok(Classification::Uncertain(reason));
             }
         };
-        if local_only
-            && let (Some(start), Some(end)) = (
-                start.certified_rational_outer_envelope(),
-                end.certified_rational_outer_envelope(),
-            )
-        {
-            return Ok(start.union(&end, &CurveContext::STRICT));
-        }
-        let direct = start.union(&end, &CurveContext::STRICT);
-        if matches!(direct, Classification::Decided(_)) {
-            return Ok(direct);
-        }
-        let Some(start) = start.certified_rational_outer_envelope() else {
-            return Ok(direct);
-        };
-        let Some(end) = end.certified_rational_outer_envelope() else {
-            return Ok(direct);
-        };
+        // Endpoint bounds already certify the geometry. Their union needs
+        // conservative enclosures, without ordering unrelated exact scalar
+        // expressions tightly. Honor refinement so close chords can separate.
+        let start = start
+            .certified_rational_outer_envelope(refinement_steps)
+            .unwrap_or(start);
+        let end = end
+            .certified_rational_outer_envelope(refinement_steps)
+            .unwrap_or(end);
         Ok(start.union(&end, &CurveContext::STRICT))
     }
 
@@ -84341,29 +84332,31 @@ fn algebraic_chord_strict_coordinate_between(
         } else {
             (second, first)
         };
-        let separated_midpoint =
-            |lower_bounds: Aabb2, upper_bounds: Aabb2| -> CurveResult<Option<Real>> {
-                let lower_bounds = lower_bounds
-                    .certified_rational_outer_envelope()
-                    .unwrap_or(lower_bounds);
-                let upper_bounds = upper_bounds
-                    .certified_rational_outer_envelope()
-                    .unwrap_or(upper_bounds);
-                let lower_upper = match parameter_axis.axis {
-                    Axis2::X => lower_bounds.max().x(),
-                    Axis2::Y => lower_bounds.max().y(),
-                };
-                let upper_lower = match parameter_axis.axis {
-                    Axis2::X => upper_bounds.min().x(),
-                    Axis2::Y => upper_bounds.min().y(),
-                };
-                Ok(
-                    (compare_reals(lower_upper, upper_lower, &CurveContext::STRICT)
-                        == Some(std::cmp::Ordering::Less))
-                    .then(|| (lower_upper + upper_lower) / Real::from(2_i8))
-                    .transpose()?,
-                )
+        let separated_midpoint = |lower_bounds: Aabb2,
+                                  upper_bounds: Aabb2,
+                                  refinement_steps: usize|
+         -> CurveResult<Option<Real>> {
+            let lower_bounds = lower_bounds
+                .certified_rational_outer_envelope(refinement_steps)
+                .unwrap_or(lower_bounds);
+            let upper_bounds = upper_bounds
+                .certified_rational_outer_envelope(refinement_steps)
+                .unwrap_or(upper_bounds);
+            let lower_upper = match parameter_axis.axis {
+                Axis2::X => lower_bounds.max().x(),
+                Axis2::Y => lower_bounds.max().y(),
             };
+            let upper_lower = match parameter_axis.axis {
+                Axis2::X => upper_bounds.min().x(),
+                Axis2::Y => upper_bounds.min().y(),
+            };
+            Ok(
+                (compare_reals(lower_upper, upper_lower, &CurveContext::STRICT)
+                    == Some(std::cmp::Ordering::Less))
+                .then(|| (lower_upper + upper_lower) / Real::from(2_i8))
+                .transpose()?,
+            )
+        };
         for refinement_steps in [0, 2, 4, 8, 16, 32, 64, 128, 256, 512] {
             let (Classification::Decided(lower_bounds), Classification::Decided(upper_bounds)) = (
                 algebraic_chord_endpoint_local_bounds_refined(lower, refinement_steps, policy),
@@ -84371,7 +84364,9 @@ fn algebraic_chord_strict_coordinate_between(
             ) else {
                 continue;
             };
-            if let Some(midpoint) = separated_midpoint(lower_bounds, upper_bounds)? {
+            if let Some(midpoint) =
+                separated_midpoint(lower_bounds, upper_bounds, refinement_steps)?
+            {
                 return Ok(Classification::Decided(midpoint));
             }
         }
@@ -84386,7 +84381,9 @@ fn algebraic_chord_strict_coordinate_between(
             ) else {
                 continue;
             };
-            if let Some(midpoint) = separated_midpoint(lower_bounds, upper_bounds)? {
+            if let Some(midpoint) =
+                separated_midpoint(lower_bounds, upper_bounds, refinement_steps)?
+            {
                 #[cfg(feature = "dispatch-trace")]
                 hyperreal::dispatch_trace::record(
                     "hypercurve",
@@ -134842,6 +134839,98 @@ mod conversion_tests {
                 retained.representative_point(&policy).unwrap(),
                 Classification::Decided(Point2::from_values(2, 0).into()),
             );
+        }
+    }
+
+    #[test]
+    fn conservative_chord_envelopes_preserve_requested_refinement() {
+        for coordinate in [Real::from(2_i8).sqrt().unwrap(), Real::pi()] {
+            for gap_bits in [80_usize, 600] {
+                let gap = Real::from(2_i8).powi_i64(-(gap_bits as i64)).unwrap();
+                for axis in [Axis2::X, Axis2::Y] {
+                    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+                        let chord = |coordinate: Real| {
+                            let (start, end, direction) = match axis {
+                                Axis2::X => (
+                                    Point2::new(coordinate.clone(), Real::zero()),
+                                    Point2::new(coordinate, Real::one()),
+                                    BezierAlgebraicChordAxisDirection2::PositiveY,
+                                ),
+                                Axis2::Y => (
+                                    Point2::new(Real::zero(), coordinate.clone()),
+                                    Point2::new(Real::one(), coordinate),
+                                    BezierAlgebraicChordAxisDirection2::PositiveX,
+                                ),
+                            };
+                            BezierAlgebraicChord2::from_certified_axis_aligned_endpoints(
+                                start.into(),
+                                end.into(),
+                                direction,
+                                &policy,
+                            )
+                        };
+                        let first = chord(coordinate.clone());
+                        let second = chord(&coordinate + &gap);
+                        for reversed in [false, true] {
+                            let chords = if reversed {
+                                [first.reversed(), second.reversed()]
+                            } else {
+                                [first.clone(), second.clone()]
+                            };
+                            for local_only in [true, false] {
+                                let bounds = |steps| {
+                                    chords.each_ref().map(|chord| {
+                                        let Classification::Decided(bounds) = chord
+                                            .conservative_bounds_refined_impl(
+                                                steps, &policy, local_only,
+                                            )
+                                            .unwrap()
+                                        else {
+                                            panic!(
+                                                "exact chord endpoints have finite outer bounds"
+                                            );
+                                        };
+                                        bounds
+                                    })
+                                };
+                                let coarse = bounds(0);
+                                let fine = bounds(gap_bits + 64);
+                                assert_eq!(
+                                    fine[0].overlaps(&fine[1], &CurveContext::STRICT),
+                                    Classification::Decided(false),
+                                    "{axis:?}, gap 2^-{gap_bits}, local={local_only}, reversed={reversed}",
+                                );
+                                for ((coarse, fine), exact) in coarse
+                                    .iter()
+                                    .zip(&fine)
+                                    .zip([coordinate.clone(), &coordinate + &gap])
+                                {
+                                    for corner in [fine.min(), fine.max()] {
+                                        assert!(corner.x().exact_rational_ref().is_some());
+                                        assert!(corner.y().exact_rational_ref().is_some());
+                                        assert_eq!(
+                                            coarse.contains_point(corner, &CurveContext::STRICT),
+                                            Classification::Decided(true),
+                                        );
+                                    }
+                                    let (lower, upper) = match axis {
+                                        Axis2::X => (fine.min_x(), fine.max_x()),
+                                        Axis2::Y => (fine.min_y(), fine.max_y()),
+                                    };
+                                    assert!(upper - lower < gap);
+                                    // A separately requested tighter scalar enclosure must
+                                    // lie inside the chord's conservative coordinate band.
+                                    let [inner_lower, inner_upper] = exact
+                                        .certified_dyadic_interval(-((gap_bits + 96) as i32))
+                                        .unwrap();
+                                    assert!(lower <= &Real::new(inner_lower));
+                                    assert!(upper >= &Real::new(inner_upper));
+                                }
+                            }
+                        }
+                    }
+                }
+            }
         }
     }
 
