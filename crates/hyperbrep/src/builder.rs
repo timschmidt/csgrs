@@ -3533,9 +3533,7 @@ fn validate_revolution_profile_radius(profile: &[Point2]) -> Result<(), Construc
 
 fn normalize_revolution_contour(contour: &Contour2) -> Result<Contour2, ConstructionError> {
     let contour = normalize_contour(contour, true)?;
-    let bounds = match Aabb2::from_contour(&contour, &CurveContext::STRICT)
-        .map_err(GeometryError::from)?
-    {
+    let bounds = match Aabb2::from_contour(&contour).map_err(GeometryError::from)? {
         Classification::Decided(bounds) => bounds,
         Classification::Uncertain(reason) => {
             return Err(
