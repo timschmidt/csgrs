@@ -82674,6 +82674,15 @@ fn algebraic_chord_point_coordinate_order_by_refinement(
             return Classification::Decided(order);
         }
     }
+    for (candidate, other, reverse) in [(first, second, false), (second, first, true)] {
+        if let CurvePoint2(CurvePointData2::AnalyticParallel(candidate)) = candidate
+            && let Ok(Classification::Decided(Some(order))) = policy.strict_predicate_pass(|| {
+                candidate.retained_parameter_axis_order_to_point(other, axis, policy)
+            })
+        {
+            return Classification::Decided(if reverse { order.reverse() } else { order });
+        }
+    }
     if policy.has_bounded_exact_predicate_budget() {
         return Classification::Uncertain(UncertaintyReason::Ordering);
     }
@@ -93753,6 +93762,20 @@ impl BezierAnalyticParallelPoint2 {
         &self,
         policy: &CurveContext,
     ) -> CurveResult<Classification<Option<BezierRecursiveQuadraticProjectivePoint2>>> {
+        if policy.has_bounded_exact_predicate_budget()
+            && match &self.data.parameter {
+                BezierAnalyticParallelPointParameter2::SelectedFiber(_) => true,
+                BezierAnalyticParallelPointParameter2::RecursiveProjective(parameter) => {
+                    parameter.projective_scalar().is_none()
+                }
+                BezierAnalyticParallelPointParameter2::Bezier(_) => false,
+            }
+        {
+            // A local root remains a valid point without global coordinate
+            // publication. Speculative field imports must not promote it
+            // before a predicate can reuse its retained defining relation.
+            return Ok(Classification::Uncertain(UncertaintyReason::Predicate));
+        }
         let parameter = match &self.data.parameter {
             BezierAnalyticParallelPointParameter2::Bezier(parameter) => parameter.clone(),
             BezierAnalyticParallelPointParameter2::SelectedFiber(parameter) => {
@@ -94679,6 +94702,107 @@ impl BezierAnalyticParallelPoint2 {
             value,
             policy,
         )
+    }
+
+    /// Compares a rational source image at a locally retained root with a
+    /// point already expressible in that root's coefficient field. The
+    /// homogeneous difference is a polynomial in the selected parameter;
+    /// its defining relation and source pole proof remain authoritative.
+    fn retained_parameter_axis_order_to_point(
+        &self,
+        other: &CurvePoint2,
+        axis: Axis2,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<Option<std::cmp::Ordering>>> {
+        if !policy.accepts_retained_policy(self.data.policy)
+            || self.data.parallel.distance().zero_status() != ZeroKnowledge::Zero
+            || self.data.tangent_distance.zero_status() != ZeroKnowledge::Zero
+        {
+            return Ok(Classification::Decided(None));
+        }
+        let BezierAnalyticParallelPointParameter2::RecursiveProjective(parameter) =
+            &self.data.parameter
+        else {
+            return Ok(Classification::Decided(None));
+        };
+        let Some(authority) = parameter.polynomial_authority() else {
+            return Ok(Classification::Decided(None));
+        };
+        // Only import the older point. Requiring a common field containing
+        // the query's Cartesian image would first forget the very local
+        // root/coefficient relation this predicate is meant to preserve.
+        let other_source = match policy
+            .bounded_exact_predicate_pass(|| recursive_projective_point_source(other, policy))?
+        {
+            Classification::Decided(Some(source)) => source,
+            Classification::Decided(None) => return Ok(Classification::Decided(None)),
+            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+        };
+        let Some(other_coordinates) =
+            recursive_projective_point_source_in_field(&authority.field, &other_source)
+        else {
+            return Ok(Classification::Decided(None));
+        };
+        let other_weight_sign = match recursive_projective_evidence_denominator_sign(other, policy)?
+        {
+            Classification::Decided(RealSign::Zero) => {
+                return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
+            }
+            Classification::Decided(sign) => sign,
+            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+        };
+        let source = self.data.parallel.source_power_basis()?;
+        let unit_weight = [Real::one()];
+        let weight = source.weight.unwrap_or(&unit_weight);
+        let weight_sign = match self.parameter_polynomial_sign(weight, policy)? {
+            Classification::Decided(RealSign::Zero) => {
+                return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
+            }
+            Classification::Decided(sign) => sign,
+            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+        };
+        let (coordinate, translation, other_coordinate) = match axis {
+            Axis2::X => (
+                source.x_numerator,
+                &self.data.translation_x,
+                &other_coordinates.x,
+            ),
+            Axis2::Y => (
+                source.y_numerator,
+                &self.data.translation_y,
+                &other_coordinates.y,
+            ),
+        };
+        let coordinate = polynomial_add(coordinate, &polynomial_scale(weight, translation));
+        let zero = Real::zero();
+        let difference = (0..coordinate.len().max(weight.len()))
+            .map(|power| {
+                other_coordinates
+                    .denominator
+                    .scale(coordinate.get(power).unwrap_or(&zero))?
+                    .subtract(&other_coordinate.scale(weight.get(power).unwrap_or(&zero))?)
+            })
+            .collect::<Option<Vec<_>>>();
+        let Some(difference) = difference else {
+            return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+        };
+        Ok(parameter
+            .recursive_polynomial_sign(&difference, policy)?
+            .map(|sign| {
+                #[cfg(feature = "dispatch-trace")]
+                hyperreal::dispatch_trace::record(
+                    "hypercurve",
+                    "algebraic-chord-point-axis-order",
+                    "retained-coefficient-field",
+                );
+                Some(
+                    match product_sign(sign, product_sign(weight_sign, other_weight_sign)) {
+                        RealSign::Negative => std::cmp::Ordering::Less,
+                        RealSign::Zero => std::cmp::Ordering::Equal,
+                        RealSign::Positive => std::cmp::Ordering::Greater,
+                    },
+                )
+            }))
     }
 
     fn parameter_polynomial_sign(
@@ -149590,6 +149714,140 @@ mod conversion_tests {
             &value.data
         ));
         assert!(Arc::ptr_eq(&one.square().unwrap().data, &one.data));
+    }
+
+    #[test]
+    fn analytic_axis_order_replays_a_local_root_in_the_other_points_field() {
+        let half = (Real::one() / Real::from(2_i8)).unwrap();
+        let third = (Real::one() / Real::from(3_i8)).unwrap();
+        let tiny = Real::from(2_i8).powi_i64(-600).unwrap();
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let alpha = algebraic_parameter(vec![-half.clone(), Real::zero(), Real::one()]);
+            let first = BezierAnalyticParallelPoint2::new(
+                QuadraticBezier2::new(
+                    Point2::new(Real::zero(), Real::zero()),
+                    Point2::new(half.clone(), Real::zero()),
+                    Point2::new(Real::one(), Real::zero()),
+                )
+                .parallel_left(Real::one())
+                .unwrap(),
+                alpha,
+                &policy,
+            );
+            let Classification::Decided(Some(first_coordinates)) =
+                first.recursive_projective_point(&policy).unwrap()
+            else {
+                panic!("the first point retains its selected parameter and speed field")
+            };
+            let field = first_coordinates.denominator.field();
+            // beta^3 = alpha, in the coefficient field that already owns
+            // the first point (alpha,1). The second point is (beta^3,beta).
+            let Classification::Decided(parameters) =
+                recursive_projective_polynomial_unit_parameters(
+                    &field,
+                    vec![
+                        first_coordinates.x.scale(&Real::from(-1_i8)).unwrap(),
+                        field.constant(Real::zero()).unwrap(),
+                        field.constant(Real::zero()).unwrap(),
+                        first_coordinates.denominator.clone(),
+                    ],
+                    &policy,
+                )
+                .unwrap()
+            else {
+                panic!("the later root must retain the first point's coefficient field")
+            };
+            let beta = parameters[0].as_recursive_projective().unwrap();
+            assert!(beta.polynomial_authority().is_some());
+            for gauge in [Real::one(), -Real::from(2_i8).sqrt().unwrap()] {
+                let source = RationalBezier2::try_new(
+                    vec![
+                        Point2::new(Real::zero(), Real::zero()),
+                        Point2::new(Real::zero(), third.clone()),
+                        Point2::new(Real::zero(), &third * Real::from(2_i8)),
+                        Point2::new(Real::one(), Real::one()),
+                    ],
+                    vec![gauge; 4],
+                )
+                .unwrap();
+                for (shift, expected) in [
+                    (Real::zero(), std::cmp::Ordering::Equal),
+                    (tiny.clone(), std::cmp::Ordering::Greater),
+                    (-tiny.clone(), std::cmp::Ordering::Less),
+                ] {
+                    let second = BezierAnalyticParallelPoint2::new_recursive_projective(
+                        source.parallel_left(Real::zero()).unwrap(),
+                        beta.clone(),
+                        &policy,
+                    )
+                    .translated(&shift, &Real::zero(), &policy)
+                    .unwrap();
+                    assert!(matches!(
+                        policy
+                            .bounded_exact_predicate_pass(
+                                || second.recursive_projective_point(&policy)
+                            )
+                            .unwrap(),
+                        Classification::Uncertain(UncertaintyReason::Predicate),
+                    ));
+                    let first_point = CurvePoint2::from(first.clone());
+                    let second_point = CurvePoint2::from(second.clone());
+                    for (left, right, expected) in [
+                        (&second_point, &first_point, expected),
+                        (&first_point, &second_point, expected.reverse()),
+                    ] {
+                        let outcome = crate::policy::resolve_certified_value(&policy, |attempt| {
+                            attempt.bounded_exact_predicate_pass(|| {
+                                algebraic_chord_point_coordinate_order(
+                                    left,
+                                    right,
+                                    Axis2::X,
+                                    attempt,
+                                )
+                                .unwrap()
+                            })
+                        });
+                        assert_eq!(outcome.value, Classification::Decided(expected));
+                        assert_eq!(outcome.certainty, CurveCertainty::Certified);
+                        assert!(second.data.recursive_projective_point.get().is_none());
+                    }
+                }
+            }
+            // W(t)=t^3-sqrt(1/2) vanishes at the same selected root. A
+            // homogeneous equality cannot turn that source pole into a point.
+            let alpha = half.clone().sqrt().unwrap();
+            let Classification::Decided(pole) = RationalBezier2::from_homogeneous_controls(
+                [
+                    -alpha.clone(),
+                    -alpha.clone(),
+                    -alpha.clone(),
+                    Real::one() - alpha,
+                ]
+                .into_iter()
+                .map(|weight| crate::HomogeneousControl2::new(Real::one(), Real::zero(), weight))
+                .collect(),
+                &policy,
+            )
+            .unwrap() else {
+                panic!("the rational chart has finite endpoints and an interior pole")
+            };
+            let pole_point = BezierAnalyticParallelPoint2::new_recursive_projective(
+                pole.parallel_left(Real::zero()).unwrap(),
+                beta.clone(),
+                &policy,
+            );
+            assert_eq!(
+                policy
+                    .bounded_exact_predicate_pass(|| pole_point
+                        .retained_parameter_axis_order_to_point(
+                            &CurvePoint2::from(first),
+                            Axis2::X,
+                            &policy,
+                        ))
+                    .unwrap(),
+                Classification::Uncertain(UncertaintyReason::Boundary),
+            );
+        }
     }
 
     #[test]
