@@ -6052,20 +6052,20 @@ fn represented_biaffine_ratio(
     let affine_interval = |first: &AlgebraicRootRepresentation,
                            second: &AlgebraicRootRepresentation,
                            coefficients: &[Real; 3]| {
-        let mut value = BezierAlgebraicChordRealInterval2 {
+        let mut value = RealInterval {
             lower: coefficients[2].clone(),
             upper: coefficients[2].clone(),
         };
         for (source, scale) in [(first, &coefficients[0]), (second, &coefficients[1])] {
-            let source = BezierAlgebraicChordRealInterval2 {
+            let source = RealInterval {
                 lower: source.interval.lower.clone(),
                 upper: source.interval.upper.clone(),
             };
-            let scale = BezierAlgebraicChordRealInterval2 {
+            let scale = RealInterval {
                 lower: scale.clone(),
                 upper: scale.clone(),
             };
-            value = value.add(&source.multiply(&scale, &CurveContext::STRICT)?);
+            value = value.add(&source.multiply(&scale)?);
         }
         Some(value)
     };
@@ -6079,7 +6079,7 @@ fn represented_biaffine_ratio(
         ) else {
             continue;
         };
-        let Some(interval) = numerator.divide(&denominator, &CurveContext::STRICT) else {
+        let Some(interval) = numerator.divide(&denominator) else {
             continue;
         };
         match represented_univariate_coordinate(&coefficients, &interval.lower, &interval.upper, &x)
@@ -6316,9 +6316,9 @@ struct BezierRecursiveProjectiveChordParallelSystem2 {
 
 #[derive(Debug)]
 struct BezierRecursiveProjectiveChordParallelIntervalSystem2 {
-    incidence_rational: Vec<BezierAlgebraicChordRealInterval2>,
-    incidence_radical: Vec<BezierAlgebraicChordRealInterval2>,
-    speed_squared: Vec<BezierAlgebraicChordRealInterval2>,
+    incidence_rational: Vec<RealInterval>,
+    incidence_radical: Vec<RealInterval>,
+    speed_squared: Vec<RealInterval>,
     precision: i32,
 }
 
@@ -6903,15 +6903,13 @@ fn represented_univariate_coordinate(
         // without a degree-sized Sturm chain. Multiple-root images decline
         // this path and retain the complete global construction fallback.
         let derivative = polynomial_derivative(coefficients);
-        let parameter_interval = BezierAlgebraicChordRealInterval2 {
+        let parameter_interval = RealInterval {
             lower: interval.lower.clone(),
             upper: interval.upper.clone(),
         };
-        let Some(derivative_bounds) = BezierAlgebraicChordRealInterval2::evaluate_power_basis(
-            &derivative,
-            &parameter_interval,
-            &CurveContext::STRICT,
-        ) else {
+        let Some(derivative_bounds) =
+            RealInterval::evaluate_power_basis(&derivative, &parameter_interval)
+        else {
             return Classification::Uncertain(UncertaintyReason::Predicate);
         };
         let derivative_nonzero = compare_reals(
@@ -7021,10 +7019,7 @@ fn represented_tensor_coordinate_refined(
     initial_refinement_steps: usize,
     _hot_refinement_limit: usize,
     _trace_operation: &'static str,
-    mut image_interval: impl FnMut(
-        &[AlgebraicRootRepresentation],
-        usize,
-    ) -> Option<BezierAlgebraicChordRealInterval2>,
+    mut image_interval: impl FnMut(&[AlgebraicRootRepresentation], usize) -> Option<RealInterval>,
 ) -> Classification<AlgebraicRootRepresentation> {
     let mut refinement_steps = initial_refinement_steps;
     let mut previous = None;
@@ -7056,7 +7051,7 @@ fn represented_tensor_coordinate_refined(
             {
                 let precision = refinement_steps.max(64).min(i32::MAX as usize) as i32;
                 if let Some([lower, upper]) = interval.lower.certified_dyadic_interval(-precision) {
-                    interval = BezierAlgebraicChordRealInterval2 {
+                    interval = RealInterval {
                         lower: Real::new(lower),
                         upper: Real::new(upper),
                     };
@@ -7226,21 +7221,20 @@ fn represented_affine_coordinate(
         256,
         "represented-affine-image-separation",
         |refined_sources, _| {
-            let mut interval = BezierAlgebraicChordRealInterval2 {
+            let mut interval = RealInterval {
                 lower: affine_offset.clone(),
                 upper: affine_offset.clone(),
             };
             for (source, scale) in refined_sources.iter().zip(&scales) {
-                let source_interval = BezierAlgebraicChordRealInterval2 {
+                let source_interval = RealInterval {
                     lower: source.interval.lower.clone(),
                     upper: source.interval.upper.clone(),
                 };
-                let scale_interval = BezierAlgebraicChordRealInterval2 {
+                let scale_interval = RealInterval {
                     lower: scale.clone(),
                     upper: scale.clone(),
                 };
-                let term_interval =
-                    source_interval.multiply(&scale_interval, &CurveContext::STRICT)?;
+                let term_interval = source_interval.multiply(&scale_interval)?;
                 interval = interval.add(&term_interval);
             }
             Some(interval)
@@ -7288,7 +7282,7 @@ fn dense_tensor_interval_with_coefficient_precision(
     polynomial: &DenseTensorPolynomial,
     sources: &[AlgebraicRootRepresentation],
     coefficient_precision: Option<i32>,
-) -> Option<BezierAlgebraicChordRealInterval2> {
+) -> Option<RealInterval> {
     dense_tensor_interval_with_coefficient_precision_and_source_witnesses(
         polynomial,
         sources,
@@ -7302,7 +7296,7 @@ fn dense_tensor_interval_with_coefficient_precision_and_source_witnesses(
     sources: &[AlgebraicRootRepresentation],
     source_real_witnesses: Option<&[Option<Real>]>,
     coefficient_precision: Option<i32>,
-) -> Option<BezierAlgebraicChordRealInterval2> {
+) -> Option<RealInterval> {
     let dimensions = polynomial.dimensions();
     if dimensions.len() != sources.len() + 1
         || dimensions.last() != Some(&1)
@@ -7317,12 +7311,12 @@ fn dense_tensor_interval_with_coefficient_precision_and_source_witnesses(
             if let Some(value) =
                 source_real_witnesses.and_then(|witnesses| witnesses[index].as_ref())
             {
-                return BezierAlgebraicChordRealInterval2 {
+                return RealInterval {
                     lower: value.clone(),
                     upper: value.clone(),
                 };
             }
-            BezierAlgebraicChordRealInterval2 {
+            RealInterval {
                 lower: source.interval.lower.clone(),
                 upper: source.interval.upper.clone(),
             }
@@ -7331,18 +7325,18 @@ fn dense_tensor_interval_with_coefficient_precision_and_source_witnesses(
     fn evaluate(
         polynomial: &DenseTensorPolynomial,
         dimensions: &[usize],
-        source_intervals: &[BezierAlgebraicChordRealInterval2],
+        source_intervals: &[RealInterval],
         coefficient_precision: Option<i32>,
         axis: usize,
         flat_prefix: usize,
-    ) -> Option<BezierAlgebraicChordRealInterval2> {
+    ) -> Option<RealInterval> {
         if axis == source_intervals.len() {
             let coefficient = polynomial.coefficients().get(flat_prefix)?;
             if coefficient
                 .exact_rational_ref()
                 .is_some_and(|value| value.is_zero())
             {
-                return Some(BezierAlgebraicChordRealInterval2 {
+                return Some(RealInterval {
                     lower: Real::zero(),
                     upper: Real::zero(),
                 });
@@ -7354,12 +7348,12 @@ fn dense_tensor_interval_with_coefficient_precision_and_source_witnesses(
                 // the result. Dyadic bounds are exact enclosures, not an
                 // approximate equality decision.
                 let [lower, upper] = coefficient.certified_dyadic_interval(precision)?;
-                return Some(BezierAlgebraicChordRealInterval2 {
+                return Some(RealInterval {
                     lower: Real::new(lower),
                     upper: Real::new(upper),
                 });
             }
-            return Some(BezierAlgebraicChordRealInterval2 {
+            return Some(RealInterval {
                 lower: coefficient.clone(),
                 upper: coefficient.clone(),
             });
@@ -7385,9 +7379,7 @@ fn dense_tensor_interval_with_coefficient_precision_and_source_witnesses(
                 axis + 1,
                 flat_prefix.checked_add(exponent.checked_mul(stride)?)?,
             )?;
-            value = value
-                .multiply(&source_intervals[axis], &CurveContext::STRICT)?
-                .add(&coefficient);
+            value = value.multiply(&source_intervals[axis])?.add(&coefficient);
         }
         Some(value)
     }
@@ -7404,7 +7396,7 @@ fn dense_tensor_interval_with_coefficient_precision_and_source_witnesses(
 fn dense_tensor_interval(
     polynomial: &DenseTensorPolynomial,
     sources: &[AlgebraicRootRepresentation],
-) -> Option<BezierAlgebraicChordRealInterval2> {
+) -> Option<RealInterval> {
     dense_tensor_interval_with_coefficient_precision(polynomial, sources, None)
 }
 
@@ -8441,14 +8433,14 @@ fn represented_tensor_nested_interval(
     candidate: &DenseTensorPolynomial,
     sources: &[AlgebraicRootRepresentation],
     signed_radical: &AlgebraicRootRepresentation,
-) -> Option<BezierAlgebraicChordRealInterval2> {
+) -> Option<RealInterval> {
     let retained = dense_tensor_interval(retained, sources)?;
     let candidate = dense_tensor_interval(candidate, sources)?;
-    let radical = BezierAlgebraicChordRealInterval2 {
+    let radical = RealInterval {
         lower: signed_radical.interval.lower.clone(),
         upper: signed_radical.interval.upper.clone(),
     };
-    Some(retained.add(&candidate.multiply(&radical, &CurveContext::STRICT)?))
+    Some(retained.add(&candidate.multiply(&radical)?))
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -8601,7 +8593,7 @@ fn represented_tensor_nested_ratio(
         ) else {
             continue;
         };
-        let Some(interval) = numerator.divide(&denominator, &CurveContext::STRICT) else {
+        let Some(interval) = numerator.divide(&denominator) else {
             continue;
         };
         #[cfg(test)]
@@ -8659,7 +8651,7 @@ fn represented_tensor_nested_ratio(
                 refined_sources,
                 &refined_radical,
             )?;
-            numerator.divide(&denominator, &CurveContext::STRICT)
+            numerator.divide(&denominator)
         },
     )
 }
@@ -8756,7 +8748,7 @@ fn represented_tensor_ratio(
         ) else {
             continue;
         };
-        let Some(interval) = numerator.divide(&denominator, &CurveContext::STRICT) else {
+        let Some(interval) = numerator.divide(&denominator) else {
             continue;
         };
         #[cfg(test)]
@@ -8789,7 +8781,7 @@ fn represented_tensor_ratio(
         |refined_sources, _| {
             let numerator = dense_tensor_interval(numerator, refined_sources)?;
             let denominator = dense_tensor_interval(denominator, refined_sources)?;
-            numerator.divide(&denominator, &CurveContext::STRICT)
+            numerator.divide(&denominator)
         },
     )
 }
@@ -9073,16 +9065,15 @@ fn represented_ratio(
     numerator: &AlgebraicRootRepresentation,
     denominator: &AlgebraicRootRepresentation,
 ) -> Classification<AlgebraicRootRepresentation> {
-    let numerator_interval = BezierAlgebraicChordRealInterval2 {
+    let numerator_interval = RealInterval {
         lower: numerator.interval.lower.clone(),
         upper: numerator.interval.upper.clone(),
     };
-    let denominator_interval = BezierAlgebraicChordRealInterval2 {
+    let denominator_interval = RealInterval {
         lower: denominator.interval.lower.clone(),
         upper: denominator.interval.upper.clone(),
     };
-    let Some(interval) = numerator_interval.divide(&denominator_interval, &CurveContext::STRICT)
-    else {
+    let Some(interval) = numerator_interval.divide(&denominator_interval) else {
         return Classification::Uncertain(UncertaintyReason::Predicate);
     };
     let Some(numerator_axis) =
@@ -9602,19 +9593,16 @@ fn represented_exact_radial_linear_sign(
         let x = refined_represented_root(&frame.unit_radial[0], refinement_steps);
         let y = refined_represented_root(&frame.unit_radial[1], refinement_steps);
         let interval = |source: &AlgebraicRootRepresentation, scale: &Real| {
-            BezierAlgebraicChordRealInterval2 {
+            RealInterval {
                 lower: source.interval.lower.clone(),
                 upper: source.interval.upper.clone(),
             }
-            .multiply(
-                &BezierAlgebraicChordRealInterval2 {
-                    lower: scale.clone(),
-                    upper: scale.clone(),
-                },
-                &CurveContext::STRICT,
-            )
+            .multiply(&RealInterval {
+                lower: scale.clone(),
+                upper: scale.clone(),
+            })
         };
-        let value = BezierAlgebraicChordRealInterval2 {
+        let value = RealInterval {
             lower: offset.clone(),
             upper: offset.clone(),
         }
@@ -11425,7 +11413,7 @@ fn analytic_parallel_point_bounds_refined(
     let parameter = parameter
         .clone()
         .refined_isolating_interval(refinement_steps, policy);
-    let parameter = BezierAlgebraicChordRealInterval2::from_parameter(&parameter);
+    let parameter = RealInterval::from_parameter(&parameter);
     analytic_parallel_point_bounds_over_interval(
         parallel,
         &parameter,
@@ -11441,7 +11429,7 @@ fn retained_analytic_parallel_point_bounds_at_bezier_parameter(
 ) -> Classification<Aabb2> {
     analytic_parallel_point_bounds_over_interval_with_tangent(
         &point.data.parallel,
-        &BezierAlgebraicChordRealInterval2::from_parameter(parameter),
+        &RealInterval::from_parameter(parameter),
         point
             .data
             .frame_tangent
@@ -11462,24 +11450,18 @@ fn rational_bezier_point_bounds_refined(
     let parameter = parameter
         .clone()
         .refined_isolating_interval(refinement_steps, policy);
-    rational_bezier_point_bounds_over_interval(
-        curve,
-        &BezierAlgebraicChordRealInterval2::from_parameter(&parameter),
-    )
+    rational_bezier_point_bounds_over_interval(curve, &RealInterval::from_parameter(&parameter))
 }
 
 fn rational_bezier_point_bounds_over_interval(
     curve: &RationalBezier2,
-    parameter: &BezierAlgebraicChordRealInterval2,
+    parameter: &RealInterval,
 ) -> Classification<Aabb2> {
     let source = match curve.homogeneous_power_basis() {
         Ok(source) => source,
         Err(_) => return Classification::Uncertain(UncertaintyReason::Unsupported),
     };
-    let strict = &CurveContext::STRICT;
-    let evaluate = |polynomial: &[Real]| {
-        BezierAlgebraicChordRealInterval2::evaluate_power_basis(polynomial, parameter, strict)
-    };
+    let evaluate = |polynomial: &[Real]| RealInterval::evaluate_power_basis(polynomial, parameter);
     let (Some(x), Some(y), Some(weight)) = (
         evaluate(&source.x_numerator),
         evaluate(&source.y_numerator),
@@ -11487,7 +11469,7 @@ fn rational_bezier_point_bounds_over_interval(
     ) else {
         return Classification::Uncertain(UncertaintyReason::Ordering);
     };
-    let (Some(x), Some(y)) = (x.divide(&weight, strict), y.divide(&weight, strict)) else {
+    let (Some(x), Some(y)) = (x.divide(&weight), y.divide(&weight)) else {
         return Classification::Uncertain(UncertaintyReason::Ordering);
     };
     Classification::Decided(Aabb2::new_unchecked(
@@ -11498,7 +11480,7 @@ fn rational_bezier_point_bounds_over_interval(
 
 fn analytic_parallel_point_bounds_over_interval(
     parallel: &BezierParallel2,
-    parameter: &BezierAlgebraicChordRealInterval2,
+    parameter: &RealInterval,
     tangent_distance: &Real,
     translation_x: &Real,
     translation_y: &Real,
@@ -11515,16 +11497,13 @@ fn analytic_parallel_point_bounds_over_interval(
 
 fn analytic_parallel_point_bounds_over_interval_with_tangent(
     parallel: &BezierParallel2,
-    parameter: &BezierAlgebraicChordRealInterval2,
+    parameter: &RealInterval,
     frame_tangent: Option<(&[Real], &[Real])>,
     tangent_distance: &Real,
     translation_x: &Real,
     translation_y: &Real,
 ) -> Classification<Aabb2> {
-    let strict = &CurveContext::STRICT;
-    let evaluate = |polynomial: &[Real]| {
-        BezierAlgebraicChordRealInterval2::evaluate_power_basis(polynomial, parameter, strict)
-    };
+    let evaluate = |polynomial: &[Real]| RealInterval::evaluate_power_basis(polynomial, parameter);
     let source = match parallel.source_power_basis() {
         Ok(source) => source,
         Err(_) => return Classification::Uncertain(UncertaintyReason::Unsupported),
@@ -11538,10 +11517,7 @@ fn analytic_parallel_point_bounds_over_interval_with_tangent(
         let Some(weight) = evaluate(weight) else {
             return Classification::Uncertain(UncertaintyReason::Ordering);
         };
-        let (Some(x), Some(y)) = (
-            point_x.divide(&weight, strict),
-            point_y.divide(&weight, strict),
-        ) else {
+        let (Some(x), Some(y)) = (point_x.divide(&weight), point_y.divide(&weight)) else {
             return Classification::Uncertain(UncertaintyReason::Ordering);
         };
         point_x = x;
@@ -11569,27 +11545,27 @@ fn analytic_parallel_point_bounds_over_interval_with_tangent(
             return Classification::Uncertain(UncertaintyReason::Ordering);
         };
         let Some(speed) = tangent_x
-            .square(strict)
-            .and_then(|x| tangent_y.square(strict).map(|y| x.add(&y)))
-            .and_then(|speed_squared| speed_squared.nonnegative_square_root(strict))
+            .square()
+            .and_then(|x| tangent_y.square().map(|y| x.add(&y)))
+            .and_then(|speed_squared| speed_squared.nonnegative_square_root(None))
         else {
             return Classification::Uncertain(UncertaintyReason::Ordering);
         };
-        let Some(normal_x) = (BezierAlgebraicChordRealInterval2 {
+        let Some(normal_x) = (RealInterval {
             lower: -tangent_y.upper.clone(),
             upper: -tangent_y.lower.clone(),
         })
-        .divide(&speed, strict) else {
+        .divide(&speed) else {
             return Classification::Uncertain(UncertaintyReason::Ordering);
         };
-        let Some(normal_y) = tangent_x.divide(&speed, strict) else {
+        let Some(normal_y) = tangent_x.divide(&speed) else {
             return Classification::Uncertain(UncertaintyReason::Ordering);
         };
-        let distance = BezierAlgebraicChordRealInterval2 {
+        let distance = RealInterval {
             lower: parallel.distance().clone(),
             upper: parallel.distance().clone(),
         };
-        let tangent_distance = BezierAlgebraicChordRealInterval2 {
+        let tangent_distance = RealInterval {
             lower: tangent_distance.clone(),
             upper: tangent_distance.clone(),
         };
@@ -11599,14 +11575,14 @@ fn analytic_parallel_point_bounds_over_interval_with_tangent(
             Some(tangent_offset_x),
             Some(tangent_offset_y),
         ) = (
-            normal_x.multiply(&distance, strict),
-            normal_y.multiply(&distance, strict),
+            normal_x.multiply(&distance),
+            normal_y.multiply(&distance),
             tangent_x
-                .divide(&speed, strict)
-                .and_then(|unit| unit.multiply(&tangent_distance, strict)),
+                .divide(&speed)
+                .and_then(|unit| unit.multiply(&tangent_distance)),
             tangent_y
-                .divide(&speed, strict)
-                .and_then(|unit| unit.multiply(&tangent_distance, strict)),
+                .divide(&speed)
+                .and_then(|unit| unit.multiply(&tangent_distance)),
         )
         else {
             return Classification::Uncertain(UncertaintyReason::Ordering);
@@ -11614,11 +11590,11 @@ fn analytic_parallel_point_bounds_over_interval_with_tangent(
         point_x = point_x.add(&normal_offset_x).add(&tangent_offset_x);
         point_y = point_y.add(&normal_offset_y).add(&tangent_offset_y);
     }
-    let point_x = point_x.add(&BezierAlgebraicChordRealInterval2 {
+    let point_x = point_x.add(&RealInterval {
         lower: translation_x.clone(),
         upper: translation_x.clone(),
     });
-    let point_y = point_y.add(&BezierAlgebraicChordRealInterval2 {
+    let point_y = point_y.add(&RealInterval {
         lower: translation_y.clone(),
         upper: translation_y.clone(),
     });
@@ -18648,7 +18624,7 @@ impl BezierAlgebraicCuspSemicircle2 {
             }
         };
         let radius_squared = self.radial_distance() * self.radial_distance();
-        let radius_squared = BezierAlgebraicChordRealInterval2 {
+        let radius_squared = RealInterval {
             lower: radius_squared.clone(),
             upper: radius_squared,
         };
@@ -18673,14 +18649,14 @@ impl BezierAlgebraicCuspSemicircle2 {
             };
             terminal_refined |= refinement_steps == 512;
             let delta = |axis| {
-                BezierAlgebraicChordRealInterval2::from_axis(&point, axis)
-                    .subtract(&BezierAlgebraicChordRealInterval2::from_axis(&center, axis))
+                RealInterval::from_axis(&point, axis)
+                    .subtract(&RealInterval::from_axis(&center, axis))
             };
             let delta_x = delta(Axis2::X);
             let delta_y = delta(Axis2::Y);
-            let Some(residual) = delta_x.square(&CurveContext::STRICT).and_then(|x| {
+            let Some(residual) = delta_x.square().and_then(|x| {
                 delta_y
-                    .square(&CurveContext::STRICT)
+                    .square()
                     .map(|y| x.add(&y).subtract(&radius_squared))
             }) else {
                 continue;
@@ -28488,11 +28464,11 @@ impl BezierAlgebraicCuspSemicircle2 {
                     tuple.push(exact_parameter.clone());
                     let value = (|| {
                         let speed = dense_polynomial_value_interval(&q, &tuple)?
-                            .nonnegative_square_root(&CurveContext::STRICT)?;
+                            .nonnegative_square_root(None)?;
                         let rational =
                             dense_polynomial_value_interval(&incidence_rational, &tuple)?;
                         let radical = dense_polynomial_value_interval(&incidence_radical, &tuple)?;
-                        Some(rational.add(&radical.multiply(&speed, &CurveContext::STRICT)?))
+                        Some(rational.add(&radical.multiply(&speed)?))
                     })();
                     if let Some(sign) = value.as_ref().and_then(dense_strict_interval_sign) {
                         return Ok(Classification::Decided(sign));
@@ -28673,18 +28649,14 @@ impl BezierAlgebraicCuspSemicircle2 {
                             &Real::eval_poly(&coefficients, &upper),
                             &CurveContext::STRICT,
                         );
-                        let parameter_interval = BezierAlgebraicChordRealInterval2 {
+                        let parameter_interval = RealInterval {
                             lower: lower.clone(),
                             upper: upper.clone(),
                         };
                         let derivative_sign =
-                            BezierAlgebraicChordRealInterval2::evaluate_power_basis(
-                                &derivative,
-                                &parameter_interval,
-                                &CurveContext::STRICT,
-                            )
-                            .as_ref()
-                            .and_then(dense_strict_interval_sign);
+                            RealInterval::evaluate_power_basis(&derivative, &parameter_interval)
+                                .as_ref()
+                                .and_then(dense_strict_interval_sign);
                         if matches!(
                             (projection_lower_sign, projection_upper_sign),
                             (Some(RealSign::Negative), Some(RealSign::Positive))
@@ -29479,7 +29451,7 @@ impl BezierAlgebraicCuspSemicircle2 {
         // only delay this rejection; it cannot create a false negative.
         if let Classification::Decided(center) = self.center_point_evidence(policy)? {
             let radius_squared = self.radial_distance() * self.radial_distance();
-            let radius_squared = BezierAlgebraicChordRealInterval2 {
+            let radius_squared = RealInterval {
                 lower: radius_squared.clone(),
                 upper: radius_squared,
             };
@@ -29500,45 +29472,41 @@ impl BezierAlgebraicCuspSemicircle2 {
                     continue;
                 };
                 let start = [
-                    BezierAlgebraicChordRealInterval2::from_axis(&start_bounds, Axis2::X),
-                    BezierAlgebraicChordRealInterval2::from_axis(&start_bounds, Axis2::Y),
+                    RealInterval::from_axis(&start_bounds, Axis2::X),
+                    RealInterval::from_axis(&start_bounds, Axis2::Y),
                 ];
                 let end = [
-                    BezierAlgebraicChordRealInterval2::from_axis(&end_bounds, Axis2::X),
-                    BezierAlgebraicChordRealInterval2::from_axis(&end_bounds, Axis2::Y),
+                    RealInterval::from_axis(&end_bounds, Axis2::X),
+                    RealInterval::from_axis(&end_bounds, Axis2::Y),
                 ];
                 let center = [
-                    BezierAlgebraicChordRealInterval2::from_axis(&center_bounds, Axis2::X),
-                    BezierAlgebraicChordRealInterval2::from_axis(&center_bounds, Axis2::Y),
+                    RealInterval::from_axis(&center_bounds, Axis2::X),
+                    RealInterval::from_axis(&center_bounds, Axis2::Y),
                 ];
                 let direction = [end[0].subtract(&start[0]), end[1].subtract(&start[1])];
                 let radial = [start[0].subtract(&center[0]), start[1].subtract(&center[1])];
                 let end_radial = [end[0].subtract(&center[0]), end[1].subtract(&center[1])];
                 let Some((projection, direction_squared, radial_squared)) = (|| {
                     let projection = radial[0]
-                        .multiply(&direction[0], &CurveContext::STRICT)?
-                        .add(&radial[1].multiply(&direction[1], &CurveContext::STRICT)?);
+                        .multiply(&direction[0])?
+                        .add(&radial[1].multiply(&direction[1])?);
                     let direction_squared = direction[0]
-                        .multiply(&direction[0], &CurveContext::STRICT)?
-                        .add(&direction[1].multiply(&direction[1], &CurveContext::STRICT)?);
+                        .multiply(&direction[0])?
+                        .add(&direction[1].multiply(&direction[1])?);
                     let radial_squared = radial[0]
-                        .multiply(&radial[0], &CurveContext::STRICT)?
-                        .add(&radial[1].multiply(&radial[1], &CurveContext::STRICT)?);
+                        .multiply(&radial[0])?
+                        .add(&radial[1].multiply(&radial[1])?);
                     Some((projection, direction_squared, radial_squared))
                 })() else {
                     continue;
                 };
                 if clip_to_finite_chord {
                     let Some([start_incidence, middle_incidence, end_incidence]) = (|| {
-                        let dot = |first: &[BezierAlgebraicChordRealInterval2; 2],
-                                   second: &[BezierAlgebraicChordRealInterval2; 2]| {
+                        let dot = |first: &[RealInterval; 2], second: &[RealInterval; 2]| {
                             Some(
                                 first[0]
-                                    .multiply(&second[0], &CurveContext::STRICT)?
-                                    .add(
-                                        &first[1]
-                                            .multiply(&second[1], &CurveContext::STRICT)?,
-                                    ),
+                                    .multiply(&second[0])?
+                                    .add(&first[1].multiply(&second[1])?),
                             )
                         };
                         Some([
@@ -29568,16 +29536,14 @@ impl BezierAlgebraicCuspSemicircle2 {
                         ));
                     }
                 }
-                let Some(discriminant) = projection
-                    .multiply(&projection, &CurveContext::STRICT)
-                    .and_then(|projection_squared| {
-                        direction_squared
-                            .multiply(
-                                &radial_squared.subtract(&radius_squared),
-                                &CurveContext::STRICT,
-                            )
-                            .map(|residual| projection_squared.subtract(&residual))
-                    })
+                let Some(discriminant) =
+                    projection
+                        .multiply(&projection)
+                        .and_then(|projection_squared| {
+                            direction_squared
+                                .multiply(&radial_squared.subtract(&radius_squared))
+                                .map(|residual| projection_squared.subtract(&residual))
+                        })
                 else {
                     continue;
                 };
@@ -41894,7 +41860,7 @@ impl BezierAlgebraicCuspSemicircleSelectedFiberRationalParameterMap2 {
             }
             Err(_) => return Classification::Uncertain(UncertaintyReason::Unsupported),
         };
-        let parameter = BezierAlgebraicChordRealInterval2 {
+        let parameter = RealInterval {
             lower: other_parameter.root().lower.clone(),
             upper: other_parameter.root().upper.clone(),
         };
@@ -42107,7 +42073,7 @@ impl BezierAlgebraicCuspSemicircleSelectedFiberParallelParameterMap2 {
         };
         analytic_parallel_point_bounds_over_interval(
             &self.data.parallel,
-            &BezierAlgebraicChordRealInterval2 {
+            &RealInterval {
                 lower: other_parameter.root().lower.clone(),
                 upper: other_parameter.root().upper.clone(),
             },
@@ -46529,7 +46495,7 @@ impl BezierAlgebraicCuspSemicircleChordParameterMap2 {
                 &system.projective.second_speed_squared,
                 &sources,
             )?
-            .divide(&common_denominator, &CurveContext::STRICT)
+            .divide(&common_denominator)
         };
         let (Some(x), Some(y)) = (coordinate(point_x), coordinate(point_y)) else {
             return Classification::Uncertain(UncertaintyReason::Ordering);
@@ -46756,41 +46722,35 @@ impl BezierAlgebraicCuspSemicircleChordParameterMap2 {
             .cusp_parameter
             .clone()
             .refined_isolating_interval(refinement_steps, &self.data.policy);
-        let first = BezierAlgebraicChordRealInterval2::from_parameter(&first);
-        let second = BezierAlgebraicChordRealInterval2::from_parameter(&second);
-        let cusp = BezierAlgebraicChordRealInterval2::from_parameter(&cusp);
+        let first = RealInterval::from_parameter(&first);
+        let second = RealInterval::from_parameter(&second);
+        let cusp = RealInterval::from_parameter(&cusp);
         let evaluate = |polynomial: &TrivariatePolynomial2| {
-            BezierAlgebraicChordRealInterval2::evaluate_trivariate_power_basis(
-                polynomial,
-                &first,
-                &second,
-                &cusp,
-                &self.data.policy,
-            )
+            RealInterval::evaluate_trivariate_power_basis(polynomial, &first, &second, &cusp)
         };
-        let Some(speed) = evaluate(&system.speed_squared)
-            .and_then(|value| value.nonnegative_square_root(&self.data.policy))
+        let Some(speed) =
+            evaluate(&system.speed_squared).and_then(|value| value.nonnegative_square_root(None))
         else {
             return Classification::Uncertain(UncertaintyReason::Ordering);
         };
         let speed_value = |expression: &BezierAlgebraicCuspTrivariateSquareRootExpression2| {
             let rational = evaluate(&expression.rational)?;
-            let radical = evaluate(&expression.radical)?.multiply(&speed, &self.data.policy)?;
+            let radical = evaluate(&expression.radical)?.multiply(&speed)?;
             Some(rational.add(&radical))
         };
         let Some(contact_discriminant) = speed_value(&system.contact_discriminant)
-            .and_then(|value| value.nonnegative_square_root(&self.data.policy))
+            .and_then(|value| value.nonnegative_square_root(None))
         else {
             return Classification::Uncertain(UncertaintyReason::Ordering);
         };
-        let branch_interval = |value: BezierAlgebraicChordRealInterval2, branch: i8| {
+        let branch_interval = |value: RealInterval, branch: i8| {
             if branch < 0 {
-                BezierAlgebraicChordRealInterval2 {
+                RealInterval {
                     lower: -value.upper,
                     upper: -value.lower,
                 }
             } else if branch == 0 {
-                BezierAlgebraicChordRealInterval2 {
+                RealInterval {
                     lower: Real::zero(),
                     upper: Real::zero(),
                 }
@@ -46803,11 +46763,10 @@ impl BezierAlgebraicCuspSemicircleChordParameterMap2 {
         };
         let coordinate = |expression: &BezierAlgebraicCuspRetainedOffsetChordNestedExpression2| {
             let retained = speed_value(&expression.retained)?;
-            let candidate = speed_value(&expression.candidate)?
-                .multiply(&contact_discriminant, &self.data.policy)?;
+            let candidate = speed_value(&expression.candidate)?.multiply(&contact_discriminant)?;
             retained
                 .add(&branch_interval(candidate, contact.branch))
-                .divide(&common_denominator, &self.data.policy)
+                .divide(&common_denominator)
         };
         let (Some(x), Some(y)) = (coordinate(point_x), coordinate(point_y)) else {
             return Classification::Uncertain(UncertaintyReason::Ordering);
@@ -46840,14 +46799,14 @@ impl BezierAlgebraicCuspSemicircleChordParameterMap2 {
             &system.second_parameter,
         ]
         .map(|parameter| {
-            BezierAlgebraicChordRealInterval2::from_parameter(
+            RealInterval::from_parameter(
                 &parameter
                     .clone()
                     .refined_isolating_interval(refinement_steps, &self.data.policy),
             )
         });
         let evaluate = |polynomial: &QuadrivariatePolynomial2| {
-            BezierAlgebraicChordRealInterval2::evaluate_quadrivariate_power_basis(
+            RealInterval::evaluate_quadrivariate_power_basis(
                 polynomial,
                 [
                     &parameters[0],
@@ -46855,22 +46814,21 @@ impl BezierAlgebraicCuspSemicircleChordParameterMap2 {
                     &parameters[2],
                     &parameters[3],
                 ],
-                &self.data.policy,
             )
         };
         let Some(pair_discriminant) = evaluate(&system.pair_discriminant)
-            .and_then(|value| value.nonnegative_square_root(&self.data.policy))
+            .and_then(|value| value.nonnegative_square_root(None))
         else {
             return Classification::Uncertain(UncertaintyReason::Ordering);
         };
-        let branch_interval = |value: BezierAlgebraicChordRealInterval2, branch: i8| {
+        let branch_interval = |value: RealInterval, branch: i8| {
             if branch < 0 {
-                BezierAlgebraicChordRealInterval2 {
+                RealInterval {
                     lower: -value.upper,
                     upper: -value.lower,
                 }
             } else if branch == 0 {
-                BezierAlgebraicChordRealInterval2 {
+                RealInterval {
                     lower: Real::zero(),
                     upper: Real::zero(),
                 }
@@ -46880,12 +46838,11 @@ impl BezierAlgebraicCuspSemicircleChordParameterMap2 {
         };
         let pair_value = |expression: &BezierAlgebraicCuspQuadrivariateSquareRootExpression2| {
             let rational = evaluate(&expression.rational)?;
-            let radical =
-                evaluate(&expression.radical)?.multiply(&pair_discriminant, &self.data.policy)?;
+            let radical = evaluate(&expression.radical)?.multiply(&pair_discriminant)?;
             Some(rational.add(&branch_interval(radical, system.pair_branch)))
         };
         let Some(chord_discriminant) = pair_value(&system.chord_discriminant)
-            .and_then(|value| value.nonnegative_square_root(&self.data.policy))
+            .and_then(|value| value.nonnegative_square_root(None))
         else {
             return Classification::Uncertain(UncertaintyReason::Ordering);
         };
@@ -46894,11 +46851,10 @@ impl BezierAlgebraicCuspSemicircleChordParameterMap2 {
         };
         let coordinate = |expression: &BezierSelectedRadialCircleChordNestedExpression2| {
             let retained = pair_value(&expression.retained)?;
-            let candidate = pair_value(&expression.candidate)?
-                .multiply(&chord_discriminant, &self.data.policy)?;
+            let candidate = pair_value(&expression.candidate)?.multiply(&chord_discriminant)?;
             retained
                 .add(&branch_interval(candidate, contact.branch))
-                .divide(&common_denominator, &self.data.policy)
+                .divide(&common_denominator)
         };
         let (Some(x), Some(y)) = (coordinate(point_x), coordinate(point_y)) else {
             return Classification::Uncertain(UncertaintyReason::Ordering);
@@ -46927,18 +46883,13 @@ impl BezierAlgebraicCuspSemicircleChordParameterMap2 {
             .support_parameter
             .clone()
             .refined_isolating_interval(refinement_steps, &self.data.policy);
-        let cusp = BezierAlgebraicChordRealInterval2::from_parameter(&cusp);
-        let support = BezierAlgebraicChordRealInterval2::from_parameter(&support);
+        let cusp = RealInterval::from_parameter(&cusp);
+        let support = RealInterval::from_parameter(&support);
         let evaluate = |polynomial: &BivariatePolynomial| {
-            BezierAlgebraicChordRealInterval2::evaluate_bivariate_power_basis(
-                polynomial,
-                &cusp,
-                &support,
-                &self.data.policy,
-            )
+            RealInterval::evaluate_bivariate_power_basis(polynomial, &cusp, &support)
         };
-        let Some(discriminant) = evaluate(&system.discriminant)
-            .and_then(|value| value.nonnegative_square_root(&self.data.policy))
+        let Some(discriminant) =
+            evaluate(&system.discriminant).and_then(|value| value.nonnegative_square_root(None))
         else {
             return Classification::Uncertain(UncertaintyReason::Ordering);
         };
@@ -46947,24 +46898,21 @@ impl BezierAlgebraicCuspSemicircleChordParameterMap2 {
         };
         let coordinate = |expression: &BezierAlgebraicCuspTwoTermExpression2| {
             let rational = evaluate(&expression.rational)?;
-            let radical =
-                evaluate(&expression.radical)?.multiply(&discriminant, &self.data.policy)?;
+            let radical = evaluate(&expression.radical)?.multiply(&discriminant)?;
             let radical = if contact.branch == -1 {
-                BezierAlgebraicChordRealInterval2 {
+                RealInterval {
                     lower: -radical.upper,
                     upper: -radical.lower,
                 }
             } else if contact.branch == 0 {
-                BezierAlgebraicChordRealInterval2 {
+                RealInterval {
                     lower: Real::zero(),
                     upper: Real::zero(),
                 }
             } else {
                 radical
             };
-            rational
-                .add(&radical)
-                .divide(&common_denominator, &self.data.policy)
+            rational.add(&radical).divide(&common_denominator)
         };
         let (Some(x), Some(y)) = (coordinate(point_x), coordinate(point_y)) else {
             return Classification::Uncertain(UncertaintyReason::Ordering);
@@ -46997,20 +46945,14 @@ impl BezierAlgebraicCuspSemicircleChordParameterMap2 {
             .cusp_parameter
             .clone()
             .refined_isolating_interval(refinement_steps, &self.data.policy);
-        let first = BezierAlgebraicChordRealInterval2::from_parameter(&first);
-        let second = BezierAlgebraicChordRealInterval2::from_parameter(&second);
-        let cusp = BezierAlgebraicChordRealInterval2::from_parameter(&cusp);
+        let first = RealInterval::from_parameter(&first);
+        let second = RealInterval::from_parameter(&second);
+        let cusp = RealInterval::from_parameter(&cusp);
         let evaluate = |polynomial: &TrivariatePolynomial2| {
-            BezierAlgebraicChordRealInterval2::evaluate_trivariate_power_basis(
-                polynomial,
-                &first,
-                &second,
-                &cusp,
-                &self.data.policy,
-            )
+            RealInterval::evaluate_trivariate_power_basis(polynomial, &first, &second, &cusp)
         };
-        let Some(discriminant) = evaluate(&system.discriminant)
-            .and_then(|value| value.nonnegative_square_root(&self.data.policy))
+        let Some(discriminant) =
+            evaluate(&system.discriminant).and_then(|value| value.nonnegative_square_root(None))
         else {
             return Classification::Uncertain(UncertaintyReason::Ordering);
         };
@@ -47019,24 +46961,21 @@ impl BezierAlgebraicCuspSemicircleChordParameterMap2 {
         };
         let coordinate = |expression: &BezierAlgebraicCuspTrivariateSquareRootExpression2| {
             let rational = evaluate(&expression.rational)?;
-            let radical =
-                evaluate(&expression.radical)?.multiply(&discriminant, &self.data.policy)?;
+            let radical = evaluate(&expression.radical)?.multiply(&discriminant)?;
             let radical = if contact.branch == -1 {
-                BezierAlgebraicChordRealInterval2 {
+                RealInterval {
                     lower: -radical.upper,
                     upper: -radical.lower,
                 }
             } else if contact.branch == 0 {
-                BezierAlgebraicChordRealInterval2 {
+                RealInterval {
                     lower: Real::zero(),
                     upper: Real::zero(),
                 }
             } else {
                 radical
             };
-            rational
-                .add(&radical)
-                .divide(&common_denominator, &self.data.policy)
+            rational.add(&radical).divide(&common_denominator)
         };
         let (Some(x), Some(y)) = (coordinate(point_x), coordinate(point_y)) else {
             return Classification::Uncertain(UncertaintyReason::Ordering);
@@ -48885,18 +48824,15 @@ impl BezierAlgebraicCuspChordDerivedPoint2 {
             }
             Err(_) => return Classification::Uncertain(UncertaintyReason::Unsupported),
         };
-        let point_x = BezierAlgebraicChordRealInterval2::from_axis(&point, Axis2::X);
-        let point_y = BezierAlgebraicChordRealInterval2::from_axis(&point, Axis2::Y);
-        let center_x = BezierAlgebraicChordRealInterval2::from_axis(&center, Axis2::X);
-        let center_y = BezierAlgebraicChordRealInterval2::from_axis(&center, Axis2::Y);
-        let multiply = |value: &BezierAlgebraicChordRealInterval2, coefficient: Real| {
-            value.multiply(
-                &BezierAlgebraicChordRealInterval2 {
-                    lower: coefficient.clone(),
-                    upper: coefficient,
-                },
-                &CurveContext::STRICT,
-            )
+        let point_x = RealInterval::from_axis(&point, Axis2::X);
+        let point_y = RealInterval::from_axis(&point, Axis2::Y);
+        let center_x = RealInterval::from_axis(&center, Axis2::X);
+        let center_y = RealInterval::from_axis(&center, Axis2::Y);
+        let multiply = |value: &RealInterval, coefficient: Real| {
+            value.multiply(&RealInterval {
+                lower: coefficient.clone(),
+                upper: coefficient,
+            })
         };
         let a = self.data.radial_scale.clone();
         let b = self.data.perpendicular_scale.clone();
@@ -48915,11 +48851,11 @@ impl BezierAlgebraicCuspChordDerivedPoint2 {
         else {
             return Classification::Uncertain(UncertaintyReason::Ordering);
         };
-        let x = x.add(&BezierAlgebraicChordRealInterval2 {
+        let x = x.add(&RealInterval {
             lower: self.data.translation_x.clone(),
             upper: self.data.translation_x.clone(),
         });
-        let y = y.add(&BezierAlgebraicChordRealInterval2 {
+        let y = y.add(&RealInterval {
             lower: self.data.translation_y.clone(),
             upper: self.data.translation_y.clone(),
         });
@@ -48947,20 +48883,20 @@ impl BezierAlgebraicCuspChordDerivedPoint2 {
                 continue;
             };
             terminal_refined |= refinement_steps == 512;
-            let x = BezierAlgebraicChordRealInterval2::from_axis(&bounds, Axis2::X);
-            let y = BezierAlgebraicChordRealInterval2::from_axis(&bounds, Axis2::Y);
-            let x_factor = BezierAlgebraicChordRealInterval2 {
+            let x = RealInterval::from_axis(&bounds, Axis2::X);
+            let y = RealInterval::from_axis(&bounds, Axis2::Y);
+            let x_factor = RealInterval {
                 lower: x_factor.clone(),
                 upper: x_factor.clone(),
             };
-            let y_factor = BezierAlgebraicChordRealInterval2 {
+            let y_factor = RealInterval {
                 lower: y_factor.clone(),
                 upper: y_factor.clone(),
             };
-            let Some(linear) = x.multiply(&x_factor, &CurveContext::STRICT).and_then(|x| {
-                y.multiply(&y_factor, &CurveContext::STRICT)
-                    .map(|y| x.add(&y))
-            }) else {
+            let Some(linear) = x
+                .multiply(&x_factor)
+                .and_then(|x| y.multiply(&y_factor).map(|y| x.add(&y)))
+            else {
                 continue;
             };
             if compare_reals(&linear.upper, value, &CurveContext::STRICT)
@@ -56171,7 +56107,7 @@ impl BezierRecursiveQuadraticValue2 {
         &self,
         refinement_steps: usize,
         coefficient_precision: Option<i32>,
-    ) -> Option<BezierAlgebraicChordRealInterval2> {
+    ) -> Option<RealInterval> {
         match self.data.as_ref() {
             BezierRecursiveQuadraticValueData2::Base {
                 field, expression, ..
@@ -56210,16 +56146,13 @@ impl BezierRecursiveQuadraticValue2 {
                 let root = field
                     .radicand
                     .interval_with_coefficient_precision(refinement_steps, coefficient_precision)?
-                    .nonnegative_square_root_with_precision(
-                        &CurveContext::STRICT,
-                        coefficient_precision,
-                    )?;
-                Some(retained.add(&radical.multiply(&root, &CurveContext::STRICT)?))
+                    .nonnegative_square_root(coefficient_precision)?;
+                Some(retained.add(&radical.multiply(&root)?))
             }
         }
     }
 
-    fn interval(&self, refinement_steps: usize) -> Option<BezierAlgebraicChordRealInterval2> {
+    fn interval(&self, refinement_steps: usize) -> Option<RealInterval> {
         self.interval_with_coefficient_precision(refinement_steps, None)
     }
 
@@ -56232,7 +56165,7 @@ impl BezierRecursiveQuadraticValue2 {
         &self,
         sources: &[AlgebraicRootRepresentation],
         coefficient_precision: Option<i32>,
-    ) -> Option<BezierAlgebraicChordRealInterval2> {
+    ) -> Option<RealInterval> {
         self.interval_over_source_box_with_witnesses(sources, coefficient_precision, true)
     }
 
@@ -56241,7 +56174,7 @@ impl BezierRecursiveQuadraticValue2 {
         sources: &[AlgebraicRootRepresentation],
         coefficient_precision: Option<i32>,
         use_real_witnesses: bool,
-    ) -> Option<BezierAlgebraicChordRealInterval2> {
+    ) -> Option<RealInterval> {
         if use_real_witnesses {
             let (base, _) = self.field().base_and_extension_path();
             if base.sources.len() == sources.len()
@@ -56252,7 +56185,7 @@ impl BezierRecursiveQuadraticValue2 {
                 // that retained tower is a point interval, and avoids losing
                 // the correlation to dependency inflation in nested interval
                 // square roots.
-                return Some(BezierAlgebraicChordRealInterval2 {
+                return Some(RealInterval {
                     lower: value.clone(),
                     upper: value,
                 });
@@ -56295,11 +56228,8 @@ impl BezierRecursiveQuadraticValue2 {
                         coefficient_precision,
                         use_real_witnesses,
                     )?
-                    .nonnegative_square_root_with_precision(
-                        &CurveContext::STRICT,
-                        coefficient_precision,
-                    )?;
-                Some(retained.add(&radical.multiply(&root, &CurveContext::STRICT)?))
+                    .nonnegative_square_root(coefficient_precision)?;
+                Some(retained.add(&radical.multiply(&root)?))
             }
         }
     }
@@ -56458,16 +56388,13 @@ impl BezierRecursiveQuadraticValue2 {
                 )?;
                 let root_interval = radicand
                     .interval_with_coefficient_precision(refinement_steps, Some(-coefficient_bits))?
-                    .nonnegative_square_root_with_precision(
-                        &CurveContext::STRICT,
-                        Some(-coefficient_bits),
-                    )?;
+                    .nonnegative_square_root(Some(-coefficient_bits))?;
                 Some((retained_interval, radical_interval, root_interval))
             })() else {
                 continue;
             };
             let Some(value) = radical_interval
-                .multiply(&root_interval, &CurveContext::STRICT)
+                .multiply(&root_interval)
                 .map(|radical| retained_interval.add(&radical))
             else {
                 continue;
@@ -57283,11 +57210,10 @@ impl BezierRecursiveQuadraticProjectiveScalar2 {
         Ok(Classification::Decided(difference))
     }
 
-    fn interval(&self, refinement_steps: usize) -> Option<BezierAlgebraicChordRealInterval2> {
-        self.numerator.interval(refinement_steps)?.divide(
-            &self.denominator.interval(refinement_steps)?,
-            &CurveContext::STRICT,
-        )
+    fn interval(&self, refinement_steps: usize) -> Option<RealInterval> {
+        self.numerator
+            .interval(refinement_steps)?
+            .divide(&self.denominator.interval(refinement_steps)?)
     }
 
     /// Only source-free parameters may bypass selected-root publication.
@@ -57575,7 +57501,7 @@ impl BezierRecursiveMonotoneParameter2 {
         let target = interval_system
             .as_ref()
             .and_then(|system| system.parameter_interval(&midpoint))
-            .unwrap_or_else(|| BezierAlgebraicChordRealInterval2 {
+            .unwrap_or_else(|| RealInterval {
                 lower: midpoint.clone(),
                 upper: midpoint.clone(),
             });
@@ -57866,7 +57792,7 @@ impl BezierRecursiveMonotoneParameter2 {
                 &refined.source_upper,
                 precision,
             )? {
-                let interval = BezierAlgebraicChordRealInterval2 {
+                let interval = RealInterval {
                     lower: Real::new(lower),
                     upper: Real::new(upper),
                 };
@@ -57938,7 +57864,7 @@ impl BezierRecursiveMonotoneParameter2 {
                 &upper,
                 precision,
             )? {
-                let interval = BezierAlgebraicChordRealInterval2 {
+                let interval = RealInterval {
                     lower: Real::new(lower),
                     upper: Real::new(upper),
                 };
@@ -58184,7 +58110,7 @@ impl BezierRecursivePolynomialParameterAuthority2 {
             // predicate already separated on its retained bracket needs none.
             if let Some(sign) = recursive_quadratic_polynomial_interval(
                 coefficients,
-                &BezierAlgebraicChordRealInterval2 {
+                &RealInterval {
                     lower: parameter.data.lower.clone(),
                     upper: parameter.data.upper.clone(),
                 },
@@ -58253,7 +58179,7 @@ impl BezierRecursivePolynomialParameterAuthority2 {
                     return Ok(Classification::Uncertain(reason));
                 }
             };
-            let target = BezierAlgebraicChordRealInterval2 {
+            let target = RealInterval {
                 lower: refined.data.lower.clone(),
                 upper: refined.data.upper.clone(),
             };
@@ -60198,10 +60124,9 @@ impl BezierRecursiveQuadraticProjectivePoint2 {
             let coordinate_interval =
                 |numerator: &BezierRecursiveQuadraticValue2,
                  denominator: &BezierRecursiveQuadraticValue2| {
-                    numerator.interval(refinement_steps)?.divide(
-                        &denominator.interval(refinement_steps)?,
-                        &CurveContext::STRICT,
-                    )
+                    numerator
+                        .interval(refinement_steps)?
+                        .divide(&denominator.interval(refinement_steps)?)
                 };
             let (Some(first), Some(second)) = (
                 coordinate_interval(first, &self.denominator),
@@ -60370,10 +60295,7 @@ impl BezierRecursiveQuadraticProjectivePoint2 {
         ) else {
             return Classification::Uncertain(UncertaintyReason::Ordering);
         };
-        let (Some(x), Some(y)) = (
-            x.divide(&denominator, &CurveContext::STRICT),
-            y.divide(&denominator, &CurveContext::STRICT),
-        ) else {
+        let (Some(x), Some(y)) = (x.divide(&denominator), y.divide(&denominator)) else {
             return Classification::Uncertain(UncertaintyReason::Ordering);
         };
         Classification::Decided(Aabb2::new_unchecked(
@@ -60930,7 +60852,7 @@ impl BezierRecursiveProjectiveChordRationalSystem2 {
             Classification::Decided(bounds) => bounds,
             Classification::Uncertain(_) => return Ok(None),
         };
-        let source_interval = BezierAlgebraicChordRealInterval2::from_axis(&source_bounds, axis);
+        let source_interval = RealInterval::from_axis(&source_bounds, axis);
         let endpoint_numerator = match axis {
             Axis2::X => &endpoint.x,
             Axis2::Y => &endpoint.y,
@@ -60943,7 +60865,7 @@ impl BezierRecursiveProjectiveChordRationalSystem2 {
                         endpoint
                             .denominator
                             .interval(refinement_steps)
-                            .and_then(|denominator| numerator.divide(&denominator, strict))
+                            .and_then(|denominator| numerator.divide(&denominator))
                     })
             else {
                 continue;
@@ -61323,48 +61245,45 @@ impl BezierRecursiveProjectiveChordParallelIntervalSystem2 {
     /// bounds. The interval still contains the authored value exactly, while
     /// all later Horner arithmetic stays rational and can prove signs below a
     /// predicate evaluator's scalar-refinement horizon.
-    fn parameter_interval(&self, parameter: &Real) -> Option<BezierAlgebraicChordRealInterval2> {
+    fn parameter_interval(&self, parameter: &Real) -> Option<RealInterval> {
         if let Some(value) = parameter.exact_rational_normal_form() {
             let value = Real::new(value);
-            return Some(BezierAlgebraicChordRealInterval2 {
+            return Some(RealInterval {
                 lower: value.clone(),
                 upper: value,
             });
         }
         let [lower, upper] = parameter.certified_dyadic_interval(self.precision)?;
-        Some(BezierAlgebraicChordRealInterval2 {
+        Some(RealInterval {
             lower: Real::new(lower),
             upper: Real::new(upper),
         })
     }
 
     fn polynomial_interval(
-        coefficients: &[BezierAlgebraicChordRealInterval2],
-        parameter: &BezierAlgebraicChordRealInterval2,
-    ) -> Option<BezierAlgebraicChordRealInterval2> {
-        let mut value = BezierAlgebraicChordRealInterval2 {
+        coefficients: &[RealInterval],
+        parameter: &RealInterval,
+    ) -> Option<RealInterval> {
+        let mut value = RealInterval {
             lower: Real::zero(),
             upper: Real::zero(),
         };
         for coefficient in coefficients.iter().rev() {
-            value = value
-                .multiply(parameter, &CurveContext::STRICT)?
-                .add(coefficient);
+            value = value.multiply(parameter)?.add(coefficient);
         }
         Some(value)
     }
 
-    fn incidence_sign(&self, parameter: &BezierAlgebraicChordRealInterval2) -> Option<RealSign> {
+    fn incidence_sign(&self, parameter: &RealInterval) -> Option<RealSign> {
         let rational = Self::polynomial_interval(&self.incidence_rational, parameter)?;
         let radical = Self::polynomial_interval(&self.incidence_radical, parameter)?;
         let speed_squared = Self::polynomial_interval(&self.speed_squared, parameter)?;
-        let speed = speed_squared
-            .nonnegative_square_root_with_precision(&CurveContext::STRICT, Some(self.precision))?;
-        let radical_speed = radical.multiply(&speed, &CurveContext::STRICT)?;
+        let speed = speed_squared.nonnegative_square_root(Some(self.precision))?;
+        let radical_speed = radical.multiply(&speed)?;
         let incidence = rational.add(&radical_speed);
         let sign = dense_strict_interval_sign(&incidence);
         if sign.is_none() && std::env::var_os("HYPERCURVE_DEBUG_MONOTONE_INTERVAL").is_some() {
-            let approximate = |value: &BezierAlgebraicChordRealInterval2| {
+            let approximate = |value: &RealInterval| {
                 (
                     value.lower.to_f64_lossy(),
                     value.upper.to_f64_lossy(),
@@ -61709,11 +61628,11 @@ impl BezierRecursiveProjectiveChordParallelSystem2 {
     fn polynomial_interval_on_real_interval(
         &self,
         coefficients: &[BezierRecursiveQuadraticValue2],
-        parameter: &BezierAlgebraicChordRealInterval2,
+        parameter: &RealInterval,
         refinement_steps: usize,
         coefficient_precision: i32,
-    ) -> Option<BezierAlgebraicChordRealInterval2> {
-        let mut value = BezierAlgebraicChordRealInterval2 {
+    ) -> Option<RealInterval> {
+        let mut value = RealInterval {
             lower: Real::zero(),
             upper: Real::zero(),
         };
@@ -61722,9 +61641,7 @@ impl BezierRecursiveProjectiveChordParallelSystem2 {
                 refinement_steps,
                 Some(coefficient_precision),
             )?;
-            value = value
-                .multiply(parameter, &CurveContext::STRICT)?
-                .add(&coefficient);
+            value = value.multiply(parameter)?.add(&coefficient);
         }
         Some(value)
     }
@@ -61781,7 +61698,7 @@ impl BezierRecursiveProjectiveChordParallelSystem2 {
     /// coefficient fields remain independent of the monotone root authority.
     fn incidence_interval_sign(
         &self,
-        parameter: &BezierAlgebraicChordRealInterval2,
+        parameter: &RealInterval,
         refinement_steps: usize,
         coefficient_precision: i32,
     ) -> Option<RealSign> {
@@ -61804,19 +61721,16 @@ impl BezierRecursiveProjectiveChordParallelSystem2 {
                 refinement_steps,
                 coefficient_precision,
             )?
-            .nonnegative_square_root_with_precision(
-                &CurveContext::STRICT,
-                Some(coefficient_precision),
-            )?;
+            .nonnegative_square_root(Some(coefficient_precision))?;
         let incidence = radical
-            .multiply(&speed, &CurveContext::STRICT)
+            .multiply(&speed)
             .map(|radical| rational.add(&radical))?;
         dense_strict_interval_sign(&incidence)
     }
 
     fn oriented_incidence_interval_sign(
         &self,
-        parameter: &BezierAlgebraicChordRealInterval2,
+        parameter: &RealInterval,
         refinement_steps: usize,
         coefficient_precision: i32,
     ) -> Option<RealSign> {
@@ -61992,17 +61906,17 @@ impl BezierRecursiveProjectiveChordParallelSystem2 {
 
 fn recursive_quadratic_polynomial_interval(
     coefficients: &[BezierRecursiveQuadraticValue2],
-    target: &BezierAlgebraicChordRealInterval2,
+    target: &RealInterval,
     source_steps: usize,
     coefficient_precision: i32,
-) -> Option<BezierAlgebraicChordRealInterval2> {
+) -> Option<RealInterval> {
     let zero = Real::zero();
-    let mut value = BezierAlgebraicChordRealInterval2 {
+    let mut value = RealInterval {
         lower: zero.clone(),
         upper: zero,
     };
     for coefficient in coefficients.iter().rev() {
-        value = value.multiply(target, &CurveContext::STRICT)?.add(
+        value = value.multiply(target)?.add(
             &coefficient
                 .interval_with_coefficient_precision(source_steps, Some(coefficient_precision))?,
         );
@@ -62012,11 +61926,7 @@ fn recursive_quadratic_polynomial_interval(
 
 fn recursive_quadratic_parameter_interval_sign(
     target_parameter: &BezierParameter2,
-    interval_value: impl Fn(
-        &BezierAlgebraicChordRealInterval2,
-        usize,
-        i32,
-    ) -> Option<BezierAlgebraicChordRealInterval2>,
+    interval_value: impl Fn(&RealInterval, usize, i32) -> Option<RealInterval>,
 ) -> Option<RealSign> {
     let strict = &CurveContext::STRICT;
     let mut target_refinement = BezierParameterRefinement2::new(target_parameter, strict);
@@ -62025,7 +61935,7 @@ fn recursive_quadratic_parameter_interval_sign(
             bezier_parameter_root_representation(target_refinement.refine_to(target_steps));
         let source_steps = target_steps.saturating_add(64);
         let coefficient_bits = source_steps.max(64).min(i32::MAX as usize) as i32;
-        let interval = BezierAlgebraicChordRealInterval2 {
+        let interval = RealInterval {
             lower: target.interval.lower,
             upper: target.interval.upper,
         };
@@ -62043,10 +61953,10 @@ fn recursive_quadratic_parallel_expression_interval(
     expression: &BezierRecursiveQuadraticParallelExpression2,
     speed_squared: &[BezierRecursiveQuadraticValue2],
     unit_target_speed: bool,
-    target: &BezierAlgebraicChordRealInterval2,
+    target: &RealInterval,
     source_steps: usize,
     coefficient_precision: i32,
-) -> Option<BezierAlgebraicChordRealInterval2> {
+) -> Option<RealInterval> {
     let rational = recursive_quadratic_polynomial_interval(
         &expression.rational,
         target,
@@ -62060,7 +61970,7 @@ fn recursive_quadratic_parallel_expression_interval(
         coefficient_precision,
     )?;
     let speed = if unit_target_speed {
-        BezierAlgebraicChordRealInterval2 {
+        RealInterval {
             lower: Real::one(),
             upper: Real::one(),
         }
@@ -62071,12 +61981,9 @@ fn recursive_quadratic_parallel_expression_interval(
             source_steps,
             coefficient_precision,
         )?
-        .nonnegative_square_root_with_precision(
-            &CurveContext::STRICT,
-            Some(coefficient_precision),
-        )?
+        .nonnegative_square_root(Some(coefficient_precision))?
     };
-    Some(rational.add(&radical.multiply(&speed, &CurveContext::STRICT)?))
+    Some(rational.add(&radical.multiply(&speed)?))
 }
 
 /// Certifies a simple authored-sheet root directly on the candidate box.
@@ -62099,7 +62006,7 @@ fn recursive_quadratic_parallel_expression_transverse_root(
         let source_steps = target_steps.saturating_add(64);
         let coefficient_bits = source_steps.max(64).min(i32::MAX as usize) as i32;
         let coefficient_precision = -coefficient_bits;
-        let interval = BezierAlgebraicChordRealInterval2 {
+        let interval = RealInterval {
             lower: target.interval.lower.clone(),
             upper: target.interval.upper.clone(),
         };
@@ -62120,11 +62027,11 @@ fn recursive_quadratic_parallel_expression_transverse_root(
         {
             return Some(false);
         }
-        let lower = BezierAlgebraicChordRealInterval2 {
+        let lower = RealInterval {
             lower: target.interval.lower.clone(),
             upper: target.interval.lower,
         };
-        let upper = BezierAlgebraicChordRealInterval2 {
+        let upper = RealInterval {
             lower: target.interval.upper.clone(),
             upper: target.interval.upper,
         };
@@ -64807,11 +64714,11 @@ impl BezierRecursiveQuadraticLineParameterMapSystem2 {
         let Some(center) = self.center.lifted_to(&field) else {
             return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
         };
-        let exact_x = BezierAlgebraicChordRealInterval2 {
+        let exact_x = RealInterval {
             lower: point.x().clone(),
             upper: point.x().clone(),
         };
-        let exact_y = BezierAlgebraicChordRealInterval2 {
+        let exact_y = RealInterval {
             lower: point.y().clone(),
             upper: point.y().clone(),
         };
@@ -64825,22 +64732,17 @@ impl BezierRecursiveQuadraticLineParameterMapSystem2 {
                 continue;
             };
             terminal_refined |= refinement_steps == 512;
-            let center_x = BezierAlgebraicChordRealInterval2::from_axis(&center_bounds, Axis2::X);
-            let center_y = BezierAlgebraicChordRealInterval2::from_axis(&center_bounds, Axis2::Y);
-            let radial_x = BezierAlgebraicChordRealInterval2::from_axis(&contact_bounds, Axis2::X)
-                .subtract(&center_x);
-            let radial_y = BezierAlgebraicChordRealInterval2::from_axis(&contact_bounds, Axis2::Y)
-                .subtract(&center_y);
+            let center_x = RealInterval::from_axis(&center_bounds, Axis2::X);
+            let center_y = RealInterval::from_axis(&center_bounds, Axis2::Y);
+            let radial_x = RealInterval::from_axis(&contact_bounds, Axis2::X).subtract(&center_x);
+            let radial_y = RealInterval::from_axis(&contact_bounds, Axis2::Y).subtract(&center_y);
             let target_x = exact_x.subtract(&center_x);
             let target_y = exact_y.subtract(&center_y);
-            let Some(cross) = radial_x
-                .multiply(&target_y, &CurveContext::STRICT)
-                .and_then(|first| {
-                    radial_y
-                        .multiply(&target_x, &CurveContext::STRICT)
-                        .map(|second| first.subtract(&second))
-                })
-            else {
+            let Some(cross) = radial_x.multiply(&target_y).and_then(|first| {
+                radial_y
+                    .multiply(&target_x)
+                    .map(|second| first.subtract(&second))
+            }) else {
                 continue;
             };
             if compare_reals(&cross.lower, &zero, &CurveContext::STRICT)
@@ -69280,7 +69182,7 @@ fn dense_reduce_selected_tuple_relations(
     Some(polynomial)
 }
 
-fn dense_strict_interval_sign(value: &BezierAlgebraicChordRealInterval2) -> Option<RealSign> {
+fn dense_strict_interval_sign(value: &RealInterval) -> Option<RealSign> {
     let strict = &CurveContext::STRICT;
     // Hyperlimit's ordinary STRICT scalar predicate deliberately stops at its
     // fixed refinement budget. Interval endpoints can independently carry a
@@ -69318,7 +69220,7 @@ fn dense_strict_interval_sign(value: &BezierAlgebraicChordRealInterval2) -> Opti
 fn dense_polynomial_value_interval(
     polynomial: &DenseTensorPolynomial,
     sources: &[AlgebraicRootRepresentation],
-) -> Option<BezierAlgebraicChordRealInterval2> {
+) -> Option<RealInterval> {
     dense_tensor_interval(&dense_tensor_with_output_axis(polynomial)?, sources)
 }
 
@@ -69326,7 +69228,7 @@ fn dense_polynomial_value_interval_with_coefficient_precision(
     polynomial: &DenseTensorPolynomial,
     sources: &[AlgebraicRootRepresentation],
     coefficient_precision: i32,
-) -> Option<BezierAlgebraicChordRealInterval2> {
+) -> Option<RealInterval> {
     dense_tensor_interval_with_coefficient_precision(
         &dense_tensor_with_output_axis(polynomial)?,
         sources,
@@ -69514,8 +69416,7 @@ fn dense_two_positive_square_root_interval_with_coefficient_precision(
     sources: &[AlgebraicRootRepresentation],
     source_real_witnesses: Option<&[Option<Real>]>,
     coefficient_precision: Option<i32>,
-) -> Option<BezierAlgebraicChordRealInterval2> {
-    let strict = &CurveContext::STRICT;
+) -> Option<RealInterval> {
     let interval = |polynomial: &DenseTensorPolynomial| {
         dense_tensor_interval_with_coefficient_precision_and_source_witnesses(
             &dense_tensor_with_output_axis(polynomial)?,
@@ -69524,15 +69425,15 @@ fn dense_two_positive_square_root_interval_with_coefficient_precision(
             coefficient_precision,
         )
     };
-    let first_speed = interval(first_speed_squared)?
-        .nonnegative_square_root_with_precision(strict, coefficient_precision)?;
-    let second_speed = interval(second_speed_squared)?
-        .nonnegative_square_root_with_precision(strict, coefficient_precision)?;
-    let product_speed = first_speed.multiply(&second_speed, strict)?;
+    let first_speed =
+        interval(first_speed_squared)?.nonnegative_square_root(coefficient_precision)?;
+    let second_speed =
+        interval(second_speed_squared)?.nonnegative_square_root(coefficient_precision)?;
+    let product_speed = first_speed.multiply(&second_speed)?;
     let value = interval(&expression.rational)?;
-    let value = value.add(&interval(&expression.first)?.multiply(&first_speed, strict)?);
-    let value = value.add(&interval(&expression.second)?.multiply(&second_speed, strict)?);
-    Some(value.add(&interval(&expression.product)?.multiply(&product_speed, strict)?))
+    let value = value.add(&interval(&expression.first)?.multiply(&first_speed)?);
+    let value = value.add(&interval(&expression.second)?.multiply(&second_speed)?);
+    Some(value.add(&interval(&expression.product)?.multiply(&product_speed)?))
 }
 
 fn dense_two_positive_square_root_interval(
@@ -69540,7 +69441,7 @@ fn dense_two_positive_square_root_interval(
     first_speed_squared: &DenseTensorPolynomial,
     second_speed_squared: &DenseTensorPolynomial,
     sources: &[AlgebraicRootRepresentation],
-) -> Option<BezierAlgebraicChordRealInterval2> {
+) -> Option<RealInterval> {
     dense_two_positive_square_root_interval_with_coefficient_precision(
         expression,
         first_speed_squared,
@@ -69557,17 +69458,15 @@ fn dense_positive_square_root_interval_with_coefficient_precision(
     radicand: &DenseTensorPolynomial,
     sources: &[AlgebraicRootRepresentation],
     coefficient_precision: Option<i32>,
-) -> Option<BezierAlgebraicChordRealInterval2> {
-    let strict = &CurveContext::STRICT;
+) -> Option<RealInterval> {
     let interval = |polynomial: &DenseTensorPolynomial| match coefficient_precision {
         Some(precision) => dense_polynomial_value_interval_with_coefficient_precision(
             polynomial, sources, precision,
         ),
         None => dense_polynomial_value_interval(polynomial, sources),
     };
-    let speed = interval(radicand)?
-        .nonnegative_square_root_with_precision(strict, coefficient_precision)?;
-    Some(interval(rational)?.add(&interval(radical)?.multiply(&speed, strict)?))
+    let speed = interval(radicand)?.nonnegative_square_root(coefficient_precision)?;
+    Some(interval(rational)?.add(&interval(radical)?.multiply(&speed)?))
 }
 
 fn dense_positive_square_root_interval(
@@ -69575,7 +69474,7 @@ fn dense_positive_square_root_interval(
     radical: &DenseTensorPolynomial,
     radicand: &DenseTensorPolynomial,
     sources: &[AlgebraicRootRepresentation],
-) -> Option<BezierAlgebraicChordRealInterval2> {
+) -> Option<RealInterval> {
     dense_positive_square_root_interval_with_coefficient_precision(
         rational, radical, radicand, sources, None,
     )
@@ -73267,7 +73166,7 @@ impl BezierAlgebraicChord2 {
             return Ok(None);
         };
         let strict = &CurveContext::STRICT;
-        let exact = |value: &Real| BezierAlgebraicChordRealInterval2 {
+        let exact = |value: &Real| RealInterval {
             lower: value.clone(),
             upper: value.clone(),
         };
@@ -73292,21 +73191,19 @@ impl BezierAlgebraicChord2 {
             else {
                 continue;
             };
-            let start_x = BezierAlgebraicChordRealInterval2::from_axis(&start, Axis2::X);
-            let start_y = BezierAlgebraicChordRealInterval2::from_axis(&start, Axis2::Y);
-            let direction_x =
-                BezierAlgebraicChordRealInterval2::from_axis(&end, Axis2::X).subtract(&start_x);
-            let direction_y =
-                BezierAlgebraicChordRealInterval2::from_axis(&end, Axis2::Y).subtract(&start_y);
-            let point_x = BezierAlgebraicChordRealInterval2::from_axis(&point, Axis2::X)
+            let start_x = RealInterval::from_axis(&start, Axis2::X);
+            let start_y = RealInterval::from_axis(&start, Axis2::Y);
+            let direction_x = RealInterval::from_axis(&end, Axis2::X).subtract(&start_x);
+            let direction_y = RealInterval::from_axis(&end, Axis2::Y).subtract(&start_y);
+            let point_x = RealInterval::from_axis(&point, Axis2::X)
                 .subtract(&start_x)
                 .subtract(&exact(&support.translation_x));
-            let point_y = BezierAlgebraicChordRealInterval2::from_axis(&point, Axis2::Y)
+            let point_y = RealInterval::from_axis(&point, Axis2::Y)
                 .subtract(&start_y)
                 .subtract(&exact(&support.translation_y));
-            let Some(cross) = direction_x.multiply(&point_y, strict).and_then(|first| {
+            let Some(cross) = direction_x.multiply(&point_y).and_then(|first| {
                 direction_y
-                    .multiply(&point_x, strict)
+                    .multiply(&point_x)
                     .map(|second| first.subtract(&second))
             }) else {
                 continue;
@@ -73314,10 +73211,10 @@ impl BezierAlgebraicChord2 {
             let incidence = match support.direction {
                 BezierAlgebraicChordUnitDisplacement2::LeftNormal => {
                     let Some(normal) = direction_x
-                        .square(strict)
-                        .and_then(|x| direction_y.square(strict).map(|y| x.add(&y)))
-                        .and_then(|squared| squared.nonnegative_square_root(strict))
-                        .and_then(|speed| speed.multiply(&exact(&support.distance), strict))
+                        .square()
+                        .and_then(|x| direction_y.square().map(|y| x.add(&y)))
+                        .and_then(|squared| squared.nonnegative_square_root(None))
+                        .and_then(|speed| speed.multiply(&exact(&support.distance)))
                     else {
                         continue;
                     };
@@ -73717,12 +73614,10 @@ impl BezierAlgebraicChord2 {
             // that complete tangent-side authority to the full predicate.
             return Classification::Uncertain(UncertaintyReason::Predicate);
         }
-        let tangent_x =
-            BezierAlgebraicChordRealInterval2::from_values([tangent_x], &CurveContext::STRICT)
-                .expect("one exact tangent coordinate defines an interval");
-        let tangent_y =
-            BezierAlgebraicChordRealInterval2::from_values([tangent_y], &CurveContext::STRICT)
-                .expect("one exact tangent coordinate defines an interval");
+        let tangent_x = RealInterval::from_values([tangent_x])
+            .expect("one exact tangent coordinate defines an interval");
+        let tangent_y = RealInterval::from_values([tangent_y])
+            .expect("one exact tangent coordinate defines an interval");
         let zero = Real::zero();
         let mut terminal_refined = false;
         for refinement_steps in [0, 2, 4, 8, 16, 32, 64, 128, 256, 512] {
@@ -73733,20 +73628,15 @@ impl BezierAlgebraicChord2 {
                 continue;
             };
             terminal_refined |= refinement_steps == 512;
-            let delta_x = BezierAlgebraicChordRealInterval2::from_axis(&point, Axis2::X).subtract(
-                &BezierAlgebraicChordRealInterval2::from_axis(&origin, Axis2::X),
-            );
-            let delta_y = BezierAlgebraicChordRealInterval2::from_axis(&point, Axis2::Y).subtract(
-                &BezierAlgebraicChordRealInterval2::from_axis(&origin, Axis2::Y),
-            );
-            let Some(cross) = tangent_x
-                .multiply(&delta_y, &CurveContext::STRICT)
-                .and_then(|first| {
-                    tangent_y
-                        .multiply(&delta_x, &CurveContext::STRICT)
-                        .map(|second| first.subtract(&second))
-                })
-            else {
+            let delta_x = RealInterval::from_axis(&point, Axis2::X)
+                .subtract(&RealInterval::from_axis(&origin, Axis2::X));
+            let delta_y = RealInterval::from_axis(&point, Axis2::Y)
+                .subtract(&RealInterval::from_axis(&origin, Axis2::Y));
+            let Some(cross) = tangent_x.multiply(&delta_y).and_then(|first| {
+                tangent_y
+                    .multiply(&delta_x)
+                    .map(|second| first.subtract(&second))
+            }) else {
                 continue;
             };
             if compare_reals(&cross.lower, &zero, &CurveContext::STRICT)
@@ -76407,14 +76297,12 @@ impl BezierAlgebraicChord2 {
             let certified_direction_values = direction_authority.certified_unit_tangent();
             let certified_direction = certified_direction_values.as_ref().map(|(x, y)| {
                 (
-                    BezierAlgebraicChordRealInterval2::from_values(
+                    RealInterval::from_values(
                         [x.clone()],
-                        &CurveContext::STRICT,
                     )
                     .expect("one certified tangent coordinate defines an exact interval"),
-                    BezierAlgebraicChordRealInterval2::from_values(
+                    RealInterval::from_values(
                         [y.clone()],
-                        &CurveContext::STRICT,
                     )
                     .expect("one certified tangent coordinate defines an exact interval"),
                 )
@@ -76451,13 +76339,13 @@ impl BezierAlgebraicChord2 {
                         continue;
                     };
                     Some((
-                        BezierAlgebraicChordRealInterval2::from_axis(&end_bounds, Axis2::X)
-                            .subtract(&BezierAlgebraicChordRealInterval2::from_axis(
+                        RealInterval::from_axis(&end_bounds, Axis2::X)
+                            .subtract(&RealInterval::from_axis(
                                 &start_bounds,
                                 Axis2::X,
                             )),
-                        BezierAlgebraicChordRealInterval2::from_axis(&end_bounds, Axis2::Y)
-                            .subtract(&BezierAlgebraicChordRealInterval2::from_axis(
+                        RealInterval::from_axis(&end_bounds, Axis2::Y)
+                            .subtract(&RealInterval::from_axis(
                                 &start_bounds,
                                 Axis2::Y,
                             )),
@@ -76509,17 +76397,17 @@ impl BezierAlgebraicChord2 {
                     .as_ref()
                     .or(endpoint_direction.as_ref())
                     .expect("a retained chord supplies either a certified or endpoint direction");
-                let tangent_x = BezierAlgebraicChordRealInterval2 {
+                let tangent_x = RealInterval {
                     lower: Real::new(tangent_x_lower),
                     upper: Real::new(tangent_x_upper),
                 };
-                let tangent_y = BezierAlgebraicChordRealInterval2 {
+                let tangent_y = RealInterval {
                     lower: Real::new(tangent_y_lower),
                     upper: Real::new(tangent_y_upper),
                 };
-                let Some(cross) = direction_x.multiply(&tangent_y, strict).and_then(|first| {
+                let Some(cross) = direction_x.multiply(&tangent_y).and_then(|first| {
                     direction_y
-                        .multiply(&tangent_x, strict)
+                        .multiply(&tangent_x)
                         .map(|second| first.subtract(&second))
                 }) else {
                     continue;
@@ -76559,7 +76447,7 @@ impl BezierAlgebraicChord2 {
                     .max(tangent_y_coefficients.len())
                     .saturating_sub(1);
                 if degree <= 2 {
-                    let exact_interval = |value: Real| BezierAlgebraicChordRealInterval2 {
+                    let exact_interval = |value: Real| RealInterval {
                         lower: value.clone(),
                         upper: value,
                     };
@@ -76573,10 +76461,10 @@ impl BezierAlgebraicChord2 {
                             .cloned()
                             .unwrap_or_else(Real::zero);
                         direction_x
-                            .multiply(&exact_interval(tangent_y), strict)
+                            .multiply(&exact_interval(tangent_y))
                             .and_then(|first| {
                                 direction_y
-                                    .multiply(&exact_interval(tangent_x), strict)
+                                    .multiply(&exact_interval(tangent_x))
                                     .map(|second| first.subtract(&second))
                             })
                     };
@@ -76595,35 +76483,34 @@ impl BezierAlgebraicChord2 {
                             }
                             std::cmp::Ordering::Equal => unreachable!("validated above"),
                         };
-                        let start = BezierAlgebraicChordRealInterval2 {
+                        let start = RealInterval {
                             lower: start_lower.clone(),
                             upper: start_upper.clone(),
                         };
-                        let end = BezierAlgebraicChordRealInterval2 {
+                        let end = RealInterval {
                             lower: end_lower.clone(),
                             upper: end_upper.clone(),
                         };
                         let delta = end.subtract(&start);
-                        let evaluate = |parameter: &BezierAlgebraicChordRealInterval2| {
-                            c2.multiply(parameter, strict)
+                        let evaluate = |parameter: &RealInterval| {
+                            c2.multiply(parameter)
                                 .map(|value| value.add(&c1))?
-                                .multiply(parameter, strict)
+                                .multiply(parameter)
                                 .map(|value| value.add(&c0))
                         };
                         let controls = (|| {
                             let q0 = evaluate(&start)?;
                             let derivative = c2
-                                .multiply(&start, strict)?
-                                .multiply(&exact_interval(Real::from(2_i8)), strict)?
+                                .multiply(&start)?
+                                .multiply(&exact_interval(Real::from(2_i8)))?
                                 .add(&c1);
-                            let q1 = delta.multiply(&derivative, strict)?;
-                            let q2 = c2.multiply(&delta.square(strict)?, strict)?;
+                            let q1 = delta.multiply(&derivative)?;
+                            let q2 = c2.multiply(&delta.square()?)?;
                             let first = q0.clone();
                             let middle = q0.add(&q1.multiply(
                                 &exact_interval(
                                     (Real::one() / Real::from(2_i8)).expect("two is nonzero"),
                                 ),
-                                strict,
                             )?);
                             let last = q0.add(&q1).add(&q2);
                             Some([first, middle, last])
@@ -77179,7 +77066,7 @@ impl BezierAlgebraicChord2 {
                 let Some((lower, upper)) = parameter.finite_envelope_bounds() else {
                     break;
                 };
-                let target = BezierAlgebraicChordRealInterval2 {
+                let target = RealInterval {
                     lower: lower.clone(),
                     upper: upper.clone(),
                 };
@@ -84560,19 +84447,12 @@ fn algebraic_chord_endpoint_bounds_refined_impl(
                 },
             }
             .refined_isolating_interval(refinement_steps, policy);
-            let parameter = BezierAlgebraicChordRealInterval2::from_parameter(&parameter);
-            let denominator = BezierAlgebraicChordRealInterval2::evaluate_power_basis(
-                denominator,
-                &parameter,
-                policy,
-            );
-            let x = BezierAlgebraicChordRealInterval2::evaluate_power_basis(x, &parameter, policy);
-            let y = BezierAlgebraicChordRealInterval2::evaluate_power_basis(y, &parameter, policy);
+            let parameter = RealInterval::from_parameter(&parameter);
+            let denominator = RealInterval::evaluate_power_basis(denominator, &parameter);
+            let x = RealInterval::evaluate_power_basis(x, &parameter);
+            let y = RealInterval::evaluate_power_basis(y, &parameter);
             if let (Some(denominator), Some(x), Some(y)) = (denominator, x, y)
-                && let (Some(x), Some(y)) = (
-                    x.divide(&denominator, policy),
-                    y.divide(&denominator, policy),
-                )
+                && let (Some(x), Some(y)) = (x.divide(&denominator), y.divide(&denominator))
             {
                 return Classification::Decided(Aabb2::new_unchecked(
                     Point2::new(x.lower, y.lower),
@@ -84745,11 +84625,11 @@ pub(crate) fn retained_point_circle_incidence_sign(
         | CurvePoint2(CurvePointData2::Similarity(_) | CurvePointData2::Endpoint(_)) => {}
     }
 
-    let radius = BezierAlgebraicChordRealInterval2 {
+    let radius = RealInterval {
         lower: radius_squared.clone(),
         upper: radius_squared.clone(),
     };
-    let exact = |value: &Real| BezierAlgebraicChordRealInterval2 {
+    let exact = |value: &Real| RealInterval {
         lower: value.clone(),
         upper: value.clone(),
     };
@@ -84761,17 +84641,13 @@ pub(crate) fn retained_point_circle_incidence_sign(
             continue;
         };
         terminal_refined |= refinement_steps == 512;
-        let delta = |axis, coordinate| {
-            BezierAlgebraicChordRealInterval2::from_axis(&bounds, axis).subtract(&exact(coordinate))
-        };
-        let Some(residual) = delta(Axis2::X, center.x())
-            .square(&CurveContext::STRICT)
-            .and_then(|x| {
-                delta(Axis2::Y, center.y())
-                    .square(&CurveContext::STRICT)
-                    .map(|y| x.add(&y).subtract(&radius))
-            })
-        else {
+        let delta =
+            |axis, coordinate| RealInterval::from_axis(&bounds, axis).subtract(&exact(coordinate));
+        let Some(residual) = delta(Axis2::X, center.x()).square().and_then(|x| {
+            delta(Axis2::Y, center.y())
+                .square()
+                .map(|y| x.add(&y).subtract(&radius))
+        }) else {
             continue;
         };
         let zero = Real::zero();
@@ -84826,16 +84702,10 @@ pub(crate) fn retained_point_linear_difference_to_algebraic_sign(
         );
     }
 
-    let coefficient_x = BezierAlgebraicChordRealInterval2::from_values(
-        [coefficient_x.clone()],
-        &CurveContext::STRICT,
-    )
-    .expect("one exact coefficient defines an interval");
-    let coefficient_y = BezierAlgebraicChordRealInterval2::from_values(
-        [coefficient_y.clone()],
-        &CurveContext::STRICT,
-    )
-    .expect("one exact coefficient defines an interval");
+    let coefficient_x = RealInterval::from_values([coefficient_x.clone()])
+        .expect("one exact coefficient defines an interval");
+    let coefficient_y = RealInterval::from_values([coefficient_y.clone()])
+        .expect("one exact coefficient defines an interval");
     let mut terminal_refined = false;
     for refinement_steps in [0, 2, 4, 8, 16, 32, 64, 128, 256, 512] {
         let Classification::Decided(bounds) =
@@ -84844,11 +84714,11 @@ pub(crate) fn retained_point_linear_difference_to_algebraic_sign(
             continue;
         };
         terminal_refined |= refinement_steps == 512;
-        let Some(projection) = BezierAlgebraicChordRealInterval2::from_axis(&bounds, Axis2::X)
-            .multiply(&coefficient_x, &CurveContext::STRICT)
+        let Some(projection) = RealInterval::from_axis(&bounds, Axis2::X)
+            .multiply(&coefficient_x)
             .and_then(|x| {
-                BezierAlgebraicChordRealInterval2::from_axis(&bounds, Axis2::Y)
-                    .multiply(&coefficient_y, &CurveContext::STRICT)
+                RealInterval::from_axis(&bounds, Axis2::Y)
+                    .multiply(&coefficient_y)
                     .map(|y| x.add(&y))
             })
         else {
@@ -85538,39 +85408,25 @@ pub(crate) fn algebraic_chord_point_linear_order_to_exact(
             .map(std::cmp::Ordering::reverse)),
         };
     }
-    let coefficient_x_interval = BezierAlgebraicChordRealInterval2::from_values(
-        [coefficient_x.clone()],
-        &CurveContext::STRICT,
-    )
-    .expect("one exact coefficient defines an interval");
-    let coefficient_y_interval = BezierAlgebraicChordRealInterval2::from_values(
-        [coefficient_y.clone()],
-        &CurveContext::STRICT,
-    )
-    .expect("one exact coefficient defines an interval");
-    let origin_x =
-        BezierAlgebraicChordRealInterval2::from_values([origin.x().clone()], &CurveContext::STRICT)
-            .expect("one exact coordinate defines an interval");
-    let origin_y =
-        BezierAlgebraicChordRealInterval2::from_values([origin.y().clone()], &CurveContext::STRICT)
-            .expect("one exact coordinate defines an interval");
+    let coefficient_x_interval = RealInterval::from_values([coefficient_x.clone()])
+        .expect("one exact coefficient defines an interval");
+    let coefficient_y_interval = RealInterval::from_values([coefficient_y.clone()])
+        .expect("one exact coefficient defines an interval");
+    let origin_x = RealInterval::from_values([origin.x().clone()])
+        .expect("one exact coordinate defines an interval");
+    let origin_y = RealInterval::from_values([origin.y().clone()])
+        .expect("one exact coordinate defines an interval");
     let interval_order = |refinement_steps| {
         let Classification::Decided(bounds) =
             algebraic_chord_endpoint_bounds_refined(point, refinement_steps, policy)
         else {
             return None;
         };
-        let delta_x =
-            BezierAlgebraicChordRealInterval2::from_axis(&bounds, Axis2::X).subtract(&origin_x);
-        let delta_y =
-            BezierAlgebraicChordRealInterval2::from_axis(&bounds, Axis2::Y).subtract(&origin_y);
+        let delta_x = RealInterval::from_axis(&bounds, Axis2::X).subtract(&origin_x);
+        let delta_y = RealInterval::from_axis(&bounds, Axis2::Y).subtract(&origin_y);
         let Some(value) = delta_x
-            .multiply(&coefficient_x_interval, &CurveContext::STRICT)
-            .and_then(|x| {
-                delta_y
-                    .multiply(&coefficient_y_interval, &CurveContext::STRICT)
-                    .map(|y| x.add(&y))
-            })
+            .multiply(&coefficient_x_interval)
+            .and_then(|x| delta_y.multiply(&coefficient_y_interval).map(|y| x.add(&y)))
         else {
             return Some(None);
         };
@@ -85700,16 +85556,10 @@ pub(crate) fn algebraic_chord_points_linear_order(
     if first.same_point(second, policy) == Classification::Decided(true) {
         return Ok(Classification::Decided(std::cmp::Ordering::Equal));
     }
-    let coefficient_x_interval = BezierAlgebraicChordRealInterval2::from_values(
-        [coefficient_x.clone()],
-        &CurveContext::STRICT,
-    )
-    .expect("one exact coefficient defines an interval");
-    let coefficient_y_interval = BezierAlgebraicChordRealInterval2::from_values(
-        [coefficient_y.clone()],
-        &CurveContext::STRICT,
-    )
-    .expect("one exact coefficient defines an interval");
+    let coefficient_x_interval = RealInterval::from_values([coefficient_x.clone()])
+        .expect("one exact coefficient defines an interval");
+    let coefficient_y_interval = RealInterval::from_values([coefficient_y.clone()])
+        .expect("one exact coefficient defines an interval");
     let interval_order = |refinement_steps| {
         let (Classification::Decided(first), Classification::Decided(second)) = (
             algebraic_chord_endpoint_bounds_refined(first, refinement_steps, policy),
@@ -85717,19 +85567,13 @@ pub(crate) fn algebraic_chord_points_linear_order(
         ) else {
             return None;
         };
-        let delta_x = BezierAlgebraicChordRealInterval2::from_axis(&first, Axis2::X).subtract(
-            &BezierAlgebraicChordRealInterval2::from_axis(&second, Axis2::X),
-        );
-        let delta_y = BezierAlgebraicChordRealInterval2::from_axis(&first, Axis2::Y).subtract(
-            &BezierAlgebraicChordRealInterval2::from_axis(&second, Axis2::Y),
-        );
+        let delta_x = RealInterval::from_axis(&first, Axis2::X)
+            .subtract(&RealInterval::from_axis(&second, Axis2::X));
+        let delta_y = RealInterval::from_axis(&first, Axis2::Y)
+            .subtract(&RealInterval::from_axis(&second, Axis2::Y));
         let Some(value) = delta_x
-            .multiply(&coefficient_x_interval, &CurveContext::STRICT)
-            .and_then(|x| {
-                delta_y
-                    .multiply(&coefficient_y_interval, &CurveContext::STRICT)
-                    .map(|y| x.add(&y))
-            })
+            .multiply(&coefficient_x_interval)
+            .and_then(|x| delta_y.multiply(&coefficient_y_interval).map(|y| x.add(&y)))
         else {
             return Some(None);
         };
@@ -86792,32 +86636,26 @@ impl BezierAlgebraicChord2 {
             };
             terminal_refined |= refinement_steps == 512;
             let delta = |start: &Aabb2, end: &Aabb2, axis| {
-                BezierAlgebraicChordRealInterval2::from_axis(end, axis)
-                    .subtract(&BezierAlgebraicChordRealInterval2::from_axis(start, axis))
+                RealInterval::from_axis(end, axis).subtract(&RealInterval::from_axis(start, axis))
             };
             let first_x = delta(&first_start, &first_end, Axis2::X);
             let first_y = delta(&first_start, &first_end, Axis2::Y);
             let second_x = delta(&second_start, &second_end, Axis2::X);
             let second_y = delta(&second_start, &second_end, Axis2::Y);
             let strict = &CurveContext::STRICT;
-            let cross = first_x.multiply(&second_y, strict).and_then(|first| {
+            let cross = first_x.multiply(&second_y).and_then(|first| {
                 first_y
-                    .multiply(&second_x, strict)
+                    .multiply(&second_x)
                     .map(|second| first.subtract(&second))
             });
-            let dot = first_x.multiply(&second_x, strict).and_then(|first| {
-                first_y
-                    .multiply(&second_y, strict)
-                    .map(|second| first.add(&second))
-            });
-            let scale = |value: BezierAlgebraicChordRealInterval2, scale: &Real| {
-                value.multiply(
-                    &BezierAlgebraicChordRealInterval2 {
-                        lower: scale.clone(),
-                        upper: scale.clone(),
-                    },
-                    strict,
-                )
+            let dot = first_x
+                .multiply(&second_x)
+                .and_then(|first| first_y.multiply(&second_y).map(|second| first.add(&second)));
+            let scale = |value: RealInterval, scale: &Real| {
+                value.multiply(&RealInterval {
+                    lower: scale.clone(),
+                    upper: scale.clone(),
+                })
             };
             let value = cross
                 .and_then(|cross| scale(cross, cross_scale))
@@ -87152,24 +86990,22 @@ impl BezierAlgebraicChord2 {
                 continue;
             };
             terminal_refined |= refinement_steps == 512;
-            let delta_x = BezierAlgebraicChordRealInterval2::from_axis(&end, Axis2::X).subtract(
-                &BezierAlgebraicChordRealInterval2::from_axis(&start, Axis2::X),
-            );
-            let delta_y = BezierAlgebraicChordRealInterval2::from_axis(&end, Axis2::Y).subtract(
-                &BezierAlgebraicChordRealInterval2::from_axis(&start, Axis2::Y),
-            );
-            let coefficient_x = BezierAlgebraicChordRealInterval2 {
+            let delta_x = RealInterval::from_axis(&end, Axis2::X)
+                .subtract(&RealInterval::from_axis(&start, Axis2::X));
+            let delta_y = RealInterval::from_axis(&end, Axis2::Y)
+                .subtract(&RealInterval::from_axis(&start, Axis2::Y));
+            let coefficient_x = RealInterval {
                 lower: coefficient_x.clone(),
                 upper: coefficient_x.clone(),
             };
-            let coefficient_y = BezierAlgebraicChordRealInterval2 {
+            let coefficient_y = RealInterval {
                 lower: coefficient_y.clone(),
                 upper: coefficient_y.clone(),
             };
             let strict = &CurveContext::STRICT;
-            let value = delta_x.multiply(&coefficient_x, strict).and_then(|first| {
+            let value = delta_x.multiply(&coefficient_x).and_then(|first| {
                 delta_y
-                    .multiply(&coefficient_y, strict)
+                    .multiply(&coefficient_y)
                     .map(|second| first.add(&second))
             });
             let Some(value) = value else {
@@ -87469,13 +87305,11 @@ impl BezierAlgebraicChord2 {
             let first_y = first.y.interval(refinement_steps)?;
             let second_x = second.x.interval(refinement_steps)?;
             let second_y = second.y.interval(refinement_steps)?;
-            first_x
-                .multiply(&second_y, &CurveContext::STRICT)
-                .and_then(|positive| {
-                    first_y
-                        .multiply(&second_x, &CurveContext::STRICT)
-                        .map(|negative| positive.subtract(&negative))
-                })
+            first_x.multiply(&second_y).and_then(|positive| {
+                first_y
+                    .multiply(&second_x)
+                    .map(|negative| positive.subtract(&negative))
+            })
         };
         let mut terminal_refined = false;
         for &refinement_steps in schedule {
@@ -87680,17 +87514,9 @@ impl BezierAlgebraicChord2 {
                 continue;
             };
             let incidence = line[0]
-                .multiply(&point[0], &CurveContext::STRICT)
-                .and_then(|value| {
-                    line[1]
-                        .multiply(&point[1], &CurveContext::STRICT)
-                        .map(|term| value.add(&term))
-                })
-                .and_then(|value| {
-                    line[2]
-                        .multiply(&point[2], &CurveContext::STRICT)
-                        .map(|term| value.add(&term))
-                });
+                .multiply(&point[0])
+                .and_then(|value| line[1].multiply(&point[1]).map(|term| value.add(&term)))
+                .and_then(|value| line[2].multiply(&point[2]).map(|term| value.add(&term)));
             if let Some(sign) = incidence.as_ref().and_then(dense_strict_interval_sign) {
                 #[cfg(feature = "dispatch-trace")]
                 hyperreal::dispatch_trace::record(
@@ -87878,19 +87704,15 @@ impl BezierAlgebraicChord2 {
             };
             terminal_refined |= refinement_steps == 512;
             let strict = &CurveContext::STRICT;
-            let start_x = BezierAlgebraicChordRealInterval2::from_axis(&start, Axis2::X);
-            let start_y = BezierAlgebraicChordRealInterval2::from_axis(&start, Axis2::Y);
-            let delta_x =
-                BezierAlgebraicChordRealInterval2::from_axis(&end, Axis2::X).subtract(&start_x);
-            let delta_y =
-                BezierAlgebraicChordRealInterval2::from_axis(&end, Axis2::Y).subtract(&start_y);
-            let point_x =
-                BezierAlgebraicChordRealInterval2::from_axis(&point, Axis2::X).subtract(&start_x);
-            let point_y =
-                BezierAlgebraicChordRealInterval2::from_axis(&point, Axis2::Y).subtract(&start_y);
-            let Some(cross) = delta_x.multiply(&point_y, strict).and_then(|first| {
+            let start_x = RealInterval::from_axis(&start, Axis2::X);
+            let start_y = RealInterval::from_axis(&start, Axis2::Y);
+            let delta_x = RealInterval::from_axis(&end, Axis2::X).subtract(&start_x);
+            let delta_y = RealInterval::from_axis(&end, Axis2::Y).subtract(&start_y);
+            let point_x = RealInterval::from_axis(&point, Axis2::X).subtract(&start_x);
+            let point_y = RealInterval::from_axis(&point, Axis2::Y).subtract(&start_y);
+            let Some(cross) = delta_x.multiply(&point_y).and_then(|first| {
                 delta_y
-                    .multiply(&point_x, strict)
+                    .multiply(&point_x)
                     .map(|second| first.subtract(&second))
             }) else {
                 continue;
@@ -88796,19 +88618,15 @@ impl BezierAlgebraicChord2 {
             Ok(())
         };
         let interval_side = |start: &Aabb2, end: &Aabb2, point: &Aabb2| {
-            let start_x = BezierAlgebraicChordRealInterval2::from_axis(start, Axis2::X);
-            let start_y = BezierAlgebraicChordRealInterval2::from_axis(start, Axis2::Y);
-            let delta_x =
-                BezierAlgebraicChordRealInterval2::from_axis(end, Axis2::X).subtract(&start_x);
-            let delta_y =
-                BezierAlgebraicChordRealInterval2::from_axis(end, Axis2::Y).subtract(&start_y);
-            let point_x =
-                BezierAlgebraicChordRealInterval2::from_axis(point, Axis2::X).subtract(&start_x);
-            let point_y =
-                BezierAlgebraicChordRealInterval2::from_axis(point, Axis2::Y).subtract(&start_y);
-            let cross = delta_x.multiply(&point_y, strict).and_then(|first| {
+            let start_x = RealInterval::from_axis(start, Axis2::X);
+            let start_y = RealInterval::from_axis(start, Axis2::Y);
+            let delta_x = RealInterval::from_axis(end, Axis2::X).subtract(&start_x);
+            let delta_y = RealInterval::from_axis(end, Axis2::Y).subtract(&start_y);
+            let point_x = RealInterval::from_axis(point, Axis2::X).subtract(&start_x);
+            let point_y = RealInterval::from_axis(point, Axis2::Y).subtract(&start_y);
+            let cross = delta_x.multiply(&point_y).and_then(|first| {
                 delta_y
-                    .multiply(&point_x, strict)
+                    .multiply(&point_x)
                     .map(|second| first.subtract(&second))
             })?;
             if compare_reals(&cross.lower, &zero, strict) == Some(std::cmp::Ordering::Greater) {
@@ -89271,15 +89089,20 @@ impl BezierAlgebraicChordSupportPredicate2 {
     }
 }
 
+/// Conservative interval over arbitrary exact scalar endpoints.
+///
+/// Returned enclosures use only certified sign and order decisions. An
+/// unresolved optional enclosure returns `None`; terminal approximation
+/// belongs to the consuming geometry predicate, never interval arithmetic.
 #[derive(Clone, Debug, PartialEq)]
-struct BezierAlgebraicChordRealInterval2 {
+struct RealInterval {
     lower: Real,
     upper: Real,
 }
 
-impl BezierAlgebraicChordRealInterval2 {
+impl RealInterval {
     #[inline]
-    fn compare_to_zero(value: &Real, policy: &CurveContext) -> Option<std::cmp::Ordering> {
+    fn compare_to_zero(value: &Real) -> Option<std::cmp::Ordering> {
         value
             .immediate_sign()
             .map(|sign| match sign {
@@ -89287,7 +89110,7 @@ impl BezierAlgebraicChordRealInterval2 {
                 RealSign::Zero => std::cmp::Ordering::Equal,
                 RealSign::Positive => std::cmp::Ordering::Greater,
             })
-            .or_else(|| compare_reals(value, &Real::zero(), policy))
+            .or_else(|| compare_reals(value, &Real::zero(), &CurveContext::STRICT))
     }
 
     fn from_parameter(parameter: &BezierParameter2) -> Self {
@@ -89332,11 +89155,11 @@ impl BezierAlgebraicChordRealInterval2 {
         }
     }
 
-    fn multiply(&self, other: &Self, policy: &CurveContext) -> Option<Self> {
-        let first_lower = Self::compare_to_zero(&self.lower, policy);
-        let first_upper = Self::compare_to_zero(&self.upper, policy);
-        let second_lower = Self::compare_to_zero(&other.lower, policy);
-        let second_upper = Self::compare_to_zero(&other.upper, policy);
+    fn multiply(&self, other: &Self) -> Option<Self> {
+        let first_lower = Self::compare_to_zero(&self.lower);
+        let first_upper = Self::compare_to_zero(&self.upper);
+        let second_lower = Self::compare_to_zero(&other.lower);
+        let second_upper = Self::compare_to_zero(&other.upper);
         let first_nonnegative = matches!(
             first_lower,
             Some(std::cmp::Ordering::Equal | std::cmp::Ordering::Greater)
@@ -89423,15 +89246,15 @@ impl BezierAlgebraicChordRealInterval2 {
             &self.upper * &other.lower,
             &self.upper * &other.upper,
         ];
-        Self::from_values(products, policy)
+        Self::from_values(products)
     }
 
     /// Squares an interval without introducing the dependent cross-products
     /// of generic interval multiplication.
-    fn square(&self, policy: &CurveContext) -> Option<Self> {
+    fn square(&self) -> Option<Self> {
         let zero = Real::zero();
-        let lower_sign = Self::compare_to_zero(&self.lower, policy)?;
-        let upper_sign = Self::compare_to_zero(&self.upper, policy)?;
+        let lower_sign = Self::compare_to_zero(&self.lower)?;
+        let upper_sign = Self::compare_to_zero(&self.upper)?;
         if lower_sign != std::cmp::Ordering::Less {
             return Some(Self {
                 lower: &self.lower * &self.lower,
@@ -89447,7 +89270,7 @@ impl BezierAlgebraicChordRealInterval2 {
         let lower_magnitude = -self.lower.clone();
         let lower_square = &self.lower * &self.lower;
         let upper_square = &self.upper * &self.upper;
-        let upper = match compare_reals(&lower_magnitude, &self.upper, policy) {
+        let upper = match compare_reals(&lower_magnitude, &self.upper, &CurveContext::STRICT) {
             Some(std::cmp::Ordering::Greater) => lower_square,
             Some(std::cmp::Ordering::Less | std::cmp::Ordering::Equal) => upper_square,
             None => lower_square + upper_square,
@@ -89455,11 +89278,11 @@ impl BezierAlgebraicChordRealInterval2 {
         Some(Self { lower: zero, upper })
     }
 
-    fn divide(&self, other: &Self, policy: &CurveContext) -> Option<Self> {
+    fn divide(&self, other: &Self) -> Option<Self> {
         let denominator_is_positive =
-            Self::compare_to_zero(&other.lower, policy) == Some(std::cmp::Ordering::Greater);
+            Self::compare_to_zero(&other.lower) == Some(std::cmp::Ordering::Greater);
         let denominator_is_negative =
-            Self::compare_to_zero(&other.upper, policy) == Some(std::cmp::Ordering::Less);
+            Self::compare_to_zero(&other.upper) == Some(std::cmp::Ordering::Less);
         if !denominator_is_positive && !denominator_is_negative {
             return None;
         }
@@ -89472,20 +89295,16 @@ impl BezierAlgebraicChordRealInterval2 {
             lower: (Real::one() / &other.upper).ok()?,
             upper: (Real::one() / &other.lower).ok()?,
         };
-        self.multiply(&reciprocal, policy)
+        self.multiply(&reciprocal)
     }
 
-    fn evaluate_power_basis(
-        coefficients: &[Real],
-        parameter: &Self,
-        policy: &CurveContext,
-    ) -> Option<Self> {
+    fn evaluate_power_basis(coefficients: &[Real], parameter: &Self) -> Option<Self> {
         let mut value = Self {
             lower: Real::zero(),
             upper: Real::zero(),
         };
         for coefficient in coefficients.iter().rev() {
-            value = value.multiply(parameter, policy)?;
+            value = value.multiply(parameter)?;
             value.lower += coefficient;
             value.upper += coefficient;
         }
@@ -89496,15 +89315,14 @@ impl BezierAlgebraicChordRealInterval2 {
         polynomial: &BivariatePolynomial,
         first: &Self,
         second: &Self,
-        policy: &CurveContext,
     ) -> Option<Self> {
         let mut value = Self {
             lower: Real::zero(),
             upper: Real::zero(),
         };
         for row in polynomial.coefficients.iter().rev() {
-            value = value.multiply(first, policy)?;
-            value = value.add(&Self::evaluate_power_basis(row, second, policy)?);
+            value = value.multiply(first)?;
+            value = value.add(&Self::evaluate_power_basis(row, second)?);
         }
         Some(value)
     }
@@ -89514,21 +89332,20 @@ impl BezierAlgebraicChordRealInterval2 {
         first: &Self,
         second: &Self,
         third: &Self,
-        policy: &CurveContext,
     ) -> Option<Self> {
         let mut value = Self {
             lower: Real::zero(),
             upper: Real::zero(),
         };
         for rows in polynomial.coefficients.iter().rev() {
-            value = value.multiply(first, policy)?;
+            value = value.multiply(first)?;
             let mut slice = Self {
                 lower: Real::zero(),
                 upper: Real::zero(),
             };
             for row in rows.iter().rev() {
-                slice = slice.multiply(second, policy)?;
-                slice = slice.add(&Self::evaluate_power_basis(row, third, policy)?);
+                slice = slice.multiply(second)?;
+                slice = slice.add(&Self::evaluate_power_basis(row, third)?);
             }
             value = value.add(&slice);
         }
@@ -89538,7 +89355,6 @@ impl BezierAlgebraicChordRealInterval2 {
     fn evaluate_quadrivariate_power_basis(
         polynomial: &QuadrivariatePolynomial2,
         parameters: [&Self; 4],
-        policy: &CurveContext,
     ) -> Option<Self> {
         let [first, second, third, fourth] = parameters;
         let [first_count, second_count, third_count, fourth_count] = polynomial.dimensions;
@@ -89548,13 +89364,13 @@ impl BezierAlgebraicChordRealInterval2 {
         };
         let mut value = zero();
         for first_power in (0..first_count).rev() {
-            value = value.multiply(first, policy)?;
+            value = value.multiply(first)?;
             let mut first_slice = zero();
             for second_power in (0..second_count).rev() {
-                first_slice = first_slice.multiply(second, policy)?;
+                first_slice = first_slice.multiply(second)?;
                 let mut second_slice = zero();
                 for third_power in (0..third_count).rev() {
-                    second_slice = second_slice.multiply(third, policy)?;
+                    second_slice = second_slice.multiply(third)?;
                     let start = QuadrivariatePolynomial2::flat_index(
                         polynomial.dimensions,
                         [first_power, second_power, third_power, 0],
@@ -89562,7 +89378,6 @@ impl BezierAlgebraicChordRealInterval2 {
                     second_slice = second_slice.add(&Self::evaluate_power_basis(
                         &polynomial.coefficients[start..start + fourth_count],
                         fourth,
-                        policy,
                     )?);
                 }
                 first_slice = first_slice.add(&second_slice);
@@ -89572,10 +89387,6 @@ impl BezierAlgebraicChordRealInterval2 {
         Some(value)
     }
 
-    fn nonnegative_square_root(&self, policy: &CurveContext) -> Option<Self> {
-        self.nonnegative_square_root_with_precision(policy, None)
-    }
-
     /// Encloses the nonnegative square root, optionally replacing symbolic
     /// root endpoints by certified dyadic rationals at `precision`.
     ///
@@ -89583,13 +89394,9 @@ impl BezierAlgebraicChordRealInterval2 {
     /// `sqrt(Real)` endpoint causes every later product and comparison to
     /// replay that radical DAG; a certified dyadic enclosure carries the
     /// identical proof obligation with substantially smaller arithmetic.
-    fn nonnegative_square_root_with_precision(
-        &self,
-        policy: &CurveContext,
-        precision: Option<i32>,
-    ) -> Option<Self> {
+    fn nonnegative_square_root(&self, precision: Option<i32>) -> Option<Self> {
         let zero = Real::zero();
-        if Self::compare_to_zero(&self.upper, policy)? == std::cmp::Ordering::Less {
+        if Self::compare_to_zero(&self.upper)? == std::cmp::Ordering::Less {
             return None;
         }
         let endpoint = |value: &Real, lower: bool| {
@@ -89604,11 +89411,11 @@ impl BezierAlgebraicChordRealInterval2 {
                 bounds[1].clone()
             }))
         };
-        let lower = match Self::compare_to_zero(&self.lower, policy)? {
+        let lower = match Self::compare_to_zero(&self.lower)? {
             std::cmp::Ordering::Greater => endpoint(&self.lower, true)?,
             std::cmp::Ordering::Equal | std::cmp::Ordering::Less => zero,
         };
-        let upper = match Self::compare_to_zero(&self.upper, policy)? {
+        let upper = match Self::compare_to_zero(&self.upper)? {
             std::cmp::Ordering::Greater => endpoint(&self.upper, false)?,
             std::cmp::Ordering::Equal => Real::zero(),
             std::cmp::Ordering::Less => return None,
@@ -89616,16 +89423,17 @@ impl BezierAlgebraicChordRealInterval2 {
         Some(Self { lower, upper })
     }
 
-    fn from_values<const N: usize>(values: [Real; N], policy: &CurveContext) -> Option<Self> {
+    fn from_values<const N: usize>(values: [Real; N]) -> Option<Self> {
         let mut values = values.into_iter();
         let first = values.next()?;
         let mut lower = first.clone();
         let mut upper = first;
         for value in values {
-            if compare_reals(&value, &lower, policy)? == std::cmp::Ordering::Less {
+            if compare_reals(&value, &lower, &CurveContext::STRICT)? == std::cmp::Ordering::Less {
                 lower = value.clone();
             }
-            if compare_reals(&value, &upper, policy)? == std::cmp::Ordering::Greater {
+            if compare_reals(&value, &upper, &CurveContext::STRICT)? == std::cmp::Ordering::Greater
+            {
                 upper = value;
             }
         }
@@ -89648,7 +89456,7 @@ fn retained_bounds_axis_order_to_real(
             continue;
         };
         terminal_refined |= refinement_steps == 512;
-        let coordinate = BezierAlgebraicChordRealInterval2::from_axis(&bounds, axis);
+        let coordinate = RealInterval::from_axis(&bounds, axis);
         if compare_reals(&coordinate.upper, value, &CurveContext::STRICT)
             == Some(std::cmp::Ordering::Less)
         {
@@ -90446,47 +90254,44 @@ impl BezierAlgebraicChordParallelPoint2 {
         let (tangent_x_coefficients, tangent_y_coefficients) =
             support.frame_tangent_power_basis()?;
         let strict = &CurveContext::STRICT;
-        let exact = |value: &Real| BezierAlgebraicChordRealInterval2 {
+        let exact = |value: &Real| RealInterval {
             lower: value.clone(),
             upper: value.clone(),
         };
-        let scale = |value: &BezierAlgebraicChordRealInterval2, scalar: &Real| {
-            value.multiply(&exact(scalar), strict)
-        };
+        let scale = |value: &RealInterval, scalar: &Real| value.multiply(&exact(scalar));
         let mut parameter_lower = parameter.data.lower.clone();
         let mut parameter_upper = parameter.data.upper.clone();
-        let source_parameter_interval =
-            |refinement_steps| -> CurveResult<Option<BezierAlgebraicChordRealInterval2>> {
-                Ok(Some(match &source.data.parameter {
-                    BezierAnalyticParallelPointParameter2::Bezier(parameter) => {
-                        let parameter = parameter
-                            .clone()
-                            .refined_isolating_interval(refinement_steps, policy);
-                        BezierAlgebraicChordRealInterval2::from_parameter(&parameter)
+        let source_parameter_interval = |refinement_steps| -> CurveResult<Option<RealInterval>> {
+            Ok(Some(match &source.data.parameter {
+                BezierAnalyticParallelPointParameter2::Bezier(parameter) => {
+                    let parameter = parameter
+                        .clone()
+                        .refined_isolating_interval(refinement_steps, policy);
+                    RealInterval::from_parameter(&parameter)
+                }
+                BezierAnalyticParallelPointParameter2::SelectedFiber(parameter) => {
+                    let parameter = match parameter.refined(refinement_steps, policy)? {
+                        Classification::Decided(parameter) => parameter,
+                        Classification::Uncertain(_) => return Ok(None),
+                    };
+                    RealInterval {
+                        lower: parameter.root().lower.clone(),
+                        upper: parameter.root().upper.clone(),
                     }
-                    BezierAnalyticParallelPointParameter2::SelectedFiber(parameter) => {
-                        let parameter = match parameter.refined(refinement_steps, policy)? {
-                            Classification::Decided(parameter) => parameter,
-                            Classification::Uncertain(_) => return Ok(None),
-                        };
-                        BezierAlgebraicChordRealInterval2 {
-                            lower: parameter.root().lower.clone(),
-                            upper: parameter.root().upper.clone(),
-                        }
+                }
+                BezierAnalyticParallelPointParameter2::RecursiveProjective(parameter) => {
+                    let parameter = match parameter.refined(refinement_steps, policy)? {
+                        Classification::Decided(parameter) => parameter,
+                        Classification::Uncertain(_) => return Ok(None),
+                    };
+                    let (lower, upper) = parameter.isolating_bounds();
+                    RealInterval {
+                        lower: lower.clone(),
+                        upper: upper.clone(),
                     }
-                    BezierAnalyticParallelPointParameter2::RecursiveProjective(parameter) => {
-                        let parameter = match parameter.refined(refinement_steps, policy)? {
-                            Classification::Decided(parameter) => parameter,
-                            Classification::Uncertain(_) => return Ok(None),
-                        };
-                        let (lower, upper) = parameter.isolating_bounds();
-                        BezierAlgebraicChordRealInterval2 {
-                            lower: lower.clone(),
-                            upper: upper.clone(),
-                        }
-                    }
-                }))
-            };
+                }
+            }))
+        };
         let bounded_exact_pass = policy.has_bounded_exact_predicate_budget();
         let refinement_schedule: &[usize] = if bounded_exact_pass {
             &[0, 2, 4, 8, 16, 32, 64, 128]
@@ -90517,7 +90322,7 @@ impl BezierAlgebraicChordParallelPoint2 {
             {
                 parameter_upper = refined_parameter.data.upper.clone();
             }
-            let parameter = BezierAlgebraicChordRealInterval2 {
+            let parameter = RealInterval {
                 lower: parameter_lower.clone(),
                 upper: parameter_upper.clone(),
             };
@@ -90533,25 +90338,13 @@ impl BezierAlgebraicChordParallelPoint2 {
             else {
                 continue;
             };
-            let direction_x =
-                BezierAlgebraicChordRealInterval2::from_axis(&direction_end, Axis2::X).subtract(
-                    &BezierAlgebraicChordRealInterval2::from_axis(&direction_start, Axis2::X),
-                );
-            let direction_y =
-                BezierAlgebraicChordRealInterval2::from_axis(&direction_end, Axis2::Y).subtract(
-                    &BezierAlgebraicChordRealInterval2::from_axis(&direction_start, Axis2::Y),
-                );
+            let direction_x = RealInterval::from_axis(&direction_end, Axis2::X)
+                .subtract(&RealInterval::from_axis(&direction_start, Axis2::X));
+            let direction_y = RealInterval::from_axis(&direction_end, Axis2::Y)
+                .subtract(&RealInterval::from_axis(&direction_start, Axis2::Y));
             let (Some(v_x), Some(v_y)) = (
-                BezierAlgebraicChordRealInterval2::evaluate_power_basis(
-                    tangent_x_coefficients,
-                    &parameter,
-                    strict,
-                ),
-                BezierAlgebraicChordRealInterval2::evaluate_power_basis(
-                    tangent_y_coefficients,
-                    &parameter,
-                    strict,
-                ),
+                RealInterval::evaluate_power_basis(tangent_x_coefficients, &parameter),
+                RealInterval::evaluate_power_basis(tangent_y_coefficients, &parameter),
             ) else {
                 continue;
             };
@@ -90588,17 +90381,13 @@ impl BezierAlgebraicChordParallelPoint2 {
                 else {
                     continue;
                 };
-                let physical_x =
-                    BezierAlgebraicChordRealInterval2::from_axis(&end, Axis2::X).subtract(
-                        &BezierAlgebraicChordRealInterval2::from_axis(&start, Axis2::X),
-                    );
-                let physical_y =
-                    BezierAlgebraicChordRealInterval2::from_axis(&end, Axis2::Y).subtract(
-                        &BezierAlgebraicChordRealInterval2::from_axis(&start, Axis2::Y),
-                    );
-                let Some(physical_cross) = physical_x.multiply(&v_y, strict).and_then(|first| {
+                let physical_x = RealInterval::from_axis(&end, Axis2::X)
+                    .subtract(&RealInterval::from_axis(&start, Axis2::X));
+                let physical_y = RealInterval::from_axis(&end, Axis2::Y)
+                    .subtract(&RealInterval::from_axis(&start, Axis2::Y));
+                let Some(physical_cross) = physical_x.multiply(&v_y).and_then(|first| {
                     physical_y
-                        .multiply(&v_x, strict)
+                        .multiply(&v_x)
                         .map(|second| first.subtract(&second))
                 }) else {
                     continue;
@@ -90606,36 +90395,35 @@ impl BezierAlgebraicChordParallelPoint2 {
                 physical_cross
             };
             let Some(u_speed) = direction_x
-                .square(strict)
-                .and_then(|x| direction_y.square(strict).map(|y| x.add(&y)))
-                .and_then(|squared| squared.nonnegative_square_root(strict))
+                .square()
+                .and_then(|x| direction_y.square().map(|y| x.add(&y)))
+                .and_then(|squared| squared.nonnegative_square_root(None))
             else {
                 continue;
             };
             let Some(v_speed) = v_x
-                .square(strict)
-                .and_then(|x| v_y.square(strict).map(|y| x.add(&y)))
-                .and_then(|squared| squared.nonnegative_square_root(strict))
+                .square()
+                .and_then(|x| v_y.square().map(|y| x.add(&y)))
+                .and_then(|squared| squared.nonnegative_square_root(None))
             else {
                 continue;
             };
-            let Some(direction_cross) = direction_x.multiply(&v_y, strict).and_then(|first| {
+            let Some(direction_cross) = direction_x.multiply(&v_y).and_then(|first| {
                 direction_y
-                    .multiply(&v_x, strict)
+                    .multiply(&v_x)
                     .map(|second| first.subtract(&second))
             }) else {
                 continue;
             };
-            let Some(dot) = direction_x.multiply(&v_x, strict).and_then(|first| {
-                direction_y
-                    .multiply(&v_y, strict)
-                    .map(|second| first.add(&second))
-            }) else {
+            let Some(dot) = direction_x
+                .multiply(&v_x)
+                .and_then(|first| direction_y.multiply(&v_y).map(|second| first.add(&second)))
+            else {
                 continue;
             };
             let mut value = match (point_index, anchor_index) {
                 (0, 1) => physical_cross.clone(),
-                (1, 0) => BezierAlgebraicChordRealInterval2 {
+                (1, 0) => RealInterval {
                     lower: -physical_cross.upper.clone(),
                     upper: -physical_cross.lower.clone(),
                 },
@@ -90644,12 +90432,10 @@ impl BezierAlgebraicChordParallelPoint2 {
             };
             let displacement_numerator = match self.data.direction {
                 BezierAlgebraicChordUnitDisplacement2::LeftNormal => dot.clone(),
-                BezierAlgebraicChordUnitDisplacement2::Tangent => {
-                    BezierAlgebraicChordRealInterval2 {
-                        lower: -direction_cross.upper.clone(),
-                        upper: -direction_cross.lower.clone(),
-                    }
-                }
+                BezierAlgebraicChordUnitDisplacement2::Tangent => RealInterval {
+                    lower: -direction_cross.upper.clone(),
+                    upper: -direction_cross.lower.clone(),
+                },
             };
             let Some(displacement) = scale(&displacement_numerator, &self.data.distance) else {
                 continue;
@@ -90663,17 +90449,14 @@ impl BezierAlgebraicChordParallelPoint2 {
                 &self.data.translation_x + &source.data.translation_x - &support.data.translation_x;
             let translation_y =
                 &self.data.translation_y + &source.data.translation_y - &support.data.translation_y;
-            let Some(translation) =
-                v_x.multiply(&exact(&translation_y), strict)
-                    .and_then(|first| {
-                        v_y.multiply(&exact(&translation_x), strict)
-                            .map(|second| first.subtract(&second))
-                    })
-            else {
+            let Some(translation) = v_x.multiply(&exact(&translation_y)).and_then(|first| {
+                v_y.multiply(&exact(&translation_x))
+                    .map(|second| first.subtract(&second))
+            }) else {
                 continue;
             };
             value = value.add(&translation);
-            let Some(scaled_value) = value.multiply(&u_speed, strict) else {
+            let Some(scaled_value) = value.multiply(&u_speed) else {
                 continue;
             };
             value = scaled_value.add(&displacement);
@@ -91556,47 +91339,41 @@ impl BezierAlgebraicChordParallelPoint2 {
                 (start, end)
             }
         };
-        let strict = &CurveContext::STRICT;
-        let delta_x = BezierAlgebraicChordRealInterval2::from_axis(&end, Axis2::X).subtract(
-            &BezierAlgebraicChordRealInterval2::from_axis(&start, Axis2::X),
-        );
-        let delta_y = BezierAlgebraicChordRealInterval2::from_axis(&end, Axis2::Y).subtract(
-            &BezierAlgebraicChordRealInterval2::from_axis(&start, Axis2::Y),
-        );
+        let delta_x = RealInterval::from_axis(&end, Axis2::X)
+            .subtract(&RealInterval::from_axis(&start, Axis2::X));
+        let delta_y = RealInterval::from_axis(&end, Axis2::Y)
+            .subtract(&RealInterval::from_axis(&start, Axis2::Y));
         let Some(speed) = delta_x
-            .square(strict)
-            .and_then(|x| delta_y.square(strict).map(|y| x.add(&y)))
-            .and_then(|speed_squared| speed_squared.nonnegative_square_root(strict))
+            .square()
+            .and_then(|x| delta_y.square().map(|y| x.add(&y)))
+            .and_then(|speed_squared| speed_squared.nonnegative_square_root(None))
         else {
             return Classification::Uncertain(UncertaintyReason::Ordering);
         };
         let direction_x = match self.data.direction {
-            BezierAlgebraicChordUnitDisplacement2::LeftNormal => {
-                BezierAlgebraicChordRealInterval2 {
-                    lower: -delta_y.upper.clone(),
-                    upper: -delta_y.lower.clone(),
-                }
-            }
+            BezierAlgebraicChordUnitDisplacement2::LeftNormal => RealInterval {
+                lower: -delta_y.upper.clone(),
+                upper: -delta_y.lower.clone(),
+            },
             BezierAlgebraicChordUnitDisplacement2::Tangent => delta_x.clone(),
         };
         let direction_y = match self.data.direction {
             BezierAlgebraicChordUnitDisplacement2::LeftNormal => delta_x,
             BezierAlgebraicChordUnitDisplacement2::Tangent => delta_y,
         };
-        let Some(unit_x) = direction_x.divide(&speed, strict) else {
+        let Some(unit_x) = direction_x.divide(&speed) else {
             return Classification::Uncertain(UncertaintyReason::Ordering);
         };
-        let Some(unit_y) = direction_y.divide(&speed, strict) else {
+        let Some(unit_y) = direction_y.divide(&speed) else {
             return Classification::Uncertain(UncertaintyReason::Ordering);
         };
-        let distance = BezierAlgebraicChordRealInterval2 {
+        let distance = RealInterval {
             lower: self.data.distance.clone(),
             upper: self.data.distance.clone(),
         };
-        let (Some(offset_x), Some(offset_y)) = (
-            unit_x.multiply(&distance, strict),
-            unit_y.multiply(&distance, strict),
-        ) else {
+        let (Some(offset_x), Some(offset_y)) =
+            (unit_x.multiply(&distance), unit_y.multiply(&distance))
+        else {
             return Classification::Uncertain(UncertaintyReason::Ordering);
         };
         let origin = if let Some(point) = self.data.source_point.as_deref() {
@@ -91627,15 +91404,15 @@ impl BezierAlgebraicChordParallelPoint2 {
                 }
             }
         };
-        let x = BezierAlgebraicChordRealInterval2::from_axis(&origin, Axis2::X)
+        let x = RealInterval::from_axis(&origin, Axis2::X)
             .add(&offset_x)
-            .add(&BezierAlgebraicChordRealInterval2 {
+            .add(&RealInterval {
                 lower: self.data.translation_x.clone(),
                 upper: self.data.translation_x.clone(),
             });
-        let y = BezierAlgebraicChordRealInterval2::from_axis(&origin, Axis2::Y)
+        let y = RealInterval::from_axis(&origin, Axis2::Y)
             .add(&offset_y)
-            .add(&BezierAlgebraicChordRealInterval2 {
+            .add(&RealInterval {
                 lower: self.data.translation_y.clone(),
                 upper: self.data.translation_y.clone(),
             });
@@ -91777,23 +91554,17 @@ impl BezierAlgebraicChordParallelPoint2 {
             else {
                 continue;
             };
-            let radial_x = BezierAlgebraicChordRealInterval2::from_axis(&point, Axis2::X).subtract(
-                &BezierAlgebraicChordRealInterval2::from_axis(&center, Axis2::X),
-            );
-            let radial_y = BezierAlgebraicChordRealInterval2::from_axis(&point, Axis2::Y).subtract(
-                &BezierAlgebraicChordRealInterval2::from_axis(&center, Axis2::Y),
-            );
-            let chord_x =
-                BezierAlgebraicChordRealInterval2::from_axis(&chord_end, Axis2::X).subtract(
-                    &BezierAlgebraicChordRealInterval2::from_axis(&chord_start, Axis2::X),
-                );
-            let chord_y =
-                BezierAlgebraicChordRealInterval2::from_axis(&chord_end, Axis2::Y).subtract(
-                    &BezierAlgebraicChordRealInterval2::from_axis(&chord_start, Axis2::Y),
-                );
+            let radial_x = RealInterval::from_axis(&point, Axis2::X)
+                .subtract(&RealInterval::from_axis(&center, Axis2::X));
+            let radial_y = RealInterval::from_axis(&point, Axis2::Y)
+                .subtract(&RealInterval::from_axis(&center, Axis2::Y));
+            let chord_x = RealInterval::from_axis(&chord_end, Axis2::X)
+                .subtract(&RealInterval::from_axis(&chord_start, Axis2::X));
+            let chord_y = RealInterval::from_axis(&chord_end, Axis2::Y)
+                .subtract(&RealInterval::from_axis(&chord_start, Axis2::Y));
             let Some(projection) = radial_x
-                .multiply(&chord_x, strict)
-                .and_then(|x| radial_y.multiply(&chord_y, strict).map(|y| x.add(&y)))
+                .multiply(&chord_x)
+                .and_then(|x| radial_y.multiply(&chord_y).map(|y| x.add(&y)))
             else {
                 continue;
             };
@@ -92117,40 +91888,39 @@ impl BezierAnalyticParallelPoint2 {
         let point_weight_coefficients = point_source.weight.unwrap_or(&unit_weight);
         let tangent_weight_coefficients = tangent_source.weight.unwrap_or(&unit_weight);
         let strict = &CurveContext::STRICT;
-        let parameter_interval =
-            |parameter: &BezierAnalyticParallelPointParameter2,
-             refinement_steps|
-             -> CurveResult<Option<BezierAlgebraicChordRealInterval2>> {
-                Ok(Some(match parameter {
-                    BezierAnalyticParallelPointParameter2::Bezier(parameter) => {
-                        let parameter = parameter
-                            .clone()
-                            .refined_isolating_interval(refinement_steps, policy);
-                        BezierAlgebraicChordRealInterval2::from_parameter(&parameter)
+        let parameter_interval = |parameter: &BezierAnalyticParallelPointParameter2,
+                                  refinement_steps|
+         -> CurveResult<Option<RealInterval>> {
+            Ok(Some(match parameter {
+                BezierAnalyticParallelPointParameter2::Bezier(parameter) => {
+                    let parameter = parameter
+                        .clone()
+                        .refined_isolating_interval(refinement_steps, policy);
+                    RealInterval::from_parameter(&parameter)
+                }
+                BezierAnalyticParallelPointParameter2::SelectedFiber(parameter) => {
+                    let parameter = match parameter.refined(refinement_steps, policy)? {
+                        Classification::Decided(parameter) => parameter,
+                        Classification::Uncertain(_) => return Ok(None),
+                    };
+                    RealInterval {
+                        lower: parameter.root().lower.clone(),
+                        upper: parameter.root().upper.clone(),
                     }
-                    BezierAnalyticParallelPointParameter2::SelectedFiber(parameter) => {
-                        let parameter = match parameter.refined(refinement_steps, policy)? {
-                            Classification::Decided(parameter) => parameter,
-                            Classification::Uncertain(_) => return Ok(None),
-                        };
-                        BezierAlgebraicChordRealInterval2 {
-                            lower: parameter.root().lower.clone(),
-                            upper: parameter.root().upper.clone(),
-                        }
+                }
+                BezierAnalyticParallelPointParameter2::RecursiveProjective(parameter) => {
+                    let parameter = match parameter.refined(refinement_steps, policy)? {
+                        Classification::Decided(parameter) => parameter,
+                        Classification::Uncertain(_) => return Ok(None),
+                    };
+                    let (lower, upper) = parameter.isolating_bounds();
+                    RealInterval {
+                        lower: lower.clone(),
+                        upper: upper.clone(),
                     }
-                    BezierAnalyticParallelPointParameter2::RecursiveProjective(parameter) => {
-                        let parameter = match parameter.refined(refinement_steps, policy)? {
-                            Classification::Decided(parameter) => parameter,
-                            Classification::Uncertain(_) => return Ok(None),
-                        };
-                        let (lower, upper) = parameter.isolating_bounds();
-                        BezierAlgebraicChordRealInterval2 {
-                            lower: lower.clone(),
-                            upper: upper.clone(),
-                        }
-                    }
-                }))
-            };
+                }
+            }))
+        };
         let oriented_side = |mut sign| {
             sign = product_sign(sign, tangent_displacement_sign);
             if chord.retained_support_orientation_is_reversed() {
@@ -92171,11 +91941,7 @@ impl BezierAnalyticParallelPoint2 {
                 continue;
             };
             let evaluate = |coefficients: &[Real], parameter| {
-                BezierAlgebraicChordRealInterval2::evaluate_power_basis(
-                    coefficients,
-                    parameter,
-                    strict,
-                )
+                RealInterval::evaluate_power_basis(coefficients, parameter)
             };
             let correlated_incidence = (|| {
                 macro_rules! interval_or_none {
@@ -92204,20 +91970,20 @@ impl BezierAnalyticParallelPoint2 {
                 let tangent_y =
                     interval_or_none!("tangent-y", evaluate(tangent_y_coefficients, &parameter));
                 let point_speed_squared =
-                    interval_or_none!("point-speed-x-square", point_tangent_x.square(strict)).add(
-                        &interval_or_none!("point-speed-y-square", point_tangent_y.square(strict)),
+                    interval_or_none!("point-speed-x-square", point_tangent_x.square()).add(
+                        &interval_or_none!("point-speed-y-square", point_tangent_y.square()),
                     );
                 let point_speed = interval_or_none!(
                     "point-speed-root",
-                    point_speed_squared.nonnegative_square_root(strict)
+                    point_speed_squared.nonnegative_square_root(None)
                 );
                 let tangent_speed_squared =
-                    interval_or_none!("tangent-speed-x-square", tangent_x.square(strict)).add(
-                        &interval_or_none!("tangent-speed-y-square", tangent_y.square(strict)),
+                    interval_or_none!("tangent-speed-x-square", tangent_x.square()).add(
+                        &interval_or_none!("tangent-speed-y-square", tangent_y.square()),
                     );
                 let tangent_speed = interval_or_none!(
                     "tangent-speed-root",
-                    tangent_speed_squared.nonnegative_square_root(strict)
+                    tangent_speed_squared.nonnegative_square_root(None)
                 );
                 let point_weight = interval_or_none!(
                     "point-weight",
@@ -92231,25 +91997,21 @@ impl BezierAnalyticParallelPoint2 {
                     "point-x-numerator",
                     evaluate(point_source.x_numerator, &point_parameter)
                 );
-                let point_x = interval_or_none!(
-                    "point-x-divide",
-                    point_x_numerator.divide(&point_weight, strict)
-                );
+                let point_x =
+                    interval_or_none!("point-x-divide", point_x_numerator.divide(&point_weight));
                 let point_y_numerator = interval_or_none!(
                     "point-y-numerator",
                     evaluate(point_source.y_numerator, &point_parameter)
                 );
-                let point_y = interval_or_none!(
-                    "point-y-divide",
-                    point_y_numerator.divide(&point_weight, strict)
-                );
+                let point_y =
+                    interval_or_none!("point-y-divide", point_y_numerator.divide(&point_weight));
                 let tangent_x_numerator = interval_or_none!(
                     "tangent-x-numerator",
                     evaluate(tangent_source.x_numerator, &parameter)
                 );
                 let tangent_x_coordinate = interval_or_none!(
                     "tangent-x-divide",
-                    tangent_x_numerator.divide(&tangent_weight, strict)
+                    tangent_x_numerator.divide(&tangent_weight)
                 );
                 let tangent_y_numerator = interval_or_none!(
                     "tangent-y-numerator",
@@ -92257,92 +92019,77 @@ impl BezierAnalyticParallelPoint2 {
                 );
                 let tangent_y_coordinate = interval_or_none!(
                     "tangent-y-divide",
-                    tangent_y_numerator.divide(&tangent_weight, strict)
+                    tangent_y_numerator.divide(&tangent_weight)
                 );
                 let delta_x = point_x.subtract(&tangent_x_coordinate);
                 let delta_y = point_y.subtract(&tangent_y_coordinate);
                 let source_incidence =
-                    interval_or_none!("source-incidence-x", tangent_x.multiply(&delta_y, strict))
+                    interval_or_none!("source-incidence-x", tangent_x.multiply(&delta_y)).subtract(
+                        &interval_or_none!("source-incidence-y", tangent_y.multiply(&delta_x)),
+                    );
+                let tangent_cross =
+                    interval_or_none!("tangent-cross-x", tangent_x.multiply(&point_tangent_y))
                         .subtract(&interval_or_none!(
-                            "source-incidence-y",
-                            tangent_y.multiply(&delta_x, strict)
+                            "tangent-cross-y",
+                            tangent_y.multiply(&point_tangent_x)
                         ));
-                let tangent_cross = interval_or_none!(
-                    "tangent-cross-x",
-                    tangent_x.multiply(&point_tangent_y, strict)
-                )
-                .subtract(&interval_or_none!(
-                    "tangent-cross-y",
-                    tangent_y.multiply(&point_tangent_x, strict)
-                ));
-                let tangent_dot = interval_or_none!(
-                    "tangent-dot-x",
-                    tangent_x.multiply(&point_tangent_x, strict)
-                )
-                .add(&interval_or_none!(
-                    "tangent-dot-y",
-                    tangent_y.multiply(&point_tangent_y, strict)
-                ));
-                let speed_product = interval_or_none!(
-                    "speed-product",
-                    tangent_speed.multiply(&point_speed, strict)
-                );
+                let tangent_dot =
+                    interval_or_none!("tangent-dot-x", tangent_x.multiply(&point_tangent_x)).add(
+                        &interval_or_none!("tangent-dot-y", tangent_y.multiply(&point_tangent_y)),
+                    );
+                let speed_product =
+                    interval_or_none!("speed-product", tangent_speed.multiply(&point_speed));
                 let dot_plus_speed = tangent_dot.add(&speed_product);
                 let normal_difference =
                     if compare_reals(&dot_plus_speed.lower, &Real::zero(), strict)
                         == Some(std::cmp::Ordering::Greater)
                     {
                         let squared_cross =
-                            interval_or_none!("cross-square", tangent_cross.square(strict));
+                            interval_or_none!("cross-square", tangent_cross.square());
                         let denominator = interval_or_none!(
                             "normal-denominator",
-                            dot_plus_speed.multiply(&point_speed, strict)
+                            dot_plus_speed.multiply(&point_speed)
                         );
                         let quotient = interval_or_none!(
                             "normal-quotient",
-                            squared_cross.divide(&denominator, strict)
+                            squared_cross.divide(&denominator)
                         );
-                        BezierAlgebraicChordRealInterval2 {
+                        RealInterval {
                             lower: -quotient.upper,
                             upper: -quotient.lower,
                         }
                     } else {
-                        interval_or_none!(
-                            "normal-direct-divide",
-                            tangent_dot.divide(&point_speed, strict)
-                        )
-                        .subtract(&tangent_speed)
+                        interval_or_none!("normal-direct-divide", tangent_dot.divide(&point_speed))
+                            .subtract(&tangent_speed)
                     };
-                let exact = |value: &Real| BezierAlgebraicChordRealInterval2 {
+                let exact = |value: &Real| RealInterval {
                     lower: value.clone(),
                     upper: value.clone(),
                 };
                 let normal_difference = interval_or_none!(
                     "normal-scale",
-                    normal_difference.multiply(&exact(self.data.parallel.distance()), strict)
+                    normal_difference.multiply(&exact(self.data.parallel.distance()))
                 );
                 let normal_distance_delta =
                     self.data.parallel.distance() - start.data.parallel.distance();
                 let normal_delta = interval_or_none!(
                     "normal-delta-scale",
-                    tangent_speed.multiply(&exact(&normal_distance_delta), strict)
+                    tangent_speed.multiply(&exact(&normal_distance_delta))
                 );
                 let tangent_over_speed =
-                    interval_or_none!("tangent-divide", tangent_cross.divide(&point_speed, strict));
+                    interval_or_none!("tangent-divide", tangent_cross.divide(&point_speed));
                 let tangent = interval_or_none!(
                     "tangent-scale",
-                    tangent_over_speed.multiply(&exact(&self.data.tangent_distance), strict)
+                    tangent_over_speed.multiply(&exact(&self.data.tangent_distance))
                 );
                 let translation_x = &self.data.translation_x - &start.data.translation_x;
                 let translation_y = &self.data.translation_y - &start.data.translation_y;
-                let translation = interval_or_none!(
-                    "translation-x",
-                    tangent_x.multiply(&exact(&translation_y), strict)
-                )
-                .subtract(&interval_or_none!(
-                    "translation-y",
-                    tangent_y.multiply(&exact(&translation_x), strict)
-                ));
+                let translation =
+                    interval_or_none!("translation-x", tangent_x.multiply(&exact(&translation_y)))
+                        .subtract(&interval_or_none!(
+                            "translation-y",
+                            tangent_y.multiply(&exact(&translation_x))
+                        ));
                 Some(
                     source_incidence
                         .add(&normal_difference)
@@ -92393,29 +92140,23 @@ impl BezierAnalyticParallelPoint2 {
             ) else {
                 continue;
             };
-            let Some(tangent_x) = BezierAlgebraicChordRealInterval2::evaluate_power_basis(
-                tangent_x_coefficients,
-                &parameter,
-                strict,
-            ) else {
+            let Some(tangent_x) =
+                RealInterval::evaluate_power_basis(tangent_x_coefficients, &parameter)
+            else {
                 continue;
             };
-            let Some(tangent_y) = BezierAlgebraicChordRealInterval2::evaluate_power_basis(
-                tangent_y_coefficients,
-                &parameter,
-                strict,
-            ) else {
+            let Some(tangent_y) =
+                RealInterval::evaluate_power_basis(tangent_y_coefficients, &parameter)
+            else {
                 continue;
             };
-            let delta_x = BezierAlgebraicChordRealInterval2::from_axis(&point, Axis2::X).subtract(
-                &BezierAlgebraicChordRealInterval2::from_axis(&origin, Axis2::X),
-            );
-            let delta_y = BezierAlgebraicChordRealInterval2::from_axis(&point, Axis2::Y).subtract(
-                &BezierAlgebraicChordRealInterval2::from_axis(&origin, Axis2::Y),
-            );
-            let Some(cross) = tangent_x.multiply(&delta_y, strict).and_then(|first| {
+            let delta_x = RealInterval::from_axis(&point, Axis2::X)
+                .subtract(&RealInterval::from_axis(&origin, Axis2::X));
+            let delta_y = RealInterval::from_axis(&point, Axis2::Y)
+                .subtract(&RealInterval::from_axis(&origin, Axis2::Y));
+            let Some(cross) = tangent_x.multiply(&delta_y).and_then(|first| {
                 tangent_y
-                    .multiply(&delta_x, strict)
+                    .multiply(&delta_x)
                     .map(|second| first.subtract(&second))
             }) else {
                 continue;
@@ -92447,8 +92188,7 @@ impl BezierAnalyticParallelPoint2 {
                 let (lower, upper) = match parameter {
                     BezierAnalyticParallelPointParameter2::Bezier(parameter) => {
                         let parameter = parameter.clone().refined_isolating_interval(512, policy);
-                        let interval =
-                            BezierAlgebraicChordRealInterval2::from_parameter(&parameter);
+                        let interval = RealInterval::from_parameter(&parameter);
                         (interval.lower, interval.upper)
                     }
                     BezierAnalyticParallelPointParameter2::SelectedFiber(parameter) => {
@@ -92830,7 +92570,7 @@ impl BezierAnalyticParallelPoint2 {
                     Classification::Uncertain(_) => continue,
                 };
             terminal_refined |= refinement_steps == 512;
-            let parameter_interval = BezierAlgebraicChordRealInterval2 {
+            let parameter_interval = RealInterval {
                 lower: refined.data.lower.clone(),
                 upper: refined.data.upper.clone(),
             };
@@ -94888,7 +94628,7 @@ impl BezierAnalyticParallelPoint2 {
                 };
                 analytic_parallel_point_bounds_over_interval_with_tangent(
                     &self.data.parallel,
-                    &BezierAlgebraicChordRealInterval2 {
+                    &RealInterval {
                         lower: parameter.root().lower.clone(),
                         upper: parameter.root().upper.clone(),
                     },
@@ -94914,7 +94654,7 @@ impl BezierAnalyticParallelPoint2 {
                 let (lower, upper) = parameter.isolating_bounds();
                 analytic_parallel_point_bounds_over_interval_with_tangent(
                     &self.data.parallel,
-                    &BezierAlgebraicChordRealInterval2 {
+                    &RealInterval {
                         lower: lower.clone(),
                         upper: upper.clone(),
                     },
@@ -96972,19 +96712,14 @@ impl BezierAlgebraicChordPairPoint2 {
             ) else {
                 continue;
             };
-            let product_difference =
-                |first: &BezierAlgebraicChordRealInterval2,
-                 second: &BezierAlgebraicChordRealInterval2,
-                 third: &BezierAlgebraicChordRealInterval2,
-                 fourth: &BezierAlgebraicChordRealInterval2| {
-                    first
-                        .multiply(second, &CurveContext::STRICT)
-                        .and_then(|first| {
-                            third
-                                .multiply(fourth, &CurveContext::STRICT)
-                                .map(|second| first.subtract(&second))
-                        })
-                };
+            let product_difference = |first: &RealInterval,
+                                      second: &RealInterval,
+                                      third: &RealInterval,
+                                      fourth: &RealInterval| {
+                first
+                    .multiply(second)
+                    .and_then(|first| third.multiply(fourth).map(|second| first.subtract(&second)))
+            };
             let (Some(x), Some(y), Some(denominator)) = (
                 product_difference(
                     &first_interval[1],
@@ -97008,15 +96743,11 @@ impl BezierAlgebraicChordPairPoint2 {
                 continue;
             };
             let incidence = query_interval[0]
-                .multiply(&x, &CurveContext::STRICT)
-                .and_then(|value| {
-                    query_interval[1]
-                        .multiply(&y, &CurveContext::STRICT)
-                        .map(|y| value.add(&y))
-                })
+                .multiply(&x)
+                .and_then(|value| query_interval[1].multiply(&y).map(|y| value.add(&y)))
                 .and_then(|value| {
                     query_interval[2]
-                        .multiply(&denominator, &CurveContext::STRICT)
+                        .multiply(&denominator)
                         .map(|constant| value.add(&constant))
                 });
             let Some(incidence) = incidence else {
@@ -97666,22 +97397,18 @@ impl BezierAlgebraicChordPairPoint2 {
                 continue;
             };
             terminal_refined |= refinement_steps == 512;
-            let coordinate =
-                |bounds: &Aabb2, axis| BezierAlgebraicChordRealInterval2::from_axis(bounds, axis);
+            let coordinate = |bounds: &Aabb2, axis| RealInterval::from_axis(bounds, axis);
             let start_x = coordinate(&start, Axis2::X);
             let start_y = coordinate(&start, Axis2::Y);
             let delta_x = coordinate(&end, Axis2::X).subtract(&start_x);
             let delta_y = coordinate(&end, Axis2::Y).subtract(&start_y);
             let point_x = coordinate(&point, Axis2::X).subtract(&start_x);
             let point_y = coordinate(&point, Axis2::Y).subtract(&start_y);
-            let Some(cross) = delta_x
-                .multiply(&point_y, &CurveContext::STRICT)
-                .and_then(|first| {
-                    delta_y
-                        .multiply(&point_x, &CurveContext::STRICT)
-                        .map(|second| first.subtract(&second))
-                })
-            else {
+            let Some(cross) = delta_x.multiply(&point_y).and_then(|first| {
+                delta_y
+                    .multiply(&point_x)
+                    .map(|second| first.subtract(&second))
+            }) else {
                 continue;
             };
             let zero = Real::zero();
@@ -97782,7 +97509,7 @@ impl BezierAlgebraicChordPairPoint2 {
         {
             let constant_coordinate = |chord: &BezierAlgebraicChord2, axis: Axis2| {
                 let bounds = endpoint_bounds(chord.start())?;
-                Some(BezierAlgebraicChordRealInterval2::from_axis(&bounds, axis))
+                Some(RealInterval::from_axis(&bounds, axis))
             };
             let vertical = if first_direction.axis() == Axis2::Y {
                 first
@@ -97805,8 +97532,7 @@ impl BezierAlgebraicChordPairPoint2 {
         let first_end = endpoint_bounds(first.end())?;
         let second_start = endpoint_bounds(second.start())?;
         let second_end = endpoint_bounds(second.end())?;
-        let coordinate =
-            |bounds: &Aabb2, axis| BezierAlgebraicChordRealInterval2::from_axis(bounds, axis);
+        let coordinate = |bounds: &Aabb2, axis| RealInterval::from_axis(bounds, axis);
         let first_start_x = coordinate(&first_start, Axis2::X);
         let first_start_y = coordinate(&first_start, Axis2::Y);
         let first_delta_x = coordinate(&first_end, Axis2::X).subtract(&first_start_x);
@@ -97815,14 +97541,14 @@ impl BezierAlgebraicChordPairPoint2 {
         let second_start_y = coordinate(&second_start, Axis2::Y);
         let second_delta_x = coordinate(&second_end, Axis2::X).subtract(&second_start_x);
         let second_delta_y = coordinate(&second_end, Axis2::Y).subtract(&second_start_y);
-        let cross = |first_x: &BezierAlgebraicChordRealInterval2,
-                     first_y: &BezierAlgebraicChordRealInterval2,
-                     second_x: &BezierAlgebraicChordRealInterval2,
-                     second_y: &BezierAlgebraicChordRealInterval2| {
+        let cross = |first_x: &RealInterval,
+                     first_y: &RealInterval,
+                     second_x: &RealInterval,
+                     second_y: &RealInterval| {
             Some(
                 first_x
-                    .multiply(second_y, policy)?
-                    .subtract(&first_y.multiply(second_x, policy)?),
+                    .multiply(second_y)?
+                    .subtract(&first_y.multiply(second_x)?),
             )
         };
         let denominator = cross(
@@ -97839,9 +97565,9 @@ impl BezierAlgebraicChordPairPoint2 {
             &second_delta_x,
             &second_delta_y,
         )?;
-        let parameter = numerator.divide(&denominator, policy)?;
-        let x = first_start_x.add(&parameter.multiply(&first_delta_x, policy)?);
-        let y = first_start_y.add(&parameter.multiply(&first_delta_y, policy)?);
+        let parameter = numerator.divide(&denominator)?;
+        let x = first_start_x.add(&parameter.multiply(&first_delta_x)?);
+        let y = first_start_y.add(&parameter.multiply(&first_delta_y)?);
         if compare_reals(&x.lower, &x.upper, &CurveContext::STRICT)? == std::cmp::Ordering::Greater
             || compare_reals(&y.lower, &y.upper, &CurveContext::STRICT)?
                 == std::cmp::Ordering::Greater
@@ -101164,24 +100890,18 @@ impl BezierAlgebraicCuspSemicircleFragment2 {
                 continue;
             };
             terminal_refined |= refinement_steps == 512;
-            let radial_x = BezierAlgebraicChordRealInterval2::from_axis(&point, Axis2::X).subtract(
-                &BezierAlgebraicChordRealInterval2::from_axis(&center, Axis2::X),
-            );
-            let radial_y = BezierAlgebraicChordRealInterval2::from_axis(&point, Axis2::Y).subtract(
-                &BezierAlgebraicChordRealInterval2::from_axis(&center, Axis2::Y),
-            );
-            let chord_x =
-                BezierAlgebraicChordRealInterval2::from_axis(&chord_end, Axis2::X).subtract(
-                    &BezierAlgebraicChordRealInterval2::from_axis(&chord_start, Axis2::X),
-                );
-            let chord_y =
-                BezierAlgebraicChordRealInterval2::from_axis(&chord_end, Axis2::Y).subtract(
-                    &BezierAlgebraicChordRealInterval2::from_axis(&chord_start, Axis2::Y),
-                );
+            let radial_x = RealInterval::from_axis(&point, Axis2::X)
+                .subtract(&RealInterval::from_axis(&center, Axis2::X));
+            let radial_y = RealInterval::from_axis(&point, Axis2::Y)
+                .subtract(&RealInterval::from_axis(&center, Axis2::Y));
+            let chord_x = RealInterval::from_axis(&chord_end, Axis2::X)
+                .subtract(&RealInterval::from_axis(&chord_start, Axis2::X));
+            let chord_y = RealInterval::from_axis(&chord_end, Axis2::Y)
+                .subtract(&RealInterval::from_axis(&chord_start, Axis2::Y));
             let strict = &CurveContext::STRICT;
             let Some(projection) = radial_x
-                .multiply(&chord_x, strict)
-                .and_then(|x| radial_y.multiply(&chord_y, strict).map(|y| x.add(&y)))
+                .multiply(&chord_x)
+                .and_then(|x| radial_y.multiply(&chord_y).map(|y| x.add(&y)))
             else {
                 continue;
             };
@@ -110996,7 +110716,7 @@ impl BezierParallel2 {
         }
         analytic_parallel_point_bounds_over_interval(
             self,
-            &BezierAlgebraicChordRealInterval2 {
+            &RealInterval {
                 lower: start.clone(),
                 upper: end.clone(),
             },
@@ -133731,7 +133451,7 @@ mod conversion_tests {
                 );
             };
             let [x, y] = [Axis2::X, Axis2::Y].map(|axis| {
-                let interval = BezierAlgebraicChordRealInterval2::from_axis(&bounds, axis);
+                let interval = RealInterval::from_axis(&bounds, axis);
                 [
                     Real::new(interval.lower.certified_dyadic_interval(-16).unwrap()[0].clone()),
                     Real::new(interval.upper.certified_dyadic_interval(-16).unwrap()[1].clone()),
@@ -134794,6 +134514,75 @@ mod conversion_tests {
                 retained.representative_point(&policy).unwrap(),
                 Classification::Decided(Point2::from_values(2, 0).into()),
             );
+        }
+    }
+
+    #[test]
+    fn real_interval_enclosures_do_not_consume_topology_approximation() {
+        for policy in [CurveContext::APPROXIMATE_512, CurveContext::STRICT] {
+            for operation in 0..5 {
+                // Positive, but its scalar sign needs more than 512 bits.
+                // Use a fresh expression for each query so a prior proof
+                // cannot hide approximation consumed by the interval kernel.
+                let exponent = 607 + operation + i64::from(policy == CurveContext::STRICT) * 5;
+                let epsilon = Real::one() - Real::from(2_i8).powi_i64(-exponent).unwrap().cos();
+                let interval = RealInterval {
+                    lower: -Real::from(2_i8) * &epsilon,
+                    upper: epsilon.clone(),
+                };
+                let outcome =
+                    crate::policy::resolve_certified_value(&policy, |_| match operation {
+                        0 => interval.multiply(&RealInterval {
+                            lower: -Real::one(),
+                            upper: Real::one(),
+                        }),
+                        1 => interval.square(),
+                        2 => RealInterval {
+                            lower: Real::zero(),
+                            upper: epsilon.clone(),
+                        }
+                        .nonnegative_square_root(None),
+                        3 => RealInterval::from_values([epsilon.clone(), Real::zero()]),
+                        4 => RealInterval {
+                            lower: Real::one(),
+                            upper: Real::one(),
+                        }
+                        .divide(&RealInterval {
+                            lower: epsilon.clone(),
+                            upper: Real::from(2_i8) * &epsilon,
+                        }),
+                        _ => unreachable!(),
+                    });
+                assert_eq!(
+                    outcome.certainty,
+                    CurveCertainty::Certified,
+                    "operation={operation}, policy={policy:?}",
+                );
+                // Declining an optional enclosure is sound. If one is
+                // returned, it must contain these independently known values.
+                if let Some(bounds) = outcome.value {
+                    let witnesses = match operation {
+                        0 => vec![-Real::from(2_i8) * &epsilon, Real::from(2_i8) * &epsilon],
+                        1 => vec![Real::zero(), Real::from(4_i8) * &epsilon * &epsilon],
+                        2 | 3 => vec![Real::zero(), epsilon.clone()],
+                        4 => vec![
+                            (Real::one() / (Real::from(2_i8) * &epsilon)).unwrap(),
+                            (Real::one() / &epsilon).unwrap(),
+                        ],
+                        _ => unreachable!(),
+                    };
+                    for witness in witnesses {
+                        assert!(matches!(
+                            bounds.lower.certified_cmp_until(&witness, -3200).ordering(),
+                            Some(std::cmp::Ordering::Less | std::cmp::Ordering::Equal),
+                        ));
+                        assert!(matches!(
+                            bounds.upper.certified_cmp_until(&witness, -3200).ordering(),
+                            Some(std::cmp::Ordering::Greater | std::cmp::Ordering::Equal),
+                        ));
+                    }
+                }
+            }
         }
     }
 
@@ -166034,7 +165823,7 @@ mod conversion_tests {
         .unwrap();
         assert!(
             nested_bounded_numerator
-                .divide(&nested_bounded_denominator, &CurveContext::STRICT)
+                .divide(&nested_bounded_denominator)
                 .is_none(),
             "the correlated radical denominator must straddle zero at the old nested ceiling",
         );
@@ -166085,7 +165874,7 @@ mod conversion_tests {
             dense_tensor_interval(&difference, &ratio_bounded_sources).unwrap();
         assert!(
             ratio_bounded_numerator
-                .divide(&ratio_bounded_denominator, &CurveContext::STRICT)
+                .divide(&ratio_bounded_denominator)
                 .is_none(),
             "the exact nonzero denominator must still straddle zero at the old quotient ceiling",
         );
