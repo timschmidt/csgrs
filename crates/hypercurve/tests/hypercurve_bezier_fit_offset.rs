@@ -3372,6 +3372,115 @@ fn certified_curve_path_parallel_leaves_corner_join_to_higher_layer() {
 }
 
 #[test]
+fn stationary_ph_region_reoffsets_through_paths_booleans_and_cancellation() {
+    // P'(t)=t^2(1-t^2,2t). The exact normal has a finite one-sided
+    // endpoint, and repeated offsets must retain that branch and its source.
+    let source = RationalBezier2::try_new(
+        vec![
+            p(0, 0),
+            p(0, 0),
+            p(0, 0),
+            Point2::new(q(1, 30), r(0)),
+            Point2::new(q(2, 15), q(1, 10)),
+            Point2::new(q(2, 15), q(1, 2)),
+        ],
+        vec![r(1); 6],
+    )
+    .unwrap();
+    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+        for reversed in [false, true] {
+            let mut path = CurvePath2::try_new(vec![
+                Curve2::from(source.clone()),
+                Curve2::from(
+                    LineSeg2::try_new(source.end().clone(), Point2::new(r(-1), q(1, 2))).unwrap(),
+                ),
+                Curve2::from(LineSeg2::try_new(Point2::new(r(-1), q(1, 2)), p(-1, 0)).unwrap()),
+                Curve2::from(LineSeg2::try_new(p(-1, 0), p(0, 0)).unwrap()),
+            ])
+            .unwrap();
+            if reversed {
+                path = path.reversed(&policy).unwrap().into_value();
+            }
+            let original = CurveRegion2::try_from_boundary_paths_with_loop_semantics(
+                &[path],
+                &[CurveRegionLoopRole::Material],
+                &[FillRule::NonZero],
+                &policy,
+            )
+            .unwrap();
+            assert_eq!(original.certainty, hypercurve::CurveCertainty::Certified);
+            let original = original.into_value();
+            let first = original
+                .offset(q(1, 20), &OffsetCornerStyle2::Round, &policy)
+                .unwrap();
+            assert_eq!(first.certainty, hypercurve::CurveCertainty::Certified);
+            let second = first
+                .value
+                .offset(q(1, 40), &OffsetCornerStyle2::Round, &policy)
+                .unwrap();
+            assert_eq!(second.certainty, hypercurve::CurveCertainty::Certified);
+            let direct = original
+                .offset(q(3, 40), &OffsetCornerStyle2::Round, &policy)
+                .unwrap();
+            assert_eq!(direct.certainty, hypercurve::CurveCertainty::Certified);
+            let difference = second
+                .value
+                .boolean_region(&direct.value, hypercurve::BooleanOp::Xor, &policy)
+                .unwrap();
+            assert_eq!(difference.certainty, hypercurve::CurveCertainty::Certified);
+            assert!(difference.value.is_empty());
+
+            let paths = second.value.boundary_paths(&policy).unwrap();
+            assert_eq!(paths.certainty, hypercurve::CurveCertainty::Certified);
+            let Classification::Decided(paths) = paths.into_value() else {
+                panic!("the exact offset boundary must remain a path")
+            };
+            assert_eq!(paths.len(), 1);
+            assert!(
+                paths[0]
+                    .curves()
+                    .iter()
+                    .any(|curve| curve.family() == hypercurve::CurveFamily2::AnalyticParallel)
+            );
+            let restored = CurveRegion2::try_from_boundary_paths_with_loop_semantics(
+                &paths,
+                &[CurveRegionLoopRole::Material],
+                &[FillRule::NonZero],
+                &policy,
+            )
+            .unwrap();
+            assert_eq!(restored.certainty, hypercurve::CurveCertainty::Certified);
+            for (point, expected) in [
+                (
+                    Point2::new(q(-1, 2), q(1, 4)),
+                    hypercurve::RegionPointLocation::Inside,
+                ),
+                (p(2, 2), hypercurve::RegionPointLocation::Outside),
+                (
+                    Point2::new(q(-43, 40), q(1, 4)),
+                    hypercurve::RegionPointLocation::Boundary,
+                ),
+            ] {
+                let location = restored.value.classify_point(&point, &policy).unwrap();
+                assert_eq!(location.certainty, hypercurve::CurveCertainty::Certified);
+                assert_eq!(location.value, Classification::Decided(expected));
+            }
+            let cancelled = restored
+                .value
+                .offset(q(-3, 40), &OffsetCornerStyle2::Round, &policy)
+                .unwrap();
+            assert_eq!(cancelled.certainty, hypercurve::CurveCertainty::Certified);
+            let difference = cancelled
+                .value
+                .boolean_region(&original, hypercurve::BooleanOp::Xor, &policy)
+                .unwrap();
+            assert_eq!(difference.certainty, hypercurve::CurveCertainty::Certified);
+            assert!(difference.value.is_empty());
+        }
+    }
+}
+
+#[test]
 fn curve_region_exact_offset_retains_analytic_parallel_arrangement() {
     let path = CurvePath2::try_new(vec![
         Curve2::from(QuadraticBezier2::new(p(1, 0), p(1, 1), p(0, 1))),

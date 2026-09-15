@@ -4640,7 +4640,11 @@ fn exact_offset_span_from_algebraic_endpoint_images(
             BezierParameterRange2::new_validated(start.clone(), end.clone()),
             reversed,
         );
-        exact_offset_span_from_analytic_parallel(&fragment, distance, policy)
+        exact_offset_span_from_retained_parallel_fragment(
+            RetainedParallelOffsetFragmentRef2::Analytic(&fragment),
+            distance,
+            policy,
+        )
     };
     let BezierSubcurve2::RationalQuadratic(source_curve) = source else {
         return general_offset();
@@ -4917,8 +4921,9 @@ fn exact_offset_spans_from_source_singular_parallel(
             if singular {
                 return parallel
                     .source_cusp_limit_point_and_tangent_support(
+                        parallel,
                         parameter,
-                        &source_range,
+                        &CurveParameterRange2::from_bezier_range(source_range.clone()),
                         scale,
                         policy,
                     )
@@ -5512,178 +5517,6 @@ fn exact_offset_span_from_algebraic_cusp_semicircle(
     }))
 }
 
-fn exact_offset_span_from_analytic_parallel(
-    fragment: &crate::BezierParallelFragment2,
-    distance: &Real,
-    policy: &CurveContext,
-) -> CurveResult<Classification<ExactOffsetSpan2>> {
-    let range_start = fragment.range().start();
-    let range_end = fragment.range().end();
-    let source_scale = match fragment
-        .parallel()
-        .regular_fragment_derivative_scale_sign(fragment.range(), policy)?
-    {
-        Classification::Decided(sign @ (RealSign::Positive | RealSign::Negative)) => sign,
-        Classification::Decided(RealSign::Zero) => {
-            return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
-        }
-        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-    };
-    let traversal_agrees_with_source =
-        (source_scale == RealSign::Positive) != fragment.is_reversed();
-    let composed_distance = if traversal_agrees_with_source {
-        fragment.parallel().distance() + distance
-    } else {
-        fragment.parallel().distance() - distance
-    };
-    let composed = fragment.parallel().with_distance(composed_distance);
-    let composed_distance_sign = match real_sign(composed.distance(), policy) {
-        Some(sign) => sign,
-        None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
-    };
-
-    let mut boundaries = Vec::new();
-    boundaries.push(fragment.range().start().clone());
-    if composed_distance_sign != RealSign::Zero {
-        let analysis = match composed.singularity_analysis(policy)? {
-            Classification::Decided(analysis) => analysis,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
-        for singularity in analysis.source_singularities() {
-            let after_start =
-                match singularity.cmp_by_refinement(fragment.range().start(), policy)? {
-                    Classification::Decided(order) => !order.is_lt(),
-                    Classification::Uncertain(reason) => {
-                        return Ok(Classification::Uncertain(reason));
-                    }
-                };
-            let before_end = match singularity.cmp_by_refinement(fragment.range().end(), policy)? {
-                Classification::Decided(order) => !order.is_gt(),
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            };
-            if after_start && before_end {
-                return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
-            }
-        }
-        for cusp in analysis.parallel_cusps() {
-            let after_start = match cusp.cmp_by_refinement(fragment.range().start(), policy)? {
-                Classification::Decided(order) => order.is_gt(),
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            };
-            let before_end = match cusp.cmp_by_refinement(fragment.range().end(), policy)? {
-                Classification::Decided(order) => order.is_lt(),
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            };
-            if after_start && before_end {
-                let order = cusp.cmp_by_refinement(
-                    boundaries
-                        .last()
-                        .expect("composed parallel boundaries begin at the retained range start"),
-                    policy,
-                )?;
-                match order {
-                    Classification::Decided(std::cmp::Ordering::Greater) => {
-                        boundaries.push(cusp.clone());
-                    }
-                    Classification::Decided(std::cmp::Ordering::Equal) => {}
-                    Classification::Decided(std::cmp::Ordering::Less) => {
-                        return Err(CurveError::Topology(
-                            "composed parallel cusp isolators are not ordered".into(),
-                        ));
-                    }
-                    Classification::Uncertain(reason) => {
-                        return Ok(Classification::Uncertain(reason));
-                    }
-                }
-            }
-        }
-    }
-    boundaries.push(fragment.range().end().clone());
-    let ranges = boundaries
-        .windows(2)
-        .map(|pair| BezierParameterRange2::new_validated(pair[0].clone(), pair[1].clone()))
-        .collect::<Vec<_>>();
-    let fragments = exact_parallel_fragments(&composed, &boundaries, fragment.is_reversed());
-    let first_range = ranges
-        .first()
-        .expect("a retained parallel range produces at least one composed range");
-    let last_range = ranges
-        .last()
-        .expect("a retained parallel range produces at least one composed range");
-    let (start_parameter, end_parameter, start_range, end_range) = if fragment.is_reversed() {
-        (range_end, range_start, last_range, first_range)
-    } else {
-        (range_start, range_end, first_range, last_range)
-    };
-    let source_end =
-        match exact_parallel_point_evidence(fragment.parallel(), end_parameter, policy)? {
-            Classification::Decided(point) => point,
-            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-        };
-    let offset_start = match exact_parallel_point_evidence(&composed, start_parameter, policy)? {
-        Classification::Decided(point) => point,
-        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-    };
-    let offset_end = match exact_parallel_point_evidence(&composed, end_parameter, policy)? {
-        Classification::Decided(point) => point,
-        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-    };
-    let start_scale = match composed.regular_fragment_derivative_scale_sign(start_range, policy)? {
-        Classification::Decided(sign @ (RealSign::Positive | RealSign::Negative)) => sign,
-        Classification::Decided(RealSign::Zero) => {
-            return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
-        }
-        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-    };
-    let end_scale = if ranges.len() == 1 {
-        start_scale
-    } else {
-        match composed.regular_fragment_derivative_scale_sign(end_range, policy)? {
-            Classification::Decided(sign @ (RealSign::Positive | RealSign::Negative)) => sign,
-            Classification::Decided(RealSign::Zero) => {
-                return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
-            }
-            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-        }
-    };
-    let start_tangent = match exact_parallel_endpoint_tangent(
-        &composed,
-        fragment.parallel(),
-        start_parameter,
-        start_scale,
-        fragment.is_reversed(),
-    )? {
-        Classification::Decided(tangent) => tangent,
-        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-    };
-    let end_tangent = match exact_parallel_endpoint_tangent(
-        &composed,
-        fragment.parallel(),
-        end_parameter,
-        end_scale,
-        fragment.is_reversed(),
-    )? {
-        Classification::Decided(tangent) => tangent,
-        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-    };
-    Ok(Classification::Decided(ExactOffsetSpan2 {
-        fragments,
-        source_end,
-        offset_start,
-        offset_end,
-        start_tangent: Some(start_tangent),
-        end_tangent: Some(end_tangent),
-    }))
-}
-
 fn analytic_parallel_traversal_start(
     fragment: &crate::BezierParallelFragment2,
 ) -> &BezierParameter2 {
@@ -5803,8 +5636,9 @@ fn retained_parallel_traversal_end(
 }
 
 fn exact_retained_parallel_fragment(
-    fragment: RetainedParallelOffsetFragmentRef2<'_>,
     parallel: BezierParallel2,
+    range: &CurveParameterRange2,
+    reversed: bool,
     policy: &CurveContext,
 ) -> CurveResult<Option<crate::BezierParallelFragment2>> {
     let promote = |parameter: &CurveParameter2| -> CurveResult<Option<BezierParameter2>> {
@@ -5819,7 +5653,6 @@ fn exact_retained_parallel_fragment(
             Classification::Uncertain(_) => None,
         })
     };
-    let range = fragment.range();
     let Some(start) = promote(range.start())? else {
         return Ok(None);
     };
@@ -5829,7 +5662,7 @@ fn exact_retained_parallel_fragment(
     Ok(Some(crate::BezierParallelFragment2::from_certified_range(
         parallel,
         BezierParameterRange2::new_validated(start, end),
-        fragment.is_reversed(),
+        reversed,
     )))
 }
 
@@ -5908,233 +5741,6 @@ fn exact_parallel_region_endpoint_tangent(
         )?
         .map(CurveTangent2::AlgebraicChord),
     )
-}
-
-/// Offsets a selected-fiber fragment in its native retained parameter chart.
-/// The source/cusp analysis remains in the canonical Bezier chart, but every
-/// Boolean-authored boundary stays a `CurveParameter2`; no global norm
-/// is constructed merely to form an offset range or endpoint tangent.
-fn exact_offset_span_from_selected_parallel_fragment(
-    fragment: &crate::bezier_split::BezierSelectedFiberFragment2,
-    distance: &Real,
-    policy: &CurveContext,
-) -> CurveResult<Classification<ExactOffsetSpan2>> {
-    let parallel = fragment.parallel_carrier();
-    if let Some(promoted) = exact_retained_parallel_fragment(
-        RetainedParallelOffsetFragmentRef2::Selected(fragment),
-        parallel.clone(),
-        policy,
-    )? {
-        return exact_offset_span_from_analytic_parallel(&promoted, distance, policy);
-    }
-    let range = fragment.range();
-    let source_scale_result = retained_parallel_range_scale_sign(&parallel, range, policy);
-    let source_scale = match source_scale_result? {
-        Classification::Decided(sign @ (RealSign::Positive | RealSign::Negative)) => sign,
-        Classification::Decided(RealSign::Zero) => {
-            return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
-        }
-        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-    };
-    let traversal_agrees_with_source =
-        (source_scale == RealSign::Positive) != fragment.is_reversed();
-    let composed_distance = if traversal_agrees_with_source {
-        parallel.distance() + distance
-    } else {
-        parallel.distance() - distance
-    };
-    let composed = parallel.with_distance(composed_distance);
-    let composed_distance_sign = match real_sign(composed.distance(), policy) {
-        Some(sign) => sign,
-        None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
-    };
-
-    let mut boundaries = vec![range.start().clone()];
-    if composed_distance_sign != RealSign::Zero {
-        let analysis = match composed.singularity_analysis(policy)? {
-            Classification::Decided(analysis) => analysis,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
-        for singularity in analysis.source_singularities() {
-            let singularity = CurveParameter2::from(singularity.clone());
-            let after_start = match singularity.cmp_by_refinement(range.start(), policy)? {
-                Classification::Decided(order) => !order.is_lt(),
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            };
-            let before_end = match singularity.cmp_by_refinement(range.end(), policy)? {
-                Classification::Decided(order) => !order.is_gt(),
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            };
-            if after_start && before_end {
-                return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
-            }
-        }
-        for cusp in analysis.parallel_cusps() {
-            let cusp = CurveParameter2::from(cusp.clone());
-            let after_start = match cusp.cmp_by_refinement(range.start(), policy)? {
-                Classification::Decided(order) => order.is_gt(),
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            };
-            let before_end = match cusp.cmp_by_refinement(range.end(), policy)? {
-                Classification::Decided(order) => order.is_lt(),
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            };
-            if after_start && before_end {
-                match cusp.cmp_by_refinement(
-                    boundaries
-                        .last()
-                        .expect("retained parallel boundaries begin at the range start"),
-                    policy,
-                )? {
-                    Classification::Decided(std::cmp::Ordering::Greater) => {
-                        boundaries.push(cusp);
-                    }
-                    Classification::Decided(std::cmp::Ordering::Equal) => {}
-                    Classification::Decided(std::cmp::Ordering::Less) => {
-                        return Err(CurveError::Topology(
-                            "retained parallel cusp parameters are not ordered".into(),
-                        ));
-                    }
-                    Classification::Uncertain(reason) => {
-                        return Ok(Classification::Uncertain(reason));
-                    }
-                }
-            }
-        }
-    }
-    boundaries.push(range.end().clone());
-    let ranges = boundaries
-        .windows(2)
-        .map(|pair| CurveParameterRange2::new_validated(pair[0].clone(), pair[1].clone()))
-        .collect::<Vec<_>>();
-    let mut fragments = Vec::with_capacity(ranges.len());
-    for range in &ranges {
-        let start_point =
-            match exact_parallel_region_point_evidence(&composed, range.start(), policy)? {
-                Classification::Decided(point) => point,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            };
-        let end_point = match exact_parallel_region_point_evidence(&composed, range.end(), policy)?
-        {
-            Classification::Decided(point) => point,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
-        let retained = crate::bezier_split::BezierSelectedFiberFragment2::new(
-            BezierSelectedFiberSource2::AnalyticParallel(composed.clone()),
-            range.clone(),
-            start_point,
-            end_point,
-        );
-        fragments.push(BezierSplitFragment2::SelectedFiber(
-            if fragment.is_reversed() {
-                retained.reversed()
-            } else {
-                retained
-            },
-        ));
-    }
-    if fragment.is_reversed() {
-        fragments.reverse();
-    }
-
-    let first_range = ranges
-        .first()
-        .expect("a retained parameter range produces one composed span");
-    let last_range = ranges
-        .last()
-        .expect("a retained parameter range produces one composed span");
-    let (start_parameter, end_parameter, start_range, end_range) = if fragment.is_reversed() {
-        (range.end(), range.start(), last_range, first_range)
-    } else {
-        (range.start(), range.end(), first_range, last_range)
-    };
-    let offset_start =
-        match exact_parallel_region_point_evidence(&composed, start_parameter, policy)? {
-            Classification::Decided(point) => point,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
-    let offset_end = match exact_parallel_region_point_evidence(&composed, end_parameter, policy)? {
-        Classification::Decided(point) => point,
-        Classification::Uncertain(reason) => {
-            return Ok(Classification::Uncertain(reason));
-        }
-    };
-    let start_scale = match retained_parallel_range_scale_sign(&composed, start_range, policy)? {
-        Classification::Decided(sign @ (RealSign::Positive | RealSign::Negative)) => sign,
-        Classification::Decided(RealSign::Zero) => {
-            return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
-        }
-        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-    };
-    let end_scale = if ranges.len() == 1 {
-        start_scale
-    } else {
-        match retained_parallel_range_scale_sign(&composed, end_range, policy)? {
-            Classification::Decided(sign @ (RealSign::Positive | RealSign::Negative)) => sign,
-            Classification::Decided(RealSign::Zero) => {
-                return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
-            }
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        }
-    };
-    let start_tangent = match exact_parallel_region_endpoint_tangent(
-        &composed,
-        &parallel,
-        start_parameter,
-        start_scale,
-        fragment.is_reversed(),
-        policy,
-    )? {
-        Classification::Decided(tangent) => tangent,
-        Classification::Uncertain(reason) => {
-            return Ok(Classification::Uncertain(reason));
-        }
-    };
-    let end_tangent = match exact_parallel_region_endpoint_tangent(
-        &composed,
-        &parallel,
-        end_parameter,
-        end_scale,
-        fragment.is_reversed(),
-        policy,
-    )? {
-        Classification::Decided(tangent) => tangent,
-        Classification::Uncertain(reason) => {
-            return Ok(Classification::Uncertain(reason));
-        }
-    };
-    #[cfg(feature = "dispatch-trace")]
-    hyperreal::dispatch_trace::record(
-        "hypercurve",
-        "curve-region-exact-offset-span",
-        "retained-region-parameter",
-    );
-    Ok(Classification::Decided(ExactOffsetSpan2 {
-        fragments,
-        source_end: fragment.end_point().clone(),
-        offset_start,
-        offset_end,
-        start_tangent: Some(start_tangent),
-        end_tangent: Some(end_tangent),
-    }))
 }
 
 fn promoted_endpoint_image_corner_fragment(
@@ -6340,8 +5946,9 @@ impl<'a> CornerCarrierPreparation2<'a> {
             }
             BezierSplitFragment2::SelectedFiber(fragment) => {
                 if let Some(parallel) = exact_retained_parallel_fragment(
-                    RetainedParallelOffsetFragmentRef2::Selected(fragment),
                     RetainedParallelOffsetFragmentRef2::Selected(fragment).parallel(),
+                    fragment.range(),
+                    fragment.is_reversed(),
                     policy,
                 )
                 .map_err(|cause| curve_region_edit_error(operation, cause))?
@@ -6457,14 +6064,293 @@ fn exact_offset_span_from_retained_parallel_fragment(
     distance: &Real,
     policy: &CurveContext,
 ) -> CurveResult<Classification<ExactOffsetSpan2>> {
-    match fragment {
-        RetainedParallelOffsetFragmentRef2::Analytic(fragment) => {
-            exact_offset_span_from_analytic_parallel(fragment, distance, policy)
+    let parallel = fragment.parallel();
+    let range = fragment.range();
+    let source_scale = match retained_parallel_range_scale_sign(&parallel, &range, policy)? {
+        Classification::Decided(sign @ (RealSign::Positive | RealSign::Negative)) => sign,
+        Classification::Decided(RealSign::Zero) => {
+            return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
         }
-        RetainedParallelOffsetFragmentRef2::Selected(fragment) => {
-            exact_offset_span_from_selected_parallel_fragment(fragment, distance, policy)
+        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+    };
+    let traversal_agrees_with_source =
+        (source_scale == RealSign::Positive) != fragment.is_reversed();
+    let composed_distance = if traversal_agrees_with_source {
+        parallel.distance() + distance
+    } else {
+        parallel.distance() - distance
+    };
+    let composed = parallel.with_distance(composed_distance);
+    let composed_distance_sign = match real_sign(composed.distance(), policy) {
+        Some(sign) => sign,
+        None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
+    };
+
+    // A retained endpoint may be the finite one-sided limit of a stationary
+    // source. Its canonical source root supplies the primitive tangent frame;
+    // every other cut stays in its original parameter authority.
+    let mut source_endpoints = [None, None];
+    let mut boundaries = vec![range.start().clone()];
+    let analysis = match composed.singularity_analysis(policy) {
+        Ok(Classification::Decided(analysis)) => Some(analysis),
+        // Zero displacement already defines the source without a unit normal.
+        // Optional endpoint-frame recovery must not narrow that existing domain.
+        _ if composed_distance_sign == RealSign::Zero => None,
+        Ok(Classification::Uncertain(reason)) => return Ok(Classification::Uncertain(reason)),
+        Err(error) => return Err(error),
+    };
+    if let Some(analysis) = analysis {
+        for singularity in analysis.source_singularities() {
+            let parameter = CurveParameter2::from(singularity.clone());
+            let after_start = match parameter.cmp_by_refinement(range.start(), policy) {
+                Ok(Classification::Decided(order)) => order,
+                _ if composed_distance_sign == RealSign::Zero => continue,
+                Ok(Classification::Uncertain(reason)) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+                Err(error) => return Err(error),
+            };
+            let before_end = match parameter.cmp_by_refinement(range.end(), policy) {
+                Ok(Classification::Decided(order)) => order,
+                _ if composed_distance_sign == RealSign::Zero => continue,
+                Ok(Classification::Uncertain(reason)) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+                Err(error) => return Err(error),
+            };
+            if after_start.is_eq() {
+                source_endpoints[0] = Some(singularity.clone());
+            } else if before_end.is_eq() {
+                source_endpoints[1] = Some(singularity.clone());
+            } else if after_start.is_gt()
+                && before_end.is_lt()
+                && composed_distance_sign != RealSign::Zero
+            {
+                return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+            }
+        }
+        for cusp in analysis.parallel_cusps() {
+            let cusp = CurveParameter2::from(cusp.clone());
+            let after_start = match cusp.cmp_by_refinement(range.start(), policy)? {
+                Classification::Decided(order) => order.is_gt(),
+                Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+            };
+            let before_end = match cusp.cmp_by_refinement(range.end(), policy)? {
+                Classification::Decided(order) => order.is_lt(),
+                Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+            };
+            if after_start && before_end {
+                match cusp.cmp_by_refinement(
+                    boundaries
+                        .last()
+                        .expect("a retained range starts with a boundary"),
+                    policy,
+                )? {
+                    Classification::Decided(std::cmp::Ordering::Greater) => boundaries.push(cusp),
+                    Classification::Decided(std::cmp::Ordering::Equal) => {}
+                    Classification::Decided(std::cmp::Ordering::Less) => {
+                        return Err(CurveError::Topology(
+                            "retained parallel cusp parameters are not ordered".into(),
+                        ));
+                    }
+                    Classification::Uncertain(reason) => {
+                        return Ok(Classification::Uncertain(reason));
+                    }
+                }
+            }
         }
     }
+    boundaries.push(range.end().clone());
+    let ranges = boundaries
+        .windows(2)
+        .map(|pair| CurveParameterRange2::new_validated(pair[0].clone(), pair[1].clone()))
+        .collect::<Vec<_>>();
+    let (start_index, end_index, start_range, end_range) = if fragment.is_reversed() {
+        (1, 0, ranges.last().unwrap(), ranges.first().unwrap())
+    } else {
+        (0, 1, ranges.first().unwrap(), ranges.last().unwrap())
+    };
+    let scale = |range: &CurveParameterRange2| -> CurveResult<Classification<RealSign>> {
+        Ok(
+            match retained_parallel_range_scale_sign(&composed, range, policy)? {
+                Classification::Decided(RealSign::Zero) => {
+                    Classification::Uncertain(UncertaintyReason::Boundary)
+                }
+                result => result,
+            },
+        )
+    };
+    let start_scale = match scale(start_range)? {
+        Classification::Decided(sign) => sign,
+        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+    };
+    let end_scale = if ranges.len() == 1 {
+        start_scale
+    } else {
+        match scale(end_range)? {
+            Classification::Decided(sign) => sign,
+            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+        }
+    };
+    let endpoint = |index: usize,
+                    scale: RealSign|
+     -> CurveResult<Classification<(CurvePoint2, CurveTangent2)>> {
+        if let Some(parameter) = &source_endpoints[index] {
+            let direction = if fragment.is_reversed() {
+                match scale {
+                    RealSign::Positive => RealSign::Negative,
+                    RealSign::Negative => RealSign::Positive,
+                    RealSign::Zero => unreachable!(),
+                }
+            } else {
+                scale
+            };
+            // The point belongs to the new offset, but a join's tangent support
+            // remains anchored at the original region corner.
+            let limit = composed.source_cusp_limit_point_and_tangent_support(
+                &parallel, parameter, &range, direction, policy,
+            );
+            if composed_distance_sign != RealSign::Zero
+                || matches!(&limit, Ok(Classification::Decided(_)))
+            {
+                return limit.map(|result| {
+                    result.map(|(point, tangent)| (point, CurveTangent2::AlgebraicChord(tangent)))
+                });
+            }
+        }
+        let parameter = if index == 0 {
+            range.start()
+        } else {
+            range.end()
+        };
+        let point = match exact_parallel_region_point_evidence(&composed, parameter, policy)? {
+            Classification::Decided(point) => point,
+            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+        };
+        Ok(exact_parallel_region_endpoint_tangent(
+            &composed,
+            &parallel,
+            parameter,
+            scale,
+            fragment.is_reversed(),
+            policy,
+        )?
+        .map(|tangent| (point, tangent)))
+    };
+    let (offset_start, start_tangent) = match endpoint(start_index, start_scale)? {
+        Classification::Decided(endpoint) => endpoint,
+        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+    };
+    let (offset_end, end_tangent) = match endpoint(end_index, end_scale)? {
+        Classification::Decided(endpoint) => endpoint,
+        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+    };
+    let source_end = match fragment {
+        RetainedParallelOffsetFragmentRef2::Selected(fragment) => fragment.end_point().clone(),
+        RetainedParallelOffsetFragmentRef2::Analytic(_)
+            if source_endpoints[end_index].is_some()
+                && matches!(end_tangent, CurveTangent2::AlgebraicChord(_)) =>
+        {
+            let CurveTangent2::AlgebraicChord(tangent) = &end_tangent else {
+                unreachable!("a stationary endpoint retained its tangent support")
+            };
+            tangent.start().clone()
+        }
+        RetainedParallelOffsetFragmentRef2::Analytic(_) => {
+            let parameter = if end_index == 0 {
+                range.start()
+            } else {
+                range.end()
+            };
+            match exact_parallel_region_point_evidence(&parallel, parameter, policy)? {
+                Classification::Decided(point) => point,
+                Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+            }
+        }
+    };
+
+    // Share each cut point between its incident fragments. Only cuts that need
+    // selected parameters or one-sided source limits retain endpoint payloads.
+    let mut points = Vec::new();
+    let mut fragments = Vec::with_capacity(ranges.len());
+    for (index, range) in ranges.iter().enumerate() {
+        let has_source_limit = (index == 0 && source_endpoints[0].is_some())
+            || (index + 1 == ranges.len() && source_endpoints[1].is_some());
+        if !has_source_limit
+            && let Some(fragment) = exact_retained_parallel_fragment(
+                composed.clone(),
+                range,
+                fragment.is_reversed(),
+                policy,
+            )?
+        {
+            fragments.push(BezierSplitFragment2::AnalyticParallel(fragment));
+        } else {
+            if points.is_empty() {
+                points.resize(boundaries.len(), None);
+                points[0] = Some(if fragment.is_reversed() {
+                    offset_end.clone()
+                } else {
+                    offset_start.clone()
+                });
+                points[boundaries.len() - 1] = Some(if fragment.is_reversed() {
+                    offset_start.clone()
+                } else {
+                    offset_end.clone()
+                });
+            }
+            for boundary in index..=index + 1 {
+                if points[boundary].is_none() {
+                    match exact_parallel_region_point_evidence(
+                        &composed,
+                        &boundaries[boundary],
+                        policy,
+                    )? {
+                        Classification::Decided(point) => points[boundary] = Some(point),
+                        Classification::Uncertain(reason) => {
+                            return Ok(Classification::Uncertain(reason));
+                        }
+                    }
+                }
+            }
+            let selected = crate::bezier_split::BezierSelectedFiberFragment2::new(
+                BezierSelectedFiberSource2::AnalyticParallel(composed.clone()),
+                range.clone(),
+                points[index]
+                    .as_ref()
+                    .expect("the selected start point was retained")
+                    .clone(),
+                points[index + 1]
+                    .as_ref()
+                    .expect("the selected end point was retained")
+                    .clone(),
+            );
+            fragments.push(BezierSplitFragment2::SelectedFiber(
+                if fragment.is_reversed() {
+                    selected.reversed()
+                } else {
+                    selected
+                },
+            ));
+        }
+    }
+    if fragment.is_reversed() {
+        fragments.reverse();
+    }
+    #[cfg(feature = "dispatch-trace")]
+    hyperreal::dispatch_trace::record(
+        "hypercurve",
+        "curve-region-exact-offset-span",
+        "retained-region-parameter",
+    );
+    Ok(Classification::Decided(ExactOffsetSpan2 {
+        fragments,
+        source_end,
+        offset_start,
+        offset_end,
+        start_tangent: Some(start_tangent),
+        end_tangent: Some(end_tangent),
+    }))
 }
 
 /// Coalesces one traversal-contiguous retained-parallel run whose only
@@ -6746,8 +6632,12 @@ fn exact_offset_span_from_source_run(
             )? {
                 Classification::Decided(Some((coalesced, run_length))) => {
                     consumed = run_length;
-                    exact_offset_span_from_analytic_parallel(&coalesced, distance, policy)
-                        .map(|span| span.map(|span| vec![span]))
+                    exact_offset_span_from_retained_parallel_fragment(
+                        RetainedParallelOffsetFragmentRef2::Analytic(&coalesced),
+                        distance,
+                        policy,
+                    )
+                    .map(|span| span.map(|span| vec![span]))
                 }
                 Classification::Decided(None) => exact_offset_span_from_retained_parallel_fragment(
                     RetainedParallelOffsetFragmentRef2::from_fragment(fragment)
@@ -30569,6 +30459,116 @@ mod tests {
     }
 
     #[test]
+    fn retained_stationary_endpoint_composition_keeps_source_and_tangent_anchor() {
+        let source = RationalBezier2::try_new(
+            vec![
+                p(0, 0),
+                p(0, 0),
+                p(0, 0),
+                Point2::new(q(1, 30), Real::zero()),
+                Point2::new(q(2, 15), q(1, 10)),
+                Point2::new(q(2, 15), q(1, 2)),
+            ],
+            vec![Real::one(); 6],
+        )
+        .unwrap();
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let initial_distance = q(-1, 20);
+            assert!(matches!(
+                source
+                    .parallel_left(initial_distance.clone())
+                    .unwrap()
+                    .point_at(&Real::zero(), &policy)
+                    .unwrap(),
+                Classification::Uncertain(UncertaintyReason::Boundary)
+            ));
+            for reversed in [false, true] {
+                let Classification::Decided(spans) = exact_offset_spans_from_materialized_curve(
+                    &BezierSubcurve2::Rational(source.clone()),
+                    &initial_distance,
+                    &policy,
+                )
+                .unwrap() else {
+                    panic!("the stationary PH source has an exact one-sided offset")
+                };
+                let mut fragment = spans[0].fragments[0].clone();
+                if reversed {
+                    fragment = fragment.reversed().unwrap();
+                }
+                let mut total_distance = initial_distance.clone();
+                for increment in [q(-1, 40), q(-1, 80), q(7, 80)] {
+                    let old_distance = total_distance.clone();
+                    total_distance = &total_distance + &increment;
+                    let distance = if reversed { -increment } else { increment };
+                    let Classification::Decided(span) =
+                        exact_offset_span_from_retained_parallel_fragment(
+                            RetainedParallelOffsetFragmentRef2::from_fragment(&fragment).unwrap(),
+                            &distance,
+                            &policy,
+                        )
+                        .unwrap()
+                    else {
+                        panic!("the one-sided endpoint must compose and cancel exactly")
+                    };
+                    let (point, tangent) = if reversed {
+                        (&span.offset_end, span.end_tangent.as_ref().unwrap())
+                    } else {
+                        (&span.offset_start, span.start_tangent.as_ref().unwrap())
+                    };
+                    assert_eq!(
+                        point.same_point(
+                            &CurvePoint2::from(Point2::new(Real::zero(), total_distance.clone())),
+                            &policy
+                        ),
+                        Classification::Decided(true)
+                    );
+                    let CurveTangent2::AlgebraicChord(tangent) = tangent else {
+                        panic!("the stationary endpoint must retain its limiting tangent")
+                    };
+                    assert_eq!(
+                        tangent.start().same_point(
+                            &CurvePoint2::from(Point2::new(Real::zero(), old_distance.clone())),
+                            &policy
+                        ),
+                        Classification::Decided(true)
+                    );
+                    assert_eq!(
+                        tangent.end().same_point(
+                            &CurvePoint2::from(Point2::new(
+                                if reversed { -Real::one() } else { Real::one() },
+                                old_distance.clone()
+                            )),
+                            &policy
+                        ),
+                        Classification::Decided(true)
+                    );
+                    let source_end = if reversed {
+                        Point2::new(Real::zero(), old_distance)
+                    } else {
+                        Point2::new(q(2, 15) - old_distance, q(1, 2))
+                    };
+                    assert_eq!(
+                        span.source_end.same_point(&source_end.into(), &policy),
+                        Classification::Decided(true)
+                    );
+                    assert_eq!(span.fragments.len(), 1);
+                    fragment = span.fragments[0].clone();
+                    let carrier = RetainedParallelOffsetFragmentRef2::from_fragment(&fragment)
+                        .unwrap()
+                        .parallel();
+                    assert_eq!(carrier.source_degree(), 5);
+                    assert_eq!(
+                        carrier.source(),
+                        &BezierParallelSource2::Rational(source.clone())
+                    );
+                    assert_eq!(carrier.distance(), &total_distance);
+                }
+                assert_eq!(total_distance, Real::zero());
+            }
+        }
+    }
+
+    #[test]
     fn retained_parallel_offset_composition_respects_traversal_orientation() {
         let policy = CurveContext::STRICT;
         let tenth = (Real::one() / Real::from(10_i8)).unwrap();
@@ -30589,10 +30589,12 @@ mod tests {
                 range.clone(),
                 reversed,
             );
-            let Classification::Decided(span) =
-                exact_offset_span_from_analytic_parallel(&fragment, &next_distance, &policy)
-                    .unwrap()
-            else {
+            let Classification::Decided(span) = exact_offset_span_from_retained_parallel_fragment(
+                RetainedParallelOffsetFragmentRef2::Analytic(&fragment),
+                &next_distance,
+                &policy,
+            )
+            .unwrap() else {
                 panic!("regular retained parallel composition must be decided");
             };
             assert_eq!(span.fragments.len(), 1);
@@ -30623,9 +30625,12 @@ mod tests {
                 range.clone(),
                 reversed,
             );
-            let Classification::Decided(span) =
-                exact_offset_span_from_analytic_parallel(&fragment, &distance, &policy).unwrap()
-            else {
+            let Classification::Decided(span) = exact_offset_span_from_retained_parallel_fragment(
+                RetainedParallelOffsetFragmentRef2::Analytic(&fragment),
+                &distance,
+                &policy,
+            )
+            .unwrap() else {
                 panic!("the represented composed cusp must split exactly");
             };
             assert_eq!(span.fragments.len(), 2);
@@ -30686,8 +30691,8 @@ mod tests {
         let first = fragment(range(zero.clone(), algebraic.clone()));
         let second = fragment(range(algebraic, one.clone()));
         assert!(matches!(
-            exact_offset_span_from_analytic_parallel(
-                &first,
+            exact_offset_span_from_retained_parallel_fragment(
+                RetainedParallelOffsetFragmentRef2::Analytic(&first),
                 &(Real::one() / Real::from(10_i8)).unwrap(),
                 &construction_policy,
             ),

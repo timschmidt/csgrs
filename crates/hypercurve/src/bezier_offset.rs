@@ -109824,27 +109824,37 @@ impl BezierParallel2 {
     /// it therefore defines both unit-frame limits at the singular parameter
     /// without sampling, fitting, or allowing APPROXIMATE_512 to become
     /// persistent construction evidence.
+    /// The tangent support is anchored on `tangent_anchor`, which must share
+    /// this source chart. Reoffset joins therefore retain the original corner
+    /// while the returned limit point belongs to the composed distance.
     pub(crate) fn source_cusp_limit_point_and_tangent_support(
         &self,
+        tangent_anchor: &Self,
         parameter: &BezierParameter2,
-        range: &BezierParameterRange2,
+        range: &CurveParameterRange2,
         tangent_direction: RealSign,
         policy: &CurveContext,
     ) -> CurveResult<Classification<(CurvePoint2, BezierAlgebraicChord2)>> {
+        debug_assert!(Arc::ptr_eq(&self.data.source, &tangent_anchor.data.source));
         if tangent_direction == RealSign::Zero {
             return Err(CurveError::Topology(
                 "source-cusp parallel tangent direction was zero".into(),
             ));
         }
-        let frame = match self.source_oriented_regularized_tangent_field(range, policy)? {
-            Classification::Decided(Some(frame)) => frame,
-            Classification::Decided(None) => {
-                return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
-            }
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
+        let interior = match range.strict_interior_scalar(&policy.strict_counterpart())? {
+            Classification::Decided(interior) => interior,
+            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
         };
+        let frame =
+            match self.source_oriented_regularized_tangent_field_at_interior(&interior, policy)? {
+                Classification::Decided(Some(frame)) => frame,
+                Classification::Decided(None) => {
+                    return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
+                }
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            };
         let speed_squared = polynomial_add(
             &polynomial_multiply(&frame.x, &frame.x),
             &polynomial_multiply(&frame.y, &frame.y),
@@ -109873,8 +109883,19 @@ impl BezierParallel2 {
             Real::zero(),
             policy,
         );
+        let anchor = if self.distance() == tangent_anchor.distance() {
+            point.clone()
+        } else {
+            BezierAnalyticParallelPoint2::new_with_regularized_tangent_distance(
+                tangent_anchor.clone(),
+                parameter.clone(),
+                Arc::clone(&frame),
+                Real::zero(),
+                policy,
+            )
+        };
         let support = BezierAnalyticParallelPoint2::new_with_regularized_tangent_distance(
-            self.clone(),
+            tangent_anchor.clone(),
             parameter.clone(),
             frame,
             match tangent_direction {
@@ -109899,6 +109920,10 @@ impl BezierParallel2 {
                 return Ok(Classification::Uncertain(reason));
             }
         };
+        let anchor = match retain(anchor)? {
+            Classification::Decided(anchor) => anchor,
+            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+        };
         let support = match retain(support)? {
             Classification::Decided(point) => point,
             Classification::Uncertain(reason) => {
@@ -109906,9 +109931,7 @@ impl BezierParallel2 {
             }
         };
         let tangent = match BezierAlgebraicChord2::try_new_from_certified_distinct_endpoints(
-            point.clone(),
-            support,
-            policy,
+            anchor, support, policy,
         )? {
             Classification::Decided(tangent) => tangent,
             Classification::Uncertain(reason) => {
