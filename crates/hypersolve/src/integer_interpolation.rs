@@ -148,7 +148,10 @@ fn integer_polynomial_remainder_modulo(
     while remainder.len() > degree && !is_zero_integer_polynomial(&remainder) {
         let shift = remainder.len() - modulus.len();
         let top = remainder.last()?;
-        let common = euclidean_bigint_gcd(top, leading);
+        let common = BigInt::from(Rational::gcd_magnitudes(
+            top.magnitude(),
+            leading.magnitude(),
+        ));
         let remainder_scale = leading / &common;
         let modulus_scale = top / common;
         if !remainder_scale.is_one() {
@@ -168,7 +171,10 @@ fn integer_polynomial_remainder_modulo(
         if !scale.is_one() {
             let mut common = scale.clone();
             for coefficient in &remainder {
-                common = euclidean_bigint_gcd(&common, coefficient);
+                common = BigInt::from(Rational::gcd_magnitudes(
+                    common.magnitude(),
+                    coefficient.magnitude(),
+                ));
                 if common.is_one() {
                     break;
                 }
@@ -580,7 +586,10 @@ fn reconstruct_rational_polynomial(
     let common_denominator = rationals
         .iter()
         .fold(BigInt::one(), |common, (_, denominator)| {
-            let gcd = euclidean_bigint_gcd(&common, denominator);
+            let gcd = BigInt::from(Rational::gcd_magnitudes(
+                common.magnitude(),
+                denominator.magnitude(),
+            ));
             common / gcd * denominator
         });
     Some((
@@ -628,7 +637,7 @@ fn rational_reconstruction(
     // The bound and coprimality checks are therefore the complete rational
     // reconstruction certificate; the final polynomial candidate is still
     // replayed by exact division against both inputs.
-    if euclidean_bigint_gcd(&remainder, &denominator) != BigInt::one() {
+    if !Rational::gcd_magnitudes(remainder.magnitude(), denominator.magnitude()).is_one() {
         return None;
     }
     Some((remainder, denominator))
@@ -739,7 +748,10 @@ fn primitive_pseudo_remainder(dividend: &[BigInt], divisor: &[BigInt]) -> Option
         // gcd before scaling either polynomial.  The resulting combination
         // is still an exact pseudo-remainder up to a nonzero integer factor,
         // but avoids manufacturing that factor in every coefficient.
-        let leading_gcd = euclidean_bigint_gcd(&remainder_leading, &divisor_leading);
+        let leading_gcd = BigInt::from(Rational::gcd_magnitudes(
+            remainder_leading.magnitude(),
+            divisor_leading.magnitude(),
+        ));
         let remainder_scale = &divisor_leading / &leading_gcd;
         let divisor_scale = &remainder_leading / leading_gcd;
         for coefficient in &mut remainder {
@@ -795,27 +807,6 @@ fn primitive_integer_part(polynomial: Vec<BigInt>) -> Vec<BigInt> {
     polynomial
 }
 
-/// Exact Euclidean GCD for the large, similarly sized coefficients produced
-/// by fraction-free polynomial arithmetic.
-///
-/// `num-integer` uses the binary algorithm for `BigInt::gcd`; on large PRS
-/// coefficients its shift/subtract loop can dominate the complete Sturm
-/// construction. Quotient/remainder reduction reaches the identical positive
-/// gcd in far fewer big-integer operations for this workload.
-fn euclidean_bigint_gcd(left: &BigInt, right: &BigInt) -> BigInt {
-    let mut left = left.abs();
-    let mut right = right.abs();
-    if left < right {
-        std::mem::swap(&mut left, &mut right);
-    }
-    while !right.is_zero() {
-        let remainder = left % &right;
-        left = right;
-        right = remainder;
-    }
-    left
-}
-
 fn integer_polynomial_content(polynomial: &[BigInt]) -> BigInt {
     let Some((smallest_index, smallest)) = polynomial
         .iter()
@@ -830,7 +821,10 @@ fn integer_polynomial_content(polynomial: &[BigInt]) -> BigInt {
         if index == smallest_index || coefficient.is_zero() {
             continue;
         }
-        content = euclidean_bigint_gcd(&content, coefficient);
+        content = BigInt::from(Rational::gcd_magnitudes(
+            content.magnitude(),
+            coefficient.magnitude(),
+        ));
         // One is the terminal content. Continuing through large resultant
         // coefficients can otherwise spend most of a primitive PRS in GCDs
         // whose outcome is already known.
